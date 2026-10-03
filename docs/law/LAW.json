@@ -945,6 +945,13 @@
     "type": "enforced"
   },
   {
+    "id": "LAW-2026-10-03-VENDOR-SUBLEDGER-IS-THE-AP-GL",
+    "title": "KILL THE SECOND SYSTEM table 12 \u2014 accounting.vendor_balances equals the A/P control GL vendor by vendor, and A/P control equals the vendor subledger: no A/P is owed to no vendor",
+    "source_file": "docs/bus/00-OWNER-ORDER-2026-10-03-KILL-THE-SECOND-SYSTEM.md",
+    "guard": "scripts/verify-vendor-balances-equals-ap-control.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "LAW-2026-10-03-NO-MIGRATION-NEITHER-APPLIED-NOR-HELD",
     "title": "ROUND 380.2 \u2014 every db/migrations file is applied on production, held / applied_held / superseded in .held-migrations.json, or numbered after the newest applied (pending the next deploy); 0 files in neither state, and every held-registry entry exists on disk",
     "source_file": "docs/bus/10-03-2026-ALL-SEATS-ROUND-380-THE-BACKFILL-IS-WITHDRAWN-AND-FOUR-RULINGS.md",

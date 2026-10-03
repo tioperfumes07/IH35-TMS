@@ -1,10 +1,10 @@
 {
-  "healthzSha": "e19f08f",
-  "generated_at": "2026-10-03T21:12:49.204Z",
+  "healthzSha": "59abb9c",
+  "generated_at": "2026-10-03T23:18:27.349Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "e19f08f",
+    "deployedSha": "59abb9c",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2124,93 +2124,93 @@
   "recentActivity": [
     {
       "number": 0,
-      "title": "Cursor- OUTBOX BANK-F91228 CreateWorkOrderModal leftover #24807",
+      "title": "Cursor- BANK-F91263 HosDriverMapPreviewPage leftover text-[11px] → text-xs (12)",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 04:10 PM CT",
+      "mergedAtCt": "10/03/2026, 06:11 PM CT",
       "url": "",
-      "sha": "d60c02dc38",
-      "committedAtIso": "2026-10-03T16:10:41-05:00"
+      "sha": "59abb9c62d",
+      "committedAtIso": "2026-10-03T18:11:18-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- leftover CreateWorkOrderModal text-xs BANK-F91228",
+      "title": "Cursor- BANK-F91262 EarningsTab leftover text-[11px] → text-xs (12)",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 04:09 PM CT",
+      "mergedAtCt": "10/03/2026, 06:10 PM CT",
       "url": "",
-      "sha": "2f7ca17017",
-      "committedAtIso": "2026-10-03T16:09:44-05:00"
+      "sha": "20ac64a4c2",
+      "committedAtIso": "2026-10-03T18:10:17-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- OUTBOX BANK-F91227 MaintKpiRows leftover #24805",
+      "title": "Cursor- BANK-F91261 ProgramBoardPage leftover text-[11px]/#334155 drain (36)",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 04:08 PM CT",
+      "mergedAtCt": "10/03/2026, 06:06 PM CT",
       "url": "",
-      "sha": "62afd828a4",
-      "committedAtIso": "2026-10-03T16:08:37-05:00"
+      "sha": "fe1bbabb77",
+      "committedAtIso": "2026-10-03T18:06:18-05:00"
+    },
+    {
+      "number": 24874,
+      "title": "Claude-3- ROUND 381.6: fuel cards carry their issuer vendor, forward and reverse",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 06:05 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24874",
+      "sha": "8b35798cd2",
+      "committedAtIso": "2026-10-03T18:05:47-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- leftover MaintKpiRows text-xs BANK-F91227",
+      "title": "Cursor- BANK-F91260 SystemModulePage leftover text-[11px]/#334155 drain",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 04:07 PM CT",
+      "mergedAtCt": "10/03/2026, 06:04 PM CT",
       "url": "",
-      "sha": "cd4b8f50b0",
-      "committedAtIso": "2026-10-03T16:07:46-05:00"
+      "sha": "92edc1836c",
+      "committedAtIso": "2026-10-03T18:04:39-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- OUTBOX BANK-F91226 DriversTable leftover #24803",
+      "title": "Cursor- OUTBOX BANK-F91256..F91259 safety leftover drain",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 04:06 PM CT",
+      "mergedAtCt": "10/03/2026, 06:02 PM CT",
       "url": "",
-      "sha": "e19f08ff01",
-      "committedAtIso": "2026-10-03T16:06:42-05:00"
+      "sha": "c136ed97d8",
+      "committedAtIso": "2026-10-03T18:02:51-05:00"
+    },
+    {
+      "number": 24895,
+      "title": "FINDING: ACCT-F9990 LANE: FINANCIAL (OWNER ORDER KILL THE SECOND SYSTEM, tables 2-5: driver_finance.escrow_balances current / held / released and escrow_ledger.running_balance_cents die — the per-driver escrow summary is a view over the 2100-00-nnn GL, the six writers keep only the identity row and the ledger history, and two of them no longer refuse a GL-approved payout because a stale stored copy was lower)",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 06:02 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24895",
+      "sha": "ab09ad0293",
+      "committedAtIso": "2026-10-03T18:02:32-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- leftover DriversTable text-xs BANK-F91226",
+      "title": "Cursor- BANK-F91259 IntegrityReportsTab leftover #334155 → #4B5563",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 04:05 PM CT",
+      "mergedAtCt": "10/03/2026, 06:02 PM CT",
       "url": "",
-      "sha": "2c324da9e0",
-      "committedAtIso": "2026-10-03T16:05:10-05:00"
-    },
-    {
-      "number": 24802,
-      "title": "FINDING: ACCT-F3707 LANE: NON-FINANCIAL (U4 + U13 + U14 — Accounting tab bar: \"Expenses List\" removed (it rendered the same page as \"Expenses\"), Accounting's Vendors and Customers tabs removed (pure redirects to the /vendors and /customers modules), \"Maintenance & shop\" renamed \"Work orders & bills\"; every route stays mounted)",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 04:00 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24802",
-      "sha": "2649021db4",
-      "committedAtIso": "2026-10-03T16:00:50-05:00"
+      "sha": "7d0ca1c3e9",
+      "committedAtIso": "2026-10-03T18:02:18-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- docs(bus): OUTBOX BANK-F91225 DocsHome #24798 c3e1d27aae",
+      "title": "Cursor- BANK-F91258 AnomalyDetailDrawer leftover text-[11px] → text-xs",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 03:59 PM CT",
+      "mergedAtCt": "10/03/2026, 06:01 PM CT",
       "url": "",
-      "sha": "08be4a5664",
-      "committedAtIso": "2026-10-03T15:59:12-05:00"
+      "sha": "e90abedcae",
+      "committedAtIso": "2026-10-03T18:01:26-05:00"
     },
     {
-      "number": 24800,
-      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: CC-2 migration 202615370700 — U10 bill_category — each Bills sub-tab shows only its own type)",
+      "number": 24891,
+      "title": "FINDING: ACCT-F3716 LANE: FINANCIAL (U16 — \"work order number, unit and trailer on every bill / expense list, and a stored copy of the work order opens from the document\": the Bills list hid the Work order column and had no Unit / Trailer, the Expenses list had no Unit (335 live USMCA expenses carry one), and a document only linked to the LIVE work order, which keeps changing after the bill is entered. Lists now show work order, unit and trailer (own, else the one all lines carry); the database stores a copy of the work order the moment a bill / expense is linked to it, and the document opens that copy)",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 03:59 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24800",
-      "sha": "a21989e49d",
-      "committedAtIso": "2026-10-03T15:59:02-05:00"
-    },
-    {
-      "number": 24799,
-      "title": "chore: claim 202615370930 for CC-3 ROUND 365.1 role bindings",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 03:58 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24799",
-      "sha": "239cc23ffb",
-      "committedAtIso": "2026-10-03T15:58:23-05:00"
+      "mergedAtCt": "10/03/2026, 06:01 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24891",
+      "sha": "464ff0ba51",
+      "committedAtIso": "2026-10-03T18:01:10-05:00"
     }
   ]
 }
