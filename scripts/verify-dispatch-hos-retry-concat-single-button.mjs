@@ -44,6 +44,10 @@ export function check(componentText, boardText, listText) {
   if (!/HOS_COLUMNS\.map\(\(c, cIndex\)/.test(listText)) {
     failures.push(`${LIST_FILE} HOS_COLUMNS.map no longer tracks the column index needed for showRetryOnError`);
   }
+  if (componentText.includes("text-[11px]")) failures.push(`${COMPONENT_FILE}: leftover text-[11px]`);
+  if (componentText.includes("#8A92AB") || componentText.includes("#334155")) {
+    failures.push(`${COMPONENT_FILE}: leftover off-scale muted`);
+  }
 
   return failures;
 }
