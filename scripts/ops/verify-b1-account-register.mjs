@@ -228,6 +228,12 @@ function main() {
     throw new Error(`${COA}: must not label book column QUICKBOOKS BALANCE (B-1 Book balance)`);
   }
 
+  // BANK-F91065 — ORDERS B-1 chrome uses locked tokens (text-section-header / text-xs), not text-[11px].
+  if (page.includes("text-[11px]")) {
+    throw new Error(`${PAGE}: must not use text-[11px] — use text-section-header (11px headers) or text-xs (12px body)`);
+  }
+  assertIncludes(page, "text-section-header", PAGE);
+
   console.log(`${LABEL}: PASS`);
 }
 
