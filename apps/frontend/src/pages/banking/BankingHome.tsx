@@ -132,7 +132,11 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   const [transactionsInitialFilter, setTransactionsInitialFilter] = useState<string>("all");
 
   useEffect(() => {
-    setActiveTab(bankingTabFromPath(location.pathname) as BankingTabId);
+    const tab = bankingTabFromPath(location.pathname) as BankingTabId;
+    setActiveTab(tab);
+    // U26 (owner): leaving Transactions clears the KPI tile's pre-filter, so coming back by the sub-nav shows every line
+    // (it used to stay on "Uncategorized" forever once the tile had been clicked).
+    if (tab !== "transactions") setTransactionsInitialFilter("all");
   }, [location.pathname]);
 
   // Legacy /banking/uncategorized alias lands here via manifest redirect (?type=uncategorized).
