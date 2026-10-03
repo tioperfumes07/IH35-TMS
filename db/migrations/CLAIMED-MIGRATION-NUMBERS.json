@@ -2026,6 +2026,11 @@
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-03",
       "purpose": "U16 (owner UI register, CC-2): a stored copy of the work order opens from the document — accounting.document_work_order_copies + AFTER INSERT/UPDATE triggers on bills / bill_lines / expenses / expense_lines capture the linked work order (WO row, unit / driver / vendor print fields, line totals) at link time, one writer for every path."
+    },
+    "202615390930": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 390.3 bank-recon adjustments link to their session on the spine: backfill accounting.transaction_source_links (linked_object_type bank_reconciliation, roles recon_service_charge / recon_interest_earned) for the USMCA rows whose memo carries the session uuid, then rewrite those memos to a human date -- memo last, only if the links landed"
     }
   },
   "202613590001": {
