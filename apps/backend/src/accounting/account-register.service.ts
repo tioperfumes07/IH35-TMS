@@ -16,17 +16,26 @@ const SOURCE_TYPE_LABELS: Record<string, string> = {
   customer_payment: "Invoice Payment",
   bill_payment: "Bill Payment",
   cash_advance: "Cash Advance",
+  // BANK-F91057 — live USMCA posts driver_cash_advance (not cash_advance).
+  driver_cash_advance: "Cash Advance",
   driver_advance: "Driver Advance",
   settlement: "Settlement",
+  // BANK-F91057 — live USMCA posts driver_settlement (420 rows); settlement alias kept.
+  driver_settlement: "Settlement",
   transfer: "Transfer",
   expense: "Expense",
   bank_deposit: "Deposit",
   bank_categorization: "Bank Categorization",
   journal_entry: "Journal Entry",
+  manual_je: "Journal Entry",
   factoring_advance: "Factoring Advance",
   // BANK-F91056 — ORDERS leftover type labels (match B-1 TRANSACTION_TYPES chips).
   credit_memo: "Credit Memo",
   fuel_event: "Fuel Event",
+  // BANK-F91057 — live census chips (load 387 · escrow 32 · bank_reconciliation 6).
+  load: "Load",
+  escrow_account: "Escrow",
+  bank_reconciliation: "Bank Reconciliation",
 };
 
 export type RawPosting = {
@@ -261,11 +270,16 @@ export async function getAccountRegister(
            AND ex_non_chk.payment_type = 'check'
       )`;
   } else if (input.type) {
-    params.push(input.type);
-    // Journal Entry rows often have NULL source_transaction_type (manual JE).
+    // BANK-F91057 — live keys ≠ chip aliases. Settlement chip must hit driver_settlement
+    // (420 USMCA rows); Cash Advance → driver_cash_advance; Journal Entry → manual_je too.
     if (input.type === "journal_entry") {
-      where += ` AND (p.source_transaction_type IS NULL OR p.source_transaction_type = $${params.length})`;
+      where += ` AND (p.source_transaction_type IS NULL OR p.source_transaction_type IN ('journal_entry', 'manual_je'))`;
+    } else if (input.type === "settlement" || input.type === "driver_settlement") {
+      where += ` AND p.source_transaction_type IN ('settlement', 'driver_settlement')`;
+    } else if (input.type === "cash_advance" || input.type === "driver_cash_advance") {
+      where += ` AND p.source_transaction_type IN ('cash_advance', 'driver_cash_advance')`;
     } else {
+      params.push(input.type);
       where += ` AND p.source_transaction_type = $${params.length}`;
     }
   }
@@ -368,7 +382,8 @@ export async function getAccountRegister(
         AND pay.operating_company_id = p.operating_company_id
        LEFT JOIN mdata.customers pc ON pc.id = pay.customer_id AND pc.operating_company_id = p.operating_company_id
        LEFT JOIN driver_finance.driver_settlements ds
-         ON p.source_transaction_type = 'settlement' AND ds.id::text = p.source_transaction_id
+         ON p.source_transaction_type IN ('settlement', 'driver_settlement')
+        AND ds.id::text = p.source_transaction_id
         AND ds.operating_company_id = p.operating_company_id
        LEFT JOIN mdata.drivers dr ON dr.id = ds.driver_id AND dr.operating_company_id = p.operating_company_id
        LEFT JOIN accounting.bill_payments bpp
@@ -420,11 +435,11 @@ export async function getAccountRegister(
               OR (p.source_transaction_type = 'invoice' AND bt.matched_invoice_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'customer_payment' AND bt.matched_payment_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'bill_payment' AND bt.matched_bill_payment_id::text = p.source_transaction_id)
-              OR (p.source_transaction_type = 'settlement' AND bt.matched_settlement_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type IN ('settlement', 'driver_settlement') AND bt.matched_settlement_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'transfer' AND bt.matched_transfer_id::text = p.source_transaction_id)
               -- B-1 / BANK-F91025 — Faro wire + cash/driver advance matches must light ✓=C on the register.
               OR (p.source_transaction_type = 'factoring_advance' AND bt.matched_factoring_advance_id::text = p.source_transaction_id)
-              OR (p.source_transaction_type IN ('cash_advance', 'driver_advance') AND bt.matched_advance_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type IN ('cash_advance', 'driver_advance', 'driver_cash_advance') AND bt.matched_advance_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'bank_categorization' AND bt.id::text = p.source_transaction_id)
             )
        ) match_info ON true
@@ -441,6 +456,7 @@ export async function getAccountRegister(
               WHEN 'invoice' THEN 'invoice'
               WHEN 'customer_payment' THEN 'payment'
               WHEN 'settlement' THEN 'settlement'
+              WHEN 'driver_settlement' THEN 'settlement'
               ELSE p.source_transaction_type
             END
        ) att ON true
@@ -622,11 +638,11 @@ export async function toggleAccountRegisterCleared(
               OR (p.source_transaction_type = 'invoice' AND bt.matched_invoice_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'customer_payment' AND bt.matched_payment_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'bill_payment' AND bt.matched_bill_payment_id::text = p.source_transaction_id)
-              OR (p.source_transaction_type = 'settlement' AND bt.matched_settlement_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type IN ('settlement', 'driver_settlement') AND bt.matched_settlement_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'transfer' AND bt.matched_transfer_id::text = p.source_transaction_id)
               -- B-1 / BANK-F91025 — Faro wire + cash/driver advance matches must light ✓=C on the register.
               OR (p.source_transaction_type = 'factoring_advance' AND bt.matched_factoring_advance_id::text = p.source_transaction_id)
-              OR (p.source_transaction_type IN ('cash_advance', 'driver_advance') AND bt.matched_advance_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type IN ('cash_advance', 'driver_advance', 'driver_cash_advance') AND bt.matched_advance_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'bank_categorization' AND bt.id::text = p.source_transaction_id)
             )
        ) match_info ON true
@@ -772,11 +788,11 @@ export async function saveAccountRegisterInline(
               OR (p.source_transaction_type = 'invoice' AND bt.matched_invoice_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'customer_payment' AND bt.matched_payment_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'bill_payment' AND bt.matched_bill_payment_id::text = p.source_transaction_id)
-              OR (p.source_transaction_type = 'settlement' AND bt.matched_settlement_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type IN ('settlement', 'driver_settlement') AND bt.matched_settlement_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'transfer' AND bt.matched_transfer_id::text = p.source_transaction_id)
               -- B-1 / BANK-F91025 — Faro wire + cash/driver advance matches must light ✓=C on the register.
               OR (p.source_transaction_type = 'factoring_advance' AND bt.matched_factoring_advance_id::text = p.source_transaction_id)
-              OR (p.source_transaction_type IN ('cash_advance', 'driver_advance') AND bt.matched_advance_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type IN ('cash_advance', 'driver_advance', 'driver_cash_advance') AND bt.matched_advance_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'bank_categorization' AND bt.id::text = p.source_transaction_id)
             )
        ) match_info ON true

@@ -59,7 +59,8 @@ function main() {
   assertIncludes(page, 't === "factoring_advance"', PAGE);
   assertIncludes(page, "/factoring/advances/${reference}", PAGE);
   // B-1 leftovers: cash/driver advance Edit hop + Check (expense payment_type) Edit hop
-  assertIncludes(page, 't === "cash_advance" || t === "driver_advance"', PAGE);
+  // BANK-F91057 — also driver_cash_advance (live USMCA key).
+  assertIncludes(page, 't === "driver_cash_advance"', PAGE);
   assertIncludes(page, "/cash-advances?advance_id=${reference}", PAGE);
   assertIncludes(page, 'Check: "check"', PAGE);
   assertIncludes(page, '(expensePaymentType ?? "").toLowerCase() === "check"', PAGE);
@@ -74,6 +75,22 @@ function main() {
   assertIncludes(page, "/fuel/history?transaction_id=${reference}", PAGE);
   assertIncludes(service, 'credit_memo: "Credit Memo"', SERVICE);
   assertIncludes(service, 'fuel_event: "Fuel Event"', SERVICE);
+  // BANK-F91057 — live USMCA keys (driver_settlement / driver_cash_advance) + Load/Escrow chips
+  assertIncludes(page, 'Settlement: "driver_settlement"', PAGE);
+  assertIncludes(page, '"Cash Advance": "driver_cash_advance"', PAGE);
+  assertIncludes(page, 'Load: "load"', PAGE);
+  assertIncludes(page, 'Escrow: "escrow_account"', PAGE);
+  assertIncludes(page, '"Bank Reconciliation": "bank_reconciliation"', PAGE);
+  assertIncludes(page, 't === "driver_settlement"', PAGE);
+  assertIncludes(page, 't === "driver_cash_advance"', PAGE);
+  assertIncludes(page, 't === "load"', PAGE);
+  assertIncludes(page, "/dispatch/loads/${reference}", PAGE);
+  assertIncludes(service, 'driver_settlement: "Settlement"', SERVICE);
+  assertIncludes(service, 'driver_cash_advance: "Cash Advance"', SERVICE);
+  assertIncludes(service, 'load: "Load"', SERVICE);
+  assertIncludes(service, "IN ('settlement', 'driver_settlement')", SERVICE);
+  assertIncludes(service, "IN ('cash_advance', 'driver_cash_advance')", SERVICE);
+  assertIncludes(service, "'journal_entry', 'manual_je'", SERVICE);
   // B-1 ORDERS filter chip set: status / type / date / payee (date = period From/To already)
   assertIncludes(page, 'data-b1-filter-payee="1"', PAGE);
   assertIncludes(page, 'data-b1-filter-status="1"', PAGE);
@@ -172,7 +189,11 @@ function main() {
   assertIncludes(service, "matched_factoring_advance_id::text = p.source_transaction_id", SERVICE);
   assertIncludes(service, "matched_advance_id::text = p.source_transaction_id", SERVICE);
   assertIncludes(service, "p.source_transaction_type = 'factoring_advance'", SERVICE);
-  assertIncludes(service, "p.source_transaction_type IN ('cash_advance', 'driver_advance')", SERVICE);
+  assertIncludes(
+    service,
+    "p.source_transaction_type IN ('cash_advance', 'driver_advance', 'driver_cash_advance')",
+    SERVICE,
+  );
   assertIncludes(service, "bank_deposit: \"Deposit\"", SERVICE);
   assertIncludes(service, "source_transaction_type = 'bank_deposit'", SERVICE);
   assertIncludes(service, 'journal_entry: "Journal Entry"', SERVICE);

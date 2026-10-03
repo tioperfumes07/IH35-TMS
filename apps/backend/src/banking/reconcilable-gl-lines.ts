@@ -41,16 +41,23 @@ const TYPE_LABELS: Record<string, string> = {
   customer_payment: "Invoice Payment",
   bill_payment: "Bill Payment",
   cash_advance: "Cash Advance",
+  // BANK-F91057 — live key aliases (must match RECON_TXN_TYPE_FILTERS chip labels).
+  driver_cash_advance: "Cash Advance",
   driver_advance: "Driver Advance",
   settlement: "Settlement",
+  driver_settlement: "Settlement",
   transfer: "Transfer",
   expense: "Expense",
   bank_deposit: "Deposit",
   bank_categorization: "Bank Categorization",
   journal_entry: "Journal",
+  manual_je: "Journal",
   // BANK-F91056 — must match RECON_TXN_TYPE_FILTERS labels on ReconciliationWorkspace.
   credit_memo: "Credit Memo",
   fuel_event: "Fuel Event",
+  load: "Load",
+  escrow_account: "Escrow",
+  bank_reconciliation: "Bank Reconciliation",
 };
 
 export async function listReconcilableGlLines(
