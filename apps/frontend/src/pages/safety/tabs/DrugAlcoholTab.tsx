@@ -361,7 +361,7 @@ export function DrugAlcoholTab() {
                         {eligibilityQ.data?.eligible ? "Eligible" : "Ineligible"}
                       </span>
                       {!eligibilityQ.data?.eligible ? (
-                        <div className="mt-1 text-[11px] text-red-700">{(eligibilityQ.data?.reasons ?? []).join(", ")}</div>
+                        <div className="mt-1 text-xs text-red-700">{(eligibilityQ.data?.reasons ?? []).join(", ")}</div>
                       ) : null}
                     </>
                   )}
@@ -469,7 +469,7 @@ export function DrugAlcoholTab() {
                   return (
                     <span
                       key={stage}
-                      className={`rounded px-2 py-0.5 text-[11px] uppercase tracking-wide ${
+                      className={`rounded px-2 py-0.5 text-xs uppercase tracking-wide ${
                         active ? "bg-slate-100 text-slate-700" : completed ? "bg-slate-50 text-slate-700" : "bg-gray-100 text-gray-600"
                       }`}
                     >
@@ -501,7 +501,7 @@ export function DrugAlcoholTab() {
                   {userFacingApiError(advanceRtdMutation.error, "Could not advance the return-to-duty case.")}
                 </p>
               ) : null}
-              <div className="text-[11px] text-slate-600">
+              <div className="text-xs text-slate-600">
                 Follow-up tests: {rtdCase.follow_up_tests_completed}/{rtdCase.follow_up_tests_required ?? "—"}
               </div>
             </div>
