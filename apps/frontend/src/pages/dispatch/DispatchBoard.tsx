@@ -561,7 +561,7 @@ function AssignmentBand({ title, count, children }: { title: string; count: numb
     <section className="space-y-1" data-testid={`dispatch-assignment-band-${title.toLowerCase().replace(/\s+/g, "-")}`}>
       <div className="flex items-center justify-between border-b border-gray-200 pb-1">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-700">{title}</h3>
-        <span className="text-[11px] text-gray-500">{count}</span>
+        <span className="text-xs text-gray-500">{count}</span>
       </div>
       {children}
     </section>
@@ -1684,7 +1684,7 @@ export function DispatchBoard({
                   const section = boardSections.find((s) => s.key === key);
                   const all = section?.rows.length ?? rows.length;
                   return (
-                    <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide" data-testid={`dispatch-board-section-${key}`} style={{ color: colors.tableHeaderText }}>
+                    <div className="flex items-center gap-2 text-section-header font-semibold uppercase tracking-wide" data-testid={`dispatch-board-section-${key}`} style={{ color: colors.tableHeaderText }}>
                       <span>{section?.title ?? key}</span>
                       <span className="rounded-sm px-1.5 text-xs font-bold normal-case tracking-normal" style={{ backgroundColor: colors.cardBg, color: colors.mutedText, border: `1px solid ${colors.tableColumnRule}` }}>
                         {rows.length}{rows.length === all ? "" : ` of ${all}`}
