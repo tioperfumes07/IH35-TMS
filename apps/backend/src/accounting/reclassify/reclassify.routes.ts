@@ -82,6 +82,7 @@ export async function registerAccountingReclassifyRoutes(app: FastifyInstance) {
       to_entity_uuid: z.string().uuid().nullable().optional(),
       to_entity_type: z.enum(["customer", "vendor", "driver", "unit"]).nullable().optional(),
       filter_snapshot: z.record(z.string(), z.unknown()).optional(),
+      override_refusals: z.boolean().optional(),
     }).safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
     await assertCompanyMembership(user.uuid, body.data.operating_company_id);
