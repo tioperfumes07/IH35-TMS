@@ -52,11 +52,11 @@ const columns: ParityColumn<InventoryPartRow>[] = [
     label: "Low Stock",
     render: (row) =>
       row.voided_at ? (
-        <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-600">—</span>
+        <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">—</span>
       ) : partNeedsReorder(row.on_hand_qty, row.reorder_threshold) ? (
-        <span className="rounded-sm bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">REORDER</span>
+        <span className="rounded-sm bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">REORDER</span>
       ) : (
-        <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">OK</span>
+        <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">OK</span>
       ),
   },
   {
@@ -98,7 +98,7 @@ const columns: ParityColumn<InventoryPartRow>[] = [
     key: "status",
     label: "Status",
     render: (row) => (
-      <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
+      <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
         {row.status}
       </span>
     ),
@@ -240,7 +240,7 @@ export function InventoryPartsStockPage() {
               dataAttributes={{ "data-inventory-parts-filter-toolbar": "collapsed" }}
             >
               <div className="grid gap-3 sm:grid-cols-2">
-                <label className="text-[11px] text-slate-600">
+                <label className="text-xs text-slate-600">
                   Category
                   <Combobox
                     value={stagedFilters.draft.categoryFilter || null}
@@ -250,7 +250,7 @@ export function InventoryPartsStockPage() {
                     allowClear
                   />
                 </label>
-                <label className="text-[11px] text-slate-600">
+                <label className="text-xs text-slate-600">
                   Stock state
                   <Combobox
                     value={stagedFilters.draft.stockFilter || null}
