@@ -708,13 +708,13 @@ export function SettlementDetailPage() {
           }}
         />
         <div>
-          <div className="text-[11px] uppercase text-gray-500">Unit(s)</div>
+          <div className="text-xs uppercase text-gray-500">Unit(s)</div>
           <div className="text-xs font-semibold" data-testid="settlement-detail-unit">
             {readout?.tour?.unit_number ?? "—"}
           </div>
         </div>
         <div style={{ flex: 1, minWidth: 220 }}>
-          <div className="text-[11px] uppercase text-gray-500">Tour legs</div>
+          <div className="text-xs uppercase text-gray-500">Tour legs</div>
           <div className="flex flex-wrap gap-1" data-testid="settlement-detail-tour-legs">
             {readout && readout.legs.length > 0 ? (
               readout.legs.map((leg) => (

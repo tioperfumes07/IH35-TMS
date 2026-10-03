@@ -68,6 +68,10 @@ function verify(files) {
   // 6 — every new section drills to its source via EntityLink.
   if (!/EntityLink/.test(loadsSection)) f.push("loads-section-no-entitylink");
 
+  // BANK-F91182 leftover chrome: identity-strip captions must use locked text-xs, never text-[11px] / off-scale muted.
+  if (page.includes("text-[11px]")) f.push("leftover-text-[11px]");
+  if (page.includes("#8A92AB") || page.includes("#334155")) f.push("leftover-off-scale-muted");
+
   return f;
 }
 
@@ -103,6 +107,7 @@ if (process.argv.includes("--selftest")) {
     { ...base, waterfallSection: base.waterfallSection.replaceAll('data-testid="settlement-company-waterfall-section"', 'data-testid="oops"') },
     { ...base, page: base.page.replaceAll("<CompanyWaterfallSection", "<Nope") },
     { ...base, loadsSection: base.loadsSection.replace(/EntityLink/g, "NotALink") },
+    { ...base, page: `${base.page} text-[11px] #8A92AB` },
   ];
   for (const [index, mutated] of mutations.entries()) {
     const changed = Object.keys(base).some((k) => mutated[k] !== base[k]);
