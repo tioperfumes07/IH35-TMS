@@ -444,6 +444,21 @@ const BANK_MATCH_REVERSE_TABLE: Partial<Record<VoidableEntityType, string>> = {
   customer_payment: "accounting.payments",
 };
 
+// ROUND 373 / 368.2(b) — the bank line's OWN pointer to the document being voided. The cascade used to find lines only by
+// linked_entity_id or the document's source_bank_transaction_id, so a line MATCHED to an expense / fill / invoice / JE /
+// factoring advance (matched_*_id) kept naming a voided document — the "matched to nothing" state. Fixed column names
+// from a closed map, never input.
+const BANK_LINE_MATCHED_COLUMN: Partial<Record<VoidableEntityType, string>> = {
+  invoice: "matched_invoice_id",
+  journal_entry: "matched_journal_entry_id",
+  bill: "matched_bill_id",
+  expense: "matched_expense_id",
+  bill_payment: "matched_bill_payment_id",
+  customer_payment: "matched_payment_id",
+  fuel_event: "matched_fuel_transaction_id",
+  factoring_advance: "matched_factoring_advance_id",
+};
+
 // LINKAGE-INTEGRITY-LAW (board, owner paste 2026-09-01) — this reset used to clear ONLY the
 // categorize-as-X link fields (linked_entity_id/category*), never the SEPARATE reconciliation-session
 // pointer family (matched_load_id/matched_bill_id/matched_settlement_id/matched_expense_id/
@@ -565,15 +580,17 @@ export async function unmatchBankTransactionsForVoid(
   const reverseIdSql = reverseTable
     ? `(SELECT source_bank_transaction_id FROM ${reverseTable} WHERE id = $2::uuid AND operating_company_id = $1::uuid)`
     : `NULL::uuid`;
+  const matchedCol = BANK_LINE_MATCHED_COLUMN[params.entityType];
+  const byMatched = matchedCol ? ` OR ${matchedCol} = $2::uuid` : "";
   await releaseBankLineMatchesWhere(
     client,
-    `operating_company_id = $1::uuid AND (linked_entity_id = $2::uuid OR id = ${reverseIdSql})`,
+    `operating_company_id = $1::uuid AND (linked_entity_id = $2::uuid OR id = ${reverseIdSql}${byMatched})`,
     [params.operatingCompanyId, params.entityId],
     { kind: "void", reason: `void: ${params.entityType} ${params.entityId}`, actorUserId: actor?.userId ?? null }
   );
   const res = await client.query<{ id: string }>(
     `${BANK_TX_UNMATCH_RESET_SQL}
-       AND (linked_entity_id = $2::uuid OR id = ${reverseIdSql})
+       AND (linked_entity_id = $2::uuid OR id = ${reverseIdSql}${byMatched})
      RETURNING id`,
     [params.operatingCompanyId, params.entityId]
   );
