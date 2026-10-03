@@ -30,6 +30,7 @@ import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { buildPgClientConfig } from "../src/lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "./constants.js";
+import { refuseProductionConnectionString, refuseProductionDatabase } from "./refuse-production.js";
 
 /** Production / seed entities — never deactivate via this helper. */
 const PROTECTED_COMPANY_CODES = new Set(["TRANSP", "TRK", "USMCA"]);
@@ -121,11 +122,16 @@ export async function createIsolatedOperatingCompany(
   await ensureIntegrationPrerequisites();
 
   const ownClient = !opts?.client;
+  if (!opts?.client) refuseProductionConnectionString(connectString()); // ROUND 390.1
   const client = opts?.client ?? new pg.Client(buildPgClientConfig(connectString()));
   if (ownClient) {
     await client.connect();
     await client.query("SET ROLE ih35_app");
   }
+  await refuseProductionDatabase(client).catch(async (e) => {
+    if (ownClient) await client.end().catch(() => {});
+    throw e;
+  }); // ROUND 390.1 — own or caller-supplied, never production
 
   try {
     await client.query("BEGIN");

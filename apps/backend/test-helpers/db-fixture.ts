@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { buildPgClientConfig } from "../src/lib/pg-connection-options.js";
 import { TEST_OWNER_EMAIL, TEST_OWNER_GOOGLE_ID, TEST_OWNER_USER_ID } from "./constants.js";
+import { refuseProductionConnectionString, refuseProductionDatabase } from "./refuse-production.js";
 
 // Canonical home: ./isolated-company.ts — re-export for import convenience (#2717 / #2719).
 export {
@@ -31,6 +32,7 @@ let cachedSecondEntity: { companyId: string; loadId: string } | null = null;
 function connectString(): string {
   const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
   if (!cs) throw new Error("DATABASE_DIRECT_URL or DATABASE_URL is required for integration tests");
+  refuseProductionConnectionString(cs); // ROUND 390.1 — fixtures never write production
   return cs;
 }
 
@@ -43,6 +45,7 @@ function connectString(): string {
 // so every load INSERT in the integration suite failed with "No canonical dispatch flag color". Seed the
 // six codes the trigger can request, idempotently (mirrors the migration backfill / USMCA bootstrap shape).
 export async function seedDispatchFlagColorsForCompany(client: pg.Client, companyId: string): Promise<void> {
+  await refuseProductionDatabase(client); // ROUND 390.1 — a caller-supplied client is checked too
   await client.query(
     `
       INSERT INTO catalogs.dispatch_flag_colors
@@ -98,11 +101,13 @@ export async function resolveLoadTrailerEquipmentIdForTests(
 
 /** P44 prerequisites for any direct INSERT INTO mdata.loads in tests (flag colors + trailer catalog). */
 export async function prepareCompanyForLoadInserts(client: pg.Client, companyId: string): Promise<string> {
+  await refuseProductionDatabase(client); // ROUND 390.1 — a caller-supplied client is checked too
   await seedDispatchFlagColorsForCompany(client, companyId);
   return resolveLoadTrailerEquipmentId(client, companyId);
 }
 
 async function seedLoadForCompany(client: pg.Client, companyId: string, suffix: string): Promise<string> {
+  await refuseProductionDatabase(client); // ROUND 390.1 — a caller-supplied client is checked too
   // Generic catalog tables (202606241800 loop) carry a company-GUC-ONLY policy — no lucia-bypass clause:
   //   USING/WITH CHECK operating_company_id::text = current_setting('app.operating_company_id', true)
   // The fixture historically set only app.bypass_rls, so catalog seeds (dispatch_flag_colors,
@@ -132,6 +137,10 @@ export async function ensureIntegrationLoadId(): Promise<string> {
   const companyId = await ensureIntegrationPrerequisites();
   const client = new pg.Client(buildPgClientConfig(connectString()));
   await client.connect();
+  await refuseProductionDatabase(client).catch(async (e) => {
+    await client.end().catch(() => {});
+    throw e;
+  }); // ROUND 390.1
   try {
     await client.query("SET ROLE ih35_app");
     await client.query("BEGIN");
@@ -158,6 +167,10 @@ export async function ensureSecondEntityLoad(): Promise<{ companyId: string; loa
   await ensureIntegrationPrerequisites();
   const client = new pg.Client(buildPgClientConfig(connectString()));
   await client.connect();
+  await refuseProductionDatabase(client).catch(async (e) => {
+    await client.end().catch(() => {});
+    throw e;
+  }); // ROUND 390.1
   try {
     await client.query("SET ROLE ih35_app");
     await client.query("BEGIN");
@@ -210,8 +223,13 @@ export async function ensureIntegrationPrerequisites(): Promise<string> {
     throw new Error("DATABASE_DIRECT_URL or DATABASE_URL is required for integration tests");
   }
 
+  refuseProductionConnectionString(cs); // ROUND 390.1 — before connecting
   const client = new pg.Client(buildPgClientConfig(cs));
   await client.connect();
+  await refuseProductionDatabase(client).catch(async (e) => {
+    await client.end().catch(() => {});
+    throw e;
+  }); // ROUND 390.1
 
   try {
     await client.query("SET ROLE ih35_app");
@@ -311,8 +329,13 @@ export async function getIntegrationWorkOrderSeedIds(): Promise<{ unitId: string
     throw new Error("DATABASE_DIRECT_URL or DATABASE_URL is required for getIntegrationWorkOrderSeedIds()");
   }
 
+  refuseProductionConnectionString(cs); // ROUND 390.1 — before connecting
   const client = new pg.Client(buildPgClientConfig(cs));
   await client.connect();
+  await refuseProductionDatabase(client).catch(async (e) => {
+    await client.end().catch(() => {});
+    throw e;
+  }); // ROUND 390.1
 
   try {
     await client.query("SET ROLE ih35_app");

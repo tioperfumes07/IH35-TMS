@@ -11,9 +11,41 @@ const LABEL = "verify-usmca-clean-no-voids-no-fixtures";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const TEST_ID = String.raw`(^|[^a-z])(e2e|demo|test|sample|fixture|practice|example)([^a-z]|$)`;
 const base = JSON.parse(readFileSync(new URL("./verify-usmca-clean-no-voids-no-fixtures.baseline.json", import.meta.url), "utf8"));
+export const REQUIRES_LIVE_DB = "USMCA cleanliness is a live fact — fails closed without a database";
+
+/** Pure: shrink-only comparison against the committed baseline (ROUND 390.1 — wired; was an orphan). */
+export function evaluate(counts, baseline, kept) {
+  const problems = [];
+  for (const [k, v] of Object.entries(counts)) {
+    const b = baseline.counts[k];
+    if (b === undefined) problems.push(`${k}: no baseline`);
+    else if (v > b) problems.push(`${k}: ${v} (baseline ${b}) — a new ${k.replace(/_/g, " ")} in USMCA`);
+  }
+  if (kept !== 2) problems.push(`settlement docrefs 5817 / 5818: ${kept} of 2 present — they are kept for the owner, never deleted`);
+  return problems;
+}
+
+if (process.argv.includes("--selftest")) {
+  const b = { counts: { test_identifiers: 2, sample_rows: 6 } };
+  const cases = [
+    ["at baseline passes", evaluate({ test_identifiers: 2, sample_rows: 6 }, b, 2).length === 0],
+    ["a NEW test identifier fails (the 2026-10-02 E2E customers)", evaluate({ test_identifiers: 4, sample_rows: 6 }, b, 2).some((x) => x.startsWith("test_identifiers"))],
+    ["below baseline passes (shrink)", evaluate({ test_identifiers: 0, sample_rows: 0 }, b, 2).length === 0],
+    ["a missing kept docref fails", evaluate({ test_identifiers: 2, sample_rows: 6 }, b, 1).some((x) => x.includes("5817"))],
+  ];
+  for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
+  const bad = cases.filter(([, ok]) => !ok).length;
+  console.log(bad ? `${LABEL} --selftest FAIL` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
 
 const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
 try {
+  // A fresh verify database carries no USMCA company: nothing production-shaped to measure — say so, never call it proof.
+  if ((await client.query(`SELECT 1 FROM org.companies WHERE id = $1::uuid`, [USMCA])).rows.length === 0) {
+    console.log(`${LABEL}: DATABASE PHASE — USMCA company absent (fresh verify DB); the shrink-only rule is selftested, NOT live proof.`);
+    process.exitCode = 0;
+  } else {
   await client.query("BEGIN READ ONLY");
   await client.query("SET LOCAL app.bypass_rls = 'lucia'");
   const sampleTables = (await client.query(
@@ -37,16 +69,13 @@ try {
   };
   const kept = Number((await client.query(`SELECT count(*)::int n FROM driver_finance.driver_settlements WHERE operating_company_id = $1::uuid AND source_document_ref IN ('5817', '5818')`, [USMCA])).rows[0].n);
   await client.query("ROLLBACK");
-  const problems = [];
-  for (const [k, v] of Object.entries(counts)) {
-    const b = base.counts[k];
-    if (b === undefined) problems.push(`${k}: no baseline`);
-    else if (v > b) problems.push(`${k}: ${v} (baseline ${b}) — a new ${k.replace(/_/g, " ")} in USMCA`);
-  }
-  if (kept !== 2) problems.push(`settlement docrefs 5817 / 5818: ${kept} of 2 present — they are kept for the owner, never deleted`);
-  if (problems.length) { console.error(`${LABEL}: LIVE FAIL — ${problems.join("; ")}`); process.exit(1); }
+  const problems = evaluate(counts, base, kept);
+  if (problems.length) { console.error(`${LABEL}: LIVE FAIL — ${problems.join("; ")}`); process.exitCode = 1; }
+  else {
   const dirty = Object.entries(counts).filter(([, v]) => v > 0).map(([k, v]) => `${k} ${v}`);
   console.log(`${LABEL}: LIVE PASS — 0 above baseline (measured_at ${base.measured_at}); docrefs 5817 / 5818 present. Still to clean: ${dirty.join(", ") || "nothing"}.`);
+  }
+  }
 } finally {
   client.release();
   await pool.end();
