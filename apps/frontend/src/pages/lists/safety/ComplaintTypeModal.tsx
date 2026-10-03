@@ -122,13 +122,13 @@ export function ComplaintTypeModal({ open, companyId, row, onClose, onSaved }: P
         <label className="block text-xs font-semibold text-gray-600">
           Type Code
           <input value={form.type_code} onChange={(event) => setForm((v) => ({ ...v, type_code: event.target.value.toUpperCase() }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="SERVICE-QUALITY" />
-          {errors.type_code ? <div className="mt-1 text-[11px] text-red-700">{errors.type_code}</div> : null}
+          {errors.type_code ? <div className="mt-1 text-xs text-red-700">{errors.type_code}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
           Type Name
           <input value={form.type_name} onChange={(event) => setForm((v) => ({ ...v, type_name: event.target.value }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
-          {errors.type_name ? <div className="mt-1 text-[11px] text-red-700">{errors.type_name}</div> : null}
+          {errors.type_name ? <div className="mt-1 text-xs text-red-700">{errors.type_name}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
