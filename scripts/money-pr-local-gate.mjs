@@ -807,6 +807,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-r342-opco-canonical-on-double-scoped",
     ["db/migrations/202615310700_r342_phase2a_expand_operating_company_id.sql", "scripts/verify-r342-opco-canonical-on-double-scoped.mjs"],
   ],
+  // Standing order F-1 (CC-1) — a driver's escrow never releases more than it holds (named debt: the 3 purge-population drivers).
+  [
+    "verify-escrow-never-over-releases",
+    ["db/migrations/", "apps/backend/src/driver-finance/", "apps/backend/src/settlements/", "apps/backend/src/accounting/escrow/", "scripts/verify-escrow-never-over-releases.mjs"],
+  ],
   // ROUND 342 Phase 4 — one scope column, one RLS policy on the factoring tables that carried a duplicate tenant policy.
   [
     "verify-factoring-one-scope-policy",
