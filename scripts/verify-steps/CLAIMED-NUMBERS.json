@@ -10087,5 +10087,20 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-03",
     "purpose": "verify-escrow-balances-equals-its-gl"
+  },
+  "12409": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-test-fixtures-refuse-production"
+  },
+  "12413": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-usmca-clean-no-voids-no-fixtures"
+  },
+  "12417": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-arriving-soon-serves-pm-and-wo-due"
   }
 }
