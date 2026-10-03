@@ -110,6 +110,20 @@ function main() {
   }
   assertIncludes(splitModal, "text-section-header", "BankTransactionSplitModal.tsx");
 
+  // BANK-F91069 — B-3 Banking Home account tile + Transfers list use locked text tokens.
+  const accountTile = read("apps/frontend/src/pages/banking/components/AccountTile.tsx");
+  if (accountTile.includes("text-[11px]")) {
+    throw new Error("AccountTile.tsx: must not use text-[11px] — use text-xs (ORDERS §16 card chrome)");
+  }
+  const transfers = read("apps/frontend/src/pages/banking/TransfersListPage.tsx");
+  if (transfers.includes("text-[11px]")) {
+    throw new Error("TransfersListPage.tsx: must not use text-[11px] — use text-xs");
+  }
+  const escrow = read("apps/frontend/src/pages/banking/components/DriverEscrowLedgerSection.tsx");
+  if (escrow.includes("text-[11px]")) {
+    throw new Error("DriverEscrowLedgerSection.tsx: must not use text-[11px] — use text-xs");
+  }
+
   console.log(`${LABEL}: PASS`);
 }
 

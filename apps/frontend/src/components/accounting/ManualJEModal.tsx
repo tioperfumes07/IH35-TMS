@@ -171,7 +171,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
       <div className="space-y-2 text-xs" data-testid="manual-je-drawer">
         {step === 1 ? (
           <>
-            <p className="text-[11px] text-gray-600">Enter the journal header. Line items are added on the next step.</p>
+            <p className="text-xs text-gray-600">Enter the journal header. Line items are added on the next step.</p>
             <label className="block">
               Journal date
               <DatePicker
@@ -224,7 +224,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
           </>
         ) : (
           <>
-            <div className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1 text-[11px] text-gray-700">
+            <div className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-700">
               <span className="font-semibold">Date:</span> {date}
               {referenceNumber.trim() ? (
                 <>
@@ -240,7 +240,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
               ) : null}
             </div>
             <div className="space-y-1">
-              <div className="grid grid-cols-5 gap-1 px-1.5 text-[11px] font-semibold uppercase text-gray-500">
+              <div className="grid grid-cols-5 gap-1 px-1.5 text-section-header font-semibold uppercase text-gray-500">
                 <span>Account</span>
                 <span>Class</span>
                 <span>Debit</span>
