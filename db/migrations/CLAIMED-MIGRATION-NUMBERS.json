@@ -1842,6 +1842,11 @@
       "claimed_at": "2026-10-03",
       "purpose": "ROUND 342 phase 2 step 2c (CC-2): drop tenant_id from the 17 double-scoped tables now that 202615330400 (CC-1) removed the coi sync trigger and moved the factor-agreement FKs to operating_company_id; drop the CHECKs / indexes / FKs / policies that name it; same PR re-proves the #24293 NULL-writer fix."
     },
+    "202615340600": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-03",
+      "purpose": "CC-2 engine ten-point (point 5 WORM + audit + FORCE RLS): fuel.fuel_transactions, integrations.relay_fuel_transactions, relay_fuel_transaction_lines, relay_deposits refuse DELETE except voided rows under an open owner AUTH; row audit on those + fuel.fraud_alerts; FORCE RLS on fuel.load_fuel_cost / tank_events / tank_state / unit_mpg."
+    },
     "202615340100": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-03",
