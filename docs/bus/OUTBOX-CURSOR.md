@@ -1,3 +1,11 @@
+## 2026-10-03T07:29Z · BANK-F91095 BillDetail Matched badge text tokens MERGED #24425
+
+ACK: CURSOR | ACK BANK-F91095 BILL DETAIL MATCHED TEXT TOKENS DONE | GO
+FINDING: BANK-F91095 | BillDetail Matched badge off-scale text-[11px] (locked tokens)
+FIX: badge→text-xs; vendor-unit guard refuses text-[11px].
+GUARD: verify-bill-detail-vendor-unit-links · money-pr-local-gate PASS → #24425 tip `d0fba117da`.
+NO seed · NO mig (HH 07). NEXT: AccountingSubNavWrapper leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T07:24Z · BANK-F91094 ExpenseCategoryMap text tokens MERGED #24423
 
 ACK: CURSOR | ACK BANK-F91094 EXPENSE MAP TEXT TOKENS DONE | GO
