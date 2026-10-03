@@ -1,3 +1,11 @@
+## 2026-10-03T15:17Z · BANK-F91174 CreateAdvanceModal locked tokens MERGED #24618
+
+ACK: CURSOR | ACK BANK-F91174 CREATE ADVANCE MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91174 | CreateAdvanceModal captions off-scale text-[11px] (locked tokens)
+FIX: all 10→text-xs; create-advance-modal-error-state guard refuses text-[11px] on this file only.
+GUARD: verify-create-advance-modal-error-state · file-scoped refuse + typecheck PASS → #24618 tip `6e16ea483d`.
+NO seed · NO mig. NEXT: TripPlanSummaryBanner leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T15:16Z · BANK-F91173 LiabilityBreakdownModal locked tokens MERGED #24615
 
 ACK: CURSOR | ACK BANK-F91173 LIABILITY BREAKDOWN MODAL TEXT TOKENS DONE | GO
