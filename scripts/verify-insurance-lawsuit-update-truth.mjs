@@ -8,14 +8,19 @@ function failures(candidate) {
   const route = candidate.slice(candidate.indexOf('/api/v1/insurance/lawsuits/:id"'));
   const checks = [
     ["mutation limiter", /lawsuits\/:id"[\s\S]{0,180}rateLimit:\s*\{\s*max:\s*120,\s*timeWindow:\s*"1 minute"/],
-    ["status lock", /SELECT status[\s\S]{0,180}FROM insurance\.lawsuit[\s\S]{0,180}tenant_id = \$1::uuid AND id = \$2::uuid[\s\S]{0,100}LIMIT 1[\s\S]{0,40}FOR UPDATE/],
-    ["company update", /UPDATE insurance\.lawsuit[\s\S]{0,180}WHERE tenant_id = \$1::uuid AND id = \$2::uuid[\s\S]{0,100}RETURNING/],
+    ["status lock", /SELECT status[\s\S]{0,180}FROM insurance\.lawsuit[\s\S]{0,180}operating_company_id = \$1::uuid AND id = \$2::uuid[\s\S]{0,100}LIMIT 1[\s\S]{0,40}FOR UPDATE/],
+    ["company update", /UPDATE insurance\.lawsuit[\s\S]{0,180}WHERE operating_company_id = \$1::uuid AND id = \$2::uuid[\s\S]{0,100}RETURNING/],
     ["create proven row", /if \(!result\.rows\[0\]\) return \{ kind: "lawsuit_not_found" as const \}[\s\S]{0,100}const lawsuit = result\.rows\[0\]/],
     ["update audit", /appendCrudAudit\([\s\S]{0,120}"insurance\.lawsuit\.updated"[\s\S]{0,180}resource_type: "insurance\.lawsuit"[\s\S]{0,100}resource_id: lawsuit\.id/],
     ["company and linkage audit", /operating_company_id: query\.data\.operating_company_id[\s\S]{0,100}claim_id: body\.claim_id[\s\S]{0,100}status: body\.status/],
     ["proven response", /row: lawsuit/],
   ];
-  return checks.filter(([, pattern]) => !pattern.test(route)).map(([label]) => label);
+  const failed = checks.filter(([, pattern]) => !pattern.test(route)).map(([label]) => label);
+  // Negative: a lawsuit read or write keyed on id alone crosses carriers — every one carries the company predicate.
+  if (/FROM insurance\.lawsuit\s+WHERE id = \$|UPDATE insurance\.lawsuit\s+SET[\s\S]{0,200}?WHERE id = \$/.test(route)) failed.push("unscoped lawsuit read/write");
+  // The linked claim must be the same carrier's: its ownership lookup carries the company predicate first.
+  if (!/FROM insurance\.claim\s+WHERE operating_company_id = \$1::uuid/.test(route)) failed.push("claim link not company-checked");
+  return failed;
 }
 
 const problems = failures(source);
@@ -32,9 +37,15 @@ if (process.argv.includes("--selftest")) {
     ["resource_id: lawsuit.id,\n        operating_company_id: query.data.operating_company_id", 'resource_id: "",\n        operating_company_id: query.data.operating_company_id'],
     ["status: body.status", 'status: ""'],
     ["row: lawsuit", "row: result.rows[0]"],
+    // company scope (ROUND 342: operating_company_id, the one company column) dropped from the lock / the update
+    ["FROM insurance.lawsuit\n            WHERE operating_company_id = $1::uuid AND id = $2::uuid", "FROM insurance.lawsuit\n            WHERE id = $2::uuid"],
+    ["FROM insurance.claim\n            WHERE operating_company_id", "FROM insurance.claim\n            WHERE true OR operating_company_id"],
+    ["WHERE operating_company_id = $1::uuid AND id = $2::uuid\n          RETURNING", "WHERE id = $2::uuid\n          RETURNING"],
   ];
   for (const [from, to] of mutations) {
-    const index = from === "row: lawsuit" ? source.lastIndexOf(from) : source.indexOf(from);
+    // Plants land inside the route this guard checks (other routes in the file reuse the same SQL text).
+    const routeStart = source.indexOf('/api/v1/insurance/lawsuits/:id"');
+    const index = from === "row: lawsuit" ? source.lastIndexOf(from) : source.indexOf(from, routeStart);
     const changed = index < 0 ? source : `${source.slice(0, index)}${to}${source.slice(index + from.length)}`;
     if (changed === source || failures(changed).length === 0) {
       console.error(`verify-insurance-lawsuit-update-truth selftest mutation escaped: ${from}`);
