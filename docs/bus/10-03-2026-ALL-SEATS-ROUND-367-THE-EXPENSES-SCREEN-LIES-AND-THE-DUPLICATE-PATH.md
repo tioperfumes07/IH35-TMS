@@ -175,3 +175,106 @@ and **0 in-app history-based back buttons remain** app-wide. Report the count re
 check that the same page reached by two different paths renders the identical breadcrumb.
 
 **Deadline:** with ROUND 364, **2026-10-06 18:00Z**. CC-2 owns Accounting, CURSOR owns the app-wide sweep.
+
+---
+
+## 367.7 — THE 167 ARE A MIXED BUCKET. SPLIT THEM BEFORE ANYONE CALLS THEM BROKEN. (CC-3 measures · CC-2 owns the writers)
+
+Owner, 2026-10-03: *"which 167 matches, they should not exist, that means the engine is not working as it
+should."*
+
+**He is right that the number must end at zero, and I owe him the split before we act on it**, because the 167
+as reported is not one thing. CC-3's measurement said *"live matches or categorizations with a journal entry
+today — 167 (each one is exposed if sent back)"*. Matches and categorizations are **not** the same, and a
+journal entry means something different under each:
+
+| Bucket | What it is | Correct state |
+|---|---|---|
+| **A** | **Categorizations** that created their own document — expense, bill, deposit — which therefore has a journal entry | **CORRECT.** This is QBO. A categorize CREATES. The journal entry belongs to the document it created, not to the categorization |
+| **B** | **Matches** whose journal entry was created **by the match itself** | **DEFECT — must be 0.** A match LINKS and posts nothing (LAW 363.6). This is the deposit-sweep path CC-1 flagged |
+| **C** | Rows reading any `matched_*` state with **nothing actually matched** | **DEFECT — must be 0.** 29 of these were found and released earlier today |
+
+**Required value, measured on the DIRECT endpoint:** the three counts, the row list for B and C, and the
+current count of bank lines in For Review versus any `matched_*` state. The owner has already uncategorized
+everything and sent it all back to For Review, so B and C should now be 0 and the whole bucket should be near
+empty. **If it is not, the undo did not fully release, and that is a bigger finding than the 167.**
+
+**And the engine, not just the rows.** Cleaning 167 rows and leaving the writer alone means they come back on
+the re-upload. CC-2 names **every code path that can create a journal entry at match time** and removes the
+posting from each. Required value: **0 postings created by any bank-match code path**, proven live, and the
+guard holds through the re-upload.
+
+**Report all counts even at zero.** A zero measured on the direct endpoint is proof. A zero from the pooler is
+masked and proves nothing.
+
+## 367.8 — A DUPLICATE IS OFFERED, NEVER SILENTLY CREATED AND NEVER SILENTLY DELETED (CC-1 · CC-2)
+
+Owner, 2026-10-03: *"yes lets delete the duplicates as well but I think it should work like that if there is a
+duplicate and lets pretend those are real, it should do what I stated."*
+
+So the engine must behave correctly **whether the pair is a duplicate or two real purchases**. Both outcomes
+are legitimate and the system does not get to decide silently.
+
+**At creation and at import, before the row is written:**
+
+- When an incoming fuel purchase or expense matches an existing one on **provider transaction ID**, it is a
+  true duplicate and is **refused** — the provider cannot charge the same transaction twice. That refusal is
+  in the database, not only in the UI.
+- When it matches on **vendor + date + amount** but the provider transaction ID differs or is absent, it is a
+  **possible** duplicate. It is **surfaced before it is written**, with both rows side by side — date, amount,
+  vendor, load, unit, driver, provider reference — and the owner chooses:
+  1. **It is a duplicate** → the second is not created. If one already exists: reverse, void, purge, in that
+     order, never hand-written.
+  2. **They are both real** → both are kept, and **each is assigned to its correct load**. This is the case
+     the owner means by "pretend those are real".
+
+**This matters more than it looks on the current 11 groups.** The pairs carry **different load prefixes** —
+13580-7 against 13586-3, 13580-4 against 13574-5, 13579-6 against 13574-4. One fuel purchase is landing on
+**two different loads**, so two loads' costs are wrong right now in opposite directions. Deleting one row at
+random fixes neither. Each pair is resolved to the right load, which is exactly the **by-load** selector of
+the reclassify engine (LAW 363.3).
+
+- The duplicate banner stays and becomes **actionable**: every group opens the side-by-side resolution, and a
+  group the owner has ruled on is **remembered**, so the same pair never asks twice.
+- Nothing is auto-deleted. Nothing is auto-merged. **The owner decides and the decision is audited** — who,
+  when, which rows, which outcome, which load each landed on (LAW 363.9).
+
+**Required value:** all 11 current groups resolved with the provider transaction ID pasted for both rows,
+each outcome named, and each surviving row carrying its correct load. Then the refusal and the prompt are
+live, so the re-upload cannot recreate them.
+
+**Guard:** `verify-duplicate-expense-is-refused-or-ruled-never-silent.mjs` — live, and it holds through the
+re-upload.
+
+## 367.9 — THE BREADCRUMB IS APP-WIDE, AND SOME SCREENS HAVE NO BACK AT ALL (CURSOR owns · CC-2 Accounting)
+
+Owner, 2026-10-03: *"the back button must be fixed in the entire app, because it is not just in accounting, in
+many modules it does the same and some tabs don't have it."*
+
+367.6 is promoted from an Accounting item to an **app-wide contract**. Two defects, not one:
+
+1. Where a back control exists, it is **browser history**, so the same button lands somewhere different
+   depending on how you arrived.
+2. **Some screens have no back control at all** — the owner lands somewhere with no way up except the browser.
+
+**The contract, every route, no exceptions:**
+
+- Every screen renders a **breadcrumb**: `Module › List › Record`. Every crumb clickable, the last one the
+  current page and not a link.
+- **"Up" is structural, never historical.** From a record, the parent is its list. From a list, the module
+  home. Always the same, from anywhere, including a deep link and a refresh, because it is derived from the
+  **route** and not from a navigation stack.
+- **One component for the whole app.** Not one per module — that is how we ended up with some screens having a
+  back control and others having none. Same rule as the account multi-select and the status multi-select:
+  **one component, not two.**
+- The browser's own back button keeps doing history. We do not touch it. One control per behaviour.
+
+**Required value:** an inventory of **every route in the app** with three columns — has a breadcrumb, parent
+resolves to the module home, no history-based back control remains. All three true on every row. Report the
+total route count and the count fixed; a route missing from the inventory is a defect in the inventory.
+
+**Guard:** `verify-every-route-has-a-structural-breadcrumb.mjs` — static over the whole route manifest, plus a
+live check that the same page reached by two different paths renders the identical breadcrumb.
+
+**Deadline:** 367.7 by **2026-10-04 06:00Z** — it gates the purge. 367.8 before the purge runs. 367.9 by
+**2026-10-06 18:00Z**, app-wide, not Accounting-only.

@@ -90,3 +90,11 @@ CC-2 also has `docs/bus/10-03-2026-CC-2-ROUND-364-ACCOUNTING-MODULE-REGISTER-364
 **367.6** `← Back` is browser history and lands differently depending on how you arrived — it becomes a breadcrumb where "up" is structural and always the module home.
 
 **365.6 is still the gate.** Finish your list, no handoffs, three numbers at the top of every report.
+
+### ROUND 367 ADDENDUM — 367.7, 367.8, 367.9
+
+**367.7 — the 167 is a MIXED bucket, split it before calling it broken.** (A) categorizations that created their own document and correctly have a journal entry — that is QBO, not a defect. (B) matches whose journal entry was created BY THE MATCH — the 363.6 defect, must be 0. (C) rows in any `matched_*` state with nothing matched — must be 0. CC-3 measures on the DIRECT endpoint and pastes the SQL; CC-2 names every writer that can post at match time and removes it. The owner already undid everything, so B and C should be 0 — **if they are not, the undo did not fully release, and that is the bigger finding.**
+
+**367.8 — a duplicate is OFFERED, never silently created and never silently deleted.** Same provider transaction ID = refused in the database. Same vendor+date+amount with a different or absent provider ID = surfaced side by side before the row is written, owner rules it: duplicate (reverse, void, purge) or both real (both kept, **each assigned to its correct load**). The current 11 pairs carry DIFFERENT load prefixes, so one purchase is on two loads and two loads are wrong in opposite directions. Nothing auto-deleted, nothing auto-merged, every decision audited.
+
+**367.9 — the breadcrumb is APP-WIDE.** Owner: it is not just Accounting, many modules do the same and **some tabs have no back at all**. Every route gets a structural breadcrumb from one shared component; up is the parent in the hierarchy, never history; derived from the route so it survives refresh and deep links. Deliverable is an inventory of every route with three true columns. CURSOR owns it, CC-2 owns Accounting.
