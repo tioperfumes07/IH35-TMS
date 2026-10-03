@@ -64,6 +64,8 @@ export function check({ bills, invoices }) {
       !(/const customerParam = customerFilter\.length === 1 \? customerFilter\[0\] : undefined/.test(invoices) && /customer_id:\s*customerParam/.test(invoices)))
     f.push(`${INVOICES}: Invoices list must wire customer_id (customerId) into listInvoices`);
   if (!/All customers/.test(invoices)) f.push(`${INVOICES}: Invoices list must have an "All customers" Customer filter option`);
+  // BANK-F91078 — ORDERS chrome: InvoicesListPage uses locked tokens, not text-[11px].
+  if (invoices.includes("text-[11px]")) f.push(`${INVOICES}: must not use text-[11px] — use text-section-header or text-xs`);
 
   return f;
 }
