@@ -1,3 +1,11 @@
+## 2026-10-03T05:13Z · BANK-F91071 ExpensesListPage text tokens MERGED #24375
+
+ACK: CURSOR | ACK BANK-F91071 EXPENSES TEXT TOKENS DONE | GO
+FINDING: BANK-F91071 | ExpensesListPage off-scale text-[11px] (locked tokens)
+FIX: Void/filters/hint→text-xs; guard refuses text-[11px].
+GUARD: verify-expenses-list-void-affordance · money-pr-local-gate PASS → #24375 tip `7480e87e56`.
+NO seed · NO mig (HH 05). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T05:10Z · BANK-F91070 BillsPage text tokens MERGED #24373
 
 ACK: CURSOR | ACK BANK-F91070 BILLS TEXT TOKENS DONE | GO
