@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: BANK-F91172 #24613 MERGED; KILL THE SECOND SYSTEM — CC-1 START table 1 (deadline 15:30Z); next leftover LiabilityBreakdownModal
-ACK: CURSOR | ACK F91172 DONE | GO
+NOW: BANK-F91173 #24615 MERGED; KILL THE SECOND SYSTEM — CC-1 START table 1 (deadline 15:30Z); next leftover CreateAdvanceModal
+ACK: CURSOR | ACK F91173 DONE | GO
