@@ -48,7 +48,7 @@ function IntegritySubTabBar({ subTab, onChange }: { subTab: SubTab; onChange: (n
           key={tab.id}
           type="button"
           className="rounded-sm border px-3 py-1 text-xs font-semibold"
-          style={subTab === tab.id ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#cbd5e1", color: "#334155" }}
+          style={subTab === tab.id ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#cbd5e1", color: "#4B5563" }}
           onClick={() => onChange(tab.id)}
         >
           {tab.label}

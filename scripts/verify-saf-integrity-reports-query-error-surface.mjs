@@ -25,6 +25,13 @@ function assertFile(rel, needles) {
   return needles.filter((n) => !src.includes(n)).map((n) => `${rel}: missing ${n}`);
 }
 
+function leftoverErrors(src) {
+  const errors = [];
+  if (src.includes("text-[11px]")) errors.push("leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155")) errors.push("leftover off-scale muted");
+  return errors;
+}
+
 function selftest() {
   const bad = `{woQuery.isError ? (`;
   const good = NEEDLES.join("\n");
@@ -46,6 +53,11 @@ function selftest() {
     }
   } finally {
     fs.unlinkSync(tmp);
+  }
+  const leftover = leftoverErrors(`${good}\n<div className="text-[11px]" style={{ color: "#334155" }}>plant</div>`);
+  if (!leftover.includes("leftover text-[11px]") || !leftover.includes("leftover off-scale muted")) {
+    console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`, leftover);
+    process.exit(1);
   }
   console.log(`${LABEL} selftest PASS`);
 }
@@ -69,6 +81,12 @@ if (errors.length) {
 const src = fs.readFileSync(path.join(process.cwd(), FILE), "utf8");
 if (/\{woQuery\.isError \? \(/.test(src) && !src.includes("activeListQuery.isError")) {
   console.error(`${LABEL} FAIL: still gates list error only on woQuery.isError`);
+  process.exit(1);
+}
+const leftover = leftoverErrors(src);
+if (leftover.length) {
+  console.error(`${LABEL} FAIL:`);
+  for (const e of leftover) console.error(`  - ${e}`);
   process.exit(1);
 }
 console.log(`${LABEL} PASS — IntegrityReportsTab surfaces active sub-tab + observations query errors`);
