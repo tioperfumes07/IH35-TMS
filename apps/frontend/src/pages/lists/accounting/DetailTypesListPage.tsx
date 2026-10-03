@@ -186,7 +186,7 @@ export function DetailTypesListPage() {
             limit={DETAIL_TYPES_LIST_CAP}
             total={listQuery.data?.total ?? null}
             hint="Refine the account type or status filters to see the rest."
-            className="text-[11px] text-slate-600"
+            className="text-xs text-slate-600"
           />
           <ParityTable
           columns={columns}
