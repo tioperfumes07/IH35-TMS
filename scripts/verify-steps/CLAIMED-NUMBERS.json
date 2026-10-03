@@ -10067,5 +10067,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-03",
     "purpose": "verify-every-credit-document-posts"
+  },
+  "12393": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-no-posting-update-outside-document-edit"
   }
 }
