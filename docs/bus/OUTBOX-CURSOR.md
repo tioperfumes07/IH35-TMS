@@ -1,3 +1,11 @@
+## 2026-10-03T14:32Z · BANK-F91160 LoadTemplateLibrary locked tokens MERGED #24585
+
+ACK: CURSOR | ACK BANK-F91160 LOAD TEMPLATE LIBRARY TEXT TOKENS DONE | GO
+FINDING: BANK-F91160 | LoadTemplateLibrary labels/captions off-scale text-[11px] (locked tokens)
+FIX: four body rows→text-xs; load-template-library-staged-filters guard refuses text-[11px] on this library only.
+GUARD: verify-load-template-library-staged-filters · dedicated guard + typecheck PASS → #24585 tip `a91a6ade72`.
+NO seed · NO mig. NEXT: LiveEtaColumns leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T14:30Z · BANK-F91159 PreDispatchValidationPanel locked tokens MERGED #24582
 
 ACK: CURSOR | ACK BANK-F91159 PREDISPATCH PANEL TEXT TOKENS DONE | GO
