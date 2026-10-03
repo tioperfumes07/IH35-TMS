@@ -40,6 +40,8 @@ export function collectProblems(root = ROOT) {
   if (/driversQuery/.test(code)) {
     problems.push(`${FILE}: must not keep a bulk driversQuery roster cache`);
   }
+  if (src.includes("text-[11px]")) problems.push("leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155")) problems.push("leftover off-scale muted");
 
   return problems;
 }
@@ -71,6 +73,20 @@ const driversQuery = useQuery({
     if (!planted.length) {
       console.error(`${LABEL} SELFTEST FAIL: planted silent roster did not FAIL`);
       process.exit(1);
+    }
+    const leftoverRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-contract-leftover-"));
+    try {
+      const leftoverDir = path.join(leftoverRoot, "apps/frontend/src/pages/legal/contracts");
+      fs.mkdirSync(leftoverDir, { recursive: true });
+      const live = fs.readFileSync(path.join(ROOT, FILE), "utf8");
+      fs.writeFileSync(path.join(leftoverDir, "UnifiedContractCreatorModal.tsx"), `${live}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`);
+      const leftover = collectProblems(leftoverRoot);
+      if (!leftover.some((p) => p.includes("leftover"))) {
+        console.error(`${LABEL} SELFTEST FAIL: leftover plant escaped`);
+        process.exit(1);
+      }
+    } finally {
+      fs.rmSync(leftoverRoot, { recursive: true, force: true });
     }
   } finally {
     fs.rmSync(stubRoot, { recursive: true, force: true });
