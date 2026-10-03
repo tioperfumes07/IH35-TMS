@@ -168,7 +168,45 @@ function describe(mismatch) {
 
 /* -- entry point ----------------------------------------------------------- */
 
+/* -- ROUND 372.2 #5: an override is a ruling, never a convenience ------------------------------
+ * An override teaches this guard to stop asking whether a file on disk is the file that ran. Every override added
+ * from ROUND 372 on must name the ruling that authorised it (`ruling`: a file under docs/bus that exists). The 60
+ * historical overrides that predate the rule carry no ruling; their count is frozen and may only shrink. */
+export const UNRULED_OVERRIDE_CEILING = 60;
+export function overrideRulingFailures(entries, fileExists = (p) => fs.existsSync(path.resolve(ROOT, p))) {
+  const out = [];
+  const unruled = entries.filter((o) => !o.ruling);
+  if (unruled.length > UNRULED_OVERRIDE_CEILING) {
+    out.push(`${unruled.length} checksum override(s) carry no ruling (ceiling ${UNRULED_OVERRIDE_CEILING}, shrink-only) — a new override must name its ruling: ${unruled.slice(UNRULED_OVERRIDE_CEILING).map((o) => o.filename).join(", ")}`);
+  }
+  for (const o of entries.filter((e) => e.ruling)) {
+    if (!/^docs\/bus\/[^/]+\.md$/.test(o.ruling) || !fileExists(o.ruling)) {
+      out.push(`checksum override for ${o.filename} cites ruling "${o.ruling}", which is not an existing docs/bus/*.md file`);
+    }
+  }
+  return out;
+}
+
+function overrideSelftest() {
+  const old = Array.from({ length: UNRULED_OVERRIDE_CEILING }, (_, i) => ({ filename: `old${i}.sql` }));
+  const exists = (p) => p === "docs/bus/RULING.md";
+  const cases = [
+    ["the frozen historical set passes", overrideRulingFailures(old, exists).length === 0],
+    ["a new override with an existing ruling passes", overrideRulingFailures([...old, { filename: "n.sql", ruling: "docs/bus/RULING.md" }], exists).length === 0],
+    ["a new override with no ruling fails", overrideRulingFailures([...old, { filename: "n.sql" }], exists).length === 1],
+    ["a ruling that does not exist fails", overrideRulingFailures([...old, { filename: "n.sql", ruling: "docs/bus/NOPE.md" }], exists).length === 1],
+    ["a ruling outside docs/bus fails", overrideRulingFailures([...old, { filename: "n.sql", ruling: "README.md" }], () => true).length === 1],
+  ];
+  for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
+  const bad = cases.filter(([, ok]) => !ok).length;
+  console.log(bad ? "verify:applied-migrations-immutable --selftest FAIL" : `verify:applied-migrations-immutable --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
+
 async function main() {
+  if (process.argv.includes("--selftest")) overrideSelftest();
+  const rulingProblems = overrideRulingFailures(JSON.parse(fs.readFileSync(OVERRIDES_PATH, "utf8")));
+  if (rulingProblems.length > 0) fail(`${rulingProblems.length} checksum override(s) without a valid ruling`, rulingProblems);
   const overridesByFile = loadChecksumOverrides();
   const snapshot = readSnapshotLedger();
   const databaseUrl = process.env.DATABASE_URL || "";

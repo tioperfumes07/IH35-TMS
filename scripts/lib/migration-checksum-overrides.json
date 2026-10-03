@@ -478,5 +478,41 @@
     "reason": "Lead, 2026-10-01: appended ALLOW_BARE_UUID_CAST inline comments to the two current_setting()::uuid casts (USING + WITH CHECK, lines 90/94) to satisfy verify-rls-uuid-cast-nullif.mjs; no DDL text changed, only trailing SQL comments. The live policy itself (driver_samsara_accounts_entity_scope on mdata.driver_samsara_accounts) is fixed forward in the same PR by 202615230200_rls_uuid_cast_nullif_driver_samsara_accounts.sql (ALTER POLICY, NULLIF-wrapped) so a GUC set to the empty string fails closed instead of raising invalid-uuid-syntax.",
     "added_at": "2026-10-01",
     "added_in_pr": "lead/fix-rls-uuid-cast-nullif-driver-samsara"
+  },
+  {
+    "filename": "202614420000_fuel_transactions_genesis_anchor_gross_cost_discount_fee.sql",
+    "ledger_checksum": "ff636abe7c56bfd5f62a3ab25d7e362238ffe6da53220ff1074f51b910941fbb",
+    "disk_checksum": "c973579041f8e871c4fe27a3ce6a9d7b46874a03bfbfa8e6db308f201c74f4f1",
+    "reason": "ROUND 372.2: applied to production from source that was never committed and cannot be found; this file is RECONSTRUCTED FROM PRODUCTION 2026-10-03 (live catalog, direct endpoint) and reproduces the live state — see its header block. Never re-run on production.",
+    "ruling": "docs/bus/10-03-2026-CC-1-ROUND-372-FOUR-RULINGS-AND-THE-MULTI-LOAD-SETTLEMENT-LINE.md",
+    "added_at": "2026-10-03",
+    "added_in_pr": "cc-1/r372-2-reconstruct-migrations"
+  },
+  {
+    "filename": "202614430000_fuel_transactions_genesis_anchor_gross_cost_discount_fee.sql",
+    "ledger_checksum": "842f1330b20532d0825e90d234fd3f716c4c32c81da09a6c70e58710ed9e70d5",
+    "disk_checksum": "ccf8e78ae9665922fe31a0ff2335f697de3697312b0304ba5ae2f79468147bb4",
+    "reason": "ROUND 372.2: applied to production from source that was never committed and cannot be found; this file is RECONSTRUCTED FROM PRODUCTION 2026-10-03 (live catalog, direct endpoint) and reproduces the live state — see its header block. Never re-run on production.",
+    "ruling": "docs/bus/10-03-2026-CC-1-ROUND-372-FOUR-RULINGS-AND-THE-MULTI-LOAD-SETTLEMENT-LINE.md",
+    "added_at": "2026-10-03",
+    "added_in_pr": "cc-1/r372-2-reconstruct-migrations"
+  },
+  {
+    "filename": "202614560000_geocode_precision_google_native_values.sql",
+    "ledger_checksum": "864956da9420a83f7c738c4eb95900990d5209b2fdffc2b4de3d8de618a0a3f0",
+    "disk_checksum": "f1632dd81ff9708341b6cb08e81211cba3a664d17c14a635bf4c83f1f0b3be5d",
+    "reason": "ROUND 372.2: applied to production from source that was never committed and cannot be found; this file is RECONSTRUCTED FROM PRODUCTION 2026-10-03 (live catalog, direct endpoint) and reproduces the live state — see its header block. Never re-run on production.",
+    "ruling": "docs/bus/10-03-2026-CC-1-ROUND-372-FOUR-RULINGS-AND-THE-MULTI-LOAD-SETTLEMENT-LINE.md",
+    "added_at": "2026-10-03",
+    "added_in_pr": "cc-1/r372-2-reconstruct-migrations"
+  },
+  {
+    "filename": "202614570000_fix_driver_samsara_accounts_rls_empty_uuid_cast.sql",
+    "ledger_checksum": "a36e09fa93ed26f91848f8e39ef1f8c5faf3c4a41d1d40eb4a5e2c9b5f8c3ebf",
+    "disk_checksum": "4a13188121440d85f4be8e41f9664a4fa7d205205bac990fcb2578fe56acbed2",
+    "reason": "ROUND 372.2: applied to production from source that was never committed and cannot be found; this file is RECONSTRUCTED FROM PRODUCTION 2026-10-03 (live catalog, direct endpoint) and reproduces the live state — see its header block. Never re-run on production.",
+    "ruling": "docs/bus/10-03-2026-CC-1-ROUND-372-FOUR-RULINGS-AND-THE-MULTI-LOAD-SETTLEMENT-LINE.md",
+    "added_at": "2026-10-03",
+    "added_in_pr": "cc-1/r372-2-reconstruct-migrations"
   }
 ]
