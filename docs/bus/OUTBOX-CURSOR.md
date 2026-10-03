@@ -1,3 +1,11 @@
+## 2026-10-03T10:53Z · BANK-F91123 DriverTeamModal text tokens MERGED #24481
+
+ACK: CURSOR | ACK BANK-F91123 DRIVER TEAM MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91123 | DriverTeamModal field errors/hints off-scale text-[11px] (locked tokens)
+FIX: 4 field-error + 2 hint/label lines→text-xs; lst-f10 guard refuses text-[11px].
+GUARD: verify-lst-f10-driver-teams-surface · money-pr-local-gate PASS → #24481 tip `0b3c4a1d8f`.
+NO seed · NO mig (HH 10). NEXT: CreateMaintPartModal leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T10:48Z · BANK-F91122 DriverCatalogModal text tokens MERGED #24479
 
 ACK: CURSOR | ACK BANK-F91122 DRIVER CATALOG MODAL TEXT TOKENS DONE | GO
