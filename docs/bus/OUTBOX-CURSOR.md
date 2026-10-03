@@ -1,3 +1,11 @@
+## 2026-10-03T14:35Z · BANK-F91161 LiveEtaColumns locked tokens MERGED #24587
+
+ACK: CURSOR | ACK BANK-F91161 LIVE ETA COLUMNS TEXT TOKENS DONE | GO
+FINDING: BANK-F91161 | LiveEtaColumns Samsara ETA empty/pill off-scale text-[11px] (locked tokens)
+FIX: both→text-xs; dispatch-eta-columns guard refuses text-[11px] on LiveEtaColumns.tsx only.
+GUARD: verify-dispatch-eta-columns · dedicated file refuse + typecheck PASS → #24587 tip `26f54ac624`.
+NO seed · NO mig. NEXT: ARAgingPage leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T14:32Z · BANK-F91160 LoadTemplateLibrary locked tokens MERGED #24585
 
 ACK: CURSOR | ACK BANK-F91160 LOAD TEMPLATE LIBRARY TEXT TOKENS DONE | GO
