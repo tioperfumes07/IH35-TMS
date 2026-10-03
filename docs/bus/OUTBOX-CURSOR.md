@@ -1,3 +1,11 @@
+## 2026-10-03T08:21Z · BANK-F91102 PostingTemplateModal text tokens MERGED #24439
+
+ACK: CURSOR | ACK BANK-F91102 POSTING TEMPLATE TEXT TOKENS DONE | GO
+FINDING: BANK-F91102 | PostingTemplateModal errors/hints off-scale text-[11px] (locked tokens)
+FIX: 5 classes→text-xs; link05 guard refuses text-[11px].
+GUARD: verify-acct-link05-posting-template-create · money-pr-local-gate PASS → #24439 tip `feb8601be9`.
+NO seed · NO mig (HH 08). NEXT: AccountDrawer leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T08:16Z · BANK-F91101 ItemEditorModal text tokens MERGED #24437
 
 ACK: CURSOR | ACK BANK-F91101 ITEM EDITOR TEXT TOKENS DONE | GO
