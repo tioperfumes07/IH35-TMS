@@ -49,7 +49,11 @@ export function classify(disk, ledger, held, addedAt = () => null, lastDeployAt 
   for (const f of disk) {
     if (ledger.has(f) || held.has(f)) continue;
     const added = addedAt(f);
-    const isPending = added && lastDeployAt ? new Date(added) > new Date(lastDeployAt) : f > newest;
+    // Pending on EITHER signal (CC-3, 2026-10-03): numbered after the newest applied (db-migrate runs it next, in order),
+    // or added after the last deploy (band numbering lets a merged file sort before an applied one). Time alone
+    // misread every open branch committed before the latest deploy — its file is new, numbered after everything
+    // applied, and was called "neither" (#24874, 202615380930).
+    const isPending = f > newest || Boolean(added && lastDeployAt && new Date(added) > new Date(lastDeployAt));
     (isPending ? pending : neither).push(f);
   }
   return { newest, neither, pending };
@@ -99,6 +103,10 @@ if (isMain) {
       ["a file that was in the repo at the last deploy and still is not applied → neither", (() => {
         const c = classify(["202601040000_d.sql"], L, H, () => "2026-10-01T00:00:00Z", "2026-10-03T21:59:00Z");
         return c.neither.join() === "202601040000_d.sql";
+      })()],
+      ["a HIGHER-numbered file committed BEFORE the last deploy (an open branch) → pending, not neither", (() => {
+        const c = classify(["202601060000_f.sql"], L, H, () => "2026-10-03T21:00:00Z", "2026-10-03T22:00:00Z");
+        return c.pending.join() === "202601060000_f.sql" && c.neither.length === 0;
       })()],
       ["a held entry with no file → RULE 2", staticProblems(new Set(["202601010000_a.sql"]), new Set(["202601099999_gone.sql"])).length === 1],
       ["registry object and string entries both read", heldUnion({ held: [{ file: "x.sql" }], superseded: ["y.sql"] }).size === 2],
