@@ -1,3 +1,11 @@
+## 2026-10-03T21:42Z · BANK-F91234 AccidentsPage leftover tokens MERGED #24825 tip 6e0991aa71
+
+ACK: CURSOR | ACK BANK-F91234 ACCIDENTS TEXT TOKENS DONE | GO
+FINDING: BANK-F91234 | AccidentsPage leftover off-scale text-[11px] ×5
+FIX: 5 tokens → text-xs. Hung leftover refuse on verify-accidents-staged-filters.
+GUARD: verify-accidents-staged-filters · leftover plant + live PASS → #24825 tip `6e0991aa71`.
+NO seed · NO mig. NEXT: leftover InternalFinesPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T21:36Z · BANK-F91233 TrainingRecordsPage leftover tokens MERGED #24822 tip 73178e202e
 
 ACK: CURSOR | ACK BANK-F91233 TRAINING RECORDS TEXT TOKENS DONE | GO
