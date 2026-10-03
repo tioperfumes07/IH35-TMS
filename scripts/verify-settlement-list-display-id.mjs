@@ -33,6 +33,8 @@ export function run() {
   const header = read("apps/frontend/src/pages/driver-finance/components/SettlementHeader.tsx");
   assert(detail.includes("settlementDisplayId"), "SettlementDetailPage must pass settlement display_id to header", errors);
   assert(header.includes("settlementDisplayId"), "SettlementHeader must render settlement display_id", errors);
+  assert(!header.includes("text-[11px]"), "SettlementHeader leftover chrome must use text-xs, not text-[11px]", errors);
+  assert(!header.includes("#8A92AB") && !header.includes("#334155"), "SettlementHeader leftover chrome must not use off-scale #334155 / #8A92AB", errors);
   assert(detail.includes("showManualPaidDraftBanner"), "SettlementDetailPage must surface manual_paid draft honesty banner", errors);
 
   // FE Render build unblock (ih35-tms-web exit 2): Manual Paid chip must type-check through setFilter.
@@ -59,8 +61,10 @@ export function run() {
 function selftest() {
   const apiPath = path.join(ROOT, "apps/frontend/src/api/driverFinance.ts");
   const pagePath = path.join(ROOT, "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx");
+  const headerPath = path.join(ROOT, "apps/frontend/src/pages/driver-finance/components/SettlementHeader.tsx");
   const apiBackup = fs.readFileSync(apiPath, "utf8");
   const pageBackup = fs.readFileSync(pagePath, "utf8");
+  const headerBackup = fs.readFileSync(headerPath, "utf8");
   try {
     const patched = apiBackup.replace(
       /(export type SettlementListRow = \{[\s\S]*?)(\n  display_id: string \| null;)/,
@@ -85,10 +89,17 @@ function selftest() {
       throw new Error("planted setFilter manual_paid removal not detected");
     }
 
-    console.log(`[verify-settlement-list-display-id] SELFTEST PASS (${planted.length}+${plantedPage.length} planted failures detected)`);
+    fs.writeFileSync(headerPath, `${headerBackup}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`, "utf8");
+    const plantedHeader = run();
+    if (!plantedHeader.some((e) => e.includes("text-[11px]") || e.includes("#8A92AB") || e.includes("#334155"))) {
+      throw new Error("planted SettlementHeader leftover tokens not detected");
+    }
+
+    console.log(`[verify-settlement-list-display-id] SELFTEST PASS (${planted.length}+${plantedPage.length}+${plantedHeader.length} planted failures detected)`);
   } finally {
     fs.writeFileSync(apiPath, apiBackup, "utf8");
     fs.writeFileSync(pagePath, pageBackup, "utf8");
+    fs.writeFileSync(headerPath, headerBackup, "utf8");
   }
 }
 
