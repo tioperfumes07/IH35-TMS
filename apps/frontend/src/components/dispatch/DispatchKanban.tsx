@@ -775,7 +775,7 @@ function KanbanDispatchCard({
             kind="load"
             id={load.id}
             label={cardSecondaryLoadNumber(load) ?? undefined}
-            className="font-mono text-[11px] text-gray-500"
+            className="font-mono text-xs text-gray-500"
             data-kanban-card-secondary="load-number"
             onClick={(event) => event.stopPropagation()}
           />
@@ -797,7 +797,7 @@ function KanbanDispatchCard({
         )}
       </div>
 
-      <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] text-gray-600">
+      <div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-600">
         <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 font-semibold text-slate-700">{mode}</span>
         <span>{weight}</span>
         <span className="truncate" title={commodity}>
@@ -899,7 +899,7 @@ function KanbanCompactCard({
       ]
         .filter(Boolean)
         .join(" · ")}
-      className={`flex h-10 items-center gap-2 rounded border border-gray-200 bg-white px-2 text-[11px] shadow-xs transition hover:bg-gray-50 ${
+      className={`flex h-10 items-center gap-2 rounded border border-gray-200 bg-white px-2 text-xs shadow-xs transition hover:bg-gray-50 ${
         isDragging ? "opacity-60" : ""
       } ${isOver ? "ring-2 ring-slate-400" : ""} ${
         draggableEnabled ? "cursor-grab select-none active:cursor-grabbing" : "cursor-pointer"
@@ -1014,7 +1014,7 @@ function KanbanStandardCard({
       {...listeners}
       onClick={() => onClick(load.id)}
       title={`${cardPrimaryLabel(load)} · ${entityLabel(load.load_number, load.id, "Load")} · ${lane}`}
-      className={`flex flex-col gap-0.5 rounded border border-gray-200 bg-white px-2 py-1.5 text-[11px] shadow-xs transition hover:bg-gray-50 ${
+      className={`flex flex-col gap-0.5 rounded border border-gray-200 bg-white px-2 py-1.5 text-xs shadow-xs transition hover:bg-gray-50 ${
         isDragging ? "opacity-60" : ""
       } ${isOver ? "ring-2 ring-slate-400" : ""} ${
         draggableEnabled ? "cursor-grab select-none active:cursor-grabbing" : "cursor-pointer"
@@ -1178,7 +1178,7 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
           <span className="whitespace-nowrap text-xs font-semibold text-gray-900">{unitLabel}</span>
         )}
       </div>
-      <div className="mt-0.5 truncate text-[11px] text-gray-500">
+      <div className="mt-0.5 truncate text-xs text-gray-500">
         {load.assigned_primary_driver_id ? (
           <EntityLinkOrTombstone
             kind="driver"
@@ -2178,7 +2178,7 @@ export function DispatchKanban({
             await assignMutation.mutateAsync({ loadId: pendingAssign.loadId, unitId: pendingAssign.unitId });
           }}
         />
-        <div className="mb-2 flex items-center justify-end gap-1 text-[11px]">
+        <div className="mb-2 flex items-center justify-end gap-1 text-xs">
           <span className="text-gray-500">Density</span>
           {KANBAN_DENSITIES.map((mode) => (
             <button
@@ -2238,7 +2238,7 @@ export function DispatchKanban({
             <span className="rounded-sm bg-white px-2 py-0.5 text-xs font-bold text-slate-700">{outOfServiceLoads.length}</span>
           </header>
           {outOfServiceLoads.length === 0 ? (
-            <p className="mt-1 text-[11px] italic text-slate-700">
+            <p className="mt-1 text-xs italic text-slate-700">
               Full fleet out-of-service feed pending — no units flagged.
             </p>
           ) : (
@@ -2255,7 +2255,7 @@ export function DispatchKanban({
                       onLoadClick(load.id);
                     }
                   }}
-                  className="flex items-center gap-2 rounded-sm border border-slate-200 bg-white px-2 py-1 text-[11px] hover:bg-slate-100"
+                  className="flex items-center gap-2 rounded-sm border border-slate-200 bg-white px-2 py-1 text-xs hover:bg-slate-100"
                   data-testid="kanban-oos-chip"
                 >
                   <span className="text-red-600" aria-hidden>

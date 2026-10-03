@@ -28,6 +28,16 @@ const contracts = [
     (s) => /!load\.assigned_primary_driver_id && !load\.assigned_unit_id \? \(\s*<span className="text-gray-400"[^>]*>—<\/span>/.test(s),
     (s) => s.replace(/<span className="text-gray-400" aria-label="No unit or driver assigned">—<\/span>/g, "<span>Unassigned</span>"),
   ],
+  [
+    "leftover text-[11px]",
+    (s) => !s.includes("text-[11px]"),
+    (s) => `${s}\n<div className="text-[11px]">plant</div>`,
+  ],
+  [
+    "leftover off-scale muted",
+    (s) => !s.includes("#8A92AB") && !s.includes("#334155"),
+    (s) => `${s}\n<div className="text-[#8A92AB]">plant</div>`,
+  ],
 ];
 
 function audit(s) {
