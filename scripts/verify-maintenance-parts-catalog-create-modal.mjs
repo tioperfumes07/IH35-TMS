@@ -29,6 +29,10 @@ const checks = [
 const live = Object.fromEntries(Object.entries(F).map(([k, file]) => [k, fs.readFileSync(file, "utf8")]));
 const audit = (src) => checks.filter(([k, re]) => !re.test(src[k])).map(([, , msg]) => msg);
 const failures = audit(live);
+// BANK-F91124 — ORDERS chrome: CreateMaintPartModal field errors use text-xs, not text-[11px].
+if (live.modal.includes("text-[11px]")) {
+  failures.push("modal must not use text-[11px] — use text-xs");
+}
 if (failures.length) {
   console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);
   process.exit(1);
