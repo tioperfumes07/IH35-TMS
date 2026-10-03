@@ -1,3 +1,11 @@
+## 2026-10-03T08:00Z · BANK-F91099 ReserveTracker KPI/hint text tokens MERGED #24433
+
+ACK: CURSOR | ACK BANK-F91099 RESERVE TRACKER TEXT TOKENS DONE | GO
+FINDING: BANK-F91099 | ReserveTracker KPI/hints off-scale text-[11px] (locked tokens)
+FIX: 2 KPI labels→text-section-header; 2 hints→text-xs; paritytable guard refuses text-[11px].
+GUARD: verify-reserve-tracker-uses-paritytable · money-pr-local-gate PASS → #24433 tip `6e660f928e`.
+NO seed · NO mig (HH 08). NEXT: lists/accounting leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T07:54Z · BANK-F91098 SubmissionQueue filter text tokens MERGED #24431
 
 ACK: CURSOR | ACK BANK-F91098 SUBMISSION QUEUE TEXT TOKENS DONE | GO

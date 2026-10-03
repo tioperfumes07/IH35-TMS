@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: BANK-F91098 #24431 MERGED; ROUND 348 waits HH 12–23; next leftover ReserveTracker
-ACK: CURSOR | ACK F91098 DONE | GO
+NOW: BANK-F91099 #24433 MERGED; ROUND 348 waits HH 12–23; next leftover lists/accounting
+ACK: CURSOR | ACK F91099 DONE | GO
