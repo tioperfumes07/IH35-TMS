@@ -21,6 +21,8 @@ export function check(filePath = path.join(ROOT, PAGE)) {
   assert(!/\[search,\s*setSearch\]/.test(src), "FactoringQueuePage: must not keep page-local search state");
   assert(!/Search load # or customer/.test(src), "FactoringQueuePage: must not mount page-local search input");
   assert(/stageFilter/.test(src), "FactoringQueuePage: must keep stage filter");
+  // BANK-F91139 — ORDERS chrome: KPI headings text-section-header; filter labels text-xs.
+  assert(!src.includes("text-[11px]"), "FactoringQueuePage: must not use text-[11px] — use text-section-header / text-xs");
 }
 
 // GUARD-SELFTEST-MUTATES-SOURCE fix: never write the plant into the real tracked file. Copy it
