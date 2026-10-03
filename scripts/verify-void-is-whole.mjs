@@ -33,7 +33,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { EMPTY_BY_PURGE_EXIT, purgeWindowFor } from "./lib/purge-window.mjs";
 export const REQUIRES_LIVE_DB =
   "live money guard; reads journal entries and document headers and fails closed with no DATABASE_URL (R-102-C)";
 
@@ -276,22 +275,13 @@ if (fresh.length) {
     }
     process.exit(1);
   }
-  // Direction 1 only. Inside the window → EMPTY BY PURGE (gate accepts via acceptedAsEmptyByPurge).
-  // Outside the window → hard FAIL, same as before (baseline not widened).
-  const w = purgeWindowFor(LABEL);
-  if (w.open) {
-    console.log(
-      `${LABEL}: EMPTY BY PURGE (verified ${w.verifiedAt}, expires ${w.expiresAt}) — ${d1Only.length} NEW Direction-1 silent-void(s) while the window is open; named skip, not a pass. Direction 2 stays hard and was clean.`
-    );
-    for (const v of d1Only.slice(0, 20)) console.log(`  · ${violationKey(v)} — ${v.detail}`);
-    if (d1Only.length > 20) console.log(`  · … and ${d1Only.length - 20} more`);
-    process.exit(EMPTY_BY_PURGE_EXIT);
-  }
-  console.error(`${LABEL}: FAIL — ${d1Only.length} NEW Direction-1 silent-void(s) beyond the ${baseline.size}-violation baseline (window closed: ${w.reason}):`);
+  // Direction 1 only — a HARD FAIL (Lead ROUND 347). It used to exit EMPTY BY PURGE while the purge window was open,
+  // and the window never closes while the owner's seeding freeze stands (purge-window.mjs: expiresAt null), so this
+  // guard reported "no data" forever while naming real findings — 131 on 2026-10-03, 130 of them false (fuel read only
+  // its own ledger; fixed in #24308) and 1 real (mdata.loads 13515). This guard measures documents that EXIST, so the
+  // freeze premise ("the tables are empty on purpose") never applied to it. It is no longer a purge-window arm.
+  console.error(`${LABEL}: FAIL — ${d1Only.length} NEW Direction-1 silent-void(s) beyond the ${baseline.size}-violation baseline:`);
   for (const v of d1Only) console.error(`  ✗ ${violationKey(v)} — ${v.detail}`);
   process.exit(1);
 }
 console.log(`${LABEL}: PASS — ${violations.length} violation(s), all in the before-picture baseline (${baseline.size}); 0 new.`);
-// Touch the helper so the static exemption guards see the call site even on the PASS path (window
-// closed or open). A PASS does not exit EMPTY BY PURGE; this only proves the arm is wired.
-purgeWindowFor(LABEL);

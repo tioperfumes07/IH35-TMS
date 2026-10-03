@@ -2,7 +2,7 @@
 // The purge-window exemption stays exactly as ruled (Lead, docs/bus/09-23-2026-LEAD-RULING-CURSOR-
 // PURGE-WINDOW-GUARD-STATE.md; tenth arm added per docs/bus/09-23-2026-LEAD-RULING-CC1-ROUND-
 // E12.1-R2-TASK27-TENTH-PURGE-ARM.md). Static, no DATABASE_URL:
-//   1. the ten named guards, and only they, call the purge-window helper — a new guard cannot inherit it;
+//   1. the nine named guards (ROUND 347 removed verify-void-is-whole), and only they, call the purge-window helper — a new guard cannot inherit it;
 //   2. money-pr-local-gate accepts the EMPTY BY PURGE exit at all four live-guard sites and prints
 //      the counted summary line;
 //   3. the window opens only on a verified purge, closes when day 1 closes, and expires 72 hours
@@ -31,7 +31,8 @@ const callers = fs
   .sort();
 const expected = [...PURGE_WINDOW_GUARDS].sort();
 // STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
-if (PURGE_WINDOW_GUARDS.length !== 10) failures.push(`PURGE_WINDOW_GUARDS lists ${PURGE_WINDOW_GUARDS.length} guards; the rulings name ten`);
+// Lead ROUND 347 (2026-10-03) removed verify-void-is-whole from the window: ten -> nine.
+if (PURGE_WINDOW_GUARDS.length !== 9) failures.push(`PURGE_WINDOW_GUARDS lists ${PURGE_WINDOW_GUARDS.length} guards; the rulings name nine (ROUND 347 removed verify-void-is-whole)`);
 for (const c of callers) if (!expected.includes(c)) failures.push(`${c} calls the purge-window helper but is not one of the ten`);
 for (const e of expected) if (!callers.includes(e)) failures.push(`${e} is one of the ten but no longer calls the purge-window helper at its empty-table arm`);
 
@@ -113,6 +114,6 @@ if (failures.length > 0) {
 }
 const w = purgeWindow();
 console.log(
-  `${LABEL}: PASS — exactly the 10 named guards may skip EMPTY BY PURGE; the gate accepts it at 4 sites; ` +
+  `${LABEL}: PASS — exactly the ${PURGE_WINDOW_GUARDS.length} named guards may skip EMPTY BY PURGE; the gate accepts it at 4 sites; ` +
     `window ${w.open ? `OPEN (verified ${w.verifiedAt}, expires ${w.expiresAt})` : `closed (${w.reason})`}; ${cases.length} window cases hold.`
 );
