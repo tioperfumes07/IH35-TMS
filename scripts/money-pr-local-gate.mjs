@@ -317,6 +317,7 @@ const STEPS = [
   ["verify-r342-dual-scoped-factoring-reads", "scripts/verify-r342-dual-scoped-factoring-reads.mjs"],
   ["verify-r342-dual-scoped-insurance-reads", "scripts/verify-r342-dual-scoped-insurance-reads.mjs"],
   ["verify-r3421-unit-plates-identity-user-company-scoped", "scripts/verify-r3421-unit-plates-identity-user-company-scoped.mjs"],
+  ["verify-r348-trk-ownership-hub", "scripts/verify-r348-trk-ownership-hub.mjs"],
   ["verify-account-register-ref-no-journal-entry-link", "scripts/verify-account-register-ref-no-journal-entry-link.mjs"],
   ["verify-money-detail-page-uses-ispending", "scripts/verify-money-detail-page-uses-ispending.mjs"],
   ["verify-lists-accounting-picker-law-honest", "scripts/verify-lists-accounting-picker-law-honest.mjs"],
@@ -529,6 +530,13 @@ const LIVE_DOMAIN_GUARDS = [
     [
       "db/migrations/202615312300_r3421_unit_plates_identity_user_company_scoped.sql",
       "scripts/verify-r3421-unit-plates-identity-user-company-scoped.mjs",
+    ],
+  ],
+  [
+    "verify-r348-trk-ownership-hub",
+    [
+      "db/migrations/202615321200_r348_trk_ownership_hub.sql",
+      "scripts/verify-r348-trk-ownership-hub.mjs",
     ],
   ],
 
