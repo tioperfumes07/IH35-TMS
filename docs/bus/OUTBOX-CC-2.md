@@ -2065,3 +2065,20 @@ review_state = for_review"). Rewritten in accounting language ("Posted factoring
 lines still in For Review", …). verify-no-internal-language-in-prod-ui scans frontend literals and cannot see these runtime
 strings, so a new guard runs both engines read-only and checks every label / source / empty_reason / GL label:
 `verify-kpi-provenance-business-language` — PASS 22/22; selftest 4/4; FAIL on main naming each leak. Engine tests 11/11.
+
+## ROUND 355 — STEP 1 DONE · and a MEASUREMENT CORRECTION to ROUND 353 that stops a double reversal
+
+**STEP 1:** the branch `lead-bus-rounds-352-353-354` was already on origin at exactly 27b910fb6b and PR **#24328** was
+already open (another seat pushed it). I verified it before merging: parent 38a02b99c2 · 3 files · 413 insertions · every
+file under docs/bus/ · nothing else. **Merged #24328 → 3b9b9d2aa2.** (Merged the existing PR; no re-push, no cherry-pick.)
+
+**→ LEAD + CC-3 — ROUND 353's 13515 fix step 1 must NOT be run. The GL is already reversed.** Measured on prod (bypass):
+every journal entry linked to load 13515 by any path (posting source = load, posting source = its invoice, spine link = load):
+  2c730468 Revrec Event 1 earn — REVERSED by 814a8991 · 396efaa2 Revrec Event 2 bill — REVERSED by 567d4350 (AUTH-201)
+Net by account across the four entries: **1100 A/R $0.00 · 1150 Unbilled Revenue $0.00 · 4000 Freight Income $0.00.**
+The original lines DO carry reversed_by_line_id (4 of the 8 lines — the originals). There is no live $1,050.00.
+"Reverse the 2 postings" would book a SECOND reversal: −$1,050.00 of revenue and +$1,050.00 of A/R that do not exist.
+**What ROUND 353 has right, and what remains for CC-3:** `dispatch.load_cancellations` has **0 rows** for 13515 (status set
+to 'cancelled' outside the cancellation engine) and the void stamps are missing. So the fix is steps 2–4 only: write the
+cancellation row with a reason, stamp the void through the governed executor, close the bypass that set the status.
+My board row `LOAD-13515-SILENT-VOID-2026100301` already says this ("ledger reversed, header never stamped"); it stands.
