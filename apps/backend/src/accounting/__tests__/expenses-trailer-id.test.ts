@@ -51,7 +51,8 @@ describe("accounting/expenses.routes EXPENSE-FUEL-TRAILER-LIST-FILTER-MISSING", 
   it("queryExpensesList joins mdata.equipment for a trailer_display_id, company-scoped like unit_id's join", () => {
     expect(routes).toContain("tr.equipment_number                          AS trailer_display_id");
     expect(routes).toContain(
-      "LEFT JOIN mdata.equipment tr ON tr.id = e.trailer_id\n        AND (tr.owner_company_id = e.operating_company_id OR tr.currently_leased_to_company_id = e.operating_company_id)"
+      // U16 — the trailer is the expense's own, else the one all of its lines carry; still company-scoped.
+      "LEFT JOIN mdata.equipment tr ON tr.id = COALESCE(e.trailer_id, line_dims.trailer_id)\n        AND (tr.owner_company_id = e.operating_company_id OR tr.currently_leased_to_company_id = e.operating_company_id)"
     );
   });
 

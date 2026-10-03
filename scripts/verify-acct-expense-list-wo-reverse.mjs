@@ -21,10 +21,11 @@ export function check({ listPage, api, routes }) {
   const listQuery = routes.match(/export async function queryExpensesList[\s\S]*?(?=export async function registerExpenseRoutes)/)?.[0] ?? "";
   const backendRowType = routes.match(/export type ExpenseListRow = \{[\s\S]*?\n\};/)?.[0] ?? "";
   const frontendRowType = api.match(/export type ExpenseListRow = \{[\s\S]*?\n\};/)?.[0] ?? "";
-  if (!/linked_work_order_uuid::text\s+AS linked_work_order_uuid/.test(listQuery)) {
+  // U16 — the expense's own work order, else the one all of its lines carry.
+  if (!/(?:e\.linked_work_order_uuid|COALESCE\(e\.linked_work_order_uuid, line_dims\.work_order_id\))::text\s+AS linked_work_order_uuid/.test(listQuery)) {
     errors.push("expenses.routes list query must SELECT linked_work_order_uuid");
   }
-  if (!/LEFT JOIN maintenance\.work_orders wo\s+ON wo\.id = e\.linked_work_order_uuid\s+AND wo\.operating_company_id = e\.operating_company_id/.test(listQuery)) {
+  if (!/LEFT JOIN maintenance\.work_orders wo\s+ON wo\.id = (?:e\.linked_work_order_uuid|COALESCE\(e\.linked_work_order_uuid, line_dims\.work_order_id\))\s+AND wo\.operating_company_id = e\.operating_company_id/.test(listQuery)) {
     errors.push("expenses.routes list query must same-company LEFT JOIN work_orders for display_id");
   }
   if (!/linked_work_order_uuid:\s*string \| null/.test(backendRowType)) {
@@ -45,7 +46,7 @@ const listPage = read("apps/frontend/src/pages/accounting/ExpensesListPage.tsx")
 
 if (process.argv.includes("--selftest")) {
   const plants = [
-    ["WO FK projection", { routes: routes.replace("e.linked_work_order_uuid::text               AS linked_work_order_uuid", "NULL::text AS removed_work_order_uuid"), api, listPage }],
+    ["WO FK projection", { routes: routes.replace("COALESCE(e.linked_work_order_uuid, line_dims.work_order_id)::text AS linked_work_order_uuid", "NULL::text AS removed_work_order_uuid"), api, listPage }],
     ["WO same-company join", { routes: routes.replace("AND wo.operating_company_id = e.operating_company_id", "AND true"), api, listPage }],
     ["backend row type", { routes: routes.replace("linked_work_order_uuid: string | null;", "removed_work_order_uuid: string | null;"), api, listPage }],
     ["frontend row type", { routes, api: api.replace("linked_work_order_uuid: string | null;", "removed_work_order_uuid: string | null;"), listPage }],

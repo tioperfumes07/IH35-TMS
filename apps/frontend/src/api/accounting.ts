@@ -330,6 +330,13 @@ export type VendorBill = {
   unit_display_id?: string | null;
   linked_work_order_uuid?: string | null;
   linked_work_order_display_id?: string | null;
+  /** U16 — the bill's own unit / trailer, else the one unit / work order all of its lines carry (list rows). */
+  list_unit_id?: string | null;
+  list_unit_display_id?: string | null;
+  list_trailer_id?: string | null;
+  list_trailer_display_id?: string | null;
+  line_work_order_uuid?: string | null;
+  line_work_order_display_id?: string | null;
   /** ACCT-F04 reverse drill — present when accounting.bills.insurance_claim_id column exists. */
   insurance_claim_id?: string | null;
   insurance_claim_number?: string | null;
@@ -864,6 +871,9 @@ export type ExpenseListRow = {
   matched_bank_transaction_description?: string | null;
   trailer_id: string | null;
   trailer_display_id: string | null;
+  /** U16 — the expense's own unit, else the one unit all of its lines carry. */
+  unit_id?: string | null;
+  unit_display_id?: string | null;
   /** LDT-1 (additive, 2026-09-06) — the Load Costs cards read these straight off the list row. */
   vendor_document_number?: string | null;
   payment_account_number?: string | null;
@@ -3244,4 +3254,12 @@ export function getCompanySettlementReport(id: string, operatingCompanyId: strin
   return apiRequest<CompanySettlementReport>(
     withCompany(`/api/v1/accounting/company-settlements/${encodeURIComponent(id)}/report`, operatingCompanyId)
   );
+}
+
+/** U16 — stored copies of the work order a bill / expense was linked to (captured by the database at link time). */
+export type WorkOrderCopyRow = { id: string; work_order_id: string; work_order_display_id: string | null; captured_at: string };
+
+export function listDocumentWorkOrderCopies(operatingCompanyId: string, kind: "bill" | "expense", id: string) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ rows: WorkOrderCopyRow[] }>(`/api/v1/accounting/documents/${kind}/${id}/work-order-copies?${q.toString()}`);
 }

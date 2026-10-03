@@ -676,18 +676,43 @@ export function BillsPage() {
             "—"
           ),
       },
+      // U16 (owner UI register 2026-10-03) — work order, unit and trailer on every bill list (shown, not hidden); the
+      // bill's own, else the one its lines all carry.
       {
         key: "linked_work_order_uuid",
         label: "Work order",
         sortable: true,
-        defaultHidden: true,
-        sortValue: (bill) => bill.linked_work_order_display_id || bill.linked_work_order_uuid || "",
+        sortValue: (bill) =>
+          bill.linked_work_order_display_id || bill.line_work_order_display_id || bill.linked_work_order_uuid || bill.line_work_order_uuid || "",
+        render: (bill) => {
+          const woId = bill.linked_work_order_uuid ?? bill.line_work_order_uuid ?? null;
+          const woLabel = bill.linked_work_order_uuid ? bill.linked_work_order_display_id : bill.line_work_order_display_id;
+          return woId ? <EntityLink kind="work_order" id={woId} label={entityLabel(woLabel ?? null, woId, "Work order")} /> : "—";
+        },
+      },
+      {
+        key: "list_unit_id",
+        label: "Unit",
+        sortable: true,
+        sortValue: (bill) => bill.list_unit_display_id ?? "",
         render: (bill) =>
-          bill.linked_work_order_uuid ? (
+          bill.list_unit_id ? (
+            <EntityLink kind="unit" id={bill.list_unit_id} label={entityLabel(bill.list_unit_display_id ?? null, bill.list_unit_id, "Unit")} />
+          ) : (
+            "—"
+          ),
+      },
+      {
+        key: "list_trailer_id",
+        label: "Trailer",
+        sortable: true,
+        sortValue: (bill) => bill.list_trailer_display_id ?? "",
+        render: (bill) =>
+          bill.list_trailer_id ? (
             <EntityLink
-              kind="work_order"
-              id={bill.linked_work_order_uuid}
-              label={entityLabel(bill.linked_work_order_display_id, bill.linked_work_order_uuid, "Work order")}
+              kind="trailer"
+              id={bill.list_trailer_id}
+              label={entityLabel(bill.list_trailer_display_id ?? null, bill.list_trailer_id, "Trailer")}
             />
           ) : (
             "—"

@@ -367,7 +367,23 @@ function centsFromNumeric(value: unknown): number | null {
   return Math.round(n * 100);
 }
 
-function buildPdfModel(params: {
+/** Line sums (dollars, grouped by line_type) -> the letter's labor / parts / other cents. Shared by the live print and
+ *  the stored copy (U16), so both total a work order the same way. */
+export function lineTotalsFromSums(rows: Array<{ line_type: string; total: string | number | null }>) {
+  let laborCents: number | null = null;
+  let partsCents: number | null = null;
+  let otherCents: number | null = null;
+  for (const row of rows) {
+    const cents = Math.round(Number(row.total) * 100);
+    if (!Number.isFinite(cents) || cents === 0) continue;
+    if (row.line_type === "labor") laborCents = (laborCents ?? 0) + cents;
+    else if (row.line_type === "part" || row.line_type === "parts") partsCents = (partsCents ?? 0) + cents;
+    else otherCents = (otherCents ?? 0) + cents;
+  }
+  return { laborCents, partsCents, otherCents };
+}
+
+export function buildPdfModel(params: {
   company: Record<string, unknown>;
   wo: Record<string, unknown>;
   unit: Record<string, unknown> | null;
@@ -1574,18 +1590,9 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
           GROUP BY line_type`,
         [params.data.id]
       );
-      let laborCents: number | null = null;
-      let partsCents: number | null = null;
-      let otherCents: number | null = null;
-      for (const row of lineTotalsRes.rows as Array<{ line_type: string; total: string }>) {
-        const cents = Math.round(Number(row.total) * 100);
-        if (!Number.isFinite(cents) || cents === 0) continue;
-        if (row.line_type === "labor") laborCents = (laborCents ?? 0) + cents;
-        else if (row.line_type === "part" || row.line_type === "parts") partsCents = (partsCents ?? 0) + cents;
-        else otherCents = (otherCents ?? 0) + cents;
-      }
+      const lineTotals = lineTotalsFromSums(lineTotalsRes.rows as Array<{ line_type: string; total: string }>);
 
-      const model = buildPdfModel({ company, wo, unit, driver, vendor, lineTotals: { laborCents, partsCents, otherCents } });
+      const model = buildPdfModel({ company, wo, unit, driver, vendor, lineTotals });
       return { kind: "html" as const, html: renderWorkOrderPdfHtml(model) };
     });
 
@@ -1595,4 +1602,75 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
     reply.header("Content-Type", "text/html; charset=utf-8");
     return reply.send(payload.html);
   });
+
+  // U16 (owner UI register 2026-10-03) — "a stored copy of the work order opens from the document". The copies are
+  // captured by the database at link time (accounting.document_work_order_copies, trg_capture_work_order_copy), so the
+  // bill / expense shows the work order AS IT WAS when it was entered, printed with the same letter as the live one.
+  const docCopiesParamsSchema = z.object({ kind: z.enum(["bill", "expense"]), id: z.string().uuid() });
+  app.get(
+    "/api/v1/accounting/documents/:kind/:id/work-order-copies",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req: FastifyRequest, reply: FastifyReply) => {
+      const user = authed(req, reply);
+      if (!user) return;
+      const params = docCopiesParamsSchema.safeParse(req.params ?? {});
+      if (!params.success) return validationError(reply, params.error);
+      const query = companyQuerySchema.safeParse(req.query ?? {});
+      if (!query.success) return validationError(reply, query.error);
+      const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+        const res = await client.query(
+          `SELECT id::text, work_order_id::text, work_order_display_id, captured_at
+             FROM accounting.document_work_order_copies
+            WHERE operating_company_id = $1::uuid AND source_kind = $2 AND source_id = $3::uuid
+            ORDER BY captured_at ASC`,
+          [query.data.operating_company_id, params.data.kind, params.data.id]
+        );
+        return res.rows;
+      });
+      return reply.send({ rows });
+    }
+  );
+
+  app.get(
+    "/api/v1/accounting/work-order-copies/:id.html",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req: FastifyRequest, reply: FastifyReply) => {
+      const user = authed(req, reply);
+      if (!user) return;
+      const params = idParamsSchema.safeParse(req.params ?? {});
+      if (!params.success) return validationError(reply, params.error);
+      const query = companyQuerySchema.safeParse(req.query ?? {});
+      if (!query.success) return validationError(reply, query.error);
+      const copy = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+        const res = await client.query(
+          `SELECT payload, captured_at, source_kind FROM accounting.document_work_order_copies
+            WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+          [params.data.id, query.data.operating_company_id]
+        );
+        return res.rows[0] as { payload: Record<string, unknown>; captured_at: string; source_kind: string } | undefined;
+      });
+      if (!copy) return reply.code(404).send({ error: "work_order_copy_not_found" });
+      const p = copy.payload as {
+        wo: Record<string, unknown>;
+        company: Record<string, unknown> | null;
+        unit: Record<string, unknown> | null;
+        driver: Record<string, unknown> | null;
+        vendor: Record<string, unknown> | null;
+        line_totals: Record<string, string | number>;
+      };
+      const model = buildPdfModel({
+        company: p.company ?? {},
+        wo: p.wo,
+        unit: p.unit,
+        driver: p.driver,
+        vendor: p.vendor,
+        lineTotals: lineTotalsFromSums(Object.entries(p.line_totals ?? {}).map(([line_type, total]) => ({ line_type, total }))),
+      });
+      const captured = new Date(copy.captured_at).toLocaleString("en-US", { timeZone: "America/Chicago" });
+      const banner = `<div data-testid="wo-copy-banner" style="border:1px solid #E5E7EB;background:#F7F8FA;padding:6px 10px;margin:0 0 8px;font:12px sans-serif;color:#4B5563">Stored copy — this work order as it was when the ${copy.source_kind} was linked (${captured} CT). The live work order may have changed since.</div>`;
+      const html = renderWorkOrderPdfHtml(model).replace(/<body([^>]*)>/i, (m) => `${m}${banner}`);
+      reply.header("Content-Type", "text/html; charset=utf-8");
+      return reply.send(html);
+    }
+  );
 }

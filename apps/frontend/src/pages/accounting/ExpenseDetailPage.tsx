@@ -8,6 +8,7 @@ import { getExpense, voidExpense, type ExpenseDetailLine } from "../../api/accou
 import { ListErrorState } from "../../components/ListErrorState";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
+import { WorkOrderCopyLinks } from "../../components/accounting/WorkOrderCopyLinks";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -374,6 +375,8 @@ export function ExpenseDetailPage() {
             />
           </DataPanelRow>
         ) : null}
+        {/* U16 — the stored copy of the work order, as it was when this expense was linked (header or line link). */}
+        {selectedCompanyId ? <WorkOrderCopyLinks kind="expense" documentId={expense.id} operatingCompanyId={selectedCompanyId} /> : null}
         {expense.driver_uuid ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Driver</span>

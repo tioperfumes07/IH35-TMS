@@ -937,6 +937,30 @@ export async function updateBankBalance(
   }
 }
 
+// U16 (owner UI register 2026-10-03) — work order, unit and trailer on every bill list: the bill's own unit / trailer,
+// else the one unit / work order all of its lines carry. Shared by both bill list queries (selected as dims.*).
+const BILL_LIST_DIMS_JOIN_SQL = `
+        LEFT JOIN LATERAL (
+          SELECT CASE WHEN count(DISTINCT bl_dim.unit_id) = 1 THEN (array_agg(bl_dim.unit_id) FILTER (WHERE bl_dim.unit_id IS NOT NULL))[1] END AS unit_id,
+                 CASE WHEN count(DISTINCT wol.work_order_uuid) = 1 THEN (array_agg(wol.work_order_uuid) FILTER (WHERE wol.work_order_uuid IS NOT NULL))[1] END AS work_order_id
+            FROM accounting.bill_lines bl_dim
+            LEFT JOIN maintenance.work_order_lines wol ON wol.uuid = bl_dim.linked_wo_line_uuid
+           WHERE bl_dim.bill_id = b.id
+        ) line_dims ON true
+        LEFT JOIN mdata.units bunit ON bunit.id = COALESCE(b.unit_id, line_dims.unit_id)
+        LEFT JOIN mdata.equipment btrl ON btrl.id = b.trailer_id
+        LEFT JOIN maintenance.work_orders line_wo
+          ON line_wo.id = line_dims.work_order_id
+         AND line_wo.operating_company_id = b.operating_company_id
+        LEFT JOIN LATERAL (
+          SELECT COALESCE(b.unit_id, line_dims.unit_id)::text AS list_unit_id,
+                 bunit.unit_number AS list_unit_display_id,
+                 b.trailer_id::text AS list_trailer_id,
+                 btrl.equipment_number AS list_trailer_display_id,
+                 line_dims.work_order_id::text AS line_work_order_uuid,
+                 line_wo.display_id AS line_work_order_display_id
+        ) dims ON true`;
+
 export async function listVendorBalances(
   userId: string,
   operatingCompanyId: string,
@@ -1091,13 +1115,14 @@ export async function listBillsByVendor(
                load_link.destination_label AS linked_destination,
                load_link.trailer_number AS linked_trailer_number,
                settlement_link.settlement_id AS linked_settlement_id,
-               settlement_link.settlement_display_id AS linked_settlement_display_id
+               settlement_link.settlement_display_id AS linked_settlement_display_id, dims.*
         FROM accounting.bills b
         ${BILL_VENDOR_RESOLVE_JOIN_SQL}
         LEFT JOIN catalogs.accounts coa ON coa.id = b.coa_account_id AND coa.operating_company_id = b.operating_company_id
         LEFT JOIN maintenance.work_orders wo
           ON wo.id = b.linked_work_order_uuid
          AND wo.operating_company_id = b.operating_company_id
+        ${BILL_LIST_DIMS_JOIN_SQL}
         LEFT JOIN insurance.claim claim
           ON claim.id = b.insurance_claim_id
          AND claim.operating_company_id = b.operating_company_id
@@ -1288,13 +1313,14 @@ export async function listAllBillsForCompany(
                load_link.load_id AS linked_load_id,
                load_link.load_number AS linked_load_number,
                settlement_link.settlement_id AS linked_settlement_id,
-               settlement_link.settlement_display_id AS linked_settlement_display_id
+               settlement_link.settlement_display_id AS linked_settlement_display_id, dims.*
         FROM accounting.bills b
         ${BILL_VENDOR_RESOLVE_JOIN_SQL}
         LEFT JOIN catalogs.accounts coa ON coa.id = b.coa_account_id AND coa.operating_company_id = b.operating_company_id
         LEFT JOIN maintenance.work_orders wo
           ON wo.id = b.linked_work_order_uuid
          AND wo.operating_company_id = b.operating_company_id
+        ${BILL_LIST_DIMS_JOIN_SQL}
         LEFT JOIN insurance.claim claim
           ON claim.id = b.insurance_claim_id
          AND claim.operating_company_id = b.operating_company_id

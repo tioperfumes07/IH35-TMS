@@ -307,6 +307,19 @@ export function ExpensesListPage() {
           <span className="text-gray-400">—</span>
         ),
     },
+    // U16 (owner UI register 2026-10-03) — work order, unit and trailer on every expense list.
+    {
+      key: "unit_display_id",
+      label: "Unit",
+      sortable: true,
+      sortValue: (r) => r.unit_display_id ?? "",
+      render: (r) =>
+        r.unit_id ? (
+          <EntityLink kind="unit" id={r.unit_id} label={entityLabel(r.unit_display_id ?? null, r.unit_id, "Unit")} />
+        ) : (
+          <span className="text-gray-400">—</span>
+        ),
+    },
     {
       key: "trailer_display_id",
       label: "Trailer",

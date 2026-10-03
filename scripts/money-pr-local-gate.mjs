@@ -889,6 +889,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-receipt-creator-is-expense-creator",
     ["apps/frontend/src/pages/accounting/ReceiptsPage.tsx", "apps/frontend/src/components/expenses/", "apps/backend/src/accounting/receipts.routes.ts", "scripts/verify-receipt-creator-is-expense-creator.mjs"],
   ],
+  // U16 (owner) — work order / unit / trailer on every bill and expense list; the stored work-order copy opens from the document.
+  [
+    "verify-work-order-copy-and-list-columns",
+    ["db/migrations/202615380700_document_work_order_copies.sql", "apps/backend/src/accounting/bills.service.ts", "apps/backend/src/accounting/expenses.routes.ts", "apps/backend/src/work-orders/work-orders.routes.ts", "apps/frontend/src/pages/accounting/BillsPage.tsx", "apps/frontend/src/pages/accounting/ExpensesListPage.tsx", "apps/frontend/src/pages/accounting/BillDetailPage.tsx", "apps/frontend/src/pages/accounting/ExpenseDetailPage.tsx", "apps/frontend/src/components/accounting/WorkOrderCopyLinks.tsx", "scripts/verify-work-order-copy-and-list-columns.mjs"],
+  ],
   // ROUND 368.2(b) — a bank line may not sit matched to nothing (deferred constraint triggers, both sides).
   [
     "verify-no-bank-line-is-matched-to-nothing",
