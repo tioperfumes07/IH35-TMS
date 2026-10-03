@@ -48,6 +48,9 @@ export function collectProblems(root = ROOT) {
     if (/configure in Lists/.test(modal) || /Lists → Driver → Escrow Types/.test(modal)) {
       problems.push(`${MODAL}: must not send operators to Lists-only path`);
     }
+    // BANK-F91246 leftover refuse — EscrowForfeitModal only
+    if (modal.includes("text-[11px]")) problems.push("leftover text-[11px]");
+    if (modal.includes("#8A92AB") || modal.includes("#334155")) problems.push("leftover off-scale muted");
   }
 
   if (!registry) problems.push(`missing ${REGISTRY}`);
@@ -86,7 +89,20 @@ if (process.argv.includes("--selftest")) {
     for (const p of baseline) console.error("  - " + p);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST OK`);
+  // BANK-F91246 leftover plant on EscrowForfeitModal
+  const abs = path.join(ROOT, MODAL);
+  const original = fs.readFileSync(abs, "utf8");
+  try {
+    fs.writeFileSync(abs, `${original}\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n`);
+    const leftover = collectProblems();
+    if (!leftover.includes("leftover text-[11px]") || !leftover.includes("leftover off-scale muted")) {
+      console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`, leftover);
+      process.exit(1);
+    }
+  } finally {
+    fs.writeFileSync(abs, original);
+  }
+  console.log(`${LABEL} SELFTEST OK — leftover plant rejected`);
 } else {
   const problems = collectProblems();
   if (problems.length) {

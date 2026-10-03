@@ -52,7 +52,24 @@ function selftest() {
   } finally {
     fs.unlinkSync(tmp);
   }
-  console.log(`${LABEL} selftest PASS`);
+  // BANK-F91248 leftover plant on DotInspectionsPage
+  const pageRel = "apps/frontend/src/pages/safety/DotInspectionsPage.tsx";
+  const abs = path.join(process.cwd(), pageRel);
+  const original = fs.readFileSync(abs, "utf8");
+  try {
+    fs.writeFileSync(abs, `${original}\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n`);
+    const plantErrors = [];
+    const pageSrc = fs.readFileSync(abs, "utf8");
+    if (pageSrc.includes("text-[11px]")) plantErrors.push("leftover text-[11px]");
+    if (pageSrc.includes("#8A92AB") || pageSrc.includes("#334155")) plantErrors.push("leftover off-scale muted");
+    if (!plantErrors.includes("leftover text-[11px]") || !plantErrors.includes("leftover off-scale muted")) {
+      console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`, plantErrors);
+      process.exit(1);
+    }
+  } finally {
+    fs.writeFileSync(abs, original);
+  }
+  console.log(`${LABEL} selftest PASS — leftover plant rejected`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -67,6 +84,13 @@ for (const c of CHECKS) {
     continue;
   }
   errors.push(...assertFile(c.file, c.needles));
+}
+// BANK-F91248 leftover refuse — DotInspectionsPage only
+{
+  const pageRel = "apps/frontend/src/pages/safety/DotInspectionsPage.tsx";
+  const pageSrc = fs.readFileSync(path.join(process.cwd(), pageRel), "utf8");
+  if (pageSrc.includes("text-[11px]")) errors.push("leftover text-[11px]");
+  if (pageSrc.includes("#8A92AB") || pageSrc.includes("#334155")) errors.push("leftover off-scale muted");
 }
 if (errors.length) {
   console.error(`${LABEL} FAIL:`);

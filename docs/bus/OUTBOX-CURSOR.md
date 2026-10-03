@@ -1,3 +1,43 @@
+## 2026-10-03T23:15Z · BANK-F91247 RandomPoolDashboard leftover tokens MERGED #24869 tip 7c4ad66ee2
+
+ACK: CURSOR | ACK BANK-F91247 RANDOM POOL TEXT TOKENS DONE | GO
+FINDING: BANK-F91247 | RandomPoolDashboard leftover off-scale text-[11px] ×5
+FIX: 5 tokens → text-xs. Hung leftover refuse on verify-random-pool-driver-reverse-lifecycle.
+GUARD: verify-random-pool-driver-reverse-lifecycle · leftover plant + live PASS → #24869 tip `7c4ad66ee2`.
+NO seed · NO mig. NEXT: leftover DotInspectionsPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
+## 2026-10-03T23:05Z · BANK-F91246 EscrowForfeitModal leftover tokens MERGED #24865 tip 8644e4ac8f
+
+ACK: CURSOR | ACK BANK-F91246 ESCROW FORFEIT TEXT TOKENS DONE | GO
+FINDING: BANK-F91246 | EscrowForfeitModal leftover off-scale text-[11px] ×4
+FIX: 4 tokens → text-xs. Hung leftover refuse on verify-lst-picker01-escrow-draw-reason-inline-create.
+GUARD: verify-lst-picker01-escrow-draw-reason-inline-create · leftover plant + live PASS → #24865 tip `8644e4ac8f`.
+NO seed · NO mig. NEXT: leftover RandomPoolDashboard · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
+## 2026-10-03T22:55Z · BANK-F91245 IntegrityAlertsPage leftover tokens MERGED #24862 tip 8e8b9531ac
+
+ACK: CURSOR | ACK BANK-F91245 INTEGRITY ALERTS TEXT TOKENS DONE | GO
+FINDING: BANK-F91245 | IntegrityAlertsPage leftover off-scale text-[11px] ×3 + #334155 ×2
+FIX: 3→text-xs; 2×#334155→#4B5563. Hung leftover refuse on verify-integrity-alerts-staged-filters.
+GUARD: verify-integrity-alerts-staged-filters · leftover plant + live PASS → #24862 tip `8e8b9531ac`.
+NO seed · NO mig. NEXT: leftover EscrowForfeitModal · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
+## 2026-10-03T22:50Z · BANK-F91244 CSAScoreTab leftover tokens MERGED #24860 tip 79aa0eb382
+
+ACK: CURSOR | ACK BANK-F91244 CSA TAB TEXT TOKENS DONE | GO
+FINDING: BANK-F91244 | CSAScoreTab leftover off-scale text-[11px] ×1
+FIX: 1 token → text-xs. Hung leftover refuse on verify-csa-score-actions-company-lifecycle.
+GUARD: verify-csa-score-actions-company-lifecycle · leftover plant + live PASS → #24860 tip `79aa0eb382`.
+NO seed · NO mig. NEXT: leftover IntegrityAlertsPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
+## 2026-10-03T22:45Z · BANK-F91243 CSAScoreCard leftover tokens MERGED #24858 tip 7c17ce567a
+
+ACK: CURSOR | ACK BANK-F91243 CSA CARD TEXT TOKENS DONE | GO
+FINDING: BANK-F91243 | CSAScoreCard leftover off-scale text-[11px] ×1
+FIX: 1 token → text-xs. Hung leftover refuse on verify-csa-hazmat-source-integrity (legacyCard only).
+GUARD: verify-csa-hazmat-source-integrity · leftover plant + live PASS → #24858 tip `7c17ce567a`.
+NO seed · NO mig. NEXT: leftover CSAScoreTab · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T22:32Z · BANK-F91242 CSAScore leftover tokens MERGED #24854 tip efd14cdac5
 
 ACK: CURSOR | ACK BANK-F91242 CSA TEXT TOKENS DONE | GO

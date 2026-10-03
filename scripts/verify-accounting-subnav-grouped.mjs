@@ -52,7 +52,7 @@ const APPROVED_GROUP_LABELS = [
 
 /** Bills ▾ children per the approved PNG. */
 const APPROVED_BILLS_CHILDREN = [
-  { label: "Bill", path: "/accounting/bills" },
+  { label: "All bills", path: "/accounting/bills" },
   { label: "Maintenance bill", path: "/accounting/bills/maintenance" },
   { label: "Repair bill", path: "/accounting/bills/repair" },
   { label: "Fuel bill", path: "/accounting/bills/fuel" },
@@ -160,7 +160,7 @@ function selftest() {
       maint_shop: "Work orders & bills",
       reports: "Reports", more: "More",
     } as const;
-    { label: "Bill", path: "/accounting/bills", section: "bills" },
+    { label: "All bills", path: "/accounting/bills", section: "bills" },
     { label: "Maintenance bill", path: "/accounting/bills/maintenance", section: "bills" },
     { label: "Repair bill", path: "/accounting/bills/repair", section: "bills" },
     { label: "Fuel bill", path: "/accounting/bills/fuel", section: "bills" },

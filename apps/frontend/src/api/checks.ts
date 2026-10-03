@@ -301,17 +301,38 @@ export function listCheckPrintQueue(operatingCompanyId: string, bankAccountId: s
   return apiRequest<{ rows: PrintQueueRow[] }>(`/api/v1/checks/print-queue?${q.toString()}`);
 }
 
+export type CheckNumberGap = { from: string; to: string; count: number };
+
 export type PrintBatchResult = {
   print_batch_id: string;
   assignments: Array<{ check_id: string; check_number: string }>;
+  skipped: CheckNumberGap[];
 };
 
-export function assignCheckPrintBatch(input: {
+export type PrintBatchInput = {
   operating_company_id: string;
   bank_account_id: string;
   check_type: "voucher" | "standard";
   ids: string[];
-}) {
+  /** U9 — the typed number per id (same order); null = continue the sequence from the row above. */
+  numbers?: Array<string | null>;
+  gap_reason?: string | null;
+};
+
+export type PrintBatchPreview = {
+  next_on_file: string | null;
+  assignments: Array<{ check_id: string; check_number: string }>;
+  duplicates: Array<{ check_number: string; held_by: string }>;
+  gaps: CheckNumberGap[];
+  gap_count: number;
+  next_after: string;
+};
+
+export function previewCheckPrintBatch(input: PrintBatchInput) {
+  return apiRequest<PrintBatchPreview>(`/api/v1/checks/print-batch/preview`, { method: "POST", body: input });
+}
+
+export function assignCheckPrintBatch(input: PrintBatchInput) {
   return apiRequest<PrintBatchResult>(`/api/v1/checks/print-batch`, { method: "POST", body: input });
 }
 

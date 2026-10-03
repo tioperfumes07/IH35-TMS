@@ -20,6 +20,9 @@ function audit(text, backend = backendSource) {
   need((text.match(/mutate\(\{ companyId, generation: actionGenerationRef\.current \}\)/g) ?? []).length === 2, "both CSA actions must capture company/generation");
   need(text.includes("@matrix-built modules=safety cols=connectivity,reverse_link"), "leaf annotation missing");
   need(/"safety\.csa_score\.computed",[\s\S]{0,180}operating_company_id: companyId/.test(backend), "CSA recompute audit omits operating company");
+  // BANK-F91244 leftover refuse — CSAScoreTab only
+  if (text.includes("text-[11px]")) failures.push("leftover text-[11px]");
+  if (text.includes("#8A92AB") || text.includes("#334155")) failures.push("leftover off-scale muted");
   return failures;
 }
 
@@ -39,7 +42,13 @@ if (process.argv.includes("--selftest")) {
   }
   const mutatedBackend = backendSource.replace("operating_company_id: companyId,", "");
   if (mutatedBackend === backendSource || audit(source, mutatedBackend).length === 0) throw new Error(`mutation ${mutations.length + 1} escaped`);
-  console.log(`verify-csa-score-actions-company-lifecycle selftest PASS — ${mutations.length + 1}/${mutations.length + 1} planted defects red`);
+  // BANK-F91244 leftover plant
+  const leftoverPlant = `${source}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  const leftover = audit(leftoverPlant);
+  if (!leftover.includes("leftover text-[11px]") || !leftover.includes("leftover off-scale muted")) {
+    throw new Error(`leftover plant escaped: ${leftover.join("; ")}`);
+  }
+  console.log(`verify-csa-score-actions-company-lifecycle selftest PASS — ${mutations.length + 1}/${mutations.length + 1} planted defects red + leftover plant rejected`);
   process.exit(0);
 }
 

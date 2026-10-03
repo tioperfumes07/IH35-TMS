@@ -135,7 +135,7 @@ export function EscrowForfeitModal({ open, row, operatingCompanyId, loading, onC
             />
           </div>
           {overBalance ? (
-            <span className="mt-1 block text-[11px] text-red-600" data-testid="escrow-forfeit-over-balance">
+            <span className="mt-1 block text-xs text-red-600" data-testid="escrow-forfeit-over-balance">
               Cannot forfeit more than the driver&apos;s escrow balance ({formatUsd(balance)}).
             </span>
           ) : null}
@@ -172,7 +172,7 @@ export function EscrowForfeitModal({ open, row, operatingCompanyId, loading, onC
             />
           </div>
           {selectedDrawMeta ? (
-            <span className="mt-1 block text-[11px] text-slate-600" data-testid="escrow-forfeit-catalog-recovery-meta">
+            <span className="mt-1 block text-xs text-slate-600" data-testid="escrow-forfeit-catalog-recovery-meta">
               Catalog recovery: {selectedDrawMeta.default_recovery_rail ?? "ask"}
               {selectedDrawMeta.survives_separation ? " · survives separation" : ""}
             </span>
@@ -215,7 +215,7 @@ export function EscrowForfeitModal({ open, row, operatingCompanyId, loading, onC
             </SelectCombobox>
           </div>
           {!liabilitiesQuery.isLoading && liabilityOptions.length === 0 ? (
-            <span className="mt-1 block text-[11px] text-slate-500">
+            <span className="mt-1 block text-xs text-slate-500">
               This driver has no open liabilities on record.
             </span>
           ) : null}
@@ -225,7 +225,7 @@ export function EscrowForfeitModal({ open, row, operatingCompanyId, loading, onC
               VendorBillCreatePage / BillPaymentModal. */}
           {linkedLiabilityId ? (
             <div className="mt-1" data-testid="escrow-forfeit-liability-link">
-              <EntityLink kind="liability" id={linkedLiabilityId} label="View liability →" className="text-[11px] text-red-600 hover:underline" />
+              <EntityLink kind="liability" id={linkedLiabilityId} label="View liability →" className="text-xs text-red-600 hover:underline" />
             </div>
           ) : null}
         </label>

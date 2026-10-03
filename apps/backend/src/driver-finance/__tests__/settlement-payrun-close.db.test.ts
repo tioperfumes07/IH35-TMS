@@ -33,6 +33,7 @@ import { TEST_OWNER_USER_ID, TEST_ENCRYPTION_KEY } from "../../../test-helpers/c
 import { upsertDriverEscrowAccountLink } from "../../accounting/driver-subaccount-provision.service.js";
 import { closeSettlementPayRun, SettlementPayRunError } from "../settlement-payrun-close.service.js";
 import { ESCROW_CAP_CENTS } from "../escrow-resolver.service.js";
+import { createJournalEntry } from "../../accounting/journal-entries.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -85,6 +86,8 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
   // per-driver escrow liability sub-accounts (grandparent -> parent -> per-driver leaf)
   const escrowGrandparent = randomUUID();
   const escrowParent = randomUUID();
+  /** KILL THE SECOND SYSTEM: an opening escrow is seeded as GL (Dr this / Cr the driver's 2100 leaf), never a stored column. */
+  const openingEscrowEquity = randomUUID();
   // Distinct, non-Faro (<> 1150040084) QBO ids per escrow account: uq_accounts_company_qbo_account_id forbids
   // reuse within a company, and the escrow resolver only requires a Liability that is NOT Faro (never a
   // specific id) — so each account in the Damage-Claim liability family carries its own id, as in prod.
@@ -180,14 +183,24 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     );
     await mkAcct(s.escrowSub, `${s.displayId} — Driver Escrow`, "Liability", escrowParent, escrowQbo(s.displayId));
     await upsertDriverEscrowAccountLink(db, { operatingCompanyId: companyId, driverId: s.driverId, coaAccountId: s.escrowSub });
-    // ACCT-ESCROW-BALANCES-STALE-VS-GO19 (owner ruling 2026-09-05): readDriverEscrowBalanceCents now
-    // reads the GL (accounting.escrow_accounts.balance_cents), not driver_finance.escrow_balances --
-    // seed BOTH so the cap-check scenarios below (which assert escrow_balance_before_cents) still test
-    // the real starting balance the resolver actually reads.
-    await db.query(
-      `UPDATE accounting.escrow_accounts SET balance_cents = $3 WHERE operating_company_id = $1::uuid AND holder_id = $2::uuid AND holder_type = 'driver'`,
-      [companyId, s.driverId, escrowBalanceCents]
-    );
+    // KILL THE SECOND SYSTEM (2026-10-03): readDriverEscrowBalanceCents reads the driver's 2100-00-nnn GL
+    // (driver_finance.v_driver_escrow_balance) and accounting.escrow_accounts.balance_cents no longer exists — so the
+    // starting balance the cap-check scenarios assert is seeded AS GL: Dr opening equity / Cr the driver's escrow leaf.
+    if (escrowBalanceCents > 0) {
+      await createJournalEntry(
+        {
+          operating_company_id: companyId,
+          entry_date: new Date().toISOString().slice(0, 10),
+          memo: `TEST DATA — opening driver escrow ${s.displayId}`,
+          source: "manual",
+          postings: [
+            { account_id: openingEscrowEquity, debit_or_credit: "debit", amount_cents: escrowBalanceCents, description: "TEST DATA — opening escrow" },
+            { account_id: s.escrowSub, debit_or_credit: "credit", amount_cents: escrowBalanceCents, description: "TEST DATA — opening escrow" },
+          ],
+        } as never,
+        { userId, role: "Owner" }
+      );
+    }
     // running escrow balance (driver-facing projection; kept in sync by the real close path, no longer
     // the resolver's read source)
     await db.query(
@@ -263,6 +276,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
       await mkAcct(acct.cash, `Operating Cash ${suffix}`, "Asset", null, null);
       await mkAcct(escrowGrandparent, `Damage Claim Escrow ${suffix}`, "Liability", null, escrowQbo("GP"));
       await mkAcct(escrowParent, `Driver Escrow ${suffix}`, "Liability", escrowGrandparent, escrowQbo("P"));
+      await mkAcct(openingEscrowEquity, `Opening Escrow Equity ${suffix}`, "Equity", null, null);
       priorGlobalBindings = await saveGlobalAccountRoleBindings(db, GLOBAL_BIND_KEYS);
       // Snapshot SHARED-company PRIMARY designations BEFORE we overwrite them (sibling suites
       // need ap_control / uncategorized_expense intact — never wipe the whole company).

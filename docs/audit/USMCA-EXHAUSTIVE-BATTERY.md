@@ -13,6 +13,8 @@
 | **create** (collection POST) | 336 | `POST /api/v1/mdata/customers` — creates a top-level record |
 | **nested create** (child POST) | 272 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
 | action (NOT a create) | 249 | `/:id/approve`, `/scan` — operates on an existing row |
+| **nested create** (child POST) | 271 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
+| action (NOT a create) | 250 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 72 | auth, webhooks, feature flags, integrations plumbing |
 | **TOTAL POST endpoints** | 929 | |
 | UI files with `+ Create`/`+ Book` | 195 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
@@ -632,11 +634,11 @@ after creation; a GL/posting failure goes to CC-1.
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
 | create | `/api/v1/checks` | `apps/backend/src/accounting/checks/checks.routes.ts:142` | — | — | — |
-| nested | `/api/v1/checks/:id/reissue` | `apps/backend/src/accounting/checks/checks.routes.ts:879` | — | — | — |
-| nested | `/api/v1/checks/:id/unvoid` | `apps/backend/src/accounting/checks/checks.routes.ts:846` | — | — | — |
+| nested | `/api/v1/checks/:id/reissue` | `apps/backend/src/accounting/checks/checks.routes.ts:914` | — | — | — |
+| nested | `/api/v1/checks/:id/unvoid` | `apps/backend/src/accounting/checks/checks.routes.ts:881` | — | — | — |
 | create | `/api/v1/checks/pay-bills` | `apps/backend/src/accounting/checks/checks.routes.ts:492` | — | — | — |
-| create | `/api/v1/checks/print-batch` | `apps/backend/src/accounting/checks/checks.routes.ts:734` | — | — | — |
-| nested | `/api/v1/checks/print-batch/:id/confirm` | `apps/backend/src/accounting/checks/checks.routes.ts:770` | — | — | — |
+| create | `/api/v1/checks/print-batch` | `apps/backend/src/accounting/checks/checks.routes.ts:769` | — | — | — |
+| nested | `/api/v1/checks/print-batch/:id/confirm` | `apps/backend/src/accounting/checks/checks.routes.ts:805` | — | — | — |
 
 ### driver-pay — 6 create-surface(s)
 

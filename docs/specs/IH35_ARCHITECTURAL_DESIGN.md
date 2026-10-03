@@ -221,7 +221,7 @@ Accounting · Bills ▾ · Expenses ▾ · Bill payment ▾ · Invoices ▾ · W
 | Group | Leaves (routes stay mounted) | Notes |
 |-------|------------------------------|-------|
 | **Accounting** | `/accounting` hub / dashboard KPIs | Home |
-| **Bills ▾** | Bill, Maintenance/Repair/Fuel/Driver/Vendor bill, Multiple, Recurring | PNG Bills family |
+| **Bills ▾** | All bills (the register; was "Bill" — U11 2026-10-03), Maintenance/Repair/Fuel/Driver/Vendor bill, Multiple, Recurring | PNG Bills family |
 | **Expenses ▾** | Expenses (the expenses list; `/accounting/expenses/list` still routes to it), Receipts | Receipts = attachment proof |
 | **Bill payment ▾** | Bill payment, Vendor balances/credits, Accounts payable, AP Aging | AP side |
 | **Invoices ▾** | Invoices list, Receive Payment, Undeposited Funds, AR Aging, Collections | ACCT-F5050 — promoted from More ▾ so AR is peer to Bills / Expenses / Bill payment (owner 2026-08-13); route `/accounting/invoices` unchanged |

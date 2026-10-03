@@ -12,7 +12,7 @@ const LABEL = "deep-audit-b-invoices-subnav";
 
 /** PASS-5 H6: 17 top-level subnav targets when entering via /accounting/invoices. */
 const AUDIT_17_TABS = [
-  { group: "Bills▾", path: "/accounting/bills", label: "Bill" },
+  { group: "Bills▾", path: "/accounting/bills", label: "All bills" },
   { group: "Settlements▾", path: "/accounting/dispute-queue", label: "Dispute queue" },
   { group: null, path: "/accounting/expenses", label: "Expenses" },
   { group: null, path: "/accounting/bill-payments", label: "Bill payment" },

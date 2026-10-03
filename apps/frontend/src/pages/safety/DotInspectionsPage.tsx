@@ -142,21 +142,21 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
                 <div className="mt-2 flex items-center gap-2">
                   <button
                     type="button"
-                    className="rounded-sm bg-[#1F2A44] px-2 py-1 text-[11px] font-semibold text-white"
+                    className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-semibold text-white"
                     onClick={() => followUpMutation.mutate({ id: String(row.id), state: "reviewed" })}
                   >
                     Mark Reviewed
                   </button>
                   <button
                     type="button"
-                    className="rounded-sm bg-red-700 px-2 py-1 text-[11px] font-semibold text-white"
+                    className="rounded-sm bg-red-700 px-2 py-1 text-xs font-semibold text-white"
                     onClick={() => followUpMutation.mutate({ id: String(row.id), state: "citation" })}
                   >
                     Mark Citation
                   </button>
                   <button
                     type="button"
-                    className="rounded-sm bg-[#1f2a44] px-2 py-1 text-[11px] font-semibold text-white hover:bg-[#0f1729]"
+                    className="rounded-sm bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white hover:bg-[#0f1729]"
                     onClick={() => followUpMutation.mutate({ id: String(row.id), state: "clean" })}
                   >
                     Mark Clean
