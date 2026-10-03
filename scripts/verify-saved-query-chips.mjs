@@ -21,6 +21,8 @@ import fs from "node:fs";
 
 const HOME = "apps/frontend/src/pages/home/OwnerHome.tsx";
 const REPORTS_API = "apps/frontend/src/api/reports.ts";
+const TOUR = "apps/frontend/src/pages/dispatch/LoadsWithoutTourPage.tsx";
+const BILL = "apps/frontend/src/pages/dispatch/LoadsWithoutDriverBillPage.tsx";
 
 const CHIPS = [
   {
@@ -78,12 +80,19 @@ function analyze(src) {
   if (!/import \{ getInsuranceSummary \} from "\.\.\/\.\.\/api\/insurance";/.test(home)) errors.push("OwnerHome.tsx must import getInsuranceSummary from api/insurance (not re-derive the count)");
   if (!/import \{ listExpenseDuplicates \} from "\.\.\/\.\.\/api\/accounting";/.test(home)) errors.push("OwnerHome.tsx must import listExpenseDuplicates from api/accounting (not re-derive the count)");
 
+  for (const [rel, page] of [["LoadsWithoutTourPage", src.tour], ["LoadsWithoutDriverBillPage", src.bill]]) {
+    if ((page ?? "").includes("text-[11px]")) errors.push(`${rel} leftover text-[11px]`);
+    if ((page ?? "").includes("#8A92AB") || (page ?? "").includes("#334155")) errors.push(`${rel} leftover off-scale muted`);
+  }
+
   return errors;
 }
 
 const base = {
   home: fs.readFileSync(HOME, "utf8"),
   reportsApi: fs.readFileSync(REPORTS_API, "utf8"),
+  tour: fs.readFileSync(TOUR, "utf8"),
+  bill: fs.readFileSync(BILL, "utf8"),
 };
 
 function withField(field, transform) {
@@ -108,6 +117,8 @@ if (process.argv.includes("--selftest")) {
     ["reports.ts loses the real endpoint URL", withField("reportsApi", (s) => s.replace("/api/v1/reports/exception-queue-counts", "/api/v1/reports/gone-counts"))],
     ["OwnerHome stops importing getInsuranceSummary", withField("home", (s) => s.replace('import { getInsuranceSummary } from "../../api/insurance";', ""))],
     ["OwnerHome stops importing listExpenseDuplicates", withField("home", (s) => s.replace('import { listExpenseDuplicates } from "../../api/accounting";', ""))],
+    ["tour leftover tokens", withField("tour", (s) => `${s}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`)],
+    ["bill leftover tokens", withField("bill", (s) => `${s}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`)],
   ];
   let caught = 0;
   for (const [label, mutated] of mutations) {

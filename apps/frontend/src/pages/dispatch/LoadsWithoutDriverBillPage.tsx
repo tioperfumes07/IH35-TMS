@@ -98,7 +98,7 @@ export function LoadsWithoutDriverBillPage() {
           tableTestId="loads-without-driver-bill-table"
         />
       )}
-      <p className="text-[11px] text-gray-500" data-testid="kpi-drill-row-count">
+      <p className="text-xs text-gray-500" data-testid="kpi-drill-row-count">
         {loads.length} loads — must match the "Loads without a driver bill" chip.
       </p>
     </div>
