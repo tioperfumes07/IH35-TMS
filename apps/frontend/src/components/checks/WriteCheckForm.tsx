@@ -1418,7 +1418,14 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                 ) : null}
               </div>
             ) : null}
-            {openBillsQuery.isLoading ? (
+            {/* U8 (owner): "Create Check offers no open bills". "No open bills for this payee" also showed when the
+                bills were never READ — the payee lookup failed, or the payee has no payable vendor — so a check that
+                should have paid a bill was written as an expense and the cost would count twice. Say which. */}
+            {openBillsQuery.isError ? (
+              <div className="text-xs font-semibold text-red-700" data-testid="check-open-bills-unread">
+                Could not read open bills — do not record a bill payment as an expense.
+              </div>
+            ) : openBillsQuery.isLoading ? (
               <div className="text-xs text-gray-400">Loading open bills…</div>
             ) : openBills.filter((b) => !(b.id in billToPayAmounts)).length === 0 ? (
               <div className="text-xs text-gray-400">{billsToPay.length > 0 ? "No other open bills." : "No open bills for this payee."}</div>
@@ -1462,6 +1469,24 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                       </div>
                     );
                   })}
+              </div>
+            )}
+          </div>
+        ) : payeeId ? (
+          // U8 (owner): this whole panel used to vanish when the payee had no resolvable vendor or the lookup failed, so
+          // Create Check simply "offered no open bills". Say why there is nothing to pay here.
+          <div className="rounded border border-gray-200 p-3" data-b4-add-to-check="1">
+            {payeePreviewQuery.isError ? (
+              <div className="text-xs font-semibold text-red-700" data-testid="check-open-bills-unread">
+                Could not read this payee, so its open bills are not listed — do not record a bill payment as an expense.
+              </div>
+            ) : payeePreviewQuery.isLoading ? (
+              <div className="text-xs text-gray-400">Loading open bills…</div>
+            ) : (
+              <div className="text-xs text-slate-600" data-testid="check-open-bills-no-vendor">
+                {payeeKind === "driver"
+                  ? "This driver has no linked payable vendor, so their bills cannot be listed here. Link the driver's vendor to pay a bill by check."
+                  : "This payee has no bills to pay (only vendors and drivers carry bills)."}
               </div>
             )}
           </div>
