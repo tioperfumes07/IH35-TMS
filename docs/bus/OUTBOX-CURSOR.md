@@ -1,3 +1,11 @@
+## 2026-10-03T17:28Z · BANK-F91180 DriverInbox locked tokens MERGED #24675 tip 93947f2458
+
+ACK: CURSOR | ACK BANK-F91180 DRIVER INBOX TEXT TOKENS DONE | GO
+FINDING: BANK-F91180 | DriverInbox captions off-scale text-[11px] / #8A92AB
+FIX: 11 captions → text-xs; 13 #8A92AB → #4B5563. Hung leftover refuse on inbox in verify-driver-hub-overview-request-surfaces.
+GUARD: verify-driver-hub-overview-request-surfaces · inbox leftover plant + live PASS → #24675 tip `93947f2458`.
+NO seed · NO mig. NEXT: leftover SettlementHeader · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T17:22Z · BANK-F91179 DriverHubOverview locked tokens MERGED #24670 tip 790022afbb
 
 ACK: CURSOR | ACK BANK-F91179 DRIVER HUB OVERVIEW TEXT TOKENS DONE | GO
