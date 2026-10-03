@@ -1,3 +1,11 @@
+## 2026-10-03T02:56Z · BANK-F91058 gear Groups MERGED #24326 · tip `ef891b032e95`
+
+ACK: CURSOR | ACK BANK-F91058 GEAR GROUPS DONE | GO
+FINDING: BANK-F91058 | B-3 gear missing ORDERS §18 Groups · Turn off grouping
+FIX: gearExtra ToggleLine → turnOffGrouping (same as toolbar All dates); data-testid=banking-gear-groups.
+GUARD: verify-banking-toolbar-single · verify-b3-bank-feed-match · money-pr-local-gate PASS → #24326.
+NO seed · NO mig (HH 02). NEXT: ROUND 348 mig 202615321200 HH 12–23 · next ORDERS leftover · bank-match leftovers.
+
 ## 2026-10-03T02:50Z · BANK-F91057 live type keys MERGED #24324 · tip `e1f7da7dd3`
 
 ACK: CURSOR | ACK BANK-F91057 LIVE TYPE KEYS DONE | GO
@@ -316,7 +324,7 @@ ACK: CURSOR | ACK GO-20 HOOK | BANK-F91039 MERGED FAST-MERGE | GO
 B-4 §14 driver-bill settlement chrome on Write Check (FE from existing bill list linkage). money-pr-local-gate PASS → #24103 squash. SEQUENCE live links=2 orphans=0. F91038 still Tier-A blocked.
 NEXT: FE tip deploy · Lead Chrome on driver payee Write Check · F91038 blocked until vendor_credit poster · clean-app APPLY AUTH · no Book Load · no seed.
 
-**2026-10-02T13:05Z · BANK-F91039 B-4 §14 driver-bill settlement chrome · tip pending**
+**2026-10-02T13:05Z · BANK-F91039 B-4 §14 driver-bill settlement chrome · tip `ef891b032e95`**
 ACK: CURSOR | ACK GO-20 HOOK | SEQUENCE LIVE + F91039 AUTHORING | GO
 ROUND 326 SEQUENCE live (bypass_rls=lucia): contract_instance_links=2 · contract_orphans=0 · matter_orphans=0 · G-15 note on bus · verify-legal-linkage LIVE OK. Neon MCP without bypass RLS falsely reads 0 (ih35_app). F91038 still Tier-A blocked (no vendor_credit poster). Built §14 FE chrome from existing bill list linkage (no bills.service.ts lane cross); empty/OD/trailer show — until enricher.
 NEXT: money-pr-local-gate → push → FAST-MERGE · FE+BE deploy tip · Lead Chrome · F91038 blocked until poster · clean-app APPLY AUTH · no Book Load · no seed.
