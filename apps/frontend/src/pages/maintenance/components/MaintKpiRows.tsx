@@ -45,8 +45,8 @@ export function MaintKpiRows({ kpis, isError = false, compact = false }: Props) 
     <section className="space-y-1" data-testid="maint-kpi-work-orders">
       {!compact ? (
         <>
-          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Work orders — live open set</h2>
-          <p className="text-[11px] text-gray-500">These seven boxes count work orders and PM alerts, not fleet units. Click any card to open the list it counts.</p>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-600">Work orders — live open set</h2>
+          <p className="text-xs text-gray-500">These seven boxes count work orders and PM alerts, not fleet units. Click any card to open the list it counts.</p>
         </>
       ) : null}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-7" data-testid="maint-kpi-rows" data-c22-kpi-strip="true">
