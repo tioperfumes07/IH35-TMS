@@ -1,3 +1,11 @@
+## 2026-10-03T04:40Z · BANK-F91067 B-3 feed text tokens MERGED #24364
+
+ACK: CURSOR | ACK BANK-F91067 FEED TEXT TOKENS DONE | GO
+FINDING: BANK-F91067 | B-3 bank feed off-scale text-[11px] (locked tokens)
+FIX: REGISTER_COLUMN_HEADER_CLASS→text-section-header; body/chips→text-xs; ManualJE+RecordCC too.
+GUARD: verify-banking-toolbar-single · money-pr-local-gate PASS → #24364 tip `3805ddb2b9`.
+NO seed · NO mig (HH 04). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T04:32Z · BANK-F91066 B-2 recon text tokens MERGED #24362
 
 ACK: CURSOR | ACK BANK-F91066 RECON TEXT TOKENS DONE | GO
