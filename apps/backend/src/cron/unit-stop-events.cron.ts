@@ -2,7 +2,7 @@
  * ENGINE: unit stop events
  * SCHEDULE: 7,22,37,52 * * * *
  * WRITES: telematics unit stop events
- * IDEMPOTENCY: UNIQUE(unit_id, started_at) ON CONFLICT DO UPDATE
+ * IDEMPOTENCY: ADVISORY LOCK per (company, unit) — UPDATE the row matching UNIQUE(operating_company_id, unit_id, started_at) or UNIQUE(operating_company_id, unit_id, ended_at), else INSERT (migration 202615301059)
  * OVERLAP: second run rewrites the same rows
  * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
  */

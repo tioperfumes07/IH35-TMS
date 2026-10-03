@@ -147,41 +147,58 @@ export async function writeUnitStopEvents(
       );
       const c = ctx.rows[0] ?? { driver_id: null, load_id: null };
 
-      await client.query(
-        `INSERT INTO telematics.unit_stop_events (
-           operating_company_id, unit_id, started_at, ended_at, dwell_minutes, sample_count,
-           lat, lng, city, state,
-           odometer_mi, odometer_read_at, odometer_age_minutes, odometer_note,
-           miles_since_previous_stop, miles_note,
-           geofence_id, geofence_label, geofence_kind, metres_from_fence_centre,
-           driver_id_at_time, load_id_at_time, updated_at
-         ) VALUES (
-           $1::uuid, $2::uuid, $3::timestamptz, $4::timestamptz, $5, $6,
-           $7, $8, $9, $10,
-           $11, $12::timestamptz, $13, $14,
-           $15, $16,
-           $17::uuid, $18, $19, $20,
-           $21::uuid, $22::uuid, now()
-         )
-         ON CONFLICT (unit_id, started_at) DO UPDATE SET
-           ended_at = EXCLUDED.ended_at, dwell_minutes = EXCLUDED.dwell_minutes, sample_count = EXCLUDED.sample_count,
-           lat = EXCLUDED.lat, lng = EXCLUDED.lng, city = EXCLUDED.city, state = EXCLUDED.state,
-           odometer_mi = EXCLUDED.odometer_mi, odometer_read_at = EXCLUDED.odometer_read_at,
-           odometer_age_minutes = EXCLUDED.odometer_age_minutes, odometer_note = EXCLUDED.odometer_note,
-           miles_since_previous_stop = EXCLUDED.miles_since_previous_stop, miles_note = EXCLUDED.miles_note,
-           geofence_id = EXCLUDED.geofence_id, geofence_label = EXCLUDED.geofence_label,
-           geofence_kind = EXCLUDED.geofence_kind, metres_from_fence_centre = EXCLUDED.metres_from_fence_centre,
-           driver_id_at_time = EXCLUDED.driver_id_at_time, load_id_at_time = EXCLUDED.load_id_at_time,
-           updated_at = now()`,
-        [
+      // ROUND 340: the table has TWO natural keys and both move — an in-progress stop keeps its start and grows its end
+      // every tick; a clipped stop keeps its end and shows a later start. Both are now unique per company (migration
+      // 202615301059). ON CONFLICT can name only one arbiter: with (…, ended_at) as the target, an in-progress stop's next
+      // tick raises 23505 on (…, started_at) — the failure that killed the odometer snapshot two days running (#24254).
+      // So: one transaction lock per (company, unit); UPDATE the row matching EITHER key (keeping the earlier start, the
+      // later end, the larger dwell / sample count); INSERT only when neither matches. Two writers for one unit serialize.
+      const params = [
           operatingCompanyId, unit.unitId, s.startedAt.toISOString(), s.endedAt.toISOString(), s.dwellMinutes, s.sampleCount,
           s.lat, s.lng, s.city, s.state,
           s.odometerMi, s.odometerReadAt ? s.odometerReadAt.toISOString() : null, s.odometerAgeMinutes, s.odometerNote,
           s.milesSincePreviousStop, s.milesNote,
           fence?.geofence_id ?? null, fence?.label ?? null, fence?.location_kind ?? null, fence ? Number(Number(fence.metres_from_centre).toFixed(1)) : null,
           c.driver_id, c.load_id,
-        ]
+        ];
+      await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1::text, 0))`, [`telematics.unit_stop:${operatingCompanyId}:${unit.unitId}`]);
+      const updated = await client.query(
+        `UPDATE telematics.unit_stop_events SET
+           started_at = LEAST(started_at, $3::timestamptz), ended_at = GREATEST(ended_at, $4::timestamptz),
+           dwell_minutes = GREATEST(dwell_minutes, $5), sample_count = GREATEST(sample_count, $6),
+           lat = $7, lng = $8, city = $9, state = $10,
+           odometer_mi = $11, odometer_read_at = $12::timestamptz, odometer_age_minutes = $13, odometer_note = $14,
+           miles_since_previous_stop = $15, miles_note = $16,
+           geofence_id = $17::uuid, geofence_label = $18, geofence_kind = $19, metres_from_fence_centre = $20,
+           driver_id_at_time = $21::uuid, load_id_at_time = $22::uuid,
+           updated_at = now()
+         WHERE id = (SELECT id FROM telematics.unit_stop_events
+                      WHERE operating_company_id = $1::uuid AND unit_id = $2::uuid
+                        AND (started_at = $3::timestamptz OR ended_at = $4::timestamptz)
+                      ORDER BY started_at LIMIT 1)
+         RETURNING id`,
+        params
       );
+      if (!updated.rows[0]) {
+        await client.query(
+          `INSERT INTO telematics.unit_stop_events (
+             operating_company_id, unit_id, started_at, ended_at, dwell_minutes, sample_count,
+             lat, lng, city, state,
+             odometer_mi, odometer_read_at, odometer_age_minutes, odometer_note,
+             miles_since_previous_stop, miles_note,
+             geofence_id, geofence_label, geofence_kind, metres_from_fence_centre,
+             driver_id_at_time, load_id_at_time, updated_at
+           ) VALUES (
+             $1::uuid, $2::uuid, $3::timestamptz, $4::timestamptz, $5, $6,
+             $7, $8, $9, $10,
+             $11, $12::timestamptz, $13, $14,
+             $15, $16,
+             $17::uuid, $18, $19, $20,
+             $21::uuid, $22::uuid, now()
+           )`,
+          params
+        );
+      }
       summary.rowsUpserted++;
     }
   }
@@ -190,7 +207,7 @@ export async function writeUnitStopEvents(
 
 /**
  * Catch-up: re-run the 36 h writer over consecutive windows (6 h overlap) reaching `days` back. The writer
- * upserts on (unit_id, started_at), so a re-read stop is updated, never duplicated. Runs once a day so a stop
+ * updates the row matching either natural key under a per-unit lock, so a re-read stop is updated, never duplicated. Runs once a day so a stop
  * missed by a late GPS batch -- or every stop before the writer first ran (2026-09-29) -- still gets a row, and
  * E-05 can classify legs whose pickup predates the 15-minute cadence.
  */
