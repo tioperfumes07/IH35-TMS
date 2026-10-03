@@ -466,12 +466,12 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
       >
         <div className="text-xs" data-testid="accident-report-drawer">
         {createMode ? (
-          <div className="mb-2 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-700">
+          <div className="mb-2 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700">
             Office intake uses this form layout. Persisted reports also arrive from the driver mobile app or maintenance work order conversion.
           </div>
         ) : null}
         <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-2">
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">Accident Damage Details</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-700">Accident Damage Details</div>
           <div className="grid grid-cols-2 gap-x-3 gap-y-2">
             <Field label="Record Type *">
               <ReferenceSelect
@@ -642,7 +642,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                   dataTestId="accident-load"
                 />
                 {createMode && suggestionPinned && loadId && suggestionQuery.data?.data?.load_id === loadId ? (
-                  <p className="mt-1 text-[11px] text-slate-600" data-testid="accident-create-load-suggested">
+                  <p className="mt-1 text-xs text-slate-600" data-testid="accident-create-load-suggested">
                     Auto-filled from the active trip for this driver/unit on the incident date.
                   </p>
                 ) : null}
@@ -715,7 +715,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                   here may predate or differ from the linked claim's own number. No claim_id → render
                   nothing extra; the free-text field alone stays exactly as honest as it always was. */}
               {typeof accident?.claim_id === "string" && accident.claim_id ? (
-                <p className="mt-1 text-[11px] text-slate-500">
+                <p className="mt-1 text-xs text-slate-500">
                   Linked claim:{" "}
                   <EntityLink
                     kind="claim"
@@ -731,7 +731,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                   driver_finance.driver_liabilities by origin='safety_accident'/origin_id and returns
                   spawned_liability_id; render it the same honest-drill way as the claim link above. */}
               {typeof accident?.spawned_liability_id === "string" && accident.spawned_liability_id ? (
-                <p className="mt-1 text-[11px] text-slate-500">
+                <p className="mt-1 text-xs text-slate-500">
                   Spawned liability:{" "}
                   <EntityLink
                     kind="liability"
@@ -867,7 +867,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
         ) : null}
         {!detailQuery.isError && spawnedWorkOrders.length > 0 ? (
           <div
-            className="mt-2 rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-[11px] text-slate-700"
+            className="mt-2 rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-xs text-slate-700"
             data-testid="accident-spawned-wo"
           >
             <div className="font-semibold text-slate-600">Linked AC work orders</div>
@@ -925,7 +925,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
 function Field({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
   return (
     <div className={`space-y-1 ${className ?? ""}`}>
-      <label className="text-[11px] font-semibold uppercase text-gray-600">{label}</label>
+      <label className="text-xs font-semibold uppercase text-gray-600">{label}</label>
       {children}
     </div>
   );
