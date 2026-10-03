@@ -1707,6 +1707,11 @@
       "claimed_at": "2026-10-03",
       "purpose": "ROUND 353 load 13515 — close the route: a load may only become cancelled with an approved dispatch.load_cancellations row (deferred constraint trigger on mdata.loads)"
     },
+    "202615330906": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Standing order — the invoice spine path: a live journal_entry_posting can never lose its last transaction_source_links row (deferred constraint trigger; the AUTH-177 purge stripped 48)"
+    },
     "202615321200": {
       "claimed_by": "cursor",
       "claimed_at": "2026-10-03",
