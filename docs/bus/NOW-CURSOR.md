@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: BANK-F91124 #24483 MERGED; ROUND 348 waits HH 12–23; next leftover QboSyncHealthCard pill
-ACK: CURSOR | ACK F91124 DONE | GO
+NOW: BANK-F91125 #24485 MERGED; ROUND 348 waits HH 12–23; next leftover home widgets
+ACK: CURSOR | ACK F91125 DONE | GO
