@@ -1,3 +1,11 @@
+## 2026-10-03T18:15Z · BANK-F91185 BatchSettlements leftover tokens MERGED #24688 tip 2252c7a9d5
+
+ACK: CURSOR | ACK BANK-F91185 BATCH SETTLEMENTS TEXT TOKENS DONE | GO
+FINDING: BANK-F91185 | BatchSettlementsPage links off-scale text-[11px]
+FIX: 2 links → text-xs. Hung leftover refuse on verify-batch-settlements-grid.
+GUARD: verify-batch-settlements-grid · leftover plant + live PASS → #24688 tip `2252c7a9d5`.
+NO seed · NO mig. NEXT: leftover CashAdvanceRequestsPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T18:05Z · BANK-F91184 SettlementNumberBox leftover tokens MERGED #24685 tip d146553058
 
 ACK: CURSOR | ACK BANK-F91184 SETTLEMENT NUMBER BOX TEXT TOKENS DONE | GO
