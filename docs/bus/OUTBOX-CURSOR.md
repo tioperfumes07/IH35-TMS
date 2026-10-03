@@ -1,3 +1,11 @@
+## 2026-10-03T06:18Z · BANK-F91084 AccountingHub text tokens MERGED #24403
+
+ACK: CURSOR | ACK BANK-F91084 ACCOUNTING HUB TEXT TOKENS DONE | GO
+FINDING: BANK-F91084 | AccountingHubPage off-scale text-[11px] (locked tokens)
+FIX: KPI/section→text-section-header; guard refuses text-[11px].
+GUARD: verify-accounting-hub-honest-labels · money-pr-local-gate PASS → #24403 tip `defaefd22a`.
+NO seed · NO mig (HH 06). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T06:15Z · BANK-F91083 VendorCredits text tokens MERGED #24401
 
 ACK: CURSOR | ACK BANK-F91083 VENDOR CREDITS TEXT TOKENS DONE | GO
