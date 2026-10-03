@@ -124,6 +124,14 @@ function main() {
   if (bankRecon.includes("text-[11px]")) {
     throw new Error("BankReconciliationPage.tsx: must not use text-[11px] — use text-section-header or text-xs");
   }
+  // BANK-F91077 — DailyReconPage filter labels use text-section-header, not text-[11px].
+  const dailyRecon = read("apps/frontend/src/pages/accounting/DailyReconPage.tsx");
+  if (dailyRecon.includes("text-[11px]")) {
+    throw new Error("DailyReconPage.tsx: must not use text-[11px] — use text-section-header or text-xs");
+  }
+  if (!dailyRecon.includes("text-section-header")) {
+    throw new Error("DailyReconPage.tsx: filter labels must use text-section-header");
+  }
 
   console.log(`${LABEL}: PASS`);
 }
