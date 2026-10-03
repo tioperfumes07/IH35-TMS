@@ -56,6 +56,8 @@ export function failures(files) {
   if (!files.self.split('import fs from "node:fs";')[0].includes(HEADER)) found.push("exact Tasks drawer header missing");
   try { if (JSON.parse(files.feed).entries?.some((entry) => entry.guard === SELF)) found.push("manual feed duplicates exact Tasks ownership"); }
   catch (error) { found.push(`feed parse: ${error.message}`); }
+  if (files.planner.includes("text-[11px]")) found.push("leftover text-[11px]");
+  if (files.planner.includes("#8A92AB") || files.planner.includes("#334155")) found.push("leftover off-scale muted");
   return found;
 }
 
@@ -99,7 +101,16 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   });
-  console.log(`${LABEL} SELFTEST PASS — 15/15 drawer/subject/evidence regressions detected`);
+  const leftoverPlanted = {
+    ...current,
+    planner: `${current.planner}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`,
+  };
+  const leftover = failures(leftoverPlanted);
+  if (!leftover.includes("leftover text-[11px]") || !leftover.includes("leftover off-scale muted")) {
+    console.error(`${LABEL} SELFTEST FAIL — leftover plant escaped`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — 15/15 drawer/subject/evidence regressions detected + leftover plant rejected`);
   process.exit(0);
 }
 
