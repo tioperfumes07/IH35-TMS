@@ -86,3 +86,41 @@ load-born documents and are not counted below. Load-born rows only:
 **Lane:** step 2 adds a column to `accounting.journal_entry_postings` and touches the posters (CC-1 GL
 lane). CC-3 needs the Lead's LANE_CROSS for it, or CC-1 takes step 2 and CC-3 takes 1, 3 (documents),
 4 and 5.
+
+## D. Owner question 2026-10-03: a bank match or categorization sent back to For Review
+
+Same connection and method as above.
+
+**The two send-back paths** (`recon-worklist.service.ts` `unmatchBankTransaction`;
+`void.service.ts` `BANK_TX_UNMATCH_RESET_SQL`) both **overwrite** the bank row. Every `matched_*_id`,
+including `matched_load_id`, and every `categorization_*`, including `categorization_load_id`, go
+to NULL, and `review_state` goes to `for_review`. What survives:
+- `audit.row_changes` before-image (`banking.bank_transactions` **is** audited): the only place the
+  load is still written down.
+- A `banking.reconciliation_matches` row, `match_state='rejected'`. It **overwrites** the accepted
+  match row in place (ON CONFLICT UPDATE), and **skips load and settlement matches entirely**.
+  Live: 0 rejected rows.
+- A reversal JE (`reverseJournalEntryNoFlip`), but only when the match itself created the JE
+  (fuel / relay / factoring). It carries `reversal_of_line_id`, but neither the bank line nor the load.
+
+**What has actually happened:**
+
+| fact | count |
+|---|---:|
+| bank lines sent `matched` → `for_review` (audit, 2026-09-03 → 10-03) | 248 (+1 from `excluded`) |
+| … that held a `matched_load_id` / `categorization_load_id` / match JE at the time | **0 / 0 / 0**: all 248 were hollow `matched` flags with no pointer set (29 of them are today's release) |
+| ledger reversal lines whose original JE a bank row points to (now or in audit) | **0 of 3,085** |
+| bank rows holding a categorization/match JE today | 167: each one, if sent back, takes this path |
+| `journal_entry` reversal lines of fuel postings (fuel-event-born, not unmatch) | 318: fuel row exists with load 260, **fuel row gone 58** |
+| `journal_entry` reversal lines whose original has no spine link at all | **122**: origin unknown, cannot reach a load, reported |
+
+**So:** no load has been lost to a send-back **yet**. Each of the 167 live matches or categorizations
+would lose its load from everything but the audit log the first time it is sent back.
+
+**Added to the build (no new table):**
+- The send-back writes the reversal, not an overwrite. The `reconciliation_matches` row keeps the
+  accepted match (`matched_*` kind + id, load included; the load/settlement skip is removed) and
+  records the release beside it, rather than flipping it to rejected in place.
+- The reversal JE carries the original's `load_id` (step C.2) and the bank transaction as its source.
+- Finish test adds: from the reversal of a sent-back match → bank line → original match → load, and
+  from the load → the match, its release and the reversal.
