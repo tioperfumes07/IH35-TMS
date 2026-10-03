@@ -105,6 +105,12 @@ if (failures.length) {
   process.exit(1);
 }
 
+// BANK-F91140 — ORDERS chrome: AssignmentBand count is text-xs; section header is text-section-header.
+if (original.includes("text-[11px]")) {
+  console.error("[verify-dispatch-table-view-distinct] FAILED\n - DispatchBoard must not use text-[11px] — use text-xs / text-section-header");
+  process.exit(1);
+}
+
 if (process.argv.includes("--selftest")) {
   let caught = 0;
   for (const [name, , mutate] of contracts) {
