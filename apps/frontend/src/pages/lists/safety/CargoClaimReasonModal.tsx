@@ -133,13 +133,13 @@ export function CargoClaimReasonModal({ open, companyId, row, onClose, onSaved }
         <label className="block text-xs font-semibold text-gray-600">
           Reason Code
           <input value={form.reason_code} onChange={(event) => setForm((v) => ({ ...v, reason_code: event.target.value.toUpperCase() }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="WATER-DAMAGE" />
-          {errors.reason_code ? <div className="mt-1 text-[11px] text-red-700">{errors.reason_code}</div> : null}
+          {errors.reason_code ? <div className="mt-1 text-xs text-red-700">{errors.reason_code}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
           Display Name
           <input value={form.display_name} onChange={(event) => setForm((v) => ({ ...v, display_name: event.target.value }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
-          {errors.display_name ? <div className="mt-1 text-[11px] text-red-700">{errors.display_name}</div> : null}
+          {errors.display_name ? <div className="mt-1 text-xs text-red-700">{errors.display_name}</div> : null}
         </label>
 
         <div className="grid grid-cols-2 gap-2">
@@ -157,7 +157,7 @@ export function CargoClaimReasonModal({ open, companyId, row, onClose, onSaved }
           <label className="block text-xs font-semibold text-gray-600">
             Sort Order
             <input type="number" value={form.sort_order} onChange={(event) => setForm((v) => ({ ...v, sort_order: event.target.value }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
-            {errors.sort_order ? <div className="mt-1 text-[11px] text-red-700">{errors.sort_order}</div> : null}
+            {errors.sort_order ? <div className="mt-1 text-xs text-red-700">{errors.sort_order}</div> : null}
           </label>
         </div>
 
