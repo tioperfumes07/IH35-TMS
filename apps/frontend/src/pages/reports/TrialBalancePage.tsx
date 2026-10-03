@@ -269,15 +269,15 @@ export function TrialBalancePage() {
       {summary ? (
         <div className="grid gap-2 md:grid-cols-3">
           <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
-            <div className="text-[11px] font-semibold uppercase text-gray-500">Grand total debits</div>
+            <div className="text-section-header font-semibold uppercase text-gray-500">Grand total debits</div>
             <div className="text-page-title font-semibold">{money(summary.grand_total_debits)}</div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
-            <div className="text-[11px] font-semibold uppercase text-gray-500">Grand total credits</div>
+            <div className="text-section-header font-semibold uppercase text-gray-500">Grand total credits</div>
             <div className="text-page-title font-semibold">{money(summary.grand_total_credits)}</div>
           </div>
           <div className={`rounded-sm border bg-white px-3 py-2 ${summary.balanced ? "border-emerald-200" : "border-rose-300"}`}>
-            <div className="text-[11px] font-semibold uppercase text-gray-500">Balance check</div>
+            <div className="text-section-header font-semibold uppercase text-gray-500">Balance check</div>
             <div className={`text-page-title font-semibold ${summary.balanced ? "text-emerald-700" : "text-rose-700"}`}>
               {summary.balanced ? "Balanced" : "Out of balance"}
             </div>
@@ -287,7 +287,7 @@ export function TrialBalancePage() {
 
       <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-left text-xs">
-          <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+          <thead className="border-b border-gray-200 bg-gray-50 text-section-header font-semibold uppercase tracking-wide text-gray-600">
             <tr>
               {showCodes ? (
                 <th className="cursor-pointer px-3 py-2" onClick={() => toggleSort("account_code")}>
