@@ -1621,6 +1621,11 @@
       "claimed_by": "CURSOR",
       "claimed_at": "2026-10-02",
       "purpose": "ROUND 342.1 — company-scope mdata.unit_plates + equipment_plates active uniques + drivers.identity_user_id partial UNIQUE(operating_company_id, identity_user_id) WHERE NOT NULL (owner: one person can be a driver in two carriers)."
+    },
+    "202615310700": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-02",
+      "purpose": "ROUND 342 Phase 2 step 2a (expand) — on the 17 double-scoped tables: assert 0 disagreements, backfill operating_company_id from tenant_id, SET NOT NULL, FK to org.companies, an operating_company_id twin of every tenant_id index (incl. uq_factoring_factor (operating_company_id, id) for CC-1's same-entity FK), opco policies replacing the tenant-only B1 policies, tenant_id DROP NOT NULL. Nothing dropped."
     }
   },
   "202613590001": {
