@@ -60,6 +60,9 @@ export function check(sources) {
     if (/emptyText="No at-risk loads right now\."/.test(page) && !/loadsQ\.isError\s*\?/.test(page)) {
       failures.push(`${FILES.page}: emptyText must be behind loadsQ.isError ternary (false-empty)`);
     }
+    if (page.includes("text-[11px]")) {
+      failures.push(`${FILES.page}: must not use text-[11px] — use text-xs or text-section-header`);
+    }
   }
 
   if (!test) failures.push(`${FILES.test}: missing`);

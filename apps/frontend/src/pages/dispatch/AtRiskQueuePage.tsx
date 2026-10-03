@@ -244,7 +244,7 @@ export function AtRiskQueuePage() {
           footerCells={footerCells}
         />
       )}
-      <p className="text-[11px] text-gray-500" data-testid="kpi-drill-row-count">
+      <p className="text-xs text-gray-500" data-testid="kpi-drill-row-count">
         {loads.length} loads — must match the At-risk / late tile.
       </p>
     </div>
