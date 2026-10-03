@@ -218,7 +218,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
     <section data-testid="compliance-section-hos-tracker">
       {/* Section band */}
       <div className="flex items-center bg-[#F1EFE8] px-3" style={{ height: 26 }}>
-        <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+        <span className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
           Driver duty-status timeline · {selectedDate === today ? "today" : selectedDate}
         </span>
         <span className="ml-auto text-xs text-slate-400">
@@ -231,7 +231,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
         <div className="flex flex-wrap gap-2">
           {kpis.map((k) => (
             <div key={k.label} className="flex h-[30px] min-w-[120px] flex-1 items-center justify-between rounded-sm border border-slate-200 bg-white px-2.5">
-              <span className="text-[11px] uppercase tracking-wider text-slate-500">{k.label}</span>
+              <span className="text-xs uppercase tracking-wider text-slate-500">{k.label}</span>
               <span className={`text-xs font-semibold tabular-nums ${k.cls}`}>{k.value}</span>
             </div>
           ))}
@@ -244,7 +244,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
               key={d.date}
               type="button"
               onClick={() => setSelectedDate(d.date)}
-              className={`rounded-sm border px-2.5 py-1 text-center text-[11px] leading-tight ${selectedDate === d.date ? "border-slate-800 font-bold text-slate-900 shadow-[inset_0_-2px_0_#1f2a44]" : "border-slate-200 text-slate-500"}`}
+              className={`rounded-sm border px-2.5 py-1 text-center text-xs leading-tight ${selectedDate === d.date ? "border-slate-800 font-bold text-slate-900 shadow-[inset_0_-2px_0_#1f2a44]" : "border-slate-200 text-slate-500"}`}
             >
               {formatPlannerDayLabel(d.date)}
               <span className="block text-xs text-slate-400">{d.weekday}</span>
@@ -253,7 +253,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
         </div>
 
         <div className="relative max-w-sm space-y-2" data-testid="hos-tracker-filters">
-          <label className="text-[11px] text-slate-600">
+          <label className="text-xs text-slate-600">
             Driver
             <EntityPicker
               kind="driver"
@@ -329,7 +329,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
                 <div className="text-xs font-semibold text-slate-900">
                   <EntityLinkOrTombstone kind="driver" id={selectedDriver.driver_id} name={selectedDriver.driver_name} noun="Driver" />
                 </div>
-                <div className="text-[11px] text-slate-500">
+                <div className="text-xs text-slate-500">
                   Unit{" "}
                   <EntityLinkOrTombstone kind="unit" id={selectedDriver.unit_id} name={selectedDriver.unit_number} noun="Unit" data-testid="hos-tracker-detail-unit-link" />{" "}
                   · {selectedDate} · HOS cycle detail
@@ -342,7 +342,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
             ) : (
               <div className="space-y-4 px-4 py-4">
                 <div>
-                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Remaining (Samsara certified)</div>
+                  <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Remaining (Samsara certified)</div>
                   <div className="grid grid-cols-2 gap-2">
                     {[
                       { label: "Drive", v: selectedDriver.clocks.drive_remaining_min },
@@ -351,14 +351,14 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
                       { label: "Cycle (70h)", v: selectedDriver.clocks.cycle_remaining_min },
                     ].map((c) => (
                       <div key={c.label} className="rounded-sm border border-slate-200 px-2.5 py-1.5">
-                        <div className="text-[11px] uppercase tracking-wide text-slate-500">{c.label}</div>
+                        <div className="text-xs uppercase tracking-wide text-slate-500">{c.label}</div>
                         <div className="text-xs font-semibold tabular-nums text-slate-900">{hmm(c.v)}</div>
                       </div>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">8-day on-duty (home-terminal days)</div>
+                  <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">8-day on-duty (home-terminal days)</div>
                   <div className="space-y-1">
                     {(selectedDriver.eight_day_breakdown ?? []).map((day) => {
                       const pct = Math.min(100, ((day.on_duty_min ?? 0) / (14 * 60)) * 100);
