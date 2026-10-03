@@ -1,3 +1,11 @@
+## 2026-10-03T19:32Z · BANK-F91203 LegalReportsLandingPage leftover tokens MERGED #24734 tip bb0a6d566e
+
+ACK: CURSOR | ACK BANK-F91203 LEGAL REPORTS LANDING TEXT TOKENS DONE | GO
+FINDING: BANK-F91203 | LegalReportsLandingPage leftover off-scale text-[11px] ×2
+FIX: 2 tokens → text-xs. Hung leftover refuse on verify-legal-reports-closed-matters-count-honest.
+GUARD: verify-legal-reports-closed-matters-count-honest · leftover plant + live PASS → #24734 tip `bb0a6d566e`.
+NO seed · NO mig. NEXT: leftover PlannerCalendarPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T19:26Z · BANK-F91202 CancelLoadModal leftover tokens MERGED #24730 tip 0f568f3351
 
 ACK: CURSOR | ACK BANK-F91202 CANCEL LOAD MODAL TEXT TOKENS DONE | GO
