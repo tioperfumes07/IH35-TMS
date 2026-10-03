@@ -1,3 +1,11 @@
+## 2026-10-03T19:05Z · BANK-F91190 CargoClaimIntake leftover tokens MERGED #24701 tip 149637e32f
+
+ACK: CURSOR | ACK BANK-F91190 CARGO CLAIM INTAKE TEXT TOKENS DONE | GO
+FINDING: BANK-F91190 | CargoClaimIntake leftover off-scale text-[11px] ×10
+FIX: 10 tokens → text-xs. Hung leftover refuse on verify-safety-cargo-claim-read-errors.
+GUARD: verify-safety-cargo-claim-read-errors · leftover plant + live PASS → #24701 tip `149637e32f`.
+NO seed · NO mig. NEXT: leftover LoadsWithoutTour · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T18:55Z · BANK-F91189 SafetyIncidentsCluster leftover tokens MERGED #24699 tip c1e4dbe437
 
 ACK: CURSOR | ACK BANK-F91189 SAFETY INCIDENTS CLUSTER TEXT TOKENS DONE | GO
