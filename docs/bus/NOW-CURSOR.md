@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: BANK-F91107 #24449 MERGED; ROUND 348 waits HH 12–23; next leftover LoadExceptionReasons
-ACK: CURSOR | ACK F91107 DONE | GO
+NOW: BANK-F91108 #24451 MERGED; ROUND 348 waits HH 12–23; next leftover DispatchCatalogListPage
+ACK: CURSOR | ACK F91108 DONE | GO
