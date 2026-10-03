@@ -1,3 +1,11 @@
+## 2026-10-03T08:29Z · BANK-F91103 AccountDrawer text tokens MERGED #24441
+
+ACK: CURSOR | ACK BANK-F91103 ACCOUNT DRAWER TEXT TOKENS DONE | GO
+FINDING: BANK-F91103 | AccountDrawer KPI/hints off-scale text-[11px] (locked tokens)
+FIX: Preview→text-section-header; 4 hints→text-xs; picker01 guard refuses text-[11px].
+GUARD: verify-lst-picker01-account-drawer-detail-type-inline-create · money-pr-local-gate PASS → #24441 tip `51714b8633`.
+NO seed · NO mig (HH 08). NEXT: AccountingCatalogModal leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T08:21Z · BANK-F91102 PostingTemplateModal text tokens MERGED #24439
 
 ACK: CURSOR | ACK BANK-F91102 POSTING TEMPLATE TEXT TOKENS DONE | GO
