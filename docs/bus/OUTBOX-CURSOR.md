@@ -1,3 +1,11 @@
+## 2026-10-03T14:14Z · BANK-F91154 ProfitPerTruckPage KPI locked tokens MERGED #24570
+
+ACK: CURSOR | ACK BANK-F91154 PROFIT PER TRUCK TEXT TOKENS DONE | GO
+FINDING: BANK-F91154 | ProfitPerTruckPage KPI off-scale text-[11px] (locked tokens)
+FIX: KPI labels→text-section-header; profit-per-truck-print-letter guard refuses text-[11px] on this page only.
+GUARD: verify-profit-per-truck-print-letter · dedicated guard + typecheck PASS → #24570 tip `9822722dd1`.
+NO seed · NO mig. NEXT: ManagementReportPackagePage leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T14:10Z · BANK-F91153 MaintenanceCostPerUnitPage KPI locked tokens MERGED #24568
 
 ACK: CURSOR | ACK BANK-F91153 MAINT COST PER UNIT TEXT TOKENS DONE | GO
