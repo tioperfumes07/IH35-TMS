@@ -146,7 +146,7 @@ export function DOTComplianceTab() {
         render: (row) => (
           <button
             type="button"
-            className="rounded-sm border border-slate-300 px-2 py-0.5 text-[11px] disabled:opacity-50"
+            className="rounded-sm border border-slate-300 px-2 py-0.5 text-xs disabled:opacity-50"
             disabled={acknowledgeMutation.isPending || remindersQ.isLoading || remindersQ.isError}
             onClick={() => acknowledgeMutation.mutate({ reminderId: row.id, companyId, generation: actionGenerationRef.current })}
           >
@@ -208,10 +208,10 @@ export function DOTComplianceTab() {
           <article key={card.cfr} className="rounded-sm border border-gray-200 bg-white p-4">
             <div className="flex items-start justify-between gap-2">
               <h3 className="text-xs font-semibold text-slate-900">{card.title}</h3>
-              <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">{card.cfr}</span>
+              <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{card.cfr}</span>
             </div>
             <p className="mt-2 text-xs leading-relaxed text-slate-700">{card.summary}</p>
-            <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500">
+            <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
               <span>Cadence: {card.cadence}</span>
               <span>Open: {sourceCounters.get(card.sourceType) ?? 0}</span>
             </div>
