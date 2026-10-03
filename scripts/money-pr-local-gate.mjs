@@ -769,6 +769,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-factoring-writers-write-the-spine",
     ["apps/backend/src/factoring/", "scripts/verify-factoring-writers-write-the-spine.mjs"],
   ],
+  // KPI engines' operator-facing strings (label / source / empty_reason / GL) in business language — runtime check.
+  [
+    "verify-kpi-provenance-business-language",
+    ["apps/backend/src/factoring/factoring-kpi.service.ts", "apps/backend/src/banking/banking-kpi.service.ts", "scripts/verify-kpi-provenance-business-language.mjs"],
+  ],
   // ROUND 335 item 2 — Banking home against the approved preview (engine-fed factoring + escrow cards, no dead links).
   [
     "verify-banking-home-preview-parity",
