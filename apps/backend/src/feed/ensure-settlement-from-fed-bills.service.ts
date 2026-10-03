@@ -22,6 +22,7 @@ import { materializeSettlementLines } from "../driver-finance/settlement-lines-m
 import { aggregateSettlementTotals, SETTLEMENT_DEDUCTION_APPLY_FLAG } from "../driver-finance/settlements-load-bookended.service.js";
 import { postLoadBookendedSettlementGlAfterClose } from "../driver-finance/settlement-payrun-close.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { approveSettlement, settlementApprovalRefusal } from "../settlements/approval.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -318,8 +319,12 @@ export async function closeFedSettlementIfRequested(input: {
     return { closed: false, settlementPosted: false, journalEntryId: null, status: "open", warnings };
   }
 
-  await withCurrentUser(input.actorUserId, async (client) => {
+  // SETL-DUAL-APPROVAL-STATE-CONTRADICTION — the canonical header gate (every line approved + feed
+  // gate green) sets approval_status='approved' before status moves. A refusal rolls this close back
+  // and leaves the minted settlement open, named in warnings — never status='approved' over needs_review.
+  const refused = await withCurrentUser(input.actorUserId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
+    await approveSettlement(client, input.settlementId, input.actorUserId, input.operatingCompanyId);
     await client.query(
       `UPDATE driver_finance.driver_settlements
           SET status = 'approved',
@@ -328,7 +333,16 @@ export async function closeFedSettlementIfRequested(input: {
         WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status IN ('open', 'approved')`,
       [input.settlementId, input.operatingCompanyId]
     );
+    return null;
+  }).catch((error: unknown) => {
+    const refusal = settlementApprovalRefusal(error);
+    if (refusal) return refusal;
+    throw error;
   });
+  if (refused) {
+    warnings.push(`close_refused:${refused.error} — ${refused.message}`);
+    return { closed: false, settlementPosted: false, journalEntryId: null, status: "open", warnings };
+  }
 
   const posted = await postLoadBookendedSettlementGlAfterClose({
     operatingCompanyId: input.operatingCompanyId,
