@@ -1,3 +1,13 @@
+## 2026-10-03T00:07Z · ROUND 342.1 unit_plates + identity_user_id shipping · codes PR #24290 MERGED `590f0cfe4e`
+
+ACK: CURSOR | ROUND 342.1 | UNIT KEYS + IDENTITY | GO
+#24290 MERGED tip `590f0cfe4e` — codes+OCI trap LIVE on Neon.
+Claim #24291 → `cb3f8d7673` (mig 202615312300 + step 12328).
+FIX: DROP drivers_identity_user_id_key → uq_mdata_drivers_company_identity_user partial; unit_plates/equipment_plates active uniques include operating_company_id.
+samsara_driver_id UNTOUCHED (owner Class B).
+CC-3 allow-list sentence in PR body.
+NO seed. NEXT: gate → PR → FAST-MERGE · then driver_teams/load_stop_legs/safety.
+
 ## 2026-10-02T23:57Z · ROUND 342.1 OWNER ANSWERS — identity_user_id DEFECT · samsara CORRECT · unit keys UP
 
 ACK: CURSOR | ROUND 342.1 | OWNER ANSWERS | GO
