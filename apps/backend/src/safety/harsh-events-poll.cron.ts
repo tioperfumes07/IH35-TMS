@@ -244,7 +244,24 @@ export async function runHarshEventsPollCronTick(): Promise<void> {
             JSON.stringify({ operating_company_id: operatingCompanyId, error: message }),
             HARSH_EVENTS_POLL_AUDIT_SOURCE,
           ])
-          .catch(() => {});
+          .catch((auditError: unknown) => {
+            // ROUND 381.5 (Lead, 2026-10-03) — this was `.catch(() => {})`, which swallowed a database
+            // error inside the transaction. The poll itself still rethrows its aggregated failures below,
+            // so the RUN was never silent — but the AUDIT WRITE was. If audit.append_event fails here we
+            // lose the only record that this company's poll failed, and nothing anywhere says so. On HOS
+            // and DVIR data that is the record a DOT reviewer would ask for.
+            //
+            // It logs rather than rethrows ON PURPOSE: we are already inside failure handling, and
+            // throwing here would replace the real poll error with an audit-write error and hide the
+            // cause. Surfacing is what makes the catch honest (verify-no-swallowed-db-error-in-transaction).
+            // eslint-disable-next-line no-console
+            console.error(
+              `harsh_events_poll_cron: FAILED TO WRITE THE FAILURE AUDIT EVENT for operating_company_id=${operatingCompanyId}. ` +
+                `The poll failure below is recorded nowhere else. audit error: ${
+                  auditError instanceof Error ? auditError.message : String(auditError)
+                }`
+            );
+          });
       });
     }
   }

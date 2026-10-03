@@ -30,10 +30,33 @@ const TOUCHES_DB = /client\.query|\(\s*client\s*,|\(client as never/;
 /** Any ONE of these makes the catch honest: it recovers the transaction, or it surfaces the error. */
 const HANDLED = /\blog\b|logger|console\.|throw\b|reply\./;
 
+// ROUND 381.5 (Lead, 2026-10-03) — the handler capture must BALANCE BRACES.
+// TRY_CATCH is non-greedy, so `catch (e) { ... { nested } ... }` captured only up to the FIRST closing
+// brace. Any handler containing a nested block — an arrow callback, an if, a nested try — had its tail
+// truncated, and a `console.error`, `throw` or `req.log.error` living past that point was invisible.
+// Measured: that read as 10 NEW swallows across 13 files, 222 -> 232, when the handlers were honest.
+// CC-1 reported this guard as misreading correct code and was right about the pattern. Fixing the regex
+// rather than the baseline: no entry is added, nothing is widened, and a genuinely bare catch still fails.
+function handlerFrom(source, catchBraceIndex) {
+  let depth = 0;
+  for (let i = catchBraceIndex; i < source.length; i++) {
+    const c = source[i];
+    if (c === "{") depth++;
+    else if (c === "}") {
+      depth--;
+      if (depth === 0) return source.slice(catchBraceIndex + 1, i);
+    }
+  }
+  return source.slice(catchBraceIndex + 1);
+}
+
 export function offendingSites(source) {
   const out = [];
   for (const m of source.matchAll(TRY_CATCH)) {
-    const [body, handler] = [m[1], m[2]];
+    const body = m[1];
+    // Re-read the handler from the real opening brace so nested blocks are included.
+    const handlerOpen = source.indexOf("{", m.index + m[0].indexOf("catch"));
+    const handler = handlerOpen === -1 ? m[2] : handlerFrom(source, handlerOpen);
     if (body.length > 4000) continue; // a whole route body, not an isolated read
     if (!TOUCHES_DB.test(body)) continue;
     if (body.includes("SAVEPOINT") || handler.includes("SAVEPOINT")) continue;
