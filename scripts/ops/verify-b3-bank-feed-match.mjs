@@ -133,6 +133,12 @@ function main() {
     throw new Error("BankTxCategorizationPage.tsx: KPI labels must use text-section-header");
   }
 
+  // BANK-F91076 — EmailQueuePage mono/body uses text-xs, not text-[11px].
+  const emailQueue = read("apps/frontend/src/pages/banking/EmailQueuePage.tsx");
+  if (emailQueue.includes("text-[11px]")) {
+    throw new Error("EmailQueuePage.tsx: must not use text-[11px] — use text-xs");
+  }
+
   console.log(`${LABEL}: PASS`);
 }
 
