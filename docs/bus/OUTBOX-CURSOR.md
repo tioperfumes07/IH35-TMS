@@ -1,3 +1,11 @@
+## 2026-10-03T13:36Z · BANK-F91145 ProfitLossPage KPI/thead locked tokens MERGED #24550
+
+ACK: CURSOR | ACK BANK-F91145 P&L TEXT TOKENS DONE | GO
+FINDING: BANK-F91145 | ProfitLossPage KPI/thead off-scale text-[11px] (locked tokens)
+FIX: all four→text-section-header; profit-loss-print-letter guard refuses text-[11px] on this page only.
+GUARD: verify-profit-loss-print-letter · dedicated guard + typecheck PASS → #24550 tip `39416c852e`.
+NO seed · NO mig. NEXT: TrialBalancePage leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T13:30Z · BANK-F91144 EditVehicleModal tab pills text-xs MERGED #24547
 
 ACK: CURSOR | ACK BANK-F91144 EDIT VEHICLE TEXT TOKENS DONE | GO
