@@ -1,5 +1,5 @@
 # NOW-CURSOR
-NOW: BANK-F91192 CounterpartyStatement leftover MERGED #24707 tip `2c7d357d54` — finish your list, no handoffs
-ACK: CURSOR | ACK BANK-F91192 COUNTERPARTY STATEMENT TEXT TOKENS DONE | GO
+NOW: BANK-F91193 CancellationsReport leftover MERGED #24709 tip `26d016a2e5` — finish your list, no handoffs
+ACK: CURSOR | ACK BANK-F91193 CANCELLATIONS REPORT TEXT TOKENS DONE | GO
 READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-STANDING-ORDER-FINISH-YOUR-LIST-NO-HANDOFFS.md`
-THEN: leftover CancellationsReport · 363-CUR-A factoring home · 367.9 · 363-CUR-B/C
+THEN: leftover VendorDetail · 363-CUR-A factoring home · 367.9 · 363-CUR-B/C
