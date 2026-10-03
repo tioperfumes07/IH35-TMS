@@ -296,19 +296,19 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
 
       <div className="grid gap-2 md:grid-cols-4">
         <div className="rounded-sm border border-red-200 bg-red-50 p-3">
-          <div className="text-[11px] uppercase text-red-700">Total active debt</div>
+          <div className="text-xs uppercase text-red-700">Total active debt</div>
           <div className="text-page-title font-semibold text-red-800" data-testid="driver-earnings-total-debt">
             {money(Number(debt?.total_active_debt ?? 0))}
           </div>
         </div>
         <div className="rounded-sm border border-slate-200 bg-slate-100 p-3">
-          <div className="text-[11px] uppercase text-slate-700">Outstanding liabilities</div>
+          <div className="text-xs uppercase text-slate-700">Outstanding liabilities</div>
           <div className="text-page-title font-semibold text-slate-800" data-testid="driver-earnings-liabilities-total">
             {moneyOrError(liabilitiesQuery.isError, totalOutstandingLiabilities)}
           </div>
         </div>
         <div className="rounded-sm border border-slate-300 bg-slate-100 p-3">
-          <div className="text-[11px] uppercase text-slate-700">Cash advances unpaid</div>
+          <div className="text-xs uppercase text-slate-700">Cash advances unpaid</div>
           <div className="text-page-title font-semibold text-slate-700" data-testid="driver-earnings-cash-advances-unpaid">
             {moneyOrError(liabilitiesQuery.isError, cashAdvancesUnpaid)}
           </div>
@@ -328,7 +328,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
           </Link>
         </div>
         <div className="rounded-sm border border-slate-200 bg-slate-100 p-3">
-          <div className="text-[11px] uppercase text-slate-700">Pending ack liabilities</div>
+          <div className="text-xs uppercase text-slate-700">Pending ack liabilities</div>
           <div className="text-page-title font-semibold text-slate-800">
             {money(Number(debt?.pending_ack_total ?? 0))}
           </div>
@@ -354,13 +354,13 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
         </div>
         <div className="grid gap-2 md:grid-cols-2">
           <div>
-            <div className="text-[11px] uppercase text-gray-500">Pre-clause balance</div>
+            <div className="text-xs uppercase text-gray-500">Pre-clause balance</div>
             <div className="text-page-title font-semibold text-gray-900" data-testid="driver-earnings-escrow-pre">
               {money(Number(debt?.escrow_pre_clause ?? 0))}
             </div>
           </div>
           <div>
-            <div className="text-[11px] uppercase text-gray-500">Post-clause balance</div>
+            <div className="text-xs uppercase text-gray-500">Post-clause balance</div>
             <div className="text-page-title font-semibold text-gray-900" data-testid="driver-earnings-escrow-post">
               {money(Number(debt?.escrow_post_clause ?? 0))}
             </div>
@@ -401,7 +401,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
         ) : (
           <div className="grid gap-2 md:grid-cols-2">
             <div>
-              <div className="text-[11px] uppercase text-gray-500">Vendor</div>
+              <div className="text-xs uppercase text-gray-500">Vendor</div>
               <div className="text-xs font-semibold text-gray-900" data-testid="driver-earnings-ap-vendor-link">
                 <EntityLink
                   kind="vendor"
@@ -415,7 +415,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
               </div>
             </div>
             <div>
-              <div className="text-[11px] uppercase text-gray-500">Open bills</div>
+              <div className="text-xs uppercase text-gray-500">Open bills</div>
               <div className="text-page-title font-semibold text-gray-900" data-testid="driver-earnings-ap-vendor-open-total">
                 {openBillsQuery.isError
                   ? moneyOrError(true, 0)
@@ -484,19 +484,19 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
 
       <div className="grid gap-2 md:grid-cols-3">
         <div className="rounded-sm border border-gray-200 bg-white p-3">
-          <div className="text-[11px] uppercase text-gray-500">YTD earnings</div>
+          <div className="text-xs uppercase text-gray-500">YTD earnings</div>
           <div className="text-page-title font-semibold text-gray-900" data-testid="driver-earnings-ytd">
             {moneyOrError(settlementsQuery.isError, ytdEarnings)}
           </div>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-3">
-          <div className="text-[11px] uppercase text-gray-500">Average per week</div>
+          <div className="text-xs uppercase text-gray-500">Average per week</div>
           <div className="text-page-title font-semibold text-gray-900" data-testid="driver-earnings-avg-week">
             {moneyOrError(settlementsQuery.isError, averagePerWeek)}
           </div>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-3">
-          <div className="text-[11px] uppercase text-gray-500">Settlements YTD</div>
+          <div className="text-xs uppercase text-gray-500">Settlements YTD</div>
           <div className="text-page-title font-semibold text-gray-900">
             {settlementsQuery.isError ? <span className="text-red-600">Error</span> : ytdSettlements.length}
           </div>
@@ -620,7 +620,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
           <div className="flex items-center justify-between gap-2">
             <div>
               <h3 className="text-xs font-semibold text-gray-900">Pay rates</h3>
-              <p className="text-[11px] text-gray-500">
+              <p className="text-xs text-gray-500">
                 Per-load and per-mile rates live on the driver's equipment qualifications, not a shared template.
               </p>
             </div>
