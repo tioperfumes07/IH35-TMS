@@ -184,7 +184,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div>
           <div className="text-xs font-semibold text-slate-800">Hours of Service — Compliance</div>
-          <div className="text-[11px] text-slate-500">
+          <div className="text-xs text-slate-500">
             Fleet duty status and FMCSA clocks from recorded duty-status events. Driver self-view remains on Driver HOS detail.
           </div>
         </div>
@@ -201,19 +201,19 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
 
       <div className="grid gap-2 md:grid-cols-3" data-testid="safety-hos-kpi-tiles">
         <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2">
-          <div className="text-[11px] uppercase text-slate-700">Drivers on duty</div>
+          <div className="text-xs uppercase text-slate-700">Drivers on duty</div>
           <div className="text-page-title font-semibold text-emerald-900" data-testid="safety-hos-kpi-on-duty">
             {fleetQuery.isError || fleetIncomplete ? "—" : metrics.onDuty}
           </div>
         </div>
         <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2">
-          <div className="text-[11px] uppercase text-slate-700">Drivers off duty</div>
+          <div className="text-xs uppercase text-slate-700">Drivers off duty</div>
           <div className="text-page-title font-semibold text-slate-900" data-testid="safety-hos-kpi-off-duty">
             {fleetQuery.isError || fleetIncomplete ? "—" : metrics.offDuty}
           </div>
         </div>
         <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2">
-          <div className="text-[11px] uppercase text-slate-700">Approaching 11h drive cap</div>
+          <div className="text-xs uppercase text-slate-700">Approaching 11h drive cap</div>
           <div className="text-page-title font-semibold text-slate-700" data-testid="safety-hos-kpi-approaching-cap">
             {fleetQuery.isError || fleetIncomplete ? "—" : metrics.approachingCap}
           </div>
@@ -300,7 +300,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
         <section className="rounded-sm border border-gray-200 bg-white" data-testid="safety-hos-violations-panel">
           <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
             <div className="text-xs font-semibold text-slate-800">HOS violations (read-only){violationTotal ? ` · ${violationTotal} total` : ""}</div>
-            <Link to="/safety/hos-violations" className="text-[11px] font-semibold text-slate-700 hover:underline">
+            <Link to="/safety/hos-violations" className="text-xs font-semibold text-slate-700 hover:underline">
               Open violations tab
             </Link>
           </div>
@@ -338,7 +338,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
               </ul>
             )}
           </div>
-          <div className="border-t border-gray-100 px-3 py-2 text-[11px] text-slate-500">
+          <div className="border-t border-gray-100 px-3 py-2 text-xs text-slate-500">
             Log new HOS violations with <span className="font-semibold text-slate-700">+ Create</span> above, or manage the full list on{" "}
             <Link to="/safety/hos-violations" className="font-semibold text-slate-700 hover:underline">
               /safety/hos-violations
