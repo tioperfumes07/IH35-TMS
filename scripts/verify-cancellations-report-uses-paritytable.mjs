@@ -69,6 +69,10 @@ function assertMigrated(src) {
   if (!src.includes("Billable to customer")) {
     errors.push(`${PAGE}: must keep KPI summary cards`);
   }
+  if (src.includes("text-[11px]")) errors.push(`${PAGE}: leftover text-[11px]`);
+  if (src.includes("#8A92AB") || src.includes("#334155")) {
+    errors.push(`${PAGE}: leftover off-scale muted`);
+  }
   return errors;
 }
 
@@ -118,6 +122,16 @@ function selftest() {
   }
   if (badErrors.length < 3) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
+    process.exit(1);
+  }
+  const live = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+  if (live.includes("text-[11px]") || live.includes("#8A92AB") || live.includes("#334155")) {
+    console.error(`${LABEL} --selftest FAIL — live leftover tokens present`);
+    process.exit(1);
+  }
+  const leftoverErrors = assertMigrated(`${good}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`);
+  if (!leftoverErrors.some((e) => e.includes("leftover"))) {
+    console.error(`${LABEL} --selftest FAIL leftover plant escaped:`, leftoverErrors);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);
