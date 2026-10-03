@@ -189,13 +189,13 @@ export function ReportsHomePage() {
         {reportsKpis.map((item) => (
           <div
             key={item.label}
-            className={`rounded-sm border bg-white px-3 py-2 ${item.warn ? "border-l-[3px] border-l-[#334155]" : "border-slate-200"}`}
+            className={`rounded-sm border bg-white px-3 py-2 ${item.warn ? "border-l-[3px] border-l-slate-700" : "border-slate-200"}`}
           >
-            <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">
+            <div className="text-xs font-semibold uppercase tracking-[0.04em] text-slate-500">
               {item.label}
             </div>
             <div
-              className={`text-page-title font-semibold ${item.warn ? "text-[#334155]" : "text-slate-900"}`}
+              className={`text-page-title font-semibold ${item.warn ? "text-slate-700" : "text-slate-900"}`}
             >
               {item.value}
             </div>
@@ -245,7 +245,7 @@ export function ReportsHomePage() {
                 >
                   <span className="flex items-center justify-between gap-2">
                     <span>{label}</span>
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-slate-600">
                       {basisForReport(id)}
                     </span>
                   </span>

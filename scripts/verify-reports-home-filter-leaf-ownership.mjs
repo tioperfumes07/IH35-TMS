@@ -64,6 +64,8 @@ function analyze(overrides = {}) {
   if (/RunnerFilters/.test(home)) {
     failures.push("ReportsHome must not mount RunnerFilters");
   }
+  if (home.includes("text-[11px]")) failures.push("leftover text-[11px]");
+  if (home.includes("#8A92AB") || home.includes("#334155")) failures.push("leftover off-scale muted");
   const runner = overrides.runner ?? read(RUNNER);
   if (!/RunnerFilters/.test(runner)) {
     failures.push("ReportsRunner must still mount RunnerFilters (real owner)");
@@ -122,7 +124,12 @@ function selftest() {
   const good = analyze();
   if (good.length) fail(`selftest expected GOOD on real tree: ${good.join("; ")}`);
 
-  console.log(`${LABEL} --selftest OK`);
+  const leftoverPlant = analyze({ home: `${read(HOME)}\n<div className="text-[11px] text-[#8A92AB] text-[#334155]">plant</div>` });
+  if (!leftoverPlant.includes("leftover text-[11px]") || !leftoverPlant.includes("leftover off-scale muted")) {
+    fail("selftest leftover plant escaped");
+  }
+
+  console.log(`${LABEL} --selftest leftover plant rejected`);
 }
 
 function main() {
