@@ -1,3 +1,11 @@
+## 2026-10-03T10:20Z · BANK-F91118 CargoClaimReasonModal text tokens MERGED #24471
+
+ACK: CURSOR | ACK BANK-F91118 CARGO CLAIM MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91118 | CargoClaimReasonModal field errors off-scale text-[11px] (locked tokens)
+FIX: 3 field-error lines→text-xs; safety-catalog-connectivity guard refuses text-[11px].
+GUARD: verify-lists-safety-catalog-connectivity-exact · money-pr-local-gate PASS → #24471 tip `c4da584636`.
+NO seed · NO mig (HH 10). NEXT: MaintenanceCatalogModal leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T10:11Z · BANK-F91117 CivilFineTypeModal text tokens MERGED #24469
 
 ACK: CURSOR | ACK BANK-F91117 CIVIL FINE MODAL TEXT TOKENS DONE | GO
