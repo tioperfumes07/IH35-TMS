@@ -68,3 +68,13 @@ Read in this order, both are required before you write code:
 2. `docs/bus/10-03-2026-CC-2-ROUND-363-BUILD-THE-RECLASSIFY-ENGINE-AND-THE-WIZARD-SURFACE.md` — your box.
 
 Lane ruling for this round: `docs/bus/00-LEAD-RULING-2026-10-03-LANE-CROSS-ACCT-F9855-AND-POSTING-LOAD-ID.md`
+
+## ROUND 365 — PURGE READINESS — ASSIGNED, OUTRANKS EVERYTHING
+
+`docs/bus/10-03-2026-ALL-SEATS-ROUND-365-PURGE-READINESS-EVERYTHING-POSTS-WHERE-IT-SHOULD.md`
+
+365.1 the role is the contract · 365.2 every document type posts its declared pair · 365.3 the five wrong-sign accounts · 365.4 the purge misses NULL-company rows · 365.5 the pre-purge baseline is the proof the re-upload landed · **365.6 main is RED on 31 live guards right now — that is the purge blocker** · 365.7 the refusals that must be live before the delete.
+
+Take the guards in your own lane from the 365.6 list. Name the cause and the writer. Do not raise a threshold or widen a baseline to clear one — `docs/audit/VERIFY-STATIC-BASELINE.json` is shrink-only and no entry is added without a Lead ruling.
+
+CC-2 also has `docs/bus/10-03-2026-CC-2-ROUND-364-ACCOUNTING-MODULE-REGISTER-364-1-TO-364-14.md` — the Accounting module register, 364.1 to 364.14, which ships AFTER 365.
