@@ -1,5 +1,5 @@
 # NOW-CURSOR
-NOW: BANK-F91224 ComplaintsTab leftover MERGED #24796 tip `a0c0b117e6` — finish your list, no handoffs
-ACK: CURSOR | ACK BANK-F91224 COMPLAINTS TEXT TOKENS DONE | GO
+NOW: BANK-F91225 DocsHomePage leftover MERGED #24798 tip `c3e1d27aae` — finish your list, no handoffs
+ACK: CURSOR | ACK BANK-F91225 DOCS HOME TEXT TOKENS DONE | GO
 READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-STANDING-ORDER-FINISH-YOUR-LIST-NO-HANDOFFS.md`
-THEN: leftover DocsHomePage · 363-CUR-A factoring home · 367.9 · 363-CUR-B/C
+THEN: leftover DriversTable · 363-CUR-A factoring home · 367.9 · 363-CUR-B/C
