@@ -342,6 +342,7 @@ export async function unmatchBankTransactionOnClient(
     prev_fuel_transaction_id: string | null;
     prev_relay_fuel_transaction_id: string | null;
     prev_factoring_advance_id: string | null;
+    prev_deposit_id: string | null;
   }>(
     `
       WITH prior AS (
@@ -349,7 +350,7 @@ export async function unmatchBankTransactionOnClient(
                matched_load_id, matched_bill_id, matched_settlement_id,
                matched_payment_id, matched_bill_payment_id,
                matched_fuel_transaction_id, matched_relay_fuel_transaction_id,
-               matched_factoring_advance_id
+               matched_factoring_advance_id, matched_deposit_id
         FROM banking.bank_transactions
         WHERE id = $1::uuid AND operating_company_id = $2::uuid
           AND voided_at IS NULL
@@ -369,6 +370,9 @@ export async function unmatchBankTransactionOnClient(
           -- OWNER-ORDER 2026-10-02 §4 — these three were left set on unmatch (half-release).
           matched_invoice_id = NULL,
           matched_advance_id = NULL,
+          -- ROUND 373.4 — the deposit link. A deposit match created no JE (the deposit posted when it was made), so
+          -- unmatch only releases the link; the deposit and its posting stand.
+          matched_deposit_id = NULL,
           categorization_gl_account_id = NULL,
           -- 'unmatched' is not a legal review_state (CHECK: for_review|categorized|excluded|matched|
           -- transfer) — 'for_review' is the correct "back in the queue" state, and unlike the
@@ -397,7 +401,8 @@ export async function unmatchBankTransactionOnClient(
         prior.matched_bill_payment_id::text AS prev_bill_payment_id,
         prior.matched_fuel_transaction_id::text AS prev_fuel_transaction_id,
         prior.matched_relay_fuel_transaction_id::text AS prev_relay_fuel_transaction_id,
-        prior.matched_factoring_advance_id::text AS prev_factoring_advance_id
+        prior.matched_factoring_advance_id::text AS prev_factoring_advance_id,
+        prior.matched_deposit_id::text AS prev_deposit_id
     `,
     [input.bank_transaction_id, input.operating_company_id]
   );

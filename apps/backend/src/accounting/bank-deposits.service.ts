@@ -12,6 +12,7 @@ import {
   PostingEngineError,
 } from "./posting-engine.service.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
+import { unmatchBankTransactionOnClient } from "./bank-recon/recon-worklist.service.js";
 
 export class BankDepositError extends Error {
   constructor(
@@ -473,6 +474,26 @@ export async function voidBankDeposit(input: {
       }
     }
 
+    // ROUND 373.4 — a bank line matched to this deposit is released through the bank feed's own unmatch, in this
+    // transaction, BEFORE the deposit is voided: the line goes back to For Review, its match row is retired with the
+    // release recorded beside it (LAW 363.9), and it never points at a voided document (ROUND 368.2(b) refusal).
+    const matchedLines = await client.query<{ id: string }>(
+      `
+      SELECT id::text FROM banking.bank_transactions
+       WHERE operating_company_id = $1::uuid AND voided_at IS NULL
+         AND (matched_deposit_id = $2::uuid OR ($3::uuid IS NOT NULL AND matched_journal_entry_id = $3::uuid))
+      `,
+      [input.operatingCompanyId, dep.id, dep.journal_entry_id]
+    );
+    for (const line of matchedLines.rows) {
+      await unmatchBankTransactionOnClient(client as never, {
+        operating_company_id: input.operatingCompanyId,
+        bank_transaction_id: line.id,
+        actor_user_uuid: input.userId,
+        release_kind: "void",
+      });
+    }
+
     await client.query(
       `
       UPDATE accounting.deposits
@@ -493,6 +514,7 @@ export async function voidBankDeposit(input: {
       display_id: dep.display_id,
       void_reason: reason,
       reversal_journal_entry_id: reversalJe,
+      released_bank_transaction_ids: matchedLines.rows.map((r) => r.id),
     });
 
     return { id: dep.id, display_id: dep.display_id, reversal_journal_entry_id: reversalJe };
@@ -514,8 +536,8 @@ export async function getBankDeposit(operatingCompanyId: string, userId: string,
         SELECT id, transaction_date, merchant_name, description, amount_cents
           FROM banking.bank_transactions
          WHERE operating_company_id = d.operating_company_id
-           AND d.journal_entry_id IS NOT NULL
-           AND matched_journal_entry_id = d.journal_entry_id
+           -- ROUND 373.4: the bank line matched to this deposit (matched_deposit_id); the JE form is the legacy match.
+           AND (matched_deposit_id = d.id OR (d.journal_entry_id IS NOT NULL AND matched_journal_entry_id = d.journal_entry_id))
          ORDER BY transaction_date DESC, created_at DESC
          LIMIT 1
       ) bt ON TRUE

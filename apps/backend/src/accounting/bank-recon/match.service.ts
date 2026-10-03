@@ -54,7 +54,10 @@ export type LedgerEntryKind =
   | "factoring_advance"
   | "fuel_transaction"
   | "relay_fuel"
-  | "settlement";
+  | "settlement"
+  // ROUND 373.4 — a Deposit document (accounting.deposits): the bank deposit line matches the deposit that already
+  // posted (Dr bank / Cr Undeposited Funds) when it was made. The match links; it posts nothing.
+  | "deposit";
 export type MatchState = "auto_matched" | "user_matched" | "rejected";
 
 // banking.reconciliation_matches.ledger_entry_kind has a CHECK constraint. Migration
@@ -76,6 +79,7 @@ export const PERSISTABLE_MATCH_KINDS: ReadonlySet<LedgerEntryKind> = new Set<Led
   // ROUND 186 addendum — driver settlement net_pay ↔ BoA debit. Wider date window (10d) lives in
   // the bulk runner, not findCandidates (settlement-born candidate universe stays bill_payment/bill).
   "settlement",
+  "deposit",
 ]);
 
 // Denormalized convenience FK on banking.bank_transactions (migration 0182 + Part 2a's
@@ -93,6 +97,7 @@ const MATCHED_COLUMN_BY_KIND: Partial<Record<LedgerEntryKind, string>> = {
   settlement: "matched_settlement_id",
   fuel_transaction: "matched_fuel_transaction_id",
   relay_fuel: "matched_relay_fuel_transaction_id",
+  deposit: "matched_deposit_id",
 };
 
 // ROUND 141.4 — A kind that findCandidates can RETURN but that cannot be accepted
@@ -585,11 +590,47 @@ async function fetchLedgerCandidates(
                   AND m.ledger_entry_id = p.id
                   AND m.match_state IN ('auto_matched', 'user_matched')
              )
+             -- ROUND 373.4: a receipt already on a live Deposit is matched THROUGH that deposit, never on its own —
+             -- matching it directly would move it out of Undeposited Funds a second time.
+             AND NOT EXISTS (
+               SELECT 1 FROM accounting.deposit_lines dl
+                 JOIN accounting.deposits d ON d.id = dl.deposit_id AND d.voided_at IS NULL
+                WHERE dl.source_payment_id = p.id
+             )
            LIMIT $5
         `,
         [operatingCompanyId, fromDate, toDate, likeParam, rowLimit]
       );
       for (const row of payments.rows) results.push(toCandidate("payment", row, "customer"));
+    }
+    // ROUND 373.4 — Deposit documents: the deposit that already moved its receipts from Undeposited Funds into THIS bank
+    // account. Scoped to the line's own bank account (a deposit belongs to one bank), live, posted, not yet matched.
+    if (wants("deposit")) {
+      const deposits = await client.query<RawRow>(
+        `
+          SELECT d.id::text, d.amount_deposited_cents::int AS amount_cents, d.deposit_date::text AS event_date,
+                 d.display_id::text AS memo, NULL::text AS counterparty_id, NULL::text AS counterparty_name,
+                 COALESCE(NULLIF(d.reference_number, ''), d.display_id)::text AS reference,
+                 d.memo::text AS description, NULL::int AS open_balance_cents
+            FROM accounting.deposits d
+           WHERE d.operating_company_id = $1::uuid
+             AND d.bank_account_id = $6::uuid
+             AND d.deposit_date BETWEEN $2::date AND $3::date
+             AND d.voided_at IS NULL
+             AND d.posting_status = 'posted'
+             AND ($4::text IS NULL OR lower(COALESCE(d.display_id, '') || ' ' || COALESCE(d.reference_number, '') || ' ' || COALESCE(d.memo, '')) LIKE $4)
+             AND NOT EXISTS (
+               SELECT 1 FROM banking.reconciliation_matches m
+                WHERE m.ledger_entry_kind = 'deposit'
+                  AND m.ledger_entry_id = d.id
+                  AND m.voided_at IS NULL
+                  AND m.match_state IN ('auto_matched', 'user_matched')
+             )
+           LIMIT $5
+        `,
+        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit, _bankAccountId]
+      );
+      for (const row of deposits.rows) results.push(toCandidate("deposit", row, "customer"));
     }
   }
 
@@ -706,6 +747,26 @@ async function fetchLedgerCandidates(
   });
 }
 
+/**
+ * ROUND 373.4 — a customer payment or factoring advance that sits on a live Deposit already left Undeposited Funds
+ * through that deposit. Matching it directly would sweep it a second time; match the deposit instead.
+ */
+async function refuseReceiptAlreadyOnADeposit(client: DbClient, operatingCompanyId: string, kind: LedgerEntryKind, entryId: string) {
+  if (kind !== "payment" && kind !== "factoring_advance") return;
+  const col = kind === "payment" ? "source_payment_id" : "source_factoring_advance_id";
+  const res = await client.query<{ display_id: string | null }>(
+    `SELECT d.display_id::text
+       FROM accounting.deposit_lines dl
+       JOIN accounting.deposits d ON d.id = dl.deposit_id AND d.voided_at IS NULL
+      WHERE dl.${col} = $1::uuid AND dl.operating_company_id = $2::uuid
+      LIMIT 1`,
+    [entryId, operatingCompanyId]
+  );
+  if (res.rows[0]) {
+    throw new Error(`receipt_is_on_a_deposit:${res.rows[0].display_id ?? ""} — match the bank line to that deposit, not to the receipt`);
+  }
+}
+
 async function loadLedgerAmountCents(client: DbClient, operatingCompanyId: string, kind: LedgerEntryKind, entryId: string) {
   if (kind === "payment") {
     const res = await client.query<{ amount_cents: number }>(
@@ -778,6 +839,17 @@ async function loadLedgerAmountCents(client: DbClient, operatingCompanyId: strin
     const res = await client.query<{ amount_cents: number }>(
       `SELECT ABS(COALESCE(total_amount_paid_cents, 0))::int AS amount_cents
          FROM integrations.relay_fuel_transactions
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
+        LIMIT 1`,
+      [entryId, operatingCompanyId]
+    );
+    return Math.abs(Number(res.rows[0]?.amount_cents ?? 0));
+  }
+  if (kind === "deposit") {
+    // The amount that reached the bank: total receipts less any cash back (accounting.deposits CHECK deposits_amount_math).
+    const res = await client.query<{ amount_cents: number }>(
+      `SELECT amount_deposited_cents::int AS amount_cents
+         FROM accounting.deposits
         WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
         LIMIT 1`,
       [entryId, operatingCompanyId]
@@ -1282,6 +1354,7 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
     if (!PERSISTABLE_MATCH_KINDS.has(input.ledger_entry_kind)) {
       throw new Error(`match_kind_not_acceptable:${input.ledger_entry_kind}`);
     }
+    await refuseReceiptAlreadyOnADeposit(client, input.operating_company_id, input.ledger_entry_kind, input.ledger_entry_id);
 
     // Idempotency: a bank line already cleared (review_state='matched') must not be re-matched.
     if (txn.review_state === "matched") {
@@ -1715,6 +1788,7 @@ export async function acceptExactMultiDocumentMatch(input: {
       if (!PERSISTABLE_MATCH_KINDS.has(entry.ledger_entry_kind)) {
         throw new Error(`match_kind_not_acceptable:${entry.ledger_entry_kind}`);
       }
+      await refuseReceiptAlreadyOnADeposit(client, input.operating_company_id, entry.ledger_entry_kind, entry.ledger_entry_id);
     }
 
     for (const entry of input.entries) {

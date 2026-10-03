@@ -503,6 +503,7 @@ const BANK_TX_UNMATCH_RESET_SQL = `
          matched_relay_fuel_transaction_id = NULL,
          matched_invoice_id = NULL,
          matched_advance_id = NULL,
+         matched_deposit_id = NULL,
          linked_entity_id = NULL,
          category = NULL,
          category_kind = NULL,

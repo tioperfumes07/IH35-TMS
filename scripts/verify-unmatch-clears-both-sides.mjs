@@ -86,10 +86,18 @@ export function checkUnmatchClearsBothSides(source) {
   // bill_payment included by construction. Accepted in place of the per-kind pushes.
   const retiresEveryKind = /UPDATE banking\.reconciliation_matches\s+SET match_state = 'rejected',[\s\S]{0,400}AND match_state IN \('auto_matched', 'user_matched'\)/.test(body)
     && !/ledger_entry_kind\s*=\s*\$/.test(body.slice(0, body.indexOf("RETURNING ledger_entry_kind")));
-  if (!retiresEveryKind && !/rejectedKinds\.push\(\{\s*kind:\s*"payment"/.test(body)) {
+  // ROUND 363-CC3-B / LAW 363.9 (03f4753223): an unmatch RELEASES every match row of the line — any kind — through
+  // releaseBankLineMatches (banking.release_bank_line_matches(line, …): per line, no kind argument), keeps the accepted
+  // row and records the release beside it, and reports exactly what it released (releasedInThisTransaction). That is the
+  // every-kind retirement in its current form; a release scoped to a kind would not match this shape.
+  const releasesEveryKind = /releaseBankLineMatches\(\s*client\s*,\s*\{\s*bankTransactionId:\s*input\.bank_transaction_id\b/.test(body)
+    && /releasedInThisTransaction\(\s*client\s*,\s*input\.bank_transaction_id\s*\)/.test(body)
+    // …and nothing in the same body narrows a retirement of match rows to one kind.
+    && !/UPDATE banking\.reconciliation_matches[\s\S]{0,400}?ledger_entry_kind\s*=\s*\$/.test(body);
+  if (!retiresEveryKind && !releasesEveryKind && !/rejectedKinds\.push\(\{\s*kind:\s*"payment"/.test(body)) {
     failures.push("rejectedKinds never includes 'payment' — an unmatched payment-kind match is never recorded as rejected.");
   }
-  if (!retiresEveryKind && !/rejectedKinds\.push\(\{\s*kind:\s*"bill_payment"/.test(body)) {
+  if (!retiresEveryKind && !releasesEveryKind && !/rejectedKinds\.push\(\{\s*kind:\s*"bill_payment"/.test(body)) {
     failures.push("rejectedKinds never includes 'bill_payment' — an unmatched bill_payment-kind match is never recorded as rejected.");
   }
 
@@ -168,7 +176,9 @@ function main() {
       console.error(`[${LABEL}] SELFTEST FAILED: the real file must pass`);
       process.exit(1);
     }
-    const scoped = real.replace("AND match_state IN ('auto_matched', 'user_matched')\n      RETURNING", "AND ledger_entry_kind = $4 AND match_state IN ('auto_matched', 'user_matched')\n      RETURNING");
+    // ROUND 363-CC3-B moved the retirement into releaseBankLineMatches (every kind, per line). Plant: swap that call for
+    // a kind-scoped release — the guard must fail.
+    const scoped = real.replace("releaseBankLineMatches(client, {", "releaseBankLineMatchesForOneKind(client, {");
     if (scoped === real || checkUnmatchClearsBothSides(scoped).length === 0) {
       console.error(`[${LABEL}] SELFTEST FAILED: a retire UPDATE scoped to one kind must fail`);
       process.exit(1);
