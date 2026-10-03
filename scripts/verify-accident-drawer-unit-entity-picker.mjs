@@ -68,6 +68,8 @@ export function collectProblems(root = ROOT) {
   if (!/selectedOption=\{[\s\S]{0,220}?initialDriverId[\s\S]{0,220}?initialDriverName/.test(code)) {
     problems.push(`${FILE}: persisted driver picker must seed its reader-provided human label`);
   }
+  if (src.includes("text-[11px]")) problems.push(`${FILE}: leftover text-[11px]`);
+  if (src.includes("#8A92AB") || src.includes("#334155")) problems.push(`${FILE}: leftover off-scale muted`);
   const entityPicker = readRel(root, ENTITY_PICKER);
   // Widened 2026-09-05 (CC-2): #20192 (WIZ-38) inserted a legitimate `&& heldQuery.data !== false`
   // guard between `selectedOption` and its `?`, which the old exact-ternary regex could not see past
@@ -108,6 +110,29 @@ listDispatchLoads({ limit: 200 })
     if (!planted.length) {
       console.error(`${LABEL} SELFTEST FAIL: planted stub did not FAIL`);
       process.exit(1);
+    }
+    const leftoverRoot = fs.mkdtempSync(path.join(os.tmpdir(), "accident-leftover-"));
+    try {
+      const leftoverDir = path.join(leftoverRoot, "apps/frontend/src/components/safety");
+      fs.mkdirSync(leftoverDir, { recursive: true });
+      const live = readRel(ROOT, FILE) ?? "";
+      fs.writeFileSync(
+        path.join(leftoverDir, "AccidentReportDrawer.tsx"),
+        `${live}\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n`,
+      );
+      const epDir = path.join(leftoverRoot, "apps/frontend/src/components");
+      fs.mkdirSync(epDir, { recursive: true });
+      fs.copyFileSync(path.join(ROOT, ENTITY_PICKER), path.join(epDir, "EntityPicker.tsx"));
+      const leftover = collectProblems(leftoverRoot);
+      if (
+        !leftover.some((p) => p.includes("leftover text-[11px]")) ||
+        !leftover.some((p) => p.includes("leftover off-scale muted"))
+      ) {
+        console.error(`${LABEL} SELFTEST FAIL: leftover plant escaped`, leftover);
+        process.exit(1);
+      }
+    } finally {
+      fs.rmSync(leftoverRoot, { recursive: true, force: true });
     }
   } finally {
     fs.rmSync(tmpRoot, { recursive: true, force: true });
