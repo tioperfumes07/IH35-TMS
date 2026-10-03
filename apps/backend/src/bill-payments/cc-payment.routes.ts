@@ -6,7 +6,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { enqueueAccountingOutbox } from "../accounting/outbox-events.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { buildQboCcBillPaymentPayload } from "./qbo-cc-payment-poster.js";
-import { postBillPaymentGlIfEnabled } from "../accounting/bill-payment-gl.service.js";
+import { postBillPaymentGlIfEnabledInClientTx } from "../accounting/bill-payment-gl.service.js";
 
 const createCcPaymentBodySchema = z.object({
   bill_id: z.string().uuid(),
@@ -147,6 +147,10 @@ export async function registerCcPaymentRoutes(app: FastifyInstance) {
           }
         }
 
+        // ROUND 363-CC1-B — Dr the bill's payable / Cr the CC-liability account, posted on THIS transaction as the payment
+        // is created (it used to post after commit and log a failure, leaving a committed payment with no postings).
+        await postBillPaymentGlIfEnabledInClientTx(client as never, query.data.operating_company_id, paymentId, { userId: user.uuid });
+
         await appendCrudAudit(client, user.uuid, "accounting.cc_bill_payment.created.closure3", {
           resource_type: "accounting.bill_payments",
           resource_id: paymentId,
@@ -166,22 +170,6 @@ export async function registerCcPaymentRoutes(app: FastifyInstance) {
       });
 
       if ("error" in result) return reply.code(result.code).send({ error: result.error });
-
-      // BANKING-GL-COMPLETION — Dr ap_control / Cr the CC-liability account, via the SAME canonical
-      // bill_payment poster CHAIN-04 already ships (postBillPaymentGlIfEnabled -> postSourceTransaction
-      // ('bill_payment') -> buildBillPaymentLines, which now also reads cc_account_id — see
-      // posting-engine.service.ts). Runs AFTER the transaction above committed (postSourceTransaction opens
-      // its OWN transaction; calling it from inside the still-open insert would self-deadlock on the
-      // bill/bill_payment row's own lock). Gated by the EXISTING BILL_PAYMENT_GL_POSTING_ENABLED flag
-      // (default OFF) — no new flag. Best-effort: the bill_payment row is already committed either way.
-      try {
-        await postBillPaymentGlIfEnabled(query.data.operating_company_id, result.data.payment_id, { userId: user.uuid });
-      } catch (err) {
-        req.log.warn(
-          { err, payment_id: result.data.payment_id, company_id: query.data.operating_company_id },
-          "cc_bill_payment_gl_post_failed"
-        );
-      }
 
       return reply.code(result.code).send(result.data);
     } catch (error) {

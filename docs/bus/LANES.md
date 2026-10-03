@@ -36,6 +36,15 @@ apps/backend/src/maintenance/pm-auto-engine.cron.ts
 apps/backend/src/maintenance/__tests__/pm-auto-engine-e14.test.ts
 apps/backend/src/system/engine-status.catalog.ts
 scripts/db-migrate.mjs
+# ROUND 372.1 (Lead, 2026-10-03) — files no seat owned are CC-1's from now on:
+apps/backend/src/health/health.routes.ts
+apps/backend/src/integrations/samsara/fuel-purchase-push.service.ts
+apps/backend/src/integrations/samsara/geofences/fence-push.service.ts
+apps/backend/src/integrations/samsara/routes-integration.service.ts
+apps/backend/src/leases/**
+apps/backend/src/legal/contracts.service.ts
+apps/backend/src/maintenance/fuel-integrity.service.ts
+apps/backend/src/telematics/stop-events.reads.ts
 **/*.db.test.ts
 TABLES: accounting.company_settlements · driver_finance.driver_bills · mdata.drivers · identity.*
         mdata.loads
