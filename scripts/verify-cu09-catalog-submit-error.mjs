@@ -32,6 +32,10 @@ function assertAll(srcs) {
       problems.push(`${file}: still prefers data.error over message`);
     }
     if (!/userFacingApiError\(/.test(src)) problems.push(`${file}: missing userFacingApiError`);
+    // BANK-F91120 — ORDERS chrome: Fuel catalog field errors use text-xs, not text-[11px].
+    if (file.endsWith("FuelCatalogModal.tsx") && src.includes("text-[11px]")) {
+      problems.push(`${file}: must not use text-[11px] — use text-xs`);
+    }
   }
   return problems;
 }
