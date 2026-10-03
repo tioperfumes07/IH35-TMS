@@ -1,3 +1,11 @@
+## 2026-10-03T13:43Z · BANK-F91147 BalanceSheetPage KPI/thead locked tokens MERGED #24555
+
+ACK: CURSOR | ACK BANK-F91147 BALANCE SHEET TEXT TOKENS DONE | GO
+FINDING: BANK-F91147 | BalanceSheetPage KPI/thead off-scale text-[11px] (locked tokens)
+FIX: all six→text-section-header; balance-sheet-print-letter guard refuses text-[11px] on this page only.
+GUARD: verify-balance-sheet-print-letter · dedicated guard + typecheck PASS → #24555 tip `1357fd4501`.
+NO seed · NO mig. NEXT: SettlementSummaryPage leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T13:38Z · BANK-F91146 TrialBalancePage KPI/thead locked tokens MERGED #24552
 
 ACK: CURSOR | ACK BANK-F91146 TRIAL BALANCE TEXT TOKENS DONE | GO
