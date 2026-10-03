@@ -6,8 +6,10 @@
  * Root cause: escrow-forfeit.service.ts wrote accounting.escrow_postings (+ liabilities) but
  * wrote escrow_balances / escrow_ledger ZERO times → driver-facing balance froze (overstated).
  *
- * Static: service UPDATEs escrow_balances (−), INSERTs escrow_ledger transaction_type='forfeit',
- * fails loud if driver_finance cannot move, and still records accounting via recordEscrowPostingOnly.
+ * KILL THE SECOND SYSTEM tables 2-5 (202615380100): escrow_balances keeps no amount and escrow_ledger no running
+ * balance — the forfeit's balance change IS the GL forfeiture. The split this guard exists for now means: the forfeit
+ * writes accounting.escrow_postings AND appends its driver_finance.escrow_ledger 'forfeit' row (the driver-facing
+ * history) on the same path, against the identity row from ensureEscrowBalanceRow — and never writes a stored amount.
  *
  * Optional throwaway (IH35_ESC_FORFEIT_SPLIT_DSN=local only): both stores net the same forfeited cents.
  *
@@ -38,11 +40,11 @@ export function assertSplit(root = ROOT) {
   if (!/recordEscrowPostingOnly\s*\(/.test(svc) && !/INSERT\s+INTO\s+accounting\.escrow_postings/.test(svc)) {
     problems.push(`${SERVICE}: must write accounting.escrow_postings (recordEscrowPostingOnly or INSERT)`);
   }
-  if (!/UPDATE\s+driver_finance\.escrow_balances/.test(svc)) {
-    problems.push(`${SERVICE}: must UPDATE driver_finance.escrow_balances on forfeit`);
+  if (!/ensureEscrowBalanceRow\s*\(/.test(svc)) {
+    problems.push(`${SERVICE}: must resolve the escrow_balances identity row via ensureEscrowBalanceRow (the ledger FK)`);
   }
-  if (!/current_balance_cents\s*=\s*current_balance_cents\s*-/.test(svc)) {
-    problems.push(`${SERVICE}: escrow_balances.current_balance_cents must decrement`);
+  if (/current_balance_cents|total_held_cents|total_released_cents|running_balance_cents/.test(svc)) {
+    problems.push(`${SERVICE}: writes a stored escrow amount — those columns died with 202615380100; the balance is the GL`);
   }
   if (!/INSERT\s+INTO\s+driver_finance\.escrow_ledger/.test(svc)) {
     problems.push(`${SERVICE}: must INSERT driver_finance.escrow_ledger`);
@@ -50,15 +52,11 @@ export function assertSplit(root = ROOT) {
   if (!/['"]forfeit['"]/.test(svc)) {
     problems.push(`${SERVICE}: escrow_ledger must use transaction_type='forfeit'`);
   }
-  if (!/E_ESCROW_BALANCES_MISSING|split-brain/.test(svc)) {
-    problems.push(`${SERVICE}: must fail loud when driver_finance cannot move (no accounting-only forfeit)`);
-  }
-  // Keep #3542 sign concerns out of this guard's ownership — but require same-txn ordering:
-  // accounting write appears before escrow_balances UPDATE in source.
+  // same-transaction ordering: the accounting write precedes the ledger row in source
   const acctIdx = svc.search(/recordEscrowPostingOnly\s*\(|INSERT\s+INTO\s+accounting\.escrow_postings/);
-  const dfIdx = svc.search(/UPDATE\s+driver_finance\.escrow_balances/);
+  const dfIdx = svc.search(/INSERT\s+INTO\s+driver_finance\.escrow_ledger/);
   if (acctIdx < 0 || dfIdx < 0 || dfIdx < acctIdx) {
-    problems.push(`${SERVICE}: driver_finance.escrow_balances UPDATE must follow accounting.escrow_postings write in the same tx path`);
+    problems.push(`${SERVICE}: the driver_finance.escrow_ledger row must follow the accounting.escrow_postings write on the same path`);
   }
 
   return problems;
@@ -82,10 +80,8 @@ DECLARE
   v_df uuid;
   v_user uuid;
   v_for bigint := 20000;
-  v_seed bigint := 50000;
   v_postings int;
-  v_df_before bigint;
-  v_df_after bigint;
+  v_ledger int;
 BEGIN
   SELECT id INTO v_opco FROM org.companies WHERE code = 'TRANSP' LIMIT 1;
   IF v_opco IS NULL THEN RAISE EXCEPTION 'no TRANSP'; END IF;
@@ -107,12 +103,10 @@ BEGIN
   ) VALUES (v_opco, v_driver, 'driver', 'driver_bond', v_coa, 'active')
   RETURNING id INTO v_escrow;
 
-  INSERT INTO driver_finance.escrow_balances (
-    operating_company_id, driver_id, total_held_cents, total_released_cents, current_balance_cents
-  ) VALUES (v_opco, v_driver, v_seed, 0, v_seed)
+  -- identity row only (KILL THE SECOND SYSTEM tables 2-5: no stored amounts)
+  INSERT INTO driver_finance.escrow_balances (operating_company_id, driver_id, last_updated_at)
+  VALUES (v_opco, v_driver, now())
   RETURNING id INTO v_df;
-
-  SELECT current_balance_cents INTO v_df_before FROM driver_finance.escrow_balances WHERE id = v_df;
 
   -- Mirror service: the accounting side is the escrow_postings forfeiture row (the balance itself is the 2100-00-nnn GL;
   -- accounting.escrow_accounts.balance_cents died with KILL THE SECOND SYSTEM table 1, migration 202615380000).
@@ -121,26 +115,23 @@ BEGIN
     note, posted_by_user_id
   ) VALUES (v_opco, v_escrow, 'forfeiture', v_for, 'forfeit', 'split-proof', v_user);
 
-  UPDATE driver_finance.escrow_balances
-     SET current_balance_cents = current_balance_cents - v_for, last_updated_at = now()
-   WHERE id = v_df AND current_balance_cents >= v_for;
-  IF NOT FOUND THEN RAISE EXCEPTION 'df UPDATE failed'; END IF;
   INSERT INTO driver_finance.escrow_ledger
-    (operating_company_id, driver_id, escrow_balance_id, transaction_type, amount_cents, running_balance_cents, description)
-  VALUES (v_opco, v_driver, v_df, 'forfeit', v_for, v_df_before - v_for, 'split-proof');
+    (operating_company_id, driver_id, escrow_balance_id, transaction_type, amount_cents, description)
+  VALUES (v_opco, v_driver, v_df, 'forfeit', -v_for, 'split-proof');
 
   SELECT count(*) INTO v_postings FROM accounting.escrow_postings
    WHERE escrow_account_id = v_escrow AND posting_type = 'forfeiture' AND amount_cents = v_for;
-  SELECT current_balance_cents INTO v_df_after FROM driver_finance.escrow_balances WHERE id = v_df;
+  SELECT count(*) INTO v_ledger FROM driver_finance.escrow_ledger
+   WHERE escrow_balance_id = v_df AND transaction_type = 'forfeit' AND amount_cents = -v_for;
 
   IF v_postings <> 1 THEN
     RAISE EXCEPTION 'accounting side: expected 1 forfeiture escrow_postings row of %, found %', v_for, v_postings;
   END IF;
-  IF v_df_before - v_df_after <> v_for THEN
-    RAISE EXCEPTION 'driver_finance delta % <> forfeited %', v_df_before - v_df_after, v_for;
+  IF v_ledger <> 1 THEN
+    RAISE EXCEPTION 'driver_finance side: expected 1 forfeit escrow_ledger row of -%, found %', v_for, v_ledger;
   END IF;
 
-  RAISE NOTICE 'SPLIT_PROOF_OK both_net=% final=%', v_for, v_df_after;
+  RAISE NOTICE 'SPLIT_PROOF_OK both_recorded=% ledger_rows=%', v_for, v_ledger;
 END
 $proof$;
 ROLLBACK;
@@ -160,10 +151,14 @@ if (process.argv.includes("--selftest")) {
   try {
     const dest = path.join(tmp, SERVICE);
     fs.mkdirSync(path.dirname(dest), { recursive: true });
-    let s = stripComments(read(ROOT, SERVICE)).replace(/UPDATE\s+driver_finance\.escrow_balances/g, "SELECT 1 FROM driver_finance.escrow_balances /*noupdate*/");
+    let s = stripComments(read(ROOT, SERVICE)).replace(/INSERT\s+INTO\s+driver_finance\.escrow_ledger/g, "SELECT 1 FROM driver_finance.escrow_ledger /*noinsert*/");
     fs.writeFileSync(dest, s);
-    if (!assertSplit(tmp).some((p) => /must UPDATE driver_finance\.escrow_balances/.test(p))) {
-      failures.push("removed UPDATE not caught");
+    if (!assertSplit(tmp).some((p) => /must INSERT driver_finance\.escrow_ledger/.test(p))) {
+      failures.push("removed ledger INSERT not caught");
+    }
+    fs.writeFileSync(dest, stripComments(read(ROOT, SERVICE)) + "\nconst x = `UPDATE driver_finance.escrow_balances SET current_balance_cents = 0`;\n");
+    if (!assertSplit(tmp).some((p) => /stored escrow amount/.test(p))) {
+      failures.push("a re-added stored-amount write not caught");
     }
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });

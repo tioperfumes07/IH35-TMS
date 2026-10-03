@@ -33,6 +33,7 @@ import {
   daysUntilEligible,
   isEligibleForRelease,
 } from "./escrow-separation.math.js";
+import { ensureEscrowBalanceRow } from "./escrow-balance-row.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -358,34 +359,20 @@ export async function releaseDriverEscrowSeparation(
       // as cash to the driver, once as a damage recovery. Decrement current_balance_cents and append
       // the ledger row here so both stores reconcile after a separation release, exactly like the
       // forfeit path already does. escrow_ledger's CHECK already permits transaction_type='release'.
-      const dfBal = await client.query<{ id: string; current_balance_cents: string }>(
-        `UPDATE driver_finance.escrow_balances
-         SET current_balance_cents = current_balance_cents - $3::bigint,
-             last_updated_at = now()
-         WHERE operating_company_id = $1::uuid
-           AND driver_id = $2::uuid
-           AND current_balance_cents >= $3::bigint
-         RETURNING id::text, current_balance_cents::bigint`,
-        [input.operating_company_id, separation.driver_id, net.net_release_cents]
-      );
-      const dfRow = dfBal.rows[0];
-      if (!dfRow) {
-        throw new Error(
-          "E_ESCROW_BALANCES_MISSING: driver_finance.escrow_balances missing or insufficient — refusing split-brain separation release (accounting posted without driver-facing decrement)"
-        );
-      }
+      // KILL THE SECOND SYSTEM (tables 2-5): the GL release above IS the balance change; no stored copy to decrement
+      // (its ">= net" guard could block a payout the GL allowed). The ledger row keeps the movement history.
+      const escrowBalanceId = await ensureEscrowBalanceRow(client as never, input.operating_company_id, separation.driver_id);
       await client.query(
         `INSERT INTO driver_finance.escrow_ledger
-           (operating_company_id, driver_id, escrow_balance_id, transaction_type, amount_cents, running_balance_cents, description)
-         VALUES ($1::uuid, $2::uuid, $3::uuid, 'release', $4::bigint, $5::bigint, $6)`,
+           (operating_company_id, driver_id, escrow_balance_id, transaction_type, amount_cents, description)
+         VALUES ($1::uuid, $2::uuid, $3::uuid, 'release', $4::bigint, $5)`,
         [
           input.operating_company_id,
           separation.driver_id,
-          dfRow.id,
+          escrowBalanceId,
           // ESCROW-LEDGER-SIGN-01: already positive here (a release is positive to the driver) --
           // routed through the shared helper anyway so every writer derives the sign the same way.
           signedEscrowLedgerAmountCents("release", net.net_release_cents),
-          Number(dfRow.current_balance_cents),
           `Driver escrow separation payout (>=90 days post-termination)`,
         ]
       );

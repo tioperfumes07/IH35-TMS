@@ -201,13 +201,13 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
         { userId, role: "Owner" }
       );
     }
-    // running escrow balance (driver-facing projection; kept in sync by the real close path, no longer
-    // the resolver's read source)
+    // KILL THE SECOND SYSTEM tables 2-5: escrow_balances is an identity row only (no stored amounts) — the summary is
+    // driver_finance.v_escrow_balances over the GL seeded above.
     await db.query(
-      `INSERT INTO driver_finance.escrow_balances (operating_company_id, driver_id, total_held_cents, current_balance_cents)
-       VALUES ($1::uuid,$2::uuid,$3,$3)
-       ON CONFLICT (operating_company_id, driver_id) DO UPDATE SET current_balance_cents = EXCLUDED.current_balance_cents, total_held_cents = EXCLUDED.total_held_cents`,
-      [companyId, s.driverId, escrowBalanceCents]
+      `INSERT INTO driver_finance.escrow_balances (operating_company_id, driver_id)
+       VALUES ($1::uuid,$2::uuid)
+       ON CONFLICT (operating_company_id, driver_id) DO NOTHING`,
+      [companyId, s.driverId]
     );
     await db.query(
       `INSERT INTO driver_finance.driver_settlements

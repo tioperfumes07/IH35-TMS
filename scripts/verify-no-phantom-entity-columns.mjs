@@ -6,7 +6,7 @@
  * a column the migrations never create, e.g.
  *   - mdata.units.operating_company_id      (units carry owner_company_id + currently_leased_to_company_id)
  *   - mdata.equipment.operating_company_id  (equipment carries owner_company_id + currently_leased_to_company_id)
- *   - mdata.drivers.escrow_balance          (driver escrow lives in driver_finance.escrow_balances.current_balance_cents)
+ *   - mdata.drivers.escrow_balance          (driver escrow is the 2100-00-nnn GL: driver_finance.v_escrow_balances)
  *
  * These 42703 at runtime → the endpoint 500s (FLEET-1 trailer quick-assign, DRIVER-2 escrow KPIs, and the
  * equipment-transfer inbound-confirm / samsara fault→unit resolution were all this bug). This guard fails if
@@ -115,7 +115,7 @@ function scanBlock(block) {
   while ((e = ESCROW.exec(block))) {
     const pre = block.slice(Math.max(0, e.index - 6), e.index);
     if (/\bas\s*$/i.test(pre)) continue; // output alias `... AS escrow_balance` is fine
-    violations.push("escrow_balance column (phantom — use driver_finance.escrow_balances.current_balance_cents)");
+    violations.push("escrow_balance column (phantom — the driver escrow balance is the 2100-00-nnn GL: driver_finance.v_escrow_balances / v_driver_escrow_balance)");
   }
 
   return violations;

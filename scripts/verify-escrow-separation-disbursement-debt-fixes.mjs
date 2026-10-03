@@ -57,8 +57,11 @@ export function analyzeEscrowSeparationSource(src) {
   }
   const afterReleaseIdx = fn.indexOf("releaseEscrowOnClient");
   const tail = fn.slice(afterReleaseIdx);
-  if (!/UPDATE driver_finance\.escrow_balances/.test(tail)) {
-    failures.push(`${ESCROW_SEPARATION_FILE}: a release must also decrement driver_finance.escrow_balances (ACCT-F5657) — otherwise the driver-facing balance never drops and a later forfeit can double-drain the same escrow.`);
+  // KILL THE SECOND SYSTEM tables 2-5 (202615380100): the driver-facing balance is the GL (v_escrow_balances), so the
+  // release's own GL posting already drops it — there is no stored copy to decrement. What ACCT-F5657 still requires:
+  // the escrow_balances identity row is resolved (ledger FK) and the ledger row is appended.
+  if (!/ensureEscrowBalanceRow\s*\(/.test(tail)) {
+    failures.push(`${ESCROW_SEPARATION_FILE}: a release must resolve the driver_finance.escrow_balances identity row via ensureEscrowBalanceRow (ACCT-F5657) — the ledger row points at it.`);
   }
   if (!/INSERT INTO driver_finance\.escrow_ledger/.test(tail)) {
     failures.push(`${ESCROW_SEPARATION_FILE}: a release must also append a driver_finance.escrow_ledger row (ACCT-F5657) — the two stores must reconcile after every release.`);
@@ -120,13 +123,7 @@ export async function releaseDriverEscrowSeparation(input, actor) {
   return withCurrentUser(actor.userId, async (client) => {
     if (net.net_release_cents > 0) {
       const released = await releaseEscrowOnClient(client, { amount_cents: net.net_release_cents }, actor);
-      const dfBal = await client.query(\`
-        UPDATE driver_finance.escrow_balances
-         SET current_balance_cents = current_balance_cents - $3::bigint
-         WHERE current_balance_cents >= $3::bigint
-         RETURNING id::text, current_balance_cents::bigint\`);
-      const dfRow = dfBal.rows[0];
-      if (!dfRow) throw new Error("E_ESCROW_BALANCES_MISSING");
+      const escrowBalanceId = await ensureEscrowBalanceRow(client, input.operating_company_id, separation.driver_id);
       await client.query(\`INSERT INTO driver_finance.escrow_ledger (transaction_type) VALUES ('release')\`);
     }
   });

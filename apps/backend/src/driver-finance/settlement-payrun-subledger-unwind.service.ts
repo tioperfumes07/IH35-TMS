@@ -12,6 +12,7 @@
 import { signedEscrowLedgerAmountCents } from "./escrow-ledger-sign.js";
 import { recordEscrowPostingOnly } from "../accounting/escrow/service.js";
 import type { RecoverySnapshot } from "./settlement-payrun-recovery.service.js";
+import { ensureEscrowBalanceRow } from "./escrow-balance-row.js";
 
 type DbClient = { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number | null }> };
 
@@ -103,21 +104,13 @@ export async function unwindPayRunSubledgersInClientTx(
     });
     // Pay-run cap summary + detailed ledger: undo the 'hold' the close appended (running balance falls
     // back by escrowCents). total_held is reduced (the hold is being unwound, not paid out).
-    const balRes = await client.query<{ id: string; current_balance_cents: number }>(
-      `UPDATE driver_finance.escrow_balances
-          SET total_held_cents = GREATEST(0, total_held_cents - $3),
-              current_balance_cents = current_balance_cents - $3,
-              last_updated_at = now()
-        WHERE operating_company_id = $1::uuid AND driver_id = $2::uuid
-        RETURNING id::text, current_balance_cents`,
-      [opco, settlement.driver_id, escrowCents]
-    );
-    const balanceRow = balRes.rows[0];
+    // KILL THE SECOND SYSTEM (tables 2-5): the reversal JE IS the balance change; the ledger row records it.
+    const balanceRow = { id: await ensureEscrowBalanceRow(client as never, opco, settlement.driver_id) };
     if (balanceRow) {
       await client.query(
         `INSERT INTO driver_finance.escrow_ledger
-           (operating_company_id, driver_id, escrow_balance_id, settlement_id, transaction_type, amount_cents, running_balance_cents, description)
-         VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, 'release', $5, $6, $7)`,
+           (operating_company_id, driver_id, escrow_balance_id, settlement_id, transaction_type, amount_cents, description)
+         VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, 'release', $5, $6)`,
         [
           opco,
           settlement.driver_id,
@@ -126,7 +119,6 @@ export async function unwindPayRunSubledgersInClientTx(
           // ESCROW-LEDGER-SIGN-01: undoing a hold reads as a 'release' to the driver (positive) --
           // already correct by construction here, routed through the shared helper for consistency.
           signedEscrowLedgerAmountCents("release", escrowCents),
-          balanceRow.current_balance_cents,
           `${label} — escrow contribution reversal: ${reason}`,
         ]
       );

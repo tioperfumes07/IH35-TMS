@@ -28,14 +28,31 @@ export const REQUIRES_LIVE_DB = "escrow balances are live money — fails closed
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-escrow-equals-its-gl";
 
-/** Files that still WRITE (and read back to write) the stored escrow columns — retired in step 2. Shrink-only. */
-export const WRITER_DEBT = {
-  "apps/backend/src/settlements/approval.service.ts": "upserts escrow_balances and reads it back for the ledger running balance — step 2",
-  "apps/backend/src/driver-finance/settlement-payrun-close.service.ts": "upserts escrow_balances / ledger running balance at close — step 2",
-  "apps/backend/src/driver-finance/historical-escrow-backfill.service.ts": "upserts escrow_balances for history backfill — step 2",
-  "apps/backend/src/driver-finance/escrow-forfeit.service.ts": "decrements escrow_balances and writes the ledger running balance — step 2",
-  "apps/backend/src/driver-finance/settlement-payrun-subledger-unwind.service.ts": "reverses escrow_balances on unwind — step 2",
-};
+/** Files that still WRITE (and read back to write) the stored escrow columns. Shrink-only. EMPTY since KILL THE SECOND
+ *  SYSTEM tables 2-5 (migration 202615380100): the columns no longer exist, every writer keeps only the identity row. */
+export const WRITER_DEBT = {};
+
+/** KILL THE SECOND SYSTEM tables 1-5 — the stored escrow amounts that died, and the migration that dropped them. */
+export const DEAD_COLUMNS = [
+  ["accounting", "escrow_accounts", "balance_cents", "202615380000"],
+  ["driver_finance", "escrow_balances", "current_balance_cents", "202615380100"],
+  ["driver_finance", "escrow_balances", "total_held_cents", "202615380100"],
+  ["driver_finance", "escrow_balances", "total_released_cents", "202615380100"],
+  ["driver_finance", "escrow_ledger", "running_balance_cents", "202615380100"],
+];
+
+/** Static: no migration after the one that dropped a column adds it back (a dead balance stays dead). */
+export function deadColumnsStayDead({ files, read }) {
+  const out = [];
+  for (const [schema, table, col, dropped] of DEAD_COLUMNS) {
+    const re = new RegExp(`ALTER\\s+TABLE\\s+(IF\\s+EXISTS\\s+)?${schema}\\.${table}\\s+ADD\\s+COLUMN\\s+(IF\\s+NOT\\s+EXISTS\\s+)?${col}\\b`, "i");
+    for (const f of files) {
+      const base = f.split("/").pop();
+      if (base.slice(0, 12) > dropped && re.test(read(f).replace(/--[^\n]*/g, ""))) out.push(`RULE 7: ${f} adds ${schema}.${table}.${col} back — it died with ${dropped}; the balance is the 2100-00-nnn GL.`);
+    }
+  }
+  return out;
+}
 
 const stripTs = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 const VIEW = /v_driver_escrow_balance|v_escrow_account_balance/i;
@@ -56,24 +73,26 @@ export function touchesStoredBalance(t) {
     || /accounting\.escrow_accounts\b/i.test(t) && /\bbalance_cents\b/i.test(t) && !VIEW.test(t);
 }
 
-export function staticFailures({ files, read }) {
+export function staticFailures({ files, read, debt = WRITER_DEBT }) {
   const out = [];
   const touching = [];
   for (const f of files) {
     const st = statements(stripTs(read(f)));
     if (st.some(touchesStoredBalance)) touching.push(f);
-    if (!WRITER_DEBT[f] && st.some(readsStoredBalance)) {
+    if (!debt[f] && st.some(readsStoredBalance)) {
       out.push(`RULE 1: ${f} reads a STORED escrow balance — read driver_finance.v_driver_escrow_balance (the 2100-00-<nnn> GL balance) instead.`);
     }
   }
-  for (const f of Object.keys(WRITER_DEBT)) {
+  for (const f of Object.keys(debt)) {
     if (!touching.includes(f)) out.push(`WRITER DEBT RATCHET: ${f} no longer touches a stored escrow balance — remove it from WRITER_DEBT.`);
   }
   return out;
 }
 
-export function liveFailures({ liveSubaccounts, viewRows, recompute }) {
+export function liveFailures({ liveSubaccounts, viewRows, recompute, deadPresent = [], summaryMismatch = [] }) {
   const out = [];
+  for (const c of deadPresent) out.push(`RULE 5: ${c} still exists — it died with KILL THE SECOND SYSTEM; the balance is the 2100-00-nnn GL.`);
+  for (const m of summaryMismatch) out.push(`RULE 6: driver_finance.v_escrow_balances ${m.driver_id} current ${m.current} != GL ${m.gl}.`);
   const byAccount = new Map();
   for (const r of viewRows) byAccount.set(r.coa_account_id, (byAccount.get(r.coa_account_id) ?? 0) + 1);
   for (const s of liveSubaccounts) {
@@ -112,23 +131,43 @@ async function measure(client) {
       FROM accounting.journal_entry_postings p JOIN accounting.journal_entries j ON j.id = p.journal_entry_uuid AND j.status = 'posted'
      WHERE p.account_id IN (SELECT coa_account_id FROM driver_finance.v_driver_escrow_balance)
      GROUP BY 1`);
+  const dead = [];
+  for (const [schema, table, col] of DEAD_COLUMNS) {
+    const r = await client.query(`SELECT 1 FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 AND column_name = $3`, [schema, table, col]);
+    if (r.rows.length) dead.push(`${schema}.${table}.${col}`);
+  }
+  let summaryMismatch = [];
+  if ((await client.query(`SELECT to_regclass('driver_finance.v_escrow_balances') IS NOT NULL AS ok`)).rows[0].ok) {
+    summaryMismatch = (await client.query(`
+      SELECT eb.driver_id::text, eb.current_balance_cents::bigint AS current, COALESCE(g.gl, 0)::bigint AS gl
+        FROM driver_finance.v_escrow_balances eb
+        LEFT JOIN (SELECT operating_company_id, driver_id, sum(balance_cents) AS gl FROM driver_finance.v_driver_escrow_balance GROUP BY 1, 2) g
+          ON g.operating_company_id = eb.operating_company_id AND g.driver_id = eb.driver_id
+       WHERE eb.current_balance_cents <> COALESCE(g.gl, 0)`)).rows;
+  }
   await client.query("ROLLBACK");
-  return { liveSubaccounts: live.rows, viewRows: view.rows, recompute: new Map(rec.rows.map((r) => [r.account_id, Number(r.bal)])) };
+  return { liveSubaccounts: live.rows, viewRows: view.rows, recompute: new Map(rec.rows.map((r) => [r.account_id, Number(r.bal)])), deadPresent: dead, summaryMismatch };
 }
 
 const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
   if (process.argv.includes("--selftest")) {
-    const debtFiles = Object.keys(WRITER_DEBT);
+    const testDebt = { "apps/backend/src/legacy-writer.ts": "fixture writer" };
+    const debtFiles = Object.keys(testDebt);
     const fake = Object.fromEntries(debtFiles.map((f) => [f, "q(`SELECT current_balance_cents FROM driver_finance.escrow_balances`)"]));
     const files = [...debtFiles, "apps/backend/src/x.ts", "apps/backend/src/y.ts"];
     const reader = (extra) => (f) => (f === "apps/backend/src/x.ts" ? extra : fake[f] ?? "SELECT 1");
     const live = { liveSubaccounts: [{ id: "a1", company: "USMCA", account_number: "2100-00-001" }], viewRows: [{ coa_account_id: "a1", account_number: "2100-00-001", balance_cents: 500, deactivated: false }], recompute: new Map([["a1", 500]]) };
     const cases = [
-      ["clean tree passes", staticFailures({ files, read: reader("q(`SELECT ea.id, vb.balance_cents FROM accounting.escrow_accounts ea JOIN driver_finance.v_driver_escrow_balance vb ON 1=1`)") }).length === 0],
-      ["a new stored-balance reader fails", staticFailures({ files, read: reader("q(`SELECT ea.balance_cents FROM accounting.escrow_accounts ea`)") }).some((f) => f.startsWith("RULE 1"))],
-      ["joining escrow_balances fails", staticFailures({ files, read: reader("q(`SELECT eb.current_balance_cents FROM x JOIN driver_finance.escrow_balances eb ON 1=1`)") }).some((f) => f.startsWith("RULE 1"))],
-      ["a writer that stopped must leave the list", staticFailures({ files, read: (f) => (f === debtFiles[0] ? "q(`SELECT 1`)" : reader("")(f)) }).some((f) => f.startsWith("WRITER DEBT"))],
+      ["clean tree passes", staticFailures({ files, debt: testDebt, read: reader("q(`SELECT ea.id, vb.balance_cents FROM accounting.escrow_accounts ea JOIN driver_finance.v_driver_escrow_balance vb ON 1=1`)") }).length === 0],
+      ["a new stored-balance reader fails", staticFailures({ files, debt: testDebt, read: reader("q(`SELECT ea.balance_cents FROM accounting.escrow_accounts ea`)") }).some((f) => f.startsWith("RULE 1"))],
+      ["joining escrow_balances fails", staticFailures({ files, debt: testDebt, read: reader("q(`SELECT eb.current_balance_cents FROM x JOIN driver_finance.escrow_balances eb ON 1=1`)") }).some((f) => f.startsWith("RULE 1"))],
+      ["a writer that stopped must leave the list", staticFailures({ files, debt: testDebt, read: (f) => (f === debtFiles[0] ? "q(`SELECT 1`)" : reader("")(f)) }).some((f) => f.startsWith("WRITER DEBT"))],
+      ["the writer list is empty on this tree (tables 1-5 dead)", Object.keys(WRITER_DEBT).length === 0],
+      ["a dead column still present fails", liveFailures({ ...live, deadPresent: ["driver_finance.escrow_balances.current_balance_cents"] }).some((f) => f.startsWith("RULE 5"))],
+      ["a summary off the GL fails", liveFailures({ ...live, summaryMismatch: [{ driver_id: "d", current: 1, gl: 2 }] }).some((f) => f.startsWith("RULE 6"))],
+      ["re-adding a dead column in a later migration fails", deadColumnsStayDead({ files: ["db/migrations/202699990000_x.sql"], read: () => "ALTER TABLE driver_finance.escrow_balances ADD COLUMN current_balance_cents bigint;" }).some((f) => f.startsWith("RULE 7"))],
+      ["the dropping migration itself is not a re-add", deadColumnsStayDead({ files: ["db/migrations/202615380100_x.sql"], read: () => "ALTER TABLE driver_finance.escrow_balances ADD COLUMN current_balance_cents bigint;" }).length === 0],
       ["live clean passes", liveFailures(live).length === 0],
       ["unmapped live sub-account fails", liveFailures({ ...live, viewRows: [] }).some((f) => f.startsWith("RULE 2"))],
       ["double-mapped sub-account fails", liveFailures({ ...live, viewRows: [...live.viewRows, ...live.viewRows] }).some((f) => f.startsWith("RULE 2"))],

@@ -15,6 +15,13 @@
 //     Neither exactly matches the owner's stated $4,992.75, and the two don't match each other
 //     either (a $63.79 gap between GL and Faro's own statement total).
 //
+// KILL THE SECOND SYSTEM tables 2-5 (2026-10-03, migration 202615380100): the escrow "sub-ledger" was the stored
+//   driver_finance.escrow_balances.current_balance_cents — the second system. It is gone; the per-driver summary is
+//   driver_finance.v_escrow_balances, DERIVED from each driver's 2100-00-nnn GL. The $1,050.00 escrow gap therefore
+//   CLOSES BY CONSTRUCTION: re-measured 2026-10-03 (prod, USMCA) the GL-derived summary is 12 drivers / $1,325.00 and
+//   the GL driver-escrow net is -$1,325.00 — gap $0.00. The ratchet below now also requires that gap to stay 0.
+//   (The factoring-reserve gap is unchanged and still named on the board.)
+//
 // This guard does not resolve either gap -- B-34 says "prove... or name the gap," and both gaps
 // are named on the board (FACTORING-RESERVE-ESCROW-SUBLEDGER-GAP). It RATCHETS: today's measured
 // numbers become a floor so a silent further drift (the GL and sub-ledger diverging even more) is
@@ -28,8 +35,8 @@ const FACTORING_RESERVES_ACCOUNT_ID = "165cc317-5c8b-4296-8aab-f5101f4a6815";
 // Baseline measured 2026-09-30. These are NOT "correct" values -- they are today's actual,
 // imperfect state, ratcheted so nothing gets silently worse.
 const BASELINE = {
-  escrowSubledgerDriverCount: 14,
-  escrowSubledgerTotalCents: 237500,
+  escrowSubledgerDriverCount: 12, // re-measured 2026-10-03 from the GL-derived v_escrow_balances (was 14 on the stored copy)
+  escrowSubledgerTotalCents: 132500, // = -escrowGlTotalCents: the summary IS the GL now (was 237500 on the stored copy)
   escrowGlTotalCents: -132500, // liability, credit-normal; stored here as the signed net we measure
   factoringReserveGlCents: 514440,
   factoringReserveFaroCents: 520819,
@@ -39,7 +46,7 @@ async function measure(client) {
   const escrowSubledger = await client.query(
     `
     SELECT count(*)::int AS driver_count, sum(current_balance_cents)::text AS total_cents
-    FROM driver_finance.escrow_balances WHERE operating_company_id = $1::uuid AND current_balance_cents <> 0
+    FROM driver_finance.v_escrow_balances WHERE operating_company_id = $1::uuid AND current_balance_cents <> 0
     `,
     [USMCA]
   );
@@ -114,6 +121,10 @@ async function run() {
       failures.push(`escrow sub-ledger total changed from the measured baseline: ${m.escrowSubledgerTotalCents} !== ${BASELINE.escrowSubledgerTotalCents} — real driver money moved, re-measure and update this guard's baseline deliberately, don't silently pass through a drift`);
     }
 
+    if (m.escrowSubledgerTotalCents + m.escrowGlTotalCents !== 0) {
+      failures.push(`escrow summary (v_escrow_balances) ${m.escrowSubledgerTotalCents} does not equal the GL driver-escrow balance ${-m.escrowGlTotalCents} — the summary must be the GL (KILL THE SECOND SYSTEM)`);
+    }
+
     if (failures.length > 0) {
       console.error(`${LABEL}: FAIL — ${failures.join("; ")}`);
       process.exit(1);
@@ -121,8 +132,8 @@ async function run() {
 
     console.log(
       `${LABEL}: LIVE PASS (ratchet, measure-only, B-34) — ` +
-        `escrow sub-ledger: ${m.escrowSubledgerDriverCount} drivers, $${(m.escrowSubledgerTotalCents / 100).toFixed(2)} (matches owner's stated figures); ` +
-        `escrow GL: $${(m.escrowGlTotalCents / 100).toFixed(2)} (gap vs sub-ledger: $${((m.escrowSubledgerTotalCents + m.escrowGlTotalCents) / 100).toFixed(2)}, unresolved, named on the board); ` +
+        `escrow summary (GL-derived v_escrow_balances): ${m.escrowSubledgerDriverCount} drivers, $${(m.escrowSubledgerTotalCents / 100).toFixed(2)}; ` +
+        `escrow GL: $${(m.escrowGlTotalCents / 100).toFixed(2)} (gap $${((m.escrowSubledgerTotalCents + m.escrowGlTotalCents) / 100).toFixed(2)} — closed by construction); ` +
         `factoring reserve GL: $${(m.factoringReserveGlCents / 100).toFixed(2)}, Faro statement total: $${(m.factoringReserveFaroCents / 100).toFixed(2)} (gap: $${((m.factoringReserveFaroCents - m.factoringReserveGlCents) / 100).toFixed(2)}, unresolved, named on the board).`
     );
   } finally {

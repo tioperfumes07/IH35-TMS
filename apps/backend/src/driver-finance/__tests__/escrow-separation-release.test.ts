@@ -58,11 +58,10 @@ function mockQueryImplementation(opts: {
     if (sql.includes("FROM driver_finance.driver_settlement_deductions")) {
       return { rows: [{ total: opts.outstandingDamageCents ?? 0 }] };
     }
-    // ACCT-F5657 — ESC-SEPARATION-SPLIT's driver-facing decrement + ledger append.
-    if (sql.includes("UPDATE driver_finance.escrow_balances")) {
-      const dfBalance = opts.driverFinanceBalanceCents === undefined ? (opts.balanceCents ?? 50000) : opts.driverFinanceBalanceCents;
-      if (dfBalance === null) return { rows: [] }; // simulates WHERE current_balance_cents >= $3 failing
-      return { rows: [{ id: "dfbal-1", current_balance_cents: dfBalance }] };
+    // ACCT-F5657 / KILL THE SECOND SYSTEM tables 2-5 — the escrow_balances IDENTITY row (no amount) + ledger append.
+    if (sql.includes("INSERT INTO driver_finance.escrow_balances")) {
+      if (opts.driverFinanceBalanceCents === null) return { rows: [] }; // simulates an upsert that returns no id
+      return { rows: [{ id: "dfbal-1" }] };
     }
     if (sql.includes("INSERT INTO driver_finance.escrow_ledger")) {
       return { rows: [] };
@@ -155,7 +154,7 @@ describe("releaseDriverEscrowSeparation (BLOCK-02)", () => {
     expect(mocked.releaseEscrowOnClientMock).not.toHaveBeenCalled();
   });
 
-  it("ACCT-F5657: decrements driver_finance.escrow_balances and appends the escrow_ledger row in the same transaction as the release", async () => {
+  it("ACCT-F5657 (tables 2-5): resolves the escrow_balances identity row and appends the escrow_ledger row in the same transaction as the release — no stored amount", async () => {
     mocked.isEnabledMock.mockResolvedValue(true);
     mocked.releaseEscrowOnClientMock.mockResolvedValue({ posting: { id: "posting-1" }, balance_cents: 0 });
     mockQueryImplementation({ balanceCents: 50000, outstandingDamageCents: 0, driverFinanceBalanceCents: 50000 });
@@ -166,21 +165,23 @@ describe("releaseDriverEscrowSeparation (BLOCK-02)", () => {
     );
 
     expect(result).toMatchObject({ result: "released", net_release_cents: 50000 });
-    const decrementCall = mocked.queryMock.mock.calls.find(([sql]) =>
-      String(sql).includes("UPDATE driver_finance.escrow_balances")
+    const identityCall = mocked.queryMock.mock.calls.find(([sql]) =>
+      String(sql).includes("INSERT INTO driver_finance.escrow_balances")
     );
-    expect(decrementCall).toBeDefined();
-    expect(decrementCall?.[1]).toEqual(["oc-1", SEPARATION_ROW.driver_id, 50000]);
+    expect(identityCall).toBeDefined();
+    expect(identityCall?.[1]).toEqual(["oc-1", SEPARATION_ROW.driver_id, null]);
+    expect(String(identityCall?.[0])).not.toMatch(/current_balance_cents|total_held_cents|total_released_cents/);
     const ledgerCall = mocked.queryMock.mock.calls.find(([sql]) =>
       String(sql).includes("INSERT INTO driver_finance.escrow_ledger")
     );
     expect(ledgerCall).toBeDefined();
     expect(ledgerCall?.[1]).toEqual(
-      expect.arrayContaining(["oc-1", SEPARATION_ROW.driver_id, "dfbal-1", 50000, 50000])
+      expect.arrayContaining(["oc-1", SEPARATION_ROW.driver_id, "dfbal-1", 50000])
     );
+    expect(String(ledgerCall?.[0])).not.toMatch(/running_balance_cents/);
   });
 
-  it("ACCT-F5657: refuses a split-brain release when driver_finance.escrow_balances is missing or insufficient, even though accounting already posted", async () => {
+  it("ACCT-F5657 (tables 2-5): refuses when the escrow_balances identity row cannot be resolved — the ledger row must have its anchor", async () => {
     mocked.isEnabledMock.mockResolvedValue(true);
     mocked.releaseEscrowOnClientMock.mockResolvedValue({ posting: { id: "posting-1" }, balance_cents: 0 });
     mockQueryImplementation({ balanceCents: 50000, outstandingDamageCents: 0, driverFinanceBalanceCents: null });
@@ -190,7 +191,7 @@ describe("releaseDriverEscrowSeparation (BLOCK-02)", () => {
         { operating_company_id: "oc-1", separation_id: "sep-1" },
         { userId: "user-1", role: "Owner" }
       )
-    ).rejects.toThrow("E_ESCROW_BALANCES_MISSING");
+    ).rejects.toThrow("ensureEscrowBalanceRow");
     // The accounting-side release already ran on this same (mocked) client before the guard fired --
     // that is expected and safe, since throwing here rolls back the WHOLE transaction atomically
     // (this is a unit test of the query sequence, not a transaction-rollback test; the real DB

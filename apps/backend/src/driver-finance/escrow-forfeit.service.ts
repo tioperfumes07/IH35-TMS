@@ -41,6 +41,7 @@ import {
   resolveDriverEscrowLiabilityAccount,
   readDriverEscrowBalanceCents,
 } from "./escrow-resolver.service.js";
+import { ensureEscrowBalanceRow } from "./escrow-balance-row.js";
 
 /** OFF by default (pattern fallback recognizes *_GL_POSTING_ENABLED and returns false when unseeded). */
 export const DRIVER_ESCROW_FORFEIT_GL_POSTING_FLAG_KEY = "DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED";
@@ -185,38 +186,22 @@ export async function forfeitDriverEscrowOnClient(
   // overstated what the driver is owed. escrow_ledger CHECK already permits transaction_type='forfeit'.
   // Decrement current_balance_cents and append the ledger row so both stores reconcile after forfeit.
   // (Sign math for accounting.escrow_accounts lives in apply_escrow_posting_delta / #3542 — not here.)
-  const dfBal = await (client as { query: <T>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> }).query<{
-    id: string;
-    current_balance_cents: string;
-  }>(
-    `UPDATE driver_finance.escrow_balances
-     SET current_balance_cents = current_balance_cents - $3::bigint,
-         last_updated_at = now()
-     WHERE operating_company_id = $1::uuid
-       AND driver_id = $2::uuid
-       AND current_balance_cents >= $3::bigint
-     RETURNING id::text, current_balance_cents::bigint`,
-    [input.operating_company_id, input.driver_uuid, amountCents]
-  );
-  const dfRow = dfBal.rows[0];
-  if (!dfRow) {
-    throw new EscrowForfeitError(
-      "E_ESCROW_BALANCES_MISSING",
-      "driver_finance.escrow_balances missing or insufficient — refusing split-brain forfeit (accounting posted without driver-facing decrement)"
-    );
-  }
+  // KILL THE SECOND SYSTEM (tables 2-5): no stored balance to decrement — the GL forfeiture above IS the balance
+  // change. The over-draw decision was made from the GL (readDriverEscrowBalanceCents) and the database refuses a
+  // driver escrow sub-account below zero; the old "current_balance_cents >= amount" guard read a stored copy that
+  // could disagree with the GL and block a forfeit the books allowed.
+  const escrowBalanceId = await ensureEscrowBalanceRow(client as never, input.operating_company_id, input.driver_uuid);
   await (client as { query: (sql: string, values?: unknown[]) => Promise<unknown> }).query(
     `INSERT INTO driver_finance.escrow_ledger
-       (operating_company_id, driver_id, escrow_balance_id, transaction_type, amount_cents, running_balance_cents, description)
-     VALUES ($1::uuid, $2::uuid, $3::uuid, 'forfeit', $4::bigint, $5::bigint, $6)`,
+       (operating_company_id, driver_id, escrow_balance_id, transaction_type, amount_cents, description)
+     VALUES ($1::uuid, $2::uuid, $3::uuid, 'forfeit', $4::bigint, $5)`,
     [
       input.operating_company_id,
       input.driver_uuid,
-      dfRow.id,
+      escrowBalanceId,
       // ESCROW-LEDGER-SIGN-01: a forfeit is money permanently leaving the driver's escrow
       // position -- negative to him, same as a hold. Sign follows transaction_type.
       signedEscrowLedgerAmountCents("forfeit", amountCents),
-      Number(dfRow.current_balance_cents),
       `Forfeit: ${input.reason}`,
     ]
   );
