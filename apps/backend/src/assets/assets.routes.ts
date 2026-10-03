@@ -112,7 +112,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedCompanyId]);
 
       const values: unknown[] = [resolvedCompanyId];
-      const filters = ["tenant_id = $1"];
+      const filters = ["operating_company_id = $1"];
       if (type) {
         values.push(type);
         filters.push(`asset_type = $${values.length}`);
@@ -134,7 +134,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
         `
           SELECT
             id,
-            tenant_id,
+            operating_company_id,
             unit_code,
             asset_type,
             vin,
@@ -180,7 +180,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
         `
           SELECT
             id,
-            tenant_id,
+            operating_company_id,
             unit_code,
             asset_type,
             vin,
@@ -196,7 +196,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
             updated_at
           FROM mdata.assets
           WHERE id = $1
-            AND tenant_id = $2
+            AND operating_company_id = $2
           LIMIT 1
         `,
         [parsedParams.data.id, resolvedCompanyId]
@@ -226,7 +226,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
         `
           SELECT
             id,
-            tenant_id,
+            operating_company_id,
             asset_id,
             old_status,
             new_status,
@@ -235,7 +235,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
             changed_at
           FROM mdata.asset_status_history
           WHERE asset_id = $1
-            AND tenant_id = $2
+            AND operating_company_id = $2
           ORDER BY changed_at DESC
         `,
         [parsedParams.data.id, resolvedCompanyId]
@@ -264,7 +264,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
         const res = await client.query(
           `
             INSERT INTO mdata.assets (
-              tenant_id,
+              operating_company_id,
               unit_code,
               asset_type,
               vin,
@@ -351,7 +351,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
           UPDATE mdata.assets
           SET ${setParts.join(", ")}
           WHERE id = $${idIdx}
-            AND tenant_id = $${companyIdx}
+            AND operating_company_id = $${companyIdx}
           RETURNING *
         `,
         values
@@ -384,7 +384,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
           SELECT id, status
           FROM mdata.assets
           WHERE id = $1
-            AND tenant_id = $2
+            AND operating_company_id = $2
           LIMIT 1
         `,
         [parsedParams.data.id, resolvedCompanyId]
@@ -404,7 +404,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
                 ELSE damage_reported_at
               END
           WHERE id = $1
-            AND tenant_id = $2
+            AND operating_company_id = $2
           RETURNING *
         `,
         [
@@ -422,7 +422,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
       await client.query(
         `
           INSERT INTO mdata.asset_status_history (
-            tenant_id,
+            operating_company_id,
             asset_id,
             old_status,
             new_status,
@@ -457,7 +457,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
         `
           SELECT status, COUNT(*)::int AS count
           FROM mdata.assets
-          WHERE tenant_id = $1
+          WHERE operating_company_id = $1
           GROUP BY status
           ORDER BY status ASC
         `,
@@ -467,7 +467,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
         `
           SELECT COALESCE(SUM(repair_estimate_cents), 0)::bigint AS total_repair_estimate_cents
           FROM mdata.assets
-          WHERE tenant_id = $1
+          WHERE operating_company_id = $1
             AND status = 'damaged'
         `,
         [resolvedCompanyId]

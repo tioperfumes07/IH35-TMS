@@ -124,7 +124,7 @@ useEffect(() => {
     lawsuitRoutes: `SELECT claim.driver_id::text AS driver_id, asset.unit_id::text AS unit_id
 FROM insurance.lawsuit AS lawsuit
 LEFT JOIN insurance.claim AS claim ON claim.tenant_id = lawsuit.tenant_id AND claim.id = lawsuit.claim_id
-LEFT JOIN mdata.assets AS asset ON asset.tenant_id = lawsuit.tenant_id AND asset.id = claim.asset_id`,
+LEFT JOIN mdata.assets AS asset ON asset.operating_company_id = lawsuit.tenant_id AND asset.id = claim.asset_id`,
     insuranceApi: `type InsuranceLawsuit = { driver_id: string | null; unit_id: string | null }`,
   };
 

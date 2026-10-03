@@ -173,8 +173,8 @@ export function computeFailures(sources) {
   if (!/trailers\.id = c\.trailer_id[\s\S]{0,240}?(owner_company_id|currently_leased_to_company_id)/.test(claimRoutes)) {
     errors.push("claim.routes.ts: the mdata.equipment trailer join must be ENTITY-SCOPED (owner_company_id / currently_leased_to_company_id) — an id-only join leaks trailers across operating companies");
   }
-  if (!/LEFT JOIN mdata\.assets assets[\s\S]{0,200}?assets\.tenant_id\s*=\s*\$\{scope\}/.test(claimRoutes)) {
-    errors.push("claim.routes.ts: the mdata.assets join must be ENTITY-SCOPED (assets.tenant_id = the claim's company scope) — mdata.assets has no operating_company_id");
+  if (!/LEFT JOIN mdata\.assets assets[\s\S]{0,200}?assets\.operating_company_id\s*=\s*\$\{scope\}/.test(claimRoutes)) {
+    errors.push("claim.routes.ts: the mdata.assets join must be ENTITY-SCOPED (assets.operating_company_id = the claim's company scope) — ROUND 342 renamed mdata.assets.tenant_id to operating_company_id");
   }
   // ROUND 342 Phase 2 (owner ruling: one scope column). The COALESCE(c.operating_company_id, c.tenant_id) this guard
   // used to require existed because operating_company_id could be NULL on rows written before it was populated.
@@ -380,7 +380,7 @@ function claimFrom(caps) {
   return \`
   LEFT JOIN mdata.assets assets
     ON assets.id = c.asset_id
-   AND assets.tenant_id = \${scope}\${trailerJoin}
+   AND assets.operating_company_id = \${scope}\${trailerJoin}
 \`;
 }
       for (const [kind, id] of [

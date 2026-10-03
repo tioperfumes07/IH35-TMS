@@ -79,7 +79,7 @@ async function resolveAssetForWorkOrder(
       `
         SELECT id::text AS id, unit_code
         FROM mdata.assets
-        WHERE tenant_id = $1::uuid
+        WHERE operating_company_id = $1::uuid
           AND id = $2::uuid
         LIMIT 1
       `,
@@ -100,7 +100,7 @@ async function resolveAssetForWorkOrder(
       JOIN mdata.units u ON u.id = w.unit_id
                          AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid
       JOIN mdata.assets a
-        ON a.tenant_id = w.operating_company_id
+        ON a.operating_company_id = w.operating_company_id
        AND a.unit_code = u.unit_number
       WHERE w.id = $1::uuid
         AND w.operating_company_id = $2::uuid
@@ -125,9 +125,9 @@ async function lookupPseByRmLane(client: DbClient, operatingCompanyId: string, l
         COALESCE(i.coa_account_id::text, c.coa_account_id::text) AS coa_account_id
       FROM accounting.ps_item i
       JOIN accounting.ps_category c
-        ON c.tenant_id = i.tenant_id
+        ON c.operating_company_id = i.operating_company_id
        AND lower(c.qbo_id) = lower(i.category_qbo_id)
-      WHERE i.tenant_id = $1::uuid
+      WHERE i.operating_company_id = $1::uuid
         AND i.active = true
         AND c.active = true
         AND (
@@ -394,7 +394,7 @@ export async function applyMaintWoApStructuredBill(
         SET superseded_at = now(),
             superseded_reason = 'wo_ap_repost'
         WHERE bill_id = $1::uuid
-          AND tenant_id = $2::uuid
+          AND operating_company_id = $2::uuid
           AND superseded_at IS NULL
       `,
       [billId, input.operating_company_id]
@@ -402,7 +402,7 @@ export async function applyMaintWoApStructuredBill(
     await client.query(
       `
         INSERT INTO accounting.bill_unit_allocation (
-          tenant_id,
+          operating_company_id,
           bill_id,
           asset_id,
           allocation_method,

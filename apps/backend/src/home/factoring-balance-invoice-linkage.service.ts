@@ -349,12 +349,12 @@ export async function resolveCanonicalActiveFactor(
       FROM factoring.canonical_factor_agreements a
       JOIN factoring.factor f
         ON f.id = a.factor_profile_id
-       AND f.operating_company_id = a.tenant_id
+       AND f.operating_company_id = a.operating_company_id
       JOIN mdata.vendors v
         ON v.id = a.factor_vendor_id
-       AND v.operating_company_id = a.tenant_id
+       AND v.operating_company_id = a.operating_company_id
        AND v.deactivated_at IS NULL
-      WHERE a.tenant_id = $1::uuid
+      WHERE a.operating_company_id = $1::uuid
         AND a.agreement_code = $2
         AND a.voided_at IS NULL
         AND a.effective_from <= $3::date
@@ -391,7 +391,7 @@ export async function resolveCanonicalActiveFactor(
               AND (effective_to IS NULL OR effective_to >= $2::date)
           )::text AS voided_current_n
         FROM factoring.canonical_factor_agreements
-        WHERE tenant_id = $1::uuid
+        WHERE operating_company_id = $1::uuid
           AND agreement_code = $3
       `,
       [operatingCompanyId, asOf, FARO_FULL_RECOURSE_AGREEMENT_CODE]

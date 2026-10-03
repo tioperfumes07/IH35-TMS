@@ -13,7 +13,7 @@ export type InsuranceAssetQueryable = {
 export const RESOLVE_MDATA_ASSET_ID_SQL = `
   SELECT a.id::text
   FROM mdata.assets a
-  WHERE a.tenant_id = $1::uuid
+  WHERE a.operating_company_id = $1::uuid
     AND (
       a.id = $2::uuid
       OR a.unit_id = $2::uuid

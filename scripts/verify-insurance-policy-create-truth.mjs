@@ -13,7 +13,7 @@ function failures(candidate) {
   const checks = [
     ["creator limiter", /insurance\/policies"[\s\S]{0,160}rateLimit:\s*\{\s*max:\s*60,\s*timeWindow:\s*"1 minute"/],
     ["company vendor", /FROM mdata\.vendors[\s\S]{0,180}operating_company_id = \$2::uuid[\s\S]{0,100}deactivated_at IS NULL/],
-    ["company catalog", /FROM insurance\.type_catalog[\s\S]{0,180}tenant_id = \$1::uuid[\s\S]{0,140}active = true/],
+    ["company catalog", /FROM insurance\.type_catalog[\s\S]{0,180}operating_company_id = \$1::uuid[\s\S]{0,140}active = true/],
     ["insert identity", /const policy = result\.rows\[0\][\s\S]{0,100}if \(!policy\?\.id\) throw new Error\("insurance_policy_insert_failed"\)/],
     ["create audit", /appendCrudAudit\([\s\S]{0,120}"insurance\.policy\.created"[\s\S]{0,180}resource_type: "insurance\.policy"[\s\S]{0,100}resource_id: policy\.id/],
     ["linkage audit", /operating_company_id: body\.operating_company_id[\s\S]{0,100}vendor_id: body\.vendor_id[\s\S]{0,120}coverage_type_id: coverageTypeRes\.rows\[0\]\.id/],

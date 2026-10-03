@@ -348,7 +348,7 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
         // fix: the LESSEE operates the equipment, so the asset belongs to effectiveCompanyId
         // (COALESCE(currently_leased_to, owner)), the same value the equipment row itself was just
         // scoped under. Deliberately NOT set: insured_value_cents stays NULL, never 0 -- the owner
-        // supplies real insured values. ON CONFLICT on the natural key (tenant_id, unit_code) keeps
+        // supplies real insured values. ON CONFLICT on the natural key (operating_company_id, unit_code) keeps
         // this idempotent.
         await ensureEquipmentAsset(client, {
           tenantId: effectiveCompanyId,

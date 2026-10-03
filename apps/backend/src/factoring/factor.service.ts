@@ -796,7 +796,7 @@ export async function assignCustomerToFactor(
       FROM factoring.canonical_factor_agreements cfa
       WHERE c.id = $2::uuid
         AND c.operating_company_id = $1::uuid
-        AND cfa.tenant_id = $1::uuid
+        AND cfa.operating_company_id = $1::uuid
         AND cfa.factor_profile_id = $3::uuid
         AND cfa.factor_vendor_id IS NOT NULL
         AND cfa.voided_at IS NULL
@@ -924,7 +924,7 @@ export async function resolvePurchaseRate(
     `SELECT fac.id::text AS id, fac.name, fac.reserve_rate, fac.cash_reserve_rate, fac.fee_rate
        FROM factoring.canonical_factor_agreements a
        JOIN factoring.factor fac ON fac.id = a.factor_profile_id
-      WHERE a.tenant_id = $1::uuid AND a.voided_at IS NULL AND fac.voided_at IS NULL AND fac.active IS TRUE
+      WHERE a.operating_company_id = $1::uuid AND a.voided_at IS NULL AND fac.voided_at IS NULL AND fac.active IS TRUE
         AND a.effective_from <= $2::date AND (a.effective_to IS NULL OR a.effective_to > $2::date)
       ORDER BY a.effective_from DESC LIMIT 1`,
     [tenantId, asOfDate]

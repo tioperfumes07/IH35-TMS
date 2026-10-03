@@ -39,7 +39,7 @@ const SELECT_CANDIDATES = `
    AND (a.effective_to IS NULL OR a.effective_to > now()::date)
   JOIN factoring.canonical_factor_agreements cfa
     ON cfa.factor_profile_id = a.factor_id
-   AND cfa.tenant_id = a.operating_company_id
+   AND cfa.operating_company_id = a.operating_company_id
    AND cfa.factor_vendor_id IS NOT NULL
    AND cfa.voided_at IS NULL
    AND cfa.effective_from <= now()::date
@@ -55,7 +55,7 @@ const UPDATE_MIRROR = `
   FROM factoring.customer_factor_assignment a
   JOIN factoring.canonical_factor_agreements cfa
     ON cfa.factor_profile_id = a.factor_id
-   AND cfa.tenant_id = a.operating_company_id
+   AND cfa.operating_company_id = a.operating_company_id
    AND cfa.factor_vendor_id IS NOT NULL
    AND cfa.voided_at IS NULL
    AND cfa.effective_from <= now()::date

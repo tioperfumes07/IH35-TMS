@@ -121,7 +121,7 @@ export async function detectAssetCoverageGap(
     `
       SELECT id::text, asset_type::text
       FROM mdata.assets
-      WHERE tenant_id = $1::uuid
+      WHERE operating_company_id = $1::uuid
         AND id = $2::uuid
       LIMIT 1
     `,

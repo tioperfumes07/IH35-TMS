@@ -145,7 +145,7 @@ export async function registerPseMirrorRoutes(app: FastifyInstance) {
         `
           SELECT qbo_id, name, coa_account_id, active
           FROM accounting.ps_category
-          WHERE tenant_id = $1::uuid
+          WHERE operating_company_id = $1::uuid
           ORDER BY name ASC
         `,
         [query.data.operating_company_id]
@@ -167,7 +167,7 @@ export async function registerPseMirrorRoutes(app: FastifyInstance) {
     await syncPseMirror(String(user.uuid), query.data.operating_company_id);
     const rows = await withCompanyScope(String(user.uuid), query.data.operating_company_id, async (client) => {
       const values: unknown[] = [query.data.operating_company_id];
-      let where = "tenant_id = $1::uuid";
+      let where = "operating_company_id = $1::uuid";
       if (query.data.category) {
         values.push(query.data.category.toLowerCase());
         where += ` AND category_qbo_id = $${values.length}`;
@@ -201,7 +201,7 @@ export async function registerPseMirrorRoutes(app: FastifyInstance) {
         `
           SELECT qbo_id, number, name, type, detail_type, active
           FROM accounting.coa_account
-          WHERE tenant_id = $1::uuid
+          WHERE operating_company_id = $1::uuid
           ORDER BY name ASC
         `,
         [query.data.operating_company_id]

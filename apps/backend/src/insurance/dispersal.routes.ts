@@ -239,7 +239,7 @@ export async function persistInsuranceDispersalBills(input: {
         await client.query(
           `
             INSERT INTO accounting.bill_unit_allocation (
-              tenant_id,
+              operating_company_id,
               bill_id,
               asset_id,
               allocation_method,

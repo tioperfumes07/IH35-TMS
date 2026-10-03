@@ -41,7 +41,7 @@ async function isEnforcementEnabled(userId: string, operatingCompanyId: string) 
       `
         SELECT enforce_posting
         FROM accounting.pse_posting_policy
-        WHERE tenant_id = $1::uuid
+        WHERE operating_company_id = $1::uuid
         LIMIT 1
       `,
       [operatingCompanyId]

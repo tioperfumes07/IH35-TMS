@@ -819,6 +819,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-escrow-never-over-releases",
     ["db/migrations/", "apps/backend/src/driver-finance/", "apps/backend/src/settlements/", "apps/backend/src/accounting/escrow/", "scripts/verify-escrow-never-over-releases.mjs"],
   ],
+  // ROUND 342 Phase 5 (CC-1) — one entity column: no tenant_id column / policy / equating CHECK outside the named debt.
+  [
+    "verify-one-entity-column",
+    ["db/migrations/", "scripts/verify-one-entity-column.mjs"],
+  ],
   // ROUND 342 Phase 4 — one scope column, one RLS policy on the factoring tables that carried a duplicate tenant policy.
   [
     "verify-factoring-one-scope-policy",

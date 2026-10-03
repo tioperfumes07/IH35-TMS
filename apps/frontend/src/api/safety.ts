@@ -1184,7 +1184,7 @@ export type SafetyAnomalySubjectType = "driver" | "unit" | "customer" | "invoice
 
 export type SafetyAnomaly = {
   id: string;
-  tenant_id: string;
+  operating_company_id: string;
   anomaly_type: string;
   severity: SafetyAnomalySeverity;
   subject_type: SafetyAnomalySubjectType;

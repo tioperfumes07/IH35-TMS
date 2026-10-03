@@ -122,7 +122,7 @@ function claimSelectColumns(caps: ClaimColumnCapabilities, alias = "c") {
 //   insurance.claim -> operating_company_id EXISTS and is the live forced-RLS key; the policy is
 //                      (identity.is_lucia_bypass() OR operating_company_id::text = current_setting(...))
 //                      on polcmd '*'. tenant_id also exists and is what every writer fills in today.
-//   mdata.assets    -> tenant_id                (no operating_company_id)
+//   mdata.assets    -> operating_company_id     (ROUND 342: renamed from tenant_id, its only company column)
 //   mdata.equipment -> owner_company_id + currently_leased_to_company_id  (the owner/leased pair;
 //                      a trailer TRK owns and leases to TRANSP must still resolve for TRANSP)
 //
@@ -143,7 +143,7 @@ function claimFrom(caps: ClaimColumnCapabilities) {
   FROM insurance.claim c
   LEFT JOIN mdata.assets assets
     ON assets.id = c.asset_id
-   AND assets.tenant_id = ${scope}${trailerJoin}
+   AND assets.operating_company_id = ${scope}${trailerJoin}
   -- CLS-UUID-LABEL display-name joins. Each is scoped the way ITS OWN table requires, not uniformly:
   --   drivers/loads carry operating_company_id;
   --   mdata.units has NO operating_company_id (§4) and is scoped by the owner/leased PAIR, so a

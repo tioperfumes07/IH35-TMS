@@ -116,7 +116,7 @@ async function lookupPolicyMonthlyPremiumCents(
             ON pu.asset_id = a.id AND pu.removed_at IS NULL
           JOIN insurance.policy p
             ON p.id = pu.policy_id AND p.operating_company_id = pu.operating_company_id
-          WHERE a.tenant_id = $1::uuid
+          WHERE a.operating_company_id = $1::uuid
             AND a.unit_code = $2
             AND p.policy_number = $3
             AND p.status = 'active'
@@ -187,7 +187,7 @@ async function lookupLinkedPolicies(
             ON pu.asset_id = a.id AND pu.removed_at IS NULL
           JOIN insurance.policy p
             ON p.id = pu.policy_id AND p.operating_company_id = pu.operating_company_id
-          WHERE a.tenant_id = $1::uuid
+          WHERE a.operating_company_id = $1::uuid
             AND a.unit_id = $2::uuid
             AND ${excludeInsuranceFixtureSql("p.policy_number")}
           ORDER BY (p.status = 'active') DESC, p.expiry_date DESC
@@ -933,7 +933,7 @@ export async function buildUnitAggregate(
         `
       SELECT acquisition_cost_cents
       FROM mdata.assets
-      WHERE tenant_id = $2::uuid
+      WHERE operating_company_id = $2::uuid
         AND samsara_unit_id = $3
       LIMIT 1
     `,

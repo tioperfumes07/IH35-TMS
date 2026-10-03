@@ -23,7 +23,7 @@ type QueryShape = {
 
 type AuditRowChangeRecord = {
   id: string;
-  tenant_id: string | null;
+  operating_company_id: string | null;
   schema_name: string;
   table_name: string;
   op: "INSERT" | "UPDATE" | "DELETE";
@@ -49,7 +49,7 @@ function normalizeOffset(offset: number): number {
 
 export function buildAuditRowChangesQuery(input: ListAuditRowChangesInput): QueryShape {
   const values: unknown[] = [input.operating_company_id];
-  const filters = ["tenant_id = $1::uuid"];
+  const filters = ["operating_company_id = $1::uuid"];
 
   if (input.schema) {
     values.push(input.schema);
@@ -81,7 +81,7 @@ export function buildAuditRowChangesQuery(input: ListAuditRowChangesInput): Quer
     sql: `
       SELECT
         id::text,
-        tenant_id::text,
+        operating_company_id::text,
         schema_name,
         table_name,
         op,
@@ -110,7 +110,7 @@ export async function listAuditRowChanges(userId: string, input: ListAuditRowCha
     const res = await (client as Queryable).query<AuditRowChangeRecord>(query.sql, query.values);
     const rowChanges = res.rows.map((row) => ({
       id: row.id,
-      tenant_id: row.tenant_id,
+      operating_company_id: row.operating_company_id,
       schema_name: row.schema_name,
       table_name: row.table_name,
       op: row.op,

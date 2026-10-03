@@ -259,7 +259,7 @@ export async function renderCoiPdf(
         a.year::int,
         pu.insured_value_cents::bigint AS insured_value_cents
       FROM insurance.policy_unit pu
-      JOIN mdata.assets a ON a.id = pu.asset_id AND a.tenant_id = pu.operating_company_id
+      JOIN mdata.assets a ON a.id = pu.asset_id AND a.operating_company_id = pu.operating_company_id
       WHERE pu.operating_company_id = $1::uuid
         AND pu.policy_id = $2::uuid
       ORDER BY a.unit_code ASC, a.created_at ASC

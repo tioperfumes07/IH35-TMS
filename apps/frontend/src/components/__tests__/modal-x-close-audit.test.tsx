@@ -232,7 +232,7 @@ describe("modal x-close audit", () => {
           onUpdated={vi.fn()}
           initialAnomaly={{
             id: "anomaly-1",
-            tenant_id: "tenant-1",
+            operating_company_id: "tenant-1",
             anomaly_type: "speed",
             severity: "medium",
             subject_type: "driver",

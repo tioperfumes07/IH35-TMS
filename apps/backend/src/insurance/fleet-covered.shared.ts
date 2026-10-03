@@ -34,7 +34,7 @@ export const FLEET_COVERED_SQL = `
   FROM mdata.assets a
   LEFT JOIN insurance.policy_unit pu
     ON pu.asset_id = a.id
-   AND pu.operating_company_id = a.tenant_id
+   AND pu.operating_company_id = a.operating_company_id
    AND pu.removed_at IS NULL
   LEFT JOIN insurance.policy p
     ON p.id = pu.policy_id
@@ -43,7 +43,7 @@ export const FLEET_COVERED_SQL = `
    AND p.effective_date <= now()::date
    AND p.expiry_date >= now()::date
    AND ${excludeInsuranceFixtureSql("p.policy_number")}
-  WHERE a.tenant_id = $1::uuid
+  WHERE a.operating_company_id = $1::uuid
     AND a.status NOT IN ('sold', 'retired')
     AND a.asset_type IN ('tractor', 'dry_van', 'reefer', 'flatbed')
     AND a.unit_code <> 'T144'

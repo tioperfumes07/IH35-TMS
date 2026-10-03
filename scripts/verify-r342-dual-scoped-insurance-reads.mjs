@@ -8,8 +8,9 @@
  * (migration 202615310700) backfilled it and made it NOT NULL, and step 2c drops tenant_id — so any surviving
  * COALESCE(…operating_company_id, …tenant_id) is a future SQL error and is now the regression this guard catches.
  *
- * Rename-only (unchanged from #24298): insurance.type_catalog and mdata.assets stay on tenant_id until CC-1's rename —
- * a COALESCE on their operating_company_id is a SQL error today.
+ * Rename-only: insurance.type_catalog and mdata.assets had tenant_id only; CC-1's ROUND 342 phase 1 (migration
+ * 202615330400) RENAMED it to operating_company_id, so their reads now scope on operating_company_id directly — never a
+ * COALESCE and never tenant_id (the column no longer exists on them).
  *
  * Usage: node scripts/verify-r342-dual-scoped-insurance-reads.mjs [--selftest]
  */
@@ -51,11 +52,11 @@ export function check(src) {
   if (!/FROM insurance\.policy\s+WHERE operating_company_id = \$1::uuid/.test(src.summary)) f.push(`${FILES.summary}: summary policy count not scoped on operating_company_id`);
   if (!/FROM insurance\.claim\s+WHERE operating_company_id = \$1::uuid/.test(src.summary)) f.push(`${FILES.summary}: summary claim count not scoped on operating_company_id`);
   if (!/lawsuit\.operating_company_id = \$1/.test(src.lawsuit)) f.push(`${FILES.lawsuit}: lawsuit list not scoped on operating_company_id`);
-  // Rename-only tables stay on tenant_id (CC-1 renames them).
-  if (FALLBACK.test(src.typeCat) || !src.typeCat.includes('filters = ["tenant_id = $1::uuid"]')) f.push(`${FILES.typeCat}: type_catalog must stay on tenant_id until CC-1's rename`);
-  if (!/FROM insurance\.type_catalog\s+WHERE tenant_id = \$1::uuid/.test(src.createAtomic)) f.push(`${FILES.createAtomic}: type_catalog read must stay on tenant_id until CC-1's rename`);
-  if (!src.resolveAsset.includes("WHERE a.tenant_id = $1::uuid") || /COALESCE\(a\.operating_company_id/.test(src.resolveAsset)) {
-    f.push(`${FILES.resolveAsset}: mdata.assets has no operating_company_id — stays on tenant_id`);
+  // Rename-only tables: renamed by CC-1's 202615330400 — they scope on operating_company_id, never tenant_id.
+  if (FALLBACK.test(src.typeCat) || !src.typeCat.includes('filters = ["operating_company_id = $1::uuid"]')) f.push(`${FILES.typeCat}: type_catalog must scope on operating_company_id (renamed by 202615330400)`);
+  if (!/FROM insurance\.type_catalog\s+WHERE operating_company_id = \$1::uuid/.test(src.createAtomic)) f.push(`${FILES.createAtomic}: type_catalog read must scope on operating_company_id (renamed by 202615330400)`);
+  if (!src.resolveAsset.includes("WHERE a.operating_company_id = $1::uuid") || /\ba\.tenant_id\b/.test(src.resolveAsset)) {
+    f.push(`${FILES.resolveAsset}: mdata.assets scopes on operating_company_id (renamed by 202615330400) — never tenant_id`);
   }
   return f;
 }
@@ -69,7 +70,7 @@ if (process.argv.includes("--selftest")) {
     ["fallback back in policy", { ...real, policy: real.policy.replace("p.operating_company_id = $1::uuid", "COALESCE(p.operating_company_id, p.tenant_id) = $1::uuid") }],
     ["helper falls back again", { ...real, helper: real.helper.replace('return alias ? `${alias}.operating_company_id` : "operating_company_id";', 'return alias ? `COALESCE(${alias}.operating_company_id, ${alias}.tenant_id)` : "COALESCE(operating_company_id, tenant_id)";') }],
     ["claim scope on tenant_id", { ...real, claim: real.claim.replace("const scope = `c.operating_company_id`", "const scope = `c.tenant_id`") }],
-    ["type_catalog moved early", { ...real, typeCat: real.typeCat.replace('filters = ["tenant_id = $1::uuid"]', 'filters = ["operating_company_id = $1::uuid"]') }],
+    ["type_catalog back on tenant_id", { ...real, typeCat: real.typeCat.replace('filters = ["operating_company_id = $1::uuid"]', 'filters = ["tenant_id = $1::uuid"]') }],
   ];
   const unchanged = plants.filter(([, s]) => JSON.stringify(s) === JSON.stringify(real)).map(([n]) => n);
   if (unchanged.length) { console.error(`${LABEL} --selftest FAIL: plant did not change the source: ${unchanged.join("; ")}`); process.exit(1); }
@@ -81,4 +82,4 @@ if (process.argv.includes("--selftest")) {
 
 const failures = check(read());
 if (failures.length) { console.error(`${LABEL}: FAIL\n  ${failures.join("\n  ")}`); process.exit(1); }
-console.log(`${LABEL}: PASS — insurance reads scope on operating_company_id (no tenant_id fallback); type_catalog + mdata.assets stay on tenant_id until CC-1's rename`);
+console.log(`${LABEL}: PASS — insurance reads scope on operating_company_id (no tenant_id fallback); type_catalog + mdata.assets scope on operating_company_id (renamed by 202615330400)`);
