@@ -321,6 +321,8 @@ const STEPS = [
   ["verify-safety-training-record-canonical-routes", "scripts/verify-safety-training-record-canonical-routes.mjs"],
   ["verify-safety-event-detail-list-fallback", "scripts/verify-safety-event-detail-list-fallback.mjs"],
   ["verify-factoring-outstanding-liability-honest-label", "scripts/verify-factoring-outstanding-liability-honest-label.mjs"],
+  // ROUND 355 R-3 — factoring fees are financing costs under 6810, never Bank Charges. Ceiling 0.
+  ["verify-factoring-fees-are-financing-costs", "scripts/verify-factoring-fees-are-financing-costs.mjs"],
   ["verify-expense-create-duplicate-submission-guard", "scripts/verify-expense-create-duplicate-submission-guard.mjs"],
   ["verify-cash-flow-projection-snapshot-wired", "scripts/verify-cash-flow-projection-snapshot-wired.mjs"],
   ["verify-financial-reports-business-date-not-utc", "scripts/verify-financial-reports-business-date-not-utc.mjs"],
@@ -526,6 +528,15 @@ const LIVE_DOMAIN_GUARDS = [
     ],
   ],
 
+  // ROUND 355 R-3 — factoring fee/interest accounts must parent under 6810 (6405 under 6400); never Bank Charges; 6820 stays dead.
+  [
+    "verify-factoring-fees-are-financing-costs",
+    [
+      "scripts/verify-factoring-fees-are-financing-costs.mjs",
+      "apps/backend/src/catalogs/accounts.routes.ts",
+      "apps/backend/src/factoring/",
+    ],
+  ],
   // RECLASSIFY (Lead 2026-10-01, QBO spec §24) — every applied reclassify line is carried by a RECLASSIFICATION JE pair; WORM on postings.
   ["verify-reclassify-batches-are-whole", ["apps/backend/src/accounting/reclassify/", "apps/backend/src/accounting/journal-entries.service.ts"]],
   ["verify-feed-gate-blocks-incomplete", ["apps/backend/src/driver-finance/feed-gate/", "apps/backend/src/settlements/approval.service.ts", "db/migrations/202615170400_feed_gate_intakes.sql"]],

@@ -1,3 +1,12 @@
+## 2026-10-03T03:20Z · ROUND 355 STEP 1 DONE (#24328) · R-3 CoA LOCKED
+
+ACK: CURSOR | ACK ROUND 355 STEP1+R3 | GO
+STEP 1: #24328 already MERGED (docs-only ROUNDS 352/353/354) — squash `3b9b9d2aa2` on origin/main. Did NOT re-push; branch was already up-to-date.
+R-3 LIVE PROOF (Neon lucia, USMCA): 6400→6810 OtherExpense postings=0 · 6405→6400 · 6830→6810 · 6820 DEAD · 0 Bank Charges on factoring fee/interest. CoA already matched the ruling — no UPDATE needed.
+GUARD: `scripts/verify-factoring-fees-are-financing-costs.mjs` selftest+live PASS · wired in money-pr-local-gate.
+DISPATCH: NOW-CC-1 = R-1 Driver Damage Loss chain · NOW-CC-2 = R-2 gallon fuel cap from unit tank.
+NO seed. NEXT: ship R-3 guard PR · ROUND 348 remaster · seats build R-1/R-2.
+
 ## 2026-10-03T02:56Z · BANK-F91058 gear Groups MERGED #24326 · tip `ef891b032e95`
 
 ACK: CURSOR | ACK BANK-F91058 GEAR GROUPS DONE | GO
