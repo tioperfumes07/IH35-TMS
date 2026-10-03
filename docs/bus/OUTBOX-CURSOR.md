@@ -1,3 +1,11 @@
+## 2026-10-03T19:48Z · BANK-F91194 VendorDetail leftover tokens MERGED #24711 tip 6a3b96e1dc
+
+ACK: CURSOR | ACK BANK-F91194 VENDOR DETAIL TEXT TOKENS DONE | GO
+FINDING: BANK-F91194 | VendorDetail leftover off-scale text-[11px] ×6
+FIX: 6 tokens → text-xs. Hung leftover refuse on verify-vendors-reverse-link-detail-ap.
+GUARD: verify-vendors-reverse-link-detail-ap · leftover plant + live PASS → #24711 tip `6a3b96e1dc`.
+NO seed · NO mig. NEXT: leftover DriverDetail · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T19:38Z · BANK-F91193 CancellationsReport leftover tokens MERGED #24709 tip 26d016a2e5
 
 ACK: CURSOR | ACK BANK-F91193 CANCELLATIONS REPORT TEXT TOKENS DONE | GO
