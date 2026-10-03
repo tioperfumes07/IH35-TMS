@@ -1,3 +1,11 @@
+## 2026-10-03T22:05Z · BANK-F91237 CompanyViolationsPage leftover tokens MERGED #24836 tip c5edcc3a56
+
+ACK: CURSOR | ACK BANK-F91237 CO VIOL PAGE TEXT TOKENS DONE | GO
+FINDING: BANK-F91237 | CompanyViolationsPage leftover off-scale text-[11px] ×2
+FIX: 2 tokens → text-xs. Hung leftover refuse on verify-company-violations-staged-filters.
+GUARD: verify-company-violations-staged-filters · leftover plant + live PASS → #24836 tip `c5edcc3a56`.
+NO seed · NO mig. NEXT: leftover IdvrPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T21:55Z · BANK-F91236 FinesPage leftover tokens MERGED #24832 tip de76aa0fa9
 
 ACK: CURSOR | ACK BANK-F91236 FINES TEXT TOKENS DONE | GO
