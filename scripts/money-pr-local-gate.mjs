@@ -854,6 +854,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-bank-feed-filters-read-the-line-state",
     ["apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx", "apps/frontend/src/pages/banking/BankingHome.tsx", "scripts/verify-bank-feed-filters-read-the-line-state.mjs"],
   ],
+  // U10 (owner) — Bills sub-tabs filter by the stored bill_category, never memo words.
+  [
+    "verify-bills-sub-tabs-filter-by-stored-type",
+    ["apps/frontend/src/pages/accounting/BillsPage.tsx", "apps/frontend/src/components/accounting/VendorBillForm.tsx", "apps/backend/src/accounting/bills.service.ts", "apps/backend/src/accounting/bills.routes.ts", "db/migrations/202615370700_bills_bill_category.sql", "scripts/verify-bills-sub-tabs-filter-by-stored-type.mjs"],
+  ],
   // ROUND 368.2(b) — a bank line may not sit matched to nothing (deferred constraint triggers, both sides).
   [
     "verify-no-bank-line-is-matched-to-nothing",

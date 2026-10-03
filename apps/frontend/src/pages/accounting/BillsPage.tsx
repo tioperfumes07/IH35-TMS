@@ -105,12 +105,11 @@ function selectedToBillType(selected: string[]): "all" | "vendor_bill" | "driver
   return selected.length === 1 && (selected[0] === "vendor_bill" || selected[0] === "driver_bill") ? selected[0] : "all";
 }
 
+// U10 (owner): "every bills sub-tab renders only its own type". This used to GUESS the type from memo / vendor words
+// (/maint|shop/, /fuel|diesel|loves/, /driver|settlement/), so each sub-tab showed the wrong bills and missed the right
+// ones. The type is stored now (accounting.bills.bill_category, migration 202615370700).
 function billMatchesCategory(bill: VendorBill, category: BillListCategory): boolean {
-  const hay = `${bill.memo ?? ""} ${bill.bill_number ?? ""} ${bill.vendor_name ?? ""}`.toLowerCase();
-  if (category === "maintenance") return /maint|shop|pm\b|work.?order/.test(hay);
-  if (category === "repair") return /repair|roadside|breakdown/.test(hay);
-  if (category === "fuel") return /fuel|diesel|loves|def\b/.test(hay);
-  return /driver|settlement|advance|payroll|escrow/.test(hay);
+  return bill.bill_category === category;
 }
 
 function billBalanceCents(bill: VendorBill) {

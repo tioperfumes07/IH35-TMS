@@ -63,12 +63,12 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/accounting/account-register/toggle-cleared` | `apps/backend/src/accounting/account-register.routes.ts:70` | — | — | — |
 | create | `/api/v1/accounting/bank-deposits` | `apps/backend/src/accounting/bank-deposits.routes.ts:90` | — | — | — |
 | nested | `/api/v1/accounting/bill-payments/:id/post-gl` | `apps/backend/src/accounting/bill-payment-gl.routes.ts:19` | — | — | — |
-| nested | `/api/v1/accounting/bill-payments/:id/unvoid` | `apps/backend/src/accounting/bills.routes.ts:798` | — | — | — |
-| create | `/api/v1/accounting/bills` | `apps/backend/src/accounting/bills.routes.ts:516` | — | — | — |
-| nested | `/api/v1/accounting/bills/:id/allocate` | `apps/backend/src/accounting/bills.routes.ts:897` | — | — | — |
-| nested | `/api/v1/accounting/bills/:id/pay` | `apps/backend/src/accounting/bills.routes.ts:616` | — | — | — |
+| nested | `/api/v1/accounting/bill-payments/:id/unvoid` | `apps/backend/src/accounting/bills.routes.ts:801` | — | — | — |
+| create | `/api/v1/accounting/bills` | `apps/backend/src/accounting/bills.routes.ts:518` | — | — | — |
+| nested | `/api/v1/accounting/bills/:id/allocate` | `apps/backend/src/accounting/bills.routes.ts:900` | — | — | — |
+| nested | `/api/v1/accounting/bills/:id/pay` | `apps/backend/src/accounting/bills.routes.ts:619` | — | — | — |
 | nested | `/api/v1/accounting/bills/:id/post-gl` | `apps/backend/src/accounting/bill-gl-draft.routes.ts:102` | — | — | — |
-| nested | `/api/v1/accounting/bills/:id/unvoid` | `apps/backend/src/accounting/bills.routes.ts:712` | — | — | — |
+| nested | `/api/v1/accounting/bills/:id/unvoid` | `apps/backend/src/accounting/bills.routes.ts:715` | — | — | — |
 | create | `/api/v1/accounting/bills/draft-je-preview` | `apps/backend/src/accounting/bill-gl-draft.routes.ts:45` | — | — | — |
 | create | `/api/v1/accounting/broker-advances` | `apps/backend/src/accounting/broker-advances.routes.ts:38` | — | — | — |
 | nested | `/api/v1/accounting/broker-advances/:id/disburse-to-driver-bill` | `apps/backend/src/accounting/broker-advances.routes.ts:76` | — | — | — |
