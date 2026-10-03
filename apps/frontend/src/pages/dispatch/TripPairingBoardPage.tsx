@@ -57,7 +57,7 @@ function legChip(leg: TripLeg) {
       className="inline-flex hover:underline"
       label={
         <span
-          className="inline-flex flex-col items-start gap-0.5 rounded-sm px-1.5 py-0.5 text-[11px] font-semibold text-white"
+          className="inline-flex flex-col items-start gap-0.5 rounded-sm px-1.5 py-0.5 text-xs font-semibold text-white"
           style={{ backgroundColor: TRIP_COLOR[leg.trip_type] }}
         >
           <span>
@@ -67,7 +67,7 @@ function legChip(leg: TripLeg) {
           {/* GLOBAL-TYPE-SIZE-BASELINE (Claude + Jorge 2026-06-07): the scale is locked, and
               verify-ui-design-system-ratchet.mjs forbids any NEW raw text-[Npx] occurrence even
               at an already-locked value — no separate size class needed here at all: this span
-              inherits the parent's own text-[11px] (pre-existing, unchanged) by default. */}
+              inherits the parent's own text-xs (locked body token) by default. */}
           {dateRange ? <span className="font-normal opacity-90">{dateRange}</span> : null}
         </span>
       }
@@ -92,7 +92,7 @@ export function tourNeedsPreCutoverNorthbound(tour: Pick<TripPairingUnitRow, "le
 
 function LegendSwatch({ color, dashed, label }: { color?: string; dashed?: boolean; label: string }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-600">
+    <span className="inline-flex items-center gap-1.5 text-xs text-slate-600">
       <span
         className="inline-block h-3 w-3 rounded-xs"
         style={dashed ? { border: "1px dashed #94a3b8", background: "#f1f5f9" } : { backgroundColor: color }}
@@ -197,7 +197,7 @@ function buildTripPairingColumns(onBookReturn: (unitId: string) => void, trCount
             <button
               type="button"
               onClick={() => onBookReturn(t.unit_id)}
-              className="inline-flex items-center rounded-sm border border-dashed border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-700 hover:border-slate-500 hover:bg-slate-200"
+              className="inline-flex items-center rounded-sm border border-dashed border-slate-300 bg-slate-100 px-1.5 py-0.5 text-xs text-slate-700 hover:border-slate-500 hover:bg-slate-200"
               aria-label={`Book Southbound return for ${t.unit_number ?? "unit"}`}
             >
               + Find Southbound{t.return_city ? ` · empty in ${t.return_city}` : ""}{t.return_avail_date ? ` · avail ${new Date(t.return_avail_date).toLocaleDateString()}` : ""}
@@ -396,7 +396,7 @@ export function TripPairingBoardPage() {
               key={s.key}
               type="button"
               onClick={() => setSegment(s.key)}
-              className={`border-l border-slate-300 px-2.5 py-1 text-[11px] font-semibold first:border-l-0 ${
+              className={`border-l border-slate-300 px-2.5 py-1 text-xs font-semibold first:border-l-0 ${
                 segment === s.key ? "bg-[#1F2A44] text-white" : "bg-white text-slate-700 hover:bg-slate-50"
               }`}
             >
@@ -456,9 +456,9 @@ export function TripPairingBoardPage() {
           {showUnbooked ? (
             <section>
               <div className="mb-1 flex items-center gap-2">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.4px] text-slate-700">Unbooked / available</span>
-                <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-700">{unbooked.length}</span>
-                <span className="text-[11px] text-slate-500">— no trip assigned; book a Northbound to start a tour</span>
+                <span className="text-section-header font-semibold uppercase tracking-[0.4px] text-slate-700">Unbooked / available</span>
+                <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">{unbooked.length}</span>
+                <span className="text-xs text-slate-500">— no trip assigned; book a Northbound to start a tour</span>
               </div>
               <div className="flex flex-wrap gap-2 rounded-sm border border-slate-200 bg-slate-50 p-2">
                 {unbooked.map((u) => (
@@ -470,7 +470,7 @@ export function TripPairingBoardPage() {
                     <button
                       type="button"
                       onClick={() => setBookUnitId(u.unit_id)}
-                      className="mt-0.5 inline-flex w-fit items-center rounded-sm bg-[#1F2A44] px-2 py-0.5 text-[11px] font-semibold text-white hover:bg-[#0f1729]"
+                      className="mt-0.5 inline-flex w-fit items-center rounded-sm bg-[#1F2A44] px-2 py-0.5 text-xs font-semibold text-white hover:bg-[#0f1729]"
                     >
                       + Book NB
                     </button>
@@ -484,9 +484,9 @@ export function TripPairingBoardPage() {
           {/* Zone 2 — Assigned trips (Northbound / Triangulation / Southbound = 6 columns). */}
           <section>
             <div className="mb-1 flex items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.4px] text-slate-800">Assigned trips</span>
-              <span className="rounded-sm border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-700">{tours.length}</span>
-              <span className="text-[11px] text-slate-500">— multi-leg tours stack under the unit; SB return = settlement closes</span>
+              <span className="text-section-header font-semibold uppercase tracking-[0.4px] text-slate-800">Assigned trips</span>
+              <span className="rounded-sm border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">{tours.length}</span>
+              <span className="text-xs text-slate-500">— multi-leg tours stack under the unit; SB return = settlement closes</span>
             </div>
             <ParityTable<TripPairingUnitRow> appearance="board"
               columns={tripPairingColumns}
@@ -510,7 +510,7 @@ export function TripPairingBoardPage() {
             <LegendSwatch color="#b45309" label="Up north — settlement open" />
           </div>
 
-          <p className="text-[11px] text-slate-400">
+          <p className="text-xs text-slate-400">
             <Link to="/dispatch" className="text-slate-700 hover:underline">← Dispatch</Link> · refreshes every 5 min · DAT360 auto-publish not yet wired (the delivery-city + avail-date here feed it later).
           </p>
         </div>
