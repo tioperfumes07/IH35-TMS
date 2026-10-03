@@ -22,17 +22,27 @@ export const REQUIRES_LIVE_DB = "no released document is still flagged as matche
 const LABEL = "verify-unmatched-document-is-matchable-again";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const UNMATCH = "apps/backend/src/accounting/bank-recon/recon-worklist.service.ts";
+// The release function must retire every live auto/user row of the line, not only the pointer-backed ones.
+const RELEASE_MIGRATION = "db/migrations/202615330930_send_back_keeps_the_match.sql";
+const RELEASE_MARKER = /SET released_from_state = rm\.match_state,[\s\S]{0,300}AND rm\.match_state IN \('auto_matched', 'user_matched'\)/.test(fs.readFileSync(path.join(ROOT, RELEASE_MIGRATION), "utf8")) ? "RELEASE_SQL_RETIRES_ALL_LIVE_ROWS" : "";
 const MATCH = "apps/backend/src/accounting/bank-recon/match.service.ts";
 
 export function check({ unmatch, match }) {
   const f = [];
   const fn = unmatch.slice(unmatch.indexOf("export async function unmatchBankTransactionOnClient"));
-  if (!/UPDATE banking\.reconciliation_matches\s+SET match_state = 'rejected',\s+voided_at = now\(\)[\s\S]{0,400}AND match_state IN \('auto_matched', 'user_matched'\)/.test(fn)) f.push(`${UNMATCH}: unmatch must retire (void) EVERY live match row of the line, whatever its kind`);
+  // ROUND 363-CC3-B / LAW 363.9: unmatch takes every live row out of the live set by RELEASING it (match_state
+  // 'released' — the drawer and every live-set reader count only auto/user matches), not by flipping it to 'rejected'
+  // in place. The release runs through banking.release_bank_line_matches(), which releases every pointer AND every live
+  // auto/user row of the line whatever its kind (migration 202615330930; pinned by verify-send-back-preserves-the-match).
+  if (!/await releaseBankLineMatches\(client,/.test(fn) || !/RELEASE_SQL_RETIRES_ALL_LIVE_ROWS/.test(RELEASE_MARKER))
+    f.push(`${UNMATCH}: unmatch must take EVERY live match row of the line out of the live set (release it), whatever its kind`);
   if (/ledger_entry_kind = \$3/.test(fn.slice(0, fn.indexOf("return {")))) f.push(`${UNMATCH}: unmatch retires match rows per kind again — kinds left out stay hidden from the drawer`);
   for (const t of ["accounting.payments", "accounting.bill_payments"]) {
     if (!new RegExp(`UPDATE ${t.replace(".", "\\.")}\\s+SET source_bank_transaction_id = NULL,[\\s\\S]{0,120}cleared_date = NULL`).test(fn)) f.push(`${UNMATCH}: unmatch must clear ${t} source_bank_transaction_id AND cleared_date`);
   }
-  if (!/ON CONFLICT \(bank_transaction_id, ledger_entry_kind, ledger_entry_id\)\s+DO UPDATE SET[\s\S]{0,300}voided_at = NULL/.test(match)) f.push(`${MATCH}: storeMatch must revive a retired row on re-match (voided_at = NULL)`);
+  // A released row sits outside the partial unique index, so a re-match inserts a NEW live row; a row voided by an older
+  // path is still revived. Both make the pair live again.
+  if (!/ON CONFLICT \(bank_transaction_id, ledger_entry_kind, ledger_entry_id\)(?:\s+WHERE match_state <> 'released')?\s+DO UPDATE SET[\s\S]{0,300}voided_at = NULL/.test(match)) f.push(`${MATCH}: storeMatch must revive a retired row on re-match (voided_at = NULL)`);
   return f;
 }
 
@@ -41,7 +51,7 @@ if (process.argv.includes("--selftest")) {
   const fails = [];
   if (check(real).length) fails.push(`tree not clean: ${check(real).join("; ")}`);
   const plants = [
-    ["match rows no longer retired", { ...real, unmatch: real.unmatch.replace("AND match_state IN ('auto_matched', 'user_matched')", "AND false") }],
+    ["match rows no longer released", { ...real, unmatch: real.unmatch.replace("await releaseBankLineMatches(client,", "await skipRelease(client,") }],
     ["cleared_date left set", { ...real, unmatch: real.unmatch.replace(/(UPDATE accounting\.payments\s+SET source_bank_transaction_id = NULL,\s+)cleared_date = NULL/, "$1cleared_date = cleared_date") }],
     ["re-match leaves the row voided", { ...real, match: real.match.replace(/(DO UPDATE SET[\s\S]{0,300})voided_at = NULL/, "$1voided_at = voided_at") }],
   ];

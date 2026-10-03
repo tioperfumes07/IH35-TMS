@@ -116,6 +116,8 @@ const STEPS = [
   ["verify-dispatch-tables-audited-and-rls-forced", "scripts/verify-dispatch-tables-audited-and-rls-forced.mjs"],
   // Lead 2026-10-03 — guards read the direct endpoint, never as ih35_app (pooled SET ROLE leak).
   ["verify-guards-do-not-run-as-ih35_app", "scripts/verify-guards-do-not-run-as-ih35_app.mjs"],
+  // ROUND 363-CC3-B / LAW 363.9 — a bank-line send-back keeps the match and records the release beside it.
+  ["verify-send-back-preserves-the-match-and-its-load", "scripts/verify-send-back-preserves-the-match-and-its-load.mjs"],
   ["verify-no-session-advisory-locks", "scripts/verify-no-session-advisory-locks.mjs"],
   ["verify-rollup-keys-carry-company", "scripts/verify-rollup-keys-carry-company.mjs"],
   ["verify-filter-surfaces-full-set", "scripts/verify-filter-surfaces-full-set.mjs"],

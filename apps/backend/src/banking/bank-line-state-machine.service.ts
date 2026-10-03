@@ -31,6 +31,7 @@ import { unmatchBankTransactionOnClient } from "../accounting/bank-recon/recon-w
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { assertBankTxnNotInReconciledSession } from "./closed-session-immutability.js";
 import { RELEASE_TRANSFER_LINK_SET_SQL, revokeTransferInClient } from "./transfers.service.js";
+import { attachReleaseReversals, releaseBankLineMatches } from "./bank-line-release.js";
 
 export type BankLineBucket = "for_review" | "categorized" | "excluded";
 export type BankLineKind = "added" | "matched" | "transfer" | "split";
@@ -237,6 +238,13 @@ async function reverseMatchCreatedEntries(
     (r === "reversed" ? outcome.reversed_journal_entry_ids : outcome.already_reversed_journal_entry_ids).push(jeId);
   }
   for (const f of faro.rows) {
+    // ROUND 363-CC3-B — the Faro register line lets go of its match too: record the release before its pointers clear.
+    await releaseBankLineMatches(client, {
+      bankTransactionId: f.line_id,
+      kind: "undo",
+      reason: `released with bank line ${input.bankTransactionId} (Faro Rsv Deposit reversed)`,
+      actorUserId: input.actorUserId,
+    });
     await client.query(
       `UPDATE accounting.faro_reserve_entries SET journal_entry_id = NULL, posted_at = NULL, posted_by_user_id = NULL
         WHERE id = $1::uuid AND journal_entry_id = $2::uuid`,
@@ -292,6 +300,16 @@ export async function undoBankLineOnClient(
     outcome.noop = true;
     return outcome;
   }
+
+  // ROUND 363-CC3-B / LAW 363.9 — a send-back KEEPS the accepted match: every match this line carries is recorded as
+  // released (who, when, why) BEFORE any branch below clears a pointer. trg_send_back_keeps_the_match refuses the
+  // commit otherwise. The unmatch branch calls the same function again; by then there is nothing left to release.
+  await releaseBankLineMatches(client, {
+    bankTransactionId: line.id,
+    kind: "undo",
+    reason,
+    actorUserId: input.actorUserId,
+  });
 
   if (line.review_bucket === "excluded") {
     await client.query(
@@ -402,6 +420,9 @@ export async function undoBankLineOnClient(
       [input.operatingCompanyId, line.id, line.matched_journal_entry_id]
     );
   }
+
+  // ROUND 363-CC3-B — every reversal this undo produced names the bank line (released rows + the reversal's postings).
+  await attachReleaseReversals(client, line.id, outcome.reversed_journal_entry_ids);
 
   // NO STRANDING — the line must now be in For review with no document; otherwise nothing of this undo commits.
   const after = await client.query<{ review_bucket: string; resolution_kind: string | null }>(

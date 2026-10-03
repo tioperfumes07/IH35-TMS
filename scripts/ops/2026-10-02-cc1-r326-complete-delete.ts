@@ -526,6 +526,15 @@ async function main() {
         `SELECT column_name AS c FROM information_schema.columns WHERE table_schema = 'banking' AND table_name = 'bank_transactions' AND column_name LIKE 'matched\\_%\\_id'`
       )).rows.map((r) => r.c);
       if (matchedCols.length) {
+        // ROUND 363-CC3-B / ROUND 366.1(b) — the bank line is preserved and every match it carried is recorded as
+        // released ('purge_reset') BEFORE the pointers clear, while the documents still exist; the deferred refusal
+        // trg_send_back_keeps_the_match (migration 202615330930) rejects the COMMIT otherwise.
+        await client.query(
+          `SELECT banking.release_bank_line_matches(id, 'purge_reset', $2, NULL)
+             FROM banking.bank_transactions
+            WHERE operating_company_id = $1::uuid AND (${matchedCols.map((c) => `${c} IS NOT NULL`).join(" OR ")})`,
+          [USMCA, `ROUND 326 zero-reset ${AUTH_ID}`]
+        );
         await client.query(
           `UPDATE banking.bank_transactions
               SET ${matchedCols.map((c) => `${c} = NULL`).join(", ")},

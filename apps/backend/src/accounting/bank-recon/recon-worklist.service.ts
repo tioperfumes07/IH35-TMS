@@ -7,6 +7,7 @@
 // reconciliation_matches-linked, so every one of them was surfacing as a live, clickable
 // "unmatched, needs review" item in this worklist -- an operator working this queue would see 699
 // phantom line items for transactions that were already superseded and need no action at all.
+import { attachReleaseReversals, releaseBankLineMatches, releasedInThisTransaction, type BankLineReleaseKind } from "../../banking/bank-line-release.js";
 import type { PoolClient } from "pg";
 import { withLuciaBypass } from "../../auth/db.js";
 import { reverseJournalEntryNoFlip } from "../journal-entries.service.js";
@@ -241,7 +242,7 @@ export async function rejectReconMatch(input: {
           matched_by_user_uuid
         )
         VALUES ($1::uuid, $2::uuid, $3::text, $4::uuid, 0, 'rejected', now(), $5::uuid)
-        ON CONFLICT (bank_transaction_id, ledger_entry_kind, ledger_entry_id)
+        ON CONFLICT (bank_transaction_id, ledger_entry_kind, ledger_entry_id) WHERE match_state <> 'released'
         DO UPDATE SET
           match_score = 0,
           match_state = 'rejected',
@@ -315,8 +316,16 @@ export type UnmatchOnClientResult = {
  */
 export async function unmatchBankTransactionOnClient(
   client: PoolClient,
-  input: { operating_company_id: string; bank_transaction_id: string; actor_user_uuid: string }
+  input: { operating_company_id: string; bank_transaction_id: string; actor_user_uuid: string; release_kind?: BankLineReleaseKind }
 ): Promise<UnmatchOnClientResult> {
+  // ROUND 363-CC3-B — record the release of every match this line carries BEFORE the pointers clear (LAW 363.9: the
+  // accepted match stays, the release is written beside it; trg_send_back_keeps_the_match refuses the commit otherwise).
+  await releaseBankLineMatches(client, {
+    bankTransactionId: input.bank_transaction_id,
+    kind: input.release_kind ?? "unmatch",
+    reason: "bank_line_unmatched",
+    actorUserId: input.actor_user_uuid,
+  });
   // Same CTE-captures-pre-update-values shape reconciliation.routes.ts's session-scoped unmatch
   // already uses — Postgres UPDATE...RETURNING reflects the NEW row, so the ids to reverse/reject
   // have to come from a snapshot taken before the UPDATE, not the UPDATE's own output.
@@ -408,6 +417,7 @@ export async function unmatchBankTransactionOnClient(
       reason: "bank_transaction_unmatched",
       actorUserId: input.actor_user_uuid,
     });
+    await attachReleaseReversals(client, input.bank_transaction_id, [row.prev_journal_entry_id]);
   }
 
   // BNK-11 — clear the reverse (ledger-side) back-pointer too, scoped to "still points at THIS
@@ -443,40 +453,10 @@ export async function unmatchBankTransactionOnClient(
     );
   }
 
-  // ROUND 360 — retire EVERY live match row this line holds, whatever its kind (fuel, relay, factoring advance and
-  // settlement matches used to keep 'user_matched' after an unmatch, which hid the document from the Match drawer
-  // forever). Voided, not merely 'rejected': an unmatch is "undo my link", not "never suggest this pair" — a voided row
-  // hides nothing (link-suggestions reads only unvoided rejections) and the line is back in the worklist.
-  const retired = await client.query<{ kind: LedgerEntryKind; id: string }>(
-    `UPDATE banking.reconciliation_matches
-        SET match_state = 'rejected',
-            voided_at = now(),
-            void_reason = 'bank_line_unmatched',
-            voided_by_user_id = $3::uuid,
-            updated_at = now()
-      WHERE operating_company_id = $1::uuid
-        AND bank_transaction_id = $2::uuid
-        AND voided_at IS NULL
-        AND match_state IN ('auto_matched', 'user_matched')
-      RETURNING ledger_entry_kind AS kind, ledger_entry_id::text AS id`,
-    [input.operating_company_id, input.bank_transaction_id, input.actor_user_uuid]
-  );
-  const rejectedKinds: Array<{ kind: LedgerEntryKind; id: string }> = [...retired.rows];
-  const pointed: Array<[LedgerEntryKind, string | null]> = [
-    ["expense", row.prev_expense_id],
-    ["transfer", row.prev_transfer_id],
-    ["je", row.prev_journal_entry_id],
-    ["bill", row.prev_bill_id],
-    ["payment", row.prev_payment_id],
-    ["bill_payment", row.prev_bill_payment_id],
-    ["factoring_advance", row.prev_factoring_advance_id],
-    ["fuel_transaction", row.prev_fuel_transaction_id],
-    ["relay_fuel", row.prev_relay_fuel_transaction_id],
-    ["settlement", row.prev_settlement_id],
-  ];
-  for (const [kind, id] of pointed) {
-    if (id && !rejectedKinds.some((r) => r.kind === kind && r.id === id)) rejectedKinds.push({ kind, id });
-  }
+  // ROUND 363-CC3-B — what this unmatch let go of is exactly what it released above (every pointer, plus any live match
+  // row with no pointer behind it). Nothing is flipped to 'rejected' in place any more: an unmatch is "undo my link", and
+  // the accepted row keeps saying what the line was matched to.
+  const rejectedKinds = (await releasedInThisTransaction(client, input.bank_transaction_id)) as Array<{ kind: LedgerEntryKind; id: string }>;
 
   return {
     released: rejectedKinds,

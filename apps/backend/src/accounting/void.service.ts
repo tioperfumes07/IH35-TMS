@@ -12,6 +12,7 @@ import { assertNoHistoricalJournalCoverage } from "../driver-finance/settlement-
 // The reversal + the status flip run on the SAME transaction client passed in by the caller, so they
 // are atomic. This module does not open its own transaction and does not modify the posting engine.
 
+import { releaseBankLineMatchesWhere } from "../banking/bank-line-release.js";
 import { boundJeMemo } from "./je-memo.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { writeTransactionSourceLink } from "./accounting-spine-emit.js";
@@ -518,57 +519,10 @@ const BANK_TX_UNMATCH_RESET_SQL = `
    WHERE operating_company_id = $1::uuid
 `;
 
-// LINKAGE-INTEGRITY-LAW — the reconciliation-session match family (load/bill/settlement/expense/
-// transfer/payment/bill_payment) maps 1:1 to banking.reconciliation_matches.ledger_entry_kind
-// (migration 202613350001 widened its CHECK to accept all of these). matched_journal_entry_id maps
-// to 'je' but is intentionally NOT voided here — see BANK_TX_UNMATCH_RESET_SQL's own comment: its JE
-// was already reversed by postVoidReversal, a separate concern from the match record.
-const MATCHED_COLUMN_TO_KIND: Array<{ column: string; kind: string }> = [
-  { column: "matched_load_id", kind: "load" },
-  { column: "matched_bill_id", kind: "bill" },
-  { column: "matched_settlement_id", kind: "settlement" },
-  { column: "matched_expense_id", kind: "expense" },
-  { column: "matched_transfer_id", kind: "transfer" },
-  { column: "matched_payment_id", kind: "payment" },
-  { column: "matched_bill_payment_id", kind: "bill_payment" },
-];
-
-/**
- * LINKAGE-INTEGRITY-LAW shared step: for whichever matched_* columns the reset just cleared, write a
- * voided row into banking.reconciliation_matches (the SAME void_reason/voided_at/voided_by_user_id
- * convention the manual /unmatch route's 'rejected' rows already use — a released match must leave a
- * trail regardless of which side released it). `prior` is the RETURNING row from the reset UPDATE.
- */
-async function recordVoidedMatches(
-  client: QueryableClient,
-  operatingCompanyId: string,
-  bankTransactionId: string,
-  prior: Record<string, string | null>,
-  actorUserId: string | null,
-  voidReason: string
-): Promise<void> {
-  for (const { column, kind } of MATCHED_COLUMN_TO_KIND) {
-    const ledgerEntryId = prior[column];
-    if (!ledgerEntryId) continue;
-    await client.query(
-      `
-        INSERT INTO banking.reconciliation_matches (
-          operating_company_id, bank_transaction_id, ledger_entry_kind, ledger_entry_id,
-          match_score, match_state, matched_at, matched_by_user_uuid,
-          voided_at, void_reason, voided_by_user_id
-        )
-        VALUES ($1::uuid, $2::uuid, $3::text, $4::uuid, 0, 'rejected', now(), $5::uuid, now(), $6, $5::uuid)
-        ON CONFLICT (bank_transaction_id, ledger_entry_kind, ledger_entry_id)
-        DO UPDATE SET
-          match_state = 'rejected',
-          voided_at = now(),
-          void_reason = EXCLUDED.void_reason,
-          voided_by_user_id = EXCLUDED.voided_by_user_id
-      `,
-      [operatingCompanyId, bankTransactionId, kind, ledgerEntryId, actorUserId, voidReason]
-    );
-  }
-}
+// ROUND 363-CC3-B — the release of every match a reset clears is recorded BEFORE the reset, through
+// banking.release_bank_line_matches() (bank-line-release.ts). The trail this file used to write after the reset
+// (recordVoidedMatches) read the matched_* ids from the UPDATE's RETURNING row — Postgres returns the NEW values, which
+// the reset had just set to NULL — so it recorded nothing on every void.
 
 /**
  * BANK-ORPHAN-01 shared primitive #1: reset ONE bank_transactions row (known by its own id) back to
@@ -582,24 +536,17 @@ export async function unmatchBankTransactionById(
   bankTransactionId: string,
   actor?: { userId: string; reason: string }
 ): Promise<boolean> {
-  const res = await client.query<Record<string, string | null> & { id: string }>(
+  await releaseBankLineMatchesWhere(client, `operating_company_id = $1::uuid AND id = $2::uuid`, [operatingCompanyId, bankTransactionId], {
+    kind: "void",
+    reason: actor?.reason ?? "unmatched via unmatchBankTransactionById",
+    actorUserId: actor?.userId ?? null,
+  });
+  const res = await client.query<{ id: string }>(
     `${BANK_TX_UNMATCH_RESET_SQL} AND id = $2::uuid
-     RETURNING id, matched_load_id::text, matched_bill_id::text, matched_settlement_id::text,
-               matched_expense_id::text, matched_transfer_id::text, matched_payment_id::text,
-               matched_bill_payment_id::text`,
+     RETURNING id`,
     [operatingCompanyId, bankTransactionId]
   );
-  const row = res.rows[0];
-  if (!row) return false;
-  await recordVoidedMatches(
-    client,
-    operatingCompanyId,
-    bankTransactionId,
-    row,
-    actor?.userId ?? null,
-    actor?.reason ?? "unmatched via unmatchBankTransactionById"
-  );
-  return true;
+  return Boolean(res.rows[0]);
 }
 
 /**
@@ -618,24 +565,18 @@ export async function unmatchBankTransactionsForVoid(
   const reverseIdSql = reverseTable
     ? `(SELECT source_bank_transaction_id FROM ${reverseTable} WHERE id = $2::uuid AND operating_company_id = $1::uuid)`
     : `NULL::uuid`;
-  const res = await client.query<Record<string, string | null> & { id: string }>(
+  await releaseBankLineMatchesWhere(
+    client,
+    `operating_company_id = $1::uuid AND (linked_entity_id = $2::uuid OR id = ${reverseIdSql})`,
+    [params.operatingCompanyId, params.entityId],
+    { kind: "void", reason: `void: ${params.entityType} ${params.entityId}`, actorUserId: actor?.userId ?? null }
+  );
+  const res = await client.query<{ id: string }>(
     `${BANK_TX_UNMATCH_RESET_SQL}
        AND (linked_entity_id = $2::uuid OR id = ${reverseIdSql})
-     RETURNING id, matched_load_id::text, matched_bill_id::text, matched_settlement_id::text,
-               matched_expense_id::text, matched_transfer_id::text, matched_payment_id::text,
-               matched_bill_payment_id::text`,
+     RETURNING id`,
     [params.operatingCompanyId, params.entityId]
   );
-  for (const row of res.rows) {
-    await recordVoidedMatches(
-      client,
-      params.operatingCompanyId,
-      row.id,
-      row,
-      actor?.userId ?? null,
-      `void: ${params.entityType} ${params.entityId}`
-    );
-  }
   return res.rows.length;
 }
 
