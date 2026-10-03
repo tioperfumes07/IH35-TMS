@@ -849,6 +849,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-wizard-and-reclassify-share-one-writer",
     ["apps/frontend/src/pages/settlements/", "apps/frontend/src/pages/accounting/ReclassifyTransactionsPage.tsx", "apps/frontend/src/lib/reclassifyDrill.ts", "apps/frontend/src/api/reclassify.ts", "apps/backend/src/accounting/reclassify/", "apps/backend/src/accounting/line-item-account.ts", "apps/backend/src/driver-finance/settlement-creator.service.ts", "apps/backend/src/driver-finance/settlement-payrun-close.service.ts", "apps/backend/src/fuel/fuel-expense-document.service.ts", "scripts/verify-wizard-and-reclassify-share-one-writer.mjs"],
   ],
+  // U26 (owner) — bank feed filters read the line's state; the description filter sticks; badges count after filters.
+  [
+    "verify-bank-feed-filters-read-the-line-state",
+    ["apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx", "apps/frontend/src/pages/banking/BankingHome.tsx", "scripts/verify-bank-feed-filters-read-the-line-state.mjs"],
+  ],
   // ROUND 368.2(b) — a bank line may not sit matched to nothing (deferred constraint triggers, both sides).
   [
     "verify-no-bank-line-is-matched-to-nothing",

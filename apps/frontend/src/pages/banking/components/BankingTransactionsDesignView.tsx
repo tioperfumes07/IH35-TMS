@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Download, MessageSquare, Paperclip, Printer } from "lucide-react";
@@ -698,8 +698,21 @@ export function hasAutoSuggestion(tx: PlaidBankTransaction): boolean {
  * switch so the multi-select filter (a UNION over selectedTransactionTypes) and the server-side
  * subset (SERVER_FILTERABLE_TRANSACTION_TYPES in api/banking.ts) read the same one definition per
  * type — money_in/money_out/ready_to_post here MUST agree with the server's is_credit/pending SQL. */
-export function matchesTransactionTypeFilter(type: string, tx: PlaidBankTransaction): boolean {
+/** U26 — a calendar date in the viewer's own time zone. toISOString() is UTC: after 7 pm in Laredo "Today" asked for
+ *  tomorrow and "This week" shifted a day. */
+export function localIsoDate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+export function matchesTransactionTypeFilter(
+  type: string,
+  tx: PlaidBankTransaction,
+  ctx: { suggestions?: Record<string, unknown> } = {},
+): boolean {
   const { spent, received } = spentReceived(tx);
+  // U26 (owner): "banking filters do not filter correctly". The state of a line is review_bucket (the classifier the
+  // three tabs use), not the six-column matched_kind / is_matched the API derives, and not the Plaid category text.
+  const forReview = !looksCategorizedTx(tx) && !looksExcludedTx(tx);
   switch (type) {
     case "money_in":
       return received > 0;
@@ -708,17 +721,22 @@ export function matchesTransactionTypeFilter(type: string, tx: PlaidBankTransact
     case "ready_to_post":
       return !tx.pending;
     case "suggested_matches":
-      return Boolean(tx.matched_kind);
+      // a line still to review that has a computed match suggestion or a rule suggestion (was: lines ALREADY matched)
+      return forReview && (Boolean(ctx.suggestions?.[tx.id]) || hasAutoSuggestion(tx));
     case "auto_suggested":
       return hasAutoSuggestion(tx);
     case "transfers":
-      return tx.plaid_category.some((category) => category.toLowerCase().includes("transfer"));
+      // recorded as a transfer (was: any Plaid category containing "transfer", whatever the line's state)
+      return tx.resolution_kind === "transfer" || Boolean(tx.matched_transfer_id);
     case "rules":
-      return tx.plaid_category.length > 0;
+      // a bank rule produced the suggestion / categorization (was: "has any Plaid category")
+      return categorizedRuleLabel(tx) !== null;
     case "missing_from_to":
-      return !String(tx.merchant_name ?? tx.description ?? "").trim();
+      // no payee — none saved, none suggested (was: empty merchant text, and "" never fell through to description)
+      return !tx.categorization_vendor_id && !tx.categorization_customer_id && !tx.suggested_vendor_id;
     case "uncategorized":
-      return !tx.matched_kind && !hasPersistedMatch(tx);
+      // the For review bucket itself (was: no link among six columns — deposits, payments, splits passed as uncategorized)
+      return forReview;
     case "resolution_added":
       return tx.resolution_kind === "added";
     case "resolution_matched":
@@ -768,6 +786,9 @@ export function BankingTransactionsDesignView({
   useEffect(() => {
     if (initialTransactionType && initialTransactionType !== "all") {
       setSelectedTransactionTypes([initialTransactionType]);
+    } else {
+      // U26 — the deep-link pre-filter going back to "all" clears it (it used to be ignored, so it stuck).
+      setSelectedTransactionTypes([]);
     }
   }, [initialTransactionType]);
   const [categorizeBy, setCategorizeBy] = useState<CategorizeBy>("category");
@@ -1101,9 +1122,21 @@ export function BankingTransactionsDesignView({
       seen.add(label);
       options.push({ value: label, label });
     }
-    return options.slice(0, 200);
+    return options.slice(0, 1000);
   }, [scopedRows]);
 
+  // U26 (owner): the tab badges counted the lines BEFORE the Spent/Received and type filters, so "For review · 120"
+  // sat over a list of 5. Every filter except the tab itself now runs first; the badge and the list are one number.
+  const passesFilters = useCallback(
+    (tx: PlaidBankTransaction) => {
+      const { spent, received } = spentReceived(tx);
+      if (amountFilter === "spent" && spent <= 0) return false;
+      if (amountFilter === "received" && received <= 0) return false;
+      if (selectedTransactionTypes.length === 0) return true;
+      return selectedTransactionTypes.some((type) => matchesTransactionTypeFilter(type, tx, { suggestions: txnSuggestions }));
+    },
+    [amountFilter, selectedTransactionTypes, txnSuggestions],
+  );
   const reviewTabBuckets = useMemo(() => {
     const out: Record<ReviewTabId, PlaidBankTransaction[]> = {
       all: [],
@@ -1111,7 +1144,7 @@ export function BankingTransactionsDesignView({
       categorized: [],
       excluded: [],
     };
-    for (const tx of scopedRows) {
+    for (const tx of scopedRows.filter(passesFilters)) {
       out.all.push(tx);
       if (looksExcludedTx(tx)) {
         out.excluded.push(tx);
@@ -1122,7 +1155,7 @@ export function BankingTransactionsDesignView({
       }
     }
     return out;
-  }, [scopedRows]);
+  }, [scopedRows, passesFilters]);
 
   const [sortBy, setSortBy] = useState<BankTxnSort>({ key: "date", dir: "desc" });
   const toggleSort = (key: BankTxnSort["key"]) =>
@@ -1142,18 +1175,7 @@ export function BankingTransactionsDesignView({
     // predicates in link.routes.ts), so `source` already reflects the range. Re-filtering the same
     // already-fetched rows here would be exactly the theater item 24 names -- a control that LOOKS
     // like it re-queries but silently falls back to a client-side filter.
-    const filtered = source.filter((tx) => {
-      const { spent, received } = spentReceived(tx);
-      if (amountFilter === "spent" && spent <= 0) return false;
-      if (amountFilter === "received" && received <= 0) return false;
-      // B.2 — multi-select is a UNION: no selection (or "all") means unfiltered; any selection
-      // shows a transaction matching AT LEAST ONE selected type (matches the server's OR semantics
-      // for the subset it can pre-filter — see SERVER_FILTERABLE_TRANSACTION_TYPES in api/banking.ts
-      // — and stays correct here regardless of what the server already narrowed, since this is a
-      // strict re-check, never a widening one).
-      if (selectedTransactionTypes.length === 0) return true;
-      return selectedTransactionTypes.some((type) => matchesTransactionTypeFilter(type, tx));
-    });
+    const filtered = source; // U26 — every filter already ran in reviewTabBuckets (passesFilters)
     const sortDir = sortBy.dir === "asc" ? 1 : -1;
     const sortVal = (tx: PlaidBankTransaction): string | number => {
       if (sortBy.key === "description") return (tx.description ?? tx.merchant_name ?? "").toLowerCase();
@@ -3630,7 +3652,9 @@ export function BankingTransactionsDesignView({
               options={descriptionFilterOptions}
               value={descriptionFilter || null}
               onChange={(next) => setDescriptionFilter(next ?? "")}
-              onSearch={setDescriptionFilter}
+              /* U26 (owner): no onSearch — the Combobox clears its typed text when it closes, and onSearch fed that
+                 empty text back into the filter, so the filter wiped itself (and refetched every keystroke). The box
+                 now narrows its own options locally; picking one applies the filter and it stays. */
               allowClear
               placeholder="Filter by description"
               dataTestId="banking-transactions-description-filter"
@@ -3675,8 +3699,7 @@ export function BankingTransactionsDesignView({
                       [
                         ["All", () => { setDateFrom(""); setDateTo(""); }],
                         ["Today", () => {
-                          const d = new Date();
-                          const iso = d.toISOString().slice(0, 10);
+                          const iso = localIsoDate(new Date());
                           setDateFrom(iso); setDateTo(iso);
                         }],
                         ["This week", () => {
@@ -3684,22 +3707,18 @@ export function BankingTransactionsDesignView({
                           const day = d.getDay();
                           const start = new Date(d); start.setDate(d.getDate() - ((day + 6) % 7));
                           const end = new Date(start); end.setDate(start.getDate() + 6);
-                          setDateFrom(start.toISOString().slice(0, 10));
-                          setDateTo(end.toISOString().slice(0, 10));
+                          setDateFrom(localIsoDate(start));
+                          setDateTo(localIsoDate(end));
                         }],
                         ["This month", () => {
                           const d = new Date();
-                          const start = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
-                          const end = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0));
-                          setDateFrom(start.toISOString().slice(0, 10));
-                          setDateTo(end.toISOString().slice(0, 10));
+                          setDateFrom(localIsoDate(new Date(d.getFullYear(), d.getMonth(), 1)));
+                          setDateTo(localIsoDate(new Date(d.getFullYear(), d.getMonth() + 1, 0)));
                         }],
                         ["Last month", () => {
                           const d = new Date();
-                          const start = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 1, 1));
-                          const end = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 0));
-                          setDateFrom(start.toISOString().slice(0, 10));
-                          setDateTo(end.toISOString().slice(0, 10));
+                          setDateFrom(localIsoDate(new Date(d.getFullYear(), d.getMonth() - 1, 1)));
+                          setDateTo(localIsoDate(new Date(d.getFullYear(), d.getMonth(), 0)));
                         }],
                         ["Oldest first", () => {
                           setDateFrom("");

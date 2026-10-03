@@ -439,6 +439,8 @@ describe("BankingTransactionsDesignView date formatting", () => {
     expect(screen.getByRole("button", { name: "For review · 2" })).toBeInTheDocument();
     fireEvent.click(screen.getByTestId("banking-amount-filter-received"));
     expect(screen.getByText("1-1 of 1")).toBeInTheDocument();
+    // U26 — the tab badge counts what the filters leave, not the unfiltered set ("For review · 2" over a list of 1).
+    expect(screen.getByRole("button", { name: "For review · 1" })).toBeInTheDocument();
     expect(screen.getByText("Page 1 of 1")).toBeInTheDocument();
     expect(screen.getByText("$45.50")).toBeInTheDocument();
     expect(screen.queryByText("Fuel purchase")).not.toBeInTheDocument();
