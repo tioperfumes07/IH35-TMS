@@ -145,9 +145,9 @@ function OverviewWizardSection({ title, canEdit, onEdit, children }: { title: st
   return (
     <section className="rounded-sm border border-gray-200">
       <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-3 py-1.5">
-        <span className="text-[11px] font-semibold text-gray-700">{title}</span>
+        <span className="text-xs font-semibold text-gray-700">{title}</span>
         {canEdit ? (
-          <button type="button" onClick={onEdit} className="text-[11px] font-semibold text-[#1f2a44] hover:underline">
+          <button type="button" onClick={onEdit} className="text-xs font-semibold text-[#1f2a44] hover:underline">
             Edit ▸
           </button>
         ) : null}
@@ -1121,7 +1121,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                   <div className="space-y-2">
                     {(load.stops ?? []).map((stop) => (
                       <div key={stop.id} className="rounded-sm border border-gray-100 p-2">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">{stop.stop_type}</div>
+                        <div className="text-section-header font-semibold uppercase tracking-[0.4px] text-gray-500">{stop.stop_type}</div>
                         <FlatFieldGrid
                           columns={2}
                           fields={[
@@ -1259,7 +1259,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                     <div className="flex items-center justify-between gap-2 border-t border-gray-100 pt-2">
                       <div>
                         <div className="text-xs font-semibold text-gray-700">Invoice</div>
-                        <div className="text-[11px] text-gray-500">
+                        <div className="text-xs text-gray-500">
                           {invoiceLookupFailed
                             ? "Could not load invoices for this load. Retry before creating."
                             : canInvoiceFromLoad
