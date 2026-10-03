@@ -124,6 +124,15 @@ function main() {
     throw new Error("DriverEscrowLedgerSection.tsx: must not use text-[11px] — use text-xs");
   }
 
+  // BANK-F91074 — archived BankTxCategorizationPage KPI/body use locked tokens (not text-[11px]).
+  const bankTxCat = read("apps/frontend/src/pages/banking/BankTxCategorizationPage.tsx");
+  if (bankTxCat.includes("text-[11px]")) {
+    throw new Error("BankTxCategorizationPage.tsx: must not use text-[11px] — use text-section-header or text-xs");
+  }
+  if (!bankTxCat.includes("text-section-header")) {
+    throw new Error("BankTxCategorizationPage.tsx: KPI labels must use text-section-header");
+  }
+
   console.log(`${LABEL}: PASS`);
 }
 

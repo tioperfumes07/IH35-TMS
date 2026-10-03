@@ -300,7 +300,7 @@ export function BankTxCategorizationPage() {
 
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
         <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
-          <div className="text-[11px] font-semibold uppercase text-gray-500">Uncategorized</div>
+          <div className="text-section-header font-semibold uppercase text-gray-500">Uncategorized</div>
           <div className={`text-page-title font-semibold ${Number(kpiUncCount ?? 0) > 0 ? "text-red-600" : "text-gray-900"}`}>
             {uncCountDisplay}
             {Number(kpiUncCount ?? 0) > 0 ? (
@@ -309,19 +309,19 @@ export function BankTxCategorizationPage() {
           </div>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
-          <div className="text-[11px] font-semibold uppercase text-gray-500">Total uncategorized amount</div>
+          <div className="text-section-header font-semibold uppercase text-gray-500">Total uncategorized amount</div>
           <div className="text-page-title font-semibold text-gray-900">
             {formatMoneyCents(mergedMeta.total_uncategorized_amount_cents)}
           </div>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
-          <div className="text-[11px] font-semibold uppercase text-gray-500">Processed this week</div>
+          <div className="text-section-header font-semibold uppercase text-gray-500">Processed this week</div>
           <div className="text-page-title font-semibold text-gray-900">
             {mergedMeta.processed_this_week_count != null ? mergedMeta.processed_this_week_count : "—"}
           </div>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
-          <div className="text-[11px] font-semibold uppercase text-gray-500">Auto-categorize hit rate</div>
+          <div className="text-section-header font-semibold uppercase text-gray-500">Auto-categorize hit rate</div>
           <div className="text-page-title font-semibold text-gray-900">
             {mergedMeta.auto_categorize_hit_rate_pct != null && mergedMeta.auto_categorize_hit_rate_pct !== undefined
               ? `${Number(mergedMeta.auto_categorize_hit_rate_pct).toFixed(1)}%`
@@ -487,7 +487,7 @@ export function BankTxCategorizationPage() {
                         const rec = s as Record<string, unknown>;
                         const conf = suggestionConfidence(rec);
                         return (
-                          <div key={String(rec.id ?? suggestionLabel(rec))} className="truncate text-[11px]">
+                          <div key={String(rec.id ?? suggestionLabel(rec))} className="truncate text-xs">
                             {suggestionLabel(rec)}
                             {conf != null ? ` (${conf}%)` : ""}
                           </div>
@@ -604,7 +604,7 @@ export function BankTxCategorizationPage() {
               <div>
                 <span className="font-semibold">Description:</span> {txDescription(selectedTx)}
               </div>
-              <div className="pt-2 text-[11px] text-gray-600">
+              <div className="pt-2 text-xs text-gray-600">
                 {(
                   suggestionQueries[txs.findIndex((t) => String(t.id) === String(selectedTx.id))]?.data?.suggestions ?? []
                 )
