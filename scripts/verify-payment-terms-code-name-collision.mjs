@@ -205,6 +205,14 @@ for (const [file, checkers] of [
   }
 }
 
+// BANK-F91104 — ORDERS chrome: AccountingCatalogModal field errors use text-xs, not text-[11px].
+if (fs.existsSync(MODAL_FILE)) {
+  const modalSrc = fs.readFileSync(MODAL_FILE, "utf8");
+  if (modalSrc.includes("text-[11px]")) {
+    failures.push(`${MODAL_FILE}: must not use text-[11px] — use text-xs`);
+  }
+}
+
 if (failures.length) {
   console.error(`${LABEL}: FAIL`);
   for (const f of failures) console.error(`  - ${f}`);
