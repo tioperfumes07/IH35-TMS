@@ -435,10 +435,10 @@ export function DomainCatalogSection({ domain, onCatalogClick, onDomainClick }: 
               </button>
             ) : (
               <div className="font-semibold text-slate-500">
-                {catalog.name} <span className="text-[11px] uppercase tracking-wide">({CATALOG_IN_PREPARATION})</span>
+                {catalog.name} <span className="text-section-header uppercase tracking-wide">({CATALOG_IN_PREPARATION})</span>
               </div>
             )}
-            <div className="text-[11px] text-slate-500">{catalog.description}</div>
+            <div className="text-xs text-slate-500">{catalog.description}</div>
           </div>
         ))}
       </div>

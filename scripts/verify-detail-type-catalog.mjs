@@ -32,6 +32,13 @@ if (!/detail_type_is_system/.test(routeSrc)) failures.push("detail-types route m
 const map = read("apps/frontend/src/pages/lists/components/AllCatalogsMap.tsx");
 if (!/catalogKey: "account-types"/.test(map)) failures.push("AllCatalogsMap must register Account Type (account-types)");
 if (!/catalogKey: "detail-types"/.test(map)) failures.push("AllCatalogsMap must register Detail Type (detail-types)");
+// BANK-F91106 — ORDERS chrome: in-preparation badge uses named 11px token; descriptions use text-xs.
+if (map.includes("text-[11px]")) {
+  failures.push("AllCatalogsMap must not use text-[11px] — use text-section-header or text-xs");
+}
+if (!map.includes("text-section-header")) {
+  failures.push("AllCatalogsMap in-preparation badge must use text-section-header");
+}
 
 const manifest = read("apps/frontend/src/routes/manifest.tsx");
 if (!/path="\/lists\/accounting\/account-types"/.test(manifest)) failures.push("manifest must route /lists/accounting/account-types");
