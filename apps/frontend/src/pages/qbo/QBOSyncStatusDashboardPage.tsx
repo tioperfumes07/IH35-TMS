@@ -227,19 +227,19 @@ export function QBOSyncStatusDashboardPage() {
 
       <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-sm border border-emerald-200 bg-emerald-50 p-3">
-          <div className="text-[11px] font-semibold uppercase text-emerald-800">Healthy (24h)</div>
+          <div className="text-xs font-semibold uppercase text-emerald-800">Healthy (24h)</div>
           <div className="text-page-title font-semibold text-emerald-900">{kpis.healthy}</div>
         </div>
         <div className="rounded-sm border border-amber-200 bg-amber-50 p-3">
-          <div className="text-[11px] font-semibold uppercase text-amber-900">Pending</div>
+          <div className="text-xs font-semibold uppercase text-amber-900">Pending</div>
           <div className="text-page-title font-semibold text-amber-950">{kpis.pending}</div>
         </div>
         <div className="rounded-sm border border-amber-200 bg-amber-50 p-3">
-          <div className="text-[11px] font-semibold uppercase text-amber-900">Failed (retrying)</div>
+          <div className="text-xs font-semibold uppercase text-amber-900">Failed (retrying)</div>
           <div className="text-page-title font-semibold text-amber-950">{kpis.failedRetry}</div>
         </div>
         <div className="rounded-sm border border-red-200 bg-red-50 p-3">
-          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase text-red-900">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase text-red-900">
             Dead letter
             {kpis.dead > 0 ? (
               <span className="rounded-sm bg-red-600 px-1.5 py-0.5 text-xs font-bold text-white">needs attention</span>
@@ -336,7 +336,7 @@ export function QBOSyncStatusDashboardPage() {
           // ACCT-F3500: server-bound error-text search above — suppress ParityTable toolbar Search.
           suppressToolbarSearch
           renderExpanded={(r) => (
-            <div className="font-mono text-[11px] text-gray-800">
+            <div className="font-mono text-xs text-gray-800">
               <div className="mb-1 font-semibold">Payload / diagnostics</div>
               <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all">
                 {JSON.stringify({ payload: r.payload, stack: r.error_stack }, null, 2)}
@@ -349,7 +349,7 @@ export function QBOSyncStatusDashboardPage() {
           shown={runs.length}
           limit={200}
           hint="Narrow filters or search for older QBO sync runs."
-          className="text-[11px] text-slate-600"
+          className="text-xs text-slate-600"
         />
 
         <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
