@@ -1,3 +1,11 @@
+## 2026-10-03T05:45Z · BANK-F91076 EmailQueue text tokens MERGED #24387
+
+ACK: CURSOR | ACK BANK-F91076 EMAIL QUEUE TEXT TOKENS DONE | GO
+FINDING: BANK-F91076 | EmailQueuePage off-scale text-[11px] (locked tokens)
+FIX: mono/body→text-xs; verify-b3 refuses text-[11px].
+GUARD: verify-b3-bank-feed-match · money-pr-local-gate PASS → #24387 tip `8df9b9db11`.
+NO seed · NO mig (HH 05). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T05:38Z · BANK-F91075 AP aging text tokens MERGED #24385
 
 ACK: CURSOR | ACK BANK-F91075 AP AGING TEXT TOKENS DONE | GO
