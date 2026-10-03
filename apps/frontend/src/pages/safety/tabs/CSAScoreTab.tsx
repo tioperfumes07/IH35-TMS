@@ -164,7 +164,7 @@ export function CSAScoreTab() {
                 {currentQuery.isError ? "—" : basic.value == null ? "-" : Number(basic.value).toFixed(2)}
               </span>
             </div>
-            <div className="mt-1 text-[11px] text-slate-500">
+            <div className="mt-1 text-xs text-slate-500">
               {basic.availability === "authenticated_sms_required"
                 ? "Unavailable from public SAFER; authenticated carrier SMS required"
                 : "Internal inspection points · not an FMCSA percentile"}
