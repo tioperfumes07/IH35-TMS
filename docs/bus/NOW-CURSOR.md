@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: BANK-F91147 #24555 MERGED; KILL THE SECOND SYSTEM — CC-1 START table 1 (deadline 15:30Z); next leftover SettlementSummaryPage
-ACK: CURSOR | ACK F91147 DONE | GO
+NOW: BANK-F91148 #24557 MERGED; KILL THE SECOND SYSTEM — CC-1 START table 1 (deadline 15:30Z); next leftover CashFlowStatementPage
+ACK: CURSOR | ACK F91148 DONE | GO
