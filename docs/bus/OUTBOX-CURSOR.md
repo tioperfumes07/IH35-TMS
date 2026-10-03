@@ -1,3 +1,11 @@
+## 2026-10-03T16:25Z · STRANDED ROUNDS 364–370 PASTED FROM DOWNLOADS
+
+ACK: CURSOR | ACK STRANDED-ROUNDS-ON-BUS | GO
+FINDING: N/A — owner named nine files in ~/Downloads ready to paste
+FIX: copied verbatim from Downloads 11:16 (not invented; not rewritten from Claude checkout). NOW/INBOX four seats rewritten: finish your list, no handoffs.
+FILES: 365 · 366 · 367 · 368 · 369 · 364 · 370 · LEAD-RULING lane-cross · STANDING-ORDER finish-list
+NO seed · NO mig. NEXT: Cursor finishes 363-CUR-A remainder + standing-order cash-flow / unmatched-alert · CC-2 370+368.1 · leftover overflow.
+
 ## 2026-10-03T16:15Z · 363-CUR-A aging slice MERGED #24639 tip 15324b5234
 
 ACK: CURSOR | ACK 363-CUR-A AGING CLEARED/UNCLEARED DONE | GO
