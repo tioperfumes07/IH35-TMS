@@ -102,6 +102,11 @@ export function run() {
 
 async function measure(client) {
   await client.query("BEGIN READ ONLY");
+  // Behind pgbouncer the app pool's session-level SET ROLE ih35_app (auth/db.ts connect handler) survives on the server
+  // backend, so a borrowed connection can arrive as ih35_app — where load_charge_lines' policy hides every company-less
+  // row even under the bypass (measured: pooled 0 rows, direct 284 / 136 company-less). Unscoped by construction means
+  // the login role: pin it for this transaction.
+  await client.query("SET LOCAL ROLE NONE");
   await client.query("SELECT set_config('app.bypass_rls', 'lucia', true)");
   const { rows: tables } = await client.query(`
     SELECT c.table_schema AS s, c.table_name AS t
