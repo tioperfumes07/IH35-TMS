@@ -103,6 +103,13 @@ function main() {
     throw new Error(`${MATCH}: must not use text-[11px] (GLOBAL-TYPE-SIZE-BASELINE body 12px = text-xs)`);
   }
 
+  // BANK-F91068 — B-3 Split modal labels use text-section-header / text-xs, not text-[11px].
+  const splitModal = read("apps/frontend/src/pages/banking/components/BankTransactionSplitModal.tsx");
+  if (splitModal.includes("text-[11px]")) {
+    throw new Error("BankTransactionSplitModal.tsx: must not use text-[11px] — use text-section-header or text-xs");
+  }
+  assertIncludes(splitModal, "text-section-header", "BankTransactionSplitModal.tsx");
+
   console.log(`${LABEL}: PASS`);
 }
 

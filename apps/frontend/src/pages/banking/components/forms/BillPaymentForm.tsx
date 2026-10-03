@@ -103,9 +103,9 @@ export function BillPaymentForm({ value, onChange, operatingCompanyId }: Props) 
       </div>
 
       <div className="rounded-sm border border-gray-200 bg-white p-2">
-        <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-600">Bill selection / apply</div>
+        <div className="mb-2 text-section-header font-semibold uppercase tracking-wide text-gray-600">Bill selection / apply</div>
         <label className="block">
-          <span className="text-[11px] font-semibold text-gray-600">Bill</span>
+          <span className="text-xs font-semibold text-gray-600">Bill</span>
           <SelectCombobox
             className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={String(value.bill_id ?? "")}
@@ -168,7 +168,7 @@ export function BillPaymentForm({ value, onChange, operatingCompanyId }: Props) 
 function Field({ label, children }: { label: string; children: JSX.Element }) {
   return (
     <label className="space-y-1">
-      <span className="text-[11px] font-semibold text-gray-600">{label}</span>
+      <span className="text-xs font-semibold text-gray-600">{label}</span>
       {children}
     </label>
   );

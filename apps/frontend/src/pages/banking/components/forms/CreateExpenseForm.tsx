@@ -184,7 +184,7 @@ export function CreateExpenseForm({ value, onChange, operatingCompanyId }: Props
 function Field({ label, children }: { label: string; children: JSX.Element }) {
   return (
     <label className="space-y-1">
-      <span className="text-[11px] font-semibold text-gray-600">{label}</span>
+      <span className="text-xs font-semibold text-gray-600">{label}</span>
       {children}
     </label>
   );
