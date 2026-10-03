@@ -2016,6 +2016,11 @@
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-03",
       "purpose": "ROUND 381.6 fuel card vendor linkage: catalogs.fuel_card_types.issuer_vendor_id uuid NULL REFERENCES mdata.vendors(id) + same-company refusal trigger + index -- the card issuer (Relay / Dreamline) the owner designates on the Fuel Cards page; no binding written by the migration"
+    },
+    "202615380700": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-03",
+      "purpose": "U16 (owner UI register, CC-2): a stored copy of the work order opens from the document — accounting.document_work_order_copies + AFTER INSERT/UPDATE triggers on bills / bill_lines / expenses / expense_lines capture the linked work order (WO row, unit / driver / vendor print fields, line totals) at link time, one writer for every path."
     }
   },
   "202613590001": {
