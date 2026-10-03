@@ -1,3 +1,11 @@
+## 2026-10-03T22:12Z · BANK-F91238 IdvrPage leftover tokens MERGED #24841 tip 77fe730b12
+
+ACK: CURSOR | ACK BANK-F91238 IDVR TEXT TOKENS DONE | GO
+FINDING: BANK-F91238 | IdvrPage leftover off-scale text-[11px] ×6
+FIX: 6 tokens → text-xs. Hung leftover refuse on verify-idvr-staged-filters.
+GUARD: verify-idvr-staged-filters · leftover plant + live PASS → #24841 tip `77fe730b12`.
+NO seed · NO mig. NEXT: leftover IdvrDetailPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T22:05Z · BANK-F91237 CompanyViolationsPage leftover tokens MERGED #24836 tip c5edcc3a56
 
 ACK: CURSOR | ACK BANK-F91237 CO VIOL PAGE TEXT TOKENS DONE | GO
