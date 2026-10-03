@@ -1419,7 +1419,7 @@ export function CustomerDetailPage() {
                   : "Not set"}
               </p>
             </div>
-            <p className="text-[11px] text-gray-500">
+            <p className="text-xs text-gray-500">
               If set by your factor (Faro/RTS), select Factor and let daily report sync update. Otherwise select Manual.
             </p>
           </DataPanel>
@@ -1521,7 +1521,7 @@ export function CustomerDetailPage() {
                 </DataPanelRow>
               </>
             )}
-            <p className="text-[11px] text-gray-500">
+            <p className="text-xs text-gray-500">
               Industry standard layover ranges $250-500/day. Most customers expect the first night included in detention rate.
             </p>
           </DataPanel>
@@ -1611,7 +1611,7 @@ export function CustomerDetailPage() {
                 <div className="text-xs text-gray-600">Operational contacts and communication owners</div>
                 <div className="flex items-center gap-2">
                   {canViewInactiveContacts ? (
-                    <label className="flex items-center gap-1 rounded-sm border border-gray-300 px-2 py-1 text-[11px] text-gray-600">
+                    <label className="flex items-center gap-1 rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-600">
                       <input type="checkbox" checked={includeInactiveContacts} onChange={(event) => setIncludeInactiveContacts(event.target.checked)} />
                       Show inactive
                     </label>
@@ -1637,7 +1637,7 @@ export function CustomerDetailPage() {
                     <div className="flex items-center gap-2 py-1">
                       {contact.is_primary ? <span className="text-xs">⭐</span> : null}
                       <span className="text-xs font-semibold text-gray-900">{contact.name}</span>
-                      {contact.title ? <span className="text-[11px] text-gray-500">{contact.title}</span> : null}
+                      {contact.title ? <span className="text-xs text-gray-500">{contact.title}</span> : null}
                       <StatusBadge variant={departmentVariant(contact.department)}>{contact.department}</StatusBadge>
                       {contact.deactivated_at ? <StatusBadge variant="neutral">inactive</StatusBadge> : null}
                     </div>
@@ -1763,7 +1763,7 @@ export function CustomerDetailPage() {
             <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {canWriteQuality ? (
-                  <label className="flex items-center gap-1 rounded-sm border border-gray-300 px-2 py-1 text-[11px] text-gray-600">
+                  <label className="flex items-center gap-1 rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-600">
                     <input type="checkbox" checked={showVoidedQuality} onChange={(event) => setShowVoidedQuality(event.target.checked)} />
                     Show voided
                   </label>
@@ -1782,7 +1782,7 @@ export function CustomerDetailPage() {
               ) : qualityEvents.map((event) => (
                 <div key={event.id} className={`rounded-sm border px-3 py-2 ${event.voided_at ? "border-gray-200 bg-gray-50 text-gray-500" : "border-gray-300 bg-white"}`}>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-[11px]">{formatDateUS(event.event_date)}</span>
+                    <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs">{formatDateUS(event.event_date)}</span>
                     <StatusBadge variant={event.severity === "severe" ? "crit" : event.severity === "warning" ? "warn" : "info"}>{event.severity}</StatusBadge>
                     <span className="text-xs uppercase tracking-wide">{event.event_type.replaceAll("_", " ")}</span>
                     {event.dollar_impact_amount != null ? <strong className="text-xs">${Number(event.dollar_impact_amount).toFixed(2)}</strong> : null}
@@ -2074,7 +2074,7 @@ export function CustomerDetailPage() {
             }
             filterBar={
               canViewInactiveContacts ? (
-                <label className="flex items-center gap-1 rounded-sm border border-gray-300 px-2 py-1 text-[11px] text-gray-600">
+                <label className="flex items-center gap-1 rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-600">
                   <input type="checkbox" checked={includeInactiveContacts} onChange={(event) => setIncludeInactiveContacts(event.target.checked)} />
                   Show inactive
                 </label>
@@ -2456,7 +2456,7 @@ export function CustomerDetailPage() {
               ) : undefined
             }
             filterBar={
-              <label className="flex items-center gap-1 rounded-sm border border-gray-300 px-2 py-1 text-[11px] text-gray-600">
+              <label className="flex items-center gap-1 rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-600">
                 <input type="checkbox" checked={includeInactiveLanes} onChange={(event) => setIncludeInactiveLanes(event.target.checked)} />
                 Show inactive
               </label>

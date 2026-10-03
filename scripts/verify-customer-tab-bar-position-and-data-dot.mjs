@@ -36,6 +36,8 @@ export function auditAll(src) {
   if (!/hasData:\s*tabHasData\[/.test(src)) {
     failures.push(`${FILE}: NavyPageSubNav's items= no longer computes a real hasData value from tabHasData — the data-dot feature has been silently dropped`);
   }
+  if (src.includes("text-[11px]")) failures.push(`${FILE}: leftover text-[11px]`);
+  if (src.includes("#8A92AB") || src.includes("#334155")) failures.push(`${FILE}: leftover off-scale muted`);
 
   return failures;
 }
@@ -79,7 +81,14 @@ if (process.argv.includes("--selftest")) {
     "MUTATION 2 (hasData wiring stripped) escaped detection"
   );
 
-  console.log(`${LABEL} --selftest PASS (2/2 mutations caught)`);
+  const leftoverMutated = `${real}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  const leftoverFailures = auditAll(leftoverMutated);
+  assert.ok(
+    leftoverFailures.some((f) => f.includes("leftover")),
+    "MUTATION 3 (leftover tokens planted) escaped detection"
+  );
+
+  console.log(`${LABEL} --selftest PASS (3/3 mutations caught)`);
   process.exit(0);
 }
 
