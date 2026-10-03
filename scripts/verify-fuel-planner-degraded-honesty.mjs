@@ -42,6 +42,10 @@ const checks = scan(source);
 const failed = checks.filter(([, ok]) => !ok);
 for (const [name, ok] of checks) console.log(`${ok ? "PASS" : "FAIL"} ${name}`);
 if (failed.length) process.exit(1);
+if (source.summary.includes("text-[11px]")) {
+  console.error("TripPlanSummaryBanner.tsx: must not use text-[11px] — use text-xs or text-section-header");
+  process.exit(1);
+}
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
