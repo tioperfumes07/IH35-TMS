@@ -104,7 +104,7 @@ function SectionDivider({ title, index }: { title: string; index: number }) {
   return (
     <div className="mt-8 border-b-2 border-slate-800 pb-1 print:mt-6">
       <div className="flex items-baseline gap-3">
-        <span className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">{index + 1}</span>
+        <span className="text-section-header font-semibold uppercase tracking-widest text-slate-500">{index + 1}</span>
         <h2 className="text-xs font-semibold text-slate-900">{title}</h2>
       </div>
     </div>
@@ -127,7 +127,7 @@ function PLSection({ companyId, fromDate, toDate, basis, searchQuery }: { compan
 
   const renderSection = (title: string, lines: typeof revenue.lines, total: number) => (
     <div className="mb-4">
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1">{title}</div>
+      <div className="text-section-header font-semibold uppercase tracking-wide text-slate-500 mb-1">{title}</div>
       {filterLines(lines).length === 0 ? (
         <p className="text-xs text-slate-400 pl-2">— no entries —</p>
       ) : (
@@ -215,11 +215,11 @@ function BSSection({ companyId, asOfDate, basis, searchQuery }: { companyId: str
 
   return (
     <div className="mt-3">
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1">Assets</div>
+      <div className="text-section-header font-semibold uppercase tracking-wide text-slate-500 mb-1">Assets</div>
       {renderLines(assets.lines, assets.total, "Total Assets")}
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1 mt-3">Liabilities</div>
+      <div className="text-section-header font-semibold uppercase tracking-wide text-slate-500 mb-1 mt-3">Liabilities</div>
       {renderLines(liabilities.lines, liabilities.total, "Total Liabilities")}
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1 mt-3">Equity</div>
+      <div className="text-section-header font-semibold uppercase tracking-wide text-slate-500 mb-1 mt-3">Equity</div>
       {renderLines(equity.lines, equity.total, "Total Equity")}
       <div className="flex justify-between font-bold text-xs border-t-2 border-slate-800 pt-1 mt-2">
         <span>Total Liabilities & Equity</span>
@@ -247,7 +247,7 @@ function ARAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
   return (
     <div className="mt-3 overflow-auto">
       <div className="overflow-x-auto"><table className="min-w-full text-xs">
-        <thead className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">
+        <thead className="text-section-header font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">
           <tr>
             <th className="py-1 text-left">Customer</th>
             <th className="py-1 text-right">Current</th>
@@ -296,7 +296,7 @@ function APAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
   return (
     <div className="mt-3 overflow-auto">
       <div className="overflow-x-auto"><table className="min-w-full text-xs">
-        <thead className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">
+        <thead className="text-section-header font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">
           <tr>
             <th className="py-1 text-left">Vendor</th>
             <th className="py-1 text-right">Current</th>
@@ -346,7 +346,7 @@ function CustomerSummarySection({ companyId, fromDate, toDate, searchQuery }: { 
   return (
     <div className="mt-3 overflow-auto">
       <div className="overflow-x-auto"><table className="min-w-full text-xs">
-        <thead className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">
+        <thead className="text-section-header font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">
           <tr>
             <th className="py-1 text-left">Customer</th>
             <th className="py-1 text-right">Revenue</th>
@@ -388,7 +388,7 @@ function VendorExpenseSummarySection({ companyId, fromDate, toDate, searchQuery 
   return (
     <div className="mt-3 overflow-auto">
       <div className="overflow-x-auto"><table className="min-w-full text-xs">
-        <thead className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">
+        <thead className="text-section-header font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">
           <tr>
             <th className="py-1 text-left">Vendor</th>
             <th className="py-1 text-right">Open balance</th>
@@ -541,7 +541,7 @@ export function ManagementReportPackagePage() {
         <div className="rounded-sm border border-gray-200 bg-white p-6 print:border-0 print:p-0">
           {/* Cover page */}
           <div className="mb-8 border-b-2 border-slate-800 pb-6 print:pb-4">
-            <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-2">Management Report Package</div>
+            <div className="text-section-header font-semibold uppercase tracking-widest text-slate-400 mb-2">Management Report Package</div>
             <h1 className="text-page-title font-bold text-slate-900 mb-1">{pkg.label}</h1>
             <div className="text-slate-600 text-xs mb-4">{pkg.description}</div>
             <div className="grid grid-cols-2 gap-4 text-xs text-slate-500 mt-6">
@@ -557,11 +557,11 @@ export function ManagementReportPackagePage() {
 
           {/* Table of Contents */}
           <div className="mb-8">
-            <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-2">Table of Contents</div>
+            <div className="text-section-header font-semibold uppercase tracking-widest text-slate-500 mb-2">Table of Contents</div>
             <ol className="space-y-1 text-xs text-slate-700">
               {pkg.sections.map((section, i) => (
                 <li key={section} className="flex items-baseline gap-2">
-                  <span className="text-[11px] font-semibold text-slate-400 min-w-[1rem]">{i + 1}</span>
+                  <span className="text-xs font-semibold text-slate-400 min-w-[1rem]">{i + 1}</span>
                   <span>{section}</span>
                 </li>
               ))}
