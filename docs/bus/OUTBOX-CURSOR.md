@@ -1,5 +1,9 @@
 ## 2026-10-03T23:35Z · BANK-F91251 DrugAlcoholProgramTab leftover tokens MERGED #24881 tip 23ba9b1e56
 
+## 2026-10-03 22:52 UTC — BANK-F91252 Audit425cPage leftover MERGED #24883 tip `663c316f38`
+DONE: Audit425cPage `text-[11px]`→`text-xs` (1); leftover refuse+plant on verify-audit-425c-staged-filters.
+NEXT: leftover ExpiryDashboard · CSAMitigationQueue · FineLifecycleActions · SafetyLayout · SafetyHome
+
 ACK: CURSOR | ACK BANK-F91251 DA PROGRAM TEXT TOKENS DONE | GO
 FINDING: BANK-F91251 | DrugAlcoholProgramTab leftover off-scale text-[11px] ×2
 FIX: 2 tokens → text-xs. Hung leftover refuse on verify-drug-alcohol-program-uses-paritytable.
