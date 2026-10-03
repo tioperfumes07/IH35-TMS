@@ -30,6 +30,11 @@ function assertAll(srcs) {
     if (/import \{\s*\nimport /.test(src)) {
       problems.push(`${file}: broken multi-line import`);
     }
+    // BANK-F91280 leftover refuse — ForensicReviewPage page-scoped only
+    if (file.includes("ForensicReviewPage")) {
+      if (src.includes("text-[11px]")) problems.push(`${file}: leftover text-[11px]`);
+      if (src.includes("#8A92AB") || src.includes("#334155")) problems.push(`${file}: leftover off-scale muted`);
+    }
   }
   return problems;
 }
@@ -47,6 +52,13 @@ if (SELFTEST) {
   const live = assertAll(srcs);
   if (live.length) {
     console.error(`${LABEL} SELFTEST FAILED live: ${live.join(" | ")}`);
+    process.exit(1);
+  }
+  const forensic = FILES.find((f) => f.includes("ForensicReviewPage"));
+  const leftoverPlant = { ...srcs, [forensic]: `${srcs[forensic]}\n<div className="text-[11px] text-[#8A92AB]">plant</div>` };
+  const leftoverHits = assertAll(leftoverPlant);
+  if (!leftoverHits.some((e) => e.includes("leftover text-[11px]")) || !leftoverHits.some((e) => e.includes("leftover off-scale muted"))) {
+    console.error(`${LABEL} SELFTEST FAILED leftover plant escaped: ${leftoverHits.join(" | ")}`);
     process.exit(1);
   }
   console.log(`${LABEL} SELFTEST PASS`);

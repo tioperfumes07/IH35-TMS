@@ -323,10 +323,10 @@ export function ForensicReviewPage() {
                 </div>
                 {batch.status === "in_progress" && live?.recent_errors?.length ? (
                   <details className="mt-2 rounded-sm border border-red-100 bg-red-50 p-2">
-                    <summary className="cursor-pointer text-[11px] font-semibold text-red-700">Recent errors ({live.recent_errors.length})</summary>
+                    <summary className="cursor-pointer text-xs font-semibold text-red-700">Recent errors ({live.recent_errors.length})</summary>
                     <div className="mt-1 space-y-1">
                       {live.recent_errors.map((item) => (
-                        <div key={`${item.at}-${item.message}`} className="text-[11px] text-red-700">
+                        <div key={`${item.at}-${item.message}`} className="text-xs text-red-700">
                           {new Date(item.at).toLocaleTimeString()} - {item.message}
                         </div>
                       ))}
@@ -360,13 +360,13 @@ export function ForensicReviewPage() {
                       shown={(auditLogQuery.data?.rows ?? []).length}
                       limit={FORENSIC_AUDIT_LOG_PAGE}
                       hint="Expand again later for older audit rows (cursor paging not yet wired)."
-                      className="mb-1 text-[11px] text-gray-600"
+                      className="mb-1 text-xs text-gray-600"
                     />
                     {(auditLogQuery.data?.rows ?? []).length === 0 ? (
-                      <p className="text-[11px] text-gray-500">No audit rows yet.</p>
+                      <p className="text-xs text-gray-500">No audit rows yet.</p>
                     ) : (
                       (auditLogQuery.data?.rows ?? []).map((row: ForensicAuditLogRow) => (
-                        <div key={row.id} className="border-b border-gray-200 py-1 text-[11px] text-gray-700 last:border-b-0">
+                        <div key={row.id} className="border-b border-gray-200 py-1 text-xs text-gray-700 last:border-b-0">
                           <span className="font-semibold">{row.event_type}</span> · {new Date(row.occurred_at).toLocaleString()}
                           {row.entity_type ? ` · ${row.entity_type}` : ""}
                           {row.records_processed !== null ? ` · records ${row.records_processed}` : ""}
