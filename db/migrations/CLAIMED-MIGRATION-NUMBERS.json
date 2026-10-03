@@ -1717,6 +1717,11 @@
       "claimed_at": "2026-10-03",
       "purpose": "ROUND 352 F-2 + F-3 (one-leg family): declare role fuel_wallet_relay (1295); a deferred constraint trigger on journal_entry_postings refuses a non-reversal credit that leaves an account bound to undeposited_funds (1090) or fuel_wallet_relay (1295) with a credit balance — an asset holding money cannot be negative."
     },
+    "202615330700": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 355 R-2 (same package as F-3): fuel cap is GALLONS per unit — mdata.units.fuel_tank_capacity_gallons, policy per_swipe_gallon_limit (fallback, default 150), refuse an active policy with neither limit, overage rule over_gallon_limit + audit columns, exempt outcome for repairs / authorized non-fuel spend."
+    },
     "202615340100": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-03",
