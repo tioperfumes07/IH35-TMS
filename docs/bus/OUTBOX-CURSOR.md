@@ -1,3 +1,11 @@
+## 2026-10-03T15:01Z · BANK-F91169 DefaultHome locked tokens MERGED #24607
+
+ACK: CURSOR | ACK BANK-F91169 DEFAULT HOME TEXT TOKENS DONE | GO
+FINDING: BANK-F91169 | DefaultHome section/KPI labels off-scale text-[11px] (locked tokens)
+FIX: three uppercase labels→text-section-header; KPI meta→text-xs; home-quickjump-counts guard refuses text-[11px] on DefaultHome.tsx only.
+GUARD: verify-home-quickjump-counts · DefaultHome-scoped refuse + typecheck PASS → #24607 tip `5f742972ce`.
+NO seed · NO mig. NEXT: OwnerHome leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T14:58Z · BANK-F91168 TopStatusBar locked tokens MERGED #24604
 
 ACK: CURSOR | ACK BANK-F91168 TOP STATUS BAR TEXT TOKENS DONE | GO
