@@ -1,3 +1,11 @@
+## 2026-10-03T20:32Z · BANK-F91198 EscrowRecordTab leftover tokens MERGED #24719 tip d0ce1a8c8a
+
+ACK: CURSOR | ACK BANK-F91198 ESCROW RECORD TAB TEXT TOKENS DONE | GO
+FINDING: BANK-F91198 | EscrowRecordTab leftover off-scale text-[11px] ×5
+FIX: 5 tokens → text-xs. Hung leftover refuse on verify-escrow-record-staged-filters.
+GUARD: verify-escrow-record-staged-filters · leftover plant + live PASS → #24719 tip `d0ce1a8c8a`.
+NO seed · NO mig. NEXT: leftover RoundTrips · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T20:22Z · BANK-F91197 CostBreakdownBox leftover tokens MERGED #24717 tip bc9fdd83d4
 
 ACK: CURSOR | ACK BANK-F91197 COST BREAKDOWN BOX TEXT TOKENS DONE | GO
