@@ -46,6 +46,8 @@ function run() {
   }
   const noteProblems = collectNoteSaveProblems(source);
   if (noteProblems.length) throw new Error(`${LABEL}: ${noteProblems.join("; ")}`);
+  if (source.includes("text-[11px]")) throw new Error(`${LABEL}: leftover text-[11px]`);
+  if (source.includes("#8A92AB") || source.includes("#334155")) throw new Error(`${LABEL}: leftover off-scale muted`);
   console.log(`${LABEL}: PASS`);
 }
 
@@ -62,6 +64,17 @@ if (process.argv.includes("--selftest")) {
   const badHits = collectNoteSaveProblems(bad);
   if (!goodOk || badHits.length < 3) {
     console.error(`${LABEL}: selftest FAIL good=${goodOk} bad=${JSON.stringify(badHits)}`);
+    process.exit(1);
+  }
+  const leftoverSrc = `${good}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  let leftoverCaught = false;
+  try {
+    if (leftoverSrc.includes("text-[11px]")) throw new Error("leftover text-[11px]");
+  } catch {
+    leftoverCaught = true;
+  }
+  if (!leftoverCaught || !(leftoverSrc.includes("#8A92AB") || leftoverSrc.includes("#334155"))) {
+    console.error(`${LABEL}: selftest FAIL leftover plant escaped`);
     process.exit(1);
   }
   console.log(`${LABEL}: selftest PASS`);
