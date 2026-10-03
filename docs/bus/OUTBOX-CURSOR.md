@@ -1,3 +1,11 @@
+## 2026-10-03T14:26Z · BANK-F91158 AuthGatePanel identity locked tokens MERGED #24580
+
+ACK: CURSOR | ACK BANK-F91158 AUTH GATE PANEL TEXT TOKENS DONE | GO
+FINDING: BANK-F91158 | AuthGatePanel identity row off-scale text-[11px] (locked tokens)
+FIX: row→text-xs; auth-gate-panel-fails-closed guard refuses text-[11px] on this panel only.
+GUARD: verify-auth-gate-panel-fails-closed · dedicated guard + typecheck PASS → #24580 tip `0be2e827e4`.
+NO seed · NO mig. NEXT: PreDispatchValidationPanel leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T14:24Z · BANK-F91157 FreshnessIndicator pill locked tokens MERGED #24577
 
 ACK: CURSOR | ACK BANK-F91157 FRESHNESS INDICATOR TEXT TOKENS DONE | GO
