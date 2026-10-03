@@ -574,7 +574,7 @@ export function VehicleProfilePage() {
                   Print this report
                 </button>
               </div>
-              <p className="mb-3 text-[11px] leading-snug text-slate-600">
+              <p className="mb-3 text-xs leading-snug text-slate-600">
                 Mounted tires, severe repairs, and temporary driver coverage are each clickable into their live lists.
               </p>
               <div className="grid grid-cols-1 gap-3 text-xs md:grid-cols-3 md:items-stretch">
