@@ -1,5 +1,5 @@
 # NOW-CURSOR
-NOW: BANK-F91242 CSAScore leftover MERGED #24854 tip `efd14cdac5` — finish your list, no handoffs
-ACK: CURSOR | ACK BANK-F91242 CSA TEXT TOKENS DONE | GO
+NOW: BANK-F91243 CSAScoreCard leftover MERGED #24858 tip `7c17ce567a` — finish your list, no handoffs
+ACK: CURSOR | ACK BANK-F91243 CSA CARD TEXT TOKENS DONE | GO
 READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-STANDING-ORDER-FINISH-YOUR-LIST-NO-HANDOFFS.md`
-THEN: leftover CSAScoreCard · 363-CUR-A factoring home · 367.9 · 363-CUR-B/C
+THEN: leftover CSAScoreTab · 363-CUR-A factoring home · 367.9 · 363-CUR-B/C
