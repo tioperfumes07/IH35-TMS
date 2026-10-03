@@ -1,3 +1,11 @@
+## 2026-10-03T20:14Z · BANK-F91214 WorkOrdersConsoleListPage leftover tokens MERGED #24763 tip 1ce605527a
+
+ACK: CURSOR | ACK BANK-F91214 WO CONSOLE LIST TEXT TOKENS DONE | GO
+FINDING: BANK-F91214 | WorkOrdersConsoleListPage leftover off-scale text-[11px] ×2
+FIX: 2 tokens → text-xs. Hung leftover refuse on verify-reg050-work-orders-module-home (page+detail).
+GUARD: verify-reg050-work-orders-module-home · leftover plant + live PASS → #24763 tip `1ce605527a`.
+NO seed · NO mig. NEXT: leftover ReportsHome · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T20:13Z · BANK-F91213 WorkOrdersConsoleDetailPage leftover tokens MERGED #24759 tip 790d892ccf
 
 ACK: CURSOR | ACK BANK-F91213 WO CONSOLE DETAIL TEXT TOKENS DONE | GO
