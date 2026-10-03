@@ -2599,3 +2599,24 @@ accounting.invoice_lines 8 MB (5) · mdata.customers 7 MB (11). Full list kept f
 rows 800 -> 800; duplicate groups (company, unit, ended_at) 0; unique indexes: unit_stop_events_company_unit_ended_unique,
 unit_stop_events_company_unit_start_unique, unit_stop_events_pkey — all indisvalid true; unit_stop_events_unit_start_unique
 GONE; migrations 1059 / 1101 / 1102 in the ledger. First real tick under the new writer: 00:37Z (being read).
+
+ROUND 345 · THE BLOCK, PHASE 1 (financial lines) — merged #24314 (56f96140f7), claims #24301 + #24305 · 2026-10-03
+- Every company-bearing FK on invoice_lines, bill_lines, expense_lines, payment_applications, transaction_source_links
+  now has a VALIDATED composite (operating_company_id, ref) twin — 19 new + 4 pre-existing = 23. A line can no longer
+  reference another company's invoice / payment / account / item / class / load / driver / customer / lease / work order
+  / posting / parent line. bill_lines + expense_lines: CHECK operating_company_id IS NOT NULL (NOT VALID — the 534
+  orphans are untouched, VALIDATE after the owner rules).
+- PROD (read-only, SET LOCAL app.bypass_rls='lucia'): ledger 202615320900-0908 applied 02:03:36-02:03:38Z by the
+  Render pre-deploy (dep-db063umgekts738b3en0); 25 constraints, 23 validated + the 2 NOT VALID checks; 7 parent
+  unique indexes indisvalid; rows unchanged (invoice_lines 21,313 · bill_lines 155,392 · expense_lines 35,048 ·
+  payment_applications 12,214 · transaction_source_links 7,947). Guard verify-money-lines-same-entity-fks live: 20
+  company-bearing FKs PASS.
+- Fork proof (both forks deleted): cross-company writes refused 23503 on every new FK tested; NULL company refused
+  23514; same-company writes accepted; guard FAILS when one FK is dropped.
+- Found while gating, fixed in #24314 (CI-guard lane): verify-no-opco-filter-on-tables-without-it.mjs declared
+  ALLOW_OFFLINE_SKIP twice on main (#24298 + #24307) — a SyntaxError that failed every seat's gate. Removed the
+  duplicate; same meaning. FYI CC-2 / Cursor.
+- Local only (gitignored baseline): verify-bank-match-suggest-is-read-only re-measured 951 -> 981 — 30 rows, all
+  source='plaid' with plaid_transaction_id, one feed batch 2026-10-03 00:28Z. Any seat whose gate reds on it: same check.
+- LEFT: phase 2 (settlement_lines, escrow_balances, driver_advance_accounts); picker half with Cursor; rulings still
+  open — TRK driver_payroll_clearing target, escrow 57927c7c + 009d57e9 merge, the 534 orphans, load counter 13618 vs 13639.
