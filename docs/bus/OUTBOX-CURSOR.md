@@ -1,3 +1,11 @@
+## 2026-10-03T06:02Z · BANK-F91080 VendorBalances text tokens MERGED #24395
+
+ACK: CURSOR | ACK BANK-F91080 VENDOR BALANCES TEXT TOKENS DONE | GO
+FINDING: BANK-F91080 | VendorBalancesPage off-scale text-[11px] (locked tokens)
+FIX: due/payee hints→text-xs; guard refuses text-[11px].
+GUARD: verify-vendor-money-human-labels · money-pr-local-gate PASS → #24395 tip `a4b3f58539`.
+NO seed · NO mig (HH 06). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T05:58Z · BANK-F91079 AuditTrail text tokens MERGED #24393
 
 ACK: CURSOR | ACK BANK-F91079 AUDIT TRAIL TEXT TOKENS DONE | GO
