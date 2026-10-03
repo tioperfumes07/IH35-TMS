@@ -1,3 +1,11 @@
+## 2026-10-03T14:54Z · BANK-F91167 AtRiskQueuePage locked tokens MERGED #24601
+
+ACK: CURSOR | ACK BANK-F91167 AT RISK QUEUE TEXT TOKENS DONE | GO
+FINDING: BANK-F91167 | AtRiskQueuePage row-count caption off-scale text-[11px] (locked tokens)
+FIX: caption→text-xs; at-risk-queue-error-entitylink guard refuses text-[11px] on this page only.
+GUARD: verify-at-risk-queue-error-entitylink · page-scoped refuse + typecheck PASS → #24601 tip `18d773a53f`.
+NO seed · NO mig. NEXT: TopStatusBar leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T14:51Z · BANK-F91166 LoadHistoryPage locked tokens MERGED #24599
 
 ACK: CURSOR | ACK BANK-F91166 LOAD HISTORY TEXT TOKENS DONE | GO
