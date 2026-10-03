@@ -121,7 +121,7 @@ export function TransactionRegisterPage() {
         label: "Source",
         sortable: true,
         render: (r) => (
-          <span className={`rounded-sm border px-2 py-0.5 text-[11px] ${sourceBadgeClass(r.source)}`}>
+          <span className={`rounded-sm border px-2 py-0.5 text-xs ${sourceBadgeClass(r.source)}`}>
             {r.source}
           </span>
         ),
