@@ -38,6 +38,8 @@ function run(src, matrix, self) {
     for (const id of LEAVES) if (!parsed.leaves?.find((leaf) => leaf.id === id)?.required?.includes("reverse_link")) failures.push(`exact Required ownership: ${id}`);
   } catch { failures.push("vendors Required matrix parses"); }
   if (!self.split("\n").includes(HEADER)) failures.push("exact AP reverse Built annotation");
+  if (src.includes("text-[11px]")) failures.push("leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155")) failures.push("leftover off-scale muted");
   return failures;
 }
 
@@ -68,7 +70,17 @@ if (process.argv.includes("--selftest")) {
   const wrongHeader = self.replace('"leaves":["detail.ap.bills"', '"leaves":["detail.ap"');
   if (!run(live, matrix, wrongHeader).includes("exact AP reverse Built annotation")) throw new Error("header mutation escaped");
   caught += 1;
-  console.log(`${LABEL} SELFTEST PASS — ${caught}/${CHECKS.length + LEAVES.length + 1} runtime/matrix/header mutations rejected`);
+  if (live.includes("text-[11px]") || live.includes("#8A92AB") || live.includes("#334155")) {
+    console.error(`${LABEL} SELFTEST FAIL — live leftover tokens present`);
+    process.exit(1);
+  }
+  const leftoverPlant = `${live}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  if (!run(leftoverPlant, matrix, self).some((f) => f.includes("leftover"))) {
+    console.error(`${LABEL} SELFTEST FAIL — leftover plant escaped`);
+    process.exit(1);
+  }
+  caught += 1;
+  console.log(`${LABEL} SELFTEST PASS — ${caught}/${CHECKS.length + LEAVES.length + 2} runtime/matrix/header/leftover mutations rejected`);
   process.exit(0);
 }
 

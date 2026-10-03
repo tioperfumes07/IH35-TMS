@@ -574,7 +574,7 @@ export function VendorDetailPage() {
               className="mb-3 rounded-sm border border-slate-200 bg-slate-50 p-3"
               data-testid="vendor-linked-driver"
             >
-              <div className="text-[11px] uppercase text-slate-600">Linked driver (A/P payee)</div>
+              <div className="text-xs uppercase text-slate-600">Linked driver (A/P payee)</div>
               <div className="mt-1 text-xs font-semibold text-gray-900">
                 <EntityLinkOrTombstone
                   kind="driver"
@@ -589,7 +589,7 @@ export function VendorDetailPage() {
               read-only until Edit is on, matching QBO's header Edit. Previously the only Edit button
               was buried at the bottom, so the profile looked un-editable and dropdowns wouldn't open. */}
           <div className="mb-3 flex items-center justify-between gap-2 border-b border-gray-100 pb-2">
-            <span className="text-[11px] text-slate-500">
+            <span className="text-xs text-slate-500">
               {profileEditMode ? "Editing — change any field, then Save." : "Read-only. Click Edit to change vendor details."}
             </span>
             <div className="flex gap-2">
@@ -741,7 +741,7 @@ export function VendorDetailPage() {
             <span className="text-xs font-semibold text-gray-600">Quality rating</span>
             <div className="flex items-center gap-2">
               <span
-                className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
                   profileForm.qualityRating === "good"
                     ? "bg-slate-100 text-slate-700"
                     : profileForm.qualityRating === "bad"
@@ -1162,13 +1162,13 @@ export function VendorDetailPage() {
               {taxFormDocsQuery.isLoading ? (
                 <span className="text-xs text-gray-500">Checking…</span>
               ) : taxFormDocsQuery.isError ? (
-                <span className="rounded-sm bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-800">Couldn&apos;t check</span>
+                <span className="rounded-sm bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800">Couldn&apos;t check</span>
               ) : (taxFormDocsQuery.data?.length ?? 0) > 0 ? (
-                <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
+                <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
                   {taxFormDocsQuery.data!.length} tax-form document{taxFormDocsQuery.data!.length === 1 ? "" : "s"} attached
                 </span>
               ) : (
-                <span className="rounded-sm border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                <span className="rounded-sm border border-slate-200 bg-white px-2 py-0.5 text-xs font-semibold text-slate-600">
                   No tax-form document on file
                 </span>
               )}
