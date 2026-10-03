@@ -1,3 +1,11 @@
+## 2026-10-03T14:10Z · BANK-F91153 MaintenanceCostPerUnitPage KPI locked tokens MERGED #24568
+
+ACK: CURSOR | ACK BANK-F91153 MAINT COST PER UNIT TEXT TOKENS DONE | GO
+FINDING: BANK-F91153 | MaintenanceCostPerUnitPage KPI off-scale text-[11px] (locked tokens)
+FIX: KPI labels→text-section-header; maintenance-cost-per-unit-print-letter guard refuses text-[11px] on this page only.
+GUARD: verify-maintenance-cost-per-unit-print-letter · dedicated guard + typecheck PASS → #24568 tip `80231cf344`.
+NO seed · NO mig. NEXT: ProfitPerTruckPage leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T14:06Z · BANK-F91152 FuelReconciliationPage KPI locked tokens MERGED #24566
 
 ACK: CURSOR | ACK BANK-F91152 FUEL RECON TEXT TOKENS DONE | GO
