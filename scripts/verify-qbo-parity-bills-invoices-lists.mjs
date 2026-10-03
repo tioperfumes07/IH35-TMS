@@ -37,6 +37,9 @@ export function check({ bills, invoices }) {
       !(/const vendorParam = vendorFilter\.length === 1 \? vendorFilter\[0\] : undefined/.test(bills) && /vendor_id:\s*vendorParam/.test(bills)))
     f.push(`${BILLS}: Bills list must wire vendor_id (vendorId) into listBills`);
   if (!/All vendors/.test(bills)) f.push(`${BILLS}: Bills list must have an "All vendors" Vendor filter option`);
+  // BANK-F91070 — ORDERS chrome: BillsPage uses locked tokens (text-section-header / text-xs), not text-[11px].
+  if (bills.includes("text-[11px]")) f.push(`${BILLS}: must not use text-[11px] — use text-section-header (11px headers) or text-xs (12px body)`);
+  if (!bills.includes("text-section-header")) f.push(`${BILLS}: KPI labels must use text-section-header`);
 
   // ---- Invoices list ----
   if (!/label:\s*"Load #"/.test(invoices)) f.push(`${INVOICES}: Invoices list must have a "Load #" column`);
@@ -93,6 +96,7 @@ if (process.argv.includes("--selftest")) {
     ];
     listBills(companyId, { vendor_id: vendorId || undefined });
     <option value="">All vendors</option>
+    <p className="text-section-header font-semibold uppercase">Open</p>
   `;
   const goodInvoices = `
     import { listAllCustomers } from "../../api/mdata";
@@ -117,6 +121,7 @@ if (process.argv.includes("--selftest")) {
     ["missing invoices Customer filter caught", check({ bills: goodBills, invoices: goodInvoices.replace("customer_id: customerId || undefined", "") }).some((x) => x.includes("customer_id"))],
     ["capped customer roster regression caught", check({ bills: goodBills, invoices: goodInvoices.replaceAll("listAllCustomers", "listCustomers") }).some((x) => /exhaustive|capped/.test(x))],
     ["missing company scope caught", check({ bills: goodBills, invoices: goodInvoices.replace("operating_company_id: selectedCompanyId", "operating_company_id: undefined") }).some((x) => x.includes("selectedCompanyId scope"))],
+    ["text-[11px] on BillsPage caught", check({ bills: goodBills + ' text-[11px] ', invoices: goodInvoices }).some((x) => x.includes("text-[11px]"))],
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
