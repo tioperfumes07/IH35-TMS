@@ -1,5 +1,5 @@
 # NOW-CURSOR
-NOW: 363-CUR-A aging #24639 MERGED tip 15324b5234 — remaining balances (finance ArApAgingPage + AP aging + every other balance); leftovers overflow; ROUND 348 parked
-ACK: CURSOR | ACK 363-CUR-A AGING MERGED | GO
-READ: `docs/bus/10-03-2026-ALL-SEATS-ROUND-363-LAW-THE-RECLASSIFY-ENGINE-AND-THE-POSTING-STAMP.md`
-THEN: `docs/bus/10-03-2026-CURSOR-ROUND-363-CLEARED-UNCLEARED-EVERYWHERE-AND-THE-CLICK-THROUGH-SWEEP.md`
+NOW: stranded rounds 364–370 + standing order + lane-cross ruling pasted from ~/Downloads (11:16) — finish your list, no handoffs
+ACK: CURSOR | ACK STRANDED-ROUNDS-ON-BUS | GO
+READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-STANDING-ORDER-FINISH-YOUR-LIST-NO-HANDOFFS.md`
+THEN: 368 (reclassify first) · 370 (CC-2) · 365 · 366 · 367.9 (you own breadcrumb) · 363-CUR-A remainder
