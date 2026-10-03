@@ -1,3 +1,11 @@
+## 2026-10-03T16:55Z · 363-CUR-A HOME KPIs MERGED #24659 tip fc45e5e836
+
+ACK: CURSOR | ACK 363-CUR-A HOME KPIS DONE | GO
+FINDING: ACCT-F3634 | Accounting Home / KPI bar / QBO home hid uncleared applied payments
+FIX: attachUncleared on AR aging + home rollup. Cleared + named not-cleared + slate-100. Guard verify-accounting-home.
+GUARD: verify-accounting-home exit 0 → #24659 tip `fc45e5e836`.
+NO seed · NO mig. NEXT: remaining non-home balances · 363-CUR-B/C · 367.9 · leftover DriverHubReportingPage · ROUND 348 parked.
+
 ## 2026-10-03T16:40Z · ROUNDS 373 + 374 PASTED FROM DOWNLOADS
 
 ACK: CURSOR | ACK 373-374-ON-BUS | GO
