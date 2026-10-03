@@ -573,7 +573,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div>
           <div className="text-xs font-semibold text-slate-800">{config.title}</div>
-          <div className="text-[11px] text-slate-500">{config.subtitle}</div>
+          <div className="text-xs text-slate-500">{config.subtitle}</div>
         </div>
         <Button
           size="sm"
@@ -592,7 +592,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
         className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white px-3 py-2"
         data-testid={`${config.pageTestId}-filters`}
       >
-        <label className="text-[11px] text-slate-600">
+        <label className="text-xs text-slate-600">
           Driver
           <EntityPicker
             kind="driver"
@@ -605,7 +605,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             dataTestId={`${config.pageTestId}-filter-driver`}
           />
         </label>
-        <label className="text-[11px] text-slate-600">
+        <label className="text-xs text-slate-600">
           Unit
           <EntityPicker
             kind="unit"
@@ -618,7 +618,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             dataTestId={`${config.pageTestId}-filter-unit`}
           />
         </label>
-        <label className="text-[11px] text-slate-600">
+        <label className="text-xs text-slate-600">
           Load
           <EntityPicker
             kind="load"
@@ -631,7 +631,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             dataTestId={`${config.pageTestId}-filter-load`}
           />
         </label>
-        <label className="text-[11px] text-slate-600">
+        <label className="text-xs text-slate-600">
           Trailer
           <EntityPicker
             kind="trailer"
@@ -644,7 +644,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             dataTestId={`${config.pageTestId}-filter-trailer`}
           />
         </label>
-        <div className="text-[11px] text-slate-600">
+        <div className="text-xs text-slate-600">
           <label htmlFor="safety-incidents-from-date">From</label>
           <DatePicker
             id="safety-incidents-from-date"
@@ -655,7 +655,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             data-testid="safety-incidents-from-date"
           />
         </div>
-        <div className="text-[11px] text-slate-600">
+        <div className="text-xs text-slate-600">
           <label htmlFor="safety-incidents-to-date">To</label>
           <DatePicker
             id="safety-incidents-to-date"
@@ -758,7 +758,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
 
           {savedHint ? (
             <div
-              className="mb-2 text-[11px] font-medium text-slate-700"
+              className="mb-2 text-xs font-medium text-slate-700"
               data-testid={`${config.pageTestId}-saved-hint`}
             >
               Report saved — add photos now.
@@ -1085,7 +1085,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                           onChange={(e) => setVoidReason(e.target.value)}
                         />
                         {voidError ? (
-                          <div className="text-[11px] text-[#dc2626]" data-testid={`${config.pageTestId}-void-error`}>
+                          <div className="text-xs text-[#dc2626]" data-testid={`${config.pageTestId}-void-error`}>
                             {voidError}
                           </div>
                         ) : null}
@@ -1117,7 +1117,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                   </div>
                 ) : null}
                 {!createMode && detail?.voided_at ? (
-                  <div className="text-[11px] text-slate-500" data-testid={`${config.pageTestId}-voided-note`}>
+                  <div className="text-xs text-slate-500" data-testid={`${config.pageTestId}-voided-note`}>
                     Voided {formatDateUS(str(detail.voided_at))}
                     {str(detail.voided_reason) ? ` · ${str(detail.voided_reason)}` : ""}
                   </div>
@@ -1128,7 +1128,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             {createMode ? (
               <div className="space-y-1">
                 {missingFields.length > 0 ? (
-                  <div className="text-[11px] text-slate-500" data-testid={`${config.pageTestId}-missing-fields`}>
+                  <div className="text-xs text-slate-500" data-testid={`${config.pageTestId}-missing-fields`}>
                     Missing required: {missingFields.join(", ")}
                   </div>
                 ) : null}
