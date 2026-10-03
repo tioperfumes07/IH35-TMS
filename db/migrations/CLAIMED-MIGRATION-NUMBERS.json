@@ -1857,6 +1857,11 @@
       "claimed_at": "2026-10-03",
       "purpose": "CC-2 engine ten-point (point 9 single-fire): _system.job_leases + withJobLease helper — one instance per job per lease window; adopted by CC-2's six unleased crons (bank tie-out, bank drift alerts, factoring repurchase-due, Love's card import, reconciliation worker, Samsara fuel reports)."
     },
+    "202615340800": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-03",
+      "purpose": "ALL-SEATS order KILL THE SECOND SYSTEM (CC-2, driver_settlement_deductions): view driver_finance.v_settlement_deduction_balances — each deduction's remaining = its amount (the stored policy) minus its active settlement deduction lines; readers repoint to it before remaining_balance_cents is dropped."
+    },
     "202615340100": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-03",
