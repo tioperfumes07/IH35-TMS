@@ -9,8 +9,9 @@
 
 import { stampDocumentVoided } from "../accounting/void-document-stamp.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { createExpenseFromFuelTransaction } from "../fuel/fuel-expense-document.service.js";
+import { createExpenseFromFuelTransaction, resolveFuelLineAccount } from "../fuel/fuel-expense-document.service.js";
 import { enteredFuelRowHash, FuelProviderTransactionDuplicateError, refuseDuplicateProviderTransaction } from "../fuel/fuel-provider-reference.js";
+import { resolveLineItemAndAccount, type ResolvedLineAccount } from "../accounting/line-item-account.js";
 import {
   createDriverCashAdvanceCore,
   reverseDriverAdvanceInClientTx,
@@ -394,11 +395,11 @@ export async function previewSettlementCreator(
         Math.round(Number(fuel.discount_cents || 0));
     if (amount <= 0) continue;
     const rail = await accountByNumber(client, draft.operating_company_id, cardRailNumber(fuel.card));
-    const fuelExpense =
-      (await accountByRole(client, draft.operating_company_id, "company_fuel_advance_expense")) ??
-      (await accountByNumber(client, draft.operating_company_id, "5000"));
+    // ROUND 363-CC2-D — the account the post will use (picked item / account, else the fuel-type item), not a guess.
+    const fuelAcct = await resolveFuelLineAccount(client as never, draft.operating_company_id, fuel);
+    const fuelExpense = "refused" in fuelAcct ? null : fuelAcct;
     if (!rail) blockers.push(`Card rail ${cardRailNumber(fuel.card)} not found in CoA.`);
-    if (!fuelExpense) blockers.push("Fuel expense account not found.");
+    if ("refused" in fuelAcct) blockers.push(`Fuel line ${fuel.date}: ${fuelAcct.refused}`);
     push({
       load_number: fuel.load_number ?? null,
       account_number: fuelExpense?.account_number ?? null,
@@ -427,9 +428,7 @@ export async function previewSettlementCreator(
       companyExpensesCents += exp.amount_cents;
       const card = exp.card ?? "relay";
       const rail = await accountByNumber(client, draft.operating_company_id, cardRailNumber(card));
-      const itemAcct =
-        (await accountByNumber(client, draft.operating_company_id, "6100")) ??
-        (await accountByRole(client, draft.operating_company_id, "other_operating_expense"));
+      const itemAcct = await previewExpenseLineAccount(client, draft.operating_company_id, exp, blockers);
       push({
         load_number: exp.load_number ?? null,
         account_number: itemAcct?.account_number ?? null,
@@ -460,9 +459,7 @@ export async function previewSettlementCreator(
       blockers.push("Account 2175 Driver Reimbursements Payable missing — cannot post Drv reimbursements.");
       break;
     }
-    const itemAcct =
-      (await accountByNumber(client, draft.operating_company_id, "6100")) ??
-      (await accountByRole(client, draft.operating_company_id, "other_operating_expense"));
+    const itemAcct = await previewExpenseLineAccount(client, draft.operating_company_id, exp, blockers);
     push({
       load_number: exp.load_number ?? null,
       account_number: itemAcct?.account_number ?? null,
@@ -1063,16 +1060,7 @@ export async function postSettlementCreatorInClientTx(
         Math.round(Number(fuel.discount_cents || 0));
     if (amountCents <= 0) continue;
 
-    const loadId = fuel.load_number
-      ? (
-          await client.query<{ id: string }>(
-            `SELECT id::text FROM mdata.loads
-              WHERE operating_company_id = $1::uuid AND load_number = $2 AND soft_deleted_at IS NULL
-              ORDER BY created_at DESC LIMIT 1`,
-            [draft.operating_company_id, fuel.load_number.trim()],
-          )
-        ).rows[0]?.id ?? null
-      : null;
+    const loadId = await resolveLineLoadId(client, draft.operating_company_id, fuel);
 
     // Vendor: match by name or leave null → createExpenseFromFuelTransaction refuses without vendor.
     const vendor = fuel.vendor_name
@@ -1147,6 +1135,8 @@ export async function postSettlementCreatorInClientTx(
       operating_company_id: draft.operating_company_id,
       fuel_transaction_id: fuelId,
       requesting_user_uuid: actorUserId,
+      item_id: fuel.item_id ?? null,
+      account_id: fuel.account_id ?? null,
     });
     if (doc.outcome === "refused") {
       throw new SettlementCreatorError("fuel_expense_refused", doc.reason);
@@ -1217,13 +1207,11 @@ export async function postSettlementCreatorInClientTx(
       draft.operating_company_id,
       preference,
     );
-    const itemAcct =
-      (await accountByNumber(client, draft.operating_company_id, "6100")) ??
-      (await accountByRole(client, draft.operating_company_id, "other_operating_expense"));
+    const itemAcct = await resolveExpenseLineAccount(client, draft.operating_company_id, exp);
     if (!itemAcct) {
       throw new SettlementCreatorError("expense_account_missing", `No expense account for Comp. Exp. "${exp.item_name}".`);
     }
-    const loadId = await resolveLoadIdByNumber(exp.load_number);
+    const loadId = await resolveLineLoadId(client, draft.operating_company_id, exp);
     const expenseNumber = await nextExpenseDisplayId(
       client as never,
       draft.operating_company_id,
@@ -1256,9 +1244,9 @@ export async function postSettlementCreatorInClientTx(
       `
         INSERT INTO accounting.expense_lines (
           operating_company_id, expense_id, line_sequence, amount, amount_cents, description,
-          load_id, load_required, expense_account_uuid, quantity, rate_cents, unit_of_measure
+          load_id, load_required, expense_account_uuid, quantity, rate_cents, unit_of_measure, item_id
         )
-        VALUES ($1::uuid, $2::uuid, 1, $3, $4::bigint, $5, $6::uuid, $7, $8::uuid, 1, $4::bigint, 'each')
+        VALUES ($1::uuid, $2::uuid, 1, $3, $4::bigint, $5, $6::uuid, $7, $8::uuid, 1, $4::bigint, 'each', $9::uuid)
       `,
       [
         draft.operating_company_id,
@@ -1269,6 +1257,7 @@ export async function postSettlementCreatorInClientTx(
         loadId,
         Boolean(loadId),
         itemAcct.id,
+        itemAcct.item_id,
       ],
     );
     expenseIds.push(expenseId);
@@ -1309,18 +1298,27 @@ export async function postSettlementCreatorInClientTx(
   }
   for (const exp of draft.expenses ?? []) {
     if (!exp.is_reimbursable || exp.amount_cents <= 0) continue;
+    // ROUND 363-CC2-D — the line carries its own load and the account it posts to at close (posting_account_id,
+    // read first by loadSettlementPayItems); it used to carry neither, so close assigned the load by date and the
+    // account by a NULL reimbursement type.
+    const acct = await resolveExpenseLineAccount(client, draft.operating_company_id, exp);
+    if (!acct) throw new SettlementCreatorError("expense_account_missing", `No expense account for reimbursement "${exp.item_name}".`);
+    const lineLoadId = await resolveLineLoadId(client, draft.operating_company_id, exp);
     await client.query(
       `
         INSERT INTO driver_finance.settlement_lines (
-          settlement_id, operating_company_id, line_type, description, amount, is_active, is_sample_data
+          settlement_id, operating_company_id, line_type, description, amount, is_active, is_sample_data,
+          load_id, posting_account_id
         )
-        VALUES ($1::uuid, $2::uuid, 'reimbursement', $3, $4, true, false)
+        VALUES ($1::uuid, $2::uuid, 'reimbursement', $3, $4, true, false, $5::uuid, $6::uuid)
       `,
       [
         settlementId,
         draft.operating_company_id,
         exp.description ?? exp.item_name,
         dollarsFromCents(exp.amount_cents),
+        lineLoadId,
+        acct.id,
       ],
     );
   }
@@ -1756,6 +1754,71 @@ export async function previewSettlementCreatorThroughClose(
     }
   }
   return { ...preview, close_totals: closeTotals, blockers, can_post: preview.can_post && blockers.length === preview.blockers.length };
+}
+
+/**
+ * ROUND 363-CC2-D — a line's picked load: the id the user chose (must be this company's), else the typed load number.
+ * Shared by the preview and the post.
+ */
+async function resolveLineLoadId(
+  client: DbClient,
+  operatingCompanyId: string,
+  line: { load_id?: string | null; load_number?: string | null },
+): Promise<string | null> {
+  if (line.load_id) {
+    const r = await client.query<{ id: string }>(
+      `SELECT id::text FROM mdata.loads WHERE id = $2::uuid AND operating_company_id = $1::uuid AND soft_deleted_at IS NULL`,
+      [operatingCompanyId, line.load_id],
+    );
+    if (!r.rows[0]) throw new SettlementCreatorError("line_load_not_found", `Load ${line.load_id} is not a load of this company.`);
+    return r.rows[0].id;
+  }
+  if (!line.load_number?.trim()) return null;
+  const found = await client.query<{ id: string }>(
+    `SELECT id::text FROM mdata.loads
+      WHERE operating_company_id = $1::uuid AND load_number = $2 AND soft_deleted_at IS NULL
+      ORDER BY created_at DESC LIMIT 1`,
+    [operatingCompanyId, line.load_number.trim()],
+  );
+  return found.rows[0]?.id ?? null;
+}
+
+/**
+ * ROUND 363-CC2-D — the account an expense / reimbursement line posts to: the item or account the user picked
+ * (resolveLineItemAndAccount — the one resolver), else the documented default 6100 / other_operating_expense.
+ * A pick that does not resolve is refused, never silently replaced by the default.
+ */
+async function resolveExpenseLineAccount(
+  client: DbClient,
+  operatingCompanyId: string,
+  line: { item_id?: string | null; account_id?: string | null; item_name: string },
+): Promise<{ id: string; account_number: string | null; account_name: string | null; item_id: string | null } | null> {
+  const picked = await resolveLineItemAndAccount(client as never, operatingCompanyId, line);
+  if (picked && "refused" in picked) throw new SettlementCreatorError("line_account_refused", `"${line.item_name}": ${picked.refused}`);
+  if (picked) return pickedAccount(picked);
+  const fallback =
+    (await accountByNumber(client, operatingCompanyId, "6100")) ??
+    (await accountByRole(client, operatingCompanyId, "other_operating_expense"));
+  return fallback ? { id: fallback.id, account_number: fallback.account_number ?? null, account_name: fallback.account_name ?? null, item_id: null } : null;
+}
+
+/** Preview: same resolver as the post; a refused pick is a blocker on the preview, not a thrown error. */
+async function previewExpenseLineAccount(
+  client: DbClient,
+  operatingCompanyId: string,
+  line: { item_id?: string | null; account_id?: string | null; item_name: string },
+  blockers: string[],
+): Promise<{ id: string; account_number: string | null; account_name: string | null } | null> {
+  try {
+    return await resolveExpenseLineAccount(client, operatingCompanyId, line);
+  } catch (err) {
+    if (err instanceof SettlementCreatorError) { blockers.push(err.message); return null; }
+    throw err;
+  }
+}
+
+function pickedAccount(p: ResolvedLineAccount) {
+  return { id: p.account_id, account_number: p.account_number, account_name: p.account_name, item_id: p.item_id };
 }
 
 export class SettlementCreatorError extends Error {

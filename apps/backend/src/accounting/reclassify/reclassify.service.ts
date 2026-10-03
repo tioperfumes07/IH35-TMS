@@ -39,6 +39,8 @@ export type ReclassifyLineFilter = {
   /** ROUND 368.1 by-item / by-load selectors — the item on the document line, the load on the posting (or its line). */
   item_ids?: string[];
   load_ids?: string[];
+  /** ROUND 363-CC2-D — the lines of these documents only (the settlement wizard's just-posted documents). */
+  source_transaction_ids?: string[];
   /** ROUND 370.3 sortable headers — whitelisted keys only (see LINE_SORT). */
   sort_key?: string | null;
   sort_dir?: "asc" | "desc" | null;
@@ -120,6 +122,10 @@ export function buildLineWhere(filter: ReclassifyLineFilter, values: unknown[]):
   if (filter.load_ids?.length) {
     values.push(filter.load_ids);
     where.push(`COALESCE(p.load_id, dl.load_id) = ANY($${values.length}::uuid[])`);
+  }
+  if (filter.source_transaction_ids?.length) {
+    values.push(filter.source_transaction_ids);
+    where.push(`p.source_transaction_id::text = ANY($${values.length}::text[])`);
   }
   if (filter.search && filter.search.trim()) {
     values.push(`%${filter.search.trim()}%`);

@@ -53,6 +53,10 @@ export type SettlementCreatorDraft = {
     card: SettlementCreatorFuelCard;
     load_number?: string | null;
     fuel_type?: "diesel" | "def" | "reefer_diesel";
+    /** ROUND 363-CC2-D — picked at creation; the account wins over the item's default, load_id over load_number. */
+    item_id?: string | null;
+    account_id?: string | null;
+    load_id?: string | null;
   }>;
   expenses: Array<{
     date: string;
@@ -63,6 +67,10 @@ export type SettlementCreatorDraft = {
     is_company_expense: boolean;
     is_reimbursable: boolean;
     card?: SettlementCreatorFuelCard | null;
+    /** ROUND 363-CC2-D — picked at creation; the account wins over the item's default, load_id over load_number. */
+    item_id?: string | null;
+    account_id?: string | null;
+    load_id?: string | null;
   }>;
   deductions: Array<{ description: string; amount_cents: number; load_number?: string | null }>;
   reimbursements: Array<{ description: string; amount_cents: number; load_number?: string | null }>;

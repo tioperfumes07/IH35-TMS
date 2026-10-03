@@ -828,6 +828,12 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-duplicate-expense-is-refused-or-ruled-never-silent",
     ["apps/backend/src/fuel/", "apps/backend/src/feed/seed-settlement-document.service.ts", "apps/backend/src/driver-finance/settlement-creator.service.ts", "apps/backend/src/integrations/relay-payments/", "db/migrations/202615370600_fuel_purchase_unique_per_provider_transaction.sql", "scripts/verify-duplicate-expense-is-refused-or-ruled-never-silent.mjs"],
   ],
+  // ROUND 363-CC2-D — the Settlement Creator codes item / account / load at creation and reclassifies in place through
+  // the one reclassify engine (no wizard-local copy).
+  [
+    "verify-wizard-and-reclassify-share-one-writer",
+    ["apps/frontend/src/pages/settlements/", "apps/frontend/src/pages/accounting/ReclassifyTransactionsPage.tsx", "apps/frontend/src/lib/reclassifyDrill.ts", "apps/frontend/src/api/reclassify.ts", "apps/backend/src/accounting/reclassify/", "apps/backend/src/accounting/line-item-account.ts", "apps/backend/src/driver-finance/settlement-creator.service.ts", "apps/backend/src/driver-finance/settlement-payrun-close.service.ts", "apps/backend/src/fuel/fuel-expense-document.service.ts", "scripts/verify-wizard-and-reclassify-share-one-writer.mjs"],
+  ],
   // ROUND 368.2(b) — a bank line may not sit matched to nothing (deferred constraint triggers, both sides).
   [
     "verify-no-bank-line-is-matched-to-nothing",

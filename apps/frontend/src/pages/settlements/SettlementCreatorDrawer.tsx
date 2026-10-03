@@ -14,7 +14,11 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { formatUsdCents, formatUsdCentsTable } from "../../lib/money";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
+import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 import { useAccountingItemsQuery } from "../../hooks/useAccountingItemsQuery";
+import { useQuery } from "@tanstack/react-query";
+import { getReclassifyAccountTree } from "../../api/reclassify";
+import { WizardReclassifyPanel } from "./WizardReclassifyPanel";
 import { FuelStopLocationPicker } from "../../components/locations/FuelStopLocationPicker";
 import { formatFuelStopLocationLabel } from "../../lib/fuelStopLocationLabel";
 import { peekNextLoadNumber } from "../../api/dispatch";
@@ -32,7 +36,7 @@ import type { ReactNode } from "react";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 type LoadDraft = SettlementCreatorDraft["loads"][number];
-/** location_id / vendor_id / item_id are picker state only — stripped before API. */
+/** location_id / vendor_id are picker state only — stripped before API. item_id / account_id / load_id are SENT (363-CC2-D). */
 type FuelDraft = SettlementCreatorDraft["fuel_purchases"][number] & {
   location_id?: string | null;
   vendor_id?: string | null;
@@ -256,6 +260,75 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
+type LineCodingFields = { item_id?: string | null; account_id?: string | null; load_id?: string | null; load_number?: string | null };
+type RefOption = { value: string; label: string };
+
+/**
+ * ROUND 363-CC2-D — the item, the account and the load of a wizard line, picked at creation (ids, never free text).
+ * Blank account = the item's default account (fuel: the fuel-type item). The load is the load picker; the typed
+ * load number stays only as the label of what was picked.
+ */
+function LineCoding({
+  companyId,
+  line,
+  onPatch,
+  accountOptions,
+  accountsLoading,
+  item,
+  testIdPrefix,
+}: {
+  companyId: string;
+  line: LineCodingFields;
+  onPatch: (patch: LineCodingFields) => void;
+  accountOptions: RefOption[];
+  accountsLoading: boolean;
+  item?: { options: RefOption[]; loading: boolean; onSearch: (q: string) => void; placeholder: string };
+  testIdPrefix: string;
+}) {
+  return (
+    <>
+      {item ? (
+        <Field label="Item">
+          <ReferenceSelect
+            value={line.item_id ?? null}
+            onChange={(id) => onPatch({ item_id: id })}
+            options={item.options}
+            createKind="item"
+            operatingCompanyId={companyId}
+            placeholder={item.loading ? "Loading items…" : item.placeholder}
+            loading={item.loading}
+            addNewLabel="+ Add new item"
+            onSearch={item.onSearch}
+          />
+        </Field>
+      ) : null}
+      <Field label="Account">
+        <ReferenceSelect
+          value={line.account_id ?? null}
+          onChange={(id) => onPatch({ account_id: id })}
+          options={accountOptions}
+          createKind="account"
+          operatingCompanyId={companyId}
+          placeholder={accountsLoading ? "Loading accounts…" : "Blank = the item's account"}
+          loading={accountsLoading}
+          data-testid={`${testIdPrefix}-account`}
+        />
+      </Field>
+      <Field label="Load">
+        <EntityPicker
+          kind="load"
+          operatingCompanyId={companyId}
+          value={line.load_id ?? null}
+          onChange={(id, opt) => onPatch({ load_id: id, load_number: id ? (opt?.label ?? line.load_number ?? null) : null })}
+          placeholder={line.load_number ? `Load ${line.load_number}` : "Pick the load"}
+          size={pickerSize}
+          data-testid={`${testIdPrefix}-load`}
+        />
+      </Field>
+    </>
+  );
+}
+
 /** Locked baseline: 28px clickable boxes, 12px body, 2px radius, equal paired widths. */
 const inputClass =
   "h-7 w-full min-w-0 rounded-sm border border-[#E5E7EB] px-2 text-center text-xs text-[#0F1219]";
@@ -363,6 +436,23 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     () => (itemsQuery.data ?? []).map((row) => ({ value: row.id, label: row.name })),
     [itemsQuery.data],
   );
+  // ROUND 363-CC2-D — the account picker on every line reads the Reclassify account tree (363-CC2-A rules: the whole
+  // chart, both sides, zero balances included), so a line can post to an account nothing has posted to yet.
+  const today = new Date().toISOString().slice(0, 10);
+  const [showAccountNumbers] = useShowAccountNumbers();
+  const accountTreeQuery = useQuery({
+    queryKey: ["settlement-creator-account-tree", companyId],
+    queryFn: () => getReclassifyAccountTree(companyId, today, today),
+    enabled: open && Boolean(companyId) && !wrongEntity,
+    staleTime: 60_000,
+  });
+  const accountOptions = useMemo(
+    () =>
+      (accountTreeQuery.data?.accounts ?? [])
+        .filter((a) => a.is_active && a.is_postable)
+        .map((a) => ({ value: a.account_id, label: formatAccountDisplayLabel(a, { showNumber: showAccountNumbers }) })),
+    [accountTreeQuery.data, showAccountNumbers],
+  );
   const drvItemOptions = useMemo(
     () => (drvItemsQuery.data ?? []).map((row) => ({ value: row.id, label: row.name })),
     [drvItemsQuery.data],
@@ -420,7 +510,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
         join_outbound_load_number: l.join_outbound_load_number || null,
       })),
       fuel_purchases: fuels.map(({ location_id: _lid, vendor_id: _vid, ...fuel }) => fuel),
-      expenses: expensesMerged.map(({ location, location_id: _lid, item_id: _iid, ...exp }) => ({
+      expenses: expensesMerged.map(({ location, location_id: _lid, ...exp }) => ({
         ...exp,
         description: [location?.trim(), exp.description?.trim()].filter(Boolean).join(" · ") || exp.description,
       })),
@@ -513,6 +603,8 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     }
   }
 
+  const [posted, setPosted] = useState<{ label: string; documentIds: string[] } | null>(null);
+
   async function onPost() {
     if (!allowPost || !draft || !preview?.can_post) return;
     setBusy(true);
@@ -520,7 +612,8 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     try {
       const res = await postSettlementCreator(draft);
       pushToast(`Settlement ${res.source_document_ref || res.display_id} posted`, "success");
-      onClose();
+      // ROUND 363-CC2-D — stay open on the posted lines so a wrong account is reclassified here, not after a hunt.
+      setPosted({ label: `Settlement ${res.source_document_ref || res.display_id} posted`, documentIds: [...(res.expense_ids ?? [])] });
     } catch (e) {
       const apiErr = e as { status?: number; data?: { error?: string; message?: string }; message?: string };
       if (apiErr?.status === 409 && apiErr?.data?.error === "settlement_exists") {
@@ -534,7 +627,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               `Settlement ${res.source_document_ref || res.display_id} voided prior + reposted`,
               "success",
             );
-            onClose();
+            setPosted({ label: `Settlement ${res.source_document_ref || res.display_id} voided prior + reposted`, documentIds: [...(res.expense_ids ?? [])] });
             return;
           } catch (retryErr) {
             setError(String((retryErr as Error).message || "Void and repost failed"));
@@ -581,6 +674,18 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
       }
     >
       <div className="space-y-3 text-xs" data-testid="settlement-creator-drawer">
+        {posted ? (
+          <WizardReclassifyPanel
+            companyId={companyId}
+            documentIds={posted.documentIds}
+            postedLabel={posted.label}
+            accountOptions={accountOptions}
+            onDone={() => {
+              setPosted(null);
+              onClose();
+            }}
+          />
+        ) : null}
         {wrongEntity ? (
           <p className="text-xs text-red-600" data-testid="settlement-creator-usmca-only">
             Settlement Creator is USMCA only.
@@ -1064,17 +1169,19 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       <option value="relay">Relay</option>
                     </select>
                   </Field>
-                  <Field label="Load No.">
-                    <input
-                      className={inputClass}
-                      value={fuel.load_number ?? ""}
-                      onChange={(e) => {
-                        const next = [...fuels];
-                        next[idx] = { ...fuel, load_number: e.target.value };
-                        setFuels(next);
-                      }}
-                    />
-                  </Field>
+                  <LineCoding
+                    companyId={companyId}
+                    line={fuel}
+                    testIdPrefix={`sc-fuel-${idx}`}
+                    accountOptions={accountOptions}
+                    accountsLoading={accountTreeQuery.isLoading}
+                    item={{ options: itemOptions, loading: itemsQuery.isLoading, onSearch: setItemSearch, placeholder: "Fuel item (blank = by fuel type)" }}
+                    onPatch={(patch) => {
+                      const next = [...fuels];
+                      next[idx] = { ...fuel, ...patch };
+                      setFuels(next);
+                    }}
+                  />
                 </div>
               ))}
             </Section>
@@ -1154,17 +1261,18 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       <option value="relay">Relay</option>
                     </select>
                   </Field>
-                  <Field label="Load No.">
-                    <input
-                      className={inputClass}
-                      value={exp.load_number ?? ""}
-                      onChange={(e) => {
-                        const next = [...companyExpenses];
-                        next[idx] = { ...exp, load_number: e.target.value };
-                        setCompanyExpenses(next);
-                      }}
-                    />
-                  </Field>
+                  <LineCoding
+                    companyId={companyId}
+                    line={exp}
+                    testIdPrefix={`sc-comp-exp-${idx}`}
+                    accountOptions={accountOptions}
+                    accountsLoading={accountTreeQuery.isLoading}
+                    onPatch={(patch) => {
+                      const next = [...companyExpenses];
+                      next[idx] = { ...exp, ...patch };
+                      setCompanyExpenses(next);
+                    }}
+                  />
                   <Field label="Location">
                     <FuelStopLocationPicker
                       operatingCompanyId={companyId}
@@ -1266,17 +1374,18 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       ariaLabel="Driver reimbursement"
                     />
                   </Field>
-                  <Field label="Load No.">
-                    <input
-                      className={inputClass}
-                      value={exp.load_number ?? ""}
-                      onChange={(e) => {
-                        const next = [...drvReimbursements];
-                        next[idx] = { ...exp, load_number: e.target.value };
-                        setDrvReimbursements(next);
-                      }}
-                    />
-                  </Field>
+                  <LineCoding
+                    companyId={companyId}
+                    line={exp}
+                    testIdPrefix={`sc-drv-reimb-${idx}`}
+                    accountOptions={accountOptions}
+                    accountsLoading={accountTreeQuery.isLoading}
+                    onPatch={(patch) => {
+                      const next = [...drvReimbursements];
+                      next[idx] = { ...exp, ...patch };
+                      setDrvReimbursements(next);
+                    }}
+                  />
                   <Field label="Location">
                     <FuelStopLocationPicker
                       operatingCompanyId={companyId}
