@@ -56,6 +56,9 @@ const REVERSAL_WRAPPERS = [
   "voidInvoiceInClientTx",
   "reverseFactoringAdvanceEvent",
   "reverseJournalEntryNoFlip",
+  // fuel/fuel-card-overage.service.ts — reverses a posted overage receivable via reverseJournalEntryNoFlip;
+  // pinned by verify-fuel-overage-gallon-cap-per-unit (fails if the call is removed or a DELETE appears).
+  "voidFuelCardOverage",
   // void-document.service.ts's voidDocument() dispatcher (R-154 check engine round) -- "NOT a new
   // reversal engine" per its own header, a thin per-type dispatch to the SAME engines already named
   // above (reversePostedSourceTransactionInClientTx for 'expense', postVoidReversal for 'invoice'/

@@ -12,13 +12,14 @@ import { requireAuth } from "../auth/session-middleware.js";
 import {
   approveAndPostFuelCardOverage,
   exemptFuelCardOverage,
+  voidFuelCardOverage,
   reprocessUnprocessedFuelOverages,
 } from "./fuel-card-overage.service.js";
 
 const listQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   status: z
-    .enum(["pending_review", "approved", "posted", "company_variance", "exempt_authorized", "all"])
+    .enum(["pending_review", "approved", "posted", "company_variance", "exempt_authorized", "voided", "all"])
     .default("pending_review"),
   driver_id: z.string().uuid().optional(),
   unit_id: z.string().uuid().optional(),
@@ -46,6 +47,11 @@ const exemptBodySchema = z
     message: "a repair names its work order",
     path: ["work_order_id"],
   });
+
+const voidBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  reason: z.string().trim().min(3).max(1000),
+});
 
 const APPROVE_ROLES = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
 
@@ -86,10 +92,9 @@ export async function registerFuelCardOverageRoutes(app: FastifyInstance) {
         }
 
         const values: unknown[] = [q.operating_company_id];
-        const filters: string[] = [
-          "e.operating_company_id = $1::uuid",
-          "e.voided_at IS NULL",
-        ];
+        const filters: string[] = ["e.operating_company_id = $1::uuid"];
+        // Voided events are kept (WORM) and shown only under their own filter.
+        if (q.status !== "voided") filters.push("e.voided_at IS NULL");
         if (q.status !== "all") {
           values.push(q.status);
           filters.push(`e.status = $${values.length}`);
@@ -144,6 +149,8 @@ export async function registerFuelCardOverageRoutes(app: FastifyInstance) {
               e.exempt_work_order_id,
               e.exempt_note,
               e.exempted_at,
+              e.voided_at,
+              e.void_reason,
               ft.transaction_at,
               ft.fuel_type,
               ft.total_cost,
@@ -193,6 +200,8 @@ export async function registerFuelCardOverageRoutes(app: FastifyInstance) {
             exempt_work_order_id: row.exempt_work_order_id ?? null,
             exempt_note: row.exempt_note ?? null,
             exempted_at: row.exempted_at ?? null,
+            voided_at: row.voided_at ?? null,
+            void_reason: row.void_reason ?? null,
             transaction_at: row.transaction_at,
             fuel_type: row.fuel_type,
             total_cost: row.total_cost === null ? null : Number(row.total_cost),
@@ -316,6 +325,35 @@ export async function registerFuelCardOverageRoutes(app: FastifyInstance) {
           return reply.code(409).send({ error: outcome.message });
         }
         return reply.code(422).send({ error: outcome.message });
+      }
+      return outcome;
+    }
+  );
+
+  /** ROUND 352 point 7 — void an overage event; a posted receivable is reversed by a linked reversing entry. */
+  app.post(
+    "/api/v1/fuel/card-overage-events/:id/void",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return reply;
+      if (!APPROVE_ROLES.has(String(authUser.role ?? ""))) {
+        return reply.code(403).send({ error: "forbidden" });
+      }
+      const params = approveParamsSchema.safeParse(req.params ?? {});
+      if (!params.success) return sendValidationError(reply, params.error);
+      const body = voidBodySchema.safeParse(req.body ?? {});
+      if (!body.success) return sendValidationError(reply, body.error);
+      await assertCompanyMembership(authUser.uuid, body.data.operating_company_id);
+      const outcome = await voidFuelCardOverage({
+        operating_company_id: body.data.operating_company_id,
+        overage_event_id: params.data.id,
+        actor_user_id: authUser.uuid,
+        reason: body.data.reason,
+      });
+      if (outcome.status === "error") {
+        if (outcome.message === "overage_event_not_found") return reply.code(404).send({ error: outcome.message });
+        return reply.code(409).send({ error: outcome.message });
       }
       return outcome;
     }

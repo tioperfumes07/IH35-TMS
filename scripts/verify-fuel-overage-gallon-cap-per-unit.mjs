@@ -3,7 +3,7 @@
 // fallback, for a card row with no gallon quantity.
 // Static: migration 202615330700 adds the tank + policy fallback + the active-policy-has-a-limit CHECK; the math
 // evaluates gallons before dollars; the engine feeds the unit's tank into the math; the receivable posts to role
-// fuel_overage_receivable (1250), never Cash Advance; an exemption needs a reason, a person and (repair) a work order.
+// fuel_overage_receivable (1250), never Cash Advance; void reverses a posted receivable (never deletes); an exemption needs a reason, a person and (repair) a work order.
 // Live (DATABASE_URL): no active policy without a limit; and no overage event judged on DOLLARS whose card row
 // carried gallons — the regression this ROUND fixes. Named debt below is shrink-only (events minted before R-2).
 // --selftest plants each regression.
@@ -45,6 +45,11 @@ export function check(src) {
   if (!/tank_capacity_gallons: gallonInputs\.tank_capacity_gallons/.test(svc)) f.push(`${FILES.svc}: the engine no longer feeds the unit's tank into the math`);
   if (!/u\.fuel_tank_capacity_gallons/.test(svc)) f.push(`${FILES.svc}: the tank is no longer read from mdata.units`);
   if (!/"fuel_overage_receivable"/.test(post) || /cash_advance/i.test(post)) f.push(`${FILES.post}: the receivable must post to role fuel_overage_receivable (1250), never Cash Advance`);
+  // ROUND 352 point 7 — reversible: void reverses a posted receivable with a linked reversing entry, never a flip/delete.
+  const voidFn = svc.match(/export async function voidFuelCardOverage\([\s\S]*?\n\}\n/);
+  if (!voidFn || !/reverseJournalEntryNoFlip\(/.test(voidFn[0]) || /DELETE FROM/i.test(voidFn[0])) {
+    f.push(`${FILES.svc}: voidFuelCardOverage must reverse a posted receivable via reverseJournalEntryNoFlip and never delete`);
+  }
   return f;
 }
 
@@ -68,6 +73,7 @@ if (process.argv.includes("--selftest")) {
     ["gallon row falls through to dollars", { ...real, math: real.math.replace("if (!gl || gallons <= gl.limit) return NO_OVERAGE;", "if (!gl) return NO_OVERAGE;") }],
     ["tank not fed", { ...real, svc: real.svc.replace("tank_capacity_gallons: gallonInputs.tank_capacity_gallons", "tank_capacity_gallons: null") }],
     ["limitless policy allowed", { ...real, mig: real.mig.replace("CHECK (NOT is_active OR per_swipe_gallon_limit IS NOT NULL OR per_transaction_limit_cents IS NOT NULL)", "CHECK (true)") }],
+    ["void stops reversing", { ...real, svc: real.svc.replace("const { reversal } = await reverseJournalEntryNoFlip(", "const { reversal } = await Promise.resolve(") }],
     ["WORM dropped", { ...real, mig: real.mig.replace("CREATE TRIGGER trg_worm_refuse_delete BEFORE DELETE ON fuel.fuel_card_overage_events", "-- no worm") }],
     ["receivable to cash advance", { ...real, post: real.post.replace('"fuel_overage_receivable"', '"driver_cash_advance"') }],
   ];
