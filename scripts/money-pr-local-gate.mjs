@@ -787,6 +787,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-one-leg-asset-never-credit",
     ["db/migrations/202615330600_one_leg_asset_accounts_never_credit.sql", "apps/backend/src/accounting/fuel-posting/", "scripts/verify-one-leg-asset-never-credit.mjs"],
   ],
+  // ROUND 355 R-2 — the fuel-card cap is gallons per unit (the unit's own tank); dollars are the last fallback.
+  [
+    "verify-fuel-overage-gallon-cap-per-unit",
+    ["db/migrations/202615330700_fuel_overage_gallon_cap_per_unit.sql", "apps/backend/src/fuel/", "apps/backend/src/mdata/unit-update-schema.ts", "scripts/verify-fuel-overage-gallon-cap-per-unit.mjs"],
+  ],
   // KPI engines' operator-facing strings (label / source / empty_reason / GL) in business language — runtime check.
   [
     "verify-kpi-provenance-business-language",

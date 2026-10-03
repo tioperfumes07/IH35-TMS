@@ -79,6 +79,7 @@ export const UNIT_PATCHABLE_FIELD_KEYS = [
   "irp_registered_jurisdictions",
   "irp_expiration",
   "irp_registered_weight_lbs",
+  "fuel_tank_capacity_gallons",
   "operation_country",
   "sct_permit_number",
   "sct_permit_expiration",
@@ -165,6 +166,8 @@ const fieldSchemas: Record<UnitPatchableFieldKey, z.ZodTypeAny> = {
   irp_registered_jurisdictions: z.record(z.string(), z.unknown()).nullable(),
   irp_expiration: isoDateSchema.nullable(),
   irp_registered_weight_lbs: z.number().int().nonnegative().nullable(),
+  // ROUND 355 R-2 — the unit's own tank is the per-swipe fuel-card cap (matches chk_units_fuel_tank_capacity_gallons).
+  fuel_tank_capacity_gallons: z.number().positive().max(2000).nullable(),
   operation_country: z.enum(["US", "MX", "cross_border"]).nullable(),
   sct_permit_number: z.string().trim().max(120).nullable(),
   sct_permit_expiration: isoDateSchema.nullable(),

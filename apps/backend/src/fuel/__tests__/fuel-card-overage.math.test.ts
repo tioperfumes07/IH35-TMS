@@ -130,3 +130,89 @@ describe("BANK-DOM-06 buildOverageReason", () => {
     expect(buildOverageReason(nonFuel, nonFuelOnly, 800)).toContain("non-fuel");
   });
 });
+
+describe("ROUND 355 R-2 — the cap is GALLONS, per unit, from the unit's own tank", () => {
+  const policy: FuelCardOveragePolicy = {
+    per_transaction_limit_cents: 90000, // $900 — last fallback only
+    recover_non_fuel_purchases: true,
+    per_swipe_gallon_limit: 150,
+  };
+
+  it("same gallons, different tanks: a large tank owes nothing, a small tank owes the excess", () => {
+    // 220 gal at $4.50 = $990.00 on the card.
+    const base = { total_cents: 99000, fuel_type: "diesel", policy, gallons: 220, price_per_gallon: 4.5 };
+    expect(computeFuelCardOverageCents({ ...base, tank_capacity_gallons: 300, tank_source: "unit_tank" })).toEqual({
+      overage_cents: 0,
+      rule: "none",
+    });
+    const small = computeFuelCardOverageCents({ ...base, tank_capacity_gallons: 120, tank_source: "unit_tank" });
+    // (220 − 120) × $4.50 = $450.00
+    expect(small).toMatchObject({
+      overage_cents: 45000,
+      rule: "over_gallon_limit",
+      gallons: 220,
+      gallon_limit: 120,
+      gallon_limit_source: "unit_tank",
+      unit_price_cents: 450,
+    });
+  });
+
+  it("gallons first: under the tank but over the $900 dollar limit recovers NOTHING", () => {
+    // 200 gal at $5.00 = $1,000 > $900, but a 250-gal tank holds it all.
+    expect(
+      computeFuelCardOverageCents({
+        total_cents: 100000, fuel_type: "diesel", policy, gallons: 200, price_per_gallon: 5, tank_capacity_gallons: 250,
+      })
+    ).toEqual({ overage_cents: 0, rule: "none" });
+  });
+
+  it("no recorded tank: the policy's 150-gallon fallback applies", () => {
+    expect(
+      computeFuelCardOverageCents({ total_cents: 80000, fuel_type: "diesel", policy, gallons: 160, price_per_gallon: 5 })
+    ).toMatchObject({ overage_cents: 5000, rule: "over_gallon_limit", gallon_limit: 150, gallon_limit_source: "policy_per_swipe" });
+  });
+
+  it("no pump price on the row: the unit price is total ÷ gallons", () => {
+    // $800 / 200 gal = $4.00; (200 − 150) × $4.00 = $200
+    expect(
+      computeFuelCardOverageCents({ total_cents: 80000, fuel_type: "diesel", policy, gallons: 200, price_per_gallon: null })
+    ).toMatchObject({ overage_cents: 20000, unit_price_cents: 400 });
+  });
+
+  it("reefer fuel is judged against the reefer tank", () => {
+    expect(
+      computeFuelCardOverageCents({
+        total_cents: 30000, fuel_type: "reefer_diesel", policy, gallons: 60, price_per_gallon: 5,
+        tank_capacity_gallons: 50, tank_source: "reefer_tank",
+      })
+    ).toMatchObject({ overage_cents: 5000, gallon_limit_source: "reefer_tank" });
+  });
+
+  it("the dollar limit is the LAST fallback — only for a row with no gallons", () => {
+    expect(
+      computeFuelCardOverageCents({ total_cents: 100000, fuel_type: "diesel", policy, gallons: null })
+    ).toEqual({ overage_cents: 10000, rule: "over_transaction_limit" });
+  });
+
+  it("non-fuel stays recovered in full, never also on gallons", () => {
+    expect(
+      computeFuelCardOverageCents({ total_cents: 2500, fuel_type: "other", policy, gallons: 999, tank_capacity_gallons: 100 })
+    ).toEqual({ overage_cents: 2500, rule: "non_fuel_purchase" });
+  });
+
+  it("never recovers more than the purchase", () => {
+    const r = computeFuelCardOverageCents({
+      total_cents: 1000, fuel_type: "diesel", policy, gallons: 500, price_per_gallon: 9, tank_capacity_gallons: 1,
+    });
+    expect(r.overage_cents).toBe(1000);
+  });
+
+  it("the reason names the gallons, the limit, its source and the price", () => {
+    const r = computeFuelCardOverageCents({
+      total_cents: 99000, fuel_type: "diesel", policy, gallons: 220, price_per_gallon: 4.5, tank_capacity_gallons: 120,
+    });
+    expect(buildOverageReason(r, policy, 99000)).toBe(
+      "Fuel-card overage: 220 gal exceeded the unit's tank capacity of 120 gal by 100 gal at $4.500/gal = $450.00 (recovered from driver settlement)"
+    );
+  });
+});

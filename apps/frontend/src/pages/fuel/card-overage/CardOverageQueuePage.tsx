@@ -14,6 +14,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
+import { ExemptOverageModal, type ExemptOverageInput } from "./ExemptOverageModal";
 
 /**
  * BANK-F10 / FUEL-03 — operator queue for fuel-card overage approve-then-recover.
@@ -38,6 +39,27 @@ export type OverageEventRow = {
   created_at: string;
   transaction_at: string | null;
   fuel_type: string | null;
+  /** ROUND 355 R-2 — the arithmetic of a gallon-rule overage. */
+  gallons?: number | null;
+  gallon_limit?: number | null;
+  gallon_limit_source?: "unit_tank" | "reefer_tank" | "policy_per_swipe" | null;
+  unit_price_cents?: number | null;
+  exempt_reason?: "repair" | "authorized_spend" | null;
+  exempt_work_order_id?: string | null;
+  exempt_note?: string | null;
+};
+
+const LIMIT_SOURCE_LABEL: Record<string, string> = {
+  unit_tank: "unit tank",
+  reefer_tank: "reefer tank",
+  policy_per_swipe: "per-swipe limit",
+};
+
+const RULE_LABEL: Record<string, string> = {
+  non_fuel_purchase: "Non-fuel purchase",
+  over_gallon_limit: "Over gallon limit",
+  over_transaction_limit: "Over dollar limit",
+  confirmed_fraud: "Confirmed fraud",
 };
 
 type ListResponse = {
@@ -84,9 +106,11 @@ export function CardOverageQueuePage() {
   // destructive/config confirmations elsewhere), holding the pending row until the operator
   // confirms or cancels.
   const [confirmApproveRow, setConfirmApproveRow] = useState<OverageEventRow | null>(null);
+  const [exemptRow, setExemptRow] = useState<OverageEventRow | null>(null);
 
   useEffect(() => {
     actionGenerationRef.current += 1;
+    setExemptRow(null);
     setConfirmApproveRow(null);
   }, [companyId]);
   // BANK-F5167 + CLS-ADJACENT — EntityPicker FKs stage with status; URL only on Apply.
@@ -146,6 +170,24 @@ export function CardOverageQueuePage() {
     },
   });
 
+  const exemptMut = useMutation({
+    mutationFn: (input: { eventId: string; companyId: string; generation: number } & ExemptOverageInput) =>
+      apiRequest(`/api/v1/fuel/card-overage-events/${input.eventId}/exempt`, {
+        method: "POST",
+        body: {
+          operating_company_id: input.companyId,
+          reason: input.reason,
+          work_order_id: input.work_order_id,
+          note: input.note,
+        },
+      }),
+    onSuccess: (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      pushToast("Exempted from recovery.", "success");
+      void queryClient.invalidateQueries({ queryKey: ["fuel", "card-overage-events", input.companyId] });
+    },
+  });
+
   const rows = eventsQuery.data?.events ?? [];
 
   const columns = useMemo<ParityColumn<OverageEventRow>[]>(
@@ -179,7 +221,17 @@ export function CardOverageQueuePage() {
         label: "Rule",
         sortable: true,
         cellClass: "font-mono text-xs",
-        render: (row) => row.overage_rule,
+        render: (row) => RULE_LABEL[row.overage_rule] ?? row.overage_rule,
+      },
+      {
+        key: "gallons",
+        label: "Gallons / limit",
+        sortable: true,
+        cellClass: "text-right",
+        render: (row) =>
+          row.gallons != null && row.gallon_limit != null
+            ? `${row.gallons} / ${row.gallon_limit} gal (${LIMIT_SOURCE_LABEL[row.gallon_limit_source ?? ""] ?? "limit"})`
+            : "—",
       },
       {
         key: "overage_cents",
@@ -206,7 +258,20 @@ export function CardOverageQueuePage() {
               <ActionButton disabled={approveMut.isPending} onClick={() => setConfirmApproveRow(row)}>
                 Approve recovery
               </ActionButton>
-            ) : row.journal_entry_id ? (
+            ) : null}
+            {row.overage_rule === "non_fuel_purchase" &&
+            (row.status === "pending_review" || row.status === "company_variance") ? (
+              <ActionButton disabled={exemptMut.isPending} onClick={() => setExemptRow(row)}>
+                Exempt
+              </ActionButton>
+            ) : null}
+            {row.status === "exempt_authorized" ? (
+              row.exempt_work_order_id ? (
+                <EntityLink kind="work_order" id={row.exempt_work_order_id} label="Repair WO" className="text-xs font-semibold text-slate-700 hover:underline" />
+              ) : (
+                <span className="text-xs text-gray-600" title={row.exempt_note ?? undefined}>Authorized</span>
+              )
+            ) : row.status === "pending_review" ? null : row.journal_entry_id ? (
               <EntityLink
                 kind="journal_entry"
                 id={row.journal_entry_id}
@@ -220,7 +285,7 @@ export function CardOverageQueuePage() {
         ),
       },
     ],
-    [approveMut]
+    [approveMut, exemptMut]
   );
 
   if (!companyId) {
@@ -293,7 +358,7 @@ export function CardOverageQueuePage() {
             />
           </label>
           <div className="flex flex-wrap items-center gap-2">
-            {["pending_review", "approved", "posted", "company_variance", "all"].map((status) => (
+            {["pending_review", "approved", "posted", "company_variance", "exempt_authorized", "all"].map((status) => (
               <button
                 key={status}
                 type="button"
@@ -354,6 +419,25 @@ export function CardOverageQueuePage() {
             eventId: confirmApproveRow.id,
             companyId,
             generation: actionGenerationRef.current,
+          });
+        }}
+      />
+      <ExemptOverageModal
+        open={exemptRow != null}
+        companyId={companyId}
+        summary={
+          exemptRow
+            ? `${money(exemptRow.overage_cents)} for ${entityLabel(exemptRow.driver_name, exemptRow.driver_id, "Driver")}`
+            : ""
+        }
+        onClose={() => setExemptRow(null)}
+        onConfirm={async (input) => {
+          if (!exemptRow) return;
+          await exemptMut.mutateAsync({
+            eventId: exemptRow.id,
+            companyId,
+            generation: actionGenerationRef.current,
+            ...input,
           });
         }}
       />
