@@ -7020,3 +7020,31 @@ expires_at: 2026-10-04T23:55:00Z
 status: OPEN
 THIS AUTHORIZATION DOES NOT COVER: any company other than USMCA; any row of preserve.* other than INSERTs by the
 preservation step; any table other than telematics.unit_stop_events; any money posting or JE.
+
+## AUTH-206
+issued_at: 2026-10-03T03:35:00Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). Load 13515 (44eae7f5-70ff-4366-92cf-173d1e9bd11c) ONLY.
+  Lead order ROUND 353 ("13515 — THE FIX — CC-3 ... The gate clears for every seat when step 3 lands"), completing
+  AUTH-201 (owner/Lead 2026-10-01: 13513/13515 same billable load; keep 13513; retire 13515).
+  Measured on prod under SET LOCAL app.bypass_rls = 'lucia' (2026-10-03): the ledger is ALREADY whole — revrec Event 1
+  2c730468 reversed by 814a8991, Event 2 396efaa2 reversed by 567d4350, every original line carries reversed_by_line_id
+  and every reversal line reversal_of_line_id, accounts 1100 / 1150 / 4000 each net 0. ROUND 353 step 1 ("reverse the
+  2 postings") is therefore already done and is NOT re-run (it would double-reverse revenue). What AUTH-201's script
+  skipped by setting mdata.loads.status directly (scripts/ops/2026-10-01-cursor-auth201-retire-13515-keep-13513.ts:248):
+  Action (scripts/ops/2026-10-03-cc3-r353-13515-cancellation-record-and-void-stamp.mts), ONE transaction:
+  (0) REFUSE unless the four JEs are exactly as measured above (2 originals reversed, all lines linked, every account 0)
+      and no other ledger link references the load;
+  (1) INSERT the missing dispatch.load_cancellations row: reason OTHER (USMCA catalogue), notes naming AUTH-201,
+      status approved, cancelled_at = the load's AUTH-201 cancel time, cancelled_by / approved_by = primary owner
+      e4117991 (who recorded all 16 existing cancellations); crud audit row;
+  (2) stampDocumentVoided(family 'load') — the governed executor: voided_at, void_reason, voided_by_user_id, status
+      flip, load_number renumbered VOID-13515-44eae7f5.
+  Fork rehearsal br-fragrant-tree-akt9eg6y (deleted): applied once; second run refused at the precondition;
+  verify-void-is-whole ✗ 13515 -> PASS 0 violations; driver bill 33d5debc stays paid.
+action: DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-03-cc3-r353-13515-cancellation-record-and-void-stamp.mts --apply --auth AUTH-206
+  Dry-run first (default, no --apply).
+expires_at: 2026-10-05T03:35:00Z
+status: OPEN
+THIS AUTHORIZATION DOES NOT COVER: any load other than 13515; 13513; any journal entry or posting; the paid driver bill
+  33d5debc or settlement 0936ca4e (the driven trip — whether its cost moves to 13513 is a Lead ruling); any DELETE;
+  any company other than USMCA.
