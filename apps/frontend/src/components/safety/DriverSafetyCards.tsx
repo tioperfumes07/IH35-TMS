@@ -123,7 +123,7 @@ function countdownText(days: number | null): string {
 function CredentialRow({ label, expiresAt, days }: { label: string; expiresAt: string | null; days: number | null }) {
   const sev = credSeverity(days);
   return (
-    <div className="flex items-center justify-between gap-2 py-0.5 text-[11px]">
+    <div className="flex items-center justify-between gap-2 py-0.5 text-xs">
       <span className="shrink-0 text-slate-500">{label}</span>
       <span className="flex min-w-0 items-center gap-1.5">
         <span className="truncate text-slate-700">{fmtDate(expiresAt)}</span>
@@ -301,12 +301,12 @@ export function DriverSafetyCards({ companyId, filter, activityWindow, onCountsC
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div>
           <h3 className="text-xs font-semibold text-slate-900">Driver Safety Cards</h3>
-          <p className="text-[11px] text-slate-500">
+          <p className="text-xs text-slate-500">
             Credential standing at a glance — CDL, visa, DOT medical, open incidents, D&amp;A pool.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <label className="flex items-center gap-1.5 text-[11px] text-slate-500">
+          <label className="flex items-center gap-1.5 text-xs text-slate-500">
             Find driver
             <input
               type="search"
@@ -314,10 +314,10 @@ export function DriverSafetyCards({ companyId, filter, activityWindow, onCountsC
               onChange={(e) => setRosterSearch(e.target.value)}
               placeholder="Name…"
               data-testid="driver-cards-search"
-              className="w-40 rounded-sm border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700"
+              className="w-40 rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700"
             />
           </label>
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+          <div className="flex items-center gap-1.5 text-xs text-slate-500">
             <label htmlFor="driver-cards-sort">Sort</label>
             <Combobox
               id="driver-cards-sort"
@@ -341,7 +341,7 @@ export function DriverSafetyCards({ companyId, filter, activityWindow, onCountsC
               type="button"
               data-testid={`driver-cards-chip-${chip.id}`}
               onClick={() => setRiskFilter(chip.id)}
-              className={`rounded-full border px-2.5 py-0.5 text-[11px] ${
+              className={`rounded-full border px-2.5 py-0.5 text-xs ${
                 active
                   ? "border-[#1f2a44] bg-[#1f2a44] text-white"
                   : emphasize
@@ -357,11 +357,11 @@ export function DriverSafetyCards({ companyId, filter, activityWindow, onCountsC
       </div>
 
       {loading ? (
-        <div className="rounded-sm border border-slate-200 bg-white px-3 py-8 text-center text-[11px] text-slate-500">
+        <div className="rounded-sm border border-slate-200 bg-white px-3 py-8 text-center text-xs text-slate-500">
           Loading driver safety cards…
         </div>
       ) : cards.length === 0 ? (
-        <div className="rounded-sm border border-slate-200 bg-white px-3 py-8 text-center text-[11px] text-slate-500">
+        <div className="rounded-sm border border-slate-200 bg-white px-3 py-8 text-center text-xs text-slate-500">
           No drivers match this filter.
         </div>
       ) : (
@@ -391,7 +391,7 @@ export function DriverSafetyCards({ companyId, filter, activityWindow, onCountsC
                   <CredentialRow label="DOT medical" expiresAt={card.medicalExpiresAt} days={card.medicalDays} />
                 </div>
 
-                <div className="mt-1.5 flex items-center justify-between border-t border-slate-100 pt-1.5 text-[11px]">
+                <div className="mt-1.5 flex items-center justify-between border-t border-slate-100 pt-1.5 text-xs">
                   <span className="text-slate-500">
                     Open incidents{" "}
                     <span className={card.openIncidents > 0 ? "font-semibold text-red-700" : "text-slate-700"}>

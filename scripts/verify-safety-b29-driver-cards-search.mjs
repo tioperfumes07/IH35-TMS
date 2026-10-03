@@ -14,6 +14,8 @@ export function run() {
     ["term-reaches-server", /search:\s*rosterSearch \|\| undefined/.test(s)],
     ["term-in-query-key", /queryKey:\s*\["safety-cards",\s*"drivers",\s*companyId,\s*rosterSearch\]/.test(s)],
     ["search-input", /data-testid="driver-cards-search"/.test(s)],
+    ["leftover text-[11px]", !s.includes("text-[11px]")],
+    ["leftover off-scale muted", !s.includes("#8A92AB") && !s.includes("#334155")],
   ];
   const failed = checks.filter(([, ok]) => !ok).map(([id]) => id);
   const ok = failed.length === 0;
