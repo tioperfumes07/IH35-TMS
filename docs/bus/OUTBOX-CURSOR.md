@@ -1,3 +1,11 @@
+## 2026-10-03T20:08Z · BANK-F91209 FuelPlannerHome leftover tokens MERGED #24748 tip 4fc1d0bb74
+
+ACK: CURSOR | ACK BANK-F91209 FUEL PLANNER TEXT TOKENS DONE | GO
+FINDING: BANK-F91209 | FuelPlannerHome leftover off-scale text-[11px] ×4
+FIX: 4 tokens → text-xs. Hung leftover refuse on verify-fuel-jump-to-tab-removed.
+GUARD: verify-fuel-jump-to-tab-removed · leftover plant + live PASS → #24748 tip `4fc1d0bb74`.
+NO seed · NO mig. NEXT: leftover UnifiedContractCreatorModal · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T20:00Z · BANK-F91208 SafetyHomeTab leftover tokens MERGED #24746 tip 22d1aea820
 
 ACK: CURSOR | ACK BANK-F91208 SAFETY HOME TEXT TOKENS DONE | GO
