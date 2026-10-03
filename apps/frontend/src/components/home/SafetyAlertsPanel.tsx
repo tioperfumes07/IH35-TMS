@@ -47,7 +47,7 @@ export function SafetyAlertsPanel({ alerts, loading, certDataStale, isError }: P
   return (
     <section className="rounded-sm border border-slate-200 bg-white" aria-label="Safety alerts">
       <div className="border-b border-slate-200 px-3 py-2">
-        <h2 className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">Safety Alerts</h2>
+        <h2 className="text-section-header font-semibold uppercase tracking-wide text-slate-700">Safety Alerts</h2>
         {certDataStale ? (
           <p className="mt-1 text-xs text-amber-700">
             Driver cert data may be stale (last sync &gt; 7 days). Verify driver file sync before acting on expiry counts.
@@ -76,7 +76,7 @@ export function SafetyAlertsPanel({ alerts, loading, certDataStale, isError }: P
                   <h3 className="text-xs font-semibold">{alert.title}</h3>
                   <p className="mt-0.5 text-xs opacity-90">{alert.body}</p>
                 </div>
-                <span className="shrink-0 rounded-full bg-white/70 px-2 py-0.5 text-[11px] font-bold uppercase">
+                <span className="shrink-0 rounded-full bg-white/70 px-2 py-0.5 text-xs font-bold uppercase">
                   {alert.severity}
                 </span>
               </div>
