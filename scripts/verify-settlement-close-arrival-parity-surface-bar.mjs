@@ -22,6 +22,7 @@ export function check() {
   assert(!/<table\b/.test(src), "SettlementCloseArrivalPage: must not use raw HTML table");
   assert(src.includes("Draft JE preview"), "SettlementCloseArrivalPage: keep draft JE preview chrome");
   assert(src.includes("settleAndPay"), "SettlementCloseArrivalPage: keep close mutation");
+  assert(!src.includes("text-[11px]"), "SettlementCloseArrivalPage.tsx: must not use text-[11px] — use text-xs or text-section-header");
 }
 
 function selftest() {

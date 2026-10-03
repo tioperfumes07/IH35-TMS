@@ -324,7 +324,7 @@ export function SettlementCloseArrivalPage() {
                 }}
               />
             </div>
-            <p className="mt-1 text-[11px] text-slate-600">
+            <p className="mt-1 text-xs text-slate-600">
               Open pre-settlements only (names from open-by-driver join). Nested +Create driver stays
               wired for picker law; a new driver appears here after their first pre-settlement exists.
             </p>
@@ -430,7 +430,7 @@ export function SettlementCloseArrivalPage() {
                   <div className="h-2 w-full rounded-sm bg-gray-200">
                     <div className="h-2 rounded-sm bg-slate-600" style={{ width: `${escrowCapPct}%` }} />
                   </div>
-                  <div className="mt-1 flex items-center justify-between text-[11px] text-gray-600">
+                  <div className="mt-1 flex items-center justify-between text-xs text-gray-600">
                     <span>Current escrow balance: {formatUsd(currentEscrowTotal)}</span>
                     <span className={escrowToCap === 0 ? "font-semibold text-slate-700" : ""}>
                       {escrowToCap === 0 ? "At cap" : `${formatUsd(escrowToCap)} to cap`}
@@ -441,7 +441,7 @@ export function SettlementCloseArrivalPage() {
                     rows (source_liabilities) to compute currentEscrowTotal above -- they were discarded after
                     the sum, leaving no way to drill from this close screen to what the escrow balance is made of. */}
                 {((debtQuery.data?.source_liabilities as Array<{ id?: unknown; type?: unknown; current_balance?: unknown }> | undefined) ?? []).length > 0 ? (
-                  <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-gray-100 pt-1 text-[11px] text-gray-600">
+                  <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-gray-100 pt-1 text-xs text-gray-600">
                     <span>Open liabilities:</span>
                     {(debtQuery.data?.source_liabilities as Array<{ id?: unknown; type?: unknown; current_balance?: unknown }>).map((liability, idx) => {
                       const id = String(liability.id ?? "");
