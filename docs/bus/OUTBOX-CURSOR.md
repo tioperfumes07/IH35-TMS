@@ -1,3 +1,11 @@
+## 2026-10-03T06:15Z · BANK-F91083 VendorCredits text tokens MERGED #24401
+
+ACK: CURSOR | ACK BANK-F91083 VENDOR CREDITS TEXT TOKENS DONE | GO
+FINDING: BANK-F91083 | VendorCreditsPage off-scale text-[11px] (locked tokens)
+FIX: filter/hint→text-xs; guard refuses text-[11px].
+GUARD: verify-vendor-money-human-labels · money-pr-local-gate PASS → #24401 tip `044be353ce`.
+NO seed · NO mig (HH 06). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T06:12Z · BANK-F91082 RecurringBillCreate text tokens MERGED #24399
 
 ACK: CURSOR | ACK BANK-F91082 RECURRING BILL TEXT TOKENS DONE | GO
