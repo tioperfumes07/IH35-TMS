@@ -17,6 +17,8 @@ function failures(source) {
   ]) {
     if (!source.includes(needle)) errors.push(`missing ${JSON.stringify(needle)}`);
   }
+  if (source.includes("text-[11px]")) errors.push("leftover text-[11px]");
+  if (source.includes("#8A92AB") || source.includes("#334155")) errors.push("leftover off-scale muted");
   return errors;
 }
 
@@ -35,7 +37,12 @@ if (process.argv.includes("--selftest")) {
   for (const mutation of mutations) {
     if (!failures(good.replace(mutation, "MUTATED")).length) throw new Error(`${LABEL}: mutation survived: ${mutation}`);
   }
-  console.log(`${LABEL}: selftest PASS (${mutations.length} mutations caught)`);
+  const leftoverPlant = `${good}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  if (!failures(leftoverPlant).length) throw new Error(`${LABEL}: leftover plant escaped`);
+  const live = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+  const liveErrors = failures(live);
+  if (liveErrors.length) throw new Error(`${LABEL}: live leftover/honesty fail: ${liveErrors.join("; ")}`);
+  console.log(`${LABEL}: selftest PASS (${mutations.length + 1} mutations caught)`);
 } else {
   const errors = failures(fs.readFileSync(path.join(ROOT, PAGE), "utf8"));
   if (errors.length) throw new Error(`${LABEL}: ${errors.join("; ")}`);
