@@ -1,3 +1,23 @@
+# >>> NOW 2026-10-03 — ROUNDS 373 + 374 ON THE BUS — FINISH YOUR LIST
+
+READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-ROUND-373-SPINE-HOLE-MEASURED-THREE-WRITERS-NAMED.md`
+THEN: `docs/bus/10-03-2026-ALL-SEATS-ROUND-374-BASELINE-AND-FIVE-WRONG-SIGN-ACCOUNTS.md`
+THEN: `docs/bus/10-03-2026-ALL-SEATS-STANDING-ORDER-FINISH-YOUR-LIST-NO-HANDOFFS.md`
+
+Pasted from ~/Downloads (not invented): 373 spine hole · 374 baseline + five wrong-sign accounts.
+**Finish your list. Do not hand off.** You coordinate. You do **not** take CC-1/CC-2 writers.
+
+## YOUR LIST (still yours)
+
+1. **363-CUR-A remainder** — customer/vendor profile + list + every other balance. Deadline **2026-10-05 06:00Z**.
+2. **Standing-order Cursor engine** — cash flow / 7-day unmatched ALERT / two bank-match defects.
+3. **367.9** breadcrumb by **2026-10-06 18:00Z**.
+4. **363-CUR-B / C** by 2026-10-06 06:00Z. **373.2 / 370 / 368.1 / 374.2** stay on the named seats.
+
+ACK: `CURSOR | ACK 373-374 PASTED FINISH-LIST | GO`
+
+---
+
 # >>> NOW 2026-10-03 — STRANDED ROUNDS ON THE BUS — FINISH YOUR LIST
 
 READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-STANDING-ORDER-FINISH-YOUR-LIST-NO-HANDOFFS.md`

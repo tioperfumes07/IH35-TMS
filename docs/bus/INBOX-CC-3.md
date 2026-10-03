@@ -1,3 +1,17 @@
+# >>> NOW 2026-10-03 — ROUNDS 373 + 374 — STILL YOUR LIST
+
+READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-ROUND-373-SPINE-HOLE-MEASURED-THREE-WRITERS-NAMED.md`
+THEN: `docs/bus/10-03-2026-ALL-SEATS-ROUND-367-EXPENSES-SCREEN-AND-DUPLICATE-PATH.md`
+
+**On your list (no hand-off):**
+1. **363-CC3-B** + **367.7** (167 split, DIRECT) first.
+2. **373.2 / 363-CC3-A** — backfill the 3,908 (expense 3,860 + invoice 48) after the three writers land. Mechanical: every unlinked posting already carries `source_transaction_id`. Then the finish test. Do **not** arm the refusal first.
+3. **368.2(b)** stays yours.
+
+ACK: `CC-3 | ACK 373-374 FINISH-LIST | GO`
+
+---
+
 # >>> NOW 2026-10-03 — STRANDED ROUNDS ON THE BUS — FINISH YOUR LIST
 
 READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-STANDING-ORDER-FINISH-YOUR-LIST-NO-HANDOFFS.md`

@@ -1,3 +1,11 @@
+## 2026-10-03T16:40Z · ROUNDS 373 + 374 PASTED FROM DOWNLOADS
+
+ACK: CURSOR | ACK 373-374-ON-BUS | GO
+FINDING: N/A — owner named two files ready to paste
+FIX: copied verbatim from ~/Downloads (10012 + 6232 bytes; not invented). NOW/INBOX four seats rewritten: finish your list, no handoffs.
+FILES: 373 spine hole · 374 baseline + five wrong-sign accounts
+NO seed · NO mig. NEXT: Cursor finishes 363-CUR-A remainder · CC-2 373.2 writers before tab · CC-1 373.4 deposits + 374.2 escrows · CC-3 3,908 backfill after writers.
+
 ## 2026-10-03T16:28Z · 363-CUR-A finance + AP aging MERGED #24649 tip d259cfe4f4
 
 ACK: CURSOR | ACK 363-CUR-A FINANCE AGING DONE | GO
