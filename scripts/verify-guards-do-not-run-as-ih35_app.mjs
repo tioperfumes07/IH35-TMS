@@ -15,6 +15,7 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { directGuardUrl, guardDbEnv, isPooledHost, FORBIDDEN_GUARD_ROLE } from "./lib/guard-db-url.mjs";
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
+import { resolveGateReadonlyDbUrl } from "./lib/gate-db-credential.mjs";
 
 const LABEL = "verify-guards-do-not-run-as-ih35_app";
 const require = createRequire(import.meta.url);
@@ -73,7 +74,9 @@ if (process.argv.includes("--selftest")) {
 }
 
 const fails = [...entryPointGaps(), ...rewriteGaps()];
-const raw = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
+// The SAME URL requireLiveDbOrExit connects with — including the gate credential when no DATABASE_URL is set (ROUND 384.1).
+// Probing the env alone dialled a default localhost whenever the gate credential was the source, and crashed the gate.
+const raw = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL || resolveGateReadonlyDbUrl();
 const handed = directGuardUrl(raw);
 if (raw && isPooledHost(host(handed))) fails.push(`the URL a guard is handed is still the pooler (${host(handed)})`);
 

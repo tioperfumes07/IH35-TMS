@@ -201,6 +201,17 @@ export const COA_ROLE_VALUES = [
    * it below zero.
    */
   "fuel_wallet_relay",
+  // ROUND 365.1 (migration 202615370930) — the last posters that looked their account up by NUMBER now resolve by role.
+  // Bound for USMCA to the same accounts the posters used by number, so nothing moved; DELIBERATELY absent from
+  // ROLE_FALLBACKS — each fails closed, naming the role, anywhere it is not bound.
+  /** 1260 Interest Receivable — related-party loan interest accrued on money we LENT (interest-accrual.service.ts, out). */
+  "interest_receivable",
+  /** 2510 Dreamline Diesel Card Payable — the billed-in-arrears card rail (fuel poster, settlement creator). */
+  "fuel_card_payable_dreamline",
+  /** 2200 Driver Settlements Payable — a broker advance disbursed against a driver bill reduces it (broker-advances). */
+  "driver_settlements_payable",
+  /** 4200 Accessorial / Detention Income — customer accessorial charges (settlement creator projection). */
+  "accessorial_revenue",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];

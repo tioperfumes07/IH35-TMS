@@ -2279,6 +2279,13 @@ export const COA_ROLE_VALUES = [
   "lease_liability",
   "accumulated_rou_amortization",
   "lease_interest_expense",
+  // ROUND 352 F-3 — prefunded Relay fuel wallet (1295).
+  "fuel_wallet_relay",
+  // ROUND 365.1 (202615370930) — posters resolve these by role, never by account number.
+  "interest_receivable",
+  "fuel_card_payable_dreamline",
+  "driver_settlements_payable",
+  "accessorial_revenue",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];

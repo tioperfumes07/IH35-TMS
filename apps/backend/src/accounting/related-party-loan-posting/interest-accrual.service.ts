@@ -114,21 +114,14 @@ export async function resolveAccrualAccounts(
     } catch {
       return { ok: false, missingRole: "interest_income" };
     }
-    const recv = await client.query<{ id: string }>(
-      `SELECT id::text AS id
-         FROM catalogs.accounts
-        WHERE operating_company_id = $1::uuid
-          AND account_number = '1260'
-          AND deactivated_at IS NULL
-          -- is_postable mirrors what resolveRoleAccount demands of every role-resolved account. A
-          -- header/summary account accepts no journal lines; resolving one here would produce an entry
-          -- that fails at insert, or worse, posts to a rollup and distorts every child balance.
-          AND is_postable = true
-        LIMIT 1`,
-      [operatingCompanyId]
-    );
-    const counterAccountId = recv.rows[0]?.id;
-    if (!counterAccountId) return { ok: false, missingRole: "account 1260 Interest Receivable" };
+    // ROUND 365.1 — by ROLE (interest_receivable = 1260 on USMCA, 202615370930), never by account number.
+    // resolveRoleAccount demands an active, postable account, so a header account can never be picked.
+    let counterAccountId: string;
+    try {
+      counterAccountId = await resolveRoleAccount(client, operatingCompanyId, "interest_receivable");
+    } catch {
+      return { ok: false, missingRole: "interest_receivable" };
+    }
     return { ok: true, interestAccountId, counterAccountId };
   }
 

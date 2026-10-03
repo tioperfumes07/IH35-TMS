@@ -80,48 +80,26 @@ function buildFuelIdempotencyKey(input: Pick<FuelPostingInput, "operating_compan
   return ["ih35:fuel-posting:v1", input.operating_company_id.toLowerCase(), input.fuel_event_id, input.posting_path].join(":");
 }
 
-async function resolveFuelAdvanceLiabilityAccount(client: DbClient, operatingCompanyId: string): Promise<string> {
-  const byName = await client.query<{ id: string }>(
-    `
-      SELECT id::text
-      FROM catalogs.accounts
-      WHERE account_type = 'Liability'
-        AND deactivated_at IS NULL
-        AND is_postable = true
-        AND operating_company_id = $1::uuid
-        AND (
-          account_name ILIKE '%fuel%advance%'
-          OR account_name ILIKE '%driver%advance%'
-          OR account_name ILIKE '%advance liability%'
-        )
-      ORDER BY updated_at DESC
-      LIMIT 1
-    `,
-    [operatingCompanyId]
+// ROUND 365.1 — the driver_advance path's credit account. This used to take ANY liability whose NAME matched
+// '%fuel%advance%' / '%driver%advance%' / '%advance liability%', and failing that ANY "current liability" by
+// `updated_at DESC` — the account a fuel posting landed in depended on a name and on which row was touched last. On
+// USMCA neither guess matches (measured 2026-10-03: 0 accounts; 0 fuel_event postings have ever credited a liability),
+// so this path has never posted there; it threw "mapping is missing".
+//
+// No role names this account and the owner has never designated one: a Relay cash advance drawn by a driver is money
+// the DRIVER owes back (advance_recovery, 1245) paid out of the Relay wallet (fuel_wallet_relay, 1295) — not fuel
+// expense against an unnamed liability. Choosing that treatment is an owner accounting decision, so the path now FAILS
+// CLOSED by name instead of guessing; it posts nothing it did not post before.
+async function resolveFuelAdvanceLiabilityAccount(_client: DbClient, operatingCompanyId: string): Promise<string> {
+  throw new Error(
+    "Fuel posting driver_advance path has no designated credit account for " +
+      `operating_company_id=${operatingCompanyId}: it never resolves an account by name or by latest update (ROUND 365.1). ` +
+      "A Relay cash advance is a driver receivable (advance_recovery) paid from the Relay wallet (fuel_wallet_relay); " +
+      "that treatment needs an owner designation before this path can post."
   );
-  if (byName.rows[0]?.id) return byName.rows[0].id;
-
-  const bySubtype = await client.query<{ id: string }>(
-    `
-      SELECT id::text
-      FROM catalogs.accounts
-      WHERE account_type = 'Liability'
-        AND account_subtype IN ('OtherCurrentLiabilities', 'CurrentLiabilities')
-        AND deactivated_at IS NULL
-        AND is_postable = true
-        AND operating_company_id = $1::uuid
-      ORDER BY updated_at DESC
-      LIMIT 1
-    `,
-    [operatingCompanyId]
-  );
-  if (bySubtype.rows[0]?.id) return bySubtype.rows[0].id;
-
-  throw new Error("Fuel advance liability account mapping is missing");
 }
 
-// R-30.1-A: resolve the fuel-card rail's OWN GL account by account_number -- the same
-// by-lookup pattern resolveFuelAdvanceLiabilityAccount already uses above, not a hardcoded uuid.
+// R-30.1-A: resolve the fuel-card rail's OWN GL account (ROUND 365.1: by role, for both rails).
 // Dreamline (2510) is billed-in-arrears (a payable); Relay (1295) is prefunded (an asset wallet).
 // Fails closed (throws) rather than falling back to ap_control -- a missing rail account is a
 // setup gap to report, never silently substituted.
@@ -135,21 +113,11 @@ async function resolveFuelCardRailAccount(
   if (rail === "relay_fuel_wallet") {
     return { account_id: await resolveRoleAccount(client, operatingCompanyId, "fuel_wallet_relay"), source: "role:fuel_wallet_relay" };
   }
-  const accountNumber = "2510";
-  const byNumber = await client.query<{ id: string }>(
-    `
-      SELECT id::text
-      FROM catalogs.accounts
-      WHERE account_number = $1
-        AND deactivated_at IS NULL
-        AND operating_company_id = $2::uuid
-      ORDER BY updated_at DESC
-      LIMIT 1
-    `,
-    [accountNumber, operatingCompanyId]
-  );
-  if (byNumber.rows[0]?.id) return { account_id: byNumber.rows[0].id, source: `account_number:${accountNumber}` };
-  throw new Error(`Fuel card rail account ${accountNumber} (${rail}) is missing for operating_company_id=${operatingCompanyId}`);
+  // ROUND 365.1 — Dreamline (2510 on USMCA) resolves through its role too, never by account number (202615370930).
+  return {
+    account_id: await resolveRoleAccount(client, operatingCompanyId, "fuel_card_payable_dreamline"),
+    source: "role:fuel_card_payable_dreamline",
+  };
 }
 
 /** R-153.6/153.7: exported so fuel-expense-document.service.ts's backfill/dedupe writer can resolve
@@ -168,20 +136,9 @@ export async function resolveCompanyDirectCreditAccount(
     // CLOSED on ambiguity (>1 designated/subtype-matching account) rather than silently picking one.
     const apBound = await resolveRoleAccountOptional(client, operatingCompanyId, "ap_control");
     if (apBound) return { account_id: apBound, source: "role_designation:ap_control" };
-    const apSubtype = await client.query<{ id: string }>(
-      `
-        SELECT id::text
-        FROM catalogs.accounts
-        WHERE account_subtype = 'AccountsPayable'
-          AND deactivated_at IS NULL
-          AND is_postable = true
-          AND operating_company_id = $1::uuid
-        ORDER BY updated_at DESC
-        LIMIT 1
-      `,
-      [operatingCompanyId]
-    );
-    if (apSubtype.rows[0]?.id) return { account_id: apSubtype.rows[0].id, source: "account_subtype:AccountsPayable" };
+    // ROUND 365.1 — the `account_subtype = 'AccountsPayable' ORDER BY updated_at DESC` fallback that stood here is gone:
+    // which account it picked depended on which row was touched last. The resolver above already applies the
+    // ap_control control-role rules (designation first, fail closed on ambiguity); past it there is nothing to guess.
     throw new Error("AP credit account mapping is missing for company-direct fuel posting");
   }
 

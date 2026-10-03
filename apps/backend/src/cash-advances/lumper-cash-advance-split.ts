@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { withCurrentUser } from "../auth/db.js";
 import { isBillPaymentGlPostingEnabled } from "../accounting/bill-payment-gl.service.js";
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
+import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
 import { logger } from "../observability/structured-logger.js";
 
@@ -202,16 +203,14 @@ export async function disburseCashAdvanceSplit(
             });
           }
         } else {
-          // lumper expense leg → DR QBO-117 (resolved per entity by account_number; fail-loud if missing).
-          const acct = await client.query(
-            `SELECT id::text AS id FROM catalogs.accounts
-             WHERE operating_company_id = $1::uuid AND account_number = 'QBO-117' AND deactivated_at IS NULL`,
-            [companyId],
-          );
-          if (acct.rows.length === 0) {
-            throw new DisburseSplitFailure(409, "lumper_expense_account_missing", "QBO-117 (Warehouse-Lumper Fee) not found for this entity");
+          // lumper expense leg → DR the 'reimbursement_expense' role (owner ruling ROW 0: lumper stays on that role —
+          // 5310 Lumper Expense on USMCA). ROUND 365.1: by ROLE, never by account number — the old lookup named
+          // 'QBO-117', a number USMCA's chart does not carry, so this leg refused every time. Fail-loud if unbound.
+          const lumperRoleAccount = await resolveRoleAccountOptional(client as never, companyId, "reimbursement_expense");
+          if (!lumperRoleAccount) {
+            throw new DisburseSplitFailure(409, "lumper_expense_account_missing", "the 'reimbursement_expense' role (lumper expense) is not bound for this entity — bind it on the CoA Roles page");
           }
-          const lumperAccountId = String((acct.rows[0] as { id: string }).id);
+          const lumperAccountId = String(lumperRoleAccount);
 
           // ACCT-F353 — derive from the LOAD the lumper fee is tied to (mdata.loads.is_sample_data).
           const loadSample = await client.query<{ is_sample_data: boolean | null }>(

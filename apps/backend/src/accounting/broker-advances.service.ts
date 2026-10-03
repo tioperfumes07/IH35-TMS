@@ -19,17 +19,20 @@
 // owed, it never creates a new liability or a settlement deduction.
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { assertBankAccountUsable } from "../banking/bank-account-visibility.js";
+import { resolveRoleAccountOptional, type CoaRole } from "./coa-roles/resolver.service.js";
 import { createJournalEntryOnClient } from "./journal-entries.service.js";
 import { findConflictingInvoiceForLoad } from "./from-load.js";
 
-const DRIVER_SETTLEMENTS_PAYABLE_ACCOUNT_NUMBER = "2200";
-const ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER = "1100";
+// ROUND 365.1 — every account below resolves by ROLE (accounting.chart_of_accounts_roles), never by account number:
+// 2200 = driver_settlements_payable, 1100 = ar_control, 2250 = broker_customer_advance_liability (202615370930).
+const DRIVER_SETTLEMENTS_PAYABLE_ROLE: CoaRole = "driver_settlements_payable";
+const ACCOUNTS_RECEIVABLE_ROLE: CoaRole = "ar_control";
 // LOAD-COSTS-COMPLETE items (1)/(2) TIMING correction (owner order 2026-09-04, QBO/NetSuite
 // customer-deposit pattern researched first, migration 202613720001): a broker advance received
 // or disbursed BEFORE an invoice exists for its load has nothing real to credit/debit against
 // Accounts Receivable -- there is no receivable yet. It credits this liability instead and
 // reclassifies to 1100 the moment buildInvoiceFromLoad mints the invoice and claims the row.
-const CUSTOMER_DEPOSITS_ACCOUNT_NUMBER = "2250";
+const CUSTOMER_DEPOSITS_ROLE: CoaRole = "broker_customer_advance_liability";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -216,8 +219,8 @@ export async function recordBrokerAdvanceInClientTx(
   // (2)'s disbursement is that row's only JE).
   let journalEntryId: string | null = null;
   if (bankLedgerAccountId) {
-    const creditAccountNumber = hasPostedReceivable ? ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER : CUSTOMER_DEPOSITS_ACCOUNT_NUMBER;
-    const creditAccountId = await resolveAccountId(client, input.operatingCompanyId, creditAccountNumber);
+    const creditRole = hasPostedReceivable ? ACCOUNTS_RECEIVABLE_ROLE : CUSTOMER_DEPOSITS_ROLE;
+    const creditAccountId = await resolveAccountId(client, input.operatingCompanyId, creditRole);
     const je = await createJournalEntryOnClient(
       client as never,
       {
@@ -292,13 +295,9 @@ export type DisburseBrokerAdvanceToDriverBillResult = {
   journalEntryId: string;
 };
 
-async function resolveAccountId(client: Queryable, operatingCompanyId: string, accountNumber: string): Promise<string> {
-  const res = await client.query<{ id: string }>(
-    `SELECT id FROM catalogs.accounts WHERE operating_company_id = $1::uuid AND account_number = $2 LIMIT 1`,
-    [operatingCompanyId, accountNumber]
-  );
-  const id = res.rows[0]?.id;
-  if (!id) throw new BrokerAdvanceError("gl_account_not_found", `catalogs.accounts has no account_number=${accountNumber} for this company`);
+async function resolveAccountId(client: Queryable, operatingCompanyId: string, role: CoaRole): Promise<string> {
+  const id = await resolveRoleAccountOptional(client as never, operatingCompanyId, role);
+  if (!id) throw new BrokerAdvanceError("gl_account_not_found", `the '${role}' role is not bound for this company — bind it on the CoA Roles page`);
   return String(id);
 }
 
@@ -415,10 +414,10 @@ export async function applyBrokerAdvanceToDriverBillInClientTx(
   // proforma-convert.service.ts), so a load whose only invoice is still a proforma has NO A/R row
   // to reduce either. Pre-invoice AND pre-conversion both land on 2250 Customer Deposits; a
   // receivable only exists once the invoice has left proforma status.
-  const payableAccountId = await resolveAccountId(client, input.operatingCompanyId, DRIVER_SETTLEMENTS_PAYABLE_ACCOUNT_NUMBER);
+  const payableAccountId = await resolveAccountId(client, input.operatingCompanyId, DRIVER_SETTLEMENTS_PAYABLE_ROLE);
   const hasPostedReceivable = advance.applied_to_invoice_id != null && advance.invoice_status !== "proforma" && advance.invoice_status !== "void";
-  const creditAccountNumber = hasPostedReceivable ? ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER : CUSTOMER_DEPOSITS_ACCOUNT_NUMBER;
-  const creditAccountId = await resolveAccountId(client, input.operatingCompanyId, creditAccountNumber);
+  const creditRole = hasPostedReceivable ? ACCOUNTS_RECEIVABLE_ROLE : CUSTOMER_DEPOSITS_ROLE;
+  const creditAccountId = await resolveAccountId(client, input.operatingCompanyId, creditRole);
 
   const je = await createJournalEntryOnClient(
     client as never,
@@ -471,7 +470,8 @@ export async function applyBrokerAdvanceToDriverBillInClientTx(
       driver_id: bill.driver_id,
       disbursed_amount_cents: disbursedAmountCents,
       journal_entry_id: je.id,
-      credit_account_number: creditAccountNumber,
+      credit_role: creditRole,
+      credit_account_id: creditAccountId,
     },
     "info",
     "LOAD-COSTS-COMPLETE-item-2"
