@@ -53,6 +53,10 @@ if (map.includes("expense-category-account-options") || map.includes("<datalist"
 if (!map.includes("ReferenceSelect")) {
   failures.push("ExpenseCategoryMapPage missing ReferenceSelect");
 }
+// BANK-F91094 — ORDERS chrome: selected-account hint uses text-xs, not text-[11px].
+if (map.includes("text-[11px]")) {
+  failures.push("ExpenseCategoryMapPage must not use text-[11px] — use text-xs");
+}
 
 const ref = read("apps/frontend/src/components/parity/ReferenceSelect.tsx");
 // LST-PICKER-01 made the picker config-driven: the kind→backend mapping moved out of a hardcoded

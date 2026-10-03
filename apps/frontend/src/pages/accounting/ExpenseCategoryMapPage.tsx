@@ -262,7 +262,7 @@ export function ExpenseCategoryMapPage() {
                     disabled={!companyId}
                   />
                 </div>
-                <p className="mt-1 text-[11px] text-gray-500">
+                <p className="mt-1 text-xs text-gray-500">
                   {selectedAccount
                     ? `Selected: ${selectedAccount.account_name}`
                     : "Pick from chart of accounts."}
