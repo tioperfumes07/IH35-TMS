@@ -721,6 +721,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-factoring-writers-write-the-spine",
     ["apps/backend/src/factoring/", "scripts/verify-factoring-writers-write-the-spine.mjs"],
   ],
+  // ROUND 342 Phase 4 — one scope column, one RLS policy on the factoring tables that carried a duplicate tenant policy.
+  [
+    "verify-factoring-one-scope-policy",
+    ["db/migrations/202615310600_factoring_drop_duplicate_tenant_policies.sql", "apps/backend/src/factoring/factor.service.ts", "scripts/verify-factoring-one-scope-policy.mjs"],
+  ],
   // ROUND 336 rule 7 — a factored invoice's amount is locked in the DB while its Faro purchase is open.
   [
     "verify-factored-invoice-amount-locked",

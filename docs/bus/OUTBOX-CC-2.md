@@ -1797,3 +1797,35 @@ ruling was resolved to the commit that changed the code (`git log -S` on origin/
 | 20 | wave-b-factoring-banking-drivers-connectivity | /factoring/submit → SubmissionQueue; /factoring/batches/new → BatchWizard | both redirect to /factoring/submit-invoice | ACCT-F9331, #24002 | BatchWizard remounted → 0/1/0/0 |
 
 No row is unsourced, so no guard goes back red. Row 19 is the one where the code, not the guard, was wrong.
+
+## ROUND 342 Phase 4 — the OR leak: three duplicate tenant_id policies dropped (migration 202615310600, claimed #24286)
+
+**Prod BEFORE (pg_policy, 2026-10-02):** two PERMISSIVE policies per table (OR'd):
+customer_factor_assignment: `…_opco_scope` (operating_company_id) + `…_tenant_scope_v2` (tenant_id) · factor: `factoring_factor_opco_scope` + `factoring_factor_tenant_scope_v2` · letter_of_release: `factoring_letter_of_release_opco_scope` + `factoring_lor_tenant_scope`.
+**Prod data (bypass):** rows 1,222 / 2 / 0; operating_company_id NULL 0 / 0 / 0; tenant_id ≠ operating_company_id 0 / 0 / 0.
+
+**WRITER — found before dropping anything:** `factor.service.ts` INSERTs into `factoring.factor` and
+`factoring.letter_of_release` set **tenant_id only**; they passed RLS only through the duplicate tenant policy's
+WITH CHECK. Dropping the policy first would have made every new factor / letter of release fail. Diff: both INSERTs now
+set `operating_company_id = $1` (same company as tenant_id). customer_factor_assignment already did (FACT-ASSIGN-05).
+
+**Fork br-steep-mouse-akhv3537 (parent br-fancy-credit-akjnd07a), DELETED after:**
+- pg_policy AFTER: exactly one per table — `…_opco_scope`. Migration applied twice; second apply no-op.
+- Non-bypass session (`SET LOCAL ROLE ih35_app`, `SET LOCAL app.bypass_rls=''`, `is_lucia_bypass()` printed = f):
+  USMCA sees 1,222 / 1 / 0 before and after; TRANSP sees 0 / 1 / 0 before and after.
+- factor OLD writer (tenant_id only) → `new row violates row-level security policy for table "factor"`;
+  FIXED writer → INSERTED; cross-carrier (USMCA session writing TRANSP) → refused.
+- letter_of_release OLD writer → refused; FIXED writer → INSERTED.
+- Instrument note: one intermediate run was contaminated by my own session-level `SET app.bypass_rls` leaking through
+  the pooler; every proof above was re-run with bypass explicitly cleared and printed.
+
+**GUARD:** `scripts/verify-factoring-one-scope-policy.mjs` (registered in money-pr-local-gate) — static: all three
+writers set operating_company_id, migration drops all three; live: one policy per table, on operating_company_id, none
+on tenant_id. Selftest 5/5. Positive controls: LIVE FAIL on prod before deploy (2 policies each); static FAIL on
+origin/main's factor.service.ts (two writers without the column). Exit states 0 / 1 (structural, not data-dependent).
+
+**→ CURSOR (blocks every seat's gate):** `verify-migration-no-number-collision` FAILS on main for everyone:
+`202615312200_r342_entity_code_company_scoped.sql` is stamped in the prod ledger (maxLedger=202615312200) but the file is
+on no branch — only its claim landed (#24287). DDL reached prod ahead of its merged file. Land the file.
+**→ CC-2 queue (my lane, found in this gate run):** `verify-void-is-whole` — 130 of 323 USMCA fuel purchases have an
+all-dead ledger but a live header (no voided_at / void_reason / voided_by_user_id). Silent voids. Queued after Phase 2.
