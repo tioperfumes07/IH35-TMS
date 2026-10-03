@@ -105,6 +105,8 @@ const STEPS = [
   ["verify-dispatch-tables-board-appearance", "scripts/verify-dispatch-tables-board-appearance.mjs"],
   ["verify-scheduled-engine-idempotency-header", "scripts/verify-scheduled-engine-idempotency-header.mjs"],
   ["verify-unit-stop-events-no-clipped-starts", "scripts/verify-unit-stop-events-no-clipped-starts.mjs"],
+  // ROUND 345 block — money lines reference only their own company (composite same-entity FKs).
+  ["verify-money-lines-same-entity-fks", "scripts/verify-money-lines-same-entity-fks.mjs"],
   ["verify-no-session-advisory-locks", "scripts/verify-no-session-advisory-locks.mjs"],
   ["verify-rollup-keys-carry-company", "scripts/verify-rollup-keys-carry-company.mjs"],
   ["verify-filter-surfaces-full-set", "scripts/verify-filter-surfaces-full-set.mjs"],

@@ -16,8 +16,6 @@ const LABEL = "verify-no-opco-filter-on-tables-without-it";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SRC = path.join(ROOT, "apps/backend/src");
 // Static rename-only list when DATABASE_URL is unset; live information_schema widens the set when present.
-export const ALLOW_OFFLINE_SKIP =
-  "static ROUND 342 rename-only table list when DATABASE_URL unset — live information_schema when set";
 // Rename-only tables per the ROUND 342 inventory (tenant_id, no operating_company_id) — used when offline.
 const STATIC_TABLES = [
   "insurance.type_catalog", "mdata.assets", "mdata.asset_status_history", "factoring.canonical_factor_agreements",
