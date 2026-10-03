@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Relay Card</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    .num { font-variant-numeric: tabular-nums; text-align: right; }
+    .hd { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #5d6b7a; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { padding: 8px 10px; font-size: 12.5px; border-bottom: 1px solid #E4EAF0; border-left: 0; border-right: 0; }
+    tbody tr:nth-child(even) { background: #FAFCFD; }
+    a { color: #1c5ba8; } a:hover { color: #14314F; }
+    .ctl { font: inherit; font-size: 12.5px; height: 34px; box-sizing: border-box; border: 1px solid #C7D2DC; border-radius: 3px; padding: 0 10px; background: #FFFFFF; color: #0d2137; }
+    .date { width: 132px; }
+    .chip { font-size: 11.5px; height: 34px; box-sizing: border-box; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid #C7D2DC; border-radius: 17px; background: #FFFFFF; color: #14314F; }
+    .btnp { font: inherit; font-size: 12.5px; font-weight: 600; height: 34px; padding: 0 14px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer; }
+    .btns { font: inherit; font-size: 12.5px; height: 34px; padding: 0 14px; border: 1px solid #C7D2DC; background: #FFFFFF; color: #14314F; border-radius: 3px; cursor: pointer; }
+    .gear { width: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: #5d6b7a; }
+    .card { background: #FFFFFF; border: 1px solid #C7D2DC; border-radius: 3px; }
+    .cardhd { padding: 11px 16px; border-bottom: 1px solid #E4EAF0; }
+    .t { font-size: 14px; font-weight: 600; }
+    .s { font-size: 11.5px; color: #5d6b7a; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 1060px; box-sizing: border-box; background: #eef2f6; color: #0d2137; display: flex; flex-direction: column;">
+  <div style="background: #FFFFFF; border-bottom: 1px solid #C7D2DC; padding: 14px 24px 0 24px;">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 20px;">
+      <div>
+        <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.01em;">Relay Card</div>
+        <div style="font-size: 12.5px; color: #5d6b7a; margin-top: 1px;">Fuel wallet &middot; the card reports itself, not the truck &mdash; so the unit has to be resolved</div>
+      </div>
+      <div style="display: flex; gap: 8px;"><button type="button" class="btns" style="height: 44px;">Card roster</button><button type="button" class="btnp" style="height: 44px;">+ New &#9662;</button></div>
+    </div>
+    <div style="display: flex; gap: 2px; margin-top: 12px;"><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Home</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Accounts</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Transactions</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Link suggestions</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Reconciliation</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Driver escrow</div><div style="font-size: 12.5px; font-weight: 600; padding: 9px 13px; color: #0d2137; border-bottom: 2.5px solid #14314F;">Relay card</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Reports</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Settings</div></div>
+  </div>
+  <div style="padding: 14px 24px 22px 24px; display: flex; flex-direction: column; gap: 14px; min-height: 0;">
+    <div style="display: flex; align-items: center; gap: 12px; background: #FDF3E7; border: 1px solid #B45309; border-radius: 3px; padding: 10px 14px;">
+      <span style="font-size: 15px; font-weight: 700; color: #8A4208; line-height: 1;">!</span>
+      <div style="flex-grow: 1;">
+        <div style="font-size: 13px; font-weight: 600; color: #8A4208;">$20,942.94 of fuel will not post — the unit could not be resolved</div>
+        <div style="font-size: 11.5px; color: #3d4a57; margin-top: 1px;">Relay reports the card, not the truck. Without a unit the row is a Tier 1 violation and the posting engine refuses it. Held, not guessed, not dropped in suspense.</div>
+      </div>
+      <button type="button" style="font: inherit; font-size: 11.5px; font-weight: 600; height: 34px; padding: 0 12px; border: 1px solid #B45309; background: #FFFFFF; color: #8A4208; border-radius: 3px; cursor: pointer; white-space: nowrap;">Run the rematch</button>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px;">
+      <sc-for list="{{kpis}}" as="k" hint-placeholder-count="6">
+        <div style="background: #FFFFFF; border: 1px solid {{k.border}}; border-radius: 3px; padding: 9px 12px;">
+          <div style="font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: {{k.ink}};">{{k.label}}</div>
+          <div class="num" style="font-size: 21px; font-weight: 600; text-align: left; line-height: 1.2; color: {{k.ink}};">{{k.value}}</div>
+          <div style="font-size: 10.5px; color: {{k.ink}};">{{k.sub}}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 336px; gap: 14px; min-width: 0;">
+
+      <div class="card" style="min-width: 0;">
+        <div style="padding: 11px 16px; border-bottom: 1px solid #E4EAF0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+          <div>
+            <div class="t">Unit rematch queue</div>
+            <div class="s">card &rarr; unit, by the evidence &mdash; never by the card's own label alone</div>
+          </div>
+          <div style="flex-grow: 1;"></div>
+          <input class="ctl date" value="09/01/2026" aria-label="From date">
+          <span style="font-size: 12.5px; color: #8895a3;">to</span>
+          <input class="ctl date" value="09/30/2026" aria-label="To date">
+          <select class="ctl" style="width: 150px;" aria-label="Confidence"><option>All confidence</option></select>
+          <button type="button" aria-label="Choose columns" title="Choose columns" class="ctl gear"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg></button>
+        </div>
+        <table>
+          <thead>
+            <tr style="background: #F6F9FB;">
+              <th class="hd" style="text-align: left; width: 30px;"><input type="checkbox" aria-label="Select all"></th>
+              <th class="hd" style="text-align: left; width: 90px;">Date</th>
+              <th class="hd" style="text-align: left; width: 86px;">Card</th>
+              <th class="hd" style="text-align: left;">Site</th>
+              <th class="hd" style="text-align: right; width: 68px;">Gallons</th>
+              <th class="hd" style="text-align: right; width: 100px;">Amount</th>
+              <th class="hd" style="text-align: left; width: 62px;">Unit</th>
+              <th class="hd" style="text-align: left; width: 96px;">Driver</th>
+              <th class="hd" style="text-align: left; width: 168px;">Evidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{rows}}" as="r" hint-placeholder-count="12">
+              <tr>
+                <td><input type="checkbox" aria-label="Select row"></td>
+                <td class="num" style="text-align: left; color: #3d4a57;">{{r.date}}</td>
+                <td class="num" style="text-align: left; color: #3d4a57;">{{r.card}}</td>
+                <td style="max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{r.site}}</td>
+                <td class="num" style="color: #3d4a57;">{{r.gal}}</td>
+                <td class="num" style="font-weight: 600; color: #8C2020;">{{r.amt}}</td>
+                <td style="font-weight: 600; color: {{r.unitInk}};">{{r.unit}}</td>
+                <td style="color: {{r.drvInk}};">{{r.drv}}</td>
+                <td>
+                  <span style="font-size: 10.5px; font-weight: 600; padding: 2px 7px; border-radius: 10px; background: {{r.evBg}}; color: {{r.evInk}};">{{r.ev}}</span>
+                </td>
+              </tr>
+            </sc-for>
+          </tbody>
+          <tfoot>
+            <tr style="background: #F6F9FB; border-top: 2px solid #C7D2DC;">
+              <td colspan="4" style="font-weight: 700;">76 uncategorized &middot; 12 shown</td>
+              <td class="num" style="font-weight: 700;">2,918.4</td>
+              <td class="num" style="font-weight: 700; color: #8C2020;">-$20,942.94</td>
+              <td colspan="3" class="hd">held until the unit resolves</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0;">
+        <div class="card">
+          <div class="cardhd"><div class="t">How a unit gets resolved</div><div class="s">two independent signals, and what happens when they disagree</div></div>
+          <div style="padding: 4px 16px 14px 16px;">
+            <sc-for list="{{how}}" as="h" hint-placeholder-count="4">
+              <div style="padding: 10px 0; border-bottom: 1px solid #E4EAF0;">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
+                  <span style="font-size: 12.5px; font-weight: 600; color: {{h.ink}};">{{h.t}}</span>
+                  <span class="num" style="font-size: 12.5px; font-weight: 700; color: {{h.ink}};">{{h.n}}</span>
+                </div>
+                <div style="font-size: 11.5px; color: #3d4a57; margin-top: 3px; line-height: 1.5;">{{h.d}}</div>
+              </div>
+            </sc-for>
+            <div style="font-size: 11.5px; color: #5d6b7a; margin-top: 10px; line-height: 1.6;">
+              Two signals agreeing is a match. One signal alone is a proposal that waits for a person. Two signals disagreeing is held and reported — never averaged, never resolved by picking the newer one.
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cardhd"><div class="t">Wallet loads and draws</div><div class="s">30 days</div></div>
+          <div style="padding: 12px 16px 14px 16px;">
+            <svg viewBox="0 0 300 92" style="width: 100%; height: 92px; display: block;" aria-label="Wallet balance, last 30 days">
+              <line x1="0" y1="70" x2="300" y2="70" stroke="#C7D2DC" stroke-width="1"></line>
+              <sc-for list="{{bars}}" as="b" hint-placeholder-count="10">
+                <rect x="{{b.x}}" y="{{b.y}}" width="20" height="{{b.h}}" fill="{{b.fill}}"></rect>
+              </sc-for>
+              <text x="0" y="86" font-size="9" fill="#8895a3" font-family="IBM Plex Sans">09/01</text>
+              <text x="266" y="86" font-size="9" fill="#8895a3" font-family="IBM Plex Sans">09/30</text>
+            </svg>
+            <div style="display: flex; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid #E4EAF0;">
+              <span style="font-size: 12px; color: #3d4a57;">Loaded in</span>
+              <span class="num" style="font-size: 12.5px; font-weight: 600; color: #14314F;">$48,000.00</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 7px;">
+              <span style="font-size: 12px; color: #3d4a57;">Drawn out</span>
+              <span class="num" style="font-size: 12.5px; font-weight: 600; color: #8C2020;">-$80,726.45</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 7px; padding-top: 7px; border-top: 1px solid #E4EAF0;">
+              <span style="font-size: 12px; font-weight: 600;">Balance</span>
+              <span class="num" style="font-size: 13px; font-weight: 700; color: #8C2020;">-$32,726.45</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1060}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const RED = '#8C2020', AMBER = '#8A4208', NAVY = '#14314F', GREEN = '#1F6B32';
+    const usd = (n) => (n < 0 ? '-$' : '$') + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const kpis = [
+      { label: 'Wallet balance', value: usd(-32726.45), sub: 'drawn beyond loads', border: '#B42318', ink: RED },
+      { label: 'Uncategorized', value: '76', sub: 'of 76 on this card', border: '#B42318', ink: RED },
+      { label: 'Held, will not post', value: usd(-20942.94), sub: 'no unit resolved', border: '#B45309', ink: AMBER },
+      { label: 'Resolved this run', value: '52', sub: 'AUTH-178, committed', border: '#C7D2DC', ink: GREEN },
+      { label: 'Gallons, September', value: '2,918.4', sub: 'unposted only', border: '#C7D2DC', ink: '#0d2137' },
+      { label: 'Avg $/gal', value: '$7.18', sub: 'card price, not net', border: '#C7D2DC', ink: '#0d2137' }
+    ];
+
+    const EV = { both: ['#ECF3EC', GREEN, 'Two signals agree'], one: ['#FDF3E7', AMBER, 'Load only'], dis: ['#FCEDEC', RED, 'Signals disagree'], none: ['#FCEDEC', RED, 'No signal'] };
+    const R = (date, card, site, gal, amt, unit, drv, ev) => {
+      const m = EV[ev];
+      return {
+        date, card, site,
+        gal: gal.toFixed(1), amt: usd(-amt),
+        unit: unit || '—', unitInk: unit ? '#0d2137' : RED,
+        drv: drv || '—', drvInk: drv ? '#3d4a57' : RED,
+        ev: m[2], evBg: m[0], evInk: m[1]
+      };
+    };
+
+    const rows = [
+      R('09/27', '••4471', "LOVE'S TRAVEL STOP #604 — LAREDO TX", 128.4, 921.90, 'T156', 'R. Sanchez', 'both'),
+      R('09/27', '••4471', 'PILOT #431 — COTULLA TX', 126.2, 906.82, 'T152', null, 'one'),
+      R('09/26', '••8830', "LOVE'S #212 — SAN ANTONIO TX", 44.8, 321.74, 'T175', 'J. Ramirez', 'both'),
+      R('09/26', '••8830', 'PILOT #217 — DILLEY TX', 105.1, 755.19, null, null, 'none'),
+      R('09/25', '••2216', 'TA — SAN ANTONIO NORTH', 117.6, 844.37, 'T168', null, 'one'),
+      R('09/25', '••4471', 'FLYING J #742 — GEORGE WEST TX', 132.0, 947.76, null, null, 'dis'),
+      R('09/24', '••9903', "LOVE'S #604 — LAREDO TX", 98.3, 705.79, 'T147', null, 'one'),
+      R('09/24', '••2216', 'PILOT #431 — COTULLA TX', 121.4, 871.65, null, null, 'none'),
+      R('09/23', '••8830', 'TA — LAREDO TX', 110.9, 796.26, 'T170', null, 'one'),
+      R('09/22', '••9903', 'FLYING J #742 — GEORGE WEST TX', 135.3, 971.45, null, null, 'none'),
+      R('09/21', '••4471', "LOVE'S #212 — SAN ANTONIO TX", 119.8, 860.16, 'T173', null, 'one'),
+      R('09/20', '••2216', 'PILOT #217 — DILLEY TX', 102.4, 735.23, null, null, 'dis')
+    ];
+
+    const how = [
+      { t: 'Both signals agree', n: '12', d: 'The load active at that timestamp and the GPS position within the site geofence name the same unit. Committed without asking.', ink: GREEN },
+      { t: 'Load only', n: '40', d: 'A load was running on a unit at that hour but no position fix lands at the site. Proposed, and a person accepts it — which is what AUTH-178 was.', ink: AMBER },
+      { t: 'No signal at all', n: '18', d: 'No load, no position. Held. The row keeps its dollars and posts nothing until someone names the unit.', ink: RED },
+      { t: 'Signals disagree', n: '6', d: 'The load says one unit, the geofence says another. Held and reported by name. Never averaged and never silently resolved.', ink: RED }
+    ];
+
+    const seq = [12, 30, 18, 44, 26, 52, 34, 61, 47, 70];
+    const bars = seq.map((v, i) => ({
+      x: 6 + i * 29,
+      y: 70 - v * 0.9,
+      h: (v * 0.9).toFixed(1),
+      fill: i % 3 === 0 ? NAVY : '#B45309'
+    }));
+
+    return { kpis, rows, how, bars };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Active Work Orders</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    .num { font-variant-numeric: tabular-nums; text-align: right; }
+    .hd { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #64748B; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { padding: 8px 10px; font-size: 12.5px; border-bottom: 1px solid #E8EDF2; }
+    tbody tr:nth-child(even) { background: #FAFCFD; }
+    a { color: #14314F; } a:hover { color: #0B1B2B; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 1100px; box-sizing: border-box; background: #F1F4F7; color: #0F1B2D; display: flex; flex-direction: column;">
+
+  <div style="background: #FFFFFF; border-bottom: 1px solid #D8E0E8; padding: 16px 24px 0 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+      <div>
+        <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.01em;">Active Work Orders</div>
+        <div style="font-size: 12.5px; color: #64748B; margin-top: 2px;">The board and the table are the same rows — the board to work them, the table to find one</div>
+      </div>
+      <button type="button" style="font: inherit; font-size: 12.5px; font-weight: 600; padding: 8px 16px; min-height: 44px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer;">+ Create Work Order</button>
+    </div>
+    <div style="display: flex; gap: 2px; margin-top: 14px;">
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Home</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Fleet Table</div>
+      <div style="font-size: 12.5px; font-weight: 600; padding: 9px 14px; color: #0F1B2D; border-bottom: 2.5px solid #14314F;">Active WOs</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Service / Location</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Driver Reports</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Road Service</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Parts Inventory</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Integrity Report</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Settings</div>
+    </div>
+  </div>
+
+  <div style="padding: 16px 24px 24px 24px; display: flex; flex-direction: column; gap: 16px;">
+
+    <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px;">
+      <sc-for list="{{cols}}" as="c" hint-placeholder-count="5">
+        <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; border-top: 3px solid {{c.accent}}; min-height: 300px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 10px 12px; border-bottom: 1px solid #E8EDF2;">
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: {{c.accent}};">{{c.title}}</span>
+            <span class="num" style="font-size: 15px; font-weight: 700;">{{c.count}}</span>
+          </div>
+          <div style="padding: 8px; display: flex; flex-direction: column; gap: 7px;">
+            <sc-for list="{{c.cards}}" as="w" hint-placeholder-count="2">
+              <div style="border: 1px solid #E2E8F0; border-left: 3px solid {{c.accent}}; border-radius: 2px; background: #FFFFFF; padding: 8px 9px;">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 6px;">
+                  <a href="#wo" style="font-size: 11.5px; font-weight: 700; text-decoration: none;">{{w.id}}</a>
+                  <span style="font-size: 9.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #64748B; background: #F1F5F9; border-radius: 2px; padding: 2px 4px;">{{w.src}}</span>
+                </div>
+                <div style="font-size: 12px; font-weight: 600; margin-top: 3px;">{{w.unit}} · {{w.driver}}</div>
+                <div style="font-size: 11.5px; color: #475569; margin-top: 2px; line-height: 1.35;">{{w.what}}</div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 6px;">
+                  <span style="font-size: 11px; color: #94A3B8;">{{w.age}}</span>
+                  <span class="num" style="font-size: 12px; font-weight: 600;">{{w.cost}}</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+      <div style="padding: 11px 16px; border-bottom: 1px solid #E8EDF2; display: flex; justify-content: space-between; align-items: baseline;">
+        <div style="font-size: 14px; font-weight: 600;">All work orders</div>
+        <div style="font-size: 11.5px; color: #64748B;">Sorted by age · oldest first</div>
+      </div>
+      <table>
+        <thead>
+          <tr style="background: #F6F9FB;">
+            <th class="hd" style="text-align: left;">WO #</th>
+            <th class="hd" style="text-align: left; width: 70px;">Unit</th>
+            <th class="hd" style="text-align: left;">Driver</th>
+            <th class="hd" style="text-align: left;">Complaint</th>
+            <th class="hd" style="text-align: left; width: 96px;">Source</th>
+            <th class="hd" style="text-align: left; width: 150px;">Shop</th>
+            <th class="hd" style="text-align: left; width: 96px;">Status</th>
+            <th class="hd" style="text-align: right; width: 62px;">Age</th>
+            <th class="hd" style="text-align: right; width: 96px;">Parts</th>
+            <th class="hd" style="text-align: right; width: 96px;">Labor</th>
+            <th class="hd" style="text-align: right; width: 104px;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <sc-for list="{{table}}" as="t" hint-placeholder-count="8">
+            <tr>
+              <td><a href="#wo" style="font-weight: 600; text-decoration: none;">{{t.id}}</a></td>
+              <td style="font-weight: 600;">{{t.unit}}</td>
+              <td style="color: #334155;">{{t.driver}}</td>
+              <td style="color: #334155;">{{t.what}}</td>
+              <td style="font-size: 11.5px; color: #64748B;">{{t.src}}</td>
+              <td style="color: #334155;">{{t.shop}}</td>
+              <td><span style="font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: {{t.tone}};">{{t.status}}</span></td>
+              <td class="num" style="color: #64748B;">{{t.age}}</td>
+              <td class="num">{{t.parts}}</td>
+              <td class="num">{{t.labor}}</td>
+              <td class="num" style="font-weight: 600;">{{t.total}}</td>
+            </tr>
+          </sc-for>
+        </tbody>
+        <tfoot>
+          <tr style="background: #F6F9FB; border-top: 2px solid #D8E0E8;">
+            <td colspan="8" style="font-weight: 700;">8 open work orders</td>
+            <td class="num" style="font-weight: 700;">$6,918.40</td>
+            <td class="num" style="font-weight: 700;">$4,264.20</td>
+            <td class="num" style="font-weight: 700;">$11,182.60</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const usd = (n) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const cols = [
+      { title: 'Open', accent: '#1F2A44', count: 3, cards: [
+        { id: 'WO-T156-0041', src: 'Driver', unit: 'T156', driver: 'Angel Sosa', what: 'Air leak, passenger tank', age: '2h', cost: '—' },
+        { id: 'WO-T177-0042', src: 'PM', unit: 'T177', driver: 'Jorge Corona', what: 'PM A — 1,050 mi remaining', age: '6h', cost: usd(640) }
+      ] },
+      { title: 'In Progress', accent: '#475569', count: 3, cards: [
+        { id: 'WO-T152-0038', src: 'Driver', unit: 'T152', driver: 'Genaro R.', what: 'Steer tires, alignment pull', age: '2d', cost: usd(1842.4) }
+      ] },
+      { title: 'Awaiting Parts', accent: '#B45309', count: 1, cards: [
+        { id: 'WO-T163-0035', src: 'Damage', unit: 'T163', driver: 'Luis Sosa', what: 'Trailer door skin — panel on order', age: '4d', cost: usd(2180) }
+      ] },
+      { title: 'Severe / OOS', accent: '#A32D2D', count: 1, cards: [
+        { id: 'WO-T168-0031', src: 'Fault', unit: 'T168', driver: 'Pedro Perez', what: 'SPN 3363 DEF heater · unit down', age: '3d', cost: usd(4365.58) }
+      ] },
+      { title: 'Completed', accent: '#334155', count: 6, cards: [
+        { id: 'WO-T174-0029', src: 'DVIR', unit: 'T174', driver: 'Leonel Morales', what: 'Marker lamp replaced', age: '—', cost: usd(85) }
+      ] }
+    ];
+    const NAVY = '#1F2A44', AMBER = '#B45309', RED = '#A32D2D', SLATE = '#475569';
+    const table = [
+      ['WO-T168-0031', 'T168', 'Pedro Perez', 'DEF heater circuit, SPN 3363', 'Fault code', 'Rush Truck Center', 'Severe / OOS', RED, '3d', 3120.00, 1245.58],
+      ['WO-T163-0035', 'T163', 'Luis Sosa', 'Trailer door skin, dock strike', 'Damage report', 'In-house', 'Awaiting parts', AMBER, '4d', 1640.00, 540.00],
+      ['WO-T152-0038', 'T152', 'Genaro R.', 'Steer tires, pulls right', 'Driver report', 'Sonora Truck & Tire', 'In progress', SLATE, '2d', 1420.40, 422.00],
+      ['WO-T175-0039', 'T175', 'Leonel Morales', 'APU will not start', 'Driver report', 'In-house', 'In progress', SLATE, '2d', 285.00, 340.00],
+      ['WO-T124-0040', 'T124', 'Unassigned', 'Coolant weep at water pump', 'Inspection', 'In-house', 'In progress', SLATE, '1d', 218.00, 480.00],
+      ['WO-T156-0041', 'T156', 'Angel Sosa', 'Air leak, passenger tank', 'Driver report', '—', 'Open', NAVY, '2h', 0, 0],
+      ['WO-T177-0042', 'T177', 'Jorge Corona', 'PM A service due', 'PM engine', 'In-house', 'Open', NAVY, '6h', 235.00, 405.00],
+      ['WO-T171-0043', 'T171', 'Unassigned', 'DOT annual inspection', 'PM engine', 'In-house', 'Open', NAVY, '1d', 0, 831.62]
+    ].map((r) => ({
+      id: r[0], unit: r[1], driver: r[2], what: r[3], src: r[4], shop: r[5],
+      status: r[6], tone: r[7], age: r[8],
+      parts: r[9] === 0 ? '—' : usd(r[9]),
+      labor: r[10] === 0 ? '—' : usd(r[10]),
+      total: (r[9] + r[10]) === 0 ? '—' : usd(r[9] + r[10])
+    }));
+    return { cols: cols, table: table };
+  }
+}
+</script>
+</body>
+</html>

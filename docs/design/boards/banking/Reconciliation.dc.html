@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Reconciliation</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    .num { font-variant-numeric: tabular-nums; text-align: right; }
+    .hd { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #5d6b7a; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { padding: 8px 10px; font-size: 12.5px; border-bottom: 1px solid #E4EAF0; border-left: 0; border-right: 0; }
+    tbody tr:nth-child(even) { background: #FAFCFD; }
+    a { color: #1c5ba8; } a:hover { color: #14314F; }
+    .ctl { font: inherit; font-size: 12.5px; height: 34px; box-sizing: border-box; border: 1px solid #C7D2DC; border-radius: 3px; padding: 0 10px; background: #FFFFFF; color: #0d2137; }
+    .date { width: 132px; }
+    .chip { font-size: 11.5px; height: 34px; box-sizing: border-box; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid #C7D2DC; border-radius: 17px; background: #FFFFFF; color: #14314F; }
+    .btnp { font: inherit; font-size: 12.5px; font-weight: 600; height: 34px; padding: 0 14px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer; }
+    .btns { font: inherit; font-size: 12.5px; height: 34px; padding: 0 14px; border: 1px solid #C7D2DC; background: #FFFFFF; color: #14314F; border-radius: 3px; cursor: pointer; }
+    .gear { width: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: #5d6b7a; }
+    .card { background: #FFFFFF; border: 1px solid #C7D2DC; border-radius: 3px; }
+    .cardhd { padding: 11px 16px; border-bottom: 1px solid #E4EAF0; }
+    .t { font-size: 14px; font-weight: 600; }
+    .s { font-size: 11.5px; color: #5d6b7a; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 1160px; box-sizing: border-box; background: #eef2f6; color: #0d2137; display: flex; flex-direction: column;">
+  <div style="background: #FFFFFF; border-bottom: 1px solid #C7D2DC; padding: 14px 24px 0 24px;">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 20px;">
+      <div>
+        <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.01em;">Reconciliation</div>
+        <div style="font-size: 12.5px; color: #5d6b7a; margin-top: 1px;">Tie a statement out, line by line &middot; 0 of 8 accounts have ever done this</div>
+      </div>
+      <div style="display: flex; gap: 8px;"><button type="button" class="btns" style="height: 44px;">History</button><button type="button" class="btnp" style="height: 44px;">+ New &#9662;</button></div>
+    </div>
+    <div style="display: flex; gap: 2px; margin-top: 12px;"><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Home</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Accounts</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Transactions</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Link suggestions</div><div style="font-size: 12.5px; font-weight: 600; padding: 9px 13px; color: #0d2137; border-bottom: 2.5px solid #14314F;">Reconciliation</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Driver escrow</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Relay card</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Reports</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Settings</div></div>
+  </div>
+  <div style="padding: 14px 24px 22px 24px; display: flex; flex-direction: column; gap: 14px; min-height: 0;">
+    <div style="display: flex; align-items: center; gap: 12px; background: #FCEDEC; border: 1px solid #B42318; border-radius: 3px; padding: 10px 14px;">
+      <span style="font-size: 15px; font-weight: 700; color: #8C2020; line-height: 1;">!</span>
+      <div style="flex-grow: 1;">
+        <div style="font-size: 13px; font-weight: 600; color: #8C2020;">Not one account has ever been reconciled — 0 of 8</div>
+        <div style="font-size: 11.5px; color: #3d4a57; margin-top: 1px;">Until an account ties out to a statement once, its balance is a feed total. Nothing on Banking Home, the balance sheet or the cash-flow report is a proven cash position.</div>
+      </div>
+      <button type="button" style="font: inherit; font-size: 11.5px; font-weight: 600; height: 34px; padding: 0 12px; border: 1px solid #B42318; background: #FFFFFF; color: #8C2020; border-radius: 3px; cursor: pointer; white-space: nowrap;">Start with ••••3224</button>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 336px; gap: 14px; min-width: 0;">
+
+      <div class="card" style="min-width: 0; display: flex; flex-direction: column;">
+        <!-- STATEMENT HEADER — QBO reconcile shape -->
+        <div style="padding: 13px 16px; border-bottom: 1px solid #E4EAF0; display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end;">
+          <div>
+            <div class="hd" style="margin-bottom: 4px;">Account</div>
+            <select class="ctl" style="width: 226px;" aria-label="Account"><option>USMCA FREIGHT ••••3224</option></select>
+          </div>
+          <div>
+            <div class="hd" style="margin-bottom: 4px;">Statement ending date</div>
+            <input class="ctl date" value="09/30/2026" aria-label="Statement ending date">
+          </div>
+          <div>
+            <div class="hd" style="margin-bottom: 4px;">Ending balance</div>
+            <input class="ctl num" style="width: 120px;" value="18,406.55" aria-label="Statement ending balance">
+          </div>
+          <div style="flex-grow: 1;"></div>
+          <button type="button" class="btns">Save and close</button>
+          <button type="button" class="btnp">Finish now</button>
+        </div>
+
+        <!-- THE DIFFERENCE STRIP -->
+        <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-bottom: 1px solid #C7D2DC; background: #F6F9FB;">
+          <sc-for list="{{strip}}" as="s" hint-placeholder-count="5">
+            <div style="padding: 11px 14px; border-top: 3px solid {{s.top}};">
+              <div class="hd" style="color: {{s.ink}};">{{s.label}}</div>
+              <div class="num" style="text-align: left; font-size: 19px; font-weight: 600; color: {{s.ink}}; line-height: 1.25;">{{s.value}}</div>
+              <div style="font-size: 10.5px; color: #8895a3;">{{s.sub}}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- CLEARED / UNCLEARED -->
+        <div style="padding: 10px 16px; border-bottom: 1px solid #E4EAF0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <div style="display: flex; height: 34px; border: 1px solid #C7D2DC; border-radius: 3px; overflow: hidden;">
+            <div style="font-size: 12px; font-weight: 600; padding: 0 12px; display: flex; align-items: center; background: #14314F; color: #FFFFFF;">Payments 214</div>
+            <div style="font-size: 12px; padding: 0 12px; display: flex; align-items: center; color: #5d6b7a; border-left: 1px solid #C7D2DC;">Deposits 104</div>
+            <div style="font-size: 12px; padding: 0 12px; display: flex; align-items: center; color: #5d6b7a; border-left: 1px solid #C7D2DC;">All 318</div>
+          </div>
+          <input class="ctl" style="width: 196px;" placeholder="Search this statement" aria-label="Search">
+          <select class="ctl" style="width: 136px;" aria-label="Status"><option>Uncleared only</option></select>
+          <div style="flex-grow: 1;"></div>
+          <span style="font-size: 11.5px; color: #5d6b7a;">Ctrl-click to clear a range</span>
+          <button type="button" aria-label="Choose columns" title="Choose columns" class="ctl gear"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg></button>
+        </div>
+
+        <table>
+          <thead>
+            <tr style="background: #F6F9FB;">
+              <th class="hd" style="text-align: left; width: 30px;">&#10003;</th>
+              <th class="hd" style="text-align: left; width: 96px;">Date</th>
+              <th class="hd" style="text-align: left; width: 86px;">Ref</th>
+              <th class="hd" style="text-align: left;">Payee / description</th>
+              <th class="hd" style="text-align: left; width: 144px;">Account</th>
+              <th class="hd" style="text-align: right; width: 104px;">Payment</th>
+              <th class="hd" style="text-align: right; width: 104px;">Deposit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{lines}}" as="l" hint-placeholder-count="13">
+              <tr>
+                <td><input type="checkbox" aria-label="Cleared"></td>
+                <td class="num" style="text-align: left; color: #3d4a57;">{{l.date}}</td>
+                <td class="num" style="text-align: left; color: #8895a3;">{{l.ref}}</td>
+                <td style="max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{l.desc}}</td>
+                <td style="color: {{l.acctInk}};">{{l.acct}}</td>
+                <td class="num" style="color: #8C2020;">{{l.pay}}</td>
+                <td class="num" style="color: #1F6B32;">{{l.dep}}</td>
+              </tr>
+            </sc-for>
+          </tbody>
+          <tfoot>
+            <tr style="background: #F6F9FB; border-top: 2px solid #C7D2DC;">
+              <td colspan="5" style="font-weight: 700;">0 cleared of 318 &middot; nothing has been ticked yet</td>
+              <td class="num" style="font-weight: 700;">—</td>
+              <td class="num" style="font-weight: 700;">—</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0;">
+        <div class="card">
+          <div class="cardhd"><div class="t">Every account, last tie-out</div><div class="s">the column that has never had a date in it</div></div>
+          <table>
+            <thead>
+              <tr style="background: #F6F9FB;">
+                <th class="hd" style="text-align: left;">Account</th>
+                <th class="hd" style="text-align: left; width: 96px;">Last recon</th>
+                <th class="hd" style="text-align: right; width: 56px;">Open</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{accts}}" as="a" hint-placeholder-count="8">
+                <tr>
+                  <td style="max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{a.name}}</td>
+                  <td style="color: #8C2020; font-weight: 600;">{{a.last}}</td>
+                  <td class="num" style="color: #3d4a57;">{{a.open}}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="cardhd"><div class="t">What blocks the first close</div><div class="s">in the order it has to be cleared</div></div>
+          <div style="padding: 4px 16px 14px 16px;">
+            <sc-for list="{{blocks}}" as="b" hint-placeholder-count="4">
+              <div style="display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid #E4EAF0;">
+                <span class="num" style="font-size: 12px; font-weight: 700; color: {{b.ink}}; width: 16px; text-align: left;">{{b.n}}</span>
+                <div style="min-width: 0;">
+                  <div style="font-size: 12.5px; font-weight: 600; color: {{b.ink}};">{{b.t}}</div>
+                  <div style="font-size: 11.5px; color: #3d4a57; margin-top: 2px; line-height: 1.5;">{{b.d}}</div>
+                </div>
+              </div>
+            </sc-for>
+            <div style="font-size: 11.5px; color: #5d6b7a; margin-top: 10px; line-height: 1.6;">
+              A reconciliation posts a locked statement, a cleared flag on every line and a period marker. Nothing here writes to a closed period afterwards without a reversing entry — same rule as the GL.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1160}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const RED = '#8C2020', AMBER = '#8A4208', NAVY = '#14314F';
+    const usd = (n) => (n < 0 ? '-$' : '$') + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const strip = [
+      { label: 'Statement ending', value: usd(18406.55), sub: 'entered by hand', top: '#C7D2DC', ink: '#0d2137' },
+      { label: 'Beginning balance', value: '—', sub: 'no prior reconciliation', top: '#B42318', ink: RED },
+      { label: 'Cleared payments', value: usd(0), sub: '0 of 214 ticked', top: '#C7D2DC', ink: '#0d2137' },
+      { label: 'Cleared deposits', value: usd(0), sub: '0 of 104 ticked', top: '#C7D2DC', ink: '#0d2137' },
+      { label: 'Difference', value: usd(18406.55), sub: 'must reach 0.00 to finish', top: '#B42318', ink: RED }
+    ];
+
+    const L = (date, ref, desc, acct, pay, dep) => ({
+      date, ref: ref || '—', desc,
+      acct: acct || 'Uncategorized', acctInk: acct ? '#3d4a57' : RED,
+      pay: pay ? usd(-pay) : '—',
+      dep: dep ? usd(dep) : '—'
+    });
+
+    const lines = [
+      L('09/29', 'ACH', 'FARO CAPITAL — ADVANCE BATCH 0929', 'Factoring advance', 0, 31218.40),
+      L('09/28', '—', 'DREAMLINE ENERGY — FUEL CARD SETTLEMENT', null, 41886.12, 0),
+      L('09/27', '1841', 'PROGRESSIVE COMMERCIAL — POLICY 0087', 'Insurance — units', 4212.00, 0),
+      L('09/27', 'ACH', 'RELAY PAYMENTS — WALLET LOAD', null, 12000.00, 0),
+      L('09/26', '1840', 'RUSH TRUCK CENTER — LAREDO', 'Repairs — outside shop', 3029.92, 0),
+      L('09/25', 'ACH', 'DRIVER SETTLEMENT RUN 5819', 'Driver pay — clearing', 28741.16, 0),
+      L('09/25', '—', 'TXTAG — SEPTEMBER TOLL STATEMENT', null, 1864.25, 0),
+      L('09/24', 'ACH', 'FARO CAPITAL — RESERVE RELEASE', 'Factoring reserve', 0, 4992.75),
+      L('09/23', '1839', 'A. TIJERINA TOWING', null, 1450.00, 0),
+      L('09/22', '—', 'MERCHANT FEE — BANK SERVICE CHARGE', 'Bank fees', 42.50, 0),
+      L('09/22', 'ACH', 'IRP / APPORTIONED PLATES — TX DMV', 'Registration & permits', 7318.00, 0),
+      L('09/19', 'ACH', 'FARO CAPITAL — ADVANCE BATCH 0919', 'Factoring advance', 0, 26440.10),
+      L('09/18', '1838', 'SOUTHWEST TIRE — ROADSIDE US-83', null, 712.55, 0)
+    ];
+
+    const accts = [
+      { name: 'USMCA FREIGHT ••••3224', last: 'Never', open: '318' },
+      { name: 'Dreamline Diesel Card', last: 'Never', open: '397' },
+      { name: 'Relay Fuel Wallet', last: 'Never', open: '76' },
+      { name: 'Faro Factoring — USMCA', last: 'Never', open: '104' },
+      { name: 'Faro Cash Reserve', last: 'Never', open: '12' },
+      { name: 'Faro Escrow Reserve', last: 'Never', open: '4' },
+      { name: 'Petty Cash', last: 'Never', open: '36' },
+      { name: 'Scentsx', last: 'Never', open: '0' }
+    ];
+
+    const blocks = [
+      { n: '1', t: 'Cash GL unbound on 3 of 8', d: 'A reconciliation writes to the Cash GL for its account. Three accounts have none, so they cannot close at all — this is the first fix, not a later one.', ink: RED },
+      { n: '2', t: '931 rows carry no category', d: 'An uncategorized line clears against the bank but posts nowhere. Tie-out would balance the statement and leave the GL wrong.', ink: RED },
+      { n: '3', t: 'No beginning balance exists', d: 'The first reconciliation sets it. Until then the difference is the whole statement, which is exactly what the strip above shows.', ink: AMBER },
+      { n: '4', t: 'QBO is not connected', d: 'Reconcile here first, then sync. Syncing an unreconciled feed writes the same mess into QuickBooks.', ink: AMBER }
+    ];
+
+    return { strip, lines, accts, blocks };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Maintenance Settings</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    .num { font-variant-numeric: tabular-nums; text-align: right; }
+    .hd { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #64748B; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { padding: 8px 10px; font-size: 12.5px; border-bottom: 1px solid #E8EDF2; }
+    tbody tr:nth-child(even) { background: #FAFCFD; }
+    a { color: #14314F; } a:hover { color: #0B1B2B; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 1000px; box-sizing: border-box; background: #F1F4F7; color: #0F1B2D; display: flex; flex-direction: column;">
+
+  <div style="background: #FFFFFF; border-bottom: 1px solid #D8E0E8; padding: 16px 24px 0 24px;">
+    <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.01em;">Maintenance Settings</div>
+    <div style="font-size: 12.5px; color: #64748B; margin-top: 2px;">The PM catalog, the alert thresholds, and the state of the feeds everything else depends on</div>
+    <div style="display: flex; gap: 2px; margin-top: 14px;">
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Home</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Fleet Table</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Active WOs</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Service / Location</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Driver Reports</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Road Service</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Parts Inventory</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Integrity Report</div>
+      <div style="font-size: 12.5px; font-weight: 600; padding: 9px 14px; color: #0F1B2D; border-bottom: 2.5px solid #14314F;">Settings</div>
+    </div>
+  </div>
+
+  <div style="padding: 16px 24px 24px 24px; display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px;">
+
+    <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0;">
+      <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+        <div style="padding: 11px 16px; border-bottom: 1px solid #E8EDF2; display: flex; justify-content: space-between; align-items: baseline;">
+          <div>
+            <div style="font-size: 14px; font-weight: 600;">PM catalog</div>
+            <div style="font-size: 11.5px; color: #64748B;">What counts as due, and when the alert fires</div>
+          </div>
+          <button type="button" style="font: inherit; font-size: 11.5px; font-weight: 600; min-height: 36px; padding: 0 12px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer;">+ Add interval</button>
+        </div>
+        <table>
+          <thead>
+            <tr style="background: #F6F9FB;">
+              <th class="hd" style="text-align: left; width: 74px;">Code</th>
+              <th class="hd" style="text-align: left;">Service</th>
+              <th class="hd" style="text-align: left; width: 88px;">Basis</th>
+              <th class="hd" style="text-align: right; width: 96px;">Interval</th>
+              <th class="hd" style="text-align: right; width: 110px;">Warn at</th>
+              <th class="hd" style="text-align: right; width: 88px;">Applies to</th>
+              <th class="hd" style="text-align: right; width: 104px;">Est. cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{pm}}" as="p" hint-placeholder-count="6">
+              <tr>
+                <td style="font-weight: 700;">{{p.code}}</td>
+                <td style="color: #334155;">{{p.name}}</td>
+                <td style="color: #64748B;">{{p.basis}}</td>
+                <td class="num" style="font-weight: 600;">{{p.interval}}</td>
+                <td class="num" style="color: #8A4208;">{{p.warn}}</td>
+                <td class="num" style="color: #64748B;">{{p.units}}</td>
+                <td class="num">{{p.cost}}</td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+        <div style="padding: 11px 16px; border-bottom: 1px solid #E8EDF2; font-size: 14px; font-weight: 600;">Service task catalog</div>
+        <div style="padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 6px;">
+          <sc-for list="{{tasks}}" as="t" hint-placeholder-count="16">
+            <span style="font-size: 11.5px; color: #1F2A44; background: #EEF3F8; border: 1px solid #DCE5EE; border-radius: 2px; padding: 4px 8px;">{{t}}</span>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0;">
+
+      <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+        <div style="padding: 11px 16px; border-bottom: 1px solid #E8EDF2; font-size: 14px; font-weight: 600;">Feeds this module depends on</div>
+        <table>
+          <tbody>
+            <sc-for list="{{feeds}}" as="f" hint-placeholder-count="5">
+              <tr>
+                <td style="width: 12px; padding-right: 0;"><span style="display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: {{f.tone}};"></span></td>
+                <td>
+                  <div style="font-weight: 600; font-size: 12.5px;">{{f.name}}</div>
+                  <div style="font-size: 11.5px; color: #64748B;">{{f.detail}}</div>
+                </td>
+                <td class="num" style="width: 116px; font-size: 11.5px; color: {{f.tone}}; font-weight: 600;">{{f.state}}</td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+        <div style="padding: 11px 16px; border-bottom: 1px solid #E8EDF2; font-size: 14px; font-weight: 600;">Odometer</div>
+        <div style="padding: 12px 16px; display: flex; flex-direction: column; gap: 11px;">
+          <label style="display: block;">
+            <span class="hd">Daily snapshot</span>
+            <select aria-label="Snapshot hour" style="font: inherit; font-size: 13px; width: 100%; min-height: 40px; margin-top: 4px; border: 1px solid #C6D1DC; border-radius: 3px; padding: 0 9px; background: #FFFFFF; color: #0F1B2D; box-sizing: border-box;"><option>03:00 CT — one row per unit</option></select>
+          </label>
+          <div style="font-size: 11.5px; color: #64748B; line-height: 1.6;">
+            Taken from the position feed already in the database. <strong>No extra Samsara call</strong> — the odometer arrives with every position, so a second daily pull would pay twice for a number we already hold.
+          </div>
+          <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: #1F2A44;">
+            <input type="checkbox" checked style="width: 15px; height: 15px;"> Record a gap row when a unit reports no odometer
+          </label>
+          <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: #1F2A44;">
+            <input type="checkbox" checked style="width: 15px; height: 15px;"> Allow manual odometer entry from Driver Reports
+          </label>
+        </div>
+      </div>
+
+      <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+        <div style="padding: 11px 16px; border-bottom: 1px solid #E8EDF2; font-size: 14px; font-weight: 600;">Alerts</div>
+        <div style="padding: 12px 16px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12.5px;">
+            <span style="color: #334155;">PM due soon, at</span>
+            <span class="num" style="font-weight: 600;">2,500 mi</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12.5px;">
+            <span style="color: #334155;">PM overdue, escalate after</span>
+            <span class="num" style="font-weight: 600;">500 mi</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12.5px;">
+            <span style="color: #334155;">Fault code severity that opens a WO draft</span>
+            <span style="font-weight: 600;">Red only</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12.5px;">
+            <span style="color: #334155;">Truck sitting at a shop, warn after</span>
+            <span class="num" style="font-weight: 600;">3 days</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12.5px;">
+            <span style="color: #334155;">Driver report untouched, warn after</span>
+            <span class="num" style="font-weight: 600;">4 hours</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const NAVY = '#1F2A44', AMBER = '#B45309', RED = '#A32D2D';
+    const usd = (n) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const pm = [
+      { code: 'PM-A', name: 'Engine oil, filters, chassis lube, inspection', basis: 'Miles', interval: '25,000 mi', warn: '2,500 mi out', units: '16', cost: usd(640.00) },
+      { code: 'PM-B', name: 'PM-A plus fuel filters, air filter, valve lash', basis: 'Miles', interval: '100,000 mi', warn: '5,000 mi out', units: '16', cost: usd(1480.00) },
+      { code: 'DOT', name: 'Federal annual inspection', basis: 'Months', interval: '12 months', warn: '30 days out', units: '16', cost: usd(285.00) },
+      { code: 'TIRE', name: 'Tire rotation and tread measurement', basis: 'Miles', interval: '50,000 mi', warn: '4,000 mi out', units: '16', cost: usd(220.00) },
+      { code: 'BRK', name: 'Brake inspection and adjustment', basis: 'Miles', interval: '50,000 mi', warn: '4,000 mi out', units: '16', cost: usd(380.00) },
+      { code: 'COOL', name: 'Coolant test and service', basis: 'Months', interval: '24 months', warn: '60 days out', units: '16', cost: usd(410.00) }
+    ];
+    const tasks = [
+      'Engine oil change', 'Oil filter', 'Fuel filter', 'Air filter', 'Coolant service',
+      'DEF system service', 'Chassis lube', 'Brake adjustment', 'Brake pad replacement',
+      'Tire rotation', 'Tire replacement', 'Alignment', 'Battery replacement',
+      'DOT annual inspection', 'Valve lash adjustment', 'APU service'
+    ];
+    const feeds = [
+      { name: 'Samsara positions', detail: 'Odometer and GPS, every few minutes', state: 'Live', tone: NAVY },
+      { name: 'Odometer ledger', detail: 'Daily snapshot — to be built', state: 'Not running', tone: RED },
+      { name: 'Samsara fault codes', detail: 'No poller; webhook has never fired', state: 'No data', tone: RED },
+      { name: 'Driver app reports', detail: 'Wired end to end, no driver has used it', state: 'Ready', tone: AMBER },
+      { name: 'PM auto-engine', detail: 'Cron runs hourly at :05 CT', state: 'No schedules', tone: AMBER }
+    ];
+    return { pm: pm, tasks: tasks, feeds: feeds };
+  }
+}
+</script>
+</body>
+</html>

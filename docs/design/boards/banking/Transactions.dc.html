@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Transactions</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    .num { font-variant-numeric: tabular-nums; text-align: right; }
+    .hd { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #5d6b7a; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { padding: 8px 10px; font-size: 12.5px; border-bottom: 1px solid #E4EAF0; border-left: 0; border-right: 0; }
+    tbody tr:nth-child(even) { background: #FAFCFD; }
+    a { color: #1c5ba8; } a:hover { color: #14314F; }
+    .ctl { font: inherit; font-size: 12.5px; height: 34px; box-sizing: border-box; border: 1px solid #C7D2DC; border-radius: 3px; padding: 0 10px; background: #FFFFFF; color: #0d2137; }
+    .date { width: 132px; }
+    .chip { font-size: 11.5px; height: 34px; box-sizing: border-box; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid #C7D2DC; border-radius: 17px; background: #FFFFFF; color: #14314F; }
+    .btnp { font: inherit; font-size: 12.5px; font-weight: 600; height: 34px; padding: 0 14px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer; }
+    .btns { font: inherit; font-size: 12.5px; height: 34px; padding: 0 14px; border: 1px solid #C7D2DC; background: #FFFFFF; color: #14314F; border-radius: 3px; cursor: pointer; }
+    .gear { width: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: #5d6b7a; }
+    .card { background: #FFFFFF; border: 1px solid #C7D2DC; border-radius: 3px; }
+    .cardhd { padding: 11px 16px; border-bottom: 1px solid #E4EAF0; }
+    .t { font-size: 14px; font-weight: 600; }
+    .s { font-size: 11.5px; color: #5d6b7a; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 1160px; box-sizing: border-box; background: #eef2f6; color: #0d2137; display: flex; flex-direction: column;">
+  <div style="background: #FFFFFF; border-bottom: 1px solid #C7D2DC; padding: 14px 24px 0 24px;">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 20px;">
+      <div>
+        <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.01em;">Transactions</div>
+        <div style="font-size: 12.5px; color: #5d6b7a; margin-top: 1px;">947 in the feed &middot; 931 waiting on a category and a link</div>
+      </div>
+      <div style="display: flex; gap: 8px;"><button type="button" class="btns" style="height: 44px;">Export</button><button type="button" class="btnp" style="height: 44px;">+ New &#9662;</button></div>
+    </div>
+    <div style="display: flex; gap: 2px; margin-top: 12px;"><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Home</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Accounts</div><div style="font-size: 12.5px; font-weight: 600; padding: 9px 13px; color: #0d2137; border-bottom: 2.5px solid #14314F;">Transactions</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Link suggestions</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Reconciliation</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Driver escrow</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Relay card</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Reports</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Settings</div></div>
+  </div>
+  <div style="padding: 14px 24px 22px 24px; display: flex; flex-direction: column; gap: 14px; min-height: 0;">
+    <!-- KPI TILES -->
+    <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px;">
+      <sc-for list="{{kpis}}" as="k" hint-placeholder-count="6">
+        <button type="button" style="font: inherit; text-align: left; cursor: pointer; background: #FFFFFF; border: 1px solid {{k.border}}; border-radius: 3px; padding: 9px 12px;">
+          <div style="font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: {{k.ink}};">{{k.label}}</div>
+          <div class="num" style="font-size: 21px; font-weight: 600; text-align: left; line-height: 1.2; color: {{k.ink}};">{{k.value}}</div>
+          <div style="font-size: 10.5px; color: {{k.ink}};">{{k.sub}}</div>
+        </button>
+      </sc-for>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 330px; gap: 14px; min-width: 0;">
+
+      <div class="card" style="min-width: 0; display: flex; flex-direction: column;">
+        <!-- ONE TOOLBAR, ONE CONTROL HEIGHT -->
+        <div style="padding: 11px 16px; border-bottom: 1px solid #E4EAF0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+          <input class="ctl" style="width: 232px;" placeholder="Search description, unit, load, amount" aria-label="Search">
+          <input class="ctl date" value="09/01/2026" aria-label="From date">
+          <span style="font-size: 12.5px; color: #8895a3;">to</span>
+          <input class="ctl date" value="09/30/2026" aria-label="To date">
+          <select class="ctl" style="width: 150px;" aria-label="Account"><option>All accounts (8)</option></select>
+          <select class="ctl" style="width: 136px;" aria-label="Type"><option>All types</option></select>
+          <div style="display: flex; height: 34px; border: 1px solid #C7D2DC; border-radius: 3px; overflow: hidden;">
+            <div style="font-size: 12px; font-weight: 600; padding: 0 12px; display: flex; align-items: center; background: #14314F; color: #FFFFFF;">Uncategorized 931</div>
+            <div style="font-size: 12px; padding: 0 12px; display: flex; align-items: center; color: #5d6b7a; border-left: 1px solid #C7D2DC;">Categorized 16</div>
+            <div style="font-size: 12px; padding: 0 12px; display: flex; align-items: center; color: #5d6b7a; border-left: 1px solid #C7D2DC;">All 947</div>
+          </div>
+          <div style="flex-grow: 1;"></div>
+          <button type="button" aria-label="Choose columns" title="Choose columns" class="ctl gear"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg></button>
+        </div>
+
+        <!-- ACTIVE FILTER CHIPS -->
+        <div style="padding: 9px 16px; border-bottom: 1px solid #E4EAF0; background: #FAFCFD; display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+          <span class="hd" style="margin-right: 2px;">Filtering</span>
+          <sc-for list="{{chips}}" as="c" hint-placeholder-count="3">
+            <span class="chip">{{c}} <span style="color: #8895a3;">&times;</span></span>
+          </sc-for>
+          <button type="button" style="font: inherit; font-size: 11.5px; height: 34px; padding: 0 4px; border: 0; background: transparent; color: #1c5ba8; cursor: pointer;">Clear all</button>
+        </div>
+
+        <!-- BULK BAR -->
+        <div style="padding: 9px 16px; border-bottom: 1px solid #C7D2DC; background: #EEF4FA; display: flex; gap: 8px; align-items: center;">
+          <span style="font-size: 12.5px; font-weight: 600;">6 selected</span>
+          <span style="font-size: 12.5px; color: #5d6b7a;">&middot; -$4,918.62</span>
+          <div style="flex-grow: 1;"></div>
+          <button type="button" class="btns">Categorize</button>
+          <button type="button" class="btns">Link to unit</button>
+          <button type="button" class="btns">Link to load</button>
+          <button type="button" class="btnp">Save and close</button>
+        </div>
+
+        <table>
+          <thead>
+            <tr style="background: #F6F9FB;">
+              <th class="hd" style="text-align: left; width: 30px;"><input type="checkbox" checked aria-label="Select all"></th>
+              <th class="hd" style="text-align: left; width: 96px;">Date</th>
+              <th class="hd" style="text-align: left;">Description</th>
+              <th class="hd" style="text-align: left; width: 140px;">Category</th>
+              <th class="hd" style="text-align: left; width: 62px;">Unit</th>
+              <th class="hd" style="text-align: left; width: 104px;">Driver</th>
+              <th class="hd" style="text-align: left; width: 74px;">Load</th>
+              <th class="hd" style="text-align: right; width: 104px;">Amount</th>
+              <th class="hd" style="text-align: left; width: 96px;">Linkage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{rows}}" as="r" hint-placeholder-count="14">
+              <tr>
+                <td><input type="checkbox" aria-label="Select row"></td>
+                <td class="num" style="text-align: left; color: #3d4a57;">{{r.date}}</td>
+                <td style="max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{r.desc}}</td>
+                <td style="color: {{r.catInk}};">{{r.cat}}</td>
+                <td style="font-weight: 600; color: {{r.unitInk}};">{{r.unit}}</td>
+                <td style="color: {{r.drvInk}};">{{r.drv}}</td>
+                <td style="color: {{r.loadInk}};">{{r.load}}</td>
+                <td class="num" style="font-weight: 600; color: {{r.amtInk}};">{{r.amt}}</td>
+                <td><span style="font-size: 10.5px; font-weight: 600; padding: 2px 7px; border-radius: 10px; background: {{r.lkBg}}; color: {{r.lkInk}};">{{r.lk}}</span></td>
+              </tr>
+            </sc-for>
+          </tbody>
+          <tfoot>
+            <tr style="background: #F6F9FB; border-top: 2px solid #C7D2DC;">
+              <td colspan="7" style="font-weight: 700;">931 uncategorized &middot; 14 shown &middot; page 1 of 67</td>
+              <td class="num" style="font-weight: 700; color: #8C2020;">-$173,183.95</td>
+              <td class="hd">total outflow</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- THE LINKAGE LAW, ON THE SCREEN -->
+      <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0;">
+        <div class="card">
+          <div class="cardhd"><div class="t">What this row must link to</div><div class="s">docs/laws/TRANSACTION-LINKAGE-LAW.md &middot; enforced on save, both directions</div></div>
+          <div style="padding: 4px 16px 14px 16px;">
+            <sc-for list="{{tiers}}" as="t" hint-placeholder-count="3">
+              <div style="padding: 11px 0; border-bottom: 1px solid #E4EAF0;">
+                <div style="display: flex; align-items: baseline; gap: 7px;">
+                  <span style="font-size: 10px; font-weight: 700; letter-spacing: .09em; color: {{t.ink}};">{{t.tier}}</span>
+                  <span style="font-size: 12.5px; font-weight: 600;">{{t.name}}</span>
+                </div>
+                <div style="font-size: 11.5px; color: #3d4a57; margin-top: 3px; line-height: 1.5;">{{t.req}}</div>
+                <div style="font-size: 11px; color: #8895a3; margin-top: 3px;">{{t.eg}}</div>
+              </div>
+            </sc-for>
+            <div style="font-size: 11.5px; color: #3d4a57; margin-top: 11px; line-height: 1.6;">
+              A link that resolves one way and not the other is half a link and counts as unlinked. The row opens from the unit, the driver, the load and the settlement — or it is not linked.
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cardhd"><div class="t">Where the 931 sit</div><div class="s">by account, uncategorized only</div></div>
+          <div style="padding: 10px 16px 14px 16px;">
+            <sc-for list="{{bars}}" as="b" hint-placeholder-count="5">
+              <div style="padding: 6px 0; border-top: 1px solid #F1F5F8;">
+                <div style="display: flex; justify-content: space-between; font-size: 12px;">
+                  <span style="color: #0d2137;">{{b.name}}</span>
+                  <span class="num" style="font-weight: 600; color: #8A4208;">{{b.n}}</span>
+                </div>
+                <div style="position: relative; height: 6px; margin-top: 4px; background: #E2E8F0; border-radius: 2px;">
+                  <div style="position: absolute; left: 0; top: 0; bottom: 0; width: {{b.w}}; background: #B45309; border-radius: 2px;"></div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1160}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const RED = '#8C2020', AMBER = '#8A4208', MUTE = '#8895a3';
+    const usd = (n) => (n < 0 ? '-$' : '$') + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const kpis = [
+      { label: 'Transactions', value: '947', sub: 'September to date', border: '#C7D2DC', ink: '#0d2137' },
+      { label: 'Uncategorized', value: '931', sub: '98% of the feed', border: '#B42318', ink: RED },
+      { label: 'No unit link', value: '879', sub: 'Tier 1 violations', border: '#B42318', ink: RED },
+      { label: 'No load link', value: '931', sub: 'not one row', border: '#B42318', ink: RED },
+      { label: 'Fuel, unposted', value: usd(-20942.94), sub: 'Relay, unit unmatched', border: '#B45309', ink: AMBER },
+      { label: 'Duplicates flagged', value: '0', sub: 'engine has not run', border: '#B45309', ink: AMBER }
+    ];
+
+    const chips = ['September 2026', 'Uncategorized', 'All accounts'];
+
+    const R = (date, desc, cat, unit, drv, load, amt, lk) => {
+      const map = { none: ['#FCEDEC', RED, 'Unlinked'], part: ['#FDF3E7', AMBER, 'Half a link'], full: ['#ECF3EC', '#1F6B32', 'Linked'] };
+      const m = map[lk];
+      return {
+        date, desc,
+        cat: cat || '—', catInk: cat ? '#3d4a57' : RED,
+        unit: unit || '—', unitInk: unit ? '#0d2137' : RED,
+        drv: drv || '—', drvInk: drv ? '#3d4a57' : RED,
+        load: load || '—', loadInk: load ? '#3d4a57' : RED,
+        amt: usd(amt), amtInk: amt < 0 ? RED : '#0d2137',
+        lk: m[2], lkBg: m[0], lkInk: m[1]
+      };
+    };
+
+    const rows = [
+      R('09/27', "LOVE'S TRAVEL STOP #604 — LAREDO TX", null, null, null, null, -594.33, 'none'),
+      R('09/27', 'RELAY FUEL — PILOT #431 COTULLA TX', 'Fuel — diesel', 'T152', 'R. Sanchez', null, -906.82, 'part'),
+      R('09/26', "LOVE'S TRAVEL STOP #212 — SAN ANTONIO TX", null, null, null, null, -321.74, 'none'),
+      R('09/26', 'TXTAG — COLOMBIA SOLIDARITY BRIDGE', null, null, null, null, -18.75, 'none'),
+      R('09/26', 'DEF BULK — LAREDO TERMINAL', null, null, null, null, -212.40, 'none'),
+      R('09/25', 'BLUE BEACON TRUCK WASH #77', null, null, null, null, -47.06, 'none'),
+      R('09/25', 'RUSH TRUCK CENTER — LAREDO', 'Repairs — outside shop', 'T168', null, null, -3029.92, 'part'),
+      R('09/25', 'SCALE — TX DPS WEIGH STATION', null, null, null, null, -64.00, 'none'),
+      R('09/24', 'LUMPER — SYSCO SAN ANTONIO', null, null, null, null, -150.00, 'none'),
+      R('09/24', 'FARO CAPITAL — ADVANCE 13611', 'Factoring advance', null, null, '13611', 4128.00, 'part'),
+      R('09/23', 'TOW — A. TIJERINA TOWING', null, null, null, null, -1450.00, 'none'),
+      R('09/23', 'SOUTHWEST TIRE — ROADSIDE US-83', null, null, null, null, -712.55, 'none'),
+      R('09/22', 'FUEL — T175 PILOT #212', 'Fuel — diesel', 'T175', 'J. Ramirez', '13598', -321.74, 'full'),
+      R('09/22', 'PROGRESSIVE — UNIT PHYSICAL DAMAGE', 'Insurance — units', 'T156', null, null, -1188.00, 'full')
+    ];
+
+    const tiers = [
+      { tier: 'TIER 1', name: 'The truck was working', req: 'Unit and driver and load. All three. No exceptions, no override.', eg: 'Fuel, DEF, tolls, crossings, scales, lumper, detention, road repair, roadside, tow, accident, citation, trip permits', ink: RED },
+      { tier: 'TIER 2', name: 'The asset, not the trip', req: 'Unit only. Load and settlement are optional and must never be forced — the guard fails the demand, not the row.', eg: 'Shop PM, in-house repair, parts, yard tires, DOT inspection, wash, unit insurance, registration, IRP, lease, depreciation', ink: AMBER },
+      { tier: 'TIER 3', name: 'The company', req: 'Company and GL only. A unit link on one of these is itself the defect.', eg: 'Rent, utilities, software, bank fees, interest', ink: '#1F6B32' }
+    ];
+
+    const bars = [
+      { name: 'Dreamline Diesel Card', n: '397', w: '100%' },
+      { name: 'Relay Fuel Wallet', n: '76', w: '19%' },
+      { name: 'USMCA FREIGHT ••••3224', n: '318', w: '80%' },
+      { name: 'Faro Factoring — USMCA', n: '104', w: '26%' },
+      { name: 'Petty Cash', n: '36', w: '9%' }
+    ];
+
+    return { kpis, chips, rows, tiers, bars };
+  }
+}
+</script>
+</body>
+</html>

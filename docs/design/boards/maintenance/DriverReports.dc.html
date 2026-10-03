@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Driver Reports</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    .num { font-variant-numeric: tabular-nums; text-align: right; }
+    .hd { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #64748B; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { padding: 8px 10px; font-size: 12.5px; border-bottom: 1px solid #E8EDF2; }
+    tbody tr:nth-child(even) { background: #FAFCFD; }
+    a { color: #14314F; } a:hover { color: #0B1B2B; }
+    label { display: block; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 1100px; box-sizing: border-box; background: #F1F4F7; color: #0F1B2D; display: flex; flex-direction: column;">
+
+  <div style="background: #FFFFFF; border-bottom: 1px solid #D8E0E8; padding: 16px 24px 0 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+      <div>
+        <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.01em;">Driver Reports</div>
+        <div style="font-size: 12.5px; color: #64748B; margin-top: 2px;">One queue. Damage, in-transit issues and DVIR defects are all a driver telling us something is wrong.</div>
+      </div>
+      <button type="button" style="font: inherit; font-size: 12.5px; font-weight: 600; padding: 8px 16px; min-height: 44px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer;">+ Report from office</button>
+    </div>
+    <div style="display: flex; gap: 2px; margin-top: 14px;">
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Home</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Fleet Table</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Active WOs</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Service / Location</div>
+      <div style="font-size: 12.5px; font-weight: 600; padding: 9px 14px; color: #0F1B2D; border-bottom: 2.5px solid #14314F;">Driver Reports</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Road Service</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Parts Inventory</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Integrity Report</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Settings</div>
+    </div>
+  </div>
+
+  <div style="background: #FFFFFF; border-bottom: 1px solid #D8E0E8; padding: 10px 24px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+    <span class="hd" style="margin-right: 4px;">Kind</span>
+    <button type="button" style="font: inherit; font-size: 11.5px; font-weight: 600; min-height: 34px; padding: 0 12px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer;">All 14</button>
+    <button type="button" style="font: inherit; font-size: 11.5px; font-weight: 500; min-height: 34px; padding: 0 12px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Damage 3</button>
+    <button type="button" style="font: inherit; font-size: 11.5px; font-weight: 500; min-height: 34px; padding: 0 12px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Mechanical 6</button>
+    <button type="button" style="font: inherit; font-size: 11.5px; font-weight: 500; min-height: 34px; padding: 0 12px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">DVIR defect 4</button>
+    <button type="button" style="font: inherit; font-size: 11.5px; font-weight: 500; min-height: 34px; padding: 0 12px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Accident 1</button>
+    <span class="hd" style="margin-left: 10px;">Units</span>
+    <div style="display: flex; align-items: center; gap: 5px; border: 1px solid #C6D1DC; border-radius: 3px; padding: 4px 6px; background: #FFFFFF; min-height: 34px;">
+      <span style="display: inline-flex; align-items: center; gap: 5px; background: #E8EEF5; color: #1F2A44; font-size: 11.5px; font-weight: 600; border-radius: 2px; padding: 3px 5px 3px 7px;">T156 <button type="button" aria-label="Remove T156" style="font: inherit; line-height: 1; border: 0; background: none; color: #64748B; cursor: pointer; padding: 0 2px;">×</button></span>
+      <span style="font-size: 12px; color: #94A3B8; padding: 0 6px;">Add unit…</span>
+    </div>
+    <div style="flex-grow: 1;"></div>
+    <span style="font-size: 11.5px; color: #64748B;">Reported from the driver app, or typed here — same record either way</span>
+  </div>
+
+  <div style="padding: 16px 24px 24px 24px; display: grid; grid-template-columns: 1.55fr 1fr; gap: 16px;">
+
+    <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; min-width: 0;">
+      <div style="padding: 11px 16px; border-bottom: 1px solid #E8EDF2; display: flex; justify-content: space-between; align-items: baseline;">
+        <div style="font-size: 14px; font-weight: 600;">Queue</div>
+        <div style="font-size: 11.5px; color: #64748B;">Triage each one: accept into a work order, or close with a reason</div>
+      </div>
+      <table>
+        <thead>
+          <tr style="background: #F6F9FB;">
+            <th class="hd" style="text-align: left; width: 98px;">Kind</th>
+            <th class="hd" style="text-align: left; width: 62px;">Unit</th>
+            <th class="hd" style="text-align: left;">Driver</th>
+            <th class="hd" style="text-align: left;">What they reported</th>
+            <th class="hd" style="text-align: left; width: 72px;">Photos</th>
+            <th class="hd" style="text-align: left; width: 96px;">Reported</th>
+            <th class="hd" style="text-align: left; width: 74px;">Via</th>
+            <th class="hd" style="text-align: right; width: 168px;">Triage</th>
+          </tr>
+        </thead>
+        <tbody>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+            <tr>
+              <td><span style="font-size: 9.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #FFFFFF; background: {{r.tone}}; border-radius: 2px; padding: 2px 5px;">{{r.kind}}</span></td>
+              <td style="font-weight: 600;">{{r.unit}}</td>
+              <td style="color: #334155;">{{r.driver}}</td>
+              <td style="color: #334155;">{{r.what}}</td>
+              <td class="num" style="color: #64748B; text-align: left;">{{r.photos}}</td>
+              <td style="color: #64748B; font-size: 11.5px;">{{r.when}}</td>
+              <td style="color: #64748B; font-size: 11.5px;">{{r.via}}</td>
+              <td style="text-align: right; white-space: nowrap;">
+                <button type="button" style="font: inherit; font-size: 11px; font-weight: 600; padding: 5px 8px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer;">Generate WO</button>
+                <button type="button" style="font: inherit; font-size: 11px; padding: 5px 8px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #64748B; border-radius: 3px; cursor: pointer; margin-left: 4px;">Close</button>
+              </td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; min-width: 0;">
+      <div style="padding: 11px 16px; border-bottom: 1px solid #E8EDF2;">
+        <div style="font-size: 14px; font-weight: 600;">Report an issue or damage</div>
+        <div style="font-size: 11.5px; color: #64748B;">The same form the driver sees in the app — one record, one shape</div>
+      </div>
+      <div style="padding: 14px 16px; display: flex; flex-direction: column; gap: 12px;">
+
+        <label>
+          <span class="hd">Unit</span>
+          <select id="f-unit" style="font: inherit; font-size: 13px; width: 100%; min-height: 40px; margin-top: 4px; border: 1px solid #C6D1DC; border-radius: 3px; padding: 0 9px; background: #FFFFFF; color: #0F1B2D; box-sizing: border-box;">
+            <option>T156 — Angel Sosa</option>
+          </select>
+        </label>
+
+        <label>
+          <span class="hd">Kind</span>
+          <div style="display: flex; gap: 6px; margin-top: 5px; flex-wrap: wrap;">
+            <button type="button" style="font: inherit; font-size: 11.5px; font-weight: 600; min-height: 36px; padding: 0 11px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer;">Mechanical</button>
+            <button type="button" style="font: inherit; font-size: 11.5px; min-height: 36px; padding: 0 11px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Damage</button>
+            <button type="button" style="font: inherit; font-size: 11.5px; min-height: 36px; padding: 0 11px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Tire</button>
+            <button type="button" style="font: inherit; font-size: 11.5px; min-height: 36px; padding: 0 11px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Accident</button>
+          </div>
+        </label>
+
+        <label>
+          <span class="hd">Severity</span>
+          <div style="display: flex; gap: 6px; margin-top: 5px;">
+            <button type="button" style="font: inherit; font-size: 11.5px; min-height: 36px; padding: 0 11px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Can keep running</button>
+            <button type="button" style="font: inherit; font-size: 11.5px; font-weight: 600; min-height: 36px; padding: 0 11px; border: 1px solid #B45309; background: #FFF7ED; color: #8A4208; border-radius: 3px; cursor: pointer;">Needs shop soon</button>
+            <button type="button" style="font: inherit; font-size: 11.5px; min-height: 36px; padding: 0 11px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #8C2020; border-radius: 3px; cursor: pointer;">Unsafe — stop</button>
+          </div>
+        </label>
+
+        <label for="f-what">
+          <span class="hd">What is wrong</span>
+          <textarea id="f-what" rows="3" style="font: inherit; font-size: 13px; width: 100%; margin-top: 4px; border: 1px solid #C6D1DC; border-radius: 3px; padding: 8px 9px; background: #FFFFFF; color: #0F1B2D; box-sizing: border-box; resize: vertical;">Air leak on the passenger side tank, builds slow after start</textarea>
+        </label>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <label for="f-odo">
+            <span class="hd">Odometer</span>
+            <input id="f-odo" type="text" value="571,544" style="font: inherit; font-size: 13px; font-variant-numeric: tabular-nums; text-align: right; width: 100%; min-height: 40px; margin-top: 4px; border: 1px solid #C6D1DC; border-radius: 3px; padding: 0 9px; background: #FFFFFF; color: #0F1B2D; box-sizing: border-box;">
+          </label>
+          <label for="f-loc">
+            <span class="hd">Where</span>
+            <input id="f-loc" type="text" value="I-35 MM 18, Laredo TX" style="font: inherit; font-size: 13px; width: 100%; min-height: 40px; margin-top: 4px; border: 1px solid #C6D1DC; border-radius: 3px; padding: 0 9px; background: #FFFFFF; color: #0F1B2D; box-sizing: border-box;">
+          </label>
+        </div>
+
+        <div>
+          <span class="hd">Photos</span>
+          <div style="display: flex; gap: 8px; margin-top: 5px;">
+            <div style="width: 74px; height: 58px; border: 1px solid #D8E0E8; border-radius: 3px; background: #EEF2F6;"></div>
+            <div style="width: 74px; height: 58px; border: 1px solid #D8E0E8; border-radius: 3px; background: #EEF2F6;"></div>
+            <button type="button" style="font: inherit; font-size: 11.5px; width: 74px; height: 58px; border: 1px dashed #C6D1DC; background: #FFFFFF; color: #64748B; border-radius: 3px; cursor: pointer;">+ Add</button>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px; padding-top: 4px;">
+          <button type="button" style="font: inherit; font-size: 12.5px; font-weight: 600; flex-grow: 1; min-height: 44px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer;">Submit report</button>
+          <button type="button" style="font: inherit; font-size: 12.5px; min-height: 44px; padding: 0 16px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Cancel</button>
+        </div>
+
+        <div style="font-size: 11.5px; color: #64748B; border-top: 1px solid #E8EDF2; padding-top: 10px;">
+          The odometer typed here is written to the same ledger Samsara writes to, stamped <strong>manual · entered</strong>, with your name on it. Your reading and the truck's reading never overwrite each other.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const NAVY = '#1F2A44', AMBER = '#B45309', RED = '#A32D2D', SLATE = '#475569';
+    const rows = [
+      { kind: 'Mechanical', tone: NAVY, unit: 'T156', driver: 'Angel Sosa', what: 'Air leak, passenger side tank', photos: '2', when: 'Today 07:12', via: 'App' },
+      { kind: 'Damage', tone: AMBER, unit: 'T163', driver: 'Luis Sosa', what: 'Trailer door skin creased at dock', photos: '4', when: 'Yesterday', via: 'App' },
+      { kind: 'DVIR', tone: SLATE, unit: 'T174', driver: 'Leonel Morales', what: 'Marker lamp out, driver side rear', photos: '1', when: 'Yesterday', via: 'App' },
+      { kind: 'Accident', tone: RED, unit: 'T150', driver: 'Pedro Perez', what: 'Mirror struck in yard, no injury', photos: '6', when: 'Sep 28', via: 'Office' },
+      { kind: 'Mechanical', tone: NAVY, unit: 'T175', driver: 'Leonel Morales', what: 'APU will not start when cold', photos: '—', when: 'Sep 28', via: 'App' },
+      { kind: 'Tire', tone: AMBER, unit: 'T152', driver: 'Genaro R.', what: 'Steer pulling right, uneven wear', photos: '3', when: 'Sep 27', via: 'App' },
+      { kind: 'DVIR', tone: SLATE, unit: 'T177', driver: 'Jorge Corona', what: 'Air hose chafing at glad hand', photos: '2', when: 'Sep 27', via: 'App' },
+      { kind: 'Mechanical', tone: NAVY, unit: 'T124', driver: 'Unassigned', what: 'Coolant smell in cab after idle', photos: '—', when: 'Sep 26', via: 'Office' }
+    ];
+    return { rows: rows };
+  }
+}
+</script>
+</body>
+</html>

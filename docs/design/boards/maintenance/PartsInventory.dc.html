@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Parts Inventory</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    .num { font-variant-numeric: tabular-nums; text-align: right; }
+    .hd { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #64748B; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { padding: 8px 10px; font-size: 12.5px; border-bottom: 1px solid #E8EDF2; }
+    tbody tr:nth-child(even) { background: #FAFCFD; }
+    a { color: #14314F; } a:hover { color: #0B1B2B; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 1000px; box-sizing: border-box; background: #F1F4F7; color: #0F1B2D; display: flex; flex-direction: column;">
+
+  <div style="background: #FFFFFF; border-bottom: 1px solid #D8E0E8; padding: 16px 24px 0 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+      <div>
+        <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.01em;">Parts Inventory</div>
+        <div style="font-size: 12.5px; color: #64748B; margin-top: 2px;">What is on the shelf, what it cost, and what needs ordering before a truck waits on it</div>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button type="button" style="font: inherit; font-size: 12.5px; padding: 8px 14px; min-height: 44px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Receive parts</button>
+        <button type="button" style="font: inherit; font-size: 12.5px; font-weight: 600; padding: 8px 16px; min-height: 44px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer;">+ Add part</button>
+      </div>
+    </div>
+    <div style="display: flex; gap: 2px; margin-top: 14px;">
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Home</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Fleet Table</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Active WOs</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Service / Location</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Driver Reports</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Road Service</div>
+      <div style="font-size: 12.5px; font-weight: 600; padding: 9px 14px; color: #0F1B2D; border-bottom: 2.5px solid #14314F;">Parts Inventory</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Integrity Report</div>
+      <div style="font-size: 12.5px; padding: 9px 14px; color: #64748B;">Settings</div>
+    </div>
+  </div>
+
+  <div style="background: #FFFFFF; border-bottom: 1px solid #D8E0E8; padding: 10px 24px; display: flex; align-items: center; gap: 10px;">
+    <span class="hd">Category</span>
+    <div style="display: flex; align-items: center; gap: 5px; border: 1px solid #C6D1DC; border-radius: 3px; padding: 4px 6px; background: #FFFFFF; min-height: 34px;">
+      <span style="display: inline-flex; align-items: center; gap: 5px; background: #E8EEF5; color: #1F2A44; font-size: 11.5px; font-weight: 600; border-radius: 2px; padding: 3px 5px 3px 7px;">Brake <button type="button" aria-label="Remove brake" style="font: inherit; line-height: 1; border: 0; background: none; color: #64748B; cursor: pointer; padding: 0 2px;">×</button></span>
+      <span style="display: inline-flex; align-items: center; gap: 5px; background: #E8EEF5; color: #1F2A44; font-size: 11.5px; font-weight: 600; border-radius: 2px; padding: 3px 5px 3px 7px;">Filters <button type="button" aria-label="Remove filters" style="font: inherit; line-height: 1; border: 0; background: none; color: #64748B; cursor: pointer; padding: 0 2px;">×</button></span>
+      <span style="font-size: 12px; color: #94A3B8; padding: 0 6px;">Add category…</span>
+    </div>
+    <span class="hd" style="margin-left: 8px;">Bin</span>
+    <select aria-label="Bin" style="font: inherit; font-size: 12.5px; min-height: 34px; border: 1px solid #C6D1DC; border-radius: 3px; padding: 0 8px; background: #FFFFFF; color: #1F2A44;"><option>All bins</option></select>
+    <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: #1F2A44; margin-left: 8px;">
+      <input type="checkbox" checked style="width: 15px; height: 15px;"> Below reorder point only
+    </label>
+    <div style="flex-grow: 1;"></div>
+    <button type="button" style="font: inherit; font-size: 12px; min-height: 34px; padding: 0 12px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Export</button>
+  </div>
+
+  <div style="padding: 16px 24px 24px 24px; display: flex; flex-direction: column; gap: 14px;">
+
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px;">
+      <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; padding: 11px 13px;">
+        <div class="hd">Distinct parts</div>
+        <div class="num" style="font-size: 27px; font-weight: 600; text-align: left;">48</div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; padding: 11px 13px;">
+        <div class="hd">Inventory value</div>
+        <div class="num" style="font-size: 27px; font-weight: 600; text-align: left;">$12,884.35</div>
+        <div style="font-size: 11px; color: #94A3B8;">at last purchase cost</div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #B45309; border-radius: 3px; padding: 11px 13px;">
+        <div style="font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #8A4208;">Below reorder</div>
+        <div class="num" style="font-size: 27px; font-weight: 600; text-align: left; color: #8A4208;">5</div>
+        <div style="font-size: 11px; color: #8A4208;">1 with a truck waiting</div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; padding: 11px 13px;">
+        <div class="hd">Consumed MTD</div>
+        <div class="num" style="font-size: 27px; font-weight: 600; text-align: left;">$6,918.40</div>
+        <div style="font-size: 11px; color: #94A3B8;">onto 8 work orders</div>
+      </div>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+      <table>
+        <thead>
+          <tr style="background: #F6F9FB;">
+            <th class="hd" style="text-align: left; width: 150px;">Part #</th>
+            <th class="hd" style="text-align: left;">Description</th>
+            <th class="hd" style="text-align: left; width: 92px;">Category</th>
+            <th class="hd" style="text-align: left; width: 96px;">Bin</th>
+            <th class="hd" style="text-align: right; width: 76px;">On hand</th>
+            <th class="hd" style="text-align: right; width: 84px;">Reorder at</th>
+            <th class="hd" style="text-align: right; width: 104px;">Unit cost</th>
+            <th class="hd" style="text-align: right; width: 112px;">Value</th>
+            <th class="hd" style="text-align: left; width: 154px;">Vendor</th>
+            <th class="hd" style="text-align: right; width: 108px;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="10">
+            <tr>
+              <td><a href="#p" style="font-weight: 600; text-decoration: none;">{{r.pn}}</a></td>
+              <td style="color: #334155;">{{r.desc}}</td>
+              <td style="color: #64748B;">{{r.cat}}</td>
+              <td style="color: #64748B;">{{r.bin}}</td>
+              <td class="num" style="font-weight: 600; color: {{r.tone}};">{{r.qty}}</td>
+              <td class="num" style="color: #64748B;">{{r.reorder}}</td>
+              <td class="num">{{r.cost}}</td>
+              <td class="num" style="font-weight: 600;">{{r.value}}</td>
+              <td style="color: #475569;">{{r.vendor}}</td>
+              <td style="text-align: right;">
+                <sc-if value="{{r.low}}" hint-placeholder-val="{{ true }}">
+                  <button type="button" style="font: inherit; font-size: 11px; font-weight: 600; padding: 5px 9px; border: 1px solid #B45309; background: #FFF7ED; color: #8A4208; border-radius: 3px; cursor: pointer;">Order</button>
+                </sc-if>
+              </td>
+            </tr>
+          </sc-for>
+        </tbody>
+        <tfoot>
+          <tr style="background: #F6F9FB; border-top: 2px solid #D8E0E8;">
+            <td colspan="7" style="font-weight: 700;">10 of 48 shown</td>
+            <td class="num" style="font-weight: 700;">$5,412.60</td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const NAVY = '#1F2A44', AMBER = '#B45309';
+    const usd = (n) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const raw = [
+      ['BP-4707-Q', 'Brake pad set, drive axle', 'Brake', 'A-1', 6, 4, 218.40, 'Fleetpride Laredo'],
+      ['BD-2201', 'Brake drum, 16.5 x 7', 'Brake', 'A-2', 2, 4, 184.00, 'Fleetpride Laredo'],
+      ['FF-33528', 'Fuel filter, Detroit DD15', 'Filters', 'B-1', 14, 6, 38.75, 'Rush Parts'],
+      ['OF-LF9080', 'Oil filter, DD15', 'Filters', 'B-1', 11, 6, 42.10, 'Rush Parts'],
+      ['AF-P616056', 'Air filter, primary', 'Filters', 'B-2', 3, 4, 96.20, 'Rush Parts'],
+      ['DEF-HTR-63', 'DEF tank heater element', 'Emissions', 'C-1', 0, 2, 612.00, 'Rush Truck Center'],
+      ['AL-38-BLU', 'Air line, 3/8 blue, 50 ft', 'Air system', 'C-2', 2, 2, 78.50, 'Fleetpride Laredo'],
+      ['GH-STD', 'Glad hand, standard', 'Air system', 'C-2', 9, 4, 22.40, 'Fleetpride Laredo'],
+      ['LMP-M1', 'Marker lamp, red LED', 'Electrical', 'D-1', 22, 10, 11.85, 'Border Truck Supply'],
+      ['BAT-31-950', 'Battery, group 31, 950 CCA', 'Electrical', 'D-2', 4, 4, 196.75, 'Border Truck Supply']
+    ];
+    const rows = raw.map((r) => {
+      const low = r[4] <= r[5];
+      return {
+        pn: r[0], desc: r[1], cat: r[2], bin: r[3],
+        qty: r[4] === 0 ? '0' : String(r[4]),
+        reorder: String(r[5]),
+        cost: usd(r[6]),
+        value: r[4] === 0 ? '—' : usd(r[4] * r[6]),
+        vendor: r[7],
+        tone: low ? AMBER : NAVY,
+        low: low
+      };
+    });
+    return { rows: rows };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Driver Profiles</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    .num { font-variant-numeric: tabular-nums; text-align: right; }
+    .hd { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #64748B; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { padding: 7px 10px; font-size: 12.5px; border-bottom: 1px solid #E8EDF2; }
+    tbody tr:nth-child(even) { background: #FAFCFD; }
+    a { color: #14314F; } a:hover { color: #0B1B2B; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 1000px; box-sizing: border-box; background: #F1F4F7; color: #0F1B2D; display: flex; flex-direction: column;">
+
+  <!-- BAND 0 — title + KPI ROW. 78px, not 216px. -->
+  <div style="background: #FFFFFF; border-bottom: 1px solid #D8E0E8; padding: 14px 24px 12px 24px;">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 20px;">
+      <div>
+        <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.01em;">Driver Hub Home</div>
+        <div style="font-size: 12.5px; color: #64748B; margin-top: 1px;">130 drivers · 19 active · USMCA Freight Solutions</div>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button type="button" style="font: inherit; font-size: 12.5px; padding: 8px 14px; min-height: 44px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Refresh</button>
+        <button type="button" style="font: inherit; font-size: 12.5px; font-weight: 600; padding: 8px 16px; min-height: 44px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer;">+ Create Driver</button>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-top: 12px;">
+      <sc-for list="{{kpis}}" as="k" hint-placeholder-count="6">
+        <button type="button" style="font: inherit; text-align: left; cursor: pointer; background: {{k.bg}}; border: 1px solid {{k.border}}; border-radius: 3px; padding: 8px 11px;">
+          <div style="font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: {{k.labelInk}};">{{k.label}}</div>
+          <div class="num" style="font-size: 21px; font-weight: 600; text-align: left; line-height: 1.2; color: {{k.ink}};">{{k.value}}</div>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- BAND 1 — module tabs, ONE bar. Cash advance requests lives here. -->
+  <div style="background: #FFFFFF; border-bottom: 1px solid #D8E0E8; padding: 0 24px; display: flex; gap: 2px; flex-wrap: wrap;">
+    <div style="font-size: 12.5px; padding: 9px 13px; color: #64748B;">Drivers</div>
+    <div style="font-size: 12.5px; font-weight: 600; padding: 9px 13px; color: #0F1B2D; border-bottom: 2.5px solid #14314F;">Profiles</div>
+    <div style="font-size: 12.5px; padding: 9px 13px; color: #64748B;">Settlements ▾</div>
+    <div style="font-size: 12.5px; padding: 9px 13px; color: #64748B;">Cash advances</div>
+    <div style="font-size: 12.5px; padding: 9px 13px; color: #64748B;">Cash advance requests</div>
+    <div style="font-size: 12.5px; padding: 9px 13px; color: #64748B;">Pay rate templates</div>
+    <div style="font-size: 12.5px; padding: 9px 13px; color: #64748B;">Team splits</div>
+    <div style="font-size: 12.5px; padding: 9px 13px; color: #64748B;">Driver disputes</div>
+    <div style="font-size: 12.5px; padding: 9px 13px; color: #64748B;">Leave</div>
+    <div style="font-size: 12.5px; padding: 9px 13px; color: #64748B;">Teams</div>
+  </div>
+
+  <!-- BAND 2 — filters + view toggle + search, ONE line -->
+  <div style="background: #FFFFFF; border-bottom: 1px solid #D8E0E8; padding: 9px 24px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+    <button type="button" style="font: inherit; font-size: 11.5px; font-weight: 600; min-height: 34px; padding: 0 11px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer;">Active 19</button>
+    <button type="button" style="font: inherit; font-size: 11.5px; min-height: 34px; padding: 0 11px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Probation 3</button>
+    <button type="button" style="font: inherit; font-size: 11.5px; min-height: 34px; padding: 0 11px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">On leave 0</button>
+    <button type="button" style="font: inherit; font-size: 11.5px; min-height: 34px; padding: 0 11px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Inactive 108</button>
+    <button type="button" style="font: inherit; font-size: 11.5px; min-height: 34px; padding: 0 11px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">All 130</button>
+
+    <span style="width: 1px; height: 22px; background: #E2E8F0; margin: 0 4px;"></span>
+
+    <div style="display: flex; align-items: center; gap: 5px; border: 1px solid #C6D1DC; border-radius: 3px; padding: 3px 6px; background: #FFFFFF; min-height: 34px;">
+      <span style="display: inline-flex; align-items: center; gap: 5px; background: #E8EEF5; color: #1F2A44; font-size: 11.5px; font-weight: 600; border-radius: 2px; padding: 3px 5px 3px 7px;">T175 <button type="button" aria-label="Remove T175" style="font: inherit; line-height: 1; border: 0; background: none; color: #64748B; cursor: pointer; padding: 0 2px;">×</button></span>
+      <span style="font-size: 12px; color: #94A3B8; padding: 0 6px;">Unit…</span>
+    </div>
+    <select aria-label="Pay basis" style="font: inherit; font-size: 12px; min-height: 34px; border: 1px solid #C6D1DC; border-radius: 3px; padding: 0 8px; background: #FFFFFF; color: #1F2A44;"><option>All pay bases</option></select>
+
+    <label for="dsearch" style="position: absolute; left: -9999px;">Search drivers</label>
+    <input id="dsearch" type="search" placeholder="Search name, phone, CDL…" style="font: inherit; font-size: 12.5px; min-height: 34px; flex-grow: 1; min-width: 180px; border: 1px solid #C6D1DC; border-radius: 3px; padding: 0 10px; background: #FFFFFF; color: #0F1B2D;">
+
+    <button type="button" style="font: inherit; font-size: 11.5px; font-weight: 600; min-height: 34px; padding: 0 11px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer;">Master-detail</button>
+    <button type="button" style="font: inherit; font-size: 11.5px; min-height: 34px; padding: 0 11px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">List</button>
+    <button type="button" aria-label="Choose columns" title="Choose columns" style="font: inherit; min-height: 34px; width: 34px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #475569; border-radius: 3px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>
+    </button>
+  </div>
+
+  <!-- DATA STARTS HERE — 244px from the top -->
+  <div style="flex-grow: 1; min-height: 0; padding: 14px 24px 20px 24px; display: grid; grid-template-columns: 1fr 1.25fr; gap: 14px;">
+
+    <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; min-width: 0; display: flex; flex-direction: column;">
+      <div style="padding: 9px 14px; border-bottom: 1px solid #E8EDF2; display: flex; justify-content: space-between; align-items: baseline;">
+        <span class="hd">19 active drivers</span>
+        <span style="font-size: 11.5px; color: #64748B;">Sorted by settlement due</span>
+      </div>
+      <div style="overflow: auto; min-height: 0;">
+        <table>
+          <thead>
+            <tr style="background: #F6F9FB;">
+              <th class="hd" style="text-align: left;">Driver</th>
+              <th class="hd" style="text-align: left; width: 62px;">Unit</th>
+              <th class="hd" style="text-align: left; width: 86px;">Pay basis</th>
+              <th class="hd" style="text-align: right; width: 96px;">Due</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{drivers}}" as="d" hint-placeholder-count="9">
+              <tr style="background: {{d.rowBg}};">
+                <td><a href="DriverDetail.dc.html" style="font-weight: 600; text-decoration: none;">{{d.name}}</a></td>
+                <td style="font-weight: 600;">{{d.unit}}</td>
+                <td style="color: #64748B; font-size: 11.5px;">{{d.basis}}</td>
+                <td class="num" style="font-weight: 600;">{{d.due}}</td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; min-width: 0; display: flex; flex-direction: column;">
+      <div style="padding: 12px 16px; border-bottom: 1px solid #E8EDF2; display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <div style="font-size: 16px; font-weight: 700;">Angel Sosa</div>
+          <div style="font-size: 12px; color: #64748B; margin-top: 1px;">Unit T156 · CDL TX · hired 2026-05-14 · <span style="font-weight: 600; color: #1F2A44;">Active</span></div>
+        </div>
+        <a href="DriverDetail.dc.html" style="font-size: 11.5px; font-weight: 600; text-decoration: none;">Open full profile →</a>
+      </div>
+
+      <div style="padding: 12px 16px; display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px;">
+          <div><div class="hd">Settlement due</div><div class="num" style="font-size: 17px; font-weight: 700; text-align: left;">$1,842.60</div></div>
+          <div><div class="hd">Escrow held</div><div class="num" style="font-size: 17px; font-weight: 700; text-align: left;">$1,250.00</div></div>
+          <div><div class="hd">Advances open</div><div class="num" style="font-size: 17px; font-weight: 700; text-align: left;">—</div></div>
+          <div><div class="hd">Miles, 30 days</div><div class="num" style="font-size: 17px; font-weight: 700; text-align: left;">9,150</div></div>
+          <div style="background: #FFFFFF; border: 1px solid #1F2A44; border-radius: 3px; padding: 6px 9px; margin: -6px -9px;">
+            <div style="font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #1F2A44;">Integrity</div>
+            <div style="font-size: 17px; font-weight: 700; color: #1F2A44; line-height: 1.2;">Clear</div>
+            <div style="font-size: 10.5px; color: #64748B;">0 flags · 90 days</div>
+          </div>
+        </div>
+
+        <div style="border-top: 1px solid #E8EDF2; padding-top: 10px;">
+          <div class="hd" style="margin-bottom: 6px;">Recent activity</div>
+          <table>
+            <tbody>
+              <sc-for list="{{activity}}" as="a" hint-placeholder-count="5">
+                <tr>
+                  <td style="width: 84px; color: #64748B; font-size: 11.5px;">{{a.when}}</td>
+                  <td><span style="font-size: 9.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #FFFFFF; background: {{a.tone}}; border-radius: 2px; padding: 2px 5px;">{{a.kind}}</span></td>
+                  <td style="color: #334155;">{{a.what}}</td>
+                  <td class="num" style="width: 96px; font-weight: 600;">{{a.amt}}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="border-top: 1px solid #E8EDF2; padding-top: 10px;">
+          <div class="hd" style="margin-bottom: 6px;">Linked</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <sc-for list="{{links}}" as="l" hint-placeholder-count="8">
+              <a href="#l" style="font-size: 11.5px; color: #1F2A44; background: #EEF3F8; border: 1px solid #DCE5EE; border-radius: 2px; padding: 4px 8px; text-decoration: none;">{{l}}</a>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const NAVY = '#1F2A44', AMBER = '#B45309', RED = '#A32D2D';
+    const usd = (n) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const kpis = [
+      { label: 'Active', value: '19 / 130', bg: '#14314F', border: '#14314F', ink: '#FFFFFF', labelInk: '#B8C7D8' },
+      { label: 'On loads', value: '8', bg: '#FFFFFF', border: '#D8E0E8', ink: '#0F1B2D', labelInk: '#64748B' },
+      { label: 'Available', value: '11', bg: '#FFFFFF', border: '#D8E0E8', ink: '#0F1B2D', labelInk: '#64748B' },
+      { label: 'On leave', value: '0', bg: '#FFFFFF', border: '#D8E0E8', ink: '#0F1B2D', labelInk: '#64748B' },
+      { label: 'Settle due', value: '50', bg: '#FFFFFF', border: '#B45309', ink: '#8A4208', labelInk: '#8A4208' },
+      { label: 'Escrow held', value: '$2,375.00', bg: '#FFFFFF', border: '#D8E0E8', ink: '#0F1B2D', labelInk: '#64748B' }
+    ];
+    const raw = [
+      ['Angel Sosa', 'T156', 'Per mile', 1842.60, true],
+      ['Leonel Morales', 'T175', 'Per mile', 1614.20, false],
+      ['Pedro Perez', 'T168', 'Per mile', 1490.75, false],
+      ['Jorge Corona', 'T177', 'Per mile', 1388.40, false],
+      ['Luis Sosa', 'T170', 'Per mile', 1205.00, false],
+      ['Genaro Garza', 'T152', 'Per mile', 1144.90, false],
+      ['Rafael Rivero', '—', 'Weekly salary', 1100.00, false],
+      ['Hector Salinas', 'T164', 'Per mile', 962.35, false],
+      ['Ruben Castillo', 'T171', 'Percentage', 874.10, false]
+    ];
+    const drivers = raw.map((r) => ({
+      name: r[0], unit: r[1], basis: r[2], due: usd(r[3]),
+      rowBg: r[4] ? '#EEF3F8' : 'transparent'
+    }));
+    const activity = [
+      { when: 'Today', kind: 'Report', tone: NAVY, what: 'Air leak, passenger tank — T156', amt: '—' },
+      { when: 'Sep 26', kind: 'Fuel', tone: '#475569', what: 'LOVES · 128.4 gal', amt: usd(594.33) },
+      { when: 'Sep 25', kind: 'Load', tone: NAVY, what: 'Load 13629 delivered', amt: usd(2700.00) },
+      { when: 'Sep 22', kind: 'Settle', tone: '#334155', what: 'Settlement S-2026-5812 closed', amt: usd(1903.45) },
+      { when: 'Sep 18', kind: 'Escrow', tone: AMBER, what: 'Escrow contribution', amt: usd(50.00) }
+    ];
+    const links = ['Loads (14)', 'Settlements (6)', 'Fuel (31)', 'Driver reports (2)', 'Accidents (0)', 'Insurance claims (0)', 'Legal (0)', 'Documents (7)'];
+    return { kpis: kpis, drivers: drivers, activity: activity, links: links };
+  }
+}
+</script>
+</body>
+</html>

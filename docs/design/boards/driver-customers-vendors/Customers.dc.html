@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Customers</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    .num { font-variant-numeric: tabular-nums; text-align: right; }
+    .hd { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #64748B; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { padding: 8px 10px; font-size: 12.5px; border-bottom: 1px solid #E8EDF2; }
+    tbody tr:nth-child(even) { background: #FAFCFD; }
+    a { color: #14314F; } a:hover { color: #0B1B2B; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 1000px; box-sizing: border-box; background: #F1F4F7; color: #0F1B2D; display: flex; flex-direction: column;">
+
+  <div style="background: #FFFFFF; border-bottom: 1px solid #D8E0E8; padding: 14px 24px 12px 24px;">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 20px;">
+      <div>
+        <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.01em;">Customers</div>
+        <div style="font-size: 12.5px; color: #64748B; margin-top: 1px;">The list opens on the customers you actually do business with</div>
+      </div>
+      <button type="button" style="font: inherit; font-size: 12.5px; font-weight: 600; padding: 8px 16px; min-height: 44px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer;">+ Create Customer</button>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-top: 12px;">
+      <div style="background: #14314F; border: 1px solid #14314F; border-radius: 3px; padding: 8px 11px;">
+        <div style="font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #B8C7D8;">With transactions</div>
+        <div class="num" style="font-size: 21px; font-weight: 600; text-align: left; line-height: 1.2; color: #FFFFFF;">65</div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; padding: 8px 11px;">
+        <div class="hd">In the book</div>
+        <div class="num" style="font-size: 21px; font-weight: 600; text-align: left; line-height: 1.2;">1,249</div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; padding: 8px 11px;">
+        <div class="hd">Open invoices</div>
+        <div class="num" style="font-size: 21px; font-weight: 600; text-align: left; line-height: 1.2;">110</div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; padding: 8px 11px;">
+        <div class="hd">Billed</div>
+        <div class="num" style="font-size: 21px; font-weight: 600; text-align: left; line-height: 1.2;">$381,916.72</div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #A32D2D; border-radius: 3px; padding: 8px 11px;">
+        <div style="font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #8C2020;">A/R open</div>
+        <div class="num" style="font-size: 21px; font-weight: 600; text-align: left; line-height: 1.2; color: #8C2020;">$366,409.12</div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; padding: 8px 11px;">
+        <div class="hd">Collected</div>
+        <div class="num" style="font-size: 21px; font-weight: 600; text-align: left; line-height: 1.2;">$15,507.60</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="background: #FFFFFF; border-bottom: 1px solid #D8E0E8; padding: 9px 24px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+    <button type="button" style="font: inherit; font-size: 11.5px; font-weight: 600; min-height: 34px; padding: 0 11px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer;">With transactions 65</button>
+    <button type="button" style="font: inherit; font-size: 11.5px; min-height: 34px; padding: 0 11px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Open balance 61</button>
+    <button type="button" style="font: inherit; font-size: 11.5px; min-height: 34px; padding: 0 11px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Factored 1,223</button>
+    <button type="button" style="font: inherit; font-size: 11.5px; min-height: 34px; padding: 0 11px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">All 1,249</button>
+
+    <span style="width: 1px; height: 22px; background: #E2E8F0; margin: 0 4px;"></span>
+
+    <select aria-label="Date range" style="font: inherit; font-size: 12px; min-height: 34px; border: 1px solid #C6D1DC; border-radius: 3px; padding: 0 8px; background: #FFFFFF; color: #1F2A44;"><option>This year</option></select>
+    <select aria-label="Aging" style="font: inherit; font-size: 12px; min-height: 34px; border: 1px solid #C6D1DC; border-radius: 3px; padding: 0 8px; background: #FFFFFF; color: #1F2A44;"><option>All ages</option></select>
+
+    <label for="csearch" style="position: absolute; left: -9999px;">Search customers</label>
+    <input id="csearch" type="search" placeholder="Search all 1,249 — hidden is not missing" style="font: inherit; font-size: 12.5px; min-height: 34px; flex-grow: 1; min-width: 220px; border: 1px solid #C6D1DC; border-radius: 3px; padding: 0 10px; background: #FFFFFF; color: #0F1B2D;">
+
+    <button type="button" style="font: inherit; font-size: 11.5px; font-weight: 600; height: 34px; padding: 0 11px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer;">Regular</button>
+    <button type="button" style="font: inherit; font-size: 11.5px; height: 34px; padding: 0 11px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Master-detail</button>
+    <button type="button" style="font: inherit; font-size: 11.5px; height: 34px; padding: 0 11px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Export</button>
+    <button type="button" aria-label="Choose columns" title="Choose columns" style="font: inherit; min-height: 34px; width: 34px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #475569; border-radius: 3px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>
+    </button>
+  </div>
+
+  <div style="padding: 14px 24px 20px 24px; display: flex; flex-direction: column; gap: 12px;">
+
+    <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+      <table>
+        <thead>
+          <tr style="background: #F6F9FB;">
+            <th class="hd" style="text-align: left;">Customer</th>
+            <th class="hd" style="text-align: right; width: 82px;">Invoices</th>
+            <th class="hd" style="text-align: right; width: 122px;">Billed</th>
+            <th class="hd" style="text-align: right; width: 122px;">Collected</th>
+            <th class="hd" style="text-align: right; width: 130px;">Open balance</th>
+            <th class="hd" style="text-align: right; width: 104px;">Last invoice</th>
+            <th class="hd" style="text-align: left; width: 108px;">Factored</th>
+            <th class="hd" style="text-align: left; width: 96px;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="9">
+            <tr>
+              <td><a href="#c" style="font-weight: 600; text-decoration: none;">{{r.name}}</a></td>
+              <td class="num">{{r.inv}}</td>
+              <td class="num">{{r.billed}}</td>
+              <td class="num" style="color: {{r.paidInk}};">{{r.paid}}</td>
+              <td class="num" style="font-weight: 600;">{{r.open}}</td>
+              <td class="num" style="color: #64748B;">{{r.last}}</td>
+              <td style="color: #475569;">{{r.factored}}</td>
+              <td><span style="font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: #1F2A44;">Active</span></td>
+            </tr>
+          </sc-for>
+        </tbody>
+        <tfoot>
+          <tr style="background: #F6F9FB; border-top: 2px solid #D8E0E8;">
+            <td style="font-weight: 700;">65 customers with transactions</td>
+            <td class="num" style="font-weight: 700;">110</td>
+            <td class="num" style="font-weight: 700;">$381,916.72</td>
+            <td class="num" style="font-weight: 700;">$15,507.60</td>
+            <td class="num" style="font-weight: 700;">$366,409.12</td>
+            <td colspan="3"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div style="background: #FFF7ED; border: 1px solid #B45309; border-radius: 3px; padding: 12px 16px;">
+      <div style="font-size: 13px; font-weight: 700; color: #8A4208;">This screen surfaces something you should see</div>
+      <div style="font-size: 12.5px; color: #334155; margin-top: 4px; line-height: 1.6;">
+        110 live invoices, <strong>$381,916.72 billed</strong> — and only <strong>7 invoices carry any payment at all</strong>, $15,507.60 in total. Your Faro debtor receipts for September alone show roughly $28,000 collected across 14 invoices. That cash is not relieving A/R in the app, so the $366,409.12 open balance is overstated by whatever Faro has already paid you. Measured live 2026-09-30, not estimated. Raised as its own job, not fixed on this screen.
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const usd = (n) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const raw = [
+      ['Refrigerx Transportation LLC', 14, 58360.00, 0, '09/25/2026', 'Faro'],
+      ['Semares Forwarding Services', 11, 53900.00, 0, '09/25/2026', 'Faro'],
+      ['Armstrong Transport GR', 6, 18400.00, 0, '09/24/2026', 'Faro'],
+      ['ES Logistics International LLC', 4, 15400.00, 0, '09/24/2026', 'Faro'],
+      ['AB Global Logistics , Inc', 4, 15100.00, 0, '09/24/2026', 'Faro'],
+      ['S E Mares Forwarding Service LLC', 3, 14700.00, 0, '08/28/2026', 'Faro'],
+      ['John J. Jerue Truck Broker, Inc', 3, 10700.00, 1100.00, '08/28/2026', 'Faro'],
+      ['EGRO TRANSPORT LLC', 3, 8700.00, 0, '09/24/2026', 'Faro'],
+      ['Hawkeye Transportation Services', 3, 8050.00, 0, '09/24/2026', 'Faro']
+    ];
+    const rows = raw.map((r) => ({
+      name: r[0],
+      inv: String(r[1]),
+      billed: usd(r[2]),
+      paid: r[3] === 0 ? '—' : usd(r[3]),
+      paidInk: r[3] === 0 ? '#94A3B8' : '#0F1B2D',
+      open: usd(r[2] - r[3]),
+      last: r[4],
+      factored: r[5]
+    }));
+    return { rows: rows };
+  }
+}
+</script>
+</body>
+</html>

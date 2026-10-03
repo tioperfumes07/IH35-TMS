@@ -1601,6 +1601,28 @@ function resolveGuardDatabaseUrl() {
   return cachedReadonlyDbUrl ?? process.env.DATABASE_URL;
 }
 
+// ROUND 363 (Lead, 2026-10-03) — the credential has to be resolved ONCE, for the whole gate, not
+// only inside runNode(). Roughly twenty places in this file read `process.env.DATABASE_URL`
+// directly to decide whether a touched live domain can be verified (lines 1738, 1759, 1067, 1254
+// and others). .husky/pre-push deliberately does not source .env, so all of them saw it unset and
+// failed closed — correctly, per ROUND 29.9-B, but for the wrong reason: a working ih35_ci_readonly
+// credential was sitting right here unread. Resolve it once, before any of those checks run, so
+// every entry point (runNode, the touched-live-domain checks, require-live-db.mjs in a spawned
+// guard) sees the same connection. When nothing resolves, the env is left untouched and every
+// live guard still FAILs — never a silent skip.
+//
+// CALLER_WRITER_DATABASE_URL is captured BEFORE the assignment because exactly one guard
+// (verify-workflow-requests-entity-scoped) must INSERT and SET ROLE ih35_app, which the readonly
+// role cannot do. That guard gets the caller's real writer URL or nothing — never the readonly one.
+const CALLER_WRITER_DATABASE_URL = process.env.DATABASE_URL;
+if (!process.env.DATABASE_URL) {
+  const gateDbUrl = resolveGuardDatabaseUrl();
+  if (gateDbUrl) {
+    process.env.DATABASE_URL = gateDbUrl;
+    console.log(`[${LABEL}] DATABASE_URL resolved from the gate's own read-only credential (ih35_ci_readonly); live guards will run.`);
+  }
+}
+
 const localOutcomes = { passed: 0, failed: 0, skipped: 0 };
 const skippedLiveChecks = [];
 process.once('exit', code => console.log(formatLocalOutcomes(LABEL, localOutcomes, skippedLiveChecks.length, code)));
@@ -1614,10 +1636,20 @@ function runNode(rel, extraEnv = {}, args = []) {
   const script = path.join(ROOT, rel);
   console.log(`[${LABEL}] RUN ${rel}${args.length ? ` ${args.join(" ")}` : ""}`);
   const env = { ...process.env, ...extraEnv };
-  // Only override when a live DB is actually in play (DATABASE_URL set) and the caller didn't
-  // already pin a specific connection string via extraEnv (e.g. a test harness).
-  if (env.DATABASE_URL && !extraEnv.DATABASE_URL) {
-    env.DATABASE_URL = resolveGuardDatabaseUrl();
+  // ROUND 363 (Lead, 2026-10-03) — ROOT CAUSE OF EVERY "DATABASE_URL not set" PUSH REJECTION.
+  // This used to read `if (env.DATABASE_URL && ...)`: the gate only handed a guard its own
+  // read-only credential when the CALLER had already set DATABASE_URL. But .husky/pre-push
+  // deliberately does NOT source .env (Rule 18 / CURSOR-PIPELINE-REPAIR P0-1), so every push ran
+  // with DATABASE_URL unset — and the gate, holding a perfectly good ih35_ci_readonly credential,
+  // declined to use it and let the live guard fail "DATABASE_URL not set ... a live money guard
+  // that cannot connect is a FAIL" (ROUND 29.9-B). Docs-only branches were unpushable for weeks
+  // for that reason alone. Now the gate resolves its own credential whenever the caller has not
+  // pinned one. Unchanged where it matters: extraEnv.DATABASE_URL still wins (test harnesses), and
+  // when NO credential can be resolved the env is left exactly as it was, so the live guard still
+  // FAILs rather than silently passing. Never logged — it is a live credential.
+  if (!extraEnv.DATABASE_URL) {
+    const resolved = resolveGuardDatabaseUrl();
+    if (resolved) env.DATABASE_URL = resolved;
   }
   // Every guard reads the DIRECT endpoint — never the pooler, where the app's SET ROLE ih35_app leaks.
   const res = spawnSync(process.execPath, [script, ...args], {
@@ -1711,7 +1743,7 @@ for (const [name, rel] of STEPS) {
 {
   const name = "verify-workflow-requests-entity-scoped";
   const rel = "scripts/verify-workflow-requests-entity-scoped.mjs";
-  const writerUrl = process.env.DATABASE_URL;
+  const writerUrl = CALLER_WRITER_DATABASE_URL;
   const code = writerUrl ? runNode(rel, { DATABASE_URL: writerUrl }) : runNode(rel);
   if (code !== 0) {
     failStep(name);

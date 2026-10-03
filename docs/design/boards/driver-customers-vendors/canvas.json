@@ -1,0 +1,85 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Customers.dc.html": {
+      "h": 1000,
+      "title": "3 · Customers — regular view",
+      "w": 1440,
+      "x": 0,
+      "y": 1760
+    },
+    "DriverDetail.dc.html": {
+      "h": 1640,
+      "title": "2 · The full profile",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "Main.dc.html": {
+      "h": 1000,
+      "is_interactive": true,
+      "title": "1 · Driver Hub Home — click a driver",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Vendors.dc.html": {
+      "h": 1000,
+      "title": "4 · Vendors — regular view",
+      "w": 1440,
+      "x": 1520,
+      "y": 1760
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-09-30T20:00:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "before": {
+      "fill": "red",
+      "maxH": 980,
+      "text": "WHAT IS LIVE RIGHT NOW — measured in your Chrome, 2026-09-30 14:2x CT\n\n/drivers/profiles\n593 px of chrome before one byte of driver data, on a 1350 px screen. 44% of the page gone.\nThe KPI block is 7 bars stacked vertically, y=135 to y=351 — 216 px — each full width with its number shoved to x=2305 of 2381.\nSix bands before any data, one of them a full-width bar holding a single item.\nThe list pane renders ZERO rows.\n\n/customers\nOpens on Active (1229). First rows $0.00, No history. No with-transactions tab exists.\n\n/vendors\nOpens on Active (609). First rows 7-Eleven, A. Tijerina Towing — $0.00, No history.\n\nC-19 and C-20 were merged. None of this changed.",
+      "w": 580,
+      "x": 3040,
+      "y": 0
+    },
+    "rules": {
+      "fill": "blue",
+      "maxH": 900,
+      "text": "THE RULES THESE BOARDS SET FOR THE WHOLE APP\n\nLINES FOR ROWS, NEVER FOR COLUMNS. No cell anywhere declares a left or right border. Horizontal rules and zebra only.\n\nONE CONTROL HEIGHT — 34 px for every filter, select and search box in the app; 40 px for a field being edited in a form.\n\nONE DATE BOX WIDTH — 132 px, everywhere, tabular figures. A date box is never full-width and never guesses its size from its container.\n\nMONEY BOX 120 px, right-aligned. Short code 104 px. Only a free-text reason grows to fill.\n\nAn edit box is sized to what goes in it. A 10-character date does not get a 600 px field.\n\nKPI blocks are tiles across, never bars down. 78 px, not 216.\n\nMISSING RENDERS AS — , never 0, and never -$0.00.",
+      "w": 580,
+      "x": 3040,
+      "y": 1040
+    },
+    "t1": {
+      "kind": "title1",
+      "maxW": 2960,
+      "text": "The three screens you have been waiting for",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "views": {
+      "fill": "gray",
+      "maxH": 620,
+      "text": "CUSTOMERS AND VENDORS — BOTH VIEWS\n\nRegular view is the table on boards 3 and 4. It is the default.\n\nMaster-detail is the second view, the same shape as the Driver Hub Home board: list on the left, the selected record filling the right.\n\nOne toggle, same position, same size on every list in the app.\n\nEither way the list opens on parties with real money — 65 customers, 34 vendors. All is one click away and search always reaches all 1,249 and 623.",
+      "w": 580,
+      "x": 3040,
+      "y": 2000
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "DriverDetail.dc.html",
+    "Customers.dc.html",
+    "Vendors.dc.html"
+  ],
+  "pages": [],
+  "title": "Driver Profile · Customers · Vendors"
+}

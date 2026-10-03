@@ -60,3 +60,11 @@ static failures, and the four items waiting on the owner:
 THE RULE: a merged PR has shipped nothing until BOTH services are live. ih35-tms-web has
 autoDeploy OFF. Your DONE line names the deploy id and status for backend AND frontend, or the
 item is not done. "Merged #239xx" is not proof. "dep-xxxx live" is proof.
+
+## ROUND 363 — 2026-10-03 15:13Z — ASSIGNED
+
+Read in this order, both are required before you write code:
+1. `docs/bus/10-03-2026-ALL-SEATS-ROUND-363-LAW-THE-RECLASSIFY-ENGINE-AND-THE-POSTING-STAMP.md` — nine laws, owner-ruled this session. Edit-not-delete, the posting load stamp, the three-selector reclassify engine, the four things a reefer-fuel reclass moves, what can and cannot be reclassified (Lead correction on the record), a match posts nothing, the gate credential and the 23 guards that were never passing, the whole chart of accounts including zeros, and audit style.
+2. `docs/bus/10-03-2026-CC-2-ROUND-363-BUILD-THE-RECLASSIFY-ENGINE-AND-THE-WIZARD-SURFACE.md` — your box.
+
+Lane ruling for this round: `docs/bus/00-LEAD-RULING-2026-10-03-LANE-CROSS-ACCT-F9855-AND-POSTING-LOAD-ID.md`

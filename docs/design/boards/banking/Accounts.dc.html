@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Accounts</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    .num { font-variant-numeric: tabular-nums; text-align: right; }
+    .hd { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #5d6b7a; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { padding: 8px 10px; font-size: 12.5px; border-bottom: 1px solid #E4EAF0; border-left: 0; border-right: 0; }
+    tbody tr:nth-child(even) { background: #FAFCFD; }
+    a { color: #1c5ba8; } a:hover { color: #14314F; }
+    .ctl { font: inherit; font-size: 12.5px; height: 34px; box-sizing: border-box; border: 1px solid #C7D2DC; border-radius: 3px; padding: 0 10px; background: #FFFFFF; color: #0d2137; }
+    .date { width: 132px; }
+    .chip { font-size: 11.5px; height: 34px; box-sizing: border-box; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid #C7D2DC; border-radius: 17px; background: #FFFFFF; color: #14314F; }
+    .btnp { font: inherit; font-size: 12.5px; font-weight: 600; height: 34px; padding: 0 14px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer; }
+    .btns { font: inherit; font-size: 12.5px; height: 34px; padding: 0 14px; border: 1px solid #C7D2DC; background: #FFFFFF; color: #14314F; border-radius: 3px; cursor: pointer; }
+    .gear { width: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: #5d6b7a; }
+    .card { background: #FFFFFF; border: 1px solid #C7D2DC; border-radius: 3px; }
+    .cardhd { padding: 11px 16px; border-bottom: 1px solid #E4EAF0; }
+    .t { font-size: 14px; font-weight: 600; }
+    .s { font-size: 11.5px; color: #5d6b7a; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 1060px; box-sizing: border-box; background: #eef2f6; color: #0d2137; display: flex; flex-direction: column;">
+  <div style="background: #FFFFFF; border-bottom: 1px solid #C7D2DC; padding: 14px 24px 0 24px;">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 20px;">
+      <div>
+        <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.01em;">Accounts</div>
+        <div style="font-size: 12.5px; color: #5d6b7a; margin-top: 1px;">8 real, 2 virtual &middot; 3 cannot post because no Cash GL is mapped</div>
+      </div>
+      <div style="display: flex; gap: 8px;"><button type="button" class="btns" style="height: 44px;">Chart of accounts</button><button type="button" class="btnp" style="height: 44px;">+ New &#9662;</button></div>
+    </div>
+    <div style="display: flex; gap: 2px; margin-top: 12px;"><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Home</div><div style="font-size: 12.5px; font-weight: 600; padding: 9px 13px; color: #0d2137; border-bottom: 2.5px solid #14314F;">Accounts</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Transactions</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Link suggestions</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Reconciliation</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Driver escrow</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Relay card</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Reports</div><div style="font-size: 12.5px; padding: 9px 13px; color: #5d6b7a;">Settings</div></div>
+  </div>
+  <div style="padding: 14px 24px 22px 24px; display: flex; flex-direction: column; gap: 14px; min-height: 0;">
+    <div style="display: grid; grid-template-columns: 420px 1fr; gap: 14px; min-width: 0;">
+
+      <!-- MASTER -->
+      <div class="card" style="min-width: 0; display: flex; flex-direction: column;">
+        <div style="padding: 11px 14px; border-bottom: 1px solid #E4EAF0; display: flex; gap: 6px; align-items: center;">
+          <input class="ctl" style="flex-grow: 1; min-width: 0;" placeholder="Search accounts" aria-label="Search accounts">
+          <select class="ctl" style="width: 108px;" aria-label="Type"><option>All types</option></select>
+          <button type="button" aria-label="Choose columns" title="Choose columns" class="ctl gear"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg></button>
+        </div>
+        <div style="padding: 9px 14px; border-bottom: 1px solid #E4EAF0; background: #FAFCFD; display: flex; gap: 6px; flex-wrap: wrap;">
+          <span class="chip" style="background: #14314F; color: #FFFFFF; border-color: #14314F;">Real 8</span>
+          <span class="chip">Virtual 2</span>
+          <span class="chip" style="border-color: #B45309; color: #8A4208;">Unbound GL 3</span>
+        </div>
+        <table>
+          <thead>
+            <tr style="background: #F6F9FB;">
+              <th class="hd" style="text-align: left;">Account</th>
+              <th class="hd" style="text-align: right; width: 118px;">Balance</th>
+              <th class="hd" style="text-align: left; width: 62px;">GL</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{accts}}" as="a" hint-placeholder-count="10">
+              <tr style="background: {{a.rowBg}};">
+                <td style="max-width: 0; overflow: hidden;">
+                  <div style="font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{a.name}}</div>
+                  <div style="font-size: 10.5px; color: #8895a3;">{{a.kind}}</div>
+                </td>
+                <td class="num" style="font-weight: 600; color: {{a.tone}};">{{a.bal}}</td>
+                <td><span style="font-size: 10.5px; font-weight: 600; padding: 2px 6px; border-radius: 10px; background: {{a.glBg}}; color: {{a.glInk}};">{{a.gl}}</span></td>
+              </tr>
+            </sc-for>
+          </tbody>
+          <tfoot>
+            <tr style="background: #F6F9FB; border-top: 2px solid #C7D2DC;">
+              <td style="font-weight: 700;">Cash on hand &middot; real only</td>
+              <td class="num" style="font-weight: 700; color: #8C2020;">-$21,042.31</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- DETAIL -->
+      <div class="card" style="min-width: 0; display: flex; flex-direction: column;">
+        <div style="padding: 13px 18px; border-bottom: 1px solid #E4EAF0; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+          <div>
+            <div style="font-size: 17px; font-weight: 700;">Dreamline Diesel Card</div>
+            <div class="s" style="margin-top: 2px;">Real &middot; fuel card &middot; statement import &middot; 397 of 397 transactions uncategorized</div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btns">Close</button>
+            <button type="button" class="btnp">Save and close</button>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 12px; margin: 14px 18px 0 18px; background: #FDF3E7; border: 1px solid #B45309; border-radius: 3px; padding: 10px 14px;">
+          <span style="font-size: 15px; font-weight: 700; color: #8A4208; line-height: 1;">!</span>
+          <div style="flex-grow: 1;">
+            <div style="font-size: 13px; font-weight: 600; color: #8A4208;">This account has no Cash GL</div>
+            <div style="font-size: 11.5px; color: #3d4a57; margin-top: 1px;">Nothing on it can post to the general ledger until one is chosen. Every dollar here is off-book.</div>
+          </div>
+          <select class="ctl" style="width: 218px;" aria-label="Cash GL account"><option>Choose a Cash GL account…</option></select>
+        </div>
+
+        <!-- FIELDS — every box sized to what goes in it -->
+        <div style="padding: 16px 18px 4px 18px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 18px;">
+          <sc-for list="{{fields}}" as="f" hint-placeholder-count="12">
+            <div>
+              <div class="hd" style="margin-bottom: 4px;">{{f.label}}</div>
+              <div style="font-size: 12.5px; font-weight: {{f.wt}}; color: {{f.ink}}; height: 34px; display: flex; align-items: center;">{{f.value}}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="padding: 8px 18px 0 18px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 18px;">
+          <div>
+            <div class="hd" style="margin-bottom: 4px;">Opening balance date</div>
+            <input class="ctl date" value="08/01/2026" aria-label="Opening balance date">
+          </div>
+          <div>
+            <div class="hd" style="margin-bottom: 4px;">Opening balance</div>
+            <input class="ctl num" style="width: 120px;" value="0.00" aria-label="Opening balance">
+          </div>
+          <div>
+            <div class="hd" style="margin-bottom: 4px;">Short code</div>
+            <input class="ctl" style="width: 104px;" value="DRMLN" aria-label="Short code">
+          </div>
+        </div>
+
+        <div style="padding: 16px 18px 18px 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; min-width: 0;">
+          <div style="border: 1px solid #E4EAF0; border-radius: 3px; min-width: 0;">
+            <div style="padding: 9px 13px; border-bottom: 1px solid #E4EAF0; background: #FAFCFD;"><div class="t" style="font-size: 13px;">Recent activity</div></div>
+            <table>
+              <tbody>
+                <sc-for list="{{recent}}" as="r" hint-placeholder-count="6">
+                  <tr>
+                    <td class="num" style="text-align: left; width: 86px; color: #3d4a57;">{{r.d}}</td>
+                    <td style="max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{r.t}}</td>
+                    <td class="num" style="width: 104px; font-weight: 600; color: #8C2020;">{{r.a}}</td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+          <div style="border: 1px solid #E4EAF0; border-radius: 3px; min-width: 0;">
+            <div style="padding: 9px 13px; border-bottom: 1px solid #E4EAF0; background: #FAFCFD;"><div class="t" style="font-size: 13px;">What this account owes the ledger</div></div>
+            <div style="padding: 4px 13px 12px 13px;">
+              <sc-for list="{{owes}}" as="o" hint-placeholder-count="4">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px solid #E4EAF0;">
+                  <span style="font-size: 12px; color: #3d4a57;">{{o.k}}</span>
+                  <span class="num" style="font-size: 12.5px; font-weight: 600; color: {{o.ink}};">{{o.v}}</span>
+                </div>
+              </sc-for>
+              <div style="font-size: 11.5px; color: #5d6b7a; margin-top: 10px; line-height: 1.6;">
+                A fuel card is Tier 1 by definition — the truck was working. Every row on it needs a unit, a driver and a load before it posts. 397 of 397 currently have none of the three.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1060}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const RED = '#8C2020', AMBER = '#8A4208', NAVY = '#14314F', MUTE = '#8895a3';
+    const usd = (n) => (n < 0 ? '-$' : '$') + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const A = (name, kind, bal, gl, sel) => {
+      const map = { ok: ['#ECF3EC', '#1F6B32', 'Bound'], no: ['#FDF3E7', AMBER, 'None'], na: ['#F1F5F8', MUTE, 'n/a'] };
+      const m = map[gl];
+      return {
+        name, kind,
+        bal: bal === 0 ? '—' : usd(bal),
+        tone: bal < 0 ? RED : bal > 0 ? NAVY : MUTE,
+        gl: m[2], glBg: m[0], glInk: m[1],
+        rowBg: sel ? '#EEF4FA' : 'transparent'
+      };
+    };
+
+    const accts = [
+      A('USMCA FREIGHT ••••3224', 'Real · operating', 0, 'ok'),
+      A('Dreamline Diesel Card', 'Real · fuel card', -140226.34, 'no', true),
+      A('Relay Fuel Wallet', 'Real · fuel card', -32726.45, 'no'),
+      A('Faro Factoring — USMCA', 'Real · factoring', 0, 'ok'),
+      A('Faro Cash Reserve', 'Real · factoring', 0, 'ok'),
+      A('Faro Escrow Reserve', 'Real · factoring', 0, 'no'),
+      A('Petty Cash', 'Real · cash', 0, 'ok'),
+      A('Scentsx', 'Real · other', 0, 'ok'),
+      A('Factoring Reserve', 'Virtual · ledger', 4992.75, 'na'),
+      A('Driver Escrow Pool', 'Virtual · ledger', 2375.00, 'na')
+    ];
+
+    const F = (label, value, tone) => ({
+      label, value,
+      ink: tone === 'bad' ? RED : tone === 'warn' ? AMBER : tone === 'mute' ? MUTE : '#0d2137',
+      wt: tone === 'mute' ? '400' : '600'
+    });
+
+    const fields = [
+      F('Type', 'Credit card — fuel'),
+      F('Currency', 'USD'),
+      F('Feed source', 'Statement import (CSV)'),
+      F('Cash GL account', 'Not mapped', 'bad'),
+      F('QBO account', 'Not connected', 'bad'),
+      F('Last reconciled', 'Never', 'bad'),
+      F('Transactions', '397'),
+      F('Uncategorized', '397 — 100%', 'bad'),
+      F('Linked to a unit', '0', 'bad'),
+      F('Statement day', '28th of the month'),
+      F('Opened', '08/01/2026'),
+      F('Closed', '—', 'mute')
+    ];
+
+    const recent = [
+      { d: '09/28', t: 'DREAMLINE ENERGY — SETTLEMENT', a: usd(-41886.12) },
+      { d: '09/27', t: "LOVE'S #604 — LAREDO TX", a: usd(-594.33) },
+      { d: '09/26', t: 'PILOT #431 — COTULLA TX', a: usd(-906.82) },
+      { d: '09/26', t: "LOVE'S #212 — SAN ANTONIO TX", a: usd(-321.74) },
+      { d: '09/25', t: 'DEF BULK — LAREDO TERMINAL', a: usd(-212.40) },
+      { d: '09/24', t: 'PILOT #217 — DILLEY TX', a: usd(-755.19) }
+    ];
+
+    const owes = [
+      { k: 'Uncategorized rows', v: '397', ink: RED },
+      { k: 'Rows with no unit', v: '397', ink: RED },
+      { k: 'Rows with no load', v: '397', ink: RED },
+      { k: 'Posted to the GL', v: usd(0), ink: RED }
+    ];
+
+    return { accts, fields, recent, owes };
+  }
+}
+</script>
+</body>
+</html>

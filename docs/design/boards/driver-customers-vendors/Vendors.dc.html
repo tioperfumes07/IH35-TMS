@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Vendors</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    .num { font-variant-numeric: tabular-nums; text-align: right; }
+    .hd { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #64748B; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { padding: 8px 10px; font-size: 12.5px; border-bottom: 1px solid #E8EDF2; }
+    tbody tr:nth-child(even) { background: #FAFCFD; }
+    a { color: #14314F; } a:hover { color: #0B1B2B; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 1000px; box-sizing: border-box; background: #F1F4F7; color: #0F1B2D; display: flex; flex-direction: column;">
+
+  <div style="background: #FFFFFF; border-bottom: 1px solid #D8E0E8; padding: 14px 24px 12px 24px;">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 20px;">
+      <div>
+        <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.01em;">Vendors</div>
+        <div style="font-size: 12.5px; color: #64748B; margin-top: 1px;">The list opens on the vendors you actually pay</div>
+      </div>
+      <button type="button" style="font: inherit; font-size: 12.5px; font-weight: 600; padding: 8px 16px; min-height: 44px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer;">+ Create Vendor</button>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-top: 12px;">
+      <div style="background: #14314F; border: 1px solid #14314F; border-radius: 3px; padding: 8px 11px;">
+        <div style="font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #B8C7D8;">With transactions</div>
+        <div class="num" style="font-size: 21px; font-weight: 600; text-align: left; line-height: 1.2; color: #FFFFFF;">34</div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; padding: 8px 11px;">
+        <div class="hd">In the book</div>
+        <div class="num" style="font-size: 21px; font-weight: 600; text-align: left; line-height: 1.2;">623</div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; padding: 8px 11px;">
+        <div class="hd">Spend YTD</div>
+        <div class="num" style="font-size: 21px; font-weight: 600; text-align: left; line-height: 1.2;">$185,914.44</div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; padding: 8px 11px;">
+        <div class="hd">Fuel share</div>
+        <div class="num" style="font-size: 21px; font-weight: 600; text-align: left; line-height: 1.2;">99.2%</div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px; padding: 8px 11px;">
+        <div class="hd">Open bills</div>
+        <div class="num" style="font-size: 21px; font-weight: 600; text-align: left; line-height: 1.2;">—</div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #B45309; border-radius: 3px; padding: 8px 11px;">
+        <div style="font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #8A4208;">Unposted fuel</div>
+        <div class="num" style="font-size: 21px; font-weight: 600; text-align: left; line-height: 1.2; color: #8A4208;">$20,942.94</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="background: #FFFFFF; border-bottom: 1px solid #D8E0E8; padding: 9px 24px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+    <button type="button" style="font: inherit; font-size: 11.5px; font-weight: 600; min-height: 34px; padding: 0 11px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer;">With transactions 34</button>
+    <button type="button" style="font: inherit; font-size: 11.5px; min-height: 34px; padding: 0 11px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Open bills 0</button>
+    <button type="button" style="font: inherit; font-size: 11.5px; min-height: 34px; padding: 0 11px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">All 623</button>
+
+    <span style="width: 1px; height: 22px; background: #E2E8F0; margin: 0 4px;"></span>
+
+    <span class="hd">Category</span>
+    <div style="display: flex; align-items: center; gap: 5px; border: 1px solid #C6D1DC; border-radius: 3px; padding: 3px 6px; background: #FFFFFF; min-height: 34px;">
+      <span style="display: inline-flex; align-items: center; gap: 5px; background: #E8EEF5; color: #1F2A44; font-size: 11.5px; font-weight: 600; border-radius: 2px; padding: 3px 5px 3px 7px;">Fuel <button type="button" aria-label="Remove fuel" style="font: inherit; line-height: 1; border: 0; background: none; color: #64748B; cursor: pointer; padding: 0 2px;">×</button></span>
+      <span style="display: inline-flex; align-items: center; gap: 5px; background: #E8EEF5; color: #1F2A44; font-size: 11.5px; font-weight: 600; border-radius: 2px; padding: 3px 5px 3px 7px;">Repair <button type="button" aria-label="Remove repair" style="font: inherit; line-height: 1; border: 0; background: none; color: #64748B; cursor: pointer; padding: 0 2px;">×</button></span>
+      <span style="font-size: 12px; color: #94A3B8; padding: 0 6px;">Add…</span>
+    </div>
+
+    <label for="vsearch" style="position: absolute; left: -9999px;">Search vendors</label>
+    <input id="vsearch" type="search" placeholder="Search all 623 — hidden is not missing" style="font: inherit; font-size: 12.5px; min-height: 34px; flex-grow: 1; min-width: 200px; border: 1px solid #C6D1DC; border-radius: 3px; padding: 0 10px; background: #FFFFFF; color: #0F1B2D;">
+
+    <button type="button" style="font: inherit; font-size: 11.5px; font-weight: 600; height: 34px; padding: 0 11px; border: 1px solid #14314F; background: #14314F; color: #FFFFFF; border-radius: 3px; cursor: pointer;">Regular</button>
+    <button type="button" style="font: inherit; font-size: 11.5px; height: 34px; padding: 0 11px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Master-detail</button>
+    <button type="button" style="font: inherit; font-size: 11.5px; height: 34px; padding: 0 11px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #1F2A44; border-radius: 3px; cursor: pointer;">Export</button>
+    <button type="button" aria-label="Choose columns" title="Choose columns" style="font: inherit; min-height: 34px; width: 34px; border: 1px solid #C6D1DC; background: #FFFFFF; color: #475569; border-radius: 3px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>
+    </button>
+  </div>
+
+  <div style="padding: 14px 24px 20px 24px; display: flex; flex-direction: column; gap: 12px;">
+
+    <div style="background: #FFFFFF; border: 1px solid #D8E0E8; border-radius: 3px;">
+      <table>
+        <thead>
+          <tr style="background: #F6F9FB;">
+            <th class="hd" style="text-align: left;">Vendor</th>
+            <th class="hd" style="text-align: left; width: 118px;">Category</th>
+            <th class="hd" style="text-align: right; width: 92px;">Transactions</th>
+            <th class="hd" style="text-align: right; width: 136px;">Spend YTD</th>
+            <th class="hd" style="text-align: right; width: 118px;">Avg ticket</th>
+            <th class="hd" style="text-align: right; width: 104px;">Last paid</th>
+            <th class="hd" style="text-align: left; width: 120px;">Pays through</th>
+            <th class="hd" style="text-align: right; width: 116px;">Open bills</th>
+          </tr>
+        </thead>
+        <tbody>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+            <tr>
+              <td><a href="#v" style="font-weight: 600; text-decoration: none;">{{r.name}}</a></td>
+              <td style="color: #475569;">{{r.cat}}</td>
+              <td class="num">{{r.txns}}</td>
+              <td class="num" style="font-weight: 600;">{{r.spend}}</td>
+              <td class="num" style="color: #475569;">{{r.avg}}</td>
+              <td class="num" style="color: #64748B;">{{r.last}}</td>
+              <td style="color: #475569;">{{r.pays}}</td>
+              <td class="num" style="color: #94A3B8;">—</td>
+            </tr>
+          </sc-for>
+        </tbody>
+        <tfoot>
+          <tr style="background: #F6F9FB; border-top: 2px solid #D8E0E8;">
+            <td style="font-weight: 700;">34 vendors with transactions</td>
+            <td></td>
+            <td class="num" style="font-weight: 700;">523</td>
+            <td class="num" style="font-weight: 700;">$185,914.44</td>
+            <td colspan="4"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div style="background: #FFF7ED; border: 1px solid #B45309; border-radius: 3px; padding: 12px 16px;">
+      <div style="font-size: 13px; font-weight: 700; color: #8A4208;">Two things this screen makes visible</div>
+      <div style="font-size: 12.5px; color: #334155; margin-top: 4px; line-height: 1.6;">
+        <strong>LOVES is 494 of your 523 vendor transactions and $177,911.29 of $185,914.44 — 95.7% of every dollar you pay a vendor.</strong> That concentration is worth knowing before you negotiate.<br>
+        <strong>$20,942.94 of Relay fuel has never posted.</strong> 44 transactions staged since 08-03, blocked because the unit could not be matched — though the resolver's own query matches 43 of the 44 against live data today. There is no unit-rematch route in the app; that is the missing piece, and it is queued.
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const usd = (n) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const raw = [
+      ['LOVES', 'Fuel', 494, 177911.29, '09/27/2026', 'Relay fuel card'],
+      ['PILOT', 'Fuel', 13, 6003.26, '09/14/2026', 'Relay fuel card'],
+      ['FLYING', 'Fuel', 5, 1124.19, '09/15/2026', 'Relay fuel card'],
+      ['Fuel America', 'Fuel', 6, 311.77, '09/18/2026', 'Relay fuel card'],
+      ['PRIME INT', 'Crossing', 1, 225.00, '09/12/2026', 'Bank ACH'],
+      ['PALOS GARZA', 'Crossing', 1, 124.80, '08/21/2026', 'Bank ACH'],
+      ['SR FORWARDING,INC', 'Crossing', 1, 120.00, '08/21/2026', 'Bank ACH'],
+      ['Blue Beacon Truck Wash', 'Truck wash', 2, 94.13, '08/20/2026', 'Bank ACH']
+    ];
+    const rows = raw.map((r) => ({
+      name: r[0], cat: r[1], txns: r[2].toLocaleString('en-US'),
+      spend: usd(r[3]), avg: usd(r[3] / r[2]), last: r[4], pays: r[5]
+    }));
+    return { rows: rows };
+  }
+}
+</script>
+</body>
+</html>

@@ -1285,3 +1285,11 @@ re-author them.
 The last gate failure on branch 1 is `verify-transaction-linkage-law: DATABASE_URL not set` — my
 session has none, yours does. Run it where it can connect. **Do not add ALLOW_OFFLINE_SKIP, do not
 fake a URL, do not skip it.** No `--no-verify`. No baseline additions.
+
+## ROUND 363 — 2026-10-03 15:13Z — ASSIGNED
+
+Read in this order, both are required before you write code:
+1. `docs/bus/10-03-2026-ALL-SEATS-ROUND-363-LAW-THE-RECLASSIFY-ENGINE-AND-THE-POSTING-STAMP.md` — nine laws, owner-ruled this session. Edit-not-delete, the posting load stamp, the three-selector reclassify engine, the four things a reefer-fuel reclass moves, what can and cannot be reclassified (Lead correction on the record), a match posts nothing, the gate credential and the 23 guards that were never passing, the whole chart of accounts including zeros, and audit style.
+2. `docs/bus/10-03-2026-CC-1-ROUND-363-THE-POSTING-STAMP-BILL-PAYMENTS-AND-THE-MATCH-POSTS-NOTHING.md` — your box.
+
+Lane ruling for this round: `docs/bus/00-LEAD-RULING-2026-10-03-LANE-CROSS-ACCT-F9855-AND-POSTING-LOAD-ID.md`

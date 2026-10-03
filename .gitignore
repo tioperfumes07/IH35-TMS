@@ -30,3 +30,8 @@ scripts/feed/.last-close-*.json
 .local/
 # self-written by its guard on first run; pins a live bank_transactions count — never commit (Lead 2026-10-01)
 scripts/verify-bank-match-suggest-is-read-only.baseline.json
+
+# Nested seat worktrees (git worktree add ./wt-*) — never part of the tree
+wt-*/
+.tmp-scratch/
+.r330-staged/
