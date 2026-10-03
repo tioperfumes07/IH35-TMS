@@ -1887,6 +1887,11 @@
       "claimed_at": "2026-10-03",
       "purpose": "ROUND 373 ordering (writers, then arm): DISABLE the 26 document-side triggers of 202615360600 until every void path releases the bank lines that name its document; the bank-line and match-row refusals stay armed."
     },
+    "202615380600": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-03",
+      "purpose": "U24 (owner UI register, CC-2): reclassify by ITEM and by LOAD — from/to item and load columns on accounting.reclassify_batches / reclassify_batch_lines so the engine records and undoes an item or load move (the item move carries the item account; the load move re-stamps the reclass legs old -> new)."
+    },
     "202615370800": {
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-03",
