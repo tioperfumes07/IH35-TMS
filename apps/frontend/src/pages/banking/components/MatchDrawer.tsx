@@ -99,6 +99,7 @@ const KIND_LABELS: Record<BankMatchCandidateKind, string> = {
   je: "Journal Entry",
   bill: "Bill",
   expense: "Expense",
+  deposit: "Deposit",
 };
 
 /** ORDERS §19 Find Other Matches — Record type chips (QBO Show). */
@@ -109,6 +110,7 @@ const RECORD_TYPE_CHIPS: ReadonlyArray<{ kind: BankMatchCandidateKind; label: st
   { kind: "transfer", label: "Transfer" },
   { kind: "je", label: "Journal Entry" },
   { kind: "bill", label: "Bill" },
+  { kind: "deposit", label: "Deposit" },
 ];
 
 function chipClassName(selected: boolean) {
@@ -126,6 +128,7 @@ const KIND_ENTITY: Record<BankMatchCandidateKind, EntityKind> = {
   je: "journal_entry",
   bill: "bill",
   expense: "expense",
+  deposit: "deposit",
 };
 
 function formatMoneyCents(cents: number | null | undefined) {

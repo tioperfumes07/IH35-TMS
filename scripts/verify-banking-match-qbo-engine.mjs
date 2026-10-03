@@ -75,10 +75,12 @@ export function problemsFor({ service, predicate, route, api, view, drawer }) {
     const after = service.slice(fetchStart);
     const fetchEnd = after.indexOf("\nasync function loadLedgerAmountCents");
     const body = fetchEnd > 0 ? after.slice(0, fetchEnd) : after.slice(0, 4500);
+    // ROUND 369.2 (Lead ruling, 2026-10-03): "QBO parity wins. ROUND 157-C is superseded" — any open document of a
+    // matchable type is a candidate, so customer payments and expenses are no longer forbidden here (that contract is
+    // asserted by verify-bank-match-candidate-sources). Transfers and journal entries stay out: #22960 removed them as
+    // candidates on purpose and verify-bank-match-no-double-match-all-six-kinds names why.
     for (const [re, name] of [
-      [/FROM accounting\.expenses\b/i, "expenses"],
       [/FROM accounting\.journal_entries\b/i, "journal_entries"],
-      [/FROM accounting\.payments\b/i, "AR payments"],
       [/FROM banking\.transfers\b/i, "transfers"],
     ]) {
       if (re.test(body)) p.push(`service: fetchLedgerCandidates must NOT select ${name}`);
@@ -155,7 +157,8 @@ function selftest() {
   const mutants = [
     ["resurrect QBO 90", { ...base, service: base.service.replace("export const MATCH_WINDOW_STEPS", "export const QBO_DAYS_BEFORE = 90;\nexport const MATCH_WINDOW_STEPS") }],
     ["step1 wrong bounds", { ...base, service: base.service.replace("step1: { before: 3, after: 1 }", "step1: { before: 90, after: 20 }") }],
-    ["expenses back", { ...base, service: base.service.replace("async function fetchLedgerCandidates", "async function fetchLedgerCandidates() {\n FROM accounting.expenses e\n}\nasync function fetchLedgerCandidates_OLD") }],
+    // ROUND 369.2 retired the "no expenses / no AR payments" rule; the mutant that guards a live rule takes its place.
+    ["transfers back", { ...base, service: base.service.replace("async function fetchLedgerCandidates", "async function fetchLedgerCandidates() {\n FROM banking.transfers t\n}\nasync function fetchLedgerCandidates_OLD") }],
     ["type filter back", { ...base, view: base.view + `\n<div data-testid="banking-match-filter-kind"><MultiSelectDropdown data-testid="banking-match-filter-kind-dropdown"/></div>\n` }],
   ];
   for (const [name, mutant] of mutants) {

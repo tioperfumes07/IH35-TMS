@@ -132,7 +132,7 @@ async function decideOnClient(client: PgClient, input: MaybePostBankCategorizati
           bt.matched_journal_entry_id::text            AS matched_journal_entry_id,
           COALESCE(bt.matched_expense_id, bt.matched_fuel_transaction_id, bt.matched_relay_fuel_transaction_id,
                    bt.matched_invoice_id, bt.matched_payment_id, bt.matched_bill_payment_id, bt.matched_settlement_id,
-                   bt.matched_factoring_advance_id, bt.matched_advance_id)::text AS matched_document_id,
+                   bt.matched_factoring_advance_id, bt.matched_advance_id, bt.matched_deposit_id)::text AS matched_document_id,
           bt.transfer_kind::text                       AS transfer_kind,
           bt.destination_bank_account_id::text         AS destination_bank_account_id,
           bt.matched_transfer_id::text                 AS matched_transfer_id,

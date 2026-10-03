@@ -79,6 +79,7 @@ export const RELEASE_CATEGORIZATION_SET_SQL = `
             matched_factoring_advance_id = NULL,
             matched_fuel_transaction_id = NULL,
             matched_relay_fuel_transaction_id = NULL,
+            matched_deposit_id = NULL,
             matched_journal_entry_id = NULL,
             category = NULL,
             category_kind = NULL,

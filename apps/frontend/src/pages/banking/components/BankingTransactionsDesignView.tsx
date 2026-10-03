@@ -164,6 +164,7 @@ const MATCH_CANDIDATE_KIND_LABELS: Record<BankMatchCandidateKind, string> = {
   je: "Journal Entry",
   bill: "Bill",
   expense: "Expense",
+  deposit: "Deposit",
 };
 
 // Match candidates — EntityLink for every kind with a real detail route (Law §9).
@@ -174,6 +175,7 @@ const MATCH_CANDIDATE_ENTITY_KIND: Record<BankMatchCandidateKind, EntityKind> = 
   je: "journal_entry",
   bill: "bill",
   expense: "expense",
+  deposit: "deposit",
 };
 
 // ROUND 157-C / 156 MASTER SPEC: BUILD NO TYPE FILTER. Settlement-born only is the entire

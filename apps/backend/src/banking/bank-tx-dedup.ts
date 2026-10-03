@@ -96,6 +96,7 @@ export async function repointReconciliationMatchesOnPlaidMerge(
              matched_factoring_advance_id = COALESCE(survivor.matched_factoring_advance_id, pending.matched_factoring_advance_id),
              matched_fuel_transaction_id = COALESCE(survivor.matched_fuel_transaction_id, pending.matched_fuel_transaction_id),
              matched_relay_fuel_transaction_id = COALESCE(survivor.matched_relay_fuel_transaction_id, pending.matched_relay_fuel_transaction_id),
+             matched_deposit_id = COALESCE(survivor.matched_deposit_id, pending.matched_deposit_id),
              categorized_by_user_id = COALESCE(survivor.categorized_by_user_id, pending.categorized_by_user_id),
              categorized_at = COALESCE(survivor.categorized_at, pending.categorized_at),
              updated_at = now()

@@ -536,7 +536,8 @@ export function getFactoringVirtualTimeline(companyId: string, loadId?: string) 
   );
 }
 
-export type BankMatchCandidateKind = "payment" | "bill_payment" | "transfer" | "je" | "bill" | "expense";
+// ROUND 373.4 — "deposit": a Deposit document (Make Deposit) the bank deposit line matches; the match posts nothing.
+export type BankMatchCandidateKind = "payment" | "bill_payment" | "transfer" | "je" | "bill" | "expense" | "deposit";
 
 export type BankMatchCandidate = {
   ledger_entry_kind: BankMatchCandidateKind;
