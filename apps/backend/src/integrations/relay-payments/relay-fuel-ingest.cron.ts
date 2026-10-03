@@ -31,7 +31,7 @@ import {
   type RelayFuelTransaction,
   RelayApiError,
 } from "./relay-client.js";
-import { upsertRelayFuelTransaction } from "./relay-fuel-ingest.service.js";
+import { upsertRelayFuelTransaction, type RelayIngestSource } from "./relay-fuel-ingest.service.js";
 import { computeRelayIngestWindow } from "./relay-fuel-ingest-window.js";
 
 const RELAY_SYNC_KIND = "relay_fuel_daily_pull";
@@ -160,14 +160,19 @@ async function listActiveCompanyIds(client: DbClient): Promise<{ id: string; cod
   return res.rows.map((r) => ({ id: r.id, code: r.code }));
 }
 
-async function ingestForCompany(
+/**
+ * The ONE Relay ingest path. The 07:00 cron, the backfill and the webhook receiver (relay-fuel-webhook.routes.ts) all
+ * land rows through here, so a fill arriving by push takes exactly the path a pulled fill takes — the webhook changes
+ * arrival time, never the posting rule (Lead ROUND 353).
+ */
+export async function ingestForCompany(
   client: DbClient,
   app: Pick<FastifyInstance, "log">,
   operatingCompanyId: string,
   startDate: string,
   endDate: string,
   entityCode: string | null,
-  opts?: { preloaded?: RelayFuelTransaction[] }
+  opts?: { preloaded?: RelayFuelTransaction[]; source?: RelayIngestSource }
 ): Promise<{ pulled: number; upserted: number; skipped: number; gl_post_candidates: FuelTxnGlPostCandidate[] }> {
   assertTenantContext(operatingCompanyId, "relay_payments.fuel_ingest_cron");
   await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
@@ -195,7 +200,7 @@ async function ingestForCompany(
       );
       continue;
     }
-    const result = await upsertRelayFuelTransaction(client, operatingCompanyId, parsed, "daily_pull");
+    const result = await upsertRelayFuelTransaction(client, operatingCompanyId, parsed, opts?.source ?? "daily_pull");
     upserted += 1;
     if (result.gl_post_candidate) gl_post_candidates.push(result.gl_post_candidate);
     if (!result.matched_driver_id || !result.matched_unit_id) {
@@ -211,10 +216,11 @@ async function ingestForCompany(
     }
   }
 
+  const source = opts?.source ?? "daily_pull";
   await client.query(`SELECT audit.append_event($1, $2, $3::jsonb, NULL, $4)`, [
-    "integrations.relay_fuel_ingest_daily_pull",
+    source === "daily_pull" ? "integrations.relay_fuel_ingest_daily_pull" : `integrations.relay_fuel_ingest_${source}`,
     "info",
-    JSON.stringify({ operating_company_id: operatingCompanyId, start_date: startDate, end_date: endDate, pulled: rawRows.length, upserted, skipped }),
+    JSON.stringify({ operating_company_id: operatingCompanyId, source, start_date: startDate, end_date: endDate, pulled: rawRows.length, upserted, skipped }),
     RELAY_FUEL_INGEST_AUDIT_SOURCE,
   ]);
 

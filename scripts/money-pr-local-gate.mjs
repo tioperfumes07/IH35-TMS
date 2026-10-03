@@ -789,6 +789,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-one-leg-asset-never-credit",
     ["db/migrations/202615330600_one_leg_asset_accounts_never_credit.sql", "apps/backend/src/accounting/fuel-posting/", "scripts/verify-one-leg-asset-never-credit.mjs"],
   ],
+  // 10-02 queue item 5 / ROUND 353 — Relay fuel webhook: signed before parsed, lands through the pull's ingest path.
+  [
+    "verify-relay-fuel-webhook-receiver",
+    ["apps/backend/src/integrations/relay-payments/", "apps/backend/src/index.ts", "scripts/verify-relay-fuel-webhook-receiver.mjs"],
+  ],
   // Insurance guards that existed but were registered nowhere — they drifted red on main unnoticed (ROUND 342 rename).
   [
     "verify-insurance-claim-graph-complete-reverse",
