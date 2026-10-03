@@ -124,6 +124,12 @@ export function audit(read) {
   if (dispatchSrc.includes("text-[11px]")) {
     fails.push("Dispatch catalogs: must not use text-[11px] — use text-xs");
   }
+  // BANK-F91110 — ORDERS chrome: Termination Reasons field errors use text-xs, not text-[11px].
+  const termRel = "apps/frontend/src/pages/lists/drivers/TerminationReasonsListPage.tsx";
+  const termSrc = read(termRel);
+  if (termSrc.includes("text-[11px]")) {
+    fails.push("Driver Termination Reasons: must not use text-[11px] — use text-xs");
+  }
   return fails;
 }
 
