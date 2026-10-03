@@ -16,6 +16,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { ListErrorState } from "../../components/ListErrorState";
 import { companyToday } from "../../lib/businessDate";
 import { mmmDd } from "../../lib/formatDate";
+import { UnclearedDocumentsNote, type UnclearedDocumentNote } from "../../components/accounting/UnclearedDocumentsNote";
 
 function fmtMoney(cents: number) {
   return formatUsdCents(cents);
@@ -86,6 +87,7 @@ type Props = {
   /** Roster query status so the empty state renders only once the fetch settles. */
   status: ListQueryStatus;
   openByCustomerId: Map<string, number>;
+  unclearedByCustomerId?: Map<string, { uncleared_cents: number; uncleared_documents: UnclearedDocumentNote[] }>;
   openBalancesAvailable: boolean;
   /** CC-3 V.1 roll-up: per-customer YTD profitability keyed by customer_id. */
   profitabilityByCustomerId: Map<string, CustomerProfitability>;
@@ -94,7 +96,7 @@ type Props = {
   onSelectCustomer?: (customerId: string) => void;
 };
 
-export function CustomersListView({ companyId, customers, status, openByCustomerId, openBalancesAvailable, profitabilityByCustomerId, financeByCustomerId, onSelectCustomer }: Props) {
+export function CustomersListView({ companyId, customers, status, openByCustomerId, unclearedByCustomerId, openBalancesAvailable, profitabilityByCustomerId, financeByCustomerId, onSelectCustomer }: Props) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   // Same BULK_WRITE_ROLES gate the old BulkActionBar enforced internally (useBulkPermission) —
@@ -429,6 +431,25 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             cellClass: "text-right tabular-nums",
             sortValue: (row) => row.ar_open_cents ?? -1,
             render: (row) => (row.ar_open_cents == null ? <span className="text-gray-500">Unavailable</span> : fmtMoney(row.ar_open_cents)),
+          },
+          {
+            key: "cleared_open_cents",
+            label: "Cleared",
+            sortable: true,
+            cellClass: "text-right tabular-nums",
+            sortValue: (row) => (row.ar_open_cents ?? 0) + (unclearedByCustomerId?.get(row.id)?.uncleared_cents ?? 0),
+            render: (row) =>
+              row.ar_open_cents == null ? (
+                <span className="text-gray-500">Unavailable</span>
+              ) : (
+                fmtMoney(row.ar_open_cents + (unclearedByCustomerId?.get(row.id)?.uncleared_cents ?? 0))
+              ),
+          },
+          {
+            key: "uncleared_cents",
+            label: "Not cleared",
+            sortable: true,
+            render: (row) => <UnclearedDocumentsNote docs={unclearedByCustomerId?.get(row.id)?.uncleared_documents ?? []} />,
           },
           {
             key: "overdue_label",

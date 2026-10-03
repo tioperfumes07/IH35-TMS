@@ -35,6 +35,9 @@ import { ReferenceSelect, type ReferenceOption } from "../components/parity/Refe
 import { useCatalogQuery } from "../hooks/useCatalogQuery";
 import { CounterpartyStatementView } from "./reports/CounterpartyStatementPage";
 import { EntityActivityFeed } from "../components/shared/EntityActivityFeed";
+import { getApAgingReport } from "../api/reports";
+import { UnclearedDocumentsNote, type UnclearedDocumentNote } from "../components/accounting/UnclearedDocumentsNote";
+import { companyToday } from "../lib/businessDate";
 
 type VendorTabId = "transaction_list" | "vendor_details" | "statements" | "activity" | "notes";
 
@@ -278,6 +281,22 @@ export function VendorsPage() {
     queryFn: () => listVendorBalances(companyId, { all: true }),
     enabled: Boolean(companyId),
   });
+  const apAgingUnclearedQuery = useQuery({
+    queryKey: ["reports", "ap-aging", "uncleared", companyId],
+    queryFn: () => getApAgingReport(companyId, companyToday()),
+    enabled: Boolean(companyId),
+    retry: false,
+  });
+  const unclearedByVendorId = useMemo(() => {
+    const map = new Map<string, { uncleared_cents: number; uncleared_documents: UnclearedDocumentNote[] }>();
+    for (const row of apAgingUnclearedQuery.data?.rows ?? []) {
+      map.set(row.vendor_id, {
+        uncleared_cents: row.uncleared_cents,
+        uncleared_documents: row.uncleared_documents,
+      });
+    }
+    return map;
+  }, [apAgingUnclearedQuery.data?.rows]);
   // CC-3 V.1 / Wave 3 Step 3 — vendor counterparty roll-up (Purchases YTD / Last Purchase / Last Transaction).
   const vendorRollupsQuery = useQuery({
     queryKey: ["mdata", "vendor-rollups", companyId],
@@ -798,6 +817,7 @@ export function VendorsPage() {
               vendors={vendorsSorted}
               status={vendorsStatus}
               openByVendorId={openByVendorId}
+              unclearedByVendorId={unclearedByVendorId}
               rollupByVendorId={rollupByVendorId}
               onSelectVendor={(vendorId) => {
                 setSelectedVendorId(vendorId);
@@ -915,6 +935,18 @@ export function VendorsPage() {
                       per-detail computation that could drift from the list column. */}
                   <p className="text-xs text-gray-600">Open balance</p>
                   <p className="text-page-title font-semibold text-gray-900">{balancesQuery.isError ? <span className="text-red-600 text-xs">Failed to load — <button type="button" className="underline" onClick={() => void balancesQuery.refetch()}>Retry</button></span> : fmtMoney(openByVendorId.get(selectedVendor.id) ?? 0)}</p>
+                  <p className="mt-2 text-xs text-gray-600">Cleared</p>
+                  <p className="text-page-title font-semibold text-gray-900">
+                    {balancesQuery.isError
+                      ? <span className="text-red-600 text-xs">Failed to load</span>
+                      : fmtMoney((openByVendorId.get(selectedVendor.id) ?? 0) + (unclearedByVendorId.get(selectedVendor.id)?.uncleared_cents ?? 0))}
+                  </p>
+                  <UnclearedDocumentsNote docs={unclearedByVendorId.get(selectedVendor.id)?.uncleared_documents ?? []} />
+                  {(unclearedByVendorId.get(selectedVendor.id)?.uncleared_cents ?? 0) > 0 ? (
+                    <p className="mt-2 rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
+                      Applied payments that have not been matched or categorized in Banking are named not cleared.
+                    </p>
+                  ) : null}
                   <p className="mt-2 text-xs text-gray-600">Spend (YTD)</p>
                   <p className="text-page-title font-semibold text-gray-900" data-testid="vendor-detail-spend-ytd">{vendorRollupsQuery.isError ? <span className="text-red-600 text-xs">Failed to load</span> : fmtMoney(rollupByVendorId.get(selectedVendor.id)?.spend_ytd_cents ?? 0)}</p>
                   <p className="mt-2 text-xs text-gray-600">Overdue payment</p>
