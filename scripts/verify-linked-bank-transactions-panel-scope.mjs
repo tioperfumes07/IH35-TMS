@@ -53,6 +53,9 @@ function verify(r, a, p, accounting = accountingMatrix, banking = bankingMatrix)
   if (!emptyCondition.includes("isSuccess") || !emptyCondition.includes("rows.length === 0")) {
     failures.push("panel conflates fetch failure with an empty reverse set");
   }
+  // BANK-F91282 leftover refuse — LinkedBankTransactionsPanel text token ratchet
+  if (p.includes("text-[11px]")) failures.push("LinkedBankTransactionsPanel.tsx: leftover text-[11px]");
+  if (p.includes("#8A92AB") || p.includes("#334155")) failures.push("LinkedBankTransactionsPanel.tsx: leftover off-scale muted");
   for (const [module, matrix] of [["accounting", accounting], ["banking", banking]]) {
     try {
       const leaf = JSON.parse(matrix).leaves?.find((item) => item.id === "banking.panel.linked_bank_transactions");
@@ -98,7 +101,12 @@ if (process.argv.includes("--selftest")) {
     [route, api, panel, accountingMatrix, bankingMatrix.replace('"id": "banking.panel.linked_bank_transactions"', '"id": "banking.panel.linked_bank_transactions.removed"')],
   ];
   mutations.forEach((mutation, index) => { if (verify(...mutation).length === 0) throw new Error(`selftest mutation ${index + 1} escaped`); });
-  console.log(`verify-linked-bank-transactions-panel-scope SELFTEST PASS (${mutations.length}/${mutations.length})`);
+    const leftover = verify(route, api, `${panel}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`);
+  if (!leftover.some((e) => e.includes("leftover text-[11px]")) || !leftover.some((e) => e.includes("leftover off-scale muted"))) {
+    console.error(`FAIL leftover plant escaped: ${leftover.join("; ")}`);
+    process.exit(1);
+  }
+console.log(`verify-linked-bank-transactions-panel-scope SELFTEST PASS (${mutations.length}/${mutations.length})`);
   process.exit(0);
 }
 const failures = verify(route, api, panel);
