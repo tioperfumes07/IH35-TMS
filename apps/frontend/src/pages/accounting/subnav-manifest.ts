@@ -10,7 +10,7 @@ import { COLLECTIONS_SUBNAV_ITEM } from "./subnav-collections";
  * outside-click / Escape — NOT hover). Recorded in `docs/lockdown/00_LOCKED_DECISIONS.md`.
  *
  * The approved top row is exactly:
- *   Accounting · Bills ▾ · Expenses ▾ · Bill payment ▾ · Invoices ▾ · Maintenance & shop ▾ ·
+ *   Accounting · Bills ▾ · Expenses ▾ · Bill payment ▾ · Invoices ▾ · Work orders & bills ▾ ·
  *   Vendors · Customers · Reports · More ▾
  * **ACCT-F5050 (owner 2026-08-13):** Invoices ▾ promoted from More overflow to a first-class top
  * node (peer of Bills / Expenses / Bill payment) — operators could not find the AR list when it was
@@ -37,8 +37,6 @@ export type AccountingSubNavSection =
   | "billpay"
   | "invoices"
   | "maint_shop"
-  | "vendors"
-  | "customers"
   | "reports"
   | "more";
 
@@ -55,9 +53,8 @@ export const GROUP_LABELS = {
   expenses: "Expenses",
   billpay: "Bill payment",
   invoices: "Invoices",
-  maint_shop: "Maintenance & shop",
-  vendors: "Vendors",
-  customers: "Customers",
+  // U14 (owner, 2026-10-03): "Maintenance & shop" kept, renamed "Work orders & bills".
+  maint_shop: "Work orders & bills",
   reports: "Reports",
   more: "More",
 } as const satisfies Record<AccountingSubNavSection, string>;
@@ -81,7 +78,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   { label: "Recurring bills", path: "/accounting/bills/recurring", section: "bills" },
 
   // Expenses ▾ — browse first; bare route is the locked creator hub. /new is route-only legacy.
-  { label: "Expenses List", path: "/accounting/expenses/list", section: "expenses" },
+  // U4 (owner): "Expenses List" rendered the same ExpensesListPage as "Expenses" — one tab (the route stays for old links).
   { label: "Load costs", path: "/accounting/load-costs", section: "expenses" },
   { label: "Expenses", path: "/accounting/expenses", section: "expenses" },
   { label: "Receipts", path: "/accounting/receipts", section: "expenses" },
@@ -97,11 +94,11 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   { label: "AP Aging", path: "/reports/ap-aging", section: "billpay" },
 
   // Maintenance & shop ▾
-  { label: "Maintenance & shop", path: "/accounting/maintenance-shop", section: "maint_shop" },
+  { label: "Work orders & bills", path: "/accounting/maintenance-shop", section: "maint_shop" },
 
   // Vendors / Customers / Reports (top-level leaves)
-  { label: "Vendors", path: "/accounting/vendors", section: "vendors" },
-  { label: "Customers", path: "/accounting/customers", section: "customers" },
+  // U13 (owner): Accounting's Vendors and Customers tabs were pure <Navigate> redirects to /vendors and /customers —
+  // removed from Accounting (the routes stay so old links still land).
   { label: "Reports", path: "/accounting/reports", section: "reports" },
 
   // Invoices ▾ — AR / receivables (ACCT-F5050 — promoted from More ▾)
@@ -255,7 +252,7 @@ export const ACCOUNTING_SUB_NAV_ITEMS: readonly NavItem[] = [
   leafOf("/accounting"), // Accounting (Home)
   // Group labels navigate to the primary list (nav-split); chevron opens the dropdown.
   { label: GROUP_LABELS.bills, href: "/accounting/bills", children: childrenOf("bills") },
-  { label: GROUP_LABELS.expenses, href: "/accounting/expenses/list", children: childrenOf("expenses") },
+  { label: GROUP_LABELS.expenses, href: "/accounting/expenses", children: childrenOf("expenses") },
   // NAV-LOAD-COSTS-01 (owner 2026-09-06 04:5xZ "IN ACCOUNTING, WHERE ARE THE TABS?") — Load costs is a top-row leaf,
   // not only buried under Expenses ▾: it is the same board Dispatch → Load costs opens, with its own tab row.
   leafOf("/accounting/load-costs"),
@@ -275,8 +272,6 @@ export const ACCOUNTING_SUB_NAV_ITEMS: readonly NavItem[] = [
       leafOf("/accounting/bills/fuel"),
     ],
   },
-  leafOf("/accounting/vendors"), // Vendors
-  leafOf("/accounting/customers"), // Customers
   leafOf("/accounting/reports"), // Reports
   // More stays chevron-only (no single default destination).
   { label: GROUP_LABELS.more, children: childrenOf("more") },

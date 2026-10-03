@@ -44,9 +44,8 @@ const APPROVED_GROUP_LABELS = [
   "Expenses",
   "Bill payment",
   "Invoices",
-  "Maintenance & shop",
-  "Vendors",
-  "Customers",
+  // U14 (owner, 2026-10-03): renamed; U13: Vendors / Customers were pure redirects to /vendors and /customers — removed.
+  "Work orders & bills",
   "Reports",
   "More",
 ];
@@ -85,6 +84,8 @@ export function checkWrapper(src) {
 /** Returns a list of failure strings (empty = pass). Pure so it can be self-tested. */
 export function checkManifest(src) {
   const failures = [];
+  // U4 (owner, 2026-10-03): "Expenses List" rendered the same ExpensesListPage as "Expenses" — one tab only.
+  if (/label: "Expenses List", path:/.test(src)) failures.push("SUBNAV_ITEMS re-added the duplicate \"Expenses List\" tab (same page as Expenses) — U4");
 
   // Approved top-node group labels present (via GROUP_LABELS literals).
   for (const label of APPROVED_GROUP_LABELS) {
@@ -104,10 +105,14 @@ export function checkManifest(src) {
         failures.push(`ACCOUNTING_SUB_NAV_ITEMS missing group GROUP_LABELS.${g}`);
       }
     }
-    for (const leaf of ["/accounting/vendors", "/accounting/customers", "/accounting/reports", "/accounting"]) {
+    // U13 (owner, 2026-10-03): Vendors / Customers removed from Accounting (pure redirects to /vendors and /customers).
+    for (const leaf of ["/accounting/reports", "/accounting"]) {
       if (!block.includes(`leafOf("${leaf}")`)) {
         failures.push(`ACCOUNTING_SUB_NAV_ITEMS missing top-level leaf leafOf("${leaf}")`);
       }
+    }
+    for (const gone of ["/accounting/vendors", "/accounting/customers"]) {
+      if (block.includes(`leafOf("${gone}")`)) failures.push(`ACCOUNTING_SUB_NAV_ITEMS re-added ${gone} — a pure redirect is not an Accounting tab (U13)`);
     }
   }
 
@@ -152,7 +157,7 @@ function selftest() {
     export const GROUP_LABELS = {
       home: "Accounting", bills: "Bills", expenses: "Expenses", billpay: "Bill payment",
       invoices: "Invoices",
-      maint_shop: "Maintenance & shop", vendors: "Vendors", customers: "Customers",
+      maint_shop: "Work orders & bills",
       reports: "Reports", more: "More",
     } as const;
     { label: "Bill", path: "/accounting/bills", section: "bills" },
@@ -169,8 +174,6 @@ function selftest() {
       { label: GROUP_LABELS.billpay, children: childrenOf("billpay") },
       { label: GROUP_LABELS.invoices, children: childrenOf("invoices") },
       { label: GROUP_LABELS.maint_shop, children: [] },
-      leafOf("/accounting/vendors"),
-      leafOf("/accounting/customers"),
       leafOf("/accounting/reports"),
       { label: GROUP_LABELS.more, children: childrenOf("more") },
     ];

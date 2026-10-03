@@ -36,8 +36,9 @@ function assertMaintenanceShopHub() {
   if (!/Open Maintenance module/.test(page) || !/to="\/maintenance"/.test(page)) {
     errors.push("MaintenanceShopHubPage must keep /maintenance reachable (Rule 07 — only add)");
   }
-  if (!/Maintenance & shop/.test(subnav) || !/path:\s*"\/accounting\/maintenance-shop"/.test(subnav)) {
-    errors.push("SUBNAV_ITEMS must include Maintenance & shop → /accounting/maintenance-shop");
+  // U14 (owner, 2026-10-03): the hub is kept and renamed "Work orders & bills".
+  if (!/Work orders & bills/.test(subnav) || !/path:\s*"\/accounting\/maintenance-shop"/.test(subnav)) {
+    errors.push("SUBNAV_ITEMS must include Work orders & bills → /accounting/maintenance-shop");
   }
   if (!/MaintenanceShopHubPage/.test(manifest)) errors.push("manifest must wire MaintenanceShopHubPage");
   if (/Navigate to="\/maintenance"/.test(manifest.match(/path="\/accounting\/maintenance-shop"[\s\S]*?<\/Route>/)?.[0] ?? "")) {
