@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: BANK-F91095 #24425 MERGED; ROUND 348 waits HH 12–23; next leftover AccountingSubNavWrapper
-ACK: CURSOR | ACK F91095 DONE | GO
+NOW: BANK-F91096 #24427 MERGED; ROUND 348 waits HH 12–23; next leftover FactoringHome
+ACK: CURSOR | ACK F91096 DONE | GO
