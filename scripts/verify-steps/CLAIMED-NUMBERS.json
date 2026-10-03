@@ -9987,5 +9987,10 @@
     "claimed_at": "2026-10-02",
     "purpose": "ROUND 342.1 — verify-r3421-unit-plates-identity-user-company-scoped",
     "pr": null
+  },
+  "12329": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-03",
+    "purpose": "Lead ROUND 342 phase 5 — one entity column: no tenant_id column, no policy reading one, no CHECK equating two company columns (CC-1)."
   }
 }
