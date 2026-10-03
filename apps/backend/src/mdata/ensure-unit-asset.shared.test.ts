@@ -28,7 +28,7 @@ describe("ensureUnitAsset", () => {
     expect(query).toHaveBeenCalledTimes(1);
     const [sql, values] = query.mock.calls[0];
     expect(sql).toContain("INSERT INTO mdata.assets");
-    expect(sql).toContain("ON CONFLICT (tenant_id, unit_code) DO UPDATE");
+    expect(sql).toContain("ON CONFLICT (operating_company_id, unit_code) DO UPDATE");
     expect(sql).toContain(
       "mdata.assets.unit_id IS NULL OR mdata.assets.unit_id = EXCLUDED.unit_id",
     );

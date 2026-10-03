@@ -17,7 +17,7 @@ export const SubjectTypeSchema = z.enum(ANOMALY_SUBJECT_TYPES);
 
 export const AnomalySchema = z.object({
   id: z.string().uuid(),
-  tenant_id: z.string().uuid(),
+  operating_company_id: z.string().uuid(),
   anomaly_type: AnomalyTypeSchema,
   severity: SeveritySchema,
   subject_type: SubjectTypeSchema,

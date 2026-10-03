@@ -109,7 +109,7 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
             ON claim.operating_company_id = lawsuit.operating_company_id
            AND claim.id = lawsuit.claim_id
           LEFT JOIN mdata.assets AS asset
-            ON asset.tenant_id = lawsuit.operating_company_id
+            ON asset.operating_company_id = lawsuit.operating_company_id
            AND asset.id = claim.asset_id
           LEFT JOIN mdata.drivers AS driver
             ON driver.id = claim.driver_id

@@ -22,9 +22,9 @@ export async function ensureUnitAsset(
 ): Promise<string> {
   const result = await client.query(
     `
-      INSERT INTO mdata.assets (tenant_id, unit_code, asset_type, vin, make, model, year, status, unit_id)
+      INSERT INTO mdata.assets (operating_company_id, unit_code, asset_type, vin, make, model, year, status, unit_id)
       VALUES ($1::uuid, $2, 'tractor', $3, $4, $5, $6, 'active', $7::uuid)
-      ON CONFLICT (tenant_id, unit_code) DO UPDATE SET
+      ON CONFLICT (operating_company_id, unit_code) DO UPDATE SET
         vin = EXCLUDED.vin,
         make = EXCLUDED.make,
         model = EXCLUDED.model,

@@ -8,7 +8,7 @@
  * (migration 202615310700) backfilled it and made it NOT NULL, and step 2c drops tenant_id — so any surviving
  * COALESCE(…operating_company_id, …tenant_id) is a future SQL error and is now the regression this guard catches.
  *
- * Rename-only: factoring.canonical_factor_agreements stays on tenant_id until CC-1 ships its rename — a COALESCE on
+ * Rename-only: factoring.canonical_factor_agreements — tenant_id RENAMED to operating_company_id by CC-1's 202615330400.
  * its operating_company_id is a SQL error today, and is still refused here.
  *
  * Usage: node scripts/verify-r342-dual-scoped-factoring-reads.mjs [--selftest]
@@ -44,16 +44,16 @@ export function check(src) {
   if (!/WHERE b\.operating_company_id = \$1::uuid|AND b\.operating_company_id = \$1::uuid/.test(src.bankMatch)) f.push(`${FILES.bankMatch}: batch read not scoped on operating_company_id`);
   if (!/a\.operating_company_id = \$1::uuid/.test(src.factor)) f.push(`${FILES.factor}: assignment read not scoped on operating_company_id`);
   if (!/cfa\.operating_company_id = \$1::uuid/.test(src.subq)) f.push(`${FILES.subq}: assignment read not scoped on operating_company_id`);
-  // canonical_factor_agreements: rename-only, stays tenant_id until CC-1.
+  // canonical_factor_agreements: tenant_id RENAMED to operating_company_id by CC-1's 202615330400 — scope on it, never tenant_id.
   for (const [key, text] of [["factor", src.factor], ["kpi", src.kpi]]) {
     const blocks = text.split("factoring.canonical_factor_agreements");
     for (let i = 1; i < blocks.length; i++) {
       if (/COALESCE\(\w*\.?operating_company_id/.test(blocks[i].slice(0, 600))) {
-        f.push(`${FILES[key]}: canonical_factor_agreements must stay on tenant_id until CC-1's rename`);
+        f.push(`${FILES[key]}: canonical_factor_agreements has one company column — no COALESCE`);
       }
     }
   }
-  if (!src.factor.includes("AND cfa.tenant_id = $1::uuid")) f.push(`${FILES.factor}: canonical cfa scope moved off tenant_id before CC-1's rename`);
+  if (!src.factor.includes("AND cfa.operating_company_id = $1::uuid") || /\bcfa\.tenant_id\b/.test(src.factor)) f.push(`${FILES.factor}: canonical cfa scope must be operating_company_id (renamed by 202615330400)`);
   return f;
 }
 
@@ -66,7 +66,7 @@ if (process.argv.includes("--selftest")) {
     ["fallback back in batch", { ...real, batch: real.batch.replace("b.operating_company_id = $1::uuid", "COALESCE(b.operating_company_id, b.tenant_id) = $1::uuid") }],
     ["helper falls back again", { ...real, helper: real.helper.replace('return alias ? `${alias}.operating_company_id` : "operating_company_id";', 'return alias ? `COALESCE(${alias}.operating_company_id, ${alias}.tenant_id)` : "COALESCE(operating_company_id, tenant_id)";') }],
     ["assignment read on tenant_id", { ...real, factor: real.factor.replaceAll("a.operating_company_id = $1::uuid", "a.tenant_id = $1::uuid") }],
-    ["canonical moved early", { ...real, factor: real.factor.replace("AND cfa.tenant_id = $1::uuid", "AND cfa.operating_company_id = $1::uuid") }],
+    ["canonical back on tenant_id", { ...real, factor: real.factor.replace("AND cfa.operating_company_id = $1::uuid", "AND cfa.tenant_id = $1::uuid") }],
   ];
   const unchanged = plants.filter(([, s]) => JSON.stringify(s) === JSON.stringify(real)).map(([n]) => n);
   if (unchanged.length) { console.error(`${LABEL} --selftest FAIL: plant did not change the source: ${unchanged.join("; ")}`); process.exit(1); }
@@ -78,4 +78,4 @@ if (process.argv.includes("--selftest")) {
 
 const failures = check(read());
 if (failures.length) { console.error(`${LABEL}: FAIL\n  ${failures.join("\n  ")}`); process.exit(1); }
-console.log(`${LABEL}: PASS — factoring reads scope on operating_company_id (no tenant_id fallback); canonical_factor_agreements stays on tenant_id until CC-1's rename`);
+console.log(`${LABEL}: PASS — factoring reads scope on operating_company_id (no tenant_id fallback); canonical_factor_agreements scopes on operating_company_id (renamed by 202615330400)`);

@@ -5,7 +5,7 @@
 // verified, live root cause of "the 20 insured USMCA trailers cannot be attached to any policy":
 // mdata.assets held 90 rows, 100% asset_type='tractor', zero trailer rows.
 //
-// Mirrors ensureUnitAsset exactly: same ON CONFLICT (tenant_id, unit_code) natural key on
+// Mirrors ensureUnitAsset exactly: same ON CONFLICT (operating_company_id, unit_code) natural key on
 // mdata.assets, same "insured_value_cents stays NULL, never 0" rule (0 would assert a
 // valued-at-nothing asset into a table insurance reads -- the owner supplies real insured values),
 // same idempotent mint-or-relink contract. Going-forward fix only: wired into equipment create so
@@ -59,9 +59,9 @@ export async function ensureEquipmentAsset(
 ): Promise<string> {
   const result = await client.query(
     `
-      INSERT INTO mdata.assets (tenant_id, unit_code, asset_type, vin, make, model, year, status, equipment_id)
+      INSERT INTO mdata.assets (operating_company_id, unit_code, asset_type, vin, make, model, year, status, equipment_id)
       VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, 'active', $8::uuid)
-      ON CONFLICT (tenant_id, unit_code) DO UPDATE SET
+      ON CONFLICT (operating_company_id, unit_code) DO UPDATE SET
         vin = EXCLUDED.vin,
         make = EXCLUDED.make,
         model = EXCLUDED.model,

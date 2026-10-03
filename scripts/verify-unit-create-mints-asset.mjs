@@ -7,12 +7,12 @@
  *   mdata.units (USMCA) = 40
  * `insurance.policy_unit.asset_id` and `insurance.claim` reference `mdata.assets`, and the wizard
  * resolver (`resolve-asset-id.shared.ts`) maps unit -> asset via `a.id | a.unit_id | a.unit_code`,
- * all under `a.tenant_id`. With no asset row, every branch is dead and
+ * all under `a.operating_company_id` (renamed from tenant_id in ROUND 342). With no asset row, every branch is dead and
  * POST /insurance/policies/with-bills 404s `asset_not_found` for EVERY unit — the units and assets
  * registries were joined by nothing but a `unit_code` string.
  *
  * The tempting "fixes" this guard exists to make unnecessary are both damaging: inventing an asset
- * inside the insurance path, or widening `a.tenant_id` so one company resolves ANOTHER company's
+ * inside the insurance path, or widening `a.operating_company_id` so one company resolves ANOTHER company's
  * asset. The correct fix is that a unit is never created without its asset — which is what this
  * asserts, so the class cannot silently return through a new creator.
  *

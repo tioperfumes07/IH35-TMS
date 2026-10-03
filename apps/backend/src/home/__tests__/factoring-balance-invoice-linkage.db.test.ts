@@ -159,7 +159,7 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
     );
     await db.query(
       `INSERT INTO factoring.canonical_factor_agreements (
-         id, tenant_id, factor_profile_id, factor_vendor_id, agreement_code,
+         id, operating_company_id, factor_profile_id, factor_vendor_id, agreement_code,
          effective_from, effective_to, is_full_recourse,
          fee_rate_tier1, fee_rate_tier2, reserve_rate,
          repurchase_term_days, grace_days, repurchase_deadline_days, default_interest_daily_rate
@@ -169,7 +169,7 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
          0.0150,0.0200,0.0150,
          30,5,95,0.00067000
        )
-       ON CONFLICT (tenant_id, factor_vendor_id, agreement_code, effective_from) DO NOTHING`,
+       ON CONFLICT (operating_company_id, factor_vendor_id, agreement_code, effective_from) DO NOTHING`,
       [
         agreementId,
         opts.opco,
@@ -1339,14 +1339,14 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
       await db.query(
         `
           INSERT INTO factoring.canonical_factor_agreements (
-            id, tenant_id, factor_profile_id, factor_vendor_id, agreement_code,
+            id, operating_company_id, factor_profile_id, factor_vendor_id, agreement_code,
             effective_from, effective_to, is_full_recourse,
             fee_rate_tier1, fee_rate_tier2, reserve_rate,
             repurchase_term_days, grace_days, repurchase_deadline_days,
             default_interest_daily_rate, created_by_user_id
           )
           SELECT
-            $1::uuid, tenant_id, factor_profile_id, factor_vendor_id, agreement_code,
+            $1::uuid, operating_company_id, factor_profile_id, factor_vendor_id, agreement_code,
             '2026-01-01'::date, NULL, is_full_recourse,
             fee_rate_tier1, fee_rate_tier2, reserve_rate,
             repurchase_term_days, grace_days, repurchase_deadline_days,

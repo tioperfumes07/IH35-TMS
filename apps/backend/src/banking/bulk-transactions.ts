@@ -54,7 +54,7 @@ export async function resolveCoaAccountId(
     `
       SELECT id
       FROM accounting.coa_account
-      WHERE tenant_id = $1::uuid
+      WHERE operating_company_id = $1::uuid
         AND qbo_id = $2::numeric
       LIMIT 1
     `,

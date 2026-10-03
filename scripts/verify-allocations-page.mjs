@@ -101,13 +101,13 @@ export function assertCreatePath({ panel, routes }) {
   if (!/FROM accounting\.bills[\s\S]{0,180}?operating_company_id = \$2::uuid/.test(route)) {
     errors.push("allocation POST must resolve the source bill in the selected company");
   }
-  if (!/FROM mdata\.assets[\s\S]{0,160}?tenant_id = \$1[\s\S]{0,120}?id = ANY\(\$2::uuid\[\]\)/.test(route)) {
+  if (!/FROM mdata\.assets[\s\S]{0,160}?operating_company_id = \$1[\s\S]{0,120}?id = ANY\(\$2::uuid\[\]\)/.test(route)) {
     errors.push("allocation POST must resolve every selected asset in the selected company");
   }
-  if (!/UPDATE accounting\.bill_unit_allocation[\s\S]{0,220}?superseded_reason = 'reallocate'[\s\S]{0,180}?bill_id = \$1[\s\S]{0,100}?tenant_id = \$2/.test(route)) {
+  if (!/UPDATE accounting\.bill_unit_allocation[\s\S]{0,220}?superseded_reason = 'reallocate'[\s\S]{0,180}?bill_id = \$1[\s\S]{0,100}?operating_company_id = \$2/.test(route)) {
     errors.push("re-allocation must supersede only the bill's active same-company allocation rows");
   }
-  if (!/INSERT INTO accounting\.bill_unit_allocation\s*\([\s\S]{0,300}?tenant_id,[\s\S]*?bill_id,[\s\S]*?asset_id,[\s\S]*?allocation_method,[\s\S]*?allocation_pct,[\s\S]*?allocated_amount_cents/.test(route)) {
+  if (!/INSERT INTO accounting\.bill_unit_allocation\s*\([\s\S]{0,300}?operating_company_id,[\s\S]*?bill_id,[\s\S]*?asset_id,[\s\S]*?allocation_method,[\s\S]*?allocation_pct,[\s\S]*?allocated_amount_cents/.test(route)) {
     errors.push("allocation POST must persist the canonical company/bill/asset allocation row");
   }
   return errors;
@@ -216,7 +216,7 @@ function selftest() {
     ["POST method", "panel", /method:\s*"POST"/, /submit the selected allocation/],
     ["company scope wrapper", "routes", /withCompanyScope\(String\(user\.uuid\), query\.data\.operating_company_id/g, /authorize and execute inside/],
     ["same-company bill", "routes", /AND operating_company_id = \$2::uuid/g, /source bill in the selected company/],
-    ["same-company assets", "routes", /WHERE tenant_id = \$1/g, /every selected asset in the selected company/],
+    ["same-company assets", "routes", /WHERE operating_company_id = \$1/g, /every selected asset in the selected company/],
     ["supersede reason", "routes", /superseded_reason = 'reallocate'/g, /supersede only/],
     ["canonical insert", "routes", /INSERT INTO accounting\.bill_unit_allocation/g, /persist the canonical/],
   ];

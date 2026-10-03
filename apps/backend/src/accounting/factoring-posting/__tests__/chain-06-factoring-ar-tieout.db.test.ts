@@ -328,7 +328,7 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
       );
       await db.query(
         `INSERT INTO factoring.canonical_factor_agreements (
-           id, tenant_id, factor_profile_id, factor_vendor_id, agreement_code,
+           id, operating_company_id, factor_profile_id, factor_vendor_id, agreement_code,
            effective_from, effective_to, is_full_recourse,
            fee_rate_tier1, fee_rate_tier2, reserve_rate,
            repurchase_term_days, grace_days, repurchase_deadline_days, default_interest_daily_rate
@@ -394,7 +394,7 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
           await db.query(
             `UPDATE factoring.canonical_factor_agreements
                 SET effective_to = '2024-12-01'::date
-              WHERE id = $1::uuid AND tenant_id = $2::uuid`,
+              WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
             [seededFaroAgreementId, companyId]
           );
         }

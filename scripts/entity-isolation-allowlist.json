@@ -556,7 +556,7 @@
     {
       "schema": "audit",
       "table": "row_changes",
-      "reason": "needs FK from 'tenant_id' to org.companies(id)",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
       "phase": "P4"
     },
     {
@@ -820,7 +820,7 @@
     {
       "schema": "integrity",
       "table": "anomalies",
-      "reason": "needs FK from 'tenant_id' to org.companies(id)",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
       "phase": "P4"
     },
     {

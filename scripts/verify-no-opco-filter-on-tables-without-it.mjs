@@ -15,13 +15,18 @@ import { fileURLToPath } from "node:url";
 const LABEL = "verify-no-opco-filter-on-tables-without-it";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SRC = path.join(ROOT, "apps/backend/src");
-// Static rename-only list when DATABASE_URL is unset; live information_schema widens the set when present.
 // Rename-only tables per the ROUND 342 inventory (tenant_id, no operating_company_id) — used when offline.
+// CC-1's 202615330400 RENAMES tenant_id -> operating_company_id on every one of them. The code in this repo targets the
+// schema its own migrations produce (Render's pre-deploy applies a migration before the new code goes live), so a table
+// renamed by an ON-DISK migration counts as having operating_company_id even while the live database still predates it.
+import { PHASE_1, PHASE_1_MIGRATION } from "./verify-one-entity-column.mjs";
+const RENAMED_ON_DISK = fs.existsSync(path.join(path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."), "db/migrations", PHASE_1_MIGRATION))
+  ? new Set(PHASE_1) : new Set();
 const STATIC_TABLES = [
   "insurance.type_catalog", "mdata.assets", "mdata.asset_status_history", "factoring.canonical_factor_agreements",
   "accounting.bill_unit_allocation", "accounting.coa_account", "accounting.ps_category", "accounting.ps_item",
   "accounting.pse_posting_policy", "accounting.vendor_subtype_pse_map", "maint.part", "maint.pm_schedule",
-];
+].filter((t) => !RENAMED_ON_DISK.has(t));
 
 export function offenders(src, tables) {
   const out = [];
@@ -77,7 +82,7 @@ if (process.env.DATABASE_URL) {
          AND NOT EXISTS (SELECT 1 FROM information_schema.columns o
                           WHERE o.table_schema = t.table_schema AND o.table_name = t.table_name
                             AND o.column_name = 'operating_company_id')`);
-    tables = r.rows.map((x) => x.q);
+    tables = r.rows.map((x) => x.q).filter((t) => !RENAMED_ON_DISK.has(t));
     source = `live information_schema (${tables.length} tables with tenant_id and no operating_company_id)`;
   } catch (err) {
     console.error(`${LABEL}: FAIL — live check could not run: ${err.message}`);

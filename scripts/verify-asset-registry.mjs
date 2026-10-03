@@ -49,7 +49,8 @@ requirePattern(routes, /app\.patch\("\/api\/v1\/assets\/:id"/, "routes must defi
 requirePattern(routes, /app\.patch\("\/api\/v1\/assets\/:id\/status"/, "routes must define PATCH /api/v1/assets/:id/status");
 requirePattern(routes, /app\.get\("\/api\/v1\/assets\/:id\/status-history"/, "routes must define GET /api/v1/assets/:id/status-history");
 requirePattern(routes, /app\.get\("\/api\/v1\/assets\/summary"/, "routes must define GET /api/v1/assets/summary");
-requirePattern(routes, /tenant_id = \$1|AND tenant_id = \$2/, "routes must scope queries by tenant_id");
+// ROUND 342: mdata.assets.tenant_id was renamed to operating_company_id (one entity column).
+requirePattern(routes, /operating_company_id = \$1|AND operating_company_id = \$2/, "routes must scope queries by operating_company_id");
 requirePattern(routes, /resolveOperatingCompanyId|assertCompanyMembership/, "routes must resolve + enforce company scope");
 requirePattern(routes, /INSERT INTO mdata\.asset_status_history/i, "status endpoint must record history rows");
 

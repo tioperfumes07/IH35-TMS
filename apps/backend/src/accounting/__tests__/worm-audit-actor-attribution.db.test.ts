@@ -70,7 +70,7 @@ describeIntegration("ACCT-F177 — WORM row_changes names the actor and the role
     const res = await db.query<{ changed_by_user_id: string | null; changed_by_role: string | null; op: string }>(
       `SELECT changed_by_user_id::text AS changed_by_user_id, changed_by_role, op
          FROM audit.row_changes
-        WHERE table_name = $1 AND tenant_id = $2::uuid
+        WHERE table_name = $1 AND operating_company_id = $2::uuid
         ORDER BY changed_at DESC
         LIMIT 1`,
       [table, companyId]

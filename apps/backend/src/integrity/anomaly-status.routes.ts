@@ -69,7 +69,7 @@ async function withTenantScope<T>(
 function mapAnomalyRow(row: Record<string, unknown>) {
   return AnomalySchema.parse({
     id: String(row.id),
-    tenant_id: String(row.tenant_id),
+    operating_company_id: String(row.operating_company_id),
     anomaly_type: String(row.anomaly_type),
     severity: String(row.severity),
     subject_type: String(row.subject_type),
@@ -101,7 +101,7 @@ export async function registerAnomalyStatusRoutes(app: FastifyInstance) {
 
     const result = await withTenantScope(user.uuid, tenantId, async (client) => {
       const values: unknown[] = [tenantId];
-      const filters: string[] = ["a.tenant_id = $1::uuid"];
+      const filters: string[] = ["a.operating_company_id = $1::uuid"];
 
       if (parsed.data.status) {
         values.push(parsed.data.status);
@@ -129,7 +129,7 @@ export async function registerAnomalyStatusRoutes(app: FastifyInstance) {
         `
           SELECT
             a.id::text,
-            a.tenant_id::text,
+            a.operating_company_id::text,
             a.anomaly_type::text,
             a.severity::text,
             a.subject_type::text,
@@ -153,12 +153,12 @@ export async function registerAnomalyStatusRoutes(app: FastifyInstance) {
             ON a.subject_type = 'driver'
            AND d.id = a.subject_id
            AND (
-                d.operating_company_id = a.tenant_id
+                d.operating_company_id = a.operating_company_id
              OR EXISTS (
                   SELECT 1
                   FROM mdata.driver_company_authorizations anomaly_driver_dca
                   WHERE anomaly_driver_dca.driver_id = d.id
-                    AND anomaly_driver_dca.company_id = a.tenant_id
+                    AND anomaly_driver_dca.company_id = a.operating_company_id
                     AND anomaly_driver_dca.is_authorized = true
                     AND anomaly_driver_dca.deactivated_at IS NULL
                 )
@@ -166,15 +166,15 @@ export async function registerAnomalyStatusRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.units u
             ON a.subject_type = 'unit'
            AND u.id = a.subject_id
-           AND (u.owner_company_id = a.tenant_id OR u.currently_leased_to_company_id = a.tenant_id)
+           AND (u.owner_company_id = a.operating_company_id OR u.currently_leased_to_company_id = a.operating_company_id)
           LEFT JOIN mdata.customers c
             ON a.subject_type = 'customer'
            AND c.id = a.subject_id
-           AND c.operating_company_id = a.tenant_id
+           AND c.operating_company_id = a.operating_company_id
           LEFT JOIN accounting.invoices i
             ON a.subject_type = 'invoice'
            AND i.id = a.subject_id
-           AND i.operating_company_id = a.tenant_id
+           AND i.operating_company_id = a.operating_company_id
           WHERE ${filters.join(" AND ")}
           ORDER BY a.detected_at DESC, a.id DESC
           LIMIT $${values.length - 1}::int OFFSET $${values.length}::int
@@ -205,7 +205,7 @@ export async function registerAnomalyStatusRoutes(app: FastifyInstance) {
         `
           SELECT
             a.id::text,
-            a.tenant_id::text,
+            a.operating_company_id::text,
             a.anomaly_type::text,
             a.severity::text,
             a.subject_type::text,
@@ -229,12 +229,12 @@ export async function registerAnomalyStatusRoutes(app: FastifyInstance) {
             ON a.subject_type = 'driver'
            AND d.id = a.subject_id
            AND (
-                d.operating_company_id = a.tenant_id
+                d.operating_company_id = a.operating_company_id
              OR EXISTS (
                   SELECT 1
                   FROM mdata.driver_company_authorizations anomaly_driver_dca
                   WHERE anomaly_driver_dca.driver_id = d.id
-                    AND anomaly_driver_dca.company_id = a.tenant_id
+                    AND anomaly_driver_dca.company_id = a.operating_company_id
                     AND anomaly_driver_dca.is_authorized = true
                     AND anomaly_driver_dca.deactivated_at IS NULL
                 )
@@ -242,17 +242,17 @@ export async function registerAnomalyStatusRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.units u
             ON a.subject_type = 'unit'
            AND u.id = a.subject_id
-           AND (u.owner_company_id = a.tenant_id OR u.currently_leased_to_company_id = a.tenant_id)
+           AND (u.owner_company_id = a.operating_company_id OR u.currently_leased_to_company_id = a.operating_company_id)
           LEFT JOIN mdata.customers c
             ON a.subject_type = 'customer'
            AND c.id = a.subject_id
-           AND c.operating_company_id = a.tenant_id
+           AND c.operating_company_id = a.operating_company_id
           LEFT JOIN accounting.invoices i
             ON a.subject_type = 'invoice'
            AND i.id = a.subject_id
-           AND i.operating_company_id = a.tenant_id
+           AND i.operating_company_id = a.operating_company_id
           WHERE a.id = $1::uuid
-            AND a.tenant_id = $2::uuid
+            AND a.operating_company_id = $2::uuid
           LIMIT 1
         `,
         [params.data.id, tenantId]
@@ -286,11 +286,11 @@ export async function registerAnomalyStatusRoutes(app: FastifyInstance) {
             status_changed_at = now(),
             status_changed_by = $3::uuid
           WHERE id = $1::uuid
-            AND tenant_id = $2::uuid
+            AND operating_company_id = $2::uuid
             AND status <> 'dismissed'
           RETURNING
             id::text,
-            tenant_id::text,
+            operating_company_id::text,
             anomaly_type::text,
             severity::text,
             subject_type::text,
@@ -335,10 +335,10 @@ export async function registerAnomalyStatusRoutes(app: FastifyInstance) {
             status_changed_by = $3::uuid,
             resolution_note = $4::text
           WHERE id = $1::uuid
-            AND tenant_id = $2::uuid
+            AND operating_company_id = $2::uuid
           RETURNING
             id::text,
-            tenant_id::text,
+            operating_company_id::text,
             anomaly_type::text,
             severity::text,
             subject_type::text,
@@ -383,10 +383,10 @@ export async function registerAnomalyStatusRoutes(app: FastifyInstance) {
             status_changed_by = $3::uuid,
             resolution_note = $4::text
           WHERE id = $1::uuid
-            AND tenant_id = $2::uuid
+            AND operating_company_id = $2::uuid
           RETURNING
             id::text,
-            tenant_id::text,
+            operating_company_id::text,
             anomaly_type::text,
             severity::text,
             subject_type::text,

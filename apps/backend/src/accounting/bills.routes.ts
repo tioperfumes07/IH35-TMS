@@ -930,7 +930,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
         `
           SELECT id, insured_value_cents
           FROM mdata.assets
-          WHERE tenant_id = $1
+          WHERE operating_company_id = $1
             AND id = ANY($2::uuid[])
         `,
         [query.data.operating_company_id, assetIds]
@@ -956,7 +956,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
           SET superseded_at = now(),
               superseded_reason = 'reallocate'
           WHERE bill_id = $1
-            AND tenant_id = $2
+            AND operating_company_id = $2
             AND superseded_at IS NULL
         `,
         [params.data.id, query.data.operating_company_id]
@@ -966,7 +966,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
         await client.query(
           `
             INSERT INTO accounting.bill_unit_allocation (
-              tenant_id,
+              operating_company_id,
               bill_id,
               asset_id,
               allocation_method,
@@ -1008,7 +1008,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
     const payload = await withCompanyScope(String(user.uuid), query.data.operating_company_id, async (client) => {
       const values: unknown[] = [query.data.operating_company_id, params.data.id];
-      const where = ["a.tenant_id = $1", "a.asset_id = $2", "b.operating_company_id = $1::uuid", "a.superseded_at IS NULL"];
+      const where = ["a.operating_company_id = $1", "a.asset_id = $2", "b.operating_company_id = $1::uuid", "a.superseded_at IS NULL"];
       if (query.data.from) {
         values.push(query.data.from);
         where.push(`b.bill_date >= $${values.length}::date`);
@@ -1023,7 +1023,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
           SELECT
             COALESCE(SUM(a.allocated_amount_cents), 0)::bigint AS total_allocated_cents
           FROM accounting.bill_unit_allocation a
-          JOIN accounting.bills b ON b.id = a.bill_id AND b.operating_company_id = a.tenant_id
+          JOIN accounting.bills b ON b.id = a.bill_id AND b.operating_company_id = a.operating_company_id
           WHERE ${where.join(" AND ")}
         `,
         values

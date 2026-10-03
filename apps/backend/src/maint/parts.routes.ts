@@ -57,7 +57,7 @@ export async function registerMaintPartsRoutes(app: FastifyInstance) {
 
     const rows = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
       const values: unknown[] = [parsed.data.operating_company_id];
-      const filters = ["tenant_id = $1::uuid"];
+      const filters = ["operating_company_id = $1::uuid"];
       if (parsed.data.search) {
         values.push(`%${parsed.data.search}%`);
         const idx = values.length;

@@ -175,7 +175,7 @@ function policyUnitSelectColumns() {
 function policyUnitFromClause() {
   return `
     FROM insurance.policy_unit pu
-    LEFT JOIN mdata.assets a ON a.id = pu.asset_id AND a.tenant_id = pu.operating_company_id
+    LEFT JOIN mdata.assets a ON a.id = pu.asset_id AND a.operating_company_id = pu.operating_company_id
     LEFT JOIN mdata.units u
       ON (u.id = a.unit_id OR (a.unit_id IS NULL AND u.unit_number = a.unit_code))
      AND (u.owner_company_id = pu.operating_company_id OR u.currently_leased_to_company_id = pu.operating_company_id)
@@ -222,7 +222,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
           FROM insurance.policy p
           LEFT JOIN insurance.type_catalog tc
             ON tc.id = p.coverage_type_id
-           AND tc.tenant_id = p.operating_company_id
+           AND tc.operating_company_id = p.operating_company_id
           WHERE ${filters.join(" AND ")}
           ORDER BY p.expiry_date ASC, p.insurer_name ASC
         `,
@@ -249,7 +249,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
           FROM insurance.policy p
           LEFT JOIN insurance.type_catalog tc
             ON tc.id = p.coverage_type_id
-           AND tc.tenant_id = p.operating_company_id
+           AND tc.operating_company_id = p.operating_company_id
           WHERE p.operating_company_id = $1::uuid AND p.id = $2::uuid
         `,
         [query.data.operating_company_id, params.data.id]
@@ -309,7 +309,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
         `
           SELECT id::text
           FROM insurance.type_catalog
-          WHERE tenant_id = $1::uuid
+          WHERE operating_company_id = $1::uuid
             AND code = $2
             AND active = true
           LIMIT 1
@@ -421,7 +421,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
           `
             SELECT id::text
             FROM insurance.type_catalog
-            WHERE tenant_id = $1::uuid
+            WHERE operating_company_id = $1::uuid
               AND code = $2
               AND active = true
             LIMIT 1
@@ -872,7 +872,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
         `
           SELECT a.id::text, a.unit_code, a.asset_type, a.status
           FROM mdata.assets a
-          WHERE a.tenant_id = $1::uuid AND a.id = $2::uuid
+          WHERE a.operating_company_id = $1::uuid AND a.id = $2::uuid
           LIMIT 1
         `,
         [query.data.operating_company_id, resolvedAssetId]

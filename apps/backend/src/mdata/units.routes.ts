@@ -575,7 +575,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
           // NULL means "not stated"; 0 would assert a valued-at-nothing asset into a table insurance
           // reads. The owner supplies real insured values.
           //
-          // ON CONFLICT on the natural key (tenant_id, unit_code) keeps this idempotent and stops a
+          // ON CONFLICT on the natural key (operating_company_id, unit_code) keeps this idempotent and stops a
           // retry or a re-created unit number from failing the whole create.
           const assetId = await ensureUnitAsset(client, {
             tenantId: operatingCompanyId,

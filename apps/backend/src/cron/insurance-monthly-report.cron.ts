@@ -44,7 +44,7 @@ async function gatherReportData(client: DbClient, operatingCompanyId: string): P
      FROM mdata.units u
      LEFT JOIN mdata.assets a
        ON (a.unit_id = u.id OR (a.unit_id IS NULL AND a.unit_code = u.unit_number))
-       AND a.tenant_id = $1::uuid
+       AND a.operating_company_id = $1::uuid
      LEFT JOIN insurance.policy_unit pu
        ON pu.asset_id = a.id
        AND pu.removed_at IS NULL
@@ -65,7 +65,7 @@ async function gatherReportData(client: DbClient, operatingCompanyId: string): P
      FROM mdata.equipment e
      LEFT JOIN mdata.assets a
        ON a.equipment_id = e.id
-       AND a.tenant_id = $1::uuid
+       AND a.operating_company_id = $1::uuid
      LEFT JOIN insurance.policy_unit pu
        ON pu.asset_id = a.id
        AND pu.removed_at IS NULL

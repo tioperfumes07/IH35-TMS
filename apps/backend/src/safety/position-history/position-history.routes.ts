@@ -149,7 +149,7 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
         LEFT JOIN maint.position_set ps ON ps.id = ph.position_set_id
           AND ps.operating_company_id = $1::uuid
         LEFT JOIN maint.part p ON p.id = ph.part_id
-          AND p.tenant_id = $1::uuid
+          AND p.operating_company_id = $1::uuid
         WHERE ${where.join(" AND ")}
         ORDER BY ph.action_at DESC
         LIMIT $${++paramIdx} OFFSET $${++paramIdx}`,
@@ -196,7 +196,7 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
         LEFT JOIN maint.position_set ps ON ps.id = ph.position_set_id
           AND ps.operating_company_id = $2::uuid
         LEFT JOIN maint.part p ON p.id = ph.part_id
-          AND p.tenant_id = $2::uuid
+          AND p.operating_company_id = $2::uuid
         WHERE ph.id = $1 AND ph.operating_company_id = $2::uuid
         LIMIT 1`,
         [id, operating_company_id]
@@ -239,7 +239,7 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
            ) AS position_ok,
            ($5::uuid IS NULL OR EXISTS (
              SELECT 1 FROM maint.part p
-              WHERE p.id = $5::uuid AND p.tenant_id = $1::uuid
+              WHERE p.id = $5::uuid AND p.operating_company_id = $1::uuid
            )) AS part_ok`,
         [data.operating_company_id, data.unit_id, data.position_set_id, data.position_code, data.part_id ?? null]
       );
@@ -338,7 +338,7 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
         LEFT JOIN maint.position_set ps ON ps.id = ph.position_set_id
           AND ps.operating_company_id = $1::uuid
         LEFT JOIN maint.part p ON p.id = ph.part_id
-          AND p.tenant_id = $1::uuid
+          AND p.operating_company_id = $1::uuid
         WHERE ph.operating_company_id = $1::uuid
           AND ph.unit_id = $2
           AND ph.position_code = $3
