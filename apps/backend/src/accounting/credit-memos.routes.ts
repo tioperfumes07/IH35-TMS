@@ -5,6 +5,7 @@ import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope 
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { DuplicateDocumentNumberError, nextCreditMemoDisplayId, resolveCreditMemoDisplayId } from "./display-id.js";
 import { duplicateDocumentNumberBody, suggestFromLastSaved } from "../lib/qbo-custom-document-number.js";
+import { PostingEngineError, postSourceTransactionInClientTx, reversePostedSourceTransactionInClientTx } from "./posting-engine.service.js";
 import {
   reinstateDocumentThenVoidReversal,
   ReinstateDocumentError,
@@ -15,8 +16,9 @@ import {
 // AR half: accounting.credit_memos existed with zero direct create/apply path (only ever written as a
 // side effect inside payments/apply.service.ts's overpayment handler) and accounting.credit_memo_applications
 // did not exist at all until this finding's migration (202612811300).
-// NO GL posting — marks QBO-parity data only, same as the AP side. GL rides the existing
-// invoice/payment chain when flags turn ON.
+// ROUND 373.4 — a credit memo now POSTS at creation, on the creating transaction: Dr the income / contra-income account
+// it names (account_id, required here) / Cr A/R, through the canonical engine (spine link, load stamp). Void reverses
+// it through the engine in the same transaction. Applying it to invoices moves the subledger only.
 
 const idParamSchema = z.object({ id: z.string().uuid() });
 
@@ -47,6 +49,8 @@ const createBodySchema = z.object({
   issue_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   amount_cents: z.coerce.number().int().positive(),
   reason: z.enum(CREDIT_MEMO_REASONS),
+  // ROUND 373.4 — the income (or contra-income) account this credit reduces. Required: a credit memo posts.
+  account_id: z.string().trim().uuid(),
   notes: z.string().trim().max(2000).optional().nullable(),
   display_id: z.string().trim().min(1).max(40).optional(),
 });
@@ -253,6 +257,15 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
 
       const issueDate = body.data.issue_date ?? companyBusinessDate();
 
+      // ROUND 373.4 — the account must be this company's, active and postable; never guessed, never defaulted.
+      const acctRes = await client.query(
+        `SELECT id FROM catalogs.accounts
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL AND COALESCE(is_postable, true)
+          LIMIT 1`,
+        [body.data.account_id, query.data.operating_company_id]
+      );
+      if (!acctRes.rows[0]) return { code: 400 as const, error: "account_not_postable_for_company" };
+
       // Canonical generator (same advisory-lock + MAX pattern nextVendorCreditDisplayId uses).
       const displayId = await resolveCreditMemoDisplayId(
         client,
@@ -263,9 +276,9 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
 
       const insRes = await client.query(
         `INSERT INTO accounting.credit_memos
-           (operating_company_id, customer_id, display_id, status, reason, issue_date, amount_cents, notes, created_by_user_id)
-         VALUES ($1, $2, $3, 'issued', $4, $5, $6, $7, $8)
-         RETURNING id, display_id, status, reason, issue_date, amount_cents, amount_applied_cents, (amount_cents - amount_applied_cents) AS amount_unapplied_cents`,
+           (operating_company_id, customer_id, display_id, status, reason, issue_date, amount_cents, notes, created_by_user_id, account_id)
+         VALUES ($1, $2, $3, 'issued', $4, $5, $6, $7, $8, $9::uuid)
+         RETURNING id, display_id, status, reason, issue_date, amount_cents, amount_applied_cents, (amount_cents - amount_applied_cents) AS amount_unapplied_cents, account_id`,
         [
           query.data.operating_company_id,
           body.data.customer_id,
@@ -275,10 +288,23 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
           body.data.amount_cents,
           body.data.notes ?? null,
           user.uuid,
+          body.data.account_id,
         ]
       );
       const credit = insRes.rows[0];
       if (!credit) return { code: 500 as const, error: "credit_memo_create_failed" };
+
+      // ROUND 373.4 — post on this transaction (Dr account / Cr A/R); a posting failure rolls the credit memo back.
+      const posting = await postSourceTransactionInClientTx(
+        client as never,
+        { operating_company_id: query.data.operating_company_id, source_transaction_type: "credit_memo", source_transaction_id: String(credit.id) },
+        { userId: user.uuid }
+      );
+      const jeId = (posting as { journal_entry_id?: string | null })?.journal_entry_id ?? null;
+      if (jeId) {
+        await client.query(`UPDATE accounting.credit_memos SET journal_entry_id = $2::uuid WHERE id = $1::uuid`, [credit.id, jeId]);
+      }
+      credit.journal_entry_id = jeId;
 
       await appendCrudAudit(
         client,
@@ -535,11 +561,26 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
       );
       if (flipped.rowCount === 0) return { code: 409 as const, error: "already_voided" };
 
+      // ROUND 373.4 — void REVERSES the credit memo's posting through the engine, on this transaction (never a delete).
+      // A credit memo that never posted (GL owned elsewhere — payment overpayment, Faro short-pay) has nothing to reverse.
+      let reversalJeId: string | null = null;
+      try {
+        const rev = await reversePostedSourceTransactionInClientTx(
+          client as never,
+          { operating_company_id: query.data.operating_company_id, source_transaction_type: "credit_memo", source_transaction_id: params.data.id },
+          { userId: user.uuid },
+          companyBusinessDate()
+        );
+        reversalJeId = (rev as { journal_entry_id?: string | null })?.journal_entry_id ?? null;
+      } catch (err) {
+        if (!(err instanceof PostingEngineError && err.code === "SOURCE_NOT_FOUND")) throw err;
+      }
+
       await appendCrudAudit(
         client,
         user.uuid,
         "accounting.credit_memos.voided",
-        { resource_type: "accounting.credit_memos", resource_id: params.data.id, reason: body.data.reason },
+        { resource_type: "accounting.credit_memos", resource_id: params.data.id, reason: body.data.reason, reversal_journal_entry_id: reversalJeId },
         "warning",
         "ACCT-F5606"
       );

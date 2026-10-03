@@ -6,6 +6,7 @@ import { companyBusinessDate } from "../lib/company-business-date.js";
 import { DuplicateDocumentNumberError, nextVendorCreditDisplayId, resolveVendorCreditDisplayId } from "./display-id.js";
 import { duplicateDocumentNumberBody, suggestFromLastSaved } from "../lib/qbo-custom-document-number.js";
 import { resolveVendorIdentitySet } from "./vendor-identity.js";
+import { PostingEngineError, postSourceTransactionInClientTx, reversePostedSourceTransactionInClientTx } from "./posting-engine.service.js";
 
 // CUSTVEND-PAR-1: Vendor credit CRUD + apply-to-bill + void.
 // NO GL posting — marks QBO-parity data only. GL rides the existing bill-GL chain when flags turn ON.
@@ -19,10 +20,9 @@ const createBodySchema = z.object({
   vendor_id: z.string().trim().uuid(),
   issue_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   amount_cents: z.coerce.number().int().positive(),
-  // accounting.vendor_credits has NO coa_account_id column (verified on the Neon prod branch), so a
-  // value here was accepted and dropped. Refused loudly instead — a designated GL account that
-  // silently disappears is the "empty binding / silent skip" defect class.
-  coa_account_id: z.string().uuid().optional().nullable(),
+  // ROUND 373.4 — the expense account this credit reduces, stored as accounting.vendor_credits.account_id (migration
+  // 202615370000). Required: a manual vendor credit POSTS — Dr A/P / Cr this account — at creation.
+  coa_account_id: z.string().uuid(),
   notes: z.string().trim().max(2000).optional().nullable(),
   display_id: z.string().trim().min(1).max(40).optional(),
 });
@@ -238,13 +238,6 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
     const body = createBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
 
-    if (body.data.coa_account_id != null) {
-      return reply.code(422).send({
-        error: "coa_account_id_not_persisted",
-        detail: "accounting.vendor_credits has no GL account column; the credit rides the bill GL chain",
-      });
-    }
-
     let result;
     try {
       result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
@@ -255,6 +248,15 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
       if (!vendorRes.rows[0]) return { code: 404 as const, error: "vendor_not_found" };
 
       const issueDate = body.data.issue_date ?? companyBusinessDate();
+
+      // ROUND 373.4 — the account must be this company's, active and postable; never guessed, never defaulted.
+      const acctRes = await client.query(
+        `SELECT id FROM catalogs.accounts
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL AND COALESCE(is_postable, true)
+          LIMIT 1`,
+        [body.data.coa_account_id, query.data.operating_company_id]
+      );
+      if (!acctRes.rows[0]) return { code: 400 as const, error: "account_not_postable_for_company" };
 
       // Canonical generator (same advisory-lock + MAX pattern as invoices/payments/credit memos).
       // The private COUNT(*)+1 this replaced took no lock, so two concurrent creates produced the
@@ -268,9 +270,9 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
 
       const insRes = await client.query(
         `INSERT INTO accounting.vendor_credits
-           (operating_company_id, vendor_id, display_id, issue_date, amount_cents, notes, created_by_user_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
-         RETURNING id, display_id, status, issue_date, amount_cents, amount_unapplied_cents`,
+           (operating_company_id, vendor_id, display_id, issue_date, amount_cents, notes, created_by_user_id, account_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8::uuid)
+         RETURNING id, display_id, status, issue_date, amount_cents, amount_unapplied_cents, account_id`,
         [
           query.data.operating_company_id,
           body.data.vendor_id,
@@ -279,10 +281,23 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
           body.data.amount_cents,
           body.data.notes ?? null,
           user.uuid,
+          body.data.coa_account_id,
         ]
       );
       const credit = insRes.rows[0];
       if (!credit) return { code: 500 as const, error: "vendor_credit_create_failed" };
+
+      // ROUND 373.4 — post on this transaction (Dr A/P / Cr the expense account); a failure rolls the credit back.
+      const posting = await postSourceTransactionInClientTx(
+        client as never,
+        { operating_company_id: query.data.operating_company_id, source_transaction_type: "vendor_credit", source_transaction_id: String(credit.id) },
+        { userId: user.uuid }
+      );
+      const jeId = (posting as { journal_entry_id?: string | null })?.journal_entry_id ?? null;
+      if (jeId) {
+        await client.query(`UPDATE accounting.vendor_credits SET journal_entry_id = $2::uuid WHERE id = $1::uuid`, [credit.id, jeId]);
+      }
+      credit.journal_entry_id = jeId;
 
       await appendCrudAudit(
         client,
@@ -549,11 +564,29 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
       );
       if (flipped.rowCount === 0) return { code: 409 as const, error: "already_voided" };
 
+      // ROUND 373.4 — void REVERSES whatever this credit posted (manual: Dr A/P / Cr expense; overpay: Dr A/P / Cr bank)
+      // through the engine, on this transaction. A credit that never posted (QBO mirror) has nothing to reverse.
+      let reversalJeId: string | null = null;
+      try {
+        const rev = await reversePostedSourceTransactionInClientTx(
+          client as never,
+          { operating_company_id: query.data.operating_company_id, source_transaction_type: "vendor_credit", source_transaction_id: params.data.id },
+          { userId: user.uuid },
+          companyBusinessDate()
+        );
+        reversalJeId = (rev as { journal_entry_id?: string | null })?.journal_entry_id ?? null;
+        if (reversalJeId) {
+          await client.query(`UPDATE accounting.vendor_credits SET void_reversal_entry_id = $2::uuid WHERE id = $1::uuid`, [params.data.id, reversalJeId]);
+        }
+      } catch (err) {
+        if (!(err instanceof PostingEngineError && err.code === "SOURCE_NOT_FOUND")) throw err;
+      }
+
       await appendCrudAudit(
         client,
         user.uuid,
         "accounting.vendor_credits.voided",
-        { resource_type: "accounting.vendor_credits", resource_id: params.data.id, reason: body.data.reason },
+        { resource_type: "accounting.vendor_credits", resource_id: params.data.id, reason: body.data.reason, reversal_journal_entry_id: reversalJeId },
         "warning",
         "CUSTVEND-PAR-1"
       );

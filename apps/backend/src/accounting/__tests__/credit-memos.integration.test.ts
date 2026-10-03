@@ -42,6 +42,9 @@ describeIntegration("AR credit memos live path (real Postgres)", () => {
   const otherCustomerId = randomUUID();
   const invoiceId = randomUUID();
   const otherCustomerInvoiceId = randomUUID();
+  /** ROUND 373.4 — a memo names the income it reduces and posts Dr that account / Cr A/R. */
+  const arAccountId = randomUUID();
+  const incomeAccountId = randomUUID();
 
   async function bypass<T>(fn: () => Promise<T>): Promise<T> {
     await db.query("BEGIN");
@@ -89,6 +92,17 @@ describeIntegration("AR credit memos live path (real Postgres)", () => {
          VALUES ($1::uuid, $2::uuid, $3::uuid, $4, CURRENT_DATE + 30, 50000)`,
         [otherCustomerInvoiceId, companyId, otherCustomerId, `INV-2026-9${suffixDigits.slice(0, 4)}`]
       );
+      await db.query(
+        `INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, account_subtype, is_postable)
+         VALUES ($1::uuid, $3::uuid, $4, $5, 'Asset', 'AccountsReceivable', true),
+                ($2::uuid, $3::uuid, $6, $7, 'Income', NULL, true)`,
+        [arAccountId, incomeAccountId, companyId, `A-${arAccountId.slice(0, 8)}`, `AR ${suffix}`, `A-${incomeAccountId.slice(0, 8)}`, `Freight Revenue ${suffix}`]
+      );
+      await db.query(
+        `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
+         VALUES ($1::uuid, 'ar_control', $2::uuid, true)`,
+        [companyId, arAccountId]
+      );
     });
 
     app = await createIntegrationApp(async (a) => {
@@ -117,7 +131,7 @@ describeIntegration("AR credit memos live path (real Postgres)", () => {
       method: "POST",
       url: `/api/v1/accounting/credit-memos?operating_company_id=${companyId}`,
       headers: { "content-type": "application/json", ...testAuthHeaders(undefined, "Accountant") },
-      payload: { customer_id: customer, amount_cents: amountCents, reason: "other" },
+      payload: { customer_id: customer, amount_cents: amountCents, reason: "other", account_id: incomeAccountId },
     });
     expect(res.statusCode).toBe(201);
     return res.json() as { id: string; display_id: string; status: string; amount_unapplied_cents: string };
@@ -134,7 +148,7 @@ describeIntegration("AR credit memos live path (real Postgres)", () => {
       method: "POST",
       url: `/api/v1/accounting/credit-memos?operating_company_id=${companyId}`,
       headers: { "content-type": "application/json", ...testAuthHeaders(undefined, "Dispatcher") },
-      payload: { customer_id: customerId, amount_cents: 100, reason: "other" },
+      payload: { customer_id: customerId, amount_cents: 100, reason: "other", account_id: incomeAccountId },
     });
     expect(dispatcher.statusCode).toBe(403);
   });
@@ -144,7 +158,7 @@ describeIntegration("AR credit memos live path (real Postgres)", () => {
       method: "POST",
       url: `/api/v1/accounting/credit-memos?operating_company_id=${companyId}`,
       headers: { "content-type": "application/json", ...testAuthHeaders(undefined, "Owner") },
-      payload: { customer_id: "not-a-uuid", amount_cents: 100, reason: "other" },
+      payload: { customer_id: "not-a-uuid", amount_cents: 100, reason: "other", account_id: incomeAccountId },
     });
     expect(malformed.statusCode).toBe(400);
 
@@ -152,7 +166,7 @@ describeIntegration("AR credit memos live path (real Postgres)", () => {
       method: "POST",
       url: `/api/v1/accounting/credit-memos?operating_company_id=${companyId}`,
       headers: { "content-type": "application/json", ...testAuthHeaders(undefined, "Owner") },
-      payload: { customer_id: randomUUID(), amount_cents: 100, reason: "other" },
+      payload: { customer_id: randomUUID(), amount_cents: 100, reason: "other", account_id: incomeAccountId },
     });
     expect(unknown.statusCode).toBe(404);
     expect((unknown.json() as { error: string }).error).toBe("customer_not_found");
@@ -163,7 +177,7 @@ describeIntegration("AR credit memos live path (real Postgres)", () => {
       method: "POST",
       url: `/api/v1/accounting/credit-memos?operating_company_id=${companyId}`,
       headers: { "content-type": "application/json", ...testAuthHeaders(undefined, "Owner") },
-      payload: { customer_id: customerId, amount_cents: 100, reason: "not_a_real_reason" },
+      payload: { customer_id: customerId, amount_cents: 100, reason: "not_a_real_reason", account_id: incomeAccountId },
     });
     expect(res.statusCode).toBe(400);
   });
@@ -347,5 +361,55 @@ describeIntegration("AR credit memos live path (real Postgres)", () => {
     expect(Number(state.credit?.amount_applied_cents ?? -1)).toBe(0);
     expect(Number(state.applications?.total ?? 0)).toBe(1);
     expect(Number(state.applications?.active ?? -1)).toBe(0);
+
+    const reversed = await bypass(async () => {
+      const res = await db.query<{ reversed_by_je_id: string | null }>(
+        `SELECT je.reversed_by_je_id::text
+           FROM accounting.credit_memos c
+           JOIN accounting.journal_entries je ON je.id = c.journal_entry_id
+          WHERE c.id = $1::uuid`,
+        [credit.id]
+      );
+      return res.rows[0];
+    });
+    expect(reversed?.reversed_by_je_id).toBeTruthy();
+  });
+
+  it("refuses a memo with no account, or an account outside its company (ROUND 373.4)", async () => {
+    const missing = await app.inject({
+      method: "POST",
+      url: `/api/v1/accounting/credit-memos?operating_company_id=${companyId}`,
+      headers: { "content-type": "application/json", ...testAuthHeaders(undefined, "Owner") },
+      payload: { customer_id: customerId, amount_cents: 100, reason: "other" },
+    });
+    expect(missing.statusCode).toBe(400);
+    const foreign = await app.inject({
+      method: "POST",
+      url: `/api/v1/accounting/credit-memos?operating_company_id=${companyId}`,
+      headers: { "content-type": "application/json", ...testAuthHeaders(undefined, "Owner") },
+      payload: { customer_id: customerId, amount_cents: 100, reason: "other", account_id: randomUUID() },
+    });
+    expect(foreign.statusCode).toBe(400);
+    expect((foreign.json() as { error: string }).error).toBe("account_not_postable_for_company");
+  });
+
+  it("posts Dr the named income / Cr A/R on create, on the creating transaction (ROUND 373.4)", async () => {
+    const credit = await createCreditMemo(12500);
+    const gl = await bypass(async () => {
+      const res = await db.query<{ journal_entry_id: string | null; inc_dr: string; ar_cr: string }>(
+        `SELECT c.journal_entry_id::text,
+                COALESCE(sum(l.amount_cents) FILTER (WHERE l.account_id = $2::uuid AND l.debit_or_credit = 'debit'), 0)::text AS inc_dr,
+                COALESCE(sum(l.amount_cents) FILTER (WHERE l.account_id = $3::uuid AND l.debit_or_credit = 'credit'), 0)::text AS ar_cr
+           FROM accounting.credit_memos c
+           LEFT JOIN accounting.journal_entry_postings l ON l.journal_entry_uuid = c.journal_entry_id
+          WHERE c.id = $1::uuid
+          GROUP BY c.journal_entry_id`,
+        [credit.id, incomeAccountId, arAccountId]
+      );
+      return res.rows[0];
+    });
+    expect(gl?.journal_entry_id).toBeTruthy();
+    expect(Number(gl?.inc_dr)).toBe(12500);
+    expect(Number(gl?.ar_cr)).toBe(12500);
   });
 });

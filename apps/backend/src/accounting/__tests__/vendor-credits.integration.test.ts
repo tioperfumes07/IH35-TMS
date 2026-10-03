@@ -45,6 +45,9 @@ describeIntegration("vendor credits live path (real Postgres)", () => {
   /** Bill keyed by the QBO vendor id (the prod shape), not by the mdata uuid. */
   const qboKeyedBillId = randomUUID();
   const otherVendorBillId = randomUUID();
+  /** ROUND 373.4 — a credit names the expense it reduces and posts Dr A/P / Cr that account. */
+  const apAccountId = randomUUID();
+  const expenseAccountId = randomUUID();
 
   async function bypass<T>(fn: () => Promise<T>): Promise<T> {
     await db.query("BEGIN");
@@ -92,6 +95,17 @@ describeIntegration("vendor credits live path (real Postgres)", () => {
          VALUES ($1::uuid, $2::uuid, $3, CURRENT_DATE, 'unpaid', 50000, $4)`,
         [otherVendorBillId, companyId, otherVendorId, `VC-OTHER-${suffix}`]
       );
+      await db.query(
+        `INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, account_subtype, is_postable)
+         VALUES ($1::uuid, $3::uuid, $4, $5, 'Liability', 'AccountsPayable', true),
+                ($2::uuid, $3::uuid, $6, $7, 'Expense', NULL, true)`,
+        [apAccountId, expenseAccountId, companyId, `A-${apAccountId.slice(0, 8)}`, `AP ${suffix}`, `A-${expenseAccountId.slice(0, 8)}`, `Repairs ${suffix}`]
+      );
+      await db.query(
+        `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
+         VALUES ($1::uuid, 'ap_control', $2::uuid, true)`,
+        [companyId, apAccountId]
+      );
     });
 
     app = await createIntegrationApp(async (a) => {
@@ -120,7 +134,7 @@ describeIntegration("vendor credits live path (real Postgres)", () => {
       method: "POST",
       url: `/api/v1/accounting/vendor-credits?operating_company_id=${companyId}`,
       headers: { "content-type": "application/json", ...testAuthHeaders(undefined, "Accountant") },
-      payload: { vendor_id: vendor, amount_cents: amountCents },
+      payload: { vendor_id: vendor, amount_cents: amountCents, coa_account_id: expenseAccountId },
     });
     expect(res.statusCode).toBe(201);
     return res.json() as { id: string; display_id: string; status: string; amount_unapplied_cents: string };
@@ -137,7 +151,7 @@ describeIntegration("vendor credits live path (real Postgres)", () => {
       method: "POST",
       url: `/api/v1/accounting/vendor-credits?operating_company_id=${companyId}`,
       headers: { "content-type": "application/json", ...testAuthHeaders(undefined, "Dispatcher") },
-      payload: { vendor_id: vendorId, amount_cents: 100 },
+      payload: { vendor_id: vendorId, amount_cents: 100, coa_account_id: expenseAccountId },
     });
     expect(dispatcher.statusCode).toBe(403);
   });
@@ -147,7 +161,7 @@ describeIntegration("vendor credits live path (real Postgres)", () => {
       method: "POST",
       url: `/api/v1/accounting/vendor-credits?operating_company_id=${companyId}`,
       headers: { "content-type": "application/json", ...testAuthHeaders(undefined, "Owner") },
-      payload: { vendor_id: "not-a-uuid", amount_cents: 100 },
+      payload: { vendor_id: "not-a-uuid", amount_cents: 100, coa_account_id: expenseAccountId },
     });
     expect(malformed.statusCode).toBe(400);
 
@@ -155,21 +169,48 @@ describeIntegration("vendor credits live path (real Postgres)", () => {
       method: "POST",
       url: `/api/v1/accounting/vendor-credits?operating_company_id=${companyId}`,
       headers: { "content-type": "application/json", ...testAuthHeaders(undefined, "Owner") },
-      payload: { vendor_id: randomUUID(), amount_cents: 100 },
+      payload: { vendor_id: randomUUID(), amount_cents: 100, coa_account_id: expenseAccountId },
     });
     expect(unknown.statusCode).toBe(404);
     expect((unknown.json() as { error: string }).error).toBe("vendor_not_found");
   });
 
-  it("refuses a GL account it cannot persist instead of dropping it", async () => {
-    const res = await app.inject({
+  it("refuses a credit with no account, or an account outside its company (ROUND 373.4)", async () => {
+    const missing = await app.inject({
+      method: "POST",
+      url: `/api/v1/accounting/vendor-credits?operating_company_id=${companyId}`,
+      headers: { "content-type": "application/json", ...testAuthHeaders(undefined, "Owner") },
+      payload: { vendor_id: vendorId, amount_cents: 100 },
+    });
+    expect(missing.statusCode).toBe(400);
+    const foreign = await app.inject({
       method: "POST",
       url: `/api/v1/accounting/vendor-credits?operating_company_id=${companyId}`,
       headers: { "content-type": "application/json", ...testAuthHeaders(undefined, "Owner") },
       payload: { vendor_id: vendorId, amount_cents: 100, coa_account_id: randomUUID() },
     });
-    expect(res.statusCode).toBe(422);
-    expect((res.json() as { error: string }).error).toBe("coa_account_id_not_persisted");
+    expect(foreign.statusCode).toBe(400);
+    expect((foreign.json() as { error: string }).error).toBe("account_not_postable_for_company");
+  });
+
+  it("posts Dr A/P / Cr the named expense on create, on the creating transaction (ROUND 373.4)", async () => {
+    const credit = await createCredit(12500);
+    const gl = await bypass(async () => {
+      const res = await db.query<{ journal_entry_id: string | null; ap_dr: string; exp_cr: string }>(
+        `SELECT v.journal_entry_id::text,
+                COALESCE(sum(l.amount_cents) FILTER (WHERE l.account_id = $2::uuid AND l.debit_or_credit = 'debit'), 0)::text AS ap_dr,
+                COALESCE(sum(l.amount_cents) FILTER (WHERE l.account_id = $3::uuid AND l.debit_or_credit = 'credit'), 0)::text AS exp_cr
+           FROM accounting.vendor_credits v
+           LEFT JOIN accounting.journal_entry_postings l ON l.journal_entry_uuid = v.journal_entry_id
+          WHERE v.id = $1::uuid
+          GROUP BY v.journal_entry_id`,
+        [credit.id, apAccountId, expenseAccountId]
+      );
+      return res.rows[0];
+    });
+    expect(gl?.journal_entry_id).toBeTruthy();
+    expect(Number(gl?.ap_dr)).toBe(12500);
+    expect(Number(gl?.exp_cr)).toBe(12500);
   });
 
   it("creates a credit with a server-generated display id and an audit row", async () => {
@@ -360,5 +401,14 @@ describeIntegration("vendor credits live path (real Postgres)", () => {
     expect(Number(state.credit?.amount_applied_cents ?? -1)).toBe(0);
     expect(Number(state.applications?.total ?? 0)).toBe(1);
     expect(Number(state.applications?.active ?? -1)).toBe(0);
+
+    const reversal = await bypass(async () => {
+      const res = await db.query<{ void_reversal_entry_id: string | null }>(
+        `SELECT void_reversal_entry_id::text FROM accounting.vendor_credits WHERE id = $1::uuid`,
+        [credit.id]
+      );
+      return res.rows[0];
+    });
+    expect(reversal?.void_reversal_entry_id).toBeTruthy();
   });
 });

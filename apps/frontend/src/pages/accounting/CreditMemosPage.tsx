@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { listAllCustomers } from "../../api/mdata";
-import { listInvoices, type Invoice } from "../../api/accounting";
+import { listCoaAccountsForJe, listInvoices, type Invoice } from "../../api/accounting";
 import {
   applyCreditMemo,
   createCreditMemo,
@@ -89,6 +89,17 @@ export function CreditMemosPage() {
   const [applyAmountCents, setApplyAmountCents] = useState<number | null>(null);
   const [voidOpen, setVoidOpen] = useState(false);
   const [createCustomerId, setCreateCustomerId] = useState<string | null>(customerFilter || null);
+  // ROUND 373.4 — the account this credit posts to (required: the document posts at creation).
+  const [createAccountId, setCreateAccountId] = useState<string | null>(null);
+  const accountsQuery = useQuery({
+    queryKey: ["accounting", "credit-doc-accounts", companyId],
+    queryFn: () => listCoaAccountsForJe(companyId, { postableOnly: true }),
+    enabled: Boolean(companyId),
+  });
+  const accountOptions = useMemo(
+    () => (accountsQuery.data?.accounts ?? []).map((a) => ({ value: a.id, label: a.account_name })),
+    [accountsQuery.data]
+  );
   const [createAmountCents, setCreateAmountCents] = useState<number | null>(null);
   const [createReason, setCreateReason] = useState<CreditMemoReason>("other");
   const [createNotes, setCreateNotes] = useState("");
@@ -141,6 +152,7 @@ export function CreditMemosPage() {
         reason: createReason,
         notes: createNotes.trim() || undefined,
         display_id: createDisplayId.trim() || undefined,
+        account_id: createAccountId as string,
       }),
     onSuccess: async () => {
       pushToast("Credit memo created", "success");
@@ -149,6 +161,7 @@ export function CreditMemosPage() {
       setCreateReason("other");
       setCreateNotes("");
       setCreateDisplayId("");
+      setCreateAccountId(null);
       await queryClient.invalidateQueries({ queryKey: ["accounting", "credit-memos", companyId] });
     },
     onError: (err) => pushToast(err instanceof Error ? err.message : "Create failed", "error"),
@@ -344,7 +357,7 @@ export function CreditMemosPage() {
             </Button>
             <Button
               type="button"
-              disabled={!createCustomerId || createAmountCents == null || createAmountCents <= 0 || createMut.isPending}
+              disabled={!createCustomerId || createAmountCents == null || !createAccountId || createAmountCents <= 0 || createMut.isPending}
               loading={createMut.isPending}
               onClick={() => createMut.mutate()}
             >
@@ -392,6 +405,21 @@ export function CreditMemosPage() {
                 valueCents={createAmountCents}
                 onChangeCents={setCreateAmountCents}
                 ariaLabel="Credit memo amount"
+              />
+            </div>
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium text-gray-600">Income account *</span>
+            <div className="mt-1">
+              <ReferenceSelect
+                value={createAccountId}
+                onChange={setCreateAccountId}
+                options={accountOptions}
+                createKind="account"
+                operatingCompanyId={companyId}
+                placeholder="Select account"
+                disabled={!companyId}
+                onOptionCreated={() => void accountsQuery.refetch()}
               />
             </div>
           </label>

@@ -74,8 +74,8 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/accounting/broker-advances/:id/disburse-to-driver-bill` | `apps/backend/src/accounting/broker-advances.routes.ts:76` | — | — | — |
 | nested | `/api/v1/accounting/collections/:taskId/contact` | `apps/backend/src/accounting/collections.routes.ts:92` | — | — | — |
 | create | `/api/v1/accounting/company-settlements/open` | `apps/backend/src/accounting/company-settlement-open-close.routes.ts:40` | — | — | — |
-| create | `/api/v1/accounting/credit-memos` | `apps/backend/src/accounting/credit-memos.routes.ts:235` | — | — | — |
-| nested | `/api/v1/accounting/credit-memos/:id/unvoid` | `apps/backend/src/accounting/credit-memos.routes.ts:555` | — | — | — |
+| create | `/api/v1/accounting/credit-memos` | `apps/backend/src/accounting/credit-memos.routes.ts:239` | — | — | — |
+| nested | `/api/v1/accounting/credit-memos/:id/unvoid` | `apps/backend/src/accounting/credit-memos.routes.ts:596` | — | — | — |
 | create | `/api/v1/accounting/escrow/deposit` | `apps/backend/src/accounting/escrow/routes.ts:119` | — | — | — |
 | create | `/api/v1/accounting/escrow/open` | `apps/backend/src/accounting/escrow/routes.ts:42` | — | — | — |
 | create | `/api/v1/accounting/expense-category-map` | `apps/backend/src/accounting/expense-category-map/routes.ts:222` | — | — | — |

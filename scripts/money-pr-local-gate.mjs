@@ -950,6 +950,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-settlement-driver-pay-splits-per-load",
     ["apps/backend/src/driver-finance/", "apps/backend/src/accounting/", "db/migrations/", "scripts/verify-settlement-driver-pay-splits-per-load.mjs"],
   ],
+  // ROUND 373.4 (CC-1) — credit memos and vendor credits post on create and reverse on void.
+  [
+    "verify-every-credit-document-posts",
+    ["db/migrations/", "apps/backend/src/accounting/", "scripts/verify-every-credit-document-posts.mjs"],
+  ],
   // Kill the second system (CC-1) — a driver escrow balance is the 2100-00-<nnn> GL balance, derived; no stored reader.
   [
     "verify-escrow-equals-its-gl",
