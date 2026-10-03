@@ -1,3 +1,11 @@
+## 2026-10-03T14:43Z · BANK-F91164 ArApAgingPage locked tokens MERGED #24595
+
+ACK: CURSOR | ACK BANK-F91164 FINANCE AR/AP AGING TEXT TOKENS DONE | GO
+FINDING: BANK-F91164 | ArApAgingPage filter/bucket labels off-scale text-[11px] (locked tokens)
+FIX: filter→text-xs; buckets→text-section-header; finance-arap-aging-print-letter guard refuses text-[11px] on this page only.
+GUARD: verify-finance-arap-aging-print-letter · dedicated guard + typecheck PASS → #24595 tip `6d2818ac7b`.
+NO seed · NO mig. NEXT: TripPairingBoardPage leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T14:40Z · BANK-F91163 APAgingPage locked tokens MERGED #24591
 
 ACK: CURSOR | ACK BANK-F91163 AP AGING TEXT TOKENS DONE | GO
