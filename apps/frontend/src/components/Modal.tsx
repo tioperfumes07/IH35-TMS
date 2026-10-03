@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getUserPreferences } from "../api/safety";
 import { colors, typography } from "../design/tokens";
 import { useEscapeKey } from "../hooks/useEscapeKey";
-import { MODAL_MIN_BY_PRESET, readModalSizeFromPrefs, persistModalSize, type ModalSizePreset } from "../lib/modal-size-prefs";
+import { MODAL_MAX_DEFAULT_W, MODAL_MIN_BY_PRESET, readModalSizeFromPrefs, persistModalSize, type ModalSizePreset } from "../lib/modal-size-prefs";
 import { ConfirmDiscardDialog } from "./dialogs/ConfirmDiscardDialog";
 import { ModalCloseButton } from "./ModalCloseButton";
 import { PARITY_CREATE_DRAWER_WIDTH } from "./parity/sizing";
@@ -126,7 +126,7 @@ export function Modal({
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const min = MODAL_MIN_BY_PRESET[sizePreset];
-    const fallbackW = Math.min(Math.max(vw * 0.85, min.w), vw * 0.92);
+    const fallbackW = Math.min(Math.max(vw * 0.85, min.w), vw * 0.92, MODAL_MAX_DEFAULT_W[sizePreset] ?? Number.POSITIVE_INFINITY);
     const fallbackH = Math.min(Math.max(vh * 0.72, min.h), vh * 0.92);
     const w = Math.max(min.w, Math.min(stored?.w ?? fallbackW, vw * 0.95));
     const h = Math.max(min.h, Math.min(stored?.h ?? fallbackH, vh * 0.95));
