@@ -104,11 +104,11 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
     return (
       <section className="overflow-hidden rounded-sm border border-gray-200 bg-white">
         <div className="flex items-center justify-between bg-gray-50 px-2 py-1">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">PM Alerts</span>
+          <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">PM Alerts</span>
           <span className="text-xs font-semibold" style={{ color: "#854F0B" }}>{openTotalCount} open</span>
         </div>
         {alerts.length === 0 ? (
-          <div className="px-2 py-1.5 text-[11px] text-gray-400">No PM alerts</div>
+          <div className="px-2 py-1.5 text-xs text-gray-400">No PM alerts</div>
         ) : (
           <div>
           <ul className="flex flex-col">
@@ -138,7 +138,7 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
     <section className="rounded-sm border border-gray-200 bg-white p-3">
       <div className="mb-2 flex items-center justify-between">
         <h3 className="text-xs font-semibold text-gray-900">PM Alerts</h3>
-        <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">{openTotalCount} open</span>
+        <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">{openTotalCount} open</span>
       </div>
       {alerts.length === 0 ? (
         <p className="text-xs text-gray-500">No preventive maintenance alerts.</p>
@@ -150,13 +150,13 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
                 <p className="text-xs font-semibold text-gray-900">
                   Unit <EntityLink kind="unit" id={alert.unit_id} label={entityLabel(alert.unit_number, alert.unit_id, "Unit")} /> · {alert.schedule_label}
                 </p>
-                <span className="text-[11px] text-gray-500">Due @ {alert.trigger_odometer.toLocaleString()} mi</span>
+                <span className="text-xs text-gray-500">Due @ {alert.trigger_odometer.toLocaleString()} mi</span>
               </div>
-              <p className="mt-1 text-[11px] text-gray-500">Triggered {new Date(alert.triggered_at).toLocaleString()}</p>
+              <p className="mt-1 text-xs text-gray-500">Triggered {new Date(alert.triggered_at).toLocaleString()}</p>
               <div className="mt-2 flex items-center gap-2">
                 <button
                   type="button"
-                  className="rounded-sm border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                  className="rounded-sm border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                   disabled={ackMutation.isPending}
                   onClick={() => void ackMutation.mutateAsync({
                     alertId: alert.id,
@@ -168,7 +168,7 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
                 </button>
                 <button
                   type="button"
-                  className="rounded-sm bg-slate-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-slate-700"
+                  className="rounded-sm bg-slate-600 px-2 py-1 text-xs font-semibold text-white hover:bg-slate-700"
                   disabled={scheduleMutation.isPending}
                   onClick={() => {
                     setSchedulingAlertId(alert.id);
@@ -180,7 +180,7 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
               </div>
               {schedulingAlertId === alert.id ? (
                 <div className="mt-2 bg-slate-50 p-2" data-testid={`pm-alert-wo-picker-${alert.id}`}>
-                  <label className="text-[11px] font-semibold text-gray-700">Work order</label>
+                  <label className="text-xs font-semibold text-gray-700">Work order</label>
                   <EntityPicker
                     kind="work_order"
                     operatingCompanyId={operatingCompanyId}
@@ -193,7 +193,7 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
                   <div className="mt-2 flex justify-end gap-2">
                     <button
                       type="button"
-                      className="rounded-sm border border-gray-300 px-2 py-1 text-[11px] text-gray-700"
+                      className="rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-700"
                       onClick={() => {
                         setSchedulingAlertId(null);
                         setSelectedWorkOrderId(null);
@@ -203,7 +203,7 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
                     </button>
                     <button
                       type="button"
-                      className="rounded-sm bg-slate-700 px-2 py-1 text-[11px] font-semibold text-white disabled:opacity-50"
+                      className="rounded-sm bg-slate-700 px-2 py-1 text-xs font-semibold text-white disabled:opacity-50"
                       disabled={!selectedWorkOrderId || scheduleMutation.isPending}
                       onClick={() => {
                         if (!selectedWorkOrderId) return;

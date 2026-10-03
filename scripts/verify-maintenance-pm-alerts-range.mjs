@@ -40,6 +40,8 @@ function failures(source = live) {
     ["scheduled server range", source.card.includes("offset: (scheduledPage - 1) * pageSize") && source.card.includes('data-testid="pm-alerts-scheduled-pager"')],
     ["open read failure visible", source.card.includes('data-testid="pm-alerts-query-error"') && source.card.includes("Couldn't load PM alerts") && source.card.includes("alertsQuery.refetch()")],
     ["scheduled read failure visible", source.card.includes('data-testid="pm-alerts-scheduled-query-error"') && source.card.includes("Couldn't load scheduled PM alerts") && source.card.includes("scheduledAlertsQuery.refetch()")],
+    ["leftover text-[11px]", !source.card.includes("text-[11px]")],
+    ["leftover off-scale muted", !source.card.includes("#8A92AB") && !source.card.includes("#334155")],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }
 
@@ -66,10 +68,16 @@ if (process.argv.includes("--selftest")) {
     { ...live, card: live.card.replace("offset: (scheduledPage - 1) * pageSize", "offset: 0") },
     { ...live, card: live.card.replace('data-testid="pm-alerts-query-error"', 'data-testid="missing"') },
     { ...live, card: live.card.replace('data-testid="pm-alerts-scheduled-query-error"', 'data-testid="missing"') },
+    { ...live, card: `${live.card}\n<div className="text-[11px] text-[#8A92AB]">plant</div>` },
   ];
   const escaped = mutations.map((source, index) => failures(source).length ? null : index + 1).filter(Boolean);
   if (escaped.length) {
     console.error(`verify-maintenance-pm-alerts-range SELFTEST FAIL — mutations ${escaped.join(", ")} stayed green`);
+    process.exit(1);
+  }
+  const leftoverPlant = failures({ ...live, card: `${live.card}\n<div className="text-[11px] text-[#8A92AB]">plant</div>` });
+  if (!leftoverPlant.includes("leftover text-[11px]") || !leftoverPlant.includes("leftover off-scale muted")) {
+    console.error("verify-maintenance-pm-alerts-range SELFTEST FAIL — leftover plant escaped", leftoverPlant);
     process.exit(1);
   }
   console.log(`verify-maintenance-pm-alerts-range SELFTEST PASS — ${mutations.length}/${mutations.length} mutations red`);
