@@ -9,6 +9,7 @@
  *   DRY_RUN=1 … (default) prints the rows that would insert; APPLY=1 writes.
  */
 import pg from "pg";
+import { assertIsIntendedProduction } from "../lib/assert-not-production.mjs";
 
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const LOAD_ID = "2c2d9ae7-386d-4ede-9c8f-888bce2896d7";
@@ -35,6 +36,8 @@ async function main() {
 
   const client = new pg.Client({ connectionString: url });
   await client.connect();
+  // ROUND 363-CC3-D / 365.4: an AUTH-gated production fix refuses to run anywhere but the production branch.
+  await assertIsIntendedProduction(client, { label: "auth200-link-13503-expenses" });
   try {
     await client.query("BEGIN");
     await client.query("SELECT set_config('app.bypass_rls', 'lucia', true)");

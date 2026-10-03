@@ -38,11 +38,21 @@ const BASELINE = 15;
  * real SQL type keyword. Case-insensitive; SQL is not case-sensitive on keywords. */
 const DELETED_AT_COLUMN_RE = /\bdeleted_at\s+(timestamp(?:tz)?|date|boolean)\b/i;
 
+/** The ONE table where deleted_at is not a soft-delete flag: audit.record_deletions is the log the governed purge
+ * writes BEFORE it hard-deletes a row (REVERSE -> VOID -> PURGE), and its deleted_at is the time of that real deletion
+ * event — voided_at / deactivated_at / revoked_at would each say something false. It is defined (CREATE TABLE IF NOT
+ * EXISTS) by 202615210200 and 202615290200, both applied (never edited — ROUND 369.3). The law forbids a deleted_at that
+ * marks a LIVE record "off"; a deletion log is not that. Classified here by name, not by raising BASELINE. */
+const DELETION_LOG_TABLE_RE = /^\s*CREATE TABLE (IF NOT EXISTS )?audit\.record_deletions\b/i;
+
 export function fileDefinesDeletedAtColumn(sqlText) {
   const lines = sqlText.split("\n");
+  let inDeletionLog = false;
   for (const line of lines) {
     const trimmed = line.trim();
     if (trimmed.startsWith("--")) continue; // line comment
+    if (DELETION_LOG_TABLE_RE.test(line)) { inDeletionLog = true; continue; }
+    if (inDeletionLog) { if (/^\s*\);/.test(line)) inDeletionLog = false; continue; }
     if (DELETED_AT_COLUMN_RE.test(line)) return true;
   }
   return false;
@@ -88,6 +98,13 @@ function runSelftest() {
   const whereOnly = `SELECT * FROM foo.bar WHERE deleted_at IS NULL;`;
   if (fileDefinesDeletedAtColumn(whereOnly)) {
     throw new Error("selftest: a WHERE clause referencing an existing deleted_at column must NOT be flagged as a new definition — it was");
+  }
+  const deletionLog = `CREATE TABLE IF NOT EXISTS audit.record_deletions (\n  id bigserial PRIMARY KEY,\n  deleted_at timestamptz NOT NULL DEFAULT now()\n);`;
+  if (fileDefinesDeletedAtColumn(deletionLog)) {
+    throw new Error("selftest: audit.record_deletions (the hard-delete log) must not count as a soft-delete column — it did");
+  }
+  if (!fileDefinesDeletedAtColumn(deletionLog + `\nCREATE TABLE foo.bar (\n  deleted_at timestamptz\n);`)) {
+    throw new Error("selftest: a deleted_at on ANY other table after the deletion log must still be detected — it was not");
   }
   console.log(`[${LABEL}] --selftest OK (real column definition detected, ADD COLUMN detected, comment-only and WHERE-only both correctly ignored)`);
 }
