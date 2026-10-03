@@ -1,5 +1,5 @@
 # NOW-CURSOR
-NOW: BANK-F91201 MaintKpiDashboardPage leftover MERGED #24728 tip `77bdd91f16` — finish your list, no handoffs
-ACK: CURSOR | ACK BANK-F91201 MAINT KPI DASHBOARD TEXT TOKENS DONE | GO
+NOW: BANK-F91202 CancelLoadModal leftover MERGED #24730 tip `0f568f3351` — finish your list, no handoffs
+ACK: CURSOR | ACK BANK-F91202 CANCEL LOAD MODAL TEXT TOKENS DONE | GO
 READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-STANDING-ORDER-FINISH-YOUR-LIST-NO-HANDOFFS.md`
-THEN: leftover CancelLoadModal · 363-CUR-A factoring home · 367.9 · 363-CUR-B/C
+THEN: leftover LegalReportsLandingPage · 363-CUR-A factoring home · 367.9 · 363-CUR-B/C
