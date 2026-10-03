@@ -34,6 +34,9 @@ function contains(relativePath, content, checks) {
 
 const componentPath = "apps/frontend/src/components/dispatch/FreshnessIndicator.tsx";
 const component = read(componentPath);
+if (component.includes("text-[11px]")) {
+  fail(`${componentPath}: must not use text-[11px] — use text-xs`);
+}
 contains(componentPath, component, [
   { pattern: /export function FreshnessIndicator/, label: "FreshnessIndicator export" },
   { pattern: /lastFetchedAt:\s*string\s*\|\s*null/, label: "lastFetchedAt prop" },
