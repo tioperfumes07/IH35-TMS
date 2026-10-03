@@ -1,3 +1,11 @@
+## 2026-10-03T21:20Z · BANK-F91226 DriversTable leftover tokens MERGED #24803 tip 2c324da9e0
+
+ACK: CURSOR | ACK BANK-F91226 DRIVERS TABLE TEXT TOKENS DONE | GO
+FINDING: BANK-F91226 | DriversTable leftover off-scale text-[11px] ×1
+FIX: 1 token → text-xs. Hung leftover refuse on verify-driver-f7334-canonical-tags-wired (DriversTable only).
+GUARD: verify-driver-f7334-canonical-tags-wired · leftover plant + live PASS → #24803 tip `2c324da9e0`.
+NO seed · NO mig. NEXT: leftover MaintKpiRows · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T20:58Z · BANK-F91225 DocsHomePage leftover tokens MERGED #24798 tip c3e1d27aae
 
 ACK: CURSOR | ACK BANK-F91225 DOCS HOME TEXT TOKENS DONE | GO
