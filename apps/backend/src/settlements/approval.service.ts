@@ -30,7 +30,7 @@
  * Escrow tables (driver_finance.escrow_balances / escrow_ledger) are natively CENTS — left as-is.
  */
 
-import { assertSubjectMayCloseOnClient } from "../driver-finance/feed-gate/feed-gate.service.js";
+import { assertSubjectMayCloseOnClient, FeedGateError } from "../driver-finance/feed-gate/feed-gate.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { recordEscrowPostingOnly } from "../accounting/escrow/service.js";
 import { signedEscrowLedgerAmountCents } from "../driver-finance/escrow-ledger-sign.js";
@@ -163,10 +163,11 @@ export async function getSettlementSummary(
         SELECT COUNT(*) FROM driver_finance.settlement_lines
         WHERE settlement_id = s.id
       ) as total_count,
-      COALESCE(eb.current_balance_cents, 0) as escrow_balance_cents
+      COALESCE(eb.balance_cents, 0) as escrow_balance_cents
     FROM driver_finance.driver_settlements s
     JOIN mdata.drivers d ON d.id = s.driver_id AND d.operating_company_id = s.operating_company_id
-    LEFT JOIN driver_finance.escrow_balances eb
+    -- KILL-THE-SECOND-SYSTEM: the escrow balance is the driver's 2100-00-<nnn> GL balance, derived.
+    LEFT JOIN driver_finance.v_driver_escrow_balance eb
       ON eb.driver_id = s.driver_id AND eb.operating_company_id = s.operating_company_id
     WHERE s.id = $1 AND s.operating_company_id = $2::uuid
   `, [settlementId, operatingCompanyId]);
@@ -493,6 +494,29 @@ export async function checkAllLinesApproved(
   };
 }
 
+export class SettlementLinesNotApprovedError extends Error {
+  readonly code = "settlement_lines_not_approved";
+  constructor(public pendingCount: number, public rejectedCount: number) {
+    super(`Cannot approve: ${pendingCount} lines pending, ${rejectedCount} lines rejected`);
+    this.name = "SettlementLinesNotApprovedError";
+  }
+}
+
+/**
+ * SETL-DUAL-APPROVAL-STATE-CONTRADICTION — maps the two refusals approveSettlement() raises (lines
+ * not all approved / feed gate red) to a 409 body, or null for any other error. Every writer that
+ * moves driver_settlements.status to 'approved' runs approveSettlement() first in the same
+ * transaction, so status='approved' never coexists with approval_status='needs_review'
+ * (scripts/verify-settlement-status-approved-runs-approval-gate.mjs).
+ */
+export function settlementApprovalRefusal(error: unknown): { error: string; message: string; details?: unknown } | null {
+  if (error instanceof SettlementLinesNotApprovedError) {
+    return { error: error.code, message: error.message, details: { pending_count: error.pendingCount, rejected_count: error.rejectedCount } };
+  }
+  if (error instanceof FeedGateError) return { error: error.code, message: error.message, details: error.details };
+  return null;
+}
+
 /**
  * Mark settlement as approved (when all lines reviewed) — canonical header.
  */
@@ -505,7 +529,7 @@ export async function approveSettlement(
   // Verify all lines are processed
   const check = await checkAllLinesApproved(client, settlementId, operatingCompanyId);
   if (!check.allApproved) {
-    throw new Error(`Cannot approve: ${check.pendingCount} lines pending, ${check.rejectedCount} lines rejected`);
+    throw new SettlementLinesNotApprovedError(check.pendingCount, check.rejectedCount);
   }
 
   // FEED GATE (owner law 2026-10-01): a settlement is approved only when every intake check is green —

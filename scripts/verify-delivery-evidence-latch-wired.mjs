@@ -37,6 +37,32 @@ const EVIDENCE_STATUSES = ["delivered_pending_docs", "completed_docs_received"];
 const LATCH_MARKERS = ["latchOnDeliveryEvidence", "postLoadRevenueLatch"];
 
 /**
+ * LATCHING DELEGATES (ROUND 365.6, replaces a file-name exemption for geofence-auto-delivery.service.ts,
+ * writer CC-3 #23821): a path may hand the delivery-evidence status to THE load-status machine instead
+ * of writing it itself. That is latched — but only by structure, re-proven every run:
+ *   (a) the delegate's own definition (found by its exported function, wherever it lives) references
+ *       the revenue latch, so a delegate that stops latching turns every caller red; and
+ *   (b) the calling file has NO direct `UPDATE mdata.loads ... SET status` of its own — a file that
+ *       both delegates and writes the status itself must latch itself.
+ */
+const LATCHING_DELEGATES = ["transitionDispatchLoadInClientTx"];
+const DIRECT_STATUS_WRITE = /UPDATE\s+mdata\.loads\b[\s\S]{0,400}?\bSET\s+status\b/i;
+
+/** Delegates (from LATCHING_DELEGATES) whose exported definition in `files` references the latch. */
+export function latchingDelegates(files) {
+  const ok = new Set();
+  for (const { src } of files) {
+    const executable = stripCommentsForLatchScan(src);
+    for (const name of LATCHING_DELEGATES) {
+      if (new RegExp(`export\\s+(?:async\\s+)?function\\s+${name}\\b`).test(executable) && LATCH_MARKERS.some((m) => executable.includes(m))) {
+        ok.add(name);
+      }
+    }
+  }
+  return ok;
+}
+
+/**
  * Files that legitimately NAME a delivery-evidence status without transitioning a load into one:
  * the poster itself, the shared helper, read-only/reporting paths, and consumers that branch on a
  * status someone else set. Each is a stated decision, never a silencer.
@@ -45,10 +71,6 @@ const EXEMPT = new Set([
   "apps/backend/src/dispatch/delivery-evidence-latch.ts", // the helper that DOES the latching
   "apps/backend/src/accounting/revrec-delivery-posting/poster.service.ts", // the poster itself
   "apps/backend/src/dispatch/stamp-final-delivery-departure.ts", // stamps the stop, not the load status
-  // Never writes a load status itself: it names "delivered_pending_docs" only as the target it hands to
-  // transitionDispatchLoadInClientTx (dispatch/load-transition.service.ts), which calls latchOnDeliveryEvidence
-  // for every delivery-evidence status. Checked by reading both files: no UPDATE mdata.loads in this one.
-  "apps/backend/src/dispatch/geofence-auto-delivery.service.ts",
   "apps/backend/src/driver-finance/settlements-load-bookended.service.ts", // reads a status set upstream
   // Pure status MAPPERS / read-side classifiers — they name the status but never write it to a load.
   // Verified by reading each: load-state-machine returns a normalised status from a status
@@ -149,6 +171,7 @@ export function auditSources(files) {
   const problems = [];
   let scanned = 0;
   let widened = 0;
+  const delegates = latchingDelegates(files);
   for (const { rel, src } of files) {
     if (EXEMPT.has(rel)) continue;
     const executable = stripCommentsForLatchScan(src);
@@ -158,7 +181,10 @@ export function auditSources(files) {
     // Count files in scope ONLY because of the 2026-08-07 widening — see the vacuous-pass check in
     // auditTree(). A literal-status match does not count.
     if (!status.startsWith("assigns the literal status")) widened++;
-    if (!LATCH_MARKERS.some((m) => executable.includes(m))) {
+    const viaDelegate =
+      !DIRECT_STATUS_WRITE.test(executable) &&
+      [...delegates].some((name) => new RegExp(`\\b${name}\\s*\\(`).test(executable));
+    if (!viaDelegate && !LATCH_MARKERS.some((m) => executable.includes(m))) {
       problems.push(
         `${rel}: ${status}, but never references the revenue latch ` +
           `(${LATCH_MARKERS.join(" / ")}). Delivery evidence would be recorded while the ledger hears ` +
@@ -294,6 +320,36 @@ function selftest() {
     }
   }
 
+  // case10 — the geofence-auto-delivery shape: names the evidence status only as the target it hands to
+  // the load-status machine. Clean while the machine latches; RED the moment the machine stops latching,
+  // and RED if the delegating file also writes the status itself.
+  const machine = `export async function transitionDispatchLoadInClientTx(c, a, o, id, input) {
+    await c.query("UPDATE mdata.loads SET status = $2 WHERE id = $1", [id, input.new_status]);
+    await latchOnDeliveryEvidence(c, {});
+  }`;
+  const delegating = `const r = await transitionDispatchLoadInClientTx(client, actor, opco, id, { new_status: "delivered_pending_docs" });`;
+  const tree = (m, d) => [
+    { rel: "apps/backend/src/dispatch/m.service.ts", src: m },
+    { rel: "apps/backend/src/dispatch/auto.service.ts", src: d },
+  ];
+  if (auditSources(tree(machine, delegating)).problems.length !== 0)
+    failures.push("case10a FAIL — a path that delegates to the latching load-status machine was flagged");
+  if (auditSources(tree(machine.replace("latchOnDeliveryEvidence", "noLatchHere"), delegating)).problems.length === 0)
+    failures.push("case10b FAIL — the load-status machine stopped latching and its delegating caller stayed GREEN");
+  if (auditSources(tree(machine, delegating + `\nawait client.query("UPDATE mdata.loads SET status = $2 WHERE id = $1", [id, s]);`)).problems.length === 0)
+    failures.push("case10c FAIL — a delegating file that ALSO writes the status itself was excused by the delegate");
+  // case10d — the REAL machine + the REAL geofence caller: clean as-is, RED with the machine's latch removed.
+  const machineRel = "apps/backend/src/dispatch/load-transition.service.ts";
+  const geoRel = "apps/backend/src/dispatch/geofence-auto-delivery.service.ts";
+  if (existsSync(join(ROOT, machineRel)) && existsSync(join(ROOT, geoRel))) {
+    const realM = readFileSync(join(ROOT, machineRel), "utf8");
+    const realG = readFileSync(join(ROOT, geoRel), "utf8");
+    const real = (m) => [{ rel: machineRel, src: m }, { rel: geoRel, src: realG }];
+    if (auditSources(real(realM)).problems.length !== 0) failures.push(`case10d FAIL — the REAL ${geoRel} is flagged`);
+    if (auditSources(real(realM.replace(/latchOnDeliveryEvidence/g, "noLatchHere"))).problems.length === 0)
+      failures.push(`case10d FAIL — removing the latch from the REAL ${machineRel} left ${geoRel} GREEN`);
+  } else failures.push(`case10d FAIL — ${machineRel} or ${geoRel} missing; the real delegate proof cannot run`);
+
   // NOTE: the selftest deliberately does NOT assert that the real tree is clean. That conflates two
   // different things — "is the matcher correct" (this selftest) and "is the repo currently compliant"
   // (the main run). The previous version asserted tree-cleanliness here, which meant a genuine defect
@@ -303,7 +359,7 @@ function selftest() {
     for (const f of failures) console.error(`  ✗ ${LABEL}: ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: selftest PASS — 11/11 writer, latch, comment, and real-file mutation cases`);
+  console.log(`${LABEL}: selftest PASS — 15/15 writer, latch, delegate, comment, and real-file mutation cases`);
 }
 
 function main() {

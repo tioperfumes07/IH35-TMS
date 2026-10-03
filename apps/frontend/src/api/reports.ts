@@ -93,6 +93,13 @@ export type HomeFleetSnapshot = {
   roadside: number;
 };
 
+export type AgingUnclearedDocument = {
+  document_type: string;
+  document_number: string;
+  document_date: string;
+  amount_cents: number;
+};
+
 export type ARAgingRow = {
   customer_id: string;
   customer_name: string;
@@ -104,6 +111,9 @@ export type ARAgingRow = {
   bucket_91_plus_cents: number;
   total_open_cents: number;
   last_payment_date?: string | null;
+  uncleared_documents: AgingUnclearedDocument[];
+  uncleared_cents: number;
+  cleared_open_cents: number;
 };
 
 export type ARAgingResponse = {
@@ -126,6 +136,9 @@ export type APAgingRow = {
   bucket_91_plus_cents: number;
   total_open_cents: number;
   last_payment_date?: string | null;
+  uncleared_documents: AgingUnclearedDocument[];
+  uncleared_cents: number;
+  cleared_open_cents: number;
 };
 
 export type APAgingResponse = {
@@ -269,6 +282,9 @@ type ArAgingApiPayload = {
     bucket_91_plus_cents: number;
     last_payment_date: string | null;
     invoice_count: number;
+    uncleared_documents?: AgingUnclearedDocument[];
+    uncleared_cents?: number;
+    cleared_open_cents?: number;
   }>;
 };
 
@@ -295,6 +311,9 @@ type ApAgingApiPayload = {
     bucket_91_plus_cents: number;
     last_payment_date: string | null;
     bill_count: number;
+    uncleared_documents?: AgingUnclearedDocument[];
+    uncleared_cents?: number;
+    cleared_open_cents?: number;
   }>;
 };
 
@@ -315,6 +334,9 @@ export async function getArAgingReport(companyId: string, asOfDate: string): Pro
     bucket_91_plus_cents: r.bucket_91_plus_cents,
     total_open_cents: r.total_cents,
     last_payment_date: r.last_payment_date,
+    uncleared_documents: r.uncleared_documents ?? [],
+    uncleared_cents: r.uncleared_cents ?? 0,
+    cleared_open_cents: r.cleared_open_cents ?? r.total_cents,
   }));
   return {
     status: "real",
@@ -343,6 +365,9 @@ export async function getApAgingReport(companyId: string, asOfDate: string): Pro
     bucket_91_plus_cents: r.bucket_91_plus_cents,
     total_open_cents: r.total_cents,
     last_payment_date: r.last_payment_date,
+    uncleared_documents: r.uncleared_documents ?? [],
+    uncleared_cents: r.uncleared_cents ?? 0,
+    cleared_open_cents: r.cleared_open_cents ?? r.total_cents,
   }));
   return {
     status: "real",

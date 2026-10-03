@@ -1,10 +1,10 @@
 {
-  "healthzSha": "419ab8a",
-  "generated_at": "2026-10-03T14:56:13.811Z",
+  "healthzSha": "5479722",
+  "generated_at": "2026-10-03T15:57:14.915Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "419ab8a",
+    "deployedSha": "5479722",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 24603,
-      "title": "FINDING: N/A LANE: DOCS -- ROUND 361 section D: a bank match/categorization sent back to For Review (owner question)",
+      "number": 24622,
+      "title": "FINDING: ACCT-F9854 LANE: FINANCIAL (Lead order \"KILL THE SECOND SYSTEM\", escrow step 1: every driver escrow number now comes from the driver's own 2100-00-nnn GL sub-account — derived from the postings — and no screen, report, API or service reads a stored escrow balance any more)",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 09:56 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24603",
-      "sha": "41a02b061c",
-      "committedAtIso": "2026-10-03T09:56:01-05:00"
+      "mergedAtCt": "10/03/2026, 10:56 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24622",
+      "sha": "39a9cb7c0c",
+      "committedAtIso": "2026-10-03T10:56:57-05:00"
     },
     {
-      "number": 24602,
-      "title": "FINDING: N/A — OUTBOX BANK-F91167 DONE census (#24601)",
+      "number": 24628,
+      "title": "FINDING: ACCT-F9855 LANE: FINANCIAL (SETL-DUAL-APPROVAL-STATE-CONTRADICTION: a driver settlement could read status 'approved' while its approval header still said 'needs_review' — three writers moved status without the canonical approval gate; all three now run approveSettlement() first, in the same transaction)",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 09:53 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24602",
-      "sha": "516dc7c870",
-      "committedAtIso": "2026-10-03T09:53:21-05:00"
+      "mergedAtCt": "10/03/2026, 10:56 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24628",
+      "sha": "f1108bf2d0",
+      "committedAtIso": "2026-10-03T10:56:53-05:00"
     },
     {
-      "number": 24601,
-      "title": "FINDING: BANK-F91167 | AtRiskQueuePage row-count caption off-scale text-[11px] (locked tokens)",
+      "number": 24629,
+      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: ROUND 363 CC-1 — migrations 202615350500 / 202615350700 / 202615350800 and verify-steps 12353 / 12357 / 12361 / 12365 — the posting load stamp, the bill-payment refusal, the match posts nothing, the reclassify writer)",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 09:52 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24601",
-      "sha": "18d773a53f",
-      "committedAtIso": "2026-10-03T09:52:44-05:00"
+      "mergedAtCt": "10/03/2026, 10:56 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24629",
+      "sha": "aa464e94cd",
+      "committedAtIso": "2026-10-03T10:56:41-05:00"
     },
     {
-      "number": 24600,
-      "title": "FINDING: N/A — OUTBOX BANK-F91166 DONE census (#24599)",
+      "number": 24633,
+      "title": "FINDING: BANK-F3650 ROUND 365.6 — nine bank-feed guards red on main are green: six were pinned to code ROUND 360 moved into the state machine (invariants re-proven on the engine), three were stale, and one exposed a real gap fixed at the write point (the same JE could be matched to two bank lines)",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 09:51 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24600",
-      "sha": "419ab8aae8",
-      "committedAtIso": "2026-10-03T09:51:38-05:00"
+      "mergedAtCt": "10/03/2026, 10:56 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24633",
+      "sha": "b8baf36eab",
+      "committedAtIso": "2026-10-03T10:56:22-05:00"
     },
     {
-      "number": 24599,
-      "title": "FINDING: BANK-F91166 | LoadHistoryPage headings/captions off-scale text-[11px] (locked tokens)",
+      "number": 24632,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL -- ROUND 365.6: the 7 red-on-main guards in CC-3's lane, each to green by fixing the code or the stale guard — no threshold raised, no baseline widened",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 09:50 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24599",
-      "sha": "a34ff79bda",
-      "committedAtIso": "2026-10-03T09:50:52-05:00"
+      "mergedAtCt": "10/03/2026, 10:49 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24632",
+      "sha": "5479722913",
+      "committedAtIso": "2026-10-03T10:49:46-05:00"
     },
     {
-      "number": 24598,
-      "title": "FINDING: N/A — OUTBOX BANK-F91165 DONE census (#24597)",
+      "number": 24631,
+      "title": "FINDING: BANK-F3602 ROUND 360 guards read TRUCKING — ROUND 363 law freezes TRANSPORTATION and TRUCKING; the seven bank-feed guards now skip both and name them on every line",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 09:50 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24598",
-      "sha": "eb4ea80397",
-      "committedAtIso": "2026-10-03T09:50:00-05:00"
+      "mergedAtCt": "10/03/2026, 10:38 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24631",
+      "sha": "5ac0bb63a1",
+      "committedAtIso": "2026-10-03T10:38:53-05:00"
     },
     {
-      "number": 24597,
-      "title": "FINDING: BANK-F91165 | TripPairingBoardPage chrome off-scale text-[11px] (locked tokens)",
+      "number": 24630,
+      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: migration 202615330930 for CC-3 ROUND 363-CC3-B — the send-back keeps the match)",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 09:49 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24597",
-      "sha": "c88e09c499",
-      "committedAtIso": "2026-10-03T09:49:07-05:00"
+      "mergedAtCt": "10/03/2026, 10:35 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24630",
+      "sha": "332ec4446b",
+      "committedAtIso": "2026-10-03T10:35:31-05:00"
     },
     {
-      "number": 24596,
-      "title": "FINDING: N/A — OUTBOX BANK-F91164 DONE census (#24595)",
+      "number": 24627,
+      "title": "FINDING: BANK-F3601 Relay ingest — every pull is a dated dtstart/dtend window (never unfiltered, 10s apart, halved on timeout), drivers match on integration_id only, and a money field in an unconfirmed shape is refused by name instead of coerced",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 09:43 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24596",
-      "sha": "c28ca02a2e",
-      "committedAtIso": "2026-10-03T09:43:35-05:00"
+      "mergedAtCt": "10/03/2026, 10:32 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24627",
+      "sha": "1c9baf9a6a",
+      "committedAtIso": "2026-10-03T10:32:01-05:00"
     },
     {
-      "number": 24595,
-      "title": "FINDING: BANK-F91164 | ArApAgingPage filter/bucket labels off-scale text-[11px] (locked tokens)",
+      "number": 24626,
+      "title": "FINDING: N/A — OUTBOX BANK-F91177 DONE census (#24625)",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 09:42 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24595",
-      "sha": "6d2818ac7b",
-      "committedAtIso": "2026-10-03T09:42:36-05:00"
+      "mergedAtCt": "10/03/2026, 10:27 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24626",
+      "sha": "5197f57998",
+      "committedAtIso": "2026-10-03T10:27:55-05:00"
     },
     {
-      "number": 24594,
-      "title": "FINDING: N/A — OUTBOX BANK-F91163 DONE census (#24591)",
+      "number": 24625,
+      "title": "FINDING: BANK-F91177 | SettlementCloseArrivalPage captions off-scale text-[11px] (locked tokens)",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 09:41 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24594",
-      "sha": "4457b74330",
-      "committedAtIso": "2026-10-03T09:41:28-05:00"
+      "mergedAtCt": "10/03/2026, 10:27 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24625",
+      "sha": "2d9aa1a664",
+      "committedAtIso": "2026-10-03T10:27:12-05:00"
     }
   ]
 }

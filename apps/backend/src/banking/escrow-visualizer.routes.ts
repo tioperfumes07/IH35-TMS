@@ -90,13 +90,14 @@ export async function registerBankingEscrowVisualizerRoutes(app: FastifyInstance
             SELECT
               d.id AS driver_id,
               CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name,
-              COALESCE(ea.balance_cents, 0) / 100.0 AS escrow_balance
+              COALESCE(vb.balance_cents, 0) / 100.0 AS escrow_balance
             FROM mdata.drivers d
             LEFT JOIN accounting.escrow_accounts ea
               ON ea.holder_id = d.id
               AND ea.holder_type = 'driver'
               AND ea.purpose = 'driver_bond'
               AND ea.operating_company_id = d.operating_company_id
+            LEFT JOIN driver_finance.v_driver_escrow_balance vb ON vb.escrow_account_id = ea.id
             WHERE d.operating_company_id = $1::uuid
               AND (d.deactivated_at IS NULL OR ea.id IS NOT NULL)
             ORDER BY driver_name

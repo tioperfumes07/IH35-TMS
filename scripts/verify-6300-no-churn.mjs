@@ -22,7 +22,10 @@ const RESET = /status = CASE WHEN prior\.matched_journal_entry_id IS NOT NULL AN
 export function problems(src) {
   const p = [];
   if (!RESET.test(src.worklist)) p.push("recon-worklist unmatch must send a reversed categorized line back to pending_categorization");
-  if (!RESET.test(src.session)) p.push("the session unmatch must send a reversed categorized line back to pending_categorization");
+  // The session unmatch may carry the reset itself, or DELEGATE to recon-worklist's unmatchBankTransaction (checked above),
+  // which since ROUND 360 runs the bank-line state machine — whose release also sets status = 'pending_categorization'.
+  const sessionDelegates = /await unmatchBankTransaction\(\{/.test(src.session) && /import \{[^}]*\bunmatchBankTransaction\b[^}]*\} from "\.\.\/accounting\/bank-recon\/recon-worklist\.service\.js"/.test(src.session);
+  if (!RESET.test(src.session) && !sessionDelegates) p.push("the session unmatch must send a reversed categorized line back to pending_categorization (or delegate to unmatchBankTransaction)");
   const b = src.backlog;
   const sel = b.slice(b.indexOf("AND bt.status = 'categorized'"), b.indexOf("AND bt.status = 'categorized'") + 1200);
   if (!/AND NOT EXISTS \([\s\S]*source_transaction_type = 'bank_categorization'[\s\S]*je\.reversed_by_je_id IS NOT NULL/.test(sel)) p.push("the categorized-backlog poster must skip lines whose categorization JE was reversed");
@@ -41,7 +44,7 @@ if (isMain) {
     if (own.length) { console.error(`${LABEL} --selftest FAIL on the real tree — ${own.join("; ")}`); process.exit(1); }
     const plants = [
       ["worklist leaves categorized", { ...src, worklist: src.worklist.replace("THEN 'pending_categorization' ELSE bt.status END", "THEN bt.status ELSE bt.status END") }],
-      ["session leaves categorized", { ...src, session: src.session.replace("THEN 'pending_categorization' ELSE bt.status END", "THEN bt.status ELSE bt.status END") }],
+      ["session stops delegating and resets nothing", { ...src, session: src.session.replace("await unmatchBankTransaction({", "await somethingElse({") }],
       ["backlog re-posts reversed", { ...src, backlog: src.backlog.replace("AND je.reversed_by_je_id IS NOT NULL\n            )", "AND false\n            )") }],
     ];
     for (const [name, planted] of plants) {

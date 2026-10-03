@@ -79,8 +79,10 @@ export async function readDriverProfile(client: Q, companyId: string, driverId: 
 
   // 4. Escrow — the GL-tied escrow accounts (accounting.escrow_accounts, holder_type='driver') and their postings.
   const escrowAccounts = (await rows(
-    `SELECT id, purpose, status, balance_cents, coa_account_id FROM accounting.escrow_accounts
-      WHERE operating_company_id = $1 AND holder_type = 'driver' AND holder_id = $2 ORDER BY purpose`
+    `SELECT ea.id, ea.purpose, ea.status, COALESCE(vb.balance_cents, 0) AS balance_cents, ea.coa_account_id
+       FROM accounting.escrow_accounts ea
+       LEFT JOIN driver_finance.v_driver_escrow_balance vb ON vb.escrow_account_id = ea.id
+      WHERE ea.operating_company_id = $1 AND ea.holder_type = 'driver' AND ea.holder_id = $2 ORDER BY ea.purpose`
   )).map((x) => ({ ...x, balance_cents: n(x.balance_cents) }));
   const escrowPostings = escrowAccounts.length
     ? (await client.query(

@@ -24,6 +24,9 @@ function assertSource() {
   if (!page.includes("printLetterHtml")) fail("ARAgingPage must use printLetterHtml");
   if (/onClick=\{\(\) => window\.print\(\)\}/.test(page)) fail("must not window.print() on SPA");
   if (page.includes("text-[11px]")) fail("ARAgingPage.tsx: must not use text-[11px] — use text-section-header");
+  if (!page.includes("UnclearedDocumentsNote")) fail("ARAgingPage must name uncleared documents via UnclearedDocumentsNote");
+  if (!page.includes("not cleared")) fail("ARAgingPage must label uncleared payments not cleared");
+  if (!page.includes("cleared_open_cents")) fail("ARAgingPage must show the cleared balance");
 }
 
 function selftest() {

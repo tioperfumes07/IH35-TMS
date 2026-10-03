@@ -10,6 +10,7 @@ import { appendSettlementLineFromDriverBillIfMissing, appendEscrowContributionLi
 import { aggregateSettlementTotals } from "./settlements-load-bookended.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { postNegativeSettlementLiabilityIfNeeded } from "./negative-settlement-liability.service.js";
+import { approveSettlement, settlementApprovalRefusal } from "../settlements/approval.service.js";
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
 const driverIdParamsSchema = z.object({ driverId: z.string().uuid() });
@@ -467,6 +468,11 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
 
       const totals = await aggregateSettlementTotals(client, params.data.id, body.operating_company_id);
 
+      // SETL-DUAL-APPROVAL-STATE-CONTRADICTION — Settle & Pay is an approval: run the canonical header
+      // gate (every line approved + feed gate green, sets approval_status='approved') before status
+      // moves, so the two columns can never disagree. A refusal throws and rolls the settle back.
+      await approveSettlement(client, params.data.id, user.uuid, body.operating_company_id);
+
       await client.query(
         `
           UPDATE driver_finance.driver_settlements
@@ -523,8 +529,13 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
       );
 
       return { row, pdf };
+    }).catch((error: unknown) => {
+      const refusal = settlementApprovalRefusal(error);
+      if (refusal) return { approvalRefused: refusal };
+      throw error;
     });
 
+    if (result && "approvalRefused" in result) return reply.code(409).send(result.approvalRefused);
     if (result && "unavailable" in result) return reply.code(501).send({ error: "driver_finance_schema_not_available" });
     if (result && "notFound" in result) return reply.code(404).send({ error: "pre_settlement_not_found" });
     if (result && "invalidStatus" in result) {

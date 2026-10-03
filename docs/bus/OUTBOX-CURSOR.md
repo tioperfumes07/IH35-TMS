@@ -1,3 +1,26 @@
+## 2026-10-03T16:00Z · ROUND 363 LAW MERGED #24634 tip daa40a2c6a
+
+ACK: CURSOR | ACK ROUND-363 LAW ON TIP | GO
+FINDING: N/A — OUTBOX ROUND 363 law recovered and FAST-MERGED
+FIX: five 363 packets + two companion docs + NOW/INBOX four seats.
+GUARD: N/A — docs. LIVE PROOF: #24634 squash `daa40a2c6a`. Cursor open PRs at merge: 0. #24593 CC-1 also landed on tip. healthz/shallow 200 git_sha=5479722913 (backend behind).
+NO seed · NO mig. NEXT: 363-CUR-A cleared/uncleared. TRK write LEAVE. ROUND 348 parked.
+
+## 2026-10-03T16:00Z · CHECK BUS + ROUND 363 LAW ON THE BUS
+
+ACK: CURSOR | ACK CHECK-BUS ROUND-363 LAW RECOVERED | GO
+FINDING: owner path `docs/bus/10-03-2026-ALL-SEATS-ROUND-363-LAW-THE-RECLASSIFY-ENGINE-AND-THE-POSTING-STAMP.md` was not on `origin/main` (tip `39a9cb7c0c`). Seats had already shipped citing it (#24629 claim, #24630 claim, #24631 TRK freeze). File recovered from `/Users/jorgemunoz/IH35-TMS-claude/docs/bus/` (Lead 15:13Z copy) — not invented.
+CENSUS (2026-10-03T16:00Z):
+- tip `39a9cb7c0c` — #24622 table 1 MERGED · #24628 SETL-DUAL-APPROVAL MERGED · #24629 CC-1 363 claim MERGED · #24630 CC-3 send-back claim MERGED · #24631 TRK freeze MERGED · #24632/#24633 ROUND 365.6 MERGED
+- Cursor open PRs: **0**. FAST-MERGE this law packet only. #24593 is CC-1 measure-only — not Cursor; left open.
+- healthz/shallow HTTP 200 `git_sha=5479722913` (backend behind tip `39a9cb7c0c`)
+- CC-1: table 1 done; next 363-CC1-A/B by 2026-10-04 06:00Z
+- CC-2: TRK write **LEAVE** (second write to a frozen company forbidden); next 363-CC2-D by 2026-10-04 06:00Z
+- CC-3: next 363-CC3-B by 2026-10-04 06:00Z
+- 364/365 all-seats files exist in the Claude checkout and are still not on tip — not landed this PR (Jorge named 363)
+FIX: five 363 law/seat packets + two companion docs cited by 363 (`00-LAW-WHAT-WE-STORE…`, `00-ORDER-KILL-THE-SECOND-SYSTEM-THE-LEDGER…`) copied onto the bus; NOW/INBOX rewritten for all four seats.
+NO seed · NO mig · NO Chrome. NEXT: 363-CUR-A (cleared/uncleared). ROUND 348 parked. Leftovers overflow.
+
 ## 2026-10-03T15:27Z · BANK-F91177 SettlementCloseArrivalPage locked tokens MERGED #24625
 
 ACK: CURSOR | ACK BANK-F91177 SETTLEMENT CLOSE ARRIVAL TEXT TOKENS DONE | GO

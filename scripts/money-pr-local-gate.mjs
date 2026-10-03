@@ -904,6 +904,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-no-row-escapes-its-company",
     ["db/migrations/", "apps/backend/src/accounting/", "apps/backend/src/dispatch/", "apps/backend/src/driver-finance/", "scripts/verify-no-row-escapes-its-company.mjs"],
   ],
+  // Kill the second system (CC-1) — a driver escrow balance is the 2100-00-<nnn> GL balance, derived; no stored reader.
+  [
+    "verify-escrow-equals-its-gl",
+    ["db/migrations/", "apps/backend/src/driver-finance/", "apps/backend/src/settlements/", "apps/backend/src/accounting/escrow/", "apps/backend/src/banking/", "apps/backend/src/mdata/canonical/", "apps/backend/src/master-data/", "scripts/verify-escrow-equals-its-gl.mjs"],
+  ],
   // ROUND 342 Phase 4 — one scope column, one RLS policy on the factoring tables that carried a duplicate tenant policy.
   [
     "verify-factoring-one-scope-policy",

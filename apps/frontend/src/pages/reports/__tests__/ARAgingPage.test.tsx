@@ -48,6 +48,9 @@ const sampleRow: reportsApi.ARAgingRow = {
   bucket_91_plus_cents: 0,
   total_open_cents: 17_000,
   last_payment_date: null,
+  uncleared_documents: [],
+  uncleared_cents: 0,
+  cleared_open_cents: 17_000,
 };
 
 describe("ARAgingPage drill-through", () => {

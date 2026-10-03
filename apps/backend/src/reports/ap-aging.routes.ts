@@ -3,6 +3,11 @@ import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { createTtlCache } from "../lib/ttl-cache.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import {
+  attachUncleared,
+  listUnclearedBillPayments,
+  type UnclearedDocument,
+} from "../accounting/uncleared-applied-documents.js";
 
 // REPORTS-1 — the Reports-module A/P aging report is now sourced from the CANONICAL aging objects
 // (the same bucket math the Finance Hub FIN-20 screen and the statement exports trace to), instead of
@@ -34,6 +39,9 @@ type ApAgingRow = {
   bucket_91_plus_cents: number;
   last_payment_date: string | null;
   bill_count: number;
+  uncleared_documents: UnclearedDocument[];
+  uncleared_cents: number;
+  cleared_open_cents: number;
 };
 
 type ApAgingPayload = {
@@ -149,25 +157,31 @@ export async function registerReportsApAgingRoutes(app: FastifyInstance) {
       );
       const lastPayRows = lastPay.rows as Array<{ vendor_key: string; last_payment_date: string | null }>;
       const lastPayMap = new Map(lastPayRows.map((r) => [r.vendor_key, r.last_payment_date]));
+      const uncleared = await listUnclearedBillPayments(client, query.data.operating_company_id, asOf);
 
-      const rows: ApAgingRow[] = rawRows.map((row) => {
-        const current = num(row.current_cents);
-        const b1_30 = num(row.bucket_1_30_cents);
-        const vendorId = String(row.vendor_id);
-        return {
-          vendor_id: vendorId,
-          vendor_name: String(row.vendor_name ?? "Unknown vendor"),
-          total_cents: num(row.total_open_cents),
-          current_cents: current,
-          bucket_1_30_cents: b1_30,
-          bucket_0_30_cents: current + b1_30,
-          bucket_31_60_cents: num(row.bucket_31_60_cents),
-          bucket_61_90_cents: num(row.bucket_61_90_cents),
-          bucket_91_plus_cents: num(row.bucket_91_plus_cents),
-          last_payment_date: lastPayMap.get(vendorId) ?? null,
-          bill_count: num(row.open_bill_count),
-        };
-      });
+      const rows: ApAgingRow[] = attachUncleared(
+        rawRows.map((row) => {
+          const current = num(row.current_cents);
+          const b1_30 = num(row.bucket_1_30_cents);
+          const vendorId = String(row.vendor_id);
+          return {
+            vendor_id: vendorId,
+            vendor_name: String(row.vendor_name ?? "Unknown vendor"),
+            total_cents: num(row.total_open_cents),
+            current_cents: current,
+            bucket_1_30_cents: b1_30,
+            bucket_0_30_cents: current + b1_30,
+            bucket_31_60_cents: num(row.bucket_31_60_cents),
+            bucket_61_90_cents: num(row.bucket_61_90_cents),
+            bucket_91_plus_cents: num(row.bucket_91_plus_cents),
+            last_payment_date: lastPayMap.get(vendorId) ?? null,
+            bill_count: num(row.open_bill_count),
+          };
+        }),
+        uncleared,
+        "vendor_id",
+        (row) => row.total_cents,
+      );
 
       const totals = rows.reduce(
         (acc, row) => {
