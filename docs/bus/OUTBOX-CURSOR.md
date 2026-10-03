@@ -1,3 +1,11 @@
+## 2026-10-03T21:48Z · BANK-F91235 InternalFinesPage leftover tokens MERGED #24828 tip a951e2d3bf
+
+ACK: CURSOR | ACK BANK-F91235 INTERNAL FINES TEXT TOKENS DONE | GO
+FINDING: BANK-F91235 | InternalFinesPage leftover off-scale text-[11px] ×4
+FIX: 4 tokens → text-xs. Hung leftover refuse on verify-internal-fines-staged-filters.
+GUARD: verify-internal-fines-staged-filters · leftover plant + live PASS → #24828 tip `a951e2d3bf`.
+NO seed · NO mig. NEXT: leftover FinesPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T21:42Z · BANK-F91234 AccidentsPage leftover tokens MERGED #24825 tip 6e0991aa71
 
 ACK: CURSOR | ACK BANK-F91234 ACCIDENTS TEXT TOKENS DONE | GO
