@@ -1,3 +1,11 @@
+## 2026-10-03T10:11Z · BANK-F91117 CivilFineTypeModal text tokens MERGED #24469
+
+ACK: CURSOR | ACK BANK-F91117 CIVIL FINE MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91117 | CivilFineTypeModal field errors off-scale text-[11px] (locked tokens)
+FIX: 3 field-error lines→text-xs; safety-catalog-connectivity guard refuses text-[11px].
+GUARD: verify-lists-safety-catalog-connectivity-exact · money-pr-local-gate PASS → #24469 tip `1a69ea256d`.
+NO seed · NO mig (HH 10). NEXT: CargoClaimReasonModal leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T10:05Z · BANK-F91116 CompanyViolationTypeModal text tokens MERGED #24467
 
 ACK: CURSOR | ACK BANK-F91116 COMPANY VIOLATION MODAL TEXT TOKENS DONE | GO
