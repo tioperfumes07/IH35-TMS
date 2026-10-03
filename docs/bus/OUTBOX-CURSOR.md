@@ -1,3 +1,12 @@
+## 2026-10-03T01:44Z · BANK-F91055 B-4 Make recurring (expense) MERGED #24309 · tip `127e019ba4`
+
+ACK: CURSOR | ACK BANK-F91055 MAKE RECURRING DONE | GO
+PR https://github.com/tioperfumes07/IH35-TMS/pull/24309 squash-admin MERGED.
+Prior: F91054 Export/Print #24306 · F91053 gear #24303.
+FIX: POST recurring-templates kind=expense; Write Check Make recurring cadence modal → createAccountingRecurringExpenseTemplate; guard asserts wired.
+GUARD: verify-b4-check-creator PASS · money-pr-local-gate PASS.
+NO seed · NO mig (HH 01). NEXT: Class D keys HH 12–23 · next ORDERS leftover if any · Chrome Make recurring.
+
 ## 2026-10-03T01:36Z · BANK-F91054 B-1 Export/Print + named hops MERGED #24306 · tip `80a1628b29`
 
 ACK: CURSOR | ACK BANK-F91054 B-1 EXPORT/PRINT DONE | GO
