@@ -119,12 +119,17 @@ export async function registerInsurancePaymentScheduleRoutes(app: FastifyInstanc
         `
           INSERT INTO insurance.payment_schedule (
             tenant_id,
+            -- ROUND 342 Phase 2: operating_company_id is the canonical scope and the only column RLS checks. This
+            -- INSERT set tenant_id alone, so a normal request was refused (42501) and a bypass session wrote a row no
+            -- carrier could see (insurance.payment_schedule c929cb4e…, operating_company_id NULL). Same company as
+            -- tenant_id ($1) — not a new lookup.
+            operating_company_id,
             policy_id,
             due_date,
             amount_cents,
             status
           )
-          VALUES ($1::uuid, $2::uuid, $3::date, $4, $5)
+          VALUES ($1::uuid, $1::uuid, $2::uuid, $3::date, $4, $5)
           RETURNING ${selectColumns()}
         `,
         [

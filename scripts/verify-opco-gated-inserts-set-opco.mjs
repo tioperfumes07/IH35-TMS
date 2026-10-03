@@ -38,10 +38,19 @@ const LABEL = "verify-opco-gated-inserts-set-opco";
 /**
  * Tables whose ONLY permissive WITH CHECK gates on operating_company_id, which is NULLABLE.
  * Verified on Neon prod branch br-fancy-credit-akjnd07a via pg_policy + pg_attribute, 2026-08-08.
- * NOT in this list, deliberately: factoring.factor, factoring.customer_factor_assignment and
- * factoring.letter_of_release, each of which also has a permissive tenant_id policy.
+ * ROUND 342 (2026-10-02): factoring.factor, factoring.customer_factor_assignment and factoring.letter_of_release
+ * joined the list when Phase 4 (migration 202615310600) dropped their duplicate tenant_id policies — their writers were
+ * fixed in the same PR. The four CHECK-equated tables (Group B1) are listed too: operating_company_id is canonical
+ * everywhere, and Phase 2 retires tenant_id.
  */
 export const OPCO_GATED_TABLES = [
+  "factoring.factor",
+  "factoring.customer_factor_assignment",
+  "factoring.letter_of_release",
+  "maintenance.internal_labor_log",
+  "master_data.customer_terms_history",
+  "mdata.mx_permits",
+  "mdata.mx_tolls_ledger",
   "factoring.reserve_movement",
   "factoring.batch",
   "factoring.bank_match_suggestion",
@@ -103,16 +112,11 @@ export function offendingInserts(src, tables = OPCO_GATED_TABLES) {
  * lane fixes them is the intended direction of travel, and the count below should only ever fall.
  */
 const BASELINE = new Set([
+  // ROUND 342: 10 -> 1. Seven entries were already fixed on main and never removed; payment-schedule.routes.ts and
+  // refund-obligation.service.ts were fixed in the ROUND 342 Phase 2 writer PR. claim.routes.ts builds its column list
+  // at runtime — put("operating_company_id", …) whenever the column exists (it does on prod) — so a static scan cannot
+  // see it; it is not a missing column.
   "apps/backend/src/insurance/claim.routes.ts::insurance.claim",
-  "apps/backend/src/insurance/coi.service.ts::insurance.coi_request",
-  "apps/backend/src/insurance/lawsuit.routes.ts::insurance.lawsuit",
-  "apps/backend/src/insurance/payment-schedule.routes.ts::insurance.payment_schedule",
-  "apps/backend/src/insurance/policy-bill-schedule.service.ts::insurance.payment_schedule",
-  "apps/backend/src/insurance/policy-create-atomic.service.ts::insurance.policy",
-  "apps/backend/src/insurance/policy-create-atomic.service.ts::insurance.policy_unit",
-  "apps/backend/src/insurance/policy.routes.ts::insurance.policy",
-  "apps/backend/src/insurance/policy.routes.ts::insurance.policy_unit",
-  "apps/backend/src/insurance/refund-obligation.service.ts::insurance.refund_obligation",
 ]);
 
 export function collectProblems(sources, baseline = BASELINE) {
@@ -153,15 +157,20 @@ if (process.argv.includes("--selftest")) {
   }
 
   // The three prod-verified EXEMPT tables must not be in the list.
-  for (const exempt of [
+  // ROUND 342 Phase 4 (#24288, migration 202615310600) dropped the second tenant_id policy on these three; they are
+  // opco-only now and MUST be listed (an unlisted one would let a tenant-only INSERT back in unseen).
+  for (const required of [
     "factoring.factor",
     "factoring.customer_factor_assignment",
     "factoring.letter_of_release",
   ]) {
-    if (OPCO_GATED_TABLES.includes(exempt)) {
-      failures.push(`${exempt} has a second permissive tenant_id policy on prod and must NOT be listed`);
+    if (!OPCO_GATED_TABLES.includes(required)) {
+      failures.push(`${required} is opco-only since ROUND 342 Phase 4 and must be listed`);
     }
   }
+  // ROUND 342: the payment-schedule writer that left operating_company_id NULL, verbatim from main before the fix.
+  const nullWriter = "INSERT INTO insurance.payment_schedule (\n tenant_id,\n policy_id,\n due_date,\n amount_cents,\n status\n ) VALUES ($1::uuid, $2::uuid, $3::date, $4, $5)";
+  if (offendingInserts(nullWriter).length !== 1) failures.push("the ROUND 342 null-producing payment_schedule INSERT was NOT caught");
 
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:`);
@@ -177,7 +186,7 @@ if (process.argv.includes("--selftest")) {
 
   console.log(
     `${LABEL} SELFTEST OK — 9/9 (defect caught, fix passes, comment cannot fake a pass, unrelated ` +
-      `table ignored, 3 prod-exempt tables correctly absent, ratchet catches NEW and honours baseline)`
+      `table ignored, 3 Phase-4 factoring tables listed, ROUND 342 null writer caught, ratchet catches NEW and honours baseline)`
   );
   process.exit(0);
 }

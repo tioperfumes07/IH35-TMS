@@ -1829,3 +1829,59 @@ origin/main's factor.service.ts (two writers without the column). Exit states 0 
 on no branch — only its claim landed (#24287). DDL reached prod ahead of its merged file. Land the file.
 **→ CC-2 queue (my lane, found in this gate run):** `verify-void-is-whole` — 130 of 323 USMCA fuel purchases have an
 all-dead ledger but a live header (no voided_at / void_reason / voided_by_user_id). Silent voids. Queued after Phase 2.
+
+## ROUND 342.2 — Phase 4 CLOSED on prod (#24288, migration 202615310600, claim #24286; backend dep-db04c249v7es739sh83g live 00:06:01Z)
+
+1. Assertions inside the migration: the pre-arm DO block (NULL or tenant ≠ opco, all three tables) returned 0 — the
+   migration applied (it RAISEs otherwise). Re-measured on prod after: factor 0 · customer_factor_assignment 0 · letter_of_release 0.
+2. pg_policy: BEFORE 2 each (`…_opco_scope` + `…tenant_scope_v2` / `factoring_lor_tenant_scope`, measured on prod 23:56Z)
+   → AFTER 1 each: `factoring_customer_factor_assignment_opco_scope`, `factoring_factor_opco_scope`, `factoring_letter_of_release_opco_scope`.
+3. Non-bypass USMCA session on prod AFTER (ih35_app, `is_lucia_bypass()` = f): customer_factor_assignment 1,222 · factor 1 · letter_of_release 0.
+   BEFORE on prod I measured under bypass only (1,222 / 2 / 0); the non-bypass BEFORE/AFTER pair is from the fork
+   (1,222 / 1 / 0 both). Identical.
+4. `count(*) FROM pg_policy WHERE pg_get_expr(polqual, polrelid) LIKE '%tenant_id%'` = **21** after (the Lead's 24 before; I did not measure 24 myself).
+Guard `verify-factoring-one-scope-policy` live exit 0.
+
+## ROUND 342 Phase 2 — step 1: the WRITERS (this PR). Nothing dropped yet.
+
+**Real set = 17 tables**, not 15: B1 = 5 (both NOT NULL / CHECK-equated); B2 = **12** (the round lists 12 under "(10)").
+Prod (bypass): rows / opco NULL / disagree — only insurance.payment_schedule has a NULL (1); 0 disagreements anywhere.
+
+**The null row is test junk, not a real schedule:** payment_schedule c929cb4e… belongs to policy `POL-TESTMTDQ164H`
+(cancelled), which the project's own purge (`run-usmca-seat-junk-purge-once.mts:474`, `policy_number ILIKE 'POL-TEST%'`)
+classifies as seat junk; the purge cancels the policy but never touches its schedule. No bill, no late fee, no money.
+The other schedule is under `SAMPLE-POL-5743-SIMPLE` (cancelled). insurance.payment_schedule holds 0 real rows.
+
+**The writer:** 23 INSERT statements reach the 17 tables; 2 still omitted operating_company_id —
+`insurance/payment-schedule.routes.ts` (POST /api/v1/insurance/payment-schedule) and `insurance/refund-obligation.service.ts`.
+Both now set `operating_company_id = $1` (same company as tenant_id). Fork br-autumn-meadow-ak8woqmh (deleted), non-bypass:
+OLD payment_schedule writer → `new row violates row-level security policy` (every normal request has been refused);
+FIXED → INSERTED with USMCA. Same for refund_obligation. Under bypass the OLD writer → INSERTED with `opco_is_null = t` —
+exactly how c929cb4e was born. (claim.routes.ts sets the column dynamically via put() when it exists — it does.)
+**Guard:** `verify-opco-gated-inserts-set-opco` now covers all 17 tables (adds the 3 Phase-4 factoring tables + 4 B1
+tables); baseline 10 → 1 (7 entries were already fixed and never removed; claim.routes.ts kept with its reason).
+Selftest 9/9 incl. the verbatim null-producing INSERT. Its old selftest asserted the 3 factoring tables must NOT be
+listed — superseded by Phase 4 (#24288), now inverted.
+
+**Phase 2 plan — expand / move code / contract (why not one transaction):** tenant_id is wired into 30 indexes (7
+unique business keys), 17 FKs to org.companies, 7 RLS policies (4 of them the ONLY policy on a B1 table:
+mx_permits, mx_tolls_ledger, internal_labor_log, customer_terms_history — drop the column and that table has RLS on with
+no policy), 1 view (factoring.v_factor_reserve_balance), the incoming composite FK from canonical_factor_agreements,
+and ~60 backend files (insurance.policy alone: 32). Render runs the migration BEFORE the new code serves, so dropping
+tenant_id in the same deploy as the code change fails every old-code request in the window. Steps:
+ 2a migration: per table assert 0 disagree → backfill opco from tenant_id (count) → SET NOT NULL → FK opco → org.companies
+    → an opco twin of every tenant index, unique ones included, **uq_factoring_factor (operating_company_id, id) for
+    CC-1's same-entity FK** → opco policy replacing each tenant-only B1 policy → tenant_id DROP NOT NULL → view on opco.
+ 2b code: every reader / ON CONFLICT target moves to operating_company_id; writers stop writing tenant_id.
+ 2c migration: drop tenant_id + its CHECKs / FKs / indexes — only after **CC-1 confirms in writing** (i) the
+    coi_request sync trigger is dropped and (ii) canonical_factor_agreements' composite FKs are on (operating_company_id, …).
+
+**"Always red" — decisions in writing:**
+- verify-purge-era-closures-still-hold: BASELINED — REPORT-ONLY by owner ruling ROUND 213 (2026-09-28), gate line 1123.
+  Clears when the owner seeds / imports.
+- verify-usmca-book-equals-faro-and-alwaystrack: BASELINED — REPORT-ONLY by Lead 2026-10-01 (owner seeding freeze),
+  gate line 1278. Which side is non-zero: the Faro side is NOT the database — it is `FARO_AGING_TARGETS`, a constant
+  transcribed from the owner's AGING REPORT.csv ($298,762.00 over 82 rows); the book side is $0.00 because USMCA has no
+  factored invoices under the freeze. A book population of zero is NO DATA → owed: exit 2, queued with the three-state work.
+- verify-factoring-reserve-escrow-subledger-gap, verify-fuel-card-gl-subledger-traceability (red in the static step,
+  my lane): OPEN — CC-2 queue, after Phase 2.
