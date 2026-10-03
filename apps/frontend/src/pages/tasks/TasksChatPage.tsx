@@ -260,7 +260,7 @@ export function TasksChatPage() {
                 <div className="border-b border-slate-200 px-4 py-2">
                   <div className="text-xs font-semibold text-[#1f2a44]">{selectedTask?.title ?? "Task"}</div>
                   {selectedTask ? (
-                    <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-slate-500">
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-slate-500">
                       <span>{formatDateUS(selectedTask.scheduled_date)} · {taskStatusLabel(selectedTask.status)}</span>
                       <TaskSubjectLink
                         subjectType={selectedTask.subject_type}

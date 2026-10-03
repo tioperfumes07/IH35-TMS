@@ -27,6 +27,8 @@ function failures(source) {
     if (!source.includes(`${query}.refetch()`)) found.push(`${label} failure has no exact Retry`);
     if (!source.includes(anchor)) found.push(`${label} has no stable rendered anchor`);
   }
+  if (source.includes("text-[11px]")) found.push("leftover text-[11px]");
+  if (source.includes("#8A92AB") || source.includes("#334155")) found.push("leftover off-scale muted");
   return found;
 }
 
@@ -47,7 +49,13 @@ if (process.argv.includes("--selftest")) {
     console.error(`verify-tasks-chat-read-recovery: SELFTEST FAIL — surviving mutations: ${survivors.join(", ")}`);
     process.exit(1);
   }
-  console.log(`verify-tasks-chat-read-recovery: SELFTEST PASS — ${contracts.length}/${contracts.length} query-boundary mutations rejected`);
+  const leftoverPlant = `${original}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  const leftoverFound = failures(leftoverPlant);
+  if (!leftoverFound.includes("leftover text-[11px]") || !leftoverFound.includes("leftover off-scale muted")) {
+    console.error("verify-tasks-chat-read-recovery: SELFTEST FAIL — leftover plant escaped");
+    process.exit(1);
+  }
+  console.log(`verify-tasks-chat-read-recovery: SELFTEST PASS — ${contracts.length}/${contracts.length} query-boundary mutations + leftover plant rejected`);
   process.exit(0);
 }
 
