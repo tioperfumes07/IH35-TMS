@@ -324,7 +324,7 @@ export function DispatchList({
             ...HOS_COLUMNS.map((c, cIndex) => ({
               key: `hos_${c.key}`,
               label: c.label,
-              cellClass: "font-mono text-[11px] text-gray-700",
+              cellClass: "font-mono text-xs text-gray-700",
               render: (load: DispatchLoadRow) => (
                 <DriverHosClockValue
                   driverId={load.assigned_primary_driver_id}
@@ -372,7 +372,7 @@ export function DispatchList({
                     key: "eta",
                     label: "ETA",
                     render: (load: DispatchLoadRow) => (
-                      <span className="text-[11px] text-gray-600">
+                      <span className="text-xs text-gray-600">
                         {load.status === "in_transit" && load.samsara_eta_at
                           ? new Date(load.samsara_eta_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
                           : "—"}
@@ -438,7 +438,7 @@ export function DispatchList({
               </div>
               <div className="mt-2">
                 <span
-                  className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${progressPill(load.progress_status)}`}
+                  className={`rounded-full px-2 py-0.5 text-xs font-semibold ${progressPill(load.progress_status)}`}
                   title={
                     load.progress_eta_delta_minutes == null
                       ? "No live GPS/appointment delta available."
