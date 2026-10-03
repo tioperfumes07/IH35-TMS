@@ -1,5 +1,5 @@
 # NOW-CURSOR
-NOW: BANK-F91226 DriversTable leftover MERGED #24803 tip `2c324da9e0` — finish your list, no handoffs
-ACK: CURSOR | ACK BANK-F91226 DRIVERS TABLE TEXT TOKENS DONE | GO
+NOW: BANK-F91227 MaintKpiRows leftover MERGED #24805 tip `cd4b8f50b0` — finish your list, no handoffs
+ACK: CURSOR | ACK BANK-F91227 MAINT KPI ROWS TEXT TOKENS DONE | GO
 READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-STANDING-ORDER-FINISH-YOUR-LIST-NO-HANDOFFS.md`
-THEN: leftover MaintKpiRows · 363-CUR-A factoring home · 367.9 · 363-CUR-B/C
+THEN: leftover CreateWorkOrderModal · 363-CUR-A factoring home · 367.9 · 363-CUR-B/C
