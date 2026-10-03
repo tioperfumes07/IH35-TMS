@@ -132,6 +132,15 @@ function analyze(src) {
   if (!/customer-detail-status/.test(cpage))
     errors.push("Customers detail header must show an Active/Inactive Status badge");
 
+  if (!cpage.includes("UnclearedDocumentsNote") || !cpage.includes("not cleared"))
+    errors.push("Customers detail must name uncleared payments not cleared");
+  if (!clist.includes("UnclearedDocumentsNote") || !clist.includes('label: "Not cleared"') || !clist.includes('label: "Cleared"'))
+    errors.push("Customers list must show Cleared and name documents not cleared");
+  if (!vpage.includes("UnclearedDocumentsNote") || !vpage.includes("not cleared"))
+    errors.push("Vendors detail must name uncleared payments not cleared");
+  if (!vlist.includes("UnclearedDocumentsNote") || !vlist.includes('label: "Not cleared"') || !vlist.includes('label: "Cleared"'))
+    errors.push("Vendors list must show Cleared and name documents not cleared");
+
   return errors;
 }
 
@@ -184,6 +193,8 @@ if (process.argv.includes("--selftest")) {
     ["customer detail Open balance off-rollup", withField("cpage", (s) => s.replace(/openByCustomerId\.get\(selectedCustomer\.id\)/g, "zero"))],
     ["customer detail drops Revenue tile", withField("cpage", (s) => s.replace(/customer-detail-revenue-ytd/g, "gone"))],
     ["customer detail drops Status badge", withField("cpage", (s) => s.replace(/customer-detail-status/g, "gone"))],
+    ["customer detail drops uncleared note", withField("cpage", (s) => s.replace(/UnclearedDocumentsNote/g, "GoneNote"))],
+    ["vendor detail drops uncleared note", withField("vpage", (s) => s.replace(/UnclearedDocumentsNote/g, "GoneNote"))],
   ];
   let caught = 0;
   for (const [label, mutated] of mutations) {

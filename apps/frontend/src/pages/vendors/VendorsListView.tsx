@@ -14,6 +14,7 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { companyToday } from "../../lib/businessDate";
 import { mmmDd } from "../../lib/formatDate";
+import { UnclearedDocumentsNote, type UnclearedDocumentNote } from "../../components/accounting/UnclearedDocumentsNote";
 
 function fmtMoney(cents: number) {
   return formatUsdCents(cents);
@@ -83,12 +84,13 @@ type Props = {
   /** Roster query status so the empty state renders only once the fetch settles. */
   status: ListQueryStatus;
   openByVendorId: Map<string, number>;
+  unclearedByVendorId?: Map<string, { uncleared_cents: number; uncleared_documents: UnclearedDocumentNote[] }>;
   /** CC-3 V.1 / Wave 3 Step 3 — per-vendor expense roll-up (Purchases YTD / Last Purchase). */
   rollupByVendorId: Map<string, VendorRollup>;
   onSelectVendor?: (vendorId: string) => void;
 };
 
-export function VendorsListView({ companyId, vendors, status, openByVendorId, rollupByVendorId, onSelectVendor }: Props) {
+export function VendorsListView({ companyId, vendors, status, openByVendorId, unclearedByVendorId, rollupByVendorId, onSelectVendor }: Props) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const bulkPermission = useBulkPermission();
@@ -284,6 +286,20 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, ro
             sortable: true,
             cellClass: "text-right tabular-nums",
             render: (row) => fmtMoney(row.open_balance),
+          },
+          {
+            key: "cleared_open_cents",
+            label: "Cleared",
+            sortable: true,
+            cellClass: "text-right tabular-nums",
+            sortValue: (row) => row.open_balance + (unclearedByVendorId?.get(row.id)?.uncleared_cents ?? 0),
+            render: (row) => fmtMoney(row.open_balance + (unclearedByVendorId?.get(row.id)?.uncleared_cents ?? 0)),
+          },
+          {
+            key: "uncleared_cents",
+            label: "Not cleared",
+            sortable: true,
+            render: (row) => <UnclearedDocumentsNote docs={unclearedByVendorId?.get(row.id)?.uncleared_documents ?? []} />,
           },
           // VC-LIST-01 — Spend MTD / Spend YTD are REAL (bills + expenses) from the extended
           // vendor-rollups endpoint. LOVES proof (Neon 2026-09-06, bypass_rls=lucia, USMCA): 183

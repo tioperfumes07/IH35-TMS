@@ -122,6 +122,17 @@ export function assertOpenBalanceFailureTruth(sources) {
   return errors;
 }
 
+export function assertUnclearedNamed(page, list) {
+  const errors = [];
+  if (!page.includes("UnclearedDocumentsNote")) errors.push("Customers.tsx must name uncleared documents via UnclearedDocumentsNote");
+  if (!page.includes("not cleared")) errors.push("Customers.tsx must label uncleared payments not cleared");
+  if (!page.includes("getArAgingReport")) errors.push("Customers.tsx must reuse reports AR aging for uncleared payments");
+  if (!list.includes("UnclearedDocumentsNote")) errors.push("CustomersListView must name uncleared documents via UnclearedDocumentsNote");
+  if (!list.includes('label: "Cleared"')) errors.push("CustomersListView must show the cleared balance");
+  if (!list.includes('label: "Not cleared"')) errors.push("CustomersListView must label uncleared payments not cleared");
+  return errors;
+}
+
 function selftest() {
   const problems = [];
   const live = read(TARGET_REL);
@@ -129,6 +140,8 @@ function selftest() {
 
   const liveErrors = assertOpenByCustomerExcludesVoid(live);
   if (liveErrors.length) problems.push(`live source rejected: ${liveErrors.join("; ")}`);
+  const unclearedErrors = assertUnclearedNamed(live, sources[LIST_REL]);
+  if (unclearedErrors.length) problems.push(`live uncleared rejected: ${unclearedErrors.join("; ")}`);
   const failureTruthErrors = assertOpenBalanceFailureTruth(sources);
   if (failureTruthErrors.length) problems.push(`live failure truth rejected: ${failureTruthErrors.join("; ")}`);
   const api = read(ACCOUNTING_API_REL);
@@ -231,6 +244,7 @@ function main() {
 
   const errors = assertOpenByCustomerExcludesVoid(read(TARGET_REL));
   errors.push(...assertOpenBalanceFailureTruth(Object.fromEntries([TARGET_REL, LIST_REL, SIDEBAR_REL, DRILL_REL].map((rel) => [rel, read(rel)]))));
+  errors.push(...assertUnclearedNamed(read(TARGET_REL), read(LIST_REL)));
   errors.push(...assertCompleteInvoiceRange(read(ACCOUNTING_API_REL)));
   if (errors.length) {
     console.error(`${LABEL} FAILED\n- ${errors.join("\n- ")}`);
