@@ -106,7 +106,7 @@ function U14HopBadge({ row }: { row: U14ExclusiveRow | undefined }) {
   if (row.status === "CERTIFIED") {
     return (
       <span
-        className="inline-block rounded-sm px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white"
+        className="inline-block rounded-sm px-1.5 py-0.5 text-xs font-bold uppercase tracking-wide text-white"
         style={{ backgroundColor: NAVY }}
         title="Urgent exclusive seat hops + live SHA — not Rule 24 Certified"
       >
@@ -128,7 +128,7 @@ function ProofBadge({ proof }: { proof: ModuleRow["proof"] }) {
   if (proof === "certified") {
     return (
       <span
-        className="inline-block rounded-sm px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white"
+        className="inline-block rounded-sm px-1.5 py-0.5 text-xs font-bold uppercase tracking-wide text-white"
         style={{ backgroundColor: NAVY }}
         title="Every acceptance item is prod_verified after a live GUARD click"
       >
@@ -139,7 +139,7 @@ function ProofBadge({ proof }: { proof: ModuleRow["proof"] }) {
   if (proof === "code_verified") {
     return (
       <span
-        className="inline-block rounded-sm border px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide"
+        className="inline-block rounded-sm border px-1.5 py-0.5 text-xs font-bold uppercase tracking-wide"
         style={{ borderColor: AMBER, color: AMBER, backgroundColor: "#fffbeb" }}
         title="Checklist PASS by code/CI — not yet live-proven on prod (prod_verified still false)"
       >
@@ -184,7 +184,7 @@ function ProgressBar({
         <div className="h-2 w-32 overflow-hidden rounded-sm bg-gray-200">
           <div className="h-full" style={{ width: `${pct}%`, backgroundColor: fill }} />
         </div>
-        <span className="tabular-nums text-xs text-[#334155]">
+        <span className="tabular-nums text-xs text-[#4B5563]">
           {done} of {total}
         </span>
       </div>
@@ -362,7 +362,7 @@ export function ModuleCompletionPage() {
         <button
           type="button"
           className={`rounded-sm px-2 py-1 text-xs font-semibold ${
-            scope === "first14" ? "bg-[#1f2a44] text-white" : "border border-gray-300 text-[#334155]"
+            scope === "first14" ? "bg-[#1f2a44] text-white" : "border border-gray-300 text-[#4B5563]"
           }`}
           onClick={() => setScope("first14")}
         >
@@ -371,7 +371,7 @@ export function ModuleCompletionPage() {
         <button
           type="button"
           className={`rounded-sm px-2 py-1 text-xs font-semibold ${
-            scope === "u14" ? "bg-[#1f2a44] text-white" : "border border-gray-300 text-[#334155]"
+            scope === "u14" ? "bg-[#1f2a44] text-white" : "border border-gray-300 text-[#4B5563]"
           }`}
           onClick={() => setScope("u14")}
           data-testid="program-modules-scope-u14"
@@ -381,7 +381,7 @@ export function ModuleCompletionPage() {
         <button
           type="button"
           className={`rounded-sm px-2 py-1 text-xs font-semibold ${
-            scope === "all" ? "bg-[#1f2a44] text-white" : "border border-gray-300 text-[#334155]"
+            scope === "all" ? "bg-[#1f2a44] text-white" : "border border-gray-300 text-[#4B5563]"
           }`}
           onClick={() => setScope("all")}
         >
@@ -389,7 +389,7 @@ export function ModuleCompletionPage() {
         </button>
       </div>
 
-      <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs text-[#334155]">
+      <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs text-[#4B5563]">
         <span className="font-semibold text-[#1f2a44]">
           {totals.done} of {totals.total}
         </span>{" "}
@@ -465,7 +465,7 @@ export function ModuleCompletionPage() {
           </div>
           <ul className="space-y-1">
             {detailItems.map((item) => (
-              <li key={item.id} className="flex flex-wrap gap-2 text-xs text-[#334155]">
+              <li key={item.id} className="flex flex-wrap gap-2 text-xs text-[#4B5563]">
                 <span className="w-28 shrink-0 font-mono text-[#64748b]">{item.id}</span>
                 <span
                   className={`w-24 shrink-0 font-semibold ${
@@ -481,14 +481,14 @@ export function ModuleCompletionPage() {
                 {item.status === "PASS" || item.status === "HOLD" ? (
                   item.prod_verified ? (
                     <span
-                      className="w-28 shrink-0 text-[11px] font-bold uppercase"
+                      className="w-28 shrink-0 text-xs font-bold uppercase"
                       style={{ color: NAVY }}
                     >
                       prod-verified
                     </span>
                   ) : (
                     <span
-                      className="w-28 shrink-0 text-[11px] font-bold uppercase"
+                      className="w-28 shrink-0 text-xs font-bold uppercase"
                       style={{ color: AMBER }}
                     >
                       code only
