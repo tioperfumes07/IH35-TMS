@@ -64,7 +64,7 @@ const CATEGORY_ROWS = {
   ],
 };
 
-function renderForm(onSaved = vi.fn()) {
+function renderForm(onSaved = vi.fn(), initialPayee?: { kind: "vendor" | "driver"; id: string }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return {
     onSaved,
@@ -72,7 +72,7 @@ function renderForm(onSaved = vi.fn()) {
       <MemoryRouter>
         <QueryClientProvider client={qc}>
           <ToastProvider>
-            <WriteCheckForm open operatingCompanyId="co-1" onClose={vi.fn()} onSaved={onSaved} />
+            <WriteCheckForm open operatingCompanyId="co-1" onClose={vi.fn()} onSaved={onSaved} initialPayee={initialPayee} />
           </ToastProvider>
         </QueryClientProvider>
       </MemoryRouter>
@@ -111,5 +111,25 @@ describe("WriteCheckForm", () => {
     expect(createSpy).not.toHaveBeenCalled();
     expect(onSaved).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+  });
+
+  // U8 (owner): "Create Check offers no open bills". The panel said "No open bills for this payee" even when the bills
+  // were never read, so a check that should pay a bill could be saved as an expense (the cost counted twice).
+  it("says the bills could not be read when the payee lookup fails — never 'No open bills'", async () => {
+    vi.spyOn(bankingApi, "getCashGlMapping").mockResolvedValue(BANK_ACCOUNTS);
+    vi.spyOn(accountingApi, "listExpenseCategoryMappings").mockResolvedValue(CATEGORY_ROWS);
+    vi.spyOn(checksApi, "resolveCheckPayeePreview").mockRejectedValue(new Error("boom"));
+    renderForm(vi.fn(), { kind: "vendor", id: "fake-vendor-1" });
+    expect(await screen.findByTestId("check-open-bills-unread")).toBeInTheDocument();
+    expect(screen.queryByText("No open bills for this payee.")).not.toBeInTheDocument();
+  });
+
+  it("says a driver has no linked payable vendor instead of 'No open bills'", async () => {
+    vi.spyOn(bankingApi, "getCashGlMapping").mockResolvedValue(BANK_ACCOUNTS);
+    vi.spyOn(accountingApi, "listExpenseCategoryMappings").mockResolvedValue(CATEGORY_ROWS);
+    vi.spyOn(checksApi, "resolveCheckPayeePreview").mockResolvedValue({ vendor_id_for_bills: null, print_on_check_name: "Driver", remit_to_address: null } as never);
+    renderForm(vi.fn(), { kind: "driver", id: "fake-driver-1" });
+    expect(await screen.findByTestId("check-open-bills-no-vendor")).toHaveTextContent("no linked payable vendor");
+    expect(screen.queryByText("No open bills for this payee.")).not.toBeInTheDocument();
   });
 });
