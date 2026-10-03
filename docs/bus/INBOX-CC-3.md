@@ -77,3 +77,16 @@ CC-2 also has `docs/bus/10-03-2026-CC-2-ROUND-364-ACCOUNTING-MODULE-REGISTER-364
 **366.5** `00-STANDING-ORDER-OWN-YOUR-ENGINE-END-TO-END.md` is amended — **finish your list, and you do not hand off.** Report three numbers every time: on my list · closed this round with proof · still open. A lane boundary is not a handoff: get the ruling and build both halves yourself.
 
 **365.6 is still the gate. Green first.**
+
+## ROUND 367 — FROM THE OWNER'S LIVE SCREEN — ASSIGNED
+
+`docs/bus/10-03-2026-ALL-SEATS-ROUND-367-THE-EXPENSES-SCREEN-LIES-AND-THE-DUPLICATE-PATH.md`
+
+**367.1** Expenses renders `0 rows` while its own banner counts **22 rows in 11 groups** — two readers of the same table disagreeing on the same page. Default filter, company scope, the pooled connection or a dropping join. **Empty is a question, not an answer.**
+**367.2** 11 duplicate LOVES expense groups, 22 rows. The purge deletes the rows, not the path — and the owner re-uploads the same data within hours. Resolve each of the 11 against the provider transaction ID before the purge. The pairs carry DIFFERENT load numbers, so one fuel purchase is landing on two loads.
+**367.3** Expenses is read-only and reclassify must work from it.
+**367.4** The Accounting tab bar runs off the screen.
+**367.5** Owner confirms the bank feed is already all in For Review and is NEVER deleted — verify it, four counts, direct endpoint, report all four even at zero (was 167 live matches with a journal entry, was 29 matched-to-nothing).
+**367.6** `← Back` is browser history and lands differently depending on how you arrived — it becomes a breadcrumb where "up" is structural and always the module home.
+
+**365.6 is still the gate.** Finish your list, no handoffs, three numbers at the top of every report.
