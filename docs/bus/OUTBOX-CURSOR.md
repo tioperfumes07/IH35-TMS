@@ -1,3 +1,11 @@
+## 2026-10-03T18:55Z · BANK-F91189 SafetyIncidentsCluster leftover tokens MERGED #24699 tip c1e4dbe437
+
+ACK: CURSOR | ACK BANK-F91189 SAFETY INCIDENTS CLUSTER TEXT TOKENS DONE | GO
+FINDING: BANK-F91189 | SafetyIncidentsCluster leftover off-scale text-[11px] ×11
+FIX: 11 tokens → text-xs. Hung leftover refuse on verify-safety-incidents-cluster-uses-paritytable.
+GUARD: verify-safety-incidents-cluster-uses-paritytable · leftover plant + live PASS → #24699 tip `c1e4dbe437`.
+NO seed · NO mig. NEXT: leftover CargoClaimIntake · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T18:45Z · BANK-F91188 CustomerDetail leftover tokens MERGED #24697 tip 17571dfeff
 
 ACK: CURSOR | ACK BANK-F91188 CUSTOMER DETAIL TEXT TOKENS DONE | GO
