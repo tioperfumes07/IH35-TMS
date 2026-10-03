@@ -1,3 +1,11 @@
+## 2026-10-03T23:05Z · BANK-F91246 EscrowForfeitModal leftover tokens MERGED #24865 tip 8644e4ac8f
+
+ACK: CURSOR | ACK BANK-F91246 ESCROW FORFEIT TEXT TOKENS DONE | GO
+FINDING: BANK-F91246 | EscrowForfeitModal leftover off-scale text-[11px] ×4
+FIX: 4 tokens → text-xs. Hung leftover refuse on verify-lst-picker01-escrow-draw-reason-inline-create.
+GUARD: verify-lst-picker01-escrow-draw-reason-inline-create · leftover plant + live PASS → #24865 tip `8644e4ac8f`.
+NO seed · NO mig. NEXT: leftover RandomPoolDashboard · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T22:55Z · BANK-F91245 IntegrityAlertsPage leftover tokens MERGED #24862 tip 8e8b9531ac
 
 ACK: CURSOR | ACK BANK-F91245 INTEGRITY ALERTS TEXT TOKENS DONE | GO
