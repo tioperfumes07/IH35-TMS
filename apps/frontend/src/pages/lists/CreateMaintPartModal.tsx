@@ -110,7 +110,7 @@ export function CreateMaintPartModal({ open, operatingCompanyId, onClose, onCrea
             onChange={(e) => setForm((v) => ({ ...v, sku: e.target.value }))}
             className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
-          {errors.sku ? <div className="mt-1 text-[11px] text-red-700">{errors.sku}</div> : null}
+          {errors.sku ? <div className="mt-1 text-xs text-red-700">{errors.sku}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
@@ -120,7 +120,7 @@ export function CreateMaintPartModal({ open, operatingCompanyId, onClose, onCrea
             onChange={(e) => setForm((v) => ({ ...v, part_name: e.target.value }))}
             className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
-          {errors.part_name ? <div className="mt-1 text-[11px] text-red-700">{errors.part_name}</div> : null}
+          {errors.part_name ? <div className="mt-1 text-xs text-red-700">{errors.part_name}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
@@ -131,7 +131,7 @@ export function CreateMaintPartModal({ open, operatingCompanyId, onClose, onCrea
             className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
             placeholder="e.g. Detroit Diesel"
           />
-          {errors.manufacturer ? <div className="mt-1 text-[11px] text-red-700">{errors.manufacturer}</div> : null}
+          {errors.manufacturer ? <div className="mt-1 text-xs text-red-700">{errors.manufacturer}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
@@ -176,7 +176,7 @@ export function CreateMaintPartModal({ open, operatingCompanyId, onClose, onCrea
             className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
             placeholder="0.00"
           />
-          {errors.typical_unit_cost ? <div className="mt-1 text-[11px] text-red-700">{errors.typical_unit_cost}</div> : null}
+          {errors.typical_unit_cost ? <div className="mt-1 text-xs text-red-700">{errors.typical_unit_cost}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
