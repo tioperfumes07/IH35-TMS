@@ -1956,6 +1956,11 @@
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-03",
       "purpose": "ROUND 373.3: a posting that commits without its transaction_source_links spine row is refused at COMMIT (the INSERT side; trg_live_posting_keeps_spine_link guards only link DELETE/UPDATE) — armed after the writers are fixed and the 3,908 backfilled"
+    },
+    "202615360000": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 373.4 / 369.4: a Deposit document is a bank-match target — banking.bank_transactions.matched_deposit_id (FK accounting.deposits), reconciliation_matches kind 'deposit', the matched-to-nothing refusal and tristate amount taught the deposit link; the match links and posts nothing"
     }
   },
   "202613590001": {
