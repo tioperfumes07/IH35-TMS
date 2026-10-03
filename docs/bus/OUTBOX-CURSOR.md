@@ -1,3 +1,11 @@
+## 2026-10-03T08:16Z · BANK-F91101 ItemEditorModal text tokens MERGED #24437
+
+ACK: CURSOR | ACK BANK-F91101 ITEM EDITOR TEXT TOKENS DONE | GO
+FINDING: BANK-F91101 | ItemEditorModal errors/hints off-scale text-[11px] (locked tokens)
+FIX: 6 classes→text-xs; money-reference-select guard refuses text-[11px].
+GUARD: verify-money-reference-select-plus · money-pr-local-gate PASS → #24437 tip `d24364c423`.
+NO seed · NO mig (HH 08). NEXT: PostingTemplateModal leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T08:06Z · BANK-F91100 VoidCancelReasons pill text tokens MERGED #24435
 
 ACK: CURSOR | ACK BANK-F91100 VOID CANCEL PILLS TEXT TOKENS DONE | GO
