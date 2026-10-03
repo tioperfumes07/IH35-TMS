@@ -86,7 +86,7 @@ export function RequiredDocumentsSection({ operatingCompanyId }: { operatingComp
         sortable: true,
         render: (row) => (
           <span
-            className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+            className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
               row.enforcement === "hard_block" ? "bg-slate-200 text-slate-800" : "bg-slate-100 text-slate-600"
             }`}
           >
@@ -104,7 +104,7 @@ export function RequiredDocumentsSection({ operatingCompanyId }: { operatingComp
       <div className="mb-3 flex items-center justify-between">
         <div>
           <h2 className="text-xs font-semibold text-[#1f2a44]">Required Documents</h2>
-          <p className="text-[11px] text-slate-500">
+          <p className="text-xs text-slate-500">
             Which documents are required per record. Warn-first; promote any to a hard block. Seeded from FMCSA/IRS defaults.
           </p>
         </div>
@@ -175,7 +175,7 @@ export function RequiredDocumentsSection({ operatingCompanyId }: { operatingComp
                           },
                         })
                       }
-                      className="rounded-sm border border-slate-300 px-2 py-0.5 text-[11px] hover:bg-slate-50 disabled:opacity-50"
+                      className="rounded-sm border border-slate-300 px-2 py-0.5 text-xs hover:bg-slate-50 disabled:opacity-50"
                     >
                       {row.enforcement === "warn" ? "Make hard block" : "Make warn"}
                     </button>
@@ -183,7 +183,7 @@ export function RequiredDocumentsSection({ operatingCompanyId }: { operatingComp
                       type="button"
                       disabled={patch.isPending}
                       onClick={() => setDeactivateTarget(row)}
-                      className="rounded-sm border border-slate-300 px-2 py-0.5 text-[11px] text-red-600 hover:bg-slate-50 disabled:opacity-50"
+                      className="rounded-sm border border-slate-300 px-2 py-0.5 text-xs text-red-600 hover:bg-slate-50 disabled:opacity-50"
                     >
                       Deactivate
                     </button>
@@ -236,9 +236,9 @@ function CreateRow({
 
   return (
     <div className="mb-3 rounded-sm border border-slate-200 bg-slate-50 p-3">
-      <div className="mb-2 text-[11px] font-semibold text-slate-600">New required document for {entityKind}s</div>
+      <div className="mb-2 text-xs font-semibold text-slate-600">New required document for {entityKind}s</div>
       <div className="flex flex-wrap items-end gap-2">
-        <label className="flex flex-col text-[11px] text-slate-500">
+        <label className="flex flex-col text-xs text-slate-500">
           Code (lower_snake_case)
           <input
             value={code}
@@ -247,7 +247,7 @@ function CreateRow({
             className="mt-0.5 rounded-sm border border-slate-300 px-2 py-1 text-xs"
           />
         </label>
-        <label className="flex flex-col text-[11px] text-slate-500">
+        <label className="flex flex-col text-xs text-slate-500">
           Label
           <input
             value={label}
@@ -256,7 +256,7 @@ function CreateRow({
             className="mt-0.5 rounded-sm border border-slate-300 px-2 py-1 text-xs"
           />
         </label>
-        <label className="flex flex-col text-[11px] text-slate-500">
+        <label className="flex flex-col text-xs text-slate-500">
           Enforcement
           <select
             value={enforcement}
@@ -267,7 +267,7 @@ function CreateRow({
             <option value="hard_block">Hard block</option>
           </select>
         </label>
-        <label className="flex items-center gap-1 text-[11px] text-slate-600">
+        <label className="flex items-center gap-1 text-xs text-slate-600">
           <input type="checkbox" checked={hasExpiry} onChange={(e) => setHasExpiry(e.target.checked)} />
           Has expiry
         </label>
@@ -280,7 +280,7 @@ function CreateRow({
           {pending ? "Creating…" : "+ Create"}
         </button>
       </div>
-      {error ? <p className="mt-1 text-[11px] text-red-600">{error}</p> : null}
+      {error ? <p className="mt-1 text-xs text-red-600">{error}</p> : null}
     </div>
   );
 }
