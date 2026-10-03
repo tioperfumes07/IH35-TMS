@@ -1,7 +1,7 @@
 // R-190 — Print Checks queue (QBO parity). Owner types the starting check number (never guessed),
 // selects need_to_print checks, assigns numbers via assignPrintBatch, then confirms or reprints.
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -30,6 +30,9 @@ export function CheckPrintPage() {
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  // BANK-F91063 — Order checks lands here with ?focus=stock (stock settings, not print queue alone).
+  const focusStock = searchParams.get("focus") === "stock";
 
   const [bankAccountId, setBankAccountId] = useState<string>("");
   const [startingNumber, setStartingNumber] = useState("");
@@ -208,7 +211,19 @@ export function CheckPrintPage() {
         <div className="flex flex-col gap-4">
           {error ? <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div> : null}
 
-          <div className="grid grid-cols-3 gap-3 rounded border border-gray-200 bg-white p-3">
+          <div
+            className={`grid grid-cols-3 gap-3 rounded border bg-white p-3 ${
+              focusStock ? "border-[#14314F] ring-1 ring-[#14314F]/40" : "border-gray-200"
+            }`}
+            data-b4-order-checks-stock="1"
+            data-testid="b4-order-checks-stock"
+            id="check-stock-settings"
+          >
+            {focusStock ? (
+              <p className="col-span-3 text-xs font-semibold text-[#14314F]" data-testid="b4-order-checks-stock-banner">
+                Order checks — set the starting check number and style for this bank account (check stock).
+              </p>
+            ) : null}
             <label className="text-xs font-semibold text-gray-700">
               Bank account
               <select
