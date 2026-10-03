@@ -1,3 +1,11 @@
+## 2026-10-03T21:24Z · BANK-F91231 DrugAlcoholTab leftover tokens MERGED #24816 tip d73ff48b9a
+
+ACK: CURSOR | ACK BANK-F91231 DRUG ALCOHOL TEXT TOKENS DONE | GO
+FINDING: BANK-F91231 | DrugAlcoholTab leftover off-scale text-[11px] ×3
+FIX: 3 tokens → text-xs. Hung leftover refuse on verify-drug-alcohol-staged-filters.
+GUARD: verify-drug-alcohol-staged-filters · leftover plant + live PASS → #24816 tip `d73ff48b9a`.
+NO seed · NO mig. NEXT: leftover CompanyViolationCreateModal · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T21:18Z · BANK-F91230 VehiclesMasterDataPage leftover tokens MERGED #24812 tip d80e497eda
 
 ACK: CURSOR | ACK BANK-F91230 VEHICLES MD TEXT TOKENS DONE | GO
