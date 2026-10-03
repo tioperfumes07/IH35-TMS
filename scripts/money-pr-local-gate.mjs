@@ -1070,6 +1070,19 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-fuel-loves-prices-daily-table-and-report-guard",
     ["apps/backend/src/fuel/", "apps/backend/src/sync/", "apps/backend/src/reports/fuel-price-variance.routes.ts"],
   ],
+  // 00-ROOT-CAUSE-THE-SPINE (CC-2): every posting with a live document carries its spine link (ceiling 0); postings
+  // stranded by a purge (document deleted, GL kept) are a committed shrink-only ceiling that must net to zero.
+  [
+    "verify-every-posting-has-a-spine-link",
+    [
+      "apps/backend/src/accounting/posting-engine.service.ts",
+      "apps/backend/src/accounting/void.service.ts",
+      "apps/backend/src/accounting/accounting-spine-emit.ts",
+      "scripts/ops/",
+      "db/migrations/",
+      "scripts/verify-every-posting-has-a-spine-link.mjs",
+    ],
+  ],
   // E1 (#22293): every directory that calls createJournalEntry(OnClient), plus the guard's baseline.
   [
     "verify-every-posting-has-a-source",
