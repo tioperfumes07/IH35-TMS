@@ -1,5 +1,9 @@
 ## 2026-10-03T23:35Z · BANK-F91251 DrugAlcoholProgramTab leftover tokens MERGED #24881 tip 23ba9b1e56
 
+## BANK-F91253 ExpiryDashboard leftover MERGED #24885 tip `be786ea985`
+DONE: ExpiryDashboard text-[11px]→text-xs (1); leftover refuse+plant on verify-safety-cert-expiry-filter-comboboxes.
+NEXT: CSAMitigationQueue · FineLifecycleActions · SafetyLayout · SafetyHome
+
 ## 2026-10-03 22:52 UTC — BANK-F91252 Audit425cPage leftover MERGED #24883 tip `663c316f38`
 DONE: Audit425cPage `text-[11px]`→`text-xs` (1); leftover refuse+plant on verify-audit-425c-staged-filters.
 NEXT: leftover ExpiryDashboard · CSAMitigationQueue · FineLifecycleActions · SafetyLayout · SafetyHome
