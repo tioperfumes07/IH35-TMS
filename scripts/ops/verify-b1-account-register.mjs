@@ -65,6 +65,15 @@ function main() {
   assertIncludes(page, '(expensePaymentType ?? "").toLowerCase() === "check"', PAGE);
   assertIncludes(page, "/accounting/checks/${reference}", PAGE);
   assertIncludes(page, "r.expense_payment_type", PAGE);
+  // BANK-F91056 — Credit Memo + Fuel Event type chips + Edit hops
+  assertIncludes(page, '"Credit Memo": "credit_memo"', PAGE);
+  assertIncludes(page, '"Fuel Event": "fuel_event"', PAGE);
+  assertIncludes(page, 't === "credit_memo"', PAGE);
+  assertIncludes(page, "/accounting/credit-memos?credit_memo_id=${reference}", PAGE);
+  assertIncludes(page, 't === "fuel_event"', PAGE);
+  assertIncludes(page, "/fuel/history?transaction_id=${reference}", PAGE);
+  assertIncludes(service, 'credit_memo: "Credit Memo"', SERVICE);
+  assertIncludes(service, 'fuel_event: "Fuel Event"', SERVICE);
   // B-1 ORDERS filter chip set: status / type / date / payee (date = period From/To already)
   assertIncludes(page, 'data-b1-filter-payee="1"', PAGE);
   assertIncludes(page, 'data-b1-filter-status="1"', PAGE);

@@ -110,6 +110,11 @@ function sourceRoute(
   if (t === "transfer") return "/banking/transfers";
   // Law §9 bank reverse: bank_categorization source_transaction_id is the bank txn uuid.
   if (t === "bank_categorization" && reference) return `/banking/transactions?txn_id=${reference}`;
+  // BANK-F91056 — Credit Memo / Fuel Event Edit hops (CreditMemosPage + FuelPlannerHome deep-links).
+  if (t === "credit_memo" && reference) return `/accounting/credit-memos?credit_memo_id=${reference}`;
+  if (t === "credit_memo") return "/accounting/credit-memos";
+  if (t === "fuel_event" && reference) return `/fuel/history?transaction_id=${reference}`;
+  if (t === "fuel_event") return "/fuel/history";
   if (t === "journal_entry" && reference) return `/accounting/journal-entries/${reference}`;
   if (journalEntryId) return `/accounting/journal-entries/${journalEntryId}`;
   return "/accounting/journal-entries";
@@ -130,6 +135,9 @@ const TRANSACTION_TYPES = [
   "Cash Advance",
   "Driver Advance",
   "Factoring Advance",
+  // BANK-F91056 — ORDERS leftover type chips (were missing from B-1 filter).
+  "Credit Memo",
+  "Fuel Event",
 ];
 // Map the display label back to the stored source_transaction_type the backend filters on.
 const TYPE_TO_SOURCE: Record<string, string> = {
@@ -148,6 +156,9 @@ const TYPE_TO_SOURCE: Record<string, string> = {
   "Cash Advance": "cash_advance",
   "Driver Advance": "driver_advance",
   "Factoring Advance": "factoring_advance",
+  // BANK-F91056
+  "Credit Memo": "credit_memo",
+  "Fuel Event": "fuel_event",
 };
 
 function applyPreset(preset: string): { from: string; to: string } | null {

@@ -342,7 +342,8 @@ export function ReclassifyTransactionsPage() {
               {/* ReferenceSelect createKind="account" — canonical picker, showAccountNumbers gate via coaAccountReferenceOption */}
               <ReferenceSelect value={toAccount || null} onChange={(next) => setToAccount(next ?? "")} options={accountRefOptions} createKind="account" operatingCompanyId={companyId} placeholder="Select…" loading={coaQ.isLoading} onOptionCreated={() => void coaQ.refetch()} />
             </div>
-            <label className="mt-2 flex flex-col gap-1 text-xs font-semibold text-slate-600">Change class to
+            {/* BANK-F91056 — ORDERS §B-5 Change class named for Chrome / guard (parity with location + vendor). */}
+            <label className="mt-2 flex flex-col gap-1 text-xs font-semibold text-slate-600" data-b5-change-class="1">Change class to
               <SelectCombobox value={toClass} onChange={(e) => setToClass(e.target.value)} data-testid="reclassify-to-class">
                 <option value="">Select…</option>
                 {(classesQ.data?.classes ?? []).map((c) => <option key={c.id} value={c.id}>{c.class_name}</option>)}

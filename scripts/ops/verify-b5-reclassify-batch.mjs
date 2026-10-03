@@ -52,6 +52,8 @@ function main() {
   assertIncludes(reclassify, 'data-b5-reclassify-modal="1"', RECLASSIFY);
   assertIncludes(reclassify, "Change account to", RECLASSIFY);
   assertIncludes(reclassify, "Change class to", RECLASSIFY);
+  // BANK-F91056 — Change class named like location / vendor-customer for ORDERS Chrome.
+  assertIncludes(reclassify, 'data-b5-change-class="1"', RECLASSIFY);
   assertIncludes(reclassify, 'data-b5-change-location="1"', RECLASSIFY);
   assertIncludes(reclassify, "Change location to", RECLASSIFY);
   assertIncludes(reclassify, "FuelStopLocationPicker", RECLASSIFY);

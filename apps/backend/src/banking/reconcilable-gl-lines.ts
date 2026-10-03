@@ -48,6 +48,9 @@ const TYPE_LABELS: Record<string, string> = {
   bank_deposit: "Deposit",
   bank_categorization: "Bank Categorization",
   journal_entry: "Journal",
+  // BANK-F91056 — must match RECON_TXN_TYPE_FILTERS labels on ReconciliationWorkspace.
+  credit_memo: "Credit Memo",
+  fuel_event: "Fuel Event",
 };
 
 export async function listReconcilableGlLines(
