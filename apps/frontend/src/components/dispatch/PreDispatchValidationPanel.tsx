@@ -235,7 +235,7 @@ export function PreDispatchValidationPanel({
           validation used UUIDs as query params only; expose real EntityLinks for selected identities. */}
       {(driverUuid || unitUuid || trailerUuid || customerId) ? (
         <div
-          className="flex flex-wrap gap-x-3 gap-y-1 border-t border-slate-200 pt-2 text-[11px] text-slate-700"
+          className="flex flex-wrap gap-x-3 gap-y-1 border-t border-slate-200 pt-2 text-xs text-slate-700"
           data-testid="pre-dispatch-validation-entitylinks"
         >
           {driverUuid ? (

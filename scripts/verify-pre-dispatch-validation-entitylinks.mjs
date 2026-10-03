@@ -36,6 +36,7 @@ function checkSource(src) {
   ]) {
     assert(src.includes(`<EntityLinkOrTombstone kind="${kind}" id={${id}} name={${name}} noun="${noun}"`), `must use unresolved-safe ${kind} drill`);
   }
+  assert(!src.includes("text-[11px]"), "PreDispatchValidationPanel.tsx: must not use text-[11px] — use text-xs");
 }
 
 function checkServiceSource(src) {
