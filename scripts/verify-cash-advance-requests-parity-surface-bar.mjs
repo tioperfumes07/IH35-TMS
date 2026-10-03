@@ -22,6 +22,8 @@ export function check() {
   assert(src.includes("+ Create"), "CashAdvanceRequestsPage: keep + Create");
   assert(src.includes("DriverPickerWithCreate"), "CashAdvanceRequestsPage: keep nested driver create");
   assert(src.includes('kind="driver"'), "CashAdvanceRequestsPage: keep driver EntityLink/EntityPicker");
+  assert(!src.includes("text-[11px]"), "CashAdvanceRequestsPage leftover chrome must use text-xs, not text-[11px]");
+  assert(!src.includes("#8A92AB") && !src.includes("#334155"), "CashAdvanceRequestsPage leftover chrome must not use off-scale #334155 / #8A92AB");
 }
 
 function selftest() {
@@ -46,6 +48,16 @@ function selftest() {
   }
   fs.writeFileSync(filePath, good);
   assert(failed, "selftest: expected FAIL on raw HTML table");
+
+  fs.writeFileSync(filePath, `${good}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`);
+  let leftoverFailed = false;
+  try {
+    check();
+  } catch (err) {
+    leftoverFailed = String(err).includes("leftover");
+  }
+  fs.writeFileSync(filePath, good);
+  assert(leftoverFailed, "selftest: expected FAIL on leftover text-[11px]");
   console.log("verify-cash-advance-requests-parity-surface-bar --selftest PASS");
 }
 

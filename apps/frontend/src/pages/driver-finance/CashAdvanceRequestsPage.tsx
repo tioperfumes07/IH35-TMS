@@ -230,7 +230,7 @@ export function CashAdvanceRequestsPage() {
                 </span>
                 {ownerUrl ? (
                   <div>
-                    <div className="text-[11px] uppercase text-gray-500">Owner link (copy)</div>
+                    <div className="text-xs uppercase text-gray-500">Owner link (copy)</div>
                     <input
                       readOnly
                       className="mt-0.5 w-full max-w-xs rounded-sm border border-gray-200 px-1 py-0.5 font-mono text-xs"
@@ -295,7 +295,7 @@ export function CashAdvanceRequestsPage() {
 
       {companyId ? (
         <div className="relative flex flex-wrap items-end gap-3" data-testid="cash-advance-requests-filters">
-          <label className="text-[11px] text-slate-600">
+          <label className="text-xs text-slate-600">
             Driver
             <EntityPicker
               kind="driver"
