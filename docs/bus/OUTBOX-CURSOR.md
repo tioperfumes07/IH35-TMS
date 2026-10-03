@@ -1,3 +1,12 @@
+## 2026-10-03T03:38Z · ROUND 355 R-3 GUARD MERGED #24337 · tip `f943fc6da3`
+
+ACK: CURSOR | ACK ROUND 355 R3 MERGED | GO
+STEP 1: #24328 already MERGED (did not re-push; was up-to-date).
+R-3: CoA already correct on prod — guard #24337 squash `f943fc6da3`. LIVE: 6400/6830→6810 OtherExpense postings=0; 6405→6400; 6820 DEAD.
+DISPATCH: NOW-CC-1 = R-1 damage-loss chain · NOW-CC-2 = R-2 gallon fuel cap.
+ROUND 348 remaster waits HH 12–23 (Cursor mig band); claim already on main.
+NO seed.
+
 ## 2026-10-03T03:20Z · ROUND 355 STEP 1 DONE (#24328) · R-3 CoA LOCKED
 
 ACK: CURSOR | ACK ROUND 355 STEP1+R3 | GO
