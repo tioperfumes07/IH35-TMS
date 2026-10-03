@@ -48,6 +48,10 @@ function verify(candidate) {
   } catch {
     failures.push("accounting Required matrix must remain valid JSON");
   }
+  // BANK-F91085 — ORDERS chrome: CreditMemosPage uses text-xs, not text-[11px].
+  if (candidate.page.includes("text-[11px]")) {
+    failures.push("CreditMemosPage must not use text-[11px] — use text-xs");
+  }
   return failures;
 }
 

@@ -247,7 +247,7 @@ export function CreditMemosPage() {
     <div className="flex flex-wrap items-end gap-3" data-credit-memos-filter-toolbar="collapsed">
       <CollapsedListFilters activeFilterCount={(statusFilter && statusFilter !== "active" ? 1 : 0) + (customerFilter ? 1 : 0)} testIdPrefix="credit-memos" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
         <div className="flex flex-wrap gap-2">
-          <label className="text-[11px] text-slate-600">
+          <label className="text-xs text-slate-600">
             Customer
             <EntityPicker
               kind="customer"
@@ -381,7 +381,7 @@ export function CreditMemosPage() {
                 limit={1000}
                 total={customersQuery.data?.total ?? null}
                 hint="Type in the customer field to search the full roster."
-                className="mt-1 text-[11px] text-slate-600"
+                className="mt-1 text-xs text-slate-600"
               />
             </div>
           </label>
