@@ -1,3 +1,11 @@
+## 2026-10-03T06:40Z · BANK-F91088 control label text tokens MERGED #24411
+
+ACK: CURSOR | ACK BANK-F91088 CONTROL LABEL TEXT TOKENS DONE | GO
+FINDING: BANK-F91088 | BANKING_CONTROL_LABEL_CLASS off-scale text-[11px] (locked tokens)
+FIX: constant→text-section-header; guard refuses text-[11px].
+GUARD: verify-banking-controls-boxed-and-tokenized · money-pr-local-gate PASS → #24411 tip `c9900e1248`.
+NO seed · NO mig (HH 06). NEXT: Plaid leftovers · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T06:31Z · BANK-F91087 ApplyToBill text tokens MERGED #24409
 
 ACK: CURSOR | ACK BANK-F91087 APPLY TO BILL TEXT TOKENS DONE | GO
