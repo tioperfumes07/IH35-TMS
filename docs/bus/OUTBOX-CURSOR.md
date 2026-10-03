@@ -1,3 +1,11 @@
+## 2026-10-03T07:08Z · BANK-F91092 InvoiceDetail pill text tokens MERGED #24419
+
+ACK: CURSOR | ACK BANK-F91092 INVOICE DETAIL PILL TEXT TOKENS DONE | GO
+FINDING: BANK-F91092 | InvoiceDetail factoring pill off-scale text-[11px] (locked tokens)
+FIX: pill→text-section-header; JE-link guard refuses text-[11px].
+GUARD: verify-invoice-detail-je-links · money-pr-local-gate PASS → #24419 tip `a912bbf364`.
+NO seed · NO mig (HH 07). NEXT: FactoringDetail leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T07:00Z · BANK-F91091 TransactionRegister text tokens MERGED #24417
 
 ACK: CURSOR | ACK BANK-F91091 REGISTER BADGE TEXT TOKENS DONE | GO
