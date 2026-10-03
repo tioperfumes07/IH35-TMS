@@ -16,6 +16,9 @@ function verify(source) {
     if (!source.includes(`stagedFilters.setDraft((draft) => ({ ...draft, ${kind}: next ?? "" }))`)) failures.push(`${kind} picker bypasses staged state`);
   }
   if (!source.includes("onApply: applyEntityFilters")) failures.push("staged Apply does not commit canonical URL/query state");
+  // BANK-F91279 leftover refuse — ClaimsTab page-scoped text token ratchet
+  if (source.includes("text-[11px]")) failures.push(`${FILE}: leftover text-[11px]`);
+  if (source.includes("#8A92AB") || source.includes("#334155")) failures.push(`${FILE}: leftover off-scale muted`);
   return failures;
 }
 
@@ -39,7 +42,12 @@ if (process.argv.includes("--selftest")) {
     console.error(`FAIL verify-insurance-claims-filter-apply selftest: caught ${caught}/${mutations.length}`);
     process.exit(1);
   }
-  console.log(`PASS verify-insurance-claims-filter-apply selftest: ${caught}/${mutations.length} planted defects caught`);
+  const leftover = verify(`${source}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`);
+  if (!leftover.some((e) => e.includes("leftover text-[11px]")) || !leftover.some((e) => e.includes("leftover off-scale muted"))) {
+    console.error(`FAIL leftover plant escaped: ${leftover.join("; ")}`);
+    process.exit(1);
+  }
+  console.log(`PASS verify-insurance-claims-filter-apply selftest: ${caught}/${mutations.length} planted defects caught + leftover plant`);
 } else {
   console.log("PASS verify-insurance-claims-filter-apply");
 }
