@@ -1021,6 +1021,24 @@ export function ParityTable<T>({
   }, [selectionScopeKey, isSelectionControlled, controlledSelectedKeys, onSelectionChange]);
 
   // Drag-to-resize: capture the column + start geometry on mousedown, update width on mousemove,
+  // U1 (owner, 2026-10-03): "nothing in Accounting resizes — full screen or any width". Every column rendered a fixed
+  // pixel width under table-fixed, so a table was the SUM of its widths at any window size (the Expenses list: 2,278 px
+  // inside a 2,244 px box on a 2,400 px screen) — it never shrank or grew with the window. The measured / dragged
+  // widths are now PROPORTIONS: each column takes its share of the table's width, so the table fits the window at any
+  // size and a drag still changes the shares. A floor (MIN_COL_WIDTH_PX per column) stops it crushing below legible;
+  // only then does the container scroll. Sticky-left tables keep pixels (their offsets are pixel math).
+  const widthFor = (column: ParityColumn<T>): number | undefined => {
+    const key = String(column.key);
+    const autoFitOrFloor =
+      column.minWidth != null ? Math.max(autoFitWidths[key] ?? 0, column.minWidth) || undefined : autoFitWidths[key];
+    return colWidths[key] ?? autoFitOrFloor;
+  };
+  const proportional = columnLayout !== "auto" && !(stickyLeftCount > 0);
+  const proportionalTotal = proportional ? visibleColumns.reduce((sum, c) => sum + (widthFor(c) ?? 120), 0) : 0;
+  const proportionalMinTable = proportional ? visibleColumns.length * MIN_COL_WIDTH_PX + (selectable ? 32 : 0) + (renderExpanded ? 32 : 0) : 0;
+  const cssWidthFor = (w: number | undefined): string | number | undefined =>
+    !w ? undefined : proportional && proportionalTotal > 0 ? `${((w / proportionalTotal) * 100).toFixed(4)}%` : w;
+
   // persist on mouseup. Widths drive the table-fixed column widths and survive reloads (storageKey).
   function startResize(key: string, e: ReactMouseEvent) {
     e.preventDefault();
@@ -1604,7 +1622,7 @@ export function ParityTable<T>({
           money / number cell aligns its digits even when its column key escapes PARITY_NUMERIC_KEY. */}
       <table
         className={`w-full ${columnLayout === "auto" ? "table-auto" : "table-fixed"} ${board ? "text-left" : "text-center"} tabular-nums`}
-        style={{ fontSize: d.font, ...(board ? { fontSize: 12.5, fontFamily: "var(--ih-font)", color: "var(--ih-ink)" } : {}), ...(minWidthPx ? { minWidth: minWidthPx } : {}) }}
+        style={{ fontSize: d.font, ...(board ? { fontSize: 12.5, fontFamily: "var(--ih-font)", color: "var(--ih-ink)" } : {}), ...(minWidthPx ? { minWidth: minWidthPx } : proportionalMinTable ? { minWidth: proportionalMinTable } : {}) }}
         data-table-appearance={appearance}
       >
         <thead
@@ -1688,16 +1706,13 @@ export function ParityTable<T>({
               const key = String(column.key);
               // AUTO-FIT — manual resize (colWidths) always wins once the user has dragged a
               // column; until then, size to the column's own content (autoFitWidths) instead of
-              // silently truncating under table-fixed's own no-remeasure default.
-              const autoFitOrFloor =
-                column.minWidth != null
-                  ? Math.max(autoFitWidths[key] ?? 0, column.minWidth) || undefined
-                  : autoFitWidths[key];
-              const w = colWidths[key] ?? autoFitOrFloor;
+              // silently truncating under table-fixed's own no-remeasure default. (U1: rendered as a share.)
+              const w = widthFor(column);
               return (
                 <th
                   key={key}
                   data-testid={column.testId}
+                  data-col-width-px={w ?? undefined}
                   title={column.headerTitle}
                   // REORDER — draggable on the whole <th>, not a separate handle: the sort button
                   // (a click, no movement) and the resize grip (its own onMouseDown + stopPropagation)
@@ -1751,7 +1766,7 @@ export function ParityTable<T>({
                     borderBottom: `1px solid ${colors.tableColumnRule}`,
                     // board: the boards' column label (.hd) and rules -- overrides the defaults above.
                     ...(board ? { ...BOARD_LABEL, fontWeight: headerWeight ?? BOARD_LABEL.fontWeight, borderTop: `1px solid ${BOARD_RULE}`, borderBottom: `1px solid ${BOARD_RULE}` } : {}),
-                    ...(w ? (columnLayout === "auto" ? { minWidth: w } : { width: w }) : {}),
+                    ...(w ? (columnLayout === "auto" ? { minWidth: w } : { width: cssWidthFor(w) }) : {}),
                     ...(dragOverKey === key ? { outlineColor: colors.navy } : {}),
                     ...(key in stickyLeftPx
                       ? {
