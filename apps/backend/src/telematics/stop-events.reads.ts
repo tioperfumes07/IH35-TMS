@@ -90,6 +90,9 @@ async function stopsForUnit(
     let geofenceId: string | null = null;
     let geofenceLabel: string | null = null;
     if (s.lat != null && s.lng != null) {
+      // Fence lookup is enrichment — never fail the stop list. The savepoint keeps a failed lookup from poisoning the
+      // transaction (25P02) for the driver read below and every stop after it.
+      await client.query("SAVEPOINT stop_event_fence_lookup");
       try {
         const g = await client.query<{ geofence_id: string; label: string | null }>(geofenceForStopSql(), [
           operatingCompanyId,
@@ -98,8 +101,10 @@ async function stopsForUnit(
         ]);
         geofenceId = g.rows[0]?.geofence_id ?? null;
         geofenceLabel = g.rows[0]?.label ?? null;
-      } catch {
-        // fence lookup is enrichment — never fail the stop list
+        await client.query("RELEASE SAVEPOINT stop_event_fence_lookup");
+      } catch (fenceErr) {
+        await client.query("ROLLBACK TO SAVEPOINT stop_event_fence_lookup");
+        console.warn(`[stop-events] fence lookup failed for unit ${unitId} (stop kept without a fence)`, fenceErr);
       }
     }
 

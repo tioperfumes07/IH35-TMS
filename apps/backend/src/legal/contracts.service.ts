@@ -886,7 +886,9 @@ export async function completePublicSigning(
 
     // Phase 4 (operational, ON) + Phase 5 (Option-B financial handoff — link+consent+
     // event only, NO posting). Best-effort: a link/handoff failure must not void a
-    // completed signature, but is surfaced in logs.
+    // completed signature, but is surfaced in logs. The savepoint is what makes "best-effort" true: without it a failed
+    // link statement poisons the signing transaction (25P02), the audit write below dies, and the signature rolls back.
+    await client.query("SAVEPOINT contract_signed_links_handoff");
     try {
       await applySignedOperationalLinks(client, {
         operatingCompanyId: String(token.operating_company_id),
@@ -909,7 +911,9 @@ export async function completePublicSigning(
         contractInstanceId: String(token.contract_instance_id),
         actorUserId: token.created_by_user_id ? String(token.created_by_user_id) : null,
       });
+      await client.query("RELEASE SAVEPOINT contract_signed_links_handoff");
     } catch (linkErr) {
+      await client.query("ROLLBACK TO SAVEPOINT contract_signed_links_handoff");
       await appendContractAuditLog(client, {
         operatingCompanyId: String(token.operating_company_id),
         contractInstanceId: String(token.contract_instance_id),
@@ -934,14 +938,19 @@ export async function getContractInstanceDetail(
 ) {
   // ROUND 326: repair missing contract_instance_links from signer/FKs before returning detail.
   if (args.actorUserId) {
+    // Best-effort repair: the savepoint keeps a failed repair from poisoning the transaction (25P02) so the detail
+    // reads below still run; the failure is logged, not dropped.
+    await client.query("SAVEPOINT contract_detail_link_repair");
     try {
       await syncContractInstanceLinkage(client as never, {
         operatingCompanyId: args.operatingCompanyId,
         contractInstanceId: args.contractInstanceId,
         actorUserId: args.actorUserId,
       });
-    } catch {
-      /* best-effort — detail still returns */
+      await client.query("RELEASE SAVEPOINT contract_detail_link_repair");
+    } catch (repairErr) {
+      await client.query("ROLLBACK TO SAVEPOINT contract_detail_link_repair");
+      console.warn(`[legal] contract ${args.contractInstanceId} link repair failed (detail still returns)`, repairErr);
     }
   }
   const instanceRes = await client.query(

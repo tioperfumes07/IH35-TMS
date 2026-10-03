@@ -51,6 +51,9 @@ export async function pushFencesToSamsara(client: Db, operatingCompanyId: string
   const candidates = (await listFencePushCandidates(client, operatingCompanyId)).filter((f) => kinds.includes(f.location_kind));
   const out = { considered: candidates.length, created: 0, linked_existing: 0, failed: 0, failures: [] as { fence_id: string; error: string }[] };
   for (const f of candidates) {
+    // One savepoint per fence: a failed UPDATE/log must not poison the transaction (25P02) for the failure log below
+    // and every fence after it.
+    await client.query("SAVEPOINT fence_push_item");
     try {
       const existing = await api.findAddressByExternalId("ih35Site", f.id);
       const address = existing ?? (await api.createAddress({
@@ -63,7 +66,9 @@ export async function pushFencesToSamsara(client: Db, operatingCompanyId: string
       );
       if (existing) out.linked_existing += 1; else out.created += 1;
       await logPush(client, operatingCompanyId, { fence_id: f.id, outcome: existing ? "linked_existing" : "created", samsara_address_id: address.id }, null);
+      await client.query("RELEASE SAVEPOINT fence_push_item");
     } catch (error) {
+      await client.query("ROLLBACK TO SAVEPOINT fence_push_item");
       const msg = String((error as Error)?.message ?? error);
       out.failed += 1;
       out.failures.push({ fence_id: f.id, error: msg });

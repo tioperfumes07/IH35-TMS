@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["system"],"cols":["driver"],"leafRe":"^system\\.samsara_hos_driver_map$","task":"WAVE-A-DRIVER-SAMSARA-REMAINDER","vertical":"last-hotfile-slice"} */
+/** @matrix-built {"modules":["system"],"cols":["driver","connectivity"],"leaves":["system.samsara_driver_mapping"]} */
+// ROUND 365.6 — leaf system.samsara_driver_mapping: /samsara/driver-mapping is mounted and linked from the Samsara
+// integration page; the page maps rows through POST /api/v1/samsara/map (registered) for the selected company, and a
+// driver target must be a driver of that same company (mdata.drivers by operating_company_id + id) before
+// integrations.samsara_drivers.local_driver_id is written.
 import fs from "node:fs";
 import process from "node:process";
 
@@ -12,6 +17,11 @@ const FILES = {
   manifest: "apps/frontend/src/routes/manifest.tsx",
   resolver: "apps/frontend/src/components/shared/EntityLink.tsx",
   matrix: "docs/specs/scoreboard/modules/system.required.json",
+  mapPage: "apps/frontend/src/pages/samsara-driver-mapping/SamsaraDriverMappingPage.tsx",
+  mapApi: "apps/frontend/src/api/samsara-driver-mapping.ts",
+  mapRoute: "apps/backend/src/integrations/samsara/driver-mapping/driver-mapping.routes.ts",
+  integrationPage: "apps/frontend/src/pages/integrations/SamsaraIntegrationPage.tsx",
+  index: "apps/backend/src/index.ts",
 };
 
 function read() {
@@ -63,6 +73,17 @@ export function verify(source) {
   need("service", "ambiguous", "ambiguous matches must remain explicit");
   if (/\b(?:INSERT\s+INTO|UPDATE\s+mdata\.drivers|DELETE\s+FROM)\b/i.test(withoutComments(source.service))) failures.push(`${FILES.service}: preview service must not mutate driver records`);
 
+  // system.samsara_driver_mapping — connectivity + driver.
+  need("manifest", 'path="/samsara/driver-mapping"', "driver-mapping page must remain mounted (samsara_driver_mapping connectivity)");
+  need("integrationPage", 'to="/samsara/driver-mapping"', "the Samsara integration page must link to driver mapping (samsara_driver_mapping connectivity)");
+  need("mapPage", "const companyId = selectedCompanyId", "mapping must run for the selected company (samsara_driver_mapping connectivity)");
+  need("mapPage", "mapSamsaraDrivers(companyId, body)", "the page must write through the map API (samsara_driver_mapping connectivity)");
+  need("mapPage", 'target_kind: "driver"', "the page must map a Samsara driver to a local driver (samsara_driver_mapping driver)");
+  need("mapApi", 'withCompany("/api/v1/samsara/map", companyId)', "the API must POST the company-bound map route (samsara_driver_mapping connectivity)");
+  need("mapRoute", '"/api/v1/samsara/map"', "backend must mount POST /api/v1/samsara/map (samsara_driver_mapping connectivity)");
+  need("index", "await registerSamsaraDriverMappingRoutes(app);", "driver-mapping routes must be registered (samsara_driver_mapping connectivity)");
+  need("mapRoute", "SELECT id::text AS id FROM mdata.drivers WHERE operating_company_id = $1::uuid AND id = $2::uuid LIMIT 1", "a driver target must be a driver of the same company (samsara_driver_mapping driver)");
+
   need("routeTest", "scopes the company (parameterized set_config)", "route test must prove bound company scope");
   need("routeTest", "expect(scopeCall?.values).toEqual([OCI])", "route test must assert the exact bound company");
   let matrix;
@@ -96,6 +117,8 @@ if (process.argv.includes("--self-test")) {
     ["service", "a.operating_company_id = $1::uuid"],
     ["service", "current_samsara_driver_id"], ["service", "proposed_samsara_driver_id"], ["service", "ambiguous"],
     ["routeTest", "expect(scopeCall?.values).toEqual([OCI])"], ["resolver", 'case "driver"'],
+    ["manifest", 'path="/samsara/driver-mapping"'], ["mapPage", "mapSamsaraDrivers(companyId, body)"], ["mapPage", 'target_kind: "driver"'],
+    ["mapRoute", "SELECT id::text AS id FROM mdata.drivers WHERE operating_company_id = $1::uuid AND id = $2::uuid LIMIT 1"],
   ]) mutations.push(() => ({ ...source, [key]: source[key].replaceAll(token, "BROKEN_DRIVER_CONTRACT") }));
   mutations.push(() => ({ ...source, page: source.page.replace("<ParityTable", "<table><ParityTable") }));
   mutations.push(() => ({ ...source, service: `${source.service}\nawait client.query(\"UPDATE mdata.drivers SET samsara_driver_id = NULL\")` }));

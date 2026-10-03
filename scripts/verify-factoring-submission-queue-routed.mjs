@@ -1,10 +1,16 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["factoring"],"cols":["customer","load","connectivity","reverse_link"],"leaves":["factoring.tab.submit_to_factor"]} */
 /**
  * verify-factoring-submission-queue-routed.mjs — FACT-PAR1 CI guard (step 995)
  *
  * Locks: SubmissionQueue.tsx is reachable — imported by routes/manifest.tsx at
  * `/factoring/submit`, and FactoringHome exposes a deep-link (NOT a SUBNAV tab) so
  * architectural Factoring tab count is unchanged (Rule 05 / never-delete-only-add).
+ *
+ * MATRIX (ROUND 365.6, leaf factoring.tab.submit_to_factor): checkSubmitTab() proves the canonical Submit Invoice tab
+ * is mounted (FactoringHome -> SubmitToFactorTab), lists candidates from a registered GET purchases/candidates, posts
+ * through POST /api/v1/factoring/purchases (registered), carries each invoice's customer + load as EntityLinks (with a
+ * customer filter), and that customer, load and invoice pages show the factoring purchase back (FactoringPurchaseLinksPanel).
  *
  * Usage:
  *   node scripts/verify-factoring-submission-queue-routed.mjs
@@ -69,6 +75,33 @@ export function check({ manifest, home, queue, routeManifest }) {
   return f;
 }
 
+const TAB = {
+  tab: "apps/frontend/src/pages/factoring/SubmitToFactorTab.tsx",
+  api: "apps/frontend/src/api/factoring-purchases.ts",
+  routes: "apps/backend/src/factoring/purchase.routes.ts",
+  index: "apps/backend/src/index.ts",
+  customerDrill: "apps/frontend/src/components/customers/CustomerDrillModal.tsx",
+  loadTab: "apps/frontend/src/components/dispatch/tabs/FactoringTab.tsx",
+  invoicePage: "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx",
+};
+
+/** Matrix leaf factoring.tab.submit_to_factor — connectivity, customer, load, reverse_link. */
+export function checkSubmitTab(s) {
+  const f = [];
+  if (!/tab === "submit_invoice" \? <SubmitToFactorTab /.test(s.home ?? "")) f.push(`${HOME}: the Submit Invoice tab must mount SubmitToFactorTab (connectivity)`);
+  if (!/await createFactoringPurchase\(companyId, \{/.test(s.tab) || !/app\.post\("\/api\/v1\/factoring\/purchases",/.test(s.routes) || !/app\.get\("\/api\/v1\/factoring\/purchases\/candidates",/.test(s.routes) || !/^\s*await registerFactoringPurchaseRoutes\(app\);/m.test(s.index)) f.push(`${TAB.tab}: must list candidates and post purchases through registered /api/v1/factoring/purchases routes (connectivity)`);
+  if (!/<EntityLink kind="customer" id=\{r\.customer_id\}/.test(s.tab) || !/customer_id: applied\.customerId/.test(s.tab)) f.push(`${TAB.tab}: each candidate must link its customer, with a customer filter (customer)`);
+  if (!/<EntityLink kind="load" id=\{r\.load_id\}/.test(s.tab)) f.push(`${TAB.tab}: each candidate must link its load (load)`);
+  if (!/<FactoringPurchaseLinksPanel[^\n]*filter=\{\{ customer_id: customer\.id \}\}/.test(s.customerDrill) || !/<FactoringPurchaseLinksPanel[^\n]*filter=\{\{ load_id: loadId \}\}/.test(s.loadTab) || !/<FactoringPurchaseLinksPanel[^\n]*filter=\{\{ invoice_id: id \}\}/.test(s.invoicePage)) f.push(`FactoringPurchaseLinksPanel: customer, load and invoice pages must show the purchase back (reverse_link)`);
+  return f;
+}
+
+function readTab() {
+  const out = { home: fs.readFileSync(path.join(ROOT, HOME), "utf8") };
+  for (const [k, rel] of Object.entries(TAB)) out[k] = fs.readFileSync(path.join(ROOT, rel), "utf8");
+  return out;
+}
+
 export function run() {
   const read = (rel) => {
     try {
@@ -77,12 +110,15 @@ export function run() {
       return null;
     }
   };
-  return check({
-    manifest: read(MANIFEST),
-    home: read(HOME),
-    queue: read(QUEUE),
-    routeManifest: read(ROUTE_MANIFEST),
-  });
+  return [
+    ...check({
+      manifest: read(MANIFEST),
+      home: read(HOME),
+      queue: read(QUEUE),
+      routeManifest: read(ROUTE_MANIFEST),
+    }),
+    ...checkSubmitTab(readTab()),
+  ];
 }
 
 if (process.argv.includes("--selftest")) {
@@ -120,6 +156,23 @@ if (process.argv.includes("--selftest")) {
   if (ok.length) {
     console.error(`${LABEL} SELFTEST FAIL:\n${ok.map((e) => `  - ${e}`).join("\n")}`);
     process.exit(1);
+  }
+  const realTab = readTab();
+  const tabNow = checkSubmitTab(realTab);
+  if (tabNow.length) {
+    console.error(`${LABEL} SELFTEST FAIL — real Submit Invoice tab rejected:\n${tabNow.map((e) => `  - ${e}`).join("\n")}`);
+    process.exit(1);
+  }
+  for (const [name, key, from, to] of [
+    ["load link removed", "tab", '<EntityLink kind="load" id={r.load_id}', "<span"],
+    ["customer reverse removed", "customerDrill", "filter={{ customer_id: customer.id }}", "filter={{}}"],
+    ["tab unmounted", "home", 'tab === "submit_invoice" ? <SubmitToFactorTab', 'tab === "submit_invoice" ? <div'],
+  ]) {
+    const mutated = { ...realTab, [key]: realTab[key].split(from).join(to) };
+    if (mutated[key] === realTab[key] || !checkSubmitTab(mutated).length) {
+      console.error(`${LABEL} SELFTEST FAIL — mutation "${name}" escaped or did not apply`);
+      process.exit(1);
+    }
   }
   console.log(`${LABEL} SELFTEST PASS`);
   process.exit(0);

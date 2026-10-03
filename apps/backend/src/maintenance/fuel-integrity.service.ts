@@ -436,6 +436,9 @@ export async function computeDriverFuelIntegrity(
   const burnByDriver = new Map<string, SamsaraDriverBurn>();
   let samsaraDriversUnmapped = 0;
   if (opts?.samsaraDriverReport) {
+    // The savepoint keeps a failed driver-map read from poisoning the transaction (25P02) for the Relay read below; the
+    // failure is reported as samsara_feed_error, never silently.
+    await client.query("SAVEPOINT fuel_integrity_samsara_burn");
     try {
       const rows = await opts.samsaraDriverReport();
       const idMap = await loadDriverIdsBySamsaraDriverId(client as never, operatingCompanyId);
@@ -452,7 +455,9 @@ export async function computeDriverFuelIntegrity(
         if (r.distance_traveled_meters != null) b.samsaraMiles = Number(((b.samsaraMiles ?? 0) + r.distance_traveled_meters / 1609.344).toFixed(1));
         burnByDriver.set(driverId, b);
       }
+      await client.query("RELEASE SAVEPOINT fuel_integrity_samsara_burn");
     } catch (err) {
+      await client.query("ROLLBACK TO SAVEPOINT fuel_integrity_samsara_burn");
       samsaraFeedError = String((err as Error)?.message ?? err);
     }
   }

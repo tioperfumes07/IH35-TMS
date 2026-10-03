@@ -272,6 +272,9 @@ export async function runFuelPurchasePush(
     if (result.push_sample.length < 5) result.push_sample.push(item.body);
     if (!opts.apply) continue;
     if (!opts.poster) throw new Error("fuel_purchase_push: apply requested without a Samsara poster");
+    // One savepoint per item: a failed outcome write must not poison the caller's transaction (25P02) for the failure
+    // record below and every item after it.
+    await client.query("SAVEPOINT fuel_purchase_push_item");
     try {
       const posted = await opts.poster.createFuelPurchase(item.body);
       await recordOutcome(client, operatingCompanyId, {
@@ -280,8 +283,10 @@ export async function runFuelPurchasePush(
         reason: null,
         samsara_fuel_purchase_id: posted.samsara_fuel_purchase_id,
       });
+      await client.query("RELEASE SAVEPOINT fuel_purchase_push_item");
       result.pushed += 1;
     } catch (error) {
+      await client.query("ROLLBACK TO SAVEPOINT fuel_purchase_push_item");
       const message =
         error instanceof SamsaraApiError
           ? `${error.message}${error.statusCode ? `:http_${error.statusCode}` : ""}`

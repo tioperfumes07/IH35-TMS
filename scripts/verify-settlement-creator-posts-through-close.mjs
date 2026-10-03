@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["settlements"],"cols":["settlement"],"leaves":["settlements.drawer.creator"]} */
 // ROUND 326 item 18 (CC-1) — the Settlement Creator has ONE calculator: the close engine. Owner: "the totals he
 // verifies must come from the same code path the post writes — do not create a second calculator."
 // Before: the creator wrote a settlement 'closed' and never called the close engine (no settlement JE, while the
@@ -14,6 +15,9 @@
 //   4. the close stops honoring onlyAdvanceIds (the creator recovers exactly the advances its document lists);
 //   5. Edit = void and repost stops refusing a settlement already posted through the per-load A/P chain;
 //   6. the creator's totals block stops rendering the posting engine's chain (sc-posting-engine-totals).
+//   7. (ROUND 365.6, matrix leaf settlements.drawer.creator, column settlement) the drawer stops being mounted on the
+//      Settlements page, stops posting its settlement number through the registered creator post route, or the creator
+//      stops writing the driver_finance.driver_settlements header that route returns.
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -25,6 +29,8 @@ const F = {
   routes: "apps/backend/src/driver-finance/settlement-creator.routes.ts",
   close: "apps/backend/src/driver-finance/settlement-payrun-close.service.ts",
   drawer: "apps/frontend/src/pages/settlements/SettlementCreatorDrawer.tsx",
+  page: "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
+  index: "apps/backend/src/index.ts",
 };
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 
@@ -47,6 +53,10 @@ export function problems(src) {
   const close = strip(src.close);
   if (!/onlyAdvanceIds\?: string\[\] \| null/.test(close) || !/onlyAdvanceIds == null \|\| onlyAdvanceIds\.has\(a\.id\)/.test(close)) p.push("closeSettlementPayRun must honor onlyAdvanceIds");
   if (!/data-testid="sc-posting-engine-totals"/.test(src.drawer) || !/preview\.close_totals\.net_cents/.test(src.drawer)) p.push("the creator's totals block must render the posting engine's chain (sc-posting-engine-totals)");
+  if (!/<SettlementCreatorDrawer open=\{creatorOpen\}/.test(src.page)) p.push("the Settlements page must mount the Settlement Creator drawer (settlement)");
+  if (!/settlement_no: settlementNo\.trim\(\)/.test(src.drawer) || !/await postSettlementCreator\(draft\)/.test(src.drawer)) p.push("the drawer must post its settlement number through postSettlementCreator (settlement)");
+  if (!/app\.post\("\/api\/v1\/driver-finance\/settlement-creator\/post",/.test(src.routes) || !/^\s*await registerSettlementCreatorRoutes\(app\);/m.test(src.index)) p.push("POST /api/v1/driver-finance/settlement-creator/post must be registered (settlement)");
+  if (!/INSERT INTO driver_finance\.driver_settlements \(/.test(c)) p.push("the creator must write the driver_finance.driver_settlements header (settlement)");
   return p;
 }
 
@@ -67,6 +77,7 @@ if (isMain) {
       ["preview off the engine", { ...src, routes: src.routes.replace("previewSettlementCreatorThroughClose(client, user.uuid, draft)", "previewSettlementCreator(client, draft)") }],
       ["all advances", { ...src, close: src.close.replace("onlyAdvanceIds == null || onlyAdvanceIds.has(a.id)", "true") }],
       ["edit over a posted chain", { ...src, creator: src.creator.replace('"settlement_posted_through_close"', '"x"') }],
+      ["drawer unmounted", { ...src, page: src.page.replace("<SettlementCreatorDrawer open={creatorOpen}", "<div") }],
       ["totals block gone", { ...src, drawer: src.drawer.replace('data-testid="sc-posting-engine-totals"', "") }],
     ];
     for (const [name, planted] of plants) {
