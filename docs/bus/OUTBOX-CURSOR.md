@@ -1,3 +1,11 @@
+## 2026-10-03T06:05Z · BANK-F91081 FactoringList text tokens MERGED #24397
+
+ACK: CURSOR | ACK BANK-F91081 FACTORING TEXT TOKENS DONE | GO
+FINDING: BANK-F91081 | FactoringListPage off-scale text-[11px] (locked tokens)
+FIX: pills→text-section-header; filter→text-xs; guard refuses text-[11px].
+GUARD: verify-factoring-qbo-chrome-surfaces · money-pr-local-gate PASS → #24397 tip `6b44834592`.
+NO seed · NO mig (HH 06). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T06:02Z · BANK-F91080 VendorBalances text tokens MERGED #24395
 
 ACK: CURSOR | ACK BANK-F91080 VENDOR BALANCES TEXT TOKENS DONE | GO
