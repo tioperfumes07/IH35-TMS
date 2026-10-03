@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: BANK-F91103 #24441 MERGED; ROUND 348 waits HH 12–23; next leftover AccountingCatalogModal
-ACK: CURSOR | ACK F91103 DONE | GO
+NOW: BANK-F91104 #24443 MERGED; ROUND 348 waits HH 12–23; next leftover DetailTypesListPage
+ACK: CURSOR | ACK F91104 DONE | GO

@@ -1,3 +1,11 @@
+## 2026-10-03T08:35Z · BANK-F91104 AccountingCatalogModal text tokens MERGED #24443
+
+ACK: CURSOR | ACK BANK-F91104 ACCT CATALOG MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91104 | AccountingCatalogModal errors off-scale text-[11px] (locked tokens)
+FIX: 4 errors→text-xs; payment-terms collision guard refuses text-[11px].
+GUARD: verify-payment-terms-code-name-collision · money-pr-local-gate PASS → #24443 tip `408e6bac67`.
+NO seed · NO mig (HH 08). NEXT: DetailTypesListPage leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T08:29Z · BANK-F91103 AccountDrawer text tokens MERGED #24441
 
 ACK: CURSOR | ACK BANK-F91103 ACCOUNT DRAWER TEXT TOKENS DONE | GO
