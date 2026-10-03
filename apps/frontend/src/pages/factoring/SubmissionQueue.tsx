@@ -238,7 +238,7 @@ export function SubmissionQueue() {
       <PageHeader title="Submit to Factor" subtitle="Eligible invoices ready for factor submission" />
 
       <div className="relative flex flex-wrap items-end gap-3" data-testid="factoring-submit-filters">
-        <label className="text-[11px] text-slate-600">
+        <label className="text-xs text-slate-600">
           Customer
           <EntityPicker
             kind="customer"
@@ -251,7 +251,7 @@ export function SubmissionQueue() {
             dataTestId="factoring-submit-filter-customer"
           />
         </label>
-        <label className="text-[11px] text-slate-600">
+        <label className="text-xs text-slate-600">
           Load
           <EntityPicker
             kind="load"
