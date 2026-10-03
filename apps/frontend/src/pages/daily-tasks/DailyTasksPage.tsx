@@ -364,7 +364,7 @@ export function DailyTasksPage() {
       <div className="rounded-sm border border-slate-200 bg-white px-3 py-2">
         <div className="mb-2 flex items-center justify-between">
           <div className="text-xs text-slate-600">View</div>
-          <div className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700">
+          <div className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-700">
             <AlertTriangle className="h-3.5 w-3.5" />
             Alerts {overdueCount} overdue
           </div>
@@ -419,7 +419,7 @@ export function DailyTasksPage() {
       <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Quick Create Task">
         <div className="space-y-3 text-xs">
           <div>
-            <label htmlFor="daily-task-title" className="mb-1 block text-[11px] font-semibold uppercase text-slate-600">
+            <label htmlFor="daily-task-title" className="mb-1 block text-xs font-semibold uppercase text-slate-600">
               Title
             </label>
             <input
@@ -431,7 +431,7 @@ export function DailyTasksPage() {
             />
           </div>
           <div>
-            <label htmlFor="daily-task-description" className="mb-1 block text-[11px] font-semibold uppercase text-slate-600">
+            <label htmlFor="daily-task-description" className="mb-1 block text-xs font-semibold uppercase text-slate-600">
               Description
             </label>
             <textarea
@@ -444,7 +444,7 @@ export function DailyTasksPage() {
           </div>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <div>
-              <label htmlFor="daily-task-assignee" className="mb-1 block text-[11px] font-semibold uppercase text-slate-600">
+              <label htmlFor="daily-task-assignee" className="mb-1 block text-xs font-semibold uppercase text-slate-600">
                 Assignee
               </label>
               <SelectCombobox
@@ -462,7 +462,7 @@ export function DailyTasksPage() {
               </SelectCombobox>
             </div>
             <div>
-              <label htmlFor="daily-task-priority" className="mb-1 block text-[11px] font-semibold uppercase text-slate-600">
+              <label htmlFor="daily-task-priority" className="mb-1 block text-xs font-semibold uppercase text-slate-600">
                 Priority
               </label>
               <SelectCombobox
@@ -480,7 +480,7 @@ export function DailyTasksPage() {
             </div>
           </div>
           <div>
-            <label htmlFor="daily-task-due" className="mb-1 block text-[11px] font-semibold uppercase text-slate-600">
+            <label htmlFor="daily-task-due" className="mb-1 block text-xs font-semibold uppercase text-slate-600">
               Due Date / Time
             </label>
             <DateTimePicker
@@ -506,7 +506,7 @@ export function DailyTasksPage() {
       <Modal variant="drawer" open={cancelTaskId != null} onClose={() => setCancelTaskId(null)} title="Cancel Task">
         <div className="space-y-3 text-xs">
           <div>
-            <label htmlFor="daily-task-cancel-reason" className="mb-1 block text-[11px] font-semibold uppercase text-slate-600">
+            <label htmlFor="daily-task-cancel-reason" className="mb-1 block text-xs font-semibold uppercase text-slate-600">
               Cancellation reason
             </label>
             <textarea
@@ -586,7 +586,7 @@ function TaskDetailDrawer({
               </div>
             </div>
             <div>
-              <div className="mb-2 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+              <div className="mb-2 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
                 <Clock3 className="h-3.5 w-3.5" />
                 Activity Timeline
               </div>
@@ -607,7 +607,7 @@ function TaskDetailDrawer({
                       </span>
                       <span className="text-xs text-slate-500">{formatDateTime(event.created_at)}</span>
                     </div>
-                    <div className="text-[11px] text-slate-700">Actor: <EntityLink kind="user" id={event.actor_user_id} label={entityLabel(event.actor_name, event.actor_user_id, "User")} /></div>
+                    <div className="text-xs text-slate-700">Actor: <EntityLink kind="user" id={event.actor_user_id} label={entityLabel(event.actor_name, event.actor_user_id, "User")} /></div>
                     {Object.keys(event.payload ?? {}).length > 0 ? (
                       <pre className="mt-2 overflow-x-auto rounded-sm bg-slate-50 p-2 text-xs text-slate-600">
                         {JSON.stringify(event.payload, null, 2)}
