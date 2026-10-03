@@ -84,6 +84,8 @@ export type ReclassifyLineRow = {
   /** ROUND 370 — every posting behind the balance is listed; these say why one cannot be reclassified. */
   is_reversed: boolean;
   is_reversal: boolean;
+  /** U22 — the source document was purged (its number comes from the audit trail); drill to the journal entry. */
+  document_purged?: boolean;
   item_id: string | null;
   item_name: string | null;
   load_id: string | null;
@@ -159,6 +161,13 @@ export function buildLineWhere(filter: ReclassifyLineFilter, values: unknown[]):
   return where.join("\n          AND ");
 }
 
+/**
+ * The posting's source document id as uuid — NULL when it is not one. A document key compared as text
+ * (x.id::text = p.source_transaction_id) cannot use the primary-key index: on a fiscal-year window every per-row lookup
+ * became a scan (48 s for USMCA's year). Compare uuid to uuid.
+ */
+const SRC_DOC_UUID = `(CASE WHEN length(p.source_transaction_id) = 36 AND p.source_transaction_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' THEN p.source_transaction_id::uuid END)`;
+
 /** The postings + their entry + batch + the document line (item, load) — shared by the count, the list and apply. */
 const LINE_FROM = `
           FROM accounting.journal_entry_postings p
@@ -201,14 +210,31 @@ const LINE_SELECT = `
                p.source_transaction_type,
                p.source_transaction_id,
                p.source_transaction_line_id,
-               CASE p.source_transaction_type
-                 WHEN 'expense' THEN (SELECT e.expense_number FROM accounting.expenses e WHERE e.id::text = p.source_transaction_id)
-                 WHEN 'bill' THEN (SELECT coalesce(b.display_id, b.bill_number) FROM accounting.bills b WHERE b.id::text = p.source_transaction_id)
-                 WHEN 'invoice' THEN (SELECT i.display_id FROM accounting.invoices i WHERE i.id::text = p.source_transaction_id)
-                 WHEN 'customer_payment' THEN (SELECT py.display_id FROM accounting.payments py WHERE py.id::text = p.source_transaction_id)
-                 WHEN 'bill_payment' THEN (SELECT NULLIF(btrim(bb.bill_number), '') FROM accounting.bill_payments bp2 JOIN accounting.bills bb ON bb.id = bp2.bill_id WHERE bp2.id::text = p.source_transaction_id)
-                 WHEN 'driver_settlement' THEN (SELECT s2.display_id FROM driver_finance.driver_settlements s2 WHERE s2.id::text = p.source_transaction_id)
-                 ELSE NULL END AS document_number,
+               -- U22 (owner): "the expense number is missing". 3,860 USMCA expense postings are the reversal pairs of
+               -- expenses later PURGED (REVERSE -> VOID -> PURGE): the document row is gone, so the lookup found nothing.
+               -- The number survives in the WORM audit trail (the DELETE row's old_data), so Num shows it, and the line
+               -- says it is purged so the drill opens its journal entry instead of a document that no longer exists.
+               COALESCE(
+                 CASE p.source_transaction_type
+                 WHEN 'expense' THEN (SELECT e.expense_number FROM accounting.expenses e WHERE e.id = ${SRC_DOC_UUID})
+                 WHEN 'bill' THEN (SELECT coalesce(b.display_id, b.bill_number) FROM accounting.bills b WHERE b.id = ${SRC_DOC_UUID})
+                 WHEN 'invoice' THEN (SELECT i.display_id FROM accounting.invoices i WHERE i.id = ${SRC_DOC_UUID})
+                 WHEN 'customer_payment' THEN (SELECT py.display_id FROM accounting.payments py WHERE py.id = ${SRC_DOC_UUID})
+                 WHEN 'bill_payment' THEN (SELECT NULLIF(btrim(bb.bill_number), '') FROM accounting.bill_payments bp2 JOIN accounting.bills bb ON bb.id = bp2.bill_id WHERE bp2.id = ${SRC_DOC_UUID})
+                 WHEN 'driver_settlement' THEN (SELECT s2.display_id FROM driver_finance.driver_settlements s2 WHERE s2.id = ${SRC_DOC_UUID})
+                 ELSE NULL END,
+                 (SELECT rc.old_data->>(CASE p.source_transaction_type WHEN 'expense' THEN 'expense_number' WHEN 'bill' THEN 'bill_number' ELSE 'display_id' END)
+                    FROM audit.row_changes rc
+                   WHERE rc.schema_name = 'accounting'
+                     AND rc.table_name = CASE p.source_transaction_type WHEN 'expense' THEN 'expenses' WHEN 'bill' THEN 'bills' WHEN 'invoice' THEN 'invoices' END
+                     AND rc.op = 'DELETE' AND rc.row_pk = p.source_transaction_id
+                   ORDER BY rc.changed_at DESC LIMIT 1)
+               ) AS document_number,
+               (p.source_transaction_type IN ('expense', 'bill', 'invoice') AND NOT EXISTS (
+                  SELECT 1 FROM accounting.expenses x WHERE p.source_transaction_type = 'expense' AND x.id = ${SRC_DOC_UUID}
+                  UNION ALL SELECT 1 FROM accounting.bills x WHERE p.source_transaction_type = 'bill' AND x.id = ${SRC_DOC_UUID}
+                  UNION ALL SELECT 1 FROM accounting.invoices x WHERE p.source_transaction_type = 'invoice' AND x.id = ${SRC_DOC_UUID}
+               )) AS document_purged,
                p.account_id::text AS account_id,
                a.account_number, a.account_name, a.account_type, a.account_subtype, a.system_purpose,
                EXISTS (SELECT 1 FROM banking.bank_accounts ba WHERE ba.ledger_account_id = p.account_id) AS is_bank_ledger,

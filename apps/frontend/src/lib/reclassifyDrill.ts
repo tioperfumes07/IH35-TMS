@@ -24,6 +24,8 @@ export function docKind(t: string | null): DocKind {
 }
 export function docTarget(l: ReclassifyLine): { kind: DocKind; id: string } {
   const kind = docKind(l.source_transaction_type);
+  // U22 — a purged document no longer opens; its journal entry (which still carries the line) does.
+  if (l.document_purged) return { kind: "journal_entry", id: l.journal_entry_id };
   return kind !== "journal_entry" && l.source_transaction_id ? { kind, id: l.source_transaction_id } : { kind: "journal_entry", id: l.journal_entry_id };
 }
 /** Why a listed row cannot be selected (ROUND 370: it is shown because the balance counts it). */

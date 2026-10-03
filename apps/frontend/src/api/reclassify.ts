@@ -26,6 +26,8 @@ export type ReclassifyLine = {
   account_name: string | null;
   /** U27 — the account's type, so the screen can present the line in the account's natural sign. */
   account_type?: string | null;
+  /** U22 — the source document was purged (REVERSE -> VOID -> PURGE); its number comes from the audit trail. */
+  document_purged?: boolean;
   class_id: string | null;
   class_name: string | null;
   location_id: string | null;
