@@ -100,6 +100,12 @@ export function audit(read) {
     for (const re of s.must) if (!re.test(src)) fails.push(`${s.name}: missing ${re}`);
     for (const re of s.mustNot ?? []) if (re.test(src)) fails.push(`${s.name}: regressed ${re}`);
   }
+  // BANK-F91100 — ORDERS chrome: Void/Cancel Reasons status pills use text-xs, not text-[11px].
+  const voidRel = "apps/frontend/src/pages/lists/accounting/VoidCancelReasonsListPage.tsx";
+  const voidSrc = read(voidRel);
+  if (voidSrc.includes("text-[11px]")) {
+    fails.push("Void / Cancel Reasons: must not use text-[11px] — use text-xs");
+  }
   return fails;
 }
 
