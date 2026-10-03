@@ -78,7 +78,7 @@ async function run() {
   }
   try {
     await client.query("BEGIN");
-    // Read as the LOGIN role (the gate logs in as ih35_ci_readonly, which may not SET ROLE neondb_owner and has BYPASSRLS);
+    // Read as the LOGIN role (the gate logs in as ih35_ci_readonly, which may not SET ROLE to the database owner and has BYPASSRLS);
     // never as ih35_app (pooled SET ROLE leak, #24584).
     await client.query("SET LOCAL ROLE NONE");
     await client.query("SET LOCAL app.bypass_rls = 'lucia'");
