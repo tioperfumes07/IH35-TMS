@@ -1925,12 +1925,22 @@
     "202615350700": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-03",
-      "purpose": "ROUND 363-CC1-B: CONSTRAINT TRIGGER DEFERRABLE INITIALLY DEFERRED — the database refuses an accounting.bill_payments row that commits without its bill_payment postings"
+      "purpose": "RELEASED UNUSED — out of the CC-1 band (HH 00-05, verify-migration-lane-band); re-claimed as 202615360100. No file was ever authored at this number."
     },
     "202615350800": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-03",
-      "purpose": "ROUND 363-CC1-D (LAW 363.3/363.5): refuse a direct UPDATE of a posted accounting.journal_entry_postings line outside the document-edit service (reclassify = restate + reverse + re-post)"
+      "purpose": "RELEASED UNUSED — out of the CC-1 band (HH 00-05, verify-migration-lane-band); re-claimed as 202615360200. No file was ever authored at this number."
+    },
+    "202615360100": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 363-CC1-B: CONSTRAINT TRIGGER DEFERRABLE INITIALLY DEFERRED — the database refuses an accounting.bill_payments row that commits without its bill_payment postings (re-claim of 202615350700, in band)"
+    },
+    "202615360200": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 363-CC1-D (LAW 363.3/363.5): refuse a direct UPDATE of a posted accounting.journal_entry_postings line outside the document-edit service (re-claim of 202615350800, in band)"
     }
   },
   "202613590001": {
