@@ -30,7 +30,7 @@
  * Escrow tables (driver_finance.escrow_balances / escrow_ledger) are natively CENTS — left as-is.
  */
 
-import { assertSubjectMayCloseOnClient } from "../driver-finance/feed-gate/feed-gate.service.js";
+import { assertSubjectMayCloseOnClient, FeedGateError } from "../driver-finance/feed-gate/feed-gate.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { recordEscrowPostingOnly } from "../accounting/escrow/service.js";
 import { signedEscrowLedgerAmountCents } from "../driver-finance/escrow-ledger-sign.js";
@@ -493,6 +493,29 @@ export async function checkAllLinesApproved(
   };
 }
 
+export class SettlementLinesNotApprovedError extends Error {
+  readonly code = "settlement_lines_not_approved";
+  constructor(public pendingCount: number, public rejectedCount: number) {
+    super(`Cannot approve: ${pendingCount} lines pending, ${rejectedCount} lines rejected`);
+    this.name = "SettlementLinesNotApprovedError";
+  }
+}
+
+/**
+ * SETL-DUAL-APPROVAL-STATE-CONTRADICTION — maps the two refusals approveSettlement() raises (lines
+ * not all approved / feed gate red) to a 409 body, or null for any other error. Every writer that
+ * moves driver_settlements.status to 'approved' runs approveSettlement() first in the same
+ * transaction, so status='approved' never coexists with approval_status='needs_review'
+ * (scripts/verify-settlement-status-approved-runs-approval-gate.mjs).
+ */
+export function settlementApprovalRefusal(error: unknown): { error: string; message: string; details?: unknown } | null {
+  if (error instanceof SettlementLinesNotApprovedError) {
+    return { error: error.code, message: error.message, details: { pending_count: error.pendingCount, rejected_count: error.rejectedCount } };
+  }
+  if (error instanceof FeedGateError) return { error: error.code, message: error.message, details: error.details };
+  return null;
+}
+
 /**
  * Mark settlement as approved (when all lines reviewed) — canonical header.
  */
@@ -505,7 +528,7 @@ export async function approveSettlement(
   // Verify all lines are processed
   const check = await checkAllLinesApproved(client, settlementId, operatingCompanyId);
   if (!check.allApproved) {
-    throw new Error(`Cannot approve: ${check.pendingCount} lines pending, ${check.rejectedCount} lines rejected`);
+    throw new SettlementLinesNotApprovedError(check.pendingCount, check.rejectedCount);
   }
 
   // FEED GATE (owner law 2026-10-01): a settlement is approved only when every intake check is green —

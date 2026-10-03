@@ -15,6 +15,7 @@ import { renderSettlementStatementPdf } from "./settlement-pdf-renderer.service.
 import { listDriverBillsForSettlementPeriod } from "./settlements.service.js";
 import { loadIdsForSettlement } from "../accounting/tour-open-gate.service.js";
 import { postHeldDocumentsForClosedTour } from "../accounting/tour-close-posting.service.js";
+import { approveSettlement, settlementApprovalRefusal } from "../settlements/approval.service.js";
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
 
@@ -267,6 +268,10 @@ export async function registerSettlementsMvpRoutes(app: FastifyInstance) {
           return { invalidStatus: true as const, status };
         }
 
+        // SETL-DUAL-APPROVAL-STATE-CONTRADICTION — the canonical header gate (every line approved +
+        // feed gate green) sets approval_status='approved' first; a refusal throws and rolls back.
+        await approveSettlement(client, params.data.id, user.uuid, companyId);
+
         await client.query(
           `
             UPDATE driver_finance.driver_settlements
@@ -393,6 +398,8 @@ export async function registerSettlementsMvpRoutes(app: FastifyInstance) {
 
       return { ok: true, id: params.data.id, display_id: settlementNo };
     } catch (error) {
+      const refusal = settlementApprovalRefusal(error);
+      if (refusal) return reply.code(409).send(refusal);
       const message = String((error as Error)?.message ?? "settlement_approve_failed");
       if (message === "settlement_not_found") return reply.code(404).send({ error: message });
       return reply.code(500).send({ error: "settlement_approve_failed", message });
