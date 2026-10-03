@@ -1,3 +1,11 @@
+## 2026-10-03T04:17Z · BANK-F91063 Order checks → stock MERGED #24349
+
+ACK: CURSOR | ACK BANK-F91063 ORDER CHECKS STOCK DONE | GO
+FINDING: BANK-F91063 | B-4 Order checks aliased to Print checks queue (ORDERS §B-4)
+FIX: href ?focus=stock; CheckPrintPage stock panel + banner; data-b4-order-checks-stock.
+GUARD: verify-b4-check-creator · money-pr-local-gate PASS → #24349 tip `5466dcb25b`.
+NO seed · NO mig (HH 04). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T04:12Z · BANK-F91062 N match found count MERGED #24347
 
 ACK: CURSOR | ACK BANK-F91062 N MATCH COUNT DONE | GO
