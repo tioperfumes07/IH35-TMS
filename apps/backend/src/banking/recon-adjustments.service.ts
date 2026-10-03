@@ -6,6 +6,14 @@
  *   - Interest earned = income JE (Dr bank / Cr income) — not a 5xxx/6xxx cost, so JE is correct.
  *
  * Idempotent: if the session already carries a JE FK for that leg, skip re-post.
+ *
+ * ROUND 390.3 — every posting of an adjustment is LINKED to its reconciliation session on the spine
+ * (accounting.transaction_source_links: linked_object_type 'bank_reconciliation', linked_object_id = session id,
+ * relationship_role 'recon_service_charge' / 'recon_interest_earned'). That link is the forward/reverse key and the
+ * idempotency key (with the amount) — never the memo. The memo is for people: "Bank reconciliation service charge —
+ * 10/01/2026", no session uuid. A re-run of the same session takes a transaction-scoped advisory lock on the session,
+ * finds the linked adjustment and returns it, so the same session can never mint two charges, and two sessions with
+ * identical charges each keep their own.
  */
 import type { QueryableClient } from "../accounting/journal-entry-type-resolver.js";
 import { createJournalEntryOnClient } from "../accounting/journal-entries.service.js";
@@ -35,6 +43,75 @@ export type ReconAdjustmentResult = {
   service_charge_expense_id: string | null;
   interest_earned_journal_entry_id: string | null;
 };
+
+export const RECON_LINK_TYPE = "bank_reconciliation";
+export const RECON_SERVICE_CHARGE_ROLE = "recon_service_charge";
+export const RECON_INTEREST_EARNED_ROLE = "recon_interest_earned";
+
+/** "2026-10-01" -> "10/01/2026" (the date as the owner reads it; no time zone shift — it is a date, not an instant). */
+export function reconMemoDate(isoDate: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(isoDate);
+  return m ? `${m[2]}/${m[3]}/${m[1]}` : isoDate;
+}
+
+export function reconServiceChargeMemo(date: string): string {
+  return `Bank reconciliation service charge — ${reconMemoDate(date)}`;
+}
+
+export function reconInterestEarnedMemo(date: string): string {
+  return `Bank reconciliation interest earned — ${reconMemoDate(date)}`;
+}
+
+/** Link every posting of a journal entry to the reconciliation session (idempotent). Returns how many postings carry it. */
+async function linkEntryToSession(
+  client: QueryableClient,
+  operatingCompanyId: string,
+  journalEntryId: string,
+  sessionId: string,
+  role: string
+): Promise<number> {
+  await client.query(
+    `INSERT INTO accounting.transaction_source_links (operating_company_id, journal_entry_posting_id, linked_object_type, linked_object_id, relationship_role)
+     SELECT p.operating_company_id, p.id, $3, $4, $5
+       FROM accounting.journal_entry_postings p
+      WHERE p.journal_entry_uuid = $1::uuid AND p.operating_company_id = $2::uuid
+        AND NOT EXISTS (SELECT 1 FROM accounting.transaction_source_links l
+                         WHERE l.journal_entry_posting_id = p.id AND l.linked_object_type = $3
+                           AND l.linked_object_id = $4 AND l.relationship_role = $5)`,
+    [journalEntryId, operatingCompanyId, RECON_LINK_TYPE, sessionId, role]
+  );
+  const n = await client.query<{ n: number }>(
+    `SELECT count(*)::int AS n
+       FROM accounting.journal_entry_postings p
+       JOIN accounting.transaction_source_links l ON l.journal_entry_posting_id = p.id
+      WHERE p.journal_entry_uuid = $1::uuid AND l.linked_object_type = $2 AND l.linked_object_id = $3 AND l.relationship_role = $4`,
+    [journalEntryId, RECON_LINK_TYPE, sessionId, role]
+  );
+  return n.rows[0]?.n ?? 0;
+}
+
+/** The live (unreversed) journal entry this session already posted for one leg at this amount, found through the spine. */
+async function findLinkedEntry(
+  client: QueryableClient,
+  operatingCompanyId: string,
+  sessionId: string,
+  role: string,
+  amountCents: number
+): Promise<string | null> {
+  const r = await client.query<{ id: string }>(
+    `SELECT j.id::text AS id
+       FROM accounting.transaction_source_links l
+       JOIN accounting.journal_entry_postings p ON p.id = l.journal_entry_posting_id
+       JOIN accounting.journal_entries j ON j.id = p.journal_entry_uuid
+      WHERE l.operating_company_id = $1::uuid AND l.linked_object_type = $2 AND l.linked_object_id = $3
+        AND l.relationship_role = $4 AND p.debit_or_credit = 'debit' AND p.amount_cents = $5::bigint
+        AND j.voided_at IS NULL AND j.reversed_by_je_id IS NULL AND j.reverses_je_id IS NULL
+      ORDER BY j.created_at
+      LIMIT 1`,
+    [operatingCompanyId, RECON_LINK_TYPE, sessionId, role, amountCents]
+  );
+  return r.rows[0]?.id ?? null;
+}
 
 function requirePositiveCents(n: number, label: string) {
   if (!Number.isInteger(n) || n < 0) throw new Error(`${label}_must_be_non_negative_integer`);
@@ -100,31 +177,25 @@ async function createAndPostServiceChargeExpense(
     input.bank_account_id
   );
 
-  const memo = `Bank reconciliation service charge · session ${input.session_id}`;
+  const memo = reconServiceChargeMemo(input.service_charge_date);
   const expenseNumber = await nextExpenseDisplayId(
     client as never,
     input.operating_company_id,
     new Date(`${input.service_charge_date}T00:00:00.000Z`)
   );
 
-  // Idempotent re-entry: an expense already minted for this session memo + amount.
-  const existing = await client.query<{ id: string; journal_entry_id: string | null }>(
-    `SELECT id::text AS id, journal_entry_id::text AS journal_entry_id
-       FROM accounting.expenses
-      WHERE operating_company_id = $1::uuid
-        AND memo = $2
-        AND total_amount_cents = $3::bigint
-        AND voided_at IS NULL
-        AND status <> 'void'
-      ORDER BY created_at DESC
-      LIMIT 1`,
-    [input.operating_company_id, memo, input.service_charge_cents]
-  );
-  if (existing.rows[0]?.journal_entry_id) {
-    return {
-      expense_id: existing.rows[0].id,
-      journal_entry_id: existing.rows[0].journal_entry_id,
-    };
+  // Idempotent re-entry (ROUND 390.3): the expense this SESSION already minted for this amount, found through the
+  // spine link — never the memo (two sessions with an identical charge used to share one memo key, and the second
+  // charge was swallowed).
+  const linkedJe = await findLinkedEntry(client, input.operating_company_id, input.session_id, RECON_SERVICE_CHARGE_ROLE, input.service_charge_cents);
+  if (linkedJe) {
+    const existing = await client.query<{ id: string }>(
+      `SELECT id::text AS id FROM accounting.expenses
+        WHERE operating_company_id = $1::uuid AND journal_entry_id = $2::uuid AND voided_at IS NULL AND status <> 'void'
+        LIMIT 1`,
+      [input.operating_company_id, linkedJe]
+    );
+    if (existing.rows[0]) return { expense_id: existing.rows[0].id, journal_entry_id: linkedJe };
   }
 
   const inserted = await client.query<{ id: string }>(
@@ -216,6 +287,10 @@ async function createAndPostServiceChargeExpense(
     [expenseId, posting.journal_entry_id, input.operating_company_id]
   );
 
+  // The link IS the document's tie to its session (the expense's own postings carry source 'expense'). No link, no post.
+  const linked = await linkEntryToSession(client, input.operating_company_id, posting.journal_entry_id, input.session_id, RECON_SERVICE_CHARGE_ROLE);
+  if (linked < 2) throw new Error("recon_service_charge_session_link_failed");
+
   return { expense_id: expenseId, journal_entry_id: posting.journal_entry_id };
 }
 
@@ -226,6 +301,9 @@ export async function postReconciliationAdjustments(
 ): Promise<ReconAdjustmentResult> {
   requirePositiveCents(input.service_charge_cents, "service_charge_cents");
   requirePositiveCents(input.interest_earned_cents, "interest_earned_cents");
+
+  // One re-run at a time per session: the spine lookups below are only an idempotency key if nobody else is mid-post.
+  await client.query(`SELECT pg_advisory_xact_lock(hashtextextended('recon-adjustments:' || $1, 0))`, [input.session_id]);
 
   let serviceChargeJeId = input.service_charge_journal_entry_id;
   let serviceChargeExpenseId = input.service_charge_expense_id ?? null;
@@ -257,13 +335,16 @@ export async function postReconciliationAdjustments(
     if (!input.interest_earned_date) throw new Error("interest_earned_date_required");
     if (!input.interest_earned_account_id) throw new Error("interest_earned_account_required");
     if (!interestJeId) {
+      interestJeId = await findLinkedEntry(client, input.operating_company_id, input.session_id, RECON_INTEREST_EARNED_ROLE, input.interest_earned_cents);
+    }
+    if (!interestJeId) {
       // Interest is income (Dr bank / Cr income) — not a cost document. JE via canonical poster.
       const je = await createJournalEntryOnClient(
         client,
         {
           operating_company_id: input.operating_company_id,
           entry_date: input.interest_earned_date,
-          memo: `Bank reconciliation interest earned · session ${input.session_id}`,
+          memo: reconInterestEarnedMemo(input.interest_earned_date),
           source: "auto",
           journal_entry_type_code: "GENERAL",
           source_transaction_type: "bank_reconciliation",
@@ -290,6 +371,8 @@ export async function postReconciliationAdjustments(
         actor
       );
       interestJeId = je.id;
+      const linked = await linkEntryToSession(client, input.operating_company_id, je.id, input.session_id, RECON_INTEREST_EARNED_ROLE);
+      if (linked < 2) throw new Error("recon_interest_earned_session_link_failed");
     }
   }
 
