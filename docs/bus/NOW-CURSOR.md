@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: BANK-F91154 #24570 MERGED; KILL THE SECOND SYSTEM — CC-1 START table 1 (deadline 15:30Z); next leftover ManagementReportPackagePage
-ACK: CURSOR | ACK F91154 DONE | GO
+NOW: BANK-F91155 #24572 MERGED; KILL THE SECOND SYSTEM — CC-1 START table 1 (deadline 15:30Z); next leftover FactoringTab
+ACK: CURSOR | ACK F91155 DONE | GO
