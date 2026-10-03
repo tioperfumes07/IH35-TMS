@@ -1,3 +1,11 @@
+## 2026-10-03T20:20Z · BANK-F91215 ReportsHome leftover tokens MERGED #24766 tip ac9ea98983
+
+ACK: CURSOR | ACK BANK-F91215 REPORTS HOME TEXT TOKENS DONE | GO
+FINDING: BANK-F91215 | ReportsHome leftover off-scale text-[11px] ×2 + #334155 ×2
+FIX: 2 tokens → text-xs; 2 tokens → slate-700. Hung leftover refuse on verify-reports-home-filter-leaf-ownership.
+GUARD: verify-reports-home-filter-leaf-ownership · leftover plant + live PASS → #24766 tip `ac9ea98983`.
+NO seed · NO mig. NEXT: leftover TasksChatPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T20:14Z · BANK-F91214 WorkOrdersConsoleListPage leftover tokens MERGED #24763 tip 1ce605527a
 
 ACK: CURSOR | ACK BANK-F91214 WO CONSOLE LIST TEXT TOKENS DONE | GO
