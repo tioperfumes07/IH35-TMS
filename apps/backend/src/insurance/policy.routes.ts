@@ -309,7 +309,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
         `
           SELECT id::text
           FROM insurance.type_catalog
-          WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid
+          WHERE tenant_id = $1::uuid
             AND code = $2
             AND active = true
           LIMIT 1
@@ -421,7 +421,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
           `
             SELECT id::text
             FROM insurance.type_catalog
-            WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid
+            WHERE tenant_id = $1::uuid
               AND code = $2
               AND active = true
             LIMIT 1
