@@ -1588,6 +1588,11 @@ export type BankTransactionSuggestion = {
   suggested_confidence: "high" | "medium";
   date_gap_days: number;
   memo_similarity: number;
+  /** BANK-F91061 — ORDERS §18 inline candidate fields (type is suggested_ledger_entry_kind). */
+  suggested_event_date?: string | null;
+  suggested_amount_cents?: number | null;
+  suggested_payee_name?: string | null;
+  suggested_reference?: string | null;
 };
 
 // B.1 — bulk match suggestions (exact cents, +-5d, expense/bill) for the banking transactions LIST,

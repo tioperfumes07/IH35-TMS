@@ -60,6 +60,32 @@ export function run() {
     "the ONE gear's gearExtra must still carry the transaction-detail toggles, Groups/Turn off grouping, the register's own page-size control, and the automation honesty checkbox",
     errors
   );
+  // BANK-F91061 — ORDERS §18 match badge carries candidate type/date/amount/payee inline (not badge-only).
+  assert(
+    register.includes("formatSuggestedMatchInline") &&
+      register.includes('data-b3-match-badge-inline="1"') &&
+      register.includes("banking-suggested-match-detail-") &&
+      register.includes("1 match found"),
+    "suggested-match badge must render ORDERS §18 inline candidate (type/date/amount/payee) via formatSuggestedMatchInline",
+    errors
+  );
+  const suggestRoute = read("apps/backend/src/banking/p7-wave2.routes.ts");
+  assert(
+    suggestRoute.includes("suggested_event_date: best.event_date") &&
+      suggestRoute.includes("suggested_amount_cents: best.amount_cents") &&
+      suggestRoute.includes("suggested_payee_name: best.counterparty_name") &&
+      suggestRoute.includes("suggested_reference: best.reference"),
+    "POST /banking/transactions/suggest must return candidate date/amount/payee/ref for the inline badge",
+    errors
+  );
+  const bankingApi = read("apps/frontend/src/api/banking.ts");
+  assert(
+    bankingApi.includes("suggested_event_date?:") &&
+      bankingApi.includes("suggested_amount_cents?:") &&
+      bankingApi.includes("suggested_payee_name?:"),
+    "BankTransactionSuggestion type must carry the ORDERS §18 inline candidate fields",
+    errors
+  );
   assert(
     parityTable.includes("gearExtra?: ReactNode") && parityTable.includes("{gearExtra ? ("),
     "ParityTable must keep the gearExtra extension slot (BANK-TOOLBAR-ONE's ONE-gear mechanism) rendered inside its own gear popover",
