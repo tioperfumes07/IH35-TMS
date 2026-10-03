@@ -11,5 +11,140 @@
       "regenerate": "node scripts/audit-coverage-scoreboard.mjs --emit-program-json && node scripts/gen-program-scoreboard.mjs",
       "why": "Sat without top-level healthzSha/generated_at (unfalsifiable). deployedSha 14daeed was 59 commits behind live on 2026-08-29; maxDeploysBehind 80 is temporary until the regen command shrinks it."
     }
+  ],
+  "generated_note": "ROUND 363-CC3-C — EVERY generator in scripts/ (gen-*.mjs / generate-*.mjs) declares its artifact here; verify-derived-artifact-freshness fails on any generator not listed. 'Stale' means an artifact's OUTPUT WAS NOT REBUILT AFTER MAIN MOVED — its committed content differs from what its own generator produces from the committed inputs today. It does NOT mean a PR was built wrong or never merged; nothing is lost; the fix is to run `regenerate` and commit the result. Modes: regen-diff = the guard regenerates in a scratch worktree and compares every path (a pair is several paths of ONE artifact — regenerating one member without the other fails); not-committed = gitignored, rebuilt on every use, must stay untracked; historical = a one-off whose output is a dated record, never regenerated. 'volatile' lists the only lines allowed to differ between two runs of the same generator (measured by running it twice).",
+  "generated": [
+    {
+      "generator": "scripts/gen-program-scoreboard.mjs",
+      "mode": "regen-diff",
+      "paths": [
+        "apps/frontend/src/pages/program/programScoreboard.data.ts"
+      ],
+      "inputs": [
+        "docs/audit/program-scoreboard.json"
+      ],
+      "regenerate": "node scripts/gen-program-scoreboard.mjs",
+      "volatile": [],
+      "why": "PAIR with docs/audit/program-scoreboard.json (stamp entry above, written by audit-coverage-scoreboard.mjs): one artifact in two files. #24603 regenerated the json and shipped without the .ts; this entry fails that."
+    },
+    {
+      "generator": "scripts/audit-coverage-scoreboard.mjs",
+      "mode": "stamp",
+      "paths": [
+        "docs/audit/program-scoreboard.json"
+      ],
+      "regenerate": "node scripts/audit-coverage-scoreboard.mjs --emit-program-json && node scripts/gen-program-scoreboard.mjs",
+      "why": "the stamp entry under 'artifacts' (healthzSha / generated_at) — its pair member is the gen-program-scoreboard entry."
+    },
+    {
+      "generator": "scripts/gen-block-created-dates.mjs",
+      "mode": "regen-diff",
+      "paths": [
+        "docs/trackers/block-created-dates.json"
+      ],
+      "inputs": [
+        ".block-ready/"
+      ],
+      "regenerate": "node scripts/gen-block-created-dates.mjs",
+      "volatile": [
+        "\"generated_at_iso\":"
+      ],
+      "why": "created date per .block-ready spec; measured stale 2026-10-03 (last regenerated 2026-07-12)."
+    },
+    {
+      "generator": "scripts/gen-canonical-relations.mjs",
+      "mode": "regen-diff",
+      "paths": [
+        "scripts/canonical-relations.json"
+      ],
+      "inputs": [
+        "live schema (DATABASE_URL)"
+      ],
+      "regenerate": "node scripts/gen-canonical-relations.mjs",
+      "volatile": [],
+      "requiresDatabase": true,
+      "why": "the canonical relation list verify-phantom-relations reads; measured stale 2026-10-03 (855 -> 894 relations)."
+    },
+    {
+      "generator": "scripts/gen-class-scoreboard.mjs",
+      "mode": "regen-diff",
+      "paths": [
+        "apps/frontend/src/pages/program/classScoreboard.data.ts"
+      ],
+      "inputs": [
+        "docs/audit/wave-queue.json"
+      ],
+      "regenerate": "node scripts/gen-class-scoreboard.mjs",
+      "volatile": [
+        "\"generatedAt\":"
+      ],
+      "why": "class scoreboard page data; measured stale 2026-10-03 (last regenerated 2026-08-12)."
+    },
+    {
+      "generator": "scripts/gen-financial-buildability.mjs",
+      "mode": "regen-diff",
+      "paths": [
+        "docs/trackers/financial-block-buildability.md",
+        "docs/trackers/financial-block-buildability.csv"
+      ],
+      "inputs": [
+        "docs/trackers/block-reconciliation-data.json",
+        ".block-ready/"
+      ],
+      "regenerate": "node scripts/gen-financial-buildability.mjs",
+      "volatile": [],
+      "why": "PAIR (.md + .csv, one artifact). Lists only PENDING financial blocks, so it shrinks as blocks finish; measured stale 2026-10-03 (last regenerated 2026-07-12)."
+    },
+    {
+      "generator": "scripts/gen-program-phase-manifest.mjs",
+      "mode": "regen-diff",
+      "paths": [
+        "docs/trackers/program-phase-manifest.json"
+      ],
+      "inputs": [
+        ".block-ready/"
+      ],
+      "regenerate": "node scripts/gen-program-phase-manifest.mjs",
+      "volatile": [],
+      "why": "auto-refreshed by the tracker job; fresh on 2026-10-03."
+    },
+    {
+      "generator": "scripts/gen-usmca-battery-doc.mjs",
+      "mode": "regen-diff",
+      "paths": [
+        "docs/audit/USMCA-EXHAUSTIVE-BATTERY.md"
+      ],
+      "inputs": [
+        "scripts/usmca-create-surface-inventory.mjs (route sources)"
+      ],
+      "regenerate": "node scripts/gen-usmca-battery-doc.mjs",
+      "volatile": [],
+      "why": "create-surface battery across every module; measured stale 2026-10-03 (last regenerated 2026-09-07)."
+    },
+    {
+      "generator": "scripts/generate-gate-step-map.mjs",
+      "mode": "not-committed",
+      "paths": [
+        "scripts/.gate-step-map.json"
+      ],
+      "why": "rebuilt by ensureFreshGateStepMap() on every gate run (~0.3s); gitignored (GATE-LIVELOCK-01)."
+    },
+    {
+      "generator": "scripts/generate-module-completion-data.mjs",
+      "mode": "not-committed",
+      "paths": [
+        "apps/frontend/src/generated/module-completion.ts"
+      ],
+      "why": "rebuilt by the frontend typecheck / build / dev scripts; gitignored (AGENTS.md: never commit it)."
+    },
+    {
+      "generator": "scripts/generate-batch-8-ledger-backfill.mjs",
+      "mode": "historical",
+      "paths": [
+        "docs/batch-8/missing-migrations.txt",
+        "docs/batch-8/normal-ledgered-migrations.txt"
+      ],
+      "why": "one-off Batch 8 ledger backfill (2026-07); its outputs are the dated record of that run and are never regenerated against today's ledger."
+    }
   ]
 }

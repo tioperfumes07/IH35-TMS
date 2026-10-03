@@ -33,7 +33,7 @@ export interface ClassScoreboard {
 
 export const CLASS_SCOREBOARD: ClassScoreboard = {
   "meta": {
-    "generatedAt": "2026-08-12T22:02:45.799Z",
+    "generatedAt": "2026-10-03T17:42:57.455Z",
     "source": "docs/audit/wave-queue.json"
   },
   "summary": {
@@ -42,7 +42,7 @@ export const CLASS_SCOREBOARD: ClassScoreboard = {
     "building": 0,
     "notStarted": 4,
     "liveDefect": 4,
-    "drainedWithoutGuard": 1
+    "drainedWithoutGuard": 0
   },
   "rows": [
     {
@@ -169,16 +169,16 @@ export const CLASS_SCOREBOARD: ClassScoreboard = {
       "id": "CLS-DISP-WIRE-06",
       "lane": "money",
       "layer": "C",
-      "status": "open",
-      "code": "NN",
-      "tone": "grey",
-      "label": "not started",
+      "status": "drained",
+      "code": "CC",
+      "tone": "green",
+      "label": "drained",
       "instances": 1,
       "modules": 1,
       "guard": "scripts/verify-disp-wire-06-load-expense-link.mjs",
       "guardMissing": false,
       "guardNearMatch": null,
-      "liveDefect": true
+      "liveDefect": false
     },
     {
       "id": "CLS-DISP-WIRE-07",
@@ -304,16 +304,16 @@ export const CLASS_SCOREBOARD: ClassScoreboard = {
       "id": "CLS-GL-DARK",
       "lane": "money",
       "layer": "C",
-      "status": "drained",
-      "code": "CC",
-      "tone": "green",
-      "label": "drained",
+      "status": "open",
+      "code": "NN",
+      "tone": "grey",
+      "label": "not started",
       "instances": 4,
       "modules": 1,
       "guard": "scripts/verify-gl-posting-coverage.mjs",
       "guardMissing": false,
       "guardNearMatch": null,
-      "liveDefect": false
+      "liveDefect": true
     },
     {
       "id": "CLS-HOOKS-ORDER",
@@ -355,8 +355,8 @@ export const CLASS_SCOREBOARD: ClassScoreboard = {
       "label": "drained",
       "instances": 9,
       "modules": 4,
-      "guard": "scripts/verify-money-ops-fk-density.mjs",
-      "guardMissing": true,
+      "guard": "scripts/verify-disp-wire-06-load-expense-link.mjs",
+      "guardMissing": false,
       "guardNearMatch": null,
       "liveDefect": false
     },

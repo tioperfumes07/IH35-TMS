@@ -20,31 +20,43 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BR_DIR = path.join(ROOT, ".block-ready");
 const OUT = path.join(ROOT, "docs/trackers/block-created-dates.json");
 
-function addDateForFile(relPath) {
-  // First commit that ADDED the file → its author date. `--follow` tracks renames; --diff-filter=A limits
-  // to the add; -1 with reverse-ish semantics: git log lists newest-first, so take the LAST (oldest) add.
-  try {
-    const out = execFileSync(
-      "git",
-      ["log", "--diff-filter=A", "--follow", "--format=%aI", "--", relPath],
-      { cwd: ROOT, encoding: "utf8" }
-    ).split(/\r?\n/).filter(Boolean);
-    const oldest = out[out.length - 1]; // oldest add commit
-    if (oldest && /^\d{4}-\d{2}-\d{2}/.test(oldest)) return oldest.slice(0, 10);
-  } catch { /* git unavailable / untracked file → null (undated) */ }
-  return null;
+// ROUND 363-CC3-C — ONE pass over history instead of one `git log --follow` per file (1,430 files took 210s, which kept
+// this artifact out of the freshness check). Oldest commit first: an add (A) stamps the file's date; a rename (R) carries
+// the old path's date to the new path. Compared with the old per-file `--follow` output on all 1,413 blocks: 1,411 agree;
+// 2 differ (CLOSURE-23-DR-BACKUP-AUDIT, GAP-82-MEDICAL-CARD-TRACKING) because `--follow`'s similarity guess walked each
+// spec back into the retired monolithic `.block-ready.json` (2026-05-24); the spec FILE was added 2026-06-07, which is
+// what this records. `--follow` is not used: its guess is the defect.
+function addDatesFromHistory() {
+  const out = execFileSync(
+    "git",
+    ["log", "--reverse", "--diff-filter=AR", "-M", "--name-status", "--format=%x00%aI", "--", ".block-ready"],
+    { cwd: ROOT, encoding: "utf8", maxBuffer: 256 * 1024 * 1024 }
+  );
+  const dates = new Map();
+  for (const chunk of out.split("\0").filter(Boolean)) {
+    const lines = chunk.split(/\r?\n/).filter(Boolean);
+    const d = lines[0].slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) continue;
+    for (const line of lines.slice(1)) {
+      const [status, a, b] = line.split("\t");
+      if (status === "A" && !dates.has(a)) dates.set(a, d);
+      else if (status?.startsWith("R") && b && !dates.has(b)) dates.set(b, dates.get(a) ?? d);
+    }
+  }
+  return dates;
 }
 
 function main() {
   if (!fs.existsSync(BR_DIR)) { console.error(`[created-dates] no .block-ready dir at ${BR_DIR}`); process.exit(1); }
   const dates = {};
   let dated = 0, undated = 0;
+  const history = addDatesFromHistory();
   for (const f of fs.readdirSync(BR_DIR)) {
     if (!f.endsWith(".json")) continue;
     let id;
     try { id = JSON.parse(fs.readFileSync(path.join(BR_DIR, f), "utf8")).block_id ?? f.replace(/\.json$/, ""); }
     catch { id = f.replace(/\.json$/, ""); }
-    const d = addDateForFile(`.block-ready/${f}`);
+    const d = history.get(`.block-ready/${f}`) ?? null;
     dates[id] = d;
     if (d) dated++; else undated++;
   }
