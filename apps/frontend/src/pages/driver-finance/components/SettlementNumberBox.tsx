@@ -27,7 +27,7 @@ export function SettlementNumberBox({
   const isProvisional = Boolean(displayId) && !sourceDocumentRef;
   const provisionalBadge = isProvisional ? (
     <span
-      className="ml-2 rounded-sm bg-amber-100 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.3px] text-amber-800"
+      className="ml-2 rounded-sm bg-amber-100 px-1.5 py-0.5 text-xs font-semibold uppercase tracking-[0.3px] text-amber-800"
       data-testid="settlement-number-box-provisional"
       title="Internal provisional number — the owner sets the real AlwaysTrack number when it is known"
     >

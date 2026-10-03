@@ -72,6 +72,10 @@ function verify(files) {
   if (page.includes("text-[11px]")) f.push("leftover-text-[11px]");
   if (page.includes("#8A92AB") || page.includes("#334155")) f.push("leftover-off-scale-muted");
 
+  // BANK-F91184 leftover chrome: SettlementNumberBox Provisional badge must use text-xs.
+  if (numberBox.includes("text-[11px]")) f.push("leftover-number-box-text-[11px]");
+  if (numberBox.includes("#8A92AB") || numberBox.includes("#334155")) f.push("leftover-number-box-off-scale-muted");
+
   return f;
 }
 
@@ -108,6 +112,7 @@ if (process.argv.includes("--selftest")) {
     { ...base, page: base.page.replaceAll("<CompanyWaterfallSection", "<Nope") },
     { ...base, loadsSection: base.loadsSection.replace(/EntityLink/g, "NotALink") },
     { ...base, page: `${base.page} text-[11px] #8A92AB` },
+    { ...base, numberBox: `${base.numberBox} text-[11px] #8A92AB` },
   ];
   for (const [index, mutated] of mutations.entries()) {
     const changed = Object.keys(base).some((k) => mutated[k] !== base[k]);
