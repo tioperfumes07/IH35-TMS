@@ -66,7 +66,11 @@ contains("apps/frontend/src/pages/home/roles/DriverManagerHome.tsx", driverManag
 ]);
 
 read("apps/frontend/src/components/home/DriverManagerKpiBar.tsx");
-read("apps/frontend/src/components/home/DriverManagerAttentionPanel.tsx");
+const attnPanel = read("apps/frontend/src/components/home/DriverManagerAttentionPanel.tsx");
+// BANK-F91130 — ORDERS chrome: DriverManagerAttentionPanel heading/pill use locked tokens, not text-[11px].
+if (attnPanel.includes("text-[11px]")) {
+  fail("apps/frontend/src/components/home/DriverManagerAttentionPanel.tsx: must not use text-[11px] — use text-section-header / text-xs");
+}
 
 const docs = read("docs/specs/gap-69-driver-manager-home-view.md");
 contains("docs/specs/gap-69-driver-manager-home-view.md", docs, [
