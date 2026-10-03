@@ -38,7 +38,7 @@ import { ActionButton } from "../../../components/shared/ActionButton";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
 import { Button } from "../../../components/Button";
-import { QBO_BANKING_ACTIONS, QBO_BANKING_ACTION_TEXT_CLASS } from "../../../design/qbo-parity";
+import { QBO_BANKING_ACTIONS } from "../../../design/qbo-parity";
 import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 import { useBulkSelection } from "../../../hooks/useBulkSelection";
 import { Combobox, SelectCombobox } from "../../../components/Combobox";
@@ -144,6 +144,19 @@ type RowDetailDraft = {
   /** none | recover (settlement deduction) | payable (driver advance / company owes driver) */
   driverMoneyTreatment: "none" | "recover" | "payable";
 };
+/**
+ * BANK-ACTION-QBO-01 — the QuickBooks Action-column label for a row's chosen action. QBO puts the
+ * action on the button the operator clicks ("Add" / "Match" / "Record transfer"); it has no separate
+ * "Action type" column printing the same word beside it. `categorize` maps to QBO's "Add", which is
+ * what QuickBooks calls categorizing a line into an account.
+ */
+export function qboActionLabel(mode: "match" | "categorize" | "transfer" | "cc_payment"): string {
+  if (mode === "match") return QBO_BANKING_ACTIONS.match;
+  if (mode === "transfer") return QBO_BANKING_ACTIONS.recordTransfer;
+  if (mode === "cc_payment") return QBO_BANKING_ACTIONS.recordCcPayment;
+  return QBO_BANKING_ACTIONS.add;
+}
+
 
 const USD = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const COMPANY_TRANSACTIONS_PAGE_SIZE = 500;
@@ -2268,24 +2281,6 @@ export function BankingTransactionsDesignView({
 
     cols.push(
       {
-        key: "matchCategorize",
-        // D54 — QuickBooks action set: Add · Match · Record transfer (not "Match/Categorize").
-        label: "Action type",
-        sortable: true,
-        className: REGISTER_COLUMN_HEADER_CLASS,
-        render: (tx) => (
-          <span className={`rounded-sm bg-gray-100 px-2 py-1 ${QBO_BANKING_ACTION_TEXT_CLASS}`}>
-            {getDraft(tx).mode === "match"
-              ? QBO_BANKING_ACTIONS.match
-              : getDraft(tx).mode === "transfer"
-                ? QBO_BANKING_ACTIONS.recordTransfer
-                : getDraft(tx).mode === "cc_payment"
-                  ? QBO_BANKING_ACTIONS.recordCcPayment
-                  : QBO_BANKING_ACTIONS.add}
-          </span>
-        ),
-      },
-      {
         key: "action",
         label: "Action",
         sortable: true,
@@ -2349,12 +2344,21 @@ export function BankingTransactionsDesignView({
                   Undo
                 </ActionButton>
               ) : null}
+              {/* BANK-ACTION-QBO-01 (owner 2026-10-03): "in banking there are two actions, action
+                  type and action". QuickBooks has ONE Action column: the chosen action IS the
+                  primary button's label — Add · Match · Record transfer · Record as credit card
+                  payment — with a caret for the rest. We carried a separate "Action type" column
+                  whose only job was to print that same word in a pill one column to the left, while
+                  the button said the generic "Post". Two columns, one fact, and the word the
+                  operator acts on was not on the thing they click. The column is removed and its
+                  word moved onto the button. */}
               <ActionButton
                 className="h-7 px-2 text-xs"
                 onClick={() => void postTransaction(tx)}
                 disabled={postingTxId === tx.id}
+                data-testid={`banking-action-primary-${tx.id}`}
               >
-                {postingTxId === tx.id ? "Posting..." : "Post"}
+                {postingTxId === tx.id ? "Posting..." : qboActionLabel(getDraft(tx).mode)}
               </ActionButton>
               <button
                 type="button"
