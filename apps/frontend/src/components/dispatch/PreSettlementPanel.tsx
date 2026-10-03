@@ -102,7 +102,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
       {/* Header */}
       <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-gray-50 p-3">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Pre-Settlement</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Pre-Settlement</div>
           <div className="font-semibold text-gray-900">
             <EntityLinkOrTombstone kind="settlement" id={settlement.id} name={settlementLabel(settlement)} noun="Record" />
           </div>
@@ -118,7 +118,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
           </div>
           {/* COL-06: period_end was already on PreSettlementDetail.settlement -- just never
               rendered, leaving Period End invisible on this panel. */}
-          <div className="mt-0.5 text-[11px] text-gray-500">
+          <div className="mt-0.5 text-xs text-gray-500">
             {settlement.period_start ? formatDateUS(settlement.period_start) : "—"}
             {" – "}
             {settlement.period_end ? formatDateUS(settlement.period_end) : "—"}
@@ -142,11 +142,11 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
           to the bookend pair only if `legs` came back empty (a settlement whose legs predate
           presettlement_link_id). One shared row renderer for both paths — no duplicated markup. */}
       <div className="space-y-1">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Linked Trips</div>
+        <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Linked Trips</div>
         {linkedTripRows.length > 0 ? (
           linkedTripRows.map((row) => (
             <div key={row.loadId} className="flex items-center gap-2 rounded-sm border border-slate-300 bg-slate-100 px-2 py-1.5">
-              <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[11px] font-bold uppercase text-slate-700">
+              <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-bold uppercase text-slate-700">
                 {row.tripType}
               </span>
               <EntityLinkOrTombstone
@@ -170,7 +170,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
         <div className="space-y-1">
           {earningLines.length > 0 ? (
             <>
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                 Earnings
               </div>
               {earningLines.map((l) => (
@@ -183,7 +183,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
           ) : null}
           {deductionLines.length > 0 ? (
             <>
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                 Deductions
               </div>
               {deductionLines.map((l) => (
@@ -196,7 +196,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
           ) : null}
           {reimbLines.length > 0 ? (
             <>
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                 Reimbursements
               </div>
               {reimbLines.map((l) => (
