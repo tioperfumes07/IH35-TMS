@@ -136,7 +136,7 @@ export async function computeFactoringKpis(client: DbClient, oci: string, range:
     `SELECT count(*)::int n, COALESCE(sum(p.gross_cents),0)::bigint gross, COALESCE(sum(p.advance_cents),0)::bigint adv
        FROM accounting.factoring_purchases p WHERE ${POSTED_IN_RANGE}`, base)).rows[0]!;
   const noPurchases = vol.n === 0 ? "No posted factoring purchase in this range — the Owner posts purchases on Submit to Factor." : null;
-  out.push({ key: "purchased_volume", label: "Purchased volume", unit: "cents", value: num(vol.gross), source: "accounting.factoring_purchases (posted, gross_cents)",
+  out.push({ key: "purchased_volume", label: "Purchased volume", unit: "cents", value: num(vol.gross), source: "Posted factoring purchases — gross invoice value",
     gl_account: "2150 Factoring Advance (credit side of each funding JE)", row_count: vol.n, empty_reason: noPurchases });
 
   const contracted = (await client.query<{ r: string | null }>(
@@ -145,7 +145,7 @@ export async function computeFactoringKpis(client: DbClient, oci: string, range:
   out.push({ key: "advance_rate", label: "Advance rate realised", unit: "percent",
     value: num(vol.gross) > 0 ? Number(((num(vol.adv) / num(vol.gross)) * 100).toFixed(2)) : null,
     compare_value: contracted != null ? Number((Number(contracted) * 100).toFixed(2)) : null, compare_label: "Contracted",
-    source: "factoring_purchases advance_cents / gross_cents vs factoring.factor.advance_rate", gl_account: null, row_count: vol.n, empty_reason: noPurchases });
+    source: "Advance paid ÷ gross purchased, against the factor's contracted advance rate", gl_account: null, row_count: vol.n, empty_reason: noPurchases });
 
   for (const [key, label, a] of [
     ["escrow_reserve_balance", acc.cash.merged ? "Faro reserve balance" : "Escrow reserve balance", acc.escrow],
@@ -153,7 +153,7 @@ export async function computeFactoringKpis(client: DbClient, oci: string, range:
   ] as const) {
     const r = a.id ? (await client.query<{ n: number; v: string }>(`SELECT count(*)::int n, COALESCE(sum(${SIGNED}),0)::bigint v ${postingsSql("balance")}`, [...base, a.id])).rows[0]! : { n: 0, v: "0" };
     const merged = "merged" in a && a.merged;
-    out.push({ key, label, unit: "cents", value: a.id ? num(r.v) : null, source: "accounting.journal_entry_postings (posted, as of range end)", gl_account: a.label,
+    out.push({ key, label, unit: "cents", value: a.id ? num(r.v) : null, source: "Posted general-ledger balance as of the end date", gl_account: a.label,
       row_count: r.n,
       empty_reason: merged
         ? `One Faro Security Reserve — Faro's Cash Rsv is a column of the reserve above (${a.label.replace("merged into ", "")}), not a second balance.`
@@ -165,7 +165,7 @@ export async function computeFactoringKpis(client: DbClient, oci: string, range:
     ["default_interest_accrued", "Default interest accrued", acc.interest],
   ] as const) {
     const r = a.id ? (await client.query<{ n: number; v: string }>(`SELECT count(*)::int n, COALESCE(sum(${SIGNED}),0)::bigint v ${postingsSql("activity")}`, [...base, a.id])).rows[0]! : { n: 0, v: "0" };
-    out.push({ key, label, unit: "cents", value: num(r.v), source: "accounting.journal_entry_postings (posted, in range)", gl_account: a.label,
+    out.push({ key, label, unit: "cents", value: num(r.v), source: "Posted general-ledger activity in the date range", gl_account: a.label,
       row_count: r.n, empty_reason: !a.id ? `${a.label} — bind the CoA role` : r.n === 0 ? "Nothing accrued in this range." : null });
   }
 
@@ -174,7 +174,7 @@ export async function computeFactoringKpis(client: DbClient, oci: string, range:
        FROM accounting.factoring_purchases p JOIN banking.bank_transactions b ON b.matched_factoring_advance_id = p.factoring_advance_id
       WHERE ${POSTED_IN_RANGE} AND p.factoring_advance_id IS NOT NULL`, base)).rows[0]!;
   out.push({ key: "net_cash_received", label: "Net cash received", unit: "cents", value: num(cash.v),
-    source: "banking.bank_transactions matched to the purchase's advance (matched_factoring_advance_id)", gl_account: "1090 Undeposited Funds -> bank",
+    source: "Bank deposits matched to each purchase's advance", gl_account: "1090 Undeposited Funds -> bank",
     row_count: cash.n, empty_reason: noPurchases ?? (cash.n === 0 ? "No Faro wire matched to a purchase yet — the Owner matches each deposit." : null) });
 
   const dtf = (await client.query<{ n: number; d: string | null }>(
@@ -183,7 +183,7 @@ export async function computeFactoringKpis(client: DbClient, oci: string, range:
        JOIN accounting.invoices i ON i.id = l.invoice_id
       WHERE ${POSTED_IN_RANGE} AND i.issue_date IS NOT NULL`, base)).rows[0]!;
   out.push({ key: "days_to_fund", label: "Days to fund (invoice issue -> purchase)", unit: "days", value: dtf.d != null ? Number(dtf.d) : null,
-    source: "factoring_purchase_lines x accounting.invoices.issue_date", gl_account: null, row_count: dtf.n, empty_reason: noPurchases });
+    source: "Days from invoice date to the factor's purchase", gl_account: null, row_count: dtf.n, empty_reason: noPurchases });
 
   const aging = (await client.query<{ bucket: string; n: number; v: string }>(
     `SELECT CASE WHEN ($3::date - p.purchase_date) <= 7 THEN '0-7' WHEN ($3::date - p.purchase_date) <= 15 THEN '8-15'
@@ -192,7 +192,7 @@ export async function computeFactoringKpis(client: DbClient, oci: string, range:
        FROM accounting.factoring_purchases p WHERE ${POSTED_IN_RANGE} AND ${BANK_MATCH} IS NULL GROUP BY 1`, base)).rows;
   const agingN = aging.reduce((a, b) => a + b.n, 0);
   out.push({ key: "unfunded_aging", label: "Unfunded purchases (no matched wire)", unit: "cents", value: aging.reduce((a, b) => a + num(b.v), 0),
-    source: "posted factoring_purchases with no matched bank deposit, by days since purchase", gl_account: "1090 Undeposited Funds", row_count: agingN,
+    source: "Posted purchases with no matched bank deposit yet, by days since purchase", gl_account: "1090 Undeposited Funds", row_count: agingN,
     buckets: ["0-7", "8-15", "16-30", "31+"].map((b) => { const x = aging.find((y) => y.bucket === b); return { label: b, count: x?.n ?? 0, cents: num(x?.v) }; }),
     empty_reason: noPurchases ?? (agingN === 0 ? "Every posted purchase has its wire matched." : null) });
 
@@ -200,7 +200,7 @@ export async function computeFactoringKpis(client: DbClient, oci: string, range:
     `SELECT count(*)::int n, COALESCE(sum(jp.amount_cents),0)::bigint v ${postingsSql("activity")}
        AND jp.debit_or_credit = 'credit' AND jp.source_transaction_type = 'factoring_reserve_release'`, [...base, acc.escrow.id])).rows[0]! : { n: 0, v: "0" };
   out.push({ key: "reserve_releases", label: "Reserve releases", unit: "cents", value: num(rel.v),
-    source: "credits to the escrow reserve account sourced factoring_reserve_release", gl_account: acc.escrow.label, row_count: rel.n,
+    source: "Reserve releases credited to the factor reserve account", gl_account: acc.escrow.label, row_count: rel.n,
     empty_reason: rel.n === 0 ? "Faro has released no reserve in this range." : null });
 
   return out;

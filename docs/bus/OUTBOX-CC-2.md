@@ -2056,3 +2056,12 @@ checks). Nothing else was behind it.
 - **Queued (my lane, found here):** the shared LedgerKpiPanel shows each KPI's `source` (internal schema.table names) to the
   operator as hover text and as the drill's "Source:" line, for all 22 factoring + banking KPIs. The static
   internal-language guard cannot see runtime strings. Next: business-language provenance in the engines + a runtime check.
+
+## KPI provenance in business language (queued in #24317, done)
+
+LedgerKpiPanel shows each KPI's `source` as hover text and as the drill's "Source:" line — 17 of the 22 factoring + banking
+KPIs named internal tables / columns there (e.g. "accounting.factoring_purchases (posted, gross_cents)", "bank_transactions
+review_state = for_review"). Rewritten in accounting language ("Posted factoring purchases — gross invoice value", "Bank
+lines still in For Review", …). verify-no-internal-language-in-prod-ui scans frontend literals and cannot see these runtime
+strings, so a new guard runs both engines read-only and checks every label / source / empty_reason / GL label:
+`verify-kpi-provenance-business-language` — PASS 22/22; selftest 4/4; FAIL on main naming each leak. Engine tests 11/11.
