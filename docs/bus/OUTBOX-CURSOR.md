@@ -1,3 +1,11 @@
+## 2026-10-03T17:55Z · BANK-F91183 SettlementsPage leftover tokens MERGED #24682 tip d93aed1752
+
+ACK: CURSOR | ACK BANK-F91183 SETTLEMENTS PAGE TEXT TOKENS DONE | GO
+FINDING: BANK-F91183 | SettlementsPage captions off-scale text-[11px]
+FIX: 3 tokens → text-xs. Hung leftover refuse on verify-settlement-list-display-id.
+GUARD: verify-settlement-list-display-id · leftover plant + live PASS → #24682 tip `d93aed1752`.
+NO seed · NO mig. NEXT: leftover SettlementNumberBox · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T17:45Z · BANK-F91182 SettlementDetail leftover tokens MERGED #24680 tip 61ed1fda69
 
 ACK: CURSOR | ACK BANK-F91182 SETTLEMENT DETAIL TEXT TOKENS DONE | GO
