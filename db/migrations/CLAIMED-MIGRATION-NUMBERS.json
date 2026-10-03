@@ -1676,6 +1676,31 @@
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-03",
       "purpose": "Lead ROUND 342 phases 1 / 3 / 5 — tenant_id RENAMED to operating_company_id on the 17 tenant-only tables (+ v_factor_reserve_balance output), audit.tg_audit_row / prevent_canonical_factor_agreement_term_mutation repointed, coi_request sync trigger dropped, profile same-entity FK onto factoring.factor(operating_company_id, id) + policy tautology fixed, ddl event trigger refusing a new tenant_id column or policy"
+    },
+    "202615330900": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 345 the block, phase 2: UNIQUE INDEX CONCURRENTLY driver_finance.driver_settlements (operating_company_id, id)"
+    },
+    "202615330901": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 345 the block, phase 2: UNIQUE INDEX CONCURRENTLY mdata.driver_teams (operating_company_id, id)"
+    },
+    "202615330902": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 345 the block, phase 2: UNIQUE INDEX CONCURRENTLY driver_finance.driver_bills (operating_company_id, id)"
+    },
+    "202615330903": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 345 the block, phase 2: UNIQUE INDEX CONCURRENTLY driver_finance.auto_deduction_policies (operating_company_id, id)"
+    },
+    "202615330904": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 345 the block, phase 2: composite same-entity FKs on settlement_lines / escrow_balances / driver_advance_accounts (13; the two with one cross-company row each — awaiting owner rulings — added NOT VALID) + settlement_lines company-required CHECK"
     }
   },
   "202613590001": {
