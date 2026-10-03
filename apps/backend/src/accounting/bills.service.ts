@@ -1096,7 +1096,7 @@ export async function listBillsByVendor(
          AND wo.operating_company_id = b.operating_company_id
         LEFT JOIN insurance.claim claim
           ON claim.id = b.insurance_claim_id
-         AND claim.tenant_id = b.operating_company_id
+         AND claim.operating_company_id = b.operating_company_id
         LEFT JOIN LATERAL (
           SELECT bl.load_id, l.load_number, pickup.scheduled_arrival_at AS pickup_date,
                  delivery.actual_arrival_at AS delivery_date, l.miles_practical,
@@ -1293,7 +1293,7 @@ export async function listAllBillsForCompany(
          AND wo.operating_company_id = b.operating_company_id
         LEFT JOIN insurance.claim claim
           ON claim.id = b.insurance_claim_id
-         AND claim.tenant_id = b.operating_company_id
+         AND claim.operating_company_id = b.operating_company_id
         LEFT JOIN LATERAL (
           SELECT bl.load_id, l.load_number
           FROM accounting.bill_lines bl
@@ -2091,7 +2091,7 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
          AND wo.operating_company_id = b.operating_company_id
         LEFT JOIN insurance.claim claim
           ON claim.id = b.insurance_claim_id
-         AND claim.tenant_id = b.operating_company_id
+         AND claim.operating_company_id = b.operating_company_id
         WHERE b.id = $1
           AND b.operating_company_id = $2::uuid
         LIMIT 1

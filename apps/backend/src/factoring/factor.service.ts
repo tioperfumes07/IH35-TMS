@@ -162,14 +162,14 @@ export async function listFactors(
   deps: { client: Queryable }
 ): Promise<FactorRow[]> {
   const values: unknown[] = [tenantId];
-  const filters = ["COALESCE(f.operating_company_id, f.tenant_id) = $1::uuid"];
+  const filters = ["f.operating_company_id = $1::uuid"];
   if (opts.activeOnly) filters.push("f.active = true");
 
   const res = await deps.client.query<Record<string, unknown>>(
     `
       SELECT
         f.id::text,
-        f.tenant_id::text,
+        f.operating_company_id::text AS tenant_id,
         f.name,
         f.advance_rate::numeric,
         f.fee_rate::numeric,
@@ -218,7 +218,7 @@ export async function getFactorForCustomer(
     `
       SELECT
         f.id::text,
-        f.tenant_id::text,
+        f.operating_company_id::text AS tenant_id,
         f.name,
         f.advance_rate::numeric,
         f.fee_rate::numeric,
@@ -242,7 +242,7 @@ export async function getFactorForCustomer(
         a.effective_to::text
       FROM factoring.customer_factor_assignment a
       JOIN factoring.factor f ON f.id = a.factor_id
-      WHERE COALESCE(a.operating_company_id, a.tenant_id) = $1::uuid
+      WHERE a.operating_company_id = $1::uuid
         AND a.customer_id = $2::uuid
         AND a.effective_from <= $3::date
         AND (a.effective_to IS NULL OR a.effective_to > $3::date)
@@ -341,7 +341,7 @@ export async function createFactor(
         )
         RETURNING
           id::text,
-          tenant_id::text,
+          operating_company_id::text AS tenant_id,
           name,
           advance_rate::numeric,
           fee_rate::numeric,
@@ -485,7 +485,7 @@ export async function updateFactor(
       `
         SELECT
           id::text,
-          tenant_id::text,
+          operating_company_id::text AS tenant_id,
           name,
           advance_rate::numeric,
           fee_rate::numeric,
@@ -505,7 +505,7 @@ export async function updateFactor(
           created_at::text,
           updated_at::text
         FROM factoring.factor
-        WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid
+        WHERE operating_company_id = $1::uuid
           AND id = $2::uuid
         LIMIT 1
       `,
@@ -522,11 +522,11 @@ export async function updateFactor(
       `
         UPDATE factoring.factor
         SET ${updates.join(", ")}
-        WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid
+        WHERE operating_company_id = $1::uuid
           AND id = $2::uuid
         RETURNING
           id::text,
-          tenant_id::text,
+          operating_company_id::text AS tenant_id,
           name,
           advance_rate::numeric,
           fee_rate::numeric,
@@ -565,7 +565,7 @@ export async function deactivateFactor(tenantId: string, factorId: string, deps:
     `
       SELECT COUNT(*)::text AS cnt
       FROM factoring.customer_factor_assignment
-      WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid
+      WHERE operating_company_id = $1::uuid
         AND factor_id = $2::uuid
         AND effective_to IS NULL
     `,
@@ -578,7 +578,7 @@ export async function deactivateFactor(tenantId: string, factorId: string, deps:
       `
         SELECT COUNT(*)::text AS cnt
         FROM factoring.letter_of_release
-        WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid
+        WHERE operating_company_id = $1::uuid
           AND factor_id = $2::uuid
       `,
       [tenantId, factorId]
@@ -594,11 +594,11 @@ export async function deactivateFactor(tenantId: string, factorId: string, deps:
       UPDATE factoring.factor
       SET active = false,
           updated_at = now()
-      WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid
+      WHERE operating_company_id = $1::uuid
         AND id = $2::uuid
       RETURNING
         id::text,
-        tenant_id::text,
+        operating_company_id::text AS tenant_id,
         name,
         advance_rate::numeric,
         fee_rate::numeric,
@@ -661,7 +661,7 @@ export async function createLetterOfRelease(
       )
       RETURNING
         id::text,
-        tenant_id::text,
+        operating_company_id::text AS tenant_id,
         factor_id::text,
         issued_date::text,
         effective_release_date::text,
@@ -690,7 +690,7 @@ export async function listLetterOfReleases(
     `
       SELECT
         id::text,
-        tenant_id::text,
+        operating_company_id::text AS tenant_id,
         factor_id::text,
         issued_date::text,
         effective_release_date::text,
@@ -698,7 +698,7 @@ export async function listLetterOfReleases(
         notes,
         created_at::text
       FROM factoring.letter_of_release
-      WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid
+      WHERE operating_company_id = $1::uuid
         AND factor_id = $2::uuid
       ORDER BY created_at DESC
     `,
@@ -718,7 +718,7 @@ export async function assignCustomerToFactor(
     `
       SELECT id::text
       FROM factoring.factor
-      WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid
+      WHERE operating_company_id = $1::uuid
         AND id = $2::uuid
       LIMIT 1
     `,
@@ -730,7 +730,7 @@ export async function assignCustomerToFactor(
     `
       UPDATE factoring.customer_factor_assignment
       SET effective_to = ($3::date - INTERVAL '1 day')::date
-      WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid
+      WHERE operating_company_id = $1::uuid
         AND customer_id = $2::uuid
         AND effective_to IS NULL
         AND effective_from < $3::date
@@ -768,7 +768,7 @@ export async function assignCustomerToFactor(
       )
       RETURNING
         id::text,
-        tenant_id::text,
+        operating_company_id::text AS tenant_id,
         customer_id::text,
         factor_id::text,
         effective_from::text,
@@ -812,7 +812,7 @@ export async function assignCustomerToFactor(
     `
       SELECT name
       FROM factoring.factor
-      WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid
+      WHERE operating_company_id = $1::uuid
         AND id = $2::uuid
       LIMIT 1
     `,
@@ -836,7 +836,7 @@ export async function listFactorAssignmentsForCustomer(
     `
       SELECT
         a.id::text,
-        a.tenant_id::text,
+        a.operating_company_id::text AS tenant_id,
         a.customer_id::text,
         a.factor_id::text,
         f.name AS factor_name,
@@ -845,7 +845,7 @@ export async function listFactorAssignmentsForCustomer(
         a.created_at::text
       FROM factoring.customer_factor_assignment a
       JOIN factoring.factor f ON f.id = a.factor_id
-      WHERE COALESCE(a.operating_company_id, a.tenant_id) = $1::uuid
+      WHERE a.operating_company_id = $1::uuid
         AND a.customer_id = $2::uuid
       ORDER BY a.effective_from DESC, a.created_at DESC
     `,
@@ -881,7 +881,7 @@ export async function listFactorBatchHistoryForCustomer(
         COALESCE(b.submitted_at, b.funded_at) AS sort_key
       FROM factoring.batch b
       JOIN accounting.invoices i ON i.id = ANY(b.invoice_ids)
-      WHERE COALESCE(b.operating_company_id, b.tenant_id) = $1::uuid
+      WHERE b.operating_company_id = $1::uuid
         AND i.operating_company_id = $1::uuid
         AND i.customer_id = $2::uuid
       ORDER BY sort_key DESC NULLS LAST, b.batch_number DESC

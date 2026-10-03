@@ -20,7 +20,7 @@ function audit(s) {
   if (!/customer_id:\s*customerId/.test(s.creator) || !/policy_id:\s*requestPolicyId/.test(s.creator)) failures.push("creator must forward customer and policy FKs");
   if (!/policy_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.schema)) failures.push("list schema must accept policy reverse filter");
   if (!/clauses\.push\(`r\.policy_id = \$\$\{values\.length\}::uuid`\)/.test(s.service)) failures.push("service must apply exact policy predicate");
-  if (!/c\.operating_company_id = r\.tenant_id/.test(s.service) || !/c\.customer_name AS customer_name/.test(s.service)) failures.push("reverse payload must resolve tenant-matched canonical customer label");
+  if (!/c\.operating_company_id = r\.operating_company_id/.test(s.service) || !/c\.customer_name AS customer_name/.test(s.service)) failures.push("reverse payload must resolve tenant-matched canonical customer label");
   if (/c\.legal_name\b/.test(s.service)) failures.push("COI reverse must not query phantom mdata.customers.legal_name");
   if (!/export const insuranceCoiApi[\s\S]{0,220}policy_id\?: string;[\s\S]{0,180}coi-requests/.test(s.api)) failures.push("client must expose policy filter");
   if (!/function listInsuranceCoiRequests[\s\S]{0,140}policy_id\?: string;/.test(s.api)) failures.push("public client wrapper must forward policy filter type");
@@ -39,7 +39,7 @@ if (process.argv.includes("--selftest")) {
     ["policy payload", "creator", /policy_id:\s*requestPolicyId/g, "policy_id: null"],
     ["schema", "schema", /policy_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/, ""],
     ["server filter", "service", /r\.policy_id = \$\$\{values\.length\}::uuid/, "TRUE"],
-    ["tenant join", "service", /c\.operating_company_id = r\.tenant_id/, "TRUE"],
+    ["tenant join", "service", /c\.operating_company_id = r\.operating_company_id/, "TRUE"],
     ["label", "service", /c\.customer_name AS customer_name/, "NULL AS customer_name"],
     ["phantom label", "service", /c\.customer_name AS customer_name/, "c.legal_name AS customer_name"],
     ["api", "api", /(export const insuranceCoiApi[\s\S]{0,220})policy_id\?: string;/, "$1"],

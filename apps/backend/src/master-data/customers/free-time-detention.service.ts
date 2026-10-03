@@ -167,7 +167,7 @@ export async function listTermsHistory(
         uuid::text,
         customer_uuid::text,
         operating_company_id::text,
-        tenant_id::text,
+        operating_company_id::text AS tenant_id,
         free_time_minutes,
         detention_rate_per_hour::text,
         detention_currency,

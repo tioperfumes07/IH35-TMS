@@ -800,7 +800,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
            LEFT JOIN mdata.customers lcu ON lcu.id = l.customer_id AND lcu.operating_company_id = w.operating_company_id
            LEFT JOIN mdata.loads rl ON rl.id = w.roadside_breakdown_load_id AND rl.operating_company_id = w.operating_company_id
            LEFT JOIN dispatch.intransit_issues si ON si.id = w.source_intransit_issue_id AND si.operating_company_id = w.operating_company_id
-           LEFT JOIN insurance.claim ic ON ic.id = w.insurance_claim_id AND ic.tenant_id = w.operating_company_id
+           LEFT JOIN insurance.claim ic ON ic.id = w.insurance_claim_id AND ic.operating_company_id = w.operating_company_id
           WHERE w.id = $1 AND w.operating_company_id = $2::uuid LIMIT 1`,
         [params.data.id, companyId]
       );

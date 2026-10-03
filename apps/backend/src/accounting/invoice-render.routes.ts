@@ -159,7 +159,7 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
             a.id::text AS assignment_id
           FROM factoring.customer_factor_assignment a
           JOIN factoring.factor f ON f.id = a.factor_id
-          WHERE a.tenant_id = $1::uuid
+          WHERE a.operating_company_id = $1::uuid
             AND a.customer_id = $2::uuid
             AND a.effective_from <= $3::date
             AND (a.effective_to IS NULL OR a.effective_to > $3::date)

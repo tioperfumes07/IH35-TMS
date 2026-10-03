@@ -25,7 +25,7 @@ function failures(s = files) { return [
   ["lawsuit driver/unit backend filters", s.lawsuitSchema.includes("driver_id: z.string().uuid().optional()") && s.lawsuitSchema.includes("unit_id: z.string().uuid().optional()") && s.lawsuitRoutes.includes("claim.driver_id = $${values.length}::uuid") && s.lawsuitRoutes.includes("asset.unit_id = $${values.length}::uuid")],
   ["driver and unit reverse consumers", s.driverProfile.includes('filter={{ driver_id: id }} contextLabel="this driver"') && s.unitProfile.includes('filter={{ unit_id: id }} contextLabel="this unit"')],
   ["exact lawsuit drill", s.lawsuitReverse.includes('<EntityLink kind="lawsuit" id={row.id}') && s.lawsuitReverse.includes("listInsuranceLawsuits({ operating_company_id: operatingCompanyId, ...filter })")],
-  ["lawsuit human labels projected with entity scope", s.lawsuitRoutes.includes("claim.claim_number") && s.lawsuitRoutes.includes("AS driver_name") && s.lawsuitRoutes.includes("unit.unit_number") && s.lawsuitRoutes.includes("driver.operating_company_id = lawsuit.tenant_id") && s.lawsuitRoutes.includes("COALESCE(unit.currently_leased_to_company_id, unit.owner_company_id) = lawsuit.tenant_id")],
+  ["lawsuit human labels projected with entity scope", s.lawsuitRoutes.includes("claim.claim_number") && s.lawsuitRoutes.includes("AS driver_name") && s.lawsuitRoutes.includes("unit.unit_number") && s.lawsuitRoutes.includes("driver.operating_company_id = lawsuit.operating_company_id") && s.lawsuitRoutes.includes("COALESCE(unit.currently_leased_to_company_id, unit.owner_company_id) = lawsuit.operating_company_id")],
   ["lawsuit label payload typed", ["claim_number: string | null", "driver_name: string | null", "unit_number: string | null"].every((token) => s.insuranceApi.includes(token))],
   // LawsuitsTab migrated its EntityLink columns to EntityLinkOrTombstone, which computes
   // entityLabel(name, id, noun) INTERNALLY (and renders the honest tombstone when id is missing) —
@@ -41,7 +41,7 @@ if (process.argv.includes("--selftest")) {
     failures({...files, lawsuitRoutes: files.lawsuitRoutes.replace("claim.driver_id = $${values.length}::uuid", "TRUE")}).includes("lawsuit driver/unit backend filters"),
     failures({...files, driverProfile: ""}).includes("driver and unit reverse consumers"),
     failures({...files, lawsuitReverse: files.lawsuitReverse.replace('kind="lawsuit" id={row.id}', 'kind="claim" id={row.id}')}).includes("exact lawsuit drill"),
-    failures({...files, lawsuitRoutes: files.lawsuitRoutes.replace("driver.operating_company_id = lawsuit.tenant_id", "TRUE")}).includes("lawsuit human labels projected with entity scope"),
+    failures({...files, lawsuitRoutes: files.lawsuitRoutes.replace("driver.operating_company_id = lawsuit.operating_company_id", "TRUE")}).includes("lawsuit human labels projected with entity scope"),
     failures({...files, insuranceApi: files.insuranceApi.replace("driver_name: string | null", "")}).includes("lawsuit label payload typed"),
     failures({...files, lawsuitPage: files.lawsuitPage.replace("lawsuit.unit_number", "null")}).includes("lawsuit links consume human labels"),
   ];

@@ -132,7 +132,7 @@ export async function createDraftBatch(
         AND NOT EXISTS (
           SELECT 1
           FROM factoring.batch b
-          WHERE COALESCE(b.operating_company_id, b.tenant_id) = $1::uuid
+          WHERE b.operating_company_id = $1::uuid
             AND i.id = ANY(b.invoice_ids)
         )
     `,
@@ -261,7 +261,7 @@ export async function submitBatch(
       SELECT id::text, status, factor_id::text
       FROM factoring.batch
       WHERE id = $1::uuid
-        AND COALESCE(operating_company_id, tenant_id) = $2::uuid
+        AND operating_company_id = $2::uuid
       LIMIT 1
     `,
     [batchId, tenantId]
@@ -294,7 +294,7 @@ export async function submitBatch(
       SET status = 'submitted',
           submitted_at = now()
       WHERE id = $1::uuid
-        AND COALESCE(operating_company_id, tenant_id) = $2::uuid
+        AND operating_company_id = $2::uuid
       RETURNING *
     `,
     [batchId, tenantId]
@@ -337,7 +337,7 @@ export async function fundBatch(
       SELECT id::text, status
       FROM factoring.batch
       WHERE id = $1::uuid
-        AND COALESCE(operating_company_id, tenant_id) = $2::uuid
+        AND operating_company_id = $2::uuid
       LIMIT 1
     `,
     [batchId, tenantId]
@@ -359,7 +359,7 @@ export async function fundBatch(
       SET status = 'funded',
           funded_at = now()
       WHERE id = $1::uuid
-        AND COALESCE(operating_company_id, tenant_id) = $2::uuid
+        AND operating_company_id = $2::uuid
       RETURNING *
     `,
     [batchId, tenantId]
@@ -393,7 +393,7 @@ export async function listBatches(
   deps: { client: Queryable; status?: FactoringBatchStatus }
 ): Promise<FactoringBatchRow[]> {
   const values: unknown[] = [tenantId];
-  const filters = ["COALESCE(operating_company_id, tenant_id) = $1::uuid"];
+  const filters = ["operating_company_id = $1::uuid"];
   if (deps.status) {
     values.push(deps.status);
     filters.push(`status = $${values.length}`);
@@ -436,7 +436,7 @@ export async function listCandidateInvoices(
         AND NOT EXISTS (
           SELECT 1
           FROM factoring.batch b
-          WHERE COALESCE(b.operating_company_id, b.tenant_id) = $1::uuid
+          WHERE b.operating_company_id = $1::uuid
             AND i.id = ANY(b.invoice_ids)
         )
       ORDER BY i.issue_date DESC NULLS LAST, i.created_at DESC
@@ -466,7 +466,7 @@ export async function getBatchDetail(
       SELECT *
       FROM factoring.batch
       WHERE id = $1::uuid
-        AND COALESCE(operating_company_id, tenant_id) = $2::uuid
+        AND operating_company_id = $2::uuid
       LIMIT 1
     `,
     [batchId, tenantId]

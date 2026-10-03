@@ -170,10 +170,10 @@ export async function autoPostOverageOnSettle(
 ): Promise<{ overage_cents: number; posted: boolean; movement: ReserveMovementRow | null }> {
   const batchRes = await deps.client.query<Record<string, unknown>>(
     `
-      SELECT id::text, COALESCE(operating_company_id, tenant_id)::text AS operating_company_id, expected_advance_cents::bigint, factor_id::text
+      SELECT id::text, operating_company_id::text AS operating_company_id, expected_advance_cents::bigint, factor_id::text
       FROM factoring.batch
       WHERE id = $1::uuid
-        AND COALESCE(operating_company_id, tenant_id) = $2::uuid
+        AND operating_company_id = $2::uuid
       LIMIT 1
     `,
     [batchId, tenantId]
@@ -206,7 +206,7 @@ export async function listReserveMovementsForBatch(
       SELECT *
       FROM factoring.reserve_movement
       WHERE batch_id = $1::uuid
-        AND COALESCE(operating_company_id, tenant_id) = $2::uuid
+        AND operating_company_id = $2::uuid
       ORDER BY created_at ASC, id ASC
     `,
     [batchId, tenantId]

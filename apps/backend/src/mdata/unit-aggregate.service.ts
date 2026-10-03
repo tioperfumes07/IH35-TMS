@@ -115,7 +115,7 @@ async function lookupPolicyMonthlyPremiumCents(
           JOIN insurance.policy_unit pu
             ON pu.asset_id = a.id AND pu.removed_at IS NULL
           JOIN insurance.policy p
-            ON p.id = pu.policy_id AND p.tenant_id = pu.tenant_id
+            ON p.id = pu.policy_id AND p.operating_company_id = pu.operating_company_id
           WHERE a.tenant_id = $1::uuid
             AND a.unit_code = $2
             AND p.policy_number = $3
@@ -186,7 +186,7 @@ async function lookupLinkedPolicies(
           JOIN insurance.policy_unit pu
             ON pu.asset_id = a.id AND pu.removed_at IS NULL
           JOIN insurance.policy p
-            ON p.id = pu.policy_id AND p.tenant_id = pu.tenant_id
+            ON p.id = pu.policy_id AND p.operating_company_id = pu.operating_company_id
           WHERE a.tenant_id = $1::uuid
             AND a.unit_id = $2::uuid
             AND ${excludeInsuranceFixtureSql("p.policy_number")}

@@ -80,28 +80,28 @@ export async function registerInsuranceSummaryRoutes(app: FastifyInstance) {
       // insurance-visibility.ts for the live-verified evidence this closes.
       const total_active_policies = await count(
         `SELECT count(*)::int AS count FROM insurance.policy
-           WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND status = 'active'
+           WHERE operating_company_id = $1::uuid AND status = 'active'
              AND ${excludeInsuranceFixtureSql("policy_number")}`
       );
       const policies_expiring_30d = await count(
         `SELECT count(*)::int AS count FROM insurance.policy
-           WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND status = 'active'
+           WHERE operating_company_id = $1::uuid AND status = 'active'
              AND expiry_date BETWEEN now()::date AND (now() + interval '30 days')::date
              AND ${excludeInsuranceFixtureSql("policy_number")}`
       );
       const open_claims = await count(
         `SELECT count(*)::int AS count FROM insurance.claim
-           WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND status IN ('open', 'investigating')
+           WHERE operating_company_id = $1::uuid AND status IN ('open', 'investigating')
              AND ${excludeInsuranceFixtureSql("claim_number")}`
       );
       const open_lawsuits = await count(
         `SELECT count(*)::int AS count FROM insurance.lawsuit
-           WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND status IN ('filed', 'active')
+           WHERE operating_company_id = $1::uuid AND status IN ('filed', 'active')
              AND ${excludeInsuranceFixtureSql("case_number")}`
       );
       const recent_coi_requests = await count(
         `SELECT count(*)::int AS count FROM insurance.coi_request
-           WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND requested_at >= now() - interval '30 days'`
+           WHERE operating_company_id = $1::uuid AND requested_at >= now() - interval '30 days'`
       );
       // Coverage gap (INSURANCE-1): use the ONE canonical definition shared with the Coverage Gaps
       // detail tab (GET /api/v1/insurance/coverage-gaps) — a unit missing >= 1 REQUIRED coverage type

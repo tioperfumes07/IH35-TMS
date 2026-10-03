@@ -95,8 +95,7 @@ export async function autoCreateClaimFromDamage(
     `
       SELECT id::text
       FROM insurance.policy
-      WHERE tenant_id = $2::uuid
-        AND operating_company_id = $2::uuid
+      WHERE operating_company_id = $2::uuid
         AND status = 'active'
         AND coverage_type = ANY($1::text[])
       ORDER BY array_position($1::text[], coverage_type), expiry_date DESC
@@ -142,7 +141,7 @@ export async function autoCreateClaimFromDamage(
         $8::uuid,
         $9::uuid
       )
-      ON CONFLICT (tenant_id, claim_number) DO NOTHING
+      ON CONFLICT (operating_company_id, claim_number) DO NOTHING
       RETURNING id::text, claim_number, policy_id::text, status, amount_claimed_cents::bigint
     `,
     [
@@ -167,7 +166,6 @@ export async function autoCreateClaimFromDamage(
         SELECT id::text, claim_number, policy_id::text, status, amount_claimed_cents::bigint
         FROM insurance.claim
         WHERE claim_number = $1
-          AND tenant_id = $2::uuid
           AND operating_company_id = $2::uuid
         LIMIT 1
       `,

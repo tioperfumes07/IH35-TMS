@@ -3,9 +3,8 @@ import fs from "node:fs";
 const file = "apps/backend/src/safety/damage-continuity/insurance-link.service.ts";
 const source = fs.readFileSync(file, "utf8");
 const checks = [
-  ["AND operating_company_id = $2::uuid", 3],
-  ["WHERE tenant_id = $2::uuid", 1],
-  ["AND tenant_id = $2::uuid", 1],
+  ["operating_company_id = $2::uuid", 3],
+  // ROUND 342 Phase 2 (owner ruling: operating_company_id canonical; migration 202615310700 made it NOT NULL and backfilled): the duplicate tenant_id predicate went away; the company scope stays on operating_company_id.
   ["AND operating_company_id = $3::uuid", 1],
   ["AND operating_company_id = $4::uuid", 1],
   ["AND ic.operating_company_id = $4::uuid", 1],

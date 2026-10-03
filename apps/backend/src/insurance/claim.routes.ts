@@ -85,7 +85,7 @@ function claimSelectColumns(caps: ClaimColumnCapabilities, alias = "c") {
 
   return `
     ${a}id::text,
-    ${a}tenant_id::text,
+    ${a}operating_company_id::text AS tenant_id,
     ${a}claim_number,
     ${a}policy_id::text,
     ${a}asset_id::text,
@@ -126,13 +126,10 @@ function claimSelectColumns(caps: ClaimColumnCapabilities, alias = "c") {
 //   mdata.equipment -> owner_company_id + currently_leased_to_company_id  (the owner/leased pair;
 //                      a trailer TRK owns and leases to TRANSP must still resolve for TRANSP)
 //
-// The claim side of each predicate uses COALESCE(c.operating_company_id, c.tenant_id): prod's RLS
-// key is operating_company_id, but rows written before the writers started populating it carry the
-// value in tenant_id only, and a database without held 202607490000 has no such column at all.
-// Keying on operating_company_id alone would silently resolve to NULL and drop the unit/trailer
-// off the claim on every one of those rows.
+// ROUND 342: the claim side of each predicate is c.operating_company_id — migration 202615310700
+// made it NOT NULL and the canonical company-scope column (tenant_id is slated to be dropped).
 function claimFrom(caps: ClaimColumnCapabilities) {
-  const scope = caps.operatingCompanyId ? `COALESCE(c.operating_company_id, c.tenant_id)` : `c.tenant_id`;
+  const scope = `c.operating_company_id`;
   const trailerJoin = caps.economics
     ? `
   LEFT JOIN mdata.equipment trailers
@@ -151,9 +148,8 @@ function claimFrom(caps: ClaimColumnCapabilities) {
   --   drivers/loads carry operating_company_id;
   --   mdata.units has NO operating_company_id (§4) and is scoped by the owner/leased PAIR, so a
   --     TRK-owned unit leased to USMCA still resolves;
-  --   insurance.policy is joined on tenant_id ON PURPOSE — its operating_company_id column exists but
-  --     is nullable and is never written by the create path (see LV-TXN-014), so joining on it would
-  --     silently resolve NOTHING and leave the policy label blank again.
+  --   insurance.policy is joined on operating_company_id, NOT NULL and canonical since ROUND 342
+  --     (migration 202615310700).
   LEFT JOIN mdata.drivers cdrv
     ON cdrv.id = c.driver_id
    AND (
@@ -175,7 +171,7 @@ function claimFrom(caps: ClaimColumnCapabilities) {
    AND cload.operating_company_id = ${scope}
   LEFT JOIN insurance.policy cpol
     ON cpol.id = c.policy_id
-   AND cpol.tenant_id = ${scope}
+   AND cpol.operating_company_id = ${scope}
 `;
 }
 
@@ -271,7 +267,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
       const values: unknown[] = [parsed.data.operating_company_id];
       // INSURANCE-DASHBOARD-FIXTURE-LEAK: keep the Claims list in parity with the Open Claims KPI
       // (summary.routes.ts), which already excludes agent-created fixture rows.
-      const filters = ["COALESCE(operating_company_id, tenant_id) = $1::uuid", excludeInsuranceFixtureSql("c.claim_number")];
+      const filters = ["operating_company_id = $1::uuid", excludeInsuranceFixtureSql("c.claim_number")];
       if (parsed.data.policy_id) {
         values.push(parsed.data.policy_id);
         filters.push(`policy_id = $${values.length}::uuid`);
@@ -311,8 +307,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
       }
       const scopedFilters = filters.map((f) =>
         f
-          .replace(/^COALESCE\(operating_company_id, tenant_id\)/, "COALESCE(c.operating_company_id, c.tenant_id)")
-          .replace(/^tenant_id/, "c.tenant_id")
+          .replace(/^operating_company_id/, "c.operating_company_id")
           .replace(/^policy_id/, "c.policy_id")
           .replace(/^status/, "c.status")
           .replace(/^asset_id/, "c.asset_id")
@@ -361,7 +356,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         `
           SELECT ${claimSelectColumns(caps, "c")}
           ${claimFrom(caps)}
-          WHERE COALESCE(c.operating_company_id, c.tenant_id) = $1::uuid AND c.id = $2::uuid
+          WHERE c.operating_company_id = $1::uuid AND c.id = $2::uuid
           LIMIT 1
         `,
         [query.data.operating_company_id, params.data.id]
@@ -384,7 +379,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
           `
             SELECT id::text, case_number, claim_id::text, status, filed_date::text
             FROM insurance.lawsuit
-            WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid
+            WHERE operating_company_id = $1::uuid
               AND claim_id = $2::uuid
             ORDER BY filed_date DESC NULLS LAST, id ASC
           `,
@@ -517,7 +512,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         `
           SELECT id::text
           FROM insurance.policy
-          WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND id = $2::uuid
+          WHERE operating_company_id = $1::uuid AND id = $2::uuid
           LIMIT 1
         `,
         [body.operating_company_id, body.policy_id]
@@ -636,7 +631,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         `
           SELECT ${claimSelectColumns(caps, "c")}
           ${claimFrom(caps)}
-          WHERE COALESCE(c.operating_company_id, c.tenant_id) = $1::uuid AND c.id = $2::uuid
+          WHERE c.operating_company_id = $1::uuid AND c.id = $2::uuid
           LIMIT 1
         `,
         [body.operating_company_id, createdId]
@@ -695,7 +690,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
           `
             SELECT id::text
             FROM insurance.policy
-            WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND id = $2::uuid
+            WHERE operating_company_id = $1::uuid AND id = $2::uuid
             LIMIT 1
           `,
           [query.data.operating_company_id, body.policy_id]
@@ -739,7 +734,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
           `
             SELECT status
             FROM insurance.claim
-            WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND id = $2::uuid
+            WHERE operating_company_id = $1::uuid AND id = $2::uuid
             LIMIT 1
           `,
           [query.data.operating_company_id, params.data.id]
@@ -805,7 +800,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
       let priorAccidentReportId: string | null = null;
       if (body.accident_report_id !== undefined) {
         const prior = await client.query<{ accident_report_id: string | null }>(
-          `SELECT accident_report_id::text FROM insurance.claim WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND id = $2::uuid LIMIT 1`,
+          `SELECT accident_report_id::text FROM insurance.claim WHERE operating_company_id = $1::uuid AND id = $2::uuid LIMIT 1`,
           [query.data.operating_company_id, params.data.id]
         );
         priorAccidentReportId = prior.rows[0]?.accident_report_id ?? null;
@@ -815,7 +810,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         `
           UPDATE insurance.claim
           SET ${assignments.join(", ")}
-          WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND id = $2::uuid
+          WHERE operating_company_id = $1::uuid AND id = $2::uuid
           RETURNING id::text
         `,
         values
@@ -852,7 +847,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         `
           SELECT ${claimSelectColumns(caps, "c")}
           ${claimFrom(caps)}
-          WHERE COALESCE(c.operating_company_id, c.tenant_id) = $1::uuid AND c.id = $2::uuid
+          WHERE c.operating_company_id = $1::uuid AND c.id = $2::uuid
           LIMIT 1
         `,
         [query.data.operating_company_id, params.data.id]

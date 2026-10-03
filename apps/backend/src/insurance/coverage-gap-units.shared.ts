@@ -86,7 +86,7 @@ export const COVERAGE_GAP_UNITS_SQL = `
       ON pu.asset_id = a.id AND pu.removed_at IS NULL
     JOIN insurance.policy p
       ON p.id = pu.policy_id
-     AND p.tenant_id = pu.tenant_id
+     AND p.operating_company_id = pu.operating_company_id
      AND p.status = 'active'
      AND p.effective_date <= now()::date
      AND p.expiry_date >= now()::date
@@ -228,7 +228,7 @@ export const COVERAGE_GAP_UNITS_DETAIL_SQL = `
     FROM insurance.policy_unit pu
     JOIN insurance.policy pol
       ON pol.id = pu.policy_id
-     AND pol.tenant_id = pu.tenant_id
+     AND pol.operating_company_id = pu.operating_company_id
      AND pol.status = 'active'
      AND pol.effective_date <= now()::date
      AND pol.expiry_date >= now()::date
