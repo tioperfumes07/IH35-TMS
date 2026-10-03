@@ -3058,6 +3058,27 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
     draftId: input.attachmentDraftId,
     newId: created.id,
   });
+  // ROUND 363-CC1-A follow-through (LAW 363.2 — the posting carries its load): a bill whose every line names the
+  // SAME single load is that load's bill, so its header carries the load too. That is the document's own data, never
+  // an allocation: a bill with lines on two loads, or a line with no load, keeps a NULL header and each line keeps
+  // its own. Without it the A/P credit of a per-load settlement bill (posted from the header, no line id) could not
+  // name its load while its own debit lines could. Same transaction as the lines; the GL posts afterwards.
+  {
+    const hdr = await client.query<{ load_id: string | null }>(
+      `
+        UPDATE accounting.bills b
+           SET load_id = one.load_id
+          FROM (SELECT min(bl.load_id::text)::uuid AS load_id
+                  FROM accounting.bill_lines bl
+                 WHERE bl.bill_id = $1::uuid
+                HAVING count(*) > 0 AND count(bl.load_id) = count(*) AND count(DISTINCT bl.load_id) = 1) one
+         WHERE b.id = $1::uuid AND b.operating_company_id = $2::uuid AND b.load_id IS NULL
+        RETURNING b.load_id::text AS load_id
+      `,
+      [created.id, input.operatingCompanyId]
+    );
+    if (hdr.rows[0]) (created as { load_id?: string | null }).load_id = hdr.rows[0].load_id;
+  }
   await appendCrudAudit(
     client,
     userId,
