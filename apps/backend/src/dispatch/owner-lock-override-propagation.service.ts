@@ -202,7 +202,7 @@ export async function rerateLoadMilesFromStops(
              longitude::text AS longitude
       FROM mdata.load_stops s
       WHERE s.load_id = $1::uuid
-        AND EXISTS (SELECT 1 FROM mdata.loads l WHERE l.id = s.load_id AND l.operating_company_id = $2::uuid)
+        AND s.operating_company_id = $2::uuid -- load_stops_load_same_entity_fkey: a stop's company is its load's
         AND COALESCE(s.status, 'active') <> 'cancelled'
         AND latitude IS NOT NULL
         AND longitude IS NOT NULL

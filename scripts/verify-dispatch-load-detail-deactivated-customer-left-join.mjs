@@ -193,7 +193,7 @@ function check(src, mdataLoadsSrc, drawerSrc, loadApiSrc, factoringSrc, finesSrc
   if (!/if \(!loadId \|\| !load\?\.operating_company_id\) return/.test(drawerSrc)) {
     problems.push(`${DRAWER}: package metadata write must fail closed without the loaded row company`);
   }
-  const scopedUpdateCalls = drawerSrc.match(/updateMutation\.mutateAsync\(\{[\s\S]{0,180}?operatingCompanyId: load\.operating_company_id/g)?.length ?? 0;
+  const scopedUpdateCalls = drawerSrc.match(/updateMutation\s*\.mutateAsync\(\{[\s\S]{0,180}?operatingCompanyId: load\.operating_company_id/g)?.length ?? 0;
   if (scopedUpdateCalls < 2) {
     problems.push(`${DRAWER}: both notes/package and dispatch-flag writes must submit immutable load company (found ${scopedUpdateCalls}/2)`);
   }

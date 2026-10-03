@@ -1,5 +1,5 @@
 import { stopFenceTimeSql } from "../telematics/stop-arrival-events.js";
-import { canonicalDispatchWorkStatusClause } from "../dispatch/canonical-active-load-set.js";
+import { canonicalDispatchWorkStatusClause, canonicalNotCancelledLoadClause } from "../dispatch/canonical-active-load-set.js";
 
 /**
  * B-27 — THE ATTRIBUTION FUNCTION, ONE, SHARED (Lead order, ROUND 297.3).
@@ -363,7 +363,7 @@ export function loadAtTimeSql(unitAlias: string, tsExpr: string, resultAlias = "
       AND l.assigned_unit_id = ${unitAlias}
       AND l.soft_deleted_at IS NULL
       AND l.voided_at IS NULL
-      AND l.status::text <> 'cancelled'
+      AND ${canonicalNotCancelledLoadClause("l")}
       AND COALESCE(l.is_sample_data, false) = false
       AND (
         (fin.actual_finished_at IS NOT NULL AND fin.actual_finished_at >= ${tsExpr})

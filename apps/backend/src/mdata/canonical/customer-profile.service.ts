@@ -8,6 +8,8 @@
  * Every row carries the id the screen drills to (invoice, payment, load, purchase, file).
  */
 
+import { canonicalNotCancelledLoadClause } from "../../dispatch/canonical-active-load-set.js";
+
 type Q = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 
 export type ProfileBlock<T> = { value: T; empty_reason: string | null };
@@ -183,7 +185,7 @@ export async function readCustomerProfile(client: Q, companyId: string, customer
                              ORDER BY sequence_number DESC LIMIT 1) d ON true
         WHERE l.operating_company_id = $1 AND l.customer_id = $2
           AND l.voided_at IS NULL AND l.soft_deleted_at IS NULL AND l.canceled_at IS NULL
-          AND l.status <> 'cancelled' AND coalesce(l.rate_total_cents, 0) > 0
+          AND ${canonicalNotCancelledLoadClause("l")} AND coalesce(l.rate_total_cents, 0) > 0
         ORDER BY pickup_at DESC
         LIMIT 50`,
       [companyId, customerId]

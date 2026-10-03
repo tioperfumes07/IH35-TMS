@@ -6,6 +6,8 @@
  * Voided / reversed rows never count. Every row carries the id the screen drills to.
  */
 
+import { canonicalNotCancelledLoadClause } from "../../dispatch/canonical-active-load-set.js";
+
 type Q = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 export type ProfileBlock<T> = { value: T; empty_reason: string | null };
 
@@ -145,7 +147,7 @@ export async function readDriverProfile(client: Q, companyId: string, driverId: 
             (SELECT min(s.scheduled_arrival_at) FROM mdata.load_stops s WHERE s.load_id = l.id AND s.soft_deleted_at IS NULL) AS first_stop_at
        FROM mdata.loads l LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
       WHERE l.operating_company_id = $1 AND (l.assigned_primary_driver_id = $2::uuid OR l.assigned_secondary_driver_id = $2::uuid)
-        AND l.voided_at IS NULL AND l.soft_deleted_at IS NULL AND l.canceled_at IS NULL AND l.status <> 'cancelled'
+        AND l.voided_at IS NULL AND l.soft_deleted_at IS NULL AND l.canceled_at IS NULL AND ${canonicalNotCancelledLoadClause("l")}
       ORDER BY first_stop_at DESC NULLS LAST LIMIT 50`
   )).map((l) => ({ ...l, rate_total_cents: n(l.rate_total_cents) }));
 

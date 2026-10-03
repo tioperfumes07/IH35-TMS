@@ -47,6 +47,8 @@ const SOURCES = [
   {
     file: "apps/backend/src/cash-advances/cash-advance-create.ts",
     label: "CreateDriverCashAdvanceCoreInput TS union",
+    // The core create function is also the settlement creator's path, so it carries the INTERNAL-ONLY methods below.
+    internalOnlyAllowed: true,
     extract: (src) => {
       const m = /disbursement_method:\s*((?:"[a-z_]+"\s*\|\s*)+"[a-z_]+");/.exec(src);
       return m ? m[1].replace(/\s*\|\s*/g, ", ") : null;
@@ -80,6 +82,15 @@ const SOURCES = [
   },
 ];
 
+/**
+ * INTERNAL-ONLY methods: accepted by the core create function, never offered to an operator. Each one is named with its
+ * ruling. A value here must appear in the core TS union and in NO operator surface (API schema or modal) — choosing it
+ * by hand would let someone record a "real" disbursement with no bank evidence.
+ *   historical_backfill — CLOSE-POST-A-2, owner ruling 2026-09-06 ROUND 16.9 (#21100): a real past wire evidenced by the
+ *   signed settlement document, with no bank line identified yet; written only by the settlement creator.
+ */
+const INTERNAL_ONLY = new Set(["historical_backfill"]);
+
 function parseLiteralSet(literalList) {
   return new Set([...literalList.matchAll(/"([a-z_]+)"/g)].map((m) => m[1]));
 }
@@ -110,6 +121,17 @@ export function check(root = ROOT) {
   }
   if (errors.length) return errors;
 
+  for (const s of found) {
+    const leaked = [...INTERNAL_ONLY].filter((v) => s.values.has(v));
+    if (!s.internalOnlyAllowed && leaked.length) {
+      errors.push(`${s.file} (${s.label}) offers internal-only disbursement_method [${leaked.join(", ")}] to an operator`);
+    }
+    if (s.internalOnlyAllowed) {
+      const missing = [...INTERNAL_ONLY].filter((v) => !s.values.has(v));
+      if (missing.length) errors.push(`${s.file} (${s.label}) dropped internal-only disbursement_method [${missing.join(", ")}]`);
+      s.values = new Set([...s.values].filter((v) => !INTERNAL_ONLY.has(v)));
+    }
+  }
   const reference = found[0];
   for (const s of found.slice(1)) {
     if (!setsEqual(reference.values, s.values)) {
