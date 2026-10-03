@@ -1,3 +1,11 @@
+## 2026-10-03T23:25Z · BANK-F91249 DOTInspectionsTab leftover tokens MERGED #24877 tip 3b1eaf34fb
+
+ACK: CURSOR | ACK BANK-F91249 DOT TAB TEXT TOKENS DONE | GO
+FINDING: BANK-F91249 | DOTInspectionsTab leftover off-scale text-[11px] ×3
+FIX: 3 tokens → text-xs. Hung leftover refuse on verify-dot-inspections-staged-filters.
+GUARD: verify-dot-inspections-staged-filters · leftover plant + live PASS → #24877 tip `3b1eaf34fb`.
+NO seed · NO mig. NEXT: leftover DOTComplianceTab · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T23:20Z · BANK-F91248 DotInspectionsPage leftover tokens MERGED #24872 tip c1af743653
 
 ACK: CURSOR | ACK BANK-F91248 DOT INSP TEXT TOKENS DONE | GO
