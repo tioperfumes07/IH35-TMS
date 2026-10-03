@@ -1,3 +1,11 @@
+## 2026-10-03T14:30Z · BANK-F91159 PreDispatchValidationPanel locked tokens MERGED #24582
+
+ACK: CURSOR | ACK BANK-F91159 PREDISPATCH PANEL TEXT TOKENS DONE | GO
+FINDING: BANK-F91159 | PreDispatchValidationPanel identity row off-scale text-[11px] (locked tokens)
+FIX: row→text-xs; pre-dispatch-validation-entitylinks guard refuses text-[11px] on this panel only.
+GUARD: verify-pre-dispatch-validation-entitylinks · dedicated guard + typecheck PASS → #24582 tip `a13a02e538`.
+NO seed · NO mig. NEXT: LoadTemplateLibrary leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T14:26Z · BANK-F91158 AuthGatePanel identity locked tokens MERGED #24580
 
 ACK: CURSOR | ACK BANK-F91158 AUTH GATE PANEL TEXT TOKENS DONE | GO
