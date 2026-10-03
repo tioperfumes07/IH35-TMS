@@ -12,6 +12,13 @@ const files = {
 };
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(path.join(ROOT, file), "utf8")]));
 
+function leftoverProblems(s = source) {
+  const problems = [];
+  if (s.driverPortal.includes("text-[11px]")) problems.push("leftover text-[11px]");
+  if (s.driverPortal.includes("#8A92AB") || s.driverPortal.includes("#334155")) problems.push("leftover off-scale muted");
+  return problems;
+}
+
 function failures(s = source) {
   return [
     ["canonical HOS producer", s.aggregate.includes("getCurrentClocks") && s.aggregate.includes("hos.duty_status_events")],
@@ -19,7 +26,7 @@ function failures(s = source) {
     ["periodic HOS refresh", s.page.includes("refetchInterval: 30_000") && s.page.includes("HOSStatusSection")],
     ["failed refresh retry", /hosQ\.isError[\s\S]{0,220}<ListErrorState[\s\S]{0,220}onRetry=\{\(\) => void hosQ\.refetch\(\)\}/.test(s.page)],
     ["driver portal HOS failure retry", /q\.isError[\s\S]{0,360}title="Couldn't load HOS status"[\s\S]{0,360}q\.refetch\(\)[\s\S]{0,260}if \(!q\.data\)/.test(s.driverPortal)],
-  ].filter(([, ok]) => !ok).map(([name]) => name);
+  ].filter(([, ok]) => !ok).map(([name]) => name).concat(leftoverProblems(s));
 }
 
 if (process.argv.includes("--selftest")) {
@@ -35,7 +42,15 @@ if (process.argv.includes("--selftest")) {
     const mutated = { ...source, [key]: source[key].replaceAll(before, after) };
     if (mutated[key] === source[key] || failures(mutated).length === 0) throw new Error(`mutation escaped: ${key}:${before}`);
   }
-  console.log("verify:driver-profile-hos-source SELFTEST PASS — 5/5 producer/refresh/error mutations red");
+  const leftoverPlanted = {
+    ...source,
+    driverPortal: `${source.driverPortal}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`,
+  };
+  const leftoverFails = leftoverProblems(leftoverPlanted);
+  if (!leftoverFails.includes("leftover text-[11px]") || !leftoverFails.includes("leftover off-scale muted")) {
+    throw new Error("leftover plant escaped");
+  }
+  console.log("verify:driver-profile-hos-source SELFTEST PASS — 5/5 producer/refresh/error mutations red + leftover plant rejected");
   process.exit(0);
 }
 
