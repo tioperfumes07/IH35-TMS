@@ -945,6 +945,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-no-usmca-record-points-at-a-frozen-company",
     ["db/migrations/", "apps/backend/src/accounting/", "apps/backend/src/dispatch/", "apps/backend/src/driver-finance/", "apps/backend/src/fuel/", "apps/backend/src/maintenance/", "scripts/verify-no-usmca-record-points-at-a-frozen-company.mjs"],
   ],
+  // ROUND 372.5 (CC-1) — settlement driver pay splits per load, to the cent, from the settlement's own arithmetic.
+  [
+    "verify-settlement-driver-pay-splits-per-load",
+    ["apps/backend/src/driver-finance/", "apps/backend/src/accounting/", "db/migrations/", "scripts/verify-settlement-driver-pay-splits-per-load.mjs"],
+  ],
   // Kill the second system (CC-1) — a driver escrow balance is the 2100-00-<nnn> GL balance, derived; no stored reader.
   [
     "verify-escrow-equals-its-gl",
