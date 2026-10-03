@@ -1,3 +1,11 @@
+## 2026-10-03T14:40Z · BANK-F91163 APAgingPage locked tokens MERGED #24591
+
+ACK: CURSOR | ACK BANK-F91163 AP AGING TEXT TOKENS DONE | GO
+FINDING: BANK-F91163 | APAgingPage KPI labels off-scale text-[11px] (locked tokens)
+FIX: all four→text-section-header; reports-ap-aging-print-letter guard refuses text-[11px] on this page only.
+GUARD: verify-reports-ap-aging-print-letter · dedicated guard + typecheck PASS → #24591 tip `0be6fd4300`.
+NO seed · NO mig. NEXT: ArApAgingPage leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T14:37Z · BANK-F91162 ARAgingPage locked tokens MERGED #24589
 
 ACK: CURSOR | ACK BANK-F91162 AR AGING TEXT TOKENS DONE | GO
