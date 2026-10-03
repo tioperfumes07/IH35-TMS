@@ -59,10 +59,10 @@ export function DriverHubOverview({ companyId, canReview }: { companyId: string;
   });
 
   if (!canReview) {
-    return <p className="text-xs text-[#8A92AB]">Reviewing requests requires a Manager, Accountant, or Owner role.</p>;
+    return <p className="text-xs text-[#4B5563]">Reviewing requests requires a Manager, Accountant, or Owner role.</p>;
   }
   if (!companyId) {
-    return <p className="text-xs text-[#8A92AB]">Select an operating company to view driver requests and alerts.</p>;
+    return <p className="text-xs text-[#4B5563]">Select an operating company to view driver requests and alerts.</p>;
   }
 
   const leaveCount = leaveQ.isLoading || leaveQ.isError ? null : (leaveQ.data?.total_count ?? 0);
@@ -124,7 +124,7 @@ export function DriverHubOverview({ companyId, canReview }: { companyId: string;
       <section className="space-y-2" data-testid="driver-hub-request-alerts">
         <div>
           <h2 className="text-xs font-semibold text-[#1A1F36]">Requests &amp; alerts</h2>
-          <p className="text-xs text-[#8A92AB]">Live counts from driver scheduler, finance, maintenance, and comms inboxes</p>
+          <p className="text-xs text-[#4B5563]">Live counts from driver scheduler, finance, maintenance, and comms inboxes</p>
         </div>
         {anyQueryError ? (
           <ListErrorBanner
@@ -147,11 +147,11 @@ export function DriverHubOverview({ companyId, canReview }: { companyId: string;
               data-testid={card.testId}
               className="rounded-sm border border-[#e5e7eb] bg-white p-3 shadow-xs transition hover:border-slate-300 hover:shadow-sm"
             >
-              <div className="text-[11px] font-semibold uppercase tracking-[0.25px] text-[#6B7280]">{card.title}</div>
+              <div className="text-xs font-semibold uppercase tracking-[0.25px] text-[#6B7280]">{card.title}</div>
               <div className={`mt-1 text-page-title font-bold tabular-nums ${card.isError ? "text-red-700" : "text-[#1A1F36]"}`}>
                 {formatCount(card.count, card.isError)}
               </div>
-              <p className="mt-1 text-[11px] text-[#8A92AB]">{card.subtitle}</p>
+              <p className="mt-1 text-xs text-[#4B5563]">{card.subtitle}</p>
             </Link>
           ))}
         </div>

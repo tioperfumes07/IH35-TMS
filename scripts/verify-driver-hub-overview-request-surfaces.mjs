@@ -66,6 +66,13 @@ function assertWiring(readSourceFn = readSource) {
     }
   }
 
+  if (overview.includes("text-[11px]")) {
+    problems.push(`${FILES.overview}: leftover chrome must use text-xs, not text-[11px]`);
+  }
+  if (overview.includes("#334155") || overview.includes("#8A92AB")) {
+    problems.push(`${FILES.overview}: leftover chrome must not use off-scale #334155 / #8A92AB`);
+  }
+
   return problems;
 }
 
@@ -94,7 +101,12 @@ function selftest() {
     const problems = assertWiring((rel) => (rel === file ? mutated : originals[rel]));
     if (!problems.length) throw new Error(`${LABEL}: selftest did not reject missing ${label}`);
   }
-  console.log(`${LABEL}: selftest PASS (${cases.length} mutations)`);
+  const leftoverPlant = `${originals[FILES.overview]}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  const leftoverProblems = assertWiring((rel) => (rel === FILES.overview ? leftoverPlant : originals[rel]));
+  if (!leftoverProblems.some((p) => p.includes("text-[11px]") || p.includes("#8A92AB"))) {
+    throw new Error(`${LABEL}: selftest did not reject leftover text-[11px] / #8A92AB on overview`);
+  }
+  console.log(`${LABEL}: selftest PASS (${cases.length} mutations + leftover plant)`);
 }
 
 if (process.argv.includes("--selftest")) selftest();
