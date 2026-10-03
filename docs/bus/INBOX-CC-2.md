@@ -1,3 +1,19 @@
+# >>> NOW 2026-10-03 — ROUNDS 373 + 374 — RECLASSIFY FIRST, THEN THE HOLE
+
+READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-ROUND-373-SPINE-HOLE-MEASURED-THREE-WRITERS-NAMED.md`
+THEN: `docs/bus/10-03-2026-ALL-SEATS-ROUND-374-BASELINE-AND-FIVE-WRONG-SIGN-ACCOUNTS.md`
+THEN: `docs/bus/10-03-2026-CC-2-ROUND-370-RECLASSIFY-SHOWS-BALANCES-NO-TRANSACTIONS.md`
+
+**On your list (no hand-off):**
+1. **373.2 first** — `reclassify.service.ts` + `recon-worklist.service.ts` write the spine **before** the reclassify tab ships. Shipping without the link digs the 3,908 hole deeper.
+2. **370 + 368.1** — derived balances + working register. Deadline **2026-10-04 18:00Z**.
+3. **374.2** — 1090 Undeposited Funds credit 151,736.34 (sweep hypothesis) and 1295 Relay Fuel Wallet credit 33,839.80. Count both sides by writer.
+4. **374.3** — stored opening-balance columns: 0 accounts with a non-zero opening and no `opening_balance_as_of`; 0 surfaces that add stored opening to a derived total.
+
+ACK: `CC-2 | ACK 373-374 RECLASSIFY-FIRST | GO`
+
+---
+
 # >>> NOW 2026-10-03 — STRANDED ROUNDS ON THE BUS — RECLASSIFY FIRST
 
 READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-STANDING-ORDER-FINISH-YOUR-LIST-NO-HANDOFFS.md`

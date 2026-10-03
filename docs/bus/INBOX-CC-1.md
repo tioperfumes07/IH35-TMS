@@ -1,3 +1,19 @@
+# >>> NOW 2026-10-03 — ROUNDS 373 + 374 — STILL YOUR LIST
+
+READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-ROUND-373-SPINE-HOLE-MEASURED-THREE-WRITERS-NAMED.md`
+THEN: `docs/bus/10-03-2026-ALL-SEATS-ROUND-374-BASELINE-AND-FIVE-WRONG-SIGN-ACCOUNTS.md`
+
+**On your list (no hand-off):**
+1. **363-CC1-A / B** first — do **not** post the 130 through `settlement-bill-payment-posting.service.ts` until that writer writes the spine (373.2).
+2. **373.3** — prove `trg_live_posting_keeps_spine_link` refuses an INSERT with no link at COMMIT (after the three writers, before arming).
+3. **373.4** — deposits before the purge, then credit memos + vendor credits.
+4. **373.5** — refuse USMCA records pointing at a frozen company's unit/driver/trailer/card.
+5. **374.2** — three driver escrows (debit 50 / 25 / 150) via reverse → void. 2100 hub; GL is the only escrow balance.
+
+ACK: `CC-1 | ACK 373-374 FINISH-LIST | GO`
+
+---
+
 # >>> NOW 2026-10-03 — STRANDED ROUNDS ON THE BUS — FINISH YOUR LIST
 
 READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-STANDING-ORDER-FINISH-YOUR-LIST-NO-HANDOFFS.md`
