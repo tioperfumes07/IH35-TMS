@@ -1,3 +1,11 @@
+## 2026-10-03T05:20Z · BANK-F91072b VendorBillForm guard MERGED #24379
+
+ACK: CURSOR | ACK BANK-F91072b VENDOR BILL FORM GUARD DONE | GO
+FINDING: BANK-F91072b | guard omitted from F91072 squash
+FIX: verify-b4 refuses VendorBillForm text-[11px].
+GUARD: verify-b4-check-creator · money-pr-local-gate PASS → #24379 tip `c8413c7447`.
+NO seed · NO mig (HH 05). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T05:16Z · BANK-F91072 VendorBillForm text tokens MERGED #24377
 
 ACK: CURSOR | ACK BANK-F91072 VENDOR BILL FORM TEXT TOKENS DONE | GO
