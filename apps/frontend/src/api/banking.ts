@@ -1,4 +1,5 @@
 import { apiRequest, apiRequestFormData } from "./client";
+import { appendStatusList } from "../lib/statusListParams";
 
 export type BankingTile = {
   id: string;
@@ -1454,7 +1455,7 @@ export function listTransfers(
     to?: string;
     type?: TransferType;
     accountId?: string;
-    status?: "active" | "revoked";
+    status?: "active" | "revoked" | ReadonlyArray<"active" | "revoked">;
     limit?: number;
     offset?: number;
   } = {}
@@ -1464,7 +1465,7 @@ export function listTransfers(
   if (options.to) params.set("to", options.to);
   if (options.type) params.set("type", options.type);
   if (options.accountId) params.set("account_id", options.accountId);
-  if (options.status) params.set("status", options.status);
+  appendStatusList(params, "status", options.status);
   params.set("limit", String(options.limit ?? 50));
   params.set("offset", String(options.offset ?? 0));
   return apiRequest<{ transfers: Transfer[] }>(`/api/v1/banking/transfers?${params.toString()}`);

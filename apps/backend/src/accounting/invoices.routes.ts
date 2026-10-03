@@ -24,7 +24,8 @@ import {
 const idParamsSchema = z.object({ id: z.string().uuid() });
 
 const listQuerySchema = companyQuerySchema.extend({
-  status: z.string().trim().optional(),
+  // U12 — multi-select: ?status=a&status=b (one value still accepted); "active" / "posted" are pseudo-statuses.
+  status: z.union([z.string().trim(), z.array(z.string().trim())]).optional(),
   search: z.string().trim().optional(),
   customer_id: z.string().uuid().optional(),
   // WAVE-H2 reverse drill: load → invoices
@@ -320,12 +321,15 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       // (verify-mdata-entity-scope scans template text; interpolated JS where-clauses alone are insufficient).
       const extraWhere: string[] = [];
       const values: unknown[] = [q.operating_company_id];
-      if (q.status === "active") {
-        extraWhere.push("i.voided_at IS NULL");
-        extraWhere.push("i.status NOT IN ('void', 'voided')");
-      } else if (q.status === "posted") {
+      // U12 — one condition per picked status, OR'd: "active" = not voided, "posted" = GL-posted (FLT-02), the rest literal.
+      const pickedStatuses = (Array.isArray(q.status) ? q.status : q.status ? [q.status] : []).filter((st) => st && st !== "all");
+      const statusOr: string[] = [];
+      if (pickedStatuses.includes("active")) {
+        statusOr.push("(i.voided_at IS NULL AND i.status NOT IN ('void', 'voided'))");
+      }
+      if (pickedStatuses.includes("posted")) {
         // FLT-02 — GL-posted invoices only (owner req 2.7); same EXISTS shape as bills.service posted filter.
-        extraWhere.push(`EXISTS (
+        statusOr.push(`(EXISTS (
           SELECT 1
           FROM accounting.journal_entry_postings jep
           JOIN accounting.journal_entries je
@@ -335,13 +339,14 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
             AND jep.source_transaction_type = 'invoice'
             AND jep.source_transaction_id = i.id::text
             AND je.status = 'posted'
-        )`);
-        extraWhere.push("i.voided_at IS NULL");
-        extraWhere.push("i.status NOT IN ('void', 'voided')");
-      } else if (q.status && q.status !== "all") {
-        values.push(q.status);
-        extraWhere.push(`i.status = $${values.length}`);
+        ) AND i.voided_at IS NULL AND i.status NOT IN ('void', 'voided'))`);
       }
+      const literalStatuses = pickedStatuses.filter((st) => st !== "active" && st !== "posted");
+      if (literalStatuses.length) {
+        values.push(literalStatuses);
+        statusOr.push(`i.status::text = ANY($${values.length}::text[])`);
+      }
+      if (statusOr.length) extraWhere.push(statusOr.length === 1 ? statusOr[0] : `(${statusOr.join(" OR ")})`);
       if (q.customer_id) {
         values.push(q.customer_id);
         extraWhere.push(`i.customer_id = $${values.length}`);

@@ -1,4 +1,5 @@
 import { apiRequest } from "./client";
+import { appendStatusList } from "../lib/statusListParams";
 
 export type RevenueContractListItem = {
   id: string;
@@ -72,12 +73,12 @@ export type RevenueContractList = { total: number; limit: number; offset: number
 
 export function getRevenueContracts(input: {
   operating_company_id: string;
-  status?: string;
+  status?: string | readonly string[];
   limit?: number;
   offset?: number;
 }) {
   const q = new URLSearchParams({ operating_company_id: input.operating_company_id });
-  if (input.status) q.set("status", input.status);
+  appendStatusList(q, "status", input.status);
   if (input.limit != null) q.set("limit", String(input.limit));
   if (input.offset != null) q.set("offset", String(input.offset));
   return apiRequest<RevenueContractList>(`/api/v1/accounting/revenue-contracts?${q}`);

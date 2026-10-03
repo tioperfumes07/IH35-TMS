@@ -11,6 +11,7 @@
  * from the payload (DoD-B). Posting is the backend's job — this client never computes GL.
  */
 import { apiRequest } from "./client";
+import { appendStatusList } from "../lib/statusListParams";
 
 export type LoanDirection = "in" | "out";
 export type LoanRelationship = "owner" | "spouse" | "friend" | "employee" | "related_company" | "other";
@@ -81,7 +82,7 @@ export type ListRelatedPartyLoansQuery = {
   direction?: LoanDirection;
   target_type?: LoanTargetType;
   counterparty_id?: string;
-  status?: LoanStatus;
+  status?: LoanStatus | ReadonlyArray<LoanStatus>;
   from?: string;
   to?: string;
   limit?: number;
@@ -104,7 +105,7 @@ export function listRelatedPartyLoansUrl(q: ListRelatedPartyLoansQuery): string 
   if (q.direction) p.set("direction", q.direction);
   if (q.target_type) p.set("target_type", q.target_type);
   if (q.counterparty_id) p.set("counterparty_id", q.counterparty_id);
-  if (q.status) p.set("status", q.status);
+  appendStatusList(p, "status", q.status);
   if (q.from) p.set("from", q.from);
   if (q.to) p.set("to", q.to);
   if (typeof q.limit === "number") p.set("limit", String(q.limit));

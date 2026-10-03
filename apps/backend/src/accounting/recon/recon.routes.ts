@@ -7,6 +7,7 @@ import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../shared.js";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
+import { statusListParam } from "../../lib/status-list.js";
 
 const RECON_ENABLED = process.env.TMS_QBO_RECON_ENABLED === "true";
 
@@ -31,7 +32,8 @@ const runsQuery = companyQuerySchema.extend({
 
 const exceptionsQuery = companyQuerySchema.extend({
   run_id: z.string().uuid().optional(),
-  status: z.enum(["open", "explained", "resolved"]).optional(),
+  // U12 — multi-select: ?status=a&status=b (one value still accepted).
+  status: statusListParam(["open", "explained", "resolved"] as const),
   exception_class: z.string().trim().min(1).max(64).optional(),
   limit: z.coerce.number().int().min(1).max(500).default(100),
   offset: z.coerce.number().int().min(0).default(0),
@@ -82,7 +84,7 @@ export async function registerReconRoutes(app: FastifyInstance) {
            FROM accounting.recon_exceptions
           WHERE operating_company_id = $1::uuid AND is_active = true AND voided_at IS NULL
             AND ($2::uuid IS NULL OR run_id = $2::uuid)
-            AND ($3::text IS NULL OR status = $3)
+            AND ($3::text[] IS NULL OR status::text = ANY($3::text[]))
             AND ($4::text IS NULL OR exception_class = $4)
           ORDER BY created_at DESC LIMIT $5 OFFSET $6`,
         [q.data.operating_company_id, q.data.run_id ?? null, q.data.status ?? null, q.data.exception_class ?? null, q.data.limit, q.data.offset],

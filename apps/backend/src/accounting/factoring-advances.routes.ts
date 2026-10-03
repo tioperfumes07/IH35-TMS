@@ -24,6 +24,7 @@ import { getFactorForCustomer } from "../factoring/factor.service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { requireVoidCancelExecutorWired } from "../lib/authz/void-cancel-authz.js";
 import { requireFactoringPurchaseOwner } from "../factoring/owner-only-purchase.js";
+import { statusListCondition, statusListParam } from "../lib/status-list.js";
 
 const idParamsSchema = z.object({
   id: z.string().uuid(),
@@ -36,10 +37,8 @@ const listQuerySchema = companyQuerySchema.extend({
   // no other existing caller of this endpoint (e.g. entityPickerRegistry.ts's factoring-advance
   // picker) silently changes behavior; FactoringListPage.tsx is the only caller updated to send
   // "active" explicitly.
-  status: z
-    .enum(["active", "submitted", "advanced", "reserve_held", "collected", "released", "recourse_returned", "voided", "all"])
-    .optional()
-    .default("all"),
+  // U12 — multi-select: ?status=a&status=b (one value still accepted); none / "all" = every status; "active" = not voided.
+  status: statusListParam(["active", "submitted", "advanced", "reserve_held", "collected", "released", "recourse_returned", "voided", "all"] as const),
   factoring_company_vendor_id: z.string().uuid().optional(),
   date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -266,12 +265,13 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     const rows = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
       const where: string[] = ["fa.operating_company_id = $1::uuid"];
       const values: unknown[] = [q.operating_company_id];
-      if (q.status === "active") {
-        where.push(`fa.status <> 'voided'`);
-      } else if (q.status && q.status !== "all") {
-        values.push(q.status);
-        where.push(`fa.status = $${values.length}`);
-      }
+      const statusCond = q.status?.includes("all")
+        ? null
+        : statusListCondition("fa.status", q.status, (v) => {
+            values.push(v);
+            return `$${values.length}`;
+          }, { notVoidedPseudo: { value: "active", excludes: ["voided"] } });
+      if (statusCond) where.push(statusCond);
       if (q.factoring_company_vendor_id) {
         values.push(q.factoring_company_vendor_id);
         where.push(`fa.factoring_company_vendor_id = $${values.length}`);

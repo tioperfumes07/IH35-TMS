@@ -37,6 +37,8 @@ import { MoneyProofTrailPanel } from "../../components/accounting/MoneyProofTrai
 const WRITE_ROLES = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
 
 import { formatUsdCents } from "../../lib/money";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { statusOptions } from "../../lib/statusListParams";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -70,10 +72,11 @@ export function VendorCreditsPage() {
   // R-102-B item 5 ("DEFAULT FILTERS" — owner, ROUND 117: "lists default to live with 'Show
   // voided' off on fresh load"). Same fix as the sibling CreditMemosPage — this page had NO
   // default-hide at all before this.
-  const [statusFilter, setStatusFilter] = useState<VendorCreditStatus | "active" | "">("active");
+  // U12 (owner UI register 2026-10-03) — status is a multi-select (same component as every list); default Active.
+  const [statusFilter, setStatusFilter] = useState<Array<VendorCreditStatus | "active">>(["active"]);
   const staged = useStagedListFilters({
     applied: { statusFilter, vendorId: vendorFilter },
-    empty: { statusFilter: "active" as const, vendorId: "" },
+    empty: { statusFilter: ["active"] as Array<VendorCreditStatus | "active">, vendorId: "" },
     onApply: (next) => {
       setStatusFilter(next.statusFilter);
       setVendorFilter(next.vendorId);
@@ -120,7 +123,7 @@ export function VendorCreditsPage() {
     queryFn: () =>
       listVendorCredits(companyId, {
         vendor_id: vendorFilter || undefined,
-        status: statusFilter || undefined,
+        status: statusFilter,
       }),
     enabled: Boolean(companyId),
   });
@@ -253,7 +256,7 @@ export function VendorCreditsPage() {
 
   const filterBar = (
     <div className="flex flex-wrap items-end gap-3" data-vendor-credits-filter-toolbar="collapsed">
-      <CollapsedListFilters activeFilterCount={(statusFilter && statusFilter !== "active" ? 1 : 0) + (vendorFilter ? 1 : 0)} testIdPrefix="vendor-credits" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
+      <CollapsedListFilters activeFilterCount={(statusFilter.length === 1 && statusFilter[0] === "active" ? 0 : 1) + (vendorFilter ? 1 : 0)} testIdPrefix="vendor-credits" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
         <div className="flex flex-wrap gap-2">
           <label className="text-xs text-slate-600">
             Vendor
@@ -268,17 +271,14 @@ export function VendorCreditsPage() {
               dataTestId="vendor-credits-filter-vendor"
             />
           </label>
-          <SelectCombobox
-            value={staged.draft.statusFilter}
-            onChange={(e) => staged.setDraft({ ...staged.draft, statusFilter: e.target.value as VendorCreditStatus | "active" | "" })}
-            aria-label="Vendor credit status filter"
-          >
-            <option value="active">Active (hide voided)</option>
-            <option value="">All statuses (include voided)</option>
-            <option value="open">Open</option>
-            <option value="applied">Applied</option>
-            <option value="voided">Voided</option>
-          </SelectCombobox>
+          <MultiSelectDropdown
+            label="Status"
+            options={statusOptions({ "active": "Active (hide voided)", "open": "Open", "applied": "Applied", "voided": "Voided" })}
+            selected={staged.draft.statusFilter}
+            onChange={(next) => staged.setDraft({ ...staged.draft, statusFilter: next as Array<VendorCreditStatus | "active"> })}
+            allLabel="All statuses (include voided)"
+            data-testid="vendor-credits-status-filter"
+          />
         </div>
       </CollapsedListFilters>
       {vendorFilter ? (
@@ -318,7 +318,7 @@ export function VendorCreditsPage() {
         <>
           {/* R-102-B item 5 — owner: "a list that silently hides is the same class of defect as
               a badge that never renders." Company-wide, independent of every non-status filter. */}
-          {statusFilter === "active" && typeof creditsQuery.data?.voided_count === "number" && creditsQuery.data.voided_count > 0 ? (
+          {statusFilter.length === 1 && statusFilter[0] === "active" && typeof creditsQuery.data?.voided_count === "number" && creditsQuery.data.voided_count > 0 ? (
             <p className="text-xs text-gray-500" data-testid="vendor-credits-voided-count">
               {(creditsQuery.data?.credits ?? []).length} live, {creditsQuery.data.voided_count} voided (hidden)
             </p>

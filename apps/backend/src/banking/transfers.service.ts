@@ -738,7 +738,8 @@ export async function listTransfers(input: {
   toDate?: string;
   type?: TransferType;
   accountId?: string;
-  status?: "active" | "revoked";
+  /** U12 — one or both (both = every transfer). */
+  status?: "active" | "revoked" | ReadonlyArray<"active" | "revoked">;
   limit: number;
   offset: number;
 }) {
@@ -762,8 +763,8 @@ export async function listTransfers(input: {
       values.push(input.accountId);
       where.push(`(t.from_account_id = $${values.length} OR t.to_account_id = $${values.length})`);
     }
-    if (input.status === "active") where.push("t.revoked_at IS NULL");
-    if (input.status === "revoked") where.push("t.revoked_at IS NOT NULL");
+    const wanted = Array.isArray(input.status) ? input.status : input.status ? [input.status] : [];
+    if (wanted.length === 1) where.push(wanted[0] === "active" ? "t.revoked_at IS NULL" : "t.revoked_at IS NOT NULL");
     values.push(input.limit, input.offset);
     const whereSql = where.join(" AND ");
 

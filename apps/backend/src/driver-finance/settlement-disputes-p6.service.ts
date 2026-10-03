@@ -328,7 +328,8 @@ export async function listSettlementDisputeQueueP6(
   userId: string,
   input: {
     operating_company_id: string;
-    status?: string | null;
+    /** U12 — one status or several (multi-select); "all" / empty = no filter. */
+    status?: string | readonly string[] | null;
     driver_id?: string | null;
     limit: number;
     offset: number;
@@ -340,9 +341,10 @@ export async function listSettlementDisputeQueueP6(
     const values: unknown[] = [input.operating_company_id];
     const where: string[] = [`d.operating_company_id = $1::uuid`];
 
-    if (input.status && input.status !== "all") {
-      values.push(toCanonicalStatus(input.status));
-      where.push(`d.status = $${values.length}`);
+    const wanted = (Array.isArray(input.status) ? input.status : input.status ? [input.status] : []).filter((s) => s && s !== "all");
+    if (wanted.length) {
+      values.push([...new Set(wanted.map(toCanonicalStatus))]);
+      where.push(`d.status::text = ANY($${values.length}::text[])`);
     }
 
     if (input.driver_id) {

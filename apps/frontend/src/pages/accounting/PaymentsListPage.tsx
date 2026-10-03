@@ -23,6 +23,8 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import { useUrlSort } from "../../hooks/useUrlSort";
 
 import { formatUsdCents } from "../../lib/money";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { statusOptions } from "../../lib/statusListParams";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -84,12 +86,13 @@ export function PaymentsListPage() {
   // BANK-SORT-ROLLOUT-ACCT: every visible column header sorts ASC/DESC; sort persists in the URL
   // (?sort=&dir=) so it survives reload / is shareable, same as Bills / Expenses.
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
-  const [status, setStatus] = useState<"all" | "active" | "voided">("active");
+  // U12 (owner UI register 2026-10-03) — status is a multi-select; default Active; none picked = every payment.
+  const [status, setStatus] = useState<Array<"active" | "voided">>(["active"]);
   const [method, setMethod] = useState<"" | PaymentMethod | "factoring">("");
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const staged = useStagedListFilters({ applied: { status, method, dateFrom, dateTo }, empty: { status: "active" as const, method: "" as const, dateFrom: "", dateTo: "" }, onApply: (next) => { setStatus(next.status); setMethod(next.method); setDateFrom(next.dateFrom); setDateTo(next.dateTo); } });
+  const staged = useStagedListFilters({ applied: { status, method, dateFrom, dateTo }, empty: { status: ["active"] as Array<"active" | "voided">, method: "" as const, dateFrom: "", dateTo: "" }, onApply: (next) => { setStatus(next.status); setMethod(next.method); setDateFrom(next.dateFrom); setDateTo(next.dateTo); } });
   // ACCT-F5055 — Topbar Create→Receive payment uses ?create=1 (Bills/Expenses/Invoices parity).
   const recordOpen = searchParams.get("create") === "1";
   function setRecordOpen(next: boolean) {
@@ -108,7 +111,7 @@ export function PaymentsListPage() {
     queryKey: ["accounting", "payments", selectedCompanyId, status, method, search, dateFrom, dateTo, sortKey, sortDirection],
     queryFn: async () => {
       const filters: {
-        status: "all" | "active" | "voided";
+        status: Array<"all" | "active" | "voided">;
         payment_method?: PaymentMethod;
         search?: string;
         date_from?: string;
@@ -117,7 +120,7 @@ export function PaymentsListPage() {
         dir?: "asc" | "desc";
         limit?: number;
       } = {
-        status,
+        status: status.length ? status : ["all"],
         search: search || undefined,
         date_from: dateFrom || undefined,
         date_to: dateTo || undefined,
@@ -261,7 +264,7 @@ export function PaymentsListPage() {
   );
 
   const paymentsActiveFilterCount =
-    (status !== "all" ? 1 : 0) + (method ? 1 : 0) + (dateFrom || dateTo ? 1 : 0);
+    (status.length === 1 && status[0] === "active" ? 0 : 1) + (method ? 1 : 0) + (dateFrom || dateTo ? 1 : 0);
 
   const filterBar = (
     <div className="space-y-2 w-full">
@@ -281,14 +284,14 @@ export function PaymentsListPage() {
         }
       >
         <div className="grid gap-2 md:grid-cols-4">
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-            Status
-            <SelectCombobox value={staged.draft.status} onChange={(event) => staged.setDraft({ ...staged.draft, status: event.target.value as "all" | "active" | "voided" })} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
-              <option value="all">All</option>
-              <option value="active">Active</option>
-              <option value="voided">Voided</option>
-            </SelectCombobox>
-          </label>
+          <MultiSelectDropdown
+            label="Status"
+            options={statusOptions({ "active": "Active", "voided": "Voided" })}
+            selected={staged.draft.status}
+            onChange={(next) => staged.setDraft({ ...staged.draft, status: next as Array<"active" | "voided"> })}
+            allLabel="All"
+            data-testid="payments-status-filter"
+          />
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Method

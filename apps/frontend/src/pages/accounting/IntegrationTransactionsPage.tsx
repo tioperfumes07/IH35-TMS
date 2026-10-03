@@ -12,6 +12,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { CollapsedListFilters } from "../../components/table";
 import { SelectCombobox } from "../../components/Combobox";
 import { useUrlSort } from "../../hooks/useUrlSort";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 
 const fmtCents = (c: number | null) => (c == null ? "—" : formatUsdCents(c));
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
@@ -54,7 +55,8 @@ const FETCH_LIMIT = 500;
 export function IntegrationTransactionsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
-  const [syncStatus, setSyncStatus] = useState("");
+  // U12 (owner UI register 2026-10-03) — status is a multi-select; none picked = every status.
+  const [syncStatus, setSyncStatus] = useState<string[]>([]);
   const [entityType, setEntityType] = useState("");
   const [search, setSearch] = useState("");
   // BANK-SORT-ROLLOUT-ACCT: sort persists in URL (?sort=&dir=) via useUrlSort + ParityTable controlled sort.
@@ -64,7 +66,7 @@ export function IntegrationTransactionsPage() {
     queryKey: ["integration-transactions", operatingCompanyId, syncStatus, entityType, search],
     queryFn: () => getIntegrationTransactions({
       operating_company_id: operatingCompanyId,
-      sync_status: syncStatus || undefined,
+      sync_status: syncStatus,
       entity_type: entityType || undefined,
       q: search || undefined,
       limit: FETCH_LIMIT,
@@ -220,7 +222,7 @@ export function IntegrationTransactionsPage() {
   const filterBar = (
     <div className="flex flex-wrap gap-2 items-center" data-integration-tx-filter-toolbar="collapsed">
       <CollapsedListFilters
-        activeFilterCount={(syncStatus ? 1 : 0) + (entityType ? 1 : 0)}
+        activeFilterCount={(syncStatus.length ? 1 : 0) + (entityType ? 1 : 0)}
         applyLawExemptReason="QBO_SYNC_OUT_OF_SCOPE"
         testIdPrefix="integration-tx"
         searchSlot={
@@ -235,18 +237,14 @@ export function IntegrationTransactionsPage() {
         }
       >
         <div className="flex flex-wrap gap-2">
-          <SelectCombobox
-            aria-label="Filter by sync status"
-            value={syncStatus}
-            onChange={(e) => setSyncStatus(e.target.value)}
-          >
-            <option value="">All statuses</option>
-            {(["pending", "in_flight", "synced", "failed", "blocked"] as const).map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </SelectCombobox>
+          <MultiSelectDropdown
+            label="Status"
+            options={(["pending", "in_flight", "synced", "failed", "blocked"] as const).map((s) => ({ value: s, label: s.replaceAll("_", " ") }))}
+            selected={syncStatus}
+            onChange={setSyncStatus}
+            allLabel="All statuses"
+            data-testid="integration-tx-status-filter"
+          />
           <SelectCombobox
             aria-label="Filter by entity type"
             value={entityType}

@@ -14,11 +14,12 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { SelectCombobox } from "../../components/Combobox";
 import {
   getFixedAssets, getFixedAssetDetail, registerTrkOwnedUnits,
   type FixedAssetListItem, type FixedAssetDetail, type RegisterTrkUnitsResult,
 } from "../../api/fixed-assets";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { statusOptions } from "../../lib/statusListParams";
 
 const fmtCents = (c: number) => formatUsdCents(c);
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
@@ -339,8 +340,9 @@ export function FixedAssetsPage() {
   const operatingCompanyId = selectedCompanyId ?? "";
   const { enabled, loading: flagLoading } = useFeatureFlag("FIXED_ASSETS_ENABLED", operatingCompanyId || undefined);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [statusFilter, setStatusFilter] = useState("");
-  const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: "" }, onApply: (next) => { setStatusFilter(next.statusFilter); setOffset(0); } });
+  // U12 (owner UI register 2026-10-03) — status is a multi-select (same component as every list); none = all.
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: [] as string[] }, onApply: (next) => { setStatusFilter(next.statusFilter); setOffset(0); } });
   const [offset, setOffset] = useState(0);
   const [detailId, setDetailId] = useState<string | null>(searchParams.get("asset_id"));
   const [registerOpen, setRegisterOpen] = useState(false);
@@ -384,7 +386,7 @@ export function FixedAssetsPage() {
 
   const assetsQuery = useQuery({
     queryKey: ["fixed-assets", operatingCompanyId, statusFilter, offset],
-    queryFn: () => getFixedAssets({ operating_company_id: operatingCompanyId, status: statusFilter || undefined, limit, offset }),
+    queryFn: () => getFixedAssets({ operating_company_id: operatingCompanyId, status: statusFilter, limit, offset }),
     enabled: Boolean(selectedCompanyId) && enabled,
   });
   const { data, isPending, isFetching, isError } = assetsQuery;
@@ -452,17 +454,15 @@ export function FixedAssetsPage() {
 
   const filterBar = (
     <div className="flex flex-wrap gap-2 items-center" data-fixed-assets-filter-toolbar="collapsed">
-      <CollapsedListFilters activeFilterCount={statusFilter ? 1 : 0} testIdPrefix="fixed-assets" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
-        <SelectCombobox
-          value={staged.draft.statusFilter}
-          onChange={(e) => staged.setDraft({ statusFilter: e.target.value })}
-        >
-          <option value="">All statuses</option>
-          <option value="active">Active</option>
-          <option value="fully_depreciated">Fully Depreciated</option>
-          <option value="disposed">Disposed</option>
-          <option value="voided">Voided</option>
-        </SelectCombobox>
+      <CollapsedListFilters activeFilterCount={statusFilter.length ? 1 : 0} testIdPrefix="fixed-assets" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
+        <MultiSelectDropdown
+          label="Status"
+          options={statusOptions({ "active": "Active", "fully_depreciated": "Fully Depreciated", "disposed": "Disposed", "voided": "Voided" })}
+          selected={staged.draft.statusFilter}
+          onChange={(next) => staged.setDraft({ statusFilter: next })}
+          allLabel="All statuses"
+          data-testid="fixed-assets-status-filter"
+        />
       </CollapsedListFilters>
       <span className="text-xs text-gray-500">
         {total.toLocaleString()} asset{total !== 1 ? "s" : ""}

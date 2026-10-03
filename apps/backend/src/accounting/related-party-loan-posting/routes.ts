@@ -25,6 +25,7 @@ import { currentAuthUser, validationError, withCompanyScope } from "../shared.js
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { buildLoanSchedule } from "./schedule.service.js";
 import { prepareInterestAccrual } from "./interest-accrual.service.js";
+import { statusListCondition, statusListParam } from "../../lib/status-list.js";
 
 const listQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -33,7 +34,8 @@ const listQuerySchema = z.object({
     .enum(["bill", "settlement", "cash_advance", "expense", "loan_out", "repayment", "intercompany"])
     .optional(),
   counterparty_id: z.string().uuid().optional(),
-  status: z.enum(["draft", "open", "paid", "reversed"]).optional(),
+  // U12 — multi-select: ?status=a&status=b (one value still accepted).
+  status: statusListParam(["draft", "open", "paid", "reversed"] as const),
   from: z.string().date().optional(),
   to: z.string().date().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
@@ -89,7 +91,7 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
         const filters: string[] = ["e.operating_company_id = $1::uuid", "e.deleted_at IS NULL"];
         // void-not-delete: a reversed entry is retained forever but must not inflate the register's
         // running balance. It is included only when the caller asks for that status explicitly.
-        if (!q.status) filters.push("e.reversed_at IS NULL");
+        if (!q.status?.length) filters.push("e.reversed_at IS NULL");
         if (q.direction) {
           values.push(q.direction);
           filters.push(`e.direction = $${values.length}`);
@@ -102,10 +104,11 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
           values.push(q.counterparty_id);
           filters.push(`e.counterparty_id = $${values.length}`);
         }
-        if (q.status) {
-          values.push(q.status);
-          filters.push(`e.status = $${values.length}`);
-        }
+        const statusCond = statusListCondition("e.status", q.status, (v) => {
+          values.push(v);
+          return `$${values.length}`;
+        });
+        if (statusCond) filters.push(statusCond);
         if (q.from) {
           values.push(q.from);
           filters.push(`e.entry_date >= $${values.length}::date`);

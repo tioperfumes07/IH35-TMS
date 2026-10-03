@@ -29,6 +29,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
 import { FORM_SELECT_CLASS } from "../../../components/forms/inputClass";
 import { LoanApplicationWizard } from "./LoanApplicationWizard";
+import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 
 const DIRECTIONS: Array<{ value: "" | LoanDirection; label: string }> = [
   { value: "", label: "All directions" },
@@ -57,7 +58,8 @@ export function LoansAdvancesPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [direction, setDirection] = useState<"" | LoanDirection>("");
-  const [status, setStatus] = useState<"" | LoanStatus>("");
+  // U12 (owner UI register 2026-10-03) — status is a multi-select; none picked = every live status (reversed hidden).
+  const [status, setStatus] = useState<LoanStatus[]>([]);
   const [targetType, setTargetType] = useState<"" | LoanTargetType>("");
   const [wizardOpen, setWizardOpen] = useState(false);
 
@@ -67,7 +69,7 @@ export function LoansAdvancesPage() {
       listRelatedPartyLoans({
         operating_company_id: companyId,
         ...(direction ? { direction } : {}),
-        ...(status ? { status } : {}),
+        ...(status.length ? { status } : {}),
         ...(targetType ? { target_type: targetType } : {}),
         limit: 100,
       }),
@@ -109,18 +111,14 @@ export function LoansAdvancesPage() {
             </option>
           ))}
         </select>
-        <select
-          className={`${FORM_SELECT_CLASS} max-w-[180px]`}
-          value={status}
-          onChange={(e) => setStatus(e.target.value as "" | LoanStatus)}
-          aria-label="Filter by status"
-        >
-          {STATUSES.map((s) => (
-            <option key={s || "all"} value={s}>
-              {s || "All statuses"}
-            </option>
-          ))}
-        </select>
+        <MultiSelectDropdown
+          label="Status"
+          options={STATUSES.filter((st): st is LoanStatus => st !== "").map((st) => ({ value: st, label: st }))}
+          selected={status}
+          onChange={(next) => setStatus(next as LoanStatus[])}
+          allLabel="All statuses"
+          data-testid="loans-status-filter"
+        />
         <select
           className={`${FORM_SELECT_CLASS} max-w-[200px]`}
           value={targetType}

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement, ReactNode } from "react";
 import {
@@ -140,10 +140,10 @@ describe("InvoicesListPage has_balance deep-link + URL sync (A/R aging contract)
     } as never);
   });
 
-  async function openFilters() {
-    const user = userEvent.setup();
-    await user.click(screen.getByTestId("invoices-filters-toggle"));
-    return user;
+  // U12 (owner UI register 2026-10-03) — the toolbar shows its filters inline (MoneyListToolbar, no toggle); Status is a
+  // multi-select (repeated ?status=), "With balance" and "Not sent" are their own toggles.
+  function statusTrigger() {
+    return within(screen.getByTestId("invoices-status-filter")).getByRole("button", { expanded: false });
   }
 
   it("honors ?customer_id=&has_balance=true via server filter (not client with_balance page slice)", async () => {
@@ -160,13 +160,13 @@ describe("InvoicesListPage has_balance deep-link + URL sync (A/R aging contract)
         expect.objectContaining({
           customer_id: CUSTOMER_ID,
           has_balance: true,
-          status: undefined,
+          // FLT-03 — no ?status= means Active (voided hidden); "With balance" narrows it server-side.
+          status: ["active"],
         })
       );
     });
 
-    await openFilters();
-    expect(await screen.findByDisplayValue("With balance")).toBeInTheDocument();
+    expect(await screen.findByTestId("invoices-filter-with-balance")).toBeChecked();
     await waitFor(() => expect(screen.getByText("INV-1")).toBeInTheDocument());
     expect(screen.getByText(/Rows: 2 of 2/)).toBeInTheDocument();
   });
@@ -195,16 +195,30 @@ describe("InvoicesListPage has_balance deep-link + URL sync (A/R aging contract)
     });
   });
 
+  it("a second status adds a second ?status= (multi-select) and the server gets both", async () => {
+    render(wrap(<InvoicesListPage />, `/accounting/invoices?status=sent`));
+    await waitFor(() => expect(accountingApi.listInvoices).toHaveBeenCalledWith(COMPANY_ID, expect.objectContaining({ status: ["sent"] })));
+    const user = userEvent.setup();
+    await user.click(statusTrigger());
+    await user.click(within(screen.getByRole("listbox")).getByRole("button", { name: "Partial" }));
+    await waitFor(() => {
+      const q = screen.getByTestId("location-search").textContent ?? "";
+      expect(q).toContain("status=sent");
+      expect(q).toContain("status=partial");
+    });
+    await waitFor(() =>
+      expect(accountingApi.listInvoices).toHaveBeenCalledWith(COMPANY_ID, expect.objectContaining({ status: ["sent", "partial"] }))
+    );
+  });
+
   it("writes status/has_balance/customer_id bidirectionally into searchParams on filter change", async () => {
     render(wrap(<InvoicesListPage />, `/accounting/invoices?customer_id=${CUSTOMER_ID}&has_balance=true`));
 
     await waitFor(() => expect(accountingApi.listInvoices).toHaveBeenCalled());
-    const user = await openFilters();
-    const statusSelect = await screen.findByDisplayValue("With balance");
-    await user.selectOptions(statusSelect, "sent");
-    // Filters are staged (useStagedListFilters) — a draft change only commits to the URL/query
-    // once Apply is clicked, matching the shared CollapsedListFilters Apply/Cancel/Reset chrome.
-    await user.click(screen.getByRole("button", { name: "Apply" }));
+    const user = userEvent.setup();
+    await user.click(await screen.findByTestId("invoices-filter-with-balance"));
+    await user.click(statusTrigger());
+    await user.click(within(screen.getByRole("listbox")).getByRole("button", { name: "Sent" }));
 
     await waitFor(() => {
       const q = screen.getByTestId("location-search").textContent ?? "";
@@ -217,7 +231,8 @@ describe("InvoicesListPage has_balance deep-link + URL sync (A/R aging contract)
       expect(accountingApi.listInvoices).toHaveBeenCalledWith(
         COMPANY_ID,
         expect.objectContaining({
-          status: "sent",
+          // Active stays picked; Sent is added (multi-select = Active OR Sent).
+          status: ["active", "sent"],
           has_balance: undefined,
           customer_id: CUSTOMER_ID,
         })
@@ -263,13 +278,12 @@ describe("InvoicesListPage has_balance deep-link + URL sync (A/R aging contract)
         COMPANY_ID,
         expect.objectContaining({
           customer_id: CUSTOMER_B,
-          status: "partial",
+          status: ["partial"],
           has_balance: undefined,
         })
       );
     });
-    await openFilters();
-    expect(await screen.findByDisplayValue("Partial")).toBeInTheDocument();
+    expect(within(screen.getByTestId("invoices-status-filter")).getByText("Status (1)")).toBeInTheDocument();
     expect(screen.getByTestId("location-search").textContent).toContain("status=partial");
   });
 });
@@ -323,8 +337,9 @@ describe("InvoicesListPage LV-AR-OPEN-INCLUDES-VOIDED (ACCT-F5027)", () => {
     expect(screen.getByText(/Total billed:\s*\$1,200\.00/)).toBeInTheDocument();
     expect(screen.getByText(/Open:\s*\$950\.00/)).toBeInTheDocument();
 
-    // Document Total column may still show historical $2,450.00; Open cells for voids are $0.00.
-    expect(screen.getByText("$2,450.00")).toBeInTheDocument();
-    expect(screen.getAllByText("$0.00").length).toBeGreaterThanOrEqual(2);
+    // The Total and Open cells of both void rows render $0.00 (invoiceTotalCentsForAggregate / invoiceOpenCentsForDisplay);
+    // the voided $2,450.00 appears nowhere on the list.
+    expect(screen.queryByText("$2,450.00")).toBeNull();
+    expect(screen.getAllByText("$0.00").length).toBeGreaterThanOrEqual(4);
   });
 });

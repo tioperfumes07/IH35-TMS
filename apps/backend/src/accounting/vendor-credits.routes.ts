@@ -7,6 +7,7 @@ import { DuplicateDocumentNumberError, nextVendorCreditDisplayId, resolveVendorC
 import { duplicateDocumentNumberBody, suggestFromLastSaved } from "../lib/qbo-custom-document-number.js";
 import { resolveVendorIdentitySet } from "./vendor-identity.js";
 import { PostingEngineError, postSourceTransactionInClientTx, reversePostedSourceTransactionInClientTx } from "./posting-engine.service.js";
+import { statusListCondition, statusListParam } from "../lib/status-list.js";
 
 // CUSTVEND-PAR-1: Vendor credit CRUD + apply-to-bill + void.
 // NO GL posting — marks QBO-parity data only. GL rides the existing bill-GL chain when flags turn ON.
@@ -49,7 +50,8 @@ const listQuerySchema = companyQuerySchema.extend({
   // R-102-B item 5 — "active" is a frontend-facing pseudo-status (not a real vendor_credits.status
   // value): open/applied are both live states, voided is the only dead one; see credit-
   // memos.routes.ts's identical listQuerySchema for the sibling family's same pattern.
-  status: z.enum(["open", "applied", "voided", "active"]).optional(),
+  // U12 — multi-select: ?status=a&status=b (one value still accepted).
+  status: statusListParam(["open", "applied", "voided", "active"] as const),
 });
 
 function canWriteVendorCredits(role: string) {
@@ -72,12 +74,11 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
         params.push(query.data.vendor_id);
         conditions.push(`vc.vendor_id = $${params.length}`);
       }
-      if (query.data.status === "active") {
-        conditions.push(`vc.status <> 'voided'`);
-      } else if (query.data.status) {
-        params.push(query.data.status);
-        conditions.push(`vc.status = $${params.length}`);
-      }
+      const statusCond = statusListCondition("vc.status", query.data.status, (v) => {
+        params.push(v);
+        return `$${params.length}`;
+      }, { notVoidedPseudo: { value: "active", excludes: ["voided"] } });
+      if (statusCond) conditions.push(statusCond);
 
       const res = await client.query(
         `SELECT

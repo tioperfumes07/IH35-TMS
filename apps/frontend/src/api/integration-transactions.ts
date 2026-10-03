@@ -1,4 +1,5 @@
 import { apiRequest } from "./client";
+import { appendStatusList } from "../lib/statusListParams";
 
 export type IntegrationTxnBankTransaction = {
   txn_date: string | null;
@@ -36,7 +37,7 @@ export type IntegrationTxnList = {
 
 export function getIntegrationTransactions(input: {
   operating_company_id: string;
-  sync_status?: string;
+  sync_status?: string | readonly string[];
   entity_type?: string;
   date_from?: string;
   date_to?: string;
@@ -45,7 +46,7 @@ export function getIntegrationTransactions(input: {
   offset?: number;
 }) {
   const q = new URLSearchParams({ operating_company_id: input.operating_company_id });
-  if (input.sync_status) q.set("sync_status", input.sync_status);
+  appendStatusList(q, "sync_status", input.sync_status);
   if (input.entity_type) q.set("entity_type", input.entity_type);
   if (input.date_from) q.set("date_from", input.date_from);
   if (input.date_to) q.set("date_to", input.date_to);

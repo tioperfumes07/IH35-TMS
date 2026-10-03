@@ -894,6 +894,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-work-order-copy-and-list-columns",
     ["db/migrations/202615380700_document_work_order_copies.sql", "apps/backend/src/accounting/bills.service.ts", "apps/backend/src/accounting/expenses.routes.ts", "apps/backend/src/work-orders/work-orders.routes.ts", "apps/frontend/src/pages/accounting/BillsPage.tsx", "apps/frontend/src/pages/accounting/ExpensesListPage.tsx", "apps/frontend/src/pages/accounting/BillDetailPage.tsx", "apps/frontend/src/pages/accounting/ExpenseDetailPage.tsx", "apps/frontend/src/components/accounting/WorkOrderCopyLinks.tsx", "scripts/verify-work-order-copy-and-list-columns.mjs"],
   ],
+  // U12 (owner) — every Accounting / Banking status filter is the shared multi-select; list endpoints take a repeated ?status=.
+  [
+    "verify-accounting-status-filters-are-multiselect",
+    ["apps/frontend/src/pages/accounting/", "apps/frontend/src/pages/banking/", "apps/backend/src/lib/status-list.ts", "apps/backend/src/accounting/", "apps/backend/src/banking/transfers.service.ts", "apps/backend/src/driver-finance/", "apps/backend/src/integrations/qbo/qbo-reconcile-read.service.ts", "scripts/verify-accounting-status-filters-are-multiselect.mjs"],
+  ],
   // ROUND 368.2(b) — a bank line may not sit matched to nothing (deferred constraint triggers, both sides).
   [
     "verify-no-bank-line-is-matched-to-nothing",

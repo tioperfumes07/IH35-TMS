@@ -1,4 +1,5 @@
 import { apiRequest } from "./client";
+import { appendStatusList } from "../lib/statusListParams";
 
 export type AbandonmentChargebackRow = Record<string, unknown> & {
   id: string;
@@ -10,13 +11,15 @@ export type AbandonmentChargebackRow = Record<string, unknown> & {
   settlement_display_id: string | null;
 };
 
+export type AbandonmentStatusFilter = "pending" | "approved" | "disputed" | "applied" | "reversed" | "all";
+
 export async function listAbandonmentChargebacks(params: {
   operating_company_id: string;
-  status?: "pending" | "approved" | "disputed" | "applied" | "reversed" | "all";
+  status?: AbandonmentStatusFilter | readonly AbandonmentStatusFilter[];
   driver_id?: string;
 }) {
   const qs = new URLSearchParams({ operating_company_id: params.operating_company_id });
-  if (params.status) qs.set("status", params.status);
+  appendStatusList(qs, "status", params.status);
   if (params.driver_id) qs.set("driver_id", params.driver_id);
   return apiRequest<{ abandonment_chargebacks: AbandonmentChargebackRow[] }>(`/api/v1/abandonment-chargebacks?${qs.toString()}`);
 }

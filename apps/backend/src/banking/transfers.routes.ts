@@ -53,7 +53,8 @@ const listQuerySchema = z.object({
   to: z.string().date().optional(),
   type: z.enum(["bank_to_bank", "cc_payment", "cash_deposit", "owner_contribution", "owner_distribution"]).optional(),
   account_id: z.string().uuid().optional(),
-  status: z.enum(["active", "revoked"]).optional(),
+  // U12 — multi-select: ?status=a&status=b (one value still accepted).
+  status: z.union([z.enum(["active", "revoked"]), z.array(z.enum(["active", "revoked"]))]).optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });

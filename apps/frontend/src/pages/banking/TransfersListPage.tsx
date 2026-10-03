@@ -23,6 +23,8 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { Modal } from "../../components/Modal";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { OnlineBankingMatchBanner } from "../../components/accounting/OnlineBankingMatchBanner";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { statusOptions } from "../../lib/statusListParams";
 
 const PAGE_SIZE = 50;
 
@@ -115,9 +117,10 @@ export function TransfersListPage() {
   const [fromDate, setFromDate] = useState(new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString().slice(0, 10));
   const [toDate, setToDate] = useState(new Date().toISOString().slice(0, 10));
   const [type, setType] = useState<TransferType | "">("");
-  const [status, setStatus] = useState<"active" | "revoked" | "">("active");
+  // U12 (owner UI register 2026-10-03) — status is a multi-select; default Active; none picked = every transfer.
+  const [status, setStatus] = useState<Array<"active" | "revoked">>(["active"]);
   const [accountId, setAccountId] = useState("");
-  const staged = useStagedListFilters({ applied: { fromDate, toDate, type, status, accountId }, empty: { fromDate: "", toDate: "", type: "" as const, status: "" as const, accountId: "" }, onApply: (next) => { setFromDate(next.fromDate); setToDate(next.toDate); setType(next.type); setStatus(next.status); setAccountId(next.accountId); setOffset(0); } });
+  const staged = useStagedListFilters({ applied: { fromDate, toDate, type, status, accountId }, empty: { fromDate: "", toDate: "", type: "" as const, status: [] as Array<"active" | "revoked">, accountId: "" }, onApply: (next) => { setFromDate(next.fromDate); setToDate(next.toDate); setType(next.type); setStatus(next.status); setAccountId(next.accountId); setOffset(0); } });
   const [offset, setOffset] = useState(0);
   const [revokingId, setRevokingId] = useState("");
   const [transferModalOpen, setTransferModalOpen] = useState(false);
@@ -177,7 +180,7 @@ export function TransfersListPage() {
         from: fromDate || undefined,
         to: toDate || undefined,
         type: (type || undefined) as TransferType | undefined,
-        status: (status || undefined) as "active" | "revoked" | undefined,
+        status,
         accountId: accountId || undefined,
         limit: PAGE_SIZE,
         offset,
@@ -436,7 +439,7 @@ export function TransfersListPage() {
 
       <CollapsedListFilters
         activeFilterCount={
-          (fromDate || toDate ? 1 : 0) + (type ? 1 : 0) + (accountId ? 1 : 0) + (status ? 1 : 0)
+          (fromDate || toDate ? 1 : 0) + (type ? 1 : 0) + (accountId ? 1 : 0) + (status.length ? 1 : 0)
         }
         onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
         testIdPrefix="transfers"
@@ -473,14 +476,14 @@ export function TransfersListPage() {
               ))}
             </SelectCombobox>
           </label>
-          <label className="text-xs text-gray-600">
-            Status
-            <SelectCombobox value={staged.draft.status} onChange={(e) => staged.setDraft({ ...staged.draft, status: e.target.value as "active" | "revoked" | "" })} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs">
-              <option value="">All</option>
-              <option value="active">Active</option>
-              <option value="revoked">Revoked</option>
-            </SelectCombobox>
-          </label>
+          <MultiSelectDropdown
+            label="Status"
+            options={statusOptions({ "active": "Active", "revoked": "Revoked" })}
+            selected={staged.draft.status}
+            onChange={(next) => staged.setDraft({ ...staged.draft, status: next as Array<"active" | "revoked"> })}
+            allLabel="All"
+            data-testid="transfers-status-filter"
+          />
         </div>
       </CollapsedListFilters>
 

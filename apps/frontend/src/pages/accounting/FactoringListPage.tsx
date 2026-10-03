@@ -9,7 +9,6 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SubmitFactoringModal } from "./SubmitFactoringModal";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
-import { SelectCombobox } from "../../components/Combobox";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityPicker } from "../../components/EntityPicker";
@@ -31,6 +30,7 @@ const STATUS_OPTIONS: Array<{ value: "all" | "active" | FactoringAdvance["status
 
 import { formatUsdCents } from "../../lib/money";
 import { FACTORING_TAB_PATH } from "../../router/route-manifest";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -71,14 +71,15 @@ export function FactoringListPage() {
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
   // GO-23 row16 (owner FINISH LAW 2026-09-03): voided hidden by default, same convention as
   // Bills/Expenses/Invoices/Payments lists (all default status="active").
-  const [status, setStatus] = useState<"all" | "active" | FactoringAdvance["status"]>("active");
+  // U12 (owner UI register 2026-10-03) — status is a multi-select; default Active; none picked = every status.
+  const [status, setStatus] = useState<Array<"all" | "active" | FactoringAdvance["status"]>>(["active"]);
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const loadId = deepLinkLoadId ?? "";
   const staged = useStagedListFilters({
     applied: { status, fromDate, toDate, loadId },
-    empty: { status: "active" as const, fromDate: "", toDate: "", loadId: "" },
+    empty: { status: ["active"] as Array<"all" | "active" | FactoringAdvance["status"]>, fromDate: "", toDate: "", loadId: "" },
     onApply: (next) => {
       setStatus(next.status);
       setFromDate(next.fromDate);
@@ -147,7 +148,7 @@ export function FactoringListPage() {
   }
 
   const factoringActiveFilterCount =
-    (status !== "all" ? 1 : 0) + (fromDate || toDate ? 1 : 0) + (deepLinkLoadId ? 1 : 0);
+    (status.length === 1 && status[0] === "active" ? 0 : status.length ? 1 : 0) + (fromDate || toDate ? 1 : 0) + (deepLinkLoadId ? 1 : 0);
 
   const filterBar = (
     <CollapsedListFilters
@@ -178,16 +179,14 @@ export function FactoringListPage() {
             dataTestId="factoring-filter-load"
           />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-          Status
-          <SelectCombobox value={staged.draft.status} onChange={(event) => staged.setDraft({ ...staged.draft, status: event.target.value as "all" | FactoringAdvance["status"] })} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
-            {STATUS_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </SelectCombobox>
-        </label>
+        <MultiSelectDropdown
+          label="Status"
+          options={STATUS_OPTIONS.filter((option) => option.value !== "all").map((option) => ({ value: option.value, label: option.label }))}
+          selected={staged.draft.status}
+          onChange={(next) => staged.setDraft({ ...staged.draft, status: next as Array<"all" | "active" | FactoringAdvance["status"]> })}
+          allLabel="All (include voided)"
+          data-testid="factoring-status-filter"
+        />
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Date from
           <DatePicker value={staged.draft.fromDate} onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })} className="h-9" />
@@ -207,7 +206,7 @@ export function FactoringListPage() {
 
       {/* R-102-B item 5 — owner: "a list that silently hides is the same class of defect as a
           badge that never renders." Company-wide, independent of every non-status filter. */}
-      {status === "active" && typeof query.data?.voided_count === "number" && query.data.voided_count > 0 ? (
+      {status.length === 1 && status[0] === "active" && typeof query.data?.voided_count === "number" && query.data.voided_count > 0 ? (
         <p className="text-xs text-gray-500" data-testid="factoring-voided-count">
           {rows.length} live, {query.data.voided_count} voided (hidden)
         </p>

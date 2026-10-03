@@ -25,6 +25,7 @@ import {
   reinstateDocumentThenVoidReversal,
   ReinstateDocumentError,
 } from "./reinstate-document.service.js";
+import { statusListCondition, statusListParam } from "../lib/status-list.js";
 
 const PREPAID_POST_FLAG = "PREPAID_EXPENSES_POST_ENABLED";
 
@@ -33,7 +34,8 @@ function accountingRoles(role: string) {
 }
 
 const listQuerySchema = companyQuerySchema.extend({
-  status: z.enum(["active", "fully_amortized", "voided"]).optional(),
+  // U12 — multi-select: ?status=a&status=b (one value still accepted).
+  status: statusListParam(["active", "fully_amortized", "voided"] as const),
   date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
@@ -181,7 +183,11 @@ async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
       const params: unknown[] = [operating_company_id];
       let pi = 2;
 
-      if (status) { conds.push(`pa.status = $${pi++}`); params.push(status); }
+      const statusCond = statusListCondition("pa.status", status, (v) => {
+        params.push(v);
+        return `$${pi++}`;
+      });
+      if (statusCond) conds.push(statusCond);
       if (date_from) { conds.push(`pa.purchase_date >= $${pi++}::date`); params.push(date_from); }
       if (date_to) { conds.push(`pa.purchase_date < ($${pi++}::date + interval '1 day')`); params.push(date_to); }
 

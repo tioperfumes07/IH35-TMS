@@ -4,19 +4,20 @@ import { listLoads, type DispatchLoadRow, type LoadStatus } from "../api/loads";
 
 export type LoadStatusFilter = "all" | "delivered" | "in_transit";
 
-export function useInvoiceCreateFromLoad(operatingCompanyId: string, options: { search?: string; statusFilter?: LoadStatusFilter; page?: number; pageSize?: number }) {
+export function useInvoiceCreateFromLoad(operatingCompanyId: string, options: { search?: string; statusFilter?: LoadStatusFilter | readonly LoadStatusFilter[]; page?: number; pageSize?: number }) {
   const page = options.page ?? 1;
   const pageSize = options.pageSize ?? 25;
   const offset = (page - 1) * pageSize;
 
-  const status: LoadStatus[] | undefined =
-    options.statusFilter === "delivered"
-      ? ["delivered"]
-      : options.statusFilter === "in_transit"
-        ? ["in_transit", "dispatched", "at_pickup", "at_delivery"]
-        : undefined;
-  // ROUND 283.3 — board_scope is mandatory (Lead 2026-09-30). in_transit → live; delivered/all → history.
-  const board_scope: "live" | "history" = options.statusFilter === "in_transit" ? "live" : "history";
+  // U12 (owner UI register 2026-10-03) — the status filter is a multi-select; none / "all" = every status.
+  const picked = (Array.isArray(options.statusFilter) ? options.statusFilter : options.statusFilter ? [options.statusFilter] : []).filter(
+    (f): f is Exclude<LoadStatusFilter, "all"> => f !== "all"
+  );
+  const status: LoadStatus[] | undefined = picked.length
+    ? picked.flatMap((f): LoadStatus[] => (f === "delivered" ? ["delivered"] : ["in_transit", "dispatched", "at_pickup", "at_delivery"]))
+    : undefined;
+  // ROUND 283.3 — board_scope is mandatory (Lead 2026-09-30). in_transit alone → live; anything else → history.
+  const board_scope: "live" | "history" = picked.length === 1 && picked[0] === "in_transit" ? "live" : "history";
 
   const loadsQuery = useQuery({
     queryKey: ["invoice-create", "loads", operatingCompanyId, options.search, options.statusFilter, page, pageSize],

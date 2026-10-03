@@ -33,6 +33,7 @@ import {
 } from "../integrations/qbo/qbo-reconcile-read.service.js";
 import { withCurrentUser } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { statusListParam } from "../lib/status-list.js";
 
 export const QBO_RECONCILE_UI_FLAG = "QBO_RECONCILE_UI_ENABLED";
 
@@ -53,7 +54,8 @@ async function reconcileUiEnabled(userUuid: string, operatingCompanyId: string):
 }
 
 const capturesQuerySchema = companyQuerySchema.extend({
-  status: z.enum(["received", "fetched", "applied", "conflict", "error", "duplicate"]).optional(),
+  // U12 — multi-select: ?status=a&status=b (one value still accepted).
+  status: statusListParam(["received", "fetched", "applied", "conflict", "error", "duplicate"] as const),
   entity_type: z.string().trim().min(1).max(64).optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
