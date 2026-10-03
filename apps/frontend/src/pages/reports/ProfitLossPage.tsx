@@ -244,15 +244,15 @@ export function ProfitLossPage() {
       {query.data ? (
         <div className="grid gap-2 md:grid-cols-3">
           <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
-            <div className="text-[11px] font-semibold uppercase text-gray-500">Revenue total</div>
+            <div className="text-section-header font-semibold uppercase text-gray-500">Revenue total</div>
             <div className="text-page-title font-semibold">{money(query.data.revenue.total)}</div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
-            <div className="text-[11px] font-semibold uppercase text-gray-500">Gross profit</div>
+            <div className="text-section-header font-semibold uppercase text-gray-500">Gross profit</div>
             <div className="text-page-title font-semibold">{money(query.data.gross_profit)}</div>
           </div>
           <div className={`rounded-sm border bg-white px-3 py-2 ${query.data.net_income < 0 ? "border-rose-300" : "border-emerald-200"}`}>
-            <div className="text-[11px] font-semibold uppercase text-gray-500">Net income</div>
+            <div className="text-section-header font-semibold uppercase text-gray-500">Net income</div>
             <div className={`text-page-title font-semibold ${query.data.net_income < 0 ? "text-rose-700" : "text-emerald-700"}`}>{money(query.data.net_income)}</div>
           </div>
         </div>
@@ -270,7 +270,7 @@ export function ProfitLossPage() {
             <div key={section.key} className="overflow-auto rounded-sm border border-gray-200 bg-white">
               <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold">{section.title}</div>
               <table className="min-w-full text-left text-xs">
-                <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                <thead className="border-b border-gray-200 bg-gray-50 text-section-header font-semibold uppercase tracking-wide text-gray-600">
                   <tr>
                     {showCodes ? <th className="px-3 py-2">Account #</th> : null}
                     <th className="px-3 py-2">Account</th>
