@@ -33,6 +33,9 @@ export function audit(src) {
   if (/q\.isError\s*\?\s*\(\s*<div className="[^"]*(?:rounded|border)/.test(src)) {
     problems.push(`${TARGET}: error alert must stay flat inside the panel frame (no box-in-box)`);
   }
+  if (src.includes("text-[11px]")) {
+    problems.push(`${TARGET}: must not use text-[11px] — use text-xs`);
+  }
   return problems;
 }
 
