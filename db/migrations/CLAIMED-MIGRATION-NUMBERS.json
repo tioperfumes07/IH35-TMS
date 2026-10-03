@@ -1742,6 +1742,86 @@
       "claimed_at": "2026-10-03",
       "purpose": "Dispatch D1: composite same-company FKs on mdata.loads (7) and mdata.load_stops (4)"
     },
+    "202615330913": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D2a: UNIQUE INDEX CONCURRENTLY dispatch.auto_status_suggestions (operating_company_id, key)"
+    },
+    "202615330914": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D2a: UNIQUE INDEX CONCURRENTLY mdata.unit_border_crossings (operating_company_id, key)"
+    },
+    "202615330915": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D2a: UNIQUE INDEX CONCURRENTLY dispatch.cargo_sensor_readings (operating_company_id, key)"
+    },
+    "202615330916": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D2a: UNIQUE INDEX CONCURRENTLY safety.incidents (operating_company_id, key)"
+    },
+    "202615330917": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D2a: UNIQUE INDEX CONCURRENTLY mdata.load_stops (operating_company_id, key)"
+    },
+    "202615330918": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D2a: UNIQUE INDEX CONCURRENTLY dispatch.stop_arrivals (operating_company_id, key)"
+    },
+    "202615330919": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D2a: UNIQUE INDEX CONCURRENTLY geo.geofence_events (operating_company_id, key)"
+    },
+    "202615330920": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D2a: UNIQUE INDEX CONCURRENTLY dispatch.detention_requests (operating_company_id, key)"
+    },
+    "202615330921": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D2a: UNIQUE INDEX CONCURRENTLY dispatch.detention_events (operating_company_id, key)"
+    },
+    "202615330922": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D2a: UNIQUE INDEX CONCURRENTLY accounting.invoice_lines (operating_company_id, key)"
+    },
+    "202615330923": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D2a: composite same-company FKs on 11 dispatch tables (35)"
+    },
+    "202615330924": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D2b: UNIQUE INDEX CONCURRENTLY dispatch.pod_documents (operating_company_id, id)"
+    },
+    "202615330925": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D2b: UNIQUE INDEX CONCURRENTLY dispatch.non_owned_trailers (operating_company_id, id)"
+    },
+    "202615330926": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D2b: UNIQUE INDEX CONCURRENTLY insurance.claim (operating_company_id, id)"
+    },
+    "202615330927": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D2b: dispatch.load_eta_predictions gets operating_company_id derived from its load"
+    },
+    "202615330928": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D2b: composite same-company FKs on the remaining dispatch tables (35) + intransit_issues company NOT NULL"
+    },
     "202615321200": {
       "claimed_by": "cursor",
       "claimed_at": "2026-10-03",
