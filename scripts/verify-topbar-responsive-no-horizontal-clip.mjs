@@ -56,6 +56,9 @@ export function collectFailures({ topbar, switcher, css, shell }) {
   if (!/max-w-\[min\(280px,100%\)\]/.test(switcher)) {
     failures.push("CarrierSwitcher trigger must cap width with max-w-[min(280px,100%)]");
   }
+  // BANK-F91281 leftover refuse — CarrierSwitcher page-scoped text token ratchet
+  if (switcher.includes("text-[11px]")) failures.push("CarrierSwitcher.tsx: leftover text-[11px]");
+  if (switcher.includes("#8A92AB") || switcher.includes("#334155")) failures.push("CarrierSwitcher.tsx: leftover off-scale muted");
 
   if (!/responsive-breakpoints\.css/.test(shell)) {
     failures.push("Shell.tsx must import responsive-breakpoints.css so the top-bar stack is loaded");
@@ -110,6 +113,14 @@ function selftest() {
       console.error(`verify-topbar-responsive-no-horizontal-clip --selftest FAILED — planted ${p.name} escaped`);
       process.exit(1);
     }
+  }
+  const leftover = collectFailures({
+    ...clean,
+    switcher: `${clean.switcher}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`,
+  });
+  if (!leftover.some((e) => e.includes("leftover text-[11px]")) || !leftover.some((e) => e.includes("leftover off-scale muted"))) {
+    console.error("verify-topbar-responsive-no-horizontal-clip --selftest FAILED — leftover plant escaped\n" + leftover.join("\n"));
+    process.exit(1);
   }
 
   console.log("verify-topbar-responsive-no-horizontal-clip --selftest PASS");

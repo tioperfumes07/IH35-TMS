@@ -66,7 +66,7 @@ export function CarrierSwitcher() {
 
       {open ? (
         <div className="absolute right-0 z-30 mt-1 w-72 rounded-sm border border-gray-200 bg-white p-2 text-xs shadow-sm">
-          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Company context</div>
+          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Company context</div>
           <div className="space-y-1">
             {activeCompanies.map((company) => {
               const isSelected = company.id === selectedCompanyId;
@@ -76,7 +76,7 @@ export function CarrierSwitcher() {
                   <div className={`w-full text-left ${isSelected ? "font-semibold text-gray-900" : "text-gray-700"}`}>
                     {company.short_name || company.legal_name}
                   </div>
-                  <div className="mt-1 flex items-center justify-between text-[11px] text-gray-500">
+                  <div className="mt-1 flex items-center justify-between text-xs text-gray-500">
                     <span>{company.code}</span>
                     {isSelected ? <span>Current</span> : isDefault ? <span>Default</span> : null}
                   </div>
@@ -84,7 +84,7 @@ export function CarrierSwitcher() {
                     <div className="mt-2 flex items-center gap-2">
                       <Button
                         type="button"
-                        className="h-7 px-2 py-1 text-[11px]"
+                        className="h-7 px-2 py-1 text-xs"
                         disabled={switchingCompanyId !== null}
                         onClick={() => void switchCompany(company)}
                       >
@@ -94,7 +94,7 @@ export function CarrierSwitcher() {
                         <Button
                           variant="secondary"
                           type="button"
-                          className="h-7 px-2 py-1 text-[11px]"
+                          className="h-7 px-2 py-1 text-xs"
                           disabled={switchingCompanyId !== null}
                           onClick={async () => {
                             await setDefaultCompanyForUser(company.id);
@@ -110,7 +110,7 @@ export function CarrierSwitcher() {
                       <Button
                         variant="secondary"
                         type="button"
-                        className="h-7 px-2 py-1 text-[11px]"
+                        className="h-7 px-2 py-1 text-xs"
                         disabled={switchingCompanyId !== null}
                         onClick={async () => {
                           await setDefaultCompanyForUser(company.id);
