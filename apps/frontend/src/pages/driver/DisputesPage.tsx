@@ -11,7 +11,7 @@ export function DisputesPage() {
       <h2 className="text-xs font-semibold">{t("driver.disputes_title")}</h2>
       <p className="text-xs text-slate-700">{t("driver.disputes_blurb")}</p>
       {selectedCompany ? (
-        <p className="text-[11px] text-slate-500">
+        <p className="text-xs text-slate-500">
           Company scope: <span>{entityLabel(selectedCompany.short_name ?? selectedCompany.legal_name, selectedCompany.id, "Company")}</span>
         </p>
       ) : null}

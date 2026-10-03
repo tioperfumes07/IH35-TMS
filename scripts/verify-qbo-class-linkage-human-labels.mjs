@@ -36,6 +36,8 @@ function assertAll(srcs) {
   if (!/entityLabel\(selectedCompany\.short_name \?\? selectedCompany\.legal_name, selectedCompany\.id, "Company"\)/.test(disputes)) {
     problems.push(`${FILES[2]}: must render selected company human label`);
   }
+  if (disputes.includes("text-[11px]")) problems.push("leftover text-[11px]");
+  if (disputes.includes("#8A92AB") || disputes.includes("#334155")) problems.push("leftover off-scale muted");
   return problems;
 }
 
@@ -81,7 +83,14 @@ if (SELFTEST) {
     console.error(`${LABEL} SELFTEST FAILED live: ${live.join(" | ")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS`);
+  const leftoverPlanted = { ...srcs };
+  leftoverPlanted[FILES[2]] = `${srcs[FILES[2]]}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  const leftoverProblems = assertAll(leftoverPlanted);
+  if (!leftoverProblems.includes("leftover text-[11px]") || !leftoverProblems.includes("leftover off-scale muted")) {
+    console.error(`${LABEL} SELFTEST FAILED leftover plant escaped`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST leftover plant rejected`);
   process.exit(0);
 }
 
