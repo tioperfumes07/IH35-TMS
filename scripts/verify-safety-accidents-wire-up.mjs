@@ -36,6 +36,12 @@ export function collectFailures({ accidentsPage, sharedDrawer, tabsConfig, safet
   if (!/^\/\*\*[\s\S]*@deprecated/m.test(safetyHome.trimStart())) {
     failures.push("SafetyHome.tsx must carry @deprecated header");
   }
+  if (safetyHome.includes("text-[11px]")) {
+    failures.push("SafetyHome.tsx leftover text-[11px]");
+  }
+  if (safetyHome.includes("#8A92AB") || safetyHome.includes("#334155")) {
+    failures.push("SafetyHome.tsx leftover off-scale muted");
+  }
   if (!tabWrapper.includes("AccidentsPage")) {
     failures.push("AccidentsIncidentsTab must render AccidentsPage");
   }
@@ -74,6 +80,13 @@ function main() {
       if (!failures.some((failure) => failure.includes(expected))) {
         throw new Error(`mutation escaped: ${expected} (${JSON.stringify(failures)})`);
       }
+    }
+    const leftover = collectFailures({
+      ...good,
+      safetyHome: `${good.safetyHome}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`,
+    });
+    if (!leftover.some((f) => f.includes("leftover text-[11px]")) || !leftover.some((f) => f.includes("leftover off-scale muted"))) {
+      throw new Error(`leftover plant escaped: ${JSON.stringify(leftover)}`);
     }
     console.log(`verify:safety-accidents-wire-up SELFTEST OK ${mutations.length}/${mutations.length}`);
     return;
