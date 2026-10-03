@@ -17,9 +17,23 @@ surfaces fixed. **Guard:** `verify-accounting-surfaces-are-viewport-fluid.mjs`.
 
 ## 364.2 — REMOVE `Load costs` FROM ACCOUNTING (CC-2) — RULED
 Measured: `{ label: "Load costs", path: "/accounting/load-costs", section: "expenses" }`. Load profitability
-is a Dispatch concept and QBO has no equivalent. **Remove the subnav entry.** The Dispatch surface stays
-exactly as it is — nothing is deleted. What replaces the tab is the click-through: from a GL line to its load,
-which is what the `load_id` stamp (363-CC1-A) exists for. You reach the load from the money, not from a tab.
+is a Dispatch concept and QBO has no equivalent. **Remove the subnav entry only.** What replaces the tab is
+the click-through: from a GL line to its load, which is what the `load_id` stamp (363-CC1-A) exists for. You
+reach the load from the money, not from a nav tab.
+
+**Owner confirmed the removal and stated what the surface itself is for, 2026-10-03:** *"load costs renders
+the live loads and current costs related to that load."* So the Dispatch surface is not merely left alone — it
+has a job and it must do it:
+
+- It renders the **live load set** — the one canonical active load set, never a closed or voided load leaking
+  in. `verify-one-canonical-active-load-set` is one of the 31 guards failing on main right now (365.6), and it
+  is exactly this surface's correctness.
+- Each load shows its **current** cost — every expense, fuel purchase, toll, lumper, driver pay line and bill
+  posted against it **as of now**, derived from the GL postings through `load_id`, never from a stored total.
+- It is the forward half of the same linkage: from the load you see its money, and from the money you see its
+  load. Both directions, one source.
+
+Nothing is deleted. If CC-2 believes any page component should be, post it and get a written ruling first.
 
 ## 364.3 — TWO EXPENSE TABS, ONE CONCEPT (CC-2)
 Measured, both under `section: "expenses"`: `Expenses List` -> `/accounting/expenses/list` **and**
@@ -58,12 +72,27 @@ never through the expense poster.
 ## 364.8 — PRINT CHECKS LISTS ONLY CREATED-AND-NOT-PRINTED (CC-2) — RULED
 A print state on the check: to-print, printed, printed-at. The Print checks tab renders **only** to-print.
 
-**Ruled, on the owner's instruction to take the recommendation: the check number is assigned at PRINT time**,
-QBO-style, for print-later checks. A number assigned at creation and never printed burns a check number and
-breaks the sequence an auditor reads straight down. A check printed immediately takes its number at that
-moment, which is the same rule.
+**Ruled (owner, 2026-10-03): the check number is assigned at PRINT time and the field is EDITABLE**, exactly
+as QuickBooks does it. A number assigned at creation and never printed burns a check number and breaks the
+sequence an auditor reads straight down. A check printed immediately takes its number at that moment.
 
-**Guard:** `verify-check-number-assigned-at-print-and-sequence-unbroken.mjs` — live, no gaps in the sequence.
+Owner's words: *"the check numbers should follow sequence but as in QuickBooks we are able to input our own
+number if we change numbers etc."* So:
+
+- The next number is **proposed** from the sequence, never forced.
+- The owner can **type over it** — he changes check stock, starts a new box, voids a run, and the real number
+  on the paper is whatever is on the paper. The system follows the paper, not the other way round.
+- When he types a number, **the sequence continues from the number he typed.** That is QBO behavior and it is
+  the only behavior that stays true to the physical checkbook.
+- A **duplicate number warns** and names the existing check, QBO-style. It is a warning, not a refusal — the
+  owner may legitimately reuse a number after a void, and he decides.
+- A **gap** in the sequence is not an error either. It is **recorded and visible**, with the reason where one
+  exists (voided, destroyed, printer jam). An auditor reading the sequence straight down must be able to see
+  the gap and why.
+
+**Guard:** `verify-check-number-proposed-not-forced-and-gaps-are-recorded.mjs` — live: the proposal follows
+the last number used, a typed number is honored and continues the sequence, a duplicate warns, and every gap
+carries a record.
 
 ## 364.9 — EVERY BILLS SUB-TAB RENDERS ONLY ITS OWN TYPE (CC-2)
 
@@ -133,3 +162,45 @@ one should be, post it and get a written ruling first** — I withdrew exactly t
 and nearly had a seat delete working behaviour.
 
 **Linkage declaration required in every PR.** **NOBODY SEEDS ANY DATA ANYWHERE.**
+
+---
+
+## 364.15 — THE WORK ORDER TRAVELS WITH ITS BILL AND ITS EXPENSE (CC-2 surface · CC-3 linkage) — OWNER, 2026-10-03
+
+Owner: *"in the expense or bills tabs showing the bills or expenses for those as well and will show the order
+numbers etc. and a copy of the work order the system created."*
+
+Keeping `Work orders & bills` (364.13) is not enough. The linkage has to be visible **from the money side
+too**, which is the linkage law working in both directions.
+
+**On the bill and expense rows, in these tabs** — `Bill`, `Maintenance bill`, `Repair bill`, `Expenses`,
+`Expenses List`, `Receipts` and the Reclassify list:
+
+- A **work order column** showing the work order **number**, click-through to the work order. Where a row has
+  no work order the cell is empty and means "no work order", never blank-because-we-did-not-look.
+- The **unit** and the **trailer** the work order was written against, each click-through. A maintenance bill
+  that cannot name its unit is not linked.
+- The work order's **status** at a glance, so a bill paid against an open work order is visible as exactly
+  that.
+
+**On the bill and expense detail**:
+
+- **A copy of the work order the system created**, openable and printable from the document itself — the same
+  PDF the shop and the vendor see, stored in `docs.files` and linked, not regenerated differently each time it
+  is opened. A regenerated copy that drifts from what the vendor was handed is worthless as evidence.
+- Both directions resolve: work order -> its bill or expense (364.13), and bill or expense -> its work order
+  and its stored copy (this item). **Either direction missing is a linkage failure, not a UI gap.**
+
+**Canonical, do not drift:** `maintenance.work_orders` is the hub, `maintenance.*` is the schema — never
+`maint.*`. The bill links to `mdata.vendors`, never `mdata.qbo_vendors`. `docs.files` holds the stored copy.
+
+**Required value:** on live USMCA data, the count of maintenance and repair bills and expenses, the count
+carrying a work order number, and the count whose stored work-order copy opens. The gap between the first and
+the second is named row by row — some bills legitimately have no work order, and those are stated, not
+guessed at.
+
+**Guard:** `verify-maintenance-money-and-work-order-link-both-ways.mjs` — live, both directions, plus the
+stored copy resolves from `docs.files`.
+
+**Deadline:** with 364.9, **2026-10-06 18:00Z**. CC-3 owns the linkage and the refusal; CC-2 owns the columns,
+the detail panel and the print path.
