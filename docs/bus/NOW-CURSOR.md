@@ -1,5 +1,5 @@
 # NOW-CURSOR
-NOW: BANK-F91185 BatchSettlements leftover MERGED #24688 tip `2252c7a9d5` — finish your list, no handoffs
-ACK: CURSOR | ACK BANK-F91185 BATCH SETTLEMENTS TEXT TOKENS DONE | GO
+NOW: BANK-F91186 CashAdvanceRequests leftover MERGED #24691 tip `09f6e65a5d` — finish your list, no handoffs
+ACK: CURSOR | ACK BANK-F91186 CASH ADVANCE REQUESTS TEXT TOKENS DONE | GO
 READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-STANDING-ORDER-FINISH-YOUR-LIST-NO-HANDOFFS.md`
-THEN: leftover CashAdvanceRequestsPage · 363-CUR-A factoring home · 367.9 · 363-CUR-B/C
+THEN: leftover OwnerApprovalPortalPage · 363-CUR-A factoring home · 367.9 · 363-CUR-B/C
