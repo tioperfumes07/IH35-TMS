@@ -165,28 +165,31 @@ BEGIN
   IF v_coa IS NULL OR v_user IS NULL THEN RAISE EXCEPTION 'missing coa/user fixture'; END IF;
 
   INSERT INTO accounting.escrow_accounts (
-    operating_company_id, holder_id, holder_type, purpose, coa_account_id, balance_cents, status
-  ) VALUES (v_opco, v_holder, 'driver', 'driver_bond', v_coa, 0, 'active')
+    operating_company_id, holder_id, holder_type, purpose, coa_account_id, status
+  ) VALUES (v_opco, v_holder, 'driver', 'driver_bond', v_coa, 'active')
   RETURNING id INTO v_escrow;
 
-  SELECT balance_cents INTO v_bal0 FROM accounting.escrow_accounts WHERE id = v_escrow;
+  -- KILL THE SECOND SYSTEM table 1 (migration 202615380000): accounting.escrow_accounts.balance_cents is gone; the
+  -- balance is the 2100-00-nnn GL. What this trigger still owns is the posting_type contract: deposit / release /
+  -- forfeiture are accepted and recorded, anything else is refused — never a silent sign.
+  v_bal0 := 0;
 
   INSERT INTO accounting.escrow_postings (
     operating_company_id, escrow_account_id, posting_type, amount_cents, source_type,
     note, posted_by_user_id
   ) VALUES (v_opco, v_escrow, 'deposit', v_dep, 'manual', 'delta-proof deposit', v_user);
-  SELECT balance_cents INTO v_bal1 FROM accounting.escrow_accounts WHERE id = v_escrow;
-  IF v_bal1 <> v_bal0 + v_dep THEN
-    RAISE EXCEPTION 'deposit delta FAIL: bal0=% bal1=% expected=%', v_bal0, v_bal1, v_bal0 + v_dep;
+  SELECT count(*) INTO v_bal1 FROM accounting.escrow_postings WHERE escrow_account_id = v_escrow AND posting_type = 'deposit';
+  IF v_bal1 <> 1 THEN
+    RAISE EXCEPTION 'deposit not recorded: % row(s)', v_bal1;
   END IF;
 
   INSERT INTO accounting.escrow_postings (
     operating_company_id, escrow_account_id, posting_type, amount_cents, source_type,
     note, posted_by_user_id
   ) VALUES (v_opco, v_escrow, 'forfeiture', v_for, 'forfeit', 'delta-proof forfeit', v_user);
-  SELECT balance_cents INTO v_bal2 FROM accounting.escrow_accounts WHERE id = v_escrow;
-  IF v_bal2 <> v_bal1 - v_for THEN
-    RAISE EXCEPTION 'forfeiture delta FAIL: bal1=% bal2=% expected=% (would be + if ELSE bug)', v_bal1, v_bal2, v_bal1 - v_for;
+  SELECT count(*) INTO v_bal2 FROM accounting.escrow_postings WHERE escrow_account_id = v_escrow AND posting_type = 'forfeiture';
+  IF v_bal2 <> 1 THEN
+    RAISE EXCEPTION 'forfeiture not recorded: % row(s)', v_bal2;
   END IF;
 
   -- Prove adjustment still fails loud (no ELSE→+)

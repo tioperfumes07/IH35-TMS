@@ -83,8 +83,7 @@ DECLARE
   v_user uuid;
   v_for bigint := 20000;
   v_seed bigint := 50000;
-  v_acct_before bigint;
-  v_acct_after bigint;
+  v_postings int;
   v_df_before bigint;
   v_df_after bigint;
 BEGIN
@@ -104,8 +103,8 @@ BEGIN
   RETURNING id INTO v_driver;
 
   INSERT INTO accounting.escrow_accounts (
-    operating_company_id, holder_id, holder_type, purpose, coa_account_id, balance_cents, status
-  ) VALUES (v_opco, v_driver, 'driver', 'driver_bond', v_coa, v_seed, 'active')
+    operating_company_id, holder_id, holder_type, purpose, coa_account_id, status
+  ) VALUES (v_opco, v_driver, 'driver', 'driver_bond', v_coa, 'active')
   RETURNING id INTO v_escrow;
 
   INSERT INTO driver_finance.escrow_balances (
@@ -113,21 +112,14 @@ BEGIN
   ) VALUES (v_opco, v_driver, v_seed, 0, v_seed)
   RETURNING id INTO v_df;
 
-  SELECT balance_cents INTO v_acct_before FROM accounting.escrow_accounts WHERE id = v_escrow;
   SELECT current_balance_cents INTO v_df_before FROM driver_finance.escrow_balances WHERE id = v_df;
 
-  -- Mirror service: accounting posting (forfeiture if CHECK allows, else skip trigger path and direct UPDATE)
-  BEGIN
-    INSERT INTO accounting.escrow_postings (
-      operating_company_id, escrow_account_id, posting_type, amount_cents, source_type,
-      note, posted_by_user_id
-    ) VALUES (v_opco, v_escrow, 'forfeiture', v_for, 'forfeit', 'split-proof', v_user);
-  EXCEPTION WHEN check_violation THEN
-    -- #3542 not applied on this DB yet — apply signed delta manually to prove dual-store reconcile
-    UPDATE accounting.escrow_accounts
-       SET balance_cents = balance_cents - v_for, updated_at = now()
-     WHERE id = v_escrow;
-  END;
+  -- Mirror service: the accounting side is the escrow_postings forfeiture row (the balance itself is the 2100-00-nnn GL;
+  -- accounting.escrow_accounts.balance_cents died with KILL THE SECOND SYSTEM table 1, migration 202615380000).
+  INSERT INTO accounting.escrow_postings (
+    operating_company_id, escrow_account_id, posting_type, amount_cents, source_type,
+    note, posted_by_user_id
+  ) VALUES (v_opco, v_escrow, 'forfeiture', v_for, 'forfeit', 'split-proof', v_user);
 
   UPDATE driver_finance.escrow_balances
      SET current_balance_cents = current_balance_cents - v_for, last_updated_at = now()
@@ -137,20 +129,18 @@ BEGIN
     (operating_company_id, driver_id, escrow_balance_id, transaction_type, amount_cents, running_balance_cents, description)
   VALUES (v_opco, v_driver, v_df, 'forfeit', v_for, v_df_before - v_for, 'split-proof');
 
-  SELECT balance_cents INTO v_acct_after FROM accounting.escrow_accounts WHERE id = v_escrow;
+  SELECT count(*) INTO v_postings FROM accounting.escrow_postings
+   WHERE escrow_account_id = v_escrow AND posting_type = 'forfeiture' AND amount_cents = v_for;
   SELECT current_balance_cents INTO v_df_after FROM driver_finance.escrow_balances WHERE id = v_df;
 
-  IF v_acct_before - v_acct_after <> v_for THEN
-    RAISE EXCEPTION 'accounting delta % <> forfeited %', v_acct_before - v_acct_after, v_for;
+  IF v_postings <> 1 THEN
+    RAISE EXCEPTION 'accounting side: expected 1 forfeiture escrow_postings row of %, found %', v_for, v_postings;
   END IF;
   IF v_df_before - v_df_after <> v_for THEN
     RAISE EXCEPTION 'driver_finance delta % <> forfeited %', v_df_before - v_df_after, v_for;
   END IF;
-  IF v_acct_after <> v_df_after THEN
-    RAISE EXCEPTION 'stores diverge after forfeit: acct=% df=%', v_acct_after, v_df_after;
-  END IF;
 
-  RAISE NOTICE 'SPLIT_PROOF_OK both_net=% final=%', v_for, v_acct_after;
+  RAISE NOTICE 'SPLIT_PROOF_OK both_net=% final=%', v_for, v_df_after;
 END
 $proof$;
 ROLLBACK;
