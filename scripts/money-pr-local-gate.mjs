@@ -852,6 +852,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-one-entity-column",
     ["db/migrations/", "scripts/verify-one-entity-column.mjs"],
   ],
+  // Lead 10-03 (CC-1) — no row escapes its company: zero NULL operating_company_id, run UNSCOPED (named debt: purge population).
+  [
+    "verify-no-row-escapes-its-company",
+    ["db/migrations/", "apps/backend/src/accounting/", "apps/backend/src/dispatch/", "apps/backend/src/driver-finance/", "scripts/verify-no-row-escapes-its-company.mjs"],
+  ],
   // ROUND 342 Phase 4 — one scope column, one RLS policy on the factoring tables that carried a duplicate tenant policy.
   [
     "verify-factoring-one-scope-policy",
