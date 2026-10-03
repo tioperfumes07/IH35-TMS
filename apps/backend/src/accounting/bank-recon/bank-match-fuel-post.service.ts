@@ -7,6 +7,7 @@
  *
  * Fail-closed: null unit_id or null load_id is an ENGINE defect (owner), not a data soft-skip.
  */
+import { loadAtTimeSql } from "../../maintenance/driver-attribution.js";
 import {
   buildFuelTxnJeMemo,
   loadFuelTxnCreditSignals,
@@ -151,22 +152,17 @@ async function resolveLoadForUnitAt(
   unitId: string,
   atIso: string
 ): Promise<{ load_id: string; load_number: string | null } | null> {
-  // Active dispatch load on this unit at fill time (USMCA-scoped). Never invent — fail closed if none.
+  // The load on this unit at fill time — the ONE canonical rule (maintenance/driver-attribution.ts loadAtTimeSql: the
+  // trip under way by its first pickup / last delivery stop, NB-then-return aware; never created_at). This used to read
+  // l.unit_id / l.dispatched_at / l.delivered_at / l.completed_at — none of which exist on mdata.loads (it carries
+  // assigned_unit_id; delivery time lives on the stops), so the query raised on every call (verify-no-phantom-load-
+  // assignments). Never invent — no load at that time returns null.
   const res = await client.query<{ load_id: string; load_number: string | null }>(
     `
-      SELECT l.id::text AS load_id, l.load_number::text AS load_number
-        FROM mdata.loads l
-       WHERE l.operating_company_id = $1::uuid
-         AND l.unit_id = $2::uuid
-         AND l.voided_at IS NULL
-         AND l.is_sample_data IS NOT TRUE
-         AND COALESCE(l.dispatched_at, l.created_at) <= $3::timestamptz
-         AND (
-           l.status IN ('dispatched', 'at_pickup', 'in_transit', 'at_delivery', 'delivered', 'completed_docs_received')
-           OR COALESCE(l.delivered_at, l.completed_at) >= $3::timestamptz
-         )
-       ORDER BY COALESCE(l.dispatched_at, l.created_at) DESC
-       LIMIT 1
+      SELECT lat.load_id::text AS load_id, l.load_number::text AS load_number
+        FROM (SELECT $2::uuid AS unit_id) u
+        ${loadAtTimeSql("u.unit_id", "$3::timestamptz", "lat")}
+        JOIN mdata.loads l ON l.id = lat.load_id
     `,
     [operatingCompanyId, unitId, atIso]
   );

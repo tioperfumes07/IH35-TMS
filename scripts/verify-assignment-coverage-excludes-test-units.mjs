@@ -117,7 +117,7 @@ async function runLive() {
     if (rows.length !== 16) { // STALE-LITERAL-OK: live fleet size measured 2026-09-30 (T-23); a real change should surface loudly, not be silently accepted
       console.error(
         `${LABEL}: FAIL — expected 16 real USMCA units, measured ${rows.length}. The real fleet ` +
-          `count changed (a unit added/removed/reclassified) -- update this guard's expectation, ` +
+          `count changed (a unit added/removed/reclassified) -- change this guard's expectation, ` +
           `don't silently accept a different count.`
       );
       process.exit(1);
