@@ -45,6 +45,7 @@ import {
   ensureResolvable,
   fetchHealthzVersionSync,
 } from "./lib/live-verified-stamps.mjs";
+import { analyseGenerated, generatorsOnDisk, gitPredicates, regenerateInScratch } from "./lib/generated-artifacts.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const REGISTRY = path.join(ROOT, "docs/specs/DERIVED-ARTIFACTS.json");
@@ -192,6 +193,34 @@ function selftest() {
     if (r.length < 1) throw new Error("planted regression escaped");
   });
 
+  // ROUND 363-CC3-C — every generator declared; regen-diff; pairs; not-committed; historical.
+  const G = (over = {}) => ({ entries: [], generatorsOnDisk: [], exists: () => true, isTracked: () => true, isIgnored: () => false, regen: new Map(), ...over });
+  const pairEntry = { generator: "scripts/gen-x.mjs", mode: "regen-diff", paths: ["a.json", "a.ts"], regenerate: "node scripts/gen-x.mjs", volatile: ['"generatedAt":'], why: "w" };
+  t("unregistered generator FAILS", () => {
+    const r = analyseGenerated(G({ generatorsOnDisk: ["scripts/gen-x.mjs", "scripts/gen-y.mjs"], entries: [pairEntry],
+      regen: new Map([["a.json", { committed: "1", fresh: "1" }], ["a.ts", { committed: "2", fresh: "2" }]]) }));
+    if (!r.problems.some((p) => p.includes("gen-y.mjs"))) throw new Error(r.problems.join("|"));
+  });
+  t("pair regenerated together PASSES; volatile line ignored", () => {
+    const r = analyseGenerated(G({ generatorsOnDisk: ["scripts/gen-x.mjs"], entries: [pairEntry],
+      regen: new Map([["a.json", { committed: 'x\n"generatedAt": 1', fresh: 'x\n"generatedAt": 2' }], ["a.ts", { committed: "y", fresh: "y" }]]) }));
+    eq(r.problems.length, 0, r.problems.join("|"));
+  });
+  t("one member of a pair regenerated without the other FAILS", () => {
+    const r = analyseGenerated(G({ generatorsOnDisk: ["scripts/gen-x.mjs"], entries: [pairEntry],
+      regen: new Map([["a.json", { committed: "new", fresh: "new" }], ["a.ts", { committed: "old", fresh: "new" }]]) }));
+    if (!r.problems.some((p) => p.startsWith("STALE — a.ts") && p.includes("ALL of them together"))) throw new Error(r.problems.join("|"));
+  });
+  t("not-committed output that got committed FAILS", () => {
+    const r = analyseGenerated(G({ generatorsOnDisk: ["scripts/gen-x.mjs"], entries: [{ generator: "scripts/gen-x.mjs", mode: "not-committed", paths: ["g.ts"], why: "w" }],
+      isTracked: () => true, isIgnored: () => true }));
+    if (!r.problems.some((p) => p.includes("must never be committed"))) throw new Error(r.problems.join("|"));
+  });
+  t("regen that produced nothing FAILS CLOSED", () => {
+    const r = analyseGenerated(G({ generatorsOnDisk: ["scripts/gen-x.mjs"], entries: [pairEntry], regen: new Map() }));
+    if (!r.problems.some((p) => p.includes("failing closed"))) throw new Error(r.problems.join("|"));
+  });
+
   const bad = T.filter((x) => !x[1]);
   for (const [n, ok, e] of T) console.log(`  ${ok ? "PASS" : "FAIL"}  ${n}${e ? " — " + e : ""}`);
   console.log(`${LABEL} --selftest ${bad.length ? "FAIL" : "PASS"} ${T.length - bad.length}/${T.length}`);
@@ -241,7 +270,14 @@ function main() {
     ancestorOf: (a, b) => (b === liveFull ? isAncestorOfLive(a) : ancestorCheck(ROOT, a, b)),
   });
 
-  console.log(`${LABEL}: live=${liveSha} checked=${stats.checked} fresh=${stats.fresh} stale=${stats.stale}`);
+  // ROUND 363-CC3-C — every generator in scripts/ is declared and checked by its mode.
+  const generated = Array.isArray(cfg.generated) ? cfg.generated : [];
+  const onDisk = generatorsOnDisk(ROOT);
+  const g = analyseGenerated({ entries: generated, generatorsOnDisk: onDisk, ...gitPredicates(ROOT), regen: regenerateInScratch(ROOT, generated) });
+  problems.push(...g.problems);
+  if (g.stats.registered !== g.stats.generators) problems.push(`generators registered ${g.stats.registered} of ${g.stats.generators} on disk — every one must declare its artifact`);
+
+  console.log(`${LABEL}: live=${liveSha} checked=${stats.checked + g.stats.checked} (stamp ${stats.checked} + generated ${g.stats.checked}) generators=${g.stats.generators} registered=${g.stats.registered} fresh=${stats.fresh} stale=${stats.stale + g.stats.stale}`);
   for (const w of warnings) console.log(`  warn: ${w}`);
   if (problems.length) {
     console.error(`${LABEL} FAIL — ${problems.length} problem(s):`);
