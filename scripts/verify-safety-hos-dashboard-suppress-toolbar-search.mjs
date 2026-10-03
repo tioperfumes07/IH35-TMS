@@ -22,6 +22,14 @@ export function checkPage(src) {
     /suppressToolbarSearch/.test(src),
     "HoursOfServicePage: ParityTable must pass suppressToolbarSearch",
   );
+  leftoverRefuse(src);
+}
+
+function leftoverRefuse(src) {
+  if (src.includes("text-[11px]")) throw new Error("HoursOfServicePage: leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155")) {
+    throw new Error("HoursOfServicePage: leftover off-scale muted");
+  }
 }
 
 function selftest() {
@@ -36,7 +44,15 @@ function selftest() {
     failed = true;
   }
   assert(failed, "selftest: expected FAIL without suppressToolbarSearch");
-  console.log("verify-safety-hos-dashboard-suppress-toolbar-search --selftest PASS");
+  const leftoverPlant = `${good}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  let leftoverFailed = false;
+  try {
+    checkPage(leftoverPlant);
+  } catch {
+    leftoverFailed = true;
+  }
+  assert(leftoverFailed, "selftest: leftover plant escaped");
+  console.log("verify-safety-hos-dashboard-suppress-toolbar-search --selftest PASS + leftover plant rejected");
 }
 
 if (process.argv.includes("--selftest")) {
