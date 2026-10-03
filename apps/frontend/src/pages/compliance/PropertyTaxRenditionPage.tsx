@@ -202,7 +202,7 @@ function RenditionListView({
       />
 
       <div className="relative flex flex-wrap items-end gap-3" data-testid="property-tax-filters">
-        <label className="text-[11px] text-slate-600">
+        <label className="text-xs text-slate-600">
           Unit
           <EntityPicker
             kind="unit"
@@ -228,7 +228,7 @@ function RenditionListView({
 
       {/* + Create rendition */}
       <section className="rounded-sm border border-slate-200 bg-white p-3">
-        <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-700">+ Create Rendition</h2>
+        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-700">+ Create Rendition</h2>
         <div className="flex flex-wrap items-end gap-3">
           <label className="text-xs">
             Tax Year
@@ -449,7 +449,7 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
       {/* Header controls */}
       <section className="grid gap-3 rounded-sm border border-slate-200 bg-white p-3 md:grid-cols-3">
         <div>
-          <div className="text-[11px] uppercase tracking-wide text-slate-500">Status</div>
+          <div className="text-xs uppercase tracking-wide text-slate-500">Status</div>
           <select
             value={rendition.status}
             onChange={(e) => statusM.mutate(e.target.value as RenditionStatus)}
@@ -463,7 +463,7 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
           </select>
         </div>
         <div>
-          <div className="text-[11px] uppercase tracking-wide text-slate-500">CAD-Assessed Tax (drives accrual)</div>
+          <div className="text-xs uppercase tracking-wide text-slate-500">CAD-Assessed Tax (drives accrual)</div>
           <div className="mt-1 flex items-center gap-2">
             <MoneyInput
               valueDollars={assessedInput}
@@ -484,7 +484,7 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
           <div className="mt-1 text-xs text-slate-500">Current: {centsToUSD(rendition.assessed_tax_cents)}</div>
         </div>
         <div>
-          <div className="text-[11px] uppercase tracking-wide text-slate-500">Extension</div>
+          <div className="text-xs uppercase tracking-wide text-slate-500">Extension</div>
           <label className="mt-1 flex items-center gap-2 text-xs">
             <input
               type="checkbox"
@@ -499,7 +499,7 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
       {/* CLS-CHROME-LAW-8: line-add button relabeled from "+ Add" (forbidden verb) to "+ Create
           Line", matching InvoiceDetailPage.tsx's identical add-a-row-to-a-list pattern. */}
       <section className="rounded-sm border border-slate-200 bg-white p-3">
-        <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-700">Taxable Assets Rendered</h2>
+        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-700">Taxable Assets Rendered</h2>
         <div className="space-y-3">
           <div className="flex flex-wrap items-end gap-2">
             <div className="min-w-64 text-xs">

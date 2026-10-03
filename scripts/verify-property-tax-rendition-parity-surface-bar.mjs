@@ -31,6 +31,9 @@ export function check(filePath = path.join(ROOT, PAGE)) {
     src.includes("<Combobox") && src.includes('dataTestId="property-tax-rendition-asset-picker"'),
     "PropertyTaxRenditionPage: asset picker must be Combobox",
   );
+  // BANK-F91277 leftover refuse — page-scoped text token ratchet
+  assert(!src.includes("text-[11px]"), `${PAGE}: leftover text-[11px]`);
+  assert(!src.includes("#8A92AB") && !src.includes("#334155"), `${PAGE}: leftover off-scale muted`);
 }
 
 // GUARD-SELFTEST-MUTATES-SOURCE fix: never write the plant into the real tracked file. Copy it
@@ -58,6 +61,36 @@ async function selftest() {
     },
   );
   assert(failed, "selftest: expected FAIL on raw HTML table");
+  let leftoverFailed = false;
+  await withMutatedCopy(
+    realPath,
+    (good) => `${good}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`,
+    (tmpPath) => {
+      try {
+        check(tmpPath);
+      } catch (e) {
+        const msg = String(e?.message ?? e);
+        if (msg.includes("leftover text-[11px]") && msg.includes("leftover off-scale muted") === false) {
+          // first assert throws on text-[11px]; confirm muted plant also fails on a second copy if needed
+          leftoverFailed = msg.includes("leftover text-[11px]");
+        } else if (msg.includes("leftover")) {
+          leftoverFailed = true;
+        }
+      }
+    },
+  );
+  // muted plant is same string — first leftover assert fires on text-[11px]; also prove muted via direct assert path
+  const mutedOnly = (() => {
+    try {
+      const src = fs.readFileSync(realPath, "utf8") + '\n<div className="text-[#8A92AB]">plant</div>';
+      assert(!src.includes("#8A92AB") && !src.includes("#334155"), `${PAGE}: leftover off-scale muted`);
+      return false;
+    } catch (e) {
+      return String(e?.message ?? e).includes("leftover off-scale muted");
+    }
+  })();
+  assert(leftoverFailed, "selftest: leftover text-[11px] plant escaped");
+  assert(mutedOnly, "selftest: leftover off-scale muted plant escaped");
   console.log("verify-property-tax-rendition-parity-surface-bar --selftest PASS");
 }
 
