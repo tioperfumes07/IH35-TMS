@@ -149,7 +149,7 @@ export function SafetyLayout() {
       <div className="space-y-0">
         <div className="flex items-end justify-between border-b border-gray-200 bg-white px-[22px] py-3">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-[11px] text-slate-400">
+            <div className="flex items-center gap-2 text-xs text-slate-400">
               <button
                 type="button"
                 aria-label="Back"
