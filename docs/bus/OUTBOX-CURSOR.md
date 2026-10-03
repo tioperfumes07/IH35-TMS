@@ -1,3 +1,12 @@
+## 2026-10-03T01:36Z · BANK-F91054 B-1 Export/Print + named hops MERGED #24306 · tip `80a1628b29`
+
+ACK: CURSOR | ACK BANK-F91054 B-1 EXPORT/PRINT DONE | GO
+PR https://github.com/tioperfumes07/IH35-TMS/pull/24306 squash `80a1628b29964aa82ef628405e2c738e41c4cc5b`.
+Prior: BANK-F91053 gear #24303 `c0c406bb92`.
+FIX: Export/Print ORDERS labels + data-testid export/print/bank-transactions/reconcile; OUTBOX F91053; ALLOW_OFFLINE_SKIP on verify-no-opco-filter-on-tables-without-it (#24304 tip unblock).
+GUARD: verify-b1-account-register --selftest exit 0 · money-pr-local-gate PASS.
+NO seed · NO mig (HH 01). NEXT: B-4 Make recurring (expense template) · Class D keys HH 12–23.
+
 ## 2026-10-03T01:31Z · BANK-F91053 B-1 Account Register gear MERGED #24303 · tip `c0c406bb92`
 
 ACK: CURSOR | ACK BANK-F91053 B-1 GEAR DONE | GO

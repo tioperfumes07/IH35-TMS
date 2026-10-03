@@ -50,3 +50,24 @@ export function getAccountingRecurringTemplate(id: string, operatingCompanyId: s
     `/api/v1/accounting/recurring-templates/${encodeURIComponent(id)}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
   );
 }
+
+/** BANK-F91055 — ORDERS §B-4 Make recurring on Write Check → kind=expense template. */
+export type CreateRecurringExpenseTemplateInput = {
+  operating_company_id: string;
+  template_name: string;
+  cadence: "weekly" | "biweekly" | "monthly" | "quarterly" | "annually" | "custom_cron";
+  next_run_at: string;
+  cron_expression?: string | null;
+  vendor_uuid?: string | null;
+  amount_cents: number;
+  payment_account_uuid?: string | null;
+  memo?: string | null;
+  expense_date?: string | null;
+};
+
+export function createAccountingRecurringExpenseTemplate(input: CreateRecurringExpenseTemplateInput) {
+  return apiRequest<{ id: string }>(`/api/v1/accounting/recurring-templates`, {
+    method: "POST",
+    body: JSON.stringify({ ...input, kind: "expense" }),
+  });
+}
