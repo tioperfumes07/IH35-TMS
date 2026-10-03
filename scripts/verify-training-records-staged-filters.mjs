@@ -30,7 +30,13 @@ function assertPage(src) {
   if (!/setSearchParams/.test(src) || !/setDriverFilter/.test(src) || !/training-records-filter-driver/.test(src)) {
     errors.push("must keep LST-F5191 URL sync + setDriverFilter + training-records-filter-driver");
   }
+  leftoverRefuse(src, errors);
   return errors;
+}
+
+function leftoverRefuse(src, errors) {
+  if (src.includes("text-[11px]")) errors.push("leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155")) errors.push("leftover off-scale muted");
 }
 
 function selftest() {
@@ -52,7 +58,13 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAIL`, { bad: assertPage(bad), good: assertPage(good) });
     process.exit(1);
   }
-  console.log(`${LABEL} selftest PASS`);
+  const leftoverPlant = `${good}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  const leftover = assertPage(leftoverPlant);
+  if (!leftover.includes("leftover text-[11px]") || !leftover.includes("leftover off-scale muted")) {
+    console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`, leftover);
+    process.exit(1);
+  }
+  console.log(`${LABEL} selftest PASS + leftover plant rejected`);
 }
 
 if (process.argv.includes("--selftest")) {
