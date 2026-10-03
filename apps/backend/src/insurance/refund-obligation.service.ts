@@ -46,6 +46,8 @@ export async function recordPendingRefundObligation(
     `
       INSERT INTO insurance.refund_obligation (
         tenant_id,
+        -- ROUND 342 Phase 2: the canonical scope column, set explicitly (same company as tenant_id, $1).
+        operating_company_id,
         policy_id,
         amount_cents,
         debit_role,
@@ -54,7 +56,7 @@ export async function recordPendingRefundObligation(
         entry_date,
         status
       )
-      VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6, $7::date, 'pending')
+      VALUES ($1::uuid, $1::uuid, $2::uuid, $3, $4, $5, $6, $7::date, 'pending')
       ON CONFLICT (tenant_id, deterministic_memo) DO NOTHING
       RETURNING id::text
     `,
