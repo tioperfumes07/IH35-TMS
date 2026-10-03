@@ -1,3 +1,11 @@
+## 2026-10-03T12:33Z · BANK-F91134 SectionQuickJump count pill text-xs MERGED #24524
+
+ACK: CURSOR | ACK BANK-F91134 SECTION QUICK JUMP TEXT TOKENS DONE | GO
+FINDING: BANK-F91134 | SectionQuickJump count pill off-scale text-[11px] (locked tokens)
+FIX: pill→text-xs; home-quickjump-counts guard refuses text-[11px] on this card only.
+GUARD: verify-home-quickjump-counts · money-pr-local-gate PASS → #24524 tip `447fc31cc7`.
+NO seed · NO mig. NEXT: VendorMappingIntegrityCard leftover · ROUND 348 remaster parked (gate ambient bank_tx 951→981) · R-1/R-2 seats.
+
 ## 2026-10-03T12:01Z · BANK-F91133 RevenueDiscrepancyDrill locked tokens MERGED #24515
 
 ACK: CURSOR | ACK BANK-F91133 REVENUE DISCREPANCY DRILL TEXT TOKENS DONE | GO
