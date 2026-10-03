@@ -34,6 +34,8 @@ function assertPage(src) {
   if (/const \[driverPickerId,\s*setDriverPickerId\]/.test(src)) {
     errors.push("must not keep hand-rolled silent filter useState");
   }
+  if (src.includes("text-[11px]")) errors.push("leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155")) errors.push("leftover off-scale muted");
   return errors;
 }
 
@@ -59,7 +61,13 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAIL`, { bad: assertPage(bad), good: assertPage(good) });
     process.exit(1);
   }
-  console.log(`${LABEL} selftest PASS`);
+  const leftoverPlant = `${good}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  const leftoverErrors = assertPage(leftoverPlant);
+  if (!leftoverErrors.includes("leftover text-[11px]") || !leftoverErrors.includes("leftover off-scale muted")) {
+    console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`, leftoverErrors);
+    process.exit(1);
+  }
+  console.log(`${LABEL} selftest leftover plant rejected`);
 }
 
 if (process.argv.includes("--selftest")) {

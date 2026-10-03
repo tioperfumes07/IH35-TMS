@@ -103,7 +103,7 @@ export function LiabilitiesHomePage() {
       <PageHeader title="Liabilities" subtitle="Driver debt with acknowledgment + forfeiture status" />
 
       <div className="relative flex flex-wrap items-end gap-3" data-testid="liabilities-filters">
-        <label className="text-[11px] text-slate-600">
+        <label className="text-xs text-slate-600">
           Driver
           <EntityPicker
             kind="driver"
