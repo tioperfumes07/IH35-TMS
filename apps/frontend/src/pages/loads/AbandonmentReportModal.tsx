@@ -61,7 +61,7 @@ export function AbandonmentReportModal({
       {/* Exact Leaves dispatch.modal.abandonment_report:load|driver —
           loadId was API-only; driver was picker-only — expose EntityLinks. */}
       <div
-        className="mb-3 flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] text-slate-700"
+        className="mb-3 flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs text-slate-700"
         data-testid="abandonment-report-modal-entitylinks"
       >
         <span>

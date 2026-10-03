@@ -36,6 +36,8 @@ function check(overrides = new Map()) {
   assert(/label=\{entityLabel\(driverLabel, driverId, "Driver"\)\}/.test(modal), "driver drill must use the canonical picker label");
   assert(!/entityLabel\(null, driverId, "Driver"\)/.test(modal), "driver drill must not rebuild a label from its UUID");
   assert(/defaultDriverLabel=\{load\.assigned_primary_driver_name \?\? load\.assigned_secondary_driver_name\}/.test(drawer), "LoadDetailDrawer must seed the assigned driver's human label");
+  assert(!modal.includes("text-[11px]"), "leftover text-[11px]");
+  assert(!modal.includes("#8A92AB") && !modal.includes("#334155"), "leftover off-scale muted");
 }
 
 function selftest() {
@@ -52,8 +54,16 @@ function selftest() {
     failed = true;
   }
   assert(failed, "--selftest expected FAIL when entitylinks testid removed");
+  const leftover = `${original}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  let leftoverFailed = false;
+  try {
+    check(new Map([[MODAL, leftover]]));
+  } catch (e) {
+    leftoverFailed = String(e?.message || e).includes("leftover");
+  }
+  assert(leftoverFailed, "--selftest leftover plant escaped");
   check();
-  console.log(`${LABEL}: OK — selftest PASS`);
+  console.log(`${LABEL}: OK — selftest leftover plant rejected`);
 }
 
 const mode = process.argv.includes("--selftest") ? "selftest" : "check";
