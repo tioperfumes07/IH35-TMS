@@ -2011,6 +2011,11 @@
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-03",
       "purpose": "ROUND 365.1 every poster resolves by role: widen chart_of_accounts_roles_role_check (interest_receivable, fuel_card_payable_dreamline, accessorial_revenue, driver_settlements_payable) and bind them + broker_customer_advance_liability for USMCA to the accounts the posters already used by number (1260, 2510, 4200, 2200, 2250) -- config only, no posting moves"
+    },
+    "202615380930": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 381.6 fuel card vendor linkage: catalogs.fuel_card_types.issuer_vendor_id uuid NULL REFERENCES mdata.vendors(id) + same-company refusal trigger + index -- the card issuer (Relay / Dreamline) the owner designates on the Fuel Cards page; no binding written by the migration"
     }
   },
   "202613590001": {
