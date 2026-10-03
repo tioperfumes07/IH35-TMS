@@ -81,6 +81,9 @@ export async function registerAccountingReclassifyRoutes(app: FastifyInstance) {
       to_location_id: z.string().uuid().nullable().optional(),
       to_entity_uuid: z.string().uuid().nullable().optional(),
       to_entity_type: z.enum(["customer", "vendor", "driver", "unit"]).nullable().optional(),
+      // U24 — reclassify by item / by load (expense and bill lines).
+      to_item_id: z.string().uuid().nullable().optional(),
+      to_load_id: z.string().uuid().nullable().optional(),
       filter_snapshot: z.record(z.string(), z.unknown()).optional(),
       override_refusals: z.boolean().optional(),
     }).safeParse(req.body ?? {});

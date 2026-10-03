@@ -49,6 +49,9 @@ async function hasReversalLinkageColumns(client: QueryableClient): Promise<boole
 }
 
 type CreatePostingInput = {
+  /** U24 / LAW 363.3 — an explicit load stamp for this line (the reclassify engine's load move: the reversing leg keeps
+   *  the old load, the reposting leg carries the new one). Absent = the stamp from the posting's source document. */
+  load_id?: string | null;
   account_id: string;
   class_id?: string | null;
   /** BANK-F91052 — QBO Location (mdata.locations); nullable reporting dimension. */
@@ -276,7 +279,7 @@ export async function createJournalEntryOnClient(
         )
         -- ROUND 363-CC1-A: the load stamp, resolved from this posting's own source document in the same statement.
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,
-                accounting.posting_source_load_id($13::text, $14::text),now(),now())
+                COALESCE($15::uuid, accounting.posting_source_load_id($13::text, $14::text)),now(),now())
         ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
           WHERE idempotency_key IS NOT NULL DO NOTHING
         RETURNING id::text
@@ -301,6 +304,7 @@ export async function createJournalEntryOnClient(
         `manual_je:${header.id}`,
         posting.source_transaction_type ?? input.source_transaction_type ?? (isHandKeyed ? "manual_je" : null),
         posting.source_transaction_id ?? input.source_transaction_id ?? (isHandKeyed ? header.id : null),
+        posting.load_id ?? null,
       ]
     );
     // CODER-12 audit-spine: one source link per inserted posting line, same transaction. On a

@@ -26,7 +26,7 @@ describe("Reclassify engine — pure rules (QBO spec §24)", () => {
     expect(refused.map((r) => [r.posting.posting_id, r.why])).toEqual([
       ["p2", "journal entry is voided"],
       ["p3", "already reclassified in batch b-old; undo that batch first"],
-      ["p4", "line already carries the requested account/class/location/entity"],
+      ["p4", "line already carries the requested account/class/location/entity/item/load"],
     ]);
   });
 
@@ -175,5 +175,40 @@ describe("Reclassify engine — document line rewrite (invoice / cash documents)
       expect(r.updated).toBe(false);
       expect(r.note).toMatch(/control account/);
     }
+  });
+});
+
+// U24 (owner): reclassify by item and by load.
+describe("Reclassify engine — by item / by load (U24)", () => {
+  const ITEM_DIESEL = "11111111-0000-4000-8000-000000000001";
+  const ITEM_REEFER = "11111111-0000-4000-8000-000000000002";
+  const LOAD_A = "22222222-0000-4000-8000-00000000000a";
+  const LOAD_B = "22222222-0000-4000-8000-00000000000b";
+  const line = (patch: Partial<SelectedPosting>) => ({ ...base, item_id: ITEM_DIESEL, load_id: LOAD_A, ...patch }) as SelectedPosting;
+
+  it("moves only expense and bill lines by item / load — other documents carry no item or load", () => {
+    const { eligible, refused } = classifySelection(
+      [line({ posting_id: "e1", source_transaction_type: "expense" }), line({ posting_id: "b1", source_transaction_type: "bill" }), line({ posting_id: "i1", source_transaction_type: "invoice" })],
+      { to_item_id: ITEM_REEFER },
+    );
+    expect(eligible.map((p) => p.posting_id)).toEqual(["e1", "b1"]);
+    expect(refused.map((r) => r.posting.posting_id)).toEqual(["i1"]);
+  });
+
+  it("a line already on the target item and load is refused as no change", () => {
+    const { refused } = classifySelection([line({ posting_id: "e1", source_transaction_type: "expense" })], { to_item_id: ITEM_DIESEL, to_load_id: LOAD_A });
+    expect(refused[0]?.why).toMatch(/already carries/);
+  });
+
+  it("a load move re-stamps the legs: reversing leg keeps the old load, the repost carries the new one", () => {
+    const [rev, repost] = buildReclassPairs([line({ posting_id: "e1", source_transaction_type: "expense" })], { to_load_id: LOAD_B }, "batch-1");
+    expect(rev).toMatchObject({ load_id: LOAD_A });
+    expect(repost).toMatchObject({ load_id: LOAD_B });
+  });
+
+  it("without a load move both legs leave the stamp to the document", () => {
+    const [rev, repost] = buildReclassPairs([line({ posting_id: "e1", source_transaction_type: "expense" })], { to_account_id: "acct-2" }, "batch-1");
+    expect(rev.load_id).toBeUndefined();
+    expect(repost.load_id).toBeUndefined();
   });
 });

@@ -864,6 +864,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-load-costs-in-dispatch-reads-the-ledger",
     ["apps/frontend/src/routes/manifest.tsx", "apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx", "apps/frontend/src/pages/accounting/subnav-manifest.ts", "apps/backend/src/accounting/load-costs-board.routes.ts", "db/migrations/202615370800_posting_source_load_id_index_usable.sql", "scripts/verify-load-costs-in-dispatch-reads-the-ledger.mjs"],
   ],
+  // U24 (owner) — reclassify by item and by load through the one engine, recorded and undoable.
+  [
+    "verify-reclassify-by-item-and-load",
+    ["apps/backend/src/accounting/reclassify/", "apps/backend/src/accounting/journal-entries.service.ts", "apps/frontend/src/pages/accounting/ReclassifyTransactionsPage.tsx", "db/migrations/202615380600_reclassify_by_item_and_load.sql", "scripts/verify-reclassify-by-item-and-load.mjs"],
+  ],
   // ROUND 368.2(b) — a bank line may not sit matched to nothing (deferred constraint triggers, both sides).
   [
     "verify-no-bank-line-is-matched-to-nothing",
