@@ -17,12 +17,13 @@
  * is now exclusively a human "Match" action (banking's own reconciliation tooling), never an
  * ingest-time auto-write.
  *
- * Resolves (read-only) the driver via integration_id → unique phone → unique name
- * (see relay-fuel-driver-match.ts) and the unit via the "Truck #" prompt.
+ * Resolves (read-only) the driver by Relay driver.integration_id ONLY — no phone/name fallback; an unmatched
+ * driver stays unresolved with a named reason (see relay-fuel-driver-match.ts) — and the unit via the
+ * "Truck #" prompt.
  */
-import type { RelayFuelTransaction } from "./relay-client.js";
+import { relayMoneyField, type RelayFuelTransaction } from "./relay-client.js";
 import type { DbClient } from "./db-client.type.js";
-import { resolveMatchedDriverId } from "./relay-fuel-driver-match.js";
+import { resolveRelayDriverMatch, type RelayDriverUnresolvedReason } from "./relay-fuel-driver-match.js";
 import { upsertRelayWalletBankFeedRow } from "./relay-wallet-bank-feed.service.js";
 
 export type { DbClient } from "./db-client.type.js";
@@ -34,6 +35,8 @@ export type RelayIngestResult = {
   relay_fuel_transaction_id: string | null;
   transaction_id: string;
   matched_driver_id: string | null;
+  /** Why matched_driver_id is null (integration_id-only matching); null when matched or when skipped. */
+  driver_unresolved_reason: RelayDriverUnresolvedReason | null;
   matched_unit_id: string | null;
   line_count: number;
   /**
@@ -75,24 +78,19 @@ export async function resolveRelayFillOwnerCompany(client: DbClient, truckNumber
 }
 
 /** Relay sends dollar amounts as strings (e.g. "182.44"). Converts to integer cents; never silently
- *  coerces a garbage value to 0 — an unparsable amount throws so the row is dead-lettered/surfaced,
- *  not stored as a wrong-but-plausible $0.00. */
-function dollarsToCents(value: string | null | undefined, fieldName: string): number {
-  if (value == null || value.trim() === "") {
-    throw new Error(`relay_fuel_ingest: missing required money field ${fieldName}`);
-  }
-  const n = Number(value);
-  if (!Number.isFinite(n)) {
-    throw new Error(`relay_fuel_ingest: unparsable money field ${fieldName}=${JSON.stringify(value)}`);
-  }
-  return Math.round(n * 100);
+ *  coerces a garbage value to 0 — the value must be the one accepted dollar-string shape
+ *  (relayMoneyField, relay-client.ts) or this throws RelayRowRejectedError naming the field and the
+ *  received type, so the row is surfaced, not stored as a wrong-but-plausible $0.00. */
+function dollarsToCents(value: unknown, fieldName: string, transactionId: string): number {
+  const dollars = relayMoneyField(value, fieldName, transactionId, true) as string;
+  return Math.round(Number(dollars) * 100);
 }
 
-/** Same conversion, but the field is OPTIONAL — absent/blank yields null rather than throwing. */
-function optionalDollarsToCents(value: string | null | undefined): number | null {
-  if (value == null || value.trim() === "") return null;
-  const n = Number(value);
-  return Number.isFinite(n) ? Math.round(n * 100) : null;
+/** Same conversion, but the field is OPTIONAL — absent/blank yields null; a present value in any other
+ *  shape still throws (it used to become null silently). */
+function optionalDollarsToCents(value: unknown, fieldName: string, transactionId: string): number | null {
+  const dollars = relayMoneyField(value, fieldName, transactionId, false);
+  return dollars === null ? null : Math.round(Number(dollars) * 100);
 }
 
 /** The "Truck #" prompt carries our unit number (per Jorge's confirmed matching rule). Label match is
@@ -144,6 +142,7 @@ export async function upsertRelayFuelTransaction(
     relay_fuel_transaction_id: null,
     transaction_id: tx.transaction_id,
     matched_driver_id: null,
+    driver_unresolved_reason: null,
     matched_unit_id: null,
     line_count: 0,
     fuel_transaction_id: null,
@@ -163,17 +162,25 @@ export async function upsertRelayFuelTransaction(
     if (heldElsewhere.rows[0]?.ok) return skipped("already_held_by_other_company");
   }
 
-  const matchedDriverId = await resolveMatchedDriverId(client, operatingCompanyId, {
-    integration_id: relayDriverIntegrationId,
-    phone: tx.driver?.phone ?? null,
-    first_name: tx.driver?.first_name ?? null,
-    last_name: tx.driver?.last_name ?? null,
-  });
-  const matchedUnitId = await resolveMatchedUnitId(client, operatingCompanyId, truckNumber);
+  // Every money value is validated and converted BEFORE the first write, so a refused value can never leave a
+  // half-written header without its lines.
+  const txId = tx.transaction_id;
+  const totalAmountPaidCents = dollarsToCents(tx.total_amount_paid, "total_amount_paid", txId);
+  const totalRetailPriceCents = dollarsToCents(tx.total_retail_price, "total_retail_price", txId);
+  const totalAmountSavedCents = optionalDollarsToCents(tx.total_amount_saved, "total_amount_saved", txId);
+  const fuelItems = tx.fuel_items ?? [];
+  const lineCents = fuelItems.map((item, i) => ({
+    retail_price_per_unit: optionalDollarsToCents(item.retail_price_per_unit, `fuel_items[${i}].retail_price_per_unit`, txId),
+    discounted_price_per_unit: optionalDollarsToCents(item.discounted_price_per_unit, `fuel_items[${i}].discounted_price_per_unit`, txId),
+    total_retail_price: optionalDollarsToCents(item.total_retail_price, `fuel_items[${i}].total_retail_price`, txId),
+    total_discounted_price: optionalDollarsToCents(item.total_discounted_price, `fuel_items[${i}].total_discounted_price`, txId),
+    fee_amount: optionalDollarsToCents(item.fee?.amount ?? null, `fuel_items[${i}].fee.amount`, txId),
+  }));
 
-  const totalAmountPaidCents = dollarsToCents(tx.total_amount_paid, "total_amount_paid");
-  const totalRetailPriceCents = dollarsToCents(tx.total_retail_price, "total_retail_price");
-  const totalAmountSavedCents = optionalDollarsToCents(tx.total_amount_saved);
+  // integration_id ONLY — an unmatched driver stays NULL with its reason, never a phone/name guess.
+  const driverMatch = await resolveRelayDriverMatch(client, operatingCompanyId, relayDriverIntegrationId);
+  const matchedDriverId = driverMatch.driver_id;
+  const matchedUnitId = await resolveMatchedUnitId(client, operatingCompanyId, truckNumber);
 
   const columns = [
     "operating_company_id",
@@ -299,9 +306,9 @@ export async function upsertRelayFuelTransaction(
     [relayFuelTransactionId]
   );
 
-  const fuelItems = tx.fuel_items ?? [];
   for (let i = 0; i < fuelItems.length; i += 1) {
     const item = fuelItems[i];
+    const cents = lineCents[i];
     await client.query(
       `
         INSERT INTO integrations.relay_fuel_transaction_lines (
@@ -337,14 +344,14 @@ export async function upsertRelayFuelTransaction(
         item.fuel_type,
         item.fuel_type_description,
         item.fuel_product_code,
-        optionalDollarsToCents(item.retail_price_per_unit),
-        optionalDollarsToCents(item.discounted_price_per_unit),
+        cents.retail_price_per_unit,
+        cents.discounted_price_per_unit,
         item.volume != null && item.volume !== "" ? Number(item.volume) : null,
         item.volume_uom,
-        optionalDollarsToCents(item.total_retail_price),
-        optionalDollarsToCents(item.total_discounted_price),
+        cents.total_retail_price,
+        cents.total_discounted_price,
         item.fee?.type ?? null,
-        optionalDollarsToCents(item.fee?.amount ?? null),
+        cents.fee_amount,
       ]
     );
   }
@@ -374,6 +381,7 @@ export async function upsertRelayFuelTransaction(
     relay_fuel_transaction_id: relayFuelTransactionId,
     transaction_id: tx.transaction_id,
     matched_driver_id: matchedDriverId,
+    driver_unresolved_reason: driverMatch.unresolved_reason,
     matched_unit_id: matchedUnitId,
     line_count: fuelItems.length,
     fuel_transaction_id: null,

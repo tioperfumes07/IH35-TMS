@@ -1,15 +1,22 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   applyRelayDateRangeParams,
+  fetchAllRelayFuelTransactions,
   filterRelayFuelTransactionsByDateRange,
   parseRelayFuelTransactionRow,
   relayApiBase,
   relayApiKey,
+  relayMoneyField,
   relayTransactionCalendarDate,
+  relayWindowSpanDays,
   retryAfterMsFromRelayError,
   RelayApiError,
+  RelayRowRejectedError,
   type RelayFuelTransaction,
 } from "./relay-client.js";
+
+/** Both required totals present — the minimum money a row must carry to be accepted. */
+const TOTALS = { total_amount_paid: "10.00", total_retail_price: "10.00" };
 
 // Per-entity Relay key resolution: RELAY_API_KEY_<CODE> takes precedence, RELAY_API_KEY is the fallback,
 // and a missing key resolves to null (caller throws relay_not_configured — never borrows another entity's key).
@@ -92,7 +99,7 @@ describe("parseRelayFuelTransactionRow — id aliases (API vs CSV)", () => {
     const parsed = parseRelayFuelTransactionRow({
       transaction_id: "txn-1",
       created_at: "2026-07-01T12:00:00Z",
-      total_amount_paid: "10.00",
+      ...TOTALS,
     });
     expect(parsed?.transaction_id).toBe("txn-1");
     expect(parsed?.created_at).toBe("2026-07-01T12:00:00Z");
@@ -102,7 +109,7 @@ describe("parseRelayFuelTransactionRow — id aliases (API vs CSV)", () => {
     const parsed = parseRelayFuelTransactionRow({
       id: 12345,
       created_at: "2026-07-01T12:00:00Z",
-      total_amount_paid: "10.00",
+      ...TOTALS,
     });
     expect(parsed?.transaction_id).toBe("12345");
   });
@@ -111,6 +118,7 @@ describe("parseRelayFuelTransactionRow — id aliases (API vs CSV)", () => {
     const parsed = parseRelayFuelTransactionRow({
       id: "abc",
       createdAt: "2026-07-01T12:00:00Z",
+      ...TOTALS,
     });
     expect(parsed?.transaction_id).toBe("abc");
     expect(parsed?.created_at).toBe("2026-07-01T12:00:00Z");
@@ -221,5 +229,154 @@ describe("parseRelayFuelTransactionRow — cash_advance dollar string (Mike Brun
       cash_advance: "25.00",
     });
     expect(parsed?.cash_advance).toBe(true);
+  });
+});
+
+// Money: ONE accepted shape — a plain decimal dollar string. Relay has not confirmed dollars vs integer cents for
+// the API, so a JSON number (either reading) and any string Number() would have bent are refused by field + type.
+describe("relayMoneyField — one accepted money shape", () => {
+  it("returns a dollar string unchanged (the cents conversion downstream is untouched)", () => {
+    for (const v of ["182.44", "0.00", "0", "3.899", "-12.50"]) expect(relayMoneyField(v, "f", "t", true)).toBe(v);
+  });
+
+  it("treats absent as null when optional and rejects it when required", () => {
+    expect(relayMoneyField(undefined, "f", "t", false)).toBeNull();
+    expect(relayMoneyField(null, "f", "t", false)).toBeNull();
+    expect(relayMoneyField("", "f", "t", false)).toBeNull();
+    expect(() => relayMoneyField(undefined, "total_amount_paid", "t", true)).toThrow(/money_field_missing:total_amount_paid/);
+  });
+
+  it("refuses a JSON number, naming the field and the received type", () => {
+    expect(() => relayMoneyField(182.44, "total_amount_paid", "t1", true)).toThrow(
+      /money_field_unexpected_type:total_amount_paid .*received number 182\.44/
+    );
+    expect(() => relayMoneyField(18244, "total_amount_paid", "t1", true)).toThrow(RelayRowRejectedError);
+  });
+
+  it("refuses strings Number() would have coerced, and non-scalars", () => {
+    for (const v of ["$1.00", "1,234.00", "1e3", " 12.00", ".5", "0x10", "NaN", "Infinity", "+1.00", "abc"]) {
+      expect(() => relayMoneyField(v, "f", "t", false), v).toThrow(/money_field_unexpected_type:f .*received string/);
+    }
+    expect(() => relayMoneyField(true, "f", "t", false)).toThrow(/received boolean/);
+    expect(() => relayMoneyField({ amount: "1.00" }, "f", "t", false)).toThrow(/received object/);
+    expect(() => relayMoneyField(["1.00"], "f", "t", false)).toThrow(/received array/);
+  });
+});
+
+describe("parseRelayFuelTransactionRow — money fields are validated, never coerced", () => {
+  const base = { transaction_id: "txn-m", created_at: "2026-07-16T05:42:29Z", ...TOTALS };
+
+  it("keeps accepted dollar strings exactly as sent", () => {
+    const parsed = parseRelayFuelTransactionRow({
+      ...base,
+      total_amount_saved: "1.25",
+      fuel_items: [{ retail_price_per_unit: "3.899", total_retail_price: "182.44", fee: { type: "x", amount: "2.00" } }],
+    });
+    expect(parsed?.total_amount_paid).toBe("10.00");
+    expect(parsed?.total_amount_saved).toBe("1.25");
+    expect(parsed?.fuel_items[0].retail_price_per_unit).toBe("3.899");
+    expect(parsed?.fuel_items[0].fee?.amount).toBe("2.00");
+  });
+
+  it('rejects a missing total instead of storing $0.00 (the old ?? "0")', () => {
+    expect(() =>
+      parseRelayFuelTransactionRow({ transaction_id: "t", created_at: "2026-07-16T00:00:00Z", total_retail_price: "1.00" })
+    ).toThrow(/money_field_missing:total_amount_paid/);
+  });
+
+  it("rejects a numeric total (dollars-or-cents unconfirmed)", () => {
+    try {
+      parseRelayFuelTransactionRow({ ...base, total_amount_paid: 61.86 });
+      expect.unreachable();
+    } catch (error) {
+      expect(error).toBeInstanceOf(RelayRowRejectedError);
+      expect((error as RelayRowRejectedError).transactionId).toBe("txn-m");
+      expect((error as RelayRowRejectedError).field).toBe("total_amount_paid");
+    }
+  });
+
+  it("rejects a bad line-item money field by its indexed name (it used to become null silently)", () => {
+    expect(() =>
+      parseRelayFuelTransactionRow({ ...base, fuel_items: [{ total_retail_price: "1.00" }, { retail_price_per_unit: 3.899 }] })
+    ).toThrow(/fuel_items\[1\]\.retail_price_per_unit/);
+    expect(() => parseRelayFuelTransactionRow({ ...base, fuel_items: [{ fee: { amount: "$2" } }] })).toThrow(
+      /fuel_items\[0\]\.fee\.amount/
+    );
+  });
+
+  it("rejects a numeric or non-dollar cash_advance; boolean and dollar strings still map", () => {
+    expect(parseRelayFuelTransactionRow({ ...base, cash_advance: true })?.cash_advance).toBe(true);
+    expect(parseRelayFuelTransactionRow({ ...base, cash_advance: "0.00" })?.cash_advance).toBe(false);
+    expect(() => parseRelayFuelTransactionRow({ ...base, cash_advance: 25 })).toThrow(/money_field_unexpected_type:cash_advance/);
+    expect(() => parseRelayFuelTransactionRow({ ...base, cash_advance: "yes" })).toThrow(/money_field_unexpected_type:cash_advance/);
+  });
+});
+
+// Relay: "You can filter by date range by using the dtstart and dtend" + a "10 second limit on pulling
+// transactions". One call never asks for unfiltered history or for more than RELAY_MAX_SINGLE_CALL_SPAN_DAYS.
+describe("fetchAllRelayFuelTransactions — bounded, dated calls only", () => {
+  const saved = { ...process.env };
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    for (const k of Object.keys(process.env)) if (k.startsWith("RELAY_")) delete process.env[k];
+    Object.assign(process.env, saved);
+  });
+
+  it("relayWindowSpanDays counts inclusive days and refuses bad ranges", () => {
+    expect(relayWindowSpanDays("2026-03-01", "2026-03-01")).toBe(1);
+    expect(relayWindowSpanDays("2026-03-01", "2026-03-07")).toBe(7);
+    expect(relayWindowSpanDays("2026-03-07", "2026-03-01")).toBeNull();
+    expect(relayWindowSpanDays(null, "2026-03-01")).toBeNull();
+    expect(relayWindowSpanDays("2026-3-1", "2026-03-01")).toBeNull();
+  });
+
+  it("refuses an unfiltered pull before any HTTP call", async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+    process.env.RELAY_API_KEY_TEST = "k";
+    await expect(
+      fetchAllRelayFuelTransactions("TEST", { startDate: undefined as unknown as string, endDate: undefined as unknown as string })
+    ).rejects.toThrow(/relay_unbounded_pull_refused/);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("refuses a single call wider than 31 days (history must be windowed)", async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+    process.env.RELAY_API_KEY_TEST = "k";
+    await expect(fetchAllRelayFuelTransactions("TEST", { startDate: "2024-10-01", endDate: "2026-10-01" })).rejects.toThrow(
+      /relay_window_too_wide/
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("sends dtstart/dtend, paces the call, and reports refused rows instead of storing them", async () => {
+    process.env.NODE_ENV = "test";
+    process.env.RELAY_API_BASE = "https://relay.example.test/api/fuel/transactions/";
+    process.env.RELAY_API_KEY_TEST = "k";
+    const urls: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: URL | string) => {
+        urls.push(String(url));
+        return new Response(
+          JSON.stringify([
+            { transaction_id: "good", created_at: "2026-03-02T10:00:00Z", ...TOTALS },
+            { transaction_id: "bad", created_at: "2026-03-02T11:00:00Z", total_amount_paid: 10, total_retail_price: "10.00" },
+          ]),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      })
+    );
+    const pacer = { beforeCall: vi.fn(async () => {}), afterCall: vi.fn() };
+    const { rows, meta } = await fetchAllRelayFuelTransactions("TEST", { startDate: "2026-03-01", endDate: "2026-03-07", pacer });
+    expect(urls).toHaveLength(1);
+    const sent = new URL(urls[0]);
+    expect(sent.searchParams.get("dtstart")).toBe("2026-03-01");
+    expect(sent.searchParams.get("dtend")).toBe("2026-03-07");
+    expect(pacer.beforeCall).toHaveBeenCalledTimes(1);
+    expect(pacer.afterCall).toHaveBeenCalledTimes(1);
+    expect(rows.map((r) => r.transaction_id)).toEqual(["good"]);
+    expect(meta.rejected).toEqual([expect.objectContaining({ transaction_id: "bad", field: "total_amount_paid" })]);
   });
 });

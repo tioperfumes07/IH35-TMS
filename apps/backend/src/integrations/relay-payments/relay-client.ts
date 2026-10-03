@@ -130,11 +130,13 @@ async function readJsonResponse(res: Response): Promise<unknown> {
 }
 
 // One request attempt: fetch (timeout-bounded) + classify. Throws a RelayApiError (retryable flag set) on a
-// network/abort error or a non-2xx response.
-async function relayGetOnce(url: URL, key: string): Promise<Response> {
+// network/abort error or a non-2xx response. `timeoutMs` lets the windowed pull ask for a short per-call budget;
+// it is clamped to relayApiTimeoutMs() so the breaker (fetch + slack) can never fire first.
+async function relayGetOnce(url: URL, key: string, timeoutMs: number = relayTimeoutMs()): Promise<Response> {
+  const budgetMs = Math.min(Math.max(1, timeoutMs), relayTimeoutMs());
   let res: Response;
   try {
-    res = await withCircuitBreaker("relay", () => relayFetch(url, { headers: relayHeaders(key) }, relayTimeoutMs()));
+    res = await withCircuitBreaker("relay", () => relayFetch(url, { headers: relayHeaders(key) }, budgetMs));
   } catch (error) {
     throw new RelayApiError(`relay_network_error:${String((error as Error)?.message ?? error)}`, null, null, true);
   }
@@ -155,15 +157,21 @@ async function relayGetOnce(url: URL, key: string): Promise<Response> {
 }
 
 // Retry a retryable failure (aborted/timeout, 429, 5xx) with exponential backoff. A non-retryable error
-// (auth/4xx, relay_not_configured) throws immediately.
-async function relayGetWithRetry(url: URL, key: string): Promise<Response> {
+// (auth/4xx, relay_not_configured) throws immediately. The windowed pull passes maxRetries 0: its own loop
+// owns retries, so every call it makes stays behind the >=10s pacer (Relay's "10 second limit").
+async function relayGetWithRetry(
+  url: URL,
+  key: string,
+  opts: { timeoutMs?: number; maxRetries?: number } = {}
+): Promise<Response> {
+  const maxRetries = opts.maxRetries ?? RELAY_MAX_RETRIES;
   let attempt = 0;
   for (;;) {
     try {
-      return await relayGetOnce(url, key);
+      return await relayGetOnce(url, key, opts.timeoutMs);
     } catch (error) {
       const retryable = error instanceof RelayApiError && error.retryable;
-      if (retryable && attempt < RELAY_MAX_RETRIES) {
+      if (retryable && attempt < maxRetries) {
         // Honor Retry-After on 429 when present; otherwise exponential backoff.
         const retryAfterMs = retryAfterMsFromRelayError(error);
         const backoffMs = retryAfterMs ?? RELAY_RETRY_BASE_MS * 2 ** attempt;
@@ -265,6 +273,65 @@ function str(value: unknown): string | null {
   return typeof value === "string" && value.trim().length > 0 ? value : null;
 }
 
+/**
+ * A Relay row refused as a whole because a money field is not in the one accepted shape. Thrown by
+ * parseRelayFuelTransactionRow; every caller catches it, counts the row as rejected with this reason, and
+ * surfaces it (log + audit / failed tick) — it is never turned into a $0.00 or a skipped-without-reason row.
+ */
+export class RelayRowRejectedError extends Error {
+  readonly transactionId: string | null;
+  readonly field: string;
+  readonly reason: string;
+
+  constructor(transactionId: string | null, field: string, reason: string) {
+    super(`relay_row_rejected:${reason} field=${field} transaction_id=${transactionId ?? "?"}`);
+    this.name = "RelayRowRejectedError";
+    this.transactionId = transactionId;
+    this.field = field;
+    this.reason = reason;
+  }
+}
+
+/**
+ * THE one accepted Relay money shape: a plain decimal DOLLAR STRING ("182.44", "0.00", "3.899", "-12.50").
+ * Why this one: the confirmed schema types every money field as a string (RelayFuelTransaction below), Relay
+ * (Mike Bruno 2026-07-16) told us prod sends dollar strings ("0.00"), the existing tests and the CSV mapper
+ * feed dollar strings, and the ingest has always stored round(dollars * 100) as cents. Relay has NOT confirmed
+ * whether the API ever sends integer cents, so a JSON number is refused (it could be either), as is any string
+ * Number() would have bent into a value ("$1.00", "1,234.00", "1e3", " 12.00").
+ */
+export const RELAY_DOLLAR_STRING = /^-?\d+(?:\.\d+)?$/;
+
+function describeReceived(value: unknown): string {
+  if (Array.isArray(value)) return "array";
+  if (typeof value === "string") return `string ${JSON.stringify(value.length > 40 ? `${value.slice(0, 40)}...` : value)}`;
+  if (typeof value === "number") return `number ${String(value)}`;
+  return typeof value;
+}
+
+/**
+ * Validate one Relay money field. Absent (undefined / null / blank string) -> null, or a rejection when the
+ * field is required. A dollar string is returned UNCHANGED (the cents conversion downstream is untouched).
+ * Anything else throws RelayRowRejectedError naming the field and the received type.
+ */
+export function relayMoneyField(
+  value: unknown,
+  field: string,
+  transactionId: string | null,
+  required: boolean
+): string | null {
+  if (value === undefined || value === null || (typeof value === "string" && value.trim() === "")) {
+    if (required) throw new RelayRowRejectedError(transactionId, field, `money_field_missing:${field}`);
+    return null;
+  }
+  if (typeof value === "string" && RELAY_DOLLAR_STRING.test(value)) return value;
+  throw new RelayRowRejectedError(
+    transactionId,
+    field,
+    `money_field_unexpected_type:${field} expected a dollar string like "182.44", received ${describeReceived(value)}`
+  );
+}
+
 /** Coerce Relay id/timestamp fields that may arrive as number or alternate keys (CSV uses `id`). */
 function strOrCoerce(value: unknown): string | null {
   const direct = str(value);
@@ -282,18 +349,13 @@ function coerceCreatedAt(row: Record<string, unknown>): string | null {
   return null;
 }
 
-/** Normalize Relay cash_advance (bool OR dollar string like "0.00") into boolean | null for our schema. */
-function coerceCashAdvance(value: unknown): boolean | null {
+/** Normalize Relay cash_advance into boolean | null for our schema. Two shapes only: the schema's boolean, or
+ *  the dollar string prod actually sends ("0.00" -> false, "25.00" -> true; Mike Bruno 2026-07-16). A number or
+ *  any other string ("yes", "$25") is refused through relayMoneyField, never guessed at. */
+function coerceCashAdvance(value: unknown, transactionId: string): boolean | null {
   if (typeof value === "boolean") return value;
-  if (typeof value === "number" && Number.isFinite(value)) return value !== 0;
-  const s = strOrCoerce(value);
-  if (!s) return null;
-  const n = Number(s);
-  if (Number.isFinite(n)) return n !== 0;
-  const lower = s.toLowerCase();
-  if (lower === "true" || lower === "yes") return true;
-  if (lower === "false" || lower === "no") return false;
-  return null;
+  const dollars = relayMoneyField(value, "cash_advance", transactionId, false);
+  return dollars === null ? null : Number(dollars) !== 0;
 }
 
 function extractRelayRowArray(json: unknown): { rows: unknown[]; envelope: string } {
@@ -317,10 +379,10 @@ function extractRelayRowArray(json: unknown): { rows: unknown[]; envelope: strin
   return { rows: [], envelope: `keys:${Object.keys(obj).slice(0, 12).join(",")}` };
 }
 
-/** Defensive parse of one raw transaction row into the confirmed shape. Never throws on shape drift —
- *  a malformed/unexpected row is skipped by the caller (dead-lettered), not allowed to crash the whole
- *  pull. The FULL raw row is separately archived verbatim by the ingest service regardless of parse
- *  outcome, so nothing Relay sends is ever silently lost. */
+/** Parse one raw transaction row into the confirmed shape. A row with no id/timestamp returns null (skipped).
+ *  A row whose MONEY field is missing (when required) or not a dollar string THROWS RelayRowRejectedError —
+ *  callers catch it per row, so one bad row is rejected with a named reason without crashing the whole pull,
+ *  and is never stored as a wrong-but-plausible amount (the old `?? "0"` did exactly that). */
 export function parseRelayFuelTransactionRow(row: Record<string, unknown>): RelayFuelTransaction | null {
   // API often sends `id`; CSV importer already maps id→transaction_id. Accept both (add-only).
   const transaction_id =
@@ -341,19 +403,21 @@ export function parseRelayFuelTransactionRow(row: Record<string, unknown>): Rela
   const fuel_items = asArray(row.fuel_items)
     .map((fi) => asObject(fi))
     .filter((fi): fi is Record<string, unknown> => Boolean(fi))
-    .map((fi) => {
+    .map((fi, i) => {
       const feeRaw = asObject(fi.fee);
+      const money = (value: unknown, name: string) =>
+        relayMoneyField(value, `fuel_items[${i}].${name}`, transaction_id, false);
       return {
         fuel_type: str(fi.fuel_type),
         fuel_type_description: str(fi.fuel_type_description),
         fuel_product_code: str(fi.fuel_product_code),
-        retail_price_per_unit: str(fi.retail_price_per_unit),
-        discounted_price_per_unit: str(fi.discounted_price_per_unit),
+        retail_price_per_unit: money(fi.retail_price_per_unit, "retail_price_per_unit"),
+        discounted_price_per_unit: money(fi.discounted_price_per_unit, "discounted_price_per_unit"),
         volume: str(fi.volume),
         volume_uom: str(fi.volume_uom),
-        total_retail_price: str(fi.total_retail_price),
-        total_discounted_price: str(fi.total_discounted_price),
-        fee: feeRaw ? { type: str(feeRaw.type), amount: str(feeRaw.amount) } : null,
+        total_retail_price: money(fi.total_retail_price, "total_retail_price"),
+        total_discounted_price: money(fi.total_discounted_price, "total_discounted_price"),
+        fee: feeRaw ? { type: str(feeRaw.type), amount: money(feeRaw.amount, "fee.amount") } : null,
       };
     });
 
@@ -361,13 +425,14 @@ export function parseRelayFuelTransactionRow(row: Record<string, unknown>): Rela
     transaction_id,
     created_at,
     relay_fuel_code: str(row.relay_fuel_code),
-    total_amount_paid: str(row.total_amount_paid) ?? "0",
-    total_retail_price: str(row.total_retail_price) ?? "0",
-    total_amount_saved: str(row.total_amount_saved),
+    // Required: a missing total used to become "0" here and land as a real-looking $0.00 fill.
+    total_amount_paid: relayMoneyField(row.total_amount_paid, "total_amount_paid", transaction_id, true) as string,
+    total_retail_price: relayMoneyField(row.total_retail_price, "total_retail_price", transaction_id, true) as string,
+    total_amount_saved: relayMoneyField(row.total_amount_saved, "total_amount_saved", transaction_id, false),
     is_direct_bill: typeof row.is_direct_bill === "boolean" ? row.is_direct_bill : null,
     currency_code: str(row.currency_code),
     // Prod sends dollar strings ("0.00") — Mike Bruno 2026-07-16 — not always boolean.
-    cash_advance: coerceCashAdvance(row.cash_advance),
+    cash_advance: coerceCashAdvance(row.cash_advance, transaction_id),
     fuel_code_type: str(row.fuel_code_type),
     linked_org: linkedOrgRaw
       ? { id: str(linkedOrgRaw.id), name: str(linkedOrgRaw.name), number: str(linkedOrgRaw.number) }
@@ -428,31 +493,82 @@ export function filterRelayFuelTransactionsByDateRange(
   });
 }
 
+export type RelayRejectedRow = { transaction_id: string | null; field: string; reason: string };
+
 type RelayFuelFetchMeta = {
   api_row_count: number;
   pages_fetched: number;
   envelope: string;
+  /** Rows refused by parseRelayFuelTransactionRow (money field missing / wrong shape) — never stored. */
+  rejected: RelayRejectedRow[];
 };
 
+/** Spacing between Relay HTTP calls. `beforeCall` waits until the previous call is at least the interval old. */
+export type RelayCallPacer = { beforeCall: () => Promise<void>; afterCall: () => void };
+
+/** Largest dtstart..dtend span (inclusive days) one call may ask for. Anything wider must be windowed
+ *  (fetchRelayFuelTransactionsInWindows) — one call for months of history is what blew the timeout. */
+export const RELAY_MAX_SINGLE_CALL_SPAN_DAYS = 31;
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Inclusive day count of [startDate, endDate]; null when either is not YYYY-MM-DD or start > end. */
+export function relayWindowSpanDays(startDate: string | null | undefined, endDate: string | null | undefined): number | null {
+  if (!startDate || !endDate || !ISO_DATE.test(startDate) || !ISO_DATE.test(endDate)) return null;
+  const start = Date.parse(`${startDate}T00:00:00Z`);
+  const end = Date.parse(`${endDate}T00:00:00Z`);
+  if (!Number.isFinite(start) || !Number.isFinite(end) || start > end) return null;
+  return Math.round((end - start) / 86_400_000) + 1;
+}
+
 /**
- * Pull fuel transactions from Relay (prod-verified 2026-07-16).
+ * Pull fuel transactions from Relay for ONE bounded window (prod-verified 2026-07-16).
  *
- * - No dates → full history (Mike: "You can pull all history via the API").
- * - With startDate/endDate → server filter via `dtstart`/`dtend` (Mike 2026-07-16). The old
- *   `start_date`/`end_date` names are ignored by Relay — that was the "dates don't work" false finding.
+ * - Server filter via `dtstart`/`dtend` (Mike 2026-07-16). The old `start_date`/`end_date` names are
+ *   ignored by Relay — that was the "dates don't work" false finding.
+ * - REFUSES an unfiltered pull (missing/invalid dates) and any span wider than
+ *   RELAY_MAX_SINGLE_CALL_SPAN_DAYS. Relay will serve all history in one call, but it also has a "10 second
+ *   limit on pulling transactions" (Relay, relayed 2026-10-03); history goes through dated windows instead.
  * - Client-side filter remains as a safety net after the server response.
  */
 export async function fetchAllRelayFuelTransactions(
-  entityCode?: string | null,
-  opts?: { startDate?: string | null; endDate?: string | null }
+  entityCode: string | null | undefined,
+  opts: {
+    startDate: string;
+    endDate: string;
+    /** Per-call fetch budget; clamped to relayApiTimeoutMs(). Default: relayApiTimeoutMs(). */
+    timeoutMs?: number;
+    /** Inner retries on a retryable error. The windowed pull passes 0 and retries behind its pacer. */
+    maxRetries?: number;
+    /** Spaces every page request (each page is its own HTTP call). */
+    pacer?: RelayCallPacer;
+  }
 ): Promise<{ rows: RelayFuelTransaction[]; meta: RelayFuelFetchMeta }> {
+  const span = relayWindowSpanDays(opts?.startDate, opts?.endDate);
+  if (span === null) {
+    throw new RelayApiError(
+      `relay_unbounded_pull_refused:dtstart/dtend required as YYYY-MM-DD with start <= end (got ${String(opts?.startDate)}..${String(opts?.endDate)})`,
+      null,
+      null,
+      false
+    );
+  }
+  if (span > RELAY_MAX_SINGLE_CALL_SPAN_DAYS) {
+    throw new RelayApiError(
+      `relay_window_too_wide:${opts.startDate}..${opts.endDate} is ${span} days; one call may span at most ${RELAY_MAX_SINGLE_CALL_SPAN_DAYS} — use fetchRelayFuelTransactionsInWindows`,
+      null,
+      null,
+      false
+    );
+  }
   const key = relayApiKey(entityCode);
   if (!key) {
     throw new RelayApiError("relay_not_configured", null, null, false);
   }
 
-  const first = applyRelayDateRangeParams(new URL(relayApiBase()), opts?.startDate, opts?.endDate);
+  const first = applyRelayDateRangeParams(new URL(relayApiBase()), opts.startDate, opts.endDate);
   const collected: RelayFuelTransaction[] = [];
+  const rejected: RelayRejectedRow[] = [];
   const seen = new Set<string>();
   let nextUrl: URL | null = first;
   let pages = 0;
@@ -461,7 +577,13 @@ export async function fetchAllRelayFuelTransactions(
 
   while (nextUrl && pages < MAX_PAGES) {
     pages += 1;
-    const res = await relayGetWithRetry(nextUrl, key);
+    await opts.pacer?.beforeCall();
+    let res: Response;
+    try {
+      res = await relayGetWithRetry(nextUrl, key, { timeoutMs: opts.timeoutMs, maxRetries: opts.maxRetries });
+    } finally {
+      opts.pacer?.afterCall();
+    }
     const json = await readJsonResponse(res);
     const obj = asObject(json);
     const { rows, envelope } = extractRelayRowArray(json);
@@ -474,7 +596,16 @@ export async function fetchAllRelayFuelTransactions(
         skippedCount += 1;
         continue;
       }
-      const parsed = parseRelayFuelTransactionRow(row);
+      let parsed: RelayFuelTransaction | null;
+      try {
+        parsed = parseRelayFuelTransactionRow(row);
+      } catch (error) {
+        if (!(error instanceof RelayRowRejectedError)) throw error;
+        rejected.push({ transaction_id: error.transactionId, field: error.field, reason: error.reason });
+        // eslint-disable-next-line no-console -- fail-loud: a refused money field is never silently dropped
+        console.error(`[RELAY_FUEL] row_rejected ${error.message}`);
+        continue;
+      }
       if (parsed && !seen.has(parsed.transaction_id)) {
         seen.add(parsed.transaction_id);
         collected.push(parsed);
@@ -498,7 +629,7 @@ export async function fetchAllRelayFuelTransactions(
 
   return {
     rows: collected,
-    meta: { api_row_count: collected.length, pages_fetched: pages, envelope: lastEnvelope },
+    meta: { api_row_count: collected.length, pages_fetched: pages, envelope: lastEnvelope, rejected },
   };
 }
 
@@ -515,14 +646,23 @@ export async function listRelayFuelTransactions(params: {
   /** When set (backfill), skip the HTTP round-trip and filter this in-memory snapshot. */
   preloaded?: RelayFuelTransaction[];
 }): Promise<RelayFuelTransaction[]> {
-  const source =
-    params.preloaded ??
-    (
-      await fetchAllRelayFuelTransactions(params.entityCode, {
-        startDate: params.startDate,
-        endDate: params.endDate,
-      })
-    ).rows;
+  let source = params.preloaded;
+  if (!source) {
+    const { rows, meta } = await fetchAllRelayFuelTransactions(params.entityCode, {
+      startDate: params.startDate,
+      endDate: params.endDate,
+    });
+    // This helper returns rows only, so a refused row would vanish here — fail the whole call instead.
+    if (meta.rejected.length > 0) {
+      throw new RelayApiError(
+        `relay_rows_rejected:${meta.rejected.length} in ${params.startDate}..${params.endDate}; first: ${meta.rejected[0].reason}`,
+        null,
+        meta.rejected,
+        false
+      );
+    }
+    source = rows;
+  }
   const filtered = filterRelayFuelTransactionsByDateRange(source, params.startDate, params.endDate);
 
   if (source.length > 0 && filtered.length === 0) {

@@ -24,15 +24,17 @@ import {
 } from "../../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
 import { flushFuelCardOverageAfterCommit } from "../../fuel/fuel-card-overage.service.js";
 import {
-  fetchAllRelayFuelTransactions,
   filterRelayFuelTransactionsByDateRange,
   listRelayFuelTransactions,
   parseRelayFuelTransactionRow,
   type RelayFuelTransaction,
+  type RelayRejectedRow,
   RelayApiError,
+  RelayRowRejectedError,
 } from "./relay-client.js";
 import { upsertRelayFuelTransaction, type RelayIngestSource } from "./relay-fuel-ingest.service.js";
 import { computeRelayIngestWindow } from "./relay-fuel-ingest-window.js";
+import { fetchRelayFuelTransactionsInWindows } from "./relay-fuel-windowed-pull.js";
 
 const RELAY_SYNC_KIND = "relay_fuel_daily_pull";
 
@@ -113,13 +115,19 @@ function isoDateMonthsAgo(n: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-/** Ingest window size in days — DB BATCHING ONLY (owner directive 2026-07-15 kept the 3-day granularity).
- *  HTTP filtering uses Relay `dtstart`/`dtend` (Mike 2026-07-16). These windows still slice an already-
- *  fetched (or date-filtered) snapshot for upsert batching + audit granularity.
+/** Daily-tick window size in days (owner directive 2026-07-15 kept the 3-day granularity). Each window is
+ *  ONE dated Relay call (`dtstart`/`dtend`) and one DB commit + audit row.
  *  Configurable via RELAY_FUEL_INGEST_WINDOW_DAYS; default 3. */
 function relayIngestWindowDays(): number {
   const raw = Number.parseInt(process.env.RELAY_FUEL_INGEST_WINDOW_DAYS ?? "3", 10);
   return Number.isFinite(raw) && raw > 0 ? raw : 3;
+}
+
+/** History-backfill window size in days — one dated Relay call per window, >=10s apart, halved on a timeout.
+ *  Configurable via RELAY_FUEL_BACKFILL_WINDOW_DAYS; default 7. */
+function relayBackfillWindowDays(): number {
+  const raw = Number.parseInt(process.env.RELAY_FUEL_BACKFILL_WINDOW_DAYS ?? "7", 10);
+  return Number.isFinite(raw) && raw > 0 ? raw : 7;
 }
 
 /** Mike (Relay, 2026-07-16): "We have a 10 second limit on pulling transactions" — min gap between pulls. */
@@ -131,9 +139,9 @@ function relayInterCompanyDelayMs(): number {
 /**
  * Inclusive, contiguous [startDate,endDate] windows of `windowDays` each covering [startIso, endIso],
  * oldest→newest, with NO gaps and NO overlaps (each window's end is the day before the next window's start).
- * Windows batch DB upserts after a server-filtered (`dtstart`/`dtend`) or full-history pull; the upsert is
- * idempotent by transaction_id so a boundary or re-run never duplicates. The daily cron reuses this with a
- * 1-day range (start === end) → a single window.
+ * The fixed-size reference split; the live pull (fetchRelayFuelTransactionsInWindows) walks the same contiguous
+ * shape but may halve a window that times out. The upsert is idempotent by transaction_id, so a boundary or
+ * re-run never duplicates.
  */
 export function dayWindows(startIso: string, endIso: string, windowDays: number): Array<{ startDate: string; endDate: string }> {
   const windows: Array<{ startDate: string; endDate: string }> = [];
@@ -172,8 +180,19 @@ export async function ingestForCompany(
   startDate: string,
   endDate: string,
   entityCode: string | null,
-  opts?: { preloaded?: RelayFuelTransaction[]; source?: RelayIngestSource }
-): Promise<{ pulled: number; upserted: number; skipped: number; gl_post_candidates: FuelTxnGlPostCandidate[] }> {
+  opts?: {
+    preloaded?: RelayFuelTransaction[];
+    source?: RelayIngestSource;
+    /** Rows the pull already refused (relay-client parse) — recorded with this batch, never stored. */
+    rejected?: RelayRejectedRow[];
+  }
+): Promise<{
+  pulled: number;
+  upserted: number;
+  skipped: number;
+  rejected: RelayRejectedRow[];
+  gl_post_candidates: FuelTxnGlPostCandidate[];
+}> {
   assertTenantContext(operatingCompanyId, "relay_payments.fuel_ingest_cron");
   await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
@@ -188,10 +207,24 @@ export async function ingestForCompany(
     }));
   let upserted = 0;
   let skipped = 0;
+  const rejected: RelayRejectedRow[] = [...(opts?.rejected ?? [])];
+  const driverUnresolved: Record<string, number> = {};
   const gl_post_candidates: FuelTxnGlPostCandidate[] = [];
 
   for (const rawRow of rawRows) {
-    const parsed = parseRelayFuelTransactionRow(rawRow);
+    // The webhook hands raw rows straight here, so this parse is the money gate for pushed fills too.
+    let parsed: RelayFuelTransaction | null;
+    try {
+      parsed = parseRelayFuelTransactionRow(rawRow);
+    } catch (error) {
+      if (!(error instanceof RelayRowRejectedError)) throw error;
+      rejected.push({ transaction_id: error.transactionId, field: error.field, reason: error.reason });
+      app.log.error(
+        { operating_company_id: operatingCompanyId, transaction_id: error.transactionId, field: error.field, reason: error.reason },
+        "[RELAY_FUEL_INGEST_CRON] row rejected — money field not in the accepted shape; nothing stored"
+      );
+      continue;
+    }
     if (!parsed) {
       skipped += 1;
       app.log.warn(
@@ -208,12 +241,16 @@ export async function ingestForCompany(
     }
     upserted += 1;
     if (result.gl_post_candidate) gl_post_candidates.push(result.gl_post_candidate);
+    if (result.driver_unresolved_reason) {
+      driverUnresolved[result.driver_unresolved_reason] = (driverUnresolved[result.driver_unresolved_reason] ?? 0) + 1;
+    }
     if (!result.matched_driver_id || !result.matched_unit_id) {
       app.log.info(
         {
           operating_company_id: operatingCompanyId,
           transaction_id: result.transaction_id,
           matched_driver_id: result.matched_driver_id,
+          driver_unresolved_reason: result.driver_unresolved_reason,
           matched_unit_id: result.matched_unit_id,
         },
         "[RELAY_FUEL_INGEST_CRON] transaction ingested with an unresolved driver or unit match"
@@ -222,14 +259,39 @@ export async function ingestForCompany(
   }
 
   const source = opts?.source ?? "daily_pull";
+  const baseClass = source === "daily_pull" ? "integrations.relay_fuel_ingest_daily_pull" : `integrations.relay_fuel_ingest_${source}`;
+  // A batch with refused rows is NOT recorded under the plain class: lastCoveredEndDate reads that class as
+  // "this window is covered", and a window holding an unstored fill is not.
   await client.query(`SELECT audit.append_event($1, $2, $3::jsonb, NULL, $4)`, [
-    source === "daily_pull" ? "integrations.relay_fuel_ingest_daily_pull" : `integrations.relay_fuel_ingest_${source}`,
-    "info",
-    JSON.stringify({ operating_company_id: operatingCompanyId, source, start_date: startDate, end_date: endDate, pulled: rawRows.length, upserted, skipped }),
+    rejected.length > 0 ? `${baseClass}_with_rejected_rows` : baseClass,
+    rejected.length > 0 ? "warning" : "info",
+    JSON.stringify({
+      operating_company_id: operatingCompanyId,
+      source,
+      start_date: startDate,
+      end_date: endDate,
+      pulled: rawRows.length,
+      upserted,
+      skipped,
+      rejected: rejected.length,
+      rejected_rows: rejected.slice(0, 50),
+      driver_unresolved: driverUnresolved,
+    }),
     RELAY_FUEL_INGEST_AUDIT_SOURCE,
   ]);
 
-  return { pulled: rawRows.length, upserted, skipped, gl_post_candidates };
+  return { pulled: rawRows.length, upserted, skipped, rejected, gl_post_candidates };
+}
+
+/** Thrown after a pull has stored every good row, when any row was refused — the tick / backfill is then
+ *  recorded as FAILED (so the window is re-read next run) and the aggregated error reaches Sentry. */
+function relayRejectedRowsError(rejected: RelayRejectedRow[], startDate: string, endDate: string): RelayApiError {
+  return new RelayApiError(
+    `relay_rows_rejected:${rejected.length} row(s) in ${startDate}..${endDate} refused (money field not a dollar string); first: ${rejected[0]?.reason ?? "?"}`,
+    null,
+    rejected.slice(0, 50),
+    false
+  );
 }
 
 /**
@@ -272,45 +334,63 @@ export async function runRelayFuelIngestTick(
       let pulled = 0;
       let upserted = 0;
       let skipped = 0;
-      // Server-side date filter via dtstart/dtend, chunked like the backfill so a catch-up never
-      // exceeds the per-request timeout. Client-side filter stays as the defensive fallback.
-      for (const chunk of dayWindows(window.startDate, window.endDate, relayIngestWindowDays())) {
-        const { rows: apiRows, meta } = await fetchAllRelayFuelTransactions(entityCode, {
-          startDate: chunk.startDate,
-          endDate: chunk.endDate,
-        });
-        const windowRows = filterRelayFuelTransactionsByDateRange(apiRows, chunk.startDate, chunk.endDate);
-        app.log.info(
-          {
-            operating_company_id: operatingCompanyId,
-            entity_code: entityCode,
-            api_rows: meta.api_row_count,
-            window_rows: windowRows.length,
-            window: `${chunk.startDate}..${chunk.endDate}`,
-            window_reason: window.reason,
-          },
-          "[RELAY_FUEL_INGEST_CRON] relay pull complete"
-        );
-        const stats = await withLuciaBypass(async (client) =>
-          ingestForCompany(client, app, operatingCompanyId, chunk.startDate, chunk.endDate, entityCode, {
-            preloaded: windowRows,
-          })
-        );
-        pendingGlPosts.push(...stats.gl_post_candidates);
-        pulled += stats.pulled;
-        upserted += stats.upserted;
-        skipped += stats.skipped;
-      }
+      const rejected: RelayRejectedRow[] = [];
+      // Server-side date filter via dtstart/dtend, one paced call per window (>=10s apart, halved on a
+      // timeout) so a catch-up never becomes one long call. Client-side filter stays as the defensive fallback.
+      const pull = await fetchRelayFuelTransactionsInWindows(entityCode, {
+        startDate: window.startDate,
+        endDate: window.endDate,
+        windowDays: relayIngestWindowDays(),
+        onWindow: async (chunk, apiRows, meta) => {
+          const windowRows = filterRelayFuelTransactionsByDateRange(apiRows, chunk.startDate, chunk.endDate);
+          app.log.info(
+            {
+              operating_company_id: operatingCompanyId,
+              entity_code: entityCode,
+              api_rows: apiRows.length,
+              window_rows: windowRows.length,
+              rejected_rows: meta.rejected.length,
+              window: `${chunk.startDate}..${chunk.endDate}`,
+              window_reason: window.reason,
+            },
+            "[RELAY_FUEL_INGEST_CRON] relay pull complete"
+          );
+          const stats = await withLuciaBypass(async (client) =>
+            ingestForCompany(client, app, operatingCompanyId, chunk.startDate, chunk.endDate, entityCode, {
+              preloaded: windowRows,
+              rejected: meta.rejected,
+            })
+          );
+          pendingGlPosts.push(...stats.gl_post_candidates);
+          pulled += stats.pulled;
+          upserted += stats.upserted;
+          skipped += stats.skipped;
+          rejected.push(...stats.rejected);
+        },
+      });
+      // Good rows are stored; a refused row fails the tick so the sync log does not mark the window covered.
+      if (rejected.length > 0) throw relayRejectedRowsError(rejected, window.startDate, window.endDate);
       await withLuciaBypass(async (client) =>
         finishRelayTick(client, logId, {
           success: true,
           rowsAdded: upserted,
           error: null,
-          payload: { start_date: window.startDate, end_date: window.endDate, window_reason: window.reason, last_covered_end: lastEnd, pulled, upserted, skipped, entity_code: entityCode },
+          payload: {
+            start_date: window.startDate,
+            end_date: window.endDate,
+            window_reason: window.reason,
+            last_covered_end: lastEnd,
+            pulled,
+            upserted,
+            skipped,
+            relay_calls: pull.calls,
+            window_halvings: pull.halvings,
+            entity_code: entityCode,
+          },
         })
       );
       app.log.info(
-        { operating_company_id: operatingCompanyId, window: `${window.startDate}..${window.endDate}`, pulled, upserted, skipped },
+        { operating_company_id: operatingCompanyId, window: `${window.startDate}..${window.endDate}`, pulled, upserted, skipped, relay_calls: pull.calls, window_halvings: pull.halvings },
         "[RELAY_FUEL_INGEST_CRON] run complete"
       );
     } catch (error) {
@@ -381,12 +461,14 @@ export function initializeRelayFuelIngestCron(app: FastifyInstance) {
 
 /**
  * One-shot HISTORICAL BACKFILL — pulls the maximum available past Relay fuel transactions
- * for each active, flag-ON operating company. Default 24 months (RELAY_FUEL_INGEST_BACKFILL_MONTHS),
- * chunked into small (default 3-day, RELAY_FUEL_INGEST_WINDOW_DAYS) windows so a busy carrier's volume never
- * exceeds the per-request timeout. Idempotent + RESUMABLE (upsert by transaction_id), so a re-run continues
- * rather than duplicating or restarting; Relay returns only what exists, so "24 months or more" naturally
- * yields whatever history is available. Jorge 2026-07-05: "set to maximum past time, 24 months or more if
- * available." Owner directive 2026-07-15: pull in 3-day windows.
+ * for each active, flag-ON operating company. Default 24 months (RELAY_FUEL_INGEST_BACKFILL_MONTHS), pulled
+ * as a SEQUENCE of dated windows (default 7 days, RELAY_FUEL_BACKFILL_WINDOW_DAYS) — never one call for the
+ * whole range: each window is its own dtstart/dtend call, >=10s after the previous one, halved on a timeout
+ * down to 1 day (fetchRelayFuelTransactionsInWindows). Each window commits on its own, so a failure keeps every
+ * earlier window. Idempotent + RESUMABLE (upsert by transaction_id), so a re-run continues rather than
+ * duplicating or restarting; Relay returns only what exists, so "24 months or more" naturally yields whatever
+ * history is available. Jorge 2026-07-05: "set to maximum past time, 24 months or more if available."
+ * At 24 months / 7-day windows that is ~105 calls, so >= ~18 minutes per company by design.
  */
 export async function runRelayFuelBackfill(
   app: FastifyInstance,
@@ -394,8 +476,7 @@ export async function runRelayFuelBackfill(
 ): Promise<void> {
   const months =
     opts?.months ?? (Number.parseInt(process.env.RELAY_FUEL_INGEST_BACKFILL_MONTHS ?? "24", 10) || 24);
-  const windowDays = relayIngestWindowDays();
-  const windows = dayWindows(isoDateMonthsAgo(months), todayIsoDate(), windowDays);
+  const windowDays = relayBackfillWindowDays();
   const failures: { operating_company_id: string; error: unknown }[] = [];
   const pendingGlPosts: FuelTxnGlPostCandidate[] = [];
   let totalPulled = 0;
@@ -427,64 +508,65 @@ export async function runRelayFuelBackfill(
     let pulled = 0;
     let upserted = 0;
     let skipped = 0;
+    const rejected: RelayRejectedRow[] = [];
     try {
-      // Server-side date filter via dtstart/dtend (Mike) — avoids downloading history older than the
-      // requested months window. Client-side windowing still batches DB upserts.
+      // Server-side date filter via dtstart/dtend (Mike), one paced call per window. Network I/O stays outside
+      // the DB transaction; each window's rows commit in their own withLuciaBypass.
       const rangeStart = isoDateMonthsAgo(months);
       const rangeEnd = todayIsoDate();
-      const { rows: apiRows, meta } = await fetchAllRelayFuelTransactions(entityCode, {
+      const pull = await fetchRelayFuelTransactionsInWindows(entityCode, {
         startDate: rangeStart,
         endDate: rangeEnd,
-      });
-      app.log.info(
-        {
-          operating_company_id: operatingCompanyId,
-          entity_code: entityCode,
-          api_rows: meta.api_row_count,
-          windows: windows.length,
-          months,
-          dtstart: rangeStart,
-          dtend: rangeEnd,
-        },
-        "[RELAY_FUEL_INGEST_BACKFILL] relay pull complete — slicing windows client-side"
-      );
-
-      if (apiRows.length === 0) {
-        app.log.warn(
-          { operating_company_id: operatingCompanyId, entity_code: entityCode },
-          "[RELAY_FUEL_INGEST_BACKFILL] relay API returned zero transactions for entity — verify key/account with Relay"
-        );
-      }
-
-      // One DB commit per company so partial progress + audit rows survive a later-window failure.
-      await withLuciaBypass(async (client) => {
-        for (const [idx, w] of windows.entries()) {
+        windowDays,
+        onWindow: async (w, apiRows, meta) => {
           const windowRows = filterRelayFuelTransactionsByDateRange(apiRows, w.startDate, w.endDate);
-          const stats = await ingestForCompany(client, app, operatingCompanyId, w.startDate, w.endDate, entityCode, {
-            preloaded: windowRows,
-          });
+          const stats = await withLuciaBypass(async (client) =>
+            ingestForCompany(client, app, operatingCompanyId, w.startDate, w.endDate, entityCode, {
+              preloaded: windowRows,
+              rejected: meta.rejected,
+            })
+          );
           pulled += stats.pulled;
           upserted += stats.upserted;
           skipped += stats.skipped;
+          rejected.push(...stats.rejected);
           pendingGlPosts.push(...stats.gl_post_candidates);
           app.log.info(
             {
               operating_company_id: operatingCompanyId,
               window: `${w.startDate}..${w.endDate}`,
-              window_index: idx + 1,
-              window_total: windows.length,
+              api_rows: apiRows.length,
               pulled: stats.pulled,
               upserted: stats.upserted,
               skipped: stats.skipped,
+              rejected: stats.rejected.length,
               gl_post_pending: stats.gl_post_candidates.length,
             },
             "[RELAY_FUEL_INGEST_BACKFILL] window complete"
           );
-        }
+        },
       });
 
+      if (pull.rows === 0) {
+        app.log.warn(
+          { operating_company_id: operatingCompanyId, entity_code: entityCode, dtstart: rangeStart, dtend: rangeEnd },
+          "[RELAY_FUEL_INGEST_BACKFILL] relay API returned zero transactions for entity — verify key/account with Relay"
+        );
+      }
+      if (rejected.length > 0) throw relayRejectedRowsError(rejected, rangeStart, rangeEnd);
+
       app.log.info(
-        { operating_company_id: operatingCompanyId, months, window_days: windowDays, windows: windows.length, pulled, upserted, skipped },
+        {
+          operating_company_id: operatingCompanyId,
+          months,
+          window_days: windowDays,
+          windows: pull.windows,
+          relay_calls: pull.calls,
+          window_halvings: pull.halvings,
+          pulled,
+          upserted,
+          skipped,
+        },
         "[RELAY_FUEL_INGEST_BACKFILL] company backfill complete"
       );
       totalPulled += pulled;

@@ -143,7 +143,8 @@ async function handleRelayWebhook(req: FastifyRequest, reply: FastifyReply) {
   const today = arrivedAt.slice(0, 10);
   const stats = await withLuciaBypass((client) =>
     ingestForCompany(client, req, company.id, dates[0] ?? today, dates[dates.length - 1] ?? today, company.code, {
-      // ingestForCompany parses every row itself (parseRelayFuelTransactionRow) and skips the unparsable.
+      // ingestForCompany parses every row itself (parseRelayFuelTransactionRow): it skips a row with no id/timestamp
+      // and REJECTS (named reason, audited, nothing stored) a row whose money field is not a dollar string.
       preloaded: rows as unknown as RelayFuelTransaction[],
       source: "webhook",
     })
@@ -155,10 +156,12 @@ async function handleRelayWebhook(req: FastifyRequest, reply: FastifyReply) {
 
   return reply.code(200).send({
     ok: true,
-    status: "ingested",
+    status: stats.rejected.length > 0 ? "ingested_with_rejected_rows" : "ingested",
     received: rows.length,
     upserted: stats.upserted,
     skipped: stats.skipped,
+    rejected: stats.rejected.length,
+    rejected_rows: stats.rejected.slice(0, 50),
     arrived_at: arrivedAt,
   });
 }

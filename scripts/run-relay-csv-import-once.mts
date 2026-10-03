@@ -106,11 +106,13 @@ function csvRowToApiShape(g: (name: string) => string | undefined): Record<strin
   const total = S(g("total"));
   return {
     transaction_id: id, created_at, relay_fuel_code: S(g("relay code")),
-    total_amount_paid: total ?? "0", total_retail_price: hasRetail ? String(retailSum) : (total ?? "0"),
+    // Same mapping as relay-fuel-csv-import.routes.ts: a missing total is rejected by the parser, not stored as $0.00,
+    // and integration_id is never borrowed from "relay driver id" (driver match keys on integration_id only).
+    total_amount_paid: total, total_retail_price: hasRetail ? String(retailSum) : total,
     currency_code: "USD", is_direct_bill: false, cash_advance: false, fuel_code_type: S(g("sub-type")),
     linked_org: { name: S(g("organization")) },
     driver: relayDriverId || name[0]
-      ? { id: relayDriverId, integration_id: relayDriverId, first_name: S(name[0]), last_name: name.slice(1).join(" ") || null, phone: S(g("driver_phone_number")) }
+      ? { id: relayDriverId, integration_id: null, first_name: S(name[0]), last_name: name.slice(1).join(" ") || null, phone: S(g("driver_phone_number")) }
       : null,
     merchant: { name: S(g("merchant_name")) ?? S(g("location")) },
     location: { name: S(g("location")), address: S(g("location_address")), city: S(g("location_city")), state: S(g("location_state")), zip_code: S(g("location_zip")) },
@@ -183,7 +185,15 @@ try {
       if (depositsOnly) continue;
 
       const raw = csvRowToApiShape(g);
-      const tx = raw ? parseRelayFuelTransactionRow(raw) : null;
+      let tx: ReturnType<typeof parseRelayFuelTransactionRow>;
+      try {
+        tx = raw ? parseRelayFuelTransactionRow(raw) : null;
+      } catch (err) {
+        // RelayRowRejectedError: a money value that is not a plain dollar string — counted, named, never stored.
+        failed++;
+        console.error("fuel_rejected", raw?.transaction_id, err instanceof Error ? err.message : err);
+        continue;
+      }
       if (!tx) { skipped++; continue; }
       try {
         await upsertRelayFuelTransaction(client, TRANSP, tx, "csv_import");

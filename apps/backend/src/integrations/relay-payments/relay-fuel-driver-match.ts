@@ -1,58 +1,49 @@
 /**
  * Relay fuel → mdata.drivers matcher.
  *
- * Primary key (existing): drivers.integration_id = Relay driver.integration_id
- * (often a 16-digit fuel card / external id). Prod historically has integration_id
- * NULL on every driver, so ingest left matched_driver_id = 0.
+ * ONE key, nothing else: Relay driver.integration_id = mdata.drivers.integration_id (column added by
+ * 202607110000_relay_fuel_ingest.sql), within the operating company, active drivers only.
+ * Relay (relayed by the Lead 2026-10-03): "use the integration_id to match transactions as thats the value we
+ * store on the driver profile that is visible to the users."
  *
- * Fallbacks (unique within operating company only — never guess on collision):
- * 1) phone last-10 digits
- * 2) trimmed lower first_name + last_name
+ * The phone / first+last name fallbacks were REMOVED: a fill attributed to the wrong driver becomes a wrong
+ * settlement deduction. No integration_id match -> the driver stays unresolved with a named reason (stored rows
+ * keep relay_driver_* verbatim, so a human can still link it) — the matcher never guesses. Relay driver.id,
+ * email, phone, name and card number are NOT match keys (Relay has not confirmed integration_id == driver.id).
  *
  * Read-only against mdata.drivers (no writes) — avoids Drivers-module data thrash.
  */
 import type { DbClient } from "./db-client.type.js";
 
-export type RelayDriverMatchHints = {
-  integration_id: string | null;
-  phone: string | null;
-  first_name: string | null;
-  last_name: string | null;
-};
+/** Relay's "not set" card/driver placeholder — never a match key. */
+export const RELAY_PLACEHOLDER_INTEGRATION_ID = "0000000000000000";
 
-export function normalizePhoneDigits(raw: string | null | undefined): string | null {
-  if (raw == null) return null;
-  const digits = String(raw).replace(/\D+/g, "");
-  if (digits.length < 10) return null;
-  return digits.slice(-10);
-}
+export type RelayDriverUnresolvedReason =
+  | "relay_integration_id_missing"
+  | "relay_integration_id_placeholder"
+  | "no_active_driver_with_integration_id"
+  | "integration_id_matches_multiple_drivers";
 
-export function normalizePersonName(raw: string | null | undefined): string | null {
-  if (raw == null) return null;
-  const t = String(raw).trim().toLowerCase().replace(/\s+/g, " ");
-  return t.length > 0 ? t : null;
-}
+export type RelayDriverMatch =
+  | { driver_id: string; unresolved_reason: null }
+  | { driver_id: null; unresolved_reason: RelayDriverUnresolvedReason };
 
-async function uniqueDriverId(
-  client: DbClient,
-  sql: string,
-  params: unknown[],
-): Promise<string | null> {
-  const res = await client.query<{ id: string }>(sql, params);
-  if (res.rows.length !== 1) return null;
-  return res.rows[0]?.id ?? null;
-}
-
-async function resolveByIntegrationId(
+/**
+ * Resolve the driver for a Relay fuel txn by integration_id ONLY. Exact match on the value Relay sent (no
+ * trimming / case folding — the key is an identifier, not free text). Returns the reason when unresolved.
+ */
+export async function resolveRelayDriverMatch(
   client: DbClient,
   operatingCompanyId: string,
-  integrationId: string | null,
-): Promise<string | null> {
-  if (!integrationId || integrationId.trim() === "" || integrationId === "0000000000000000") {
-    return null;
+  integrationId: string | null
+): Promise<RelayDriverMatch> {
+  if (integrationId == null || integrationId.trim() === "") {
+    return { driver_id: null, unresolved_reason: "relay_integration_id_missing" };
   }
-  return uniqueDriverId(
-    client,
+  if (integrationId === RELAY_PLACEHOLDER_INTEGRATION_ID) {
+    return { driver_id: null, unresolved_reason: "relay_integration_id_placeholder" };
+  }
+  const res = await client.query<{ id: string }>(
     `
       SELECT id::text AS id
       FROM mdata.drivers
@@ -62,72 +53,10 @@ async function resolveByIntegrationId(
         AND archived_at IS NULL
       LIMIT 2
     `,
-    [operatingCompanyId, integrationId],
+    [operatingCompanyId, integrationId]
   );
-}
-
-async function resolveByPhone(
-  client: DbClient,
-  operatingCompanyId: string,
-  phone: string | null,
-): Promise<string | null> {
-  const phone10 = normalizePhoneDigits(phone);
-  if (!phone10) return null;
-  return uniqueDriverId(
-    client,
-    `
-      SELECT id::text AS id
-      FROM mdata.drivers
-      WHERE operating_company_id = $1::uuid
-        AND deactivated_at IS NULL
-        AND archived_at IS NULL
-        AND length(regexp_replace(COALESCE(phone, ''), '[^0-9]', '', 'g')) >= 10
-        AND right(regexp_replace(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10) = $2
-      LIMIT 2
-    `,
-    [operatingCompanyId, phone10],
-  );
-}
-
-async function resolveByName(
-  client: DbClient,
-  operatingCompanyId: string,
-  firstName: string | null,
-  lastName: string | null,
-): Promise<string | null> {
-  const fn = normalizePersonName(firstName);
-  const ln = normalizePersonName(lastName);
-  if (!fn || !ln) return null;
-  return uniqueDriverId(
-    client,
-    `
-      SELECT id::text AS id
-      FROM mdata.drivers
-      WHERE operating_company_id = $1::uuid
-        AND deactivated_at IS NULL
-        AND archived_at IS NULL
-        AND lower(trim(first_name)) = $2
-        AND lower(trim(last_name)) = $3
-      LIMIT 2
-    `,
-    [operatingCompanyId, fn, ln],
-  );
-}
-
-/**
- * Resolve a single driver id for a Relay fuel txn. Order: integration_id → phone → name.
- * Returns null when ambiguous or missing — never picks among multiples.
- */
-export async function resolveMatchedDriverId(
-  client: DbClient,
-  operatingCompanyId: string,
-  hints: RelayDriverMatchHints,
-): Promise<string | null> {
-  const byIntegration = await resolveByIntegrationId(client, operatingCompanyId, hints.integration_id);
-  if (byIntegration) return byIntegration;
-
-  const byPhone = await resolveByPhone(client, operatingCompanyId, hints.phone);
-  if (byPhone) return byPhone;
-
-  return resolveByName(client, operatingCompanyId, hints.first_name, hints.last_name);
+  if (res.rows.length === 0) return { driver_id: null, unresolved_reason: "no_active_driver_with_integration_id" };
+  // The (operating_company_id, integration_id) unique index makes this unreachable today; never pick one anyway.
+  if (res.rows.length > 1) return { driver_id: null, unresolved_reason: "integration_id_matches_multiple_drivers" };
+  return { driver_id: res.rows[0].id, unresolved_reason: null };
 }
