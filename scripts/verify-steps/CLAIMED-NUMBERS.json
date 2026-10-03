@@ -7893,10 +7893,1048 @@
     "claimed_at": "2026-10-02",
     "purpose": "ROUND 300 — multi-JE void writes reversed_by_je_id once per original (CC-1)."
   },
+  "12270": {
+    "claimed_by": "Cursor",
+    "purpose": "verify-b5-change-location-wired — B-5 Change location picker + reclassify to_location_id + JEP location_id",
+    "pr": null
+  },
   "12273": {
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-02",
     "purpose": "ROUND 300 — period reopen reverses the closing retained-earnings JE (CC-1)."
+  },
+  "12277": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "Lead ROUND 330.6 — re-posted settlement carries predecessor / successor links (CC-1)."
+  },
+  "12281": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "Lead ROUND 330.6 — a faro_daily_imports header can never outlive all its lines (CC-1)."
+  },
+  "12285": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 301 — reversing a cash advance voids its repayment deduction (CC-1)."
+  },
+  "12289": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 301 — a bank-categorized driver advance is created, disbursed and linked in one transaction (CC-1)."
+  },
+  "12293": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "CC-3 handoff — A/P aging as-of excludes voided bills; cash forecast names its company (CC-1)."
+  },
+  "12297": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "Lead ROUND 332 — an invoice may not be issued without its ledger entry and spine link (CC-1)."
+  },
+  "12301": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "Lead ROUND 332 — load status 'invoiced' and the invoice are created in one transaction (CC-1)."
+  },
+  "12305": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "Lead ROUND 332 — purge route: refuse_financial_row_delete resolves functions with to_regprocedure (CC-1)."
+  },
+  "12306": {
+    "claimed_by": "CURSOR",
+    "claimed_at": "2026-10-02",
+    "purpose": "BANK-F91038 — bill-payment overpay creates vendor_credit + A/P cash JE + spine (verify-bill-payment-overpay-creates-vendor-credit).",
+    "pr": null
+  },
+  "12309": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "Lead ROUND 339 order 1 — no posting, active role or item default on a deactivated / non-postable account (CC-1)."
+  },
+  "12313": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "Lead ROUND 339 order 2 — one active role per account and per (company, role) (CC-1)."
+  },
+  "12317": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "Lead ROUND 339 order 3 — every posting writer links the spine in the same transaction (CC-1)."
+  },
+  "12321": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "Lead ROUND 339 order 4 — every posted account resolves through a role (CC-1)."
+  },
+  "12325": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "Lead ROUND 339 order 5 — no engine writes to 9000 Ask My Accountant (CC-1)."
+  },
+  "12326": {
+    "claimed_by": "CURSOR",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 342 — verify-r342-entity-code-company-scoped + verify-r342-factor-reserve-oci-field (tenant_id→OCI trap on v_factor_reserve_balance)",
+    "pr": null
+  },
+  "12328": {
+    "claimed_by": "CURSOR",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 342.1 — verify-r3421-unit-plates-identity-user-company-scoped",
+    "pr": null
+  },
+  "12329": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-03",
+    "purpose": "Lead ROUND 342 phase 5 — one entity column: no tenant_id column, no policy reading one, no CHECK equating two company columns (CC-1)."
+  },
+  "12333": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-03",
+    "purpose": "Lead ROUND 355 R-1 — verify-driver-damage-loss-chain: escrow first, never below zero, then pay, then Driver Damage Loss (CC-1)."
+  },
+  "12337": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-03",
+    "purpose": "Lead ROUND 355 R-3 — verify-factoring-fees-are-financing-costs (CC-1)."
+  },
+  "12341": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-no-row-escapes-its-company — zero NULL operating_company_id, run unscoped (CC-1)."
+  },
+  "12345": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-bills-carry-their-unit — bills with a load carry its unit/trailer; repair bills carry a work order (CC-1)."
+  },
+  "12349": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-escrow-equals-its-gl — every driver escrow number on a screen/API equals the 2100-00-nnn GL balance; no reader of a stored escrow balance (CC-1)."
+  },
+  "12353": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-every-load-born-posting-carries-its-load"
+  },
+  "12357": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-no-bill-payment-without-postings"
+  },
+  "12361": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-bank-match-creates-no-postings"
+  },
+  "12365": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-no-posting-update-outside-document-edit"
+  },
+  "12369": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-driver-escrow-gl-never-negative"
+  },
+  "12373": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-no-usmca-record-points-at-a-frozen-company"
+  },
+  "12377": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-settlement-driver-pay-splits-per-load"
+  },
+  "12381": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-every-document-type-posts-its-declared-pair"
+  },
+  "12385": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-every-poster-resolves-by-role-not-by-name-or-number"
+  },
+  "12389": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-every-credit-document-posts"
+  },
+  "12393": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-no-posting-update-outside-document-edit"
+  },
+  "12397": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-no-migration-is-neither-applied-nor-held"
+  },
+  "12401": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-samsara-history-is-never-an-operational-path-into-a-frozen-company"
+  },
+  "12405": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-escrow-balances-equals-its-gl"
+  },
+  "12409": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-test-fixtures-refuse-production"
+  },
+  "12413": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-usmca-clean-no-voids-no-fixtures (RESERVED, step not authored: the guard FAILS on 4 E2E fixtures living in production USMCA and is exempt until those rows are gone and the writer is found — see docs/bus/10-03-2026-LEAD-RULING-WIRE-THE-ORPHAN-GUARDS.md)"
+  },
+  "12417": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-ap-control-ties-subledger"
+  },
+  "12421": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-every-posting-has-its-spine-link"
+  },
+  "12425": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-ap-control-written-only-by-documents"
+  },
+  "12429": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-arrival-detection-wired-on-poll-path"
+  },
+  "12433": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-receivables-post-on-creation"
+  },
+  "12437": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-subaccount-numbers-one-per-driver"
+  },
+  "12441": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-arriving-soon-serves-geofence-state"
+  },
+  "12453": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-b2-je-line-r-after-finish"
+  },
+  "12465": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-balances-render-in-natural-sign"
+  },
+  "12477": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-bank-deposits-make-deposit"
+  },
+  "12489": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-bank-feed-filters-read-the-line-state"
+  },
+  "12501": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-bank-line-buckets-are-the-three-tabs"
+  },
+  "12513": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-bank-line-posts-in-same-transaction"
+  },
+  "12525": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-bank-possible-duplicates-flagged-never-removed"
+  },
+  "12537": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-bank-register-route"
+  },
+  "12549": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-banking-factoring-surfaces-standard"
+  },
+  "12561": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-banking-home-preview-parity"
+  },
+  "12573": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-batch-settlements-grid"
+  },
+  "12585": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-bills-sub-tabs-filter-by-stored-type"
+  },
+  "12597": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-border-crossing-customs-link"
+  },
+  "12609": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-cancelled-load-has-cancellation-record"
+  },
+  "12621": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-categorized-has-a-document"
+  },
+  "12633": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-cc2-crons-single-fire"
+  },
+  "12645": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-cc3-driver-resolution-uses-canonical-map"
+  },
+  "12657": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-checks-list-shows-every-check"
+  },
+  "12669": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-competing-engine-bank-match-one-writer"
+  },
+  "12681": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-competing-engine-legal-money-one-writer"
+  },
+  "12693": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-competing-engine-register-cleared-one-writer"
+  },
+  "12705": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-csv-statement-upload-idempotent"
+  },
+  "12717": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-day95-asks-never-recourses"
+  },
+  "12729": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-delivery-latch-never-inline-in-open-tx"
+  },
+  "12741": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-design-token-parity"
+  },
+  "12753": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-dispatch-date-boxes"
+  },
+  "12765": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-dispatch-missing-is-em-dash"
+  },
+  "12777": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-dispatch-tables-audited-and-rls-forced"
+  },
+  "12789": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-dispatch-tables-board-appearance"
+  },
+  "12801": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-documents-survived-the-undo"
+  },
+  "12813": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-driven-miles-legs-never-interpolate"
+  },
+  "12825": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-driven-miles-segments-from-stop-events"
+  },
+  "12837": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-driver-escrow-gl-never-negative"
+  },
+  "12849": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-driver-messaging-both-ways"
+  },
+  "12861": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-driver-profile-orders-complete"
+  },
+  "12873": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-driver-profile-tabs-read-only-and-attributed"
+  },
+  "12885": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-driver-prompts-flag-off-idempotent"
+  },
+  "12897": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-duplicate-expense-is-refused-or-ruled-never-silent"
+  },
+  "12909": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-e05-legs-evidence-chain"
+  },
+  "12921": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-e29-fences-fire-and-status-switch-flag-off"
+  },
+  "12933": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-engine-catalog-probes-exist"
+  },
+  "12945": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-every-account-type-has-a-pl-or-bs-home"
+  },
+  "12957": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-every-load-born-document-and-posting-traces-to-its-load"
+  },
+  "12969": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-every-posting-has-a-spine-link"
+  },
+  "12981": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-every-posting-has-its-spine-link"
+  },
+  "12993": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-every-void-releases-its-bank-lines"
+  },
+  "13005": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-f-retry-scheduled-writers-idempotent"
+  },
+  "13017": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-factor-reserve-roles-match-faro-bank-accounts"
+  },
+  "13029": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-factored-invoice-amount-locked"
+  },
+  "13041": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-factoring-advance-drawer-linkage"
+  },
+  "13053": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-factoring-banking-kpis-tie-to-ledger"
+  },
+  "13065": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-factoring-fees-are-financing-costs"
+  },
+  "13077": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-factoring-interest-at-close-2150-ties"
+  },
+  "13089": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-factoring-one-scope-policy"
+  },
+  "13101": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-factoring-writers-write-the-spine"
+  },
+  "13113": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-faro-cash-reserve-presents-as-payable"
+  },
+  "13125": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-faro-reserve-by-customer-ties-to-gl"
+  },
+  "13137": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-faro-reserve-registers"
+  },
+  "13149": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-fault-code-alerts-use-shared-driver-attribution"
+  },
+  "13161": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-fault-code-proposes-catalog-item"
+  },
+  "13173": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-fault-driver-attribution-sourced"
+  },
+  "13185": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-feed-gate-blocks-incomplete"
+  },
+  "13197": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-fence-capture-feeds-stops-never-interpolates"
+  },
+  "13209": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-filter-surfaces-full-set"
+  },
+  "13221": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-for-review-has-no-document"
+  },
+  "13233": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-fuel-efficiency-signal-never-invents"
+  },
+  "13245": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-fuel-expense-is-unique-per-provider-transaction"
+  },
+  "13257": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-fuel-overage-gallon-cap-per-unit"
+  },
+  "13269": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-fuel-posts-only-on-bank-match"
+  },
+  "13281": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-fuel-relay-source-worm"
+  },
+  "13293": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-geofence-auto-delivery-canonical"
+  },
+  "13305": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-geofence-samsara-link-never-guesses"
+  },
+  "13317": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-geofence-webhook-feeds-detector"
+  },
+  "13329": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-harsh-events-poll-fallback-exists"
+  },
+  "13341": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-ifta-filing-export-honest"
+  },
+  "13353": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-ifta-miles-never-guesses"
+  },
+  "13365": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-invoice-postings-carry-spine-link"
+  },
+  "13377": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-kpi-provenance-business-language"
+  },
+  "13389": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-legal-deadline-alerts"
+  },
+  "13401": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-legal-linkage"
+  },
+  "13413": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-list-count-matches-its-own-banner-count"
+  },
+  "13425": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-live-fleet-is-measured-not-hardcoded"
+  },
+  "13437": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-load-at-time-single-definition"
+  },
+  "13449": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-load-cancellation-reversal-canonical"
+  },
+  "13461": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-load-costs-in-dispatch-reads-the-ledger"
+  },
+  "13473": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-load-history-surface"
+  },
+  "13485": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-load-status-machines-agree"
+  },
+  "13497": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-load-status-writers-cas"
+  },
+  "13509": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-loaded-miles-derived"
+  },
+  "13521": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-loads-report-surface"
+  },
+  "13533": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-match-posts-nothing"
+  },
+  "13545": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-money-engine-linkage"
+  },
+  "13557": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-money-lines-same-entity-fks"
+  },
+  "13569": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-money-table-cells-aligned"
+  },
+  "13581": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-no-bank-line-is-matched-to-nothing"
+  },
+  "13593": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-no-live-duplicate-documents"
+  },
+  "13605": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-no-merge-conflict-markers"
+  },
+  "13617": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-no-opco-filter-on-tables-without-it"
+  },
+  "13629": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-no-orphan-source-postings"
+  },
+  "13641": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-no-reader-of-stop-arrivals"
+  },
+  "13653": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-no-session-advisory-locks"
+  },
+  "13665": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-one-bank-match-writer-writes-je"
+  },
+  "13677": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-one-factoring-purchase-engine"
+  },
+  "13689": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-one-geofence-inside-decider"
+  },
+  "13701": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-one-leg-asset-never-credit"
+  },
+  "13713": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-one-open-invoice-definition"
+  },
+  "13725": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-one-purchase-rate-resolver"
+  },
+  "13737": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-only-the-posting-engine-writes-postings"
+  },
+  "13749": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-owner-lock-override-propagates"
+  },
+  "13761": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-party-tab-drills-and-reverse"
+  },
+  "13773": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-pm-due-engine-no-fleet-average-no-samsara-call"
+  },
+  "13785": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-pm-writers-exclude-sample-units"
+  },
+  "13797": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-position-poll-odometer-and-mirror-first"
+  },
+  "13809": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-print-checks-numbers-editable-gaps-recorded"
+  },
+  "13821": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-r342-opco-canonical-on-double-scoped"
+  },
+  "13833": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-reclassify-batches-are-whole"
+  },
+  "13845": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-reclassify-by-item-and-load"
+  },
+  "13857": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-reclassify-list-sums-to-its-balance"
+  },
+  "13869": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-reclassify-shows-every-coa-account-including-zero"
+  },
+  "13881": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-recon-payee-never-ledger-account"
+  },
+  "13893": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-recon-service-charge-interest-posts"
+  },
+  "13905": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-register-columns-are-filterable-multi-select"
+  },
+  "13917": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-register-num-resolves-purged-documents"
+  },
+  "13929": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-relay-fill-one-company"
+  },
+  "13941": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-relay-fuel-webhook-receiver"
+  },
+  "13953": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-rollup-keys-carry-company"
+  },
+  "13965": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-safety-reminders-cron-usmca-scoped"
+  },
+  "13977": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-samsara-documents-engine"
+  },
+  "13989": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-samsara-driver-messaging-flag-off-one-store"
+  },
+  "14001": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-samsara-dvir-ingest-never-guesses"
+  },
+  "14013": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-samsara-fence-push-flag-off-no-duplicates"
+  },
+  "14025": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-samsara-fuel-push-never-substitutes"
+  },
+  "14037": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-samsara-fuel-reports-engine"
+  },
+  "14049": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-samsara-master-sync-flag-off"
+  },
+  "14061": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-samsara-master-sync-link-only"
+  },
+  "14073": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-samsara-one-token-path-and-measured-shapes"
+  },
+  "14085": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-samsara-route-push-contract"
+  },
+  "14097": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-samsara-routes-push-real-ids-flag-off"
+  },
+  "14109": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-samsara-webhook-tenant-resolution"
+  },
+  "14121": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-scheduled-engine-idempotency-header"
+  },
+  "14133": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-send-back-preserves-the-match-and-its-load"
+  },
+  "14145": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-settlement-deduction-balance-derived"
+  },
+  "14157": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-settlement-status-approved-runs-approval-gate"
+  },
+  "14169": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-tables-and-tab-bars-follow-the-window"
+  },
+  "14181": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-telematics-linkage-screens-wired"
+  },
+  "14193": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-undo-is-single-transaction"
+  },
+  "14205": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-undo-leaves-no-document-behind"
+  },
+  "14217": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-unit-stop-events-no-clipped-starts"
+  },
+  "14229": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-unmatched-document-is-matchable-again"
+  },
+  "14241": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-variant-duplicate-candidates"
+  },
+  "14253": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-wizard-and-reclassify-share-one-writer"
+  },
+  "14265": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-guards-do-not-run-as-ih35-app"
+  },
+  "14277": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-no-cross-entity-loads"
+  },
+  "14289": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-receipt-creator-is-expense-creator"
+  },
+  "14301": {
+    "claimed_at": "2026-10-03",
+    "claimed_by": "claude",
+    "purpose": "verify-work-order-copy-and-list-columns"
+  },
+  "14313": {
+    "claimed_at": "2026-10-04",
+    "claimed_by": "claude",
+    "purpose": "verify-accounting-status-filters-are-multiselect"
+  },
+  "14325": {
+    "claimed_at": "2026-10-04",
+    "claimed_by": "claude",
+    "purpose": "verify-accounting-way-back-is-breadcrumb"
+  },
+  "14337": {
+    "claimed_at": "2026-10-04",
+    "claimed_by": "claude",
+    "purpose": "verify-fuel-card-issuer-vendor-linkage"
+  },
+  "14349": {
+    "claimed_at": "2026-10-04",
+    "claimed_by": "claude",
+    "purpose": "verify-reefer-fuel-credit"
+  },
+  "14361": {
+    "claimed_at": "2026-10-04",
+    "claimed_by": "claude",
+    "purpose": "verify-vendor-balances-equals-ap-control"
+  },
+  "14373": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-ap-control-ties-subledger"
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -9899,233 +10937,5 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
-  },
-  "12270": {
-    "claimed_by": "Cursor",
-    "purpose": "verify-b5-change-location-wired — B-5 Change location picker + reclassify to_location_id + JEP location_id",
-    "pr": null
-  },
-  "12306": {
-    "claimed_by": "CURSOR",
-    "claimed_at": "2026-10-02",
-    "purpose": "BANK-F91038 — bill-payment overpay creates vendor_credit + A/P cash JE + spine (verify-bill-payment-overpay-creates-vendor-credit).",
-    "pr": null
-  },
-  "12277": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "Lead ROUND 330.6 — re-posted settlement carries predecessor / successor links (CC-1)."
-  },
-  "12281": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "Lead ROUND 330.6 — a faro_daily_imports header can never outlive all its lines (CC-1)."
-  },
-  "12285": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 301 — reversing a cash advance voids its repayment deduction (CC-1)."
-  },
-  "12289": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 301 — a bank-categorized driver advance is created, disbursed and linked in one transaction (CC-1)."
-  },
-  "12293": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "CC-3 handoff — A/P aging as-of excludes voided bills; cash forecast names its company (CC-1)."
-  },
-  "12297": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "Lead ROUND 332 — an invoice may not be issued without its ledger entry and spine link (CC-1)."
-  },
-  "12301": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "Lead ROUND 332 — load status 'invoiced' and the invoice are created in one transaction (CC-1)."
-  },
-  "12305": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "Lead ROUND 332 — purge route: refuse_financial_row_delete resolves functions with to_regprocedure (CC-1)."
-  },
-  "12309": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "Lead ROUND 339 order 1 — no posting, active role or item default on a deactivated / non-postable account (CC-1)."
-  },
-  "12313": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "Lead ROUND 339 order 2 — one active role per account and per (company, role) (CC-1)."
-  },
-  "12317": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "Lead ROUND 339 order 3 — every posting writer links the spine in the same transaction (CC-1)."
-  },
-  "12321": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "Lead ROUND 339 order 4 — every posted account resolves through a role (CC-1)."
-  },
-  "12325": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "Lead ROUND 339 order 5 — no engine writes to 9000 Ask My Accountant (CC-1)."
-  },
-  "12326": {
-    "claimed_by": "CURSOR",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 342 — verify-r342-entity-code-company-scoped + verify-r342-factor-reserve-oci-field (tenant_id→OCI trap on v_factor_reserve_balance)",
-    "pr": null
-  },
-  "12328": {
-    "claimed_by": "CURSOR",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 342.1 — verify-r3421-unit-plates-identity-user-company-scoped",
-    "pr": null
-  },
-  "12329": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-03",
-    "purpose": "Lead ROUND 342 phase 5 — one entity column: no tenant_id column, no policy reading one, no CHECK equating two company columns (CC-1)."
-  },
-  "12333": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-03",
-    "purpose": "Lead ROUND 355 R-1 — verify-driver-damage-loss-chain: escrow first, never below zero, then pay, then Driver Damage Loss (CC-1)."
-  },
-  "12337": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-03",
-    "purpose": "Lead ROUND 355 R-3 — verify-factoring-fees-are-financing-costs (CC-1)."
-  },
-  "12341": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-03",
-    "purpose": "verify-no-row-escapes-its-company — zero NULL operating_company_id, run unscoped (CC-1)."
-  },
-  "12345": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-03",
-    "purpose": "verify-bills-carry-their-unit — bills with a load carry its unit/trailer; repair bills carry a work order (CC-1)."
-  },
-  "12349": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-03",
-    "purpose": "verify-escrow-equals-its-gl — every driver escrow number on a screen/API equals the 2100-00-nnn GL balance; no reader of a stored escrow balance (CC-1)."
-  },
-  "12353": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-03",
-    "purpose": "verify-every-load-born-posting-carries-its-load"
-  },
-  "12357": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-03",
-    "purpose": "verify-no-bill-payment-without-postings"
-  },
-  "12361": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-03",
-    "purpose": "verify-bank-match-creates-no-postings"
-  },
-  "12365": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-03",
-    "purpose": "verify-no-posting-update-outside-document-edit"
-  },
-  "12369": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-03",
-    "purpose": "verify-driver-escrow-gl-never-negative"
-  },
-  "12373": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-03",
-    "purpose": "verify-no-usmca-record-points-at-a-frozen-company"
-  },
-  "12377": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-03",
-    "purpose": "verify-settlement-driver-pay-splits-per-load"
-  },
-  "12381": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-03",
-    "purpose": "verify-every-document-type-posts-its-declared-pair"
-  },
-  "12385": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-03",
-    "purpose": "verify-every-poster-resolves-by-role-not-by-name-or-number"
-  },
-  "12389": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-03",
-    "purpose": "verify-every-credit-document-posts"
-  },
-  "12393": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-03",
-    "purpose": "verify-no-posting-update-outside-document-edit"
-  },
-  "12397": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-03",
-    "purpose": "verify-no-migration-is-neither-applied-nor-held"
-  },
-  "12401": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-03",
-    "purpose": "verify-samsara-history-is-never-an-operational-path-into-a-frozen-company"
-  },
-  "12405": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-03",
-    "purpose": "verify-escrow-balances-equals-its-gl"
-  },
-  "12409": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-03",
-    "purpose": "verify-test-fixtures-refuse-production"
-  },
-  "12413": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-03",
-    "purpose": "verify-usmca-clean-no-voids-no-fixtures"
-  },
-  "12417": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-03",
-    "purpose": "verify-arriving-soon-serves-pm-and-wo-due"
-  },
-  "12421": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-04",
-    "purpose": "verify-every-posting-has-its-spine-link"
-  },
-  "12425": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-04",
-    "purpose": "verify-ap-control-written-only-by-documents"
-  },
-  "12429": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-04",
-    "purpose": "verify-driver-advance-posts-to-drivers-own-subaccount"
-  },
-  "12433": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-04",
-    "purpose": "verify-driver-receivables-post-on-creation"
-  },
-  "12437": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-04",
-    "purpose": "verify-driver-subaccount-numbers-one-per-driver"
   }
 }
