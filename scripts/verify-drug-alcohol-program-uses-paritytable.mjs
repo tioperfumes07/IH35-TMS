@@ -73,6 +73,9 @@ function assertMigrated(src) {
   if (!src.includes("Positive Results — SAP Referral Queue")) {
     errors.push(`${PAGE}: must keep Positive Results SAP queue heading`);
   }
+  // BANK-F91251 leftover refuse — DrugAlcoholProgramTab only
+  if (src.includes("text-[11px]")) errors.push("leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155")) errors.push("leftover off-scale muted");
   return errors;
 }
 
@@ -119,7 +122,14 @@ function selftest() {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS`);
+  // BANK-F91251 leftover plant
+  const leftoverPlant = `${good}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  const leftover = assertMigrated(leftoverPlant);
+  if (!leftover.includes("leftover text-[11px]") || !leftover.includes("leftover off-scale muted")) {
+    console.error(`${LABEL} --selftest FAIL leftover plant escaped`, leftover);
+    process.exit(1);
+  }
+  console.log(`${LABEL} --selftest PASS — leftover plant rejected`);
 }
 
 function main() {
