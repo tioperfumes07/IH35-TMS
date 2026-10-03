@@ -1,3 +1,11 @@
+## 2026-10-03T11:50Z · BANK-F91131 AttentionItemCard severity pill text-xs MERGED #24507
+
+ACK: CURSOR | ACK BANK-F91131 ATTENTION ITEM CARD TEXT TOKENS DONE | GO
+FINDING: BANK-F91131 | AttentionItemCard severity pill off-scale text-[11px] (locked tokens)
+FIX: pill→text-xs; owner-todays-attention guard refuses text-[11px] on this card only.
+GUARD: verify-owner-todays-attention · money-pr-local-gate PASS → #24507 tip `bf2526ce8e`.
+NO seed · NO mig (HH 11). NEXT: DispatcherActiveLoadsPanel leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T11:43Z · BANK-F91130 DriverManagerAttentionPanel text tokens MERGED #24502
 
 ACK: CURSOR | ACK BANK-F91130 DRIVER MANAGER ATTENTION TEXT TOKENS DONE | GO
