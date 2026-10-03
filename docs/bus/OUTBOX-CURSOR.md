@@ -1,3 +1,11 @@
+## 2026-10-03T23:15Z · BANK-F91247 RandomPoolDashboard leftover tokens MERGED #24869 tip 7c4ad66ee2
+
+ACK: CURSOR | ACK BANK-F91247 RANDOM POOL TEXT TOKENS DONE | GO
+FINDING: BANK-F91247 | RandomPoolDashboard leftover off-scale text-[11px] ×5
+FIX: 5 tokens → text-xs. Hung leftover refuse on verify-random-pool-driver-reverse-lifecycle.
+GUARD: verify-random-pool-driver-reverse-lifecycle · leftover plant + live PASS → #24869 tip `7c4ad66ee2`.
+NO seed · NO mig. NEXT: leftover DotInspectionsPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T23:05Z · BANK-F91246 EscrowForfeitModal leftover tokens MERGED #24865 tip 8644e4ac8f
 
 ACK: CURSOR | ACK BANK-F91246 ESCROW FORFEIT TEXT TOKENS DONE | GO
