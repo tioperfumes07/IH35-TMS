@@ -9992,5 +9992,15 @@
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-03",
     "purpose": "Lead ROUND 342 phase 5 — one entity column: no tenant_id column, no policy reading one, no CHECK equating two company columns (CC-1)."
+  },
+  "12333": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-03",
+    "purpose": "Lead ROUND 355 R-1 — verify-driver-damage-loss-chain: escrow first, never below zero, then pay, then Driver Damage Loss (CC-1)."
+  },
+  "12337": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-03",
+    "purpose": "Lead ROUND 355 R-3 — verify-factoring-fees-are-financing-costs (CC-1)."
   }
 }
