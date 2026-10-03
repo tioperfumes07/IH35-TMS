@@ -142,10 +142,10 @@ export function CostBreakdownBox({
 
   return (
     <div className="cost-box overflow-hidden rounded-sm border border-gray-300 bg-white">
-      <div className="cost-box-header bg-[#14314F] px-4 py-[9px] text-[11px] font-bold uppercase tracking-wide text-white">Cost Breakdown</div>
+      <div className="cost-box-header bg-[#14314F] px-4 py-[9px] text-xs font-bold uppercase tracking-wide text-white">Cost Breakdown</div>
       <div className="cost-box-body">
         <div className="cost-sub border-b border-gray-200">
-          <div className="cost-sub-header bg-gray-50 px-[14px] py-[7px] text-[11px] font-bold uppercase tracking-wide text-slate-700">
+          <div className="cost-sub-header bg-gray-50 px-[14px] py-[7px] text-xs font-bold uppercase tracking-wide text-slate-700">
             Section A - Category lines
           </div>
           <div className="p-2">
@@ -341,7 +341,7 @@ export function CostBreakdownBox({
         </div>
 
         <div className="cost-sub">
-          <div className="cost-sub-header bg-gray-50 px-[14px] py-[7px] text-[11px] font-bold uppercase tracking-wide text-slate-700">
+          <div className="cost-sub-header bg-gray-50 px-[14px] py-[7px] text-xs font-bold uppercase tracking-wide text-slate-700">
             Section B - Item lines (service items / parts / labor)
           </div>
           <div className="space-y-2 p-2">
@@ -466,15 +466,15 @@ export function CostBreakdownBox({
 
                 {partsLaborMode !== "none" ? (
                   <div className="mt-2 bg-gray-50 p-2">
-                    <div className="mb-1 text-[11px] font-semibold text-gray-600">Parts & Labor</div>
+                    <div className="mb-1 text-xs font-semibold text-gray-600">Parts & Labor</div>
                       {(line.sub_rows ?? []).map((row) => (
                         <div key={row.id} className="mb-1 grid gap-1 border-t border-gray-100 pt-2 md:grid-cols-[80px_1fr_160px_80px_100px_100px_30px]">
-                          <div className="px-2 py-1 text-[11px] uppercase text-slate-600">{row.line_type}</div>
+                          <div className="px-2 py-1 text-xs uppercase text-slate-600">{row.line_type}</div>
                         {row.line_type === "parts" ? (
                           <div className="space-y-1">
                             {partsCatalogStatus === "unavailable" ? (
                               <p
-                                className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-700"
+                                className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700"
                                 data-testid="wo-parts-catalog-not-provisioned"
                               >
                                 Parts catalog not provisioned for this operating company.
@@ -595,7 +595,7 @@ export function CostBreakdownBox({
                           <div className="space-y-1">
                             {laborRatesCatalogStatus === "unavailable" ? (
                               <p
-                                className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-700"
+                                className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700"
                                 data-testid="wo-labor-rates-catalog-not-provisioned"
                               >
                                 Labor rates catalog not provisioned for this operating company.
