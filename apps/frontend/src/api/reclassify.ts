@@ -166,6 +166,8 @@ export function findReclassifyLines(
 export function applyReclassify(body: {
   operating_company_id: string; posting_ids: string[]; reason: string;
   to_account_id?: string | null; to_class_id?: string | null; to_location_id?: string | null; to_entity_uuid?: string | null; to_entity_type?: "customer" | "vendor" | "driver" | "unit" | null;
+  /** U24 — reclassify by item (the account follows the item) and by load (expense and bill lines). */
+  to_item_id?: string | null; to_load_id?: string | null;
   filter_snapshot?: Record<string, unknown>;
   /** LAW 363.5 — owner only: apply over the refused classes (A/R, A/P, inventory, payroll); never a bank line; audited per line. */
   override_refusals?: boolean;

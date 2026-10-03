@@ -9,6 +9,8 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { useAuth } from "../../auth/useAuth";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { EntityPicker } from "../../components/EntityPicker";
+import { useAccountingItemsQuery } from "../../hooks/useAccountingItemsQuery";
 import { naturalCentsForType } from "../../lib/naturalBalance";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -146,6 +148,12 @@ export function ReclassifyTransactionsPage() {
   const [toLocation, setToLocation] = useState<string | null>(null);
   const [toEntityKind, setToEntityKind] = useState<"vendor" | "customer">("vendor");
   const [toVendor, setToVendor] = useState("");
+  // U24 (owner): reclassify by item and by load.
+  const [toItem, setToItem] = useState("");
+  const [toLoad, setToLoad] = useState<string | null>(null);
+  const [itemSearch, setItemSearch] = useState("");
+  const itemsTargetQ = useAccountingItemsQuery({ operatingCompanyId: companyId, kind: "all", search: itemSearch, enabled: modalOpen && !!companyId });
+  const itemTargetOptions = useMemo<ReferenceOption[]>(() => (itemsTargetQ.data ?? []).map((row) => ({ value: row.id, label: row.name })), [itemsTargetQ.data]);
   const [reason, setReason] = useState("");
   const [overrideRefusals, setOverrideRefusals] = useState(false);
   const [lastResult, setLastResult] = useState<ReclassifyBatchResult | null>(null);
@@ -177,11 +185,12 @@ export function ReclassifyTransactionsPage() {
       operating_company_id: companyId, posting_ids: Array.from(selected.keys()), reason,
       to_account_id: toAccount || null, to_class_id: toClass || null, to_location_id: toLocation || null,
       to_entity_uuid: toVendor || null, to_entity_type: toVendor ? toEntityKind : null,
+      to_item_id: toItem || null, to_load_id: toLoad || null,
       filter_snapshot: applied ?? {},
       override_refusals: isOwner && overrideRefusals ? true : undefined,
     }),
     onSuccess: (res) => {
-      setLastResult(res); setModalOpen(false); setSelected(new Map()); setToAccount(""); setToClass(""); setToLocation(null); setToVendor(""); setToEntityKind("vendor"); setReason(""); setOverrideRefusals(false);
+      setLastResult(res); setModalOpen(false); setSelected(new Map()); setToAccount(""); setToClass(""); setToLocation(null); setToVendor(""); setToEntityKind("vendor"); setToItem(""); setToLoad(null); setReason(""); setOverrideRefusals(false);
       void qc.invalidateQueries({ queryKey: ["reclassify-lines"] }); void qc.invalidateQueries({ queryKey: ["reclassify-accounts"] }); void qc.invalidateQueries({ queryKey: ["reclassify-batches"] });
     },
   });
@@ -510,6 +519,14 @@ export function ReclassifyTransactionsPage() {
                 {(classesQ.data?.classes ?? []).map((c) => <option key={c.id} value={c.id}>{c.class_name}</option>)}
               </SelectCombobox>
             </label>
+            {/* U24 (owner): by item — the account follows the item's own expense account unless one is chosen above. */}
+            <label className="mt-2 flex flex-col gap-1 text-xs font-semibold text-slate-600" data-testid="reclassify-to-item">Change item to
+              <ReferenceSelect value={toItem || null} onChange={(next) => setToItem(next ?? "")} options={itemTargetOptions} createKind="item" operatingCompanyId={companyId} placeholder="Select…" loading={itemsTargetQ.isLoading} onSearch={setItemSearch} />
+            </label>
+            {/* U24 (owner): by load — the line moves to the load; the reclass entry's legs carry the old and the new load. */}
+            <label className="mt-2 flex flex-col gap-1 text-xs font-semibold text-slate-600" data-testid="reclassify-to-load">Change load to
+              <EntityPicker kind="load" operatingCompanyId={companyId} value={toLoad} onChange={(v) => setToLoad(v)} allowCreate={false} allowClear ariaLabel="Change load to" />
+            </label>
             <label className="mt-2 flex flex-col gap-1 text-xs font-semibold text-slate-600" data-b5-change-location="1">
               Change location to
               <div data-testid="reclassify-to-location">
@@ -557,7 +574,7 @@ export function ReclassifyTransactionsPage() {
             {applyMut.error ? <div className="mt-2"><ListErrorState {...formatQueryErrorDetail(applyMut.error)} onRetry={() => applyMut.reset()} /></div> : null}
             <div className="mt-3 flex justify-end gap-2">
               <Button type="button" variant="tertiary" onClick={() => setModalOpen(false)}>Cancel</Button>
-              <Button type="button" loading={applyMut.isPending} disabled={reason.trim().length < 3 || (!toAccount && !toClass && !toLocation && !toVendor)} onClick={() => applyMut.mutate()} data-testid="reclassify-apply">Apply</Button>
+              <Button type="button" loading={applyMut.isPending} disabled={reason.trim().length < 3 || (!toAccount && !toClass && !toLocation && !toVendor && !toItem && !toLoad)} onClick={() => applyMut.mutate()} data-testid="reclassify-apply">Apply</Button>
             </div>
           </div>
         </div>

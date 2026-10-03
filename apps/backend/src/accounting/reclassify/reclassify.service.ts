@@ -418,6 +418,10 @@ export type ApplyReclassifyInput = {
   to_location_id?: string | null;
   to_entity_uuid?: string | null;
   to_entity_type?: "customer" | "vendor" | "driver" | "unit" | null;
+  /** U24 — move the lines to another ITEM (the account follows the item's own expense account unless to_account_id is
+   *  given) and/or another LOAD (the reclass legs are re-stamped old -> new). Expense and bill lines only. */
+  to_item_id?: string | null;
+  to_load_id?: string | null;
   filter_snapshot?: Record<string, unknown>;
   /** LAW 363.5 — OWNER ONLY: apply the batch to lines in an overridable refused class; each one is recorded and audited. */
   override_refusals?: boolean;
@@ -532,7 +536,7 @@ async function linkReclassEntry(
 /** Pure: which selected lines are eligible and why the others are not. Unit-tested without a DB. */
 export function classifySelection(
   postings: SelectedPosting[],
-  target: { to_account_id?: string | null; to_class_id?: string | null; to_location_id?: string | null; to_entity_uuid?: string | null },
+  target: { to_account_id?: string | null; to_class_id?: string | null; to_location_id?: string | null; to_entity_uuid?: string | null; to_item_id?: string | null; to_load_id?: string | null },
   opts: { overrideRefusals?: boolean } = {},
 ): { eligible: SelectedPosting[]; refused: Array<{ posting: SelectedPosting; why: string }>; overridden: Map<string, string> } {
   const eligible: SelectedPosting[] = [];
@@ -549,12 +553,19 @@ export function classifySelection(
       if (!(control.overridable && opts.overrideRefusals)) { refused.push({ posting: p, why: control.overridable ? `${control.reason} — the owner may override` : control.reason }); continue; }
       overridden.set(p.posting_id, control.reason);
     }
+    // U24 — an item or load lives on a document LINE: only expense and bill lines carry both.
+    if ((target.to_item_id || target.to_load_id) && p.source_transaction_type !== "expense" && p.source_transaction_type !== "bill") {
+      refused.push({ posting: p, why: `${p.source_transaction_type ?? "journal entry"} lines carry no item / load to move — by item and by load apply to expense and bill lines` });
+      continue;
+    }
     const noChange =
       (!target.to_account_id || target.to_account_id === p.account_id) &&
       (!target.to_class_id || target.to_class_id === p.class_id) &&
       (!target.to_location_id || target.to_location_id === p.location_id) &&
-      (!target.to_entity_uuid || target.to_entity_uuid === p.entity_uuid);
-    if (noChange) { refused.push({ posting: p, why: "line already carries the requested account/class/location/entity" }); continue; }
+      (!target.to_entity_uuid || target.to_entity_uuid === p.entity_uuid) &&
+      (!target.to_item_id || target.to_item_id === p.item_id) &&
+      (!target.to_load_id || target.to_load_id === p.load_id);
+    if (noChange) { refused.push({ posting: p, why: "line already carries the requested account/class/location/entity/item/load" }); continue; }
     eligible.push(p);
   }
   return { eligible, refused, overridden };
@@ -575,16 +586,18 @@ export function isHandKeyed(p: Pick<SelectedPosting, "source_transaction_type" |
 /** Pure: the reclass JE lines for one document — a reverse+repost PAIR per selected posting. */
 export function buildReclassPairs(
   eligible: SelectedPosting[],
-  target: { to_account_id?: string | null; to_class_id?: string | null; to_location_id?: string | null; to_entity_uuid?: string | null; to_entity_type?: string | null },
+  target: { to_account_id?: string | null; to_class_id?: string | null; to_location_id?: string | null; to_entity_uuid?: string | null; to_entity_type?: string | null; to_item_id?: string | null; to_load_id?: string | null },
   batchId: string,
 ) {
   return eligible.flatMap((p) => {
     const flip: "debit" | "credit" = p.debit_or_credit === "debit" ? "credit" : "debit";
-    const what = [target.to_account_id ? "account" : null, target.to_class_id ? "class" : null, target.to_location_id ? "location" : null, target.to_entity_uuid ? "entity" : null].filter(Boolean).join("/");
+    const what = [target.to_account_id ? "account" : null, target.to_class_id ? "class" : null, target.to_location_id ? "location" : null, target.to_entity_uuid ? "entity" : null, target.to_item_id ? "item" : null, target.to_load_id ? "load" : null].filter(Boolean).join("/");
     const desc = `Reclass ${batchId.slice(0, 8)} (${what}) · ${p.description ?? ""}`.trim();
     const base = { amount_cents: p.amount_cents, description: desc, source_transaction_type: p.source_transaction_type, source_transaction_id: p.source_transaction_id };
     return [
-      { ...base, account_id: p.account_id, class_id: p.class_id, location_id: p.location_id, entity_uuid: p.entity_uuid, entity_type: p.entity_type, debit_or_credit: flip },
+      // U24 / LAW 363.3 — a load move re-stamps the legs: the reversing leg keeps the line's old load, the repost carries
+      // the new one. Without a load move both legs take the stamp from the document (undefined = the writer's default).
+      { ...base, account_id: p.account_id, class_id: p.class_id, location_id: p.location_id, entity_uuid: p.entity_uuid, entity_type: p.entity_type, debit_or_credit: flip, load_id: target.to_load_id ? (p.load_id ?? null) : undefined },
       {
         ...base,
         account_id: target.to_account_id ?? p.account_id,
@@ -593,6 +606,7 @@ export function buildReclassPairs(
         entity_uuid: target.to_entity_uuid ?? p.entity_uuid,
         entity_type: target.to_entity_uuid ? (target.to_entity_type ?? null) : p.entity_type,
         debit_or_credit: p.debit_or_credit,
+        load_id: target.to_load_id ?? undefined,
       },
     ];
   });
@@ -621,11 +635,26 @@ export async function rewriteDocumentLine(
   client: DbClient,
   companyId: string,
   p: SelectedPosting,
-  target: { account_id: string | null; class_id: string | null; location_id: string | null; entity_uuid: string | null; entity_type: string | null },
+  target: { account_id: string | null; class_id: string | null; location_id: string | null; entity_uuid: string | null; entity_type: string | null; item_id?: string | null; load_id?: string | null },
 ): Promise<{ updated: boolean; note: string | null }> {
   const type = p.source_transaction_type;
   if (!type || !p.source_transaction_id) return { updated: false, note: "hand-keyed journal entry: no source document to rewrite (ledger moved by the reclass JE)" };
   const notes: string[] = [];
+  // U24 — the item and the load live on the document LINE; without the posting's line id the move is refused, never guessed.
+  if ((target.item_id || target.load_id) && (type === "expense" || type === "bill")) {
+    if (!p.source_transaction_line_id) {
+      notes.push(`${type} posting carries no line id; item / load not moved`);
+    } else {
+      const table = type === "expense" ? "accounting.expense_lines" : "accounting.bill_lines";
+      const live = type === "bill" ? " AND voided_at IS NULL" : "";
+      const r = await client.query(
+        `UPDATE ${table} SET item_id = COALESCE($3::uuid, item_id), load_id = COALESCE($4::uuid, load_id)
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid${live}`,
+        [p.source_transaction_line_id, companyId, target.item_id ?? null, target.load_id ?? null],
+      );
+      if ((r.rowCount ?? 0) === 0) notes.push(`${type} line not found; item / load not moved`);
+    }
+  }
   if (type === "expense") {
     if (target.entity_uuid && target.entity_type && target.entity_type !== "vendor") notes.push(`expense payee can only become a vendor (asked ${target.entity_type}); ledger moved, header unchanged`);
     if (target.entity_uuid && target.entity_type === "vendor") {
@@ -703,24 +732,43 @@ const INSERT_LINE = `
   INSERT INTO accounting.reclassify_batch_lines
     (batch_id, operating_company_id, posting_id, journal_entry_id, source_transaction_type, source_transaction_id, source_transaction_line_id,
      from_account_id, from_class_id, from_location_id, from_entity_uuid, from_entity_type, to_account_id, to_class_id, to_location_id, to_entity_uuid, to_entity_type,
-     debit_or_credit, amount_cents, result, refusal_reason, reclass_journal_entry_id, document_updated, document_update_note, override_of_refusal)
-  VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5, $6, $7, $8::uuid, $9::uuid, $10::uuid, $11::uuid, $12, $13::uuid, $14::uuid, $15::uuid, $16::uuid, $17, $18, $19, $20, $21, $22::uuid, $23, $24, $25)`;
+     debit_or_credit, amount_cents, result, refusal_reason, reclass_journal_entry_id, document_updated, document_update_note, override_of_refusal,
+     from_item_id, to_item_id, from_load_id, to_load_id)
+  VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5, $6, $7, $8::uuid, $9::uuid, $10::uuid, $11::uuid, $12, $13::uuid, $14::uuid, $15::uuid, $16::uuid, $17, $18, $19, $20, $21, $22::uuid, $23, $24, $25,
+          $26::uuid, $27::uuid, $28::uuid, $29::uuid)`;
 
 export async function applyReclassify(input: ApplyReclassifyInput, actor: { userId: string; role: string }): Promise<ReclassifyBatchResult> {
   const reason = input.reason.trim();
   if (reason.length < 3) throw new Error("reclassify_reason_required");
-  if (!input.to_account_id && !input.to_class_id && !input.to_location_id && !input.to_entity_uuid) throw new Error("reclassify_changes_nothing");
+  if (!input.to_account_id && !input.to_class_id && !input.to_location_id && !input.to_entity_uuid && !input.to_item_id && !input.to_load_id) throw new Error("reclassify_changes_nothing");
   if (!!input.to_entity_uuid !== !!input.to_entity_type) throw new Error("reclassify_entity_pair_incomplete");
   const postingIds = Array.from(new Set(input.posting_ids));
   if (postingIds.length === 0) throw new Error("reclassify_no_lines_selected");
   if (postingIds.length > 500) throw new Error("reclassify_too_many_lines_max_500");
   const overrideRefusals = input.override_refusals === true;
   if (overrideRefusals && actor.role !== "Owner") throw new Error("reclassify_override_owner_only");
-  const target = { to_account_id: input.to_account_id ?? null, to_class_id: input.to_class_id ?? null, to_location_id: input.to_location_id ?? null, to_entity_uuid: input.to_entity_uuid ?? null, to_entity_type: input.to_entity_type ?? null };
+  const target = { to_account_id: input.to_account_id ?? null, to_class_id: input.to_class_id ?? null, to_location_id: input.to_location_id ?? null, to_entity_uuid: input.to_entity_uuid ?? null, to_entity_type: input.to_entity_type ?? null, to_item_id: input.to_item_id ?? null, to_load_id: input.to_load_id ?? null };
 
   return withCurrentUser(actor.userId, async (client) => {
     const companyId = input.operating_company_id;
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
+
+    // U24 — an item move carries the item's own expense account (unless the account is given explicitly), so the ledger
+    // moves with the item; an item with no account is refused rather than moving the item alone.
+    if (target.to_item_id) {
+      const it = await client.query<{ ok: boolean; acct: string | null }>(
+        `SELECT (deactivated_at IS NULL) AS ok, default_expense_account_id::text AS acct
+           FROM catalogs.items WHERE id = $1::uuid AND (operating_company_id = $2::uuid OR operating_company_id IS NULL)`, [target.to_item_id, companyId]);
+      if (!it.rows[0]?.ok) throw new Error("reclassify_target_item_not_found");
+      if (!target.to_account_id) {
+        if (!it.rows[0].acct) throw new Error("reclassify_target_item_has_no_account");
+        target.to_account_id = it.rows[0].acct;
+      }
+    }
+    if (target.to_load_id) {
+      const ld = await client.query(`SELECT 1 FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL`, [target.to_load_id, companyId]);
+      if (!ld.rows[0]) throw new Error("reclassify_target_load_not_found");
+    }
 
     if (target.to_account_id) {
       const acc = await client.query<{ ok: boolean; account_type: string | null; account_subtype: string | null; system_purpose: string | null; is_bank_ledger: boolean }>(
@@ -743,9 +791,9 @@ export async function applyReclassify(input: ApplyReclassifyInput, actor: { user
 
     const batchRes = await client.query<{ id: string }>(
       `INSERT INTO accounting.reclassify_batches
-         (operating_company_id, created_by_user_id, reason, filter_snapshot, to_account_id, to_class_id, to_location_id, to_entity_uuid, to_entity_type, lines_requested, override_refusals)
-       VALUES ($1::uuid, $2::uuid, $3, $4::jsonb, $5::uuid, $6::uuid, $7::uuid, $8::uuid, $9, $10, $11) RETURNING id::text`,
-      [companyId, actor.userId, reason, JSON.stringify(input.filter_snapshot ?? {}), target.to_account_id, target.to_class_id, target.to_location_id, target.to_entity_uuid, target.to_entity_type, postingIds.length, overrideRefusals],
+         (operating_company_id, created_by_user_id, reason, filter_snapshot, to_account_id, to_class_id, to_location_id, to_entity_uuid, to_entity_type, lines_requested, override_refusals, to_item_id, to_load_id)
+       VALUES ($1::uuid, $2::uuid, $3, $4::jsonb, $5::uuid, $6::uuid, $7::uuid, $8::uuid, $9, $10, $11, $12::uuid, $13::uuid) RETURNING id::text`,
+      [companyId, actor.userId, reason, JSON.stringify(input.filter_snapshot ?? {}), target.to_account_id, target.to_class_id, target.to_location_id, target.to_entity_uuid, target.to_entity_type, postingIds.length, overrideRefusals, target.to_item_id, target.to_load_id],
     );
     const batchId = batchRes.rows[0]!.id;
     const result: ReclassifyBatchResult = { batch_id: batchId, lines_requested: postingIds.length, lines_applied: 0, lines_refused: 0, amount_cents_moved: 0, documents: [] };
@@ -757,6 +805,7 @@ export async function applyReclassify(input: ApplyReclassifyInput, actor: { user
         p.account_id, p.class_id, p.location_id, p.entity_uuid, p.entity_type,
         target.to_account_id ?? p.account_id, target.to_class_id ?? p.class_id, target.to_location_id ?? p.location_id, target.to_entity_uuid ?? p.entity_uuid, target.to_entity_uuid ? target.to_entity_type : p.entity_type,
         p.debit_or_credit, p.amount_cents, "refused", why, null, false, null, null,
+        p.item_id ?? null, target.to_item_id ?? p.item_id ?? null, p.load_id ?? null, target.to_load_id ?? p.load_id ?? null,
       ]);
       result.documents.push({ source_transaction_type: p.source_transaction_type, source_transaction_id: p.source_transaction_id, document_number: p.document_number, reclass_journal_entry_id: null, lines_applied: 0, lines_refused: 1, document_updated: false, document_update_note: null, refusal_reason: why });
     };
@@ -793,7 +842,7 @@ export async function applyReclassify(input: ApplyReclassifyInput, actor: { user
           const handKeyed = isHandKeyed(p);
           const rw = handKeyed
             ? { updated: true, note: null }
-            : await rewriteDocumentLine(client as DbClient, companyId, p, { account_id: target.to_account_id, class_id: target.to_class_id, location_id: target.to_location_id, entity_uuid: target.to_entity_uuid, entity_type: target.to_entity_type });
+            : await rewriteDocumentLine(client as DbClient, companyId, p, { account_id: target.to_account_id, class_id: target.to_class_id, location_id: target.to_location_id, entity_uuid: target.to_entity_uuid, entity_type: target.to_entity_type, item_id: target.to_item_id, load_id: target.to_load_id });
           if (!rw.updated) throw new ReclassifyDocumentNotRewritableError(rw.note ?? "document line could not be rewritten");
           rewrites.set(p.posting_id, rw);
         }
@@ -830,6 +879,7 @@ export async function applyReclassify(input: ApplyReclassifyInput, actor: { user
             p.account_id, p.class_id, p.location_id, p.entity_uuid, p.entity_type,
             target.to_account_id ?? p.account_id, target.to_class_id ?? p.class_id, target.to_location_id ?? p.location_id, target.to_entity_uuid ?? p.entity_uuid, target.to_entity_uuid ? target.to_entity_type : p.entity_type,
             p.debit_or_credit, p.amount_cents, "applied", null, jeId, rw.updated, rw.note, overridden.get(p.posting_id) ?? null,
+            p.item_id ?? null, target.to_item_id ?? p.item_id ?? null, p.load_id ?? null, target.to_load_id ?? p.load_id ?? null,
           ]);
           result.lines_applied += 1;
           result.amount_cents_moved += p.amount_cents;
@@ -886,13 +936,24 @@ export async function undoReclassifyBatch(input: { operating_company_id: string;
       await client.query(`UPDATE accounting.reclassify_batch_lines SET undo_journal_entry_id = $2::uuid WHERE batch_id = $1::uuid AND reclass_journal_entry_id = $3::uuid`, [input.batch_id, undoId, row.je]);
       reversed += 1;
     }
-    const lines = await client.query<{ source_transaction_type: string | null; source_transaction_id: string | null; source_transaction_line_id: string | null; from_account_id: string; from_class_id: string | null; from_location_id: string | null; from_entity_uuid: string | null; document_updated: boolean }>(
-      `SELECT source_transaction_type, source_transaction_id, source_transaction_line_id, from_account_id::text, from_class_id::text, from_location_id::text, from_entity_uuid::text, document_updated
+    const lines = await client.query<{ source_transaction_type: string | null; source_transaction_id: string | null; source_transaction_line_id: string | null; from_account_id: string; from_class_id: string | null; from_location_id: string | null; from_entity_uuid: string | null; document_updated: boolean; from_item_id: string | null; to_item_id: string | null; from_load_id: string | null; to_load_id: string | null }>(
+      `SELECT source_transaction_type, source_transaction_id, source_transaction_line_id, from_account_id::text, from_class_id::text, from_location_id::text, from_entity_uuid::text, document_updated,
+              from_item_id::text, to_item_id::text, from_load_id::text, to_load_id::text
          FROM accounting.reclassify_batch_lines WHERE batch_id = $1::uuid AND result = 'applied'`,
       [input.batch_id],
     );
     for (const l of lines.rows) {
       if (!l.document_updated) continue;
+      // U24 — an item / load move goes back on the document line it was made on.
+      const itemMoved = l.to_item_id !== l.from_item_id;
+      const loadMoved = l.to_load_id !== l.from_load_id;
+      if ((itemMoved || loadMoved) && l.source_transaction_line_id && (l.source_transaction_type === "expense" || l.source_transaction_type === "bill")) {
+        const table = l.source_transaction_type === "expense" ? "accounting.expense_lines" : "accounting.bill_lines";
+        await client.query(
+          `UPDATE ${table} SET item_id = CASE WHEN $2 THEN $3::uuid ELSE item_id END, load_id = CASE WHEN $4 THEN $5::uuid ELSE load_id END WHERE id = $1::uuid`,
+          [l.source_transaction_line_id, itemMoved, l.from_item_id, loadMoved, l.from_load_id],
+        );
+      }
       if (l.source_transaction_type === "expense" && l.source_transaction_id) {
         if (l.source_transaction_line_id) await client.query(`UPDATE accounting.expense_lines SET expense_account_uuid = $2::uuid WHERE id = $1::uuid`, [l.source_transaction_line_id, l.from_account_id]);
         await client.query(`UPDATE accounting.expenses SET class_id = $2::uuid, location_id = $4::uuid, vendor_uuid = coalesce($3::uuid, vendor_uuid), updated_at = now() WHERE id = $1::uuid`, [l.source_transaction_id, l.from_class_id, l.from_entity_uuid, l.from_location_id]);
