@@ -15,6 +15,7 @@ const WORKSPACE = "apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx";
 const SHELL = "apps/frontend/src/pages/banking/components/ReconciliationTabContent.tsx";
 const API = "apps/frontend/src/api/banking.ts";
 const ROUTES = "apps/backend/src/banking/reconciliation.routes.ts";
+const GL_LINES = "apps/backend/src/banking/reconcilable-gl-lines.ts";
 
 function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
@@ -29,6 +30,7 @@ function main() {
   const shell = read(SHELL);
   const api = read(API);
   const routes = read(ROUTES);
+  const glLines = read(GL_LINES);
 
   assertIncludes(workspace, 'data-b2-reconcile-arithmetic="1"', WORKSPACE);
   assertIncludes(workspace, 'data-b2-reconcile-tabs="1"', WORKSPACE);
@@ -73,6 +75,13 @@ function main() {
   // BANK-F91056 — Credit Memo + Fuel Event on recon Type filter (match GL TYPE_LABELS).
   assertIncludes(workspace, '"Credit Memo"', WORKSPACE);
   assertIncludes(workspace, '"Fuel Event"', WORKSPACE);
+  // BANK-F91057 — Escrow + Bank Reconciliation chips; TYPE_LABELS map live keys.
+  assertIncludes(workspace, '"Escrow"', WORKSPACE);
+  assertIncludes(workspace, '"Bank Reconciliation"', WORKSPACE);
+  assertIncludes(glLines, 'driver_settlement: "Settlement"', GL_LINES);
+  assertIncludes(glLines, 'driver_cash_advance: "Cash Advance"', GL_LINES);
+  assertIncludes(glLines, 'load: "Load"', GL_LINES);
+  assertIncludes(glLines, 'escrow_account: "Escrow"', GL_LINES);
   assertIncludes(workspace, "tx.type_label !== appliedTxnType", WORKSPACE);
   assertIncludes(workspace, "reconDocumentHref", WORKSPACE);
   assertIncludes(workspace, "data-b2-recon-row-open", WORKSPACE);

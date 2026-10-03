@@ -99,12 +99,29 @@ function sourceRoute(
   if (t === "factoring_advance" && reference) return `/factoring/advances/${reference}`;
   if (t === "factoring_advance") return "/factoring/advances";
   // B-1 — cash / driver advance → cash-advances surface (EntityLink kind cash_advance).
-  if ((t === "cash_advance" || t === "driver_advance") && reference) {
+  // BANK-F91057 — live key is driver_cash_advance (24 USMCA rows).
+  if (
+    (t === "cash_advance" || t === "driver_advance" || t === "driver_cash_advance") &&
+    reference
+  ) {
     return `/cash-advances?advance_id=${reference}`;
   }
-  if (t === "cash_advance" || t === "driver_advance") return "/cash-advances";
-  if (t === "settlement" && reference) return `/driver-finance/settlements?settlement_id=${reference}`;
-  if (t === "settlement") return "/driver-finance/settlements";
+  if (t === "cash_advance" || t === "driver_advance" || t === "driver_cash_advance") {
+    return "/cash-advances";
+  }
+  // BANK-F91057 — live key is driver_settlement (420 USMCA rows); settlement alias kept.
+  if ((t === "settlement" || t === "driver_settlement") && reference) {
+    return `/driver-finance/settlements?settlement_id=${reference}`;
+  }
+  if (t === "settlement" || t === "driver_settlement") return "/driver-finance/settlements";
+  // BANK-F91057 — Load JE lines (387 USMCA) → dispatch load face.
+  if (t === "load" && reference) return `/dispatch/loads/${reference}`;
+  if (t === "load") return "/dispatch/loads";
+  // BANK-F91057 — escrow postings → accounting escrow surface.
+  if (t === "escrow_account" && reference) {
+    return `/accounting/escrow?escrow_account_id=${reference}`;
+  }
+  if (t === "escrow_account") return "/accounting/escrow";
   // Law §9 transfer reverse: banking transfers list (QBO Transfer / fund move).
   if (t === "transfer" && reference) return `/banking/transfers?transfer_id=${reference}`;
   if (t === "transfer") return "/banking/transfers";
@@ -115,7 +132,14 @@ function sourceRoute(
   if (t === "credit_memo") return "/accounting/credit-memos";
   if (t === "fuel_event" && reference) return `/fuel/history?transaction_id=${reference}`;
   if (t === "fuel_event") return "/fuel/history";
-  if (t === "journal_entry" && reference) return `/accounting/journal-entries/${reference}`;
+  // BANK-F91057 — bank_reconciliation → reconcile shell (session is the source id when present).
+  if (t === "bank_reconciliation" && reference) {
+    return `/banking/reconcile?session_id=${reference}`;
+  }
+  if (t === "bank_reconciliation") return "/banking/reconcile";
+  if ((t === "journal_entry" || t === "manual_je") && reference) {
+    return `/accounting/journal-entries/${reference}`;
+  }
   if (journalEntryId) return `/accounting/journal-entries/${journalEntryId}`;
   return "/accounting/journal-entries";
 }
@@ -138,6 +162,10 @@ const TRANSACTION_TYPES = [
   // BANK-F91056 — ORDERS leftover type chips (were missing from B-1 filter).
   "Credit Memo",
   "Fuel Event",
+  // BANK-F91057 — live USMCA source keys that were unlabeled / unfilterable.
+  "Load",
+  "Escrow",
+  "Bank Reconciliation",
 ];
 // Map the display label back to the stored source_transaction_type the backend filters on.
 const TYPE_TO_SOURCE: Record<string, string> = {
@@ -149,16 +177,22 @@ const TYPE_TO_SOURCE: Record<string, string> = {
   // B-1 ORDERS — Check filter → BE expense + payment_type='check' (not a separate JE source type).
   Check: "check",
   "Journal Entry": "journal_entry",
-  Settlement: "settlement",
+  // BANK-F91057 — live key is driver_settlement (BE also accepts settlement alias).
+  Settlement: "driver_settlement",
   Transfer: "transfer",
   Deposit: "bank_deposit",
   "Bank Categorization": "bank_categorization",
-  "Cash Advance": "cash_advance",
+  // BANK-F91057 — live key is driver_cash_advance (BE also accepts cash_advance alias).
+  "Cash Advance": "driver_cash_advance",
   "Driver Advance": "driver_advance",
   "Factoring Advance": "factoring_advance",
   // BANK-F91056
   "Credit Memo": "credit_memo",
   "Fuel Event": "fuel_event",
+  // BANK-F91057
+  Load: "load",
+  Escrow: "escrow_account",
+  "Bank Reconciliation": "bank_reconciliation",
 };
 
 function applyPreset(preset: string): { from: string; to: string } | null {
