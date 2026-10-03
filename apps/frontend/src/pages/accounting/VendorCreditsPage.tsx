@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { listVendors } from "../../api/mdata";
-import { listVendorBills, type VendorBill } from "../../api/accounting";
+import { listCoaAccountsForJe, listVendorBills, type VendorBill } from "../../api/accounting";
 import {
   applyVendorCredit,
   createVendorCredit,
@@ -86,6 +86,17 @@ export function VendorCreditsPage() {
   const [applyAmountCents, setApplyAmountCents] = useState<number | null>(null);
   const [voidOpen, setVoidOpen] = useState(false);
   const [createVendorId, setCreateVendorId] = useState<string | null>(vendorFilter || null);
+  // ROUND 373.4 — the account this credit posts to (required: the document posts at creation).
+  const [createAccountId, setCreateAccountId] = useState<string | null>(null);
+  const accountsQuery = useQuery({
+    queryKey: ["accounting", "credit-doc-accounts", companyId],
+    queryFn: () => listCoaAccountsForJe(companyId, { postableOnly: true }),
+    enabled: Boolean(companyId),
+  });
+  const accountOptions = useMemo(
+    () => (accountsQuery.data?.accounts ?? []).map((a) => ({ value: a.id, label: a.account_name })),
+    [accountsQuery.data]
+  );
   const [createAmountCents, setCreateAmountCents] = useState<number | null>(null);
   const [createNotes, setCreateNotes] = useState("");
   const [createDisplayId, setCreateDisplayId] = useState("");
@@ -136,6 +147,7 @@ export function VendorCreditsPage() {
         amount_cents: createAmountCents as number,
         notes: createNotes.trim() || undefined,
         display_id: createDisplayId.trim() || undefined,
+        coa_account_id: createAccountId as string,
       }),
     onSuccess: async () => {
       pushToast("Vendor credit created", "success");
@@ -143,6 +155,7 @@ export function VendorCreditsPage() {
       setCreateAmountCents(null);
       setCreateNotes("");
       setCreateDisplayId("");
+      setCreateAccountId(null);
       await queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-credits", companyId] });
       await queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-credits", "next-number", companyId] });
     },
@@ -338,7 +351,7 @@ export function VendorCreditsPage() {
             </Button>
             <Button
               type="button"
-              disabled={!createVendorId || createAmountCents == null || createAmountCents <= 0 || createMut.isPending}
+              disabled={!createVendorId || createAmountCents == null || !createAccountId || createAmountCents <= 0 || createMut.isPending}
               loading={createMut.isPending}
               onClick={() => createMut.mutate()}
             >
@@ -390,6 +403,21 @@ export function VendorCreditsPage() {
                 valueCents={createAmountCents}
                 onChangeCents={setCreateAmountCents}
                 ariaLabel="Vendor credit amount"
+              />
+            </div>
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium text-gray-600">Expense account *</span>
+            <div className="mt-1">
+              <ReferenceSelect
+                value={createAccountId}
+                onChange={setCreateAccountId}
+                options={accountOptions}
+                createKind="account"
+                operatingCompanyId={companyId}
+                placeholder="Select account"
+                disabled={!companyId}
+                onOptionCreated={() => void accountsQuery.refetch()}
               />
             </div>
           </label>

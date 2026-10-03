@@ -664,7 +664,8 @@ async function reinstateCreditMemo(
 ): Promise<ReinstateDocumentResult> {
   // Credit memo void zeroes amount_applied and voids applications. Reinstate restores status to
   // 'issued' with amount_applied=0 (applications stay voided — re-apply is an explicit operator
-  // action, never silent). No GL to reverse today (zero posting lines — TASK 18).
+  // action, never silent). ROUND 373.4: a credit memo that named its account posted Dr account / Cr A/R and its void
+  // reversed that; reinstateDocumentThenVoidReversal reverses the void reversal (found through reversed_by_je_id).
   const result = await reinstateSimple(client, { ...input, type: "credit_memo" }, "credit_memo", "credit_memo");
   await client.query(
     `UPDATE accounting.credit_memos

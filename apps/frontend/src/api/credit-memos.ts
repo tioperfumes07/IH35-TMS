@@ -86,7 +86,7 @@ export function listCreditMemos(
 
 export function createCreditMemo(
   operatingCompanyId: string,
-  payload: { customer_id: string; issue_date?: string; amount_cents: number; reason: CreditMemoReason; notes?: string; display_id?: string }
+  payload: { customer_id: string; issue_date?: string; amount_cents: number; reason: CreditMemoReason; account_id: string; notes?: string; display_id?: string }
 ): Promise<CreditMemo> {
   return apiRequest<CreditMemo>(
     `/api/v1/accounting/credit-memos?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,

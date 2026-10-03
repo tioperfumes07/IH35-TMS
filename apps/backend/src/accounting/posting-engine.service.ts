@@ -74,8 +74,12 @@ export const POSTING_SOURCE_TYPES = [
   // BANK-F91038 — bill-payment Amount to Credit (overpay). sourceId = accounting.vendor_credits.id.
   // ONLY when vendor_credits.source_bill_payment_id is set (cash left a bank on a bill payment).
   // Lines reuse bill_payment accounts exactly: Dr ap_control / Cr the payment's bank ledger —
-  // no new GL math. Manual vendor credits (source_bill_payment_id NULL) stay subledger-only.
+  // no new GL math. ROUND 373.4: a manual vendor credit that names its account posts Dr ap_control / Cr that account.
   "vendor_credit",
+  // ROUND 373.4 — a credit memo that names its account: Dr that income / contra-income account / Cr ar_control, at
+  // creation. sourceId = accounting.credit_memos.id. Credits whose GL is owned elsewhere (payment overpayment, Faro
+  // short-pay write-down) carry no account and never reach this poster.
+  "credit_memo",
 ] as const;
 
 export type PostingSourceType = (typeof POSTING_SOURCE_TYPES)[number];
@@ -204,7 +208,9 @@ export type PostingErrorCode =
   | "POSTING_BATCH_RECLAIM_HAS_LINES"
   | "DEPOSIT_ALREADY_AT_BANK"
   | "DEPOSIT_BANK_LEDGER_ACCOUNT_MISSING"
-  | "VENDOR_CREDIT_NO_CASH_ORIGIN";
+  | "VENDOR_CREDIT_NO_CASH_ORIGIN"
+  | "VENDOR_CREDIT_NO_ACCOUNT"
+  | "CREDIT_MEMO_NO_ACCOUNT";
 
 export class PostingEngineError extends Error {
   code: PostingErrorCode;
@@ -2108,6 +2114,50 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
  * Same accounts as buildBillPaymentLines (Dr A/P / Cr bank). Refuses when
  * source_bill_payment_id is NULL so manual vendor credits stay subledger-only.
  */
+/**
+ * ROUND 373.4 — a credit memo reduces what the customer owes and the income it corrects: Dr the account it names /
+ * Cr A/R. Posted at creation, on the creating transaction. A credit memo without an account is one whose GL is owned
+ * elsewhere (payment overpayment, Faro short-pay write-down) and is never posted here.
+ */
+async function buildCreditMemoLines(client: DbClient, operatingCompanyId: string, sourceId: string): Promise<PostingDraft> {
+  const res = await client.query<{
+    id: string; display_id: string | null; issue_date: string; amount_cents: number; account_id: string | null;
+    voided_at: string | null; status: string; source_system: string | null;
+  }>(
+    `SELECT id::text, display_id, issue_date::text, amount_cents::bigint AS amount_cents, account_id::text,
+            voided_at::text, status::text, source_system::text
+       FROM accounting.credit_memos
+      WHERE operating_company_id = $1::uuid AND id::text = $2
+      LIMIT 1
+      FOR UPDATE`,
+    [operatingCompanyId, sourceId]
+  );
+  const memo = res.rows[0];
+  if (!memo) throw new PostingEngineError("SOURCE_NOT_FOUND", "Credit memo not found");
+  if (memo.voided_at || memo.status === "voided") {
+    throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Voided credit memo is not posting-eligible");
+  }
+  if ((memo.source_system ?? "").toLowerCase() === "qbo") {
+    throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "QBO-origin credit memo — parallel books, QBO holds its GL");
+  }
+  if (!memo.account_id) {
+    throw new PostingEngineError("CREDIT_MEMO_NO_ACCOUNT", "This credit memo names no account — its GL is owned elsewhere or it was never coded");
+  }
+  const ar = await resolveArAccountForCompany(client, operatingCompanyId);
+  if (!ar) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AR account mapping is missing");
+  const amount = Number(memo.amount_cents ?? 0);
+  if (amount <= 0) throw new PostingEngineError("UNBALANCED_ENTRY", "Credit memo amount_cents must be positive");
+  const label = memo.display_id ? `Credit memo ${memo.display_id}` : "Credit memo";
+  return {
+    postingDate: memo.issue_date,
+    memo: `${label} posting`,
+    lines: [
+      { account_id: memo.account_id, debit_or_credit: "debit", amount_cents: amount, description: `${label} — income reduced`, source_transaction_line_id: null, relationship_role: "source_transaction" },
+      { account_id: ar, debit_or_credit: "credit", amount_cents: amount, description: `${label} AR`, source_transaction_line_id: null, relationship_role: "source_transaction" },
+    ],
+  };
+}
+
 async function buildVendorCreditOverpayLines(
   client: DbClient,
   operatingCompanyId: string,
@@ -2119,6 +2169,7 @@ async function buildVendorCreditOverpayLines(
     issue_date: string;
     amount_cents: number;
     source_bill_payment_id: string | null;
+    account_id: string | null;
     voided_at: string | null;
     status: string;
   }>(
@@ -2129,6 +2180,7 @@ async function buildVendorCreditOverpayLines(
         issue_date::text,
         amount_cents::bigint AS amount_cents,
         source_bill_payment_id::text,
+        account_id::text,
         voided_at::text,
         status::text
       FROM accounting.vendor_credits
@@ -2145,10 +2197,27 @@ async function buildVendorCreditOverpayLines(
     throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Voided vendor credit is not posting-eligible");
   }
   if (!credit.source_bill_payment_id) {
-    throw new PostingEngineError(
-      "VENDOR_CREDIT_NO_CASH_ORIGIN",
-      "Manual vendor credits are subledger-only — refusing GL post without source_bill_payment_id (BANK-F91038 overpay path only)"
-    );
+    // ROUND 373.4 — a manual vendor credit reduces what we owe the vendor and the cost it corrects: Dr A/P / Cr the
+    // expense account it names. One without an account (a QBO mirror) is not posting-eligible — never guessed.
+    if (!credit.account_id) {
+      throw new PostingEngineError(
+        "VENDOR_CREDIT_NO_ACCOUNT",
+        "This vendor credit names no expense account — a manual vendor credit posts Dr A/P / Cr the account it reduces"
+      );
+    }
+    const ap = await resolveApAccountForCompany(client, operatingCompanyId);
+    if (!ap) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AP account mapping is missing");
+    const manualAmount = Number(credit.amount_cents ?? 0);
+    if (manualAmount <= 0) throw new PostingEngineError("UNBALANCED_ENTRY", "Vendor credit amount_cents must be positive");
+    const manualLabel = credit.display_id ? `Vendor credit ${credit.display_id}` : "Vendor credit";
+    return {
+      postingDate: credit.issue_date,
+      memo: `${manualLabel} posting`,
+      lines: [
+        { account_id: ap, debit_or_credit: "debit", amount_cents: manualAmount, description: `${manualLabel} AP`, source_transaction_line_id: null, relationship_role: "source_transaction" },
+        { account_id: credit.account_id, debit_or_credit: "credit", amount_cents: manualAmount, description: `${manualLabel} — expense reduced`, source_transaction_line_id: null, relationship_role: "source_transaction" },
+      ],
+    };
   }
 
   const paymentRes = await client.query<{
@@ -2808,6 +2877,7 @@ async function buildPostingDraft(
   if (sourceType === "bank_deposit") return buildBankDepositLines(client, operatingCompanyId, sourceId);
   if (sourceType === "bill_payment") return buildBillPaymentLines(client, operatingCompanyId, sourceId);
   if (sourceType === "vendor_credit") return buildVendorCreditOverpayLines(client, operatingCompanyId, sourceId);
+  if (sourceType === "credit_memo") return buildCreditMemoLines(client, operatingCompanyId, sourceId);
   if (sourceType === "cash_advance") return buildCashAdvanceLines(client, operatingCompanyId, sourceId, creditAccountId);
   if (sourceType === "driver_advance") return buildDriverAdvanceLines(client, operatingCompanyId, sourceId, creditAccountId);
   if (sourceType === "bank_categorization") return buildBankCategorizationLines(client, operatingCompanyId, sourceId);
