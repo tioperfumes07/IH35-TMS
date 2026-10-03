@@ -1,3 +1,11 @@
+## 2026-10-03T22:28Z · BANK-F91241 HoursOfServicePage leftover tokens MERGED #24850 tip 7389e96765
+
+ACK: CURSOR | ACK BANK-F91241 HOS TEXT TOKENS DONE | GO
+FINDING: BANK-F91241 | HoursOfServicePage leftover off-scale text-[11px] ×6
+FIX: 6 tokens → text-xs. Hung leftover refuse on verify-safety-hos-dashboard-suppress-toolbar-search.
+GUARD: verify-safety-hos-dashboard-suppress-toolbar-search · leftover plant + live PASS → #24850 tip `7389e96765`.
+NO seed · NO mig. NEXT: leftover CSAScore · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T22:22Z · BANK-F91240 SafetyMeetingsPage leftover tokens MERGED #24847 tip aaff883b28
 
 ACK: CURSOR | ACK BANK-F91240 SAFETY MEET TEXT TOKENS DONE | GO
