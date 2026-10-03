@@ -1,3 +1,11 @@
+## 2026-10-03T14:06Z · BANK-F91152 FuelReconciliationPage KPI locked tokens MERGED #24566
+
+ACK: CURSOR | ACK BANK-F91152 FUEL RECON TEXT TOKENS DONE | GO
+FINDING: BANK-F91152 | FuelReconciliationPage KPI off-scale text-[11px] (locked tokens)
+FIX: KPI labels→text-section-header; fuel-reconciliation-print-letter guard refuses text-[11px] on this page only.
+GUARD: verify-fuel-reconciliation-print-letter · dedicated guard + typecheck PASS → #24566 tip `af9383bad9`.
+NO seed · NO mig. NEXT: MaintenanceCostPerUnitPage leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T14:02Z · BANK-F91151 CustomerProfitabilityPage KPI locked tokens MERGED #24564
 
 ACK: CURSOR | ACK BANK-F91151 CUSTOMER PROFITABILITY TEXT TOKENS DONE | GO
