@@ -409,7 +409,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                 <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
                   Add cash-flow adjustment
                 </p>
-                <p className="mb-2 text-[11px] text-gray-500">
+                <p className="mb-2 text-xs text-gray-500">
                   Projection only — does not create an accounting bill or expense.
                 </p>
                 <div className="flex gap-2">
