@@ -339,6 +339,168 @@ async function ensureFreshDbOdometerLedger(client, file) {
   );
 }
 
+// ── FRESH-DB: pg_trgm lives in public, as in production (CC-3, ROUND 381.3, 2026-10-03) ─────────
+// Production carries pg_trgm in schema `public` (read from pg_extension 2026-10-03). A database built from source gets it
+// in `mdata`: 0162 runs CREATE EXTENSION IF NOT EXISTS pg_trgm with mdata first on its search_path. Nothing noticed
+// until 202615231000_round296_filter_column_indexes.sql named the operator class schema-qualified —
+// `public.gin_trgm_ops` — so every fresh build now dies there ('operator class "public.gin_trgm_ops" does not exist'),
+// measured on a local fresh cluster once 202615221200 stopped killing the chain first. 202615231000 is applied in
+// production and cannot be edited. This moves the extension to public — the production placement — before it runs.
+// Non-prod only; a no-op where pg_trgm is already in public; production is never touched by this path.
+const FRESH_DB_TRGM_NEEDED_BY = "202615231000_round296_filter_column_indexes.sql";
+let freshDbTrgmBootstrapped = false;
+async function ensureFreshDbTrgmInPublic(client, file) {
+  if (TARGET_IS_PROD || freshDbTrgmBootstrapped) return;
+  if (file < FRESH_DB_TRGM_NEEDED_BY) return;
+  const ext = await client.query(
+    `SELECT extnamespace::regnamespace::text AS ns FROM pg_extension WHERE extname = 'pg_trgm'`
+  );
+  freshDbTrgmBootstrapped = true;
+  if (!ext.rows[0] || ext.rows[0].ns === "public") return;
+  await client.query(`ALTER EXTENSION pg_trgm SET SCHEMA public`);
+  console.log(
+    `[db:migrate] fresh-DB schema bootstrap: moved pg_trgm from ${ext.rows[0].ns} to public (production placement) before ${file} (non-prod target only)`
+  );
+}
+
+// ── FRESH-DB: journal_entry_postings.load_id before the refusal that names it (CC-3, 2026-10-03) ────────
+// 202615330931_load_born_rows_refuse_a_null_load.sql (CC-3) creates a trigger `UPDATE OF load_id` on
+// accounting.journal_entry_postings, but the column is added by 202615350500_journal_entry_postings_load_id_stamp.sql,
+// which SORTS AFTER it. Production applied 350500 first (out of numeric order), so it passed there; a database built from
+// source runs 330931 first and dies ('column "load_id" of relation "journal_entry_postings" does not exist'), measured on
+// a local fresh cluster. Both are applied in production and cannot be edited. This adds the bare column early — exactly
+// 350500's own `ADD COLUMN IF NOT EXISTS load_id uuid`; 350500 still adds the FK, index and resolver when it runs.
+// Non-prod only; a no-op once the column exists; production is never touched by this path.
+const FRESH_DB_POSTING_LOAD_ID_NEEDED_BY = "202615330931_load_born_rows_refuse_a_null_load.sql";
+let freshDbPostingLoadIdBootstrapped = false;
+async function ensureFreshDbPostingLoadId(client, file) {
+  if (TARGET_IS_PROD || freshDbPostingLoadIdBootstrapped) return;
+  if (file < FRESH_DB_POSTING_LOAD_ID_NEEDED_BY) return;
+  freshDbPostingLoadIdBootstrapped = true;
+  const present = await client.query(`SELECT to_regclass('accounting.journal_entry_postings') IS NOT NULL AS ok`);
+  if (!present.rows[0]?.ok) return;
+  await client.query(`ALTER TABLE accounting.journal_entry_postings ADD COLUMN IF NOT EXISTS load_id uuid`);
+  console.log(
+    `[db:migrate] fresh-DB schema bootstrap: ensured accounting.journal_entry_postings.load_id before ${file} (non-prod target only; 202615350500 sorts after the refusal that names it)`
+  );
+}
+
+// ── FRESH-DB: the four fuel tank tables (CC-3, ROUND 381.3, 2026-10-03) ──────────────────────────
+// fuel.tank_events, fuel.tank_state, fuel.load_fuel_cost and fuel.unit_mpg exist in production with RLS policies, but NO
+// migration in this repo creates them — they were made live. 202615340600_fuel_relay_worm_audit_force_rls.sql FORCEs RLS
+// on all four and refuses where a table has no policy, so every database built from source dies there ('relation
+// "fuel.load_fuel_cost" does not exist'), measured on a local fresh cluster. 202615340600 is applied in production, so it
+// cannot be edited. This recreates the four exactly as production carries them (read from prod's catalog 2026-10-03:
+// columns, defaults, keys, checks, FKs, policies) — RLS ENABLED, not forced: forcing is 340600's own work. Not the real
+// fix: that is a parity migration owned by the tables' author (fuel lane, CC-2). Non-prod only; skipped when they exist.
+const FRESH_DB_FUEL_TANK_NEEDED_BY = "202615340600_fuel_relay_worm_audit_force_rls.sql";
+let freshDbFuelTankBootstrapped = false;
+async function ensureFreshDbFuelTankTables(client, file) {
+  if (TARGET_IS_PROD || freshDbFuelTankBootstrapped) return;
+  if (file < FRESH_DB_FUEL_TANK_NEEDED_BY) return;
+  freshDbFuelTankBootstrapped = true;
+  const present = await client.query(
+    `SELECT to_regclass('fuel.load_fuel_cost') IS NOT NULL AS ok, to_regclass('mdata.units') IS NOT NULL AND to_regclass('mdata.loads') IS NOT NULL AS deps_ok`
+  );
+  if (present.rows[0]?.ok || !present.rows[0]?.deps_ok) return;
+  await client.query(`
+    CREATE TABLE fuel.tank_events (
+      id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+      operating_company_id uuid NOT NULL,
+      unit_id uuid NOT NULL REFERENCES mdata.units(id),
+      event_type text NOT NULL CHECK (event_type = ANY (ARRAY['opening','purchase','burn','adjustment','reversal'])),
+      occurred_at timestamptz NOT NULL,
+      odometer_miles numeric(10,1),
+      gallons numeric(10,3) NOT NULL,
+      unit_cost_cents integer,
+      extended_cost_cents bigint NOT NULL,
+      load_id uuid REFERENCES mdata.loads(id),
+      fuel_transaction_id uuid,
+      expense_id uuid,
+      downtime_event_id uuid,
+      mpg_used numeric(6,3),
+      mpg_method text CHECK (mpg_method = ANY (ARRAY['tank_to_tank','unit_rolling_90d','fleet_class_default'])),
+      idle_rate_gal_per_hour numeric(5,3),
+      idle_rate_method text CHECK (idle_rate_method = ANY (ARRAY['samsara_measured','doe_default'])),
+      reverses_event_id uuid REFERENCES fuel.tank_events(id),
+      filled_to_full boolean NOT NULL DEFAULT false,
+      is_sample_data boolean NOT NULL DEFAULT false,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      created_by_user_id uuid,
+      updated_at timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE TABLE fuel.tank_state (
+      unit_id uuid NOT NULL PRIMARY KEY REFERENCES mdata.units(id),
+      operating_company_id uuid NOT NULL,
+      as_of timestamptz NOT NULL,
+      gallons_on_hand numeric(10,3) NOT NULL,
+      value_on_hand_cents bigint NOT NULL,
+      avg_cost_per_gallon_cents integer NOT NULL,
+      last_event_id uuid NOT NULL REFERENCES fuel.tank_events(id),
+      negative_flagged boolean NOT NULL DEFAULT false,
+      negative_flagged_at timestamptz
+    );
+    CREATE TABLE fuel.load_fuel_cost (
+      load_id uuid NOT NULL REFERENCES mdata.loads(id),
+      unit_id uuid NOT NULL REFERENCES mdata.units(id),
+      operating_company_id uuid NOT NULL,
+      driven_miles numeric(10,1),
+      practical_miles numeric(10,1),
+      short_miles numeric(10,1),
+      gallons_consumed numeric(10,3),
+      avg_cost_per_gallon_cents integer,
+      fuel_cost_consumed_cents bigint,
+      fuel_cost_purchased_cents bigint NOT NULL,
+      mpg_used numeric(6,3),
+      mpg_method text CHECK (mpg_method = ANY (ARRAY['tank_to_tank','unit_rolling_90d','fleet_class_default'])),
+      confidence text NOT NULL CHECK (confidence = ANY (ARRAY['measured','estimated','unavailable'])),
+      missing_reason text,
+      computed_at timestamptz NOT NULL DEFAULT now(),
+      PRIMARY KEY (load_id, unit_id)
+    );
+    CREATE TABLE fuel.unit_mpg (
+      id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+      operating_company_id uuid NOT NULL,
+      unit_id uuid NOT NULL REFERENCES mdata.units(id),
+      window_start timestamptz NOT NULL,
+      window_end timestamptz NOT NULL,
+      miles numeric(10,1) NOT NULL,
+      gallons numeric(10,3) NOT NULL,
+      mpg numeric(6,3) NOT NULL,
+      method text NOT NULL CHECK (method = ANY (ARRAY['tank_to_tank','unit_rolling_90d','fleet_class_default'])),
+      sample_size integer NOT NULL,
+      computed_at timestamptz NOT NULL DEFAULT now()
+    );
+    ALTER TABLE fuel.tank_events ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE fuel.tank_state ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE fuel.load_fuel_cost ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE fuel.unit_mpg ENABLE ROW LEVEL SECURITY;
+    CREATE POLICY tank_events_insert ON fuel.tank_events FOR INSERT WITH CHECK (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
+    CREATE POLICY tank_events_select ON fuel.tank_events FOR SELECT USING (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
+    CREATE POLICY tank_events_update ON fuel.tank_events FOR UPDATE USING (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
+    CREATE POLICY tank_state_insert ON fuel.tank_state FOR INSERT WITH CHECK (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
+    CREATE POLICY tank_state_select ON fuel.tank_state FOR SELECT USING (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
+    CREATE POLICY tank_state_update ON fuel.tank_state FOR UPDATE USING (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
+    CREATE POLICY load_fuel_cost_insert ON fuel.load_fuel_cost FOR INSERT WITH CHECK (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
+    CREATE POLICY load_fuel_cost_select ON fuel.load_fuel_cost FOR SELECT USING (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
+    CREATE POLICY load_fuel_cost_update ON fuel.load_fuel_cost FOR UPDATE USING (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
+    CREATE POLICY unit_mpg_insert ON fuel.unit_mpg FOR INSERT WITH CHECK (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
+    CREATE POLICY unit_mpg_select ON fuel.unit_mpg FOR SELECT USING (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
+    DO $$
+    BEGIN
+      IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ih35_app') THEN
+        GRANT SELECT, INSERT, UPDATE ON fuel.tank_events, fuel.tank_state, fuel.load_fuel_cost, fuel.unit_mpg TO ih35_app;
+      END IF;
+      IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ih35_ci_readonly') THEN
+        GRANT SELECT ON fuel.tank_events, fuel.tank_state, fuel.load_fuel_cost, fuel.unit_mpg TO ih35_ci_readonly;
+      END IF;
+    END $$;
+  `);
+  console.log(
+    `[db:migrate] fresh-DB schema bootstrap: created fuel.tank_events / tank_state / load_fuel_cost / unit_mpg (production shape) before ${file} (non-prod target only; production drift — needs a real parity migration)`
+  );
+}
+
 // ── FRESH-DB: PRODUCTION-DATA-ONLY MIGRATIONS (Lead, 2026-09-30) ─────────────
 // THE THIRD instance today of "production has drifted from the migration set", and I said in the
 // second one that a third means the general fix rather than a third special-case. This is that
@@ -401,6 +563,13 @@ const FRESH_DB_PRODUCTION_DATA_ONLY = new Map([
       "bank_accounts rows. No migration inserts USMCA into org.companies, so on a fresh database the " +
       "insert violates accounts_operating_company_id_fkey and kills the chain (CI 2026-10-01). Pure " +
       "data, no DDL; applied in production 2026-09-30T23:12:04Z, therefore uneditable.",
+  ],
+  [
+    "202615221200_usmca_bank_tx_split_flags_on.sql",
+    "Turns on two USMCA feature-flag overrides (BANK_TX_SPLIT_ENABLED, BANK_TX_SPLIT_GL_POSTING_ENABLED) in " +
+      "lib.feature_flag_overrides. It RAISEs when no Owner user exists and inserts the USMCA id with no company " +
+      "existence guard, so a fresh database (no Owner, no USMCA) dies here (ROUND 381.3). Pure data, no DDL; " +
+      "applied in production 2026-10-02T12:34:59Z, therefore uneditable.",
   ],
 ]);
 
@@ -853,6 +1022,9 @@ try {
     await ensureFreshDbProductionIdentity(client, file);
     await ensureFreshDbProductionSchema(client, file);
     await ensureFreshDbOdometerLedger(client, file);
+    await ensureFreshDbTrgmInPublic(client, file);
+    await ensureFreshDbPostingLoadId(client, file);
+    await ensureFreshDbFuelTankTables(client, file);
     const dataOnlyReason = freshDbProductionDataOnlySkip(file);
     if (dataOnlyReason) {
       console.log(
