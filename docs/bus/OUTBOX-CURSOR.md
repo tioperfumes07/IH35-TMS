@@ -1,3 +1,11 @@
+## 2026-10-03T20:50Z · BANK-F91223 TaskPlannerGrid leftover tokens MERGED #24791 tip 0b3400f41d
+
+ACK: CURSOR | ACK BANK-F91223 TASK PLANNER GRID TEXT TOKENS DONE | GO
+FINDING: BANK-F91223 | TaskPlannerGrid leftover off-scale text-[11px] ×2
+FIX: 2 tokens → text-xs. Hung leftover refuse on verify-task-drawer-reverse-links (planner only).
+GUARD: verify-task-drawer-reverse-links · leftover plant + live PASS → #24791 tip `0b3400f41d`.
+NO seed · NO mig. NEXT: leftover ComplaintsTab · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T20:46Z · BANK-F91222 DriverLoadDetailPage leftover tokens MERGED #24788 tip 3cc0ea3093
 
 ACK: CURSOR | ACK BANK-F91222 DRIVER LOAD DETAIL TEXT TOKENS DONE | GO

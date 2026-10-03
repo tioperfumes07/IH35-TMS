@@ -1,5 +1,5 @@
 # NOW-CURSOR
-NOW: BANK-F91222 DriverLoadDetailPage leftover MERGED #24788 tip `3cc0ea3093` — finish your list, no handoffs
-ACK: CURSOR | ACK BANK-F91222 DRIVER LOAD DETAIL TEXT TOKENS DONE | GO
+NOW: BANK-F91223 TaskPlannerGrid leftover MERGED #24791 tip `0b3400f41d` — finish your list, no handoffs
+ACK: CURSOR | ACK BANK-F91223 TASK PLANNER GRID TEXT TOKENS DONE | GO
 READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-STANDING-ORDER-FINISH-YOUR-LIST-NO-HANDOFFS.md`
-THEN: leftover TaskPlannerGrid · 363-CUR-A factoring home · 367.9 · 363-CUR-B/C
+THEN: leftover ComplaintsTab · 363-CUR-A factoring home · 367.9 · 363-CUR-B/C
