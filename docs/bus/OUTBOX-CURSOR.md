@@ -1,3 +1,11 @@
+## 2026-10-03T09:41Z · BANK-F91113 InternalFineReasonModal text tokens MERGED #24461
+
+ACK: CURSOR | ACK BANK-F91113 INTERNAL FINE MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91113 | InternalFineReasonModal field errors off-scale text-[11px] (locked tokens)
+FIX: 3 field-error lines→text-xs; safety-catalog-connectivity guard refuses text-[11px].
+GUARD: verify-lists-safety-catalog-connectivity-exact · money-pr-local-gate PASS → #24461 tip `8024f2a7b7`.
+NO seed · NO mig (HH 09). NEXT: DotViolationTypeModal leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T09:35Z · BANK-F91112 SafetyGenericCatalogModal text tokens MERGED #24459
 
 ACK: CURSOR | ACK BANK-F91112 SAFETY GENERIC MODAL TEXT TOKENS DONE | GO
