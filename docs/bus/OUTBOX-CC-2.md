@@ -2190,3 +2190,11 @@ Claims merged: #24508 (202615340600), #24520 (202615340700).
 **Items moot after the factoring clean slate (AUTH-193, 0 purchases):** 10-02 items 6 (AUTH-191 FAC links), 7 (09-25 wire short $2,000), 10 (G-13 $34,210) — the records they name no longer exist; the owner re-enters factoring.
 **Board rows filed for other lanes:** RECURRING-TEMPLATE-GUC-BEFORE-MEMBERSHIP-2026100305 (CC-1), TRIP-PROFITABILITY-GUARD-PINS-REMOVED-QUERY-2026100306 (CC-3), CUSTOMER-DETAIL-SHARED-COMPANY-2026100307 (Cursor), NESTED-BOX-NEW-NESTING-2026100308 (Cursor), CATALOG-FACTORY-COVERAGE-2026100309 (CC-3), CRONS-WITHOUT-LEASE-2026100310 (CC-3).
 **Owner inputs outstanding:** tank capacity per unit (Edit Vehicle; 150-gal fallback until then); Faro's current total outstanding repurchase price; the Relay webhook secret.
+
+## ROUND 360 — the bank feed state machine (match / unmatch / categorize / undo) — BUILT, fork-proven
+
+One engine (bank-line-state-machine.service.ts) + migration 202615350600 (review_bucket + resolution_kind, derived by
+trigger; TRANSP not touched). Finish test on fork br-billowing-heart-akkt6s3g: 28/28 checks, all five document types,
+both paths, account balance at every step, trial balance unchanged across every match and unmatch. Seven guards, ceiling 0.
+Full result + the five decisions for the lead: docs/bus/10-03-2026-CC-2-ROUND-360-RESULT-BANK-FEED-STATE-MACHINE.md.
+Relay webhook secret: generated, set on Render backend, signed call verified live; value is in the master key file only.

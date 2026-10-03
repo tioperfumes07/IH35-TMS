@@ -76,6 +76,12 @@ export type PlaidBankTransaction = {
    * accept-suggestion flow). Independent of `status` — a transaction can be categorized without
    * ever being reviewed for a match, and vice versa. */
   review_state?: string | null;
+  /** ROUND 360 — WHERE the line sits: exactly the three tabs. Derived in the database from the line's own links (never
+   *  typed). NULL only for a frozen company's unwritten rows. */
+  review_bucket?: "for_review" | "categorized" | "excluded" | null;
+  /** ROUND 360 — HOW a categorized line got there (the Action column): added = categorize created it, matched = linked to
+   *  a document that already existed, transfer, split. NULL outside Categorized. */
+  resolution_kind?: "added" | "matched" | "transfer" | "split" | null;
   matched_load_id: string | null;
   /** BANK-F5662: load_number joined alongside matched_load_id (per-account register labels). */
   matched_load_number?: string | null;
@@ -1362,6 +1368,8 @@ export function createTransfer(
     transfer_date: string;
     memo?: string;
     reference_number?: string;
+    /** ROUND 360 — record FROM a bank feed line: created, linked and posted in one request / one transaction. */
+    from_bank_line?: { bank_transaction_id: string; destination_bank_account_id: string; transfer_kind: "in" | "out" };
   }
 ) {
   return apiRequest<{ transfer: Transfer }>(`/api/v1/banking/transfers`, {

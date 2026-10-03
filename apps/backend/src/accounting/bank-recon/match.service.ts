@@ -840,7 +840,12 @@ async function storeMatch(
         match_score = EXCLUDED.match_score,
         match_state = EXCLUDED.match_state,
         matched_at = now(),
-        matched_by_user_uuid = EXCLUDED.matched_by_user_uuid
+        matched_by_user_uuid = EXCLUDED.matched_by_user_uuid,
+        -- ROUND 360 — re-matching a pair an unmatch retired makes the row live again.
+        voided_at = NULL,
+        void_reason = NULL,
+        voided_by_user_id = NULL,
+        updated_at = now()
       RETURNING id::text
     `,
     [
@@ -1397,6 +1402,7 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
         ? await client.query(
             `UPDATE banking.bank_transactions
                 SET review_state = 'matched',
+                    resolution_kind = 'matched',
                     reviewed_at = now(),
                     categorized_by_user_id = $4::uuid,
                     categorized_at = now(),
@@ -1417,6 +1423,7 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
         : await client.query(
             `UPDATE banking.bank_transactions
                 SET review_state = 'matched',
+                    resolution_kind = 'matched',
                     reviewed_at = now(),
                     categorized_by_user_id = $4::uuid,
                     categorized_at = now(),
@@ -1619,10 +1626,28 @@ async function sweepMatchedReceiptToBank(
   ledgerEntryId: string,
   actorUserUuid: string
 ): Promise<void> {
+  // ROUND 360 — an unmatch reverses the sweep it created; re-matching must RE-post, not hand back the reversed batch
+  // (BANK-F05's pattern: the revision is the number of this source's entries already reversed).
+  const reversed = await client.query<{ n: string }>(
+    `SELECT COUNT(DISTINCT je.id)::text AS n
+       FROM accounting.journal_entries je
+       JOIN accounting.journal_entry_postings p ON p.journal_entry_uuid = je.id AND p.operating_company_id = je.operating_company_id
+      WHERE je.operating_company_id = $1::uuid
+        AND p.source_transaction_type = $2
+        AND p.source_transaction_id::text = $3
+        AND je.reversed_by_je_id IS NOT NULL`,
+    [operatingCompanyId, sourceType, ledgerEntryId]
+  );
+  const reversedCount = Number(reversed.rows[0]?.n ?? 0);
   try {
     await postSourceTransactionInClientTx(
       client,
-      { operating_company_id: operatingCompanyId, source_transaction_type: sourceType, source_transaction_id: ledgerEntryId },
+      {
+        operating_company_id: operatingCompanyId,
+        source_transaction_type: sourceType,
+        source_transaction_id: ledgerEntryId,
+        ...(reversedCount > 0 ? { posting_purpose: "repost" as const, repost_revision: reversedCount } : {}),
+      },
       { userId: actorUserUuid }
     );
   } catch (sweepError) {
@@ -1755,7 +1780,7 @@ export async function acceptExactMultiDocumentMatch(input: {
     if (matchedColumn) {
       const cleared = await client.query(
         `UPDATE banking.bank_transactions
-            SET review_state = 'matched',
+            SET review_state = 'matched', resolution_kind = 'matched',
                 reviewed_at = now(),
                 categorized_by_user_id = $4::uuid,
                 categorized_at = now(),

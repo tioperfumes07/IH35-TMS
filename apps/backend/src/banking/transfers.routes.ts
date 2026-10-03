@@ -37,6 +37,14 @@ const createBodySchema = z.object({
   transfer_date: z.string().date(),
   memo: z.string().trim().max(1000).optional(),
   reference_number: z.string().trim().max(200).optional(),
+  // ROUND 360 — record this transfer FROM a bank feed line: created, linked and posted in one transaction.
+  from_bank_line: z
+    .object({
+      bank_transaction_id: z.string().uuid(),
+      destination_bank_account_id: z.string().uuid(),
+      transfer_kind: z.enum(["in", "out"]),
+    })
+    .optional(),
 });
 
 const listQuerySchema = z.object({
@@ -109,6 +117,13 @@ export async function registerBankingTransfersRoutes(app: FastifyInstance) {
           transferDate: body.data.transfer_date,
           memo: body.data.memo,
           referenceNumber: body.data.reference_number,
+          fromBankLine: body.data.from_bank_line
+            ? {
+                bankTransactionId: body.data.from_bank_line.bank_transaction_id,
+                destinationBankAccountId: body.data.from_bank_line.destination_bank_account_id,
+                transferKind: body.data.from_bank_line.transfer_kind,
+              }
+            : null,
         },
         user.uuid
       );

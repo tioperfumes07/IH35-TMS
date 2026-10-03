@@ -35,7 +35,9 @@ import { readFileSync, existsSync } from "node:fs";
 
 const LABEL = "verify:no-reverse-without-repost";
 const ENGINE = "apps/backend/src/accounting/posting-engine.service.ts";
-const ROUTES = "apps/backend/src/banking/banking.routes.ts";
+// ROUND 360 — every bank-line Undo (both undo-categorization routes, /unmatch, link-suggestions undo) runs the bank-line
+// state machine; its single reversal primitive is where the refusal must live.
+const ROUTES = "apps/backend/src/banking/bank-line-state-machine.service.ts";
 const FLAG = "POSTING_ENGINE_SUPPORTS_REPOST";
 
 /**
@@ -50,14 +52,11 @@ export function stripComments(src) {
 
 /** Isolate the undo-categorization handler so assertions cannot be satisfied by some other route. */
 export function extractUndoHandler(src) {
-  const start = String(src).indexOf('app.post("/api/v1/banking/transactions/:id/undo-categorization"');
+  const start = String(src).indexOf("async function reverseOnceOnClient(");
   if (start < 0) return null;
   const rest = String(src).slice(start + 10);
-  const nextPost = rest.indexOf("app.post(");
-  const nextGet = rest.indexOf("app.get(");
-  const ends = [nextPost, nextGet].filter((i) => i > 0);
-  const end = ends.length ? start + 10 + Math.min(...ends) : String(src).length;
-  return String(src).slice(start, end);
+  const next = rest.search(/\n(export )?async function /);
+  return String(src).slice(start, next > 0 ? start + 10 + next : String(src).length);
 }
 
 export function analyse(files) {
@@ -98,7 +97,7 @@ export function analyse(files) {
   const handler = extractUndoHandler(routes);
   if (handler == null) {
     problems.push(
-      `${ROUTES}: the undo-categorization route was not found — repoint this guard rather than leaving ` +
+      `${ROUTES}: reverseOnceOnClient (the bank-line Undo reversal) was not found — repoint this guard rather than leaving ` +
         `it silently unable to check the reversal path.`
     );
     return problems;
@@ -139,7 +138,7 @@ function selftest() {
   const engineTrueWithPurpose = `export type PostingPurpose = "initial_post" | "reversal" | "repost";\nexport const ${FLAG} = true;`;
 
   const mk = (body) =>
-    `app.post("/api/v1/banking/transactions/:id/undo-categorization", async (req, reply) => {\n${body}\n});\napp.get("/x", async () => {});\n`;
+    `async function reverseOnceOnClient(client, input) {\n${body}\n}\nasync function other() {}\n`;
 
   const good = mk(`
       const priorJournalEntryId = row.matched_journal_entry_id;
@@ -167,12 +166,12 @@ function selftest() {
   t("a missing flag export FAILS",
     analyse({ [ENGINE]: 'export type PostingPurpose = "initial_post" | "reversal";', [ROUTES]: good }).length >= 1);
   t("a moved/renamed undo route FAILS rather than passing vacuously",
-    analyse({ [ENGINE]: engineFalse, [ROUTES]: 'app.post("/api/v1/banking/other", async () => {});' }).length === 1);
+    analyse({ [ENGINE]: engineFalse, [ROUTES]: "async function somethingElse() {}" }).length === 1);
   t("another route's flag check does not satisfy this handler",
     analyse({
       [ENGINE]: engineFalse,
       [ROUTES]: mk(`      if (priorJournalEntryId) { await reverseJournalEntryNoFlip(client, {}); }`) +
-        `app.post("/api/v1/other", async () => { if (!${FLAG}) return; });\n`,
+        `async function other2() { if (!${FLAG}) return; }\n`,
     }).length === 1);
 
   if (failures.length) {

@@ -17,8 +17,7 @@ import {
 import { countDriverEscrowKpis } from "./driver-escrow-counts.js";
 import { countTotalBankTransactions, countUncategorizedTransactions } from "./pending-categorization.js";
 import { bankingRuleMatches, type BankingRuleRow } from "./banking-rules.engine.js";
-import { reverseJournalEntryNoFlip } from "../accounting/journal-entries.service.js";
-import { POSTING_ENGINE_SUPPORTS_REPOST } from "../accounting/posting-engine.service.js";
+import { undoBankLineOnClient } from "./bank-line-state-machine.service.js";
 import {
   sumAuthoritativeDepositoryCashCents,
   withInternalWalletBalances,
@@ -734,137 +733,28 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;
 
-    const ok = await withCompanyScope(user.uuid, companyId, async (client) => {
-      // BANK-F01 — undoing a categorization MUST reverse the journal entry it posted.
-      //
-      // THE DEFECT THIS CLOSES. This handler used to clear the categorization fields and leave
-      // `matched_journal_entry_id` set. Two things followed, and neither was visible to anyone:
-      //   1. the JE posted under the OLD (wrong) account stayed in the ledger, unreversed; and
-      //   2. bank-feed-gl-posting.service.ts:160 refuses to post a row that already carries
-      //      `matched_journal_entry_id` (`already_posted`), so the CORRECTED categorization could
-      //      never post either.
-      // Net effect: re-categorising was a silent no-op against the general ledger. The operator saw
-      // the correction, the books kept the error, and nothing surfaced the divergence — a
-      // SILENT-SUCCESS defect, and for an auditor worse than a duplicate, because the operational
-      // record and the ledger disagree permanently with no signal.
-      //
-      // Verified on prod 2026-08-03 (banking.bank_transactions 10975/10975 visible, n_tup_del 46):
-      // ZERO rows were stranded, i.e. the trap had not yet been sprung. It is closed here before it is.
-      //
-      // FAIL-CLOSED. The reversal runs on this same transaction client, so if it throws — closed
-      // period, non-posted JE, an integrity conflict — the whole undo rolls back and the caller gets
-      // an error. Refusing the undo is correct: silently leaving a stale GL line is the outcome this
-      // exists to prevent. Reuses the EXISTING reverseJournalEntryNoFlip (idempotent, linkage-aware);
-      // NO new GL math is written here.
-      const posted = await client.query<{ matched_journal_entry_id: string | null }>(
-        `SELECT matched_journal_entry_id::text
-           FROM banking.bank_transactions
-          WHERE id = $1 AND operating_company_id = $2::uuid
-          LIMIT 1
-          FOR UPDATE`,
-        [params.data.id, companyId]
-      );
-      const priorJournalEntryId = posted.rows[0]?.matched_journal_entry_id ?? null;
-
-      // BANK-F03 — FAIL LOUD rather than reverse into a dead end.
-      //
-      // BANK-F01 (PR #4225) made this handler reverse the posted JE, which fixed a stale-ledger defect
-      // but introduced a WORSE one that I did not catch before merging: the canonical poster cannot
-      // RE-POST a source transaction after a reversal (its batch idempotency key ends in
-      // posting_purpose, which has only initial_post|reversal — see POSTING_ENGINE_SUPPORTS_REPOST).
-      // So the sequence became: reverse the entry, clear the link, then have the corrected
-      // categorization silently return the ORIGINAL batch. Net effect: the expense disappears from the
-      // books entirely. Proven on a prod fork — 20 rows, fuel down $4,593.94, target accounts zero lines.
-      //
-      // Until the poster gains a real repost capability, refusing is the only honest outcome: a wrong
-      // account on the books is recoverable, an expense silently deleted from the ledger is not. This
-      // check runs BEFORE the reversal, so nothing is undone when nothing can be re-posted.
-      if (priorJournalEntryId && !POSTING_ENGINE_SUPPORTS_REPOST) {
-        return {
-          status: "repost_unsupported" as const,
-          journalEntryId: priorJournalEntryId,
-        };
-      }
-
-      if (priorJournalEntryId) {
-        await reverseJournalEntryNoFlip(client, {
+    // ROUND 360 — one engine for every Undo (docs/bus/00-CONTRACT-BANK-FEED-STATE-MACHINE-MATCH-UNMATCH-CATEGORIZE-UNDO.md).
+    // It reads HOW the line left For review: a categorize is removed (BANK-F01: its JE reversed — once, never twice —
+    // and the documents it created voided), a match only breaks the link (the pre-existing document is untouched and
+    // back in the match pool), an exclude is cleared. Fail-closed on this one transaction: the line lands in For review
+    // with no document, or nothing commits. (BANK-F03's repost refusal is moot: POSTING_ENGINE_SUPPORTS_REPOST.)
+    try {
+      const outcome = await withCompanyScope(user.uuid, companyId, (client) =>
+        undoBankLineOnClient(client as never, {
           operatingCompanyId: companyId,
-          journalEntryId: priorJournalEntryId,
-          reason: `undo-categorization of bank transaction ${params.data.id}`,
+          bankTransactionId: params.data.id,
           actorUserId: user.uuid,
-        });
-      }
-
-      // BANK-F9517: this used to .catch(() => ({ rows: [] })) — worse than the fake-empty-200 class
-      // (BANK-F9514/15/16), because `if (!res.rows[0]) return false` below turns ANY query failure
-      // (constraint violation, connection drop, a future column rename) into the exact same 404
-      // "transaction_not_found" the caller gets for a genuinely missing row. A real error here — after
-      // reverseJournalEntryNoFlip has already run above, on this SAME transaction client — MUST throw
-      // so the whole undo (JE reversal included) rolls back; that is the entire point of the
-      // "FAIL-CLOSED" design already documented on the reversal call a few lines up. Swallowing this
-      // one query's failure quietly defeated that guarantee for exactly the step it existed to protect.
-      const res = await client.query(
-        `
-          UPDATE banking.bank_transactions
-          SET
-            status = 'pending_categorization',
-            -- Cleared with the reversal above: leaving it set is what made the corrected
-            -- categorization unpostable (already_posted) while the wrong JE stood.
-            matched_journal_entry_id = NULL,
-            category = NULL,
-            category_kind = NULL,
-            linked_entity_id = NULL,
-            categorization_customer_id = NULL,
-            categorization_vendor_id = NULL,
-            categorization_gl_account_id = NULL,
-            categorization_project_id = NULL,
-            categorization_memo = NULL,
-            suggested_match_invoice_id = NULL,
-            suggested_match_bill_id = NULL,
-            destination_bank_account_id = NULL,
-            transfer_kind = NULL,
-            paired_transaction_id = NULL,
-            skip_reason = NULL,
-            investigate_note = NULL,
-            categorized_at = NULL,
-            updated_at = now()
-          WHERE id = $1
-            AND operating_company_id = $2::uuid
-          RETURNING id
-        `,
-        [params.data.id, companyId]
+          reason: `undo-categorization of bank transaction ${params.data.id}`,
+        })
       );
-      if (!res.rows[0]) return false;
-      await appendCrudAudit(
-        client,
-        user.uuid,
-        "banking.transaction.reclassified",
-        {
-          resource_type: "banking.bank_transactions",
-          resource_id: params.data.id,
-          operating_company_id: companyId,
-          // BANK-F01 — name the JE that was reversed. Without it the audit trail records that a
-          // categorization was undone but not that the ledger was corrected, which is the half a
-          // reviewer actually needs.
-          reversed_journal_entry_id: priorJournalEntryId,
-        },
-        "info",
-        "BT-3-BANKING-REBUILD"
-      );
-      return true;
-    });
-    if (ok && typeof ok === "object" && "status" in ok && ok.status === "repost_unsupported") {
-      return reply.code(409).send({
-        error: "repost_unsupported",
-        message:
-          "This transaction has a posted journal entry, and the posting engine cannot yet re-post a " +
-          "corrected categorization after a reversal. Undoing now would reverse the entry and leave the " +
-          "expense unrecorded. Refused deliberately (BANK-F03).",
-        journal_entry_id: ok.journalEntryId,
-      });
+      return { ok: true, outcome };
+    } catch (err) {
+      const e = err as { code?: string; message?: string };
+      if (e.message === "bank_transaction_not_found") return reply.code(404).send({ error: "transaction_not_found" });
+      if (e.code === "reconciled_session_locked") return reply.code(409).send({ error: e.code, message: e.message });
+      if (e.message === "void_reversal_disabled") return reply.code(409).send({ error: "void_reversal_disabled" });
+      throw err;
     }
-    if (!ok) return reply.code(404).send({ error: "transaction_not_found" });
-    return { ok: true };
   });
 
   // ── Cash-GL setup (B-1, fork-A: reuse banking.bank_accounts.ledger_account_id) ───────────────────────

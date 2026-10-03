@@ -7,6 +7,7 @@
 // reconciliation_matches-linked, so every one of them was surfacing as a live, clickable
 // "unmatched, needs review" item in this worklist -- an operator working this queue would see 699
 // phantom line items for transactions that were already superseded and need no action at all.
+import type { PoolClient } from "pg";
 import { withLuciaBypass } from "../../auth/db.js";
 import { reverseJournalEntryNoFlip } from "../journal-entries.service.js";
 import { acceptMatchWithResolveDifference, previewMatchVariance, type LedgerEntryKind } from "./match.service.js";
@@ -23,7 +24,8 @@ type WorklistRow = {
 };
 
 function confirmedStateWhere() {
-  return `rm.match_state IN ('auto_matched', 'user_matched', 'rejected')`;
+  // ROUND 360 — a voided match row (an unmatch, or a void of the document) no longer covers the line.
+  return `rm.voided_at IS NULL AND rm.match_state IN ('auto_matched', 'user_matched', 'rejected')`;
 }
 
 export async function getReconWorklist(input: {
@@ -285,166 +287,201 @@ export async function unmatchBankTransaction(input: {
   bank_transaction_id: string;
   actor_user_uuid: string;
 }): Promise<{ ok: boolean }> {
+  // ROUND 360 — every unmatch goes through the bank-line state machine (one transaction, by resolution_kind).
+  // Imported lazily: the state machine imports unmatchBankTransactionOnClient from this module.
+  const { undoBankLineOnClient } = await import("../../banking/bank-line-state-machine.service.js");
   return withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
-
-    // Same CTE-captures-pre-update-values shape reconciliation.routes.ts's session-scoped unmatch
-    // already uses — Postgres UPDATE...RETURNING reflects the NEW row, so the ids to reverse/reject
-    // have to come from a snapshot taken before the UPDATE, not the UPDATE's own output.
-    const res = await client.query<{
-      id: string;
-      prev_expense_id: string | null;
-      prev_transfer_id: string | null;
-      prev_journal_entry_id: string | null;
-      prev_load_id: string | null;
-      prev_bill_id: string | null;
-      prev_settlement_id: string | null;
-      prev_payment_id: string | null;
-      prev_bill_payment_id: string | null;
-      prev_fuel_transaction_id: string | null;
-      prev_relay_fuel_transaction_id: string | null;
-      prev_factoring_advance_id: string | null;
-    }>(
-      `
-        WITH prior AS (
-          SELECT id, matched_expense_id, matched_transfer_id, matched_journal_entry_id,
-                 matched_load_id, matched_bill_id, matched_settlement_id,
-                 matched_payment_id, matched_bill_payment_id,
-                 matched_fuel_transaction_id, matched_relay_fuel_transaction_id,
-                 matched_factoring_advance_id
-          FROM banking.bank_transactions
-          WHERE id = $1::uuid AND operating_company_id = $2::uuid
-            AND voided_at IS NULL
-        )
-        UPDATE banking.bank_transactions bt
-        SET matched_expense_id = NULL,
-            matched_transfer_id = NULL,
-            matched_journal_entry_id = NULL,
-            matched_load_id = NULL,
-            matched_bill_id = NULL,
-            matched_settlement_id = NULL,
-            matched_payment_id = NULL,
-            matched_bill_payment_id = NULL,
-            matched_factoring_advance_id = NULL,
-            matched_fuel_transaction_id = NULL,
-            matched_relay_fuel_transaction_id = NULL,
-            -- OWNER-ORDER 2026-10-02 §4 — these three were left set on unmatch (half-release).
-            matched_invoice_id = NULL,
-            matched_advance_id = NULL,
-            categorization_gl_account_id = NULL,
-            -- 'unmatched' is not a legal review_state (CHECK: for_review|categorized|excluded|matched|
-            -- transfer) — 'for_review' is the correct "back in the queue" state, and unlike the
-            -- session-scoped unmatch (reconciliation.routes.ts, which leaves review_state untouched at
-            -- 'matched' with no matched_*_id pointers — a pre-existing orphaned-state gap, out of
-            -- scope here) this one gets it right.
-            review_state = 'for_review',
-            -- ROUND 326 queue item 14 (G-18): when unmatch reverses a match-created JE (fuel/relay/
-            -- recourse below), the line goes back to the categorization queue. Leaving it
-            -- 'categorized' with no JE made the categorized-backlog poster re-post it — reverse,
-            -- re-post, reverse — the 6300 gross churn.
-            status = CASE WHEN prior.matched_journal_entry_id IS NOT NULL AND bt.status = 'categorized'
-                          THEN 'pending_categorization' ELSE bt.status END,
-            updated_at = now()
-        FROM prior
-        WHERE bt.id = prior.id
-        RETURNING
-          bt.id,
-          prior.matched_expense_id::text AS prev_expense_id,
-          prior.matched_transfer_id::text AS prev_transfer_id,
-          prior.matched_journal_entry_id::text AS prev_journal_entry_id,
-          prior.matched_load_id::text AS prev_load_id,
-          prior.matched_bill_id::text AS prev_bill_id,
-          prior.matched_settlement_id::text AS prev_settlement_id,
-          prior.matched_payment_id::text AS prev_payment_id,
-          prior.matched_bill_payment_id::text AS prev_bill_payment_id,
-          prior.matched_fuel_transaction_id::text AS prev_fuel_transaction_id,
-          prior.matched_relay_fuel_transaction_id::text AS prev_relay_fuel_transaction_id,
-          prior.matched_factoring_advance_id::text AS prev_factoring_advance_id
-      `,
-      [input.bank_transaction_id, input.operating_company_id]
-    );
-    const row = res.rows[0];
-    if (!row) throw new Error("bank_transaction_not_found");
-
-    // OWNER-ORDER 2026-10-02 §4 — reverse ONLY JEs this match writer created (fuel/relay fill post
-    // or factoring chargeback on 1230). Do NOT reverse a JE that was merely matched as the ledger
-    // target (kind=je) or that categorize wrote — those use undo-categorization / void of the JE.
-    const matchCreatedJe = Boolean(
-      row.prev_fuel_transaction_id || row.prev_relay_fuel_transaction_id || row.prev_factoring_advance_id
-    );
-    if (row.prev_journal_entry_id && matchCreatedJe) {
-      await reverseJournalEntryNoFlip(client, {
-        operatingCompanyId: input.operating_company_id,
-        journalEntryId: row.prev_journal_entry_id,
-        reason: "bank_transaction_unmatched",
-        actorUserId: input.actor_user_uuid,
-      });
-    }
-
-    // BNK-11 — clear the reverse (ledger-side) back-pointer too, scoped to "still points at THIS
-    // bank transaction" so a link that has since moved on (re-matched elsewhere, or posted directly)
-    // is never touched by unmatching a now-stale reference.
-    //
-    // BANK-F26053 — clear cleared_date alongside source_bank_transaction_id, same scope. Unmatching
-    // detaches this payment from the reconciliation session it settled in (THREE-DATES-COVERAGE-GAP:
-    // cleared_date drives ONLY that), so leaving a stale cleared_date after unmatch would misreport
-    // a session the payment no longer belongs to.
-    if (row.prev_payment_id) {
-      await client.query(
-        `UPDATE accounting.payments
-            SET source_bank_transaction_id = NULL,
-                cleared_date = NULL
-          WHERE id = $1::uuid
-            AND operating_company_id = $2::uuid
-            AND source_bank_transaction_id = $3::uuid`,
-        [row.prev_payment_id, input.operating_company_id, input.bank_transaction_id]
-      );
-    }
-    if (row.prev_bill_payment_id) {
-      await client.query(
-        `UPDATE accounting.bill_payments
-            SET source_bank_transaction_id = NULL,
-                from_bank_account_id = NULL,
-                cleared_date = NULL,
-                updated_at = now()
-          WHERE id = $1::uuid
-            AND operating_company_id = $2::uuid
-            AND source_bank_transaction_id = $3::uuid`,
-        [row.prev_bill_payment_id, input.operating_company_id, input.bank_transaction_id]
-      );
-    }
-
-    const rejectedKinds: Array<{ kind: LedgerEntryKind; id: string }> = [];
-    if (row.prev_expense_id) rejectedKinds.push({ kind: "expense", id: row.prev_expense_id });
-    if (row.prev_transfer_id) rejectedKinds.push({ kind: "transfer", id: row.prev_transfer_id });
-    if (row.prev_journal_entry_id) rejectedKinds.push({ kind: "je", id: row.prev_journal_entry_id });
-    if (row.prev_bill_id) rejectedKinds.push({ kind: "bill", id: row.prev_bill_id });
-    if (row.prev_payment_id) rejectedKinds.push({ kind: "payment", id: row.prev_payment_id });
-    if (row.prev_bill_payment_id) rejectedKinds.push({ kind: "bill_payment", id: row.prev_bill_payment_id });
-    // load/settlement are not LedgerEntryKind members in this module's own type (that widened CHECK
-    // is reconciliation.routes.ts's own session-scoped kind set) — rejected as 'bill'-shaped rows
-    // would be wrong; skip them here since acceptReconMatch/MatchDrawer never write those two kinds.
-    for (const { kind, id } of rejectedKinds) {
-      await client.query(
-        `
-          INSERT INTO banking.reconciliation_matches (
-            operating_company_id, bank_transaction_id, ledger_entry_kind, ledger_entry_id,
-            match_score, match_state, matched_at, matched_by_user_uuid
-          )
-          VALUES ($1::uuid, $2::uuid, $3::text, $4::uuid, 0, 'rejected', now(), $5::uuid)
-          ON CONFLICT (bank_transaction_id, ledger_entry_kind, ledger_entry_id)
-          DO UPDATE SET
-            match_score = 0,
-            match_state = 'rejected',
-            matched_at = now(),
-            matched_by_user_uuid = EXCLUDED.matched_by_user_uuid
-        `,
-        [input.operating_company_id, input.bank_transaction_id, kind, id, input.actor_user_uuid]
-      );
-    }
-
+    await undoBankLineOnClient(client, {
+      operatingCompanyId: input.operating_company_id,
+      bankTransactionId: input.bank_transaction_id,
+      actorUserId: input.actor_user_uuid,
+      reason: "bank_transaction_unmatched",
+    });
     return { ok: true };
   });
+}
+
+export type UnmatchOnClientResult = {
+  released: Array<{ kind: LedgerEntryKind; id: string }>;
+  reversed_match_journal_entry_id: string | null;
+};
+
+/**
+ * ROUND 360 — UNMATCH on the caller's transaction. Breaks the link ONLY: the document is untouched, its own flags
+ * (source_bank_transaction_id, cleared_date) are cleared, and its match row goes to 'rejected', so the document is back
+ * in the candidate pool. The single GL exception is a JE this match WRITER created (fuel/relay fill, factoring
+ * chargeback — OWNER-ORDER 2026-10-02 §4); a document that already existed is never reversed.
+ */
+export async function unmatchBankTransactionOnClient(
+  client: PoolClient,
+  input: { operating_company_id: string; bank_transaction_id: string; actor_user_uuid: string }
+): Promise<UnmatchOnClientResult> {
+  // Same CTE-captures-pre-update-values shape reconciliation.routes.ts's session-scoped unmatch
+  // already uses — Postgres UPDATE...RETURNING reflects the NEW row, so the ids to reverse/reject
+  // have to come from a snapshot taken before the UPDATE, not the UPDATE's own output.
+  const res = await client.query<{
+    id: string;
+    prev_expense_id: string | null;
+    prev_transfer_id: string | null;
+    prev_journal_entry_id: string | null;
+    prev_load_id: string | null;
+    prev_bill_id: string | null;
+    prev_settlement_id: string | null;
+    prev_payment_id: string | null;
+    prev_bill_payment_id: string | null;
+    prev_fuel_transaction_id: string | null;
+    prev_relay_fuel_transaction_id: string | null;
+    prev_factoring_advance_id: string | null;
+  }>(
+    `
+      WITH prior AS (
+        SELECT id, matched_expense_id, matched_transfer_id, matched_journal_entry_id,
+               matched_load_id, matched_bill_id, matched_settlement_id,
+               matched_payment_id, matched_bill_payment_id,
+               matched_fuel_transaction_id, matched_relay_fuel_transaction_id,
+               matched_factoring_advance_id
+        FROM banking.bank_transactions
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid
+          AND voided_at IS NULL
+      )
+      UPDATE banking.bank_transactions bt
+      SET matched_expense_id = NULL,
+          matched_transfer_id = NULL,
+          matched_journal_entry_id = NULL,
+          matched_load_id = NULL,
+          matched_bill_id = NULL,
+          matched_settlement_id = NULL,
+          matched_payment_id = NULL,
+          matched_bill_payment_id = NULL,
+          matched_factoring_advance_id = NULL,
+          matched_fuel_transaction_id = NULL,
+          matched_relay_fuel_transaction_id = NULL,
+          -- OWNER-ORDER 2026-10-02 §4 — these three were left set on unmatch (half-release).
+          matched_invoice_id = NULL,
+          matched_advance_id = NULL,
+          categorization_gl_account_id = NULL,
+          -- 'unmatched' is not a legal review_state (CHECK: for_review|categorized|excluded|matched|
+          -- transfer) — 'for_review' is the correct "back in the queue" state, and unlike the
+          -- session-scoped unmatch (reconciliation.routes.ts, which leaves review_state untouched at
+          -- 'matched' with no matched_*_id pointers — a pre-existing orphaned-state gap, out of
+          -- scope here) this one gets it right.
+          review_state = 'for_review',
+          -- ROUND 326 queue item 14 (G-18): when unmatch reverses a match-created JE (fuel/relay/
+          -- recourse below), the line goes back to the categorization queue. Leaving it
+          -- 'categorized' with no JE made the categorized-backlog poster re-post it — reverse,
+          -- re-post, reverse — the 6300 gross churn.
+          status = CASE WHEN prior.matched_journal_entry_id IS NOT NULL AND bt.status = 'categorized'
+                        THEN 'pending_categorization' ELSE bt.status END,
+          updated_at = now()
+      FROM prior
+      WHERE bt.id = prior.id
+      RETURNING
+        bt.id,
+        prior.matched_expense_id::text AS prev_expense_id,
+        prior.matched_transfer_id::text AS prev_transfer_id,
+        prior.matched_journal_entry_id::text AS prev_journal_entry_id,
+        prior.matched_load_id::text AS prev_load_id,
+        prior.matched_bill_id::text AS prev_bill_id,
+        prior.matched_settlement_id::text AS prev_settlement_id,
+        prior.matched_payment_id::text AS prev_payment_id,
+        prior.matched_bill_payment_id::text AS prev_bill_payment_id,
+        prior.matched_fuel_transaction_id::text AS prev_fuel_transaction_id,
+        prior.matched_relay_fuel_transaction_id::text AS prev_relay_fuel_transaction_id,
+        prior.matched_factoring_advance_id::text AS prev_factoring_advance_id
+    `,
+    [input.bank_transaction_id, input.operating_company_id]
+  );
+  const row = res.rows[0];
+  if (!row) throw new Error("bank_transaction_not_found");
+
+  // OWNER-ORDER 2026-10-02 §4 — reverse ONLY JEs this match writer created (fuel/relay fill post
+  // or factoring chargeback on 1230). Do NOT reverse a JE that was merely matched as the ledger
+  // target (kind=je) or that categorize wrote — those use undo-categorization / void of the JE.
+  const matchCreatedJe = Boolean(
+    row.prev_fuel_transaction_id || row.prev_relay_fuel_transaction_id || row.prev_factoring_advance_id
+  );
+  if (row.prev_journal_entry_id && matchCreatedJe) {
+    await reverseJournalEntryNoFlip(client, {
+      operatingCompanyId: input.operating_company_id,
+      journalEntryId: row.prev_journal_entry_id,
+      reason: "bank_transaction_unmatched",
+      actorUserId: input.actor_user_uuid,
+    });
+  }
+
+  // BNK-11 — clear the reverse (ledger-side) back-pointer too, scoped to "still points at THIS
+  // bank transaction" so a link that has since moved on (re-matched elsewhere, or posted directly)
+  // is never touched by unmatching a now-stale reference.
+  //
+  // BANK-F26053 — clear cleared_date alongside source_bank_transaction_id, same scope. Unmatching
+  // detaches this payment from the reconciliation session it settled in (THREE-DATES-COVERAGE-GAP:
+  // cleared_date drives ONLY that), so leaving a stale cleared_date after unmatch would misreport
+  // a session the payment no longer belongs to.
+  if (row.prev_payment_id) {
+    await client.query(
+      `UPDATE accounting.payments
+          SET source_bank_transaction_id = NULL,
+              cleared_date = NULL
+        WHERE id = $1::uuid
+          AND operating_company_id = $2::uuid
+          AND source_bank_transaction_id = $3::uuid`,
+      [row.prev_payment_id, input.operating_company_id, input.bank_transaction_id]
+    );
+  }
+  if (row.prev_bill_payment_id) {
+    await client.query(
+      `UPDATE accounting.bill_payments
+          SET source_bank_transaction_id = NULL,
+              from_bank_account_id = NULL,
+              cleared_date = NULL,
+              updated_at = now()
+        WHERE id = $1::uuid
+          AND operating_company_id = $2::uuid
+          AND source_bank_transaction_id = $3::uuid`,
+      [row.prev_bill_payment_id, input.operating_company_id, input.bank_transaction_id]
+    );
+  }
+
+  // ROUND 360 — retire EVERY live match row this line holds, whatever its kind (fuel, relay, factoring advance and
+  // settlement matches used to keep 'user_matched' after an unmatch, which hid the document from the Match drawer
+  // forever). Voided, not merely 'rejected': an unmatch is "undo my link", not "never suggest this pair" — a voided row
+  // hides nothing (link-suggestions reads only unvoided rejections) and the line is back in the worklist.
+  const retired = await client.query<{ kind: LedgerEntryKind; id: string }>(
+    `UPDATE banking.reconciliation_matches
+        SET match_state = 'rejected',
+            voided_at = now(),
+            void_reason = 'bank_line_unmatched',
+            voided_by_user_id = $3::uuid,
+            updated_at = now()
+      WHERE operating_company_id = $1::uuid
+        AND bank_transaction_id = $2::uuid
+        AND voided_at IS NULL
+        AND match_state IN ('auto_matched', 'user_matched')
+      RETURNING ledger_entry_kind AS kind, ledger_entry_id::text AS id`,
+    [input.operating_company_id, input.bank_transaction_id, input.actor_user_uuid]
+  );
+  const rejectedKinds: Array<{ kind: LedgerEntryKind; id: string }> = [...retired.rows];
+  const pointed: Array<[LedgerEntryKind, string | null]> = [
+    ["expense", row.prev_expense_id],
+    ["transfer", row.prev_transfer_id],
+    ["je", row.prev_journal_entry_id],
+    ["bill", row.prev_bill_id],
+    ["payment", row.prev_payment_id],
+    ["bill_payment", row.prev_bill_payment_id],
+    ["factoring_advance", row.prev_factoring_advance_id],
+    ["fuel_transaction", row.prev_fuel_transaction_id],
+    ["relay_fuel", row.prev_relay_fuel_transaction_id],
+    ["settlement", row.prev_settlement_id],
+  ];
+  for (const [kind, id] of pointed) {
+    if (id && !rejectedKinds.some((r) => r.kind === kind && r.id === id)) rejectedKinds.push({ kind, id });
+  }
+
+  return {
+    released: rejectedKinds,
+    reversed_match_journal_entry_id: row.prev_journal_entry_id && matchCreatedJe ? row.prev_journal_entry_id : null,
+  };
 }
 
 export async function closeReconPeriod(input: {

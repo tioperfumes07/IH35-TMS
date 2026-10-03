@@ -4,7 +4,13 @@ import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "./bank-account-visibility.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
-import { postSourceTransaction, reversePostedSourceTransaction, PostingEngineError } from "../accounting/posting-engine.service.js";
+import {
+  postSourceTransaction,
+  postSourceTransactionInClientTx,
+  reversePostedSourceTransaction,
+  reversePostedSourceTransactionInClientTx,
+  PostingEngineError,
+} from "../accounting/posting-engine.service.js";
 
 // BANKING-GL-COMPLETION — per-entity kill switch (default OFF; migration 202607150000). Resolved
 // PER-ENTITY via isEnabled inside the request flow — never a global process.env read — so flipping it
@@ -57,6 +63,37 @@ async function maybePostTransferGl(
   }
 }
 
+/**
+ * ROUND 360 — the transfer JE on the CALLER's transaction (instant: the screen returns with the GL already right, and a
+ * posting failure rolls the transfer back with it). Reversal is idempotent in the posting engine (an existing reversal is
+ * returned, never a second one) and a transfer that never posted (flag off at the time) has nothing to reverse.
+ */
+export async function postTransferGlOnClient(
+  client: DbClient,
+  operatingCompanyId: string,
+  transferId: string,
+  userId: string,
+  purpose: "initial_post" | "reversal"
+): Promise<{ journal_entry_id: string | null }> {
+  const postingEnabled = await isEnabled(client as never, TRANSFER_GL_POSTING_FLAG_KEY, {
+    operating_company_id: operatingCompanyId,
+    user_uuid: userId,
+  });
+  if (!postingEnabled) return { journal_entry_id: null };
+  const source = { operating_company_id: operatingCompanyId, source_transaction_type: "transfer" as const, source_transaction_id: transferId };
+  if (purpose === "initial_post") {
+    const posted = await postSourceTransactionInClientTx(client as never, source, { userId });
+    return { journal_entry_id: posted.journal_entry_id };
+  }
+  try {
+    const reversed = await reversePostedSourceTransactionInClientTx(client as never, source, { userId }, new Date().toISOString().slice(0, 10));
+    return { journal_entry_id: reversed.journal_entry_id };
+  } catch (err) {
+    if (err instanceof PostingEngineError && err.code === "SOURCE_NOT_FOUND") return { journal_entry_id: null };
+    throw err;
+  }
+}
+
 export type AccountKind = "bank" | "cc" | "coa";
 export type TransferType = "bank_to_bank" | "cc_payment" | "cash_deposit" | "owner_contribution" | "owner_distribution" | "petty_cash_funding";
 
@@ -71,6 +108,9 @@ export type TransferInput = {
   transferDate: string;
   memo?: string;
   referenceNumber?: string;
+  /** ROUND 360 — the bank feed line this transfer is being recorded FROM. Created, linked and posted in ONE transaction,
+   *  and stamped as the line that minted it (so Undo on that line removes it). */
+  fromBankLine?: { bankTransactionId: string; destinationBankAccountId: string; transferKind: "in" | "out" } | null;
 };
 
 type TransferRow = {
@@ -233,15 +273,33 @@ export async function createTransfer(input: TransferInput, userId: string) {
     throw new Error("self_transfer_not_allowed");
   }
 
+  // ROUND 360 — insert, link the originating bank line (if any) and post the JE in ONE transaction, on one client: when
+  // this returns the account already carries it, and a posting failure leaves no transfer behind. (The old after-commit
+  // postSourceTransaction opened its own connection, so a failed post left a committed transfer with no GL.)
   const transfer = await withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
-    return insertTransferInClient(client, input, userId);
+    const created = await insertTransferInClient(client, input, userId);
+    if (input.fromBankLine) {
+      await client.query(`SELECT pg_advisory_xact_lock(hashtext($1::text))`, [
+        `banking.mark_transfer:${input.fromBankLine.bankTransactionId}`,
+      ]);
+      const stamped = await stampBankTransactionTransferLink(client, {
+        bankTransactionId: input.fromBankLine.bankTransactionId,
+        operatingCompanyId: input.operatingCompanyId,
+        transferId: created.id,
+        destinationBankAccountId: input.fromBankLine.destinationBankAccountId,
+        transferKind: input.fromBankLine.transferKind,
+        pairedTransactionId: null,
+      });
+      if (!stamped) throw new Error("bank_line_already_linked_to_a_transfer");
+      await client.query(
+        `UPDATE banking.transfers SET minted_from_bank_transaction_id = $1::uuid WHERE id = $2::uuid AND operating_company_id = $3::uuid`,
+        [input.fromBankLine.bankTransactionId, created.id, input.operatingCompanyId]
+      );
+    }
+    await postTransferGlOnClient(client, input.operatingCompanyId, created.id, userId, "initial_post");
+    return created;
   });
-
-  // BANKING-GL-COMPLETION — post the balanced JE AFTER the transfer row is committed (postSourceTransaction
-  // opens its OWN transaction; calling it inside the insert txn would self-deadlock). No-ops when
-  // TRANSFER_GL_POSTING_ENABLED resolves false for this entity (the default).
-  await maybePostTransferGl(transfer.operating_company_id, transfer.id, userId, "initial_post");
 
   await enqueueSyncJob(
     transfer.operating_company_id,
@@ -321,6 +379,7 @@ async function stampBankTransactionTransferLink(
       UPDATE banking.bank_transactions
       SET
         status = 'transfer',
+        resolution_kind = 'transfer', -- ROUND 360
         category = 'transfer',
         category_kind = 'transfer',
         destination_bank_account_id = $2,
@@ -431,6 +490,15 @@ export async function markBankFeedLineAsTransfer(input: MarkBankFeedTransferInpu
       throw new Error("transfer_link_failed");
     }
 
+    if (minted) {
+      // ROUND 360 — provenance (Undo on THIS line removes the transfer it created) and the JE, same transaction.
+      await client.query(
+        `UPDATE banking.transfers SET minted_from_bank_transaction_id = $1::uuid WHERE id = $2::uuid AND operating_company_id = $3::uuid`,
+        [bankTransactionId, transferId, operatingCompanyId]
+      );
+      await postTransferGlOnClient(client, operatingCompanyId, transferId, userId, "initial_post");
+    }
+
     if (pairedTransactionId) {
       await client.query(
         `
@@ -471,7 +539,6 @@ export async function markBankFeedLineAsTransfer(input: MarkBankFeedTransferInpu
 
   // GL + sync only when THIS call minted (createTransfer posts after its own commit; we mirror that).
   if (result.minted) {
-    await maybePostTransferGl(operatingCompanyId, result.transfer_id, userId, "initial_post");
     await enqueueSyncJob(
       operatingCompanyId,
       "transfer",
@@ -521,62 +588,8 @@ async function mintTransferForBankFeedLineInClient(
 export async function revokeTransfer(transferId: string, operatingCompanyId: string, reason: string, userId: string) {
   const transfer = await withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-    const currentRes = await client.query<TransferRow>(
-      `
-        SELECT id, operating_company_id, from_account_id, from_account_kind, to_account_id, to_account_kind, amount_cents, revoked_at
-        FROM banking.transfers
-        WHERE id = $1
-          AND operating_company_id = $2::uuid
-        LIMIT 1
-      `,
-      [transferId, operatingCompanyId]
-    );
-    const current = currentRes.rows[0];
-    if (!current) throw new Error("transfer_not_found");
-    if (current.revoked_at) throw new Error("transfer_already_revoked");
-
-    const updateRes = await client.query<TransferRow>(
-      `
-        UPDATE banking.transfers
-        SET revoked_at = now(),
-            revoked_by_user_id = $3,
-            revoked_reason = $4,
-            updated_at = now()
-        WHERE id = $1
-          AND operating_company_id = $2::uuid
-        RETURNING id, operating_company_id, from_account_id, from_account_kind, to_account_id, to_account_kind, amount_cents, revoked_at
-      `,
-      [transferId, operatingCompanyId, userId, reason]
-    );
-    const revoked = updateRes.rows[0];
-    if (!revoked) throw new Error("transfer_revoke_failed");
-
-    if (revoked.from_account_kind === "bank") {
-      await updateBankBalance(client, revoked.from_account_id, operatingCompanyId, Math.abs(revoked.amount_cents));
-    }
-    if (revoked.to_account_kind === "bank") {
-      await updateBankBalance(client, revoked.to_account_id, operatingCompanyId, -Math.abs(revoked.amount_cents));
-    }
-
-    await appendCrudAudit(
-      client,
-      userId,
-      "banking.transfer.revoked",
-      {
-        resource_type: "banking.transfers",
-        resource_id: transferId,
-        operating_company_id: operatingCompanyId,
-        reason,
-      },
-      "warning",
-      "P5-D1-TRANSFER"
-    );
-    return revoked;
+    return revokeTransferInClient(client, transferId, operatingCompanyId, reason, userId);
   });
-
-  // BANKING-GL-COMPLETION — reverse any posted transfer JE (idempotent no-op if the flag was off when the
-  // transfer was created / nothing was ever posted).
-  await maybePostTransferGl(transfer.operating_company_id, transfer.id, userId, "reversal");
 
   await enqueueSyncJob(
     transfer.operating_company_id,
@@ -592,6 +605,93 @@ export async function revokeTransfer(transferId: string, operatingCompanyId: str
 
   return transfer;
 }
+
+/**
+ * ROUND 360 — revoke on the CALLER's transaction: the row, the balance bump, the audit, the JE reversal and the release of
+ * every bank line still linked to it, together. A revoked transfer can no longer hold a bank line in Categorized.
+ */
+export async function revokeTransferInClient(
+  client: DbClient,
+  transferId: string,
+  operatingCompanyId: string,
+  reason: string,
+  userId: string
+): Promise<TransferRow & { released_bank_transaction_ids: string[] }> {
+  const currentRes = await client.query<TransferRow>(
+    `
+      SELECT id, operating_company_id, from_account_id, from_account_kind, to_account_id, to_account_kind, amount_cents, revoked_at
+      FROM banking.transfers
+      WHERE id = $1
+        AND operating_company_id = $2::uuid
+      LIMIT 1
+    `,
+    [transferId, operatingCompanyId]
+  );
+  const current = currentRes.rows[0];
+  if (!current) throw new Error("transfer_not_found");
+  if (current.revoked_at) throw new Error("transfer_already_revoked");
+
+  const updateRes = await client.query<TransferRow>(
+    `
+      UPDATE banking.transfers
+      SET revoked_at = now(),
+          revoked_by_user_id = $3,
+          revoked_reason = $4,
+          updated_at = now()
+      WHERE id = $1
+        AND operating_company_id = $2::uuid
+      RETURNING id, operating_company_id, from_account_id, from_account_kind, to_account_id, to_account_kind, amount_cents, revoked_at
+    `,
+    [transferId, operatingCompanyId, userId, reason]
+  );
+  const revoked = updateRes.rows[0];
+  if (!revoked) throw new Error("transfer_revoke_failed");
+
+  if (revoked.from_account_kind === "bank") {
+    await updateBankBalance(client, revoked.from_account_id, operatingCompanyId, Math.abs(revoked.amount_cents));
+  }
+  if (revoked.to_account_kind === "bank") {
+    await updateBankBalance(client, revoked.to_account_id, operatingCompanyId, -Math.abs(revoked.amount_cents));
+  }
+
+  await appendCrudAudit(
+    client,
+    userId,
+    "banking.transfer.revoked",
+    {
+      resource_type: "banking.transfers",
+      resource_id: transferId,
+      operating_company_id: operatingCompanyId,
+      reason,
+    },
+    "warning",
+    "P5-D1-TRANSFER"
+  );
+
+  await postTransferGlOnClient(client, operatingCompanyId, transferId, userId, "reversal");
+
+  const released = await client.query<{ id: string }>(
+    `UPDATE banking.bank_transactions
+        SET ${RELEASE_TRANSFER_LINK_SET_SQL}
+      WHERE operating_company_id = $1::uuid
+        AND matched_transfer_id = $2::uuid
+      RETURNING id::text`,
+    [operatingCompanyId, transferId]
+  );
+  return { ...revoked, released_bank_transaction_ids: released.rows.map((r) => r.id) };
+}
+
+/** ROUND 360 — every transfer field a bank line carries, cleared together (the classifier then puts it in For review). */
+export const RELEASE_TRANSFER_LINK_SET_SQL = `
+            status = 'pending_categorization',
+            category = NULL,
+            category_kind = NULL,
+            destination_bank_account_id = NULL,
+            transfer_kind = NULL,
+            paired_transaction_id = NULL,
+            matched_transfer_id = NULL,
+            categorized_at = NULL,
+            updated_at = now()`;
 
 /**
  * BANK-F12 — Law §9 reverse hop: transfer → banking.bank_transactions.

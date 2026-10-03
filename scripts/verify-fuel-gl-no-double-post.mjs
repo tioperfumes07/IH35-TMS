@@ -43,7 +43,7 @@ import { readFileSync, existsSync } from "node:fs";
 const LABEL = "verify:fuel-gl-no-double-post";
 
 const PLAID = "apps/backend/src/integrations/plaid/plaid.service.ts";
-const BANKING = "apps/backend/src/banking/banking.routes.ts";
+const BANKING = "apps/backend/src/banking/bank-line-state-machine.service.ts"; // ROUND 360: every bank-line Undo runs here
 const ENGINE = "apps/backend/src/accounting/posting-engine.service.ts";
 const SELF = "scripts/verify-fuel-gl-no-double-post.mjs";
 

@@ -360,16 +360,18 @@ async function loadEntry(client: DbClient, oci: string, id: string): Promise<Ent
   return e;
 }
 
-async function stampPosted(client: DbClient, oci: string, entry: EntryRow, jeId: string, actor: string) {
+// ROUND 360 — kind: 'matched' when the line is linked to a JE that already existed (escrow_held -> the purchase's funding
+// JE; Undo breaks the link only), 'added' when this poster CREATED the JE for the line (Undo reverses it).
+async function stampPosted(client: DbClient, oci: string, entry: EntryRow, jeId: string, actor: string, kind: "matched" | "added") {
   await client.query(
     `UPDATE accounting.faro_reserve_entries SET journal_entry_id = $1::uuid, posted_at = now(), posted_by_user_id = $3::uuid
       WHERE id = $2::uuid AND journal_entry_id IS NULL`,
     [jeId, entry.id, actor]
   );
   await client.query(
-    `UPDATE banking.bank_transactions SET matched_journal_entry_id = $1::uuid, review_state = 'matched', reviewed_at = now(), updated_at = now()
+    `UPDATE banking.bank_transactions SET matched_journal_entry_id = $1::uuid, review_state = 'matched', resolution_kind = $4, reviewed_at = now(), updated_at = now()
       WHERE id = $2::uuid AND operating_company_id = $3::uuid AND matched_journal_entry_id IS NULL`,
-    [jeId, entry.bank_transaction_id, oci]
+    [jeId, entry.bank_transaction_id, oci, kind]
   );
 }
 
@@ -392,7 +394,7 @@ export async function postFaroReserveEntryOnClient(
   if (entry.entry_kind === "escrow_held") {
     if (link!.purchase_status !== "posted" || !link!.purchase_je) throw new FaroReserveError("faro_escrow_held_purchase_not_posted");
     if (link!.escrow_reserve_cents !== amount) throw new FaroReserveError("faro_escrow_held_differs_from_purchase_line");
-    await stampPosted(client, oci, entry, link!.purchase_je, input.actor_user_id);
+    await stampPosted(client, oci, entry, link!.purchase_je, input.actor_user_id, "matched");
     return { entry_id: entry.id, journal_entry_id: link!.purchase_je };
   }
   if (entry.entry_kind === "rsv_deposit") throw new FaroReserveError("faro_rsv_deposit_posts_with_its_payment_match");
@@ -489,8 +491,8 @@ export async function postFaroReserveEntryOnClient(
   );
   // Owner ruling 2026-10-02: every leg is linked on the spine (transaction_source_links) to its Faro entry and its invoice.
   await writeFactoringSpineLinks(client, oci, je.id, `faro_${entry.entry_kind}`);
-  await stampPosted(client, oci, entry, je.id, input.actor_user_id);
-  if (pair) await stampPosted(client, oci, pair, je.id, input.actor_user_id);
+  await stampPosted(client, oci, entry, je.id, input.actor_user_id, "added");
+  if (pair) await stampPosted(client, oci, pair, je.id, input.actor_user_id, "added");
   return { entry_id: entry.id, journal_entry_id: je.id, ...(pair ? { paired_entry_id: pair.id } : {}) };
 }
 

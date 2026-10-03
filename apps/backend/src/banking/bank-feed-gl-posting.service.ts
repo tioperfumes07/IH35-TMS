@@ -380,6 +380,7 @@ export async function postBankCategorizationOnClient(client: PgClient, input: Ma
       UPDATE banking.bank_transactions
       SET matched_journal_entry_id = $1::uuid,
           review_state = 'matched',
+          resolution_kind = 'added', -- ROUND 360: categorize CREATED this entry; Undo reverses it
           reviewed_at = now(),
           updated_at = now()
       WHERE id = $2::uuid

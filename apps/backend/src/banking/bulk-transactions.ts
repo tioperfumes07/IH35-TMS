@@ -267,9 +267,11 @@ export async function bulkPostTransactionsAsBills(
             created_at,
             updated_at,
             -- ACCT-F353 — derived from the vendor being paid (vendorIsSampleData above).
-            is_sample_data
+            is_sample_data,
+            -- ROUND 360 — the bank line that CREATED this bill: Undo on that line voids it (and nothing else).
+            source_bank_transaction_id
           )
-          VALUES ($1,$2,$2,$8,$3,$3,$4,$5,$4,$5,'paid',$6,$7,now(),now(),$9)
+          VALUES ($1,$2,$2,$8,$3,$3,$4,$5,$4,$5,'paid',$6,$7,now(),now(),$9,$10)
           RETURNING id
         `,
         [
@@ -286,6 +288,7 @@ export async function bulkPostTransactionsAsBills(
           userId,
           mdataVendorId,
           vendorIsSampleData,
+          txn.id,
         ]
       );
       const billId = billRes.rows[0]?.id;
@@ -359,6 +362,7 @@ export async function bulkPostTransactionsAsBills(
           UPDATE banking.bank_transactions
           SET
             status = 'categorized',
+            resolution_kind = 'added', -- ROUND 360: this line CREATED the bill + bill payment
             category = 'bill',
             category_kind = $2,
             linked_entity_id = $3::uuid,
