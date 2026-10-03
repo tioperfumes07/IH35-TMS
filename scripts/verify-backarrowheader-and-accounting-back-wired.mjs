@@ -75,6 +75,10 @@ function auditAccountingWrapper(source) {
       `${ACCOUNTING_WRAPPER}: the hasInAppHistory check must run BEFORE the /home fallback, or the fallback always wins`
     );
   }
+  // BANK-F91096 — ORDERS chrome: Back control uses text-xs, not text-[11px].
+  if (stripped.includes("text-[11px]")) {
+    failures.push(`${ACCOUNTING_WRAPPER}: must not use text-[11px] — use text-xs`);
+  }
   return failures;
 }
 
@@ -158,6 +162,11 @@ if (process.argv.includes("--selftest")) {
                 return;
               }`
         ),
+    },
+    {
+      name: "AccountingSubNavWrapper Back control off-scale text-[11px]",
+      target: "accounting",
+      mutate: (t) => t.replace("text-xs font-semibold text-gray-600", "text-[11px] font-semibold text-gray-600"),
     },
   ];
   let caught = 0;

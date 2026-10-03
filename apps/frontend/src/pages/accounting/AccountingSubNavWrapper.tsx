@@ -114,7 +114,7 @@ export function AccountingSubNavWrapper({
               }
               navigate("/home");
             }}
-            className="mt-0.5 inline-flex items-center gap-1 rounded-xs border-0 bg-transparent px-1 py-0.5 text-[11px] font-semibold text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+            className="mt-0.5 inline-flex items-center gap-1 rounded-xs border-0 bg-transparent px-1 py-0.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 hover:text-gray-900"
           >
             <span aria-hidden>←</span>
             <span>Back</span>
