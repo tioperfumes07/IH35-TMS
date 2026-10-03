@@ -77,6 +77,7 @@ const FIELD_DEFS: FieldDef[] = [
   { key: "irp_account_number", label: "IRP Account Number", type: "text", tab: "IRP / Plates" },
   { key: "irp_expiration", label: "IRP Expiration", type: "date", tab: "IRP / Plates" },
   { key: "irp_registered_weight_lbs", label: "IRP Registered Weight (lbs)", type: "number", tab: "IRP / Plates" },
+  { key: "fuel_tank_capacity_gallons", label: "Fuel Tank Capacity (gal)", type: "number", tab: "Identity" },
   { key: "sct_permit_number", label: "SCT Permit Number", type: "text", tab: "IRP / Plates" },
   { key: "sct_permit_expiration", label: "SCT Permit Expiration", type: "date", tab: "IRP / Plates" },
   { key: "pita_status", label: "PITA Status", type: "text", tab: "IRP / Plates" },
