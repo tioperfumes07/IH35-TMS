@@ -93,6 +93,14 @@ function runChecks(root = ROOT) {
     const fact = fs.readFileSync(factAbs, "utf8");
     if (fact.includes("text-[11px]")) fails.push(`${factRel}: must not use text-[11px] — use text-section-header or text-xs`);
   }
+  // BANK-F91093 — ORDERS chrome: FactoringDetailPage status pill uses named 11px token.
+  const detailRel = "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx";
+  const detailAbs = path.join(root, detailRel);
+  if (fs.existsSync(detailAbs)) {
+    const detail = fs.readFileSync(detailAbs, "utf8");
+    if (detail.includes("text-[11px]")) fails.push(`${detailRel}: must not use text-[11px] — use text-section-header`);
+    if (!detail.includes("text-section-header")) fails.push(`${detailRel}: status pill must use text-section-header`);
+  }
   return fails;
 }
 
