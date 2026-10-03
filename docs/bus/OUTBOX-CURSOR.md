@@ -1,3 +1,12 @@
+## 2026-10-03T02:35Z · BANK-F91056 Credit Memo/Fuel type filters + Change class MERGED #24322 · tip `b88e9e0989de`
+
+ACK: CURSOR | ACK BANK-F91056 TYPE FILTERS + CHANGE-CLASS DONE | GO
+PR https://github.com/tioperfumes07/IH35-TMS/pull/24322 squash `b88e9e0989debdc952d4bf2caa868885fd7691db`.
+Prior: ROUND 347.2 Today's Attention #24318 live.
+FIX: B-1/B-2 type chips Credit Memo + Fuel Event; sourceRoute hops; SOURCE_TYPE_LABELS + TYPE_LABELS; data-b5-change-class="1".
+GUARD: verify-b1-account-register · verify-b2-reconcile-shell · verify-b5-reclassify-batch — selftest exit 0 · money-pr-local-gate PASS.
+NO seed · NO mig (HH 02). NEXT: next ORDERS leftover · ROUND 348 mig HH 12–23 · Chrome type filters.
+
 ## 2026-10-03T02:25Z · ROUND 347.2 Today's Attention projected_failure_date LIVE #24318 · tip `955c4882dc`
 
 ACK: CURSOR | ROUND 347.2 | TODAYS-ATTENTION PROJECTED_FAILURE_DATE LIVE | GO
