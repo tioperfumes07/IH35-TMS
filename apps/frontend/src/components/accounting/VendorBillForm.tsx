@@ -426,13 +426,13 @@ export function VendorBillForm({
                 disabled={!operatingCompanyId}
               />
               {!operatingCompanyId ? (
-                <p className="mt-1 text-[11px] text-slate-600">Select an operating company to load vendors.</p>
+                <p className="mt-1 text-xs text-slate-600">Select an operating company to load vendors.</p>
               ) : vendorsQuery.isLoading ? (
-                <p className="mt-1 text-[11px] text-gray-500">Loading vendors…</p>
+                <p className="mt-1 text-xs text-gray-500">Loading vendors…</p>
               ) : vendorsQuery.isError ? (
-                <p className="mt-1 text-[11px] text-red-600">Couldn't load vendors. Refresh to try again.</p>
+                <p className="mt-1 text-xs text-red-600">Couldn't load vendors. Refresh to try again.</p>
               ) : vendorOptions.length === 0 ? (
-                <p className="mt-1 text-[11px] text-slate-600">No vendors found for this company. Create a vendor first, or check the selected company.</p>
+                <p className="mt-1 text-xs text-slate-600">No vendors found for this company. Create a vendor first, or check the selected company.</p>
               ) : null}
             </>
           </Field>
@@ -634,7 +634,7 @@ export function VendorBillForm({
         taxDisplayOnly
       />
 
-      <div className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-[11px] text-slate-700">
+      <div className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-700">
         Line amounts post together with the bill header as one transaction. Tax shown above is
         display-only until a tax expense line with a real CoA
         account is entered — the bill amount equals the sum of lines (no invented tax GL).
@@ -677,7 +677,7 @@ export function VendorBillForm({
 function Field({ label, children }: { label: string; children: JSX.Element }) {
   return (
     <div className="space-y-1">
-      <label className="text-[11px] font-semibold text-gray-600">{label}</label>
+      <label className="text-xs font-semibold text-gray-600">{label}</label>
       {children}
     </div>
   );
