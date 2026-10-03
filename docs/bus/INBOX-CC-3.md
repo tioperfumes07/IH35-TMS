@@ -98,3 +98,13 @@ CC-2 also has `docs/bus/10-03-2026-CC-2-ROUND-364-ACCOUNTING-MODULE-REGISTER-364
 **367.8 — a duplicate is OFFERED, never silently created and never silently deleted.** Same provider transaction ID = refused in the database. Same vendor+date+amount with a different or absent provider ID = surfaced side by side before the row is written, owner rules it: duplicate (reverse, void, purge) or both real (both kept, **each assigned to its correct load**). The current 11 pairs carry DIFFERENT load prefixes, so one purchase is on two loads and two loads are wrong in opposite directions. Nothing auto-deleted, nothing auto-merged, every decision audited.
 
 **367.9 — the breadcrumb is APP-WIDE.** Owner: it is not just Accounting, many modules do the same and **some tabs have no back at all**. Every route gets a structural breadcrumb from one shared component; up is the parent in the hierarchy, never history; derived from the route so it survives refresh and deep links. Deliverable is an inventory of every route with three true columns. CURSOR owns it, CC-2 owns Accounting.
+
+## ROUND 368 — PRIORITY CHANGE — READ BEFORE YOUR NEXT ITEM
+
+`docs/bus/10-03-2026-ALL-SEATS-ROUND-368-PRIORITY-CHANGE-RECLASSIFY-FIRST-AND-THE-TWO-PERMANENT-REFUSALS.md`
+
+**368.1 — the Reclassify tab and its engine ship BEFORE the purge (CC-2, top of list, 2026-10-04 18:00Z).** It is the owner's balance inspector and he is inspecting the book before he deletes it. Whole chart of accounts including zeros, P&L/Balance Sheet toggle, balances DERIVED from GL postings with no stored total, everything clickable, sortable headers, the account pane wide enough to read, all three selectors.
+
+**368.2 — honest answer to the owner: neither defect is permanently fixed yet.** The match-posts-a-journal-entry defect is RULED and ORDERED but no code has changed. The 29 matched-to-nothing rows were RELEASED — that is a data correction, not a fix. Permanent means the DATABASE refuses it: (a) no posting may be created by a bank-match code path; (b) no bank line may sit in any of the 13 `matched_*` states with nothing matched. Both CONSTRAINT TRIGGER, DEFERRABLE INITIALLY DEFERRED, proven by attempting one and being refused. Both live before the purge.
+
+**368.3 — EVERY SCREEN IS HONEST, standing law.** Empty is a question, not an answer. A screen that cannot read its data says "could not read", never 0. **A failure that renders as zero is a lie.** Two readers of the same data on one page agree or the page does not ship. Default filters are declared on screen.
