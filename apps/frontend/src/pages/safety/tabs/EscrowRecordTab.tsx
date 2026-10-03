@@ -223,7 +223,7 @@ export function EscrowRecordTab() {
       <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-600">
         Escrow balances and events surface security-invoker data. Forfeiture attempts are auditable.
         {rows.length > 0 ? (
-          <p className="mt-1 text-[11px] text-slate-500" data-testid="escrow-signed-clause-summary">
+          <p className="mt-1 text-xs text-slate-500" data-testid="escrow-signed-clause-summary">
             Signed escrow clause on file: {signedClauseCount} of {rows.length} drivers, based on signed contract records.
             Forfeit stays blocked until the clause is signed.
           </p>
@@ -256,7 +256,7 @@ export function EscrowRecordTab() {
         rowTestId={(row) => `escrow-record-row-${row.id}`}
         filterBar={
           <div className="relative flex flex-wrap items-end gap-2" data-testid="escrow-records-filters">
-            <label className="text-[11px] text-slate-600">
+            <label className="text-xs text-slate-600">
               Driver
               <EntityPicker
                 kind="driver"
@@ -305,7 +305,7 @@ export function EscrowRecordTab() {
         >
           Escrow timeline unavailable for {timelineErrors.length} driver
           {timelineErrors.length === 1 ? "" : "s"} — forfeiture audit below may be incomplete.
-          <ul className="mt-1 list-disc pl-4 text-[11px]">
+          <ul className="mt-1 list-disc pl-4 text-xs">
             {timelineErrors.slice(0, 3).map((entry) => (
               <li key={entry}>{entry}</li>
             ))}
@@ -316,8 +316,8 @@ export function EscrowRecordTab() {
 
       <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="escrow-forfeit-audit">
         <h4 className="text-xs font-semibold text-slate-700">Forfeiture Audit</h4>
-        <p className="mt-1 text-[11px] text-slate-500">Successful forfeitures: {totalForfeits}</p>
-        <div className="mt-2 space-y-1 text-[11px]">
+        <p className="mt-1 text-xs text-slate-500">Successful forfeitures: {totalForfeits}</p>
+        <div className="mt-2 space-y-1 text-xs">
           {attempts.map((entry) => (
             <div key={entry.id} className={entry.status === "blocked" ? "text-red-700" : "text-slate-700"}>
               {entry.created_at.slice(0, 16).replace("T", " ")} - <EntityLink kind="driver" id={entry.driver_id} label={entityLabel(entry.driver_name, entry.driver_id, "Driver")} /> - {formatUsd(entry.amount)} - {entry.reason} (

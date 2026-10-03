@@ -34,6 +34,10 @@ function assertPage(src) {
   if (/const \[driverFilter,\s*setDriverFilter\]/.test(src)) {
     errors.push("must not keep hand-rolled silent driverFilter useState");
   }
+  if (src.includes("text-[11px]")) errors.push("leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155")) {
+    errors.push("leftover off-scale muted");
+  }
   return errors;
 }
 
@@ -54,6 +58,16 @@ function selftest() {
   `;
   if (assertPage(bad).length === 0 || assertPage(good).length > 0) {
     console.error(`${LABEL} SELFTEST FAIL`, { bad: assertPage(bad), good: assertPage(good) });
+    process.exit(1);
+  }
+  const live = fs.readFileSync(path.join(process.cwd(), TARGET), "utf8");
+  if (live.includes("text-[11px]") || live.includes("#8A92AB") || live.includes("#334155")) {
+    console.error(`${LABEL} SELFTEST FAIL — live leftover tokens present`);
+    process.exit(1);
+  }
+  const leftoverErrors = assertPage(`${good}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`);
+  if (!leftoverErrors.some((e) => e.includes("leftover"))) {
+    console.error(`${LABEL} SELFTEST FAIL leftover plant escaped:`, leftoverErrors);
     process.exit(1);
   }
   console.log(`${LABEL} selftest PASS`);
