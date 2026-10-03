@@ -78,3 +78,16 @@ Lane ruling for this round: `docs/bus/00-LEAD-RULING-2026-10-03-LANE-CROSS-ACCT-
 Take the guards in your own lane from the 365.6 list. Name the cause and the writer. Do not raise a threshold or widen a baseline to clear one — `docs/audit/VERIFY-STATIC-BASELINE.json` is shrink-only and no entry is added without a Lead ruling.
 
 CC-2 also has `docs/bus/10-03-2026-CC-2-ROUND-364-ACCOUNTING-MODULE-REGISTER-364-1-TO-364-14.md` — the Accounting module register, 364.1 to 364.14, which ships AFTER 365.
+
+## ROUND 366 — THE RESET RUNBOOK, THE STALE SWEEP, THE BLUEPRINT — AND THE STANDING ORDER AMENDED
+
+`docs/bus/10-03-2026-ALL-SEATS-ROUND-366-THE-RESET-RUNBOOK-THE-STALE-SWEEP-AND-THE-BLUEPRINT.md`
+
+**366.1 RULING — delete the matches, KEEP the bank lines.** The imported bank, Faro and Relay lines are the bank's record, not ours, and the only evidence in the system we did not write. They go back to For Review; they are never deleted. The matches, categorizations and the documents they created are purged. **Closed reconciliation sessions covering purged postings are reversed, voided and purged too** — otherwise `R` locks rows that no longer exist. The owner's reconciliation file is a source document: read, never written.
+
+**366.2** the reset runbook, 11 steps, no step starts before the one above it is proven.
+**366.3** the stale sweep — archive docs, never delete on a hunch; register or delete the 31 unaccounted guards without raising a threshold; nine unwatched derived artifacts; measure before removing any surface.
+**366.4** the blueprint is rebuilt from live reads after the purge; each seat supplies its own section with the query pasted; anything unmeasurable goes in as unproven.
+**366.5** `00-STANDING-ORDER-OWN-YOUR-ENGINE-END-TO-END.md` is amended — **finish your list, and you do not hand off.** Report three numbers every time: on my list · closed this round with proof · still open. A lane boundary is not a handoff: get the ruling and build both halves yourself.
+
+**365.6 is still the gate. Green first.**

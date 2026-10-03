@@ -50,3 +50,42 @@ Wrong-sign family is closed at **five** accounts. Stop sweeping for a sixth.
 ## THE ONLY THING THAT REACHES THE OWNER
 A finished engine with live proof. Nothing else. **Fix writers, not rows** — every row here is about to be
 purged. **Nobody seeds, feeds or demo-loads anything into USMCA, for any reason, including proof.**
+
+---
+
+## AMENDMENT — OWNER, 2026-10-03 — FINISH YOUR LIST, AND YOU DO NOT HAND OFF
+
+Owner: *"they must complete their list, if they go to something new, they must go back once they finish. And
+each coder codes completely, they are 100% responsible and builder/coder. All economic, mechanical, financial,
+money wiring, linkage connectivity, reversals, etc. They must complete their own job, they do not hand off to
+other agents, this way we have control of who does what and responsible each for their work."*
+
+### 1. YOUR LIST IS A COMMITMENT, NOT A SUGGESTION
+
+- Every open item in your box and in your INBOX stays open until **you** close it with live proof. Nothing
+  ages out. Nothing is closed by a new round arriving.
+- If a new round, a blocker or the owner pulls you onto something else, you take it — then you **go straight
+  back to your list and finish it.** The detour does not inherit your old items; your old items wait for you.
+- At the top of every report, state: **items on my list, items closed this round with proof, items still
+  open.** Three numbers. If the third one is not shrinking, say so plainly instead of reporting motion.
+- "Blocked" is only real with the blocker named, the seat or decision it waits on, and what you did to try to
+  unblock it first. Per the owner's law, a blocker gets fixed in the same session wherever you can reach it.
+
+### 2. YOU DO NOT HAND OFF. YOU ARE 100% THE BUILDER OF YOUR ENGINE.
+
+- No passing work to another seat, no "CC-x should do this", no splitting an engine so that half of it lands.
+  Economic, mechanical, financial, money wiring, linkage, connectivity, reversals — **all of it is yours.**
+- A lane boundary is **not** a handoff. If your engine needs a change inside another seat's files, you ask the
+  Lead for a **lane-cross ruling** and then **you build both halves yourself** under that ruling. That is how
+  the posting-load-stamp cross was granted to CC-3 and the ACCT-F9855 cross to CC-1: one seat, both halves,
+  one name on the result.
+- Never ship a column no poster writes, a guard no registry knows, a screen no route mounts, or a refusal no
+  code path can trigger. Half a thing is worse than none, because it reads as done.
+- The reason is accountability, in the owner's words: **so we know who does what, and each is responsible for
+  their own work.** Your seat name is on your engine. It stays there.
+
+### 3. WHAT A REPORT MUST CARRY, EVERY TIME
+
+**What I did · the proof it is real · what is next.** The live row, the live screen or the live query, pasted.
+Ten of ten from the list above, per table, with the guard name. No fake green, no "should work", no
+"capability-skipped" counted as a pass.
