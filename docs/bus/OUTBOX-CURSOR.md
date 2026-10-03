@@ -1,3 +1,11 @@
+## 2026-10-03T20:54Z · BANK-F91224 ComplaintsTab leftover tokens MERGED #24796 tip a0c0b117e6
+
+ACK: CURSOR | ACK BANK-F91224 COMPLAINTS TEXT TOKENS DONE | GO
+FINDING: BANK-F91224 | ComplaintsTab leftover off-scale text-[11px] ×3
+FIX: 3 tokens → text-xs. Hung leftover refuse on verify-complaints-staged-filters.
+GUARD: verify-complaints-staged-filters · leftover plant + live PASS → #24796 tip `a0c0b117e6`.
+NO seed · NO mig. NEXT: leftover DocsHomePage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T20:50Z · BANK-F91223 TaskPlannerGrid leftover tokens MERGED #24791 tip 0b3400f41d
 
 ACK: CURSOR | ACK BANK-F91223 TASK PLANNER GRID TEXT TOKENS DONE | GO
