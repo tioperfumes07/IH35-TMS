@@ -19,12 +19,16 @@ const checks = [
   ["apps/frontend/src/pages/factoring/SubmissionWorkqueue.tsx", /<EntityLink[\s\S]{0,80}kind="customer"[\s\S]{0,80}id=\{item\.customer_id\}/],
 ];
 const DRIVER_LOADS = "apps/frontend/src/pages/driver/DriverLoadsPage.tsx";
+const DRIVER_DETAIL = "apps/frontend/src/pages/driver/DriverLoadDetailPage.tsx";
 const files = Object.fromEntries([...new Set(checks.map(([file]) => file))].map((file) => [file, fs.readFileSync(file, "utf8")]));
+const leftoverRefuse = (src, failures) => {
+  if (src.includes("text-[11px]")) failures.push("leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155")) failures.push("leftover off-scale muted");
+};
 const audit = (source) => {
   const failures = checks.filter(([file, pattern]) => !pattern.test(source[file])).map(([file]) => `${file}: customer FK/link missing`);
-  const page = source[DRIVER_LOADS] ?? "";
-  if (page.includes("text-[11px]")) failures.push("leftover text-[11px]");
-  if (page.includes("#8A92AB") || page.includes("#334155")) failures.push("leftover off-scale muted");
+  leftoverRefuse(source[DRIVER_LOADS] ?? "", failures);
+  leftoverRefuse(source[DRIVER_DETAIL] ?? "", failures);
   return failures;
 };
 if (process.argv.includes("--selftest")) {
@@ -38,6 +42,11 @@ if (process.argv.includes("--selftest")) {
   const leftover = audit(leftoverPlant);
   if (!leftover.includes("leftover text-[11px]") || !leftover.includes("leftover off-scale muted")) {
     throw new Error("leftover plant escaped");
+  }
+  const leftoverDetailPlant = { ...files, [DRIVER_DETAIL]: `${files[DRIVER_DETAIL]}\n<div className="text-[11px] text-[#8A92AB]">plant</div>` };
+  const leftoverDetail = audit(leftoverDetailPlant);
+  if (!leftoverDetail.includes("leftover text-[11px]") || !leftoverDetail.includes("leftover off-scale muted")) {
+    throw new Error("leftover detail plant escaped");
   }
   console.log(`verify-wave-a-customer-column SELFTEST PASS — ${caught} planted defects + leftover plant rejected`);
 }
