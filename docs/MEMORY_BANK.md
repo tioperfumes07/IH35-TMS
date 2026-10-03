@@ -1379,6 +1379,13 @@ Full coder instructions: `claude/2026-09-13-ABSORPTION-INGEST-AND-DISPUTE-WINDOW
 3. Ship Needs delivery authorization FE queue (this PR) → FE deploy → Owner clicks Authorize when a rolling load needs early factoring auth.
 4. No baseline raises to clear tip ENV reds.
 
+## Active Architectural Decisions — ROUND 342 dual-scoped factoring reads (Cursor, 2026-10-03)
+
+- Dual-scoped factoring tables (`batch`, `bank_match_suggestion`, `customer_factor_assignment`, `factor`, `letter_of_release`, `reserve_movement`) scope reads via `COALESCE(operating_company_id, tenant_id)`.
+- Helper: `apps/backend/src/factoring/company-scope.ts` (`factoringCompanyScope` / `companyIdFromDualScopedRow`).
+- Rename-only `factoring.canonical_factor_agreements` stays on `tenant_id` until CC-1 ships the column — never COALESCE OCI there.
+- Guard: `verify-r342-dual-scoped-factoring-reads` (money-pr-local-gate + step 12326 spawn). Insurance dual-scoped sweep still open.
+
 ## Active Architectural Decisions — ROUND 342.1 unit keys + identity_user (Cursor, 2026-10-03)
 
 - **Owner:** one person CAN hold `mdata.drivers` in two carriers → `uq_mdata_drivers_company_identity_user` partial UNIQUE(operating_company_id, identity_user_id) WHERE NOT NULL. Mig `202615312300`.

@@ -1,3 +1,11 @@
+## 2026-10-03T00:15Z · ROUND 342 dual-scoped factoring reads (shipping)
+
+ACK: CURSOR | ROUND 342 | DUAL-SCOPED FACTORING READS | GO
+FIX: WHERE/AND on dual-scoped factoring tables → COALESCE(operating_company_id, tenant_id). Helper company-scope.ts. canonical_factor_agreements UNTOUCHED (rename-only).
+GUARD: verify-r342-dual-scoped-factoring-reads (--selftest PASS) wired money-pr-local-gate + step 12326.
+Files: batch/bank-match/factor/submission-queue/factoring-kpi + company-scope.ts + guard + MEMORY_BANK.
+NO seed · NO migration (HH 00). NEXT: gate → PR → FAST-MERGE · insurance dual-scoped next · Class D keys HH 12–23.
+
 ## 2026-10-03T00:07Z · ROUND 342.1 unit_plates + identity_user_id shipping · codes PR #24290 MERGED `590f0cfe4e`
 
 ACK: CURSOR | ROUND 342.1 | UNIT KEYS + IDENTITY | GO
