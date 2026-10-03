@@ -54,6 +54,9 @@ export function collectFailures({
   if (!/const gross = earnings \+ deadheadPay \+ extraPay \+ reimbursements;/.test(summary)) {
     failures.push("NetPaySummary.tsx gross total does not include deadheadPay — client total would disagree with backend net_pay");
   }
+  if (summary.includes("text-[11px]")) {
+    failures.push("NetPaySummary.tsx: must not use text-[11px] — use text-xs or text-section-header");
+  }
   if (!/Empty Miles/.test(section)) {
     failures.push("DeadheadPaySection.tsx does not label the section 'Empty Miles'");
   }
@@ -70,9 +73,10 @@ if (process.argv.includes("--selftest")) {
   const page = load(PAGE_PATH);
   const summary = load(SUMMARY_PATH);
   const mutations = [
-    ["deadhead filter removed", page, { page: page.replace(/const deadhead = lines\.filter[\s\S]*?\}\);\n/, "") }],
-    ["section not rendered", page, { page: page.replace("<DeadheadPaySection lines={deadhead} />\n          ", "") }],
+    ["deadhead filter removed", page, { page: page.replace(/const deadhead = activeLines\.filter\(\(line\) => String\(line\.line_type\) === "deadhead_pay"\)/, "const deadhead = []") }],
+    ["section not rendered", page, { page: page.replace("<DeadheadPaySection lines={deadhead} isOpen={!settlementIsReadOnly} operatingCompanyId={companyId} />", "") }],
     ["gross total drops deadheadPay", summary, { summary: summary.replace("const gross = earnings + deadheadPay + extraPay + reimbursements;", "const gross = earnings + extraPay + reimbursements;") }],
+    ["off-scale caption", summary, { summary: summary.replace("text-xs text-gray-500", "text-[11px] text-gray-500") }],
   ];
   const escaped = [];
   for (const [name, original, patch] of mutations) {

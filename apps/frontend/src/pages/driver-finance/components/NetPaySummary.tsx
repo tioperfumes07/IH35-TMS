@@ -25,7 +25,7 @@ export function NetPaySummary({ earnings, deadheadPay, extraPay, reimbursements,
         <div className="border-t border-gray-200 pt-1" />
         <Row label="Gross Pay" value={gross} />
         <Row label="Less: Deductions" value={-deductions} />
-        <div className="text-[11px] text-gray-500">(Pending-ack deductions {formatUsdTable(pendingAckDeductions)} not yet applied)</div>
+        <div className="text-xs text-gray-500">(Pending-ack deductions {formatUsdTable(pendingAckDeductions)} not yet applied)</div>
         <div className="border-t border-gray-200 pt-1" />
         <div className="flex items-center justify-between font-bold text-slate-700">
           <span>NET PAY</span>
