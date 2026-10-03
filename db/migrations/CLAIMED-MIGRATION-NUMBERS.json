@@ -1887,6 +1887,11 @@
       "claimed_at": "2026-10-03",
       "purpose": "ROUND 373 ordering (writers, then arm): DISABLE the 26 document-side triggers of 202615360600 until every void path releases the bank lines that name its document; the bank-line and match-row refusals stay armed."
     },
+    "202615370700": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-03",
+      "purpose": "U10 (owner UI register, CC-2): accounting.bills.bill_category (vendor | maintenance | repair | fuel | driver) — a stored type for every bill so each Bills sub-tab shows only its own type (the list guessed it from memo words); backfill from facts only (driver_id -> driver, linked work order -> maintenance), frozen companies untouched."
+    },
     "202615370600": {
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-03",
