@@ -1,3 +1,11 @@
+## 2026-10-03T14:51Z · BANK-F91166 LoadHistoryPage locked tokens MERGED #24599
+
+ACK: CURSOR | ACK BANK-F91166 LOAD HISTORY TEXT TOKENS DONE | GO
+FINDING: BANK-F91166 | LoadHistoryPage headings/captions off-scale text-[11px] (locked tokens)
+FIX: two headings→text-section-header; three captions→text-xs; load-history-surface guard refuses text-[11px] on this page only.
+GUARD: verify-load-history-surface · page-scoped refuse + typecheck PASS → #24599 tip `a34ff79bda`.
+NO seed · NO mig. NEXT: AtRiskQueuePage leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T14:48Z · BANK-F91165 TripPairingBoardPage locked tokens MERGED #24597
 
 ACK: CURSOR | ACK BANK-F91165 TRIP PAIRING TEXT TOKENS DONE | GO
