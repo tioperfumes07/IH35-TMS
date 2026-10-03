@@ -357,7 +357,7 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
             return (
               <div className="flex flex-wrap gap-1" data-testid={`drivers-table-tags-${row.driverId}`}>
                 {tags.map((t) => (
-                  <span key={t.tag_id} className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-700">
+                  <span key={t.tag_id} className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs text-slate-700">
                     {t.label}
                   </span>
                 ))}
