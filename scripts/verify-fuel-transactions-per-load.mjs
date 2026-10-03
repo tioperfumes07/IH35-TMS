@@ -138,9 +138,10 @@ async function live() {
     for (const doc of docs) for (const fp of doc.fuel_purchases || []) loadNumbers.add(fp.load);
 
     const loadRes = await client.query(
-      `SELECT id, load_number, assigned_primary_driver_id, assigned_unit_id
+      // stampDocumentVoided renumbers a voided load VOID-<original>-<id8> (#22442); its documents still name the original.
+      `SELECT id, regexp_replace(load_number, '^VOID-(.+)-[0-9a-f]{8}$', '\\1') AS load_number, assigned_primary_driver_id, assigned_unit_id
          FROM mdata.loads
-        WHERE operating_company_id = $1::uuid AND load_number = ANY($2::text[])`,
+        WHERE operating_company_id = $1::uuid AND regexp_replace(load_number, '^VOID-(.+)-[0-9a-f]{8}$', '\\1') = ANY($2::text[])`,
       [USMCA_COMPANY_ID, Array.from(loadNumbers)]
     );
     const loadMap = new Map(
@@ -163,7 +164,7 @@ async function live() {
     const liveRes = await client.query(
       `SELECT ft.id::text AS id, ft.source_row_hash, ft.total_cost, ft.fuel_type,
               ft.transaction_reference, ft.transaction_at::date::text AS txn_date,
-              ft.voided_at, ft.archived_at, ft.notes, ft.void_reason, l.load_number
+              ft.voided_at, ft.archived_at, ft.notes, ft.void_reason, regexp_replace(l.load_number, '^VOID-(.+)-[0-9a-f]{8}$', '\\1') AS load_number
          FROM fuel.fuel_transactions ft
          LEFT JOIN mdata.loads l ON l.id = ft.load_id
         WHERE ft.operating_company_id = $1::uuid`,

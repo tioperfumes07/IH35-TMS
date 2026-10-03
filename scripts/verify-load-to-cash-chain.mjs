@@ -126,7 +126,10 @@ const LINK1_PENDING_REAL_MILEAGE_SOURCE = new Set([
 export function expenseNumberMismatch(loadNumber, expenseNumber) {
   if (!expenseNumber) return false; // no expense_number at all is a separate, pre-existing gap class, not this check's concern
   if (!loadNumber) return true; // an expense claims a load_id but that load has no number to derive from — can't possibly match
-  return !expenseNumber.startsWith(loadNumber);
+  // stampDocumentVoided (ROUND 130.2, #22442) renumbers a voided load VOID-<original>-<id8> to free the number; its
+  // expenses keep the number they were minted under — compare against the original.
+  const original = /^VOID-(.+)-[0-9a-f]{8}$/.exec(loadNumber)?.[1] ?? loadNumber;
+  return !expenseNumber.startsWith(original);
 }
 
 async function live() {
@@ -255,6 +258,8 @@ if (process.argv.includes("--selftest")) {
   assert.equal(expenseNumberMismatch("13565", "99999-1"), true, "an expense_number not derived from its load must fail");
   assert.equal(expenseNumberMismatch("13565", null), false, "no expense_number at all is a different gap class, not this check");
   assert.equal(expenseNumberMismatch(null, "13565-3"), true, "an expense_number with no load_number to derive from cannot pass");
+  assert.equal(expenseNumberMismatch("VOID-13515-44eae7f5", "13515-25"), false, "a voided load's renumber keeps its expenses matched to the original");
+  assert.equal(expenseNumberMismatch("VOID-13515-44eae7f5", "13516-1"), true, "a voided load still refuses an expense from another load");
   console.log(`${LABEL} --selftest PASS`);
   process.exit(0);
 }

@@ -7044,7 +7044,14 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). Load 13515 (44eae7f5-7
 action: DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-03-cc3-r353-13515-cancellation-record-and-void-stamp.mts --apply --auth AUTH-206
   Dry-run first (default, no --apply).
 expires_at: 2026-10-05T03:35:00Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-03T03:27:49Z
+consumed_by: CC-3
+row_counts: dispatch.load_cancellations +1 (88d8967a, reason OTHER 38880c9f, approved, owner e4117991); mdata.loads 13515 stamped
+  voided by stampDocumentVoided (voided_at 2026-10-03 03:27:49.349Z, void_reason set, voided_by e4117991, status voided,
+  load_number VOID-13515-44eae7f5); 0 JEs, 0 postings; driver bill 33d5debc still paid.
+proof_query: node scripts/verify-void-is-whole.mjs against prod -> PASS 0 violations (was ✗ loads 1-silent-void 13515).
+
 THIS AUTHORIZATION DOES NOT COVER: any load other than 13515; 13513; any journal entry or posting; the paid driver bill
   33d5debc or settlement 0936ca4e (the driven trip — whether its cost moves to 13513 is a Lead ruling); any DELETE;
   any company other than USMCA.
