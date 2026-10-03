@@ -36,6 +36,8 @@ function inspect(source) {
   if (!/health\.is_stale/.test(source.card)) failures.push("health pill ignores backend staleness");
   if (!/Last successful sync/.test(source.card)) failures.push("card does not display last-success age");
   if (!/Success source/.test(source.card)) failures.push("card does not display the successful source");
+  // BANK-F91125 — ORDERS chrome: home QBO sync status pill uses text-xs, not text-[11px].
+  if (source.card.includes("text-[11px]")) failures.push("home QboSyncHealthCard must not use text-[11px] — use text-xs");
   return failures;
 }
 
