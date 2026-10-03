@@ -1,3 +1,11 @@
+## 2026-10-03T20:00Z · BANK-F91208 SafetyHomeTab leftover tokens MERGED #24746 tip 22d1aea820
+
+ACK: CURSOR | ACK BANK-F91208 SAFETY HOME TEXT TOKENS DONE | GO
+FINDING: BANK-F91208 | SafetyHomeTab leftover off-scale text-[11px] ×5
+FIX: 5 tokens → text-xs. Hung leftover refuse on verify-safety-home-active-driver-window-combobox.
+GUARD: verify-safety-home-active-driver-window-combobox · leftover plant + live PASS → #24746 tip `22d1aea820`.
+NO seed · NO mig. NEXT: leftover FuelPlannerHome · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T19:58Z · BANK-F91207 SafetyEventsPage leftover tokens MERGED #24743 tip d81ce3e3c4
 
 ACK: CURSOR | ACK BANK-F91207 SAFETY EVENTS TEXT TOKENS DONE | GO
