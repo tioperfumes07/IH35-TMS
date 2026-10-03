@@ -21,6 +21,7 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { ensureFreshGateStepMap } from "./generate-gate-step-map.mjs";
+import { guardDbEnv } from "./lib/guard-db-url.mjs";
 import { guardIsInScope } from "./verify-static.mjs";
 import { EMPTY_BY_PURGE_EXIT, PURGE_WINDOW_GUARDS, purgeWindow } from "./lib/purge-window.mjs";
 import { dataWritePathDiffActuallyWrites, dataWritePathFileActuallyWrites } from "./lib/data-write-path-detection.mjs";
@@ -113,6 +114,8 @@ const STEPS = [
   ["verify-invoice-postings-carry-spine-link", "scripts/verify-invoice-postings-carry-spine-link.mjs"],
   // Dispatch D3 — every dispatch-module table audited + RLS forced.
   ["verify-dispatch-tables-audited-and-rls-forced", "scripts/verify-dispatch-tables-audited-and-rls-forced.mjs"],
+  // Lead 2026-10-03 — guards read the direct endpoint, never as ih35_app (pooled SET ROLE leak).
+  ["verify-guards-do-not-run-as-ih35_app", "scripts/verify-guards-do-not-run-as-ih35_app.mjs"],
   ["verify-no-session-advisory-locks", "scripts/verify-no-session-advisory-locks.mjs"],
   ["verify-rollup-keys-carry-company", "scripts/verify-rollup-keys-carry-company.mjs"],
   ["verify-filter-surfaces-full-set", "scripts/verify-filter-surfaces-full-set.mjs"],
@@ -1581,10 +1584,11 @@ function runNode(rel, extraEnv = {}, args = []) {
   if (env.DATABASE_URL && !extraEnv.DATABASE_URL) {
     env.DATABASE_URL = resolveGuardDatabaseUrl();
   }
+  // Every guard reads the DIRECT endpoint — never the pooler, where the app's SET ROLE ih35_app leaks.
   const res = spawnSync(process.execPath, [script, ...args], {
     cwd: ROOT,
     encoding: "utf8",
-    env,
+    env: guardDbEnv(env),
   });
   const out = `${res.stdout ?? ""}${res.stderr ?? ""}`.trim();
   if (out) console.log(out);

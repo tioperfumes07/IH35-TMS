@@ -901,5 +901,12 @@
     "source_file": "apps/frontend/src/pages/dispatch/RoundTripsTimeline.tsx",
     "guard": "scripts/verify-roundtrips-timeline-restored.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-10-03-GUARDS-NEVER-READ-AS-IH35-APP",
+    "title": "Lead 2026-10-03 (owner ordered repaired) — every guard reads the DIRECT database endpoint, never the pgbouncer pooler where the app pool session-level SET ROLE ih35_app leaks; a pooled 0 is masked, not empty. Rule lives in the harness (scripts/lib/guard-db-url.mjs via money-pr-local-gate, run-required-guards, require-live-db), not per script",
+    "source_file": "docs/bus/OUTBOX-CC-3.md",
+    "guard": "scripts/verify-guards-do-not-run-as-ih35_app.mjs",
+    "type": "enforced"
   }
 ]

@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
+import { guardDbEnv } from './guard-db-url.mjs';
 
 export function formatLocalOutcomes(label, outcomes, deferredCount, exitCode) {
   return `${label}: LOCAL PHASE OUTCOMES passed=${outcomes.passed} failed=${outcomes.failed} skipped=${outcomes.skipped + deferredCount} gate_exit=${exitCode}; local skips are NOT live passes; required CI must execute them`;
@@ -25,7 +26,7 @@ export function runRequiredGuards(files, spawn = spawnSync) {
   const summary = { attempted: files.length, executed: 0, passed: 0, failed: 0, skipped: 0 };
   for (const file of files) {
     try {
-      const result = spawn(process.execPath, [file], { encoding: 'utf8', maxBuffer: 8 * 1024 * 1024, timeout: 120000 });
+      const result = spawn(process.execPath, [file], { env: guardDbEnv(process.env), encoding: 'utf8', maxBuffer: 8 * 1024 * 1024, timeout: 120000 });
       const output = `${result.stdout ?? ''}${result.stderr ?? ''}`;
       if (output) process.stdout.write(output);
       if (!result.error) summary.executed++;
