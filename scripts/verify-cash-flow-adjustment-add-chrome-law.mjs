@@ -20,7 +20,13 @@ function audit(src) {
   const block = m[0];
   if (!/<Plus className="h-3 w-3" \/>\s*Create\s*<\/button>/.test(block)) failures.push("adjustment button must read 'Create' next to the Plus icon");
   if (/<Plus className="h-3 w-3" \/>\s*Add\s*<\/button>/.test(block)) failures.push("adjustment button must not use the forbidden 'Add' verb (chrome law item 8)");
+  leftoverRefuse(src, failures);
   return failures;
+}
+
+function leftoverRefuse(src, failures) {
+  if (src.includes("text-[11px]")) failures.push("leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155")) failures.push("leftover off-scale muted");
 }
 
 if (process.argv.includes("--selftest")) {
@@ -38,7 +44,13 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`${LABEL} SELFTEST PASS — ${mutations.length} mutations detected`);
+  const leftoverPlant = `${src}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  const leftoverFailures = audit(leftoverPlant);
+  if (!leftoverFailures.includes("leftover text-[11px]") || !leftoverFailures.includes("leftover off-scale muted")) {
+    console.error(`${LABEL} SELFTEST FAIL — leftover plant escaped — ${leftoverFailures.join("; ")}`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — ${mutations.length} mutations detected + leftover plant rejected`);
   process.exit(0);
 }
 
