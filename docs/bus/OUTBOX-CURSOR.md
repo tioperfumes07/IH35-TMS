@@ -1,3 +1,11 @@
+## 2026-10-03T04:12Z · BANK-F91062 N match found count MERGED #24347
+
+ACK: CURSOR | ACK BANK-F91062 N MATCH COUNT DONE | GO
+FINDING: BANK-F91062 | B-3 badge hardcodes "1 match found" (ORDERS §18 needs N)
+FIX: suggest API suggested_match_count; formatSuggestedMatchBadgeLabel; data-b3-match-count.
+GUARD: verify-banking-toolbar-single · vitest 4/4 · money-pr-local-gate PASS → #24347 tip `4a8dc2b449`.
+NO seed · NO mig (HH 04). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T03:50Z · BANK-F91061 match badge inline MERGED #24339
 
 ACK: CURSOR | ACK BANK-F91061 MATCH BADGE INLINE DONE | GO
