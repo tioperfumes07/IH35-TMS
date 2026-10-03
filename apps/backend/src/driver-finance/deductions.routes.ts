@@ -531,10 +531,11 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
     const result = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
       const accountsRes = await client.query(
         `
-          SELECT id::text, purpose, balance_cents::bigint AS balance_cents, status, created_at::text, updated_at::text
-            FROM accounting.escrow_accounts
-           WHERE holder_id = $1::uuid AND holder_type = 'driver' AND operating_company_id = $2::uuid
-           ORDER BY created_at ASC
+          SELECT ea.id::text, ea.purpose, COALESCE(vb.balance_cents, 0)::bigint AS balance_cents, ea.status, ea.created_at::text, ea.updated_at::text
+            FROM accounting.escrow_accounts ea
+            LEFT JOIN driver_finance.v_driver_escrow_balance vb ON vb.escrow_account_id = ea.id
+           WHERE ea.holder_id = $1::uuid AND ea.holder_type = 'driver' AND ea.operating_company_id = $2::uuid
+           ORDER BY ea.created_at ASC
         `,
         [params.data.id, query.data.operating_company_id]
       );

@@ -152,7 +152,7 @@ export async function readDriverOverview(client: Q, oc: string, driverId: string
 
   // Tiles
   const due = (await q(`SELECT coalesce(sum(s.net_pay), 0) AS v, count(*)::int AS n FROM driver_finance.driver_settlements s WHERE s.operating_company_id = $1 AND s.driver_id = $2 AND ${DUE_SQL}`))[0];
-  const escrow = (await q(`SELECT coalesce(sum(balance_cents), 0) AS v, count(*)::int AS n FROM accounting.escrow_accounts WHERE operating_company_id = $1 AND holder_type = 'driver' AND holder_id = $2`))[0];
+  const escrow = (await q(`SELECT coalesce(sum(balance_cents), 0) AS v, count(*)::int AS n FROM driver_finance.v_driver_escrow_balance WHERE operating_company_id = $1 AND driver_id = $2`))[0];
   const mi30 = (await q(`SELECT ${driverSamsaraSql("distance_mi", "$2::uuid", "now() - interval '30 days'", "now()")} AS mi,
       ${driverSamsaraSql("fuel_burned_gal", "$2::uuid", "now() - interval '30 days'", "now()")} AS g WHERE $1::uuid IS NOT NULL`))[0];
   const gal30 = mi30;

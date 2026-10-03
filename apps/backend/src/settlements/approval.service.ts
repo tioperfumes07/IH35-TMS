@@ -163,10 +163,11 @@ export async function getSettlementSummary(
         SELECT COUNT(*) FROM driver_finance.settlement_lines
         WHERE settlement_id = s.id
       ) as total_count,
-      COALESCE(eb.current_balance_cents, 0) as escrow_balance_cents
+      COALESCE(eb.balance_cents, 0) as escrow_balance_cents
     FROM driver_finance.driver_settlements s
     JOIN mdata.drivers d ON d.id = s.driver_id AND d.operating_company_id = s.operating_company_id
-    LEFT JOIN driver_finance.escrow_balances eb
+    -- KILL-THE-SECOND-SYSTEM: the escrow balance is the driver's 2100-00-<nnn> GL balance, derived.
+    LEFT JOIN driver_finance.v_driver_escrow_balance eb
       ON eb.driver_id = s.driver_id AND eb.operating_company_id = s.operating_company_id
     WHERE s.id = $1 AND s.operating_company_id = $2::uuid
   `, [settlementId, operatingCompanyId]);

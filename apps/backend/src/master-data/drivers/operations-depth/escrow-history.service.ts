@@ -57,70 +57,62 @@ export async function getDriverEscrowHistory(
   opts: OperationsPagingOpts = {}
 ): Promise<OperationsResult<EscrowHistoryRow>> {
   const { page, page_size, limit, offset } = resolvePaging(opts);
+  // KILL-THE-SECOND-SYSTEM (CC-1): escrow history IS the GL register of the driver's own 2100-00-<nnn> sub-account —
+  // one row per posted journal-entry line, the running balance computed from the postings (never a stored
+  // running_balance_cents). Each row carries its own journal entry, so the screen drills number -> account ->
+  // posting -> source document. The ledger rows still exist; the number no longer comes from them.
   const totalRes = await client.query<{ total: string }>(
     `
       SELECT COUNT(*)::text AS total
-      FROM driver_finance.escrow_ledger
-      WHERE driver_id = $1::uuid
-        AND operating_company_id = $2::uuid
+      FROM accounting.journal_entry_postings p
+      JOIN accounting.journal_entries j ON j.id = p.journal_entry_uuid AND j.status = 'posted'
+      JOIN accounting.escrow_accounts ea
+        ON ea.coa_account_id = p.account_id
+       AND ea.holder_type = 'driver'
+       AND ea.holder_id = $1::uuid
+       AND ea.operating_company_id = $2::uuid
     `,
     [driverUuid, operatingCompanyId]
   );
   const total = Number(totalRes.rows[0]?.total ?? 0);
   const res = await client.query<EscrowHistoryRow>(
     `
+      WITH reg AS (
+        SELECT p.id, p.operating_company_id, p.debit_or_credit, p.amount_cents, p.created_at,
+               p.source_transaction_type, p.source_transaction_id, j.id AS journal_entry_id, j.entry_date,
+               j.reverses_je_id,
+               sum(CASE WHEN p.debit_or_credit = 'credit' THEN p.amount_cents ELSE -p.amount_cents END)
+                 OVER (ORDER BY j.entry_date, p.created_at, p.id) AS running_cents
+          FROM accounting.journal_entry_postings p
+          JOIN accounting.journal_entries j ON j.id = p.journal_entry_uuid AND j.status = 'posted'
+          JOIN accounting.escrow_accounts ea
+            ON ea.coa_account_id = p.account_id
+           AND ea.holder_type = 'driver'
+           AND ea.holder_id = $1::uuid
+           AND ea.operating_company_id = $2::uuid
+      )
       SELECT
-        -- Every column is alias-qualified: driver_settlements joins below and shares id,
-        -- operating_company_id and created_at, so an unqualified reference is ambiguous and would
-        -- 500 every escrow history page. Caught by executing this against prod.
-        el.id::text AS uuid,
-        el.driver_id::text,
-        el.operating_company_id::text,
-        el.transaction_type AS entry_type,
-        to_char(el.amount_cents / 100.0, 'FM999999990.00') AS amount,
-        to_char(el.running_balance_cents / 100.0, 'FM999999990.00') AS running_balance,
-        el.settlement_id::text,
-        el.settlement_line_id::text,
-        je.journal_entry_id::text,
+        reg.id::text AS uuid,
+        $1::text AS driver_id,
+        reg.operating_company_id::text,
+        CASE WHEN reg.reverses_je_id IS NOT NULL THEN 'reversal'
+             WHEN reg.debit_or_credit = 'credit' THEN 'hold'
+             ELSE 'release' END AS entry_type,
+        to_char((CASE WHEN reg.debit_or_credit = 'credit' THEN reg.amount_cents ELSE -reg.amount_cents END) / 100.0, 'FM999999990.00') AS amount,
+        to_char(reg.running_cents / 100.0, 'FM999999990.00') AS running_balance,
+        CASE WHEN reg.source_transaction_type = 'driver_settlement' THEN reg.source_transaction_id::text END AS settlement_id,
+        NULL::text AS settlement_line_id,
+        reg.journal_entry_id::text,
         ds.paid_via_bank_txn_id::text AS bank_transaction_id,
-        el.created_at::text
-      FROM driver_finance.escrow_ledger el
-      -- SAF-B22 (GL leg): resolve the posted journal entry, but ONLY when the match is
-      -- unambiguous. A settlement can carry more than one escrow posting, and showing the WRONG
-      -- journal entry on a driver's money is worse than showing none — so this returns the JE only
-      -- when every candidate posting agrees on it, and NULL otherwise. Driver-scoped through the
-      -- accounting.escrow_accounts bridge (holder_type='driver') so one driver can never surface
-      -- another's GL entry, and company-scoped on both tables. accounting.* is FORCE-RLS with a
-      -- policy on app.operating_company_id, which this route sets (routes.ts:66), and ih35_app holds
-      -- SELECT on both tables — all four verified on prod before writing this join.
-      LEFT JOIN LATERAL (
-        SELECT CASE
-                 WHEN count(DISTINCT ep.linked_journal_entry_id) = 1
-                 -- min(uuid) does not exist in Postgres; array_agg DISTINCT is the correct way to
-                 -- take "the single distinct value" (caught by executing this against prod, not by
-                 -- reading it).
-                 THEN (array_agg(DISTINCT ep.linked_journal_entry_id))[1]
-               END AS journal_entry_id
-        FROM accounting.escrow_postings ep
-        JOIN accounting.escrow_accounts ea
-          ON ea.id = ep.escrow_account_id
-         AND ea.holder_type = 'driver'
-         AND ea.holder_id = el.driver_id
-         AND ea.operating_company_id = el.operating_company_id
-        WHERE ep.operating_company_id = el.operating_company_id
-          AND ep.source_type = 'driver_settlement'
-          AND ep.source_id = el.settlement_id
-          AND ep.linked_journal_entry_id IS NOT NULL
-      ) je ON el.settlement_id IS NOT NULL
-      -- SAF-B22 (bank leg): the settlement carries the cash record. Company-scoped; the table is
-      -- FORCE-RLS on app.operating_company_id which this route sets, and ih35_app holds SELECT —
-      -- both verified on prod before writing this join.
+        reg.created_at::text
+      FROM reg
+      -- The settlement carries the cash record (escrow is a withholding; the money moves once, when the settlement is
+      -- paid). Company-scoped; FORCE-RLS on app.operating_company_id, which this route sets.
       LEFT JOIN driver_finance.driver_settlements ds
-        ON ds.id = el.settlement_id
-       AND ds.operating_company_id = el.operating_company_id
-      WHERE el.driver_id = $1::uuid
-        AND el.operating_company_id = $2::uuid
-      ORDER BY el.created_at DESC
+        ON reg.source_transaction_type = 'driver_settlement'
+       AND ds.id::text = reg.source_transaction_id::text
+       AND ds.operating_company_id = reg.operating_company_id
+      ORDER BY reg.entry_date DESC, reg.created_at DESC, reg.id DESC
       LIMIT $3 OFFSET $4
     `,
     [driverUuid, operatingCompanyId, limit, offset]
