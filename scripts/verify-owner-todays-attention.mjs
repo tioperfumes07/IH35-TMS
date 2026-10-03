@@ -208,6 +208,24 @@ check(
   () => fileExists("apps/frontend/src/components/home/AttentionItemCard.tsx")
 );
 
+// BANK-F91131 — ORDERS chrome: AttentionItemCard severity pill uses text-xs, not text-[11px].
+check(
+  "AttentionItemCard severity pill uses text-xs, not text-[11px]",
+  () => {
+    const src = readFileSync(
+      resolve(ROOT, "apps/frontend/src/components/home/AttentionItemCard.tsx"),
+      "utf8"
+    );
+    if (src.includes("text-[11px]")) {
+      throw new Error("AttentionItemCard must not use text-[11px] — use text-xs");
+    }
+    if (!src.includes("text-xs font-bold uppercase tracking-wide")) {
+      throw new Error("AttentionItemCard severity pill must use text-xs");
+    }
+    return true;
+  }
+);
+
 check(
   "TodaysAttentionTop5 uses fetchOwnerTodaysAttention + dismissOwnerAttentionItem",
   () => fileContains(
