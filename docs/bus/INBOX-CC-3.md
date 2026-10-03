@@ -108,3 +108,19 @@ CC-2 also has `docs/bus/10-03-2026-CC-2-ROUND-364-ACCOUNTING-MODULE-REGISTER-364
 **368.2 — honest answer to the owner: neither defect is permanently fixed yet.** The match-posts-a-journal-entry defect is RULED and ORDERED but no code has changed. The 29 matched-to-nothing rows were RELEASED — that is a data correction, not a fix. Permanent means the DATABASE refuses it: (a) no posting may be created by a bank-match code path; (b) no bank line may sit in any of the 13 `matched_*` states with nothing matched. Both CONSTRAINT TRIGGER, DEFERRABLE INITIALLY DEFERRED, proven by attempting one and being refused. Both live before the purge.
 
 **368.3 — EVERY SCREEN IS HONEST, standing law.** Empty is a question, not an answer. A screen that cannot read its data says "could not read", never 0. **A failure that renders as zero is a lie.** Two readers of the same data on one page agree or the page does not ship. Default filters are declared on screen.
+
+## ROUND 369 — NINE RULINGS AND THE 167 CORRECTION
+
+`docs/bus/10-03-2026-ALL-SEATS-ROUND-369-NINE-RULINGS-AND-THE-167-CORRECTION.md`
+
+**369.0** The 167 are NOT USMCA — they were TRANSPORTATION **categorized** lines carrying categorization journal entries, which is bucket A of 367.7 and correct QBO behaviour. On USMCA today 0 matched lines carry a journal entry. TRANSP is frozen: the number is retired, nobody re-measures it. Buckets B and C still have to reach zero on USMCA and still get database refusals.
+**369.1** The TRK derived-bucket writes STAY — undoing them is a second write into a frozen entity to repair something that is not wrong. The permanent fix is a refusal: a write path that touches a frozen company ID is refused. CC-2 owns it.
+**369.2** QBO parity wins, ROUND 157-C superseded — any open document is a match candidate, so operator-entered bill payments CAN be matched.
+**369.3** NEVER edit an applied migration — not now, not after the checksum verdict, nothing unlocks it. Write a forward migration that makes each a no-op when its precondition is absent. CC-2 is unblocked.
+**369.4** The replacement document for each of the six match-time posters, named one by one. One principle: the document exists BEFORE the line is matched to it. Each removal ships with its replacement creation path in the same PR.
+**369.5** Matching to an open bill CREATES the bill payment; the document posts, the match still posts nothing. Same wire as 364.7 Create Check — one behaviour, two entry points, one writer.
+**369.6** Post-as-bill posting after commit is a defect; document and postings commit together or neither does.
+**369.7** Cash-advance mark-disbursed CREATES a document, so it is a categorize, not a match — undo reverses the posting, voids the document and returns the line to For Review.
+**369.8** Delete both Neon forks — yes, after confirming by name that neither is prod.
+**369.9** The fresh-DB main reds block all four seats and go first.
+**369.10** NEW: 0 of 173 USMCA drivers carry `integration_id`, so every Relay fill resolves no driver. Blocks the re-upload. Resolve what can be resolved, leave the rest NULL and list them by name, never guess a driver onto fuel.
