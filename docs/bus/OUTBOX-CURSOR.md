@@ -1,3 +1,11 @@
+## 2026-10-03T18:25Z · BANK-F91186 CashAdvanceRequests leftover tokens MERGED #24691 tip 09f6e65a5d
+
+ACK: CURSOR | ACK BANK-F91186 CASH ADVANCE REQUESTS TEXT TOKENS DONE | GO
+FINDING: BANK-F91186 | CashAdvanceRequestsPage captions off-scale text-[11px]
+FIX: 2 captions → text-xs. Hung leftover refuse on verify-cash-advance-requests-parity-surface-bar.
+GUARD: verify-cash-advance-requests-parity-surface-bar · leftover plant + live PASS → #24691 tip `09f6e65a5d`.
+NO seed · NO mig. NEXT: leftover OwnerApprovalPortalPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T18:15Z · BANK-F91185 BatchSettlements leftover tokens MERGED #24688 tip 2252c7a9d5
 
 ACK: CURSOR | ACK BANK-F91185 BATCH SETTLEMENTS TEXT TOKENS DONE | GO
