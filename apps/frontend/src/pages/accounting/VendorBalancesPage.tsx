@@ -104,7 +104,7 @@ export function VendorBalancesPage() {
                   <span>{row.open_bill_count} open bills</span>
                   <span className="font-semibold text-red-700">{money(row.balance_cents)}</span>
                 </div>
-                <div className="text-[11px] text-gray-500">{row.next_due_date ? `Next due ${row.next_due_date}` : "No due date"}</div>
+                <div className="text-xs text-gray-500">{row.next_due_date ? `Next due ${row.next_due_date}` : "No due date"}</div>
               </button>
             ))}
           </div>
@@ -140,7 +140,7 @@ export function VendorBalancesPage() {
                     <div className="mt-0.5 text-xs text-gray-600">
                       {formatDateUS(bill.bill_date)} · Due {bill.due_date ? formatDateUS(bill.due_date) : "-"} · {titleize(bill.status)}
                     </div>
-                    <div className={`text-[11px] ${dueTone}`}>{dueDelta === null ? "No due date" : dueDelta < 0 ? "Past due" : `Due in ${dueDelta} days`}</div>
+                    <div className={`text-xs ${dueTone}`}>{dueDelta === null ? "No due date" : dueDelta < 0 ? "Past due" : `Due in ${dueDelta} days`}</div>
                   </button>
                   <div className="mt-2 flex justify-end">
                     <Button
@@ -176,7 +176,7 @@ export function VendorBalancesPage() {
                 </div>
                 <div className="text-gray-600">{payment.payment_method} · {payment.reference_number || payment.check_number || "-"}</div>
                 <div className="mt-1 flex items-center justify-between">
-                  <span className="text-[11px] text-gray-500">By {payment.created_by_user_id ? entityLabel(null, payment.created_by_user_id, "User") : "system"}</span>
+                  <span className="text-xs text-gray-500">By {payment.created_by_user_id ? entityLabel(null, payment.created_by_user_id, "User") : "system"}</span>
                   {ownerOnly ? (
                     <Button size="sm" variant="secondary" onClick={() => setVoidTarget(payment.id)}>
                       Void
