@@ -92,6 +92,28 @@ const MASTER_TABLES = [
 ];
 const PRESERVED_SCHEMAS = new Set(["identity", "org", "catalogs", "preserve", "audit", "_system", "lib", "mdata", "banking"]);
 const RESET_TABLES = new Set(["banking.bank_transactions"]);
+// ROUND 359 — a row with NO company is invisible to every "WHERE operating_company_id = $1" in this engine: it would be
+// neither collected nor counted in the proof, and the reset would report success over leftover line detail (measured
+// 2026-10-03, unscoped: expense_lines 506, bill_lines 28, dispatch.load_charge_lines 136). In a delete schema such a row
+// is collected ("row escaped its company") and the proof requires zero left. In a preserved schema it is NEVER deleted:
+// a table whose NULL company MEANS "shared by every company" is reported as kept, with its reason; any other is a BLOCKER.
+const ESCAPED_REASON = "ROUND 326 zero-reset: row escaped its company";
+const SHARED_BY_DESIGN: Record<string, string> = {
+  "audit.row_changes": "audit of company-less tables", "audit.scenario_status": "global scenario status",
+  "audit.record_deletions": "deletion record of shared rows", "catalogs.detail_types": "QuickBooks detail-type catalog shared by all companies",
+  "identity.role_permissions": "global role -> permission map", "identity.user_permissions": "a NULL-company grant applies in every company",
+  "lib.feature_flag_overrides": "a NULL-company override applies to every company", "outbox.queue": "system outbox jobs",
+  "public.audit_log": "legacy system audit log", "archive.round258_purge_event_costs": "frozen archive",
+  "archive.round258_purge_lost_opportunity": "frozen archive", "archive.round266_purge_event_costs": "frozen archive",
+};
+async function companyColumnTables(c: Q): Promise<string[]> {
+  return (await c.query<{ t: string }>(
+    `SELECT c.table_schema || '.' || c.table_name AS t FROM information_schema.columns c
+       JOIN information_schema.tables tb ON tb.table_schema = c.table_schema AND tb.table_name = c.table_name AND tb.table_type = 'BASE TABLE'
+      WHERE c.column_name = 'operating_company_id' AND c.table_schema NOT IN ('pg_catalog', 'information_schema')
+      ORDER BY 1`
+  )).rows.map((r) => r.t);
+}
 function zeroResetPreserved(table: string): boolean {
   if (table === "mdata.loads" || table === "mdata.load_stops") return false;
   if (RESET_TABLES.has(table)) return false;
@@ -102,6 +124,7 @@ function zeroResetPreserved(table: string): boolean {
 // rows = a child with no single-column primary key, deleted by its foreign key (before its parent).
 type ResetRef = { table: string; col: string; vals: string[]; kind: "bank" | "unlink" | "rows" };
 const RESETS: ResetRef[] = [];
+const ESCAPED_REPORT: string[] = [];
 function isMasterOrPreserve(table: string): boolean {
   const schema = table.split(".")[0];
   if (table === "mdata.loads" || table === "mdata.load_stops") return false;
@@ -225,6 +248,20 @@ async function roots(c: Q, plan: Plan, why: Map<string, string>) {
           AND EXISTS (SELECT 1 FROM information_schema.columns k WHERE k.table_schema = c.table_schema AND k.table_name = c.table_name AND k.column_name = 'id')`
     )).rows.map((r) => r.t);
     for (const t of dispatchTables) add(plan, t, await ids(c, `SELECT id::text AS id FROM ${t} WHERE operating_company_id = $1::uuid`, [USMCA]), why, "ROUND 326 zero-reset: dispatch record");
+    // ROUND 359 ADDITION 1 — collect the rows that escaped their company (no company filter can see them).
+    for (const t of await companyColumnTables(c)) {
+      const n = Number((await c.query<{ n: string }>(`SELECT count(*)::text AS n FROM ${t} WHERE operating_company_id IS NULL`)).rows[0]?.n);
+      if (!n) continue;
+      if (zeroResetPreserved(t) || !ZERO_RESET_DELETE_SCHEMAS.has(t.split(".")[0])) {
+        if (SHARED_BY_DESIGN[t]) ESCAPED_REPORT.push(`KEPT ${t}: ${n} row(s) with no company — shared by design (${SHARED_BY_DESIGN[t]}), never deleted`);
+        else ESCAPED_REPORT.push(`BLOCKER ${t}: ${n} row(s) with NO company in a PRESERVED table — never deleted; resolve before APPLY`);
+        continue;
+      }
+      const pk = await pkOf(c, t);
+      if (!pk) { ESCAPED_REPORT.push(`UNHANDLED ${t}: ${n} row(s) with no company and no single-column primary key — resolve before APPLY`); continue; }
+      const got = add(plan, t, await ids(c, `SELECT ${pk}::text AS id FROM ${t} WHERE operating_company_id IS NULL`), why, ESCAPED_REASON);
+      ESCAPED_REPORT.push(`ESCAPED ${t}: ${got} row(s) with NO company collected for deletion`);
+    }
     return;
   }
   throw new Error("--scope=transportation21 | --scope=usmca-clean | --scope=orphan-postings | --scope=zero-reset is required");
@@ -409,7 +446,11 @@ async function main() {
          FROM accounting.journal_entry_postings WHERE journal_entry_uuid::text = ANY($1::text[])`, [planJes])).rows[0];
     console.log(`SCOPE ${SCOPE} — PLAN (delete order, deepest first):`);
     for (const t of order) console.log(`  ${t.padEnd(55)} ${plan.get(t)?.size ?? 0}`);
-    for (const r of [...new Set(report)]) console.log(`  ! ${r}`);
+    for (const e of ESCAPED_REPORT) {
+      console.log(`  ${e.startsWith("BLOCKER") || e.startsWith("UNHANDLED") ? "!" : "~"} ${e}`);
+      if (e.startsWith("BLOCKER") || e.startsWith("UNHANDLED")) report.push(e);
+    }
+    for (const r of [...new Set(report)]) if (!ESCAPED_REPORT.includes(r)) console.log(`  ! ${r}`);
     console.log(`LEDGER (USMCA) before: DR ${ledgerBefore.dr} CR ${ledgerBefore.cr} unbalanced JEs ${ledgerBefore.unb}; removed by plan: DR ${removed.dr} CR ${removed.cr} (must be equal)`);
     if (removed.dr !== removed.cr) throw new Error("PLAN REFUSED: the JEs in scope do not net to zero — the ledger would not balance");
     if (SCOPE === "zero-reset") {
@@ -534,11 +575,18 @@ async function main() {
         const left = Number((await client.query<{ n: string }>(`SELECT count(*)::text AS n FROM ${t} WHERE operating_company_id = $1::uuid`, [USMCA])).rows[0]?.n);
         if (left !== 0) throw new Error(`ZERO-RESET PROOF FAILED: ${t} still has ${left} row(s) — rolled back`);
       }
+      // ROUND 359 ADDITION 2 — PROOF that no row escaped its company: every delete-schema table with the column has zero
+      // company-less rows left (a company-filtered count cannot see them).
+      for (const t of await companyColumnTables(client)) {
+        if (zeroResetPreserved(t) || !ZERO_RESET_DELETE_SCHEMAS.has(t.split(".")[0])) continue;
+        const escaped = Number((await client.query<{ n: string }>(`SELECT count(*)::text AS n FROM ${t} WHERE operating_company_id IS NULL`)).rows[0]?.n);
+        if (escaped !== 0) throw new Error(`ROWS ESCAPED THEIR COMPANY: ${t} has ${escaped} row(s) with operating_company_id IS NULL — rolled back`);
+      }
       const masterAfter = await masterCounts(client);
       for (const [t, n] of Object.entries(masterBefore ?? {})) {
         if (masterAfter[t] !== n) throw new Error(`ZERO-RESET PROOF FAILED: master table ${t} changed ${n} -> ${masterAfter[t]} — rolled back`);
       }
-      console.log("ZERO-RESET PROOF: GL postings 0; every deleted table 0; master data unchanged:", JSON.stringify(masterAfter));
+      console.log("ZERO-RESET PROOF: GL postings 0; every deleted table 0 for the company AND 0 with no company; master data unchanged:", JSON.stringify(masterAfter));
     }
     await client.query(`SELECT audit.append_event('owner_purge', 'warning', $1::jsonb, NULL, $2)`, [JSON.stringify({ scope: SCOPE, auth_id: AUTH_ID, counts, ledger_after: after }), `OWNER-PURGE-${AUTH_ID}`]).catch(() => undefined);
     await client.query("COMMIT");
