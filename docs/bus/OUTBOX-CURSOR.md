@@ -1,3 +1,11 @@
+## 2026-10-03T06:47Z · BANK-F91089 Plaid chrome text tokens MERGED #24413
+
+ACK: CURSOR | ACK BANK-F91089 PLAID TEXT TOKENS DONE | GO
+FINDING: BANK-F91089 | Plaid chrome off-scale text-[11px] (locked tokens)
+FIX: badge→text-xs; reconnect→text-section-header; guard refuses text-[11px].
+GUARD: verify-plaid-status-derived-from-state · money-pr-local-gate PASS → #24413 tip `c18273c505`.
+NO seed · NO mig (HH 06). NEXT: RecurringBillList leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T06:40Z · BANK-F91088 control label text tokens MERGED #24411
 
 ACK: CURSOR | ACK BANK-F91088 CONTROL LABEL TEXT TOKENS DONE | GO
