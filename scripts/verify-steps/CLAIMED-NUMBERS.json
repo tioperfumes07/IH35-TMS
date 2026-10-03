@@ -10082,5 +10082,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-03",
     "purpose": "verify-samsara-history-is-never-an-operational-path-into-a-frozen-company"
+  },
+  "12405": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-escrow-balances-equals-its-gl"
   }
 }

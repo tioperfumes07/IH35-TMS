@@ -1997,6 +1997,11 @@
       "claimed_at": "2026-10-03",
       "purpose": "ROUND 373.4: credit memos and vendor credits post — accounting.credit_memos.account_id / journal_entry_id (Dr the income it reduces / Cr A/R) and accounting.vendor_credits.account_id / journal_entry_id (Dr A/P / Cr the expense it reduces), posted at creation through the engine, reversed on void"
     },
+    "202615380100": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-03",
+      "purpose": "OWNER ORDER KILL THE SECOND SYSTEM tables 2-4: driver_finance.escrow_balances current_balance_cents / total_held_cents / total_released_cents die — the row stays as identity (escrow_ledger FK, settlement / release-schedule fields), the amounts come from driver_finance.v_escrow_balances over the 2100-00-nnn GL; the stored-amount over-release trigger retires to the GL refusals"
+    },
     "202615380000": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-03",
