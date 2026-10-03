@@ -1475,7 +1475,7 @@ export function CustomersPage() {
                           Applied payments that have not been matched or categorized in Banking are named not cleared.
                         </p>
                       ) : null}
-                      <p className="mt-2 text-xs text-gray-600">Revenue (YTD)</p
+                      <p className="mt-2 text-xs text-gray-600">Revenue (YTD)</p>
                       <p className="text-page-title font-semibold text-gray-900" data-testid="customer-detail-revenue-ytd">{fmtMoney(profitabilityByCustomerId.get(selectedCustomer.id)?.revenue_cents ?? 0)}</p>
                       <p className="mt-2 text-xs text-gray-600">Overdue payment</p>
                       <p className="text-page-title font-semibold text-red-700">{fmtMoney(overdue)}</p>
