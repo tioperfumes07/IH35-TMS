@@ -323,7 +323,11 @@ export function DatePicker({
           className="fixed z-[1000] rounded-sm border border-gray-300 bg-white p-2 shadow-lg"
           style={{ top: popoverPos.top, left: popoverPos.left, width: popoverPos.width }}
           onMouseDown={(e) => {
-            e.preventDefault();
+            // U21 (owner): preventDefault keeps focus in the date field for day clicks — but on a native <select> it also
+            // stops the browser from OPENING it, so the Month and Year selectors could never be changed with the mouse
+            // ("the calendars cannot change the YEAR"). Let form controls take their own mousedown.
+            const t = e.target as HTMLElement;
+            if (!t.closest("select, option, input, textarea")) e.preventDefault();
             e.stopPropagation();
           }}
           onClick={(e) => e.stopPropagation()}
