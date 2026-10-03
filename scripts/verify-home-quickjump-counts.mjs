@@ -95,6 +95,9 @@ function main() {
     failures.push("DefaultHome.tsx: must not use text-[11px] — use text-xs or text-section-header");
   }
   const ownerHome = read(paths.ownerHome);
+  if (ownerHome.includes("text-[11px]")) {
+    failures.push("OwnerHome.tsx: must not use text-[11px] — use text-xs or text-section-header");
+  }
   const accountingManifest = read(paths.accountingManifest);
   const bankingNav = read(paths.bankingNav);
   const fuelTabsConfig = read(paths.fuelTabs);

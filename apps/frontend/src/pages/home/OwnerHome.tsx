@@ -329,7 +329,7 @@ export function OwnerHome({ auth }: Props) {
         <section className="rounded-sm border border-slate-300 bg-slate-100/90 px-3 py-3 text-xs text-slate-700">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">Pending Owner Approvals</div>
+              <div className="text-section-header font-semibold uppercase tracking-wide text-slate-700">Pending Owner Approvals</div>
               <div className="mt-1 font-semibold">
                 {ownerCashPendingQuery.isLoading
                   ? "Loading…"
@@ -576,7 +576,7 @@ export function OwnerHome({ auth }: Props) {
       </section>
 
       <section className="order-5 space-y-2">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Operations snapshot (reports KPIs)</div>
+        <div className="text-section-header font-semibold uppercase tracking-wide text-slate-500">Operations snapshot (reports KPIs)</div>
         <div className="grid grid-cols-1 gap-2 xl:grid-cols-7">
           {kpiItems.map((item) => (
             <div
@@ -589,7 +589,7 @@ export function OwnerHome({ auth }: Props) {
                     : "border-slate-200"
               }`}
             >
-              <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">{item.label}</div>
+              <div className="text-section-header font-semibold uppercase tracking-[0.04em] text-slate-500">{item.label}</div>
               <div
                 className={`text-xs font-semibold ${
                   item.alert === "crit"
@@ -603,7 +603,7 @@ export function OwnerHome({ auth }: Props) {
               >
                 {item.number}
               </div>
-              <div className="text-[11px] text-slate-500">{item.meta}</div>
+              <div className="text-xs text-slate-500">{item.meta}</div>
             </div>
           ))}
         </div>
