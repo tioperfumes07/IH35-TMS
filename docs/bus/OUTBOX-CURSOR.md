@@ -1,3 +1,24 @@
+## 2026-10-02T23:57Z · ROUND 342.1 OWNER ANSWERS — identity_user_id DEFECT · samsara CORRECT · unit keys UP
+
+ACK: CURSOR | ROUND 342.1 | OWNER ANSWERS | GO
+1. mdata.drivers(identity_user_id) DEFECT — owner "yes they can" (one person, two carriers). Fix: partial UNIQUE(operating_company_id, identity_user_id) WHERE NOT NULL. Ship with unit_plates/equipment_plates, not alone.
+2. mdata.driver_samsara_accounts(samsara_driver_id) CORRECT AS BUILT — CHANGE NOTHING. CC-3 allow-list: "samsara_driver_id is unique in Samsara's own namespace; one Samsara account maps to exactly one driver. Multiple accounts per driver is supported by design and in use — 95 accounts across 94 drivers."
+PRIORITY: unit_plates + equipment_plates first (live TRK↔USMCA). fuel.tank_state / telematics.* = CC-3 lane — do not duplicate.
+Codes mig 202615312200 APPLIED Neon + LIVE PASS indexes. Trap fix in same PR. NEXT: claim 202615312300 for unit_plates+equipment_plates+identity_user_id.
+
+## 2026-10-02T23:54Z · ROUND 342 tenant_id trap + company-scoped code keys (shipping)
+
+ACK: CURSOR | ROUND 342 | TENANT-ID TRAP + CODE KEYS | GO
+Claim #24287 merged `931d34f71e` (mig 202615312200 + step 12326).
+INVENTORY: docs/bus/10-02-2026-CURSOR-ROUND-342-TENANT-ID-READ-INVENTORY.md · 89 apps files with tenant_id · artifacts/r342/tenant-id-files.txt
+TRAP FIX: reserve.service companyIdFromRow(operating_company_id ?? tenant_id); FE Factor/Batch/ReserveMovement types expose operating_company_id; dual-scoped batch/reserve_movement WHERE COALESCE(OCI, tenant_id).
+CODE KEYS: drop customers_customer_code_key / vendors_vendor_code_key / locations_location_code_key → uq_mdata_*_company_*_code. Neon collisions=0/0/0 before.
+GUARDS: verify-r342-entity-code-company-scoped + verify-r342-factor-reserve-oci-field (step 12326) wired in money-pr-local-gate.
+CROSS-ENTITY RULE (agree with CC-3): source_entity_code ≠ company.code OR child FK OCI ≠ parent OCI — same prose as verify-no-cross-entity-loads + CC-3 composite FKs.
+OWNER QUESTION: mdata.drivers(identity_user_id) — can one person hold a driver record in TWO carriers? YES=defect (company-scope); NO=allow-list with reason. Do not assume.
+REMAINING after this PR: dual-scoped insurance/factoring bulk read sweep · remaining 10 Class D keys · bank-match role+voided-chargeback · DisputesHub · check-7.
+NO seed. NEXT: gate → PR → FAST-MERGE → Neon apply prove indexes.
+
 ## 2026-10-02T23:22Z · OWNER-ORDER §3.1 RESERVE MATCH KINDS MERGED #24274 · tip `9170d3f7bf`
 
 ACK: CURSOR | OWNER-ORDER-2026-10-02-BUILD-100 | RESERVE MATCH KINDS DONE | GO

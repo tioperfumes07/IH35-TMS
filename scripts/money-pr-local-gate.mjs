@@ -306,6 +306,8 @@ const STEPS = [
   ["verify-driver-profile-dqf-kpi-actions", "scripts/verify-driver-profile-dqf-kpi-actions.mjs"],
   ["verify-bill-payment-print-letter-html", "scripts/verify-bill-payment-print-letter-html.mjs"],
   ["verify-bill-payment-overpay-creates-vendor-credit", "scripts/verify-bill-payment-overpay-creates-vendor-credit.mjs"],
+  ["verify-r342-entity-code-company-scoped", "scripts/verify-r342-entity-code-company-scoped.mjs"],
+  ["verify-r342-factor-reserve-oci-field", "scripts/verify-r342-factor-reserve-oci-field.mjs"],
   ["verify-account-register-ref-no-journal-entry-link", "scripts/verify-account-register-ref-no-journal-entry-link.mjs"],
   ["verify-money-detail-page-uses-ispending", "scripts/verify-money-detail-page-uses-ispending.mjs"],
   ["verify-lists-accounting-picker-law-honest", "scripts/verify-lists-accounting-picker-law-honest.mjs"],
@@ -475,6 +477,21 @@ const LIVE_DOMAIN_GUARDS = [
       "apps/backend/src/accounting/posting-engine.service.ts",
       "apps/frontend/src/components/checks/WriteCheckForm.tsx",
       "db/migrations/202615292200_vendor_credits_source_bill_payment_id.sql",
+    ],
+  ],
+  [
+    "verify-r342-entity-code-company-scoped",
+    [
+      "db/migrations/202615312200_r342_entity_code_company_scoped.sql",
+      "scripts/verify-r342-entity-code-company-scoped.mjs",
+    ],
+  ],
+  [
+    "verify-r342-factor-reserve-oci-field",
+    [
+      "apps/backend/src/factoring/reserve.service.ts",
+      "apps/frontend/src/api/factoring.ts",
+      "scripts/verify-r342-factor-reserve-oci-field.mjs",
     ],
   ],
 
