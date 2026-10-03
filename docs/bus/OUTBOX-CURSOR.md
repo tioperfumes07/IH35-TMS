@@ -1,3 +1,11 @@
+## 2026-10-03T09:30Z · BANK-F91111 QboSyncHealthCard button text tokens MERGED #24457
+
+ACK: CURSOR | ACK BANK-F91111 QBO SYNC HEALTH BUTTON TEXT TOKENS DONE | GO
+FINDING: BANK-F91111 | QboSyncHealthCard Force Sync button off-scale text-[11px] (locked tokens)
+FIX: button→text-xs; qbo-sync-health-card guard refuses text-[11px].
+GUARD: verify-qbo-sync-health-card-uses-paritytable · money-pr-local-gate PASS → #24457 tip `a05ed90de3`.
+NO seed · NO mig (HH 09). NEXT: lists catalog-modal leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T09:24Z · BANK-F91110 TerminationReasons field-error text tokens MERGED #24455
 
 ACK: CURSOR | ACK BANK-F91110 TERMINATION REASONS TEXT TOKENS DONE | GO
