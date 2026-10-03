@@ -120,7 +120,7 @@ export function TopStatusBar({
             {qboSyncPill.label}
           </button>
           <span
-            className="whitespace-nowrap text-[11px]"
+            className="whitespace-nowrap text-xs"
             style={{ color: muted }}
             data-testid="qbo-sync-last-success"
             title={qboSyncPill.lastSuccessLabel}
@@ -130,7 +130,7 @@ export function TopStatusBar({
           {qboSyncPill.needsReconnect ? (
             <button
               type="button"
-              className="ml-1 rounded-full border border-amber-400/60 px-2 py-0.5 text-[11px] font-semibold text-amber-100 hover:bg-amber-400/10"
+              className="ml-1 rounded-full border border-amber-400/60 px-2 py-0.5 text-xs font-semibold text-amber-100 hover:bg-amber-400/10"
               onClick={onReconnectQbo}
             >
               Reconnect QuickBooks
@@ -138,7 +138,7 @@ export function TopStatusBar({
           ) : (
             <button
               type="button"
-              className="ml-1 rounded-full border border-slate-400/70 px-2 py-0.5 text-[11px] font-semibold text-slate-100 hover:bg-slate-400/10 disabled:cursor-not-allowed disabled:opacity-60"
+              className="ml-1 rounded-full border border-slate-400/70 px-2 py-0.5 text-xs font-semibold text-slate-100 hover:bg-slate-400/10 disabled:cursor-not-allowed disabled:opacity-60"
               data-testid="qbo-sync-now-button"
               disabled={syncNowPending || qboSyncPill.status === "syncing"}
               onClick={onSyncNow}

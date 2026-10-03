@@ -64,6 +64,10 @@ function pageHeadingPx(src) {
 function analyze(topbar, pageHeader, moduleHeader, tokens) {
   const errors = [];
 
+  if (topbar.includes("text-[11px]")) {
+    errors.push("TopStatusBar.tsx: must not use text-[11px] — use text-xs or text-section-header");
+  }
+
   // 1) Top status bar height == spec (computed from its own tokens).
   const barCls = classNameFor(topbar, "data-status-bar-desktop");
   if (!barCls) {
