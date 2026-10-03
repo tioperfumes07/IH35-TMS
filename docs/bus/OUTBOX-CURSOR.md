@@ -1,3 +1,11 @@
+## 2026-10-03T10:59Z · BANK-F91124 CreateMaintPartModal text tokens MERGED #24483
+
+ACK: CURSOR | ACK BANK-F91124 MAINT PART MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91124 | CreateMaintPartModal field errors off-scale text-[11px] (locked tokens)
+FIX: 4 field-error lines→text-xs; maint-parts-create-modal guard refuses text-[11px].
+GUARD: verify-maintenance-parts-catalog-create-modal · money-pr-local-gate PASS → #24483 tip `362bb1bac3`.
+NO seed · NO mig (HH 10). NEXT: QboSyncHealthCard pill leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T10:53Z · BANK-F91123 DriverTeamModal text tokens MERGED #24481
 
 ACK: CURSOR | ACK BANK-F91123 DRIVER TEAM MODAL TEXT TOKENS DONE | GO
