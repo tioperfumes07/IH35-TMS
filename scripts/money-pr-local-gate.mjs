@@ -109,6 +109,8 @@ const STEPS = [
   ["verify-money-lines-same-entity-fks", "scripts/verify-money-lines-same-entity-fks.mjs"],
   // ROUND 353 — a load becomes cancelled only through an approved cancellation record (13515 route closed).
   ["verify-cancelled-load-has-cancellation-record", "scripts/verify-cancelled-load-has-cancellation-record.mjs"],
+  // Standing order 2026-10-03 — invoice postings carry their spine link; no live posting loses its last link.
+  ["verify-invoice-postings-carry-spine-link", "scripts/verify-invoice-postings-carry-spine-link.mjs"],
   ["verify-no-session-advisory-locks", "scripts/verify-no-session-advisory-locks.mjs"],
   ["verify-rollup-keys-carry-company", "scripts/verify-rollup-keys-carry-company.mjs"],
   ["verify-filter-surfaces-full-set", "scripts/verify-filter-surfaces-full-set.mjs"],
