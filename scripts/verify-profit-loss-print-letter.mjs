@@ -24,6 +24,7 @@ function assertSource() {
   if (!page.includes("printLetterHtml")) fail("ProfitLossPage must use printLetterHtml");
   if (!/onClick=\{printLetter\}/.test(page)) fail("Print must call printLetter");
   if (/onClick=\{\(\) => window\.print\(\)\}/.test(page)) fail("must not window.print() on SPA");
+  if (page.includes("text-[11px]")) fail("ProfitLossPage.tsx: must not use text-[11px] — use text-section-header");
 }
 
 function selftest() {
