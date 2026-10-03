@@ -1822,6 +1822,11 @@
       "claimed_at": "2026-10-03",
       "purpose": "Dispatch D2b: composite same-company FKs on the remaining dispatch tables (35) + intransit_issues company NOT NULL"
     },
+    "202615330929": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D3: row audit (audit.tg_audit_row) on the 28 unaudited dispatch tables + FORCE ROW LEVEL SECURITY on dispatch.manual_delivery_authorizations"
+    },
     "202615321200": {
       "claimed_by": "cursor",
       "claimed_at": "2026-10-03",
