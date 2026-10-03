@@ -19,6 +19,11 @@ vi.mock("../../accounting/posting-engine.service.js", () => ({
   postSourceTransactionInClientTx: (...args: unknown[]) => mockPostSourceTransactionInClientTx(...args),
 }));
 
+// ROUND 365.1 — the lumper expense leg resolves the 'reimbursement_expense' role (5310 Lumper Expense on USMCA).
+vi.mock("../../accounting/coa-roles/resolver.service.js", () => ({
+  resolveRoleAccountOptional: vi.fn(async (_c: unknown, _o: string, role: string) => (role === "reimbursement_expense" ? "acct-117" : null)),
+}));
+
 const mockQuery = vi.fn();
 vi.mock("../../auth/db.js", () => ({
   withCurrentUser: async (_userId: string, fn: (client: { query: typeof mockQuery }) => Promise<unknown>) =>

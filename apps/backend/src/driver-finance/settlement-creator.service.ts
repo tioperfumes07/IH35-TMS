@@ -25,7 +25,8 @@ import {
 } from "./settlement-display-id.js";
 import { allocateNextSettlementSourceDocumentRef } from "./settlement-source-document-ref.service.js";
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
-import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
+import { resolveRoleAccountOptional, type CoaRole } from "../accounting/coa-roles/resolver.service.js";
+import { resolveDriverReimbursementParentAccount } from "../accounting/driver-subaccount-provision.service.js";
 import { resolveCompanyDirectCreditAccount } from "../accounting/fuel-posting/poster.service.js";
 import { nextExpenseDisplayId } from "../accounting/display-id.js";
 import { creatorEmptyPayCents, creatorEmptyRateCents } from "./settlement-creator-empty-pay.js";
@@ -54,31 +55,13 @@ export type { DbClient };
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const AUDIT_TAG = "SETTLEMENT-CREATOR-R186";
 
-async function accountByNumber(
-  client: DbClient,
-  opco: string,
-  accountNumber: string,
-): Promise<{ id: string; account_number: string; account_name: string } | null> {
-  const res = await client.query<{ id: string; account_number: string; account_name: string }>(
-    `
-      SELECT id::text, account_number, account_name
-      FROM catalogs.accounts
-      WHERE operating_company_id = $1::uuid
-        AND account_number = $2
-        AND deactivated_at IS NULL
-      LIMIT 1
-    `,
-    [opco, accountNumber],
-  );
-  return res.rows[0] ?? null;
-}
-
 async function accountByRole(
   client: DbClient,
   opco: string,
-  role: string,
+  role: CoaRole,
 ): Promise<{ id: string; account_number: string | null; account_name: string } | null> {
-  const id = await resolveRoleAccountOptional(client, opco, role as never);
+  // ROUND 365.1 — every account the creator previews or posts resolves by ROLE; there is no by-number lookup left here.
+  const id = await resolveRoleAccountOptional(client, opco, role);
   if (!id) return null;
   const res = await client.query<{ id: string; account_number: string | null; account_name: string }>(
     `
@@ -117,8 +100,9 @@ async function itemByName(
   return res.rows[0] ?? null;
 }
 
-function cardRailNumber(card: "dreamline" | "relay"): string {
-  return card === "dreamline" ? "2510" : "1295";
+/** The card rail's role — never its account number (2510 / 1295 on USMCA). Same roles the fuel poster resolves. */
+function cardRailRole(card: "dreamline" | "relay"): CoaRole {
+  return card === "dreamline" ? "fuel_card_payable_dreamline" : "fuel_wallet_relay";
 }
 
 function dollarsFromCents(cents: number): number {
@@ -394,11 +378,11 @@ export async function previewSettlementCreator(
         Math.round(Number(fuel.fees_cents || 0)) -
         Math.round(Number(fuel.discount_cents || 0));
     if (amount <= 0) continue;
-    const rail = await accountByNumber(client, draft.operating_company_id, cardRailNumber(fuel.card));
+    const rail = await accountByRole(client, draft.operating_company_id, cardRailRole(fuel.card));
     // ROUND 363-CC2-D — the account the post will use (picked item / account, else the fuel-type item), not a guess.
     const fuelAcct = await resolveFuelLineAccount(client as never, draft.operating_company_id, fuel);
     const fuelExpense = "refused" in fuelAcct ? null : fuelAcct;
-    if (!rail) blockers.push(`Card rail ${cardRailNumber(fuel.card)} not found in CoA.`);
+    if (!rail) blockers.push(`Card rail role '${cardRailRole(fuel.card)}' is not bound — bind it on the CoA Roles page.`);
     if ("refused" in fuelAcct) blockers.push(`Fuel line ${fuel.date}: ${fuelAcct.refused}`);
     push({
       load_number: fuel.load_number ?? null,
@@ -411,7 +395,7 @@ export async function previewSettlementCreator(
     });
     push({
       load_number: fuel.load_number ?? null,
-      account_number: rail?.account_number ?? cardRailNumber(fuel.card),
+      account_number: rail?.account_number ?? null,
       account_name: rail?.account_name ?? (fuel.card === "dreamline" ? "Dreamline" : "Relay"),
       debit_cents: 0,
       credit_cents: amount,
@@ -427,7 +411,7 @@ export async function previewSettlementCreator(
     if (exp.is_company_expense) {
       companyExpensesCents += exp.amount_cents;
       const card = exp.card ?? "relay";
-      const rail = await accountByNumber(client, draft.operating_company_id, cardRailNumber(card));
+      const rail = await accountByRole(client, draft.operating_company_id, cardRailRole(card));
       const itemAcct = await previewExpenseLineAccount(client, draft.operating_company_id, exp, blockers);
       push({
         load_number: exp.load_number ?? null,
@@ -440,19 +424,19 @@ export async function previewSettlementCreator(
       });
       push({
         load_number: exp.load_number ?? null,
-        account_number: rail?.account_number ?? cardRailNumber(card),
+        account_number: rail?.account_number ?? null,
         account_name: rail?.account_name ?? "Card rail",
         debit_cents: 0,
         credit_cents: exp.amount_cents,
         memo: `Comp. Exp. Cr card (never A/P)`,
         section: "expense",
       });
-      if (!rail) blockers.push(`Expense card rail ${cardRailNumber(card)} missing.`);
+      if (!rail) blockers.push(`Expense card rail role '${cardRailRole(card)}' is not bound — bind it on the CoA Roles page.`);
     }
   }
 
   // Drv reimbursements (is_reimbursable) — Dr reimbursement expense / Cr 2175 (never card rail / never 6890/5310).
-  const acct2175 = await accountByNumber(client, draft.operating_company_id, "2175");
+  const acct2175 = await resolveDriverReimbursementParentAccount(client as never, draft.operating_company_id);
   for (const exp of draft.expenses ?? []) {
     if (!exp.is_reimbursable || exp.amount_cents <= 0) continue;
     if (!acct2175) {
@@ -471,7 +455,7 @@ export async function previewSettlementCreator(
     });
     push({
       load_number: exp.load_number ?? null,
-      account_number: acct2175.account_number ?? "2175",
+      account_number: acct2175.account_number ?? null,
       account_name: acct2175.account_name ?? "Driver Reimbursements Payable",
       debit_cents: 0,
       credit_cents: exp.amount_cents,
@@ -500,11 +484,9 @@ export async function previewSettlementCreator(
     if (pay <= 0) continue;
     mileagePayCents += pay;
     const drPay =
-      (await accountByRole(client, draft.operating_company_id, "driver_pay_expense")) ??
-      (await accountByNumber(client, draft.operating_company_id, "6890"));
+      await accountByRole(client, draft.operating_company_id, "driver_pay_expense");
     const crPay =
-      (await accountByRole(client, draft.operating_company_id, "driver_payroll_clearing")) ??
-      (await accountByNumber(client, draft.operating_company_id, "2100"));
+      await accountByRole(client, draft.operating_company_id, "driver_payroll_clearing");
     push({
       load_number: load.load_number,
       account_number: drPay?.account_number ?? null,
@@ -530,11 +512,10 @@ export async function previewSettlementCreator(
     for (const acc of load.accessorials ?? []) {
       if (acc.amount_cents <= 0) continue;
       const rev =
-        (await accountByNumber(client, draft.operating_company_id, "4200")) ??
-        (await accountByRole(client, draft.operating_company_id, "accessorial_revenue"));
+        await accountByRole(client, draft.operating_company_id, "accessorial_revenue");
       push({
         load_number: load.load_number,
-        account_number: rev?.account_number ?? "4200",
+        account_number: rev?.account_number ?? null,
         account_name: rev?.account_name ?? acc.item_name,
         debit_cents: 0,
         credit_cents: acc.amount_cents,
@@ -552,12 +533,11 @@ export async function previewSettlementCreator(
   // "reimbursements" line (settlement 5818's $15.25 LOVES/TPE scale-expense reimbursement, not
   // modeled as an is_reimbursable expense) would permanently fail the debit_total_cents ===
   // credit_total_cents check. Same account pair as the is_reimbursable path: Dr reimbursement
-  // expense (6100/other_operating_expense) / Cr 2175 Driver Reimbursements Payable.
+  // expense (other_operating_expense role -- never 6100 Telephone, ROUND 365.1) / Cr 2175 Driver Reimbursements Payable.
   let reimbCents = 0;
   const reimbItemAcct =
-    (await accountByNumber(client, draft.operating_company_id, "6100")) ??
-    (await accountByRole(client, draft.operating_company_id, "other_operating_expense"));
-  const reimbAcct2175 = await accountByNumber(client, draft.operating_company_id, "2175");
+    await accountByRole(client, draft.operating_company_id, "other_operating_expense");
+  const reimbAcct2175 = acct2175;
   for (const r of draft.reimbursements ?? []) {
     if (r.amount_cents <= 0) continue;
     reimbCents += r.amount_cents;
@@ -576,7 +556,7 @@ export async function previewSettlementCreator(
     });
     push({
       load_number: r.load_number ?? null,
-      account_number: reimbAcct2175.account_number ?? "2175",
+      account_number: reimbAcct2175.account_number ?? null,
       account_name: reimbAcct2175.account_name ?? "Driver Reimbursements Payable",
       debit_cents: 0,
       credit_cents: r.amount_cents,
@@ -596,11 +576,9 @@ export async function previewSettlementCreator(
   // Enlonada/Desenlonada additional pay, no other driver-net items besides mileage).
   let additionalPayCents = 0;
   const addPayExpenseAcct =
-    (await accountByRole(client, draft.operating_company_id, "driver_pay_expense")) ??
-    (await accountByNumber(client, draft.operating_company_id, "6890"));
+    await accountByRole(client, draft.operating_company_id, "driver_pay_expense");
   const addPayClearingAcct =
-    (await accountByRole(client, draft.operating_company_id, "driver_payroll_clearing")) ??
-    (await accountByNumber(client, draft.operating_company_id, "2100"));
+    await accountByRole(client, draft.operating_company_id, "driver_payroll_clearing");
   for (const p of draft.additional_pay ?? []) {
     if (p.amount_cents <= 0) continue;
     additionalPayCents += p.amount_cents;
@@ -631,11 +609,9 @@ export async function previewSettlementCreator(
   // other_recovery role -> 7200, confirmed via deductions.service.ts), so both get the same pair
   // here: Dr driver_payroll_clearing (withheld from payable) / Cr 7200 income.
   const income7200 =
-    (await accountByNumber(client, draft.operating_company_id, "7200")) ??
-    (await accountByRole(client, draft.operating_company_id, "other_recovery"));
+    await accountByRole(client, draft.operating_company_id, "other_recovery");
   const deductClearingAcct =
-    (await accountByRole(client, draft.operating_company_id, "driver_payroll_clearing")) ??
-    (await accountByNumber(client, draft.operating_company_id, "2100"));
+    await accountByRole(client, draft.operating_company_id, "driver_payroll_clearing");
   let deductionCents = 0;
   for (const d of draft.deductions ?? []) {
     if (d.amount_cents <= 0) continue;
@@ -651,7 +627,7 @@ export async function previewSettlementCreator(
     });
     push({
       load_number: d.load_number ?? null,
-      account_number: income7200?.account_number ?? "7200",
+      account_number: income7200?.account_number ?? null,
       account_name: income7200?.account_name ?? "Driver Admin Fee & Chargeback Income",
       debit_cents: 0,
       credit_cents: d.amount_cents,
@@ -672,7 +648,7 @@ export async function previewSettlementCreator(
     });
     push({
       load_number: null,
-      account_number: income7200?.account_number ?? "7200",
+      account_number: income7200?.account_number ?? null,
       account_name: income7200?.account_name ?? "Driver Admin Fee & Chargeback Income",
       debit_cents: 0,
       credit_cents: adminFeeCents,
@@ -714,8 +690,7 @@ export async function previewSettlementCreator(
     // escrow from that same payable is Dr 2100 / Cr escrow liability -- moving the liability from
     // "payable to driver" into "held in escrow", not creating money from nothing.
     const payClearing =
-      (await accountByRole(client, draft.operating_company_id, "driver_payroll_clearing")) ??
-      (await accountByNumber(client, draft.operating_company_id, "2100"));
+      await accountByRole(client, draft.operating_company_id, "driver_payroll_clearing");
     push({
       load_number: e.load_number ?? null,
       account_number: payClearing?.account_number ?? null,
@@ -1797,8 +1772,7 @@ async function resolveExpenseLineAccount(
   if (picked && "refused" in picked) throw new SettlementCreatorError("line_account_refused", `"${line.item_name}": ${picked.refused}`);
   if (picked) return pickedAccount(picked);
   const fallback =
-    (await accountByNumber(client, operatingCompanyId, "6100")) ??
-    (await accountByRole(client, operatingCompanyId, "other_operating_expense"));
+    await accountByRole(client, operatingCompanyId, "other_operating_expense");
   return fallback ? { id: fallback.id, account_number: fallback.account_number ?? null, account_name: fallback.account_name ?? null, item_id: null } : null;
 }
 

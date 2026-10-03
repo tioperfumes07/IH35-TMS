@@ -662,6 +662,28 @@ async function nextDriverReimbursementLeafNumber(client: DbClient, subParentId: 
 }
 
 /**
+ * READ-ONLY resolve of the "2175 Driver Reimbursements Payable" parent this provisioner owns (by its canonical name +
+ * type, the same lookup ensureDriverReimbursementParent uses). For callers that must SHOW the reimbursement payable —
+ * the settlement creator's preview — without knowing its account number (ROUND 365.1). Null when not provisioned yet.
+ */
+export async function resolveDriverReimbursementParentAccount(
+  client: DbClient,
+  operatingCompanyId: string
+): Promise<{ id: string; account_number: string | null; account_name: string } | null> {
+  const id = await resolveCanonicalParentAccount(client, {
+    accountName: DRIVER_REIMBURSEMENT_PARENT_NAME,
+    accountType: "Liability",
+    operatingCompanyId,
+  });
+  if (!id) return null;
+  const res = await client.query<{ id: string; account_number: string | null; account_name: string }>(
+    `SELECT id::text, account_number, account_name FROM catalogs.accounts WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    [id, operatingCompanyId]
+  );
+  return res.rows[0] ?? null;
+}
+
+/**
  * READ-ONLY resolve of a per-driver reimbursement leaf under the 2175-00 sub-parent. Returns null if
  * the parent, sub-parent, or this driver's leaf doesn't exist yet (caller decides whether to provision).
  */

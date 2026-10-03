@@ -71,6 +71,11 @@ const ROLE_LABELS: Record<CoaRole, string> = {
   lease_liability: "Lease liability (ASC 842 lessee)",
   accumulated_rou_amortization: "Accumulated ROU amortization",
   lease_interest_expense: "Lease interest expense (finance lease)",
+  fuel_wallet_relay: "Relay fuel wallet (prefunded)",
+  interest_receivable: "Interest receivable (loans we made)",
+  fuel_card_payable_dreamline: "Dreamline diesel card payable",
+  driver_settlements_payable: "Driver settlements payable",
+  accessorial_revenue: "Accessorial / detention income",
 };
 
 export function CoaRolesPage() {

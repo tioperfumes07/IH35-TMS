@@ -929,5 +929,12 @@
     "source_file": "docs/bus/10-03-2026-ALL-SEATS-ROUND-368-RECLASSIFY-FIRST-AND-TWO-PERMANENT-REFUSALS.md",
     "guard": "scripts/verify-every-void-releases-its-bank-lines.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-10-03-EVERY-POSTER-RESOLVES-BY-ROLE",
+    "title": "ROUND 365.1 \u2014 a poster resolves the account it posts to by ROLE (accounting.chart_of_accounts_roles via resolveRoleAccount), never by account number or account name; on USMCA no role is bound twice, every referenced-but-unbound role is named with its ruling, and every account shared by two roles is classified (ruling or defect)",
+    "source_file": "docs/bus/10-03-2026-ALL-SEATS-ROUND-365-PURGE-READINESS.md",
+    "guard": "scripts/verify-every-poster-resolves-by-role-not-by-name-or-number.mjs",
+    "type": "enforced"
   }
 ]

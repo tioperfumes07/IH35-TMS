@@ -5,6 +5,16 @@ vi.mock("../journal-entries.service.js", () => ({
   createJournalEntryOnClient: (...args: unknown[]) => createJournalEntryOnClient(...args),
 }));
 
+// ROUND 365.1 — the service resolves by ROLE. On USMCA the roles are bound (202615370930) to the accounts these fakes
+// already key by number, so the resolver fake looks the role's account up through the same client stub.
+const ROLE_ACCOUNT_NUMBER: Record<string, string> = { ar_control: "1100", broker_customer_advance_liability: "2250", driver_settlements_payable: "2200" };
+vi.mock("../coa-roles/resolver.service.js", () => ({
+  resolveRoleAccountOptional: async (client: { query: (sql: string, v: unknown[]) => Promise<{ rows: { id: string }[] }> }, opco: string, role: string) =>
+    ROLE_ACCOUNT_NUMBER[role]
+      ? (await client.query("SELECT id FROM catalogs.accounts WHERE operating_company_id = $1::uuid AND account_number = $2 LIMIT 1", [opco, ROLE_ACCOUNT_NUMBER[role]])).rows[0]?.id ?? null
+      : null,
+}));
+
 const { BrokerAdvanceError, applyBrokerAdvanceToDriverBillInClientTx, recordBrokerAdvanceInClientTx } = await import(
   "../broker-advances.service.js"
 );

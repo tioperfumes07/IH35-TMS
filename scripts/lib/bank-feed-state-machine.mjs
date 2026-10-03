@@ -7,6 +7,9 @@
 // transaction, prints is_lucia_bypass() so a scoped run can never pass for an unscoped one, and fails closed when the
 // database is unreachable or returns zero bank lines (an empty result is an instrument claim, not a pass).
 
+import { directGuardUrl } from "./guard-db-url.mjs";
+import { resolveGateReadonlyDbUrl } from "./gate-db-credential.mjs";
+
 /** Every column through which a bank line claims a document. */
 export const LINK_COLUMNS = [
   "matched_advance_id",
@@ -42,9 +45,12 @@ export const THE_THREE_TABS = ["for_review", "categorized", "excluded"];
  * Pass { needsBucket: true } to fail when migration 202615350600 has not been applied yet.
  */
 export async function withUnscopedReadOnly(label, fn) {
-  const url = process.env.DATABASE_URL;
+  // The harness rule (Lead ruling 2026-10-03, guard harness pins role): the DIRECT endpoint, and the gate credential when
+  // no DATABASE_URL is set (ROUND 384.1) — the same URL requireLiveDbOrExit uses. Reading DATABASE_URL alone failed the
+  // gate wherever the gate credential was the source, and handed the guard the pooler (ih35_app SET ROLE leak) elsewhere.
+  const url = directGuardUrl(process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL || resolveGateReadonlyDbUrl());
   if (!url) {
-    console.error(`${label}: FAIL — needs DATABASE_URL (live, unscoped). A guard that cannot look is not a pass.`);
+    console.error(`${label}: FAIL — needs DATABASE_URL or the gate credential (live, unscoped). A guard that cannot look is not a pass.`);
     process.exit(1);
   }
   const { default: pg } = await import("pg");

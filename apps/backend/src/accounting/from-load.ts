@@ -7,6 +7,7 @@ import { resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-rev
 import { recomputeInvoiceTotals } from "./shared.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { createJournalEntryOnClient } from "./journal-entries.service.js";
+import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -506,13 +507,16 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
     for (const row of unappliedAdvances.rows) {
       const reclassCents = (row.receipt_journal_entry_id ? Number(row.amount_cents) : 0) + (row.disbursed_journal_entry_id ? Number(row.disbursed_amount_cents ?? 0) : 0);
       if (reclassCents <= 0) continue;
-      const [depositAccountRes, receivableAccountRes] = await Promise.all([
-        client.query<{ id: string }>(`SELECT id FROM catalogs.accounts WHERE operating_company_id = $1::uuid AND account_number = '2250' LIMIT 1`, [input.operatingCompanyId]),
-        client.query<{ id: string }>(`SELECT id FROM catalogs.accounts WHERE operating_company_id = $1::uuid AND account_number = '1100' LIMIT 1`, [input.operatingCompanyId]),
-      ]);
-      const depositAccountId = depositAccountRes.rows[0]?.id;
-      const receivableAccountId = receivableAccountRes.rows[0]?.id;
-      if (!depositAccountId || !receivableAccountId) continue; // pre-202613720001 environment -- reclass unavailable, never crash invoice minting over it
+      // ROUND 365.1 — by ROLE, never by account number (2250 = broker_customer_advance_liability, 1100 = ar_control).
+      // A row that posted to the deposit liability MUST be reclassified when its receivable is minted; an unbound role
+      // FAILS the mint (names the role) instead of silently leaving the deposit overstated and A/R understated.
+      const depositAccountId = await resolveRoleAccountOptional(client as never, input.operatingCompanyId, "broker_customer_advance_liability");
+      const receivableAccountId = await resolveRoleAccountOptional(client as never, input.operatingCompanyId, "ar_control");
+      if (!depositAccountId || !receivableAccountId) {
+        throw new Error(
+          `broker advance reclass at invoice mint: role ${!depositAccountId ? "'broker_customer_advance_liability'" : "'ar_control'"} is not bound for this company — bind it on the CoA Roles page`
+        );
+      }
       const reclassJe = await createJournalEntryOnClient(
         client as never,
         {
