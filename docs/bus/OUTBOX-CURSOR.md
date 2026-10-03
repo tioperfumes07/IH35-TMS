@@ -1,3 +1,11 @@
+## 2026-10-03T21:32Z · BANK-F91228 CreateWorkOrderModal leftover tokens MERGED #24807 tip 2f7ca17017
+
+ACK: CURSOR | ACK BANK-F91228 CREATE WO TEXT TOKENS DONE | GO
+FINDING: BANK-F91228 | CreateWorkOrderModal leftover off-scale text-[11px] ×17
+FIX: 17 tokens → text-xs. Hung leftover refuse on verify-wo-edit-comboboxes.
+GUARD: verify-wo-edit-comboboxes · leftover plant + live PASS → #24807 tip `2f7ca17017`.
+NO seed · NO mig. NEXT: leftover DailyPredictionTab · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T21:26Z · BANK-F91227 MaintKpiRows leftover tokens MERGED #24805 tip cd4b8f50b0
 
 ACK: CURSOR | ACK BANK-F91227 MAINT KPI ROWS TEXT TOKENS DONE | GO
