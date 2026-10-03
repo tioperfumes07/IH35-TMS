@@ -11,6 +11,9 @@ export type FuelCardAssignment = {
   operating_company_id: string;
   fuel_card_type_id: string | null;
   fuel_card_type_name: string | null;
+  /** ROUND 381.6 — the vendor that issues this card's type. */
+  issuer_vendor_id: string | null;
+  issuer_vendor_name: string | null;
   card_last_digits: string;
   unit_id: string;
   unit_number: string | null;
@@ -27,6 +30,8 @@ export type FuelCardAssignment = {
 export type FuelCardAssignmentListFilter = {
   unit_id?: string;
   driver_id?: string;
+  /** Reverse link: the cards a vendor issues. */
+  vendor_id?: string;
   card_last_digits?: string;
   include_voided?: boolean;
 };
@@ -53,6 +58,7 @@ export function listFuelCardAssignments(companyId: string, filter: FuelCardAssig
   const qs = companyQuery(companyId, {
     unit_id: filter.unit_id,
     driver_id: filter.driver_id,
+    vendor_id: filter.vendor_id,
     card_last_digits: filter.card_last_digits,
     include_voided: filter.include_voided ? "true" : undefined,
   });
@@ -77,5 +83,26 @@ export function voidFuelCardAssignment(companyId: string, id: string, reason: st
   return apiRequest<FuelCardAssignment>(`/api/v1/fuel/card-assignments/${id}/void?${companyQuery(companyId)}`, {
     method: "POST",
     body: { reason },
+  });
+}
+
+/** ROUND 381.6 — card types and the vendor that issues each. */
+export type FuelCardTypeIssuer = {
+  id: string;
+  code: string;
+  display_name: string;
+  issuer_vendor_id: string | null;
+  issuer_vendor_name: string | null;
+  active_card_count: number;
+};
+
+export function listFuelCardTypeIssuers(companyId: string) {
+  return apiRequest<{ rows: FuelCardTypeIssuer[] }>(`/api/v1/fuel/card-types/issuers?${companyQuery(companyId)}`);
+}
+
+export function setFuelCardTypeIssuer(companyId: string, cardTypeId: string, issuer_vendor_id: string | null) {
+  return apiRequest<FuelCardTypeIssuer>(`/api/v1/fuel/card-types/${cardTypeId}/issuer?${companyQuery(companyId)}`, {
+    method: "POST",
+    body: { issuer_vendor_id },
   });
 }

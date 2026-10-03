@@ -9,7 +9,10 @@ import {
   createFuelCardAssignment,
   endFuelCardAssignment,
   FuelCardAssignmentScopeError,
+  FuelCardTypeIssuerError,
   listFuelCardAssignments,
+  listFuelCardTypeIssuers,
+  setFuelCardTypeIssuer,
   resolveUnitByCard,
   voidFuelCardAssignment,
 } from "./fuel-card-assignments.service.js";
@@ -20,6 +23,7 @@ const companyQuery = z.object({ operating_company_id: z.string().uuid() });
 const listQuery = companyQuery.extend({
   unit_id: z.string().uuid().optional(),
   driver_id: z.string().uuid().optional(),
+  vendor_id: z.string().uuid().optional(),
   card_last_digits: z.string().regex(/^[0-9]{4,6}$/).optional(),
   include_voided: z.enum(["true", "false"]).optional(),
 });
@@ -35,6 +39,7 @@ const createBody = z.object({
 });
 const endBody = z.object({ effective_to: z.string().datetime({ offset: true }) });
 const voidBody = z.object({ reason: z.string().trim().min(3).max(500) });
+const issuerBody = z.object({ issuer_vendor_id: z.string().uuid().nullable() });
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -66,7 +71,7 @@ function mapDbError(reply: FastifyReply, err: unknown) {
   throw err;
 }
 
-/** E-22 addition — card -> truck registry. Forward: card list; reverse: ?unit_id= / ?driver_id=. */
+/** E-22 addition — card -> truck registry. Forward: card list; reverse: ?unit_id= / ?driver_id= / ?vendor_id= (issuer). */
 export async function registerFuelCardAssignmentRoutes(app: FastifyInstance) {
   app.get("/api/v1/fuel/card-assignments", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
@@ -77,6 +82,7 @@ export async function registerFuelCardAssignmentRoutes(app: FastifyInstance) {
       listFuelCardAssignments(client, q.data.operating_company_id, {
         unit_id: q.data.unit_id,
         driver_id: q.data.driver_id,
+        vendor_id: q.data.vendor_id,
         card_last_digits: q.data.card_last_digits,
         include_voided: q.data.include_voided === "true",
       })
@@ -148,5 +154,40 @@ export async function registerFuelCardAssignmentRoutes(app: FastifyInstance) {
     });
     if (!row) return reply.code(404).send({ error: "not_found_or_already_voided" });
     return row;
+  });
+
+  // ROUND 381.6 — card types and the vendor that issues each (forward: card -> issuer; reverse: ?vendor_id= above).
+  app.get("/api/v1/fuel/card-types/issuers", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const q = companyQuery.safeParse(req.query ?? {});
+    if (!q.success) return reply.code(400).send({ error: "validation_error", details: q.error.flatten() });
+    const rows = await withCompany(user.uuid, q.data.operating_company_id, (client) => listFuelCardTypeIssuers(client, q.data.operating_company_id));
+    return { rows };
+  });
+
+  app.post("/api/v1/fuel/card-types/:id/issuer", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    if (!requireCardWriteRole(reply, String(user.role ?? ""))) return;
+    const q = companyQuery.safeParse(req.query ?? {});
+    const id = z.string().uuid().safeParse((req.params as { id?: string })?.id);
+    const b = issuerBody.safeParse(req.body ?? {});
+    if (!q.success || !id.success || !b.success) return reply.code(400).send({ error: "validation_error" });
+    try {
+      return await withCompany(user.uuid, q.data.operating_company_id, async (client) => {
+        const { before, after } = await setFuelCardTypeIssuer(client, q.data.operating_company_id, id.data, b.data.issuer_vendor_id);
+        await appendCrudAudit(client, user.uuid, "fuel.card_type.issuer_set", {
+          operating_company_id: q.data.operating_company_id,
+          fuel_card_type_id: id.data,
+          before_issuer_vendor_id: before,
+          after_issuer_vendor_id: after.issuer_vendor_id,
+        });
+        return after;
+      });
+    } catch (err) {
+      if (err instanceof FuelCardTypeIssuerError) return reply.code(400).send({ error: err.code, message: err.message });
+      return mapDbError(reply, err);
+    }
   });
 }
