@@ -133,8 +133,8 @@ function statusChip(status: string): { bg: string; fg: string } {
   if (s === "DONE") return { bg: "#DCFCE7", fg: "#166534" }; // green
   if (s === "NEEDS-VERIFY") return { bg: "#FEF3C7", fg: "#854F0B" }; // amber
   if (s.includes("GATED")) return { bg: "#F3F4F6", fg: "#6B7280" }; // grey
-  if (s === "PENDING" || s === "OPEN") return { bg: "#E2E8F0", fg: "#334155" }; // slate (navy family)
-  return { bg: "#E2E8F0", fg: "#334155" };
+  if (s === "PENDING" || s === "OPEN") return { bg: "#E2E8F0", fg: "#4B5563" }; // slate (navy family)
+  return { bg: "#E2E8F0", fg: "#4B5563" };
 }
 
 // ── CT date-only formatter for the Date column (registered_on has no time) ──────────────────────────
@@ -298,7 +298,7 @@ function liveStateChip(state: string | undefined): { bg: string; fg: string; lab
     case "deployed":
       return { bg: "#DCFCE7", fg: "#166534", label: "deployed" }; // green — live on prod
     case "merged":
-      return { bg: "#E2E8F0", fg: "#334155", label: "merged" }; // slate
+      return { bg: "#E2E8F0", fg: "#4B5563", label: "merged" }; // slate
     case "waiting-merge":
       return { bg: "#1F2A44", fg: "#FFFFFF", label: "waiting-merge" }; // navy — ready
     case "in-ci":
@@ -308,7 +308,7 @@ function liveStateChip(state: string | undefined): { bg: string; fg: string; lab
     case "gated":
       return { bg: "#F3F4F6", fg: "#6B7280", label: "gated" }; // grey
     case "pending":
-      return { bg: "#E2E8F0", fg: "#334155", label: "pending" }; // slate
+      return { bg: "#E2E8F0", fg: "#4B5563", label: "pending" }; // slate
     default:
       return { bg: "#F3F4F6", fg: "#9CA3AF", label: state || "—" };
   }
@@ -520,7 +520,7 @@ export function ProgramBoardPage() {
       {/* HONEST TIMESTAMPS — two distinct fields, never conflated. Left = the snapshot's true age;
           right = live server compute time (re-polled every 60s). Live counts are recomputed at request
           time from the snapshot, so they always match the rows below. */}
-      <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600">
+      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
         <span className="rounded border border-gray-300 bg-white px-2 py-1">
           Blocks data as of{" "}
           <span className="font-semibold tabular-nums">{data?.data_as_of_ct ?? "…"}</span>
@@ -558,7 +558,7 @@ export function ProgramBoardPage() {
       {/* LOCKED DECISIONS — owner-locked answers surfaced up top so they are never buried in a thread. */}
       {lockedDecisions.length > 0 ? (
         <div className="rounded border border-gray-200 bg-white" style={{ borderLeft: "3px solid #1F2A44" }}>
-          <div className="border-b border-gray-100 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          <div className="border-b border-gray-100 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
             Locked Decisions — owner-locked, do not re-litigate ({lockedDecisions.length})
           </div>
           <ol className="divide-y divide-gray-100">
@@ -577,7 +577,7 @@ export function ProgramBoardPage() {
       ) : null}
 
       {(data?.warnings?.length ?? 0) > 0 ? (
-        <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-[11px] text-amber-900">
+        <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
           {data?.warnings?.join(" · ")}
         </div>
       ) : null}
@@ -624,7 +624,7 @@ export function ProgramBoardPage() {
           ) : null}
           {tab === "pending" ? (
             <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-2 text-[11px]">
+              <div className="flex flex-wrap items-center gap-2 text-xs">
                 {(
                   [
                     { label: `${pendingSummary.open} open`, key: "PENDING" },
@@ -650,7 +650,7 @@ export function ProgramBoardPage() {
               <div className="h-1.5 w-full overflow-hidden rounded bg-slate-200" role="progressbar" aria-valuenow={pendingSummary.pct} aria-valuemin={0} aria-valuemax={100}>
                 <div className="h-full rounded" style={{ width: `${pendingSummary.pct}%`, background: "#1F2A44" }} />
               </div>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-xs text-slate-500">
                 Everything not yet concluded — pending, legacy GATED (actionable; no owner approval), and needs-verify. Live on every load; as items are
                 finished they leave this list and the completion metric above rises.
               </p>
@@ -667,13 +667,13 @@ export function ProgramBoardPage() {
               />
               <DeltasBadge deltas={deltas} open={deltasOpen} onToggle={() => setDeltasOpen((o) => !o)} />
             </div>
-            <span className="text-[11px] tabular-nums text-slate-500">
+            <span className="text-xs tabular-nums text-slate-500">
               Showing {activeRows.length} of {baseRows.length}
             </span>
           </div>
 
           <div className="overflow-x-auto rounded border border-gray-200">
-            <table className="w-full border-collapse text-[11px]">
+            <table className="w-full border-collapse text-xs">
               <thead className="sticky top-0 z-10 bg-slate-100 text-left text-slate-600">
                 <tr>
                   <th className="px-2 py-1.5 font-semibold">#</th>
@@ -801,7 +801,7 @@ export function ProgramBoardPage() {
                               return (
                                 <span
                                   className="rounded px-1.5 py-0.5 text-xs font-semibold"
-                                  style={needsPreview ? { background: "#FEF3C7", color: "#854F0B" } : { background: "#E2E8F0", color: "#334155" }}
+                                  style={needsPreview ? { background: "#FEF3C7", color: "#854F0B" } : { background: "#E2E8F0", color: "#4B5563" }}
                                 >
                                   {tagVal}
                                 </span>
@@ -841,7 +841,7 @@ export function ProgramBoardPage() {
 
           {tab === "focus" && (data?.sequence?.length ?? 0) > 0 ? (
             <div className="rounded border border-gray-200 bg-white p-3">
-              <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Recommended sequence</div>
+              <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Recommended sequence</div>
               <ol className="space-y-1 text-xs text-slate-700">
                 {data?.sequence?.map((s) => (
                   <li key={s.step} className="flex gap-2">
@@ -866,13 +866,13 @@ export function ProgramBoardPage() {
               aria-label="Filter merged PRs"
               className="h-7 w-72 max-w-full rounded border border-gray-300 px-2 text-xs"
             />
-            <span className="text-[11px] tabular-nums text-slate-500">
+            <span className="text-xs tabular-nums text-slate-500">
               showing {mergedFiltered.length} of {data?.merged_pr_total ?? mergedFiltered.length} merged PRs
               {(data?.merged_pr_total ?? 0) > (data?.merged_prs?.length ?? 0) ? " (most recent slice)" : ""}
             </span>
           </div>
           <div className="overflow-x-auto rounded border border-gray-200">
-            <table className="w-full border-collapse text-[11px]">
+            <table className="w-full border-collapse text-xs">
               <thead className="sticky top-0 z-10 bg-slate-100 text-left text-slate-600">
                 <tr>
                   <th className="px-2 py-1.5 font-semibold">#</th>
@@ -925,13 +925,13 @@ export function ProgramBoardPage() {
               aria-label="Filter held PRs"
               className="h-7 w-72 max-w-full rounded border border-gray-300 px-2 text-xs"
             />
-            <span className="text-[11px] tabular-nums text-slate-500">{holdFiltered.length} held items</span>
+            <span className="text-xs tabular-nums text-slate-500">{holdFiltered.length} held items</span>
           </div>
-          <p className="text-[11px] text-slate-500">
+          <p className="text-xs text-slate-500">
             Merged but gated — typically behind a feature flag or awaiting deploy/ancestry. Not an owner merge-approval hold; flip flags or wait for deploy as applicable.
           </p>
           <div className="overflow-x-auto rounded border border-gray-200">
-            <table className="w-full border-collapse text-[11px]">
+            <table className="w-full border-collapse text-xs">
               <thead className="sticky top-0 z-10 bg-slate-100 text-left text-slate-600">
                 <tr>
                   <th className="px-2 py-1.5 font-semibold">#</th>
@@ -962,7 +962,7 @@ export function ProgramBoardPage() {
                       <td className="whitespace-nowrap px-2 py-1.5">
                         <span
                           className="rounded px-1.5 py-0.5 text-xs font-semibold"
-                          style={isTier1 ? { background: "#FEE2E2", color: "#991B1B" } : { background: "#E2E8F0", color: "#334155" }}
+                          style={isTier1 ? { background: "#FEE2E2", color: "#991B1B" } : { background: "#E2E8F0", color: "#4B5563" }}
                         >
                           {p.category}
                         </span>
@@ -1083,7 +1083,7 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
 
       {audit.why_done_overstates.length > 0 ? (
         <div>
-          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
             Why the DONE count overstates completion
           </div>
           <ul className="list-disc space-y-0.5 pl-4 text-xs text-slate-600">
@@ -1105,7 +1105,7 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
               <div className="text-page-title font-semibold tabular-nums" style={{ color: t.accent ?? "#1F2A44" }}>
                 {t.value}
               </div>
-              <div className="text-[11px] uppercase tracking-wide text-slate-500">{t.label}</div>
+              <div className="text-xs uppercase tracking-wide text-slate-500">{t.label}</div>
             </div>
           ))}
         </div>
@@ -1113,9 +1113,9 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
       </div>
 
       <div>
-        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">By module</div>
+        <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">By module</div>
         <div className="overflow-x-auto rounded border border-gray-200">
-          <table className="w-full border-collapse text-[11px]">
+          <table className="w-full border-collapse text-xs">
             <thead className="bg-slate-100 text-left text-slate-600">
               <tr>
                 <th className="px-2 py-1.5 font-semibold">Module</th>
@@ -1144,7 +1144,7 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
 
       {audit.prod_verified_facts.length > 0 ? (
         <div>
-          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Prod-verified facts</div>
+          <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Prod-verified facts</div>
           <ul className="space-y-1.5">
             {audit.prod_verified_facts.map((f, i) => (
               <li key={i} className="rounded border border-gray-100 bg-slate-50 px-2 py-1.5 text-xs">
@@ -1152,7 +1152,7 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
                   <span className="font-semibold text-slate-800">{f.fact}</span>
                   <span
                     className="rounded px-1.5 py-0.5 text-xs font-semibold"
-                    style={{ background: "#E2E8F0", color: "#334155" }}
+                    style={{ background: "#E2E8F0", color: "#4B5563" }}
                   >
                     {f.verdict}
                   </span>
@@ -1166,7 +1166,7 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
 
       {audit.schema_drift_flags.length > 0 ? (
         <div>
-          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Schema drift flags</div>
+          <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Schema drift flags</div>
           <ul className="list-disc space-y-0.5 pl-4 text-xs" style={{ color: "#DC2626" }}>
             {audit.schema_drift_flags.map((s, i) => (
               <li key={i}>{s}</li>
@@ -1177,14 +1177,14 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
 
       <div>
         <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
             Top open items ({filteredOpenItems.length} of {audit.top_open_items.length})
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <select
               value={moduleFilter}
               onChange={(e) => setModuleFilter(e.target.value)}
-              className="h-7 rounded border border-gray-300 px-1.5 text-[11px]"
+              className="h-7 rounded border border-gray-300 px-1.5 text-xs"
             >
               <option value="all">All modules</option>
               {modules.map((m) => (
@@ -1196,7 +1196,7 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
             <select
               value={verdictFilter}
               onChange={(e) => setVerdictFilter(e.target.value)}
-              className="h-7 rounded border border-gray-300 px-1.5 text-[11px]"
+              className="h-7 rounded border border-gray-300 px-1.5 text-xs"
             >
               <option value="all">All verdicts</option>
               {verdicts.map((v) => (
@@ -1208,7 +1208,7 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
           </div>
         </div>
         <div className="overflow-x-auto rounded border border-gray-200">
-          <table className="w-full border-collapse text-[11px]">
+          <table className="w-full border-collapse text-xs">
             <thead className="bg-slate-100 text-left text-slate-600">
               <tr>
                 <th className="px-2 py-1.5 font-semibold">ID</th>
@@ -1230,7 +1230,7 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
                     <td className="whitespace-nowrap px-2 py-1.5">
                       <span
                         className="rounded px-1.5 py-0.5 text-xs font-semibold"
-                        style={isNotBuilt ? { background: "#FEE2E2", color: "#991B1B" } : { background: "#E2E8F0", color: "#334155" }}
+                        style={isNotBuilt ? { background: "#FEE2E2", color: "#991B1B" } : { background: "#E2E8F0", color: "#4B5563" }}
                       >
                         {it.verdict}
                       </span>
@@ -1296,7 +1296,7 @@ function DeltasBadge({ deltas, open, onToggle }: { deltas?: BoardDeltas; open: b
         +{added.length} new · {completed.length} completed
       </button>
       {open ? (
-        <div className="absolute left-0 z-20 mt-1 w-72 max-w-[80vw] rounded border border-gray-200 bg-white p-2 text-[11px] shadow-lg">
+        <div className="absolute left-0 z-20 mt-1 w-72 max-w-[80vw] rounded border border-gray-200 bg-white p-2 text-xs shadow-lg">
           {deltas?.since ? <div className="mb-1 text-xs text-slate-400">since {deltas.since}</div> : null}
           {added.length ? (
             <div className="mb-1.5">
@@ -1374,7 +1374,7 @@ function TallyBar({ tally, totals, lastSyncedCt }: { tally?: TabTally; totals?: 
     <div className="space-y-1.5 rounded border border-gray-200 bg-white p-2">
       {hasProgress ? (
         <div className="space-y-1">
-          <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
             <span className="font-semibold tabular-nums">
               {typeof deployed === "number" ? deployed : "—"} of {typeof total === "number" ? total : "—"} deployed
               {typeof pct === "number" ? ` · ${pct}%` : ""}
@@ -1396,11 +1396,11 @@ function TallyBar({ tally, totals, lastSyncedCt }: { tally?: TabTally; totals?: 
       ) : null}
 
       {hasFinancial || hasDeltas ? (
-        <div className="flex flex-wrap items-center gap-2 text-[11px]">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
           {hasFinancial ? (
             <span
               className="rounded px-2 py-0.5 font-semibold tabular-nums"
-              style={(financialPending ?? 0) > 0 ? { background: "#FEE2E2", color: "#991B1B" } : { background: "#E2E8F0", color: "#334155" }}
+              style={(financialPending ?? 0) > 0 ? { background: "#FEE2E2", color: "#991B1B" } : { background: "#E2E8F0", color: "#4B5563" }}
             >
               Pending financial: {financialPending}
             </span>
@@ -1508,7 +1508,7 @@ function ThreadPanel({
         </div>
       ))}
       {!questions.length && !answers.length ? (
-        <div className="text-[11px] text-slate-400">No agent question on file for {blockId ?? "this item"} yet — you can still add a note.</div>
+        <div className="text-xs text-slate-400">No agent question on file for {blockId ?? "this item"} yet — you can still add a note.</div>
       ) : null}
       <AddNote placeholder="Type your answer…" onSubmit={onSubmit} submitting={submitting} compact />
     </div>
