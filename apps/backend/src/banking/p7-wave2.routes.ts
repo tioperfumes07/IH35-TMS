@@ -302,9 +302,10 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
         // "suggest exact cents +-5d to expenses/bills" — literal filter, narrower than the general
         // auto_match flag (which also requires memo_similarity >= 0.8): amount_gap_cents === 0 and
         // date_gap_days <= AUTO_MATCH_DATE_WINDOW_DAYS (5), kind in {expense, bill} only.
-        const best = result.candidates.find(
+        const qualifying = result.candidates.filter(
           (c) => c.exact_amount && c.date_gap_days <= 5 && (c.ledger_entry_kind === "expense" || c.ledger_entry_kind === "bill")
         );
+        const best = qualifying[0];
         if (!best) return { bank_transaction_id: bankTransactionId, suggestion: null };
         return {
           bank_transaction_id: bankTransactionId,
@@ -321,6 +322,8 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
             suggested_amount_cents: best.amount_cents,
             suggested_payee_name: best.counterparty_name,
             suggested_reference: best.reference,
+            // BANK-F91062 — ORDERS §18: "N match found" (not hardcoded 1). Count of exact±5d expense/bill.
+            suggested_match_count: qualifying.length,
           },
         };
       })
