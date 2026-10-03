@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: BANK-F91111 #24457 MERGED; ROUND 348 waits HH 12–23; next leftover lists catalog modal
-ACK: CURSOR | ACK F91111 DONE | GO
+NOW: BANK-F91112 #24459 MERGED; ROUND 348 waits HH 12–23; next leftover InternalFineReasonModal
+ACK: CURSOR | ACK F91112 DONE | GO
