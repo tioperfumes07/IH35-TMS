@@ -21,6 +21,7 @@ export function WizardReclassifyPanel({
   postedLabel,
   accountOptions,
   onDone,
+  intro = "Wrong account on a line you just entered? Select it and reclassify here — the same engine as Accounting › Reclassify.",
 }: {
   companyId: string;
   /** The documents the wizard just created (expenses, invoices). */
@@ -28,6 +29,8 @@ export function WizardReclassifyPanel({
   postedLabel: string;
   accountOptions: Array<{ value: string; label: string }>;
   onDone: () => void;
+  /** U17 — the Expenses list reuses this panel (same engine, same writer); it says its own first line. */
+  intro?: string;
 }) {
   const today = new Date().toISOString().slice(0, 10);
   // Owner ruling (Round 83): account numbers hidden unless the viewer's toggle is on.
@@ -74,7 +77,7 @@ export function WizardReclassifyPanel({
         <div>
           <div className="font-semibold">{postedLabel}</div>
           <div className="text-slate-600">
-            Wrong account on a line you just entered? Select it and reclassify here — the same engine as Accounting › Reclassify.
+            {intro}
           </div>
         </div>
         <Button type="button" size="sm" variant="secondary" onClick={onDone} data-testid="sc-reclassify-done">
