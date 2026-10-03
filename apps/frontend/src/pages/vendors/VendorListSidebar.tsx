@@ -8,6 +8,7 @@ import { SelectCombobox } from "../../components/Combobox";
 import { useListState, type ListQueryStatus } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
 import { MASTER_DETAIL } from "../../design/master-detail";
+import { UnclearedDocumentsNote, type UnclearedDocumentNote } from "../../components/accounting/UnclearedDocumentsNote";
 
 function fmtMoney(cents: number) {
   return formatUsdCents(cents);
@@ -31,6 +32,7 @@ type Props = {
   sortByName: "name_asc" | "name_desc" | "balance_asc" | "balance_desc";
   selectedVendorId: string;
   openByVendorId: Map<string, number>;
+  unclearedByVendorId?: Map<string, { uncleared_cents: number; uncleared_documents: UnclearedDocumentNote[] }>;
   onSearchChange: (value: string) => void;
   onSortChange: (value: "name_asc" | "name_desc" | "balance_asc" | "balance_desc") => void;
   onPageChange: (page: number) => void;
@@ -48,6 +50,7 @@ export function VendorListSidebar({
   sortByName,
   selectedVendorId,
   openByVendorId,
+  unclearedByVendorId,
   onSearchChange,
   onSortChange,
   onPageChange,
@@ -165,7 +168,13 @@ export function VendorListSidebar({
                         <span title={vendor.name} className="single-line-name">{vendor.name}</span>
                       </CardLink>
                     </td>
-                    <td style={{ width: widths.open_balance }} className="px-2 py-1.5 text-right text-xs tabular-nums text-gray-700">{fmtMoney(openByVendorId.get(vendor.id) ?? 0)}</td>
+                    <td style={{ width: widths.open_balance }} className="px-2 py-1.5 text-right text-xs tabular-nums text-gray-700">
+                      Cleared{" "}
+                      {fmtMoney(
+                        (openByVendorId.get(vendor.id) ?? 0) + (unclearedByVendorId?.get(vendor.id)?.uncleared_cents ?? 0),
+                      )}
+                      <UnclearedDocumentsNote docs={unclearedByVendorId?.get(vendor.id)?.uncleared_documents ?? []} />
+                    </td>
                     <td style={{ width: widths.status }} className="px-2 py-1.5">
                       <span className={`inline-flex rounded-sm px-2 py-0.5 text-xs font-semibold ${isInactive ? "bg-gray-200 text-gray-700" : "bg-slate-100 text-slate-700"}`}>
                         {isInactive ? "Inactive" : "Active"}

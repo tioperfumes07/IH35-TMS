@@ -8,6 +8,7 @@ import { SelectCombobox } from "../../components/Combobox";
 import { useListState, type ListQueryStatus } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
 import { MASTER_DETAIL } from "../../design/master-detail";
+import { UnclearedDocumentsNote, type UnclearedDocumentNote } from "../../components/accounting/UnclearedDocumentsNote";
 
 function fmtMoney(cents: number) {
   return formatUsdCents(cents);
@@ -31,6 +32,7 @@ type Props = {
   sortByName: "name_asc" | "name_desc" | "balance_asc" | "balance_desc";
   selectedCustomerId: string;
   openByCustomerId: Map<string, number>;
+  unclearedByCustomerId?: Map<string, { uncleared_cents: number; uncleared_documents: UnclearedDocumentNote[] }>;
   openBalancesAvailable: boolean;
   onSearchChange: (value: string) => void;
   onSortChange: (value: "name_asc" | "name_desc" | "balance_asc" | "balance_desc") => void;
@@ -49,6 +51,7 @@ export function CustomerListSidebar({
   sortByName,
   selectedCustomerId,
   openByCustomerId,
+  unclearedByCustomerId,
   openBalancesAvailable,
   onSearchChange,
   onSortChange,
@@ -163,7 +166,18 @@ export function CustomerListSidebar({
                       </CardLink>
                     </td>
                     <td style={{ width: widths.open_balance }} className="px-2 py-1.5 text-right text-xs tabular-nums text-gray-700">
-                      {openBalancesAvailable ? fmtMoney(openByCustomerId.get(customer.id) ?? 0) : "Unavailable"}
+                      {openBalancesAvailable ? (
+                        <>
+                          Cleared{" "}
+                          {fmtMoney(
+                            (openByCustomerId.get(customer.id) ?? 0) +
+                              (unclearedByCustomerId?.get(customer.id)?.uncleared_cents ?? 0),
+                          )}
+                        </>
+                      ) : (
+                        "Unavailable"
+                      )}
+                      <UnclearedDocumentsNote docs={unclearedByCustomerId?.get(customer.id)?.uncleared_documents ?? []} />
                     </td>
                     <td style={{ width: widths.status }} className="px-2 py-1.5">
                       <span className={`inline-flex rounded-sm px-2 py-0.5 text-xs font-semibold ${isInactive ? "bg-gray-200 text-gray-700" : "bg-slate-100 text-slate-700"}`}>

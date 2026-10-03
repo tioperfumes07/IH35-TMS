@@ -4,6 +4,9 @@ import { titleize } from "../../lib/titleize";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listVendorBalances, listVendorBills, getVendorBill, voidVendorBillPayment, type VendorBill } from "../../api/accounting";
+import { getApAgingReport } from "../../api/reports";
+import { companyToday } from "../../lib/businessDate";
+import { UnclearedDocumentsNote, type UnclearedDocumentNote } from "../../components/accounting/UnclearedDocumentsNote";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { Button } from "../../components/Button";
@@ -47,6 +50,22 @@ export function VendorBalancesPage() {
     queryFn: () => listVendorBalances(companyId, { all: false, sort: "balance_desc" }),
     enabled: Boolean(companyId),
   });
+  const apAgingUnclearedQuery = useQuery({
+    queryKey: ["reports", "ap-aging", "uncleared", companyId],
+    queryFn: () => getApAgingReport(companyId, companyToday()),
+    enabled: Boolean(companyId),
+    retry: false,
+  });
+  const unclearedByVendorId = useMemo(() => {
+    const map = new Map<string, { uncleared_cents: number; uncleared_documents: UnclearedDocumentNote[] }>();
+    for (const row of apAgingUnclearedQuery.data?.rows ?? []) {
+      map.set(row.vendor_id, {
+        uncleared_cents: row.uncleared_cents,
+        uncleared_documents: row.uncleared_documents,
+      });
+    }
+    return map;
+  }, [apAgingUnclearedQuery.data?.rows]);
 
   const selectedVendor = useMemo(() => {
     if (!selectedVendorId) return null;
@@ -74,6 +93,11 @@ export function VendorBalancesPage() {
     () => (balancesQuery.data?.rows ?? []).reduce((sum, row) => sum + Number(row.balance_cents ?? 0), 0),
     [balancesQuery.data?.rows]
   );
+  const totalUncleared = useMemo(
+    () => (balancesQuery.data?.rows ?? []).reduce((sum, row) => sum + (unclearedByVendorId.get(row.vendor_id)?.uncleared_cents ?? 0), 0),
+    [balancesQuery.data?.rows, unclearedByVendorId],
+  );
+  const totalCleared = totalOutstanding + totalUncleared;
 
   const ownerOnly = auth.user?.role === "Owner";
 
@@ -81,7 +105,15 @@ export function VendorBalancesPage() {
     <div className="space-y-3">
       <PageHeader title="Vendor Balances" subtitle="Outstanding vendor bills with running payment ledger" />
       {balancesQuery.isError ? <ListErrorBanner onRetry={() => void balancesQuery.refetch()} /> : null}
-      <div className="text-xs text-gray-600">Total outstanding: <span className="font-semibold text-red-700">{money(totalOutstanding)}</span></div>
+      <div className="text-xs text-gray-600">
+        Total outstanding: <span className="font-semibold text-red-700">{money(totalOutstanding)}</span>
+        {" · "}Cleared <span className="font-semibold text-slate-900">{money(totalCleared)}</span>
+      </div>
+      {totalUncleared > 0 ? (
+        <p className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
+          Cleared {money(totalCleared)}. Applied payments that have not been matched or categorized in Banking are named not cleared beside each vendor.
+        </p>
+      ) : null}
 
       <div className="grid gap-3 lg:grid-cols-3">
         <section className="rounded-sm border border-gray-200 bg-white">
@@ -104,6 +136,10 @@ export function VendorBalancesPage() {
                   <span>{row.open_bill_count} open bills</span>
                   <span className="font-semibold text-red-700">{money(row.balance_cents)}</span>
                 </div>
+                <div className="mt-0.5 text-xs text-slate-600">
+                  Cleared {money(row.balance_cents + (unclearedByVendorId.get(row.vendor_id)?.uncleared_cents ?? 0))}
+                </div>
+                <UnclearedDocumentsNote docs={unclearedByVendorId.get(row.vendor_id)?.uncleared_documents ?? []} />
                 <div className="text-xs text-gray-500">{row.next_due_date ? `Next due ${row.next_due_date}` : "No due date"}</div>
               </button>
             ))}
