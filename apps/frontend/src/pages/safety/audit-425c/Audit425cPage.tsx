@@ -360,7 +360,7 @@ export default function Audit425cPage() {
       </div>
 
       {enabled && !auditQuery.isLoading && !auditQuery.isError ? (
-        <div className="rounded-sm border border-gray-200 bg-slate-50 p-2 text-[11px] text-slate-600">
+        <div className="rounded-sm border border-gray-200 bg-slate-50 p-2 text-xs text-slate-600">
           Showing {rows.length} of {allEvents.length} loaded 425C events ({totalCount} match this entity and date range
           server-side; the reader returns at most {PAGE_LIMIT} per request). Narrow the date range if the loaded count is
           capped.

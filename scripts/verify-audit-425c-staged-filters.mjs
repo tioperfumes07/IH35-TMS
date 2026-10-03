@@ -25,6 +25,8 @@ function assertPage(src) {
   if (/const \[fromDate,\s*setFromDate\]/.test(src) || /const \[actorFilter,\s*setActorFilter\]/.test(src)) {
     errors.push("must not keep hand-rolled silent filter useState");
   }
+  if (src.includes("text-[11px]")) errors.push("leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155")) errors.push("leftover off-scale muted");
   return errors;
 }
 
@@ -44,6 +46,12 @@ function selftest() {
   `;
   if (assertPage(bad).length === 0 || assertPage(good).length > 0) {
     console.error(`${LABEL} SELFTEST FAIL`, { bad: assertPage(bad), good: assertPage(good) });
+    process.exit(1);
+  }
+  const leftoverPlant = `${good}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  const leftover = assertPage(leftoverPlant);
+  if (!leftover.includes("leftover text-[11px]") || !leftover.includes("leftover off-scale muted")) {
+    console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`, leftover);
     process.exit(1);
   }
   console.log(`${LABEL} selftest PASS`);
