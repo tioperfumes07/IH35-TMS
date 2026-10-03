@@ -327,7 +327,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
               <option value="driver">Driver</option>
               <option value="company">Company</option>
             </SelectCombobox>
-            <label className="text-[11px] text-slate-600">
+            <label className="text-xs text-slate-600">
               Driver
               <EntityPicker
                 kind="driver"
@@ -340,7 +340,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
                 dataTestId="fines-filter-driver"
               />
             </label>
-            <label className="text-[11px] text-slate-600">
+            <label className="text-xs text-slate-600">
               Unit
               <EntityPicker
                 kind="unit"
