@@ -49,13 +49,13 @@ export function RevenueDiscrepancyDrill({
       aria-labelledby="revenue-discrepancy-heading"
       data-testid="revenue-discrepancy-drill"
     >
-      <h3 id="revenue-discrepancy-heading" className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">
+      <h3 id="revenue-discrepancy-heading" className="text-section-header font-semibold uppercase tracking-wide text-slate-700">
         Revenue discrepancies
         {discrepancyCount > 0 ? ` (${discrepancyCount}` : ""}
         {discrepancyCount > 0 && discrepancyCents > 0 ? ` · ${formatUsdFromCents(discrepancyCents)}` : ""}
         {discrepancyCount > 0 ? ")" : ""}
       </h3>
-      <p className="mt-1 text-[11px] text-slate-600">
+      <p className="mt-1 text-xs text-slate-600">
         Open mismatched invoices or journal entries. Links use server-provided paths.
       </p>
       <ul className="mt-2 space-y-1" role="list">
