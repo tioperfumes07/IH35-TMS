@@ -1,3 +1,11 @@
+## 2026-10-03T07:15Z · BANK-F91093 FactoringDetail pill text tokens MERGED #24421
+
+ACK: CURSOR | ACK BANK-F91093 FACTORING DETAIL PILL TEXT TOKENS DONE | GO
+FINDING: BANK-F91093 | FactoringDetail status pill off-scale text-[11px] (locked tokens)
+FIX: pill→text-section-header; factoring chrome guard refuses text-[11px].
+GUARD: verify-factoring-qbo-chrome-surfaces · money-pr-local-gate PASS → #24421 tip `950cec1261`.
+NO seed · NO mig (HH 07). NEXT: ExpenseCategoryMap / BillDetail leftovers · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T07:08Z · BANK-F91092 InvoiceDetail pill text tokens MERGED #24419
 
 ACK: CURSOR | ACK BANK-F91092 INVOICE DETAIL PILL TEXT TOKENS DONE | GO
