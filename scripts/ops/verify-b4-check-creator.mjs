@@ -173,6 +173,11 @@ function main() {
   if (billForm.includes("text-[11px]")) {
     throw new Error("VendorBillForm.tsx: must not use text-[11px] — use text-xs (GLOBAL-TYPE-SIZE-BASELINE body 12px)");
   }
+  // BANK-F91073 — ORDERS bill payments list badges use text-xs, not text-[11px].
+  const billPayments = read("apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx");
+  if (billPayments.includes("text-[11px]")) {
+    throw new Error("BillPaymentsListPage.tsx: must not use text-[11px] — use text-xs (GLOBAL-TYPE-SIZE-BASELINE body 12px)");
+  }
 
   console.log(`${LABEL}: PASS`);
 }

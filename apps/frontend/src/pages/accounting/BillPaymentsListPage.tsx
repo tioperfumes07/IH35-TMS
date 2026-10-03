@@ -32,13 +32,13 @@ import { userFacingApiError } from "../../lib/api-error-message";
 function ReconciledBadge({ isReconciled }: { isReconciled?: boolean }) {
   if (isReconciled) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
+      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
         <svg aria-hidden="true" viewBox="0 0 12 12" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2.5 6.5l2.5 2.5 4.5-5" strokeLinecap="round" strokeLinejoin="round" /></svg> Matched
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600">
+    <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
       Unmatched
     </span>
   );
@@ -254,9 +254,9 @@ export function BillPaymentsListPage() {
         sortValue: (row) => (row.revoked_at ? "voided" : "active"),
         render: (row) =>
           row.revoked_at ? (
-            <span className="rounded-sm bg-slate-200 px-1.5 py-0.5 text-[11px] font-medium text-slate-700">Voided</span>
+            <span className="rounded-sm bg-slate-200 px-1.5 py-0.5 text-xs font-medium text-slate-700">Voided</span>
           ) : (
-            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-800">Active</span>
+            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-800">Active</span>
           ),
       },
       {
@@ -276,7 +276,7 @@ export function BillPaymentsListPage() {
               Void
             </Button>
           ) : row.revoked_at ? (
-            <span className="text-[11px] font-medium text-slate-500">Voided</span>
+            <span className="text-xs font-medium text-slate-500">Voided</span>
           ) : (
             "-"
           ),
