@@ -604,7 +604,7 @@ export function CargoClaimIntakeSurface({
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div>
           <div className="text-xs font-semibold text-slate-800">{title}</div>
-          <div className="text-[11px] text-slate-500">{subtitle}</div>
+          <div className="text-xs text-slate-500">{subtitle}</div>
         </div>
         {!creating ? (
           <Button
@@ -749,7 +749,7 @@ export function CargoClaimIntakeSurface({
                   disabled={form.amountUndetermined}
                 />
               </div>
-              <label className="mt-1 flex items-center gap-1 text-[11px] text-slate-500">
+              <label className="mt-1 flex items-center gap-1 text-xs text-slate-500">
                 <input
                   type="checkbox"
                   data-testid={`${pageTestId}-amount-undetermined`}
@@ -829,7 +829,7 @@ export function CargoClaimIntakeSurface({
             </label>
           </div>
           {error ? (
-            <div className="mt-2 text-[11px] text-red-600" data-testid={`${pageTestId}-error`}>
+            <div className="mt-2 text-xs text-red-600" data-testid={`${pageTestId}-error`}>
               {error}
             </div>
           ) : null}
@@ -872,7 +872,7 @@ export function CargoClaimIntakeSurface({
         rowTestId={(row) => `${pageTestId}-row-${String(row.id ?? "")}`}
         filterBar={
           <div className="relative flex flex-wrap items-end gap-3" data-testid={`${pageTestId}-filters`}>
-            <label className="text-[11px] text-slate-600">
+            <label className="text-xs text-slate-600">
               Driver
               <EntityPicker
                 kind="driver"
@@ -885,7 +885,7 @@ export function CargoClaimIntakeSurface({
                 dataTestId={`${pageTestId}-filter-driver`}
               />
             </label>
-            <label className="text-[11px] text-slate-600">
+            <label className="text-xs text-slate-600">
               Unit
               <EntityPicker
                 kind="unit"
@@ -898,7 +898,7 @@ export function CargoClaimIntakeSurface({
                 dataTestId={`${pageTestId}-filter-unit`}
               />
             </label>
-            <label className="text-[11px] text-slate-600">
+            <label className="text-xs text-slate-600">
               Load
               <EntityPicker
                 kind="load"
@@ -911,7 +911,7 @@ export function CargoClaimIntakeSurface({
                 dataTestId={`${pageTestId}-filter-load`}
               />
             </label>
-            <label className="text-[11px] text-slate-600">
+            <label className="text-xs text-slate-600">
               Trailer
               <EntityPicker
                 kind="trailer"
@@ -1147,7 +1147,7 @@ export function CargoClaimIntakeSurface({
           )}
 
           {editError ? (
-            <div className="mt-2 text-[11px] text-red-600" data-testid={`${pageTestId}-edit-error`}>
+            <div className="mt-2 text-xs text-red-600" data-testid={`${pageTestId}-edit-error`}>
               {editError}
             </div>
           ) : null}
@@ -1239,7 +1239,7 @@ export function CargoClaimIntakeSurface({
                           onChange={(e) => setVoidReason(e.target.value)}
                         />
                         {voidError ? (
-                          <div className="text-[11px] text-[#dc2626]" data-testid={`${pageTestId}-void-error`}>
+                          <div className="text-xs text-[#dc2626]" data-testid={`${pageTestId}-void-error`}>
                             {voidError}
                           </div>
                         ) : null}
@@ -1272,7 +1272,7 @@ export function CargoClaimIntakeSurface({
             ) : null}
 
             {detail?.voided_at ? (
-              <div className="text-[11px] text-slate-500" data-testid={`${pageTestId}-voided-note`}>
+              <div className="text-xs text-slate-500" data-testid={`${pageTestId}-voided-note`}>
                 Voided {formatDateUS(detail.voided_at)}
                 {detail.voided_reason ? ` · ${String(detail.voided_reason)}` : ""}
               </div>
