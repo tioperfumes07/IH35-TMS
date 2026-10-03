@@ -1,3 +1,11 @@
+## 2026-10-03T14:24Z · BANK-F91157 FreshnessIndicator pill locked tokens MERGED #24577
+
+ACK: CURSOR | ACK BANK-F91157 FRESHNESS INDICATOR TEXT TOKENS DONE | GO
+FINDING: BANK-F91157 | FreshnessIndicator pill off-scale text-[11px] (locked tokens)
+FIX: pill→text-xs; freshness-indicator guard refuses text-[11px] on this component only.
+GUARD: verify-freshness-indicator · dedicated guard + typecheck PASS → #24577 tip `fc367c5aa8`.
+NO seed · NO mig. NEXT: AuthGatePanel leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T14:20Z · BANK-F91156 FactoringTab hint locked tokens MERGED #24575
 
 ACK: CURSOR | ACK BANK-F91156 FACTORING TAB TEXT TOKENS DONE | GO
