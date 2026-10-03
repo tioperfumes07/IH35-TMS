@@ -14,6 +14,8 @@ function failures(s={}){const d=s.driver??driver,u=s.unit??unit,t=s.tracker??tra
  ["unit target honored",f.includes('searchParams.get("unit_id")')&&f.includes("row.unit_id === effectiveUnitId")&&f.includes('dataTestId="fleet-hos-filter-unit"')&&f.includes("allowCreate={false}")],
  ["offline target revealed",f.includes("effectiveUnitId && offlineRows.length > 0")&&f.includes("setShowOffline(true)")],
  ["canonical fleet route",JSON.parse(r).leaves.find((leaf)=>leaf.id==="fleet.hos_board")?.route_hint==="/compliance?tab=overview"],
+ ["leftover text-[11px]",!t.includes("text-[11px]")],
+ ["leftover off-scale muted",!t.includes("#8A92AB")&&!t.includes("#334155")],
 ].filter(([,ok])=>!ok).map(([name])=>name)}
 if(process.argv.includes("--selftest")){const checks=[
  failures({entityLink:entityLink.replace('return `/compliance?tab=hos_tracker&driver_id=${id}`','return `/compliance?tab=hos_tracker`')}).includes("driver profile HOS deep link"),
@@ -21,5 +23,7 @@ if(process.argv.includes("--selftest")){const checks=[
  failures({entityLink:entityLink.replace('return `/compliance?tab=overview&unit_id=${id}`','return `/compliance?tab=overview`')}).includes("unit profile fleet HOS deep link"),
  failures({fleet:fleet.replaceAll("row.unit_id === effectiveUnitId","true")}).includes("unit target honored"),
  failures({fleet:fleet.replace('dataTestId="fleet-hos-filter-unit"','dataTestId="x"')}).includes("unit target honored"),
-];if(checks.some((ok)=>!ok)){console.error(`verify-compliance-hos-profile-reverse selftest FAIL — mutations ${checks.map((ok,index)=>ok?null:index+1).filter(Boolean).join(", ")} stayed green`);process.exit(1)}console.log("verify-compliance-hos-profile-reverse selftest PASS — 5/5 source/target mutations red");process.exit(0)}
+ failures({tracker:`${tracker}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`}).includes("leftover text-[11px]") &&
+   failures({tracker:`${tracker}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`}).includes("leftover off-scale muted"),
+];if(checks.some((ok)=>!ok)){console.error(`verify-compliance-hos-profile-reverse selftest FAIL — mutations ${checks.map((ok,index)=>ok?null:index+1).filter(Boolean).join(", ")} stayed green`);process.exit(1)}console.log("verify-compliance-hos-profile-reverse selftest PASS — 6/6 source/target mutations red");process.exit(0)}
 const missing=failures();if(missing.length){console.error(`verify-compliance-hos-profile-reverse FAIL — ${missing.join(", ")}`);process.exit(1)}console.log("verify-compliance-hos-profile-reverse PASS — driver/unit profiles land on exact HOS rows");
