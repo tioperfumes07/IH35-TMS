@@ -930,6 +930,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-no-bill-payment-without-postings",
     ["db/migrations/", "apps/backend/src/accounting/", "apps/backend/src/banking/", "apps/backend/src/bill-payments/", "apps/backend/src/cash-advances/", "apps/backend/src/ap/", "scripts/verify-no-bill-payment-without-postings.mjs"],
   ],
+  // ROUND 374 (CC-1) — a driver escrow GL balance is never below zero; the refusal is live and deferred.
+  [
+    "verify-driver-escrow-gl-never-negative",
+    ["db/migrations/", "apps/backend/src/accounting/escrow/", "apps/backend/src/driver-finance/", "apps/backend/src/accounting/settlement-posting/", "scripts/verify-driver-escrow-gl-never-negative.mjs"],
+  ],
   // Kill the second system (CC-1) — a driver escrow balance is the 2100-00-<nnn> GL balance, derived; no stored reader.
   [
     "verify-escrow-equals-its-gl",
