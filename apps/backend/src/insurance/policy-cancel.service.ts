@@ -132,7 +132,7 @@ export async function cancelInsurancePolicy(input: CancelPolicyInput): Promise<C
   // --- Phase 1: read policy, resolve accounts, compute refund, dedupe JE. ---
   const pre = await withCompanyScope(input.userId, input.operatingCompanyId, async (client) => {
     const policyRes = await client.query<PolicyRow>(
-      `SELECT ${CANCEL_SELECT} FROM insurance.policy WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND id = $2::uuid`,
+      `SELECT ${CANCEL_SELECT} FROM insurance.policy WHERE operating_company_id = $1::uuid AND id = $2::uuid`,
       [input.operatingCompanyId, input.policyId]
     );
     const policy = policyRes.rows[0];
@@ -235,7 +235,7 @@ export async function cancelInsurancePolicy(input: CancelPolicyInput): Promise<C
             cancelled_on = $3::date,
             cancel_reason = $4,
             updated_at = now()
-        WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND id = $2::uuid
+        WHERE operating_company_id = $1::uuid AND id = $2::uuid
         RETURNING ${CANCEL_SELECT}
       `,
       [input.operatingCompanyId, input.policyId, input.cancelledOn, input.cancelReason]
@@ -248,7 +248,7 @@ export async function cancelInsurancePolicy(input: CancelPolicyInput): Promise<C
         UPDATE insurance.payment_schedule
         SET bill_status = 'cancelled',
             updated_at = now()
-        WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid
+        WHERE operating_company_id = $1::uuid
           AND policy_id = $2::uuid
           AND bill_uuid IS NULL
           AND due_date >= $3::date

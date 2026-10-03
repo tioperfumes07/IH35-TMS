@@ -11,7 +11,7 @@ const client = (assignment: Record<string, unknown> | null, agreement: Record<st
   }),
 });
 
-const assignmentRow = { id: "f-1", name: "Faro", reserve_rate: "0.0150", cash_reserve_rate: "0", fee_rate: "0.0150", assignment_id: "a-1", effective_from: "2026-08-07", effective_to: null, active: true };
+const assignmentRow = { id: "f-1", operating_company_id: "co", name: "Faro", reserve_rate: "0.0150", cash_reserve_rate: "0", fee_rate: "0.0150", assignment_id: "a-1", effective_from: "2026-08-07", effective_to: null, active: true };
 
 describe("resolvePurchaseRate", () => {
   it("uses the customer's own assignment first", async () => {

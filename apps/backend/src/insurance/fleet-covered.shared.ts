@@ -34,11 +34,11 @@ export const FLEET_COVERED_SQL = `
   FROM mdata.assets a
   LEFT JOIN insurance.policy_unit pu
     ON pu.asset_id = a.id
-   AND pu.tenant_id = a.tenant_id
+   AND pu.operating_company_id = a.tenant_id
    AND pu.removed_at IS NULL
   LEFT JOIN insurance.policy p
     ON p.id = pu.policy_id
-   AND p.tenant_id = pu.tenant_id
+   AND p.operating_company_id = pu.operating_company_id
    AND p.status = 'active'
    AND p.effective_date <= now()::date
    AND p.expiry_date >= now()::date

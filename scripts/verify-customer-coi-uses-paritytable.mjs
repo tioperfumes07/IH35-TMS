@@ -73,13 +73,13 @@ function assertMigrated(src, service = "") {
     errors.push(`${PAGE}: policy column must drill to the policy with its entity-scoped human label`);
   }
   if (service) {
-    if (!/JOIN org\.user_company_access uca[\s\S]{0,220}?uca\.company_id = r\.tenant_id/.test(service)) {
+    if (!/JOIN org\.user_company_access uca[\s\S]{0,220}?uca\.company_id = r\.operating_company_id/.test(service)) {
       errors.push(`${SERVICE}: requester label join must be scoped through company membership`);
     }
     if (!/JOIN identity\.users u[\s\S]{0,180}?u\.id = uca\.user_id/.test(service) || !/AS requested_by_name/.test(service)) {
       errors.push(`${SERVICE}: list query must resolve requested_by_name`);
     }
-    if (!/JOIN insurance\.policy p[\s\S]{0,180}?p\.tenant_id = r\.tenant_id/.test(service) || !/p\.policy_number/.test(service)) {
+    if (!/JOIN insurance\.policy p[\s\S]{0,180}?p\.operating_company_id = r\.operating_company_id/.test(service) || !/p\.policy_number/.test(service)) {
       errors.push(`${SERVICE}: list query must resolve policy_number with tenant scope`);
     }
   }

@@ -121,7 +121,7 @@ export async function postInsuranceClaimRecovery(
          ON e.id = c.expense_id AND e.operating_company_id = $1::uuid
        LEFT JOIN accounting.bills b
          ON b.id = c.bill_id AND b.operating_company_id = $1::uuid
-       WHERE (c.operating_company_id = $1::uuid OR c.tenant_id = $1::uuid)
+       WHERE c.operating_company_id = $1::uuid
          AND c.id = $2::uuid
        LIMIT 1`,
       [input.operating_company_id, input.claim_id]

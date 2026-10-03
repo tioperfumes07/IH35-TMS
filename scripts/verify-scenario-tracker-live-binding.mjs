@@ -318,7 +318,7 @@ const CHAIN_REQUIRED = [
       "insurance.claim",
       "c.id = a.insurance_claim_id",
       "c.accident_report_id = a.id",
-      "c.tenant_id = a.operating_company_id",
+      "c.operating_company_id = a.operating_company_id", // ROUND 342: insurance.claim scopes on its canonical column
       "maintenance.work_orders",
       "w.insurance_claim_id = c.id",
       "w.source_type = 'AC'",

@@ -47,7 +47,7 @@ function lawsuitSelectColumns(alias = "", includeClaimLinks = false) {
   const p = alias ? `${alias}.` : "";
   return `
     ${p}id::text,
-    ${p}tenant_id::text,
+    ${p}operating_company_id::text AS tenant_id,
     ${p}case_number,
     ${p}plaintiff,
     ${p}defendant,
@@ -80,7 +80,7 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
       const values: unknown[] = [parsed.data.operating_company_id];
       // INSURANCE-DASHBOARD-FIXTURE-LEAK: keep the Lawsuits list in parity with the Open Lawsuits KPI
       // (summary.routes.ts), which already excludes agent-created fixture rows.
-      const filters = ["COALESCE(lawsuit.operating_company_id, lawsuit.tenant_id) = $1::uuid", excludeInsuranceFixtureSql("lawsuit.case_number")];
+      const filters = ["lawsuit.operating_company_id = $1::uuid", excludeInsuranceFixtureSql("lawsuit.case_number")];
       if (parsed.data.status) {
         values.push(parsed.data.status);
         filters.push(`lawsuit.status = $${values.length}`);
@@ -106,17 +106,17 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
           SELECT ${lawsuitSelectColumns("lawsuit", true)}
           FROM insurance.lawsuit AS lawsuit
           LEFT JOIN insurance.claim AS claim
-            ON claim.tenant_id = lawsuit.tenant_id
+            ON claim.operating_company_id = lawsuit.operating_company_id
            AND claim.id = lawsuit.claim_id
           LEFT JOIN mdata.assets AS asset
-            ON asset.tenant_id = lawsuit.tenant_id
+            ON asset.tenant_id = lawsuit.operating_company_id
            AND asset.id = claim.asset_id
           LEFT JOIN mdata.drivers AS driver
             ON driver.id = claim.driver_id
-           AND driver.operating_company_id = lawsuit.tenant_id
+           AND driver.operating_company_id = lawsuit.operating_company_id
           LEFT JOIN mdata.units AS unit
             ON unit.id = asset.unit_id
-           AND COALESCE(unit.currently_leased_to_company_id, unit.owner_company_id) = lawsuit.tenant_id
+           AND COALESCE(unit.currently_leased_to_company_id, unit.owner_company_id) = lawsuit.operating_company_id
           WHERE ${filters.join(" AND ")}
           ORDER BY lawsuit.filed_date DESC, lawsuit.created_at DESC
         `,
@@ -146,7 +146,7 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
           `
             SELECT id::text
             FROM insurance.claim
-            WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND id = $2::uuid
+            WHERE operating_company_id = $1::uuid AND id = $2::uuid
             LIMIT 1
           `,
           [body.operating_company_id, body.claim_id]
@@ -230,7 +230,7 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
           `
             SELECT id::text
             FROM insurance.claim
-            WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND id = $2::uuid
+            WHERE operating_company_id = $1::uuid AND id = $2::uuid
             LIMIT 1
           `,
           [query.data.operating_company_id, body.claim_id]
@@ -243,7 +243,7 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
           `
             SELECT status
             FROM insurance.lawsuit
-            WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND id = $2::uuid
+            WHERE operating_company_id = $1::uuid AND id = $2::uuid
             LIMIT 1
             FOR UPDATE
           `,
@@ -281,7 +281,7 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
         `
           UPDATE insurance.lawsuit
           SET ${assignments.join(", ")}
-          WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND id = $2::uuid
+          WHERE operating_company_id = $1::uuid AND id = $2::uuid
           RETURNING ${lawsuitSelectColumns()}
         `,
         values

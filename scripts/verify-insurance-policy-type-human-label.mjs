@@ -32,7 +32,7 @@ function read(rel) {
 function audit(sources) {
   const failures = [];
   const { routes, api, list, detail, gaps, vendor, vehicle, helper, completion, board } = sources;
-  const scopedCatalogJoin = /LEFT JOIN insurance\.type_catalog tc[\s\S]*?tc\.id = p\.coverage_type_id[\s\S]*?tc\.tenant_id = p\.tenant_id/;
+  const scopedCatalogJoin = /LEFT JOIN insurance\.type_catalog tc[\s\S]*?tc\.id = p\.coverage_type_id[\s\S]*?tc\.tenant_id = p\.operating_company_id/;
   if ((routes.match(new RegExp(scopedCatalogJoin.source, "g")) ?? []).length < 2) {
     failures.push("policy list and detail must each resolve type names through the same-company catalog FK");
   }
@@ -101,7 +101,7 @@ const real = Object.fromEntries(Object.entries(FILES).map(([key, rel]) => [key, 
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    ["missing company predicate", { ...real, routes: real.routes.replaceAll("AND tc.tenant_id = p.tenant_id", "") }],
+    ["missing company predicate", { ...real, routes: real.routes.replaceAll("AND tc.tenant_id = p.operating_company_id", "") }],
     ["missing serializer label", { ...real, routes: real.routes.replaceAll("tc.name AS coverage_type_name", "p.coverage_type AS coverage_type_name") }],
     ["raw list renderer", { ...real, list: real.list.replace('render: (p: InsurancePolicy) => coverageTypeName(p)', 'render: (p: InsurancePolicy) => p.coverage_type') }],
     ["list cached catalog survives error", { ...real, list: real.list.replace("typesQuery.isError ? undefined : typesQuery.data?.find", "false ? undefined : typesQuery.data?.find") }],

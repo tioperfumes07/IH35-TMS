@@ -176,11 +176,13 @@ export function computeFailures(sources) {
   if (!/LEFT JOIN mdata\.assets assets[\s\S]{0,200}?assets\.tenant_id\s*=\s*\$\{scope\}/.test(claimRoutes)) {
     errors.push("claim.routes.ts: the mdata.assets join must be ENTITY-SCOPED (assets.tenant_id = the claim's company scope) — mdata.assets has no operating_company_id");
   }
-  // The claim side of every scope predicate must tolerate rows written before operating_company_id
-  // was populated. Keying on c.operating_company_id ALONE resolves to NULL on those rows and
-  // silently drops the unit/trailer off the claim — a wrong answer that looks like "no trailer".
-  if (!/const scope\s*=[\s\S]{0,200}?COALESCE\(c\.operating_company_id, c\.tenant_id\)/.test(claimRoutes)) {
-    errors.push("claim.routes.ts: the claim-side scope expression must be COALESCE(c.operating_company_id, c.tenant_id) — a bare c.operating_company_id drops every row that predates the backfill");
+  // ROUND 342 Phase 2 (owner ruling: one scope column). The COALESCE(c.operating_company_id, c.tenant_id) this guard
+  // used to require existed because operating_company_id could be NULL on rows written before it was populated.
+  // Migration 202615310700 backfilled it from tenant_id and made it NOT NULL, and tenant_id is being retired — so the
+  // claim side of every scope predicate is c.operating_company_id, and a fallback to tenant_id is now the regression
+  // (it would break the moment tenant_id is dropped).
+  if (!/const scope\s*=\s*`c\.operating_company_id`/.test(claimRoutes) || /const scope\s*=[^;]*tenant_id/.test(claimRoutes)) {
+    errors.push("claim.routes.ts: the claim-side scope expression must be c.operating_company_id (ROUND 342: NOT NULL, canonical) — no fallback to tenant_id");
   }
   // Placeholder numbers are NOT asserted here. The INSERT column list is built lockstep and is
   // capability-dependent, so pinning $16/$20/$21 asserted parameter ORDER (and broke when a column
@@ -367,7 +369,7 @@ function claimSelectColumns(alias = "c") {
 }
 const caps = await getClaimColumnCapabilities(client);
 function claimFrom(caps) {
-  const scope = caps.operatingCompanyId ? \`COALESCE(c.operating_company_id, c.tenant_id)\` : \`c.tenant_id\`;
+  const scope = \`c.operating_company_id\`;
   const trailerJoin = caps.economics ? \`
   LEFT JOIN mdata.equipment trailers
     ON trailers.id = c.trailer_id
@@ -466,7 +468,7 @@ function selftest() {
     ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace("LEFT JOIN mdata.equipment trailers", "LEFT JOIN mdata.units trailers"); }, "LEFT JOIN mdata.equipment trailers"],
     // RLS-key class: prod FORCE RLS keys the claim INSERT WITH CHECK on operating_company_id.
     ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace('if (caps.operatingCompanyId) put("operating_company_id", body.operating_company_id, (p) => `${p}::uuid`);', ""); }, "must write operating_company_id"],
-    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace("COALESCE(c.operating_company_id, c.tenant_id)", "c.operating_company_id"); }, "drops every row that predates the backfill"],
+    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace("const scope = `c.operating_company_id`", "const scope = `COALESCE(c.operating_company_id, c.tenant_id)`"); }, "no fallback to tenant_id"],
     ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replaceAll("getClaimColumnCapabilities", "somethingElse"); }, "getClaimColumnCapabilities"],
     ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace('return { kind: "economics_unavailable" as const };', "return null;"); }, "economics_unavailable"],
     ["autoClaim", (f) => { f.autoClaim = f.autoClaim.replace("        operating_company_id,\n", ""); }, "auto-claim INSERT must write operating_company_id"],

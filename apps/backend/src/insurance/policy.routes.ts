@@ -175,10 +175,10 @@ function policyUnitSelectColumns() {
 function policyUnitFromClause() {
   return `
     FROM insurance.policy_unit pu
-    LEFT JOIN mdata.assets a ON a.id = pu.asset_id AND a.tenant_id = pu.tenant_id
+    LEFT JOIN mdata.assets a ON a.id = pu.asset_id AND a.tenant_id = pu.operating_company_id
     LEFT JOIN mdata.units u
       ON (u.id = a.unit_id OR (a.unit_id IS NULL AND u.unit_number = a.unit_code))
-     AND (u.owner_company_id = pu.tenant_id OR u.currently_leased_to_company_id = pu.tenant_id)
+     AND (u.owner_company_id = pu.operating_company_id OR u.currently_leased_to_company_id = pu.operating_company_id)
   `;
 }
 
@@ -195,7 +195,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
       // fixture rows the KPI headline (summary.routes.ts) already excludes — a list disagreeing with
       // its own headline count is the exact FLEET-KPI-PARITY bug class this repo already fixed once
       // for Fleet (mdata/fleet-visibility.ts).
-      const filters = ["COALESCE(p.operating_company_id, p.tenant_id) = $1::uuid", excludeInsuranceFixtureSql("p.policy_number")];
+      const filters = ["p.operating_company_id = $1::uuid", excludeInsuranceFixtureSql("p.policy_number")];
       if (parsed.data.coverage_type) {
         values.push(parsed.data.coverage_type);
         filters.push(`p.coverage_type = $${values.length}`);
@@ -222,7 +222,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
           FROM insurance.policy p
           LEFT JOIN insurance.type_catalog tc
             ON tc.id = p.coverage_type_id
-           AND tc.tenant_id = p.tenant_id
+           AND tc.tenant_id = p.operating_company_id
           WHERE ${filters.join(" AND ")}
           ORDER BY p.expiry_date ASC, p.insurer_name ASC
         `,
@@ -249,8 +249,8 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
           FROM insurance.policy p
           LEFT JOIN insurance.type_catalog tc
             ON tc.id = p.coverage_type_id
-           AND tc.tenant_id = p.tenant_id
-          WHERE COALESCE(p.operating_company_id, p.tenant_id) = $1::uuid AND p.id = $2::uuid
+           AND tc.tenant_id = p.operating_company_id
+          WHERE p.operating_company_id = $1::uuid AND p.id = $2::uuid
         `,
         [query.data.operating_company_id, params.data.id]
       );
@@ -259,7 +259,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
         `
           SELECT ${policyUnitSelectColumns()}
           ${policyUnitFromClause()}
-          WHERE COALESCE(pu.operating_company_id, pu.tenant_id) = $1::uuid AND pu.policy_id = $2::uuid
+          WHERE pu.operating_company_id = $1::uuid AND pu.policy_id = $2::uuid
           ORDER BY pu.created_at ASC
         `,
         [query.data.operating_company_id, params.data.id]
@@ -460,7 +460,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
         `
           UPDATE insurance.policy
           SET ${assignments.join(", ")}
-          WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND id = $2::uuid
+          WHERE operating_company_id = $1::uuid AND id = $2::uuid
           RETURNING ${policySelectColumns()}
         `,
         values
@@ -498,7 +498,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
         `
           UPDATE insurance.policy
           SET status = 'cancelled', updated_at = now()
-          WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND id = $2::uuid
+          WHERE operating_company_id = $1::uuid AND id = $2::uuid
           RETURNING id::text
         `,
         [query.data.operating_company_id, params.data.id]
@@ -532,7 +532,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
         `
           SELECT id::text, total_premium_cents::bigint, effective_date::text, expiry_date::text
           FROM insurance.policy
-          WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND id = $2::uuid
+          WHERE operating_company_id = $1::uuid AND id = $2::uuid
         `,
         [body.operating_company_id, params.data.policy_id]
       );
@@ -547,7 +547,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
         `
           SELECT id::text, (removed_at IS NULL) AS is_active
           FROM insurance.policy_unit
-          WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND policy_id = $2::uuid AND asset_id = $3::uuid
+          WHERE operating_company_id = $1::uuid AND policy_id = $2::uuid AND asset_id = $3::uuid
           FOR UPDATE
         `,
         [body.operating_company_id, params.data.policy_id, resolvedAssetId]
@@ -559,7 +559,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
       }
 
       const countRes = await client.query(
-        `SELECT count(*)::int AS count FROM insurance.policy_unit WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND policy_id = $2::uuid AND removed_at IS NULL`,
+        `SELECT count(*)::int AS count FROM insurance.policy_unit WHERE operating_company_id = $1::uuid AND policy_id = $2::uuid AND removed_at IS NULL`,
         [body.operating_company_id, params.data.policy_id]
       );
       const activeCount = Number((countRes.rows[0] as { count?: number } | undefined)?.count ?? 0);
@@ -568,7 +568,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
       if (existing && !existing.is_active) {
         const upd = await client.query(
           `UPDATE insurance.policy_unit SET removed_at = NULL, insured_value_cents = $4, updated_at = now()
-           WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND policy_id = $2::uuid AND id = $3::uuid
+           WHERE operating_company_id = $1::uuid AND policy_id = $2::uuid AND id = $3::uuid
            RETURNING id::text, policy_id::text, asset_id::text, insured_value_cents::bigint, removed_at::text, created_at::text, updated_at::text`,
           [body.operating_company_id, params.data.policy_id, existing.id, body.insured_value_cents]
         );
@@ -635,7 +635,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
       type PolicyRow = { id: string; total_premium_cents: string; effective_date: string; expiry_date: string };
       const policyRes = await client.query(
         `SELECT id::text, total_premium_cents::bigint, effective_date::text, expiry_date::text
-         FROM insurance.policy WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND id = $2::uuid`,
+         FROM insurance.policy WHERE operating_company_id = $1::uuid AND id = $2::uuid`,
         [query.data.operating_company_id, params.data.policy_id]
       );
       const policy = policyRes.rows[0] as PolicyRow | undefined;
@@ -644,7 +644,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
       const unitRes = await client.query(
         `SELECT id::text, asset_id::text, (removed_at IS NULL) AS is_active
          FROM insurance.policy_unit
-         WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND policy_id = $2::uuid AND id = $3::uuid
+         WHERE operating_company_id = $1::uuid AND policy_id = $2::uuid AND id = $3::uuid
          FOR UPDATE`,
         [query.data.operating_company_id, params.data.policy_id, params.data.unit_id]
       );
@@ -653,14 +653,14 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
       if (!unit.is_active) return { kind: "ok_already_removed" as const };
 
       const countRes = await client.query(
-        `SELECT count(*)::int AS count FROM insurance.policy_unit WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND policy_id = $2::uuid AND removed_at IS NULL`,
+        `SELECT count(*)::int AS count FROM insurance.policy_unit WHERE operating_company_id = $1::uuid AND policy_id = $2::uuid AND removed_at IS NULL`,
         [query.data.operating_company_id, params.data.policy_id]
       );
       const activeCount = Math.max(1, Number((countRes.rows[0] as { count?: number } | undefined)?.count ?? 1));
 
       await client.query(
         `UPDATE insurance.policy_unit SET removed_at = now(), updated_at = now()
-         WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND id = $2::uuid`,
+         WHERE operating_company_id = $1::uuid AND id = $2::uuid`,
         [query.data.operating_company_id, unit.id]
       );
 
@@ -731,7 +731,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
              $4::date, $5::date, $6, $7, $8,
              due_day, pay_day, late_fee_pct, insurer_email, agent_contact, 'pending', vendor_id, insurer_name
            FROM insurance.policy
-           WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND id = $2::uuid
+           WHERE operating_company_id = $1::uuid AND id = $2::uuid
            RETURNING ${policySelectColumns()}, renewed_from_policy_id::text`,
           [
             body.operating_company_id,
@@ -751,7 +751,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
           `INSERT INTO insurance.policy_unit (tenant_id, operating_company_id, policy_id, asset_id, insured_value_cents)
            SELECT $1::uuid, $1::uuid, $2::uuid, asset_id, insured_value_cents
            FROM insurance.policy_unit
-           WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND policy_id = $3::uuid AND removed_at IS NULL`,
+           WHERE operating_company_id = $1::uuid AND policy_id = $3::uuid AND removed_at IS NULL`,
           [body.operating_company_id, newPolicy.id, params.data.policy_id]
         );
 
@@ -804,7 +804,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
         `
           UPDATE insurance.policy_unit
           SET insured_value_cents = $3
-          WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND id = $2::uuid
+          WHERE operating_company_id = $1::uuid AND id = $2::uuid
           RETURNING ${policyUnitSelectColumns()}
         `,
         [query.data.operating_company_id, params.data.id, bodyParsed.data.insured_value_cents]
@@ -835,7 +835,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
         `
           UPDATE insurance.policy_unit
           SET removed_at = COALESCE(removed_at, now()), updated_at = now()
-          WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND id = $2::uuid
+          WHERE operating_company_id = $1::uuid AND id = $2::uuid
           RETURNING id::text
         `,
         [query.data.operating_company_id, params.data.id]
@@ -892,8 +892,8 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
             p.status,
             pu.insured_value_cents::bigint
           FROM insurance.policy_unit pu
-          JOIN insurance.policy p ON p.id = pu.policy_id AND p.tenant_id = pu.tenant_id
-          WHERE COALESCE(pu.operating_company_id, pu.tenant_id) = $1::uuid
+          JOIN insurance.policy p ON p.id = pu.policy_id AND p.operating_company_id = pu.operating_company_id
+          WHERE pu.operating_company_id = $1::uuid
             AND pu.asset_id = $2::uuid
           ORDER BY p.coverage_type ASC, p.expiry_date ASC
         `,

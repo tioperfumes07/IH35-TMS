@@ -893,7 +893,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
           JOIN insurance.claim c
             ON c.id = a.insurance_claim_id
            AND c.accident_report_id = a.id
-           AND c.tenant_id = a.operating_company_id
+           AND c.operating_company_id = a.operating_company_id
           JOIN maintenance.work_orders w
             ON w.insurance_claim_id = c.id
            AND w.operating_company_id = a.operating_company_id

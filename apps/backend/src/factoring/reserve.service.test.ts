@@ -107,7 +107,7 @@ describe("factoring reserve service", () => {
   it("enforces company-scoped reserve movement listing", async () => {
     const query = vi.fn(async (sql: string, values?: unknown[]) => {
       if (sql.includes("FROM factoring.reserve_movement")) {
-        expect(sql).toContain("AND COALESCE(operating_company_id, tenant_id) = $2::uuid");
+        expect(sql).toContain("AND operating_company_id = $2::uuid");
         expect(values).toEqual([batchId, tenantId]);
         return {
           rows: [

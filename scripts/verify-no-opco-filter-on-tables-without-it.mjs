@@ -6,6 +6,8 @@
 // The rule: for every table that lacks operating_company_id, no query `FROM <table> [alias] WHERE …` may name it.
 // Table list: live from information_schema when DATABASE_URL is set (so the guard follows CC-1's rename by itself);
 // otherwise the static ROUND 342 rename-only list. --selftest plants the exact #24298 shapes.
+// Offline it is still a real check (static ROUND 342 rename-only list), not a skip; online it reads information_schema.
+export const ALLOW_OFFLINE_SKIP = "static source scan against the ROUND 342 rename-only table list when no DATABASE_URL — still a real check";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

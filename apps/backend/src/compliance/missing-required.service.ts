@@ -94,7 +94,7 @@ const PRESENCE_SQL: Record<string, string> = {
                 AND ff.tax_period_start <= current_date AND ff.tax_period_end >= current_date) AS form_2290,
       EXISTS (SELECT 1 FROM mdata.assets a
               JOIN insurance.policy_unit pu ON pu.asset_id = a.id AND pu.removed_at IS NULL
-              JOIN insurance.policy p ON p.id = pu.policy_id AND p.tenant_id = pu.tenant_id
+              JOIN insurance.policy p ON p.id = pu.policy_id AND p.operating_company_id = pu.operating_company_id
                 AND p.status = 'active' AND p.effective_date <= current_date AND p.expiry_date >= current_date
               WHERE a.tenant_id = $2::uuid AND a.unit_code = u.unit_number) AS insurance
     FROM mdata.units u WHERE u.id = $1::uuid
