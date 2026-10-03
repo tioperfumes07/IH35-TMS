@@ -25,6 +25,9 @@ function assertSrc(src) {
   if (!/createFactor/.test(code)) {
     problems.push("missing createFactor nested creator wiring");
   }
+  if (src.includes("text-[11px]")) {
+    problems.push("FactoringTab.tsx: must not use text-[11px] — use text-xs");
+  }
   // FACTORING-GUARDS (owner ROUND 10, deadline 06:30Z): LDT-4 (bd00b7cac1) restyled this section
   // (added the "Select FARO factor account" heading, the factorsQ.isError QueryErrorNote block, and
   // ldt-* wrapper markup) — the real feature (testid, Combobox+allowAddNew, createFactor wiring,
