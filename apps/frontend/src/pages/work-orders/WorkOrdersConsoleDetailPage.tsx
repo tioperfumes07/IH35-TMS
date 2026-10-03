@@ -356,7 +356,7 @@ export function WorkOrdersConsoleDetailPage() {
           />
           <div className="mt-3 space-y-1 text-xs">
             {photoPaths.map((path) => (
-              <div key={path} className="font-mono text-[11px] text-slate-700">
+              <div key={path} className="font-mono text-xs text-slate-700">
                 {path}
               </div>
             ))}
@@ -374,7 +374,7 @@ export function WorkOrdersConsoleDetailPage() {
 
       <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Line items</div>
-        <pre className="mt-2 max-h-[320px] overflow-auto rounded-sm bg-slate-50 p-2 text-[11px]">
+        <pre className="mt-2 max-h-[320px] overflow-auto rounded-sm bg-slate-50 p-2 text-xs">
           {JSON.stringify(detailQuery.data?.line_items ?? [], null, 2)}
         </pre>
       </div>

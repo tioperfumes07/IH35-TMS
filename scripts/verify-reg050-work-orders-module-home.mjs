@@ -85,6 +85,8 @@ function audit(parts) {
   }
   const writableWoPredicates = parts.labor.match(/SELECT id FROM maintenance\.work_orders[\s\S]{0,240}?voided_at IS NULL[\s\S]{0,120}?status NOT IN \('complete', 'cancelled'\)/g) ?? [];
   if (writableWoPredicates.length < 2) failures.push("timer start and manual time entry must both reject terminal work orders");
+  if (parts.detail.includes("text-[11px]")) failures.push("leftover text-[11px]");
+  if (parts.detail.includes("#8A92AB") || parts.detail.includes("#334155")) failures.push("leftover off-scale muted");
   return failures;
 }
 
@@ -111,7 +113,13 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`${LABEL} SELFTEST PASS ${mutations.length}/${mutations.length}`);
+  const leftoverChanged = { ...sources, detail: `${sources.detail}\n<div className="text-[11px] text-[#8A92AB]">plant</div>` };
+  const leftoverFailures = audit(leftoverChanged);
+  if (!leftoverFailures.includes("leftover text-[11px]") || !leftoverFailures.includes("leftover off-scale muted")) {
+    console.error(`${LABEL} SELFTEST FAIL — leftover plant escaped`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS ${mutations.length}/${mutations.length} + leftover plant rejected`);
   process.exit(0);
 }
 
