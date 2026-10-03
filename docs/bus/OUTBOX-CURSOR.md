@@ -1,3 +1,11 @@
+## 2026-10-03T14:16Z · BANK-F91155 ManagementReportPackagePage locked tokens MERGED #24572
+
+ACK: CURSOR | ACK BANK-F91155 MGMT REPORT PACKAGE TEXT TOKENS DONE | GO
+FINDING: BANK-F91155 | ManagementReportPackagePage headings off-scale text-[11px] (locked tokens)
+FIX: eleven uppercase headings/thead→text-section-header; TOC index→text-xs; management-report-package-print-letter guard refuses text-[11px] on this page only.
+GUARD: verify-management-report-package-print-letter · dedicated guard + typecheck PASS → #24572 tip `6f8e7e0e0b`.
+NO seed · NO mig. NEXT: FactoringTab leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T14:14Z · BANK-F91154 ProfitPerTruckPage KPI locked tokens MERGED #24570
 
 ACK: CURSOR | ACK BANK-F91154 PROFIT PER TRUCK TEXT TOKENS DONE | GO
