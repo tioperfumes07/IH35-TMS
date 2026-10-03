@@ -83,6 +83,13 @@ function assertMigrated(src) {
   if (src.includes("useMutation")) {
     errors.push(`${PAGE}: read-only report — must not add mutations (TMS bills are the canonical A/P subledger)`);
   }
+  // BANK-F91075 — ORDERS chrome: AP aging uses locked tokens (text-section-header / text-xs), not text-[11px].
+  if (src.includes("text-[11px]")) {
+    errors.push(`${PAGE}: must not use text-[11px] — use text-section-header (11px headers) or text-xs (12px body)`);
+  }
+  if (!src.includes("text-section-header")) {
+    errors.push(`${PAGE}: money bucket labels must use text-section-header`);
+  }
   return errors;
 }
 
