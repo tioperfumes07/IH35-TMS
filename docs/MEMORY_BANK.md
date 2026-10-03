@@ -1447,6 +1447,23 @@ Full coder instructions: `claude/2026-09-13-ABSORPTION-INGEST-AND-DISPUTE-WINDOW
 
 ## Next Immediate Milestones — ROUND 355 (Cursor, 2026-10-03)
 
-- CC-1 ships R-1 damage-loss chain with fork proof.
-- CC-2 ships R-2 gallon fuel cap + F-3 Relay wallet package.
+- CC-1 ships R-1 damage-loss chain with fork proof **after** table-1 reader-repoint (see KILL THE SECOND SYSTEM).
+- CC-2 ships R-2 gallon fuel cap + F-3 Relay wallet package (policy — stays).
 - Cursor finishes ROUND 348 TRK ownership hub remaster (mig 202615321200) when HH 12–23 / rebase clean.
+
+## Active Architectural Decisions — KILL THE SECOND SYSTEM (Cursor, 2026-10-03)
+
+Owner, verbatim: the ledger is the balance; policies stay; this is a deletion, not a build.
+QuickBooks format already live: `2100` + `2100-00-nnn`, `1245` + per-driver advance sub.
+A BALANCE is derived from postings. A POLICY / DOCUMENT is stored.
+
+- **Canonical number:** `accounting.journal_entry_postings` on the sub-account. Not
+  `escrow_accounts.balance_cents` (supersedes 2026-09-05 "column is canonical"; the **mapping
+  row** `holder_id`→`coa_account_id` stays).
+- **Live USMCA 2026-10-03T13:20Z:** 27 live drivers; 29 live `2100-00-nnn`; 29 live
+  `DRIVERCASHAD%` (not `1245-00-nnn` — do not remint); 44 `escrow_accounts` driver rows;
+  19/44 column↔GL drift; `vendor_balances` already a VIEW over bills.
+- **Order:** CC-1 table 1 readers first (`readDriverEscrowBalanceCents`), then 2–7; CC-2 8–11
+  after table 1; CC-3 table 12 last. One table per PR. No hand-repair.
+- **R-1 waits** for table 1. R-2 is a policy and continues.
+- Law: `docs/bus/00-OWNER-ORDER-2026-10-03-KILL-THE-SECOND-SYSTEM.md`

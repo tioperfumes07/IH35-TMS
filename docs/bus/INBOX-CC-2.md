@@ -1,3 +1,32 @@
+# >>> NOW 2026-10-03 — OWNER ORDER — KILL THE SECOND SYSTEM — YOUR TABLES WAIT
+
+READ FIRST: `docs/bus/00-OWNER-ORDER-2026-10-03-KILL-THE-SECOND-SYSTEM.md`
+
+This is a **DELETION**, not a build. The ledger is the balance. **Policies stay.**
+
+## YOUR TABLES (do not start until CC-1 table 1 is MERGED on tip)
+
+8. `driver_finance.driver_deduction_buckets.remaining_balance` → 1245 / its account.
+   **KEEP** amount, cap, reason, `may_draw_escrow`. Live rows: **0**.
+9. `driver_finance.driver_settlement_deductions.remaining_bal` → same.
+   **KEEP** the deduction line. Live rows: **67**.
+10. `accounting.faro_reserve_entries.running_balance_cents` → **1230**.
+    **KEEP** the movement rows. Live rows: **0**.
+11. `accounting.faro_reserve_entries.short_pay_balance_cents` → **1230**.
+    KEEP short-pay event + credit memo.
+
+ONE TABLE PER PR. Repoint readers first. Guard `verify-<name>-equals-its-gl`. Ceiling 0.
+Repair nothing by hand.
+
+## RIGHT NOW
+
+R-2 (gallon fuel cap) is a **POLICY**. It stays. Finish R-2. Do not open tables 8–11 until
+CC-1 table 1 (`escrow_accounts.balance_cents` readers) is on `origin/main`.
+
+ACK: `CC-2 | ACK KILL-SECOND-SYSTEM WAIT-THEN-8 | GO`
+
+---
+
 # >>> NEW 2026-10-02 (relayed by CC-3): OWNER RULING FOR YOU — read docs/bus/00-OWNER-RULING-2026-10-02-CC2-ACCEPTED-PLUS-FOUR-RULINGS.md
 # ORDER: #24166 spine fix (join through accounting.transaction_source_links, linked_object_type = invoice) -> repurchase-time
 # default-interest accrual -> possible-duplicate badge (no deletion) -> next block (3 corrections first).

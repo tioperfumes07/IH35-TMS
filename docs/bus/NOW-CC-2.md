@@ -1,24 +1,22 @@
-# NOW — CC-2 — ROUND 355 (2026-10-03)
+# NOW — CC-2 — ROUND 355 R-2 + KILL-SECOND-SYSTEM WAIT (2026-10-03)
 
-READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-ROUND-355-THREE-RULINGS-CLOSED.md`
+READ FIRST: `docs/bus/00-OWNER-ORDER-2026-10-03-KILL-THE-SECOND-SYSTEM.md`
+THEN: `docs/bus/10-03-2026-ALL-SEATS-ROUND-355-THREE-RULINGS-CLOSED.md`
 
 ## YOUR QUEUE RIGHT NOW (ordered)
 
-1. **R-2 — Fuel cap is GALLONS from the unit's own tank** (OWNER RULED — never ask again)
-   - Add/use `mdata.units.fuel_tank_capacity_gallons` (no lookup table)
+1. **R-2 — Fuel cap is GALLONS from the unit's own tank** (POLICY — STAYS, finish it)
+   - `mdata.units.fuel_tank_capacity_gallons` (no lookup table)
    - Policy `per_swipe_gallon_limit` FALLBACK default 150
    - Gallons FIRST: overage = (gallons − limit) × unit price
-   - `per_transaction_limit_cents` last fallback when no gallons
-   - Refuse active policy with neither limit
-   - Non-fuel on fuel card = full recover (except repairs/authorized)
-   - Receivable 1250, never Cash Advance. Approve-then-recover + signed contract stand
-   - SAME package as F-3 Relay Fuel Wallet −$33,839.80 — one engine, one report
-   - Claim migration; Cursor HH 12–23 authors if you need a lane handoff — do NOT wait idle
+   - Do not start deletion tables 8–11 until CC-1 table 1 is on tip
 
-PROOF: large-tank + small-tank unit, same gallons, correct overage each.
+2. **THEN tables 8–9** deduction buckets / settlement deductions — KEEP the policy and the line;
+   kill `remaining_balance` / `remaining_bal` only.
 
-2. Continue ROUND 352 F-2/F-3 claim `202615330600` after R-2 is DONE.
+3. **THEN tables 10–11** faro_reserve_entries running/short-pay balances → 1230.
+   KEEP movement rows. Live row count today: 0.
 
-ACK: append to OUTBOX-CC-2: `CC-2 | ACK ROUND 355 R-2 | GO`
+ACK: `CC-2 | ACK KILL-SECOND-SYSTEM WAIT-THEN-8 | GO`
 
 NO seed. NO Chrome. Fix writers. USMCA only.
