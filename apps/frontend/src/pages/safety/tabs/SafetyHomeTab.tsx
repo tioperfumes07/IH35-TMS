@@ -47,7 +47,7 @@ function KpiTile({
 }) {
   const inner = (
     <>
-      <div className="text-[11px] uppercase tracking-wide text-slate-500">{label}</div>
+      <div className="text-xs uppercase tracking-wide text-slate-500">{label}</div>
       {isError ? (
         <div className="text-xs font-semibold text-red-600" data-testid="safety-home-kpi-error">
           Unavailable
@@ -116,7 +116,7 @@ function DrillRow({ record }: { record: DrillRecord }) {
       <span className="w-20 shrink-0 text-slate-500">{record.when || "—"}</span>
       <span className="min-w-[8rem] flex-1 text-slate-700">{record.label}</span>
       <span className="flex items-center gap-2">
-        <span className="text-[11px] uppercase text-slate-400">Driver</span>
+        <span className="text-xs uppercase text-slate-400">Driver</span>
         <EntityLink
           kind="driver"
           id={record.driverId}
@@ -125,7 +125,7 @@ function DrillRow({ record }: { record: DrillRecord }) {
         />
       </span>
       <span className="flex items-center gap-2">
-        <span className="text-[11px] uppercase text-slate-400">Unit</span>
+        <span className="text-xs uppercase text-slate-400">Unit</span>
         <EntityLink
           kind="unit"
           id={record.unitId}
@@ -279,7 +279,7 @@ export function SafetyHomeTab() {
         data-testid="safety-home-active-drivers"
       >
         <div>
-          <div className="text-[11px] uppercase tracking-wide text-slate-500">
+          <div className="text-xs uppercase tracking-wide text-slate-500">
             Active Drivers (Samsara GPS activity)
           </div>
           {activeDriversQuery.isError ? (
@@ -395,7 +395,7 @@ export function SafetyHomeTab() {
         <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
           Open events & recent accidents (30d)
         </h4>
-        <p className="mb-2 text-[11px] text-slate-400">
+        <p className="mb-2 text-xs text-slate-400">
           Open safety events plus driver-/unit-linked accidents from the last 30 days (by accident date).
         </p>
         {drillError ? (
