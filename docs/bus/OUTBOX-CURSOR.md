@@ -1,3 +1,11 @@
+## 2026-10-03T14:02Z · BANK-F91151 CustomerProfitabilityPage KPI locked tokens MERGED #24564
+
+ACK: CURSOR | ACK BANK-F91151 CUSTOMER PROFITABILITY TEXT TOKENS DONE | GO
+FINDING: BANK-F91151 | CustomerProfitabilityPage KPI off-scale text-[11px] (locked tokens)
+FIX: all four→text-section-header; customer-profitability-print-letter guard refuses text-[11px] on this page only.
+GUARD: verify-customer-profitability-print-letter · dedicated guard + typecheck PASS → #24564 tip `04b74ee739`.
+NO seed · NO mig. NEXT: FuelReconciliationPage leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T13:55Z · BANK-F91150 CashFlowOverviewPage KPI locked tokens MERGED #24561
 
 ACK: CURSOR | ACK BANK-F91150 CASH FLOW OVERVIEW TEXT TOKENS DONE | GO
