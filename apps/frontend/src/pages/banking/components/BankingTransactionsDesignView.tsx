@@ -3652,9 +3652,17 @@ export function BankingTransactionsDesignView({
               options={descriptionFilterOptions}
               value={descriptionFilter || null}
               onChange={(next) => setDescriptionFilter(next ?? "")}
-              /* U26 (owner): no onSearch — the Combobox clears its typed text when it closes, and onSearch fed that
-                 empty text back into the filter, so the filter wiped itself (and refetched every keystroke). The box
-                 now narrows its own options locally; picking one applies the filter and it stays. */
+              /* BANK-FILTER-BLUR-01 supersedes U26's remedy (not its diagnosis — that was right).
+                 U26 removed onSearch entirely because "the Combobox clears its typed text when it
+                 closes, and onSearch fed that empty text back into the filter, so the filter wiped
+                 itself". True, and that is now fixed at the source: searchIsValue stops the clear,
+                 so the empty-text feedback cannot happen. Dropping onSearch also dropped SERVER-side
+                 narrowing, which left the box filtering only the rows already loaded — an operator
+                 hunting a merchant that is not on the current page could not find it, and could only
+                 apply a value that already appears in the list rather than typing one. Restored:
+                 typed text narrows server-side, survives blur, and stays visible. */
+              onSearch={setDescriptionFilter}
+              searchIsValue
               allowClear
               placeholder="Filter by description"
               dataTestId="banking-transactions-description-filter"

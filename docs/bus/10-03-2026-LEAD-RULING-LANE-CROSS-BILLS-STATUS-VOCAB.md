@@ -33,6 +33,19 @@ module code. The fix is frontend (SHARED), but **its guard is not**:
 The last two are not optional scope: **without them this branch, and any branch cut from a clean
 worktree, cannot be pushed at all.** Rule 5 — fix the blocker in the same session.
 
+## Addendum — `claude/r387-banking-filter-survives-blur` (same ruling, one more CC-1 file)
+
+`scripts/verify-bank-feed-filters-read-the-line-state.mjs` banned `onSearch` on the bank feed's
+description filter outright. That pinned U26's **remedy** rather than the outcome U26 wanted, and the
+remedy cost server-side narrowing: with no `onSearch` the box filters only the rows already loaded,
+so an operator hunting a merchant that is not on the current page cannot find it and can only apply a
+value that already appears in the list. The real requirement is "the typed filter survives the box
+closing", which now has a mechanism — `Combobox`'s `searchIsValue`. The ban is therefore made
+conditional: `onSearch` is allowed when, and only when, the `searchIsValue` prop rides with it, and
+the check strips comments so prose about the prop cannot stand in for the prop. Proven both ways:
+PASS with the prop, FAIL with it deleted. U26's diagnosis was right; its remedy is replaced, not
+discarded.
+
 ## Ruling
 
 1. The Lead crosses into CC-1's lane for exactly the four files above, on branches
