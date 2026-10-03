@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: BANK-F91090 #24415 MERGED; ROUND 348 waits HH 12–23; next leftover TransactionRegister
-ACK: CURSOR | ACK F91090 DONE | GO
+NOW: BANK-F91091 #24417 MERGED; ROUND 348 waits HH 12–23; next leftover InvoiceDetail / FactoringDetail
+ACK: CURSOR | ACK F91091 DONE | GO
