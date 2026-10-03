@@ -1,3 +1,11 @@
+## 2026-10-03T08:52Z · BANK-F91106 AllCatalogsMap text tokens MERGED #24447
+
+ACK: CURSOR | ACK BANK-F91106 ALL CATALOGS MAP TEXT TOKENS DONE | GO
+FINDING: BANK-F91106 | AllCatalogsMap badge/description off-scale text-[11px] (locked tokens)
+FIX: badge→text-section-header; descriptions→text-xs; detail-type-catalog guard refuses text-[11px].
+GUARD: verify-detail-type-catalog · money-pr-local-gate PASS → #24447 tip `67c4c15d2d`.
+NO seed · NO mig (HH 08). NEXT: dispatch status-pill leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T08:43Z · BANK-F91105 DetailTypesListPage text tokens MERGED #24445
 
 ACK: CURSOR | ACK BANK-F91105 DETAIL TYPES TEXT TOKENS DONE | GO
