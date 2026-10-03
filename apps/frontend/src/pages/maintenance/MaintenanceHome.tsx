@@ -383,9 +383,9 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
         label: "Flag",
         render: (row) =>
           partNeedsReorder(row.qty_on_hand, row.reorder_threshold) ? (
-            <span className="rounded-sm bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">REORDER</span>
+            <span className="rounded-sm bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">REORDER</span>
           ) : (
-            <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">OK</span>
+            <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">OK</span>
           ),
       },
     ],
@@ -731,20 +731,20 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
             />
           ) : null}
           <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-            <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]">
-              <div className="text-[11px] uppercase tracking-wide text-gray-500">Total Parts</div>
+            <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-xs">
+              <div className="text-xs uppercase tracking-wide text-gray-500">Total Parts</div>
               <div className="font-semibold">
                 {partsInventoryKpisQuery.isError ? "—" : (partsInventoryKpisQuery.data?.total_parts ?? 0)}
               </div>
             </div>
-            <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]">
-              <div className="text-[11px] uppercase tracking-wide text-gray-500">Low Stock</div>
+            <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-xs">
+              <div className="text-xs uppercase tracking-wide text-gray-500">Low Stock</div>
               <div className="font-semibold">
                 {partsInventoryKpisQuery.isError ? "—" : (partsInventoryKpisQuery.data?.low_stock_count ?? 0)}
               </div>
             </div>
-            <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]">
-              <div className="text-[11px] uppercase tracking-wide text-gray-500">Total Inventory Value</div>
+            <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-xs">
+              <div className="text-xs uppercase tracking-wide text-gray-500">Total Inventory Value</div>
               <div className="font-semibold">
                 {partsInventoryKpisQuery.isError
                   ? "—"

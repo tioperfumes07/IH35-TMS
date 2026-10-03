@@ -10,6 +10,8 @@ function audit(candidate) {
   if (!/recentQuery\.isError \? \([\s\S]{0,220}title="Couldn't load recent maintenance activity"[\s\S]{0,220}recentQuery\.refetch\(\)[\s\S]{0,120}: \(\s*<RecentActivityRow/.test(candidate)) failures.push("recent/completed histories fail closed with exact recovery");
   if (!/partsReorderQuery\.isError \? \([\s\S]{0,220}title="Couldn't load parts reorder flags"[\s\S]{0,220}partsReorderQuery\.refetch\(\)[\s\S]{0,120}: \(\s*<ParityTable/.test(candidate)) failures.push("parts reorder flags fail closed with exact recovery");
   if (!/recentTotalCount=\{recentQuery\.data\?\.recent_total_count/.test(candidate) || !/completedTotalCount=\{recentQuery\.data\?\.completed_total_count/.test(candidate)) failures.push("successful histories retain exact totals");
+  if (candidate.includes("text-[11px]")) failures.push("leftover text-[11px]");
+  if (candidate.includes("#8A92AB") || candidate.includes("#334155")) failures.push("leftover off-scale muted");
   return failures;
 }
 
@@ -21,10 +23,11 @@ if (process.argv.includes("--selftest")) {
     "partsReorderQuery.refetch()",
     "recentTotalCount={recentQuery.data?.recent_total_count",
     "completedTotalCount={recentQuery.data?.completed_total_count",
+    `${source}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`,
   ];
   for (const needle of mutations) {
-    const changed = source.replace(needle, "/* planted defect */");
-    if (changed === source || audit(changed).length === 0) throw new Error(`planted defect escaped: ${needle}`);
+    const changed = needle.startsWith(source) ? needle : source.replace(needle, "/* planted defect */");
+    if ((changed === source && !needle.startsWith(source)) || audit(changed).length === 0) throw new Error(`planted defect escaped: ${needle.slice(0, 80)}`);
   }
   console.log(`verify-maintenance-home-read-recovery SELFTEST PASS — ${mutations.length}/${mutations.length} mutations detected`);
   process.exit(0);
