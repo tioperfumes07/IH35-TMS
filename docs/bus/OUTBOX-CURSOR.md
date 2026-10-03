@@ -1,3 +1,19 @@
+## 2026-10-03T13:55Z · BANK-F91150 CashFlowOverviewPage KPI locked tokens MERGED #24561
+
+ACK: CURSOR | ACK BANK-F91150 CASH FLOW OVERVIEW TEXT TOKENS DONE | GO
+FINDING: BANK-F91150 | CashFlowOverviewPage KPI off-scale text-[11px] (locked tokens)
+FIX: four uppercase labels→text-section-header; four captions→text-xs; cash-flow-overview-print-letter guard refuses text-[11px] on this page only.
+GUARD: verify-cash-flow-overview-print-letter · dedicated guard + typecheck PASS → #24561 tip `a09d48aa2b`.
+NO seed · NO mig. NEXT: CustomerProfitabilityPage leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
+## 2026-10-03T13:52Z · BANK-F91149 CashFlowStatementPage KPI/thead locked tokens MERGED #24559
+
+ACK: CURSOR | ACK BANK-F91149 CASH FLOW STATEMENT TEXT TOKENS DONE | GO
+FINDING: BANK-F91149 | CashFlowStatementPage KPI/thead off-scale text-[11px] (locked tokens)
+FIX: five uppercase labels + thead→text-section-header; two body captions→text-xs; cash-flow-statement-print-letter guard refuses text-[11px] on this page only.
+GUARD: verify-cash-flow-statement-print-letter · dedicated guard + typecheck PASS → #24559 tip `1defa0da14`.
+NO seed · NO mig. NEXT: CashFlowOverviewPage leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T13:50Z · BANK-F91148 SettlementSummaryPage KPI locked tokens MERGED #24557
 
 ACK: CURSOR | ACK BANK-F91148 SETTLEMENT SUMMARY TEXT TOKENS DONE | GO
