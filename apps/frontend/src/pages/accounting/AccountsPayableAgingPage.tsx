@@ -364,7 +364,7 @@ export function AccountsPayableAgingPage() {
       </div>
 
       <div
-        className="mb-3 grid gap-1 rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-600 print:hidden"
+        className="mb-3 grid gap-1 rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 print:hidden"
         data-testid="ap-aging-qbo-mirror-status"
       >
         <div>
@@ -462,7 +462,7 @@ export function AccountsPayableAgingPage() {
             sortDirection={sortDirection}
             onSortChange={onSortChange}
             filterBar={
-              <span className="text-[11px] text-slate-500">{typeFiltered.length} rows</span>
+              <span className="text-xs text-slate-500">{typeFiltered.length} rows</span>
             }
           />
           {/* TOTAL row — same values the former <tfoot> carried (sum of the filtered vendor rows),
@@ -475,7 +475,7 @@ export function AccountsPayableAgingPage() {
             <span className="mr-auto">TOTAL</span>
             {MONEY_KEYS.map((k) => (
               <span key={k} className="whitespace-nowrap">
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{MONEY_LABELS[k]}</span>{" "}
+                <span className="text-section-header font-semibold uppercase tracking-wide text-slate-500">{MONEY_LABELS[k]}</span>{" "}
                 <span className={`tabular-nums ${RED_KEYS.has(k) ? "text-red-600" : ""}`}>{money(amount(vendorTotals, k))}</span>
               </span>
             ))}
@@ -496,7 +496,7 @@ export function AccountsPayableAgingPage() {
             sortDirection={sortDirection}
             onSortChange={onSortChange}
             filterBar={
-              <span className="text-[11px] text-slate-500">{typeFiltered.length} rows</span>
+              <span className="text-xs text-slate-500">{typeFiltered.length} rows</span>
             }
           />
           <div
@@ -506,7 +506,7 @@ export function AccountsPayableAgingPage() {
             <span className="mr-auto">TOTAL</span>
             {MONEY_KEYS.map((k) => (
               <span key={k} className="whitespace-nowrap">
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{MONEY_LABELS[k]}</span>{" "}
+                <span className="text-section-header font-semibold uppercase tracking-wide text-slate-500">{MONEY_LABELS[k]}</span>{" "}
                 <span className={`tabular-nums ${RED_KEYS.has(k) ? "text-red-600" : ""}`}>{money(amount(vendorTotals, k))}</span>
               </span>
             ))}
