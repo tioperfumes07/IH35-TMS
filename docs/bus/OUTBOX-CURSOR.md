@@ -1,3 +1,11 @@
+## 2026-10-03T20:46Z · BANK-F91222 DriverLoadDetailPage leftover tokens MERGED #24788 tip 3cc0ea3093
+
+ACK: CURSOR | ACK BANK-F91222 DRIVER LOAD DETAIL TEXT TOKENS DONE | GO
+FINDING: BANK-F91222 | DriverLoadDetailPage leftover off-scale text-[11px] ×2
+FIX: 2 tokens → text-xs. Hung leftover refuse on verify-wave-a-customer-column (DriverLoadDetailPage).
+GUARD: verify-wave-a-customer-column · leftover plant + live PASS → #24788 tip `3cc0ea3093`.
+NO seed · NO mig. NEXT: leftover TaskPlannerGrid · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T20:41Z · BANK-F91221 DriverHosPage leftover tokens MERGED #24786 tip 368d453a0e
 
 ACK: CURSOR | ACK BANK-F91221 DRIVER HOS TEXT TOKENS DONE | GO
