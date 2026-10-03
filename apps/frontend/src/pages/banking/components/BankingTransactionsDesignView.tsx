@@ -615,6 +615,16 @@ export function formatSuggestedMatchInline(
   return [head, date !== "—" ? date : "", amount, payee].filter(Boolean).join(" · ");
 }
 
+/**
+ * BANK-F91062 — ORDERS §18: badge label is "N match found" / "N matches found" from the
+ * qualifying candidate count (exact cents ±5d expense/bill). Never hardcodes 1 when N>1.
+ */
+export function formatSuggestedMatchBadgeLabel(suggestion: BankTransactionSuggestion): string {
+  const raw = Number(suggestion.suggested_match_count);
+  const n = Number.isFinite(raw) && raw >= 1 ? Math.floor(raw) : 1;
+  return n === 1 ? "1 match found" : `${n} matches found`;
+}
+
 export function spentReceived(tx: PlaidBankTransaction) {
   const amount = Math.abs(Number(tx.amount_cents ?? 0));
   if (amount <= 0) return { spent: 0, received: 0 };
@@ -2273,8 +2283,11 @@ export function BankingTransactionsDesignView({
                     }`}
                     onClick={() => setMatchDrawerTxId(tx.id)}
                     data-testid={`banking-suggested-match-${tx.id}`}
+                    data-b3-match-count={String(
+                      Math.max(1, Math.floor(Number(txnSuggestions[tx.id]!.suggested_match_count) || 1)),
+                    )}
                   >
-                    1 match found
+                    {formatSuggestedMatchBadgeLabel(txnSuggestions[tx.id]!)}
                   </button>
                   <button
                     type="button"

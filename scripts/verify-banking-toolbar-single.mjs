@@ -61,12 +61,14 @@ export function run() {
     errors
   );
   // BANK-F91061 — ORDERS §18 match badge carries candidate type/date/amount/payee inline (not badge-only).
+  // BANK-F91062 — badge label is N from suggested_match_count (not hardcoded "1 match found").
   assert(
     register.includes("formatSuggestedMatchInline") &&
+      register.includes("formatSuggestedMatchBadgeLabel") &&
       register.includes('data-b3-match-badge-inline="1"') &&
       register.includes("banking-suggested-match-detail-") &&
-      register.includes("1 match found"),
-    "suggested-match badge must render ORDERS §18 inline candidate (type/date/amount/payee) via formatSuggestedMatchInline",
+      register.includes("data-b3-match-count="),
+    "suggested-match badge must render ORDERS §18 inline candidate + N match count via formatSuggestedMatchBadgeLabel",
     errors
   );
   const suggestRoute = read("apps/backend/src/banking/p7-wave2.routes.ts");
@@ -74,16 +76,18 @@ export function run() {
     suggestRoute.includes("suggested_event_date: best.event_date") &&
       suggestRoute.includes("suggested_amount_cents: best.amount_cents") &&
       suggestRoute.includes("suggested_payee_name: best.counterparty_name") &&
-      suggestRoute.includes("suggested_reference: best.reference"),
-    "POST /banking/transactions/suggest must return candidate date/amount/payee/ref for the inline badge",
+      suggestRoute.includes("suggested_reference: best.reference") &&
+      suggestRoute.includes("suggested_match_count: qualifying.length"),
+    "POST /banking/transactions/suggest must return candidate date/amount/payee/ref + suggested_match_count for the badge",
     errors
   );
   const bankingApi = read("apps/frontend/src/api/banking.ts");
   assert(
     bankingApi.includes("suggested_event_date?:") &&
       bankingApi.includes("suggested_amount_cents?:") &&
-      bankingApi.includes("suggested_payee_name?:"),
-    "BankTransactionSuggestion type must carry the ORDERS §18 inline candidate fields",
+      bankingApi.includes("suggested_payee_name?:") &&
+      bankingApi.includes("suggested_match_count?:"),
+    "BankTransactionSuggestion type must carry the ORDERS §18 inline candidate fields + match count",
     errors
   );
   assert(
