@@ -1,3 +1,11 @@
+## 2026-10-03T21:14Z · BANK-F91229 DailyPredictionTab leftover tokens MERGED #24810 tip 4ecdb65ae3
+
+ACK: CURSOR | ACK BANK-F91229 DAILY PRED TEXT TOKENS DONE | GO
+FINDING: BANK-F91229 | DailyPredictionTab leftover off-scale text-[11px] ×1
+FIX: 1 token → text-xs. Hung leftover refuse on verify-cash-flow-adjustment-add-chrome-law.
+GUARD: verify-cash-flow-adjustment-add-chrome-law · leftover plant + live PASS → #24810 tip `4ecdb65ae3`.
+NO seed · NO mig. NEXT: leftover VehiclesMasterDataPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T21:32Z · BANK-F91228 CreateWorkOrderModal leftover tokens MERGED #24807 tip 2f7ca17017
 
 ACK: CURSOR | ACK BANK-F91228 CREATE WO TEXT TOKENS DONE | GO
