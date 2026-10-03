@@ -453,7 +453,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
           </button>
           {/* FIX 2 — no silent dead control: explain WHY the button is disabled. */}
           {missing.length > 0 ? (
-            <span className="text-[11px] text-gray-500">Select a driver and a reason to create the fine.</span>
+            <span className="text-xs text-gray-500">Select a driver and a reason to create the fine.</span>
           ) : null}
           {createError ? (
             <p className="w-full text-xs text-red-700" data-testid="internal-fine-create-error">
@@ -462,7 +462,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
           ) : null}
           {/* FIX 3 (frontend) — approver transparency: approving instantly creates a driver liability. */}
           {form.status === "approved" && approverName ? (
-            <span className="text-[11px] text-gray-600">Approving as {approverName} — creates a recoverable driver liability on save.</span>
+            <span className="text-xs text-gray-600">Approving as {approverName} — creates a recoverable driver liability on save.</span>
           ) : null}
           {/* SAF-F24 / LST-PICKER-01: reason create is ReferenceSelect first-row (CatalogQuickCreateDrawer). */}
         </div>
@@ -486,7 +486,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
           hidePager
           filterBar={
             <div className="relative flex flex-wrap items-end gap-2" data-testid="internal-fines-filters">
-              <label className="text-[11px] text-slate-600">
+              <label className="text-xs text-slate-600">
                 Driver
                 <EntityPicker
                   kind="driver"
@@ -499,7 +499,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
                   dataTestId="internal-fines-filter-driver"
                 />
               </label>
-              <label className="text-[11px] text-slate-600">
+              <label className="text-xs text-slate-600">
                 Load
                 <EntityPicker
                   kind="load"
