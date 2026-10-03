@@ -316,6 +316,11 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
             suggested_confidence: best.auto_match ? "high" : "medium",
             date_gap_days: best.date_gap_days,
             memo_similarity: best.memo_similarity,
+            // BANK-F91061 — ORDERS §18: badge shows candidate type/date/amount/payee inline (QBO parity).
+            suggested_event_date: best.event_date,
+            suggested_amount_cents: best.amount_cents,
+            suggested_payee_name: best.counterparty_name,
+            suggested_reference: best.reference,
           },
         };
       })

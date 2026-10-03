@@ -169,6 +169,12 @@ const RECON_TXN_TYPE_FILTERS = [
   "Cash Advance",
   "Driver Advance",
   "Bank Categorization",
+  // BANK-F91056 — ORDERS leftover recon Type chips (GL lines labeled via TYPE_LABELS).
+  "Credit Memo",
+  "Fuel Event",
+  // BANK-F91057 — live GL labels (TYPE_LABELS now maps driver_settlement/driver_cash_advance/…).
+  "Escrow",
+  "Bank Reconciliation",
 ] as const;
 type ReconTxnTypeFilter = (typeof RECON_TXN_TYPE_FILTERS)[number];
 

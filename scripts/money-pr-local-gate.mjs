@@ -107,6 +107,8 @@ const STEPS = [
   ["verify-unit-stop-events-no-clipped-starts", "scripts/verify-unit-stop-events-no-clipped-starts.mjs"],
   // ROUND 345 block — money lines reference only their own company (composite same-entity FKs).
   ["verify-money-lines-same-entity-fks", "scripts/verify-money-lines-same-entity-fks.mjs"],
+  // ROUND 353 — a load becomes cancelled only through an approved cancellation record (13515 route closed).
+  ["verify-cancelled-load-has-cancellation-record", "scripts/verify-cancelled-load-has-cancellation-record.mjs"],
   ["verify-no-session-advisory-locks", "scripts/verify-no-session-advisory-locks.mjs"],
   ["verify-rollup-keys-carry-company", "scripts/verify-rollup-keys-carry-company.mjs"],
   ["verify-filter-surfaces-full-set", "scripts/verify-filter-surfaces-full-set.mjs"],
@@ -321,6 +323,8 @@ const STEPS = [
   ["verify-safety-training-record-canonical-routes", "scripts/verify-safety-training-record-canonical-routes.mjs"],
   ["verify-safety-event-detail-list-fallback", "scripts/verify-safety-event-detail-list-fallback.mjs"],
   ["verify-factoring-outstanding-liability-honest-label", "scripts/verify-factoring-outstanding-liability-honest-label.mjs"],
+  // ROUND 355 R-3 — factoring fees are financing costs under 6810, never Bank Charges. Ceiling 0.
+  ["verify-factoring-fees-are-financing-costs", "scripts/verify-factoring-fees-are-financing-costs.mjs"],
   ["verify-expense-create-duplicate-submission-guard", "scripts/verify-expense-create-duplicate-submission-guard.mjs"],
   ["verify-cash-flow-projection-snapshot-wired", "scripts/verify-cash-flow-projection-snapshot-wired.mjs"],
   ["verify-financial-reports-business-date-not-utc", "scripts/verify-financial-reports-business-date-not-utc.mjs"],
@@ -526,6 +530,15 @@ const LIVE_DOMAIN_GUARDS = [
     ],
   ],
 
+  // ROUND 355 R-3 — factoring fee/interest accounts must parent under 6810 (6405 under 6400); never Bank Charges; 6820 stays dead.
+  [
+    "verify-factoring-fees-are-financing-costs",
+    [
+      "scripts/verify-factoring-fees-are-financing-costs.mjs",
+      "apps/backend/src/catalogs/accounts.routes.ts",
+      "apps/backend/src/factoring/",
+    ],
+  ],
   // RECLASSIFY (Lead 2026-10-01, QBO spec §24) — every applied reclassify line is carried by a RECLASSIFICATION JE pair; WORM on postings.
   ["verify-reclassify-batches-are-whole", ["apps/backend/src/accounting/reclassify/", "apps/backend/src/accounting/journal-entries.service.ts"]],
   ["verify-feed-gate-blocks-incomplete", ["apps/backend/src/driver-finance/feed-gate/", "apps/backend/src/settlements/approval.service.ts", "db/migrations/202615170400_feed_gate_intakes.sql"]],
@@ -768,6 +781,11 @@ const LIVE_DOMAIN_GUARDS = [
   [
     "verify-factoring-writers-write-the-spine",
     ["apps/backend/src/factoring/", "scripts/verify-factoring-writers-write-the-spine.mjs"],
+  ],
+  // KPI engines' operator-facing strings (label / source / empty_reason / GL) in business language — runtime check.
+  [
+    "verify-kpi-provenance-business-language",
+    ["apps/backend/src/factoring/factoring-kpi.service.ts", "apps/backend/src/banking/banking-kpi.service.ts", "scripts/verify-kpi-provenance-business-language.mjs"],
   ],
   // ROUND 335 item 2 — Banking home against the approved preview (engine-fed factoring + escrow cards, no dead links).
   [

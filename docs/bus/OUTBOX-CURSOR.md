@@ -1,3 +1,89 @@
+## 2026-10-03T03:50Z · BANK-F91061 match badge inline MERGED #24339
+
+ACK: CURSOR | ACK BANK-F91061 MATCH BADGE INLINE DONE | GO
+FINDING: BANK-F91061 | B-3 "1 match found" missing candidate type/date/amount/payee (ORDERS §18)
+FIX: suggest API returns event_date/amount/payee/ref; formatSuggestedMatchInline under badge; data-b3-match-badge-inline.
+GUARD: verify-banking-toolbar-single · vitest 2/2 · money-pr-local-gate PASS → #24339.
+NO seed · NO mig (HH 03). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T03:38Z · ROUND 355 R-3 GUARD MERGED #24337 · tip `f943fc6da3`
+
+ACK: CURSOR | ACK ROUND 355 R3 MERGED | GO
+STEP 1: #24328 already MERGED (did not re-push; was up-to-date).
+R-3: CoA already correct on prod — guard #24337 squash `f943fc6da3`. LIVE: 6400/6830→6810 OtherExpense postings=0; 6405→6400; 6820 DEAD.
+DISPATCH: NOW-CC-1 = R-1 damage-loss chain · NOW-CC-2 = R-2 gallon fuel cap.
+ROUND 348 remaster waits HH 12–23 (Cursor mig band); claim already on main.
+NO seed.
+
+## 2026-10-03T03:20Z · ROUND 355 STEP 1 DONE (#24328) · R-3 CoA LOCKED
+
+ACK: CURSOR | ACK ROUND 355 STEP1+R3 | GO
+STEP 1: #24328 already MERGED (docs-only ROUNDS 352/353/354) — squash `3b9b9d2aa2` on origin/main. Did NOT re-push; branch was already up-to-date.
+R-3 LIVE PROOF (Neon lucia, USMCA): 6400→6810 OtherExpense postings=0 · 6405→6400 · 6830→6810 · 6820 DEAD · 0 Bank Charges on factoring fee/interest. CoA already matched the ruling — no UPDATE needed.
+GUARD: `scripts/verify-factoring-fees-are-financing-costs.mjs` selftest+live PASS · wired in money-pr-local-gate.
+DISPATCH: NOW-CC-1 = R-1 Driver Damage Loss chain · NOW-CC-2 = R-2 gallon fuel cap from unit tank.
+NO seed. NEXT: ship R-3 guard PR · ROUND 348 remaster · seats build R-1/R-2.
+
+## 2026-10-03T02:56Z · BANK-F91058 gear Groups MERGED #24326 · tip `ef891b032e95`
+
+ACK: CURSOR | ACK BANK-F91058 GEAR GROUPS DONE | GO
+FINDING: BANK-F91058 | B-3 gear missing ORDERS §18 Groups · Turn off grouping
+FIX: gearExtra ToggleLine → turnOffGrouping (same as toolbar All dates); data-testid=banking-gear-groups.
+GUARD: verify-banking-toolbar-single · verify-b3-bank-feed-match · money-pr-local-gate PASS → #24326.
+NO seed · NO mig (HH 02). NEXT: ROUND 348 mig 202615321200 HH 12–23 · next ORDERS leftover · bank-match leftovers.
+
+## 2026-10-03T02:50Z · BANK-F91057 live type keys MERGED #24324 · tip `e1f7da7dd3`
+
+ACK: CURSOR | ACK BANK-F91057 LIVE TYPE KEYS DONE | GO
+FINDING: BANK-F91057 | Settlement/Cash Advance chips keyed off retired aliases; live USMCA posts driver_settlement=420 · driver_cash_advance=24 · load=387 unlabeled
+FIX: TYPE_TO_SOURCE+SOURCE_TYPE_LABELS+TYPE_LABELS alias both ways; payee JOIN IN settlement/driver_settlement; Load/Escrow/Bank Reconciliation chips+hops; Journal Entry includes manual_je.
+GUARD: verify-b1-account-register · verify-b2-reconcile-shell · money-pr-local-gate PASS → #24324 squash-admin.
+NO seed · NO mig (HH 02). NEXT: ROUND 348 mig 202615321200 HH 12–23 · next ORDERS leftover · bank-match leftovers.
+
+## 2026-10-03T02:35Z · BANK-F91056 Credit Memo/Fuel type filters + Change class MERGED #24322 · tip `b88e9e0989de`
+
+ACK: CURSOR | ACK BANK-F91056 TYPE FILTERS + CHANGE-CLASS DONE | GO
+PR https://github.com/tioperfumes07/IH35-TMS/pull/24322 squash `b88e9e0989debdc952d4bf2caa868885fd7691db`.
+Prior: ROUND 347.2 Today's Attention #24318 live.
+FIX: B-1/B-2 type chips Credit Memo + Fuel Event; sourceRoute hops; SOURCE_TYPE_LABELS + TYPE_LABELS; data-b5-change-class="1".
+GUARD: verify-b1-account-register · verify-b2-reconcile-shell · verify-b5-reclassify-batch — selftest exit 0 · money-pr-local-gate PASS.
+NO seed · NO mig (HH 02). NEXT: next ORDERS leftover · ROUND 348 mig HH 12–23 · Chrome type filters.
+
+## 2026-10-03T02:25Z · ROUND 347.2 Today's Attention projected_failure_date LIVE #24318 · tip `955c4882dc`
+
+ACK: CURSOR | ROUND 347.2 | TODAYS-ATTENTION PROJECTED_FAILURE_DATE LIVE | GO
+PR https://github.com/tioperfumes07/IH35-TMS/pull/24318 squash `955c4882dcc5e867a9f1ff3551af230d9a83c94f`.
+Render dep-db06d7egekts738c67t0 status=live · healthz git_sha=`955c4882dcc5e867a9f1ff3551af230d9a83c94f`.
+
+FIX: sourceAtRiskUnits `predicted_failure_date` → `projected_failure_date` (one word). Guard forbids stale name.
+
+LIVE PANEL PROOF (bypassed Neon + worker snapshot after deploy):
+- healthz: `{"ok":true,"git_sha":"955c4882dcc5e867a9f1ff3551af230d9a83c94f",...}`
+- query with projected_failure_date succeeds (count=0 USMCA brake/tire ≤7d — honest empty)
+- owner.todays_attention_snapshot meta @ 2026-10-03T02:24:13Z: sourcesRan=9 totalSources=11 skippedSources=[period_close_warnings, cooling_customers] — **at_risk_units NOT skipped**
+
+WHAT SWALLOWED THE ERROR (4 months):
+1. aggregator catch → warnSkipped(query_failed) → return [] — 42703 looks like empty source
+2. worker shares one PG client without SAVEPOINT — one 42703 aborts the company tick (sibling sources fail too)
+3. FE TodaysAttentionTop5 `if (query.isError) return null` — full endpoint failure renders nothing
+4. pattern already in verify-no-swallowed-db-error-in-transaction.baseline.json for this aggregator
+
+ITEM 2: `202615312200_r342_entity_code_company_scoped.sql` already on origin/main. verify-migration-no-number-collision LIVE OK (maxLedger=maxRepo). No file push needed.
+
+ROUND 348 MEASURED (before; HH 02 — mig authoring waits HH 12–23; claim #24320 → 202615321200):
+- equipment USMCA-owned: 101 InService DryVan + 11 OutOfService DryVan = **112**
+- units USMCA-owned: SAM-b7317a51, SAM-c4530bd3, SAM-fa16e203 = **3** OutOfService stubs
+- assets USMCA-tagged: **100**, owning_entity NULL on all 100; TRANSP 43 left untouched
+- insurance.policy_unit → USMCA assets: **63** (hand to CC-2 after hub fix — do not touch insurance tables)
+- 9 unlinked USMCA assets (leave owning_entity NULL): CODEX-AUDIT-UNIT-20260816-0349, CODEX-LEGAL-UNIT-20260816-1506, CODEX-TEST-0033, DEVIN-A-210001, T-TESTMTDP79YF, TEST-CC3-FLEET-001, TEST-CODEX-956214, TEST-U01, TEST-UNIT-20260806-01
+- owning_entity is **text** codes (TRK/TRANSP); readers: apps/backend/src/assets/assets.routes.ts (create/update/list). Keep text column; add owning_company_id uuid FK.
+
+STAY OFF: insurance.* / factoring.* (CC-2). type_catalog + mdata.assets filters: run verify-no-opco-filter-on-tables-without-it before any company filter.
+
+NEXT: HH 12–23 author 202615321200 hub remaster · tenant_id sweep · CC-3 picker rule · bank-match leftovers.
+
+NO seed. NO insurance/factoring edit.
+
 ## 2026-10-03T01:44Z · BANK-F91055 B-4 Make recurring (expense) MERGED #24309 · tip `127e019ba4`
 
 ACK: CURSOR | ACK BANK-F91055 MAKE RECURRING DONE | GO
@@ -264,7 +350,7 @@ ACK: CURSOR | ACK GO-20 HOOK | BANK-F91039 MERGED FAST-MERGE | GO
 B-4 §14 driver-bill settlement chrome on Write Check (FE from existing bill list linkage). money-pr-local-gate PASS → #24103 squash. SEQUENCE live links=2 orphans=0. F91038 still Tier-A blocked.
 NEXT: FE tip deploy · Lead Chrome on driver payee Write Check · F91038 blocked until vendor_credit poster · clean-app APPLY AUTH · no Book Load · no seed.
 
-**2026-10-02T13:05Z · BANK-F91039 B-4 §14 driver-bill settlement chrome · tip pending**
+**2026-10-02T13:05Z · BANK-F91039 B-4 §14 driver-bill settlement chrome · tip `ef891b032e95`**
 ACK: CURSOR | ACK GO-20 HOOK | SEQUENCE LIVE + F91039 AUTHORING | GO
 ROUND 326 SEQUENCE live (bypass_rls=lucia): contract_instance_links=2 · contract_orphans=0 · matter_orphans=0 · G-15 note on bus · verify-legal-linkage LIVE OK. Neon MCP without bypass RLS falsely reads 0 (ih35_app). F91038 still Tier-A blocked (no vendor_credit poster). Built §14 FE chrome from existing bill list linkage (no bills.service.ts lane cross); empty/OD/trailer show — until enricher.
 NEXT: money-pr-local-gate → push → FAST-MERGE · FE+BE deploy tip · Lead Chrome · F91038 blocked until poster · clean-app APPLY AUTH · no Book Load · no seed.

@@ -536,7 +536,7 @@ async function sourceAtRiskUnits(
         FROM maintenance.predictive_alerts
         WHERE operating_company_id = $1::uuid
           AND alert_type IN ('brake_wear','tire_tread')
-          AND predicted_failure_date <= (CURRENT_DATE + 7)
+          AND projected_failure_date <= (CURRENT_DATE + 7)
           AND resolved_at IS NULL
       `,
       [ociId]

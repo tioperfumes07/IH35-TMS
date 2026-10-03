@@ -344,6 +344,24 @@ check(
   )
 );
 
+// ROUND 347.2 — owner panel broke June (#635): wrong column name → 42703 every tick.
+check(
+  "at_risk_units queries projected_failure_date (live column), never predicted_failure_date",
+  () => {
+    const src = readFileSync(
+      resolve(ROOT, "apps/backend/src/owner/todays-attention/aggregator.service.ts"),
+      "utf8"
+    );
+    if (!src.includes("projected_failure_date")) {
+      throw new Error("missing projected_failure_date");
+    }
+    if (src.includes("predicted_failure_date")) {
+      throw new Error("stale predicted_failure_date still present — column does not exist");
+    }
+    return true;
+  }
+);
+
 // ─── Summary ──────────────────────────────────────────────────────────────────
 
 console.log(`\n[${LABEL}] ${passed} passed, ${failed} failed\n`);

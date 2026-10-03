@@ -131,7 +131,7 @@ export async function computeBankingKpis(client: DbClient, oci: string, range: B
     `SELECT a.bank_account, a.account_number, ${BOOK_BALANCE} AS balance FROM (${ACCOUNTS} AND ca.account_type = 'Asset') a ORDER BY a.account_number`, base)).rows;
   const cashDays = num((await client.query<{ n: number }>(`SELECT count(*)::int n FROM (${CASH_DAYS}) c`, base)).rows[0]?.n);
   out.push({ key: "cash_position", label: "Cash position (book)", unit: "cents", value: cash.reduce((s, r) => s + num(r.balance), 0),
-    source: "posted journal_entry_postings on each Asset bank account's ledger_account_id, as of range end; drill = per account per day",
+    source: "Posted general-ledger balance of each bank account as of the end date (detail: per account, per day)",
     gl_account: cash.map((r) => r.account_number).join(", ") || null, row_count: cashDays,
     buckets: cash.map((r) => ({ label: `${r.bank_account} (${r.account_number})`, count: 0, cents: num(r.balance) })),
     empty_reason: cash.length === 0 ? "No active bank account is linked to a GL cash account — link it on Cash / GL setup." : cashDays === 0 ? "No posted cash activity in this range." : null });
@@ -144,32 +144,32 @@ export async function computeBankingKpis(client: DbClient, oci: string, range: B
        FROM banking.bank_transactions b WHERE ${IN_SCOPE}`, base)).rows[0]!;
   const noLines = clr.n === 0 ? "No bank line in this range." : null;
   out.push({ key: "cleared_vs_uncleared", label: "Uncleared (vs cleared)", unit: "cents", value: num(clr.uv), compare_value: num(clr.cv), compare_label: "Cleared",
-    source: "bank_transactions.reconciliation_cleared (live, not excluded)", gl_account: null, row_count: clr.n,
+    source: "Bank lines marked cleared in reconciliation (excluded lines left out)", gl_account: null, row_count: clr.n,
     buckets: [{ label: "Cleared", count: clr.cn, cents: num(clr.cv) }, { label: "Uncleared", count: clr.un, cents: num(clr.uv) }], empty_reason: noLines });
 
   for (const [key, label, dir] of [["unmatched_inflow", "Unmatched inflow", true], ["unmatched_outflow", "Unmatched outflow", false]] as const) {
     const r = (await client.query<{ n: number; v: string }>(
       `SELECT count(*)::int n, COALESCE(sum(${ABS}), 0)::bigint v FROM banking.bank_transactions b WHERE ${IN_SCOPE} AND ${UNMATCHED} AND b.is_credit = ${dir}`, base)).rows[0]!;
-    out.push({ key, label, unit: "cents", value: num(r.v), source: "bank_transactions review_state = for_review", gl_account: null, row_count: r.n,
+    out.push({ key, label, unit: "cents", value: num(r.v), source: "Bank lines still in For Review", gl_account: null, row_count: r.n,
       empty_reason: noLines ?? (r.n === 0 ? `Every ${dir ? "deposit" : "payment"} in this range is matched or categorized.` : null) });
   }
 
   const mr = (await client.query<{ n: number; m: number }>(
     `SELECT count(*)::int n, count(*) FILTER (WHERE ${RESOLVED})::int m FROM banking.bank_transactions b WHERE ${IN_SCOPE}`, base)).rows[0]!;
   out.push({ key: "match_rate", label: "Match rate", unit: "percent", value: mr.n > 0 ? Number(((mr.m / mr.n) * 100).toFixed(2)) : null,
-    compare_value: mr.m, compare_label: "Resolved lines", source: "review_state matched / categorized / transfer over live lines (excluded left out)",
+    compare_value: mr.m, compare_label: "Resolved lines", source: "Bank lines matched, categorized or recorded as transfers, out of all lines (excluded left out)",
     gl_account: null, row_count: mr.n, empty_reason: noLines });
 
   const gap = (await client.query<{ bank_account: string; gap_cents: string }>(RECON_GAP, base)).rows;
   out.push({ key: "reconciliation_gap", label: "Reconciliation gap (feed vs book)", unit: "cents", value: gap.reduce((s, r) => s + Math.abs(num(r.gap_cents)), 0),
-    source: "bank_accounts.current_balance_cents (bank feed) minus GL book balance as of range end, absolute, per fed account", gl_account: null,
+    source: "Bank-feed balance minus general-ledger balance, per connected account, as of the end date", gl_account: null,
     row_count: gap.length, buckets: gap.map((r) => ({ label: r.bank_account, count: 1, cents: num(r.gap_cents) })),
     empty_reason: gap.length === 0 ? "No bank account with a live feed is linked to a GL account." : null });
 
   const w = (await client.query<{ n: number; e: string; r: string }>(
     `SELECT count(*)::int n, COALESCE(sum(expected_cents), 0)::bigint e, COALESCE(sum(received_cents), 0)::bigint r FROM (${WIRES}) w`, base)).rows[0]!;
   out.push({ key: "factoring_wires_vs_expected", label: "Factoring wires vs expected", unit: "cents", value: num(w.r) - num(w.e), compare_value: num(w.e), compare_label: "Expected",
-    source: "matched Faro wires (matched_factoring_advance_id) minus posted purchases' net_to_company_cents", gl_account: "1090 Undeposited Funds", row_count: w.n,
+    source: "Faro wires matched to purchases, minus the net each posted purchase was due", gl_account: "1090 Undeposited Funds", row_count: w.n,
     empty_reason: w.n === 0 ? "No posted factoring purchase in this range — the Owner posts purchases on Submit to Factor." : null });
 
   for (const [key, label, pred, why] of [
@@ -178,7 +178,7 @@ export async function computeBankingKpis(client: DbClient, oci: string, range: B
   ] as const) {
     const r = (await client.query<{ n: number; v: string }>(
       `SELECT count(*)::int n, COALESCE(sum(${ABS}), 0)::bigint v FROM banking.bank_transactions b WHERE ${IN_SCOPE} AND b.is_credit = false AND ${pred}`, base)).rows[0]!;
-    out.push({ key, label, unit: "cents", value: num(r.v), source: `bank payments with ${pred.replace(/b\./g, "")}`, gl_account: null, row_count: r.n,
+    out.push({ key, label, unit: "cents", value: num(r.v), source: key === "fuel_drafts" ? "Bank payments matched to fuel or Relay fuel purchases" : "Bank payments matched to driver settlements", gl_account: null, row_count: r.n,
       empty_reason: r.n === 0 ? why : null });
   }
 
@@ -197,7 +197,7 @@ export async function computeBankingKpis(client: DbClient, oci: string, range: B
       ORDER BY 1`, base)).rows;
   out.push({ key: "escrow_held", label: "Driver escrow held", unit: "cents", value: num(held.v),
     compare_value: perAcct.length, compare_label: "Accounts holding escrow",
-    source: "posted journal_entry_postings on the escrow_liability_default account and its sub-accounts, credit - debit, as of range end",
+    source: "Posted balance of Driver Escrow and its per-driver sub-accounts as of the end date",
     gl_account: glLabel, row_count: held.n, buckets: perAcct.map((r) => ({ label: r.label, count: 1, cents: num(r.v) })),
     empty_reason: unbound ?? (held.n === 0 ? "No escrow posting on or before this date." : null) });
   for (const [key, label, side, why] of [
@@ -206,7 +206,7 @@ export async function computeBankingKpis(client: DbClient, oci: string, range: B
   ] as const) {
     const r = (await client.query<{ n: number; v: string }>(
       `SELECT count(*)::int n, COALESCE(sum(e.amount_cents), 0)::bigint v FROM (${escrowPostings("activity", side)}) e`, base)).rows[0]!;
-    out.push({ key, label, unit: "cents", value: num(r.v), source: `${side}s to the escrow liability and its sub-accounts in range`,
+    out.push({ key, label, unit: "cents", value: num(r.v), source: side === "credit" ? "Escrow contributions posted in the date range" : "Escrow deductions and releases posted in the date range",
       gl_account: glLabel, row_count: r.n, empty_reason: unbound ?? (r.n === 0 ? why : null) });
   }
   return out;

@@ -596,6 +596,25 @@ export function formatBankTransactionDate(rawDate: string | null | undefined) {
   return `${mm}/${dd}/${yyyy}`;
 }
 
+/**
+ * BANK-F91061 — ORDERS §18: "1 match found" badge must carry the candidate's type / date /
+ * amount / payee inline (QBO: "Check 1581 06/27/2025 -$900.00 Jose Santiago…"). Pure; never invents.
+ */
+export function formatSuggestedMatchInline(
+  suggestion: BankTransactionSuggestion,
+  formatCents: (cents: number) => string = (c) => USD.format(Math.abs(c) / 100),
+): string {
+  const kind = String(suggestion.suggested_ledger_entry_kind ?? "").trim();
+  const kindLabel = kind === "bill" ? "Bill" : kind === "expense" ? "Expense" : kind || "Match";
+  const ref = String(suggestion.suggested_reference ?? "").trim();
+  const date = formatBankTransactionDate(suggestion.suggested_event_date ?? null);
+  const cents = Number(suggestion.suggested_amount_cents ?? 0);
+  const amount = Number.isFinite(cents) && cents !== 0 ? formatCents(cents) : "";
+  const payee = String(suggestion.suggested_payee_name ?? "").trim();
+  const head = [kindLabel, ref].filter(Boolean).join(" ");
+  return [head, date !== "—" ? date : "", amount, payee].filter(Boolean).join(" · ");
+}
+
 export function spentReceived(tx: PlaidBankTransaction) {
   const amount = Math.abs(Number(tx.amount_cents ?? 0));
   if (amount <= 0) return { spent: 0, received: 0 };
@@ -2236,21 +2255,37 @@ export function BankingTransactionsDesignView({
             >
               {/* B.1 — suggested match badge (exact cents, +-5d, expense/bill). Click opens the
               same Match drawer "Accept match (reconcile)" already uses below — Accept never
-              happens here directly, only navigation to the existing accept flow. */}
+              happens here directly, only navigation to the existing accept flow.
+              BANK-F91061 — ORDERS §18: show candidate type/date/amount/payee inline beside the badge. */}
               {txnSuggestions[tx.id] && !hasPersistedMatch(tx) ? (
-                <button
-                  type="button"
-                  title={`${txnSuggestions[tx.id]!.suggested_ledger_entry_kind} match, ${txnSuggestions[tx.id]!.date_gap_days}d gap`}
-                  className={`h-7 rounded-sm border px-1.5 text-[11px] font-semibold ${
-                    txnSuggestions[tx.id]!.suggested_confidence === "high"
-                      ? "border-slate-700 bg-slate-700 text-white"
-                      : "border-slate-300 bg-slate-50 text-slate-600"
-                  }`}
-                  onClick={() => setMatchDrawerTxId(tx.id)}
-                  data-testid={`banking-suggested-match-${tx.id}`}
+                <div
+                  className="flex max-w-[22rem] flex-col items-end gap-0.5"
+                  data-testid={`banking-suggested-match-block-${tx.id}`}
+                  data-b3-match-badge-inline="1"
                 >
-                  1 match found
-                </button>
+                  <button
+                    type="button"
+                    title={`${txnSuggestions[tx.id]!.suggested_ledger_entry_kind} match, ${txnSuggestions[tx.id]!.date_gap_days}d gap`}
+                    className={`h-7 rounded-sm border px-1.5 text-[11px] font-semibold ${
+                      txnSuggestions[tx.id]!.suggested_confidence === "high"
+                        ? "border-slate-700 bg-slate-700 text-white"
+                        : "border-slate-300 bg-slate-50 text-slate-600"
+                    }`}
+                    onClick={() => setMatchDrawerTxId(tx.id)}
+                    data-testid={`banking-suggested-match-${tx.id}`}
+                  >
+                    1 match found
+                  </button>
+                  <button
+                    type="button"
+                    className="max-w-full truncate text-left text-xs text-[#1F2A44] underline-offset-2 hover:underline"
+                    title={formatSuggestedMatchInline(txnSuggestions[tx.id]!)}
+                    onClick={() => setMatchDrawerTxId(tx.id)}
+                    data-testid={`banking-suggested-match-detail-${tx.id}`}
+                  >
+                    {formatSuggestedMatchInline(txnSuggestions[tx.id]!)}
+                  </button>
+                </div>
               ) : null}
               {/* BANK-UNDO-01 — QBO parity: row-level Undo on Categorized AND Excluded, releasing
                   every match/categorization column (and reversing the GL if any) in one call. */}
@@ -3895,6 +3930,15 @@ export function BankingTransactionsDesignView({
               <ToggleLine label="Match status" checked={viewSettings.showMatchStatus} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showMatchStatus: checked }))} />
               <ToggleLine label="Reference" checked={viewSettings.showReference} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showReference: checked }))} />
               <ToggleLine label="Posted JE" checked={viewSettings.showPostedJe} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showPostedJe: checked }))} />
+              {/* BANK-F91058 — ORDERS §18 Groups · Turn off grouping (same state as toolbar All dates).
+                  Nested under Also show (no new raw-size header — UI ratchet backslide lock). */}
+              <span data-testid="banking-gear-groups" className="col-span-2">
+                <ToggleLine
+                  label="Turn off grouping"
+                  checked={viewSettings.turnOffGrouping}
+                  onChange={(checked) => setViewSettings((prev) => ({ ...prev, turnOffGrouping: checked }))}
+                />
+              </span>
             </div>
             <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Automation review</p>
             <label

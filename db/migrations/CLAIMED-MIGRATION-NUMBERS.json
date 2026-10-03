@@ -1701,6 +1701,31 @@
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-03",
       "purpose": "ROUND 345 the block, phase 2: composite same-entity FKs on settlement_lines / escrow_balances / driver_advance_accounts (13; the two with one cross-company row each — awaiting owner rulings — added NOT VALID) + settlement_lines company-required CHECK"
+    },
+    "202615330905": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 353 load 13515 — close the route: a load may only become cancelled with an approved dispatch.load_cancellations row (deferred constraint trigger on mdata.loads)"
+    },
+    "202615321200": {
+      "claimed_by": "cursor",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 348: remaster mdata.equipment (112) + mdata.units (3) USMCA-owned→TRK owned leased-to-USMCA; populate mdata.assets.owning_entity from hub; add owning_company_id uuid FK + same-entity constraint vs linked unit/equipment (CC-3 composite shape). Leave 9 unlinked assets NULL. No insurance/factoring touch."
+    },
+    "202615330600": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 352 F-2 + F-3 (one-leg family): declare role fuel_wallet_relay (1295); a deferred constraint trigger on journal_entry_postings refuses a non-reversal credit that leaves an account bound to undeposited_funds (1090) or fuel_wallet_relay (1295) with a credit balance — an asset holding money cannot be negative."
+    },
+    "202615330700": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 355 R-2 (same package as F-3): fuel cap is GALLONS per unit — mdata.units.fuel_tank_capacity_gallons, policy per_swipe_gallon_limit (fallback, default 150), refuse an active policy with neither limit, overage rule over_gallon_limit + audit columns, exempt outcome for repairs / authorized non-fuel spend."
+    },
+    "202615340100": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-03",
+      "purpose": "Lead ROUND 355 R-1 — driver damage chain: escrow -> pay -> Driver Damage Loss; role driver_damage_loss (USMCA 6176), driver_settlement_deductions.parent_deduction_id, status written_off"
     }
   },
   "202613590001": {

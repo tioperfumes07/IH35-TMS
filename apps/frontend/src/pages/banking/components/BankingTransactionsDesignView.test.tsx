@@ -10,6 +10,7 @@ import {
   BankingTransactionsDesignView,
   categorizedProvenanceText,
   categorizedRuleLabel,
+  formatSuggestedMatchInline,
   spentReceived,
 } from "./BankingTransactionsDesignView";
 
@@ -32,6 +33,41 @@ function provenanceTx(overrides: Partial<PlaidBankTransaction>): PlaidBankTransa
     ...overrides,
   };
 }
+
+describe("B-3 §18 formatSuggestedMatchInline (BANK-F91061)", () => {
+  it("renders candidate type · date · amount · payee for the match badge", () => {
+    const line = formatSuggestedMatchInline(
+      {
+        suggested_ledger_entry_kind: "expense",
+        suggested_ledger_entry_id: "exp-1",
+        suggested_confidence: "high",
+        date_gap_days: 2,
+        memo_similarity: 0.9,
+        suggested_event_date: "2026-06-27",
+        suggested_amount_cents: 90000,
+        suggested_payee_name: "Jose Santiago",
+        suggested_reference: "1581",
+      },
+      (c) => `$${(Math.abs(c) / 100).toFixed(2)}`,
+    );
+    expect(line).toBe("Expense 1581 · 06/27/2026 · $900.00 · Jose Santiago");
+  });
+
+  it("omits empty optional fields without inventing placeholders", () => {
+    const line = formatSuggestedMatchInline({
+      suggested_ledger_entry_kind: "bill",
+      suggested_ledger_entry_id: "bill-1",
+      suggested_confidence: "medium",
+      date_gap_days: 0,
+      memo_similarity: 0.5,
+      suggested_event_date: null,
+      suggested_amount_cents: 0,
+      suggested_payee_name: null,
+      suggested_reference: null,
+    });
+    expect(line).toBe("Bill");
+  });
+});
 
 describe("B-3 §19 categorizedProvenanceText", () => {
   it("returns Added to: Expense <date> for categorize path", () => {

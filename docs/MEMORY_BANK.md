@@ -1435,3 +1435,18 @@ Full coder instructions: `claude/2026-09-13-ABSORPTION-INGEST-AND-DISPUTE-WINDOW
 - **Faro identity:** face − escrow − cash_rsv − discount − fees − dispatch − sch_fee = net_advance. Discount = factoring fee; Sch Fee + Wire = transaction fees (never one bucket). Sch Fee at collection against cash.
 - **Match survivors:** acceptMatchWithResolveDifference / unmatchBankTransaction; fuel JE same txn; 1230 repurchase → postFactoringChargebackEvent({client}).
 - **Calendars:** DateTimePicker portal fix (UI-F9637) verified 15/15 vitest; QBO presets include today/this_week; Legal alerts due_at range + 132px Due.
+
+## Active Architectural Decisions — ROUND 355 R-3 factoring fees are financing costs (Cursor, 2026-10-03)
+
+- **Owner ruling:** factoring fees must NOT sit under Bank Charges. ASC 860 financing cost for full-recourse Faro.
+- **Live USMCA CoA (already correct on prod, 0 postings on all four):** 6400→parent 6810 subtype OtherExpense; 6405→parent 6400; 6830→parent 6810; 6820 DEAD duplicate. 6300/6310 remain the only Bank Charges leaves.
+- **Guard:** `scripts/verify-factoring-fees-are-financing-costs.mjs` — ceiling 0; refuses bank-charge subtype or wrong parent; 6820 must stay deactivated. Wired in money-pr-local-gate.
+- **Do not revive 6820. Do not re-open Faro "NOT A LOAN" vs owner accounting determination.**
+- **R-1 (CC-1):** Driver Damage Loss 6176 is terminal leg of escrow family — escrow → net pay → loss. Never net vs 7210.
+- **R-2 (CC-2):** Fuel overage limit is gallons from `mdata.units.fuel_tank_capacity_gallons`, policy gallon fallback 150, dollar cap last resort.
+
+## Next Immediate Milestones — ROUND 355 (Cursor, 2026-10-03)
+
+- CC-1 ships R-1 damage-loss chain with fork proof.
+- CC-2 ships R-2 gallon fuel cap + F-3 Relay wallet package.
+- Cursor finishes ROUND 348 TRK ownership hub remaster (mig 202615321200) when HH 12–23 / rebase clean.
