@@ -1,3 +1,11 @@
+## 2026-10-03T19:40Z · BANK-F91205 DispatchChatPage leftover tokens MERGED #24739 tip 37c2a1763a
+
+ACK: CURSOR | ACK BANK-F91205 DISPATCH CHAT TEXT TOKENS DONE | GO
+FINDING: BANK-F91205 | DispatchChatPage leftover off-scale text-[11px] ×1
+FIX: 1 token → text-xs. Hung leftover refuse on verify-dispatch-chat-error-honesty.
+GUARD: verify-dispatch-chat-error-honesty · leftover plant + live PASS → #24739 tip `37c2a1763a`.
+NO seed · NO mig. NEXT: leftover MaintenanceHome · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T19:35Z · BANK-F91204 PlannerCalendarPage leftover tokens MERGED #24736 tip 8cf6731af3
 
 ACK: CURSOR | ACK BANK-F91204 PLANNER CALENDAR TEXT TOKENS DONE | GO
