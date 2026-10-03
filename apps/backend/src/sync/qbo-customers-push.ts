@@ -118,7 +118,7 @@ async function auditQboPushAttempt(
   await client.query(
     `
       INSERT INTO audit.row_changes (
-        tenant_id,
+        operating_company_id,
         schema_name,
         table_name,
         op,

@@ -104,7 +104,7 @@ export async function factoringBookReserveCents(client: DbClient, oci: string, a
 export async function activeFactorId(client: DbClient, oci: string): Promise<string | null> {
   return (await client.query<{ id: string }>(
     `SELECT f.id::text AS id FROM factoring.canonical_factor_agreements a JOIN factoring.factor f ON f.id = a.factor_profile_id
-      WHERE a.tenant_id = $1::uuid AND a.voided_at IS NULL AND f.voided_at IS NULL ORDER BY a.effective_from DESC LIMIT 1`, [oci])).rows[0]?.id ?? null;
+      WHERE a.operating_company_id = $1::uuid AND a.voided_at IS NULL AND f.voided_at IS NULL ORDER BY a.effective_from DESC LIMIT 1`, [oci])).rows[0]?.id ?? null;
 }
 
 /**
@@ -141,7 +141,7 @@ export async function computeFactoringKpis(client: DbClient, oci: string, range:
 
   const contracted = (await client.query<{ r: string | null }>(
     `SELECT f.advance_rate::text r FROM factoring.canonical_factor_agreements a JOIN factoring.factor f ON f.id = a.factor_profile_id
-      WHERE a.tenant_id = $1::uuid AND a.voided_at IS NULL AND f.voided_at IS NULL ORDER BY a.effective_from DESC LIMIT 1`, [oci])).rows[0]?.r;
+      WHERE a.operating_company_id = $1::uuid AND a.voided_at IS NULL AND f.voided_at IS NULL ORDER BY a.effective_from DESC LIMIT 1`, [oci])).rows[0]?.r;
   out.push({ key: "advance_rate", label: "Advance rate realised", unit: "percent",
     value: num(vol.gross) > 0 ? Number(((num(vol.adv) / num(vol.gross)) * 100).toFixed(2)) : null,
     compare_value: contracted != null ? Number((Number(contracted) * 100).toFixed(2)) : null, compare_label: "Contracted",

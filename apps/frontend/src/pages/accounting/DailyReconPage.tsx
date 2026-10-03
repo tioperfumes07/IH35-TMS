@@ -176,7 +176,7 @@ export function DailyReconPage() {
           >
             <div className="flex flex-wrap gap-2 items-end">
               <div className="flex flex-col gap-0.5">
-                <label className="text-[11px] font-semibold uppercase text-gray-500">From</label>
+                <label className="text-section-header font-semibold uppercase text-gray-500">From</label>
                 <DatePicker
                   value={staged.draft.fromDate}
                   onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })}
@@ -184,7 +184,7 @@ export function DailyReconPage() {
                 />
               </div>
               <div className="flex flex-col gap-0.5">
-                <label className="text-[11px] font-semibold uppercase text-gray-500">To</label>
+                <label className="text-section-header font-semibold uppercase text-gray-500">To</label>
                 <DatePicker
                   value={staged.draft.toDate}
                   onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })}
@@ -192,7 +192,7 @@ export function DailyReconPage() {
                 />
               </div>
               <div className="flex flex-col gap-0.5">
-                <label className="text-[11px] font-semibold uppercase text-gray-500">Type</label>
+                <label className="text-section-header font-semibold uppercase text-gray-500">Type</label>
                 <SelectCombobox
                   value={staged.draft.entityType}
                   onChange={(e) => staged.setDraft({ ...staged.draft, entityType: e.target.value })}
@@ -203,7 +203,7 @@ export function DailyReconPage() {
                 </SelectCombobox>
               </div>
               <div className="flex flex-col gap-0.5">
-                <label className="text-[11px] font-semibold uppercase text-gray-500">Status</label>
+                <label className="text-section-header font-semibold uppercase text-gray-500">Status</label>
                 <SelectCombobox
                   value={staged.draft.matchStatus}
                   onChange={(e) => staged.setDraft({ ...staged.draft, matchStatus: e.target.value as DailyReconMatchStatus | "all" })}

@@ -19,7 +19,9 @@ function problems(b = backend, p = page) {
     [graph.includes("matter_number ASC, id ASC") && graph.includes("incident_at DESC NULLS LAST, id ASC"), "matter/incident stable order"],
     [graph.includes("ORDER BY uuid ASC"), "continuity stable order"],
     [graph.includes("transaction_date DESC NULLS LAST, id ASC") && graph.includes("bill_date DESC NULLS LAST, id ASC") && graph.includes("created_at DESC NULLS LAST, id ASC"), "financial/WO stable order"],
-    [(graph.match(/operating_company_id = \$1::uuid/g) ?? []).length >= 7 && (graph.match(/tenant_id = \$1::uuid/g) ?? []).length >= 2, "company scope across all schemas"],
+    // ROUND 342: operating_company_id is the one company column (tenant_id dropped by 202615330800). The claim and all eight
+    // reverse families are each scoped on it — nine predicates — and no read may name the dropped column.
+    [(graph.match(/operating_company_id = \$1::uuid/g) ?? []).length >= 9 && !/\btenant_id\b/.test(graph), "company scope across all schemas"],
     [p.includes('data-testid="insurance-claim-expenses-reverse"') && p.includes('data-testid="insurance-claim-bills-reverse"'), "mounted claim reverse UI"],
   ];
   return checks.filter(([ok]) => !ok).map(([, label]) => label);
@@ -36,6 +38,8 @@ if (process.argv.includes("--selftest")) {
     [backend.replace("bill_date DESC NULLS LAST, id ASC", "bill_date DESC LIMIT 50"), page],
     [backend.replace("created_at DESC NULLS LAST, id ASC", "created_at DESC LIMIT 50"), page],
     [backend.replace("operating_company_id = $1::uuid AND insurance_claim_id", "insurance_claim_id"), page],
+    // the dropped legacy column reintroduced in one family's scope
+    [backend.replace("operating_company_id = $1::uuid AND insurance_claim_id", "tenant_id = $1::uuid AND operating_company_id = $1::uuid AND insurance_claim_id"), page],
   ];
   const escaped = mutations.map((mutation, index) => problems(...mutation).length === 0 ? index + 1 : null).filter(Boolean);
   if (escaped.length) throw new Error(`${escaped.length} planted defect(s) escaped: ${escaped.join(",")}`);

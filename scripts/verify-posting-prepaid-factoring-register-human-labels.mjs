@@ -19,7 +19,9 @@ function assertAll(srcs) {
   const problems = [];
   for (const [file, src] of Object.entries(srcs)) {
     if (/\.slice\(0,\s*8\)/.test(src)) problems.push(`${file}: still UUID-slices`);
-    if (!/entityLabel\(/.test(src)) problems.push(`${file}: missing entityLabel`);
+    // Human label: entityLabel(...) directly, or EntityLinkOrTombstone with a name prop (it labels through entityLabel
+    // internally — the component that replaced the bare calls, e.g. AbandonmentQueuePage since ACCT-F26303).
+    if (!/entityLabel\(/.test(src) && !/<EntityLinkOrTombstone[\s\S]{0,200}?\bname=\{/.test(src)) problems.push(`${file}: missing entityLabel`);
   }
   return problems;
 }
@@ -40,6 +42,13 @@ if (SELFTEST) {
   );
   if (!assertAll(planted).length) {
     console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);
+    process.exit(1);
+  }
+  // Plant 2: the Abandonment page's labelled links replaced by raw ids (no entityLabel, no named EntityLinkOrTombstone).
+  const planted2 = { ...srcs };
+  planted2[FILES[3]] = planted2[FILES[3]].replace(/<EntityLinkOrTombstone[\s\S]*?\/>/g, "{String(row.id)}");
+  if (planted2[FILES[3]] === srcs[FILES[3]] || !assertAll(planted2).some((p) => p.startsWith(FILES[3]))) {
+    console.error(`${LABEL} SELFTEST FAILED: unlabelled Abandonment links not caught`);
     process.exit(1);
   }
   const live = assertAll(srcs);

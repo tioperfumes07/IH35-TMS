@@ -131,7 +131,7 @@ function FieldLabel({ label, required, children }: { label: string; required?: b
 
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null;
-  return <div className="mt-1 text-[11px] text-red-700">{msg}</div>;
+  return <div className="mt-1 text-xs text-red-700">{msg}</div>;
 }
 
 export function AccountDrawer({
@@ -489,7 +489,7 @@ export function AccountDrawer({
                 />
                 <div>
                   <div className="text-xs font-semibold text-gray-800">Make this a subaccount</div>
-                  <div className="mt-0.5 text-[11px] text-gray-500">
+                  <div className="mt-0.5 text-xs text-gray-500">
                     Nest this account under a parent of the same account type (current entity only).
                   </div>
                 </div>
@@ -536,7 +536,7 @@ export function AccountDrawer({
                 className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-3"
                 data-testid="account-preview-pane"
               >
-                <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                <div className="mb-2 text-section-header font-semibold uppercase tracking-wide text-slate-500">
                   Preview
                 </div>
                 <div className="space-y-1.5 text-xs text-slate-700">
@@ -567,7 +567,7 @@ export function AccountDrawer({
                       {ACTION_LABELS[previewEntry.defaultAction] ?? previewEntry.defaultAction}
                     </span>
                   </div>
-                  <div className="pt-1 text-[11px] text-slate-500" data-testid="preview-description">
+                  <div className="pt-1 text-xs text-slate-500" data-testid="preview-description">
                     {`Lands under ${GROUP_LABELS[previewEntry.group] ?? previewEntry.group} on your ${
                       STATEMENT_LABELS[previewEntry.statement] ?? previewEntry.statement
                     }${form.is_subaccount ? ", nested as a subaccount." : "."}`}
@@ -629,7 +629,7 @@ export function AccountDrawer({
                 />
                 <div>
                   <div className="text-xs font-semibold text-gray-800">Lock Account</div>
-                  <div className="mt-0.5 text-[11px] text-gray-500">
+                  <div className="mt-0.5 text-xs text-gray-500">
                     Locked accounts cannot be edited or archived. This action cannot be undone through the UI.
                   </div>
                 </div>

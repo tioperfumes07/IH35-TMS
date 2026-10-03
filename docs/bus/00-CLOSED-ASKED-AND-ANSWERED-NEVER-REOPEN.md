@@ -119,6 +119,7 @@ ruling and none of it should ever have reached him.** Cite the column on the rig
 | **Escrow cap / net-pay floor** | **$2,500 cap. 5% floor**, overridable by owner/accountant/admin. Both live. | **C2b**, answer **44** |
 | **Unmatched bank transactions** | **Alert at 7 days.** One threshold, not 30/90. | **A1** |
 | **Deleting money records** | **NEVER**, and kill any job that does. Keep a register of every void and cancellation. The authorized purge is the owner's **explicit override** for settlement-created transactions only — it licenses no automatic deletion path, and the purge's own audit trail and the void register survive it. | **F9**; answer **5** |
+| **Faro wire fee** | **It is a WIRE FEE — a bank charge, NOT a financing cost.** Owner 2026-10-03: *"FARO WIRE FEE IS A WIRE FEE."* Role `factor_wire_fee` stays on the company's bank-charge / wire-fee account: USMCA **6300 Bank Service Charges & Wire Fees**, TRANSP QBO-211 *BC-Ach & Wire Fees*, TRK QBO-107 *BC-ACH & Wire Fees*. The factoring **fees** (6400 / 6405 / 6830) are financing costs under 6810 (R-3); the factor's **wire fee** is not. Never move it under 6810. Guarded by `verify-factoring-fees-are-financing-costs` (wire-fee rule). | Owner 2026-10-03 (chat) |
 
 ## THE LEAD'S STANDING CORRECTION — 2026-10-03
 **The owner is not a decision queue.** He decides what has not been decided. Everything else is in a file:

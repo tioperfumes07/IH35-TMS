@@ -322,13 +322,13 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
       );
       await db.query(
         `INSERT INTO factoring.factor (
-           id, tenant_id, name, advance_rate, fee_rate, reserve_rate, recourse_days, active
+           id, operating_company_id, name, advance_rate, fee_rate, reserve_rate, recourse_days, active
          ) VALUES ($1::uuid,$2::uuid,$3,0.9700,0.0150,0.0150,95,true)`,
         [seededFaroProfileId, companyId, `Chain-06 Faro Full Recourse ${suffix}`]
       );
       await db.query(
         `INSERT INTO factoring.canonical_factor_agreements (
-           id, tenant_id, factor_profile_id, factor_vendor_id, agreement_code,
+           id, operating_company_id, factor_profile_id, factor_vendor_id, agreement_code,
            effective_from, effective_to, is_full_recourse,
            fee_rate_tier1, fee_rate_tier2, reserve_rate,
            repurchase_term_days, grace_days, repurchase_deadline_days, default_interest_daily_rate
@@ -394,12 +394,12 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
           await db.query(
             `UPDATE factoring.canonical_factor_agreements
                 SET effective_to = '2024-12-01'::date
-              WHERE id = $1::uuid AND tenant_id = $2::uuid`,
+              WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
             [seededFaroAgreementId, companyId]
           );
         }
         if (seededFaroProfileId) {
-          await db.query(`UPDATE factoring.factor SET active = false WHERE id = $1::uuid AND tenant_id = $2::uuid`, [
+          await db.query(`UPDATE factoring.factor SET active = false WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [
             seededFaroProfileId,
             companyId,
           ]);

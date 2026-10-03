@@ -173,8 +173,8 @@ export function computeFailures(sources) {
   if (!/trailers\.id = c\.trailer_id[\s\S]{0,240}?(owner_company_id|currently_leased_to_company_id)/.test(claimRoutes)) {
     errors.push("claim.routes.ts: the mdata.equipment trailer join must be ENTITY-SCOPED (owner_company_id / currently_leased_to_company_id) — an id-only join leaks trailers across operating companies");
   }
-  if (!/LEFT JOIN mdata\.assets assets[\s\S]{0,200}?assets\.tenant_id\s*=\s*\$\{scope\}/.test(claimRoutes)) {
-    errors.push("claim.routes.ts: the mdata.assets join must be ENTITY-SCOPED (assets.tenant_id = the claim's company scope) — mdata.assets has no operating_company_id");
+  if (!/LEFT JOIN mdata\.assets assets[\s\S]{0,200}?assets\.operating_company_id\s*=\s*\$\{scope\}/.test(claimRoutes)) {
+    errors.push("claim.routes.ts: the mdata.assets join must be ENTITY-SCOPED (assets.operating_company_id = the claim's company scope) — ROUND 342 renamed mdata.assets.tenant_id to operating_company_id");
   }
   // ROUND 342 Phase 2 (owner ruling: one scope column). The COALESCE(c.operating_company_id, c.tenant_id) this guard
   // used to require existed because operating_company_id could be NULL on rows written before it was populated.
@@ -199,17 +199,20 @@ export function computeFailures(sources) {
   // policy `identity.is_lucia_bypass() OR operating_company_id::text = current_setting(...)`,
   // polcmd '*', column nullable with no default). A writer that sets only tenant_id leaves it NULL,
   // the check is not satisfied, and Postgres REJECTS the row — prod n_tup_ins was 0, meaning claim
-  // creation had never once succeeded. Every writer must set BOTH columns.
-  if (!/put\("operating_company_id", body\.operating_company_id/.test(claimRoutes)) {
-    errors.push("claim.routes.ts: the claim INSERT must write operating_company_id — prod RLS keys the INSERT WITH CHECK on it and rejects rows where it is NULL");
+  // creation had never once succeeded. ROUND 342 step 2c: operating_company_id is the ONE company column —
+  // every writer sets it UNCONDITIONALLY, and none writes the legacy tenant_id (phase B drops it).
+  if (!/^\s*put\("operating_company_id", body\.operating_company_id/m.test(claimRoutes)) {
+    errors.push("claim.routes.ts: the claim INSERT must write operating_company_id unconditionally — prod RLS keys the INSERT WITH CHECK on it and rejects rows where it is NULL");
   }
-  if (!/put\("tenant_id", body\.operating_company_id/.test(claimRoutes)) {
-    errors.push("claim.routes.ts: the claim INSERT must write tenant_id — every existing claim read still filters on it");
+  if (/put\("tenant_id"/.test(claimRoutes)) {
+    errors.push("claim.routes.ts: the claim INSERT writes tenant_id — ROUND 342 step 2c retires it; operating_company_id is the one company column");
   }
-  if (!/INSERT INTO insurance\.claim \([\s\S]{0,200}?\btenant_id,\s*\n\s*operating_company_id,/.test(autoClaim)) {
-    errors.push(
-      "insurance-link.service.ts: the WF-027 auto-claim INSERT must write operating_company_id alongside tenant_id — prod RLS rejects the row otherwise"
-    );
+  const autoCols = (autoClaim.match(/INSERT INTO insurance\.claim \(([\s\S]*?)\)/) ?? [])[1] ?? "";
+  if (!/\boperating_company_id\b/.test(autoCols)) {
+    errors.push("insurance-link.service.ts: the WF-027 auto-claim INSERT must write operating_company_id — prod RLS rejects the row otherwise");
+  }
+  if (/\btenant_id\b/.test(autoCols)) {
+    errors.push("insurance-link.service.ts: the WF-027 auto-claim INSERT writes tenant_id — ROUND 342 step 2c retires it");
   }
   // ── HELD-COLUMN READ GUARD ───────────────────────────────────────────────────────────────────
   // The six economics columns come from HELD 202607730000, which is skipped by db:migrate. Reading
@@ -380,14 +383,13 @@ function claimFrom(caps) {
   return \`
   LEFT JOIN mdata.assets assets
     ON assets.id = c.asset_id
-   AND assets.tenant_id = \${scope}\${trailerJoin}
+   AND assets.operating_company_id = \${scope}\${trailerJoin}
 \`;
 }
       for (const [kind, id] of [
         ["trailer", body.trailer_id],
       ] as const) {}
-      put("tenant_id", body.operating_company_id, (p) => \`\${p}::uuid\`);
-      if (caps.operatingCompanyId) put("operating_company_id", body.operating_company_id, (p) => \`\${p}::uuid\`);
+      put("operating_company_id", body.operating_company_id, (p) => \`\${p}::uuid\`);
       if (caps.economics) {
         put("fault", body.fault ?? null, (p) => \`COALESCE(\${p}, 'undetermined')\`);
         put("deductible_cents", body.deductible_cents ?? null, (p) => \`COALESCE(\${p}, 0)\`);
@@ -424,12 +426,11 @@ const INITIAL_FORM = {
 `,
     autoClaim: `
       INSERT INTO insurance.claim (
-        tenant_id,
         operating_company_id,
         claim_number,
         policy_id
       )
-      VALUES ($1::uuid, $1::uuid, $2, $3::uuid)
+      VALUES ($1::uuid, $2, $3::uuid)
 `,
     reverseSection: `
       {claim.fault} {claim.driver_responsible} {claim.deductible_cents} {claim.recovery_rail}
@@ -467,7 +468,10 @@ function selftest() {
     ["claimShared", (f) => { f.claimShared = f.claimShared.replace('["escrow", "settlement", "split", "ask"]', '["escrow", "settlement", "split", "ask", "auto"]'); }, "owner lock #1"],
     ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace("LEFT JOIN mdata.equipment trailers", "LEFT JOIN mdata.units trailers"); }, "LEFT JOIN mdata.equipment trailers"],
     // RLS-key class: prod FORCE RLS keys the claim INSERT WITH CHECK on operating_company_id.
-    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace('if (caps.operatingCompanyId) put("operating_company_id", body.operating_company_id, (p) => `${p}::uuid`);', ""); }, "must write operating_company_id"],
+    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace('      put("operating_company_id", body.operating_company_id, (p) => `${p}::uuid`);', ""); }, "must write operating_company_id"],
+    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace('      put("operating_company_id", body.operating_company_id, (p) => `${p}::uuid`);', '      if (caps.operatingCompanyId) put("operating_company_id", body.operating_company_id, (p) => `${p}::uuid`);'); }, "unconditionally"],
+    ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace('      put("operating_company_id", body.operating_company_id, (p) => `${p}::uuid`);', '      put("tenant_id", body.operating_company_id, (p) => `${p}::uuid`);\n      put("operating_company_id", body.operating_company_id, (p) => `${p}::uuid`);'); }, "writes tenant_id"],
+    ["autoClaim", (f) => { f.autoClaim = f.autoClaim.replace("        operating_company_id,\n", "        tenant_id,\n        operating_company_id,\n"); }, "auto-claim INSERT writes tenant_id"],
     ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace("const scope = `c.operating_company_id`", "const scope = `COALESCE(c.operating_company_id, c.tenant_id)`"); }, "no fallback to tenant_id"],
     ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replaceAll("getClaimColumnCapabilities", "somethingElse"); }, "getClaimColumnCapabilities"],
     ["claimRoutes", (f) => { f.claimRoutes = f.claimRoutes.replace('return { kind: "economics_unavailable" as const };', "return null;"); }, "economics_unavailable"],

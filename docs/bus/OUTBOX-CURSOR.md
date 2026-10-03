@@ -1,3 +1,563 @@
+## 2026-10-03T11:43Z · BANK-F91130 DriverManagerAttentionPanel text tokens MERGED #24502
+
+ACK: CURSOR | ACK BANK-F91130 DRIVER MANAGER ATTENTION TEXT TOKENS DONE | GO
+FINDING: BANK-F91130 | DriverManagerAttentionPanel heading/pill off-scale text-[11px] (locked tokens)
+FIX: heading→text-section-header; pill→text-xs; driver-manager-home guard refuses text-[11px].
+GUARD: verify-driver-manager-home · money-pr-local-gate PASS → #24502 tip `a7bb9d781d`.
+NO seed · NO mig (HH 11). NEXT: AttentionItemCard leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T11:32Z · BANK-F91129 SafetyAlertsPanel text tokens MERGED #24497
+
+ACK: CURSOR | ACK BANK-F91129 SAFETY ALERTS PANEL TEXT TOKENS DONE | GO
+FINDING: BANK-F91129 | SafetyAlertsPanel heading/pill off-scale text-[11px] (locked tokens)
+FIX: heading→text-section-header; pill→text-xs; safety-officer-home guard refuses text-[11px].
+GUARD: verify-safety-officer-home · money-pr-local-gate PASS → #24497 tip `04026d1166`.
+NO seed · NO mig (HH 11). NEXT: DriverManagerAttentionPanel leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T11:26Z · BANK-F91128 TodaysAttentionTop5 text tokens MERGED #24493
+
+ACK: CURSOR | ACK BANK-F91128 TODAYS ATTENTION TEXT TOKENS DONE | GO
+FINDING: BANK-F91128 | TodaysAttentionTop5 heading/hint off-scale text-[11px] (locked tokens)
+FIX: 2 headings→text-section-header; hint→text-xs; dismiss-error guard refuses text-[11px].
+GUARD: verify-home-attention-dismiss-visible-errors · money-pr-local-gate PASS → #24493 tip `28573a9763`.
+NO seed · NO mig (HH 11). NEXT: SafetyAlertsPanel leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T11:19Z · BANK-F91127 DispatcherKpiBar text tokens MERGED #24489
+
+ACK: CURSOR | ACK BANK-F91127 DISPATCHER KPI BAR TEXT TOKENS DONE | GO
+FINDING: BANK-F91127 | DispatcherKpiBar labels off-scale text-[11px] (locked tokens)
+FIX: labels→text-section-header; dispatcher-home guard refuses text-[11px] on kpiBar only.
+GUARD: verify-dispatcher-home · money-pr-local-gate PASS → #24489 tip `d473f2beae`.
+NO seed · NO mig (HH 11). NEXT: home widget leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T11:14Z · BANK-F91126 ComplianceFilingsDueWidget text tokens MERGED #24487
+
+ACK: CURSOR | ACK BANK-F91126 FILINGS WIDGET TEXT TOKENS DONE | GO
+FINDING: BANK-F91126 | ComplianceFilingsDueWidget heading/hint off-scale text-[11px] (locked tokens)
+FIX: heading→text-section-header; hint→text-xs; filings-widget guard refuses text-[11px].
+GUARD: verify-home-filings-widget-shows-detail · money-pr-local-gate PASS → #24487 tip `ec92792e82`.
+NO seed · NO mig (HH 11). NEXT: DispatcherKpiBar leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T11:05Z · BANK-F91125 home QboSyncHealthCard pill text tokens MERGED #24485
+
+ACK: CURSOR | ACK BANK-F91125 HOME QBO SYNC PILL TEXT TOKENS DONE | GO
+FINDING: BANK-F91125 | home QboSyncHealthCard status pill off-scale text-[11px] (locked tokens)
+FIX: status pill→text-xs; qbo-sync-staleness guard refuses text-[11px].
+GUARD: verify-qbo-sync-staleness · money-pr-local-gate PASS → #24485 tip `6367c5b6bc`.
+NO seed · NO mig (HH 11). NEXT: home widget leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T10:59Z · BANK-F91124 CreateMaintPartModal text tokens MERGED #24483
+
+ACK: CURSOR | ACK BANK-F91124 MAINT PART MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91124 | CreateMaintPartModal field errors off-scale text-[11px] (locked tokens)
+FIX: 4 field-error lines→text-xs; maint-parts-create-modal guard refuses text-[11px].
+GUARD: verify-maintenance-parts-catalog-create-modal · money-pr-local-gate PASS → #24483 tip `362bb1bac3`.
+NO seed · NO mig (HH 10). NEXT: QboSyncHealthCard pill leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T10:53Z · BANK-F91123 DriverTeamModal text tokens MERGED #24481
+
+ACK: CURSOR | ACK BANK-F91123 DRIVER TEAM MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91123 | DriverTeamModal field errors/hints off-scale text-[11px] (locked tokens)
+FIX: 4 field-error + 2 hint/label lines→text-xs; lst-f10 guard refuses text-[11px].
+GUARD: verify-lst-f10-driver-teams-surface · money-pr-local-gate PASS → #24481 tip `0b3c4a1d8f`.
+NO seed · NO mig (HH 10). NEXT: CreateMaintPartModal leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T10:48Z · BANK-F91122 DriverCatalogModal text tokens MERGED #24479
+
+ACK: CURSOR | ACK BANK-F91122 DRIVER CATALOG MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91122 | DriverCatalogModal field errors off-scale text-[11px] (locked tokens)
+FIX: 3 field-error lines→text-xs; cu09 catalog-submit-error guard refuses text-[11px].
+GUARD: verify-cu09-catalog-submit-error · money-pr-local-gate PASS → #24479 tip `dff4886449`.
+NO seed · NO mig (HH 10). NEXT: DriverTeamModal leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T10:42Z · BANK-F91121 FleetCatalogModal text tokens MERGED #24477
+
+ACK: CURSOR | ACK BANK-F91121 FLEET CATALOG MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91121 | FleetCatalogModal field errors off-scale text-[11px] (locked tokens)
+FIX: 3 field-error lines→text-xs; cu09 catalog-submit-error guard refuses text-[11px].
+GUARD: verify-cu09-catalog-submit-error · money-pr-local-gate PASS → #24477 tip `94bbcea05a`.
+NO seed · NO mig (HH 10). NEXT: DriverCatalogModal leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T10:35Z · BANK-F91120 FuelCatalogModal text tokens MERGED #24475
+
+ACK: CURSOR | ACK BANK-F91120 FUEL CATALOG MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91120 | FuelCatalogModal field errors off-scale text-[11px] (locked tokens)
+FIX: 3 field-error lines→text-xs; cu09 catalog-submit-error guard refuses text-[11px].
+GUARD: verify-cu09-catalog-submit-error · money-pr-local-gate PASS → #24475 tip `e08b91647b`.
+NO seed · NO mig (HH 10). NEXT: FleetCatalogModal leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T10:25Z · BANK-F91119 MaintenanceCatalogModal text tokens MERGED #24473
+
+ACK: CURSOR | ACK BANK-F91119 MAINT CATALOG MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91119 | MaintenanceCatalogModal field errors off-scale text-[11px] (locked tokens)
+FIX: 3 field-error lines→text-xs; maintenance-catalog-connectivity guard refuses text-[11px].
+GUARD: verify-lists-maintenance-dedicated-catalog-connectivity-exact · money-pr-local-gate PASS → #24473 tip `4460211cac`.
+NO seed · NO mig (HH 10). NEXT: FuelCatalogModal leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T10:20Z · BANK-F91118 CargoClaimReasonModal text tokens MERGED #24471
+
+ACK: CURSOR | ACK BANK-F91118 CARGO CLAIM MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91118 | CargoClaimReasonModal field errors off-scale text-[11px] (locked tokens)
+FIX: 3 field-error lines→text-xs; safety-catalog-connectivity guard refuses text-[11px].
+GUARD: verify-lists-safety-catalog-connectivity-exact · money-pr-local-gate PASS → #24471 tip `c4da584636`.
+NO seed · NO mig (HH 10). NEXT: MaintenanceCatalogModal leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T10:11Z · BANK-F91117 CivilFineTypeModal text tokens MERGED #24469
+
+ACK: CURSOR | ACK BANK-F91117 CIVIL FINE MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91117 | CivilFineTypeModal field errors off-scale text-[11px] (locked tokens)
+FIX: 3 field-error lines→text-xs; safety-catalog-connectivity guard refuses text-[11px].
+GUARD: verify-lists-safety-catalog-connectivity-exact · money-pr-local-gate PASS → #24469 tip `1a69ea256d`.
+NO seed · NO mig (HH 10). NEXT: CargoClaimReasonModal leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T10:05Z · BANK-F91116 CompanyViolationTypeModal text tokens MERGED #24467
+
+ACK: CURSOR | ACK BANK-F91116 COMPANY VIOLATION MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91116 | CompanyViolationTypeModal field errors off-scale text-[11px] (locked tokens)
+FIX: 4 field-error lines→text-xs; safety-catalog-connectivity guard refuses text-[11px].
+GUARD: verify-lists-safety-catalog-connectivity-exact · money-pr-local-gate PASS → #24467 tip `b3984157c5`.
+NO seed · NO mig (HH 10). NEXT: CivilFineTypeModal leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T09:56Z · BANK-F91115 ComplaintTypeModal text tokens MERGED #24465
+
+ACK: CURSOR | ACK BANK-F91115 COMPLAINT TYPE MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91115 | ComplaintTypeModal field errors off-scale text-[11px] (locked tokens)
+FIX: 2 field-error lines→text-xs; safety-catalog-connectivity guard refuses text-[11px].
+GUARD: verify-lists-safety-catalog-connectivity-exact · money-pr-local-gate PASS → #24465 tip `4af6afefaa`.
+NO seed · NO mig (HH 09). NEXT: CompanyViolationTypeModal leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T09:50Z · BANK-F91114 DotViolationTypeModal text tokens MERGED #24463
+
+ACK: CURSOR | ACK BANK-F91114 DOT VIOLATION MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91114 | DotViolationTypeModal field errors off-scale text-[11px] (locked tokens)
+FIX: 4 field-error lines→text-xs; safety-catalog-connectivity guard refuses text-[11px].
+GUARD: verify-lists-safety-catalog-connectivity-exact · money-pr-local-gate PASS → #24463 tip `f67dcd95cf`.
+NO seed · NO mig (HH 09). NEXT: ComplaintTypeModal leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T09:41Z · BANK-F91113 InternalFineReasonModal text tokens MERGED #24461
+
+ACK: CURSOR | ACK BANK-F91113 INTERNAL FINE MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91113 | InternalFineReasonModal field errors off-scale text-[11px] (locked tokens)
+FIX: 3 field-error lines→text-xs; safety-catalog-connectivity guard refuses text-[11px].
+GUARD: verify-lists-safety-catalog-connectivity-exact · money-pr-local-gate PASS → #24461 tip `8024f2a7b7`.
+NO seed · NO mig (HH 09). NEXT: DotViolationTypeModal leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T09:35Z · BANK-F91112 SafetyGenericCatalogModal text tokens MERGED #24459
+
+ACK: CURSOR | ACK BANK-F91112 SAFETY GENERIC MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91112 | SafetyGenericCatalogModal field errors off-scale text-[11px] (locked tokens)
+FIX: 3 field-error lines→text-xs; safety-catalog-connectivity guard refuses text-[11px].
+GUARD: verify-lists-safety-catalog-connectivity-exact · money-pr-local-gate PASS → #24459 tip `b74d29d3ee`.
+NO seed · NO mig (HH 09). NEXT: InternalFineReasonModal leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T09:30Z · BANK-F91111 QboSyncHealthCard button text tokens MERGED #24457
+
+ACK: CURSOR | ACK BANK-F91111 QBO SYNC HEALTH BUTTON TEXT TOKENS DONE | GO
+FINDING: BANK-F91111 | QboSyncHealthCard Force Sync button off-scale text-[11px] (locked tokens)
+FIX: button→text-xs; qbo-sync-health-card guard refuses text-[11px].
+GUARD: verify-qbo-sync-health-card-uses-paritytable · money-pr-local-gate PASS → #24457 tip `a05ed90de3`.
+NO seed · NO mig (HH 09). NEXT: lists catalog-modal leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T09:24Z · BANK-F91110 TerminationReasons field-error text tokens MERGED #24455
+
+ACK: CURSOR | ACK BANK-F91110 TERMINATION REASONS TEXT TOKENS DONE | GO
+FINDING: BANK-F91110 | TerminationReasons field errors off-scale text-[11px] (locked tokens)
+FIX: 3 field-error/conflict lines→text-xs; filter-surfaces guard refuses text-[11px].
+GUARD: verify-filter-surfaces-full-set · money-pr-local-gate PASS → #24455 tip `9a2b19ca3d`.
+NO seed · NO mig (HH 09). NEXT: QboSyncHealthCard leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T09:18Z · BANK-F91109 DispatchCatalog pill text tokens MERGED #24453
+
+ACK: CURSOR | ACK BANK-F91109 DISPATCH CATALOG PILL TEXT TOKENS DONE | GO
+FINDING: BANK-F91109 | DispatchCatalogListPage status pills off-scale text-[11px] (locked tokens)
+FIX: Active/inactive pills→text-xs; filter-surfaces guard refuses text-[11px].
+GUARD: verify-filter-surfaces-full-set · money-pr-local-gate PASS → #24453 tip `392c2f3226`.
+NO seed · NO mig (HH 09). NEXT: TerminationReasons leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T09:09Z · BANK-F91108 LoadExceptionReasons pill text tokens MERGED #24451
+
+ACK: CURSOR | ACK BANK-F91108 EXCEPTION REASONS PILL TEXT TOKENS DONE | GO
+FINDING: BANK-F91108 | LoadExceptionReasons status pills off-scale text-[11px] (locked tokens)
+FIX: Active/inactive pills→text-xs; filter-surfaces guard refuses text-[11px].
+GUARD: verify-filter-surfaces-full-set · money-pr-local-gate PASS → #24451 tip `e75e3c45f3`.
+NO seed · NO mig (HH 09). NEXT: DispatchCatalogListPage leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T09:00Z · BANK-F91107 LoadCancellationReasons pill text tokens MERGED #24449
+
+ACK: CURSOR | ACK BANK-F91107 CANCEL REASONS PILL TEXT TOKENS DONE | GO
+FINDING: BANK-F91107 | LoadCancellationReasons status pills off-scale text-[11px] (locked tokens)
+FIX: Active/inactive pills→text-xs; filter-surfaces guard refuses text-[11px].
+GUARD: verify-filter-surfaces-full-set · money-pr-local-gate PASS → #24449 tip `85a9b3ef93`.
+NO seed · NO mig (HH 09). NEXT: LoadExceptionReasons leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T08:52Z · BANK-F91106 AllCatalogsMap text tokens MERGED #24447
+
+ACK: CURSOR | ACK BANK-F91106 ALL CATALOGS MAP TEXT TOKENS DONE | GO
+FINDING: BANK-F91106 | AllCatalogsMap badge/description off-scale text-[11px] (locked tokens)
+FIX: badge→text-section-header; descriptions→text-xs; detail-type-catalog guard refuses text-[11px].
+GUARD: verify-detail-type-catalog · money-pr-local-gate PASS → #24447 tip `67c4c15d2d`.
+NO seed · NO mig (HH 08). NEXT: dispatch status-pill leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T08:43Z · BANK-F91105 DetailTypesListPage text tokens MERGED #24445
+
+ACK: CURSOR | ACK BANK-F91105 DETAIL TYPES TEXT TOKENS DONE | GO
+FINDING: BANK-F91105 | DetailTypesListPage hint off-scale text-[11px] (locked tokens)
+FIX: hint→text-xs; detail-type-catalog guard refuses text-[11px].
+GUARD: verify-detail-type-catalog · money-pr-local-gate PASS → #24445 tip `138235893e`.
+NO seed · NO mig (HH 08). NEXT: AllCatalogsMap leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T08:35Z · BANK-F91104 AccountingCatalogModal text tokens MERGED #24443
+
+ACK: CURSOR | ACK BANK-F91104 ACCT CATALOG MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91104 | AccountingCatalogModal errors off-scale text-[11px] (locked tokens)
+FIX: 4 errors→text-xs; payment-terms collision guard refuses text-[11px].
+GUARD: verify-payment-terms-code-name-collision · money-pr-local-gate PASS → #24443 tip `408e6bac67`.
+NO seed · NO mig (HH 08). NEXT: DetailTypesListPage leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T08:29Z · BANK-F91103 AccountDrawer text tokens MERGED #24441
+
+ACK: CURSOR | ACK BANK-F91103 ACCOUNT DRAWER TEXT TOKENS DONE | GO
+FINDING: BANK-F91103 | AccountDrawer KPI/hints off-scale text-[11px] (locked tokens)
+FIX: Preview→text-section-header; 4 hints→text-xs; picker01 guard refuses text-[11px].
+GUARD: verify-lst-picker01-account-drawer-detail-type-inline-create · money-pr-local-gate PASS → #24441 tip `51714b8633`.
+NO seed · NO mig (HH 08). NEXT: AccountingCatalogModal leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T08:21Z · BANK-F91102 PostingTemplateModal text tokens MERGED #24439
+
+ACK: CURSOR | ACK BANK-F91102 POSTING TEMPLATE TEXT TOKENS DONE | GO
+FINDING: BANK-F91102 | PostingTemplateModal errors/hints off-scale text-[11px] (locked tokens)
+FIX: 5 classes→text-xs; link05 guard refuses text-[11px].
+GUARD: verify-acct-link05-posting-template-create · money-pr-local-gate PASS → #24439 tip `feb8601be9`.
+NO seed · NO mig (HH 08). NEXT: AccountDrawer leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T08:16Z · BANK-F91101 ItemEditorModal text tokens MERGED #24437
+
+ACK: CURSOR | ACK BANK-F91101 ITEM EDITOR TEXT TOKENS DONE | GO
+FINDING: BANK-F91101 | ItemEditorModal errors/hints off-scale text-[11px] (locked tokens)
+FIX: 6 classes→text-xs; money-reference-select guard refuses text-[11px].
+GUARD: verify-money-reference-select-plus · money-pr-local-gate PASS → #24437 tip `d24364c423`.
+NO seed · NO mig (HH 08). NEXT: PostingTemplateModal leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T08:06Z · BANK-F91100 VoidCancelReasons pill text tokens MERGED #24435
+
+ACK: CURSOR | ACK BANK-F91100 VOID CANCEL PILLS TEXT TOKENS DONE | GO
+FINDING: BANK-F91100 | VoidCancelReasons status pills off-scale text-[11px] (locked tokens)
+FIX: Active/inactive pills→text-xs; filter-surfaces guard refuses text-[11px].
+GUARD: verify-filter-surfaces-full-set · money-pr-local-gate PASS → #24435 tip `5d68e330a4`.
+NO seed · NO mig (HH 08). NEXT: lists/accounting leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T08:00Z · BANK-F91099 ReserveTracker KPI/hint text tokens MERGED #24433
+
+ACK: CURSOR | ACK BANK-F91099 RESERVE TRACKER TEXT TOKENS DONE | GO
+FINDING: BANK-F91099 | ReserveTracker KPI/hints off-scale text-[11px] (locked tokens)
+FIX: 2 KPI labels→text-section-header; 2 hints→text-xs; paritytable guard refuses text-[11px].
+GUARD: verify-reserve-tracker-uses-paritytable · money-pr-local-gate PASS → #24433 tip `6e660f928e`.
+NO seed · NO mig (HH 08). NEXT: lists/accounting leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T07:54Z · BANK-F91098 SubmissionQueue filter text tokens MERGED #24431
+
+ACK: CURSOR | ACK BANK-F91098 SUBMISSION QUEUE TEXT TOKENS DONE | GO
+FINDING: BANK-F91098 | SubmissionQueue filter labels off-scale text-[11px] (locked tokens)
+FIX: 2 labels→text-xs; factoring chrome guard refuses text-[11px].
+GUARD: verify-factoring-qbo-chrome-surfaces · money-pr-local-gate PASS → #24431 tip `25d8458d9c`.
+NO seed · NO mig (HH 07). NEXT: ReserveTracker leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T07:47Z · BANK-F91097 FactoringHome filter text tokens MERGED #24429
+
+ACK: CURSOR | ACK BANK-F91097 FACTORING HOME TEXT TOKENS DONE | GO
+FINDING: BANK-F91097 | FactoringHome filter labels off-scale text-[11px] (locked tokens)
+FIX: 6 labels→text-xs; factoring chrome guard refuses text-[11px].
+GUARD: verify-factoring-qbo-chrome-surfaces · money-pr-local-gate PASS → #24429 tip `ed152187e4`.
+NO seed · NO mig (HH 07). NEXT: SubmissionQueue leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T07:39Z · BANK-F91096 AccountingSubNav Back text tokens MERGED #24427
+
+ACK: CURSOR | ACK BANK-F91096 ACCT SUBNAV BACK TEXT TOKENS DONE | GO
+FINDING: BANK-F91096 | AccountingSubNavWrapper Back off-scale text-[11px] (locked tokens)
+FIX: Back→text-xs; smart-back guard refuses text-[11px].
+GUARD: verify-backarrowheader-and-accounting-back-wired · money-pr-local-gate PASS → #24427 tip `68b14a7700`.
+NO seed · NO mig (HH 07). NEXT: FactoringHome leftovers · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T07:29Z · BANK-F91095 BillDetail Matched badge text tokens MERGED #24425
+
+ACK: CURSOR | ACK BANK-F91095 BILL DETAIL MATCHED TEXT TOKENS DONE | GO
+FINDING: BANK-F91095 | BillDetail Matched badge off-scale text-[11px] (locked tokens)
+FIX: badge→text-xs; vendor-unit guard refuses text-[11px].
+GUARD: verify-bill-detail-vendor-unit-links · money-pr-local-gate PASS → #24425 tip `d0fba117da`.
+NO seed · NO mig (HH 07). NEXT: AccountingSubNavWrapper leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T07:24Z · BANK-F91094 ExpenseCategoryMap text tokens MERGED #24423
+
+ACK: CURSOR | ACK BANK-F91094 EXPENSE MAP TEXT TOKENS DONE | GO
+FINDING: BANK-F91094 | ExpenseCategoryMap hint off-scale text-[11px] (locked tokens)
+FIX: hint→text-xs; reference-select guard refuses text-[11px].
+GUARD: verify-money-reference-select-plus · money-pr-local-gate PASS → #24423 tip `f403c0c10f`.
+NO seed · NO mig (HH 07). NEXT: BillDetail leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T07:15Z · BANK-F91093 FactoringDetail pill text tokens MERGED #24421
+
+ACK: CURSOR | ACK BANK-F91093 FACTORING DETAIL PILL TEXT TOKENS DONE | GO
+FINDING: BANK-F91093 | FactoringDetail status pill off-scale text-[11px] (locked tokens)
+FIX: pill→text-section-header; factoring chrome guard refuses text-[11px].
+GUARD: verify-factoring-qbo-chrome-surfaces · money-pr-local-gate PASS → #24421 tip `950cec1261`.
+NO seed · NO mig (HH 07). NEXT: ExpenseCategoryMap / BillDetail leftovers · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T07:08Z · BANK-F91092 InvoiceDetail pill text tokens MERGED #24419
+
+ACK: CURSOR | ACK BANK-F91092 INVOICE DETAIL PILL TEXT TOKENS DONE | GO
+FINDING: BANK-F91092 | InvoiceDetail factoring pill off-scale text-[11px] (locked tokens)
+FIX: pill→text-section-header; JE-link guard refuses text-[11px].
+GUARD: verify-invoice-detail-je-links · money-pr-local-gate PASS → #24419 tip `a912bbf364`.
+NO seed · NO mig (HH 07). NEXT: FactoringDetail leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T07:00Z · BANK-F91091 TransactionRegister text tokens MERGED #24417
+
+ACK: CURSOR | ACK BANK-F91091 REGISTER BADGE TEXT TOKENS DONE | GO
+FINDING: BANK-F91091 | TransactionRegister source badge off-scale text-[11px] (locked tokens)
+FIX: badge→text-xs; paritytable guard refuses text-[11px].
+GUARD: verify-transaction-register-page-uses-paritytable · money-pr-local-gate PASS → #24417 tip `605fdee836`.
+NO seed · NO mig (HH 06). NEXT: InvoiceDetail / FactoringDetail leftovers · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T06:53Z · BANK-F91090 RecurringBillList text tokens MERGED #24415
+
+ACK: CURSOR | ACK BANK-F91090 RECURRING LIST TEXT TOKENS DONE | GO
+FINDING: BANK-F91090 | RecurringBillList off-scale text-[11px] (locked tokens)
+FIX: back-link→text-xs; wizard guard refuses text-[11px].
+GUARD: verify-acct-recurring-bill-wizard · money-pr-local-gate PASS → #24415 tip `2faefcff8d`.
+NO seed · NO mig (HH 06). NEXT: TransactionRegister leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T06:47Z · BANK-F91089 Plaid chrome text tokens MERGED #24413
+
+ACK: CURSOR | ACK BANK-F91089 PLAID TEXT TOKENS DONE | GO
+FINDING: BANK-F91089 | Plaid chrome off-scale text-[11px] (locked tokens)
+FIX: badge→text-xs; reconnect→text-section-header; guard refuses text-[11px].
+GUARD: verify-plaid-status-derived-from-state · money-pr-local-gate PASS → #24413 tip `c18273c505`.
+NO seed · NO mig (HH 06). NEXT: RecurringBillList leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T06:40Z · BANK-F91088 control label text tokens MERGED #24411
+
+ACK: CURSOR | ACK BANK-F91088 CONTROL LABEL TEXT TOKENS DONE | GO
+FINDING: BANK-F91088 | BANKING_CONTROL_LABEL_CLASS off-scale text-[11px] (locked tokens)
+FIX: constant→text-section-header; guard refuses text-[11px].
+GUARD: verify-banking-controls-boxed-and-tokenized · money-pr-local-gate PASS → #24411 tip `c9900e1248`.
+NO seed · NO mig (HH 06). NEXT: Plaid leftovers · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T06:31Z · BANK-F91087 ApplyToBill text tokens MERGED #24409
+
+ACK: CURSOR | ACK BANK-F91087 APPLY TO BILL TEXT TOKENS DONE | GO
+FINDING: BANK-F91087 | ApplyToBillForm off-scale text-[11px] (locked tokens)
+FIX: labels→text-xs; verify-b4 refuses text-[11px].
+GUARD: verify-b4-check-creator · money-pr-local-gate PASS → #24409 tip `43d1fd879c`.
+NO seed · NO mig (HH 06). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T06:27Z · BANK-F91086 CreateMultipleBills text tokens MERGED #24407
+
+ACK: CURSOR | ACK BANK-F91086 MULTI BILLS TEXT TOKENS DONE | GO
+FINDING: BANK-F91086 | CreateMultipleBillsPage off-scale text-[11px] (locked tokens)
+FIX: cell/button→text-xs; guard refuses text-[11px].
+GUARD: verify-acct-multi-bills-parity · money-pr-local-gate PASS → #24407 tip `af98aa302f`.
+NO seed · NO mig (HH 06). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T06:25Z · BANK-F91085 CreditMemos text tokens MERGED #24405
+
+ACK: CURSOR | ACK BANK-F91085 CREDIT MEMOS TEXT TOKENS DONE | GO
+FINDING: BANK-F91085 | CreditMemosPage off-scale text-[11px] (locked tokens)
+FIX: filter/hint→text-xs; guard refuses text-[11px].
+GUARD: verify-accounting-credit-memos-connectivity-reverse · money-pr-local-gate PASS → #24405 tip `8ad29ade6f`.
+NO seed · NO mig (HH 06). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T06:18Z · BANK-F91084 AccountingHub text tokens MERGED #24403
+
+ACK: CURSOR | ACK BANK-F91084 ACCOUNTING HUB TEXT TOKENS DONE | GO
+FINDING: BANK-F91084 | AccountingHubPage off-scale text-[11px] (locked tokens)
+FIX: KPI/section→text-section-header; guard refuses text-[11px].
+GUARD: verify-accounting-hub-honest-labels · money-pr-local-gate PASS → #24403 tip `defaefd22a`.
+NO seed · NO mig (HH 06). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T06:15Z · BANK-F91083 VendorCredits text tokens MERGED #24401
+
+ACK: CURSOR | ACK BANK-F91083 VENDOR CREDITS TEXT TOKENS DONE | GO
+FINDING: BANK-F91083 | VendorCreditsPage off-scale text-[11px] (locked tokens)
+FIX: filter/hint→text-xs; guard refuses text-[11px].
+GUARD: verify-vendor-money-human-labels · money-pr-local-gate PASS → #24401 tip `044be353ce`.
+NO seed · NO mig (HH 06). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T06:12Z · BANK-F91082 RecurringBillCreate text tokens MERGED #24399
+
+ACK: CURSOR | ACK BANK-F91082 RECURRING BILL TEXT TOKENS DONE | GO
+FINDING: BANK-F91082 | RecurringBillCreate off-scale text-[11px] (locked tokens)
+FIX: back-link/hint→text-xs; guard refuses text-[11px].
+GUARD: verify-acct-recurring-bill-wizard · money-pr-local-gate PASS → #24399 tip `0a052cbf0d`.
+NO seed · NO mig (HH 06). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T06:05Z · BANK-F91081 FactoringList text tokens MERGED #24397
+
+ACK: CURSOR | ACK BANK-F91081 FACTORING TEXT TOKENS DONE | GO
+FINDING: BANK-F91081 | FactoringListPage off-scale text-[11px] (locked tokens)
+FIX: pills→text-section-header; filter→text-xs; guard refuses text-[11px].
+GUARD: verify-factoring-qbo-chrome-surfaces · money-pr-local-gate PASS → #24397 tip `6b44834592`.
+NO seed · NO mig (HH 06). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T06:02Z · BANK-F91080 VendorBalances text tokens MERGED #24395
+
+ACK: CURSOR | ACK BANK-F91080 VENDOR BALANCES TEXT TOKENS DONE | GO
+FINDING: BANK-F91080 | VendorBalancesPage off-scale text-[11px] (locked tokens)
+FIX: due/payee hints→text-xs; guard refuses text-[11px].
+GUARD: verify-vendor-money-human-labels · money-pr-local-gate PASS → #24395 tip `a4b3f58539`.
+NO seed · NO mig (HH 06). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T05:58Z · BANK-F91079 AuditTrail text tokens MERGED #24393
+
+ACK: CURSOR | ACK BANK-F91079 AUDIT TRAIL TEXT TOKENS DONE | GO
+FINDING: BANK-F91079 | AccountingAuditTrailPage off-scale text-[11px] (locked tokens)
+FIX: headers→text-section-header; pre→text-xs; guard refuses text-[11px].
+GUARD: verify-accounting-audit-trail-mutation-onerror · money-pr-local-gate PASS → #24393 tip `8e149e8944`.
+NO seed · NO mig (HH 05). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T05:51Z · BANK-F91078 InvoicesListPage text tokens MERGED #24391
+
+ACK: CURSOR | ACK BANK-F91078 INVOICES TEXT TOKENS DONE | GO
+FINDING: BANK-F91078 | InvoicesListPage off-scale text-[11px] (locked tokens)
+FIX: badge→text-section-header; filters→text-xs; guard refuses text-[11px].
+GUARD: verify-qbo-parity-bills-invoices-lists · money-pr-local-gate PASS → #24391 tip `f0c7033987`.
+NO seed · NO mig (HH 05). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T05:48Z · BANK-F91077 DailyRecon text tokens MERGED #24389
+
+ACK: CURSOR | ACK BANK-F91077 DAILY RECON TEXT TOKENS DONE | GO
+FINDING: BANK-F91077 | DailyReconPage off-scale text-[11px] (locked tokens)
+FIX: filter labels→text-section-header; verify-b2 refuses text-[11px].
+GUARD: verify-b2-reconcile-shell · money-pr-local-gate PASS → #24389 tip `5141632840`.
+NO seed · NO mig (HH 05). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T05:45Z · BANK-F91076 EmailQueue text tokens MERGED #24387
+
+ACK: CURSOR | ACK BANK-F91076 EMAIL QUEUE TEXT TOKENS DONE | GO
+FINDING: BANK-F91076 | EmailQueuePage off-scale text-[11px] (locked tokens)
+FIX: mono/body→text-xs; verify-b3 refuses text-[11px].
+GUARD: verify-b3-bank-feed-match · money-pr-local-gate PASS → #24387 tip `8df9b9db11`.
+NO seed · NO mig (HH 05). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T05:38Z · BANK-F91075 AP aging text tokens MERGED #24385
+
+ACK: CURSOR | ACK BANK-F91075 AP AGING TEXT TOKENS DONE | GO
+FINDING: BANK-F91075 | AccountsPayableAgingPage off-scale text-[11px] (locked tokens)
+FIX: money labels→text-section-header; hint/counts→text-xs; guard refuses text-[11px].
+GUARD: verify-accounts-payable-aging-page-uses-paritytable · money-pr-local-gate PASS → #24385 tip `8fd1fbdaae`.
+NO seed · NO mig (HH 05). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T05:34Z · BANK-F91074 BankTxCategorization text tokens MERGED #24383
+
+ACK: CURSOR | ACK BANK-F91074 BANKTX CAT TEXT TOKENS DONE | GO
+FINDING: BANK-F91074 | BankTxCategorizationPage off-scale text-[11px] (locked tokens)
+FIX: KPI→text-section-header; body→text-xs; verify-b3 refuses text-[11px].
+GUARD: verify-b3-bank-feed-match · money-pr-local-gate PASS → #24383 tip `dd8d02804b`.
+NO seed · NO mig (HH 05). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T05:29Z · BANK-F91073 BillPaymentsListPage text tokens MERGED #24381
+
+ACK: CURSOR | ACK BANK-F91073 BILL PAYMENTS TEXT TOKENS DONE | GO
+FINDING: BANK-F91073 | BillPaymentsListPage off-scale text-[11px] (locked tokens)
+FIX: badges→text-xs; verify-b4 refuses text-[11px].
+GUARD: verify-b4-check-creator · money-pr-local-gate PASS → #24381 tip `6877e67663`.
+NO seed · NO mig (HH 05). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T05:20Z · BANK-F91072b VendorBillForm guard MERGED #24379
+
+ACK: CURSOR | ACK BANK-F91072b VENDOR BILL FORM GUARD DONE | GO
+FINDING: BANK-F91072b | guard omitted from F91072 squash
+FIX: verify-b4 refuses VendorBillForm text-[11px].
+GUARD: verify-b4-check-creator · money-pr-local-gate PASS → #24379 tip `c8413c7447`.
+NO seed · NO mig (HH 05). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T05:16Z · BANK-F91072 VendorBillForm text tokens MERGED #24377
+
+ACK: CURSOR | ACK BANK-F91072 VENDOR BILL FORM TEXT TOKENS DONE | GO
+FINDING: BANK-F91072 | VendorBillForm off-scale text-[11px] (locked tokens)
+FIX: helpers/banner/labels→text-xs; verify-b4 refuses text-[11px].
+GUARD: verify-b4-check-creator · money-pr-local-gate PASS → #24377 tip `920f1c7c9e`.
+NO seed · NO mig (HH 05). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T05:13Z · BANK-F91071 ExpensesListPage text tokens MERGED #24375
+
+ACK: CURSOR | ACK BANK-F91071 EXPENSES TEXT TOKENS DONE | GO
+FINDING: BANK-F91071 | ExpensesListPage off-scale text-[11px] (locked tokens)
+FIX: Void/filters/hint→text-xs; guard refuses text-[11px].
+GUARD: verify-expenses-list-void-affordance · money-pr-local-gate PASS → #24375 tip `7480e87e56`.
+NO seed · NO mig (HH 05). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T05:10Z · BANK-F91070 BillsPage text tokens MERGED #24373
+
+ACK: CURSOR | ACK BANK-F91070 BILLS TEXT TOKENS DONE | GO
+FINDING: BANK-F91070 | BillsPage off-scale text-[11px] (locked tokens)
+FIX: KPI→text-section-header; badges/filters/Allocate→text-xs; guard refuses text-[11px].
+GUARD: verify-qbo-parity-bills-invoices-lists · money-pr-local-gate PASS → #24373 tip `185ea5939c`.
+NO seed · NO mig (HH 05). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T04:56Z · BANK-F91069 Home tiles text tokens MERGED #24369
+
+ACK: CURSOR | ACK BANK-F91069 HOME TILES TEXT TOKENS DONE | GO
+FINDING: BANK-F91069 | B-3 Banking Home tiles / Transfers off-scale text-[11px]
+FIX: AccountTile/Escrow/Transfers→text-xs; accounting ManualJE→text-section-header; guard refuses text-[11px].
+GUARD: verify-b3-bank-feed-match · money-pr-local-gate PASS → #24369 tip `554c4a4551`.
+NO seed · NO mig (HH 04). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T04:50Z · BANK-F91068 Split modal text tokens MERGED #24367
+
+ACK: CURSOR | ACK BANK-F91068 SPLIT MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91068 | B-3 Split modal off-scale text-[11px] (locked tokens)
+FIX: labels→text-section-header; body→text-xs; also ReconMatch/CreateExpense/BillPayment forms.
+GUARD: verify-b3-bank-feed-match · money-pr-local-gate PASS → #24367 tip `c6313dde38`.
+NO seed · NO mig (HH 04). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T04:40Z · BANK-F91067 B-3 feed text tokens MERGED #24364
+
+ACK: CURSOR | ACK BANK-F91067 FEED TEXT TOKENS DONE | GO
+FINDING: BANK-F91067 | B-3 bank feed off-scale text-[11px] (locked tokens)
+FIX: REGISTER_COLUMN_HEADER_CLASS→text-section-header; body/chips→text-xs; ManualJE+RecordCC too.
+GUARD: verify-banking-toolbar-single · money-pr-local-gate PASS → #24364 tip `3805ddb2b9`.
+NO seed · NO mig (HH 04). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T04:32Z · BANK-F91066 B-2 recon text tokens MERGED #24362
+
+ACK: CURSOR | ACK BANK-F91066 RECON TEXT TOKENS DONE | GO
+FINDING: BANK-F91066 | B-2 Reconcile off-scale text-[11px] (locked tokens)
+FIX: headers→text-section-header; chips→text-xs; guard refuses text-[11px] on Workspace+BankRecon.
+GUARD: verify-b2-reconcile-shell · money-pr-local-gate PASS → #24362 tip `7452d163c8`.
+NO seed · NO mig (HH 04). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T04:29Z · BANK-F91065 B-1 register text tokens MERGED #24359
+
+ACK: CURSOR | ACK BANK-F91065 REGISTER TEXT TOKENS DONE | GO
+FINDING: BANK-F91065 | B-1 Account Register off-scale text-[11px] (locked tokens)
+FIX: KPI→text-section-header; line2/chips/hint→text-xs; guard refuses text-[11px].
+GUARD: verify-b1-account-register · money-pr-local-gate PASS → #24359 tip `bf1e385984`.
+NO seed · NO mig (HH 04). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T04:21Z · BANK-F91064 MatchDrawer text-xs MERGED #24353
+
+ACK: CURSOR | ACK BANK-F91064 MATCHDRAWER TEXT-XS DONE | GO
+FINDING: BANK-F91064 | MatchDrawer off-scale text-[11px] (ORDERS chrome / baseline 12px)
+FIX: 7× text-[11px] → text-xs; verify-b3-bank-feed-match refuses text-[11px].
+GUARD: verify-b3-bank-feed-match · money-pr-local-gate PASS → #24353 tip `621d181cda`.
+NO seed · NO mig (HH 04). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T04:17Z · BANK-F91063 Order checks → stock MERGED #24349
+
+ACK: CURSOR | ACK BANK-F91063 ORDER CHECKS STOCK DONE | GO
+FINDING: BANK-F91063 | B-4 Order checks aliased to Print checks queue (ORDERS §B-4)
+FIX: href ?focus=stock; CheckPrintPage stock panel + banner; data-b4-order-checks-stock.
+GUARD: verify-b4-check-creator · money-pr-local-gate PASS → #24349 tip `5466dcb25b`.
+NO seed · NO mig (HH 04). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
+## 2026-10-03T04:12Z · BANK-F91062 N match found count MERGED #24347
+
+ACK: CURSOR | ACK BANK-F91062 N MATCH COUNT DONE | GO
+FINDING: BANK-F91062 | B-3 badge hardcodes "1 match found" (ORDERS §18 needs N)
+FIX: suggest API suggested_match_count; formatSuggestedMatchBadgeLabel; data-b3-match-count.
+GUARD: verify-banking-toolbar-single · vitest 4/4 · money-pr-local-gate PASS → #24347 tip `4a8dc2b449`.
+NO seed · NO mig (HH 04). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T03:50Z · BANK-F91061 match badge inline MERGED #24339
 
 ACK: CURSOR | ACK BANK-F91061 MATCH BADGE INLINE DONE | GO

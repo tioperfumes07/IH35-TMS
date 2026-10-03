@@ -59,7 +59,7 @@ const insuranceApiMocks = {
     requests: [
       {
         id: "c0100000-0000-4000-8000-000000000004",
-        tenant_id: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
+        operating_company_id: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
         customer_id: customerId,
         customer_name: "Acme Shipper",
         policy_id: policyId,

@@ -2620,3 +2620,35 @@ ROUND 345 · THE BLOCK, PHASE 1 (financial lines) — merged #24314 (56f96140f7)
   source='plaid' with plaid_transaction_id, one feed batch 2026-10-03 00:28Z. Any seat whose gate reds on it: same check.
 - LEFT: phase 2 (settlement_lines, escrow_balances, driver_advance_accounts); picker half with Cursor; rulings still
   open — TRK driver_payroll_clearing target, escrow 57927c7c + 009d57e9 merge, the 534 orphans, load counter 13618 vs 13639.
+
+## 2026-10-03 · CC-3 · STANDING ORDER items 1–2 + block phase 2 — per table, live (prod, SET LOCAL app.bypass_rls='lucia')
+
+**13515 (ROUND 353) — DONE on prod, gate unblocked for every seat.** #24334 AUTH-206 → applied 03:27:49Z → #24341.
+- Ledger was ALREADY whole: 2c730468→814a8991, 396efaa2→567d4350, every line linked both ways, 1100/1150/4000 net 0.
+  ROUND 353 step 1 ("reverse the 2 postings") would have double-reversed — not run. Guard 282.1 was not bypassed.
+- Bypass file: `scripts/ops/2026-10-01-cursor-auth201-retire-13515-keep-13513.ts:248` (bare UPDATE status='cancelled').
+- `dispatch.load_cancellations` +1 (88d8967a, OTHER, approved, owner e4117991) · `mdata.loads` 13515 →
+  VOID-13515-44eae7f5, voided via stampDocumentVoided · 0 JEs · `verify-void-is-whole` ✗ → PASS 0.
+- Route closed: migration 202615330905 (deferred constraint trigger: a load moves to cancelled only with an approved
+  record) · guard `verify-cancelled-load-has-cancellation-record` live PASS, 1 KNOWN (E2E-2E-95603e75, test residue).
+- Also fixed (the void renumber broke them): `verify-load-to-cash-chain` LINK 3, `verify-fuel-transactions-per-load`.
+- For the Lead: 13515's driven trip (driver bill 33d5debc paid, settlement 0936ca4e closed) stays on the voided load —
+  whether that cost belongs on 13513 is your ruling. Test residue for the purge: E2E-2E-95603e75 + the TEST_/CC3_/
+  CASCADE_ cancellation reason codes.
+
+**Invoice spine path, 48 postings / $178,938.00 — path closed.** #24345 claim → #24350, deploy dep-db083p7avr4c73ehva5g.
+- The 48 = 24 "Void reversal of invoice" JEs (2026-09-25, postVoidReversal — written WITH links). audit.row_changes:
+  48 link DELETEs at 2026-09-30 17:28:12Z = the AUTH-177 purge (deleted voided invoices + their links, left both
+  reversal-pair JEs live). Writer ≠ path; the delete path is.
+- Migration 202615330906: a live posting can never lose its last `transaction_source_links` row (deferred; a purge that
+  deletes the posting too passes). Guard `verify-invoice-postings-carry-spine-link` live PASS, ceiling 48 committed.
+- → CC-1: `2026-10-02-cc1-r326-complete-delete.ts:365` deletes links by document; where a posting survives, the DB now
+  refuses it. → CC-2: your 1,926 unlinked expense postings are protected from further loss, not counted by my guard.
+
+**Block phase 2 — live.** #24316 claim → #24343. settlement_lines / escrow_balances / driver_advance_accounts: 12
+same-company FKs, 10 validated + 2 NOT VALID (escrow 009d57e9 and QBO-149-001, one TRANSP row each, owner ruling) +
+settlement_lines company CHECK validated. `verify-money-lines-same-entity-fks` live: 32 FKs on 8 tables PASS.
+
+**Gate repairs on main:** #24331 (UI ratchet: a comment spelled the class it forbids, from #24326).
+
+**Next:** Dispatch end to end, ten points per table.

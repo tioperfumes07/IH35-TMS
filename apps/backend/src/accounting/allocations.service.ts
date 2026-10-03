@@ -69,7 +69,7 @@ export async function listBillUnitAllocations(
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
 
-    const where: string[] = ["a.tenant_id = $1", "b.operating_company_id = $1::uuid", "a.superseded_at IS NULL"];
+    const where: string[] = ["a.operating_company_id = $1", "b.operating_company_id = $1::uuid", "a.superseded_at IS NULL"];
     const values: unknown[] = [operatingCompanyId];
     if (options.billId) {
       values.push(options.billId);
@@ -84,7 +84,7 @@ export async function listBillUnitAllocations(
       `
         SELECT COUNT(*)::bigint AS total
         FROM accounting.bill_unit_allocation a
-        JOIN accounting.bills b ON b.id = a.bill_id AND b.operating_company_id = a.tenant_id
+        JOIN accounting.bills b ON b.id = a.bill_id AND b.operating_company_id = a.operating_company_id
         WHERE ${where.join(" AND ")}
       `,
       values
@@ -116,12 +116,12 @@ export async function listBillUnitAllocations(
           a.allocated_amount_cents,
           a.created_at::text AS created_at
         FROM accounting.bill_unit_allocation a
-        JOIN accounting.bills b ON b.id = a.bill_id AND b.operating_company_id = a.tenant_id
-        JOIN mdata.assets ast ON ast.id = a.asset_id AND ast.tenant_id = a.tenant_id
+        JOIN accounting.bills b ON b.id = a.bill_id AND b.operating_company_id = a.operating_company_id
+        JOIN mdata.assets ast ON ast.id = a.asset_id AND ast.operating_company_id = a.operating_company_id
         LEFT JOIN mdata.units u
           ON u.unit_number = ast.unit_code
-         AND (u.owner_company_id = a.tenant_id OR u.currently_leased_to_company_id = a.tenant_id)
-        LEFT JOIN catalogs.accounts coa ON coa.id = b.coa_account_id AND coa.operating_company_id = a.tenant_id
+         AND (u.owner_company_id = a.operating_company_id OR u.currently_leased_to_company_id = a.operating_company_id)
+        LEFT JOIN catalogs.accounts coa ON coa.id = b.coa_account_id AND coa.operating_company_id = a.operating_company_id
         WHERE ${where.join(" AND ")}
         ORDER BY a.created_at DESC, a.id DESC
         LIMIT $${values.length - 1}

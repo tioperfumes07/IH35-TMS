@@ -100,6 +100,36 @@ export function audit(read) {
     for (const re of s.must) if (!re.test(src)) fails.push(`${s.name}: missing ${re}`);
     for (const re of s.mustNot ?? []) if (re.test(src)) fails.push(`${s.name}: regressed ${re}`);
   }
+  // BANK-F91100 — ORDERS chrome: Void/Cancel Reasons status pills use text-xs, not text-[11px].
+  const voidRel = "apps/frontend/src/pages/lists/accounting/VoidCancelReasonsListPage.tsx";
+  const voidSrc = read(voidRel);
+  if (voidSrc.includes("text-[11px]")) {
+    fails.push("Void / Cancel Reasons: must not use text-[11px] — use text-xs");
+  }
+  // BANK-F91107 — ORDERS chrome: Load Cancellation Reasons status pills use text-xs, not text-[11px].
+  const cancelRel = "apps/frontend/src/pages/lists/dispatch/LoadCancellationReasonsListPage.tsx";
+  const cancelSrc = read(cancelRel);
+  if (cancelSrc.includes("text-[11px]")) {
+    fails.push("Load Cancellation Reasons: must not use text-[11px] — use text-xs");
+  }
+  // BANK-F91108 — ORDERS chrome: Load Exception Reasons status pills use text-xs, not text-[11px].
+  const exceptionRel = "apps/frontend/src/pages/lists/dispatch/LoadExceptionReasonsListPage.tsx";
+  const exceptionSrc = read(exceptionRel);
+  if (exceptionSrc.includes("text-[11px]")) {
+    fails.push("Load Exception Reasons: must not use text-[11px] — use text-xs");
+  }
+  // BANK-F91109 — ORDERS chrome: Dispatch catalog status pills use text-xs, not text-[11px].
+  const dispatchRel = "apps/frontend/src/pages/lists/dispatch/DispatchCatalogListPage.tsx";
+  const dispatchSrc = read(dispatchRel);
+  if (dispatchSrc.includes("text-[11px]")) {
+    fails.push("Dispatch catalogs: must not use text-[11px] — use text-xs");
+  }
+  // BANK-F91110 — ORDERS chrome: Termination Reasons field errors use text-xs, not text-[11px].
+  const termRel = "apps/frontend/src/pages/lists/drivers/TerminationReasonsListPage.tsx";
+  const termSrc = read(termRel);
+  if (termSrc.includes("text-[11px]")) {
+    fails.push("Driver Termination Reasons: must not use text-[11px] — use text-xs");
+  }
   return fails;
 }
 

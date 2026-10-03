@@ -1593,6 +1593,8 @@ export type BankTransactionSuggestion = {
   suggested_amount_cents?: number | null;
   suggested_payee_name?: string | null;
   suggested_reference?: string | null;
+  /** BANK-F91062 — ORDERS §18 "N match found" (exact±5d expense/bill qualifying count). */
+  suggested_match_count?: number | null;
 };
 
 // B.1 — bulk match suggestions (exact cents, +-5d, expense/bill) for the banking transactions LIST,

@@ -62,8 +62,11 @@ export function check({ pageSrc, testSrc }) {
   if (!testSrc) {
     failures.push(`${TEST_FILE} — MISSING (regression test for the silent-failure fix)`);
   } else {
+    // The lifecycle mutation is ONE useMutation shared by every action, so one rejected reachable action proves the
+    // shared onError surfaces the failure. Mark Advanced is a retired writer (owner law 2026-10-02, showAdvance = false),
+    // so the rejection test drives Void — an action the operator can still take.
     const requiredMarkers = [
-      "markAdvancedMock.mockRejectedValue",
+      "voidFactoringMock.mockRejectedValue",
       'screen.getByTestId("toast-message")',
     ];
     for (const marker of requiredMarkers) {
@@ -121,6 +124,11 @@ if (process.argv.includes("--selftest")) {
     failures.push("planted removal of the useToast import was not caught");
   }
 
+  const noRejection = { ...sources, testSrc: sources.testSrc.split("voidFactoringMock.mockRejectedValue").join("voidFactoringMock.mockResolvedValue") };
+  if (!check(noRejection).some((f) => f.includes("voidFactoringMock.mockRejectedValue"))) {
+    failures.push("planted removal of the rejected-action test case was not caught");
+  }
+
   const noTest = { ...sources, testSrc: null };
   if (!check(noTest).some((f) => f.includes("MISSING (regression test"))) {
     failures.push("planted removal of the regression test was not caught");
@@ -131,7 +139,7 @@ if (process.argv.includes("--selftest")) {
     for (const f of failures) console.error(`  ✗ ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS (3 independent planted removals caught)`);
+  console.log(`${LABEL} --selftest PASS (4 independent planted removals caught)`);
   process.exit(0);
 }
 

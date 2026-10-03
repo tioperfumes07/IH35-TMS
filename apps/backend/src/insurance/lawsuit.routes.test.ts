@@ -12,7 +12,7 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
       rows: [
         {
           id: "aaaaaaaa-1111-4111-8111-111111111111",
-          tenant_id: String(values?.[0] ?? ""),
+          operating_company_id: String(values?.[0] ?? ""),
           case_number: "CASE-001",
           plaintiff: "Acme Logistics",
           defendant: "RoadRunner Inc",
@@ -46,7 +46,7 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
       rows: [
         {
           id: "bbbbbbbb-2222-4222-8222-222222222222",
-          tenant_id: String(values?.[0]),
+          operating_company_id: String(values?.[0]),
           case_number: String(values?.[1]),
           plaintiff: String(values?.[2]),
           defendant: String(values?.[3]),
@@ -79,7 +79,7 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
       rows: [
         {
           id: lawsuitId,
-          tenant_id: String(values?.[0]),
+          operating_company_id: String(values?.[0]),
           case_number: "CASE-001",
           plaintiff: "Acme Logistics",
           defendant: "RoadRunner Inc",

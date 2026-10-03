@@ -1707,6 +1707,41 @@
       "claimed_at": "2026-10-03",
       "purpose": "ROUND 353 load 13515 — close the route: a load may only become cancelled with an approved dispatch.load_cancellations row (deferred constraint trigger on mdata.loads)"
     },
+    "202615330906": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Standing order — the invoice spine path: a live journal_entry_posting can never lose its last transaction_source_links row (deferred constraint trigger; the AUTH-177 purge stripped 48)"
+    },
+    "202615330907": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D1 (block, dispatch core): UNIQUE INDEX CONCURRENTLY docs.files (operating_company_id, id)"
+    },
+    "202615330908": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D1: UNIQUE INDEX CONCURRENTLY mdata.locations (operating_company_id, id)"
+    },
+    "202615330909": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D1: UNIQUE INDEX CONCURRENTLY catalogs.pickup_time_types (operating_company_id, id)"
+    },
+    "202615330910": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D1: UNIQUE INDEX CONCURRENTLY catalogs.lumper_providers (operating_company_id, id)"
+    },
+    "202615330911": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D1: mdata.load_stops gets operating_company_id — derived from its load by trigger, backfilled, company-required CHECK"
+    },
+    "202615330912": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D1: composite same-company FKs on mdata.loads (7) and mdata.load_stops (4)"
+    },
     "202615321200": {
       "claimed_by": "cursor",
       "claimed_at": "2026-10-03",
@@ -1722,10 +1757,25 @@
       "claimed_at": "2026-10-03",
       "purpose": "ROUND 355 R-2 (same package as F-3): fuel cap is GALLONS per unit — mdata.units.fuel_tank_capacity_gallons, policy per_swipe_gallon_limit (fallback, default 150), refuse an active policy with neither limit, overage rule over_gallon_limit + audit columns, exempt outcome for repairs / authorized non-fuel spend."
     },
+    "202615330800": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 342 phase 2 step 2c (CC-2): drop tenant_id from the 17 double-scoped tables now that 202615330400 (CC-1) removed the coi sync trigger and moved the factor-agreement FKs to operating_company_id; drop the CHECKs / indexes / FKs / policies that name it; same PR re-proves the #24293 NULL-writer fix."
+    },
     "202615340100": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-03",
       "purpose": "Lead ROUND 355 R-1 — driver damage chain: escrow -> pay -> Driver Damage Loss; role driver_damage_loss (USMCA 6176), driver_settlement_deductions.parent_deduction_id, status written_off"
+    },
+    "202615350100": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-03",
+      "purpose": "Lead 10-03 orphans — expense_lines derive-company repair fallback (legacy parentless rows only), stamp the 506 from their account, NOT NULL operating_company_id on the clean company tables, NOT VALID CHECK + single-column FKs on bill_lines / load_charge_lines (dangling 28 + 136 are purge population)"
+    },
+    "202615350200": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-03",
+      "purpose": "Lead 10-03 bills carry their unit — bill unit/trailer derived from the load (or work order) on write; repair bills require a work order (A4-D5)"
     }
   },
   "202613590001": {

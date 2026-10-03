@@ -25,6 +25,7 @@ import { resolveFuelOverageContractAuthority } from "./fuel-card-overage-contrac
 import { postFuelOverageReceivable } from "./fuel-card-overage-posting.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { markFraudAlertsRecovered } from "./fuel-fraud-recovery.service.js";
+import { reverseJournalEntryNoFlip } from "../accounting/journal-entries.service.js";
 
 export const FUEL_CARD_OVERAGE_ENGINE_FLAG_KEY = "FUEL_CARD_OVERAGE_ENGINE_ENABLED";
 export const FUEL_CARD_OVERAGE_GL_POSTING_FLAG_KEY = "FUEL_CARD_OVERAGE_GL_POSTING_ENABLED";
@@ -68,11 +69,13 @@ export async function resolveOveragePolicy(
     id: string;
     per_transaction_limit_cents: string | null;
     recover_non_fuel_purchases: boolean;
+    per_swipe_gallon_limit: string | null;
   }>(
     `
       SELECT id::text,
              per_transaction_limit_cents::text,
-             recover_non_fuel_purchases
+             recover_non_fuel_purchases,
+             per_swipe_gallon_limit::text
         FROM fuel.fuel_card_overage_policies
        WHERE operating_company_id = $1::uuid
          AND is_active
@@ -92,7 +95,61 @@ export async function resolveOveragePolicy(
       per_transaction_limit_cents:
         row.per_transaction_limit_cents === null ? null : Number(row.per_transaction_limit_cents),
       recover_non_fuel_purchases: Boolean(row.recover_non_fuel_purchases),
+      per_swipe_gallon_limit:
+        row.per_swipe_gallon_limit === null ? null : Number(row.per_swipe_gallon_limit),
     },
+  };
+}
+
+/**
+ * ROUND 355 R-2 — the gallon inputs for one card row: its gallons and pump price, and the tank the fuel went
+ * into (the unit's own tank; for reefer fuel, the trailer's reefer tank). Company-scoped on the row.
+ */
+export async function loadFuelRowGallonInputs(
+  client: DbClient,
+  operatingCompanyId: string,
+  fuelTransactionId: string
+): Promise<{
+  unit_id: string | null;
+  gallons: number | null;
+  price_per_gallon: number | null;
+  tank_capacity_gallons: number | null;
+  tank_source: "unit_tank" | "reefer_tank";
+}> {
+  const res = await client.query<{
+    unit_id: string | null;
+    gallons: string | null;
+    price_per_gallon: string | null;
+    fuel_type: string | null;
+    unit_tank: string | null;
+    reefer_tank: string | null;
+  }>(
+    `
+      SELECT ft.unit_id::text,
+             ft.gallons::text,
+             ft.price_per_gallon::text,
+             ft.fuel_type,
+             u.fuel_tank_capacity_gallons::text AS unit_tank,
+             eq.reefer_fuel_capacity_gal::text  AS reefer_tank
+        FROM fuel.fuel_transactions ft
+        LEFT JOIN mdata.units u      ON u.id = ft.unit_id
+        LEFT JOIN mdata.equipment eq ON eq.id = ft.trailer_id
+       WHERE ft.id = $1::uuid
+         AND ft.operating_company_id = $2::uuid
+       LIMIT 1
+    `,
+    [fuelTransactionId, operatingCompanyId]
+  );
+  const r = res.rows[0];
+  const num = (v: string | null | undefined) => (v === null || v === undefined ? null : Number(v));
+  const reefer = String(r?.fuel_type ?? "").toLowerCase() === "reefer_diesel";
+  return {
+    unit_id: r?.unit_id ?? null,
+    gallons: num(r?.gallons),
+    price_per_gallon: num(r?.price_per_gallon),
+    // Reefer fuel goes into the trailer's reefer tank, never the tractor's — judged against that tank or the fallback.
+    tank_capacity_gallons: reefer ? num(r?.reefer_tank) : num(r?.unit_tank),
+    tank_source: reefer ? "reefer_tank" : "unit_tank",
   };
 }
 
@@ -199,10 +256,19 @@ export async function maybeEvaluateFuelCardOverage(
       if (!resolved) return { status: "skipped_no_policy" } as const;
 
       const totalCents = Math.round(Number(candidate.amount_cents ?? 0));
+      const gallonInputs = await loadFuelRowGallonInputs(
+        client,
+        candidate.operating_company_id,
+        candidate.fuel_transaction_id
+      );
       const overage = computeFuelCardOverageCents({
         total_cents: totalCents,
         fuel_type: candidate.fuel_type,
         policy: resolved.policy,
+        gallons: gallonInputs.gallons,
+        price_per_gallon: gallonInputs.price_per_gallon,
+        tank_capacity_gallons: gallonInputs.tank_capacity_gallons,
+        tank_source: gallonInputs.tank_source,
       });
       if (overage.overage_cents <= 0) return { status: "skipped_no_overage" } as const;
 
@@ -215,17 +281,6 @@ export async function maybeEvaluateFuelCardOverage(
       const reviewReason = contract.hasContractAuthority
         ? buildOverageReason(overage, resolved.policy, totalCents)
         : contract.denialReason ?? "Missing contract authority for driver recovery";
-
-      const unitRow = await client.query<{ unit_id: string | null }>(
-        `
-          SELECT unit_id::text
-            FROM fuel.fuel_transactions
-           WHERE id = $1::uuid
-             AND operating_company_id = $2::uuid
-           LIMIT 1
-        `,
-        [candidate.fuel_transaction_id, candidate.operating_company_id]
-      );
 
       const inserted = await client.query<{ id: string }>(
         `
@@ -241,24 +296,33 @@ export async function maybeEvaluateFuelCardOverage(
             status,
             review_reason,
             has_contract_authority,
-            created_by_user_id
+            created_by_user_id,
+            gallons,
+            gallon_limit,
+            gallon_limit_source,
+            unit_price_cents
           )
-          VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::uuid, $6::bigint, $7::bigint, $8, $9, $10, $11, $12::uuid)
+          VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::uuid, $6::bigint, $7::bigint, $8, $9, $10, $11, $12::uuid,
+                  $13::numeric, $14::numeric, $15, $16::numeric)
           RETURNING id::text
         `,
         [
           candidate.operating_company_id,
           candidate.fuel_transaction_id,
           candidate.driver_id,
-          unitRow.rows[0]?.unit_id ?? null,
+          gallonInputs.unit_id,
           resolved.policy_id,
           overage.overage_cents,
           totalCents,
-          overage.rule === "non_fuel_purchase" ? "non_fuel_purchase" : "over_transaction_limit",
+          overage.rule,
           status,
           reviewReason,
           contract.hasContractAuthority,
           actorUserId,
+          overage.rule === "over_gallon_limit" ? overage.gallons : null,
+          overage.rule === "over_gallon_limit" ? overage.gallon_limit : null,
+          overage.rule === "over_gallon_limit" ? overage.gallon_limit_source : null,
+          overage.rule === "over_gallon_limit" ? overage.unit_price_cents : null,
         ]
       );
       const eventId = inserted.rows[0]?.id;
@@ -529,6 +593,210 @@ export async function flushFuelCardOverageAfterCommit(
     log?.info?.(stats, "[FUEL_OVERAGE_ENGINE] flush complete");
   }
   return stats;
+}
+
+/**
+ * ROUND 355 R-2 — non-fuel on a fuel card is personal and recovered in full, EXCEPT a repair or spend a manager
+ * authorized. The reviewer records that here instead of approving: the event becomes exempt_authorized (kept, never
+ * deleted), names who, when and why, and for a repair the same-company work order. Refused once a receivable JE
+ * exists — that is a reversal, not an exemption. The DB CHECK chk_fuel_overage_event_exempt_complete holds the
+ * same shape, so no other writer can exempt without a reason and a person.
+ */
+export async function exemptFuelCardOverage(input: {
+  operating_company_id: string;
+  overage_event_id: string;
+  actor_user_id: string;
+  reason: "repair" | "authorized_spend";
+  work_order_id?: string | null;
+  note: string;
+}): Promise<
+  | { status: "exempt_authorized"; overage_event_id: string }
+  | { status: "error"; message: string }
+> {
+  return withLuciaBypass(async (rawClient) => {
+    const client = rawClient as unknown as DbClient;
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+    const ev = await client.query<{
+      id: string;
+      fuel_transaction_id: string;
+      status: string;
+      overage_rule: string;
+      journal_entry_id: string | null;
+      overage_cents: string;
+    }>(
+      `
+        SELECT id::text, fuel_transaction_id::text, status, overage_rule, journal_entry_id::text, overage_cents::text
+          FROM fuel.fuel_card_overage_events
+         WHERE id = $1::uuid
+           AND operating_company_id = $2::uuid
+           AND voided_at IS NULL
+         LIMIT 1
+         FOR UPDATE
+      `,
+      [input.overage_event_id, input.operating_company_id]
+    );
+    const row = ev.rows[0];
+    if (!row) return { status: "error", message: "overage_event_not_found" } as const;
+    if (row.journal_entry_id) return { status: "error", message: "already_posted_reverse_instead" } as const;
+    if (row.overage_rule !== "non_fuel_purchase") {
+      return { status: "error", message: "only_non_fuel_purchases_can_be_exempted" } as const;
+    }
+    if (row.status !== "pending_review" && row.status !== "company_variance") {
+      return { status: "error", message: `invalid_status_for_exempt:${row.status}` } as const;
+    }
+    let workOrderId: string | null = null;
+    if (input.reason === "repair") {
+      if (!input.work_order_id) return { status: "error", message: "repair_requires_work_order" } as const;
+      const wo = await client.query<{ id: string }>(
+        `SELECT id::text FROM maintenance.work_orders WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+        [input.work_order_id, input.operating_company_id]
+      );
+      if (!wo.rows[0]) return { status: "error", message: "work_order_not_found_in_company" } as const;
+      workOrderId = wo.rows[0].id;
+    }
+    await client.query(
+      `
+        UPDATE fuel.fuel_card_overage_events
+           SET status = 'exempt_authorized',
+               exempt_reason = $1,
+               exempt_work_order_id = $2::uuid,
+               exempt_note = $3,
+               exempted_at = now(),
+               exempted_by_user_id = $4::uuid,
+               updated_at = now()
+         WHERE id = $5::uuid
+           AND operating_company_id = $6::uuid
+      `,
+      [input.reason, workOrderId, input.note, input.actor_user_id, row.id, input.operating_company_id]
+    );
+    // The card row keeps its link to the event (overage_event_id) but no longer carries a recovery amount.
+    await client.query(
+      `
+        UPDATE fuel.fuel_transactions
+           SET overage_recovered_cents = NULL,
+               updated_at = now()
+         WHERE id = $1::uuid
+           AND operating_company_id = $2::uuid
+      `,
+      [row.fuel_transaction_id, input.operating_company_id]
+    );
+    await appendCrudAudit(
+      client,
+      input.actor_user_id,
+      "fuel.fuel_card_overage_event_exempted",
+      {
+        resource_type: "fuel.fuel_card_overage_events",
+        resource_id: row.id,
+        operating_company_id: input.operating_company_id,
+        fuel_transaction_id: row.fuel_transaction_id,
+        overage_cents: Number(row.overage_cents),
+        exempt_reason: input.reason,
+        exempt_work_order_id: workOrderId,
+      },
+      "info",
+      "FUEL-03-OVERAGE-ENGINE"
+    );
+    return { status: "exempt_authorized", overage_event_id: row.id } as const;
+  });
+}
+
+/**
+ * ROUND 352 point 7 — an overage event is reversible. Void stamps the event (kept, never deleted) and, when the
+ * receivable has posted, reverses its journal entry through reverseJournalEntryNoFlip (a LINKED reversing entry; the
+ * original is never flipped) on the same transaction. The card row keeps its link to the event, so a re-process
+ * never mints a second charge for the same swipe. Refused once a settlement deduction has recovered it — that
+ * recovery is reversed on the settlement first, never here.
+ */
+export async function voidFuelCardOverage(input: {
+  operating_company_id: string;
+  overage_event_id: string;
+  actor_user_id: string;
+  reason: string;
+}): Promise<
+  | { status: "voided"; overage_event_id: string; reversal_journal_entry_id: string | null }
+  | { status: "error"; message: string }
+> {
+  return withLuciaBypass(async (rawClient) => {
+    const client = rawClient as unknown as DbClient;
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+    const ev = await client.query<{
+      id: string;
+      fuel_transaction_id: string;
+      status: string;
+      journal_entry_id: string | null;
+      overage_cents: string;
+    }>(
+      `
+        SELECT id::text, fuel_transaction_id::text, status, journal_entry_id::text, overage_cents::text
+          FROM fuel.fuel_card_overage_events
+         WHERE id = $1::uuid
+           AND operating_company_id = $2::uuid
+           AND voided_at IS NULL
+         LIMIT 1
+         FOR UPDATE
+      `,
+      [input.overage_event_id, input.operating_company_id]
+    );
+    const row = ev.rows[0];
+    if (!row) return { status: "error", message: "overage_event_not_found" } as const;
+    if (row.status === "exempt_authorized") return { status: "error", message: "exempt_event_has_nothing_to_reverse" } as const;
+    const link = await loadExistingOverageDeductionLink(client, input.operating_company_id, row.fuel_transaction_id);
+    if (link.deduction_id || link.overage_deduction_id) {
+      return { status: "error", message: "recovered_by_settlement_deduction_reverse_it_there" } as const;
+    }
+    let reversalId: string | null = null;
+    if (row.journal_entry_id) {
+      const { reversal } = await reverseJournalEntryNoFlip(rawClient as never, {
+        operatingCompanyId: input.operating_company_id,
+        journalEntryId: row.journal_entry_id,
+        reason: `Fuel-card overage voided: ${input.reason}`,
+        actorUserId: input.actor_user_id,
+      });
+      reversalId = reversal.reversal_journal_entry_id ?? null;
+      if (!reversalId) throw new Error("fuel_overage_reversal_journal_entry_id_missing");
+    }
+    await client.query(
+      `
+        UPDATE fuel.fuel_card_overage_events
+           SET status = 'voided',
+               voided_at = now(),
+               voided_by_user_id = $1::uuid,
+               void_reason = $2,
+               updated_at = now()
+         WHERE id = $3::uuid
+           AND operating_company_id = $4::uuid
+      `,
+      [input.actor_user_id, input.reason, row.id, input.operating_company_id]
+    );
+    await client.query(
+      `
+        UPDATE fuel.fuel_transactions
+           SET overage_recovered_cents = NULL,
+               updated_at = now()
+         WHERE id = $1::uuid
+           AND operating_company_id = $2::uuid
+      `,
+      [row.fuel_transaction_id, input.operating_company_id]
+    );
+    await appendCrudAudit(
+      client,
+      input.actor_user_id,
+      "fuel.fuel_card_overage_event_voided",
+      {
+        resource_type: "fuel.fuel_card_overage_events",
+        resource_id: row.id,
+        operating_company_id: input.operating_company_id,
+        fuel_transaction_id: row.fuel_transaction_id,
+        overage_cents: Number(row.overage_cents),
+        original_journal_entry_id: row.journal_entry_id,
+        reversal_journal_entry_id: reversalId,
+        reason: input.reason,
+      },
+      "warning",
+      "FUEL-03-OVERAGE-ENGINE"
+    );
+    return { status: "voided", overage_event_id: row.id, reversal_journal_entry_id: reversalId } as const;
+  });
 }
 
 /** Backfill hook: re-evaluate existing fuel rows that have no overage event yet. */

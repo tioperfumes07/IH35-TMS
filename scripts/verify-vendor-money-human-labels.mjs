@@ -22,6 +22,14 @@ function assertAll(srcs) {
     if (!/entityLabel\(/.test(src)) {
       problems.push(`${file}: missing entityLabel`);
     }
+    // BANK-F91080 — ORDERS chrome: VendorBalancesPage uses text-xs, not text-[11px].
+    if (file.endsWith("VendorBalancesPage.tsx") && src.includes("text-[11px]")) {
+      problems.push(`${file}: must not use text-[11px] — use text-xs`);
+    }
+    // BANK-F91083 — ORDERS chrome: VendorCreditsPage uses text-xs, not text-[11px].
+    if (file.endsWith("VendorCreditsPage.tsx") && src.includes("text-[11px]")) {
+      problems.push(`${file}: must not use text-[11px] — use text-xs`);
+    }
   }
   return problems;
 }

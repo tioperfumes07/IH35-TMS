@@ -46,38 +46,23 @@ export function audit(src) {
     }
   }
 
-  // 2. The Email and Mark-uploaded button handlers must each carry a .catch() after their .then(),
-  // and it must land BETWEEN that button's own emitting call and its own JSX label -- not merely
-  // exist somewhere later in the file (a naive regex with [\s\S]*? can "find" the OTHER button's
-  // .catch() and false-pass). Ordering via indexOf sidesteps that cross-block match entirely.
-  const emailCallIdx = src.drawer.indexOf("emailed_at: new Date().toISOString(),");
-  const emailCatchIdx = src.drawer.indexOf('"Could not mark package as emailed"');
-  const emailLabelIdx = src.drawer.indexOf("Email package");
-  if (
-    emailCallIdx === -1 ||
-    emailCatchIdx === -1 ||
-    emailLabelIdx === -1 ||
-    !(emailCallIdx < emailCatchIdx && emailCatchIdx < emailLabelIdx)
-  ) {
-    failures.push(
-      `${FILES.drawer}: the Email package button's persistPackageMeta call must carry a .catch() ` +
-        `after .then(), landing before the button's own JSX label`,
-    );
-  }
-
-  const uploadedCallIdx = src.drawer.indexOf("uploaded_at: new Date().toISOString(),");
-  const uploadedCatchIdx = src.drawer.indexOf('"Could not mark package as uploaded"');
-  const uploadedLabelIdx = src.drawer.indexOf("Mark uploaded");
-  if (
-    uploadedCallIdx === -1 ||
-    uploadedCatchIdx === -1 ||
-    uploadedLabelIdx === -1 ||
-    !(uploadedCallIdx < uploadedCatchIdx && uploadedCatchIdx < uploadedLabelIdx)
-  ) {
-    failures.push(
-      `${FILES.drawer}: the Mark-uploaded button's persistPackageMeta call must carry a .catch() ` +
-        `after .then(), landing before the button's own JSX label`,
-    );
+  // 2. EVERY other call site: the Email / Mark-uploaded buttons this guard was written for were removed with the
+  //    LDT-D Documents-tab rework (ca42c9771d, 2026-09-06) and exist nowhere now, so the old position checks pinned code
+  //    that is gone. The rule that matters is general: any persistPackageMeta(...) call outside its own definition must
+  //    be inside a try { await ... } catch, or carry a .catch( before the statement ends — so a re-added button is held
+  //    to the same standard the moment it lands.
+  const callRe = /persistPackageMeta\(/g;
+  let m;
+  while ((m = callRe.exec(src.drawer)) !== null) {
+    const before = src.drawer.slice(Math.max(0, m.index - 40), m.index);
+    if (/async function\s+$/.test(before)) continue; // the definition itself
+    const stmtEnd = src.drawer.indexOf(";", src.drawer.indexOf("})", m.index));
+    const statement = src.drawer.slice(m.index, stmtEnd < 0 ? m.index + 600 : stmtEnd + 1);
+    const guardedByTry = /try \{\s*await\s*$/.test(src.drawer.slice(Math.max(0, m.index - 60), m.index));
+    if (!guardedByTry && !/\.catch\(/.test(statement)) {
+      const line = src.drawer.slice(0, m.index).split("\n").length;
+      failures.push(`${FILES.drawer}:${line}: persistPackageMeta call has no rejection handler (try/catch or .catch()) — a failed metadata write becomes a silent unhandled rejection`);
+    }
   }
 
   return failures;
@@ -127,55 +112,34 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
 
-  // Mutation 2: drop the .catch() from the Email button (the exact pre-fix shape).
-  const droppedEmailCatch = {
+  // Mutation 2: a re-added button calling persistPackageMeta with .then() and no .catch() (the original pre-fix shape).
+  const unguardedButton = {
     drawer: good.drawer.replace(
-      `          void persistPackageMeta({
-                            ...packageState.meta,
-                            emailed_at: new Date().toISOString(),
-                          })
-                            .then(() => pushToast("Marked as emailed to factoring company", "success"))
-                            .catch((error) => pushToast(userFacingApiError(error, "Could not mark package as emailed"), "error"))`,
-      `          void persistPackageMeta({
-                            ...packageState.meta,
-                            emailed_at: new Date().toISOString(),
-                          }).then(() => pushToast("Marked as emailed to factoring company", "success"))`,
+      "  async function openDriverInstructionsFile() {",
+      "  function markEmailed() {\n    void persistPackageMeta({ ...packageState.meta, emailed_at: new Date().toISOString() }).then(() => pushToast(\"Marked as emailed\", \"success\"));\n  }\n\n  async function openDriverInstructionsFile() {",
     ),
   };
-  if (droppedEmailCatch.drawer === good.drawer) {
-    console.error(`${LABEL} SELFTEST FAIL — dropped-email-catch pattern did not match source, re-anchor`);
+  if (unguardedButton.drawer === good.drawer) {
+    console.error(`${LABEL} SELFTEST FAIL — unguarded-button plant did not match source, re-anchor`);
     process.exit(1);
   }
-  if (audit(droppedEmailCatch).length === 0) {
-    console.error(`${LABEL} SELFTEST FAIL — dropped Email-button .catch() regression escaped`);
+  if (audit(unguardedButton).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — an unguarded persistPackageMeta call escaped`);
+    process.exit(1);
+  }
+  // Control: the same call WITH a .catch() passes.
+  const guardedButton = {
+    drawer: unguardedButton.drawer.replace(
+      'pushToast(\"Marked as emailed\", \"success\"));',
+      'pushToast(\"Marked as emailed\", \"success\")).catch((error) => pushToast(userFacingApiError(error, \"x\"), \"error\"));',
+    ),
+  };
+  if (audit(guardedButton).length !== 0) {
+    console.error(`${LABEL} SELFTEST FAIL — a .catch()-guarded call was flagged: ${audit(guardedButton).join("; ")}`);
     process.exit(1);
   }
 
-  // Mutation 3: drop the .catch() from the Mark-uploaded button (the exact pre-fix shape).
-  const droppedUploadedCatch = {
-    drawer: good.drawer.replace(
-      `          void persistPackageMeta({
-                            ...packageState.meta,
-                            uploaded_at: new Date().toISOString(),
-                          })
-                            .then(() => pushToast("Marked as uploaded to factoring portal", "success"))
-                            .catch((error) => pushToast(userFacingApiError(error, "Could not mark package as uploaded"), "error"))`,
-      `          void persistPackageMeta({
-                            ...packageState.meta,
-                            uploaded_at: new Date().toISOString(),
-                          }).then(() => pushToast("Marked as uploaded to factoring portal", "success"))`,
-    ),
-  };
-  if (droppedUploadedCatch.drawer === good.drawer) {
-    console.error(`${LABEL} SELFTEST FAIL — dropped-uploaded-catch pattern did not match source, re-anchor`);
-    process.exit(1);
-  }
-  if (audit(droppedUploadedCatch).length === 0) {
-    console.error(`${LABEL} SELFTEST FAIL — dropped Mark-uploaded-button .catch() regression escaped`);
-    process.exit(1);
-  }
-
-  console.log(`${LABEL} SELFTEST PASS — 3 mutations detected`);
+  console.log(`${LABEL} SELFTEST PASS — 2 mutations detected, 1 control passes`);
   process.exit(0);
 }
 
@@ -184,4 +148,4 @@ if (failures.length) {
   console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — all 4 factoring-package metadata call sites disclose persistence failure`);
+console.log(`${LABEL} PASS — every factoring-package metadata write discloses persistence failure (try/catch or .catch())`);

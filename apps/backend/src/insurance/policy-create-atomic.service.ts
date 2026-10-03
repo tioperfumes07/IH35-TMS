@@ -205,7 +205,7 @@ async function persistBillsOnClient(
     for (const allocation of bill.allocations) {
       await client.query(
         `INSERT INTO accounting.bill_unit_allocation (
-           tenant_id, bill_id, asset_id,
+           operating_company_id, bill_id, asset_id,
            allocation_method, allocation_pct, allocated_amount_cents
          )
          VALUES ($1,$2,$3,$4,$5,$6)`,
@@ -287,7 +287,7 @@ export async function createInsurancePolicyWithBills(
 
     const coverageTypeRes = await client.query<{ id: string }>(
       `SELECT id::text FROM insurance.type_catalog
-       WHERE tenant_id = $1::uuid AND code = $2 AND active = true LIMIT 1`,
+       WHERE operating_company_id = $1::uuid AND code = $2 AND active = true LIMIT 1`,
       [input.operatingCompanyId, input.coverageType]
     );
     if (!coverageTypeRes.rows[0]) throw new Error("coverage_type_not_found");
@@ -304,13 +304,13 @@ export async function createInsurancePolicyWithBills(
 
     const policyRes = await client.query<{ id: string }>(
       `INSERT INTO insurance.policy (
-         tenant_id, operating_company_id, vendor_id, insurer_name, policy_number, coverage_type, coverage_type_id,
+         operating_company_id, vendor_id, insurer_name, policy_number, coverage_type, coverage_type_id,
          effective_date, expiry_date, total_premium_cents, down_payment_cents,
          installment_count, due_day, pay_day, late_fee_pct,
          insurer_email, agent_contact, status, allocation_method
        )
        VALUES (
-         $1::uuid,$1::uuid,$2,$3,$4,$5,$6::uuid,
+         $1::uuid,$2,$3,$4,$5,$6::uuid,
          $7::date,$8::date,$9,$10,
          $11,$12,$13,$14,$15,$16,$17,$18
        )
@@ -362,9 +362,9 @@ export async function createInsurancePolicyWithBills(
       const costPerMonth = costPerUnit[i] ?? 0;
       await client.query(
         `INSERT INTO insurance.policy_unit (
-           tenant_id, operating_company_id, policy_id, asset_id, insured_value_cents, cost_per_month_cents
+           operating_company_id, policy_id, asset_id, insured_value_cents, cost_per_month_cents
          )
-         VALUES ($1::uuid,$1::uuid,$2::uuid,$3::uuid,0,$4)`,
+         VALUES ($1::uuid,$2::uuid,$3::uuid,0,$4)`,
         [input.operatingCompanyId, policyId, resolvedAssetId, costPerMonth]
       );
       await appendCrudAudit(client, input.userId, "insurance.policy_unit.created", {

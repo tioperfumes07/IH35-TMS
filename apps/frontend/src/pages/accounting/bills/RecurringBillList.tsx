@@ -191,7 +191,7 @@ export function RecurringBillList() {
             }
             navigate("/accounting/bills");
           }}
-          className="inline-flex items-center gap-1 rounded-sm px-1 py-0.5 text-[11px] font-semibold text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+          className="inline-flex items-center gap-1 rounded-sm px-1 py-0.5 text-xs font-semibold text-gray-500 hover:bg-gray-100 hover:text-gray-700"
           aria-label="Back to Bills"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />

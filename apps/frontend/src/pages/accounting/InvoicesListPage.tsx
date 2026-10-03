@@ -462,7 +462,7 @@ export function InvoicesListPage() {
         sortValue: (row) => (row.source_load_chargeback_requested ? 1 : 0),
         render: (row) =>
           row.source_load_chargeback_requested ? (
-            <span className="rounded-sm border border-slate-300 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-700">
+            <span className="rounded-sm border border-slate-300 bg-slate-50 px-2 py-0.5 text-section-header font-semibold uppercase tracking-wide text-slate-700">
               flagged
             </span>
           ) : (
@@ -579,7 +579,7 @@ export function InvoicesListPage() {
         activeFilterCount={invoicesActiveFilterCount}
         testIdPrefix="invoices"
       >
-        <label className="text-[11px] text-slate-600">
+        <label className="text-xs text-slate-600">
           Load
           <EntityPicker
             kind="load"
@@ -593,7 +593,7 @@ export function InvoicesListPage() {
           />
         </label>
         <div>
-          <span className="text-[11px] text-slate-600">Status</span>
+          <span className="text-xs text-slate-600">Status</span>
           <SelectCombobox value={status} onChange={(event) => applyStatusFilter(event.target.value as InvoiceListFilter)} className="mt-1 h-9 rounded-sm border border-gray-300 px-2 text-xs">
             {STATUS_OPTIONS.map((option) => (
               <option key={option.label} value={option.value}>

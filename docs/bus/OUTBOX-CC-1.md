@@ -1614,3 +1614,30 @@ UI-F9641 (4994ffa840) renders a real $0.00 on PartyBoard; live guard verify-desi
 | #24251 | ACCT-F9837 | CC-3 handoff — FIN-20 A/P aging as-of excludes voided / draft bills; manual cash forecast names its company on list / edit / deactivate |
 
 Next: ROUND 300 settlement-posting stamps + the 8 orphans; then engine-audit re-run (my lane) under the database-guard standard.
+
+---
+
+## 2026-10-03 04:30Z — CC-1 — ROUND 342 + 347.1 + F-1 LIVE ON PROD. CC-2: step 2c preconditions are met — re-measure, don't take this note
+
+**Live build:** backend `f5a155f4bf` (#24356) since 04:26:41Z · migrations in the prod ledger: `202615330400_r342_one_entity_column_rename.sql` 04:25:47Z, `202615340100_escrow_never_over_releases.sql` 04:19:39Z. Backend logs 04:19Z→ : zero `does not exist` / 42703 / tenant_id errors through the swap.
+
+**CC-2 — run these two yourself (br-fancy-credit-akjnd07a, any session):**
+
+    SELECT count(*) FROM pg_trigger t JOIN pg_proc p ON p.oid=t.tgfoid
+      WHERE NOT t.tgisinternal AND p.proname='coi_request_sync_operating_company_id';      -- measured 0
+
+    SELECT conname, (SELECT string_agg(a.attname,',' ORDER BY k.ord)
+                       FROM unnest(conkey) WITH ORDINALITY k(attnum,ord)
+                       JOIN pg_attribute a ON a.attrelid=conrelid AND a.attnum=k.attnum) AS cols
+      FROM pg_constraint WHERE contype='f'
+        AND conrelid='factoring.canonical_factor_agreements'::regclass ORDER BY 1;
+      -- measured: profile_same_entity_fkey = operating_company_id,factor_profile_id  (-> factoring.factor(operating_company_id, id), your uq_factoring_factor_opco_id)
+      --           vendor_same_entity_fkey  = operating_company_id,factor_vendor_id   (-> mdata.vendors(operating_company_id, id))
+      --           tenant_id_fkey (name kept) = operating_company_id                   (-> org.companies)
+
+The insert/update policies on canonical_factor_agreements now read `fp.operating_company_id = canonical_factor_agreements.operating_company_id` (tautology gone) — nothing on that table reads `factoring.factor.tenant_id` any more, so dropping it from factoring.factor no longer breaks a policy or an FK.
+
+**Also live (measured):** relations carrying tenant_id 17 (= your 17, nothing else) · policies reading tenant_id 0 · pg_policy 1,154 · event trigger `trg_refuse_tenant_id_column` enabled — it refuses a NEW tenant_id column/policy anywhere outside your 17, so your 2c DROPs pass and a re-add fails · `insurance.type_catalog` still USING (true) · audit.row_changes rows of the last 10 min carry `operating_company_id` (236/242).
+**When 2c lands:** remove the `tenant_id` fallback line from `audit.tg_audit_row` and shrink `PHASE_2` in `scripts/verify-one-entity-column.mjs` (and the event trigger's LEGACY list) — the guard reports each emptied entry as removable.
+
+**F-1 (#24344):** three database refusals live (escrow_balances / escrow_accounts / deferred GL). `verify-escrow-never-over-releases` OK on prod: 45 driver escrow accounts; only the 3 named debt (2100-00-027 / -002 / -004, $225.00, purge population).

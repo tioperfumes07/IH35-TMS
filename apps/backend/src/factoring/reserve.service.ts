@@ -14,10 +14,8 @@ function toNumber(value: unknown): number {
 
 export type ReserveMovementRow = {
   id: string;
-  /** ROUND 342 — canonical. Prefer this over tenant_id (retired by CC-1 rename). */
+  /** ROUND 342 — the one company column. */
   operating_company_id: string;
-  /** @deprecated ROUND 342 — alias of operating_company_id until FE callers finish cutover. */
-  tenant_id: string;
   batch_id: string | null;
   factor_id: string | null;
   direction: ReserveMovementDirection;
@@ -27,10 +25,8 @@ export type ReserveMovementRow = {
 };
 
 export type FactorReserveBalanceRow = {
-  /** ROUND 342 — canonical. v_factor_reserve_balance OUTPUT renames tenant_id→operating_company_id with CC-1. */
+  /** ROUND 342 — the one company column (v_factor_reserve_balance outputs it under this name). */
   operating_company_id: string;
-  /** @deprecated ROUND 342 — alias of operating_company_id until FE callers finish cutover. */
-  tenant_id: string;
   factor_id: string;
   balance_cents: number;
   last_movement_at: string | null;
@@ -74,10 +70,9 @@ export class ReserveMovementError extends Error {
   }
 }
 
-/** ROUND 342 trap: after CC-1 renames the view/base column, row.tenant_id is undefined — blank ≡ zero. */
+/** ROUND 342 — operating_company_id is the one company column on reserve rows and on the balance view. */
 function companyIdFromRow(row: Record<string, unknown>): string {
-  const oci = row.operating_company_id ?? row.tenant_id;
-  return String(oci ?? "");
+  return String(row.operating_company_id ?? "");
 }
 
 function mapReserveMovementRow(row: Record<string, unknown>): ReserveMovementRow {
@@ -85,7 +80,6 @@ function mapReserveMovementRow(row: Record<string, unknown>): ReserveMovementRow
   return {
     id: String(row.id),
     operating_company_id: companyId,
-    tenant_id: companyId,
     batch_id: row.batch_id ? String(row.batch_id) : null,
     factor_id: row.factor_id ? String(row.factor_id) : null,
     direction: String(row.direction) as ReserveMovementDirection,
@@ -99,7 +93,6 @@ function mapFactorReserveBalanceRow(row: Record<string, unknown>): FactorReserve
   const companyId = companyIdFromRow(row);
   return {
     operating_company_id: companyId,
-    tenant_id: companyId,
     factor_id: String(row.factor_id),
     balance_cents: toNumber(row.balance_cents),
     last_movement_at: row.last_movement_at ? String(row.last_movement_at) : null,
@@ -133,12 +126,9 @@ export async function postReserveMovement(
   }
   const inserted = await deps.client.query<Record<string, unknown>>(
     `
-        -- LV-TXN-016: prod RLS on this table gates WITH CHECK on operating_company_id, and the
-        -- column is NULLABLE, so omitting it leaves NULL, the check yields NULL, and the write
-        -- aborts 42501. tenant_id and operating_company_id are the same company id here
-        -- (tenant_id REFERENCES org.companies(id)), so both are written from the same value.
+        -- LV-TXN-016: prod RLS on this table gates WITH CHECK on operating_company_id — the one scope
+        -- column (ROUND 342, NOT NULL) — so it is always written, from $1.
       INSERT INTO factoring.reserve_movement (
-        tenant_id,
         operating_company_id,
         batch_id,
         factor_id,
@@ -147,7 +137,6 @@ export async function postReserveMovement(
         reason
       )
       VALUES (
-        $1::uuid,
         $1::uuid,
         $2::uuid,
         $3::uuid,
@@ -231,7 +220,6 @@ export async function getFactorReserveBalances(
   const postings = await factoringReservePostings(client, tenantId);
   return [{
     operating_company_id: tenantId,
-    tenant_id: tenantId,
     factor_id: factorId,
     balance_cents: book.total,
     last_movement_at: postings.length ? postings[postings.length - 1]!.entry_date : null,
@@ -256,7 +244,6 @@ export async function getReserveBalanceHistory(
     return {
       id: p.id,
       operating_company_id: tenantId,
-      tenant_id: tenantId,
       batch_id: null,
       factor_id: factorId,
       // "credit" = added to the reserve (a GL debit on the asset), "debit" = taken out — the screen's existing meaning.

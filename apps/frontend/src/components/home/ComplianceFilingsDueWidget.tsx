@@ -33,7 +33,7 @@ export function ComplianceFilingsDueWidget({ operatingCompanyId }: Props) {
   return (
     <section className="rounded-sm border border-slate-200 bg-white" aria-label="Filings and compliance due" data-testid="home-compliance-filings-widget">
       <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2">
-        <h2 className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">Filings / Compliance Due</h2>
+        <h2 className="text-section-header font-semibold uppercase tracking-wide text-slate-700">Filings / Compliance Due</h2>
         <Link to="/compliance" className="text-xs font-semibold text-slate-700 underline">
           Open full dashboard
         </Link>
@@ -59,7 +59,7 @@ export function ComplianceFilingsDueWidget({ operatingCompanyId }: Props) {
                 <div className={`text-page-title font-semibold ${pendingCount > 0 ? "text-red-700" : "text-[#1f2a44]"}`}>
                   {pendingCount}
                 </div>
-                <div className="text-[11px] text-slate-500">overdue + due soon</div>
+                <div className="text-xs text-slate-500">overdue + due soon</div>
               </div>
               <div className="text-xs text-slate-500">
                 {counts.overdue} overdue · {counts.due} due soon · {counts.upcoming} upcoming

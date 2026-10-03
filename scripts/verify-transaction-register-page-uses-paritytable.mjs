@@ -69,6 +69,10 @@ function assertMigrated(src) {
   if (src.includes("useMutation")) {
     errors.push(`${PAGE}: read-only register — must not add mutations`);
   }
+  // BANK-F91091 — ORDERS chrome: source badge uses text-xs, not text-[11px].
+  if (src.includes("text-[11px]")) {
+    errors.push(`${PAGE}: must not use text-[11px] — use text-xs (GLOBAL-TYPE-SIZE-BASELINE body 12px)`);
+  }
   return errors;
 }
 
@@ -116,6 +120,11 @@ function selftest() {
   }
   if (badErrors.length < 3) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
+    process.exit(1);
+  }
+  const offScale = `${good}\n<span className="text-[11px]">src</span>`;
+  if (!assertMigrated(offScale).some((e) => e.includes("text-[11px]"))) {
+    console.error(`${LABEL} --selftest FAIL off-scale text-[11px] not caught`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);

@@ -15,7 +15,7 @@ describe("buildAuditRowChangesQuery", () => {
     });
 
     expect(query.sql).toContain("FROM audit.row_changes");
-    expect(query.sql).toContain("tenant_id = $1::uuid");
+    expect(query.sql).toContain("operating_company_id = $1::uuid");
     expect(query.sql).toContain("schema_name = $2");
     expect(query.sql).toContain("table_name = $3");
     expect(query.sql).toContain("row_pk = $4");

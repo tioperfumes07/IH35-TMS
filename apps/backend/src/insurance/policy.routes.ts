@@ -175,7 +175,7 @@ function policyUnitSelectColumns() {
 function policyUnitFromClause() {
   return `
     FROM insurance.policy_unit pu
-    LEFT JOIN mdata.assets a ON a.id = pu.asset_id AND a.tenant_id = pu.operating_company_id
+    LEFT JOIN mdata.assets a ON a.id = pu.asset_id AND a.operating_company_id = pu.operating_company_id
     LEFT JOIN mdata.units u
       ON (u.id = a.unit_id OR (a.unit_id IS NULL AND u.unit_number = a.unit_code))
      AND (u.owner_company_id = pu.operating_company_id OR u.currently_leased_to_company_id = pu.operating_company_id)
@@ -222,7 +222,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
           FROM insurance.policy p
           LEFT JOIN insurance.type_catalog tc
             ON tc.id = p.coverage_type_id
-           AND tc.tenant_id = p.operating_company_id
+           AND tc.operating_company_id = p.operating_company_id
           WHERE ${filters.join(" AND ")}
           ORDER BY p.expiry_date ASC, p.insurer_name ASC
         `,
@@ -249,7 +249,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
           FROM insurance.policy p
           LEFT JOIN insurance.type_catalog tc
             ON tc.id = p.coverage_type_id
-           AND tc.tenant_id = p.operating_company_id
+           AND tc.operating_company_id = p.operating_company_id
           WHERE p.operating_company_id = $1::uuid AND p.id = $2::uuid
         `,
         [query.data.operating_company_id, params.data.id]
@@ -309,7 +309,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
         `
           SELECT id::text
           FROM insurance.type_catalog
-          WHERE tenant_id = $1::uuid
+          WHERE operating_company_id = $1::uuid
             AND code = $2
             AND active = true
           LIMIT 1
@@ -321,7 +321,6 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
       const result = await client.query(
         `
           INSERT INTO insurance.policy (
-            tenant_id,
             operating_company_id,
             vendor_id,
             insurer_name,
@@ -341,7 +340,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
             status
           )
           VALUES (
-            $1::uuid, $1::uuid, $2, $3, $4, $5, $6::uuid, $7::date, $8::date, $9, $10, $11, $12, $13, $14, $15, $16, $17
+            $1::uuid, $2, $3, $4, $5, $6::uuid, $7::date, $8::date, $9, $10, $11, $12, $13, $14, $15, $16, $17
           )
           RETURNING ${policySelectColumns()}
         `,
@@ -421,7 +420,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
           `
             SELECT id::text
             FROM insurance.type_catalog
-            WHERE tenant_id = $1::uuid
+            WHERE operating_company_id = $1::uuid
               AND code = $2
               AND active = true
             LIMIT 1
@@ -575,8 +574,8 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
         unitRow = upd.rows[0] as Record<string, unknown>;
       } else {
         const ins = await client.query(
-          `INSERT INTO insurance.policy_unit (tenant_id, operating_company_id, policy_id, asset_id, insured_value_cents)
-           VALUES ($1::uuid, $1::uuid, $2::uuid, $3::uuid, $4)
+          `INSERT INTO insurance.policy_unit (operating_company_id, policy_id, asset_id, insured_value_cents)
+           VALUES ($1::uuid, $2::uuid, $3::uuid, $4)
            RETURNING id::text, policy_id::text, asset_id::text, insured_value_cents::bigint, removed_at::text, created_at::text, updated_at::text`,
           [body.operating_company_id, params.data.policy_id, resolvedAssetId, body.insured_value_cents]
         );
@@ -723,11 +722,11 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
       result = await withCompanyScope(user.uuid, body.operating_company_id, async (client) => {
         const insertRes = await client.query(
           `INSERT INTO insurance.policy (
-             tenant_id, operating_company_id, renewed_from_policy_id, policy_number, coverage_type, coverage_type_id,
+             operating_company_id, renewed_from_policy_id, policy_number, coverage_type, coverage_type_id,
              effective_date, expiry_date, total_premium_cents, down_payment_cents, installment_count,
              due_day, pay_day, late_fee_pct, insurer_email, agent_contact, status, vendor_id, insurer_name
            )
-           SELECT $1::uuid, $1::uuid, $2::uuid, $3, coverage_type, coverage_type_id,
+           SELECT $1::uuid, $2::uuid, $3, coverage_type, coverage_type_id,
              $4::date, $5::date, $6, $7, $8,
              due_day, pay_day, late_fee_pct, insurer_email, agent_contact, 'pending', vendor_id, insurer_name
            FROM insurance.policy
@@ -748,8 +747,8 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
         if (!newPolicy) return { kind: "policy_not_found" as const };
 
         await client.query(
-          `INSERT INTO insurance.policy_unit (tenant_id, operating_company_id, policy_id, asset_id, insured_value_cents)
-           SELECT $1::uuid, $1::uuid, $2::uuid, asset_id, insured_value_cents
+          `INSERT INTO insurance.policy_unit (operating_company_id, policy_id, asset_id, insured_value_cents)
+           SELECT $1::uuid, $2::uuid, asset_id, insured_value_cents
            FROM insurance.policy_unit
            WHERE operating_company_id = $1::uuid AND policy_id = $3::uuid AND removed_at IS NULL`,
           [body.operating_company_id, newPolicy.id, params.data.policy_id]
@@ -872,7 +871,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
         `
           SELECT a.id::text, a.unit_code, a.asset_type, a.status
           FROM mdata.assets a
-          WHERE a.tenant_id = $1::uuid AND a.id = $2::uuid
+          WHERE a.operating_company_id = $1::uuid AND a.id = $2::uuid
           LIMIT 1
         `,
         [query.data.operating_company_id, resolvedAssetId]

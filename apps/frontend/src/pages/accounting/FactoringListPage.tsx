@@ -39,7 +39,7 @@ function money(cents: number) {
 }
 
 function statusPill(status: FactoringAdvance["status"]) {
-  const base = "rounded-sm px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide";
+  const base = "rounded-sm px-2 py-0.5 text-section-header font-semibold uppercase tracking-wide";
   if (status === "advanced") return `${base} bg-slate-100 text-slate-700 border border-slate-300`;
   if (status === "reserve_held" || status === "collected") return `${base} bg-slate-50 text-slate-600 border border-slate-200`;
   if (status === "released") return `${base} bg-slate-100 text-slate-700 border border-slate-200`;
@@ -166,7 +166,7 @@ export function FactoringListPage() {
       }
     >
       <div className="grid gap-2 md:grid-cols-4 w-full" data-testid="factoring-entity-filters">
-        <label className="flex flex-col gap-1 text-[11px] text-slate-600">
+        <label className="flex flex-col gap-1 text-xs text-slate-600">
           Load
           <EntityPicker
             kind="load"

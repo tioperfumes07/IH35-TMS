@@ -39,7 +39,7 @@ export function QboSyncHealthCard({ rows, onForceSync, syncing }: Props) {
     <div className="rounded-sm border border-slate-200 bg-white p-3">
       <div className="mb-2 flex items-center justify-between">
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">QBO Sync Health</div>
-        <button type="button" onClick={onForceSync} disabled={syncing} className="rounded-sm bg-slate-800 px-2.5 py-1 text-[11px] font-semibold text-white">
+        <button type="button" onClick={onForceSync} disabled={syncing} className="rounded-sm bg-slate-800 px-2.5 py-1 text-xs font-semibold text-white">
           {syncing ? "Starting..." : "Force QBO Sync"}
         </button>
       </div>

@@ -284,17 +284,17 @@ export function BankReconciliationPage() {
           data-testid="recon-balance-header"
         >
           <div>
-            <div className="text-[11px] uppercase tracking-wide text-gray-500">Beginning balance</div>
+            <div className="text-section-header uppercase tracking-wide text-gray-500">Beginning balance</div>
             <div className="text-xs font-semibold text-gray-900">{money(balanceHeader.beginningCents)}</div>
           </div>
           <div>
-            <div className="text-[11px] uppercase tracking-wide text-gray-500">Ending balance</div>
+            <div className="text-section-header uppercase tracking-wide text-gray-500">Ending balance</div>
             <div className="text-xs font-semibold text-gray-900">
               {balanceHeader.endingCents != null ? money(balanceHeader.endingCents) : "—"}
             </div>
           </div>
           <div>
-            <div className="text-[11px] uppercase tracking-wide text-gray-500">Last reconciled</div>
+            <div className="text-section-header uppercase tracking-wide text-gray-500">Last reconciled</div>
             <div className="text-xs font-semibold text-gray-900">
               {formatReconciledDate(balanceHeader.lastReconciledAt)}
             </div>

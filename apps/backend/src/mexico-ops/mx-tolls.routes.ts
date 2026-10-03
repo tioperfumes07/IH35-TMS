@@ -121,11 +121,11 @@ export async function mxTollsRoutes(app: FastifyInstance) {
     const row = await withCompany(user.uuid, body.operating_company_id, async (client) => {
       const { rows } = await client.query(`
         INSERT INTO mdata.mx_tolls_ledger (
-          operating_company_id, tenant_id,
+          operating_company_id,
           load_id, toll_date, caseta,
           amount_mxn, amount_usd_cents, exchange_rate_used,
           payment_method, unit_id, driver_id, receipt_url
-        ) VALUES ($1,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
         RETURNING *
       `, [
         body.operating_company_id,

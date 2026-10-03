@@ -194,7 +194,7 @@ export function DriverTeamModal({ open, operatingCompanyId, mode, team, onClose,
             className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
             placeholder="e.g. Laredo Night Team"
           />
-          {errors.team_name ? <div className="mt-1 text-[11px] text-red-700">{errors.team_name}</div> : null}
+          {errors.team_name ? <div className="mt-1 text-xs text-red-700">{errors.team_name}</div> : null}
         </label>
 
         {mode === "create" ? (
@@ -210,7 +210,7 @@ export function DriverTeamModal({ open, operatingCompanyId, mode, team, onClose,
                 open={open}
                 placeholder="Select primary driver"
               />
-              {errors.primary_driver ? <div className="mt-1 text-[11px] text-red-700">{errors.primary_driver}</div> : null}
+              {errors.primary_driver ? <div className="mt-1 text-xs text-red-700">{errors.primary_driver}</div> : null}
             </div>
 
             <div className="block text-xs font-semibold text-gray-600">
@@ -224,7 +224,7 @@ export function DriverTeamModal({ open, operatingCompanyId, mode, team, onClose,
                 open={open}
                 placeholder="Select secondary driver"
               />
-              {errors.secondary_driver ? <div className="mt-1 text-[11px] text-red-700">{errors.secondary_driver}</div> : null}
+              {errors.secondary_driver ? <div className="mt-1 text-xs text-red-700">{errors.secondary_driver}</div> : null}
             </div>
 
             <div className="block text-xs font-semibold text-gray-600">
@@ -237,7 +237,7 @@ export function DriverTeamModal({ open, operatingCompanyId, mode, team, onClose,
                 max={maxEffectiveFromIso()}
                 onChange={(next) => setForm((value) => ({ ...value, effective_from: next }))}
               />
-              {errors.effective_from ? <div className="mt-1 text-[11px] text-red-700">{errors.effective_from}</div> : null}
+              {errors.effective_from ? <div className="mt-1 text-xs text-red-700">{errors.effective_from}</div> : null}
             </div>
           </>
         ) : null}
@@ -265,7 +265,7 @@ export function DriverTeamModal({ open, operatingCompanyId, mode, team, onClose,
         {mode === "edit" && team ? (
           <div className="rounded-sm border border-gray-200 bg-slate-50 p-2">
             <div className="mb-1 text-xs font-semibold text-slate-700">Membership</div>
-            <p className="mb-2 text-[11px] text-slate-500">
+            <p className="mb-2 text-xs text-slate-500">
               Replacing a driver closes this team (effective today) and opens a new one with the same name — the old
               record is kept, never deleted.
             </p>
@@ -291,7 +291,7 @@ export function DriverTeamModal({ open, operatingCompanyId, mode, team, onClose,
             ))}
             {replaceSlot ? (
               <div className="mt-2 space-y-2 border-t border-gray-200 pt-2">
-                <div className="text-[11px] font-semibold text-slate-600">Replacement for {replaceSlot} driver</div>
+                <div className="text-xs font-semibold text-slate-600">Replacement for {replaceSlot} driver</div>
                 <DriverPickerWithCreate
                   operatingCompanyId={operatingCompanyId}
                   value={replacementDriverId}

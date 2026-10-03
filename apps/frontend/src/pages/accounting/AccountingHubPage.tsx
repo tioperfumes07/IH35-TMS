@@ -142,7 +142,7 @@ function kpiCard(label: string, value: string, sublabel: string, tone: "neutral"
         : "border-l-4 border-l-slate-300";
   return (
     <div className={`rounded-sm border border-gray-200 bg-white px-3 py-2 ${toneClass}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{label}</p>
+      <p className="text-section-header font-semibold uppercase tracking-wide text-gray-500">{label}</p>
       <p className="text-page-title font-semibold text-gray-900">{value}</p>
       <p className="text-xs text-gray-500">{sublabel}</p>
     </div>
@@ -153,7 +153,7 @@ function homePanel(title: string, rows: AmountRow[], empty: string, actionHref?:
   return (
     <section className="rounded-sm border border-gray-200 bg-white">
       <header className="flex items-center justify-between border-b border-gray-200 px-3 py-1.5">
-        <h3 className="text-[11px] font-bold uppercase tracking-wide text-gray-700">{title}</h3>
+        <h3 className="text-section-header font-bold uppercase tracking-wide text-gray-700">{title}</h3>
         {actionHref && actionLabel ? (
           <Link to={actionHref} className="text-xs font-semibold text-slate-700 hover:underline">
             {actionLabel}

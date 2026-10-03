@@ -128,13 +128,13 @@ export function FleetCatalogModal({ open, operatingCompanyId, displayName, clien
             className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-slate-100"
             placeholder="EXAMPLE-CODE"
           />
-          {errors.code ? <div className="mt-1 text-[11px] text-red-700">{errors.code}</div> : null}
+          {errors.code ? <div className="mt-1 text-xs text-red-700">{errors.code}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
           Display Name
           <input value={form.display_name} disabled={readOnly} onChange={(event) => setForm((value) => ({ ...value, display_name: event.target.value }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-slate-100" />
-          {errors.display_name ? <div className="mt-1 text-[11px] text-red-700">{errors.display_name}</div> : null}
+          {errors.display_name ? <div className="mt-1 text-xs text-red-700">{errors.display_name}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
@@ -145,7 +145,7 @@ export function FleetCatalogModal({ open, operatingCompanyId, displayName, clien
         <label className="block text-xs font-semibold text-gray-600">
           Sort Order
           <input type="number" min={0} step={1} disabled={readOnly} value={form.sort_order} onChange={(event) => setForm((value) => ({ ...value, sort_order: Number(event.target.value || 0) }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-slate-100" />
-          {errors.sort_order ? <div className="mt-1 text-[11px] text-red-700">{errors.sort_order}</div> : null}
+          {errors.sort_order ? <div className="mt-1 text-xs text-red-700">{errors.sort_order}</div> : null}
         </label>
 
         <label className="flex items-center gap-2 text-xs text-gray-700">

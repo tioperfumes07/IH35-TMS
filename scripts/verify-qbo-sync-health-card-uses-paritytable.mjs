@@ -56,6 +56,10 @@ function assertMigrated(src) {
   if (!src.includes("driftClass")) {
     errors.push(`${PAGE}: must keep the driftClass severity coloring`);
   }
+  // BANK-F91111 — ORDERS chrome: Force QBO Sync button uses text-xs, not text-[11px].
+  if (src.includes("text-[11px]")) {
+    errors.push(`${PAGE}: must not use text-[11px] — use text-xs`);
+  }
   return errors;
 }
 

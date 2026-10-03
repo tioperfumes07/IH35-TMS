@@ -173,7 +173,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
       <div className="space-y-2 text-xs">
         {step === 1 ? (
           <>
-            <p className="text-[11px] text-gray-600">Add debit/credit lines. Totals must match before you continue. Date, reference, and memo are set on the next step.</p>
+            <p className="text-xs text-gray-600">Add debit/credit lines. Totals must match before you continue. Date, reference, and memo are set on the next step.</p>
             <div className="space-y-1">
               {lines.map((line, idx) => (
                 <div key={idx} className="grid grid-cols-6 gap-1 rounded-sm border border-gray-200 p-1.5">

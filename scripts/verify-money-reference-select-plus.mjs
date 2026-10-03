@@ -53,6 +53,10 @@ if (map.includes("expense-category-account-options") || map.includes("<datalist"
 if (!map.includes("ReferenceSelect")) {
   failures.push("ExpenseCategoryMapPage missing ReferenceSelect");
 }
+// BANK-F91094 — ORDERS chrome: selected-account hint uses text-xs, not text-[11px].
+if (map.includes("text-[11px]")) {
+  failures.push("ExpenseCategoryMapPage must not use text-[11px] — use text-xs");
+}
 
 const ref = read("apps/frontend/src/components/parity/ReferenceSelect.tsx");
 // LST-PICKER-01 made the picker config-driven: the kind→backend mapping moved out of a hardcoded
@@ -105,6 +109,10 @@ if (
   !/item-preferred-vendor-block[\s\S]{0,900}allowCreate/.test(itemEditor)
 ) {
   failures.push("ItemEditorModal preferred vendor must use EntityPicker kind=vendor allowCreate");
+}
+// BANK-F91101 — ORDERS chrome: field errors + capped-list hints use text-xs, not text-[11px].
+if (itemEditor.includes("text-[11px]")) {
+  failures.push("ItemEditorModal must not use text-[11px] — use text-xs");
 }
 
 const createWo = read("apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx");

@@ -15,6 +15,11 @@
  * Ceiling 0. Refuses any live factoring-fee / factoring-interest account whose subtype is a
  * bank-charge type OR whose parent is not 6810 (6405 is allowed as child of 6400).
  *
+ * WIRE-FEE RULE (owner 2026-10-03: "FARO WIRE FEE IS A WIRE FEE"): the factor's WIRE fee is a bank charge, not a
+ * financing cost. The account bound to the active role factor_wire_fee must carry a bank-charge subtype and must NOT sit
+ * under 6810 — the inverse of the rule above, so a sweep cannot "fix" it onto the financing side. USMCA today:
+ * 6300 Bank Service Charges & Wire Fees. Recorded in docs/bus/00-CLOSED-ASKED-AND-ANSWERED-NEVER-REOPEN.md.
+ *
  * Read-only against Neon. No seed. No CoA rewrite here — Lead already executed the reclass on
  * prod (0 postings made it free); this guard locks the shape.
  */
@@ -91,6 +96,18 @@ export function classifyRow(row) {
   return { ok: true, why: "ok" };
 }
 
+/** The account bound to factor_wire_fee: a wire fee is a bank charge — bank-charge subtype, never under 6810. */
+export function classifyWireFeeAccount(row) {
+  const num = String(row.account_number ?? "");
+  if (!isBankChargeSubtype(row.account_subtype)) {
+    return { ok: false, why: `factor_wire_fee -> ${num} subtype=${row.account_subtype ?? "NULL"} — a Faro wire fee is a WIRE FEE (bank charge), owner 2026-10-03` };
+  }
+  if (row.parent_number === "6810" || num === "6810") {
+    return { ok: false, why: `factor_wire_fee -> ${num} sits under 6810 Interest & Financing Expense — a wire fee is not a financing cost` };
+  }
+  return { ok: true, why: "wire-fee-is-bank-charge" };
+}
+
 function selftest() {
   const cases = [
     [{ account_number: "6400", account_subtype: "OtherExpense", parent_number: "6810", deactivated_at: null }, true],
@@ -106,6 +123,17 @@ function selftest() {
     const r = classifyRow(row);
     if (r.ok !== expectOk) {
       console.error(`${LABEL}: SELFTEST FAIL on ${JSON.stringify(row)} → ${JSON.stringify(r)} expected ok=${expectOk}`);
+      process.exit(1);
+    }
+  }
+  const wire = [
+    [{ account_number: "6300", account_subtype: "Bank Charges", parent_number: null }, true],
+    [{ account_number: "6300", account_subtype: "OtherExpense", parent_number: "6810" }, false],
+    [{ account_number: "6840", account_subtype: "Bank Charges", parent_number: "6810" }, false],
+  ];
+  for (const [row, expectOk] of wire) {
+    if (classifyWireFeeAccount(row).ok !== expectOk) {
+      console.error(`${LABEL}: SELFTEST FAIL wire-fee rule on ${JSON.stringify(row)} expected ok=${expectOk}`);
       process.exit(1);
     }
   }
@@ -170,6 +198,21 @@ try {
     failures.push(`6810 itself has bank-charge subtype ${parent.account_subtype}`);
   }
 
+  // WIRE-FEE RULE — the active factor_wire_fee binding stays a bank charge.
+  const wireRows = (await client.query(
+    `SELECT a.account_number, a.account_subtype, p.account_number AS parent_number
+       FROM accounting.chart_of_accounts_roles r
+       JOIN catalogs.accounts a ON a.id = r.account_id
+       LEFT JOIN catalogs.accounts p ON p.id = a.parent_account_id
+      WHERE r.operating_company_id = $1::uuid AND r.role = 'factor_wire_fee' AND r.is_active`,
+    [USMCA]
+  )).rows;
+  if (wireRows.length === 0) failures.push("factor_wire_fee has no active binding on USMCA (expected 6300 Bank Service Charges & Wire Fees)");
+  for (const w of wireRows) {
+    const v = classifyWireFeeAccount(w);
+    if (!v.ok) failures.push(v.why);
+  }
+
   await client.query("ROLLBACK");
 
   if (failures.length > 0) {
@@ -178,7 +221,7 @@ try {
   }
 
   console.log(
-    `${LABEL}: PASS — USMCA 6400/6830→6810, 6405→6400, 6820 dead, 0 bank-charge subtypes on factoring fee/interest accounts (rows=${rows.length})`
+    `${LABEL}: PASS — USMCA 6400/6830→6810, 6405→6400, 6820 dead, 0 bank-charge subtypes on factoring fee/interest accounts (rows=${rows.length}); factor_wire_fee -> ${wireRows.map((w) => w.account_number).join(",")} stays a bank charge (wire fee)`
   );
 } finally {
   await client.end();

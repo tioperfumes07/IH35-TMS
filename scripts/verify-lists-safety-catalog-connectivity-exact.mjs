@@ -46,6 +46,46 @@ export function audit(sources = {}) {
   if (!sharedModal.includes("onClose();") || !sharedModal.includes("finally") || !sharedModal.includes("setIsSaving(false)")) {
     failures.push("shared Safety catalog modal must close only after canonical success and always release saving state");
   }
+  // BANK-F91112 — ORDERS chrome: Safety generic catalog field errors use text-xs, not text-[11px].
+  if (sharedModal.includes("text-[11px]")) {
+    failures.push("shared Safety catalog modal must not use text-[11px] — use text-xs");
+  }
+  // BANK-F91113 — ORDERS chrome: Internal Fine Reason field errors use text-xs, not text-[11px].
+  const internalFineRel = "apps/frontend/src/pages/lists/safety/InternalFineReasonModal.tsx";
+  const internalFine = sources[internalFineRel] ?? read(internalFineRel);
+  if (internalFine.includes("text-[11px]")) {
+    failures.push("InternalFineReasonModal must not use text-[11px] — use text-xs");
+  }
+  // BANK-F91114 — ORDERS chrome: DOT Violation Type field errors use text-xs, not text-[11px].
+  const dotRel = "apps/frontend/src/pages/lists/safety/DotViolationTypeModal.tsx";
+  const dotModal = sources[dotRel] ?? read(dotRel);
+  if (dotModal.includes("text-[11px]")) {
+    failures.push("DotViolationTypeModal must not use text-[11px] — use text-xs");
+  }
+  // BANK-F91115 — ORDERS chrome: Complaint Type field errors use text-xs, not text-[11px].
+  const complaintRel = "apps/frontend/src/pages/lists/safety/ComplaintTypeModal.tsx";
+  const complaintModal = sources[complaintRel] ?? read(complaintRel);
+  if (complaintModal.includes("text-[11px]")) {
+    failures.push("ComplaintTypeModal must not use text-[11px] — use text-xs");
+  }
+  // BANK-F91116 — ORDERS chrome: Company Violation Type field errors use text-xs, not text-[11px].
+  const companyRel = "apps/frontend/src/pages/lists/safety/CompanyViolationTypeModal.tsx";
+  const companyModal = sources[companyRel] ?? read(companyRel);
+  if (companyModal.includes("text-[11px]")) {
+    failures.push("CompanyViolationTypeModal must not use text-[11px] — use text-xs");
+  }
+  // BANK-F91117 — ORDERS chrome: Civil Fine Type field errors use text-xs, not text-[11px].
+  const civilRel = "apps/frontend/src/pages/lists/safety/CivilFineTypeModal.tsx";
+  const civilModal = sources[civilRel] ?? read(civilRel);
+  if (civilModal.includes("text-[11px]")) {
+    failures.push("CivilFineTypeModal must not use text-[11px] — use text-xs");
+  }
+  // BANK-F91118 — ORDERS chrome: Cargo Claim Reason field errors use text-xs, not text-[11px].
+  const cargoRel = "apps/frontend/src/pages/lists/safety/CargoClaimReasonModal.tsx";
+  const cargoModal = sources[cargoRel] ?? read(cargoRel);
+  if (cargoModal.includes("text-[11px]")) {
+    failures.push("CargoClaimReasonModal must not use text-[11px] — use text-xs");
+  }
 
   for (const [leafKey, slug, plural, singular] of CATALOGS) {
     const route = `/lists/safety/${slug}`;

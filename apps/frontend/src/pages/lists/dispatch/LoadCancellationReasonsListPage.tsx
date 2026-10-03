@@ -40,8 +40,8 @@ const REASON_CODE_REGEX = /^[A-Z][A-Z0-9_]+$/;
 
 function statusPill(isActive: boolean) {
   return isActive
-    ? "inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700"
-    : "inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600";
+    ? "inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700"
+    : "inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600";
 }
 
 /** Export the visible cancellation reason rows as CSV. */

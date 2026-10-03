@@ -2608,7 +2608,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   resetTestId="factoring-home-filter-reset"
                 >
                   <div className="flex flex-wrap items-end gap-3">
-                    <label className="text-[11px] text-slate-600">
+                    <label className="text-xs text-slate-600">
                       Customer
                       <EntityPicker
                         kind="customer"
@@ -2621,7 +2621,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                         dataTestId="factoring-home-filter-customer"
                       />
                     </label>
-                    <label className="text-[11px] text-slate-600">
+                    <label className="text-xs text-slate-600">
                       Load
                       <EntityPicker
                         kind="load"
@@ -2716,7 +2716,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                     cancelTestId="factoring-home-chargebacks-filter-cancel"
                     resetTestId="factoring-home-chargebacks-filter-reset"
                   >
-                    <label className="text-[11px] text-slate-600">
+                    <label className="text-xs text-slate-600">
                       Customer
                       <EntityPicker
                         kind="customer"
@@ -3160,7 +3160,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 cancelTestId="factoring-home-equipment-filter-cancel"
                 resetTestId="factoring-home-equipment-filter-reset"
               >
-                <label className="text-[11px] text-slate-600">
+                <label className="text-xs text-slate-600">
                   Lender vendor
                   <EntityPicker
                     kind="vendor"
@@ -3358,7 +3358,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                     resetTestId="factoring-home-merges-filter-reset"
                   >
                     <div className="flex flex-wrap items-end gap-3">
-                      <label className="text-[11px] text-slate-600">
+                      <label className="text-xs text-slate-600">
                         Driver
                         <EntityPicker
                           kind="driver"
@@ -3371,7 +3371,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                           dataTestId="factoring-home-filter-driver"
                         />
                       </label>
-                      <label className="text-[11px] text-slate-600">
+                      <label className="text-xs text-slate-600">
                         Vendor
                         <EntityPicker
                           kind="vendor"

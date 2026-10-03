@@ -25,6 +25,11 @@ export const PHASES = [
     migrations: ["202615330904_block_phase2_driver_finance_same_entity_fks.sql"],
     tables: ["driver_finance.settlement_lines", "driver_finance.escrow_balances", "driver_finance.driver_advance_accounts"],
   },
+  {
+    // Dispatch D1 — the dispatch core (load_stops gained its company column in 0911).
+    migrations: ["202615330911_dispatch_d1_load_stops_company_column.sql", "202615330912_dispatch_d1_loads_and_stops_same_entity_fks.sql"],
+    tables: ["mdata.loads", "mdata.load_stops"],
+  },
 ];
 const MIGRATIONS = PHASES.flatMap((p) => p.migrations);
 // bill_lines / expense_lines carry NULL-company orphan rows (534, ruling pending) — CHECK is NOT VALID, enforced on new writes.
@@ -32,6 +37,7 @@ export const COMPANY_REQUIRED = {
   "accounting.bill_lines": "bill_lines_company_required",
   "accounting.expense_lines": "expense_lines_company_required",
   "driver_finance.settlement_lines": "settlement_lines_company_required",
+  "mdata.load_stops": "load_stops_company_required",
 };
 // ROUND 345 Part 2 — each holds ONE row pointing at a TRANSP driver record, awaiting the owner's ruling. DO NOT TOUCH
 // TRANSPORTATION. VALIDATE (and remove the entry) after the ruling; the count may only shrink.
@@ -51,6 +57,10 @@ export const DECLARED = [
   "settlement_lines_deduction_policy_same_entity_fkey", "settlement_lines_load_same_entity_fkey", "settlement_lines_disputed_by_same_entity_fkey",
   "settlement_lines_split_partner_same_entity_fkey", "settlement_lines_void_reversal_je_same_entity_fkey", "escrow_balances_driver_same_entity_fkey",
   "escrow_balances_last_settlement_same_entity_fkey", "driver_advance_accounts_driver_same_entity_fkey", "driver_advance_accounts_account_same_entity_fkey",
+  "loads_primary_driver_same_entity_fkey", "loads_secondary_driver_same_entity_fkey", "loads_accepted_by_driver_same_entity_fkey",
+  "loads_split_primary_driver_same_entity_fkey", "loads_split_secondary_driver_same_entity_fkey", "loads_instructions_file_same_entity_fkey",
+  "loads_factoring_vendor_same_entity_fkey", "load_stops_load_same_entity_fkey", "load_stops_location_same_entity_fkey",
+  "load_stops_pickup_time_type_same_entity_fkey", "load_stops_lumper_provider_same_entity_fkey",
   ...Object.values(COMPANY_REQUIRED),
 ];
 
@@ -126,8 +136,9 @@ const fails = auditStatic(sql);
            AND EXISTS (SELECT 1 FROM pg_attribute p WHERE p.attrelid = con.confrelid AND p.attname = 'operating_company_id' AND NOT p.attisdropped)
          GROUP BY con.oid, con.conrelid, con.confrelid, con.convalidated`, [BLOCKED])).rows
         .filter((r) => !(r.cols.length === 1 && r.cols[0] === "operating_company_id"))
-        .map((r) => r.cols.length === 2 && r.cols[0] === "operating_company_id"
-          ? { t: r.t, col: r.cols[1], parent: r.parent, composite: true, validated: r.validated }
+        // a composite may be declared (operating_company_id, x) or (x, operating_company_id) — both are same-company
+        .map((r) => r.cols.length === 2 && r.cols.includes("operating_company_id")
+          ? { t: r.t, col: r.cols.find((x) => x !== "operating_company_id"), parent: r.parent, composite: true, validated: r.validated }
           : { t: r.t, col: r.cols.join(","), parent: r.parent, composite: false });
       const checks = (await c.query(`SELECT conrelid::regclass::text t, conname name FROM pg_constraint WHERE contype = 'c' AND conname = ANY($1)`, [Object.values(COMPANY_REQUIRED)])).rows;
       const crossCounts = {};

@@ -43,7 +43,7 @@ export function assertGuard({ shared, routes }) {
   if (shared?.match(/VALUES\s*\([^)]*['"]trailer['"]/s)) {
     errs.push(`${SHARED}: must not INSERT generic asset_type='trailer' — the database CHECK forbids it`);
   }
-  if (!shared?.includes("ON CONFLICT (tenant_id, unit_code)")) {
+  if (!shared?.includes("ON CONFLICT (operating_company_id, unit_code)")) {
     errs.push(`${SHARED}: must be idempotent on the same natural key ensureUnitAsset uses`);
   }
   if (!shared?.includes("equipment_id")) {
@@ -83,9 +83,9 @@ function selftest() {
       return "other";
     }
     export async function ensureEquipmentAsset
-    INSERT INTO mdata.assets (tenant_id, unit_code, asset_type, vin, make, model, year, status, equipment_id)
+    INSERT INTO mdata.assets (operating_company_id, unit_code, asset_type, vin, make, model, year, status, equipment_id)
     VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, 'active', $8::uuid)
-    ON CONFLICT (tenant_id, unit_code) DO UPDATE SET
+    ON CONFLICT (operating_company_id, unit_code) DO UPDATE SET
     equipment_id = EXCLUDED.equipment_id
   `;
   const goodRoutes = `
@@ -103,12 +103,12 @@ function selftest() {
   // Mutation 2: collapses a canonical subtype to generic trailer, which the DB CHECK forbids.
   const bad2 = assertGuard({ shared: goodShared.replace("VALUES ($1::uuid, $2, $3", "VALUES ($1::uuid, $2, 'trailer'"), routes: goodRoutes });
   // Mutation 3: no ON CONFLICT — not idempotent, a retry would throw or duplicate.
-  const bad3 = assertGuard({ shared: goodShared.replace("ON CONFLICT (tenant_id, unit_code) DO UPDATE SET", ""), routes: goodRoutes });
+  const bad3 = assertGuard({ shared: goodShared.replace("ON CONFLICT (operating_company_id, unit_code) DO UPDATE SET", ""), routes: goodRoutes });
   // Mutation 4: defaults insured_value_cents to 0 on mint (fabricates a valued-at-nothing asset).
   const bad4 = assertGuard({
     shared: goodShared.replace(
-      "INSERT INTO mdata.assets (tenant_id, unit_code, asset_type, vin, make, model, year, status, equipment_id)",
-      "INSERT INTO mdata.assets (tenant_id, unit_code, asset_type, insured_value_cents, vin, make, model, year, status, equipment_id)"
+      "INSERT INTO mdata.assets (operating_company_id, unit_code, asset_type, vin, make, model, year, status, equipment_id)",
+      "INSERT INTO mdata.assets (operating_company_id, unit_code, asset_type, insured_value_cents, vin, make, model, year, status, equipment_id)"
     ),
     routes: goodRoutes,
   });

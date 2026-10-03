@@ -1,10 +1,10 @@
 {
-  "healthzSha": "2187c85",
-  "generated_at": "2026-10-02T22:48:13.299Z",
+  "healthzSha": "94d5134",
+  "generated_at": "2026-10-03T11:40:19.833Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "2187c85",
+    "deployedSha": "94d5134",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 24266,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL (ROUND 337: unit_stop_events dedupe rewritten as preserve -> assert -> delete in one transaction; prod dry run stopped at the 0-unmatched assertion — 16 grown stops — nothing applied)",
+      "number": 24500,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL -- Dispatch D1: load_stops gets its company; loads + stops reference only their own company (11 same-company FKs)",
       "state": "merged",
-      "mergedAtCt": "10/02/2026, 05:47 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24266",
-      "sha": "0c6648f479",
-      "committedAtIso": "2026-10-02T17:47:37-05:00"
+      "mergedAtCt": "10/03/2026, 06:39 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24500",
+      "sha": "4b44d767b4",
+      "committedAtIso": "2026-10-03T06:39:45-05:00"
     },
     {
-      "number": 24265,
-      "title": "FINDING: ACCT-F2981 — a factored invoice's amount could be edited while Faro still held it as collateral; the database now refuses it while the purchase is open, naming the purchase and the Faro invoice number",
+      "number": 24499,
+      "title": "FINDING: N/A — OUTBOX BANK-F91129 DONE census (#24497)",
       "state": "merged",
-      "mergedAtCt": "10/02/2026, 05:38 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24265",
-      "sha": "2187c85a43",
-      "committedAtIso": "2026-10-02T17:38:51-05:00"
+      "mergedAtCt": "10/03/2026, 06:35 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24499",
+      "sha": "179b973b3c",
+      "committedAtIso": "2026-10-03T06:35:29-05:00"
     },
     {
-      "number": 24264,
-      "title": "FINDING: N/A LANE: DOCS (CC-3 OUTBOX: ROUND 330.7 — batch A #24254, batch B #24263, deploy ids, unit-stop cleanup AUTH request)",
+      "number": 24498,
+      "title": "FINDING: BANK-F91070 — a Relay fill could only arrive at the 07:00 pull; a signed webhook receiver now lands it on arrival (1.6 s on a fork), through the pull's own ingest path, posting nothing",
       "state": "merged",
-      "mergedAtCt": "10/02/2026, 05:37 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24264",
-      "sha": "e25cbe6acb",
-      "committedAtIso": "2026-10-02T17:37:31-05:00"
+      "mergedAtCt": "10/03/2026, 06:35 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24498",
+      "sha": "94d513468c",
+      "committedAtIso": "2026-10-03T06:35:04-05:00"
     },
     {
-      "number": 24263,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL (ROUND 330.7 order 2, batch B: my lane's 20 unswept scheduled engines — 9 defects fixed as ONE guarded sweep, overlap-proven on a fork; generalized guard: no session advisory locks)",
+      "number": 24497,
+      "title": "FINDING: BANK-F91129 | SafetyAlertsPanel heading/pill off-scale text-[11px] (locked tokens)",
       "state": "merged",
-      "mergedAtCt": "10/02/2026, 05:36 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24263",
-      "sha": "d472df5ef0",
-      "committedAtIso": "2026-10-02T17:36:59-05:00"
+      "mergedAtCt": "10/03/2026, 06:32 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24497",
+      "sha": "04026d1166",
+      "committedAtIso": "2026-10-03T06:32:49-05:00"
     },
     {
-      "number": 24262,
-      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: migration 202615300600 for CC-2 factored-invoice amount lock)",
+      "number": 24496,
+      "title": "FINDING: N/A — OUTBOX BANK-F91128 DONE census (#24493)",
       "state": "merged",
-      "mergedAtCt": "10/02/2026, 05:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24262",
-      "sha": "c3807b3482",
-      "committedAtIso": "2026-10-02T17:28:02-05:00"
+      "mergedAtCt": "10/03/2026, 06:29 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24496",
+      "sha": "756007aa29",
+      "committedAtIso": "2026-10-03T06:29:54-05:00"
     },
     {
-      "number": 24261,
-      "title": "FINDING: ACCT-F2980 — the \"2150 = open factored Net\" guard measured open Net as purchased gross, so a short-pay could never tie even when written down; open Net is now the invoice's open balance capped at purchased gross, and keep-open requires a dispute note",
+      "number": 24495,
+      "title": "FINDING: ACCT-F2998 — four insurance guards were red on main because they still asserted tenant_id; three of them were registered nowhere, so nothing noticed — re-pointed at operating_company_id, strengthened, and registered",
       "state": "merged",
-      "mergedAtCt": "10/02/2026, 05:27 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24261",
-      "sha": "b129c5e677",
-      "committedAtIso": "2026-10-02T17:27:36-05:00"
+      "mergedAtCt": "10/03/2026, 06:27 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24495",
+      "sha": "10b902da22",
+      "committedAtIso": "2026-10-03T06:27:55-05:00"
     },
     {
-      "number": 24260,
-      "title": "FINDING: BANK-F91038 — bill-payment Amount to Credit left a TB hole (bank full amount, JE apps only); Save now mints vendor_credit + Dr A/P/Cr cash + spine same txn",
+      "number": 24494,
+      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: migrations 202615350100 / 202615350200 + verify-steps 12341 / 12345 for CC-1 — the 534 company-less line rows, and bills carrying their unit)",
       "state": "merged",
-      "mergedAtCt": "10/02/2026, 05:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24260",
-      "sha": "9e01583181",
-      "committedAtIso": "2026-10-02T17:26:14-05:00"
+      "mergedAtCt": "10/03/2026, 06:27 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24494",
+      "sha": "ee0267263f",
+      "committedAtIso": "2026-10-03T06:27:19-05:00"
     },
     {
-      "number": 24259,
-      "title": "FINDING: ACCT-F2979 — the factoring purchase funding entry linked on the spine only to its advance (the invoice half missing) and the Due-to-Faro reclass linked to nothing; every CC-2 factoring writer now writes its spine in the posting transaction",
+      "number": 24493,
+      "title": "FINDING: BANK-F91128 | TodaysAttentionTop5 heading/hint off-scale text-[11px] (locked tokens)",
       "state": "merged",
-      "mergedAtCt": "10/02/2026, 05:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24259",
-      "sha": "1941465f9f",
-      "committedAtIso": "2026-10-02T17:15:46-05:00"
+      "mergedAtCt": "10/03/2026, 06:26 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24493",
+      "sha": "28573a9763",
+      "committedAtIso": "2026-10-03T06:26:57-05:00"
     },
     {
-      "number": 24258,
-      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: migration for CC-1 ROUND 332 item 3 — load invoiced status follows its invoice)",
+      "number": 24492,
+      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: migrations 202615330907-0912 for CC-3 Dispatch D1 — loads + load_stops company scope)",
       "state": "merged",
-      "mergedAtCt": "10/02/2026, 05:12 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24258",
-      "sha": "1975c4116f",
-      "committedAtIso": "2026-10-02T17:12:24-05:00"
+      "mergedAtCt": "10/03/2026, 06:25 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24492",
+      "sha": "9138579278",
+      "committedAtIso": "2026-10-03T06:25:13-05:00"
     },
     {
-      "number": 0,
-      "title": "Cursor- CLAIM-RESERVE migration 202615292200 + verify-step 12306 BANK-F91038",
+      "number": 24491,
+      "title": "FINDING: N/A — OUTBOX BANK-F91127 DONE census (#24489)",
       "state": "merged",
-      "mergedAtCt": "10/02/2026, 05:06 PM CT",
-      "url": "",
-      "sha": "25ed336aba",
-      "committedAtIso": "2026-10-02T17:06:37-05:00"
+      "mergedAtCt": "10/03/2026, 06:24 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24491",
+      "sha": "ecdd5af3a8",
+      "committedAtIso": "2026-10-03T06:24:10-05:00"
     }
   ]
 }

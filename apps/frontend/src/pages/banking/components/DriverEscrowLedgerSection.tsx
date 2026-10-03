@@ -294,9 +294,9 @@ export function DriverEscrowLedgerSection({ operatingCompanyId, driverEscrowBala
         label: "Status",
         render: (row) =>
           row.cleared ? (
-            <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-[11px] font-semibold text-[#1F2A44]">Cleared</span>
+            <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#1F2A44]">Cleared</span>
           ) : (
-            <span className="text-[11px] text-[#6B7280]">Uncleared</span>
+            <span className="text-xs text-[#6B7280]">Uncleared</span>
           ),
       },
       {
@@ -536,7 +536,7 @@ export function DriverEscrowLedgerSection({ operatingCompanyId, driverEscrowBala
             {chips.map((chip) => (
               <span
                 key={chip.key}
-                className="flex h-6 items-center gap-1 rounded-sm border border-[#14314F] bg-[#14314F] px-2 text-[11px] font-medium text-white"
+                className="flex h-6 items-center gap-1 rounded-sm border border-[#14314F] bg-[#14314F] px-2 text-xs font-medium text-white"
               >
                 {chip.label}
                 <button

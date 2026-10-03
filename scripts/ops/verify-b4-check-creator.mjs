@@ -115,6 +115,13 @@ function main() {
   assertIncludes(form, "checkDraftStorageKey", FORM);
   assertIncludes(form, 'data-b4-order-checks="1"', FORM);
   assertIncludes(form, "Order checks", FORM);
+  // BANK-F91063 — Order checks opens check-stock settings (?focus=stock), not bare Print checks.
+  assertIncludes(form, "/accounting/checks/print?focus=stock", FORM);
+  assertIncludes(form, 'data-testid="b4-order-checks"', FORM);
+  const printPage = read("apps/frontend/src/pages/accounting/checks/CheckPrintPage.tsx");
+  assertIncludes(printPage, 'data-b4-order-checks-stock="1"', "CheckPrintPage.tsx");
+  assertIncludes(printPage, 'focus") === "stock"', "CheckPrintPage.tsx");
+  assertIncludes(printPage, "Order checks — set the starting check number", "CheckPrintPage.tsx");
   assertIncludes(form, 'data-b4-make-recurring="1"', FORM);
   assertIncludes(form, "Make recurring", FORM);
   // BANK-F91055 — Make recurring wired (expense template), not honest-disabled
@@ -160,6 +167,22 @@ function main() {
 
   assertIncludes(topbar, "/accounting/checks/new", TOPBAR);
   assertIncludes(topbar, "create_check", TOPBAR);
+
+  // BANK-F91072 — ORDERS B-4 / bill create chrome uses text-xs, not text-[11px].
+  const billForm = read("apps/frontend/src/components/accounting/VendorBillForm.tsx");
+  if (billForm.includes("text-[11px]")) {
+    throw new Error("VendorBillForm.tsx: must not use text-[11px] — use text-xs (GLOBAL-TYPE-SIZE-BASELINE body 12px)");
+  }
+  // BANK-F91073 — ORDERS bill payments list badges use text-xs, not text-[11px].
+  const billPayments = read("apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx");
+  if (billPayments.includes("text-[11px]")) {
+    throw new Error("BillPaymentsListPage.tsx: must not use text-[11px] — use text-xs (GLOBAL-TYPE-SIZE-BASELINE body 12px)");
+  }
+  // BANK-F91087 — ORDERS B-4 Apply to Bill labels use text-xs, not text-[11px].
+  const applyToBill = read("apps/frontend/src/pages/banking/components/forms/ApplyToBillForm.tsx");
+  if (applyToBill.includes("text-[11px]")) {
+    throw new Error("ApplyToBillForm.tsx: must not use text-[11px] — use text-xs");
+  }
 
   console.log(`${LABEL}: PASS`);
 }

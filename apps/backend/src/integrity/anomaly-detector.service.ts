@@ -157,7 +157,7 @@ export class AnomalyDetectorService {
       `
         INSERT INTO integrity.anomalies (
           id,
-          tenant_id,
+          operating_company_id,
           anomaly_type,
           severity,
           subject_type,
@@ -179,7 +179,7 @@ export class AnomalyDetectorService {
         WHERE NOT EXISTS (
           SELECT 1
           FROM integrity.anomalies existing
-          WHERE existing.tenant_id = $2::uuid
+          WHERE existing.operating_company_id = $2::uuid
             AND existing.subject_id = $6::uuid
             AND existing.anomaly_type = $3::text
             AND existing.status = 'new'

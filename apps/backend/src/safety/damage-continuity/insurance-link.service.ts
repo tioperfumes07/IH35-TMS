@@ -5,13 +5,13 @@
 // continuity chain captures "damage detected -> claim filed".
 //
 // Live schema notes:
-//   * Claims are insurance.claim (cents, tenant_id, role ih35_app).
+//   * Claims are insurance.claim (cents, operating_company_id, role ih35_app).
 //   * insurance.claim also carries operating_company_id (migration 202607490000, hand-applied to
-//     prod) and its FORCED RLS policy keys on THAT column, for every command including INSERT:
+//     prod) — the one company column (ROUND 342) — and its FORCED RLS policy keys on it for every command:
 //       identity bypass or the session company. This service additionally uses explicit company predicates.
-//     Verified on the Neon prod branch br-fancy-credit-akjnd07a, 2026-07-22. Writing only
-//     tenant_id leaves operating_company_id NULL, the WITH CHECK is not satisfied, and the row is
-//     REJECTED — so this writer must set both. Prod insurance.claim.n_tup_ins was 0, i.e. no
+//     Verified on the Neon prod branch br-fancy-credit-akjnd07a, 2026-07-22. A writer that left
+//     operating_company_id NULL had the row REJECTED by the WITH CHECK, so this writer always sets
+//     it. Prod insurance.claim.n_tup_ins was 0, i.e. no
 //     auto-claim had ever actually been written.
 //   * insurance.claim.policy_id is NOT NULL, so an auto-claim must attach to an
 //     existing active policy. If the tenant has no usable policy we skip
@@ -112,7 +112,6 @@ export async function autoCreateClaimFromDamage(
   const insertRes = await client.query<AutoCreatedClaim>(
     `
       INSERT INTO insurance.claim (
-        tenant_id,
         operating_company_id,
         claim_number,
         policy_id,
@@ -127,7 +126,6 @@ export async function autoCreateClaimFromDamage(
         load_id
       )
       VALUES (
-        $1::uuid,
         $1::uuid,
         $2,
         $3::uuid,

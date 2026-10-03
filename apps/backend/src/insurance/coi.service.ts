@@ -37,7 +37,7 @@ type UpdateCoiRequestInput = {
 function selectColumns(prefix = "") {
   return `
     ${prefix}id::text AS id,
-    ${prefix}operating_company_id::text AS tenant_id,
+    ${prefix}operating_company_id::text AS operating_company_id,
     ${prefix}customer_id::text AS customer_id,
     ${prefix}policy_id::text AS policy_id,
     ${prefix}requested_at::text AS requested_at,
@@ -122,12 +122,11 @@ export async function createCoiRequest(client: Queryable, input: CreateCoiReques
     if (!policyRes.rows[0]) return { kind: "policy_not_found" as const };
   }
 
-  // RLS policy coi_request_opco_scope WITH CHECK keys operating_company_id (not tenant_id).
-  // Inserting tenant_id alone leaves operating_company_id NULL → Postgres 42501 on every create.
+  // RLS policy coi_request_opco_scope WITH CHECK keys operating_company_id — the one scope column (ROUND 342).
+  // A NULL there is refused (42501), so it is always written, from $1.
   const insert = await client.query(
     `
       INSERT INTO insurance.coi_request (
-        tenant_id,
         operating_company_id,
         customer_id,
         policy_id,
@@ -138,7 +137,7 @@ export async function createCoiRequest(client: Queryable, input: CreateCoiReques
         expires_at,
         responded_at
       )
-      VALUES ($1::uuid, $1::uuid, $2::uuid, $3::uuid, $4::uuid, 'pending', $5, NULL, $6::date, NULL)
+      VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, 'pending', $5, NULL, $6::date, NULL)
       RETURNING ${selectColumns()}
     `,
     [

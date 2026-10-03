@@ -389,7 +389,7 @@ export function ExpensesListPage() {
         <button
           type="button"
           disabled={r.status === "void"}
-          className={`rounded-sm border px-2 py-0.5 text-[11px] font-medium ${
+          className={`rounded-sm border px-2 py-0.5 text-xs font-medium ${
             r.status === "void"
               ? "border-gray-200 bg-gray-50 text-gray-400"
               : "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
@@ -442,7 +442,7 @@ export function ExpensesListPage() {
           allLabel="All statuses"
           data-testid="expenses-status-filter"
         />
-        <label className="text-[11px] text-slate-600">
+        <label className="text-xs text-slate-600">
           Load
           <EntityPicker
             kind="load"
@@ -455,7 +455,7 @@ export function ExpensesListPage() {
             dataTestId="expenses-filter-load"
           />
         </label>
-        <label className="text-[11px] text-slate-600">
+        <label className="text-xs text-slate-600">
           Driver
           <EntityPicker
             kind="driver"
@@ -468,7 +468,7 @@ export function ExpensesListPage() {
             dataTestId="expenses-filter-driver"
           />
         </label>
-        <label className="text-[11px] text-slate-600">
+        <label className="text-xs text-slate-600">
           Unit
           <EntityPicker
             kind="unit"
@@ -481,7 +481,7 @@ export function ExpensesListPage() {
             dataTestId="expenses-filter-unit"
           />
         </label>
-        <label className="text-[11px] text-slate-600">
+        <label className="text-xs text-slate-600">
           Trailer
           <EntityPicker
             kind="trailer"
@@ -496,7 +496,7 @@ export function ExpensesListPage() {
         </label>
         <DateRangePresets from={fromDate} to={toDate} onChange={({ from, to }) => { setFromDate(from); setToDate(to); }} data-testid="expenses-date-range" />
       </MoneyListToolbar>
-      <div className="ml-auto flex items-center gap-3 text-[11px] text-gray-600">
+      <div className="ml-auto flex items-center gap-3 text-xs text-gray-600">
         {/* CLS-MONEY-KPI-FAKE-ZERO-REMAINDER — totals used to compute straight from query.data with
             no isError awareness, so a failed fetch fabricated a real-looking "$0.00" here even while
             the ListErrorBanner below correctly showed the failure. Same class already fixed for

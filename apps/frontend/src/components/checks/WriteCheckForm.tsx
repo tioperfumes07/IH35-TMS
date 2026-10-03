@@ -1734,10 +1734,14 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
               Print check
             </Button>
           ) : null}
+          {/* BANK-F91063 — ORDERS §B-4 Order checks ≠ Print check. Opens check-stock settings
+              (starting number / style) on the print page, not the bare print queue. */}
           <a
-            href="/accounting/checks/print"
+            href="/accounting/checks/print?focus=stock"
             className="inline-flex h-7 items-center rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#1F2A44] hover:bg-[#F7F8FA]"
             data-b4-order-checks="1"
+            data-testid="b4-order-checks"
+            title="Set check stock starting number and style for this bank"
             onClick={onClose}
           >
             Order checks

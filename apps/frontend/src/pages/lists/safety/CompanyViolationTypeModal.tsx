@@ -122,19 +122,19 @@ export function CompanyViolationTypeModal({ open, companyId, row, onClose, onSav
         <label className="block text-xs font-semibold text-gray-600">
           Type Code
           <input value={form.type_code} onChange={(event) => setForm((v) => ({ ...v, type_code: event.target.value.toUpperCase() }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="UNSAFE-DRIVING" />
-          {errors.type_code ? <div className="mt-1 text-[11px] text-red-700">{errors.type_code}</div> : null}
+          {errors.type_code ? <div className="mt-1 text-xs text-red-700">{errors.type_code}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
           Type Name
           <input value={form.type_name} onChange={(event) => setForm((v) => ({ ...v, type_name: event.target.value }))} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
-          {errors.type_name ? <div className="mt-1 text-[11px] text-red-700">{errors.type_name}</div> : null}
+          {errors.type_name ? <div className="mt-1 text-xs text-red-700">{errors.type_name}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
           Default Severity ({form.default_severity})
           <input type="range" min={1} max={10} step={1} value={form.default_severity} onChange={(event) => setForm((v) => ({ ...v, default_severity: Number(event.target.value || 1) }))} className="mt-2 w-full" />
-          {errors.default_severity ? <div className="mt-1 text-[11px] text-red-700">{errors.default_severity}</div> : null}
+          {errors.default_severity ? <div className="mt-1 text-xs text-red-700">{errors.default_severity}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
@@ -147,7 +147,7 @@ export function CompanyViolationTypeModal({ open, companyId, row, onClose, onSav
             className="mt-1 w-full"
             placeholder="e.g. 125.00"
           />
-          {errors.amount_cents ? <div className="mt-1 text-[11px] text-red-700">{errors.amount_cents}</div> : null}
+          {errors.amount_cents ? <div className="mt-1 text-xs text-red-700">{errors.amount_cents}</div> : null}
         </label>
 
         <label className="flex items-center gap-2 text-xs text-gray-700">

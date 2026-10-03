@@ -37,7 +37,7 @@ type StatusFilter = "active" | "inactive" | "all";
 const CODE_REGEX = /^[a-z][a-z0-9_]+$/;
 
 function statusPill(isActive: boolean) {
-  return `inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold ${isActive ? "text-slate-700" : "text-slate-600"}`;
+  return `inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold ${isActive ? "text-slate-700" : "text-slate-600"}`;
 }
 
 function parseConflict(error: unknown): string | null {

@@ -109,6 +109,8 @@ const STEPS = [
   ["verify-money-lines-same-entity-fks", "scripts/verify-money-lines-same-entity-fks.mjs"],
   // ROUND 353 — a load becomes cancelled only through an approved cancellation record (13515 route closed).
   ["verify-cancelled-load-has-cancellation-record", "scripts/verify-cancelled-load-has-cancellation-record.mjs"],
+  // Standing order 2026-10-03 — invoice postings carry their spine link; no live posting loses its last link.
+  ["verify-invoice-postings-carry-spine-link", "scripts/verify-invoice-postings-carry-spine-link.mjs"],
   ["verify-no-session-advisory-locks", "scripts/verify-no-session-advisory-locks.mjs"],
   ["verify-rollup-keys-carry-company", "scripts/verify-rollup-keys-carry-company.mjs"],
   ["verify-filter-surfaces-full-set", "scripts/verify-filter-surfaces-full-set.mjs"],
@@ -787,6 +789,29 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-one-leg-asset-never-credit",
     ["db/migrations/202615330600_one_leg_asset_accounts_never_credit.sql", "apps/backend/src/accounting/fuel-posting/", "scripts/verify-one-leg-asset-never-credit.mjs"],
   ],
+  // 10-02 queue item 5 / ROUND 353 — Relay fuel webhook: signed before parsed, lands through the pull's ingest path.
+  [
+    "verify-relay-fuel-webhook-receiver",
+    ["apps/backend/src/integrations/relay-payments/", "apps/backend/src/index.ts", "scripts/verify-relay-fuel-webhook-receiver.mjs"],
+  ],
+  // Insurance guards that existed but were registered nowhere — they drifted red on main unnoticed (ROUND 342 rename).
+  [
+    "verify-insurance-claim-graph-complete-reverse",
+    ["apps/backend/src/insurance/claim.routes.ts", "apps/frontend/src/pages/insurance/ClaimsTab.tsx", "scripts/verify-insurance-claim-graph-complete-reverse.mjs"],
+  ],
+  [
+    "verify-insurance-lawsuit-update-truth",
+    ["apps/backend/src/insurance/lawsuit.routes.ts", "scripts/verify-insurance-lawsuit-update-truth.mjs"],
+  ],
+  [
+    "verify-insurance-payment-schedule-policy-company-link",
+    ["apps/backend/src/insurance/payment-schedule.routes.ts", "scripts/verify-insurance-payment-schedule-policy-company-link.mjs"],
+  ],
+  // ROUND 355 R-2 — the fuel-card cap is gallons per unit (the unit's own tank); dollars are the last fallback.
+  [
+    "verify-fuel-overage-gallon-cap-per-unit",
+    ["db/migrations/202615330700_fuel_overage_gallon_cap_per_unit.sql", "apps/backend/src/fuel/", "apps/backend/src/mdata/unit-update-schema.ts", "scripts/verify-fuel-overage-gallon-cap-per-unit.mjs"],
+  ],
   // KPI engines' operator-facing strings (label / source / empty_reason / GL) in business language — runtime check.
   [
     "verify-kpi-provenance-business-language",
@@ -806,6 +831,16 @@ const LIVE_DOMAIN_GUARDS = [
   [
     "verify-r342-opco-canonical-on-double-scoped",
     ["db/migrations/202615310700_r342_phase2a_expand_operating_company_id.sql", "scripts/verify-r342-opco-canonical-on-double-scoped.mjs"],
+  ],
+  // Standing order F-1 (CC-1) — a driver's escrow never releases more than it holds (named debt: the 3 purge-population drivers).
+  [
+    "verify-escrow-never-over-releases",
+    ["db/migrations/", "apps/backend/src/driver-finance/", "apps/backend/src/settlements/", "apps/backend/src/accounting/escrow/", "scripts/verify-escrow-never-over-releases.mjs"],
+  ],
+  // ROUND 342 Phase 5 (CC-1) — one entity column: no tenant_id column / policy / equating CHECK outside the named debt.
+  [
+    "verify-one-entity-column",
+    ["db/migrations/", "scripts/verify-one-entity-column.mjs"],
   ],
   // ROUND 342 Phase 4 — one scope column, one RLS policy on the factoring tables that carried a duplicate tenant policy.
   [
@@ -1067,6 +1102,19 @@ const LIVE_DOMAIN_GUARDS = [
   [
     "verify-fuel-loves-prices-daily-table-and-report-guard",
     ["apps/backend/src/fuel/", "apps/backend/src/sync/", "apps/backend/src/reports/fuel-price-variance.routes.ts"],
+  ],
+  // 00-ROOT-CAUSE-THE-SPINE (CC-2): every posting with a live document carries its spine link (ceiling 0); postings
+  // stranded by a purge (document deleted, GL kept) are a committed shrink-only ceiling that must net to zero.
+  [
+    "verify-every-posting-has-a-spine-link",
+    [
+      "apps/backend/src/accounting/posting-engine.service.ts",
+      "apps/backend/src/accounting/void.service.ts",
+      "apps/backend/src/accounting/accounting-spine-emit.ts",
+      "scripts/ops/",
+      "db/migrations/",
+      "scripts/verify-every-posting-has-a-spine-link.mjs",
+    ],
   ],
   // E1 (#22293): every directory that calls createJournalEntry(OnClient), plus the guard's baseline.
   [

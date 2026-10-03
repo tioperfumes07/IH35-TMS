@@ -98,6 +98,47 @@ function main() {
   assertIncludes(tokens, 'recordCcPayment: "Record as credit card payment"', TOKENS);
   assertIncludes(tokens, 'findOtherMatches: "Find other matches"', TOKENS);
 
+  // BANK-F91064 — MatchDrawer body/actions use locked text-xs (12px), not off-scale text-[11px].
+  if (match.includes("text-[11px]")) {
+    throw new Error(`${MATCH}: must not use text-[11px] (GLOBAL-TYPE-SIZE-BASELINE body 12px = text-xs)`);
+  }
+
+  // BANK-F91068 — B-3 Split modal labels use text-section-header / text-xs, not text-[11px].
+  const splitModal = read("apps/frontend/src/pages/banking/components/BankTransactionSplitModal.tsx");
+  if (splitModal.includes("text-[11px]")) {
+    throw new Error("BankTransactionSplitModal.tsx: must not use text-[11px] — use text-section-header or text-xs");
+  }
+  assertIncludes(splitModal, "text-section-header", "BankTransactionSplitModal.tsx");
+
+  // BANK-F91069 — B-3 Banking Home account tile + Transfers list use locked text tokens.
+  const accountTile = read("apps/frontend/src/pages/banking/components/AccountTile.tsx");
+  if (accountTile.includes("text-[11px]")) {
+    throw new Error("AccountTile.tsx: must not use text-[11px] — use text-xs (ORDERS §16 card chrome)");
+  }
+  const transfers = read("apps/frontend/src/pages/banking/TransfersListPage.tsx");
+  if (transfers.includes("text-[11px]")) {
+    throw new Error("TransfersListPage.tsx: must not use text-[11px] — use text-xs");
+  }
+  const escrow = read("apps/frontend/src/pages/banking/components/DriverEscrowLedgerSection.tsx");
+  if (escrow.includes("text-[11px]")) {
+    throw new Error("DriverEscrowLedgerSection.tsx: must not use text-[11px] — use text-xs");
+  }
+
+  // BANK-F91074 — archived BankTxCategorizationPage KPI/body use locked tokens (not text-[11px]).
+  const bankTxCat = read("apps/frontend/src/pages/banking/BankTxCategorizationPage.tsx");
+  if (bankTxCat.includes("text-[11px]")) {
+    throw new Error("BankTxCategorizationPage.tsx: must not use text-[11px] — use text-section-header or text-xs");
+  }
+  if (!bankTxCat.includes("text-section-header")) {
+    throw new Error("BankTxCategorizationPage.tsx: KPI labels must use text-section-header");
+  }
+
+  // BANK-F91076 — EmailQueuePage mono/body uses text-xs, not text-[11px].
+  const emailQueue = read("apps/frontend/src/pages/banking/EmailQueuePage.tsx");
+  if (emailQueue.includes("text-[11px]")) {
+    throw new Error("EmailQueuePage.tsx: must not use text-[11px] — use text-xs");
+  }
+
   console.log(`${LABEL}: PASS`);
 }
 

@@ -91,7 +91,7 @@ export const COVERAGE_GAP_UNITS_SQL = `
      AND p.effective_date <= now()::date
      AND p.expiry_date >= now()::date
      AND ${excludeInsuranceFixtureSql("p.policy_number")}
-    WHERE a.tenant_id = $1::uuid
+    WHERE a.operating_company_id = $1::uuid
       AND a.unit_code = u.unit_number
       AND p.coverage_type::text = ANY($2::text[])
   ) cov ON true
@@ -190,7 +190,7 @@ export const COVERAGE_GAP_UNITS_DETAIL_SQL = `
     SELECT u.id AS unit_id, a.id AS asset_id, u.unit_number AS unit_number, 'tractor'::text AS asset_type
     FROM mdata.units u
     JOIN mdata.assets a
-      ON a.tenant_id = $1::uuid
+      ON a.operating_company_id = $1::uuid
      AND a.unit_code = u.unit_number
     WHERE (
             u.currently_leased_to_company_id = $1::uuid
@@ -205,7 +205,7 @@ export const COVERAGE_GAP_UNITS_DETAIL_SQL = `
 
     SELECT NULL::uuid AS unit_id, a.id AS asset_id, a.unit_code AS unit_number, a.asset_type
     FROM mdata.assets a
-    WHERE a.tenant_id = $1::uuid
+    WHERE a.operating_company_id = $1::uuid
       AND a.asset_type IN ('dry_van', 'reefer', 'flatbed')
       AND a.status = 'active'
       AND ${excludeDemoPhantomSql("a.unit_code")}
@@ -238,7 +238,7 @@ export const COVERAGE_GAP_UNITS_DETAIL_SQL = `
       AND pu.removed_at IS NULL
     LIMIT 1
   ) p ON true
-  WHERE tc.tenant_id = $1::uuid
+  WHERE tc.operating_company_id = $1::uuid
     AND tc.active = true
   ORDER BY iu.unit_number ASC, tc.sort_order ASC
 `;

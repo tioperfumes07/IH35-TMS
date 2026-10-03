@@ -55,7 +55,7 @@ ON CONFLICT (tenant_id, name) DO UPDATE SET
   notes = EXCLUDED.notes;
 
 INSERT INTO factoring.canonical_factor_agreements (
-  tenant_id, factor_profile_id, factor_vendor_id, agreement_code,
+  operating_company_id, factor_profile_id, factor_vendor_id, agreement_code,
   effective_from, effective_to, is_full_recourse,
   fee_rate_tier1, fee_rate_tier2, reserve_rate,
   repurchase_term_days, grace_days, repurchase_deadline_days,
@@ -74,7 +74,7 @@ WHERE f.tenant_id = '91e0bf0a-133f-4ce8-a734-2586cfa66d96'
   AND f.name = 'Faro Factoring Full Recourse V1'
   AND NOT EXISTS (
     SELECT 1 FROM factoring.canonical_factor_agreements a
-    WHERE a.tenant_id = f.tenant_id
+    WHERE a.operating_company_id = f.tenant_id
       AND a.agreement_code = 'FARO_FULL_RECOURSE_V1'
       AND a.voided_at IS NULL
   );

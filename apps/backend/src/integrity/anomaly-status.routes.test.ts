@@ -10,7 +10,7 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
       rows: [
         {
           id: "11111111-1111-4111-8111-111111111111",
-          tenant_id: String(values?.[0] ?? "33333333-3333-4333-8333-333333333333"),
+          operating_company_id: String(values?.[0] ?? "33333333-3333-4333-8333-333333333333"),
           anomaly_type: "driver-without-medcard",
           severity: "high",
           subject_type: "driver",
@@ -33,7 +33,7 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
       rows: [
         {
           id: String(values?.[0]),
-          tenant_id: String(values?.[1]),
+          operating_company_id: String(values?.[1]),
           anomaly_type: "unit-overdue-pm",
           severity: "medium",
           subject_type: "unit",
@@ -61,7 +61,7 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
       rows: [
         {
           id: String(values?.[0]),
-          tenant_id: String(values?.[1]),
+          operating_company_id: String(values?.[1]),
           anomaly_type: "orphaned-bill",
           severity: "medium",
           subject_type: "invoice",
@@ -139,9 +139,9 @@ describe("anomaly status routes", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    const body = response.json() as { anomaly: { id: string; tenant_id: string } };
+    const body = response.json() as { anomaly: { id: string; operating_company_id: string } };
     expect(body.anomaly.id).toBe("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
-    expect(body.anomaly.tenant_id).toBe("33333333-3333-4333-8333-333333333333");
+    expect(body.anomaly.operating_company_id).toBe("33333333-3333-4333-8333-333333333333");
   });
 
   it("acknowledges an anomaly", async () => {

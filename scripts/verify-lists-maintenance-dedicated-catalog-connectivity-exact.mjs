@@ -34,6 +34,8 @@ export function audit(overrides = {}) {
   if (!src.list.includes("client.list({ operating_company_id: companyId") && !src.list.includes("fetchAllCatalogPages(client.list, { operating_company_id: companyId")) failures.push("shared list missing client.list({ operating_company_id: companyId");
   for (const token of ["enabled: Boolean(companyId)", "<MaintenanceCatalogModal", "void query.refetch();"]) if (!src.list.includes(token)) failures.push(`shared list missing ${token}`);
   for (const token of ["await client.create(operatingCompanyId, body)", "await client.update(row.id, operatingCompanyId, body)", "await client.deactivate(row.id, operatingCompanyId)", "onSaved();"]) if (!src.modal.includes(token)) failures.push(`shared modal missing ${token}`);
+  // BANK-F91119 — ORDERS chrome: Maintenance catalog field errors use text-xs, not text-[11px].
+  if (src.modal.includes("text-[11px]")) failures.push("MaintenanceCatalogModal must not use text-[11px] — use text-xs");
   for (const token of ["app.get(basePath", "app.post(basePath", "withCompanyScope(", "INSERT INTO catalogs.${config.tableName}", "appendCrudAudit("]) if (!src.factory.includes(token)) failures.push(`backend factory missing ${token}`);
   for (const [leafKey, slug, pageName, clientName, tableName] of CATALOGS) {
     const route = `/lists/maintenance/${slug}`;

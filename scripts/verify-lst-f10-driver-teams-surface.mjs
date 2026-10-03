@@ -175,6 +175,10 @@ function contractErrors(src) {
   if (!modal.includes("DriverPickerWithCreate")) {
     errors.push("PICKER-LAW: DriverTeamModal must use DriverPickerWithCreate (inherits inline + Create driver)");
   }
+  // BANK-F91123 — ORDERS chrome: DriverTeamModal errors/hints use text-xs, not text-[11px].
+  if (modal.includes("text-[11px]")) {
+    errors.push("DriverTeamModal must not use text-[11px] — use text-xs");
+  }
 
   // ---- §7 product locks -------------------------------------------------------------------------
   if (!page.includes("+ Create")) {

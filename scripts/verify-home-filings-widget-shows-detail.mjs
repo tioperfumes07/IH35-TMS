@@ -85,6 +85,10 @@ if (process.argv.includes("--selftest")) {
 }
 
 const failures = collectFailures(source);
+// BANK-F91126 — ORDERS chrome: filings widget heading/hint use locked tokens, not text-[11px].
+if (source.includes("text-[11px]")) {
+  failures.push("must not use text-[11px] — use text-section-header / text-xs");
+}
 if (failures.length) {
   console.error(`[${LABEL}] FAIL:\n- ${failures.join("\n- ")}`);
   process.exit(1);

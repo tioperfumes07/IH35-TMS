@@ -267,7 +267,7 @@ export function ReserveTracker() {
         <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
           {([7, 14, 30, 60] as const).map((days) => (
             <div key={days} className="rounded-sm border border-gray-200 bg-gray-50 p-2 text-center">
-              <div className="text-[11px] uppercase tracking-wide text-gray-500">Next {days}d</div>
+              <div className="text-section-header uppercase tracking-wide text-gray-500">Next {days}d</div>
               <div className="mt-1 text-xs font-bold text-gray-900">
                 {fmtM(forecastByWindow[days])}
               </div>
@@ -311,7 +311,7 @@ export function ReserveTracker() {
               {/* LINK reverse_link: factor_id was dead text — EntityLink kind="factor" resolves to
                   /factoring/factors?factor_id= (FactorAdmin). stopPropagation so the link doesn't
                   also fire this card's own onClick (local selectedFactorId toggle). */}
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+              <div className="text-section-header font-semibold uppercase tracking-wide text-gray-500">
                 <EntityLink
                   kind="factor"
                   id={bal.factor_id}
@@ -320,10 +320,10 @@ export function ReserveTracker() {
                 />
               </div>
               <div className="mt-1 text-page-title font-bold text-gray-900">{fmtM(bal.balance_cents)}</div>
-              <div className="mt-1 text-[11px] text-gray-500">
+              <div className="mt-1 text-xs text-gray-500">
                 Last movement: {fmtDt(bal.last_movement_at)}
               </div>
-              <div className="text-[11px] text-gray-500">
+              <div className="text-xs text-gray-500">
                 Total movements: {bal.movement_count}
               </div>
             </div>

@@ -42,6 +42,10 @@ const hasEntityLabelFallback = /entityLabel\(bill\.unit_display_id,\s*bill\.unit
 if (!hasUuidSliceFallback && !hasEntityLabelFallback) {
   errors.push("BillDetailPage unit label does not prefer unit_display_id with an honest fallback");
 }
+// BANK-F91095 — ORDERS chrome: Matched badge uses text-xs, not text-[11px].
+if (detailPage.includes("text-[11px]")) {
+  errors.push("BillDetailPage must not use text-[11px] — use text-xs");
+}
 
 if (errors.length > 0) {
   for (const e of errors) console.error("FAIL:", e);

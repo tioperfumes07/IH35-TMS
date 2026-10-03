@@ -2119,3 +2119,59 @@ roles exactly. Restored, it found a real gap: 4 lease roles in code but not in t
 **Consequence, stated plainly:** USMCA's 1090 and 1295 are negative today, so any new non-reversal credit to them is
 refused until the missing legs post (Relay top-ups categorised as transfers into the wallet; the 1090 sweeps reversed) —
 or until the purge resets them. That is the intended behaviour: the next spend must follow its funding.
+
+## 2026-10-03 — 00-ROOT-CAUSE-THE-SPINE: the poster writes the link; the PURGE stranded the GL (CC-2)
+**The bus premise does not hold, measured on prod.** `posting-engine.service.ts insertPostingLines` writes
+`accounting.transaction_source_links` INSIDE the loop that inserts each posting (same client, same transaction; its
+reversal path too), and `void.service.ts` writes a `reversal_of` link per reversal leg. Patching the poster would have
+added a third copy of a write that is already there.
+**Where the 3,908 unlinked postings came from:** `audit.row_changes` — the AUTH-177 purge
+(`owner_purge_voided_and_sample`) deleted 3,860 expense links at 2026-09-30 17:19:10.188 and 48 invoice links at
+17:28:12.433, in the same transactions that deleted 963 voided expenses + 24 voided invoices (and their lines). It did NOT
+delete their GL: each purged document's original + reversal entries are still posted — 1,930 + 1,930 expense legs and 48
+invoice reversal legs, **net $0.00**, every `source_transaction_id` naming a row that no longer exists.
+963 documents × 2 entries = the bus's **1,926 "wholly unlinked" entries**; zero partial because each entry belonged to one
+deleted document.
+**Per table (USMCA, posted):**
+| source type | postings | unlinked | unlinked with a LIVE document |
+|---|---|---|---|
+| expense | 5,416 | 3,860 (all stranded by purge, net 0) | **0** |
+| invoice | 183 | 48 (all stranded by purge, net 0) | **0** |
+| journal_entry · fuel_event · driver_settlement · load · bill · manual_je · escrow_account · driver_cash_advance · customer_payment · bank_reconciliation | 2,310 | 0 | 0 |
+Same-transaction proof without seeding: every linked expense posting (1,556/1,556) and invoice posting (135/135) has a
+link whose `created_at` equals the posting's — Postgres `now()` is fixed per transaction.
+Trial balance unchanged: **2,178,029.25 / 2,178,029.25 / .00 / 7,909 postings.**
+**Fix (writers, not rows):** no backfill (purge population). The writer is the purge → board
+`PURGE-STRANDS-GL-PAIR-2026100303` (CC-1 route + Lead ops scripts): remove the net-zero GL pair with the document, or keep
+the links — never an entry pointing at nothing.
+**Guard:** `verify-every-posting-has-a-spine-link` (money gate) — CODE: the three writers keep writing the link in the
+posting's own loop/client; LIVE: unlinked posting with a live document **ceiling 0** (supersedes ROUND 342 Order 3's 2);
+stranded-by-purge ceiling expense 3860 / invoice 48, **committed**, shrink-only, must net to 0. Selftest 6/6; live PASS.
+
+## 2026-10-03 — ROUND 355 step 3: PER TABLE against ROUND 352's nine points (CC-2's tables)
+Live = prod, measured 2026-10-03 after deploys dep-db07thc9v7es73a9o6d0 (F-2/F-3) and the R-2 migration on prod.
+**fuel.fuel_card_overage_events** — 9 of 9
+1 opco NOT NULL ✓, no tenant_id ✓ (information_schema / pg_attribute) · 2 unique indexes all carry opco: uq_fuel_card_overage_events_active_txn (opco, fuel_transaction_id) WHERE voided_at IS NULL ✓ · 3 parents by single-column FK (driver, fuel_txn, JE, policy, unit, company) + exempt work order same-company composite; a repair exemption cannot be NULL-switched off (CHECK chk_fuel_overage_event_exempt_complete) ✓ · 4 spine: the receivable posts through createJournalEntryOnClient (links every leg); live: the posted event's 2 legs carry links ✓ · 5 WORM trg_worm_refuse_delete (fuel.refuse_overage_row_delete — AUTH + voided only; GL first) ✓ fork br-purple-frost-akqmnnpx · 6 idempotent: active-txn unique index; engine run twice on fork → already_evaluated ✓ · 7 reversible: voidFuelCardOverage → reverseJournalEntryNoFlip, linked reversal, original never flipped (built in this PR; fork br-round-poetry-akf4ppz9: 1250 + 6100 net 0, 4/4 legs linked) ✓ · 8 single-fire: the only scheduled caller (Relay fuel ingest 07:00) claims per company under pg_advisory_xact_lock + a 30-minute claim row (ROUND 306 E-20) ✓ · 9 guard verify-fuel-overage-gallon-cap-per-unit, committed named debt (3 pre-R-2 dollar-rule events), selftest 10/10 ✓
+**fuel.fuel_card_overage_policies** — 9 of 9 (points 4/6/7/8 N/A — a policy posts nothing, is edited not retried, is voided via is_active/voided_at, has no schedule)
+1 ✓ · 2 uq company-default + uq per-driver, both on opco ✓ · 3 driver + company FKs ✓ · 5 WORM (active policy refused on fork) ✓ · new: CHECK chk_fuel_overage_policy_active_has_a_limit (live 0 violations), row audit ✓ · 9 same guard ✓
+**accounting.journal_entry_postings — 1090 / 1295 (F-2 / F-3)** — my piece: trg_refuse_one_leg_asset_credit (deferred) live, tgenabled O ✓; role fuel_wallet_relay bound USMCA + TRANSP 1295 ✓; guard verify-one-leg-asset-never-credit live PASS (USMCA 1090 −15,173,634 / 1295 −3,383,980 named debt, shrink-only). Points 1–3, 5–8 are the table owner's (CC-1).
+**accounting.transaction_source_links (spine, point 4 everywhere)** — verify-every-posting-has-a-spine-link live PASS: 0 of 7,909 USMCA postings with a live document lack a link; 3,908 stranded by the AUTH-177 purge (net 0, committed ceiling). Writer at fault filed: PURGE-STRANDS-GL-PAIR-2026100303.
+**mdata.units.fuel_tank_capacity_gallons** — column only (units has no operating_company_id by design — owner/lessee model; not my table). Writer: unit PATCH + Edit Vehicle; CHECK 0 < tank ≤ 2000; row audit via trg_audit_units.
+**Withdrawn:** I first read the Relay ingest cron as un-leased (point 8). It is leased per company (claimRelayTick). Not a gap.
+
+## 2026-10-03 DONE census (CC-2) — merged AND live, deploy ids for both services
+| Item | PR · squash | Backend deploy (live) | Web deploy (live) | Live proof |
+|---|---|---|---|---|
+| F-2 / F-3 — 1090 + 1295 never credit-balance; role fuel_wallet_relay | #24342 · c4593a43 | dep-db07thc9v7es73a9o6d0 04:07Z | n/a (no FE) | 202615330600 applied 04:06:23Z; trigger armed (deferred); role bound USMCA+TRANSP 1295; verify-one-leg-asset-never-credit PASS (named debt within floor) |
+| Spine root cause — the purge, not the poster; guard at 0 | #24346 · 8bf2a8d3 | n/a (guard + docs) | n/a | verify-every-posting-has-a-spine-link PASS: 0 of 7,909 live-document postings unlinked; 3,908 purge-stranded (net 0) committed ceiling |
+| R-2 — fuel cap in gallons per unit | #24352 · aafe0afa | dep-db0841vr12us7395lci0 04:23Z | dep-db085phmgk9c73cfdrc0 04:25Z (includes aafe0afa) | 202615330700 applied 04:22:46Z; 3 policies 150 gal; WORM + audit on both tables; guard PASS; 0/196 units have a tank yet (owner enters; 150 fallback) |
+| Overage void reverses the 1250 receivable + per-table report | #24361 · 461d5f83 | dep-db089nlg1s2s73d02fog 04:33Z | dep-db08b4hh83ns73cjvhj0 04:39Z (includes 461d5f83) | fork br-round-poetry-akf4ppz9: linked reversal, 1250/6100 net 0 |
+| 2c phase A — code stops touching tenant_id | #24366 · b28ee737 | dep-db08hqid0e5s73aht49g 04:52Z | auto (new_commit) | no tenant_id errors in logs after deploy |
+| 2c phase B — tenant_id dropped from the last 17 tables | #24371 · 8129f543 | dep-db08ni7avr4c73ekdva0 05:03Z | n/a (no FE) | 202615330800 applied 05:02:02Z; 0 tenant_id columns in the database; verify-one-entity-column PASS at ceiling 0; #24293 re-proven on fork br-soft-bar-ak5g3i59 |
+Claims merged: #24335 (202615330700), #24357 (202615330800). Bus: #24336 (standing order).
+**Owner-facing consequence (stated again):** USMCA 1090 and 1295 are negative, so a new deposit out of Undeposited Funds or a
+new Relay fuel spend is refused at commit until the two TB-close sweeps are reversed / the Relay top-ups recorded as transfers,
+or the governed purge resets them.
+**Next (CC-2 engine):** the four insurance guards red on main before today (verify-claim-load-reverse-and-driver-create,
+verify-insurance-claim-graph-complete-reverse, verify-insurance-lawsuit-update-truth,
+verify-insurance-payment-schedule-policy-company-link) — triage each as real defect vs. drift, fix in one block.

@@ -156,7 +156,7 @@ export type InsuranceAssetCoverage = {
 
 export type InsuranceCoiRequest = {
   id: string;
-  tenant_id: string;
+  operating_company_id: string;
   customer_id: string;
   policy_id: string | null;
   requested_at: string;
@@ -192,7 +192,7 @@ export type UpdateCoiRequestPayload = {
 
 export type InsurancePaymentSchedule = {
   id: string;
-  tenant_id: string;
+  operating_company_id: string;
   policy_id: string;
   due_date: string;
   amount_cents: number;
@@ -214,7 +214,7 @@ export type CreateInsurancePaymentSchedulePayload = {
 
 export type InsuranceClaim = {
   id: string;
-  tenant_id: string;
+  operating_company_id: string;
   claim_number: string;
   policy_id: string;
   asset_id: string | null;
@@ -323,7 +323,7 @@ export type UpdateInsuranceClaimPayload = {
 
 export type InsuranceLawsuit = {
   id: string;
-  tenant_id: string;
+  operating_company_id: string;
   case_number: string;
   plaintiff: string;
   defendant: string;

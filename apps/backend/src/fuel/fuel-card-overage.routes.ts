@@ -11,13 +11,15 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { requireAuth } from "../auth/session-middleware.js";
 import {
   approveAndPostFuelCardOverage,
+  exemptFuelCardOverage,
+  voidFuelCardOverage,
   reprocessUnprocessedFuelOverages,
 } from "./fuel-card-overage.service.js";
 
 const listQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   status: z
-    .enum(["pending_review", "approved", "posted", "company_variance", "all"])
+    .enum(["pending_review", "approved", "posted", "company_variance", "exempt_authorized", "voided", "all"])
     .default("pending_review"),
   driver_id: z.string().uuid().optional(),
   unit_id: z.string().uuid().optional(),
@@ -32,6 +34,23 @@ const approveParamsSchema = z.object({
 
 const approveBodySchema = z.object({
   operating_company_id: z.string().uuid(),
+});
+
+const exemptBodySchema = z
+  .object({
+    operating_company_id: z.string().uuid(),
+    reason: z.enum(["repair", "authorized_spend"]),
+    work_order_id: z.string().uuid().nullable().optional(),
+    note: z.string().trim().min(3).max(1000),
+  })
+  .refine((b) => b.reason !== "repair" || Boolean(b.work_order_id), {
+    message: "a repair names its work order",
+    path: ["work_order_id"],
+  });
+
+const voidBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  reason: z.string().trim().min(3).max(1000),
 });
 
 const APPROVE_ROLES = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
@@ -73,10 +92,9 @@ export async function registerFuelCardOverageRoutes(app: FastifyInstance) {
         }
 
         const values: unknown[] = [q.operating_company_id];
-        const filters: string[] = [
-          "e.operating_company_id = $1::uuid",
-          "e.voided_at IS NULL",
-        ];
+        const filters: string[] = ["e.operating_company_id = $1::uuid"];
+        // Voided events are kept (WORM) and shown only under their own filter.
+        if (q.status !== "voided") filters.push("e.voided_at IS NULL");
         if (q.status !== "all") {
           values.push(q.status);
           filters.push(`e.status = $${values.length}`);
@@ -123,6 +141,16 @@ export async function registerFuelCardOverageRoutes(app: FastifyInstance) {
               e.approved_at,
               e.approved_by_user_id,
               e.created_at,
+              e.gallons,
+              e.gallon_limit,
+              e.gallon_limit_source,
+              e.unit_price_cents,
+              e.exempt_reason,
+              e.exempt_work_order_id,
+              e.exempt_note,
+              e.exempted_at,
+              e.voided_at,
+              e.void_reason,
               ft.transaction_at,
               ft.fuel_type,
               ft.total_cost,
@@ -164,6 +192,16 @@ export async function registerFuelCardOverageRoutes(app: FastifyInstance) {
             approved_at: row.approved_at,
             approved_by_user_id: row.approved_by_user_id,
             created_at: row.created_at,
+            gallons: row.gallons === null ? null : Number(row.gallons),
+            gallon_limit: row.gallon_limit === null ? null : Number(row.gallon_limit),
+            gallon_limit_source: row.gallon_limit_source ?? null,
+            unit_price_cents: row.unit_price_cents === null ? null : Number(row.unit_price_cents),
+            exempt_reason: row.exempt_reason ?? null,
+            exempt_work_order_id: row.exempt_work_order_id ?? null,
+            exempt_note: row.exempt_note ?? null,
+            exempted_at: row.exempted_at ?? null,
+            voided_at: row.voided_at ?? null,
+            void_reason: row.void_reason ?? null,
             transaction_at: row.transaction_at,
             fuel_type: row.fuel_type,
             total_cost: row.total_cost === null ? null : Number(row.total_cost),
@@ -253,6 +291,70 @@ export async function registerFuelCardOverageRoutes(app: FastifyInstance) {
         return reply.code(500).send({ error: "fuel_overage_approve_failed", message: msg });
       }
 
+      return outcome;
+    }
+  );
+
+  /** ROUND 355 R-2 — exempt a non-fuel purchase as a repair (named work order) or manager-authorized spend. */
+  app.post(
+    "/api/v1/fuel/card-overage-events/:id/exempt",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return reply;
+      if (!APPROVE_ROLES.has(String(authUser.role ?? ""))) {
+        return reply.code(403).send({ error: "forbidden" });
+      }
+      const params = approveParamsSchema.safeParse(req.params ?? {});
+      if (!params.success) return sendValidationError(reply, params.error);
+      const body = exemptBodySchema.safeParse(req.body ?? {});
+      if (!body.success) return sendValidationError(reply, body.error);
+      await assertCompanyMembership(authUser.uuid, body.data.operating_company_id);
+
+      const outcome = await exemptFuelCardOverage({
+        operating_company_id: body.data.operating_company_id,
+        overage_event_id: params.data.id,
+        actor_user_id: authUser.uuid,
+        reason: body.data.reason,
+        work_order_id: body.data.work_order_id ?? null,
+        note: body.data.note,
+      });
+      if (outcome.status === "error") {
+        if (outcome.message === "overage_event_not_found") return reply.code(404).send({ error: outcome.message });
+        if (outcome.message === "already_posted_reverse_instead" || outcome.message.startsWith("invalid_status_for_exempt")) {
+          return reply.code(409).send({ error: outcome.message });
+        }
+        return reply.code(422).send({ error: outcome.message });
+      }
+      return outcome;
+    }
+  );
+
+  /** ROUND 352 point 7 — void an overage event; a posted receivable is reversed by a linked reversing entry. */
+  app.post(
+    "/api/v1/fuel/card-overage-events/:id/void",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return reply;
+      if (!APPROVE_ROLES.has(String(authUser.role ?? ""))) {
+        return reply.code(403).send({ error: "forbidden" });
+      }
+      const params = approveParamsSchema.safeParse(req.params ?? {});
+      if (!params.success) return sendValidationError(reply, params.error);
+      const body = voidBodySchema.safeParse(req.body ?? {});
+      if (!body.success) return sendValidationError(reply, body.error);
+      await assertCompanyMembership(authUser.uuid, body.data.operating_company_id);
+      const outcome = await voidFuelCardOverage({
+        operating_company_id: body.data.operating_company_id,
+        overage_event_id: params.data.id,
+        actor_user_id: authUser.uuid,
+        reason: body.data.reason,
+      });
+      if (outcome.status === "error") {
+        if (outcome.message === "overage_event_not_found") return reply.code(404).send({ error: outcome.message });
+        return reply.code(409).send({ error: outcome.message });
+      }
       return outcome;
     }
   );

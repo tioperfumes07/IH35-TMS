@@ -96,7 +96,7 @@ const PRESENCE_SQL: Record<string, string> = {
               JOIN insurance.policy_unit pu ON pu.asset_id = a.id AND pu.removed_at IS NULL
               JOIN insurance.policy p ON p.id = pu.policy_id AND p.operating_company_id = pu.operating_company_id
                 AND p.status = 'active' AND p.effective_date <= current_date AND p.expiry_date >= current_date
-              WHERE a.tenant_id = $2::uuid AND a.unit_code = u.unit_number) AS insurance
+              WHERE a.operating_company_id = $2::uuid AND a.unit_code = u.unit_number) AS insurance
     FROM mdata.units u WHERE u.id = $1::uuid
       AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid
     -- NOTE: mdata.units has NO operating_company_id (it uses owner_company_id / currently_leased_to_company_id);

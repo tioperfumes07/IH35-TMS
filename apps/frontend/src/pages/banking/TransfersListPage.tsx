@@ -370,7 +370,7 @@ export function TransfersListPage() {
                 Checking whether recording a transfer posts a journal entry for this company…
               </p>
               <p className="mt-1">
-                <code className="text-[11px]">TRANSFER_GL_POSTING_ENABLED</code> is resolved per entity and has not
+                <code className="text-xs">TRANSFER_GL_POSTING_ENABLED</code> is resolved per entity and has not
                 been read yet{transferGlFlag.error ? " (the lookup failed)" : ""}. Until it is,{" "}
                 <strong>assume recording a transfer DOES post</strong> — that is the assumption that cannot cost you
                 an unintended entry.
@@ -380,27 +380,27 @@ export function TransfersListPage() {
             <>
               <p className="font-semibold">
                 Recording a transfer DOES post a TMS journal entry —{" "}
-                <code className="text-[11px]">TRANSFER_GL_POSTING_ENABLED</code> is ON for this company
+                <code className="text-xs">TRANSFER_GL_POSTING_ENABLED</code> is ON for this company
               </p>
               <p className="mt-1">
                 The transfer poster runs for this entity, so a TMS JE is written to the live ledger and linked in the
                 TMS JE column. An EMPTY TMS JE column here therefore means those transfers were recorded before the
                 flag was turned on — it does not mean posting is off. Transfer rows still store QBO journal ids
                 separately from TMS GL. Reverse drill: JE detail Source links map{" "}
-                <code className="text-[11px]">transfer</code> → Banking Transfers.
+                <code className="text-xs">transfer</code> → Banking Transfers.
               </p>
             </>
           ) : (
             <>
               <p className="font-semibold">
-                TMS journal entry link requires <code className="text-[11px]">TRANSFER_GL_POSTING_ENABLED</code>, which
+                TMS journal entry link requires <code className="text-xs">TRANSFER_GL_POSTING_ENABLED</code>, which
                 is OFF for this company
               </p>
               <p className="mt-1">
                 Transfer rows store QBO journal ids separately from TMS GL. A TMS JE appears in the TMS JE column only
                 when the existing transfer poster ran with the flag ON for this entity. Zero linked JEs with the flag
                 OFF is expected — not proof that transfers post to the ledger. Reverse drill: JE detail Source links
-                map <code className="text-[11px]">transfer</code> → Banking Transfers.
+                map <code className="text-xs">transfer</code> → Banking Transfers.
               </p>
             </>
           )}

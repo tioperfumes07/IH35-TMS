@@ -314,8 +314,8 @@ function TerminationReasonModal({ open, initialRow, conflictError, saving, onClo
             className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
             placeholder="fired_aggressive"
           />
-          {fieldErrors.code ? <div className="mt-1 text-[11px] text-red-700">{fieldErrors.code}</div> : null}
-          {conflictError ? <div className="mt-1 text-[11px] text-red-700">{conflictError}</div> : null}
+          {fieldErrors.code ? <div className="mt-1 text-xs text-red-700">{fieldErrors.code}</div> : null}
+          {conflictError ? <div className="mt-1 text-xs text-red-700">{conflictError}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
@@ -325,7 +325,7 @@ function TerminationReasonModal({ open, initialRow, conflictError, saving, onClo
             onChange={(event) => setForm((v) => ({ ...v, label: event.target.value }))}
             className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
-          {fieldErrors.label ? <div className="mt-1 text-[11px] text-red-700">{fieldErrors.label}</div> : null}
+          {fieldErrors.label ? <div className="mt-1 text-xs text-red-700">{fieldErrors.label}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">

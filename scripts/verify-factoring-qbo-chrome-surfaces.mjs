@@ -86,6 +86,35 @@ function runChecks(root = ROOT) {
     const src = fs.readFileSync(abs, "utf8");
     if (!c.pattern.test(src)) fails.push(`${c.name}: pattern miss in ${c.file}`);
   }
+  // BANK-F91081 — ORDERS chrome: FactoringListPage uses locked tokens, not text-[11px].
+  const factRel = "apps/frontend/src/pages/accounting/FactoringListPage.tsx";
+  const factAbs = path.join(root, factRel);
+  if (fs.existsSync(factAbs)) {
+    const fact = fs.readFileSync(factAbs, "utf8");
+    if (fact.includes("text-[11px]")) fails.push(`${factRel}: must not use text-[11px] — use text-section-header or text-xs`);
+  }
+  // BANK-F91093 — ORDERS chrome: FactoringDetailPage status pill uses named 11px token.
+  const detailRel = "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx";
+  const detailAbs = path.join(root, detailRel);
+  if (fs.existsSync(detailAbs)) {
+    const detail = fs.readFileSync(detailAbs, "utf8");
+    if (detail.includes("text-[11px]")) fails.push(`${detailRel}: must not use text-[11px] — use text-section-header`);
+    if (!detail.includes("text-section-header")) fails.push(`${detailRel}: status pill must use text-section-header`);
+  }
+  // BANK-F91097 — ORDERS chrome: FactoringHome filter labels use text-xs, not text-[11px].
+  const homeRel = "apps/frontend/src/pages/factoring/FactoringHome.tsx";
+  const homeAbs = path.join(root, homeRel);
+  if (fs.existsSync(homeAbs)) {
+    const home = fs.readFileSync(homeAbs, "utf8");
+    if (home.includes("text-[11px]")) fails.push(`${homeRel}: must not use text-[11px] — use text-xs`);
+  }
+  // BANK-F91098 — ORDERS chrome: SubmissionQueue filter labels use text-xs, not text-[11px].
+  const queueRel = "apps/frontend/src/pages/factoring/SubmissionQueue.tsx";
+  const queueAbs = path.join(root, queueRel);
+  if (fs.existsSync(queueAbs)) {
+    const queue = fs.readFileSync(queueAbs, "utf8");
+    if (queue.includes("text-[11px]")) fails.push(`${queueRel}: must not use text-[11px] — use text-xs`);
+  }
   return fails;
 }
 

@@ -25,11 +25,21 @@ const LOADS = path.join(ROOT, "apps/backend/src/dispatch/loads.routes.ts");
 // comment at the call site. The pipeline is one coupled unit across both files; check() below reads
 // them concatenated so the requirement still holds without demanding they live in one file.
 const LATCH = path.join(ROOT, "apps/backend/src/dispatch/delivery-evidence-latch.ts");
+// #23249 (BOL -> invoice -> Faro, 2026-09-30) moved the convert + send pair one hop deeper: the latch now calls
+// autoInvoiceOnBol, which runs convertProformaToOfficial then sendDraftInvoice. The pipeline is still one coupled unit;
+// the latch must CALL autoInvoiceOnBol, and that service must hold the convert -> send pair (both checked below).
+const AUTO_BOL = path.join(ROOT, "apps/backend/src/accounting/auto-invoice-on-bol.service.ts");
 const INVOICES = path.join(ROOT, "apps/backend/src/accounting/invoices.routes.ts");
 const HELD = path.join(ROOT, "db/migrations/.held-migrations.json");
 // FACT-DELIVERED-AUTO (owner 2026-09-09) — stage 2 of the pipeline: a delivered load whose invoice is
 // sent and whose customer is factor-assigned auto-creates the factoring "purchase" (submitted advance).
 const AUTO_SUBMIT = path.join(ROOT, "apps/backend/src/factoring/auto-submit-on-delivery.service.ts");
+
+/** The delivery-path scope: loads.routes + the latch, plus the BOL service ONLY when the latch calls it. */
+export function loadsScope(loadsSrc, latchSrc, bolSrc) {
+  const viaBol = /autoInvoiceOnBol\(/.test(latchSrc) ? "\n" + bolSrc : "";
+  return loadsSrc + "\n" + latchSrc + viaBol;
+}
 
 /** @param {Record<string, string>} sources */
 export function check(sources) {
@@ -202,6 +212,17 @@ function selftest() {
   if (!check(notIdempotent).some((p) => /idempotent/.test(p))) {
     throw new Error(`${LABEL} selftest: a non-idempotent auto-submit was not caught`);
   }
+  // (d) #23249 hop: the latch stops calling autoInvoiceOnBol — the convert -> send pair (which lives in the BOL
+  //     service) leaves the delivery path and the pipeline check must fail.
+  const bolService = "convertProformaToOfficial\nsendDraftInvoice";
+  const latchCalls = "delivered_pending_docs\nfactoring-auto-submit\nautoSubmitDeliveredLoadToFactor\nawait autoInvoiceOnBol(db, {})";
+  if (check({ ...good, loads: loadsScope("", latchCalls, bolService) }).length) {
+    throw new Error(`${LABEL} selftest: a latch that calls autoInvoiceOnBol was flagged`);
+  }
+  const latchDropsBol = latchCalls.replace("await autoInvoiceOnBol(db, {})", "");
+  if (!check({ ...good, loads: loadsScope("", latchDropsBol, bolService) }).some((p) => /convert proforma|sendDraftInvoice/.test(p))) {
+    throw new Error(`${LABEL} selftest: a latch that no longer calls autoInvoiceOnBol was not caught`);
+  }
   console.log(`[${LABEL}] SELFTEST PASS`);
 }
 
@@ -215,7 +236,9 @@ const problems = check({
   fromLoad: read(FROM_LOAD),
   convert: read(CONVERT),
   mint: read(MINT),
-  loads: read(LOADS) + "\n" + read(LATCH),
+  // The latch's call into autoInvoiceOnBol is what makes the BOL service part of the delivery path; only then is the
+  // service's body counted (a latch that stops calling it drops the convert -> send pair from this scope and FAILS).
+  loads: loadsScope(read(LOADS), read(LATCH), read(AUTO_BOL)),
   invoices: read(INVOICES),
   held: read(HELD),
   autoSubmit: read(AUTO_SUBMIT),

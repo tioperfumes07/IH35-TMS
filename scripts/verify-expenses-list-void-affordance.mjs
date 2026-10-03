@@ -39,6 +39,11 @@ for (const [rel, src] of [
   }
 }
 
+// BANK-F91071 — ORDERS chrome: ExpensesListPage uses locked text-xs, not text-[11px].
+if (listPage.includes("text-[11px]")) {
+  errors.push("ExpensesListPage must not use text-[11px] — use text-xs (GLOBAL-TYPE-SIZE-BASELINE body 12px)");
+}
+
 if (errors.length > 0) {
   for (const e of errors) console.error("FAIL:", e);
   process.exit(1);

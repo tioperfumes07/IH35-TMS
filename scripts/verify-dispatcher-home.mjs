@@ -89,6 +89,8 @@ function main() {
   if (dispatcherHome.includes("DefaultHome")) failures.push("DispatcherHome must not pass through to DefaultHome");
 
   if (!kpiBar.includes("dispatcher-kpi-bar")) failures.push("DispatcherKpiBar must expose test id");
+  // BANK-F91127 — ORDERS chrome: DispatcherKpiBar labels use text-section-header, not text-[11px].
+  if (kpiBar.includes("text-[11px]")) failures.push("DispatcherKpiBar must not use text-[11px] — use text-section-header");
   if (!loadsPanel.includes("dispatcher-active-loads-panel")) failures.push("DispatcherActiveLoadsPanel must expose test id");
   if (!pendingPanel.includes("dispatcher-pending-actions-panel")) failures.push("DispatcherPendingActionsPanel must expose test id");
 

@@ -10,6 +10,7 @@ import {
   BankingTransactionsDesignView,
   categorizedProvenanceText,
   categorizedRuleLabel,
+  formatSuggestedMatchBadgeLabel,
   formatSuggestedMatchInline,
   spentReceived,
 } from "./BankingTransactionsDesignView";
@@ -66,6 +67,25 @@ describe("B-3 §18 formatSuggestedMatchInline (BANK-F91061)", () => {
       suggested_reference: null,
     });
     expect(line).toBe("Bill");
+  });
+});
+
+describe("B-3 §18 formatSuggestedMatchBadgeLabel (BANK-F91062)", () => {
+  const base = {
+    suggested_ledger_entry_kind: "expense" as const,
+    suggested_ledger_entry_id: "exp-1",
+    suggested_confidence: "high" as const,
+    date_gap_days: 0,
+    memo_similarity: 0.9,
+  };
+
+  it("says 1 match found when count is 1 or missing", () => {
+    expect(formatSuggestedMatchBadgeLabel({ ...base, suggested_match_count: 1 })).toBe("1 match found");
+    expect(formatSuggestedMatchBadgeLabel({ ...base })).toBe("1 match found");
+  });
+
+  it("says N matches found when count > 1", () => {
+    expect(formatSuggestedMatchBadgeLabel({ ...base, suggested_match_count: 3 })).toBe("3 matches found");
   });
 });
 

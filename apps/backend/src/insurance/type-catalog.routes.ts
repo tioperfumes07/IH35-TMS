@@ -96,7 +96,7 @@ export async function registerInsuranceTypeCatalogRoutes(app: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
 
     const rows = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
-      const filters = ["tenant_id = $1::uuid"];
+      const filters = ["operating_company_id = $1::uuid"];
       if (!parsed.data.include_inactive) filters.push("active = true");
       const result = await client.query(
         `
@@ -126,7 +126,7 @@ export async function registerInsuranceTypeCatalogRoutes(app: FastifyInstance) {
         const result = await client.query(
           `
             INSERT INTO insurance.type_catalog (
-              tenant_id, code, name, description, active, sort_order
+              operating_company_id, code, name, description, active, sort_order
             )
             VALUES ($1::uuid, $2, $3, $4, $5, $6)
             RETURNING ${selectColumns()}
@@ -189,7 +189,7 @@ export async function registerInsuranceTypeCatalogRoutes(app: FastifyInstance) {
           `
             UPDATE insurance.type_catalog
             SET ${assignments.join(", ")}
-            WHERE tenant_id = $1::uuid AND id = $2::uuid
+            WHERE operating_company_id = $1::uuid AND id = $2::uuid
             RETURNING ${selectColumns()}
           `,
           values
@@ -225,7 +225,7 @@ export async function registerInsuranceTypeCatalogRoutes(app: FastifyInstance) {
         `
           UPDATE insurance.type_catalog
           SET active = false
-          WHERE tenant_id = $1::uuid AND id = $2::uuid
+          WHERE operating_company_id = $1::uuid AND id = $2::uuid
           RETURNING id::text
         `,
         [query.data.operating_company_id, params.data.id]

@@ -54,13 +54,13 @@ export function AccountTile({ tile, selected, onSelect, onView, onInspect }: Pro
         </div>
         <div className="truncate text-xs font-semibold text-gray-900">{tile.display_name}</div>
         <div className="mt-1 text-xs font-bold tabular-nums text-gray-900">${Number(tile.current_balance ?? 0).toFixed(2)}</div>
-        <div className="mt-1 text-[11px] text-slate-700">Uncat: {Number(tile.uncategorized_count ?? 0)}</div>
+        <div className="mt-1 text-xs text-slate-700">Uncat: {Number(tile.uncategorized_count ?? 0)}</div>
       </button>
       <div className="mt-1 flex gap-2 border-t border-gray-100 pt-1">
         <button
           type="button"
           data-testid="bank-account-tile-view"
-          className="text-[11px] font-medium text-slate-800 underline-offset-2 hover:underline"
+          className="text-xs font-medium text-slate-800 underline-offset-2 hover:underline"
           onClick={(e) => {
             e.stopPropagation();
             (onView ?? onSelect)();
@@ -71,7 +71,7 @@ export function AccountTile({ tile, selected, onSelect, onView, onInspect }: Pro
         <button
           type="button"
           data-testid="bank-account-tile-inspect"
-          className="text-[11px] font-medium text-slate-800 underline-offset-2 hover:underline"
+          className="text-xs font-medium text-slate-800 underline-offset-2 hover:underline"
           onClick={(e) => {
             e.stopPropagation();
             onInspect?.();
