@@ -5,6 +5,13 @@ function withCompany(path: string, companyId: string) {
   return `${path}${separator}operating_company_id=${encodeURIComponent(companyId)}`;
 }
 
+export type AccountingUnclearedDocument = {
+  document_type: string;
+  document_number: string;
+  document_date: string;
+  amount_cents: number;
+};
+
 export type AccountingAgingBuckets = {
   current_cents: number;
   d1_30_cents: number;
@@ -12,6 +19,9 @@ export type AccountingAgingBuckets = {
   d61_90_cents: number;
   d90_plus_cents: number;
   total_outstanding_cents: number;
+  uncleared_cents: number;
+  cleared_open_cents: number;
+  uncleared_documents: AccountingUnclearedDocument[];
 };
 
 export type AccountingHomeData = {

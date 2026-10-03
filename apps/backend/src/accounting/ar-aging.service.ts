@@ -1,5 +1,10 @@
 import { withCurrentUser } from "../auth/db.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import {
+  attachUncleared,
+  listUnclearedCustomerPayments,
+  type UnclearedDocument,
+} from "./uncleared-applied-documents.js";
 
 type ArAgingInvoiceRowDb = {
   customer_id: string;
@@ -17,6 +22,9 @@ export type ArAgingCustomerRow = {
   d61_90: number;
   d90_plus: number;
   total_outstanding: number;
+  uncleared_documents: UnclearedDocument[];
+  uncleared_cents: number;
+  cleared_open_cents: number;
 };
 
 export type ArAgingTotals = {
@@ -175,6 +183,9 @@ export async function getArAgingReport(input: {
         d61_90: 0,
         d90_plus: 0,
         total_outstanding: 0,
+        uncleared_documents: [],
+        uncleared_cents: 0,
+        cleared_open_cents: 0,
       };
 
       if (daysOverdue <= 0) {
@@ -194,8 +205,14 @@ export async function getArAgingReport(input: {
       byCustomer.set(key, customer);
     }
 
-    const customers = Array.from(byCustomer.values()).sort(
-      (a, b) => a.customer_name.localeCompare(b.customer_name) || a.customer_id.localeCompare(b.customer_id)
+    const uncleared = await listUnclearedCustomerPayments(client, input.operating_company_id, effectiveAsOf);
+    const customers = attachUncleared(
+      Array.from(byCustomer.values()).sort(
+        (a, b) => a.customer_name.localeCompare(b.customer_name) || a.customer_id.localeCompare(b.customer_id),
+      ),
+      uncleared,
+      "customer_id",
+      (row) => row.total_outstanding,
     );
 
     const totals: ArAgingTotals = customers.reduce(

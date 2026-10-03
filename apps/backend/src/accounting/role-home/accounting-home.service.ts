@@ -3,6 +3,7 @@ import { getArAgingReport, type ArAgingTotals } from "../ar-aging.service.js";
 import { withCompanyScope } from "../shared.js";
 import { companyBusinessDate } from "../../lib/company-business-date.js";
 import { countPendingJournalApprovals } from "./pending-approvals-gl.service.js";
+import type { UnclearedDocument } from "../uncleared-applied-documents.js";
 
 export type AgingBuckets = {
   current_cents: number;
@@ -11,6 +12,9 @@ export type AgingBuckets = {
   d61_90_cents: number;
   d90_plus_cents: number;
   total_outstanding_cents: number;
+  uncleared_cents: number;
+  cleared_open_cents: number;
+  uncleared_documents: UnclearedDocument[];
 };
 
 export type AccountingHomeData = {
@@ -32,7 +36,12 @@ export type AccountingHomeData = {
   early_pay_discounts_expiring_this_week: number;
 };
 
-function mapAgingTotals(totals: ArAgingTotals | ApAgingTotals): AgingBuckets {
+function mapAgingTotals(
+  totals: ArAgingTotals | ApAgingTotals,
+  rows: Array<{ uncleared_cents: number; cleared_open_cents: number; uncleared_documents: UnclearedDocument[] }>,
+): AgingBuckets {
+  const uncleared_cents = rows.reduce((sum, row) => sum + row.uncleared_cents, 0);
+  const cleared_open_cents = rows.reduce((sum, row) => sum + row.cleared_open_cents, 0);
   return {
     current_cents: totals.current,
     d1_30_cents: totals.d1_30,
@@ -40,6 +49,9 @@ function mapAgingTotals(totals: ArAgingTotals | ApAgingTotals): AgingBuckets {
     d61_90_cents: totals.d61_90,
     d90_plus_cents: totals.d90_plus,
     total_outstanding_cents: totals.total_outstanding,
+    uncleared_cents,
+    cleared_open_cents,
+    uncleared_documents: rows.flatMap((row) => row.uncleared_documents),
   };
 }
 
@@ -181,8 +193,8 @@ export async function getAccountingHomeData(input: {
 
   return {
     as_of_date: asOfDate,
-    ar_aging: mapAgingTotals(arReport.totals),
-    ap_aging: mapAgingTotals(apReport.totals),
+    ar_aging: mapAgingTotals(arReport.totals, arReport.customers),
+    ap_aging: mapAgingTotals(apReport.totals, apReport.vendors),
     period_close: {
       period_label: supplemental.openPeriod?.period_label ?? null,
       period_end: periodEnd,

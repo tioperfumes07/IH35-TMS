@@ -7,7 +7,22 @@ import { computeDaysToClose } from "../accounting-home.service.js";
 
 vi.mock("../../ar-aging.service.js", () => ({
   getArAgingReport: vi.fn(async () => ({
-    customers: [],
+    customers: [
+      {
+        customer_id: "cust-1",
+        uncleared_cents: 50_00,
+        cleared_open_cents: 435_00,
+        uncleared_documents: [
+          {
+            party_id: "cust-1",
+            document_type: "customer payment",
+            document_number: "500",
+            document_date: "2026-10-01",
+            amount_cents: 50_00,
+          },
+        ],
+      },
+    ],
     totals: {
       current: 100_00,
       d1_30: 200_00,
@@ -21,7 +36,22 @@ vi.mock("../../ar-aging.service.js", () => ({
 
 vi.mock("../../ap-aging.service.js", () => ({
   getApAgingReport: vi.fn(async () => ({
-    vendors: [],
+    vendors: [
+      {
+        vendor_id: "vend-1",
+        uncleared_cents: 25_00,
+        cleared_open_cents: 540_00,
+        uncleared_documents: [
+          {
+            party_id: "vend-1",
+            document_type: "bill payment",
+            document_number: "BP-1",
+            document_date: "2026-10-01",
+            amount_cents: 25_00,
+          },
+        ],
+      },
+    ],
     totals: {
       current: 300_00,
       d1_30: 150_00,
@@ -82,6 +112,12 @@ describe("getAccountingHomeData", () => {
     expect(data.ap_aging.total_outstanding_cents).toBe(515_00);
     expect(data.ar_aging.d1_30_cents).toBe(200_00);
     expect(data.ap_aging.d90_plus_cents).toBe(5_00);
+    expect(data.ar_aging.uncleared_cents).toBe(50_00);
+    expect(data.ap_aging.uncleared_cents).toBe(25_00);
+    expect(data.ar_aging.cleared_open_cents).toBe(435_00);
+    expect(data.ap_aging.cleared_open_cents).toBe(540_00);
+    expect(data.ar_aging.uncleared_documents).toHaveLength(1);
+    expect(data.ap_aging.uncleared_documents[0]?.document_number).toBe("BP-1");
   });
 
   it("includes period close countdown for open period", async () => {

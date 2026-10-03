@@ -13,6 +13,7 @@ import { Button } from "../../../components/Button";
 import { AccountingKpiBar } from "../../../components/home/AccountingKpiBar";
 import { AccountingPendingApprovalsPanel } from "../../../components/home/AccountingPendingApprovalsPanel";
 import { ComplianceFilingsDueWidget } from "../../../components/home/ComplianceFilingsDueWidget";
+import { UnclearedDocumentsNote } from "../../../components/accounting/UnclearedDocumentsNote";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { formatUsdFromCents } from "../HomeKpiCard";
 import { printLetterHtml } from "../../../lib/openPrintableDocument";
@@ -47,7 +48,23 @@ function AgingBucketCard({ title, buckets, accent }: { title: string; buckets: A
           <span>Total outstanding</span>
           <span className="tabular-nums">{formatUsdFromCents(buckets?.total_outstanding_cents ?? 0)}</span>
         </li>
+        <li className="flex items-center justify-between px-3 py-2">
+          <span className="text-slate-600">Cleared</span>
+          <span className="font-medium tabular-nums text-slate-900">
+            {formatUsdFromCents(buckets?.cleared_open_cents ?? buckets?.total_outstanding_cents ?? 0)}
+          </span>
+        </li>
+        <li className="px-3 py-2">
+          <span className="text-slate-600">Not cleared</span>
+          <UnclearedDocumentsNote docs={buckets?.uncleared_documents ?? []} />
+        </li>
       </ul>
+      {(buckets?.uncleared_cents ?? 0) > 0 ? (
+        <p className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
+          Cleared {formatUsdFromCents(buckets?.cleared_open_cents ?? 0)}. Applied payments that have not been
+          matched or categorized in Banking are named not cleared.
+        </p>
+      ) : null}
     </section>
   );
 }
@@ -86,6 +103,8 @@ export function AccountingHome({ auth }: Props) {
         { label: "61–90 days", cents: buckets?.d61_90_cents ?? 0 },
         { label: "90+ days", cents: buckets?.d90_plus_cents ?? 0 },
         { label: "Total outstanding", cents: buckets?.total_outstanding_cents ?? 0 },
+        { label: "Cleared", cents: buckets?.cleared_open_cents ?? buckets?.total_outstanding_cents ?? 0 },
+        { label: "Not cleared", cents: buckets?.uncleared_cents ?? 0 },
       ];
       return `
         <h1 style="margin-top:16px">${esc(title)}</h1>
