@@ -25,6 +25,10 @@ export function check({ service, page }) {
   if (/reversed_by_line_id IS NULL|reversal_of_line_id IS NULL|je\.status = 'posted'/.test(where)) f.push(`${SERVICE}: buildLineWhere hides rows the balance counts (reversed / reversal / posted-only)`);
   if (!/const openAccount = \(id: string \| null\) => \{ setAccountId\(id\); runFind\(id\); \}/.test(page)) f.push(`${PAGE}: clicking an account must load its transactions (openAccount -> runFind)`);
   if (!/onClick=\{\(\) => openAccount\(a\.account_id\)\}/.test(page)) f.push(`${PAGE}: the account rows must call openAccount on click`);
+  // The register loads on open, and its default window is fiscal year to date (a last-month window cannot list what an
+  // all-time-through-To-date balance counts).
+  if (/useState<\{ from: string; to: string;[^>]*\} \| null>\(null\)/.test(page)) f.push(`${PAGE}: the register must load on open — \`applied\` may not start null`);
+  if (!/useState\(firstOfFiscalYear\(\)\)/.test(page) || /firstOfPrevMonth/.test(page)) f.push(`${PAGE}: the default window must be fiscal year to date, not last month`);
   return f;
 }
 
