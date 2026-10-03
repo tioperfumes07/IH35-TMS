@@ -2,7 +2,7 @@
 /**
  * B-4 CHECK CREATOR + BILL PAYMENT — ORDERS-2026-10-01-BANKING-REGISTER-SET §9/§10/§13–§15.
  * Asserts QBO Write Check chrome on the existing engine: Who did you pay?, Add to Check /
- * Outstanding Transactions, Restore draft, Order checks, Make recurring (honest disabled).
+ * Outstanding Transactions, Restore draft, Order checks, Make recurring (expense template).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -38,7 +38,7 @@ function main() {
   assertIncludes(form, 'label: "Payment"', FORM);
   assertIncludes(form, 'data-b4-amount-to-apply="1"', FORM);
   assertIncludes(form, "Amount to Apply:", FORM);
-  // BANK-F91033 — Amount to Credit is live (typed Payment above open balance); Save blocked while credit > 0
+  // BANK-F91033 / F91038 — Amount to Credit is live; Save allowed with credit (vendor_credit mint on pay-bills)
   assertIncludes(form, 'data-b4-amount-to-credit="1"', FORM);
   assertIncludes(form, "Amount to Credit:", FORM);
   assertIncludes(form, "billPaymentCreditCents", FORM);
@@ -46,7 +46,8 @@ function main() {
   assertIncludes(form, "formatMoneyCents(billPaymentCreditCents)", FORM);
   assertIncludes(form, "formatMoneyCents(billPaymentApplyCents)", FORM);
   assertIncludes(form, 'data-testid="b4-amount-to-credit"', FORM);
-  assertIncludes(form, "billPaymentCreditCents === 0", FORM);
+  assertIncludes(form, "billPaymentCreditCents > 0", FORM);
+  assertIncludes(form, "vendor credit", FORM);
   if (form.includes("Amount to Credit: <strong>$0.00</strong>")) {
     throw new Error(`${FORM}: Amount to Credit must not be a hardcoded $0.00 stub`);
   }
@@ -116,6 +117,21 @@ function main() {
   assertIncludes(form, "Order checks", FORM);
   assertIncludes(form, 'data-b4-make-recurring="1"', FORM);
   assertIncludes(form, "Make recurring", FORM);
+  // BANK-F91055 — Make recurring wired (expense template), not honest-disabled
+  assertIncludes(form, 'data-testid="b4-make-recurring"', FORM);
+  assertIncludes(form, "canMakeRecurring", FORM);
+  assertIncludes(form, "createAccountingRecurringExpenseTemplate", FORM);
+  assertIncludes(form, 'data-b4-make-recurring-modal="1"', FORM);
+  assertIncludes(form, "handleMakeRecurring", FORM);
+  if (/title="Make recurring is not wired for checks yet/.test(form)) {
+    throw new Error(`${FORM}: Make recurring must not stay honest-disabled`);
+  }
+  const recurringRoutes = read("apps/backend/src/accounting/recurring-template-detail.routes.ts");
+  assertIncludes(recurringRoutes, 'kind: z.literal("expense")', "recurring-template-detail.routes.ts");
+  assertIncludes(recurringRoutes, "BANK-F91055", "recurring-template-detail.routes.ts");
+  assertIncludes(recurringRoutes, "amount_cents", "recurring-template-detail.routes.ts");
+  const recurringApi = read("apps/frontend/src/api/accountingRecurringTemplate.ts");
+  assertIncludes(recurringApi, "createAccountingRecurringExpenseTemplate", "accountingRecurringTemplate.ts");
   assertIncludes(form, "Print later", FORM);
   // BANK-F91041 — ORDERS §B-4 More(Void / Delete=void / Transaction journal / Audit history)
   assertIncludes(form, 'data-b4-check-more="1"', FORM);
