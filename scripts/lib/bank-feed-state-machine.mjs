@@ -1,7 +1,7 @@
 // ROUND 360 (CC-2) — shared pieces of the bank feed state machine guards.
 // Spec: docs/bus/00-CONTRACT-BANK-FEED-STATE-MACHINE-MATCH-UNMATCH-CATEGORIZE-UNDO.md
 //
-// Every guard here runs UNSCOPED across every company EXCEPT the frozen one (OWNER RULING 2026-10-02: TRANSPORTATION is
+// Every guard here runs UNSCOPED across every company EXCEPT the frozen one (OWNER RULING 2026-10-02 + ROUND 363 law: TRANSPORTATION and TRUCKING are
 // not read, not written — 00-OWNER-RULING-2026-10-02-CC2-ACCEPTED-PLUS-FOUR-RULINGS.md §3), which each report names.
 // Every guard here runs under SET LOCAL app.bypass_rls = 'lucia' inside a READ ONLY
 // transaction, prints is_lucia_bypass() so a scoped run can never pass for an unscoped one, and fails closed when the
@@ -30,7 +30,7 @@ export const LINKED_SQL = (a = "bt") =>
   `(num_nonnulls(${LINK_COLUMNS.map((c) => `${a}.${c}`).join(", ")}) > 0 OR ${a}.status IN ('split', 'transfer') OR ${a}.transfer_kind IS NOT NULL)`;
 
 /** Companies no seat reads or writes (owner ruling). */
-export const FROZEN_COMPANY_CODES = ["TRANSP"];
+export const FROZEN_COMPANY_CODES = ["TRANSP", "TRK"]; // ROUND 363: TRANSPORTATION and TRUCKING are frozen
 /** SQL: the row's company is not frozen. `col` is the operating_company_id expression. */
 export const NOT_FROZEN_SQL = (col = "bt.operating_company_id") =>
   `${col} NOT IN (SELECT id FROM org.companies WHERE code = ANY('{${FROZEN_COMPANY_CODES.join(",")}}'::text[]))`;
