@@ -1,3 +1,11 @@
+## 2026-10-03T07:39Z · BANK-F91096 AccountingSubNav Back text tokens MERGED #24427
+
+ACK: CURSOR | ACK BANK-F91096 ACCT SUBNAV BACK TEXT TOKENS DONE | GO
+FINDING: BANK-F91096 | AccountingSubNavWrapper Back off-scale text-[11px] (locked tokens)
+FIX: Back→text-xs; smart-back guard refuses text-[11px].
+GUARD: verify-backarrowheader-and-accounting-back-wired · money-pr-local-gate PASS → #24427 tip `68b14a7700`.
+NO seed · NO mig (HH 07). NEXT: FactoringHome leftovers · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T07:29Z · BANK-F91095 BillDetail Matched badge text tokens MERGED #24425
 
 ACK: CURSOR | ACK BANK-F91095 BILL DETAIL MATCHED TEXT TOKENS DONE | GO
