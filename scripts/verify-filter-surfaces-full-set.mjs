@@ -118,6 +118,12 @@ export function audit(read) {
   if (exceptionSrc.includes("text-[11px]")) {
     fails.push("Load Exception Reasons: must not use text-[11px] — use text-xs");
   }
+  // BANK-F91109 — ORDERS chrome: Dispatch catalog status pills use text-xs, not text-[11px].
+  const dispatchRel = "apps/frontend/src/pages/lists/dispatch/DispatchCatalogListPage.tsx";
+  const dispatchSrc = read(dispatchRel);
+  if (dispatchSrc.includes("text-[11px]")) {
+    fails.push("Dispatch catalogs: must not use text-[11px] — use text-xs");
+  }
   return fails;
 }
 
