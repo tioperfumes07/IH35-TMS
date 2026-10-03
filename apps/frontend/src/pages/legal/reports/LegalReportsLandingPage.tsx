@@ -37,7 +37,7 @@ function SeverityChips({ bySeverity }: { bySeverity: Record<string, number> }) {
   return (
     <div className="mt-1 flex flex-wrap gap-1">
       {entries.map(({ severity, count }) => (
-        <span key={severity} className={`rounded px-2 py-0.5 text-[11px] font-semibold capitalize ${SEVERITY_STYLES[severity] ?? "bg-gray-100 text-gray-700"}`}>
+        <span key={severity} className={`rounded px-2 py-0.5 text-xs font-semibold capitalize ${SEVERITY_STYLES[severity] ?? "bg-gray-100 text-gray-700"}`}>
           {severity}: {count}
         </span>
       ))}
@@ -72,7 +72,7 @@ export function LegalReportsLandingPage() {
       ) : (
         <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
-            <div className="text-[11px] uppercase tracking-wide text-gray-500">Open by severity</div>
+            <div className="text-xs uppercase tracking-wide text-gray-500">Open by severity</div>
             <SeverityChips bySeverity={(s.open_by_severity as Record<string, number>) ?? {}} />
           </div>
           <Card
