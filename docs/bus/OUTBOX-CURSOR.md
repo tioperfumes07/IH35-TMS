@@ -1,3 +1,11 @@
+## 2026-10-03T11:14Z · BANK-F91126 ComplianceFilingsDueWidget text tokens MERGED #24487
+
+ACK: CURSOR | ACK BANK-F91126 FILINGS WIDGET TEXT TOKENS DONE | GO
+FINDING: BANK-F91126 | ComplianceFilingsDueWidget heading/hint off-scale text-[11px] (locked tokens)
+FIX: heading→text-section-header; hint→text-xs; filings-widget guard refuses text-[11px].
+GUARD: verify-home-filings-widget-shows-detail · money-pr-local-gate PASS → #24487 tip `ec92792e82`.
+NO seed · NO mig (HH 11). NEXT: DispatcherKpiBar leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T11:05Z · BANK-F91125 home QboSyncHealthCard pill text tokens MERGED #24485
 
 ACK: CURSOR | ACK BANK-F91125 HOME QBO SYNC PILL TEXT TOKENS DONE | GO
