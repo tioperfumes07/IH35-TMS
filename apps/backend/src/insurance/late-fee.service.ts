@@ -74,7 +74,7 @@ export async function applyOverdueLateFeesForTenant(tenantId: string, today: str
       `
         SELECT id::text
         FROM insurance.payment_schedule
-        WHERE tenant_id = $1::uuid
+        WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid
           AND due_date < $2::date
           AND status NOT IN ('paid', 'late_fee_applied')
       `,

@@ -231,7 +231,7 @@ export async function renderCoiPdf(
         expiry_date::text,
         status
       FROM insurance.policy
-      WHERE tenant_id = $1::uuid
+      WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid
         AND id = $2::uuid
       LIMIT 1
     `,
@@ -260,7 +260,7 @@ export async function renderCoiPdf(
         pu.insured_value_cents::bigint AS insured_value_cents
       FROM insurance.policy_unit pu
       JOIN mdata.assets a ON a.id = pu.asset_id AND a.tenant_id = pu.tenant_id
-      WHERE pu.tenant_id = $1::uuid
+      WHERE COALESCE(pu.operating_company_id, pu.tenant_id) = $1::uuid
         AND pu.policy_id = $2::uuid
       ORDER BY a.unit_code ASC, a.created_at ASC
     `,

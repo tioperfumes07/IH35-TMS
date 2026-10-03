@@ -309,6 +309,7 @@ const STEPS = [
   ["verify-r342-entity-code-company-scoped", "scripts/verify-r342-entity-code-company-scoped.mjs"],
   ["verify-r342-factor-reserve-oci-field", "scripts/verify-r342-factor-reserve-oci-field.mjs"],
   ["verify-r342-dual-scoped-factoring-reads", "scripts/verify-r342-dual-scoped-factoring-reads.mjs"],
+  ["verify-r342-dual-scoped-insurance-reads", "scripts/verify-r342-dual-scoped-insurance-reads.mjs"],
   ["verify-r3421-unit-plates-identity-user-company-scoped", "scripts/verify-r3421-unit-plates-identity-user-company-scoped.mjs"],
   ["verify-account-register-ref-no-journal-entry-link", "scripts/verify-account-register-ref-no-journal-entry-link.mjs"],
   ["verify-money-detail-page-uses-ispending", "scripts/verify-money-detail-page-uses-ispending.mjs"],
@@ -506,6 +507,13 @@ const LIVE_DOMAIN_GUARDS = [
       "apps/backend/src/factoring/factoring-kpi.service.ts",
       "apps/backend/src/factoring/company-scope.ts",
       "scripts/verify-r342-dual-scoped-factoring-reads.mjs",
+    ],
+  ],
+  [
+    "verify-r342-dual-scoped-insurance-reads",
+    [
+      "apps/backend/src/insurance/",
+      "scripts/verify-r342-dual-scoped-insurance-reads.mjs",
     ],
   ],
   [

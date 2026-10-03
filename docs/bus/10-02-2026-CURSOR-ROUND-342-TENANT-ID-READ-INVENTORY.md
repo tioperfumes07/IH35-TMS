@@ -117,7 +117,7 @@ Dual-scoped (has BOTH tenant_id + operating_company_id) — safe to switch reads
 - factoring: bank_match_suggestion, batch, customer_factor_assignment, factor, letter_of_release, reserve_movement
   **DONE 2026-10-03** — apps reads use `COALESCE(operating_company_id, tenant_id)` (guard verify-r342-dual-scoped-factoring-reads).
 - insurance: claim, coi_request, lawsuit, payment_schedule, policy, policy_unit, refund_obligation
-  **OPEN** — next dual-scoped sweep.
+  **DONE 2026-10-03** — COALESCE(OCI, tenant_id); type_catalog+assets stay tenant_id (guard verify-r342-dual-scoped-insurance-reads).
 - maintenance.internal_labor_log · master_data.customer_terms_history · mdata.mx_permits · mdata.mx_tolls_ledger
 
 Rename-only (tenant_id, NO operating_company_id today) — ship WITH CC-1 rename, not before:

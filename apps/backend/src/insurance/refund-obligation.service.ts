@@ -76,7 +76,7 @@ export async function recordPendingRefundObligation(
     `
       SELECT id::text
       FROM insurance.refund_obligation
-      WHERE tenant_id = $1::uuid AND deterministic_memo = $2
+      WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND deterministic_memo = $2
       LIMIT 1
     `,
     [input.operatingCompanyId, input.deterministicMemo]
@@ -110,7 +110,7 @@ export async function postPendingRefundObligations(
   client: Queryable,
   input: { operatingCompanyId: string; userId: string; role: string; policyId?: string }
 ): Promise<DrainResult> {
-  const filters = ["tenant_id = $1::uuid", "status = 'pending'"];
+  const filters = ["COALESCE(operating_company_id, tenant_id) = $1::uuid", "status = 'pending'"];
   const values: unknown[] = [input.operatingCompanyId];
   if (input.policyId) {
     values.push(input.policyId);
@@ -188,7 +188,7 @@ export async function postPendingRefundObligations(
             journal_entry_id = $3::uuid,
             posted_at = now(),
             updated_at = now()
-        WHERE tenant_id = $1::uuid AND id = $2::uuid AND status = 'pending'
+        WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND id = $2::uuid AND status = 'pending'
       `,
       [input.operatingCompanyId, obligation.id, journalEntryId]
     );

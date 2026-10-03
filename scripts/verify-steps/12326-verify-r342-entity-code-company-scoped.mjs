@@ -16,4 +16,8 @@ const r3 = spawnSync(process.execPath, ["scripts/verify-r342-dual-scoped-factori
   cwd: root,
   stdio: "inherit",
 });
-process.exit(r.status === 0 && r2.status === 0 && r3.status === 0 ? 0 : 1);
+const r4 = spawnSync(process.execPath, ["scripts/verify-r342-dual-scoped-insurance-reads.mjs", "--selftest"], {
+  cwd: root,
+  stdio: "inherit",
+});
+process.exit(r.status === 0 && r2.status === 0 && r3.status === 0 && r4.status === 0 ? 0 : 1);

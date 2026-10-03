@@ -54,7 +54,7 @@ function selectColumns(prefix = "") {
 
 export async function listCoiRequests(client: Queryable, input: ListCoiRequestsInput) {
   const values: unknown[] = [input.operating_company_id];
-  const clauses = ["r.tenant_id = $1::uuid"];
+  const clauses = ["COALESCE(r.operating_company_id, r.tenant_id) = $1::uuid"];
   if (input.customer_id) {
     values.push(input.customer_id);
     clauses.push(`r.customer_id = $${values.length}::uuid`);
@@ -113,7 +113,7 @@ export async function createCoiRequest(client: Queryable, input: CreateCoiReques
       `
         SELECT id::text
         FROM insurance.policy
-        WHERE tenant_id = $1::uuid
+        WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid
           AND id = $2::uuid
         LIMIT 1
       `,
@@ -161,7 +161,7 @@ export async function updateCoiRequest(client: Queryable, input: UpdateCoiReques
       `
         SELECT id::text
         FROM insurance.policy
-        WHERE tenant_id = $1::uuid
+        WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid
           AND id = $2::uuid
         LIMIT 1
       `,
@@ -193,7 +193,7 @@ export async function updateCoiRequest(client: Queryable, input: UpdateCoiReques
     `
       UPDATE insurance.coi_request
       SET ${assignments.join(", ")}
-      WHERE tenant_id = $1::uuid
+      WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid
         AND id = $2::uuid
       RETURNING ${selectColumns()}
     `,

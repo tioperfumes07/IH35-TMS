@@ -1379,6 +1379,12 @@ Full coder instructions: `claude/2026-09-13-ABSORPTION-INGEST-AND-DISPUTE-WINDOW
 3. Ship Needs delivery authorization FE queue (this PR) → FE deploy → Owner clicks Authorize when a rolling load needs early factoring auth.
 4. No baseline raises to clear tip ENV reds.
 
+## Active Architectural Decisions — ROUND 342 dual-scoped insurance reads (Cursor, 2026-10-03)
+
+- Dual-scoped insurance tables (`claim`, `coi_request`, `lawsuit`, `payment_schedule`, `policy`, `policy_unit`, `refund_obligation`) scope reads via `COALESCE(operating_company_id, tenant_id)`.
+- Rename-only stay on `tenant_id`: `insurance.type_catalog`, `mdata.assets` joins.
+- Helper: `apps/backend/src/insurance/company-scope.ts`. Guard: `verify-r342-dual-scoped-insurance-reads`.
+
 ## Active Architectural Decisions — ROUND 342 dual-scoped factoring reads (Cursor, 2026-10-03)
 
 - Dual-scoped factoring tables (`batch`, `bank_match_suggestion`, `customer_factor_assignment`, `factor`, `letter_of_release`, `reserve_movement`) scope reads via `COALESCE(operating_company_id, tenant_id)`.

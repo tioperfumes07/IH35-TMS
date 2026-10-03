@@ -27,7 +27,10 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
     };
   }
 
-  if (sql.includes("FROM insurance.policy") && sql.includes("tenant_id = $2::uuid")) {
+  if (
+    sql.includes("FROM insurance.policy") &&
+    (sql.includes("tenant_id = $2::uuid") || sql.includes("COALESCE(operating_company_id, tenant_id) = $2::uuid"))
+  ) {
     if (String(values?.[0]) === "99999999-9999-4999-8999-999999999999") return { rows: [] };
     return { rows: [{ id: String(values?.[0]) }] };
   }
