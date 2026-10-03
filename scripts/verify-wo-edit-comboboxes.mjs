@@ -28,7 +28,13 @@ function audit(src) {
   if (!/import\s*\{[^}]*SelectCombobox[^}]*\}\s*from\s*"\.\.\/\.\.\/\.\.\/components\/Combobox"/.test(src)) {
     f.push(`${FILE}: must import SelectCombobox from ../../../components/Combobox`);
   }
+  leftoverRefuse(src, f);
   return f;
+}
+
+function leftoverRefuse(src, failures) {
+  if (src.includes("text-[11px]")) failures.push("leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155")) failures.push("leftover off-scale muted");
 }
 
 function main() {
@@ -51,7 +57,13 @@ function main() {
       console.error("SELFTEST FAIL: a reintroduced <select> did not trip");
       process.exit(1);
     }
-    console.log("SELFTEST OK: guard trips on regression");
+    const leftoverPlant = `${src}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+    const leftoverFailures = audit(leftoverPlant);
+    if (!leftoverFailures.includes("leftover text-[11px]") || !leftoverFailures.includes("leftover off-scale muted")) {
+      console.error(`SELFTEST FAIL: leftover plant escaped — ${leftoverFailures.join("; ")}`);
+      process.exit(1);
+    }
+    console.log("SELFTEST OK: guard trips on regression + leftover plant rejected");
   }
 
   console.log("PASS verify-wo-edit-comboboxes");

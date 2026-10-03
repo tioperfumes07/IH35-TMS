@@ -57,7 +57,7 @@ function SectionCard({ badge, title, right, testid, children }: { badge: string;
     <section data-testid={testid} className="rounded-sm border border-[#E5E7EB] bg-white">
       <div className="flex items-center gap-2 rounded-t-sm border-b border-[#14314F] bg-[#14314F] px-2.5 py-1.5">
         <span className="grid h-[18px] w-[18px] place-items-center rounded-sm bg-white/15 text-xs font-bold text-white">{badge}</span>
-        <span className="text-[11px] font-bold uppercase tracking-wide text-white">{title}</span>
+        <span className="text-xs font-bold uppercase tracking-wide text-white">{title}</span>
         {right ? <span className="ml-auto text-xs text-[#CDD6E6]">{right}</span> : null}
       </div>
       <div className="p-2.5">{children}</div>
@@ -68,7 +68,7 @@ function SectionCard({ badge, title, right, testid, children }: { badge: string;
 function FieldV5({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="flex min-w-0 flex-col gap-1">
-      <span className="text-[11px] font-semibold uppercase tracking-wide text-inactive">{label}</span>
+      <span className="text-xs font-semibold uppercase tracking-wide text-inactive">{label}</span>
       {children}
     </label>
   );
@@ -77,8 +77,8 @@ function FieldV5({ label, children }: { label: string; children: ReactNode }) {
 function SegYesNo({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
   return (
     <div data-testid="wo-oos-seg" className="inline-flex h-[30px] overflow-hidden rounded-[5px] border border-[#d6dae1]">
-      <button type="button" onClick={() => onChange(true)} className={`px-3 text-[11px] font-semibold ${value ? "bg-[#b91c1c] text-white" : "bg-white text-inactive"}`}>Yes</button>
-      <button type="button" onClick={() => onChange(false)} className={`px-3 text-[11px] font-semibold ${!value ? "bg-[#1d2b45] text-white" : "bg-white text-inactive"}`}>No</button>
+      <button type="button" onClick={() => onChange(true)} className={`px-3 text-xs font-semibold ${value ? "bg-[#b91c1c] text-white" : "bg-white text-inactive"}`}>Yes</button>
+      <button type="button" onClick={() => onChange(false)} className={`px-3 text-xs font-semibold ${!value ? "bg-[#1d2b45] text-white" : "bg-white text-inactive"}`}>No</button>
     </div>
   );
 }
@@ -87,7 +87,7 @@ function CccRow({ tone, label, register, placeholder }: { tone: "cmp" | "cau" | 
   const bg = tone === "cmp" ? "bg-[#0891b2]" : tone === "cau" ? "bg-[#b45309]" : "bg-[#15803d]";
   return (
     <div className="mb-2 overflow-hidden rounded-md border border-[#e6e9ee] last:mb-0">
-      <div className={`px-2 py-1 text-[11px] font-extrabold uppercase tracking-wide text-white ${bg}`}>{label}</div>
+      <div className={`px-2 py-1 text-xs font-extrabold uppercase tracking-wide text-white ${bg}`}>{label}</div>
       <textarea {...register} placeholder={placeholder} className="h-10 w-full resize-y border-0 px-2 py-1.5 text-xs outline-hidden" />
     </div>
   );
@@ -106,12 +106,12 @@ function AssetLocationMap({ parts, onAdd, onChange, onRemove }: { parts: Seriali
   return (
     <div data-testid="wo-asset-location" className="mt-2 overflow-hidden rounded-lg border border-[#d6dae1] bg-white">
       <div className="flex items-center gap-2 bg-[#0f1a30] px-2.5 py-1.5 text-white">
-        <span className="text-[11px] font-extrabold uppercase tracking-wide">Asset location &amp; serial</span>
+        <span className="text-xs font-extrabold uppercase tracking-wide">Asset location &amp; serial</span>
         <span className="ml-auto text-xs text-[#aab6cd]">tires · batteries · lamps · mirrors — where it sits + serial</span>
         <button type="button" data-testid="wo-add-serialized-part" onClick={onAdd} className="rounded-sm bg-[#1f2a44] px-2 py-0.5 text-xs font-semibold text-white">+ Create part</button>
       </div>
       {parts.length === 0 ? (
-        <div className="px-3 py-3 text-[11px] text-[#94a3b8]">No serialized items placed. Add a tire/battery/lamp/mirror to capture its position + serial (chain-of-custody).</div>
+        <div className="px-3 py-3 text-xs text-[#94a3b8]">No serialized items placed. Add a tire/battery/lamp/mirror to capture its position + serial (chain-of-custody).</div>
       ) : (
         <div className="space-y-2 p-2.5">
           {parts.map((sp, i) => {
@@ -121,9 +121,9 @@ function AssetLocationMap({ parts, onAdd, onChange, onRemove }: { parts: Seriali
                 <div className="mb-1.5 flex flex-wrap gap-1">
                   {LOC_CATS.map((c) => (
                     <button type="button" key={c.key} onClick={() => onChange(i, { part_type: c.key, position_code: "" })}
-                      className={`rounded-sm px-2 py-0.5 text-[11px] font-semibold ${c.key === sp.part_type ? "bg-[#1d2b45] text-white" : "bg-[#f8fafc] text-[#475569]"}`}>{c.label}</button>
+                      className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${c.key === sp.part_type ? "bg-[#1d2b45] text-white" : "bg-[#f8fafc] text-[#475569]"}`}>{c.label}</button>
                   ))}
-                  <button type="button" onClick={() => onRemove(i)} className="ml-auto rounded-sm border border-[#d6dae1] px-2 text-[11px] text-[#b91c1c]">Remove</button>
+                  <button type="button" onClick={() => onRemove(i)} className="ml-auto rounded-sm border border-[#d6dae1] px-2 text-xs text-[#b91c1c]">Remove</button>
                 </div>
                 {/* truck silhouette — clickable wheel/position grid */}
                 <div className="rounded-md border border-[#e6e9ee] bg-[#f8fafc] p-2">
@@ -1087,7 +1087,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                         type="button"
                         data-testid={`edit-wo-remove-line-${row._idx}`}
                         onClick={() => removeEditLine(row._idx)}
-                        className="rounded-sm border border-[#d6dae1] px-2 py-0.5 text-[11px] text-[#b91c1c]"
+                        className="rounded-sm border border-[#d6dae1] px-2 py-0.5 text-xs text-[#b91c1c]"
                       >
                         Remove
                       </button>
@@ -1098,7 +1098,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
             </div>
             <BooksTreatmentNotice totalDollars={editLinesTotal} />
             <div className="mt-2 flex items-center gap-2">
-              <button type="button" data-testid="edit-wo-add-line" onClick={addEditLine} className="rounded-sm bg-[#1f2a44] px-2.5 py-1 text-[11px] font-semibold text-white">+ Create line</button>
+              <button type="button" data-testid="edit-wo-add-line" onClick={addEditLine} className="rounded-sm bg-[#1f2a44] px-2.5 py-1 text-xs font-semibold text-white">+ Create line</button>
               <span className="ml-auto text-xs font-semibold text-sidebar-active">Total ${editLinesTotal.toFixed(2)}</span>
             </div>
           </SectionCard>
@@ -1216,7 +1216,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           {/* Conditional Outside-vendor block (render: #vendorBlock, revealed when Repaired by = Outside vendor) */}
           {outsideVendor ? (
             <div data-testid="wo-outside-vendor-block" className="mt-2 rounded-md border border-[#fed7aa] bg-[#fffdf8] p-2">
-              <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-[#b45309]">Outside vendor</div>
+              <div className="mb-1.5 text-xs font-bold uppercase tracking-wide text-[#b45309]">Outside vendor</div>
               <input type="hidden" {...form.register("vendor_id")} />
               <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
                 <FieldV5 label="Vendor (QuickBooks list)">
@@ -1246,7 +1246,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
               </div>
             </div>
           ) : null}
-          <div className="mt-2 rounded-sm border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] text-emerald-900">
+          <div className="mt-2 rounded-sm border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-900">
             Class auto-derive: <span className="font-semibold">{classHint}</span>
           </div>
         </SectionCard>
@@ -1279,7 +1279,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
               onRemove={(i) => setSerializedParts((p) => p.filter((_, j) => j !== i))}
             />
             {requiresLoadForG18 ? (
-              <div className="mt-2 rounded-sm border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] text-amber-900">
+              <div className="mt-2 rounded-sm border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900">
                 Required: this expense type must link to a load (G18).
               </div>
             ) : null}
@@ -1304,13 +1304,13 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                   onInvoiceOtherChange={setInvoiceOtherInput}
                 />
               ) : (
-                <div className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-2 text-[11px] text-slate-600">
+                <div className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-2 text-xs text-slate-600">
                   No separate vendor invoice to reconcile for this payment type.
                 </div>
               )}
             </div>
             <div>
-              <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-inactive">How was it paid?</div>
+              <div className="mb-1.5 text-xs font-bold uppercase tracking-wide text-inactive">How was it paid?</div>
               {/* Segmented Expense / Bill / In-house (render: #paySeg) */}
               <div data-testid="wo-pay-seg" className="mb-2 flex gap-1.5">
                 {([
@@ -1372,7 +1372,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
 
         {/* Footer — Cancel / Save draft / Create work order (green) */}
         <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 border-t border-[#d6dae1] pt-2.5" data-testid="wo-responsive-footer">
-          <div className="mr-auto min-w-0 text-[11px] text-[#475569]">Completing a PM recalculates next-due → PM Countdown</div>
+          <div className="mr-auto min-w-0 text-xs text-[#475569]">Completing a PM recalculates next-due → PM Countdown</div>
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
           <Button type="button" variant="secondary" disabled={paymentTiming !== "in_house" || !preSaveChecksOk} onClick={() => void submit("wo_only")}>Save draft</Button>
           <Button
