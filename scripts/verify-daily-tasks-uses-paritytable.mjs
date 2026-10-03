@@ -59,6 +59,8 @@ function assertMigrated(source, serviceSource = read(SERVICE), apiSource = read(
   if (!apiSource.includes("actor_name: string | null")) {
     errors.push(`${API}: DailyTaskEvent must type actor_name`);
   }
+  if (source.includes("text-[11px]")) errors.push(`${PAGE}: leftover text-[11px]`);
+  if (source.includes("#8A92AB") || source.includes("#334155")) errors.push(`${PAGE}: leftover off-scale muted`);
   return errors;
 }
 
@@ -108,6 +110,11 @@ function selftest() {
   }
   if (!noActivityRetryErrors.some((error) => error.includes("activity failure"))) {
     console.error(`${LABEL} --selftest FAIL activity retry mutation survived`);
+    process.exit(1);
+  }
+  const leftover = assertMigrated(`${good}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`);
+  if (!leftover.some((e) => e.includes("leftover text-[11px]")) || !leftover.some((e) => e.includes("leftover off-scale muted"))) {
+    console.error(`${LABEL} --selftest FAIL leftover plant escaped`, leftover);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);
