@@ -74,6 +74,12 @@ export function audit(sources = {}) {
   if (companyModal.includes("text-[11px]")) {
     failures.push("CompanyViolationTypeModal must not use text-[11px] — use text-xs");
   }
+  // BANK-F91117 — ORDERS chrome: Civil Fine Type field errors use text-xs, not text-[11px].
+  const civilRel = "apps/frontend/src/pages/lists/safety/CivilFineTypeModal.tsx";
+  const civilModal = sources[civilRel] ?? read(civilRel);
+  if (civilModal.includes("text-[11px]")) {
+    failures.push("CivilFineTypeModal must not use text-[11px] — use text-xs");
+  }
 
   for (const [leafKey, slug, plural, singular] of CATALOGS) {
     const route = `/lists/safety/${slug}`;
