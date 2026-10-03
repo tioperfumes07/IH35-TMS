@@ -879,6 +879,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-checks-list-shows-every-check",
     ["apps/backend/src/accounting/checks/checks.routes.ts", "apps/frontend/src/pages/accounting/checks/CheckListPage.tsx", "apps/frontend/src/api/checks.ts", "scripts/verify-checks-list-shows-every-check.mjs"],
   ],
+  // U9 (owner) — Print checks: numbers proposed + editable, duplicates refused, skipped numbers recorded with a reason.
+  [
+    "verify-print-checks-numbers-editable-gaps-recorded",
+    ["apps/backend/src/accounting/checks/", "apps/frontend/src/pages/accounting/checks/CheckPrintPage.tsx", "apps/frontend/src/api/checks.ts", "scripts/verify-print-checks-numbers-editable-gaps-recorded.mjs"],
+  ],
   // ROUND 368.2(b) — a bank line may not sit matched to nothing (deferred constraint triggers, both sides).
   [
     "verify-no-bank-line-is-matched-to-nothing",

@@ -1,5 +1,8 @@
 // R-190 — Print Checks queue (QBO parity). Owner types the starting check number (never guessed),
 // selects need_to_print checks, assigns numbers via assignPrintBatch, then confirms or reprints.
+// U9 (owner UI register 2026-10-03) — each selected check shows the number it will print, PROPOSED from the stock and
+// EDITABLE; the checks below an edited one continue from it; a number already used on the account is flagged and
+// refused; numbers the batch skips are listed and need a reason, recorded on each skipped number.
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -15,6 +18,7 @@ import {
   confirmCheckPrintBatch,
   getCheckStockSettings,
   listCheckPrintQueue,
+  previewCheckPrintBatch,
   putCheckStockSettings,
   type PrintQueueRow,
 } from "../../../api/checks";
@@ -23,6 +27,19 @@ import { openPrintableDocument } from "../../../lib/openPrintableDocument";
 
 function formatMoneyCents(cents: number): string {
   return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
+}
+
+function useDebounced<T>(value: T, ms: number): T {
+  const [v, setV] = useState(value);
+  useEffect(() => {
+    const t = window.setTimeout(() => setV(value), ms);
+    return () => window.clearTimeout(t);
+  }, [value, ms]);
+  return v;
+}
+
+function gapLabel(g: { from: string; to: string }): string {
+  return g.from === g.to ? `#${g.from}` : `#${g.from}–#${g.to}`;
 }
 
 export function CheckPrintPage() {
@@ -41,6 +58,9 @@ export function CheckPrintPage() {
   const [lastBatchId, setLastBatchId] = useState<string | null>(null);
   const [lastAssignments, setLastAssignments] = useState<Array<{ check_id: string; check_number: string }>>([]);
   const [reprintFrom, setReprintFrom] = useState("");
+  // U9 — the owner's typed number per selected check id ("" = continue the sequence from the check above).
+  const [typed, setTyped] = useState<Record<string, string>>({});
+  const [gapReason, setGapReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -74,6 +94,42 @@ export function CheckPrintPage() {
     if (savedCheckType === "voucher" || savedCheckType === "standard") setCheckType(savedCheckType);
   }, [savedCheckType]);
   const rows = queueQuery.data?.rows ?? [];
+  // Print order = queue order, never click order.
+  const orderedIds = useMemo(() => rows.filter((r) => selectedIds.has(r.id)).map((r) => r.id), [rows, selectedIds]);
+  const typedNumbers = useMemo(() => orderedIds.map((id) => (typed[id]?.trim() ? typed[id].trim() : null)), [orderedIds, typed]);
+  const previewKey = useDebounced(JSON.stringify([orderedIds, typedNumbers]), 300);
+  const previewQuery = useQuery({
+    queryKey: ["checks", "print-preview", companyId, bankAccountId, checkType, previewKey],
+    queryFn: () => {
+      const [ids, numbers] = JSON.parse(previewKey) as [string[], Array<string | null>];
+      return previewCheckPrintBatch({ operating_company_id: companyId, bank_account_id: bankAccountId, check_type: checkType, ids, numbers });
+    },
+    enabled: Boolean(companyId && bankAccountId && orderedIds.length > 0),
+    retry: false,
+  });
+  const previewFresh = previewKey === JSON.stringify([orderedIds, typedNumbers]);
+  const preview = previewFresh ? previewQuery.data : undefined;
+  const proposedById = useMemo(
+    () => new Map((preview?.assignments ?? []).map((a) => [a.check_id, a.check_number])),
+    [preview]
+  );
+  const duplicateByNumber = useMemo(
+    () => new Map((preview?.duplicates ?? []).map((d) => [d.check_number, d.held_by])),
+    [preview]
+  );
+  const gapNeedsReason = (preview?.gap_count ?? 0) > 0 && gapReason.trim().length < 3;
+  const canAssign =
+    !busy && orderedIds.length > 0 && Boolean(preview) && !previewQuery.isError && duplicateByNumber.size === 0 && !gapNeedsReason;
+
+  function editNumber(id: string, value: string) {
+    setTyped((prev) => {
+      const next = { ...prev, [id]: value.replace(/[^\d]/g, "") };
+      // The sequence continues from what is typed: checks below this one drop their own edits and follow it.
+      const at = orderedIds.indexOf(id);
+      for (const later of orderedIds.slice(at + 1)) delete next[later];
+      return next;
+    });
+  }
 
   const saveStockMutation = useMutation({
     mutationFn: () =>
@@ -106,28 +162,30 @@ export function CheckPrintPage() {
   }
 
   async function handleAssign() {
-    if (!bankAccountId || selectedIds.size === 0) return;
+    if (!bankAccountId || orderedIds.length === 0) return;
     setBusy(true);
     setError(null);
     try {
-      if (startingNumber.trim() && startingNumber.trim() !== (stockNext ?? "")) {
-        await putCheckStockSettings({
-          operating_company_id: companyId,
-          bank_account_id: bankAccountId,
-          next_check_number: startingNumber.trim(),
-          check_type: checkType,
-        });
-      }
+      // U9 — the numbers sent are exactly the ones shown; the stock's next number is moved by the batch itself
+      // (continuing from the highest number printed), never silently overwritten here first.
       const result = await assignCheckPrintBatch({
         operating_company_id: companyId,
         bank_account_id: bankAccountId,
         check_type: checkType,
-        ids: [...selectedIds],
+        ids: orderedIds,
+        numbers: typedNumbers,
+        gap_reason: gapReason.trim() || null,
       });
       setLastBatchId(result.print_batch_id);
       setLastAssignments(result.assignments);
       setSelectedIds(new Set());
-      pushToast(`Assigned ${result.assignments.length} check number(s). Confirm the print below.`, "success");
+      setTyped({});
+      setGapReason("");
+      const skipped = result.skipped.reduce((n, g) => n + g.count, 0);
+      pushToast(
+        `Assigned ${result.assignments.length} check number(s)${skipped ? `; ${skipped} skipped number(s) recorded` : ""}. Confirm the print below.`,
+        "success"
+      );
       await queryClient.invalidateQueries({ queryKey: ["checks"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to assign check numbers.");
@@ -172,6 +230,35 @@ export function CheckPrintPage() {
       render: (row) => (
         <input type="checkbox" checked={selectedIds.has(row.id)} onChange={() => toggleRow(row.id)} aria-label="Select check" />
       ),
+    },
+    {
+      key: "check_number",
+      label: "Check no.",
+      sortable: false,
+      className: "w-36",
+      render: (row) => {
+        if (!selectedIds.has(row.id)) return <span className="text-gray-400">—</span>;
+        const proposed = proposedById.get(row.id) ?? "";
+        const shown = typed[row.id] !== undefined ? typed[row.id] : proposed;
+        const dupBy = shown ? duplicateByNumber.get(String(BigInt(shown))) : undefined;
+        return (
+          <div>
+            <input
+              className={`h-8 w-28 rounded-sm border px-2 text-xs ${dupBy ? "border-red-500" : "border-gray-300"}`}
+              value={shown}
+              placeholder={proposed || "Type number"}
+              onChange={(e) => editNumber(row.id, e.target.value)}
+              aria-label={`Check number for ${row.print_on_check_name}`}
+              data-testid="print-check-number"
+            />
+            {dupBy ? (
+              <div className="mt-1 text-xs text-red-600" data-testid="print-check-duplicate">
+                Already used — {dupBy}
+              </div>
+            ) : null}
+          </div>
+        );
+      },
     },
     {
       key: "print_on_check_name",
@@ -235,6 +322,8 @@ export function CheckPrintPage() {
                   setLastBatchId(null);
                   setLastAssignments([]);
                   setStartingNumber("");
+                  setTyped({});
+                  setGapReason("");
                 }}
               >
                 <option value="">Select bank account…</option>
@@ -297,10 +386,34 @@ export function CheckPrintPage() {
                   <input type="checkbox" checked={rows.length > 0 && selectedIds.size === rows.length} onChange={toggleAll} />
                   Select all ({rows.length})
                 </label>
-                <Button variant="primary" disabled={busy || selectedIds.size === 0 || (!stockNext && !startingNumber.trim())} onClick={() => void handleAssign()}>
-                  {busy ? "Assigning…" : `Assign numbers (${selectedIds.size})`}
+                <Button variant="primary" disabled={!canAssign} onClick={() => void handleAssign()}>
+                  {busy ? "Assigning…" : `Assign numbers (${orderedIds.length})`}
                 </Button>
               </div>
+              {orderedIds.length > 0 && previewQuery.isError && previewFresh ? (
+                <div className="border-b border-gray-100 px-3 py-2 text-xs text-red-600" data-testid="print-preview-error">
+                  {previewQuery.error instanceof Error ? previewQuery.error.message : "These check numbers cannot be used."}
+                </div>
+              ) : null}
+              {preview && preview.gap_count > 0 ? (
+                <div className="flex flex-wrap items-end gap-3 border-b border-gray-100 px-3 py-2" data-testid="print-gap-panel">
+                  <div className="text-xs text-gray-700">
+                    These numbers skip {preview.gap_count} unused check{preview.gap_count > 1 ? "s" : ""}:{" "}
+                    <span className="font-semibold">{preview.gaps.map(gapLabel).join(", ")}</span>. Each is recorded as a skipped
+                    (voided) number with the reason below.
+                  </div>
+                  <label className="text-xs font-semibold text-gray-700">
+                    Reason skipped
+                    <input
+                      className="mt-1 h-8 w-72 rounded-sm border border-gray-300 px-2 text-xs"
+                      value={gapReason}
+                      onChange={(e) => setGapReason(e.target.value)}
+                      placeholder="e.g. two checks torn in the printer"
+                      data-testid="print-gap-reason"
+                    />
+                  </label>
+                </div>
+              ) : null}
               <ParityTable<PrintQueueRow>
                 columns={columns}
                 rows={rows}
