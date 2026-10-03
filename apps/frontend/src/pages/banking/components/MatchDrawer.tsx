@@ -140,7 +140,7 @@ function candidateDrillLabel(candidate: BankMatchCandidate) {
 
 /** Label-only chrome — EntityLink must stay inline at the call site (entity-link-adoption). */
 function kindBadgeClassName() {
-  return "inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-700 hover:underline";
+  return "inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-slate-700 hover:underline";
 }
 
 
@@ -961,7 +961,7 @@ export function MatchDrawer({
                     {isTopAuto ? (
                       <span
                         data-testid="match-candidate-top"
-                        className="inline-flex items-center rounded-sm bg-slate-800 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white"
+                        className="inline-flex items-center rounded-sm bg-slate-800 px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-white"
                       >
                         Best match
                       </span>
@@ -972,7 +972,7 @@ export function MatchDrawer({
                   </span>
                 </div>
 
-                <div className="mt-1 truncate text-[11px] text-slate-700" title={c.memo}>
+                <div className="mt-1 truncate text-xs text-slate-700" title={c.memo}>
                   {c.memo?.trim() ? c.memo : "—"}
                 </div>
 
@@ -996,8 +996,8 @@ export function MatchDrawer({
                     data-testid="match-candidate-confirm"
                     className={
                       canConfirm
-                        ? "rounded-sm border border-slate-700 bg-slate-900 px-2 py-1 text-[11px] text-white hover:bg-slate-800 disabled:opacity-60"
-                        : "rounded-sm border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-400"
+                        ? "rounded-sm border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-white hover:bg-slate-800 disabled:opacity-60"
+                        : "rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs text-slate-400"
                     }
                     disabled={!canConfirm || isConfirming}
                     title={
@@ -1032,7 +1032,7 @@ export function MatchDrawer({
           data-testid="match-drawer-categorize-create"
         >
           <p className="text-xs font-semibold text-slate-800">Or categorize instead</p>
-          <p className="text-[11px] text-slate-500">
+          <p className="text-xs text-slate-500">
             Nested <strong>+ Add new</strong> creates stay in this drawer (entity-scoped catalogs). Category is
             required; vendor is optional. Uses the same categorize API as the Transactions register.
           </p>
@@ -1071,7 +1071,7 @@ export function MatchDrawer({
           <button
             type="button"
             data-testid="match-drawer-categorize-submit"
-            className="rounded-sm border border-slate-700 bg-slate-900 px-2 py-1.5 text-[11px] text-white hover:bg-slate-800 disabled:opacity-60"
+            className="rounded-sm border border-slate-700 bg-slate-900 px-2 py-1.5 text-xs text-white hover:bg-slate-800 disabled:opacity-60"
             disabled={!canCategorize}
             onClick={() => categorizeMutation.mutate()}
           >
