@@ -1887,6 +1887,11 @@
       "claimed_at": "2026-10-03",
       "purpose": "ROUND 373 ordering (writers, then arm): DISABLE the 26 document-side triggers of 202615360600 until every void path releases the bank lines that name its document; the bank-line and match-row refusals stay armed."
     },
+    "202615370800": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-03",
+      "purpose": "U3 (owner UI register, CC-2): accounting.posting_source_load_id() made index-usable — every key compared as uuid instead of id::text (54 s for USMCA cost postings) with identical results proven posting-by-posting on a prod fork; lets the Dispatch load-cost board read current cost from the ledger and unblocks the posting load_id backfill."
+    },
     "202615370700": {
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-03",
