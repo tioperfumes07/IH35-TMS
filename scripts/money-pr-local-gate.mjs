@@ -107,6 +107,8 @@ const STEPS = [
   ["verify-unit-stop-events-no-clipped-starts", "scripts/verify-unit-stop-events-no-clipped-starts.mjs"],
   // ROUND 345 block — money lines reference only their own company (composite same-entity FKs).
   ["verify-money-lines-same-entity-fks", "scripts/verify-money-lines-same-entity-fks.mjs"],
+  // ROUND 353 — a load becomes cancelled only through an approved cancellation record (13515 route closed).
+  ["verify-cancelled-load-has-cancellation-record", "scripts/verify-cancelled-load-has-cancellation-record.mjs"],
   ["verify-no-session-advisory-locks", "scripts/verify-no-session-advisory-locks.mjs"],
   ["verify-rollup-keys-carry-company", "scripts/verify-rollup-keys-carry-company.mjs"],
   ["verify-filter-surfaces-full-set", "scripts/verify-filter-surfaces-full-set.mjs"],
