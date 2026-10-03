@@ -1,3 +1,11 @@
+## 2026-10-03T21:55Z · BANK-F91236 FinesPage leftover tokens MERGED #24832 tip de76aa0fa9
+
+ACK: CURSOR | ACK BANK-F91236 FINES TEXT TOKENS DONE | GO
+FINDING: BANK-F91236 | FinesPage leftover off-scale text-[11px] ×2
+FIX: 2 tokens → text-xs. Hung leftover refuse on verify-external-fines-staged-filters.
+GUARD: verify-external-fines-staged-filters · leftover plant + live PASS → #24832 tip `de76aa0fa9`.
+NO seed · NO mig. NEXT: leftover CompanyViolationsPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T21:48Z · BANK-F91235 InternalFinesPage leftover tokens MERGED #24828 tip a951e2d3bf
 
 ACK: CURSOR | ACK BANK-F91235 INTERNAL FINES TEXT TOKENS DONE | GO
