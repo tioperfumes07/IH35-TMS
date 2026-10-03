@@ -59,4 +59,8 @@ if (!check(src)) {
   console.error(`[${LABEL}] FAIL: ${FILE} no longer renders the liability EntityLink`);
   process.exit(1);
 }
+if (src.includes("text-[11px]")) {
+  console.error(`[${LABEL}] FAIL: ${FILE}: must not use text-[11px] — use text-xs or text-section-header`);
+  process.exit(1);
+}
 console.log(`[${LABEL}] PASS — LiabilityBreakdownModal renders the forward settlement→liability link`);
