@@ -65,6 +65,7 @@ import {
 } from "../accounting/settlement-posting/settlement-bill-payment.math.js";
 import { isCoaRole, resolveRoleAccountOptional, resolveReimbursementExpenseAccount } from "../accounting/coa-roles/resolver.service.js";
 import { categorizeSettlementLines } from "./settlement-line-categorize.service.js";
+import { ensureEscrowBalanceRow } from "./escrow-balance-row.js";
 
 /**
  * The escrow cap rendered for human-readable ledger text. DERIVED from ESCROW_CAP_CENTS — never a
@@ -1448,38 +1449,20 @@ async function recordEscrowContribution(
     label: string;
   }
 ): Promise<void> {
-  const newBalance = args.balanceBeforeCents + args.amountCents;
-  // Upsert the running-balance summary (authoritative current balance for the next pay-run's cap check).
-  // NOTE: escrow_balances.last_settlement_id / escrow_ledger.settlement_id still FK into the RETIRED
-  // settlement.settlement family (the canonical-repoint migration 202607110220 is HELD, so it is absent on
-  // a fresh CI DB). Writing a driver_finance.driver_settlements id there would FK-violate — so we OMIT the
-  // settlement columns entirely (both are nullable). The settlement linkage is captured on the JE audit +
-  // driver_advances.recovered_in_settlement_id + the ledger description.
-  const bal = await client.query<{ id: string }>(
-    `
-      INSERT INTO driver_finance.escrow_balances
-        (operating_company_id, driver_id, total_held_cents, current_balance_cents, last_updated_at)
-      VALUES ($1::uuid, $2::uuid, $3, $4, now())
-      ON CONFLICT (operating_company_id, driver_id) DO UPDATE SET
-        total_held_cents = driver_finance.escrow_balances.total_held_cents + $3,
-        current_balance_cents = driver_finance.escrow_balances.current_balance_cents + $3,
-        last_updated_at = now()
-      RETURNING id::text
-    `,
-    [args.operatingCompanyId, args.driverId, args.amountCents, newBalance]
-  );
-  const balanceId = bal.rows[0]?.id;
-  if (!balanceId) return;
+  // KILL THE SECOND SYSTEM (tables 2-5): the pay-run JE's Cr to the driver's 2100-00-nnn sub-account IS the balance
+  // change; escrow_balances keeps only its identity row (the ledger FK) — no running total. (Settlement columns are
+  // still omitted: escrow_balances.last_settlement_id / escrow_ledger.settlement_id FK into the retired family.)
+  const balanceId = await ensureEscrowBalanceRow(client as never, args.operatingCompanyId, args.driverId);
   // Append the ledger 'hold' entry (detailed history). running_balance_cents = the post-contribution
   // balance (escrow_balances' own magnitude tracking, unchanged by ESCROW-LEDGER-SIGN-01). amount_cents
   // IS signed per that fix: a hold is negative to the driver, sign follows transaction_type.
   await client.query(
     `
       INSERT INTO driver_finance.escrow_ledger
-        (operating_company_id, driver_id, escrow_balance_id, transaction_type, amount_cents, running_balance_cents, description)
-      VALUES ($1::uuid, $2::uuid, $3::uuid, 'hold', $4, $5, $6)
+        (operating_company_id, driver_id, escrow_balance_id, transaction_type, amount_cents, description)
+      VALUES ($1::uuid, $2::uuid, $3::uuid, 'hold', $4, $5)
     `,
-    [args.operatingCompanyId, args.driverId, balanceId, signedEscrowLedgerAmountCents("hold", args.amountCents), newBalance, `${args.label} — escrow contribution (capped @ ${ESCROW_CAP_LABEL})`]
+    [args.operatingCompanyId, args.driverId, balanceId, signedEscrowLedgerAmountCents("hold", args.amountCents), `${args.label} — escrow contribution (capped @ ${ESCROW_CAP_LABEL})`]
   );
 }
 

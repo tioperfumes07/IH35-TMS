@@ -34,6 +34,7 @@ import { assertSubjectMayCloseOnClient, FeedGateError } from "../driver-finance/
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { recordEscrowPostingOnly } from "../accounting/escrow/service.js";
 import { signedEscrowLedgerAmountCents } from "../driver-finance/escrow-ledger-sign.js";
+import { ensureEscrowBalanceRow } from "../driver-finance/escrow-balance-row.js";
 
 type Queryable = {
   query: <R = unknown>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -394,44 +395,19 @@ async function updateEscrowBalance(
 
   const { driver_id, operating_company_id } = settlementResult.rows[0];
 
-  // Direction-aware deltas. A 'hold' moves money INTO escrow: total_held += amt, balance += amt.
-  // A 'release' pays money BACK OUT: total_released += amt, balance -= amt (never add to held/balance
-  // on a release — that would double-count the driver's escrow). amountCents may arrive signed; the
-  // magnitude drives the ledger.
+  // The magnitude drives the GL escrow posting below; the ledger amount is signed by transaction_type.
   const amt = Math.abs(amountCents);
-  const heldDelta = transactionType === 'hold' ? amt : 0;
-  const releasedDelta = transactionType === 'release' ? amt : 0;
-  const balanceDelta = transactionType === 'hold' ? amt : -amt;
 
-  // Upsert escrow balance
-  await client.query(`
-    INSERT INTO driver_finance.escrow_balances (
-      operating_company_id, driver_id, total_held_cents, total_released_cents, current_balance_cents,
-      last_settlement_id, last_updated_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, now())
-    ON CONFLICT (operating_company_id, driver_id) DO UPDATE SET
-      total_held_cents = driver_finance.escrow_balances.total_held_cents + EXCLUDED.total_held_cents,
-      total_released_cents = driver_finance.escrow_balances.total_released_cents + EXCLUDED.total_released_cents,
-      current_balance_cents = driver_finance.escrow_balances.current_balance_cents + EXCLUDED.current_balance_cents,
-      last_settlement_id = EXCLUDED.last_settlement_id,
-      last_updated_at = now()
-  `, [operating_company_id, driver_id, heldDelta, releasedDelta, balanceDelta, settlementId]);
-
-  // Get the balance ID for ledger entry
-  const balanceResult = await client.query<{ id: string; current_balance_cents: number }>(`
-    SELECT id, current_balance_cents FROM driver_finance.escrow_balances
-    WHERE driver_id = $1 AND operating_company_id = $2::uuid
-  `, [driver_id, operating_company_id]);
-
-  if (balanceResult.rows.length > 0) {
-    const balance = balanceResult.rows[0];
-
+  // KILL THE SECOND SYSTEM (tables 2-5): escrow_balances keeps only its identity row (+ last_settlement_id); the
+  // amounts (held / released / current) are the driver's 2100-00-nnn GL via driver_finance.v_escrow_balances.
+  const balance = { id: await ensureEscrowBalanceRow(client as never, operating_company_id, driver_id, { lastSettlementId: settlementId }) };
+  {
     // Record in ledger
     await client.query(`
       INSERT INTO driver_finance.escrow_ledger (
         operating_company_id, driver_id, escrow_balance_id, settlement_id, settlement_line_id,
-        transaction_type, amount_cents, running_balance_cents, description
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        transaction_type, amount_cents, description
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     `, [
       operating_company_id,
       driver_id,
@@ -443,7 +419,6 @@ async function updateEscrowBalance(
       // -- discarded the hold-vs-release distinction on every row. Sign now follows
       // transaction_type, never the caller.
       signedEscrowLedgerAmountCents(transactionType, amountCents),
-      balance.current_balance_cents,
       `Escrow ${transactionType} from settlement line item`
     ]);
   }

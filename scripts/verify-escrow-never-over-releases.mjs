@@ -5,14 +5,13 @@
  * DOLLAR DEDUCTIONS GO TO." The 2100-00-<nnn> sub-account is the driver's damage fund: drawn to zero, never below.
  *
  * LIVE (fails closed without a database), every company, under the bypass:
- *   1. no driver_finance.escrow_balances row with current_balance_cents < 0
- *   2. no driver_finance.escrow_balances row with total_released_cents > total_held_cents
- *   3. (retired 2026-10-03 with accounting.escrow_accounts.balance_cents — the GL rule below is the same fact)
+ *   1-3. (retired 2026-10-03 — KILL THE SECOND SYSTEM tables 1-5: the stored escrow_balances amounts and
+ *        escrow_accounts.balance_cents no longer exist; rule 4 reads the same fact from the books)
  *   4. no driver escrow GL sub-account (accounting.escrow_accounts.coa_account_id, holder driver) with a DEBIT balance
  * STATIC:
- *   5. the last migration touching each (re)creates the refusals trg_refuse_escrow_over_release and the DEFERRABLE
- *      trg_refuse_driver_escrow_gl_debit_balance; trg_refuse_driver_escrow_account_negative (on the stored column) is
- *      retired by 202615380000 and must stay DROPPED.
+ *   5. the last migration touching it (re)creates the DEFERRABLE trg_refuse_driver_escrow_gl_debit_balance; the two
+ *      refusals on stored amounts — trg_refuse_driver_escrow_account_negative (202615380000) and
+ *      trg_refuse_escrow_over_release (202615380100) — are retired with their columns and must stay DROPPED.
  *
  * DEBT — shrink-only, every entry named and reasoned. A new over-released driver fails; an entry that no longer
  * violates FAILS too ("remove it so the ceiling drops") — a debt list that cannot shrink is not a ratchet.
@@ -41,7 +40,6 @@ export const CEILING = Object.keys(DEBT).length;
 
 const stripSql = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--[^\n]*/g, "");
 const TRIGGERS = [
-  ["trg_refuse_escrow_over_release", /CREATE\s+TRIGGER\s+trg_refuse_escrow_over_release\s+BEFORE\s+INSERT\s+OR\s+UPDATE[^;]*ON\s+driver_finance\.escrow_balances/i],
   ["trg_refuse_driver_escrow_gl_debit_balance", /CREATE\s+CONSTRAINT\s+TRIGGER\s+trg_refuse_driver_escrow_gl_debit_balance\s+AFTER\s+INSERT\s+OR\s+UPDATE[^;]*ON\s+accounting\.journal_entry_postings\s+DEFERRABLE\s+INITIALLY\s+DEFERRED/i],
 ];
 
@@ -49,6 +47,7 @@ const TRIGGERS = [
  *  column; the GL refusals (trg_refuse_driver_escrow_gl_debit_balance, trg_driver_escrow_gl_never_negative) own the fact.
  *  The last migration touching each must DROP it, so it can never come back. */
 const RETIRED = [
+  ["trg_refuse_escrow_over_release", /DROP\s+TRIGGER\s+IF\s+EXISTS\s+trg_refuse_escrow_over_release\s+ON\s+driver_finance\.escrow_balances/i],
   ["trg_refuse_driver_escrow_account_negative", /DROP\s+TRIGGER\s+IF\s+EXISTS\s+trg_refuse_driver_escrow_account_negative\s+ON\s+accounting\.escrow_accounts/i],
 ];
 
@@ -63,7 +62,7 @@ export function staticFailures({ files, read }) {
   for (const [name, dropped] of RETIRED) {
     let hit = null;
     for (const f of sorted) { const s = stripSql(read(f)); if (new RegExp(name, "i").test(s)) hit = { f, s }; }
-    if (hit && !dropped.test(hit.s)) out.push(`RULE 5: ${hit.f} — ${name} was retired with accounting.escrow_accounts.balance_cents; the last migration touching it must DROP it.`);
+    if (hit && !dropped.test(hit.s)) out.push(`RULE 5: ${hit.f} — ${name} was retired with its stored column (KILL THE SECOND SYSTEM); the last migration touching it must DROP it.`);
   }
   return out;
 }
@@ -98,27 +97,13 @@ async function measure(client) {
         JOIN org.companies c ON c.id = ea.operating_company_id
        WHERE ea.holder_type = 'driver'
     )
-    SELECT key, 'NEGATIVE_BALANCE' AS kind, 'escrow_balances.current_balance_cents=' || eb.current_balance_cents AS detail
-      FROM driver_finance.escrow_balances eb JOIN acct ON acct.holder_id = eb.driver_id AND acct.operating_company_id = eb.operating_company_id
-     WHERE eb.current_balance_cents < 0
-    UNION ALL
-    SELECT key, 'RELEASED_OVER_HELD', 'released ' || eb.total_released_cents || ' > held ' || eb.total_held_cents
-      FROM driver_finance.escrow_balances eb JOIN acct ON acct.holder_id = eb.driver_id AND acct.operating_company_id = eb.operating_company_id
-     WHERE eb.total_released_cents > eb.total_held_cents
-    UNION ALL
-    -- (rule 3, a stored accounting.escrow_accounts.balance_cents below zero, died with the column — KILL THE SECOND
-    -- SYSTEM table 1, migration 202615380000; the GL rule below is the same fact read from the books)
+    -- rules 1-3 (stored escrow_balances / escrow_accounts amounts) died with their columns — 202615380000 / 202615380100
     SELECT acct.key, 'GL_DEBIT_BALANCE', 'GL net debit ' || sum(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END) || ' cents'
       FROM acct JOIN accounting.journal_entry_postings p ON p.account_id = acct.coa_account_id
       JOIN accounting.journal_entries j ON j.id = p.journal_entry_uuid AND j.status = 'posted'
      GROUP BY acct.key
     HAVING sum(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END) > 0
-    UNION ALL
-    -- an escrow_balances row with NO escrow account bridge cannot be keyed — surface it rather than skip it
-    SELECT 'UNBRIDGED:' || eb.driver_id::text, 'NEGATIVE_BALANCE', 'escrow_balances.current_balance_cents=' || eb.current_balance_cents
-      FROM driver_finance.escrow_balances eb
-     WHERE (eb.current_balance_cents < 0 OR eb.total_released_cents > eb.total_held_cents)
-       AND NOT EXISTS (SELECT 1 FROM acct WHERE acct.holder_id = eb.driver_id AND acct.operating_company_id = eb.operating_company_id)
+
      ORDER BY 1, 2`);
   const drivers = await client.query(`SELECT count(*)::int AS n FROM accounting.escrow_accounts WHERE holder_type = 'driver'`);
   await client.query("ROLLBACK");
@@ -133,7 +118,6 @@ if (isMain) {
       ["named debt only passes", liveFailures(debtRows).length === 0],
       ["a new over-released driver fails", liveFailures([...debtRows, { key: "USMCA:2100-00-099", kind: "NEGATIVE_BALANCE", detail: "-1" }]).length === 1],
       ["a debt entry that went green fails (shrink)", liveFailures(debtRows.slice(1)).some((f) => f.startsWith("DEBT RATCHET"))],
-      ["an unbridged negative row fails", liveFailures([...debtRows, { key: "UNBRIDGED:abc", kind: "NEGATIVE_BALANCE", detail: "-1" }]).length === 1],
       ["ceiling is the named debt", CEILING === 3],
     ];
     for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
@@ -151,7 +135,7 @@ if (isMain) {
       console.error(`${LABEL}: FAIL\n  ${all.join("\n  ")}`);
       process.exitCode = 1;
     } else {
-      console.log(`${LABEL}: OK — ${driverAccounts} driver escrow accounts; over-released: only the ${CEILING} named debt entries (${Object.keys(DEBT).join(", ")}), ceiling ${CEILING}; the three database refusals are in place.`);
+      console.log(`${LABEL}: OK — ${driverAccounts} driver escrow accounts; over-released: only the ${CEILING} named debt entries (${Object.keys(DEBT).join(", ")}), ceiling ${CEILING}; the GL debit-balance refusal is in place and the stored-amount refusals stay dropped.`);
     }
   } finally {
     client.release?.();

@@ -18,8 +18,11 @@
  *       accounting.escrow_accounts.balance_cents, which no longer exists. Measured against the GL itself the projection
  *       differs on 10 USMCA drivers (purge population); table 2 replaces escrow_balances with a VIEW over the GL and
  *       ships verify-escrow-balances-equals-its-gl, so the equality holds by construction instead of by reconciliation.
- *   (b) driver_finance.escrow_balances.current_balance_cents == the driver's latest
- *       driver_finance.escrow_ledger.running_balance_cents (when a ledger row exists for that driver)
+ *   (b) RETIRED 2026-10-03 with KILL THE SECOND SYSTEM tables 2-5 (migration 202615380100): both sides —
+ *       escrow_balances.current_balance_cents and escrow_ledger.running_balance_cents — no longer exist. There is nothing
+ *       left to reconcile: the projection is driver_finance.v_escrow_balances, DERIVED from the GL.
+ *   (c) LIVE, what remains of this guard: the projection columns stay gone (a re-added copy would reopen the drift).
+ *       The per-driver equality of the view with the GL is verify-escrow-equals-its-gl RULE 6.
  * A mismatch on EITHER means the projection has drifted from the canonical GL again — fail-loud, never
  * silently tolerated (a driver escrow decision made off the projection would be wrong).
  *
@@ -107,11 +110,16 @@ async function main() {
   try {
     await client.query("BEGIN");
     await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
-    const glRows = []; // rule (a) retired — see header; GL_VS_PROJECTION_QUERY kept for the table-2 measurement
-    const ledgerRows = (await client.query(LEDGER_RUNNING_BALANCE_QUERY)).rows;
+    const glRows = []; // rule (a) retired — see header
+    const ledgerRows = []; // rule (b) retired — see header
+    const reopened = (await client.query(`
+      SELECT table_name || '.' || column_name AS col FROM information_schema.columns
+       WHERE table_schema = 'driver_finance'
+         AND ((table_name = 'escrow_balances' AND column_name IN ('current_balance_cents', 'total_held_cents', 'total_released_cents'))
+           OR (table_name = 'escrow_ledger' AND column_name = 'running_balance_cents'))`)).rows.map((r) => r.col);
     await client.query("COMMIT");
 
-    const failures = [];
+    const failures = reopened.map((c) => `driver_finance.${c} exists again — the stored escrow projection died with 202615380100; derive it from the GL (v_escrow_balances)`);
     for (const r of glRows) {
       if (String(r.gl_balance_cents) !== String(r.projection_balance_cents)) {
         failures.push(
@@ -127,10 +135,6 @@ async function main() {
       }
     }
 
-    if (glRows.length === 0 && ledgerRows.length === 0) {
-      console.log(`${LABEL} SKIP — no driver has both a GL escrow bridge row and a driver_finance.escrow_balances row yet; nothing to reconcile.`);
-      return 0;
-    }
 
     if (failures.length > 0) {
       console.error(`${LABEL} FAIL — ${failures.length} escrow balance mismatch(es) between the GL and its projection:`);
@@ -140,7 +144,7 @@ async function main() {
     }
 
     console.log(
-      `${LABEL} PASS — ${glRows.length} driver(s) GL-vs-projection checked, ${ledgerRows.length} driver(s) projection-vs-ledger checked, all reconcile.`
+      `${LABEL} PASS — the stored escrow projection columns are gone (rules a/b retired with them, 202615380100); the summary is v_escrow_balances over the GL.`
     );
     return 0;
   } finally {

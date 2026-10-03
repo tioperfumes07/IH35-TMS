@@ -57,6 +57,7 @@
 import { signedEscrowLedgerAmountCents } from "./escrow-ledger-sign.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { recordEscrowPostingOnly } from "../accounting/escrow/service.js";
+import { ensureEscrowBalanceRow } from "./escrow-balance-row.js";
 
 export type QueryableClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }>;
@@ -123,35 +124,16 @@ export async function createHistoricalEscrowHold(
     return { outcome: "already_exists", escrow_ledger_id: existing.rows[0].id };
   }
 
-  // Same escrow_balances upsert shape as settlement-payrun-close.service.ts's
-  // recordEscrowContribution -- current_balance_cents/total_held_cents are the pot's own
-  // magnitude, unchanged by ESCROW-LEDGER-SIGN-01 (that fix is scoped to escrow_ledger.amount_cents
-  // only).
-  const newBalance = await client.query<{ current_balance_cents: string }>(
-    `
-      INSERT INTO driver_finance.escrow_balances
-        (operating_company_id, driver_id, total_held_cents, current_balance_cents, last_updated_at)
-      VALUES ($1::uuid, $2::uuid, $3, $3, now())
-      ON CONFLICT (operating_company_id, driver_id) DO UPDATE SET
-        total_held_cents = driver_finance.escrow_balances.total_held_cents + $3,
-        current_balance_cents = driver_finance.escrow_balances.current_balance_cents + $3,
-        last_updated_at = now()
-      RETURNING id::text AS id, current_balance_cents::text
-    `,
-    [input.operating_company_id, input.driver_id, input.amount_cents]
-  );
-  const balanceRow = newBalance.rows[0] as { id?: string; current_balance_cents: string } | undefined;
-  if (!balanceRow?.id) {
-    throw new Error("createHistoricalEscrowHold: escrow_balances upsert returned no id.");
-  }
+  // KILL THE SECOND SYSTEM (tables 2-5): identity row only; the balance is the GL.
+  const balanceRow = { id: await ensureEscrowBalanceRow(client as never, input.operating_company_id, input.driver_id) };
 
   const signedAmountCents = signedEscrowLedgerAmountCents("hold", input.amount_cents);
   const inserted = await client.query<{ id: string }>(
     `
       INSERT INTO driver_finance.escrow_ledger
         (operating_company_id, driver_id, escrow_balance_id, transaction_type, amount_cents,
-         running_balance_cents, description, load_id)
-      VALUES ($1::uuid, $2::uuid, $3::uuid, 'hold', $4, $5, $6, $7::uuid)
+         description, load_id)
+      VALUES ($1::uuid, $2::uuid, $3::uuid, 'hold', $4, $5, $6::uuid)
       RETURNING id::text
     `,
     [
@@ -159,7 +141,6 @@ export async function createHistoricalEscrowHold(
       input.driver_id,
       balanceRow.id,
       signedAmountCents,
-      Number(balanceRow.current_balance_cents),
       input.description,
       input.load_id,
     ]
