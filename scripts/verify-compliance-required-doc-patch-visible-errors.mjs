@@ -14,6 +14,8 @@ function audit(text) {
   need(/role="alert"[\s\S]*\{patchError\}/.test(text), "patch error must render accessibly");
   need(/error instanceof Error \? error\.message/.test(text), "backend detail must be preserved");
   need(/is_active: false/.test(text) && !/deleteRequiredDocument/.test(text), "deactivate must remain void-not-delete");
+  need(!text.includes("text-[11px]"), "leftover text-[11px]");
+  need(!text.includes("#8A92AB") && !text.includes("#334155"), "leftover off-scale muted");
   return failures;
 }
 
