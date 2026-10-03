@@ -8074,7 +8074,7 @@
   "12397": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-03",
-    "purpose": "verify-no-migration-is-neither-applied-nor-held"
+    "purpose": "verify-bill-status-filter-uses-shared-vocabulary"
   },
   "12401": {
     "claimed_by": "claude",
