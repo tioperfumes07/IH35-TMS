@@ -79,6 +79,14 @@ function main() {
   assertIncludes(page, 'key: "memo"', PAGE);
   assertIncludes(page, 'key: "type"', PAGE);
   assertIncludes(page, 'key: "split_account"', PAGE);
+  // BANK-F91054 — ORDERS §B-1 print / export / gear trio + Bank transactions / Reconcile hops named.
+  assertIncludes(page, 'data-testid="b1-account-register-export"', PAGE);
+  assertIncludes(page, 'data-testid="b1-account-register-print"', PAGE);
+  assertIncludes(page, 'data-testid="b1-account-register-bank-transactions"', PAGE);
+  assertIncludes(page, 'data-testid="b1-account-register-reconcile"', PAGE);
+  // Visible ORDERS labels (children of the named buttons) — not the longer title= tooltips.
+  if (!/>\s*Export\s*</.test(page)) throw new Error(`${PAGE}: Export button must render label "Export"`);
+  if (!/>\s*Print\s*</.test(page)) throw new Error(`${PAGE}: Print button must render label "Print"`);
   // BANK-F91044 — ORDERS §B-1 "Go to page N of M" via shared ParityTable pager label
   const parityTable = read("apps/frontend/src/components/parity/ParityTable.tsx");
   assertIncludes(parityTable, 'data-parity-goto-page="1"', "ParityTable.tsx");

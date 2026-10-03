@@ -853,6 +853,7 @@ export function AccountRegisterPage() {
             type="button"
             variant="secondary"
             size="sm"
+            data-testid="b1-account-register-bank-transactions"
             onClick={() =>
               navigate(
                 report?.bank_account_id
@@ -867,6 +868,7 @@ export function AccountRegisterPage() {
             type="button"
             variant="secondary"
             size="sm"
+            data-testid="b1-account-register-reconcile"
             onClick={() =>
               navigate(
                 report?.bank_account_id
@@ -931,13 +933,30 @@ export function AccountRegisterPage() {
           )}
           toolbar={
             <>
-              {/* UI CONTROL LAW — was 2 hand-rolled buttons at their own ad-hoc size (the same
-                  shape fixed in ParityTable's own Export/gear). Now the real Button primitive. */}
-              <Button type="button" variant="tertiary" size="sm" onClick={exportCsv} disabled={!report || filteredRows.length === 0} title="Export to Excel">
-                Export to Excel
+              {/* BANK-F91054 — ORDERS §B-1 print / export / gear. Labels match the ORDERS chrome
+                  ("Export" · "Print"); titles keep the Excel/list affordance. Named for assertability
+                  beside gearButtonTestId="b1-account-register-gear". */}
+              <Button
+                type="button"
+                variant="tertiary"
+                size="sm"
+                onClick={exportCsv}
+                disabled={!report || filteredRows.length === 0}
+                title="Export to Excel"
+                data-testid="b1-account-register-export"
+              >
+                Export
               </Button>
-              <Button type="button" variant="tertiary" size="sm" onClick={printList} disabled={!report || filteredRows.length === 0} title="Print list">
-                Print list
+              <Button
+                type="button"
+                variant="tertiary"
+                size="sm"
+                onClick={printList}
+                disabled={!report || filteredRows.length === 0}
+                title="Print list"
+                data-testid="b1-account-register-print"
+              >
+                Print
               </Button>
             </>
           }
