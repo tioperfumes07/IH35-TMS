@@ -35,6 +35,8 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const MIG = resolve(ROOT, "db/migrations");
 const LABEL = "verify-one-entity-column";
 export const PHASE_1_MIGRATION = "202615330400_r342_one_entity_column_rename.sql";
+/** CC-2 step 2c drops tenant_id from the PHASE_2 tables; once it is applied, PHASE_2 allows nothing (ceiling 0). */
+export const PHASE_2_MIGRATION = "202615330800_r342_step2c_drop_tenant_id.sql";
 
 export const PHASE_1 = [
   "accounting.bill_unit_allocation", "accounting.coa_account", "accounting.ps_category", "accounting.ps_item",
@@ -79,13 +81,13 @@ export function staticFailures({ files, read }) {
   return failures;
 }
 
-export function liveFailures({ tenantRelations, tenantPolicies, equatingChecks, sharedPolicies, phase1Applied }) {
+export function liveFailures({ tenantRelations, tenantPolicies, equatingChecks, sharedPolicies, phase1Applied, phase2Applied = false }) {
   const failures = [];
   const notes = [];
-  const allowed = new Set([...PHASE_2, ...(phase1Applied ? [] : PHASE_1)]);
+  const allowed = new Set([...(phase2Applied ? [] : PHASE_2), ...(phase1Applied ? [] : PHASE_1)]);
   for (const rel of tenantRelations) {
     if (!allowed.has(rel)) {
-      failures.push(`RULE 1: ${rel} carries a column named tenant_id${PHASE_1.includes(rel) ? ` although ${PHASE_1_MIGRATION} is applied` : ""}. operating_company_id is the one entity column.`);
+      failures.push(`RULE 1: ${rel} carries a column named tenant_id${PHASE_1.includes(rel) ? ` although ${PHASE_1_MIGRATION} is applied` : PHASE_2.includes(rel) ? ` although ${PHASE_2_MIGRATION} is applied` : ""}. operating_company_id is the one entity column.`);
     }
   }
   for (const p of tenantPolicies) {
@@ -100,7 +102,7 @@ export function liveFailures({ tenantRelations, tenantPolicies, equatingChecks, 
       failures.push(`RULE 4: ${rel} policy ${pol} is no longer USING (true): it is a catalog shared by all three carriers on purpose — never scope it without an owner ruling.`);
     }
   }
-  for (const rel of PHASE_2) if (!tenantRelations.includes(rel)) notes.push(`PHASE_2 entry ${rel} no longer carries tenant_id — remove it from PHASE_2 (ceiling drops).`);
+  if (!phase2Applied) for (const rel of PHASE_2) if (!tenantRelations.includes(rel)) notes.push(`PHASE_2 entry ${rel} no longer carries tenant_id — remove it from PHASE_2 (ceiling drops).`);
   return { failures, notes };
 }
 
@@ -129,6 +131,8 @@ async function measure(client) {
       FROM pg_policy WHERE polrelid = to_regclass('insurance.type_catalog')`);
   const applied = await client.query(
     `SELECT EXISTS (SELECT 1 FROM ih35_migrations.applied_migrations WHERE name = $1) AS ok`, [PHASE_1_MIGRATION]);
+  const applied2 = await client.query(
+    `SELECT EXISTS (SELECT 1 FROM ih35_migrations.applied_migrations WHERE name = $1) AS ok`, [PHASE_2_MIGRATION]);
   await client.query("ROLLBACK");
   return {
     tenantRelations: rel.rows.map((r) => r.rel),
@@ -136,6 +140,7 @@ async function measure(client) {
     equatingChecks: chk.rows,
     sharedPolicies: shared.rows,
     phase1Applied: applied.rows[0].ok,
+    phase2Applied: applied2.rows[0].ok,
   };
 }
 
@@ -147,6 +152,9 @@ if (isMain) {
       ["post-rename state passes", liveFailures(base).failures.length === 0],
       ["new tenant_id column fails", liveFailures({ ...base, tenantRelations: [...PHASE_2, "accounting.new_table"] }).failures.some((f) => f.startsWith("RULE 1"))],
       ["phase-1 table still carrying it after apply fails", liveFailures({ ...base, tenantRelations: [...PHASE_2, "mdata.assets"] }).failures.some((f) => f.startsWith("RULE 1"))],
+      ["phase-2 table still carrying it after 2c applies fails", liveFailures({ ...base, phase2Applied: true }).failures.some((f) => f.startsWith("RULE 1") && f.includes(PHASE_2_MIGRATION))],
+      ["phase-2 equating CHECK after 2c applies fails", liveFailures({ ...base, tenantRelations: [], phase2Applied: true }).failures.some((f) => f.startsWith("RULE 3"))],
+      ["2c applied and clean passes with no notes", (() => { const r = liveFailures({ ...base, tenantRelations: [], equatingChecks: [], phase2Applied: true }); return r.failures.length === 0 && r.notes.length === 0; })()],
       ["phase-1 table before apply passes", liveFailures({ ...base, tenantRelations: [...PHASE_2, ...PHASE_1], phase1Applied: false }).failures.length === 0],
       ["tenant policy outside debt fails", liveFailures({ ...base, tenantPolicies: [{ name: "p", rel: "maint.part" }] }).failures.some((f) => f.startsWith("RULE 2"))],
       ["equating CHECK outside debt fails", liveFailures({ ...base, equatingChecks: [{ name: "c", rel: "maint.part", def: "CHECK ((operating_company_id = tenant_id))" }] }).failures.some((f) => f.startsWith("RULE 3"))],
@@ -182,7 +190,7 @@ if (isMain) {
       process.exitCode = 1;
     } else {
       const debt = m.tenantRelations.length;
-      console.log(`${LABEL}: OK — tenant_id relations ${debt} (debt ceiling ${CEILING}: PHASE_1 ${m.phase1Applied ? "applied, 0 allowed" : "pending apply"}, PHASE_2 ${PHASE_2.length} CC-2), tenant policies outside debt 0, equating CHECKs outside debt 0, type_catalog shared by design.`);
+      console.log(`${LABEL}: OK — tenant_id relations ${debt} (debt ceiling ${CEILING}: PHASE_1 ${m.phase1Applied ? "applied, 0 allowed" : "pending apply"}, PHASE_2 ${m.phase2Applied ? "applied, 0 allowed" : `${PHASE_2.length} pending ${PHASE_2_MIGRATION}`}), tenant policies outside debt 0, equating CHECKs outside debt 0, type_catalog shared by design.`);
     }
   } finally {
     client.release?.();
