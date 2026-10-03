@@ -110,6 +110,10 @@ if (
 ) {
   failures.push("ItemEditorModal preferred vendor must use EntityPicker kind=vendor allowCreate");
 }
+// BANK-F91101 — ORDERS chrome: field errors + capped-list hints use text-xs, not text-[11px].
+if (itemEditor.includes("text-[11px]")) {
+  failures.push("ItemEditorModal must not use text-[11px] — use text-xs");
+}
 
 const createWo = read("apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx");
 if (createWo.includes("QboCombobox")) {
