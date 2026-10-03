@@ -76,6 +76,10 @@ function assertMigrated(src) {
   if (!src.includes("Corrected")) {
     errors.push(`${PAGE}: must keep the Corrected badge on same-day corrected rates`);
   }
+  if (src.includes("text-[11px]")) errors.push(`${PAGE}: leftover text-[11px]`);
+  if (src.includes("#8A92AB") || src.includes("#334155")) {
+    errors.push(`${PAGE}: leftover off-scale muted`);
+  }
   return errors;
 }
 
@@ -163,6 +167,15 @@ function selftest() {
       console.error(`${LABEL} --selftest FAIL ${name} mutation`);
       process.exit(1);
     }
+  }
+  if (live.page.includes("text-[11px]") || live.page.includes("#8A92AB") || live.page.includes("#334155")) {
+    console.error(`${LABEL} --selftest FAIL — live leftover tokens present`);
+    process.exit(1);
+  }
+  const leftoverErrors = assertMigrated(`${good}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`);
+  if (!leftoverErrors.some((e) => e.includes("leftover"))) {
+    console.error(`${LABEL} --selftest FAIL leftover plant escaped:`, leftoverErrors);
+    process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);
 }
