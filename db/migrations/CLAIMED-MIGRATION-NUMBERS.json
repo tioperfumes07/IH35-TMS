@@ -1847,6 +1847,11 @@
       "claimed_at": "2026-10-03",
       "purpose": "CC-2 engine ten-point (point 5 WORM + audit + FORCE RLS): fuel.fuel_transactions, integrations.relay_fuel_transactions, relay_fuel_transaction_lines, relay_deposits refuse DELETE except voided rows under an open owner AUTH; row audit on those + fuel.fraud_alerts; FORCE RLS on fuel.load_fuel_cost / tank_events / tank_state / unit_mpg."
     },
+    "202615340700": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-03",
+      "purpose": "CC-2 engine ten-point (point 9 single-fire): _system.job_leases + withJobLease helper — one instance per job per lease window; adopted by CC-2's six unleased crons (bank tie-out, bank drift alerts, factoring repurchase-due, Love's card import, reconciliation worker, Samsara fuel reports)."
+    },
     "202615340100": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-03",
