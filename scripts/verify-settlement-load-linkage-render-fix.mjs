@@ -103,6 +103,8 @@ export function auditPreSettlementPanelSource(src) {
   if (!/legs\.map\(\(leg\)/.test(src)) {
     failures.push("PreSettlementPanel does not map over every leg in Linked Trips");
   }
+  if (src.includes("text-[11px]")) failures.push("leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155")) failures.push("leftover off-scale muted");
   return failures;
 }
 
@@ -168,6 +170,12 @@ function selftest() {
   assert.ok(auditPreSettlementPanelSource(badPanel).length >= 1, "bookend-only PreSettlementPanel must be caught");
   const goodPanel = `legs.length > 0 ? legs.map((leg) => <div key={leg.load_id} />) : null`;
   assert.ok(auditPreSettlementPanelSource(goodPanel).length === 0, "all-legs PreSettlementPanel must pass");
+  const leftoverPlant = `${goodPanel}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  assert.ok(auditPreSettlementPanelSource(leftoverPlant).some((f) => f.includes("leftover")), "leftover plant must be refused");
+  const livePanel = fs.readFileSync(PRE_SETTLEMENT_PANEL, "utf8");
+  if (livePanel.includes("text-[11px]") || livePanel.includes("#8A92AB") || livePanel.includes("#334155")) {
+    throw new Error("live leftover tokens present on PreSettlementPanel");
+  }
 
   const badOrder = `{ key: "tour", label: "x" },\n{ key: "driver", label: "y" },\n...tourLoadColumns("p"),`;
   assert.ok(auditColumnOrderSource(badOrder, "test").length >= 1, "Load-after-Driver ordering must be caught");
