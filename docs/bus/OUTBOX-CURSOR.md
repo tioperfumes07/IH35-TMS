@@ -1,5 +1,9 @@
 ## 2026-10-03T23:35Z · BANK-F91251 DrugAlcoholProgramTab leftover tokens MERGED #24881 tip 23ba9b1e56
 
+## BANK-F91256..F91259 safety leftover drain MERGED tip `7d0ca1c3e9`
+DONE: SafetyLayout · SafetyHome · AnomalyDetailDrawer · IntegrityReportsTab text tokens (F91256–F91259).
+NEXT: SystemModulePage (14 hits) · ProgramBoardPage (36) · EarningsTab (12)
+
 ## BANK-F91253 ExpiryDashboard leftover MERGED #24885 tip `be786ea985`
 DONE: ExpiryDashboard text-[11px]→text-xs (1); leftover refuse+plant on verify-safety-cert-expiry-filter-comboboxes.
 NEXT: CSAMitigationQueue · FineLifecycleActions · SafetyLayout · SafetyHome
