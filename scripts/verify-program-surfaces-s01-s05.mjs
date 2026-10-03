@@ -64,6 +64,8 @@ export function run() {
   assert(moduleComp.includes("boardReady"), "ModuleCompletionPage must gate the table on a successful API board (no false 'not yet defined' on fetch error)", errors);
   assert(moduleComp.includes("live.isSuccess"), "ModuleCompletionPage boardReady must require live.isSuccess", errors);
   assert(moduleComp.includes("{boardReady ?"), "ModuleCompletionPage must not render the N-of-M table while the API board failed", errors);
+  assert(!moduleComp.includes("text-[11px]"), "ModuleCompletionPage: leftover text-[11px]", errors);
+  assert(!moduleComp.includes("#8A92AB") && !moduleComp.includes("#334155"), "ModuleCompletionPage: leftover off-scale muted", errors);
 
   // S04: program tracker renders per-block status from registry.
   assert(tracker.includes("getProgramTracker"), "ProgramTrackerPage must fetch program tracker", errors);
@@ -151,6 +153,22 @@ function selftest() {
     const threadRoutePlanted = run();
     if (!threadRoutePlanted.some((e) => e.includes("program.panel.thread"))) {
       console.error("[verify-program-surfaces-s01-s05] SELFTEST FAIL: planted thread route mismatch not detected");
+      process.exit(1);
+    }
+    const modulePath = path.join(ROOT, "apps/frontend/src/pages/program/ModuleCompletionPage.tsx");
+    const moduleBackup = fs.readFileSync(modulePath, "utf8");
+    fs.writeFileSync(
+      modulePath,
+      `${moduleBackup}\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n`,
+      "utf8",
+    );
+    const leftoverPlanted = run();
+    fs.writeFileSync(modulePath, moduleBackup, "utf8");
+    if (
+      !leftoverPlanted.some((e) => e.includes("leftover text-[11px]")) ||
+      !leftoverPlanted.some((e) => e.includes("leftover off-scale muted"))
+    ) {
+      console.error("[verify-program-surfaces-s01-s05] SELFTEST FAIL: planted ModuleCompletion leftover not detected");
       process.exit(1);
     }
     console.log(`[verify-program-surfaces-s01-s05] SELFTEST PASS (${planted.length} planted failures detected)`);
