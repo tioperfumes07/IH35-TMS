@@ -55,6 +55,14 @@ export function collectProblems(root = ROOT, overrides = null) {
     problems.push(`${PAGE}: must not navigate away via the old "+ Create detail type" link`);
   }
   if (!/detail_type_id/.test(page)) problems.push(`${PAGE}: must still persist detail_type_id`);
+  // BANK-F91103 — ORDERS chrome: Preview header uses named 11px token; errors/hints use text-xs.
+  const pageNoComments = stripComments(page);
+  if (pageNoComments.includes("text-[11px]")) {
+    problems.push(`${PAGE}: must not use text-[11px] — use text-section-header or text-xs`);
+  }
+  if (!pageNoComments.includes("text-section-header")) {
+    problems.push(`${PAGE}: Preview header must use text-section-header`);
+  }
   if (!registry) return [...problems, `missing ${REGISTRY}`];
   if (!/detail_type:\s*\{/.test(registry)) problems.push(`${REGISTRY}: must register a detail_type picker entry`);
   if (!/account_type_id\?:\s*string/.test(registry)) {
