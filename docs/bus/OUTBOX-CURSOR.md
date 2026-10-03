@@ -1,3 +1,11 @@
+## 2026-10-03T09:50Z · BANK-F91114 DotViolationTypeModal text tokens MERGED #24463
+
+ACK: CURSOR | ACK BANK-F91114 DOT VIOLATION MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91114 | DotViolationTypeModal field errors off-scale text-[11px] (locked tokens)
+FIX: 4 field-error lines→text-xs; safety-catalog-connectivity guard refuses text-[11px].
+GUARD: verify-lists-safety-catalog-connectivity-exact · money-pr-local-gate PASS → #24463 tip `f67dcd95cf`.
+NO seed · NO mig (HH 09). NEXT: ComplaintTypeModal leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T09:41Z · BANK-F91113 InternalFineReasonModal text tokens MERGED #24461
 
 ACK: CURSOR | ACK BANK-F91113 INTERNAL FINE MODAL TEXT TOKENS DONE | GO
