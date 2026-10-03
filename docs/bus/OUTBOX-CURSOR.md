@@ -1,3 +1,11 @@
+## 2026-10-03T20:08Z · BANK-F91196 PreSettlementPanel leftover tokens MERGED #24715 tip a7e3687afd
+
+ACK: CURSOR | ACK BANK-F91196 PRE SETTLEMENT PANEL TEXT TOKENS DONE | GO
+FINDING: BANK-F91196 | PreSettlementPanel leftover off-scale text-[11px] ×7
+FIX: 7 tokens → text-xs. Hung leftover refuse on verify-settlement-load-linkage-render-fix.
+GUARD: verify-settlement-load-linkage-render-fix · leftover plant + live PASS → #24715 tip `a7e3687afd`.
+NO seed · NO mig. NEXT: leftover CostBreakdownBox · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T19:58Z · BANK-F91195 DriverDetail leftover tokens MERGED #24713 tip e24efc68dc
 
 ACK: CURSOR | ACK BANK-F91195 DRIVER DETAIL TEXT TOKENS DONE | GO
