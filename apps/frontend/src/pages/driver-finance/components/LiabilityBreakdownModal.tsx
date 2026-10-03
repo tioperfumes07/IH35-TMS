@@ -103,7 +103,7 @@ export function LiabilityBreakdownModal({
         <div>TOTAL ACTIVE: <span className="font-semibold">{formatUsdTable(total)}</span></div>
         <div>EXCLUDING PENDING ACK: <span className="font-semibold">{formatUsdTable(excludingPending)}</span></div>
       </div>
-      <div className="mt-2 text-[11px] text-gray-500">
+      <div className="mt-2 text-xs text-gray-500">
         Settlement detail uses live recompute authority and excludes pending-ack liabilities from active debt display.
       </div>
     </Modal>
