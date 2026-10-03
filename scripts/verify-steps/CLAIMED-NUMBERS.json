@@ -10017,5 +10017,25 @@
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-03",
     "purpose": "verify-escrow-equals-its-gl — every driver escrow number on a screen/API equals the 2100-00-nnn GL balance; no reader of a stored escrow balance (CC-1)."
+  },
+  "12353": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-every-load-born-posting-carries-its-load"
+  },
+  "12357": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-no-bill-payment-without-postings"
+  },
+  "12361": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-bank-match-creates-no-postings"
+  },
+  "12365": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-no-posting-update-outside-document-edit"
   }
 }

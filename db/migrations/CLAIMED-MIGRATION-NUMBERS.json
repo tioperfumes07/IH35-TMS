@@ -1896,6 +1896,21 @@
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-03",
       "purpose": "Kill the second system — escrow: stored escrow balance columns retired (escrow_accounts.balance_cents, escrow_balances current/held/released, escrow_ledger.running_balance_cents), writers stopped"
+    },
+    "202615350500": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 363-CC1-A (LAW 363.2): accounting.journal_entry_postings.load_id nullable FK -> mdata.loads + index; refusal of a posting whose source document carries a load but whose load_id is NULL (load-bearing document types only)"
+    },
+    "202615350700": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 363-CC1-B: CONSTRAINT TRIGGER DEFERRABLE INITIALLY DEFERRED — the database refuses an accounting.bill_payments row that commits without its bill_payment postings"
+    },
+    "202615350800": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 363-CC1-D (LAW 363.3/363.5): refuse a direct UPDATE of a posted accounting.journal_entry_postings line outside the document-edit service (reclassify = restate + reverse + re-post)"
     }
   },
   "202613590001": {
