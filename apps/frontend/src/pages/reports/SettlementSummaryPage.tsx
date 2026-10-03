@@ -264,19 +264,19 @@ export function SettlementSummaryPage() {
         <>
           <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-sm border border-gray-200 bg-white p-3">
-              <div className="text-[11px] font-semibold uppercase text-gray-500">Gross pay</div>
+              <div className="text-section-header font-semibold uppercase text-gray-500">Gross pay</div>
               <div className="text-page-title font-semibold">{money(query.data.totals.gross_pay_cents)}</div>
             </div>
             <div className="rounded-sm border border-gray-200 bg-white p-3">
-              <div className="text-[11px] font-semibold uppercase text-gray-500">Total deductions</div>
+              <div className="text-section-header font-semibold uppercase text-gray-500">Total deductions</div>
               <div className="text-page-title font-semibold">{money(query.data.totals.deduction_total_cents)}</div>
             </div>
             <div className="rounded-sm border border-gray-200 bg-white p-3">
-              <div className="text-[11px] font-semibold uppercase text-gray-500">Total chargebacks</div>
+              <div className="text-section-header font-semibold uppercase text-gray-500">Total chargebacks</div>
               <div className="text-page-title font-semibold">{money(query.data.totals.chargeback_total_cents)}</div>
             </div>
             <div className="rounded-sm border border-gray-200 bg-white p-3">
-              <div className="text-[11px] font-semibold uppercase text-gray-500">Net pay</div>
+              <div className="text-section-header font-semibold uppercase text-gray-500">Net pay</div>
               <div className="text-page-title font-semibold">{money(query.data.totals.net_pay_cents)}</div>
             </div>
           </div>
@@ -292,7 +292,7 @@ export function SettlementSummaryPage() {
               onRowClick={(r) => navigate(`/drivers/${r.driver_id}?tab=settlements`)}
               renderExpanded={(r) => (
                 <div>
-                  <div className="text-[11px] font-semibold uppercase text-gray-500">Deduction breakdown</div>
+                  <div className="text-section-header font-semibold uppercase text-gray-500">Deduction breakdown</div>
                   <ul className="mt-1 grid gap-1 sm:grid-cols-2">
                     {breakdownRows(r.deductions_breakdown).map((row) => (
                       <li key={row.type}>
