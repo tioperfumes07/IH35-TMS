@@ -915,5 +915,12 @@
     "source_file": "docs/bus/10-03-2026-CC-3-ROUND-363-LOAD-LINEAGE-THE-SEND-BACK-AND-THE-DERIVED-ARTIFACT-REGISTRY.md",
     "guard": "scripts/verify-send-back-preserves-the-match-and-its-load.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-10-03-LOAD-BORN-ROWS-REFUSE-A-NULL-LOAD",
+    "title": "LAW 363.2 / ROUND 363-CC3-A \u2014 a load-born posting (its resolver accounting.posting_source_load_id names a load) or a load-born document (from_load invoice, driver bill, revenue-recognition posting, load charge line) written with a NULL load is refused in the database; every reversal walks reversal -> original -> load",
+    "source_file": "docs/bus/10-03-2026-CC-3-ROUND-363-LOAD-LINEAGE-THE-SEND-BACK-AND-THE-DERIVED-ARTIFACT-REGISTRY.md",
+    "guard": "scripts/verify-every-load-born-document-and-posting-traces-to-its-load.mjs",
+    "type": "enforced"
   }
 ]

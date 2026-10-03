@@ -118,6 +118,8 @@ const STEPS = [
   ["verify-guards-do-not-run-as-ih35_app", "scripts/verify-guards-do-not-run-as-ih35_app.mjs"],
   // ROUND 363-CC3-B / LAW 363.9 — a bank-line send-back keeps the match and records the release beside it.
   ["verify-send-back-preserves-the-match-and-its-load", "scripts/verify-send-back-preserves-the-match-and-its-load.mjs"],
+  // ROUND 363-CC3-A / LAW 363.2 — a load-born posting or document is refused without its load; reversals walk to it.
+  ["verify-every-load-born-document-and-posting-traces-to-its-load", "scripts/verify-every-load-born-document-and-posting-traces-to-its-load.mjs"],
   ["verify-no-session-advisory-locks", "scripts/verify-no-session-advisory-locks.mjs"],
   ["verify-rollup-keys-carry-company", "scripts/verify-rollup-keys-carry-company.mjs"],
   ["verify-filter-surfaces-full-set", "scripts/verify-filter-surfaces-full-set.mjs"],
