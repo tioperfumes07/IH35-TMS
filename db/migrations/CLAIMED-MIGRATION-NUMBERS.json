@@ -1626,6 +1626,31 @@
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-02",
       "purpose": "ROUND 342 Phase 2 step 2a (expand) — on the 17 double-scoped tables: assert 0 disagreements, backfill operating_company_id from tenant_id, SET NOT NULL, FK to org.companies, an operating_company_id twin of every tenant_id index (incl. uq_factoring_factor (operating_company_id, id) for CC-1's same-entity FK), opco policies replacing the tenant-only B1 policies, tenant_id DROP NOT NULL. Nothing dropped."
+    },
+    "202615320900": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 345 the block, phase 1 (financial): UNIQUE INDEX CONCURRENTLY accounting.payments (operating_company_id, id) — the target a same-entity FK needs"
+    },
+    "202615320901": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 345 the block, phase 1 (financial): UNIQUE INDEX CONCURRENTLY accounting.journal_entry_postings (operating_company_id, id)"
+    },
+    "202615320902": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 345 the block, phase 1 (financial): UNIQUE INDEX CONCURRENTLY accounting.lease_contract (operating_company_id, id)"
+    },
+    "202615320903": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 345 the block, phase 1 (financial): UNIQUE INDEX CONCURRENTLY accounting.lease_asset_line (operating_company_id, id)"
+    },
+    "202615320904": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 345 the block, phase 1 (financial): composite same-entity FKs (operating_company_id, x) on invoice_lines, bill_lines, expense_lines, payment_applications, transaction_source_links + CHECK operating_company_id IS NOT NULL NOT VALID on bill_lines / expense_lines (new rows refused; history untouched)"
     }
   },
   "202613590001": {
