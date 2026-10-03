@@ -229,7 +229,7 @@ function applyPreset(preset: string): { from: string; to: string } | null {
 function kpiCard(label: string, value: string, sublabel: string) {
   return (
     <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 border-l-4 border-l-slate-300">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{label}</p>
+      <p className="text-section-header font-semibold uppercase tracking-wide text-gray-500">{label}</p>
       <p className="text-page-title font-semibold text-gray-900">{value}</p>
       <p className="text-xs text-gray-500">{sublabel}</p>
     </div>
@@ -471,7 +471,7 @@ export function AccountRegisterPage() {
   const line2 = (top: ReactNode, bottom: ReactNode) => (
     <div className="flex flex-col gap-0.5 leading-tight" data-b1-two-line="1">
       <div>{top}</div>
-      <div className="text-[11px] text-[#6B7280]">{bottom}</div>
+      <div className="text-xs text-[#6B7280]">{bottom}</div>
     </div>
   );
   const columns: Array<ParityColumn<AccountRegisterRow>> = [
@@ -854,7 +854,7 @@ export function AccountRegisterPage() {
               type="button"
               onClick={c.clear}
               aria-label={`Clear ${c.label} filter`}
-              className="inline-flex items-center gap-1 rounded-full border border-gray-300 bg-gray-50 px-2 py-0.5 text-[11px] text-gray-700 hover:bg-gray-100"
+              className="inline-flex items-center gap-1 rounded-full border border-gray-300 bg-gray-50 px-2 py-0.5 text-xs text-gray-700 hover:bg-gray-100"
             >
               {c.label}
               <svg aria-hidden="true" viewBox="0 0 12 12" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3l6 6M9 3l-6 6" strokeLinecap="round" /></svg>
@@ -924,7 +924,7 @@ export function AccountRegisterPage() {
           >
             Reconcile
           </Button>
-          <span className="text-[11px] text-[#6B7280]">
+          <span className="text-xs text-[#6B7280]">
             ✓ = blank / C / R · Balance runs in date order only (shows n/a when sorted otherwise) · 100 rows/page
           </span>
         </div>
