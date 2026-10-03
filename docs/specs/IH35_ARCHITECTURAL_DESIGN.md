@@ -216,6 +216,8 @@ Accounting · Bills ▾ · Expenses ▾ · Bill payment ▾ · Invoices ▾ · W
 
 (Owner UI register 2026-10-03: U14 renamed *Maintenance & shop* → **Work orders & bills**; U13 removed Accounting's *Vendors* / *Customers* tabs — they were pure redirects to the `/vendors` and `/customers` modules, which stay in the sidebar; U4 removed *Expenses List* — it rendered the same page as *Expenses*. Every route stays mounted, so old links still land.)
 
+(U3, same date: **Load costs** left Accounting — it lives in Dispatch at `/dispatch/load-costs` and shows each load's cost from the ledger; `/accounting/load-costs[/:loadId]` redirect there.)
+
 | Group | Leaves (routes stay mounted) | Notes |
 |-------|------------------------------|-------|
 | **Accounting** | `/accounting` hub / dashboard KPIs | Home |

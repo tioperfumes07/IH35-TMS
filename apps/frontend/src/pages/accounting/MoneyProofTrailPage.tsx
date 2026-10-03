@@ -24,7 +24,7 @@ export function MoneyProofTrailPage() {
               ["Invoices", "/accounting/invoices"],
               ["Payments", "/accounting/payments"],
               ["Settlements", "/driver-finance/settlements"],
-              ["Load costs", "/accounting/load-costs"],
+              ["Load costs", "/dispatch/load-costs"],
             ].map(([label, href]) => (
               <Link key={href} to={href} className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-semibold text-[#0F1219] hover:bg-[#F7F8FA]">
                 {label}

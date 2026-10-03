@@ -105,7 +105,7 @@ export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
             Wizard charges (line haul / FSC / accessorials / detention / layover) plus costs and driver pay so far. Approximate margin — not settlement.
           </div>
         </div>
-        <Link className="dpo-link" to="/accounting/load-costs">Open load costs →</Link>
+        <Link className="dpo-link" to="/dispatch/load-costs">Open load costs →</Link>
       </div>
       {query.isError ? (
         <div className="dpo-state dpo-state--error">

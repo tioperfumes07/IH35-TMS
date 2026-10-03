@@ -31,7 +31,7 @@ export function LoadCostsLoadPage() {
         operatingCompanyId={selectedCompanyId ?? undefined}
         initialTab={initialTab}
         openedFrom="accounting"
-        onClose={() => navigate("/accounting/load-costs")}
+        onClose={() => navigate("/dispatch/load-costs")}
       />
     </div>
   );

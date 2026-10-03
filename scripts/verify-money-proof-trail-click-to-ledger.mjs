@@ -43,7 +43,7 @@ function audit(override = {}) {
   if (!source.panel.includes("No ledger posting exists for this document.")) errors.push("proof panel must expose honest unposted state");
   if (!source.manifest.includes('path="/accounting/proof-trail"')) errors.push("proof trail has no mounted menu landing route");
   if (!source.subnav.includes('{ label: "Proof trail", path: "/accounting/proof-trail", section: "more" }')) errors.push("proof trail has no Accounting menu path");
-  for (const path of ["/accounting/bills", "/accounting/expenses/list", "/accounting/invoices", "/accounting/payments", "/driver-finance/settlements", "/accounting/load-costs"]) {
+  for (const path of ["/accounting/bills", "/accounting/expenses/list", "/accounting/invoices", "/accounting/payments", "/driver-finance/settlements", "/dispatch/load-costs"]) {
     if (!source.page.includes(`[\"${path}\"]`) && !source.page.includes(`\"${path}\"`)) errors.push(`proof trail landing is missing browse destination ${path}`);
   }
   for (const [type, rel] of Object.entries(mounts)) {

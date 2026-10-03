@@ -79,7 +79,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
 
   // Expenses ▾ — browse first; bare route is the locked creator hub. /new is route-only legacy.
   // U4 (owner): "Expenses List" rendered the same ExpensesListPage as "Expenses" — one tab (the route stays for old links).
-  { label: "Load costs", path: "/accounting/load-costs", section: "expenses" },
+  // U3 (owner, 2026-10-03): "Load costs does not belong in Accounting" — it lives in Dispatch (/dispatch/load-costs).
   { label: "Expenses", path: "/accounting/expenses", section: "expenses" },
   { label: "Receipts", path: "/accounting/receipts", section: "expenses" },
   // ROUND 326 queue item 15: the check creator was only reachable from + New / a list link.
@@ -253,9 +253,7 @@ export const ACCOUNTING_SUB_NAV_ITEMS: readonly NavItem[] = [
   // Group labels navigate to the primary list (nav-split); chevron opens the dropdown.
   { label: GROUP_LABELS.bills, href: "/accounting/bills", children: childrenOf("bills") },
   { label: GROUP_LABELS.expenses, href: "/accounting/expenses", children: childrenOf("expenses") },
-  // NAV-LOAD-COSTS-01 (owner 2026-09-06 04:5xZ "IN ACCOUNTING, WHERE ARE THE TABS?") — Load costs is a top-row leaf,
-  // not only buried under Expenses ▾: it is the same board Dispatch → Load costs opens, with its own tab row.
-  leafOf("/accounting/load-costs"),
+  // U3 (owner, 2026-10-03) supersedes NAV-LOAD-COSTS-01: Load costs left Accounting for Dispatch (/dispatch/load-costs).
   { label: GROUP_LABELS.billpay, href: "/accounting/bill-payments", children: childrenOf("billpay") },
   // ACCT-F5050 — Invoices ▾ peer of Bills / Expenses / Bill payment (group label → list).
   { label: GROUP_LABELS.invoices, href: "/accounting/invoices", children: childrenOf("invoices") },

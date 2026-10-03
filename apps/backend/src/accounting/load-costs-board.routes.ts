@@ -41,6 +41,8 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
         "late_fee", "lumper", "fuel", "repairs_maintenance", "other",
         "short_miles", "rate_loaded", "loaded_pay", "empty_miles", "rate_empty", "deadhead_pay", "gross", "margin", "margin_pct",
         "settlement",
+        // U3 — the ledger's own cost for the load (computed after the main query; sorted in code below).
+        "ledger_cost",
       ]).default("load"),
       sort_direction: z.enum(["asc", "desc"]).default("desc"),
       /** LOAD-COSTS-COMPLETE item (3): voided (cancelled) loads hidden by default. */
@@ -56,6 +58,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
       // click same as every other column.
       const marginSql = "(l.rate_total_cents-COALESCE(ec.expense_cents,0)-COALESCE(bc.bill_cents,0)-COALESCE(dp.driver_pay_cents,0))";
       const sortColumns = {
+        ledger_cost: "l.load_number", // re-sorted by ledger_cost_cents after the ledger read
         load: "l.load_number",
         unit: "u.unit_number",
         driver_name: "mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id,l.operating_company_id)",
@@ -390,7 +393,43 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
         [parsed.data.operating_company_id]
       );
       const unmatchedBank = await countUncategorizedTransactions(client, parsed.data.operating_company_id);
-      return { rows: result.rows, unmatched_bank_count: unmatchedBank, linkage: LOAD_COSTS_HUB_LINKAGE };
+      // U3 (owner, 2026-10-03): "the LIVE load set + current cost FROM THE LEDGER". The cost columns above are summed
+      // from the documents (expenses / bills / driver bills); this is what the general ledger itself carries for each
+      // load: expense + cost-of-goods postings, net of reversals, with the balance predicate. A posting's load is the
+      // stamped load_id, or — for postings written before the stamp (0 of 3,523 USMCA cost postings carry one; the
+      // backfill is boarded) — the ledger's own single definition, accounting.posting_source_load_id(). One grouped
+      // read for the whole board, never a per-load scan.
+      const loadIds = (result.rows as Array<{ load_id: string }>).map((r) => r.load_id);
+      const ledger = loadIds.length
+        ? ((await client.query(
+            `SELECT x.load_id::text AS load_id, sum(x.net)::text AS cents
+               FROM (
+                 SELECT COALESCE(p.load_id, accounting.posting_source_load_id(p.source_transaction_type, p.source_transaction_id, p.source_transaction_line_id, p.reversal_of_line_id)) AS load_id,
+                        CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END AS net
+                   FROM accounting.journal_entry_postings p
+                   JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
+                   LEFT JOIN accounting.posting_batches pb ON pb.id = p.posting_batch_id AND pb.operating_company_id = p.operating_company_id
+                   JOIN catalogs.accounts a ON a.id = p.account_id
+                  WHERE p.operating_company_id = $1::uuid
+                    AND je.status <> 'voided'
+                    AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
+                    AND a.account_type IN ('Expense', 'CostOfGoodsSold', 'OtherExpense')
+               ) x
+              WHERE x.load_id = ANY($2::uuid[])
+              GROUP BY x.load_id`,
+            [parsed.data.operating_company_id, loadIds]
+          )) as { rows: Array<{ load_id: string; cents: string }> })
+        : { rows: [] as Array<{ load_id: string; cents: string }> };
+      const ledgerByLoad = new Map(ledger.rows.map((r) => [r.load_id, Number(r.cents)]));
+      const rows = (result.rows as Array<Record<string, unknown> & { load_id: string }>).map((r) => ({
+        ...r,
+        ledger_cost_cents: ledgerByLoad.get(r.load_id) ?? 0,
+      }));
+      if (parsed.data.load_costs_sort === "ledger_cost") {
+        const dir = parsed.data.sort_direction === "asc" ? 1 : -1;
+        rows.sort((a, b) => (a.ledger_cost_cents - b.ledger_cost_cents) * dir);
+      }
+      return { rows, unmatched_bank_count: unmatchedBank, linkage: LOAD_COSTS_HUB_LINKAGE };
     });
   });
 

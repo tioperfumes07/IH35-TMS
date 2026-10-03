@@ -611,7 +611,7 @@ export function DispatchPage({
         view === "truck-line" ? (
           <TruckLineBoard
             operatingCompanyId={defaultCompanyIds[0] ?? ""}
-            onLoadClick={(loadId) => navigate(`/accounting/load-costs/${loadId}`)}
+            onLoadClick={(loadId) => navigate(`/dispatch/load-costs/${loadId}`)}
             onAssignDriver={(assignDriverId, assignUnitId) => {
               setBookDriverId(assignDriverId);
               setBookUnitId(assignUnitId);

@@ -68,19 +68,20 @@ function violations(drawer, costs, board, routes, backend, finance, sidebar, dis
   // scheduled_delivery_at still flows through the backend response for Status's own On Time/Late
   // computation and for any other consumer (e.g. DispatchLoadCostsPanel).
   if (!board.includes("PU Date") || !board.includes("Del Date")) errors.push("Load costs board missing the locked PU Date / Del Date columns");
-  if (!routes.includes('path="/accounting/load-costs"') || !drawer.includes('initialTab?: DrawerTab')) errors.push("Costs board route or drawer deep-link contract is missing");
+  if (!routes.includes('path="/dispatch/load-costs"') || !drawer.includes('initialTab?: DrawerTab')) errors.push("Costs board route or drawer deep-link contract is missing");
   if (!backend.includes("LEFT JOIN bill_costs") || !backend.includes("SUM(ROUND(bl.amount * 100))") || !backend.includes("e.load_id IS NOT NULL")) errors.push("per-load expense/bill allocation is not enforced");
   if (!backend.includes("LOAD_COSTS_HUB_LINKAGE") || !backend.includes("org.companies") || !backend.includes("maintenance.work_orders")) errors.push("Load costs board is missing the twelve-hub declaration");
   if (backend.includes("INSERT INTO") || backend.includes("UPDATE accounting") || backend.includes("DELETE FROM")) errors.push("Costs board backend introduced a writer");
   if (!backend.includes('"Dispatcher"')) errors.push("load-costs-board GET must stay readable while dispatching");
-  if (!finance.includes('to: "/accounting/load-costs"') || !finance.includes('label: "Load costs"')) errors.push("Finance hub door to the same Load costs page is missing");
+  if (!finance.includes('to: "/dispatch/load-costs"') || !finance.includes('label: "Load costs"')) errors.push("Finance hub door to the same Load costs page is missing");
   if (finance.includes("LoadCostsBoardPage")) errors.push("Finance hub forked Load costs instead of linking the one page");
-  if (!sidebar.includes('{ label: "Load costs", to: "/accounting/load-costs" }')) errors.push("Finance flyout door to Load costs is missing");
+  if (!sidebar.includes('{ label: "Load costs", to: "/dispatch/load-costs" }')) errors.push("Finance flyout door to Load costs is missing");
   if (!dispatch.includes("<DispatchLoadCostsPanel") || !panel.includes("/api/v1/accounting/load-costs-board") || !panel.includes("listAllLoads")) errors.push("Dispatch does not reuse the load-costs-board read model");
   if (!panel.includes("Approximate") || !panel.includes("data-testid=\"dispatch-load-costs-panel\"")) errors.push("Dispatch load-cost metrics dropped Approximate or the live proof hook");
   if (panel.includes('method: "POST"') || panel.includes("INSERT INTO")) errors.push("Dispatch load-cost panel writes");
-  if (!subnav.includes('{ label: "Load costs", path: "/accounting/load-costs", section: "expenses" }')) errors.push("Expenses dropdown Load costs entry was removed");
-  if (!dnav.includes('{ label: "Load costs", href: "/accounting/load-costs" }')) errors.push("Dispatch menu has no Load costs entry — a buried panel is not a door");
+  // U3 (owner, 2026-10-03): Load costs left Accounting for Dispatch — it must NOT come back into the Accounting sub-nav.
+  if (/label: "Load costs", path:/.test(subnav)) errors.push("Load costs is back in the Accounting sub-nav — U3: it lives in Dispatch");
+  if (!dnav.includes('{ label: "Load costs", href: "/dispatch/load-costs" }')) errors.push("Dispatch menu has no Load costs entry — a buried panel is not a door");
   return errors;
 }
 
@@ -136,12 +137,12 @@ if (process.argv.includes("--selftest")) {
     [drawer, costs.replace('data-testid="load-costs-new-menu"', 'data-testid="load-costs-no-menu"'), board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
     [drawer, costs.replaceAll("No costs on this load yet.", "No rows."), board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
     [drawer, costs, board.replaceAll("/api/v1/accounting/load-costs-board", "/api/v1/accounting/parallel-costs"), routes, backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
-    [drawer, costs, board, routes.replace('path="/accounting/load-costs"', 'path="/accounting/costs"'), backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
-    [drawer, costs, board, routes, backend, finance.replaceAll("/accounting/load-costs", "/finance/load-costs"), sidebar, dispatch, panel, subnav, dnav, dpage],
+    [drawer, costs, board, routes.replace('path="/dispatch/load-costs"', 'path="/accounting/costs"'), backend, finance, sidebar, dispatch, panel, subnav, dnav, dpage],
+    [drawer, costs, board, routes, backend, finance.replaceAll("/dispatch/load-costs", "/finance/load-costs"), sidebar, dispatch, panel, subnav, dnav, dpage],
     [drawer, costs, board, routes, backend, finance, sidebar.replaceAll("Load costs", "Load P&L"), dispatch, panel, subnav, dnav, dpage],
     [drawer, costs, board, routes, backend, finance, sidebar, dispatch.replace("<DispatchLoadCostsPanel", "<div"), panel, subnav, dnav, dpage],
     [drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel.replaceAll("Approximate", "Final"), subnav, dnav, dpage],
-    [drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav.replace("Load costs", "Load spend"), dnav, dpage],
+    [drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav + '\n  { label: "Load costs", path: "/dispatch/load-costs", section: "expenses" },', dnav, dpage],
     [drawer, costs, board, routes, backend, finance, sidebar, dispatch, panel, subnav, dnav.replace("Load costs", "Load spend"), dpage],
   ];
   let caught = 0;

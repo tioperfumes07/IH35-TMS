@@ -11,7 +11,7 @@
  *     UPDATE of mdata.loads.status in the new Truck Line route files themselves
  * (d) a refused transition renders the server reason (never fails silently)
  * (e) no-ping renders the red text
- * (f) double-click routes to /accounting/load-costs/:loadId
+ * (f) double-click routes to /dispatch/load-costs/:loadId
  * (g) all 4 existing view segments (Kanban/List/Round Trips/Trip Pairing) still present, additive
  * (h) V7 (ROUND 18.5, owner ruling 2026-09-11 20:55 CT) -- station.ts's own 9-index model is
  *     UNCHANGED (other surfaces/tests depend on that shape); the board's 7-label V7_STATIONS is a
@@ -92,8 +92,8 @@ export function verify(files) {
   if (!/No ping/.test(boardTsx)) problems.push('(e) TruckLineBoard.tsx must render "No ping" text when a unit has no live position');
   if (!/#DC2626/.test(boardTsx)) problems.push("(e) the no-ping / issue text must use the red token, not a silent default color");
 
-  // (f) double-click routes to /accounting/load-costs/:loadId.
-  if (!/\/accounting\/load-costs\/\$\{loadId\}/.test(dispatchTsx)) problems.push("(f) Dispatch.tsx's TruckLineBoard onLoadClick must navigate to /accounting/load-costs/:loadId");
+  // (f) double-click routes to /dispatch/load-costs/:loadId.
+  if (!/\/dispatch\/load-costs\/\$\{loadId\}/.test(dispatchTsx)) problems.push("(f) Dispatch.tsx's TruckLineBoard onLoadClick must navigate to /dispatch/load-costs/:loadId");
   if (!/onDoubleClick/.test(boardTsx)) problems.push("(f) TruckLineBoard.tsx's truck card must open the load on DOUBLE-click, not single-click");
 
   // (g) additive — Kanban/List/Round Trips/Trip Pairing all still present alongside Truck Line.
@@ -262,7 +262,7 @@ function runSelftest() {
     ["(c) office route stopped using the shared stamp function", { ...good, stopStampRoutes: good.stopStampRoutes.replaceAll("stampStopArrival", "REMOVED").replaceAll("stampStopDeparture", "REMOVED") }],
     ["(d) error surfacing removed", { ...good, boardTsx: good.boardTsx.replaceAll("userFacingApiError", "REMOVED") }],
     ["(e) no-ping text removed", { ...good, boardTsx: good.boardTsx.replace(/No ping/g, "REMOVED") }],
-    ["(f) double-click destination changed", { ...good, dispatchTsx: good.dispatchTsx.replace("/accounting/load-costs/${loadId}", "/somewhere/else") }],
+    ["(f) double-click destination changed", { ...good, dispatchTsx: good.dispatchTsx.replace("/dispatch/load-costs/${loadId}", "/somewhere/else") }],
     ["(g) a board-view segment removed", { ...good, dispatchTsx: good.dispatchTsx.replace('id: "kanban"', 'id: "REMOVED"') }],
     ["(i) reason validation removed", { ...good, archTabsService: good.archTabsService.replace("reason_not_found", "REMOVED") }],
     ["(h) mapReachedIndexToV7 removed", { ...good, boardTsx: good.boardTsx.replace("function mapReachedIndexToV7", "function REMOVEDmapReachedIndexToV7") }],

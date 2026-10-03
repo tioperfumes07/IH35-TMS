@@ -33,7 +33,7 @@ export function FinanceModuleTabs() {
     ...(loanWizardEnabled ? [{ id: "loan-wizard", label: "Loan Wizard", to: "/finance/loan-wizard" }] : []),
     ...(calculatorEnabled ? [{ id: "calculator", label: "Calculator", to: "/finance/calculator" }] : []),
     ...(amortizationEnabled ? [{ id: "amortization", label: "Amortization", to: "/finance/amortization" }] : []),
-    { id: "load-costs", label: "Load costs", to: "/accounting/load-costs" },
+    { id: "load-costs", label: "Load costs", to: "/dispatch/load-costs" },
   ];
 
   return (
@@ -50,7 +50,7 @@ export function FinanceModuleTabs() {
         <Link className="font-medium text-slate-700 underline-offset-2 hover:underline" to="/accounting">
           Accounting
         </Link>
-        <Link className="font-medium text-slate-700 underline-offset-2 hover:underline" to="/accounting/load-costs">
+        <Link className="font-medium text-slate-700 underline-offset-2 hover:underline" to="/dispatch/load-costs">
           Load costs
         </Link>
         <Link className="font-medium text-slate-700 underline-offset-2 hover:underline" to="/cash-flow">

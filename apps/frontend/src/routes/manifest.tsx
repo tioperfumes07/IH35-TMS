@@ -559,6 +559,12 @@ const VendorMappingResolutionPage = React.lazy(() => import("../pages/samsara-ve
 const HosDriverMapPreviewPage = React.lazy(() => import("../pages/samsara-vendor-mapping/HosDriverMapPreviewPage").then((m) => ({ default: m.HosDriverMapPreviewPage })));
 const SamsaraDriverMappingPage = React.lazy(() => import("../pages/samsara-driver-mapping/SamsaraDriverMappingPage").then((m) => ({ default: m.SamsaraDriverMappingPage })));
 
+/** U3 — an old /accounting/load-costs/:loadId link lands on the same load in Dispatch. */
+function LegacyLoadCostsRedirect() {
+  const { loadId } = useParams();
+  return <Navigate to={`/dispatch/load-costs/${loadId ?? ""}`} replace />;
+}
+
 // Tasks module (SIDEBAR-V2-REORG-25)
 const TaskBoardPage = React.lazy(() => import("../pages/tasks/TaskBoardPage").then((m) => ({ default: m.TaskBoardPage })));
 const TasksCalendarPage = React.lazy(() => import("../pages/tasks/TasksCalendarPage").then((m) => ({ default: m.TasksCalendarPage })));
@@ -4309,8 +4315,9 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
+        {/* U3 (owner, 2026-10-03): Load costs lives in Dispatch; the old Accounting paths still land. */}
         <Route
-          path="/accounting/load-costs"
+          path="/dispatch/load-costs"
           element={
             <ProtectedRoute>
               <LoadCostsBoardPage />
@@ -4318,13 +4325,15 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
-          path="/accounting/load-costs/:loadId"
+          path="/dispatch/load-costs/:loadId"
           element={
             <ProtectedRoute>
               <LoadCostsLoadPage />
             </ProtectedRoute>
           }
         />
+        <Route path="/accounting/load-costs" element={<Navigate to="/dispatch/load-costs" replace />} />
+        <Route path="/accounting/load-costs/:loadId" element={<LegacyLoadCostsRedirect />} />
         <Route
           path="/accounting/vendors"
           element={

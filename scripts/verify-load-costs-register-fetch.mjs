@@ -5,7 +5,7 @@
  * rendered "No expenses transactions found" over 207 real entries. Pins:
  *   - the expenses register never asks the API for more than its cap (EXPENSES_PAGE ≤ backend z.max) and pages by offset;
  *   - a register fetch error renders ListErrorState (load-costs-register-error), never the empty-state text;
- *   - Load costs is a top-row leaf in the Accounting sub-nav (leafOf("/accounting/load-costs")).
+ *   - U3 (owner, 2026-10-03): Load costs is NOT in the Accounting sub-nav — it lives in Dispatch (/dispatch/load-costs).
  * --selftest plants each regression and requires the guard to fail.
  */
 import fs from "node:fs";
@@ -22,7 +22,7 @@ function audit(s) {
   if (!/listExpenses\(companyId, \{ limit: EXPENSES_PAGE, offset \}\)/.test(s.board)) p.push("expenses register does not page by offset at the API cap");
   if ((s.board.match(/listAllExpenses\(companyId\)/g) ?? []).length < 2) p.push("both the Expenses/R&M and Fuel advances registers must read through listAllExpenses");
   if (!/if \(q\.isError\) return <div data-testid="load-costs-register-error">/.test(s.board)) p.push("register fetch error is not surfaced (renders as empty state)");
-  if (!/leafOf\("\/accounting\/load-costs"\)/.test(s.nav)) p.push("Load costs is not a top-row leaf in the Accounting sub-nav");
+  if (/leafOf\("\/(accounting|dispatch)\/load-costs"\)/.test(s.nav)) p.push("Load costs is back in the Accounting sub-nav — U3: it lives in Dispatch");
   return p;
 }
 const clean = Object.fromEntries(Object.entries(F).map(([k, v]) => [k, R(v)]));
@@ -31,7 +31,7 @@ if (process.argv.includes("--selftest")) {
     ["page above cap", { ...clean, board: clean.board.replace("const EXPENSES_PAGE = 200;", "const EXPENSES_PAGE = 500;") }],
     ["single 500 call restored", { ...clean, board: clean.board.replace("listExpenses(companyId, { limit: EXPENSES_PAGE, offset })", "listExpenses(companyId, { limit: REGISTER_LIMIT })") }],
     ["error swallowed", { ...clean, board: clean.board.replace('if (q.isError) return <div data-testid="load-costs-register-error">', 'if (false) return <div data-testid="x">') }],
-    ["nav leaf removed", { ...clean, nav: clean.nav.replace('leafOf("/accounting/load-costs")', 'leafOf("/accounting/expenses")') }],
+    ["nav leaf re-added to Accounting", { ...clean, nav: clean.nav + '\n  leafOf("/dispatch/load-costs"),' }],
   ];
   let escaped = 0;
   for (const [l, m] of plants) if (audit(m).length === 0) { console.error(`SELFTEST FAIL — not caught: ${l}`); escaped++; }
