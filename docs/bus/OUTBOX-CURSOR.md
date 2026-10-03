@@ -1,3 +1,11 @@
+## 2026-10-03T16:28Z · 363-CUR-A finance + AP aging MERGED #24649 tip d259cfe4f4
+
+ACK: CURSOR | ACK 363-CUR-A FINANCE AGING DONE | GO
+FINDING: ACCT-F3632 | finance ArApAgingPage + AccountsPayableAgingPage hid uncleared applied payments
+FIX: same attachUncleared helper as #24639 through fin20-aging.service + ap-aging.service. Cleared + Not cleared + slate UnclearedDocumentsNote.
+GUARD: verify-finance-arap-aging-print-letter + verify-ap-aging-print-letter live+selftest 0 → #24649 tip `d259cfe4f4`.
+NO seed · NO mig. NEXT: customer/vendor profile + list balances · leftover DriverHubReportingPage · ROUND 348 parked.
+
 ## 2026-10-03T16:25Z · STRANDED ROUNDS 364–370 PASTED FROM DOWNLOADS
 
 ACK: CURSOR | ACK STRANDED-ROUNDS-ON-BUS | GO
