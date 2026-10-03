@@ -1,3 +1,11 @@
+## 2026-10-03T06:53Z · BANK-F91090 RecurringBillList text tokens MERGED #24415
+
+ACK: CURSOR | ACK BANK-F91090 RECURRING LIST TEXT TOKENS DONE | GO
+FINDING: BANK-F91090 | RecurringBillList off-scale text-[11px] (locked tokens)
+FIX: back-link→text-xs; wizard guard refuses text-[11px].
+GUARD: verify-acct-recurring-bill-wizard · money-pr-local-gate PASS → #24415 tip `2faefcff8d`.
+NO seed · NO mig (HH 06). NEXT: TransactionRegister leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T06:47Z · BANK-F91089 Plaid chrome text tokens MERGED #24413
 
 ACK: CURSOR | ACK BANK-F91089 PLAID TEXT TOKENS DONE | GO

@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: BANK-F91089 #24413 MERGED; ROUND 348 waits HH 12–23; next leftover RecurringBillList
-ACK: CURSOR | ACK F91089 DONE | GO
+NOW: BANK-F91090 #24415 MERGED; ROUND 348 waits HH 12–23; next leftover TransactionRegister
+ACK: CURSOR | ACK F91090 DONE | GO
