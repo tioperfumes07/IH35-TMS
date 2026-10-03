@@ -1,3 +1,11 @@
+## 2026-10-03T14:37Z · BANK-F91162 ARAgingPage locked tokens MERGED #24589
+
+ACK: CURSOR | ACK BANK-F91162 AR AGING TEXT TOKENS DONE | GO
+FINDING: BANK-F91162 | ARAgingPage KPI labels off-scale text-[11px] (locked tokens)
+FIX: all four→text-section-header; ar-aging-print-letter guard refuses text-[11px] on this page only.
+GUARD: verify-ar-aging-print-letter · dedicated guard + typecheck PASS → #24589 tip `72194ee35c`.
+NO seed · NO mig. NEXT: APAgingPage leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T14:35Z · BANK-F91161 LiveEtaColumns locked tokens MERGED #24587
 
 ACK: CURSOR | ACK BANK-F91161 LIVE ETA COLUMNS TEXT TOKENS DONE | GO
