@@ -1981,6 +1981,11 @@
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-03",
       "purpose": "ROUND 373.4: credit memos and vendor credits post — accounting.credit_memos.account_id / journal_entry_id (Dr the income it reduces / Cr A/R) and accounting.vendor_credits.account_id / journal_entry_id (Dr A/P / Cr the expense it reduces), posted at creation through the engine, reversed on void"
+    },
+    "202615370930": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 365.1 every poster resolves by role: widen chart_of_accounts_roles_role_check (interest_receivable, fuel_card_payable_dreamline, accessorial_revenue, driver_settlements_payable) and bind them + broker_customer_advance_liability for USMCA to the accounts the posters already used by number (1260, 2510, 4200, 2200, 2250) -- config only, no posting moves"
     }
   },
   "202613590001": {
