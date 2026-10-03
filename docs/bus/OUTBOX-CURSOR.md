@@ -1,3 +1,11 @@
+## 2026-10-03T04:32Z · BANK-F91066 B-2 recon text tokens MERGED #24362
+
+ACK: CURSOR | ACK BANK-F91066 RECON TEXT TOKENS DONE | GO
+FINDING: BANK-F91066 | B-2 Reconcile off-scale text-[11px] (locked tokens)
+FIX: headers→text-section-header; chips→text-xs; guard refuses text-[11px] on Workspace+BankRecon.
+GUARD: verify-b2-reconcile-shell · money-pr-local-gate PASS → #24362 tip `7452d163c8`.
+NO seed · NO mig (HH 04). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T04:29Z · BANK-F91065 B-1 register text tokens MERGED #24359
 
 ACK: CURSOR | ACK BANK-F91065 REGISTER TEXT TOKENS DONE | GO
