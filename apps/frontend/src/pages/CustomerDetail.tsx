@@ -87,6 +87,7 @@ import { CoiRequestsTab } from "./customers/tabs/CoiRequestsTab";
 import { PortalUsersTab } from "./customers/components/PortalUsersTab";
 import { parseApiErrorPayload } from "../components/forms/useFormValidation";
 import { ListErrorBanner } from "../components/shared/ListErrorBanner";
+import { UnclearedDocumentsNote } from "../components/accounting/UnclearedDocumentsNote";
 import { NavyPageSubNav } from "../components/layout/NavyPageSubNav";
 import { useToast } from "../components/Toast";
 import { DataPanel } from "../components/layout/DataPanel";
@@ -2202,6 +2203,13 @@ export function CustomerDetailPage() {
                   <div>A/R Email: {billingSummary?.ar_email ?? "-"}</div>
                   <div>Terms (days): {billingSummary?.credit_terms_days ?? "-"}</div>
                   <div>Outstanding Balance: {billingSummary?.outstanding_balance_cents == null ? "-" : formatCurrencyCents(billingSummary.outstanding_balance_cents)}</div>
+                  <div>Cleared: {billingSummary?.cleared_open_cents == null ? "-" : formatCurrencyCents(billingSummary.cleared_open_cents)}</div>
+                  <UnclearedDocumentsNote docs={billingSummary?.uncleared_documents ?? []} />
+                  {(billingSummary?.uncleared_cents ?? 0) > 0 ? (
+                    <p className="mt-2 rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
+                      Applied payments that have not been matched or categorized in Banking are named not cleared.
+                    </p>
+                  ) : null}
                 </div>
               </DataPanel>
               <DataPanel title="Detention + Layover Defaults">

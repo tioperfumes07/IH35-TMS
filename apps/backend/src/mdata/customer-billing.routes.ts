@@ -4,6 +4,8 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { attachUncleared, listUnclearedCustomerPayments } from "../accounting/uncleared-applied-documents.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 const paramsSchema = z.object({
   customer_id: z.string().uuid(),
@@ -135,6 +137,14 @@ export async function registerCustomerBillingRoutes(app: FastifyInstance) {
       };
 
       const lastPaymentAt = ((lastPaymentRes.rows[0] as { last_payment_at?: string | null } | undefined)?.last_payment_at ?? null) as string | null;
+      const outstandingCents = Number(agingRow.total_open_cents ?? 0);
+      const uncleared = await listUnclearedCustomerPayments(client, operatingCompanyId, companyBusinessDate());
+      const [cleared] = attachUncleared(
+        [{ customer_id: customerId, open_cents: outstandingCents }],
+        uncleared,
+        "customer_id",
+        (row) => row.open_cents,
+      );
 
       await appendCrudAudit(client, authUser.uuid, "mdata.customers.billing_summary_viewed", {
         resource_id: customerId,
@@ -164,7 +174,15 @@ export async function registerCustomerBillingRoutes(app: FastifyInstance) {
           free_time_delivery_minutes: customer.free_time_delivery_minutes ?? null,
         },
         last_payment_at: lastPaymentAt,
-        outstanding_balance_cents: Number(agingRow.total_open_cents ?? 0),
+        outstanding_balance_cents: outstandingCents,
+        uncleared_cents: cleared?.uncleared_cents ?? 0,
+        cleared_open_cents: cleared?.cleared_open_cents ?? outstandingCents,
+        uncleared_documents: (cleared?.uncleared_documents ?? []).map((d) => ({
+          document_type: d.document_type,
+          document_number: d.document_number,
+          document_date: d.document_date,
+          amount_cents: d.amount_cents,
+        })),
         aging_buckets: {
           current: Number(agingRow.current_cents ?? 0),
           bucket_1_30: Number(agingRow.bucket_1_30_cents ?? 0),

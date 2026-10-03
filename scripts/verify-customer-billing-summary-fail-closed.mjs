@@ -70,6 +70,28 @@ export function check(src) {
     }
   }
 
+  if (!source.includes("UnclearedDocumentsNote")) {
+    failures.push(`${TARGET_FILE}: Credit Terms outstanding must name uncleared documents beside Cleared`);
+  }
+  if (!source.includes("Cleared:") || !source.includes("not cleared")) {
+    failures.push(`${TARGET_FILE}: Credit Terms outstanding must declare Cleared and name not cleared`);
+  }
+  if (!source.includes("bg-slate-100")) {
+    failures.push(`${TARGET_FILE}: uncleared notice must use slate-100, not amber`);
+  }
+
+  return failures;
+}
+
+const BILLING_ROUTE = "apps/backend/src/mdata/customer-billing.routes.ts";
+
+export function checkBillingRoute(src) {
+  const failures = [];
+  const source = src != null ? src : (() => { try { return readReal(BILLING_ROUTE); } catch { return null; } })();
+  if (source == null) return [`${BILLING_ROUTE} not found`];
+  for (const needle of ["listUnclearedCustomerPayments", "attachUncleared", "cleared_open_cents"]) {
+    if (!source.includes(needle)) failures.push(`${BILLING_ROUTE} missing ${needle}`);
+  }
   return failures;
 }
 
@@ -87,6 +109,9 @@ if (process.argv.includes("--selftest")) {
     {!billingSummaryQuery.isError ? (
       <>
         <DataPanel title="Factoring Config">card</DataPanel>
+        <div>Cleared: $0</div>
+        <UnclearedDocumentsNote docs={[]} />
+        <p className="bg-slate-100">named not cleared</p>
       </>
     ) : null}
     <div>
@@ -133,10 +158,14 @@ if (process.argv.includes("--selftest")) {
     </div>
   `;
 
+  const missingCleared = good.replace("Cleared:", "Open:").replace("UnclearedDocumentsNote", "GoneNote");
   const checks = [
     ["fully-fixed shape produces zero failures", check(good).length === 0],
     ["economics cards regressing to no gate is caught", check(regressedFactoring).some((f) => f.includes("economics cards are"))],
     ["aging card regressing to no gate is caught", check(regressedAging).some((f) => f.includes("Receivables Aging card is"))],
+    ["cleared/uncleared chrome regressing is caught", check(missingCleared).some((f) => f.includes("Cleared") || f.includes("uncleared"))],
+    ["billing-summary writer missing attachUncleared is caught", checkBillingRoute("return { outstanding_balance_cents: 0 }").some((f) => f.includes("attachUncleared"))],
+    ["real billing-summary writer currently satisfies this guard", checkBillingRoute().length === 0],
     ["real repo file currently satisfies this guard (no args = real file)", check().length === 0],
   ];
   const failed = checks.filter(([, ok]) => !ok);
@@ -151,7 +180,7 @@ if (process.argv.includes("--selftest")) {
 
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
-  const failures = check();
+  const failures = [...check(), ...checkBillingRoute()];
   if (failures.length) {
     console.error(`${LABEL} FAIL:`);
     for (const f of failures) console.error("  ✗ " + f);
