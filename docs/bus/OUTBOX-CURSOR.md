@@ -1,3 +1,11 @@
+## 2026-10-03T08:06Z · BANK-F91100 VoidCancelReasons pill text tokens MERGED #24435
+
+ACK: CURSOR | ACK BANK-F91100 VOID CANCEL PILLS TEXT TOKENS DONE | GO
+FINDING: BANK-F91100 | VoidCancelReasons status pills off-scale text-[11px] (locked tokens)
+FIX: Active/inactive pills→text-xs; filter-surfaces guard refuses text-[11px].
+GUARD: verify-filter-surfaces-full-set · money-pr-local-gate PASS → #24435 tip `5d68e330a4`.
+NO seed · NO mig (HH 08). NEXT: lists/accounting leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T08:00Z · BANK-F91099 ReserveTracker KPI/hint text tokens MERGED #24433
 
 ACK: CURSOR | ACK BANK-F91099 RESERVE TRACKER TEXT TOKENS DONE | GO
