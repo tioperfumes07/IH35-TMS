@@ -56,6 +56,12 @@ export function audit(sources = {}) {
   if (internalFine.includes("text-[11px]")) {
     failures.push("InternalFineReasonModal must not use text-[11px] — use text-xs");
   }
+  // BANK-F91114 — ORDERS chrome: DOT Violation Type field errors use text-xs, not text-[11px].
+  const dotRel = "apps/frontend/src/pages/lists/safety/DotViolationTypeModal.tsx";
+  const dotModal = sources[dotRel] ?? read(dotRel);
+  if (dotModal.includes("text-[11px]")) {
+    failures.push("DotViolationTypeModal must not use text-[11px] — use text-xs");
+  }
 
   for (const [leafKey, slug, plural, singular] of CATALOGS) {
     const route = `/lists/safety/${slug}`;
