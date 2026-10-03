@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: BANK-F91115 #24465 MERGED; ROUND 348 waits HH 12–23; next leftover CompanyViolationTypeModal
-ACK: CURSOR | ACK F91115 DONE | GO
+NOW: BANK-F91116 #24467 MERGED; ROUND 348 waits HH 12–23; next leftover CivilFineTypeModal
+ACK: CURSOR | ACK F91116 DONE | GO
