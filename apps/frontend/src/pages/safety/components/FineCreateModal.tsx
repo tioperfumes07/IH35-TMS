@@ -403,7 +403,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
                 dataTestId="fine-create-load-entity-picker"
               />
               {suggestionPinned && relatedLoadId && suggestionQuery.data?.data?.load_id === relatedLoadId ? (
-                <p className="text-[11px] text-slate-600" data-testid="fine-create-load-suggested">
+                <p className="text-xs text-slate-600" data-testid="fine-create-load-suggested">
                   Auto-filled from the active trip for this driver/unit on the issued date.
                 </p>
               ) : null}
@@ -449,12 +449,12 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
                 onChange={(event) => setSourceDocFile(event.target.files?.[0] ?? null)}
               />
               {sourceDocFile ? (
-                <span className="text-[11px] text-slate-500" data-testid="fine-source-doc-name">
+                <span className="text-xs text-slate-500" data-testid="fine-source-doc-name">
                   {sourceDocFile.name} — filed under the driver, unit and load selected above.
                 </span>
               ) : null}
               {createMutation.isError && createMutation.variables?.generation === lifecycleGenerationRef.current ? (
-                <span className="text-[11px] text-[#dc2626]" data-testid="fine-create-error">
+                <span className="text-xs text-[#dc2626]" data-testid="fine-create-error">
                   {createMutation.error instanceof Error ? createMutation.error.message : "Could not create the fine."}
                 </span>
               ) : null}
