@@ -8,6 +8,13 @@
  * never a guess. Rows are voided, never deleted (the table refuses DELETE).
  */
 
+/** A unit / driver that is not this company's — refused by name, never inserted on the FK alone. */
+export class FuelCardAssignmentScopeError extends Error {
+  constructor(public code: "unit_not_found_for_company" | "driver_not_found_for_company", message: string) {
+    super(message);
+  }
+}
+
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
@@ -121,6 +128,29 @@ export async function createFuelCardAssignment(
   actorUserId: string,
   input: { card_last_digits: string; unit_id: string; driver_id?: string | null; fuel_card_type_id?: string | null; effective_from: string; effective_to?: string | null; notes?: string | null }
 ): Promise<FuelCardAssignment> {
+  // Entity scope: the FK alone accepts any company's unit / driver (FK checks bypass RLS, and an Owner session sees
+  // every company). Same predicates as the manual fuel-transaction create.
+  const unit = await client.query<{ id: string }>(
+    `SELECT u.id::text AS id FROM mdata.units u
+      WHERE u.id = $1::uuid AND u.deactivated_at IS NULL
+        AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid
+      LIMIT 1`,
+    [input.unit_id, operatingCompanyId]
+  );
+  if (!unit.rows[0]) throw new FuelCardAssignmentScopeError("unit_not_found_for_company", "That truck is not an active unit owned by or leased to this company.");
+  if (input.driver_id) {
+    const driver = await client.query<{ id: string }>(
+      `SELECT d.id::text AS id FROM mdata.drivers d
+        WHERE d.id = $1::uuid AND d.deactivated_at IS NULL
+          AND (d.operating_company_id = $2::uuid
+               OR EXISTS (SELECT 1 FROM mdata.driver_company_authorizations dca
+                           WHERE dca.driver_id = d.id AND dca.company_id = $2::uuid
+                             AND dca.is_authorized = true AND dca.deactivated_at IS NULL))
+        LIMIT 1`,
+      [input.driver_id, operatingCompanyId]
+    );
+    if (!driver.rows[0]) throw new FuelCardAssignmentScopeError("driver_not_found_for_company", "That driver is not an active driver of, or authorized for, this company.");
+  }
   const res = await client.query<{ id: string }>(
     `INSERT INTO fuel.fuel_card_assignments
        (operating_company_id, card_last_digits, unit_id, driver_id, fuel_card_type_id, effective_from, effective_to, notes, created_by_user_id)

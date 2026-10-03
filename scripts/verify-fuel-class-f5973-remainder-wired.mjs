@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["fuel"],"cols":["connectivity"],"leaves":["fuel.modal.create_fuel_transaction","fuel.modal.import_fuel_transactions","fuel.modal.upload_loves_prices","fuel.panel.savings"]} */
 /** @matrix-built {"modules":["fuel"],"cols":["load"],"leaves":["fuel.modal.create_fuel_transaction"]} */
+/** @matrix-built {"modules":["fuel"],"cols":["unit","driver","connectivity","reverse_link"],"leaves":["cards"]} */
 /**
  * CLASS-F5973-TRUE-REMAINDER-FUEL: five Fuel leaves were held in the census's PROTECTED allowlist
  * as genuine remaining gaps. Live-walked all five on prod (own debug Chrome, port 9224, authenticated
@@ -21,6 +22,11 @@
  *   getFuelSavingsSummary(). Live-confirmed: History & savings tab renders a real "Savings Tracker"
  *   panel (Savings YTD driver/fleet, highest-saver, lost-savings, honest empty states).
  *
+ * - cards (E-22 fuel card registry, ROUND 365.6): /fuel/cards mounts FuelCardsPage -> AssignFuelCardDrawer, which
+ *   POSTs a registered /api/v1/fuel/card-assignments with a picked unit (required) and driver; the service refuses a
+ *   unit / driver outside the company by name; unit and driver profiles list their cards back (FuelCardsReverseSection).
+ *   The leaf's `vendor` column is NOT claimed: the registry has no vendor field (fuel_card_type_id is a catalog).
+ *
  * Self-test: node scripts/verify-fuel-class-f5973-remainder-wired.mjs --selftest
  */
 import fs from "node:fs";
@@ -35,6 +41,15 @@ const FILES = {
   uploadModal: "apps/frontend/src/pages/fuel/components/UploadLovesPricesModal.tsx",
   lovesRoute: "apps/backend/src/fuel/loves-upload.routes.ts",
   plannerHome: "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
+  manifest: "apps/frontend/src/routes/manifest.tsx",
+  cardsPage: "apps/frontend/src/pages/fuel/cards/FuelCardsPage.tsx",
+  cardDrawer: "apps/frontend/src/components/fuel/AssignFuelCardDrawer.tsx",
+  cardReverse: "apps/frontend/src/components/fuel/FuelCardsReverseSection.tsx",
+  unitDetail: "apps/frontend/src/pages/units/UnitDetail.tsx",
+  driverProfile: "apps/frontend/src/pages/drivers/DriverProfilePage.tsx",
+  cardRoutes: "apps/backend/src/fuel/fuel-card-assignments.routes.ts",
+  cardService: "apps/backend/src/fuel/fuel-card-assignments.service.ts",
+  index: "apps/backend/src/index.ts",
 };
 const LABEL = "verify-fuel-class-f5973-remainder-wired";
 
@@ -105,6 +120,23 @@ export function audit(src) {
     failures.push(`${FILES.plannerHome}: must mount UploadLovesPricesModal`);
   }
 
+  // cards — connectivity, unit, driver, reverse_link.
+  if (!/path="\/fuel\/cards"[\s\S]{0,120}<FuelTabRoute tabId="cards" \/>/.test(src.manifest) || !/tab === "cards" \? <FuelCardsPage \/>/.test(src.plannerHome) || !/<AssignFuelCardDrawer/.test(src.cardsPage)) {
+    failures.push(`${FILES.cardsPage}: /fuel/cards must mount FuelCardsPage with the Assign card drawer (cards connectivity)`);
+  }
+  if (!/await createFuelCardAssignment\(operatingCompanyId, \{/.test(src.cardDrawer) || !/app\.post\("\/api\/v1\/fuel\/card-assignments",/.test(src.cardRoutes) || !/^\s*await registerFuelCardAssignmentRoutes\(app\);/m.test(src.index)) {
+    failures.push(`${FILES.cardDrawer}: must POST a registered /api/v1/fuel/card-assignments (cards connectivity)`);
+  }
+  if (!/kind="unit"/.test(src.cardDrawer) || !/unit_id: unitId,/.test(src.cardDrawer) || !/"unit_not_found_for_company"/.test(src.cardService) || !/COALESCE\(u\.currently_leased_to_company_id, u\.owner_company_id\) = \$2::uuid/.test(src.cardService)) {
+    failures.push(`${FILES.cardService}: a card must name a picked unit of this company, refused by name otherwise (cards unit)`);
+  }
+  if (!/kind="driver"/.test(src.cardDrawer) || !/driver_id: driverId \|\| null/.test(src.cardDrawer) || !/"driver_not_found_for_company"/.test(src.cardService)) {
+    failures.push(`${FILES.cardService}: a card's driver must be a picked driver of this company, refused by name otherwise (cards driver)`);
+  }
+  if (!/listFuelCardAssignments\(operatingCompanyId, filter\)/.test(src.cardReverse) || !/<FuelCardsReverseSection[\s\S]{0,120}filter=\{\{ unit_id: id \}\}/.test(src.unitDetail) || !/<FuelCardsReverseSection[\s\S]{0,120}filter=\{\{ driver_id: id \}\}/.test(src.driverProfile)) {
+    failures.push(`${FILES.cardReverse}: unit and driver profiles must list their fuel cards back (cards reverse_link)`);
+  }
+
   return failures;
 }
 
@@ -147,6 +179,10 @@ if (process.argv.includes("--selftest")) {
     { key: "plannerHome", from: "CreateFuelTransactionModal", to: "CreateFuelTransactionM0dal" },
     { key: "plannerHome", from: "ImportFuelTransactionsModal", to: "ImportFuelTransactionsM0dal" },
     { key: "plannerHome", from: "UploadLovesPricesModal", to: "UploadLovesPricesM0dal" },
+    { key: "cardsPage", from: "<AssignFuelCardDrawer", to: "<RemovedCardDrawer" },
+    { key: "cardService", from: '"unit_not_found_for_company"', to: '"unit_not_scoped"' },
+    { key: "cardService", from: '"driver_not_found_for_company"', to: '"driver_not_scoped"' },
+    { key: "unitDetail", from: "filter={{ unit_id: id }}", to: "filter={{}}" },
   ];
   let detected = 0;
   for (const m of mutations) {

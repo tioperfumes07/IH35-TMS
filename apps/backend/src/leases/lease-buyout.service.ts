@@ -117,7 +117,7 @@ export async function buyOutLeaseToOwn(opco: string, actorUserId: string, leaseI
 
   // Phase A — the purchase bill (once, by key).
   const planned = await inTx(async (client) => {
-    if (!(await buyoutSchemaReady(client))) throw new LesseePostingError("lease_to_own_asc842_not_applied", "Lease-to-own buyout (migrations 202615210000 + 202615210100) is not applied on this database yet — ask the Lead to apply them.");
+    if (!(await buyoutSchemaReady(client))) throw new LesseePostingError("lease_to_own_asc842_not_applied", "Lease-to-own buyout (migrations 202615210000 + 202615210100) is not applied on this database yet — ask the Lead to apply them.", 503);
     const { c, assets } = await loadState(client, opco, leaseId, input.buyout_date);
     const price = c.kind === "fixed" ? Number(c.price ?? 0) : Number(input.price_cents ?? NaN);
     if (!(Number.isInteger(price) && price >= 0)) throw new LesseePostingError("lease_buyout_price_required", "Enter the purchase price (fair market value) for this buyout.");

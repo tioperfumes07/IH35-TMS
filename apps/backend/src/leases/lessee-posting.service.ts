@@ -80,7 +80,7 @@ export function legPair(amount: number, debitAccount: string, creditAccount: str
  */
 export async function capitalizeLeaseToOwnOnSign(client: DbClient, opco: string, actorUserId: string, leaseId: string) {
   if (!(await lesseeSchemaReady(client))) {
-    throw new LesseePostingError("lease_to_own_asc842_not_applied", "Lease-to-own accounting (migration 202615210000) is not applied on this database yet — ask the Lead to apply it, then sign.", 409);
+    throw new LesseePostingError("lease_to_own_asc842_not_applied", "Lease-to-own accounting (migration 202615210000) is not applied on this database yet — ask the Lead to apply it, then sign.", 503);
   }
   const c = (await client.query<{
     display: string; commencement: string; end_date: string | null; rate: number | null; kind: string | null; price: string | null;

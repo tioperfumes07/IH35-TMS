@@ -8,6 +8,7 @@ import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import {
   createFuelCardAssignment,
   endFuelCardAssignment,
+  FuelCardAssignmentScopeError,
   listFuelCardAssignments,
   resolveUnitByCard,
   voidFuelCardAssignment,
@@ -59,6 +60,7 @@ function requireCardWriteRole(reply: FastifyReply, role: string) {
 
 /** Trigger refusals (same-company, overlap) are the caller's input, not a server fault. */
 function mapDbError(reply: FastifyReply, err: unknown) {
+  if (err instanceof FuelCardAssignmentScopeError) return reply.code(400).send({ error: err.code, message: err.message });
   const e = err as { code?: string; message?: string };
   if (e?.code === "23514" || e?.code === "23P01") return reply.code(e.code === "23P01" ? 409 : 400).send({ error: "refused", detail: e.message });
   throw err;

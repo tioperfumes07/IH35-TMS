@@ -155,7 +155,7 @@ export async function createLeaseAgreement(client: DbClient, opco: string, actor
   const id = res.rows[0].id;
   if (input.lease_type === "lease_to_own") {
     if (!(await lesseeSchemaReady(client))) {
-      throw new LeaseEngineError("lease_to_own_asc842_not_applied", "Lease-to-own accounting (migration 202615210000) is not applied on this database yet — ask the Lead to apply it.", 409);
+      throw new LeaseEngineError("lease_to_own_asc842_not_applied", "Lease-to-own accounting (migration 202615210000) is not applied on this database yet — ask the Lead to apply it.", 503);
     }
     await client.query(
       `UPDATE accounting.lease_contract SET purchase_option_kind = $3, purchase_option_price_cents = $4 WHERE id = $1::uuid AND operating_company_id = $2::uuid`,

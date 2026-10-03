@@ -509,7 +509,11 @@ export async function registerVendorBillPaymentsRoutes(app: FastifyInstance) {
         try {
           const run = await openAndRunIntake(user.uuid, query.data.operating_company_id, "bill_payment", id);
           feed_gate.push({ bill_payment_id: id, intake_id: run.intake.id, status: run.intake.status, checks_failed: run.intake.checks_failed, checks_total: run.intake.checks_total });
-        } catch { /* evidence only; the payment itself already committed through the canonical engine */ }
+        } catch (intakeErr) {
+          // Evidence only; the payment itself already committed through the canonical engine. The intake runs in its
+          // own transaction, but its failure is logged — never silently dropped from the feed-gate trail.
+          req.log.warn({ err: intakeErr, bill_payment_id: id }, "feed_gate_bill_payment_intake_failed");
+        }
       }
       return reply.code(result.code).send({ ...result.data, feed_gate });
     } catch (error) {

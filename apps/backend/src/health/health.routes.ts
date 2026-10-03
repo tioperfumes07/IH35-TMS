@@ -555,8 +555,8 @@ export function backgroundJobRule(
       // "0 5 * * *" = every 1440m -> two missed periods
       return { enabled: true, maxStaleMinutes: 2880 };
     case "maintenance.pm_auto_engine_cron":
-      // "5 * * * *" = every 60m -> two missed periods
-      return { enabled: true, maxStaleMinutes: 120 };
+      // "30 3 * * *" = every 1440m -> two missed periods (E-14 moved PM to one daily run, fa7100a2f5)
+      return { enabled: true, maxStaleMinutes: 2880 };
     case "maintenance.reefer_hours_poll_cron":
       // "*/15 * * * *" = every 15m -> two missed periods
       return { enabled: true, maxStaleMinutes: 30 };

@@ -182,6 +182,9 @@ export async function pushRoutePlanItem(
   api: { upsertRoute: (b: Extract<RoutePlanItem, { action: "push" }>["body"]) => Promise<{ id: string; created: boolean }> }
 ): Promise<{ load_id: string; outcome: "pushed" | "unchanged" | "failed"; samsara_route_id?: string; error?: string }> {
   if ((await lastPushedHash(client, operatingCompanyId, item.load_id)) === item.body_hash) return { load_id: item.load_id, outcome: "unchanged" };
+  // One savepoint per route: a failed write must not poison the transaction (25P02) for the failure record below and
+  // every route the cron pushes after it.
+  await client.query("SAVEPOINT samsara_route_push_item");
   try {
     const r = await api.upsertRoute(item.body);
     await recordRoutePush(client, operatingCompanyId, { load_id: item.load_id, outcome: "pushed", body_hash: item.body_hash, samsara_route_id: r.id, created: r.created, driver_note: item.driver_note }, true, null);
@@ -191,8 +194,10 @@ export async function pushRoutePlanItem(
           AND samsara_route_id IS DISTINCT FROM $3`,
       [item.load_id, operatingCompanyId, r.id]
     );
+    await client.query("RELEASE SAVEPOINT samsara_route_push_item");
     return { load_id: item.load_id, outcome: "pushed", samsara_route_id: r.id };
   } catch (error) {
+    await client.query("ROLLBACK TO SAVEPOINT samsara_route_push_item");
     // Keep Samsara's own reason (SamsaraApiError.body.message) -- "samsara_http_400" alone hid the cause for 64 runs.
     const samsaraReason = (error as { body?: { message?: unknown } })?.body?.message;
     const message = String((error as Error)?.message ?? error) + (samsaraReason ? `: ${String(samsaraReason)}` : "");
