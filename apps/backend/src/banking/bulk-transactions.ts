@@ -1,9 +1,8 @@
 import type { PoolClient } from "pg";
 import { enqueueAccountingOutbox } from "../accounting/outbox-events.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
-import { postSourceTransaction, PostingEngineError } from "../accounting/posting-engine.service.js";
-import { postBillPaymentGlIfEnabled } from "../accounting/bill-payment-gl.service.js";
-import { withCurrentUser } from "../auth/db.js";
+import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
+import { postBillPaymentGlIfEnabledInClientTx } from "../accounting/bill-payment-gl.service.js";
 import { assertBankTxnsNotInReconciledSession } from "./closed-session-immutability.js";
 import { resolveMdataVendorIdBestEffort, resolveVendorIsSampleDataBestEffort } from "../accounting/bills.service.js";
 
@@ -386,15 +385,13 @@ export async function bulkPostTransactionsAsBills(
       );
     }
 
-    await client.query("COMMIT");
+    // ROUND 363-CC1-B / ROUND 369.6 — the A/P leg then the cash leg post on THIS transaction, before COMMIT, through the
+    // engine's in-transaction entrypoint (same client — no second connection, no self-deadlock). The documents and
+    // their postings commit together or not at all: a posting failure throws and the catch below rolls the batch back.
+    // It used to post AFTER commit, best-effort, and keep a committed bill + bill payment with no postings on failure.
+    const glPosting = await postCreatedBillsGlInClientTx(client, input.operatingCompanyId, created, userId);
 
-    // BANKING-GL-COMPLETION — post the A/P leg then the cash leg AFTER the subledger transaction above
-    // committed (postSourceTransaction opens its OWN transaction on its own connection; calling it from
-    // inside the still-open insert transaction would self-deadlock on the very row it needs to lock).
-    // Best-effort + per-bill: gated by the EXISTING BILL_GL_POSTING_ENABLED / BILL_PAYMENT_GL_POSTING_ENABLED
-    // flags (both default OFF, no new flags) — with either flag off this is a strict no-op, matching every
-    // other poster's dark-by-default contract.
-    const glPosting = await postCreatedBillsGl(input.operatingCompanyId, created, userId);
+    await client.query("COMMIT");
 
     return { bill_ids: billIds, bill_payment_ids: billPaymentIds, gl_posting: glPosting };
   } catch (error) {
@@ -404,60 +401,35 @@ export async function bulkPostTransactionsAsBills(
 }
 
 /**
- * BANKING-GL-COMPLETION — shared post-commit GL step for a "post as bill, paid-in-full" batch. Reused
- * verbatim by bank-transaction-splits.service.ts's per-line vendor-bill branch (same shape: a freshly
- * committed bill + its full-amount bill_payment). MUST be called only AFTER the bill/bill_payment rows are
- * committed (each postSourceTransaction call opens its own transaction on its own connection — calling it
- * from inside the still-open insert transaction would self-deadlock on the row's own lock).
- *
- * Gated by the EXISTING BILL_GL_POSTING_ENABLED (bill A/P leg) and BILL_PAYMENT_GL_POSTING_ENABLED (cash
- * leg) flags — both default OFF, no new flags introduced. Best-effort per pair: one bill's posting failure
- * never blocks the rest of the batch or unwinds the already-committed subledger rows.
+ * ROUND 363-CC1-B — the GL step for a "post as bill, paid-in-full" batch, ON THE CALLER'S TRANSACTION. Gated by the
+ * EXISTING BILL_GL_POSTING_ENABLED (bill A/P leg) and BILL_PAYMENT_GL_POSTING_ENABLED (cash leg) flags, read on the
+ * same client. A bill payment is never posted without its bill's A/P leg (the engine's bill-posted-first rule). Any
+ * posting failure THROWS — the caller rolls back, so no bill or bill payment is ever committed without its postings.
  */
-export async function postCreatedBillsGl(
+export async function postCreatedBillsGlInClientTx(
+  client: PoolClient,
   operatingCompanyId: string,
   pairs: Array<{ billId: string; billPaymentId: string }>,
   userId: string
 ): Promise<BulkPostAsBillsResult["gl_posting"]> {
   if (pairs.length === 0) return [];
-
-  const billGlEnabled = await withCurrentUserFlagCheck(operatingCompanyId, userId, BILL_GL_POSTING_FLAG_KEY);
-
+  const billGlEnabled = await isEnabled(client as never, BILL_GL_POSTING_FLAG_KEY, { operating_company_id: operatingCompanyId, user_uuid: userId });
   const results: BulkPostAsBillsResult["gl_posting"] = [];
   for (const pair of pairs) {
     let billPosted = false;
     let billPaymentPosted = false;
-    let errorMessage: string | undefined;
-    try {
-      if (billGlEnabled) {
-        await postSourceTransaction(
-          { operating_company_id: operatingCompanyId, source_transaction_type: "bill", source_transaction_id: pair.billId },
-          { userId }
-        );
-        billPosted = true;
-      }
-      if (billPosted) {
-        const outcome = await postBillPaymentGlIfEnabled(operatingCompanyId, pair.billPaymentId, { userId });
-        billPaymentPosted = outcome.posted;
-      }
-    } catch (err) {
-      errorMessage =
-        err instanceof PostingEngineError ? `${err.code}: ${err.message}` : String((err as Error)?.message ?? err);
+    if (billGlEnabled) {
+      await postSourceTransactionInClientTx(
+        client as never,
+        { operating_company_id: operatingCompanyId, source_transaction_type: "bill", source_transaction_id: pair.billId },
+        { userId }
+      );
+      billPosted = true;
+      const outcome = await postBillPaymentGlIfEnabledInClientTx(client as never, operatingCompanyId, pair.billPaymentId, { userId });
+      billPaymentPosted = outcome.posted;
     }
-    results.push({
-      bill_id: pair.billId,
-      bill_payment_id: pair.billPaymentId,
-      bill_posted: billPosted,
-      bill_payment_posted: billPaymentPosted,
-      ...(errorMessage ? { error: errorMessage } : {}),
-    });
+    results.push({ bill_id: pair.billId, bill_payment_id: pair.billPaymentId, bill_posted: billPosted, bill_payment_posted: billPaymentPosted });
   }
   return results;
 }
 
-async function withCurrentUserFlagCheck(operatingCompanyId: string, userId: string, flagKey: string): Promise<boolean> {
-  return withCurrentUser(userId, async (dbClient) => {
-    await dbClient.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-    return isEnabled(dbClient, flagKey, { operating_company_id: operatingCompanyId, user_uuid: userId });
-  });
-}

@@ -5,7 +5,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { createDriverCashAdvanceCore, resolveCompanyCashAdvanceThresholdDollars, reverseDriverAdvanceInClientTx } from "./cash-advance-create.js";
-import { postBillPaymentGlIfEnabled } from "../accounting/bill-payment-gl.service.js";
+import { postBillPaymentGlIfEnabledInClientTx } from "../accounting/bill-payment-gl.service.js";
 
 const COMPANY_QUERY = z.object({
   operating_company_id: z.string().uuid(),
@@ -423,6 +423,9 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
           "info",
           "BT-3-CASH-ADVANCE-REBUILD"
         );
+        // ROUND 363-CC1-B — the bill payment posts on THIS transaction, as it is created. A posting failure throws and
+        // rolls the disbursement back: there is never a committed bill payment without its postings.
+        await postBillPaymentGlIfEnabledInClientTx(client as never, companyId, linkedBillPaymentId, { userId: user.uuid });
       }
 
       if (body.data.bank_txn_id) {
@@ -496,26 +499,6 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
     });
 
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
-
-    // C6 (GO-23) — the bill_payment INSERT above (linked_bill_id branch) is the SAME data shape
-    // cc-payment.routes.ts already posts via postBillPaymentGlIfEnabled (CHAIN-04: DR ap_control /
-    // CR real bank, gated by BILL_PAYMENT_GL_POSTING_ENABLED, default OFF) — not
-    // disburseDriverAdvanceCore's driver_advance poster, which is the wrong source_transaction_type
-    // for a bill being paid off. Runs AFTER the transaction above committed (postSourceTransaction
-    // opens its own transaction; calling it inside the still-open insert would self-deadlock on the
-    // bill/bill_payment row's own lock) — same reasoning cc-payment.routes.ts documents. Best-effort:
-    // the bill_payment row is already committed either way; a post failure must not surface as a
-    // disbursement error, but must not vanish silently either (SWL-1) — logged.
-    if (result.billPaymentId) {
-      try {
-        await postBillPaymentGlIfEnabled(companyId, result.billPaymentId, { userId: user.uuid });
-      } catch (err) {
-        req.log.warn(
-          { err, bill_payment_id: result.billPaymentId, company_id: companyId, advance_id: params.data.id },
-          "cash_advance_bill_payment_gl_post_failed"
-        );
-      }
-    }
 
     return result.data;
   });

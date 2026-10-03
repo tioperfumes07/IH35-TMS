@@ -38,6 +38,8 @@ contains("apps/backend/src/accounting/role-home/accounting-home.service.ts", ser
   { pattern: /getArAgingReport/, label: "delegates to AR aging read service" },
   { pattern: /getApAgingReport/, label: "delegates to AP aging read service" },
   { pattern: /withCompanyScope/, label: "RLS company scope" },
+  { pattern: /uncleared_cents/, label: "363-CUR-A uncleared cents on home aging" },
+  { pattern: /cleared_open_cents/, label: "363-CUR-A cleared open cents on home aging" },
 ]);
 
 const routes = read("apps/backend/src/accounting/role-home/routes.ts");
@@ -62,6 +64,9 @@ contains("apps/frontend/src/pages/home/roles/AccountingHome.tsx", accountingHome
   { pattern: /fetchAccountingRoleHome/, label: "role-home API fetch" },
   { pattern: /Accounts Receivable Aging/, label: "AR aging buckets" },
   { pattern: /Accounts Payable Aging/, label: "AP aging buckets" },
+  { pattern: /UnclearedDocumentsNote/, label: "363-CUR-A uncleared documents named" },
+  { pattern: /bg-slate-100/, label: "363-CUR-A uncleared notice uses slate not amber" },
+  { pattern: /not cleared/, label: "363-CUR-A not-cleared copy" },
 ]);
 
 read("apps/frontend/src/components/home/AccountingKpiBar.tsx");
@@ -76,6 +81,21 @@ contains("apps/frontend/src/pages/home/HomePage.tsx", homePage, [
 const api = read("apps/frontend/src/api/accountingHome.ts");
 contains("apps/frontend/src/api/accountingHome.ts", api, [
   { pattern: /\/api\/v1\/accounting\/role-home/, label: "frontend API path" },
+  { pattern: /uncleared_cents/, label: "363-CUR-A uncleared cents on FE home type" },
+  { pattern: /cleared_open_cents/, label: "363-CUR-A cleared open cents on FE home type" },
+]);
+
+const kpiBar = read("apps/frontend/src/components/home/AccountingKpiBar.tsx");
+contains("apps/frontend/src/components/home/AccountingKpiBar.tsx", kpiBar, [
+  { pattern: /cleared_open_cents/, label: "KPI bar declares cleared" },
+  { pattern: /Cleared/, label: "KPI bar Cleared hint" },
+]);
+
+const qboHome = read("apps/frontend/src/pages/home/QboStyleHomePage.tsx");
+contains("apps/frontend/src/pages/home/QboStyleHomePage.tsx", qboHome, [
+  { pattern: /UnclearedDocumentsNote/, label: "QBO home names uncleared documents" },
+  { pattern: /bg-slate-100/, label: "QBO home uncleared notice uses slate not amber" },
+  { pattern: /not cleared/, label: "QBO home not-cleared copy" },
 ]);
 
 const docs = read("docs/specs/gap-67-accounting-home-view.md");

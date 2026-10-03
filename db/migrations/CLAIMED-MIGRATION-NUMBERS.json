@@ -1877,6 +1877,11 @@
       "claimed_at": "2026-10-03",
       "purpose": "ROUND 373 ordering (writers, then arm): DISABLE the 26 document-side triggers of 202615360600 until every void path releases the bank lines that name its document; the bank-line and match-row refusals stay armed."
     },
+    "202615360800": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 368.1 / 370 (CC-2): the reclassify engine may change the ACCOUNT of a posted expense line only when, at COMMIT, a reclassify batch line for that exact line carries the live reclass JE that moves the ledger with it (or its undo JE); amount edits stay refused. Replaces the blanket refusal of 202615170700 that refused every expense reclassify."
+    },
     "202615360600": {
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-03",

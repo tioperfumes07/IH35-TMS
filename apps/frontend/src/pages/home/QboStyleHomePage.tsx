@@ -31,6 +31,7 @@ import { fetchHomeCashPosition, fetchHomeTodayRevenue, type HomeKpiRange } from 
 import { HomeKpiRangeToggle, revenueKpiLabel } from "./HomeKpiRangeToggle";
 import { fetchAccountingRoleHome } from "../../api/accountingHome";
 import { getBankingTiles } from "../../api/banking";
+import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDocumentsNote";
 
 /** Money formatter — never labels transport/5xx as Unverifiable. */
 function fmt$(cents: number): string {
@@ -137,6 +138,8 @@ export function QboStyleHomePage({ auth }: Props) {
   const acct = accountingQuery.data;
   const arTotal = acct?.ar_aging.total_outstanding_cents ?? 0;
   const apTotal = acct?.ap_aging.total_outstanding_cents ?? 0;
+  const arCleared = acct?.ar_aging.cleared_open_cents ?? arTotal;
+  const apCleared = acct?.ap_aging.cleared_open_cents ?? apTotal;
   const qboOutbox = acct?.qbo.outbox_depth ?? 0;
   const qboFailed = acct?.qbo.failed_outbox_count ?? 0;
 
@@ -399,6 +402,13 @@ export function QboStyleHomePage({ auth }: Props) {
               <>
                 <p className="text-page-title font-semibold text-gray-900">{fmt$(apTotal)}</p>
                 <p className="text-xs text-slate-600">Outstanding A/P</p>
+                <p className="mt-2 text-xs text-slate-600">Cleared {fmt$(apCleared)}</p>
+                <UnclearedDocumentsNote docs={acct?.ap_aging.uncleared_documents ?? []} />
+                {(acct?.ap_aging.uncleared_cents ?? 0) > 0 ? (
+                  <p className="mt-2 rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700">
+                    Applied payments that have not been matched or categorized in Banking are named not cleared.
+                  </p>
+                ) : null}
                 <p className="mt-3 text-xs text-slate-400">Category breakdown not yet available</p>
               </>
             )}
@@ -434,6 +444,13 @@ export function QboStyleHomePage({ auth }: Props) {
               <>
                 <p className="text-page-title font-semibold text-gray-900">{fmt$(arTotal)}</p>
                 <p className="text-xs text-slate-600">Unpaid (last 365 days)</p>
+                <p className="mt-2 text-xs text-slate-600">Cleared {fmt$(arCleared)}</p>
+                <UnclearedDocumentsNote docs={acct?.ar_aging.uncleared_documents ?? []} />
+                {(acct?.ar_aging.uncleared_cents ?? 0) > 0 ? (
+                  <p className="mt-2 rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700">
+                    Applied payments that have not been matched or categorized in Banking are named not cleared.
+                  </p>
+                ) : null}
                 <div className="mt-3 space-y-1">
                   <div className="flex justify-between text-xs">
                     <span className="text-gray-600">Current (0–30 days)</span>

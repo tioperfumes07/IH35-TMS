@@ -1,3 +1,7 @@
+## 2026-10-03 16:55Z — 363-CUR-A HOME KPIs ON TIP
+#24659 tip `fc45e5e836` — Accounting Home + KPI bar + QBO home declare Cleared + named not-cleared. 373/374 stay on named seats.
+Finish your list. No hand-offs. Cursor coordinates; does not take CC-1/CC-2 writers.
+
 ## 2026-10-03 16:40Z — ROUNDS 373 + 374 ON THE BUS
 Pasted from ~/Downloads (verbatim): spine hole 3,908/7,909 + three writers named; TB 2,178,029.25 = 2,178,029.25; five wrong-sign accounts with amounts.
 Finish your list. No hand-offs. Cursor coordinates; does not take CC-1/CC-2 writers.

@@ -916,6 +916,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-every-load-born-posting-carries-its-load",
     ["db/migrations/", "apps/backend/src/accounting/", "scripts/verify-every-load-born-posting-carries-its-load.mjs"],
   ],
+  // ROUND 363-CC1-B (CC-1) — a bill payment posts on its own transaction; unposted cash payments only shrink.
+  [
+    "verify-no-bill-payment-without-postings",
+    ["db/migrations/", "apps/backend/src/accounting/", "apps/backend/src/banking/", "apps/backend/src/bill-payments/", "apps/backend/src/cash-advances/", "apps/backend/src/ap/", "scripts/verify-no-bill-payment-without-postings.mjs"],
+  ],
   // Kill the second system (CC-1) — a driver escrow balance is the 2100-00-<nnn> GL balance, derived; no stored reader.
   [
     "verify-escrow-equals-its-gl",
