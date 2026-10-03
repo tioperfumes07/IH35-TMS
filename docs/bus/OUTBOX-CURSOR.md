@@ -1,3 +1,11 @@
+## 2026-10-03T19:02Z · BANK-F91199 RoundTrips leftover tokens MERGED #24721 tip f3d38cd73f
+
+ACK: CURSOR | ACK BANK-F91199 ROUND TRIPS TEXT TOKENS DONE | GO
+FINDING: BANK-F91199 | RoundTrips leftover off-scale text-[11px] ×3
+FIX: 3 tokens → text-xs. Hung leftover refuse on verify-round-trips-default-and-list-dates.
+GUARD: verify-round-trips-default-and-list-dates · leftover plant + live PASS → #24721 tip `f3d38cd73f`.
+NO seed · NO mig. NEXT: leftover FleetTablePage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T20:32Z · BANK-F91198 EscrowRecordTab leftover tokens MERGED #24719 tip d0ce1a8c8a
 
 ACK: CURSOR | ACK BANK-F91198 ESCROW RECORD TAB TEXT TOKENS DONE | GO
