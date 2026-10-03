@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { releaseBankLineMatchesWhere } from "./bank-line-release.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
@@ -670,6 +671,12 @@ export async function revokeTransferInClient(
 
   await postTransferGlOnClient(client, operatingCompanyId, transferId, userId, "reversal");
 
+  // ROUND 363-CC3-B — both sides of the revoked transfer let go of it: record each release before the pointers clear.
+  await releaseBankLineMatchesWhere(client, `operating_company_id = $1::uuid AND matched_transfer_id = $2::uuid`, [operatingCompanyId, transferId], {
+    kind: "transfer_revoke",
+    reason: `transfer ${transferId} revoked: ${reason}`,
+    actorUserId: userId,
+  });
   const released = await client.query<{ id: string }>(
     `UPDATE banking.bank_transactions
         SET ${RELEASE_TRANSFER_LINK_SET_SQL}

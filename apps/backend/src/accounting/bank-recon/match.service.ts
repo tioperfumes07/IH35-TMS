@@ -855,7 +855,7 @@ async function storeMatch(
         matched_by_user_uuid
       )
       VALUES ($1::uuid, $2::uuid, $3::text, $4::uuid, $5::numeric, $6::text, now(), $7::uuid)
-      ON CONFLICT (bank_transaction_id, ledger_entry_kind, ledger_entry_id)
+      ON CONFLICT (bank_transaction_id, ledger_entry_kind, ledger_entry_id) WHERE match_state <> 'released'
       DO UPDATE SET
         match_score = EXCLUDED.match_score,
         match_state = EXCLUDED.match_state,

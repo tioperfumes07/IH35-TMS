@@ -252,7 +252,7 @@ export async function registerBankingLinkSuggestionActionsRoutes(app: FastifyIns
             match_score, match_state, matched_at, matched_by_user_uuid
           )
           VALUES ($1::uuid, $2::uuid, $3::text, $4::uuid, 0, 'rejected', now(), $5::uuid)
-          ON CONFLICT (bank_transaction_id, ledger_entry_kind, ledger_entry_id)
+          ON CONFLICT (bank_transaction_id, ledger_entry_kind, ledger_entry_id) WHERE match_state <> 'released'
           DO UPDATE SET
             match_state = 'rejected',
             matched_at = now(),

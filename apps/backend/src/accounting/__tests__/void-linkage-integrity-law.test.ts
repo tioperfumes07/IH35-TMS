@@ -85,33 +85,25 @@ describe("unmatchBankTransactionById — LINKAGE-INTEGRITY-LAW", () => {
     expect(resetCall?.sql).not.toContain("review_state = 'unmatched'");
   });
 
-  it("writes ONE reconciliation_matches 'rejected' row per previously-matched kind, carrying the actor and reason", async () => {
-    const { client, calls } = makeMockClient({
-      matched_load_id: LOAD_ID,
-      matched_bill_id: BILL_ID,
-      matched_settlement_id: null,
-      matched_expense_id: null,
-      matched_transfer_id: null,
-      matched_payment_id: null,
-      matched_bill_payment_id: null,
-    });
+  // ROUND 363-CC3-B — the release is recorded BEFORE the reset, through banking.release_bank_line_matches() (the old
+  // trail read the matched_* ids from the reset's RETURNING row, which real Postgres returns as the NEW, NULL values;
+  // this mock returned the old ids, which is how the empty trail passed).
+  it("records the release of every match BEFORE the reset clears it, with kind 'void', the actor and the reason", async () => {
+    const { client, calls } = makeMockClient({ matched_load_id: LOAD_ID, matched_bill_id: BILL_ID });
 
     await unmatchBankTransactionById(client as never, OPCO, BANK_TX_ID, {
       userId: "user-1",
       reason: "test unmatch reason",
     });
 
-    const matchInserts = calls.filter((c) => /INSERT INTO banking\.reconciliation_matches/.test(c.sql));
-    expect(matchInserts).toHaveLength(2);
-    const kinds = matchInserts.map((c) => c.values[2]);
-    expect(kinds.sort()).toEqual(["bill", "load"]);
-    for (const call of matchInserts) {
-      expect(call.sql).toContain("voided_at");
-      expect(call.sql).toContain("void_reason");
-      expect(call.sql).toContain("voided_by_user_id");
-      expect(call.values).toContain("user-1");
-      expect(call.values).toContain("test unmatch reason");
-    }
+    const iRelease = calls.findIndex((c) => /banking\.release_bank_line_matches\(id,/.test(c.sql));
+    const iReset = calls.findIndex((c) => /^\s*UPDATE banking\.bank_transactions/.test(c.sql));
+    expect(iRelease).toBeGreaterThanOrEqual(0);
+    expect(iRelease).toBeLessThan(iReset);
+    const release = calls[iRelease];
+    expect(release.sql).toContain("id = $2::uuid");
+    expect(release.values).toEqual([OPCO, BANK_TX_ID, "void", "test unmatch reason", "user-1"]);
+    expect(calls.some((c) => /match_state = 'rejected'/.test(c.sql))).toBe(false);
   });
 
   it("writes ZERO reconciliation_matches rows when nothing was matched (no-op on an unmatched row)", async () => {
@@ -142,16 +134,8 @@ describe("unmatchBankTransactionById — LINKAGE-INTEGRITY-LAW", () => {
 });
 
 describe("unmatchBankTransactionsForVoid — LINKAGE-INTEGRITY-LAW", () => {
-  it("records a voided match tagged with the void's own entityType/entityId in the reason", async () => {
-    const { client, calls } = makeMockClient({
-      matched_bill_id: BILL_ID,
-      matched_load_id: null,
-      matched_settlement_id: null,
-      matched_expense_id: null,
-      matched_transfer_id: null,
-      matched_payment_id: null,
-      matched_bill_payment_id: null,
-    });
+  it("releases the matches of every line the void resets, tagged with the void's own entityType/entityId", async () => {
+    const { client, calls } = makeMockClient({ matched_bill_id: BILL_ID });
 
     const n = await unmatchBankTransactionsForVoid(
       client as never,
@@ -160,10 +144,12 @@ describe("unmatchBankTransactionsForVoid — LINKAGE-INTEGRITY-LAW", () => {
     );
 
     expect(n).toBe(1);
-    const matchInsert = calls.find((c) => /INSERT INTO banking\.reconciliation_matches/.test(c.sql));
-    expect(matchInsert?.values[2]).toBe("bill");
-    expect(matchInsert?.values).toContain("user-2");
-    expect(matchInsert?.values.some((v) => typeof v === "string" && v.includes(BILL_ID))).toBe(true);
+    const iRelease = calls.findIndex((c) => /banking\.release_bank_line_matches\(id,/.test(c.sql));
+    const iReset = calls.findIndex((c) => /^\s*UPDATE banking\.bank_transactions/.test(c.sql));
+    expect(iRelease).toBeGreaterThanOrEqual(0);
+    expect(iRelease).toBeLessThan(iReset);
+    expect(calls[iRelease].sql).toContain("linked_entity_id = $2::uuid");
+    expect(calls[iRelease].values).toEqual([OPCO, BILL_ID, "void", `void: bill ${BILL_ID}`, "user-2"]);
   });
 
   // ACC-20 — same fix, shared SQL: voiding a document must release its bank transaction's
