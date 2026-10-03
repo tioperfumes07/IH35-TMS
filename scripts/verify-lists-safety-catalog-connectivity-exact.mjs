@@ -80,6 +80,12 @@ export function audit(sources = {}) {
   if (civilModal.includes("text-[11px]")) {
     failures.push("CivilFineTypeModal must not use text-[11px] — use text-xs");
   }
+  // BANK-F91118 — ORDERS chrome: Cargo Claim Reason field errors use text-xs, not text-[11px].
+  const cargoRel = "apps/frontend/src/pages/lists/safety/CargoClaimReasonModal.tsx";
+  const cargoModal = sources[cargoRel] ?? read(cargoRel);
+  if (cargoModal.includes("text-[11px]")) {
+    failures.push("CargoClaimReasonModal must not use text-[11px] — use text-xs");
+  }
 
   for (const [leafKey, slug, plural, singular] of CATALOGS) {
     const route = `/lists/safety/${slug}`;
