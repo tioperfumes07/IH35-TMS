@@ -35,7 +35,10 @@ import { EntityPicker } from "../../components/EntityPicker";
 const PAGE = 100;
 const SOURCE_TYPES = ["expense", "bill", "invoice", "bill_payment", "customer_payment", "deposit", "driver_settlement", "fuel_transaction", "journal_entry"] as const;
 
-function firstOfPrevMonth() { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); return d.toISOString().slice(0, 10); }
+// The register's default window is fiscal year to date (Jan 1 -> today). An account's balance in the tree is everything
+// posted through the To date, so a one-month window (the old last-month-to-today default) could never list what the
+// balance counts — and USMCA's whole book (operating since 2026-08-07) sits inside the fiscal year.
+function firstOfFiscalYear() { return `${new Date().getFullYear()}-01-01`; }
 function today() { return new Date().toISOString().slice(0, 10); }
 
 /** ROUND 370 — every document type opens its own document (the account register's drill map), never a bare JE. */
@@ -100,13 +103,17 @@ export function ReclassifyTransactionsPage() {
   // Owner ruling (Round 83): account numbers hidden by default, shown only when the toggle is on.
   const [showAccountNumbers, setShowAccountNumbers] = useShowAccountNumbers();
 
-  const [fromDate, setFromDate] = useState(firstOfPrevMonth());
+  const [fromDate, setFromDate] = useState(firstOfFiscalYear());
   const [toDate, setToDate] = useState(today());
   const [accountId, setAccountId] = useState<string | null>(null);
   const [sourceType, setSourceType] = useState<string>("");
   const [classId, setClassId] = useState<string>("");
   const [search, setSearch] = useState("");
-  const [applied, setApplied] = useState<{ from: string; to: string; accountId: string | null; sourceType: string; classId: string; search: string; itemId?: string; loadId?: string } | null>(null);
+  // The register LOADS ON OPEN (every account, the default window): it used to start null, and the lines query only runs
+  // once `applied` is set, so the page opened empty until a click or Find.
+  const [applied, setApplied] = useState<{ from: string; to: string; accountId: string | null; sourceType: string; classId: string; search: string; itemId?: string; loadId?: string } | null>(() => ({
+    from: firstOfFiscalYear(), to: today(), accountId: null, sourceType: "", classId: "", search: "",
+  }));
   // ROUND 368.1 — statement side, inactive toggle, sort, by-item / by-load selectors.
   const [side, setSide] = useState<Side>("profit_and_loss");
   const [includeInactive, setIncludeInactive] = useState(false);
