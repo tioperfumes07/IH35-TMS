@@ -138,3 +138,9 @@ CC-2 also has `docs/bus/10-03-2026-CC-2-ROUND-364-ACCOUNTING-MODULE-REGISTER-364
 **369.8** Delete both Neon forks — yes, after confirming by name that neither is prod.
 **369.9** The fresh-DB main reds block all four seats and go first.
 **369.10** NEW: 0 of 173 USMCA drivers carry `integration_id`, so every Relay fill resolves no driver. Blocks the re-upload. Resolve what can be resolved, leave the rest NULL and list them by name, never guess a driver onto fuel.
+
+## ROUND 370 — THE RECLASSIFY SCREEN SHOWS A BALANCE AND NO TRANSACTIONS — TOP OF YOUR LIST
+
+`docs/bus/10-03-2026-CC-2-ROUND-370-THE-RECLASSIFY-SCREEN-RENDERS-BALANCES-WITH-NO-TRANSACTIONS.md`
+
+Same shape as 367.1 on a second screen: the reader that AGGREGATES finds the data, the reader that LISTS returns nothing. A sum over zero rows is zero, so a real balance is proof the rows exist and the list query is wrong. Check scope, an invisible default filter, the POOLED connection (0 pooled vs 284 direct is measured), a join dropping rows, a NULL ordering key. Required value: balance and rendered row count consistent from the same connection and scope, for three accounts including one at 0.00, both queries pasted. It blocks the purge — the owner is auditing his book before deleting it and cannot open a single number. If it turns out to be the pooler, say so the minute you know: that answer changes every empty surface at once.
