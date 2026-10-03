@@ -9981,5 +9981,11 @@
     "claimed_at": "2026-10-02",
     "purpose": "ROUND 342 — verify-r342-entity-code-company-scoped + verify-r342-factor-reserve-oci-field (tenant_id→OCI trap on v_factor_reserve_balance)",
     "pr": null
+  },
+  "12328": {
+    "claimed_by": "CURSOR",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 342.1 — verify-r3421-unit-plates-identity-user-company-scoped",
+    "pr": null
   }
 }
