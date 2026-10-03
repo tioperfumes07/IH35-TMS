@@ -53,8 +53,11 @@ export function run() {
     register.includes("gearExtra={") &&
       register.includes("Transaction details") &&
       register.includes("Rows per page (register)") &&
-      register.includes('data-testid="banking-add-new-vendors-automation-not-wired"'),
-    "the ONE gear's gearExtra must still carry the transaction-detail toggles, the register's own page-size control, and the automation honesty checkbox",
+      register.includes('data-testid="banking-add-new-vendors-automation-not-wired"') &&
+      // BANK-F91058 — ORDERS §18 Groups · Turn off grouping lives in the ONE gear (not only toolbar).
+      register.includes('data-testid="banking-gear-groups"') &&
+      register.includes("Turn off grouping"),
+    "the ONE gear's gearExtra must still carry the transaction-detail toggles, Groups/Turn off grouping, the register's own page-size control, and the automation honesty checkbox",
     errors
   );
   assert(

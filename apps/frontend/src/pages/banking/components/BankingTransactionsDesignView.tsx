@@ -3895,6 +3895,15 @@ export function BankingTransactionsDesignView({
               <ToggleLine label="Match status" checked={viewSettings.showMatchStatus} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showMatchStatus: checked }))} />
               <ToggleLine label="Reference" checked={viewSettings.showReference} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showReference: checked }))} />
               <ToggleLine label="Posted JE" checked={viewSettings.showPostedJe} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showPostedJe: checked }))} />
+              {/* BANK-F91058 — ORDERS §18 Groups · Turn off grouping (same state as toolbar All dates).
+                  Nested under Also show (no new text-[11px] header — UI ratchet backslide lock). */}
+              <span data-testid="banking-gear-groups" className="col-span-2">
+                <ToggleLine
+                  label="Turn off grouping"
+                  checked={viewSettings.turnOffGrouping}
+                  onChange={(checked) => setViewSettings((prev) => ({ ...prev, turnOffGrouping: checked }))}
+                />
+              </span>
             </div>
             <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Automation review</p>
             <label
