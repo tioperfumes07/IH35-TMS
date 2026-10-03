@@ -317,7 +317,8 @@ export async function getLease(client: DbClient, opco: string, leaseId: string) 
     [leaseId, opco]
   )).rows;
   // ROUND 321: the ASC 842 lessee schedule (lease-to-own), each period with its bill and JE (both ways).
-  const schedule = (await lesseeSchemaReady(client))
+  const lesseeReady = await lesseeSchemaReady(client);
+  const schedule = lesseeReady
     ? (await client.query(
         `SELECT s.id::text, s.lease_asset_line_id::text, s.period_no, s.period_start::text, s.payment_cents, s.interest_cents, s.principal_cents,
                 s.liability_open_cents, s.liability_close_cents, s.rou_amortization_cents, s.rou_close_cents, s.lease_cost_cents,
@@ -329,7 +330,9 @@ export async function getLease(client: DbClient, opco: string, leaseId: string) 
         [leaseId, opco]
       )).rows
     : [];
-  return { lease: head, assets, bills, schedule };
+  // ROUND 381.4 — an empty schedule says WHY when the lessee schema is not on this database, never silently [].
+  const schedule_unavailable_reason = lesseeReady ? null : "Lease-to-own accounting (migration 202615210000) is not applied on this database yet.";
+  return { lease: head, assets, bills, schedule, schedule_unavailable_reason };
 }
 
 /** Reverse: a unit / trailer profile's leases, their monthly amount, bills and payments. */

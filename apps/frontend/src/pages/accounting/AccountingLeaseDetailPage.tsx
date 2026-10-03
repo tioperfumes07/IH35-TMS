@@ -186,6 +186,9 @@ export function AccountingLeaseDetailPage() {
               {l.buyout_je_id ? <span><EntityLink kind="journal_entry" id={String(l.buyout_je_id)} label="ROU to fixed asset JE" className="font-semibold underline" /></span> : null}
             </section>
           ) : null}
+          {l.lease_type === "lease_to_own" && query.data?.schedule_unavailable_reason ? (
+            <div className="rounded border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700" role="status" data-testid="lease-lessee-schedule-unavailable">{query.data.schedule_unavailable_reason}</div>
+          ) : null}
           {(query.data?.schedule ?? []).length ? (
             <ParityTable embedded rows={query.data?.schedule ?? []} columns={scheduleColumns(assetLabels)} rowKey={(r) => r.id} storageKey="lease-lessee-schedule" exportFilename="lease-asc842-schedule" tableTestId="lease-lessee-schedule-table" emptyText="No ASC 842 schedule." />
           ) : null}
