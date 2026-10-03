@@ -101,6 +101,13 @@ function runChecks(root = ROOT) {
     if (detail.includes("text-[11px]")) fails.push(`${detailRel}: must not use text-[11px] — use text-section-header`);
     if (!detail.includes("text-section-header")) fails.push(`${detailRel}: status pill must use text-section-header`);
   }
+  // BANK-F91097 — ORDERS chrome: FactoringHome filter labels use text-xs, not text-[11px].
+  const homeRel = "apps/frontend/src/pages/factoring/FactoringHome.tsx";
+  const homeAbs = path.join(root, homeRel);
+  if (fs.existsSync(homeAbs)) {
+    const home = fs.readFileSync(homeAbs, "utf8");
+    if (home.includes("text-[11px]")) fails.push(`${homeRel}: must not use text-[11px] — use text-xs`);
+  }
   return fails;
 }
 
