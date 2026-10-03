@@ -148,7 +148,7 @@ export async function listSubmissionQueueInvoices(
         FROM factoring.customer_factor_assignment cfa
         JOIN factoring.factor f ON f.id = cfa.factor_id AND f.voided_at IS NULL
         WHERE cfa.customer_id = COALESCE(c.id, c2.id)
-          AND cfa.tenant_id   = $1::uuid
+          AND COALESCE(cfa.operating_company_id, cfa.tenant_id) = $1::uuid
           AND cfa.voided_at   IS NULL
           AND cfa.effective_from <= COALESCE(i.issue_date, CURRENT_DATE)
           AND (cfa.effective_to IS NULL OR cfa.effective_to > COALESCE(i.issue_date, CURRENT_DATE))
@@ -163,7 +163,7 @@ export async function listSubmissionQueueInvoices(
         AND NOT EXISTS (
           SELECT 1
           FROM factoring.batch b
-          WHERE b.tenant_id = $1::uuid
+          WHERE COALESCE(b.operating_company_id, b.tenant_id) = $1::uuid
             AND i.id = ANY(b.invoice_ids)
             AND b.status NOT IN ('rejected')
         )

@@ -308,6 +308,7 @@ const STEPS = [
   ["verify-bill-payment-overpay-creates-vendor-credit", "scripts/verify-bill-payment-overpay-creates-vendor-credit.mjs"],
   ["verify-r342-entity-code-company-scoped", "scripts/verify-r342-entity-code-company-scoped.mjs"],
   ["verify-r342-factor-reserve-oci-field", "scripts/verify-r342-factor-reserve-oci-field.mjs"],
+  ["verify-r342-dual-scoped-factoring-reads", "scripts/verify-r342-dual-scoped-factoring-reads.mjs"],
   ["verify-r3421-unit-plates-identity-user-company-scoped", "scripts/verify-r3421-unit-plates-identity-user-company-scoped.mjs"],
   ["verify-account-register-ref-no-journal-entry-link", "scripts/verify-account-register-ref-no-journal-entry-link.mjs"],
   ["verify-money-detail-page-uses-ispending", "scripts/verify-money-detail-page-uses-ispending.mjs"],
@@ -493,6 +494,18 @@ const LIVE_DOMAIN_GUARDS = [
       "apps/backend/src/factoring/reserve.service.ts",
       "apps/frontend/src/api/factoring.ts",
       "scripts/verify-r342-factor-reserve-oci-field.mjs",
+    ],
+  ],
+  [
+    "verify-r342-dual-scoped-factoring-reads",
+    [
+      "apps/backend/src/factoring/batch.service.ts",
+      "apps/backend/src/factoring/bank-match.service.ts",
+      "apps/backend/src/factoring/factor.service.ts",
+      "apps/backend/src/factoring/submission-queue.service.ts",
+      "apps/backend/src/factoring/factoring-kpi.service.ts",
+      "apps/backend/src/factoring/company-scope.ts",
+      "scripts/verify-r342-dual-scoped-factoring-reads.mjs",
     ],
   ],
   [

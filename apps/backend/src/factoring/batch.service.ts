@@ -58,9 +58,10 @@ function toNumber(value: unknown): number {
 }
 
 function mapBatchRow(row: Record<string, unknown>): FactoringBatchRow {
+  const companyId = String(row.operating_company_id ?? row.tenant_id ?? "");
   return {
     id: String(row.id),
-    tenant_id: String(row.tenant_id),
+    tenant_id: companyId,
     batch_number: String(row.batch_number),
     status: String(row.status) as FactoringBatchStatus,
     invoice_ids: Array.isArray(row.invoice_ids) ? row.invoice_ids.map((v) => String(v)) : [],
@@ -131,7 +132,7 @@ export async function createDraftBatch(
         AND NOT EXISTS (
           SELECT 1
           FROM factoring.batch b
-          WHERE b.tenant_id = $1::uuid
+          WHERE COALESCE(b.operating_company_id, b.tenant_id) = $1::uuid
             AND i.id = ANY(b.invoice_ids)
         )
     `,
@@ -260,7 +261,7 @@ export async function submitBatch(
       SELECT id::text, status, factor_id::text
       FROM factoring.batch
       WHERE id = $1::uuid
-        AND tenant_id = $2::uuid
+        AND COALESCE(operating_company_id, tenant_id) = $2::uuid
       LIMIT 1
     `,
     [batchId, tenantId]
@@ -293,7 +294,7 @@ export async function submitBatch(
       SET status = 'submitted',
           submitted_at = now()
       WHERE id = $1::uuid
-        AND tenant_id = $2::uuid
+        AND COALESCE(operating_company_id, tenant_id) = $2::uuid
       RETURNING *
     `,
     [batchId, tenantId]
@@ -336,7 +337,7 @@ export async function fundBatch(
       SELECT id::text, status
       FROM factoring.batch
       WHERE id = $1::uuid
-        AND tenant_id = $2::uuid
+        AND COALESCE(operating_company_id, tenant_id) = $2::uuid
       LIMIT 1
     `,
     [batchId, tenantId]
@@ -358,7 +359,7 @@ export async function fundBatch(
       SET status = 'funded',
           funded_at = now()
       WHERE id = $1::uuid
-        AND tenant_id = $2::uuid
+        AND COALESCE(operating_company_id, tenant_id) = $2::uuid
       RETURNING *
     `,
     [batchId, tenantId]
@@ -392,7 +393,7 @@ export async function listBatches(
   deps: { client: Queryable; status?: FactoringBatchStatus }
 ): Promise<FactoringBatchRow[]> {
   const values: unknown[] = [tenantId];
-  const filters = ["tenant_id = $1::uuid"];
+  const filters = ["COALESCE(operating_company_id, tenant_id) = $1::uuid"];
   if (deps.status) {
     values.push(deps.status);
     filters.push(`status = $${values.length}`);
@@ -435,7 +436,7 @@ export async function listCandidateInvoices(
         AND NOT EXISTS (
           SELECT 1
           FROM factoring.batch b
-          WHERE b.tenant_id = $1::uuid
+          WHERE COALESCE(b.operating_company_id, b.tenant_id) = $1::uuid
             AND i.id = ANY(b.invoice_ids)
         )
       ORDER BY i.issue_date DESC NULLS LAST, i.created_at DESC
@@ -465,7 +466,7 @@ export async function getBatchDetail(
       SELECT *
       FROM factoring.batch
       WHERE id = $1::uuid
-        AND tenant_id = $2::uuid
+        AND COALESCE(operating_company_id, tenant_id) = $2::uuid
       LIMIT 1
     `,
     [batchId, tenantId]

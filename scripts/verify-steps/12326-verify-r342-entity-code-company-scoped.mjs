@@ -12,4 +12,8 @@ const r2 = spawnSync(process.execPath, ["scripts/verify-r342-factor-reserve-oci-
   cwd: root,
   stdio: "inherit",
 });
-process.exit(r.status === 0 && r2.status === 0 ? 0 : 1);
+const r3 = spawnSync(process.execPath, ["scripts/verify-r342-dual-scoped-factoring-reads.mjs", "--selftest"], {
+  cwd: root,
+  stdio: "inherit",
+});
+process.exit(r.status === 0 && r2.status === 0 && r3.status === 0 ? 0 : 1);

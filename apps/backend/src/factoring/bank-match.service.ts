@@ -85,7 +85,7 @@ export async function matchBankTxnToFactoringBatch(
         b.expected_advance_cents::bigint,
         b.submitted_at::text
       FROM factoring.batch b
-      WHERE b.tenant_id = $1::uuid
+      WHERE COALESCE(b.operating_company_id, b.tenant_id) = $1::uuid
         AND b.status IN ('submitted', 'funded')
         AND b.submitted_at IS NOT NULL
         AND NOT EXISTS (
@@ -115,7 +115,7 @@ export async function matchBankTxnToFactoringBatch(
   await deps.client.query(
     `
       DELETE FROM factoring.bank_match_suggestion
-      WHERE tenant_id = $1::uuid
+      WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid
         AND bank_txn_id = $2::uuid
         AND applied_at IS NULL
     `,
@@ -191,7 +191,7 @@ export async function getSuggestionsForTxn(
         s.applied_at::text
       FROM factoring.bank_match_suggestion s
       JOIN factoring.batch b ON b.id = s.batch_id
-      WHERE s.tenant_id = $1::uuid
+      WHERE COALESCE(s.operating_company_id, s.tenant_id) = $1::uuid
         AND s.bank_txn_id = $2::uuid
         AND s.applied_at IS NULL
       ORDER BY s.confidence DESC, s.created_at DESC
@@ -220,7 +220,7 @@ export async function applyMatch(suggestionId: string, tenantId: string, deps: {
       SELECT id::text, batch_id::text, bank_txn_id::text, applied_at::text
       FROM factoring.bank_match_suggestion
       WHERE id = $1::uuid
-        AND tenant_id = $2::uuid
+        AND COALESCE(operating_company_id, tenant_id) = $2::uuid
       LIMIT 1
     `,
     [suggestionId, tenantId]
@@ -234,7 +234,7 @@ export async function applyMatch(suggestionId: string, tenantId: string, deps: {
       SELECT 1
       FROM factoring.bank_match_suggestion
       WHERE batch_id = $1::uuid
-        AND tenant_id = $2::uuid
+        AND COALESCE(operating_company_id, tenant_id) = $2::uuid
         AND applied_at IS NOT NULL
       LIMIT 1
     `,
@@ -247,7 +247,7 @@ export async function applyMatch(suggestionId: string, tenantId: string, deps: {
       UPDATE factoring.bank_match_suggestion
       SET applied_at = now()
       WHERE id = $1::uuid
-        AND tenant_id = $2::uuid
+        AND COALESCE(operating_company_id, tenant_id) = $2::uuid
         AND applied_at IS NULL
       RETURNING id::text, bank_txn_id::text, batch_id::text, applied_at::text
     `,
