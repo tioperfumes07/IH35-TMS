@@ -812,6 +812,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-reclassify-shows-every-coa-account-including-zero",
     ["apps/backend/src/accounting/reclassify/", "apps/frontend/src/pages/accounting/ReclassifyTransactionsPage.tsx", "apps/frontend/src/api/reclassify.ts", "db/migrations/202615360800_reclassify_moves_posted_expense_line_account_with_its_entry.sql", "scripts/verify-reclassify-shows-every-coa-account-including-zero.mjs"],
   ],
+  // ROUND 367.1 / LAW 368.3 — two readers on one page agree: the Expenses grid returns every row its banner counts.
+  [
+    "verify-list-count-matches-its-own-banner-count",
+    ["apps/frontend/src/pages/accounting/ExpensesListPage.tsx", "apps/backend/src/accounting/expenses.routes.ts", "scripts/verify-list-count-matches-its-own-banner-count.mjs"],
+  ],
   // ROUND 368.2(b) — a bank line may not sit matched to nothing (deferred constraint triggers, both sides).
   [
     "verify-no-bank-line-is-matched-to-nothing",

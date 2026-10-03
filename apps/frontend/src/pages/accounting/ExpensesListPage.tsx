@@ -215,8 +215,13 @@ export function ExpensesListPage() {
     enabled: Boolean(companyId),
   });
 
+  // ROUND 367.1 — "active" is a PSEUDO-status (= not void), never a row's own status. Matching it literally threw away
+  // every row the server returned for the default filter: the grid read "0 rows" while the duplicate banner counted 22.
   const rows = useMemo(
-    () => (query.data?.rows ?? []).filter((r) => statusFilter.length === 0 || statusFilter.includes(r.status)),
+    () =>
+      (query.data?.rows ?? []).filter(
+        (r) => statusFilter.length === 0 || statusFilter.includes(r.status) || (statusFilter.includes("active") && r.status !== "void")
+      ),
     [query.data?.rows, statusFilter],
   );
 
