@@ -1,3 +1,11 @@
+## 2026-10-03T19:50Z · BANK-F91206 MaintenanceHome leftover tokens MERGED #24741 tip dfa93d0803
+
+ACK: CURSOR | ACK BANK-F91206 MAINT HOME TEXT TOKENS DONE | GO
+FINDING: BANK-F91206 | MaintenanceHome leftover off-scale text-[11px] ×8
+FIX: 8 tokens → text-xs. Hung leftover refuse on verify-maintenance-home-read-recovery.
+GUARD: verify-maintenance-home-read-recovery · leftover plant + live PASS → #24741 tip `dfa93d0803`.
+NO seed · NO mig. NEXT: leftover SafetyEventsPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T19:40Z · BANK-F91205 DispatchChatPage leftover tokens MERGED #24739 tip 37c2a1763a
 
 ACK: CURSOR | ACK BANK-F91205 DISPATCH CHAT TEXT TOKENS DONE | GO
