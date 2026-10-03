@@ -1,3 +1,11 @@
+## 2026-10-03T05:48Z · BANK-F91077 DailyRecon text tokens MERGED #24389
+
+ACK: CURSOR | ACK BANK-F91077 DAILY RECON TEXT TOKENS DONE | GO
+FINDING: BANK-F91077 | DailyReconPage off-scale text-[11px] (locked tokens)
+FIX: filter labels→text-section-header; verify-b2 refuses text-[11px].
+GUARD: verify-b2-reconcile-shell · money-pr-local-gate PASS → #24389 tip `5141632840`.
+NO seed · NO mig (HH 05). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T05:45Z · BANK-F91076 EmailQueue text tokens MERGED #24387
 
 ACK: CURSOR | ACK BANK-F91076 EMAIL QUEUE TEXT TOKENS DONE | GO
