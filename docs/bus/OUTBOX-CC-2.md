@@ -2119,3 +2119,31 @@ roles exactly. Restored, it found a real gap: 4 lease roles in code but not in t
 **Consequence, stated plainly:** USMCA's 1090 and 1295 are negative today, so any new non-reversal credit to them is
 refused until the missing legs post (Relay top-ups categorised as transfers into the wallet; the 1090 sweeps reversed) —
 or until the purge resets them. That is the intended behaviour: the next spend must follow its funding.
+
+## 2026-10-03 — 00-ROOT-CAUSE-THE-SPINE: the poster writes the link; the PURGE stranded the GL (CC-2)
+**The bus premise does not hold, measured on prod.** `posting-engine.service.ts insertPostingLines` writes
+`accounting.transaction_source_links` INSIDE the loop that inserts each posting (same client, same transaction; its
+reversal path too), and `void.service.ts` writes a `reversal_of` link per reversal leg. Patching the poster would have
+added a third copy of a write that is already there.
+**Where the 3,908 unlinked postings came from:** `audit.row_changes` — the AUTH-177 purge
+(`owner_purge_voided_and_sample`) deleted 3,860 expense links at 2026-09-30 17:19:10.188 and 48 invoice links at
+17:28:12.433, in the same transactions that deleted 963 voided expenses + 24 voided invoices (and their lines). It did NOT
+delete their GL: each purged document's original + reversal entries are still posted — 1,930 + 1,930 expense legs and 48
+invoice reversal legs, **net $0.00**, every `source_transaction_id` naming a row that no longer exists.
+963 documents × 2 entries = the bus's **1,926 "wholly unlinked" entries**; zero partial because each entry belonged to one
+deleted document.
+**Per table (USMCA, posted):**
+| source type | postings | unlinked | unlinked with a LIVE document |
+|---|---|---|---|
+| expense | 5,416 | 3,860 (all stranded by purge, net 0) | **0** |
+| invoice | 183 | 48 (all stranded by purge, net 0) | **0** |
+| journal_entry · fuel_event · driver_settlement · load · bill · manual_je · escrow_account · driver_cash_advance · customer_payment · bank_reconciliation | 2,310 | 0 | 0 |
+Same-transaction proof without seeding: every linked expense posting (1,556/1,556) and invoice posting (135/135) has a
+link whose `created_at` equals the posting's — Postgres `now()` is fixed per transaction.
+Trial balance unchanged: **2,178,029.25 / 2,178,029.25 / .00 / 7,909 postings.**
+**Fix (writers, not rows):** no backfill (purge population). The writer is the purge → board
+`PURGE-STRANDS-GL-PAIR-2026100303` (CC-1 route + Lead ops scripts): remove the net-zero GL pair with the document, or keep
+the links — never an entry pointing at nothing.
+**Guard:** `verify-every-posting-has-a-spine-link` (money gate) — CODE: the three writers keep writing the link in the
+posting's own loop/client; LIVE: unlinked posting with a live document **ceiling 0** (supersedes ROUND 342 Order 3's 2);
+stranded-by-purge ceiling expense 3860 / invoice 48, **committed**, shrink-only, must net to 0. Selftest 6/6; live PASS.
