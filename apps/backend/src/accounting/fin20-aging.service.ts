@@ -18,6 +18,12 @@
 import { withCurrentUser } from "../auth/db.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { BILL_JOURNAL_ENTRY_ID_SQL, BILL_JOURNAL_ENTRY_MEMO_SQL } from "./bills.service.js";
+import {
+  attachUncleared,
+  listUnclearedBillPayments,
+  listUnclearedCustomerPayments,
+  type UnclearedDocument,
+} from "./uncleared-applied-documents.js";
 
 export type AgingBuckets = {
   current_cents: number;
@@ -32,12 +38,18 @@ export type ArAgingCustomerRow = AgingBuckets & {
   customer_id: string;
   customer_name: string;
   open_invoice_count: number;
+  uncleared_documents: UnclearedDocument[];
+  uncleared_cents: number;
+  cleared_open_cents: number;
 };
 
 export type ApAgingVendorRow = AgingBuckets & {
   vendor_id: string;
   vendor_name: string;
   open_bill_count: number;
+  uncleared_documents: UnclearedDocument[];
+  uncleared_cents: number;
+  cleared_open_cents: number;
 };
 
 export type ArAgingSummary = {
@@ -169,17 +181,23 @@ export async function getArAgingSummary(input: {
           [input.operating_company_id]
         );
 
-    const customers: ArAgingCustomerRow[] = res.rows.map((r) => ({
-      customer_id: String(r.customer_id),
-      customer_name: String(r.customer_name ?? ""),
-      open_invoice_count: num(r.open_invoice_count),
-      current_cents: num(r.current_cents),
-      bucket_1_30_cents: num(r.bucket_1_30_cents),
-      bucket_31_60_cents: num(r.bucket_31_60_cents),
-      bucket_61_90_cents: num(r.bucket_61_90_cents),
-      bucket_91_plus_cents: num(r.bucket_91_plus_cents),
-      total_open_cents: num(r.total_open_cents),
-    }));
+    const uncleared = await listUnclearedCustomerPayments(client, input.operating_company_id, input.as_of_date);
+    const customers: ArAgingCustomerRow[] = attachUncleared(
+      res.rows.map((r) => ({
+        customer_id: String(r.customer_id),
+        customer_name: String(r.customer_name ?? ""),
+        open_invoice_count: num(r.open_invoice_count),
+        current_cents: num(r.current_cents),
+        bucket_1_30_cents: num(r.bucket_1_30_cents),
+        bucket_31_60_cents: num(r.bucket_31_60_cents),
+        bucket_61_90_cents: num(r.bucket_61_90_cents),
+        bucket_91_plus_cents: num(r.bucket_91_plus_cents),
+        total_open_cents: num(r.total_open_cents),
+      })),
+      uncleared,
+      "customer_id",
+      (row) => row.total_open_cents,
+    );
 
     const totals = customers.reduce<AgingBuckets>((acc, row) => addBuckets(acc, row), emptyBuckets());
     return { as_of_date: input.as_of_date, customers, totals };
@@ -234,17 +252,23 @@ export async function getApAgingSummary(input: {
           [input.operating_company_id]
         );
 
-    const vendors: ApAgingVendorRow[] = res.rows.map((r) => ({
-      vendor_id: String(r.vendor_id),
-      vendor_name: String(r.vendor_name ?? "Unknown vendor"),
-      open_bill_count: num(r.open_bill_count),
-      current_cents: num(r.current_cents),
-      bucket_1_30_cents: num(r.bucket_1_30_cents),
-      bucket_31_60_cents: num(r.bucket_31_60_cents),
-      bucket_61_90_cents: num(r.bucket_61_90_cents),
-      bucket_91_plus_cents: num(r.bucket_91_plus_cents),
-      total_open_cents: num(r.total_open_cents),
-    }));
+    const uncleared = await listUnclearedBillPayments(client, input.operating_company_id, input.as_of_date);
+    const vendors: ApAgingVendorRow[] = attachUncleared(
+      res.rows.map((r) => ({
+        vendor_id: String(r.vendor_id),
+        vendor_name: String(r.vendor_name ?? "Unknown vendor"),
+        open_bill_count: num(r.open_bill_count),
+        current_cents: num(r.current_cents),
+        bucket_1_30_cents: num(r.bucket_1_30_cents),
+        bucket_31_60_cents: num(r.bucket_31_60_cents),
+        bucket_61_90_cents: num(r.bucket_61_90_cents),
+        bucket_91_plus_cents: num(r.bucket_91_plus_cents),
+        total_open_cents: num(r.total_open_cents),
+      })),
+      uncleared,
+      "vendor_id",
+      (row) => row.total_open_cents,
+    );
 
     const totals = vendors.reduce<AgingBuckets>((acc, row) => addBuckets(acc, row), emptyBuckets());
     return { as_of_date: input.as_of_date, vendors, totals };

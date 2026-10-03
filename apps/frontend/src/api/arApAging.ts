@@ -14,16 +14,29 @@ export type AgingBuckets = {
   total_open_cents: number;
 };
 
+export type AgingUnclearedDocument = {
+  document_type: string;
+  document_number: string;
+  document_date: string;
+  amount_cents: number;
+};
+
 export type ArAgingCustomerRow = AgingBuckets & {
   customer_id: string;
   customer_name: string;
   open_invoice_count: number;
+  uncleared_documents: AgingUnclearedDocument[];
+  uncleared_cents: number;
+  cleared_open_cents: number;
 };
 
 export type ApAgingVendorRow = AgingBuckets & {
   vendor_id: string;
   vendor_name: string;
   open_bill_count: number;
+  uncleared_documents: AgingUnclearedDocument[];
+  uncleared_cents: number;
+  cleared_open_cents: number;
 };
 
 export type ArAgingSummary = {

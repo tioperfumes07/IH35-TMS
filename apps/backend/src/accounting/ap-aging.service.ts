@@ -7,6 +7,11 @@ import {
   type QboSyncFreshness,
 } from "../qbo/sync-freshness.js";
 import { AP_BILLS_MIRROR_SYNC_KIND } from "../qbo-sync/ap-bills-sync-kind.js";
+import {
+  attachUncleared,
+  listUnclearedBillPayments,
+  type UnclearedDocument,
+} from "./uncleared-applied-documents.js";
 
 export { AP_BILLS_MIRROR_SYNC_KIND };
 
@@ -36,6 +41,9 @@ export type ApAgingVendorRow = {
   d61_90: number;
   d90_plus: number;
   total_outstanding: number;
+  uncleared_documents: UnclearedDocument[];
+  uncleared_cents: number;
+  cleared_open_cents: number;
 };
 
 export type ApAgingTotals = {
@@ -401,6 +409,9 @@ export async function getApAgingReport(input: {
         d61_90: 0,
         d90_plus: 0,
         total_outstanding: 0,
+        uncleared_documents: [],
+        uncleared_cents: 0,
+        cleared_open_cents: 0,
       };
 
       const bucket = assignAgingBucket(effectiveAsOf, row.due_date);
@@ -409,8 +420,14 @@ export async function getApAgingReport(input: {
       byVendor.set(key, vendor);
     }
 
-    const vendors = Array.from(byVendor.values()).sort(
-      (a, b) => a.vendor_name.localeCompare(b.vendor_name) || (a.vendor_id ?? "").localeCompare(b.vendor_id ?? "")
+    const uncleared = await listUnclearedBillPayments(client, input.operating_company_id, effectiveAsOf);
+    const vendors = attachUncleared(
+      Array.from(byVendor.values()).sort(
+        (a, b) => a.vendor_name.localeCompare(b.vendor_name) || (a.vendor_id ?? "").localeCompare(b.vendor_id ?? ""),
+      ),
+      uncleared,
+      "vendor_id",
+      (row) => row.total_outstanding,
     );
 
     const totals: ApAgingTotals = vendors.reduce(

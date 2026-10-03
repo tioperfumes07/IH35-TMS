@@ -23,6 +23,9 @@ function assertSource() {
   const page = fs.readFileSync(PAGE, "utf8");
   if (!page.includes("printLetterHtml")) fail("AccountsPayableAgingPage must use printLetterHtml");
   if (/onClick=\{\(\) => window\.print\(\)\}/.test(page)) fail("must not window.print() on SPA");
+  if (!page.includes("UnclearedDocumentsNote")) fail("AccountsPayableAgingPage must name uncleared documents via UnclearedDocumentsNote");
+  if (!page.includes("not cleared")) fail("AccountsPayableAgingPage must label uncleared payments not cleared");
+  if (!page.includes("cleared_open_cents")) fail("AccountsPayableAgingPage must show the cleared balance");
 }
 
 function selftest() {

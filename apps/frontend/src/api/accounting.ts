@@ -2105,6 +2105,14 @@ export type ApAgingVendor = {
   d61_90: number;
   d90_plus: number;
   total_outstanding: number;
+  uncleared_documents: Array<{
+    document_type: string;
+    document_number: string;
+    document_date: string;
+    amount_cents: number;
+  }>;
+  uncleared_cents: number;
+  cleared_open_cents: number;
 };
 export type ApAgingTotals = {
   current: number;
