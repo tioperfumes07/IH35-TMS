@@ -1827,6 +1827,11 @@
       "claimed_at": "2026-10-03",
       "purpose": "Dispatch D3: row audit (audit.tg_audit_row) on the 28 unaudited dispatch tables + FORCE ROW LEVEL SECURITY on dispatch.manual_delivery_authorizations"
     },
+    "202615360930": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 368.2(b) re-arm, renumbered from 202615330932: it must sort AFTER 202615360600 (creates the 26 triggers) and 202615360700 (disarms them) so a fresh database ends armed like production; 202615330932 stays claimed, never authored"
+    },
     "202615330932": {
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-03",
