@@ -242,7 +242,7 @@ export function VendorCreditsPage() {
     <div className="flex flex-wrap items-end gap-3" data-vendor-credits-filter-toolbar="collapsed">
       <CollapsedListFilters activeFilterCount={(statusFilter && statusFilter !== "active" ? 1 : 0) + (vendorFilter ? 1 : 0)} testIdPrefix="vendor-credits" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
         <div className="flex flex-wrap gap-2">
-          <label className="text-[11px] text-slate-600">
+          <label className="text-xs text-slate-600">
             Vendor
             <EntityPicker
               kind="vendor"
@@ -366,7 +366,7 @@ export function VendorCreditsPage() {
                   limit={1000}
                   total={vendorsQuery.data?.total ?? null}
                   hint="Type in the vendor field to search the full roster."
-                  className="mt-1 text-[11px] text-slate-600"
+                  className="mt-1 text-xs text-slate-600"
                 />
               </div>
             </label>
