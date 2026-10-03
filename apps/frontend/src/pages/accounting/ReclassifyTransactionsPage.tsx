@@ -6,7 +6,9 @@
  * change account / class / vendor (each optional) + reason → Apply → one RECLASSIFICATION JE per
  * document, audit each, results per document, Undo per batch.
  */
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { naturalCentsForType } from "../../lib/naturalBalance";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
@@ -26,15 +28,12 @@ import { listClassesForJe, listCoaAccountsForJe } from "../../api/accounting";
 import { listCustomers, listVendors } from "../../api/mdata";
 import { FuelStopLocationPicker } from "../../components/locations/FuelStopLocationPicker";
 import {
-  applyReclassify, findReclassifyLines, getReclassifyAccountTree, listReclassifyBatches, undoReclassifyBatch,
+  applyReclassify, findReclassifyLines, getReclassifyAccountTree, getReclassifyFacets, listReclassifyBatches, undoReclassifyBatch,
   type ReclassifyBatchResult, type ReclassifyLine, type ReclassifyTreeAccount,
 } from "../../api/reclassify";
 import { docTarget, notReclassifiable } from "../../lib/reclassifyDrill";
-import { searchQboMasterData } from "../../api/qbo-mdata";
-import { EntityPicker } from "../../components/EntityPicker";
 
 const PAGE = 100;
-const SOURCE_TYPES = ["expense", "bill", "invoice", "bill_payment", "customer_payment", "deposit", "driver_settlement", "fuel_transaction", "journal_entry"] as const;
 
 // The register's default window is fiscal year to date (Jan 1 -> today). An account's balance in the tree is everything
 // posted through the To date, so a one-month window (the old last-month-to-today default) could never list what the
@@ -42,7 +41,49 @@ const SOURCE_TYPES = ["expense", "bill", "invoice", "bill_payment", "customer_pa
 function firstOfFiscalYear() { return `${new Date().getFullYear()}-01-01`; }
 function today() { return new Date().toISOString().slice(0, 10); }
 
-type SortKey = "date" | "type" | "num" | "name" | "memo" | "account" | "item" | "load" | "class" | "debit" | "credit" | "amount" | "balance";
+type SortKey = "date" | "type" | "num" | "name" | "memo" | "account" | "item" | "load" | "truck" | "driver" | "trailer" | "vendor" | "class" | "debit" | "credit" | "amount" | "balance";
+
+/** ROUND 370 (owner) — every filter is a multi-select (MultiSelectDropdown, the app's account / status filter). */
+type Filters = {
+  accountIds: string[]; types: string[]; classIds: string[]; itemIds: string[]; loadIds: string[];
+  truckIds: string[]; driverIds: string[]; trailerIds: string[]; vendorIds: string[]; search: string;
+};
+const NO_FILTERS: Filters = { accountIds: [], types: [], classIds: [], itemIds: [], loadIds: [], truckIds: [], driverIds: [], trailerIds: [], vendorIds: [], search: "" };
+
+/** ROUND 370 (owner) — the register's columns. Optional ones are added from the Columns chooser; the choice is per viewer. */
+type ColKey = "date" | "type" | "num" | "name" | "item" | "memo" | "account_no" | "account" | "load" | "truck" | "driver" | "trailer" | "vendor" | "class" | "debit" | "credit" | "amount" | "balance";
+const COLUMNS: Array<{ key: ColKey; label: string; sort?: SortKey; optional?: boolean; right?: boolean }> = [
+  { key: "date", label: "Date", sort: "date" },
+  { key: "type", label: "Type", sort: "type" },
+  { key: "num", label: "Num", sort: "num" },
+  { key: "name", label: "Name", sort: "name" },
+  { key: "item", label: "Item", sort: "item" },
+  { key: "memo", label: "Memo / description", sort: "memo" },
+  { key: "account_no", label: "Account no." },
+  { key: "account", label: "Account", sort: "account" },
+  { key: "load", label: "Load", sort: "load" },
+  { key: "truck", label: "Truck", sort: "truck", optional: true },
+  { key: "driver", label: "Driver", sort: "driver", optional: true },
+  { key: "trailer", label: "Trailer", sort: "trailer", optional: true },
+  { key: "vendor", label: "Vendor", sort: "vendor", optional: true },
+  { key: "class", label: "Class", sort: "class" },
+  { key: "debit", label: "Debit", sort: "debit", right: true },
+  { key: "credit", label: "Credit", sort: "credit", right: true },
+  { key: "amount", label: "Net amount", sort: "amount", right: true },
+  { key: "balance", label: "Balance", sort: "balance", right: true },
+];
+const COLS_STORAGE_KEY = "ih35.reclassify.columns.v1";
+function readColumns(): ColKey[] {
+  const fallback = COLUMNS.filter((c) => !c.optional).map((c) => c.key);
+  try {
+    const raw = window.localStorage.getItem(COLS_STORAGE_KEY);
+    const parsed = raw ? (JSON.parse(raw) as string[]) : null;
+    const known = new Set(COLUMNS.map((c) => c.key));
+    return parsed?.length ? parsed.filter((k): k is ColKey => known.has(k as ColKey)) : fallback;
+  } catch {
+    return fallback;
+  }
+}
 type Side = "profit_and_loss" | "balance_sheet" | "statistical";
 type TreeRow = { a: ReclassifyTreeAccount; depth: number; rollupCents: number; hasChildren: boolean };
 /** Parent -> children, depth-first, each parent's OWN balance kept separate from its rolled-up total (QBO). */
@@ -77,21 +118,22 @@ export function ReclassifyTransactionsPage() {
 
   const [fromDate, setFromDate] = useState(firstOfFiscalYear());
   const [toDate, setToDate] = useState(today());
-  const [accountId, setAccountId] = useState<string | null>(null);
-  const [sourceType, setSourceType] = useState<string>("");
-  const [classId, setClassId] = useState<string>("");
-  const [search, setSearch] = useState("");
+  const [f, setF] = useState<Filters>(NO_FILTERS);
+  const setFilter = <K extends keyof Filters>(k: K, v: Filters[K]) => setF((cur) => ({ ...cur, [k]: v }));
   // The register LOADS ON OPEN (every account, the default window): it used to start null, and the lines query only runs
   // once `applied` is set, so the page opened empty until a click or Find.
-  const [applied, setApplied] = useState<{ from: string; to: string; accountId: string | null; sourceType: string; classId: string; search: string; itemId?: string; loadId?: string } | null>(() => ({
-    from: firstOfFiscalYear(), to: today(), accountId: null, sourceType: "", classId: "", search: "",
-  }));
+  const [applied, setApplied] = useState<({ from: string; to: string } & Filters) | null>(() => ({ from: firstOfFiscalYear(), to: today(), ...NO_FILTERS }));
+  const [visibleCols, setVisibleCols] = useState<ColKey[]>(readColumns);
+  const chooseColumns = (next: string[]) => {
+    const keep = COLUMNS.filter((c) => next.includes(c.key)).map((c) => c.key);
+    setVisibleCols(keep);
+    try { window.localStorage.setItem(COLS_STORAGE_KEY, JSON.stringify(keep)); } catch { /* per-viewer convenience only */ }
+  };
+  const shownCols = COLUMNS.filter((c) => visibleCols.includes(c.key));
   // ROUND 368.1 — statement side, inactive toggle, sort, by-item / by-load selectors.
   const [side, setSide] = useState<Side>("profit_and_loss");
   const [includeInactive, setIncludeInactive] = useState(false);
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({ key: "date", dir: "desc" });
-  const [itemId, setItemId] = useState("");
-  const [loadId, setLoadId] = useState<string | null>(null);
   const [offset, setOffset] = useState(0);
   const [gotoPageDraft, setGotoPageDraft] = useState("1");
   const [selected, setSelected] = useState<Map<string, ReclassifyLine>>(new Map());
@@ -108,7 +150,7 @@ export function ReclassifyTransactionsPage() {
   const [undoReason, setUndoReason] = useState("");
 
   const accountsQ = useQuery({ queryKey: ["reclassify-accounts", companyId, fromDate, toDate], queryFn: () => getReclassifyAccountTree(companyId, fromDate, toDate), enabled: !!companyId });
-  const itemsQ = useQuery({ queryKey: ["reclassify-items", companyId], queryFn: () => searchQboMasterData("item", companyId, { q: "" }), enabled: !!companyId });
+  const facetsQ = useQuery({ queryKey: ["reclassify-facets", companyId, fromDate, toDate], queryFn: () => getReclassifyFacets(companyId, fromDate, toDate), enabled: !!companyId });
   const coaQ = useQuery({ queryKey: ["reclassify-coa", companyId], queryFn: () => listCoaAccountsForJe(companyId), enabled: !!companyId });
   const classesQ = useQuery({ queryKey: ["reclassify-classes"], queryFn: () => listClassesForJe() });
   const vendorsQ = useQuery({ queryKey: ["reclassify-vendors", companyId], queryFn: () => listVendors({ operating_company_id: companyId, limit: 1000 }), enabled: modalOpen && !!companyId && toEntityKind === "vendor" });
@@ -118,9 +160,9 @@ export function ReclassifyTransactionsPage() {
   const linesQ = useQuery({
     queryKey: ["reclassify-lines", companyId, applied, offset, sort],
     queryFn: () => findReclassifyLines(companyId, {
-      from_date: applied!.from, to_date: applied!.to, account_ids: applied!.accountId ? [applied!.accountId] : undefined,
-      source_types: applied!.sourceType ? [applied!.sourceType] : undefined, class_id: applied!.classId || undefined, search: applied!.search || undefined,
-      item_ids: applied!.itemId ? [applied!.itemId] : undefined, load_ids: applied!.loadId ? [applied!.loadId] : undefined,
+      from_date: applied!.from, to_date: applied!.to, account_ids: applied!.accountIds, source_types: applied!.types, class_ids: applied!.classIds,
+      search: applied!.search || undefined, item_ids: applied!.itemIds, load_ids: applied!.loadIds,
+      unit_ids: applied!.truckIds, driver_ids: applied!.driverIds, trailer_ids: applied!.trailerIds, vendor_ids: applied!.vendorIds,
       sort_key: sort.key, sort_dir: sort.dir, limit: PAGE, offset,
     }),
     enabled: !!companyId && !!applied,
@@ -143,7 +185,6 @@ export function ReclassifyTransactionsPage() {
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ["reclassify-lines"] }); void qc.invalidateQueries({ queryKey: ["reclassify-accounts"] }); void qc.invalidateQueries({ queryKey: ["reclassify-batches"] }); },
   });
 
-  const itemRefOptions = useMemo<ReferenceOption[]>(() => (itemsQ.data?.results ?? []).map((i) => ({ value: i.id, label: i.active ? i.display_name : `${i.display_name} (inactive)` })), [itemsQ.data]);
   const accountRefOptions = useMemo<ReferenceOption[]>(() => (coaQ.data?.accounts ?? []).map((a) => coaAccountReferenceOption({ id: a.id, account_name: a.account_name, account_type: a.account_type ?? null, account_number: a.account_number })), [coaQ.data]);
   const vendorRefOptions = useMemo<ReferenceOption[]>(() => (vendorsQ.data?.vendors ?? []).map((v) => ({ value: v.id, label: v.name })), [vendorsQ.data]);
   const customerRefOptions = useMemo<ReferenceOption[]>(() => (customersQ.data?.customers ?? []).map((c) => ({ value: c.id, label: c.name?.trim() || c.id })), [customersQ.data]);
@@ -159,28 +200,62 @@ export function ReclassifyTransactionsPage() {
   const lines = linesQ.data?.lines ?? [];
   const selectableLines = lines.filter((l) => !notReclassifiable(l));
   const pageAllSelected = selectableLines.length > 0 && selectableLines.every((l) => selected.has(l.posting_id));
-  const selectedSum = Array.from(selected.values()).reduce((s, l) => s + l.net_amount_cents, 0);
-  const activeAccount: ReclassifyTreeAccount | undefined = accountsQ.data?.accounts?.find((a) => a.account_id === applied?.accountId);
+  const selectedSum = Array.from(selected.values()).reduce((s, l) => s + naturalCentsForType(l.net_amount_cents, l.account_type), 0);
+  const oneAccountId = applied?.accountIds.length === 1 ? applied.accountIds[0] : null;
+  const activeAccount: ReclassifyTreeAccount | undefined = accountsQ.data?.accounts?.find((a) => a.account_id === oneAccountId);
+  // U27 — one account listed: its balances in that account's natural sign; several accounts: each line in its own.
+  const acctNatural = (cents: number) => (activeAccount ? naturalCentsForType(cents, activeAccount.account_type) : cents);
+  const onlyAccountFilter = !!applied && applied.types.length + applied.classIds.length + applied.itemIds.length + applied.loadIds.length + applied.truckIds.length + applied.driverIds.length + applied.trailerIds.length + applied.vendorIds.length === 0 && !applied.search;
 
-  const runFind = (overrideAccountId?: string | null) => {
-    const acct = overrideAccountId === undefined ? accountId : overrideAccountId;
-    setApplied({ from: fromDate, to: toDate, accountId: acct, sourceType, classId, search, itemId: itemId || undefined, loadId: loadId ?? undefined });
+  const runFind = (overrideAccountIds?: string[]) => {
+    const next = overrideAccountIds === undefined ? f : { ...f, accountIds: overrideAccountIds };
+    setApplied({ from: fromDate, to: toDate, ...next });
     setOffset(0); setGotoPageDraft("1"); setSelected(new Map());
   };
   // ROUND 370 — clicking an account LOADS its transactions (it used to only highlight it; the list never ran).
-  const openAccount = (id: string | null) => { setAccountId(id); runFind(id); };
+  const openAccount = (id: string | null) => { const ids = id ? [id] : []; setFilter("accountIds", ids); runFind(ids); };
+  const facetOptions = (k: keyof NonNullable<typeof facetsQ.data>) => (facetsQ.data?.[k] ?? []).map((o) => ({ value: o.id, label: `${k === "types" ? o.label.replace(/_/g, " ") : o.label} (${o.n})` }));
+  const accountOptions = useMemo(() => (accountsQ.data?.accounts ?? []).map((a) => ({ value: a.account_id, label: formatAccountDisplayLabel({ account_name: a.account_name, account_number: a.account_number }, { showNumber: showAccountNumbers }) })), [accountsQ.data, showAccountNumbers]);
   const toggleSort = (key: SortKey) => { setSort((cur) => (cur.key === key ? { key, dir: cur.dir === "asc" ? "desc" : "asc" } : { key, dir: key === "date" ? "desc" : "asc" })); setOffset(0); setGotoPageDraft("1"); };
   const sortMark = (key: SortKey) => (sort.key === key ? (sort.dir === "asc" ? " ▲" : " ▼") : "");
   const toggle = (l: ReclassifyLine) => { if (notReclassifiable(l)) return; setSelected((prev) => { const n = new Map(prev); if (n.has(l.posting_id)) n.delete(l.posting_id); else n.set(l.posting_id, l); return n; }); };
   const togglePage = () => setSelected((prev) => { const n = new Map(prev); if (pageAllSelected) selectableLines.forEach((l) => n.delete(l.posting_id)); else selectableLines.forEach((l) => n.set(l.posting_id, l)); return n; });
 
   const chips: Array<{ label: string; clear: () => void }> = [];
-  if (applied?.itemId) chips.push({ label: `Item: ${itemsQ.data?.results?.find((i) => i.id === applied.itemId)?.display_name ?? "selected"}`, clear: () => { setItemId(""); setApplied({ ...applied, itemId: undefined }); } });
-  if (applied?.loadId) chips.push({ label: "Load: selected", clear: () => { setLoadId(null); setApplied({ ...applied, loadId: undefined }); } });
-  if (applied?.accountId) chips.push({ label: `Account: ${activeAccount ? `${activeAccount.account_number ?? ""} ${activeAccount.account_name}`.trim() : "selected"}`, clear: () => { setAccountId(null); setApplied({ ...applied, accountId: null }); setSelected(new Map()); } });
-  if (applied?.sourceType) chips.push({ label: `Type: ${applied.sourceType}`, clear: () => { setSourceType(""); setApplied({ ...applied, sourceType: "" }); } });
-  if (applied?.classId) chips.push({ label: `Class: ${classesQ.data?.classes?.find((c) => c.id === applied.classId)?.class_name ?? applied.classId}`, clear: () => { setClassId(""); setApplied({ ...applied, classId: "" }); } });
-  if (applied?.search) chips.push({ label: `Search: ${applied.search}`, clear: () => { setSearch(""); setApplied({ ...applied, search: "" }); } });
+  const nameOf = (opts: Array<{ value: string; label: string }>, ids: string[]) => ids.map((id) => opts.find((o) => o.value === id)?.label.replace(/ \(\d+\)$/, "") ?? "selected").join(", ");
+  const chipGroups: Array<[keyof Filters, string, Array<{ value: string; label: string }>]> = [
+    ["accountIds", "Account", accountOptions], ["types", "Type", facetOptions("types")], ["classIds", "Class", facetOptions("classes")],
+    ["itemIds", "Item", facetOptions("items")], ["loadIds", "Load", facetOptions("loads")], ["truckIds", "Truck", facetOptions("trucks")],
+    ["driverIds", "Driver", facetOptions("drivers")], ["trailerIds", "Trailer", facetOptions("trailers")], ["vendorIds", "Vendor", facetOptions("vendors")],
+  ];
+  for (const [k, label, opts] of chipGroups) {
+    const ids = (applied?.[k] ?? []) as string[];
+    if (applied && ids.length) chips.push({ label: `${label}: ${nameOf(opts, ids)}`, clear: () => { setFilter(k, [] as never); setApplied({ ...applied, [k]: [] }); setSelected(new Map()); } });
+  }
+  if (applied?.search) chips.push({ label: `Search: ${applied.search}`, clear: () => { setFilter("search", ""); setApplied({ ...applied, search: "" }); } });
+  const cell = (k: ColKey, l: ReclassifyLine, doc: ReturnType<typeof docTarget>): ReactNode => {
+    switch (k) {
+      case "date": return <EntityLink kind={doc.kind} id={doc.id} label={formatDateQboList(l.entry_date)} />;
+      case "type": return <>{(l.source_transaction_type ?? "journal entry").replace(/_/g, " ")}{l.already_reclassified_batch_id ? <span className="ml-1 rounded bg-slate-200 px-1 text-xs" title={`Reclassified in batch ${l.already_reclassified_batch_id}`}>reclassified</span> : null}{l.is_reversed ? <span className="ml-1 rounded bg-slate-200 px-1 text-xs">reversed</span> : null}{l.is_reversal ? <span className="ml-1 rounded bg-slate-200 px-1 text-xs">reversal</span> : null}</>;
+      case "num": return <EntityLink kind={doc.kind} id={doc.id} label={l.document_number ?? (doc.kind === "journal_entry" ? "Journal entry" : (l.source_transaction_type ?? "").replace(/_/g, " "))} />;
+      case "name": return l.entity_uuid && (l.entity_type === "vendor" || l.entity_type === "customer" || l.entity_type === "driver" || l.entity_type === "unit") ? <EntityLink kind={l.entity_type} id={l.entity_uuid} label={l.entity_name ?? "—"} /> : l.entity_name ?? "—";
+      case "item": return l.item_id ? <EntityLink kind="catalog_item" id={l.item_id} label={l.item_name ?? "Item"} /> : "—";
+      case "memo": return l.description ?? "—";
+      // BANK-F91042 — ORDERS §B-5 ACCOUNT NO. column; value gated by Show account numbers (house law).
+      case "account_no": return showAccountNumbers ? ((l.account_number ?? "").trim() || "—") : "—";
+      case "account": return <EntityLink kind="account" id={l.account_id} label={formatAccountDisplayLabel({ account_name: l.account_name, account_number: l.account_number }, { showNumber: false })} />;
+      case "load": return l.load_id ? <EntityLink kind="load" id={l.load_id} label={l.load_number ?? "Load"} /> : "—";
+      case "truck": return l.unit_id ? <EntityLink kind="unit" id={l.unit_id} label={l.unit_number ?? "Truck"} /> : "—";
+      case "driver": return l.driver_id ? <EntityLink kind="driver" id={l.driver_id} label={l.driver_name ?? "Driver"} /> : "—";
+      case "trailer": return l.trailer_id ? <EntityLink kind="trailer" id={l.trailer_id} label={l.trailer_number ?? "Trailer"} /> : "—";
+      case "vendor": return l.vendor_id ? <EntityLink kind="vendor" id={l.vendor_id} label={l.vendor_name ?? "Vendor"} /> : "—";
+      case "class": return l.class_name ?? "—";
+      case "debit": return l.debit_cents ? <EntityLink kind={doc.kind} id={doc.id} label={formatCurrencyFromCents(l.debit_cents)} /> : "";
+      case "credit": return l.credit_cents ? <EntityLink kind={doc.kind} id={doc.id} label={formatCurrencyFromCents(l.credit_cents)} /> : "";
+      case "amount": return <EntityLink kind={doc.kind} id={doc.id} label={formatCurrencyFromCents(naturalCentsForType(l.net_amount_cents, l.account_type))} />;
+      case "balance": return oneAccountId ? formatCurrencyFromCents(acctNatural(l.running_balance_cents)) : "—";
+    }
+  };
 
   return (
     <AccountingSubNavWrapper title="Reclassify transactions" subtitle="Change the account, class or vendor on many GL lines at once. Every document is re-posted through a linked RECLASSIFICATION journal entry; undo per batch.">
@@ -216,7 +291,7 @@ export function ReclassifyTransactionsPage() {
           {accountsQ.error ? <div className="p-2"><ListErrorState {...formatQueryErrorDetail(accountsQ.error)} onRetry={() => void accountsQ.refetch()} /></div> : null}
           <ul className="text-xs">
             <li>
-              <button type="button" onClick={() => openAccount(null)} className={`flex w-full items-center justify-between px-2 py-1 text-left hover:bg-slate-50 ${accountId === null ? "bg-slate-100 font-semibold" : ""}`}>
+              <button type="button" onClick={() => openAccount(null)} className={`flex w-full items-center justify-between px-2 py-1 text-left hover:bg-slate-50 ${f.accountIds.length === 0 ? "bg-slate-100 font-semibold" : ""}`}>
                 <span>All accounts</span>
               </button>
             </li>
@@ -225,15 +300,15 @@ export function ReclassifyTransactionsPage() {
             ) : null}
             {tree.map(({ a, depth, rollupCents, hasChildren }) => (
               <li key={a.account_id}>
-                <button type="button" onClick={() => openAccount(a.account_id)} title={`${a.account_type ?? ""}${a.detail_type_name ? ` · ${a.detail_type_name}` : ""}${a.is_active ? "" : " · inactive"} — opening ${formatCurrencyFromCents(a.opening_cents)}, period ${formatCurrencyFromCents(a.period_activity_cents)}`} className={`flex w-full items-center justify-between gap-2 py-1 pr-2 text-left hover:bg-slate-50 ${accountId === a.account_id ? "bg-slate-100 font-semibold" : ""}`} style={{ paddingLeft: `${0.5 + depth * 1}rem` }} data-testid={`reclassify-account-${a.account_id}`}>
+                <button type="button" onClick={() => openAccount(a.account_id)} title={`${a.account_type ?? ""}${a.detail_type_name ? ` · ${a.detail_type_name}` : ""}${a.is_active ? "" : " · inactive"} — opening ${formatCurrencyFromCents(naturalCentsForType(a.opening_cents, a.account_type))}, period ${formatCurrencyFromCents(naturalCentsForType(a.period_activity_cents, a.account_type))}`} className={`flex w-full items-center justify-between gap-2 py-1 pr-2 text-left hover:bg-slate-50 ${f.accountIds.includes(a.account_id) ? "bg-slate-100 font-semibold" : ""}`} style={{ paddingLeft: `${0.5 + depth * 1}rem` }} data-testid={`reclassify-account-${a.account_id}`}>
                   {/* showAccountNumbers gate — formatAccountDisplayLabel hides the number unless the toggle is on */}
                   <span className="min-w-0 whitespace-normal break-words">
                     {formatAccountDisplayLabel({ account_name: a.account_name, account_number: a.account_number }, { showNumber: showAccountNumbers })}
                     {a.is_active ? null : <span className="ml-1 rounded bg-slate-200 px-1 text-xs">inactive</span>}
                   </span>
                   <span className="shrink-0 text-right tabular-nums">
-                    {formatCurrencyFromCents(a.closing_balance_cents)}
-                    {hasChildren ? <span className="block text-xs text-slate-600" title="This account plus its sub-accounts">Total {formatCurrencyFromCents(rollupCents)}</span> : null}
+                    {formatCurrencyFromCents(naturalCentsForType(a.closing_balance_cents, a.account_type))}
+                    {hasChildren ? <span className="block text-xs text-slate-600" title="This account plus its sub-accounts">Total {formatCurrencyFromCents(naturalCentsForType(rollupCents, a.account_type))}</span> : null}
                   </span>
                 </button>
               </li>
@@ -246,27 +321,20 @@ export function ReclassifyTransactionsPage() {
           <div className="flex flex-wrap items-end gap-2 rounded border border-gray-200 bg-white p-2" data-testid="reclassify-filters">
             <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">From<DatePicker value={fromDate} onChange={setFromDate} className="h-9" /></label>
             <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">To<DatePicker value={toDate} onChange={setToDate} className="h-9" /></label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">Type
-              <SelectCombobox value={sourceType} onChange={(e) => setSourceType(e.target.value)} data-testid="reclassify-type">
-                <option value="">All</option>
-                {SOURCE_TYPES.map((t) => <option key={t} value={t}>{t.replace(/_/g, " ")}</option>)}
-              </SelectCombobox>
-            </label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">Class
-              <SelectCombobox value={classId} onChange={(e) => setClassId(e.target.value)} data-testid="reclassify-class">
-                <option value="">All</option>
-                {(classesQ.data?.classes ?? []).map((c) => <option key={c.id} value={c.id}>{c.class_name}</option>)}
-              </SelectCombobox>
-            </label>
+            {/* ROUND 370 (owner) — every column that can be shown filters, multi-select, the same component as the account and status filters. */}
+            <MultiSelectDropdown label="Account" options={accountOptions} selected={f.accountIds} onChange={(v) => setFilter("accountIds", v)} allLabel="All accounts" searchable data-testid="reclassify-filter-account" />
+            <MultiSelectDropdown label="Type" options={facetOptions("types")} selected={f.types} onChange={(v) => setFilter("types", v)} allLabel="All types" data-testid="reclassify-filter-type" />
+            <MultiSelectDropdown label="Class" options={facetOptions("classes")} selected={f.classIds} onChange={(v) => setFilter("classIds", v)} allLabel="All classes" searchable data-testid="reclassify-filter-class" />
+            <MultiSelectDropdown label="Item" options={facetOptions("items")} selected={f.itemIds} onChange={(v) => setFilter("itemIds", v)} allLabel="All items" searchable data-testid="reclassify-filter-item" />
+            <MultiSelectDropdown label="Load" options={facetOptions("loads")} selected={f.loadIds} onChange={(v) => setFilter("loadIds", v)} allLabel="All loads" searchable data-testid="reclassify-filter-load" />
+            <MultiSelectDropdown label="Truck" options={facetOptions("trucks")} selected={f.truckIds} onChange={(v) => setFilter("truckIds", v)} allLabel="All trucks" searchable data-testid="reclassify-filter-truck" />
+            <MultiSelectDropdown label="Driver" options={facetOptions("drivers")} selected={f.driverIds} onChange={(v) => setFilter("driverIds", v)} allLabel="All drivers" searchable data-testid="reclassify-filter-driver" />
+            <MultiSelectDropdown label="Trailer" options={facetOptions("trailers")} selected={f.trailerIds} onChange={(v) => setFilter("trailerIds", v)} allLabel="All trailers" searchable data-testid="reclassify-filter-trailer" />
+            <MultiSelectDropdown label="Vendor" options={facetOptions("vendors")} selected={f.vendorIds} onChange={(v) => setFilter("vendorIds", v)} allLabel="All vendors" searchable data-testid="reclassify-filter-vendor" />
             <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">Memo / description
-              <input value={search} onChange={(e) => setSearch(e.target.value)} className="h-9 rounded border border-gray-300 px-2 text-xs" placeholder="e.g. Dreamline" data-testid="reclassify-search" />
+              <input value={f.search} onChange={(e) => setFilter("search", e.target.value)} className="h-9 rounded border border-gray-300 px-2 text-xs" placeholder="e.g. Dreamline" data-testid="reclassify-search" />
             </label>
-            <label className="flex min-w-[12rem] flex-col gap-1 text-xs font-semibold text-slate-600" data-testid="reclassify-item">Item
-              <ReferenceSelect value={itemId || null} onChange={(next) => setItemId(next ?? "")} options={itemRefOptions} createKind="item" operatingCompanyId={companyId} placeholder="All items" loading={itemsQ.isLoading} onOptionCreated={() => void itemsQ.refetch()} />
-            </label>
-            <label className="flex min-w-[12rem] flex-col gap-1 text-xs font-semibold text-slate-600">Load
-              <EntityPicker kind="load" operatingCompanyId={companyId} value={loadId} onChange={(v) => setLoadId(v)} allowCreate={false} allowClear ariaLabel="Load" />
-            </label>
+            <MultiSelectDropdown label="Columns" options={COLUMNS.map((c) => ({ value: c.key, label: c.optional ? `${c.label} (added)` : c.label }))} selected={visibleCols} onChange={chooseColumns} allLabel="All columns" data-testid="reclassify-columns" />
             <Button type="button" onClick={() => runFind()} data-testid="reclassify-find">Find transactions</Button>
           </div>
 
@@ -292,17 +360,17 @@ export function ReclassifyTransactionsPage() {
                   <Button type="button" size="sm" disabled={selected.size === 0} onClick={() => setModalOpen(true)} data-testid="reclassify-open-modal">Reclassify</Button>
                   <span className="font-semibold" data-testid="reclassify-selection-count">{selected.size} transaction line{selected.size === 1 ? "" : "s"} selected: {formatCurrencyFromCents(selectedSum)}</span>
                 </div>
-                <span className="text-slate-600">{linesQ.data ? `${linesQ.data.total_lines} line(s) · ${linesQ.data.reclassifiable_lines} reclassifiable · net ${formatCurrencyFromCents(linesQ.data.total_net_amount_cents)}` : ""}</span>
+                <span className="text-slate-600">{linesQ.data ? `${linesQ.data.total_lines} line(s) · ${linesQ.data.reclassifiable_lines} reclassifiable · net ${formatCurrencyFromCents(acctNatural(linesQ.data.total_net_amount_cents))}` : ""}</span>
               </div>
               {/* ROUND 370.3 — the listed rows ARE the balance; if they ever disagree the screen says so instead of showing both. */}
-              {linesQ.data && activeAccount && !applied.sourceType && !applied.classId && !applied.search && !applied.itemId && !applied.loadId && applied.from === fromDate && applied.to === toDate ? (
+              {linesQ.data && activeAccount && onlyAccountFilter && applied.from === fromDate && applied.to === toDate ? (
                 linesQ.data.closing_balance_cents === activeAccount.closing_balance_cents && linesQ.data.total_net_amount_cents === activeAccount.period_activity_cents ? (
                   <div className="mt-1 rounded border border-gray-200 bg-white px-2 py-1 text-xs text-slate-600" data-testid="reclassify-balance-check" data-r370-agree="1">
-                    Opening {formatCurrencyFromCents(linesQ.data.opening_cents)} + {linesQ.data.total_lines} listed line(s) {formatCurrencyFromCents(linesQ.data.total_net_amount_cents)} = balance {formatCurrencyFromCents(linesQ.data.closing_balance_cents)} — matches the account tree.
+                    Opening {formatCurrencyFromCents(acctNatural(linesQ.data.opening_cents))} + {linesQ.data.total_lines} listed line(s) {formatCurrencyFromCents(acctNatural(linesQ.data.total_net_amount_cents))} = balance {formatCurrencyFromCents(acctNatural(linesQ.data.closing_balance_cents))} — matches the account tree.
                   </div>
                 ) : (
                   <div className="mt-1 rounded border border-red-300 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700" role="alert" data-testid="reclassify-balance-check" data-r370-agree="0">
-                    These lines do not add up to the account balance: listed {formatCurrencyFromCents(linesQ.data.closing_balance_cents)}, tree {formatCurrencyFromCents(activeAccount.closing_balance_cents)}. Do not rely on either number until this is fixed.
+                    These lines do not add up to the account balance: listed {formatCurrencyFromCents(acctNatural(linesQ.data.closing_balance_cents))}, tree {formatCurrencyFromCents(acctNatural(activeAccount.closing_balance_cents))}. Do not rely on either number until this is fixed.
                   </div>
                 )
               ) : null}
@@ -312,48 +380,29 @@ export function ReclassifyTransactionsPage() {
                   <thead className="bg-slate-50 text-center uppercase tracking-wide text-gray-600">
                     <tr>
                       <th className="p-2 w-6"></th>
-                      <th className="p-2 text-center" aria-sort={sort.key === "date" ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}><button type="button" className="font-bold uppercase" onClick={() => toggleSort("date")} data-testid="reclassify-sort-date">Date{sortMark("date")}</button></th>
-                      <th className="p-2 text-center" aria-sort={sort.key === "type" ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}><button type="button" className="font-bold uppercase" onClick={() => toggleSort("type")} data-testid="reclassify-sort-type">Type{sortMark("type")}</button></th>
-                      <th className="p-2 text-center" aria-sort={sort.key === "num" ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}><button type="button" className="font-bold uppercase" onClick={() => toggleSort("num")} data-testid="reclassify-sort-num">Num{sortMark("num")}</button></th>
-                      <th className="p-2 text-center" aria-sort={sort.key === "name" ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}><button type="button" className="font-bold uppercase" onClick={() => toggleSort("name")} data-testid="reclassify-sort-name">Name{sortMark("name")}</button></th>
-                      <th className="p-2 text-center" aria-sort={sort.key === "item" ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}><button type="button" className="font-bold uppercase" onClick={() => toggleSort("item")} data-testid="reclassify-sort-item">Item{sortMark("item")}</button></th>
-                      <th className="p-2 text-center" aria-sort={sort.key === "memo" ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}><button type="button" className="font-bold uppercase" onClick={() => toggleSort("memo")} data-testid="reclassify-sort-memo">Memo / description{sortMark("memo")}</button></th>
-                      <th className="p-2 text-center" data-testid="reclassify-col-account-no">Account no.</th>
-                      <th className="p-2 text-center" aria-sort={sort.key === "account" ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}><button type="button" className="font-bold uppercase" onClick={() => toggleSort("account")} data-testid="reclassify-sort-account">Account{sortMark("account")}</button></th>
-                      <th className="p-2 text-center" aria-sort={sort.key === "load" ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}><button type="button" className="font-bold uppercase" onClick={() => toggleSort("load")} data-testid="reclassify-sort-load">Load{sortMark("load")}</button></th>
-                      <th className="p-2 text-center" aria-sort={sort.key === "class" ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}><button type="button" className="font-bold uppercase" onClick={() => toggleSort("class")} data-testid="reclassify-sort-class">Class{sortMark("class")}</button></th>
-                      <th className="p-2 text-center" aria-sort={sort.key === "debit" ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}><button type="button" className="font-bold uppercase" onClick={() => toggleSort("debit")} data-testid="reclassify-sort-debit">Debit{sortMark("debit")}</button></th>
-                      <th className="p-2 text-center" aria-sort={sort.key === "credit" ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}><button type="button" className="font-bold uppercase" onClick={() => toggleSort("credit")} data-testid="reclassify-sort-credit">Credit{sortMark("credit")}</button></th>
-                      <th className="p-2 text-center" aria-sort={sort.key === "amount" ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}><button type="button" className="font-bold uppercase" onClick={() => toggleSort("amount")} data-testid="reclassify-sort-amount">Net amount{sortMark("amount")}</button></th>
-                      <th className="p-2 text-center" aria-sort={sort.key === "balance" ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}><button type="button" className="font-bold uppercase" onClick={() => toggleSort("balance")} data-testid="reclassify-sort-balance">Balance{sortMark("balance")}</button></th>
+                      {shownCols.map((c) =>
+                        c.sort ? (
+                          <th key={c.key} className="p-2 text-center" aria-sort={sort.key === c.sort ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}>
+                            <button type="button" className="font-bold uppercase" onClick={() => toggleSort(c.sort!)} data-testid={`reclassify-sort-${c.sort}`}>{c.label}{sortMark(c.sort)}</button>
+                          </th>
+                        ) : (
+                          <th key={c.key} className="p-2 text-center" data-testid={`reclassify-col-${c.key.replace("_", "-")}`}>{c.label}</th>
+                        ),
+                      )}
                     </tr>
                   </thead>
                   <tbody>
-                    {linesQ.isLoading ? <tr><td colSpan={15} className="p-3 text-slate-600">Finding…</td></tr> : null}
+                    {linesQ.isLoading ? <tr><td colSpan={shownCols.length + 1} className="p-3 text-slate-600">Finding…</td></tr> : null}
                     {/* LAW 368.3 — "could not read" and "nothing here" are different sentences. */}
-                    {linesQ.error ? <tr><td colSpan={15} className="p-3 font-semibold text-red-700" data-testid="reclassify-could-not-read">Could not read the transactions for this selection — the list below is not empty, it failed to load.</td></tr> : null}
-                    {!linesQ.isLoading && !linesQ.error && lines.length === 0 ? <tr><td colSpan={15} className="p-3 text-slate-600" data-testid="reclassify-genuinely-empty">No transactions in this period{applied?.accountId ? " for this account" : ""} (from {formatDateQboList(applied!.from)} to {formatDateQboList(applied!.to)}).</td></tr> : null}
+                    {linesQ.error ? <tr><td colSpan={shownCols.length + 1} className="p-3 font-semibold text-red-700" data-testid="reclassify-could-not-read">Could not read the transactions for this selection — the list below is not empty, it failed to load.</td></tr> : null}
+                    {!linesQ.isLoading && !linesQ.error && lines.length === 0 ? <tr><td colSpan={shownCols.length + 1} className="p-3 text-slate-600" data-testid="reclassify-genuinely-empty">No transactions in this period{oneAccountId ? " for this account" : ""} (from {formatDateQboList(applied!.from)} to {formatDateQboList(applied!.to)}).</td></tr> : null}
                     {lines.map((l) => {
                       const why = notReclassifiable(l);
                       const doc = docTarget(l);
                       return (
                       <tr key={l.posting_id} className={`border-t border-gray-100 ${selected.has(l.posting_id) ? "bg-slate-100" : ""} ${why ? "text-slate-600" : ""}`} data-testid={`reclassify-line-${l.posting_id}`} title={why ?? undefined}>
                         <td className="p-2"><input type="checkbox" checked={selected.has(l.posting_id)} onChange={() => toggle(l)} disabled={!!why} aria-label={why ? `Not reclassifiable: ${why}` : "Select line"} /></td>
-                        <td className="p-2 whitespace-nowrap"><EntityLink kind={doc.kind} id={doc.id} label={formatDateQboList(l.entry_date)} /></td>
-                        <td className="p-2">{(l.source_transaction_type ?? "journal entry").replace(/_/g, " ")}{l.already_reclassified_batch_id ? <span className="ml-1 rounded bg-slate-200 px-1 text-xs" title={`Reclassified in batch ${l.already_reclassified_batch_id}`}>reclassified</span> : null}{l.is_reversed ? <span className="ml-1 rounded bg-slate-200 px-1 text-xs">reversed</span> : null}{l.is_reversal ? <span className="ml-1 rounded bg-slate-200 px-1 text-xs">reversal</span> : null}</td>
-                        <td className="p-2"><EntityLink kind={doc.kind} id={doc.id} label={l.document_number ?? (doc.kind === "journal_entry" ? "Journal entry" : (l.source_transaction_type ?? "").replace(/_/g, " "))} /></td>
-                        <td className="p-2">{l.entity_uuid && (l.entity_type === "vendor" || l.entity_type === "customer" || l.entity_type === "driver" || l.entity_type === "unit") ? <EntityLink kind={l.entity_type} id={l.entity_uuid} label={l.entity_name ?? "—"} /> : l.entity_name ?? "—"}</td>
-                        <td className="p-2">{l.item_id ? <EntityLink kind="catalog_item" id={l.item_id} label={l.item_name ?? "Item"} /> : "—"}</td>
-                        <td className="p-2 max-w-[22rem] truncate" title={l.description ?? ""}>{l.description ?? "—"}</td>
-                        {/* BANK-F91042 — ORDERS §B-5 ACCOUNT NO. column; value gated by Show account numbers (house law). */}
-                        <td className="p-2 whitespace-nowrap tabular-nums" data-b5-account-no="1">{showAccountNumbers ? ((l.account_number ?? "").trim() || "—") : "—"}</td>
-                        <td className="p-2"><EntityLink kind="account" id={l.account_id} label={formatAccountDisplayLabel({ account_name: l.account_name, account_number: l.account_number }, { showNumber: false })} /></td>
-                        <td className="p-2">{l.load_id ? <EntityLink kind="load" id={l.load_id} label={l.load_number ?? "Load"} /> : "—"}</td>
-                        <td className="p-2">{l.class_name ?? "—"}</td>
-                        <td className="p-2 text-right tabular-nums">{l.debit_cents ? <EntityLink kind={doc.kind} id={doc.id} label={formatCurrencyFromCents(l.debit_cents)} /> : ""}</td>
-                        <td className="p-2 text-right tabular-nums">{l.credit_cents ? <EntityLink kind={doc.kind} id={doc.id} label={formatCurrencyFromCents(l.credit_cents)} /> : ""}</td>
-                        <td className="p-2 text-right tabular-nums"><EntityLink kind={doc.kind} id={doc.id} label={formatCurrencyFromCents(l.net_amount_cents)} /></td>
-                        <td className="p-2 text-right tabular-nums">{applied?.accountId ? formatCurrencyFromCents(l.running_balance_cents) : "—"}</td>
+                        {shownCols.map((c) => <td key={c.key} className={`p-2${c.right ? " text-right tabular-nums" : ""}${c.key === "date" || c.key === "account_no" ? " whitespace-nowrap" : ""}${c.key === "memo" ? " max-w-[22rem] truncate" : ""}`} title={c.key === "memo" ? l.description ?? "" : undefined} data-b5-account-no={c.key === "account_no" ? "1" : undefined}>{cell(c.key, l, doc)}</td>)}
                       </tr>
                       );
                     })}

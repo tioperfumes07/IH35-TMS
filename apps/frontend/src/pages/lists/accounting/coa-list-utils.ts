@@ -1,5 +1,6 @@
 import type { AccountingCatalogRow } from "../../../api/catalogs-accounting";
 import type { AccountBalanceRow, AccountTypeCatalogEntry } from "../../../api/coa-list";
+import { naturalCents } from "../../../lib/naturalBalance";
 import type { PlaidBankAccount } from "../../../api/banking";
 import { formatUsdCents } from "../../../lib/money";
 
@@ -108,7 +109,8 @@ export function buildCoaListRows(
       description: (row.description ?? "").trim() || "—",
       acct_type: accountType,
       detail_type: detailType,
-      qb_balance: formatCurrencyFromCents(balance?.closing_balance_cents),
+      // U27 — natural sign (income / liabilities positive), not the raw debit − credit the ledger function returns.
+      qb_balance: formatCurrencyFromCents(balance ? naturalCents(balance.closing_balance_cents, balance.normal_balance) : undefined),
       bank_balance: bankBalance,
       feed_connected: bankBalance !== "—",
       status: row.is_active ? "Active" : "Inactive",

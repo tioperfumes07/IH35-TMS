@@ -39,6 +39,11 @@ export type ReclassifyLineFilter = {
   /** ROUND 368.1 by-item / by-load selectors — the item on the document line, the load on the posting (or its line). */
   item_ids?: string[];
   load_ids?: string[];
+  class_ids?: string[];
+  unit_ids?: string[];
+  driver_ids?: string[];
+  trailer_ids?: string[];
+  vendor_ids?: string[];
   /** ROUND 363-CC2-D — the lines of these documents only (the settlement wizard's just-posted documents). */
   source_transaction_ids?: string[];
   /** ROUND 370.3 sortable headers — whitelisted keys only (see LINE_SORT). */
@@ -83,6 +88,14 @@ export type ReclassifyLineRow = {
   item_name: string | null;
   load_id: string | null;
   load_number: string | null;
+  unit_id: string | null;
+  unit_number: string | null;
+  driver_id: string | null;
+  driver_name: string | null;
+  trailer_id: string | null;
+  trailer_number: string | null;
+  vendor_id: string | null;
+  vendor_name: string | null;
   debit_cents: number;
   credit_cents: number;
   /** opening balance of the matched accounts before from_date + every matched row up to and including this one, in date order */
@@ -111,6 +124,10 @@ export function buildLineWhere(filter: ReclassifyLineFilter, values: unknown[]):
     values.push(filter.class_id);
     where.push(`p.class_id = $${values.length}::uuid`);
   }
+  if (filter.class_ids?.length) {
+    values.push(filter.class_ids);
+    where.push(`p.class_id = ANY($${values.length}::uuid[])`);
+  }
   if (filter.entity_uuid) {
     values.push(filter.entity_uuid);
     where.push(`p.entity_uuid = $${values.length}::uuid`);
@@ -122,6 +139,14 @@ export function buildLineWhere(filter: ReclassifyLineFilter, values: unknown[]):
   if (filter.load_ids?.length) {
     values.push(filter.load_ids);
     where.push(`COALESCE(p.load_id, dl.load_id) = ANY($${values.length}::uuid[])`);
+  }
+  // ROUND 370 (owner) — every shown column filters, multi-select.
+  for (const [key, col] of [["unit_ids", "dim.unit_id"], ["driver_ids", "dim.driver_id"], ["trailer_ids", "dim.trailer_id"], ["vendor_ids", "dim.vendor_id"]] as const) {
+    const ids = filter[key];
+    if (ids?.length) {
+      values.push(ids);
+      where.push(`${col} = ANY($${values.length}::uuid[])`);
+    }
   }
   if (filter.source_transaction_ids?.length) {
     values.push(filter.source_transaction_ids);
@@ -140,16 +165,34 @@ const LINE_FROM = `
           JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
           LEFT JOIN accounting.posting_batches pb ON pb.id = p.posting_batch_id AND pb.operating_company_id = p.operating_company_id
           LEFT JOIN LATERAL (
-            SELECT el.item_id, el.load_id FROM accounting.expense_lines el
-             WHERE p.source_transaction_type = 'expense' AND el.id::text = p.source_transaction_line_id
+            -- ROUND 370 (owner): the truck / unit, driver, trailer and vendor of the line, from the document line first and
+            -- its header second. Postings carry only entity_uuid, so these live on the documents. Keys compare as uuid (a
+            -- text cast of the key defeated the primary-key index: 26 s for a month's facets); a non-uuid id matches nothing.
+            SELECT el.item_id, el.load_id, COALESCE(el.unit_id, e.unit_id) AS unit_id, COALESCE(el.driver_id, e.driver_uuid) AS driver_id,
+                   COALESCE(el.trailer_id, e.trailer_id) AS trailer_id, e.vendor_uuid AS vendor_id
+              FROM accounting.expense_lines el JOIN accounting.expenses e ON e.id = el.expense_id
+             WHERE p.source_transaction_type = 'expense' AND el.id = (CASE WHEN length(p.source_transaction_line_id) = 36 AND p.source_transaction_line_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' THEN p.source_transaction_line_id::uuid END)
             UNION ALL
-            SELECT bl.item_id, bl.load_id FROM accounting.bill_lines bl
-             WHERE p.source_transaction_type = 'bill' AND bl.id::text = p.source_transaction_line_id
+            SELECT bl.item_id, bl.load_id, COALESCE(bl.unit_id, b.unit_id), b.driver_id, COALESCE(bl.equipment_id, b.trailer_id), b.mdata_vendor_id
+              FROM accounting.bill_lines bl JOIN accounting.bills b ON b.id = bl.bill_id
+             WHERE p.source_transaction_type = 'bill' AND bl.id = (CASE WHEN length(p.source_transaction_line_id) = 36 AND p.source_transaction_line_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' THEN p.source_transaction_line_id::uuid END)
             UNION ALL
-            SELECT il.item_id, il.source_load_id FROM accounting.invoice_lines il
-             WHERE p.source_transaction_type = 'invoice' AND il.id::text = p.source_transaction_line_id
+            SELECT il.item_id, il.source_load_id, NULL::uuid, NULL::uuid, NULL::uuid, NULL::uuid FROM accounting.invoice_lines il
+             WHERE p.source_transaction_type = 'invoice' AND il.id = (CASE WHEN length(p.source_transaction_line_id) = 36 AND p.source_transaction_line_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' THEN p.source_transaction_line_id::uuid END)
+            UNION ALL
+            SELECT NULL::uuid, ft.load_id, ft.unit_id, ft.driver_id, ft.trailer_id, ft.vendor_id FROM fuel.fuel_transactions ft
+             WHERE p.source_transaction_type = 'fuel_event' AND ft.id = (CASE WHEN length(p.source_transaction_id) = 36 AND p.source_transaction_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' THEN p.source_transaction_id::uuid END)
+            UNION ALL
+            SELECT NULL::uuid, NULL::uuid, NULL::uuid, ds.driver_id, NULL::uuid, NULL::uuid FROM driver_finance.driver_settlements ds
+             WHERE p.source_transaction_type = 'driver_settlement' AND ds.id = (CASE WHEN length(p.source_transaction_id) = 36 AND p.source_transaction_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' THEN p.source_transaction_id::uuid END)
             LIMIT 1
-          ) dl ON true`;
+          ) dl ON true
+          LEFT JOIN LATERAL (
+            SELECT COALESCE(dl.unit_id, CASE WHEN p.entity_type = 'unit' THEN p.entity_uuid END) AS unit_id,
+                   COALESCE(dl.driver_id, CASE WHEN p.entity_type = 'driver' THEN p.entity_uuid END) AS driver_id,
+                   dl.trailer_id AS trailer_id,
+                   COALESCE(dl.vendor_id, CASE WHEN p.entity_type = 'vendor' THEN p.entity_uuid END) AS vendor_id
+          ) dim ON true`;
 
 const LINE_SELECT = `
         SELECT p.id::text AS posting_id,
@@ -189,6 +232,10 @@ const LINE_SELECT = `
                (p.reversal_of_line_id IS NOT NULL) AS is_reversal,
                dl.item_id::text AS item_id, it.item_name,
                COALESCE(p.load_id, dl.load_id)::text AS load_id, ld.load_number::text AS load_number,
+               dim.unit_id::text AS unit_id, un.unit_number::text AS unit_number,
+               dim.driver_id::text AS driver_id, NULLIF(concat_ws(' ', dr.first_name, dr.last_name), '') AS driver_name,
+               dim.trailer_id::text AS trailer_id, tr.equipment_number::text AS trailer_number,
+               dim.vendor_id::text AS vendor_id, vn.vendor_name,
                (CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE 0 END)::bigint AS debit_cents,
                (CASE WHEN p.debit_or_credit = 'credit' THEN p.amount_cents ELSE 0 END)::bigint AS credit_cents,
                je.entry_date AS sort_date, p.journal_entry_uuid AS sort_je, p.line_sequence AS sort_seq
@@ -196,6 +243,10 @@ ${LINE_FROM}
           LEFT JOIN catalogs.accounts a ON a.id = p.account_id AND a.operating_company_id = p.operating_company_id
           LEFT JOIN catalogs.items it ON it.id = dl.item_id
           LEFT JOIN mdata.loads ld ON ld.id = COALESCE(p.load_id, dl.load_id)
+          LEFT JOIN mdata.units un ON un.id = dim.unit_id
+          LEFT JOIN mdata.drivers dr ON dr.id = dim.driver_id
+          LEFT JOIN mdata.equipment tr ON tr.id = dim.trailer_id
+          LEFT JOIN mdata.vendors vn ON vn.id = dim.vendor_id
           LEFT JOIN catalogs.classes c ON c.id = p.class_id AND c.operating_company_id = p.operating_company_id
           LEFT JOIN mdata.locations loc ON loc.id = p.location_id AND loc.operating_company_id = p.operating_company_id`;
 
@@ -221,12 +272,53 @@ export const LINE_SORT: Record<string, string> = {
   account: "account_name",
   item: "item_name",
   load: "load_number",
+  truck: "unit_number",
+  driver: "driver_name",
+  trailer: "trailer_number",
+  vendor: "vendor_name",
   class: "class_name",
   debit: "debit_cents",
   credit: "credit_cents",
   amount: "net_amount_cents",
   balance: "running_balance_cents",
 };
+
+export type ReclassifyFacet = { id: string; label: string; n: number };
+export type ReclassifyFacets = Record<"types" | "classes" | "items" | "loads" | "trucks" | "drivers" | "trailers" | "vendors", ReclassifyFacet[]>;
+
+/**
+ * ROUND 370 (owner) — the values each register column holds in the window, with their line counts: the options of
+ * every multi-select column filter, so every option the owner can pick has rows behind it. Same LINE_FROM and the
+ * same balance predicate as the list.
+ */
+export async function findReclassifyFacets(userId: string, filter: { operating_company_id: string; from_date: string; to_date: string }) {
+  return withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [filter.operating_company_id]);
+    const values: unknown[] = [filter.operating_company_id, filter.from_date, filter.to_date];
+    const where = buildLineWhere({ operating_company_id: filter.operating_company_id, from_date: filter.from_date, to_date: filter.to_date }, values);
+    const res = await client.query<{ facet: string; id: string; label: string | null; n: string }>(
+      `WITH x AS (
+         SELECT coalesce(p.source_transaction_type, 'journal_entry') AS type_key, p.class_id, dl.item_id,
+                COALESCE(p.load_id, dl.load_id) AS load_id, dim.unit_id, dim.driver_id, dim.trailer_id, dim.vendor_id
+         ${LINE_FROM}
+          WHERE ${where}
+       )
+       SELECT 'types' AS facet, type_key AS id, type_key AS label, count(*)::text AS n FROM x GROUP BY type_key
+       UNION ALL SELECT 'classes', x.class_id::text, c.class_name, count(*)::text FROM x JOIN catalogs.classes c ON c.id = x.class_id GROUP BY x.class_id, c.class_name
+       UNION ALL SELECT 'items', x.item_id::text, it.item_name, count(*)::text FROM x JOIN catalogs.items it ON it.id = x.item_id GROUP BY x.item_id, it.item_name
+       UNION ALL SELECT 'loads', x.load_id::text, ld.load_number::text, count(*)::text FROM x JOIN mdata.loads ld ON ld.id = x.load_id GROUP BY x.load_id, ld.load_number
+       UNION ALL SELECT 'trucks', x.unit_id::text, un.unit_number::text, count(*)::text FROM x JOIN mdata.units un ON un.id = x.unit_id GROUP BY x.unit_id, un.unit_number
+       UNION ALL SELECT 'drivers', x.driver_id::text, NULLIF(concat_ws(' ', dr.first_name, dr.last_name), ''), count(*)::text FROM x JOIN mdata.drivers dr ON dr.id = x.driver_id GROUP BY x.driver_id, dr.first_name, dr.last_name
+       UNION ALL SELECT 'trailers', x.trailer_id::text, tr.equipment_number::text, count(*)::text FROM x JOIN mdata.equipment tr ON tr.id = x.trailer_id GROUP BY x.trailer_id, tr.equipment_number
+       UNION ALL SELECT 'vendors', x.vendor_id::text, vn.vendor_name, count(*)::text FROM x JOIN mdata.vendors vn ON vn.id = x.vendor_id GROUP BY x.vendor_id, vn.vendor_name`,
+      values,
+    );
+    const out: ReclassifyFacets = { types: [], classes: [], items: [], loads: [], trucks: [], drivers: [], trailers: [], vendors: [] };
+    for (const r of res.rows) out[r.facet as keyof ReclassifyFacets].push({ id: r.id, label: r.label ?? r.id, n: Number(r.n) });
+    for (const k of Object.keys(out) as Array<keyof ReclassifyFacets>) out[k].sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
+    return out;
+  });
+}
 
 export async function findReclassifyLines(userId: string, filter: ReclassifyLineFilter) {
   return withCurrentUser(userId, async (client) => {
