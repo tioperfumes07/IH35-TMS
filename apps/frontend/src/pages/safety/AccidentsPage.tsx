@@ -238,7 +238,7 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div>
           <div className="text-xs font-semibold text-slate-800">Accidents & Incidents</div>
-          <div className="text-[11px] text-slate-500">Live accident reports with damage details, photos, and maintenance WO spawn.</div>
+          <div className="text-xs text-slate-500">Live accident reports with damage details, photos, and maintenance WO spawn.</div>
         </div>
         <Button
           size="sm"
@@ -277,9 +277,9 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
         pageSizeOptions={[pageSize]}
         hidePager
         filterBar={
-          <div className="flex flex-wrap items-center gap-2 text-[11px]" data-testid="accidents-filters">
+          <div className="flex flex-wrap items-center gap-2 text-xs" data-testid="accidents-filters">
             {/* SAF-F26: filters, not creators — allowCreate={false} (same law as IdvrPage). */}
-            <label className="text-[11px] text-slate-600">
+            <label className="text-xs text-slate-600">
               Driver
               <EntityPicker
                 kind="driver"
@@ -293,7 +293,7 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
                 dataTestId="accidents-driver-filter"
               />
             </label>
-            <label className="text-[11px] text-slate-600">
+            <label className="text-xs text-slate-600">
               Unit
               <EntityPicker
                 kind="unit"
@@ -307,7 +307,7 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
                 dataTestId="accidents-unit-filter"
               />
             </label>
-            <label className="text-[11px] text-slate-600">
+            <label className="text-xs text-slate-600">
               Trailer
               <EntityPicker
                 kind="trailer"
