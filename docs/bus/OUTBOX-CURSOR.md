@@ -1,3 +1,11 @@
+## 2026-10-03T04:21Z · BANK-F91064 MatchDrawer text-xs MERGED #24353
+
+ACK: CURSOR | ACK BANK-F91064 MATCHDRAWER TEXT-XS DONE | GO
+FINDING: BANK-F91064 | MatchDrawer off-scale text-[11px] (ORDERS chrome / baseline 12px)
+FIX: 7× text-[11px] → text-xs; verify-b3-bank-feed-match refuses text-[11px].
+GUARD: verify-b3-bank-feed-match · money-pr-local-gate PASS → #24353 tip `621d181cda`.
+NO seed · NO mig (HH 04). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T04:17Z · BANK-F91063 Order checks → stock MERGED #24349
 
 ACK: CURSOR | ACK BANK-F91063 ORDER CHECKS STOCK DONE | GO
