@@ -46,6 +46,9 @@ export const KNOWN_DEBT = new Set([
   // Same shape via INSERT ... SELECT '<id>' WHERE NOT EXISTS (idempotency, not existence). Applied
   // 2026-09-30T23:12:04Z, uneditable.
   "202615000000_bind_usmca_cash_gl_accounts.sql",
+  // ROUND 381.3: both shapes — RAISEs when no Owner user exists, and INSERTs a USMCA feature-flag override with no
+  // company-existence guard. Pure data (lib.feature_flag_overrides), no DDL; applied 2026-10-02T12:34:59Z, uneditable.
+  "202615221200_usmca_bank_tx_split_flags_on.sql",
 ]);
 
 /**
@@ -55,6 +58,18 @@ export const KNOWN_DEBT = new Set([
  */
 export const INSERT_RULE_AFTER = "202614850000";
 
+/**
+ * ROUND 381.3 — an early-return existence guard on org.companies: either `IF NOT EXISTS (SELECT … FROM org.companies …)
+ * THEN RETURN`, or a variable assigned from org.companies that is tested `IS NULL THEN RETURN`. Either way, on a database
+ * without the company the block returns before it touches anything.
+ */
+export function companyGuardedByEarlyReturn(sql) {
+  const code = sql.replace(/--[^\n]*/g, "");
+  if (/\bIF\s+NOT\s+EXISTS\s*\(\s*SELECT\b[^;]*?\borg\.companies\b[^;]*?\)\s*THEN\s+RETURN\b/i.test(code)) return true;
+  const vars = [...code.matchAll(/(\w+)\s+(?:constant\s+)?uuid\s*(?::=|DEFAULT)\s*\(\s*SELECT\b[^;]*?\borg\.companies\b/gi)].map((m) => m[1]);
+  return vars.some((v) => new RegExp(`\\bIF\\s+${v}\\s+IS\\s+NULL\\s+THEN\\s+RETURN\\b`, "i").test(code));
+}
+
 export function migrationRaisesOnAbsentProductionSubject(sql) {
   const touchesProdCompany = PRODUCTION_ONLY_COMPANY_IDS.some((id) => sql.includes(id));
   if (!touchesProdCompany) return false;
@@ -62,6 +77,11 @@ export function migrationRaisesOnAbsentProductionSubject(sql) {
   if (!/\b(UPDATE|DELETE FROM)\b/i.test(sql)) return false;
   // Already guards its work the right way -- nothing to flag.
   if (/\bWHERE\s+EXISTS\b|\bIF\s+EXISTS\s*\(/i.test(sql)) return false;
+  // ROUND 381.3 — the same guard written as an EARLY RETURN is just as correct, and this read it as unguarded
+  // (202615250600 / 202615260600 / 202615280600 were all flagged while guarded):
+  //   IF NOT EXISTS (SELECT 1 FROM org.companies WHERE id = v_usmca) THEN RETURN;
+  //   v := (SELECT id FROM org.companies WHERE id = '<id>'); … IF v IS NULL THEN RETURN;
+  if (companyGuardedByEarlyReturn(sql)) return false;
 
   // The specific defect: a value LOOKED UP from data is tested for NULL, and the branch RAISEs.
   // That is "my subject is not here, so fail" -- exactly wrong when the subject is production-only.
@@ -267,6 +287,22 @@ if (process.argv.includes("--selftest")) {
   // 7. The whole mechanism is deleted.
   expect("mechanism-deleted", assertMigrator(migrator.replace("const FRESH_DB_PRODUCTION_DATA_ONLY = new Map(", "const OTHER = new Map(")), "is gone");
 
+  // ROUND 381.3 — the early-return existence guards pass; a mention of org.companies WITHOUT an early return does not.
+  const SCHEMA_READ = `SELECT pg_get_constraintdef(c.oid) INTO def FROM pg_constraint c; IF roles IS NULL OR cardinality(roles) < 10 THEN RAISE EXCEPTION 'could not read'; END IF;`;
+  refute(
+    "early-return-not-exists-passes",
+    assertMigrations([{ name: "999_er1.sql", sql: `DO $$ DECLARE def text; roles text[]; v_usmca constant uuid := '${ID}'; BEGIN ${SCHEMA_READ} IF NOT EXISTS (SELECT 1 FROM org.companies WHERE id = v_usmca) THEN RETURN; END IF; UPDATE t SET a=1 WHERE operating_company_id = v_usmca; END $$;` }])
+  );
+  refute(
+    "early-return-var-is-null-passes",
+    assertMigrations([{ name: "999_er2.sql", sql: `DO $$ DECLARE def text; roles text[]; usmca uuid := (SELECT id FROM org.companies WHERE id = '${ID}'); BEGIN ${SCHEMA_READ} IF usmca IS NULL THEN RETURN; END IF; UPDATE t SET a=1 WHERE operating_company_id = usmca; END $$;` }])
+  );
+  expect(
+    "org-companies-without-early-return-still-caught",
+    assertMigrations([{ name: "999_er3.sql", sql: `DO $$ DECLARE v uuid; usmca uuid := (SELECT id FROM org.companies WHERE id = '${ID}'); BEGIN SELECT id INTO v FROM catalogs.accounts WHERE operating_company_id = usmca; IF v IS NULL THEN RAISE EXCEPTION 'expected account'; END IF; UPDATE t SET a=1 WHERE operating_company_id = usmca; END $$;` }]),
+    "RAISEs when its subject is"
+  );
+
   const liveMigrator = assertMigrator(migrator);
   if (liveMigrator.length) failures.push(`live-migrator: ${liveMigrator.join(" | ")}`);
   const liveMigrations = assertMigrations(
@@ -279,7 +315,7 @@ if (process.argv.includes("--selftest")) {
     for (const f of failures) console.error(`  - ${f}`);
     process.exitCode = 1;
   } else {
-    console.log(`${LABEL} selftest 15/15 OK`);
+    console.log(`${LABEL} selftest 18/18 OK`);
   }
 } else {
   const problems = [
