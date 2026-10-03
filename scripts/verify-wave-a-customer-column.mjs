@@ -18,8 +18,15 @@ const checks = [
   // via a616eed3c/01b9b2f5f; kept this already-integrated, slightly more general version).
   ["apps/frontend/src/pages/factoring/SubmissionWorkqueue.tsx", /<EntityLink[\s\S]{0,80}kind="customer"[\s\S]{0,80}id=\{item\.customer_id\}/],
 ];
+const DRIVER_LOADS = "apps/frontend/src/pages/driver/DriverLoadsPage.tsx";
 const files = Object.fromEntries([...new Set(checks.map(([file]) => file))].map((file) => [file, fs.readFileSync(file, "utf8")]));
-const audit = (source) => checks.filter(([file, pattern]) => !pattern.test(source[file])).map(([file]) => `${file}: customer FK/link missing`);
+const audit = (source) => {
+  const failures = checks.filter(([file, pattern]) => !pattern.test(source[file])).map(([file]) => `${file}: customer FK/link missing`);
+  const page = source[DRIVER_LOADS] ?? "";
+  if (page.includes("text-[11px]")) failures.push("leftover text-[11px]");
+  if (page.includes("#8A92AB") || page.includes("#334155")) failures.push("leftover off-scale muted");
+  return failures;
+};
 if (process.argv.includes("--selftest")) {
   let caught = 0;
   for (const [file, pattern] of checks) {
@@ -27,7 +34,12 @@ if (process.argv.includes("--selftest")) {
     if (mutant[file] === files[file] || !audit(mutant).length) throw new Error(`customer-column mutation survived: ${file}`);
     caught++;
   }
-  console.log(`verify-wave-a-customer-column SELFTEST PASS — ${caught} planted defects rejected`);
+  const leftoverPlant = { ...files, [DRIVER_LOADS]: `${files[DRIVER_LOADS]}\n<div className="text-[11px] text-[#8A92AB]">plant</div>` };
+  const leftover = audit(leftoverPlant);
+  if (!leftover.includes("leftover text-[11px]") || !leftover.includes("leftover off-scale muted")) {
+    throw new Error("leftover plant escaped");
+  }
+  console.log(`verify-wave-a-customer-column SELFTEST PASS — ${caught} planted defects + leftover plant rejected`);
 }
 const failures = audit(files);
 if (failures.length) {

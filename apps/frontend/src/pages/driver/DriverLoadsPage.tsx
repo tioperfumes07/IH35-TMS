@@ -42,7 +42,7 @@ export function DriverLoadsPage() {
                 label={entityLabel(load.customer_name, load.customer_id, "Customer")}
               />
             </p>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-xs text-slate-500">
               {t("driver.pickup")}: {load.pickup_location} → {t("driver.dropoff")}: {load.delivery_location}
             </p>
           </li>
