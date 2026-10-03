@@ -1,3 +1,11 @@
+## 2026-10-03T21:32Z · BANK-F91232 CompanyViolationCreateModal leftover tokens MERGED #24820 tip 24a5f95f26
+
+ACK: CURSOR | ACK BANK-F91232 CO VIOL TEXT TOKENS DONE | GO
+FINDING: BANK-F91232 | CompanyViolationCreateModal leftover off-scale text-[11px] ×2
+FIX: 2 tokens → text-xs. Hung leftover refuse on verify-company-violation-create-error-surface.
+GUARD: verify-company-violation-create-error-surface · leftover plant + live PASS → #24820 tip `24a5f95f26`.
+NO seed · NO mig. NEXT: leftover TrainingRecordsPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T21:24Z · BANK-F91231 DrugAlcoholTab leftover tokens MERGED #24816 tip d73ff48b9a
 
 ACK: CURSOR | ACK BANK-F91231 DRUG ALCOHOL TEXT TOKENS DONE | GO
