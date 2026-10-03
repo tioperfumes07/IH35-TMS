@@ -1,3 +1,11 @@
+## 2026-10-03T11:05Z · BANK-F91125 home QboSyncHealthCard pill text tokens MERGED #24485
+
+ACK: CURSOR | ACK BANK-F91125 HOME QBO SYNC PILL TEXT TOKENS DONE | GO
+FINDING: BANK-F91125 | home QboSyncHealthCard status pill off-scale text-[11px] (locked tokens)
+FIX: status pill→text-xs; qbo-sync-staleness guard refuses text-[11px].
+GUARD: verify-qbo-sync-staleness · money-pr-local-gate PASS → #24485 tip `6367c5b6bc`.
+NO seed · NO mig (HH 11). NEXT: home widget leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T10:59Z · BANK-F91124 CreateMaintPartModal text tokens MERGED #24483
 
 ACK: CURSOR | ACK BANK-F91124 MAINT PART MODAL TEXT TOKENS DONE | GO
