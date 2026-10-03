@@ -828,6 +828,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-duplicate-expense-is-refused-or-ruled-never-silent",
     ["apps/backend/src/fuel/", "apps/backend/src/feed/seed-settlement-document.service.ts", "apps/backend/src/driver-finance/settlement-creator.service.ts", "apps/backend/src/integrations/relay-payments/", "db/migrations/202615370600_fuel_purchase_unique_per_provider_transaction.sql", "scripts/verify-duplicate-expense-is-refused-or-ruled-never-silent.mjs"],
   ],
+  // U22 (owner) — Num resolves a purged document's number from the audit trail; uuid-keyed document lookups.
+  [
+    "verify-register-num-resolves-purged-documents",
+    ["apps/backend/src/accounting/reclassify/", "apps/frontend/src/lib/reclassifyDrill.ts", "apps/frontend/src/pages/accounting/ReclassifyTransactionsPage.tsx", "scripts/verify-register-num-resolves-purged-documents.mjs"],
+  ],
   // U27 (owner) — balances render in natural sign (no negative income / liabilities) on every surface fed debit − credit.
   [
     "verify-balances-render-in-natural-sign",
