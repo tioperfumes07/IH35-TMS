@@ -106,6 +106,12 @@ export function audit(read) {
   if (voidSrc.includes("text-[11px]")) {
     fails.push("Void / Cancel Reasons: must not use text-[11px] — use text-xs");
   }
+  // BANK-F91107 — ORDERS chrome: Load Cancellation Reasons status pills use text-xs, not text-[11px].
+  const cancelRel = "apps/frontend/src/pages/lists/dispatch/LoadCancellationReasonsListPage.tsx";
+  const cancelSrc = read(cancelRel);
+  if (cancelSrc.includes("text-[11px]")) {
+    fails.push("Load Cancellation Reasons: must not use text-[11px] — use text-xs");
+  }
   return fails;
 }
 
