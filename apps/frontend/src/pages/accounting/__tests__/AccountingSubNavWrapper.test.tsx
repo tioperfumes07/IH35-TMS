@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement } from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
 
 // UI-BACK-BUTTON-MISSING-ENTIRELY: this wrapper is the module header for every one of the ~49
@@ -37,23 +37,26 @@ function wrap(ui: ReactElement) {
 
 beforeEach(() => navigateSpy.mockClear());
 
-describe("AccountingSubNavWrapper back button", () => {
-  const originalState = window.history.state;
-  afterEach(() => window.history.replaceState(originalState, ""));
+// U18 (owner UI register 2026-10-03) — "Back is browser history — becomes a breadcrumb, parent always the module home".
+// The wrapper still gives every Accounting page a visible way back (UI-BACK-BUTTON-MISSING-ENTIRELY), now the breadcrumb.
+describe("AccountingSubNavWrapper way back", () => {
+  beforeEach(() => navigateSpy.mockClear());
 
-  it("renders a back button", () => {
+  it("shows Accounting (home link) / [parent] / this page", () => {
     render(
       wrap(
-        <AccountingSubNavWrapper title="Invoices">
+        <AccountingSubNavWrapper title="Recurring Bills" crumbs={[{ label: "Bills", href: "/accounting/bills" }]}>
           <div>content</div>
         </AccountingSubNavWrapper>,
       ),
     );
-    expect(screen.getByLabelText("Back")).toBeInTheDocument();
+    const crumb = within(screen.getByTestId("accounting-breadcrumb"));
+    expect(crumb.getByRole("link", { name: "Accounting" })).toHaveAttribute("href", "/accounting");
+    expect(crumb.getByRole("link", { name: "Bills" })).toHaveAttribute("href", "/accounting/bills");
+    expect(crumb.getByText("Recurring Bills")).toBeInTheDocument();
   });
 
-  it("falls back to /home on a direct load/refresh (idx 0)", () => {
-    window.history.replaceState({ idx: 0 }, "");
+  it("offers no browser-history Back", () => {
     render(
       wrap(
         <AccountingSubNavWrapper title="Invoices">
@@ -61,21 +64,7 @@ describe("AccountingSubNavWrapper back button", () => {
         </AccountingSubNavWrapper>,
       ),
     );
-    fireEvent.click(screen.getByLabelText("Back"));
-    expect(navigateSpy).toHaveBeenCalledWith("/home");
-  });
-
-  it("prefers real history once the user has navigated in-app", () => {
-    window.history.replaceState({ idx: 1, key: "def456", usr: null }, "");
-    render(
-      wrap(
-        <AccountingSubNavWrapper title="Invoices">
-          <div>content</div>
-        </AccountingSubNavWrapper>,
-      ),
-    );
-    fireEvent.click(screen.getByLabelText("Back"));
-    expect(navigateSpy).toHaveBeenCalledWith(-1);
-    expect(navigateSpy).not.toHaveBeenCalledWith("/home");
+    expect(screen.queryByLabelText("Back")).toBeNull();
+    expect(navigateSpy).not.toHaveBeenCalledWith(-1);
   });
 });

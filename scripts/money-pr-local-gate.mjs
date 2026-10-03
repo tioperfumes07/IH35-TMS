@@ -899,6 +899,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-accounting-status-filters-are-multiselect",
     ["apps/frontend/src/pages/accounting/", "apps/frontend/src/pages/banking/", "apps/backend/src/lib/status-list.ts", "apps/backend/src/accounting/", "apps/backend/src/banking/transfers.service.ts", "apps/backend/src/driver-finance/", "apps/backend/src/integrations/qbo/qbo-reconcile-read.service.ts", "scripts/verify-accounting-status-filters-are-multiselect.mjs"],
   ],
+  // U18 (owner) — Accounting's way back is the module breadcrumb, never browser history.
+  [
+    "verify-accounting-way-back-is-breadcrumb",
+    ["apps/frontend/src/pages/accounting/", "apps/frontend/src/pages/banking/", "apps/frontend/src/components/accounting/", "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx", "scripts/verify-accounting-way-back-is-breadcrumb.mjs"],
+  ],
   // ROUND 368.2(b) — a bank line may not sit matched to nothing (deferred constraint triggers, both sides).
   [
     "verify-no-bank-line-is-matched-to-nothing",

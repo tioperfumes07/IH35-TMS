@@ -1,12 +1,9 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RecurringBillList } from "../RecurringBillList";
 
-// UI-BACK-BUTTON-IGNORES-REAL-NAVIGATION-HISTORY: the "Back to Bills" arrow was hardcoded to
-// /accounting/bills regardless of where the user actually came from -- missed by the earlier
-// audit waves because its aria-label wasn't the exact string "Back". Same smart-back fix.
 const navigateSpy = vi.fn();
 vi.mock("react-router-dom", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-router-dom")>();
@@ -38,25 +35,21 @@ function renderPage() {
   );
 }
 
-describe("RecurringBillList back button", () => {
-  const originalState = window.history.state;
+// U18 (owner UI register 2026-10-03) — "Back is browser history — becomes a breadcrumb, parent always the module home".
+describe("RecurringBillList way back", () => {
   beforeEach(() => navigateSpy.mockClear());
-  afterEach(() => window.history.replaceState(originalState, ""));
 
-  it("falls back to /accounting/bills on a direct load/refresh (idx 0)", async () => {
-    window.history.replaceState({ idx: 0 }, "");
+  it("is the module breadcrumb: Accounting / Bills / Recurring Bills", async () => {
     renderPage();
-    await waitFor(() => screen.getByLabelText("Back to Bills"));
-    fireEvent.click(screen.getByLabelText("Back to Bills"));
-    expect(navigateSpy).toHaveBeenCalledWith("/accounting/bills");
+    const accounting = await screen.findByRole("link", { name: "Accounting" });
+    expect(accounting).toHaveAttribute("href", "/accounting");
+    expect(screen.getByRole("link", { name: "Bills" })).toHaveAttribute("href", "/accounting/bills");
   });
 
-  it("prefers real history once the user has navigated in-app", async () => {
-    window.history.replaceState({ idx: 1, key: "xyz", usr: null }, "");
+  it("offers no browser-history Back", async () => {
     renderPage();
-    await waitFor(() => screen.getByLabelText("Back to Bills"));
-    fireEvent.click(screen.getByLabelText("Back to Bills"));
-    expect(navigateSpy).toHaveBeenCalledWith(-1);
-    expect(navigateSpy).not.toHaveBeenCalledWith("/accounting/bills");
+    await screen.findByRole("link", { name: "Accounting" });
+    expect(screen.queryByLabelText("Back to Bills")).toBeNull();
+    expect(navigateSpy).not.toHaveBeenCalledWith(-1);
   });
 });

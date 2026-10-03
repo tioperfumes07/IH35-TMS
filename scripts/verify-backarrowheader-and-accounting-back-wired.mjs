@@ -25,8 +25,8 @@ const ACCOUNTING_WRAPPER = "apps/frontend/src/pages/accounting/AccountingSubNavW
 // REG-007 (Cursor 2026-09-10) — the last 4 unconditional navigate(-1) sites migrated to smart-back.
 const REG007_FILES = [
   "apps/frontend/src/components/shared/BackButton.tsx",
-  "apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx",
-  "apps/frontend/src/pages/accounting/bills/RecurringBillCreate.tsx",
+  // U18 — LoadCostsBoardPage and RecurringBillCreate left this list: their way back is now the module breadcrumb /
+  // the parent page (verify-accounting-way-back-is-breadcrumb), not history.
 ];
 
 function stripComments(text) {
@@ -61,19 +61,19 @@ function auditBackArrowHeader(source) {
 }
 
 function auditAccountingWrapper(source) {
-  const { failures, stripped } = auditImportsHelper(ACCOUNTING_WRAPPER, source);
-  if (!/aria-label=["']Back["']/.test(stripped)) {
-    failures.push(`${ACCOUNTING_WRAPPER}: must render a back control (aria-label="Back") -- it was missing entirely`);
+  // U18 (owner UI register 2026-10-03) — "Back is browser history — becomes a breadcrumb, parent always the module home".
+  // The wrapper still must give every Accounting page a visible way back (it was once missing entirely), but that way
+  // back is now the breadcrumb Accounting / [parent] / page, and it must never pop browser history.
+  const failures = [];
+  const stripped = stripComments(source);
+  if (!/<Breadcrumb items=\{breadcrumb\}/.test(stripped)) {
+    failures.push(`${ACCOUNTING_WRAPPER}: must render the Accounting breadcrumb (the way back to the module home)`);
   }
-  if (!/<span>Back<\/span>/.test(stripped)) {
-    failures.push(`${ACCOUNTING_WRAPPER}: must show a visible Back label (not icon-only)`);
+  if (!/\{ label: "Accounting", href: "\/accounting" \}/.test(stripped)) {
+    failures.push(`${ACCOUNTING_WRAPPER}: the breadcrumb's first link must be the Accounting home (/accounting)`);
   }
-  const historyIdx = stripped.indexOf("hasInAppHistory(window.history.state)");
-  const fallbackIdx = stripped.indexOf('navigate("/home")');
-  if (historyIdx < 0 || fallbackIdx < 0 || historyIdx > fallbackIdx) {
-    failures.push(
-      `${ACCOUNTING_WRAPPER}: the hasInAppHistory check must run BEFORE the /home fallback, or the fallback always wins`
-    );
+  if (/hasInAppHistory|navigate\(-1\)|history\.back\(/.test(stripped)) {
+    failures.push(`${ACCOUNTING_WRAPPER}: must not go back through browser history (U18)`);
   }
   // BANK-F91096 — ORDERS chrome: Back control uses text-xs, not text-[11px].
   if (stripped.includes("text-[11px]")) {
@@ -128,13 +128,9 @@ if (process.argv.includes("--selftest")) {
         ),
     },
     {
-      name: "remove the back button from AccountingSubNavWrapper entirely",
+      name: "remove the breadcrumb from AccountingSubNavWrapper entirely",
       target: "accounting",
-      mutate: (t) =>
-        t.replace(
-          /<button\s+type="button"\s+aria-label="Back"[\s\S]*?<\/button>/,
-          ""
-        ),
+      mutate: (t) => t.replace("<Breadcrumb items={breadcrumb} />", ""),
     },
     {
       name: "strip visible Back label from BackArrowHeader (icon-only regression)",
@@ -142,31 +138,19 @@ if (process.argv.includes("--selftest")) {
       mutate: (t) => t.replace("<span>Back</span>", ""),
     },
     {
-      name: "strip visible Back label from AccountingSubNavWrapper (icon-only regression)",
+      name: "AccountingSubNavWrapper breadcrumb no longer starts at the Accounting home",
       target: "accounting",
-      mutate: (t) => t.replace("<span>Back</span>", ""),
+      mutate: (t) => t.replace('{ label: "Accounting", href: "/accounting" }', '{ label: "Accounting", href: "/home" }'),
     },
     {
-      name: "reorder AccountingSubNavWrapper so the /home fallback runs first",
+      name: "AccountingSubNavWrapper goes back through browser history again",
       target: "accounting",
-      mutate: (t) =>
-        t.replace(
-          `if (hasInAppHistory(window.history.state)) {
-                navigate(-1);
-                return;
-              }
-              navigate("/home");`,
-          `navigate("/home");
-              if (hasInAppHistory(window.history.state)) {
-                navigate(-1);
-                return;
-              }`
-        ),
+      mutate: (t) => t.replace("<Breadcrumb items={breadcrumb} />", "<Breadcrumb items={breadcrumb} /><button onClick={() => navigate(-1)}>Back</button>"),
     },
     {
       name: "AccountingSubNavWrapper Back control off-scale text-[11px]",
       target: "accounting",
-      mutate: (t) => t.replace("text-xs font-semibold text-gray-600", "text-[11px] font-semibold text-gray-600"),
+      mutate: (t) => t.replace('<div data-testid="accounting-breadcrumb">', '<div data-testid="accounting-breadcrumb" className="text-[11px]">'),
     },
   ];
   let caught = 0;
@@ -203,5 +187,5 @@ if (process.argv.includes("--selftest")) {
 }
 
 console.log(
-  "verify-backarrowheader-and-accounting-back-wired PASS — BackArrowHeader + AccountingSubNavWrapper smart-back and visible Back label"
+  "verify-backarrowheader-and-accounting-back-wired PASS — BackArrowHeader smart-back with a visible Back label; AccountingSubNavWrapper way back = breadcrumb to the Accounting home (U18), no history"
 );
