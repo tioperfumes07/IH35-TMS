@@ -88,26 +88,26 @@ export function DriverHosClocksBlock({
 
   return (
     <div className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1.5" data-hos-block="book-load">
-      <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-600">
+      <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.4px] text-gray-600">
         <span className={`inline-block h-2 w-2 rounded-full ${dot.cls}`} title={dot.label} />
         {heading}
         {eldRaw ? (
-          <span className="ml-1 rounded-sm bg-emerald-100 px-1 text-[11px] font-semibold uppercase tracking-[0.3px] text-emerald-700">
+          <span className="ml-1 rounded-sm bg-emerald-100 px-1 text-xs font-semibold uppercase tracking-[0.3px] text-emerald-700">
             Certified ELD
           </span>
         ) : driverId && q.data ? (
-          <span className="ml-1 rounded-sm bg-slate-100 px-1 text-[11px] font-semibold uppercase tracking-[0.3px] text-slate-700">
+          <span className="ml-1 rounded-sm bg-slate-100 px-1 text-xs font-semibold uppercase tracking-[0.3px] text-slate-700">
             In-app fallback
           </span>
         ) : null}
       </div>
       {q.isLoading ? (
-        <div className="text-[11px] text-gray-400">Loading HOS…</div>
+        <div className="text-xs text-gray-400">Loading HOS…</div>
       ) : (
-        <div className="grid grid-cols-3 gap-x-3 gap-y-0.5 text-[11px] sm:grid-cols-6">
+        <div className="grid grid-cols-3 gap-x-3 gap-y-0.5 text-xs sm:grid-cols-6">
           {HOS_COLUMNS.map((col) => (
             <div key={col.key} title={col.derived ? HOS_PROJECTED_TOOLTIP : HOS_SOURCE_TOOLTIP}>
-              <div className="text-[11px] uppercase tracking-[0.3px] text-gray-500">
+              <div className="text-xs uppercase tracking-[0.3px] text-gray-500">
                 {col.label}
                 {col.derived ? <span className="ml-0.5 text-gray-400">*</span> : null}
               </div>
@@ -149,7 +149,7 @@ export function DriverHosClockValue({
   }
   return (
     <span
-      className="font-mono text-[11px] text-gray-700"
+      className="font-mono text-xs text-gray-700"
       data-hos-col={colKey}
       title={col?.derived ? HOS_PROJECTED_TOOLTIP : HOS_SOURCE_TOOLTIP}
     >
@@ -165,7 +165,7 @@ export function DriverHosClockCells({ driverId, operatingCompanyId }: { driverId
     return (
       <>
         {HOS_COLUMNS.map((col, index) => (
-          <td key={col.key} className="px-3 py-2 text-[11px] text-slate-500" data-hos-col={col.key}>
+          <td key={col.key} className="px-3 py-2 text-xs text-slate-500" data-hos-col={col.key}>
             {index === 0 ? <HosRetryButton onRetry={() => void q.refetch()} /> : "—"}
           </td>
         ))}
@@ -177,7 +177,7 @@ export function DriverHosClockCells({ driverId, operatingCompanyId }: { driverId
       {HOS_COLUMNS.map((col) => (
         <td
           key={col.key}
-          className="px-3 py-2 font-mono text-[11px] text-gray-700"
+          className="px-3 py-2 font-mono text-xs text-gray-700"
           data-hos-col={col.key}
           title={col.derived ? HOS_PROJECTED_TOOLTIP : HOS_SOURCE_TOOLTIP}
         >
