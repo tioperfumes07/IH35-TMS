@@ -903,6 +903,10 @@ export function AccountRegisterPage() {
           // ACCT-F3498: server-bound memo/ref search above — suppress ParityTable toolbar Search.
           suppressToolbarSearch
           tableTestId="b1-account-register"
+          // BANK-F91053 — ORDERS §B-1 print/export/gear (column chooser). ParityTable already
+          // exposes Memo/Type/Account/Location as defaultHidden gear columns; name the gear so
+          // the ORDERS chrome is assertable and clickable beside Export/Print.
+          gearButtonTestId="b1-account-register-gear"
           expandOnRowClick
           expandMode="single"
           expandedKeys={expandedKeys}
