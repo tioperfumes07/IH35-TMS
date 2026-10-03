@@ -99,6 +99,19 @@ try {
         AND b.matched_factoring_advance_id = fp.factoring_advance_id AND b.voided_at IS NULL AND b.merged_into_bank_transaction_id IS NULL)),0)::bigint r
     FROM accounting.factoring_purchases fp WHERE fp.operating_company_id = '${USMCA}' AND fp.status = 'posted' AND fp.purchase_date BETWEEN '${FROM}' AND '${TO}'`);
   bref.factoring_wires_vs_expected = Number(w.r) - Number(w.e);
+  // ROUND 335 item 2 — driver escrow, own walk: every account at or below the ACTIVE escrow_liability_default binding.
+  const esc = await one(`WITH RECURSIVE t AS (
+        SELECT account_id AS id FROM accounting.chart_of_accounts_roles
+         WHERE operating_company_id = '${USMCA}' AND role = 'escrow_liability_default' AND is_active = true
+        UNION SELECT ca.id FROM catalogs.accounts ca JOIN t ON ca.parent_account_id = t.id)
+      SELECT COALESCE(sum(CASE WHEN p.debit_or_credit = 'credit' THEN p.amount_cents ELSE -p.amount_cents END) FILTER (WHERE j.entry_date <= '${TO}'),0)::bigint held,
+             COALESCE(sum(p.amount_cents) FILTER (WHERE p.debit_or_credit = 'credit' AND j.entry_date BETWEEN '${FROM}' AND '${TO}'),0)::bigint contrib,
+             COALESCE(sum(p.amount_cents) FILTER (WHERE p.debit_or_credit = 'debit' AND j.entry_date BETWEEN '${FROM}' AND '${TO}'),0)::bigint deduct
+        FROM t JOIN accounting.journal_entry_postings p ON p.account_id = t.id
+        JOIN accounting.journal_entries j ON j.id = p.journal_entry_uuid AND j.status = 'posted' AND j.operating_company_id = '${USMCA}'`);
+  bref.escrow_held = Number(esc.held);
+  bref.escrow_contributions = Number(esc.contrib);
+  bref.escrow_deductions = Number(esc.deduct);
   await c.query("ROLLBACK");
 } finally {
   await c.end();

@@ -100,7 +100,8 @@ export function checkFactoringHomeHubReverseLinks(src) {
   for (const [testId, path] of [
     ["factoring-hub-dispatch-queue-reverse-link", "/dispatch/factoring-queue"],
     ["factoring-hub-accounting-advances-reverse-link", "/accounting/factoring"],
-    ["factoring-hub-banking-entry-reverse-link", "/banking/factoring"],
+    // ROUND-20.8 B3 (#21962) retired /banking/factoring (redirect only) — the hub links Banking home directly.
+    ["factoring-hub-banking-entry-reverse-link", "/banking"],
   ]) {
     if (!src.includes(`data-testid="${testId}"`) || !src.includes(`to="${path}"`)) {
       failures.push(`${FACTORING_HOME}: missing hub reverse link ${testId} → ${path}`);

@@ -2024,3 +2024,35 @@ AFTER: `FAIL — 1 NEW Direction-1 silent-void(s) beyond the 0-violation baselin
 under AUTH-201 (duplicate billing of 13513) — ledger reversed, header never stamped voided_at / void_reason /
 voided_by_user_id. Not fixed by me (dispatch lane). Gate impact: red for every diff under accounting/ driver-finance/
 factoring/ fuel/ db/migrations/ scripts/purge/ until that row closes.
+## ROUND 335 item 2 — banking + factoring design parity against the approved preview (docs/approved-screens/4-Banking_Homepage.png)
+
+Measured Banking home element by element against the preview (Feature 1 factoring virtual bank, Feature 2 driver escrow
+visualizer, KPI strip, sub-nav), respecting later rulings (ROUND-20.8 B3 deleted Banking's Factoring tab). Built:
+- **Dead links (same class as the load Factoring tab, #24273):** the factoring virtual-bank tile routed to /banking/factoring,
+  which redirects to /banking — the tile landed back on Banking home. Now /factoring/reserve (the detail it summarises).
+  The two "Banking entry" reverse links (advance detail, factoring hub) now target /banking directly. The redirect routes stay.
+  3 guards that pinned the retired URL updated (ruling: #21962), each with a plant that the old URL must fail.
+- **Placeholders removed (ROUND 326.2 "no placeholder panels"):** the factoring card's "Advances funded MTD — (see Factoring
+  module)" and "+30 aging fees — (see Chargebacks & Fees)" now render the factoring KPI engine's month-to-date
+  purchased_volume and default_interest_accrued (the same engine Factoring renders), a zero showing the engine's reason.
+- **Driver escrow (preview Feature 2), engine first:** banking KPI engine + escrow_held / escrow_contributions /
+  escrow_deductions over the escrow_liability_default account (2100) and every sub-account (recursive, 43 accounts), each
+  with a drill sharing its predicate. Prod YTD: held $1,325.00 over 12 accounts holding escrow; contributions $8,925.00;
+  deductions $7,600.00 (8,925 − 7,600 = 1,325 — self-consistent); MTD 0 / 0 with the engine's reason. The tie-out guard
+  recomputes all three independently: **12 banking KPIs tie to the cent**; planted "root account only" → FAIL
+  (engine 0 != ledger 132500). New DriverEscrowSummaryCard on Banking home (held · accounts holding · contributions MTD ·
+  deductions MTD · Filter → /banking/driver-escrow); the three KPIs also appear (with drill) in the banking KPI panel.
+- **Stale test, my lane:** FactoringDetailPage.mutationError.test.tsx failed on MAIN — it clicked "Mark Advanced", a writer
+  retired by ACCT-F9331 (#24002). Rewritten: the retired writer must not be offered (plant showAdvance=true → FAIL) and a
+  rejected Void (the remaining writer) surfaces a toast.
+- **Not built, with reason:** the preview's "DIP balance" tile — DIP is TRANSP's Chapter 11 account; USMCA has none, and a
+  tile without data would be a placeholder.
+Guard: `verify-banking-home-preview-parity` (selftest 4/4; FAILS on main naming the placeholder, the missing escrow card
+and the off-engine MTD).
+**#24313 re-gate (my miss, corrected):** I merged #24313 on a background "exit 0" while the gate's own line said
+gate_exit=1 — its only red was the intended verify-void-is-whole failure on load 13515, but the gate stops at the first red.
+Re-run on the PR branch with only that guard stubbed: `gate_exit=0`, passed=227, failed=2 (the two documented REPORT-ONLY
+checks). Nothing else was behind it.
+- **Queued (my lane, found here):** the shared LedgerKpiPanel shows each KPI's `source` (internal schema.table names) to the
+  operator as hover text and as the drill's "Source:" line, for all 22 factoring + banking KPIs. The static
+  internal-language guard cannot see runtime strings. Next: business-language provenance in the engines + a runtime check.

@@ -4,7 +4,9 @@ import type { LedgerKpi, LedgerKpiResponse } from "../components/shared/LedgerKp
 
 export type BankingKpiKey =
   | "cash_position" | "cleared_vs_uncleared" | "unmatched_inflow" | "unmatched_outflow" | "match_rate"
-  | "reconciliation_gap" | "factoring_wires_vs_expected" | "fuel_drafts" | "settlement_drafts";
+  | "reconciliation_gap" | "factoring_wires_vs_expected" | "fuel_drafts" | "settlement_drafts"
+  // ROUND 335 item 2 — driver escrow (2100 + sub-accounts), the approved preview's Banking Feature 2.
+  | "escrow_held" | "escrow_contributions" | "escrow_deductions";
 
 export type BankingKpi = LedgerKpi & { key: BankingKpiKey };
 
