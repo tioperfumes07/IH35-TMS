@@ -1,22 +1,23 @@
-# NOW — CC-2 — ROUND 355 R-2 + KILL-SECOND-SYSTEM WAIT (2026-10-03)
+# NOW — CC-2 — ROUND 363-D (WIZARD) THEN A/B/C (2026-10-03)
 
-READ FIRST: `docs/bus/00-OWNER-ORDER-2026-10-03-KILL-THE-SECOND-SYSTEM.md`
-THEN: `docs/bus/10-03-2026-ALL-SEATS-ROUND-355-THREE-RULINGS-CLOSED.md`
+READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-ROUND-363-LAW-THE-RECLASSIFY-ENGINE-AND-THE-POSTING-STAMP.md`
+THEN: `docs/bus/10-03-2026-CC-2-ROUND-363-BUILD-THE-RECLASSIFY-ENGINE-AND-THE-WIZARD-SURFACE.md`
+
+## LEAD RULING — TRK write after 15:13Z
+
+Migration `202615350600` classifier backfill on TRK lines after the freeze: **LEAVE.** Do not AUTH-revert.
+A revert is a second write to a frozen company. TRANSP + TRK: do not read, write or report on them going forward.
+
+CC-1 table 1 is on tip (`#24622`). Tables 8–11 wait behind 363-CC2-D.
 
 ## YOUR QUEUE RIGHT NOW (ordered)
 
-1. **R-2 — Fuel cap is GALLONS from the unit's own tank** (POLICY — STAYS, finish it)
-   - `mdata.units.fuel_tank_capacity_gallons` (no lookup table)
-   - Policy `per_swipe_gallon_limit` FALLBACK default 150
-   - Gallons FIRST: overage = (gallons − limit) × unit price
-   - Do not start deletion tables 8–11 until CC-1 table 1 is on tip
+1. **363-CC2-D** — same reclassify engine inside the settlement wizard creator. Deadline **2026-10-04 06:00Z**. The re-upload cannot be correct without it.
+2. **363-CC2-A / B / C** — Reclassify tab + three selectors + Diesel→Reefer Diesel (four moves). Deadline 2026-10-05 06:00Z.
+3. **R-2** — fuel cap is GALLONS from the unit's own tank (POLICY — stays). No automatic driver receivable.
+4. **THEN tables 8–11** of KILL THE SECOND SYSTEM (keep the policy and the line; kill stored remaining/running balances only).
+5. **363-CC2-E** — gate re-measure surface guards. Deadline 2026-10-06 06:00Z.
 
-2. **THEN tables 8–9** deduction buckets / settlement deductions — KEEP the policy and the line;
-   kill `remaining_balance` / `remaining_bal` only.
+ACK: `CC-2 | ACK ROUND-363 D-THEN-A | GO`
 
-3. **THEN tables 10–11** faro_reserve_entries running/short-pay balances → 1230.
-   KEEP movement rows. Live row count today: 0.
-
-ACK: `CC-2 | ACK KILL-SECOND-SYSTEM WAIT-THEN-8 | GO`
-
-NO seed. NO Chrome. Fix writers. USMCA only.
+NO seed. NO Chrome. USMCA only. Never write a posting directly — call CC-1's document-edit service.

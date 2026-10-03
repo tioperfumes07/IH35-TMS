@@ -1,3 +1,24 @@
+# >>> NOW 2026-10-03 — ROUND 363 — YOU BUILD 363-CUR-A
+
+READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-ROUND-363-LAW-THE-RECLASSIFY-ENGINE-AND-THE-POSTING-STAMP.md`
+THEN: `docs/bus/10-03-2026-CURSOR-ROUND-363-CLEARED-UNCLEARED-EVERYWHERE-AND-THE-CLICK-THROUGH-SWEEP.md`
+
+Cursor open PRs at this census: **0**. FAST-MERGE the 363 law packet, then build 363-CUR-A.
+Leftover token-drain and ROUND 348 remaster stay overflow / parked.
+
+1. **363-CUR-A** — cleared / uncleared on every balance and both agings. Deadline **2026-10-05 06:00Z**.
+2. **363-CUR-D** ships with the first PR (`verify-no-money-gate-depends-on-wall-clock-time`).
+3. **363-CUR-B / C** by 2026-10-06 06:00Z.
+4. Coordinate one multi-select account-filter component with CC-2 (they own Reclassify; you own every other filter bar).
+
+CC-1 table 1 `#24622` is on tip. Keep CC-2 off tables 8–11 until 363-CC2-D is on tip. Keep CC-3 off table 12.
+
+TRK derived-column write after 15:13Z: **LEAVE.** Do not AUTH-revert.
+
+ACK: `CURSOR | ACK ROUND-363 CUR-A | GO`
+
+---
+
 # >>> NOW 2026-10-03 — OWNER ORDER — KILL THE SECOND SYSTEM — YOU COORDINATE
 
 READ: `docs/bus/00-OWNER-ORDER-2026-10-03-KILL-THE-SECOND-SYSTEM.md`
