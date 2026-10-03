@@ -5,7 +5,7 @@ import { z } from "zod";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 import { currentAuthUser, validationError } from "../shared.js";
 import { getAccountBalances } from "../account-balances.service.js";
-import { applyReclassify, findReclassifyLines, getReclassifyBatchLines, listReclassifyBatches, undoReclassifyBatch } from "./reclassify.service.js";
+import { applyReclassify, findReclassifyLines, getReclassifyBatchLines, listReclassifyBatches, undoReclassifyBatch, getReclassifyAccountTree } from "./reclassify.service.js";
 
 const DATE = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 function canReclassify(role: string) {
@@ -26,6 +26,17 @@ export async function registerAccountingReclassifyRoutes(app: FastifyInstance) {
     return reply.send({ from_date: q.data.from_date, to_date: q.data.to_date, accounts: report.accounts });
   });
 
+  // ROUND 368.1 — THE WHOLE CHART OF ACCOUNTS with derived balances (0.00 included, inactive flagged, both statements)
+  app.get("/api/v1/accounting/reclassify/account-tree", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!canReclassify(user.role)) return reply.code(403).send({ error: "forbidden" });
+    const q = z.object({ operating_company_id: z.string().uuid(), from_date: DATE, to_date: DATE }).safeParse(req.query ?? {});
+    if (!q.success) return validationError(reply, q.error);
+    await assertCompanyMembership(user.uuid, q.data.operating_company_id);
+    return reply.send(await getReclassifyAccountTree(user.uuid, q.data));
+  });
+
   // RESULT GRID: GL lines matching the filters, with live count + net sum of the whole match set
   app.get("/api/v1/accounting/reclassify/lines", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
@@ -35,10 +46,12 @@ export async function registerAccountingReclassifyRoutes(app: FastifyInstance) {
       operating_company_id: z.string().uuid(), from_date: DATE, to_date: DATE,
       account_ids: z.string().optional(), source_types: z.string().optional(), class_id: z.string().uuid().optional(), entity_uuid: z.string().uuid().optional(),
       search: z.string().max(200).optional(), limit: z.coerce.number().int().min(1).max(500).optional(), offset: z.coerce.number().int().min(0).optional(),
+      item_ids: z.string().optional(), load_ids: z.string().optional(),
+      sort_key: z.string().max(20).optional(), sort_dir: z.enum(["asc", "desc"]).optional(),
     }).safeParse(req.query ?? {});
     if (!q.success) return validationError(reply, q.error);
     await assertCompanyMembership(user.uuid, q.data.operating_company_id);
-    const out = await findReclassifyLines(user.uuid, { ...q.data, account_ids: csv(q.data.account_ids), source_types: csv(q.data.source_types) });
+    const out = await findReclassifyLines(user.uuid, { ...q.data, account_ids: csv(q.data.account_ids), source_types: csv(q.data.source_types), item_ids: csv(q.data.item_ids), load_ids: csv(q.data.load_ids) });
     return reply.send(out);
   });
 

@@ -23,6 +23,7 @@
 import { withCurrentUser } from "../../auth/db.js";
 import { createJournalEntryOnClient, reverseJournalEntryNoFlip } from "../journal-entries.service.js";
 import { PostingEngineError } from "../posting-engine.service.js";
+import { writeTransactionSourceLink } from "../accounting-spine-emit.js";
 
 type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }> };
 
@@ -35,6 +36,12 @@ export type ReclassifyLineFilter = {
   class_id?: string | null;
   entity_uuid?: string | null;
   search?: string | null;
+  /** ROUND 368.1 by-item / by-load selectors — the item on the document line, the load on the posting (or its line). */
+  item_ids?: string[];
+  load_ids?: string[];
+  /** ROUND 370.3 sortable headers — whitelisted keys only (see LINE_SORT). */
+  sort_key?: string | null;
+  sort_dir?: "asc" | "desc" | null;
   limit?: number;
   offset?: number;
 };
@@ -67,16 +74,28 @@ export type ReclassifyLineRow = {
   /** signed: debit positive, credit negative — QBO's NET AMOUNT on an expense account */
   net_amount_cents: number;
   already_reclassified_batch_id: string | null;
+  /** ROUND 370 — every posting behind the balance is listed; these say why one cannot be reclassified. */
+  is_reversed: boolean;
+  is_reversal: boolean;
+  item_id: string | null;
+  item_name: string | null;
+  load_id: string | null;
+  load_number: string | null;
+  debit_cents: number;
+  credit_cents: number;
+  /** opening balance of the matched accounts before from_date + every matched row up to and including this one, in date order */
+  running_balance_cents: number;
 };
 
 export function buildLineWhere(filter: ReclassifyLineFilter, values: unknown[]): string {
+  // ROUND 370 — the SAME predicate accounting.fn_account_balances_as_of sums, so the listed rows ARE the balance. The
+  // old filter hid reversed / reversal lines on the premise that they net to zero; inside a date window they do not
+  // (USMCA 9000 showed 2,837.33 with every row hidden). They are listed, flagged, and refused at apply instead.
   const where: string[] = [
     `p.operating_company_id = $1::uuid`,
-    `je.status = 'posted'`,
+    `je.status <> 'voided'`,
+    `(p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))`,
     `je.entry_date BETWEEN $2::date AND $3::date`,
-    // a reversed line (void) and its reversal net to zero: neither is reclassifiable
-    `p.reversed_by_line_id IS NULL`,
-    `p.reversal_of_line_id IS NULL`,
   ];
   if (filter.account_ids?.length) {
     values.push(filter.account_ids);
@@ -94,12 +113,37 @@ export function buildLineWhere(filter: ReclassifyLineFilter, values: unknown[]):
     values.push(filter.entity_uuid);
     where.push(`p.entity_uuid = $${values.length}::uuid`);
   }
+  if (filter.item_ids?.length) {
+    values.push(filter.item_ids);
+    where.push(`dl.item_id = ANY($${values.length}::uuid[])`);
+  }
+  if (filter.load_ids?.length) {
+    values.push(filter.load_ids);
+    where.push(`COALESCE(p.load_id, dl.load_id) = ANY($${values.length}::uuid[])`);
+  }
   if (filter.search && filter.search.trim()) {
     values.push(`%${filter.search.trim()}%`);
     where.push(`(p.description ILIKE $${values.length} OR je.memo ILIKE $${values.length})`);
   }
   return where.join("\n          AND ");
 }
+
+/** The postings + their entry + batch + the document line (item, load) — shared by the count, the list and apply. */
+const LINE_FROM = `
+          FROM accounting.journal_entry_postings p
+          JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
+          LEFT JOIN accounting.posting_batches pb ON pb.id = p.posting_batch_id AND pb.operating_company_id = p.operating_company_id
+          LEFT JOIN LATERAL (
+            SELECT el.item_id, el.load_id FROM accounting.expense_lines el
+             WHERE p.source_transaction_type = 'expense' AND el.id::text = p.source_transaction_line_id
+            UNION ALL
+            SELECT bl.item_id, bl.load_id FROM accounting.bill_lines bl
+             WHERE p.source_transaction_type = 'bill' AND bl.id::text = p.source_transaction_line_id
+            UNION ALL
+            SELECT il.item_id, il.source_load_id FROM accounting.invoice_lines il
+             WHERE p.source_transaction_type = 'invoice' AND il.id::text = p.source_transaction_line_id
+            LIMIT 1
+          ) dl ON true`;
 
 const LINE_SELECT = `
         SELECT p.id::text AS posting_id,
@@ -112,6 +156,9 @@ const LINE_SELECT = `
                  WHEN 'expense' THEN (SELECT e.expense_number FROM accounting.expenses e WHERE e.id::text = p.source_transaction_id)
                  WHEN 'bill' THEN (SELECT coalesce(b.display_id, b.bill_number) FROM accounting.bills b WHERE b.id::text = p.source_transaction_id)
                  WHEN 'invoice' THEN (SELECT i.display_id FROM accounting.invoices i WHERE i.id::text = p.source_transaction_id)
+                 WHEN 'customer_payment' THEN (SELECT py.display_id FROM accounting.payments py WHERE py.id::text = p.source_transaction_id)
+                 WHEN 'bill_payment' THEN (SELECT NULLIF(btrim(bb.bill_number), '') FROM accounting.bill_payments bp2 JOIN accounting.bills bb ON bb.id = bp2.bill_id WHERE bp2.id::text = p.source_transaction_id)
+                 WHEN 'driver_settlement' THEN (SELECT s2.display_id FROM driver_finance.driver_settlements s2 WHERE s2.id::text = p.source_transaction_id)
                  ELSE NULL END AS document_number,
                p.account_id::text AS account_id,
                a.account_number, a.account_name, a.account_type, a.account_subtype, a.system_purpose,
@@ -131,16 +178,49 @@ const LINE_SELECT = `
                (CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END)::bigint AS net_amount_cents,
                (SELECT rl.batch_id::text FROM accounting.reclassify_batch_lines rl
                   JOIN accounting.reclassify_batches rb ON rb.id = rl.batch_id AND rb.status = 'applied'
-                 WHERE rl.posting_id = p.id AND rl.result = 'applied' LIMIT 1) AS already_reclassified_batch_id
-          FROM accounting.journal_entry_postings p
-          JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
+                 WHERE rl.posting_id = p.id AND rl.result = 'applied' LIMIT 1) AS already_reclassified_batch_id,
+               (p.reversed_by_line_id IS NOT NULL) AS is_reversed,
+               (p.reversal_of_line_id IS NOT NULL) AS is_reversal,
+               dl.item_id::text AS item_id, it.item_name,
+               COALESCE(p.load_id, dl.load_id)::text AS load_id, ld.load_number::text AS load_number,
+               (CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE 0 END)::bigint AS debit_cents,
+               (CASE WHEN p.debit_or_credit = 'credit' THEN p.amount_cents ELSE 0 END)::bigint AS credit_cents,
+               je.entry_date AS sort_date, p.journal_entry_uuid AS sort_je, p.line_sequence AS sort_seq
+${LINE_FROM}
           LEFT JOIN catalogs.accounts a ON a.id = p.account_id AND a.operating_company_id = p.operating_company_id
+          LEFT JOIN catalogs.items it ON it.id = dl.item_id
+          LEFT JOIN mdata.loads ld ON ld.id = COALESCE(p.load_id, dl.load_id)
           LEFT JOIN catalogs.classes c ON c.id = p.class_id AND c.operating_company_id = p.operating_company_id
           LEFT JOIN mdata.locations loc ON loc.id = p.location_id AND loc.operating_company_id = p.operating_company_id`;
 
 function numberize(r: ReclassifyLineRow): ReclassifyLineRow {
-  return { ...r, amount_cents: Number(r.amount_cents), net_amount_cents: Number(r.net_amount_cents) };
+  const { sort_date: _d, sort_je: _j, sort_seq: _q, ...rest } = r as ReclassifyLineRow & { sort_date?: unknown; sort_je?: unknown; sort_seq?: unknown };
+  return {
+    ...rest,
+    amount_cents: Number(r.amount_cents),
+    net_amount_cents: Number(r.net_amount_cents),
+    debit_cents: Number(r.debit_cents ?? 0),
+    credit_cents: Number(r.credit_cents ?? 0),
+    running_balance_cents: Number(r.running_balance_cents ?? 0),
+  };
 }
+
+/** ROUND 370.3 — every column sorts both ways; keys are whitelisted, never interpolated from input. */
+export const LINE_SORT: Record<string, string> = {
+  date: "sort_date",
+  type: "source_transaction_type",
+  num: "document_number",
+  name: "entity_name",
+  memo: "description",
+  account: "account_name",
+  item: "item_name",
+  load: "load_number",
+  class: "class_name",
+  debit: "debit_cents",
+  credit: "credit_cents",
+  amount: "net_amount_cents",
+  balance: "running_balance_cents",
+};
 
 export async function findReclassifyLines(userId: string, filter: ReclassifyLineFilter) {
   return withCurrentUser(userId, async (client) => {
@@ -149,25 +229,56 @@ export async function findReclassifyLines(userId: string, filter: ReclassifyLine
     const where = buildLineWhere(filter, values);
     const limit = Math.min(Math.max(filter.limit ?? 100, 1), 500);
     const offset = Math.max(filter.offset ?? 0, 0);
-    const totals = await client.query<{ n: string; net: string }>(
+    const sortCol = LINE_SORT[filter.sort_key ?? "date"] ?? LINE_SORT.date;
+    const dir = filter.sort_dir === "asc" ? "ASC" : "DESC";
+    // Opening balance of the matched accounts (same predicate, before from_date) — the running balance starts there.
+    const openingValues = [...values];
+    // $3 stays bound (assertNoUnusedQueryParams): the opening is everything strictly before the window's first day.
+    const openingWhere = where.replace("je.entry_date BETWEEN $2::date AND $3::date", "je.entry_date < $2::date AND $2::date <= $3::date");
+    const opening = await client.query<{ net: string }>(
+      `SELECT coalesce(sum(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END), 0)::text AS net
+         ${LINE_FROM}
+        WHERE ${openingWhere}`,
+      openingValues,
+    );
+    const openingCents = Number(opening.rows[0]?.net ?? 0);
+    const totals = await client.query<{ n: string; net: string; debit: string; credit: string; reclassifiable: string }>(
       `SELECT count(*)::text AS n,
-              coalesce(sum(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END), 0)::text AS net
-         FROM accounting.journal_entry_postings p
-         JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
+              coalesce(sum(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END), 0)::text AS net,
+              coalesce(sum(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE 0 END), 0)::text AS debit,
+              coalesce(sum(CASE WHEN p.debit_or_credit = 'credit' THEN p.amount_cents ELSE 0 END), 0)::text AS credit,
+              count(*) FILTER (WHERE p.reversed_by_line_id IS NULL AND p.reversal_of_line_id IS NULL AND je.status = 'posted')::text AS reclassifiable
+         ${LINE_FROM}
         WHERE ${where}`,
       values,
     );
+    values.push(openingCents);
+    const openingParam = values.length;
     const rows = await client.query<ReclassifyLineRow>(
-      `${LINE_SELECT}
-         WHERE ${where}
-         ORDER BY je.entry_date DESC, p.journal_entry_uuid, p.line_sequence
-         LIMIT ${limit} OFFSET ${offset}`,
+      `WITH matched AS (
+         ${LINE_SELECT}
+          WHERE ${where}
+       ), ranked AS (
+         SELECT m.*,
+                ($${openingParam}::bigint + sum(m.net_amount_cents) OVER (ORDER BY m.sort_date, m.sort_je, m.sort_seq, m.posting_id ROWS UNBOUNDED PRECEDING))::bigint AS running_balance_cents
+           FROM matched m
+       )
+       SELECT * FROM ranked
+        ORDER BY ${sortCol} ${dir} NULLS LAST, sort_date DESC, sort_je, sort_seq
+        LIMIT ${limit} OFFSET ${offset}`,
       values,
     );
     return {
       lines: rows.rows.map(numberize),
       total_lines: Number(totals.rows[0]?.n ?? 0),
       total_net_amount_cents: Number(totals.rows[0]?.net ?? 0),
+      total_debit_cents: Number(totals.rows[0]?.debit ?? 0),
+      total_credit_cents: Number(totals.rows[0]?.credit ?? 0),
+      reclassifiable_lines: Number(totals.rows[0]?.reclassifiable ?? 0),
+      opening_cents: openingCents,
+      closing_balance_cents: openingCents + Number(totals.rows[0]?.net ?? 0),
+      sort_key: Object.keys(LINE_SORT).find((k) => LINE_SORT[k] === sortCol) ?? "date",
+      sort_dir: dir.toLowerCase(),
       limit,
       offset,
     };
@@ -228,6 +339,34 @@ export function controlAccountReason(acc: { account_type: string | null; account
   return null;
 }
 
+/**
+ * ROUND 373 — a reclassify posting is never written without its spine link (accounting.transaction_source_links), on the
+ * SAME transaction. Every leg of the entry links to the source document it reclassifies (role 'reclassification'; a
+ * hand-keyed JE links to itself) and to the batch that made it (role 'reclassify_batch' / 'reclassify_undo'), so the
+ * document's ledger drill and the batch both reach these lines.
+ */
+async function linkReclassEntry(
+  client: DbClient,
+  companyId: string,
+  journalEntryId: string,
+  doc: { type: string; id: string } | null,
+  batchId: string,
+  role: "reclassification" | "reclassify_undo",
+): Promise<number> {
+  const legs = await client.query<{ id: string }>(
+    `SELECT id::text FROM accounting.journal_entry_postings WHERE journal_entry_uuid = $1::uuid AND operating_company_id = $2::uuid`,
+    [journalEntryId, companyId],
+  );
+  for (const leg of legs.rows) {
+    if (doc) {
+      await writeTransactionSourceLink(client as never, { operating_company_id: companyId, journal_entry_posting_id: leg.id, linked_object_type: doc.type, linked_object_id: doc.id, relationship_role: role });
+    }
+    await writeTransactionSourceLink(client as never, { operating_company_id: companyId, journal_entry_posting_id: leg.id, linked_object_type: "reclassify_batch", linked_object_id: batchId, relationship_role: role === "reclassification" ? "reclassify_batch" : "reclassify_undo" });
+  }
+  if (legs.rows.length === 0) throw new Error(`reclassify_entry_has_no_postings:${journalEntryId}`);
+  return legs.rows.length;
+}
+
 /** Pure: which selected lines are eligible and why the others are not. Unit-tested without a DB. */
 export function classifySelection(
   postings: SelectedPosting[],
@@ -237,6 +376,8 @@ export function classifySelection(
   const refused: Array<{ posting: SelectedPosting; why: string }> = [];
   for (const p of postings) {
     if (p.je_status !== "posted") { refused.push({ posting: p, why: `journal entry is ${p.je_status}` }); continue; }
+    if (p.is_reversed) { refused.push({ posting: p, why: "this line was reversed (its document was voided or corrected) — reclassify the live line, not the reversed one" }); continue; }
+    if (p.is_reversal) { refused.push({ posting: p, why: "this line is a reversal entry — it is undone by undoing what it reversed, not reclassified" }); continue; }
     if (p.already_reclassified_batch_id) { refused.push({ posting: p, why: `already reclassified in batch ${p.already_reclassified_batch_id}; undo that batch first` }); continue; }
     const control = controlAccountReason({ account_type: p.account_type ?? null, account_subtype: p.account_subtype ?? null, system_purpose: p.system_purpose ?? null, is_bank_ledger: p.is_bank_ledger });
     if (control && target.to_account_id) { refused.push({ posting: p, why: control }); continue; }
@@ -486,6 +627,16 @@ export async function applyReclassify(input: ApplyReclassifyInput, actor: { user
           actor,
         );
         const jeId = (je as { id: string }).id;
+        await linkReclassEntry(
+          client as DbClient,
+          companyId,
+          jeId,
+          head.source_transaction_type && head.source_transaction_id
+            ? { type: head.source_transaction_type, id: head.source_transaction_id }
+            : { type: "journal_entry", id: head.journal_entry_id },
+          batchId,
+          "reclassification",
+        );
         let docUpdated = true;
         const notes: string[] = [];
         for (const p of eligible) {
@@ -537,6 +688,7 @@ export async function undoReclassifyBatch(input: { operating_company_id: string;
     for (const row of jes.rows) {
       const r = await reverseJournalEntryNoFlip(client as never, { operatingCompanyId: input.operating_company_id, journalEntryId: row.je, reason: `Undo reclassify batch ${input.batch_id}: ${reason}`, actorUserId: actor.userId });
       const undoId = r.reversal.reversal_journal_entry_id ?? null;
+      if (undoId) await linkReclassEntry(client as DbClient, input.operating_company_id, undoId, { type: "journal_entry", id: row.je }, input.batch_id, "reclassify_undo");
       await client.query(`UPDATE accounting.reclassify_batch_lines SET undo_journal_entry_id = $2::uuid WHERE batch_id = $1::uuid AND reclass_journal_entry_id = $3::uuid`, [input.batch_id, undoId, row.je]);
       reversed += 1;
     }
@@ -621,5 +773,96 @@ export async function getReclassifyBatchLines(userId: string, operatingCompanyId
       [batchId, operatingCompanyId],
     );
     return res.rows.map((r) => ({ ...r, amount_cents: Number(r.amount_cents) }));
+  });
+}
+
+/** ROUND 368.1 / LAW 363.8 — which statement an account's QBO type belongs to. */
+export function statementSide(accountType: string | null): "balance_sheet" | "profit_and_loss" | "statistical" {
+  const t = String(accountType ?? "").toLowerCase();
+  if (/^(asset|bank|accountsreceivable|othercurrentasset|fixedasset|otherasset|liability|accountspayable|creditcard|othercurrentliability|longtermliability|equity)$/.test(t)) return "balance_sheet";
+  if (/^(income|costofgoodssold|expense|otherincome|otherexpense)$/.test(t)) return "profit_and_loss";
+  return "statistical";
+}
+
+export type ReclassifyTreeAccount = {
+  account_id: string;
+  account_number: string | null;
+  account_name: string;
+  account_type: string | null;
+  account_subtype: string | null;
+  detail_type_name: string | null;
+  parent_account_id: string | null;
+  side: "balance_sheet" | "profit_and_loss" | "statistical";
+  is_active: boolean;
+  is_postable: boolean;
+  /** derived from the GL postings (fn_account_balances_as_of's predicate) — never a stored total */
+  opening_cents: number;
+  period_activity_cents: number;
+  closing_balance_cents: number;
+  period_line_count: number;
+};
+
+/**
+ * ROUND 368.1 — THE WHOLE CHART OF ACCOUNTS for the Reclassify balance inspector: every row of catalogs.accounts for the
+ * company (0.00 included, inactive flagged — active = deactivated_at IS NULL), its parent, its statement side, and its
+ * balances DERIVED from the postings with exactly the predicate accounting.fn_account_balances_as_of uses. The rolled-up
+ * parent total is computed by the caller from these own balances (parent own balance stays separate).
+ */
+export async function getReclassifyAccountTree(userId: string, input: { operating_company_id: string; from_date: string; to_date: string }) {
+  return withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+    const res = await client.query<{
+      account_id: string; account_number: string | null; account_name: string; account_type: string | null; account_subtype: string | null;
+      detail_type_name: string | null; parent_account_id: string | null; is_active: boolean; is_postable: boolean;
+      opening: string; activity: string; closing: string; n: string;
+    }>(
+      `WITH g AS (
+         SELECT p.account_id,
+                sum(CASE WHEN je.entry_date < $2::date THEN (CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END) ELSE 0 END) AS opening,
+                sum(CASE WHEN je.entry_date BETWEEN $2::date AND $3::date THEN (CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END) ELSE 0 END) AS activity,
+                sum(CASE WHEN je.entry_date <= $3::date THEN (CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END) ELSE 0 END) AS closing,
+                count(*) FILTER (WHERE je.entry_date BETWEEN $2::date AND $3::date) AS n
+           FROM accounting.journal_entry_postings p
+           JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
+           LEFT JOIN accounting.posting_batches pb ON pb.id = p.posting_batch_id AND pb.operating_company_id = p.operating_company_id
+          WHERE p.operating_company_id = $1::uuid
+            AND je.status <> 'voided'
+            AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
+          GROUP BY p.account_id
+       )
+       SELECT a.id::text AS account_id, a.account_number, a.account_name, a.account_type::text AS account_type, a.account_subtype,
+              dt.name AS detail_type_name, a.parent_account_id::text AS parent_account_id,
+              (a.deactivated_at IS NULL) AS is_active, COALESCE(a.is_postable, true) AS is_postable,
+              COALESCE(g.opening, 0)::text AS opening, COALESCE(g.activity, 0)::text AS activity,
+              COALESCE(g.closing, 0)::text AS closing, COALESCE(g.n, 0)::text AS n
+         FROM catalogs.accounts a
+         LEFT JOIN catalogs.detail_types dt ON dt.id = a.detail_type_id
+         LEFT JOIN g ON g.account_id = a.id
+        WHERE a.operating_company_id = $1::uuid
+        ORDER BY a.account_number NULLS LAST, a.account_name`,
+      [input.operating_company_id, input.from_date, input.to_date],
+    );
+    const accounts: ReclassifyTreeAccount[] = res.rows.map((r) => ({
+      account_id: r.account_id,
+      account_number: r.account_number,
+      account_name: r.account_name,
+      account_type: r.account_type,
+      account_subtype: r.account_subtype,
+      detail_type_name: r.detail_type_name,
+      parent_account_id: r.parent_account_id,
+      side: statementSide(r.account_type),
+      is_active: r.is_active,
+      is_postable: r.is_postable,
+      opening_cents: Number(r.opening),
+      period_activity_cents: Number(r.activity),
+      closing_balance_cents: Number(r.closing),
+      period_line_count: Number(r.n),
+    }));
+    return {
+      from_date: input.from_date,
+      to_date: input.to_date,
+      accounts,
+      longest_account_name_chars: accounts.reduce((m, a) => Math.max(m, a.account_name.length), 0),
+    };
   });
 }

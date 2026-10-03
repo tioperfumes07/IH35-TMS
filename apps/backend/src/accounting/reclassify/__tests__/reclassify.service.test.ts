@@ -7,6 +7,8 @@ const base = {
   location_id: null, location_name: null,
   entity_uuid: "ven-1", entity_type: "vendor", entity_name: "Dreamline", description: "Zelle payment to Dreamline", debit_or_credit: "debit" as const,
   amount_cents: 676778, net_amount_cents: 676778, already_reclassified_batch_id: null, je_status: "posted", memo: null,
+  is_reversed: false, is_reversal: false, item_id: null, item_name: null, load_id: null, load_number: null,
+  debit_cents: 676778, credit_cents: 0, running_balance_cents: 676778,
 };
 
 describe("Reclassify engine — pure rules (QBO spec §24)", () => {
@@ -46,17 +48,33 @@ describe("Reclassify engine — pure rules (QBO spec §24)", () => {
     expect(post).toMatchObject({ account_id: "acc-fuel", class_id: "cls-2", entity_uuid: "ven-2", entity_type: "vendor", debit_or_credit: "credit" });
   });
 
-  it("filter WHERE excludes reversed/reversal lines and non-posted JEs, and binds every filter positionally", () => {
+  it("ROUND 370: the list uses the BALANCE function's own predicate (every posting behind the balance), and binds every filter positionally", () => {
     const values: unknown[] = ["co", "2026-08-01", "2026-09-30"];
-    const where = buildLineWhere({ operating_company_id: "co", from_date: "2026-08-01", to_date: "2026-09-30", account_ids: ["a"], source_types: ["expense"], class_id: "c", search: "Dreamline" }, values);
-    expect(where).toContain("je.status = 'posted'");
-    expect(where).toContain("p.reversed_by_line_id IS NULL");
-    expect(where).toContain("p.reversal_of_line_id IS NULL");
+    const where = buildLineWhere({ operating_company_id: "co", from_date: "2026-08-01", to_date: "2026-09-30", account_ids: ["a"], source_types: ["expense"], class_id: "c", search: "Dreamline", item_ids: ["i"], load_ids: ["l"] }, values);
+    // the same predicate accounting.fn_account_balances_as_of sums — the listed rows ARE the balance
+    expect(where).toContain("je.status <> 'voided'");
+    expect(where).toContain("(p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))");
+    // reversed / reversal lines are LISTED (the balance counts them) — refused at apply, never hidden
+    expect(where).not.toContain("reversed_by_line_id IS NULL");
+    expect(where).not.toContain("reversal_of_line_id IS NULL");
     expect(where).toContain("$4::uuid[]");
     expect(where).toContain("$5::text[]");
     expect(where).toContain("$6::uuid");
-    expect(where).toContain("ILIKE $7");
-    expect(values).toEqual(["co", "2026-08-01", "2026-09-30", ["a"], ["expense"], "c", "%Dreamline%"]);
+    expect(where).toContain("dl.item_id = ANY($7::uuid[])");
+    expect(where).toContain("COALESCE(p.load_id, dl.load_id) = ANY($8::uuid[])");
+    expect(where).toContain("ILIKE $9");
+    expect(values).toEqual(["co", "2026-08-01", "2026-09-30", ["a"], ["expense"], "c", ["i"], ["l"], "%Dreamline%"]);
+  });
+
+  it("ROUND 370: a reversed line and a reversal line are listed but REFUSED at apply, with the reason", () => {
+    const { eligible, refused } = classifySelection(
+      [{ ...base, posting_id: "r1", is_reversed: true }, { ...base, posting_id: "r2", is_reversal: true }, { ...base, posting_id: "ok" }],
+      { to_account_id: "acc-new" },
+    );
+    expect(eligible.map((p) => p.posting_id)).toEqual(["ok"]);
+    expect(refused.map((r) => r.posting.posting_id)).toEqual(["r1", "r2"]);
+    expect(refused[0]!.why).toMatch(/reversed/);
+    expect(refused[1]!.why).toMatch(/reversal/);
   });
 
   it("never moves a line off A/R, A/P, bank, credit card, undeposited funds or a factoring/escrow control account (subledger owns it)", () => {

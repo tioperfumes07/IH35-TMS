@@ -36,9 +36,57 @@ export type ReclassifyLine = {
   amount_cents: number;
   net_amount_cents: number;
   already_reclassified_batch_id: string | null;
+  /** ROUND 370 — every posting behind the balance is listed; reversed / reversal rows are shown but not reclassifiable. */
+  is_reversed: boolean;
+  is_reversal: boolean;
+  item_id: string | null;
+  item_name: string | null;
+  load_id: string | null;
+  load_number: string | null;
+  debit_cents: number;
+  credit_cents: number;
+  running_balance_cents: number;
 };
 
-export type ReclassifyLinesResponse = { lines: ReclassifyLine[]; total_lines: number; total_net_amount_cents: number; limit: number; offset: number };
+export type ReclassifyLinesResponse = {
+  lines: ReclassifyLine[];
+  total_lines: number;
+  total_net_amount_cents: number;
+  total_debit_cents: number;
+  total_credit_cents: number;
+  reclassifiable_lines: number;
+  opening_cents: number;
+  closing_balance_cents: number;
+  sort_key: string;
+  sort_dir: "asc" | "desc";
+  limit: number;
+  offset: number;
+};
+
+/** ROUND 368.1 — the whole chart of accounts, balances derived from the GL postings (0.00 included, inactive flagged). */
+export type ReclassifyTreeAccount = {
+  account_id: string;
+  account_number: string | null;
+  account_name: string;
+  account_type: string | null;
+  account_subtype: string | null;
+  detail_type_name: string | null;
+  parent_account_id: string | null;
+  side: "balance_sheet" | "profit_and_loss" | "statistical";
+  is_active: boolean;
+  is_postable: boolean;
+  opening_cents: number;
+  period_activity_cents: number;
+  closing_balance_cents: number;
+  period_line_count: number;
+};
+
+export function getReclassifyAccountTree(operatingCompanyId: string, fromDate: string, toDate: string) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId, from_date: fromDate, to_date: toDate });
+  return apiRequest<{ from_date: string; to_date: string; accounts: ReclassifyTreeAccount[]; longest_account_name_chars: number }>(
+    `/api/v1/accounting/reclassify/account-tree?${q}`,
+  );
+}
 
 export type ReclassifyDocumentResult = {
   source_transaction_type: string | null;
@@ -68,7 +116,10 @@ export function getReclassifyAccounts(operatingCompanyId: string, fromDate: stri
 
 export function findReclassifyLines(
   operatingCompanyId: string,
-  params: { from_date: string; to_date: string; account_ids?: string[]; source_types?: string[]; class_id?: string; entity_uuid?: string; search?: string; limit?: number; offset?: number },
+  params: {
+    from_date: string; to_date: string; account_ids?: string[]; source_types?: string[]; class_id?: string; entity_uuid?: string; search?: string;
+    item_ids?: string[]; load_ids?: string[]; sort_key?: string; sort_dir?: "asc" | "desc"; limit?: number; offset?: number;
+  },
 ) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId, from_date: params.from_date, to_date: params.to_date });
   if (params.account_ids?.length) q.set("account_ids", params.account_ids.join(","));
@@ -76,6 +127,10 @@ export function findReclassifyLines(
   if (params.class_id) q.set("class_id", params.class_id);
   if (params.entity_uuid) q.set("entity_uuid", params.entity_uuid);
   if (params.search) q.set("search", params.search);
+  if (params.item_ids?.length) q.set("item_ids", params.item_ids.join(","));
+  if (params.load_ids?.length) q.set("load_ids", params.load_ids.join(","));
+  if (params.sort_key) q.set("sort_key", params.sort_key);
+  if (params.sort_dir) q.set("sort_dir", params.sort_dir);
   if (params.limit != null) q.set("limit", String(params.limit));
   if (params.offset != null) q.set("offset", String(params.offset));
   return apiRequest<ReclassifyLinesResponse>(`/api/v1/accounting/reclassify/lines?${q}`);
