@@ -1,3 +1,11 @@
+## 2026-10-03T06:31Z · BANK-F91087 ApplyToBill text tokens MERGED #24409
+
+ACK: CURSOR | ACK BANK-F91087 APPLY TO BILL TEXT TOKENS DONE | GO
+FINDING: BANK-F91087 | ApplyToBillForm off-scale text-[11px] (locked tokens)
+FIX: labels→text-xs; verify-b4 refuses text-[11px].
+GUARD: verify-b4-check-creator · money-pr-local-gate PASS → #24409 tip `43d1fd879c`.
+NO seed · NO mig (HH 06). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T06:27Z · BANK-F91086 CreateMultipleBills text tokens MERGED #24407
 
 ACK: CURSOR | ACK BANK-F91086 MULTI BILLS TEXT TOKENS DONE | GO
