@@ -1,3 +1,11 @@
+## 2026-10-03T05:16Z · BANK-F91072 VendorBillForm text tokens MERGED #24377
+
+ACK: CURSOR | ACK BANK-F91072 VENDOR BILL FORM TEXT TOKENS DONE | GO
+FINDING: BANK-F91072 | VendorBillForm off-scale text-[11px] (locked tokens)
+FIX: helpers/banner/labels→text-xs; verify-b4 refuses text-[11px].
+GUARD: verify-b4-check-creator · money-pr-local-gate PASS → #24377 tip `920f1c7c9e`.
+NO seed · NO mig (HH 05). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T05:13Z · BANK-F91071 ExpensesListPage text tokens MERGED #24375
 
 ACK: CURSOR | ACK BANK-F91071 EXPENSES TEXT TOKENS DONE | GO
