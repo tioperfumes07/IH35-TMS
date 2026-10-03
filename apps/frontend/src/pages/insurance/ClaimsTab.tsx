@@ -461,7 +461,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                   ? "none linked yet"
                   : null}
               </div>
-              <p className="md:col-span-2 text-[11px] text-slate-500" data-testid="claim-graph-money-gaps">
+              <p className="md:col-span-2 text-xs text-slate-500" data-testid="claim-graph-money-gaps">
                 {graph.gaps.bill || graph.gaps.expense || graph.gaps.work_order
                   ? `Money FK gaps: ${[graph.gaps.bill, graph.gaps.expense, graph.gaps.work_order].filter(Boolean).join(" · ")}`
                   : "Bill / expense / WO insurance_claim_id columns present — reverse lists above when density > 0."}
@@ -520,7 +520,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
             testIdPrefix="insurance-claims"
           >
           <div className="flex flex-wrap items-end gap-3" data-testid="insurance-claims-filters">
-            <label className="text-[11px] text-slate-600">
+            <label className="text-xs text-slate-600">
               Driver
               <EntityPicker
                 kind="driver"
@@ -533,7 +533,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                 dataTestId="insurance-claims-filter-driver"
               />
             </label>
-            <label className="text-[11px] text-slate-600">
+            <label className="text-xs text-slate-600">
               Unit
               <EntityPicker
                 kind="unit"
@@ -546,7 +546,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                 dataTestId="insurance-claims-filter-unit"
               />
             </label>
-            <label className="text-[11px] text-slate-600">
+            <label className="text-xs text-slate-600">
               Load
               <EntityPicker
                 kind="load"
@@ -559,7 +559,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                 dataTestId="insurance-claims-filter-load"
               />
             </label>
-            <label className="text-[11px] text-slate-600">
+            <label className="text-xs text-slate-600">
               Trailer
               <EntityPicker
                 kind="trailer"
