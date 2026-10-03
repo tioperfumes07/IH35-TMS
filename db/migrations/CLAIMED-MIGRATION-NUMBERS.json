@@ -1867,6 +1867,11 @@
       "claimed_at": "2026-10-03",
       "purpose": "ALL-SEATS order KILL THE SECOND SYSTEM (CC-2, driver_settlement_deductions): view driver_finance.v_settlement_deduction_balances — each deduction's remaining = its amount (the stored policy) minus its active settlement deduction lines; readers repoint to it before remaining_balance_cents is dropped."
     },
+    "202615360700": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 373 ordering (writers, then arm): DISABLE the 26 document-side triggers of 202615360600 until every void path releases the bank lines that name its document; the bank-line and match-row refusals stay armed."
+    },
     "202615360600": {
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-03",
