@@ -30,7 +30,13 @@ export function verify(source) {
   need("route", "VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$9,$10,$10)", "writer must bind both ownership fields to the selected company");
   need("route", "await ensureUnitAsset(client, {", "unit create must preserve asset linkage");
   need("route", '"maintenance.vehicles.created"', "unit create must remain audited");
+  leftoverRefuse(source.page ?? "", failures);
   return failures;
+}
+
+function leftoverRefuse(src, failures) {
+  if (src.includes("text-[11px]")) failures.push("leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155")) failures.push("leftover off-scale muted");
 }
 
 const source = read();
@@ -57,6 +63,11 @@ if (process.argv.includes("--selftest")) {
     const mutant = { ...source, [key]: source[key].replaceAll(token, `BROKEN_${index}`) };
     if (!verify(mutant).length) throw new Error(`selftest mutation ${index + 1} survived`);
   });
-  console.log(`verify-unit-column-all-module-remainder SELFTEST PASS — ${mutations.length} planted defects rejected`);
+  const leftoverPlant = `${source.page}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  const leftoverFailures = verify({ ...source, page: leftoverPlant });
+  if (!leftoverFailures.includes("leftover text-[11px]") || !leftoverFailures.includes("leftover off-scale muted")) {
+    throw new Error(`leftover plant escaped — ${leftoverFailures.join("; ")}`);
+  }
+  console.log(`verify-unit-column-all-module-remainder SELFTEST PASS — ${mutations.length} planted defects rejected + leftover plant rejected`);
 }
 console.log("verify-unit-column-all-module-remainder PASS — the final unit Required leaf creates, scopes, persists, reloads, and drills canonically");
