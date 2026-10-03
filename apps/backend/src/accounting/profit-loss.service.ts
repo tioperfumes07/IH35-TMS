@@ -23,6 +23,9 @@ export type ProfitLossSection = {
 };
 
 export type ProfitLossReport = {
+  /** ROUND 384: accounts whose account_type no P&L bucket claims, with activity. Empty when the chart
+   *  is fully mapped. Never folded into a total — an unclassified line is a question, not a number. */
+  unclassified: ProfitLossSection;
   revenue: ProfitLossSection;
   cogs: ProfitLossSection;
   gross_profit: number;
@@ -103,6 +106,8 @@ export async function getProfitLossReport(input: {
     const revenueLines: ProfitLossLine[] = [];
     const cogsLines: ProfitLossLine[] = [];
     const operatingExpenseLines: ProfitLossLine[] = [];
+    // ROUND 384: accounts whose account_type no bucket claims. Surfaced, never dropped.
+    const unclassifiedLines: ProfitLossLine[] = [];
 
     for (const row of res.rows) {
       const totalDebits = Number(row.total_debits ?? 0);
@@ -139,6 +144,32 @@ export async function getProfitLossReport(input: {
           account_type: accountType,
           amount: totalDebits - totalCredits,
         });
+        continue;
+      }
+
+      // ROUND 384 (Lead, 2026-10-03) — AN UNMAPPED ACCOUNT TYPE USED TO FALL OFF THE P&L IN SILENCE.
+      //
+      // The three branches above cover Income, OtherIncome, CostOfGoodsSold, Expense and OtherExpense.
+      // Anything else simply reached the end of the loop and was never pushed anywhere: no line, no
+      // total, no warning. Money on such an account would be missing from the P&L and from net income,
+      // and the statement would still look complete and still foot.
+      //
+      // Measured on production 2026-10-03, the chart carries eight account types: CostOfGoodsSold,
+      // Asset, Liability, Income, Expense, OtherExpense, Equity and Statistical. Asset, Liability and
+      // Equity belong on the Balance Sheet and are correctly absent here. `Statistical` is QuickBooks'
+      // non-posting type and currently holds zero postings — so nothing is being dropped TODAY. The
+      // defect is that if it ever did, nobody would be told.
+      //
+      // LAW 368.3: a screen that cannot classify something says so. It never drops it. So an unmapped
+      // type with activity now comes back as its own labelled group, and net income says it is excluded.
+      if (totalDebits !== 0 || totalCredits !== 0) {
+        unclassifiedLines.push({
+          ...(row.account_id ? { account_id: row.account_id } : {}),
+          account_code: row.account_code,
+          account_name: row.account_name,
+          account_type: accountType,
+          amount: totalDebits - totalCredits,
+        });
       }
     }
 
@@ -148,7 +179,13 @@ export async function getProfitLossReport(input: {
     const grossProfit = revenueTotal - cogsTotal;
     const netIncome = revenueTotal - cogsTotal - operatingExpensesTotal;
 
+    const unclassifiedTotal = unclassifiedLines.reduce((sum, line) => sum + line.amount, 0);
+
     return {
+      // ROUND 384: present ONLY when something fell outside every bucket. An empty array means the
+      // chart is fully mapped; a non-empty one means the P&L is incomplete and says so out loud,
+      // rather than footing neatly while money is missing from it.
+      unclassified: { lines: unclassifiedLines, total: unclassifiedTotal },
       revenue: { lines: revenueLines, total: revenueTotal },
       cogs: { lines: cogsLines, total: cogsTotal },
       gross_profit: grossProfit,

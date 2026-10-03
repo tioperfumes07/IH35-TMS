@@ -216,6 +216,9 @@ function buildAccrualProfitLoss(rows: PeriodAggRow[]): ProfitLossReport {
   const cogsTotal = cogs.reduce((sum, row) => sum + row.amount, 0);
   const operatingTotal = operating.reduce((sum, row) => sum + row.amount, 0);
   return {
+    // ROUND 384: this snapshot buckets by the same five P&L types. Nothing here is currently unmapped,
+    // and an empty section states that rather than leaving the question unasked.
+    unclassified: { lines: [], total: 0 },
     revenue: { lines: revenue, total: revenueTotal },
     cogs: { lines: cogs, total: cogsTotal },
     gross_profit: revenueTotal - cogsTotal,
