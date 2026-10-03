@@ -1,3 +1,11 @@
+## 2026-10-03T05:38Z · BANK-F91075 AP aging text tokens MERGED #24385
+
+ACK: CURSOR | ACK BANK-F91075 AP AGING TEXT TOKENS DONE | GO
+FINDING: BANK-F91075 | AccountsPayableAgingPage off-scale text-[11px] (locked tokens)
+FIX: money labels→text-section-header; hint/counts→text-xs; guard refuses text-[11px].
+GUARD: verify-accounts-payable-aging-page-uses-paritytable · money-pr-local-gate PASS → #24385 tip `8fd1fbdaae`.
+NO seed · NO mig (HH 05). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T05:34Z · BANK-F91074 BankTxCategorization text tokens MERGED #24383
 
 ACK: CURSOR | ACK BANK-F91074 BANKTX CAT TEXT TOKENS DONE | GO
