@@ -928,6 +928,14 @@ export type CustomerBillingSummary = {
   };
   last_payment_at: string | null;
   outstanding_balance_cents: number | null;
+  uncleared_cents?: number;
+  cleared_open_cents?: number;
+  uncleared_documents?: Array<{
+    document_type: string;
+    document_number: string;
+    document_date: string;
+    amount_cents: number;
+  }>;
   aging_buckets: {
     current: number;
     bucket_1_30: number;
