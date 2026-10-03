@@ -416,9 +416,9 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                   onAdd: () => setAdvanceTypeCreateOpen(true),
                 }}
               />
-              {purposeMeta ? <p className="text-[11px] text-gray-500">{purposeMeta.hint}</p> : null}
+              {purposeMeta ? <p className="text-xs text-gray-500">{purposeMeta.hint}</p> : null}
               {advanceTypesQuery.isError ? (
-                <p className="text-[11px] text-slate-600">
+                <p className="text-xs text-slate-600">
                   Could not load cash advance types — using built-in purposes until the catalog is reachable.
                 </p>
               ) : null}
@@ -427,7 +427,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                 limit={200}
                 total={advanceTypesQuery.data?.total}
                 hint="Cash advance type catalog is paginated — contact admin if a type is missing."
-                className="text-[11px] text-slate-600"
+                className="text-xs text-slate-600"
               />
               {/* UI-only taxonomy until WAVE-V-SETTLE adds cash_advance_type_id FK. */}
               <span className="sr-only" data-testid="advance-type-code">
@@ -468,7 +468,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                   ))}
                 </SelectCombobox>
                 {bankAccountsQuery.isError ? (
-                  <p className="text-[11px] text-slate-600">
+                  <p className="text-xs text-slate-600">
                     Could not load bank accounts — retry before selecting, this list is not empty.
                   </p>
                 ) : null}
@@ -489,7 +489,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
           {/* Ops linkage — flat section, no nested bordered box */}
           <section className="space-y-2 border-t border-gray-100 pt-3" data-section="ops-linkage">
             <div className="font-semibold text-gray-800">Ops linkage</div>
-            <p className="text-[11px] text-gray-500">
+            <p className="text-xs text-gray-500">
               {purpose === "lumper"
                 ? "Lumper requires a load; truck/trailer default from the load when available."
                 : purpose === "fuel_deposit"
@@ -587,12 +587,12 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                     ))}
                   </SelectCombobox>
                   {billsQuery.isError ? (
-                    <p className="text-[11px] text-slate-600">
+                    <p className="text-xs text-slate-600">
                       Could not load unpaid bills — retry before linking, this list is not empty.
                     </p>
                   ) : null}
                   {selectedBill ? (
-                    <p className="text-[11px] text-gray-500">
+                    <p className="text-xs text-gray-500">
                       Selected{" "}
                       <EntityLink
                         kind="bill"
@@ -608,7 +608,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
           ) : (
             <section className="space-y-1 border-t border-gray-100 pt-3" data-section="lumper-economics">
               <div className="font-semibold text-gray-800">Economics</div>
-              <p className="text-[11px] text-gray-600">
+              <p className="text-xs text-gray-600">
                 Lumper routes as <strong>load expense</strong> (not a personal multi-period debt). Full expense JE
                 posting is financial HOLD until CPA/Neon — this create stamps purpose, load, unit, trailer, and bank
                 for linkage.
@@ -631,7 +631,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                   />
                   <span>
                     <span className="font-medium">Next settlement — deduct in full</span>
-                    <span className="block text-[11px] text-gray-500">Single deduction of the remaining balance</span>
+                    <span className="block text-xs text-gray-500">Single deduction of the remaining balance</span>
                   </span>
                 </label>
                 <label className="inline-flex items-start gap-2">
@@ -644,7 +644,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                   />
                   <span>
                     <span className="font-medium">Amortize</span>
-                    <span className="block text-[11px] text-gray-500">Split across periods with cadence</span>
+                    <span className="block text-xs text-gray-500">Split across periods with cadence</span>
                   </span>
                 </label>
               </div>
