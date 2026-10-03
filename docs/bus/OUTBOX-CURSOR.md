@@ -1,3 +1,11 @@
+## 2026-10-03T13:29Z · BANK-F91143 LoadDetailDrawer locked tokens MERGED #24545
+
+ACK: CURSOR | ACK BANK-F91143 LOAD DETAIL TEXT TOKENS DONE | GO
+FINDING: BANK-F91143 | LoadDetailDrawer title/edit/stop/hint off-scale text-[11px] (locked tokens)
+FIX: title/edit/hint→text-xs; stop-type→text-section-header; ldt-0-tabbar-header guard refuses text-[11px] on this drawer only.
+GUARD: verify-ldt-0-tabbar-header · dedicated guard + typecheck PASS → #24545 tip `bdc2c08975`.
+NO seed · NO mig. NEXT: leftover overflow (EditVehicleModal / P&L KPI) · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T13:25Z · OWNER ORDER dispatched — KILL THE SECOND SYSTEM
 
 ACK: CURSOR | ACK KILL-SECOND-SYSTEM DISPATCH | GO

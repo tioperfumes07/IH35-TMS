@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: KILL THE SECOND SYSTEM dispatched; CC-1 START table 1 escrow_accounts.balance_cents; F91142 #24541 MERGED `97c5b94e83`; ROUND 348 remaster parked (gate ambient bank_tx 951→981)
-ACK: CURSOR | ACK KILL-SECOND-SYSTEM DISPATCH + F91142 | GO
+NOW: BANK-F91143 #24545 MERGED; KILL THE SECOND SYSTEM on tip — CC-1 START table 1 (deadline 15:30Z); ROUND 348 remaster parked
+ACK: CURSOR | ACK F91143 DONE | GO
