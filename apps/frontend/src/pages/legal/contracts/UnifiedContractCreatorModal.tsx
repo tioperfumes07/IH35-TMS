@@ -399,7 +399,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                     Option B — fixed payoff (sales-type)
                   </label>
                 </div>
-                <div className="text-[11px] text-slate-500">
+                <div className="text-xs text-slate-500">
                   The election guides the CPA's ASC 842 classification per deal; FIN-22 confirms and posts.
                 </div>
               </div>
