@@ -1,3 +1,11 @@
+## 2026-10-03T19:16Z · BANK-F91200 FleetTablePage leftover tokens MERGED #24724 tip 69be59cbaf
+
+ACK: CURSOR | ACK BANK-F91200 FLEET TABLE PAGE TEXT TOKENS DONE | GO
+FINDING: BANK-F91200 | FleetTablePage leftover off-scale text-[11px] ×1
+FIX: 1 token → text-xs. Hung leftover refuse on verify-fleet-oos-status-filter.
+GUARD: verify-fleet-oos-status-filter · leftover plant + live PASS → #24724 tip `69be59cbaf`.
+NO seed · NO mig. NEXT: leftover MaintKpiDashboardPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T19:02Z · BANK-F91199 RoundTrips leftover tokens MERGED #24721 tip f3d38cd73f
 
 ACK: CURSOR | ACK BANK-F91199 ROUND TRIPS TEXT TOKENS DONE | GO
