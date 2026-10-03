@@ -47,19 +47,15 @@ describe("coa-roles resolver — control account fail-closed (ar_control)", () =
     });
   });
 
-  it("(b2) throws when ZERO designated but the account_subtype fallback is ambiguous (>1 AR subtype match)", async () => {
+  it("(b2) ROUND 365.1: ZERO designated → no account_subtype guess, even when look-alike AR accounts exist", async () => {
     const query = vi.fn(async (sql: string) => {
       if (isMappingQuery(sql)) return { rows: [] };
       if (isLegacyBindingQuery(sql)) return { rows: [] };
       if (isSubtypeFallbackQuery(sql)) return { rows: [{ id: QBO45 }, { id: OTHER }] };
       return { rows: [] };
     });
-
-    await expect(resolveRoleAccountOptional({ query }, OPCO, "ar_control")).rejects.toMatchObject({
-      code: "CONTROL_ACCOUNT_NOT_UNIQUELY_DESIGNATED",
-      designation_source: "account_subtype_fallback",
-      candidate_count: 2,
-    });
+    await expect(resolveRoleAccountOptional({ query }, OPCO, "ar_control")).resolves.toBeNull();
+    await expect(resolveRoleAccount({ query }, OPCO, "ar_control")).rejects.toBeInstanceOf(CoaRoleResolutionError);
   });
 
   it("(b3) fails fast (CoaRoleResolutionError) when nothing is designated or matchable at all", async () => {
@@ -69,12 +65,14 @@ describe("coa-roles resolver — control account fail-closed (ar_control)", () =
     );
   });
 
-  it("uses the single subtype fallback only when exactly one AR account exists (no silent multi-pick)", async () => {
+  it("ROUND 365.1: a single AR-subtype account is NOT picked when the role is undesignated (the role is the contract)", async () => {
     const query = vi.fn(async (sql: string) => {
       if (isSubtypeFallbackQuery(sql)) return { rows: [{ id: QBO45 }] };
       return { rows: [] };
     });
-    const resolved = await resolveRoleAccountOptional({ query }, OPCO, "ar_control");
-    expect(resolved).toBe(QBO45);
+    expect(await resolveRoleAccountOptional({ query }, OPCO, "ar_control")).toBeNull();
+    expect(await resolveRoleAccountOptional({ query }, OPCO, "revenue_default")).toBeNull();
+    expect(query.mock.calls.some(([sql]) => /account_name ILIKE|account_subtype = ANY/.test(String(sql)))).toBe(false);
   });
+
 });

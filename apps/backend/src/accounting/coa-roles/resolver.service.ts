@@ -255,23 +255,12 @@ const LEGACY_ROLE_BINDINGS: Partial<Record<CoaRole, string>> = {
   cash_dip: "cash_dip",
 };
 
-const ROLE_FALLBACKS: Partial<Record<CoaRole, { subtype?: string[]; type?: string[]; nameHints?: string[] }>> = {
-  ar_control: { subtype: ["AccountsReceivable"], type: ["Asset"], nameHints: ["accounts receivable", "a/r"] },
-  ap_control: { subtype: ["AccountsPayable"], type: ["Liability"], nameHints: ["accounts payable", "a/p"] },
-  cash_clearing: {
-    subtype: ["Checking", "Savings", "CashOnHand", "UndepositedFunds"],
-    type: ["Asset"],
-    nameHints: ["cash", "bank", "checking"],
-  },
-  undeposited_funds: { subtype: ["UndepositedFunds"], type: ["Asset"], nameHints: ["undeposited funds"] },
-  revenue_default: { type: ["Income", "OtherIncome"] },
-  expense_default: { type: ["Expense", "OtherExpense", "CostOfGoodsSold"] },
-  factor_reserve_default: { type: ["Liability"], nameHints: ["factor reserve", "factoring reserve"] },
-  escrow_liability_default: { type: ["Liability"], nameHints: ["escrow"] },
-  sales_tax_payable: { subtype: ["SalesTaxPayable"], type: ["Liability"], nameHints: ["sales tax payable", "tax payable"] },
-  cash_basis_adjustment_equity: { type: ["Equity"], nameHints: ["cash basis adjustment"] },
-  retained_earnings: { subtype: ["RetainedEarnings"], type: ["Equity"], nameHints: ["retained earnings"] },
-};
+// ROUND 365.1 (CC-1, LAW 363 "the role is the contract") — ROLE_FALLBACKS is GONE. It resolved an UNBOUND role to the
+// most-recently-updated account matching an account_subtype / account_type / account_name ILIKE hint (revenue_default
+// took ANY Income account). Measured on USMCA 2026-10-03: every role that had a fallback is explicitly mapped except
+// sales_tax_payable and cash_basis_adjustment_equity, and for those the fallback matched NO account — so removing it
+// moves no live posting. An unbound role now
+// fails closed (null → the poster refuses, naming the role) instead of silently picking a look-alike account.
 
 export class CoaRoleResolutionError extends Error {
   code: "COA_ROLE_MAPPING_NOT_FOUND";
@@ -378,49 +367,6 @@ async function resolveLegacyRoleBinding(client: DbClient, operatingCompanyId: st
   return legacy.rows[0]?.account_id ?? null;
 }
 
-function buildFallbackQueryParts(operatingCompanyId: string, fallback: { subtype?: string[]; type?: string[]; nameHints?: string[] }) {
-  // operating_company_id is bound as $1 and added as a LITERAL `operating_company_id = $1::uuid`
-  // predicate in each query template below — both for entity isolation (never resolve a control
-  // account from another company) and so the static entity-scope guard sees the predicate. Fallback
-  // params therefore start at $2.
-  const clauses: string[] = ["deactivated_at IS NULL", "is_postable = true"];
-  const values: unknown[] = [operatingCompanyId];
-  if (fallback.subtype?.length) {
-    values.push(fallback.subtype);
-    clauses.push(`account_subtype = ANY($${values.length}::text[])`);
-  }
-  if (fallback.type?.length) {
-    values.push(fallback.type);
-    clauses.push(`account_type = ANY($${values.length}::text[])`);
-  }
-  if (fallback.nameHints?.length) {
-    const hintClauses: string[] = [];
-    for (const hint of fallback.nameHints) {
-      values.push(`%${hint}%`);
-      hintClauses.push(`account_name ILIKE $${values.length}`);
-    }
-    clauses.push(`(${hintClauses.join(" OR ")})`);
-  }
-  return { clauses, values };
-}
-
-async function resolveFallbackByAccountShape(client: DbClient, operatingCompanyId: string, role: CoaRole): Promise<string | null> {
-  const fallback = ROLE_FALLBACKS[role];
-  if (!fallback) return null;
-  const { clauses, values } = buildFallbackQueryParts(operatingCompanyId, fallback);
-  const fallbackRow = await client.query<{ id: string }>(
-    `
-      SELECT id::text
-      FROM catalogs.accounts
-      WHERE operating_company_id = $1::uuid AND ${clauses.join(" AND ")}
-      ORDER BY updated_at DESC
-      LIMIT 1
-    `,
-    values
-  );
-  return fallbackRow.rows[0]?.id ?? null;
-}
-
 // Count-based variant of resolveMappedRoleAccount: returns the DISTINCT designated account ids for a role
 // (no ORDER BY / LIMIT), so control-role resolution can detect ambiguity (>1) and fail closed instead of
 // silently picking the most-recently-updated mapping.
@@ -445,24 +391,6 @@ async function listMappedRoleAccountIds(client: DbClient, operatingCompanyId: st
   return mapped.rows.map((r) => r.account_id);
 }
 
-// Count-based variant of resolveFallbackByAccountShape: returns ALL DISTINCT account ids matching the
-// role's account-shape fallback (no LIMIT), so a control role can refuse to guess when the subtype is
-// shared by more than one account.
-async function listFallbackAccountIds(client: DbClient, operatingCompanyId: string, role: CoaRole): Promise<string[]> {
-  const fallback = ROLE_FALLBACKS[role];
-  if (!fallback) return [];
-  const { clauses, values } = buildFallbackQueryParts(operatingCompanyId, fallback);
-  const rows = await client.query<{ id: string }>(
-    `
-      SELECT DISTINCT id::text AS id
-      FROM catalogs.accounts
-      WHERE operating_company_id = $1::uuid AND ${clauses.join(" AND ")}
-    `,
-    values
-  );
-  return rows.rows.map((r) => r.id);
-}
-
 // Fail-closed resolution for control accounts (A/R, A/P). Authoritative source is the explicit
 // designation in accounting.chart_of_accounts_roles; the account_subtype fallback is allowed ONLY when it
 // resolves to exactly one account. 0 or >1 candidates -> throw rather than mis-post.
@@ -478,12 +406,7 @@ async function resolveControlRoleAccount(client: DbClient, operatingCompanyId: s
   const fromLegacyBinding = await resolveLegacyRoleBinding(client, operatingCompanyId, role);
   if (fromLegacyBinding) return fromLegacyBinding;
 
-  // 3) account_subtype fallback — FAIL CLOSED: never silently pick one of many.
-  const candidates = await listFallbackAccountIds(client, operatingCompanyId, role);
-  if (candidates.length > 1) {
-    throw new ControlAccountDesignationError(operatingCompanyId, role, candidates.length, "account_subtype_fallback");
-  }
-  if (candidates.length === 1) return candidates[0] ?? null;
+  // 3) No designation → null (fail closed). ROUND 365.1: no account_subtype guess, not even a unique one.
   return null;
 }
 
@@ -498,7 +421,7 @@ export async function resolveRoleAccountOptional(client: DbClient, operatingComp
   const fromLegacyBinding = await resolveLegacyRoleBinding(client, operatingCompanyId, role);
   if (fromLegacyBinding) return fromLegacyBinding;
 
-  return resolveFallbackByAccountShape(client, operatingCompanyId, role);
+  return null; // ROUND 365.1 — unbound fails closed; never a shape / name guess
 }
 
 export async function resolveRoleAccount(client: DbClient, operatingCompanyId: string, role: CoaRole): Promise<string> {
