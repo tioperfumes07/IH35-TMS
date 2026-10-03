@@ -105,7 +105,13 @@ export function checkAll(readFile) {
       failures.push(`${c.name}: ${c.file} no longer matches expected shape`);
     }
   }
+  leftoverRefuse(readFile("apps/frontend/src/pages/drivers/DriversTable.tsx") ?? "", failures);
   return failures;
+}
+
+function leftoverRefuse(src, failures) {
+  if (src.includes("text-[11px]")) failures.push("leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155")) failures.push("leftover off-scale muted");
 }
 
 if (process.argv.includes("--selftest")) {
@@ -154,7 +160,15 @@ if (process.argv.includes("--selftest")) {
     console.error(`[${LABEL}] selftest FAIL: regressed fixture (all-empty) should fail every check`);
     process.exit(1);
   }
-  console.log(`[${LABEL}] selftest: PASS — good/regressed fixtures classify correctly`);
+  const leftoverPlant = `${GOOD_FIXTURES["apps/frontend/src/pages/drivers/DriversTable.tsx"]}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  const leftoverFailures = checkAll((f) =>
+    f === "apps/frontend/src/pages/drivers/DriversTable.tsx" ? leftoverPlant : GOOD_FIXTURES[f] ?? null,
+  );
+  if (!leftoverFailures.includes("leftover text-[11px]") || !leftoverFailures.includes("leftover off-scale muted")) {
+    console.error(`[${LABEL}] selftest FAIL: leftover plant escaped — ${leftoverFailures.join("; ")}`);
+    process.exit(1);
+  }
+  console.log(`[${LABEL}] selftest: PASS — good/regressed fixtures classify correctly + leftover plant rejected`);
   process.exit(0);
 }
 
