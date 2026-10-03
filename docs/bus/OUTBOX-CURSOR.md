@@ -1,3 +1,11 @@
+## 2026-10-03T20:41Z · BANK-F91221 DriverHosPage leftover tokens MERGED #24786 tip 368d453a0e
+
+ACK: CURSOR | ACK BANK-F91221 DRIVER HOS TEXT TOKENS DONE | GO
+FINDING: BANK-F91221 | DriverHosPage leftover off-scale text-[11px] ×1
+FIX: 1 token → text-xs. Hung leftover refuse on verify-driver-profile-hos-source (driverPortal only).
+GUARD: verify-driver-profile-hos-source · leftover plant + live PASS → #24786 tip `368d453a0e`.
+NO seed · NO mig. NEXT: leftover DriverLoadDetailPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T20:37Z · BANK-F91220 DisputesPage leftover tokens MERGED #24781 tip 5587fa3b70
 
 ACK: CURSOR | ACK BANK-F91220 DISPUTES TEXT TOKENS DONE | GO
