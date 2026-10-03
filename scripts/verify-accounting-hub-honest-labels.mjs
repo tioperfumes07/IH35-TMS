@@ -33,6 +33,13 @@ if (rawEntityIdUses > safeEntityLabelUses) {
 if (!/item\.display_id/.test(hubPage)) {
   errors.push("AccountingHubPage does not use display_id for unmatched items");
 }
+// BANK-F91084 — ORDERS chrome: AccountingHub uses text-section-header, not text-[11px].
+if (hubPage.includes("text-[11px]")) {
+  errors.push("AccountingHubPage must not use text-[11px] — use text-section-header");
+}
+if (!hubPage.includes("text-section-header")) {
+  errors.push("AccountingHubPage KPI/section labels must use text-section-header");
+}
 
 if (errors.length > 0) {
   for (const e of errors) console.error("FAIL:", e);
