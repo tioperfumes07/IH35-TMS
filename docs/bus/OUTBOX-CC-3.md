@@ -2497,3 +2497,48 @@ odometer snapshot two days running (#24254). Proposal: keep BOTH unique keys; th
 UPDATEs the row matching either key (started_at = LEAST, ended_at = GREATEST), else INSERTs. Unique index
 (operating_company_id, unit_id, ended_at) created only after the delete (it cannot be built over the 1,144 copies),
 in my band, claim inside registry.claimed.
+
+## 2026-10-03 — ROUND 342 order 2 — STOP: the parent/child company measurement is NOT zero
+
+Measured on prod, `BEGIN READ ONLY; SET LOCAL app.bypass_rls = 'lucia'`. Every single-column FK where child and parent
+both carry operating_company_id: **920 relationships; 893 agree (0 rows); 19 NON-ZERO; 8 could not be measured.**
+Rows where child.operating_company_id IS DISTINCT FROM parent.operating_company_id, by company (child -> parent):
+
+**Money / financial — cross-carrier:**
+| relationship | rows | companies |
+|---|---|---|
+| accounting.chart_of_accounts_roles.account_id -> catalogs.accounts | **1** | TRK role -> TRANSP account |
+| driver_finance.driver_pay_rates.driver_id -> mdata.drivers | **3** | TRANSP rate -> USMCA driver |
+| driver_finance.driver_advance_accounts.driver_id -> mdata.drivers | **1** | TRANSP -> USMCA driver |
+| driver_finance.escrow_balances.driver_id -> mdata.drivers | **1** | USMCA escrow -> TRANSP driver |
+| fuel.fuel_transactions.driver_id -> mdata.drivers | **122** | TRANSP fuel txn -> USMCA driver |
+| fuel.fuel_card_overage_events.driver_id -> mdata.drivers | **2** | TRANSP -> USMCA driver |
+| integrations.relay_company_cards.funding_bank_account_id -> banking.bank_accounts | **2** | USMCA card -> TRANSP bank account |
+| safety.fuel_gps_matches.fuel_txn_id -> banking.bank_transactions | **75** | TRANSP match -> USMCA bank txn |
+| integrations.relay_fuel_transactions.matched_driver_id -> mdata.drivers | **69** | TRANSP -> USMCA driver |
+
+**Money lines with NO company on the child (not cross-carrier — the line has a NULL company):**
+| accounting.expense_lines.expense_account_uuid -> catalogs.accounts | 506 | NULL line -> USMCA account |
+| accounting.bill_lines.account_id -> catalogs.accounts | 28 | NULL line -> USMCA account |
+| insurance.payment_schedule.policy_id -> insurance.policy | 1 | NULL -> USMCA |
+
+**Operational:**
+| telematics.vehicle_driver_assignments.driver_id -> mdata.drivers | 352 | USMCA assignment -> TRANSP driver |
+| telematics.unit_stop_events.driver_id_at_time -> mdata.drivers | 10 | USMCA stop -> TRANSP driver |
+| integrations.samsara_drivers.local_driver_id -> mdata.drivers | 3 | TRANSP -> USMCA driver |
+| catalogs.driver_leave_balances / identity.driver_invites / pwa.driver_notifications -> mdata.drivers | 1 each | mixed |
+| catalogs.accounts.detail_type_id -> catalogs.detail_types | 49 | company account -> global (NULL) detail type — a global catalog, expected |
+
+**Not measurable (8):** FK columns holding '' or typed text vs uuid — dispatch.customer_notify_preferences.customer_id,
+dispatch.notify_log.customer_id / load_id, maintenance.pm_auto_wo_log.pm_schedule_id / run_id / work_order_id ('' in a
+uuid-referencing column); safety.da_program_enrollments.driver_uuid, safety.da_test_records.driver_uuid (text column
+-> uuid key).
+
+**Linked:** the TRK -> TRANSP role binding is very likely why every migration PR now fails
+verify-wave-h1-catalog-coa-completeness ("TRK: required CoA role unbound (only inactive binding): uncategorized_expense")
+after ACCT-F9846 (nothing posts to a deactivated account). My ROUND 340 step 3 PR (unit_stop_events keys, migrations
+202615301059-1102) is built, rehearsed and gated on that check — not pushed.
+
+Per your order: enforcement (composite FKs) NOT started; nothing written. Waiting on your ruling.
+Also: the classification workbook (claude/audits/10-02-2026-USMCA-ENGINE-ACCOUNT-CORRECTNESS-LINKAGE-AUDIT.xlsx) is not on
+main or on this machine — send it or its path; otherwise I derive the 183 from the live catalogue and rule each myself.
