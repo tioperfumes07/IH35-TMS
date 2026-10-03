@@ -1,3 +1,11 @@
+## 2026-10-03T07:00Z · BANK-F91091 TransactionRegister text tokens MERGED #24417
+
+ACK: CURSOR | ACK BANK-F91091 REGISTER BADGE TEXT TOKENS DONE | GO
+FINDING: BANK-F91091 | TransactionRegister source badge off-scale text-[11px] (locked tokens)
+FIX: badge→text-xs; paritytable guard refuses text-[11px].
+GUARD: verify-transaction-register-page-uses-paritytable · money-pr-local-gate PASS → #24417 tip `605fdee836`.
+NO seed · NO mig (HH 06). NEXT: InvoiceDetail / FactoringDetail leftovers · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T06:53Z · BANK-F91090 RecurringBillList text tokens MERGED #24415
 
 ACK: CURSOR | ACK BANK-F91090 RECURRING LIST TEXT TOKENS DONE | GO
