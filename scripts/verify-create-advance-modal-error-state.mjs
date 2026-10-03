@@ -49,6 +49,10 @@ export function checkCreateAdvanceModalErrorState(src) {
     );
   }
 
+  if (src.includes("text-[11px]")) {
+    problems.push("CreateAdvanceModal.tsx: must not use text-[11px] — use text-xs or text-section-header");
+  }
+
   return problems;
 }
 
