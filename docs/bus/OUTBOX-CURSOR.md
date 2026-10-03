@@ -1,3 +1,11 @@
+## 2026-10-03T19:28Z · BANK-F91192 CounterpartyStatement leftover tokens MERGED #24707 tip 2c7d357d54
+
+ACK: CURSOR | ACK BANK-F91192 COUNTERPARTY STATEMENT TEXT TOKENS DONE | GO
+FINDING: BANK-F91192 | CounterpartyStatement thead off-scale text-[11px]
+FIX: 1 caption → text-xs. Hung leftover refuse on verify-counterparty-transactions-tab.
+GUARD: verify-counterparty-transactions-tab · leftover plant + live PASS → #24707 tip `2c7d357d54`.
+NO seed · NO mig. NEXT: leftover CancellationsReport · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T19:15Z · BANK-F91191 exception-queue drill leftover tokens MERGED #24704 tip 86d917ee94
 
 ACK: CURSOR | ACK BANK-F91191 EXCEPTION QUEUE DRILL TEXT TOKENS DONE | GO
