@@ -24,6 +24,9 @@ export type FuelCardAssignment = {
   operating_company_id: string;
   fuel_card_type_id: string | null;
   fuel_card_type_name: string | null;
+  /** ROUND 381.6 — the vendor that issues this card's type (catalogs.fuel_card_types.issuer_vendor_id). */
+  issuer_vendor_id: string | null;
+  issuer_vendor_name: string | null;
   card_last_digits: string;
   unit_id: string;
   unit_number: string | null;
@@ -89,19 +92,21 @@ export async function resolveUnitByCard(
 
 const SELECT_ASSIGNMENTS = `
   SELECT a.id::text, a.operating_company_id::text, a.fuel_card_type_id::text, t.display_name AS fuel_card_type_name,
+         t.issuer_vendor_id::text, iv.vendor_name AS issuer_vendor_name,
          a.card_last_digits, a.unit_id::text, u.unit_number, a.driver_id::text,
          NULLIF(trim(concat_ws(' ', d.first_name, d.last_name)), '') AS driver_name,
          a.effective_from::text, a.effective_to::text, a.notes, a.created_at::text, a.voided_at::text, a.void_reason
     FROM fuel.fuel_card_assignments a
     JOIN mdata.units u ON u.id = a.unit_id
     LEFT JOIN mdata.drivers d ON d.id = a.driver_id
-    LEFT JOIN catalogs.fuel_card_types t ON t.id = a.fuel_card_type_id`;
+    LEFT JOIN catalogs.fuel_card_types t ON t.id = a.fuel_card_type_id
+    LEFT JOIN mdata.vendors iv ON iv.id = t.issuer_vendor_id AND iv.operating_company_id = a.operating_company_id`;
 
 /** Forward (card list) and reverse (unit -> its cards, driver -> their cards) in one read. */
 export async function listFuelCardAssignments(
   client: DbClient,
   operatingCompanyId: string,
-  filter: { unit_id?: string; driver_id?: string; card_last_digits?: string; include_voided?: boolean } = {}
+  filter: { unit_id?: string; driver_id?: string; vendor_id?: string; card_last_digits?: string; include_voided?: boolean } = {}
 ): Promise<FuelCardAssignment[]> {
   if (!(await registryReady(client))) return [];
   const res = await client.query<FuelCardAssignment>(
@@ -111,8 +116,9 @@ export async function listFuelCardAssignments(
         AND ($3::uuid IS NULL OR a.driver_id = $3::uuid)
         AND ($4::text IS NULL OR a.card_last_digits = $4::text)
         AND ($5::boolean OR a.voided_at IS NULL)
+        AND ($6::uuid IS NULL OR t.issuer_vendor_id = $6::uuid)
       ORDER BY a.card_last_digits, a.effective_from DESC`,
-    [operatingCompanyId, filter.unit_id ?? null, filter.driver_id ?? null, filter.card_last_digits ?? null, Boolean(filter.include_voided)]
+    [operatingCompanyId, filter.unit_id ?? null, filter.driver_id ?? null, filter.card_last_digits ?? null, Boolean(filter.include_voided), filter.vendor_id ?? null]
   );
   return res.rows;
 }
@@ -181,4 +187,62 @@ export async function voidFuelCardAssignment(client: DbClient, operatingCompanyI
     [operatingCompanyId, id, actorUserId, reason]
   );
   return res.rows[0] ? getFuelCardAssignment(client, operatingCompanyId, id) : null;
+}
+
+// ── ROUND 381.6 — card types and their issuer vendor ─────────────────────────────────────────────────────────────
+export type FuelCardTypeIssuer = {
+  id: string;
+  code: string;
+  display_name: string;
+  issuer_vendor_id: string | null;
+  issuer_vendor_name: string | null;
+  active_card_count: number;
+};
+
+/** The company's active card types with the vendor that issues each, and how many live cards carry the type. */
+export async function listFuelCardTypeIssuers(client: DbClient, operatingCompanyId: string): Promise<FuelCardTypeIssuer[]> {
+  const res = await client.query<FuelCardTypeIssuer>(
+    `SELECT t.id::text, t.code, t.display_name, t.issuer_vendor_id::text, v.vendor_name AS issuer_vendor_name,
+            (SELECT count(*)::int FROM fuel.fuel_card_assignments a
+              WHERE a.fuel_card_type_id = t.id AND a.operating_company_id = t.operating_company_id AND a.voided_at IS NULL) AS active_card_count
+       FROM catalogs.fuel_card_types t
+       LEFT JOIN mdata.vendors v ON v.id = t.issuer_vendor_id AND v.operating_company_id = t.operating_company_id
+      WHERE t.operating_company_id = $1::uuid AND t.is_active
+      ORDER BY t.sort_order, t.display_name`,
+    [operatingCompanyId]
+  );
+  return res.rows;
+}
+
+export class FuelCardTypeIssuerError extends Error {
+  constructor(public code: "card_type_not_found_for_company" | "vendor_not_found_for_company", message: string) {
+    super(message);
+  }
+}
+
+/** Designate (or clear) the issuer vendor of one card type. Same-company on both sides, refused by name. */
+export async function setFuelCardTypeIssuer(
+  client: DbClient,
+  operatingCompanyId: string,
+  cardTypeId: string,
+  issuerVendorId: string | null
+): Promise<{ before: string | null; after: FuelCardTypeIssuer }> {
+  const cur = await client.query<{ issuer_vendor_id: string | null }>(
+    `SELECT issuer_vendor_id::text FROM catalogs.fuel_card_types WHERE id = $1::uuid AND operating_company_id = $2::uuid AND is_active FOR UPDATE`,
+    [cardTypeId, operatingCompanyId]
+  );
+  if (!cur.rows[0]) throw new FuelCardTypeIssuerError("card_type_not_found_for_company", "That card type is not an active card type of this company.");
+  if (issuerVendorId) {
+    const v = await client.query<{ id: string }>(
+      `SELECT id::text FROM mdata.vendors WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL LIMIT 1`,
+      [issuerVendorId, operatingCompanyId]
+    );
+    if (!v.rows[0]) throw new FuelCardTypeIssuerError("vendor_not_found_for_company", "That vendor is not an active vendor of this company.");
+  }
+  await client.query(
+    `UPDATE catalogs.fuel_card_types SET issuer_vendor_id = $3::uuid, updated_at = now() WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    [cardTypeId, operatingCompanyId, issuerVendorId]
+  );
+  const after = (await listFuelCardTypeIssuers(client, operatingCompanyId)).find((t) => t.id === cardTypeId)!;
+  return { before: cur.rows[0].issuer_vendor_id, after };
 }

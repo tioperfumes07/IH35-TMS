@@ -938,6 +938,13 @@
     "type": "enforced"
   },
   {
+    "id": "LAW-2026-10-03-FUEL-CARDS-CARRY-THEIR-ISSUER-VENDOR",
+    "title": "ROUND 381.6 \u2014 every fuel card carries the vendor that issues its card type (catalogs.fuel_card_types.issuer_vendor_id, same company only, owner-designated on /fuel/cards, never name-matched), shown on the card and reachable back from the vendor's profile",
+    "source_file": "docs/bus/10-03-2026-ALL-SEATS-ROUND-381-TRUE-PROGRESS-25-OF-31-AND-THE-SIX-THAT-REMAIN.md",
+    "guard": "scripts/verify-fuel-card-issuer-vendor-linkage.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "LAW-2026-10-03-NO-MIGRATION-NEITHER-APPLIED-NOR-HELD",
     "title": "ROUND 380.2 \u2014 every db/migrations file is applied on production, held / applied_held / superseded in .held-migrations.json, or numbered after the newest applied (pending the next deploy); 0 files in neither state, and every held-registry entry exists on disk",
     "source_file": "docs/bus/10-03-2026-ALL-SEATS-ROUND-380-THE-BACKFILL-IS-WITHDRAWN-AND-FOUR-RULINGS.md",

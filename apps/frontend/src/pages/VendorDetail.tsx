@@ -47,6 +47,7 @@ import { userFacingApiError } from "../lib/api-error-message";
 import { VendorWorkOrdersReverseSection } from "./vendors/VendorWorkOrdersReverseSection";
 import { VendorPartsHistorySection } from "./vendors/VendorPartsHistorySection";
 import { VendorPreferredPartsReverseSection } from "./vendors/VendorPreferredPartsReverseSection";
+import { VendorFuelCardsReverseSection } from "./vendors/VendorFuelCardsReverseSection";
 import { VendorPartsInventoryReverseSection } from "./vendors/VendorPartsInventoryReverseSection";
 import { VendorMaintenanceCatalogReverseSection } from "./vendors/VendorMaintenanceCatalogReverseSection";
 import { VendorApAgingSection } from "./vendors/VendorApAgingSection";
@@ -926,6 +927,7 @@ export function VendorDetailPage() {
         <VendorBorderCrossingsReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
         <VendorPartsHistorySection operatingCompanyId={companyId} vendorId={vendor.id} />
         <VendorPreferredPartsReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
+        <VendorFuelCardsReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
         <VendorPartsInventoryReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
         <VendorMaintenanceCatalogReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
         <SafetyAlertsReverseSection operatingCompanyId={companyId} subjectKind="vendor" subjectId={vendor.id} />

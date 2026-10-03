@@ -4,13 +4,18 @@
  * migration 202615140600, PR #23695). Backend-only until now; this is the first screen.
  */
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   endFuelCardAssignment,
   listFuelCardAssignments,
+  listFuelCardTypeIssuers,
+  setFuelCardTypeIssuer,
   voidFuelCardAssignment,
   type FuelCardAssignment,
+  type FuelCardTypeIssuer,
 } from "../../../api/fuel-card-assignments";
+import { EntityPicker } from "../../../components/EntityPicker";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useCanVoidCancel } from "../../../auth/useCanVoidCancel";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
@@ -186,6 +191,85 @@ function VoidCardDrawer({
   );
 }
 
+/**
+ * ROUND 381.6 — who issues each card type (Relay, Dreamline). The owner designates it here; nothing guesses it by name.
+ * Forward: every card row shows its issuer; reverse: the vendor's link opens this page filtered to that vendor's cards.
+ */
+function CardIssuersPanel({ companyId, canWrite, onChanged }: { companyId: string; canWrite: boolean; onChanged: () => void }) {
+  const queryClient = useQueryClient();
+  const [error, setError] = useState("");
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const issuers = useQuery({
+    queryKey: ["fuel", "card-type-issuers", companyId],
+    queryFn: () => listFuelCardTypeIssuers(companyId),
+    enabled: Boolean(companyId),
+  });
+  const save = async (row: FuelCardTypeIssuer, vendorId: string | null) => {
+    if (vendorId === row.issuer_vendor_id) return;
+    setSavingId(row.id);
+    setError("");
+    try {
+      await setFuelCardTypeIssuer(companyId, row.id, vendorId);
+      await queryClient.invalidateQueries({ queryKey: ["fuel", "card-type-issuers", companyId] });
+      onChanged();
+    } catch (err) {
+      setError(userFacingApiError(err, "Failed to set the card issuer"));
+    } finally {
+      setSavingId(null);
+    }
+  };
+  const columns: ParityColumn<FuelCardTypeIssuer>[] = [
+    { key: "display_name", label: "Card type", render: (row) => row.display_name },
+    {
+      key: "issuer_vendor_name",
+      label: "Issuer (vendor)",
+      render: (row) =>
+        canWrite ? (
+          <div className="max-w-xs" data-testid={`fuel-card-issuer-${row.code}`}>
+            <EntityPicker
+              kind="vendor"
+              operatingCompanyId={companyId}
+              value={row.issuer_vendor_id}
+              onChange={(id) => void save(row, id)}
+              allowCreate={false}
+              allowClear
+              disabled={savingId === row.id}
+              size="sm"
+              placeholder="Choose the issuing vendor"
+              ariaLabel={`Issuer of ${row.display_name}`}
+            />
+          </div>
+        ) : row.issuer_vendor_id ? (
+          <EntityLinkOrTombstone kind="vendor" id={row.issuer_vendor_id} name={row.issuer_vendor_name} noun="Vendor" className={LINK} />
+        ) : (
+          <span className="text-gray-400">Not designated</span>
+        ),
+    },
+    { key: "active_card_count", label: "Cards", render: (row) => String(row.active_card_count) },
+  ];
+  return (
+    <DataPanel title="Card issuers" titleHint="The vendor that issues each fuel card type — shown on every card below">
+      {error ? (
+        <div className="mb-2 rounded-sm border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-800" role="alert" data-testid="fuel-card-issuer-error">
+          {error}
+        </div>
+      ) : null}
+      {issuers.isError ? (
+        <ListErrorBanner onRetry={() => void issuers.refetch()} message="Card issuers could not be loaded." />
+      ) : (
+        <ParityTable
+          rows={issuers.data?.rows ?? []}
+          columns={columns}
+          loading={issuers.isPending}
+          storageKey="fuel-card-type-issuers"
+          emptyText="No active fuel card types"
+          rowKey={(row) => row.id}
+        />
+      )}
+    </DataPanel>
+  );
+}
+
 export function FuelCardsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -193,13 +277,16 @@ export function FuelCardsPage() {
   const queryClient = useQueryClient();
 
   const [includeVoided, setIncludeVoided] = useState(false);
+  // Reverse link from a vendor's profile: /fuel/cards?vendor_id=<issuer>.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const vendorFilter = searchParams.get("vendor_id") ?? undefined;
   const [assignOpen, setAssignOpen] = useState(false);
   const [endTarget, setEndTarget] = useState<FuelCardAssignment | null>(null);
   const [voidTarget, setVoidTarget] = useState<FuelCardAssignment | null>(null);
 
   const query = useQuery({
-    queryKey: ["fuel", "card-assignments", companyId, includeVoided],
-    queryFn: () => listFuelCardAssignments(companyId, { include_voided: includeVoided }),
+    queryKey: ["fuel", "card-assignments", companyId, includeVoided, vendorFilter ?? null],
+    queryFn: () => listFuelCardAssignments(companyId, { include_voided: includeVoided, vendor_id: vendorFilter }),
     enabled: Boolean(companyId),
   });
 
@@ -208,6 +295,16 @@ export function FuelCardsPage() {
   const columns: ParityColumn<FuelCardAssignment>[] = [
     { key: "card_last_digits", label: "Card", render: (row) => `Card …${row.card_last_digits}` },
     { key: "fuel_card_type_name", label: "Card type", render: (row) => row.fuel_card_type_name ?? "—" },
+    {
+      key: "issuer_vendor_name",
+      label: "Issuer",
+      render: (row) =>
+        row.issuer_vendor_id ? (
+          <EntityLinkOrTombstone kind="vendor" id={row.issuer_vendor_id} name={row.issuer_vendor_name} noun="Vendor" className={LINK} />
+        ) : (
+          <span className="text-gray-400">—</span>
+        ),
+    },
     {
       key: "unit_number",
       label: "Truck",
@@ -274,12 +371,28 @@ export function FuelCardsPage() {
 
   return (
     <div className="space-y-3" data-testid="fuel-cards-page">
+      <CardIssuersPanel companyId={companyId} canWrite={canWrite} onChanged={invalidate} />
       <DataPanel title="Fuel card -> truck registry" titleHint="Every fuel card and the truck (and optional driver) it currently fuels, over effective dates">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <label className="flex items-center gap-1 text-xs text-gray-600" data-testid="fuel-cards-show-voided">
-            <input type="checkbox" checked={includeVoided} onChange={(e) => setIncludeVoided(e.target.checked)} />
-            Show voided
-          </label>
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-1 text-xs text-gray-600" data-testid="fuel-cards-show-voided">
+              <input type="checkbox" checked={includeVoided} onChange={(e) => setIncludeVoided(e.target.checked)} />
+              Show voided
+            </label>
+            {vendorFilter ? (
+              <span className="flex items-center gap-1 text-xs text-gray-700" data-testid="fuel-cards-vendor-filter">
+                Issued by <EntityLinkOrTombstone kind="vendor" id={vendorFilter} name={query.data?.rows?.[0]?.issuer_vendor_name ?? null} noun="Vendor" className={LINK} />
+                <button
+                  type="button"
+                  className="text-gray-500 hover:underline"
+                  onClick={() => { const next = new URLSearchParams(searchParams); next.delete("vendor_id"); setSearchParams(next); }}
+                  data-testid="fuel-cards-vendor-filter-clear"
+                >
+                  (all cards)
+                </button>
+              </span>
+            ) : null}
+          </div>
           {canWrite ? (
             <ActionButton onClick={() => setAssignOpen(true)} data-testid="fuel-cards-assign-open">
               + Assign card
