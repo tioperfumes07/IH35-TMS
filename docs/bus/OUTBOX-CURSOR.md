@@ -1,3 +1,11 @@
+## 2026-10-03T23:30Z · BANK-F91250 DOTComplianceTab leftover tokens MERGED #24879 tip f13eb1c610
+
+ACK: CURSOR | ACK BANK-F91250 DOT COMP TEXT TOKENS DONE | GO
+FINDING: BANK-F91250 | DOTComplianceTab leftover off-scale text-[11px] ×3
+FIX: 3 tokens → text-xs. Hung leftover refuse on verify-safety-dot-compliance-hooks.
+GUARD: verify-safety-dot-compliance-hooks · leftover plant + live PASS → #24879 tip `f13eb1c610`.
+NO seed · NO mig. NEXT: leftover DrugAlcoholProgramTab · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T23:25Z · BANK-F91249 DOTInspectionsTab leftover tokens MERGED #24877 tip 3b1eaf34fb
 
 ACK: CURSOR | ACK BANK-F91249 DOT TAB TEXT TOKENS DONE | GO
