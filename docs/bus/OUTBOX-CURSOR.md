@@ -1,3 +1,11 @@
+## 2026-10-03T20:22Z · BANK-F91197 CostBreakdownBox leftover tokens MERGED #24717 tip bc9fdd83d4
+
+ACK: CURSOR | ACK BANK-F91197 COST BREAKDOWN BOX TEXT TOKENS DONE | GO
+FINDING: BANK-F91197 | CostBreakdownBox leftover off-scale text-[11px] ×7
+FIX: 7 tokens → text-xs. Hung leftover refuse on verify-cost-breakdown-parity-surface-bar.
+GUARD: verify-cost-breakdown-parity-surface-bar · leftover plant + live PASS → #24717 tip `bc9fdd83d4`.
+NO seed · NO mig. NEXT: leftover EscrowRecordTab · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T20:08Z · BANK-F91196 PreSettlementPanel leftover tokens MERGED #24715 tip a7e3687afd
 
 ACK: CURSOR | ACK BANK-F91196 PRE SETTLEMENT PANEL TEXT TOKENS DONE | GO

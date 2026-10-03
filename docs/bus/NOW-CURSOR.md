@@ -1,5 +1,5 @@
 # NOW-CURSOR
-NOW: BANK-F91196 PreSettlementPanel leftover MERGED #24715 tip `a7e3687afd` — finish your list, no handoffs
-ACK: CURSOR | ACK BANK-F91196 PRE SETTLEMENT PANEL TEXT TOKENS DONE | GO
+NOW: BANK-F91197 CostBreakdownBox leftover MERGED #24717 tip `bc9fdd83d4` — finish your list, no handoffs
+ACK: CURSOR | ACK BANK-F91197 COST BREAKDOWN BOX TEXT TOKENS DONE | GO
 READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-STANDING-ORDER-FINISH-YOUR-LIST-NO-HANDOFFS.md`
-THEN: leftover CostBreakdownBox · 363-CUR-A factoring home · 367.9 · 363-CUR-B/C
+THEN: leftover EscrowRecordTab · 363-CUR-A factoring home · 367.9 · 363-CUR-B/C
