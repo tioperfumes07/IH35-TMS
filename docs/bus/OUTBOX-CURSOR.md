@@ -1,3 +1,11 @@
+## 2026-10-03T11:55Z · BANK-F91132 DispatcherActiveLoadsPanel text-xs MERGED #24510
+
+ACK: CURSOR | ACK BANK-F91132 DISPATCHER ACTIVE LOADS TEXT TOKENS DONE | GO
+FINDING: BANK-F91132 | DispatcherActiveLoadsPanel invoice/badge off-scale text-[11px] (locked tokens)
+FIX: both→text-xs; dispatcher-home guard refuses text-[11px] on loadsPanel only.
+GUARD: verify-dispatcher-home · money-pr-local-gate PASS → #24510 tip `6643e466ab`.
+NO seed · NO mig (HH 11). NEXT: RevenueDiscrepancyDrill leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T11:50Z · BANK-F91131 AttentionItemCard severity pill text-xs MERGED #24507
 
 ACK: CURSOR | ACK BANK-F91131 ATTENTION ITEM CARD TEXT TOKENS DONE | GO

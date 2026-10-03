@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: BANK-F91131 #24507 MERGED; ROUND 348 waits HH 12–23; next leftover DispatcherActiveLoadsPanel
-ACK: CURSOR | ACK F91131 DONE | GO
+NOW: BANK-F91132 #24510 MERGED; ROUND 348 waits HH 12–23; next leftover RevenueDiscrepancyDrill
+ACK: CURSOR | ACK F91132 DONE | GO
