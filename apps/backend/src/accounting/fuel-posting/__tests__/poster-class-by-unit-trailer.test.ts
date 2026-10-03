@@ -36,6 +36,8 @@ function baseImpl(opts: { unitQboClassId?: string | null; trailerQboClassId?: st
   return async (sql: string, values?: unknown[]) => {
     if (sql.includes("FROM accounting.posting_batches")) return { rows: [] };
     if (sql.includes("closed_period_cutoff")) return { rows: [{ cutoff: null }] };
+    // ROUND 377: cash fuel credits the bound operating_bank role (accounting.chart_of_accounts_roles), never a guess.
+    if (sql.includes("FROM accounting.chart_of_accounts_roles")) return { rows: [{ account_id: "cash-role-acct" }] };
     if (sql.includes("role_key = $1")) return { rows: [{ account_id: "cash-role-acct" }] };
     if (sql.includes("FROM mdata.units")) {
       return { rows: opts.unitQboClassId ? [{ qbo_class_id: opts.unitQboClassId }] : [] };

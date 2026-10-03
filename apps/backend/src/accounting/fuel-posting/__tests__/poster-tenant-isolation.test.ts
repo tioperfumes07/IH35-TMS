@@ -35,6 +35,8 @@ describe("fuel-posting tenant isolation", () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("FROM accounting.posting_batches")) return { rows: [] };
       if (sql.includes("closed_period_cutoff")) return { rows: [{ cutoff: null }] };
+      // ROUND 377: cash fuel credits the bound operating_bank role (accounting.chart_of_accounts_roles), never a guess.
+      if (sql.includes("FROM accounting.chart_of_accounts_roles")) return { rows: [{ account_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb" }] };
       if (sql.includes("role_key = $1")) return { rows: [{ account_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb" }] };
       if (sql.includes("INSERT INTO accounting.posting_batches")) return { rows: [{ id: "batch-3" }] };
       if (sql.includes("INSERT INTO accounting.journal_entries")) return { rows: [{ id: "je-3" }] };
