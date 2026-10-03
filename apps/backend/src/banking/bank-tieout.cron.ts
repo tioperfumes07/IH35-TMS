@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
-import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { JOB_LEASE_SECONDS, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { runBankTieoutCronTick } from "./bank-tieout.service.js";
 
 let initialized = false;
@@ -16,7 +16,7 @@ export function initializeBankTieoutCron(app: FastifyInstance) {
   cron.schedule(
     "50 5 * * *",
     async () => {
-      await wrapBackgroundJobTick("banking.bank_tieout_cron", async () => { await runBankTieoutCronTick(); }, app.log);
+      await wrapBackgroundJobTick("banking.bank_tieout_cron", async () => { await runBankTieoutCronTick(); }, app.log, { leaseSeconds: JOB_LEASE_SECONDS });
     },
     { maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );

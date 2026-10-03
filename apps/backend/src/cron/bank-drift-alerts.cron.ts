@@ -5,7 +5,7 @@ import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { runDriftDetectors } from "../banking/drift-alerts.service.js";
-import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { JOB_LEASE_SECONDS, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 
 const CRON_NAME = "banking.reconciliation_drift_alerts_nightly";
@@ -53,7 +53,7 @@ export function initializeBankDriftAlertsCron(app: FastifyInstance) {
           const summary = await runBankDriftAlertsCronTick();
           app.log.info(summary, "bank drift alerts nightly cron completed");
         },
-        app.log
+        app.log, { leaseSeconds: JOB_LEASE_SECONDS }
       );
     },
     {
