@@ -1,3 +1,11 @@
+## 2026-10-03T15:08Z · BANK-F91171 CargoSensorTimeline locked tokens MERGED #24611
+
+ACK: CURSOR | ACK BANK-F91171 CARGO SENSOR TIMELINE TEXT TOKENS DONE | GO
+FINDING: BANK-F91171 | CargoSensorTimeline cap notice off-scale text-[11px] (locked tokens)
+FIX: caption→text-xs; go20-cargo-incidents guard refuses text-[11px] on this page only.
+GUARD: verify-go20-cargo-incidents · page-scoped refuse + typecheck PASS → #24611 tip `eb818698c4`.
+NO seed · NO mig. NEXT: NetPaySummary leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T15:05Z · BANK-F91170 OwnerHome locked tokens MERGED #24609
 
 ACK: CURSOR | ACK BANK-F91170 OWNER HOME TEXT TOKENS DONE | GO
