@@ -27,7 +27,13 @@ function inspect(source) {
   if (!/pullMutation\.mutate\(\{ companyId, generation: lifecycleGenerationRef\.current \}\)/.test(source)) {
     errors.push("pull action does not submit an immutable company/generation snapshot");
   }
+  leftoverRefuse(source, errors);
   return errors;
+}
+
+function leftoverRefuse(source, errors) {
+  if (source.includes("text-[11px]")) errors.push("leftover text-[11px]");
+  if (source.includes("#8A92AB") || source.includes("#334155")) errors.push("leftover off-scale muted");
 }
 
 if (process.argv.includes("--selftest")) {
@@ -43,7 +49,13 @@ if (process.argv.includes("--selftest")) {
     console.error(`verify-csa-pull-company-lifecycle SELFTEST FAIL — ${missed.length}/4 mutation(s) survived`);
     process.exit(1);
   }
-  console.log("verify-csa-pull-company-lifecycle selftest PASS — 4/4 planted defects rejected");
+  const leftoverPlant = `${source}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  const leftover = inspect(leftoverPlant);
+  if (!leftover.includes("leftover text-[11px]") || !leftover.includes("leftover off-scale muted")) {
+    console.error("verify-csa-pull-company-lifecycle SELFTEST FAIL leftover plant escaped", leftover);
+    process.exit(1);
+  }
+  console.log("verify-csa-pull-company-lifecycle selftest PASS — 4/4 planted defects rejected + leftover plant rejected");
   process.exit(0);
 }
 

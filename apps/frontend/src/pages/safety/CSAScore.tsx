@@ -222,7 +222,7 @@ export function CSAScorePage() {
                   <div className="font-semibold text-slate-700">{tile.label}</div>
                   <div className={`font-semibold ${bandClassName(tile.risk_band)}`}>{tile.risk_band.toUpperCase()}</div>
                 </div>
-                <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-slate-600">
+                <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-600">
                   <div>
                     <div>{tile.source.authoritative_for_percentile ? "SMS measure" : "Public-source measure"}</div>
                     <div className="text-xs font-semibold text-slate-800">{formatScore(tile.latest_score)}</div>
