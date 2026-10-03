@@ -3,7 +3,7 @@
 ACK: CURSOR | ACK BANK-F91245 INTEGRITY ALERTS TEXT TOKENS DONE | GO
 FINDING: BANK-F91245 | IntegrityAlertsPage leftover off-scale text-[11px] ×3 + #334155 ×2
 FIX: 3→text-xs; 2×#334155→#4B5563. Hung leftover refuse on verify-integrity-alerts-staged-filters.
-GUARD: verify-integrity-alerts-staged-filters · leftover plant + live PASS → #24862 tip .
+GUARD: verify-integrity-alerts-staged-filters · leftover plant + live PASS → #24862 tip `8e8b9531ac`.
 NO seed · NO mig. NEXT: leftover EscrowForfeitModal · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
 
 ## 2026-10-03T22:50Z · BANK-F91244 CSAScoreTab leftover tokens MERGED #24860 tip 79aa0eb382
