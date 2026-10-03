@@ -73,11 +73,15 @@ function selftest() {
   // #1f2a44 as an ACTIVE-STATE FILL (not text color) is the exact retired shade this round fixed —
   // the guard itself can't distinguish text-color use from fill use by hex alone, so the real
   // enforcement is "only BOX_FILE may contain any hex" (checked live below), not a second denylist.
+  const selfSrc = readFileSync(new URL(import.meta.url), "utf8");
+  if (!selfSrc.includes("BANK-F91088") || !selfSrc.includes("BANKING_CONTROL_LABEL_CLASS") || !selfSrc.includes("text-section-header")) {
+    failures.push("self-source missing BANK-F91088 BANKING_CONTROL_LABEL_CLASS / text-section-header refuse");
+  }
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:\n  - ${failures.join("\n  - ")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} selftest OK — 8 locked tokens, active navy + secondary text both present`);
+  console.log(`${LABEL} selftest OK — 8 locked tokens, active navy + secondary text both present, F91088 label token refuse armed`);
 }
 
 function main() {
@@ -90,10 +94,22 @@ function main() {
     failures.push(`${BOX_FILE} not found under ${BANKING_COMPONENTS_DIR} — the shared box component must exist.`);
   } else {
     const boxSrc = readFileSync(boxPath, "utf8");
-    for (const name of ["BankingControlBox", "BankingControlGroup", "BankingControlSegment", "bankingControlBoxClass"]) {
+    for (const name of ["BankingControlBox", "BankingControlGroup", "BankingControlSegment", "bankingControlBoxClass", "BANKING_CONTROL_LABEL_CLASS"]) {
       if (!boxSrc.includes(`export function ${name}`) && !boxSrc.includes(`export const ${name}`) && !boxSrc.includes(`export function ${name}(`)) {
         failures.push(`${BOX_FILE} does not export ${name}.`);
       }
+    }
+    // BANK-F91088 — section labels use the named 11px token, never raw text-[11px].
+    // Shared constant is consumed by DriverEscrowLedgerSection + BankingTransactionsDesignView.
+    const boxCode = stripComments(boxSrc);
+    if (boxCode.includes("text-[11px]")) {
+      failures.push(`${BOX_FILE} must not use text-[11px] — use text-section-header (GLOBAL-TYPE-SIZE-BASELINE section headers).`);
+    }
+    const labelMatch = boxCode.match(/export const BANKING_CONTROL_LABEL_CLASS\s*=\s*"([^"]+)"/);
+    if (!labelMatch) {
+      failures.push(`${BOX_FILE} BANKING_CONTROL_LABEL_CLASS must be a string constant.`);
+    } else if (!labelMatch[1].includes("text-section-header")) {
+      failures.push(`${BOX_FILE} BANKING_CONTROL_LABEL_CLASS must include text-section-header.`);
     }
   }
 

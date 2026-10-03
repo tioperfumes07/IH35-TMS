@@ -99,5 +99,7 @@ export function BankingControlGroup({ children, className }: { children: ReactNo
 }
 
 /** Section-label chrome for a group (e.g. "From", "Categorize by") — 11px/700/UPPERCASE/#4B5563,
- *  the locked "column/section headers (page subheads)" spec, transcribed verbatim. */
-export const BANKING_CONTROL_LABEL_CLASS = "text-[11px] font-semibold uppercase tracking-[0.4px] text-[#4B5563]";
+ *  the locked "column/section headers (page subheads)" spec, transcribed verbatim.
+ *  BANK-F91088: named token `text-section-header` (11px), never raw `text-[11px]`. */
+export const BANKING_CONTROL_LABEL_CLASS =
+  "text-section-header font-semibold uppercase tracking-[0.4px] text-[#4B5563]";
