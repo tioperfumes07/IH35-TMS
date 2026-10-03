@@ -1,3 +1,11 @@
+## 2026-10-03T12:01Z · BANK-F91133 RevenueDiscrepancyDrill locked tokens MERGED #24515
+
+ACK: CURSOR | ACK BANK-F91133 REVENUE DISCREPANCY DRILL TEXT TOKENS DONE | GO
+FINDING: BANK-F91133 | RevenueDiscrepancyDrill heading/hint off-scale text-[11px] (locked tokens)
+FIX: heading→text-section-header; hint→text-xs; revenue-gl-linkage guard refuses text-[11px] on this drill only.
+GUARD: verify-revenue-gl-linkage · money-pr-local-gate PASS → #24515 tip `3aa4eb3533`.
+NO seed · NO mig (authored HH 11). NEXT: ROUND 348 remaster (HH 12 open) · SectionQuickJump leftover · R-1/R-2 seats.
+
 ## 2026-10-03T11:55Z · BANK-F91132 DispatcherActiveLoadsPanel text-xs MERGED #24510
 
 ACK: CURSOR | ACK BANK-F91132 DISPATCHER ACTIVE LOADS TEXT TOKENS DONE | GO

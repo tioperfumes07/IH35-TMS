@@ -794,6 +794,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-relay-fuel-webhook-receiver",
     ["apps/backend/src/integrations/relay-payments/", "apps/backend/src/index.ts", "scripts/verify-relay-fuel-webhook-receiver.mjs"],
   ],
+  // CC-2 engine ten-point: WORM + audit on the fuel / Relay source tables, FORCE RLS on the derived fuel tables.
+  [
+    "verify-fuel-relay-source-worm",
+    ["db/migrations/", "apps/backend/src/fuel/", "apps/backend/src/integrations/relay-payments/", "scripts/verify-fuel-relay-source-worm.mjs"],
+  ],
   // Lead ruling ROUND 310: one Relay fill = one live row = one company (the unit's operator).
   [
     "verify-relay-fill-one-company",
