@@ -19,6 +19,7 @@ function validateSource({ page, helper }) {
   if (!page.includes("printLetterHtml")) failures.push("FuelReconciliationPage must use printLetterHtml");
   if (!/onClick=\{printLetter\}/.test(page)) failures.push("Print must call printLetter");
   if (/onClick=\{\(\) => window\.print\(\)\}/.test(page)) failures.push("must not window.print() on SPA");
+  if (page.includes("text-[11px]")) failures.push("FuelReconciliationPage.tsx: must not use text-[11px] — use text-section-header");
   return failures;
 }
 
