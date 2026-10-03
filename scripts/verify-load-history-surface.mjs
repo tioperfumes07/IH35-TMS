@@ -55,6 +55,9 @@ export function assertLoadHistorySurface(srcs) {
   if (!/EntityLink/.test(srcs.page)) {
     fails.push("LoadHistoryPage must EntityLink linked records");
   }
+  if (srcs.page.includes("text-[11px]")) {
+    fails.push("LoadHistoryPage.tsx: must not use text-[11px] — use text-xs or text-section-header");
+  }
   if (!/\/dispatch\/loads\/:id\/history/.test(srcs.manifest)) {
     fails.push("manifest must route /dispatch/loads/:id/history");
   }

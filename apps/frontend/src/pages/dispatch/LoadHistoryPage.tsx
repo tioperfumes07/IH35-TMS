@@ -63,7 +63,7 @@ const ENTITY_KINDS = new Set<string>([
 function HistoryLink({ link }: { link: LoadHistoryLink }) {
   if (!ENTITY_KINDS.has(link.kind)) {
     return (
-      <span className="text-[11px] text-slate-500" title={link.id}>
+      <span className="text-xs text-slate-500" title={link.id}>
         {link.label ?? link.kind}
       </span>
     );
@@ -111,7 +111,7 @@ export default function LoadHistoryPage() {
         <div className="text-xs text-slate-800">
           <div>{row.summary}</div>
           {row.field ? (
-            <div className="mt-0.5 text-[11px] text-slate-500">
+            <div className="mt-0.5 text-xs text-slate-500">
               {row.field.replace(/_/g, " ")}
               {row.before_value != null || row.after_value != null
                 ? `: ${row.before_value ?? "—"} → ${row.after_value ?? "—"}`
@@ -134,7 +134,7 @@ export default function LoadHistoryPage() {
     {
       key: "source",
       label: "Source",
-      render: (row) => <span className="text-[11px] text-slate-600">{row.source ?? "—"}</span>,
+      render: (row) => <span className="text-xs text-slate-600">{row.source ?? "—"}</span>,
     },
     {
       key: "links",
@@ -220,7 +220,7 @@ export default function LoadHistoryPage() {
       ) : null}
 
       <section className="rounded-sm border border-slate-200 bg-white p-3" data-testid="load-history-linked-docs">
-        <h2 className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-600">Linked documents</h2>
+        <h2 className="mb-2 text-section-header font-bold uppercase tracking-wide text-slate-600">Linked documents</h2>
         <ParityTable appearance="board"
           columns={docColumns}
           rows={historyQuery.data?.linked_documents ?? []}
@@ -232,7 +232,7 @@ export default function LoadHistoryPage() {
       </section>
 
       <section className="rounded-sm border border-slate-200 bg-white p-3" data-testid="load-history-timeline">
-        <h2 className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-600">Timeline</h2>
+        <h2 className="mb-2 text-section-header font-bold uppercase tracking-wide text-slate-600">Timeline</h2>
         <ParityTable appearance="board"
           columns={timelineColumns}
           rows={historyQuery.data?.rows ?? []}
