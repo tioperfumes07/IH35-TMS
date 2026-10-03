@@ -433,7 +433,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                 dataAttributes={{ "data-fuel-history-filter-toolbar": "collapsed" }}
               >
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                  <label className="text-[11px] text-slate-600">
+                  <label className="text-xs text-slate-600">
                     Driver
                     <EntityPicker
                       kind="driver"
@@ -446,7 +446,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                       dataTestId="fuel-history-filter-driver"
                     />
                   </label>
-                  <label className="text-[11px] text-slate-600">
+                  <label className="text-xs text-slate-600">
                     Unit
                     <EntityPicker
                       kind="unit"
@@ -459,7 +459,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                       dataTestId="fuel-history-filter-unit"
                     />
                   </label>
-                  <label className="text-[11px] text-slate-600">
+                  <label className="text-xs text-slate-600">
                     Load
                     <EntityPicker
                       kind="load"
@@ -472,7 +472,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                       dataTestId="fuel-history-filter-load"
                     />
                   </label>
-                  <label className="text-[11px] text-slate-600">
+                  <label className="text-xs text-slate-600">
                     Trailer
                     <EntityPicker
                       kind="trailer"

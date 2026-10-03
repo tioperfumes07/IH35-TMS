@@ -23,6 +23,8 @@ function fuelNavigationFailures(source) {
   if (/jump to tab/i.test(source)) failures.push("FuelPlannerHome.tsx still contains a 'Jump to tab' trigger label.");
   if (source.includes('data-testid="fuel-jump-to-tab"')) failures.push("FuelPlannerHome.tsx still has data-testid fuel-jump-to-tab.");
   if (!source.includes("<NavyPageSubNav")) failures.push("FuelPlannerHome.tsx must render NavyPageSubNav for standard Fuel tab navigation.");
+  if (source.includes("text-[11px]")) failures.push("leftover text-[11px]");
+  if (source.includes("#8A92AB") || source.includes("#334155")) failures.push("leftover off-scale muted");
 
   const hoverDropdownBlocks = source.match(/<HoverDropdown\b[\s\S]*?<\/HoverDropdown>/g) ?? [];
   for (const block of hoverDropdownBlocks) {
@@ -51,5 +53,9 @@ if (process.argv.includes("--selftest")) {
   if (!fuelNavigationFailures(duplicateJump).some((message) => message.includes("Jump to tab"))) {
     fail("selftest duplicate Jump-to-tab mutation escaped");
   }
-  console.log("verify:fuel-jump-to-tab-removed SELFTEST PASS (2/2 planted defects rejected)");
+  const leftoverPlant = `${source}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  if (!fuelNavigationFailures(leftoverPlant).some((message) => message.includes("leftover"))) {
+    fail("selftest leftover plant escaped");
+  }
+  console.log("verify:fuel-jump-to-tab-removed SELFTEST PASS (3/3 planted defects rejected)");
 }
