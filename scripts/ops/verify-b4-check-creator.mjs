@@ -168,6 +168,12 @@ function main() {
   assertIncludes(topbar, "/accounting/checks/new", TOPBAR);
   assertIncludes(topbar, "create_check", TOPBAR);
 
+  // BANK-F91072 — ORDERS B-4 / bill create chrome uses text-xs, not text-[11px].
+  const billForm = read("apps/frontend/src/components/accounting/VendorBillForm.tsx");
+  if (billForm.includes("text-[11px]")) {
+    throw new Error("VendorBillForm.tsx: must not use text-[11px] — use text-xs (GLOBAL-TYPE-SIZE-BASELINE body 12px)");
+  }
+
   console.log(`${LABEL}: PASS`);
 }
 
