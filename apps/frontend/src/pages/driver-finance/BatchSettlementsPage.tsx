@@ -331,7 +331,7 @@ export function BatchSettlementsPage() {
                       />
                       <button
                         type="button"
-                        className="mt-1 text-[11px] text-[#6B7280] underline"
+                        className="mt-1 text-xs text-[#6B7280] underline"
                         onClick={() => fillDown("driver_id", idx)}
                       >
                         Fill down
@@ -398,7 +398,7 @@ export function BatchSettlementsPage() {
                       )}
                       <button
                         type="button"
-                        className="mt-1 text-[11px] text-[#6B7280] underline"
+                        className="mt-1 text-xs text-[#6B7280] underline"
                         onClick={() => void refreshLoads(idx, row)}
                         disabled={!row.driver_id || row.status === "saved"}
                       >
