@@ -1,3 +1,11 @@
+## 2026-10-03T14:58Z · BANK-F91168 TopStatusBar locked tokens MERGED #24604
+
+ACK: CURSOR | ACK BANK-F91168 TOP STATUS BAR TEXT TOKENS DONE | GO
+FINDING: BANK-F91168 | TopStatusBar QBO pills off-scale text-[11px] (locked tokens)
+FIX: all three→text-xs; top-banner-spec-heights guard refuses text-[11px] on TopStatusBar.tsx only.
+GUARD: verify-top-banner-spec-heights · TopStatusBar-scoped refuse + typecheck PASS → #24604 tip `118c09c381`.
+NO seed · NO mig. NEXT: DefaultHome leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T14:54Z · BANK-F91167 AtRiskQueuePage locked tokens MERGED #24601
 
 ACK: CURSOR | ACK BANK-F91167 AT RISK QUEUE TEXT TOKENS DONE | GO
