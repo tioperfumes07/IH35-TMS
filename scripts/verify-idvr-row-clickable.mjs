@@ -33,6 +33,13 @@ function assertContains(source, needle, where) {
   }
 }
 
+function leftoverRefuse(src) {
+  const failures = [];
+  if (src.includes("text-[11px]")) failures.push("leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155")) failures.push("leftover off-scale muted");
+  return failures;
+}
+
 function run() {
   const list = read(LIST);
   const detail = read(DETAIL);
@@ -52,6 +59,11 @@ function run() {
     throw new Error(`${LABEL}: absolute path="/safety/idvr/:id" must not coexist with idvr/:id (SAF-F27)`);
   }
 
+  const leftover = leftoverRefuse(detail);
+  if (leftover.length) {
+    throw new Error(`${LABEL}: ${leftover.join(", ")} in ${DETAIL}`);
+  }
+
   console.log(`${LABEL}: PASS`);
 }
 
@@ -65,7 +77,12 @@ function selftest() {
     throw new Error(`${LABEL}: selftest expected planted miss`);
   }
   fs.rmSync(tmp, { recursive: true, force: true });
-  console.log(`${LABEL}: selftest PASS`);
+  const leftoverPlant = 'getSafetyDvirDetail\nidvr-detail-page\n<div className="text-[11px] text-[#8A92AB]">plant</div>';
+  const leftover = leftoverRefuse(leftoverPlant);
+  if (!leftover.includes("leftover text-[11px]") || !leftover.includes("leftover off-scale muted")) {
+    throw new Error(`${LABEL}: selftest leftover plant escaped ${JSON.stringify(leftover)}`);
+  }
+  console.log(`${LABEL}: selftest PASS + leftover plant rejected`);
 }
 
 if (process.argv.includes("--selftest")) {
