@@ -134,6 +134,10 @@ export function assertRevenueGlLinkage(sources) {
   require("feDrill", "revenue-discrepancy-drill", "fe_drill_testid");
   require("feDrill", "/accounting/invoices/", "fe_drill_invoice_href_pattern");
   require("feDrill", "focus-visible", "fe_drill_focus_visible");
+  // BANK-F91133 — ORDERS chrome: RevenueDiscrepancyDrill heading/hint use locked tokens, not text-[11px].
+  if (sources.feDrill && sources.feDrill.includes("text-[11px]")) {
+    failures.push("fe_drill_must_not_use_text_11px");
+  }
   require("feDrillTest", "toHaveFocus", "fe_drill_keyboard_test");
   require("feDrillTest", "/accounting/journal-entries/", "fe_drill_je_href_test");
 
