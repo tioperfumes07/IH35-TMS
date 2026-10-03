@@ -24,7 +24,12 @@ function inspect(source) {
   if (!source.includes('["safety", "meetings", input.companyId]')) errors.push("success refresh is not pinned to submitting company");
   if (!/payload: \{[\s\S]*topic: topic\.trim\(\)[\s\S]*meeting_date: meetingDate[\s\S]*required_attendees: \[\.\.\.requiredAttendees\]/.test(source)) errors.push("creator does not snapshot every visible field and driver FK list");
   if (!source.includes('kind="driver"') || !source.includes("<EntityPicker") || !source.includes("<EntityLink")) errors.push("canonical driver picker/forward/reverse wiring removed");
+  leftoverRefuse(source, errors);
   return errors;
+}
+function leftoverRefuse(source, errors) {
+  if (source.includes("text-[11px]")) errors.push("leftover text-[11px]");
+  if (source.includes("#8A92AB") || source.includes("#334155")) errors.push("leftover off-scale muted");
 }
 if (process.argv.includes("--selftest")) {
   const source = fs.readFileSync(FILE, "utf8");
@@ -46,7 +51,13 @@ if (process.argv.includes("--selftest")) {
     console.error(`verify-safety-meetings-company-lifecycle SELFTEST FAIL — ${missed.length}/11 mutation(s) survived`);
     process.exit(1);
   }
-  console.log("verify-safety-meetings-company-lifecycle selftest PASS — 11/11 planted defects rejected");
+  const leftoverPlant = `${source}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  const leftover = inspect(leftoverPlant);
+  if (!leftover.includes("leftover text-[11px]") || !leftover.includes("leftover off-scale muted")) {
+    console.error("verify-safety-meetings-company-lifecycle SELFTEST FAIL leftover plant escaped", leftover);
+    process.exit(1);
+  }
+  console.log("verify-safety-meetings-company-lifecycle selftest PASS — 11/11 planted defects rejected + leftover plant rejected");
   process.exit(0);
 }
 const errors = inspect(fs.readFileSync(FILE, "utf8"));
