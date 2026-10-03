@@ -35,6 +35,7 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 const { buildPgPoolConfig } = require("./pg-connection-options.cjs");
+import { directGuardUrl, FORBIDDEN_GUARD_ROLE } from "./guard-db-url.mjs";
 
 /**
  * @param {{ label: string, allowOfflineSkip?: string }} opts
@@ -43,7 +44,8 @@ const { buildPgPoolConfig } = require("./pg-connection-options.cjs");
 export async function requireLiveDbOrExit({ label, allowOfflineSkip } = {}) {
   const pgMod = await import("pg");
   const pg = pgMod.default ?? pgMod;
-  const url = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
+  // Guards read the DIRECT endpoint, never the pooler (scripts/lib/guard-db-url.mjs).
+  const url = directGuardUrl(process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL);
 
   if (!url) {
     if (allowOfflineSkip) {
@@ -69,6 +71,15 @@ export async function requireLiveDbOrExit({ label, allowOfflineSkip } = {}) {
       process.exit(0);
     }
     console.error(`${label}: FAIL — DATABASE_URL is set but the connection failed: ${msg}`);
+    await pool.end().catch(() => {});
+    process.exit(1);
+  }
+
+  // A guard that reads as the app role reads a masked database (pooled SET ROLE leak, 2026-10-03).
+  const { rows } = await client.query("SELECT current_user AS u");
+  if (rows[0]?.u === FORBIDDEN_GUARD_ROLE) {
+    console.error(`${label}: FAIL — connected as ${FORBIDDEN_GUARD_ROLE}; a guard read under the app role is masked, not empty.`);
+    client.release();
     await pool.end().catch(() => {});
     process.exit(1);
   }
