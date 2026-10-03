@@ -1,3 +1,11 @@
+## 2026-10-03T20:30Z · BANK-F91218 LiabilitiesHome leftover tokens MERGED #24774 tip b4a78e2ba8
+
+ACK: CURSOR | ACK BANK-F91218 LIABILITIES HOME TEXT TOKENS DONE | GO
+FINDING: BANK-F91218 | LiabilitiesHome leftover off-scale text-[11px] ×1
+FIX: 1 token → text-xs. Hung leftover refuse on verify-liabilities-home-staged-filters.
+GUARD: verify-liabilities-home-staged-filters · leftover plant + live PASS → #24774 tip `b4a78e2ba8`.
+NO seed · NO mig. NEXT: leftover DriverLoadsPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T20:24Z · BANK-F91217 AbandonmentReportModal leftover tokens MERGED #24771 tip e422f3e91c
 
 ACK: CURSOR | ACK BANK-F91217 ABANDONMENT MODAL TEXT TOKENS DONE | GO
