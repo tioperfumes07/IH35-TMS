@@ -20,7 +20,12 @@ const checks = [
   [/createWoReasonMut\.mutate\(\{\s*workOrderId: String\(id\),\s*companyId,\s*generation: actionGenerationRef\.current,\s*label,/, "reason create snapshots modal scope"],
 ];
 
-const failures = (candidate) => checks.filter(([pattern]) => !pattern.test(candidate)).map(([, label]) => label);
+const failures = (candidate) => {
+  const missing = checks.filter(([pattern]) => !pattern.test(candidate)).map(([, label]) => label);
+  if (candidate.includes("text-[11px]")) missing.push("leftover text-[11px]");
+  if (candidate.includes("#8A92AB") || candidate.includes("#334155")) missing.push("leftover off-scale muted");
+  return missing;
+};
 const missing = failures(source);
 if (missing.length) {
   console.error(`verify-maint-work-order-detail-action-lifecycle FAIL — ${missing.join("; ")}`);
@@ -35,7 +40,13 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`verify-maint-work-order-detail-action-lifecycle SELFTEST PASS — ${checks.length}/${checks.length} planted defects rejected`);
+  const leftoverPlant = `${source}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  const leftoverMissing = failures(leftoverPlant);
+  if (!leftoverMissing.includes("leftover text-[11px]") || !leftoverMissing.includes("leftover off-scale muted")) {
+    console.error("verify-maint-work-order-detail-action-lifecycle SELFTEST FAIL — leftover plant escaped");
+    process.exit(1);
+  }
+  console.log(`verify-maint-work-order-detail-action-lifecycle SELFTEST PASS — ${checks.length}/${checks.length} planted defects + leftover plant rejected`);
 }
 
 console.log(`verify-maint-work-order-detail-action-lifecycle PASS — ${checks.length} immutable work-order action invariants`);
