@@ -98,7 +98,7 @@ export function LoadsWithoutTourPage() {
           tableTestId="loads-without-tour-table"
         />
       )}
-      <p className="text-[11px] text-gray-500" data-testid="kpi-drill-row-count">
+      <p className="text-xs text-gray-500" data-testid="kpi-drill-row-count">
         {loads.length} loads — must match the "Loads without a tour" chip.
       </p>
     </div>
