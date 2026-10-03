@@ -1881,6 +1881,16 @@
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-03",
       "purpose": "Lead 10-03 bills carry their unit — bill unit/trailer derived from the load (or work order) on write; repair bills require a work order (A4-D5)"
+    },
+    "202615350300": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-03",
+      "purpose": "Kill the second system — escrow: driver_finance.v_driver_escrow_balance derived from each driver's 2100-00-nnn postings (readers repointed)"
+    },
+    "202615350400": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-03",
+      "purpose": "Kill the second system — escrow: stored escrow balance columns retired (escrow_accounts.balance_cents, escrow_balances current/held/released, escrow_ledger.running_balance_cents), writers stopped"
     }
   },
   "202613590001": {

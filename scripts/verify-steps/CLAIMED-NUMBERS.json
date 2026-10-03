@@ -10012,5 +10012,10 @@
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-03",
     "purpose": "verify-bills-carry-their-unit — bills with a load carry its unit/trailer; repair bills carry a work order (CC-1)."
+  },
+  "12349": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-escrow-equals-its-gl — every driver escrow number on a screen/API equals the 2100-00-nnn GL balance; no reader of a stored escrow balance (CC-1)."
   }
 }
