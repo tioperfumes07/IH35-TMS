@@ -55,9 +55,9 @@ export function EmailQueuePage() {
       {queueQuery.isError ? <ListErrorBanner onRetry={() => void refresh()} /> : null}
       <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-700">
         <p>
-          Queue listings load from <span className="font-mono text-[11px]">GET /api/v1/email/queue</span> (pass{" "}
-          <span className="font-mono text-[11px]">operating_company_id</span>). Failed sends can be re-queued via{" "}
-          <span className="font-mono text-[11px]">POST /api/v1/admin/email-queue/:id/retry</span>.
+          Queue listings load from <span className="font-mono text-xs">GET /api/v1/email/queue</span> (pass{" "}
+          <span className="font-mono text-xs">operating_company_id</span>). Failed sends can be re-queued via{" "}
+          <span className="font-mono text-xs">POST /api/v1/admin/email-queue/:id/retry</span>.
         </p>
       </div>
       <div className="rounded-sm border border-gray-200 bg-white p-3">
@@ -75,7 +75,7 @@ export function EmailQueuePage() {
                     template=<span className="font-mono">{item.template_key}</span> · status=
                     <span className="font-mono">{item.status}</span>
                   </p>
-                  <p className="font-mono text-[11px] text-gray-500">{item.id}</p>
+                  <p className="font-mono text-xs text-gray-500">{item.id}</p>
                   {item.error_message ? <p className="text-red-600">{item.error_message}</p> : null}
                 </div>
                 <div className="flex flex-col items-end gap-2">
