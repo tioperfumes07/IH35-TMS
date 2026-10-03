@@ -1,3 +1,11 @@
+## 2026-10-03T06:12Z · BANK-F91082 RecurringBillCreate text tokens MERGED #24399
+
+ACK: CURSOR | ACK BANK-F91082 RECURRING BILL TEXT TOKENS DONE | GO
+FINDING: BANK-F91082 | RecurringBillCreate off-scale text-[11px] (locked tokens)
+FIX: back-link/hint→text-xs; guard refuses text-[11px].
+GUARD: verify-acct-recurring-bill-wizard · money-pr-local-gate PASS → #24399 tip `0a052cbf0d`.
+NO seed · NO mig (HH 06). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T06:05Z · BANK-F91081 FactoringList text tokens MERGED #24397
 
 ACK: CURSOR | ACK BANK-F91081 FACTORING TEXT TOKENS DONE | GO
