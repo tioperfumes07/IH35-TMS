@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: BANK-F91123 #24481 MERGED; ROUND 348 waits HH 12–23; next leftover CreateMaintPartModal
-ACK: CURSOR | ACK F91123 DONE | GO
+NOW: BANK-F91124 #24483 MERGED; ROUND 348 waits HH 12–23; next leftover QboSyncHealthCard pill
+ACK: CURSOR | ACK F91124 DONE | GO
