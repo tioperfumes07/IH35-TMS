@@ -86,6 +86,13 @@ function runChecks(root = ROOT) {
     const src = fs.readFileSync(abs, "utf8");
     if (!c.pattern.test(src)) fails.push(`${c.name}: pattern miss in ${c.file}`);
   }
+  // BANK-F91081 — ORDERS chrome: FactoringListPage uses locked tokens, not text-[11px].
+  const factRel = "apps/frontend/src/pages/accounting/FactoringListPage.tsx";
+  const factAbs = path.join(root, factRel);
+  if (fs.existsSync(factAbs)) {
+    const fact = fs.readFileSync(factAbs, "utf8");
+    if (fact.includes("text-[11px]")) fails.push(`${factRel}: must not use text-[11px] — use text-section-header or text-xs`);
+  }
   return fails;
 }
 
