@@ -48,11 +48,11 @@ async function gatherReportData(client: DbClient, operatingCompanyId: string): P
      LEFT JOIN insurance.policy_unit pu
        ON pu.asset_id = a.id
        AND pu.removed_at IS NULL
-       AND pu.tenant_id = $1::uuid
+       AND pu.operating_company_id = $1::uuid
      LEFT JOIN insurance.policy p
        ON p.id = pu.policy_id
        AND p.status = 'active'
-       AND p.tenant_id = $1::uuid
+       AND p.operating_company_id = $1::uuid
      WHERE u.deactivated_at IS NULL
        AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid`
   );
@@ -69,11 +69,11 @@ async function gatherReportData(client: DbClient, operatingCompanyId: string): P
      LEFT JOIN insurance.policy_unit pu
        ON pu.asset_id = a.id
        AND pu.removed_at IS NULL
-       AND pu.tenant_id = $1::uuid
+       AND pu.operating_company_id = $1::uuid
      LEFT JOIN insurance.policy p
        ON p.id = pu.policy_id
        AND p.status = 'active'
-       AND p.tenant_id = $1::uuid
+       AND p.operating_company_id = $1::uuid
      WHERE e.deactivated_at IS NULL
        AND COALESCE(e.currently_leased_to_company_id, e.owner_company_id) = $1::uuid`
   );
@@ -97,8 +97,8 @@ async function gatherReportData(client: DbClient, operatingCompanyId: string): P
      LEFT JOIN insurance.policy_unit pu
        ON pu.policy_id = p.id
        AND pu.removed_at IS NULL
-       AND pu.tenant_id = $1::uuid
-     WHERE p.tenant_id = $1::uuid
+       AND pu.operating_company_id = $1::uuid
+     WHERE p.operating_company_id = $1::uuid
        AND p.status = 'active'`
   );
 

@@ -349,7 +349,7 @@ export async function resolveCanonicalActiveFactor(
       FROM factoring.canonical_factor_agreements a
       JOIN factoring.factor f
         ON f.id = a.factor_profile_id
-       AND f.tenant_id = a.tenant_id
+       AND f.operating_company_id = a.tenant_id
       JOIN mdata.vendors v
         ON v.id = a.factor_vendor_id
        AND v.operating_company_id = a.tenant_id

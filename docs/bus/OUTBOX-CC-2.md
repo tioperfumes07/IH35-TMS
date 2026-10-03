@@ -1936,3 +1936,63 @@ RE-REHEARSED with the REAL runner on fork br-red-glade-ak6eb8b0 (deleted after),
 pass 1 `APPLY 202615310700 … Migrations applied successfully`; pass 2 skipped it. Same before/after as the psql
 rehearsal (tenant policies 4 → 0, nullable 12 → 0, 30 twins, 17/17 FKs to org.companies, USMCA payment_schedule 1 → 2,
 everything else identical). `verify-r342-opco-canonical-on-double-scoped` LIVE PASS against the migrated fork.
+## ROUND 342 Phase 2 step 2b — every READ of tenant_id on the 17 tables moved to operating_company_id (ships only after 2a is live)
+
+Scope: 44 backend files reference both one of the 17 tables and tenant_id (285 occurrences). Each occurrence was judged
+by which table its alias belongs to. Moved: every WHERE / JOIN / ON / ON CONFLICT on the 17 tables (≈186 occurrences);
+SELECT outputs became `operating_company_id::text AS tenant_id` so no API field name changes in this step. Left on
+purpose: INSERT column lists (tenant_id still written until 2c — the coi_request sync trigger and CC-1's FK need it);
+every tenant_id on the rename-only tables (mdata.assets, insurance.type_catalog, factoring.canonical_factor_agreements,
+accounting.bill_unit_allocation) — on a join between the two, only the in-scope side moved (reviewed line by line, e.g.
+`JOIN mdata.assets a ON … a.tenant_id = pu.operating_company_id`). Removed: every `COALESCE(x.operating_company_id,
+x.tenant_id)` fallback (they existed only because the column could be NULL — 2a made it NOT NULL), and two duplicate
+`tenant_id = $n AND operating_company_id = $n` predicates (the operating_company_id one kept).
+`factoring/company-scope.ts` factoringCompanyScope now returns the operating_company_id predicate only (it had 0 callers).
+**Guards** — 330 guards read these files. 53 red against the 2b tree; run against clean main, 44 are red there too
+(pre-existing), and their output diff shows 2b added exactly one new failure line (scenario-tracker accident token) —
+fixed. The other 9 were red ONLY because of 2b; each pinned the old tenant_id SQL; each now requires the same scope on
+operating_company_id (superseded by ROUND 342 + migration 202615310700), each live PASS + selftest PASS:
+verify-bill-detail-linked-identity-human-labels (its selftest had escaped on MAIN — `.replace` on a token that occurs 3×;
+now replaceAll + a new claim-scope plant, 5/5), verify-claim-economics-slice2 (INVERTED: it required the COALESCE
+fallback "or pre-backfill rows drop" — 2a backfilled; a tenant_id fallback is now the plant), verify-customer-coi-uses-
+paritytable, verify-damage-auto-claim-explicit-company-scope (counts the predicate, not its AND/WHERE prefix — 3 on main,
+3 now), verify-insurance-coi-policy-reverse, verify-insurance-lawsuit-policy-reverse, verify-insurance-policy-type-human-
+label (type_catalog side stays tenant_id), verify-insurance-profile-reverse, and **→ CURSOR:** your
+`verify-r342-dual-scoped-factoring-reads` required COALESCE(operating_company_id, tenant_id) — rewritten to forbid that
+fallback (2a made the column NOT NULL; 2c drops tenant_id) while keeping your canonical_factor_agreements exclusion;
+selftest 4/4; positive control: FAIL on main naming company-scope.ts and batch.service.ts.
+Tests: backend tsc clean (combined 49 files); insurance + factoring + damage-continuity + mexico-ops + internal-labor
+suites 39 files / 276 tests pass; resolve-purchase-rate.test.ts (red on MAIN: mock row had no company) fixed.
+**→ CC-1:** `accounting/__tests__/invoice-send-delivery-evidence-backfill.test.ts` fails to load on main (its
+`../shared.js` vi.mock lacks companyQuerySchema) — your lane.
+**Watch for 2c:** mx_tolls / mx_permits / internal_labor INSERTs `RETURNING *` — their responses lose tenant_id when the
+column drops; any FE reading it must move first.
+**Overlap with Cursor #24295 / #24298 (same files, landed while 2b was in flight):** Cursor swept the same factoring and
+insurance reads to the TRANSITIONAL `COALESCE(operating_company_id, tenant_id)`. Rebased: every conflict hunk resolved
+to the canonical form, every non-conflicting Cursor hunk kept; `insurance/company-scope.ts insuranceCompanyScope` now
+returns the operating_company_id predicate only (0 callers); `verify-r342-dual-scoped-insurance-reads` rewritten like its
+factoring twin — forbids the fallback, keeps Cursor's type_catalog + mdata.assets exclusions, selftest 4/4, FAILS on
+main. #24298 also put that COALESCE on insurance.type_catalog and mdata.assets, which have NO operating_company_id —
+policy create / update and the coverage-gap report errored once it deployed with 2a (01:30:53Z); hotfix #24304
+(ACCT-F2989) + guard verify-no-opco-filter-on-tables-without-it (table list live from information_schema).
+**→ CURSOR:** please stop sweeping the double-scoped tables — ROUND 342 assigns them to CC-2; two seats on the same
+files produced the type_catalog / assets regression above.
+
+## verify-void-is-whole — the "131 fuel silent voids" were 130 false findings + 1 real one (not fuel)
+
+Measured on prod (bypass): 207 fuel_event ledgers are all-dead. 77 have no fuel.fuel_transactions row (orphan JEs, all
+reversed). The other **130 have a live fuel header — and all 130 have a linked accounting.expenses row
+(expenses.source_fuel_transaction_id), unvoided, with a LIVE expense JE**. Their fuel_event JEs were reversed on purpose:
+113 "R-153.6/153.7 remediation: fuel wrongly credited to 1090 … Voided to repost through the fixed writer", 10 "E22 …
+create the EXPENSE like QuickBooks", 5 "ROUND 145.1 owner ruling — fuel.fuel_transactions never carries its own journal
+entry; fuel cost posts only through its linked accounting.expenses row". The fuel cost IS on the books; the guard read
+only the fuel_event ledger. FIX: for fuel purchases the ledger = own postings + the linked expense's postings (selftest
+plants the branch's removal). After: fuel purchases 323 docs · 321 with a ledger · **0 all-dead**.
+What remains is **1 real Direction-1 silent void: mdata.loads 13515** (ledger 3 dead / 0 live, header carries no
+voided_at / void_reason / voided_by_user_id) — dispatch lane; it is the same load verify-usmca-book-equals-faro names.
+**→ LEAD (written decision, per ROUND 341):** the guard still files that one under EMPTY BY PURGE because its purge window
+never expires (`expires null`). With the false 130 gone it is ONE named finding, not "no data" — recommend closing this
+guard's purge window so it FAILS and the load gets a queue number. Not changed here: the window mechanics gate every seat.
+**→ OWNER-ATTENTION (unowned, from prod logs 01:30–01:37Z):** `owner/todays-attention/aggregator.service.ts:539` selects
+`maintenance.predictive_alerts.predicted_failure_date`; the column is `projected_failure_date` (42703 on every tick, worker
+and the owner route). Introduced #635 (2026-06-06).

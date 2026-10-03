@@ -167,8 +167,8 @@ describe("insurance lawsuit routes", () => {
     const listSql = queryMock.mock.calls.find(([sql]) => String(sql).includes("ORDER BY lawsuit.filed_date DESC"))?.[0];
     expect(listSql).toContain("LEFT JOIN insurance.claim AS claim");
     expect(listSql).toContain("asset.unit_id::text AS unit_id");
-    expect(listSql).toContain("driver.operating_company_id = lawsuit.tenant_id");
-    expect(listSql).toContain("COALESCE(unit.currently_leased_to_company_id, unit.owner_company_id) = lawsuit.tenant_id");
+    expect(listSql).toContain("driver.operating_company_id = lawsuit.operating_company_id");
+    expect(listSql).toContain("COALESCE(unit.currently_leased_to_company_id, unit.owner_company_id) = lawsuit.operating_company_id");
   });
 
   it("GET applies the exact policy reverse filter through the tenant-matched claim", async () => {

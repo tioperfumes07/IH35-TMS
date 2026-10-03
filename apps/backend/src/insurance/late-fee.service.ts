@@ -26,13 +26,13 @@ export async function applyLateFee(scheduleId: string, today: string) {
         WITH candidate AS (
           SELECT
             ps.id,
-            ps.tenant_id,
+            ps.operating_company_id AS tenant_id,
             ps.amount_cents,
             p.late_fee_pct
           FROM insurance.payment_schedule ps
           JOIN insurance.policy p
             ON p.id = ps.policy_id
-           AND p.tenant_id = ps.tenant_id
+           AND p.operating_company_id = ps.operating_company_id
           WHERE ps.id = $1::uuid
             AND ps.due_date < $2::date
             AND ps.status NOT IN ('paid', 'late_fee_applied')
@@ -74,7 +74,7 @@ export async function applyOverdueLateFeesForTenant(tenantId: string, today: str
       `
         SELECT id::text
         FROM insurance.payment_schedule
-        WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid
+        WHERE operating_company_id = $1::uuid
           AND due_date < $2::date
           AND status NOT IN ('paid', 'late_fee_applied')
       `,

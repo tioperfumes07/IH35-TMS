@@ -151,8 +151,8 @@ export async function detectAssetCoverageGap(
       FROM insurance.policy_unit pu
       JOIN insurance.policy p
         ON p.id = pu.policy_id
-       AND p.tenant_id = pu.tenant_id
-      WHERE COALESCE(pu.operating_company_id, pu.tenant_id) = $1::uuid
+       AND p.operating_company_id = pu.operating_company_id
+      WHERE pu.operating_company_id = $1::uuid
         AND pu.asset_id = $2::uuid
     `,
     [input.operatingCompanyId, input.assetId]

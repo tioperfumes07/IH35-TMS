@@ -228,7 +228,7 @@ export async function computeLoadProfitability(
        -- identifiers never existed → the query 42P01'd, was swallowed, and every profitability report
        -- silently allocated $0 insurance (overstating margin).
        FROM insurance.policy ip
-       WHERE ip.tenant_id = $1
+       WHERE ip.operating_company_id = $1
          AND ip.status = 'active'
          AND ip.effective_date <= $2::date
          AND ip.expiry_date >= $2::date`,

@@ -51,7 +51,7 @@ async function withCompanyScope<T>(userId: string, operatingCompanyId: string, f
 function selectColumns() {
   return `
     id::text,
-    tenant_id::text,
+    operating_company_id::text AS tenant_id,
     policy_id::text,
     due_date::text,
     amount_cents::bigint,
@@ -74,7 +74,7 @@ export async function registerInsurancePaymentScheduleRoutes(app: FastifyInstanc
 
     const schedules = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
       const values: unknown[] = [parsed.data.operating_company_id];
-      const filters = ["COALESCE(operating_company_id, tenant_id) = $1::uuid"];
+      const filters = ["operating_company_id = $1::uuid"];
       if (parsed.data.policy_id) {
         values.push(parsed.data.policy_id);
         filters.push(`policy_id = $${values.length}::uuid`);
@@ -109,7 +109,7 @@ export async function registerInsurancePaymentScheduleRoutes(app: FastifyInstanc
     const created = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
       const policy = await client.query(
         `SELECT id FROM insurance.policy
-         WHERE id = $1::uuid AND COALESCE(operating_company_id, tenant_id) = $2::uuid
+         WHERE id = $1::uuid AND operating_company_id = $2::uuid
          LIMIT 1`,
         [parsed.data.policy_id, parsed.data.operating_company_id]
       );
@@ -165,7 +165,7 @@ export async function registerInsurancePaymentScheduleRoutes(app: FastifyInstanc
               paid_at = now(),
               updated_at = now()
           WHERE id = $1::uuid
-            AND COALESCE(operating_company_id, tenant_id) = $2::uuid
+            AND operating_company_id = $2::uuid
             AND status <> 'paid'
           RETURNING ${selectColumns()}
         `,

@@ -148,7 +148,7 @@ export async function listSubmissionQueueInvoices(
         FROM factoring.customer_factor_assignment cfa
         JOIN factoring.factor f ON f.id = cfa.factor_id AND f.voided_at IS NULL
         WHERE cfa.customer_id = COALESCE(c.id, c2.id)
-          AND COALESCE(cfa.operating_company_id, cfa.tenant_id) = $1::uuid
+          AND cfa.operating_company_id = $1::uuid
           AND cfa.voided_at   IS NULL
           AND cfa.effective_from <= COALESCE(i.issue_date, CURRENT_DATE)
           AND (cfa.effective_to IS NULL OR cfa.effective_to > COALESCE(i.issue_date, CURRENT_DATE))
@@ -163,7 +163,7 @@ export async function listSubmissionQueueInvoices(
         AND NOT EXISTS (
           SELECT 1
           FROM factoring.batch b
-          WHERE COALESCE(b.operating_company_id, b.tenant_id) = $1::uuid
+          WHERE b.operating_company_id = $1::uuid
             AND i.id = ANY(b.invoice_ids)
             AND b.status NOT IN ('rejected')
         )
@@ -254,7 +254,7 @@ export async function listWorkqueueInvoices(
                                            AND c.operating_company_id = $1::uuid
       LEFT JOIN factoring.batch b
         ON i.id = ANY(b.invoice_ids)
-        AND b.tenant_id = i.operating_company_id
+        AND b.operating_company_id = i.operating_company_id
       -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): i is scoped by the WHERE below, but fa was not
       -- -- fa.factor_fee_cents is projected directly, and fa.id feeds the chargeback/recourse joins.
       LEFT JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id

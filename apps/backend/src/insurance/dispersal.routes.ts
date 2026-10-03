@@ -288,7 +288,7 @@ export async function registerInsuranceDispersalRoutes(app: FastifyInstance) {
         `
           SELECT ${policySelectColumns()}
           FROM insurance.policy
-          WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND id = $2::uuid
+          WHERE operating_company_id = $1::uuid AND id = $2::uuid
         `,
         [query.data.operating_company_id, params.data.id]
       );
@@ -298,7 +298,7 @@ export async function registerInsuranceDispersalRoutes(app: FastifyInstance) {
         `
           SELECT ${policyUnitSelectColumns()}
           FROM insurance.policy_unit
-          WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND policy_id = $2::uuid
+          WHERE operating_company_id = $1::uuid AND policy_id = $2::uuid
           ORDER BY created_at ASC
         `,
         [query.data.operating_company_id, params.data.id]

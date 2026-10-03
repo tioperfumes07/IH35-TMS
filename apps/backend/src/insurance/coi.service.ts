@@ -37,7 +37,7 @@ type UpdateCoiRequestInput = {
 function selectColumns(prefix = "") {
   return `
     ${prefix}id::text AS id,
-    ${prefix}tenant_id::text AS tenant_id,
+    ${prefix}operating_company_id::text AS tenant_id,
     ${prefix}customer_id::text AS customer_id,
     ${prefix}policy_id::text AS policy_id,
     ${prefix}requested_at::text AS requested_at,
@@ -54,7 +54,7 @@ function selectColumns(prefix = "") {
 
 export async function listCoiRequests(client: Queryable, input: ListCoiRequestsInput) {
   const values: unknown[] = [input.operating_company_id];
-  const clauses = ["COALESCE(r.operating_company_id, r.tenant_id) = $1::uuid"];
+  const clauses = ["r.operating_company_id = $1::uuid"];
   if (input.customer_id) {
     values.push(input.customer_id);
     clauses.push(`r.customer_id = $${values.length}::uuid`);
@@ -76,17 +76,17 @@ export async function listCoiRequests(client: Queryable, input: ListCoiRequestsI
       FROM insurance.coi_request r
       LEFT JOIN org.user_company_access uca
         ON uca.user_id = r.requested_by
-       AND uca.company_id = r.tenant_id
+       AND uca.company_id = r.operating_company_id
        AND uca.deactivated_at IS NULL
       LEFT JOIN identity.users u
         ON u.id = uca.user_id
        AND u.deactivated_at IS NULL
       LEFT JOIN insurance.policy p
         ON p.id = r.policy_id
-       AND p.tenant_id = r.tenant_id
+       AND p.operating_company_id = r.operating_company_id
       LEFT JOIN mdata.customers c
         ON c.id = r.customer_id
-       AND c.operating_company_id = r.tenant_id
+       AND c.operating_company_id = r.operating_company_id
       WHERE ${clauses.join(" AND ")}
       ORDER BY r.requested_at DESC, r.created_at DESC
     `,
@@ -113,7 +113,7 @@ export async function createCoiRequest(client: Queryable, input: CreateCoiReques
       `
         SELECT id::text
         FROM insurance.policy
-        WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid
+        WHERE operating_company_id = $1::uuid
           AND id = $2::uuid
         LIMIT 1
       `,
@@ -161,7 +161,7 @@ export async function updateCoiRequest(client: Queryable, input: UpdateCoiReques
       `
         SELECT id::text
         FROM insurance.policy
-        WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid
+        WHERE operating_company_id = $1::uuid
           AND id = $2::uuid
         LIMIT 1
       `,
@@ -193,7 +193,7 @@ export async function updateCoiRequest(client: Queryable, input: UpdateCoiReques
     `
       UPDATE insurance.coi_request
       SET ${assignments.join(", ")}
-      WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid
+      WHERE operating_company_id = $1::uuid
         AND id = $2::uuid
       RETURNING ${selectColumns()}
     `,

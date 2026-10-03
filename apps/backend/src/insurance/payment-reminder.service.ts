@@ -72,7 +72,7 @@ export async function sendReminders(tenantId: string, today: string) {
       `
         SELECT id::text, due_date::text
         FROM insurance.payment_schedule
-        WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid
+        WHERE operating_company_id = $1::uuid
           AND status = 'scheduled'
           AND due_date <= $2::date
       `,
@@ -91,7 +91,7 @@ export async function sendReminders(tenantId: string, today: string) {
           SET status = 'reminded',
               reminded_at = now()
           WHERE id = $1::uuid
-            AND COALESCE(operating_company_id, tenant_id) = $2::uuid
+            AND operating_company_id = $2::uuid
             AND status = 'scheduled'
           RETURNING id::text
         `,

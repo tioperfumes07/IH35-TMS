@@ -50,6 +50,7 @@ import {
   type CheckPayeeKind,
   type CheckRemitToAddress,
 } from "../../api/checks";
+import { createAccountingRecurringExpenseTemplate } from "../../api/accountingRecurringTemplate";
 
 const EMPTY_ADDRESS: CheckRemitToAddress = {
   address_line1: null,
@@ -307,6 +308,10 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
   const [lastSavedCheckId, setLastSavedCheckId] = useState<string | null>(null);
   const [lastSavedJournalEntryId, setLastSavedJournalEntryId] = useState<string | null>(null);
   const [voidOpen, setVoidOpen] = useState(false);
+  /** BANK-F91055 — ORDERS §B-4 Make recurring → expense template (kind=expense). */
+  const [recurringOpen, setRecurringOpen] = useState(false);
+  const [recurringCadence, setRecurringCadence] = useState<"weekly" | "biweekly" | "monthly" | "quarterly" | "annually">("monthly");
+  const [recurringSaving, setRecurringSaving] = useState(false);
 
   const bankAccountsQuery = useQuery({
     queryKey: ["checks", "bank-accounts", operatingCompanyId],
@@ -872,6 +877,47 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
   // ROUND 326 queue item 15: "Print check" forces print_later (the number is assigned when the check is printed), so it
   // must not wait for a typed check number the way Save does.
   const canPrintCheck = !isBillPayment && checkLinesReady;
+  // BANK-F91055 — Make recurring for direct expense checks (not bill-payment apps). Needs payee + bank + amount.
+  const canMakeRecurring =
+    !isBillPayment &&
+    Boolean(payeeId) &&
+    Boolean(bankAccountId) &&
+    totalCents > 0 &&
+    (payeeKind === "vendor" || (payeeKind === "driver" && Boolean(vendorIdForBills)));
+
+  const handleMakeRecurring = async () => {
+    if (!canMakeRecurring || !payeeId || !bankAccountId) return;
+    const ledgerId = bankAccounts.find((a) => a.id === bankAccountId)?.ledger_account_id ?? null;
+    if (!ledgerId) {
+      pushToast("Bank account has no cash GL mapping — set Cash GL before Make recurring.", "error");
+      return;
+    }
+    const vendorUuid = payeeKind === "vendor" ? payeeId : vendorIdForBills;
+    setRecurringSaving(true);
+    try {
+      const nextRun = new Date();
+      nextRun.setUTCDate(nextRun.getUTCDate() + 1);
+      const created = await createAccountingRecurringExpenseTemplate({
+        operating_company_id: operatingCompanyId,
+        template_name: memo.trim() || `Recurring check ${formatMoneyCents(totalCents)}`,
+        cadence: recurringCadence,
+        next_run_at: nextRun.toISOString(),
+        vendor_uuid: vendorUuid,
+        amount_cents: totalCents,
+        payment_account_uuid: ledgerId,
+        memo: memo.trim() || null,
+        expense_date: checkDate || null,
+      });
+      setRecurringOpen(false);
+      pushToast("Recurring expense template created", "success");
+      navigate(`/accounting/recurring-templates/${created.id}`);
+      onClose();
+    } catch (err) {
+      pushToast(err instanceof Error ? err.message : "Could not create recurring template", "error");
+    } finally {
+      setRecurringSaving(false);
+    }
+  };
 
   function clearPersistedDraft() {
     try {
@@ -1699,9 +1745,15 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
           <Button
             type="button"
             variant="tertiary"
-            disabled
-            title="Make recurring is not wired for checks yet — use Save and new for repeats."
+            disabled={!canMakeRecurring || recurringSaving}
+            title={
+              canMakeRecurring
+                ? "Create a recurring expense template from this check"
+                : "Add a vendor (or driver with vendor), bank account, and amount first"
+            }
             data-b4-make-recurring="1"
+            data-testid="b4-make-recurring"
+            onClick={() => setRecurringOpen(true)}
           >
             Make recurring
           </Button>
@@ -1767,6 +1819,53 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
           onClose();
         }}
       />
+      {/* BANK-F91055 — ORDERS §B-4 Make recurring cadence picker before creating the expense template. */}
+      {recurringOpen ? (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30"
+          role="dialog"
+          aria-modal="true"
+          data-testid="b4-make-recurring-modal"
+          data-b4-make-recurring-modal="1"
+        >
+          <div className="w-full max-w-sm rounded-sm border border-[#E5E7EB] bg-white p-4 shadow-lg">
+            <h2 className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">Make recurring</h2>
+            <p className="mt-1 text-xs text-[#6B7280]">
+              Creates an expense template ({formatMoneyCents(totalCents)}) the recurring worker will mint on cadence.
+            </p>
+            <label className="mt-3 flex flex-col gap-1 text-xs font-semibold text-[#1F2A44]">
+              Cadence
+              <select
+                className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
+                value={recurringCadence}
+                onChange={(e) => setRecurringCadence(e.target.value as typeof recurringCadence)}
+                data-testid="b4-make-recurring-cadence"
+              >
+                <option value="weekly">Weekly</option>
+                <option value="biweekly">Every two weeks</option>
+                <option value="monthly">Monthly</option>
+                <option value="quarterly">Quarterly</option>
+                <option value="annually">Annually</option>
+              </select>
+            </label>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button type="button" variant="tertiary" size="sm" onClick={() => setRecurringOpen(false)} disabled={recurringSaving}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={() => void handleMakeRecurring()}
+                disabled={recurringSaving}
+                data-testid="b4-make-recurring-confirm"
+              >
+                {recurringSaving ? "Saving…" : "Create template"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </Modal>
   );
 }
