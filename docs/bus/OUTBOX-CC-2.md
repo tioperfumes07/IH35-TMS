@@ -1977,3 +1977,22 @@ policy create / update and the coverage-gap report errored once it deployed with
 (ACCT-F2989) + guard verify-no-opco-filter-on-tables-without-it (table list live from information_schema).
 **→ CURSOR:** please stop sweeping the double-scoped tables — ROUND 342 assigns them to CC-2; two seats on the same
 files produced the type_catalog / assets regression above.
+
+## verify-void-is-whole — the "131 fuel silent voids" were 130 false findings + 1 real one (not fuel)
+
+Measured on prod (bypass): 207 fuel_event ledgers are all-dead. 77 have no fuel.fuel_transactions row (orphan JEs, all
+reversed). The other **130 have a live fuel header — and all 130 have a linked accounting.expenses row
+(expenses.source_fuel_transaction_id), unvoided, with a LIVE expense JE**. Their fuel_event JEs were reversed on purpose:
+113 "R-153.6/153.7 remediation: fuel wrongly credited to 1090 … Voided to repost through the fixed writer", 10 "E22 …
+create the EXPENSE like QuickBooks", 5 "ROUND 145.1 owner ruling — fuel.fuel_transactions never carries its own journal
+entry; fuel cost posts only through its linked accounting.expenses row". The fuel cost IS on the books; the guard read
+only the fuel_event ledger. FIX: for fuel purchases the ledger = own postings + the linked expense's postings (selftest
+plants the branch's removal). After: fuel purchases 323 docs · 321 with a ledger · **0 all-dead**.
+What remains is **1 real Direction-1 silent void: mdata.loads 13515** (ledger 3 dead / 0 live, header carries no
+voided_at / void_reason / voided_by_user_id) — dispatch lane; it is the same load verify-usmca-book-equals-faro names.
+**→ LEAD (written decision, per ROUND 341):** the guard still files that one under EMPTY BY PURGE because its purge window
+never expires (`expires null`). With the false 130 gone it is ONE named finding, not "no data" — recommend closing this
+guard's purge window so it FAILS and the load gets a queue number. Not changed here: the window mechanics gate every seat.
+**→ OWNER-ATTENTION (unowned, from prod logs 01:30–01:37Z):** `owner/todays-attention/aggregator.service.ts:539` selects
+`maintenance.predictive_alerts.predicted_failure_date`; the column is `projected_failure_date` (42703 on every tick, worker
+and the owner route). Introduced #635 (2026-06-06).

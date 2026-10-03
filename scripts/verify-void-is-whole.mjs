@@ -62,6 +62,20 @@ export const FAMILIES = [
 const LIVE = `je.status = 'posted' AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL
               AND je.reverses_je_id IS NULL AND p.reversed_by_line_id IS NULL`;
 
+// ROUND 145.1 / E22 (owner rulings): fuel.fuel_transactions never carries its own journal entry — fuel cost posts
+// through its linked accounting.expenses row (expenses.source_fuel_transaction_id). The pre-fix fuel_event JEs were
+// reversed on purpose (R-153.6/153.7: "voided to repost through the fixed writer"). Reading only the fuel_event ledger
+// called 130 of 130 such purchases "silent voids" on 2026-10-03 although every one has a live expense JE — a false
+// finding the purge window then filed as EMPTY BY PURGE. The purchase's ledger is its own postings PLUS its expense's.
+const FUEL_VIA_EXPENSE = `
+      UNION
+      SELECT e.source_fuel_transaction_id::text AS doc_id, je.id AS je_id, (${LIVE}) AS live
+        FROM accounting.expenses e
+        JOIN accounting.journal_entry_postings p ON p.source_transaction_type = 'expense' AND p.source_transaction_id = e.id::text
+        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+       WHERE e.source_fuel_transaction_id IS NOT NULL AND e.operating_company_id = '${USMCA}'
+         AND je.operating_company_id = '${USMCA}' AND je.is_sample_data = false`;
+
 function perDocSql(linkType) {
   return `
     WITH raw AS (
@@ -76,7 +90,7 @@ function perDocSql(linkType) {
       SELECT p.source_transaction_id AS doc_id, je.id AS je_id, (${LIVE}) AS live
         FROM accounting.journal_entry_postings p
         JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
-       WHERE je.operating_company_id = '${USMCA}' AND p.source_transaction_type = '${linkType}' AND je.is_sample_data = false
+       WHERE je.operating_company_id = '${USMCA}' AND p.source_transaction_type = '${linkType}' AND je.is_sample_data = false${linkType === "fuel_event" ? FUEL_VIA_EXPENSE : ""}
     ),
     je_state AS (
       SELECT doc_id, je_id, bool_or(live) AS live FROM raw GROUP BY 1, 2
@@ -189,7 +203,15 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`${LABEL} --selftest PASS — 12 families, no banking.*, five-column liveness intact, stable violation keys`);
+  // ROUND 145.1: a fuel purchase's ledger must include its linked expense's postings (else every reposted fuel purchase
+  // reads as a silent void). Plant: the branch removed must be noticed.
+  if (!/linkType === "fuel_event" \? FUEL_VIA_EXPENSE/.test(fs.readFileSync(fileURLToPath(import.meta.url), "utf8"))
+      || !/source_fuel_transaction_id/.test(FUEL_VIA_EXPENSE) || !perDocSql("fuel_event").includes("source_fuel_transaction_id")
+      || perDocSql("expense").includes("source_fuel_transaction_id")) {
+    console.error(`${LABEL} --selftest FAIL: fuel purchases must read their linked expense's postings (ROUND 145.1), and only fuel`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} --selftest PASS — 12 families, no banking.*, five-column liveness intact, stable violation keys, fuel reads its linked expense`);
   process.exit(0);
 }
 
