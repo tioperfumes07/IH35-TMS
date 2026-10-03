@@ -22,6 +22,8 @@ function assertContract(source) {
     'queryKey: ["safety", "active-driver-set", companyId, activeDriverWindow]',
     "getActiveDriverSet(companyId, activeDriverWindow)",
   ]) if (!source.includes(token)) throw new Error(`missing Safety Home activity-window contract: ${token}`);
+  if (source.includes("text-[11px]")) throw new Error("leftover text-[11px]");
+  if (source.includes("#8A92AB") || source.includes("#334155")) throw new Error("leftover off-scale muted");
 }
 
 if (process.argv.includes("--selftest")) {
@@ -32,6 +34,13 @@ if (process.argv.includes("--selftest")) {
     encoding: "utf8",
   });
   if (child.status === 0) throw new Error("selftest failed: planted constant activity window stayed green");
+  const leftoverPlanted = `${diskSource}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  const leftoverChild = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
+    cwd: ROOT,
+    env: { ...process.env, SAFETY_F6490_PLANTED_SOURCE: leftoverPlanted },
+    encoding: "utf8",
+  });
+  if (leftoverChild.status === 0) throw new Error("selftest failed: leftover plant escaped");
   console.log("verify-safety-home-active-driver-window-combobox --selftest PASS");
   process.exit(0);
 }
