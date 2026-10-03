@@ -2686,3 +2686,9 @@ live 113 FKs / 37 tables PASS. **D3 (row audit on 28 dispatch tables + RLS FORCE
    pgbouncer** — pooled `neondb_owner` connections arrive as current_user ih35_app. Any guard or script reading through the
    pooled DATABASE_URL without pinning its role can undercount (load_charge_lines: pooled 0 rows, direct 284). Migrations
    are unaffected (constraint VALIDATE / SET NOT NULL check every row).
+
+2026-10-03 · CC-3 · Lead restart brief items 1-3
+- D3 · MERGED #24579 (15fb7d8e7e). NOT LIVE: backend srv-d7rpem… last live deploy dep-db0go28u01pc73aa3ht0 (cd0ab0d3, 14:07Z) predates the merge; prod ledger has no 202615330929; 28 dispatch tables still unaudited. Waiting on the next backend deploy, which applies it.
+- POOLED-ROLE · MERGED #24584 (cb5698f1cf). The harness hands every guard the DIRECT endpoint (scripts/lib/guard-db-url.mjs at money-pr-local-gate, run-required-guards, require-live-db); require-live-db refuses an ih35_app connection; guard verify-guards-do-not-run-as-ih35_app in the gate + LAW.json. Proof: pooled 10/10 connections read ih35_app; handed URL 5/5 neondb_owner. App pool SET ROLE untouched (CC-1 + Lead).
+  Re-measure, dispatch.*, pooled -> direct: load_charge_lines 0/0 -> 284/136 CHANGED · load_id_reservations 0 -> 4057 CHANGED · other 28 tables identical.
+- ROUND 361 · MEASURE POSTED: docs/bus/10-03-2026-CC-3-ROUND-361-LOAD-LINEAGE-MEASURE.md. 2,074 reversal lines orphaned from their load (document purged); 1,960 provable from audited DELETE before-images, 114 not (18 expense + 96 fuel) → stay NULL, reported. USMCA documents: 22 paid driver bills NULL load, provable by number+driver 22/22; invoice 010, 3 bills, 1 expense, 3 settlement lines unprovable → reported. NEXT: needs Lead LANE_CROSS for journal_entry_postings.load_id (CC-1 GL), or CC-1 takes that step.
