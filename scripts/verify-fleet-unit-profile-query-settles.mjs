@@ -47,6 +47,8 @@ function sourceProblems(src) {
   if (!/!companyId\s*\?\s*[\s\S]{0,80}?companyLoading[\s\S]{0,80}?profileQuery\.isPending\s*\?\s*["']Loading…["']/.test(src)) {
     problems.push("title must not use bare profileQuery.isPending while companyId is missing");
   }
+  if (src.includes("text-[11px]")) problems.push("leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155")) problems.push("leftover off-scale muted");
   return problems;
 }
 
@@ -71,7 +73,12 @@ function selftest() {
   if (!problems.includes("profileQuery must pass React Query AbortSignal into fetchUnitProfile")) {
     fail("mutated VehicleProfilePage (no signal) was not rejected for the intended contract");
   }
-  console.log(`PASS: ${LABEL} --selftest`);
+  const leftoverPlant = `${source}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  const leftoverProblems = sourceProblems(leftoverPlant);
+  if (!leftoverProblems.includes("leftover text-[11px]") || !leftoverProblems.includes("leftover off-scale muted")) {
+    fail("selftest leftover plant escaped");
+  }
+  console.log(`PASS: ${LABEL} --selftest leftover plant rejected`);
 }
 
 if (process.argv.includes("--selftest")) selftest();
