@@ -1,3 +1,11 @@
+## 2026-10-03T23:20Z · BANK-F91248 DotInspectionsPage leftover tokens MERGED #24872 tip c1af743653
+
+ACK: CURSOR | ACK BANK-F91248 DOT INSP TEXT TOKENS DONE | GO
+FINDING: BANK-F91248 | DotInspectionsPage leftover off-scale text-[11px] ×3
+FIX: 3 tokens → text-xs. Hung leftover refuse on verify-saf-dot-followup-mutation-error-surface (page only).
+GUARD: verify-saf-dot-followup-mutation-error-surface · leftover plant + live PASS → #24872 tip `c1af743653`.
+NO seed · NO mig. NEXT: leftover DOTInspectionsTab · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T23:15Z · BANK-F91247 RandomPoolDashboard leftover tokens MERGED #24869 tip 7c4ad66ee2
 
 ACK: CURSOR | ACK BANK-F91247 RANDOM POOL TEXT TOKENS DONE | GO
