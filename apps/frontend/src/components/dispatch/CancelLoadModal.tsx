@@ -458,7 +458,7 @@ export function CancelLoadModal({
           return (
             <>
               {!selectedReason || notes.trim().length < 20 || (billable && !charge.trim()) || cascadeBlocking ? (
-                <p className="text-[11px] text-gray-500">
+                <p className="text-xs text-gray-500">
                   {!selectedReason
                     ? "Select a cancellation reason to continue."
                     : notes.trim().length < 20

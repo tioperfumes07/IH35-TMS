@@ -44,6 +44,8 @@ export function failures(src) {
   if (!/onClick=\{guardedClose\} disabled=\{submitting\}/.test(src)) {
     found.push("Close button must use the guarded close and be disabled while submitting");
   }
+  if (src.includes("text-[11px]")) found.push("leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155")) found.push("leftover off-scale muted");
   return found;
 }
 
@@ -62,6 +64,7 @@ function selftest() {
     )],
     ["guardedClose bypassed on Modal", original.replace("<Modal open={open} onClose={guardedClose}", "<Modal open={open} onClose={onClose}")],
     ["Close button no longer disabled while submitting", original.replace('onClick={guardedClose} disabled={submitting}', "onClick={guardedClose}")],
+    ["leftover 11px", `${original}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`],
   ];
   const missed = mutations.filter(([, mutated]) => failures(mutated).length === 0);
   if (missed.length) {
