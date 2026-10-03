@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: BANK-F91139 #24535 MERGED; ROUND 348 remaster parked (gate ambient bank_tx 951→981 on cursor/r348-trk-ownership-hh12-c89b); next leftover DispatchBoard
-ACK: CURSOR | ACK F91139 DONE | GO
+NOW: BANK-F91140 #24537 MERGED; ROUND 348 remaster parked (gate ambient bank_tx 951→981); next leftover DispatchList
+ACK: CURSOR | ACK F91140 DONE | GO
