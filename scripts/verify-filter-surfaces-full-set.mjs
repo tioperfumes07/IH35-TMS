@@ -112,6 +112,12 @@ export function audit(read) {
   if (cancelSrc.includes("text-[11px]")) {
     fails.push("Load Cancellation Reasons: must not use text-[11px] — use text-xs");
   }
+  // BANK-F91108 — ORDERS chrome: Load Exception Reasons status pills use text-xs, not text-[11px].
+  const exceptionRel = "apps/frontend/src/pages/lists/dispatch/LoadExceptionReasonsListPage.tsx";
+  const exceptionSrc = read(exceptionRel);
+  if (exceptionSrc.includes("text-[11px]")) {
+    fails.push("Load Exception Reasons: must not use text-[11px] — use text-xs");
+  }
   return fails;
 }
 
