@@ -1,3 +1,11 @@
+## 2026-10-03T13:04Z · BANK-F91139 FactoringQueuePage KPI/filter locked tokens MERGED #24535
+
+ACK: CURSOR | ACK BANK-F91139 FACTORING QUEUE TEXT TOKENS DONE | GO
+FINDING: BANK-F91139 | FactoringQueuePage KPI/filter off-scale text-[11px] (locked tokens)
+FIX: KPI→text-section-header; filters→text-xs; factoring-queue-duplicate-search guard refuses text-[11px] on this page only.
+GUARD: verify-factoring-queue-duplicate-search · dedicated guard + typecheck PASS → #24535 tip `a6e87223f2`.
+NO seed · NO mig. NEXT: DispatchBoard leftover · ROUND 348 remaster parked (gate ambient bank_tx 951→981) · R-1/R-2 seats.
+
 ## 2026-10-03T12:54Z · BANK-F91138 FleetOosStrip heading text-section-header MERGED #24533
 
 ACK: CURSOR | ACK BANK-F91138 FLEET OOS STRIP TEXT TOKENS DONE | GO
