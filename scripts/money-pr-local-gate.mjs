@@ -769,6 +769,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-factoring-writers-write-the-spine",
     ["apps/backend/src/factoring/", "scripts/verify-factoring-writers-write-the-spine.mjs"],
   ],
+  // ROUND 335 item 2 — Banking home against the approved preview (engine-fed factoring + escrow cards, no dead links).
+  [
+    "verify-banking-home-preview-parity",
+    ["apps/frontend/src/pages/banking/", "apps/frontend/src/pages/factoring/", "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx", "scripts/verify-banking-home-preview-parity.mjs"],
+  ],
   // ROUND 342 hotfix — no read filters a table on operating_company_id when that table has no such column.
   [
     "verify-no-opco-filter-on-tables-without-it",

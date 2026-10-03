@@ -37,8 +37,10 @@ export function run(root = process.cwd()) {
   if (!detail.includes('data-testid="factoring-advance-banking-reverse-link"')) {
     failures.push("FactoringDetailPage must link back to Banking Factoring entry");
   }
-  if (!detail.includes("/banking/factoring")) {
-    failures.push("FactoringDetailPage reverse must target /banking/factoring");
+  // ROUND-20.8 B3 (#21962): /banking/factoring is only a redirect to /banking now — the reverse link targets Banking home
+  // (the factoring virtual bank) directly, never the retired URL.
+  if (!/to="\/banking"\s+className=[^>]*data-testid="factoring-advance-banking-reverse-link"/.test(detail)) {
+    failures.push("FactoringDetailPage reverse must target /banking (the factoring virtual bank), not the retired /banking/factoring");
   }
   // B3 — the reverse link's target must still resolve to something real (a redirect), never a 404.
   if (!manifest.includes('path="/banking/factoring"')) {
@@ -64,13 +66,23 @@ if (process.argv.includes("--selftest")) {
   mk("apps/frontend/src/routes/manifest.tsx", `path="/banking/factoring"\n`);
   mk(
     "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx",
-    `data-testid="factoring-advance-banking-reverse-link"\n/banking/factoring\n`
+    `<Link\n  to="/banking"\n  className="x"\n  data-testid="factoring-advance-banking-reverse-link"\n>`
   );
   mk(
     "apps/frontend/src/components/shared/EntityLink.tsx",
     `case "factoring_advance":\n      return \`/accounting/factoring/\${id}\`;\n`
   );
   if (run(tmp).length) throw new Error("PASS fail: " + run(tmp).join("; "));
+  // ROUND-20.8 B3: a reverse link pointing back at the retired /banking/factoring redirect must fail.
+  mk(
+    "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx",
+    `<Link\n  to="/banking/factoring"\n  className="x"\n  data-testid="factoring-advance-banking-reverse-link"\n>`
+  );
+  if (!run(tmp).length) throw new Error("FAIL fail (reverse link on the retired /banking/factoring not caught)");
+  mk(
+    "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx",
+    `<Link\n  to="/banking"\n  className="x"\n  data-testid="factoring-advance-banking-reverse-link"\n>`
+  );
   mk("apps/frontend/src/routes/manifest.tsx", "x\n");
   if (!run(tmp).length) throw new Error("FAIL fail (missing redirect route not caught)");
   fs.rmSync(tmp, { recursive: true, force: true });

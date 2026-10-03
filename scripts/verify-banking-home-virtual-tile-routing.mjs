@@ -18,8 +18,10 @@ function problemsForSource(src) {
   if (!/function virtualTileRoute/.test(src)) {
     problems.push("virtualTileRoute helper must exist — routes virtual tiles to their real ledger page");
   }
-  if (!/tile\.account_type === "virtual_factoring"\)\s*return "\/banking\/factoring"/.test(src)) {
-    problems.push("virtual_factoring tiles must route to /banking/factoring");
+  // ROUND-20.8 B3 (#21962) retired /banking/factoring (it redirects to /banking, so the tile landed back on Banking home).
+  // The factoring virtual bank opens the Factoring Reserve view it summarises (approved preview, Banking Feature 1).
+  if (!/tile\.account_type === "virtual_factoring"\)\s*return "\/factoring\/reserve"/.test(src)) {
+    problems.push("virtual_factoring tiles must route to /factoring/reserve (not the retired /banking/factoring redirect)");
   }
   if (!/tile\.account_type === "virtual_escrow"\)\s*return "\/banking\/driver-escrow"/.test(src)) {
     problems.push("virtual_escrow tiles must route to /banking/driver-escrow");
@@ -47,6 +49,7 @@ function main() {
       { name: "drops onView gate", src: clean.replace(/onView=\{\(id\) => \{\s*const virtualPath = virtualTileRoute\(sortedBankTiles\.find\(\(t\) => t\.id === id\)\);\s*if \(virtualPath\) \{\s*navigate\(virtualPath\);\s*return;\s*\}\s*/, "onView={(id) => {\n              ") },
       { name: "drops inspect-panel gate", src: clean.replace(/const virtualPath = virtualTileRoute\(tile\);/g, "const virtualPath = null;") },
       { name: "breaks the escrow route string", src: clean.replace('"/banking/driver-escrow"', '"/banking/escrow-typo"') },
+      { name: "factoring tile back on the retired redirect", src: clean.replace('return "/factoring/reserve";', 'return "/banking/factoring";') },
     ];
     let failures = 0;
     for (const m of mutants) {

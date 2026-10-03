@@ -993,9 +993,10 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   Accounting advances
                 </Link>
                 <Link
-                  to="/banking/factoring"
+                  to="/banking"
                   className="block rounded-sm px-2 py-1.5 text-slate-800 hover:bg-slate-50"
                   data-testid="factoring-hub-banking-entry-reverse-link"
+                  title="Banking home — the factoring virtual bank (ROUND-20.8 B3 retired /banking/factoring)"
                 >
                   Banking entry
                 </Link>

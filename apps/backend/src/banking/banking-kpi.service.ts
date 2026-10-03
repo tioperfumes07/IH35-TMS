@@ -25,6 +25,9 @@ export const BANKING_KPI_KEYS = [
   "factoring_wires_vs_expected",
   "fuel_drafts",
   "settlement_drafts",
+  "escrow_held",
+  "escrow_contributions",
+  "escrow_deductions",
 ] as const;
 export type BankingKpiKey = (typeof BANKING_KPI_KEYS)[number];
 
@@ -100,6 +103,26 @@ const WIRES = `
                           AND b.voided_at IS NULL AND b.merged_into_bank_transaction_id IS NULL) w ON true
    WHERE p.operating_company_id = $1::uuid AND p.status = 'posted' AND p.purchase_date BETWEEN $2::date AND $3::date`;
 
+/**
+ * ROUND 335 item 2 (approved preview, Banking Feature 2 — Driver Escrow visualizer): driver escrow is the GL liability bound
+ * to role escrow_liability_default (2100 Driver Escrow - Held in Trust) and every account under it (2100-00, the per-driver
+ * 2100-00-0xx sub-accounts), walked by parent_account_id. Held = credit - debit as of range end (a liability reads
+ * positive); contributions = credits in range; deductions / releases = debits in range. Value and drill share this SQL.
+ */
+const ESCROW_TREE = `
+  WITH RECURSIVE root AS (
+    SELECT r.account_id AS id FROM accounting.chart_of_accounts_roles r
+     WHERE r.operating_company_id = $1::uuid AND r.role = 'escrow_liability_default' AND r.is_active),
+  tree AS (SELECT id FROM root UNION SELECT a.id FROM catalogs.accounts a JOIN tree t ON a.parent_account_id = t.id)`;
+const escrowPostings = (when: "balance" | "activity", side: "credit" | "debit" | null) => `${ESCROW_TREE}
+  SELECT je.id AS journal_entry_id, je.entry_date, ca.account_number, ca.account_name, p.debit_or_credit, p.amount_cents,
+         p.source_transaction_type, p.source_transaction_id, left(je.memo, 120) AS memo
+    FROM tree JOIN accounting.journal_entry_postings p ON p.account_id = tree.id
+    JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.status = 'posted' AND je.operating_company_id = $1::uuid
+    JOIN catalogs.accounts ca ON ca.id = p.account_id
+   WHERE ${when === "balance" ? "$2::date IS NOT NULL AND je.entry_date <= $3::date" : "je.entry_date BETWEEN $2::date AND $3::date"}
+     ${side ? `AND p.debit_or_credit = '${side}'` : ""}`;
+
 export async function computeBankingKpis(client: DbClient, oci: string, range: BankingKpiRange): Promise<BankingKpi[]> {
   const base = [oci, range.from, range.to];
   const out: BankingKpi[] = [];
@@ -158,6 +181,34 @@ export async function computeBankingKpis(client: DbClient, oci: string, range: B
     out.push({ key, label, unit: "cents", value: num(r.v), source: `bank payments with ${pred.replace(/b\./g, "")}`, gl_account: null, row_count: r.n,
       empty_reason: r.n === 0 ? why : null });
   }
+
+  const root = (await client.query<{ n: number; label: string | null }>(
+    `${ESCROW_TREE} SELECT (SELECT count(*)::int FROM root) AS n,
+       (SELECT ca.account_number || ' ' || ca.account_name FROM root JOIN catalogs.accounts ca ON ca.id = root.id LIMIT 1) AS label`, [oci])).rows[0]!;
+  const unbound = root.n === 0 ? "Driver Escrow is not bound to a GL account — bind it on Cash / GL setup." : null;
+  const glLabel = root.label ? `${root.label} (+ sub-accounts)` : null;
+  const held = (await client.query<{ n: number; v: string }>(
+    `SELECT count(*)::int n, COALESCE(sum(CASE WHEN e.debit_or_credit = 'credit' THEN e.amount_cents ELSE -e.amount_cents END), 0)::bigint v
+       FROM (${escrowPostings("balance", null)}) e`, base)).rows[0]!;
+  const perAcct = (await client.query<{ label: string; v: string }>(
+    `SELECT e.account_number || ' ' || e.account_name AS label,
+            sum(CASE WHEN e.debit_or_credit = 'credit' THEN e.amount_cents ELSE -e.amount_cents END)::bigint v
+       FROM (${escrowPostings("balance", null)}) e GROUP BY 1 HAVING sum(CASE WHEN e.debit_or_credit = 'credit' THEN e.amount_cents ELSE -e.amount_cents END) <> 0
+      ORDER BY 1`, base)).rows;
+  out.push({ key: "escrow_held", label: "Driver escrow held", unit: "cents", value: num(held.v),
+    compare_value: perAcct.length, compare_label: "Accounts holding escrow",
+    source: "posted journal_entry_postings on the escrow_liability_default account and its sub-accounts, credit - debit, as of range end",
+    gl_account: glLabel, row_count: held.n, buckets: perAcct.map((r) => ({ label: r.label, count: 1, cents: num(r.v) })),
+    empty_reason: unbound ?? (held.n === 0 ? "No escrow posting on or before this date." : null) });
+  for (const [key, label, side, why] of [
+    ["escrow_contributions", "Escrow contributions", "credit", "No escrow contribution in this range."],
+    ["escrow_deductions", "Escrow deductions / releases", "debit", "No escrow deduction or release in this range."],
+  ] as const) {
+    const r = (await client.query<{ n: number; v: string }>(
+      `SELECT count(*)::int n, COALESCE(sum(e.amount_cents), 0)::bigint v FROM (${escrowPostings("activity", side)}) e`, base)).rows[0]!;
+    out.push({ key, label, unit: "cents", value: num(r.v), source: `${side}s to the escrow liability and its sub-accounts in range`,
+      gl_account: glLabel, row_count: r.n, empty_reason: unbound ?? (r.n === 0 ? why : null) });
+  }
   return out;
 }
 
@@ -186,5 +237,11 @@ export async function getBankingKpiDrill(client: DbClient, oci: string, key: Ban
            ${LINES_FROM} WHERE ${IN_SCOPE} AND b.is_credit = false AND ${FUEL} ORDER BY b.transaction_date, b.id`, base)).rows;
     case "settlement_drafts":
       return lines(`AND b.is_credit = false AND b.matched_settlement_id IS NOT NULL`);
+    case "escrow_held":
+      return (await client.query(`${escrowPostings("balance", null)} ORDER BY je.entry_date, ca.account_number, je.id`, base)).rows;
+    case "escrow_contributions":
+      return (await client.query(`${escrowPostings("activity", "credit")} ORDER BY je.entry_date, ca.account_number, je.id`, base)).rows;
+    case "escrow_deductions":
+      return (await client.query(`${escrowPostings("activity", "debit")} ORDER BY je.entry_date, ca.account_number, je.id`, base)).rows;
   }
 }
