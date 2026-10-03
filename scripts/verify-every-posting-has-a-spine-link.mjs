@@ -106,29 +106,39 @@ const codeFails = check(read());
 if (codeFails.length) { console.error(`${LABEL}: FAIL\n  ${codeFails.join("\n  ")}`); process.exit(1); }
 if (!process.env.DATABASE_URL) { console.error(`${LABEL}: FAIL — code arm passed; the live arm needs DATABASE_URL`); process.exit(1); }
 const { default: pg } = await import("pg");
-const c = new pg.Client({ connectionString: process.env.DATABASE_URL, connectionTimeoutMillis: 15000, statement_timeout: 120000 });
+const c = new pg.Client({ connectionString: process.env.DATABASE_URL, connectionTimeoutMillis: 15000, statement_timeout: 30000 });
 try {
   await c.connect();
   await c.query("BEGIN READ ONLY");
   await c.query("SET LOCAL app.bypass_rls = 'lucia'");
+  // Index-friendly: source_transaction_id is TEXT and the document ids are UUID. Casting both sides to text (the first
+  // version) defeated every primary-key index — 251 s for 7,909 postings, long enough to hold a snapshot that stalled
+  // another seat's CREATE INDEX CONCURRENTLY in Render pre-deploy (2026-10-03). Convert once (uuid-shaped only, so a
+  // non-uuid value can never throw) and LEFT JOIN on the primary keys: 0.27 s, identical counts.
   const rows = (await c.query(`
     WITH u AS (
       SELECT p.source_transaction_type AS source_type, p.amount_cents, p.debit_or_credit,
-             CASE p.source_transaction_type
-               WHEN 'expense' THEN EXISTS (SELECT 1 FROM accounting.expenses x WHERE x.id::text = p.source_transaction_id::text)
-               WHEN 'invoice' THEN EXISTS (SELECT 1 FROM accounting.invoices x WHERE x.id::text = p.source_transaction_id::text)
-               WHEN 'bill'    THEN EXISTS (SELECT 1 FROM accounting.bills x    WHERE x.id::text = p.source_transaction_id::text)
-               ELSE true
-             END AS doc_exists
+             CASE WHEN p.source_transaction_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+                  THEN p.source_transaction_id::uuid END AS sid
         FROM accounting.journal_entry_postings p
         JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.status = 'posted'
        WHERE p.operating_company_id = $1::uuid
-         AND NOT EXISTS (SELECT 1 FROM accounting.transaction_source_links l WHERE l.journal_entry_posting_id = p.id))
+         AND NOT EXISTS (SELECT 1 FROM accounting.transaction_source_links l WHERE l.journal_entry_posting_id = p.id)),
+    d AS (
+      SELECT u.*, CASE u.source_type
+                    WHEN 'expense' THEN e.id IS NOT NULL
+                    WHEN 'invoice' THEN i.id IS NOT NULL
+                    WHEN 'bill'    THEN b.id IS NOT NULL
+                    ELSE true END AS doc_exists
+        FROM u
+        LEFT JOIN accounting.expenses e ON u.source_type = 'expense' AND e.id = u.sid
+        LEFT JOIN accounting.invoices i ON u.source_type = 'invoice' AND i.id = u.sid
+        LEFT JOIN accounting.bills    b ON u.source_type = 'bill'    AND b.id = u.sid)
     SELECT source_type,
            count(*) FILTER (WHERE doc_exists)     AS unlinked_doc_exists,
            count(*) FILTER (WHERE NOT doc_exists) AS unlinked_doc_gone,
            COALESCE(sum(CASE WHEN debit_or_credit = 'debit' THEN amount_cents ELSE -amount_cents END) FILTER (WHERE NOT doc_exists), 0)::bigint AS stranded_net_cents
-      FROM u GROUP BY source_type`, [USMCA])).rows;
+      FROM d GROUP BY source_type`, [USMCA])).rows;
   const total = Number((await c.query(
     `SELECT count(*)::int AS n FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.status = 'posted' WHERE p.operating_company_id = $1::uuid`,
     [USMCA]
