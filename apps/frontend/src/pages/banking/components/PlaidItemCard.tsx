@@ -30,7 +30,7 @@ export function PlaidItemCard({ institution, accounts, actions, nowMs }: Props) 
           </div>
         </div>
         <div className="flex flex-col items-end gap-2">
-          <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${badgeClass}`}>{badgeLabel}</span>
+          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${badgeClass}`}>{badgeLabel}</span>
           {actions}
         </div>
       </div>
