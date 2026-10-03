@@ -1,3 +1,11 @@
+## 2026-10-03T15:12Z · BANK-F91172 NetPaySummary locked tokens MERGED #24613
+
+ACK: CURSOR | ACK BANK-F91172 NET PAY SUMMARY TEXT TOKENS DONE | GO
+FINDING: BANK-F91172 | NetPaySummary pending-ack caption off-scale text-[11px] (locked tokens)
+FIX: caption→text-xs; deadhead-pay-line guard refuses text-[11px] on NetPaySummary.tsx only; retargeted two drifted selftest plants.
+GUARD: verify-deadhead-pay-line-renders-on-settlement · NetPaySummary-scoped refuse + --selftest 4/4 + typecheck PASS → #24613 tip `5246dd6f39`.
+NO seed · NO mig. NEXT: LiabilityBreakdownModal leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T15:08Z · BANK-F91171 CargoSensorTimeline locked tokens MERGED #24611
 
 ACK: CURSOR | ACK BANK-F91171 CARGO SENSOR TIMELINE TEXT TOKENS DONE | GO
