@@ -85,7 +85,15 @@ try {
   const sd = (await c.query(`SELECT count(*)::int n FROM driver_finance.driver_settlements s JOIN mdata.drivers d ON d.id = s.driver_id AND d.merged_into_driver_id IS NULL
      WHERE s.operating_company_id = $1 AND s.voided_at IS NULL AND s.reversed_at IS NULL AND coalesce(s.is_presettlement, false) = false
        AND s.payment_state = 'unpaid' AND s.paid_at IS NULL AND coalesce(s.is_sample_data, false) = false`, [USMCA])).rows[0];
-  const eh = (await c.query(`SELECT coalesce(sum(balance_cents),0)::bigint s FROM accounting.escrow_accounts WHERE operating_company_id = $1 AND holder_type = 'driver'`, [USMCA])).rows[0];
+  // ACCT-F9854 (kill the second system): escrow held is the GL — each driver's 2100-00-nnn sub-account, credit minus
+  // debit of its posted lines, each account once (merged duplicate drivers share one) — recomputed here straight from the
+  // postings, independent of the engine's view; never the stored escrow_accounts.balance_cents.
+  const eh = (await c.query(`SELECT coalesce(sum(CASE WHEN p.debit_or_credit = 'credit' THEN p.amount_cents ELSE -p.amount_cents END),0)::bigint s
+       FROM accounting.journal_entry_postings p
+       JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.status = 'posted' AND je.voided_at IS NULL
+      WHERE p.operating_company_id = $1
+        AND p.account_id IN (SELECT DISTINCT ea.coa_account_id FROM accounting.escrow_accounts ea JOIN catalogs.accounts a ON a.id = ea.coa_account_id
+                              WHERE ea.operating_company_id = $1 AND ea.holder_type = 'driver' AND a.account_number LIKE '2100-00-%')`, [USMCA])).rows[0];
   const dk = engine.drivers.kpis;
   eq("drivers active", dk.active, dh.a);
   eq("drivers total", dk.total, dh.t);

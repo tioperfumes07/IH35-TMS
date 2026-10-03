@@ -48,7 +48,10 @@ describe("countDriverEscrowKpis", () => {
     // The real scoping mechanism stays: only a driver with an actual escrow account row and a
     // real nonzero balance is counted — dropping the deactivated filter must not turn this into
     // an unscoped count of every driver.
-    expect(withBalanceSql).toMatch(/COALESCE\(ea\.balance_cents,\s*0\)\s*<>\s*0/i);
+    // Kill-the-second-system: the balance is the driver's derived 2100-00-<nnn> GL balance, never ea.balance_cents.
+    expect(withBalanceSql).toMatch(/driver_finance\.v_driver_escrow_balance/i);
+    expect(withBalanceSql).toMatch(/vb\.balance_cents\s*<>\s*0/i);
+    expect(withBalanceSql).not.toMatch(/ea\.balance_cents/i);
     expect(withBalanceSql).toMatch(/JOIN accounting\.escrow_accounts/i);
   });
 

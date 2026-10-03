@@ -20,6 +20,8 @@ vi.mock("../../accounting/posting-engine.service.js", () => ({
 let currentClient: { query: (sql: string, values?: unknown[]) => Promise<{ rows: unknown[]; rowCount: number }> };
 vi.mock("../../auth/db.js", () => ({
   withCurrentUser: async (_uuid: string, cb: (c: unknown) => unknown) => cb(currentClient),
+  // A transitively imported module reads luciaPool at load time; the mock must export it or the file cannot load.
+  luciaPool: { connect: async () => currentClient, query: async () => ({ rows: [] }) },
 }));
 
 import { payDriverReimbursementImmediately, REIMBURSEMENT_GL_POSTING_FLAG } from "../driver-reimbursement.service.js";

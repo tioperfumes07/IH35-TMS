@@ -51,7 +51,8 @@ function mockQueryImplementation(opts: {
       const row = opts.separation === undefined ? SEPARATION_ROW : opts.separation;
       return { rows: row ? [row] : [] };
     }
-    if (sql.includes("FROM accounting.escrow_accounts")) {
+    // Kill-the-second-system: the release amount is the derived 2100-00-<nnn> GL balance.
+    if (sql.includes("FROM driver_finance.v_driver_escrow_balance") || sql.includes("FROM accounting.escrow_accounts")) {
       return { rows: [{ balance_cents: opts.balanceCents ?? 50000 }] };
     }
     if (sql.includes("FROM driver_finance.driver_settlement_deductions")) {

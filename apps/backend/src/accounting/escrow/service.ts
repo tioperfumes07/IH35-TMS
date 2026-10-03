@@ -78,7 +78,7 @@ export async function openEscrow(
           holder_type::text,
           purpose::text,
           coa_account_id::text,
-          balance_cents::bigint,
+          (SELECT CASE WHEN escrow_accounts.holder_type = 'driver' THEN COALESCE((SELECT vd.balance_cents FROM driver_finance.v_driver_escrow_balance vd WHERE vd.escrow_account_id = escrow_accounts.id), 0) ELSE (SELECT vb.balance_cents FROM accounting.v_escrow_account_balance vb WHERE vb.escrow_account_id = escrow_accounts.id) END)::bigint AS balance_cents,
           status::text,
           created_at::text,
           updated_at::text
@@ -112,7 +112,7 @@ export async function openEscrow(
           holder_type::text,
           purpose::text,
           coa_account_id::text,
-          balance_cents::bigint,
+          0::bigint AS balance_cents,
           status::text,
           created_at::text,
           updated_at::text
@@ -152,7 +152,7 @@ export async function listEscrowAccounts(operatingCompanyId: string, actorUserId
           ea.holder_type::text,
           ea.purpose::text,
           ea.coa_account_id::text,
-          ea.balance_cents::bigint,
+          (SELECT CASE WHEN ea.holder_type = 'driver' THEN COALESCE((SELECT vd.balance_cents FROM driver_finance.v_driver_escrow_balance vd WHERE vd.escrow_account_id = ea.id), 0) ELSE (SELECT vb.balance_cents FROM accounting.v_escrow_account_balance vb WHERE vb.escrow_account_id = ea.id) END)::bigint AS balance_cents,
           ea.status::text,
           ea.created_at::text,
           ea.updated_at::text,
@@ -202,7 +202,7 @@ export async function getEscrowAccountForHolder(
           holder_type::text,
           purpose::text,
           coa_account_id::text,
-          balance_cents::bigint,
+          (SELECT CASE WHEN escrow_accounts.holder_type = 'driver' THEN COALESCE((SELECT vd.balance_cents FROM driver_finance.v_driver_escrow_balance vd WHERE vd.escrow_account_id = escrow_accounts.id), 0) ELSE (SELECT vb.balance_cents FROM accounting.v_escrow_account_balance vb WHERE vb.escrow_account_id = escrow_accounts.id) END)::bigint AS balance_cents,
           status::text,
           created_at::text,
           updated_at::text
@@ -317,7 +317,7 @@ export async function postEscrowTransactionOnClient(
           holder_type::text,
           purpose::text,
           coa_account_id::text,
-          balance_cents::bigint,
+          (SELECT CASE WHEN escrow_accounts.holder_type = 'driver' THEN COALESCE((SELECT vd.balance_cents FROM driver_finance.v_driver_escrow_balance vd WHERE vd.escrow_account_id = escrow_accounts.id), 0) ELSE (SELECT vb.balance_cents FROM accounting.v_escrow_account_balance vb WHERE vb.escrow_account_id = escrow_accounts.id) END)::bigint AS balance_cents,
           status::text,
           created_at::text,
           updated_at::text
@@ -458,10 +458,12 @@ export async function postEscrowTransactionOnClient(
 
     const refreshed = await client.query<{ balance_cents: number }>(
       `
-        SELECT balance_cents::bigint
-        FROM accounting.escrow_accounts
-        WHERE id = $1::uuid
-          AND operating_company_id = $2::uuid
+        SELECT COALESCE(
+                 (SELECT vd.balance_cents FROM driver_finance.v_driver_escrow_balance vd WHERE vd.escrow_account_id = vb.escrow_account_id),
+                 CASE WHEN vb.holder_type = 'driver' THEN 0 ELSE vb.balance_cents END)::bigint AS balance_cents
+        FROM accounting.v_escrow_account_balance vb
+        WHERE vb.escrow_account_id = $1::uuid
+          AND vb.operating_company_id = $2::uuid
       `,
       [input.escrow_account_id, input.operating_company_id]
     );

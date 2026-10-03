@@ -89,12 +89,13 @@ export async function computeOutstandingDamageClaimsCents(
 async function findDriverBondEscrowAccount(client: DbClient, operatingCompanyId: string, driverId: string) {
   const res = await client.query<{ id: string; balance_cents: number | string }>(
     `
-      SELECT id::text, balance_cents::bigint
-      FROM accounting.escrow_accounts
-      WHERE operating_company_id = $1::uuid
-        AND holder_id = $2::uuid
-        AND holder_type = 'driver'
-        AND purpose = 'driver_bond'
+      SELECT ea.id::text, COALESCE(vb.balance_cents, 0)::bigint AS balance_cents
+      FROM accounting.escrow_accounts ea
+      LEFT JOIN driver_finance.v_driver_escrow_balance vb ON vb.escrow_account_id = ea.id
+      WHERE ea.operating_company_id = $1::uuid
+        AND ea.holder_id = $2::uuid
+        AND ea.holder_type = 'driver'
+        AND ea.purpose = 'driver_bond'
       LIMIT 1
     `,
     [operatingCompanyId, driverId]
@@ -238,10 +239,10 @@ export async function listEligibleDriverEscrowReturns(operatingCompanyId: string
                s.status::text, s.released_posting_id::text, s.released_at::text, s.notes,
                s.created_at::text, s.updated_at::text,
                (d.first_name || ' ' || d.last_name) AS driver_name,
-               ea.balance_cents::bigint AS current_balance_cents
+               COALESCE(vb.balance_cents, 0)::bigint AS current_balance_cents
         FROM driver_finance.driver_escrow_separations s
         LEFT JOIN mdata.drivers d ON d.id = s.driver_id AND d.operating_company_id = s.operating_company_id
-        LEFT JOIN accounting.escrow_accounts ea ON ea.id = s.escrow_account_id
+        LEFT JOIN driver_finance.v_driver_escrow_balance vb ON vb.escrow_account_id = s.escrow_account_id
         WHERE s.operating_company_id = $1::uuid
           AND s.status IN ('pending','eligible')
           AND s.is_active
@@ -314,7 +315,8 @@ export async function releaseDriverEscrowSeparation(
     }
 
     const balRes = await client.query<{ balance_cents: number }>(
-      `SELECT balance_cents::bigint FROM accounting.escrow_accounts WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+      // KILL-THE-SECOND-SYSTEM: the release amount is computed from the driver's 2100-00-<nnn> GL balance, derived.
+      `SELECT COALESCE((SELECT balance_cents FROM driver_finance.v_driver_escrow_balance WHERE escrow_account_id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1), 0)::bigint AS balance_cents`,
       [separation.escrow_account_id, input.operating_company_id]
     );
     const currentBalanceCents = cents(balRes.rows[0]?.balance_cents);

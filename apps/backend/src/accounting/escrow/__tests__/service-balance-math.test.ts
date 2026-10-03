@@ -73,7 +73,8 @@ describe("escrow service balance math", () => {
           ],
         };
       }
-      if (sql.includes("SELECT balance_cents::bigint")) return { rows: [{ balance_cents: 15000 }] };
+      // Kill-the-second-system: the refreshed balance is derived from the GL (v_escrow_account_balance / v_driver_escrow_balance).
+      if (sql.includes("FROM accounting.v_escrow_account_balance vb")) return { rows: [{ balance_cents: 15000 }] };
       if (sql.includes("appendCrudAudit")) return { rows: [] };
       return { rows: [] };
     });

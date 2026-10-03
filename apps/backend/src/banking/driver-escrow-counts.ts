@@ -54,8 +54,9 @@ export async function countDriverEscrowKpis(client: Queryable, operatingCompanyI
         AND ea.holder_type = 'driver'
         AND ea.purpose = 'driver_bond'
         AND ea.operating_company_id = d.operating_company_id
+      JOIN driver_finance.v_driver_escrow_balance vb ON vb.escrow_account_id = ea.id
       WHERE d.operating_company_id = $1::uuid
-        AND COALESCE(ea.balance_cents, 0) <> 0
+        AND vb.balance_cents <> 0
     `,
     [operatingCompanyId]
   );

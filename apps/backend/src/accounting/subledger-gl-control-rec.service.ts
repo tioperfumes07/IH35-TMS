@@ -162,10 +162,12 @@ export async function loadControlBalanceCents(
 export async function sumEscrowSubledgerCents(client: DbClient, operatingCompanyId: string): Promise<number> {
   const res = await client.query<{ total_cents: string | number }>(
     `
-      SELECT COALESCE(SUM(balance_cents), 0)::bigint AS total_cents
-      FROM accounting.escrow_accounts
-      WHERE operating_company_id = $1::uuid
-        AND status = 'active'
+      -- KILL-THE-SECOND-SYSTEM: each escrow account's balance is its own GL sub-account's, derived from the postings.
+      -- The control (2100 and descendants) can now differ only when something posts to an account no escrow
+      -- holder maps to (e.g. straight to the 2100 parent) — which is exactly what this rec should surface.
+      SELECT COALESCE(SUM(vb.balance_cents), 0)::bigint AS total_cents
+      FROM driver_finance.v_driver_escrow_balance vb
+      WHERE vb.operating_company_id = $1::uuid
     `,
     [operatingCompanyId]
   );
@@ -330,7 +332,7 @@ export async function getSubledgerGlControlRecReport(input: {
     },
     escrow_liability_default: {
       cents: 0,
-      source: "accounting.escrow_accounts.balance_cents",
+      source: "driver_finance.v_driver_escrow_balance (each driver escrow sub-account's GL balance, derived)",
     },
     factoring_advance_liability: {
       cents: 0,

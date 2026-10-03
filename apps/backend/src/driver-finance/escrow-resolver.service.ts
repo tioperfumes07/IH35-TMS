@@ -155,8 +155,9 @@ export async function resolveDriverEscrowLiabilityAccount(
 }
 
 /**
- * The driver's CURRENT escrow LIABILITY balance in cents — authoritative source is the GL
- * (accounting.escrow_accounts.balance_cents), NOT driver_finance.escrow_balances/escrow_ledger.
+ * The driver's CURRENT escrow LIABILITY balance in cents — the GL itself: the sum of the postings on the driver's
+ * 2100-00-<nnn> sub-account (driver_finance.v_driver_escrow_balance). Not accounting.escrow_accounts.balance_cents, not
+ * driver_finance.escrow_balances / escrow_ledger — both stored copies are retired (Kill-the-second-system order).
  *
  * ACCT-ESCROW-BALANCES-STALE-VS-GO19 (owner ruling 2026-09-05): this function used to read
  * driver_finance.escrow_balances first (falling back to escrow_ledger) — a PARALLEL, unsynced summary
@@ -183,13 +184,15 @@ export async function readDriverEscrowBalanceCents(
   operatingCompanyId: string,
   driverId: string
 ): Promise<number> {
+  // KILL-THE-SECOND-SYSTEM (CC-1): the balance is DERIVED from the driver's own 2100-00-<nnn> GL sub-account
+  // (driver_finance.v_driver_escrow_balance) — never a stored column. Measured 2026-10-03: the stored
+  // accounting.escrow_accounts.balance_cents already disagreed with the GL on 11 of 45 drivers.
   const res = await client.query<{ balance_cents: number | string | null }>(
     `
-      SELECT ea.balance_cents
-      FROM accounting.escrow_accounts ea
-      WHERE ea.operating_company_id = $1::uuid
-        AND ea.holder_id = $2::uuid
-        AND ea.holder_type = 'driver'
+      SELECT v.balance_cents
+      FROM driver_finance.v_driver_escrow_balance v
+      WHERE v.operating_company_id = $1::uuid
+        AND v.driver_id = $2::uuid
       LIMIT 1
     `,
     [operatingCompanyId, driverId]

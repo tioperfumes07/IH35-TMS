@@ -34,8 +34,13 @@ export function check(text) {
   if (/deactivated_at\s+IS\s+NULL/i.test(block)) {
     failures.push(`${FILE}: withBalanceRes must not exclude deactivated drivers — a deactivated driver with a real nonzero escrow balance is a real liability`);
   }
-  if (!/COALESCE\(ea\.balance_cents,\s*0\)\s*<>\s*0/i.test(block)) {
-    failures.push(`${FILE}: withBalanceRes lost its nonzero-balance scoping — must not become an unscoped count`);
+  // ACCT-F9854 (kill the second system): the nonzero filter reads the GL-derived balance
+  // (driver_finance.v_driver_escrow_balance), never the stored escrow_accounts.balance_cents.
+  if (!/v_driver_escrow_balance/i.test(block) || !/\bvb\.balance_cents\s*<>\s*0/i.test(block)) {
+    failures.push(`${FILE}: withBalanceRes lost its nonzero-balance scoping — must not become an unscoped count (filter on v_driver_escrow_balance vb.balance_cents <> 0)`);
+  }
+  if (/\bea\.balance_cents\b/i.test(block)) {
+    failures.push(`${FILE}: withBalanceRes reads the stored escrow_accounts.balance_cents — the balance is derived from the 2100-00-nnn postings (v_driver_escrow_balance)`);
   }
   return failures;
 }
@@ -58,8 +63,9 @@ function selftest() {
         SELECT count(DISTINCT d.id)::int AS count
         FROM mdata.drivers d
         JOIN accounting.escrow_accounts ea ON ea.holder_id = d.id
+        JOIN driver_finance.v_driver_escrow_balance vb ON vb.escrow_account_id = ea.id
         WHERE d.operating_company_id = $1::uuid
-          AND COALESCE(ea.balance_cents, 0) <> 0
+          AND vb.balance_cents <> 0
       \`,
       [operatingCompanyId]
     );
@@ -67,13 +73,16 @@ function selftest() {
   if (check(good).length) throw new Error(`PASS fail: ${JSON.stringify(check(good))}`);
 
   const regressed = good.replace(
-    "AND COALESCE(ea.balance_cents, 0) <> 0",
-    "AND d.deactivated_at IS NULL\n          AND COALESCE(ea.balance_cents, 0) <> 0"
+    "AND vb.balance_cents <> 0",
+    "AND d.deactivated_at IS NULL\n          AND vb.balance_cents <> 0"
   );
   if (!check(regressed).length) throw new Error("FAIL fail: reintroduced deactivated exclusion should have been caught");
 
-  const unscoped = good.replace("AND COALESCE(ea.balance_cents, 0) <> 0", "");
+  const unscoped = good.replace("AND vb.balance_cents <> 0", "");
   if (!check(unscoped).length) throw new Error("FAIL fail: lost nonzero-balance scoping should have been caught");
+
+  const stored = good.replace("AND vb.balance_cents <> 0", "AND vb.balance_cents <> 0 AND COALESCE(ea.balance_cents, 0) <> 0");
+  if (!check(stored).length) throw new Error("FAIL fail: a read of the stored escrow_accounts.balance_cents should have been caught");
 
   console.log(`${LABEL} --selftest OK`);
 }
