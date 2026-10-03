@@ -169,7 +169,7 @@ export async function createPolicyBillSchedule(
     `
       SELECT count(*)::text AS count
       FROM insurance.payment_schedule
-      WHERE tenant_id = $1::uuid AND policy_id = $2::uuid AND bill_uuid IS NOT NULL
+      WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND policy_id = $2::uuid AND bill_uuid IS NOT NULL
     `,
     [policy.operating_company_id, policyId]
   );

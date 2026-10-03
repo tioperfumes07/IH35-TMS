@@ -80,7 +80,7 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
       const values: unknown[] = [parsed.data.operating_company_id];
       // INSURANCE-DASHBOARD-FIXTURE-LEAK: keep the Lawsuits list in parity with the Open Lawsuits KPI
       // (summary.routes.ts), which already excludes agent-created fixture rows.
-      const filters = ["lawsuit.tenant_id = $1::uuid", excludeInsuranceFixtureSql("lawsuit.case_number")];
+      const filters = ["COALESCE(lawsuit.operating_company_id, lawsuit.tenant_id) = $1::uuid", excludeInsuranceFixtureSql("lawsuit.case_number")];
       if (parsed.data.status) {
         values.push(parsed.data.status);
         filters.push(`lawsuit.status = $${values.length}`);
@@ -146,7 +146,7 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
           `
             SELECT id::text
             FROM insurance.claim
-            WHERE tenant_id = $1::uuid AND id = $2::uuid
+            WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND id = $2::uuid
             LIMIT 1
           `,
           [body.operating_company_id, body.claim_id]
@@ -230,7 +230,7 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
           `
             SELECT id::text
             FROM insurance.claim
-            WHERE tenant_id = $1::uuid AND id = $2::uuid
+            WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND id = $2::uuid
             LIMIT 1
           `,
           [query.data.operating_company_id, body.claim_id]
@@ -243,7 +243,7 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
           `
             SELECT status
             FROM insurance.lawsuit
-            WHERE tenant_id = $1::uuid AND id = $2::uuid
+            WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND id = $2::uuid
             LIMIT 1
             FOR UPDATE
           `,
@@ -281,7 +281,7 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
         `
           UPDATE insurance.lawsuit
           SET ${assignments.join(", ")}
-          WHERE tenant_id = $1::uuid AND id = $2::uuid
+          WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid AND id = $2::uuid
           RETURNING ${lawsuitSelectColumns()}
         `,
         values

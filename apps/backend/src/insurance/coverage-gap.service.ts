@@ -121,7 +121,7 @@ export async function detectAssetCoverageGap(
     `
       SELECT id::text, asset_type::text
       FROM mdata.assets
-      WHERE tenant_id = $1::uuid
+      WHERE COALESCE(operating_company_id, tenant_id) = $1::uuid
         AND id = $2::uuid
       LIMIT 1
     `,
@@ -152,7 +152,7 @@ export async function detectAssetCoverageGap(
       JOIN insurance.policy p
         ON p.id = pu.policy_id
        AND p.tenant_id = pu.tenant_id
-      WHERE pu.tenant_id = $1::uuid
+      WHERE COALESCE(pu.operating_company_id, pu.tenant_id) = $1::uuid
         AND pu.asset_id = $2::uuid
     `,
     [input.operatingCompanyId, input.assetId]

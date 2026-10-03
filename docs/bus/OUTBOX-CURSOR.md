@@ -1,3 +1,10 @@
+## 2026-10-03T00:28Z · ROUND 342 dual-scoped insurance reads (shipping)
+
+ACK: CURSOR | ROUND 342 | DUAL-SCOPED INSURANCE READS | GO
+FIX: COALESCE(OCI, tenant_id) on dual-scoped insurance reads (claim/policy/lawsuit/coi/payment_schedule/refund/policy_unit). type_catalog + mdata.assets UNTOUCHED.
+GUARD: verify-r342-dual-scoped-insurance-reads. Factoring dual-scope MERGED #24295.
+NO seed · NO mig (HH 00). NEXT: gate → PR → FAST-MERGE · Class D keys HH 12–23.
+
 ## 2026-10-03T00:15Z · ROUND 342 dual-scoped factoring reads (shipping)
 
 ACK: CURSOR | ROUND 342 | DUAL-SCOPED FACTORING READS | GO
