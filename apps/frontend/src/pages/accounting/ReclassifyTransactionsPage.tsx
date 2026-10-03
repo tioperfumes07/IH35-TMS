@@ -7,6 +7,7 @@
  * document, audit each, results per document, Undo per batch.
  */
 import { useMemo, useState, type ReactNode } from "react";
+import { useAuth } from "../../auth/useAuth";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { naturalCentsForType } from "../../lib/naturalBalance";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,7 +30,7 @@ import { listCustomers, listVendors } from "../../api/mdata";
 import { FuelStopLocationPicker } from "../../components/locations/FuelStopLocationPicker";
 import {
   applyReclassify, findReclassifyLines, getReclassifyAccountTree, getReclassifyFacets, listReclassifyBatches, undoReclassifyBatch,
-  type ReclassifyBatchResult, type ReclassifyLine, type ReclassifyTreeAccount,
+  type ReclassifyBatchResult, type ReclassifyFacet, type ReclassifyFacets, type ReclassifyLine, type ReclassifyTreeAccount,
 } from "../../api/reclassify";
 import { docTarget, notReclassifiable } from "../../lib/reclassifyDrill";
 
@@ -111,6 +112,8 @@ function buildTree(accounts: ReclassifyTreeAccount[], side: Side, includeInactiv
 
 export function ReclassifyTransactionsPage() {
   const { selectedCompanyId } = useCompanyContext();
+  const { user } = useAuth();
+  const isOwner = user?.role === "Owner";
   const companyId = selectedCompanyId ?? "";
   const qc = useQueryClient();
   // Owner ruling (Round 83): account numbers hidden by default, shown only when the toggle is on.
@@ -144,6 +147,7 @@ export function ReclassifyTransactionsPage() {
   const [toEntityKind, setToEntityKind] = useState<"vendor" | "customer">("vendor");
   const [toVendor, setToVendor] = useState("");
   const [reason, setReason] = useState("");
+  const [overrideRefusals, setOverrideRefusals] = useState(false);
   const [lastResult, setLastResult] = useState<ReclassifyBatchResult | null>(null);
   const [accountFilter, setAccountFilter] = useState("");
   const [undoTarget, setUndoTarget] = useState<string | null>(null);
@@ -174,9 +178,10 @@ export function ReclassifyTransactionsPage() {
       to_account_id: toAccount || null, to_class_id: toClass || null, to_location_id: toLocation || null,
       to_entity_uuid: toVendor || null, to_entity_type: toVendor ? toEntityKind : null,
       filter_snapshot: applied ?? {},
+      override_refusals: isOwner && overrideRefusals ? true : undefined,
     }),
     onSuccess: (res) => {
-      setLastResult(res); setModalOpen(false); setSelected(new Map()); setToAccount(""); setToClass(""); setToLocation(null); setToVendor(""); setToEntityKind("vendor"); setReason("");
+      setLastResult(res); setModalOpen(false); setSelected(new Map()); setToAccount(""); setToClass(""); setToLocation(null); setToVendor(""); setToEntityKind("vendor"); setReason(""); setOverrideRefusals(false);
       void qc.invalidateQueries({ queryKey: ["reclassify-lines"] }); void qc.invalidateQueries({ queryKey: ["reclassify-accounts"] }); void qc.invalidateQueries({ queryKey: ["reclassify-batches"] });
     },
   });
@@ -214,7 +219,7 @@ export function ReclassifyTransactionsPage() {
   };
   // ROUND 370 — clicking an account LOADS its transactions (it used to only highlight it; the list never ran).
   const openAccount = (id: string | null) => { const ids = id ? [id] : []; setFilter("accountIds", ids); runFind(ids); };
-  const facetOptions = (k: keyof NonNullable<typeof facetsQ.data>) => (facetsQ.data?.[k] ?? []).map((o) => ({ value: o.id, label: `${k === "types" ? o.label.replace(/_/g, " ") : o.label} (${o.n})` }));
+  const facetOptions = (k: keyof ReclassifyFacets) => ((facetsQ.data as ReclassifyFacets | undefined)?.[k] ?? []).map((o: ReclassifyFacet) => ({ value: o.id, label: `${k === "types" ? o.label.replace(/_/g, " ") : o.label} (${o.n})` }));
   const accountOptions = useMemo(() => (accountsQ.data?.accounts ?? []).map((a) => ({ value: a.account_id, label: formatAccountDisplayLabel({ account_name: a.account_name, account_number: a.account_number }, { showNumber: showAccountNumbers }) })), [accountsQ.data, showAccountNumbers]);
   const toggleSort = (key: SortKey) => { setSort((cur) => (cur.key === key ? { key, dir: cur.dir === "asc" ? "desc" : "asc" } : { key, dir: key === "date" ? "desc" : "asc" })); setOffset(0); setGotoPageDraft("1"); };
   const sortMark = (key: SortKey) => (sort.key === key ? (sort.dir === "asc" ? " ▲" : " ▼") : "");
@@ -465,7 +470,7 @@ export function ReclassifyTransactionsPage() {
                     <td className="p-2 max-w-[18rem] truncate" title={b.reason}>{b.reason}</td>
                     <td className="p-2 text-right tabular-nums">{b.lines_applied}/{b.lines_requested}{b.lines_refused ? ` (${b.lines_refused} refused)` : ""}</td>
                     <td className="p-2 text-right tabular-nums">{formatCurrencyFromCents(b.amount_cents_moved)}</td>
-                    <td className="p-2">{b.status}{b.undone_at ? ` ${formatDateQboList(b.undone_at)}` : ""}</td>
+                    <td className="p-2">{b.status}{b.undone_at ? ` ${formatDateQboList(b.undone_at)}` : ""}{b.override_refusals ? <span className="ml-1 font-semibold text-slate-700" data-testid={`reclassify-batch-override-${b.id}`}>· owner override</span> : null}</td>
                     <td className="p-2">
                       {b.status === "applied" && b.lines_applied > 0 ? (
                         undoTarget === b.id ? (
@@ -543,6 +548,12 @@ export function ReclassifyTransactionsPage() {
             <label className="mt-2 flex flex-col gap-1 text-xs font-semibold text-slate-600">Reason (required, audited on every document)
               <input value={reason} onChange={(e) => setReason(e.target.value)} className="h-9 rounded border border-gray-300 px-2 text-xs" placeholder="e.g. Zelle to Dreamline belongs on Relay/Dreamline payables" data-testid="reclassify-reason" />
             </label>
+            {isOwner ? (
+              <label className="mt-2 flex items-start gap-2 text-xs text-slate-700" data-testid="reclassify-owner-override">
+                <input type="checkbox" checked={overrideRefusals} onChange={(e) => setOverrideRefusals(e.target.checked)} className="mt-0.5" />
+                <span><span className="font-semibold">Owner override</span> — also move lines normally refused (A/R, A/P, inventory, payroll, subledger control accounts). Bank and cash lines are never moved here. Each overridden line is recorded with the refusal it bypassed and audited.</span>
+              </label>
+            ) : null}
             {applyMut.error ? <div className="mt-2"><ListErrorState {...formatQueryErrorDetail(applyMut.error)} onRetry={() => applyMut.reset()} /></div> : null}
             <div className="mt-3 flex justify-end gap-2">
               <Button type="button" variant="tertiary" onClick={() => setModalOpen(false)}>Cancel</Button>

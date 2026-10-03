@@ -992,6 +992,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-settlement-driver-pay-splits-per-load",
     ["apps/backend/src/driver-finance/", "apps/backend/src/accounting/", "db/migrations/", "scripts/verify-settlement-driver-pay-splits-per-load.mjs"],
   ],
+  // ROUND 363-CC1-D (CC-1) — no writer moves a posted line in place; the database refuses it.
+  [
+    "verify-no-posting-update-outside-document-edit",
+    ["db/migrations/", "apps/backend/src/", "scripts/", "scripts/verify-no-posting-update-outside-document-edit.mjs"],
+  ],
   // ROUND 373.4 (CC-1) — credit memos and vendor credits post on create and reverse on void.
   [
     "verify-every-credit-document-posts",

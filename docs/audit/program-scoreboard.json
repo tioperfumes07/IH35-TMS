@@ -1,10 +1,10 @@
 {
-  "healthzSha": "72db0ca",
-  "generated_at": "2026-10-03T20:57:57.407Z",
+  "healthzSha": "e19f08f",
+  "generated_at": "2026-10-03T21:12:49.204Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "72db0ca",
+    "deployedSha": "e19f08f",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2124,93 +2124,93 @@
   "recentActivity": [
     {
       "number": 0,
-      "title": "Cursor- docs(bus): OUTBOX BANK-F91224 Complaints #24796 a0c0b117e6",
+      "title": "Cursor- OUTBOX BANK-F91228 CreateWorkOrderModal leftover #24807",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 03:56 PM CT",
+      "mergedAtCt": "10/03/2026, 04:10 PM CT",
       "url": "",
-      "sha": "c9c5f66218",
-      "committedAtIso": "2026-10-03T15:56:50-05:00"
+      "sha": "d60c02dc38",
+      "committedAtIso": "2026-10-03T16:10:41-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- feat(ui): leftover ComplaintsTab text-xs BANK-F91224",
+      "title": "Cursor- leftover CreateWorkOrderModal text-xs BANK-F91228",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 03:56 PM CT",
+      "mergedAtCt": "10/03/2026, 04:09 PM CT",
       "url": "",
-      "sha": "a0c0b117e6",
-      "committedAtIso": "2026-10-03T15:56:05-05:00"
-    },
-    {
-      "number": 24795,
-      "title": "FINDING: ACCT-F3706 LANE: FINANCIAL (U17 — the Expenses list is read-only and reclassify could not be reached from it; selected expenses now open the one reclassify engine in a drawer — same writer, same batch, same audit record, undo from Accounting > Reclassify)",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 03:54 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24795",
-      "sha": "76a87760bf",
-      "committedAtIso": "2026-10-03T15:54:33-05:00"
-    },
-    {
-      "number": 24794,
-      "title": "FINDING: N/A LANE: DOCS (CC-2 UI register results — U27, U23, U21, U22, U26, U8 closed with mechanism, proof and PR; both legs of a reversed pair answered)",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 03:51 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24794",
-      "sha": "72db0ca737",
-      "committedAtIso": "2026-10-03T15:51:20-05:00"
-    },
-    {
-      "number": 24793,
-      "title": "FINDING: ACCT-F3705 LANE: FINANCIAL (U8 — Create Check \"offers no open bills\": the whole Add-to-Check panel vanished whenever the payee had no resolvable payable vendor or the lookup failed — 7 of 27 active USMCA drivers have no linked vendor — so a check paying a bill could be saved as an expense; the panel now says why there is nothing to pay)",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 03:51 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24793",
-      "sha": "070fc72860",
-      "committedAtIso": "2026-10-03T15:51:07-05:00"
+      "sha": "2f7ca17017",
+      "committedAtIso": "2026-10-03T16:09:44-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- docs(bus): OUTBOX BANK-F91223 PlannerGrid #24791 0b3400f41d",
+      "title": "Cursor- OUTBOX BANK-F91227 MaintKpiRows leftover #24805",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 03:48 PM CT",
+      "mergedAtCt": "10/03/2026, 04:08 PM CT",
       "url": "",
-      "sha": "d8b970884a",
-      "committedAtIso": "2026-10-03T15:48:42-05:00"
-    },
-    {
-      "number": 24790,
-      "title": "FINDING: BANK-F3704 LANE: NON-FINANCIAL (U26 — the bank feed filters: the description filter wiped itself when its box closed, Uncategorized / Suggested matches / Transfers / Rules / Missing From-To read the wrong fields, tab badges counted before the filters, date presets were a day off in the evening, and the KPI pre-filter stuck)",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 03:47 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24790",
-      "sha": "0aa21b46ad",
-      "committedAtIso": "2026-10-03T15:47:54-05:00"
+      "sha": "62afd828a4",
+      "committedAtIso": "2026-10-03T16:08:37-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- feat(ui): leftover TaskPlannerGrid text-xs BANK-F91223",
+      "title": "Cursor- leftover MaintKpiRows text-xs BANK-F91227",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 03:47 PM CT",
+      "mergedAtCt": "10/03/2026, 04:07 PM CT",
       "url": "",
-      "sha": "0b3400f41d",
-      "committedAtIso": "2026-10-03T15:47:49-05:00"
+      "sha": "cd4b8f50b0",
+      "committedAtIso": "2026-10-03T16:07:46-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- docs(bus): OUTBOX BANK-F91222 LoadDetail #24788 3cc0ea3093",
+      "title": "Cursor- OUTBOX BANK-F91226 DriversTable leftover #24803",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 03:46 PM CT",
+      "mergedAtCt": "10/03/2026, 04:06 PM CT",
       "url": "",
-      "sha": "ef7db8c612",
-      "committedAtIso": "2026-10-03T15:46:14-05:00"
+      "sha": "e19f08ff01",
+      "committedAtIso": "2026-10-03T16:06:42-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- feat(ui): leftover DriverLoadDetailPage text-xs BANK-F91222",
+      "title": "Cursor- leftover DriversTable text-xs BANK-F91226",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 03:45 PM CT",
+      "mergedAtCt": "10/03/2026, 04:05 PM CT",
       "url": "",
-      "sha": "3cc0ea3093",
-      "committedAtIso": "2026-10-03T15:45:02-05:00"
+      "sha": "2c324da9e0",
+      "committedAtIso": "2026-10-03T16:05:10-05:00"
+    },
+    {
+      "number": 24802,
+      "title": "FINDING: ACCT-F3707 LANE: NON-FINANCIAL (U4 + U13 + U14 — Accounting tab bar: \"Expenses List\" removed (it rendered the same page as \"Expenses\"), Accounting's Vendors and Customers tabs removed (pure redirects to the /vendors and /customers modules), \"Maintenance & shop\" renamed \"Work orders & bills\"; every route stays mounted)",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 04:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24802",
+      "sha": "2649021db4",
+      "committedAtIso": "2026-10-03T16:00:50-05:00"
+    },
+    {
+      "number": 0,
+      "title": "Cursor- docs(bus): OUTBOX BANK-F91225 DocsHome #24798 c3e1d27aae",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 03:59 PM CT",
+      "url": "",
+      "sha": "08be4a5664",
+      "committedAtIso": "2026-10-03T15:59:12-05:00"
+    },
+    {
+      "number": 24800,
+      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: CC-2 migration 202615370700 — U10 bill_category — each Bills sub-tab shows only its own type)",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 03:59 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24800",
+      "sha": "a21989e49d",
+      "committedAtIso": "2026-10-03T15:59:02-05:00"
+    },
+    {
+      "number": 24799,
+      "title": "chore: claim 202615370930 for CC-3 ROUND 365.1 role bindings",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 03:58 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24799",
+      "sha": "239cc23ffb",
+      "committedAtIso": "2026-10-03T15:58:23-05:00"
     }
   ]
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildLineWhere, buildReclassPairs, classifySelection, controlAccountReason, rewriteDocumentLine, type SelectedPosting } from "../reclassify.service.js";
+import { buildLineWhere, buildReclassPairs, classifySelection, controlAccountReason, isHandKeyed, lineRefusal, rewriteDocumentLine, type SelectedPosting } from "../reclassify.service.js";
 
 const base = {
   posting_id: "p1", journal_entry_id: "je1", entry_date: "2026-08-31", source_transaction_type: "expense", source_transaction_id: "e1", source_transaction_line_id: "el1",
@@ -92,6 +92,46 @@ describe("Reclassify engine — pure rules (QBO spec §24)", () => {
     expect(refused[0]!.why).toMatch(/control account/);
     // class-only reclass on a control line is allowed (no account change)
     expect(classifySelection([{ ...base, account_subtype: "Accounts Payable (A/P)" }], { to_class_id: "cls-9" }).eligible).toHaveLength(1);
+  });
+
+  it("LAW 363.5: refuses inventory and payroll lines with the reason on the row; payroll EXPENSE accounts stay reclassifiable", () => {
+    expect(lineRefusal({ account_type: "Asset", account_subtype: "Inventory", system_purpose: null })?.reason).toMatch(/inventory subledger/);
+    expect(lineRefusal({ account_type: "Liability", account_subtype: "PayrollTaxPayable", system_purpose: null })?.reason).toMatch(/payroll liability/);
+    expect(lineRefusal({ account_type: "Liability", account_subtype: "DirectDepositPayable", system_purpose: null })?.reason).toMatch(/payroll liability/);
+    expect(lineRefusal({ account_type: "Expense", account_subtype: null, system_purpose: null }, "paycheck")?.reason).toMatch(/payroll document/);
+    expect(lineRefusal({ account_type: "Expense", account_subtype: "PayrollExpenses", system_purpose: null })).toBeNull();
+    expect(lineRefusal({ account_type: "Expense", account_subtype: null, system_purpose: null }, "bill")).toBeNull();
+    const { eligible, refused } = classifySelection([{ ...base, account_subtype: "Inventory" }], { to_account_id: "acc-x" });
+    expect(eligible).toHaveLength(0);
+    expect(refused[0]!.why).toMatch(/inventory subledger.*the owner may override/);
+  });
+
+  it("a manual JE that names itself as its source is hand-keyed (the reclass JE is its record); a real document is not", () => {
+    expect(isHandKeyed({ source_transaction_type: null, source_transaction_id: null, journal_entry_id: "je-1" })).toBe(true);
+    expect(isHandKeyed({ source_transaction_type: "manual_je", source_transaction_id: "je-1", journal_entry_id: "je-1" })).toBe(true);
+    expect(isHandKeyed({ source_transaction_type: "journal_entry", source_transaction_id: "je-1", journal_entry_id: "je-1" })).toBe(true);
+    expect(isHandKeyed({ source_transaction_type: "manual_je", source_transaction_id: "je-OTHER", journal_entry_id: "je-1" })).toBe(false);
+    expect(isHandKeyed({ source_transaction_type: "bill", source_transaction_id: "b-1", journal_entry_id: "je-1" })).toBe(false);
+  });
+
+  it("LAW 363.5 owner override: applies over A/R, A/P, inventory and payroll and names the bypassed refusal; never a bank line", () => {
+    const lines = [
+      { ...base, posting_id: "ap", account_subtype: "Accounts Payable (A/P)" },
+      { ...base, posting_id: "inv", account_subtype: "Inventory" },
+      { ...base, posting_id: "bank", account_subtype: "Checking", is_bank_ledger: true },
+      { ...base, posting_id: "exp" },
+    ];
+    const without = classifySelection(lines, { to_account_id: "acc-x" });
+    expect(without.eligible.map((p) => p.posting_id)).toEqual(["exp"]);
+    expect(without.overridden.size).toBe(0);
+    const withOverride = classifySelection(lines, { to_account_id: "acc-x" }, { overrideRefusals: true });
+    expect(withOverride.eligible.map((p) => p.posting_id)).toEqual(["ap", "inv", "exp"]);
+    expect(withOverride.overridden.get("ap")).toMatch(/control account/);
+    expect(withOverride.overridden.get("inv")).toMatch(/inventory/);
+    expect(withOverride.overridden.has("exp")).toBe(false);
+    expect(withOverride.refused.map((r) => r.posting.posting_id)).toEqual(["bank"]);
+    expect(withOverride.refused[0]!.why).toMatch(/bank register/);
+    expect(withOverride.refused[0]!.why).not.toMatch(/override/);
   });
 });
 

@@ -419,6 +419,8 @@ export type ApplyReclassifyInput = {
   to_entity_uuid?: string | null;
   to_entity_type?: "customer" | "vendor" | "driver" | "unit" | null;
   filter_snapshot?: Record<string, unknown>;
+  /** LAW 363.5 — OWNER ONLY: apply the batch to lines in an overridable refused class; each one is recorded and audited. */
+  override_refusals?: boolean;
 };
 
 export type ReclassifyDocumentResult = {
@@ -464,6 +466,42 @@ export function controlAccountReason(acc: { account_type: string | null; account
 }
 
 /**
+ * LAW 363.5 (ROUND 363-CC1-D) — the batch tool also refuses INVENTORY and PAYROLL lines: an inventory asset is owned by
+ * its quantity-on-hand subledger, and a payroll liability (tax payable, direct deposit, clearing) or a payroll-run line by
+ * the payroll it came from. Payroll EXPENSE accounts named on ordinary bills (QBO subtype PayrollExpenses — "Wages",
+ * "Bonus") stay freely reclassifiable: no subledger owns them.
+ */
+export const INVENTORY_SUBTYPE_RE = /inventory/i;
+export const PAYROLL_LIABILITY_SUBTYPE_RE = /^payroll(?!expenses?$)|payroll\s*(tax|clearing|liabilit)|payrolltaxpayable|directdepositpayable|direct\s*deposit\s*payable/i;
+export const PAYROLL_SOURCE_RE = /payroll|paycheck/i;
+
+export type LineRefusal = { reason: string; overridable: boolean };
+
+/**
+ * The full refusal for one line or target account, with whether the OWNER may override it (LAW 363.5: "the owner gets
+ * an override button on the genuinely refused classes … never silent and never unlogged"). A bank/cash ledger line is
+ * never overridable: a payment from the wrong bank is unmatch → fix → rematch in Banking, not a reclassification.
+ */
+export function lineRefusal(
+  acc: { account_type: string | null; account_subtype: string | null; system_purpose: string | null; is_bank_ledger?: boolean },
+  sourceTransactionType?: string | null,
+): LineRefusal | null {
+  if (acc.is_bank_ledger) return { reason: controlAccountReason(acc)!, overridable: false };
+  const control = controlAccountReason(acc);
+  if (control) return { reason: control, overridable: true };
+  if (acc.account_subtype && INVENTORY_SUBTYPE_RE.test(acc.account_subtype)) {
+    return { reason: `${acc.account_subtype} account: the inventory subledger owns this line (adjust quantity on hand, not the ledger)`, overridable: true };
+  }
+  if (acc.account_subtype && PAYROLL_LIABILITY_SUBTYPE_RE.test(acc.account_subtype)) {
+    return { reason: `${acc.account_subtype} payroll liability: the payroll run owns this line (correct the paycheck or the payroll liability payment)`, overridable: true };
+  }
+  if (sourceTransactionType && PAYROLL_SOURCE_RE.test(sourceTransactionType)) {
+    return { reason: `${sourceTransactionType} line: a payroll document owns this line (correct the paycheck)`, overridable: true };
+  }
+  return null;
+}
+
+/**
  * ROUND 373 — a reclassify posting is never written without its spine link (accounting.transaction_source_links), on the
  * SAME transaction. Every leg of the entry links to the source document it reclassifies (role 'reclassification'; a
  * hand-keyed JE links to itself) and to the batch that made it (role 'reclassify_batch' / 'reclassify_undo'), so the
@@ -495,16 +533,22 @@ async function linkReclassEntry(
 export function classifySelection(
   postings: SelectedPosting[],
   target: { to_account_id?: string | null; to_class_id?: string | null; to_location_id?: string | null; to_entity_uuid?: string | null },
-): { eligible: SelectedPosting[]; refused: Array<{ posting: SelectedPosting; why: string }> } {
+  opts: { overrideRefusals?: boolean } = {},
+): { eligible: SelectedPosting[]; refused: Array<{ posting: SelectedPosting; why: string }>; overridden: Map<string, string> } {
   const eligible: SelectedPosting[] = [];
   const refused: Array<{ posting: SelectedPosting; why: string }> = [];
+  /** posting_id → the refusal the owner's override bypassed (recorded on the batch line and in the audit). */
+  const overridden = new Map<string, string>();
   for (const p of postings) {
     if (p.je_status !== "posted") { refused.push({ posting: p, why: `journal entry is ${p.je_status}` }); continue; }
     if (p.is_reversed) { refused.push({ posting: p, why: "this line was reversed (its document was voided or corrected) — reclassify the live line, not the reversed one" }); continue; }
     if (p.is_reversal) { refused.push({ posting: p, why: "this line is a reversal entry — it is undone by undoing what it reversed, not reclassified" }); continue; }
     if (p.already_reclassified_batch_id) { refused.push({ posting: p, why: `already reclassified in batch ${p.already_reclassified_batch_id}; undo that batch first` }); continue; }
-    const control = controlAccountReason({ account_type: p.account_type ?? null, account_subtype: p.account_subtype ?? null, system_purpose: p.system_purpose ?? null, is_bank_ledger: p.is_bank_ledger });
-    if (control && target.to_account_id) { refused.push({ posting: p, why: control }); continue; }
+    const control = lineRefusal({ account_type: p.account_type ?? null, account_subtype: p.account_subtype ?? null, system_purpose: p.system_purpose ?? null, is_bank_ledger: p.is_bank_ledger }, p.source_transaction_type);
+    if (control && target.to_account_id) {
+      if (!(control.overridable && opts.overrideRefusals)) { refused.push({ posting: p, why: control.overridable ? `${control.reason} — the owner may override` : control.reason }); continue; }
+      overridden.set(p.posting_id, control.reason);
+    }
     const noChange =
       (!target.to_account_id || target.to_account_id === p.account_id) &&
       (!target.to_class_id || target.to_class_id === p.class_id) &&
@@ -513,7 +557,19 @@ export function classifySelection(
     if (noChange) { refused.push({ posting: p, why: "line already carries the requested account/class/location/entity" }); continue; }
     eligible.push(p);
   }
-  return { eligible, refused };
+  return { eligible, refused, overridden };
+}
+
+/**
+ * A hand-keyed journal entry has no separate document line to rewrite — the reclass JE itself is the record. That is a
+ * posting with no source, AND a manual JE that names ITSELF as its source (journal-entries.service stamps every manual
+ * line source_transaction_type 'manual_je' / id = the JE): measured 2026-10-03, 46 such lines on production were
+ * refused by every reclassify ("manual_je: this document type has no line rewrite") — a manual entry could never be
+ * reclassified.
+ */
+export function isHandKeyed(p: Pick<SelectedPosting, "source_transaction_type" | "source_transaction_id" | "journal_entry_id">): boolean {
+  if (!p.source_transaction_type || !p.source_transaction_id) return true;
+  return (p.source_transaction_type === "manual_je" || p.source_transaction_type === "journal_entry") && p.source_transaction_id === p.journal_entry_id;
 }
 
 /** Pure: the reclass JE lines for one document — a reverse+repost PAIR per selected posting. */
@@ -647,8 +703,8 @@ const INSERT_LINE = `
   INSERT INTO accounting.reclassify_batch_lines
     (batch_id, operating_company_id, posting_id, journal_entry_id, source_transaction_type, source_transaction_id, source_transaction_line_id,
      from_account_id, from_class_id, from_location_id, from_entity_uuid, from_entity_type, to_account_id, to_class_id, to_location_id, to_entity_uuid, to_entity_type,
-     debit_or_credit, amount_cents, result, refusal_reason, reclass_journal_entry_id, document_updated, document_update_note)
-  VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5, $6, $7, $8::uuid, $9::uuid, $10::uuid, $11::uuid, $12, $13::uuid, $14::uuid, $15::uuid, $16::uuid, $17, $18, $19, $20, $21, $22::uuid, $23, $24)`;
+     debit_or_credit, amount_cents, result, refusal_reason, reclass_journal_entry_id, document_updated, document_update_note, override_of_refusal)
+  VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5, $6, $7, $8::uuid, $9::uuid, $10::uuid, $11::uuid, $12, $13::uuid, $14::uuid, $15::uuid, $16::uuid, $17, $18, $19, $20, $21, $22::uuid, $23, $24, $25)`;
 
 export async function applyReclassify(input: ApplyReclassifyInput, actor: { userId: string; role: string }): Promise<ReclassifyBatchResult> {
   const reason = input.reason.trim();
@@ -658,6 +714,8 @@ export async function applyReclassify(input: ApplyReclassifyInput, actor: { user
   const postingIds = Array.from(new Set(input.posting_ids));
   if (postingIds.length === 0) throw new Error("reclassify_no_lines_selected");
   if (postingIds.length > 500) throw new Error("reclassify_too_many_lines_max_500");
+  const overrideRefusals = input.override_refusals === true;
+  if (overrideRefusals && actor.role !== "Owner") throw new Error("reclassify_override_owner_only");
   const target = { to_account_id: input.to_account_id ?? null, to_class_id: input.to_class_id ?? null, to_location_id: input.to_location_id ?? null, to_entity_uuid: input.to_entity_uuid ?? null, to_entity_type: input.to_entity_type ?? null };
 
   return withCurrentUser(actor.userId, async (client) => {
@@ -671,7 +729,8 @@ export async function applyReclassify(input: ApplyReclassifyInput, actor: { user
            FROM catalogs.accounts a WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [target.to_account_id, companyId]);
       if (!acc.rows[0]) throw new Error("reclassify_target_account_not_found");
       if (!acc.rows[0].ok) throw new Error("reclassify_target_account_not_postable");
-      if (controlAccountReason(acc.rows[0])) throw new Error("reclassify_target_is_control_account");
+      const targetRefusal = lineRefusal(acc.rows[0]);
+      if (targetRefusal && !(targetRefusal.overridable && overrideRefusals)) throw new Error("reclassify_target_is_control_account");
     }
     if (target.to_class_id) {
       const cls = await client.query<{ ok: boolean }>(`SELECT (deactivated_at IS NULL) AS ok FROM catalogs.classes WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [target.to_class_id, companyId]);
@@ -684,9 +743,9 @@ export async function applyReclassify(input: ApplyReclassifyInput, actor: { user
 
     const batchRes = await client.query<{ id: string }>(
       `INSERT INTO accounting.reclassify_batches
-         (operating_company_id, created_by_user_id, reason, filter_snapshot, to_account_id, to_class_id, to_location_id, to_entity_uuid, to_entity_type, lines_requested)
-       VALUES ($1::uuid, $2::uuid, $3, $4::jsonb, $5::uuid, $6::uuid, $7::uuid, $8::uuid, $9, $10) RETURNING id::text`,
-      [companyId, actor.userId, reason, JSON.stringify(input.filter_snapshot ?? {}), target.to_account_id, target.to_class_id, target.to_location_id, target.to_entity_uuid, target.to_entity_type, postingIds.length],
+         (operating_company_id, created_by_user_id, reason, filter_snapshot, to_account_id, to_class_id, to_location_id, to_entity_uuid, to_entity_type, lines_requested, override_refusals)
+       VALUES ($1::uuid, $2::uuid, $3, $4::jsonb, $5::uuid, $6::uuid, $7::uuid, $8::uuid, $9, $10, $11) RETURNING id::text`,
+      [companyId, actor.userId, reason, JSON.stringify(input.filter_snapshot ?? {}), target.to_account_id, target.to_class_id, target.to_location_id, target.to_entity_uuid, target.to_entity_type, postingIds.length, overrideRefusals],
     );
     const batchId = batchRes.rows[0]!.id;
     const result: ReclassifyBatchResult = { batch_id: batchId, lines_requested: postingIds.length, lines_applied: 0, lines_refused: 0, amount_cents_moved: 0, documents: [] };
@@ -697,7 +756,7 @@ export async function applyReclassify(input: ApplyReclassifyInput, actor: { user
         batchId, companyId, p.posting_id, p.journal_entry_id, p.source_transaction_type, p.source_transaction_id, p.source_transaction_line_id,
         p.account_id, p.class_id, p.location_id, p.entity_uuid, p.entity_type,
         target.to_account_id ?? p.account_id, target.to_class_id ?? p.class_id, target.to_location_id ?? p.location_id, target.to_entity_uuid ?? p.entity_uuid, target.to_entity_uuid ? target.to_entity_type : p.entity_type,
-        p.debit_or_credit, p.amount_cents, "refused", why, null, false, null,
+        p.debit_or_credit, p.amount_cents, "refused", why, null, false, null, null,
       ]);
       result.documents.push({ source_transaction_type: p.source_transaction_type, source_transaction_id: p.source_transaction_id, document_number: p.document_number, reclass_journal_entry_id: null, lines_applied: 0, lines_refused: 1, document_updated: false, document_update_note: null, refusal_reason: why });
     };
@@ -716,7 +775,7 @@ export async function applyReclassify(input: ApplyReclassifyInput, actor: { user
 
     for (const [, group] of groups) {
       const head = group[0]!;
-      const { eligible, refused } = classifySelection(group, target);
+      const { eligible, refused, overridden } = classifySelection(group, target, { overrideRefusals });
       for (const r of refused) await recordRefusal(r.posting, r.why);
       if (eligible.length === 0) continue;
       const entryDate = head.entry_date; // the document's own period; closed → refused, never shifted
@@ -731,7 +790,7 @@ export async function applyReclassify(input: ApplyReclassifyInput, actor: { user
         // A hand-keyed journal entry has no separate document: the reclass JE itself is the record.
         const rewrites = new Map<string, { updated: boolean; note: string | null }>();
         for (const p of eligible) {
-          const handKeyed = !p.source_transaction_type || !p.source_transaction_id;
+          const handKeyed = isHandKeyed(p);
           const rw = handKeyed
             ? { updated: true, note: null }
             : await rewriteDocumentLine(client as DbClient, companyId, p, { account_id: target.to_account_id, class_id: target.to_class_id, location_id: target.to_location_id, entity_uuid: target.to_entity_uuid, entity_type: target.to_entity_type });
@@ -770,7 +829,7 @@ export async function applyReclassify(input: ApplyReclassifyInput, actor: { user
             batchId, companyId, p.posting_id, p.journal_entry_id, p.source_transaction_type, p.source_transaction_id, p.source_transaction_line_id,
             p.account_id, p.class_id, p.location_id, p.entity_uuid, p.entity_type,
             target.to_account_id ?? p.account_id, target.to_class_id ?? p.class_id, target.to_location_id ?? p.location_id, target.to_entity_uuid ?? p.entity_uuid, target.to_entity_uuid ? target.to_entity_type : p.entity_type,
-            p.debit_or_credit, p.amount_cents, "applied", null, jeId, rw.updated, rw.note,
+            p.debit_or_credit, p.amount_cents, "applied", null, jeId, rw.updated, rw.note, overridden.get(p.posting_id) ?? null,
           ]);
           result.lines_applied += 1;
           result.amount_cents_moved += p.amount_cents;
@@ -780,6 +839,17 @@ export async function applyReclassify(input: ApplyReclassifyInput, actor: { user
            VALUES (gen_random_uuid(), now(), 'accounting.reclassify.document_reclassified', 'info', $1::jsonb, $2::uuid, 'RECLASSIFY-ENGINE')`,
           [JSON.stringify({ batch_id: batchId, reclass_journal_entry_id: jeId, source_transaction_type: head.source_transaction_type, source_transaction_id: head.source_transaction_id, document_number: head.document_number, lines: eligible.length, ...target, reason }), actor.userId],
         );
+        // LAW 363.5 — an override is never silent: one audit row per overridden line naming who (actor), when (the row),
+        // the before and after account, and the refusal it bypassed.
+        for (const p of eligible) {
+          const bypassed = overridden.get(p.posting_id);
+          if (!bypassed) continue;
+          await client.query(
+            `INSERT INTO audit.audit_events (uuid, created_at, event_class, severity, payload, actor_user_uuid, source)
+             VALUES (gen_random_uuid(), now(), 'accounting.reclassify.refusal_overridden', 'warning', $1::jsonb, $2::uuid, 'RECLASSIFY-ENGINE')`,
+            [JSON.stringify({ batch_id: batchId, reclass_journal_entry_id: jeId, posting_id: p.posting_id, source_transaction_type: p.source_transaction_type, source_transaction_id: p.source_transaction_id, from_account_id: p.account_id, to_account_id: target.to_account_id, amount_cents: p.amount_cents, debit_or_credit: p.debit_or_credit, refusal_bypassed: bypassed, actor_role: actor.role, reason }), actor.userId],
+          );
+        }
         await client.query("RELEASE SAVEPOINT reclass_doc");
         result.documents.push({ source_transaction_type: head.source_transaction_type, source_transaction_id: head.source_transaction_id, document_number: head.document_number, reclass_journal_entry_id: jeId, lines_applied: eligible.length, lines_refused: refused.length, document_updated: docUpdated, document_update_note: notes.length ? Array.from(new Set(notes)).join("; ") : null, refusal_reason: null });
       } catch (error) {
@@ -858,7 +928,7 @@ export async function listReclassifyBatches(userId: string, operatingCompanyId: 
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const res = await client.query<Record<string, unknown>>(
-      `SELECT b.id::text, b.created_at::text, b.reason, b.status, b.lines_requested, b.lines_applied, b.lines_refused, b.amount_cents_moved::bigint AS amount_cents_moved,
+      `SELECT b.id::text, b.created_at::text, b.reason, b.status, b.lines_requested, b.lines_applied, b.lines_refused, b.amount_cents_moved::bigint AS amount_cents_moved, b.override_refusals,
               b.to_account_id::text, a.account_number AS to_account_number, a.account_name AS to_account_name,
               b.to_class_id::text, c.class_name AS to_class_name, b.to_location_id::text, loc.location_name AS to_location_name,
               b.to_entity_uuid::text, b.to_entity_type,
@@ -885,7 +955,7 @@ export async function getReclassifyBatchLines(userId: string, operatingCompanyId
               l.to_account_id::text, ta.account_number AS to_account_number, ta.account_name AS to_account_name,
               l.from_class_id::text, fc.class_name AS from_class_name, l.to_class_id::text, tc.class_name AS to_class_name,
               l.from_entity_uuid::text, l.from_entity_type, l.to_entity_uuid::text, l.to_entity_type,
-              l.debit_or_credit, l.amount_cents::bigint AS amount_cents, l.result, l.refusal_reason,
+              l.debit_or_credit, l.amount_cents::bigint AS amount_cents, l.result, l.refusal_reason, l.override_of_refusal,
               l.reclass_journal_entry_id::text, l.undo_journal_entry_id::text, l.document_updated, l.document_update_note
          FROM accounting.reclassify_batch_lines l
          LEFT JOIN catalogs.accounts fa ON fa.id = l.from_account_id
