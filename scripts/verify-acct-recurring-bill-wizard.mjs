@@ -18,6 +18,10 @@ const createPage = fs.readFileSync(
   path.join(root, "apps/frontend/src/pages/accounting/bills/RecurringBillCreate.tsx"),
   "utf8"
 );
+const listPage = fs.readFileSync(
+  path.join(root, "apps/frontend/src/pages/accounting/bills/RecurringBillList.tsx"),
+  "utf8"
+);
 const api = fs.readFileSync(path.join(root, "apps/frontend/src/api/accounting.ts"), "utf8");
 const generator = fs.readFileSync(
   path.join(root, "apps/backend/src/accounting/bills/recurring/generator.service.ts"),
@@ -56,6 +60,10 @@ if (!generator.includes("recurring_bill_line_coa_required")) {
 // BANK-F91082 — ORDERS chrome: RecurringBillCreate uses text-xs, not text-[11px].
 if (createPage.includes("text-[11px]")) {
   fail("RecurringBillCreate.tsx must not use text-[11px] — use text-xs");
+}
+// BANK-F91090 — ORDERS chrome: RecurringBillList back-link uses text-xs, not text-[11px].
+if (listPage.includes("text-[11px]")) {
+  fail("RecurringBillList.tsx must not use text-[11px] — use text-xs");
 }
 
 console.log("PASS: verify-acct-recurring-bill-wizard");
