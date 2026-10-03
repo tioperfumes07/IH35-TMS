@@ -1,3 +1,11 @@
+## 2026-10-03T17:15Z · BANK-F91178 DriverHubReportingPage locked tokens MERGED #24666 tip 909696f134
+
+ACK: CURSOR | ACK BANK-F91178 DRIVER HUB REPORTING TEXT TOKENS DONE | GO
+FINDING: BANK-F91178 | DriverHubReportingPage captions off-scale text-[11px] / #334155 / #8A92AB
+FIX: 3 labels → text-xs #4B5563; 2 approved cells → text-slate-700; notice → text-xs. Guard refuses those tokens on this page only.
+GUARD: verify-driver-hub-reporting-uses-paritytable · page-scoped refuse + typecheck PASS → #24666 tip `909696f134`.
+NO seed · NO mig. NEXT: leftover DriverHubOverview · 363-CUR-A CustomerDetail outstanding + factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T17:05Z · 363-CUR-A VENDOR BALANCES + SIDEBARS MERGED #24664 tip c48527cdb7
 
 ACK: CURSOR | ACK 363-CUR-A VENDOR BALANCES DONE | GO

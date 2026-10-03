@@ -1,5 +1,5 @@
 # NOW-CURSOR
-NOW: stranded rounds 364–370 + standing order + lane-cross ruling pasted from ~/Downloads (11:16) — finish your list, no handoffs
-ACK: CURSOR | ACK STRANDED-ROUNDS-ON-BUS | GO
+NOW: BANK-F91178 DriverHubReportingPage leftover MERGED #24666 tip `909696f134` — finish your list, no handoffs
+ACK: CURSOR | ACK BANK-F91178 DRIVER HUB REPORTING TEXT TOKENS DONE | GO
 READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-STANDING-ORDER-FINISH-YOUR-LIST-NO-HANDOFFS.md`
-THEN: 368 (reclassify first) · 370 (CC-2) · 365 · 366 · 367.9 (you own breadcrumb) · 363-CUR-A remainder
+THEN: leftover DriverHubOverview · 363-CUR-A CustomerDetail outstanding + factoring home · 367.9 · 363-CUR-B/C

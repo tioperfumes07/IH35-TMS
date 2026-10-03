@@ -9,7 +9,7 @@ Pasted from ~/Downloads (not invented): 373 spine hole · 374 baseline + five wr
 
 ## YOUR LIST (still yours)
 
-1. **363-CUR-A remainder** — reports `#24639` · finance/AP `#24649` · customer/vendor `#24655` · home KPIs `#24659` · vendor balances/sidebars `#24664` tip `c48527cdb7`. Next: CustomerDetail outstanding · factoring home liability. Deadline **2026-10-05 06:00Z**.
+1. **363-CUR-A remainder** — reports `#24639` · finance/AP `#24649` · customer/vendor `#24655` · home KPIs `#24659` · vendor balances/sidebars `#24664` · leftover BANK-F91178 `#24666` tip `909696f134`. Next: CustomerDetail outstanding · factoring home liability. Deadline **2026-10-05 06:00Z**.
 2. **Standing-order Cursor engine** — cash flow / 7-day unmatched ALERT / two bank-match defects.
 3. **367.9** breadcrumb by **2026-10-06 18:00Z**.
 4. **363-CUR-B / C** by 2026-10-06 06:00Z. **373.2 / 370 / 368.1 / 374.2** stay on the named seats.
