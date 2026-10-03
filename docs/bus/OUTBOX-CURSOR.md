@@ -1,3 +1,11 @@
+## 2026-10-03T19:15Z · BANK-F91191 exception-queue drill leftover tokens MERGED #24704 tip 86d917ee94
+
+ACK: CURSOR | ACK BANK-F91191 EXCEPTION QUEUE DRILL TEXT TOKENS DONE | GO
+FINDING: BANK-F91191 | LoadsWithoutTour + LoadsWithoutDriverBill captions off-scale text-[11px]
+FIX: 2 captions → text-xs. Hung leftover refuse on verify-saved-query-chips.
+GUARD: verify-saved-query-chips · leftover plant + live PASS → #24704 tip `86d917ee94`.
+NO seed · NO mig. NEXT: leftover CounterpartyStatement · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T19:05Z · BANK-F91190 CargoClaimIntake leftover tokens MERGED #24701 tip 149637e32f
 
 ACK: CURSOR | ACK BANK-F91190 CARGO CLAIM INTAKE TEXT TOKENS DONE | GO
