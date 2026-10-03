@@ -14,8 +14,12 @@
  *   1. company-settlement.template.ts renders the company report inside the SAME house shell classes,
  *      and lays out all real report sections (customer charges, driver payment, fuel, expenses, P&L,
  *      net revenue, miles/MPG) — no invented money math (it consumes CompanySettlementReport).
- *   2. company-settlement-render.routes.ts serves GET .../company-settlements/:id.html, builds the
- *      report via buildCompanySettlementReport and wraps it with wrapPdfDocument (the house shell).
+ *   2. company-settlement-render.routes.ts serves GET .../company-settlements/:id.html and wraps the
+ *      body with wrapPdfDocument (the house shell). RE-POINT (ROUND 365.6, writer 7291c8ea95 #23408):
+ *      the report build + body render moved into company-settlement-document.service.ts
+ *      (buildCompanySettlementDocument) so the .html and /pdf routes print ONE document. The route must
+ *      render through that service, and the service must build via buildCompanySettlementReport and
+ *      render via renderCompanySettlementBody — same invariant, new location.
  *   3. The route is mounted in index.ts (a built-but-unmounted route is not done).
  *   4. The frontend opens the canonical backend letter (companySettlementHtmlUrl + openCanonicalDocument
  *      / openPrintableDocument) — never window.print() on the SPA shell.
@@ -27,6 +31,7 @@ import { readdirSync, readFileSync } from "node:fs";
 
 const templatePath = "apps/backend/src/render/company-settlement.template.ts";
 const routePath = "apps/backend/src/accounting/company-settlement-render.routes.ts";
+const documentPath = "apps/backend/src/accounting/company-settlement-document.service.ts";
 const indexPath = "apps/backend/src/index.ts";
 const pagePath = "apps/frontend/src/pages/driver-finance/CompanySettlementsPage.tsx";
 const apiPath = "apps/frontend/src/api/accounting.ts";
@@ -34,6 +39,7 @@ const apiPath = "apps/frontend/src/api/accounting.ts";
 const source = {
   template: readFileSync(templatePath, "utf8"),
   route: readFileSync(routePath, "utf8"),
+  document: readFileSync(documentPath, "utf8"),
   index: readFileSync(indexPath, "utf8"),
   page: readFileSync(pagePath, "utf8"),
   api: readFileSync(apiPath, "utf8"),
@@ -125,11 +131,17 @@ export function collectFailures(src = source) {
   if (!/"\/api\/v1\/accounting\/company-settlements\/:id\.html"/.test(src.route)) {
     failures.push(`${routePath}: GET /api/v1/accounting/company-settlements/:id.html route path missing`);
   }
-  if (!/buildCompanySettlementReport\(/.test(src.route)) {
-    failures.push(`${routePath}: does not build the report via buildCompanySettlementReport`);
+  if (!/import \{ buildCompanySettlementDocument \} from "\.\/company-settlement-document\.service\.js"/.test(src.route)) {
+    failures.push(`${routePath}: does not import buildCompanySettlementDocument (the one company-settlement document)`);
   }
-  if (!/renderCompanySettlementBody\(/.test(src.route)) {
-    failures.push(`${routePath}: does not render the company body`);
+  if (!/buildCompanySettlementDocument\(/.test(src.route)) {
+    failures.push(`${routePath}: does not render through buildCompanySettlementDocument`);
+  }
+  if (!/buildCompanySettlementReport\(/.test(src.document)) {
+    failures.push(`${documentPath}: does not build the report via buildCompanySettlementReport`);
+  }
+  if (!/renderCompanySettlementBody\(/.test(src.document)) {
+    failures.push(`${documentPath}: does not render the company body`);
   }
   if (!/wrapPdfDocument\(\{/.test(src.route)) {
     failures.push(`${routePath}: does not wrap the body in the house shell (wrapPdfDocument)`);
@@ -185,7 +197,9 @@ if (process.argv.includes("--selftest")) {
     ["v10 loadblock", "template", /loadblock/g, "legacyblock"],
     ["pl section", "template", /s\.pl_rollup\.lines/g, "s.PL_DISABLED.lines"],
     ["route path", "route", /"\/api\/v1\/accounting\/company-settlements\/:id\.html"/, '"/api/v1/accounting/company-settlements/:id.json"'],
-    ["build report", "route", /buildCompanySettlementReport\(/g, "buildDISABLEDReport("],
+    ["route bypasses document service", "route", /buildCompanySettlementDocument\(/g, "buildDISABLEDDocument("],
+    ["build report", "document", /buildCompanySettlementReport\(/g, "buildDISABLEDReport("],
+    ["render body", "document", /renderCompanySettlementBody\(/g, "renderDISABLEDBody("],
     ["wrap shell", "route", /wrapPdfDocument\(\{/g, "rawHtml({"],
     ["v10 skin on route", "route", /skin:\s*"v10"/g, 'skin: "house"'],
     ["route default fp export", "route", /export default fp\(async \(app\) => \{/, "const _unmounted = (async (app) => {"],

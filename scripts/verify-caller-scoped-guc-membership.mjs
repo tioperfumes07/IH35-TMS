@@ -84,12 +84,93 @@ function keyFor(label, scope) {
   return m ? `${label}|${m[1].toUpperCase()}|${m[2]}` : `${label}|FN|${scope.slice(0, 60).replace(/\s+/g, " ").trim()}`;
 }
 
+/** Split an argument list at top-level commas (ignores commas inside (), [], {}). */
+function splitArgs(s) {
+  const out = [];
+  let depth = 0;
+  let cur = "";
+  for (const ch of s) {
+    if ("([{".includes(ch)) depth++;
+    else if (")]}".includes(ch)) depth--;
+    if (ch === "," && depth === 0) { out.push(cur.trim()); cur = ""; continue; }
+    cur += ch;
+  }
+  if (cur.trim()) out.push(cur.trim());
+  return out;
+}
+
+/** Index just past the bracket that closes the one at `open`, or -1. */
+function closeOf(src, open) {
+  const pair = { "(": ")", "{": "}" }[src[open]];
+  let depth = 0;
+  for (let i = open; i < src.length; i++) {
+    if (src[i] === src[open]) depth++;
+    else if (src[i] === pair && --depth === 0) return i + 1;
+  }
+  return -1;
+}
+
+const HELPER_DEF =
+  /(?:\b(?:const|let)\s+(\w+)\s*=\s*async\s*\(([^)]*)\)\s*(?::[^=]{0,200})?=>\s*\{|\basync\s+function\s+(\w+)\s*\(([^)]*)\)[^{]{0,200}\{)/g;
+const MEMBERSHIP_CALL = /\b(?:assertCompanyMembership|resolveOperatingCompanyId)\s*\(/g;
+
+/**
+ * SAME-FILE MEMBERSHIP HELPERS (found 2026-10-03, ROUND 365.6 — lease.routes.ts, ACCT-F9731 #23822):
+ * a handler may delegate the assert to a local helper, e.g.
+ *   const authed = async (req, reply, opco) => { ...; await assertCompanyMembership(user.uuid, opco); ... }
+ * and call `authed(req, reply, q.data.operating_company_id)` before the GUC set. That IS the gate — but
+ * only when (a) the helper asserts UNCONDITIONALLY (the call sits at the top level of its body, not inside
+ * an if/loop/callback), (b) the asserted company is one of the helper's own parameters, and (c) the
+ * handler passes, in that parameter's position, the SAME caller-supplied value it then hands to the GUC,
+ * BEFORE the GUC set. Followed by structure, never by file name. Returns [{ name, companyParamIndex }].
+ */
+export function membershipHelpers(src) {
+  const helpers = [];
+  for (const d of src.matchAll(HELPER_DEF)) {
+    const name = d[1] ?? d[3];
+    const params = splitArgs(d[2] ?? d[4]).map((p) => p.replace(/\??\s*:[\s\S]*$/, "").replace(/=[\s\S]*$/, "").trim());
+    const open = d.index + d[0].length - 1;
+    const end = closeOf(src, open);
+    if (end < 0) continue;
+    const body = src.slice(open + 1, end - 1);
+    for (const c of body.matchAll(MEMBERSHIP_CALL)) {
+      const before = body.slice(0, c.index);
+      const depth = (before.match(/[{(]/g) ?? []).length - (before.match(/[})]/g) ?? []).length;
+      if (depth !== 0) continue; // a conditional / nested assert does not gate every return path
+      const argOpen = c.index + c[0].length - 1;
+      const argEnd = closeOf(body, argOpen);
+      if (argEnd < 0) continue;
+      const args = splitArgs(body.slice(argOpen + 1, argEnd - 1));
+      const idx = params.indexOf(args[args.length - 1]);
+      if (idx >= 0) helpers.push({ name, companyParamIndex: idx });
+    }
+  }
+  return helpers;
+}
+
+function gatedByHelper(scope, helpers, gucValue) {
+  const norm = (s) => s.replace(/\s+/g, "");
+  for (const h of helpers) {
+    for (const call of scope.matchAll(new RegExp(`\\b${h.name}\\s*\\(`, "g"))) {
+      const open = call.index + call[0].length - 1;
+      const end = closeOf(scope, open);
+      if (end < 0) continue;
+      const arg = splitArgs(scope.slice(open + 1, end - 1))[h.companyParamIndex];
+      if (arg && norm(arg) === norm(gucValue)) return true;
+    }
+  }
+  return false;
+}
+
 export function auditSource(src, label) {
   const found = [];
+  const helpers = membershipHelpers(src);
   for (const m of src.matchAll(GUC_CALL)) {
-    if (!CALLER_SUPPLIED.test(m[0])) continue;
+    const supplied = m[0].match(CALLER_SUPPLIED);
+    if (!supplied) continue;
     const scope = src.slice(handlerStart(src, m.index), m.index);
     if (AUTHORIZED.test(scope)) continue;
+    if (gatedByHelper(scope, helpers, supplied[0])) continue;
     found.push({
       key: keyFor(label, src.slice(handlerStart(src, m.index), m.index + 200)),
       line: src.slice(0, m.index).split("\n").length,
@@ -138,6 +219,11 @@ if (process.argv.includes("--selftest")) {
     ["laundering: assert in a DIFFERENT route in the same file", `app.post("/a", async () => { await assertCompanyMembership(c,u,x); });\napp.post("/b", async () => { await c.query(\`SELECT set_config('app.operating_company_id', $1, true)\`, [query.data.operating_company_id]); });`, 1],
     ["assert AFTER the GUC set is too late", `app.post("/a", async () => { await c.query(\`SELECT set_config('app.operating_company_id', $1, true)\`, [query.data.operating_company_id]); await assertCompanyMembership(c,u,query.data.operating_company_id); });`, 1],
     ["no GUC set at all", `app.get("/a", async () => { await c.query("SELECT 1"); });`, 0],
+    ["same-file helper asserts the SAME company the GUC gets", `const authed = async (req: R, reply: P, opco: string) => { if (!ok) return null; await assertCompanyMembership(u, opco); return u; };\napp.get("/a", async () => { const u = await authed(req, reply, q.data.operating_company_id); await c.query(\`SELECT set_config('app.operating_company_id', $1, true)\`, [q.data.operating_company_id]); });`, 0],
+    ["helper called with a DIFFERENT company than the GUC gets", `const authed = async (req: R, reply: P, opco: string) => { if (!ok) return null; await assertCompanyMembership(u, opco); return u; };\napp.get("/a", async () => { const u = await authed(req, reply, authUser.defaultCompanyId); await c.query(\`SELECT set_config('app.operating_company_id', $1, true)\`, [q.data.operating_company_id]); });`, 1],
+    ["helper asserts only conditionally", `const authed = async (req: R, reply: P, opco: string) => { if (strict) { await assertCompanyMembership(u, opco); } return u; };\napp.get("/a", async () => { const u = await authed(req, reply, q.data.operating_company_id); await c.query(\`SELECT set_config('app.operating_company_id', $1, true)\`, [q.data.operating_company_id]); });`, 1],
+    ["helper asserts a company that is not its parameter", `const authed = async (req: R, reply: P, opco: string) => { await assertCompanyMembership(u, u.defaultCompanyId); return u; };\napp.get("/a", async () => { const u = await authed(req, reply, q.data.operating_company_id); await c.query(\`SELECT set_config('app.operating_company_id', $1, true)\`, [q.data.operating_company_id]); });`, 1],
+    ["helper called only AFTER the GUC set", `const authed = async (req: R, reply: P, opco: string) => { await assertCompanyMembership(u, opco); return u; };\napp.get("/a", async () => { await c.query(\`SELECT set_config('app.operating_company_id', $1, true)\`, [q.data.operating_company_id]); const u = await authed(req, reply, q.data.operating_company_id); });`, 1],
   ];
   let bad = 0;
   for (const [name, src, expect] of cases) {
