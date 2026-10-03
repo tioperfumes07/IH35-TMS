@@ -90,6 +90,12 @@ export function run() {
     "BankTransactionSuggestion type must carry the ORDERS §18 inline candidate fields + match count",
     errors
   );
+  // BANK-F91067 — B-3 feed chrome uses locked tokens (text-section-header / text-xs), not text-[11px].
+  assert(
+    !register.includes("text-[11px]") && register.includes("REGISTER_COLUMN_HEADER_CLASS") && register.includes("text-section-header"),
+    "BankingTransactionsDesignView must not use text-[11px]; column headers via REGISTER_COLUMN_HEADER_CLASS (text-section-header)",
+    errors
+  );
   assert(
     parityTable.includes("gearExtra?: ReactNode") && parityTable.includes("{gearExtra ? ("),
     "ParityTable must keep the gearExtra extension slot (BANK-TOOLBAR-ONE's ONE-gear mechanism) rendered inside its own gear popover",
