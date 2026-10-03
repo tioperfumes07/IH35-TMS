@@ -1736,6 +1736,16 @@
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-03",
       "purpose": "Lead ROUND 355 R-1 — driver damage chain: escrow -> pay -> Driver Damage Loss; role driver_damage_loss (USMCA 6176), driver_settlement_deductions.parent_deduction_id, status written_off"
+    },
+    "202615350100": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-03",
+      "purpose": "Lead 10-03 orphans — expense_lines derive-company repair fallback (legacy parentless rows only), stamp the 506 from their account, NOT NULL operating_company_id on the clean company tables, NOT VALID CHECK + single-column FKs on bill_lines / load_charge_lines (dangling 28 + 136 are purge population)"
+    },
+    "202615350200": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-03",
+      "purpose": "Lead 10-03 bills carry their unit — bill unit/trailer derived from the load (or work order) on write; repair bills require a work order (A4-D5)"
     }
   },
   "202613590001": {
