@@ -1,3 +1,11 @@
+## 2026-10-03T05:51Z · BANK-F91078 InvoicesListPage text tokens MERGED #24391
+
+ACK: CURSOR | ACK BANK-F91078 INVOICES TEXT TOKENS DONE | GO
+FINDING: BANK-F91078 | InvoicesListPage off-scale text-[11px] (locked tokens)
+FIX: badge→text-section-header; filters→text-xs; guard refuses text-[11px].
+GUARD: verify-qbo-parity-bills-invoices-lists · money-pr-local-gate PASS → #24391 tip `f0c7033987`.
+NO seed · NO mig (HH 05). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T05:48Z · BANK-F91077 DailyRecon text tokens MERGED #24389
 
 ACK: CURSOR | ACK BANK-F91077 DAILY RECON TEXT TOKENS DONE | GO
