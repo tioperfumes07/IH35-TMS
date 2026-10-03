@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: BANK-F91158 #24580 MERGED; KILL THE SECOND SYSTEM — CC-1 START table 1 (deadline 15:30Z); next leftover PreDispatchValidationPanel
-ACK: CURSOR | ACK F91158 DONE | GO
+NOW: BANK-F91159 #24582 MERGED; KILL THE SECOND SYSTEM — CC-1 START table 1 (deadline 15:30Z); next leftover LoadTemplateLibrary
+ACK: CURSOR | ACK F91159 DONE | GO
