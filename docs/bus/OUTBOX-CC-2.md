@@ -2175,3 +2175,18 @@ or the governed purge resets them.
 **Next (CC-2 engine):** the four insurance guards red on main before today (verify-claim-load-reverse-and-driver-create,
 verify-insurance-claim-graph-complete-reverse, verify-insurance-lawsuit-update-truth,
 verify-insurance-payment-schedule-policy-company-link) — triage each as real defect vs. drift, fix in one block.
+
+## 2026-10-03 (later) DONE census (CC-2) — merged AND live
+| Item | PR · squash | Backend deploy (live) | Live proof |
+|---|---|---|---|
+| Four insurance guards red on main (drift) re-pointed + registered | #24495 · 10b902da | n/a (guards) | all four PASS on main; 3 had been registered nowhere |
+| Relay fuel webhook receiver (10-02 item 5 / ROUND 353) | #24498 · 94d51346 | dep-db0egt0u01pc73a0sei0 11:38Z | prod route answers its own `relay_webhook_unknown_entity`; fork: lands 1.6 s after arrival, posts nothing. **To switch on: set RELAY_WEBHOOK_SECRET_USMCA on the backend and give Relay the URL + secret** (503 until then) |
+| Factoring guards red on main (10-02 item 9): 4 fixed, rest triaged | #24501 · eb856773 | n/a (guards) | 4 PASS; nav guard PASS in a clean worktree; Faro repurchase tie-out needs the owner's current Faro statement total |
+| One Relay fill = one company (10-02 item 8 / ROUND 310 ruling) | #24506 · 54263dcc | dep-db0en6c9v7es73b3trfg 11:51Z | guard live: 1,840 rows, 119 duplicates at the committed ceiling (purge population); writer now stores a fill only under its unit's operator |
+| WORM + audit on fuel / Relay source tables, FORCE RLS on derived fuel tables | #24516 · 1e55f9aa | dep-db0etougekts739csie0 12:09Z | 202615340600 applied; guard live WORM 4/4, audit 5/5, FORCE 4/4 |
+| Spine guard 251 s -> 1.5 s (its snapshot stalled a concurrent index build in pre-deploy) | #24519 · b7c01ec2 | n/a (guard) | identical result, 1.46 s |
+| Single-fire: withJobLease + _system.job_leases; CC-2's unleased crons adopt it | #24523 · d60cb07c | dep-db0fb1mgekts739elm7g | 202615340700 applied 12:32:57Z; first live lease rows land at the 05:20–06:00 Chicago ticks |
+Claims merged: #24508 (202615340600), #24520 (202615340700).
+**Items moot after the factoring clean slate (AUTH-193, 0 purchases):** 10-02 items 6 (AUTH-191 FAC links), 7 (09-25 wire short $2,000), 10 (G-13 $34,210) — the records they name no longer exist; the owner re-enters factoring.
+**Board rows filed for other lanes:** RECURRING-TEMPLATE-GUC-BEFORE-MEMBERSHIP-2026100305 (CC-1), TRIP-PROFITABILITY-GUARD-PINS-REMOVED-QUERY-2026100306 (CC-3), CUSTOMER-DETAIL-SHARED-COMPANY-2026100307 (Cursor), NESTED-BOX-NEW-NESTING-2026100308 (Cursor), CATALOG-FACTORY-COVERAGE-2026100309 (CC-3), CRONS-WITHOUT-LEASE-2026100310 (CC-3).
+**Owner inputs outstanding:** tank capacity per unit (Edit Vehicle; 150-gal fallback until then); Faro's current total outstanding repurchase price; the Relay webhook secret.
