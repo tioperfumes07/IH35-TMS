@@ -115,6 +115,16 @@ function main() {
   assertIncludes(routes, "beginning_balance_cents", ROUTES);
   assertIncludes(routes, "cleared_credits_cents", ROUTES);
 
+  // BANK-F91066 — B-2 recon chrome uses locked tokens (text-section-header / text-xs), not text-[11px].
+  if (workspace.includes("text-[11px]")) {
+    throw new Error(`${WORKSPACE}: must not use text-[11px] — use text-section-header or text-xs`);
+  }
+  assertIncludes(workspace, "text-section-header", WORKSPACE);
+  const bankRecon = read("apps/frontend/src/pages/banking/BankReconciliationPage.tsx");
+  if (bankRecon.includes("text-[11px]")) {
+    throw new Error("BankReconciliationPage.tsx: must not use text-[11px] — use text-section-header or text-xs");
+  }
+
   console.log(`${LABEL}: PASS`);
 }
 
