@@ -24,6 +24,8 @@ function problems(b = backend, a = api, p = page) {
     [p.includes("offset: (pmPage - 1) * pmPageSize"), "page reaches API"],
     [p.includes('data-testid="maint-kpi-pm-server-pager"'), "visible exact pager"],
     [p.includes("useEffect(() => { setPmPage(1); setDrillPage(1); }, [companyId, periodStart, periodEnd, unitId]);"), "scope reset"],
+    [!p.includes("text-[11px]"), "leftover text-[11px]"],
+    [!p.includes("#8A92AB") && !p.includes("#334155"), "leftover off-scale muted"],
   ];
   return checks.filter(([ok]) => !ok).map(([, label]) => label);
 }
@@ -36,6 +38,7 @@ if (process.argv.includes("--selftest")) {
     [backend, api.replaceAll('params.set("offset"', 'params.set("offsetValue"'), page],
     [backend, api, page.replace('data-testid="maint-kpi-pm-server-pager"', 'data-testid="missing-pager"')],
     [backend, api, page.replace("setPmPage(1)", "void pmPage")],
+    [backend, api, `${page}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`],
   ];
   const escaped = mutations.filter(([b, a, p]) => problems(b, a, p).length === 0);
   if (escaped.length) {
