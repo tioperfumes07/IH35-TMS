@@ -33,6 +33,8 @@ function failures(source) {
   if (!source.includes("detailQuery.data ?? allRows.find")) {
     found.push("exact detail failure must retain the populated list snapshot fallback");
   }
+  if (source.includes("text-[11px]")) found.push("leftover text-[11px]");
+  if (source.includes("#8A92AB") || source.includes("#334155")) found.push("leftover off-scale muted");
   return found;
 }
 
@@ -58,6 +60,11 @@ if (process.argv.includes("--selftest")) {
       name: "detail list snapshot fallback",
       from: "detailQuery.data ?? allRows.find",
       to: "detailQuery.data ?? null ?? allRows.find",
+    },
+    {
+      name: "leftover 11px",
+      from: original,
+      to: `${original}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`,
     },
   ];
   const survivors = [];

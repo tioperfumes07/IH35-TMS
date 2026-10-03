@@ -508,7 +508,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             allowClear
           />
           {/* SAF-F28: filters, not creators — allowCreate={false} (Idvr / Accidents law). */}
-          <label className="text-[11px] text-slate-600" aria-label="Filter by driver">
+          <label className="text-xs text-slate-600" aria-label="Filter by driver">
             Driver
             <EntityPicker
               kind="driver"
@@ -522,7 +522,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
               dataTestId="safety-events-driver-filter"
             />
           </label>
-          <label className="text-[11px] text-slate-600" aria-label="Filter by unit">
+          <label className="text-xs text-slate-600" aria-label="Filter by unit">
             Unit
             <EntityPicker
               kind="unit"
@@ -689,7 +689,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
         isDirty={logModalDirty}
       >
         <div className="grid gap-2 sm:grid-cols-2" data-testid="safety-event-log-modal">
-          <label className="flex flex-col gap-0.5 text-[11px] font-semibold uppercase text-gray-600 sm:col-span-2">
+          <label className="flex flex-col gap-0.5 text-xs font-semibold uppercase text-gray-600 sm:col-span-2">
             Time of occurrence
             <DateTimePicker
               aria-label="Time of occurrence"
@@ -912,7 +912,7 @@ function KpiCard({
 }) {
   const content = (
     <>
-      <div className="text-[11px] uppercase text-gray-500">{label}</div>
+      <div className="text-xs uppercase text-gray-500">{label}</div>
       <div className="text-page-title font-semibold text-gray-900">{value}</div>
     </>
   );
