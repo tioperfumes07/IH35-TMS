@@ -26,6 +26,7 @@ import {
   type ApAgingBillRow,
 } from "../../api/arApAging";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
+import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDocumentsNote";
 
 const fmtCents = (c: number) => formatUsdCents(c);
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
@@ -90,6 +91,21 @@ const AR_COLUMNS: ParityColumn<ArAgingCustomerRow>[] = [
     cellClass: NUM_CELL,
     sortValue: (r) => r.open_invoice_count,
   },
+  {
+    key: "cleared_open_cents",
+    label: "Cleared",
+    sortable: true,
+    className: "text-right",
+    cellClass: NUM_CELL,
+    sortValue: (r) => r.cleared_open_cents,
+    render: (r) => fmtCents(r.cleared_open_cents),
+  },
+  {
+    key: "uncleared_cents",
+    label: "Not cleared",
+    sortable: true,
+    render: (r) => <UnclearedDocumentsNote docs={r.uncleared_documents} />,
+  },
   ...bucketColumns<ArAgingCustomerRow>(),
 ];
 
@@ -108,6 +124,21 @@ const AP_COLUMNS: ParityColumn<ApAgingVendorRow>[] = [
     className: "text-right",
     cellClass: NUM_CELL,
     sortValue: (r) => r.open_bill_count,
+  },
+  {
+    key: "cleared_open_cents",
+    label: "Cleared",
+    sortable: true,
+    className: "text-right",
+    cellClass: NUM_CELL,
+    sortValue: (r) => r.cleared_open_cents,
+    render: (r) => fmtCents(r.cleared_open_cents),
+  },
+  {
+    key: "uncleared_cents",
+    label: "Not cleared",
+    sortable: true,
+    render: (r) => <UnclearedDocumentsNote docs={r.uncleared_documents} />,
   },
   ...bucketColumns<ApAgingVendorRow>(),
 ];
@@ -322,6 +353,14 @@ export function ArApAgingPage() {
   const isError = mode === "ar" ? arQuery.isError : apQuery.isError;
 
   const rowCount = mode === "ar" ? arRows.length : apRows.length;
+  const unclearedCents =
+    mode === "ar"
+      ? arRows.reduce((s, r) => s + r.uncleared_cents, 0)
+      : apRows.reduce((s, r) => s + r.uncleared_cents, 0);
+  const clearedCents =
+    mode === "ar"
+      ? arRows.reduce((s, r) => s + r.cleared_open_cents, 0)
+      : apRows.reduce((s, r) => s + r.cleared_open_cents, 0);
 
   const handleExport = useMemo(
     () => () => {
@@ -494,6 +533,11 @@ export function ArApAgingPage() {
           : `Aging as of today (${fmtDate(appliedAsOf)}), computed live from the canonical ledger views.`}{" "}
         Expand a row (▸) to drill into open {mode === "ar" ? "invoices" : "bills"}.
       </p>
+      {unclearedCents > 0 ? (
+        <p className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
+          Cleared {fmtCents(clearedCents)}. Applied payments that have not been matched or categorized in Banking are named not cleared beside each {mode === "ar" ? "customer" : "vendor"}.
+        </p>
+      ) : null}
 
       {!operatingCompanyId ? (
         <div className="rounded-sm border border-gray-200 bg-white px-4 py-12 text-center text-xs text-gray-500">

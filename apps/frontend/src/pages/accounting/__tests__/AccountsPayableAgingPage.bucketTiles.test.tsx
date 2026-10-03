@@ -33,6 +33,9 @@ function vendor(overrides: Partial<ApAgingVendor>): ApAgingVendor {
     d61_90: 0,
     d90_plus: 0,
     total_outstanding: 0,
+    uncleared_documents: [],
+    uncleared_cents: 0,
+    cleared_open_cents: overrides.total_outstanding ?? 0,
     ...overrides,
   };
 }

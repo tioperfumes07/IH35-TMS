@@ -17,6 +17,7 @@ import { companyToday } from "../../lib/businessDate";
 import { apAgingBillsListHref } from "../reports/agingDrillThrough";
 import { entityLabel } from "../../lib/entity-label";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
+import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDocumentsNote";
 
 type ApAgingView = "by_vendor" | "by_type";
 
@@ -167,6 +168,21 @@ const VENDOR_COLUMNS: Array<ParityColumn<ApAgingVendor>> = [
     cellClass: parityMoneyCellClass("total"),
     sortValue: (v) => amount(v, "total"),
     render: (v) => money(amount(v, "total")),
+  },
+  {
+    key: "cleared_open_cents",
+    label: "Cleared",
+    sortable: true,
+    cellClass: "text-right tabular-nums",
+    sortValue: (v) => v.cleared_open_cents,
+    render: (v) => money(v.cleared_open_cents),
+  },
+  {
+    key: "uncleared_cents",
+    label: "Not cleared",
+    sortable: true,
+    sortValue: (v) => v.uncleared_cents,
+    render: (v) => <UnclearedDocumentsNote docs={v.uncleared_documents ?? []} />,
   },
 ];
 
@@ -394,6 +410,12 @@ export function AccountsPayableAgingPage() {
           )}
         </div>
       </div>
+
+      {vendors.some((v) => v.uncleared_cents > 0) ? (
+        <p className="mb-3 rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
+          Cleared {money(vendors.reduce((s, v) => s + v.cleared_open_cents, 0))}. Applied payments that have not been matched or categorized in Banking are named not cleared beside each vendor.
+        </p>
+      ) : null}
 
       {/* A5 item 4 — clickable aging-bucket tiles double as the totals strip and the filter: click
           a bucket to narrow the grid to vendors with a nonzero balance there, click it again (or
