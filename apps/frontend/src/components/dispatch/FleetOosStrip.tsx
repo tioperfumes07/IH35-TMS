@@ -257,7 +257,7 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
       data-testid="dispatch-fleet-oos-strip"
     >
       <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-3 py-1.5">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">
+        <span className="text-section-header font-semibold uppercase tracking-wide text-slate-700">
           Fleet OOS / In shop ({unitsQuery.isLoading || severeQuery.isLoading ? "…" : fleetReadFailed ? "—" : rows.length})
         </span>
         {/*

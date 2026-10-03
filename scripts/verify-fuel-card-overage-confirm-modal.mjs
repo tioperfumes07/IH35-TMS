@@ -43,6 +43,11 @@ if (!/setConfirmApproveRow\(null\);\s*\n\s*\}, \[companyId\]\)/.test(src)) {
   failures.push(`${filePath}: the companyId-change effect no longer clears a pending confirmApproveRow`);
 }
 
+// BANK-F91135 — ORDERS chrome: Driver/Unit filter labels use text-xs, not text-[11px].
+if (src.includes("text-[11px]")) {
+  failures.push(`${filePath}: must not use text-[11px] — use text-xs (filter labels)`);
+}
+
 if (failures.length > 0) {
   console.error("verify-fuel-card-overage-confirm-modal: FAIL");
   for (const f of failures) console.error(`  - ${f}`);

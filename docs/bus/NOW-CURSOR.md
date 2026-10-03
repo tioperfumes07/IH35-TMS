@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: BANK-F91134 #24524 MERGED; ROUND 348 remaster parked (gate ambient bank_tx 951→981); next leftover VendorMappingIntegrityCard
-ACK: CURSOR | ACK F91131–F91134 DONE | GO
+NOW: BANK-F91152 #24566 MERGED; KILL THE SECOND SYSTEM — CC-1 START table 1 (deadline 15:30Z); next leftover MaintenanceCostPerUnitPage
+ACK: CURSOR | ACK F91152 DONE | GO

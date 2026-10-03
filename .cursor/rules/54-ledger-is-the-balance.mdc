@@ -1,0 +1,35 @@
+---
+description: A balance is derived from GL postings. Policies stay. No parallel stored account balances.
+alwaysApply: false
+---
+
+# RULE 54 — THE LEDGER IS THE BALANCE (owner 2026-10-03)
+
+Owner, verbatim: **"KILL THE SECOND SYSTEM. THE LEDGER IS THE BALANCE. POLICIES STAY."**
+**"THIS IS A DELETION, NOT A BUILD."**
+
+Canonical: `docs/bus/00-OWNER-ORDER-2026-10-03-KILL-THE-SECOND-SYSTEM.md`
+
+## The rule (LAW)
+
+1. A **BALANCE** is **DERIVED** from `accounting.journal_entry_postings` on the owning GL
+   account (2100-00-nnn, 1245/sub, 1230, A/P control). Never stored. Never cached unless
+   written in the **same transaction** as the posting, on INSERT/UPDATE/DELETE, by nothing else.
+2. A **POLICY, RULE, PLAN or DOCUMENT** is **STORED**. Caps, schedules, approval dates, advance
+   documents, deduction lines, escrow ledger rows, Faro movement rows — those stay.
+   Nothing in this rule deletes a policy or a document.
+3. The test: could the number be recomputed from the postings? Then derive it.
+4. One table per PR. Repoint every reader first. No screen may read both a stored balance
+   column and the GL. Then replace the column with a VIEW (or a same-txn cache).
+5. Repair nothing by hand. Drifted stored balances are purge population. Fix writers.
+6. A new table carrying an account balance is **refused at review**.
+
+## Closed register (the twelve)
+
+escrow_accounts.balance_cents · escrow_balances current/total_held/total_released ·
+escrow_ledger.running_balance_cents · vendor_balances.balance_cents ·
+driver_advances.outstanding_balance · driver_liabilities.current_balance ·
+driver_deduction_buckets.remaining_balance · driver_settlement_deductions remaining ·
+faro_reserve_entries running_balance + short_pay_balance.
+
+CC-1 starts. CC-3 last. See the law file for seat order.

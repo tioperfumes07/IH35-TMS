@@ -260,15 +260,15 @@ export function CashFlowStatementPage() {
       {query.data ? (
         <div className="grid gap-2 md:grid-cols-4">
           <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
-            <div className="text-[11px] font-semibold uppercase text-gray-500">Net cash change</div>
+            <div className="text-section-header font-semibold uppercase text-gray-500">Net cash change</div>
             <div className="text-page-title font-semibold">{money(query.data.net_cash_change)}</div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
-            <div className="text-[11px] font-semibold uppercase text-gray-500">Cash at start</div>
+            <div className="text-section-header font-semibold uppercase text-gray-500">Cash at start</div>
             <div className="text-page-title font-semibold">{money(query.data.cash_at_start)}</div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
-            <div className="text-[11px] font-semibold uppercase text-gray-500">Cash at end</div>
+            <div className="text-section-header font-semibold uppercase text-gray-500">Cash at end</div>
             <div className="text-page-title font-semibold">{money(query.data.cash_at_end)}</div>
           </div>
           {/* Accrual mode not tying to the literal cash movement is EXPECTED (see disclaimer above),
@@ -277,9 +277,9 @@ export function CashFlowStatementPage() {
               verify-cash-flow-statement-reconciled-badge-honest.mjs, which pins its exact text). */}
           {query.data.basis === "accrual" ? (
             <div className="rounded-sm border border-slate-200 bg-white px-3 py-2">
-              <div className="text-[11px] font-semibold uppercase text-gray-500">Reconciliation</div>
+              <div className="text-section-header font-semibold uppercase text-gray-500">Reconciliation</div>
               <div className="text-page-title font-semibold text-slate-700">N/A — accrual basis</div>
-              <div className="text-[11px] text-gray-500">Accrual does not tie to the literal cash-balance change by design.</div>
+              <div className="text-xs text-gray-500">Accrual does not tie to the literal cash-balance change by design.</div>
             </div>
           ) : (
             <div
@@ -287,7 +287,7 @@ export function CashFlowStatementPage() {
                 query.data.reconciled && query.data.unclassified_leg_count === 0 ? "border-emerald-200" : "border-amber-300"
               }`}
             >
-              <div className="text-[11px] font-semibold uppercase text-gray-500">Reconciliation</div>
+              <div className="text-section-header font-semibold uppercase text-gray-500">Reconciliation</div>
               <div
                 className={`text-page-title font-semibold ${
                   query.data.reconciled && query.data.unclassified_leg_count === 0 ? "text-emerald-700" : "text-amber-700"
@@ -299,7 +299,7 @@ export function CashFlowStatementPage() {
                     ? "Reconciled — unclassified legs"
                     : "Reconciled"}
               </div>
-              <div className={query.data.unclassified_leg_count > 0 ? "text-[11px] font-semibold text-slate-700" : "text-[11px] text-gray-500"}>
+              <div className={query.data.unclassified_leg_count > 0 ? "text-xs font-semibold text-slate-700" : "text-xs text-gray-500"}>
                 Unclassified legs: {query.data.unclassified_leg_count}
                 {query.data.unclassified_leg_count > 0
                   ? " — bucketed into Operating by default, may not reflect the true Operating/Investing/Financing split"
@@ -322,7 +322,7 @@ export function CashFlowStatementPage() {
             <div key={section.key} className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
               <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold">{section.title}</div>
               <table className="min-w-full text-left text-xs">
-                <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                <thead className="border-b border-gray-200 bg-gray-50 text-section-header font-semibold uppercase tracking-wide text-gray-600">
                   <tr>
                     <th className="px-3 py-2">Class</th>
                     <th className="px-3 py-2">Subtype</th>

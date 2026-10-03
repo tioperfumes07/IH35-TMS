@@ -1857,6 +1857,16 @@
       "claimed_at": "2026-10-03",
       "purpose": "CC-2 engine ten-point (point 9 single-fire): _system.job_leases + withJobLease helper — one instance per job per lease window; adopted by CC-2's six unleased crons (bank tie-out, bank drift alerts, factoring repurchase-due, Love's card import, reconciliation worker, Samsara fuel reports)."
     },
+    "202615340800": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-03",
+      "purpose": "ALL-SEATS order KILL THE SECOND SYSTEM (CC-2, driver_settlement_deductions): view driver_finance.v_settlement_deduction_balances — each deduction's remaining = its amount (the stored policy) minus its active settlement deduction lines; readers repoint to it before remaining_balance_cents is dropped."
+    },
+    "202615350600": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 360 (CC-2) bank feed state machine: split banking.bank_transactions.review_state into review_bucket (for_review|categorized|excluded — the three tabs) + resolution_kind (added|matched|transfer|split); CHECKs make a categorized line without a live document, or a for_review line with one, impossible."
+    },
     "202615340100": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-03",

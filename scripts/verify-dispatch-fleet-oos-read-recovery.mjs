@@ -16,6 +16,8 @@ export function audit(source = readFileSync(join(ROOT, FILE), "utf8")) {
   if (!/Fleet availability was not treated as all units in service/.test(source)) problems.push("failure truth is not explicit");
   if (!/rows\.length === 0[\s\S]{0,180}All units in service/.test(source)) problems.push("honest all-in-service state was not preserved");
   if (!/fleetReadFailed \? ["']—["'] : rows\.length/.test(source)) problems.push("failed count must not render zero");
+  // BANK-F91138 — ORDERS chrome: Fleet OOS heading uses text-section-header, not text-[11px].
+  if (source.includes("text-[11px]")) problems.push("must not use text-[11px] — use text-section-header");
   return problems;
 }
 

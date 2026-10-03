@@ -24,6 +24,8 @@ export function check(filePath = path.join(ROOT, PAGE)) {
   assert(src.includes("InlineDriverPicker"), "DispatchList: keep InlineDriverPicker");
   assert(src.includes("InlineUnitPicker"), "DispatchList: keep InlineUnitPicker");
   assert(!/<table\b/.test(src), "DispatchList: must not use raw HTML table");
+  // BANK-F91141 — ORDERS chrome: HOS cell, ETA, progress pill use text-xs, not text-[11px].
+  assert(!src.includes("text-[11px]"), "DispatchList: must not use text-[11px] — use text-xs");
 }
 
 // GUARD-SELFTEST-MUTATES-SOURCE fix: never write the plant into the real tracked file. Copy it

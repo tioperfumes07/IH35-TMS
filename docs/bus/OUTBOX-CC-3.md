@@ -2652,3 +2652,37 @@ settlement_lines company CHECK validated. `verify-money-lines-same-entity-fks` l
 **Gate repairs on main:** #24331 (UI ratchet: a comment spelled the class it forbids, from #24326).
 
 **Next:** Dispatch end to end, ten points per table.
+
+## 2026-10-03 · CC-3 · KILL THE SECOND SYSTEM — vendor_balances (mine, LAST) measured; Dispatch D1–D3; board items
+
+All counts on the DIRECT endpoint as neondb_owner under SET LOCAL app.bypass_rls='lucia' (see board item 3 — pooled reads are not trustworthy).
+
+**vendor_balances — measured, not changed (order says LAST).**
+- `accounting.vendor_balances` is ALREADY a VIEW (901 rows, 0 triggers) — but over `accounting.bills` stored columns
+  (amount_cents / paid_cents / status), not over GL postings.
+- Per-vendor GL derivation is IMPOSSIBLE today: **every posting on 2000 (role ap_control) carries entity_uuid NULL**, all
+  three companies. The bill / bill-payment posters must tag the vendor (entity_type 'vendor', entity_uuid) before the view
+  can be repointed to the GL. That is the writer fix that comes first.
+- USMCA, bill-sourced A/P: view $566.35 (3 unpaid bills) = GL 2000 bill postings $566.35 (3) — **no drift for bills.**
+- USMCA GL 2000 total $3,542.98 vs open bills $566.35. The $2,976.63 difference = 60 JEs "Reversal of journal entry …:
+  DEFECT 3 — source expense voided; this replacement JE (Dr 2000 AP / Cr 9000)…", all 2026-09-30, originals exist.
+  A/P is overstated by $2,976.63 against bills. → CC-1 / CC-2 (expense / A/P GL lane).
+- **90 paid USMCA bills ($63,890.88) carry NO GL at all** (0 spine links) — only the 3 unpaid ones posted. → CC-1.
+- TRANSP / TRK: view $1.62M / $2.98M (QBO-mirror bills, numeric vendor ids) vs GL 2000 $337,972.27 / $25.00 — QBO books,
+  DO NOT TOUCH TRANSPORTATION; recorded only.
+
+**Dispatch (standing order) — live:** D1 #24500 (load_stops company column, derived; 11 FKs) · D2a #24512 + D2b #24518
+(70 dispatch FKs, all validated; eta company column; intransit_issues NOT NULL). Guard `verify-money-lines-same-entity-fks`
+live 113 FKs / 37 tables PASS. **D3 (row audit on 28 dispatch tables + RLS FORCE) is fork-proven on branch
+`cc-3/dispatch-d3`, not shipped: the gate is red (item 1).**
+
+**BOARD**
+1. → Cursor / CC-2: `verify-bank-feed-live-tieout` red for every seat since 2026-10-03 12:39Z. An Owner-role session cleared
+   matched_expense_id on 29 USMCA bank_transactions (22 plaid, 7 csv_import) and left review_state='matched'. The
+   unmatch / re-categorize writer does not reset review_state. Fix the writer.
+2. → CC-1: `verify-no-row-escapes-its-company` flaked on the pooled URL (136 company-less load_charge_lines visible as
+   neondb_owner, invisible as ih35_app). The D3 branch pins `SET LOCAL ROLE NONE` in it; the DEBT entry is unchanged.
+3. → Lead + CC-1: **the app pool's session-level `SET ROLE ih35_app` (apps/backend/src/auth/db.ts:55, :80) leaks through
+   pgbouncer** — pooled `neondb_owner` connections arrive as current_user ih35_app. Any guard or script reading through the
+   pooled DATABASE_URL without pinning its role can undercount (load_charge_lines: pooled 0 rows, direct 284). Migrations
+   are unaffected (constraint VALIDATE / SET NOT NULL check every row).

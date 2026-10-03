@@ -54,6 +54,10 @@ function audit(src) {
   if (!/data-testid="ldt0-stat-popup"/.test(src)) problems.push("header stat pop-up (ldt0-stat-popup) missing");
   if (!/e\.key\s*===\s*"Escape"/.test(src)) problems.push("Escape-to-close on the stat pop-up missing");
 
+  if (src.includes("text-[11px]")) {
+    problems.push(`${FILE}: must not use text-[11px] — use text-xs or text-section-header`);
+  }
+
   return problems;
 }
 
@@ -69,6 +73,7 @@ function main() {
       ["render 0 for Real driven", src.replace('id: "real", label: "Real driven", value: "—"', 'id: "real", label: "Real driven", value: "0"')],
       ["drop the pop-up modal", src.split('data-testid="ldt0-stat-popup"').join('data-testid="GONE"')],
       ["drop Escape close", src.split('e.key === "Escape"').join('e.key === "X"')],
+      ["reintroduce off-scale 11px", src.replace("text-xs font-semibold text-gray-700", "text-[11px] font-semibold text-gray-700")],
     ];
     let escaped = 0;
     for (const [label, mutated] of mutations) {

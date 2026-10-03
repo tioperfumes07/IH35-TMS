@@ -1,3 +1,19 @@
+# >>> NOW 2026-10-03 — OWNER ORDER — KILL THE SECOND SYSTEM — YOU COORDINATE
+
+READ: `docs/bus/00-OWNER-ORDER-2026-10-03-KILL-THE-SECOND-SYSTEM.md`
+
+You are lead. You do **not** take CC-1's money deletion. You:
+
+1. Keep CC-1 on table 1 (`escrow_accounts.balance_cents` readers → 2100-00-nnn). Deadline 15:30Z.
+2. Keep CC-2 on R-2 (policy). Block tables 8–11 until table 1 is on tip.
+3. Keep CC-3 off table 12 until 1–11 are done.
+4. Refuse any PR that adds a new table carrying an account balance.
+5. Leftover token-drain and ROUND 348 remaster stay overflow / parked.
+
+If CC-1 is silent past 15:30Z: take the reader-repoint surface; leave VIEW/column-drop with CC-1.
+
+---
+
 # ROUND 326 — CURSOR — YOUR QUEUE IS NOT EMPTY — 2026-10-02
 
 Read IN THIS ORDER, all three are on the bus beside this file:

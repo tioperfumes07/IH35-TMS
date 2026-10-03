@@ -1,3 +1,156 @@
+## 2026-10-03T14:06Z · BANK-F91152 FuelReconciliationPage KPI locked tokens MERGED #24566
+
+ACK: CURSOR | ACK BANK-F91152 FUEL RECON TEXT TOKENS DONE | GO
+FINDING: BANK-F91152 | FuelReconciliationPage KPI off-scale text-[11px] (locked tokens)
+FIX: KPI labels→text-section-header; fuel-reconciliation-print-letter guard refuses text-[11px] on this page only.
+GUARD: verify-fuel-reconciliation-print-letter · dedicated guard + typecheck PASS → #24566 tip `af9383bad9`.
+NO seed · NO mig. NEXT: MaintenanceCostPerUnitPage leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
+## 2026-10-03T14:02Z · BANK-F91151 CustomerProfitabilityPage KPI locked tokens MERGED #24564
+
+ACK: CURSOR | ACK BANK-F91151 CUSTOMER PROFITABILITY TEXT TOKENS DONE | GO
+FINDING: BANK-F91151 | CustomerProfitabilityPage KPI off-scale text-[11px] (locked tokens)
+FIX: all four→text-section-header; customer-profitability-print-letter guard refuses text-[11px] on this page only.
+GUARD: verify-customer-profitability-print-letter · dedicated guard + typecheck PASS → #24564 tip `04b74ee739`.
+NO seed · NO mig. NEXT: FuelReconciliationPage leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
+## 2026-10-03T13:55Z · BANK-F91150 CashFlowOverviewPage KPI locked tokens MERGED #24561
+
+ACK: CURSOR | ACK BANK-F91150 CASH FLOW OVERVIEW TEXT TOKENS DONE | GO
+FINDING: BANK-F91150 | CashFlowOverviewPage KPI off-scale text-[11px] (locked tokens)
+FIX: four uppercase labels→text-section-header; four captions→text-xs; cash-flow-overview-print-letter guard refuses text-[11px] on this page only.
+GUARD: verify-cash-flow-overview-print-letter · dedicated guard + typecheck PASS → #24561 tip `a09d48aa2b`.
+NO seed · NO mig. NEXT: CustomerProfitabilityPage leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
+## 2026-10-03T13:52Z · BANK-F91149 CashFlowStatementPage KPI/thead locked tokens MERGED #24559
+
+ACK: CURSOR | ACK BANK-F91149 CASH FLOW STATEMENT TEXT TOKENS DONE | GO
+FINDING: BANK-F91149 | CashFlowStatementPage KPI/thead off-scale text-[11px] (locked tokens)
+FIX: five uppercase labels + thead→text-section-header; two body captions→text-xs; cash-flow-statement-print-letter guard refuses text-[11px] on this page only.
+GUARD: verify-cash-flow-statement-print-letter · dedicated guard + typecheck PASS → #24559 tip `1defa0da14`.
+NO seed · NO mig. NEXT: CashFlowOverviewPage leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
+## 2026-10-03T13:50Z · BANK-F91148 SettlementSummaryPage KPI locked tokens MERGED #24557
+
+ACK: CURSOR | ACK BANK-F91148 SETTLEMENT SUMMARY TEXT TOKENS DONE | GO
+FINDING: BANK-F91148 | SettlementSummaryPage KPI headings off-scale text-[11px] (locked tokens)
+FIX: all five→text-section-header; settlement-summary-print-letter guard refuses text-[11px] on this page only.
+GUARD: verify-settlement-summary-print-letter · dedicated guard + typecheck PASS → #24557 tip `c725ead878`.
+NO seed · NO mig. NEXT: CashFlowStatementPage leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
+## 2026-10-03T13:43Z · BANK-F91147 BalanceSheetPage KPI/thead locked tokens MERGED #24555
+
+ACK: CURSOR | ACK BANK-F91147 BALANCE SHEET TEXT TOKENS DONE | GO
+FINDING: BANK-F91147 | BalanceSheetPage KPI/thead off-scale text-[11px] (locked tokens)
+FIX: all six→text-section-header; balance-sheet-print-letter guard refuses text-[11px] on this page only.
+GUARD: verify-balance-sheet-print-letter · dedicated guard + typecheck PASS → #24555 tip `1357fd4501`.
+NO seed · NO mig. NEXT: SettlementSummaryPage leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
+## 2026-10-03T13:38Z · BANK-F91146 TrialBalancePage KPI/thead locked tokens MERGED #24552
+
+ACK: CURSOR | ACK BANK-F91146 TRIAL BALANCE TEXT TOKENS DONE | GO
+FINDING: BANK-F91146 | TrialBalancePage KPI/thead off-scale text-[11px] (locked tokens)
+FIX: all four→text-section-header; trial-balance-print-letter guard refuses text-[11px] on this page only.
+GUARD: verify-trial-balance-print-letter · dedicated guard + typecheck PASS → #24552 tip `f70964a452`.
+NO seed · NO mig. NEXT: BalanceSheetPage leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
+## 2026-10-03T13:36Z · BANK-F91145 ProfitLossPage KPI/thead locked tokens MERGED #24550
+
+ACK: CURSOR | ACK BANK-F91145 P&L TEXT TOKENS DONE | GO
+FINDING: BANK-F91145 | ProfitLossPage KPI/thead off-scale text-[11px] (locked tokens)
+FIX: all four→text-section-header; profit-loss-print-letter guard refuses text-[11px] on this page only.
+GUARD: verify-profit-loss-print-letter · dedicated guard + typecheck PASS → #24550 tip `39416c852e`.
+NO seed · NO mig. NEXT: TrialBalancePage leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
+## 2026-10-03T13:30Z · BANK-F91144 EditVehicleModal tab pills text-xs MERGED #24547
+
+ACK: CURSOR | ACK BANK-F91144 EDIT VEHICLE TEXT TOKENS DONE | GO
+FINDING: BANK-F91144 | EditVehicleModal tab pills off-scale text-[11px] (locked tokens)
+FIX: pills→text-xs; edit-unit-enum-comboboxes guard refuses text-[11px] on this modal only.
+GUARD: verify-edit-unit-enum-comboboxes · dedicated guard + typecheck PASS → #24547 tip `1bc4fd6cc4`.
+NO seed · NO mig. NEXT: leftover overflow (P&L KPI / SettlementHeader) · CC-1 table 1 START · ROUND 348 remaster parked
+
+## 2026-10-03T13:29Z · BANK-F91143 LoadDetailDrawer locked tokens MERGED #24545
+
+ACK: CURSOR | ACK BANK-F91143 LOAD DETAIL TEXT TOKENS DONE | GO
+FINDING: BANK-F91143 | LoadDetailDrawer title/edit/stop/hint off-scale text-[11px] (locked tokens)
+FIX: title/edit/hint→text-xs; stop-type→text-section-header; ldt-0-tabbar-header guard refuses text-[11px] on this drawer only.
+GUARD: verify-ldt-0-tabbar-header · dedicated guard + typecheck PASS → #24545 tip `bdc2c08975`.
+NO seed · NO mig. NEXT: leftover overflow (EditVehicleModal / P&L KPI) · CC-1 table 1 START · ROUND 348 remaster parked
+
+## 2026-10-03T13:25Z · OWNER ORDER dispatched — KILL THE SECOND SYSTEM
+
+ACK: CURSOR | ACK KILL-SECOND-SYSTEM DISPATCH | GO
+FINDING: stored balances are a second system; GL 2100/1245/1230/A/P already exist
+FIX: law file + INBOX/NOW CC-1 START table 1; CC-2 wait then 8–11; CC-3 LAST table 12
+GUARD: N/A — docs dispatch. CC-1 owns verify-escrow-accounts-equals-its-gl
+LIVE PROOF: Neon USMCA 27 live drivers; 29 live 2100-00-nnn; 44 escrow_accounts; 19/44 column↔GL drift; vendor_balances already a VIEW. No seed. No mig.
+NEXT: CC-1 table 1 reader-repoint · ROUND 348 remaster parked · leftover chrome parked
+
+## 2026-10-03T13:16Z · BANK-F91142 AccessorialEditor footer/hint locked tokens MERGED #24541
+
+ACK: CURSOR | ACK BANK-F91142 ACCESSORIAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91142 | AccessorialEditor footer/hint off-scale text-[11px] (locked tokens)
+FIX: footer→text-section-header; hint→text-xs; accessorial-editor-uses-paritytable guard refuses text-[11px] on this editor only.
+GUARD: verify-accessorial-editor-uses-paritytable · dedicated guard + typecheck PASS → #24541 tip `97c5b94e83`.
+NO seed · NO mig. NEXT: KILL THE SECOND SYSTEM (CC-1 START) · ROUND 348 remaster parked (gate ambient bank_tx 951→981) · R-1 waits on table 1
+
+## 2026-10-03T13:11Z · BANK-F91141 DispatchList HOS/ETA/progress text-xs MERGED #24539
+
+ACK: CURSOR | ACK BANK-F91141 DISPATCH LIST TEXT TOKENS DONE | GO
+FINDING: BANK-F91141 | DispatchList HOS/ETA/progress off-scale text-[11px] (locked tokens)
+FIX: all three→text-xs; dispatch-list-parity-surface-bar guard refuses text-[11px] on this list only.
+GUARD: verify-dispatch-list-parity-surface-bar · dedicated guard + typecheck PASS → #24539 tip `46f2f3385d`.
+NO seed · NO mig. NEXT: AccessorialEditor leftover · ROUND 348 remaster parked (gate ambient bank_tx 951→981) · R-1/R-2 seats.
+
+## 2026-10-03T13:09Z · BANK-F91140 DispatchBoard count/section locked tokens MERGED #24537
+
+ACK: CURSOR | ACK BANK-F91140 DISPATCH BOARD TEXT TOKENS DONE | GO
+FINDING: BANK-F91140 | DispatchBoard count/section off-scale text-[11px] (locked tokens)
+FIX: count→text-xs; section→text-section-header; table-view-distinct guard refuses text-[11px] on this board only.
+GUARD: verify-dispatch-table-view-distinct · dedicated guard + typecheck PASS → #24537 tip `8980855509`.
+NO seed · NO mig. NEXT: DispatchList leftover · ROUND 348 remaster parked (gate ambient bank_tx 951→981) · R-1/R-2 seats.
+
+## 2026-10-03T13:04Z · BANK-F91139 FactoringQueuePage KPI/filter locked tokens MERGED #24535
+
+ACK: CURSOR | ACK BANK-F91139 FACTORING QUEUE TEXT TOKENS DONE | GO
+FINDING: BANK-F91139 | FactoringQueuePage KPI/filter off-scale text-[11px] (locked tokens)
+FIX: KPI→text-section-header; filters→text-xs; factoring-queue-duplicate-search guard refuses text-[11px] on this page only.
+GUARD: verify-factoring-queue-duplicate-search · dedicated guard + typecheck PASS → #24535 tip `a6e87223f2`.
+NO seed · NO mig. NEXT: DispatchBoard leftover · ROUND 348 remaster parked (gate ambient bank_tx 951→981) · R-1/R-2 seats.
+
+## 2026-10-03T12:54Z · BANK-F91138 FleetOosStrip heading text-section-header MERGED #24533
+
+ACK: CURSOR | ACK BANK-F91138 FLEET OOS STRIP TEXT TOKENS DONE | GO
+FINDING: BANK-F91138 | FleetOosStrip heading off-scale text-[11px] (locked tokens)
+FIX: heading→text-section-header; fleet-oos-read-recovery guard refuses text-[11px] on this strip only.
+GUARD: verify-dispatch-fleet-oos-read-recovery · dedicated guard + typecheck PASS → #24533 tip `dca3358f4b`.
+NO seed · NO mig. NEXT: FactoringQueuePage leftover · ROUND 348 remaster parked (gate ambient bank_tx 951→981) · R-1/R-2 seats.
+
+## 2026-10-03T12:48Z · BANK-F91137 FineCreateModal hint/doc/error text-xs MERGED #24531
+
+ACK: CURSOR | ACK BANK-F91137 FINE CREATE TEXT TOKENS DONE | GO
+FINDING: BANK-F91137 | FineCreateModal hint/doc/error off-scale text-[11px] (locked tokens)
+FIX: all three→text-xs; safety-fine-create-lifecycle guard refuses text-[11px] on this modal only.
+GUARD: verify-safety-fine-create-lifecycle · dedicated guard + typecheck PASS → #24531 tip `153c1285a7`.
+NO seed · NO mig. NEXT: FleetOosStrip leftover · ROUND 348 remaster parked (gate ambient bank_tx 951→981) · R-1/R-2 seats.
+
+## 2026-10-03T12:46Z · BANK-F91136 HosViolationCreateModal load hint text-xs MERGED #24529
+
+ACK: CURSOR | ACK BANK-F91136 HOS CREATE HINT TEXT TOKENS DONE | GO
+FINDING: BANK-F91136 | HosViolationCreateModal load-suggested hint off-scale text-[11px] (locked tokens)
+FIX: hint→text-xs; hos-violation-create-suggest-load guard refuses text-[11px] on this modal only.
+GUARD: verify-hos-violation-create-suggest-load · dedicated guard + typecheck PASS → #24529 tip `e24ec1414d`.
+NO seed · NO mig. NEXT: FineCreateModal leftover · ROUND 348 remaster parked (gate ambient bank_tx 951→981) · R-1/R-2 seats.
+
+## 2026-10-03T12:44Z · BANK-F91135 CardOverageQueuePage filter labels text-xs MERGED #24527
+
+ACK: CURSOR | ACK BANK-F91135 CARD OVERAGE FILTER TEXT TOKENS DONE | GO
+FINDING: BANK-F91135 | CardOverageQueuePage Driver/Unit filter labels off-scale text-[11px] (locked tokens)
+FIX: both labels→text-xs; fuel-card-overage-confirm-modal guard refuses text-[11px] on this page only.
+GUARD: verify-fuel-card-overage-confirm-modal · dedicated guard + typecheck PASS → #24527 tip `1fed5bc7ae`.
+NO seed · NO mig. NEXT: HosViolationCreateModal leftover · ROUND 348 remaster parked (gate ambient bank_tx 951→981) · R-1/R-2 seats.
+
 ## 2026-10-03T12:33Z · BANK-F91134 SectionQuickJump count pill text-xs MERGED #24524
 
 ACK: CURSOR | ACK BANK-F91134 SECTION QUICK JUMP TEXT TOKENS DONE | GO

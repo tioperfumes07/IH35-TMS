@@ -1,3 +1,56 @@
+# >>> NOW 2026-10-03 — OWNER ORDER — KILL THE SECOND SYSTEM — YOU START
+
+READ FIRST: `docs/bus/00-OWNER-ORDER-2026-10-03-KILL-THE-SECOND-SYSTEM.md`
+
+This is a **DELETION**, not a build. The ledger is the balance. Policies stay.
+
+## YOUR FIRST PR (ONE TABLE) — TABLE 1
+
+**FINDING (measured, Neon USMCA 2026-10-03T13:20Z, bypass_rls=lucia):**
+`accounting.escrow_accounts.balance_cents` is a stored second system. 44 driver rows, column sum
+237500. 19 of 44 drift from `accounting.journal_entry_postings` on `coa_account_id` (credit−debit,
+`journal_entries.voided_at IS NULL`, unreversed); GL sum −632500. Live drivers 27. Live `2100-00-nnn`
+subs (exclude TEST/CODEX/SAMPLE/Battery/Autoprovision) 29. Parent `2100` "Driver Escrow - Held in Trust"
+exists. Mapping row stays.
+
+**GL THAT OWNS THE NUMBER:** `2100-00-nnn` (`catalogs.accounts`, FK `escrow_accounts.coa_account_id`).
+
+**PR1 — REPOINT READERS ONLY (HH 13, no migration):**
+Every screen / report / API / service that reads `escrow_accounts.balance_cents` must read the
+`2100-00-nnn` account balance from `accounting.journal_entry_postings`. Named readers already
+on tip (do not invent a second resolver):
+
+- `apps/backend/src/driver-finance/escrow-resolver.service.ts` `readDriverEscrowBalanceCents` (line ~188) — this is the money decision reader
+- `apps/backend/src/mdata/canonical/driver-overview.service.ts:155`
+- `apps/backend/src/mdata/canonical/driver-hub.service.ts:54,78`
+- `apps/backend/src/mdata/canonical/driver-profile.service.ts:80`
+- `apps/backend/src/banking/escrow-visualizer.routes.ts:93`
+- `apps/backend/src/banking/driver-escrow-counts.ts:58`
+- `apps/backend/src/accounting/escrow/service.ts` (list/get)
+- `apps/backend/src/accounting/subledger-gl-control-rec.service.ts:166,333`
+- `apps/backend/src/driver-finance/escrow-separation.service.ts:241,317`
+- `apps/backend/src/driver-finance/deductions.routes.ts:535`
+
+No screen may read both. Do not UPDATE `balance_cents` to "fix" the 19 drifted rows. Do not drop
+the column in PR1. Mapping row (`holder_id`, `coa_account_id`, purpose, status) stays.
+
+**GUARD:** `verify-escrow-accounts-equals-its-gl` (your band ≡1 mod 4). Claim-merge-then-author.
+Value = GL 2100-00-nnn per driver. Row count = live sub-account count. Ceiling 0. Baseline
+COMMITTED. Run UNSCOPED. Rewrite `verify-escrow-balance-reconciles-gl` so it no longer treats
+`escrow_accounts.balance_cents` as authority.
+
+**DEADLINE:** 2026-10-03 15:30Z. **SURRENDER:** Cursor takes the reader-repoint surface if silent;
+you keep the VIEW / column-drop (tables 2–7) and R-1.
+
+**DONE LINE:** `CC-1 | TABLE-1 READERS REPOINTED | <sha> | <live sha> | 0 screens read balance_cents; escrow-resolver reads journal_entry_postings; verify-escrow-accounts-equals-its-gl ceiling 0 | NEXT table 2`
+
+R-1 (6176 damage-loss) **WAITS** until this PR is on tip. Building R-1 against `balance_cents` is
+building the second system. After PR1, R-1 reads 2100.
+
+NO seed. NO Chrome. NO hand-repair. USMCA only. ACK: `CC-1 | ACK KILL-SECOND-SYSTEM TABLE-1 | GO`
+
+---
+
 # ROUND 326 — CC-1 — YOUR QUEUE IS NOT EMPTY — 2026-10-02
 
 Read IN THIS ORDER, all three are on the bus beside this file:

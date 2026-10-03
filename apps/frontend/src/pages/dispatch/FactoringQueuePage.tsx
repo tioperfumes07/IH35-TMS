@@ -330,13 +330,13 @@ export function FactoringQueuePage() {
       {summaryQ.data ? (
         <div className="grid gap-2 sm:grid-cols-4">
           <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
-            <div className="text-[11px] uppercase tracking-wide text-gray-500">Active Factor</div>
+            <div className="text-section-header font-semibold uppercase tracking-wide text-gray-500">Active Factor</div>
             <div className="mt-1 font-semibold text-gray-900">
               {summaryQ.data.active_factor_name || "Not configured"}
             </div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
-            <div className="text-[11px] uppercase tracking-wide text-gray-500">Reserve Balance</div>
+            <div className="text-section-header font-semibold uppercase tracking-wide text-gray-500">Reserve Balance</div>
             <div className="mt-1 font-semibold text-gray-900">
               {/* views.factoring_summary normalizes signed ledger cents to DOLLARS.
                   Format directly as dollars; do NOT divide by 100. Must match FactoringHome.tsx. */}
@@ -344,7 +344,7 @@ export function FactoringQueuePage() {
             </div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
-            <div className="text-[11px] uppercase tracking-wide text-gray-500">MTD Advances</div>
+            <div className="text-section-header font-semibold uppercase tracking-wide text-gray-500">MTD Advances</div>
             <div className="mt-1 font-semibold text-gray-900">
               {/* mtd_advanced_total is also DOLLARS (0124 sums factoring_advances.advance_amount — no _cents). */}
               {money.format(summaryQ.data.mtd_advanced_total || 0)}{" "}
@@ -352,7 +352,7 @@ export function FactoringQueuePage() {
             </div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
-            <div className="text-[11px] uppercase tracking-wide text-gray-500">Packet Queue</div>
+            <div className="text-section-header font-semibold uppercase tracking-wide text-gray-500">Packet Queue</div>
             <div className="mt-1 font-semibold text-gray-900">
               {(countByStage["NOT_FACTORED"] ?? 0) + (countByStage["PACKET_READY"] ?? 0)} pending{" "}
               <span className="text-xs text-gray-500">
@@ -364,7 +364,7 @@ export function FactoringQueuePage() {
       ) : null}
 
       <div className="relative flex flex-wrap items-end gap-3" data-testid="factoring-dispatch-queue-filters">
-        <label className="text-[11px] text-slate-600">
+        <label className="text-xs text-slate-600">
           Customer
           <EntityPicker
             kind="customer"
@@ -377,7 +377,7 @@ export function FactoringQueuePage() {
             dataTestId="factoring-dispatch-filter-customer"
           />
         </label>
-        <label className="text-[11px] text-slate-600">
+        <label className="text-xs text-slate-600">
           Load
           <EntityPicker
             kind="load"
