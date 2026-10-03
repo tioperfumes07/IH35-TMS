@@ -1,3 +1,11 @@
+## 2026-10-03T09:24Z · BANK-F91110 TerminationReasons field-error text tokens MERGED #24455
+
+ACK: CURSOR | ACK BANK-F91110 TERMINATION REASONS TEXT TOKENS DONE | GO
+FINDING: BANK-F91110 | TerminationReasons field errors off-scale text-[11px] (locked tokens)
+FIX: 3 field-error/conflict lines→text-xs; filter-surfaces guard refuses text-[11px].
+GUARD: verify-filter-surfaces-full-set · money-pr-local-gate PASS → #24455 tip `9a2b19ca3d`.
+NO seed · NO mig (HH 09). NEXT: QboSyncHealthCard leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T09:18Z · BANK-F91109 DispatchCatalog pill text tokens MERGED #24453
 
 ACK: CURSOR | ACK BANK-F91109 DISPATCH CATALOG PILL TEXT TOKENS DONE | GO
