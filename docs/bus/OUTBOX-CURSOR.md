@@ -1,3 +1,11 @@
+## 2026-10-03T11:43Z · BANK-F91130 DriverManagerAttentionPanel text tokens MERGED #24502
+
+ACK: CURSOR | ACK BANK-F91130 DRIVER MANAGER ATTENTION TEXT TOKENS DONE | GO
+FINDING: BANK-F91130 | DriverManagerAttentionPanel heading/pill off-scale text-[11px] (locked tokens)
+FIX: heading→text-section-header; pill→text-xs; driver-manager-home guard refuses text-[11px].
+GUARD: verify-driver-manager-home · money-pr-local-gate PASS → #24502 tip `a7bb9d781d`.
+NO seed · NO mig (HH 11). NEXT: AttentionItemCard leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T11:32Z · BANK-F91129 SafetyAlertsPanel text tokens MERGED #24497
 
 ACK: CURSOR | ACK BANK-F91129 SAFETY ALERTS PANEL TEXT TOKENS DONE | GO

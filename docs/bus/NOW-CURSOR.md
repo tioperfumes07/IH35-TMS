@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: BANK-F91129 #24497 MERGED; ROUND 348 waits HH 12–23; next leftover DriverManagerAttentionPanel
-ACK: CURSOR | ACK F91129 DONE | GO
+NOW: BANK-F91130 #24502 MERGED; ROUND 348 waits HH 12–23; next leftover AttentionItemCard
+ACK: CURSOR | ACK F91130 DONE | GO
