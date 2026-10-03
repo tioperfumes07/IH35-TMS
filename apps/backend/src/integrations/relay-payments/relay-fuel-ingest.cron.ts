@@ -201,6 +201,11 @@ export async function ingestForCompany(
       continue;
     }
     const result = await upsertRelayFuelTransaction(client, operatingCompanyId, parsed, opts?.source ?? "daily_pull");
+    if (result.skipped_reason) {
+      // One fill = one company: another company owns (or already holds) this fill — nothing written here.
+      skipped += 1;
+      continue;
+    }
     upserted += 1;
     if (result.gl_post_candidate) gl_post_candidates.push(result.gl_post_candidate);
     if (!result.matched_driver_id || !result.matched_unit_id) {
