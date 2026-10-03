@@ -1702,6 +1702,11 @@
       "claimed_at": "2026-10-03",
       "purpose": "ROUND 345 the block, phase 2: composite same-entity FKs on settlement_lines / escrow_balances / driver_advance_accounts (13; the two with one cross-company row each — awaiting owner rulings — added NOT VALID) + settlement_lines company-required CHECK"
     },
+    "202615330905": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 353 load 13515 — close the route: a load may only become cancelled with an approved dispatch.load_cancellations row (deferred constraint trigger on mdata.loads)"
+    },
     "202615321200": {
       "claimed_by": "cursor",
       "claimed_at": "2026-10-03",
