@@ -308,6 +308,7 @@ const STEPS = [
   ["verify-bill-payment-overpay-creates-vendor-credit", "scripts/verify-bill-payment-overpay-creates-vendor-credit.mjs"],
   ["verify-r342-entity-code-company-scoped", "scripts/verify-r342-entity-code-company-scoped.mjs"],
   ["verify-r342-factor-reserve-oci-field", "scripts/verify-r342-factor-reserve-oci-field.mjs"],
+  ["verify-r3421-unit-plates-identity-user-company-scoped", "scripts/verify-r3421-unit-plates-identity-user-company-scoped.mjs"],
   ["verify-account-register-ref-no-journal-entry-link", "scripts/verify-account-register-ref-no-journal-entry-link.mjs"],
   ["verify-money-detail-page-uses-ispending", "scripts/verify-money-detail-page-uses-ispending.mjs"],
   ["verify-lists-accounting-picker-law-honest", "scripts/verify-lists-accounting-picker-law-honest.mjs"],
@@ -492,6 +493,13 @@ const LIVE_DOMAIN_GUARDS = [
       "apps/backend/src/factoring/reserve.service.ts",
       "apps/frontend/src/api/factoring.ts",
       "scripts/verify-r342-factor-reserve-oci-field.mjs",
+    ],
+  ],
+  [
+    "verify-r3421-unit-plates-identity-user-company-scoped",
+    [
+      "db/migrations/202615312300_r3421_unit_plates_identity_user_company_scoped.sql",
+      "scripts/verify-r3421-unit-plates-identity-user-company-scoped.mjs",
     ],
   ],
 

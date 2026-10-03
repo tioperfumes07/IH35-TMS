@@ -1379,6 +1379,13 @@ Full coder instructions: `claude/2026-09-13-ABSORPTION-INGEST-AND-DISPUTE-WINDOW
 3. Ship Needs delivery authorization FE queue (this PR) → FE deploy → Owner clicks Authorize when a rolling load needs early factoring auth.
 4. No baseline raises to clear tip ENV reds.
 
+## Active Architectural Decisions — ROUND 342.1 unit keys + identity_user (Cursor, 2026-10-03)
+
+- **Owner:** one person CAN hold `mdata.drivers` in two carriers → `uq_mdata_drivers_company_identity_user` partial UNIQUE(operating_company_id, identity_user_id) WHERE NOT NULL. Mig `202615312300`.
+- **unit_plates / equipment_plates:** active unique includes `operating_company_id` (live TRK↔USMCA).
+- **samsara:** CHANGE NOTHING — `driver_samsara_accounts_samsara_driver_id_key` stays global; multi-account per driver by design (95/94).
+- **fuel.tank_state / telematics.*:** CC-3 lane — Cursor does not duplicate.
+
 ## Active Architectural Decisions — ROUND 342 tenant_id → OCI + Class D code keys (Cursor, 2026-10-02)
 
 - **Trap:** `factoring.v_factor_reserve_balance` OUTPUT field renames with CC-1 (`tenant_id`→`operating_company_id`). Blank ≡ zero. Live readers already use KPI GL engine; mappers/types must accept OCI first (`companyIdFromRow`).
