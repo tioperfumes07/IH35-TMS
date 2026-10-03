@@ -62,6 +62,12 @@ export function audit(sources = {}) {
   if (dotModal.includes("text-[11px]")) {
     failures.push("DotViolationTypeModal must not use text-[11px] — use text-xs");
   }
+  // BANK-F91115 — ORDERS chrome: Complaint Type field errors use text-xs, not text-[11px].
+  const complaintRel = "apps/frontend/src/pages/lists/safety/ComplaintTypeModal.tsx";
+  const complaintModal = sources[complaintRel] ?? read(complaintRel);
+  if (complaintModal.includes("text-[11px]")) {
+    failures.push("ComplaintTypeModal must not use text-[11px] — use text-xs");
+  }
 
   for (const [leafKey, slug, plural, singular] of CATALOGS) {
     const route = `/lists/safety/${slug}`;
