@@ -88,7 +88,7 @@ export function DispatcherActiveLoadsPanel({ rows, isLoading, isError, onRetry }
                 )}
               </span>
               <span
-                className="shrink-0 font-mono text-[11px] text-slate-600"
+                className="shrink-0 font-mono text-xs text-slate-600"
                 data-testid="dispatcher-active-load-invoice"
                 title={row.invoice_status ? `Invoice ${row.invoice_status}` : "No invoice"}
               >
@@ -97,7 +97,7 @@ export function DispatcherActiveLoadsPanel({ rows, isLoading, isError, onRetry }
                   <span className="ml-1 text-slate-400">({row.invoice_status})</span>
                 ) : null}
               </span>
-              <span className={`rounded-sm px-2 py-0.5 text-[11px] font-semibold ${badgeClass(row.is_late, row.detention_expected)}`}>
+              <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${badgeClass(row.is_late, row.detention_expected)}`}>
                 {badgeLabel(row.is_late, row.detention_expected)}
               </span>
               <EntityLink kind="load" id={row.id} label="Open" className="text-xs font-medium text-slate-700 hover:underline" />

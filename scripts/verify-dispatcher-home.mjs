@@ -92,6 +92,8 @@ function main() {
   // BANK-F91127 — ORDERS chrome: DispatcherKpiBar labels use text-section-header, not text-[11px].
   if (kpiBar.includes("text-[11px]")) failures.push("DispatcherKpiBar must not use text-[11px] — use text-section-header");
   if (!loadsPanel.includes("dispatcher-active-loads-panel")) failures.push("DispatcherActiveLoadsPanel must expose test id");
+  // BANK-F91132 — ORDERS chrome: DispatcherActiveLoadsPanel invoice/badge use text-xs, not text-[11px].
+  if (loadsPanel.includes("text-[11px]")) failures.push("DispatcherActiveLoadsPanel must not use text-[11px] — use text-xs");
   if (!pendingPanel.includes("dispatcher-pending-actions-panel")) failures.push("DispatcherPendingActionsPanel must expose test id");
 
   if (failures.length > 0) {
