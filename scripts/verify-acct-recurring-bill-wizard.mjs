@@ -53,4 +53,9 @@ if (!generator.includes("recurring_bill_line_coa_required")) {
   fail("generator must fail closed when line items lack coa_account_id");
 }
 
+// BANK-F91082 — ORDERS chrome: RecurringBillCreate uses text-xs, not text-[11px].
+if (createPage.includes("text-[11px]")) {
+  fail("RecurringBillCreate.tsx must not use text-[11px] — use text-xs");
+}
+
 console.log("PASS: verify-acct-recurring-bill-wizard");
