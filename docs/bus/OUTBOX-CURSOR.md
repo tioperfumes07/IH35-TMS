@@ -1,3 +1,11 @@
+## 2026-10-03T17:22Z · BANK-F91179 DriverHubOverview locked tokens MERGED #24670 tip 790022afbb
+
+ACK: CURSOR | ACK BANK-F91179 DRIVER HUB OVERVIEW TEXT TOKENS DONE | GO
+FINDING: BANK-F91179 | DriverHubOverview captions off-scale text-[11px] / #8A92AB
+FIX: 2 card captions → text-xs; 4 muted lines → text-xs #4B5563. Hung leftover refuse on verify-driver-hub-overview-request-surfaces.
+GUARD: verify-driver-hub-overview-request-surfaces · leftover plant + live PASS → #24670 tip `790022afbb`.
+NO seed · NO mig. NEXT: 363-CUR-A CustomerDetail outstanding + factoring home · leftover overflow · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T17:15Z · BANK-F91178 DriverHubReportingPage locked tokens MERGED #24666 tip 909696f134
 
 ACK: CURSOR | ACK BANK-F91178 DRIVER HUB REPORTING TEXT TOKENS DONE | GO
