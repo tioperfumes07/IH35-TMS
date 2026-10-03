@@ -789,6 +789,19 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-one-leg-asset-never-credit",
     ["db/migrations/202615330600_one_leg_asset_accounts_never_credit.sql", "apps/backend/src/accounting/fuel-posting/", "scripts/verify-one-leg-asset-never-credit.mjs"],
   ],
+  // Insurance guards that existed but were registered nowhere — they drifted red on main unnoticed (ROUND 342 rename).
+  [
+    "verify-insurance-claim-graph-complete-reverse",
+    ["apps/backend/src/insurance/claim.routes.ts", "apps/frontend/src/pages/insurance/ClaimsTab.tsx", "scripts/verify-insurance-claim-graph-complete-reverse.mjs"],
+  ],
+  [
+    "verify-insurance-lawsuit-update-truth",
+    ["apps/backend/src/insurance/lawsuit.routes.ts", "scripts/verify-insurance-lawsuit-update-truth.mjs"],
+  ],
+  [
+    "verify-insurance-payment-schedule-policy-company-link",
+    ["apps/backend/src/insurance/payment-schedule.routes.ts", "scripts/verify-insurance-payment-schedule-policy-company-link.mjs"],
+  ],
   // ROUND 355 R-2 — the fuel-card cap is gallons per unit (the unit's own tank); dollars are the last fallback.
   [
     "verify-fuel-overage-gallon-cap-per-unit",

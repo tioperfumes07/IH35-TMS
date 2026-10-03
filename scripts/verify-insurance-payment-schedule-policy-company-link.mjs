@@ -7,7 +7,7 @@ const source = fs.readFileSync(file, "utf8");
 function audit(value) {
   const failures = [];
   const creator = value.match(/app\.post\("\/api\/v1\/insurance\/payment-schedule"[\s\S]*?app\.patch\(/)?.[0] ?? "";
-  if (!/FROM insurance\.policy[\s\S]{0,160}id = \$1::uuid AND tenant_id = \$2::uuid/.test(creator)) failures.push("creator must validate policy ownership");
+  if (!/FROM insurance\.policy[\s\S]{0,160}id = \$1::uuid AND operating_company_id = \$2::uuid/.test(creator)) failures.push("creator must validate policy ownership");
   if (!/if \(!policy\.rows\[0\]\) return null;[\s\S]{0,220}INSERT INTO insurance\.payment_schedule/.test(creator)) failures.push("invalid policy must stop before insert");
   if (!/if \(!created\) return reply\.code\(404\)\.send\(\{ error: "policy_not_found" \}\)/.test(creator)) failures.push("invalid policy must fail loud");
   return failures;
@@ -20,7 +20,7 @@ if (failures.length) {
 }
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    source.replace("tenant_id = $2::uuid", "TRUE"),
+    source.replace("id = $1::uuid AND operating_company_id = $2::uuid", "id = $1::uuid AND TRUE"),
     source.replace("if (!policy.rows[0]) return null;", "void policy;"),
     source.replace('error: "policy_not_found"', 'error: "unknown"'),
   ];
