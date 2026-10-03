@@ -14,7 +14,7 @@
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
-import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { JOB_LEASE_SECONDS, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import { getSamsaraConfigForCompany } from "../integrations/samsara/samsara.service.js";
 import { SamsaraClient } from "../integrations/samsara/samsara-client.js";
@@ -45,14 +45,14 @@ export function initializeSamsaraFuelReportsCron(app: FastifyInstance) {
     await wrapBackgroundJobTick(CRON_NAME, async () => {
       assertTenantContext(USMCA_COMPANY_ID, CRON_NAME);
       app.log.info(await runSamsaraFuelReportsTick(), `${CRON_NAME} complete`);
-    }, app.log);
+    }, app.log, { leaseSeconds: JOB_LEASE_SECONDS });
   }, { timezone: "America/Chicago", maxRandomDelay: 30_000 });
   // First boot after deploy on an empty table: catch up 30 days once (~2 min of Samsara reads) instead of waiting
   // for 05:20 -- the tick itself decides (empty -> 30 days, else 2), so a later boot only refreshes 2 days.
   setTimeout(() => {
     void wrapBackgroundJobTick(`${CRON_NAME}.boot`, async () => {
       app.log.info(await runSamsaraFuelReportsTick(), `${CRON_NAME}.boot complete`);
-    }, app.log);
+    }, app.log, { leaseSeconds: JOB_LEASE_SECONDS });
   }, 180_000).unref?.();
   app.log.info(`${CRON_NAME} scheduled (daily 05:20 America/Chicago)`);
 }

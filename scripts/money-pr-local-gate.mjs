@@ -794,6 +794,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-relay-fuel-webhook-receiver",
     ["apps/backend/src/integrations/relay-payments/", "apps/backend/src/index.ts", "scripts/verify-relay-fuel-webhook-receiver.mjs"],
   ],
+  // Standing order point 9 — every CC-2 scheduled tick runs under a lease (withJobLease) or a named own claim.
+  [
+    "verify-cc2-crons-single-fire",
+    ["apps/backend/src/lib/background-jobs.ts", "apps/backend/src/cron/", "apps/backend/src/banking/", "apps/backend/src/integrations/", "apps/backend/src/fuel/", "apps/backend/src/factoring/", "scripts/verify-cc2-crons-single-fire.mjs"],
+  ],
   // CC-2 engine ten-point: WORM + audit on the fuel / Relay source tables, FORCE RLS on the derived fuel tables.
   [
     "verify-fuel-relay-source-worm",

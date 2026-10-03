@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
-import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { JOB_LEASE_SECONDS, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { LOVES_CARD_IMPORT_JOB, runLovesCardImportTick } from "../sync/loves-card-import.js";
 import { onFuelIngestComplete } from "../fuel/fuel-ingest-hooks.js";
 
@@ -26,7 +26,7 @@ export function initializeLovesCardImportCron(app: FastifyInstance) {
         async () => {
           await runLovesCardImportTick();
         },
-        app.log
+        app.log, { leaseSeconds: JOB_LEASE_SECONDS }
       );
       // ROUND 306 E-21/E-22: matching and fraud detection run once, after the import lands.
       await onFuelIngestComplete(app.log, "loves_card_import");

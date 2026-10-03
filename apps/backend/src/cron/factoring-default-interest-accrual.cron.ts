@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
-import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { JOB_LEASE_SECONDS, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { registerRepurchaseDueEvents } from "../factoring/repurchase-due.service.js";
@@ -79,7 +79,7 @@ export function initializeFactoringDefaultInterestCron(app: FastifyInstance) {
             app.log.info(summary, "factoring day-95 cron registered repurchase-due events for the owner");
           }
         },
-        app.log
+        app.log, { leaseSeconds: JOB_LEASE_SECONDS }
       );
     },
     {

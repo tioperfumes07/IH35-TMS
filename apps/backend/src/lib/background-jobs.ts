@@ -41,6 +41,46 @@ export async function recordBackgroundJobDisabled(jobName: string): Promise<void
   await recordBackgroundJobRun(jobName, true, null);
 }
 
+/**
+ * Standing order point 9 — single-fire. Two backend instances run every node-cron schedule; this lets exactly one of
+ * them run a job inside its lease window. The claim is ONE atomic statement on _system.job_leases (migration
+ * 202615340700): insert the job's row, or take it over only when the current lease has expired. Returns "skipped"
+ * when another instance holds the lease — the holder records the run, so a skip is not a failure.
+ */
+/** Default lease for CC-2's daily / 6-hourly / hourly jobs: longer than the instance stagger, shorter than any period. */
+export const JOB_LEASE_SECONDS = 600;
+
+export async function withJobLease(
+  jobName: string,
+  leaseSeconds: number,
+  fn: () => Promise<void>
+): Promise<"ran" | "skipped"> {
+  const holder = `${process.env.RENDER_INSTANCE_ID ?? process.env.HOSTNAME ?? "local"}:${process.pid}`;
+  const claimed = await withLuciaBypass(async (client) => {
+    const r = await client.query<{ job_name: string }>(
+      `
+        INSERT INTO _system.job_leases (job_name, holder, leased_at, leased_until)
+        VALUES ($1, $2, now(), now() + make_interval(secs => $3))
+        ON CONFLICT (job_name) DO UPDATE
+           SET holder = EXCLUDED.holder, leased_at = EXCLUDED.leased_at, leased_until = EXCLUDED.leased_until
+         WHERE _system.job_leases.leased_until < now()
+        RETURNING job_name
+      `,
+      [jobName, holder, leaseSeconds]
+    );
+    return r.rows.length === 1;
+  });
+  if (!claimed) return "skipped";
+  try {
+    await fn();
+  } finally {
+    await withLuciaBypass((client) =>
+      client.query(`UPDATE _system.job_leases SET last_finished_at = now() WHERE job_name = $1 AND holder = $2`, [jobName, holder])
+    ).catch((err) => console.warn("[background-jobs] job lease finish stamp failed", err));
+  }
+  return "ran";
+}
+
 export async function wrapBackgroundJobTick(
   jobName: string,
   fn: () => Promise<void>,
@@ -49,10 +89,19 @@ export async function wrapBackgroundJobTick(
    * rethrow (ROUND 330.1): after recording + logging the failure, throw it on — for engines whose policy is "never
    * swallowed" (fault-poll, samsara-dvir-poll, harsh-events-poll), so they can route through this wrapper too.
    */
-  opts?: { onError?: (error: unknown) => void; rethrow?: boolean }
+  /**
+   * leaseSeconds (standing order point 9): run under withJobLease so only one instance runs this tick; the other
+   * instance skips silently (the holder records the run).
+   */
+  opts?: { onError?: (error: unknown) => void; rethrow?: boolean; leaseSeconds?: number }
 ): Promise<void> {
   try {
-    await fn();
+    if (opts?.leaseSeconds) {
+      const outcome = await withJobLease(jobName, opts.leaseSeconds, fn);
+      if (outcome === "skipped") return;
+    } else {
+      await fn();
+    }
     await recordBackgroundJobRun(jobName, true, null);
   } catch (error) {
     await recordBackgroundJobRun(jobName, false, String((error as Error)?.message ?? error));
