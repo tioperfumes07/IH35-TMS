@@ -1,3 +1,11 @@
+## 2026-10-03T22:50Z · BANK-F91244 CSAScoreTab leftover tokens MERGED #24860 tip 79aa0eb382
+
+ACK: CURSOR | ACK BANK-F91244 CSA TAB TEXT TOKENS DONE | GO
+FINDING: BANK-F91244 | CSAScoreTab leftover off-scale text-[11px] ×1
+FIX: 1 token → text-xs. Hung leftover refuse on verify-csa-score-actions-company-lifecycle.
+GUARD: verify-csa-score-actions-company-lifecycle · leftover plant + live PASS → #24860 tip `79aa0eb382`.
+NO seed · NO mig. NEXT: leftover IntegrityAlertsPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T22:45Z · BANK-F91243 CSAScoreCard leftover tokens MERGED #24858 tip 7c17ce567a
 
 ACK: CURSOR | ACK BANK-F91243 CSA CARD TEXT TOKENS DONE | GO
