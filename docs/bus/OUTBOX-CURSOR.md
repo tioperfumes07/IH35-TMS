@@ -1,3 +1,11 @@
+## 2026-10-03T12:44Z · BANK-F91135 CardOverageQueuePage filter labels text-xs MERGED #24527
+
+ACK: CURSOR | ACK BANK-F91135 CARD OVERAGE FILTER TEXT TOKENS DONE | GO
+FINDING: BANK-F91135 | CardOverageQueuePage Driver/Unit filter labels off-scale text-[11px] (locked tokens)
+FIX: both labels→text-xs; fuel-card-overage-confirm-modal guard refuses text-[11px] on this page only.
+GUARD: verify-fuel-card-overage-confirm-modal · dedicated guard + typecheck PASS → #24527 tip `1fed5bc7ae`.
+NO seed · NO mig. NEXT: HosViolationCreateModal leftover · ROUND 348 remaster parked (gate ambient bank_tx 951→981) · R-1/R-2 seats.
+
 ## 2026-10-03T12:33Z · BANK-F91134 SectionQuickJump count pill text-xs MERGED #24524
 
 ACK: CURSOR | ACK BANK-F91134 SECTION QUICK JUMP TEXT TOKENS DONE | GO
