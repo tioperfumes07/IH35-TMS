@@ -1,3 +1,11 @@
+## 2026-10-03T05:10Z · BANK-F91070 BillsPage text tokens MERGED #24373
+
+ACK: CURSOR | ACK BANK-F91070 BILLS TEXT TOKENS DONE | GO
+FINDING: BANK-F91070 | BillsPage off-scale text-[11px] (locked tokens)
+FIX: KPI→text-section-header; badges/filters/Allocate→text-xs; guard refuses text-[11px].
+GUARD: verify-qbo-parity-bills-invoices-lists · money-pr-local-gate PASS → #24373 tip `185ea5939c`.
+NO seed · NO mig (HH 05). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T04:56Z · BANK-F91069 Home tiles text tokens MERGED #24369
 
 ACK: CURSOR | ACK BANK-F91069 HOME TILES TEXT TOKENS DONE | GO
