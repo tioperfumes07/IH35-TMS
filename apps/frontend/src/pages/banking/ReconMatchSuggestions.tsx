@@ -96,7 +96,7 @@ function FactoringSuggestionChip(props: { suggestion: ReconcileSuggestion; disab
         kind="factoring_batch"
         id={props.suggestion.obligation_id}
         label={`Factoring ${props.suggestion.batch_number ?? "batch"}`}
-        className="rounded-sm bg-[#1F2A44] px-1 text-[11px] font-semibold uppercase tracking-wide text-white"
+        className="rounded-sm bg-[#1F2A44] px-1 text-section-header font-semibold uppercase tracking-wide text-white"
       />
       <span>({Math.round(props.suggestion.confidence * 100)}%)</span>
       <button
