@@ -1,5 +1,5 @@
 # NOW-CURSOR
-NOW: ROUND 363 law #24634 MERGED tip daa40a2c6a — 363-CUR-A cleared/uncleared (deadline 2026-10-05 06:00Z); leftovers overflow; ROUND 348 parked
-ACK: CURSOR | ACK ROUND-363 LAW MERGED | GO
+NOW: 363-CUR-A aging #24639 MERGED tip 15324b5234 — remaining balances (finance ArApAgingPage + AP aging + every other balance); leftovers overflow; ROUND 348 parked
+ACK: CURSOR | ACK 363-CUR-A AGING MERGED | GO
 READ: `docs/bus/10-03-2026-ALL-SEATS-ROUND-363-LAW-THE-RECLASSIFY-ENGINE-AND-THE-POSTING-STAMP.md`
 THEN: `docs/bus/10-03-2026-CURSOR-ROUND-363-CLEARED-UNCLEARED-EVERYWHERE-AND-THE-CLICK-THROUGH-SWEEP.md`
