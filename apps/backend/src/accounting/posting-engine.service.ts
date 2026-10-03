@@ -9,7 +9,7 @@ import {
   assertLoadRevenueHasSourceLoad,
   InvoiceLoadSourceRequiredError as SharedInvoiceLoadSourceError,
 } from "./invoice-linkage-guards.js";
-import { resolveReversalDate, todayIso } from "./void.service.js";
+import { releaseBankLinesNamingDocument, resolveReversalDate, todayIso } from "./void.service.js";
 // ACCT-LINK-01 regression fix (GO-1405 Recipe B, 2026-08-29): this canonical poster's own
 // createJournalEntryHeader() never populated journal_entry_type_id -- confirmed the dominant
 // contributor to live density staying at 46/2214 (2%) despite journal-entries.service.ts's
@@ -3397,6 +3397,11 @@ async function executeSourceReversalOnClient(
     `,
     [reversalJeId, original.journal_entry_id, input.operating_company_id]
   );
+  // ROUND 368.2(b) — a bank line that names this journal entry goes back to For review (match kept, release recorded) before it dies.
+  await releaseBankLinesNamingDocument(client as never, { operatingCompanyId: input.operating_company_id, pointerColumn: "matched_journal_entry_id", documentId: original.journal_entry_id }, {
+    userId: null,
+    reason: `journal entry ${original.journal_entry_id} reversed by ${reversalJeId}`,
+  });
   await client.query(
     `
       UPDATE accounting.journal_entries

@@ -5,6 +5,7 @@
 // "driver_advance") for a plain cash-out, or cash-advances.routes.ts's mark-disbursed (fixed in
 // #19618 — postBillPaymentGlIfEnabled) for the linked_bill_id branch. Both were verified before
 // this exemption; neither was assumed — GO-23 C6, 2026-09-02.
+import { releaseBankLinesNamingDocument } from "../accounting/void.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { voidSettlementDeduction } from "../driver-finance/settlement-deduction-void.service.js";
 import { nextCashAdvanceDisplayId } from "./display-id.js";
@@ -701,6 +702,11 @@ export async function reverseDriverAdvanceInClientTx(
   // current_balance=0 signals. Stamping the register here too (COALESCE-guarded, so a row already
   // voided by some other path is never clobbered) closes the gap with zero new logic: no new route,
   // no new UI, no change to WHEN/WHY this fires, just what it records when it does.
+  // ROUND 368.2(b) — a bank line matched to this advance goes back to For review (match kept, release recorded).
+  await releaseBankLinesNamingDocument(client as never, { operatingCompanyId: companyId, pointerColumn: "matched_advance_id", documentId: input.advanceId }, {
+    userId: actorUserUuid,
+    reason: `advance reversed: ${input.reason}`,
+  });
   await client.query(
     `
       UPDATE driver_finance.driver_advances

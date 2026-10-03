@@ -11,7 +11,7 @@ import type { BulkPerEntityContext, BulkPerEntityResult } from "../bulk/bulk.typ
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { PostingEngineError, reversePostedSourceTransactionInClientTx } from "./posting-engine.service.js";
 import { BATCH_VOID_ACTION } from "./bulk-void.service.js";
-import { todayIso } from "./void.service.js";
+import { releaseBankLinesNamingDocument, todayIso } from "./void.service.js";
 import { cascadeVoidChildren } from "./cascade-void-engine.service.js";
 
 const emptyPayloadSchema = z.object({}).default({});
@@ -66,6 +66,11 @@ async function handleExpenseBulk(ctx: BulkPerEntityContext<Record<string, unknow
     return { ok: false, code: "E_VOID_REVERSAL", message };
   }
 
+  // ROUND 368.2(b) — a bank line that names this expense goes back to For review (match kept, release recorded) before it dies.
+  await releaseBankLinesNamingDocument(client as never, { operatingCompanyId, pointerColumn: "matched_expense_id", documentId: id }, {
+    userId: actorUserId,
+    reason: `void: expense ${id} — ${reason.trim()}`,
+  });
   await client.query(
     `
       UPDATE accounting.expenses

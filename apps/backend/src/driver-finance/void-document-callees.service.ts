@@ -33,7 +33,7 @@ import {
   reverseSettlementBillPaymentInClientTx,
   type SettlementBillPaymentReversalResult,
 } from "../accounting/settlement-posting/settlement-bill-payment-posting.service.js";
-import { unmatchBankTransactionById } from "../accounting/void.service.js";
+import { releaseBankLinesNamingDocument, unmatchBankTransactionById } from "../accounting/void.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { voidSettlementDeduction, DeductionVoidError } from "./settlement-deduction-void.service.js";
@@ -119,6 +119,11 @@ export async function reverseSettlementForVoid(
     [settlementId, operatingCompanyId, actor.userId, reason]
   );
   if (!flipped.rows[0]) throw new Error("settlement_reverse_race_lost");
+  // ROUND 368.2(b) — a bank line matched to this settlement (matched_settlement_id) goes back to For review too.
+  await releaseBankLinesNamingDocument(client, { operatingCompanyId, pointerColumn: "matched_settlement_id", documentId: settlementId }, {
+    userId: actor.userId,
+    reason: `settlement reversal: ${settlementId}`,
+  });
 
   let bankTransactionUnmatched = false;
   if (current.paid_via_bank_txn_id) {

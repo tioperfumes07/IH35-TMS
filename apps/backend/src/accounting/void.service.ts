@@ -572,6 +572,37 @@ export async function unmatchBankTransactionById(
  * governance void/cancel executors, the settlement reversal path — gets this for free, per the owner's
  * instruction: "Build it into the void cascade, not as a cleanup job."
  */
+/**
+ * ROUND 368.2(b) — every path that makes a document stop being live releases the bank lines that still NAME it
+ * through a matched_* pointer, in the same transaction, before the 26 document-side refusals
+ * (202615360600, disarmed by 202615360700 until this held) can see a dead link. The release is recorded first
+ * (banking.release_bank_line_matches — LAW 363.9, the match is kept), then the line goes back to For review with the
+ * shared reset. The column is checked against the closed list of the 13 pointers, never interpolated from input.
+ */
+const RELEASABLE_POINTER_COLUMNS = new Set([
+  "matched_load_id", "matched_bill_id", "matched_settlement_id", "matched_expense_id", "matched_transfer_id",
+  "matched_payment_id", "matched_bill_payment_id", "matched_journal_entry_id", "matched_factoring_advance_id",
+  "matched_invoice_id", "matched_fuel_transaction_id", "matched_relay_fuel_transaction_id", "matched_advance_id",
+]);
+export async function releaseBankLinesNamingDocument(
+  client: QueryableClient,
+  params: { operatingCompanyId: string; pointerColumn: string; documentId: string },
+  actor: { userId: string | null; reason: string }
+): Promise<number> {
+  if (!RELEASABLE_POINTER_COLUMNS.has(params.pointerColumn)) throw new Error(`not_a_bank_line_pointer: ${params.pointerColumn}`);
+  const where = `operating_company_id = $1::uuid AND voided_at IS NULL AND ${params.pointerColumn} = $2::uuid`;
+  await releaseBankLineMatchesWhere(client, where, [params.operatingCompanyId, params.documentId], {
+    kind: "void",
+    reason: actor.reason,
+    actorUserId: actor.userId,
+  });
+  const res = await client.query<{ id: string }>(
+    `${BANK_TX_UNMATCH_RESET_SQL} AND voided_at IS NULL AND ${params.pointerColumn} = $2::uuid RETURNING id`,
+    [params.operatingCompanyId, params.documentId]
+  );
+  return res.rows.length;
+}
+
 export async function unmatchBankTransactionsForVoid(
   client: QueryableClient,
   params: { operatingCompanyId: string; entityType: VoidableEntityType; entityId: string },
@@ -889,6 +920,11 @@ export async function postVoidReversal(
         [reversalJeId, firstOriginalJeId, params.operatingCompanyId]
       );
       for (const row of src.rows) {
+        // ROUND 368.2(b) — a bank line that names this original JE goes back to For review before the JE dies.
+        await releaseBankLinesNamingDocument(client, { operatingCompanyId: params.operatingCompanyId, pointerColumn: "matched_journal_entry_id", documentId: String(row.je_id) }, {
+          userId: actor.userId,
+          reason: `journal entry ${String(row.je_id)} reversed by ${reversalJeId}`,
+        });
         await client.query(
           `UPDATE accounting.journal_entries SET reversed_by_je_id = $2::uuid, updated_at = now()
             WHERE id = $1::uuid AND operating_company_id = $3::uuid AND reversed_by_je_id IS NULL`,

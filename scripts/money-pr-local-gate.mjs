@@ -120,6 +120,8 @@ const STEPS = [
   ["verify-send-back-preserves-the-match-and-its-load", "scripts/verify-send-back-preserves-the-match-and-its-load.mjs"],
   // ROUND 363-CC3-A / LAW 363.2 — a load-born posting or document is refused without its load; reversals walk to it.
   ["verify-every-load-born-document-and-posting-traces-to-its-load", "scripts/verify-every-load-born-document-and-posting-traces-to-its-load.mjs"],
+  // ROUND 368.2(b) — every void path releases the bank lines that name its document; the 26 document-side refusals stay armed.
+  ["verify-every-void-releases-its-bank-lines", "scripts/verify-every-void-releases-its-bank-lines.mjs"],
   ["verify-no-session-advisory-locks", "scripts/verify-no-session-advisory-locks.mjs"],
   ["verify-rollup-keys-carry-company", "scripts/verify-rollup-keys-carry-company.mjs"],
   ["verify-filter-surfaces-full-set", "scripts/verify-filter-surfaces-full-set.mjs"],

@@ -33,6 +33,11 @@ function makeFakeClient(opts: { existingVoidedAt?: string | null; existingVoidRe
           ],
         };
       }
+      // ROUND 368.2(b) — the release of bank lines that name the document (banking.release_bank_line_matches), then
+      // their reset; neither touches the document row.
+      if (sql.includes("banking.release_bank_line_matches")) {
+        return { rows: [{ n: 0 }] };
+      }
       if (sql.trim().startsWith("UPDATE")) {
         return { rows: [{ voided_at: "2026-09-23T00:00:00.000Z" }] };
       }
@@ -188,5 +193,31 @@ describe("stampDocumentVoided — ROUND 122 P0: per-family status value, never o
         voidedByUserId: ACTOR,
       })
     ).rejects.toMatchObject({ code: "invalid_void_family" });
+  });
+});
+
+describe("stampDocumentVoided — ROUND 368.2(b): the bank lines that name the document are released first", () => {
+  it("load -> releases lines by matched_load_id, then resets them, BEFORE the stamp's own UPDATE", async () => {
+    const { client, calls } = makeFakeClient();
+    await stampDocumentVoided(client, { operatingCompanyId: OPCO, family: "load", documentId: DOC_ID, voidReason: "test reason", voidedByUserId: ACTOR });
+    const iRelease = calls.findIndex((c) => c.sql.includes("banking.release_bank_line_matches"));
+    const iReset = calls.findIndex((c) => /UPDATE banking\.bank_transactions/.test(c.sql));
+    const iStamp = calls.findIndex((c) => /UPDATE mdata\.loads/.test(c.sql));
+    expect(iRelease).toBeGreaterThanOrEqual(0);
+    expect(calls[iRelease].sql).toContain("matched_load_id = $2::uuid");
+    expect(iRelease).toBeLessThan(iReset);
+    expect(iReset).toBeLessThan(iStamp);
+  });
+
+  it("driver_reimbursement -> no bank-line pointer, so no release query", async () => {
+    const { client, calls } = makeFakeClient();
+    await stampDocumentVoided(client, { operatingCompanyId: OPCO, family: "driver_reimbursement", documentId: DOC_ID, voidReason: "test reason", voidedByUserId: ACTOR });
+    expect(calls.some((c) => c.sql.includes("banking.release_bank_line_matches"))).toBe(false);
+  });
+
+  it("a refused void (different reason on an already-voided document) releases nothing", async () => {
+    const { client, calls } = makeFakeClient({ existingVoidedAt: "2026-09-01T00:00:00Z", existingVoidReason: "other", existingVoidedBy: ACTOR });
+    await expect(stampDocumentVoided(client, { operatingCompanyId: OPCO, family: "load", documentId: DOC_ID, voidReason: "test reason", voidedByUserId: ACTOR })).rejects.toThrow();
+    expect(calls.some((c) => c.sql.includes("banking.release_bank_line_matches"))).toBe(false);
   });
 });

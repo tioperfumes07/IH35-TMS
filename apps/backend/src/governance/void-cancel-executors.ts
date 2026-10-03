@@ -15,7 +15,7 @@
 
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { settleWorkOrderFinancialLinkage } from "../work-orders/work-orders.routes.js";
-import { auditVoid, isVoidEnforcementEnabled, postVoidReversal } from "../accounting/void.service.js";
+import { auditVoid, isVoidEnforcementEnabled, postVoidReversal, releaseBankLinesNamingDocument } from "../accounting/void.service.js";
 import { reverseJournalEntryNoFlip } from "../accounting/journal-entries.service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { reverseSettlementBillPaymentInClientTx } from "../accounting/settlement-posting/settlement-bill-payment-posting.service.js";
@@ -787,6 +787,11 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
     [entityId, operatingCompanyId, userId, reason]
   );
   if (!flipped.rows[0]) return { kind: "already_done" };
+  // ROUND 368.2(b) — a bank line matched to this settlement goes back to For review (match kept, release recorded).
+  await releaseBankLinesNamingDocument(client, { operatingCompanyId, pointerColumn: "matched_settlement_id", documentId: entityId }, {
+    userId,
+    reason: `void: driver_settlement ${entityId} — ${reason}`,
+  });
 
   await appendCrudAudit(
     client,
@@ -1150,6 +1155,11 @@ const executeRelayFuelTransaction: EntityExecutor = async (ctx) => {
   );
   if (!pre.rows[0]) return { kind: "not_found" };
   if (pre.rows[0].voided_at) return { kind: "already_done" };
+  // ROUND 368.2(b) — a bank line matched to this Relay fill goes back to For review (match kept, release recorded).
+  await releaseBankLinesNamingDocument(client, { operatingCompanyId, pointerColumn: "matched_relay_fuel_transaction_id", documentId: entityId }, {
+    userId,
+    reason: `void: relay_fuel_transaction ${entityId} — ${reason}`,
+  });
   const flipped = await client.query(
     `UPDATE integrations.relay_fuel_transactions
         SET voided_at = now()
