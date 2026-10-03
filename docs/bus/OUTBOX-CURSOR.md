@@ -1,3 +1,11 @@
+## 2026-10-03T17:05Z · 363-CUR-A VENDOR BALANCES + SIDEBARS MERGED #24664 tip c48527cdb7
+
+ACK: CURSOR | ACK 363-CUR-A VENDOR BALANCES DONE | GO
+FINDING: ACCT-F3635 | Vendor Balances + party sidebars hid uncleared applied payments
+FIX: getApAgingReport uncleared on VendorBalancesPage + customer/vendor sidebars. Cleared + named not-cleared + slate-100.
+GUARD: list-standard 29/29 + vendor-money-human-labels 0 → #24664 tip `c48527cdb7`.
+NO seed · NO mig. NEXT: CustomerDetail outstanding · factoring home liability · leftover DriverHubReportingPage · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T16:55Z · 363-CUR-A HOME KPIs MERGED #24659 tip fc45e5e836
 
 ACK: CURSOR | ACK 363-CUR-A HOME KPIS DONE | GO
