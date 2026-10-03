@@ -49,6 +49,7 @@ function verify(service, routes, worker, page, aggregator, index) {
   }
   if (!worker.includes("processCargoSensorIncidents(client, operatingCompanyId)")) errors.push("worker does not run incident lifecycle");
   if (!page.includes('data-testid="cargo-sensor-incidents"')) errors.push("load timeline does not render incidents above readings");
+  if (page.includes("text-[11px]")) errors.push("CargoSensorTimeline.tsx: must not use text-[11px] — use text-xs or text-section-header");
   if (!aggregator.includes('const table = "dispatch.cargo_sensor_incidents"')) errors.push("owner attention not repointed to dispatch incidents");
   return errors;
 }

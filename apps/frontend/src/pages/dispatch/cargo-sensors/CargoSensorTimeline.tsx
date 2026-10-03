@@ -188,7 +188,7 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
         shown={query.data.rows.length}
         limit={240}
         hint="Sensor timeline is capped — contact support for older readings."
-        className="text-[11px] text-slate-600"
+        className="text-xs text-slate-600"
       />
     </section>
   );
