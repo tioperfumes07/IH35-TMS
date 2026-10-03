@@ -260,7 +260,7 @@ export function CounterpartyStatementView({
       {query.data ? (
         <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
           <table className="min-w-full text-left text-xs">
-            <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+            <thead className="border-b border-gray-200 bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-600">
               <tr>
                 <th className="px-3 py-2">Date</th>
                 <th className="px-3 py-2">Type</th>

@@ -138,6 +138,29 @@ function checkStatement(src) {
   if (!src.includes("mmmDd")) {
     fail(`${STATEMENT_PAGE}: mmmDd date formatting not found.`);
   }
+  if (src.includes("text-[11px]")) fail(`${STATEMENT_PAGE}: leftover text-[11px]`);
+  if (src.includes("#8A92AB") || src.includes("#334155")) fail(`${STATEMENT_PAGE}: leftover off-scale muted`);
+}
+
+if (process.argv.includes("--selftest")) {
+  const live = fs.readFileSync(STATEMENT_PAGE, "utf8");
+  if (live.includes("text-[11px]") || live.includes("#8A92AB") || live.includes("#334155")) {
+    console.error("verify-counterparty-transactions-tab SELFTEST FAIL — live leftover tokens present");
+    process.exit(1);
+  }
+  const planted = `${live}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  const caught = planted.includes("text-[11px]") && (planted.includes("#8A92AB") || planted.includes("#334155"));
+  if (!caught) {
+    console.error("verify-counterparty-transactions-tab SELFTEST FAIL — leftover plant escaped");
+    process.exit(1);
+  }
+  checkStatement(planted);
+  if (failures === 0) {
+    console.error("verify-counterparty-transactions-tab SELFTEST FAIL — leftover plant not refused");
+    process.exit(1);
+  }
+  console.log("verify-counterparty-transactions-tab SELFTEST PASS — leftover plant refused");
+  process.exit(0);
 }
 
 const customersSrc = fs.readFileSync(CUSTOMERS_PAGE, "utf8");
