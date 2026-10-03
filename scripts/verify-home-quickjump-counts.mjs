@@ -142,6 +142,12 @@ function main() {
     failures.push("BankingHome must import BANKING_MODULE_TABS from BANKING_NAV_CONFIG");
   }
 
+  // BANK-F91134 — ORDERS chrome: SectionQuickJump count pill uses text-xs, not text-[11px].
+  const quickJumpCard = read(path.join(ROOT, "apps/frontend/src/components/home/SectionQuickJump.tsx"));
+  if (quickJumpCard.includes("text-[11px]")) {
+    failures.push("SectionQuickJump must not use text-[11px] — use text-xs");
+  }
+
   if (failures.length) {
     console.error("[verify-home-quickjump-counts] FAILED");
     for (const f of failures) console.error(` - ${f}`);
