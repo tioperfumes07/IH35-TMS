@@ -1918,3 +1918,21 @@ control on prod BEFORE deploy: LIVE FAIL "12 nullable; 4 policies read tenant_id
 on factoring.factor (operating_company_id, id). I will not drop tenant_id from factoring.factor (or anything) until you
 confirm (i) trg_coi_request_sync_operating_company_id + its function are dropped and (ii) both canonical_factor_agreements
 same-entity FKs are on (operating_company_id, …).
+
+## ROUND 342 Phase 2a — first prod apply FAILED and rolled back; corrected and re-rehearsed with the real runner
+
+Backend dep-db04or1h83ns73chph90 (#24297): `pre_deploy_failed` 00:33:21Z — `Migration failed: constraint
+"internal_labor_log_operating_company_id_fkey" for relation "internal_labor_log" already exists`. The file is one
+transaction: prod verified unchanged after (12 tables still nullable, no twin index, the payment_schedule NULL still NULL,
+202615310700 absent from _system._schema_migrations). The running service was never affected (pre-deploy failed → the
+previous deploy kept serving).
+ROOT CAUSE: my "FK already exists?" check compared `pg_get_constraintdef()` text to 'org.companies(id)'. The runner
+(scripts/db-migrate.mjs) sets search_path to `mdata, …, org, …, maintenance, …`, so the def printed `companies(id)` —
+mismatch → ADD → collision. My fork rehearsals ran through plain psql (default search_path), which hid it.
+FIX (same file — never applied, so the ledger has no checksum to break): `SET LOCAL search_path TO pg_catalog, public`
+inside the transaction, and the FK check is structural (referenced table + conkey) or by constraint name.
+RE-REHEARSED with the REAL runner on fork br-red-glade-ak6eb8b0 (deleted after), in prod mode
+(`PROD_MIGRATE_BLOCKLIST=<fork host> ALLOW_PROD_MIGRATE=1`) so the 9 held migrations are skipped exactly as on Render:
+pass 1 `APPLY 202615310700 … Migrations applied successfully`; pass 2 skipped it. Same before/after as the psql
+rehearsal (tenant policies 4 → 0, nullable 12 → 0, 30 twins, 17/17 FKs to org.companies, USMCA payment_schedule 1 → 2,
+everything else identical). `verify-r342-opco-canonical-on-double-scoped` LIVE PASS against the migrated fork.

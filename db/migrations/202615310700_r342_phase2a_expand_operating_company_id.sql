@@ -26,6 +26,13 @@
 
 BEGIN;
 
+-- The migration runner sets a long search_path (org, mdata, maintenance, …). pg_get_*def() drops the schema from any
+-- name on the path, so text built from them — and text compared against them — must not depend on it. First apply on
+-- prod (2026-10-03 00:33Z) failed exactly here: an FK check matched 'org.companies(id)' while the runner printed
+-- 'companies(id)', and the ADD collided with the existing internal_labor_log FK. Rolled back whole; nothing applied.
+-- Pin the path for this transaction, and detect existing FKs structurally (referenced table + column), never by text.
+SET LOCAL search_path TO pg_catalog, public;
+
 DO $$
 DECLARE
   t text;
@@ -55,10 +62,14 @@ BEGIN
     EXECUTE format('ALTER TABLE %s ALTER COLUMN operating_company_id SET NOT NULL', t);
     -- 4. FK to org.companies where none exists
     SELECT EXISTS (
-      SELECT 1 FROM pg_constraint
-       WHERE conrelid = t::regclass AND contype = 'f'
-         AND confrelid = 'org.companies'::regclass
-         AND pg_get_constraintdef(oid) LIKE 'FOREIGN KEY (operating_company_id) REFERENCES org.companies(id)%'
+      SELECT 1 FROM pg_constraint c
+       WHERE c.conrelid = t::regclass AND c.contype = 'f'
+         AND c.confrelid = 'org.companies'::regclass
+         AND c.conkey = ARRAY[(SELECT a.attnum FROM pg_attribute a
+                                WHERE a.attrelid = t::regclass AND a.attname = 'operating_company_id')]
+    ) OR EXISTS (
+      SELECT 1 FROM pg_constraint c
+       WHERE c.conrelid = t::regclass AND c.conname = split_part(t, '.', 2) || '_operating_company_id_fkey'
     ) INTO v_fk;
     IF NOT v_fk THEN
       EXECUTE format('ALTER TABLE %s ADD CONSTRAINT %I FOREIGN KEY (operating_company_id) REFERENCES org.companies(id)',
