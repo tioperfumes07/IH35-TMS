@@ -24,6 +24,8 @@ function assertContract(source) {
     'options={CERT_OPTIONS}',
     'options={SEVERITY_OPTIONS}',
   ]) if (!source.includes(token)) throw new Error(`missing Certificate Expiry filter contract: ${token}`);
+  if (source.includes("text-[11px]")) throw new Error("leftover text-[11px]");
+  if (source.includes("#8A92AB") || source.includes("#334155")) throw new Error("leftover off-scale muted");
 }
 
 if (process.argv.includes("--selftest")) {
@@ -34,6 +36,13 @@ if (process.argv.includes("--selftest")) {
     encoding: "utf8",
   });
   if (child.status === 0) throw new Error("selftest failed: planted severity predicate miswire stayed green");
+  const leftoverPlanted = `${diskSource}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  const leftoverChild = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
+    cwd: ROOT,
+    env: { ...process.env, SAFETY_F6485_PLANTED_SOURCE: leftoverPlanted },
+    encoding: "utf8",
+  });
+  if (leftoverChild.status === 0) throw new Error("selftest failed: leftover plant stayed green");
   console.log("verify-safety-cert-expiry-filter-comboboxes --selftest PASS");
   process.exit(0);
 }
