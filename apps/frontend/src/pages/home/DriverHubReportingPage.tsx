@@ -98,7 +98,7 @@ const DRIVER_REPORTING_COLUMNS: Array<ParityColumn<InboxReportingDriverRow>> = [
     label: "Approved",
     sortable: true,
     className: "text-right",
-    cellClass: "text-right text-[#334155]",
+    cellClass: "text-right text-slate-700",
     render: (r) => r.approved,
   },
   {
@@ -165,7 +165,7 @@ const LOAD_REPORTING_COLUMNS: Array<ParityColumn<InboxReportingLoadRow>> = [
     label: "Approved",
     sortable: true,
     className: "text-right",
-    cellClass: "text-right text-[#334155]",
+    cellClass: "text-right text-slate-700",
     render: (r) => r.approved,
   },
   {
@@ -282,7 +282,7 @@ export function DriverHubReportingPage() {
                 >
                   <div className="flex flex-wrap items-end gap-3">
                     <div className="space-y-1">
-                      <label className="block text-[11px] font-semibold uppercase tracking-wide text-[#8A92AB]">From</label>
+                      <label className="block text-xs font-semibold uppercase tracking-wide text-[#4B5563]">From</label>
                       <DatePicker
                         className={inputCls}
                         value={stagedRange.draft.from}
@@ -291,7 +291,7 @@ export function DriverHubReportingPage() {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="block text-[11px] font-semibold uppercase tracking-wide text-[#8A92AB]">To</label>
+                      <label className="block text-xs font-semibold uppercase tracking-wide text-[#4B5563]">To</label>
                       <DatePicker
                         className={inputCls}
                         value={stagedRange.draft.to}
@@ -307,7 +307,7 @@ export function DriverHubReportingPage() {
           </div>
 
           <div className="rounded-sm border border-gray-200 bg-white p-2">
-            <div className="mb-1 px-1 text-[11px] font-semibold uppercase tracking-wide text-[#8A92AB]">
+            <div className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
               By load
             </div>
             <ParityTable
@@ -323,7 +323,7 @@ export function DriverHubReportingPage() {
           </div>
 
           {data.not_computed.length > 0 ? (
-            <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-[11px] text-slate-700">
+            <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-xs text-slate-700">
               <span className="font-semibold">Not yet computed: </span>
               {data.not_computed.join(" ")}
             </div>

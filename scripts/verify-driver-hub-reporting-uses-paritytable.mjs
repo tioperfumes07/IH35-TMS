@@ -71,6 +71,12 @@ function assertMigrated(src) {
   if (!/filterBar=\{[\s\S]*?<CollapsedListFilters[\s\S]*?onApply=\{stagedRange\.apply\}/.test(src)) {
     errors.push(`${PAGE}: reporting ParityTable must mount staged range controls in its filterBar`);
   }
+  if (src.includes("text-[11px]")) {
+    errors.push(`${PAGE}: leftover chrome must use text-xs, not text-[11px]`);
+  }
+  if (src.includes("#334155") || src.includes("#8A92AB")) {
+    errors.push(`${PAGE}: leftover chrome must not use off-scale #334155 / #8A92AB`);
+  }
   return errors;
 }
 
