@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { titleize } from "../../lib/titleize";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getReceipts, getReceiptDetail, type ReceiptItem } from "../../api/receipts";
@@ -13,6 +13,8 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { SelectCombobox } from "../../components/Combobox";
 import { useUrlSort } from "../../hooks/useUrlSort";
+import { Button } from "../../components/Button";
+import { RecordExpenseModal } from "../../components/expenses/RecordExpenseModal";
 
 const fmtCents = (c: number | null) => (c == null ? "—" : formatUsdCents(c));
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
@@ -101,6 +103,11 @@ export function ReceiptsPage() {
   const [search, setSearch] = useState("");
   const [offset, setOffset] = useState(0);
   const [detailId, setDetailId] = useState<string | null>(null);
+  // U5 (owner UI register 2026-10-03) — "the receipt creator must BE the expense creator, one writer". A receipt is the
+  // proof attached to an expense; "New receipt" opens the expense creator (RecordExpenseForm -> POST /api/v1/expenses) with
+  // the file filed as a receipt. Receipts has no writer of its own.
+  const [newReceiptOpen, setNewReceiptOpen] = useState(false);
+  const queryClient = useQueryClient();
   const limit = 50;
   // BANK-SORT-ROLLOUT-ACCT: sort persists in URL (?sort=&dir=) via useUrlSort + ParityTable controlled sort.
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
@@ -223,7 +230,30 @@ export function ReceiptsPage() {
   );
 
   return (
-    <AccountingSubNavWrapper title="Receipts" subtitle="Uploaded receipts for expenses, bills, and customer payment proof">
+    <AccountingSubNavWrapper
+      title="Receipts"
+      subtitle="Uploaded receipts for expenses, bills, and customer payment proof"
+      actions={
+        operatingCompanyId ? (
+          <Button variant="primary" onClick={() => setNewReceiptOpen(true)} data-testid="receipts-new">
+            + New receipt
+          </Button>
+        ) : null
+      }
+    >
+      {operatingCompanyId ? (
+        <RecordExpenseModal
+          open={newReceiptOpen}
+          operatingCompanyId={operatingCompanyId}
+          title="New receipt — records the expense"
+          attachmentCategory="receipt"
+          onClose={() => setNewReceiptOpen(false)}
+          onCreated={() => {
+            void queryClient.invalidateQueries({ queryKey: ["receipts"] });
+            void queryClient.invalidateQueries({ queryKey: ["accounting", "expenses"] });
+          }}
+        />
+      ) : null}
       {detailId && <ReceiptDetailPanel id={detailId} companyId={operatingCompanyId} onClose={() => setDetailId(null)} />}
 
       {isError ? (
