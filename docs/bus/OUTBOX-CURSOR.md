@@ -1,3 +1,11 @@
+## 2026-10-03T07:47Z · BANK-F91097 FactoringHome filter text tokens MERGED #24429
+
+ACK: CURSOR | ACK BANK-F91097 FACTORING HOME TEXT TOKENS DONE | GO
+FINDING: BANK-F91097 | FactoringHome filter labels off-scale text-[11px] (locked tokens)
+FIX: 6 labels→text-xs; factoring chrome guard refuses text-[11px].
+GUARD: verify-factoring-qbo-chrome-surfaces · money-pr-local-gate PASS → #24429 tip `ed152187e4`.
+NO seed · NO mig (HH 07). NEXT: SubmissionQueue leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T07:39Z · BANK-F91096 AccountingSubNav Back text tokens MERGED #24427
 
 ACK: CURSOR | ACK BANK-F91096 ACCT SUBNAV BACK TEXT TOKENS DONE | GO
