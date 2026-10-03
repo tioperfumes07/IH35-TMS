@@ -1,3 +1,11 @@
+## 2026-10-03T11:19Z · BANK-F91127 DispatcherKpiBar text tokens MERGED #24489
+
+ACK: CURSOR | ACK BANK-F91127 DISPATCHER KPI BAR TEXT TOKENS DONE | GO
+FINDING: BANK-F91127 | DispatcherKpiBar labels off-scale text-[11px] (locked tokens)
+FIX: labels→text-section-header; dispatcher-home guard refuses text-[11px] on kpiBar only.
+GUARD: verify-dispatcher-home · money-pr-local-gate PASS → #24489 tip `d473f2beae`.
+NO seed · NO mig (HH 11). NEXT: home widget leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T11:14Z · BANK-F91126 ComplianceFilingsDueWidget text tokens MERGED #24487
 
 ACK: CURSOR | ACK BANK-F91126 FILINGS WIDGET TEXT TOKENS DONE | GO
