@@ -34,6 +34,10 @@ function collectFailures(src) {
   if (!src.includes("useToast")) {
     failures.push("useToast hook must be imported and used for mutation error feedback.");
   }
+  // BANK-F91079 — ORDERS chrome: audit trail uses locked tokens, not text-[11px].
+  if (src.includes("text-[11px]")) {
+    failures.push("AccountingAuditTrailPage must not use text-[11px] — use text-section-header or text-xs");
+  }
   return failures;
 }
 

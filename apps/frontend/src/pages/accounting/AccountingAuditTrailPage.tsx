@@ -408,14 +408,14 @@ export function AccountingAuditTrailPage() {
         renderExpanded={(row) => (
           <div className="grid gap-2 md:grid-cols-2">
             <div>
-              <div className="mb-1 text-[11px] font-semibold uppercase text-slate-600">Before state</div>
-              <pre className="max-h-48 overflow-auto rounded-sm border border-slate-200 bg-white p-2 text-[11px]">
+              <div className="mb-1 text-section-header font-semibold uppercase text-slate-600">Before state</div>
+              <pre className="max-h-48 overflow-auto rounded-sm border border-slate-200 bg-white p-2 text-xs">
                 {JSON.stringify(row.before_state_json ?? {}, null, 2)}
               </pre>
             </div>
             <div>
-              <div className="mb-1 text-[11px] font-semibold uppercase text-slate-600">After state</div>
-              <pre className="max-h-48 overflow-auto rounded-sm border border-slate-200 bg-white p-2 text-[11px]">
+              <div className="mb-1 text-section-header font-semibold uppercase text-slate-600">After state</div>
+              <pre className="max-h-48 overflow-auto rounded-sm border border-slate-200 bg-white p-2 text-xs">
                 {JSON.stringify(row.after_state_json ?? {}, null, 2)}
               </pre>
             </div>
