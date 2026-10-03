@@ -46,6 +46,9 @@ if (!/<WizardReclassifyPanel\b/.test(drawer)) fails.push(`${DRAWER}: does not re
 for (const n of ["applyReclassify", "findReclassifyLines", "source_transaction_ids", "../../lib/reclassifyDrill"]) {
   if (!panel.includes(n)) fails.push(`${PANEL}: lost "${n}"`);
 }
+// U17 (owner) — "Expenses is read-only; reclassify must work from it": the Expenses list reaches the same panel.
+const EXPENSES = "apps/frontend/src/pages/accounting/ExpensesListPage.tsx";
+if (!/<WizardReclassifyPanel\b/.test(read(EXPENSES))) fails.push(`${EXPENSES}: reclassify is not reachable from the Expenses list`);
 const register = read("apps/frontend/src/pages/accounting/ReclassifyTransactionsPage.tsx");
 if (!register.includes("lib/reclassifyDrill")) fails.push("ReclassifyTransactionsPage.tsx: no longer uses the shared drill map (lib/reclassifyDrill)");
 for (const [f, src] of [[DRAWER, drawer], [PANEL, panel], ["ReclassifyTransactionsPage.tsx", register]]) {

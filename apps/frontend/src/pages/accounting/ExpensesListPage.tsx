@@ -13,6 +13,11 @@ import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { EntityPicker } from "../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ParityDrawer } from "../../components/parity/ParityDrawer";
+import { WizardReclassifyPanel } from "../settlements/WizardReclassifyPanel";
+import { getReclassifyAccountTree } from "../../api/reclassify";
+import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
+import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 import { RecordExpenseModal } from "../../components/expenses/RecordExpenseModal";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { DateRangePresets } from "../../components/forms/DateRangePresets";
@@ -151,6 +156,23 @@ export function ExpensesListPage() {
   // LST-F5195 — reverse entity filters commit via staged Apply (no silent URL helper).
   const bulk = useEntityBulkAction();
   const [pendingVoidIds, setPendingVoidIds] = useState<string[]>([]);
+  // U17 — the expenses whose posted lines the reclassify drawer shows (null = closed).
+  const [reclassifyIds, setReclassifyIds] = useState<string[] | null>(null);
+  const [showAccountNumbers] = useShowAccountNumbers();
+  const today = new Date().toISOString().slice(0, 10);
+  const reclassifyAccountsQuery = useQuery({
+    queryKey: ["expenses-reclassify-accounts", selectedCompanyId],
+    queryFn: () => getReclassifyAccountTree(selectedCompanyId ?? "", today, today),
+    enabled: Boolean(reclassifyIds) && Boolean(selectedCompanyId),
+    staleTime: 60_000,
+  });
+  const reclassifyAccountOptions = useMemo(
+    () =>
+      (reclassifyAccountsQuery.data?.accounts ?? [])
+        .filter((a) => a.is_active && a.is_postable)
+        .map((a) => ({ value: a.account_id, label: formatAccountDisplayLabel(a, { showNumber: showAccountNumbers }) })),
+    [reclassifyAccountsQuery.data, showAccountNumbers],
+  );
   const [pendingVoidLabels, setPendingVoidLabels] = useState<Record<string, string>>({});
   const [batchVoidOpen, setBatchVoidOpen] = useState(false);
   const [voidOpen, setVoidOpen] = useState(false);
@@ -695,6 +717,11 @@ export function ExpensesListPage() {
           selectable
         maxSelectable={200}
         batchActions={(selected) => (
+          <>
+          {/* U17 (owner): "Expenses is read-only; reclassify must work from it" — the one reclassify engine, in place. */}
+          <Button size="sm" variant="secondary" type="button" data-testid="expenses-reclassify-selected" onClick={() => setReclassifyIds(selected.map((row) => row.id))}>
+            {`Reclassify ${selected.length} selected`}
+          </Button>
           <Button
             size="sm"
             variant="danger"
@@ -707,10 +734,26 @@ export function ExpensesListPage() {
           >
             {`Void ${selected.length} selected`}
           </Button>
+          </>
         )}
         emptyText="No expenses found for the selected filters."
         />
       </div>
+      <ParityDrawer open={Boolean(reclassifyIds)} onClose={() => setReclassifyIds(null)} size="half" title="Reclassify expenses" subtitle="The same engine as Accounting › Reclassify — one batch, one audit record, undo from there.">
+        {reclassifyIds ? (
+          <WizardReclassifyPanel
+            companyId={selectedCompanyId ?? ""}
+            documentIds={reclassifyIds}
+            postedLabel={`${reclassifyIds.length} expense${reclassifyIds.length === 1 ? "" : "s"} selected`}
+            accountOptions={reclassifyAccountOptions}
+            intro="Pick the lines to move, the account they belong in and a reason."
+            onDone={() => {
+              setReclassifyIds(null);
+              void queryClient.invalidateQueries({ queryKey: ["accounting", "expenses", selectedCompanyId] });
+            }}
+          />
+        ) : null}
+      </ParityDrawer>
     </AccountingSubNavWrapper>
   );
 }
