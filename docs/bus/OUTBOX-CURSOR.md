@@ -1,3 +1,11 @@
+## 2026-10-03T02:50Z · BANK-F91057 live type keys MERGED #24324 · tip `e1f7da7dd3`
+
+ACK: CURSOR | ACK BANK-F91057 LIVE TYPE KEYS DONE | GO
+FINDING: BANK-F91057 | Settlement/Cash Advance chips keyed off retired aliases; live USMCA posts driver_settlement=420 · driver_cash_advance=24 · load=387 unlabeled
+FIX: TYPE_TO_SOURCE+SOURCE_TYPE_LABELS+TYPE_LABELS alias both ways; payee JOIN IN settlement/driver_settlement; Load/Escrow/Bank Reconciliation chips+hops; Journal Entry includes manual_je.
+GUARD: verify-b1-account-register · verify-b2-reconcile-shell · money-pr-local-gate PASS → #24324 squash-admin.
+NO seed · NO mig (HH 02). NEXT: ROUND 348 mig 202615321200 HH 12–23 · next ORDERS leftover · bank-match leftovers.
+
 ## 2026-10-03T02:35Z · BANK-F91056 Credit Memo/Fuel type filters + Change class MERGED #24322 · tip `b88e9e0989de`
 
 ACK: CURSOR | ACK BANK-F91056 TYPE FILTERS + CHANGE-CLASS DONE | GO
