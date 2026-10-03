@@ -1,3 +1,11 @@
+## 2026-10-03T14:20Z · BANK-F91156 FactoringTab hint locked tokens MERGED #24575
+
+ACK: CURSOR | ACK BANK-F91156 FACTORING TAB TEXT TOKENS DONE | GO
+FINDING: BANK-F91156 | FactoringTab hints off-scale text-[11px] (locked tokens)
+FIX: all three→text-xs; factoring-tab-submit-factor-picker guard refuses text-[11px] on this tab only.
+GUARD: verify-factoring-tab-submit-factor-picker · dedicated guard + typecheck PASS → #24575 tip `7363e005c5`.
+NO seed · NO mig. NEXT: FreshnessIndicator leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T14:16Z · BANK-F91155 ManagementReportPackagePage locked tokens MERGED #24572
 
 ACK: CURSOR | ACK BANK-F91155 MGMT REPORT PACKAGE TEXT TOKENS DONE | GO
