@@ -467,7 +467,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
                 key={chip.key}
                 type="button"
                 onClick={() => setEquipmentClass(chip.key)}
-                className={`inline-flex h-7 items-center gap-1 rounded-sm border px-2 text-[11px] font-medium ${
+                className={`inline-flex h-7 items-center gap-1 rounded-sm border px-2 text-xs font-medium ${
                   active
                     ? "border-[#14314F] bg-[#14314F] text-white"
                     : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"

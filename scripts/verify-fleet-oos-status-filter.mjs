@@ -43,6 +43,8 @@ function assertSource(src) {
   if (!/params\.delete\(["']q["']\)/.test(clearFn)) {
     fail("clearFilters must params.delete(\"q\") so search does not stick after Clear filters");
   }
+  if (src.includes("text-[11px]")) fail("leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155")) fail("leftover off-scale muted");
 }
 
 function selftest() {
@@ -56,6 +58,16 @@ function selftest() {
     failed = true;
   }
   if (!failed) fail("mutated still passed");
+  if (good.includes("text-[11px]") || good.includes("#8A92AB") || good.includes("#334155")) {
+    fail("live leftover tokens present");
+  }
+  let leftoverFailed = false;
+  try {
+    assertSource(`${good}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`);
+  } catch {
+    leftoverFailed = true;
+  }
+  if (!leftoverFailed) fail("leftover plant escaped");
   console.log("PASS: verify-fleet-oos-status-filter --selftest");
 }
 
