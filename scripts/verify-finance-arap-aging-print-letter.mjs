@@ -24,6 +24,7 @@ function assertSource() {
   if (!page.includes("printLetterHtml")) fail("ArApAgingPage must use printLetterHtml");
   if (!/onClick=\{printLetter\}/.test(page)) fail("Print must call printLetter");
   if (/onClick=\{\(\) => window\.print\(\)\}/.test(page)) fail("must not window.print() on SPA");
+  if (page.includes("text-[11px]")) fail("ArApAgingPage.tsx: must not use text-[11px] — use text-xs or text-section-header");
 }
 
 function selftest() {
