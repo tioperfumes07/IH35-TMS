@@ -1,3 +1,11 @@
+## 2026-10-03T14:48Z · BANK-F91165 TripPairingBoardPage locked tokens MERGED #24597
+
+ACK: CURSOR | ACK BANK-F91165 TRIP PAIRING TEXT TOKENS DONE | GO
+FINDING: BANK-F91165 | TripPairingBoardPage chrome off-scale text-[11px] (locked tokens)
+FIX: two uppercase titles→text-section-header; remaining chrome→text-xs; trip-pairing-leg-columns guard refuses text-[11px] on this page only.
+GUARD: verify-trip-pairing-leg-columns · dedicated guard + typecheck PASS → #24597 tip `c88e09c499`.
+NO seed · NO mig. NEXT: LoadHistoryPage leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T14:43Z · BANK-F91164 ArApAgingPage locked tokens MERGED #24595
 
 ACK: CURSOR | ACK BANK-F91164 FINANCE AR/AP AGING TEXT TOKENS DONE | GO
