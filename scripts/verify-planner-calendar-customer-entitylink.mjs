@@ -27,6 +27,8 @@ function audit(src) {
   if (!/kind=["']customer["']/.test(src) || !/kind=["']load["']/.test(src)) {
     failures.push(`${TARGET}: must EntityLink kind=load and kind=customer`);
   }
+  if (src.includes("text-[11px]")) failures.push(`${TARGET}: leftover text-[11px]`);
+  if (src.includes("#8A92AB") || src.includes("#334155")) failures.push(`${TARGET}: leftover off-scale muted`);
   return failures;
 }
 
@@ -42,6 +44,11 @@ if (process.argv.includes("--selftest")) {
   );
   if (!audit(broken).length) {
     console.error(`${LABEL} SELFTEST FAIL — planted regression not caught`);
+    process.exit(1);
+  }
+  const leftoverPlant = `${good}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  if (!audit(leftoverPlant).length) {
+    console.error(`${LABEL} SELFTEST FAIL — leftover plant escaped`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest OK`);

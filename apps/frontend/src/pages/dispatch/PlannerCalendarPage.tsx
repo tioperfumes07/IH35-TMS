@@ -43,7 +43,7 @@ function PlannerLoadChip({ load, disabled }: { load: PlannerLoadEvent; disabled:
       {...listeners}
       {...attributes}
       data-testid={`planner-load-${load.load_number}`}
-      className={`mb-1 block w-full rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-left text-[11px] text-slate-700 ${isDragging ? "opacity-60" : ""}`}
+      className={`mb-1 block w-full rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-left text-xs text-slate-700 ${isDragging ? "opacity-60" : ""}`}
       title={`${entityLabel(load.load_number, load.id, "Load")} · ${entityLabel(load.customer_name, load.customer_id, "Customer")} · ${load.pickup_city ?? ""}${load.pickup_state ? `, ${load.pickup_state}` : ""} — click to open detail`}
     >
       <EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} className="font-semibold" data-testid="planner-calendar-load-link" />
