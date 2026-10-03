@@ -2542,3 +2542,60 @@ after ACCT-F9846 (nothing posts to a deactivated account). My ROUND 340 step 3 P
 Per your order: enforcement (composite FKs) NOT started; nothing written. Waiting on your ruling.
 Also: the classification workbook (claude/audits/10-02-2026-USMCA-ENGINE-ACCOUNT-CORRECTNESS-LINKAGE-AUDIT.xlsx) is not on
 main or on this machine — send it or its path; otherwise I derive the 183 from the live catalogue and rule each myself.
+
+## 2026-10-03 — ROUND 345 measurements (all on prod, BEGIN READ ONLY; SET LOCAL app.bypass_rls = 'lucia')
+
+### 1. The 535 money rows with NO company — they are ORPHANS, not unassigned lines
+| table | rows | amount | what they are |
+|---|---|---|---|
+| accounting.expense_lines | 506 | $130,799.30 | expense_id IS NULL — no parent expense at all; created 2026-09-05 .. 09-21; accounts are USMCA's |
+| accounting.bill_lines | 28 | $294,210.72 | bill_id points at 28 bills that NO LONGER EXIST; all created 2026-09-13; accounts USMCA's |
+| insurance.payment_schedule | 1 | $1,200.00 | policy is USMCA's (due 2026-09-15) |
+All 534 lines were created AFTER 2026-08-07. **Why the database let them through:** bill_lines_bill_same_entity_fkey /
+expense_lines_expense_same_entity_fkey are composite (operating_company_id, parent_id) FKs with MATCH SIMPLE — Postgres
+skips the whole check when ANY column is NULL. A NULL company disables the same-entity FK. The block must make
+operating_company_id NOT NULL on every child it covers (or use MATCH FULL), or the composite FK has this exact hole.
+
+### 2. The three live rows (Part 2) — measured, NOTHING written
+- **chart_of_accounts_roles:** role **driver_payroll_clearing** (TRK, is_active = false) -> account QBO-149 "Driver Cash
+  Advance" owned by TRANSP. Your ruling on the target.
+- **escrow_balances (first of the three):** a REPOINT IS IMPOSSIBLE — the person (ALFONSO HIDALGO CHAVEZ) has TWO USMCA
+  escrow balances: 57927c7c… on his USMCA driver record (held 30,000c, released 5,000c, balance **25,000c**, 14 ledger rows)
+  and 009d57e9… on his TRANSP driver record (held 12,500c, released 12,500c, balance **0**, 6 ledger rows; created 3 min
+  earlier, 2026-09-24 16:57Z). UNIQUE (operating_company_id, driver_id) refuses moving the second onto the USMCA record. A
+  MERGE would fold its 6 ledger rows into the real balance (held -> 42,500c, released -> 17,500c, balance stays 25,000c)
+  and close the artifact (WORM refuses delete). That changes the trust account's totals: your ruling. Script
+  2026-10-03-cc3-escrow-driver-repoint.mts refused on exactly this check (dry run).
+- **driver_advance_accounts:** TRANSP advance account for Jorge Pablo Guadalupe Muñoz Gonzalez (USMCA driver record),
+  sub-account QBO-149-001 — **0 postings, balance $0**. A zero-balance artifact, not a live advance.
+
+### 3. The 76 TRANSP fuel transactions after 2026-08-07 — source documents FOUND; NOT misposted money
+Every one carries notes `relay_bridge=1; relay_txn=txn_…` — the source document is the RELAY transaction (Relay org
+"IH 35 TRANSPORTATION LLC", org number 66068577; ingest_source daily_pull). Each Relay transaction was ingested into BOTH
+companies' relay tables; the TRANSP copies were VOIDED on 2026-09-28; the USMCA copies are live.
+- USMCA's GL already carries **75 of the 76: $32,711.20** (relay posted_to_gl on the USMCA rows)
+- TRANSP's GL carries **1: $15.25** (txn_6MHM5zV64ocPco, 2026-08-13, 6100 Fuel Expense / A/P) — the one USMCA did not post
+- $32,711.20 + $15.25 = **$32,726.45** — nothing double-booked, nothing missing.
+The 76 rows in fuel.fuel_transactions under TRANSP are stale operational copies bridged before the relay void (no GL
+except the one). The "65 unit-less" and "10 on USMCA-leased trucks" are the same Relay fuel USMCA already expensed. The
+Relay account itself is in TRANSPORTATION's name — the cause of the double ingest. Nothing moved.
+
+### 4. The 8 "unmeasurable" relationships — all measured, 0 disagree
+dispatch.customer_notify_preferences / notify_log (customer_id, load_id): tables EMPTY (n_live_tup 0 — not an RLS mask).
+maintenance.pm_auto_wo_log -> pm_schedules 786/786 agree, -> pm_schedule_runs 786/786 agree, work_order_id 786 NULL.
+safety.da_program_enrollments -> drivers 1/1 agree; safety.da_test_records -> drivers 2/2 agree (their RLS policy casts an
+unset app.operating_company_id '' to uuid — measured with it set).
+
+### 5. Order 3 — index-leading report (measurement only, no index changed)
+policies 1,154 (833 keyed on operating_company_id); RLS company-scoped tables 658; indexes on them 2,564 (658 PKs);
+**non-PK indexes not leading with operating_company_id: 818 of 1,906 (137 unique) on 357 tables.** Worst by size:
+qbo_archive.transactions_snapshot 2,056 MB · qbo_archive.import_batch_audit_log 1,578 MB · audit.scenario_status 649 MB ·
+accounting.bill_lines 71 MB (9) · telematics.odometer_readings 51 MB · accounting.expense_lines 17 MB (8) ·
+accounting.expenses 17 MB (7) · banking.bank_transactions 13 MB (9) · accounting.journal_entry_postings 13 MB (2) ·
+accounting.bills 9 MB (11) · accounting.transaction_source_links 9 MB (3) · accounting.invoices 8 MB (8) ·
+accounting.invoice_lines 8 MB (5) · mdata.customers 7 MB (11). Full list kept for the order-1 plan (same edit).
+
+### 6. ROUND 340.2 — on prod (#24296, deploy dep-db04nvu7bikc7386bsj0)
+rows 800 -> 800; duplicate groups (company, unit, ended_at) 0; unique indexes: unit_stop_events_company_unit_ended_unique,
+unit_stop_events_company_unit_start_unique, unit_stop_events_pkey — all indisvalid true; unit_stop_events_unit_start_unique
+GONE; migrations 1059 / 1101 / 1102 in the ledger. First real tick under the new writer: 00:37Z (being read).
