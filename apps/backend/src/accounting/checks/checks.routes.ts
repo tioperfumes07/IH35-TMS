@@ -168,6 +168,63 @@ export async function registerCheckRoutes(app: FastifyInstance) {
     }
   );
 
+  // U6 (owner, 2026-10-03): "Checks list must show all checks with full filters". The list above reads only EXPENSE
+  // checks (accounting.expenses payment_type = 'check'); a bill paid by check and a driver settlement paid by check never
+  // appeared. This is every check the company wrote, one row each, with its kind and the document it opens.
+  app.get(
+    "/api/v1/checks/all",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req: FastifyRequest, reply: FastifyReply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      const parsed = companyQuerySchema
+        .extend({
+          date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+          date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+        })
+        .safeParse(req.query ?? {});
+      if (!parsed.success) return validationError(reply, parsed.error);
+      const q = parsed.data;
+      const rows = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
+        const res = await client.query(
+          `SELECT * FROM (
+             SELECT 'expense'::text AS kind, e.id::text AS id, e.check_number, e.transaction_date::text AS check_date,
+                    e.print_on_check_name AS payee, ba.id::text AS bank_account_id, COALESCE(ba.display_name, ba.account_name) AS bank_account,
+                    e.total_amount_cents::bigint AS amount_cents, e.memo,
+                    CASE WHEN e.voided_at IS NOT NULL THEN 'voided' WHEN e.check_number IS NULL THEN 'to_print' ELSE COALESCE(e.print_status, 'issued') END AS status
+               FROM accounting.expenses e
+               JOIN banking.bank_accounts ba ON ba.ledger_account_id = e.payment_account_uuid
+              WHERE e.operating_company_id = $1::uuid AND e.payment_type = 'check'
+             UNION ALL
+             SELECT 'bill_payment', bp.id::text, bp.check_number, bp.payment_date::text,
+                    COALESCE(v.vendor_name, bp.vendor_id), ba.id::text, COALESCE(ba.display_name, ba.account_name),
+                    bp.amount_cents::bigint, bp.memo,
+                    CASE WHEN bp.voided_at IS NOT NULL THEN 'voided' WHEN bp.cleared_date IS NOT NULL THEN 'cleared' WHEN bp.check_number IS NULL THEN 'to_print' ELSE 'issued' END
+               FROM accounting.bill_payments bp
+               JOIN accounting.bills b ON b.id = bp.bill_id
+               LEFT JOIN mdata.vendors v ON v.id = b.mdata_vendor_id
+               LEFT JOIN banking.bank_accounts ba ON ba.id = bp.from_bank_account_id
+              WHERE b.operating_company_id = $1::uuid AND bp.payment_method = 'check'
+             UNION ALL
+             SELECT 'driver_settlement_payment', r.source_id::text, r.check_number, r.issued_at::date::text,
+                    r.payee_label, ba.id::text, COALESCE(ba.display_name, ba.account_name),
+                    r.amount_cents::bigint, NULL::text,
+                    CASE WHEN r.voided_at IS NOT NULL THEN 'voided' ELSE r.status END
+               FROM banking.check_number_registry r
+               LEFT JOIN banking.bank_accounts ba ON ba.id = r.bank_account_id
+              WHERE r.operating_company_id = $1::uuid AND r.source_kind = 'driver_settlement_payment'
+           ) c
+          WHERE ($2::date IS NULL OR c.check_date::date >= $2::date)
+            AND ($3::date IS NULL OR c.check_date::date <= $3::date)
+          ORDER BY c.check_date DESC NULLS LAST, c.check_number DESC NULLS LAST
+          LIMIT 2000`,
+          [q.operating_company_id, q.date_from ?? null, q.date_to ?? null]
+        );
+        return res.rows;
+      });
+      return reply.send({ rows });
+    }
+  );
   app.get(
     "/api/v1/checks",
     { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },

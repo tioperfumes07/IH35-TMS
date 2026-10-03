@@ -110,6 +110,26 @@ export function listChecks(operatingCompanyId: string, options: CheckReverseLink
   return apiRequest<{ rows: CheckListRow[]; limit: number; offset: number }>(`/api/v1/checks?${q.toString()}`);
 }
 
+/** U6 (owner) — every check the company wrote: expense checks, bills paid by check, driver settlements paid by check. */
+export type AllChecksRow = {
+  kind: "expense" | "bill_payment" | "driver_settlement_payment";
+  id: string;
+  check_number: string | null;
+  check_date: string | null;
+  payee: string | null;
+  bank_account_id: string | null;
+  bank_account: string | null;
+  amount_cents: number | string;
+  memo: string | null;
+  status: string;
+};
+export function listAllChecks(operatingCompanyId: string, params: { date_from?: string; date_to?: string } = {}) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (params.date_from) q.set("date_from", params.date_from);
+  if (params.date_to) q.set("date_to", params.date_to);
+  return apiRequest<{ rows: AllChecksRow[] }>(`/api/v1/checks/all?${q.toString()}`);
+}
+
 export function getCheckNextNumber(operatingCompanyId: string, bankAccountId: string) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId, bank_account_id: bankAccountId });
   return apiRequest<{ next_check_number: string | null }>(`/api/v1/checks/next-number?${q.toString()}`);

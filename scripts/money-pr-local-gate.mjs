@@ -874,6 +874,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-tables-and-tab-bars-follow-the-window",
     ["apps/frontend/src/components/parity/ParityTable.tsx", "apps/frontend/src/components/forms/shared/HoverDropdownNav.css", "scripts/verify-tables-and-tab-bars-follow-the-window.mjs"],
   ],
+  // U6 (owner) — the Checks list shows every check with full filters.
+  [
+    "verify-checks-list-shows-every-check",
+    ["apps/backend/src/accounting/checks/checks.routes.ts", "apps/frontend/src/pages/accounting/checks/CheckListPage.tsx", "apps/frontend/src/api/checks.ts", "scripts/verify-checks-list-shows-every-check.mjs"],
+  ],
   // ROUND 368.2(b) — a bank line may not sit matched to nothing (deferred constraint triggers, both sides).
   [
     "verify-no-bank-line-is-matched-to-nothing",
