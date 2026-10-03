@@ -39,7 +39,7 @@ export function SettlementHeader({
     <div className="grid grid-cols-1 gap-2 rounded-sm border border-gray-200 bg-white p-3 lg:grid-cols-5">
       {settlementId || settlementDisplayId ? (
         <div>
-          <div className="text-[11px] uppercase text-gray-500">Settlement No</div>
+          <div className="text-xs uppercase text-gray-500">Settlement No</div>
           <div className="text-xs font-semibold">
             {settlementId ? (
               <EntityLink
@@ -56,7 +56,7 @@ export function SettlementHeader({
       ) : null}
       {predecessor ? (
         <div data-testid="settlement-header-predecessor">
-          <div className="text-[11px] uppercase text-gray-500">Replaces (reversed)</div>
+          <div className="text-xs uppercase text-gray-500">Replaces (reversed)</div>
           <div className="text-xs font-semibold">
             <EntityLink kind="settlement" id={predecessor.id} label={entityLabel(predecessor.label, predecessor.id, "Settlement")} />
           </div>
@@ -64,14 +64,14 @@ export function SettlementHeader({
       ) : null}
       {successor ? (
         <div data-testid="settlement-header-successor">
-          <div className="text-[11px] uppercase text-gray-500">Replaced by</div>
+          <div className="text-xs uppercase text-gray-500">Replaced by</div>
           <div className="text-xs font-semibold">
             <EntityLink kind="settlement" id={successor.id} label={entityLabel(successor.label, successor.id, "Settlement")} />
           </div>
         </div>
       ) : null}
       <div>
-        <div className="text-[11px] uppercase text-gray-500">Driver</div>
+        <div className="text-xs uppercase text-gray-500">Driver</div>
         <div className="text-xs font-semibold">
           <EntityLink kind="driver" id={driverId} label={entityLabel(driverName, driverId, "Driver")} />
         </div>
@@ -80,15 +80,15 @@ export function SettlementHeader({
           Period" label instead of the canonical Period Begin / Period End contract
           (components/dispatch/LoadDetailSettlementTab.tsx) -- split for consistency. */}
       <div>
-        <div className="text-[11px] uppercase text-gray-500">Period Begin</div>
+        <div className="text-xs uppercase text-gray-500">Period Begin</div>
         <div className="text-xs font-semibold">{formatDateUS(periodStart)}</div>
       </div>
       <div>
-        <div className="text-[11px] uppercase text-gray-500">Period End</div>
+        <div className="text-xs uppercase text-gray-500">Period End</div>
         <div className="text-xs font-semibold">{formatDateUS(periodEnd)}</div>
       </div>
       <div>
-        <div className="text-[11px] uppercase text-gray-500">Loads in cycle</div>
+        <div className="text-xs uppercase text-gray-500">Loads in cycle</div>
         <div className="text-xs">
           {loadIds.length === 0 ? (
             "—"
@@ -109,7 +109,7 @@ export function SettlementHeader({
         </div>
       </div>
       <div className="text-right">
-        <div className="text-[11px] uppercase text-gray-500">Status</div>
+        <div className="text-xs uppercase text-gray-500">Status</div>
         <div className="text-xs font-semibold">{status}</div>
         <div className="mt-1 text-xs text-gray-500">Recompute: {computedAt ? formatDateUS(computedAt) : "n/a"}</div>
         <button type="button" className="mt-1 text-xs text-slate-700 underline" onClick={onRefresh}>Refresh</button>
