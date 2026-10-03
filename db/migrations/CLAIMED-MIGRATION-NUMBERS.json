@@ -1941,6 +1941,21 @@
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-03",
       "purpose": "ROUND 363-CC1-D (LAW 363.3/363.5): refuse a direct UPDATE of a posted accounting.journal_entry_postings line outside the document-edit service (re-claim of 202615350800, in band)"
+    },
+    "202615360300": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 374: a debit that takes a driver escrow sub-account's GL balance (2100-00-nnn, from the postings) below zero is refused at COMMIT — the over-release refusal on the GL, not on the stored escrow table"
+    },
+    "202615360400": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 373.5: a USMCA record may reference only a USMCA unit, driver, trailer and fuel card — a reference to a frozen company's row is refused in the database"
+    },
+    "202615360500": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 373.3: a posting that commits without its transaction_source_links spine row is refused at COMMIT (the INSERT side; trg_live_posting_keeps_spine_link guards only link DELETE/UPDATE) — armed after the writers are fixed and the 3,908 backfilled"
     }
   },
   "202613590001": {

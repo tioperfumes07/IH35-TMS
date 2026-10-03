@@ -10037,5 +10037,30 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-03",
     "purpose": "verify-no-posting-update-outside-document-edit"
+  },
+  "12369": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-driver-escrow-gl-never-negative"
+  },
+  "12373": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-no-usmca-record-points-at-a-frozen-company"
+  },
+  "12377": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-settlement-driver-pay-splits-per-load"
+  },
+  "12381": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-every-document-type-posts-its-declared-pair"
+  },
+  "12385": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-every-poster-resolves-by-role-not-by-name-or-number"
   }
 }
