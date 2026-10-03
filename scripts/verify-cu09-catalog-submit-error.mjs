@@ -36,6 +36,10 @@ function assertAll(srcs) {
     if (file.endsWith("FuelCatalogModal.tsx") && src.includes("text-[11px]")) {
       problems.push(`${file}: must not use text-[11px] — use text-xs`);
     }
+    // BANK-F91121 — ORDERS chrome: Fleet catalog field errors use text-xs, not text-[11px].
+    if (file.endsWith("FleetCatalogModal.tsx") && src.includes("text-[11px]")) {
+      problems.push(`${file}: must not use text-[11px] — use text-xs`);
+    }
   }
   return problems;
 }
