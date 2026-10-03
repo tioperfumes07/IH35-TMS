@@ -1086,7 +1086,7 @@ export function WorkOrderDetailPage() {
             </div>
             {wo.source_intransit_issue_id ? (
               <div className="mt-3 rounded-sm border border-gray-200 bg-gray-50 p-3" data-testid="wo-source-intransit-issue">
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Source In-Transit Issue</div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Source In-Transit Issue</div>
                 <Link
                   className="font-semibold text-slate-700 hover:underline"
                   to={`/dispatch/in-transit-issues?issue_id=${encodeURIComponent(String(wo.source_intransit_issue_id))}`}
@@ -1104,19 +1104,19 @@ export function WorkOrderDetailPage() {
           <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-700">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               <div>
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Status</div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Status</div>
                 <p>{String(wo.status ?? "—")}</p>
               </div>
               <div>
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Severity</div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Severity</div>
                 <div className="mt-1"><DvirSeverityBadge severity={String(wo.severity ?? "")} /></div>
               </div>
               <div>
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Source Type</div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Source Type</div>
                 <p>{String(wo.source_type ?? "—")}</p>
               </div>
               <div>
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Asset</div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Asset</div>
                 <div className="mt-1 flex flex-wrap items-center gap-2">
                   <EntityLinkOrTombstone kind="unit" id={wo.unit_id as string | null} name={wo.unit_number ?? wo.unit_display_id} noun="Unit" />
                   {wo.equipment_id ? (
@@ -1258,7 +1258,7 @@ export function WorkOrderDetailPage() {
 
       <details className="rounded-sm border border-gray-200 bg-white">
         <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-gray-900">Line items (raw)</summary>
-        <pre className="max-h-64 overflow-auto border-t border-gray-100 p-2 text-[11px]">
+        <pre className="max-h-64 overflow-auto border-t border-gray-100 p-2 text-xs">
           {JSON.stringify(wo.line_items ?? [], null, 2)}
         </pre>
       </details>
