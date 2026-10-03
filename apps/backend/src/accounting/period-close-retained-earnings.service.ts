@@ -249,10 +249,12 @@ export async function insertRetainedEarningsClosingJournalIfNeeded(
           amount_cents,
           description,
           idempotency_key,
+          load_id,
           created_at,
           updated_at
         )
-        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, $8, now(), now())
+        -- ROUND 363-CC1-A: the retained-earnings close spans the whole period — no load, NULL by design.
+        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, $8, NULL, now(), now())
         ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
           WHERE idempotency_key IS NOT NULL DO NOTHING
         RETURNING id::text

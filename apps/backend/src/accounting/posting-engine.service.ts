@@ -864,10 +864,13 @@ async function insertPostingLines(input: {
           posting_batch_id,
           idempotency_key,
           class_id,
+          load_id,
           created_at,
           updated_at
         )
-        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, $8, $9, $10, $11::uuid, $12, $13::uuid, now(), now())
+        -- ROUND 363-CC1-A: the load stamp, resolved from this posting's own source document in the same statement.
+        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, $8, $9, $10, $11::uuid, $12, $13::uuid,
+                accounting.posting_source_load_id($8::text, $9::text, $10::text, NULL), now(), now())
         RETURNING id::text
       `,
       [
@@ -3289,10 +3292,13 @@ async function executeSourceReversalOnClient(
           posting_batch_id,
           idempotency_key,
           reversal_of_line_id,
+          load_id,
           created_at,
           updated_at
         )
-        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5::uuid, $6::uuid, $7, $8, $9, $10, $11, NULL, $12::uuid, $13, $14::uuid, now(), now())
+        -- ROUND 363-CC1-A: a reversal carries the load of the line it reverses (its document may already be gone).
+        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5::uuid, $6::uuid, $7, $8, $9, $10, $11, NULL, $12::uuid, $13, $14::uuid,
+                accounting.posting_source_load_id($10::text, $11::text, NULL, $14::uuid), now(), now())
         RETURNING id::text
       `,
       [
