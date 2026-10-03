@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: BANK-F91118 #24471 MERGED; ROUND 348 waits HH 12–23; next leftover MaintenanceCatalogModal
-ACK: CURSOR | ACK F91118 DONE | GO
+NOW: BANK-F91119 #24473 MERGED; ROUND 348 waits HH 12–23; next leftover FuelCatalogModal
+ACK: CURSOR | ACK F91119 DONE | GO
