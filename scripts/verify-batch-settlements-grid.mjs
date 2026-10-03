@@ -64,6 +64,12 @@ export function assertBatchSettlements(srcs) {
   if (!/export async function postSettlementCreatorInClientTx/.test(srcs.creator)) {
     fails.push("canonical settlement creator must remain the post path");
   }
+  if (srcs.page.includes("text-[11px]")) {
+    fails.push("BatchSettlementsPage leftover chrome must use text-xs, not text-[11px]");
+  }
+  if (srcs.page.includes("#8A92AB") || srcs.page.includes("#334155")) {
+    fails.push("BatchSettlementsPage leftover chrome must not use off-scale #334155 / #8A92AB");
+  }
   return fails;
 }
 
@@ -76,7 +82,16 @@ function main() {
     for (const f of fails) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} OK${selftest ? " --selftest" : ""}`);
+  if (selftest) {
+    const planted = assertBatchSettlements({ ...srcs, page: `${srcs.page} text-[11px] #8A92AB` });
+    if (!planted.some((f) => f.includes("leftover"))) {
+      console.error(`${LABEL} FAIL: planted leftover tokens not detected`);
+      process.exit(1);
+    }
+    console.log(`${LABEL} OK --selftest`);
+    return;
+  }
+  console.log(`${LABEL} OK`);
 }
 
 main();
