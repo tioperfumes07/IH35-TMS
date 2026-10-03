@@ -73,7 +73,7 @@
  *     `<Route path="loads/:id" element={<PortalLoadDetailPage />} />` under the PortalRouteGuard).
  *     Sending a customer to the internal dispatch board would be a cross-surface authz leak, not a
  *     fix. Narrowed for that stated reason — the portal link is a real drill-through, not an escape.
- *   - Channel D accepts `/accounting/load-costs/:id?tab=Costs` as a canonical target, but ONLY in
+ *   - Channel D accepts `/dispatch/load-costs/:id?tab=Costs` as a canonical target, but ONLY in
  *     `pages/accounting/LoadCostsBoardPage.tsx` (CC-3, 2026-09-13). This IS that board's own load
  *     detail view — a real, working, ID-interpolated `<Link>`, not a dead click and not a
  *     query-param bookmark — deliberately more specific than the generic dispatch record for an
@@ -110,10 +110,10 @@ const PORTAL_CANONICAL_PATH = "/portal/loads/";
  * The Load Costs Board's OWN load detail route (`?tab=Costs`) — a real, working, more-specific
  * destination for this one register, not a fabricated placeholder. See the header's "WHAT IS
  * DELIBERATELY NOT CLAIMED" note. Narrowed to this exact file so the carve-out cannot be reused
- * as a generic "any `/accounting/load-costs/` string counts" loophole elsewhere.
+ * as a generic "any `/dispatch/load-costs/` string counts" loophole elsewhere.
  */
 const LOAD_COSTS_BOARD_FILE = `${SRC}/pages/accounting/LoadCostsBoardPage.tsx`;
-const LOAD_COSTS_BOARD_PATH = "/accounting/load-costs/";
+const LOAD_COSTS_BOARD_PATH = "/dispatch/load-costs/";
 
 /**
  * Surface-focus `?load_id=` writers (not the office load record address) — see the header.

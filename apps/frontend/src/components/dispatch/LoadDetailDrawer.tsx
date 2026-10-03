@@ -477,7 +477,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
   const isPackageEligible = Boolean(load && ["delivered", "invoiced", "paid", "closed"].includes(load.status));
   const showCustomsTab = Boolean(load && loadHasCrossBorder(load));
   // LDT-0 — Accounting context hides the More group. Prop wins; pathname is the fallback for the
-  // /accounting/load-costs entry that opens the drawer at ?tab=Costs.
+  // /dispatch/load-costs entry that opens the drawer at ?tab=Costs.
   const fromAccounting = useMemo(
     () => openedFrom === "accounting" || (typeof window !== "undefined" && window.location.pathname.startsWith("/accounting")),
     [openedFrom]
@@ -692,7 +692,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
           {isPage ? (
             <nav className="mb-2 text-xs text-gray-500" data-testid="load-costs-load-breadcrumb" aria-label="Breadcrumb">
               <Link className="hover:underline" to="/accounting">Accounting</Link> <span aria-hidden="true">›</span>{" "}
-              <Link className="hover:underline" to="/accounting/load-costs">Load costs</Link> <span aria-hidden="true">›</span>{" "}
+              <Link className="hover:underline" to="/dispatch/load-costs">Load costs</Link> <span aria-hidden="true">›</span>{" "}
               <span className="font-semibold text-gray-800">{load?.load_number ?? "…"}</span>
             </nav>
           ) : null}
@@ -783,7 +783,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                 Record expense
               </Button>
               {isPage ? (
-                <Link className="text-xs font-semibold text-slate-700 underline" to="/accounting/load-costs" data-testid="load-costs-load-back">← Load costs</Link>
+                <Link className="text-xs font-semibold text-slate-700 underline" to="/dispatch/load-costs" data-testid="load-costs-load-back">← Load costs</Link>
               ) : (
                 <Button type="button" variant="secondary" size="sm" onClick={onClose}>
                   Close

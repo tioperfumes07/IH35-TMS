@@ -39,6 +39,8 @@ type BoardRow = {
   unit_number: string | null; trailer_number: string | null; pickup_city: string | null; delivery_city: string | null;
   pickup_date: string | null; scheduled_delivery_at: string | null; actual_delivery_at: string | null; created_at: string;
   revenue_cents: string; expense_cents: string; bill_cents: string; repairs_maintenance_cents: string; driver_pay_cents: string;
+  /** U3 — what the general ledger carries for this load (expense + COGS postings, net of reversals). */
+  ledger_cost_cents?: number;
   /** ROUND 285.4.4 — Book Load wizard amounts from dispatch.load_charge_lines. */
   line_haul_cents: string; fuel_surcharge_cents: string; accessorial_cents: string;
   detention_charge_cents: string; layover_cents: string;
@@ -255,7 +257,7 @@ const REGISTER_COLUMNS: Array<ParityColumn<RegisterRow>> = [
   { key: "number", label: "Number", testId: "reg-col-number", sortable: true, className: "whitespace-nowrap", sortValue: r => r.number, render: r => <span className="font-semibold text-slate-700">{r.number}</span> },
   { key: "date", label: "Date", testId: "reg-col-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.date ?? "", render: r => r.date ? formatDateQboList(r.date) : DASH },
   { key: "party", label: "Vendor / Driver", testId: "reg-col-party", sortable: true, sortValue: r => r.party, render: r => r.party || DASH },
-  { key: "load", label: "Load Number", testId: "reg-col-load", sortable: true, className: "whitespace-nowrap", sortValue: r => r.loadNumber ?? "", render: r => r.loadId ? <Link className="font-semibold text-slate-700 underline" to={`/accounting/load-costs/${r.loadId}?tab=Costs`}>{r.loadNumber ?? r.loadId}</Link> : DASH },
+  { key: "load", label: "Load Number", testId: "reg-col-load", sortable: true, className: "whitespace-nowrap", sortValue: r => r.loadNumber ?? "", render: r => r.loadId ? <Link className="font-semibold text-slate-700 underline" to={`/dispatch/load-costs/${r.loadId}?tab=Costs`}>{r.loadNumber ?? r.loadId}</Link> : DASH },
   { key: "detail", label: "Description", testId: "reg-col-detail", sortable: true, sortValue: r => r.detail, render: r => <span className="text-[#4B5563]">{r.detail || DASH}</span> },
   // REG-PARSE (owner 2026-09-06 05:2xZ): receipt number, address and settlement number are their own columns.
   { key: "receipt_number", label: "Receipt no.", testId: "reg-col-receipt-number", sortable: true, className: "whitespace-nowrap", sortValue: r => r.receiptNumber ?? "", render: r => r.receiptNumber ? <span className="ldt-k">{r.receiptNumber}</span> : DASH },
@@ -282,7 +284,7 @@ const DRIVER_PAY_COLUMNS: Array<ParityColumn<RegisterRow>> = [
   { key: "number", label: "Number", testId: "reg-col-number", sortable: true, className: "whitespace-nowrap", sortValue: r => r.number, render: r => <span className="font-semibold">{r.number}</span> },
   { key: "date", label: "Date", testId: "reg-col-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.date ?? "", render: r => r.date ? formatDateQboList(r.date) : DASH },
   { key: "party", label: "Driver", testId: "reg-col-party", sortable: true, sortValue: r => r.party, render: r => r.party || DASH },
-  { key: "load", label: "Load Number", testId: "reg-col-load", sortable: true, className: "whitespace-nowrap", sortValue: r => r.loadNumber ?? "", render: r => r.loadId ? <Link className="ldt-link" style={{ display: "inline" }} to={`/accounting/load-costs/${r.loadId}?tab=Costs`}>{r.loadNumber ?? r.loadId}</Link> : DASH },
+  { key: "load", label: "Load Number", testId: "reg-col-load", sortable: true, className: "whitespace-nowrap", sortValue: r => r.loadNumber ?? "", render: r => r.loadId ? <Link className="ldt-link" style={{ display: "inline" }} to={`/dispatch/load-costs/${r.loadId}?tab=Costs`}>{r.loadNumber ?? r.loadId}</Link> : DASH },
   { key: "loaded_miles", label: "Loaded miles", testId: "reg-col-loaded_miles", sortable: true, className: `${NUM} ldt-m`, sortValue: r => r.loadedMiles == null ? -Infinity : Number(r.loadedMiles), render: r => fmtMiles(r.loadedMiles ?? null) },
   { key: "loaded_rate", label: "Loaded rate", testId: "reg-col-loaded_rate", sortable: true, className: `${NUM} ldt-m`, sortValue: r => r.loadedRateCents == null ? -Infinity : Number(r.loadedRateCents), render: r => fmtRate(r.loadedRateCents ?? null) },
   { key: "empty_miles", label: "Empty miles", testId: "reg-col-empty_miles", sortable: true, className: `${NUM} ldt-m`, sortValue: r => r.emptyMiles == null ? -Infinity : Number(r.emptyMiles), render: r => fmtMiles(r.emptyMiles ?? null) },
@@ -306,7 +308,7 @@ function loadCell(loadsById: Map<string, string>): ParityColumn<RegisterRow> {
     render: r => {
       if (!r.loadId) return DASH;
       const label = loadsById.get(r.loadId) ?? r.loadNumber ?? r.loadId;
-      return <Link className="ldt-link" style={{ display: "inline" }} to={`/accounting/load-costs/${r.loadId}?tab=Costs`}>{label}</Link>;
+      return <Link className="ldt-link" style={{ display: "inline" }} to={`/dispatch/load-costs/${r.loadId}?tab=Costs`}>{label}</Link>;
     },
   };
 }
@@ -486,7 +488,7 @@ function TransactionRegister({ tab, companyId, loadsById, settlementsByLoad, nav
     },
   });
   const rows = q.data ?? [];
-  const goToLoad = (r: RegisterRow) => { if (r.loadId) navigate(`/accounting/load-costs/${r.loadId}?tab=Costs`); };
+  const goToLoad = (r: RegisterRow) => { if (r.loadId) navigate(`/dispatch/load-costs/${r.loadId}?tab=Costs`); };
   // A failed fetch must never render as "No … transactions found" (LAW: empty is a question, not an answer).
   if (q.isError) return <div data-testid="load-costs-register-error"><ListErrorState title={`Couldn't load ${tab.replaceAll("_", " ")}`} status={(q.error as { status?: number })?.status ?? 0} message={q.error instanceof Error ? q.error.message : String(q.error)} onRetry={() => void q.refetch()} /></div>;
   const baseColumns =
@@ -732,7 +734,7 @@ export function LoadCostsBoardPage() {
     deadhead_pay: visible.reduce((n, r) => n + (r.deadhead_pay_cents == null ? 0 : Number(r.deadhead_pay_cents)), 0), gross: driver,
   }), [visible, revenue, driver]);
   const columns: Array<ParityColumn<BoardRow>> = [
-    { key: "load", label: "Load Number", testId: "col-load", sortable: true, alwaysVisible: true, sortValue: r => r.load_number, render: r => <Link className="font-semibold text-slate-700 underline" to={`/accounting/load-costs/${r.load_id}?tab=Costs`}>{r.load_number}</Link> },
+    { key: "load", label: "Load Number", testId: "col-load", sortable: true, alwaysVisible: true, sortValue: r => r.load_number, render: r => <Link className="font-semibold text-slate-700 underline" to={`/dispatch/load-costs/${r.load_id}?tab=Costs`}>{r.load_number}</Link> },
     // LOAD-COSTS-RETURN-COLS (owner 2026-09-08, item 3): "Unassigned" is a distinct, real state
     // (no unit ever booked to this load) -- a plain "—" reads as "not measured", the same dash
     // every other untracked cell on this board already uses. Named so an operator scanning the
@@ -778,6 +780,23 @@ export function LoadCostsBoardPage() {
     { key: "lumper", label: "Lumper", testId: "col-lumper", sortable: true, className: NUM, sortValue: r => Number(r.lumper_cents), render: r => fmtDash(Number(r.lumper_cents)) },
     { key: "fuel", label: "Fuel", testId: "col-fuel", sortable: true, className: NUM, sortValue: r => Number(r.fuel_cents), render: r => fmtDash(Number(r.fuel_cents)) },
     { key: "repairs_maintenance", label: "R&M Exp", testId: "col-repairs-maintenance", sortable: true, className: NUM, sortValue: r => Number(r.repairs_maintenance_cents), render: r => fmtDash(Number(r.repairs_maintenance_cents)) },
+    // U3 (owner): "current cost FROM THE LEDGER". The document columns sum expenses / bills / driver bills; this is the
+    // ledger's own number for the load. When they disagree the cell says so — a cost on a document that never posted,
+    // or a posting with no document behind it.
+    {
+      key: "ledger_cost", label: "Cost (ledger)", testId: "col-ledger-cost", sortable: true, className: NUM,
+      sortValue: r => Number(r.ledger_cost_cents ?? 0),
+      render: r => {
+        const ledger = Number(r.ledger_cost_cents ?? 0);
+        const docs = Number(r.expense_cents) + Number(r.bill_cents) + Number(r.driver_pay_cents);
+        return (
+          <span title={ledger === docs ? "Matches the documents" : `Documents total ${fmt(docs)} — the ledger carries ${fmt(ledger)}`} data-testid="ledger-cost-cell">
+            {fmt(ledger)}
+            {ledger !== docs ? <span className="ml-1 font-semibold text-slate-700" data-testid="ledger-cost-differs">≠ docs</span> : null}
+          </span>
+        );
+      },
+    },
     { key: "other", label: "Other", testId: "col-other", sortable: true, className: NUM, sortValue: r => Number(r.other_cost_cents), render: r => fmtDash(Number(r.other_cost_cents)) },
     { key: "short_miles", label: "Short Miles", testId: "col-short-miles", sortable: true, className: NUM, sortValue: r => r.short_miles == null ? -1 : Number(r.short_miles), render: r => fmtMiles(r.short_miles) },
     { key: "rate_loaded", label: "Rate Loaded", testId: "col-rate-loaded", sortable: true, className: NUM, sortValue: r => r.rate_loaded_cents == null ? -1 : Number(r.rate_loaded_cents), render: r => fmtRate(r.rate_loaded_cents) },

@@ -232,7 +232,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
     case "dispatch":
       return [
         { label: "Dispatch Home", to: "/dispatch" },
-        { label: "Load costs", to: "/accounting/load-costs" },
+        { label: "Load costs", to: "/dispatch/load-costs" },
         { label: "Loads", to: "/dispatch?view=loads" },
         { label: "Dispatch Chat", to: "/dispatch/chat" },
         { label: "At-Risk Queue", to: "/dispatch/at-risk" },
@@ -321,7 +321,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "Loan Wizard", to: "/finance/loan-wizard" },
         { label: "Calculator", to: "/finance/calculator" },
         { label: "Amortization", to: "/finance/amortization" },
-        { label: "Load costs", to: "/accounting/load-costs" },
+        { label: "Load costs", to: "/dispatch/load-costs" },
       ];
     case "inventory":
       return [

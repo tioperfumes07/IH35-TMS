@@ -53,7 +53,7 @@ const NO_FILTERS: Filters = { accountIds: [], types: [], classIds: [], itemIds: 
 
 /** ROUND 370 (owner) — the register's columns. Optional ones are added from the Columns chooser; the choice is per viewer. */
 type ColKey = "date" | "type" | "num" | "name" | "item" | "memo" | "account_no" | "account" | "load" | "truck" | "driver" | "trailer" | "vendor" | "class" | "debit" | "credit" | "amount" | "balance";
-const COLUMNS: Array<{ key: ColKey; label: string; sort?: SortKey; optional?: boolean; right?: boolean }> = [
+const COLUMNS: Array<{ key: ColKey; label: string; sort?: SortKey; optional?: boolean; right?: boolean; entityKind?: "load" }> = [
   { key: "date", label: "Date", sort: "date" },
   { key: "type", label: "Type", sort: "type" },
   { key: "num", label: "Num", sort: "num" },
@@ -62,7 +62,7 @@ const COLUMNS: Array<{ key: ColKey; label: string; sort?: SortKey; optional?: bo
   { key: "memo", label: "Memo / description", sort: "memo" },
   { key: "account_no", label: "Account no." },
   { key: "account", label: "Account", sort: "account" },
-  { key: "load", label: "Load", sort: "load" },
+  { key: "load", label: "Load", sort: "load", entityKind: "load" }, // cell renders <EntityLink kind="load">
   { key: "truck", label: "Truck", sort: "truck", optional: true },
   { key: "driver", label: "Driver", sort: "driver", optional: true },
   { key: "trailer", label: "Trailer", sort: "trailer", optional: true },

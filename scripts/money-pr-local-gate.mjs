@@ -859,6 +859,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-bills-sub-tabs-filter-by-stored-type",
     ["apps/frontend/src/pages/accounting/BillsPage.tsx", "apps/frontend/src/components/accounting/VendorBillForm.tsx", "apps/backend/src/accounting/bills.service.ts", "apps/backend/src/accounting/bills.routes.ts", "db/migrations/202615370700_bills_bill_category.sql", "scripts/verify-bills-sub-tabs-filter-by-stored-type.mjs"],
   ],
+  // U3 (owner) — Load costs lives in Dispatch and reads each load's cost from the ledger.
+  [
+    "verify-load-costs-in-dispatch-reads-the-ledger",
+    ["apps/frontend/src/routes/manifest.tsx", "apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx", "apps/frontend/src/pages/accounting/subnav-manifest.ts", "apps/backend/src/accounting/load-costs-board.routes.ts", "db/migrations/202615370800_posting_source_load_id_index_usable.sql", "scripts/verify-load-costs-in-dispatch-reads-the-ledger.mjs"],
+  ],
   // ROUND 368.2(b) — a bank line may not sit matched to nothing (deferred constraint triggers, both sides).
   [
     "verify-no-bank-line-is-matched-to-nothing",
