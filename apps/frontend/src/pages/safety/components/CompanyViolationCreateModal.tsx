@@ -173,7 +173,7 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
               hint="Type to search the full company-violation-type catalog."
               className="text-xs text-slate-600"
             />
-            <span className="text-[11px] text-gray-500">
+            <span className="text-xs text-gray-500">
               Required. Carries the catalogued default fine amount. Without it the amount cannot resolve.
             </span>
           </div>
@@ -192,7 +192,7 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
               <option value="IFTA">IFTA</option>
               <option value="other">Other</option>
             </SelectCombobox>
-            <span className="text-[11px] text-gray-500">
+            <span className="text-xs text-gray-500">
               DOT/FMCSA axis (not a substitute for the Lists catalog type above).
             </span>
           </div>
