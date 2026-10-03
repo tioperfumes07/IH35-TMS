@@ -25,15 +25,23 @@ export function AccountingKpiBar({ data, isLoading }: Props) {
 
   const arTotal = data ? formatUsdFromCents(data.ar_aging.total_outstanding_cents) : null;
   const apTotal = data ? formatUsdFromCents(data.ap_aging.total_outstanding_cents) : null;
+  const arCleared = data
+    ? formatUsdFromCents(data.ar_aging.cleared_open_cents ?? data.ar_aging.total_outstanding_cents)
+    : null;
+  const apCleared = data
+    ? formatUsdFromCents(data.ap_aging.cleared_open_cents ?? data.ap_aging.total_outstanding_cents)
+    : null;
   const days = data?.period_close.days_to_close;
   const periodLabel = data?.period_close.period_label ?? "No open period";
   const countdown = days == null ? null : days === 0 ? "Due today" : `${days} day${days === 1 ? "" : "s"} to close`;
   const asOf = `As of ${data?.as_of_date ?? "today"}`;
+  const arHint = arCleared ? `Cleared ${arCleared} · ${asOf}` : asOf;
+  const apHint = apCleared ? `Cleared ${apCleared} · ${asOf}` : asOf;
 
   return (
     <section className="grid grid-cols-1 gap-2 md:grid-cols-3">
-      <DrillKpiCard size="md" label="Outstanding A/R" value={arTotal} hint={asOf} to="/reports/ar-aging" />
-      <DrillKpiCard size="md" label="Outstanding A/P" value={apTotal} hint={asOf} to="/reports/ap-aging" />
+      <DrillKpiCard size="md" label="Outstanding A/R" value={arTotal} hint={arHint} to="/reports/ar-aging" />
+      <DrillKpiCard size="md" label="Outstanding A/P" value={apTotal} hint={apHint} to="/reports/ap-aging" />
       <DrillKpiCard size="md" label="Period Close" value={countdown} hint={periodLabel} to="/accounting/period-close" />
     </section>
   );
