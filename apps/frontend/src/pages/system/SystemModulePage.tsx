@@ -543,11 +543,11 @@ const GAP = 26;
 
 function strokeForLink(state: TxHealthLink["state"]): { color: string; dash?: string } {
   // TXH_LINK_STATE_WIRED TXH_LINK_STATE_MISSING TXH_LINK_STATE_NA TXH_LINK_STATE_BLOCKED
-  if (state === "wired") return { color: "#334155" };
+  if (state === "wired") return { color: "#4B5563" };
   if (state === "missing") return { color: "#dc2626", dash: "6 4" };
   if (state === "not_applicable") return { color: "#94a3b8", dash: "1 3" };
   if (state === "blocked_by_constraint") return { color: "#b45309", dash: "4 3" };
-  return { color: "#334155" };
+  return { color: "#4B5563" };
 }
 
 function txhLinkStateToken(state: TxHealthLink["state"]): string {
@@ -577,7 +577,7 @@ function TxHealthWiringMap({ links }: { links: TxHealthLink[] }) {
   const nodeX = 200;
   return (
     <svg data-token="TXH_WIRING_SVG" width="420" height={height} aria-label="wiring map" className="max-w-full">
-      <circle cx={hubX} cy={hubY} r={7} fill="#334155" />
+      <circle cx={hubX} cy={hubY} r={7} fill="#4B5563" />
       {nodes.map(({ link, y: ny }, idx) => {
         const { color, dash } = strokeForLink(link.state);
         return (
@@ -593,24 +593,24 @@ function TxHealthWiringMap({ links }: { links: TxHealthLink[] }) {
             />
             <circle cx={nodeX} cy={ny} r={4} fill={color} />
             {link.state === "missing" ? (
-              <text x={nodeX - 16} y={ny + 4} fill="#dc2626" fontSize="11">
+              <text x={nodeX - 16} y={ny + 4} fill="#dc2626" fontSize="12">
                 ✕
               </text>
             ) : null}
             {link.state === "blocked_by_constraint" ? (
-              <text x={nodeX - 16} y={ny + 4} fill="#b45309" fontSize="11">
+              <text x={nodeX - 16} y={ny + 4} fill="#b45309" fontSize="12">
                 !
               </text>
             ) : null}
             {link.state === "wired" && txHealthLinkPath(link) ? (
               <a href={txHealthLinkPath(link) ?? undefined} target="_blank" rel="noreferrer">
-                <text x={nodeX + 10} y={ny + 4} fill="#334155" fontSize="11">
+                <text x={nodeX + 10} y={ny + 4} fill="#4B5563" fontSize="12">
                   {link.label}
                   {link.target_label ? ` — ${link.target_label}` : ""}
                 </text>
               </a>
             ) : (
-              <text x={nodeX + 10} y={ny + 4} fill="#334155" fontSize="11">
+              <text x={nodeX + 10} y={ny + 4} fill="#4B5563" fontSize="12">
                 {link.label}
                 {link.target_label ? ` — ${link.target_label}` : ""}
                 {link.state === "missing" ? " (missing)" : ""}
@@ -698,7 +698,7 @@ function TransactionHealthTab() {
 
       <Card title="Filters" sub="Default is every active company and every status. Uncheck an entity to hide it. Yesterday-morning dates usually mean TRANSPORTATION is the only chip still on — USMCA has today's TEST docs.">
         {selectedEntityIds.length > 0 ? (
-          <p className="border-t border-slate-200 bg-slate-50 px-1 py-2 text-[11px] font-semibold text-slate-800" role="status">
+          <p className="border-t border-slate-200 bg-slate-50 px-1 py-2 text-xs font-semibold text-slate-800" role="status">
             Entity filter is ON ({selectedEntityIds.length} company). Newest rows are for those companies only — not a stale API.
           </p>
         ) : null}
@@ -739,7 +739,7 @@ function TransactionHealthTab() {
             <p className="text-xs text-slate-500">{issuesOnly ? "No open issues — every document checked is OK." : "No documents found."}</p>
           ) : (
             <div className="space-y-3">
-              <pre data-token="TXH_LEDGER_PRE" className="overflow-x-auto rounded-lg border border-gray-200 bg-slate-50 p-3 font-mono text-[11px] leading-5 text-slate-800">
+              <pre data-token="TXH_LEDGER_PRE" className="overflow-x-auto rounded-lg border border-gray-200 bg-slate-50 p-3 font-mono text-xs leading-5 text-slate-800">
                 {formatGlLedgerPre(selected)}
               </pre>
               <TxHealthWiringMap links={links} />
@@ -752,7 +752,7 @@ function TransactionHealthTab() {
                   }
                   target="_blank"
                   rel="noreferrer"
-                  className="rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-[#1f2a44] hover:bg-slate-50"
+                  className="rounded-full border border-gray-200 bg-white px-2 py-0.5 text-xs font-semibold text-[#1f2a44] hover:bg-slate-50"
                 >
                   Open / Fix
                 </a>
@@ -762,7 +762,7 @@ function TransactionHealthTab() {
                     href={txHealthLinkPath(chip) ?? "#"}
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-[#1f2a44] hover:bg-slate-50"
+                    className="rounded-full border border-gray-200 bg-white px-2 py-0.5 text-xs font-semibold text-[#1f2a44] hover:bg-slate-50"
                   >
                     {chip.label}
                     {chip.target_label ? ` · ${chip.target_label}` : ""}
@@ -789,7 +789,7 @@ function TransactionHealthTab() {
                   >
                     <span className="min-w-0">
                       <span className="block truncate font-semibold text-[#1f2a44]">{row.display_label}</span>
-                      <span className="block truncate text-[11px] text-slate-500">
+                      <span className="block truncate text-xs text-slate-500">
                         {row.doc_type.replace(/_/g, " ")} · {row.entity_code} · {ctDateTime(row.event_at)}
                       </span>
                     </span>
@@ -1019,7 +1019,7 @@ function SoftwareTab({ data, qboAvailable }: { data: SystemData; qboAvailable: b
               {
                 key: "name",
                 label: "Check",
-                render: (c) => <span className="font-mono text-[11px] text-slate-700">{c.name}</span>,
+                render: (c) => <span className="font-mono text-xs text-slate-700">{c.name}</span>,
               },
               { key: "tier", label: "Tier", render: (c) => <span className="text-slate-500">{c.tier}</span> },
               {
@@ -1073,10 +1073,10 @@ function ClaudeCoderTab({ data, qboAvailable }: { data: SystemData; qboAvailable
           </button>
           <GhostButton onClick={() => copy("copy")}>Copy launch command</GhostButton>
           <span className="self-center font-mono text-xs text-slate-500">{LAUNCH_COMMAND}</span>
-          {copied ? <span className="self-center text-[11px] text-[#065f46]">Copied — paste it in your terminal (nothing runs here).</span> : null}
+          {copied ? <span className="self-center text-xs text-[#065f46]">Copied — paste it in your terminal (nothing runs here).</span> : null}
         </div>
 
-        <div className="mb-1.5 text-[11px] uppercase tracking-wide text-slate-500">Build &amp; agent activity — read only</div>
+        <div className="mb-1.5 text-xs uppercase tracking-wide text-slate-500">Build &amp; agent activity — read only</div>
         {tracker.isError ? (
           <ListErrorState
             title="Couldn't load build and agent activity"
@@ -1118,7 +1118,7 @@ function ClaudeCoderTab({ data, qboAvailable }: { data: SystemData; qboAvailable
           ]}
         />
         )}
-        <p className="mt-2 text-[11px] text-slate-400">
+        <p className="mt-2 text-xs text-slate-400">
           Program Tracker reconciliation snapshot as of {ctDateTime(tracker.data?.recon_synced_at)}. This is not a
           live GitHub feed; it refreshes when a new reconciliation snapshot is published. The service-health mirror
           below remains live.

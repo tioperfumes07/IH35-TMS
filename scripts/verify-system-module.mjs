@@ -96,6 +96,14 @@ export function computeSystemModuleFailures(files) {
     errors.push('SystemModulePage.tsx: must state QuickBooks Reconciliation is not bank reconciliation (design law)');
   }
 
+  // ORDERS leftover text tokens
+  if (page.includes("text-[11px]")) {
+    errors.push("SystemModulePage.tsx: leftover text-[11px]");
+  }
+  if (page.includes("#8A92AB") || page.includes("#334155")) {
+    errors.push("SystemModulePage.tsx: leftover off-scale muted");
+  }
+
   // P17 Wave-D chrome: the QBO reconciliation object register must retain canonical sortable,
   // resizable, column-chooser table chrome instead of drifting back to a hand-built table.
   if (!/import\s*\{[^}]*ParityTable[^}]*\}\s*from\s*["'][^"']*components\/parity\/ParityTable["']/.test(page)) {
@@ -340,6 +348,16 @@ if (process.argv.includes("--selftest")) {
     ["global QBO capability inputs produce zero failures", passGlobalQbo.length === 0],
     ["global USMCA QBO chrome/query/copy leak is flagged", failGlobalQbo.length === 6],
   ];
+  const leftoverPlant = computeSystemModuleFailures({
+    sidebar: goodSidebar,
+    manifest: goodManifest,
+    page: `${goodPage}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`,
+  });
+  checks.push([
+    "leftover text tokens are flagged",
+    leftoverPlant.some((e) => e.includes("leftover text-[11px]")) &&
+      leftoverPlant.some((e) => e.includes("leftover off-scale muted")),
+  ]);
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
     console.error("verify:system-module --selftest FAIL:");
