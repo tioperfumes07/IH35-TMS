@@ -10062,5 +10062,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-03",
     "purpose": "verify-every-poster-resolves-by-role-not-by-name-or-number"
+  },
+  "12389": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-every-credit-document-posts"
   }
 }

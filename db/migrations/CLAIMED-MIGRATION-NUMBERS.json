@@ -1976,6 +1976,11 @@
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-03",
       "purpose": "ROUND 373.4 / 369.4: a Deposit document is a bank-match target — banking.bank_transactions.matched_deposit_id (FK accounting.deposits), reconciliation_matches kind 'deposit', the matched-to-nothing refusal and tristate amount taught the deposit link; the match links and posts nothing"
+    },
+    "202615370000": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 373.4: credit memos and vendor credits post — accounting.credit_memos.account_id / journal_entry_id (Dr the income it reduces / Cr A/R) and accounting.vendor_credits.account_id / journal_entry_id (Dr A/P / Cr the expense it reduces), posted at creation through the engine, reversed on void"
     }
   },
   "202613590001": {

@@ -1,6 +1,6 @@
 {
   "healthzSha": "6a3b96e",
-  "generated_at": "2026-10-03T19:07:27.259Z",
+  "generated_at": "2026-10-03T19:46:42.394Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 0,
-      "title": "Cursor- BANK-F91199 RoundTrips leftover text tokens",
+      "number": 24741,
+      "title": "Cursor- feat(ui): leftover MaintenanceHome text-xs BANK-F91206",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 02:05 PM CT",
-      "url": "",
-      "sha": "f3d38cd73f",
-      "committedAtIso": "2026-10-03T14:05:55-05:00"
+      "mergedAtCt": "10/03/2026, 02:45 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24741",
+      "sha": "dfa93d0803",
+      "committedAtIso": "2026-10-03T14:45:18-05:00"
+    },
+    {
+      "number": 24740,
+      "title": "Cursor- docs(bus): OUTBOX BANK-F91205 DispatchChat #24739 37c2a1763a",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 02:43 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24740",
+      "sha": "715890834c",
+      "committedAtIso": "2026-10-03T14:43:01-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- docs(bus): OUTBOX BANK-F91198 EscrowRecordTab #24719 d0ce1a8c8a",
+      "title": "Cursor- BANK-F91205 DispatchChat leftover text tokens",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 01:56 PM CT",
+      "mergedAtCt": "10/03/2026, 02:39 PM CT",
       "url": "",
-      "sha": "5cf28fa65d",
-      "committedAtIso": "2026-10-03T13:56:20-05:00"
+      "sha": "37c2a1763a",
+      "committedAtIso": "2026-10-03T14:39:15-05:00"
+    },
+    {
+      "number": 24738,
+      "title": "FINDING: ACCT-F9866 LANE: FINANCIAL (ROUND 373.4: the Deposit — the fifth step of the accrual chain — is now a bank-feed match target: a bank deposit line matches the Deposit that already moved its receipts out of Undeposited Funds, the match links and posts nothing, and a receipt on a deposit can no longer be swept a second time)",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 02:32 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24738",
+      "sha": "d7b338af32",
+      "committedAtIso": "2026-10-03T14:32:43-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- BANK-F91198 EscrowRecordTab leftover text tokens",
+      "title": "Cursor- docs(bus): OUTBOX BANK-F91204 PlannerCalendar #24736 8cf6731af3",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 01:55 PM CT",
+      "mergedAtCt": "10/03/2026, 02:31 PM CT",
       "url": "",
-      "sha": "d0ce1a8c8a",
-      "committedAtIso": "2026-10-03T13:55:23-05:00"
+      "sha": "5880219e7b",
+      "committedAtIso": "2026-10-03T14:31:59-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- docs(bus): OUTBOX BANK-F91197 CostBreakdownBox #24717 bc9fdd83d4",
+      "title": "Cursor- BANK-F91204 PlannerCalendar leftover text tokens",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 01:53 PM CT",
+      "mergedAtCt": "10/03/2026, 02:30 PM CT",
       "url": "",
-      "sha": "0c3db061f5",
-      "committedAtIso": "2026-10-03T13:53:58-05:00"
+      "sha": "8cf6731af3",
+      "committedAtIso": "2026-10-03T14:30:29-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- BANK-F91197 CostBreakdownBox leftover text tokens",
+      "title": "Cursor- docs(bus): OUTBOX BANK-F91203 LegalReports #24734 bb0a6d566e",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 01:52 PM CT",
+      "mergedAtCt": "10/03/2026, 02:25 PM CT",
       "url": "",
-      "sha": "bc9fdd83d4",
-      "committedAtIso": "2026-10-03T13:52:31-05:00"
+      "sha": "ac0886fb5a",
+      "committedAtIso": "2026-10-03T14:25:39-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- docs(bus): OUTBOX BANK-F91196 PreSettlementPanel #24715 a7e3687afd",
+      "title": "Cursor- BANK-F91203 LegalReports leftover text tokens",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 01:50 PM CT",
+      "mergedAtCt": "10/03/2026, 02:24 PM CT",
       "url": "",
-      "sha": "b89be5ba90",
-      "committedAtIso": "2026-10-03T13:50:56-05:00"
+      "sha": "bb0a6d566e",
+      "committedAtIso": "2026-10-03T14:24:39-05:00"
     },
     {
-      "number": 24715,
-      "title": "Cursor- BANK-F91196 PreSettlementPanel leftover text tokens",
+      "number": 24733,
+      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: migration 202615360930 for CC-3 ROUND 368.2(b) re-arm — renumbered so it sorts after 202615360700)",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 01:48 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24715",
-      "sha": "a7e3687afd",
-      "committedAtIso": "2026-10-03T13:48:44-05:00"
+      "mergedAtCt": "10/03/2026, 02:23 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24733",
+      "sha": "7a07801132",
+      "committedAtIso": "2026-10-03T14:23:38-05:00"
     },
     {
-      "number": 24714,
-      "title": "Cursor- OUTBOX BANK-F91195 DriverDetail leftover #24713",
+      "number": 0,
+      "title": "Cursor- docs(bus): OUTBOX BANK-F91202 CancelLoadModal #24730 0f568f3351",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 01:46 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24714",
-      "sha": "a4b4c4507f",
-      "committedAtIso": "2026-10-03T13:46:48-05:00"
-    },
-    {
-      "number": 24713,
-      "title": "Cursor- BANK-F91195 DriverDetail leftover text tokens",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 01:45 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24713",
-      "sha": "e24efc68dc",
-      "committedAtIso": "2026-10-03T13:45:36-05:00"
-    },
-    {
-      "number": 24712,
-      "title": "Cursor- OUTBOX BANK-F91194 VendorDetail leftover #24711",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 01:40 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24712",
-      "sha": "f419ec3f6d",
-      "committedAtIso": "2026-10-03T13:40:53-05:00"
+      "mergedAtCt": "10/03/2026, 02:22 PM CT",
+      "url": "",
+      "sha": "9ecaa27217",
+      "committedAtIso": "2026-10-03T14:22:41-05:00"
     }
   ]
 }
