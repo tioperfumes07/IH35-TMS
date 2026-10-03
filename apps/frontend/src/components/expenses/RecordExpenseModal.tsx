@@ -11,6 +11,9 @@ type Props = {
   /** N1 — prefill the load FK when opened from dispatch LoadDetailDrawer. */
   defaultLoadId?: string;
   linkedLoadDisplayId?: string;
+  /** U5 — "New receipt" from Accounting > Receipts opens THIS creator (one writer); the file is filed as a receipt. */
+  title?: string;
+  attachmentCategory?: "receipt" | "vendor_invoice";
 };
 
 /**
@@ -25,9 +28,11 @@ export function RecordExpenseModal({
   onCreated,
   defaultLoadId,
   linkedLoadDisplayId,
+  title = "Record expense",
+  attachmentCategory,
 }: Props) {
   return (
-    <ParityDrawer open={open} onClose={onClose} title="Record expense" size="wide">
+    <ParityDrawer open={open} onClose={onClose} title={title} size="wide">
       <div className="space-y-4">
         {/* UploadZone lives INSIDE RecordExpenseForm so its draft id is the one sent in the create
             payload and reconciled onto the real expense (Option B) — no separate, orphaning draft id. */}
@@ -43,6 +48,7 @@ export function RecordExpenseModal({
           submitLabel="Record expense"
           defaultLoadId={defaultLoadId}
           linkedLoadDisplayId={linkedLoadDisplayId}
+          attachmentCategory={attachmentCategory}
           onSubmitted={(created) => {
             onCreated?.(created?.targetId ?? null);
             onClose();

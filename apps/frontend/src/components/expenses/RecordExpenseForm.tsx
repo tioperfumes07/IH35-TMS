@@ -48,6 +48,8 @@ type Props = {
    * work_order_id. Absent → default accounting create (non-breaking).
    */
   workOrderId?: string;
+  /** U5 — the category the attached file is filed under; "receipt" when the expense is created from Accounting > Receipts. */
+  attachmentCategory?: "receipt" | "vendor_invoice";
   /** Optional WO-context unit prefill + unit_id fallback when the picker is empty. */
   defaultUnitId?: string;
   /** Human-readable WO id for memo + banner (maintenance linkage). */
@@ -75,6 +77,7 @@ export function RecordExpenseForm({
   linkedWoDisplayId,
   defaultLoadId,
   linkedLoadDisplayId,
+  attachmentCategory = "vendor_invoice",
 }: Props) {
   const [values, setValues] = useState<RecordExpenseFormValues>(() => {
     const initial = initialRecordExpenseFormValues();
@@ -704,7 +707,7 @@ export function RecordExpenseForm({
           operatingCompanyId={operatingCompanyId}
           entityType="expense"
           entityId={draftAttachmentEntityId}
-          defaultCategory="vendor_invoice"
+          defaultCategory={attachmentCategory}
           title="Supporting Documents"
         />
       </div>

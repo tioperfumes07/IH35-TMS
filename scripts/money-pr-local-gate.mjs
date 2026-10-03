@@ -884,6 +884,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-print-checks-numbers-editable-gaps-recorded",
     ["apps/backend/src/accounting/checks/", "apps/frontend/src/pages/accounting/checks/CheckPrintPage.tsx", "apps/frontend/src/api/checks.ts", "scripts/verify-print-checks-numbers-editable-gaps-recorded.mjs"],
   ],
+  // U5 (owner) — the receipt creator IS the expense creator (one writer); receipts backend read-only.
+  [
+    "verify-receipt-creator-is-expense-creator",
+    ["apps/frontend/src/pages/accounting/ReceiptsPage.tsx", "apps/frontend/src/components/expenses/", "apps/backend/src/accounting/receipts.routes.ts", "scripts/verify-receipt-creator-is-expense-creator.mjs"],
+  ],
   // ROUND 368.2(b) — a bank line may not sit matched to nothing (deferred constraint triggers, both sides).
   [
     "verify-no-bank-line-is-matched-to-nothing",

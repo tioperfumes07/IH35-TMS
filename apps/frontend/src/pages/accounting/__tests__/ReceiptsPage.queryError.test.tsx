@@ -6,6 +6,12 @@ import { useQuery } from "@tanstack/react-query";
 
 vi.mock("@tanstack/react-query", () => ({
   useQuery: vi.fn(),
+  // U5 — the page invalidates the receipts list after "New receipt" records an expense.
+  useQueryClient: vi.fn(() => ({ invalidateQueries: vi.fn() })),
+}));
+
+vi.mock("../../../components/expenses/RecordExpenseModal", () => ({
+  RecordExpenseModal: () => null,
 }));
 
 vi.mock("react-router-dom", () => ({
