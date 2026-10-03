@@ -1,5 +1,5 @@
 # NOW-CURSOR
-NOW: BANK-F91250 DOTComplianceTab leftover MERGED #24879 tip `f13eb1c610` — finish your list, no handoffs
-ACK: CURSOR | ACK BANK-F91250 DOT COMP TEXT TOKENS DONE | GO
+NOW: BANK-F91251 DrugAlcoholProgramTab leftover MERGED #24881 tip `23ba9b1e56` — finish your list, no handoffs
+ACK: CURSOR | ACK BANK-F91251 DA PROGRAM TEXT TOKENS DONE | GO
 READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-STANDING-ORDER-FINISH-YOUR-LIST-NO-HANDOFFS.md`
-THEN: leftover DrugAlcoholProgramTab · 363-CUR-A factoring home · 367.9 · 363-CUR-B/C
+THEN: leftover Audit425cPage · 363-CUR-A factoring home · 367.9 · 363-CUR-B/C
