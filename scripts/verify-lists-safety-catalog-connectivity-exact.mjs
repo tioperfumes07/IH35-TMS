@@ -46,6 +46,10 @@ export function audit(sources = {}) {
   if (!sharedModal.includes("onClose();") || !sharedModal.includes("finally") || !sharedModal.includes("setIsSaving(false)")) {
     failures.push("shared Safety catalog modal must close only after canonical success and always release saving state");
   }
+  // BANK-F91112 — ORDERS chrome: Safety generic catalog field errors use text-xs, not text-[11px].
+  if (sharedModal.includes("text-[11px]")) {
+    failures.push("shared Safety catalog modal must not use text-[11px] — use text-xs");
+  }
 
   for (const [leafKey, slug, plural, singular] of CATALOGS) {
     const route = `/lists/safety/${slug}`;
