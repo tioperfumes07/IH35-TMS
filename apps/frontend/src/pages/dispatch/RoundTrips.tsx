@@ -284,7 +284,7 @@ function TripCard({
           onClick={(e) => e.stopPropagation()}
         />
       </div>
-      <div className="mt-1 text-[11px] text-gray-500">{toRouteSummary(load.first_pickup_city, load.first_delivery_city)}</div>
+      <div className="mt-1 text-xs text-gray-500">{toRouteSummary(load.first_pickup_city, load.first_delivery_city)}</div>
       <div className="mt-1.5 flex items-center justify-between text-xs text-gray-600">
         <span>
           <EntityLinkOrTombstone
@@ -321,7 +321,7 @@ function TripCardCostRow({
   const r = costRollups.get(loadId);
   if (!r) return null;
   return (
-    <div className="mt-0.5 text-[11px] text-gray-500" data-testid="round-trip-card-costs">
+    <div className="mt-0.5 text-xs text-gray-500" data-testid="round-trip-card-costs">
       Fuel {formatMoneyCents(r.fuel_cents, currencyCode)} · Expenses {formatMoneyCents(r.expenses_cents, currencyCode)} ·{" "}
       Driver Pay {formatMoneyCents(r.driver_pay_cents, currencyCode)} · Net {formatMoneyCents(r.net_cents, currencyCode)}
     </div>
@@ -647,7 +647,7 @@ export function RoundTrips({
                   className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-3 py-1.5"
                   style={{ background: "linear-gradient(180deg,#f6f9fc,#e9eff5)", borderBottom: "1px solid #C7D2DC" }}
                 >
-                  <div className="flex flex-wrap items-center gap-x-1 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                  <div className="flex flex-wrap items-center gap-x-1 text-xs font-semibold uppercase tracking-wide text-gray-600">
                     <EntityLinkOrTombstone
                       kind="unit"
                       id={pair.unitId}
