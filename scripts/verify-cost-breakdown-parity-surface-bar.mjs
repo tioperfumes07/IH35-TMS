@@ -24,6 +24,8 @@ export function check(filePath = path.join(ROOT, PAGE)) {
   assert(src.includes("MoneyInput"), "CostBreakdownBox: keep MoneyInput on unit cost");
   assert(src.includes("ReferenceSelect"), "CostBreakdownBox: keep category ReferenceSelect");
   assert(!/<table\b/.test(src), "CostBreakdownBox: must not use raw HTML table");
+  assert(!src.includes("text-[11px]"), "CostBreakdownBox: leftover text-[11px]");
+  assert(!src.includes("#8A92AB") && !src.includes("#334155"), "CostBreakdownBox: leftover off-scale muted");
 }
 
 // GUARD-SELFTEST-MUTATES-SOURCE fix: never write the plant into the real tracked file. Copy it
@@ -52,6 +54,22 @@ async function selftest() {
     },
   );
   assert(failed, "selftest: expected FAIL on raw HTML table");
+  const live = fs.readFileSync(realPath, "utf8");
+  assert(!live.includes("text-[11px]"), "selftest: live leftover text-[11px]");
+  assert(!live.includes("#8A92AB") && !live.includes("#334155"), "selftest: live leftover off-scale muted");
+  let leftoverFailed = false;
+  await withMutatedCopy(
+    realPath,
+    (good) => `${good}\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n`,
+    (tmpPath) => {
+      try {
+        check(tmpPath);
+      } catch {
+        leftoverFailed = true;
+      }
+    },
+  );
+  assert(leftoverFailed, "selftest: expected FAIL on leftover plant");
   console.log("verify-cost-breakdown-parity-surface-bar --selftest PASS");
 }
 
