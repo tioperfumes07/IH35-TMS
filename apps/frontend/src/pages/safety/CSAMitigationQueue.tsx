@@ -150,7 +150,7 @@ export function CSAMitigationQueuePage() {
       render: (row) => (
         <>
           <div className="font-semibold text-slate-800">{row.title}</div>
-          {row.description ? <div className="text-[11px] text-slate-500">{row.description}</div> : null}
+          {row.description ? <div className="text-xs text-slate-500">{row.description}</div> : null}
         </>
       ),
     },
