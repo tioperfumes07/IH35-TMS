@@ -11,6 +11,11 @@ function findings(values) {
   values.forEach((source, index) => {
     if (!/companyToday\(\)/.test(source)) failures.push(`${paths[index]} does not use companyToday`);
     if (/Date\.UTC\(now\.getUTCFullYear\(\), now\.getUTCMonth\(\), now\.getUTCDate\(\)\)/.test(source)) failures.push(`${paths[index]} retains UTC-day expiry basis`);
+    // BANK-F91278 leftover refuse — CoverageGapDashboard page-scoped only
+    if (paths[index].includes("CoverageGapDashboard")) {
+      if (source.includes("text-[11px]")) failures.push(`${paths[index]}: leftover text-[11px]`);
+      if (source.includes("#8A92AB") || source.includes("#334155")) failures.push(`${paths[index]}: leftover off-scale muted`);
+    }
   });
   return failures;
 }
@@ -21,7 +26,15 @@ if (process.argv.includes("--selftest")) {
   mutations.forEach((mutation, index) => {
     if (findings(mutation).length === 0) throw new Error(`mutation ${index + 1} escaped`);
   });
-  console.log(`verify-insurance-expiry-company-date SELFTEST PASS — ${mutations.length}/${mutations.length} mutations red`);
+  const gapIdx = paths.findIndex((p) => p.includes("CoverageGapDashboard"));
+  const leftoverPlant = sources.map((value, i) =>
+    i === gapIdx ? `${value}\n<div className="text-[11px] text-[#8A92AB]">plant</div>` : value,
+  );
+  const leftoverHits = findings(leftoverPlant);
+  if (!leftoverHits.some((e) => e.includes("leftover text-[11px]")) || !leftoverHits.some((e) => e.includes("leftover off-scale muted"))) {
+    throw new Error(`leftover plant escaped: ${leftoverHits.join("; ")}`);
+  }
+  console.log(`verify-insurance-expiry-company-date SELFTEST PASS — ${mutations.length}/${mutations.length} mutations red + leftover plant`);
   process.exit(0);
 }
 if (failures.length) {
