@@ -50,6 +50,12 @@ export function audit(sources = {}) {
   if (sharedModal.includes("text-[11px]")) {
     failures.push("shared Safety catalog modal must not use text-[11px] — use text-xs");
   }
+  // BANK-F91113 — ORDERS chrome: Internal Fine Reason field errors use text-xs, not text-[11px].
+  const internalFineRel = "apps/frontend/src/pages/lists/safety/InternalFineReasonModal.tsx";
+  const internalFine = sources[internalFineRel] ?? read(internalFineRel);
+  if (internalFine.includes("text-[11px]")) {
+    failures.push("InternalFineReasonModal must not use text-[11px] — use text-xs");
+  }
 
   for (const [leafKey, slug, plural, singular] of CATALOGS) {
     const route = `/lists/safety/${slug}`;
