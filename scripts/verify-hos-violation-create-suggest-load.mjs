@@ -61,4 +61,11 @@ if (failures.length) {
   console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);
   process.exit(1);
 }
+
+// BANK-F91136 — ORDERS chrome: load-suggested hint uses text-xs, not text-[11px].
+if (source.includes("text-[11px]")) {
+  console.error(`${LABEL} FAIL\n- HosViolationCreateModal must not use text-[11px] — use text-xs`);
+  process.exit(1);
+}
+
 console.log(`${LABEL} PASS — HOS violation create resolves and stamps the active load without overriding operators`);
