@@ -15,6 +15,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 import { ExemptOverageModal, type ExemptOverageInput } from "./ExemptOverageModal";
+import { VoidOverageModal } from "./VoidOverageModal";
 
 /**
  * BANK-F10 / FUEL-03 — operator queue for fuel-card overage approve-then-recover.
@@ -47,6 +48,8 @@ export type OverageEventRow = {
   exempt_reason?: "repair" | "authorized_spend" | null;
   exempt_work_order_id?: string | null;
   exempt_note?: string | null;
+  voided_at?: string | null;
+  void_reason?: string | null;
 };
 
 const LIMIT_SOURCE_LABEL: Record<string, string> = {
@@ -107,10 +110,12 @@ export function CardOverageQueuePage() {
   // confirms or cancels.
   const [confirmApproveRow, setConfirmApproveRow] = useState<OverageEventRow | null>(null);
   const [exemptRow, setExemptRow] = useState<OverageEventRow | null>(null);
+  const [voidRow, setVoidRow] = useState<OverageEventRow | null>(null);
 
   useEffect(() => {
     actionGenerationRef.current += 1;
     setExemptRow(null);
+    setVoidRow(null);
     setConfirmApproveRow(null);
   }, [companyId]);
   // BANK-F5167 + CLS-ADJACENT — EntityPicker FKs stage with status; URL only on Apply.
@@ -184,6 +189,19 @@ export function CardOverageQueuePage() {
     onSuccess: (_result, input) => {
       if (input.generation !== actionGenerationRef.current) return;
       pushToast("Exempted from recovery.", "success");
+      void queryClient.invalidateQueries({ queryKey: ["fuel", "card-overage-events", input.companyId] });
+    },
+  });
+
+  const voidMut = useMutation({
+    mutationFn: (input: { eventId: string; companyId: string; generation: number; reason: string }) =>
+      apiRequest(`/api/v1/fuel/card-overage-events/${input.eventId}/void`, {
+        method: "POST",
+        body: { operating_company_id: input.companyId, reason: input.reason },
+      }),
+    onSuccess: (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
+      pushToast("Overage voided.", "success");
       void queryClient.invalidateQueries({ queryKey: ["fuel", "card-overage-events", input.companyId] });
     },
   });
@@ -265,6 +283,14 @@ export function CardOverageQueuePage() {
                 Exempt
               </ActionButton>
             ) : null}
+            {row.status !== "voided" && row.status !== "exempt_authorized" ? (
+              <ActionButton disabled={voidMut.isPending} onClick={() => setVoidRow(row)}>
+                Void
+              </ActionButton>
+            ) : null}
+            {row.status === "voided" ? (
+              <span className="text-xs text-gray-600" title={row.void_reason ?? undefined}>Voided</span>
+            ) : null}
             {row.status === "exempt_authorized" ? (
               row.exempt_work_order_id ? (
                 <EntityLink kind="work_order" id={row.exempt_work_order_id} label="Repair WO" className="text-xs font-semibold text-slate-700 hover:underline" />
@@ -285,7 +311,7 @@ export function CardOverageQueuePage() {
         ),
       },
     ],
-    [approveMut, exemptMut]
+    [approveMut, exemptMut, voidMut]
   );
 
   if (!companyId) {
@@ -358,7 +384,7 @@ export function CardOverageQueuePage() {
             />
           </label>
           <div className="flex flex-wrap items-center gap-2">
-            {["pending_review", "approved", "posted", "company_variance", "exempt_authorized", "all"].map((status) => (
+            {["pending_review", "approved", "posted", "company_variance", "exempt_authorized", "voided", "all"].map((status) => (
               <button
                 key={status}
                 type="button"
@@ -420,6 +446,18 @@ export function CardOverageQueuePage() {
             companyId,
             generation: actionGenerationRef.current,
           });
+        }}
+      />
+      <VoidOverageModal
+        open={voidRow != null}
+        posted={Boolean(voidRow?.journal_entry_id)}
+        summary={
+          voidRow ? `${money(voidRow.overage_cents)} for ${entityLabel(voidRow.driver_name, voidRow.driver_id, "Driver")}` : ""
+        }
+        onClose={() => setVoidRow(null)}
+        onConfirm={async (reason) => {
+          if (!voidRow) return;
+          await voidMut.mutateAsync({ eventId: voidRow.id, companyId, generation: actionGenerationRef.current, reason });
         }}
       />
       <ExemptOverageModal
