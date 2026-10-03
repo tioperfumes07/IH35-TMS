@@ -33,6 +33,9 @@ function analyze(src) {
   if (/EntityLink[\s\S]*label=\{entityLabel\(row\.vendor_label/.test(src)) {
     failures.push("must not pass entityLabel(...) straight into EntityLink for vendor (tombstone path required)");
   }
+  // BANK-F91276 leftover refuse — page-scoped text token ratchet
+  if (src.includes("text-[11px]")) failures.push(`${PAGE}: leftover text-[11px]`);
+  if (src.includes("#8A92AB") || src.includes("#334155")) failures.push(`${PAGE}: leftover off-scale muted`);
   return failures;
 }
 
@@ -58,6 +61,10 @@ function selftest() {
   `;
   if (analyze(good).length) fail("selftest expected GOOD to pass");
   if (!analyze(bad).length) fail("selftest expected BAD to fail");
+  const leftover = analyze(`${good}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`);
+  if (!leftover.some((e) => e.includes("leftover text-[11px]")) || !leftover.some((e) => e.includes("leftover off-scale muted"))) {
+    fail(`selftest leftover plant escaped: ${leftover.join("; ")}`);
+  }
   console.log(`${LABEL} selftest PASS`);
 }
 
