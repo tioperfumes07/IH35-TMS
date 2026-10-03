@@ -2,17 +2,18 @@
  * RELAY-FUEL-INGEST-1 (doc 21/23 Part A): owner-triggered CSV import of Relay fuel transactions. The daily
  * pull / webhook cover live sync; this endpoint ingests a Relay CSV EXPORT (the owner's historical data)
  * that has no API equivalent. It maps each CSV row → the confirmed Relay API shape → parseRelayFuelTransactionRow
- * → upsertRelayFuelTransaction, so it reuses ALL the deployed ingest logic (driver match via integration_id / phone / name,
+ * → upsertRelayFuelTransaction, so it reuses ALL the deployed ingest logic (driver match via integration_id only,
  * per-fuel-type lines, idempotent upsert). Owner/Administrator only. Staging + canonical fuel bridge;
  * TMS GL post runs AFTER commit via flushFuelGlPostsAfterCommit (EXPENSE_GL_POSTING_ENABLED, default OFF).
  *
  * POST /api/integrations/relay/fuel/import-csv?operating_company_id=<uuid>
- * body: raw CSV text (Content-Type text/csv or text/plain). Returns { imported, skipped, lines }.
+ * body: raw CSV text (Content-Type text/csv or text/plain). Returns { imported, skipped, rejected, lines }.
+ * A row whose money value is not a plain dollar string is REJECTED by name (rejected_rows), never stored as $0.00.
  */
 import type { FastifyInstance } from "fastify";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { withLuciaBypass } from "../../auth/db.js";
-import { parseRelayFuelTransactionRow } from "./relay-client.js";
+import { parseRelayFuelTransactionRow, RelayRowRejectedError, type RelayRejectedRow } from "./relay-client.js";
 import { upsertRelayFuelTransaction } from "./relay-fuel-ingest.service.js";
 import { loadCompanyCardSet, upsertRelayDeposit } from "./relay-deposit-classifier.service.js";
 import {
@@ -96,11 +97,14 @@ function csvRowToApiShape(g: (name: string) => string | undefined): Record<strin
   const total = S(g("total"));
   return {
     transaction_id: id, created_at, relay_fuel_code: S(g("relay code")),
-    total_amount_paid: total ?? "0", total_retail_price: hasRetail ? String(retailSum) : (total ?? "0"),
+    // A missing `total` stays missing — parseRelayFuelTransactionRow rejects the row by name instead of storing $0.00.
+    total_amount_paid: total, total_retail_price: hasRetail ? String(retailSum) : total,
     currency_code: "USD", is_direct_bill: false, cash_advance: false, fuel_code_type: S(g("sub-type")),
     linked_org: { name: S(g("organization")) },
+    // integration_id is NOT taken from "relay driver id": Relay has not confirmed driver.integration_id == driver.id,
+    // and the driver match keys on integration_id only (relay-fuel-driver-match.ts). The id is kept verbatim.
     driver: relayDriverId || name[0]
-      ? { id: relayDriverId, integration_id: relayDriverId, first_name: S(name[0]), last_name: name.slice(1).join(" ") || null, phone: S(g("driver_phone_number")) }
+      ? { id: relayDriverId, integration_id: null, first_name: S(name[0]), last_name: name.slice(1).join(" ") || null, phone: S(g("driver_phone_number")) }
       : null,
     merchant: { name: S(g("merchant_name")) ?? S(g("location")) },
     location: { name: S(g("location")), address: S(g("location_address")), city: S(g("location_city")), state: S(g("location_state")), zip_code: S(g("location_zip")) },
@@ -131,6 +135,7 @@ export async function registerRelayFuelCsvImportRoute(app: FastifyInstance) {
     const idx = new Map(header.map((h, i) => [h, i]));
 
     let imported = 0, skipped = 0, lines = 0, deposits = 0, depositCompany = 0, depositUnclassified = 0;
+    const rejected: RelayRejectedRow[] = [];
     const pendingGlPosts: FuelTxnGlPostCandidate[] = [];
     const actorUserId = String((req.user as { uuid?: string } | undefined)?.uuid ?? "");
     await withLuciaBypass(async (client) => {
@@ -167,7 +172,15 @@ export async function registerRelayFuelCsvImportRoute(app: FastifyInstance) {
 
         // type=code → fuel purchased at the pump.
         const raw = csvRowToApiShape(g);
-        const tx = raw ? parseRelayFuelTransactionRow(raw) : null;
+        let tx: ReturnType<typeof parseRelayFuelTransactionRow>;
+        try {
+          tx = raw ? parseRelayFuelTransactionRow(raw) : null;
+        } catch (error) {
+          if (!(error instanceof RelayRowRejectedError)) throw error;
+          rejected.push({ transaction_id: error.transactionId, field: error.field, reason: error.reason });
+          app.log.error({ operating_company_id: opco, csv_row: i, reason: error.reason }, "[RELAY_FUEL_CSV_IMPORT] row rejected — nothing stored");
+          continue;
+        }
         if (!tx) { skipped++; continue; }
         // ROUND 43 FOLLOW-UP item 2: upsertRelayFuelTransaction no longer bridges into
         // fuel.fuel_transactions or produces a GL post candidate — gl_post_candidate is always
@@ -182,7 +195,18 @@ export async function registerRelayFuelCsvImportRoute(app: FastifyInstance) {
     // AFTER COMMIT — TMS GL only (EXPENSE_GL_POSTING_ENABLED); never QBO push.
     await flushFuelGlPostsAfterCommit(pendingGlPosts, app.log);
 
-    app.log.info({ operating_company_id: opco, imported, skipped, lines, deposits, depositCompany, depositUnclassified, role }, "[RELAY_FUEL_CSV_IMPORT] complete");
-    return reply.code(200).send({ status: "imported", operating_company_id: opco, imported, skipped, lines, deposits, depositCompany, depositUnclassified });
+    app.log.info({ operating_company_id: opco, imported, skipped, rejected: rejected.length, lines, deposits, depositCompany, depositUnclassified, role }, "[RELAY_FUEL_CSV_IMPORT] complete");
+    return reply.code(200).send({
+      status: rejected.length > 0 ? "imported_with_rejected_rows" : "imported",
+      operating_company_id: opco,
+      imported,
+      skipped,
+      rejected: rejected.length,
+      rejected_rows: rejected.slice(0, 200),
+      lines,
+      deposits,
+      depositCompany,
+      depositUnclassified,
+    });
   });
 }

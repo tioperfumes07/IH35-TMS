@@ -1,11 +1,13 @@
 /**
  * Backfill matched_driver_id on staging Relay fuel rows + driver_id on canonical
- * fuel.fuel_transactions when ingest left them NULL (drivers.integration_id empty).
+ * fuel.fuel_transactions when ingest left them NULL (drivers.integration_id empty at the time).
  *
+ * Same rule as ingest: Relay driver.integration_id = mdata.drivers.integration_id and nothing else
+ * (relay-fuel-driver-match.ts). Re-run after integration_ids are filled in on driver profiles.
  * Fills NULL only — never overwrites an existing driver link.
  */
 import type { DbClient } from "./db-client.type.js";
-import { resolveMatchedDriverId } from "./relay-fuel-driver-match.js";
+import { resolveRelayDriverMatch } from "./relay-fuel-driver-match.js";
 import {
   rematchRelayFuelLoads,
   type RelayFuelLoadRematchResult,
@@ -17,6 +19,8 @@ export type RelayFuelDriverRematchResult = {
   relay_updated: number;
   fuel_updated: number;
   skipped_ambiguous_or_unmatched: number;
+  /** Why each skipped row stayed unresolved (relay_integration_id_missing, no_active_driver_with_integration_id, ...). */
+  unresolved_reasons: Record<string, number>;
   load_rematch?: RelayFuelLoadRematchResult;
 };
 
@@ -25,9 +29,6 @@ type UnmatchedRelayRow = {
   operating_company_id: string;
   transaction_id: string;
   relay_driver_integration_id: string | null;
-  relay_driver_phone: string | null;
-  relay_driver_first_name: string | null;
-  relay_driver_last_name: string | null;
 };
 
 export async function rematchRelayFuelDrivers(
@@ -49,10 +50,7 @@ export async function rematchRelayFuelDrivers(
         id::text AS id,
         operating_company_id::text AS operating_company_id,
         transaction_id,
-        relay_driver_integration_id,
-        relay_driver_phone,
-        relay_driver_first_name,
-        relay_driver_last_name
+        relay_driver_integration_id
       FROM integrations.relay_fuel_transactions
       WHERE matched_driver_id IS NULL
         ${opcoClause}
@@ -66,18 +64,16 @@ export async function rematchRelayFuelDrivers(
   let relayUpdated = 0;
   let fuelUpdated = 0;
   let skipped = 0;
+  const unresolvedReasons: Record<string, number> = {};
 
   for (const row of res.rows) {
-    const driverId = await resolveMatchedDriverId(client, row.operating_company_id, {
-      integration_id: row.relay_driver_integration_id,
-      phone: row.relay_driver_phone,
-      first_name: row.relay_driver_first_name,
-      last_name: row.relay_driver_last_name,
-    });
-    if (!driverId) {
+    const match = await resolveRelayDriverMatch(client, row.operating_company_id, row.relay_driver_integration_id);
+    if (match.driver_id === null) {
       skipped += 1;
+      unresolvedReasons[match.unresolved_reason] = (unresolvedReasons[match.unresolved_reason] ?? 0) + 1;
       continue;
     }
+    const driverId = match.driver_id;
     matched += 1;
 
     const relayUp = await client.query(
@@ -120,6 +116,7 @@ export async function rematchRelayFuelDrivers(
     relay_updated: relayUpdated,
     fuel_updated: fuelUpdated,
     skipped_ambiguous_or_unmatched: skipped,
+    unresolved_reasons: unresolvedReasons,
     ...(loadRematch ? { load_rematch: loadRematch } : {}),
   };
 }

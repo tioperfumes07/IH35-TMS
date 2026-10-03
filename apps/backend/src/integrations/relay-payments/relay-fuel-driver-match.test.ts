@@ -1,9 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-  normalizePersonName,
-  normalizePhoneDigits,
-  resolveMatchedDriverId,
-} from "./relay-fuel-driver-match.js";
+import { resolveRelayDriverMatch } from "./relay-fuel-driver-match.js";
 import type { DbClient } from "./db-client.type.js";
 
 function mockClient(responses: Array<{ rows: Array<{ id: string }> }>): DbClient {
@@ -17,77 +13,46 @@ function mockClient(responses: Array<{ rows: Array<{ id: string }> }>): DbClient
   } as unknown as DbClient;
 }
 
-describe("relay-fuel-driver-match helpers", () => {
-  it("normalizes phone to last 10 digits", () => {
-    expect(normalizePhoneDigits("+1 (956) 813-5701")).toBe("9568135701");
-    expect(normalizePhoneDigits("8135701")).toBeNull();
-    expect(normalizePhoneDigits(null)).toBeNull();
-  });
-
-  it("normalizes person names", () => {
-    expect(normalizePersonName("  FERNANDO  ")).toBe("fernando");
-    expect(normalizePersonName("")).toBeNull();
-  });
-
-  it("prefers integration_id when unique", async () => {
+// Relay (relayed 2026-10-03): "use the integration_id to match transactions". integration_id is the ONLY key —
+// no phone, name, email, Relay driver.id or card fallback; an unmatched driver stays unresolved with a reason.
+describe("resolveRelayDriverMatch — integration_id only", () => {
+  it("matches the one active driver carrying the Relay integration_id", async () => {
     const client = mockClient([{ rows: [{ id: "drv-int" }] }]);
-    const id = await resolveMatchedDriverId(client, "opco", {
-      integration_id: "8029341864745431",
-      phone: "+19568135701",
-      first_name: "FERNANDO",
-      last_name: "MECOR",
-    });
-    expect(id).toBe("drv-int");
+    const match = await resolveRelayDriverMatch(client, "opco", "8029341864745431");
+    expect(match).toEqual({ driver_id: "drv-int", unresolved_reason: null });
     expect(client.query).toHaveBeenCalledTimes(1);
+    const [sql, params] = (client.query as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(sql).toMatch(/integration_id = \$2/);
+    expect(sql).not.toMatch(/phone|first_name|last_name|email/);
+    expect(params).toEqual(["opco", "8029341864745431"]);
   });
 
-  it("falls back to unique phone when integration_id misses", async () => {
+  it("does NOT fall back to phone or name when integration_id misses — unresolved with a reason", async () => {
     const client = mockClient([{ rows: [] }, { rows: [{ id: "drv-phone" }] }]);
-    const id = await resolveMatchedDriverId(client, "opco", {
-      integration_id: "8029341864745431",
-      phone: "+19568135701",
-      first_name: "FERNANDO",
-      last_name: "MECOR",
-    });
-    expect(id).toBe("drv-phone");
-    expect(client.query).toHaveBeenCalledTimes(2);
-  });
-
-  it("falls back to unique name when phone misses", async () => {
-    // null integration_id + null phone skip those queries — only name hits the DB
-    const client = mockClient([{ rows: [{ id: "drv-name" }] }]);
-    const id = await resolveMatchedDriverId(client, "opco", {
-      integration_id: null,
-      phone: null,
-      first_name: "Leonel",
-      last_name: "Morales",
-    });
-    expect(id).toBe("drv-name");
+    const match = await resolveRelayDriverMatch(client, "opco", "8029341864745431");
+    expect(match).toEqual({ driver_id: null, unresolved_reason: "no_active_driver_with_integration_id" });
     expect(client.query).toHaveBeenCalledTimes(1);
   });
 
-  it("falls through to name when phone is ambiguous", async () => {
-    // null integration_id skips; phone returns 2 rows → name
-    const client = mockClient([{ rows: [{ id: "a" }, { id: "b" }] }, { rows: [{ id: "name" }] }]);
-    const id = await resolveMatchedDriverId(client, "opco", {
-      integration_id: null,
-      phone: "+19568135701",
-      first_name: "X",
-      last_name: "Y",
-    });
-    expect(id).toBe("name");
-    expect(client.query).toHaveBeenCalledTimes(2);
+  it("leaves a fill with no integration_id unresolved without touching the DB", async () => {
+    for (const missing of [null, "", "   "]) {
+      const client = mockClient([{ rows: [{ id: "would-be-a-guess" }] }]);
+      const match = await resolveRelayDriverMatch(client, "opco", missing);
+      expect(match).toEqual({ driver_id: null, unresolved_reason: "relay_integration_id_missing" });
+      expect(client.query).not.toHaveBeenCalled();
+    }
   });
 
-  it("skips placeholder all-zero integration_id", async () => {
-    const client = mockClient([{ rows: [{ id: "drv-phone" }] }]);
-    const id = await resolveMatchedDriverId(client, "opco", {
-      integration_id: "0000000000000000",
-      phone: "+12108893066",
-      first_name: "RUBEN",
-      last_name: "GARCIA",
-    });
-    expect(id).toBe("drv-phone");
-    expect(client.query).toHaveBeenCalledTimes(1);
+  it("treats Relay's all-zero placeholder as no key", async () => {
+    const client = mockClient([{ rows: [{ id: "drv" }] }]);
+    const match = await resolveRelayDriverMatch(client, "opco", "0000000000000000");
+    expect(match).toEqual({ driver_id: null, unresolved_reason: "relay_integration_id_placeholder" });
+    expect(client.query).not.toHaveBeenCalled();
+  });
+
+  it("never picks among several drivers", async () => {
+    const client = mockClient([{ rows: [{ id: "a" }, { id: "b" }] }]);
+    const match = await resolveRelayDriverMatch(client, "opco", "123");
+    expect(match).toEqual({ driver_id: null, unresolved_reason: "integration_id_matches_multiple_drivers" });
   });
 });
