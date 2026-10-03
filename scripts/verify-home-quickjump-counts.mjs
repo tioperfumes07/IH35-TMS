@@ -91,6 +91,9 @@ function main() {
   const failures = [];
   const homeQuickJumps = read(paths.homeQuickJumps);
   const defaultHome = read(paths.defaultHome);
+  if (defaultHome.includes("text-[11px]")) {
+    failures.push("DefaultHome.tsx: must not use text-[11px] — use text-xs or text-section-header");
+  }
   const ownerHome = read(paths.ownerHome);
   const accountingManifest = read(paths.accountingManifest);
   const bankingNav = read(paths.bankingNav);
