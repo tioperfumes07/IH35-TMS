@@ -43,6 +43,9 @@ function audit(sources) {
   for (const [name, pattern] of forbidden) {
     if ([...sources.values()].some((source) => pattern.test(source))) failures.push(name);
   }
+  const portal = sources.get("apps/frontend/src/pages/driver-finance/OwnerApprovalPortalPage.tsx") ?? "";
+  if (portal.includes("text-[11px]")) failures.push("owner approval leftover text-[11px]");
+  if (portal.includes("#8A92AB") || portal.includes("#334155")) failures.push("owner approval leftover off-scale muted");
   return failures;
 }
 
@@ -71,7 +74,12 @@ if (process.argv.includes("--selftest")) {
     if (audit(mutated).includes(name)) caught += 1;
     else throw new Error(`selftest failed to catch: ${name}`);
   });
-  console.log(`verify-wave-a-driver-column SELFTEST PASS — ${caught}/${required.length + forbidden.length} exact driver mutations detected`);
+  const portalFile = "apps/frontend/src/pages/driver-finance/OwnerApprovalPortalPage.tsx";
+  const leftoverMutated = new Map(original);
+  leftoverMutated.set(portalFile, `${original.get(portalFile)}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`);
+  if (audit(leftoverMutated).some((f) => f.includes("leftover"))) caught += 1;
+  else throw new Error("selftest failed to catch: owner approval leftover tokens");
+  console.log(`verify-wave-a-driver-column SELFTEST PASS — ${caught}/${required.length + forbidden.length + 1} exact driver mutations detected`);
   process.exit(0);
 }
 

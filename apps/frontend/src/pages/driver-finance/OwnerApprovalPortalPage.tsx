@@ -101,7 +101,7 @@ export function OwnerApprovalPortalPage() {
           <>
             <div className="grid gap-3 md:grid-cols-2">
               <div className="rounded-sm border border-slate-200 bg-white p-4 text-xs">
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Request</div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Request</div>
                 <p className="mt-2 font-mono text-xs">{entityLabel(String(req?.display_id ?? ""), String(req?.id ?? ""), "Request")}</p>
                 <p className="mt-2">
                   <strong>Driver:</strong>{" "}<EntityLink kind="driver" id={String(req?.driver_id ?? "")} label={entityLabel(String(req?.driver_name ?? ""), String(req?.driver_id ?? ""), "Driver")} />
@@ -115,7 +115,7 @@ export function OwnerApprovalPortalPage() {
                 <p className="mt-2 text-xs text-slate-600">Submitted: {String(req?.submitted_at ?? "").replace("T", " ").slice(0, 19)}</p>
               </div>
               <div className="rounded-sm border border-slate-200 bg-white p-4 text-xs">
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Policy</div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Policy</div>
                 <p className="mt-2">
                   Standard threshold: <strong>{money(data.policy.threshold_dollars)}</strong>
                 </p>
