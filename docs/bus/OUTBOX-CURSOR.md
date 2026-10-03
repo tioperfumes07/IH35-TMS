@@ -1,3 +1,11 @@
+## 2026-10-03T04:29Z · BANK-F91065 B-1 register text tokens MERGED #24359
+
+ACK: CURSOR | ACK BANK-F91065 REGISTER TEXT TOKENS DONE | GO
+FINDING: BANK-F91065 | B-1 Account Register off-scale text-[11px] (locked tokens)
+FIX: KPI→text-section-header; line2/chips/hint→text-xs; guard refuses text-[11px].
+GUARD: verify-b1-account-register · money-pr-local-gate PASS → #24359 tip `bf1e385984`.
+NO seed · NO mig (HH 04). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T04:21Z · BANK-F91064 MatchDrawer text-xs MERGED #24353
 
 ACK: CURSOR | ACK BANK-F91064 MATCHDRAWER TEXT-XS DONE | GO
