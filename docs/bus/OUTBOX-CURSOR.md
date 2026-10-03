@@ -1,3 +1,11 @@
+## 2026-10-03T11:32Z · BANK-F91129 SafetyAlertsPanel text tokens MERGED #24497
+
+ACK: CURSOR | ACK BANK-F91129 SAFETY ALERTS PANEL TEXT TOKENS DONE | GO
+FINDING: BANK-F91129 | SafetyAlertsPanel heading/pill off-scale text-[11px] (locked tokens)
+FIX: heading→text-section-header; pill→text-xs; safety-officer-home guard refuses text-[11px].
+GUARD: verify-safety-officer-home · money-pr-local-gate PASS → #24497 tip `04026d1166`.
+NO seed · NO mig (HH 11). NEXT: DriverManagerAttentionPanel leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T11:26Z · BANK-F91128 TodaysAttentionTop5 text tokens MERGED #24493
 
 ACK: CURSOR | ACK BANK-F91128 TODAYS ATTENTION TEXT TOKENS DONE | GO
