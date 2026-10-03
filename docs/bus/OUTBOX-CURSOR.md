@@ -1,3 +1,11 @@
+## 2026-10-03T15:19Z · BANK-F91175 TripPlanSummaryBanner locked tokens MERGED #24620
+
+ACK: CURSOR | ACK BANK-F91175 TRIP PLAN SUMMARY BANNER TEXT TOKENS DONE | GO
+FINDING: BANK-F91175 | TripPlanSummaryBanner cell labels off-scale text-[11px] (locked tokens)
+FIX: uppercase labels→text-section-header; fuel-planner-degraded-honesty guard refuses text-[11px] on TripPlanSummaryBanner.tsx only.
+GUARD: verify-fuel-planner-degraded-honesty · summary-scoped refuse + typecheck PASS → #24620 tip `ab2c24dc23`.
+NO seed · NO mig. NEXT: ActiveTripStrip leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T15:17Z · BANK-F91174 CreateAdvanceModal locked tokens MERGED #24618
 
 ACK: CURSOR | ACK BANK-F91174 CREATE ADVANCE MODAL TEXT TOKENS DONE | GO
