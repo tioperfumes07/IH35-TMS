@@ -40,6 +40,8 @@ function audit({ routes, rt, types, dispatch }) {
     p.push("Dispatch.tsx onBookReturn does not set both the unit and the driver prefill before opening the booking");
   if (!/prefillDriverId=\{bookDriverId\}/.test(dispatch))
     p.push("Dispatch.tsx does not pass prefillDriverId={bookDriverId} to the Book Load modal");
+  if (rt.includes("text-[11px]")) p.push("leftover text-[11px]");
+  if (rt.includes("#8A92AB") || rt.includes("#334155")) p.push("leftover off-scale muted");
   return p;
 }
 const clean = { routes: read(ROUTES), rt: read(RT), types: read(TYPES), dispatch: read(DISPATCH) };
@@ -54,6 +56,7 @@ if (process.argv.includes("--selftest")) {
     ["NeedsReturnCard stops forwarding context", { ...clean, rt: clean.rt.replace("onBookReturn({ unitId, driverId })", "onBookReturn()") }],
     ["Dispatch onBookReturn stops prefilling driver", { ...clean, dispatch: clean.dispatch.replace("              setBookDriverId(driverId);\n", "") }],
     ["Dispatch drops prefillDriverId", { ...clean, dispatch: clean.dispatch.replace("        prefillDriverId={bookDriverId}\n", "") }],
+    ["leftover 11px", { ...clean, rt: `${clean.rt}\n<div className="text-[11px] text-[#8A92AB]">plant</div>` }],
   ];
   let escaped = 0;
   for (const [l, m] of plants) if (audit(m).length === 0) { console.error(`SELFTEST FAIL — not caught: ${l}`); escaped++; }
