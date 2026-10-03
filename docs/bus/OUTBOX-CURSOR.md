@@ -1,3 +1,38 @@
+## 2026-10-03T02:25Z · ROUND 347.2 Today's Attention projected_failure_date LIVE #24318 · tip `955c4882dc`
+
+ACK: CURSOR | ROUND 347.2 | TODAYS-ATTENTION PROJECTED_FAILURE_DATE LIVE | GO
+PR https://github.com/tioperfumes07/IH35-TMS/pull/24318 squash `955c4882dcc5e867a9f1ff3551af230d9a83c94f`.
+Render dep-db06d7egekts738c67t0 status=live · healthz git_sha=`955c4882dcc5e867a9f1ff3551af230d9a83c94f`.
+
+FIX: sourceAtRiskUnits `predicted_failure_date` → `projected_failure_date` (one word). Guard forbids stale name.
+
+LIVE PANEL PROOF (bypassed Neon + worker snapshot after deploy):
+- healthz: `{"ok":true,"git_sha":"955c4882dcc5e867a9f1ff3551af230d9a83c94f",...}`
+- query with projected_failure_date succeeds (count=0 USMCA brake/tire ≤7d — honest empty)
+- owner.todays_attention_snapshot meta @ 2026-10-03T02:24:13Z: sourcesRan=9 totalSources=11 skippedSources=[period_close_warnings, cooling_customers] — **at_risk_units NOT skipped**
+
+WHAT SWALLOWED THE ERROR (4 months):
+1. aggregator catch → warnSkipped(query_failed) → return [] — 42703 looks like empty source
+2. worker shares one PG client without SAVEPOINT — one 42703 aborts the company tick (sibling sources fail too)
+3. FE TodaysAttentionTop5 `if (query.isError) return null` — full endpoint failure renders nothing
+4. pattern already in verify-no-swallowed-db-error-in-transaction.baseline.json for this aggregator
+
+ITEM 2: `202615312200_r342_entity_code_company_scoped.sql` already on origin/main. verify-migration-no-number-collision LIVE OK (maxLedger=maxRepo). No file push needed.
+
+ROUND 348 MEASURED (before; HH 02 — mig authoring waits HH 12–23; claim #24320 → 202615321200):
+- equipment USMCA-owned: 101 InService DryVan + 11 OutOfService DryVan = **112**
+- units USMCA-owned: SAM-b7317a51, SAM-c4530bd3, SAM-fa16e203 = **3** OutOfService stubs
+- assets USMCA-tagged: **100**, owning_entity NULL on all 100; TRANSP 43 left untouched
+- insurance.policy_unit → USMCA assets: **63** (hand to CC-2 after hub fix — do not touch insurance tables)
+- 9 unlinked USMCA assets (leave owning_entity NULL): CODEX-AUDIT-UNIT-20260816-0349, CODEX-LEGAL-UNIT-20260816-1506, CODEX-TEST-0033, DEVIN-A-210001, T-TESTMTDP79YF, TEST-CC3-FLEET-001, TEST-CODEX-956214, TEST-U01, TEST-UNIT-20260806-01
+- owning_entity is **text** codes (TRK/TRANSP); readers: apps/backend/src/assets/assets.routes.ts (create/update/list). Keep text column; add owning_company_id uuid FK.
+
+STAY OFF: insurance.* / factoring.* (CC-2). type_catalog + mdata.assets filters: run verify-no-opco-filter-on-tables-without-it before any company filter.
+
+NEXT: HH 12–23 author 202615321200 hub remaster · tenant_id sweep · CC-3 picker rule · bank-match leftovers.
+
+NO seed. NO insurance/factoring edit.
+
 ## 2026-10-03T01:44Z · BANK-F91055 B-4 Make recurring (expense) MERGED #24309 · tip `127e019ba4`
 
 ACK: CURSOR | ACK BANK-F91055 MAKE RECURRING DONE | GO
