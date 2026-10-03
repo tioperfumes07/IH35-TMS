@@ -1,74 +1,95 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
-import { listChecks, type CheckListRow } from "../../../api/checks";
+import { Link } from "react-router-dom";
+import { listAllChecks, type AllChecksRow } from "../../../api/checks";
 import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { Button } from "../../../components/Button";
 import { formatDateUS } from "../../../lib/formatDate";
+import { formatUsdCents } from "../../../lib/money";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
+import { DatePicker } from "../../../components/forms/DatePicker";
 
 /**
- * Check list route (`/accounting/checks`), R-154 §5. Minimal server-sorted-by-date list for PR 4/7 --
- * full ParityTable design-law parity (server sort on every column, voided banner styling) is a
- * follow-up refinement once the print-queue and void/reissue flows (PR 5-6/7) give this list
- * something more than a plain read to show. Disclosed, not silently thin.
- *
- * go26-consolidation-ratchet (raw_table_outside_infra): routed through the same ParityTable the
- * other 51 accounting list pages use, "caller pre-pages" recipe (pass the current server page's
- * rows, pageSize = rows.length, hidePager) since this page still owns its own Prev/Next offset
- * chrome rather than ParityTable's internal pager.
+ * Check list (`/accounting/checks`). U6 (owner, 2026-10-03): "Checks list must show all checks with full filters".
+ * It used to read only EXPENSE checks; a bill paid by check and a driver settlement paid by check never appeared. It
+ * now lists every check the company wrote (GET /api/v1/checks/all), each opening its own document, with multi-select
+ * kind / status / bank account filters, a payee / number search, a date range, and sortable headers.
  */
+const KIND_LABEL: Record<AllChecksRow["kind"], string> = {
+  expense: "Check (expense)",
+  bill_payment: "Bill payment",
+  driver_settlement_payment: "Driver settlement",
+};
+const STATUS_LABEL: Record<string, string> = { to_print: "To print", issued: "Issued", printed: "Printed", cleared: "Cleared", voided: "Voided", spoiled: "Spoiled" };
+
+function documentHref(row: AllChecksRow): string {
+  if (row.kind === "bill_payment") return `/accounting/bill-payments/${row.id}`;
+  if (row.kind === "driver_settlement_payment") return "/driver-finance/settlements";
+  return `/accounting/checks/${row.id}`;
+}
+
 export function CheckListPage() {
   const { selectedCompanyId } = useCompanyContext();
-  const navigate = useNavigate();
   const companyId = selectedCompanyId ?? "";
-  const [offset, setOffset] = useState(0);
-  const limit = 50;
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [kinds, setKinds] = useState<string[]>([]);
+  const [statuses, setStatuses] = useState<string[]>([]);
+  const [banks, setBanks] = useState<string[]>([]);
+  const [search, setSearch] = useState("");
 
   const query = useQuery({
-    queryKey: ["checks", "list", companyId, offset],
-    queryFn: () => listChecks(companyId, { limit, offset }),
+    queryKey: ["checks", "all", companyId, dateFrom, dateTo],
+    queryFn: () => listAllChecks(companyId, { date_from: dateFrom || undefined, date_to: dateTo || undefined }),
     enabled: Boolean(companyId),
   });
+  const all = query.data?.rows ?? [];
 
-  const rows = query.data?.rows ?? [];
+  const bankOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const r of all) if (r.bank_account_id) seen.set(r.bank_account_id, r.bank_account ?? r.bank_account_id);
+    return [...seen].map(([value, label]) => ({ value, label }));
+  }, [all]);
+  const statusOptions = useMemo(
+    () => [...new Set(all.map((r) => r.status))].map((v) => ({ value: v, label: STATUS_LABEL[v] ?? v })),
+    [all],
+  );
 
-  const columns: Array<ParityColumn<CheckListRow>> = [
+  const rows = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    return all.filter(
+      (r) =>
+        (kinds.length === 0 || kinds.includes(r.kind)) &&
+        (statuses.length === 0 || statuses.includes(r.status)) &&
+        (banks.length === 0 || (r.bank_account_id != null && banks.includes(r.bank_account_id))) &&
+        (!needle || `${r.check_number ?? ""} ${r.payee ?? ""} ${r.memo ?? ""}`.toLowerCase().includes(needle)),
+    );
+  }, [all, kinds, statuses, banks, search]);
+
+  const columns: Array<ParityColumn<AllChecksRow>> = [
     {
-      key: "check_number",
-      label: "Check #",
-      sortable: false,
-      render: (row) => (
-        <Link to={`/accounting/checks/${row.id}`} className="text-blue-700 underline">
-          {row.check_number ?? "To print"}
-        </Link>
-      ),
+      key: "check_number", label: "Check #", sortable: true, sortValue: (r) => Number(r.check_number ?? 0),
+      render: (r) => <Link to={documentHref(r)} className="text-blue-700 underline">{r.check_number ?? "To print"}</Link>,
     },
-    { key: "transaction_date", label: "Date", sortable: false, render: (row) => formatDateUS(row.transaction_date) },
-    { key: "print_on_check_name", label: "Payee", sortable: false },
+    { key: "check_date", label: "Date", sortable: true, sortValue: (r) => r.check_date ?? "", render: (r) => (r.check_date ? formatDateUS(r.check_date) : "—") },
+    { key: "kind", label: "Type", sortable: true, sortValue: (r) => KIND_LABEL[r.kind], render: (r) => KIND_LABEL[r.kind] },
+    { key: "payee", label: "Payee", sortable: true, sortValue: (r) => r.payee ?? "", render: (r) => r.payee ?? "—" },
+    { key: "bank_account", label: "Bank account", sortable: true, sortValue: (r) => r.bank_account ?? "", render: (r) => r.bank_account ?? "—" },
+    { key: "memo", label: "Memo", sortable: true, sortValue: (r) => r.memo ?? "", render: (r) => r.memo ?? "—" },
     {
-      key: "print_status",
-      label: "Status",
-      sortable: false,
-      render: (row) => (row.voided_at ? "Voided" : row.print_status),
+      key: "amount_cents", label: "Amount", sortable: true, className: "text-right", cellClass: "text-right",
+      sortValue: (r) => Number(r.amount_cents), render: (r) => formatUsdCents(Number(r.amount_cents)),
     },
-    {
-      key: "total_amount_cents",
-      label: "Amount",
-      sortable: false,
-      className: "text-right",
-      cellClass: "text-right",
-      render: (row) =>
-        `$${(row.total_amount_cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-    },
+    { key: "status", label: "Status", sortable: true, sortValue: (r) => STATUS_LABEL[r.status] ?? r.status, render: (r) => STATUS_LABEL[r.status] ?? r.status },
   ];
 
   return (
     <AccountingSubNavWrapper
       title="Checks"
-      subtitle="All checks"
+      subtitle="Every check written — expenses, bill payments and driver settlements"
       createControl={
         <div className="flex items-center gap-2">
           <Link to="/accounting/checks/print">
@@ -85,31 +106,27 @@ export function CheckListPage() {
       ) : query.isError ? (
         <ListErrorBanner onRetry={() => void query.refetch()} />
       ) : (
-        <div className="rounded border border-gray-200">
-          <ParityTable<CheckListRow>
-            columns={columns}
-            rows={rows}
-            rowKey={(row) => row.id}
-            loading={query.isLoading}
-            emptyText="No checks yet."
-            onRowClick={(row) => navigate(`/accounting/checks/${row.id}`)}
-            pageSize={rows.length || 1}
-            hidePager
-            enableColumnResize={false}
-            enableColumnReorder={false}
-          />
-          <div className="flex items-center justify-between border-t border-gray-100 px-3 py-2 text-xs text-gray-500">
-            <button type="button" disabled={offset === 0} onClick={() => setOffset((o) => Math.max(0, o - limit))} className="disabled:opacity-40">
-              ← Prev
-            </button>
-            <button
-              type="button"
-              disabled={rows.length < limit}
-              onClick={() => setOffset((o) => o + limit)}
-              className="disabled:opacity-40"
-            >
-              Next →
-            </button>
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-end gap-2 rounded border border-gray-200 bg-white p-2" data-testid="checks-filters">
+            <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">From<DatePicker value={dateFrom} onChange={setDateFrom} /></label>
+            <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">To<DatePicker value={dateTo} onChange={setDateTo} /></label>
+            <MultiSelectDropdown label="Type" options={Object.entries(KIND_LABEL).map(([value, label]) => ({ value, label }))} selected={kinds} onChange={setKinds} allLabel="All types" data-testid="checks-filter-kind" />
+            <MultiSelectDropdown label="Status" options={statusOptions} selected={statuses} onChange={setStatuses} allLabel="All statuses" data-testid="checks-filter-status" />
+            <MultiSelectDropdown label="Bank account" options={bankOptions} selected={banks} onChange={setBanks} allLabel="All bank accounts" searchable data-testid="checks-filter-bank" />
+            <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">Payee / number / memo
+              <input value={search} onChange={(e) => setSearch(e.target.value)} className="h-8 rounded border border-gray-300 px-2 text-xs" data-testid="checks-search" />
+            </label>
+            <span className="ml-auto text-xs text-slate-600" data-testid="checks-count">{rows.length} of {all.length} check{all.length === 1 ? "" : "s"}</span>
+          </div>
+          <div className="rounded border border-gray-200">
+            <ParityTable<AllChecksRow>
+              columns={columns}
+              rows={rows}
+              rowKey={(r) => `${r.kind}:${r.id}:${r.check_number ?? ""}`}
+              loading={query.isLoading}
+              emptyText={all.length === 0 ? "No checks written yet." : "No checks match these filters."}
+              storageKey="checks-all"
+            />
           </div>
         </div>
       )}
