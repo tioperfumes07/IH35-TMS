@@ -19,7 +19,7 @@
  * Linkage both ways: finding -> driver (driver_id on every attributed row) and driver -> findings
  * (the same query filtered by the attributed driver).
  */
-import { driverAtTimeSql } from "./driver-attribution.js";
+import { assignmentInCompanySql, driverAtTimeSql } from "./driver-attribution.js";
 import { classifyFleetUnit, fleetUnitFactsSql, type FleetClass } from "../telematics/live-fleet.js";
 
 type DbClient = {
@@ -125,9 +125,9 @@ export async function listIntegrityFindingsAttribution(
            coalesce(f.resolved, false) AS resolved, f.details,
            dat.driver_id::text AS driver_id,
            EXISTS (SELECT 1 FROM telematics.vehicle_driver_assignments a
-                    WHERE a.operating_company_id = $1::uuid AND a.unit_id::text = f.unit_id) AS unit_ever_assigned,
+                    WHERE a.operating_company_id = $1::uuid AND ${assignmentInCompanySql("a")} AND a.unit_id::text = f.unit_id) AS unit_ever_assigned,
            EXISTS (SELECT 1 FROM telematics.vehicle_driver_assignments a
-                    WHERE a.operating_company_id = $1::uuid AND a.unit_id::text = f.unit_id
+                    WHERE a.operating_company_id = $1::uuid AND ${assignmentInCompanySql("a")} AND a.unit_id::text = f.unit_id
                       AND a.started_at <= f.occurred_at AND (a.ended_at IS NULL OR a.ended_at > f.occurred_at)) AS covered_at_time
       FROM safety.integrity_findings f
       LEFT JOIN mdata.units u ON u.id::text = f.unit_id

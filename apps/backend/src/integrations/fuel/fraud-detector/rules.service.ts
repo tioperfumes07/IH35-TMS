@@ -2,6 +2,7 @@
  * GAP-61 / CAP-11 — Fuel card fraud detection rules.
  * Consumes GAP-59 telematics vehicle-driver pairing for unit context at txn time.
  */
+import { assignmentInCompanySql } from "../../../maintenance/driver-attribution.js";
 
 export type FraudRuleId =
   | "RULE_GPS_MISMATCH"
@@ -195,6 +196,7 @@ async function resolveUnitId(client: DbClient, txn: FuelTransactionContext): Pro
       FROM telematics.vehicle_driver_assignments a
       WHERE a.operating_company_id = $1::uuid
         AND a.driver_id = $2::uuid
+        AND ${assignmentInCompanySql("a")}
         AND a.started_at <= $3::timestamptz
         AND (a.ended_at IS NULL OR a.ended_at > $3::timestamptz)
       ORDER BY a.started_at DESC, a.created_at DESC

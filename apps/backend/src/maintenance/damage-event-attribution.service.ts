@@ -13,7 +13,7 @@
  * time, never assigned_driver_id; a covering window with no driver is "no_driver_logged_in", not a
  * guess. Fleet class comes from live-fleet.ts — measured, never a hardcoded fleet size.
  */
-import { driverAtTimeSql } from "./driver-attribution.js";
+import { assignmentInCompanySql, driverAtTimeSql } from "./driver-attribution.js";
 import { attributionFor, type FindingGapReason } from "./integrity-findings-attribution.service.js";
 import { classifyFleetUnit, fleetUnitFactsSql, type FleetClass } from "../telematics/live-fleet.js";
 
@@ -72,9 +72,9 @@ function eventSelect(sourceExpr: string, idExpr: string, unitExpr: string, tsExp
            ${unitExpr}::text AS unit_id, u.unit_number, ${costExpr} AS cost_cents, ${detailExpr} AS detail,
            dat.driver_id::text AS driver_id,
            EXISTS (SELECT 1 FROM telematics.vehicle_driver_assignments a
-                    WHERE a.operating_company_id = $1::uuid AND a.unit_id = ${unitExpr}) AS unit_ever_assigned,
+                    WHERE a.operating_company_id = $1::uuid AND ${assignmentInCompanySql("a")} AND a.unit_id = ${unitExpr}) AS unit_ever_assigned,
            EXISTS (SELECT 1 FROM telematics.vehicle_driver_assignments a
-                    WHERE a.operating_company_id = $1::uuid AND a.unit_id = ${unitExpr}
+                    WHERE a.operating_company_id = $1::uuid AND ${assignmentInCompanySql("a")} AND a.unit_id = ${unitExpr}
                       AND a.started_at <= ${tsExpr} AND (a.ended_at IS NULL OR a.ended_at > ${tsExpr})) AS covered_at_time
       FROM ${from}
       LEFT JOIN mdata.units u ON u.id = ${unitExpr}

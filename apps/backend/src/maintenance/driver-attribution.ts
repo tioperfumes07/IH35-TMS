@@ -26,6 +26,32 @@ import { canonicalDispatchWorkStatusClause, canonicalNotCancelledLoadClause } fr
  */
 
 /**
+ * ROUND 380.3 (CC-1) — Samsara history is NEVER an operational path into another company.
+ *
+ * telematics.vehicle_driver_assignments is a record of who actually drove which truck, and it is kept. But measured
+ * 2026-10-03: 352 USMCA-scoped rows name 23 drivers who belong to a frozen company (one still open), and a USMCA-scoped
+ * row can name a unit USMCA does not use. Filtering on the row's operating_company_id does NOT exclude them — the row
+ * itself says USMCA. So every OPERATIONAL resolution (attribution for fuel, settlements, maintenance, tour close,
+ * fraud rules, "who drove this unit at T") ANDs this predicate: the assignment's driver is the company's own (or
+ * explicitly authorized for it) and its unit is one the company owns or leases. A NULL driver / unit still counts —
+ * a later "nobody" row keeps shadowing an older one exactly as before. History readers (profile, hub, ingest) do not
+ * use it, and verify-samsara-history-is-never-an-operational-path-into-a-frozen-company classifies every reader.
+ */
+export function assignmentInCompanySql(alias = "a"): string {
+  return `(${alias}.driver_id IS NULL OR EXISTS (
+      SELECT 1 FROM mdata.drivers icd
+       WHERE icd.id = ${alias}.driver_id
+         AND (icd.operating_company_id = ${alias}.operating_company_id
+              OR EXISTS (SELECT 1 FROM mdata.driver_company_authorizations icdca
+                          WHERE icdca.driver_id = icd.id AND icdca.company_id = ${alias}.operating_company_id
+                            AND icdca.is_authorized = true AND icdca.deactivated_at IS NULL))))
+    AND (${alias}.unit_id IS NULL OR EXISTS (
+      SELECT 1 FROM mdata.units icu
+       WHERE icu.id = ${alias}.unit_id
+         AND ${alias}.operating_company_id IN (icu.owner_company_id, icu.currently_leased_to_company_id)))`;
+}
+
+/**
  * Build a `LEFT JOIN LATERAL` fragment resolving the driver holding `unitAlias` at `tsExpr`.
  *
  * `unitAlias` and `tsExpr` are raw SQL fragments (a column reference like `ft.unit_id`, or an
@@ -51,6 +77,7 @@ export function driverAtTimeSql(unitAlias: string, tsExpr: string, resultAlias =
     SELECT a.driver_id
     FROM telematics.vehicle_driver_assignments a
     WHERE a.operating_company_id = $1::uuid
+      AND ${assignmentInCompanySql("a")}
       AND a.unit_id = ${unitAlias}
       AND a.started_at <= ${tsExpr}
       AND (a.ended_at IS NULL OR a.ended_at > ${tsExpr})
@@ -102,6 +129,7 @@ export function unitAtTimeSql(driverAlias: string, tsExpr: string, resultAlias =
     SELECT a.unit_id
     FROM telematics.vehicle_driver_assignments a
     WHERE a.operating_company_id = $1::uuid
+      AND ${assignmentInCompanySql("a")}
       AND a.driver_id = ${driverAlias}
       AND a.started_at <= ${tsExpr}
       AND (a.ended_at IS NULL OR a.ended_at > ${tsExpr})
@@ -150,6 +178,7 @@ export async function computeDriverMilesInPeriod(
         LEAST(COALESCE(a.ended_at, now()), $3::timestamptz) AS window_end
       FROM telematics.vehicle_driver_assignments a
       WHERE a.operating_company_id = $1::uuid
+        AND ${assignmentInCompanySql("a")}
         AND a.driver_id IS NOT NULL
         AND a.started_at < $3::timestamptz
         AND (a.ended_at IS NULL OR a.ended_at > $2::timestamptz)
@@ -230,9 +259,10 @@ export function driverAtTimeFromWindows(windows: AssignmentWindow[], ts: Date): 
 export function unitAssignmentWindowsSql(): string {
   return `
     SELECT driver_id::text AS driver_id, started_at, ended_at, created_at
-      FROM telematics.vehicle_driver_assignments
-     WHERE operating_company_id = $1::uuid AND unit_id = $2::uuid
-     ORDER BY started_at ASC`;
+      FROM telematics.vehicle_driver_assignments a
+     WHERE a.operating_company_id = $1::uuid AND a.unit_id = $2::uuid
+       AND ${assignmentInCompanySql("a")}
+     ORDER BY a.started_at ASC`;
 }
 
 /**

@@ -8,6 +8,7 @@
  * NEVER: must never close an assignment with an event older than its start, and never pair a driver not authorized for the company
  * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
  */
+import { assignmentInCompanySql } from "../maintenance/driver-attribution.js";
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
@@ -307,13 +308,14 @@ export async function getDriverForVehicleAtTime(
 ): Promise<string | null> {
   const res = await client.query<{ driver_id: string | null }>(
     `
-      SELECT driver_id::text
-      FROM telematics.vehicle_driver_assignments
-      WHERE operating_company_id = $1::uuid
-        AND unit_id = $2::uuid
-        AND started_at <= $3::timestamptz
-        AND (ended_at IS NULL OR ended_at > $3::timestamptz)
-      ORDER BY started_at DESC, created_at DESC
+      SELECT a.driver_id::text
+      FROM telematics.vehicle_driver_assignments a
+      WHERE a.operating_company_id = $1::uuid
+        AND a.unit_id = $2::uuid
+        AND ${assignmentInCompanySql("a")}
+        AND a.started_at <= $3::timestamptz
+        AND (a.ended_at IS NULL OR a.ended_at > $3::timestamptz)
+      ORDER BY a.started_at DESC, a.created_at DESC
       LIMIT 1
     `,
     [operatingCompanyId, unitId, ts]
