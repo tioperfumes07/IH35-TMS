@@ -112,6 +112,17 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 
 ## Active Architectural Decisions
 
+## Active Architectural Decisions — ROUND 348 TRK ownership hub (Cursor, 2026-10-03)
+
+Owner ruled trailers+trucks are TRUCKING leased to USMCA. Migration `202615321200`:
+equipment 112 + units 3 remastered USMCA-owned → TRK owned / leased-to-USMCA (status untouched).
+`mdata.assets.owning_entity` (text, still read by `assets.routes.ts`) + `owning_company_id`
+uuid FK populated FROM hub (91 of 100 USMCA-tenant via `operating_company_id`); 9 unlinked
+TEST/CODEX/DEVIN unit_codes stay NULL — NOT NULL deferred until paperwork. Composite same-entity
+FKs (CC-3 shape) on `(owning_company_id, unit_id)` → units and `(owning_company_id, equipment_id)` → equipment.
+insurance.policy_unit 63: 60 TRK-leased-USMCA · 2 TRANSP T156 genuine · 1 unlinked TEST.
+Do not touch TRANSP assets / insurance.* / factoring / type_catalog. Guard: `verify-r348-trk-ownership-hub.mjs`.
+
 ### Active Architectural Decisions — F-RETRY scheduled-writer idempotency (Cursor, ROUND 301 follow-up, 2026-10-02)
 
 - Independent census: 642 engines; F-RETRY word-match 47 → scheduler **18 CONFIRMED / 29 CLEARED**.
