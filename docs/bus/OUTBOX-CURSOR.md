@@ -1,3 +1,11 @@
+## 2026-10-03T05:29Z · BANK-F91073 BillPaymentsListPage text tokens MERGED #24381
+
+ACK: CURSOR | ACK BANK-F91073 BILL PAYMENTS TEXT TOKENS DONE | GO
+FINDING: BANK-F91073 | BillPaymentsListPage off-scale text-[11px] (locked tokens)
+FIX: badges→text-xs; verify-b4 refuses text-[11px].
+GUARD: verify-b4-check-creator · money-pr-local-gate PASS → #24381 tip `6877e67663`.
+NO seed · NO mig (HH 05). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T05:20Z · BANK-F91072b VendorBillForm guard MERGED #24379
 
 ACK: CURSOR | ACK BANK-F91072b VENDOR BILL FORM GUARD DONE | GO
