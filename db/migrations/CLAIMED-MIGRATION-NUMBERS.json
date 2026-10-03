@@ -2031,6 +2031,11 @@
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-03",
       "purpose": "ROUND 390.3 bank-recon adjustments link to their session on the spine: backfill accounting.transaction_source_links (linked_object_type bank_reconciliation, roles recon_service_charge / recon_interest_earned) for the USMCA rows whose memo carries the session uuid, then rewrite those memos to a human date -- memo last, only if the links landed"
+    },
+    "202615390931": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "363-CC3-A (CC-2 finding POSTING-LOAD-ID-NEVER-BACKFILLED): stamp accounting.journal_entry_postings.load_id on existing USMCA postings where accounting.posting_source_load_id() proves the load (2,198 rows measured; NULL -> value only, never repointed; unprovable rows untouched)"
     }
   },
   "202613590001": {
