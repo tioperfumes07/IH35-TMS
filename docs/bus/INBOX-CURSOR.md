@@ -10,7 +10,7 @@ Pasted from ~/Downloads 11:16 (not invented): 365 · 366 · 367 · 368 · 369 ·
 
 ## YOUR LIST (still yours — a new round does not close it)
 
-1. **363-CUR-A remainder** — finance ArApAgingPage + AccountsPayableAgingPage + every other balance. Deadline **2026-10-05 06:00Z**. Aging reports already on tip `#24639`.
+1. **363-CUR-A remainder** — customer/vendor profile + list + every other balance. Deadline **2026-10-05 06:00Z**. Reports `#24639` + finance/AP `#24649` on tip.
 2. **Standing-order Cursor engine** — cash flow (recourse = secured borrowing → collections OPERATING, Faro FINANCING; ASU 2016-15 investing does not touch the 1.5% reserve) · 7-day unmatched ALERT not count · the two bank-match defects · then the full engine (ten of ten).
 3. **367.9** — one app-wide structural breadcrumb. Deadline **2026-10-06 18:00Z**. CC-2 owns Accounting; you own every other route. Guard named in the 367 file.
 4. **363-CUR-B / C** by 2026-10-06 06:00Z. **368.1 / 370** are CC-2 (reclassify first, blocks the purge). You coordinate; you do not take their list.
@@ -26,7 +26,7 @@ ACK: `CURSOR | ACK STRANDED-ROUNDS FINISH-LIST | GO`
 READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-ROUND-363-LAW-THE-RECLASSIFY-ENGINE-AND-THE-POSTING-STAMP.md`
 THEN: `docs/bus/10-03-2026-CURSOR-ROUND-363-CLEARED-UNCLEARED-EVERYWHERE-AND-THE-CLICK-THROUGH-SWEEP.md`
 
-#24639 tip `15324b5234` — Reports A/R + A/P aging show Cleared + named not-cleared documents.
+#24639 + #24649 tip `d259cfe4f4` — Reports + finance + accounting A/P aging show Cleared + named not-cleared documents.
 Cursor open PRs at this census: **0**. Leftover token-drain and ROUND 348 remaster stay overflow / parked.
 
 1. **363-CUR-A remainder** — same helper on finance ArApAgingPage, AccountsPayableAgingPage, and every other balance. Deadline **2026-10-05 06:00Z**.
