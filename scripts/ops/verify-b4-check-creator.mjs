@@ -178,6 +178,11 @@ function main() {
   if (billPayments.includes("text-[11px]")) {
     throw new Error("BillPaymentsListPage.tsx: must not use text-[11px] — use text-xs (GLOBAL-TYPE-SIZE-BASELINE body 12px)");
   }
+  // BANK-F91087 — ORDERS B-4 Apply to Bill labels use text-xs, not text-[11px].
+  const applyToBill = read("apps/frontend/src/pages/banking/components/forms/ApplyToBillForm.tsx");
+  if (applyToBill.includes("text-[11px]")) {
+    throw new Error("ApplyToBillForm.tsx: must not use text-[11px] — use text-xs");
+  }
 
   console.log(`${LABEL}: PASS`);
 }
