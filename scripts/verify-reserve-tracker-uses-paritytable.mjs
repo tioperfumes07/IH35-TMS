@@ -88,6 +88,13 @@ function assertMigrated(src) {
   if (src.includes("useMutation")) {
     errors.push(`${PAGE}: display-only financial surface — must not add mutations`);
   }
+  // BANK-F91099 — ORDERS chrome: KPI/section labels use named 11px token, hints use text-xs.
+  if (src.includes("text-[11px]")) {
+    errors.push(`${PAGE}: must not use text-[11px] — use text-section-header or text-xs`);
+  }
+  if (!src.includes("text-section-header")) {
+    errors.push(`${PAGE}: forecast/factor KPI labels must use text-section-header`);
+  }
   return errors;
 }
 
@@ -120,6 +127,7 @@ function selftest() {
       emptyText="No movements recorded for this factor." />
     <button onClick={() => setHistPage((p) => p + 1)}>Next</button>
     <ParityTable storageKey="factoring-chargeback-fee-history" />
+    <div className="text-section-header uppercase tracking-wide">Next 7d</div>
   `;
   const bad = `
     import { useMutation } from "@tanstack/react-query";
