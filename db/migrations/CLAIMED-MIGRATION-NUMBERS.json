@@ -1827,6 +1827,11 @@
       "claimed_at": "2026-10-03",
       "purpose": "Dispatch D3: row audit (audit.tg_audit_row) on the 28 unaudited dispatch tables + FORCE ROW LEVEL SECURITY on dispatch.manual_delivery_authorizations"
     },
+    "202615330930": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 363-CC3-B: a bank send-back keeps the match — banking.reconciliation_matches release columns (released_at/by/reason/kind/reversal JE), unique only among unreleased rows, and a deferred refusal on clearing a matched_* pointer with no released match row"
+    },
     "202615321200": {
       "claimed_by": "cursor",
       "claimed_at": "2026-10-03",
