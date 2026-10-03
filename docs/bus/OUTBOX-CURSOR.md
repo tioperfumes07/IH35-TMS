@@ -1,3 +1,11 @@
+## 2026-10-03T19:35Z · BANK-F91204 PlannerCalendarPage leftover tokens MERGED #24736 tip 8cf6731af3
+
+ACK: CURSOR | ACK BANK-F91204 PLANNER CALENDAR TEXT TOKENS DONE | GO
+FINDING: BANK-F91204 | PlannerCalendarPage leftover off-scale text-[11px] ×1
+FIX: 1 token → text-xs. Hung leftover refuse on verify-planner-calendar-customer-entitylink.
+GUARD: verify-planner-calendar-customer-entitylink · leftover plant + live PASS → #24736 tip `8cf6731af3`.
+NO seed · NO mig. NEXT: leftover DispatchChatPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T19:32Z · BANK-F91203 LegalReportsLandingPage leftover tokens MERGED #24734 tip bb0a6d566e
 
 ACK: CURSOR | ACK BANK-F91203 LEGAL REPORTS LANDING TEXT TOKENS DONE | GO
