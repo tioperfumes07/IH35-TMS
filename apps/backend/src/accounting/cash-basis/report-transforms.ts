@@ -177,10 +177,22 @@ export function transformProfitLossToCashBasis(report: ProfitLossReport, anchorD
   const revenueLines = transformed.filter((entry) => entry.account_type === "Income" || entry.account_type === "OtherIncome").map(entryToProfitLossLine);
   const cogsLines = transformed.filter((entry) => entry.account_type === "CostOfGoodsSold").map(entryToProfitLossLine);
   const operatingExpenseLines = transformed.filter((entry) => entry.account_type === "Expense" || entry.account_type === "OtherExpense").map(entryToProfitLossLine);
+  // ROUND 384 (Lead, 2026-10-03) — the cash-basis P&L is a SECOND implementation of the same report and
+  // it drops unmapped account types exactly as the accrual one did: these three filters claim Income,
+  // OtherIncome, CostOfGoodsSold, Expense and OtherExpense, and anything else is simply not selected by
+  // any of them. Surfaced here too, with the same rule: an unclassified line is a question, not a number,
+  // and it is never folded into a total (LAW 368.3 — a screen that cannot classify something says so).
+  const PL_TYPES = new Set(["Income", "OtherIncome", "CostOfGoodsSold", "Expense", "OtherExpense"]);
+  const unclassifiedLines = transformed
+    .filter((entry) => !PL_TYPES.has(entry.account_type))
+    .map(entryToProfitLossLine)
+    .filter((line) => line.amount !== 0);
+  const unclassifiedTotal = unclassifiedLines.reduce((sum, line) => sum + line.amount, 0);
   const revenueTotal = revenueLines.reduce((sum, line) => sum + line.amount, 0);
   const cogsTotal = cogsLines.reduce((sum, line) => sum + line.amount, 0);
   const operatingExpensesTotal = operatingExpenseLines.reduce((sum, line) => sum + line.amount, 0);
   return {
+    unclassified: { lines: unclassifiedLines, total: unclassifiedTotal },
     revenue: { lines: revenueLines, total: revenueTotal },
     cogs: { lines: cogsLines, total: cogsTotal },
     gross_profit: revenueTotal - cogsTotal,
