@@ -85,8 +85,10 @@ function audit(parts) {
   }
   const writableWoPredicates = parts.labor.match(/SELECT id FROM maintenance\.work_orders[\s\S]{0,240}?voided_at IS NULL[\s\S]{0,120}?status NOT IN \('complete', 'cancelled'\)/g) ?? [];
   if (writableWoPredicates.length < 2) failures.push("timer start and manual time entry must both reject terminal work orders");
-  if (parts.detail.includes("text-[11px]")) failures.push("leftover text-[11px]");
-  if (parts.detail.includes("#8A92AB") || parts.detail.includes("#334155")) failures.push("leftover off-scale muted");
+  if (parts.detail.includes("text-[11px]") || parts.page.includes("text-[11px]")) failures.push("leftover text-[11px]");
+  if (parts.detail.includes("#8A92AB") || parts.detail.includes("#334155") || parts.page.includes("#8A92AB") || parts.page.includes("#334155")) {
+    failures.push("leftover off-scale muted");
+  }
   return failures;
 }
 

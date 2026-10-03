@@ -297,7 +297,7 @@ export function WorkOrdersConsoleListPage() {
         sortable: true,
         sortValue: (row) => consoleSortValue(row, "labor_cost_cents"),
         className: "text-right",
-        cellClass: "text-right font-mono text-[11px] text-slate-700",
+        cellClass: "text-right font-mono text-xs text-slate-700",
         render: (row) => (row.labor_cost_cents != null ? String(row.labor_cost_cents) : "0"),
       },
       {
@@ -512,7 +512,7 @@ export function WorkOrdersConsoleListPage() {
                             className="font-mono font-semibold text-slate-800"
                           />
                           <div className="mt-0.5 font-mono text-xs text-slate-500">{String(row.unit_number ?? "—")}</div>
-                          <div className="mt-0.5 text-[11px] capitalize text-slate-600">{String(row.status ?? "")}</div>
+                          <div className="mt-0.5 text-xs capitalize text-slate-600">{String(row.status ?? "")}</div>
                         </li>
                       ))}
                     </ul>
