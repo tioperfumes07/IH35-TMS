@@ -17,7 +17,7 @@ import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope 
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 import { CHECK_PAYEE_KIND_VALUES, resolveCheckPayee } from "./check-payee.service.js";
 import { createCheck, CreateCheckConflictError, CheckPayeeError, CheckAccountError } from "./check-create.service.js";
-import { assignPrintBatch, confirmPrintBatch, CheckPrintBatchError } from "./check-print-batch.service.js";
+import { assignPrintBatch, confirmPrintBatch, previewPrintBatch, CheckPrintBatchError } from "./check-print-batch.service.js";
 import { voidCheck, reissueCheck, unvoidCheck, CheckVoidError } from "./check-void.service.js";
 import { upsertCheckStockSettings, getCheckStockSettings, advanceCheckStockAfterUse, CheckStockError } from "./check-stock.service.js";
 import { resolveDriverVendorLink, DriverVendorMissingError } from "../driver-vendor-link.service.js";
@@ -729,7 +729,42 @@ export async function registerCheckRoutes(app: FastifyInstance) {
     bank_account_id: z.string().uuid(),
     check_type: z.enum(["voucher", "standard"]),
     ids: z.array(z.string().uuid()).min(1),
+    // U9 — the owner's typed number per id (same order); null/"" = continue the sequence.
+    numbers: z.array(z.string().trim().max(12).nullable()).optional(),
+    gap_reason: z.string().trim().max(500).nullable().optional(),
   });
+
+  const printBatchErrorStatus = (code: string) =>
+    code === "CHECK_STOCK_NOT_INITIALIZED" || code === "DUPLICATE_CHECK_NUMBER" ? 409 : code === "CHECK_NOT_FOUND" ? 404 : 400;
+
+  // U9 — read-only: the numbers the batch would print, duplicates (warned, refused at assignment) and skipped numbers.
+  app.post(
+    "/api/v1/checks/print-batch/preview",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req: FastifyRequest, reply: FastifyReply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+      const parsed = printBatchBodySchema.safeParse(req.body ?? {});
+      if (!parsed.success) return validationError(reply, parsed.error);
+      const body = parsed.data;
+      try {
+        await assertCompanyMembership(user.uuid, body.operating_company_id);
+        const preview = await previewPrintBatch(body.operating_company_id, {
+          bank_account_id: body.bank_account_id,
+          check_type: body.check_type,
+          ids: body.ids,
+          numbers: body.numbers,
+        });
+        return reply.code(200).send(preview);
+      } catch (err) {
+        if (err instanceof CheckPrintBatchError) {
+          return reply.code(printBatchErrorStatus(err.code)).send({ error: err.code, message: err.message });
+        }
+        throw err;
+      }
+    }
+  );
 
   app.post(
     "/api/v1/checks/print-batch",
@@ -748,13 +783,13 @@ export async function registerCheckRoutes(app: FastifyInstance) {
           bank_account_id: body.bank_account_id,
           check_type: body.check_type,
           ids: body.ids,
+          numbers: body.numbers,
+          gap_reason: body.gap_reason,
         });
         return reply.code(201).send(result);
       } catch (err) {
         if (err instanceof CheckPrintBatchError) {
-          const status =
-            err.code === "CHECK_STOCK_NOT_INITIALIZED" ? 409 : err.code === "CHECK_NOT_FOUND" ? 404 : 400;
-          return reply.code(status).send({ error: err.code, message: err.message });
+          return reply.code(printBatchErrorStatus(err.code)).send({ error: err.code, message: err.message });
         }
         throw err;
       }
