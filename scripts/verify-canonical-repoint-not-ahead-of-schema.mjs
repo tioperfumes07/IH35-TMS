@@ -51,25 +51,52 @@ export function tablesCreatedByHeldMigrations(heldFiles, readMigration) {
 }
 
 /** A file "guards" a table if it proves existence before querying and can refuse. */
-export function fileGuardsTable(src, table) {
+export function fileGuardsTable(src, table, readinessHelpers = []) {
   const bare = table.split(".").pop();
   const provesExistence =
     new RegExp(`to_regclass\\([^)]*${table.replace(".", "\\.")}`, "i").test(src) ||
     new RegExp(`to_regclass\\(\\$\\d`, "i").test(src) ||
     (/information_schema\.(tables|columns)/i.test(src) &&
-      new RegExp(`['"\`]${bare}['"\`]`, "i").test(src));
-  // Proving existence is only half of it — the file must also be able to REFUSE.
-  const canRefuse = /reply\.code\((?:501|503)\)/.test(src);
+      new RegExp(`['"\`]${bare}['"\`]`, "i").test(src)) ||
+    // ROUND 381.4 — the check lives in ONE shared readiness helper (e.g. leases/lessee-posting.service.ts
+    // lesseeSchemaReady → to_regclass('accounting.lease_lessee_schedule_period')) and its callers call it.
+    readinessHelpers.some((name) => new RegExp(`\\b${name}\\s*\\(`).test(src));
+  // Proving existence is only half of it — the file must also be able to REFUSE: a route's 501/503, or a service
+  // that throws a typed error carrying 501/503 (the route maps the status) naming the migration.
+  const canRefuse =
+    /reply\.code\((?:501|503)\)/.test(src) ||
+    /throw\s+new\s+\w+\((?:[^;]|\n)*?,\s*50[13]\s*\)/.test(src);
   return provesExistence && canRefuse;
+}
+
+/** Exported functions whose own body proves a given table exists: table → [function names]. */
+export function readinessHelpersByTable(heldTables, files) {
+  const out = new Map();
+  for (const { src } of files) {
+    const re = /export\s+(?:async\s+)?function\s+(\w+)\s*\(/g;
+    let m;
+    while ((m = re.exec(src))) {
+      const rest = src.slice(m.index + m[0].length);
+      const next = rest.search(/\nexport\s/);
+      const body = next === -1 ? rest : rest.slice(0, next);
+      for (const [table] of heldTables) {
+        if (new RegExp(`to_regclass\\(\\s*'${table.replace(".", "\\.")}'`, "i").test(body)) {
+          out.set(table, [...(out.get(table) ?? []), m[1]]);
+        }
+      }
+    }
+  }
+  return out;
 }
 
 export function findUnguardedReferences(heldTables, files) {
   const problems = [];
+  const helpers = readinessHelpersByTable(heldTables, files);
   for (const { path, src } of files) {
     for (const [table, migration] of heldTables) {
       const referenced = new RegExp(`(?:FROM|JOIN|INTO|UPDATE)\\s+${table.replace(".", "\\.")}\\b`, "i").test(src);
       if (!referenced) continue;
-      if (!fileGuardsTable(src, table)) {
+      if (!fileGuardsTable(src, table, helpers.get(table) ?? [])) {
         problems.push(
           `${path} queries ${table}, but that table is only created by ${migration}, which is still HELD and unapplied on prod. Without an existence check the endpoint throws 42P01 and returns a 500 for the entire merge-to-apply window — invisible to CI, which runs every migration on a fresh database. Guard it and refuse with 503 naming the migration.`
         );
@@ -210,6 +237,30 @@ function selftest() {
       true,
     ],
     ["no reference at all", [{ path: "fixture.ts", src: `SELECT 1` }], false],
+    [
+      "ROUND 381.4: a shared readiness helper + a typed 503 refusal in the service",
+      [
+        { path: "ready.ts", src: `export async function phReady(c) { return (await c.query("SELECT to_regclass('maintenance.position_history') IS NOT NULL")).rows[0]; }` },
+        { path: "svc.ts", src: `if (!(await phReady(client))) throw new SvcError("ph_not_applied", "migration 202609020000 is not applied", 503);\nconst r = await client.query("SELECT * FROM maintenance.position_history ph");` },
+      ],
+      false,
+    ],
+    [
+      "a helper call that is NOT a readiness helper does not count",
+      [
+        { path: "ready.ts", src: `export async function notReady(c) { return true; }` },
+        { path: "svc.ts", src: `if (!(await notReady(client))) throw new SvcError("x", "y", 503);\nconst r = await client.query("SELECT * FROM maintenance.position_history ph");` },
+      ],
+      true,
+    ],
+    [
+      "a readiness helper with no refusal anywhere in the caller still fails",
+      [
+        { path: "ready.ts", src: `export async function phReady(c) { return (await c.query("SELECT to_regclass('maintenance.position_history') IS NOT NULL")).rows[0]; }` },
+        { path: "svc.ts", src: `if (!(await phReady(client))) return [];\nconst r = await client.query("SELECT * FROM maintenance.position_history ph");` },
+      ],
+      true,
+    ],
   ];
 
   for (const [name, files, shouldFlag] of cases) {
@@ -236,6 +287,22 @@ function selftest() {
       ok = false;
     } else {
       console.log("SELFTEST: removing the guard from the real position-history route -> caught");
+    }
+  }
+
+  // ROUND 381.4 — the real lease-to-own files: removing the readiness call from lease-buyout must be caught.
+  const leaseFiles = ["apps/backend/src/leases/lessee-posting.service.ts", "apps/backend/src/leases/lease-buyout.service.ts"];
+  if (leaseFiles.every((f) => existsSync(resolve(ROOT, f)))) {
+    const leaseHeld = new Map([["accounting.lease_lessee_schedule_period", "202615210000_lease_to_own_lessee_asc842.sql"]]);
+    const real = leaseFiles.map((f) => ({ path: f, src: readFileSync(resolve(ROOT, f), "utf8") }));
+    const mutated = real.map((x) => (x.path.endsWith("lease-buyout.service.ts") ? { ...x, src: x.src.replace(/lesseeSchemaReady\s*\(/g, "alwaysTrue(") } : x));
+    const realFlagged = findUnguardedReferences(leaseHeld, real).length > 0;
+    const mutFlagged = findUnguardedReferences(leaseHeld, mutated).some((p) => p.startsWith("apps/backend/src/leases/lease-buyout"));
+    if (realFlagged || !mutFlagged) {
+      console.error(`SELFTEST FAIL: lease-to-own real files flagged=${realFlagged} (want false), readiness call stripped flagged=${mutFlagged} (want true)`);
+      ok = false;
+    } else {
+      console.log("SELFTEST: lease-to-own readiness helper honoured; stripping it from lease-buyout -> caught");
     }
   }
 

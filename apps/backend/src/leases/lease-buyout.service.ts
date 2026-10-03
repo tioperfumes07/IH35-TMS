@@ -160,8 +160,9 @@ export async function buyOutLeaseToOwn(opco: string, actorUserId: string, leaseI
     billId = String((bill as { id?: string }).id);
   }
 
-  // Phase B — reclass, title, register, close (one transaction).
+  // Phase B — reclass, title, register, close (one transaction). Its own readiness check: it never relies on phase A's.
   return inTx(async (client) => {
+    if (!(await buyoutSchemaReady(client))) throw new LesseePostingError("lease_to_own_asc842_not_applied", "Lease-to-own buyout (migrations 202615210000 + 202615210100) is not applied on this database yet — ask the Lead to apply them.", 503);
     const { c, assets } = await loadState(client, opco, leaseId, input.buyout_date);
     const rou = await role(client, opco, "rou_asset");
     const accum = await role(client, opco, "accumulated_rou_amortization");
