@@ -166,7 +166,7 @@ export function RandomPoolDashboard({ companyId }: Props) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-xs font-semibold text-slate-900">Random Pool Draws</h2>
-          <p className="mt-0.5 text-[11px] text-slate-500">
+          <p className="mt-0.5 text-xs text-slate-500">
             FMCSA §382.305 — 10% drug / 10% alcohol quarterly minimum
           </p>
         </div>
@@ -198,25 +198,25 @@ export function RandomPoolDashboard({ companyId }: Props) {
       {mostRecent ? (
         <div className="mt-4 grid gap-3 sm:grid-cols-4">
           <div className="rounded-sm border border-gray-100 p-3 text-center">
-            <div className="text-[11px] uppercase tracking-wide text-slate-500">Pool Size</div>
+            <div className="text-xs uppercase tracking-wide text-slate-500">Pool Size</div>
             <div className="mt-1 text-page-title font-semibold text-slate-900">{mostRecent.pool_size}</div>
           </div>
           <div className="rounded-sm border border-gray-100 p-3 text-center">
-            <div className="text-[11px] uppercase tracking-wide text-slate-500">Drug Selected</div>
+            <div className="text-xs uppercase tracking-wide text-slate-500">Drug Selected</div>
             <div className="mt-1 text-page-title font-semibold text-slate-900">
               {mostRecent.drug_drawn_count}
               <span className="ml-1 text-xs font-normal text-slate-500">{drugPct(mostRecent)}</span>
             </div>
           </div>
           <div className="rounded-sm border border-gray-100 p-3 text-center">
-            <div className="text-[11px] uppercase tracking-wide text-slate-500">Alcohol Selected</div>
+            <div className="text-xs uppercase tracking-wide text-slate-500">Alcohol Selected</div>
             <div className="mt-1 text-page-title font-semibold text-slate-900">
               {mostRecent.alcohol_drawn_count}
               <span className="ml-1 text-xs font-normal text-slate-500">{alcoholPct(mostRecent)}</span>
             </div>
           </div>
           <div className="rounded-sm border border-gray-100 p-3 text-center">
-            <div className="text-[11px] uppercase tracking-wide text-slate-500">FMCSA Min.</div>
+            <div className="text-xs uppercase tracking-wide text-slate-500">FMCSA Min.</div>
             <div className="mt-1">
               {meetsMinimums(mostRecent) ? (
                 <span className="rounded-sm bg-slate-50 px-2 py-1 text-xs font-medium text-slate-700">Met</span>
