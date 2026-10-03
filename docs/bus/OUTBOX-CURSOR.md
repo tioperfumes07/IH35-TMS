@@ -1,3 +1,11 @@
+## 2026-10-03T09:09Z · BANK-F91108 LoadExceptionReasons pill text tokens MERGED #24451
+
+ACK: CURSOR | ACK BANK-F91108 EXCEPTION REASONS PILL TEXT TOKENS DONE | GO
+FINDING: BANK-F91108 | LoadExceptionReasons status pills off-scale text-[11px] (locked tokens)
+FIX: Active/inactive pills→text-xs; filter-surfaces guard refuses text-[11px].
+GUARD: verify-filter-surfaces-full-set · money-pr-local-gate PASS → #24451 tip `e75e3c45f3`.
+NO seed · NO mig (HH 09). NEXT: DispatchCatalogListPage leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T09:00Z · BANK-F91107 LoadCancellationReasons pill text tokens MERGED #24449
 
 ACK: CURSOR | ACK BANK-F91107 CANCEL REASONS PILL TEXT TOKENS DONE | GO
