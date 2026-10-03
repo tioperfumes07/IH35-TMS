@@ -2158,3 +2158,20 @@ Live = prod, measured 2026-10-03 after deploys dep-db07thc9v7es73a9o6d0 (F-2/F-3
 **accounting.transaction_source_links (spine, point 4 everywhere)** — verify-every-posting-has-a-spine-link live PASS: 0 of 7,909 USMCA postings with a live document lack a link; 3,908 stranded by the AUTH-177 purge (net 0, committed ceiling). Writer at fault filed: PURGE-STRANDS-GL-PAIR-2026100303.
 **mdata.units.fuel_tank_capacity_gallons** — column only (units has no operating_company_id by design — owner/lessee model; not my table). Writer: unit PATCH + Edit Vehicle; CHECK 0 < tank ≤ 2000; row audit via trg_audit_units.
 **Withdrawn:** I first read the Relay ingest cron as un-leased (point 8). It is leased per company (claimRelayTick). Not a gap.
+
+## 2026-10-03 DONE census (CC-2) — merged AND live, deploy ids for both services
+| Item | PR · squash | Backend deploy (live) | Web deploy (live) | Live proof |
+|---|---|---|---|---|
+| F-2 / F-3 — 1090 + 1295 never credit-balance; role fuel_wallet_relay | #24342 · c4593a43 | dep-db07thc9v7es73a9o6d0 04:07Z | n/a (no FE) | 202615330600 applied 04:06:23Z; trigger armed (deferred); role bound USMCA+TRANSP 1295; verify-one-leg-asset-never-credit PASS (named debt within floor) |
+| Spine root cause — the purge, not the poster; guard at 0 | #24346 · 8bf2a8d3 | n/a (guard + docs) | n/a | verify-every-posting-has-a-spine-link PASS: 0 of 7,909 live-document postings unlinked; 3,908 purge-stranded (net 0) committed ceiling |
+| R-2 — fuel cap in gallons per unit | #24352 · aafe0afa | dep-db0841vr12us7395lci0 04:23Z | dep-db085phmgk9c73cfdrc0 04:25Z (includes aafe0afa) | 202615330700 applied 04:22:46Z; 3 policies 150 gal; WORM + audit on both tables; guard PASS; 0/196 units have a tank yet (owner enters; 150 fallback) |
+| Overage void reverses the 1250 receivable + per-table report | #24361 · 461d5f83 | dep-db089nlg1s2s73d02fog 04:33Z | dep-db08b4hh83ns73cjvhj0 04:39Z (includes 461d5f83) | fork br-round-poetry-akf4ppz9: linked reversal, 1250/6100 net 0 |
+| 2c phase A — code stops touching tenant_id | #24366 · b28ee737 | dep-db08hqid0e5s73aht49g 04:52Z | auto (new_commit) | no tenant_id errors in logs after deploy |
+| 2c phase B — tenant_id dropped from the last 17 tables | #24371 · 8129f543 | dep-db08ni7avr4c73ekdva0 05:03Z | n/a (no FE) | 202615330800 applied 05:02:02Z; 0 tenant_id columns in the database; verify-one-entity-column PASS at ceiling 0; #24293 re-proven on fork br-soft-bar-ak5g3i59 |
+Claims merged: #24335 (202615330700), #24357 (202615330800). Bus: #24336 (standing order).
+**Owner-facing consequence (stated again):** USMCA 1090 and 1295 are negative, so a new deposit out of Undeposited Funds or a
+new Relay fuel spend is refused at commit until the two TB-close sweeps are reversed / the Relay top-ups recorded as transfers,
+or the governed purge resets them.
+**Next (CC-2 engine):** the four insurance guards red on main before today (verify-claim-load-reverse-and-driver-create,
+verify-insurance-claim-graph-complete-reverse, verify-insurance-lawsuit-update-truth,
+verify-insurance-payment-schedule-policy-company-link) — triage each as real defect vs. drift, fix in one block.
