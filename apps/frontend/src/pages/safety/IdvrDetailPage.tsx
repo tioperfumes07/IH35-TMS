@@ -89,7 +89,7 @@ export function IdvrDetailPage() {
 
       <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div className="text-xs font-semibold text-slate-800">DVIR detail</div>
-        <div className="text-[11px] text-slate-500">Office view of a driver PWA vehicle inspection submission.</div>
+        <div className="text-xs text-slate-500">Office view of a driver PWA vehicle inspection submission.</div>
       </div>
 
       <dl className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 text-xs sm:grid-cols-2" data-testid="idvr-detail-summary">
