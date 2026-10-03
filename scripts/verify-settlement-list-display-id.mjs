@@ -46,6 +46,8 @@ export function run() {
     "SettlementsPage setFilter must accept payment_state 'manual_paid' (tsc exit 2 otherwise)",
     errors
   );
+  assert(!settlementsPage.includes("text-[11px]"), "SettlementsPage leftover chrome must use text-xs, not text-[11px]", errors);
+  assert(!settlementsPage.includes("#8A92AB") && !settlementsPage.includes("#334155"), "SettlementsPage leftover chrome must not use off-scale #334155 / #8A92AB", errors);
 
   // SettlementListRow.display_id is required — EarningsTab fixtures must include it or tsc -b fails.
   const earningsTest = read("apps/frontend/src/components/drivers/__tests__/EarningsTab.test.tsx");
@@ -95,7 +97,14 @@ function selftest() {
       throw new Error("planted SettlementHeader leftover tokens not detected");
     }
 
-    console.log(`[verify-settlement-list-display-id] SELFTEST PASS (${planted.length}+${plantedPage.length}+${plantedHeader.length} planted failures detected)`);
+    fs.writeFileSync(headerPath, headerBackup, "utf8");
+    fs.writeFileSync(pagePath, `${pageBackup}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`, "utf8");
+    const plantedList = run();
+    if (!plantedList.some((e) => e.includes("SettlementsPage leftover"))) {
+      throw new Error("planted SettlementsPage leftover tokens not detected");
+    }
+
+    console.log(`[verify-settlement-list-display-id] SELFTEST PASS (${planted.length}+${plantedPage.length}+${plantedHeader.length}+${plantedList.length} planted failures detected)`);
   } finally {
     fs.writeFileSync(apiPath, apiBackup, "utf8");
     fs.writeFileSync(pagePath, pageBackup, "utf8");
