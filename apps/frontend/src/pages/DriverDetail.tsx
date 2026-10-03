@@ -734,7 +734,7 @@ export function DriverDetailPage() {
             <span className="capitalize">{formatReasonLabel(item.change_reason)}</span>
             {item.was_corrected ? (
               <span
-                className="rounded-sm bg-gray-300 px-2 py-0.5 text-[11px] font-semibold uppercase text-gray-700"
+                className="rounded-sm bg-gray-300 px-2 py-0.5 text-xs font-semibold uppercase text-gray-700"
                 title="This rate was corrected on the same day before settlement could occur"
               >
                 Corrected
@@ -1431,7 +1431,7 @@ export function DriverDetailPage() {
                 <div key={String(row.id ?? idx)} className="border-b border-gray-100 px-2 py-1.5 text-xs">
                   <div className="font-semibold text-gray-900">{String(row.action ?? "-")}</div>
                   <div className="text-gray-600">{String(row.reason ?? "-")}</div>
-                  <div className="text-[11px] text-gray-500">{String(row.created_at ?? "")}</div>
+                  <div className="text-xs text-gray-500">{String(row.created_at ?? "")}</div>
                 </div>
               ))}
               {qboLinkageListState.isEmpty ? (
@@ -1598,7 +1598,7 @@ export function DriverDetailPage() {
                       {qualification.is_active ? "Active" : "Inactive"}
                     </span>
                   </div>
-                  <div className="text-[11px] text-gray-600">Qualified: {formatDate(qualification.qualified_at)}</div>
+                  <div className="text-xs text-gray-600">Qualified: {formatDate(qualification.qualified_at)}</div>
                 </div>
                 <div className="mt-1.5 space-y-1.5">
                   {qualification.current_rates.map((line) => (
