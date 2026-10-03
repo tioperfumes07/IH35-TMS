@@ -28,7 +28,7 @@
  * FLAG-GATED per entity, default OFF. Flag OFF => zero writes.
  */
 import { isEnabled } from "../../lib/feature-flags/service.js";
-import { resolveRoleAccount } from "../coa-roles/resolver.service.js";
+import { resolveRoleAccount, resolveRoleAccountOptional } from "../coa-roles/resolver.service.js";
 import { RELATED_PARTY_LOAN_GL_POSTING_FLAG } from "./poster.service.js";
 
 type DbClient = {
@@ -116,12 +116,10 @@ export async function resolveAccrualAccounts(
     }
     // ROUND 365.1 — by ROLE (interest_receivable = 1260 on USMCA, 202615370930), never by account number.
     // resolveRoleAccount demands an active, postable account, so a header account can never be picked.
-    let counterAccountId: string;
-    try {
-      counterAccountId = await resolveRoleAccount(client, operatingCompanyId, "interest_receivable");
-    } catch {
-      return { ok: false, missingRole: "interest_receivable" };
-    }
+    // resolveRoleAccountOptional returns null for an unbound role WITHOUT throwing, so no catch is needed here — a bare
+    // catch inside the caller's transaction would swallow a real DB error and poison it (25P02).
+    const counterAccountId = await resolveRoleAccountOptional(client, operatingCompanyId, "interest_receivable");
+    if (!counterAccountId) return { ok: false, missingRole: "interest_receivable" };
     return { ok: true, interestAccountId, counterAccountId };
   }
 
