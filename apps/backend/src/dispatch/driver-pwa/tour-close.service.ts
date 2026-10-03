@@ -30,6 +30,7 @@ import { getActiveSettlementForDriver, stampTripClosedForBookendedSettlement } f
 import { closeCompanySettlementAlongsideDriverSettlement } from "../../accounting/company-settlement-close.service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { materializeRealDrivenMilesSegments } from "../../integrations/samsara/geofences/real-driven-miles.service.js";
+import { assignmentInCompanySql } from "../../maintenance/driver-attribution.js";
 
 export type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -74,6 +75,7 @@ async function resolveDriverUnitId(
       JOIN mdata.units u ON u.id = vda.unit_id
       WHERE vda.operating_company_id = $1::uuid
         AND vda.driver_id = $2::uuid
+        AND ${assignmentInCompanySql("vda")}
         AND vda.ended_at IS NULL
       ORDER BY vda.started_at DESC
       LIMIT 1

@@ -936,5 +936,19 @@
     "source_file": "docs/bus/10-03-2026-ALL-SEATS-ROUND-365-PURGE-READINESS.md",
     "guard": "scripts/verify-every-poster-resolves-by-role-not-by-name-or-number.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-10-03-NO-MIGRATION-NEITHER-APPLIED-NOR-HELD",
+    "title": "ROUND 380.2 \u2014 every db/migrations file is applied on production, held / applied_held / superseded in .held-migrations.json, or numbered after the newest applied (pending the next deploy); 0 files in neither state, and every held-registry entry exists on disk",
+    "source_file": "docs/bus/10-03-2026-ALL-SEATS-ROUND-380-THE-BACKFILL-IS-WITHDRAWN-AND-FOUR-RULINGS.md",
+    "guard": "scripts/verify-no-migration-is-neither-applied-nor-held.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-10-03-SAMSARA-HISTORY-NEVER-AN-OPERATIONAL-PATH",
+    "title": "ROUND 380.3 \u2014 Samsara telematics history is kept but nothing operational or financial on USMCA resolves a driver or unit through it: every reader of telematics.vehicle_driver_assignments is classified OPERATIONAL (company-pinned on every query) or HISTORY, and 0 USMCA loads / fuel transactions / postings carry another company's driver",
+    "source_file": "docs/bus/10-03-2026-ALL-SEATS-ROUND-380-THE-BACKFILL-IS-WITHDRAWN-AND-FOUR-RULINGS.md",
+    "guard": "scripts/verify-samsara-history-is-never-an-operational-path-into-a-frozen-company.mjs",
+    "type": "enforced"
   }
 ]

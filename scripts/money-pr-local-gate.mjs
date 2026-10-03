@@ -1002,6 +1002,13 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-settlement-driver-pay-splits-per-load",
     ["apps/backend/src/driver-finance/", "apps/backend/src/accounting/", "db/migrations/", "scripts/verify-settlement-driver-pay-splits-per-load.mjs"],
   ],
+  // ROUND 380.2 (CC-1) — no migration on disk is neither applied nor held.
+  ["verify-no-migration-is-neither-applied-nor-held", ["db/migrations/", "scripts/verify-no-migration-is-neither-applied-nor-held.mjs"]],
+  // ROUND 380.3 (CC-1) — Samsara history is never an operational path into another company.
+  [
+    "verify-samsara-history-is-never-an-operational-path-into-a-frozen-company",
+    ["apps/backend/src/", "scripts/verify-samsara-history-is-never-an-operational-path-into-a-frozen-company.mjs"],
+  ],
   // ROUND 363-CC1-D (CC-1) — no writer moves a posted line in place; the database refuses it.
   [
     "verify-no-posting-update-outside-document-edit",
