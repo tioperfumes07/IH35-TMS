@@ -63,4 +63,11 @@ if (missing.length) {
   console.error(`verify-safety-fine-create-lifecycle FAIL — ${missing.join(", ")}`);
   process.exit(1);
 }
+
+// BANK-F91137 — ORDERS chrome: FineCreateModal hint/doc/error use text-xs, not text-[11px].
+if (source.includes("text-[11px]")) {
+  console.error("verify-safety-fine-create-lifecycle FAIL — FineCreateModal must not use text-[11px] — use text-xs");
+  process.exit(1);
+}
+
 console.log("verify-safety-fine-create-lifecycle PASS — complete fine draft is isolated per company/open lifecycle");
