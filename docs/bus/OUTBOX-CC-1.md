@@ -1682,3 +1682,34 @@ Book-vs-source total outstanding: $298,762.00 (Faro) + $5,412.40 (three self-car
 - **accounting.payments (receive payment): no hole.** 7 USMCA rows ($15,507.60), each has its 2 `customer_payment` postings.
 - **Purge population, shown:** the 10-03 zero-reset dry plan lists `accounting.bill_payments 130` (ZERO_RESET_ROOTS — every USMCA row). Backfill nothing.
 - **Permanent-fix proposal (needs the Lead's go):** (1) the database refuses a bill_payment that commits without its postings — a deferred constraint trigger, so no app path, bulk tool or ops script can repeat what my script did; (2) prove each of the 9 app paths posts on create in-transaction for cash and non-cash, and the void path reverses through the governed poster; (3) guard `verify-every-payment-document-posts`, ceiling 0, committed baseline (the 130 named as purge population), unscoped, direct connection; (4) vendor on every A/P posting (`entity_type`/`entity_uuid`) in the bill and bill-payment posters (Lead 3b).
+
+## 2026-10-03 ~17:30Z — CC-1 — ROUNDS 363 / 365 / 368 / 372 / 373 / 374 — report
+**On my list: 27 · closed this round with proof: 13 · still open: 14.**
+
+### Closed with proof (merged; CI did not run — billing lock; every one gated by money-pr-local-gate exit 0)
+| PR | What | Proof |
+|---|---|---|
+| #24622 | escrow step 1 — every escrow number is the 2100-00-nnn GL | prod after 16:01Z deploy: `verify-escrow-equals-its-gl` OK, 28 live sub-accounts |
+| #24628 | ACCT-F9855 settlement dual-approval | 3 writers gated by approveSettlement; prod 0 contradicting rows |
+| #24641 | 363-CC1-A load stamp on every posting (column + one resolver in all 11 INSERTs) | migration 0500 applied 16:20Z; static 11/11 (origin/main 11/11 fail); live writer proof waits for the first real posting (0 postings since) |
+| #24652 | per-load settlement bill header carries its load | prod read-only: 22 would set, 0 multi-load, 0 disagreements |
+| #24661 | 363-CC1-B writers: 3 post-after-commit bill-payment writers now post in-transaction; payment debits its bill's own payable | guard origin/main 6 findings → 0; prod b6f9311 contains it |
+| #24669 | 363-CC1-B refusal (migration 202615360100, deferred constraint trigger) | fork real COMMIT: cash payment with no postings REFUSED; sample + same-tx void commit |
+| #24637 / #24648 / #24643 | 365.6 — 3 stale guards, product fixes behind 5, aging palette main-red | each guard before FAIL → after PASS |
+| #24593 | measure-only report (closures, book vs Faro, 3a) | — |
+| — | 366.2 step 2 checksum verdict; 365.4 null-company DRY proof | measured |
+
+### Findings for the Lead (measured, not assumed)
+- **363-CC1-B — the 130 are NOT posted forward.** Dated 08-10..09-25: owner law `claude/00-AUGUST-AND-SEPTEMBER-ARE-CLOSED-NO-SEAT-TOUCHES-THEM.md` (no agent writes an Aug/Sep transaction), and purge population (zero-reset roots). Measured anyway so the owner can rule with facts: no double-count exists — 0 bank lines matched to any of the 90 cash payments, 0 payouts categorized as an expense, 2170's $139,939.77 of debits are 93 reversal lines, not payments. 40 of the 130 are non-cash settlement deductions whose GL is owned by the deduction JE — never posted as payments by design. Unposted cash payments are pinned at 90, shrink-only (`verify-no-bill-payment-without-postings`).
+- **373.2 — `settlement-bill-payment-posting.service.ts` is not a spine hole.** Its 3 posting references are SELECT reads in the reverse path (lines 1123, 1128, 1172); it posts only through `postSourceTransaction` and `createJournalEntry`, both spine-linking.
+- **373.3 — confirmed gap:** `trg_live_posting_keeps_spine_link` is `AFTER DELETE OR UPDATE OF journal_entry_posting_id ON accounting.transaction_source_links` — it never fires on an INSERT of a posting with no link. I build the INSERT-side refusal after CC-2's two writers and CC-3's backfill (the Lead's order).
+- **374 — the three escrow debits ($50 / $25 / $150):** every contribution on 2100-00-002/-004/-027 was voided (each credit has its void reversal), then on 2026-09-24 19:58Z `accounting/escrow/service.ts:370` ("Escrow liability release", source `escrow_account`) released 2 / 1 / 6 deductions of $25 that no longer existed. **The 202615340100 refusal would NOT block a repeat:** `trg_refuse_escrow_over_release` sits on `driver_finance.escrow_balances` — the stored table the voids never reached. Recommendation: a GL-side refusal (a debit that takes a driver's 2100-00-nnn GL balance below zero is refused at COMMIT) before the re-upload; the three Sep-24 postings are closed-period purge population — left to the zero-reset, not hand-reversed.
+- **372.5 — the multi-load settlement line:** the live pay-run close already posts one A/P bill per load from the settlement's own pay lines and refuses to close unless they tie to gross (`GROSS_DOES_NOT_TIE_TO_LOAD_BILLS`); #24652 lets each bill's A/P leg carry the load. The 420 legacy `driver_settlement` postings are from the retired clearing JE — purge population. Guard `verify-settlement-driver-pay-splits-per-load.mjs` still to write.
+- **365.1 posters by number/name** (broker advances 2250/1100/2200, fuel driver-advance name match, settlement-creator 6100 = Telephone) and **365.2** (6 of 14 document types proven, 8 unproven incl. bill payment, credit memo, vendor credit, deposit, transfer) — open.
+- **372.4:** local branch `cc-1/r365-banking-guards` — superseded by CC-2 BANK-F3650 (#24633), do not merge.
+
+### CC-1 worktrees (do not land on these)
+`~/ih35-worktrees/{loadstamp,billpay,bprefusal,billload,claim363,claimband,palette,r365-misc-guards,r365-product-guards,esc,claimesc,measure,cc1-bus,cc1-bus2}` · `/Users/jorgemunoz/IH35-TMS-cc1-setl`
+
+### Still open (14)
+373.3 spine INSERT refusal · 374 GL escrow refusal · 372.2 reconstruct the 4 migrations from live DDL · 372.3 fix 2 guards with real-file plants · 372.5 guard · 363-CC1-C/368.2(a) with CC-2's removals · 363-CC1-D reclassify writer · 373.4 deposits, credit memos, vendor credits · 373.5 cross-company refusal · 365.1 posters by number · 365.2 document-type guard · 365.7 refusals re-confirm · escrow step 2 · intercompany Due To (USMCA side).
