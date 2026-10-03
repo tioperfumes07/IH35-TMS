@@ -9,6 +9,7 @@ import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
+import { refuseProductionDatabase } from "../../../test-helpers/refuse-production.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -30,6 +31,7 @@ describeIntegration("views.driver_request_timeline (B4)", () => {
 
   beforeAll(async () => {
     await client.connect();
+    await refuseProductionDatabase(client); // ROUND 390.1 — never against production
     for (const [eventType, at, role] of steps) {
       await client.query(
         `

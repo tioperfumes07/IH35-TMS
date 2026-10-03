@@ -12,6 +12,7 @@ import {
   enqueueFmcsaCustomerVerifyRequested,
   FMCSA_CUSTOMER_VERIFY_EVENT_TYPE,
 } from "../fmcsa-customer-verify-chain.service.js";
+import { refuseProductionDatabase } from "../../../../test-helpers/refuse-production.js";
 
 const runDb =
   process.env.GITHUB_ACTIONS === "true" || process.env.IH35_RUN_DB_TESTS === "1";
@@ -32,6 +33,7 @@ describeDb("FMCSA outbox dedupe (real Postgres partial unique index)", () => {
     db = new pg.Client(buildPgClientConfig(cs));
     dbB = new pg.Client(buildPgClientConfig(cs));
     await db.connect();
+    await refuseProductionDatabase(db); // ROUND 390.1 — never against production
     await dbB.connect();
     // Ensure partial unique index from migration 0212 exists (migrated CI DB).
     const idx = await db.query(

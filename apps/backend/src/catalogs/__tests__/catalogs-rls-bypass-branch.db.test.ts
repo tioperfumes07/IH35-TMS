@@ -25,6 +25,7 @@ import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
+import { refuseProductionDatabase } from "../../../test-helpers/refuse-production.js";
 
 const run = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -84,6 +85,7 @@ run("catalogs.* RLS — every opco-scoped table grants the lucia bypass in USING
       buildPgClientConfig(process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL!)
     );
     await db.connect();
+    await refuseProductionDatabase(db); // ROUND 390.1 — never against production
   });
 
   afterAll(async () => {

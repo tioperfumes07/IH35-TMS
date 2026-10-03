@@ -50,6 +50,7 @@
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
+import { refuseProductionDatabase } from "../../../test-helpers/refuse-production.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -117,6 +118,7 @@ describeIntegration("ACCT-F99 expense-category map posting_side coherence (real 
     if (!cs) throw new Error("DATABASE_URL required");
     db = new pg.Client(buildPgClientConfig(cs));
     await db.connect();
+    await refuseProductionDatabase(db); // ROUND 390.1 — never against production
     await db.query("SET ROLE ih35_app");
     // FORCE-RLS bypass must be its OWN statement — folded into a CTE it silently does not take.
     //
