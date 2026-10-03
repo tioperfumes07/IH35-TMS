@@ -1616,6 +1616,11 @@
       "claimed_by": "CURSOR",
       "claimed_at": "2026-10-02",
       "purpose": "ROUND 342 Class D — company-scope unique codes: mdata.customers(customer_code), mdata.vendors(vendor_code), mdata.locations(location_code) → UNIQUE(operating_company_id, code); drop global *_code_key indexes."
+    },
+    "202615312300": {
+      "claimed_by": "CURSOR",
+      "claimed_at": "2026-10-02",
+      "purpose": "ROUND 342.1 — company-scope mdata.unit_plates + equipment_plates active uniques + drivers.identity_user_id partial UNIQUE(operating_company_id, identity_user_id) WHERE NOT NULL (owner: one person can be a driver in two carriers)."
     }
   },
   "202613590001": {
