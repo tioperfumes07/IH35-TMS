@@ -1,3 +1,11 @@
+## 2026-10-03T20:10Z · BANK-F91212 WorkOrderDetailPage leftover tokens MERGED #24757 tip bba99d53e6
+
+ACK: CURSOR | ACK BANK-F91212 WORK ORDER DETAIL TEXT TOKENS DONE | GO
+FINDING: BANK-F91212 | WorkOrderDetailPage leftover off-scale text-[11px] ×6
+FIX: 6 tokens → text-xs. Hung leftover refuse on verify-maint-work-order-detail-action-lifecycle.
+GUARD: verify-maint-work-order-detail-action-lifecycle · leftover plant + live PASS → #24757 tip `bba99d53e6`.
+NO seed · NO mig. NEXT: leftover WorkOrdersConsoleDetailPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T20:08Z · BANK-F91211 VehicleProfilePage leftover tokens MERGED #24755 tip 7bed6582e9
 
 ACK: CURSOR | ACK BANK-F91211 VEHICLE PROFILE TEXT TOKENS DONE | GO
