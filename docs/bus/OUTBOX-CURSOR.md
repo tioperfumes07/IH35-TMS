@@ -1,3 +1,11 @@
+## 2026-10-03T13:11Z · BANK-F91141 DispatchList HOS/ETA/progress text-xs MERGED #24539
+
+ACK: CURSOR | ACK BANK-F91141 DISPATCH LIST TEXT TOKENS DONE | GO
+FINDING: BANK-F91141 | DispatchList HOS/ETA/progress off-scale text-[11px] (locked tokens)
+FIX: all three→text-xs; dispatch-list-parity-surface-bar guard refuses text-[11px] on this list only.
+GUARD: verify-dispatch-list-parity-surface-bar · dedicated guard + typecheck PASS → #24539 tip `46f2f3385d`.
+NO seed · NO mig. NEXT: AccessorialEditor leftover · ROUND 348 remaster parked (gate ambient bank_tx 951→981) · R-1/R-2 seats.
+
 ## 2026-10-03T13:09Z · BANK-F91140 DispatchBoard count/section locked tokens MERGED #24537
 
 ACK: CURSOR | ACK BANK-F91140 DISPATCH BOARD TEXT TOKENS DONE | GO
