@@ -30,6 +30,8 @@ function failures(source) {
     if (!source.includes(`${query}.refetch()`)) found.push(`${query} failure has no exact Retry`);
     if (!source.includes(message)) found.push(`${query} failure copy lost its specific consumer context`);
   }
+  if (source.includes("text-[11px]")) found.push("CargoClaimIntake leftover text-[11px]");
+  if (source.includes("#8A92AB") || source.includes("#334155")) found.push("CargoClaimIntake leftover off-scale muted");
   return found;
 }
 
@@ -46,11 +48,13 @@ if (process.argv.includes("--selftest")) {
     const mutated = original.replace(needle, `${query}.isPending ? (`);
     if (mutated === original || failures(mutated).length === 0) survivors.push(query);
   }
+  const leftoverMutated = `${original}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  if (!failures(leftoverMutated).some((f) => f.includes("leftover"))) survivors.push("leftover tokens");
   if (survivors.length) {
     console.error(`verify-safety-cargo-claim-read-errors: SELFTEST FAIL — surviving mutations: ${survivors.join(", ")}`);
     process.exit(1);
   }
-  console.log(`verify-safety-cargo-claim-read-errors: SELFTEST PASS — ${contracts.length}/${contracts.length} read-error mutations rejected`);
+  console.log(`verify-safety-cargo-claim-read-errors: SELFTEST PASS — ${contracts.length + 1}/${contracts.length + 1} read-error mutations rejected`);
   process.exit(0);
 }
 
