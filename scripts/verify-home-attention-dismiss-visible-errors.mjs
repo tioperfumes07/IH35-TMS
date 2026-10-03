@@ -13,6 +13,8 @@ function audit(text) {
   need(/dismissMutation[\s\S]*onError: \(error\)[\s\S]*Failed to dismiss attention item/.test(text), "dismiss failure must be visible");
   need(/role="alert"[\s\S]*\{dismissError\}/.test(text), "dismiss error must render accessibly");
   need(/error instanceof Error \? error\.message/.test(text), "backend detail must be preserved");
+  // BANK-F91128 — ORDERS chrome: Today's Attention heading/hint use locked tokens, not text-[11px].
+  need(!text.includes("text-[11px]"), "must not use text-[11px] — use text-section-header / text-xs");
   return failures;
 }
 
