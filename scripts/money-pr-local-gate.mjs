@@ -940,6 +940,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-driver-escrow-gl-never-negative",
     ["db/migrations/", "apps/backend/src/accounting/escrow/", "apps/backend/src/driver-finance/", "apps/backend/src/accounting/settlement-posting/", "scripts/verify-driver-escrow-gl-never-negative.mjs"],
   ],
+  // ROUND 373.5 (CC-1) — no record points at another company's driver, unit or trailer; the refusal is live.
+  [
+    "verify-no-usmca-record-points-at-a-frozen-company",
+    ["db/migrations/", "apps/backend/src/accounting/", "apps/backend/src/dispatch/", "apps/backend/src/driver-finance/", "apps/backend/src/fuel/", "apps/backend/src/maintenance/", "scripts/verify-no-usmca-record-points-at-a-frozen-company.mjs"],
+  ],
   // Kill the second system (CC-1) — a driver escrow balance is the 2100-00-<nnn> GL balance, derived; no stored reader.
   [
     "verify-escrow-equals-its-gl",
