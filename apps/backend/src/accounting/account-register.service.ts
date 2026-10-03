@@ -24,6 +24,9 @@ const SOURCE_TYPE_LABELS: Record<string, string> = {
   bank_categorization: "Bank Categorization",
   journal_entry: "Journal Entry",
   factoring_advance: "Factoring Advance",
+  // BANK-F91056 — ORDERS leftover type labels (match B-1 TRANSACTION_TYPES chips).
+  credit_memo: "Credit Memo",
+  fuel_event: "Fuel Event",
 };
 
 export type RawPosting = {

@@ -70,6 +70,9 @@ function main() {
   assertIncludes(workspace, "RECON_TXN_TYPE_FILTERS", WORKSPACE);
   assertIncludes(workspace, '"Expense"', WORKSPACE);
   assertIncludes(workspace, '"Settlement"', WORKSPACE);
+  // BANK-F91056 — Credit Memo + Fuel Event on recon Type filter (match GL TYPE_LABELS).
+  assertIncludes(workspace, '"Credit Memo"', WORKSPACE);
+  assertIncludes(workspace, '"Fuel Event"', WORKSPACE);
   assertIncludes(workspace, "tx.type_label !== appliedTxnType", WORKSPACE);
   assertIncludes(workspace, "reconDocumentHref", WORKSPACE);
   assertIncludes(workspace, "data-b2-recon-row-open", WORKSPACE);
