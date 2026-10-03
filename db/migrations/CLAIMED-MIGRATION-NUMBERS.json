@@ -1651,6 +1651,26 @@
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-03",
       "purpose": "ROUND 345 the block, phase 1 (financial): composite same-entity FKs (operating_company_id, x) on invoice_lines, bill_lines, expense_lines, payment_applications, transaction_source_links + CHECK operating_company_id IS NOT NULL NOT VALID on bill_lines / expense_lines (new rows refused; history untouched)"
+    },
+    "202615320905": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 345 the block, phase 1b: UNIQUE INDEX CONCURRENTLY accounting.bill_lines (operating_company_id, id) — target of the parent_line_uuid self FK"
+    },
+    "202615320906": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 345 the block, phase 1b: UNIQUE INDEX CONCURRENTLY accounting.expense_lines (operating_company_id, id) — target of the parent_line_uuid self FK"
+    },
+    "202615320907": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 345 the block, phase 1b: UNIQUE INDEX CONCURRENTLY maintenance.work_orders (operating_company_id, id) — target of expense_lines.linked_work_order_uuid"
+    },
+    "202615320908": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 345 the block, phase 1b: composite same-entity FKs bill_lines.parent_line_uuid, expense_lines.parent_line_uuid, expense_lines.linked_work_order_uuid (0 references today) — the three phase 1 left uncovered"
     }
   },
   "202613590001": {

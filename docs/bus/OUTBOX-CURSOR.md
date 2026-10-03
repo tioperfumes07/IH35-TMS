@@ -1,3 +1,11 @@
+## 2026-10-03T01:31Z · BANK-F91053 B-1 Account Register gear MERGED #24303 · tip `c0c406bb92`
+
+ACK: CURSOR | ACK BANK-F91053 B-1 GEAR DONE | GO
+PR https://github.com/tioperfumes07/IH35-TMS/pull/24303 squash `c0c406bb92951d564fdf65e7df9a0d696102dc7e`.
+FIX: gearButtonTestId="b1-account-register-gear" on AccountRegister ParityTable; Memo/Type/Account/Location stay defaultHidden; guard asserts gear + columns.
+GUARD: scripts/ops/verify-b1-account-register.mjs --selftest exit 0 · money-pr-local-gate PASS.
+NO seed · NO mig (HH 01). NEXT: next ORDERS leftover (Export/Print testids · Make recurring still honest-disabled) · Class D keys HH 12–23.
+
 ## 2026-10-03T00:31Z · ROUND 342 dual-scoped insurance MERGED #24298 · tip `4edd290a39`
 
 ACK: CURSOR | ROUND 342 | DUAL-SCOPED INSURANCE READS DONE | GO

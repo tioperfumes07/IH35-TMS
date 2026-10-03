@@ -8,10 +8,11 @@
  * carry operating_company_id FAILS unless a VALIDATED composite FK covers (operating_company_id, that column) to the
  * same parent. Each line table also FAILS without its company-required CHECK. A new FK added later is caught the same
  * way. Before the block migration is in the ledger the live half reports PENDING DEPLOY.
- * STATIC (always): the block migration still declares every phase-1 constraint.
+ * STATIC (always): the block migrations still declare every phase-1 constraint. No database = FAIL (money guard).
  * Phases 2-4 extend BLOCKED as they ship. Run: node scripts/verify-money-lines-same-entity-fks.mjs [--selftest]
  */
 import { readFileSync } from "node:fs";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const MIGRATIONS = ["202615320904_block_phase1_financial_same_entity_fks.sql", "202615320908_block_phase1b_line_self_and_work_order_fks.sql"];
 const LAST = MIGRATIONS[MIGRATIONS.length - 1];
@@ -70,10 +71,9 @@ if (process.argv.includes("--selftest")) {
 }
 
 const fails = auditStatic(sql);
-if (process.env.DATABASE_URL) {
-  const pg = (await import("pg")).default;
-  const c = new pg.Client({ connectionString: process.env.DATABASE_URL });
-  await c.connect();
+{
+  // Money guard: no database is a FAIL, never a pass (require-live-db.mjs, ROUND 29.9-B).
+  const { client: c, pool } = await requireLiveDbOrExit({ label: "verify-money-lines-same-entity-fks" });
   try {
     await c.query("BEGIN READ ONLY");
     await c.query("SELECT set_config('app.bypass_rls','lucia',true)"); // catalogue reads; named per the count law
@@ -101,10 +101,9 @@ if (process.env.DATABASE_URL) {
     }
     await c.query("ROLLBACK");
   } finally {
-    await c.end();
+    c.release();
+    await pool.end();
   }
-} else {
-  console.log("verify-money-lines-same-entity-fks: no DATABASE_URL — static check only (the gate runs with one)");
 }
 if (fails.length) { for (const x of fails) console.error(`FAIL ${x}`); process.exit(1); }
 console.log("verify-money-lines-same-entity-fks: PASS");

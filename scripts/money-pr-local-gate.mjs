@@ -769,6 +769,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-factoring-writers-write-the-spine",
     ["apps/backend/src/factoring/", "scripts/verify-factoring-writers-write-the-spine.mjs"],
   ],
+  // ROUND 342 hotfix — no read filters a table on operating_company_id when that table has no such column.
+  [
+    "verify-no-opco-filter-on-tables-without-it",
+    ["apps/backend/src/insurance/policy.routes.ts", "apps/backend/src/insurance/coverage-gap.service.ts", "scripts/verify-no-opco-filter-on-tables-without-it.mjs"],
+  ],
   // ROUND 342 Phase 2 step 2a — operating_company_id complete + authoritative on the 17 double-scoped tables.
   [
     "verify-r342-opco-canonical-on-double-scoped",

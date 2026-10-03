@@ -72,11 +72,27 @@ function main() {
   assertIncludes(page, "statusFilter", PAGE);
   assertIncludes(page, "filteredRows", PAGE);
   assertIncludes(page, "printList", PAGE);
+  // BANK-F91053 — ORDERS §B-1 gear (column chooser) beside Export/Print; Memo/Type/Account/Location
+  // stay defaultHidden so the ParityTable gear has real columns to toggle.
+  assertIncludes(page, 'gearButtonTestId="b1-account-register-gear"', PAGE);
+  assertIncludes(page, 'defaultHidden: true', PAGE);
+  assertIncludes(page, 'key: "memo"', PAGE);
+  assertIncludes(page, 'key: "type"', PAGE);
+  assertIncludes(page, 'key: "split_account"', PAGE);
+  // BANK-F91054 — ORDERS §B-1 print / export / gear trio + Bank transactions / Reconcile hops named.
+  assertIncludes(page, 'data-testid="b1-account-register-export"', PAGE);
+  assertIncludes(page, 'data-testid="b1-account-register-print"', PAGE);
+  assertIncludes(page, 'data-testid="b1-account-register-bank-transactions"', PAGE);
+  assertIncludes(page, 'data-testid="b1-account-register-reconcile"', PAGE);
+  // Visible ORDERS labels (children of the named buttons) — not the longer title= tooltips.
+  if (!/>\s*Export\s*</.test(page)) throw new Error(`${PAGE}: Export button must render label "Export"`);
+  if (!/>\s*Print\s*</.test(page)) throw new Error(`${PAGE}: Print button must render label "Print"`);
   // BANK-F91044 — ORDERS §B-1 "Go to page N of M" via shared ParityTable pager label
   const parityTable = read("apps/frontend/src/components/parity/ParityTable.tsx");
   assertIncludes(parityTable, 'data-parity-goto-page="1"', "ParityTable.tsx");
   assertIncludes(parityTable, "Go to page", "ParityTable.tsx");
   assertIncludes(parityTable, 'aria-label="Go to page"', "ParityTable.tsx");
+  assertIncludes(parityTable, "gearButtonTestId", "ParityTable.tsx");
   // Print must honor the same payee/status filter as the on-screen table (BANK-F91012 follow-on).
   if (!/const rowsHtml = filteredRows/.test(page)) {
     throw new Error(`${PAGE}: printList must map filteredRows (not report.rows)`);
