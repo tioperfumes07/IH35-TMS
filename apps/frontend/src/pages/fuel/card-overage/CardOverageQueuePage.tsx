@@ -357,7 +357,7 @@ export function CardOverageQueuePage() {
         dataAttributes={{ "data-fuel-card-overage-filter-toolbar": "collapsed" }}
       >
         <div className="flex flex-wrap items-end gap-3" data-testid="fuel-card-overage-filters">
-          <label className="text-[11px] text-slate-600">
+          <label className="text-xs text-slate-600">
             Driver
             <EntityPicker
               kind="driver"
@@ -370,7 +370,7 @@ export function CardOverageQueuePage() {
               dataTestId="fuel-card-overage-filter-driver"
             />
           </label>
-          <label className="text-[11px] text-slate-600">
+          <label className="text-xs text-slate-600">
             Unit
             <EntityPicker
               kind="unit"
