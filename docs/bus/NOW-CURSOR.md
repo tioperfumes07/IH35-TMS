@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: BANK-F91108 #24451 MERGED; ROUND 348 waits HH 12–23; next leftover DispatchCatalogListPage
-ACK: CURSOR | ACK F91108 DONE | GO
+NOW: BANK-F91109 #24453 MERGED; ROUND 348 waits HH 12–23; next leftover TerminationReasons
+ACK: CURSOR | ACK F91109 DONE | GO

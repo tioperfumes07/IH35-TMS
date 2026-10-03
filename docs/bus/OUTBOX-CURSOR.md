@@ -1,3 +1,11 @@
+## 2026-10-03T09:18Z · BANK-F91109 DispatchCatalog pill text tokens MERGED #24453
+
+ACK: CURSOR | ACK BANK-F91109 DISPATCH CATALOG PILL TEXT TOKENS DONE | GO
+FINDING: BANK-F91109 | DispatchCatalogListPage status pills off-scale text-[11px] (locked tokens)
+FIX: Active/inactive pills→text-xs; filter-surfaces guard refuses text-[11px].
+GUARD: verify-filter-surfaces-full-set · money-pr-local-gate PASS → #24453 tip `392c2f3226`.
+NO seed · NO mig (HH 09). NEXT: TerminationReasons leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T09:09Z · BANK-F91108 LoadExceptionReasons pill text tokens MERGED #24451
 
 ACK: CURSOR | ACK BANK-F91108 EXCEPTION REASONS PILL TEXT TOKENS DONE | GO
