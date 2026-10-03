@@ -37,6 +37,12 @@ export function collectSourceFailures(files = Object.fromEntries(SITES.map((f) =
     if (/>\{(row|event)\.event_(type|class)\}</.test(source)) {
       failures.push(`${file}: raw event_type/event_class still rendered as bare visible text`);
     }
+    if (file.endsWith("AuditEventCard.tsx")) {
+      if (source.includes("text-[11px]")) failures.push(`${file}: leftover text-[11px]`);
+      if (source.includes("#8A92AB") || source.includes("#334155")) {
+        failures.push(`${file}: leftover off-scale muted`);
+      }
+    }
   }
   return failures;
 }

@@ -18,15 +18,15 @@ function PayloadSection({ label, data }: { label: string; data: unknown }) {
   if (data == null) {
     return (
       <div>
-        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500">{label}</div>
+        <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-gray-500">{label}</div>
         <span className="text-xs text-gray-400">—</span>
       </div>
     );
   }
   return (
     <div>
-      <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500">{label}</div>
-      <pre className="max-h-52 overflow-auto rounded-sm border border-gray-100 bg-gray-50 p-2 text-[11px] leading-tight">
+      <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-gray-500">{label}</div>
+      <pre className="max-h-52 overflow-auto rounded-sm border border-gray-100 bg-gray-50 p-2 text-xs leading-tight">
         {JSON.stringify(data, null, 2)}
       </pre>
     </div>
@@ -63,7 +63,7 @@ export function AuditEventCard({ event, onClose }: Props) {
             {event.actor_user_id ? <>{" · "}<EntityLink kind="user" id={event.actor_user_id} label={entityLabel(event.actor_email, event.actor_user_id, "User")} /></> : event.actor_email ? ` · ${event.actor_email}` : ""}
             {event.source ? ` · source: ${event.source}` : ""}
           </div>
-          <div className="text-[11px] font-mono text-gray-400">id: {event.id}</div>
+          <div className="text-xs font-mono text-gray-400">id: {event.id}</div>
         </div>
         <button
           type="button"
@@ -81,14 +81,14 @@ export function AuditEventCard({ event, onClose }: Props) {
 
       {evidence !== null && (
         <div className="border-t border-gray-100 px-4 pb-4">
-          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Evidence / Reason</div>
+          <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-gray-500">Evidence / Reason</div>
           <div className="text-xs text-gray-700">{String(evidence)}</div>
         </div>
       )}
 
       <div className="border-t border-gray-100 px-4 pb-4 pt-3">
-        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Full payload</div>
-        <pre className="max-h-52 overflow-auto rounded-sm border border-gray-100 bg-gray-50 p-2 text-[11px] leading-tight">
+        <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-gray-500">Full payload</div>
+        <pre className="max-h-52 overflow-auto rounded-sm border border-gray-100 bg-gray-50 p-2 text-xs leading-tight">
           {JSON.stringify(event.payload, null, 2)}
         </pre>
       </div>
