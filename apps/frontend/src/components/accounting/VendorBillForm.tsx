@@ -28,6 +28,8 @@ export { buildVendorBillLinePayloads };
 
 export type VendorBillFormSubmitPayload = {
   vendor_id: string;
+  /** U10 — the bill's stored type: the type tab shown on Save (Repair / Fuel / Maintenance / Driver / Vendor). */
+  bill_category?: "vendor" | "maintenance" | "repair" | "fuel" | "driver";
   bill_number?: string;
   display_id?: string;
   bill_date: string;
@@ -331,6 +333,7 @@ export function VendorBillForm({
 
     await onSubmit({
       vendor_id: vendorKey,
+      bill_category: billType === "multiple" ? undefined : (billType as "vendor" | "maintenance" | "repair" | "fuel" | "driver"),
       bill_number: billNumber.trim() || undefined,
       display_id: oursDisplayId.trim() || undefined,
       bill_date: billDate,

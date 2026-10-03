@@ -357,6 +357,8 @@ export type VendorBill = {
   matched_bank_transaction_date?: string | null;
   matched_bank_transaction_description?: string | null;
   matched_bank_transaction_amount_cents?: number | string | null;
+  /** U10 — the stored type (maintenance | repair | fuel | driver | vendor); null for frozen-company history. */
+  bill_category?: string | null;
 };
 
 /** ACCT-F603 — never pass legacy QBO vendor_id text to EntityLink (404s /vendors/472). */
@@ -1297,6 +1299,8 @@ export function createVendorBill(
   operatingCompanyId: string,
   body: {
     vendor_id: string;
+    /** U10 — stored bill type (bills.bill_category). */
+    bill_category?: "vendor" | "maintenance" | "repair" | "fuel" | "driver";
     bill_number?: string;
     display_id?: string;
     bill_date: string;

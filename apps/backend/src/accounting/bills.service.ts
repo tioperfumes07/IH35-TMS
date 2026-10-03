@@ -77,6 +77,9 @@ export type CreateBillLineInput = {
 type CreateBillInput = {
   operatingCompanyId: string;
   vendorId: string;
+  /** U10 — the bill's stored type when the operator chose one (Bills ▸ Maintenance / Repair / Fuel). Absent = the
+   *  database derives it from facts (trg_bills_set_category: driver vendor -> driver, work order -> maintenance). */
+  billCategory?: "vendor" | "maintenance" | "repair" | "fuel" | "driver";
   billNumber?: string;
   /**
    * Lead ROUND 330.6 ruling 1 — a document number is spent forever. When true the bill keeps billNumber as its
@@ -2755,6 +2758,10 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
   // expected state under parallel books, not a gap — stamping them would invent an identifier
   // for a document this system did not issue.
   const insertedId = String((res.rows[0] as { id?: string }).id ?? "");
+  if (input.billCategory && insertedId) {
+    // U10 — the operator's own choice wins over the fact-derived default (same transaction, the row just inserted).
+    await client.query(`UPDATE accounting.bills SET bill_category = $1 WHERE id = $2::uuid AND bill_category IS DISTINCT FROM $1`, [input.billCategory, insertedId]);
+  }
 
   // FAIL-F2 / ACCT-F262 — record that a bill is TEST data. `accounting.bills.is_sample_data` exists,
   // defaults false, and NOTHING wrote it, so every bill the app created was indistinguishable from

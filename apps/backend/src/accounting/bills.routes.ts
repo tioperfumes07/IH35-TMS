@@ -141,6 +141,8 @@ const createBillLineSchema = z.object({
 
 const createBillBodySchema = z.object({
   vendor_id: z.string().trim().min(1),
+  // U10 — the bill's type as chosen on the Bills sub-tab the form was opened from.
+  bill_category: z.enum(["vendor", "maintenance", "repair", "fuel", "driver"]).optional(),
   bill_number: z.string().trim().max(200).optional(),
   // LV-AP-DUP — the operator's explicit acceptance of the duplicate-vendor-invoice warning. Its
   // ABSENCE is what makes the control real: a caller cannot create a duplicate without saying why.
@@ -533,6 +535,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
         {
           operatingCompanyId: query.data.operating_company_id,
           vendorId: body.data.vendor_id,
+          billCategory: body.data.bill_category,
           billNumber: body.data.bill_number,
           billDate: body.data.bill_date,
           dueDate: body.data.due_date,
