@@ -53,6 +53,8 @@ function assertMigrated(src) {
   if (!src.includes("No active liabilities for this driver.")) {
     errors.push(`${PAGE}: must keep liabilities emptyText`);
   }
+  if (src.includes("text-[11px]")) errors.push(`${PAGE}: leftover text-[11px]`);
+  if (src.includes("#8A92AB") || src.includes("#334155")) errors.push(`${PAGE}: leftover off-scale muted`);
   return errors;
 }
 
@@ -88,6 +90,11 @@ function selftest() {
   }
   if (!assertMigrated(bad).some((e) => e.includes("hand-rolled") || e.includes("ParityTable"))) {
     console.error(`${LABEL} SELFTEST FAILED — bad fixture not caught`);
+    process.exit(1);
+  }
+  const leftover = assertMigrated(`${good}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`);
+  if (!leftover.some((e) => e.includes("leftover text-[11px]")) || !leftover.some((e) => e.includes("leftover off-scale muted"))) {
+    console.error(`${LABEL} SELFTEST FAILED — leftover plant escaped`, leftover);
     process.exit(1);
   }
   console.log(`${LABEL}: selftest PASS`);
