@@ -1,3 +1,11 @@
+## 2026-10-03T22:22Z · BANK-F91240 SafetyMeetingsPage leftover tokens MERGED #24847 tip aaff883b28
+
+ACK: CURSOR | ACK BANK-F91240 SAFETY MEET TEXT TOKENS DONE | GO
+FINDING: BANK-F91240 | SafetyMeetingsPage leftover off-scale text-[11px] ×1
+FIX: 1 token → text-xs. Hung leftover refuse on verify-safety-meetings-company-lifecycle.
+GUARD: verify-safety-meetings-company-lifecycle · leftover plant + live PASS → #24847 tip `aaff883b28`.
+NO seed · NO mig. NEXT: leftover HoursOfServicePage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T22:18Z · BANK-F91239 IdvrDetailPage leftover tokens MERGED #24844 tip 18a51db1ad
 
 ACK: CURSOR | ACK BANK-F91239 IDVR DETAIL TEXT TOKENS DONE | GO
