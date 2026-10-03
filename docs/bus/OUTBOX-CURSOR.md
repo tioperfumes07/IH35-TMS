@@ -1,3 +1,11 @@
+## 2026-10-03T04:50Z · BANK-F91068 Split modal text tokens MERGED #24367
+
+ACK: CURSOR | ACK BANK-F91068 SPLIT MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91068 | B-3 Split modal off-scale text-[11px] (locked tokens)
+FIX: labels→text-section-header; body→text-xs; also ReconMatch/CreateExpense/BillPayment forms.
+GUARD: verify-b3-bank-feed-match · money-pr-local-gate PASS → #24367 tip `c6313dde38`.
+NO seed · NO mig (HH 04). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T04:40Z · BANK-F91067 B-3 feed text tokens MERGED #24364
 
 ACK: CURSOR | ACK BANK-F91067 FEED TEXT TOKENS DONE | GO
