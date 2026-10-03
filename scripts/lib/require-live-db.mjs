@@ -36,6 +36,7 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const { buildPgPoolConfig } = require("./pg-connection-options.cjs");
 import { directGuardUrl, FORBIDDEN_GUARD_ROLE } from "./guard-db-url.mjs";
+import { resolveGateReadonlyDbUrl } from "./gate-db-credential.mjs";
 
 /**
  * @param {{ label: string, allowOfflineSkip?: string }} opts
@@ -45,7 +46,16 @@ export async function requireLiveDbOrExit({ label, allowOfflineSkip } = {}) {
   const pgMod = await import("pg");
   const pg = pgMod.default ?? pgMod;
   // Guards read the DIRECT endpoint, never the pooler (scripts/lib/guard-db-url.mjs).
-  const url = directGuardUrl(process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL);
+  //
+  // ROUND 370 (Lead, 2026-10-03): fall back to the gate's own read-only credential when the caller
+  // has none. A guard run BY HAND — which is how every seat debugs one and how the Lead measures
+  // production — used to fail closed with "DATABASE_URL not set" while a working ih35_ci_readonly
+  // credential sat unread in the file the gate already knows how to read. Failing closed is right;
+  // failing closed with the credential in reach is not. The fail-closed path below is untouched:
+  // when nothing resolves there is still no connection and this still exits 1 (ROUND 29.9-B).
+  const url = directGuardUrl(
+    process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL || resolveGateReadonlyDbUrl()
+  );
 
   if (!url) {
     if (allowOfflineSkip) {

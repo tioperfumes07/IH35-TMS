@@ -22,7 +22,8 @@ const require = createRequire(import.meta.url);
 const ENTRY_POINTS = {
   "scripts/money-pr-local-gate.mjs": [/import \{ guardDbEnv \} from "\.\/lib\/guard-db-url\.mjs"/, /env: guardDbEnv\(env\)/],
   "scripts/lib/run-required-guards.mjs": [/import \{ guardDbEnv \} from '\.\/guard-db-url\.mjs'/, /env: guardDbEnv\(process\.env\)/],
-  "scripts/lib/require-live-db.mjs": [/directGuardUrl\(process\.env\.DATABASE_DIRECT_URL \|\| process\.env\.DATABASE_URL\)/, /=== FORBIDDEN_GUARD_ROLE/],
+  // ROUND 370 (Lead) added a fallback to the gate's read-only credential inside the same call — still direct.
+  "scripts/lib/require-live-db.mjs": [/directGuardUrl\(\s*process\.env\.DATABASE_DIRECT_URL \|\| process\.env\.DATABASE_URL(?:\s*\|\|\s*resolveGateReadonlyDbUrl\(\))?\s*\)/, /=== FORBIDDEN_GUARD_ROLE/],
 };
 
 export function entryPointGaps(read = (f) => readFileSync(f, "utf8")) {
