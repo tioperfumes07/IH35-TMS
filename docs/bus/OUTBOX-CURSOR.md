@@ -1,6 +1,12 @@
-## 2026-10-04T16:40Z · BANK-F91526 CreateWO leftover field border WIRED · this PR
+## 2026-10-04T16:44Z · BANK-F91527 LocationMap leftover border WIRED · this PR
 
-DONE: CreateWorkOrderModal leftover #d6dae1/#e6e9ee → house #E5E7EB; leftover refuse on EVEN 2090 --selftest + live.
+DONE: LocationMapModal info-panel leftover #d1d5db → house #E5E7EB; leftover refuse on EVEN 4132 --selftest + live.
+
+NEXT: leftover muted chrome (SystemModule code stay / skip pile / WO pie stay) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T16:42Z · BANK-F91526 CreateWO leftover field border WIRED CI · tip `38884cff4f`
+
+DONE: #25268 — CreateWorkOrderModal leftover #d6dae1/#e6e9ee → #E5E7EB; verify-steps/2090 leftover refuse --selftest + live.
 
 NEXT: leftover muted chrome (LocationMap #d1d5db / SystemModule code stay / skip pile) · skip pile parked · HH14 no migrations this tick.
 
