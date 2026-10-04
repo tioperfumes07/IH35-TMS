@@ -11822,5 +11822,305 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-negative-settlement-posts-1257"
+  },
+  "14629": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-acct-direct-creators-company-keyed-remount"
+  },
+  "14633": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-acct-f9408-cash-forecast-proforma-eta-bucket"
+  },
+  "14637": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-acct-list-uuid-human-labels"
+  },
+  "14641": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-advance-detail-settlement-label"
+  },
+  "14645": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-auto-deduction-applies-to-next-settlement"
+  },
+  "14649": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-balance-sheet-contract"
+  },
+  "14653": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bills-money-membership-assert"
+  },
+  "14657": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-cash-advance-owner-notification-durable"
+  },
+  "14661": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-cash-advance-type-picker-inline-create"
+  },
+  "14665": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-coa-account-detail-type-cascade"
+  },
+  "14669": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-coa-card-to-register"
+  },
+  "14673": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-coa-roles-no-string-match-bypass"
+  },
+  "14677": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-company-settlements-list-route"
+  },
+  "14681": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-cu09-forensic-settlement"
+  },
+  "14685": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-d1-settlement-approval"
+  },
+  "14689": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-hub-cash-advance-routes-registered"
+  },
+  "14693": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-nonmoney-business-date"
+  },
+  "14697": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-settlement-tenant-scope"
+  },
+  "14701": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-settlement-uses-bill-not-je"
+  },
+  "14705": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-expenses-cents-and-void-not-delete"
+  },
+  "14709": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-feed-settlement-auto-mint"
+  },
+  "14713": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-insurance-policy-unit-void-not-delete"
+  },
+  "14717": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-internal-fines-load-settlement-sortable"
+  },
+  "14721": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-load-advance-persistence"
+  },
+  "14725": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maint-money-creators-reset-on-company-change"
+  },
+  "14729": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-migration-void-reverses-gl"
+  },
+  "14733": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-money-column-void-aware"
+  },
+  "14737": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-money-fields-use-moneyinput"
+  },
+  "14741": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-money-format"
+  },
+  "14745": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-money-input-format"
+  },
+  "14749": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-no-at-mint-on-presettlement-open"
+  },
+  "14753": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-no-caller-voids-without-cascade"
+  },
+  "14757": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-no-empty-zero-settlement"
+  },
+  "14761": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-nonmoney-backend-business-date"
+  },
+  "14765": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-nonmoney-suggest-load-fails-loud"
+  },
+  "14769": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-pre-settlement-panel-labels"
+  },
+  "14773": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-presettlement-create-new-sets-period"
+  },
+  "14777": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-money-parse"
+  },
+  "14781": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-sync-coa-no-orphans"
+  },
+  "14785": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-reversal-je-linkage"
+  },
+  "14789": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-reversal-symmetry"
+  },
+  "14793": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-rpt-s03-settlement-summary"
+  },
+  "14797": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-rtd-advance-stage-cas"
+  },
+  "14801": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-safety-integrity-engine-complete-nonmoney-scan"
+  },
+  "14805": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-safety-void-actions-visible-errors"
+  },
+  "14809": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-settlement-advances-geofence-human-labels"
+  },
+  "14813": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-settlement-bill-payment"
+  },
+  "14817": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-settlement-close-advances-load-status"
+  },
+  "14821": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-settlement-creator-ties-document"
+  },
+  "14825": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-settlement-dispute-creates-adjustment"
+  },
+  "14829": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-settlement-dispute-in-review-resolution-action"
+  },
+  "14833": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-settlement-disputes-tab-labels"
+  },
+  "14837": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-settlement-fe-honesty"
+  },
+  "14841": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-settlement-list-display-id"
+  },
+  "14845": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-settlement-load-bookends-populated"
+  },
+  "14849": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-settlement-load-linkage-non-null"
+  },
+  "14853": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-settlement-payment-guc-order"
+  },
+  "14857": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-settlement-pending-deductions-error-suppresses-cache"
+  },
+  "14861": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-settlement-source-ref-only-key"
+  },
+  "14865": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-settlements-sidebar"
   }
 }
