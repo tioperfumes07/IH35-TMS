@@ -49,6 +49,12 @@ export type FuelPostingInput = {
   ifta_gallons?: number | null;
   memo?: string | null;
   company_direct_credit?: CompanyDirectCredit;
+  /**
+   * One purchase, several products (CC-2 2026-10-04): a Relay fill itemises diesel / DEF / reefer on one ticket. When
+   * given, each line is its own debit leg on its own item's account (fuel-item-account.ts), the legs must foot to
+   * amount_cents exactly, and the single credit carries the total. Absent = one leg of fuel_kind, as before.
+   */
+  cost_lines?: Array<{ fuel_kind: FuelCategoryCode; amount_cents: number }>;
 };
 
 export type FuelPostingResult = {
@@ -313,6 +319,20 @@ export async function postFuelExpenseOnClient(client: DbClient, input: FuelPosti
   const fuelItem = await resolveFuelItem(client as never, input.operating_company_id, POSTING_KIND_FUEL_TYPE[fuelKind] ?? null);
   if ("refused" in fuelItem) throw new Error(`fuel_posting_account_refused: ${fuelItem.refused}`);
   const expense = { account_id: fuelItem.expenseAccountId, item_id: fuelItem.itemId };
+  // Debit legs: one per product line when the purchase is itemised, else the one fuel_kind leg. Each leg's account is its
+  // own item's; the legs must foot to the total exactly — never a plug, never a guess.
+  const costLines = input.cost_lines?.length ? input.cost_lines : [{ fuel_kind: fuelKind, amount_cents: amountCents }];
+  const debitLegs: Array<{ fuel_kind: FuelCategoryCode; amount_cents: number; account_id: string; item_id: string }> = [];
+  for (const cl of costLines) {
+    const kind = normalizeFuelKind(cl.fuel_kind);
+    const cents = Math.round(Number(cl.amount_cents));
+    if (!Number.isFinite(cents) || cents <= 0) throw new Error(`fuel_posting_cost_line_invalid: ${kind} ${cl.amount_cents}`);
+    const item = kind === fuelKind ? fuelItem : await resolveFuelItem(client as never, input.operating_company_id, POSTING_KIND_FUEL_TYPE[kind] ?? null);
+    if ("refused" in item) throw new Error(`fuel_posting_account_refused: ${item.refused}`);
+    debitLegs.push({ fuel_kind: kind, amount_cents: cents, account_id: item.expenseAccountId, item_id: item.itemId });
+  }
+  const legsTotal = debitLegs.reduce((t, l) => t + l.amount_cents, 0);
+  if (legsTotal !== amountCents) throw new Error(`fuel_posting_cost_lines_do_not_foot: lines ${legsTotal} != total ${amountCents}`);
 
   const existing = await resolveExistingPostedResult(client, input.operating_company_id, idempotencyKey);
   if (existing) return existing;
@@ -362,6 +382,7 @@ export async function postFuelExpenseOnClient(client: DbClient, input: FuelPosti
       fuel_expense_account_id: expense.account_id,
       fuel_expense_resolution: "fuel_type_item",
       fuel_item_id: expense.item_id,
+      cost_lines: debitLegs.map((l) => ({ fuel_kind: l.fuel_kind, amount_cents: l.amount_cents, account_id: l.account_id, item_id: l.item_id })),
       credit_account_id: creditAccountId,
       credit_resolution: creditResolutionSource,
       posting_path: input.posting_path,
@@ -462,12 +483,12 @@ export async function postFuelExpenseOnClient(client: DbClient, input: FuelPosti
     amount_cents: number;
     description: string;
   }> = [
-    {
-      account_id: expense.account_id,
-      debit_or_credit: "debit",
-      amount_cents: amountCents,
-      description: `${memo} · fuel expense`.slice(0, 200),
-    },
+    ...debitLegs.map((leg) => ({
+      account_id: leg.account_id,
+      debit_or_credit: "debit" as const,
+      amount_cents: leg.amount_cents,
+      description: (debitLegs.length > 1 ? `${memo} · ${leg.fuel_kind} expense` : `${memo} · fuel expense`).slice(0, 200),
+    })),
     {
       account_id: creditAccountId,
       debit_or_credit: "credit",

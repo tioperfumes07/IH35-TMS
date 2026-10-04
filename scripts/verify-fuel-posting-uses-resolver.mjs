@@ -40,5 +40,20 @@ if (!fs.existsSync(posterPath)) {
   }
 }
 
+// CC-2 2026-10-04 — a Relay fill is itemised (diesel / DEF / reefer): it posts one leg per product on that product's item
+// account, never the whole fill as diesel; its IFTA gallons are road diesel only.
+const relayPath = path.join(repoRoot, "apps/backend/src/accounting/bank-recon/bank-match-fuel-post.service.ts");
+const relay = fs.existsSync(relayPath) ? fs.readFileSync(relayPath, "utf8") : "";
+const relayFn = relay.slice(relay.indexOf("async function postRelayFuelFill"), relay.indexOf("\n}\n", relay.indexOf("async function postRelayFuelFill")));
+if (!relayFn) failures.push("bank-match-fuel-post: postRelayFuelFill not found");
+else {
+  if (/fuel_kind:\s*"diesel"/.test(relayFn)) failures.push("bank-match-fuel-post: the Relay path posts the whole fill as diesel (fuel_kind: \"diesel\") — post one leg per product");
+  if (!/cost_lines:\s*costLines/.test(relayFn)) failures.push("bank-match-fuel-post: the Relay path must pass cost_lines (one per product) to the poster");
+  if (/l\.fuel_type IN \('diesel', 'reefer', 'def'\)\) AS gallons/.test(relayFn) || !/l\.fuel_type = 'diesel'\) AS gallons/.test(relayFn)) {
+    failures.push("bank-match-fuel-post: Relay IFTA gallons must be road diesel only (reefer and DEF are not motor fuel)");
+  }
+  if (!/relay_fill_lines_do_not_foot/.test(relayFn) || !/relay_fill_has_no_fuel_lines/.test(relayFn)) failures.push("bank-match-fuel-post: the Relay path must refuse lines that do not foot and fills with no fuel line");
+}
+
 if (failures.length > 0) fail(failures);
 console.log("verify:fuel-posting-uses-resolver — OK");
