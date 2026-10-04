@@ -148,10 +148,10 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/safety/photo-comparison/evidence` | `apps/backend/src/safety/photo-comparison/routes.ts:112` | — | — | — |
 | create | `/api/safety/photo-comparison/pre-trip` | `apps/backend/src/safety/photo-comparison/routes.ts:167` | — | — | — |
 | nested | `/api/v1/safety/accident-liabilities/:id/decide` | `apps/backend/src/safety/accident-liabilities.routes.ts:113` | — | — | — |
-| create | `/api/v1/safety/accidents` | `apps/backend/src/safety/safety.routes.ts:724` | — | — | — |
-| nested | `/api/v1/safety/accidents/:id/photos` | `apps/backend/src/safety/safety.routes.ts:1054` | — | — | — |
-| nested | `/api/v1/safety/accidents/:id/spawn-liability` | `apps/backend/src/safety/safety.routes.ts:1115` | — | — | — |
-| nested | `/api/v1/safety/accidents/:id/spawn-wo` | `apps/backend/src/safety/safety.routes.ts:1306` | — | — | — |
+| create | `/api/v1/safety/accidents` | `apps/backend/src/safety/safety.routes.ts:725` | — | — | — |
+| nested | `/api/v1/safety/accidents/:id/photos` | `apps/backend/src/safety/safety.routes.ts:1055` | — | — | — |
+| nested | `/api/v1/safety/accidents/:id/spawn-liability` | `apps/backend/src/safety/safety.routes.ts:1116` | — | — | — |
+| nested | `/api/v1/safety/accidents/:id/spawn-wo` | `apps/backend/src/safety/safety.routes.ts:1314` | — | — | — |
 | create | `/api/v1/safety/background-checks` | `apps/backend/src/safety/background-checks.routes.ts:122` | — | — | — |
 | create | `/api/v1/safety/company-violations` | `apps/backend/src/safety/company-violations.routes.ts:334` | — | — | — |
 | nested | `/api/v1/safety/company-violations/:id/complete-corrective-action` | `apps/backend/src/safety/company-violations.routes.ts:655` | — | — | — |
@@ -171,12 +171,12 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/safety/drug-program/tests` | `apps/backend/src/safety/drug-program.routes.ts:211` | — | — | — |
 | create | `/api/v1/safety/dvir` | `apps/backend/src/safety/dvir.routes.ts:260` | — | — | — |
 | create | `/api/v1/safety/events-log` | `apps/backend/src/safety/events/safety-events.routes.ts:312` | — | — | — |
-| create | `/api/v1/safety/fines` | `apps/backend/src/safety/fines.routes.ts:281` | — | — | — |
-| nested | `/api/v1/safety/fines/:id/contest` | `apps/backend/src/safety/fines.routes.ts:608` | — | — | — |
-| nested | `/api/v1/safety/fines/:id/convert-to-liability` | `apps/backend/src/safety/fines.routes.ts:446` | — | — | — |
-| nested | `/api/v1/safety/fines/:id/dismiss` | `apps/backend/src/safety/fines.routes.ts:639` | — | — | — |
-| nested | `/api/v1/safety/fines/:id/link-payment` | `apps/backend/src/safety/fines.routes.ts:761` | — | — | — |
-| nested | `/api/v1/safety/fines/:id/reduce` | `apps/backend/src/safety/fines.routes.ts:670` | — | — | — |
+| create | `/api/v1/safety/fines` | `apps/backend/src/safety/fines.routes.ts:282` | — | — | — |
+| nested | `/api/v1/safety/fines/:id/contest` | `apps/backend/src/safety/fines.routes.ts:618` | — | — | — |
+| nested | `/api/v1/safety/fines/:id/convert-to-liability` | `apps/backend/src/safety/fines.routes.ts:447` | — | — | — |
+| nested | `/api/v1/safety/fines/:id/dismiss` | `apps/backend/src/safety/fines.routes.ts:649` | — | — | — |
+| nested | `/api/v1/safety/fines/:id/link-payment` | `apps/backend/src/safety/fines.routes.ts:771` | — | — | — |
+| nested | `/api/v1/safety/fines/:id/reduce` | `apps/backend/src/safety/fines.routes.ts:680` | — | — | — |
 | create | `/api/v1/safety/hos-violations` | `apps/backend/src/routes/safety/hos-violations.ts:167` | — | — | — |
 | create | `/api/v1/safety/hos/exceptions` | `apps/backend/src/safety/hos.routes.ts:34` | — | — | — |
 | create | `/api/v1/safety/incidents` | `apps/backend/src/safety/incidents.routes.ts:345` | — | — | — |
@@ -189,7 +189,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/safety/integrity-alerts` | `apps/backend/src/safety/integrity-alerts.routes.ts:483` | — | — | — |
 | nested | `/api/v1/safety/integrity-alerts/:id/snooze` | `apps/backend/src/safety/integrity-alerts.routes.ts:427` | — | — | — |
 | create | `/api/v1/safety/integrity-alerts/evaluate` | `apps/backend/src/safety/integrity-alerts.routes.ts:284` | — | — | — |
-| create | `/api/v1/safety/internal-fines` | `apps/backend/src/safety/safety-v5.routes.ts:265` | — | — | — |
+| create | `/api/v1/safety/internal-fines` | `apps/backend/src/safety/safety-v5.routes.ts:260` | — | — | — |
 | create | `/api/v1/safety/medical-cards` | `apps/backend/src/safety/medical-cards.routes.ts:225` | — | — | — |
 | create | `/api/v1/safety/onboarding/sessions` | `apps/backend/src/safety/onboarding.routes.ts:106` | — | — | — |
 | nested | `/api/v1/safety/onboarding/sessions/:session_id/admin-override` | `apps/backend/src/safety/onboarding.routes.ts:328` | — | — | — |
@@ -200,8 +200,8 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/safety/scheduler/temp-assignments` | `apps/backend/src/safety/driver-scheduler.routes.ts:499` | — | — | — |
 | create | `/api/v1/safety/training-programs` | `apps/backend/src/safety/training-programs.routes.ts:75` | — | — | — |
 | create | `/api/v1/safety/training-records` | `apps/backend/src/safety/training-records.routes.ts:48` | — | — | — |
-| create | `/api/v1/safety/v5/complaints` | `apps/backend/src/safety/safety-v5.routes.ts:679` | — | — | — |
-| create | `/api/v1/safety/v5/dot-inspections` | `apps/backend/src/safety/safety-v5.routes.ts:134` | — | — | — |
+| create | `/api/v1/safety/v5/complaints` | `apps/backend/src/safety/safety-v5.routes.ts:684` | — | — | — |
+| create | `/api/v1/safety/v5/dot-inspections` | `apps/backend/src/safety/safety-v5.routes.ts:129` | — | — | — |
 
 ### mdata — 50 create-surface(s)
 
@@ -1071,7 +1071,7 @@ after creation; a GL/posting failure goes to CC-1.
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
-| nested | `/api/v1/liabilities/:id/send-ack-request` | `apps/backend/src/liabilities/liabilities.routes.ts:197` | — | — | — |
+| nested | `/api/v1/liabilities/:id/send-ack-request` | `apps/backend/src/liabilities/liabilities.routes.ts:199` | — | — | — |
 
 ### owner-approval — 1 create-surface(s)
 

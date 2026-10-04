@@ -66,6 +66,7 @@ import {
 import { isCoaRole, resolveRoleAccountOptional, resolveReimbursementExpenseAccount } from "../accounting/coa-roles/resolver.service.js";
 import { categorizeSettlementLines } from "./settlement-line-categorize.service.js";
 import { ensureEscrowBalanceRow } from "./escrow-balance-row.js";
+import { driverReceivableFor } from "./driver-receivable-roles.js";
 import { resolveDriverAdvanceSubAccountOptional } from "./driver-advance-account-resolver.js";
 
 /**
@@ -245,11 +246,18 @@ async function loadOtherDeductionsByRole(
   // S-13647 $320, S-13648 $35.25, S-13650 $10, S-13652 $10) — reported to the owner, not corrected
   // here (a posted JE is WORM; the correction is a driver-favorable credit on a future settlement,
   // gated on the owner's read, exactly like every other settlement money correction this session).
-  const res = await client.query<{ id: string; deduction_type: string; bucket_type: string | null; amount_cents: string }>(
+  // ROUND 394 RULING 2 — a deduction that names the driver receivable it recovers (dsd.liability_id, a
+  // damage / fine liability posted at creation as Dr 1255 / 1256) credits THAT receivable role, never the
+  // recovery income/expense account a second time. Deductions with no receivable behind them keep their
+  // deduction-type role.
+  const res = await client.query<{ id: string; deduction_type: string; bucket_type: string | null; amount_cents: string; liability_type: string | null }>(
     `
-      SELECT dsd.id::text AS id, dsd.deduction_type, ddb.bucket_type, dsd.amount_cents::bigint AS amount_cents
+      SELECT dsd.id::text AS id, dsd.deduction_type, ddb.bucket_type, dsd.amount_cents::bigint AS amount_cents,
+             dl.type AS liability_type
       FROM driver_finance.driver_settlement_deductions dsd
       LEFT JOIN driver_finance.driver_deduction_buckets ddb ON ddb.id = dsd.bucket_id
+      LEFT JOIN driver_finance.driver_liabilities dl
+        ON dl.id = dsd.liability_id AND dl.operating_company_id = dsd.operating_company_id
       WHERE dsd.operating_company_id = $1::uuid
         AND dsd.applied_to_settlement_id = $2::uuid
         AND dsd.voided_at IS NULL
@@ -265,7 +273,7 @@ async function loadOtherDeductionsByRole(
     const target = classifyDeductionTarget(r.deduction_type, r.bucket_type);
     if (target === "advance" || target === "escrow") continue;
     if (t.includes("abandon") || t.includes("chargeback")) continue;
-    const roleKey = bucketRecoveryRoleKey(r.deduction_type);
+    const roleKey = driverReceivableFor(r.liability_type)?.receivable ?? bucketRecoveryRoleKey(r.deduction_type);
     byRole.set(roleKey, (byRole.get(roleKey) ?? 0) + cents);
     collectedIds.push(r.id);
   }

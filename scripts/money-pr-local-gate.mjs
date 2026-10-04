@@ -1044,6 +1044,7 @@ const LIVE_DOMAIN_GUARDS = [
   ],
   // ROUND 393.1 (CC-1) — A/P is written only by its documents (bill / bill payment / vendor credit / settlement application).
   ["verify-ap-control-written-only-by-documents", ["db/migrations/", "apps/backend/src/", "scripts/verify-ap-control-written-only-by-documents.mjs"]],
+  ["verify-driver-receivables-post-on-creation", ["db/migrations/", "apps/backend/src/", "scripts/verify-driver-receivables-post-on-creation.mjs"]],
   ["verify-driver-advance-posts-to-drivers-own-subaccount", ["apps/backend/src/", "scripts/verify-driver-advance-posts-to-drivers-own-subaccount.mjs"]],
   // ROUND 373.3 (CC-1) — every posting names its document; a posting without a spine link is refused at COMMIT.
   ["verify-every-posting-has-its-spine-link", ["db/migrations/", "apps/backend/src/accounting/", "scripts/verify-every-posting-has-its-spine-link.mjs"]],

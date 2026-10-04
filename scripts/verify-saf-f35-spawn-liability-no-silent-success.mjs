@@ -44,10 +44,9 @@ function audit(routeSrc, drawerSrc) {
   if (!/INSERT INTO driver_finance\.driver_liabilities/.test(handler)) {
     problems.push("route must INSERT driver_finance.driver_liabilities (live create path)");
   }
-  if (!/C6-MONEY-JE-EXEMPT:/.test(handler)) {
-    problems.push(
-      "route must carry C6-MONEY-JE-EXEMPT (recovery subledger; JE on settlement apply — Claude SWEEP-C6)"
-    );
+  // ROUND 394 RULING 2 — the liability posts at creation (driver receivable), superseding the C6 exemption.
+  if (!/postSourceTransactionInClientTx\([\s\S]{0,240}source_transaction_type: "driver_liability"/.test(handler)) {
+    problems.push("route must post the driver receivable at creation (postSourceTransactionInClientTx, 'driver_liability' — ROUND 394)");
   }
   if (!/createSettlementDeduction/.test(handler) && !/createSettlementDeduction/.test(routeSrc)) {
     problems.push("route must reuse createSettlementDeduction (no new GL math)");
@@ -156,7 +155,7 @@ function main() {
     process.exit(1);
   }
   console.log(
-    `${LABEL} OK — spawn-liability creates driver_liabilities (C6-exempt); UI never toasts success on null id`
+    `${LABEL} OK — spawn-liability creates driver_liabilities and posts the driver receivable (ROUND 394); UI never toasts success on null id`
   );
 }
 

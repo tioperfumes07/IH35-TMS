@@ -9,6 +9,7 @@ import { INTERNAL_CSA_SOURCE_METADATA } from "../routes/safety/csa-scores.js";
 import { EXCLUDE_ARCHIVED_DRIVERS_SQL } from "../mdata/test-seed-archive.js";
 import { EXCLUDE_PSEUDO_DRIVERS_SQL } from "../mdata/driver-pseudo-user.js";
 import { createSettlementDeduction } from "../driver-finance/deductions.service.js";
+import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { isR2Configured, putObjectBytes } from "../storage/r2-client.js";
 import { randomUUID } from "node:crypto";
 
@@ -1202,10 +1203,10 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
 
         const desc =
           `Accident damage recovery: ${String(accident.description ?? "").trim() || accident.id}`.slice(0, 500);
-        // C6-MONEY-JE-EXEMPT: accident spawn-liability seeds driver_finance.driver_liabilities +
-        // createSettlementDeduction only (recovery subledger). Balanced JE posts later on settlement
-        // apply behind SETTLEMENT_DEDUCTION_APPLY_ENABLED — same posture as internal-fine convert
-        // (safety-v5) and civil-fine convert-to-liability. Do NOT invent a solo GL poster here.
+        // ROUND 394 RULING 2 — accident damage is a DRIVER RECEIVABLE: the liability posts at creation
+        // through the canonical poster (source 'driver_liability': Dr 1255 driver_damage_receivable /
+        // Cr damage_recovery), in this same transaction; its settlement deduction carries liability_id so
+        // pay-run close credits the receivable. (Supersedes the old C6 exemption "JE on settlement apply".)
         const liabilityRes = await client.query(
           `
             INSERT INTO driver_finance.driver_liabilities (
@@ -1242,12 +1243,19 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
         const liabilityId = (liabilityRes.rows[0] as { id?: string } | undefined)?.id;
         if (!liabilityId) throw new Error("liability_create_failed");
 
+        await postSourceTransactionInClientTx(
+          client as never,
+          { operating_company_id: query.data.operating_company_id, source_transaction_type: "driver_liability", source_transaction_id: liabilityId },
+          { userId: user.uuid }
+        );
+
         const deduction = await createSettlementDeduction(client, {
           driverId: String(accident.driver_id),
           operatingCompanyId: query.data.operating_company_id,
           amountCents,
           reason: desc,
           sourceType: "damage",
+          liabilityId,
           loadId: accident.load_id ? String(accident.load_id) : null,
           createdByUserId: user.uuid,
         });

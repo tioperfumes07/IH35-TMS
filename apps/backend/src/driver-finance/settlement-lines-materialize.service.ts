@@ -62,6 +62,7 @@ import { resolveRoleAccountOptional, resolveReimbursementExpenseAccount, isCoaRo
 import { bucketRecoveryRoleKey } from "../accounting/settlement-posting/settlement-bill-payment.math.js";
 import { SETTLEMENT_DEDUCTION_SOURCE_TABLE } from "./deductions.service.js";
 import { resolveDriverEscrowLiabilityAccount } from "./escrow-resolver.service.js";
+import { driverReceivableFor } from "./driver-receivable-roles.js";
 
 type QueryClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -292,6 +293,7 @@ export async function materializeSettlementLines(
     load_id: string | null;
     deduction_type: string;
     status: string;
+    liability_type: string | null;
   }>(
     `
       -- KILL THE SECOND SYSTEM: the amount materialized is the DERIVED remaining (amount minus the deduction's active
@@ -299,7 +301,9 @@ export async function materializeSettlementLines(
       -- A deduction already taken on any settlement derives to 0 and is skipped below, so it can never be deducted twice.
       SELECT d.id::text,
              (SELECT v.remaining_cents FROM driver_finance.v_settlement_deduction_balances v WHERE v.deduction_id = d.id) AS amount_cents,
-             d.reason, d.load_id::text, d.deduction_type, d.status
+             d.reason, d.load_id::text, d.deduction_type, d.status,
+             (SELECT dl.type FROM driver_finance.driver_liabilities dl
+               WHERE dl.id = d.liability_id AND dl.operating_company_id = d.operating_company_id) AS liability_type
         FROM driver_finance.driver_settlement_deductions d
        WHERE d.operating_company_id = $1::uuid
          AND d.driver_id = $2::uuid
@@ -314,12 +318,20 @@ export async function materializeSettlementLines(
   for (const d of dedRes.rows) {
     const amountCents = Math.round(Number(d.amount_cents ?? 0));
     if (amountCents <= 0) continue;
-    const { roleKey, postingAccountId, unresolvedReason } = await resolveDeductionPostingAccount(
-      client,
-      input.operatingCompanyId,
-      settlement.driver_id,
-      d.deduction_type
-    );
+    // ROUND 394 RULING 2 — a deduction recovering a posted driver receivable (damage / fine liability) posts
+    // to that receivable (1255 / 1256), the same role pay-run close credits; every other deduction keeps its
+    // deduction-type resolution.
+    const receivable = driverReceivableFor(d.liability_type);
+    const { roleKey, postingAccountId, unresolvedReason } = receivable
+      ? await (async () => {
+          const acct = await resolveRoleAccountOptional(client, input.operatingCompanyId, receivable.receivable);
+          return {
+            roleKey: receivable.receivable as string,
+            postingAccountId: acct,
+            unresolvedReason: acct ? undefined : `no COA role account bound for role '${receivable.receivable}'`,
+          };
+        })()
+      : await resolveDeductionPostingAccount(client, input.operatingCompanyId, settlement.driver_id, d.deduction_type);
     const sourceApproved = d.status === "applied";
     const approvalStatus: "pending" | "approved" = postingAccountId && sourceApproved ? "approved" : "pending";
 

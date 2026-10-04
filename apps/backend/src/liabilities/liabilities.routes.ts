@@ -5,6 +5,8 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
+import { driverReceivableFor } from "../driver-finance/driver-receivable-roles.js";
+import { writeOffDriverReceivableInClientTx } from "../driver-finance/driver-receivable-writeoff.service.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -347,6 +349,13 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
     const companyId = query.data.operating_company_id;
 
     const updated = await withCompanyScope(user.uuid, companyId, async (client) => {
+      // ROUND 394 RULING 2 — a posted driver receivable (damage / fine) is never "paid off" by zeroing a
+      // stored number: it is recovered through settlement, or written off by its reversing entry (void).
+      const typeRes = await client.query<{ type: string }>(
+        `SELECT type FROM driver_finance.driver_liabilities WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+        [params.data.id, companyId]
+      );
+      if (driverReceivableFor(typeRes.rows[0]?.type)) return "receivable" as const;
       const res = await client
         .query(
           `
@@ -374,6 +383,12 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
       );
       return true;
     });
+    if (updated === "receivable") {
+      return reply.code(409).send({
+        error: "driver_receivable_recovers_through_settlement_or_void",
+        message: "A damage or fine receivable is recovered through settlement or written off by voiding it (a reversing entry) — never marked paid off.",
+      });
+    }
     if (!updated) return reply.code(404).send({ error: "liability_not_found" });
     return { ok: true };
   });
@@ -382,7 +397,9 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
   // (voided_at/void_reason/voided_by_user_id/void_reversal_entry_id) since GO-22 (migration
   // 202613490001, owner order 2026-09-02), but no route ever wrote it: a mistake in the loan/
   // advance/bill chain had no exit under append-only law, exactly the gap GO-22 was ordered to
-  // close. void_reversal_entry_id is deliberately left NULL here — this table is a subledger
+  // close. ROUND 394 RULING 2: a damage / fine liability IS now posted (Dr 1255 / 1256 at creation), so its
+  // void reverses that posting and records void_reversal_entry_id (driver-receivable-writeoff.service.ts).
+  // For the remaining types: void_reversal_entry_id is left NULL here — this table is a subledger
   // record, never itself posted to GL directly (confirmed: no journal_entry_id/posting_batch_id
   // column exists on it, and no poster references it as a JE source); the money-relevant GL impact
   // only happens later, when a settlement deduction spawned FROM this liability is actually
@@ -414,6 +431,16 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
       if (!pre.rows[0]) return { kind: "not_found" as const };
       if (pre.rows[0].voided_at) return { kind: "already_voided" as const };
 
+      // ROUND 394 RULING 2 — a posted driver receivable (damage / fine) is written off ONLY by the reversing
+      // entry of its creation posting; refused when any of it was already recovered through settlement.
+      const writeOff = await writeOffDriverReceivableInClientTx(client, {
+        operatingCompanyId: companyId,
+        liabilityId: params.data.id,
+        actorUserId: user.uuid,
+        reason: body.data.reason,
+      });
+      if (writeOff.kind === "recovered") return { kind: "recovered" as const, recovered_cents: writeOff.recovered_cents };
+
       await client.query(
         `
           UPDATE driver_finance.driver_liabilities
@@ -421,11 +448,12 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
               status = 'voided',
               voided_at = now(),
               void_reason = $3,
-              voided_by_user_id = $4::uuid
+              voided_by_user_id = $4::uuid,
+              void_reversal_entry_id = COALESCE($5::uuid, void_reversal_entry_id)
           WHERE id = $1
             AND operating_company_id = $2::uuid
         `,
-        [params.data.id, companyId, body.data.reason, user.uuid]
+        [params.data.id, companyId, body.data.reason, user.uuid, writeOff.kind === "reversed" ? writeOff.journal_entry_id : null]
       );
 
       // Cascade: stop any future recovery. deduction_schedule has no cancelled/voided concept of its
@@ -461,6 +489,12 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
 
     if (result.kind === "not_found") return reply.code(404).send({ error: "liability_not_found" });
     if (result.kind === "already_voided") return reply.code(409).send({ error: "liability_already_voided" });
+    if (result.kind === "recovered") {
+      return reply.code(409).send({
+        error: "driver_receivable_partly_recovered",
+        message: `$${(result.recovered_cents / 100).toFixed(2)} of this receivable was already recovered through settlement; it cannot be written off whole.`,
+      });
+    }
     return { ok: true };
   });
 }

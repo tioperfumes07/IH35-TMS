@@ -91,6 +91,13 @@ export type CreateSettlementDeductionInput = {
    */
   reversedReimbursementId?: string;
   /**
+   * ROUND 394 RULING 2 — the driver receivable (driver_finance.driver_liabilities) this deduction recovers.
+   * Set by the paths that create a posted receivable with its deduction (accident damage, civil fine,
+   * internal fine); pay-run close then credits that receivable instead of a recovery account. Every other
+   * source leaves it null.
+   */
+  liabilityId?: string | null;
+  /**
    * NOTE (BANK-DOM-06): this shared writer deliberately does NOT accept a fuel-transaction
    * provenance column. That column lives on a HELD, not-yet-applied migration (202609150000) —
    * every caller of createSettlementDeduction (cash advances, fines, tolls, citations, ...) runs
@@ -194,14 +201,16 @@ export async function createSettlementDeduction(
         bucket_id,
         source_bank_transaction_id,
         reversed_reimbursement_id,
-        remaining_balance_cents
+        remaining_balance_cents,
+        liability_id
       )
       -- A3-2: initialise the carry-forward balance to the full amount on insert (status defaults to
       -- 'pending'). The recovery engine treats NULL as = amount_cents (A3-1 lock); this just makes
       -- new rows explicit going forward. $4 = amount_cents. $8 = load_id (direct trace, nullable),
       -- $9 = bucket_id (recover-from-driver), $10 = source_bank_transaction_id (BLOCK-6b provenance),
-      -- $11 = reversed_reimbursement_id (SET-24 GL routing, nullable).
-      VALUES ($1, $2, $3, $4, $5, NULL, $6, $7, $8, $9, $10, $11, $4)
+      -- $11 = reversed_reimbursement_id (SET-24 GL routing, nullable), $12 = liability_id (ROUND 394: the
+      -- driver receivable this deduction recovers, nullable).
+      VALUES ($1, $2, $3, $4, $5, NULL, $6, $7, $8, $9, $10, $11, $4, $12)
       RETURNING ${RETURNING_COLUMNS}
     `,
     [
@@ -216,6 +225,7 @@ export async function createSettlementDeduction(
       input.bucketId ?? null,
       input.sourceBankTransactionId ?? null,
       input.reversedReimbursementId ?? null,
+      input.liabilityId ?? null,
     ]
   );
 
@@ -238,6 +248,7 @@ export async function createSettlementDeduction(
       source_bank_transaction_id: input.sourceBankTransactionId ?? null,
       load_id: input.loadId ?? null,
       reversed_reimbursement_id: input.reversedReimbursementId ?? null,
+      liability_id: input.liabilityId ?? null,
     },
     "info",
     "PREREQ-B-SETTLEMENT-DEDUCTION-SVC"

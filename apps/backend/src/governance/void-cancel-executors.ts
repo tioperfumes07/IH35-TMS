@@ -25,6 +25,7 @@ import { voidBillPaymentInClientTx } from "../accounting/bills.service.js";
 // tolerance, R-102.1-A). executeFuelTransaction below must never hand-write that column itself.
 import { stampDocumentVoided } from "../accounting/void-document-stamp.service.js";
 import { cascadeVoidChildren } from "../accounting/cascade-void-engine.service.js";
+import { writeOffDriverReceivableInClientTx } from "../driver-finance/driver-receivable-writeoff.service.js";
 
 export type VoidCancelAction = "void" | "cancel";
 
@@ -1010,12 +1011,18 @@ const executeDriverLiability: EntityExecutor = async (ctx) => {
   );
   if (!pre.rows[0]) return { kind: "not_found" };
   if (pre.rows[0].voided_at) return { kind: "already_done" };
+  // ROUND 394 RULING 2 — a posted driver receivable (damage / fine) is written off ONLY by the reversing entry
+  // of its creation posting; refused (not_completable) when any of it was already recovered through settlement.
+  const writeOff = await writeOffDriverReceivableInClientTx(client as never, { operatingCompanyId, liabilityId: entityId, actorUserId: userId, reason });
+  if (writeOff.kind === "recovered") return { kind: "not_completable" };
+  const reversingEntryRef = writeOff.kind === "reversed" ? writeOff.journal_entry_id : null;
   const flipped = await client.query(
     `UPDATE driver_finance.driver_liabilities
-        SET current_balance = 0, status = 'voided', voided_at = now(), void_reason = $3, voided_by_user_id = $4::uuid
+        SET current_balance = 0, status = 'voided', voided_at = now(), void_reason = $3, voided_by_user_id = $4::uuid,
+            void_reversal_entry_id = COALESCE($5::uuid, void_reversal_entry_id)
       WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
       RETURNING id::text`,
-    [entityId, operatingCompanyId, reason, userId]
+    [entityId, operatingCompanyId, reason, userId, reversingEntryRef]
   );
   if (!flipped.rows[0]) return { kind: "already_done" };
   await client.query(
@@ -1027,7 +1034,7 @@ const executeDriverLiability: EntityExecutor = async (ctx) => {
   await appendCrudAudit(client, userId, "liability.voided", {
     resource_id: entityId, operating_company_id: operatingCompanyId, reason, via: "governance.void_cancel_requests",
   }, "warning", "VOID-CANCEL-GOV");
-  return { kind: "ok", reversing_entry_ref: null };
+  return { kind: "ok", reversing_entry_ref: reversingEntryRef };
 };
 
 const executeCheckNumberRegistry: EntityExecutor = async (ctx) => {
