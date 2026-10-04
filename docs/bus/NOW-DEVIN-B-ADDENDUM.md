@@ -42,3 +42,5 @@ rather than loop.
 purge-era closure re-measure, tightening guard 45 so a bare UUID stops
 counting as a document reference, and
 verify-costs-are-expenses-not-handwritten-jes.mjs.
+
+<!-- Cursor lead heartbeat 2026-10-04T04:00Z — ROUND 389.2 wiring in flight; Devin seats idle/frozen under USMCA-only -->
