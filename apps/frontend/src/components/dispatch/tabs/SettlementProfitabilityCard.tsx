@@ -137,7 +137,7 @@ export function SettlementProfitabilityCard({ loadId, operatingCompanyId, curren
       </div>
 
       {d.data_completeness === "partial" && d.missing_sources.length > 0 && (
-        <div className="text-[11px] text-gray-400">
+        <div className="text-xs text-gray-400">
           Estimate — missing data: {d.missing_sources.join(", ")}
         </div>
       )}
