@@ -26,7 +26,7 @@ const STATUS_LABEL: Record<TaskStatus, string> = {
 function StatusPill({ status }: { status: TaskStatus }) {
   const done = status === "completed";
   const cls = done ? "bg-slate-200 text-slate-600" : "bg-slate-100 text-slate-700";
-  return <span className={`inline-block rounded-sm px-2 py-0.5 text-[11px] font-semibold ${cls}`}>{STATUS_LABEL[status]}</span>;
+  return <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${cls}`}>{STATUS_LABEL[status]}</span>;
 }
 
 /**
@@ -59,7 +59,7 @@ export function TasksTab({ operatingCompanyId, targetType, targetId, targetLabel
               className="font-semibold text-slate-700 hover:underline"
             />
             {t.anticipated_category ? (
-              <span className="ml-1 text-[11px] text-slate-500">({t.anticipated_category})</span>
+              <span className="ml-1 text-xs text-slate-500">({t.anticipated_category})</span>
             ) : null}
           </>
         ),
