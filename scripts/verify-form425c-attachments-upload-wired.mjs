@@ -16,6 +16,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-form425c-attachments-upload-wired";
 const HOME_PAGE = "apps/frontend/src/pages/form425c/Form425CHome.tsx";
 const TAB_PAGE = "apps/frontend/src/pages/form425c/tabs/CurrentPeriodTab.tsx";
+const EXHIBIT = "apps/frontend/src/components/form-425c/ExhibitCard.tsx";
 
 export function collectProblems(homeSrc, tabSrc) {
   const problems = [];
@@ -46,6 +47,14 @@ export function collectProblems(homeSrc, tabSrc) {
   if (tabSrc.includes("text-[11px]")) problems.push(`${TAB_PAGE}: leftover text-[11px] — use text-xs`);
   if (tabSrc.includes("#8A92AB")) problems.push(`${TAB_PAGE}: leftover #8A92AB — use #4B5563`);
 
+  return problems;
+}
+
+/** BANK-F91426 leftover refuse — ExhibitCard page-scoped text token ratchet. */
+export function checkExhibitCardLeftovers(src) {
+  const problems = [];
+  if (src.includes("text-[11px]")) problems.push("ExhibitCard leftover text-[11px] — use text-xs");
+  if (src.includes("#8A92AB")) problems.push("ExhibitCard leftover #8A92AB — use #4B5563");
   return problems;
 }
 
@@ -105,13 +114,25 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} --selftest FAIL leftover plant escaped`);
     process.exit(1);
   }
+  // BANK-F91426 leftover plant — ExhibitCard page-scoped text token ratchet
+  const liveExhibit = fs.readFileSync(path.join(ROOT, EXHIBIT), "utf8");
+  if (checkExhibitCardLeftovers(liveExhibit).length) {
+    console.error(`${LABEL} --selftest FAIL: live ExhibitCard already failing leftover refuse`);
+    process.exit(1);
+  }
+  const exhibitPlant = liveExhibit + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!checkExhibitCardLeftovers(exhibitPlant).some((m) => m.includes("leftover"))) {
+    console.error(`${LABEL} --selftest FAIL ExhibitCard leftover plant escaped`);
+    process.exit(1);
+  }
   console.log(`${LABEL} --selftest PASS`);
   process.exit(0);
 }
 
 const homeSrc = fs.readFileSync(path.join(ROOT, HOME_PAGE), "utf8");
 const tabSrc = fs.readFileSync(path.join(ROOT, TAB_PAGE), "utf8");
-const problems = collectProblems(homeSrc, tabSrc);
+const exhibitSrc = fs.readFileSync(path.join(ROOT, EXHIBIT), "utf8");
+const problems = [...collectProblems(homeSrc, tabSrc), ...checkExhibitCardLeftovers(exhibitSrc)];
 if (problems.length) {
   console.error(`${LABEL}: FAIL\n${problems.map((p) => `  - ${p}`).join("\n")}`);
   process.exit(1);
