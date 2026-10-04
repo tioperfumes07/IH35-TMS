@@ -95,7 +95,7 @@ export function ColumnChooser({
       {open ? (
         <div className="absolute right-0 z-20 mt-1 w-56 rounded-sm border border-gray-200 bg-white p-2 shadow-lg" role="menu">
           <div className="mb-2">
-            <label htmlFor="column-chooser-page-size" className="mb-1 block text-[11px] font-semibold text-gray-600">Rows per page</label>
+            <label htmlFor="column-chooser-page-size" className="mb-1 block text-xs font-semibold text-gray-600">Rows per page</label>
             <select
               id="column-chooser-page-size"
               className="h-7 w-full rounded-sm border border-gray-300 px-1 text-xs"
@@ -107,7 +107,7 @@ export function ColumnChooser({
               ))}
             </select>
           </div>
-          <div className="mb-1 text-[11px] font-semibold text-gray-600">Columns</div>
+          <div className="mb-1 text-xs font-semibold text-gray-600">Columns</div>
           <div className="max-h-56 space-y-0.5 overflow-y-auto">
             {columns.map((c) => (
               <label
