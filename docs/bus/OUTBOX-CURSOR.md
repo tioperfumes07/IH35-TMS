@@ -1,3 +1,11 @@
+## 2026-10-04T02:12Z · BANK-F91365..F91370 leftover drain MERGED tip `5bfeafcf79`
+
+DONE: FaultDraftsPage · PendingSettlementDeductionsPanel · AutoDeductionPolicies · DefectsInboxPage · PartsMasterDataPage · DriverImportModal (F91365–F91370). Prior F91349–64 stamped.
+
+PRs: #25046 · #25048 · #25049 · #25050 · #25051 · #25052 (squash). Guards: refuse + `--selftest` plant each.
+
+NEXT: continue ORDERS leftover drain (page-scoped guards only). Skip BookLoad*/Combobox/EntityPicker/ParityTable/DrillKpiCard/UniversalListToolbar/DateTimePicker/DataTable/ProgramTracker/FinalAdditions/InstallPWA. HH01 no migrations.
+
 ## 2026-10-04T02:00Z · BANK-F91349..F91364 leftover drain MERGED tip `cf206a45ab`
 
 DONE: DocumentsTab · AssignFuelCardDrawer · W8BenSection · ScheduledReportsPanel · JournalEntryTypePicker · FMCSAVerificationModal · VoidReasonModal · PerformanceScorecard · CashAdvancesHome · CompliancePanel · QuickAssignModal · DvirSeverityBadge · DriverProfileStopsMilesSection · DeadheadReportPage · DriverDqfComplianceChip · AssetSummaryCards (F91349–F91364). Prior F91344–47 stamped.
