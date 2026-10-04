@@ -6,7 +6,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { pushJournalEntryToQuickBooksImmediateBestEffort } from "./journal-entry-qbo-push.service.js";
-import { auditVoid, canVoid, postVoidReversal, resolveReversalDate, todayIso } from "./void.service.js";
+import { auditVoid, canVoid, postVoidReversal, releaseBankLinesNamingDocument, resolveReversalDate, todayIso } from "./void.service.js";
 // ACCT-PERIOD-CLOSE-01: this manual/API create path was the one JE-insert choke point with no
 // closed-period check at all -- accounting.periods' DB triggers (migration 0183) already block the
 // raw INSERT as a last resort, but this call gives a clean, typed PostingEngineError("PERIOD_LOCKED")
@@ -688,6 +688,13 @@ export async function restoreReversedJournalEntryInClientTx(
   // Stamp the cancelled reversal lines' originals? No — the originals stay reversed by their reversal; the restore is a
   // new live line. Header link only, so the reversing entry reads as restored and a retry is idempotent.
   if (await hasReversalLinkageColumns(client)) {
+    // ROUND 368.2(b) — stamping reversed_by_je_id makes this reversing entry stop being live. A bank line matched to it
+    // (matched_journal_entry_id) goes back to For review FIRST, with its release record; otherwise the document-side
+    // refusal (202615360600) rejects the restore at COMMIT.
+    await releaseBankLinesNamingDocument(client as never, { operatingCompanyId, pointerColumn: "matched_journal_entry_id", documentId: journalEntryId }, {
+      userId: params.actorUserId,
+      reason: `journal entry restored: ${journalEntryId}`,
+    });
     await client.query(`UPDATE accounting.journal_entries SET reversed_by_je_id = $2::uuid, updated_at = now() WHERE id = $1::uuid AND operating_company_id = $3::uuid`, [journalEntryId, created.id, operatingCompanyId]);
     await client.query(`UPDATE accounting.journal_entries SET reverses_je_id = $2::uuid, void_reason = $3, updated_at = now() WHERE id = $1::uuid AND operating_company_id = $4::uuid`, [created.id, journalEntryId, reason, operatingCompanyId]);
   }
