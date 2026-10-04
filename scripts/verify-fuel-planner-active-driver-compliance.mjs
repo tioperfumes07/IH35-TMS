@@ -18,6 +18,9 @@ function verify(source) {
   if (!source.home.includes("getFuelComplianceSummary(companyId, complianceDriverId)")) failures.push("active driver is not bound to compliance read");
   if (!source.home.includes("firstDriver ? Number(firstDriver.pct_followed ?? 0) : null")) failures.push("missing driver row still renders a false zero");
   if (!source.panel.includes('driverPct === null ? "Not available"')) failures.push("panel does not disclose unavailable driver compliance");
+  // BANK-F91358 leftover refuse — CompliancePanel page-scoped text token ratchet
+  if (source.panel.includes("text-[11px]")) failures.push("CompliancePanel.tsx: leftover text-[11px]");
+  if (source.panel.includes("#8A92AB")) failures.push("CompliancePanel.tsx: leftover off-scale muted #8A92AB");
   return failures;
 }
 
@@ -30,6 +33,8 @@ if (process.argv.includes("--selftest")) {
     { ...files, api: files.api.replace('search.set("driver_id", driverId)', 'search.set("driver", driverId)') },
     { ...files, home: files.home.replace("getFuelComplianceSummary(companyId, complianceDriverId)", "getFuelComplianceSummary(companyId)") },
     { ...files, panel: files.panel.replace('driverPct === null ? "Not available"', 'driverPct === null ? "0.0%"') },
+    // BANK-F91358 leftover plant
+    { ...files, panel: files.panel + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n' },
   ];
   const caught = mutations.filter((mutation) => verify(mutation).length > 0).length;
   if (caught !== mutations.length) { console.error(`selftest caught ${caught}/${mutations.length}`); process.exit(1); }
