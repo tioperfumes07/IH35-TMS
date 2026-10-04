@@ -37,7 +37,7 @@ const COLUMNS: Array<ParityColumn<ErrorRow>> = [
     sortable: true,
     sortValue: (row) => row.ts,
     render: (row) => (
-      <span className="whitespace-nowrap font-mono text-[11px] text-gray-700">{formatTs(row.ts)}</span>
+      <span className="whitespace-nowrap font-mono text-xs text-gray-700">{formatTs(row.ts)}</span>
     ),
   },
   {
@@ -46,7 +46,7 @@ const COLUMNS: Array<ParityColumn<ErrorRow>> = [
     sortable: true,
     render: (row) => (
       <span
-        className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
           row.kind === "server" ? "bg-red-50 text-red-800" : "bg-slate-100 text-slate-700"
         }`}
       >
@@ -129,8 +129,8 @@ export function ErrorMonitorPage() {
             renderExpanded={(row) =>
               row.detail ? (
                 <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Detail (JSON)</div>
-                  <pre className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap rounded-sm border border-gray-200 bg-white p-3 text-[11px] text-gray-800">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-gray-600">Detail (JSON)</div>
+                  <pre className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-800">
                     {JSON.stringify(row.detail, null, 2)}
                   </pre>
                 </div>
