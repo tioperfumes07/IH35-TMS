@@ -102,6 +102,14 @@ function runSelftest() {
       console.error(`[verify-home-quickjump-counts] SELFTEST FAIL ${label} leftover plant escaped`, leftoverBad);
       process.exit(1);
     }
+    // BANK-F91508 leftover plant — Factoring Balance KPI leftover slate-600 accent
+    const leftoverSlatePlant = `${live}\n<div accent="#475569">plant</div>`;
+    const leftoverSlateBad = [];
+    leftoverRefusePage(label, leftoverSlatePlant, leftoverSlateBad);
+    if (!leftoverSlateBad.some((e) => e.includes("leftover off-scale muted"))) {
+      console.error(`[verify-home-quickjump-counts] SELFTEST FAIL ${label} leftover #475569 plant escaped`, leftoverSlateBad);
+      process.exit(1);
+    }
   }
   console.log(`[verify-home-quickjump-counts] SELFTEST OK — ${cases.length}/${cases.length} + leftover plants rejected`);
 }
@@ -110,7 +118,7 @@ function leftoverRefusePage(label, src, bucket) {
   if (src.includes("text-[11px]")) {
     bucket.push(`${label}: leftover text-[11px]`);
   }
-  if (src.includes("#8A92AB") || src.includes("#334155")) {
+  if (src.includes("#8A92AB") || src.includes("#334155") || src.includes("#475569")) {
     bucket.push(`${label}: leftover off-scale muted`);
   }
 }

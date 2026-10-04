@@ -1,3 +1,15 @@
+## 2026-10-04T13:22Z · BANK-F91508 Factoring KPI leftover #475569 accent WIRED · this PR
+
+DONE: DefaultHome + OwnerHome Factoring Balance HomeKpiCard accent #475569 → house muted #4B5563; leftover refuse on verify-home-quickjump-counts; EVEN 3886/3888 --selftest + live.
+
+NEXT: leftover muted chrome (CreateWO empty / LocationMap / WO pie status colors stay) · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T13:18Z · BANK-F91507 Settlements DataPanel leftover WIRED CI · tip `50792c18cc`
+
+DONE: #25249 — SettlementsPage Open Driver Bills DataPanel accent #4B5563; verify-steps/3348 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (DefaultHome/OwnerHome #475569 / CreateWO empty / LocationMap) · skip pile parked · HH12 no migrations this tick.
+
 ## 2026-10-04T13:12Z · BANK-F91507 Settlements DataPanel leftover #64748b WIRED · this PR
 
 DONE: SettlementsPage Open Driver Bills DataPanel accent #64748b → house muted #4B5563; leftover refuse on verify-settlements-module-one-readout; EVEN 3348 --selftest + live.

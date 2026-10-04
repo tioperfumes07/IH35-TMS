@@ -437,7 +437,7 @@ export function DefaultHome({ auth }: Props) {
           isError={factoringBalanceQuery.isError}
           error={factoringBalanceQuery.error}
           onRetry={() => void factoringBalanceQuery.refetch()}
-          accent="#475569"
+          accent="#4B5563"
           subtext={
             !fb
               ? null
