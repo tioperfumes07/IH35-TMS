@@ -62,6 +62,11 @@ export function assertFile(relPath, src) {
   if (!src.includes("userFacingApiError")) {
     errors.push(`${relPath}: missing userFacingApiError import/usage`);
   }
+  // BANK-F91416 leftover refuse — CatalogExcelUploadModal page-scoped text token ratchet
+  if (relPath.includes("CatalogExcelUploadModal.tsx")) {
+    if (src.includes("text-[11px]")) errors.push(`${relPath}: leftover text-[11px] — use text-xs`);
+    if (src.includes("#8A92AB")) errors.push(`${relPath}: leftover #8A92AB — use #4B5563`);
+  }
   return errors;
 }
 
@@ -87,6 +92,19 @@ function show(err) {
     const ok = n === wantErrors;
     if (!ok) failed++;
     console.log(`${ok ? "ok  " : "FAIL"}  ${name}  (errors=${n})`);
+  }
+  // BANK-F91416 leftover plant — CatalogExcelUploadModal page-scoped text token ratchet
+  {
+    const planted = assertFile(
+      "apps/frontend/src/components/catalogs/CatalogExcelUploadModal.tsx",
+      good + '\n<p className="text-[11px] text-[#8A92AB]">plant</p>\n',
+    );
+    if (!planted.some((e) => e.includes("leftover"))) {
+      console.error("FAIL  leftover plant escaped");
+      failed++;
+    } else {
+      console.log("ok    leftover text-[11px]/#8A92AB plant");
+    }
   }
   if (failed) {
     console.error(`\n${LABEL} SELFTEST FAILED`);
