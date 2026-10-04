@@ -347,7 +347,7 @@
   height: 8px;
   border-radius: 1px;
   background: repeating-linear-gradient(45deg, var(--dwell) 0 3px, #eef2f7 3px 6px);
-  border: 1px solid #cbd5e1;
+  border: 1px solid #E5E7EB;
 }
 .planner-grid-canonical .pg-dwell i {
   position: absolute;
