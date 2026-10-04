@@ -51,6 +51,10 @@ export type VoidableEntityType =
   | "expense"
   | "bill_payment"
   | "customer_payment"
+  // ACCT-F409 (CC-2 2026-10-04) — a customer payment's DEPOSIT SWEEP (Dr bank / Cr 1090, source 'customer_payment_deposit',
+  // source id = the payment) is posted when the payment is matched to its bank line. postVoidReversal reverses it itself
+  // when the payment is voided (see the customer_payment block in postVoidReversal) — same class as ACCT-F5640 below.
+  | "customer_payment_deposit"
   | "prepaid_purchase"
   // ACCT-F5640 — 'prepaid_amortization' added. amortization-posting.service.ts posts each amortization
   // period's own JE with source_transaction_type='prepaid_amortization' (a DIFFERENT source type than
@@ -511,6 +515,8 @@ export type VoidReversalResult = {
   reversal_date: string | null;
   closed_period_reversal: boolean;
   reversed_line_count: number;
+  /** ACCT-F409 — a voided customer payment's deposit sweep, reversed in the same transaction (null when it had none). */
+  deposit_sweep_reversal_journal_entry_id?: string | null;
 };
 
 // ---------------------------------------------------------------------------
@@ -766,6 +772,39 @@ export async function postVoidReversal(
     entityId: params.entityId,
   }, actor);
 
+  // ACCT-F409 (Lead ruling 2026-10-04) — Undeposited Funds (1090) is a CLEARING account: a voided customer payment must
+  // leave it exactly where it was before the payment. The payment's money leaves 1090 by exactly ONE of two documents
+  // (bank-deposits.service lists a payment for a Deposit only when it has no posted 'customer_payment_deposit' sweep):
+  //   (a) its bank-match DEPOSIT SWEEP (Dr bank / Cr 1090, source 'customer_payment_deposit', id = the payment) — this void
+  //       used to reverse the payment's own entry (Cr 1090 / Dr A/R) and leave the sweep standing, so 1090 went negative by
+  //       the payment amount on EVERY void (measured: the AUTH-400 purge's 7 payment voids moved 1090 -$151,736.34 ->
+  //       -$167,018.94). The sweep is reversed HERE, by this same engine, on this client — one door for every void path;
+  //   (b) a line on a live Deposit document — one entry for several payments, which a payment void cannot partially
+  //       reverse: refused by name; void or edit the deposit first (it releases the payment back to Undeposited Funds).
+  let depositSweepReversalId: string | null = null;
+  if (params.entityType === "customer_payment") {
+    const onDeposit = await client.query<{ id: string; display_id: string | null }>(
+      `SELECT d.id::text, d.display_id
+         FROM accounting.deposit_lines dl
+         JOIN accounting.deposits d ON d.id = dl.deposit_id
+        WHERE dl.source_payment_id = $1::uuid AND d.operating_company_id = $2::uuid AND d.voided_at IS NULL
+        LIMIT 1`,
+      [params.entityId, params.operatingCompanyId]
+    );
+    if (onDeposit.rows[0]) {
+      throw new Error(
+        `customer_payment_on_live_deposit: payment ${params.entityId} is on deposit ${onDeposit.rows[0].display_id ?? onDeposit.rows[0].id}; ` +
+          `void or edit that deposit first, so the payment returns to Undeposited Funds before it is voided`
+      );
+    }
+    const sweep = await postVoidReversal(
+      client,
+      { ...params, entityType: "customer_payment_deposit", memo: `${params.memo} — reverses its deposit sweep` },
+      actor
+    );
+    depositSweepReversalId = sweep.reversal_journal_entry_id;
+  }
+
   const originalLines = await readOriginalGlPostings(
     client,
     params.operatingCompanyId,
@@ -774,7 +813,7 @@ export async function postVoidReversal(
     params.allowReversalOfReversal === true
   );
   if (originalLines.length === 0) {
-    return { reversal_journal_entry_id: null, reversal_date: null, closed_period_reversal: false, reversed_line_count: 0 };
+    return { reversal_journal_entry_id: null, reversal_date: null, closed_period_reversal: false, reversed_line_count: 0, deposit_sweep_reversal_journal_entry_id: depositSweepReversalId };
   }
 
   // REINSTATE-VOIDJE-REVERSAL-SEVERS-SOURCE-LINKAGE fix — tag the NEW reversal lines with the true
@@ -1009,6 +1048,7 @@ export async function postVoidReversal(
     reversal_date: reversalDate,
     closed_period_reversal: closedPeriod,
     reversed_line_count: reversalLines.length,
+    deposit_sweep_reversal_journal_entry_id: depositSweepReversalId,
   };
 }
 
@@ -1031,6 +1071,8 @@ export async function auditVoid(
     expense: "accounting.expenses",
     bill_payment: "accounting.bill_payments",
     customer_payment: "accounting.payments",
+    // ACCT-F409 — the sweep belongs to the payment: the audit row names the payment's table.
+    customer_payment_deposit: "accounting.payments",
     // ACCT-F331 — the audit row must name the table an auditor would open, not the posting source type.
     prepaid_purchase: "accounting.prepaid_assets",
     // ACCT-F5640 — same table; the amortization-to-date reversal still targets the prepaid asset record.
