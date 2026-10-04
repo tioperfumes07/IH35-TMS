@@ -376,6 +376,9 @@ async function live() {
     const dupKey = (r) => `${r.transaction_reference}|${Math.round(Number(r.total_cost) * 100)}`;
     const loadsByReceipt = new Map();
     for (const r of liveActive) {
+      // A copy voided through the governed executor is no longer booked on its load: liveActive keeps documented
+      // voids for assertion 1 (receipt accounted for), but a double-booking is about LIVE copies only.
+      if (r.voided_at || r.archived_at) continue;
       if (!r.transaction_reference || !/^\d{5,}$/.test(String(r.transaction_reference)) || !r.load_number) continue;
       const k = dupKey(r);
       if (!loadsByReceipt.has(k)) loadsByReceipt.set(k, new Set());
