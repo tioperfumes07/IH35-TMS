@@ -1,3 +1,15 @@
+## 2026-10-04T17:25Z · BANK-F91532 Safety filter leftover slate classes · this PR
+
+DONE: SafetyDashboardFilter leftover Tailwind slate-* → house #4B5563; leftover refuse on EVEN 1230 --selftest + live.
+
+NEXT: leftover muted chrome (Integrity slate-* / skip pile) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T17:15Z · BANK-F91531 CreateWO leftover slate classes WIRED CI · tip `af9293de5b`
+
+DONE: #25273 — CreateWorkOrderModal leftover Tailwind slate-* → house tokens; leftover refuse on EVEN 2090 --selftest + live.
+
+NEXT: leftover muted chrome (Safety / Integrity slate-* / skip pile) · skip pile parked · HH14 no migrations this tick.
+
 ## 2026-10-04T17:15Z · BANK-F91531 CreateWO leftover slate classes · this PR
 
 DONE: CreateWorkOrderModal leftover Tailwind slate-* → house #1F2A44 / #4B5563 / #E5E7EB / #F7F8FA; leftover refuse on EVEN 2090 --selftest + live.
