@@ -53,6 +53,13 @@ function assertMigrated(src) {
   if (!src.includes('tableTestId="audit-trail-table"')) {
     errors.push(`${PAGE}: must preserve tableTestId="audit-trail-table"`);
   }
+  // BANK-F91305 leftover refuse — AuditTrailPage.tsx page-scoped text token ratchet
+  if (src.includes("text-[11px]")) {
+    errors.push(`${PAGE}: leftover text-[11px]`);
+  }
+  if (src.includes("#8A92AB") || src.includes("#334155")) {
+    errors.push(`${PAGE}: leftover off-scale muted`);
+  }
   return errors;
 }
 
@@ -93,6 +100,17 @@ function selftest() {
   }
   if (badErrors.length < 3) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
+    process.exit(1);
+  }
+  // BANK-F91305 leftover plant — AuditTrailPage page-scoped text token ratchet
+  const filePath = path.join(ROOT, PAGE);
+  const realGood = fs.readFileSync(filePath, "utf8");
+  const leftoverPlant = realGood + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  fs.writeFileSync(filePath, leftoverPlant);
+  const plantErrors = assertMigrated(leftoverPlant);
+  fs.writeFileSync(filePath, realGood);
+  if (plantErrors.length < 1) {
+    console.error(`${LABEL} --selftest FAIL leftover plant escaped`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);
