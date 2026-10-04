@@ -39,7 +39,7 @@ const WINDOW_OPTIONS: Array<{ id: SafetyActivityWindow; label: string }> = [
 function pill(active: boolean) {
   return active
     ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" }
-    : { background: "white", borderColor: "#cbd5e1", color: "#4B5563" };
+    : { background: "white", borderColor: "#E5E7EB", color: "#4B5563" };
 }
 
 /**

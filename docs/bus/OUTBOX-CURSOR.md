@@ -1,3 +1,15 @@
+## 2026-10-04T15:24Z · BANK-F91521 Safety filter leftover border WIRED · this PR
+
+DONE: SafetyDashboardFilter inactive-pill leftover #cbd5e1 → house border #E5E7EB; leftover refuse on verify-safety-filter-chrome; EVEN 1230 --selftest + live.
+
+NEXT: leftover muted chrome (IntegrityReports same pill / WO pie stay) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T15:20Z · BANK-F91520 HOS status-dot leftover muted WIRED CI · tip `a363d1a357`
+
+DONE: #25262 — HosTrackerSection status-dot leftover muted #4B5563; verify-steps/4036 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (Safety filter #cbd5e1 / WO pie stay) · skip pile parked · HH14 no migrations this tick.
+
 ## 2026-10-04T15:18Z · BANK-F91520 HOS status-dot leftover muted WIRED · this PR
 
 DONE: HosTrackerSection status-dot leftover #94A3B8 → house muted #4B5563; leftover refuse on verify-hos-tracker-staged-filters; EVEN 4036 --selftest + live.
