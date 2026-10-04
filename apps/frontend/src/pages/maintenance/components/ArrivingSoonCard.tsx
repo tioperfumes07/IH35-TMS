@@ -30,7 +30,7 @@ export function ArrivingSoonCard({ card, canConvert, onConvert }: Props) {
       <div className="mt-1 text-gray-700">
         {card.final_dest_name ? `→ ${card.final_dest_name}, ${card.final_dest_city ?? ""} ${card.final_dest_state ?? ""}` : "→ destination unavailable"}
       </div>
-      <div className="mt-1 text-[11px] text-gray-600">
+      <div className="mt-1 text-xs text-gray-600">
         {card.final_dest_is_yard
           ? `ETA: ${card.predicted_yard_arrival_at ? new Date(card.predicted_yard_arrival_at).toLocaleString() : "unscheduled"}`
           : "DEADHEAD-BACK PENDING · ETA unscheduled — confirm with dispatch"}
@@ -38,7 +38,7 @@ export function ArrivingSoonCard({ card, canConvert, onConvert }: Props) {
       </div>
 
       <div className="mt-2">
-        <div className="mb-1 text-[11px] font-semibold text-gray-700">Open issues ({card.total_open_issues}):</div>
+        <div className="mb-1 text-xs font-semibold text-gray-700">Open issues ({card.total_open_issues}):</div>
         <ul className="space-y-1">
           {card.issues.slice(0, 3).map((issue) => (
             <li key={issue.issue_id} className="rounded-sm border border-gray-100 bg-gray-50 px-2 py-1">
@@ -47,13 +47,13 @@ export function ArrivingSoonCard({ card, canConvert, onConvert }: Props) {
           ))}
         </ul>
         {card.total_open_issues > card.issues.slice(0, 3).length ? (
-          <p className="mt-1 text-[11px] text-slate-500" data-testid="arriving-soon-issues-range">
+          <p className="mt-1 text-xs text-slate-500" data-testid="arriving-soon-issues-range">
             Showing {card.issues.slice(0, 3).length} of {card.total_open_issues} open issues.
           </p>
         ) : null}
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+      <div className="mt-3 flex flex-wrap gap-2 text-xs">
         {canConvert ? (
           <button type="button" className="rounded-sm border border-slate-300 px-2 py-1 text-slate-700" onClick={() => onConvert(card)}>
             Convert to WO
