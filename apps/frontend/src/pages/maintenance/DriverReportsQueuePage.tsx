@@ -156,7 +156,7 @@ export function DriverReportsQueuePage({
         <div>
           <p className="whitespace-pre-wrap text-xs text-gray-700">{row.description}</p>
           {row.latitude != null && row.longitude != null ? (
-            <p className="mt-1 text-[11px] text-gray-500">
+            <p className="mt-1 text-xs text-gray-500">
               {row.latitude}, {row.longitude}
             </p>
           ) : null}
@@ -167,7 +167,7 @@ export function DriverReportsQueuePage({
       key: "evidence",
       label: "Evidence",
       render: (row) => (
-        <div className="text-[11px] text-gray-700">
+        <div className="text-xs text-gray-700">
           Photos: {row.photo_r2_paths?.length ?? 0} · Voice: {row.voice_memo_r2_path ? "yes" : "no"}
         </div>
       ),
@@ -238,7 +238,7 @@ export function DriverReportsQueuePage({
               testIdPrefix="driver-reports"
             >
               <div className="flex flex-wrap items-end gap-3" data-testid="driver-reports-entity-filters">
-                <label className="text-[11px] text-slate-600">
+                <label className="text-xs text-slate-600">
                   Driver
                   <EntityPicker
                     kind="driver"
@@ -251,7 +251,7 @@ export function DriverReportsQueuePage({
                     dataTestId="driver-reports-filter-driver"
                   />
                 </label>
-                <label className="text-[11px] text-slate-600">
+                <label className="text-xs text-slate-600">
                   Load
                   <EntityPicker
                     kind="load"
