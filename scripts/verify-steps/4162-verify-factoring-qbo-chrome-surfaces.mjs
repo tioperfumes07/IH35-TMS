@@ -3,8 +3,10 @@
 // Static, no DB — same shape as sibling verify-steps/*.mjs files.
 export default {
   name: "verify-factoring-qbo-chrome-surfaces",
-  run(ctx) {
-    ctx.run("node", ["scripts/verify-factoring-qbo-chrome-surfaces.mjs", "--selftest"]);
-    ctx.run("node", ["scripts/verify-factoring-qbo-chrome-surfaces.mjs"]);
+  async run(ctx) {
+    await ctx.run("node", ["scripts/verify-factoring-qbo-chrome-surfaces.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-factoring-qbo-chrome-surfaces.mjs"]);
+    // BANK-F91457 — FT5 Factor Setup submission email + both reserve rates (never ran in CI).
+    await ctx.run("node", ["scripts/ops/verify-factoring-ft5-setup-email-rates.mjs", "--selftest"]);
   },
 };
