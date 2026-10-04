@@ -73,13 +73,28 @@ if (process.argv.includes("--selftest")) {
     console.error(`[${LABEL}] SELFTEST FAIL: inert plants: ${inert.join(", ")}`);
     process.exit(1);
   }
-  console.log(`[${LABEL}] --selftest PASS: rejected ${CHECKS.length}/${CHECKS.length} independent detention/load reverse plants`);
+  // BANK-F91398 leftover plant — LoadDetentionReverseSection page-scoped text token ratchet
+  const leftoverPlant = sources[F.section] + '\n<span className="text-[11px] text-[#8A92AB]">plant</span>\n';
+  if (!(leftoverPlant.includes("text-[11px]") && leftoverPlant.includes("#8A92AB"))) {
+    console.error(`[${LABEL}] SELFTEST FAIL — leftover plant escaped`);
+    process.exit(1);
+  }
+  console.log(`[${LABEL}] --selftest PASS: rejected ${CHECKS.length}/${CHECKS.length} independent detention/load reverse plants + leftover plant`);
   process.exit(0);
 }
 
 const failures = collectFailures(sources);
 if (failures.length) {
   console.error(`[${LABEL}] FAIL:\n- ${failures.join("\n- ")}`);
+  process.exit(1);
+}
+// BANK-F91398 leftover refuse — LoadDetentionReverseSection page-scoped text token ratchet
+if (sources[F.section].includes("text-[11px]")) {
+  console.error(`[${LABEL}] FAIL — LoadDetentionReverseSection.tsx leftover text-[11px]`);
+  process.exit(1);
+}
+if (sources[F.section].includes("#8A92AB")) {
+  console.error(`[${LABEL}] FAIL — LoadDetentionReverseSection.tsx leftover off-scale muted #8A92AB`);
   process.exit(1);
 }
 console.log(`[${LABEL}] PASS: ${CHECKS.length} exact detention↔load reverse-link obligations ratcheted`);
