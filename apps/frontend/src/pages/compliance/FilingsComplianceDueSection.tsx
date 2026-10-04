@@ -143,7 +143,7 @@ export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
             <div className={`text-page-title font-semibold ${key === "overdue" ? "text-red-700" : "text-[#1f2a44]"}`}>
               {counts[key]}
             </div>
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>
           </button>
         ))}
       </div>
