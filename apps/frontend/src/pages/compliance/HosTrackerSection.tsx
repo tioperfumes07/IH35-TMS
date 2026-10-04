@@ -47,15 +47,15 @@ function hmm(min: number | null): string {
 }
 
 const STATUS_VERDICT: Record<string, { label: string; cls: string }> = {
-  ok: { label: "OK", cls: "text-slate-700" },
-  warning_1hr: { label: "Low", cls: "text-slate-700" },
-  warning_15min: { label: "Low", cls: "text-slate-700" },
+  ok: { label: "OK", cls: "text-[#1F2A44]" },
+  warning_1hr: { label: "Low", cls: "text-[#1F2A44]" },
+  warning_15min: { label: "Low", cls: "text-[#1F2A44]" },
   violation: { label: "Violation", cls: "text-red-700" },
 };
 
 function driverVerdict(d: HosRosterDriver): { label: string; cls: string } {
-  if (!d.available || !d.clocks) return { label: "Unavailable", cls: "text-slate-400" };
-  return STATUS_VERDICT[d.clocks.status] ?? { label: "OK", cls: "text-slate-700" };
+  if (!d.available || !d.clocks) return { label: "Unavailable", cls: "text-[#4B5563]" };
+  return STATUS_VERDICT[d.clocks.status] ?? { label: "OK", cls: "text-[#1F2A44]" };
 }
 
 export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: string }) {
@@ -124,11 +124,11 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
   const asOf = roster?.generated_at ? new Date(roster.generated_at).toLocaleTimeString("en-US", { timeZone: "America/Chicago", hour: "2-digit", minute: "2-digit", hour12: false }) : null;
 
   const kpis: { label: string; value: number; cls: string }[] = [
-    { label: "On Duty", value: c.on_duty, cls: "text-slate-900" },
-    { label: "Driving", value: c.driving, cls: "text-slate-900" },
-    { label: "Low hours", value: c.low, cls: "text-slate-700" },
+    { label: "On Duty", value: c.on_duty, cls: "text-[#0F1219]" },
+    { label: "Driving", value: c.driving, cls: "text-[#0F1219]" },
+    { label: "Low hours", value: c.low, cls: "text-[#1F2A44]" },
     { label: "Violation", value: c.violation, cls: "text-red-700" },
-    { label: "Unavailable", value: c.unavailable, cls: "text-slate-500" },
+    { label: "Unavailable", value: c.unavailable, cls: "text-[#4B5563]" },
   ];
 
   const columns = useMemo<ParityColumn<HosRosterDriver>[]>(
@@ -138,7 +138,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
         label: "Driver",
         sortable: true,
         render: (driver) => (
-          <span className="font-medium text-slate-900">
+          <span className="font-medium text-[#0F1219]">
             <EntityLinkOrTombstone kind="driver" id={driver.driver_id} name={driver.driver_name} noun="Driver" />
           </span>
         ),
@@ -218,10 +218,10 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
     <section data-testid="compliance-section-hos-tracker">
       {/* Section band */}
       <div className="flex items-center bg-[#F1EFE8] px-3" style={{ height: 26 }}>
-        <span className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+        <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[#4B5563]">
           Driver duty-status timeline · {selectedDate === today ? "today" : selectedDate}
         </span>
-        <span className="ml-auto text-xs text-slate-400">
+        <span className="ml-auto text-xs text-[#4B5563]">
           {c.active} active · {c.unavailable} unavailable{asOf ? ` · as of ${asOf} CT` : ""}
         </span>
       </div>
@@ -230,8 +230,8 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
         {/* KPI row */}
         <div className="flex flex-wrap gap-2">
           {kpis.map((k) => (
-            <div key={k.label} className="flex h-[30px] min-w-[120px] flex-1 items-center justify-between rounded-sm border border-slate-200 bg-white px-2.5">
-              <span className="text-xs uppercase tracking-wider text-slate-500">{k.label}</span>
+            <div key={k.label} className="flex h-[30px] min-w-[120px] flex-1 items-center justify-between rounded-sm border border-[#E5E7EB] bg-white px-2.5">
+              <span className="text-xs uppercase tracking-wider text-[#4B5563]">{k.label}</span>
               <span className={`text-xs font-semibold tabular-nums ${k.cls}`}>{k.value}</span>
             </div>
           ))}
@@ -244,16 +244,16 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
               key={d.date}
               type="button"
               onClick={() => setSelectedDate(d.date)}
-              className={`rounded-sm border px-2.5 py-1 text-center text-xs leading-tight ${selectedDate === d.date ? "border-slate-800 font-bold text-slate-900 shadow-[inset_0_-2px_0_#1f2a44]" : "border-slate-200 text-slate-500"}`}
+              className={`rounded-sm border px-2.5 py-1 text-center text-xs leading-tight ${selectedDate === d.date ? "border-[#1F2A44] font-bold text-[#0F1219] shadow-[inset_0_-2px_0_#1f2a44]" : "border-[#E5E7EB] text-[#4B5563]"}`}
             >
               {formatPlannerDayLabel(d.date)}
-              <span className="block text-xs text-slate-400">{d.weekday}</span>
+              <span className="block text-xs text-[#4B5563]">{d.weekday}</span>
             </button>
           ))}
         </div>
 
         <div className="relative max-w-sm space-y-2" data-testid="hos-tracker-filters">
-          <label className="text-xs text-slate-600">
+          <label className="text-xs text-[#4B5563]">
             Driver
             <EntityPicker
               kind="driver"
@@ -312,7 +312,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
             loading={rosterQ.isLoading || (rosterQ.isFetching && !roster)}
             onRowClick={setSelectedDriver}
             rowClassName={(driver) =>
-              `cursor-pointer hover:bg-slate-50 ${driver.available ? "" : "opacity-70"}`
+              `cursor-pointer hover:bg-[#F7F8FA] ${driver.available ? "" : "opacity-70"}`
             }
             storageKey="compliance-hos-tracker"
             emptyText={effectiveDriverId ? "No HOS roster row for this driver on the selected day." : "No active drivers."}
@@ -324,25 +324,25 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
         <div className="fixed inset-0 z-40 flex justify-end" role="dialog" aria-modal="true">
           <div className="absolute inset-0 bg-black/30" onClick={() => setSelectedDriver(null)} />
           <div className="relative z-10 h-full w-[380px] max-w-[90vw] overflow-y-auto bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+            <div className="flex items-center justify-between border-b border-[#E5E7EB] px-4 py-3">
               <div>
-                <div className="text-xs font-semibold text-slate-900">
+                <div className="text-xs font-semibold text-[#0F1219]">
                   <EntityLinkOrTombstone kind="driver" id={selectedDriver.driver_id} name={selectedDriver.driver_name} noun="Driver" />
                 </div>
-                <div className="text-xs text-slate-500">
+                <div className="text-xs text-[#4B5563]">
                   Unit{" "}
                   <EntityLinkOrTombstone kind="unit" id={selectedDriver.unit_id} name={selectedDriver.unit_number} noun="Unit" data-testid="hos-tracker-detail-unit-link" />{" "}
                   · {selectedDate} · HOS cycle detail
                 </div>
               </div>
-              <button type="button" onClick={() => setSelectedDriver(null)} className="rounded-sm px-2 py-1 text-slate-500 hover:bg-slate-100" aria-label="Close">✕</button>
+              <button type="button" onClick={() => setSelectedDriver(null)} className="rounded-sm px-2 py-1 text-[#4B5563] hover:bg-[#E5E7EB]" aria-label="Close">✕</button>
             </div>
             {!selectedDriver.available || !selectedDriver.clocks ? (
-              <div className="px-4 py-10 text-center text-xs text-slate-500">HOS unavailable for this driver on {selectedDate}.</div>
+              <div className="px-4 py-10 text-center text-xs text-[#4B5563]">HOS unavailable for this driver on {selectedDate}.</div>
             ) : (
               <div className="space-y-4 px-4 py-4">
                 <div>
-                  <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Remaining (Samsara certified)</div>
+                  <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Remaining (Samsara certified)</div>
                   <div className="grid grid-cols-2 gap-2">
                     {[
                       { label: "Drive", v: selectedDriver.clocks.drive_remaining_min },
@@ -350,31 +350,31 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
                       { label: "Break", v: selectedDriver.clocks.break_remaining_min },
                       { label: "Cycle (70h)", v: selectedDriver.clocks.cycle_remaining_min },
                     ].map((c) => (
-                      <div key={c.label} className="rounded-sm border border-slate-200 px-2.5 py-1.5">
-                        <div className="text-xs uppercase tracking-wide text-slate-500">{c.label}</div>
-                        <div className="text-xs font-semibold tabular-nums text-slate-900">{hmm(c.v)}</div>
+                      <div key={c.label} className="rounded-sm border border-[#E5E7EB] px-2.5 py-1.5">
+                        <div className="text-xs uppercase tracking-wide text-[#4B5563]">{c.label}</div>
+                        <div className="text-xs font-semibold tabular-nums text-[#0F1219]">{hmm(c.v)}</div>
                       </div>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">8-day on-duty (home-terminal days)</div>
+                  <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">8-day on-duty (home-terminal days)</div>
                   <div className="space-y-1">
                     {(selectedDriver.eight_day_breakdown ?? []).map((day) => {
                       const pct = Math.min(100, ((day.on_duty_min ?? 0) / (14 * 60)) * 100);
                       return (
                         <div key={day.date} className="flex items-center gap-2">
-                          <span className="w-16 shrink-0 text-xs text-slate-500">{formatPlannerDayLabel(day.date)}</span>
-                          <div className="h-3 flex-1 rounded-sm bg-slate-100">
+                          <span className="w-16 shrink-0 text-xs text-[#4B5563]">{formatPlannerDayLabel(day.date)}</span>
+                          <div className="h-3 flex-1 rounded-sm bg-[#F7F8FA]">
                             <div className="h-3 rounded-sm bg-[#1f2a44]" style={{ width: `${pct}%` }} />
                           </div>
-                          <span className="w-12 shrink-0 text-right text-xs tabular-nums text-slate-600">{hmm(day.on_duty_min)}</span>
+                          <span className="w-12 shrink-0 text-right text-xs tabular-nums text-[#4B5563]">{hmm(day.on_duty_min)}</span>
                         </div>
                       );
                     })}
                   </div>
                 </div>
-                <p className="text-xs text-slate-400">Verbatim Samsara certified ELD — not recomputed.</p>
+                <p className="text-xs text-[#4B5563]">Verbatim Samsara certified ELD — not recomputed.</p>
               </div>
             )}
           </div>

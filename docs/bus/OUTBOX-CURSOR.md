@@ -1,3 +1,15 @@
+## 2026-10-04T18:05Z · BANK-F91536 HosTracker leftover slate classes · this PR
+
+DONE: HosTrackerSection leftover Tailwind slate-* → house #1F2A44 / #0F1219 / #4B5563 / #E5E7EB / #F7F8FA; leftover refuse on EVEN 4036 --selftest + live.
+
+NEXT: leftover muted chrome (LaneProfit frame drain / remaining slate-* pages / skip pile) · skip pile parked · HH15 leftovers first.
+
+## 2026-10-04T17:55Z · BANK-F91535 LaneProfit leftover text slate classes WIRED CI · tip `cea0477374`
+
+DONE: #25277 — LaneProfitabilityPage leftover text-slate-* / input border-slate-300 → house tokens; leftover refuse on EVEN 2320 --selftest + live.
+
+NEXT: leftover muted chrome (HosTracker slate-* / frame drain / skip pile) · skip pile parked · HH15 leftovers first.
+
 ## 2026-10-04T17:55Z · BANK-F91535 LaneProfit leftover text slate classes · this PR
 
 DONE: LaneProfitabilityPage leftover text-slate-* / input border-slate-300 → house #4B5563 / #0F1219 / #E5E7EB; leftover refuse on EVEN 2320 --selftest + live. Frame border-slate-* stay locked by box-in-box.
