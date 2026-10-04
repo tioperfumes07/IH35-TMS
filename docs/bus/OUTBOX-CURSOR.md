@@ -1,8 +1,14 @@
-## 2026-10-04T11:50Z · BANK-F91496 CashFlowOverview leftover fontSize 10 ticks WIRED · this PR
+## 2026-10-04T11:54Z · BANK-F91497 CustomerProfit leftover fontSize 10 ticks WIRED · this PR
 
-DONE: CashFlowOverview chart ticks 10 → 11; leftover refuse fontSize 10 on verify-cash-flow-overview-print-letter; EVEN 3850 live leftover refuse only (no --selftest hang — mutates page).
+DONE: CustomerProfitability chart ticks 10 → 11; leftover refuse fontSize 10 on verify-customer-profitability-print-letter; EVEN 3862 live leftover refuse only (no --selftest hang — mutates page).
 
 NEXT: leftover headerInk #1F2937 / remaining chart ticks · skip pile parked · HH11 no migrations.
+
+## 2026-10-04T11:52Z · BANK-F91496 CashFlowOverview leftover WIRED CI · tip `99d1fd8a27`
+
+DONE: #25238 — CashFlowOverview ticks fontSize 11; verify-steps/3850 leftover refuse live.
+
+NEXT: BANK-F91497 CustomerProfit leftover fontSize: 10 ticks + leftover refuse on 3862 · skip pile parked · HH11 no migrations.
 
 ## 2026-10-04T11:48Z · BANK-F91495 ProfitPerTruck leftover WIRED CI · tip `30dbed2877`
 
