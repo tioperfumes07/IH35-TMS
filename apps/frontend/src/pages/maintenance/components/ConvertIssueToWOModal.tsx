@@ -93,7 +93,7 @@ export function ConvertIssueToWOModal({ open, operatingCompanyId, card, onClose,
               ))}
             </SelectCombobox>
           </label>
-          <div className="text-[11px] text-gray-600">Suggested type: {suggested}</div>
+          <div className="text-xs text-gray-600">Suggested type: {suggested}</div>
           <label className="space-y-1">
             <span>Additional notes</span>
             <textarea className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
