@@ -13202,5 +13202,305 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-recurring-bills"
+  },
+  "15725": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-a1-audit-spine-link"
+  },
+  "15729": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-a2-audit-emit-dispatch"
+  },
+  "15733": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-a3-audit-emit-maintenance"
+  },
+  "15737": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-a6-audit-universal-view"
+  },
+  "15741": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-a7-audit-per-entity-tabs"
+  },
+  "15745": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-a8-audit-reports-section"
+  },
+  "15749": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-abandonment-driver-picker"
+  },
+  "15753": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-accident-work-orders-reverse-failure-exclusion"
+  },
+  "15757": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-admin-audit-log-viewer-chrome"
+  },
+  "15761": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-aggregate-savepoints"
+  },
+  "15765": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-aggregate-schema-grants"
+  },
+  "15769": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-aggregate-shape-route"
+  },
+  "15773": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-all-list-pages-load-200"
+  },
+  "15777": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-amortization-gl-flag-gate"
+  },
+  "15781": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-amortization-load-errors"
+  },
+  "15785": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-anomaly-dashboard-action-company-scope"
+  },
+  "15789": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-anomaly-detail-action-company-lifecycle"
+  },
+  "15793": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-anomaly-rule-seed-company-lifecycle"
+  },
+  "15797": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-app-pool-role-fail-closed"
+  },
+  "15801": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-arrival-detection-tenant-scope"
+  },
+  "15805": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-audit-actor-filter-null-company-events-visible"
+  },
+  "15809": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-audit-chain-cron-registered"
+  },
+  "15813": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-audit-chain-verify"
+  },
+  "15817": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-audit-fix-1-bulk-select-works"
+  },
+  "15821": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-audit-fix-11-qbo-sync-status-loads"
+  },
+  "15825": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-audit-fix-13-customers-pagination-works"
+  },
+  "15829": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-audit-fix-14-subtabs-deep-linkable"
+  },
+  "15833": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-audit-fix-2-column-resize-persists"
+  },
+  "15837": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-audit-fix-4-no-overflow-1024"
+  },
+  "15841": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-audit-fix-5-no-nested-boxes"
+  },
+  "15845": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-audit-fix-6-routes-do-not-redirect"
+  },
+  "15849": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-audit-fix-7-blank-pages-have-content"
+  },
+  "15853": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-audit-fix-9-endpoints-no-500-on-load"
+  },
+  "15857": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-audit-session-attribution"
+  },
+  "15861": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-audit-trail-failure-exclusion"
+  },
+  "15865": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-auth-ai-rate-limits"
+  },
+  "15869": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-auth-gate-panel-fails-closed"
+  },
+  "15873": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-auto-geofence-tenant-scope"
+  },
+  "15877": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-awaiting-truck-driver-hos"
+  },
+  "15881": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-backend-schema-contract"
+  },
+  "15885": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-background-check-create-company-lifecycle"
+  },
+  "15889": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-baselines-are-post-wipe"
+  },
+  "15893": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-book-load-driver-qualification-gate"
+  },
+  "15897": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-book-load-hard-block-response-not-silent"
+  },
+  "15901": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-book-load-historical-inactive-driver"
+  },
+  "15905": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-book-load-initial-assignment-history"
+  },
+  "15909": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-book-load-miles-required"
+  },
+  "15913": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-book-load-modal-x-dismissible"
+  },
+  "15917": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-book-load-post-insert-updates-checked"
+  },
+  "15921": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-book-load-stop-validation-honesty"
+  },
+  "15925": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-book-load-submit-not-silent"
+  },
+  "15929": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-book-load-validation-summary-honest"
+  },
+  "15933": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-booking-driver-names"
+  },
+  "15937": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bookload-equipment-query-failure-honesty"
+  },
+  "15941": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bookload-section-b-hos"
+  },
+  "15945": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bookload-stop-address-oneline"
+  },
+  "15949": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-border-crossing-cbp-wait-cache-rls"
+  },
+  "15953": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-border-geofence-seed"
+  },
+  "15957": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bug3-g18-fuel-load-link"
+  },
+  "15961": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bulk-audit-per-id"
   }
 }
