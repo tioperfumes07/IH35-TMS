@@ -1319,7 +1319,7 @@ export function TruckLineBoard({
 
       <div className="mb-2 flex min-w-0 flex-wrap items-center gap-2">
         <label className="flex items-center gap-1.5 text-xs text-[#1F2A44]" data-testid="truck-line-top-bar">
-          <span className="font-semibold uppercase tracking-[0.3px] text-[#4B5563]" style={{ fontSize: 11 }}>Status</span>
+          <span className="font-semibold uppercase tracking-[0.3px] text-[#4B5563] text-section-header">Status</span>
           {/* TRUCKLINE-STATUS-COMBOBOX (Lead, 2026-09-30) — the owner asked for the house combo
               drop-down here twice; it was still a bare <select>, which is why it looked and
               behaved unlike every other filter in the app. This is components/Combobox, size
