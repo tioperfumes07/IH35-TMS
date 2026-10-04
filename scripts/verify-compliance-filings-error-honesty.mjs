@@ -20,6 +20,9 @@ function failures(source) {
   const errorIndex = source.indexOf("dashboardQ.isError ? (");
   const tableIndex = source.indexOf("<ParityTable<FilingItem>");
   if (errorIndex < 0 || tableIndex < errorIndex) errors.push("table must render inside the successful query branch");
+  // BANK-F91341 leftover refuse — FilingsComplianceDueSection page-scoped text token ratchet
+  if (source.includes("text-[11px]")) errors.push("FilingsComplianceDueSection.tsx: leftover text-[11px]");
+  if (source.includes("#8A92AB")) errors.push("FilingsComplianceDueSection.tsx: leftover off-scale muted #8A92AB");
   return errors;
 }
 
@@ -34,6 +37,11 @@ if (process.argv.includes("--selftest")) {
   ];
   for (const mutation of mutations) {
     if (!failures(good.replace(mutation, "MUTATED")).length) throw new Error(`${LABEL}: mutation survived: ${mutation}`);
+  }
+  // BANK-F91341 leftover plant
+  const leftoverPlant = good + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!failures(leftoverPlant).some((e) => e.includes("leftover text-[11px]"))) {
+    throw new Error(`${LABEL}: leftover plant escaped`);
   }
   console.log(`${LABEL}: selftest PASS (${mutations.length} mutations caught)`);
 } else {
