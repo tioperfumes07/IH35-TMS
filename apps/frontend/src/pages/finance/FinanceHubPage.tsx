@@ -33,7 +33,7 @@ function KpiCard({ kpi, to }: { kpi: FinanceHubKpi; to: string }) {
       className="flex flex-col justify-between rounded-sm border border-slate-200 bg-white p-4 transition hover:shadow-xs"
     >
       <div>
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{kpi.label}</div>
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{kpi.label}</div>
         <div className="mt-1 text-page-title font-semibold tabular-nums text-slate-900">{kpiDisplay(kpi)}</div>
         {kpi.secondary ? <div className="mt-1 text-xs text-slate-500">{kpi.secondary}</div> : null}
       </div>
