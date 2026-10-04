@@ -1,3 +1,9 @@
+## 2026-10-04T09:50Z · BANK-F91470 customers ORDERS complete WIRED CI · tip `2a10ce0ad5`
+
+DONE: #25212 — verify-steps/3560 now runs ops/verify-customers-orders-complete --selftest.
+
+NEXT: BANK-F91471 wire vendors ORDERS complete into 4306 · C-21 odometer + C-22 fail=triage · skip pile parked · HH09 no migrations.
+
 ## 2026-10-04T09:44Z · BANK-F91469 R313 maintenance designs WIRED CI · tip `e2390d2006`
 
 DONE: #25211 — verify-steps/3458 now runs ops/verify-r313-maintenance-designs --selftest.
