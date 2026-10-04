@@ -50,8 +50,15 @@ const FLOORS = {
   // canonical engine. Every removed row is preserved as a live alias (mdata.customer_aliases 22, mdata.vendor_aliases 3:
   // name, full snapshot, exact repoint log — reversible), A/R and A/P unchanged to the cent. Same deliberate, reviewed,
   // one-time floor drop as AUTH-101 / AUTH-177 above; a drop without a matching alias still fails.
-  "mdata.customers": { floor: 1216 },
-  "mdata.vendors": { floor: 619 },
+  // LOWERED 2026-10-04 (CC-3, live-verified 1215 / 616 on the DIRECT endpoint before editing): the Lead's ROUND 389.3
+  // purge of the ROUND 390.1 E2E fixtures, run as neondb_owner (RLS denies hard deletes to ih35_app), owner-confirmed
+  // ("YES", 2026-10-04, to CC-1 and to CC-3 for both batches). audit.row_changes: 02:37:23Z customers "E2E Customer
+  // 2E-06daf76e / 2E-95603e75 / 2E-edd081e8" (is_sample_data true) + load E2E-2E-95603e75; 02:38:08Z vendor "CC3
+  // QA-Fixture WO Picker 20260822"; 02:44:09Z vendors "Juan USMCA-Battery" and "ZZTEST AUTOACCT PROBE". Customers net
+  // 1216 -> 1215 (3 removed, 2 real customers added since the last stamp); vendors 619 -> 616. Same deliberate, reviewed,
+  // one-time floor drop as AUTH-101 / AUTH-177 / AUTH-202 above — deletes stay forbidden for every non-authorized path.
+  "mdata.customers": { floor: 1215 },
+  "mdata.vendors": { floor: 616 },
   "catalogs.accounts": { floor: 193 },
   "mdata.drivers": { floor: 167 },
   "catalogs.items": { floor: 148 },
