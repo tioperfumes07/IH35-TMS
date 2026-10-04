@@ -245,7 +245,7 @@ export function LegalSignPage() {
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button
-              className="rounded-sm bg-[#334155] px-3 py-2 text-xs font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="rounded-sm bg-[#4B5563] px-3 py-2 text-xs font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-300"
               type="button"
               disabled={isStartingVerify}
               onClick={startVerification}

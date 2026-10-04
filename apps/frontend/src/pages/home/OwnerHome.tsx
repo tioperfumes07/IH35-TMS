@@ -308,7 +308,7 @@ export function OwnerHome({ auth }: Props) {
         subtitle={`Workspace snapshot for the last three days (${displayName})`}
         actions={
           <div className="flex flex-wrap items-center justify-end gap-2">
-            <button type="button" className="text-xs font-medium text-slate-700 hover:underline" onClick={printLetter}>
+            <button type="button" className="text-xs font-medium text-[#1F2A44] hover:underline" onClick={printLetter}>
               Print this page
             </button>
             <Button variant="secondary" onClick={refreshAll}>
@@ -326,16 +326,16 @@ export function OwnerHome({ auth }: Props) {
       {selectedCompanyId ? <HomeFleetRestoreCard operatingCompanyId={selectedCompanyId} /> : null}
 
       {selectedCompanyId ? (
-        <section className="rounded-sm border border-slate-300 bg-slate-100/90 px-3 py-3 text-xs text-slate-700">
+        <section className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA]/90 px-3 py-3 text-xs text-[#1F2A44]">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <div className="text-section-header font-semibold uppercase tracking-wide text-slate-700">Pending Owner Approvals</div>
+              <div className="text-section-header font-semibold uppercase tracking-wide text-[#1F2A44]">Pending Owner Approvals</div>
               <div className="mt-1 font-semibold">
                 {ownerCashPendingQuery.isLoading
                   ? "Loading…"
                   : `${ownerCashPending.length} cash advance request${ownerCashPending.length === 1 ? "" : "s"} awaiting Owner action`}
               </div>
-              <p className="mt-1 max-w-2xl text-xs text-slate-700/90">
+              <p className="mt-1 max-w-2xl text-xs text-[#1F2A44]/90">
                 Above-policy driver requests escalated from the office for your approval. Open the queue to review each request and approve or
                 decline it.
               </p>
@@ -348,7 +348,7 @@ export function OwnerHome({ auth }: Props) {
             </Link>
           </div>
           {ownerCashPending.length > 0 ? (
-            <ul className="mt-2 space-y-1 border-t border-slate-300/80 pt-2 text-xs">
+            <ul className="mt-2 space-y-1 border-t border-[#E5E7EB]/80 pt-2 text-xs">
               {ownerCashPending.slice(0, 5).map((r) => (
                 <li key={String(r.id ?? "")} className="flex min-w-0 flex-wrap justify-between gap-2">
                   <span className="font-mono">{String(r.display_id ?? "")}</span>
@@ -360,7 +360,7 @@ export function OwnerHome({ auth }: Props) {
                       className="single-line-name"
                     />
                   </span>
-                  <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-700">Above policy</span>
+                  <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-medium text-[#1F2A44]">Above policy</span>
                 </li>
               ))}
             </ul>
@@ -368,8 +368,8 @@ export function OwnerHome({ auth }: Props) {
         </section>
       ) : null}
 
-      <section className="attention-list order-1 rounded-sm border border-slate-200 bg-white lg:order-2">
-        <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold text-slate-900">Attention</div>
+      <section className="attention-list order-1 rounded-sm border border-[#E5E7EB] bg-white lg:order-2">
+        <div className="border-b border-[#E5E7EB] px-3 py-2 text-xs font-semibold text-[#0F1219]">Attention</div>
         <div className="px-3 py-1">
           <AttentionList operatingCompanyId={selectedCompanyId} maxVisibleWhenCollapsed={5} />
         </div>
@@ -380,7 +380,7 @@ export function OwnerHome({ auth }: Props) {
           canonical source (never a literal), so a chip's number always matches the list it drills
           into (verify-saved-query-chips.mjs). */}
       <section className="saved-query-chips order-1 lg:order-2" data-testid="saved-query-chips">
-        <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Saved queries</div>
+        <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Saved queries</div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
           <DrillKpiCard
             testId="saved-query-chip-unmatched-fuel"
@@ -464,7 +464,7 @@ export function OwnerHome({ auth }: Props) {
               kpiRange === "today" && tr != null && tr.delta_pct_vs_yesterday != null && Number.isFinite(tr.delta_pct_vs_yesterday) ? (
                 <span
                   className={`inline-flex rounded px-1.5 py-0.5 font-semibold ${
-                    tr.delta_pct_vs_yesterday >= 0 ? "bg-slate-100 text-slate-700" : "bg-red-100 text-red-800"
+                    tr.delta_pct_vs_yesterday >= 0 ? "bg-[#F7F8FA] text-[#1F2A44]" : "bg-red-100 text-red-800"
                   }`}
                 >
                   {tr.delta_pct_vs_yesterday >= 0 ? "↑ " : "↓ "}
@@ -546,7 +546,7 @@ export function OwnerHome({ auth }: Props) {
           isError={factoringBalanceQuery.isError}
           error={factoringBalanceQuery.error}
           onRetry={() => void factoringBalanceQuery.refetch()}
-          accent="#475569"
+          accent="#4B5563"
           subtext={
             !fb
               ? null
@@ -564,19 +564,19 @@ export function OwnerHome({ auth }: Props) {
       </div>
 
       <section className="chart-grid order-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-sm border border-slate-200 bg-white p-3 shadow-xs">
+        <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 shadow-xs">
           <WeeklyRevenueChart operatingCompanyId={selectedCompanyId} />
         </div>
-        <div className="rounded-sm border border-slate-200 bg-white p-3 shadow-xs">
+        <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 shadow-xs">
           <WOStatusPieChart operatingCompanyId={selectedCompanyId} />
         </div>
-        <div className="rounded-sm border border-slate-200 bg-white p-3 shadow-xs md:col-span-2 lg:col-span-1">
+        <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 shadow-xs md:col-span-2 lg:col-span-1">
           <FleetUtilizationGauge operatingCompanyId={selectedCompanyId} />
         </div>
       </section>
 
       <section className="order-5 space-y-2">
-        <div className="text-section-header font-semibold uppercase tracking-wide text-slate-500">Operations snapshot (reports KPIs)</div>
+        <div className="text-section-header font-semibold uppercase tracking-wide text-[#4B5563]">Operations snapshot (reports KPIs)</div>
         <div className="grid grid-cols-1 gap-2 xl:grid-cols-7">
           {kpiItems.map((item) => (
             <div
@@ -585,25 +585,25 @@ export function OwnerHome({ auth }: Props) {
                 item.alert === "crit"
                   ? "border-l-[3px] border-l-crit"
                   : item.alert === "warn"
-                    ? "border-l-[3px] border-l-[#334155]"
-                    : "border-slate-200"
+                    ? "border-l-[3px] border-l-[#4B5563]"
+                    : "border-[#E5E7EB]"
               }`}
             >
-              <div className="text-section-header font-semibold uppercase tracking-[0.04em] text-slate-500">{item.label}</div>
+              <div className="text-section-header font-semibold uppercase tracking-[0.04em] text-[#4B5563]">{item.label}</div>
               <div
                 className={`text-xs font-semibold ${
                   item.alert === "crit"
                     ? "text-crit"
                     : item.alert === "warn"
-                      ? "text-[#334155]"
+                      ? "text-[#4B5563]"
                       : item.healthy
-                        ? "text-[#334155]"
-                        : "text-slate-900"
+                        ? "text-[#4B5563]"
+                        : "text-[#0F1219]"
                 }`}
               >
                 {item.number}
               </div>
-              <div className="text-xs text-slate-500">{item.meta}</div>
+              <div className="text-xs text-[#4B5563]">{item.meta}</div>
             </div>
           ))}
         </div>
@@ -624,12 +624,12 @@ export function OwnerHome({ auth }: Props) {
       <div className="order-7">
         <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
           {fleetSnapshotQuery.isLoading ? (
-            <section className="rounded-sm border border-slate-200 bg-white">
-              <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold text-slate-900">Fleet Snapshot</div>
+            <section className="rounded-sm border border-[#E5E7EB] bg-white">
+              <div className="border-b border-[#E5E7EB] px-3 py-2 text-xs font-semibold text-[#0F1219]">Fleet Snapshot</div>
               <div className="space-y-2 p-3">
-                <div className="h-6 animate-pulse rounded-sm bg-slate-100" />
-                <div className="h-6 animate-pulse rounded-sm bg-slate-100" />
-                <div className="h-6 animate-pulse rounded-sm bg-slate-100" />
+                <div className="h-6 animate-pulse rounded-sm bg-[#F7F8FA]" />
+                <div className="h-6 animate-pulse rounded-sm bg-[#F7F8FA]" />
+                <div className="h-6 animate-pulse rounded-sm bg-[#F7F8FA]" />
               </div>
             </section>
           ) : fleetSnapshotQuery.isError ? (

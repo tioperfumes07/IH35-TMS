@@ -114,13 +114,13 @@ export function CatalogQuickCreateDrawer({
         data-testid="catalog-quick-create-drawer"
       >
         {/* Provenance, visible to the operator: this create writes the same table the list reads. */}
-        <p className="text-xs text-[#64748b]" data-testid="catalog-quick-create-target">
+        <p className="text-xs text-[#4B5563]" data-testid="catalog-quick-create-target">
           Saves to {config.writeTable}
         </p>
 
         {fields.map((field) => (
           <label className="block" key={field.name}>
-            <span className="text-xs font-medium text-[#334155]">
+            <span className="text-xs font-medium text-[#4B5563]">
               {field.label}
               {field.required ? " *" : ""}
             </span>
@@ -146,7 +146,7 @@ export function CatalogQuickCreateDrawer({
                 onChange={(e) => setValues((prev) => ({ ...prev, [field.name]: e.target.value }))}
               />
             )}
-            {field.help ? <span className="mt-0.5 block text-xs text-[#64748b]">{field.help}</span> : null}
+            {field.help ? <span className="mt-0.5 block text-xs text-[#4B5563]">{field.help}</span> : null}
           </label>
         ))}
 

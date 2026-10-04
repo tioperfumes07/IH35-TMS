@@ -51,8 +51,18 @@ function auditRowBorderVisible(src) {
   return failures;
 }
 
+function leftoverHits(src) {
+  const hits = [];
+  if (/fontSize:\s*11\b/.test(src)) hits.push(`${BOARD_FILE}: leftover fontSize: 11 — use text-section-header`);
+  // BANK-F91525 — Clear-button leftover border only. SVG fill="#CBD5E1" stays locked illustration.
+  if (src.includes("border-[#CBD5E1]") || src.includes("border-[#cbd5e1]")) {
+    hits.push(`${BOARD_FILE}: leftover border-[#CBD5E1] — use house #E5E7EB`);
+  }
+  return hits;
+}
+
 function auditAll(src) {
-  return [...auditNoDriverNamesRendered(src), ...auditUniversalFilter(src), ...auditRowBorderVisible(src)];
+  return [...auditNoDriverNamesRendered(src), ...auditUniversalFilter(src), ...auditRowBorderVisible(src), ...leftoverHits(src)];
 }
 
 function run() {
@@ -81,13 +91,17 @@ if (process.argv.includes("--selftest")) {
   assert.notEqual(mutated2, realSrc, "mutation 2 did not change the source");
   assert.ok(auditAll(mutated2).length > 0, "MUTATION 2 (universal filter removed) escaped detection");
 
-  const rowBorderNeedle = "border-bottom: 1px solid ${LOCKED_BORDER};\n          min-height: 56px;";
+  const rowBorderNeedle = "border-bottom: 1px solid ${LOCKED_BORDER};\n          min-height: 40px;";
   assert.ok(realSrc.includes(rowBorderNeedle), "selftest fixture out of sync with the real row border rule");
-  const mutated3 = realSrc.replace(rowBorderNeedle, "border-bottom: 1px solid #E5E7EB;\n          min-height: 56px;");
+  const mutated3 = realSrc.replace(rowBorderNeedle, "border-bottom: 1px solid #E5E7EB;\n          min-height: 40px;");
   assert.notEqual(mutated3, realSrc, "mutation 3 did not change the source");
   assert.ok(auditAll(mutated3).length > 0, "MUTATION 3 (row border regressed to #E5E7EB) escaped detection");
 
-  console.log("verify-truck-line-units-only --selftest PASS (3/3 mutations caught)");
+  const leftoverPlant = `${realSrc}\n<span style={{ fontSize: 11 }} className="border-[#CBD5E1]">plant</span>`;
+  assert.ok(leftoverHits(leftoverPlant).some((e) => e.includes("leftover fontSize: 11")), "leftover fontSize: 11 plant escaped");
+  assert.ok(leftoverHits(leftoverPlant).some((e) => e.includes("leftover border-[#CBD5E1]")), "leftover border-[#CBD5E1] plant escaped");
+
+  console.log("verify-truck-line-units-only --selftest PASS (3/3 mutations caught + leftover plant)");
   process.exit(0);
 }
 

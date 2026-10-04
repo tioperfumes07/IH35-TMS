@@ -9,5 +9,7 @@ export default {
   async run(ctx) {
     await ctx.run("node", [SCRIPT, "--selftest"]);
     await ctx.run("node", [SCRIPT]);
+    // BANK-F91460 — E-42 Dashcam viewer (never ran in CI).
+    await ctx.run("node", ["scripts/ops/verify-e42-dashcam-viewer.mjs", "--selftest"]);
   },
 };

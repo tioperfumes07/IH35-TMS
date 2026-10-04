@@ -53,8 +53,8 @@ export function ThreeMileCpmPanel({ operatingCompanyId }: { operatingCompanyId: 
   const columns = useMemo<ParityColumn<ThreeMileRow>[]>(
     () => [
       { key: "label", label: GROUPS.find((g) => g.value === groupBy)?.label ?? "Group", alwaysVisible: true, render: groupCell },
-      { key: "loads", label: "Loads delivered", sortValue: (r) => r.loads, render: (r) => String(r.loads) },
-      { key: "direct_cost_cents", label: "Direct cost", sortValue: (r) => r.direct_cost_cents, render: (r) => formatUsdCentsTable(r.direct_cost_cents) },
+      { key: "loads", label: "Loads delivered", sortable: true, sortValue: (r) => r.loads, render: (r) => String(r.loads) },
+      { key: "direct_cost_cents", label: "Direct cost", sortable: true, sortValue: (r) => r.direct_cost_cents, render: (r) => formatUsdCentsTable(r.direct_cost_cents) },
       ...(["real_driven", "practical", "short"] as const).map((b, i) => ({
         key: `cpm_${b}`,
         label: `CPM · ${BASIS_SHORT[b]}`,

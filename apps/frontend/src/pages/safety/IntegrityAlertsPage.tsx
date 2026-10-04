@@ -240,7 +240,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
             />
           );
         }
-        return <span className="text-slate-400">—</span>;
+        return <span className="text-[#4B5563]">—</span>;
       },
     },
     { key: "resolution_status", label: "Status", sortable: true, render: (row) => String(row.resolution_status ?? "unresolved") },
@@ -248,7 +248,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
       key: "action",
       label: "Action",
       render: (row) => (
-        <button type="button" className="text-slate-700 underline" onClick={() => setSelected(row)}>
+        <button type="button" className="text-[#1F2A44] underline" onClick={() => setSelected(row)}>
           Open
         </button>
       ),
@@ -268,7 +268,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
       render: (row) => (
         <button
           type="button"
-          className="text-slate-700 underline"
+          className="text-[#1F2A44] underline"
           onClick={() => {
             setEditingRule(row);
             setDraftRule({
@@ -295,7 +295,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
         <button
           type="button"
           className="rounded-sm border px-3 py-1 text-xs font-semibold"
-          style={pageTab === "inbox" ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#cbd5e1", color: "#4B5563" }}
+          style={pageTab === "inbox" ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#E5E7EB", color: "#4B5563" }}
           onClick={() => setPageTab("inbox")}
         >
           Alerts inbox
@@ -303,7 +303,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
         <button
           type="button"
           className="rounded-sm border px-3 py-1 text-xs font-semibold"
-          style={pageTab === "rules" ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#cbd5e1", color: "#4B5563" }}
+          style={pageTab === "rules" ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#E5E7EB", color: "#4B5563" }}
           onClick={() => setPageTab("rules")}
         >
           Rules
@@ -311,7 +311,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
         {pageTab === "inbox" ? (
           <button
             type="button"
-            className="ml-auto rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
+            className="ml-auto rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white"
             disabled={evaluateMutation.isPending}
             onClick={() => evaluateMutation.mutate({ companyId: operatingCompanyId, generation: lifecycleGenerationRef.current })}
           >
@@ -320,7 +320,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
         ) : (
           <button
             type="button"
-            className="ml-auto rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white"
+            className="ml-auto rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white"
             data-testid="integrity-rule-create-btn"
             onClick={() => {
               setEditingRule(null);
@@ -388,7 +388,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
                 <option value="confirmed_action_taken">Confirmed action taken</option>
                 <option value="dismissed">Dismissed</option>
               </SelectCombobox>
-              <label className="text-xs text-slate-600">
+              <label className="text-xs text-[#4B5563]">
                 Driver
                 <EntityPicker
                   kind="driver"
@@ -401,7 +401,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
                   dataTestId="integrity-alerts-filter-driver"
                 />
               </label>
-              <label className="text-xs text-slate-600">
+              <label className="text-xs text-[#4B5563]">
                 Unit
                 <EntityPicker
                   kind="unit"
@@ -414,7 +414,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
                   dataTestId="integrity-alerts-filter-unit"
                 />
               </label>
-              <label className="text-xs text-slate-600">
+              <label className="text-xs text-[#4B5563]">
                 Vendor
                 <EntityPicker
                   kind="vendor"
@@ -524,7 +524,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
           <div className="mt-3 flex gap-2">
             <button
               type="button"
-              className="rounded-sm bg-slate-700 px-3 py-1 font-semibold text-white"
+              className="rounded-sm bg-[#1F2A44] px-3 py-1 font-semibold text-white"
               disabled={saveRuleMutation.isPending}
               onClick={() => saveRuleMutation.mutate({
                 companyId: operatingCompanyId,

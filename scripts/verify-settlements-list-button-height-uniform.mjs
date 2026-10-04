@@ -62,6 +62,7 @@ export function collectProblems(root = ROOT) {
         problems.push(`${TOURS}: tour pills must not carry an inline style height override — it breaks the 28px .ldt-btn scale`);
       }
     }
+    leftoverRefuse(toursRaw, problems);
   }
 
   // B — the "Open →" row action is a 28px (h-7) click target.
@@ -82,6 +83,17 @@ export function collectProblems(root = ROOT) {
   }
 
   return problems;
+}
+
+function leftoverHits(src) {
+  const hits = [];
+  if (/fontSize:\s*10\b/.test(src)) hits.push("leftover fontSize: 10");
+  if (/fontSize:\s*11\b/.test(src)) hits.push("leftover fontSize: 11");
+  return hits;
+}
+
+function leftoverRefuse(src, bucket) {
+  for (const e of leftoverHits(src)) bucket.push(`${TOURS}: ${e}`);
 }
 
 function fail(messages) {
@@ -116,6 +128,11 @@ if (process.argv.includes("--selftest")) {
       console.error(
         `${LABEL} SELFTEST FAIL: expected 2 problems on the planted pre-fix stubs, got ${planted.length}: ${JSON.stringify(planted)}`
       );
+      process.exit(1);
+    }
+    const leftoverPlant = `${readRel(ROOT, TOURS)}\n<span style={{ fontSize: 10 }}>plant</span>\n<span style={{ fontSize: 11 }}>plant</span>`;
+    if (!leftoverHits(leftoverPlant).some((e) => e.includes("leftover fontSize: 10")) || !leftoverHits(leftoverPlant).some((e) => e.includes("leftover fontSize: 11"))) {
+      console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`);
       process.exit(1);
     }
   } finally {

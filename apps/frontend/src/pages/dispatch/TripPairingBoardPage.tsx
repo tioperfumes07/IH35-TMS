@@ -19,7 +19,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 // Three distinguishable navy-family shades replace the old SB green (#16a34a) and any blue/purple.
 // TRIP-LOCAL-ENUM (owner order 2026-09-06): LOCAL (Laredo->Laredo) gets its own navy-family shade,
 // same rule — no blue/purple/green.
-const TRIP_COLOR: Record<"NB" | "TR" | "SB" | "LOCAL", string> = { NB: "#1F2A44", TR: "#64748b", SB: "#334155", LOCAL: "#0f172a" };
+const TRIP_COLOR: Record<"NB" | "TR" | "SB" | "LOCAL", string> = { NB: "#1F2A44", TR: "#64748b", SB: "#4B5563", LOCAL: "#0f172a" };
 
 type Segment = "All" | "NB" | "TR" | "SB" | "LOCAL" | "open" | "upnorth";
 // SORT-A1-FALSE-POSITIVE: named `text`, not `label` — this is a segment-toggle caption array, not
@@ -92,10 +92,10 @@ export function tourNeedsPreCutoverNorthbound(tour: Pick<TripPairingUnitRow, "le
 
 function LegendSwatch({ color, dashed, label }: { color?: string; dashed?: boolean; label: string }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs text-slate-600">
+    <span className="inline-flex items-center gap-1.5 text-xs text-[#4B5563]">
       <span
         className="inline-block h-3 w-3 rounded-xs"
-        style={dashed ? { border: "1px dashed #94a3b8", background: "#f1f5f9" } : { backgroundColor: color }}
+        style={dashed ? { border: "1px dashed #4B5563", background: "#f1f5f9" } : { backgroundColor: color }}
       />
       {label}
     </span>
@@ -127,7 +127,7 @@ function buildTripPairingColumns(onBookReturn: (unitId: string) => void, trCount
     sortable: false, // single-leg chip — no single sortable value
     render: (t) => {
       const leg = t.legs.filter((l) => l.trip_type === "TR")[i] ?? null;
-      return leg ? legChip(leg) : <span className="text-slate-400">—</span>;
+      return leg ? legChip(leg) : <span className="text-[#4B5563]">—</span>;
     },
   }));
   return [
@@ -161,13 +161,13 @@ function buildTripPairingColumns(onBookReturn: (unitId: string) => void, trCount
               // before the 2026-08-07 USMCA cutover. "—" would read as "never went north", which
               // is false; say what's actually true instead.
               <span
-                className="inline-flex w-fit items-center rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-600"
+                className="inline-flex w-fit items-center rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#4B5563]"
                 title="This tour's first USMCA leg is not Northbound because the real Northbound ran under IH35 TRANSPORTATION before the 2026-08-07 USMCA cutover — it is not missing data."
               >
                 NB · pre-cutover (Transportation)
               </span>
             ) : (
-              <span className="text-slate-400">—</span>
+              <span className="text-[#4B5563]">—</span>
             )
           ) : null}
         </div>
@@ -191,13 +191,13 @@ function buildTripPairingColumns(onBookReturn: (unitId: string) => void, trCount
         const sinceDate = formatDateUS(lastLeg?.delivery_date ?? t.return_avail_date);
         return (
           <div className="flex flex-col items-start gap-1">
-            <span className="inline-flex items-center rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-600">
+            <span className="inline-flex items-center rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#4B5563]">
               open{sinceDate ? ` — up north since ${sinceDate}` : ""}
             </span>
             <button
               type="button"
               onClick={() => onBookReturn(t.unit_id)}
-              className="inline-flex items-center rounded-sm border border-dashed border-slate-300 bg-slate-100 px-1.5 py-0.5 text-xs text-slate-700 hover:border-slate-500 hover:bg-slate-200"
+              className="inline-flex items-center rounded-sm border border-dashed border-[#E5E7EB] bg-[#F7F8FA] px-1.5 py-0.5 text-xs text-[#1F2A44] hover:border-[#4B5563] hover:bg-[#E5E7EB]"
               aria-label={`Book Southbound return for ${t.unit_number ?? "unit"}`}
             >
               + Find Southbound{t.return_city ? ` · empty in ${t.return_city}` : ""}{t.return_avail_date ? ` · avail ${new Date(t.return_avail_date).toLocaleDateString()}` : ""}
@@ -205,7 +205,7 @@ function buildTripPairingColumns(onBookReturn: (unitId: string) => void, trCount
           </div>
         );
       }
-      return <span className="text-slate-400">—</span>;
+      return <span className="text-[#4B5563]">—</span>;
     },
   },
   {
@@ -215,16 +215,16 @@ function buildTripPairingColumns(onBookReturn: (unitId: string) => void, trCount
     sortValue: (t) => t.settlement_signal ?? t.status ?? "",
     render: (t) => {
       if (t.settlement_signal === "round_trip") {
-        return <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">Round trip</span>;
+        return <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#1F2A44]">Round trip</span>;
       }
       if (t.settlement_signal === "settlement_open") {
         return (
-          <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">
+          <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#1F2A44]">
             Up north · settlement open{t.up_north_days != null ? ` · ${t.up_north_days}d` : ""}
           </span>
         );
       }
-      return <span className="text-slate-400">{t.status ?? "—"}</span>;
+      return <span className="text-[#4B5563]">{t.status ?? "—"}</span>;
     },
   },
   // TPB-DATES-01: "gear box gains Customer · PU date · Del date · Days out · Miles · Status ·
@@ -240,7 +240,7 @@ function buildTripPairingColumns(onBookReturn: (unitId: string) => void, trCount
     label: "Tour",
     defaultHidden: true,
     sortValue: (t) => t.tour_id ?? "",
-    render: (t) => t.tour_id ?? <span className="text-slate-400">—</span>,
+    render: (t) => t.tour_id ?? <span className="text-[#4B5563]">—</span>,
   },
   {
     key: "pu_date",
@@ -253,7 +253,7 @@ function buildTripPairingColumns(onBookReturn: (unitId: string) => void, trCount
     },
     render: (t) => {
       const earliest = [...t.legs].sort((a, b) => String(a.pickup_date ?? "").localeCompare(String(b.pickup_date ?? "")))[0];
-      return formatDateUS(earliest?.pickup_date) || <span className="text-slate-400">—</span>;
+      return formatDateUS(earliest?.pickup_date) || <span className="text-[#4B5563]">—</span>;
     },
   },
   {
@@ -267,7 +267,7 @@ function buildTripPairingColumns(onBookReturn: (unitId: string) => void, trCount
     },
     render: (t) => {
       const latest = [...t.legs].sort((a, b) => String(a.delivery_date ?? "").localeCompare(String(b.delivery_date ?? "")))?.at(-1);
-      return formatDateUS(latest?.delivery_date) || <span className="text-slate-400">—</span>;
+      return formatDateUS(latest?.delivery_date) || <span className="text-[#4B5563]">—</span>;
     },
   },
   {
@@ -276,7 +276,7 @@ function buildTripPairingColumns(onBookReturn: (unitId: string) => void, trCount
     defaultHidden: true,
     cellClass: "text-right",
     sortValue: (t) => t.up_north_days ?? -1,
-    render: (t) => (t.up_north_days != null ? `${t.up_north_days}d` : <span className="text-slate-400">—</span>),
+    render: (t) => (t.up_north_days != null ? `${t.up_north_days}d` : <span className="text-[#4B5563]">—</span>),
   },
   ];
 }
@@ -329,7 +329,7 @@ export function TripPairingBoardPage() {
     return (
       <div
         data-testid="dispatch-trip-pairing-need-company"
-        className="rounded-sm border bg-white p-4 text-xs text-slate-600"
+        className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]"
       >
         Select an operating company to load the trip pairing board.
       </div>
@@ -390,14 +390,14 @@ export function TripPairingBoardPage() {
       {/* Bespoke trip-pairing toolbar (GUARD ruling: NOT FilterBar — wrong filter model). 6-segment toggle
           + trailer-type dropdown (disabled until C1b adds trailer_type to the board payload) + search + CSV export. */}
       <div className="mb-3 flex flex-wrap items-center gap-2 print:hidden">
-        <div className="inline-flex overflow-hidden rounded-sm border border-slate-300">
+        <div className="inline-flex overflow-hidden rounded-sm border border-[#E5E7EB]">
           {SEGMENTS.map((s) => (
             <button
               key={s.key}
               type="button"
               onClick={() => setSegment(s.key)}
-              className={`border-l border-slate-300 px-2.5 py-1 text-xs font-semibold first:border-l-0 ${
-                segment === s.key ? "bg-[#1F2A44] text-white" : "bg-white text-slate-700 hover:bg-slate-50"
+              className={`border-l border-[#E5E7EB] px-2.5 py-1 text-xs font-semibold first:border-l-0 ${
+                segment === s.key ? "bg-[#1F2A44] text-white" : "bg-white text-[#1F2A44] hover:bg-[#E5E7EB]"
               }`}
             >
               {s.text}
@@ -407,7 +407,7 @@ export function TripPairingBoardPage() {
         <select
           disabled
           title="Trailer-type filtering lights up once trailer_type is on the board payload (C1b backend)."
-          className="h-9 rounded-sm border border-slate-300 bg-slate-50 px-2 text-xs text-slate-400"
+          className="h-9 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 text-xs text-[#4B5563]"
         >
           <option>All trailer types</option>
           <option>Reefer</option>
@@ -415,7 +415,7 @@ export function TripPairingBoardPage() {
           <option>Flatbed</option>
         </select>
         <input
-          className="h-9 w-56 rounded-sm border border-slate-300 px-2 text-xs"
+          className="h-9 w-56 rounded-sm border border-[#E5E7EB] px-2 text-xs"
           placeholder="Search unit or driver…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -436,7 +436,7 @@ export function TripPairingBoardPage() {
       </div>
 
       {query.isLoading ? (
-        <div className="px-3 py-6 text-xs text-slate-500">Loading board…</div>
+        <div className="px-3 py-6 text-xs text-[#4B5563]">Loading board…</div>
       ) : query.isError ? (
         <ListErrorBanner
           message={userFacingApiError(query.error, "Could not load trip pairing board")}
@@ -445,7 +445,7 @@ export function TripPairingBoardPage() {
       ) : tours.length === 0 && unbooked.length === 0 ? (
         <div
           data-testid="dispatch-trip-pairing-honest-empty"
-          className="rounded-sm border bg-white px-3 py-6 text-center text-xs text-slate-500"
+          className="rounded-sm border bg-white px-3 py-6 text-center text-xs text-[#4B5563]"
         >
           No tours or unbooked units for this company on the trip pairing board. Assign units/drivers
           and book northbound loads — rows appear once the board feed returns tours or an unbooked pool.
@@ -456,17 +456,17 @@ export function TripPairingBoardPage() {
           {showUnbooked ? (
             <section>
               <div className="mb-1 flex items-center gap-2">
-                <span className="text-section-header font-semibold uppercase tracking-[0.4px] text-slate-700">Unbooked / available</span>
-                <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">{unbooked.length}</span>
-                <span className="text-xs text-slate-500">— no trip assigned; book a Northbound to start a tour</span>
+                <span className="text-section-header font-semibold uppercase tracking-[0.4px] text-[#1F2A44]">Unbooked / available</span>
+                <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#1F2A44]">{unbooked.length}</span>
+                <span className="text-xs text-[#4B5563]">— no trip assigned; book a Northbound to start a tour</span>
               </div>
-              <div className="flex flex-wrap gap-2 rounded-sm border border-slate-200 bg-slate-50 p-2">
+              <div className="flex flex-wrap gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2">
                 {unbooked.map((u) => (
-                  <div key={u.unit_id} className="flex min-w-[180px] flex-col gap-1 rounded-sm border border-slate-200 bg-white px-2.5 py-2 text-xs">
-                    <EntityLinkOrTombstone kind="unit" id={u.unit_id} name={u.unit_number} noun="Unit" className="font-semibold text-slate-800" />
-                    <span className="text-slate-500"><EntityLinkOrTombstone kind="driver" id={u.driver_id} name={u.driver_name} noun="Driver" /></span>
+                  <div key={u.unit_id} className="flex min-w-[180px] flex-col gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2.5 py-2 text-xs">
+                    <EntityLinkOrTombstone kind="unit" id={u.unit_id} name={u.unit_number} noun="Unit" className="font-semibold text-[#1F2A44]" />
+                    <span className="text-[#4B5563]"><EntityLinkOrTombstone kind="driver" id={u.driver_id} name={u.driver_name} noun="Driver" /></span>
                     {/* C1b: live location ("now: <city>") arrives with the backend payload — not fabricated. */}
-                    <span className="text-xs text-slate-400">now: —</span>
+                    <span className="text-xs text-[#4B5563]">now: —</span>
                     <button
                       type="button"
                       onClick={() => setBookUnitId(u.unit_id)}
@@ -476,7 +476,7 @@ export function TripPairingBoardPage() {
                     </button>
                   </div>
                 ))}
-                {unbooked.length === 0 ? <span className="px-1 text-xs text-slate-400">None.</span> : null}
+                {unbooked.length === 0 ? <span className="px-1 text-xs text-[#4B5563]">None.</span> : null}
               </div>
             </section>
           ) : null}
@@ -484,9 +484,9 @@ export function TripPairingBoardPage() {
           {/* Zone 2 — Assigned trips (Northbound / Triangulation / Southbound = 6 columns). */}
           <section>
             <div className="mb-1 flex items-center gap-2">
-              <span className="text-section-header font-semibold uppercase tracking-[0.4px] text-slate-800">Assigned trips</span>
-              <span className="rounded-sm border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">{tours.length}</span>
-              <span className="text-xs text-slate-500">— multi-leg tours stack under the unit; SB return = settlement closes</span>
+              <span className="text-section-header font-semibold uppercase tracking-[0.4px] text-[#1F2A44]">Assigned trips</span>
+              <span className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#1F2A44]">{tours.length}</span>
+              <span className="text-xs text-[#4B5563]">— multi-leg tours stack under the unit; SB return = settlement closes</span>
             </div>
             <ParityTable<TripPairingUnitRow> appearance="board"
               columns={tripPairingColumns}
@@ -501,7 +501,7 @@ export function TripPairingBoardPage() {
           </section>
 
           {/* Legend — six states (NB/TR/SB/LOCAL navy-family per §7; open-return dashed; settlement-open amber). */}
-          <div className="flex flex-wrap items-center gap-4 rounded-sm border border-slate-200 bg-white px-3 py-2">
+          <div className="flex flex-wrap items-center gap-4 rounded-sm border border-[#E5E7EB] bg-white px-3 py-2">
             <LegendSwatch color={TRIP_COLOR.NB} label="NB Northbound" />
             <LegendSwatch color={TRIP_COLOR.TR} label="TR Triangulation" />
             <LegendSwatch color={TRIP_COLOR.SB} label="SB Southbound return" />
@@ -510,8 +510,8 @@ export function TripPairingBoardPage() {
             <LegendSwatch color="#b45309" label="Up north — settlement open" />
           </div>
 
-          <p className="text-xs text-slate-400">
-            <Link to="/dispatch" className="text-slate-700 hover:underline">← Dispatch</Link> · refreshes every 5 min · DAT360 auto-publish not yet wired (the delivery-city + avail-date here feed it later).
+          <p className="text-xs text-[#4B5563]">
+            <Link to="/dispatch" className="text-[#1F2A44] hover:underline">← Dispatch</Link> · refreshes every 5 min · DAT360 auto-publish not yet wired (the delivery-city + avail-date here feed it later).
           </p>
         </div>
       )}

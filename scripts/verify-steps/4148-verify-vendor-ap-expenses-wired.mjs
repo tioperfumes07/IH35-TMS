@@ -3,8 +3,10 @@
 // verify-steps/3201-*.mjs and siblings.
 export default {
   name: "verify-vendor-ap-expenses-wired",
-  run(ctx) {
-    ctx.run("node", ["scripts/verify-vendor-ap-expenses-wired.mjs", "--selftest"]);
-    ctx.run("node", ["scripts/verify-vendor-ap-expenses-wired.mjs"]);
+  async run(ctx) {
+    await ctx.run("node", ["scripts/verify-vendor-ap-expenses-wired.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-vendor-ap-expenses-wired.mjs"]);
+    // BANK-F91471 — vendors ORDERS complete (never ran in CI).
+    await ctx.run("node", ["scripts/ops/verify-vendors-orders-complete.mjs", "--selftest"]);
   },
 };

@@ -9,6 +9,7 @@
 export default {
   name: "verify-lst-picker-config-driven",
   async run(ctx) {
+    // BANK-F91483 + BANK-F91506 — CatalogQuickCreateDrawer leftover muted (#8A92AB/#334155/#64748b) refuse.
     await ctx.run("node", ["scripts/verify-lst-picker-config-driven.mjs", "--selftest"]);
     return ctx.run("node", ["scripts/verify-lst-picker-config-driven.mjs"]);
   },

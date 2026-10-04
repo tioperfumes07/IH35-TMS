@@ -595,6 +595,18 @@
         "connectivity",
         "bank"
       ]
+    },
+    {
+      "id": "banking.panel.banking_kpi",
+      "tab": "Panels",
+      "sub": "Panel: Banking Kpi",
+      "route_hint": "surface://components/banking/BankingKpiPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/banking/BankingKpiPanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
     }
   ],
   "honesty_audit": {

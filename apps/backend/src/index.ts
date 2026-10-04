@@ -418,7 +418,6 @@ import { registerDriverMetricsRoutes } from "./integrity/driver-metrics.routes.j
 import { registerAnomalyStatusRoutes } from "./integrity/anomaly-status.routes.js";
 import { runAnomalyDetectionForTenant } from "./integrity/anomaly-detector.service.js";
 import { registerForm425CRoutes } from "./compliance/form-425c.routes.js";
-import { registerForm425cExhibitsRoutes } from "./reports/form-425c/exhibits/routes.js";
 import { registerTaxDocumentRoutes } from "./tax-documents/tax-documents.routes.js";
 import { registerListsHubRoutes } from "./lists/lists-hub.routes.js";
 import { registerListsCountsRoutes } from "./lists/lists-counts.routes.js";
@@ -1353,13 +1352,14 @@ async function main() {
   await registerBankTieoutRoutes(app);
   await registerMaintWoApRoutes(app);
   await registerForm425CRoutes(app);
-  // Form 425-C Exhibits A–F generator. Previously left unmounted (held as "financial-adjacent"),
-  // which made the mounted /reports/form-425c/exhibits page call a route that returned 404 — the
-  // exhibits could not be produced or reviewed at all. Mounting EXPOSES THE GENERATOR ONLY:
-  // rendering an exhibit is not filing one, and the routes are read-only (no write, no posting, no
-  // flag). Auth is unchanged and already enforced inside the handlers — currentAuthUser + a
-  // canAccess425cExhibits role check (403) + withCompanyScope entity scoping on every read.
-  await registerForm425cExhibitsRoutes(app);
+  // BOOT-F396 / DUPLICATE-ROUTE-BOOT-CRASH — registerForm425cExhibitsRoutes is NOT mounted here.
+  // Two seats independently fixed the same "exhibits builder is unmounted" gap: once in the reports
+  // aggregator (reports/index.ts, "GAP-44") and once here. registerReportsRoutes(app) above already
+  // mounts it, so this second call made Fastify throw at boot --
+  //   FastifyError: Method 'POST' already declared for route '/api/v1/reports/form-425c/exhibits/build'
+  // -- the process never bound, the health check never passed, and FIVE consecutive Render deploys
+  // died with "Timed Out / update_failed" while production stayed frozen on the old build.
+  // The reports aggregator is the canonical mount for every /api/v1/reports/** route; keep it there.
   await registerTaxDocumentRoutes(app);
   await registerListsHubRoutes(app);
   await registerListsCountsRoutes(app);

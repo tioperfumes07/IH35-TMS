@@ -105,8 +105,10 @@ export async function insertDashcamClip(client: DbClient, input: DashcamInsertIn
         samsara_clip_url, samsara_clip_id, trigger_kind, linked_harsh_event_id, retention_expires_at
       )
       VALUES ($1::uuid,$2::uuid,$3::timestamptz,$4::int,$5,$6,$7,$8,$9::uuid,$10::timestamptz)
-      -- ROUND 337: a replayed clip used to throw 23505 on dashcam_clips_tenant_clip_unique; it now returns the row it is
-      ON CONFLICT (operating_company_id, samsara_clip_id) DO UPDATE SET samsara_clip_url = EXCLUDED.samsara_clip_url
+      -- ROUND 337: a replayed clip used to throw 23505 on dashcam_clips_tenant_clip_unique. DO NOTHING, not DO UPDATE:
+      -- an upsert that SETs a column needs UPDATE privilege and ih35_app holds only INSERT + SELECT on this table (prod grants,
+      -- 2026-10-04), so the upsert was refused at runtime. A replay now returns the clip already recorded (read below).
+      ON CONFLICT (operating_company_id, samsara_clip_id) DO NOTHING
       RETURNING id::text
     `,
     [
@@ -122,5 +124,11 @@ export async function insertDashcamClip(client: DbClient, input: DashcamInsertIn
       input.retention_expires_at ?? null,
     ]
   );
-  return res.rows[0]?.id ?? null;
+  if (res.rows[0]?.id) return res.rows[0].id;
+  // Replay: the same Samsara clip for this company is already recorded — return it (SELECT is granted).
+  const existing = await client.query<{ id: string }>(
+    `SELECT id::text FROM telematics.dashcam_clips WHERE operating_company_id = $1::uuid AND samsara_clip_id = $2 LIMIT 1`,
+    [input.operating_company_id, input.samsara_clip_id]
+  );
+  return existing.rows[0]?.id ?? null;
 }

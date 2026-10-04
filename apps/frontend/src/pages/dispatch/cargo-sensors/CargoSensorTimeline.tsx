@@ -110,7 +110,7 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
 
   if (query.isError) {
     return (
-      <div className="space-y-2 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700" role="alert" data-cargo-sensor-timeline-error>
+      <div className="space-y-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]" role="alert" data-cargo-sensor-timeline-error>
         <div>Failed to load cargo sensor timeline.</div>
         <Button type="button" size="sm" variant="secondary" onClick={() => void query.refetch()}>
           Retry cargo sensors
@@ -141,7 +141,7 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
           query.data.incidents.map((incident) => (
             <article
               key={incident.id}
-              className="p-2 text-xs text-slate-700"
+              className="p-2 text-xs text-[#1F2A44]"
             >
               <div className="flex flex-wrap justify-between gap-2">
                 <strong className="capitalize">{incident.breach_kind} · {incident.severity}</strong>
@@ -171,9 +171,9 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="at" tick={{ fontSize: 10 }} />
-            <YAxis yAxisId="temp" tick={{ fontSize: 10 }} label={{ value: "C", angle: -90, position: "insideLeft", fontSize: 10 }} />
-            <YAxis yAxisId="humidity" orientation="right" tick={{ fontSize: 10 }} label={{ value: "%", angle: 90, position: "insideRight", fontSize: 10 }} />
+            <XAxis dataKey="at" tick={{ fontSize: 11 }} />
+            <YAxis yAxisId="temp" tick={{ fontSize: 11 }} label={{ value: "C", angle: -90, position: "insideLeft", fontSize: 11 }} />
+            <YAxis yAxisId="humidity" orientation="right" tick={{ fontSize: 11 }} label={{ value: "%", angle: 90, position: "insideRight", fontSize: 11 }} />
             <Tooltip />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             <ReferenceLine yAxisId="temp" y={query.data.threshold.min_temp_c} stroke="#f59e0b" strokeDasharray="4 4" label="Min C" />
@@ -188,7 +188,7 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
         shown={query.data.rows.length}
         limit={240}
         hint="Sensor timeline is capped — contact support for older readings."
-        className="text-xs text-slate-600"
+        className="text-xs text-[#4B5563]"
       />
     </section>
   );

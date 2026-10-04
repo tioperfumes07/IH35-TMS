@@ -20,7 +20,7 @@ const COLUMNS: { key: ColumnKey; title: string; accent: string }[] = [
   { key: "in_progress", title: "In Progress", accent: "#64748b" },
   { key: "waiting_parts", title: "Awaiting Parts", accent: "#b45309" },
   { key: "severe", title: "Severe / OOS", accent: "#dc2626" },
-  { key: "complete", title: "Completed", accent: "#334155" },
+  { key: "complete", title: "Completed", accent: "#4B5563" },
 ];
 
 function columnFor(wo: WorkOrder): ColumnKey {

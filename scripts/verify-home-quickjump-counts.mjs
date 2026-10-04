@@ -80,7 +80,51 @@ function runSelftest() {
     console.error(`[verify-home-quickjump-counts] SELFTEST FAILED — ${failed}/${cases.length}`);
     process.exit(1);
   }
-  console.log(`[verify-home-quickjump-counts] SELFTEST OK — ${cases.length}/${cases.length}`);
+  for (const [label, rel] of [
+    ["OwnerHome.tsx", paths.ownerHome],
+    ["DefaultHome.tsx", paths.defaultHome],
+  ]) {
+    const live = read(rel);
+    const leftoverGood = [];
+    leftoverRefusePage(label, live, leftoverGood);
+    if (leftoverGood.length) {
+      console.error(`[verify-home-quickjump-counts] SELFTEST FAIL — live ${label} leftover tokens present`);
+      for (const e of leftoverGood) console.error(`  ✗ ${e}`);
+      process.exit(1);
+    }
+    const leftoverPlant = `${live}\n<div className="text-[11px] text-slate-600 border-slate-300 bg-slate-50 text-[#8A92AB]" style={{ color: "#334155" }}>plant</div>`;
+    const leftoverBad = [];
+    leftoverRefusePage(label, leftoverPlant, leftoverBad);
+    if (
+      !leftoverBad.some((e) => e.includes("leftover text-[11px]")) ||
+      !leftoverBad.some((e) => e.includes("leftover off-scale muted")) ||
+      !leftoverBad.some((e) => e.includes("leftover slate class"))
+    ) {
+      console.error(`[verify-home-quickjump-counts] SELFTEST FAIL ${label} leftover plant escaped`, leftoverBad);
+      process.exit(1);
+    }
+    // BANK-F91508 leftover plant — Factoring Balance KPI leftover slate-600 accent
+    const leftoverSlatePlant = `${live}\n<div accent="#475569">plant</div>`;
+    const leftoverSlateBad = [];
+    leftoverRefusePage(label, leftoverSlatePlant, leftoverSlateBad);
+    if (!leftoverSlateBad.some((e) => e.includes("leftover off-scale muted"))) {
+      console.error(`[verify-home-quickjump-counts] SELFTEST FAIL ${label} leftover #475569 plant escaped`, leftoverSlateBad);
+      process.exit(1);
+    }
+  }
+  console.log(`[verify-home-quickjump-counts] SELFTEST OK — ${cases.length}/${cases.length} + leftover plants rejected`);
+}
+
+function leftoverRefusePage(label, src, bucket) {
+  if (src.includes("text-[11px]")) {
+    bucket.push(`${label}: leftover text-[11px]`);
+  }
+  if (src.includes("#8A92AB") || src.includes("#334155") || src.includes("#475569")) {
+    bucket.push(`${label}: leftover off-scale muted`);
+  }
+  if (src.includes("text-slate-") || src.includes("border-slate-") || src.includes("bg-slate-")) {
+    bucket.push(`${label}: leftover slate class`);
+  }
 }
 
 function main() {
@@ -91,13 +135,9 @@ function main() {
   const failures = [];
   const homeQuickJumps = read(paths.homeQuickJumps);
   const defaultHome = read(paths.defaultHome);
-  if (defaultHome.includes("text-[11px]")) {
-    failures.push("DefaultHome.tsx: must not use text-[11px] — use text-xs or text-section-header");
-  }
+  leftoverRefusePage("DefaultHome.tsx", defaultHome, failures);
   const ownerHome = read(paths.ownerHome);
-  if (ownerHome.includes("text-[11px]")) {
-    failures.push("OwnerHome.tsx: must not use text-[11px] — use text-xs or text-section-header");
-  }
+  leftoverRefusePage("OwnerHome.tsx", ownerHome, failures);
   const accountingManifest = read(paths.accountingManifest);
   const bankingNav = read(paths.bankingNav);
   const fuelTabsConfig = read(paths.fuelTabs);

@@ -2980,6 +2980,18 @@
         "connectivity",
         "picker_law"
       ]
+    },
+    {
+      "id": "lists.panel.ledger_kpi",
+      "tab": "Panels",
+      "sub": "Panel: Ledger Kpi",
+      "route_hint": "surface://components/shared/LedgerKpiPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/shared/LedgerKpiPanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
     }
   ],
   "honesty_note": {

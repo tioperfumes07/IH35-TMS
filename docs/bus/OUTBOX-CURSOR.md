@@ -1,3 +1,971 @@
+## 2026-10-04T20:12Z · BANK-F91551 LoadCosts leftover slate classes · this PR
+
+DONE: LoadCostsBoard leftover text-slate-* → house #1F2A44 / #4B5563; leftover refuse on EVEN 4110.
+
+NEXT: leftover muted chrome (ReeferFuelCredit / remaining pages / skip pile) · skip pile parked · HH16 leftovers first.
+
+## 2026-10-04T20:05Z · BANK-F91550 CustomerDetail leftover slate classes WIRED CI · tip `75029ae9b2`
+
+DONE: #25292 — CustomerDetail leftover slate-* → house tokens; leftover refuse on EVEN 4116.
+
+NEXT: leftover muted chrome (LoadCosts / remaining pages / skip pile) · skip pile parked · HH16 leftovers first.
+
+## 2026-10-04T19:55Z · BANK-F91549 SystemModule leftover slate classes WIRED CI · tip `38185ed5f6`
+
+DONE: #25291 — SystemModule leftover slate-* → house tokens; leftover refuse on EVEN 4142.
+
+NEXT: leftover muted chrome (CustomerDetail / remaining pages / skip pile) · skip pile parked · HH16 leftovers first.
+
+## 2026-10-04T19:48Z · BANK-F91548 AccountingHome leftover slate classes WIRED CI · tip `cf4631eb22`
+
+DONE: #25290 — AccountingHome leftover slate-* → house tokens; leftover refuse on EVEN 3870; uncleared notice retargeted to house #F7F8FA not amber.
+
+NEXT: leftover muted chrome (SystemModule / remaining pages / skip pile) · skip pile parked · HH16 leftovers first.
+
+## 2026-10-04T19:40Z · BANK-F91547 OwnerHome + DefaultHome leftover slate classes WIRED CI · tip `eebbb7c82a`
+
+DONE: #25289 — OwnerHome + DefaultHome leftover slate-* → house tokens; leftover refuse on EVEN 3888 + 3886.
+
+NEXT: leftover muted chrome (AccountingHome / remaining pages / skip pile) · skip pile parked · HH16 leftovers first.
+
+## 2026-10-04T19:35Z · BANK-F91546 TripPairing leftover slate classes WIRED CI · tip `d977d97c18`
+
+DONE: #25288 — TripPairing leftover slate-* → house tokens; leftover refuse on EVEN 4130 (TR #64748b parked).
+
+NEXT: leftover muted chrome (OwnerHome / DefaultHome / remaining pages / skip pile) · skip pile parked · HH16 leftovers first.
+
+## 2026-10-04T19:28Z · BANK-F91545 ProfitPerTruck leftover slate classes WIRED CI · tip `d7f1802d9e`
+
+DONE: #25287 — ProfitPerTruck leftover FLAG_UI / flag filter slate-* → house tokens; leftover refuse LIVE on EVEN 3854 print-letter leftoverHits.
+
+NEXT: leftover muted chrome (TripPairingBoard / OwnerHome / skip pile) · skip pile parked · HH16 leftovers first.
+
+## 2026-10-04T19:22Z · BANK-F91544 CustomerProfit leftover slate classes WIRED CI · tip `ef51c9ebd8`
+
+DONE: #25286 — CustomerProfitability leftover FLAG_UI / A/R link / min-rev slate-* → house tokens; leftover refuse LIVE on EVEN 3862 print-letter leftoverHits.
+
+NEXT: leftover muted chrome (ProfitPerTruck / TripPairing / OwnerHome / skip pile) · skip pile parked · HH16 leftovers first.
+
+## 2026-10-04T19:20Z · BANK-F91543 CashFlow leftover slate classes WIRED CI · tip `3768ae3a58`
+
+DONE: #25285 — CashFlowOverview leftover text-slate-* / border-slate-* → house tokens; leftover refuse LIVE on EVEN 3850 print-letter leftoverHits.
+
+NEXT: leftover muted chrome (CustomerProfit / TripPairing / OwnerHome / skip pile) · skip pile parked · HH16 leftovers first.
+
+## 2026-10-04T19:15Z · BANK-F91542 CargoSensor leftover slate classes WIRED CI · tip `5b71005af8`
+
+DONE: #25284 — CargoSensorTimeline leftover text-slate-* / border-slate-* / bg-slate-* → house tokens; leftover refuse on EVEN 4120 --selftest + live.
+
+NEXT: leftover muted chrome (CashFlow / TripPairing / remaining pages / skip pile) · skip pile parked · HH16 leftovers first.
+
+## 2026-10-04T19:05Z · BANK-F91542 CargoSensor leftover slate classes · this PR
+
+DONE: CargoSensorTimeline leftover text-slate-* / border-slate-* / bg-slate-* → house #1F2A44 / #4B5563 / #E5E7EB / #F7F8FA; leftover refuse on EVEN 4120 --selftest + live.
+
+NEXT: leftover muted chrome (TripPairingBoard slate-* / OwnerHome / remaining pages / skip pile) · skip pile parked · HH16 leftovers first.
+
+## 2026-10-04T19:05Z · BANK-F91541 LoadsReport leftover slate classes WIRED CI · tip `914c1a2b3f`
+
+DONE: #25283 — LoadsReportPage leftover text-slate-* / border-slate-* → house tokens; leftover refuse on EVEN 4126 --selftest + live.
+
+NEXT: leftover muted chrome (CargoSensor / TripPairing / remaining pages / skip pile) · skip pile parked · HH16 leftovers first.
+
+## 2026-10-04T18:55Z · BANK-F91541 LoadsReport leftover slate classes · this PR
+
+DONE: LoadsReportPage leftover text-slate-* / border-slate-* → house #4B5563 / #E5E7EB; leftover refuse on EVEN 4126 --selftest + live.
+
+NEXT: leftover muted chrome (TripPairingBoard slate-* / OwnerHome / remaining pages / skip pile) · skip pile parked · HH15 leftovers first.
+
+## 2026-10-04T18:55Z · BANK-F91540 Settlements leftover slate classes WIRED CI · tip `0ae10fb412`
+
+DONE: #25282 — SettlementsPage leftover text-slate-600 / border-slate-500 / bg-slate-50 → house tokens; leftover refuse on EVEN 3348 --selftest + live.
+
+NEXT: leftover muted chrome (LoadsReport / TripPairing / remaining pages / skip pile) · skip pile parked · HH15 leftovers first.
+
+## 2026-10-04T18:45Z · BANK-F91540 Settlements leftover slate classes · this PR
+
+DONE: SettlementsPage leftover text-slate-600 / border-slate-500 / bg-slate-50 → house #4B5563 / #F7F8FA; leftover refuse on EVEN 3348 --selftest + live.
+
+NEXT: leftover muted chrome (TripPairingBoard slate-* / OwnerHome / remaining pages / skip pile) · skip pile parked · HH15 leftovers first.
+
+## 2026-10-04T18:45Z · BANK-F91539 WeeklyRevenue leftover slate classes WIRED CI · tip `a9b10032ce`
+
+DONE: #25281 — WeeklyRevenueChart leftover text-slate-* / border-slate-* / bg-slate-* → house tokens; leftover refuse on EVEN 4124 --selftest + live.
+
+NEXT: leftover muted chrome (Settlements / TripPairing / remaining pages / skip pile) · skip pile parked · HH15 leftovers first.
+
+## 2026-10-04T18:35Z · BANK-F91539 WeeklyRevenue leftover slate classes · this PR
+
+DONE: WeeklyRevenueChart leftover text-slate-* / border-slate-* / bg-slate-* → house #4B5563 / #0F1219 / #E5E7EB / #F7F8FA; leftover refuse on EVEN 4124 --selftest + live.
+
+NEXT: leftover muted chrome (TripPairingBoard slate-* / OwnerHome / remaining pages / skip pile) · skip pile parked · HH15 leftovers first.
+
+## 2026-10-04T18:35Z · BANK-F91538 RoundTrips leftover slate classes WIRED CI · tip `16a098ac61`
+
+DONE: #25280 — RoundTripsTimeline leftover bg-slate-50 / text-slate-600 / border-slate-300 → house tokens; leftover refuse on EVEN 3408 --selftest + live. SB #475569 stays locked.
+
+NEXT: leftover muted chrome (WeeklyRevenue / TripPairing / remaining pages / skip pile) · skip pile parked · HH15 leftovers first.
+
+## 2026-10-04T18:25Z · BANK-F91538 RoundTrips leftover slate classes · this PR
+
+DONE: RoundTripsTimeline leftover bg-slate-50 / text-slate-600 / border-slate-300 → house #F7F8FA / #4B5563 / #E5E7EB; leftover refuse on EVEN 3408 --selftest + live. SB #475569 stays locked.
+
+NEXT: leftover muted chrome (TripPairingBoard slate-* / remaining pages / skip pile) · skip pile parked · HH15 leftovers first.
+
+## 2026-10-04T18:25Z · BANK-F91537 LaneProfit leftover frame slate WIRED CI · tip `36dcf3618f`
+
+DONE: #25279 — LaneProfitability leftover frame border-slate-* / divide-slate-* → house #E5E7EB; box-in-box needles retargeted, not deleted; leftover refuse on EVEN 2320 --selftest + live.
+
+NEXT: leftover muted chrome (RoundTrips slate-* / remaining pages / skip pile) · skip pile parked · HH15 leftovers first.
+
+## 2026-10-04T18:15Z · BANK-F91537 LaneProfit leftover frame slate · this PR
+
+DONE: LaneProfitabilityPage leftover frame border-slate-* / divide-slate-* → house #E5E7EB; box-in-box needles retargeted (not deleted); leftover refuse on EVEN 2320 --selftest + live.
+
+NEXT: leftover muted chrome (remaining slate-* pages / skip pile) · skip pile parked · HH15 leftovers first.
+
+## 2026-10-04T18:05Z · BANK-F91536 HosTracker leftover slate classes WIRED CI · tip `7bb83f7fdd`
+
+DONE: #25278 — HosTrackerSection leftover Tailwind slate-* → house tokens; leftover refuse on EVEN 4036 --selftest + live.
+
+NEXT: leftover muted chrome (LaneProfit frame drain / remaining slate-* / skip pile) · skip pile parked · HH15 leftovers first.
+
+## 2026-10-04T18:05Z · BANK-F91536 HosTracker leftover slate classes · this PR
+
+DONE: HosTrackerSection leftover Tailwind slate-* → house #1F2A44 / #0F1219 / #4B5563 / #E5E7EB / #F7F8FA; leftover refuse on EVEN 4036 --selftest + live.
+
+NEXT: leftover muted chrome (LaneProfit frame drain / remaining slate-* pages / skip pile) · skip pile parked · HH15 leftovers first.
+
+## 2026-10-04T17:55Z · BANK-F91535 LaneProfit leftover text slate classes WIRED CI · tip `cea0477374`
+
+DONE: #25277 — LaneProfitabilityPage leftover text-slate-* / input border-slate-300 → house tokens; leftover refuse on EVEN 2320 --selftest + live.
+
+NEXT: leftover muted chrome (HosTracker slate-* / frame drain / skip pile) · skip pile parked · HH15 leftovers first.
+
+## 2026-10-04T17:55Z · BANK-F91535 LaneProfit leftover text slate classes · this PR
+
+DONE: LaneProfitabilityPage leftover text-slate-* / input border-slate-300 → house #4B5563 / #0F1219 / #E5E7EB; leftover refuse on EVEN 2320 --selftest + live. Frame border-slate-* stay locked by box-in-box.
+
+NEXT: leftover muted chrome (HosTracker slate-* / frame drain / skip pile) · skip pile parked · HH15 leftovers first.
+
+## 2026-10-04T17:45Z · BANK-F91534 IntegrityAlerts leftover slate classes WIRED CI · tip `92aee6282f`
+
+DONE: #25276 — IntegrityAlertsPage leftover Tailwind slate-* → house #4B5563 / #1F2A44; leftover refuse on EVEN 3996 --selftest + live.
+
+NEXT: leftover muted chrome (LaneProfit text-slate-* / HosTracker / skip pile) · skip pile parked · HH15 leftovers first.
+
+## 2026-10-04T17:45Z · BANK-F91534 IntegrityAlerts leftover slate classes · this PR
+
+DONE: IntegrityAlertsPage leftover Tailwind slate-* → house #4B5563 / #1F2A44; leftover refuse on EVEN 3996 --selftest + live.
+
+NEXT: leftover muted chrome (HosTracker / LaneProfit / remaining slate-* / skip pile) · skip pile parked · HH15 leftovers first.
+
+## 2026-10-04T17:35Z · BANK-F91533 IntegrityReports leftover slate classes WIRED CI · tip `116ee13a19`
+
+DONE: #25275 — IntegrityReportsTab leftover Tailwind slate-* → house tokens; leftover refuse on EVEN 4088 --selftest + live.
+
+NEXT: leftover muted chrome (IntegrityAlerts slate-* / skip pile) · skip pile parked · HH15 leftovers first.
+
+## 2026-10-04T17:35Z · BANK-F91533 IntegrityReports leftover slate classes · this PR
+
+DONE: IntegrityReportsTab leftover Tailwind slate-* → house #1F2A44 / #4B5563 / #E5E7EB / #F7F8FA; leftover refuse on EVEN 4088 --selftest + live.
+
+NEXT: leftover muted chrome (IntegrityAlerts slate-* / skip pile) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T17:25Z · BANK-F91532 Safety filter leftover slate classes WIRED CI · tip `e003edcf4f`
+
+DONE: #25274 — SafetyDashboardFilter leftover Tailwind slate-* → house #4B5563; leftover refuse on EVEN 1230 --selftest + live.
+
+NEXT: leftover muted chrome (Integrity slate-* / skip pile) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T17:25Z · BANK-F91532 Safety filter leftover slate classes · this PR
+
+DONE: SafetyDashboardFilter leftover Tailwind slate-* → house #4B5563; leftover refuse on EVEN 1230 --selftest + live.
+
+NEXT: leftover muted chrome (Integrity slate-* / skip pile) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T17:15Z · BANK-F91531 CreateWO leftover slate classes WIRED CI · tip `af9293de5b`
+
+DONE: #25273 — CreateWorkOrderModal leftover Tailwind slate-* → house tokens; leftover refuse on EVEN 2090 --selftest + live.
+
+NEXT: leftover muted chrome (Safety / Integrity slate-* / skip pile) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T17:15Z · BANK-F91531 CreateWO leftover slate classes · this PR
+
+DONE: CreateWorkOrderModal leftover Tailwind slate-* → house #1F2A44 / #4B5563 / #E5E7EB / #F7F8FA; leftover refuse on EVEN 2090 --selftest + live.
+
+NEXT: leftover muted chrome (Safety / Integrity slate-* / skip pile) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T17:05Z · BANK-F91530 LocationMap leftover slate classes WIRED CI · tip `cd7e24b1ad`
+
+DONE: #25272 — LocationMapModal leftover Tailwind slate-* → house tokens; leftover refuse on EVEN 4132 --selftest + live.
+
+NEXT: leftover muted chrome (CreateWO slate-* / skip pile) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T17:05Z · BANK-F91530 LocationMap leftover slate classes · this PR
+
+DONE: LocationMapModal leftover Tailwind slate-* → house #1F2A44 / #0F1219 / #4B5563 / #F7F8FA; leftover refuse on EVEN 4132 --selftest + live.
+
+NEXT: leftover muted chrome (CreateWO / Safety / Integrity slate-* / skip pile) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T16:55Z · BANK-F91529 IftaPreparer leftover slate classes WIRED CI · tip `0bb4597c3c`
+
+DONE: #25271 — IftaPreparerCard leftover Tailwind slate-* → house tokens; leftover refuse on EVEN 3884 --selftest + live.
+
+NEXT: leftover muted chrome (LocationMap slate-* / WO pie empty stay / skip pile) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T16:55Z · BANK-F91529 IftaPreparer leftover slate classes · this PR
+
+DONE: IftaPreparerCard leftover Tailwind slate-* → house #4B5563 / #1F2A44 / #E5E7EB / #F7F8FA; leftover refuse on EVEN 3884 --selftest + live.
+
+NEXT: leftover muted chrome (other slate-* pages / WO pie empty stay / skip pile) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T16:50Z · BANK-F91528 IftaPreparer leftover #e2e8f0 WIRED CI · tip `2edef3a2f3`
+
+DONE: #25270 — IftaPreparerCard leftover #e2e8f0 chip/hover → house #F7F8FA / #E5E7EB; leftover refuse on EVEN 3884 --selftest + live.
+
+NEXT: leftover muted chrome (Ifta slate-* / WO pie empty stay / skip pile) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T16:48Z · BANK-F91527 LocationMap leftover border WIRED CI · tip `5fc24b468a`
+
+DONE: #25269 — LocationMapModal leftover #d1d5db → #E5E7EB; verify-steps/4132 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (IftaPreparer #e2e8f0 / SystemModule code stay / skip pile) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T16:42Z · BANK-F91526 CreateWO leftover field border WIRED CI · tip `38884cff4f`
+
+DONE: #25268 — CreateWorkOrderModal leftover #d6dae1/#e6e9ee → #E5E7EB; verify-steps/2090 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (LocationMap #d1d5db / SystemModule code stay / skip pile) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T16:38Z · BANK-F91525 TruckLine Clear leftover border WIRED CI · tip `3186848332`
+
+DONE: #25267 — TruckLine Clear leftover border-[#CBD5E1] → #E5E7EB; verify-steps/4122 leftover refuse --selftest + live. SVG fill stays locked.
+
+NEXT: leftover muted chrome (CreateWO field borders / SystemModule code stay / skip pile) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T16:30Z · BANK-F91524 PlannerGrid dwell leftover border WIRED CI · tip `7b55249e1d`
+
+DONE: #25266 — PlannerGrid .pg-dwell leftover #cbd5e1 → #E5E7EB; verify-steps/4140 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (TruckLine Clear #CBD5E1 / SystemModule code / WO pie stay) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T15:46Z · BANK-F91523 CreateWO leftover #cbd5e1 border WIRED CI · tip `08117d5fac`
+
+DONE: #25265 — CreateWorkOrderModal SVG/help leftover #cbd5e1 → #E5E7EB; verify-steps/2090 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (PlannerGrid #cbd5e1 / TruckLine select / WO pie stay) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T15:38Z · BANK-F91522 Integrity leftover pill border WIRED CI · tip `4d66e4ebb9`
+
+DONE: #25264 — IntegrityReports + IntegrityAlerts leftover #cbd5e1 → #E5E7EB; verify-steps/4088 + 3996 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (CreateWO/PlannerGrid #cbd5e1 / WO pie stay) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T15:30Z · BANK-F91521 Safety filter leftover border WIRED CI · tip `97f8553aba`
+
+DONE: #25263 — SafetyDashboardFilter leftover #cbd5e1 → #E5E7EB; verify-steps/1230 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (IntegrityReports/IntegrityAlerts same pill / WO pie stay) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T15:20Z · BANK-F91520 HOS status-dot leftover muted WIRED CI · tip `a363d1a357`
+
+DONE: #25262 — HosTrackerSection status-dot leftover muted #4B5563; verify-steps/4036 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (Safety filter #cbd5e1 / WO pie stay) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T15:18Z · BANK-F91520 HOS status-dot leftover muted WIRED · this PR
+
+DONE: HosTrackerSection status-dot leftover #94A3B8 → house muted #4B5563; leftover refuse on verify-hos-tracker-staged-filters; EVEN 4036 --selftest + live.
+
+NEXT: leftover muted chrome (WO pie status colors stay / RMBuckets In Progress stay / trip-type SB stay) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T15:14Z · BANK-F91519 LaneProfitability YAxis leftover tick WIRED CI · tip `508443189a`
+
+DONE: #25261 — LaneProfitability YAxis leftover tick 11px; verify-steps/2320 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (HOS status-dot #94A3B8 / WO pie status colors stay) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T15:12Z · BANK-F91519 LaneProfitability YAxis leftover tick WIRED · this PR
+
+DONE: LaneProfitability YAxis leftover Recharts tick → locked 11px header scale; leftover refuse on verify-reports-lane-profitability-no-box-in-box; EVEN 2320 --selftest + live.
+
+NEXT: leftover muted chrome (WO pie status colors stay / RMBuckets In Progress stay / trip-type SB stay) · skip pile parked · HH13 no migrations this tick.
+
+## 2026-10-04T15:08Z · BANK-F91518 RoundTrips --dwl leftover muted WIRED CI · tip `db615d02b9`
+
+DONE: #25260 — RoundTripsTimeline --dwl leftover muted #4B5563; verify-steps/3408 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (LaneProfitability YAxis tick / WO pie status colors stay) · skip pile parked · HH13 no migrations this tick.
+
+## 2026-10-04T15:05Z · BANK-F91518 RoundTrips --dwl leftover muted WIRED · this PR
+
+DONE: RoundTripsTimeline --dwl leftover #94a3b8 → house muted #4B5563; leftover refuse on verify-roundtrips-quality-load-entitylink; EVEN 3408 --selftest + live. SB #475569 stays locked.
+
+NEXT: leftover muted chrome (WO pie status colors stay / RMBuckets In Progress stay / trip-type SB stay) · skip pile parked · HH13 no migrations this tick.
+
+## 2026-10-04T14:58Z · BANK-F91517 SystemModule N/A leftover muted WIRED CI · tip `5de334f9f9`
+
+DONE: #25259 — SystemModulePage N/A leftover muted #4B5563; verify-steps/4142 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (RoundTrips --dwl #94a3b8 / WO pie status colors stay) · skip pile parked · HH13 no migrations this tick.
+
+## 2026-10-04T14:58Z · BANK-F91517 SystemModule N/A leftover muted WIRED · this PR
+
+DONE: SystemModulePage not_applicable leftover #94a3b8 → house muted #4B5563; leftover refuse on verify-system-module; unused EVEN 4142 --selftest + live.
+
+NEXT: leftover muted chrome (WO pie status colors stay / RMBuckets In Progress stay / trip-type SB stay) · skip pile parked · HH13 no migrations this tick.
+
+## 2026-10-04T14:54Z · BANK-F91516 PlannerGrid rule-day leftover muted WIRED CI · tip `7ced874b44`
+
+DONE: #25258 — PlannerGrid --rule-day leftover muted #4B5563; verify-steps/4140 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (SystemModule N/A #94a3b8 / WO pie status colors stay) · skip pile parked · HH13 no migrations this tick.
+
+## 2026-10-04T14:48Z · BANK-F91516 PlannerGrid rule-day leftover muted WIRED · this PR
+
+DONE: PlannerGrid --rule-day leftover #94a3b8 → house muted #4B5563; leftover refuse on verify-planner-column-lines; unused EVEN 4140 --selftest + live.
+
+NEXT: leftover muted chrome (WO pie status colors stay / RMBuckets In Progress stay / trip-type SB stay) · skip pile parked · HH13 no migrations this tick.
+
+## 2026-10-04T14:44Z · BANK-F91515 TripPairing dashed leftover muted WIRED CI · tip `0b51bdd15e`
+
+DONE: #25257 — TripPairingBoard dashed leftover muted #4B5563; verify-steps/4130 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (PlannerGrid --rule-day #94a3b8 / WO pie status colors stay) · skip pile parked · HH13 no migrations this tick.
+
+## 2026-10-04T14:38Z · BANK-F91515 TripPairing dashed leftover muted WIRED · this PR
+
+DONE: TripPairingBoard dashed-legend leftover #94a3b8 → house muted #4B5563; leftover refuse on verify-trip-pairing-leg-columns; unused EVEN 4130 --selftest + live. TR #64748b stays.
+
+NEXT: leftover muted chrome (WO pie status colors stay / RMBuckets In Progress stay / trip-type SB stay) · skip pile parked · HH13 no migrations this tick.
+
+## 2026-10-04T14:36Z · BANK-F91514 RouteDiagram dest leftover muted WIRED CI · tip `f98a6c1e8d`
+
+DONE: #25256 — RouteDiagramSvg dest leftover muted #4B5563; verify-steps/4104 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (TripPairing dashed #94a3b8 / WO pie status colors stay) · skip pile parked · HH13 no migrations this tick.
+
+## 2026-10-04T14:28Z · BANK-F91514 RouteDiagram dest leftover muted WIRED · this PR
+
+DONE: RouteDiagramSvg destination leftover #475569 → house muted #4B5563; leftover refuse on verify-fuel-planner-degraded-honesty; EVEN 4104 --selftest + live.
+
+NEXT: leftover muted chrome (WO pie status colors stay / RMBuckets In Progress stay / trip-type SB stay) · skip pile parked · HH13 no migrations this tick.
+
+## 2026-10-04T14:26Z · BANK-F91513 CreateWO help leftover muted WIRED CI · tip `62797b2fe7`
+
+DONE: #25255 — CreateWorkOrderModal leftover muted #4B5563; verify-steps/2090 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (RouteDiagram dest #475569 / WO pie status colors stay) · skip pile parked · HH13 no migrations this tick.
+
+## 2026-10-04T14:22Z · BANK-F91513 CreateWO help leftover muted WIRED · this PR
+
+DONE: CreateWorkOrderModal leftover #aab6cd help → house muted #4B5563; leftover refuse on verify-wo-create-part-task-required; EVEN 2090 --selftest + live.
+
+NEXT: leftover muted chrome (WO pie status colors stay / RMBuckets In Progress stay / #1d2b45 navy chips stay) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T14:18Z · BANK-F91512 TypeTabBar leftover muted WIRED CI · tip `1451422396`
+
+DONE: #25254 — TypeTabBar leftover muted #4B5563; verify-steps/1710 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (CreateWO #aab6cd / WO pie status colors stay) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T14:12Z · BANK-F91512 TypeTabBar leftover muted WIRED · this PR
+
+DONE: TypeTabBar inactive tab leftover #94a3b8 → house muted #4B5563; leftover refuse on verify-acct-r09-bill-subnav-type-contract; EVEN 1710 --selftest + live.
+
+NEXT: leftover muted chrome (WO pie status colors stay / RMBuckets In Progress stay) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T14:08Z · BANK-F91511 SafetyDashboardFilter leftover muted WIRED CI · tip `f7129b4e99`
+
+DONE: #25253 — SafetyDashboardFilter leftover muted #4B5563; verify-steps/1230 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (TypeTabBar #94a3b8 / WO pie status colors stay) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T13:55Z · BANK-F91511 SafetyDashboardFilter leftover muted WIRED · this PR
+
+DONE: SafetyDashboardFilter inactive pill leftover #475569 → house muted #4B5563; leftover refuse on verify-safety-filter-chrome; EVEN 1230 --selftest + live.
+
+NEXT: leftover muted chrome (TypeTabBar #94a3b8 / WO pie status colors stay) · skip pile parked · HH13 no migrations this tick.
+
+## 2026-10-04T13:50Z · BANK-F91510 LocationMap leftover muted WIRED CI · tip `061942eabe`
+
+DONE: #25252 — LocationMapModal leftover muted #4B5563; verify-steps/4132 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (SafetyDashboardFilter #475569 / TypeTabBar #94a3b8 / WO pie status colors stay) · skip pile parked · HH13 no migrations this tick.
+
+## 2026-10-04T13:42Z · BANK-F91510 LocationMap leftover muted WIRED · this PR
+
+DONE: LocationMapModal leftover #64748b/#94a3b8 → house muted #4B5563; leftover refuse on verify-lists-maintenance-generic-catalog-connectivity-exact; unused EVEN 4132 --selftest + live.
+
+NEXT: leftover muted chrome (SafetyDashboardFilter #475569 / TypeTabBar #94a3b8 / WO pie status colors stay) · skip pile parked · HH13 no migrations this tick.
+
+## 2026-10-04T13:38Z · BANK-F91509 CreateWO leftover muted WIRED CI · tip `91610ff89e`
+
+DONE: #25251 — CreateWorkOrderModal leftover muted #4B5563; verify-steps/2090 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (LocationMap SVG labels / WO pie status colors stay) · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T13:32Z · BANK-F91509 CreateWO leftover muted WIRED · this PR
+
+DONE: CreateWorkOrderModal leftover #94a3b8/#475569 → house muted #4B5563; leftover refuse on verify-wo-create-part-task-required; EVEN 2090 --selftest + live.
+
+NEXT: leftover muted chrome (LocationMap SVG labels / WO pie status colors stay) · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T13:28Z · BANK-F91508 Factoring KPI leftover WIRED CI · tip `05f09a4629`
+
+DONE: #25250 — DefaultHome + OwnerHome Factoring Balance accent #4B5563; verify-steps/3886+3888 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (CreateWO empty / LocationMap / WO pie status colors stay) · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T13:22Z · BANK-F91508 Factoring KPI leftover #475569 accent WIRED · this PR
+
+DONE: DefaultHome + OwnerHome Factoring Balance HomeKpiCard accent #475569 → house muted #4B5563; leftover refuse on verify-home-quickjump-counts; EVEN 3886/3888 --selftest + live.
+
+NEXT: leftover muted chrome (CreateWO empty / LocationMap / WO pie status colors stay) · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T13:18Z · BANK-F91507 Settlements DataPanel leftover WIRED CI · tip `50792c18cc`
+
+DONE: #25249 — SettlementsPage Open Driver Bills DataPanel accent #4B5563; verify-steps/3348 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (DefaultHome/OwnerHome #475569 / CreateWO empty / LocationMap) · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T13:12Z · BANK-F91507 Settlements DataPanel leftover #64748b WIRED · this PR
+
+DONE: SettlementsPage Open Driver Bills DataPanel accent #64748b → house muted #4B5563; leftover refuse on verify-settlements-module-one-readout; EVEN 3348 --selftest + live.
+
+NEXT: leftover muted chrome (DefaultHome/OwnerHome #475569 / CreateWO empty / LocationMap) · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T13:08Z · BANK-F91506 CatalogQuickCreate leftover WIRED CI · tip `36ea73382f`
+
+DONE: #25248 — CatalogQuickCreateDrawer help/target #4B5563; verify-steps/1510 leftover refuse --selftest + live.
+
+NEXT: leftover muted #64748b chrome (Settlements DataPanel / RMBuckets / CreateWO empty) · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T13:00Z · BANK-F91506 CatalogQuickCreate leftover #64748b WIRED · this PR
+
+DONE: CatalogQuickCreateDrawer help/target text #64748b → house muted #4B5563; leftover refuse on verify-lst-picker-config-driven; EVEN 1510 --selftest + live.
+
+NEXT: leftover muted #64748b chrome (Settlements DataPanel / RMBuckets / CreateWO empty) · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T12:55Z · BANK-F91505 WeeklyRevenue leftover WIRED CI · tip `cb6ac30db5`
+
+DONE: #25247 — WeeklyRevenueChart axis stroke #4B5563; verify-steps/4124 leftover refuse --selftest + live.
+
+NEXT: leftover muted #64748b chrome (CatalogQuickCreateDrawer / Settlements DataPanel / RMBuckets) · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T12:50Z · BANK-F91505 WeeklyRevenue leftover #64748b stroke WIRED · this PR
+
+DONE: WeeklyRevenueChart axis stroke #64748b → house muted #4B5563; leftover refuse on verify-home-kpi-range-toggle; unused EVEN 4124 --selftest + live.
+
+NEXT: leftover muted #64748b chrome (CatalogQuickCreateDrawer / Settlements DataPanel / RMBuckets) · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T12:36Z · BANK-F91504 LoadsReport leftover fontSize 11 totals WIRED · this PR
+
+DONE: LoadsReportPage totals label fontSize 11 → text-section-header; leftover refuse on verify-loads-report-surface; unused EVEN 4126 --selftest + live.
+
+NEXT: leftover fontSize 11 chrome (LaneProfit ticks already 11 / Deadhead ticks already 11) · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T12:35Z · BANK-F91503 TruckLine Status leftover WIRED CI · tip `35d6fed3d6`
+
+DONE: #25245 — TruckLineBoard Status text-section-header; verify-steps/4122 leftover refuse --selftest + live.
+
+NEXT: BANK-F91504 LoadsReport leftover fontSize: 11 totals + leftover refuse on 4126 · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T12:30Z · BANK-F91503 TruckLine Status leftover fontSize 11 WIRED · this PR
+
+DONE: TruckLineBoard Status label fontSize 11 → text-section-header; leftover refuse on verify-truck-line-units-only; unused EVEN 4122 --selftest + live.
+
+NEXT: leftover fontSize 11 chrome (SettlementKpiGrid / CashFlowKpiStrip / LoadsReport) · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T12:29Z · BANK-F91502 LoadUnitCostSplit leftover WIRED CI · tip `4f10a33362`
+
+DONE: #25244 — LoadUnitCostSplitPanel labels text-section-header; verify-steps/11088 leftover refuse --selftest + live.
+
+NEXT: BANK-F91503 TruckLine Status leftover fontSize: 11 + leftover refuse on 4122 · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T12:24Z · BANK-F91502 LoadUnitCostSplit leftover fontSize 11 labels WIRED · this PR
+
+DONE: LoadUnitCostSplitPanel labels fontSize 11 → text-section-header; leftover refuse on verify-load-unit-cost-split-wired; EVEN 11088 --selftest + live.
+
+NEXT: leftover fontSize 11 chrome (TruckLine Status / SettlementKpiGrid / CashFlowKpiStrip) · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T12:23Z · BANK-F91501 Settlements leftover WIRED CI · tip `a7cdcc7ff0`
+
+DONE: #25243 — SettlementsToursRegister totals text-section-header; verify-steps/11082 leftover refuse --selftest + live.
+
+NEXT: BANK-F91502 LoadUnitCostSplit leftover fontSize: 11 labels + leftover refuse on 11088 · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T12:18Z · BANK-F91501 Settlements leftover fontSize 11 totals WIRED · this PR
+
+DONE: SettlementsToursRegister totals label fontSize 11 → text-section-header; leftover refuse on verify-settlements-list-button-height-uniform; EVEN 11082 --selftest + live.
+
+NEXT: leftover fontSize 11 chrome (TruckLine Status / LoadUnitCostSplit / SettlementKpiGrid) · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T12:17Z · BANK-F91500 TourLoadRows leftover WIRED CI · tip `e09067a575`
+
+DONE: #25242 — TourLoadRows totals text-section-header; verify-steps/10520 leftover refuse --selftest + live.
+
+NEXT: BANK-F91501 Settlements leftover fontSize: 11 totals + leftover refuse on 11082 · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T12:12Z · BANK-F91500 TourLoadRows leftover fontSize 11 totals WIRED · this PR
+
+DONE: TourLoadRows totals label fontSize 11 → text-section-header; leftover refuse on verify-load-costs-settlement-legs-columns; EVEN 10520 --selftest + live.
+
+NEXT: leftover fontSize 11 chrome (Settlements totals / TruckLine Status / LoadUnitCostSplit) · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T12:11Z · BANK-F91499 CargoSensor leftover WIRED CI · tip `d0f434d7a2`
+
+DONE: #25241 — CargoSensorTimeline ticks fontSize 11; verify-steps/4120 leftover refuse --selftest + live.
+
+NEXT: BANK-F91500 TourLoadRows leftover fontSize: 11 totals + leftover refuse on 10520 · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T12:05Z · BANK-F91499 CargoSensor leftover fontSize 10 ticks WIRED · this PR
+
+DONE: CargoSensorTimeline ticks + axis labels 10 → 11; leftover refuse fontSize 10 on verify-go20-cargo-incidents; unused EVEN 4120 --selftest + live.
+
+NEXT: leftover headerInk #1F2937 / remaining fontSize 11 chrome · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T12:04Z · BANK-F91498 TireWear leftover WIRED CI · tip `0a6572838d`
+
+DONE: #25240 — TireWearProjectionChart ticks fontSize 11; verify-steps/4118 leftover refuse --selftest + live.
+
+NEXT: BANK-F91499 CargoSensor leftover fontSize: 10 ticks + leftover refuse on 4120 · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T11:58Z · BANK-F91498 TireWear leftover fontSize 10 ticks WIRED · this PR
+
+DONE: TireWearProjectionChart ticks 10 → 11; leftover refuse fontSize 10 on verify-cap-12-tire-tread; unused EVEN 4118 --selftest + live.
+
+NEXT: leftover headerInk #1F2937 / CargoSensor ticks · skip pile parked · HH11 no migrations.
+
+## 2026-10-04T11:56Z · BANK-F91497 CustomerProfit leftover WIRED CI · tip `772716b31a`
+
+DONE: #25239 — CustomerProfitability ticks fontSize 11; verify-steps/3862 leftover refuse live.
+
+NEXT: BANK-F91498 TireWear leftover fontSize: 10 ticks + leftover refuse on 4118 · skip pile parked · HH11 no migrations.
+
+## 2026-10-04T11:52Z · BANK-F91496 CashFlowOverview leftover WIRED CI · tip `99d1fd8a27`
+
+DONE: #25238 — CashFlowOverview ticks fontSize 11; verify-steps/3850 leftover refuse live.
+
+NEXT: BANK-F91497 CustomerProfit leftover fontSize: 10 ticks + leftover refuse on 3862 · skip pile parked · HH11 no migrations.
+
+## 2026-10-04T11:48Z · BANK-F91495 ProfitPerTruck leftover WIRED CI · tip `30dbed2877`
+
+DONE: #25237 — ProfitPerTruck ticks fontSize 11; verify-steps/3854 leftover refuse live.
+
+NEXT: BANK-F91496 CashFlowOverview leftover fontSize: 10 ticks + leftover refuse on 3850 · skip pile parked · HH11 no migrations.
+
+## 2026-10-04T11:42Z · BANK-F91494 CustomerDetail leftover WIRED CI · tip `9e3a56388c`
+
+DONE: #25236 — CustomerDetail ticks fontSize 11; verify-steps/4116 leftover refuse --selftest + live.
+
+NEXT: BANK-F91495 ProfitPerTruck leftover fontSize: 10 ticks + leftover refuse on 3854 · skip pile parked · HH11 no migrations.
+
+## 2026-10-04T11:36Z · BANK-F91493 LoadCosts leftover WIRED CI · tip `34b39a4d44`
+
+DONE: #25235 — LoadCostsBoard totals text-section-header; verify-steps/4110 leftover refuse fontSize 10+11.
+
+NEXT: BANK-F91494 CustomerDetail leftover fontSize: 10 ticks + leftover refuse on 4116 · skip pile parked · HH11 no migrations.
+
+## 2026-10-04T11:30Z · BANK-F91492 SettlementsTours leftover WIRED CI · tip `485ba32aa6`
+
+DONE: #25234 — SettlementsToursRegister pill counts text-section-header; verify-steps/11082 leftover refuse --selftest + live.
+
+NEXT: BANK-F91493 LoadCosts leftover fontSize: 11 totals + leftover refuse on 4110 · skip pile parked · HH11 no migrations.
+
+## 2026-10-04T11:24Z · BANK-F91491 LoadCosts leftover WIRED CI · tip `90b5b7dfc6`
+
+DONE: #25233 — LoadCostsBoard 10px chips → text-section-header; verify-steps/4110 leftover refuse --selftest + live.
+
+NEXT: BANK-F91492 SettlementsTours leftover fontSize: 10 + leftover refuse on 11082 · skip pile parked · HH11 no migrations.
+
+## 2026-10-04T11:18Z · BANK-F91490 TripPairingBoard leftover WIRED CI · tip `c7dda1f4ac`
+
+DONE: #25232 — TripPairingBoard SB #4B5563; verify-steps/4108 leftover refuse --selftest + live.
+
+NEXT: BANK-F91491 LoadCosts leftover fontSize: 10 + leftover refuse on 4110 · skip pile parked · HH11 no migrations.
+
+## 2026-10-04T11:16Z · BANK-F91489 CashFlowOverview leftover WIRED CI · tip `fa5fb2c1da`
+
+DONE: #25231 — CashFlowOverview line #4B5563; verify-steps/3850 leftover refuse live.
+
+NEXT: BANK-F91490 TripPairingBoard leftover #334155 + leftover refuse on 4108 · skip pile parked · HH11 no migrations.
+
+## 2026-10-04T11:12Z · BANK-F91488 ProfitPerTruck leftover WIRED CI · tip `42e145e2d2`
+
+DONE: #25230 — ProfitPerTruck revenue/mi #4B5563; verify-steps/3854 leftover refuse live.
+
+NEXT: BANK-F91489 CashFlowOverview leftover #334155 + leftover refuse on 3850 · skip pile parked · HH11 no migrations.
+
+## 2026-10-04T11:08Z · BANK-F91487 plannerTimeAxis leftover WIRED CI · tip `9a25f3679e`
+
+DONE: #25229 — plannerTimeAxis today-inset #4B5563; verify-steps/4106 leftover refuse --selftest + live.
+
+NEXT: BANK-F91488 ProfitPerTruck leftover #334155 + leftover refuse on 3854 · skip pile parked · HH11 no migrations.
+
+## 2026-10-04T11:00Z · BANK-F91486 RouteDiagramSvg leftover WIRED CI · tip `301e659e3d`
+
+DONE: #25228 — RouteDiagramSvg origin fill #4B5563; verify-steps/4104 leftover refuse --selftest + live.
+
+NEXT: BANK-F91487 plannerTimeAxis leftover #334155 + leftover refuse on 4106 · skip pile parked · HH11 no migrations.
+
+## 2026-10-04T10:52Z · BANK-F91485 WOStatusPieChart leftover WIRED CI · tip `17185197ce`
+
+DONE: #25227 — WOStatusPieChart open-slice #4B5563; verify-steps/4102 leftover refuse --selftest + live.
+
+NEXT: BANK-F91486 RouteDiagramSvg leftover #334155 + leftover refuse on 4104 · skip pile parked · HH10 no migrations.
+
+## 2026-10-04T10:48Z · BANK-F91484 LegalSignPage leftover WIRED CI · tip `78a94b89d3`
+
+DONE: #25226 — LegalSignPage Send Code #4B5563; verify-steps/12372 leftover refuse --selftest + live.
+
+NEXT: BANK-F91485 WOStatusPieChart leftover #334155 + leftover refuse on 4102 · skip pile parked · HH10 no migrations.
+
+## 2026-10-04T10:40Z · BANK-F91483 CatalogQuickCreateDrawer leftover WIRED CI · tip `3db32a15e7`
+
+DONE: #25225 — CatalogQuickCreateDrawer field labels #4B5563; verify-steps/1510 leftover refuse now catches #334155.
+
+NEXT: BANK-F91484 LegalSignPage leftover #334155 + leftover refuse on 12372 · skip pile parked · HH10 no migrations.
+
+## 2026-10-04T10:36Z · BANK-F91482 LoadBolPanel leftover WIRED CI · tip `608a146264`
+
+DONE: #25224 — LoadBolPanel stored-BOL list #4B5563; verify-steps/3882 runs leftover refuse --selftest + live.
+
+NEXT: BANK-F91483 CatalogQuickCreateDrawer leftover #334155 + leftover refuse on 1510 · skip pile parked · HH10 no migrations.
+
+## 2026-10-04T10:34Z · BANK-F91481 SafetyGroupNav leftover WIRED CI · tip `fa452880d8`
+
+DONE: #25223 — SafetyGroupNav RENAMED badge #4B5563; verify-steps/3880 runs leftover refuse --selftest + live.
+
+NEXT: BANK-F91482 LoadBolPanel leftover #334155 + leftover refuse on 2366 · skip pile parked · HH10 no migrations.
+
+## 2026-10-04T10:28Z · BANK-F91480 RMBucketsGrid leftover WIRED CI · tip `8c83c0a944`
+
+DONE: #25222 — RMBucketsGrid Completed accent #4B5563; verify-steps/4190 leftover refuse now catches #334155.
+
+NEXT: BANK-F91481 SafetyGroupNav leftover #334155 + wire leftover refuse into 3880 · skip pile parked · HH10 no migrations.
+
+## 2026-10-04T10:22Z · BANK-F91479 IftaPreparerCard leftover WIRED CI · tip `0c87f07b4c`
+
+DONE: #25221 — IftaPreparerCard #4B5563; verify-steps/3884 runs verify-basis-selector leftover refuse --selftest + live.
+
+NEXT: BANK-F91480 RMBucketsGrid leftover #334155 + leftover refuse on 4190 · skip pile parked · HH10 no migrations.
+
+## 2026-10-04T10:16Z · BANK-F91478 DefaultHome leftover WIRED CI · tip `737e4efa1d`
+
+DONE: #25220 — DefaultHome KPI warn/healthy #4B5563; verify-steps/3886 runs leftover refuse --selftest + live.
+
+NEXT: BANK-F91479 IftaPreparerCard leftover #334155 + wire leftover refuse into 3884 · skip pile parked · HH10 no migrations.
+
+## 2026-10-04T10:12Z · BANK-F91477 OwnerHome leftover WIRED CI · tip `f1d9ec57fc`
+
+DONE: #25219 — OwnerHome KPI warn/healthy #4B5563; verify-steps/3888 runs verify-home-quickjump-counts leftover refuse --selftest + live.
+
+NEXT: BANK-F91478 DefaultHome leftover #334155 + wire leftover refuse into 3886 · skip pile parked · HH10 no migrations.
+
+## 2026-10-04T10:08Z · BANK-F91476 AccountingHome leftover WIRED CI · tip `9298bc9297`
+
+DONE: #25218 — AccountingHome AP accent #4B5563; verify-steps/3870 runs verify-accounting-home --selftest + live.
+
+NEXT: BANK-F91477 OwnerHome leftover #334155 + wire leftover refuse into 3888 · skip pile parked · HH10 no migrations.
+
+## 2026-10-04T10:00Z · BANK-F91475 C-22 MaintKpiRows LOAD_FAIL WIRED CI · tip `acf9a8e191`
+
+DONE: #25217 — MaintKpiRows unavailable={LOAD_FAIL}; verify-steps/3526 runs ops/verify-c22-tabs-kpis --selftest.
+
+NEXT: BANK-F91476 AccountingHome leftover #334155 + wire verify-accounting-home into 3870 · skip pile parked · HH09 no migrations.
+
+## 2026-10-04T10:20Z · BANK-F91474 C-21 odometer honesty WIRED CI · tip `aa46a35475`
+
+DONE: #25216 — pm.routes returns odometer_reading_at from captured_at; verify-steps/3760 runs ops/verify-c21-odometer-honesty --selftest.
+
+NEXT: BANK-F91475 C-22 MaintKpiRows LOAD_FAIL + wire 3526 · skip pile parked · HH09 no migrations.
+
+## 2026-10-04T10:12Z · BANK-F91473 clean-app legal fixtures WIRED CI · tip `72af8694cc`
+
+DONE: #25215 — verify-steps/980 now runs ops/verify-clean-app-legal-fixtures-in-complete-delete --selftest.
+
+NEXT: BANK-F91474 C-21 odometer honesty captured_at + wire 3760 · C-22 fail=triage · skip pile parked · HH09 no migrations.
+
+## 2026-10-04T10:02Z · BANK-F91472 driver-profile ORDERS complete WIRED CI · tip `b1071486b9`
+
+DONE: #25214 — verify-steps/1086 now runs ops/verify-driver-profile-orders-complete --selftest.
+
+NEXT: BANK-F91473 wire clean-app legal fixtures into 980 · C-21 odometer + C-22 fail=triage · skip pile parked · HH09 no migrations.
+
+## 2026-10-04T09:56Z · BANK-F91471 vendors ORDERS complete WIRED CI · tip `7e3079a2c5`
+
+DONE: #25213 — verify-steps/4148 now runs ops/verify-vendors-orders-complete --selftest.
+
+NEXT: BANK-F91472 wire driver-profile ORDERS complete into 1086 · C-21 odometer + C-22 fail=triage · skip pile parked · HH09 no migrations.
+
+## 2026-10-04T09:50Z · BANK-F91470 customers ORDERS complete WIRED CI · tip `2a10ce0ad5`
+
+DONE: #25212 — verify-steps/3560 now runs ops/verify-customers-orders-complete --selftest.
+
+NEXT: BANK-F91471 wire vendors ORDERS complete into 4306 · C-21 odometer + C-22 fail=triage · skip pile parked · HH09 no migrations.
+
+## 2026-10-04T09:44Z · BANK-F91469 R313 maintenance designs WIRED CI · tip `e2390d2006`
+
+DONE: #25211 — verify-steps/3458 now runs ops/verify-r313-maintenance-designs --selftest.
+
+NEXT: BANK-F91470 wire customers ORDERS complete into 3560 · C-21 odometer + C-22 fail=triage · skip pile parked · HH09 no migrations.
+
+## 2026-10-04T09:38Z · BANK-F91468 R319 driver Fuel tab WIRED CI · tip `7427568425`
+
+DONE: #25210 — verify-steps/1012 now runs ops/verify-r319-driver-fuel-tab --selftest.
+
+NEXT: BANK-F91469 wire R313 maintenance designs into 3458 · C-21 odometer + C-22 fail=triage · skip pile parked · HH09 no migrations.
+
+## 2026-10-04T09:32Z · BANK-F91467 R319 customer-details engines WIRED CI · tip `bf23115cd8`
+
+DONE: #25209 — verify-steps/984 now runs ops/verify-r319-customer-details-engines --selftest.
+
+NEXT: BANK-F91468 wire R319 driver Fuel tab into 1012 · C-21 odometer + C-22 fail=triage · skip pile parked · HH09 no migrations.
+
+## 2026-10-04T09:26Z · BANK-F91466 R319 vendor engines WIRED CI · tip `fd9ba2a58b`
+
+DONE: #25208 — verify-steps/960 now runs ops/verify-r319-vendor-engines --selftest.
+
+NEXT: BANK-F91467 wire R319 customer-details engines into 984 · C-21 odometer + C-22 fail=triage · skip pile parked · HH09 no migrations.
+
+## 2026-10-04T09:20Z · BANK-F91465 PM due source + unit faults reverse WIRED CI · tip `00a9d573e3`
+
+DONE: #25207 — verify-steps/5620 now runs ops/verify-maint-pm-due-source-faults --selftest.
+
+NEXT: BANK-F91466 wire R319 vendor engines into 960 · C-21 odometer + C-22 fail=triage · skip pile parked · HH08 no migrations.
+
+## 2026-10-04T09:14Z · BANK-F91464 maint filelinks + engines widget WIRED CI · tip `17868c6e94`
+
+DONE: #25206 — verify-steps/3012 now runs ops/verify-maint-filelinks-engine-widget --selftest.
+
+NEXT: BANK-F91465 wire PM due source + unit faults reverse into 5620 · C-21 odometer + C-22 fail=triage · skip pile parked · HH08 no migrations.
+
+## 2026-10-04T09:08Z · BANK-F91463 E-40 faults-view WIRED CI · tip `a270b01059`
+
+DONE: #25205 — verify-steps/4030 now runs ops/verify-e40-faults-view --selftest.
+
+NEXT: BANK-F91464 wire maint filelinks + engines widget into 3012 · C-21 odometer + C-22 fail=triage · skip pile parked · HH08 no migrations.
+
+## 2026-10-04T09:02Z · BANK-F91462 E-41 engine-status-savepoint WIRED CI · tip `1334f178a6`
+
+DONE: #25204 — verify-steps/982 now runs ops/verify-e41-engine-status-savepoint --selftest.
+
+NEXT: BANK-F91463 wire E-40 faults-view into 4030 · C-21 odometer + C-22 fail=triage · skip pile parked · HH09 no migrations.
+
+## 2026-10-04T08:56Z · BANK-F91461 E-41 engine-status-board WIRED CI · tip `7e0ad3cd1b`
+
+DONE: #25203 — verify-steps/3564 now runs ops/verify-e41-engine-status-board --selftest.
+
+NEXT: BANK-F91462 wire E-41 engine-status-savepoint into 982 · C-21 odometer + C-22 fail=triage · skip pile parked · HH08 no migrations.
+
+## 2026-10-04T08:50Z · BANK-F91460 E-42 dashcam viewer WIRED CI · tip `284f73551c`
+
+DONE: #25202 — verify-steps/2204 now runs ops/verify-e42-dashcam-viewer --selftest.
+
+NEXT: BANK-F91461 wire E-41 engine-status-board into 3564 · C-21 odometer + C-22 fail=triage · skip pile parked · HH08 no migrations.
+
+## 2026-10-04T08:42Z · BANK-F91459 E-44 stops/miles profile WIRED CI · tip `0444b4bfb9`
+
+DONE: #25201 — verify-steps/4584 now runs ops/verify-e44-stops-miles-profile --selftest.
+
+NEXT: BANK-F91460 wire E-42 dashcam viewer into 2204 · C-21 odometer + C-22 fail=triage · skip pile parked · HH08 no migrations.
+
+## 2026-10-04T08:36Z · BANK-F91458 maint WO three dates WIRED CI · tip `df52e96a24`
+
+DONE: #25200 — verify-steps/3764 now runs ops/verify-maint-wo-three-dates --selftest.
+
+NEXT: BANK-F91459 wire E-44 stops/miles profile into 4584 · C-21 odometer + C-22 fail=triage · skip pile parked · HH08 no migrations.
+
+## 2026-10-04T08:30Z · BANK-F91457 factoring FT5 setup email rates WIRED CI · tip `d214c9dd23`
+
+DONE: #25199 — verify-steps/4162 now runs ops/verify-factoring-ft5-setup-email-rates --selftest.
+
+NEXT: BANK-F91458 wire maint WO three dates into 3764 · C-21 odometer + C-22 fail=triage · skip pile parked · HH08 no migrations.
+
+## 2026-10-04T08:24Z · BANK-F91456 factoring FT2 escrow/cash tabs WIRED CI · tip `a09269e1d0`
+
+DONE: #25198 — verify-steps/10594 now runs ops/verify-factoring-ft2-escrow-cash-tabs --selftest.
+
+NEXT: BANK-F91457 wire FT5 setup email rates into 4162 · C-21 odometer + C-22 fail=triage · skip pile parked · HH08 no migrations.
+
+## 2026-10-04T08:18Z · BANK-F91455 factoring r315 shared reserves WIRED CI · tip `897595e7f1`
+
+DONE: #25197 — verify-steps/1130 now runs ops/verify-factoring-r315-reserves-shared --selftest.
+
+NEXT: BANK-F91456 wire FT2 escrow/cash tabs into 10594 · C-21 odometer + C-22 fail=triage · skip pile parked · HH08 no migrations.
+
+## 2026-10-04T08:12Z · BANK-F91454 factoring r315 Payments tabs WIRED CI · tip `4329135f7a`
+
+DONE: #25196 — verify-steps/1986 now runs ops/verify-factoring-r315-payments-tabs --selftest.
+
+NEXT: BANK-F91455 wire r315 reserves-shared into 1130 · C-21 odometer + C-22 fail=triage · skip pile parked · HH08 no migrations.
+
+## 2026-10-04T08:06Z · BANK-F91453 factoring r315 Home cash-flow WIRED CI · tip `8598d8ed81`
+
+DONE: #25195 — verify-steps/4012 now runs ops/verify-factoring-r315-home-cash-flow --selftest.
+
+NEXT: BANK-F91454 wire r315 payments tabs into 1986 · C-21 odometer + C-22 fail=triage · skip pile parked · HH07 no migrations.
+
+## 2026-10-04T08:00Z · BANK-F91452 C-21 maintenance-shell D24–D32 WIRED CI · tip `5238e72502`
+
+DONE: #25194 — verify-steps/3788 now runs ops/verify-c21-maintenance-shell --selftest.
+
+NEXT: BANK-F91453 wire factoring r315 home cash-flow into 4012 · C-21 odometer + C-22 fail=triage · skip pile parked · HH08 no migrations.
+
+## 2026-10-04T08:30Z · BANK-F91451 C-20 Driver Profile module shell WIRED CI · tip `ec5992627c`
+
+DONE: #25193 — verify-steps/3382 now runs ops/verify-c20-driver-profile-module --selftest.
+
+NEXT: BANK-F91452 wire C-21 maintenance-shell into 3788 · C-21 odometer + C-22 fail=triage · skip pile parked · HH08 no migrations.
+
+## 2026-10-04T08:24Z · BANK-F91450 C-57 driver-profile Integrity KPIs WIRED CI · tip `ef06271afa`
+
+DONE: #25192 — verify-steps/3384 now runs ops/verify-c57-driver-profile-integrity-kpis --selftest.
+
+NEXT: BANK-F91451 wire C-20 driver-profile module shell into 3382 · C-21/C-22 fail=triage · skip pile parked · HH08 no migrations.
+
+## 2026-10-04T08:18Z · BANK-F91449 C-55 Regular + Master-detail WIRED CI · tip `01f2e09b7d`
+
+DONE: #25191 — verify-steps/12382 now runs ops/verify-c55-regular-master-detail --selftest.
+
+NEXT: BANK-F91450 wire C-57 driver-profile integrity KPIs into 3384 · C-21/C-22 fail=triage · skip pile parked · HH08 no migrations.
+
+## 2026-10-04T08:12Z · BANK-F91448 C-36 maint tabs 16→9 WIRED CI · tip `ddbd74baf2`
+
+DONE: #25190 — verify-steps/2390 now runs ops/verify-c36-maint-tabs-16-to-9 --selftest.
+
+NEXT: BANK-F91449 wire C-55 Regular + Master-detail into 12382 · C-21/C-22 fail=triage · skip pile parked · HH08 no migrations.
+
+## 2026-10-04T08:06Z · BANK-F91447 C-25 DisputesHub three-way split WIRED CI · tip `ca1fa9c537`
+
+DONE: #25189 — verify-steps/1014 now runs ops/verify-c25-disputes-hub-split --selftest.
+
+NEXT: BANK-F91448 wire C-36 maint tabs 16→9 into 2390 · C-21/C-22 fail=triage · skip pile parked · HH08 no migrations.
+
+## 2026-10-04T08:00Z · BANK-F91446 C-24 QBO parity tail WIRED CI · tip `4ca691095d`
+
+DONE: #25188 — verify-steps/12342 now runs ops/verify-c24-qbo-parity-tail --selftest.
+
+NEXT: BANK-F91447 wire C-25 disputes hub split into 1014 · C-21/C-22 fail=triage · skip pile parked · HH08 no migrations.
+
+## 2026-10-04T07:54Z · BANK-F91445 C-23 kanban Dispatched-to-pickup WIRED CI · tip `1fdf72ea2d`
+
+DONE: #25187 — verify-steps/3956 now runs ops/verify-c23-kanban-dispatched-pickup --selftest.
+
+NEXT: BANK-F91446 wire C-24 QBO parity tail into 12342 · C-21/C-22 fail=triage · skip pile parked · HH07 no migrations.
+
+## 2026-10-04T07:48Z · BANK-F91444 C-37 house table format WIRED CI · tip `86512f16cc`
+
+DONE: #25186 — verify-steps/1176 now runs ops/verify-c37-house-table-format --selftest.
+
+NEXT: BANK-F91445 wire C-23 kanban stamp into 3956 · C-21/C-22 fail=triage · skip pile parked · HH07 no migrations.
+
+## 2026-10-04T07:42Z · BANK-F91443 C-06 viewport auto-adjust WIRED CI · tip `b35f63a232`
+
+DONE: #25185 — verify-steps/3122 now runs ops/verify-c06-viewport-auto-adjust --selftest.
+
+NEXT: BANK-F91444 wire C-37 house table format into 1176 · C-23 kanban PASS next · C-21/C-22 fail=triage · skip pile parked · HH07 no migrations.
+
+## 2026-10-04T07:36Z · BANK-F91442 C-05 minimum-scroll WIRED CI · tip `5d476b9e06`
+
+DONE: #25184 — verify-steps/11836 now runs ops/verify-c05-minimum-scroll --selftest.
+
+NEXT: BANK-F91443 wire C-06 viewport auto-adjust into 3122 · skip pile parked · HH07 no migrations.
+
+## 2026-10-04T07:30Z · BANK-F91441 C-04 row treatment WIRED CI · tip `0cbecb2a65`
+
+DONE: #25183 — verify-steps/10602 now runs ops/verify-c04-row-treatment --selftest.
+
+NEXT: BANK-F91442 wire C-05 minimum-scroll into 11836 · skip pile parked · HH07 no migrations.
+
+## 2026-10-04T07:24Z · BANK-F91440 C-19 With-transactions default WIRED CI · tip `c0c24b4242`
+
+DONE: #25182 — verify-steps/2232 now runs ops/verify-c19-has-transactions-default --selftest. Invoice match banner already on 1158 B-1 pack.
+
+NEXT: BANK-F91441 wire C-04 row treatment into 10602 · skip pile parked · HH07 no migrations.
+
+## 2026-10-04T07:18Z · BANK-F91439 C-52 toast dock corrected + WIRED CI · tip `08b499b381`
+
+DONE: #25181 — C-52 requires top-14 right-3 (C-65 owns bottom-3); step 3018 runs ops/verify-c52-alerts-side-dock.
+
+NEXT: BANK-F91440 wire C-19 With-transactions default into 2232 · invoice match banner already in B-1 pack on 1158 · skip pile parked · HH07 no migrations.
+
+## 2026-10-04T07:12Z · BANK-F91438 C-50 bound pin WIRED CI · tip `2398b720c1`
+
+DONE: #25180 — verify-steps/118 now runs ops/verify-c50-active-company-bound-pin --selftest.
+
+NEXT: BANK-F91439 correct C-52 toast dock (top-14, not C-65 bottom-3) + wire into 3018 · skip pile parked · HH06 no migrations.
+
+## 2026-10-04T07:05Z · BANK-F91437 C-53 recon shell restored + WIRED CI · tip `7523d47352`
+
+DONE: #25178 — ReconciliationTabContent A-27 pending + must reach $0.00; step 1356 runs ops/verify-c53-recon-screen-shell.
+
+NEXT: BANK-F91438 wire C-50 active-company bound pin into 118 · C-52 toast dock is triage (top-14 vs bottom-3 vs C-65) · skip pile parked · HH06 no migrations.
+
+## 2026-10-04T07:00Z · BANK-F91436 C-51 Home+Escrow ops WIRED CI · tip `4c70a5cab4`
+
+DONE: #25177 — verify-steps/12392 now runs ops/verify-c51-banking-home-escrow --selftest.
+
+NEXT: BANK-F91437 restore C-53 A-27 pending + must-reach-$0.00, wire into 1356 · skip pile parked · HH06 no migrations.
+
+## 2026-10-04T06:52Z · BANK-F91435 B-4 check-creator ops WIRED CI · tip `0bedf9ca93`
+
+DONE: #25175 — verify-steps/3832 now runs ops/verify-b4-check-creator --selftest. B-1..B-5 ops packs all in CI.
+
+NEXT: BANK-F91436 wire C-51 banking Home+Escrow ops into 12392 · skip pile parked · HH06 no migrations.
+
+## 2026-10-04T06:45Z · BANK-F91434 B-3 feed/match ops WIRED CI · tip `6cd4690e3b`
+
+DONE: #25174 — verify-steps/1222 now runs ops/verify-b3-bank-feed-match --selftest.
+
+NEXT: BANK-F91435 wire B-4 check-creator ops into 3832 · skip pile parked · HH06 no migrations.
+
+## 2026-10-04T06:31Z · BANK-F91433 B-2 recon ops WIRED CI · tip `cd6393e80f`
+
+DONE: #25173 — verify-steps/1436 now runs ops/verify-b2-reconcile-shell + je-line-reconcilable.
+
+NEXT: BANK-F91434 wire B-3 feed/match ops into 1222 · skip pile parked · HH06 no migrations.
+
+## 2026-10-04T06:25Z · BANK-F91432 B-1 register connectivity WIRED CI · tip `f4d9e5f189`
+
+DONE: #25172 — verify-steps/1158 now runs ops/verify-b1-account-register + online-banking + cash-advance match banners.
+
+LIVE PROOF: three B-1 ops --selftest + paritytable --selftest exit 0.
+
+NEXT: wire B-2 recon ops into an existing EVEN step · skip pile parked · HH06 no migrations.
+
+## 2026-10-04T06:18Z · BANK-F91431 B-5 ops batch WIRED CI · tip `de05e37ad4`
+
+DONE: #25170 — verify-steps/12270 now runs ops/verify-b5-reclassify-batch (+ change-location). OUTBOX F91427..F91430 stamped.
+
+LIVE PROOF: `node scripts/verify-steps/12270-verify-b5-change-location-wired.mjs` exit 0.
+
+NEXT: continue ORDERS leftover cadence · B-1..B-5 ops PASS · skip pile parked · HH06 no migrations.
+
+## 2026-10-04T06:14Z · BANK-F91427..F91430 ORDERS leftover + B-5 chrome MERGED tip `f102fd26a2`
+
+DONE:
+- #25162 BANK-F91427 FactoringCashFlowPanel bare KpiTile→DrillKpiCard
+- #25163 BANK-F91428 Fleet Avg Age dead-KPI guard accepts DrillKpiCard
+- #25164 BANK-F91429 UNAVAILABLE-BUDGET 13→5 (MaintKpiRows ListErrorState + Fleet Avg Age)
+- #25169 BANK-F91430 B-5 reclassify "Accounts · period balances" + Account no. static markers; ops verify-b5-reclassify-batch PASS; change-location wired plant
+
+MEASURED: page-scoped text-[11px]/#8A92AB outside skip pile = 0; verify-no-dead-kpi-cards exit 0 (budget ≤5); B-1..B-5 ops verifies all PASS.
+
+NEXT: BANK-F91431 wire ops/verify-b5-reclassify-batch into CI step 12270 · then next ORDERS gap · skip pile stays parked · HH06 no migrations.
+
+## 2026-10-04T05:25Z · BANK-F91425..F91426 leftover drain CLOSED · page-scoped text-[11px] drained
+
+DONE:
+- #25159 BANK-F91425 PredictiveAlertsPage text-[11px]→text-xs (hang: verify-maintenance-home-read-recovery)
+- #25160 BANK-F91426 LoadQualityEventsReverseSection text-[11px]→text-xs + ambient-red CHECK text-sm→text-xs (hang: verify-load-quality-events-reverse-link)
+
+MEASURED: after F91426 tip `143391e351`, `rg text-[11px]` in apps/frontend/src/*.tsx outside skip pile = **0** page-scoped leftovers. Remaining hits are skip pile only (BookLoad*/Combobox/EntityPicker/ParityTable/DrillKpiCard/ListView/NavyPageSubNav/UniversalListToolbar/DateTimePicker/DataTable/ProgramTracker/FinalAdditions/InstallPWA/FormField) + BankingControlBox comment.
+
+NEXT: BANK-F91427 FactoringCashFlowPanel C8 dead-KPI drills · park Round 348 / 363-CUR-A · skip-pile / ambient Fleet Avg Age stay overflow. HH00 no migrations.
+
 ## 2026-10-04T05:00Z · ROUND 389.2 CURSOR DONE · 39 PASS + 3 triage WIRED
 
 DONE:

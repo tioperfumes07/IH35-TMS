@@ -87,7 +87,7 @@ function MiniSparkline({ values }: { values: number[] }) {
     <div className="h-10 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
-          <Line type="monotone" dataKey="v" stroke="#334155" strokeWidth={1.5} dot={false} />
+          <Line type="monotone" dataKey="v" stroke="#4B5563" strokeWidth={1.5} dot={false} />
         </LineChart>
       </ResponsiveContainer>
     </div>
@@ -250,10 +250,10 @@ export function CashFlowOverviewPage() {
         onReset={staged.reset}
         applyDisabled={!staged.dirty}
       >
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Group by</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Group by</span>
           <select
-            className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
+            className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.groupBy}
             onChange={(e) => staged.setDraft((p) => ({ ...p, groupBy: e.target.value }))}
             data-testid="reports-cash-flow-overview-group-by"
@@ -309,8 +309,8 @@ export function CashFlowOverviewPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={projection} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(v) => mmmDd(v) || String(v)} />
-                  <YAxis tickFormatter={(v) => money(Number(v))} width={72} tick={{ fontSize: 10 }} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={(v) => mmmDd(v) || String(v)} />
+                  <YAxis tickFormatter={(v) => money(Number(v))} width={72} tick={{ fontSize: 11 }} />
                   <Tooltip
                     content={({ active, payload, label }) =>
                       active && payload?.length ? (
@@ -346,7 +346,7 @@ export function CashFlowOverviewPage() {
                   <BarChart data={bar7}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                    <YAxis tickFormatter={(v) => money(Number(v))} width={68} tick={{ fontSize: 10 }} />
+                    <YAxis tickFormatter={(v) => money(Number(v))} width={68} tick={{ fontSize: 11 }} />
                     <Tooltip formatter={(v) => money(Number(v))} />
                     <Bar dataKey="v" fill="#0d9488" name="Amount" />
                   </BarChart>
@@ -374,7 +374,7 @@ export function CashFlowOverviewPage() {
               <li>
                 Uncategorized transactions:{" "}
                 <strong>{query.data.current_state.uncategorized_transactions_count}</strong> —{" "}
-                <Link className="text-slate-700 underline" to="/banking/categorization-rules">
+                <Link className="text-[#1F2A44] underline" to="/banking/categorization-rules">
                   Open categorization
                 </Link>
               </li>
@@ -385,7 +385,7 @@ export function CashFlowOverviewPage() {
                     disputes surface that always showed 0 for this figure). Link to the real factoring
                     chargebacks page instead. */}
                 Open chargebacks: <strong>{money(query.data.current_state.chargebacks_open_cents)}</strong> —{" "}
-                <Link className="text-slate-700 underline" to="/factoring/chargebacks-fees">
+                <Link className="text-[#1F2A44] underline" to="/factoring/chargebacks-fees">
                   View chargebacks
                 </Link>
               </li>

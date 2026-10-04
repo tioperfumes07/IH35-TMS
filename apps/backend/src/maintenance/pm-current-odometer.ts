@@ -20,19 +20,23 @@ export type PmOdometer = {
   odometer: number;
   source: PmOdometerSource;
   read_at: string | null;
+  /** Same sanctioned timestamp as read_at (stop odometer_read_at / snapshot read_at). C-21 alias. */
+  captured_at: string | null;
 };
 
 export async function loadPmOdometers(
   client: DbClient,
   operatingCompanyId: string,
   unitIds: string[]
-): Promise<{ byUnit: Map<string, PmOdometer>; stopEventsLive: boolean }> {
+): Promise<{ byUnit: Map<string, PmOdometer>; stopEventsLive: boolean; unavailableReason: string | null }> {
   const byUnit = new Map<string, PmOdometer>();
   const live = await client.query<{ ok: boolean }>(
     `SELECT to_regclass('telematics.unit_stop_events') IS NOT NULL AS ok`
   );
   const stopEventsLive = Boolean(live.rows[0]?.ok);
-  if (unitIds.length === 0) return { byUnit, stopEventsLive };
+  // Degrade WITH a signal: callers get a named reason, not just a silent false.
+  const unavailableReason = stopEventsLive ? null : "telematics_unit_stop_events_unavailable";
+  if (unitIds.length === 0) return { byUnit, stopEventsLive, unavailableReason };
 
   if (stopEventsLive) {
     const stops = await client.query<{ unit_id: string; odometer_mi: number | string; read_at: string | null }>(
@@ -49,7 +53,14 @@ export async function loadPmOdometers(
     );
     for (const row of stops.rows) {
       const odo = Number(row.odometer_mi);
-      if (Number.isFinite(odo)) byUnit.set(row.unit_id, { odometer: odo, source: "unit_stop_events", read_at: row.read_at });
+      if (Number.isFinite(odo)) {
+        byUnit.set(row.unit_id, {
+          odometer: odo,
+          source: "unit_stop_events",
+          read_at: row.read_at,
+          captured_at: row.read_at,
+        });
+      }
     }
   }
 
@@ -68,9 +79,16 @@ export async function loadPmOdometers(
   for (const row of snapshot.rows) {
     if (byUnit.has(row.unit_id)) continue;
     const odo = Number(row.odometer_miles);
-    if (Number.isFinite(odo)) byUnit.set(row.unit_id, { odometer: odo, source: "odometer_readings", read_at: row.read_at });
+    if (Number.isFinite(odo)) {
+      byUnit.set(row.unit_id, {
+        odometer: odo,
+        source: "odometer_readings",
+        read_at: row.read_at,
+        captured_at: row.read_at,
+      });
+    }
   }
-  return { byUnit, stopEventsLive };
+  return { byUnit, stopEventsLive, unavailableReason };
 }
 
 /** Why a unit has no odometer -- the ABSENT tier, worded once for every consumer. */

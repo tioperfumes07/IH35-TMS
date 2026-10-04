@@ -5,7 +5,7 @@
   --grp-bg: var(--planner-grp-bg, #e4eaf1);
   --slate: #1f2a44;
   --mute: #6b7280;
-  --rule-day: var(--planner-rule-day, #94a3b8);
+  --rule-day: var(--planner-rule-day, #4B5563);
   --rule-week: var(--planner-th-border, #c7d2dc);
   --rule-month: var(--planner-th-border, #c7d2dc);
   --row: var(--planner-th-border, #c7d2dc);
@@ -347,7 +347,7 @@
   height: 8px;
   border-radius: 1px;
   background: repeating-linear-gradient(45deg, var(--dwell) 0 3px, #eef2f7 3px 6px);
-  border: 1px solid #cbd5e1;
+  border: 1px solid #E5E7EB;
 }
 .planner-grid-canonical .pg-dwell i {
   position: absolute;

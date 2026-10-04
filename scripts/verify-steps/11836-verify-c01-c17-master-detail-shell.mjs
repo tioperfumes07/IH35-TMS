@@ -8,3 +8,5 @@ import { execFileSync } from "node:child_process";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 execFileSync("node", [path.join(ROOT, "scripts/verify-c01-c17-master-detail-shell.mjs")], { stdio: "inherit" });
+// BANK-F91442 — C-05 MINIMUM-SCROLL (viewport lock + master-detail fill). Never ran in CI.
+execFileSync("node", [path.join(ROOT, "scripts/ops/verify-c05-minimum-scroll.mjs"), "--selftest"], { stdio: "inherit" });

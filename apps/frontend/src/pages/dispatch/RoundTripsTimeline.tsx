@@ -79,16 +79,16 @@ export function RoundTripsTimeline({ loads, rangeFrom, rangeTo, onLoadClick }: P
     <div
       className="overflow-x-auto overflow-y-auto max-h-[70vh] rounded-sm border border-gray-200 bg-white"
       data-testid="round-trips-timeline"
-      style={{ ["--dwl" as string]: "#94a3b8" }}
+      style={{ ["--dwl" as string]: "#4B5563" }}
     >
       <div className="min-w-[720px]">
         <div
-          className="sticky top-0 z-10 grid border-b border-gray-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-600"
+          className="sticky top-0 z-10 grid border-b border-gray-200 bg-[#F7F8FA] text-xs font-semibold uppercase tracking-wide text-[#4B5563]"
           style={{ gridTemplateColumns: `7rem repeat(${days.length}, minmax(2.5rem, 1fr))` }}
         >
-          <div className="border-r border-slate-300 px-2 py-1">Unit</div>
+          <div className="border-r border-[#E5E7EB] px-2 py-1">Unit</div>
           {days.map((d) => (
-            <div key={d} className="border-l border-slate-300 px-0.5 py-1 text-center">
+            <div key={d} className="border-l border-[#E5E7EB] px-0.5 py-1 text-center">
               {formatPlannerDayLabel(d)}
             </div>
           ))}
@@ -226,7 +226,7 @@ export function RoundTripsTimeline({ loads, rangeFrom, rangeTo, onLoadClick }: P
             PDF. A round trip is not a generic planner row: this is the key to reading NB opens a
             tour and SB closes it. */}
         <div
-          className="flex flex-wrap items-center gap-4 border-t border-gray-200 bg-slate-50 px-2 py-1.5 text-xs text-gray-600"
+          className="flex flex-wrap items-center gap-4 border-t border-gray-200 bg-[#F7F8FA] px-2 py-1.5 text-xs text-gray-600"
           data-testid="round-trips-timeline-legend"
         >
           <span className="flex items-center gap-1.5">

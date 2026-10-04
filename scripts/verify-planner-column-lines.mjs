@@ -60,6 +60,27 @@ if (!dhMatch || !dhMatch[0].includes("border-left: 1px solid var(--rule-day)")) 
   failures.push("PlannerGrid.css: .pg-dh border-left must use var(--rule-day) to align with track column lines");
 }
 
+function leftoverRefuse(src) {
+  const hits = [];
+  if (src.includes("text-[11px]")) hits.push("PlannerGrid.css: leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155") || src.includes("#64748b") || src.includes("#475569") || src.includes("#94a3b8") || src.includes("#cbd5e1") || src.includes("#CBD5E1")) {
+    hits.push("PlannerGrid.css: leftover off-scale muted");
+  }
+  return hits;
+}
+
+failures.push(...leftoverRefuse(css));
+
+if (process.argv.includes("--selftest")) {
+  const leftoverHits = leftoverRefuse('--rule-day: var(--planner-rule-day, #94a3b8); border: 1px solid #cbd5e1;');
+  if (!leftoverHits.length) {
+    console.error("FAIL verify-planner-column-lines --selftest: leftover #94a3b8/#cbd5e1 plant escaped");
+    process.exit(1);
+  }
+  console.log("PASS verify-planner-column-lines --selftest — leftover plant detected");
+  process.exit(0);
+}
+
 if (failures.length) {
   console.error("FAIL verify-planner-column-lines:");
   for (const f of failures) console.error(" -", f);

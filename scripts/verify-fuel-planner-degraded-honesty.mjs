@@ -51,6 +51,21 @@ if (source.activeStrip.includes("text-[11px]")) {
   process.exit(1);
 }
 
+function leftoverRefuseDiagram(src, bucket) {
+  if (src.includes("text-[11px]")) bucket.push("RouteDiagramSvg.tsx: leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155") || src.includes("#64748b") || src.includes("#475569") || src.includes("#94a3b8")) {
+    bucket.push("RouteDiagramSvg.tsx: leftover off-scale muted");
+  }
+}
+
+const leftoverLive = [];
+leftoverRefuseDiagram(source.diagram, leftoverLive);
+if (leftoverLive.length) {
+  console.error("FAIL leftover RouteDiagramSvg:");
+  for (const e of leftoverLive) console.error(`  - ${e}`);
+  process.exit(1);
+}
+
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ["mile-zero", { ...source, table: source.table.replace('stop.mile_marker == null ? "—" : Number(stop.mile_marker)', "Number(stop.mile_marker ?? 0)") }],
@@ -74,6 +89,23 @@ if (process.argv.includes("--selftest")) {
       console.error(`verify-fuel-planner-degraded-honesty selftest FAIL — ${label} escaped`);
       process.exit(1);
     }
+  }
+  const leftoverPlant = `${source.diagram}\n<div className="text-[11px] text-[#8A92AB]" style={{ color: "#334155" }}>plant</div>`;
+  const leftoverBad = [];
+  leftoverRefuseDiagram(leftoverPlant, leftoverBad);
+  if (
+    !leftoverBad.some((e) => e.includes("leftover text-[11px]")) ||
+    !leftoverBad.some((e) => e.includes("leftover off-scale muted"))
+  ) {
+    console.error("verify-fuel-planner-degraded-honesty selftest FAIL leftover plant escaped", leftoverBad);
+    process.exit(1);
+  }
+  // BANK-F91514 leftover plant — destination fill leftover slate
+  const leftoverDest = [];
+  leftoverRefuseDiagram('isDestination ? "#475569"', leftoverDest);
+  if (!leftoverDest.some((e) => e.includes("leftover off-scale muted"))) {
+    console.error("verify-fuel-planner-degraded-honesty selftest FAIL leftover #475569 plant escaped", leftoverDest);
+    process.exit(1);
   }
   console.log(`verify-fuel-planner-degraded-honesty selftest PASS (${mutations.length}/${mutations.length})`);
 }

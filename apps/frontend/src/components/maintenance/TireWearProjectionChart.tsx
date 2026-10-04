@@ -71,8 +71,8 @@ export function TireWearProjectionChart({
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="label" tick={{ fontSize: 10 }} />
-            <YAxis domain={[0, "auto"]} tick={{ fontSize: 10 }} label={{ value: "32nds", angle: -90, position: "insideLeft", fontSize: 10 }} />
+            <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+            <YAxis domain={[0, "auto"]} tick={{ fontSize: 11 }} label={{ value: "32nds", angle: -90, position: "insideLeft", fontSize: 11 }} />
             <Tooltip />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             <ReferenceLine y={threshold32nds} stroke="#dc2626" strokeDasharray="4 4" label={`DOT ${threshold32nds}/32"`} />

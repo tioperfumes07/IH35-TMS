@@ -219,7 +219,7 @@ function CardIssuersPanel({ companyId, canWrite, onChanged }: { companyId: strin
     }
   };
   const columns: ParityColumn<FuelCardTypeIssuer>[] = [
-    { key: "display_name", label: "Card type", render: (row) => row.display_name },
+    { key: "display_name", label: "Card type", sortable: true, render: (row) => row.display_name },
     {
       key: "issuer_vendor_name",
       label: "Issuer (vendor)",
@@ -245,7 +245,7 @@ function CardIssuersPanel({ companyId, canWrite, onChanged }: { companyId: strin
           <span className="text-gray-400">Not designated</span>
         ),
     },
-    { key: "active_card_count", label: "Cards", render: (row) => String(row.active_card_count) },
+    { key: "active_card_count", label: "Cards", sortable: true, render: (row) => String(row.active_card_count) },
   ];
   return (
     <DataPanel title="Card issuers" titleHint="The vendor that issues each fuel card type — shown on every card below">
@@ -294,7 +294,7 @@ export function FuelCardsPage() {
 
   const columns: ParityColumn<FuelCardAssignment>[] = [
     { key: "card_last_digits", label: "Card", render: (row) => `Card …${row.card_last_digits}` },
-    { key: "fuel_card_type_name", label: "Card type", render: (row) => row.fuel_card_type_name ?? "—" },
+    { key: "fuel_card_type_name", label: "Card type", sortable: true, render: (row) => row.fuel_card_type_name ?? "—" },
     {
       key: "issuer_vendor_name",
       label: "Issuer",
@@ -320,13 +320,13 @@ export function FuelCardsPage() {
           <span className="text-gray-400">—</span>
         ),
     },
-    { key: "effective_from", label: "From", render: (row) => formatDateUS(row.effective_from) },
+    { key: "effective_from", label: "From", sortable: true, render: (row) => formatDateUS(row.effective_from) },
     {
       key: "effective_to",
-      label: "To",
+      label: "To", sortable: true,
       render: (row) => (row.effective_to ? formatDateUS(row.effective_to) : "Current"),
     },
-    { key: "notes", label: "Notes", allowWrap: true, render: (row) => row.notes ?? "—" },
+    { key: "notes", label: "Notes", sortable: true, allowWrap: true, render: (row) => row.notes ?? "—" },
     {
       key: "voided_at",
       label: "Status",

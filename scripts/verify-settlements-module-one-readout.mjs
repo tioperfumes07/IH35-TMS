@@ -64,6 +64,13 @@ function analyze(reg, page) {
   if (!/["']payments["']\s*\?\s*["']payments["']\s*:\s*["']tours["']/.test(page))
     errors.push("SettlementsPage default view is not 'tours' (must default to the tour readout, payments is the opt-in)");
 
+  // BANK-F91507 leftover refuse — Open Driver Bills DataPanel accent (Tailwind slate-500, not house muted)
+  if (page.includes("#64748b")) errors.push("SettlementsPage leftover off-scale muted #64748b");
+  // BANK-F91540 leftover refuse — filter label + active KPI leftover Tailwind slate-*
+  if (page.includes("text-slate-") || page.includes("border-slate-") || page.includes("bg-slate-")) {
+    errors.push("SettlementsPage leftover slate class");
+  }
+
   return errors;
 }
 
@@ -87,6 +94,8 @@ if (process.argv.includes("--selftest")) {
     ["post action removed", [reg.replace(/<PostTourAction[^>]*\/>/, "null"), page]],
     ["post ungated (can_close bypassed)", [reg.replace("disabled={!row.can_close", "disabled={false && !row.can_close"), page]],
     ["post no longer reuses close-tour endpoint", [reg.replace("closeTour(row.settlement_id, companyId)", "Promise.resolve({})"), page]],
+    ["page leftover slate-500", [reg, page + '\n<DataPanel accentColor="#64748b">plant</DataPanel>\n']],
+    ["page leftover slate class", [reg, page + '\n<label className="text-xs text-slate-600">plant</label>\n']],
   ];
   let caught = 0;
   for (const [label, [r, p]] of mutations) {

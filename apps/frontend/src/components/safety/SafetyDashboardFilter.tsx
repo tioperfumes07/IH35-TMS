@@ -39,7 +39,7 @@ const WINDOW_OPTIONS: Array<{ id: SafetyActivityWindow; label: string }> = [
 function pill(active: boolean) {
   return active
     ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" }
-    : { background: "white", borderColor: "#cbd5e1", color: "#475569" };
+    : { background: "white", borderColor: "#E5E7EB", color: "#4B5563" };
 }
 
 /**
@@ -133,7 +133,7 @@ export function SafetyDashboardFilter({
             <div className="space-y-1.5">
               <div className="text-xs font-semibold text-gray-600">Date range</div>
               <div className="flex flex-wrap items-center gap-2">
-                <label htmlFor="safety-from-date" className="text-slate-500">From</label>
+                <label htmlFor="safety-from-date" className="text-[#4B5563]">From</label>
                 <DatePicker
                   id="safety-from-date"
                   value={draft.fromDate}
@@ -142,7 +142,7 @@ export function SafetyDashboardFilter({
                   max={draft.toDate || undefined}
                   data-testid="safety-from-date"
                 />
-                <label htmlFor="safety-to-date" className="text-slate-500">To</label>
+                <label htmlFor="safety-to-date" className="text-[#4B5563]">To</label>
                 <DatePicker
                   id="safety-to-date"
                   value={draft.toDate}
@@ -154,7 +154,7 @@ export function SafetyDashboardFilter({
                 {draft.fromDate || draft.toDate ? (
                   <button
                     type="button"
-                    className="rounded-full border border-gray-300 px-2 py-0.5 text-slate-500 hover:bg-gray-100"
+                    className="rounded-full border border-gray-300 px-2 py-0.5 text-[#4B5563] hover:bg-gray-100"
                     onClick={() => {
                       staged.setDraft({ ...draft, fromDate: "", toDate: "" });
                     }}
@@ -167,7 +167,7 @@ export function SafetyDashboardFilter({
           ) : null}
       </CollapsedListFilters>
       {countsReported ? (
-        <span className="ml-auto text-slate-400" data-testid="safety-counter-line">
+        <span className="ml-auto text-[#4B5563]" data-testid="safety-counter-line">
           {shown} active · {hidden} resolved · {total} total · window {activityWindow}
         </span>
       ) : null}

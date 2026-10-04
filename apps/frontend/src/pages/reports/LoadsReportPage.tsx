@@ -255,7 +255,7 @@ export function LoadsReportPage() {
   const footerCells = query.data
     ? {
         load_number: (
-          <span className="font-semibold uppercase tracking-[0.4px] text-gray-600" style={{ fontSize: 11 }}>
+          <span className="font-semibold uppercase tracking-[0.4px] text-gray-600 text-section-header">
             Totals ({filtered.length})
           </span>
         ),
@@ -299,10 +299,10 @@ export function LoadsReportPage() {
         onReset={staged.reset}
         applyDisabled={!staged.dirty}
       >
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Date on</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Date on</span>
           <SelectCombobox
-            className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
+            className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.dateField}
             onChange={(e) => staged.setDraft((p) => ({ ...p, dateField: e.target.value as LoadsReportDateField }))}
           >
@@ -311,8 +311,8 @@ export function LoadsReportPage() {
             <option value="delivery">Delivery</option>
           </SelectCombobox>
         </label>
-        <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Customer</span>
+        <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Customer</span>
           <ReferenceSelect
             size="sm"
             value={staged.draft.customerId || null}
@@ -326,8 +326,8 @@ export function LoadsReportPage() {
             disabled={!companyId}
           />
         </label>
-        <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Driver</span>
+        <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Driver</span>
           <EntityPicker
             kind="driver"
             operatingCompanyId={companyId}
@@ -338,8 +338,8 @@ export function LoadsReportPage() {
             className="h-7 w-full text-xs"
           />
         </label>
-        <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Unit</span>
+        <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Unit</span>
           <EntityPicker
             kind="unit"
             operatingCompanyId={companyId}
@@ -350,8 +350,8 @@ export function LoadsReportPage() {
             className="h-7 w-full text-xs"
           />
         </label>
-        <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Trailer</span>
+        <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Trailer</span>
           <EntityPicker
             kind="trailer"
             operatingCompanyId={companyId}
@@ -362,10 +362,10 @@ export function LoadsReportPage() {
             className="h-7 w-full text-xs"
           />
         </label>
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Status</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Status</span>
           <SelectCombobox
-            className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
+            className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.status}
             onChange={(e) => staged.setDraft((p) => ({ ...p, status: e.target.value }))}
           >
@@ -376,10 +376,10 @@ export function LoadsReportPage() {
             ))}
           </SelectCombobox>
         </label>
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Trip</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Trip</span>
           <SelectCombobox
-            className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
+            className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.tripType}
             onChange={(e) => staged.setDraft((p) => ({ ...p, tripType: e.target.value }))}
           >
@@ -392,7 +392,7 @@ export function LoadsReportPage() {
         </label>
       </ReportFilterBar>
 
-      {query.isLoading ? <div className="rounded-sm border bg-white p-4 text-xs text-slate-500">Loading…</div> : null}
+      {query.isLoading ? <div className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]">Loading…</div> : null}
       {query.isError ? (
         <ListErrorState title="Couldn't load loads report" {...formatQueryErrorDetail(query.error)} onRetry={() => void query.refetch()} />
       ) : null}
@@ -401,23 +401,23 @@ export function LoadsReportPage() {
         <>
           <div className="grid gap-3 md:grid-cols-5">
             <div className="rounded-sm border bg-white p-3">
-              <div className="text-xs text-slate-500">Loads</div>
+              <div className="text-xs text-[#4B5563]">Loads</div>
               <div className="text-page-title font-semibold">{query.data.totals.load_count}</div>
             </div>
             <div className="rounded-sm border bg-white p-3">
-              <div className="text-xs text-slate-500">Revenue</div>
+              <div className="text-xs text-[#4B5563]">Revenue</div>
               <div className="text-page-title font-semibold">{money(query.data.totals.revenue_cents)}</div>
             </div>
             <div className="rounded-sm border bg-white p-3">
-              <div className="text-xs text-slate-500">Driver pay</div>
+              <div className="text-xs text-[#4B5563]">Driver pay</div>
               <div className="text-page-title font-semibold">{money(query.data.totals.driver_pay_cents)}</div>
             </div>
             <div className="rounded-sm border bg-white p-3">
-              <div className="text-xs text-slate-500">Fuel</div>
+              <div className="text-xs text-[#4B5563]">Fuel</div>
               <div className="text-page-title font-semibold">{money(query.data.totals.fuel_cents)}</div>
             </div>
             <div className="rounded-sm border bg-white p-3">
-              <div className="text-xs text-slate-500">Margin</div>
+              <div className="text-xs text-[#4B5563]">Margin</div>
               <div className="text-page-title font-semibold">{money(query.data.totals.margin_cents)}</div>
             </div>
           </div>

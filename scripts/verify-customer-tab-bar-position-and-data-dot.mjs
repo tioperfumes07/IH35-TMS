@@ -38,6 +38,10 @@ export function auditAll(src) {
   }
   if (src.includes("text-[11px]")) failures.push(`${FILE}: leftover text-[11px]`);
   if (src.includes("#8A92AB") || src.includes("#334155")) failures.push(`${FILE}: leftover off-scale muted`);
+  if (/fontSize:\s*10\b/.test(src)) failures.push(`${FILE}: leftover fontSize: 10`);
+  if (src.includes("text-slate-") || src.includes("border-slate-") || src.includes("bg-slate-")) {
+    failures.push(`${FILE}: leftover slate class`);
+  }
 
   return failures;
 }
@@ -81,10 +85,13 @@ if (process.argv.includes("--selftest")) {
     "MUTATION 2 (hasData wiring stripped) escaped detection"
   );
 
-  const leftoverMutated = `${real}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  const leftoverMutated = `${real}\n<div className="text-[11px] text-slate-700 border-slate-200 bg-slate-50 text-[#8A92AB]" style={{ fontSize: 10 }}>plant</div>`;
   const leftoverFailures = auditAll(leftoverMutated);
   assert.ok(
-    leftoverFailures.some((f) => f.includes("leftover")),
+    leftoverFailures.some((f) => f.includes("leftover text-[11px]")) &&
+      leftoverFailures.some((f) => f.includes("leftover off-scale muted")) &&
+      leftoverFailures.some((f) => f.includes("leftover fontSize: 10")) &&
+      leftoverFailures.some((f) => f.includes("leftover slate class")),
     "MUTATION 3 (leftover tokens planted) escaped detection"
   );
 

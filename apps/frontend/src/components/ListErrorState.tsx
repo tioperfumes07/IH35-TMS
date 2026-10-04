@@ -7,12 +7,15 @@ type Props = {
   message?: string;
   onRetry: () => void;
   className?: string;
+  /** C-22 — why the figure is unavailable (query error). Same operator copy as `message` when set. */
+  unavailable?: string;
 };
 
-export function ListErrorState({ title = "Couldn't load list", status, message, onRetry, className }: Props) {
+export function ListErrorState({ title = "Couldn't load list", status, message, onRetry, className, unavailable }: Props) {
+  const why = (message && message.trim()) || (unavailable && unavailable.trim()) || "";
   const detail =
-    message && message.trim().length > 0
-      ? `${status > 0 ? `HTTP ${status}` : "Error"}: ${message}`
+    why.length > 0
+      ? `${status > 0 ? `HTTP ${status}` : "Error"}: ${why}`
       : status > 0
         ? `HTTP ${status}`
         : "Request failed";

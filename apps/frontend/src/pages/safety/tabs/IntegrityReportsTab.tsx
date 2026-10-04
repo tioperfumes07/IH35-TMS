@@ -48,7 +48,7 @@ function IntegritySubTabBar({ subTab, onChange }: { subTab: SubTab; onChange: (n
           key={tab.id}
           type="button"
           className="rounded-sm border px-3 py-1 text-xs font-semibold"
-          style={subTab === tab.id ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#cbd5e1", color: "#4B5563" }}
+          style={subTab === tab.id ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#E5E7EB", color: "#4B5563" }}
           onClick={() => onChange(tab.id)}
         >
           {tab.label}
@@ -274,7 +274,7 @@ export function IntegrityReportsTab() {
 
   return (
     <div className="space-y-3">
-      <div className="rounded-sm border border-slate-300 bg-slate-100 p-3 text-xs text-slate-700">
+      <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]">
         Foundation outlier views (Phase 3). Active alerts tab runs the A23-12 rule engine inbox.
       </div>
 
@@ -305,7 +305,7 @@ export function IntegrityReportsTab() {
       />
       )}
       {!activeListQuery.isError ? (
-        <div className="flex items-center justify-between text-xs text-slate-600" data-testid="integrity-reports-server-pager">
+        <div className="flex items-center justify-between text-xs text-[#4B5563]" data-testid="integrity-reports-server-pager">
           <span>
             {totalCount === 0
               ? "0 of 0"

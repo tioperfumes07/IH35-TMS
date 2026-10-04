@@ -29,6 +29,10 @@ function leftoverErrors(src) {
   const errors = [];
   if (src.includes("text-[11px]")) errors.push("leftover text-[11px]");
   if (src.includes("#8A92AB") || src.includes("#334155")) errors.push("leftover off-scale muted");
+  if (src.includes("#cbd5e1") || src.includes("#CBD5E1")) errors.push("leftover #cbd5e1 border");
+  if (src.includes("text-slate-") || src.includes("border-slate-") || src.includes("bg-slate-")) {
+    errors.push("leftover slate class");
+  }
   return errors;
 }
 
@@ -54,8 +58,8 @@ function selftest() {
   } finally {
     fs.unlinkSync(tmp);
   }
-  const leftover = leftoverErrors(`${good}\n<div className="text-[11px]" style={{ color: "#334155" }}>plant</div>`);
-  if (!leftover.includes("leftover text-[11px]") || !leftover.includes("leftover off-scale muted")) {
+  const leftover = leftoverErrors(`${good}\n<div className="text-[11px] text-slate-700 border-slate-300 bg-slate-100" style={{ color: "#334155", borderColor: "#cbd5e1" }}>plant</div>`);
+  if (!leftover.includes("leftover text-[11px]") || !leftover.includes("leftover off-scale muted") || !leftover.includes("leftover #cbd5e1 border") || !leftover.includes("leftover slate class")) {
     console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`, leftover);
     process.exit(1);
   }

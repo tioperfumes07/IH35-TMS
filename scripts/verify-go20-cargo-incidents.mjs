@@ -50,6 +50,11 @@ function verify(service, routes, worker, page, aggregator, index) {
   if (!worker.includes("processCargoSensorIncidents(client, operatingCompanyId)")) errors.push("worker does not run incident lifecycle");
   if (!page.includes('data-testid="cargo-sensor-incidents"')) errors.push("load timeline does not render incidents above readings");
   if (page.includes("text-[11px]")) errors.push("CargoSensorTimeline.tsx: must not use text-[11px] — use text-xs or text-section-header");
+  if (/fontSize:\s*10\b/.test(page)) errors.push("CargoSensorTimeline.tsx: leftover fontSize: 10");
+  // BANK-F91542 leftover refuse — error/incident/cap leftover Tailwind slate-*
+  if (page.includes("text-slate-") || page.includes("border-slate-") || page.includes("bg-slate-")) {
+    errors.push("CargoSensorTimeline.tsx: leftover slate class");
+  }
   if (!aggregator.includes('const table = "dispatch.cargo_sensor_incidents"')) errors.push("owner attention not repointed to dispatch incidents");
   return errors;
 }
@@ -81,7 +86,17 @@ if (process.argv.includes("--selftest")) {
     console.error("verify-go20-cargo-incidents SELFTEST FAIL — dangling startup import mutation escaped");
     process.exit(1);
   }
-  console.log("verify-go20-cargo-incidents SELFTEST PASS — planted lifecycle, duplicate-route, and dangling-startup regressions caught");
+  const leftoverPage = `${sources[3]}\n<XAxis tick={{ fontSize: 10 }} />\n`;
+  if (!verify(...sources.slice(0, 3), leftoverPage, ...sources.slice(4)).some((error) => error.includes("fontSize: 10"))) {
+    console.error("verify-go20-cargo-incidents SELFTEST FAIL — leftover fontSize: 10 plant escaped");
+    process.exit(1);
+  }
+  const leftoverSlate = `${sources[3]}\n<div className="text-slate-700 border-slate-200 bg-slate-50">plant</div>\n`;
+  if (!verify(...sources.slice(0, 3), leftoverSlate, ...sources.slice(4)).some((error) => error.includes("leftover slate class"))) {
+    console.error("verify-go20-cargo-incidents SELFTEST FAIL — leftover slate class plant escaped");
+    process.exit(1);
+  }
+  console.log("verify-go20-cargo-incidents SELFTEST PASS — planted lifecycle, duplicate-route, dangling-startup, and leftover regressions caught");
   process.exit(0);
 }
 

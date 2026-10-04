@@ -23,15 +23,15 @@ export function LeasesPage() {
   const columns = useMemo<ParityColumn<LeaseListRow>[]>(
     () => [
       { key: "display_id", label: "Lease", alwaysVisible: true, render: (r) => <EntityLink kind="lease_contract" id={r.id} label={r.display_id ?? `Lease ${r.id.slice(0, 8)}`} className="font-semibold underline" /> },
-      { key: "lease_type", label: "Type", render: (r) => r.lease_type ?? "—" },
-      { key: "status", label: "Status", render: (r) => r.status },
+      { key: "lease_type", label: "Type", sortable: true, render: (r) => r.lease_type ?? "—" },
+      { key: "status", label: "Status", sortable: true, render: (r) => r.status },
       { key: "lessor_vendor", label: "Lessor", render: (r) => (r.lessor_vendor_id ? <EntityLink kind="vendor" id={r.lessor_vendor_id} label={r.lessor_vendor ?? r.lessor_company ?? "Vendor"} className="underline" /> : r.lessor_company ?? "—") },
-      { key: "billing_mode", label: "Billing", render: (r) => (r.billing_mode === "one_bill_per_unit" ? "Per unit" : r.billing_mode === "one_bill_all_units" ? "All units" : "—") },
-      { key: "asset_count", label: "Units / trailers", sortValue: (r) => r.asset_count, render: (r) => String(r.asset_count) },
-      { key: "payment_amount_cents", label: "Monthly", sortValue: (r) => r.payment_amount_cents, render: (r) => formatUsdCentsTable(r.payment_amount_cents) },
-      { key: "commencement_date", label: "From", sortValue: (r) => r.commencement_date, render: (r) => formatDateUS(r.commencement_date) },
-      { key: "end_date", label: "To", render: (r) => formatDateUS(r.end_date) },
-      { key: "bill_count", label: "Bills", render: (r) => String(r.bill_count) },
+      { key: "billing_mode", label: "Billing", sortable: true, render: (r) => (r.billing_mode === "one_bill_per_unit" ? "Per unit" : r.billing_mode === "one_bill_all_units" ? "All units" : "—") },
+      { key: "asset_count", label: "Units / trailers", sortable: true, sortValue: (r) => r.asset_count, render: (r) => String(r.asset_count) },
+      { key: "payment_amount_cents", label: "Monthly", sortable: true, sortValue: (r) => r.payment_amount_cents, render: (r) => formatUsdCentsTable(r.payment_amount_cents) },
+      { key: "commencement_date", label: "From", sortable: true, sortValue: (r) => r.commencement_date, render: (r) => formatDateUS(r.commencement_date) },
+      { key: "end_date", label: "To", sortable: true, render: (r) => formatDateUS(r.end_date) },
+      { key: "bill_count", label: "Bills", sortable: true, render: (r) => String(r.bill_count) },
     ],
     []
   );

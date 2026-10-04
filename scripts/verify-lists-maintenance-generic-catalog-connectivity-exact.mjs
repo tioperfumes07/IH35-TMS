@@ -56,6 +56,18 @@ export function audit(s = {}) {
   return failures;
 }
 
+function leftoverRefuse(src) {
+  const hits = [];
+  if (src.includes("text-[11px]")) hits.push(`${LOC_MAP}: leftover text-[11px]`);
+  if (src.includes("#8A92AB") || src.includes("#334155") || src.includes("#64748b") || src.includes("#94a3b8") || src.includes("#d1d5db") || src.includes("#D1D5DB")) {
+    hits.push(`${LOC_MAP}: leftover off-scale muted`);
+  }
+  if (src.includes("text-slate-") || src.includes("border-slate-") || src.includes("bg-slate-")) {
+    hits.push(`${LOC_MAP}: leftover slate class`);
+  }
+  return hits;
+}
+
 if (process.argv.includes("--selftest")) {
   const original = Object.fromEntries(Object.keys(FILES).map((key) => [key, read(key)]));
   const mutants = [
@@ -70,21 +82,26 @@ if (process.argv.includes("--selftest")) {
   const self = fs.readFileSync(SELF, "utf8");
   if (!audit({ ...original, self: self.replace(HEADER, `${HEADER}.broken`) }).length) throw new Error("header mutation survived");
   // BANK-F91294 leftover plant — LocationMapModal page-scoped text token ratchet
-  const leftoverPlant = '<div className="text-[11px] text-[#8A92AB]">plant</div>';
-  const leftoverHits = [];
-  if (leftoverPlant.includes("text-[11px]")) leftoverHits.push(`${LOC_MAP}: leftover text-[11px]`);
-  if (leftoverPlant.includes("#8A92AB") || leftoverPlant.includes("#334155")) leftoverHits.push(`${LOC_MAP}: leftover off-scale muted`);
+  const leftoverHits = leftoverRefuse('<div className="text-[11px] text-[#8A92AB]">plant</div>');
   if (!leftoverHits.some((e) => e.includes("leftover text-[11px]")) || !leftoverHits.some((e) => e.includes("leftover off-scale muted"))) {
     throw new Error(`leftover plant escaped: ${JSON.stringify(leftoverHits)}`);
+  }
+  // BANK-F91510 leftover plant — LocationMapModal leftover slate stroke/label
+  const leftoverSlateHits = leftoverRefuse('<text fill="#64748b"></text><rect stroke="#94a3b8" /><div style="border: 1px solid #d1d5db" />');
+  if (!leftoverSlateHits.some((e) => e.includes("leftover off-scale muted"))) {
+    throw new Error(`leftover slate plant escaped: ${JSON.stringify(leftoverSlateHits)}`);
+  }
+  // BANK-F91530 leftover plant — LocationMapModal leftover Tailwind slate-* classes
+  const leftoverSlateClassHits = leftoverRefuse('<div className="text-slate-700 border-slate-200 bg-slate-50">plant</div>');
+  if (!leftoverSlateClassHits.some((e) => e.includes("leftover slate class"))) {
+    throw new Error(`leftover slate class plant escaped: ${JSON.stringify(leftoverSlateClassHits)}`);
   }
   console.log(`verify-lists-maintenance-generic-catalog-connectivity-exact SELFTEST PASS — ${mutants.length + 1} planted defects rejected + leftover plant`);
   process.exit(0);
 }
 
 const failures = audit();
-// BANK-F91294 leftover refuse — LocationMapModal.tsx page-scoped text token ratchet
-const locMapSrc = fs.readFileSync(LOC_MAP, "utf8");
-if (locMapSrc.includes("text-[11px]")) failures.push(`${LOC_MAP}: leftover text-[11px]`);
-if (locMapSrc.includes("#8A92AB") || locMapSrc.includes("#334155")) failures.push(`${LOC_MAP}: leftover off-scale muted`);
+// BANK-F91294 + BANK-F91510 leftover refuse — LocationMapModal.tsx page-scoped muted ratchet
+failures.push(...leftoverRefuse(fs.readFileSync(LOC_MAP, "utf8")));
 if (failures.length) { console.error(`verify-lists-maintenance-generic-catalog-connectivity-exact FAIL\n- ${failures.join("\n- ")}`); process.exit(1); }
 console.log("verify-lists-maintenance-generic-catalog-connectivity-exact PASS — 10 Maintenance catalogs × list/create retain hub→stable route→selected-company CRUD/reload connectivity");

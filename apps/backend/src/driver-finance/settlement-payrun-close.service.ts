@@ -99,6 +99,8 @@ export type PayRunCloseErrorCode =
   | "ADVANCE_CLEARING_ACCOUNT_MISSING"
   | "CHARGEBACK_RECOVERY_ACCOUNT_MISSING"
   | "NET_PAY_NEGATIVE"
+  | "NEGATIVE_SETTLEMENT_RECEIVABLE_UNBOUND"
+  | "SHORTFALL_DOES_NOT_TIE"
   | "NET_PAY_FLOOR_BREACH"
   | "NET_PAY_DOCUMENT_MISMATCH"
   // ROUND 326 single settlement poster (per-load A/P chain) — refusals by name, never a plug.
@@ -729,7 +731,7 @@ export async function closeSettlementPayRun(
                 : DEFAULT_ESCROW_PER_SETTLEMENT_CONTRIBUTION_CENTS,
           });
 
-    const netCents =
+    let netCents =
       grossCents +
       reimbursementsCents +
       detentionPayCents -
@@ -750,10 +752,19 @@ export async function closeSettlementPayRun(
       net_cents: netCents,
     };
 
-    if (netCents < 0) {
+    // ROUND 389.3 RULING 1 — a negative net is not refused: the driver OWES the company. Net pay floors at $0.00 and the
+    // shortfall posts Dr 1257 driver_negative_settlement_receivable (by role) against the same entry, balanced or abort.
+    const shortfallCents = netCents < 0 ? -netCents : 0;
+    if (shortfallCents > 0) {
+      netCents = 0;
+      breakdown.net_cents = 0;
+      (breakdown as unknown as Record<string, unknown>).negative_settlement_receivable_cents = shortfallCents;
+    }
+    const shortfallAccountId = shortfallCents > 0 ? await resolvePayRunRoleAccount(client, opco, "driver_negative_settlement_receivable") : null;
+    if (shortfallCents > 0 && !shortfallAccountId) {
       throw new SettlementPayRunError(
-        "NET_PAY_NEGATIVE",
-        `Settlement ${settlement.display_id ?? settlementId} net would be negative (${netCents}c) — deductions/recoveries exceed gross`,
+        "NEGATIVE_SETTLEMENT_RECEIVABLE_UNBOUND",
+        `Settlement ${settlement.display_id ?? settlementId} leaves the driver owing ${shortfallCents}c but no 'driver_negative_settlement_receivable' role binding exists`,
         breakdown as unknown as Record<string, unknown>
       );
     }
@@ -955,6 +966,9 @@ export async function closeSettlementPayRun(
     let paymentMethod: { id: string; name: string; glAccountId: string } | null = null;
     if (input.paymentMethodId) paymentMethod = await resolvePaymentMethod(client, opco, input.paymentMethodId);
     let payoutBankAccountId: string | null = null;
+    if (shortfallCents > 0 && shortfallAccountId) {
+      legs.push({ account_id: shortfallAccountId, debit_or_credit: "debit", amount_cents: shortfallCents, description: `${label} — negative settlement: owed by the driver`, entity_type: "driver", entity_uuid: settlement.driver_id } as never);
+    }
     if (netCents > 0) {
       try {
         payoutBankAccountId = await resolvePayoutBankAccountId(client as never, opco, paymentMethod?.glAccountId ?? null);
@@ -1233,6 +1247,8 @@ export async function closeSettlementPayRun(
         payItems,
         applications,
         netCents,
+        shortfallCents,
+        shortfallAccountId,
         payoutBankAccountId,
         paymentReference: input.paymentReference ?? null,
       });

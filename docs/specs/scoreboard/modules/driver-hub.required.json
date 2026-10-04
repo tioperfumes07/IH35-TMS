@@ -232,6 +232,18 @@
         "connectivity"
       ],
       "surface_path": "pages/home/DriverHubReportingPage.tsx"
+    },
+    {
+      "id": "driver-hub.panel.driver",
+      "tab": "Panels",
+      "sub": "Panel: Driver",
+      "route_hint": "surface://components/boards/DriverHubBoard.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/boards/DriverHubBoard.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
     }
   ],
   "honesty_audit": {

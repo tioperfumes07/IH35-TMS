@@ -34,7 +34,27 @@ function assertPage(src) {
   if (/const \[driverPickerId,\s*setDriverPickerId\]/.test(src)) {
     errors.push("must not keep hand-rolled silent filter useState");
   }
+  errors.push(...leftoverRefuse(src));
   return errors;
+}
+
+function leftoverRefuse(src) {
+  const hits = [];
+  if (src.includes("text-[11px]")) hits.push(`${TARGET}: leftover text-[11px]`);
+  if (
+    src.includes("#8A92AB") ||
+    src.includes("#334155") ||
+    src.includes("#64748b") ||
+    src.includes("#475569") ||
+    src.includes("#94a3b8") ||
+    src.includes("#94A3B8")
+  ) {
+    hits.push(`${TARGET}: leftover off-scale muted`);
+  }
+  if (src.includes("text-slate-") || src.includes("border-slate-") || src.includes("bg-slate-")) {
+    hits.push(`${TARGET}: leftover slate class`);
+  }
+  return hits;
 }
 
 function selftest() {
@@ -61,6 +81,16 @@ function selftest() {
   `;
   if (assertPage(bad).length === 0 || assertPage(good).length > 0) {
     console.error(`${LABEL} SELFTEST FAIL`, { bad: assertPage(bad), good: assertPage(good) });
+    process.exit(1);
+  }
+  const leftoverHits = leftoverRefuse('style={{ background: driver.available ? dot : "#94A3B8" }}');
+  if (!leftoverHits.some((h) => h.includes("leftover off-scale muted"))) {
+    console.error(`${LABEL} SELFTEST FAIL leftover #94A3B8 plant escaped`);
+    process.exit(1);
+  }
+  const leftoverSlateClass = leftoverRefuse('<div className="text-slate-700 border-slate-200 bg-slate-100">plant</div>');
+  if (!leftoverSlateClass.some((h) => h.includes("leftover slate class"))) {
+    console.error(`${LABEL} SELFTEST FAIL leftover slate class plant escaped`);
     process.exit(1);
   }
   console.log(`${LABEL} selftest PASS`);

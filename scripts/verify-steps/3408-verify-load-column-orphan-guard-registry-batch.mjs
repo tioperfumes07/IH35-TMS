@@ -9,4 +9,12 @@ const guards = [
   "verify-reg023-load-detail-scoped-edit.mjs", "verify-reg037-roundtrips-timeline-window.mjs",
   "verify-reg039-load-costs-truck-column.mjs",
 ];
-export default { name: "verify-load-column-orphan-guard-registry-batch", async run(ctx) { for (const guard of guards) await ctx.run("node", [`scripts/${guard}`]); } };
+export default {
+  name: "verify-load-column-orphan-guard-registry-batch",
+  async run(ctx) {
+    // BANK-F91518: leftover --dwl #94a3b8 muted; leftover refuse on verify-roundtrips-quality-load-entitylink --selftest + live
+    // BANK-F91538: leftover frame bg-slate-50 / text-slate-600 / border-slate-300 → house tokens; leftover refuse now also slate-* classes
+    await ctx.run("node", ["scripts/verify-roundtrips-quality-load-entitylink.mjs", "--selftest"]);
+    for (const guard of guards) await ctx.run("node", [`scripts/${guard}`]);
+  },
+};

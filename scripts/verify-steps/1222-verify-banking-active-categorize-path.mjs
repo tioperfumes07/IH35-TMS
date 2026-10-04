@@ -9,6 +9,10 @@ export default {
     if (ctx.run("node", ["scripts/verify-banking-active-categorize-path.mjs"]) !== 0) {
       return 1;
     }
+    // BANK-F91434 — ORDERS §B-3 feed + Find-other-matches ops pack (never ran in CI).
+    if (ctx.run("node", ["scripts/ops/verify-b3-bank-feed-match.mjs", "--selftest"]) !== 0) {
+      return 1;
+    }
     return 0;
   },
 };

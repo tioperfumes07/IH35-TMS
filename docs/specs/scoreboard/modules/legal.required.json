@@ -454,6 +454,18 @@
         "qbo_chrome"
       ],
       "surface_path": "pages/legal/matters/LegalMattersListPage.tsx"
+    },
+    {
+      "id": "legal.panel.matter_reserve",
+      "tab": "Panels",
+      "sub": "Panel: Matter Reserve",
+      "route_hint": "surface://components/legal/MatterReservePanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/legal/MatterReservePanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
     }
   ],
   "honesty_audit": {

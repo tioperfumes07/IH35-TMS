@@ -97,6 +97,13 @@ function assertFrontendApi(src) {
   return errors;
 }
 
+function leftoverRefuseChart(src, bucket) {
+  if (src.includes("text-[11px]")) bucket.push(`${CHART}: leftover text-[11px]`);
+  if (src.includes("#8A92AB") || src.includes("#334155")) {
+    bucket.push(`${CHART}: leftover off-scale muted`);
+  }
+}
+
 function assertChartWired(src) {
   const errors = [];
   if (!/fetchHomeWoStatusCountsDetailed/.test(src)) {
@@ -111,6 +118,7 @@ function assertChartWired(src) {
   if (!/total_linked_bill_amount_cents/.test(src) || !/total_linked_expense_amount_cents/.test(src)) {
     errors.push(`${CHART}: must render linked bill AND expense totals`);
   }
+  leftoverRefuseChart(src, errors);
   return errors;
 }
 
@@ -175,6 +183,23 @@ function selftest() {
   }
   if (badErrs.length < 5) {
     console.error(`${LABEL} --selftest FAIL bad fixtures should fail hard:`, badErrs);
+    process.exit(1);
+  }
+  const liveChart = fs.readFileSync(path.join(ROOT, CHART), "utf8");
+  const leftoverGood = [];
+  leftoverRefuseChart(liveChart, leftoverGood);
+  if (leftoverGood.length) {
+    console.error(`${LABEL} --selftest FAIL live leftover tokens present:`, leftoverGood);
+    process.exit(1);
+  }
+  const leftoverPlant = `${liveChart}\n<div className="text-[11px] text-[#8A92AB]" style={{ color: "#334155" }}>plant</div>`;
+  const leftoverBad = [];
+  leftoverRefuseChart(leftoverPlant, leftoverBad);
+  if (
+    !leftoverBad.some((e) => e.includes("leftover text-[11px]")) ||
+    !leftoverBad.some((e) => e.includes("leftover off-scale muted"))
+  ) {
+    console.error(`${LABEL} --selftest FAIL leftover plant escaped`, leftoverBad);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);

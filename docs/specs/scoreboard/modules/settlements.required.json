@@ -507,7 +507,19 @@
         "connectivity"
       ]
     },
-    "settlements.panel.close_trip"
+    "settlements.panel.close_trip",
+    {
+      "id": "settlements.modal.add_pay_line",
+      "tab": "Modals",
+      "sub": "Modal: Add Pay Line",
+      "route_hint": "surface://components/driver-finance/AddPayLineModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/driver-finance/AddPayLineModal.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    }
   ],
   "honesty_audit": {
     "liability_surfaces_built_2026_08_12": {

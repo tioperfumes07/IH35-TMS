@@ -447,8 +447,16 @@ export function contractErrors(src) {
   if (/\+ New\b/.test(registry) || /\+ New\b/.test(drawer)) {
     errors.push('§7 vocabulary: "+ New" is forbidden — use "+ Create"');
   }
+  leftoverRefuseDrawer(drawer, errors);
 
   return errors;
+}
+
+function leftoverRefuseDrawer(src, bucket) {
+  if (src.includes("text-[11px]")) bucket.push("CatalogQuickCreateDrawer.tsx: leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155") || src.includes("#64748b")) {
+    bucket.push("CatalogQuickCreateDrawer.tsx: leftover off-scale muted");
+  }
 }
 
 // ── selftest ───────────────────────────────────────────────────────────────────────────────────
@@ -649,6 +657,16 @@ function selftest() {
       /REAL-BACKEND: catalogs under \/api\/v1\/catalogs\/dispatch\//,
     ],
     ["the registry file disappears", { ...good, registry: MISSING }, /missing file/],
+    [
+      "CatalogQuickCreateDrawer leftover muted",
+      { ...good, drawer: good.drawer + '\n<span className="text-[11px] text-[#8A92AB] text-[#334155]">plant</span>\n' },
+      /leftover/,
+    ],
+    [
+      "CatalogQuickCreateDrawer leftover slate-500",
+      { ...good, drawer: good.drawer + '\n<span className="text-xs text-[#64748b]">plant</span>\n' },
+      /leftover off-scale muted/,
+    ],
   ];
 
   for (const [name, fixture, expected] of mutations) {

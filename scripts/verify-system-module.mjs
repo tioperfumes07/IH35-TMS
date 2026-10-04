@@ -100,8 +100,11 @@ export function computeSystemModuleFailures(files) {
   if (page.includes("text-[11px]")) {
     errors.push("SystemModulePage.tsx: leftover text-[11px]");
   }
-  if (page.includes("#8A92AB") || page.includes("#334155")) {
+  if (page.includes("#8A92AB") || page.includes("#334155") || page.includes("#64748b") || page.includes("#475569") || page.includes("#94a3b8")) {
     errors.push("SystemModulePage.tsx: leftover off-scale muted");
+  }
+  if (page.includes("text-slate-") || page.includes("border-slate-") || page.includes("bg-slate-") || page.includes("hover:bg-slate-")) {
+    errors.push("SystemModulePage.tsx: leftover slate class");
   }
 
   // P17 Wave-D chrome: the QBO reconciliation object register must retain canonical sortable,
@@ -351,12 +354,22 @@ if (process.argv.includes("--selftest")) {
   const leftoverPlant = computeSystemModuleFailures({
     sidebar: goodSidebar,
     manifest: goodManifest,
-    page: `${goodPage}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`,
+    page: `${goodPage}\n<div className="text-[11px] text-slate-600 border-slate-200 bg-slate-50 text-[#8A92AB]">plant</div>`,
   });
   checks.push([
     "leftover text tokens are flagged",
     leftoverPlant.some((e) => e.includes("leftover text-[11px]")) &&
-      leftoverPlant.some((e) => e.includes("leftover off-scale muted")),
+      leftoverPlant.some((e) => e.includes("leftover off-scale muted")) &&
+      leftoverPlant.some((e) => e.includes("leftover slate class")),
+  ]);
+  const leftoverSlatePlant = computeSystemModuleFailures({
+    sidebar: goodSidebar,
+    manifest: goodManifest,
+    page: `${goodPage}\nconst NA = "#94a3b8";`,
+  });
+  checks.push([
+    "leftover #94a3b8 is flagged",
+    leftoverSlatePlant.some((e) => e.includes("leftover off-scale muted")),
   ]);
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {

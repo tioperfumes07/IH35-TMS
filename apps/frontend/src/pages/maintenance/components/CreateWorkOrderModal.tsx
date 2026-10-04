@@ -49,7 +49,7 @@ import { CreateWOSectionReconcile } from "./CreateWOSectionReconcile";
 import { EntityLink } from "../../../components/shared/EntityLink";
 
 // ---- render-v5 presentational helpers (match docs/approved-screens/maintenance-create-wo-render-v5.html) ----
-const FLD = "h-[30px] w-full rounded-[5px] border border-[#d6dae1] bg-white px-2 text-xs text-sidebar-bg outline-hidden focus:border-[#1f2a44]";
+const FLD = "h-[30px] w-full rounded-[5px] border border-[#E5E7EB] bg-white px-2 text-xs text-sidebar-bg outline-hidden focus:border-[#1f2a44]";
 
 function SectionCard({ badge, title, right, testid, children }: { badge: string; title: string; right?: string; testid?: string; children: ReactNode }) {
   // D27 — section headers dark navy with light letters (NAVY-NOT-BLACK #14314F), not light grey bars.
@@ -76,7 +76,7 @@ function FieldV5({ label, children }: { label: string; children: ReactNode }) {
 
 function SegYesNo({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
   return (
-    <div data-testid="wo-oos-seg" className="inline-flex h-[30px] overflow-hidden rounded-[5px] border border-[#d6dae1]">
+    <div data-testid="wo-oos-seg" className="inline-flex h-[30px] overflow-hidden rounded-[5px] border border-[#E5E7EB]">
       <button type="button" onClick={() => onChange(true)} className={`px-3 text-xs font-semibold ${value ? "bg-[#b91c1c] text-white" : "bg-white text-inactive"}`}>Yes</button>
       <button type="button" onClick={() => onChange(false)} className={`px-3 text-xs font-semibold ${!value ? "bg-[#1d2b45] text-white" : "bg-white text-inactive"}`}>No</button>
     </div>
@@ -86,7 +86,7 @@ function SegYesNo({ value, onChange }: { value: boolean; onChange: (v: boolean) 
 function CccRow({ tone, label, register, placeholder }: { tone: "cmp" | "cau" | "cor"; label: string; register: import("react-hook-form").UseFormRegisterReturn; placeholder?: string }) {
   const bg = tone === "cmp" ? "bg-[#0891b2]" : tone === "cau" ? "bg-[#b45309]" : "bg-[#15803d]";
   return (
-    <div className="mb-2 overflow-hidden rounded-md border border-[#e6e9ee] last:mb-0">
+    <div className="mb-2 overflow-hidden rounded-md border border-[#E5E7EB] last:mb-0">
       <div className={`px-2 py-1 text-xs font-extrabold uppercase tracking-wide text-white ${bg}`}>{label}</div>
       <textarea {...register} placeholder={placeholder} className="h-10 w-full resize-y border-0 px-2 py-1.5 text-xs outline-hidden" />
     </div>
@@ -104,39 +104,39 @@ const LOC_CATS: Array<{ key: SerializedPart["part_type"]; label: string; positio
 
 function AssetLocationMap({ parts, onAdd, onChange, onRemove }: { parts: SerializedPart[]; onAdd: () => void; onChange: (i: number, patch: Partial<SerializedPart>) => void; onRemove: (i: number) => void }) {
   return (
-    <div data-testid="wo-asset-location" className="mt-2 overflow-hidden rounded-lg border border-[#d6dae1] bg-white">
+    <div data-testid="wo-asset-location" className="mt-2 overflow-hidden rounded-lg border border-[#E5E7EB] bg-white">
       <div className="flex items-center gap-2 bg-[#0f1a30] px-2.5 py-1.5 text-white">
         <span className="text-xs font-extrabold uppercase tracking-wide">Asset location &amp; serial</span>
-        <span className="ml-auto text-xs text-[#aab6cd]">tires · batteries · lamps · mirrors — where it sits + serial</span>
+        <span className="ml-auto text-xs text-[#4B5563]">tires · batteries · lamps · mirrors — where it sits + serial</span>
         <button type="button" data-testid="wo-add-serialized-part" onClick={onAdd} className="rounded-sm bg-[#1f2a44] px-2 py-0.5 text-xs font-semibold text-white">+ Create part</button>
       </div>
       {parts.length === 0 ? (
-        <div className="px-3 py-3 text-xs text-[#94a3b8]">No serialized items placed. Add a tire/battery/lamp/mirror to capture its position + serial (chain-of-custody).</div>
+        <div className="px-3 py-3 text-xs text-[#4B5563]">No serialized items placed. Add a tire/battery/lamp/mirror to capture its position + serial (chain-of-custody).</div>
       ) : (
         <div className="space-y-2 p-2.5">
           {parts.map((sp, i) => {
             const cat = LOC_CATS.find((c) => c.key === sp.part_type) ?? LOC_CATS[0];
             return (
-              <div key={i} className="rounded-md border border-[#e6e9ee] p-2">
+              <div key={i} className="rounded-md border border-[#E5E7EB] p-2">
                 <div className="mb-1.5 flex flex-wrap gap-1">
                   {LOC_CATS.map((c) => (
                     <button type="button" key={c.key} onClick={() => onChange(i, { part_type: c.key, position_code: "" })}
-                      className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${c.key === sp.part_type ? "bg-[#1d2b45] text-white" : "bg-[#f8fafc] text-[#475569]"}`}>{c.label}</button>
+                      className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${c.key === sp.part_type ? "bg-[#1d2b45] text-white" : "bg-[#f8fafc] text-[#4B5563]"}`}>{c.label}</button>
                   ))}
-                  <button type="button" onClick={() => onRemove(i)} className="ml-auto rounded-sm border border-[#d6dae1] px-2 text-xs text-[#b91c1c]">Remove</button>
+                  <button type="button" onClick={() => onRemove(i)} className="ml-auto rounded-sm border border-[#E5E7EB] px-2 text-xs text-[#b91c1c]">Remove</button>
                 </div>
                 {/* truck silhouette — clickable wheel/position grid */}
-                <div className="rounded-md border border-[#e6e9ee] bg-[#f8fafc] p-2">
+                <div className="rounded-md border border-[#E5E7EB] bg-[#f8fafc] p-2">
                   <svg viewBox="0 0 430 110" className="mb-1 h-16 w-full">
-                    <rect x="60" y="30" width="120" height="50" rx="8" fill="#eef2f7" stroke="#cbd5e1" />
-                    <rect x="185" y="42" width="210" height="34" rx="6" fill="#f1f5f9" stroke="#cbd5e1" />
-                    <text x="120" y="60" fontSize="9" fill="#94a3b8" textAnchor="middle">TRACTOR</text>
-                    <text x="290" y="63" fontSize="9" fill="#94a3b8" textAnchor="middle">TRAILER</text>
+                    <rect x="60" y="30" width="120" height="50" rx="8" fill="#eef2f7" stroke="#E5E7EB" />
+                    <rect x="185" y="42" width="210" height="34" rx="6" fill="#f1f5f9" stroke="#E5E7EB" />
+                    <text x="120" y="60" fontSize="9" fill="#4B5563" textAnchor="middle">TRACTOR</text>
+                    <text x="290" y="63" fontSize="9" fill="#4B5563" textAnchor="middle">TRAILER</text>
                   </svg>
                   <div className="flex flex-wrap gap-1">
                     {cat.positions.map((pos) => (
                       <button type="button" key={pos} onClick={() => onChange(i, { position_code: pos })}
-                        className={`rounded-sm border px-2 py-0.5 text-xs font-bold ${sp.position_code === pos ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-[#94a3b8] bg-white text-[#475569]"}`}>{pos}</button>
+                        className={`rounded-sm border px-2 py-0.5 text-xs font-bold ${sp.position_code === pos ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-[#4B5563] bg-white text-[#4B5563]"}`}>{pos}</button>
                     ))}
                   </div>
                 </div>
@@ -291,7 +291,7 @@ function BooksTreatmentNotice({ totalDollars }: { totalDollars: number }) {
     <div
       data-testid="wo-books-treatment"
       data-books-treatment={capitalizes ? "capitalize" : "expense"}
-      className="mt-2 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs text-slate-700"
+      className="mt-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs text-[#1F2A44]"
     >
       {capitalizes ? (
         <>
@@ -978,13 +978,13 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           <SectionCard badge="B" title="Repair detail (VMRS)" right="complaint · cause · correction" testid="edit-wo-ccc">
             <div className="space-y-2">
               <FieldV5 label="Complaint">
-                <textarea value={editHeader.repair_complaint ?? ""} onChange={(e) => patchEditHeader({ repair_complaint: e.target.value })} className="h-10 w-full resize-y rounded-[5px] border border-[#d6dae1] px-2 py-1.5 text-xs outline-hidden" />
+                <textarea value={editHeader.repair_complaint ?? ""} onChange={(e) => patchEditHeader({ repair_complaint: e.target.value })} className="h-10 w-full resize-y rounded-[5px] border border-[#E5E7EB] px-2 py-1.5 text-xs outline-hidden" />
               </FieldV5>
               <FieldV5 label="Cause">
-                <textarea value={editHeader.repair_cause ?? ""} onChange={(e) => patchEditHeader({ repair_cause: e.target.value })} className="h-10 w-full resize-y rounded-[5px] border border-[#d6dae1] px-2 py-1.5 text-xs outline-hidden" />
+                <textarea value={editHeader.repair_cause ?? ""} onChange={(e) => patchEditHeader({ repair_cause: e.target.value })} className="h-10 w-full resize-y rounded-[5px] border border-[#E5E7EB] px-2 py-1.5 text-xs outline-hidden" />
               </FieldV5>
               <FieldV5 label="Correction">
-                <textarea value={editHeader.repair_correction ?? ""} onChange={(e) => patchEditHeader({ repair_correction: e.target.value })} className="h-10 w-full resize-y rounded-[5px] border border-[#d6dae1] px-2 py-1.5 text-xs outline-hidden" />
+                <textarea value={editHeader.repair_correction ?? ""} onChange={(e) => patchEditHeader({ repair_correction: e.target.value })} className="h-10 w-full resize-y rounded-[5px] border border-[#E5E7EB] px-2 py-1.5 text-xs outline-hidden" />
               </FieldV5>
             </div>
           </SectionCard>
@@ -1087,7 +1087,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                         type="button"
                         data-testid={`edit-wo-remove-line-${row._idx}`}
                         onClick={() => removeEditLine(row._idx)}
-                        className="rounded-sm border border-[#d6dae1] px-2 py-0.5 text-xs text-[#b91c1c]"
+                        className="rounded-sm border border-[#E5E7EB] px-2 py-0.5 text-xs text-[#b91c1c]"
                       >
                         Remove
                       </button>
@@ -1104,7 +1104,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           </SectionCard>
 
           {/* Footer */}
-          <div className="flex items-center gap-2 border-t border-[#d6dae1] pt-2.5">
+          <div className="flex items-center gap-2 border-t border-[#E5E7EB] pt-2.5">
             <div className="flex-1" />
             <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
             <Button
@@ -1132,11 +1132,11 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       <Modal open={open} onClose={handleModalClose} title="Work order created" sizePreset="md">
         <div className="space-y-3 text-xs text-sidebar-bg">
           <p className="text-xs text-gray-700">
-            Work order <EntityLink kind="work_order" id={createdWO.uuid} label={entityLabel(createdWO.display_id, createdWO.uuid, "Work order")} className="font-semibold text-slate-700 hover:underline" /> created.
+            Work order <EntityLink kind="work_order" id={createdWO.uuid} label={entityLabel(createdWO.display_id, createdWO.uuid, "Work order")} className="font-semibold text-[#1F2A44] hover:underline" /> created.
             {createdExpense ? (
               <>
                 {" "}Expense auto-created:{" "}
-                <EntityLink kind="expense" id={createdExpense.uuid} label="View expense →" className="font-semibold text-slate-700 hover:underline" />
+                <EntityLink kind="expense" id={createdExpense.uuid} label="View expense →" className="font-semibold text-[#1F2A44] hover:underline" />
               </>
             ) : null}
           </p>
@@ -1304,7 +1304,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                   onInvoiceOtherChange={setInvoiceOtherInput}
                 />
               ) : (
-                <div className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-2 text-xs text-slate-600">
+                <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-2 text-xs text-[#4B5563]">
                   No separate vendor invoice to reconcile for this payment type.
                 </div>
               )}
@@ -1321,7 +1321,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                   const on = paymentTiming === p.v;
                   return (
                     <button type="button" key={p.v} onClick={() => form.setValue("payment_timing", p.v)}
-                      className={`flex-1 rounded-md border p-1.5 text-center ${on ? "border-[#1d2b45] bg-[#1d2b45] text-white" : "border-[#d6dae1] bg-white text-sidebar-active"}`}>
+                      className={`flex-1 rounded-md border p-1.5 text-center ${on ? "border-[#1d2b45] bg-[#1d2b45] text-white" : "border-[#E5E7EB] bg-white text-sidebar-active"}`}>
                       <div className="text-xs font-extrabold">{p.h}</div>
                       <div className="text-xs opacity-75">{p.s}</div>
                     </button>
@@ -1331,7 +1331,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
               {paymentTiming === "paid_same_day" ? (
                 <>
                   <CreateWOSectionPaymentTiming register={form.register} watch={form.watch} setValue={form.setValue} />
-                  <div className="mt-1.5 rounded-md border border-[#cbd5e1] bg-[#f1f5f9] px-2 py-1.5 text-xs text-[#1f2a44]">Registers as an <b>Expense</b> in QuickBooks (money out now) against the payment account.</div>
+                  <div className="mt-1.5 rounded-md border border-[#E5E7EB] bg-[#f1f5f9] px-2 py-1.5 text-xs text-[#1f2a44]">Registers as an <b>Expense</b> in QuickBooks (money out now) against the payment account.</div>
                 </>
               ) : null}
               {paymentTiming === "vendor_invoice" ? (
@@ -1352,7 +1352,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                 </>
               ) : null}
               {paymentTiming === "in_house" ? (
-                <div className="rounded-md border border-[#d6dae1] bg-[#f1f5f9] px-2 py-1.5 text-xs text-[#475569]">In-house — no vendor invoice. Parts drawn from inventory; labor costed internally.</div>
+                <div className="rounded-md border border-[#E5E7EB] bg-[#f1f5f9] px-2 py-1.5 text-xs text-[#4B5563]">In-house — no vendor invoice. Parts drawn from inventory; labor costed internally.</div>
               ) : null}
             </div>
           </div>
@@ -1371,8 +1371,8 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
         </SectionCard>
 
         {/* Footer — Cancel / Save draft / Create work order (green) */}
-        <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 border-t border-[#d6dae1] pt-2.5" data-testid="wo-responsive-footer">
-          <div className="mr-auto min-w-0 text-xs text-[#475569]">Completing a PM recalculates next-due → PM Countdown</div>
+        <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 border-t border-[#E5E7EB] pt-2.5" data-testid="wo-responsive-footer">
+          <div className="mr-auto min-w-0 text-xs text-[#4B5563]">Completing a PM recalculates next-due → PM Countdown</div>
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
           <Button type="button" variant="secondary" disabled={paymentTiming !== "in_house" || !preSaveChecksOk} onClick={() => void submit("wo_only")}>Save draft</Button>
           <Button

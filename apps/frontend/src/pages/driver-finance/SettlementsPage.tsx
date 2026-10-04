@@ -450,7 +450,7 @@ export function SettlementsPage() {
         dataAttributes={{ "data-settlements-filter-toolbar": "collapsed" }}
       >
         <div className="flex flex-wrap gap-3" data-testid="settlements-filters">
-          <label className="text-xs text-slate-600">
+          <label className="text-xs text-[#4B5563]">
             Driver
             <EntityPicker
               kind="driver"
@@ -747,13 +747,13 @@ function OpenDriverBillsPanel({
 
   if (loading) {
     return (
-      <DataPanel title={`Open Driver Bills · loading…`} accentColor="#64748b">
+      <DataPanel title={`Open Driver Bills · loading…`} accentColor="#4B5563">
         <p className="text-xs text-gray-500">Loading open driver bills…</p>
       </DataPanel>
     );
   }
   return (
-    <DataPanel title={`Open Driver Bills · ${totalCount} · ${formatUsdCents(totalGrossCents)}`} accentColor="#64748b">
+    <DataPanel title={`Open Driver Bills · ${totalCount} · ${formatUsdCents(totalGrossCents)}`} accentColor="#4B5563">
       {items.length === 0 ? (
         <p className="text-xs text-gray-500">No open driver bills — all driver pay is either settled or not yet booked.</p>
       ) : (
@@ -802,7 +802,7 @@ function KpiCard({
     </>
   );
   const base = `rounded-sm border px-2 py-1 text-xs ${
-    active ? "border-slate-500 bg-slate-50" : "border-gray-200 bg-white"
+    active ? "border-[#4B5563] bg-[#F7F8FA]" : "border-gray-200 bg-white"
   }`;
   if (disabled) {
     return (

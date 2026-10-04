@@ -60,7 +60,22 @@ function auditBoard(src) {
   const deadheadLine = src.split("\n").find((l) => l.includes('key: "deadhead_pay"')) ?? "";
   if (!/deadhead_pay_cents == null \? DASH/.test(deadheadLine))
     f.push(`${BOARD}: deadhead_pay must render a dash (not blank) when untracked (null)`);
+  leftoverRefuse(src, f);
   return f;
+}
+
+function leftoverHits(src) {
+  const hits = [];
+  if (/fontSize:\s*10\b/.test(src)) hits.push("leftover fontSize: 10");
+  if (/fontSize:\s*11\b/.test(src)) hits.push("leftover fontSize: 11");
+  if (src.includes("text-slate-") || src.includes("border-slate-") || src.includes("bg-slate-")) {
+    hits.push("leftover slate class");
+  }
+  return hits;
+}
+
+function leftoverRefuse(src, bucket) {
+  for (const e of leftoverHits(src)) bucket.push(`${BOARD}: ${e}`);
 }
 
 function main() {
@@ -91,6 +106,16 @@ function main() {
     if (auditBoard(m6).length === 0) { console.error("SELFTEST FAIL: reverting fmtMiles dash to blank did not trip"); process.exit(1); }
     const m7 = boardSrc.replace(/deadhead_pay_cents == null \? DASH/, "deadhead_pay_cents == null ? \"\"");
     if (auditBoard(m7).length === 0) { console.error("SELFTEST FAIL: reverting deadhead dash to blank did not trip"); process.exit(1); }
+    const leftoverPlant = `${boardSrc}\n<span className="text-slate-700 border-slate-200 bg-slate-50" style={{ fontSize: 10 }}>plant</span>\n<span style={{ fontSize: 11 }}>plant</span>`;
+    const leftoverBad = auditBoard(leftoverPlant);
+    if (
+      !leftoverBad.some((e) => e.includes("leftover fontSize: 10")) ||
+      !leftoverBad.some((e) => e.includes("leftover fontSize: 11")) ||
+      !leftoverBad.some((e) => e.includes("leftover slate class"))
+    ) {
+      console.error("SELFTEST FAIL leftover plant escaped", leftoverBad);
+      process.exit(1);
+    }
     console.log("SELFTEST OK: guard trips on all mutations");
   }
 

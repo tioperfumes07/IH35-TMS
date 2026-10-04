@@ -14,6 +14,19 @@ const BOX = join(ROOT, "apps/frontend/src/components/forms/shared/CostBreakdownB
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
 const LABEL = "verify-wo-create-part-task-required";
 
+function leftoverHits(src) {
+  const hits = [];
+  if (src.includes("#94a3b8")) hits.push("leftover off-scale muted #94a3b8");
+  if (src.includes("#475569")) hits.push("leftover off-scale muted #475569");
+  if (src.includes("#aab6cd")) hits.push("leftover off-scale muted #aab6cd");
+  if (src.includes("#cbd5e1") || src.includes("#CBD5E1")) hits.push("leftover #cbd5e1 border");
+  if (src.includes("#d6dae1") || src.includes("#e6e9ee")) hits.push("leftover off-scale field border");
+  if (src.includes("text-slate-") || src.includes("border-slate-") || src.includes("bg-slate-")) {
+    hits.push("leftover slate class");
+  }
+  return hits;
+}
+
 export function run(modalPath = MODAL) {
   const modal = strip(readFileSync(modalPath, "utf8"));
   const box = strip(readFileSync(BOX, "utf8"));
@@ -26,6 +39,7 @@ export function run(modalPath = MODAL) {
     ["create-btn-disabled", /disabled=\{\s*\n?\s*!preSaveChecksOk/.test(modal) || /disabled=\{\s*!preSaveChecksOk/.test(modal)],
     ["box-required-wo", /required=\{variant === "wo"\}/.test(box)],
     ["box-testid", /data-testid=\{variant === "wo" \? "wo-section-a-part-task"/.test(box)],
+    ["leftover-muted", leftoverHits(readFileSync(modalPath, "utf8")).length === 0],
   ];
   const failed = checks.filter(([, ok]) => !ok).map(([id]) => id);
   return {
@@ -56,6 +70,12 @@ function selftest() {
     const caught = run(tmpModal);
     if (caught.ok || !caught.failed.includes("part-task-check-label")) {
       console.error(`${LABEL} SELFTEST FAIL: not caught`, caught);
+      process.exit(1);
+    }
+    writeFileSync(tmpModal, original + '\n<div className="text-xs text-[#94a3b8] text-[#475569] text-[#aab6cd] border-[#cbd5e1] border-[#d6dae1] border-[#e6e9ee] text-slate-700 border-slate-200 bg-slate-50">plant</div>\n', "utf8");
+    const leftoverCaught = run(tmpModal);
+    if (leftoverCaught.ok || !leftoverCaught.failed.includes("leftover-muted")) {
+      console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`, leftoverCaught);
       process.exit(1);
     }
   } finally {

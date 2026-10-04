@@ -11,5 +11,6 @@ export default {
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-load-costs-settlement-legs-columns.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-load-costs-settlement-legs-columns.mjs"]);
+    // BANK-F91500 — TourLoadRows leftover fontSize: 11 refuse now included in this already-wired EVEN host.
   },
 };

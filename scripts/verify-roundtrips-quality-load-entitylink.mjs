@@ -72,6 +72,24 @@ function auditRound(src) {
   return failures;
 }
 
+function leftoverRefuse(text) {
+  const hits = [];
+  if (text.includes("text-[11px]")) hits.push(`${TIMELINE}: leftover text-[11px]`);
+  // SB #475569 is locked by verify-roundtrips-timeline-restored — do not flag it.
+  if (
+    text.includes("#8A92AB") ||
+    text.includes("#334155") ||
+    text.includes("#64748b") ||
+    text.includes("#94a3b8")
+  ) {
+    hits.push(`${TIMELINE}: leftover off-scale muted`);
+  }
+  if (text.includes("text-slate-") || text.includes("border-slate-") || text.includes("bg-slate-")) {
+    hits.push(`${TIMELINE}: leftover slate class`);
+  }
+  return hits;
+}
+
 function auditTimeline(src, legsSrc) {
   const failures = [];
   if (!/--dwl/.test(src) || !/round-trips-dwell/.test(src)) {
@@ -89,6 +107,8 @@ function auditTimeline(src, legsSrc) {
   if (!/rounded border border-gray-200 bg-white p-3/.test(legsSrc)) {
     failures.push(`${LEGS}: RT_KANBAN_CARD_CLASS must match Kanban card padding p-3`);
   }
+  // BANK-F91518: --dwl leftover muted must be house #4B5563 (SB #475569 stays locked).
+  failures.push(...leftoverRefuse(src));
   return failures;
 }
 
@@ -198,6 +218,8 @@ if (process.argv.includes("--selftest")) {
     [round, qual, api, route.replace("AND i.customer_id = $3::uuid", ""), timeline, legs],
     [round, qual, api, route.replace("invalid_related_invoice_id", "invalid_related_record_id"), timeline, legs],
     [round, qual, api, route.replace("related_invoice_display_id: relatedInvoiceDisplayId", "related_invoice_display_id: null"), timeline, legs],
+    [round, qual, api, route, timeline.replace('["--dwl" as string]: "#4B5563"', '["--dwl" as string]: "#94a3b8"'), legs],
+    [round, qual, api, route, timeline.replace("bg-[#F7F8FA]", "bg-slate-50").replace("text-[#4B5563]", "text-slate-600").replaceAll("border-[#E5E7EB]", "border-slate-300"), legs],
   ];
   if (mutations.some((args) => !audit(...args).length)) {
     console.error(`${LABEL} SELFTEST FAIL — planted RoundTrips regression not caught`);

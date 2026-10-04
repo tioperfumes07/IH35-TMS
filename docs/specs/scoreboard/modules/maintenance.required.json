@@ -934,6 +934,18 @@
         "connectivity"
       ],
       "surface_path": "pages/maintenance/components/WorkOrdersTable.tsx"
+    },
+    {
+      "id": "maintenance.panel.pm_cost_per_mile",
+      "tab": "Panels",
+      "sub": "Panel: Pm Cost Per Mile",
+      "route_hint": "surface://components/maintenance/PmCostPerMilePanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/maintenance/PmCostPerMilePanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
     }
   ],
   "honesty_audit": {

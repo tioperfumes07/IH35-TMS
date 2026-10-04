@@ -543,6 +543,102 @@
         "connectivity"
       ],
       "surface_path": "pages/factoring/FactoringHome.tsx"
+    },
+    {
+      "id": "factoring.panel.factoring_kpi",
+      "tab": "Panels",
+      "sub": "Panel: Factoring Kpi",
+      "route_hint": "surface://components/factoring/FactoringKpiPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/factoring/FactoringKpiPanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "factoring.panel.factoring_purchase_links",
+      "tab": "Panels",
+      "sub": "Panel: Factoring Purchase Links",
+      "route_hint": "surface://components/factoring/FactoringPurchaseLinksPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/factoring/FactoringPurchaseLinksPanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "factoring.panel.factoring_reserves_shared",
+      "tab": "Panels",
+      "sub": "Panel: Factoring Reserves Shared",
+      "route_hint": "surface://components/factoring/FactoringReservesSharedPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/factoring/FactoringReservesSharedPanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "factoring.panel.faro_reserve_register",
+      "tab": "Panels",
+      "sub": "Panel: Faro Reserve Register",
+      "route_hint": "surface://components/factoring/FaroReserveRegisterPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/factoring/FaroReserveRegisterPanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "factoring.panel.factoring_cash_flow",
+      "tab": "Panels",
+      "sub": "Panel: Factoring Cash Flow",
+      "route_hint": "surface://pages/factoring/FactoringCashFlowPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/factoring/FactoringCashFlowPanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "factoring.panel.payments_to_you",
+      "tab": "Panels",
+      "sub": "Panel: Payments To You",
+      "route_hint": "surface://pages/factoring/PaymentsToYouPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/factoring/PaymentsToYouPanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "factoring.panel.repurchase_due",
+      "tab": "Panels",
+      "sub": "Panel: Repurchase Due",
+      "route_hint": "surface://pages/factoring/RepurchaseDuePanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/factoring/RepurchaseDuePanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "factoring.panel.save_error",
+      "tab": "Panels",
+      "sub": "Panel: Save Error",
+      "route_hint": "surface://pages/factoring/SubmitToFactorTab.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/factoring/SubmitToFactorTab.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
     }
   ],
   "honesty_audit": {

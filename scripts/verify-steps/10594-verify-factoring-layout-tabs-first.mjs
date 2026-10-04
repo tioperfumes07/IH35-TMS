@@ -8,5 +8,7 @@ export default {
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-factoring-layout-tabs-first.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-factoring-layout-tabs-first.mjs"]);
+    // BANK-F91456 — FT2 Escrow Account + Cash Reserve separate tabs (never ran in CI).
+    await ctx.run("node", ["scripts/ops/verify-factoring-ft2-escrow-cash-tabs.mjs", "--selftest"]);
   },
 };

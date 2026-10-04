@@ -422,7 +422,12 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
 
       {/* MAINT-F7528 — Home owns RMStatStrip (non-kanban tiles only, C-36). */}
       {!isHomeTab && tab !== "settings" ? (
-        <MaintKpiRows kpis={kpis} isError={kpisQuery.isError} compact={isListTab} />
+        <MaintKpiRows
+          kpis={kpis}
+          isError={kpisQuery.isError}
+          onRetry={() => void kpisQuery.refetch()}
+          compact={isListTab}
+        />
       ) : null}
       {/* D10/D32/D33: PM countdown / Alerts / DTC stay on Home sidebar only — list tabs need the list visible. */}
       {companyId && !isListTab && !isHomeTab && tab !== "settings" ? (

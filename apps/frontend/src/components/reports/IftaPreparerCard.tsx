@@ -13,10 +13,10 @@ function ReadyBadge({ label }: { label: string }) {
   // status badge (including this "ready" state) uses the locked neutral navy/slate palette.
   const palette =
     label === "waiting for quarter close"
-      ? { bg: "#f1f5f9", fg: "#334155" }
+      ? { bg: "#f1f5f9", fg: "#4B5563" }
       : label === "waiting for data"
-        ? { bg: "#e2e8f0", fg: "#334155" }
-        : { bg: "#e2e8f0", fg: "#1f2a44" };
+        ? { bg: "#F7F8FA", fg: "#4B5563" }
+        : { bg: "#F7F8FA", fg: "#1f2a44" };
   return (
     <span className="rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.04em]" style={{ background: palette.bg, color: palette.fg }}>
       {label}
@@ -32,46 +32,46 @@ export function IftaPreparerCard({ status }: Props) {
   const canSubmit = typedConfirm.trim().toUpperCase() === requiredPhrase;
 
   return (
-    <section className="rounded-sm border border-[#334155] border-l-[3px] bg-white">
-      <div className="flex items-center justify-between border-b border-[#334155] bg-[#f1f5f9] px-3 py-2">
-        <h3 className="text-xs font-semibold uppercase tracking-[0.04em] text-[#334155]">IFTA Quarterly Preparer</h3>
-        <div className="text-xs text-[#334155]">
+    <section className="rounded-sm border border-[#4B5563] border-l-[3px] bg-white">
+      <div className="flex items-center justify-between border-b border-[#4B5563] bg-[#f1f5f9] px-3 py-2">
+        <h3 className="text-xs font-semibold uppercase tracking-[0.04em] text-[#4B5563]">IFTA Quarterly Preparer</h3>
+        <div className="text-xs text-[#4B5563]">
           {status.currentQuarter} due {formatDateUS(status.nextDueAt)} ({status.daysUntilDue}d)
         </div>
       </div>
 
       <div className="space-y-2 px-3 py-3 text-xs">
-        <p className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-slate-600">
+        <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-[#4B5563]">
           This report is always accrual basis under the owner-locked reporting policy.
         </p>
         <div className="grid grid-cols-[24px_1fr_auto] items-center gap-2">
-          <span className="font-semibold text-slate-500">1</span>
-          <span className="text-slate-700">Pull state-by-state miles and gallons from closed trips</span>
+          <span className="font-semibold text-[#4B5563]">1</span>
+          <span className="text-[#1F2A44]">Pull state-by-state miles and gallons from closed trips</span>
           <ReadyBadge label={status.step1Ready ? "ready" : "waiting for data"} />
         </div>
         <div className="grid grid-cols-[24px_1fr_auto] items-center gap-2">
-          <span className="font-semibold text-slate-500">2</span>
-          <span className="text-slate-700">Validate fuel tax exceptions and unit-level anomalies</span>
+          <span className="font-semibold text-[#4B5563]">2</span>
+          <span className="text-[#1F2A44]">Validate fuel tax exceptions and unit-level anomalies</span>
           <ReadyBadge label={status.step2Ready ? "ready" : "waiting for data"} />
         </div>
         <div className="grid grid-cols-[24px_1fr_auto] items-center gap-2">
-          <span className="font-semibold text-slate-500">3</span>
-          <span className="text-slate-700">Review jurisdiction totals with safety + accounting</span>
+          <span className="font-semibold text-[#4B5563]">3</span>
+          <span className="text-[#1F2A44]">Review jurisdiction totals with safety + accounting</span>
           <ReadyBadge label={status.step3Ready ? "ready" : "waiting for data"} />
         </div>
         <div className="grid grid-cols-[24px_1fr_auto] items-center gap-2">
-          <span className="font-semibold text-slate-500">4</span>
-          <span className="text-slate-700">Finalize and generate IFTA-ready filing package</span>
+          <span className="font-semibold text-[#4B5563]">4</span>
+          <span className="text-[#1F2A44]">Finalize and generate IFTA-ready filing package</span>
           <ReadyBadge label={status.step4WaitsClose ? "waiting for quarter close" : "ready"} />
         </div>
       </div>
 
-      <div className="border-t border-slate-200 px-3 py-2">
+      <div className="border-t border-[#E5E7EB] px-3 py-2">
         {status.step4WaitsClose ? (
           <button
             type="button"
             disabled
-            className="inline-flex items-center gap-1 rounded-sm border border-[#334155] px-3 py-1.5 text-xs font-semibold text-[#334155] opacity-60"
+            className="inline-flex items-center gap-1 rounded-sm border border-[#4B5563] px-3 py-1.5 text-xs font-semibold text-[#4B5563] opacity-60"
           >
             Generate IFTA-ready CSV
           </button>
@@ -79,14 +79,14 @@ export function IftaPreparerCard({ status }: Props) {
           <button
             type="button"
             onClick={() => setConfirmOpen(true)}
-            className="inline-flex items-center gap-1 rounded-sm border border-[#334155] bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#334155] hover:bg-[#e2e8f0]"
+            className="inline-flex items-center gap-1 rounded-sm border border-[#4B5563] bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#4B5563] hover:bg-[#E5E7EB]"
           >
             Generate IFTA-ready CSV
           </button>
         )}
       </div>
 
-      <div className="flex items-center justify-between border-t border-slate-200 px-3 py-2 text-xs text-slate-600">
+      <div className="flex items-center justify-between border-t border-[#E5E7EB] px-3 py-2 text-xs text-[#4B5563]">
         <span>↑ Safety officer notified {status.daysUntilDue}d before due date · expense tracked + reminder</span>
         <Link to="/reports/ifta-preparer" className="font-semibold text-[#1f2a44] hover:underline">
           Open IFTA preparer →
@@ -97,22 +97,22 @@ export function IftaPreparerCard({ status }: Props) {
         <div className="space-y-3 text-xs">
           <p>Are you sure? This finalizes the IFTA filing for {status.currentQuarter} {currentYear}. Owner-only action.</p>
           <label className="block">
-            <span className="mb-1 block text-xs font-semibold text-slate-600">Type confirmation phrase</span>
+            <span className="mb-1 block text-xs font-semibold text-[#4B5563]">Type confirmation phrase</span>
             <input
               value={typedConfirm}
               onChange={(event) => setTypedConfirm(event.target.value)}
-              className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-xs"
+              className="w-full rounded-sm border border-[#E5E7EB] px-2 py-1.5 text-xs"
               placeholder={requiredPhrase}
             />
           </label>
           <div className="flex justify-end gap-2">
-            <button type="button" className="rounded-sm border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700" onClick={() => setConfirmOpen(false)}>
+            <button type="button" className="rounded-sm border border-[#E5E7EB] px-3 py-1.5 text-xs font-semibold text-[#1F2A44]" onClick={() => setConfirmOpen(false)}>
               Cancel
             </button>
             <button
               type="button"
               disabled={!canSubmit}
-              className="rounded-sm border border-[#334155] bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#334155] disabled:opacity-50"
+              className="rounded-sm border border-[#4B5563] bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#4B5563] disabled:opacity-50"
               onClick={() => setConfirmOpen(false)}
             >
               Submit

@@ -57,11 +57,11 @@ export function PmCostPerMilePanel({ operatingCompanyId, unitId }: { operatingCo
             <span className="text-gray-500" title={r.real_driven_reason ?? undefined}>— <span className="text-section-header">{r.real_driven_reason}</span></span>
           ),
       },
-      { key: "practical_miles", label: "Practical mi (billed)", sortValue: (r) => r.practical_miles, render: (r) => formatNumberTable(r.practical_miles, 1) },
-      { key: "short_miles", label: "Short mi (paid)", sortValue: (r) => r.short_miles, render: (r) => formatNumberTable(r.short_miles, 1) },
-      { key: "loads_in_period", label: "Loads delivered", sortValue: (r) => r.loads_in_period, render: (r) => String(r.loads_in_period) },
-      { key: "pm_cost_cents", label: "PM cost", sortValue: (r) => r.pm_cost_cents, render: (r) => formatUsdCentsTable(r.pm_cost_cents) },
-      { key: "maintenance_cost_cents", label: "Maintenance cost", sortValue: (r) => r.maintenance_cost_cents, render: (r) => formatUsdCentsTable(r.maintenance_cost_cents) },
+      { key: "practical_miles", label: "Practical mi (billed)", sortable: true, sortValue: (r) => r.practical_miles, render: (r) => formatNumberTable(r.practical_miles, 1) },
+      { key: "short_miles", label: "Short mi (paid)", sortable: true, sortValue: (r) => r.short_miles, render: (r) => formatNumberTable(r.short_miles, 1) },
+      { key: "loads_in_period", label: "Loads delivered", sortable: true, sortValue: (r) => r.loads_in_period, render: (r) => String(r.loads_in_period) },
+      { key: "pm_cost_cents", label: "PM cost", sortable: true, sortValue: (r) => r.pm_cost_cents, render: (r) => formatUsdCentsTable(r.pm_cost_cents) },
+      { key: "maintenance_cost_cents", label: "Maintenance cost", sortable: true, sortValue: (r) => r.maintenance_cost_cents, render: (r) => formatUsdCentsTable(r.maintenance_cost_cents) },
       ...(["real_driven", "practical", "short"] as const).map((b, i) => ({
         key: `cpm_${b}`,
         label: `CPM · ${BASIS_SHORT[b]}`,
