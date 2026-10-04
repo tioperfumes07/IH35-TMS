@@ -62,7 +62,7 @@ export function TireWearProjectionChart({
       <div className="mb-2 flex items-center justify-between gap-2">
         <h4 className="text-xs font-semibold text-gray-900">{position} tread trend</h4>
         {projectedReplacementDate ? (
-          <span className="text-[11px] text-amber-700">
+          <span className="text-xs text-amber-700">
             Projected replacement: {formatDateLabel(projectedReplacementDate)}
           </span>
         ) : null}
