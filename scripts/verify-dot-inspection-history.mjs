@@ -59,6 +59,9 @@ function auditBadgeRecovery(source) {
   if (!/query\.isError[\s\S]{0,420}role="alert"/.test(source)) problems.push("clean-rate GET failure must render a distinct alert");
   if (!/onClick=\{\(\) => void query\.refetch\(\)\}/.test(source)) problems.push("clean-rate GET failure must expose exact retry");
   if (!/query\.isError[\s\S]{0,700}const rate = query\.data/.test(source)) problems.push("failure branch must precede zero-inspection derivation");
+  // BANK-F91331 leftover refuse — InspectionScoreBadge.tsx page-scoped text token ratchet
+  if (source.includes("text-[11px]")) problems.push("leftover text-[11px]");
+  if (source.includes("#8A92AB")) problems.push("leftover off-scale muted #8A92AB");
   return problems;
 }
 for (const problem of auditBadgeRecovery(badge)) fail(`apps/frontend/src/components/safety/InspectionScoreBadge.tsx: ${problem}`);
@@ -92,7 +95,13 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`verify:dot-inspection-history --selftest OK — ${mutations.length}/${mutations.length} mutations detected`);
+  // BANK-F91331 leftover plant — InspectionScoreBadge page-scoped text token ratchet
+  const leftoverPlant = badge + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!auditBadgeRecovery(leftoverPlant).some((p) => p.includes("leftover text-[11px]"))) {
+    console.error("verify:dot-inspection-history --selftest FAILED: leftover plant escaped");
+    process.exit(1);
+  }
+  console.log(`verify:dot-inspection-history --selftest OK — ${mutations.length}/${mutations.length} mutations detected + leftover plant`);
   process.exit(0);
 }
 

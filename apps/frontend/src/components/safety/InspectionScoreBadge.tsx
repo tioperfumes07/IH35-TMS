@@ -49,7 +49,7 @@ export function InspectionScoreBadge({ companyId, driverId }: Props) {
         title={(query.error as Error)?.message ?? "DOT inspection score could not be loaded."}
         onClick={() => void query.refetch()}
       >
-        <span className="inline-flex items-center rounded-sm border border-slate-200 bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
+        <span className="inline-flex items-center rounded-sm border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
           DOT: unavailable · Retry
         </span>
       </button>
@@ -62,7 +62,7 @@ export function InspectionScoreBadge({ companyId, driverId }: Props) {
 
   return (
     <span
-      className={`inline-flex items-center rounded-sm border px-2 py-0.5 text-[11px] font-semibold ${classNameForRate(rate)}`}
+      className={`inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold ${classNameForRate(rate)}`}
       title={`DOT clean inspection rate over trailing ${query.data?.trailing_months ?? 12} months`}
     >
       DOT: {label}
