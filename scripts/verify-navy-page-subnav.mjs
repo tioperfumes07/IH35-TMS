@@ -27,8 +27,8 @@ const component = read(COMPONENT);
 const settlements = read(SETTLEMENTS);
 
 // Locked visual tokens
-if (!component.includes("bg-[#1A1F36]")) fail("NavyPageSubNav missing locked token: bg-[#1A1F36]");
-else pass("bg-[#1A1F36] present");
+if (!component.includes("bg-[#14314F]")) fail("NavyPageSubNav missing locked token: bg-[#14314F]");
+else pass("bg-[#14314F] present");
 
 if (!component.includes("text-[11px]")) fail("NavyPageSubNav missing locked token: text-[11px]");
 else pass("text-[11px] present");
