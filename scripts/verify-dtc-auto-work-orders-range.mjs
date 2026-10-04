@@ -32,6 +32,9 @@ function failures(source = live) {
     ["compact exact range", source.card.includes('pager("dtc-auto-work-orders-compact-range")')],
     ["full exact range", source.card.includes('pager("dtc-auto-work-orders-range")')],
     ["GET failure is explicit and retryable", source.card.includes("if (query.isError)") && source.card.includes("Couldn't load DTC auto-created work orders") && source.card.includes("onRetry={() => void query.refetch()}")],
+    // BANK-F91319 leftover refuse — DtcAutoWorkOrdersCard.tsx page-scoped text token ratchet
+    ["no leftover text-[11px]", !source.card.includes("text-[11px]")],
+    ["no leftover #8A92AB", !source.card.includes("#8A92AB")],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }
 
@@ -53,7 +56,13 @@ if (process.argv.includes("--selftest")) {
     console.error(`verify-dtc-auto-work-orders-range SELFTEST FAIL — mutations ${escaped.join(", ")} stayed green`);
     process.exit(1);
   }
-  console.log("verify-dtc-auto-work-orders-range SELFTEST PASS — 10/10 mutations red");
+  // BANK-F91319 leftover plant — DtcAutoWorkOrdersCard page-scoped text token ratchet
+  const leftoverPlant = { ...live, card: live.card + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n' };
+  if (!failures(leftoverPlant).includes("no leftover text-[11px]")) {
+    console.error("verify-dtc-auto-work-orders-range SELFTEST FAIL — leftover plant escaped");
+    process.exit(1);
+  }
+  console.log("verify-dtc-auto-work-orders-range SELFTEST PASS — 10/10 mutations red + leftover plant");
   process.exit(0);
 }
 
