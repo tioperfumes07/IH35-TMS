@@ -226,6 +226,10 @@ export function assertSettlementsClusterReverse(sources) {
     problems.push(`${LIABILITIES_HOME}: must render EntityPicker kind=driver filter (allowCreate=false) and honor ?driver_id=`);
   }
 
+  // BANK-F91297 leftover refuse — SettlementsSection.tsx page-scoped text token ratchet
+  if (settlementsSection.includes("text-[11px]")) problems.push(`${SETTLEMENTS_SECTION}: leftover text-[11px]`);
+  if (settlementsSection.includes("#8A92AB") || settlementsSection.includes("#334155")) problems.push(`${SETTLEMENTS_SECTION}: leftover off-scale muted`);
+
   return problems;
 }
 
@@ -442,7 +446,17 @@ function selftest() {
     }
   }
   const total = mutations.length + productionPlants.length + CLAIMED_LEAVES.length;
-  console.log(`${LABEL} SELFTEST PASS — ${total}/${total} fixture+production+matrix mutations detected`);
+  // BANK-F91297 leftover plant — SettlementsSection page-scoped text token ratchet
+  const leftoverPlant = '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  const leftoverHits = assertSettlementsClusterReverse({
+    ...live,
+    [SETTLEMENTS_SECTION]: live[SETTLEMENTS_SECTION] + leftoverPlant,
+  });
+  if (!leftoverHits.some((e) => e.includes("leftover text-[11px]")) || !leftoverHits.some((e) => e.includes("leftover off-scale muted"))) {
+    console.error(`${LABEL} SELFTEST FAIL — leftover plant escaped`, leftoverHits.filter((e) => e.includes("leftover")));
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — ${total}/${total} fixture+production+matrix mutations detected + leftover plant`);
   process.exit(0);
 }
 
