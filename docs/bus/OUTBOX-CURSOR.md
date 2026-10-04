@@ -1,3 +1,15 @@
+## 2026-10-04T14:28Z · BANK-F91514 RouteDiagram dest leftover muted WIRED · this PR
+
+DONE: RouteDiagramSvg destination leftover #475569 → house muted #4B5563; leftover refuse on verify-fuel-planner-degraded-honesty; EVEN 4104 --selftest + live.
+
+NEXT: leftover muted chrome (WO pie status colors stay / RMBuckets In Progress stay / trip-type SB stay) · skip pile parked · HH13 no migrations this tick.
+
+## 2026-10-04T14:26Z · BANK-F91513 CreateWO help leftover muted WIRED CI · tip `62797b2fe7`
+
+DONE: #25255 — CreateWorkOrderModal leftover muted #4B5563; verify-steps/2090 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (RouteDiagram dest #475569 / WO pie status colors stay) · skip pile parked · HH13 no migrations this tick.
+
 ## 2026-10-04T14:22Z · BANK-F91513 CreateWO help leftover muted WIRED · this PR
 
 DONE: CreateWorkOrderModal leftover #aab6cd help → house muted #4B5563; leftover refuse on verify-wo-create-part-task-required; EVEN 2090 --selftest + live.
