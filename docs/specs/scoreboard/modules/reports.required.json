@@ -1066,6 +1066,18 @@
       "required": [],
       "note": "Correctly owned by ReportsRunner (per-report run pages), not Reports home \u2014 see honesty_audit.reports_home_toolbar_filter_2026_08_17 (LV-REPORTS-HOME-FILTER-LEAF-MISOWNED), which dropped this claim from the home leaf but never added the right-owner claim here.",
       "surface_path": "pages/reports/runners/RunnerFilters.tsx"
+    },
+    {
+      "id": "reports.panel.three_mile_cpm",
+      "tab": "Panels",
+      "sub": "Panel: Three Mile Cpm",
+      "route_hint": "surface://components/reports/ThreeMileCpmPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/reports/ThreeMileCpmPanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
     }
   ],
   "honesty_audit": {
