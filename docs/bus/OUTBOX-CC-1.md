@@ -1729,3 +1729,23 @@ Book-vs-source total outstanding: $298,762.00 (Faro) + $5,412.40 (three self-car
 - **380.2 + 380.3** — #24838 `a6dfd0d569`. `verify-no-migration-is-neither-applied-nor-held` (step 12397): production 1401 on disk, 1391 applied, **0 in neither state**. `verify-samsara-history-is-never-an-operational-path-into-a-frozen-company` (step 12401): the shared driver-at-time resolver attributed **33 USMCA fuel fills to a frozen-company driver** through 352 USMCA-scoped telematics rows (23 drivers, 1 still open) → **0** with one company pin on every operational read; history rows retained and named; 0 USMCA loads / fuel / postings on another company's driver. Both in LAW.json.
 
 **Housekeeping I could not do (permission denied, not routed around):** `git worktree remove --force` and remote branch deletes for `cc1-r373-4-credit-docs-post`; the only file in it is the gate's `.tmp-usmca-inventory.json`.
+
+## 2026-10-04 — CC-1 (not idle). MERGES STOPPED per the P0 "main cannot boot" order.
+
+**ON NOW:** ROUND 389.2 wiring batch 1. 50 passing money guards; verify-steps 14413+ claimed (#25294); step files written locally, held until main boots. **Next:** ROUND 390 live purge path, merge HELD for the owner. R1 negative settlement Dr 1257.
+
+**Merged today:**
+- **#25034** advances post to the driver's own 1245 sub-account.
+- **#25094** advance balance derived from the GL.
+- **#25110** damage and fines are driver receivables.
+- **#25144** C6 exemption markers.
+- **#25145** R2: sub-account numbering, rebased on the landed batch.
+- **#25149** ROUND 390.1: a reversal line is terminal. The 09-30 double reversals came from an ops script calling reverseJournalEntryNoFlip directly on DEFECT-3 reversal JEs. The live chain query reads 122 until the purge.
+- **#25154** ROUND 390 purge dry run (output in the PR).
+
+**Open / owner:**
+- R3 A/P reversal: CANCELLED by ROUND 390 §5 / 390.1 §5, not built further.
+- 39 guard verdicts (due 10-06).
+- Test Owner grant bed20058: remove on the owner's word.
+- Five purge decisions listed in #25154.
+- `ih35_ci_readonly` is not read-only (BYPASSRLS + write grants): escalated.
