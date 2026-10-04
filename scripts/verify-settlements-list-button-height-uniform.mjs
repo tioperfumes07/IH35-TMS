@@ -88,6 +88,7 @@ export function collectProblems(root = ROOT) {
 function leftoverHits(src) {
   const hits = [];
   if (/fontSize:\s*10\b/.test(src)) hits.push("leftover fontSize: 10");
+  if (/fontSize:\s*11\b/.test(src)) hits.push("leftover fontSize: 11");
   return hits;
 }
 
@@ -129,8 +130,8 @@ if (process.argv.includes("--selftest")) {
       );
       process.exit(1);
     }
-    const leftoverPlant = `${readRel(ROOT, TOURS)}\n<span style={{ fontSize: 10 }}>plant</span>`;
-    if (!leftoverHits(leftoverPlant).some((e) => e.includes("leftover fontSize: 10"))) {
+    const leftoverPlant = `${readRel(ROOT, TOURS)}\n<span style={{ fontSize: 10 }}>plant</span>\n<span style={{ fontSize: 11 }}>plant</span>`;
+    if (!leftoverHits(leftoverPlant).some((e) => e.includes("leftover fontSize: 10")) || !leftoverHits(leftoverPlant).some((e) => e.includes("leftover fontSize: 11"))) {
       console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`);
       process.exit(1);
     }

@@ -193,7 +193,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
             </div>
           )}
           footerCells={{
-            tour: (v: TourListRow[]) => <span className="font-semibold uppercase tracking-[0.4px] text-gray-600" style={{ fontSize: 11 }} data-testid="settlements-tour-totals-label">Totals ({v.length})</span>,
+            tour: (v: TourListRow[]) => <span className="font-semibold uppercase tracking-[0.4px] text-gray-600 text-section-header" data-testid="settlements-tour-totals-label">Totals ({v.length})</span>,
             revenue: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.revenue_cents, 0)),
             costs: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.costs_cents, 0)),
             driver_pay: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.driver_pay_cents, 0)),
