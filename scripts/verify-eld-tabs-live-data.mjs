@@ -113,6 +113,9 @@ export function collectProblems(sources = Object.fromEntries(Object.entries(path
   if (eldPage.includes("activeConfig.emptyTitle") && !eldPage.includes("LiveDutyTab")) {
     problems.push("EldPage still renders only static empty states (missing LiveDutyTab wiring)");
   }
+  // BANK-F91324 leftover refuse — LiveDutyTab.tsx page-scoped text token ratchet
+  if (liveDuty.includes("text-[11px]")) problems.push("LiveDutyTab.tsx: leftover text-[11px]");
+  if (liveDuty.includes("#8A92AB")) problems.push("LiveDutyTab.tsx: leftover off-scale muted #8A92AB");
 
   return problems;
 }
@@ -132,6 +135,15 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
   const good = collectProblems(real);
   if (good.length) {
     console.error(`${LABEL} --selftest FAIL:\n${good.map((p) => `  - ${p}`).join("\n")}`);
+    process.exit(1);
+  }
+  // BANK-F91324 leftover plant — LiveDutyTab page-scoped text token ratchet
+  const leftoverPlant = {
+    ...real,
+    liveDuty: real.liveDuty + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n',
+  };
+  if (!collectProblems(leftoverPlant).some((p) => p.includes("leftover text-[11px]"))) {
+    console.error(`${LABEL} --selftest FAIL — leftover plant escaped`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest OK`);
