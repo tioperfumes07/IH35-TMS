@@ -21,6 +21,9 @@ export function check() {
   assert(src.includes('tableTestId="hos-history-table"'), "HosHistorySection: must keep hos-history-table test id");
   assert(!/<table\b/.test(src), "HosHistorySection: must not use raw HTML table");
   assert(src.includes('kind="driver"'), "HosHistorySection: keep EntityPicker driver");
+  // BANK-F91303 leftover refuse — HosHistorySection.tsx page-scoped text token ratchet
+  assert(!src.includes("text-[11px]"), "HosHistorySection.tsx: leftover text-[11px]");
+  assert(!src.includes("#8A92AB") && !src.includes("#334155"), "HosHistorySection.tsx: leftover off-scale muted");
 }
 
 function selftest() {
@@ -45,6 +48,17 @@ function selftest() {
   }
   fs.writeFileSync(filePath, good);
   assert(failed, "selftest: expected FAIL on raw HTML table");
+  // BANK-F91303 leftover plant — HosHistorySection page-scoped text token ratchet
+  const leftoverPlant = good + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  fs.writeFileSync(filePath, leftoverPlant);
+  let leftoverFailed = false;
+  try {
+    check();
+  } catch {
+    leftoverFailed = true;
+  }
+  fs.writeFileSync(filePath, good);
+  assert(leftoverFailed, "selftest: leftover plant escaped");
   console.log("verify-hos-history-parity-surface-bar --selftest PASS");
 }
 
