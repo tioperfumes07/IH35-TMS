@@ -171,9 +171,9 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="at" tick={{ fontSize: 10 }} />
-            <YAxis yAxisId="temp" tick={{ fontSize: 10 }} label={{ value: "C", angle: -90, position: "insideLeft", fontSize: 10 }} />
-            <YAxis yAxisId="humidity" orientation="right" tick={{ fontSize: 10 }} label={{ value: "%", angle: 90, position: "insideRight", fontSize: 10 }} />
+            <XAxis dataKey="at" tick={{ fontSize: 11 }} />
+            <YAxis yAxisId="temp" tick={{ fontSize: 11 }} label={{ value: "C", angle: -90, position: "insideLeft", fontSize: 11 }} />
+            <YAxis yAxisId="humidity" orientation="right" tick={{ fontSize: 11 }} label={{ value: "%", angle: 90, position: "insideRight", fontSize: 11 }} />
             <Tooltip />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             <ReferenceLine yAxisId="temp" y={query.data.threshold.min_temp_c} stroke="#f59e0b" strokeDasharray="4 4" label="Min C" />
