@@ -6,6 +6,7 @@ import {
   isClosedPeriodReversal,
   flipPostingsForReversal,
   assertBalanced,
+  reversalLineSource,
 } from "./void.service.js";
 
 describe("VOID-EVERYWHERE — permissions (locked: VOID = Owner + Accountant only)", () => {
@@ -117,5 +118,39 @@ describe("VOID-EVERYWHERE PR-2 — bill void reverses AP correctly (same engine 
     expect(reversed[0].class_id).toBe("drv1");
     expect(reversed[0].entity_uuid).toBe("vendor1");
     expect(() => assertBalanced(reversed)).not.toThrow();
+  });
+});
+
+// AUTH-400 writer fix — a reversal leg carries ITS original's source. Planted: the live Revrec Event 2 shape (load 13539,
+// invoice 317da69a): ONE entry, Cr 1150 sourced `load`, Dr 1100 sourced `invoice`, voided through the invoice.
+describe("AUTH-400 — every reversal leg keeps its own original's source (two-sided, MIXED sources)", () => {
+  const event2 = [
+    { id: "fd4a39e1", account_id: "1150", class_id: null, entity_uuid: null, debit_or_credit: "credit" as const, amount_cents: 486000, description: "Unbilled", line_sequence: 1, source_transaction_type: "load", source_transaction_id: "load-13539" },
+    { id: "06956b71", account_id: "1100", class_id: null, entity_uuid: null, debit_or_credit: "debit" as const, amount_cents: 486000, description: "A/R", line_sequence: 2, source_transaction_type: "invoice", source_transaction_id: "inv-317da69a" },
+  ];
+
+  it("reverses BOTH legs, each with its own source — the 1150 leg stays `load`, never relabelled `invoice`", () => {
+    const rev = flipPostingsForReversal(event2);
+    expect(rev).toHaveLength(2);
+    const src = rev.map((l) => ({ line: l.original_line_id, side: l.debit_or_credit, ...reversalLineSource(l, "invoice", "inv-317da69a") }));
+    expect(src).toEqual([
+      { line: "fd4a39e1", side: "debit", source_transaction_type: "load", source_transaction_id: "load-13539" },
+      { line: "06956b71", side: "credit", source_transaction_type: "invoice", source_transaction_id: "inv-317da69a" },
+    ]);
+    // Per source, original + reversal net to zero — the property the load / invoice drill-downs read.
+    const all = [...event2.map((l) => ({ ...l })), ...rev.map((l) => ({ ...l, ...reversalLineSource(l, "invoice", "inv-317da69a") }))];
+    for (const t of ["load", "invoice"]) {
+      const net = all.filter((l) => l.source_transaction_type === t).reduce((n, l) => n + (l.debit_or_credit === "debit" ? l.amount_cents : -l.amount_cents), 0);
+      expect(net).toBe(0);
+    }
+  });
+
+  it("a sourceless line or a journal_entry hop takes the voided document's resolved source (reinstate rule unchanged)", () => {
+    expect(reversalLineSource({ source_transaction_type: null, source_transaction_id: null }, "bill", "b1")).toEqual({ source_transaction_type: "bill", source_transaction_id: "b1" });
+    expect(reversalLineSource({ source_transaction_type: "journal_entry", source_transaction_id: "je1" }, "expense", "e1")).toEqual({ source_transaction_type: "expense", source_transaction_id: "e1" });
+  });
+
+  it("refuses when neither the line nor the voided document resolves a source", () => {
+    expect(() => reversalLineSource({ source_transaction_type: null, source_transaction_id: null }, null, null)).toThrow("void_reversal_line_source_unresolved");
   });
 });

@@ -99,7 +99,7 @@ async function live() {
     await client.query("ROLLBACK");
     const problems = [];
     if (missing.length) problems.push(`deferred trigger trg_refuse_document_delete_leaving_gl missing on: ${missing.join(", ")}`);
-    for (const r of rows) problems.push(`${r.doc_table}: ${r.lines} posting line(s) (${r.live_lines} live, net ${r.net_cents} cents) name ${r.docs} document(s) that no longer exist`);
+    for (const r of rows) problems.push(`${r.doc_table}: ${r.lines} posting line(s) in ${r.entries} entr(ies) (${r.live_lines} live; ${r.nonzero_accounts} account(s) not netting to zero across those whole entries) name ${r.docs} document(s) that no longer exist`);
     if (problems.length) {
       console.error(`${LABEL}: LIVE FAIL — ${problems.join("; ")}`);
       process.exit(1);

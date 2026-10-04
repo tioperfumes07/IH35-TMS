@@ -110,6 +110,11 @@ type GlPostingRow = {
   amount_cents: number;
   description: string | null;
   line_sequence: number;
+  /** The ORIGINAL line's own source (AUTH-400 writer fix). One journal entry can carry legs sourced to different
+   *  documents — Revrec Event 2 books the 1150 unbilled leg to the LOAD and the A/R leg to the INVOICE — so a reversal
+   *  leg must carry ITS original's source, never the voided document's. */
+  source_transaction_type?: string | null;
+  source_transaction_id?: string | null;
 };
 
 // ---------------------------------------------------------------------------
@@ -161,7 +166,35 @@ export function flipPostingsForReversal(
     debit_or_credit: row.debit_or_credit === "debit" ? "credit" : "debit",
     amount_cents: row.amount_cents,
     description: row.description ? `Void reversal: ${row.description}` : "Void reversal",
+    source_transaction_type: row.source_transaction_type ?? null,
+    source_transaction_id: row.source_transaction_id ?? null,
   }));
+}
+
+/**
+ * AUTH-400 writer fix — the source a reversal LEG is written with: its own original's source.
+ *
+ * Measured live (USMCA, 24 invoice voids, 2026-07-29..08-23): Revrec Event 2 posts Cr 1150 sourced `load` and Dr 1100
+ * sourced `invoice` in ONE entry. postVoidReversal stamped every reversal leg with the voided document's (trueType,
+ * trueId), so the 1150 reversal came out sourced `invoice`: the GL balanced, but the load's own source view showed an
+ * unreversed unbilled credit and the invoice showed a 1150 debit it never posted — load profitability, unbilled-by-load
+ * and every per-document drill read that.
+ *
+ * Rule: a line that names a real document keeps it. Only a line with NO source, or a `journal_entry` hop (a reversal of
+ * a reinstate, whose true document is what resolveTrueReversalSource exists to find), takes the voided document's
+ * resolved source. Neither resolvable -> refuse (never a reversal leg with no document).
+ */
+export function reversalLineSource(
+  line: { source_transaction_type?: string | null; source_transaction_id?: string | null },
+  trueType: string | null | undefined,
+  trueId: string | null | undefined
+): { source_transaction_type: string; source_transaction_id: string } {
+  const own = line.source_transaction_type;
+  if (own && own !== "journal_entry" && line.source_transaction_id) {
+    return { source_transaction_type: own, source_transaction_id: line.source_transaction_id };
+  }
+  if (trueType && trueId) return { source_transaction_type: trueType, source_transaction_id: trueId };
+  throw Object.assign(new Error("void_reversal_line_source_unresolved"), { code: "void_reversal_line_source_unresolved" });
 }
 
 /** Balance-or-fail: total debits must equal total credits and be > 0. Mirrors createJournalEntry's guard. */
@@ -361,7 +394,8 @@ async function readOriginalGlPostings(
     const res = await client.query<GlPostingRow>(
       `
         SELECT id::text, account_id::text, class_id::text, entity_uuid::text,
-               debit_or_credit, amount_cents::bigint AS amount_cents, description, line_sequence
+               debit_or_credit, amount_cents::bigint AS amount_cents, description, line_sequence,
+               source_transaction_type, source_transaction_id
         FROM accounting.journal_entry_postings
         WHERE operating_company_id = $1::uuid AND journal_entry_uuid = $2::uuid
         ORDER BY line_sequence ASC
@@ -396,7 +430,8 @@ async function readOriginalGlPostings(
   const res = await client.query<GlPostingRow>(
     `
       SELECT id::text, account_id::text, class_id::text, entity_uuid::text,
-             debit_or_credit, amount_cents::bigint AS amount_cents, description, line_sequence
+             debit_or_credit, amount_cents::bigint AS amount_cents, description, line_sequence,
+             source_transaction_type, source_transaction_id
       FROM accounting.journal_entry_postings
       WHERE operating_company_id = $1::uuid
         AND journal_entry_uuid IN (
@@ -820,8 +855,9 @@ export async function postVoidReversal(
     // ROUND 393.3 — the line and its spine row through the ONE writer (posting-line-writer.ts), in this transaction.
     // Every value is what this door wrote before:
     //   idempotency_key  BLOCK 2: `void:<type>:<id>` — a second void of the same entity is a no-op (uq_jep_company_idempotency_line);
-    //   source           trueType/trueId (REINSTATE-VOIDJE-REVERSAL-SEVERS-SOURCE-LINKAGE: a reinstate hop stays tagged to the
-    //                    true document, so a source-typed sum sees both legs and nets to zero — LV-BILLPAY-VOID-NO-REVERSAL);
+    //   source           the ORIGINAL LINE's own source (AUTH-400: a load-sourced leg stays load-sourced); a sourceless line or
+    //                    a journal_entry hop takes trueType/trueId (REINSTATE-VOIDJE-REVERSAL-SEVERS-SOURCE-LINKAGE: a reinstate
+    //                    hop stays tagged to the true document — LV-BILLPAY-VOID-NO-REVERSAL) — reversalLineSource();
     //   reversal_of_line_id  ROUND 86 line-level FK back to the original (its load is the original's load);
     //   spine            CODER-12: the voided entity, role 'reversal_of' — so a purge can tell a reversed document from an
     //                    unreversed one. A conflict no-op writes neither the line nor a link.
@@ -836,8 +872,7 @@ export async function postVoidReversal(
       amount_cents: line.amount_cents,
       description: line.description,
       idempotency_key: `void:${params.entityType}:${params.entityId}`,
-      source_transaction_type: trueType,
-      source_transaction_id: trueId,
+      ...reversalLineSource(line, trueType, trueId),
       reversal_of_line_id: line.original_line_id,
       relationship_role: "reversal_of",
       spine_link: { linked_object_type: params.entityType, linked_object_id: params.entityId },
