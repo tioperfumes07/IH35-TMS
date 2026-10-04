@@ -7207,3 +7207,28 @@ row_counts: accounting.expenses 63431792 voided by executeVoidCancel('expense') 
 proof_query: live read-only re-read — 99530579 live copies = 1 (13548); 13533 copy fuel+expense voided; four DEF refs blank.
 THIS AUTHORIZATION DOES NOT COVER: any DELETE; the expense memos that still read "ref ustFluid"; receipts 1848853 /
   99794138 (done under AUTH-207 / AUTH-209); any other document or company.
+
+## AUTH-213
+issued_at: 2026-10-04T19:59:15Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). Escrow over-release unwind ($225): reverse the nine claimless
+  2026-09-24 $25 release journal entries (escrow_postings source_type 'reconciliation', source_id NULL, "AT ctrl escrow $0 on
+  settl … — reverse close-path excess") on 2100-00-027 (x6), 2100-00-002 (x2), 2100-00-004 (x1) through
+  executeVoidCancel('journal_entry') (reverseJournalEntryNoFlip). Lead ruling 2026-10-04 ("Then the $225 unwind under its own
+  AUTH with a dry run first"); owner 2026-10-04 to CC-3: "ALL QUESTIONS HAVE BEEN ASKED AND ANSWERED … I FOLLOW
+  RECOMMENDATIONS". Engine fixed first (#25378). Prod dry run (withLuciaBypass, thrown): 9 reversed; balances -15000 / -5000 /
+  -2500 -> 0 / 0 / 0; nothing persisted (re-read).
+action: DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-04-cc3-escrow-unwind-225.mts --apply --auth AUTH-213
+expires_at: 2026-10-05T01:59:15Z
+status: OPEN
+THIS AUTHORIZATION DOES NOT COVER: any DELETE; the append-only escrow_postings rows (purge engine); any other escrow account.
+
+## AUTH-214
+issued_at: 2026-10-04T19:59:15Z
+scope: USMCA ONLY. Owner AUTH-398-FUEL-MEMO + AUTH-398-ISSUER (CC-3 chat 2026-10-04). (1) Remove ", ref ustFluid" from the
+  memos of expenses fba11ce4 / 63e5e36a / fe0ff50d / 12a35045 (memo only; amount, date, JE and its postings asserted
+  unchanged). (2) DREAMLINE card type 0fd4a1a8 -> issuer Dreamline Transit LLC 3e72d4a5 through setFuelCardTypeIssuer + the
+  fuel.card_type.issuer_set audit; RELAY stays blank (asserted). Prod dry run (thrown): 4 memos cleared, issuer set, RELAY null.
+action: DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-04-cc3-def-memos-and-dreamline-issuer.mts --apply --auth AUTH-214
+expires_at: 2026-10-05T01:59:15Z
+status: OPEN
+THIS AUTHORIZATION DOES NOT COVER: any DELETE; any amount, date or GL change; the RELAY issuer; any other expense.
