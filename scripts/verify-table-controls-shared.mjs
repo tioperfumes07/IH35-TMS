@@ -93,6 +93,21 @@ if (paginatorSrc) {
   }
 }
 
+// BANK-F91330 leftover refuse — ColumnChooser.tsx page-scoped text token ratchet (B-1 gear)
+const COLUMN_CHOOSER = "apps/frontend/src/components/table/ColumnChooser.tsx";
+let columnChooserSrc = "";
+try {
+  columnChooserSrc = readFileSync(COLUMN_CHOOSER, "utf8");
+} catch {
+  failures.push(`${COLUMN_CHOOSER}: missing`);
+}
+if (columnChooserSrc) {
+  if (columnChooserSrc.includes("text-[11px]")) failures.push(`${COLUMN_CHOOSER}: leftover text-[11px]`);
+  if (columnChooserSrc.includes("#8A92AB") || columnChooserSrc.includes("#334155")) {
+    failures.push(`${COLUMN_CHOOSER}: leftover off-scale muted`);
+  }
+}
+
 if (process.argv.includes("--selftest")) {
   const planted = searchSrc.replaceAll("lastEmittedRef", "notTheBuffer");
   const plantedFails =
@@ -112,6 +127,19 @@ if (process.argv.includes("--selftest")) {
   writeFileSync(PAGINATOR, realGood);
   if (!plantCaught) {
     console.error("selftest: leftover plant escaped");
+    process.exit(1);
+  }
+  // BANK-F91330 leftover plant — ColumnChooser page-scoped text token ratchet
+  const chooserGood = readFileSync(COLUMN_CHOOSER, "utf8");
+  const chooserPlant = chooserGood + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  writeFileSync(COLUMN_CHOOSER, chooserPlant);
+  const chooserCaught =
+    chooserPlant.includes("text-[11px]") ||
+    chooserPlant.includes("#8A92AB") ||
+    chooserPlant.includes("#334155");
+  writeFileSync(COLUMN_CHOOSER, chooserGood);
+  if (!chooserCaught) {
+    console.error("selftest: ColumnChooser leftover plant escaped");
     process.exit(1);
   }
   console.log("verify:table-controls-shared --selftest OK");
