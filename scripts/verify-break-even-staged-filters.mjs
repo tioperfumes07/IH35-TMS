@@ -13,6 +13,7 @@ import process from "node:process";
 
 const LABEL = "verify-break-even-staged-filters";
 const TARGET = "apps/frontend/src/pages/finance/BreakEvenPage.tsx";
+const WORKBOOK = "apps/frontend/src/pages/finance/BreakEvenWorkbookCreator.tsx";
 
 function analyze(src) {
   const failures = [];
@@ -40,6 +41,14 @@ function analyze(src) {
   return failures;
 }
 
+/** BANK-F91424 leftover refuse — BreakEvenWorkbookCreator page-scoped text token ratchet. */
+export function checkWorkbookLeftovers(src) {
+  const failures = [];
+  if (src.includes("text-[11px]")) failures.push("BreakEvenWorkbookCreator leftover text-[11px] — use text-xs");
+  if (src.includes("#8A92AB")) failures.push("BreakEvenWorkbookCreator leftover #8A92AB — use #4B5563");
+  return failures;
+}
+
 function fail(msg) {
   console.error(`${LABEL} FAIL: ${msg}`);
   process.exit(1);
@@ -63,6 +72,13 @@ function selftest() {
   `;
   if (analyze(good).length) fail(`selftest GOOD: ${analyze(good).join("; ")}`);
   if (!analyze(bad).length) fail("selftest expected BAD to fail");
+  // BANK-F91424 leftover plant — BreakEvenWorkbookCreator page-scoped text token ratchet
+  const live = fs.readFileSync(path.join(process.cwd(), WORKBOOK), "utf8");
+  if (checkWorkbookLeftovers(live).length) fail("live BreakEvenWorkbookCreator already failing leftover refuse");
+  const leftoverPlant = live + '\n<span className="text-[11px] text-[#8A92AB]">plant</span>\n';
+  if (!checkWorkbookLeftovers(leftoverPlant).some((f) => f.includes("leftover"))) {
+    fail("leftover text-[11px]/#8A92AB plant escaped");
+  }
   console.log(`${LABEL} selftest PASS`);
 }
 
@@ -72,6 +88,9 @@ if (process.argv.includes("--selftest")) {
 }
 
 const src = fs.readFileSync(path.join(process.cwd(), TARGET), "utf8");
-const failures = analyze(src);
+const failures = [
+  ...analyze(src),
+  ...checkWorkbookLeftovers(fs.readFileSync(path.join(process.cwd(), WORKBOOK), "utf8")),
+];
 if (failures.length) fail(failures.join("; "));
 console.log(`${LABEL} PASS — break-even staged filters`);
