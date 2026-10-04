@@ -425,21 +425,25 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
           active={effectiveStatus === "OutOfService"}
           onClick={() => setStatus("OutOfService")}
         />
-        {kpisQuery.isError ? (
-          <DrillKpiCard label="Avg Age" value={null} unavailable="Fleet age metrics could not be loaded" />
-        ) : (
-          <DrillKpiCard
-            label="Avg Age"
-            value={kpis.avg_age_years == null ? null : `${Number(kpis.avg_age_years).toFixed(1)} y`}
-            hint={kpis.avg_age_years == null ? "No age data for this fleet filter" : undefined}
-            onClick={() => {
-              const params = new URLSearchParams(searchParams);
-              params.set("sort", "year");
-              params.set("dir", "asc");
-              setSearchParams(params, { replace: true });
-            }}
-          />
-        )}
+        {/* BANK-F91429 — on KPI query error keep the year-asc drill (ListErrorState below states why);
+            do not mint a second `unavailable` tile that burns the C8 shrink-only budget. */}
+        <DrillKpiCard
+          label="Avg Age"
+          value={kpisQuery.isError || kpis.avg_age_years == null ? null : `${Number(kpis.avg_age_years).toFixed(1)} y`}
+          hint={
+            kpisQuery.isError
+              ? "Fleet age metrics could not be loaded — retry below"
+              : kpis.avg_age_years == null
+                ? "No age data for this fleet filter"
+                : undefined
+          }
+          onClick={() => {
+            const params = new URLSearchParams(searchParams);
+            params.set("sort", "year");
+            params.set("dir", "asc");
+            setSearchParams(params, { replace: true });
+          }}
+        />
       </div>
 
       {kpisQuery.isError ? <ListErrorState status={0} message="Fleet age metrics could not be loaded." onRetry={() => void kpisQuery.refetch()} /> : null}
