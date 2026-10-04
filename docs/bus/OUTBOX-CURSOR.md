@@ -1,3 +1,11 @@
+## 2026-10-04T03:10Z · BANK-F91382..F91384 leftover drain MERGED tip `c4f06c268b36`
+
+DONE: SafetyGroupNav · SafetyDashboardFilter · PhotoGallery (F91382–F91384). Prior F91377–81 stamped.
+
+PRs: #25072 · #25073 · #25074 (squash). Guards: refuse + `--selftest` plant each.
+
+NEXT: continue ORDERS leftover drain (page-scoped guards only). Skip BookLoad*/Combobox/EntityPicker/ParityTable/DrillKpiCard/UniversalListToolbar/DateTimePicker/DataTable/ProgramTracker/FinalAdditions/InstallPWA. HH01 no migrations. NavyPageSubNav ambient red. FormField roundtrip ambient red. no-dead-kpi-cards ambient red.
+
 ## 2026-10-04T02:55Z · BANK-F91377..F91381 leftover drain MERGED tip `026a76b89d`
 
 DONE: UploadZone · ArrivingSoonFilterBar · PageHeader · BackArrowHeader · TelematicsSectionTable (F91377–F91381). Prior F91371–76 stamped.
