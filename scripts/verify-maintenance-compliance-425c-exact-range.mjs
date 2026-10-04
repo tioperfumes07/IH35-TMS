@@ -16,6 +16,9 @@ function verify(route, api, page) {
   need(page, /maintenance-compliance-425c-pager[\s\S]*Previous[\s\S]*Next/, "page needs controlled exact pager");
   need(page, /useEffect\(\(\) => setPage\(0\), \[companyId\]\)/, "company transition must reset page");
   need(page, /ListErrorState[\s\S]*onRetry/, "error recovery must stay mounted");
+  // BANK-F91411 leftover refuse — Compliance425CPage page-scoped text token ratchet
+  if (page.includes("text-[11px]")) errors.push("page leftover text-[11px] — use text-xs");
+  if (page.includes("#8A92AB")) errors.push("page leftover #8A92AB — use #4B5563");
   return errors;
 }
 if (process.argv.includes("--selftest")) {
@@ -34,6 +37,10 @@ if (process.argv.includes("--selftest")) {
   ];
   const survived = mutations.map((args, i) => verify(...args).length === 0 ? i + 1 : null).filter(Boolean);
   if (survived.length) { console.error(`selftest FAIL: ${survived.join(",")} survived`); process.exit(1); }
+  // BANK-F91411 leftover plant — Compliance425CPage page-scoped text token ratchet
+  if (verify(sources[0], sources[1], sources[2] + '\n<p className="text-[11px] text-[#8A92AB]">plant</p>\n').length === 0) {
+    console.error("selftest FAIL: leftover plant escaped"); process.exit(1);
+  }
   console.log(`verify-maintenance-compliance-425c-exact-range selftest PASS: ${mutations.length}/${mutations.length} rejected`); process.exit(0);
 }
 const errors = verify(...sources);
