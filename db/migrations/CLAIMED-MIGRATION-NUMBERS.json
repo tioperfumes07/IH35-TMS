@@ -2036,6 +2036,11 @@
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-03",
       "purpose": "363-CC3-A (CC-2 finding POSTING-LOAD-ID-NEVER-BACKFILLED): stamp accounting.journal_entry_postings.load_id on existing USMCA postings where accounting.posting_source_load_id() proves the load (2,198 rows measured; NULL -> value only, never repointed; unprovable rows untouched)"
+    },
+    "202615400930": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-04",
+      "purpose": "PICKUP of Lead branch claude/r391-one-posting-line-writer (ROUND 391.2): reefer diesel gets its own account 5015 Reefer Diesel (Off-Highway) and role reefer_fuel_expense -- authored by the Lead, pushed by CC-3 (Lead worktree cannot push)"
     }
   },
   "202613590001": {
