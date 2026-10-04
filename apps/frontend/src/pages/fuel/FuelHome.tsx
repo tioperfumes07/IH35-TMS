@@ -35,9 +35,9 @@ export function FuelFraudAlertsKpiCard() {
   return (
     <Link
       to="/fuel/fraud-alerts"
-      className={`block rounded-sm border px-3 py-2 text-[11px] transition hover:shadow-xs ${tone}`}
+      className={`block rounded-sm border px-3 py-2 text-xs transition hover:shadow-xs ${tone}`}
     >
-      <div className="flex items-center gap-1.5 text-[11px] uppercase text-gray-500">
+      <div className="flex items-center gap-1.5 text-xs uppercase text-gray-500">
         Open Fraud Alerts
         <FuelFraudBadge hasOpenCritical={openCritical > 0} />
       </div>
@@ -92,10 +92,10 @@ export function FuelCardOverageKpiCard() {
   return (
     <Link
       to="/fuel/card-overage"
-      className={`block rounded-sm border px-3 py-2 text-[11px] transition hover:shadow-xs ${tone}`}
+      className={`block rounded-sm border px-3 py-2 text-xs transition hover:shadow-xs ${tone}`}
       data-testid="fuel-card-overage-kpi"
     >
-      <div className="text-[11px] uppercase text-gray-500">Card overage queue</div>
+      <div className="text-xs uppercase text-gray-500">Card overage queue</div>
       <div className={`text-page-title font-semibold ${pending > 0 ? "text-slate-800" : "text-gray-900"}`}>
         {pendingQuery.isError ? "—" : pendingLoaded ? pending : "…"}
       </div>
