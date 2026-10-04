@@ -58,10 +58,10 @@ export function WeeklyRevenueChart({ operatingCompanyId }: Props) {
       <ResponsiveContainer width="100%" height={240}>
         <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-          <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="#64748b" />
+          <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="#4B5563" />
           <YAxis
             tick={{ fontSize: 11 }}
-            stroke="#64748b"
+            stroke="#4B5563"
             tickFormatter={(v) =>
               new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(Number(v))
             }

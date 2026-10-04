@@ -1,3 +1,9 @@
+## 2026-10-04T12:50Z · BANK-F91505 WeeklyRevenue leftover #64748b stroke WIRED · this PR
+
+DONE: WeeklyRevenueChart axis stroke #64748b → house muted #4B5563; leftover refuse on verify-home-kpi-range-toggle; unused EVEN 4124 --selftest + live.
+
+NEXT: leftover muted #64748b chrome (CatalogQuickCreateDrawer / Settlements DataPanel / RMBuckets) · skip pile parked · HH12 no migrations this tick.
+
 ## 2026-10-04T12:36Z · BANK-F91504 LoadsReport leftover fontSize 11 totals WIRED · this PR
 
 DONE: LoadsReportPage totals label fontSize 11 → text-section-header; leftover refuse on verify-loads-report-surface; unused EVEN 4126 --selftest + live.

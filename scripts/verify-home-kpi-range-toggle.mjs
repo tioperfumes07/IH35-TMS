@@ -121,6 +121,8 @@ export function check({ toggle, ownerHome, defaultHome, qboHome, apiHome, routes
   // BANK-F91427 leftover refuse — WeeklyRevenueChart page-scoped text token ratchet
   if (weeklyChart && weeklyChart.includes("text-[11px]")) f.push(`${WEEKLY_CHART}: leftover text-[11px]`);
   if (weeklyChart && weeklyChart.includes("#8A92AB")) f.push(`${WEEKLY_CHART}: leftover off-scale muted #8A92AB`);
+  // BANK-F91505 leftover refuse — WeeklyRevenueChart axis stroke (Tailwind slate-500, not house muted)
+  if (weeklyChart && weeklyChart.includes("#64748b")) f.push(`${WEEKLY_CHART}: leftover off-scale muted #64748b`);
 
   return f;
 }
@@ -247,6 +249,15 @@ if (process.argv.includes("--selftest")) {
   };
   if (!check(weeklyPlant).some((x) => x.includes("WeeklyRevenueChart") && x.includes("leftover text-[11px]"))) {
     console.error(`${LABEL} --selftest FAIL — WeeklyRevenueChart leftover plant escaped`);
+    process.exit(1);
+  }
+  // BANK-F91505 leftover plant — WeeklyRevenueChart leftover axis stroke
+  const weeklyStrokePlant = {
+    ...good,
+    weeklyChart: (good.weeklyChart || "// clean chart") + '\n<XAxis stroke="#64748b" />\n',
+  };
+  if (!check(weeklyStrokePlant).some((x) => x.includes("WeeklyRevenueChart") && x.includes("leftover off-scale muted #64748b"))) {
+    console.error(`${LABEL} --selftest FAIL — WeeklyRevenueChart leftover #64748b plant escaped`);
     process.exit(1);
   }
 
