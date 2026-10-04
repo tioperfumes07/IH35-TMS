@@ -7,6 +7,16 @@ import { Modal } from "../Modal";
 import { EntityLink, type EntityKind } from "./EntityLink";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents, QBO_MONEY_CELL_CLASS } from "../../lib/money";
+import { colors } from "../../design/tokens";
+
+// KPI-TILE-COLOR LAW (owner ruling 2026-09-04, verbatim: "for all kpis i want different color not
+// just white background a light color to distinguish and darker border").
+// These tiles were `bg-white border-slate-200` — a white tile on a white page, which is the owner's
+// standing complaint and a violation of his own month-old ruling. design/tokens.ts has carried
+// kpiTileBg / kpiTileBorder since that ruling and components/layout/DrillKpiCard.tsx already paints
+// from them; this panel never did. Same pattern, same tokens, so Banking and Factoring KPIs finally
+// match the rest of the system instead of disappearing into the page.
+const KPI_TILE_STYLE = { backgroundColor: colors.kpiTileBg, borderColor: colors.kpiTileBorder };
 
 const LINK_COLUMNS: Record<string, { kind: EntityKind; labelFrom?: string }> = {
   purchase_id: { kind: "factoring_purchase", labelFrom: "display_id" },
@@ -116,7 +126,8 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
             key={k.key}
             type="button"
             onClick={() => setDrillKey(k.key)}
-            className="rounded-sm border border-slate-200 bg-white p-2 text-left hover:border-slate-400"
+            className="rounded-sm border p-2 text-left transition hover:brightness-95"
+            style={KPI_TILE_STYLE}
             data-testid={`${domain}-kpi-${k.key}`}
             title={`${k.source}${k.gl_account ? ` · GL ${k.gl_account}` : ""}`}
           >
