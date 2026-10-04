@@ -75,6 +75,9 @@ export function assertEquipmentTypesPerEntity(sources) {
   }
   if (!/aria-label=\{`Edit \$\{item\.name\}`\}/.test(page)) errs.push("EquipmentTypesPage line-item edit button needs an accessible name");
   if ((page.match(/<Modal variant="drawer"/g) ?? []).length < 4) errs.push("EquipmentTypesPage create/edit surfaces must all use drawer chrome");
+  // BANK-F91326 leftover refuse — EquipmentTypesPage.tsx page-scoped text token ratchet
+  if (page.includes("text-[11px]")) errs.push("EquipmentTypesPage.tsx: leftover text-[11px]");
+  if (page.includes("#8A92AB")) errs.push("EquipmentTypesPage.tsx: leftover off-scale muted #8A92AB");
 
   return errs;
 }
@@ -101,12 +104,19 @@ if (SELFTEST) {
   const liveProblems = assertEquipmentTypesPerEntity(live);
   if (liveProblems.length) failures.push(`live FAIL: ${liveProblems.join(" | ")}`);
 
+  // BANK-F91326 leftover plant — EquipmentTypesPage page-scoped text token ratchet
+  expectCaught(
+    "leftover-text-11px",
+    { ...live, [PAGE]: live[PAGE] + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n' },
+    "leftover text-[11px]",
+  );
+
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:`);
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 6 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 7 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
