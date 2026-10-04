@@ -616,6 +616,9 @@ async function feedOne(
   for (const f of fuelLines) {
     fi += 1;
     const parsed = parseFuelDesc(f.description || f.item_name || `FUEL-${fi}`);
+    // 2026-10-04: the feed input now carries the receipt the document printed (build_feed_input.py, line.invoice).
+    // It wins over anything read from the description; with neither, the reference stays NULL.
+    const receipt = (typeof (f as { invoice?: unknown }).invoice === "string" && (f as { invoice: string }).invoice.trim()) || parsed.invoice;
     const fuelDate = documentLineDate(f, rec); // R-177: the document's purchase date, never delivery
     const fuelId = await withCurrentUser(OWNER, async (c) => {
       await setScopedCompanyContext(c, OWNER, USMCA);
@@ -638,7 +641,7 @@ async function feedOne(
           Number(f.quantity || 0),
           Number(f.amount),
           parsed.location,
-          parsed.invoice,
+          receipt,
           rowHash,
           OWNER,
           driver_id,
@@ -665,7 +668,7 @@ async function feedOne(
       amount_cents: cents(f.amount),
       posting_path: "company_direct",
     }).catch((e) => report.push(`WARN fuel GL: ${(e as Error).message}`));
-    report.push(`FUEL ${f.fuel_type} ${parsed.invoice ?? "no receipt number"} $${f.amount}`);
+    report.push(`FUEL ${f.fuel_type} ${receipt ?? "no receipt number"} $${f.amount}`);
   }
 
   let ei = 0;
