@@ -12,3 +12,5 @@
 
 ## COORD
 Cursor re-pushing R-186 Settlement Creator. USMCA only. No Book Load.
+
+<!-- Cursor lead heartbeat 2026-10-04T04:00Z — ROUND 389.2 wiring in flight; Devin seats idle/frozen under USMCA-only -->

@@ -1,3 +1,7 @@
+// C6-MONEY-JE-EXEMPT: ROUND 389.4 RULING 1 (Lead) — the recurring worker CREATES documents (draft invoice, unposted bill,
+// draft expense) and never books them: posting happens only through each document's own post path (void + reversal
+// behind it). A balanced-JE poster here would be the timer-posts-money defect the ruling removed;
+// verify-recurring-worker-never-posts holds that line.
 import type { PoolClient } from "pg";
 import { CronExpressionParser } from "cron-parser";
 import { DateTime } from "luxon";

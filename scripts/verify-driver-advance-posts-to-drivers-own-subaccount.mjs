@@ -14,7 +14,8 @@
  *            resolveDriverAdvanceDebitAccount; no resolveAccountForCategory(…"cash_advance"…) remains.
  *   RULE 3 — pay-run close: the advance credit resolves the driver's own sub-account in BOTH paths (legacy legs
  *            and the A/P chain); no resolvePayRunRoleAccount(…, "advance_recovery") credit remains.
- *   RULE 4 — advance creation refuses an unbound driver before any row is written.
+ *   RULE 4 — advance creation provisions the driver's own sub-account when missing (ROUND 389.3), else refuses
+ *            before any row is written.
  *   RULE 6 — (step 2a) migration 202615380400 defines driver_finance.v_driver_advance_balances over the driver's
  *            own sub-account pinned to the advance_recovery role parent, and repoints recompute_driver_debt,
  *            views.banking_account_tiles and views.cash_advances_with_context to it.
@@ -84,7 +85,8 @@ export function staticProblems(read) {
   if (/resolvePayRunRoleAccount\([^)]*"advance_recovery"\)/.test(p)) out.push("RULE 3 pay-run close still credits the shared advance_recovery account");
   if ((p.match(/resolveDriverAdvanceSubAccountOptional\(/g) ?? []).length < 2) out.push("RULE 3 pay-run close does not resolve the driver's own sub-account in both the legs and A/P-chain paths");
   const c = read(FILES.create);
-  if (!/await resolveDriverAdvanceSubAccount\(/.test(c)) out.push("RULE 4 advance creation does not refuse an unbound driver");
+  // ROUND 389.3 ruling 2: creation provisions the driver's own 1245-00-nnn account when missing, else refuses.
+  if (!/await (resolveDriverAdvanceSubAccount|ensureDriverAdvanceSubAccount)\(/.test(c) || !/DriverAdvanceAccountError/.test(c)) out.push("RULE 4 advance creation neither provisions nor refuses a driver with no own sub-account");
   const m = read(VIEW_MIG);
   if (!m) out.push(`RULE 6 ${VIEW_MIG} is missing`);
   else {
@@ -117,7 +119,7 @@ if (isMain) {
       [FILES.resolver]: 'resolveRoleAccountOptional(client, opco, "advance_recovery"); FROM driver_finance.driver_advance_accounts daa JOIN catalogs.accounts a WHERE a.parent_account_id = $3::uuid',
       [FILES.engine]: "async function buildCashAdvanceLines() { await resolveDriverAdvanceDebitAccount(client); }\nasync function buildDriverAdvanceLines() { await resolveDriverAdvanceDebitAccount(client); }\nasync function other() {}",
       [FILES.payrun]: "resolveDriverAdvanceSubAccountOptional(client, opco, d); resolveDriverAdvanceSubAccountOptional(client, opco, d);",
-      [FILES.create]: "await resolveDriverAdvanceSubAccount(client, companyId, driverId);",
+      [FILES.create]: "await ensureDriverAdvanceSubAccount(client, { driverId }); catch (err) { if (err instanceof DriverAdvanceAccountError) }",
       [VIEW_MIG]: "CREATE OR REPLACE VIEW driver_finance.v_driver_advance_balances AS SELECT 1 WHERE r.role = 'advance_recovery';\nCREATE OR REPLACE FUNCTION driver_finance.recompute_driver_debt() x driver_finance.v_driver_advance_balances;\nCREATE OR REPLACE VIEW views.banking_account_tiles AS x driver_finance.v_driver_advance_balances;\nCREATE OR REPLACE VIEW views.cash_advances_with_context AS x driver_finance.v_driver_advance_balances;",
     };
     for (const f of VIEW_READERS) if (!(f in good)) good[f] = "FROM driver_finance.v_driver_advance_balances vb";

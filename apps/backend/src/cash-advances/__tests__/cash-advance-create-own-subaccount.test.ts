@@ -13,7 +13,7 @@ vi.mock("../../driver-finance/driver-advance-account-resolver.js", () => {
       super(message);
     }
   }
-  return { resolveDriverAdvanceSubAccount: mockResolve, DriverAdvanceAccountError };
+  return { ensureDriverAdvanceSubAccount: mockResolve, DriverAdvanceAccountError };
 });
 
 const { createDriverCashAdvanceCore } = await import("../cash-advance-create.js");
@@ -59,7 +59,7 @@ const baseBody = {
 };
 
 describe("createDriverCashAdvanceCore — the driver's own Cash-Advance sub-account (ROUND 394)", () => {
-  it("refuses an unbound driver with a named 409 and writes nothing", async () => {
+  it("refuses a driver whose own sub-account cannot be provisioned with a named 409 and writes nothing", async () => {
     mockResolve.mockReset();
     mockResolve.mockRejectedValue(new DriverAdvanceAccountError("DRIVER_ADVANCE_ACCOUNT_MISSING", "no own sub-account"));
     const { client } = makeClient();
@@ -69,13 +69,13 @@ describe("createDriverCashAdvanceCore — the driver's own Cash-Advance sub-acco
     expect(writes).toHaveLength(0);
   });
 
-  it("resolves the advance driver's own sub-account for this company, then books the advance", async () => {
+  it("provisions/resolves the advance driver's own sub-account for this company, then books the advance", async () => {
     mockResolve.mockReset();
     mockResolve.mockResolvedValue("driver-own-advance-sub");
     const { client, captured } = makeClient();
     const res = await createDriverCashAdvanceCore(client, ACTOR, OPCO, baseBody);
     expect(res.ok).toBe(true);
-    expect(mockResolve).toHaveBeenCalledWith(client, OPCO, "d1");
+    expect(mockResolve).toHaveBeenCalledWith(client, { operatingCompanyId: OPCO, driverId: "d1", actorUserId: ACTOR });
     expect(captured.liabilityType).toBe("advance");
   });
 });

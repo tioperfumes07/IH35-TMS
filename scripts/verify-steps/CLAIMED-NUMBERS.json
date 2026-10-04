@@ -7991,100 +7991,295 @@
     "claimed_at": "2026-10-03",
     "purpose": "Lead ROUND 342 phase 5 — one entity column: no tenant_id column, no policy reading one, no CHECK equating two company columns (CC-1)."
   },
+  "12330": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-accounting-hub-honest-labels"
+  },
+  "12332": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-accounting-subnav-grouped"
+  },
   "12333": {
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-03",
     "purpose": "Lead ROUND 355 R-1 — verify-driver-damage-loss-chain: escrow first, never below zero, then pay, then Driver Damage Loss (CC-1)."
+  },
+  "12334": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-accounting-subpages-have-subnav"
+  },
+  "12336": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-audit-fix-12-bills-has-subnav-and-create"
   },
   "12337": {
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-03",
     "purpose": "Lead ROUND 355 R-3 — verify-factoring-fees-are-financing-costs (CC-1)."
   },
+  "12338": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-audit-fix-3-list-view-toggle-renders"
+  },
+  "12340": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-audit-reports-subnav-present"
+  },
   "12341": {
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-03",
     "purpose": "verify-no-row-escapes-its-company — zero NULL operating_company_id, run unscoped (CC-1)."
+  },
+  "12342": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-banking-designview-qbo-parity"
+  },
+  "12344": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-banking-qbo-parity-chrome"
   },
   "12345": {
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-03",
     "purpose": "verify-bills-carry-their-unit — bills with a load carry its unit/trailer; repair bills carry a work order (CC-1)."
   },
+  "12346": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-customers-vendors-have-list-view"
+  },
+  "12348": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-design-parity"
+  },
   "12349": {
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-03",
     "purpose": "verify-escrow-equals-its-gl — every driver escrow number on a screen/API equals the 2100-00-nnn GL balance; no reader of a stored escrow balance (CC-1)."
+  },
+  "12350": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-list-defaults-active-only"
+  },
+  "12352": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-factoring-outstanding-liability-honest-label"
   },
   "12353": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-03",
     "purpose": "verify-every-load-born-posting-carries-its-load"
   },
+  "12354": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-finance-hub-off-honest-state"
+  },
+  "12356": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-form-425c-static-gets-before-id"
+  },
   "12357": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-03",
     "purpose": "verify-no-bill-payment-without-postings"
+  },
+  "12358": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-form425c-attachments-upload-wired"
+  },
+  "12360": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-form425c-econ-link-pack"
   },
   "12361": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-03",
     "purpose": "verify-bank-match-creates-no-postings"
   },
+  "12362": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-form425c-exhibit-c-unverified-opening"
+  },
+  "12364": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-form425c-exhibit-d-real-quarter"
+  },
   "12365": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-03",
     "purpose": "verify-no-posting-update-outside-document-edit"
+  },
+  "12366": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-form425c-exhibit-f-invoice-null-label"
+  },
+  "12368": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-form425c-profiles-bank-accounts-remove"
   },
   "12369": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-03",
     "purpose": "verify-driver-escrow-gl-never-negative"
   },
+  "12370": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-form425c-qbimport-paren-negative"
+  },
+  "12372": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-legal-breadcrumb-tail-4"
+  },
   "12373": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-03",
     "purpose": "verify-no-usmca-record-points-at-a-frozen-company"
+  },
+  "12374": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-list-defaults-and-kpi-shape"
+  },
+  "12376": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-lists-dispatch-subnav-complete"
   },
   "12377": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-03",
     "purpose": "verify-settlement-driver-pay-splits-per-load"
   },
+  "12378": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-lists-fleet-subnav-complete"
+  },
+  "12380": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-lists-safety-subnav-complete"
+  },
   "12381": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-03",
     "purpose": "verify-every-document-type-posts-its-declared-pair"
+  },
+  "12382": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-master-detail-selected-row-url-addressable"
+  },
+  "12384": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-money-list-toolbar-one-and-multiselect"
   },
   "12385": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-03",
     "purpose": "verify-every-poster-resolves-by-role-not-by-name-or-number"
   },
+  "12386": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-navy-subnav-x-of-178"
+  },
+  "12388": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-no-sidebar-flyout"
+  },
   "12389": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-03",
     "purpose": "verify-every-credit-document-posts"
+  },
+  "12390": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-parity-table-resize-sort-contract"
+  },
+  "12392": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-parity-banking-home"
   },
   "12393": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-03",
     "purpose": "verify-no-posting-update-outside-document-edit"
   },
+  "12394": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-parity-bills-invoices-lists"
+  },
+  "12396": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-parity-customers"
+  },
   "12397": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-03",
     "purpose": "verify-no-migration-is-neither-applied-nor-held"
+  },
+  "12398": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-parity-name-plus-type-option-labels"
+  },
+  "12400": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-parity-vendors"
   },
   "12401": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-03",
     "purpose": "verify-samsara-history-is-never-an-operational-path-into-a-frozen-company"
   },
+  "12402": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-responsive-layout"
+  },
+  "12404": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-section7-palette-nonfinancial"
+  },
   "12405": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-03",
     "purpose": "verify-escrow-balances-equals-its-gl"
+  },
+  "12406": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-subnav-manifest"
   },
   "12409": {
     "claimed_by": "claude",
@@ -8094,12 +8289,12 @@
   "12413": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-03",
-    "purpose": "verify-usmca-clean-no-voids-no-fixtures (RESERVED, step not authored: the guard FAILS on 4 E2E fixtures living in production USMCA and is exempt until those rows are gone and the writer is found — see docs/bus/10-03-2026-LEAD-RULING-WIRE-THE-ORPHAN-GUARDS.md)"
+    "purpose": "verify-usmca-clean-no-voids-no-fixtures"
   },
   "12417": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-03",
-    "purpose": "verify-ap-control-ties-subledger"
+    "purpose": "verify-arriving-soon-serves-pm-and-wo-due"
   },
   "12421": {
     "claimed_by": "claude",
@@ -8113,8 +8308,8 @@
   },
   "12429": {
     "claimed_by": "claude",
-    "claimed_at": "2026-10-03",
-    "purpose": "verify-arrival-detection-wired-on-poll-path"
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-advance-posts-to-drivers-own-subaccount"
   },
   "12433": {
     "claimed_by": "claude",
@@ -8945,6 +9140,11 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-arrival-detection-wired-on-poll-path"
+  },
+  "14409": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bill-status-filter-uses-shared-vocabulary"
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -10947,10 +11147,5 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
-  },
-  "14409": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-04",
-    "purpose": "verify-bill-status-filter-uses-shared-vocabulary"
   }
 }
