@@ -1,3 +1,9 @@
+## 2026-10-04T07:05Z · BANK-F91437 C-53 recon shell restored + WIRED CI · tip `7523d47352`
+
+DONE: #25178 — ReconciliationTabContent A-27 pending + must reach $0.00; step 1356 runs ops/verify-c53-recon-screen-shell.
+
+NEXT: BANK-F91438 wire C-50 active-company bound pin into 118 · C-52 toast dock is triage (top-14 vs bottom-3 vs C-65) · skip pile parked · HH06 no migrations.
+
 ## 2026-10-04T07:00Z · BANK-F91436 C-51 Home+Escrow ops WIRED CI · tip `4c70a5cab4`
 
 DONE: #25177 — verify-steps/12392 now runs ops/verify-c51-banking-home-escrow --selftest.
