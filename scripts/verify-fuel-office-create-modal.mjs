@@ -59,6 +59,13 @@ export function collectProblems(sources) {
   if (!/<ListErrorState[\s\S]{0,200}onRetry=\{\(\) => void suggestionQuery\.refetch\(\)\}/.test(modal)) {
     problems.push(`${FILES.modal}: must render ListErrorState wired to suggestionQuery.refetch() on error`);
   }
+  // BANK-F91317 leftover refuse — CreateFuelTransactionModal.tsx page-scoped text token ratchet
+  if (sources.modal.includes("text-[11px]")) {
+    problems.push(`${FILES.modal}: leftover text-[11px]`);
+  }
+  if (sources.modal.includes("#8A92AB")) {
+    problems.push(`${FILES.modal}: leftover off-scale muted #8A92AB`);
+  }
   return problems;
 }
 
@@ -117,7 +124,17 @@ if (SELFTEST) {
   }
   if (!allCaught) process.exit(1);
 
-  console.log(`${LABEL} SELFTEST OK (${mutations.length} FUEL-MONEY-F7418 regressions caught)`);
+  // BANK-F91317 leftover plant — CreateFuelTransactionModal page-scoped text token ratchet
+  const leftoverPlant = {
+    ...good,
+    modal: good.modal + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n',
+  };
+  if (!collectProblems(leftoverPlant).some((p) => p.includes("leftover text-[11px]"))) {
+    console.error(`${LABEL} SELFTEST FAIL — leftover plant escaped`);
+    process.exit(1);
+  }
+
+  console.log(`${LABEL} SELFTEST OK (${mutations.length} FUEL-MONEY-F7418 regressions caught + leftover plant)`);
   process.exit(0);
 }
 
