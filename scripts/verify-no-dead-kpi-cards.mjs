@@ -625,9 +625,10 @@ export function contractErrors(src, options = {}) {
     );
   }
   const fleetTable = src.files[`${SRC}/pages/maintenance/FleetTablePage.tsx`];
+  // BANK-F91428 — C8 migrated KpiCard → DrillKpiCard; assert either tag still carries year-asc drill.
   if (
     fleetTable &&
-    (!/<KpiCard[\s\S]*?label="Avg Age"[\s\S]*?onClick=\{\(\) =>[\s\S]*?params\.set\("sort", "year"\)[\s\S]*?params\.set\("dir", "asc"\)/.test(fleetTable) ||
+    (!/<(?:KpiCard|DrillKpiCard)[\s\S]*?label="Avg Age"[\s\S]*?onClick=\{\(\) =>[\s\S]*?params\.set\("sort", "year"\)[\s\S]*?params\.set\("dir", "asc"\)/.test(fleetTable) ||
       /label="Avg Age"[\s\S]{0,240}\bdisabled\b/.test(fleetTable))
   ) {
     errors.push(
