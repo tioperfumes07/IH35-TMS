@@ -51,11 +51,11 @@ export function DtcAutoWorkOrdersCard({ operatingCompanyId, compact = false, onO
     return (
       <section className="overflow-hidden rounded-sm border border-gray-200 bg-white">
         <div className="flex items-center justify-between bg-gray-50 px-2 py-1">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">DTC Auto Work Orders</span>
+          <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">DTC Auto Work Orders</span>
           <span className="rounded-sm bg-white px-1.5 text-xs font-bold text-gray-600">{totalCount}</span>
         </div>
         {rows.length === 0 ? (
-          <div className="px-2 py-1.5 text-[11px] text-gray-400">No auto-created DTC work orders</div>
+          <div className="px-2 py-1.5 text-xs text-gray-400">No auto-created DTC work orders</div>
         ) : (
           <div>
           <ul className="flex flex-col">
