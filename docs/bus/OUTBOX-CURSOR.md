@@ -1,3 +1,9 @@
+## 2026-10-04T06:45Z · BANK-F91434 B-3 feed/match ops WIRED CI · tip `6cd4690e3b`
+
+DONE: #25174 — verify-steps/1222 now runs ops/verify-b3-bank-feed-match --selftest.
+
+NEXT: BANK-F91435 wire B-4 check-creator ops into 3832 · skip pile parked · HH06 no migrations.
+
 ## 2026-10-04T06:31Z · BANK-F91433 B-2 recon ops WIRED CI · tip `cd6393e80f`
 
 DONE: #25173 — verify-steps/1436 now runs ops/verify-b2-reconcile-shell + je-line-reconcilable.
