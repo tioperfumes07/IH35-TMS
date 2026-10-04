@@ -1,3 +1,15 @@
+## 2026-10-04T13:32Z · BANK-F91509 CreateWO leftover muted WIRED · this PR
+
+DONE: CreateWorkOrderModal leftover #94a3b8/#475569 → house muted #4B5563; leftover refuse on verify-wo-create-part-task-required; EVEN 2090 --selftest + live.
+
+NEXT: leftover muted chrome (LocationMap SVG labels / WO pie status colors stay) · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T13:28Z · BANK-F91508 Factoring KPI leftover WIRED CI · tip `05f09a4629`
+
+DONE: #25250 — DefaultHome + OwnerHome Factoring Balance accent #4B5563; verify-steps/3886+3888 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (CreateWO empty / LocationMap / WO pie status colors stay) · skip pile parked · HH12 no migrations this tick.
+
 ## 2026-10-04T13:22Z · BANK-F91508 Factoring KPI leftover #475569 accent WIRED · this PR
 
 DONE: DefaultHome + OwnerHome Factoring Balance HomeKpiCard accent #475569 → house muted #4B5563; leftover refuse on verify-home-quickjump-counts; EVEN 3886/3888 --selftest + live.
