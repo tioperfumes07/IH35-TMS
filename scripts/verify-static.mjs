@@ -56,7 +56,30 @@ export const STATIC_RESULT_CATEGORIES = Object.freeze({
   SKIP_SCOPE: "SKIP-scope",
   FAIL_TEST: "FAIL-test",
   EXCLUDED_LIVE_DB: "EXCLUDED-live-db",
+  // ROUND 389.4 follow-up (Lead ruling to CC-2, "OPTION 3", 2026-10-04): a guard whose ONLY failure is the canonical
+  // "DATABASE_URL not set" refusal is NOT VERIFIABLE HERE in a no-DB local sweep. Opt-in only (the local pre-push
+  // fallback sets IH35_STATIC_UNVERIFIABLE_HERE=1); CI and block-ready never do, so there it is still a FAIL.
+  // NEVER a pass: printed loudly by name, and CI must still execute each one against a real database.
+  UNVERIFIABLE_HERE: "UNVERIFIABLE-here",
 });
+
+/** The one failure shape that may become UNVERIFIABLE-here: the canonical no-database refusal and nothing else. */
+/** OPTION 3: the UNVERIFIABLE-here relaxation is never honoured in CI (any CI marker present). */
+export function unverifiableHereRefusedHere(env) {
+  return Boolean(env.CI || env.GITHUB_ACTIONS || env.RENDER);
+}
+
+/** The repo's no-credential refusal phrasings (measured 2026-10-04: "not set" ×~170, "is unset" ×16, "required" ×2). */
+export const NO_DB_REFUSAL_RE = /DATABASE_URL (?:is )?(?:not set|unset|required)\b/;
+
+export function isDbUnavailableOnly(out) {
+  const text = String(out || "");
+  if (!NO_DB_REFUSAL_RE.test(text)) return false;
+  // Any other failure marker means the guard found something besides the missing database — a real FAIL. Stricter
+  // than ✗ alone: a static half that printed "FAIL — …" / "✘" / an Error before the live half refused stays a FAIL.
+  const otherMarks = text.split("\n").filter((l) => /✗|✘|\bFAIL\b|\bError\b/.test(l) && !NO_DB_REFUSAL_RE.test(l));
+  return otherMarks.length === 0;
+}
 
 /**
  * GATE-LIVELOCK-01 — decide whether a guard runs given the current push's changed-file set.
@@ -166,10 +189,24 @@ export function capabilityPreflight(
  * keys were merely absent — so we also pin DOTENV_CONFIG_PATH at /dev/null. libpq/node-pg
  * fallbacks still point at a dead local port so a bare `new Pool()` cannot reach prod.
  */
+export const NO_DB_CREDENTIAL_VARS = [
+  "DATABASE_URL",
+  "DATABASE_DIRECT_URL",
+  "DATABASE_URL_READONLY",
+  "READONLY_DATABASE_URL",
+  "WORKFLOW_RLS_TEST_DATABASE_URL",
+  "RESTORED_DATABASE_URL",
+  "NEON_API_KEY",
+];
+
 export function noDbEnv() {
   const env = { ...process.env };
-  delete env.DATABASE_URL;
-  delete env.DATABASE_DIRECT_URL;
+  for (const k of NO_DB_CREDENTIAL_VARS) delete env[k];
+  // ROUND 370 taught lib/require-live-db.mjs to fall back to the gate's read-only credential (read from the owner's
+  // key file) when no URL is set. Without this switch every "no-DB" static guard quietly found that credential and
+  // queried PRODUCTION — measured 2026-10-04: a 5,739-guard sweep ran hundreds of live reads in parallel, timed out
+  // (ETIMEDOUT), and reported live findings as static "new rot". The static sweep never touches a database.
+  env.IH35_NO_GATE_CREDENTIAL_FALLBACK = "1";
   env.DOTENV_CONFIG_PATH = "/dev/null";
   env.PGHOST = "127.0.0.1";
   env.PGPORT = "59999";
@@ -261,6 +298,8 @@ export function classify(file, options = {}) {
     kind = STATIC_RESULT_CATEGORIES.PASS; detail = "";
   } else if (main.spawnError && main.status == null) {
     kind = STATIC_RESULT_CATEGORIES.FAIL_TEST; detail = `spawn: ${main.spawnError.message}`;
+  } else if (options.unverifiableHereOk === true && isDbUnavailableOnly(main.out)) {
+    kind = STATIC_RESULT_CATEGORIES.UNVERIFIABLE_HERE; detail = firstSignalLine(main.out);
   } else {
     kind = STATIC_RESULT_CATEGORIES.FAIL_TEST; detail = firstSignalLine(main.out);
   }
@@ -397,6 +436,7 @@ function printSummary(results) {
   const skipped = by(STATIC_RESULT_CATEGORIES.SKIP_CAPABILITY);
   const skippedScope = by(STATIC_RESULT_CATEGORIES.SKIP_SCOPE);
   const excludedLiveDb = by(STATIC_RESULT_CATEGORIES.EXCLUDED_LIVE_DB);
+  const unverifiableHere = by(STATIC_RESULT_CATEGORIES.UNVERIFIABLE_HERE);
   const gatedFail = results.filter((r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST && r.gated);
   const unwiredFail = results.filter((r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST && !r.gated);
   console.log(`\n=== ${LABEL} summary ===`);
@@ -404,8 +444,19 @@ function printSummary(results) {
     `total ${results.length}  |  PASS ${pass.length}  ` +
     `FAIL-test(gated) ${gatedFail.length}  FAIL-test(unwired) ${unwiredFail.length}  ` +
     `SKIP-capability ${skipped.length}  SKIP-scope ${skippedScope.length}  ` +
-    `EXCLUDED-live-db ${excludedLiveDb.length}`,
+    `EXCLUDED-live-db ${excludedLiveDb.length}  UNVERIFIABLE-here ${unverifiableHere.length}`,
   );
+  if (unverifiableHere.length) {
+    // STDERR on purpose: the push fallback (static-sweep-proof.mjs) pipes stdout and keeps only its last 500 chars,
+    // and only on failure. stderr is inherited, so this list reaches the person pushing, every time, by name.
+    console.error(
+      `\n!!! UNVERIFIABLE-here (${unverifiableHere.length}) — NOT A PASS. Each failed ONLY because this local sweep has no ` +
+      `DATABASE_URL (verify-static strips it by design). CI MUST still execute every one of these against a real database. ` +
+      `WARNING: a guard that becomes unverifiable just by unsetting an env var is exactly how a dead guard hides — ` +
+      `this list is printed by name so none can:`
+    );
+    for (const r of unverifiableHere) console.error(`  ?? ${r.name} — ${r.detail}`);
+  }
   if (excludedLiveDb.length) {
     console.log(
       `\nEXCLUDED-live-db (${excludedLiveDb.length}) — declares REQUIRES_LIVE_DB, out of context for a ` +
@@ -440,6 +491,9 @@ function selftest() {
     fs.writeFileSync(path.join(tmp, "verify-pass-fixture.mjs"), `console.log("fixture OK"); process.exit(0);\n`);
     fs.writeFileSync(path.join(tmp, "verify-fail-fixture.mjs"), `console.error("  ✗ deliberate stale-anchor assertion"); process.exit(1);\n`);
     fs.writeFileSync(path.join(tmp, "verify-db-fixture.mjs"), `console.error("connect ECONNREFUSED 127.0.0.1:59999"); process.exit(1);\n`);
+    // OPTION 3 fixtures: the canonical no-DB refusal alone, and the same refusal beside a real finding.
+    fs.writeFileSync(path.join(tmp, "verify-nodb-refusal-fixture.mjs"), `console.error("x: FAIL — DATABASE_URL not set and this guard does not declare ALLOW_OFFLINE_SKIP."); process.exit(1);\n`);
+    fs.writeFileSync(path.join(tmp, "verify-nodb-plus-finding-fixture.mjs"), `console.error("  ✗ 3 orphan rows"); console.error("x: FAIL — DATABASE_URL not set"); process.exit(1);\n`);
     fs.writeFileSync(path.join(tmp, "verify-local-ci.mjs"), `console.error("orchestrator must not run in static sweep"); process.exit(1);\n`);
     // a guard whose live run passes but whose --selftest is broken → must classify FAIL
     fs.writeFileSync(
@@ -475,21 +529,56 @@ function selftest() {
       ciSet,
       classifyOptions: { preflight: { ok: true, missing: [], ciEquivalents: [] } },
     });
+    const optedIn = runStatic({
+      dir: tmp,
+      self: SELF_NAME,
+      ciSet: new Set(["verify-fail-fixture.mjs", "verify-nodb-refusal-fixture.mjs"]),
+      classifyOptions: { preflight: { ok: true, missing: [], ciEquivalents: [] }, unverifiableHereOk: true },
+    });
     const get = (n) => results.find((r) => r.name === n);
     const kindOf = (n) => get(n)?.kind;
     const isolated = noDbEnv();
     const checks = [
       ["noDbEnv unsets DATABASE_URL (SKIP path for live-prod audits)", !isolated.DATABASE_URL],
       ["noDbEnv unsets DATABASE_DIRECT_URL", !isolated.DATABASE_DIRECT_URL],
+      ["noDbEnv strips every credential variable a guard reads", NO_DB_CREDENTIAL_VARS.every((k) => isolated[k] === undefined)],
+      ["noDbEnv disables the gate read-only credential fallback (ROUND 370)", isolated.IH35_NO_GATE_CREDENTIAL_FALLBACK === "1"],
+      ["a guard under noDbEnv cannot resolve the gate credential", spawnSync(process.execPath, ["--input-type=module", "-e", `import { resolveGateReadonlyDbUrl } from ${JSON.stringify(new URL("./lib/gate-db-credential.mjs", import.meta.url).href)}; process.stdout.write(String(resolveGateReadonlyDbUrl() === undefined));`], { env: { ...isolated, DATABASE_URL_READONLY: undefined }, encoding: "utf8" }).stdout === "true"],
       ["noDbEnv never sets a truthy dead-port DATABASE_URL", !/59999/.test(String(isolated.DATABASE_URL || ""))],
       ["pass fixture → PASS", kindOf("verify-pass-fixture.mjs") === STATIC_RESULT_CATEGORIES.PASS],
       ["fail fixture → FAIL-test", kindOf("verify-fail-fixture.mjs") === STATIC_RESULT_CATEGORIES.FAIL_TEST],
       ["DATABASE_URL text fixture → FAIL-test", kindOf("verify-db-fixture.mjs") === STATIC_RESULT_CATEGORIES.FAIL_TEST],
+      // OPTION 3 (UNVERIFIABLE-here): only the canonical no-DB refusal, only when opted in, never with another ✗.
+      ["matcher: canonical no-DB refusal alone is the unavailable shape", isDbUnavailableOnly("x: FAIL — DATABASE_URL not set and this guard does not declare ALLOW_OFFLINE_SKIP.") === true],
+      ["no-DB refusal fixture is FAIL-test when NOT opted in (CI / block-ready shape)", kindOf("verify-nodb-refusal-fixture.mjs") === STATIC_RESULT_CATEGORIES.FAIL_TEST],
+      ["no-DB refusal fixture is UNVERIFIABLE-here ONLY when opted in", classify(path.join(tmp, "verify-nodb-refusal-fixture.mjs"), { preflight: { ok: true, missing: [], ciEquivalents: [] }, unverifiableHereOk: true }).kind === STATIC_RESULT_CATEGORIES.UNVERIFIABLE_HERE],
+      ["a real finding beside the no-DB refusal stays FAIL-test even when opted in", classify(path.join(tmp, "verify-nodb-plus-finding-fixture.mjs"), { preflight: { ok: true, missing: [], ciEquivalents: [] }, unverifiableHereOk: true }).kind === STATIC_RESULT_CATEGORIES.FAIL_TEST],
+      ["CI refuses the relaxation (CI=true)", unverifiableHereRefusedHere({ CI: "true" }) === true],
+      ["CI refuses the relaxation (GITHUB_ACTIONS)", unverifiableHereRefusedHere({ GITHUB_ACTIONS: "true" }) === true],
+      ["a local shell may opt in", unverifiableHereRefusedHere({}) === false],
+      ["UNVERIFIABLE-here is never PASS", STATIC_RESULT_CATEGORIES.UNVERIFIABLE_HERE !== STATIC_RESULT_CATEGORIES.PASS],
+      ["a ✗ finding beside the no-DB line stays a real FAIL", isDbUnavailableOnly("  ✗ found 3 orphan rows\nx: FAIL — DATABASE_URL not set") === false],
+      ["matcher: 'DATABASE_URL required' thrown Error is the unavailable shape", isDbUnavailableOnly("file:///x.mjs:9\n  throw new Error(`x: DATABASE_URL required; --selftest is not live proof`);\n  ^\nError: x: DATABASE_URL required; --selftest is not live proof\n    at file:///x.mjs:9:9\nNode.js v22") === true],
+      ["matcher: 'DATABASE_URL is unset' is the unavailable shape", isDbUnavailableOnly("x: FAIL — DATABASE_URL is unset") === true],
+      ["a static FAIL line beside the refusal stays a real FAIL", isDbUnavailableOnly("x: FAIL — static: 2 SUMs unfiltered\nx: FAIL — DATABASE_URL not set") === false],
+      ["a ✘ line beside the refusal stays a real FAIL", isDbUnavailableOnly("✘ phantom relation\nDATABASE_URL not set") === false],
+      ["no refusal phrase at all is never the unavailable shape", isDbUnavailableOnly("x: FAIL — something") === false],
+      ["a connect error is NOT the no-DB refusal", isDbUnavailableOnly("connect ECONNREFUSED 127.0.0.1:59999") === false],
       ["broken-selftest fixture → FAIL-test", kindOf("verify-selftest-broken-fixture.mjs") === STATIC_RESULT_CATEGORIES.FAIL_TEST],
       ["local-CI orchestrator excluded from static sweep", get("verify-local-ci.mjs") === undefined],
       // sentinel safety property: a real DB-connect attempt is isolated → SKIP, never PASS, never real FAIL
       ["sentinel-connect fixture → FAIL-test without explicit preflight", kindOf("verify-sentinel-connect-fixture.mjs") === STATIC_RESULT_CATEGORIES.FAIL_TEST],
-      ["exactly 4 FAIL-test", results.filter((r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST).length === 4],
+      // 4 original FAIL fixtures + the 2 OPTION 3 no-DB fixtures, which are FAIL-test when NOT opted in.
+      ["exactly 6 FAIL-test (not opted in)", results.filter((r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST).length === 6],
+      ["0 UNVERIFIABLE-here when NOT opted in", results.filter((r) => r.kind === STATIC_RESULT_CATEGORIES.UNVERIFIABLE_HERE).length === 0],
+      // Opted in (the push fallback): exactly the bare refusal moves to UNVERIFIABLE-here; the one with a real
+      // finding stays FAIL-test, and an UNVERIFIABLE-here row never gates, even when its guard is CI-wired.
+      ["opted in: exactly 5 FAIL-test", optedIn.filter((r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST).length === 5],
+      ["opted in: exactly 1 UNVERIFIABLE-here (the bare refusal)", optedIn.filter((r) => r.kind === STATIC_RESULT_CATEGORIES.UNVERIFIABLE_HERE).map((r) => r.name).join() === "verify-nodb-refusal-fixture.mjs"],
+      // `gated` = CI-run membership. The wired refusal KEEPS it (CI must still execute it with a real database)
+      // but never enters the push-blocking set, which is FAIL-test AND gated, and it is never PASS.
+      ["opted in: wired UNVERIFIABLE-here stays CI-run (gated membership kept)", optedIn.find((r) => r.name === "verify-nodb-refusal-fixture.mjs")?.gated === true],
+      ["opted in: UNVERIFIABLE-here never in the blocking set, never PASS", optedIn.filter((r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST && r.gated).map((r) => r.name).join() === "verify-fail-fixture.mjs" && optedIn.find((r) => r.name === "verify-nodb-refusal-fixture.mjs")?.kind !== STATIC_RESULT_CATEGORIES.PASS],
       // gating: the wired fail gates (gated FAIL = 1); the unwired broken-selftest fail does not
       ["gated FAIL count == 1 (only the CI-run guard gates)", results.filter((r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST && r.gated).length === 1],
       ["wired fail is gated", get("verify-fail-fixture.mjs")?.gated === true],
@@ -498,7 +587,7 @@ function selftest() {
       // reason string captured verbatim, never counted toward gated or unwired FAIL.
       ["REQUIRES_LIVE_DB fixture → EXCLUDED-live-db, not FAIL-test", kindOf("verify-requires-live-db-fixture.mjs") === STATIC_RESULT_CATEGORIES.EXCLUDED_LIVE_DB],
       ["REQUIRES_LIVE_DB reason captured verbatim", get("verify-requires-live-db-fixture.mjs")?.detail === "planted: must never run in a no-DB sweep"],
-      ["REQUIRES_LIVE_DB fixture never counted as FAIL-test (still exactly 4)", results.filter((r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST).length === 4],
+      ["REQUIRES_LIVE_DB fixture never counted as FAIL-test (still exactly 6)", results.filter((r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST).length === 6],
     ];
 
     // GATE-LIVELOCK-01 scoping selftest — guardIsInScope() as a pure-function unit test, plus a
@@ -576,7 +665,17 @@ if (isDirectRun) {
   if (only) {
     console.log(`[${LABEL}] --only ${only} — single-guard diagnostic run, not the CI/pre-push shape.`);
   }
-  const results = runStatic({ changedFiles, only });
+  // Opt-in ONLY via the local pre-push fallback (static-sweep-proof defaultRunStatic). CI never sets it.
+  const unverifiableHereOk = process.env.IH35_STATIC_UNVERIFIABLE_HERE === "1";
+  // OPTION 3 hard limit: CI must execute every guard with a real database, so the relaxation is refused there.
+  if (unverifiableHereOk && unverifiableHereRefusedHere(process.env)) {
+    console.error(`[${LABEL}] FAIL — IH35_STATIC_UNVERIFIABLE_HERE=1 is set in CI. UNVERIFIABLE-here is a local pre-push fallback only; CI must run every guard with a database. Unset it.`);
+    process.exit(1);
+  }
+  if (unverifiableHereOk) {
+    console.error(`[${LABEL}] IH35_STATIC_UNVERIFIABLE_HERE=1 — local pre-push fallback: no-database refusals are reported as UNVERIFIABLE-here (NOT a pass; CI still runs them).`);
+  }
+  const results = runStatic({ changedFiles, only, classifyOptions: unverifiableHereOk ? { unverifiableHereOk: true } : undefined });
   printSummary(results);
   const gatedFails = results.filter(
     (r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST && r.gated

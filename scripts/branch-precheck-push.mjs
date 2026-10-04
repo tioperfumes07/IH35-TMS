@@ -670,7 +670,9 @@ export function runPrecheckPush(options = {}) {
   // would run the full unscoped sweep (~4,780 guards) and livelock the local gate.
   if (!blockReadyRan && steps.some((s) => s.label === "block-ready")) {
     try {
-      ensureVerifyStaticOnce({ root });
+      // OPTION 3 (Lead ruling to CC-2, 2026-10-04): this local no-DB fallback reports a guard whose only failure is
+      // "DATABASE_URL not set" as UNVERIFIABLE-here (printed by name, NEVER a pass); CI still runs each with a database.
+      ensureVerifyStaticOnce({ root, unverifiableHereOk: true });
     } catch (error) {
       console.error("branch:precheck-push FAIL at step: verify-static-fallback");
       const detail = error?.result?.detail || error?.message || String(error);

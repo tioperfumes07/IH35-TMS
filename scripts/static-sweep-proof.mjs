@@ -54,11 +54,14 @@ export function readStaticSweepProof() {
 export function ensureVerifyStaticOnce({
   root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."),
   run = defaultRunStatic,
+  // OPTION 3 (Lead ruling 2026-10-04): the local pre-push fallback opts in to UNVERIFIABLE-here for no-database
+  // refusals. A run in that mode NEVER mints the sweep proof, so block-ready can never inherit a relaxed result.
+  unverifiableHereOk = false,
 } = {}) {
   if (hasTrustedStaticSweepProof()) {
     return { ran: false, skipped: true, proof: readStaticSweepProof() };
   }
-  const result = run(root);
+  const result = run(root, { unverifiableHereOk });
   if (!result.ok) {
     const err = new Error(
       `verify:static required before block-ready but failed (fail closed): ${result.detail || "non-zero exit"}`
@@ -66,6 +69,7 @@ export function ensureVerifyStaticOnce({
     err.result = result;
     throw err;
   }
+  if (unverifiableHereOk) return { ran: true, skipped: false, proof: null, unverifiableHere: true };
   const proof = mintStaticSweepProof({ source: "ensureVerifyStaticOnce" });
   return { ran: true, skipped: false, proof };
 }
@@ -94,10 +98,12 @@ export function computeChangedFilesForGate(root, { run = spawnSync } = {}) {
   }
 }
 
-function defaultRunStatic(root) {
+function defaultRunStatic(root, { unverifiableHereOk = false } = {}) {
   const script = path.join(root, "scripts/verify-static.mjs");
   const changedFiles = computeChangedFilesForGate(root);
   const env = { ...process.env };
+  if (unverifiableHereOk) env.IH35_STATIC_UNVERIFIABLE_HERE = "1";
+  else delete env.IH35_STATIC_UNVERIFIABLE_HERE;
   if (changedFiles !== null) env.IH35_GATE_DIFF_FILES = changedFiles.join("\n");
   // GATE-LIVELOCK-01: stderr inherited so verify-static.mjs's every-10-steps progress prints
   // stream live — a fully-buffered/piped stderr was read as "hung" during a real long run
