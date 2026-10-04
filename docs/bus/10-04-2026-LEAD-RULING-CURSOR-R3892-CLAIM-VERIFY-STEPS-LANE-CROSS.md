@@ -57,3 +57,12 @@ RULED: CURSOR may ADD the one `releaseBankLinesNamingDocument(... matched_journa
 call immediately before the restore path's `SET reversed_by_je_id` in
 `apps/backend/src/accounting/journal-entries.service.ts`. No other JE void/post math. Same
 `LANE_CROSS` filename.
+
+## Amendment 2026-10-04c — reclassify undo guard matches ROUND 390.1 restore
+
+`scripts/verify-reclassify-batches-are-whole.mjs` still required `reverseJournalEntryNoFlip` after
+ROUND 390.1 replaced undo with `restoreReversedJournalEntryInClientTx`. Tip main is red the moment
+any JE-service touch pulls this guard into the money gate.
+
+RULED: CURSOR may retarget that one static assertion to `restoreReversedJournalEntryInClientTx`
+(ROUND 390.1 law). No weakening of WORM / RECLASSIFICATION / savepoint / live invariants.
