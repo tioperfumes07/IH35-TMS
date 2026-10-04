@@ -1,3 +1,15 @@
+## 2026-10-04T17:35Z · BANK-F91533 IntegrityReports leftover slate classes · this PR
+
+DONE: IntegrityReportsTab leftover Tailwind slate-* → house #1F2A44 / #4B5563 / #E5E7EB / #F7F8FA; leftover refuse on EVEN 4088 --selftest + live.
+
+NEXT: leftover muted chrome (IntegrityAlerts slate-* / skip pile) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T17:25Z · BANK-F91532 Safety filter leftover slate classes WIRED CI · tip `e003edcf4f`
+
+DONE: #25274 — SafetyDashboardFilter leftover Tailwind slate-* → house #4B5563; leftover refuse on EVEN 1230 --selftest + live.
+
+NEXT: leftover muted chrome (Integrity slate-* / skip pile) · skip pile parked · HH14 no migrations this tick.
+
 ## 2026-10-04T17:25Z · BANK-F91532 Safety filter leftover slate classes · this PR
 
 DONE: SafetyDashboardFilter leftover Tailwind slate-* → house #4B5563; leftover refuse on EVEN 1230 --selftest + live.
