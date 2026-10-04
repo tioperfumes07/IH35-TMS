@@ -1,8 +1,14 @@
-## 2026-10-04T11:28Z · BANK-F91492 SettlementsTours leftover fontSize 10 WIRED · this PR
+## 2026-10-04T11:34Z · BANK-F91493 LoadCosts leftover fontSize 11 totals WIRED · this PR
 
-DONE: SettlementsToursRegister pill counts 10px → text-section-header; leftover refuse on verify-settlements-list-button-height-uniform; EVEN 11082 --selftest + live.
+DONE: LoadCostsBoard totals labels 11px inline → text-section-header; leftover refuse fontSize 10+11 on no-truncation; EVEN 4110 already hangs --selftest + live.
 
-NEXT: leftover fontSize: 11 totals / headerInk #1F2937 / chart ticks · skip pile parked · HH11 no migrations.
+NEXT: leftover headerInk #1F2937 / chart ticks · skip pile parked · HH11 no migrations.
+
+## 2026-10-04T11:30Z · BANK-F91492 SettlementsTours leftover WIRED CI · tip `485ba32aa6`
+
+DONE: #25234 — SettlementsToursRegister pill counts text-section-header; verify-steps/11082 leftover refuse --selftest + live.
+
+NEXT: BANK-F91493 LoadCosts leftover fontSize: 11 totals + leftover refuse on 4110 · skip pile parked · HH11 no migrations.
 
 ## 2026-10-04T11:24Z · BANK-F91491 LoadCosts leftover WIRED CI · tip `90b5b7dfc6`
 

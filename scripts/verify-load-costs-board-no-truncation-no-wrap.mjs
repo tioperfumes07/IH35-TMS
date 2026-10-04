@@ -67,6 +67,7 @@ function auditBoard(src) {
 function leftoverHits(src) {
   const hits = [];
   if (/fontSize:\s*10\b/.test(src)) hits.push("leftover fontSize: 10");
+  if (/fontSize:\s*11\b/.test(src)) hits.push("leftover fontSize: 11");
   return hits;
 }
 
@@ -102,9 +103,10 @@ function main() {
     if (auditBoard(m6).length === 0) { console.error("SELFTEST FAIL: reverting fmtMiles dash to blank did not trip"); process.exit(1); }
     const m7 = boardSrc.replace(/deadhead_pay_cents == null \? DASH/, "deadhead_pay_cents == null ? \"\"");
     if (auditBoard(m7).length === 0) { console.error("SELFTEST FAIL: reverting deadhead dash to blank did not trip"); process.exit(1); }
-    const leftoverPlant = `${boardSrc}\n<span style={{ fontSize: 10 }}>plant</span>`;
-    if (!auditBoard(leftoverPlant).some((e) => e.includes("leftover fontSize: 10"))) {
-      console.error("SELFTEST FAIL leftover plant escaped", auditBoard(leftoverPlant));
+    const leftoverPlant = `${boardSrc}\n<span style={{ fontSize: 10 }}>plant</span>\n<span style={{ fontSize: 11 }}>plant</span>`;
+    const leftoverBad = auditBoard(leftoverPlant);
+    if (!leftoverBad.some((e) => e.includes("leftover fontSize: 10")) || !leftoverBad.some((e) => e.includes("leftover fontSize: 11"))) {
+      console.error("SELFTEST FAIL leftover plant escaped", leftoverBad);
       process.exit(1);
     }
     console.log("SELFTEST OK: guard trips on all mutations");
