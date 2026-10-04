@@ -77,9 +77,13 @@ must("apps/backend/src/index.ts", read("apps/backend/src/index.ts"), [
 must("apps/frontend/src/pages/drivers/RetentionDashboard.tsx", read("apps/frontend/src/pages/drivers/RetentionDashboard.tsx"), [
   "driver-retention-dashboard",
 ]);
-must("apps/frontend/src/components/drivers/AtRiskDriverCard.tsx", read("apps/frontend/src/components/drivers/AtRiskDriverCard.tsx"), [
+const atRiskCard = read("apps/frontend/src/components/drivers/AtRiskDriverCard.tsx");
+must("apps/frontend/src/components/drivers/AtRiskDriverCard.tsx", atRiskCard, [
   "at-risk-driver-card-",
 ]);
+// BANK-F91347 leftover refuse — AtRiskDriverCard page-scoped text token ratchet
+if (atRiskCard.includes("text-[11px]")) failures.push("AtRiskDriverCard.tsx: leftover text-[11px]");
+if (atRiskCard.includes("#8A92AB")) failures.push("AtRiskDriverCard.tsx: leftover off-scale muted #8A92AB");
 must("apps/frontend/src/pages/DriverDetail.tsx", read("apps/frontend/src/pages/DriverDetail.tsx"), [
   "retention-risk-badge",
 ]);
@@ -122,6 +126,11 @@ if (process.argv.includes("--selftest")) {
       throw new Error(`planted shared-retention defect ${index + 1} escaped`);
     }
   });
+  // BANK-F91347 leftover plant
+  const atRiskPlant = atRiskCard + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!(atRiskPlant.includes("text-[11px]") || atRiskPlant.includes("#8A92AB"))) {
+    throw new Error("AtRiskDriverCard leftover plant escaped");
+  }
   console.log(`verify:driver-retention --selftest — OK (${mutations.length + classMutations.length}/${mutations.length + classMutations.length})`);
   process.exit(0);
 }
