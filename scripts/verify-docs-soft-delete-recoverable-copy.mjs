@@ -52,6 +52,9 @@ function assertTabChrome(label, src) {
   if (!/>\s*Archive\s*</.test(code)) {
     fail(`${label}: missing Archive row action for soft-delete path`);
   }
+  // BANK-F91349 leftover refuse — DocumentsTab page-scoped text token ratchet
+  if (src.includes("text-[11px]")) fail(`${label}: leftover text-[11px]`);
+  if (src.includes("#8A92AB")) fail(`${label}: leftover off-scale muted #8A92AB`);
 }
 
 function main() {
@@ -94,6 +97,21 @@ function selftest() {
   process.exit = origExit;
   if (!failed) fail("selftest: poisoned Soft Delete title did not fail");
 
+  // BANK-F91349 leftover plant
+  const tabLive = fs.readFileSync(TAB, "utf8");
+  const tabPlant = tabLive + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  let leftoverCaught = false;
+  process.exit = (code) => {
+    leftoverCaught = code === 1;
+    throw new Error("exit");
+  };
+  try {
+    assertTabChrome("DocumentsTab.tsx-plant", tabPlant);
+  } catch {
+    /* expected */
+  }
+  process.exit = origExit;
+  if (!leftoverCaught) fail("selftest: DocumentsTab leftover plant escaped");
   console.log("OK verify-docs-soft-delete-recoverable-copy --selftest");
 }
 
