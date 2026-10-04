@@ -1,3 +1,15 @@
+## 2026-10-04T13:00Z · BANK-F91506 CatalogQuickCreate leftover #64748b WIRED · this PR
+
+DONE: CatalogQuickCreateDrawer help/target text #64748b → house muted #4B5563; leftover refuse on verify-lst-picker-config-driven; EVEN 1510 --selftest + live.
+
+NEXT: leftover muted #64748b chrome (Settlements DataPanel / RMBuckets / CreateWO empty) · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T12:55Z · BANK-F91505 WeeklyRevenue leftover WIRED CI · tip `cb6ac30db5`
+
+DONE: #25247 — WeeklyRevenueChart axis stroke #4B5563; verify-steps/4124 leftover refuse --selftest + live.
+
+NEXT: leftover muted #64748b chrome (CatalogQuickCreateDrawer / Settlements DataPanel / RMBuckets) · skip pile parked · HH12 no migrations this tick.
+
 ## 2026-10-04T12:50Z · BANK-F91505 WeeklyRevenue leftover #64748b stroke WIRED · this PR
 
 DONE: WeeklyRevenueChart axis stroke #64748b → house muted #4B5563; leftover refuse on verify-home-kpi-range-toggle; unused EVEN 4124 --selftest + live.
