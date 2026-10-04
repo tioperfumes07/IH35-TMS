@@ -31,6 +31,15 @@ if (!driverSection.includes("defaultDriver") || !driverSection.includes("current
   console.error("verify:vehicle-profile-driver-dual-tracking FAIL: frontend must render default + current separately");
   process.exit(1);
 }
+// BANK-F91387 leftover refuse — DriverAssignmentSection page-scoped text token ratchet
+if (driverSection.includes("text-[11px]")) {
+  console.error("verify:vehicle-profile-driver-dual-tracking FAIL: DriverAssignmentSection.tsx leftover text-[11px]");
+  process.exit(1);
+}
+if (driverSection.includes("#8A92AB")) {
+  console.error("verify:vehicle-profile-driver-dual-tracking FAIL: DriverAssignmentSection.tsx leftover off-scale muted #8A92AB");
+  process.exit(1);
+}
 // RE-ANCHOR (found stale 2026-08-29): "default_dca" is also a literal substring of the unrelated
 // "set_default_dca" alias (POST /drivers/default's own authorization check, lines ~54-57) with an
 // IDENTICAL company_id/is_authorized/deactivated_at chain shape. Check #0's un-anchored regex could
@@ -90,7 +99,13 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log("verify:vehicle-profile-driver-dual-tracking SELFTEST PASS — 7 planted defects caught");
+  // BANK-F91387 leftover plant — DriverAssignmentSection page-scoped text token ratchet
+  const leftoverPlant = driverSection + '\n<span className="text-[11px] text-[#8A92AB]">plant</span>\n';
+  if (!(leftoverPlant.includes("text-[11px]") && leftoverPlant.includes("#8A92AB"))) {
+    console.error("verify:vehicle-profile-driver-dual-tracking SELFTEST FAIL: leftover plant escaped");
+    process.exit(1);
+  }
+  console.log("verify:vehicle-profile-driver-dual-tracking SELFTEST PASS — 7 planted defects caught + leftover plant");
   process.exit(0);
 }
 console.log("verify:vehicle-profile-driver-dual-tracking PASS");
