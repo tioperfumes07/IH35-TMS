@@ -1,3 +1,9 @@
+## 2026-10-04T06:31Z · BANK-F91433 B-2 recon ops WIRED CI · tip `cd6393e80f`
+
+DONE: #25173 — verify-steps/1436 now runs ops/verify-b2-reconcile-shell + je-line-reconcilable.
+
+NEXT: BANK-F91434 wire B-3 feed/match ops into 1222 · skip pile parked · HH06 no migrations.
+
 ## 2026-10-04T06:25Z · BANK-F91432 B-1 register connectivity WIRED CI · tip `f4d9e5f189`
 
 DONE: #25172 — verify-steps/1158 now runs ops/verify-b1-account-register + online-banking + cash-advance match banners.
