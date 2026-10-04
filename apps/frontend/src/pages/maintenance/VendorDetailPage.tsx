@@ -109,7 +109,7 @@ export function VendorDetailPage() {
               </div>
               <div><dt className="inline font-medium">Status:</dt> <dd className="inline">{vendor.is_active ? "Active" : "Archived"}</dd></div>
             </dl>
-            <p className="mt-2 text-[11px] text-gray-500">
+            <p className="mt-2 text-xs text-gray-500">
               Catalog record in{" "}
               <Link className="text-slate-600 underline" to="/lists/maintenance/vendors">
                 Lists & Catalogs / Maintenance Vendors
