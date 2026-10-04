@@ -65,6 +65,9 @@ export function computeFailures(source) {
   if (!/lovesSyncQuery\.isError[\s\S]{0,240}<ListErrorBanner[\s\S]{0,180}lovesSyncQuery\.refetch\(\)/.test(source)) {
     errors.push("FuelHome.tsx must disclose Love's sync-status failure and retry the exact query");
   }
+  // BANK-F91284 leftover refuse — FuelHome page-scoped text token ratchet
+  if (source.includes("text-[11px]")) errors.push("FuelHome.tsx: leftover text-[11px]");
+  if (source.includes("#8A92AB") || source.includes("#334155")) errors.push("FuelHome.tsx: leftover off-scale muted");
   return errors;
 }
 
@@ -169,6 +172,13 @@ function selftest() {
     process.exit(1);
   }
   if (!ok) process.exit(1);
+  const leftover = computeFailures(
+    `getFuelDashboard FuelKpiRow FuelFraudAlertsKpiCard RelayHistoryImport lovesSyncQuery.isError <ListErrorBanner lovesSyncQuery.refetch()\n<div className="text-[11px] text-[#8A92AB]">plant</div>`,
+  );
+  if (!leftover.some((e) => e.includes("leftover text-[11px]")) || !leftover.some((e) => e.includes("leftover off-scale muted"))) {
+    console.error("SELFTEST FAIL — leftover plant escaped", leftover);
+    process.exit(1);
+  }
   console.log(`${LABEL} --selftest OK`);
 }
 
