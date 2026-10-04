@@ -2,7 +2,7 @@
 // Guard (GLOBAL-TABLE-CONTROLS): the shared data-grid toolbar must stay a single shared
 // component set under components/table/*, and consumers must REUSE it (not re-fork their own
 // paginator / column chooser / search per page). Fleet is the first consumer.
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 
 const failures = [];
 
@@ -78,12 +78,40 @@ for (const consumer of [
   }
 }
 
+// BANK-F91307 leftover refuse — Paginator.tsx page-scoped text token ratchet
+const PAGINATOR = "apps/frontend/src/components/table/Paginator.tsx";
+let paginatorSrc = "";
+try {
+  paginatorSrc = readFileSync(PAGINATOR, "utf8");
+} catch {
+  failures.push(`${PAGINATOR}: missing`);
+}
+if (paginatorSrc) {
+  if (paginatorSrc.includes("text-[11px]")) failures.push(`${PAGINATOR}: leftover text-[11px]`);
+  if (paginatorSrc.includes("#8A92AB") || paginatorSrc.includes("#334155")) {
+    failures.push(`${PAGINATOR}: leftover off-scale muted`);
+  }
+}
+
 if (process.argv.includes("--selftest")) {
   const planted = searchSrc.replaceAll("lastEmittedRef", "notTheBuffer");
   const plantedFails =
     !/useState\(value\)/.test(planted) || !/lastEmittedRef/.test(planted) || !/EMIT_MS/.test(planted);
   if (!plantedFails) {
     console.error("selftest: planted TableSearch without lastEmittedRef must fail the buffer check");
+    process.exit(1);
+  }
+  // BANK-F91307 leftover plant — Paginator page-scoped text token ratchet
+  const realGood = readFileSync(PAGINATOR, "utf8");
+  const leftoverPlant = realGood + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  writeFileSync(PAGINATOR, leftoverPlant);
+  const plantCaught =
+    leftoverPlant.includes("text-[11px]") ||
+    leftoverPlant.includes("#8A92AB") ||
+    leftoverPlant.includes("#334155");
+  writeFileSync(PAGINATOR, realGood);
+  if (!plantCaught) {
+    console.error("selftest: leftover plant escaped");
     process.exit(1);
   }
   console.log("verify:table-controls-shared --selftest OK");
