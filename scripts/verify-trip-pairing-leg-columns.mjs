@@ -95,6 +95,11 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAIL leftover #94a3b8 plant escaped`);
     process.exit(1);
   }
+  const leftoverSlateHits = leftoverRefuse('className="text-slate-600 border-slate-300 bg-slate-50"');
+  if (!leftoverSlateHits.some((h) => h.includes("leftover slate class"))) {
+    console.error(`${LABEL} SELFTEST FAIL leftover slate class plant escaped`);
+    process.exit(1);
+  }
   console.log(`${LABEL} SELFTEST OK — collapsed-column regression rejected; 1/2/3 TR legs -> 1/2/3 columns confirmed`);
 }
 
@@ -114,6 +119,9 @@ function leftoverRefuse(text) {
   // TR trip-type #64748b stays; dashed-legend leftover #94a3b8 does not.
   if (text.includes("#8A92AB") || text.includes("#334155") || text.includes("#475569") || text.includes("#94a3b8")) {
     hits.push(`${PAGE_PATH}: leftover off-scale muted`);
+  }
+  if (text.includes("text-slate-") || text.includes("border-slate-") || text.includes("bg-slate-") || text.includes("hover:bg-slate-")) {
+    hits.push(`${PAGE_PATH}: leftover slate class`);
   }
   return hits;
 }
