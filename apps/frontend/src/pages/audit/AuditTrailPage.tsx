@@ -158,8 +158,8 @@ function ExpandedEventDetail({ row }: { row: SpineEvent }) {
   return (
     <div className="grid gap-3 text-xs md:grid-cols-2">
       <div>
-        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Payload</div>
-        <pre className="max-h-48 overflow-auto rounded-sm border border-gray-100 bg-white p-2 text-[11px] leading-tight">
+        <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-gray-500">Payload</div>
+        <pre className="max-h-48 overflow-auto rounded-sm border border-gray-100 bg-white p-2 text-xs leading-tight">
           {JSON.stringify(row.payload, null, 2)}
         </pre>
       </div>
@@ -289,7 +289,7 @@ export function AuditTrailPage() {
                 <EntityLinkOrTombstone kind="user" id={exactAuditEvent.actor_user_id} name={exactAuditEvent.actor_email} noun="User" />
               </div>
               <div><span className="font-semibold">Source:</span> {exactAuditEvent.source ?? "—"}</div>
-              <pre className="max-h-56 overflow-auto rounded-sm border bg-white p-2 text-[11px] md:col-span-2">{JSON.stringify(exactAuditEvent.payload, null, 2)}</pre>
+              <pre className="max-h-56 overflow-auto rounded-sm border bg-white p-2 text-xs md:col-span-2">{JSON.stringify(exactAuditEvent.payload, null, 2)}</pre>
             </div>
           ) : null}
         </section>
