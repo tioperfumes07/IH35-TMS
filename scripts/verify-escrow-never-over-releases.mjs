@@ -17,8 +17,7 @@
  * violates FAILS too ("remove it so the ceiling drops") — a debt list that cannot shrink is not a ratchet.
  *   The three over-released on 2026-09-24/25 by settlement escrow-contribution reversals (ACCT-F20260924/25, R-161)
  *   that reversed contributions a "sync projection to GL after AT escrow excess release" had already partly released.
- *   They are purge population (ROUND 350); the database now refuses the writer that made them. Ceiling 3 -> 0 when the
- *   governed purge removes their postings.
+ *   Unwound 2026-10-04 under AUTH-213 (nine release JEs reversed through the void engine; engine fixed #25378). Ceiling 3 -> 0.
  */
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
@@ -32,9 +31,6 @@ const LABEL = "verify-escrow-never-over-releases";
 
 /** key = "<company code>:<GL account number>" */
 export const DEBT = {
-  "USMCA:2100-00-027": "Jorge Luis Infante Corona — over-released $150.00 by the 2026-09-25 R-161 contribution reversals; purge population",
-  "USMCA:2100-00-002": "Neftali Coronado Urbano — over-released $50.00 by the 2026-09-25 R-161 contribution reversals; purge population",
-  "USMCA:2100-00-004": "Rafael Rogelio Rivero Reynoso — over-released $25.00 by the 2026-09-25 R-161 contribution reversals; purge population",
 };
 export const CEILING = Object.keys(DEBT).length;
 
