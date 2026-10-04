@@ -64,6 +64,8 @@ function run(parserSrc, builderSrc) {
   if (!/def attribute_unheaded_expenses\(/.test(parserSrc)) bad.push(`${PARSER}: attribute_unheaded_expenses missing (fails closed)`);
   if (!/attribute_unheaded_expenses\(cdoc, ddoc\)/.test(builderSrc)) bad.push(`${BUILDER}: does not attribute unheaded expenses before building lines`);
   if ((builderSrc.match(/\["invoice"\]\s*=/g) || []).length < 2) bad.push(`${BUILDER}: fuel and expense lines must both carry the printed invoice`);
+  if (!/SUPPRESSED_SAME_RECEIPT/.test(builderSrc) || !/for src_lines in \(_cl_exp,/.test(builderSrc))
+    bad.push(`${BUILDER}: a company row and its Drv twin on the same receipt must post as ONE purchase`);
   if (bad.length) return bad;
   const dir = mkdtempSync(join(tmpdir(), "feed-proof-"));
   try {
@@ -89,6 +91,7 @@ if (process.argv.includes("--selftest")) {
     ["append to last load", parser.replace('doc.setdefault("unheaded_expenses", []).append(row)', 'doc["loads"][cur]["expenses"].append(row)'), builder],
     ["receipt rule removed", parser.replace('if len(hit) == 1:\n            target, how = next(iter(hit)), "receipt"', "pass"), builder],
     ["builder drops invoice", parser, builder.replaceAll('["invoice"] =', '["inv_dropped"] =')],
+    ["same receipt twice", parser, builder.replace("for src_lines in (_cl_exp,", "for src_lines in ((cl.get(\"expenses\") or []),")],
     ["boundary guessed", parser.replace('if len(on) == 1: target, how = next(iter(on)), f"stop:{stop}"', 'if on: target, how = sorted(on)[-1], f"stop:{stop}"').replace('stop = "deliver" if', 'stop = "deliver" if True or'), builder],
   ];
   const live = run(parser, builder);
