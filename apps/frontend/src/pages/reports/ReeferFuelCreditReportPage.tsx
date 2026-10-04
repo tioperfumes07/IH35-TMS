@@ -219,6 +219,18 @@ export function ReeferFuelCreditReportPage() {
         </span>
       </div>
 
+      {/* Report parity: every data-bearing report prints (the Form 4136 claim is filed from this page). */}
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+          data-testid="reefer-credit-print"
+        >
+          Print
+        </button>
+      </div>
+
       {totals ? (
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-5" data-testid="reefer-totals">
           {[

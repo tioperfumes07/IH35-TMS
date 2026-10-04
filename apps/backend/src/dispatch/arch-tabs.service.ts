@@ -340,6 +340,8 @@ export async function createOfficeIntransitIssue(
     if (body.reason_id) {
       const reasonTableRes = await client.query(`SELECT to_regclass('catalogs.load_exception_reasons') IS NOT NULL AS ok`);
       const reasonTableExists = Boolean((reasonTableRes.rows[0] as { ok?: boolean } | undefined)?.ok);
+      // A reason was chosen but the catalog that defines it is absent: refuse rather than silently drop the reason.
+      if (!reasonTableExists) throw new Error("load_exception_reasons_unavailable");
       if (reasonTableExists) {
         const reasonRes = await client.query<{ code: string }>(
           `SELECT code FROM catalogs.load_exception_reasons WHERE id = $1::uuid AND operating_company_id = $2::uuid AND is_active = true LIMIT 1`,

@@ -147,6 +147,8 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
         `SELECT to_regclass('catalogs.load_exception_reasons') IS NOT NULL AS ok`
       );
       const reasonsTableExists = Boolean((reasonsTableRes.rows[0] as { ok?: boolean } | undefined)?.ok);
+      // Read path: the board still renders without the reasons catalog, but SAYS so (catalog_status in the response).
+      const reasonsCatalogStatus: "ready" | "unavailable" = reasonsTableExists ? "ready" : "unavailable";
 
       // One row per CURRENT load (not LIMIT 1 per unit) so tour legs can stack under one truck.
       const res = await client.query(
@@ -339,6 +341,7 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
         availableRows: availableRes.rows as AvailableRow[],
         pendingRows: pendingRes.rows as PendingRow[],
         reasonsTableExists,
+        reasonsCatalogStatus,
       };
     });
 
@@ -552,6 +555,7 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
       in_transit_count: groups.filter((g) => g.section === "in_transit").length,
       stations: STATION_KEYS.map((key, i) => ({ key, index: i, label: STATION_LABELS[key] })),
       catalog_ready: payload.reasonsTableExists,
+      catalog_status: payload.reasonsCatalogStatus,
     });
   });
 }

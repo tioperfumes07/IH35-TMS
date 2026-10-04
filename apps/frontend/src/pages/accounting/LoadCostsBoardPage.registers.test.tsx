@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { formatDateQboList } from "../../lib/formatDate";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
@@ -233,17 +234,21 @@ describe("LoadCostsBoardPage — registers (LCB-REG)", () => {
     for (const filter of ["in_motion", "delivered_open", "all_open", "this_week"]) {
       fireEvent.click(screen.getByTestId(`load-costs-pill-${filter}`));
       expect(screen.queryByRole("link", { name: "13601" })).not.toBeInTheDocument();
-      expect(screen.queryByRole("link", { name: "13602" })).not.toBeInTheDocument();
     }
+    // ROUND 18.2 (owner-live 2026-09-30, "LOAD COSTS SHOULD SHOW ALL 16"): a load still in a MOTION status stays on
+    // the active pills even when it carries an invoice — invoicing cannot take a truck off the road; it is the anomaly to
+    // surface on Costs, not a resettlement to file away. So 13602 (dispatched + invoiced) is on In motion, not Resettlement.
+    fireEvent.click(screen.getByTestId("load-costs-pill-in_motion"));
+    expect(screen.getByRole("link", { name: "13602" })).toBeInTheDocument();
     fireEvent.click(screen.getByTestId("load-costs-tab-resettlement"));
     const original = await screen.findByRole("link", { name: "13601" });
     expect(original).toHaveAttribute("href", expect.stringContaining("issued-load"));
-    expect(screen.getByRole("link", { name: "13602" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "13602" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "13603" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "13604" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "13605" })).not.toBeInTheDocument();
     expect(within(original.closest("tr")!).getByRole("link", { name: "S-2026-0042" })).toHaveAttribute("href", expect.stringContaining("settlement-42"));
-    expect(screen.getByTestId("load-costs-tab-resettlement")).toHaveTextContent("2");
+    expect(screen.getByTestId("load-costs-tab-resettlement")).toHaveTextContent("1");
   });
 
   it("ROUND 18.1 (owner ruling 2026-09-12, OVERTURNS REG-040's is_resettlement inclusion): a dispatched continuation on a closed tour stays on every active filter; the closed+invoiced original still moves to Resettlement, both with the SAME settlement link", async () => {
@@ -290,9 +295,10 @@ describe("LoadCostsBoardPage — registers (LCB-REG)", () => {
     fireEvent.click(screen.getByTestId("load-costs-tab-resettlement"));
     const load = await screen.findByRole("link", { name: "13508" });
     const row = within(load.closest("tr")!);
-    expect(row.getByText("08/21/2026")).toBeInTheDocument();
-    expect(row.getByText("08/24/2026")).toBeInTheDocument();
-    expect(row.queryByText("09/09/2026")).not.toBeInTheDocument();
+    // Dates render in the owner's QBO list format (D47, formatDateQboList); the test asserts WHICH dates, not a format.
+    expect(row.getByText(formatDateQboList("2026-08-21T12:00:00Z"))).toBeInTheDocument();
+    expect(row.getByText(formatDateQboList("2026-08-24T12:00:00Z"))).toBeInTheDocument();
+    expect(row.queryByText(formatDateQboList("2026-09-09T12:00:00Z"))).not.toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: /Start Date/ })).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: /Delivery Date/ })).toBeInTheDocument();
   });
