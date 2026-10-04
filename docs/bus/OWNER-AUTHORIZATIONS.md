@@ -7219,7 +7219,12 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). Escrow over-release un
   -2500 -> 0 / 0 / 0; nothing persisted (re-read).
 action: DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-04-cc3-escrow-unwind-225.mts --apply --auth AUTH-213
 expires_at: 2026-10-05T01:59:15Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-04T20:01:20Z
+consumed_by: CC-3
+row_counts: 9 reversing JEs (4ed6fe20 00cf55d8 af5b5f23 f1ec2086 534550eb 49b035cc 1c5e1c08 9dd8034c 295790ef) via
+  executeVoidCancel('journal_entry'); 0 deletes. proof_query: v_escrow_account_balance 2100-00-027 / -002 / -004 = 0 / 0 / 0;
+  USMCA driver escrow accounts with a negative balance = 0; verify-escrow-never-over-releases DEBT 3 -> 0.
 THIS AUTHORIZATION DOES NOT COVER: any DELETE; the append-only escrow_postings rows (purge engine); any other escrow account.
 
 ## AUTH-214
@@ -7230,5 +7235,10 @@ scope: USMCA ONLY. Owner AUTH-398-FUEL-MEMO + AUTH-398-ISSUER (CC-3 chat 2026-10
   fuel.card_type.issuer_set audit; RELAY stays blank (asserted). Prod dry run (thrown): 4 memos cleared, issuer set, RELAY null.
 action: DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-04-cc3-def-memos-and-dreamline-issuer.mts --apply --auth AUTH-214
 expires_at: 2026-10-05T01:59:15Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-04T20:01:20Z
+consumed_by: CC-3
+row_counts: 4 expense memos ', ref ustFluid' removed (amount, date, JE and postings unchanged); DREAMLINE issuer NULL ->
+  3e72d4a5 (Dreamline Transit LLC) with fuel.card_type.issuer_set audit; RELAY NULL (unchanged); 0 deletes.
+  proof_query: expenses with 'ustFluid' in memo = 0.
 THIS AUTHORIZATION DOES NOT COVER: any DELETE; any amount, date or GL change; the RELAY issuer; any other expense.

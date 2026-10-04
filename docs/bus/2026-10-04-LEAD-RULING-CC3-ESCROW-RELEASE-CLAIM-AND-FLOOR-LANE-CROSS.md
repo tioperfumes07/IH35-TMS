@@ -10,3 +10,5 @@ apps/backend/src/driver-finance/settlement-payrun-subledger-unwind.service.ts ·
 scripts/verify-steps/14613-verify-escrow-release-claim-and-floor.mjs
 
 Not in scope: the $225 unwind of the nine release postings — its own AUTH, dry run first.
+
+Also: scripts/verify-escrow-never-over-releases.mjs — DEBT 3 -> 0 after the AUTH-213 unwind (shrink only).
