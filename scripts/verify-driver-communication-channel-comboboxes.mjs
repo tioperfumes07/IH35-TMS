@@ -46,6 +46,14 @@ if (process.argv.includes("--selftest")) {
     encoding: "utf8",
   });
   if (child.status === 0) throw new Error("selftest failed: planted send-channel payload miswire stayed green");
+  // BANK-F91296 leftover plant — DriverCommunicationsTab page-scoped text token ratchet
+  const leftoverPlant = '<div className="text-[11px] text-[#8A92AB]">plant</div>';
+  const leftoverHits = [];
+  if (leftoverPlant.includes("text-[11px]")) leftoverHits.push(`${FILES.timeline}: leftover text-[11px]`);
+  if (leftoverPlant.includes("#8A92AB") || leftoverPlant.includes("#334155")) leftoverHits.push(`${FILES.timeline}: leftover off-scale muted`);
+  if (!leftoverHits.some((e) => e.includes("leftover text-[11px]")) || !leftoverHits.some((e) => e.includes("leftover off-scale muted"))) {
+    throw new Error(`leftover plant escaped: ${JSON.stringify(leftoverHits)}`);
+  }
   console.log("verify-driver-communication-channel-comboboxes --selftest PASS");
   process.exit(0);
 }
@@ -54,4 +62,13 @@ assertContract({
   timeline: process.env.DRIVER_F6480_TIMELINE ?? disk.timeline,
   send: process.env.DRIVER_F6480_SEND ?? disk.send,
 });
+// BANK-F91296 leftover refuse — DriverCommunicationsTab.tsx page-scoped text token ratchet
+const timelineSrc = process.env.DRIVER_F6480_TIMELINE ?? disk.timeline;
+const leftover = [];
+if (timelineSrc.includes("text-[11px]")) leftover.push(`${FILES.timeline}: leftover text-[11px]`);
+if (timelineSrc.includes("#8A92AB") || timelineSrc.includes("#334155")) leftover.push(`${FILES.timeline}: leftover off-scale muted`);
+if (leftover.length) {
+  console.error("verify-driver-communication-channel-comboboxes FAIL leftover:\n  " + leftover.join("\n  "));
+  process.exit(1);
+}
 console.log("verify-driver-communication-channel-comboboxes PASS — timeline + send channel controls preserve query/payload wiring");
