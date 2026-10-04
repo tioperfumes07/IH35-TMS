@@ -454,7 +454,7 @@ export function contractErrors(src) {
 
 function leftoverRefuseDrawer(src, bucket) {
   if (src.includes("text-[11px]")) bucket.push("CatalogQuickCreateDrawer.tsx: leftover text-[11px]");
-  if (src.includes("#8A92AB") || src.includes("#334155")) {
+  if (src.includes("#8A92AB") || src.includes("#334155") || src.includes("#64748b")) {
     bucket.push("CatalogQuickCreateDrawer.tsx: leftover off-scale muted");
   }
 }
@@ -661,6 +661,11 @@ function selftest() {
       "CatalogQuickCreateDrawer leftover muted",
       { ...good, drawer: good.drawer + '\n<span className="text-[11px] text-[#8A92AB] text-[#334155]">plant</span>\n' },
       /leftover/,
+    ],
+    [
+      "CatalogQuickCreateDrawer leftover slate-500",
+      { ...good, drawer: good.drawer + '\n<span className="text-xs text-[#64748b]">plant</span>\n' },
+      /leftover off-scale muted/,
     ],
   ];
 
