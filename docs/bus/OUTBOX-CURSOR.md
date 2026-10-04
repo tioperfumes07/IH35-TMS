@@ -1,3 +1,39 @@
+## 2026-10-04T03:20Z · ROUND 389.2 still BLOCKED · leftovers timer deferred · r389 rebased for CC-1
+
+ORDERS leftovers cadence fired (HH03 — no migrations). Superseded by ROUND 389.2.
+Tip still red: `verify-derived-artifact-freshness` on `890797420f`.
+r389 worktree rebased onto tip (was 2 behind) so CC-1 DATABASE_URL push is one command away.
+CURSOR claim+wire+triage stay local-ready until that lands.
+
+## 2026-10-04T03:15Z · ROUND 389.2 CURSOR triage verdicts (3 FAILING) — not wired yet
+
+| Guard | Verdict | Why | Fix |
+|---|---|---|---|
+| `verify-navy-page-subnav` | **GUARD WRONG** | Asserts `bg-[#1A1F36]` (retired near-black). Live `NavyPageSubNav` is `bg-[#14314F]` per NAVY-NOT-BLACK LAW / GLOBAL-TYPE-SIZE-BASELINE. | Update guard token to `#14314F`; prove fails on `#1A1F36`, passes on `#14314F`. Then wire. |
+| `verify-list-empty-settled` | **GUARD STALE path** | MIGRATED entry still names `DriverEscrowTabContent.tsx` after C-64 split; empty literal lives in `DriverEscrowLedgerSection`. TabContent is a board+ledger shell with no empty string. | Retarget MIGRATED entry to LedgerSection; prove ledger uses settled empty / ParityTable loading gate. Then wire. |
+| `verify-form-425c-exhibits` | **MIXED** | (1) CODE WRONG: `registerForm425cExhibitsRoutes` exists in `exhibits/routes.ts` but is **not** imported in `reports/index.ts`. (2) GUARD STALE: expects FE path `/reports/form-425c/exhibits`; live is `/425c/exhibits`. (3) GUARD WRONG on Link steal: forbids `to="/legal|finance|accounting/..."` cross-links that are intentional module jumps, not prefix theft. | Wire register in index.ts; update guard path to `/425c/exhibits`; drop/replace the Link-steal assertion with a real namespace-theft check. Prove both directions. Then wire. |
+
+BLOCKED from shipping any of the above by the same tip-main r389 gate red (`verify-derived-artifact-freshness`).
+
+## 2026-10-04T03:10Z · ROUND 389.2 CURSOR BLOCKED on r389 — claim+wire READY locally
+
+BLOCKER (verbatim tip main `890797420f`): `money-pr-local-gate` → `verify-derived-artifact-freshness` FAIL —
+`scripts/canonical-relations.json: node scripts/gen-canonical-relations.mjs did not produce it`.
+Same fleet blockers still red on tip: void-predicate-map drift · sweep-c6 money INSERT gaps ·
+derived-artifact. r389 worktree `/Users/jorgemunoz/wt-wire` (`claude/r389-wire-the-orphan-guards`)
+fixes derived-artifact to UNVERIFIABLE-HERE without DATABASE_URL (PASS) but is **not on origin/main**
+(4 ahead / 2 behind tip; CC-1 push with live DATABASE_URL still pending).
+
+READY (not pushed — gate red is not this diff):
+- CURSOR 39 of 1645 re-ran DATABASE_URL-stripped → **39/39 exit 0**
+- CLAIM-RESERVE commit `ab74f3c2cf` on `cursor/claim-reserve-12330-12406-c89b` (slots 12330..12406)
+- 39 verify-step wrappers parked at `/tmp/r3892-step-files/` for follow-up wiring PR after claim merges
+- Round 393.4 four (natural-sign / register multi-select / status multi-select / breadcrumb) already
+  claimed on r389 (12465/13905/14313/14325) — land with r389, not re-claimed here
+
+NEXT: the moment r389 is green on main → push claim-reserve → merge → wiring PR with 39 wrappers →
+triage CURSOR's 3 FAILING (form-425c-exhibits / list-empty-settled / navy-page-subnav).
+
 ## 2026-10-04T04:45Z · BANK-F91417..F91420 leftover drain MERGED tip `06a2f9753d`
 
 DONE: Topbar · Sidebar · CustomReportBuilder · KpiStatCard (F91417–F91420). Prior F91412–16 stamped.

@@ -27,6 +27,7 @@ import { registerReportsIftaRoutes } from "./ifta/routes.js";
 // apps/frontend/src/api/reports.ts called it and the Outstanding A/P KPI drilled into it.
 import { registerReportsApAgingRoutes } from "./ap-aging.routes.js";
 import { registerDuplicateMastersRoutes } from "./duplicate-masters.routes.js";
+import { registerForm425cExhibitsRoutes } from "./form-425c/exhibits/routes.js";
 
 export async function registerReportsRoutes(app: FastifyInstance) {
   await registerReportsLibraryRoutes(app);
@@ -56,4 +57,6 @@ export async function registerReportsRoutes(app: FastifyInstance) {
   await registerCashFlowReportRouteFix(app);
   await registerPerTruckCpmRoutes(app);
   await registerDuplicateMastersRoutes(app);
+  // GAP-44 — exhibits builder existed under reports/form-425c/exhibits but was never mounted.
+  await registerForm425cExhibitsRoutes(app);
 }
