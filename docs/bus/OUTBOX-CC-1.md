@@ -1785,3 +1785,13 @@ The #25339 merge turned main red at gate step 03d; CC-3 caught it. verify-coa-ca
 - Routed to CC-3 (INBOX-CC-3): verify-users-add-user-submits and verify-entity-audit-history-exact-pager.
 - 368.2(a) waits on CC-2's match-poster removal.
 - Unwind 61/122 and the purge wait on the owner's AUTH and the five #25154 decisions.
+
+## 2026-10-04 ~22:00Z — LST-F402 + LST-F404 landed; the Lead's two branches pushed (CC-1)
+- **LST-F402 (#25409, 1d4f87a884):** the ops-script write guard now shape-checks INSERT INTO and DELETE FROM, the way CC-2 already did UPDATE … SET. Prose is never read as a write. Selftest 17/17, including the Lead's 6 cases; the old regex fails the new selftest. Baseline 123 → 122 (removed `test-maintenance-damage-stub.ts`, which only reads a string). The r326 engine is untouched.
+- **LST-F404 (#25413, bc97418ea9):** the wall-clock ratchet now has a named `JUSTIFIED_WALL_CLOCK` (file → reason).
+  - A missing reason, a stale entry, or a count above OR below the baseline each FAIL.
+  - Selftest has the Lead's 5 cases. Final line: "13 unreviewed + 0 justified (named)".
+  - The list is empty because CC-2's 0037e76ecf had already anchored all three files the Lead measured (16 → 13).
+- **Lead branches:** the claim is rebuilt on main as #25410. The original rewrote the whole registry from an older base and would have dropped 2 newer claims. LST-F400 is rebased with CLAIMED-NUMBERS.json dropped, as #25411.
+- **Not mine, reported as asked:** `verify-geocode-provider-is-reachable` makes a network call. It belongs in the CI phase, not the local pre-push; it did not block my pushes today.
+- **AUTH-400:** rehearsal-2 (br-small-leaf-akjde74y) is voiding with the root-cause fixes (two-way reversal links + one-reversal index, live-lines document void, settlement link refusal, sourced escrow deposit idempotency, LIFO + reclassify undo). Push follows its proof. Prod is untouched.
