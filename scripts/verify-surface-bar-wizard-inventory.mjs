@@ -28,6 +28,9 @@ const FILE_OWNED_BY_LEAF = {
   "components/border-crossing/WizardStep6.tsx": "dispatch.wizard.border_crossing_wizard_page",
   // Generic multi-step chrome used by IFTA report runners — not a top-level product wizard leaf.
   "components/reports/ifta/StepWizard.tsx": "FILE_OWNED:reports.ifta.step_wizard_shell",
+  // U17 (CC-2) — the reclassify panel is a shared shell, not a top-level wizard: the Settlement Creator drawer hosts it
+  // (its own folder) and the Expenses list opens the same panel in a drawer. Owned by a REAL leaf id (checked below).
+  "pages/settlements/WizardReclassifyPanel.tsx": "settlements.drawer.creator",
 };
 
 function walk(dir, out = []) {
