@@ -104,6 +104,14 @@ function runChecks(root = ROOT) {
     const src = fs.readFileSync(abs, "utf8");
     if (!c.pattern.test(src)) fails.push(`${c.name}: pattern miss in ${c.file}`);
   }
+  // BANK-F91355 leftover refuse — VoidReasonModal page-scoped text token ratchet
+  const voidRel = "apps/frontend/src/components/accounting/VoidReasonModal.tsx";
+  const voidAbs = path.join(root, voidRel);
+  if (fs.existsSync(voidAbs)) {
+    const voidSrc = fs.readFileSync(voidAbs, "utf8");
+    if (voidSrc.includes("text-[11px]")) fails.push(`${voidRel}: leftover text-[11px]`);
+    if (voidSrc.includes("#8A92AB")) fails.push(`${voidRel}: leftover off-scale muted #8A92AB`);
+  }
   return fails;
 }
 
@@ -119,6 +127,24 @@ function selftest() {
     const planted = runChecks(tmp);
     if (planted.length < CHECKS.length) {
       console.error(`${LABEL} SELFTEST FAIL — planted chrome misses not caught (${planted.length})`);
+      process.exit(1);
+    }
+    // BANK-F91355 leftover plant
+    const voidRel = "apps/frontend/src/components/accounting/VoidReasonModal.tsx";
+    const liveVoid = fs.readFileSync(path.join(ROOT, voidRel), "utf8");
+    const plantAbs = path.join(tmp, voidRel);
+    fs.mkdirSync(path.dirname(plantAbs), { recursive: true });
+    fs.writeFileSync(plantAbs, liveVoid + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n');
+    // Copy remaining CHECK files as live so only leftover fails
+    for (const c of CHECKS) {
+      if (c.file === voidRel) continue;
+      const abs = path.join(tmp, c.file);
+      fs.mkdirSync(path.dirname(abs), { recursive: true });
+      fs.writeFileSync(abs, fs.readFileSync(path.join(ROOT, c.file), "utf8"));
+    }
+    const leftoverPlanted = runChecks(tmp);
+    if (!leftoverPlanted.some((f) => f.includes("leftover text-[11px]"))) {
+      console.error(`${LABEL} SELFTEST FAIL — VoidReasonModal leftover plant escaped`);
       process.exit(1);
     }
     console.log(`${LABEL} SELFTEST PASS (poison trips ${planted.length})`);
