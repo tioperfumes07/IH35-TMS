@@ -258,6 +258,11 @@ jobs:
       - name: verify:accounting-subnav-grouped
         run: npm run verify:accounting-subnav-grouped
 
+      - name: verify:bill-status-filter-vocabulary --selftest
+        run: node scripts/verify-bill-status-filter-uses-shared-vocabulary.mjs --selftest
+      - name: verify:bill-status-filter-vocabulary
+        run: npm run verify:bill-status-filter-vocabulary
+
       - name: verify:settlements-sidebar
         run: npm run verify:settlements-sidebar
 

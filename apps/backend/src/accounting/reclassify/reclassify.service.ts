@@ -186,16 +186,16 @@ const LINE_FROM = `
             UNION ALL
             SELECT bl.item_id, bl.load_id, COALESCE(bl.unit_id, b.unit_id), b.driver_id, COALESCE(bl.equipment_id, b.trailer_id), b.mdata_vendor_id
               FROM accounting.bill_lines bl JOIN accounting.bills b ON b.id = bl.bill_id
-             WHERE p.source_transaction_type = 'bill' AND bl.id = (CASE WHEN length(p.source_transaction_line_id) = 36 AND p.source_transaction_line_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' THEN p.source_transaction_line_id::uuid END)
+             WHERE p.source_transaction_type = 'bill' AND bl.id::text = (CASE WHEN length(p.source_transaction_line_id) = 36 AND p.source_transaction_line_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' THEN lower(p.source_transaction_line_id) END)
             UNION ALL
             SELECT il.item_id, il.source_load_id, NULL::uuid, NULL::uuid, NULL::uuid, NULL::uuid FROM accounting.invoice_lines il
-             WHERE p.source_transaction_type = 'invoice' AND il.id = (CASE WHEN length(p.source_transaction_line_id) = 36 AND p.source_transaction_line_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' THEN p.source_transaction_line_id::uuid END)
+             WHERE p.source_transaction_type = 'invoice' AND il.id::text = (CASE WHEN length(p.source_transaction_line_id) = 36 AND p.source_transaction_line_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' THEN lower(p.source_transaction_line_id) END)
             UNION ALL
             SELECT NULL::uuid, ft.load_id, ft.unit_id, ft.driver_id, ft.trailer_id, ft.vendor_id FROM fuel.fuel_transactions ft
-             WHERE p.source_transaction_type = 'fuel_event' AND ft.id = (CASE WHEN length(p.source_transaction_id) = 36 AND p.source_transaction_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' THEN p.source_transaction_id::uuid END)
+             WHERE p.source_transaction_type = 'fuel_event' AND ft.id::text = (CASE WHEN length(p.source_transaction_id) = 36 AND p.source_transaction_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' THEN lower(p.source_transaction_id) END)
             UNION ALL
             SELECT NULL::uuid, NULL::uuid, NULL::uuid, ds.driver_id, NULL::uuid, NULL::uuid FROM driver_finance.driver_settlements ds
-             WHERE p.source_transaction_type = 'driver_settlement' AND ds.id = (CASE WHEN length(p.source_transaction_id) = 36 AND p.source_transaction_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' THEN p.source_transaction_id::uuid END)
+             WHERE p.source_transaction_type = 'driver_settlement' AND ds.id::text = (CASE WHEN length(p.source_transaction_id) = 36 AND p.source_transaction_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' THEN lower(p.source_transaction_id) END)
             LIMIT 1
           ) dl ON true
           LEFT JOIN LATERAL (

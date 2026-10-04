@@ -217,6 +217,8 @@ export async function runFuelPurchasePush(
     [operatingCompanyId]
   );
   const rows = rowsRes.rows as FuelPushRow[];
+  // Degrade WITH a signal: the side table is absent, so pump time is derived on read (below) -- logged by name.
+  if (!derivedReady) console.warn("[fuel-purchase-push] fuel_fuel_transaction_derivations_unavailable -- deriving pump time on read");
   // LEAD RULING 2026-10-01 (each seat builds its engine end to end): when the derivation side table is
   // not there, E-23 derives the pump time ON READ by calling the shared derivation engine
   // (computeFuelTimeDerivations — the truck's own fuel-stop dwell), never a copy of it.

@@ -123,6 +123,8 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
   // canonical snapshot; guarded here so real driven miles degrade to "—" (never 0) where the table is absent.
   const odoRes = await client.query<{ ok: boolean }>(`SELECT to_regclass('telematics.load_odometer_segments') IS NOT NULL AS ok`);
   const hasOdometerSegments = Boolean(odoRes.rows[0]?.ok);
+  // Degrade WITH a signal: miles_real stays null (rendered "—", never 0) and the absence is logged by name.
+  if (!hasOdometerSegments) console.warn("[tour-readout] telematics_load_odometer_segments_unavailable -- miles_real degrades to null");
   const milesRealSql = hasOdometerSegments
     ? `(SELECT SUM(seg.driven_miles) FROM telematics.load_odometer_segments seg WHERE seg.load_id = l.id AND seg.operating_company_id = l.operating_company_id)`
     : `NULL::numeric`;

@@ -125,6 +125,10 @@ describe("Faro reserve posters — post what the line says", () => {
   it("rsv deposit refuses (it posts with its payment match); escrow held matches the funding JE without a new entry", async () => {
     await expect(postFaroReserveEntryOnClient(client(entry({ entry_kind: "rsv_deposit", faro_entry_id: null, faro_invoice_number: null, amount_cents: "500000" })), { operating_company_id: OPCO, entry_id: "e-1", actor_user_id: "u", actor_role: "Owner" })).rejects.toThrow("faro_rsv_deposit_posts_with_its_payment_match");
     const r = await postFaroReserveEntryOnClient(client(entry({ register: "escrow", entry_kind: "escrow_held", amount_cents: "4500" })), { operating_company_id: OPCO, entry_id: "e-1", actor_user_id: "u", actor_role: "Owner" });
+    // postFaroReserveEntryOnClient returns a union: the posted-entry branch, or the
+    // interest_accrual_awaiting_approval branch (which carries no journal_entry_id). Narrow on the
+    // discriminating field so the assertion is type-safe and names the wrong branch out loud.
+    if (!("journal_entry_id" in r)) throw new Error(`expected the posted-entry branch, got ${JSON.stringify(r)}`);
     expect(r.journal_entry_id).toBe("je-fund");
     expect(mockCreateJe).not.toHaveBeenCalled();
   });
@@ -145,6 +149,7 @@ describe("Faro reserve posters — post what the line says", () => {
       return { rows: [], rowCount: 1 };
     }) };
     const r = await postFaroReserveEntryOnClient(c, { operating_company_id: OPCO, entry_id: "e-cash", actor_user_id: "u", actor_role: "Owner" });
+    if (!("journal_entry_id" in r)) throw new Error(`expected the posted-entry branch, got ${JSON.stringify(r)}`);
     expect(r.paired_entry_id).toBe("e-esc");
     const je = mockCreateJe.mock.calls[0]![1];
     expect(je.postings[0]).toMatchObject({ account_id: "acct:factor_cash_reserve_held", debit_or_credit: "debit", source_transaction_id: "e-cash" });
