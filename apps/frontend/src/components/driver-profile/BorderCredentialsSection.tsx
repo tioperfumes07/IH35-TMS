@@ -182,7 +182,7 @@ export function BorderCredentialsSection({
         <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {cards.map(([title, primary, exp]) => (
             <div key={title} className="rounded-sm border border-gray-100 p-3">
-              <div className="text-[11px] uppercase text-gray-500">{title}</div>
+              <div className="text-xs uppercase text-gray-500">{title}</div>
               <div className="text-xs font-medium text-gray-900">{fmt(primary)}</div>
               {exp ? <div className={`text-xs ${expClass(String(exp))}`}>Exp {String(exp)}</div> : null}
             </div>
@@ -274,7 +274,7 @@ export function BorderCredentialsSection({
                     }
                   />
                   {credentialFiles[key] ? (
-                    <span className="mt-1 block text-[11px] text-slate-500">{credentialFiles[key]!.name}</span>
+                    <span className="mt-1 block text-xs text-slate-500">{credentialFiles[key]!.name}</span>
                   ) : null}
                 </FieldGroup>
               ))}
@@ -300,7 +300,7 @@ export function BorderCredentialsSection({
 function FieldGroup({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
-      <div className="mb-1 text-[11px] font-semibold uppercase text-gray-500">{label}</div>
+      <div className="mb-1 text-xs font-semibold uppercase text-gray-500">{label}</div>
       {children}
     </div>
   );

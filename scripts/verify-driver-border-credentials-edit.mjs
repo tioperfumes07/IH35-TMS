@@ -65,6 +65,12 @@ export function validate(section, routes, page, apiTypes) {
     }
   }
 
+  // BANK-F91312 leftover refuse — BorderCredentialsSection.tsx page-scoped text token ratchet
+  if (section.includes("text-[11px]")) failures.push("BorderCredentialsSection.tsx: leftover text-[11px]");
+  if (section.includes("#8A92AB") || section.includes("#334155")) {
+    failures.push("BorderCredentialsSection.tsx: leftover off-scale muted");
+  }
+
   return failures;
 }
 
@@ -122,6 +128,13 @@ function runSelfTest() {
       name: "planted PATCH omission fails",
       passed: validate(validSection.replace("updateDriver(driverId, borderFormStateToUpdatePayload(form))", ""), validRoutes, validPage, validTypes).some(
         (f) => f.includes("PATCH"),
+      ),
+    },
+    // BANK-F91312 leftover plant — BorderCredentialsSection page-scoped text token ratchet
+    {
+      name: "leftover plant fails",
+      passed: validate(validSection + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n', validRoutes, validPage, validTypes).some(
+        (f) => f.includes("leftover text-[11px]"),
       ),
     },
   ];
