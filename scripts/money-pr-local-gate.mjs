@@ -909,6 +909,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-reefer-fuel-credit",
     ["apps/backend/src/fuel/", "apps/backend/src/feed/seed-settlement-document.service.ts", "scripts/alwaystrack/parse_settlements.py", "db/migrations/202615400700_reefer_fuel_type_from_relay_product.sql", "apps/backend/src/accounting/reclassify/", "apps/backend/src/accounting/reefer-fuel-credit.routes.ts", "apps/backend/src/driver-finance/settlement-creator.service.ts", "apps/backend/src/ifta/", "apps/frontend/src/pages/reports/ReeferFuelCreditReportPage.tsx", "apps/frontend/src/pages/settlements/SettlementCreatorDrawer.tsx", "scripts/verify-reefer-fuel-credit.mjs"],
   ],
+  // CC-2 2026-10-04 (202615400800) — the reclassify batch CHECK counts every target the engine writes (load-only moves were refused).
+  [
+    "verify-reclassify-batch-check-covers-targets",
+    ["apps/backend/src/accounting/reclassify/", "db/migrations/", "scripts/verify-reclassify-batch-check-covers-targets.mjs"],
+  ],
   // ROUND 368.2(b) — a bank line may not sit matched to nothing (deferred constraint triggers, both sides).
   [
     "verify-no-bank-line-is-matched-to-nothing",
