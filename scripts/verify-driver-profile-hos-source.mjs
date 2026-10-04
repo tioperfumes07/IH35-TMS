@@ -16,6 +16,9 @@ function leftoverProblems(s = source) {
   const problems = [];
   if (s.driverPortal.includes("text-[11px]")) problems.push("leftover text-[11px]");
   if (s.driverPortal.includes("#8A92AB") || s.driverPortal.includes("#334155")) problems.push("leftover off-scale muted");
+  // BANK-F91346 leftover refuse — HOSStatusSection page-scoped text token ratchet
+  if (s.hosSection.includes("text-[11px]")) problems.push("HOSStatusSection.tsx: leftover text-[11px]");
+  if (s.hosSection.includes("#8A92AB")) problems.push("HOSStatusSection.tsx: leftover off-scale muted #8A92AB");
   return problems;
 }
 
@@ -49,6 +52,14 @@ if (process.argv.includes("--selftest")) {
   const leftoverFails = leftoverProblems(leftoverPlanted);
   if (!leftoverFails.includes("leftover text-[11px]") || !leftoverFails.includes("leftover off-scale muted")) {
     throw new Error("leftover plant escaped");
+  }
+  // BANK-F91346 leftover plant — HOSStatusSection
+  const hosPlanted = {
+    ...source,
+    hosSection: `${source.hosSection}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`,
+  };
+  if (!leftoverProblems(hosPlanted).some((p) => p.includes("HOSStatusSection.tsx: leftover text-[11px]"))) {
+    throw new Error("HOSStatusSection leftover plant escaped");
   }
   console.log("verify:driver-profile-hos-source SELFTEST PASS — 5/5 producer/refresh/error mutations red + leftover plant rejected");
   process.exit(0);
