@@ -1,8 +1,8 @@
 {
   "_comment": "ROUND 293 P0 shrink-only baseline for verify-ops-scripts-assert-not-production.mjs. These files predate the assertNotProduction() control (introduced 2026-09-30) and write to a Neon connection without it. Never add to this list to make a NEW violation pass -- only remove an entry once that file is retrofitted. A file not in this list that still fails the guard is a real, new violation and must be fixed, not baselined. [measured_at stamped 2026-09-30 so verify-no-stale-literals-in-guards accepts the tip-main baseline that shipped without it]",
-  "measurement_kind": "Codex X-16 source-only recheck: 436 scripts scanned, 125 violations / 125 existing entries; no baseline entries changed and no database read or write",
+  "measurement_kind": "LST-F402 (CC-1): shape-checked INSERT INTO / DELETE FROM / UPDATE ... SET; 475 scripts scanned, 122 violations / 122 entries. Removed scripts/test-maintenance-damage-stub.ts (a static check that only reads the string \"INSERT INTO safety.incidents\" from source — never a write).",
   "created_at": "2026-09-30",
-  "measured_at": "2026-09-30T11:50:00.000Z",
+  "measured_at": "2026-10-04T21:45:00.000Z",
   "files": [
     "scripts/__tests__/verify-sql-write-targets.test.mjs",
     "scripts/db-seed-test-fixtures.mjs",
@@ -122,7 +122,6 @@
     "scripts/ops/round29-5-unsettled-escrow-carryforward.ts",
     "scripts/ops/set24-void-duplicate-reimbursements.ts",
     "scripts/ops/void-duplicate-settlement-lines.ts",
-    "scripts/test-maintenance-damage-stub.ts",
     "scripts/verify-db-test-units-are-sample-data.mjs",
     "scripts/verify-no-bulk-test-void.mjs",
     "scripts/verify-no-leak-test-pollution.mjs",
