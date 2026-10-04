@@ -14382,5 +14382,295 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-driver-qualification-update-audit-failure-truth"
+  },
+  "16669": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-reactivate-clears-deactivated-at"
+  },
+  "16673": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-reference-enrichment-company-scope"
+  },
+  "16677": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-referral-forward-reverse-lifecycle"
+  },
+  "16681": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-report-draft-lifecycle"
+  },
+  "16685": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-residual-datepicker-label-associations"
+  },
+  "16689": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-retention"
+  },
+  "16693": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-roster-bulk-deactivate"
+  },
+  "16697": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-safety-cards-sort-combobox"
+  },
+  "16701": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-safety-training-range"
+  },
+  "16705": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-samsara-login-lifecycle"
+  },
+  "16709": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-scheduler-crons-registered"
+  },
+  "16713": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-scheduler-review-record-lifecycle"
+  },
+  "16717": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-scheduler-temp-cover-company-lifecycle"
+  },
+  "16721": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-scoring-no-db-writes"
+  },
+  "16725": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-status-action-draft-lifecycle"
+  },
+  "16729": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-team-replace-cas"
+  },
+  "16733": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-termination-company-date-compile"
+  },
+  "16737": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-training-expiry-field"
+  },
+  "16741": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-training-program-read-recovery"
+  },
+  "16745": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-vendor-mapping-monitor"
+  },
+  "16749": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-vendor-snapshot-company-isolation"
+  },
+  "16753": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-vendor-type-not-other"
+  },
+  "16757": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driverhub-unit-source"
+  },
+  "16761": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-drivers-fk-wired"
+  },
+  "16765": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-drivers-leave-canonical-inbox"
+  },
+  "16769": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-drivers-reference-catalogs-wired"
+  },
+  "16773": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-drivers-rls-scope"
+  },
+  "16777": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-drivers-team-create-picker"
+  },
+  "16781": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-drug-alcohol-dashboard-draw-company-lifecycle"
+  },
+  "16785": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-drug-test-update-audit-failure-truth"
+  },
+  "16789": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-drv03-server-side-dqf-hard-block-gate"
+  },
+  "16793": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-drv04-medical-card-create-chains-to-upload"
+  },
+  "16797": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-drv07-background-check-create-chains-to-upload"
+  },
+  "16801": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-dtc-auto-wo-dedup"
+  },
+  "16805": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-dtc-auto-wo-tenant-scope"
+  },
+  "16809": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-dvir-followup-wo-target"
+  },
+  "16813": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-dvir-severity-tag-identity"
+  },
+  "16817": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-dvir-submit-audit-company-scope"
+  },
+  "16821": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-edit-trailer-action-company-lifecycle"
+  },
+  "16825": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-edit-vehicle-modal-rbac-fields"
+  },
+  "16829": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-eld-audit-trail-status-driven-branches"
+  },
+  "16833": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-eld-audit-trail"
+  },
+  "16837": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-ent-audit-all-entity-types"
+  },
+  "16841": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-entitylink-has-label"
+  },
+  "16845": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-equipment-bulk-update-rls-where"
+  },
+  "16849": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-equipment-create-company-fk-identity"
+  },
+  "16853": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-equipment-deactivate-rls"
+  },
+  "16857": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-equipment-patch-company-lifecycle"
+  },
+  "16861": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-equipment-plate-archive-audit"
+  },
+  "16865": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-equipment-plate-create-company-identity"
+  },
+  "16869": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-equipment-transfer-initiate-identity"
+  },
+  "16873": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-event-log-worm"
+  },
+  "16877": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-excel-upload-jobs-rls-forced"
+  },
+  "16881": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-export-upload-rate-limits"
+  },
+  "16885": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-external-fine-convert-company-lifecycle"
+  },
+  "16889": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fail-d1-update-load-dqf"
+  },
+  "16893": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fault-auto-wo-24h-dedup"
+  },
+  "16897": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fault-auto-wo-idempotency"
   }
 }
