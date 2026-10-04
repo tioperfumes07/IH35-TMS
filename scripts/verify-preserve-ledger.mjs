@@ -46,17 +46,28 @@ try {
   if (!deployed) {
     console.log("verify-preserve-ledger: schema not deployed yet — static checks only");
   } else {
-    const lag = (await c.query(`
-      SELECT
-        (SELECT count(*) FROM telematics.vehicle_locations p WHERE p.created_at BETWEEN now() - interval '2 days' AND now() - interval '1 day'
-           AND NOT EXISTS (SELECT 1 FROM preserve.vehicle_positions x WHERE x.captured_at = p.captured_at
-                             AND x.observation_id = coalesce(p.source_raw_samsara_event_id, p.raw_samsara_event_id, 'none:' || p.captured_at::text)))::int AS positions,
-        (SELECT count(*) FROM telematics.unit_stop_events s WHERE s.created_at BETWEEN now() - interval '2 days' AND now() - interval '1 day'
-           AND NOT EXISTS (SELECT 1 FROM preserve.unit_stop_events x WHERE x.started_at = s.started_at))::int AS stops,
-        (SELECT count(*) FROM samsara.hos_snapshots h WHERE h.created_at BETWEEN now() - interval '2 days' AND now() - interval '1 day'
-           AND NOT EXISTS (SELECT 1 FROM preserve.hos_snapshots x WHERE x.polled_at = h.polled_at))::int AS hos`)).rows[0];
-    console.log(`preserve lag (source rows 1-2 days old not yet preserved): positions ${lag.positions}, stop events ${lag.stops}, HOS ${lag.hos}`);
-    if (lag.positions + lag.stops + lag.hos > 0) fails.push(`the preservation ledger is behind: ${JSON.stringify(lag)}`);
+    // Anchored to the preservation job's LAST SUCCESSFUL RUN (_system.background_jobs), never this guard's clock (ROUND 251
+    // item 7). That run copies every source row created in the 3 days before it, so a source row created 1-2 days before it
+    // and still not preserved is a run that skipped data — the same question the old now()-relative window asked, minus the
+    // dependence on when CI happens to run. Whether the job is still running at all is the heartbeat monitor's question.
+    const run = (await c.query(`SELECT last_successful_run_at AS at FROM _system.background_jobs WHERE job_name = 'telematics.preservation'`)).rows[0]?.at ?? null;
+    if (!run) {
+      const any = (await c.query(`SELECT EXISTS (SELECT 1 FROM telematics.vehicle_locations) OR EXISTS (SELECT 1 FROM samsara.hos_snapshots) AS any`)).rows[0].any;
+      if (any) fails.push("the preservation job (telematics.preservation) has never completed successfully, but source telematics rows exist");
+      else console.log("preserve lag: no successful preservation run recorded and no source rows yet");
+    } else {
+      const lag = (await c.query(`
+        SELECT
+          (SELECT count(*) FROM telematics.vehicle_locations p WHERE p.created_at BETWEEN $1::timestamptz - interval '2 days' AND $1::timestamptz - interval '1 day'
+             AND NOT EXISTS (SELECT 1 FROM preserve.vehicle_positions x WHERE x.captured_at = p.captured_at
+                               AND x.observation_id = coalesce(p.source_raw_samsara_event_id, p.raw_samsara_event_id, 'none:' || p.captured_at::text)))::int AS positions,
+          (SELECT count(*) FROM telematics.unit_stop_events s WHERE s.created_at BETWEEN $1::timestamptz - interval '2 days' AND $1::timestamptz - interval '1 day'
+             AND NOT EXISTS (SELECT 1 FROM preserve.unit_stop_events x WHERE x.started_at = s.started_at))::int AS stops,
+          (SELECT count(*) FROM samsara.hos_snapshots h WHERE h.created_at BETWEEN $1::timestamptz - interval '2 days' AND $1::timestamptz - interval '1 day'
+             AND NOT EXISTS (SELECT 1 FROM preserve.hos_snapshots x WHERE x.polled_at = h.polled_at))::int AS hos`, [run])).rows[0];
+      console.log(`preserve lag (source rows created 1-2 days before the last successful preservation run ${new Date(run).toISOString()}, not preserved): positions ${lag.positions}, stop events ${lag.stops}, HOS ${lag.hos}`);
+      if (lag.positions + lag.stops + lag.hos > 0) fails.push(`the preservation ledger is behind its own last run: ${JSON.stringify(lag)}`);
+    }
   }
   await c.query("ROLLBACK");
 } finally { await c.end(); }
