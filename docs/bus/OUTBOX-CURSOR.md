@@ -1,3 +1,9 @@
+## 2026-10-04T07:54Z · BANK-F91445 C-23 kanban Dispatched-to-pickup WIRED CI · tip `1fdf72ea2d`
+
+DONE: #25187 — verify-steps/3956 now runs ops/verify-c23-kanban-dispatched-pickup --selftest.
+
+NEXT: BANK-F91446 wire C-24 QBO parity tail into 12342 · C-21/C-22 fail=triage · skip pile parked · HH07 no migrations.
+
 ## 2026-10-04T07:48Z · BANK-F91444 C-37 house table format WIRED CI · tip `86512f16cc`
 
 DONE: #25186 — verify-steps/1176 now runs ops/verify-c37-house-table-format --selftest.
