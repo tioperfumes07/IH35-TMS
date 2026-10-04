@@ -30,16 +30,16 @@ const assetColumns: Array<ParityColumn<LeaseAssetRow>> = [
       r.unit_id ? <EntityLink kind="unit" id={r.unit_id} label={r.unit_number ?? "Unit"} className="underline" />
       : r.equipment_id ? <EntityLink kind="trailer" id={r.equipment_id} label={r.equipment_number ?? "Trailer"} className="underline" /> : "—",
   },
-  { key: "monthly_amount_cents", label: "Monthly amount", className: "text-right", render: (r) => formatUsdCentsTable(r.monthly_amount_cents ?? 0) },
-  { key: "start_date", label: "From", render: (r) => (r.start_date ? formatDateUS(r.start_date) : "—") },
-  { key: "end_date", label: "To", render: (r) => (r.end_date ? formatDateUS(r.end_date) : "Open") },
+  { key: "monthly_amount_cents", label: "Monthly amount", sortable: true, className: "text-right", render: (r) => formatUsdCentsTable(r.monthly_amount_cents ?? 0) },
+  { key: "start_date", label: "From", sortable: true, render: (r) => (r.start_date ? formatDateUS(r.start_date) : "—") },
+  { key: "end_date", label: "To", sortable: true, render: (r) => (r.end_date ? formatDateUS(r.end_date) : "Open") },
 ];
 const billColumns: Array<ParityColumn<LeaseBillRow>> = [
   { key: "bill", label: "Bill", alwaysVisible: true, render: (r) => <EntityLink kind="bill" id={r.id} label={r.display_id ?? r.bill_number ?? "Bill"} className="underline" /> },
-  { key: "lease_period_start", label: "Lease month", render: (r) => (r.lease_period_start ? formatDateUS(r.lease_period_start).slice(0, 2) + "/" + r.lease_period_start.slice(0, 4) : "—") },
-  { key: "amount_cents", label: "Amount", className: "text-right", render: (r) => formatUsdCentsTable(r.amount_cents) },
-  { key: "paid_cents", label: "Paid", className: "text-right", render: (r) => formatUsdCentsTable(r.paid_cents) },
-  { key: "status", label: "Status", render: (r) => r.status },
+  { key: "lease_period_start", label: "Lease month", sortable: true, render: (r) => (r.lease_period_start ? formatDateUS(r.lease_period_start).slice(0, 2) + "/" + r.lease_period_start.slice(0, 4) : "—") },
+  { key: "amount_cents", label: "Amount", sortable: true, className: "text-right", render: (r) => formatUsdCentsTable(r.amount_cents) },
+  { key: "paid_cents", label: "Paid", sortable: true, className: "text-right", render: (r) => formatUsdCentsTable(r.paid_cents) },
+  { key: "status", label: "Status", sortable: true, render: (r) => r.status },
   { key: "last_payment_id", label: "Payment", render: (r) => (r.last_payment_id ? <EntityLink kind="bill_payment" id={r.last_payment_id} label="Payment" className="underline" /> : "—") },
 ];
 
@@ -47,14 +47,14 @@ const billColumns: Array<ParityColumn<LeaseBillRow>> = [
 function scheduleColumns(labels: Map<string, string>): Array<ParityColumn<LesseeSchedulePeriodRow>> {
   return [
     { key: "period_start", label: "Month", alwaysVisible: true, render: (r) => `${r.period_start.slice(5, 7)}/${r.period_start.slice(0, 4)}` },
-    { key: "lease_asset_line_id", label: "Unit / trailer", render: (r) => labels.get(r.lease_asset_line_id) ?? "—" },
-    { key: "payment_cents", label: "Payment", className: "text-right", render: (r) => formatUsdCentsTable(r.payment_cents) },
-    { key: "interest_cents", label: "Interest", className: "text-right", render: (r) => formatUsdCentsTable(r.interest_cents) },
-    { key: "principal_cents", label: "Principal", className: "text-right", render: (r) => formatUsdCentsTable(r.principal_cents) },
-    { key: "liability_close_cents", label: "Lease liability", className: "text-right", render: (r) => formatUsdCentsTable(r.liability_close_cents) },
-    { key: "rou_amortization_cents", label: "ROU amortization", className: "text-right", render: (r) => formatUsdCentsTable(r.rou_amortization_cents) },
-    { key: "rou_close_cents", label: "ROU asset", className: "text-right", render: (r) => formatUsdCentsTable(r.rou_close_cents) },
-    { key: "lease_cost_cents", label: "Lease cost", className: "text-right", render: (r) => formatUsdCentsTable(r.lease_cost_cents) },
+    { key: "lease_asset_line_id", label: "Unit / trailer", sortable: true, render: (r) => labels.get(r.lease_asset_line_id) ?? "—" },
+    { key: "payment_cents", label: "Payment", sortable: true, className: "text-right", render: (r) => formatUsdCentsTable(r.payment_cents) },
+    { key: "interest_cents", label: "Interest", sortable: true, className: "text-right", render: (r) => formatUsdCentsTable(r.interest_cents) },
+    { key: "principal_cents", label: "Principal", sortable: true, className: "text-right", render: (r) => formatUsdCentsTable(r.principal_cents) },
+    { key: "liability_close_cents", label: "Lease liability", sortable: true, className: "text-right", render: (r) => formatUsdCentsTable(r.liability_close_cents) },
+    { key: "rou_amortization_cents", label: "ROU amortization", sortable: true, className: "text-right", render: (r) => formatUsdCentsTable(r.rou_amortization_cents) },
+    { key: "rou_close_cents", label: "ROU asset", sortable: true, className: "text-right", render: (r) => formatUsdCentsTable(r.rou_close_cents) },
+    { key: "lease_cost_cents", label: "Lease cost", sortable: true, className: "text-right", render: (r) => formatUsdCentsTable(r.lease_cost_cents) },
     { key: "bill_id", label: "Bill", render: (r) => (r.bill_id ? <EntityLink kind="bill" id={r.bill_id} label={r.bill_display_id ?? "Bill"} className="underline" /> : "—") },
     { key: "accretion_je_id", label: "Journal entry", render: (r) => (r.accretion_je_id ? <EntityLink kind="journal_entry" id={r.accretion_je_id} label="JE" className="underline" /> : r.posted_at ? "posted (zero)" : "—") },
   ];

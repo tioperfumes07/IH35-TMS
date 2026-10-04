@@ -58,7 +58,7 @@ export function MaintKpiRows({ kpis, isError = false, onRetry, compact = false }
             title="Couldn't load maintenance KPIs"
             status={0}
             message="Work-order and PM figures are unavailable until the dashboard KPI query recovers."
-            onRetry={onRetry}
+            onRetry={() => onRetry?.()}
           />
         </div>
       ) : (

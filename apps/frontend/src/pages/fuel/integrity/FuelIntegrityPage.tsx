@@ -69,11 +69,11 @@ export function FuelIntegrityPage() {
   const cardCols: ParityColumn<CardRowVerdict>[] = [
     {
       key: "transaction_at",
-      label: "Date",
+      label: "Date", sortable: true,
       render: (row) => formatDateTimeUS(row.transaction_at),
     },
-    { key: "unit_number", label: "Unit", render: (row) => row.unit_number ?? "—" },
-    { key: "fuel_type", label: "Fuel type", render: (row) => row.fuel_type ?? "—" },
+    { key: "unit_number", label: "Unit", sortable: true, render: (row) => row.unit_number ?? "—" },
+    { key: "fuel_type", label: "Fuel type", sortable: true, render: (row) => row.fuel_type ?? "—" },
     {
       key: "gallons",
       label: "Gallons",
@@ -112,12 +112,12 @@ export function FuelIntegrityPage() {
     },
     {
       key: "rules_matched",
-      label: "Rules matched",
+      label: "Rules matched", sortable: true,
       render: (row) => (row.rules_matched.length === 0 ? "—" : row.rules_matched.join(", ")),
     },
     {
       key: "why",
-      label: "Why",
+      label: "Why", sortable: true,
       allowWrap: true,
       render: (row) => row.why,
     },
@@ -126,10 +126,10 @@ export function FuelIntegrityPage() {
   const relayCols: ParityColumn<RelayFillGpsVerdict>[] = [
     {
       key: "pump_time",
-      label: "Pump time",
+      label: "Pump time", sortable: true,
       render: (row) => formatDateTimeUS(row.pump_time),
     },
-    { key: "station", label: "Station", render: (row) => row.station || "—" },
+    { key: "station", label: "Station", sortable: true, render: (row) => row.station || "—" },
     {
       key: "gallons",
       label: "Gallons",
@@ -171,21 +171,21 @@ export function FuelIntegrityPage() {
         <StatusBadge variant={verdictBadgeVariant(row.verdict)}>{gpsVerdictLabel(row.verdict)}</StatusBadge>
       ),
     },
-    { key: "why", label: "Why", allowWrap: true, render: (row) => row.why },
+    { key: "why", label: "Why", sortable: true, allowWrap: true, render: (row) => row.why },
   ];
 
   const derivedCols: ParityColumn<FuelTimeDerivation>[] = [
-    { key: "local_date", label: "Date", render: (row) => formatDateUS(row.local_date) },
-    { key: "unit_number", label: "Unit", render: (row) => row.unit_number ?? "—" },
-    { key: "vendor_name", label: "Vendor", render: (row) => row.vendor_name ?? "—" },
+    { key: "local_date", label: "Date", sortable: true, render: (row) => formatDateUS(row.local_date) },
+    { key: "unit_number", label: "Unit", sortable: true, render: (row) => row.unit_number ?? "—" },
+    { key: "vendor_name", label: "Vendor", sortable: true, render: (row) => row.vendor_name ?? "—" },
     {
       key: "transaction_at_derived",
-      label: "Derived time",
+      label: "Derived time", sortable: true,
       render: (row) => (row.transaction_at_derived ? formatDateTimeUS(row.transaction_at_derived) : "—"),
     },
-    { key: "state_derived", label: "State", render: (row) => row.state_derived ?? "—" },
-    { key: "confidence", label: "Confidence", render: (row) => row.confidence ?? "—" },
-    { key: "reason", label: "Reason", allowWrap: true, render: (row) => row.reason },
+    { key: "state_derived", label: "State", sortable: true, render: (row) => row.state_derived ?? "—" },
+    { key: "confidence", label: "Confidence", sortable: true, render: (row) => row.confidence ?? "—" },
+    { key: "reason", label: "Reason", sortable: true, allowWrap: true, render: (row) => row.reason },
   ];
 
   const verdicts = verdictsQuery.data;

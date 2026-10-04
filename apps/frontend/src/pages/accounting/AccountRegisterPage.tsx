@@ -628,11 +628,11 @@ export function AccountRegisterPage() {
   const auditColumns: Array<ParityColumn<AccountingAuditTrailEvent>> = [
     {
       key: "occurred_at",
-      label: "When",
+      label: "When", sortable: true,
       cellClass: "whitespace-nowrap",
       render: (e) => new Date(e.occurred_at).toLocaleString(),
     },
-    { key: "event_class", label: "Action", render: (e) => e.event_class.replace("accounting.", "") },
+    { key: "event_class", label: "Action", sortable: false, render: (e) => e.event_class.replace("accounting.", "") },
     {
       key: "journal_entry_id",
       label: "Journal entry",
@@ -644,10 +644,10 @@ export function AccountRegisterPage() {
         />
       ),
     },
-    { key: "debit_or_credit", label: "Dr/Cr", render: (e) => e.debit_or_credit },
+    { key: "debit_or_credit", label: "Dr/Cr", sortable: true, render: (e) => e.debit_or_credit },
     {
       key: "amount_cents",
-      label: "Amount",
+      label: "Amount", sortable: true,
       className: "text-right",
       cellClass: "text-right tabular-nums",
       render: (e) => fmtCents(e.amount_cents),

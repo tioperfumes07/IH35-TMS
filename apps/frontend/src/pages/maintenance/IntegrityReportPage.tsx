@@ -346,12 +346,12 @@ export function IntegrityReportPage({ operatingCompanyId }: { operatingCompanyId
     },
     {
       key: "unit",
-      label: "Unit",
+      label: "Unit", sortable: true,
       render: (row) => anomalyUnitLabel(row) ?? "—",
     },
-    { key: "flag", label: "Flag", render: (row) => anomalyFlagLabel(row) },
-    { key: "detail", label: "Detail", render: (row) => anomalyDetail(row) },
-    { key: "when", label: "When", render: (row) => anomalyWhen(row) ?? "—" },
+    { key: "flag", label: "Flag", sortable: true, render: (row) => anomalyFlagLabel(row) },
+    { key: "detail", label: "Detail", sortable: true, render: (row) => anomalyDetail(row) },
+    { key: "when", label: "When", sortable: true, render: (row) => anomalyWhen(row) ?? "—" },
     {
       // ROUND 305 B-50 — the flag's own period, so a reviewer can see what window it was measured over.
       key: "period",
@@ -361,13 +361,13 @@ export function IntegrityReportPage({ operatingCompanyId }: { operatingCompanyId
     },
     {
       key: "arithmetic",
-      label: "Arithmetic",
+      label: "Arithmetic", sortable: true,
       allowWrap: true,
       render: (row) => row.arithmetic ?? "—",
     },
     {
       key: "evidence",
-      label: "Evidence",
+      label: "Evidence", sortable: true,
       allowWrap: true,
       render: (row) => formatEvidenceFills(row.evidence_fills),
     },
@@ -387,7 +387,7 @@ export function IntegrityReportPage({ operatingCompanyId }: { operatingCompanyId
       label: "Status",
       render: (row) => <StatusBadge variant={STATUS_BADGE_VARIANT[row.status]}>{row.status.replace(/_/g, " ")}</StatusBadge>,
     },
-    { key: "basis", label: "Basis", allowWrap: true, render: (row) => row.basis },
+    { key: "basis", label: "Basis", sortable: true, allowWrap: true, render: (row) => row.basis },
     {
       key: "signals",
       label: "Signals",
@@ -406,8 +406,8 @@ export function IntegrityReportPage({ operatingCompanyId }: { operatingCompanyId
 
   // ROUND 305 B-49 — geofence findings, attributed or gap.
   const findingsCols: ParityColumn<FindingRow>[] = [
-    { key: "occurred_at", label: "Occurred", render: (row) => (row.occurred_at ? formatDateTimeUS(row.occurred_at) : "—") },
-    { key: "anomaly_class", label: "Class", render: (row) => row.anomaly_class },
+    { key: "occurred_at", label: "Occurred", sortable: true, render: (row) => (row.occurred_at ? formatDateTimeUS(row.occurred_at) : "—") },
+    { key: "anomaly_class", label: "Class", sortable: true, render: (row) => row.anomaly_class },
     {
       key: "unit",
       label: "Unit",
@@ -418,7 +418,7 @@ export function IntegrityReportPage({ operatingCompanyId }: { operatingCompanyId
           "—"
         ),
     },
-    { key: "unit_fleet_class", label: "Fleet class", render: (row) => row.unit_fleet_class ?? "—" },
+    { key: "unit_fleet_class", label: "Fleet class", sortable: true, render: (row) => row.unit_fleet_class ?? "—" },
     {
       key: "driver",
       label: "Driver",
@@ -436,7 +436,7 @@ export function IntegrityReportPage({ operatingCompanyId }: { operatingCompanyId
     },
     {
       key: "gap_reason",
-      label: "Gap reason / note",
+      label: "Gap reason / note", sortable: true,
       allowWrap: true,
       render: (row) => (row.gap_reason ? GAP_REASON_LABEL[row.gap_reason] : row.attribution_note),
     },
@@ -444,8 +444,8 @@ export function IntegrityReportPage({ operatingCompanyId }: { operatingCompanyId
 
   // ROUND 305 B-48 — damage / accident / tire events, attributed or gap.
   const damageEventCols: ParityColumn<DamageEventRow>[] = [
-    { key: "occurred_at", label: "Occurred", render: (row) => (row.occurred_at ? formatDateTimeUS(row.occurred_at) : "—") },
-    { key: "source", label: "Source", render: (row) => row.source.replace(/_/g, " ") },
+    { key: "occurred_at", label: "Occurred", sortable: true, render: (row) => (row.occurred_at ? formatDateTimeUS(row.occurred_at) : "—") },
+    { key: "source", label: "Source", sortable: true, render: (row) => row.source.replace(/_/g, " ") },
     {
       key: "unit",
       label: "Unit",
@@ -456,7 +456,7 @@ export function IntegrityReportPage({ operatingCompanyId }: { operatingCompanyId
           "—"
         ),
     },
-    { key: "unit_fleet_class", label: "Fleet class", render: (row) => row.unit_fleet_class ?? "—" },
+    { key: "unit_fleet_class", label: "Fleet class", sortable: true, render: (row) => row.unit_fleet_class ?? "—" },
     {
       key: "driver",
       label: "Driver",
@@ -467,8 +467,8 @@ export function IntegrityReportPage({ operatingCompanyId }: { operatingCompanyId
           "—"
         ),
     },
-    { key: "cost_cents", label: "Cost", render: (row) => (row.cost_cents == null ? "—" : formatUsdCents(row.cost_cents)) },
-    { key: "detail", label: "Detail", render: (row) => row.detail ?? "—" },
+    { key: "cost_cents", label: "Cost", sortable: true, render: (row) => (row.cost_cents == null ? "—" : formatUsdCents(row.cost_cents)) },
+    { key: "detail", label: "Detail", sortable: true, render: (row) => row.detail ?? "—" },
     {
       key: "attribution",
       label: "Attribution",
@@ -476,7 +476,7 @@ export function IntegrityReportPage({ operatingCompanyId }: { operatingCompanyId
     },
     {
       key: "gap_reason",
-      label: "Gap reason / note",
+      label: "Gap reason / note", sortable: true,
       allowWrap: true,
       render: (row) => (row.gap_reason ? GAP_REASON_LABEL[row.gap_reason] : row.attribution_note),
     },
