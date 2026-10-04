@@ -13,7 +13,7 @@ export function PhotoGallery({ photos }: { photos: Photo[] }) {
       {photos.map((p) => (
         <a key={p.id} href={p.url} target="_blank" rel="noreferrer" className="block rounded-sm border border-gray-200 p-1">
           <div className="flex h-20 items-center justify-center bg-gray-100 text-xs text-gray-500">Photo</div>
-          <div className="mt-1 text-[11px] uppercase text-gray-500">{p.type}</div>
+          <div className="mt-1 text-xs uppercase text-gray-500">{p.type}</div>
           <div className="truncate text-xs">{p.caption ?? "—"}</div>
           <div className="text-xs text-gray-400">{p.taken_at?.slice(0, 10) ?? ""}</div>
         </a>
