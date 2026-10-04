@@ -33,34 +33,34 @@ function AgingBucketCard({ title, buckets, accent }: { title: string; buckets: A
   ];
 
   return (
-    <section className="rounded-sm border border-slate-200 bg-white shadow-xs">
-      <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold" style={{ color: accent }}>
+    <section className="rounded-sm border border-[#E5E7EB] bg-white shadow-xs">
+      <div className="border-b border-[#E5E7EB] px-3 py-2 text-xs font-semibold" style={{ color: accent }}>
         {title}
       </div>
-      <ul className="divide-y divide-slate-100 text-xs">
+      <ul className="divide-y divide-[#E5E7EB] text-xs">
         {rows.map((row) => (
           <li key={row.label} className="flex items-center justify-between px-3 py-2">
-            <span className="text-slate-600">{row.label}</span>
-            <span className="font-medium tabular-nums text-slate-900">{formatUsdFromCents(row.cents)}</span>
+            <span className="text-[#4B5563]">{row.label}</span>
+            <span className="font-medium tabular-nums text-[#0F1219]">{formatUsdFromCents(row.cents)}</span>
           </li>
         ))}
-        <li className="flex items-center justify-between bg-slate-50 px-3 py-2 font-semibold">
+        <li className="flex items-center justify-between bg-[#F7F8FA] px-3 py-2 font-semibold">
           <span>Total outstanding</span>
           <span className="tabular-nums">{formatUsdFromCents(buckets?.total_outstanding_cents ?? 0)}</span>
         </li>
         <li className="flex items-center justify-between px-3 py-2">
-          <span className="text-slate-600">Cleared</span>
-          <span className="font-medium tabular-nums text-slate-900">
+          <span className="text-[#4B5563]">Cleared</span>
+          <span className="font-medium tabular-nums text-[#0F1219]">
             {formatUsdFromCents(buckets?.cleared_open_cents ?? buckets?.total_outstanding_cents ?? 0)}
           </span>
         </li>
         <li className="px-3 py-2">
-          <span className="text-slate-600">Not cleared</span>
+          <span className="text-[#4B5563]">Not cleared</span>
           <UnclearedDocumentsNote docs={buckets?.uncleared_documents ?? []} />
         </li>
       </ul>
       {(buckets?.uncleared_cents ?? 0) > 0 ? (
-        <p className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
+        <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
           Cleared {formatUsdFromCents(buckets?.cleared_open_cents ?? 0)}. Applied payments that have not been
           matched or categorized in Banking are named not cleared.
         </p>
@@ -147,7 +147,7 @@ export function AccountingHome({ auth }: Props) {
         subtitle={`AR/AP snapshot and period-close status (${displayName})`}
         actions={
           <div className="flex flex-wrap items-center justify-end gap-2">
-            <button type="button" className="text-xs font-medium text-slate-700 hover:underline" onClick={printLetter}>
+            <button type="button" className="text-xs font-medium text-[#1F2A44] hover:underline" onClick={printLetter}>
               Print this page
             </button>
             <Button variant="secondary" onClick={refresh}>
@@ -158,7 +158,7 @@ export function AccountingHome({ auth }: Props) {
       />
 
       {!companyId ? (
-        <section className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-3 text-xs text-slate-700">
+        <section className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-3 text-xs text-[#1F2A44]">
           Select an operating company to load accounting home metrics.
         </section>
       ) : homeQuery.isError ? (
