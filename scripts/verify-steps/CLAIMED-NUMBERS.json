@@ -11822,5 +11822,15 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-negative-settlement-posts-1257"
+  },
+  "14613": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-kpi-tiles-obey-tile-color-law"
+  },
+  "14617": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-tour-column-shows-the-number"
   }
 }
