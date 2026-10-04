@@ -1,3 +1,15 @@
+## 2026-10-04T14:12Z · BANK-F91512 TypeTabBar leftover muted WIRED · this PR
+
+DONE: TypeTabBar inactive tab leftover #94a3b8 → house muted #4B5563; leftover refuse on verify-acct-r09-bill-subnav-type-contract; EVEN 1710 --selftest + live.
+
+NEXT: leftover muted chrome (WO pie status colors stay / RMBuckets In Progress stay) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T14:08Z · BANK-F91511 SafetyDashboardFilter leftover muted WIRED CI · tip `f7129b4e99`
+
+DONE: #25253 — SafetyDashboardFilter leftover muted #4B5563; verify-steps/1230 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (TypeTabBar #94a3b8 / WO pie status colors stay) · skip pile parked · HH14 no migrations this tick.
+
 ## 2026-10-04T13:55Z · BANK-F91511 SafetyDashboardFilter leftover muted WIRED · this PR
 
 DONE: SafetyDashboardFilter inactive pill leftover #475569 → house muted #4B5563; leftover refuse on verify-safety-filter-chrome; EVEN 1230 --selftest + live.

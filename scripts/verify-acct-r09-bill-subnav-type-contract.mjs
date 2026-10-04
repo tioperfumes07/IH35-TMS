@@ -32,7 +32,17 @@ export function check({ typeTabs, createBill, vendorForm, billsTest }) {
       failures.push(`${TYPE_TABS}: missing ${type} bill type`);
     }
   }
+  failures.push(...leftoverRefuse(typeTabs));
   return failures;
+}
+
+function leftoverRefuse(src) {
+  const hits = [];
+  if (src.includes("text-[11px]")) hits.push(`${TYPE_TABS}: leftover text-[11px]`);
+  if (src.includes("#8A92AB") || src.includes("#334155") || src.includes("#64748b") || src.includes("#475569") || src.includes("#94a3b8")) {
+    hits.push(`${TYPE_TABS}: leftover off-scale muted`);
+  }
+  return hits;
 }
 
 function read(relativePath) {
@@ -68,6 +78,14 @@ if (process.argv.includes("--selftest")) {
       check({ ...healthy, billsTest: `it.each(["maintenance", "repair", "fuel"] as const)("opens", () => {});` }).some(
         (failure) => failure.includes("all four"),
       ),
+    ],
+    // BANK-F91512 leftover plant — TypeTabBar inactive tab leftover slate
+    [
+      "leftover muted plant fails",
+      leftoverRefuse('color: "#94a3b8"').length > 0 &&
+        check({ ...healthy, typeTabs: `${healthy.typeTabs}\ncolor: "#94a3b8"` }).some((failure) =>
+          failure.includes("leftover"),
+        ),
     ],
   ];
   const failed = checks.filter(([, passed]) => !passed);
