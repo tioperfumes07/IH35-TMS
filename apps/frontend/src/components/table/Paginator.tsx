@@ -14,10 +14,10 @@ export function Paginator({ page, pageCount, onPageChange, className = "" }: Pro
   const clamp = (p: number) => Math.min(safePageCount, Math.max(1, p));
   const go = (p: number) => onPageChange(clamp(p));
   const btn =
-    "rounded-sm border border-gray-300 bg-white px-2 py-1 text-[11px] font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-40";
+    "rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-40";
 
   return (
-    <div className={`flex flex-wrap items-center gap-1.5 text-[11px] text-gray-600 ${className}`} role="navigation" aria-label="Pagination">
+    <div className={`flex flex-wrap items-center gap-1.5 text-xs text-gray-600 ${className}`} role="navigation" aria-label="Pagination">
       <button type="button" className={btn} onClick={() => go(1)} disabled={page <= 1}>« First</button>
       <button type="button" className={btn} onClick={() => go(page - 1)} disabled={page <= 1}>‹ Prev</button>
       <span className="px-1">Page {page} of {safePageCount}</span>
@@ -37,7 +37,7 @@ export function Paginator({ page, pageCount, onPageChange, className = "" }: Pro
               setJump("");
             }
           }}
-          className="h-7 w-14 rounded-sm border border-gray-300 px-1 text-[11px]"
+          className="h-7 w-14 rounded-sm border border-gray-300 px-1 text-xs"
           aria-label="Jump to page"
         />
       </span>
