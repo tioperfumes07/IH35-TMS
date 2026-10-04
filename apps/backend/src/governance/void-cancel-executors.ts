@@ -38,6 +38,18 @@ export type ExecutorContext = {
   reason: string;
 };
 
+/**
+ * Fail closed when an executor's target table is absent. A missing relation means the void/cancel
+ * cannot run; it must never be reported as a benign "unsupported" no-op (CLS-LATCH-TABLE-ABSENT-SILENT-DEGRADE).
+ * Throws `<schema>_<table>_unavailable`, which rolls back the approve transaction.
+ */
+async function requireRelation(client: ExecutorContext["client"], relation: string): Promise<void> {
+  // `relation` is only ever a hard-coded literal at the call sites below; the guard keeps it that way.
+  if (!/^[a-z_]+\.[a-z_]+$/.test(relation)) throw new Error(`invalid_relation_${relation}`);
+  const r = await client.query<{ ok: boolean }>(`SELECT to_regclass('${relation}') IS NOT NULL AS ok`);
+  if (!r.rows[0]?.ok) throw new Error(`${relation.replace(".", "_")}_unavailable`);
+}
+
 export type ExecutorResult =
   | { kind: "ok"; reversing_entry_ref: string | null; closed_period_reversal?: boolean }
   | { kind: "unsupported_entity" } // entity_type registered { supported:false } OR its schema is absent
@@ -54,8 +66,7 @@ type EntityExecutor = (ctx: ExecutorContext) => Promise<ExecutorResult>;
 const executeWorkOrder: EntityExecutor = async (ctx) => {
   const { client, operatingCompanyId, entityId, action, userId, reason } = ctx;
 
-  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('maintenance.work_orders') IS NOT NULL AS ok`);
-  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  await requireRelation(client, 'maintenance.work_orders');
 
   if (action === "void") {
     const pre = await client.query<{ voided_at: string | null }>(
@@ -202,8 +213,7 @@ async function countPostedGl(
 const executeBill: EntityExecutor = async (ctx) => {
   const { client, operatingCompanyId, entityId, userId, reason } = ctx;
 
-  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('accounting.bills') IS NOT NULL AS ok`);
-  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  await requireRelation(client, 'accounting.bills');
 
   const pre = await client.query<{ status: string; bill_date: string | null }>(
     `SELECT status::text AS status, bill_date::text AS bill_date
@@ -276,8 +286,7 @@ const executeBill: EntityExecutor = async (ctx) => {
 const executeInvoice: EntityExecutor = async (ctx) => {
   const { client, operatingCompanyId, entityId, userId, reason } = ctx;
 
-  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('accounting.invoices') IS NOT NULL AS ok`);
-  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  await requireRelation(client, 'accounting.invoices');
 
   const pre = await client.query<{ status: string; issue_date: string | null }>(
     `SELECT status::text AS status, issue_date::text AS issue_date
@@ -355,8 +364,7 @@ const executeInvoice: EntityExecutor = async (ctx) => {
 const executeJournalEntry: EntityExecutor = async (ctx) => {
   const { client, operatingCompanyId, entityId, userId, reason } = ctx;
 
-  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('accounting.journal_entries') IS NOT NULL AS ok`);
-  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  await requireRelation(client, 'accounting.journal_entries');
 
   const pre = await client.query<{ status: string }>(
     `SELECT status::text AS status
@@ -426,8 +434,7 @@ const executeJournalEntry: EntityExecutor = async (ctx) => {
 const executeExpense: EntityExecutor = async (ctx) => {
   const { client, operatingCompanyId, entityId, userId, reason } = ctx;
 
-  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('accounting.expenses') IS NOT NULL AS ok`);
-  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  await requireRelation(client, 'accounting.expenses');
 
   const pre = await client.query<{ status: string; posting_status: string; transaction_date: string | null }>(
     `SELECT status::text AS status, posting_status::text AS posting_status, transaction_date::text AS transaction_date
@@ -499,8 +506,7 @@ const executeExpense: EntityExecutor = async (ctx) => {
 const executeFuelTransaction: EntityExecutor = async (ctx) => {
   const { client, operatingCompanyId, entityId, userId, reason } = ctx;
 
-  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('fuel.fuel_transactions') IS NOT NULL AS ok`);
-  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  await requireRelation(client, 'fuel.fuel_transactions');
 
   const pre = await client.query<{ voided_at: string | null; purchased_at: string | null; transaction_at: string | null; created_at: string }>(
     `SELECT voided_at::text, purchased_at::text, transaction_at::text, created_at::text
@@ -586,8 +592,7 @@ const executeFuelTransaction: EntityExecutor = async (ctx) => {
 const executeBillPayment: EntityExecutor = async (ctx) => {
   const { client, operatingCompanyId, entityId, userId, reason } = ctx;
 
-  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('accounting.bill_payments') IS NOT NULL AS ok`);
-  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  await requireRelation(client, 'accounting.bill_payments');
 
   const pre = await client.query<{ status: string; revoked_at: string | null; payment_date: string | null }>(
     `SELECT status::text AS status, revoked_at::text AS revoked_at, payment_date::text AS payment_date
@@ -654,8 +659,7 @@ const executeBillPayment: EntityExecutor = async (ctx) => {
 const executeCustomerPayment: EntityExecutor = async (ctx) => {
   const { client, operatingCompanyId, entityId, userId, reason } = ctx;
 
-  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('accounting.payments') IS NOT NULL AS ok`);
-  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  await requireRelation(client, 'accounting.payments');
 
   const pre = await client.query<{ voided_at: string | null; payment_date: string | null }>(
     `SELECT voided_at::text AS voided_at, payment_date::text AS payment_date
@@ -720,8 +724,7 @@ const executeCustomerPayment: EntityExecutor = async (ctx) => {
 const executeDriverSettlement: EntityExecutor = async (ctx) => {
   const { client, operatingCompanyId, entityId, userId, reason } = ctx;
 
-  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('driver_finance.driver_settlements') IS NOT NULL AS ok`);
-  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  await requireRelation(client, 'driver_finance.driver_settlements');
 
   const pre = await client.query<{ status: string }>(
     `SELECT status::text AS status FROM driver_finance.driver_settlements
@@ -841,8 +844,7 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
 const executeFactoringAdvance: EntityExecutor = async (ctx) => {
   const { client, operatingCompanyId, entityId, userId, reason } = ctx;
 
-  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('accounting.factoring_advances') IS NOT NULL AS ok`);
-  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  await requireRelation(client, 'accounting.factoring_advances');
 
   const pre = await client.query<{ status: string; advanced_at: string | null; created_at: string }>(
     `SELECT status::text AS status, advanced_at::text AS advanced_at, created_at::text AS created_at
@@ -917,8 +919,7 @@ const executeFactoringAdvance: EntityExecutor = async (ctx) => {
 
 const executeBankTransaction: EntityExecutor = async (ctx) => {
   const { client, operatingCompanyId, entityId, userId, reason } = ctx;
-  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('banking.bank_transactions') IS NOT NULL AS ok`);
-  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  await requireRelation(client, 'banking.bank_transactions');
   const pre = await client.query<{ voided_at: string | null }>(
     `SELECT voided_at::text FROM banking.bank_transactions
       WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
@@ -952,8 +953,7 @@ const executeBankTransaction: EntityExecutor = async (ctx) => {
 
 const executeReconciliationMatch: EntityExecutor = async (ctx) => {
   const { client, operatingCompanyId, entityId, userId, reason } = ctx;
-  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('banking.reconciliation_matches') IS NOT NULL AS ok`);
-  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  await requireRelation(client, 'banking.reconciliation_matches');
   const pre = await client.query<{ voided_at: string | null }>(
     `SELECT voided_at::text FROM banking.reconciliation_matches
       WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
@@ -977,8 +977,7 @@ const executeReconciliationMatch: EntityExecutor = async (ctx) => {
 
 const executeDriverBill: EntityExecutor = async (ctx) => {
   const { client, operatingCompanyId, entityId, userId, reason } = ctx;
-  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('driver_finance.driver_bills') IS NOT NULL AS ok`);
-  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  await requireRelation(client, 'driver_finance.driver_bills');
   const pre = await client.query<{ status: string; voided_at: string | null }>(
     `SELECT status::text, voided_at::text FROM driver_finance.driver_bills
       WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
@@ -1002,8 +1001,7 @@ const executeDriverBill: EntityExecutor = async (ctx) => {
 
 const executeDriverLiability: EntityExecutor = async (ctx) => {
   const { client, operatingCompanyId, entityId, userId, reason } = ctx;
-  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('driver_finance.driver_liabilities') IS NOT NULL AS ok`);
-  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  await requireRelation(client, 'driver_finance.driver_liabilities');
   const pre = await client.query<{ voided_at: string | null }>(
     `SELECT voided_at::text FROM driver_finance.driver_liabilities
       WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
@@ -1039,8 +1037,7 @@ const executeDriverLiability: EntityExecutor = async (ctx) => {
 
 const executeCheckNumberRegistry: EntityExecutor = async (ctx) => {
   const { client, operatingCompanyId, entityId, userId, reason } = ctx;
-  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('banking.check_number_registry') IS NOT NULL AS ok`);
-  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  await requireRelation(client, 'banking.check_number_registry');
   const pre = await client.query<{ status: string; voided_at: string | null }>(
     `SELECT status::text, voided_at::text FROM banking.check_number_registry
       WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
@@ -1064,8 +1061,7 @@ const executeCheckNumberRegistry: EntityExecutor = async (ctx) => {
 
 const executeBillLine: EntityExecutor = async (ctx) => {
   const { client, operatingCompanyId, entityId, userId, reason } = ctx;
-  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('accounting.bill_lines') IS NOT NULL AS ok`);
-  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  await requireRelation(client, 'accounting.bill_lines');
   const pre = await client.query<{ voided_at: string | null }>(
     `SELECT voided_at::text FROM accounting.bill_lines
       WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
@@ -1086,8 +1082,7 @@ const executeBillLine: EntityExecutor = async (ctx) => {
 
 const executeSettlementLine: EntityExecutor = async (ctx) => {
   const { client, operatingCompanyId, entityId, userId, reason } = ctx;
-  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('driver_finance.settlement_lines') IS NOT NULL AS ok`);
-  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  await requireRelation(client, 'driver_finance.settlement_lines');
   const pre = await client.query<{ voided_at: string | null; is_active: boolean | null }>(
     `SELECT voided_at::text, is_active FROM driver_finance.settlement_lines
       WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
@@ -1108,8 +1103,7 @@ const executeSettlementLine: EntityExecutor = async (ctx) => {
 
 const executeSafetyIncident: EntityExecutor = async (ctx) => {
   const { client, operatingCompanyId, entityId, userId, reason } = ctx;
-  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('safety.incidents') IS NOT NULL AS ok`);
-  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  await requireRelation(client, 'safety.incidents');
   const pre = await client.query<{ voided_at: string | null }>(
     `SELECT voided_at::text FROM safety.incidents
       WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
@@ -1130,8 +1124,7 @@ const executeSafetyIncident: EntityExecutor = async (ctx) => {
 
 const executeLegalContractInstance: EntityExecutor = async (ctx) => {
   const { client, operatingCompanyId, entityId, userId, reason } = ctx;
-  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('legal.contract_instances') IS NOT NULL AS ok`);
-  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  await requireRelation(client, 'legal.contract_instances');
   const pre = await client.query<{ voided_at: string | null; status: string }>(
     `SELECT voided_at::text, status::text FROM legal.contract_instances
       WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
@@ -1153,8 +1146,7 @@ const executeLegalContractInstance: EntityExecutor = async (ctx) => {
 
 const executeRelayFuelTransaction: EntityExecutor = async (ctx) => {
   const { client, operatingCompanyId, entityId, userId, reason } = ctx;
-  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('integrations.relay_fuel_transactions') IS NOT NULL AS ok`);
-  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  await requireRelation(client, 'integrations.relay_fuel_transactions');
   const pre = await client.query<{ voided_at: string | null }>(
     `SELECT voided_at::text FROM integrations.relay_fuel_transactions
       WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
@@ -1186,8 +1178,7 @@ const executeRelayFuelTransaction: EntityExecutor = async (ctx) => {
 
 const executeRelayFuelTransactionLine: EntityExecutor = async (ctx) => {
   const { client, operatingCompanyId, entityId, reason } = ctx;
-  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('integrations.relay_fuel_transaction_lines') IS NOT NULL AS ok`);
-  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  await requireRelation(client, 'integrations.relay_fuel_transaction_lines');
   const pre = await client.query<{ voided_at: string | null }>(
     `SELECT voided_at::text FROM integrations.relay_fuel_transaction_lines
       WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,

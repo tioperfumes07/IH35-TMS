@@ -102,7 +102,8 @@ export async function appendSettlementLineFromDriverBillIfMissing(
   }
 ): Promise<void> {
   const reg = await client.query<{ ok: boolean }>(`SELECT to_regclass('driver_finance.settlement_lines') IS NOT NULL AS ok`);
-  if (!reg.rows[0]?.ok) return;
+  // Fail closed: a settlement line that cannot be written must not look like a successful no-op.
+  if (!reg.rows[0]?.ok) throw new Error("driver_finance_settlement_lines_unavailable");
 
   // SETL-F10164 — the settlement is the canonical real-vs-sample parent. Derive the child flag from
   // that row under the same company scope; accepting a caller boolean would let a sample settlement
@@ -382,7 +383,8 @@ export async function appendEscrowContributionLineIfMissing(
   }
 ): Promise<void> {
   const reg = await client.query<{ ok: boolean }>(`SELECT to_regclass('driver_finance.settlement_lines') IS NOT NULL AS ok`);
-  if (!reg.rows[0]?.ok) return;
+  // Fail closed: a settlement line that cannot be written must not look like a successful no-op.
+  if (!reg.rows[0]?.ok) throw new Error("driver_finance_settlement_lines_unavailable");
 
   const settlementRes = await client.query<{ is_sample_data: boolean }>(
     `

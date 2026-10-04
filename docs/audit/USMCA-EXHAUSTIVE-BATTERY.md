@@ -463,7 +463,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/driver-finance/escrow-separations` | `apps/backend/src/driver-finance/escrow-separation.routes.ts:67` | — | — | — |
 | nested | `/api/v1/driver-finance/escrow/:driverId/forfeit` | `apps/backend/src/driver-finance/escrow-forfeit.routes.ts:46` | — | — | — |
 | nested | `/api/v1/driver-finance/pre-settlements/:id/add-load` | `apps/backend/src/driver-finance/pre-settlement.routes.ts:288` | — | — | — |
-| nested | `/api/v1/driver-finance/pre-settlements/:id/close-tour` | `apps/backend/src/driver-finance/tour-readout.routes.ts:614` | — | — | — |
+| nested | `/api/v1/driver-finance/pre-settlements/:id/close-tour` | `apps/backend/src/driver-finance/tour-readout.routes.ts:616` | — | — | — |
 | nested | `/api/v1/driver-finance/pre-settlements/:id/settle` | `apps/backend/src/driver-finance/pre-settlement.routes.ts:423` | — | — | — |
 | nested | `/api/v1/driver-finance/presettlement-suggestions/:id/confirm` | `apps/backend/src/dispatch/presettlement-link.routes.ts:71` | — | — | — |
 | create | `/api/v1/driver-finance/settlement-deductions` | `apps/backend/src/driver-finance/deductions.routes.ts:195` | — | — | — |
