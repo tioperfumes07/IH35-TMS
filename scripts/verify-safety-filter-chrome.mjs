@@ -50,6 +50,9 @@ function leftoverRefuse(text) {
   if (text.includes("#8A92AB") || text.includes("#334155") || text.includes("#64748b") || text.includes("#475569") || text.includes("#94a3b8") || text.includes("#cbd5e1") || text.includes("#CBD5E1")) {
     hits.push("SafetyDashboardFilter.tsx: leftover off-scale muted");
   }
+  if (text.includes("text-slate-") || text.includes("border-slate-") || text.includes("bg-slate-")) {
+    hits.push("SafetyDashboardFilter.tsx: leftover slate class");
+  }
   return hits;
 }
 
@@ -71,6 +74,11 @@ if (process.argv.includes("--selftest")) {
   const leftoverBorderHits = leftoverRefuse('borderColor: "#cbd5e1"');
   if (!leftoverBorderHits.length) {
     console.error("FAIL verify-safety-filter-chrome --selftest: leftover #cbd5e1 plant escaped");
+    process.exit(1);
+  }
+  const leftoverSlateClassHits = leftoverRefuse('<div className="text-slate-500">plant</div>');
+  if (!leftoverSlateClassHits.some((e) => e.includes("leftover slate class"))) {
+    console.error("FAIL verify-safety-filter-chrome --selftest: leftover slate class plant escaped");
     process.exit(1);
   }
   console.log("PASS verify-safety-filter-chrome --selftest — leftover plant detected");
