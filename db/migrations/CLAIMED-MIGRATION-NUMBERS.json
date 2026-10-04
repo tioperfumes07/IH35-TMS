@@ -2207,5 +2207,10 @@
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-04",
     "purpose": "integrations.relay_fuel_transactions.posted_to_gl is DERIVED (bank-match JE): clear the 75 stale true flags with no JE behind them and refuse a stored true (Lead posted_to_gl order)"
+  },
+  "202615410950": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-04",
+    "purpose": "ACCT-F403 (Lead ruling Option 1): a settlement-derived fuel row on the Relay rail posts NO fuel — fuel.fuel_transactions.relay_fuel_transaction_id links it to its Relay fill, and only a Relay fill (or a reversal) may credit the fuel_wallet_relay account"
   }
 }
