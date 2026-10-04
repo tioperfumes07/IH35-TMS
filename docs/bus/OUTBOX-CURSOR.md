@@ -1,3 +1,15 @@
+## 2026-10-04T14:58Z · BANK-F91517 SystemModule N/A leftover muted WIRED · this PR
+
+DONE: SystemModulePage not_applicable leftover #94a3b8 → house muted #4B5563; leftover refuse on verify-system-module; unused EVEN 4142 --selftest + live.
+
+NEXT: leftover muted chrome (WO pie status colors stay / RMBuckets In Progress stay / trip-type SB stay) · skip pile parked · HH13 no migrations this tick.
+
+## 2026-10-04T14:54Z · BANK-F91516 PlannerGrid rule-day leftover muted WIRED CI · tip `7ced874b44`
+
+DONE: #25258 — PlannerGrid --rule-day leftover muted #4B5563; verify-steps/4140 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (SystemModule N/A #94a3b8 / WO pie status colors stay) · skip pile parked · HH13 no migrations this tick.
+
 ## 2026-10-04T14:48Z · BANK-F91516 PlannerGrid rule-day leftover muted WIRED · this PR
 
 DONE: PlannerGrid --rule-day leftover #94a3b8 → house muted #4B5563; leftover refuse on verify-planner-column-lines; unused EVEN 4140 --selftest + live.
