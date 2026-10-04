@@ -128,8 +128,8 @@ function AssetLocationMap({ parts, onAdd, onChange, onRemove }: { parts: Seriali
                 {/* truck silhouette — clickable wheel/position grid */}
                 <div className="rounded-md border border-[#e6e9ee] bg-[#f8fafc] p-2">
                   <svg viewBox="0 0 430 110" className="mb-1 h-16 w-full">
-                    <rect x="60" y="30" width="120" height="50" rx="8" fill="#eef2f7" stroke="#cbd5e1" />
-                    <rect x="185" y="42" width="210" height="34" rx="6" fill="#f1f5f9" stroke="#cbd5e1" />
+                    <rect x="60" y="30" width="120" height="50" rx="8" fill="#eef2f7" stroke="#E5E7EB" />
+                    <rect x="185" y="42" width="210" height="34" rx="6" fill="#f1f5f9" stroke="#E5E7EB" />
                     <text x="120" y="60" fontSize="9" fill="#4B5563" textAnchor="middle">TRACTOR</text>
                     <text x="290" y="63" fontSize="9" fill="#4B5563" textAnchor="middle">TRAILER</text>
                   </svg>
@@ -1331,7 +1331,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
               {paymentTiming === "paid_same_day" ? (
                 <>
                   <CreateWOSectionPaymentTiming register={form.register} watch={form.watch} setValue={form.setValue} />
-                  <div className="mt-1.5 rounded-md border border-[#cbd5e1] bg-[#f1f5f9] px-2 py-1.5 text-xs text-[#1f2a44]">Registers as an <b>Expense</b> in QuickBooks (money out now) against the payment account.</div>
+                  <div className="mt-1.5 rounded-md border border-[#E5E7EB] bg-[#f1f5f9] px-2 py-1.5 text-xs text-[#1f2a44]">Registers as an <b>Expense</b> in QuickBooks (money out now) against the payment account.</div>
                 </>
               ) : null}
               {paymentTiming === "vendor_invoice" ? (

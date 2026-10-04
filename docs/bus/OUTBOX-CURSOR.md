@@ -1,6 +1,12 @@
-## 2026-10-04T15:32Z · BANK-F91522 Integrity leftover pill border WIRED · this PR
+## 2026-10-04T15:40Z · BANK-F91523 CreateWO leftover #cbd5e1 border WIRED · this PR
 
-DONE: IntegrityReportsTab + IntegrityAlertsPage inactive-pill leftover #cbd5e1 → house border #E5E7EB; leftover refuse on 4088 + 3996 --selftest + live.
+DONE: CreateWorkOrderModal SVG/help leftover #cbd5e1 → house border #E5E7EB; leftover refuse on EVEN 2090 --selftest + live.
+
+NEXT: leftover muted chrome (PlannerGrid #cbd5e1 / TruckLine select / WO pie stay) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T15:38Z · BANK-F91522 Integrity leftover pill border WIRED CI · tip `4d66e4ebb9`
+
+DONE: #25264 — IntegrityReports + IntegrityAlerts leftover #cbd5e1 → #E5E7EB; verify-steps/4088 + 3996 leftover refuse --selftest + live.
 
 NEXT: leftover muted chrome (CreateWO/PlannerGrid #cbd5e1 / WO pie stay) · skip pile parked · HH14 no migrations this tick.
 
