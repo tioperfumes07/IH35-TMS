@@ -422,8 +422,8 @@ export function ProfitPerTruckPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={perMileChart} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                  <YAxis tickFormatter={(v) => money(Number(v))} width={72} tick={{ fontSize: 10 }} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                  <YAxis tickFormatter={(v) => money(Number(v))} width={72} tick={{ fontSize: 11 }} />
                   <Tooltip formatter={(v) => money(Number(v))} />
                   <Legend />
                   <Bar dataKey="revenuePerMile" name="Revenue / mi" fill="#4B5563" />
