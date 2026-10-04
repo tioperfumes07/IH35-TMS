@@ -54,6 +54,10 @@ function auditRowBorderVisible(src) {
 function leftoverHits(src) {
   const hits = [];
   if (/fontSize:\s*11\b/.test(src)) hits.push(`${BOARD_FILE}: leftover fontSize: 11 — use text-section-header`);
+  // BANK-F91525 — Clear-button leftover border only. SVG fill="#CBD5E1" stays locked illustration.
+  if (src.includes("border-[#CBD5E1]") || src.includes("border-[#cbd5e1]")) {
+    hits.push(`${BOARD_FILE}: leftover border-[#CBD5E1] — use house #E5E7EB`);
+  }
   return hits;
 }
 
@@ -93,8 +97,9 @@ if (process.argv.includes("--selftest")) {
   assert.notEqual(mutated3, realSrc, "mutation 3 did not change the source");
   assert.ok(auditAll(mutated3).length > 0, "MUTATION 3 (row border regressed to #E5E7EB) escaped detection");
 
-  const leftoverPlant = `${realSrc}\n<span style={{ fontSize: 11 }}>plant</span>`;
+  const leftoverPlant = `${realSrc}\n<span style={{ fontSize: 11 }} className="border-[#CBD5E1]">plant</span>`;
   assert.ok(leftoverHits(leftoverPlant).some((e) => e.includes("leftover fontSize: 11")), "leftover fontSize: 11 plant escaped");
+  assert.ok(leftoverHits(leftoverPlant).some((e) => e.includes("leftover border-[#CBD5E1]")), "leftover border-[#CBD5E1] plant escaped");
 
   console.log("verify-truck-line-units-only --selftest PASS (3/3 mutations caught + leftover plant)");
   process.exit(0);
