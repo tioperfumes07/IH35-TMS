@@ -59,7 +59,7 @@ export function audit(s = {}) {
 function leftoverRefuse(src) {
   const hits = [];
   if (src.includes("text-[11px]")) hits.push(`${LOC_MAP}: leftover text-[11px]`);
-  if (src.includes("#8A92AB") || src.includes("#334155") || src.includes("#64748b") || src.includes("#94a3b8")) {
+  if (src.includes("#8A92AB") || src.includes("#334155") || src.includes("#64748b") || src.includes("#94a3b8") || src.includes("#d1d5db") || src.includes("#D1D5DB")) {
     hits.push(`${LOC_MAP}: leftover off-scale muted`);
   }
   return hits;
@@ -84,7 +84,7 @@ if (process.argv.includes("--selftest")) {
     throw new Error(`leftover plant escaped: ${JSON.stringify(leftoverHits)}`);
   }
   // BANK-F91510 leftover plant — LocationMapModal leftover slate stroke/label
-  const leftoverSlateHits = leftoverRefuse('<text fill="#64748b"></text><rect stroke="#94a3b8" />');
+  const leftoverSlateHits = leftoverRefuse('<text fill="#64748b"></text><rect stroke="#94a3b8" /><div style="border: 1px solid #d1d5db" />');
   if (!leftoverSlateHits.some((e) => e.includes("leftover off-scale muted"))) {
     throw new Error(`leftover slate plant escaped: ${JSON.stringify(leftoverSlateHits)}`);
   }

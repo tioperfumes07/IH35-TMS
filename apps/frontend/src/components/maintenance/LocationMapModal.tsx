@@ -171,7 +171,7 @@ export function LocationMapModal({
 
         <div
           className="map-info-panel rounded-sm px-3 py-2 text-xs text-slate-700"
-          style={{ backgroundColor: "white", border: "1px solid #d1d5db", borderLeft: "3px solid #1f2a44" }}
+          style={{ backgroundColor: "white", border: "1px solid #E5E7EB", borderLeft: "3px solid #1f2a44" }}
         >
           <div className="font-semibold text-slate-900">{infoCode}</div>
           <div>{info.name}</div>
