@@ -7291,3 +7291,14 @@ action: DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-04-cc3-def-relay-
 expires_at: 2026-10-05T04:05:48Z
 status: OPEN
 THIS AUTHORIZATION DOES NOT COVER: any DELETE; the fuel rows; any other posting.
+
+## AUTH-218
+issued_at: 2026-10-04T22:15:26Z
+scope: USMCA ONLY. Void-is-whole follow-up to AUTH-217 (ACCT-F403): the six settlement-line DEF fuel rows whose postings
+  AUTH-217 reversed (db98d022 d6053286 b7a746e4 e16a0cb4 696237be cb583ff7) are voided through
+  executeVoidCancel('fuel_transaction') — verify-void-is-whole reads a live header over an all-dead ledger as a silent void.
+  Owner standing order 2026-10-04 + Lead ruling ACCT-F403. Prod dry run (deferred constraints fired): 6 voided.
+action: DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-04-cc3-def-relay-rail-fuel-void.mts --apply --auth AUTH-218
+expires_at: 2026-10-05T04:15:26Z
+status: OPEN
+THIS AUTHORIZATION DOES NOT COVER: any DELETE; any other fuel row.

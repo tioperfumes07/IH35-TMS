@@ -92,7 +92,7 @@ export type FeedStepResult = {
   load_id: string;
   load_number: string;
   natural_key: string;
-  status: "created" | "already_exists" | "refused" | "skipped_dependency" | "would_create";
+  status: "created" | "already_exists" | "refused" | "skipped_dependency" | "would_create" | "relay_link";
   detail: string;
 };
 
@@ -238,6 +238,12 @@ export async function executeHistoricalFeedDay(
           natural_key: key, status: "refused", detail: r.reason,
         });
         if (stopOnFirstRefusal) break outer;
+      } else if (r.outcome === "relay_link") {
+        // ACCT-F403: a Relay-rail settlement fuel row posts no fuel — its Relay fill carries the cost.
+        push({
+          step: "fuel_expense", load_id: load.load_id, load_number: load.load_number,
+          natural_key: key, status: "relay_link", detail: r.reason,
+        });
       } else if (r.outcome === "would_create") {
         push({
           step: "fuel_expense", load_id: load.load_id, load_number: load.load_number,

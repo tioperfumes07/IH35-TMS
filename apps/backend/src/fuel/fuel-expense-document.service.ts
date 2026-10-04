@@ -77,6 +77,7 @@ import { nextExpenseDisplayId } from "../accounting/display-id.js";
 import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
 import {
   loadFuelTxnCreditSignals,
+  RelayFillLinksNotPostsError,
   resolveCompanyDirectCreditPreference,
 } from "../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
 import { resolveCompanyDirectCreditAccount } from "../accounting/fuel-posting/poster.service.js";
@@ -157,7 +158,9 @@ export type FuelExpenseDocumentOutcome =
     }
   | { outcome: "already_exists"; expense_id: string; expense_number: string | null }
   | { outcome: "would_create"; expense_number: null; amount_cents: number }
-  | { outcome: "refused"; reason: string };
+  | { outcome: "refused"; reason: string }
+  /** ACCT-F403: a Relay-rail settlement fuel row gets no document — it links to its Relay fill, which carries the cost. */
+  | { outcome: "relay_link"; reason: string };
 
 type FuelRow = {
   id: string;
@@ -414,7 +417,9 @@ export async function createExpenseFromFuelTransaction(
   // already has its own credit leg, so its payment_account_uuid is descriptive metadata here,
   // not a posting input; still worth setting so the document is honest about the rail either way.
   const creditSignals = await loadFuelTxnCreditSignals(client as never, input.operating_company_id, fuel.id);
-  const creditPreference = resolveCompanyDirectCreditPreference(
+  let creditPreference: ReturnType<typeof resolveCompanyDirectCreditPreference>;
+  try {
+    creditPreference = resolveCompanyDirectCreditPreference(
     {
       operating_company_id: input.operating_company_id,
       fuel_transaction_id: fuel.id,
@@ -422,8 +427,12 @@ export async function createExpenseFromFuelTransaction(
       transaction_at: fuel.transaction_at ?? fuel.purchased_at ?? txnDate,
       amount_cents: amountCents,
     },
-    creditSignals,
-  );
+      creditSignals,
+    );
+  } catch (err) {
+    if (err instanceof RelayFillLinksNotPostsError) return { outcome: "relay_link", reason: err.message };
+    throw err;
+  }
   const { account_id: paymentAccountId } = await resolveCompanyDirectCreditAccount(
     client as never,
     input.operating_company_id,

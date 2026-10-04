@@ -60,17 +60,18 @@ describe("resolveCompanyDirectCreditPreference", () => {
   // (fuel_card_code / relay_fuel_transaction_id), never a blanket "ap" fallback for any card-shaped
   // signal. "ap" is no longer reachable from this function at all except via an explicit caller
   // override (see "explicit override wins" below).
-  it("Relay settle (identified via relay_fuel_transaction_id) -> relay_fuel_wallet, never ap", () => {
-    expect(
+  it("Relay settle (identified via relay_fuel_transaction_id) -> refused: the row links to its fill, never ap, never posts", () => {
+    expect(() =>
       resolveCompanyDirectCreditPreference({
         ...BASE,
         relay_fuel_transaction_id: "66666666-6666-4666-8666-666666666666",
       })
-    ).toBe("relay_fuel_wallet");
+    ).toThrow(/relay_fill_links_not_posts/);
   });
   it("fuel_card_code DREAMLINE/RELAY resolves the rail directly", () => {
     expect(resolveCompanyDirectCreditPreference(BASE, { fuel_card_code: "DREAMLINE" })).toBe("dreamline_card_payable");
-    expect(resolveCompanyDirectCreditPreference(BASE, { fuel_card_code: "RELAY" })).toBe("relay_fuel_wallet");
+    // ACCT-F403: a Relay-rail fuel row links to its Relay fill and posts nothing — refused by name.
+    expect(() => resolveCompanyDirectCreditPreference(BASE, { fuel_card_code: "RELAY" })).toThrow(/relay_fill_links_not_posts/);
   });
   it("a card is signaled but the rail cannot be identified -> fails closed (throws), never ap_control", () => {
     expect(() => resolveCompanyDirectCreditPreference({ ...BASE, has_fuel_card: true })).toThrow(
@@ -96,11 +97,14 @@ describe("resolveCompanyDirectCreditPreference", () => {
   // No card statement is needed to pick the rail." This is USMCA-ONLY -- every other entity keeps
   // the pre-153.7 cash/fail-closed behavior (the "true cash" test above, on BASE's placeholder
   // company id, is unaffected).
-  it("R-153.7: USMCA with no card evidence at all -> relay_fuel_wallet, never cash, never a throw", () => {
+  it("R-153.7 + ACCT-F403: USMCA with no card evidence is Relay — the row links to its Relay fill and posts nothing, never cash", () => {
     const usmca = { ...BASE, operating_company_id: "5c854333-6ea5-4faa-af31-67cb272fef80" };
-    expect(resolveCompanyDirectCreditPreference(usmca)).toBe("relay_fuel_wallet");
-    expect(resolveCompanyDirectCreditPreference(usmca, { fuel_card_id: null, notes: null, source: "import" })).toBe(
-      "relay_fuel_wallet"
+    expect(() => resolveCompanyDirectCreditPreference(usmca)).toThrow(/relay_fill_links_not_posts/);
+    expect(() => resolveCompanyDirectCreditPreference(usmca, { fuel_card_id: null, notes: null, source: "import" })).toThrow(
+      /relay_fill_links_not_posts/
+    );
+    expect(() => resolveCompanyDirectCreditPreference({ ...usmca, company_direct_credit: "relay_fuel_wallet" })).toThrow(
+      /relay_fill_links_not_posts/
     );
   });
   it("R-153.7: USMCA still resolves DREAMLINE when the card code says so -- the rule does not override real evidence", () => {
