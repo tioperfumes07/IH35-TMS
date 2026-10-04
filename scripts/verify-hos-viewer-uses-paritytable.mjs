@@ -61,6 +61,9 @@ function assertMigrated(src) {
   if (!src.includes("DatePicker") || !src.includes("Combobox")) {
     errors.push(`${PAGE}: must keep driver and date controls`);
   }
+  // BANK-F91287 leftover refuse — HosViewerSection page-scoped text token ratchet
+  if (src.includes("text-[11px]")) errors.push(`${PAGE}: leftover text-[11px]`);
+  if (src.includes("#8A92AB") || src.includes("#334155")) errors.push(`${PAGE}: leftover off-scale muted`);
   return errors;
 }
 
@@ -103,7 +106,12 @@ function selftest() {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS`);
+    const leftover = assertMigrated(`${good}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`);
+  if (!leftover.some((e) => e.includes("leftover text-[11px]")) || !leftover.some((e) => e.includes("leftover off-scale muted"))) {
+    console.error(`${LABEL} --selftest FAIL leftover plant escaped`, leftover);
+    process.exit(1);
+  }
+console.log(`${LABEL} --selftest PASS`);
 }
 
 function main() {

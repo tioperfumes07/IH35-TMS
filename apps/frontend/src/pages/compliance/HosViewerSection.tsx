@@ -132,7 +132,7 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
       {/* Picker + date controls */}
       <div className="flex flex-wrap items-end gap-3 rounded-sm border border-slate-200 bg-white px-3 py-3">
         <div className="min-w-[260px] flex-1" data-testid="hos-viewer-driver-picker">
-          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-500">Driver</label>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Driver</label>
           {/* Picker law: EntityPicker kind=driver — not Combobox over listDrivers page. */}
           <EntityPicker
             kind="driver"
@@ -146,7 +146,7 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
           />
         </div>
         <div>
-          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-500">Date</label>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Date</label>
           <DatePicker
             value={selectedDate}
             max={today}
@@ -209,7 +209,7 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
                 { label: "Cycle (70h) left", v: daily.clocks?.cycle_remaining_min },
               ].map((k) => (
                 <div key={k.label} className="flex h-[34px] min-w-[130px] flex-1 items-center justify-between rounded-sm border border-slate-200 bg-white px-2.5">
-                  <span className="text-[11px] uppercase tracking-wider text-slate-500">{k.label}</span>
+                  <span className="text-xs uppercase tracking-wider text-slate-500">{k.label}</span>
                   <span className="text-xs font-semibold tabular-nums text-slate-900">{hmm(k.v)}</span>
                 </div>
               ))}
@@ -236,7 +236,7 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
             <div className="flex flex-wrap gap-2">
               {TOTAL_ORDER.map((st) => (
                 <div key={st} className="flex h-[28px] min-w-[120px] flex-1 items-center justify-between rounded-sm border border-slate-200 bg-white px-2.5">
-                  <span className="inline-flex items-center gap-1 text-[11px] uppercase tracking-wider text-slate-500">
+                  <span className="inline-flex items-center gap-1 text-xs uppercase tracking-wider text-slate-500">
                     <span className="inline-block h-[7px] w-[7px] rounded-full" style={{ background: DUTY_COLOR[st] }} />
                     {DUTY_LABEL[st]}
                   </span>
