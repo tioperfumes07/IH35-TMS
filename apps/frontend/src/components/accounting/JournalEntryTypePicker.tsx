@@ -89,7 +89,7 @@ export function JournalEntryTypePicker({ operatingCompanyId, value, onChange, di
         limit={200}
         total={typesQuery.data?.total ?? null}
         hint="Type to search or create a new journal entry type."
-        className="text-[11px] text-slate-600"
+        className="text-xs text-slate-600"
       />
       <span data-testid="journal-entry-type-picker" className="sr-only" aria-hidden="true" />
       <ParityDrawer open={createOpen} onClose={() => setCreateOpen(false)} title="Create journal entry type" size="regular">
