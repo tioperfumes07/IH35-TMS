@@ -47,7 +47,7 @@ if (!shared.includes("SlidersHorizontal")) {
 function leftoverRefuse(text) {
   const hits = [];
   if (text.includes("text-[11px]")) hits.push("SafetyDashboardFilter.tsx: leftover text-[11px]");
-  if (text.includes("#8A92AB") || text.includes("#334155") || text.includes("#64748b") || text.includes("#475569") || text.includes("#94a3b8")) {
+  if (text.includes("#8A92AB") || text.includes("#334155") || text.includes("#64748b") || text.includes("#475569") || text.includes("#94a3b8") || text.includes("#cbd5e1") || text.includes("#CBD5E1")) {
     hits.push("SafetyDashboardFilter.tsx: leftover off-scale muted");
   }
   return hits;
@@ -66,6 +66,11 @@ if (process.argv.includes("--selftest")) {
   const leftoverSlateHits = leftoverRefuse('color: "#475569"');
   if (!leftoverSlateHits.length) {
     console.error("FAIL verify-safety-filter-chrome --selftest: leftover #475569 plant escaped");
+    process.exit(1);
+  }
+  const leftoverBorderHits = leftoverRefuse('borderColor: "#cbd5e1"');
+  if (!leftoverBorderHits.length) {
+    console.error("FAIL verify-safety-filter-chrome --selftest: leftover #cbd5e1 plant escaped");
     process.exit(1);
   }
   console.log("PASS verify-safety-filter-chrome --selftest — leftover plant detected");
