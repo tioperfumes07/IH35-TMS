@@ -24,7 +24,7 @@
 //   3. the reversal-of-a-reversal escape hatch is gated on an explicit caller flag;
 //   4. no caller anywhere passes that flag except a declared allowlist (empty today).
 //
-// Rule 17: wired ONLY via scripts/verify-steps/14445-verify-void-never-reverses-a-reversal.mjs
+// Rule 17: wired ONLY via scripts/verify-steps/14869-verify-void-never-reverses-a-reversal.mjs
 //
 // Usage: node scripts/verify-void-never-reverses-a-reversal.mjs [--selftest]
 import fs from "node:fs";
