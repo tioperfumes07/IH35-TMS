@@ -49,7 +49,7 @@ export async function registerBankingFactoringVirtualRoutes(app: FastifyInstance
       const relation = await client.query<{ exists: boolean }>(
         `SELECT to_regclass('views.factoring_balance_invoice_linkage') IS NOT NULL AS exists`
       );
-      if (!relation.rows[0]?.exists) return { error: "missing_linkage_view" as const };
+      if (!relation.rows[0]?.exists) return { error: "linkage_view_unavailable" as const };
 
       const res = await client.query(
         `

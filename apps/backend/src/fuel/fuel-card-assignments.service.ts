@@ -55,6 +55,8 @@ async function registryReady(client: DbClient): Promise<boolean> {
   if (tableReady) return true;
   const r = await client.query<{ ok: boolean }>(`SELECT to_regclass('fuel.fuel_card_assignments') IS NOT NULL AS ok`);
   tableReady = Boolean(r.rows[0]?.ok);
+  // Degrade WITH a signal: the resolver answers reason "registry_not_deployed", the list refuses, and this logs it.
+  if (!tableReady) console.warn("fuel_card_assignments_unavailable: fuel.fuel_card_assignments is not deployed");
   return tableReady;
 }
 
@@ -108,7 +110,7 @@ export async function listFuelCardAssignments(
   operatingCompanyId: string,
   filter: { unit_id?: string; driver_id?: string; vendor_id?: string; card_last_digits?: string; include_voided?: boolean } = {}
 ): Promise<FuelCardAssignment[]> {
-  if (!(await registryReady(client))) return [];
+  if (!(await registryReady(client))) throw new Error("fuel_card_assignments_unavailable");
   const res = await client.query<FuelCardAssignment>(
     `${SELECT_ASSIGNMENTS}
       WHERE a.operating_company_id = $1::uuid
