@@ -113,6 +113,10 @@ export function check({ toggle, ownerHome, defaultHome, qboHome, apiHome, routes
     f.push(`${SERVICE}: must export revenueRangeWindow resolving presets via companyBusinessDate (company TZ)`);
   }
 
+  // BANK-F91339 leftover refuse — HomeKpiRangeToggle page-scoped text token ratchet
+  if (toggle && toggle.includes("text-[11px]")) f.push(`${TOGGLE}: leftover text-[11px]`);
+  if (toggle && toggle.includes("#8A92AB")) f.push(`${TOGGLE}: leftover off-scale muted #8A92AB`);
+
   return f;
 }
 
@@ -220,6 +224,16 @@ if (process.argv.includes("--selftest")) {
       ),
     ],
   ];
+
+  // BANK-F91339 leftover plant — HomeKpiRangeToggle page-scoped text token ratchet
+  const leftoverPlant = {
+    ...good,
+    toggle: good.toggle + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n',
+  };
+  if (!check(leftoverPlant).some((x) => x.includes("leftover text-[11px]"))) {
+    console.error(`${LABEL} --selftest FAIL — leftover plant escaped`);
+    process.exit(1);
+  }
 
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
