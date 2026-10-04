@@ -123,6 +123,7 @@ checkContains("apps/frontend/src/components/maintenance/TireWearProjectionChart.
 // BANK-F91386 leftover refuse — TireWearProjectionChart page-scoped text token ratchet
 if (chart && chart.includes("text-[11px]")) fail("TireWearProjectionChart.tsx: leftover text-[11px]");
 if (chart && chart.includes("#8A92AB")) fail("TireWearProjectionChart.tsx: leftover off-scale muted #8A92AB");
+if (chart && /fontSize:\s*10\b/.test(chart)) fail("TireWearProjectionChart.tsx: leftover fontSize: 10");
 
 const unitTab = checkExists("apps/frontend/src/pages/maintenance/units/UnitTiresTab.tsx");
 checkContains("apps/frontend/src/pages/maintenance/units/UnitTiresTab.tsx", unitTab, [
@@ -177,8 +178,10 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   // BANK-F91386 leftover plant — TireWearProjectionChart page-scoped text token ratchet
-  const leftoverPlant = (chart ?? "") + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
-  if (!(leftoverPlant.includes("text-[11px]") && leftoverPlant.includes("#8A92AB"))) {
+  const leftoverPlant = (chart ?? "") + '\n<div className="text-[11px] text-[#8A92AB]" style={{ fontSize: 10 }}>plant</div>\n';
+  if (
+    !(leftoverPlant.includes("text-[11px]") && leftoverPlant.includes("#8A92AB") && /fontSize:\s*10\b/.test(leftoverPlant))
+  ) {
     console.error("verify:cap-12-tire-tread --selftest FAILED — leftover plant escaped");
     process.exit(1);
   }

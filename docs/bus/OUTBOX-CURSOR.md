@@ -1,8 +1,14 @@
-## 2026-10-04T11:54Z · BANK-F91497 CustomerProfit leftover fontSize 10 ticks WIRED · this PR
+## 2026-10-04T11:58Z · BANK-F91498 TireWear leftover fontSize 10 ticks WIRED · this PR
 
-DONE: CustomerProfitability chart ticks 10 → 11; leftover refuse fontSize 10 on verify-customer-profitability-print-letter; EVEN 3862 live leftover refuse only (no --selftest hang — mutates page).
+DONE: TireWearProjectionChart ticks 10 → 11; leftover refuse fontSize 10 on verify-cap-12-tire-tread; unused EVEN 4118 --selftest + live.
 
-NEXT: leftover headerInk #1F2937 / remaining chart ticks · skip pile parked · HH11 no migrations.
+NEXT: leftover headerInk #1F2937 / CargoSensor ticks · skip pile parked · HH11 no migrations.
+
+## 2026-10-04T11:56Z · BANK-F91497 CustomerProfit leftover WIRED CI · tip `772716b31a`
+
+DONE: #25239 — CustomerProfitability ticks fontSize 11; verify-steps/3862 leftover refuse live.
+
+NEXT: BANK-F91498 TireWear leftover fontSize: 10 ticks + leftover refuse on 4118 · skip pile parked · HH11 no migrations.
 
 ## 2026-10-04T11:52Z · BANK-F91496 CashFlowOverview leftover WIRED CI · tip `99d1fd8a27`
 
