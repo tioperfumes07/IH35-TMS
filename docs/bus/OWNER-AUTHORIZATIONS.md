@@ -7196,6 +7196,14 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). Owner AUTH-398-FUEL, C
 action: DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-04-cc3-fuel-auth-398.mts --apply --auth AUTH-212
   Dry-run first (default, no --apply).
 expires_at: 2026-10-05T00:55:19Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-04T18:56:21Z
+consumed_by: CC-3
+row_counts: accounting.expenses 63431792 voided by executeVoidCancel('expense') with reversing entry 72d1b53a
+  (2 lines, Dr 51061 / Cr 51061; JE eb57181b reversed_by 72d1b53a); fuel.fuel_transactions dfb30f22 voided by
+  executeVoidCancel('fuel_transaction'); fuel.fuel_transactions 6171784d / 9b2b027e / 24b04710 / 0f1bb337
+  transaction_reference 'ustFluid' -> NULL (amount, load, JE and its 2 lines unchanged, not voided); 0 deletes.
+  Keep copy 432798f4 (13548) / expense 7ec5b0cb still posted.
+proof_query: live read-only re-read — 99530579 live copies = 1 (13548); 13533 copy fuel+expense voided; four DEF refs blank.
 THIS AUTHORIZATION DOES NOT COVER: any DELETE; the expense memos that still read "ref ustFluid"; receipts 1848853 /
   99794138 (done under AUTH-207 / AUTH-209); any other document or company.
