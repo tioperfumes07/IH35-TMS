@@ -1,3 +1,9 @@
+## 2026-10-04T08:42Z · BANK-F91459 E-44 stops/miles profile WIRED CI · tip `0444b4bfb9`
+
+DONE: #25201 — verify-steps/4584 now runs ops/verify-e44-stops-miles-profile --selftest.
+
+NEXT: BANK-F91460 wire E-42 dashcam viewer into 2204 · C-21 odometer + C-22 fail=triage · skip pile parked · HH08 no migrations.
+
 ## 2026-10-04T08:36Z · BANK-F91458 maint WO three dates WIRED CI · tip `df52e96a24`
 
 DONE: #25200 — verify-steps/3764 now runs ops/verify-maint-wo-three-dates --selftest.
