@@ -320,7 +320,7 @@ export function ReconciliationTabContent({
           ))}
         </div>
         <p className="mb-2 text-center text-xs text-[#6B7280]">
-          Difference must read exactly $0.00 before Finish is enabled. POSTING DATE and TRANSACTION DATE stay
+          Difference must reach $0.00 before Finish is enabled. POSTING DATE and TRANSACTION DATE stay
           separate columns in the workspace — never collapsed to one &quot;Date&quot;.
         </p>
 
@@ -405,10 +405,13 @@ export function ReconciliationTabContent({
                   unmatched
                 </span>
               </li>
-              <li className="flex items-center justify-between rounded-sm border border-gray-100 px-2 py-1">
+              <li
+                className="flex items-center justify-between rounded-sm border border-gray-100 px-2 py-1"
+                data-c53-a27-pending="1"
+              >
                 <span className="font-medium text-[#0F1219]">Matched with difference</span>
                 <span className="rounded-sm bg-[#fffaeb] px-1.5 py-0.5 text-xs font-semibold text-[#B54708]">
-                  matched-with-difference
+                  matched-with-difference · A-27 pending
                 </span>
               </li>
             </ul>

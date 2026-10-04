@@ -1,3 +1,9 @@
+## 2026-10-04T07:00Z · BANK-F91436 C-51 Home+Escrow ops WIRED CI · tip `4c70a5cab4`
+
+DONE: #25177 — verify-steps/12392 now runs ops/verify-c51-banking-home-escrow --selftest.
+
+NEXT: BANK-F91437 restore C-53 A-27 pending + must-reach-$0.00, wire into 1356 · skip pile parked · HH06 no migrations.
+
 ## 2026-10-04T06:52Z · BANK-F91435 B-4 check-creator ops WIRED CI · tip `0bedf9ca93`
 
 DONE: #25175 — verify-steps/3832 now runs ops/verify-b4-check-creator --selftest. B-1..B-5 ops packs all in CI.
