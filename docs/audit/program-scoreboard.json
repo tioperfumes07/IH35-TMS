@@ -1,6 +1,6 @@
 {
   "healthzSha": "2ae0bd7",
-  "generated_at": "2026-10-04T06:48:36.669Z",
+  "generated_at": "2026-10-04T17:31:15.395Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 25177,
-      "title": "FINDING: BANK-F91436 wire C-51 banking Home+Escrow ops into CI step 12392",
+      "number": 25295,
+      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: CC-2 verify-steps 12083..12395 — ROUND 389.2 wiring of 79 passing banking/recon/plaid/factoring guards)",
       "state": "merged",
-      "mergedAtCt": "10/04/2026, 01:45 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25177",
-      "sha": "4c70a5cab4",
-      "committedAtIso": "2026-10-04T01:45:56-05:00"
+      "mergedAtCt": "10/04/2026, 12:28 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25295",
+      "sha": "307aed630f",
+      "committedAtIso": "2026-10-04T12:28:13-05:00"
     },
     {
-      "number": 25176,
-      "title": "FINDING: ACCT-F2026100411 LANE: FINANCIAL (four static reds on main blocking every seat: the CC-2 share of verify-regclass-fallback-intent, the reefer credit report had no Print, and two Load-costs register tests asserted behaviour the owner overruled)",
+      "number": 25294,
+      "title": "FINDING: N/A (CLAIM-RESERVE 50 verify-steps — ROUND 389.2 wiring batch 1, reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "10/04/2026, 01:45 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25176",
-      "sha": "edc291794d",
-      "committedAtIso": "2026-10-04T01:45:38-05:00"
+      "mergedAtCt": "10/04/2026, 12:24 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25294",
+      "sha": "affb474bda",
+      "committedAtIso": "2026-10-04T12:24:17-05:00"
     },
     {
-      "number": 25175,
-      "title": "FINDING: BANK-F91435 wire B-4 check-creator ops into CI step 3832",
+      "number": 25293,
+      "title": "Cursor- BANK-F91551 LoadCosts leftover slate classes + leftover refuse on 4110",
       "state": "merged",
-      "mergedAtCt": "10/04/2026, 01:42 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25175",
-      "sha": "0bedf9ca93",
-      "committedAtIso": "2026-10-04T01:42:38-05:00"
+      "mergedAtCt": "10/04/2026, 12:02 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25293",
+      "sha": "0d46e6481d",
+      "committedAtIso": "2026-10-04T12:02:31-05:00"
     },
     {
-      "number": 25174,
-      "title": "FINDING: BANK-F91434 wire B-3 feed/match ops into CI step 1222",
+      "number": 25292,
+      "title": "Cursor- BANK-F91550 CustomerDetail leftover slate classes + leftover refuse on 4116",
       "state": "merged",
-      "mergedAtCt": "10/04/2026, 01:38 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25174",
-      "sha": "6cd4690e3b",
-      "committedAtIso": "2026-10-04T01:38:42-05:00"
+      "mergedAtCt": "10/04/2026, 11:55 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25292",
+      "sha": "75029ae9b2",
+      "committedAtIso": "2026-10-04T11:55:06-05:00"
     },
     {
-      "number": 25173,
-      "title": "FINDING: BANK-F91433 wire B-2 recon ops into CI step 1436",
+      "number": 25291,
+      "title": "Cursor- BANK-F91549 SystemModule leftover slate classes + leftover refuse on 4142",
       "state": "merged",
-      "mergedAtCt": "10/04/2026, 01:31 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25173",
-      "sha": "cd6393e80f",
-      "committedAtIso": "2026-10-04T01:31:31-05:00"
+      "mergedAtCt": "10/04/2026, 11:51 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25291",
+      "sha": "38185ed5f6",
+      "committedAtIso": "2026-10-04T11:51:29-05:00"
     },
     {
-      "number": 25172,
-      "title": "FINDING: BANK-F91432 wire B-1 register connectivity ops into CI step 1158",
+      "number": 25290,
+      "title": "Cursor- BANK-F91548 AccountingHome leftover slate classes + leftover refuse on 3870",
       "state": "merged",
-      "mergedAtCt": "10/04/2026, 01:25 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25172",
-      "sha": "f4d9e5f189",
-      "committedAtIso": "2026-10-04T01:25:23-05:00"
+      "mergedAtCt": "10/04/2026, 11:43 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25290",
+      "sha": "cf4631eb22",
+      "committedAtIso": "2026-10-04T11:43:13-05:00"
     },
     {
-      "number": 25171,
-      "title": "FINDING: OUTBOX-CURSOR BANK-F91431 MERGED tip de05e37ad4",
+      "number": 25289,
+      "title": "Cursor- BANK-F91547 OwnerHome + DefaultHome leftover slate classes + leftover refuse on 3888",
       "state": "merged",
-      "mergedAtCt": "10/04/2026, 01:18 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25171",
-      "sha": "8f6b3d9bac",
-      "committedAtIso": "2026-10-04T01:18:56-05:00"
+      "mergedAtCt": "10/04/2026, 11:38 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25289",
+      "sha": "eebbb7c82a",
+      "committedAtIso": "2026-10-04T11:38:28-05:00"
     },
     {
-      "number": 25170,
-      "title": "FINDING: BANK-F91431 wire ops B-5 reclassify-batch into CI step 12270",
+      "number": 25288,
+      "title": "FINDING: BANK-F91546 TripPairing leftover slate classes + leftover refuse on CI step 4130",
       "state": "merged",
-      "mergedAtCt": "10/04/2026, 01:17 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25170",
-      "sha": "de05e37ad4",
-      "committedAtIso": "2026-10-04T01:17:58-05:00"
+      "mergedAtCt": "10/04/2026, 11:32 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25288",
+      "sha": "d977d97c18",
+      "committedAtIso": "2026-10-04T11:32:17-05:00"
     },
     {
-      "number": 25169,
-      "title": "FINDING: BANK-F91430 B-5 reclassify period-balances + Account no. chrome",
+      "number": 25287,
+      "title": "FINDING: BANK-F91545 ProfitPerTruck leftover slate classes + leftover refuse on CI step 3854",
       "state": "merged",
-      "mergedAtCt": "10/04/2026, 01:13 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25169",
-      "sha": "f102fd26a2",
-      "committedAtIso": "2026-10-04T01:13:55-05:00"
+      "mergedAtCt": "10/04/2026, 11:27 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25287",
+      "sha": "d7f1802d9e",
+      "committedAtIso": "2026-10-04T11:27:01-05:00"
     },
     {
-      "number": 25168,
-      "title": "FINDING: N/A (CLAIMED-REGEN — reservation-only commit, no code fix: the verify-step claims for the Lead's ROUND 393 batch-five (r389 wires 165 orphan guards as verify-steps), split out of the squashed batch so the feature commit does not edit CLAIMED-NUMBERS.json)",
+      "number": 25286,
+      "title": "FINDING: BANK-F91544 CustomerProfit leftover slate classes + leftover refuse on CI step 3862",
       "state": "merged",
-      "mergedAtCt": "10/04/2026, 01:07 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25168",
-      "sha": "7fffca8fd9",
-      "committedAtIso": "2026-10-04T01:07:36-05:00"
+      "mergedAtCt": "10/04/2026, 11:23 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25286",
+      "sha": "ef51c9ebd8",
+      "committedAtIso": "2026-10-04T11:23:05-05:00"
     }
   ]
 }

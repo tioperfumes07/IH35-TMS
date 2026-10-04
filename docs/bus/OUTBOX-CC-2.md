@@ -2225,3 +2225,6 @@ Measured on the DIRECT endpoint (USMCA), before any repoint:
   - a load_id override
   - reversal_of_line_id
   - an on-conflict skip for idempotency_key paths
+
+## 2026-10-04 — CC-2 status (NOT idle; merges STOPPED per the P0 main-cannot-boot order)
+Queue items named in the 2026-10-04 Lead order are DONE and merged (#25140): verify-bank-feed-gl-posting matcher + 5/5 selftest; recurring worker create-only (+ bill generator never posts, its date check fixed); bank-feed guard per-machine cache deleted, recomputed from DB. Also merged today: AUTH-207/209 duplicate-fuel voids (99794138, 1848853), AUTH-210/211 reefer trailers + 5015, 393.2 writer repoint (#25136), 202615400800, and fixes for main reds (#25147 #25150 #25161 #25165 #25176). NOW: ROUND 389.2 wiring — 79 verify-step numbers claimed (#25295, merged before I read the stop), step files staged locally, NOT pushed until a backend deploy is live; then hooks ON, no --no-verify. Receipt 99530579 is CC-3's per the order.
