@@ -20,9 +20,11 @@ function audit(s) {
   if (!/>\s*\+\s*Create Roadside WO\s*</.test(s.grid)) failures.push("RMBucketsGrid.tsx button must read '+ Create Roadside WO'");
   if (/>\s*\+\s*Roadside WO\s*</.test(s.list)) failures.push("RoadServiceList.tsx must not use the no-verb '+ Roadside WO' label");
   if (/>\s*\+\s*Roadside WO\s*</.test(s.grid)) failures.push("RMBucketsGrid.tsx must not use the no-verb '+ Roadside WO' label");
-  // BANK-F91316 leftover refuse — RMBucketsGrid.tsx page-scoped text token ratchet (size-only; navy accent #334155 kept)
+  // BANK-F91480 leftover refuse — RMBucketsGrid.tsx page-scoped muted token ratchet
   if (s.grid.includes("text-[11px]")) failures.push("RMBucketsGrid.tsx: leftover text-[11px]");
-  if (s.grid.includes("#8A92AB")) failures.push("RMBucketsGrid.tsx: leftover off-scale muted #8A92AB");
+  if (s.grid.includes("#8A92AB") || s.grid.includes("#334155")) {
+    failures.push("RMBucketsGrid.tsx: leftover off-scale muted");
+  }
   return failures;
 }
 
@@ -38,9 +40,15 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  // BANK-F91316 leftover plant — RMBucketsGrid page-scoped text token ratchet
-  const leftoverPlant = { ...source, grid: source.grid + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n' };
-  if (!audit(leftoverPlant).some((f) => f.includes("leftover text-[11px]"))) {
+  const leftoverPlant = {
+    ...source,
+    grid: `${source.grid}\n<div className="text-[11px] text-[#8A92AB]" style={{ color: "#334155" }}>plant</div>`,
+  };
+  const leftoverHits = audit(leftoverPlant);
+  if (
+    !leftoverHits.some((f) => f.includes("leftover text-[11px]")) ||
+    !leftoverHits.some((f) => f.includes("leftover off-scale muted"))
+  ) {
     console.error(`${LABEL} SELFTEST FAIL — leftover plant escaped`);
     process.exit(1);
   }

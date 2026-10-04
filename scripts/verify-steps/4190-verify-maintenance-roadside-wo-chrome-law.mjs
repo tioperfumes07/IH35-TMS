@@ -6,6 +6,7 @@
 export default {
   name: "verify-maintenance-roadside-wo-chrome-law",
   run(ctx) {
+    // BANK-F91480 — RMBucketsGrid leftover muted refuse now included in this already-wired host.
     ctx.run("node", ["scripts/verify-maintenance-roadside-wo-chrome-law.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-maintenance-roadside-wo-chrome-law.mjs"]);
   },
