@@ -8,7 +8,7 @@ import { formatUsdCents } from "../../../lib/money";
 
 const STATUS_COLORS: Record<HomeWoStatusCount["status"], string> = {
   draft: "#94a3b8",
-  open: "#334155",
+  open: "#4B5563",
   in_progress: "#f59e0b",
   awaiting_parts: "#64748b",
   completed: "#1A7A3C",
