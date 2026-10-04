@@ -13,6 +13,8 @@
 //   HONEST-GAP note below), so crediting a fabricated driver-A/R account would be a guessed mapping; we
 //   do not do that.
 //
+// ROUND 394 RULING 2 (closes the gap below for damage / fine liabilities): those now post at creation (Dr
+// 1255 / 1256), so a forfeit linked to one credits the receivable. Older note, still true for other types:
 // HONEST GAP (flagged, not fixed here — accounting-lane defect): convertFineToLiability inserts a
 // driver_finance.driver_liabilities row but posts NO journal entry, so the driver's debt is a subledger
 // balance with no GL loss/receivable behind it. Until that upstream gap is closed, the forfeit's
@@ -42,6 +44,7 @@ import {
   readDriverEscrowBalanceCents,
 } from "./escrow-resolver.service.js";
 import { ensureEscrowBalanceRow } from "./escrow-balance-row.js";
+import { driverReceivableFor } from "./driver-receivable-roles.js";
 
 /** OFF by default (pattern fallback recognizes *_GL_POSTING_ENABLED and returns false when unseeded). */
 export const DRIVER_ESCROW_FORFEIT_GL_POSTING_FLAG_KEY = "DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED";
@@ -120,20 +123,26 @@ export async function forfeitDriverEscrowOnClient(
   if (!flagOn) return { result: "flag_off" as const };
 
   // If a specific liability is named, it must be a REAL row for this driver+entity (canonical FK, not memo).
+  let linkedLiabilityType: string | null = null;
   if (input.linked_liability_id) {
-    const liab = await (client as { query: <T>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> }).query<{ id: string }>(
-      `SELECT id::text FROM driver_finance.driver_liabilities
+    const liab = await (client as { query: <T>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> }).query<{ id: string; type: string }>(
+      `SELECT id::text, type FROM driver_finance.driver_liabilities
        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND driver_id = $3::uuid LIMIT 1`,
       [input.linked_liability_id, input.operating_company_id, input.driver_uuid]
     );
     if (!liab.rows[0]) return { result: "linked_liability_not_found" as const };
+    linkedLiabilityType = liab.rows[0].type;
   }
 
   // DR account: the driver's own escrow LIABILITY sub-account (Liability-or-fail, not-Faro-or-fail).
   const escrowLiability = await resolveDriverEscrowLiabilityAccount(client as never, input.operating_company_id, input.driver_uuid);
 
-  // CR account: damage_recovery via the PRIMARY CoA resolver — THROWS (fail loud) when undesignated.
-  const damageRecoveryAccountId = await resolveRoleAccount(client as never, input.operating_company_id, "damage_recovery");
+  // CR account: when the forfeit satisfies a POSTED driver receivable (ROUND 394 ruling 2: a damage / fine
+  // liability posted Dr 1255 / 1256 at creation), credit THAT receivable — the loss was already booked to the
+  // recovery account at creation, so crediting damage_recovery again would count it twice. Otherwise
+  // damage_recovery, as before. Both via the PRIMARY CoA resolver — THROWS (fail loud) when undesignated.
+  const receivable = driverReceivableFor(linkedLiabilityType);
+  const damageRecoveryAccountId = await resolveRoleAccount(client as never, input.operating_company_id, receivable?.receivable ?? "damage_recovery");
 
   const je = await createJournalEntryOnClient(
     client as never,
@@ -155,7 +164,7 @@ export async function forfeitDriverEscrowOnClient(
           account_id: damageRecoveryAccountId,
           debit_or_credit: "credit",
           amount_cents: amountCents,
-          description: "Damage recovery from forfeited escrow",
+          description: receivable ? "Driver receivable recovered from forfeited escrow" : "Damage recovery from forfeited escrow",
         },
       ],
     },

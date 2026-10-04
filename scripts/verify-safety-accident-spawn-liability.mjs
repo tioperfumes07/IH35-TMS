@@ -38,12 +38,14 @@ function assert(sources) {
   if (!/INSERT INTO driver_finance\.driver_liabilities/.test(handler)) {
     problems.push(`${ROUTE}: must INSERT driver_finance.driver_liabilities`);
   }
-  // Permanent C6 posture (Claude SWEEP-C6): liability seed is EXEMPT — JE on settlement apply.
-  // Without this, build-typecheck fails as a NEW C6 gap on every spawn-liability change.
-  if (!/C6-MONEY-JE-EXEMPT:/.test(handler) && !/C6-MONEY-JE-EXEMPT:/.test(route)) {
-    problems.push(
-      `${ROUTE}: spawn-liability must carry C6-MONEY-JE-EXEMPT (recovery subledger; JE on settlement apply)`
-    );
+  // ROUND 394 RULING 2 (supersedes the C6 "JE on settlement apply" exemption): accident damage is a DRIVER
+  // RECEIVABLE that posts at creation through the canonical poster (source 'driver_liability', Dr 1255), and
+  // its deduction names the liability it recovers.
+  if (!/postSourceTransactionInClientTx\([\s\S]{0,240}source_transaction_type: "driver_liability"/.test(handler)) {
+    problems.push(`${ROUTE}: spawn-liability must post the driver receivable at creation (postSourceTransactionInClientTx, 'driver_liability')`);
+  }
+  if (!/sourceType: "damage",\s*liabilityId/.test(handler)) {
+    problems.push(`${ROUTE}: the damage deduction must carry liabilityId (pay-run close credits the receivable)`);
   }
   if (!/createSettlementDeduction/.test(handler) && !/createSettlementDeduction/.test(route)) {
     problems.push(`${ROUTE}: must reuse createSettlementDeduction (no new GL math)`);

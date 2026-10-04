@@ -1,14 +1,8 @@
-// C6-MONEY-JE-EXEMPT: the driver_finance.driver_liabilities row here (type='internal_fine',
-// status='pending_recovery') is NOT the "company-paid civil fine" case named in the C6 block
-// description (SAF-B18/#3551 — that is safety/fines.routes.ts's postCompanyPaidCivilFine path,
-// already wired and POSTER_RE-matched) — this is a DIFFERENT, internal disciplinary fine recovered
-// directly from the driver's own settlement, no third-party payment leg at all. Immediately after
-// this INSERT, the SAME transaction calls createSettlementDeduction (driver-finance/
-// deductions.service.ts, sourceType: "fine") — a driver_finance.driver_settlement_deductions
-// staging row, the SAME table/pattern already verified across this session's settlement cluster
-// (#19608/#19627): the real JE posts once, later, at settlement close via
-// settlement-payrun-close.service.ts's closeSettlementPayRun (createJournalEntry). Traced, not
-// assumed. Verified 2026-09-02, GO-23 C6.
+// ROUND 394 RULING 2 — the driver_finance.driver_liabilities row here (type='internal_fine') is a DRIVER
+// RECEIVABLE: it posts at creation through the canonical poster (postSourceTransactionInClientTx, source
+// 'driver_liability': Dr 1256 driver_fine_receivable / Cr other_recovery) in the same transaction, and the
+// settlement deduction created with it carries liability_id, so pay-run close credits the receivable.
+// (Supersedes the GO-23 C6 exemption "the real JE posts once, later, at settlement close".)
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -17,6 +11,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { createWorkOrderWithLines } from "../maintenance/two-section-service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { createSettlementDeduction } from "../driver-finance/deductions.service.js";
+import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -341,12 +336,22 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
           liability = liabRes.rows[0] ?? null;
           if (liability) {
             const amountCents = Math.round(Number(body.data.amount) * 100);
+            // ROUND 394 RULING 2 — an internal fine is a DRIVER RECEIVABLE: post it now (source
+            // 'driver_liability': Dr 1256 driver_fine_receivable / Cr other_recovery) in this transaction;
+            // the deduction carries liability_id so pay-run close credits the receivable.
+            const liabilityId = String((liability as { id?: string }).id);
+            await postSourceTransactionInClientTx(
+              client as never,
+              { operating_company_id: query.data.operating_company_id, source_transaction_type: "driver_liability", source_transaction_id: liabilityId },
+              { userId: user.uuid }
+            );
             const deduction = await createSettlementDeduction(client, {
               driverId: body.data.driver_uuid,
               operatingCompanyId: query.data.operating_company_id,
               amountCents,
               reason: `Internal fine recovery: ${String(fine.id)}`,
               sourceType: "fine",
+              liabilityId,
               loadId: body.data.related_load_uuid ?? null,
               createdByUserId: user.uuid,
             });

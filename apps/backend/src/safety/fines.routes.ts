@@ -5,6 +5,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { createSettlementDeduction } from "../driver-finance/deductions.service.js";
+import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { postCompanyPaidCivilFine } from "../accounting/safety-fine-posting/poster.service.js";
 
 const companyQuerySchema = z.object({
@@ -542,12 +543,21 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
         // Apply-to-net stays behind SETTLEMENT_DEDUCTION_APPLY_ENABLED (owner flip). Seed is always on for amount > 0.
         let deductionId: string | null = null;
         if (amount > 0) {
+          // ROUND 394 RULING 2 — a civil fine charged to the driver is a DRIVER RECEIVABLE: post it now
+          // (source 'driver_liability': Dr 1256 driver_fine_receivable / Cr civil_fines_expense) in this
+          // transaction; the deduction carries liability_id so pay-run close credits the receivable.
+          await postSourceTransactionInClientTx(
+            client as never,
+            { operating_company_id: query.data.operating_company_id, source_transaction_type: "driver_liability", source_transaction_id: String(liability.id) },
+            { userId: user.uuid }
+          );
           const deduction = await createSettlementDeduction(client, {
             driverId: String(fine.subject_driver_id),
             operatingCompanyId: query.data.operating_company_id,
             amountCents: amount,
             reason: `Civil fine recovery: ${String(fine.violation_description)}`,
             sourceType: "fine",
+            liabilityId: String(liability.id),
             loadId: fine.related_load_id ? String(fine.related_load_id) : null,
             createdByUserId: user.uuid,
           });

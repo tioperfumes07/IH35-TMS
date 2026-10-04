@@ -3,6 +3,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { boundJeMemo, sourceDocumentLabel } from "./je-memo.js";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
 import { resolveRoleAccountOptional, resolveReimbursementExpenseAccount, resolveRoleAccount } from "./coa-roles/resolver.service.js";
+import { driverReceivableFor } from "../driver-finance/driver-receivable-roles.js";
 import { STANDING_LATCH_JE_PREDICATE } from "./revrec-delivery-posting/poster.service.js";
 import { DriverAdvanceAccountError, resolveDriverAdvanceSubAccount } from "../driver-finance/driver-advance-account-resolver.js";
 import { resolveBillLineDebitAccount, BillLineAccountError } from "./bill-account-resolver.js";
@@ -81,6 +82,10 @@ export const POSTING_SOURCE_TYPES = [
   // creation. sourceId = accounting.credit_memos.id. Credits whose GL is owned elsewhere (payment overpayment, Faro
   // short-pay write-down) carry no account and never reach this poster.
   "credit_memo",
+  // ROUND 394 RULING 2 — a driver liability that is a DRIVER RECEIVABLE (accident damage, civil / internal
+  // fine) posts at creation: Dr the receivable role (1255 / 1256) / Cr the matching recovery role.
+  // sourceId = driver_finance.driver_liabilities.id. A write-off is the reversal of this posting.
+  "driver_liability",
 ] as const;
 
 export type PostingSourceType = (typeof POSTING_SOURCE_TYPES)[number];
@@ -2614,6 +2619,69 @@ async function buildDriverReimbursementLines(
   };
 }
 
+// ROUND 394 RULING 2 — a driver liability that is a DRIVER RECEIVABLE posts on creation:
+//   Dr the receivable role for its type (driver_damage_receivable 1255 / driver_fine_receivable 1256)
+//   Cr the matching recovery role (damage_recovery / civil_fines_expense / other_recovery)
+// for its original amount (numeric DOLLARS -> cents), dated the day it was created. Both accounts resolve
+// through the role table (365.1); an unbound role fails closed. The settlement deduction that recovers it
+// credits the receivable; a write-off reverses this entry. Types outside the map (advance/loan post via
+// driver_advance; negative_settlement awaits its ruling) are refused, never posted to a guessed account.
+async function buildDriverLiabilityLines(client: DbClient, operatingCompanyId: string, sourceId: string): Promise<PostingDraft> {
+  const res = await client.query<{
+    id: string;
+    driver_id: string;
+    type: string;
+    original_amount: string;
+    created_at: string;
+    voided_at: string | null;
+    source_description: string | null;
+  }>(
+    `
+      SELECT id::text, driver_id::text, type::text, original_amount::text, created_at::date::text AS created_at,
+             voided_at::text, source_description
+      FROM driver_finance.driver_liabilities
+      WHERE operating_company_id = $1::uuid AND id::text = $2
+      LIMIT 1
+      FOR UPDATE
+    `,
+    [operatingCompanyId, sourceId]
+  );
+  const liability = res.rows[0];
+  if (!liability) throw new PostingEngineError("SOURCE_NOT_FOUND", "Driver liability not found");
+  if (liability.voided_at) {
+    throw new PostingEngineError("ADVANCE_NOT_POSTING_ELIGIBLE", "Driver liability is voided; a voided liability is never posted");
+  }
+  const roles = driverReceivableFor(liability.type);
+  if (!roles) {
+    throw new PostingEngineError(
+      "ADVANCE_NOT_POSTING_ELIGIBLE",
+      `Driver liability type '${liability.type}' is not a posted driver receivable`
+    );
+  }
+  const receivableAccountId = await resolveRoleAccountOptional(client, operatingCompanyId, roles.receivable);
+  if (!receivableAccountId) {
+    throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", `No active '${roles.receivable}' role binding for this company`);
+  }
+  const creditAccountId = await resolveRoleAccountOptional(client, operatingCompanyId, roles.credit);
+  if (!creditAccountId) {
+    throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", `No active '${roles.credit}' role binding for this company`);
+  }
+  const amountCents = Math.round(Number(liability.original_amount) * 100);
+  if (!Number.isSafeInteger(amountCents) || amountCents <= 0) {
+    throw new PostingEngineError("ADVANCE_NOT_POSTING_ELIGIBLE", "Driver liability amount must be positive");
+  }
+  const label = `Driver ${liability.type.replace(/_/g, " ")} receivable ${sourceId.slice(0, 8)}`;
+  const detail = (liability.source_description ?? "").trim().slice(0, 200) || label;
+  return {
+    postingDate: liability.created_at,
+    memo: `${label} posting`,
+    lines: [
+      { account_id: receivableAccountId, debit_or_credit: "debit", amount_cents: amountCents, description: detail, source_transaction_line_id: null },
+      { account_id: creditAccountId, debit_or_credit: "credit", amount_cents: amountCents, description: detail, source_transaction_line_id: null },
+    ],
+  };
+}
+
 // CHAIN-05 (BLOCK-03) — a categorized bank-feed line → a direction-aware balanced JE. This is the
 // GENERALIZATION of BLOCK-6 (bank-driver-advance): the same two-leg cash↔category structure, for ANY
 // categorized bank transaction (not just the driver-advance branch). NO new GL math — it reads the row
@@ -2864,6 +2932,7 @@ async function buildPostingDraft(
   if (sourceType === "bank_categorization") return buildBankCategorizationLines(client, operatingCompanyId, sourceId);
   if (sourceType === "driver_reimbursement") return buildDriverReimbursementLines(client, operatingCompanyId, sourceId, creditAccountId);
   if (sourceType === "transfer") return buildTransferLines(client, operatingCompanyId, sourceId);
+  if (sourceType === "driver_liability") return buildDriverLiabilityLines(client, operatingCompanyId, sourceId);
   throw new PostingEngineError("UNKNOWN_SOURCE_TYPE", `Unknown source type: ${sourceType}`);
 }
 
