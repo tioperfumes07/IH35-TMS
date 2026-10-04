@@ -57,15 +57,27 @@ export function orphanPlanProblems(plannedDocs, postings, plannedLineIds) {
   return problems;
 }
 
-/** SQL (one statement, company-scoped) counting posting lines whose named document no longer exists, per table. */
+/**
+ * SQL (one statement, company-scoped): per document table, the posting lines whose named document no longer exists,
+ * and — netted over the WHOLE ENTRIES those lines sit in, every source label together — how many accounts do not net to
+ * zero. Netting only the lines carrying one label counted one side of a pair: a void relabelled the 1150 reversal leg
+ * `invoice` while the original 1150 leg was `load`, and the invoice-only sum reported +$89,469.00 that netted $0.00
+ * (AUTH-400, 2026-10-04). An entry, not a label, is what balances.
+ */
 export function orphanCountSql() {
-  return Object.entries(DOC_SOURCE).map(([table, types]) =>
-    `SELECT '${table}' AS doc_table, count(*)::int AS lines, count(DISTINCT p.source_transaction_id)::int AS docs,
-            count(*) FILTER (WHERE p.reversed_by_line_id IS NULL AND p.reversal_of_line_id IS NULL)::int AS live_lines,
-            COALESCE(sum(CASE WHEN p.debit_or_credit::text = 'debit' THEN p.amount_cents ELSE -p.amount_cents END), 0)::bigint AS net_cents
-       FROM accounting.journal_entry_postings p
-      WHERE p.operating_company_id = $1::uuid
-        AND p.source_transaction_type IN (${types.map((t) => `'${t}'`).join(", ")})
-        AND NOT EXISTS (SELECT 1 FROM ${table} d WHERE d.id::text = p.source_transaction_id)`
-  ).join("\nUNION ALL\n");
+  return Object.entries(DOC_SOURCE).map(([table, types]) => {
+    const where = (a) => `${a}.operating_company_id = $1::uuid
+        AND ${a}.source_transaction_type IN (${types.map((t) => `'${t}'`).join(", ")})
+        AND NOT EXISTS (SELECT 1 FROM ${table} d WHERE d.id::text = ${a}.source_transaction_id)`;
+    return `SELECT '${table}' AS doc_table, a.lines, a.docs, a.live_lines, a.entries,
+            (SELECT count(*)::int FROM (
+               SELECT q.account_id FROM accounting.journal_entry_postings q
+                WHERE q.journal_entry_uuid IN (SELECT o.journal_entry_uuid FROM accounting.journal_entry_postings o WHERE ${where("o")})
+                GROUP BY q.account_id
+               HAVING sum(CASE WHEN q.debit_or_credit::text = 'debit' THEN q.amount_cents ELSE -q.amount_cents END) <> 0) z) AS nonzero_accounts
+       FROM (SELECT count(*)::int AS lines, count(DISTINCT p.source_transaction_id)::int AS docs,
+                    count(*) FILTER (WHERE p.reversed_by_line_id IS NULL AND p.reversal_of_line_id IS NULL)::int AS live_lines,
+                    count(DISTINCT p.journal_entry_uuid)::int AS entries
+               FROM accounting.journal_entry_postings p WHERE ${where("p")}) a`;
+  }).join("\nUNION ALL\n");
 }
