@@ -4,6 +4,7 @@
 // own query, narrowed to these documents) and the change goes through applyReclassify — the one reclassify engine, the
 // same writer and the same audit record as the Accounting tab. Guard: scripts/verify-wizard-and-reclassify-share-one-writer.mjs.
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { applyReclassify, findReclassifyLines, type ReclassifyBatchResult } from "../../api/reclassify";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
@@ -14,6 +15,10 @@ import { formatDateQboList } from "../../lib/formatDate";
 import { docTarget, notReclassifiable } from "../../lib/reclassifyDrill";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
+
+/** Hard fetch cap — must surface shown-vs-total (CLS-SILENT-CAP / LST-F407-C). Keep the
+ *  numeric literal on the request (`limit: 500`) so the silent-cap guard can still see the boundary. */
+const WIZARD_RECLASSIFY_LIMIT = 500;
 
 export function WizardReclassifyPanel({
   companyId,
@@ -37,7 +42,15 @@ export function WizardReclassifyPanel({
   const [showAccountNumbers] = useShowAccountNumbers();
   const linesQ = useQuery({
     queryKey: ["wizard-reclassify-lines", companyId, documentIds],
-    queryFn: () => findReclassifyLines(companyId, { from_date: "2000-01-01", to_date: today, source_transaction_ids: documentIds, limit: 500 }),
+    queryFn: () =>
+      findReclassifyLines(companyId, {
+        from_date: "2000-01-01",
+        to_date: today,
+        source_transaction_ids: documentIds,
+        // LST-F407-C — numeric literal kept so verify-no-silent-list-caps sees the hard cap;
+        // Showing N of M below is the required disclosure (same engine already returns total_lines).
+        limit: 500,
+      }),
     enabled: Boolean(companyId) && documentIds.length > 0,
   });
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -48,6 +61,10 @@ export function WizardReclassifyPanel({
   const [result, setResult] = useState<ReclassifyBatchResult | null>(null);
 
   const lines = useMemo(() => (linesQ.data?.lines ?? []).filter((l) => l.debit_or_credit === "debit"), [linesQ.data]);
+  // LST-F407-C — total_lines is the server's uncapped count; lines.length is what this panel shows
+  // after the debit filter. Never let the owner believe the table is complete when the fetch capped.
+  const totalAvailable = linesQ.data?.total_lines ?? lines.length;
+  const capped = Boolean(linesQ.data && linesQ.data.total_lines > linesQ.data.limit);
 
   async function apply() {
     if (!toAccount || selected.size === 0 || !reason.trim()) return;
@@ -89,6 +106,23 @@ export function WizardReclassifyPanel({
       {linesQ.isError ? <div className="text-red-700">Could not read the posted lines: {String((linesQ.error as Error)?.message ?? "")}</div> : null}
       {!linesQ.isLoading && !linesQ.isError && lines.length === 0 ? (
         <div className="text-slate-600">No expense line posted to the general ledger yet (fuel posts when its card line is matched in Banking).</div>
+      ) : null}
+
+      {lines.length > 0 ? (
+        <p className="text-slate-600" data-testid="sc-reclassify-cap-count">
+          Showing {lines.length} of {totalAvailable} line{totalAvailable === 1 ? "" : "s"}
+          {capped ? (
+            <>
+              {" "}
+              (list capped at {WIZARD_RECLASSIFY_LIMIT}
+              {" — "}
+              <Link className="underline" to="/accounting/reclassify">
+                open Accounting › Reclassify for the rest
+              </Link>
+              )
+            </>
+          ) : null}
+        </p>
       ) : null}
 
       {lines.length > 0 ? (
@@ -167,7 +201,11 @@ export function WizardReclassifyPanel({
         </div>
       ) : null}
       {error ? <div className="text-red-700">{error}</div> : null}
-      {result ? <div className="font-semibold text-slate-700">Reclassified — batch {result.batch_id ?? ""}. Undo it from Accounting › Reclassify.</div> : null}
+      {result ? (
+        <div className="font-semibold text-slate-700">
+          Reclassified. Undo it from Accounting › Reclassify.
+        </div>
+      ) : null}
     </section>
   );
 }

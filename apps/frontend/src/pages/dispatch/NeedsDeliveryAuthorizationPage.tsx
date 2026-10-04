@@ -53,7 +53,7 @@ export function NeedsDeliveryAuthorizationPage() {
         factoring_authorized: true,
       });
     },
-    onSuccess: (res) => {
+    onSuccess: () => {
       pushToast(`Authorized ${active?.load_number ?? "load"}`, "success");
       setActive(null);
       setReason("");
