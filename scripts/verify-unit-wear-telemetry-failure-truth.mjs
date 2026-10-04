@@ -28,6 +28,9 @@ function audit(source = files) {
   if (!/useEffect\(\(\) => \{\s*setSelectedPosition\(""\);\s*\}, \[unitId, companyId\]\)/.test(source.tires)) {
     failures.push("tires selected position resets on unit/company transition");
   }
+  // BANK-F91406 leftover refuse — UnitTiresTab page-scoped text token ratchet
+  if (source.tires.includes("text-[11px]")) failures.push("tires leftover text-[11px] — use text-xs");
+  if (source.tires.includes("#8A92AB")) failures.push("tires leftover #8A92AB — use #4B5563");
   return failures;
 }
 
@@ -44,6 +47,11 @@ if (process.argv.includes("--selftest")) {
   for (const [file, needle] of mutations) {
     const changed = { ...files, [file]: files[file].replace(needle, "") };
     if (changed[file] === files[file] || audit(changed).length === 0) throw new Error(`planted ${file}:${needle} defect escaped`);
+  }
+  // BANK-F91406 leftover plant — UnitTiresTab page-scoped text token ratchet
+  {
+    const leftover = { ...files, tires: files.tires + '\n<p className="text-[11px] text-[#8A92AB]">plant</p>\n' };
+    if (audit(leftover).length === 0) throw new Error("leftover text-[11px]/#8A92AB plant escaped");
   }
   console.log(`${LABEL} SELFTEST PASS — ${mutations.length}/${mutations.length} mutations detected`);
   process.exit(0);
