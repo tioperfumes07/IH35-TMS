@@ -31,6 +31,7 @@ import { withCurrentUser } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { emitAccountingSpineEvent, writeTransactionSourceLink } from "../accounting-spine-emit.js";
+import { insertPostingLineWithSpineIfNew } from "../posting-line-writer.js";
 import { reverseJournalEntryNoFlip } from "../journal-entries.service.js";
 import { computeDepreciationSchedule } from "../fixed-assets.math.js";
 import {
@@ -224,36 +225,27 @@ export async function insertBalancedPostingLines(
   const postingIds: string[] = [];
   let lineSequence = 1;
   for (const line of args.lines) {
-    const res = await client.query<{ id: string }>(
-      `
-        INSERT INTO accounting.journal_entry_postings
-          (operating_company_id, journal_entry_uuid, line_sequence, account_id, debit_or_credit,
-           amount_cents, description, source_transaction_type, source_transaction_id, idempotency_key,
-           load_id, created_at, updated_at)
-        -- ROUND 363-CC1-A: the load stamp, resolved from this posting's own source document in the same statement.
-        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, $8, $9, $10,
-                accounting.posting_source_load_id($8::text, $9::text), now(), now())
-        ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
-          WHERE idempotency_key IS NOT NULL DO NOTHING
-        RETURNING id::text
-      `,
-      [
-        args.operatingCompanyId,
-        args.journalEntryId,
-        lineSequence,
-        line.account_id,
-        line.debit_or_credit,
-        line.amount_cents,
-        line.description,
-        args.sourceTransactionType,
-        args.sourceTransactionId,
-        args.idempotencyKey,
-      ]
-    );
-    const postingId = res.rows[0]?.id;
+    // ROUND 393.2 — the one posting-line writer: the line and its primary spine row (the entry's first link) together;
+    // the remaining links follow on the same posting. A replay of the same (key, line) writes nothing and no link.
+    const [primary, ...more] = args.links;
+    const postingId = await insertPostingLineWithSpineIfNew(client as never, {
+      operating_company_id: args.operatingCompanyId,
+      journal_entry_uuid: args.journalEntryId,
+      line_sequence: lineSequence,
+      account_id: line.account_id,
+      debit_or_credit: line.debit_or_credit,
+      amount_cents: line.amount_cents,
+      description: line.description,
+      source_transaction_type: args.sourceTransactionType,
+      source_transaction_id: args.sourceTransactionId,
+      idempotency_key: args.idempotencyKey,
+      ...(primary
+        ? { spine_link: { linked_object_type: primary.linked_object_type, linked_object_id: primary.linked_object_id }, relationship_role: primary.relationship_role }
+        : {}),
+    });
     if (postingId) {
       postingIds.push(postingId);
-      for (const link of args.links) {
+      for (const link of more) {
         await writeTransactionSourceLink(client as never, {
           operating_company_id: args.operatingCompanyId,
           journal_entry_posting_id: postingId,

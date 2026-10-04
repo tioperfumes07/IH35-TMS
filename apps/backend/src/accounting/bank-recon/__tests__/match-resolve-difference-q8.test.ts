@@ -64,13 +64,14 @@ describe("bank-recon resolve difference Q8 compliance", () => {
         return { rows: [{ ledger_account_id: "cash-account-1" }] };
       }
       if (sql.includes("INSERT INTO banking.reconciliation_matches")) {
-        return { rows: [] };
+        return { rows: [{ id: "rm-1" }] };
       }
       if (sql.includes("INSERT INTO accounting.journal_entries")) {
         return { rows: [{ id: "je-diff-1" }] };
       }
       if (sql.includes("INSERT INTO accounting.journal_entry_postings")) {
-        return { rows: [] };
+        // ROUND 393.2 — posting-line-writer: one line per statement, RETURNING its id.
+        return { rows: [{ id: `p-${Math.random()}` }] };
       }
       return { rows: [] };
     });
@@ -89,10 +90,10 @@ describe("bank-recon resolve difference Q8 compliance", () => {
     expect(result.journal_entry_id).toBe("je-diff-1");
     expect(result.cash_basis_revenue_cents).toBe(10000);
 
-    const postingsInsert = String(
-      mockQuery.mock.calls.find(([sql]) => String(sql).includes("INSERT INTO accounting.journal_entry_postings"))?.[0] ?? ""
-    );
-    expect(postingsInsert).toContain("Bank reconciliation variance leg");
-    expect(postingsInsert).toContain("Bank reconciliation offset leg");
+    // ROUND 393.2 — the two legs are written by posting-line-writer, one statement each; description is $7.
+    const legs = mockQuery.mock.calls
+      .filter(([sql]) => String(sql).includes("INSERT INTO accounting.journal_entry_postings"))
+      .map(([, values]) => (values as unknown[])[6]);
+    expect(legs).toEqual(["Bank reconciliation variance leg", "Bank reconciliation offset leg"]);
   });
 });

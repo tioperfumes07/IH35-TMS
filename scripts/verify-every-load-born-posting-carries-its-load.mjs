@@ -88,9 +88,26 @@ async function measure(client) {
   if (!applied) { await client.query("ROLLBACK"); return null; }
   const rows = (await client.query(`
     WITH p AS (
-      SELECT id, source_transaction_type, source_transaction_id, load_id, created_at,
-             accounting.posting_source_load_id(source_transaction_type, source_transaction_id, source_transaction_line_id, reversal_of_line_id) AS expected
-        FROM accounting.journal_entry_postings)
+      -- ROUND 393.2 (CC-2): a leg of a reclass-BY-LOAD entry is expected to carry the load the reclassify engine recorded
+      -- for it in accounting.reclassify_batch_lines (from_load_id on the leg that takes the line off its old load,
+      -- to_load_id on the leg that puts it on the new one; the undo entry the other way round). Every other posting is
+      -- expected to carry what its source resolves to. Same strictness, read from the engine's own record.
+      SELECT jep.id, jep.source_transaction_type, jep.source_transaction_id, jep.load_id, jep.created_at,
+             COALESCE(rc.expected_load, accounting.posting_source_load_id(jep.source_transaction_type, jep.source_transaction_id, jep.source_transaction_line_id, jep.reversal_of_line_id)) AS expected
+        FROM accounting.journal_entry_postings jep
+        LEFT JOIN LATERAL (
+          SELECT CASE
+                   WHEN bl.reclass_journal_entry_id = jep.journal_entry_uuid
+                     THEN CASE WHEN jep.debit_or_credit = bl.debit_or_credit THEN bl.to_load_id ELSE bl.from_load_id END
+                   ELSE CASE WHEN jep.debit_or_credit = bl.debit_or_credit THEN bl.from_load_id ELSE bl.to_load_id END
+                 END AS expected_load
+            FROM accounting.reclassify_batch_lines bl
+           WHERE bl.to_load_id IS NOT NULL
+             AND (bl.reclass_journal_entry_id = jep.journal_entry_uuid OR bl.undo_journal_entry_id = jep.journal_entry_uuid)
+             AND bl.source_transaction_id = jep.source_transaction_id
+             AND bl.amount_cents = jep.amount_cents
+           LIMIT 1
+        ) rc ON true)
     SELECT
       (SELECT count(*) FROM p WHERE expected IS NOT NULL)::int                         AS load_born,
       (SELECT count(*) FROM p WHERE expected IS NOT NULL AND load_id IS NOT NULL)::int AS stamped,

@@ -32,11 +32,6 @@ const SRC = path.join(ROOT, "apps/backend/src");
 const ALLOWED = new Map([
   ["accounting/posting-engine.service.ts", "THE ENGINE. The one sanctioned writer. This entry never leaves."],
   ["accounting/posting-line-writer.ts", "THE ONE POSTING-LINE WRITER (Lead ruling docs/bus/10-04-2026-LEAD-RULING-ONE-POSTING-LINE-WRITER.md): inserts the line AND its transaction_source_links row together. Every door below collapses into it; this entry never leaves."],
-  ["accounting/journal-entries.service.ts", "The engine's own neighbourhood — shares its insert path. Stays until merged into the engine."],
-  ["accounting/bank-recon/match.service.ts", "CLOSING WITH NO REPLACEMENT — a match LINKS and posts nothing (LAW 363.6). CC-2, ROUND 368.2(a)/369.4."],
-  ["accounting/fuel-posting/poster.service.ts", "Routes through the engine. CC-2. ROUND 377.1 fixed its credit role; the insert is next."],
-  ["accounting/settlement-posting/settlement-posting.service.ts", "Routes through the engine. CC-1. Carries the ROUND 372.5 per-load split."],
-  ["accounting/amortization-posting/amortization-posting.service.ts", "Routes through the engine. CC-1."],
 ]);
 
 const INSERT_RE = /insert\s+into\s+accounting\.journal_entry_postings/i;

@@ -32,6 +32,7 @@ import { isEnabled } from "../../lib/feature-flags/service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { hasSignedDeductionAuthorization } from "../../legal/signed-finance-handoff.service.js";
 import { emitAccountingSpineEvent, writeTransactionSourceLink } from "../accounting-spine-emit.js";
+import { insertPostingLineWithSpineIfNew } from "../posting-line-writer.js";
 import { postVoidReversal } from "../void.service.js";
 import { applyDeductionToBucket, reverseDeductionFromBucket } from "./bucket-ledger.service.js";
 import { resolveRoleAccountOptional, isCoaRole } from "../coa-roles/resolver.service.js";
@@ -373,31 +374,23 @@ export async function postSettlementToGl(
 
     let lineSequence = 1;
     for (const line of lines) {
-      const insRes = await client.query<{ id: string }>(
-        `
-          INSERT INTO accounting.journal_entry_postings
-            (operating_company_id, journal_entry_uuid, line_sequence, account_id, debit_or_credit,
-             amount_cents, description, source_transaction_type, source_transaction_id, idempotency_key,
-             load_id, created_at, updated_at)
-          -- ROUND 363-CC1-A: the load stamp, resolved from this posting's own source document in the same statement.
-          VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, 'settlement', $8, $9,
-                  accounting.posting_source_load_id('settlement', $8::text), now(), now())
-          ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
-            WHERE idempotency_key IS NOT NULL DO NOTHING
-          RETURNING id::text
-        `,
-        [input.operatingCompanyId, journalEntryId, lineSequence, line.account_id, line.debit_or_credit, line.amount_cents, line.description, input.settlementId, idempotencyKey]
-      );
-      const postingId = insRes.rows[0]?.id;
+      // ROUND 393.2 — the one posting-line writer: the line and its primary spine row (source settlement -> posting)
+      // together. A replay of the same (key, line) writes nothing and no second link.
+      const postingId = await insertPostingLineWithSpineIfNew(client as never, {
+        operating_company_id: input.operatingCompanyId,
+        journal_entry_uuid: journalEntryId,
+        line_sequence: lineSequence,
+        account_id: line.account_id,
+        debit_or_credit: line.debit_or_credit,
+        amount_cents: line.amount_cents,
+        description: line.description,
+        source_transaction_type: "settlement",
+        source_transaction_id: input.settlementId,
+        idempotency_key: idempotencyKey,
+        spine_link: { linked_object_type: "driver_settlement", linked_object_id: input.settlementId },
+        relationship_role: line.link_role,
+      });
       if (postingId) {
-        // source settlement -> posting
-        await writeTransactionSourceLink(client as never, {
-          operating_company_id: input.operatingCompanyId,
-          journal_entry_posting_id: postingId,
-          linked_object_type: "driver_settlement",
-          linked_object_id: input.settlementId,
-          relationship_role: line.link_role,
-        });
         if (line.deduction_id) {
           // deduction line -> its driver_settlement_deductions row
           await writeTransactionSourceLink(client as never, {

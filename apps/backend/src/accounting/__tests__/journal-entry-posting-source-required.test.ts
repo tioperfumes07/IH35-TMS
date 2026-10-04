@@ -25,16 +25,22 @@ const ACTOR = { userId: "22222222-2222-4222-8222-222222222222", role: "Owner" };
 
 type Line = { source_transaction_type: string | null; source_transaction_id: string | null };
 
-/** Records every inserted posting line and answers the writer's own unsourced-line count from them. */
+/** Records every inserted posting line and its spine row (posting-line-writer's two statements). */
 function fakeClient() {
   const lines: Line[] = [];
+  const links: Array<{ type: unknown; id: unknown; role: unknown }> = [];
   const query = vi.fn(async (sql: string, params: unknown[] = []) => {
     if (sql.includes("INSERT INTO accounting.journal_entries")) {
       return { rows: [{ id: JE_ID, operating_company_id: COMPANY, entry_date: "2026-09-22", memo: null, status: "posted", source: params[3], qbo_sync_pending: true, created_at: "" }] };
     }
     if (sql.includes("INSERT INTO accounting.journal_entry_postings")) {
-      lines.push({ source_transaction_type: (params[11] as string) ?? null, source_transaction_id: (params[12] as string) ?? null });
+      // posting-line-writer: $8 / $9 are the source type / id.
+      lines.push({ source_transaction_type: (params[7] as string) ?? null, source_transaction_id: (params[8] as string) ?? null });
       return { rows: [{ id: `line-${lines.length}` }] };
+    }
+    if (sql.includes("INSERT INTO accounting.transaction_source_links")) {
+      links.push({ type: params[2], id: params[3], role: params[4] });
+      return { rows: [] };
     }
     if (sql.includes("UPDATE accounting.journal_entry_postings")) {
       for (const l of lines) {
@@ -51,7 +57,7 @@ function fakeClient() {
     }
     return { rows: [] };
   });
-  return { client: { query } as never, lines, query };
+  return { client: { query } as never, lines, links, query };
 }
 
 const twoLines = [
@@ -67,8 +73,8 @@ describe("createJournalEntryOnClient — every posting names its source", () => 
     await expect(
       createJournalEntryOnClient(client, { operating_company_id: COMPANY, entry_date: "2026-09-22", source: "auto", postings: twoLines }, ACTOR)
     ).rejects.toThrow("journal_entry_posting_source_required");
-    expect(lines).toHaveLength(2);
-    expect(lines.every((l) => l.source_transaction_type === null)).toBe(true);
+    // ROUND 393.2 — refused BEFORE the insert: no unsourced line is ever written.
+    expect(lines).toHaveLength(0);
   });
 
   it("writes the entry-level source onto every line", async () => {
@@ -84,19 +90,47 @@ describe("createJournalEntryOnClient — every posting names its source", () => 
     ]);
   });
 
-  it("accepts a source stamped in afterInsertBeforeCommit (the factoring poster's pattern)", async () => {
+  it("REFUSES the old stamp-after-insert pattern — an automated entry names its source up front (ROUND 393.2)", async () => {
     const { client, lines } = fakeClient();
+    await expect(
+      createJournalEntryOnClient(
+        client,
+        { operating_company_id: COMPANY, entry_date: "2026-09-22", source: "auto", postings: twoLines },
+        ACTOR,
+        {
+          afterInsertBeforeCommit: async (c) => {
+            await c.query("UPDATE accounting.journal_entry_postings SET source_transaction_type = $1, source_transaction_id = $2", ["factoring_advance", "fa-1"]);
+          },
+        }
+      )
+    ).rejects.toThrow("journal_entry_posting_source_required");
+    expect(lines).toHaveLength(0);
+  });
+
+  it("an automated entry's spine row names its source, or the spine_link it passes (the factoring lifecycle)", async () => {
+    const a = fakeClient();
     await createJournalEntryOnClient(
-      client,
-      { operating_company_id: COMPANY, entry_date: "2026-09-22", source: "auto", postings: twoLines },
-      ACTOR,
-      {
-        afterInsertBeforeCommit: async (c) => {
-          await c.query("UPDATE accounting.journal_entry_postings SET source_transaction_type = $1, source_transaction_id = $2", ["factoring_advance", "fa-1"]);
-        },
-      }
+      a.client,
+      { operating_company_id: COMPANY, entry_date: "2026-09-22", source: "auto", source_transaction_type: "invoice", source_transaction_id: "inv-1", postings: twoLines },
+      ACTOR
     );
-    expect(lines.every((l) => l.source_transaction_type === "factoring_advance" && l.source_transaction_id === "fa-1")).toBe(true);
+    expect(a.links).toEqual([
+      { type: "invoice", id: "inv-1", role: "source_transaction" },
+      { type: "invoice", id: "inv-1", role: "source_transaction" },
+    ]);
+    const f = fakeClient();
+    await createJournalEntryOnClient(
+      f.client,
+      {
+        operating_company_id: COMPANY, entry_date: "2026-09-22", source: "auto",
+        source_transaction_type: "factoring_funding", source_transaction_id: "fa-1",
+        spine_link: { linked_object_type: "factoring_advance", linked_object_id: "fa-1" }, relationship_role: "factoring_funding",
+        postings: twoLines,
+      },
+      ACTOR
+    );
+    expect(f.lines.every((l) => l.source_transaction_type === "factoring_funding" && l.source_transaction_id === "fa-1")).toBe(true);
+    expect(f.links.every((l) => l.type === "factoring_advance" && l.id === "fa-1" && l.role === "factoring_funding")).toBe(true);
   });
 
   it("accepts a settlement cash advance posted as a bill payment sourced to the driver_settlement", async () => {
@@ -117,9 +151,13 @@ describe("createJournalEntryOnClient — every posting names its source", () => 
   });
 
   it("makes a hand-keyed entry its own source", async () => {
-    const { client, lines } = fakeClient();
+    const fake = fakeClient();
+    const { client, lines } = fake;
+    const { links } = fake;
     await createJournalEntryOnClient(client, { operating_company_id: COMPANY, entry_date: "2026-09-22", source: "manual", postings: twoLines }, ACTOR);
     expect(lines.every((l) => l.source_transaction_type === "manual_je" && l.source_transaction_id === JE_ID)).toBe(true);
+    // ...and its spine row keeps naming the journal entry as a manual entry.
+    expect(links.every((l) => l.type === "journal_entry" && l.id === JE_ID && l.role === "manual_entry")).toBe(true);
   });
 
   it("refuses a half-filled source before writing anything", async () => {

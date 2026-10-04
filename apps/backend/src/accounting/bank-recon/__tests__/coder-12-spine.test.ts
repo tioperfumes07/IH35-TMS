@@ -65,10 +65,10 @@ describe("CODER-12 audit-spine — bank-recon variance JE", () => {
         };
       }
       if (sql.includes("FROM banking.bank_accounts")) return { rows: [{ ledger_account_id: "cash-account-1" }] };
-      if (sql.includes("INSERT INTO banking.reconciliation_matches")) return { rows: [] };
+      if (sql.includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "rm-1" }] };
       if (sql.includes("INSERT INTO accounting.journal_entries")) return { rows: [{ id: "je-diff-1" }] };
-      // the variance JE inserts two posting lines; RETURNING id now yields both
-      if (sql.includes("INSERT INTO accounting.journal_entry_postings")) return { rows: [{ id: "p1" }, { id: "p2" }] };
+      // ROUND 393.2 — posting-line-writer inserts one line per statement.
+      if (sql.includes("INSERT INTO accounting.journal_entry_postings")) return { rows: [{ id: `p-${Math.random()}` }] };
       return { rows: [] };
     });
 
@@ -85,7 +85,10 @@ describe("CODER-12 audit-spine — bank-recon variance JE", () => {
 
     // exactly one immutable audit event for the variance batch (audit.audit_events), and ZERO
     // events.log_event (that sink rejects accounting subjects and would roll back the posting).
-    const auditCalls = calls.filter(([sql]) => String(sql).includes("audit.append_event"));
+    // (bank_match.accepted is the accept handler's own event; the VARIANCE posting writes exactly one.)
+    const auditCalls = calls.filter(
+      ([sql, values]) => String(sql).includes("audit.append_event") && (values as unknown[])?.[0] === "accounting.bank_reconciliation.variance_posted"
+    );
     expect(auditCalls.length).toBe(1);
     expect(calls.filter(([sql]) => String(sql).includes("events.log_event")).length).toBe(0);
 
@@ -98,6 +101,15 @@ describe("CODER-12 audit-spine — bank-recon variance JE", () => {
       expect(v[2]).toBe("bank_transaction"); // linked_object_type
       expect(v[3]).toBe(BANK_TX); // linked_object_id
       expect(v[4]).toBe("bank_reconciliation_variance"); // relationship_role
+    }
+
+    // ROUND 393.2 — each variance line carries its real source INLINE too (it carried none before the repoint).
+    const postingCalls = calls.filter(([sql]) => String(sql).includes("INSERT INTO accounting.journal_entry_postings"));
+    expect(postingCalls.length).toBe(2);
+    for (const [, values] of postingCalls) {
+      const v = values as unknown[];
+      expect(v[7]).toBe("bank_transaction"); // source_transaction_type
+      expect(v[8]).toBe(BANK_TX); // source_transaction_id
     }
   });
 });

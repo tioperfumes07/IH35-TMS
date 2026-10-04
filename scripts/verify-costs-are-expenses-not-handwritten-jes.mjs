@@ -89,6 +89,17 @@ const FORBIDDEN_CREDIT_ACCOUNTS = ["1090", "1100", "1150"];
 const OK_CREDIT_ACCOUNTS = ["1295", "2510", "2500", "1000"];
 
 /**
+ * RECLASSIFY ENGINE exemption (CC-2, 2026-10-04). A JE is documented by the reclassify engine only when a
+ * reclassify_batch_lines row names it (docs = the set of documents those batch lines reclassed) AND EVERY cost-debiting
+ * line's source_transaction_id is one of those documents. A JE named by a batch line that also debits a cost line
+ * from some OTHER document is NOT exempt — otherwise the exemption is a side door. Pure — exported for selftest.
+ */
+export function reclassDocumentsJe(costDebitLines, docs) {
+  if (!docs || docs.size === 0 || !costDebitLines || costDebitLines.length === 0) return false;
+  return costDebitLines.every((l) => l.source_transaction_id && docs.has(l.source_transaction_id));
+}
+
+/**
  * Classify a JE's postings into violations. Pure function — exported for selftest.
  * @param {{ je_id: string, memo: string, postings: Array<{ account_number: string, account_type: string, debit_or_credit: string, amount_cents: string, source_transaction_type: string|null }>, has_expense_row: boolean, reversed_by_je_id?: string|null, reverses_je_id?: string|null }} row
  * @returns {string|null} violation kind, or null if clean
@@ -250,6 +261,32 @@ async function measure(client) {
       (l) => l.source_transaction_type === "bill" && l.source_transaction_id && liveBillIds.has(l.source_transaction_id),
     );
     if (allBackedByLiveBill) jeWithExpense.add(jeId);
+  }
+
+  // RECLASSIFY ENGINE (CC-2, 2026-10-04): a reclassification entry is the reclassify engine's own record, not a
+  // handwritten JE. Found live: the owner-authorized AUTH-211 reefer reclass (11 entries moving reefer diesel lines to
+  // 5015) turned this guard red for every seat. Narrow on purpose, the same evidentiary shape as the bill rule above: a
+  // JE is documented only when an accounting.reclassify_batch_lines row names it as its reclass_journal_entry_id or
+  // undo_journal_entry_id AND every cost-debiting line's source_transaction_id is that batch line's own document. A JE
+  // merely memo'd "Reclassify" with no batch line behind it still fails. The posting's own source columns are the join.
+  const reclassRes = await client.query(
+    `SELECT DISTINCT je_id, source_transaction_id FROM (
+       SELECT reclass_journal_entry_id::text AS je_id, source_transaction_id::text AS source_transaction_id
+         FROM accounting.reclassify_batch_lines
+        WHERE operating_company_id = $1::uuid AND reclass_journal_entry_id IS NOT NULL
+       UNION ALL
+       SELECT undo_journal_entry_id::text, source_transaction_id::text
+         FROM accounting.reclassify_batch_lines
+        WHERE operating_company_id = $1::uuid AND undo_journal_entry_id IS NOT NULL) x`,
+    [USMCA_COMPANY_ID],
+  );
+  const reclassDocsByJe = new Map();
+  for (const r of reclassRes.rows) {
+    if (!reclassDocsByJe.has(r.je_id)) reclassDocsByJe.set(r.je_id, new Set());
+    reclassDocsByJe.get(r.je_id).add(r.source_transaction_id);
+  }
+  for (const [jeId, lines] of costDebitSourcesByJe) {
+    if (reclassDocumentsJe(lines, reclassDocsByJe.get(jeId))) jeWithExpense.add(jeId);
   }
 
   const results = [];
@@ -505,10 +542,20 @@ function runClassifierSelftest() {
       pass++;
     }
   }
+  // Reclassify-engine exemption: both directions, including the side door CC-3 named.
+  const reclassCases = [
+    ["batch-line-named JE whose cost lines are all that line's document -> exempt", reclassDocumentsJe([{ source_transaction_id: "exp-1" }], new Set(["exp-1"])), true],
+    ["SIDE DOOR: batch-line-named JE that also debits a cost line from ANOTHER document -> NOT exempt", reclassDocumentsJe([{ source_transaction_id: "exp-1" }, { source_transaction_id: "exp-OTHER" }], new Set(["exp-1"])), false],
+    ["JE named by no batch line -> NOT exempt", reclassDocumentsJe([{ source_transaction_id: "exp-1" }], undefined), false],
+    ["batch-line-named JE with an unsourced cost line -> NOT exempt", reclassDocumentsJe([{ source_transaction_id: null }], new Set(["exp-1"])), false],
+  ];
+  for (const [name, got, want] of reclassCases) {
+    if (got !== want) { console.error(`${LABEL} --selftest FAIL — ${name}: expected ${want}, got ${got}`); fail += 1; } else pass++;
+  }
   if (fail > 0) {
     process.exitCode = 1;
   } else {
-    console.log(`${LABEL} --selftest PASS — ${pass} classifier fixtures all correct`);
+    console.log(`${LABEL} --selftest PASS — ${pass} classifier + reclass-exemption fixtures all correct`);
   }
 }
 

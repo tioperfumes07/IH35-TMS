@@ -441,6 +441,15 @@ async function measureLive(client) {
           AND je.reversed_by_je_id IS NULL
           AND je.reverses_je_id IS NULL
           AND je.status = 'posted'
+          -- CC-2 2026-10-04: a reclassification entry does not post the document again — it moves amounts the document
+          -- already posted between accounts / loads, and the reclassify engine records it line by line. Excluded only
+          -- when a reclassify_batch_lines row names THIS entry for THIS document; any other second live JE still counts.
+          AND NOT EXISTS (
+            SELECT 1 FROM accounting.reclassify_batch_lines bl
+             WHERE bl.operating_company_id = $1::uuid
+               AND (bl.reclass_journal_entry_id = je.id OR bl.undo_journal_entry_id = je.id)
+               AND bl.source_transaction_id::text = jep.source_transaction_id
+          )
         GROUP BY jep.source_transaction_id HAVING count(DISTINCT jep.journal_entry_uuid) > 1
      ) x`,
     [USMCA_COMPANY_ID],
