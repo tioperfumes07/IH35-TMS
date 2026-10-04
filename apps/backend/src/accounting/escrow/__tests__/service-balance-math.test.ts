@@ -124,9 +124,54 @@ describe("escrow service balance math", () => {
           escrow_account_id: "escrow-1",
           amount_cents: 12000,
           source_type: "manual",
+          source_id: "11111111-1111-4111-8111-111111111111",
         },
         { userId: "user-1", role: "Accountant" }
       )
     ).rejects.toThrow("escrow_release_exceeds_balance");
+  });
+
+  // ESCROW-RELEASE-CLAIM (Lead, 2026-10-04): a release names its claim; the same claim twice is a no-op.
+  const account = {
+    id: "escrow-1", operating_company_id: "oc-1", holder_id: "driver-1", holder_type: "driver", purpose: "driver_bond",
+    coa_account_id: "escrow-liability", balance_cents: 10000, status: "active", created_at: "", updated_at: "",
+  };
+  const CLAIM = "22222222-2222-4222-8222-222222222222";
+
+  it("refuses a release that names no claim", async () => {
+    mocked.queryMock.mockImplementation(async (sql: string) => {
+      if (sql.includes("FROM accounting.escrow_accounts") && sql.includes("FOR UPDATE")) return { rows: [account] };
+      return { rows: [] };
+    });
+    await expect(
+      releaseEscrow(
+        { operating_company_id: "oc-1", escrow_account_id: "escrow-1", amount_cents: 2500, source_type: "manual" },
+        { userId: "user-1", role: "Accountant" }
+      )
+    ).rejects.toThrow("escrow_release_requires_claim");
+  });
+
+  it("a second release of the same claim and amount is a no-op that returns the first", async () => {
+    mocked.createJournalEntryMock.mockClear();
+    const first = {
+      id: "posting-1", operating_company_id: "oc-1", escrow_account_id: "escrow-1", posting_type: "release", amount_cents: 2500,
+      source_type: "manual", source_id: CLAIM, note: null, posted_at: "", posted_by_user_id: "user-1",
+      linked_journal_entry_id: "je-1", created_at: "",
+    };
+    const seen: string[] = [];
+    mocked.queryMock.mockImplementation(async (sql: string) => {
+      seen.push(sql);
+      if (sql.includes("FROM accounting.escrow_accounts") && sql.includes("FOR UPDATE")) return { rows: [account] };
+      if (sql.includes("FROM accounting.escrow_postings") && sql.includes("posting_type = 'release'")) return { rows: [first] };
+      return { rows: [] };
+    });
+    const out = (await releaseEscrow(
+      { operating_company_id: "oc-1", escrow_account_id: "escrow-1", amount_cents: 2500, source_type: "manual", source_id: CLAIM },
+      { userId: "user-1", role: "Accountant" }
+    )) as { posting: { id: string }; idempotent_replay?: boolean };
+    expect(out.posting.id).toBe("posting-1");
+    expect(out.idempotent_replay).toBe(true);
+    expect(seen.some((q) => q.includes("INSERT INTO accounting.escrow_postings"))).toBe(false);
+    expect(mocked.createJournalEntryMock).not.toHaveBeenCalled();
   });
 });

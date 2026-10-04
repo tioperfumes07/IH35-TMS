@@ -88,6 +88,26 @@ export async function unwindPayRunSubledgersInClientTx(
   );
   const escrowCents = Number(escRes.rows[0]?.total ?? 0);
   if (escrowCents > 0) {
+    // ESCROW-UNWIND-NET-FLOOR (Lead, 2026-10-04): the unwind may give back only what this settlement still holds —
+    // every deposit it made minus every release / forfeiture already taken against it. 09-24/25 the unwind reversed
+    // whole deposits that releases had already drawn, and three drivers went to a debit balance. Refuse by name;
+    // never clamp, never record a partial. (A claimless release cannot be netted here — releases now must name their
+    // claim, and recordEscrowPostingOnly refuses any release that leaves the account below zero.)
+    const netRes = await client.query<{ held: string }>(
+      `SELECT COALESCE(SUM(CASE WHEN posting_type = 'deposit' THEN amount_cents ELSE -amount_cents END), 0)::bigint AS held
+         FROM accounting.escrow_postings
+        WHERE operating_company_id = $1::uuid
+          AND source_type = 'driver_settlement'
+          AND source_id = $2::uuid`,
+      [opco, settlementId]
+    );
+    const heldForSettlement = Number(netRes.rows[0]?.held ?? 0);
+    if (heldForSettlement < escrowCents) {
+      throw new Error(
+        `escrow_unwind_exceeds_held_for_settlement: ${label} holds ${heldForSettlement} cents of escrow ` +
+          `(deposits minus prior releases) but the unwind would release ${escrowCents}`
+      );
+    }
     // GL-linked escrow balance: a 'release' posting applies −escrowCents via the DB trigger, linked to
     // the reversing JE for a both-way audit trail. Mirrors closeSettlementPayRun's recordEscrowPostingOnly
     // 'deposit' one-for-one.
