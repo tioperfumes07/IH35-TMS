@@ -1997,6 +1997,11 @@
       "claimed_at": "2026-10-03",
       "purpose": "ROUND 373.4: credit memos and vendor credits post — accounting.credit_memos.account_id / journal_entry_id (Dr the income it reduces / Cr A/R) and accounting.vendor_credits.account_id / journal_entry_id (Dr A/P / Cr the expense it reduces), posted at creation through the engine, reversed on void"
     },
+    "202615380300": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-04",
+      "purpose": "ROUND 394 ruling 2: driver receivables 1255 Damage / 1256 Fine / 1257 Negative Settlement (Asset, postable) for USMCA (company by code, idempotent), role CHECK widened with driver_damage_receivable / driver_fine_receivable / driver_negative_settlement_receivable and the three bound"
+    },
     "202615380200": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-04",
