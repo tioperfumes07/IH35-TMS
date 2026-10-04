@@ -7068,6 +7068,28 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). Duplicate fuel receipt
 action: DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-04-cc2-void-duplicate-fuel-99794138.mts --apply --auth AUTH-207
   Dry-run first (default, no --apply).
 expires_at: 2026-10-04T21:20:01Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-04T01:29:00Z
+consumed_by: CC-2
+row_counts: accounting.expenses c0aa22b4 (13571-5) voided by executeVoidCancel('expense') with reversing entry e23d0729
+  (2 lines, debit 100559 / credit 100559); fuel.fuel_transactions e8415607 voided by executeVoidCancel('fuel_transaction');
+  0 deletes. Keep copy 13557-7 / 152e088a still posted.
+proof_query: postings for source c0aa22b4 + JE e23d0729, net by account: 353fbd5b 100559 - 100559 = 0, be1f70f8
+  -100559 + 100559 = 0; fuel.fuel_transactions transaction_reference '99794138' AND voided_at IS NULL -> 1.
 THIS AUTHORIZATION DOES NOT COVER: receipt 1848853 (its fill date 2026-08-26 is the boundary of loads 13543 / 13547 — the
 owner names the load first); receipt 99530579 (copies six days apart — receipts first); any other company or document.
+
+## AUTH-208
+issued_at: 2026-10-04T01:29:35Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). ONE reefer fuel fill: fuel.fuel_transactions
+  86658559-6dd3-4b1d-b680-de9d3374a92c (T170, 2026-09-09, 97.452 gal, reefer_diesel) and its expense line get trailer 10224
+  (fc534b3d, Reefer, leased to USMCA) through setReeferTrailer — the same service as Reports > Reefer fuel credit > Set trailer.
+  Owner, CC-2 chat 2026-10-04: "YES SET REEFER TRAILER ON EACH FILL". Evidence: 10224 is the only trailer recorded on T170
+  within 7 days of the fill; the script re-measures it and refuses otherwise. Prod dry run (rolled back): updated 1, fuel
+  row and expense line both on 10224.
+action: DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-04-cc2-set-reefer-trailer-t170-0909.mts --apply --auth AUTH-208
+  Dry-run first (default, no --apply).
+expires_at: 2026-10-04T21:29:35Z
+status: OPEN
+THIS AUTHORIZATION DOES NOT COVER: the T156 fills of 2026-09-08 and 2026-09-10 (two or three candidate trailers each — the
+  owner picks); the equipment record of trailer 10219 or 10224 (owned by IH 35 Trucking LLC — frozen); any other company.
