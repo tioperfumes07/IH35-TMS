@@ -61,7 +61,7 @@ export function DeadheadOptimizerPanel({
     <div className="space-y-2 rounded-sm border border-slate-200 bg-slate-100/60 p-3" data-testid="deadhead-optimizer-panel">
       <div>
         <p className="text-xs font-bold uppercase tracking-wide text-slate-700">Next-load deadhead suggestions</p>
-        <p className="text-[11px] text-slate-700/80">Top 5 pending loads ranked by (revenue − deadhead cost) / total miles</p>
+        <p className="text-xs text-slate-700/80">Top 5 pending loads ranked by (revenue − deadhead cost) / total miles</p>
         {/* Exact Leaves dispatch.panel.deadhead_optimizer:unit — unitUuid was API-only */}
         {unitUuid ? (
           <p className="mt-1 text-xs text-slate-600" data-testid="deadhead-optimizer-unit-entitylink">
@@ -89,7 +89,7 @@ export function DeadheadOptimizerPanel({
               <span>
                 #{index + 1} · <EntityLinkOrTombstone kind="load" id={row.load_uuid} name={row.load_number} noun="Load" /> · {row.pickup_city}, {row.pickup_state}
               </span>
-              <span className="font-mono text-[11px] text-slate-700">{row.score.toFixed(2)} ¢/mi score</span>
+              <span className="font-mono text-xs text-slate-700">{row.score.toFixed(2)} ¢/mi score</span>
             </div>
             <div className="text-xs text-slate-600">
               DH {fmtMiles(row.deadhead_miles)} mi · Loaded {fmtMiles(row.loaded_miles)} mi · Rev {fmtMoneyCents(row.est_revenue_cents)} ·

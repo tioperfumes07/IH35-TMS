@@ -88,6 +88,10 @@ function main() {
     fail(failures.join("; "));
   }
 
+  // BANK-F91389 leftover refuse — DeadheadOptimizerPanel page-scoped text token ratchet
+  if (panel.includes("text-[11px]")) fail("DeadheadOptimizerPanel.tsx leftover text-[11px]");
+  if (panel.includes("#8A92AB")) fail("DeadheadOptimizerPanel.tsx leftover off-scale muted #8A92AB");
+
   console.log("verify:deadhead-optimizer PASS");
 }
 
@@ -110,8 +114,13 @@ function selftest() {
   for (const [name, planted] of stopMutations) {
     if (planted === service || auditActiveStopTruth(planted).length === 0) fail(`${name} mutation escaped`);
   }
+  // BANK-F91389 leftover plant — DeadheadOptimizerPanel page-scoped text token ratchet
+  const leftoverPlant = panel + '\n<p className="text-[11px] text-[#8A92AB]">plant</p>\n';
+  if (!(leftoverPlant.includes("text-[11px]") && leftoverPlant.includes("#8A92AB"))) {
+    fail("leftover plant escaped");
+  }
   console.log(
-    `verify:deadhead-optimizer selftest PASS — ${mutations.length + stopMutations.length}/${mutations.length + stopMutations.length} recovery/lifecycle mutations caught`
+    `verify:deadhead-optimizer selftest PASS — ${mutations.length + stopMutations.length}/${mutations.length + stopMutations.length} recovery/lifecycle mutations caught + leftover plant`
   );
 }
 
