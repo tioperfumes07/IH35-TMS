@@ -25,7 +25,11 @@
       ],
       "regenerate": "node scripts/gen-program-scoreboard.mjs",
       "volatile": [],
-      "why": "PAIR with docs/audit/program-scoreboard.json (stamp entry above, written by audit-coverage-scoreboard.mjs): one artifact in two files. #24603 regenerated the json and shipped without the .ts; this entry fails that."
+      "why": "PAIR with docs/audit/program-scoreboard.json (stamp entry above, written by audit-coverage-scoreboard.mjs): one artifact in two files. #24603 regenerated the json and shipped without the .ts; this entry fails that.",
+      "watch": [
+        "docs/audit/program-scoreboard.json",
+        "scripts/audit-coverage-scoreboard.mjs"
+      ]
     },
     {
       "generator": "scripts/audit-coverage-scoreboard.mjs",
@@ -49,7 +53,10 @@
       "volatile": [
         "\"generated_at_iso\":"
       ],
-      "why": "created date per .block-ready spec; measured stale 2026-10-03 (last regenerated 2026-07-12)."
+      "why": "created date per .block-ready spec; measured stale 2026-10-03 (last regenerated 2026-07-12).",
+      "watch": [
+        ".block-ready/"
+      ]
     },
     {
       "generator": "scripts/gen-canonical-relations.mjs",
@@ -63,7 +70,10 @@
       "regenerate": "node scripts/gen-canonical-relations.mjs",
       "volatile": [],
       "requiresDatabase": true,
-      "why": "the canonical relation list verify-phantom-relations reads; measured stale 2026-10-03 (855 -> 894 relations)."
+      "why": "the canonical relation list verify-phantom-relations reads; measured stale 2026-10-03 (855 -> 894 relations).",
+      "watch": [
+        "db/migrations/**"
+      ]
     },
     {
       "generator": "scripts/gen-class-scoreboard.mjs",
@@ -78,7 +88,10 @@
       "volatile": [
         "\"generatedAt\":"
       ],
-      "why": "class scoreboard page data; measured stale 2026-10-03 (last regenerated 2026-08-12)."
+      "why": "class scoreboard page data; measured stale 2026-10-03 (last regenerated 2026-08-12).",
+      "watch": [
+        "docs/audit/wave-queue.json"
+      ]
     },
     {
       "generator": "scripts/gen-financial-buildability.mjs",
@@ -93,7 +106,11 @@
       ],
       "regenerate": "node scripts/gen-financial-buildability.mjs",
       "volatile": [],
-      "why": "PAIR (.md + .csv, one artifact). Lists only PENDING financial blocks, so it shrinks as blocks finish; measured stale 2026-10-03 (last regenerated 2026-07-12)."
+      "why": "PAIR (.md + .csv, one artifact). Lists only PENDING financial blocks, so it shrinks as blocks finish; measured stale 2026-10-03 (last regenerated 2026-07-12).",
+      "watch": [
+        "docs/trackers/block-reconciliation-data.json",
+        ".block-ready/"
+      ]
     },
     {
       "generator": "scripts/gen-program-phase-manifest.mjs",
@@ -106,7 +123,10 @@
       ],
       "regenerate": "node scripts/gen-program-phase-manifest.mjs",
       "volatile": [],
-      "why": "auto-refreshed by the tracker job; fresh on 2026-10-03."
+      "why": "auto-refreshed by the tracker job; fresh on 2026-10-03.",
+      "watch": [
+        ".block-ready/"
+      ]
     },
     {
       "generator": "scripts/gen-usmca-battery-doc.mjs",
@@ -119,7 +139,13 @@
       ],
       "regenerate": "node scripts/gen-usmca-battery-doc.mjs",
       "volatile": [],
-      "why": "create-surface battery across every module; measured stale 2026-10-03 (last regenerated 2026-09-07)."
+      "why": "create-surface battery across every module; measured stale 2026-10-03 (last regenerated 2026-09-07).",
+      "watch": [
+        "apps/backend/src/**/*.ts",
+        "apps/frontend/src/**/*.tsx",
+        "scripts/usmca-create-surface-inventory.mjs"
+      ],
+      "watchPattern": "app\\.post\\(|\\+ ?(New|Add)\\b"
     },
     {
       "generator": "scripts/generate-gate-step-map.mjs",
@@ -157,7 +183,11 @@
       ],
       "regenerate": "node scripts/verify-schema-parity.mjs --update",
       "volatile": [],
-      "why": "the column contract verify-sql-column-existence reads. It was registered NOWHERE, so it rotted silently: measured 2026-10-04, 439 columns that exist in production were missing from it (driver_settlements.predecessor/successor_settlement_id, units.fuel_tank_capacity_gallons, bank_transactions.review_bucket/resolution_kind among them), and the guard reported correct code as broken. The DDL parser was never the problem - nobody ran --update and nothing could notice. Registered so staleness is a failure, not a surprise."
+      "why": "the column contract verify-sql-column-existence reads. It was registered NOWHERE, so it rotted silently: measured 2026-10-04, 439 columns that exist in production were missing from it (driver_settlements.predecessor/successor_settlement_id, units.fuel_tank_capacity_gallons, bank_transactions.review_bucket/resolution_kind among them), and the guard reported correct code as broken. The DDL parser was never the problem - nobody ran --update and nothing could notice. Registered so staleness is a failure, not a surprise.",
+      "watch": [
+        "db/migrations/**"
+      ]
     }
-  ]
+  ],
+  "watch_note": "CONTENT SCOPING (Lead ruling, CC-3, 2026-10-04): `watch` = globs of the inputs whose change makes a branch responsible for the artifact (plus its generator and outputs); `watchPattern` narrows a watched file to changed lines matching it. A branch that touched them is strict; staleness it did not cause is loud and report-only; --strict (CI) fails every stale artifact. No `watch` = always this branch's (fail closed)."
 }

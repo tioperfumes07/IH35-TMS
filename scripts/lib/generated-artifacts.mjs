@@ -90,8 +90,18 @@ export function analyseGenerated(x) {
         if (normalise(r.committed, e.volatile) !== normalise(r.fresh, e.volatile)) stale.push(p);
       }
       if (stale.length) {
-        stats.stale++;
-        problems.push(`STALE — ${stale.join(" + ")}${e.paths.length > 1 ? ` (one artifact in ${e.paths.length} files: ${e.paths.join(", ")})` : ""}: the committed file differs from what its generator produces from today's inputs. Regenerate and commit ${e.paths.length > 1 ? "ALL of them together" : "it"}: \`${e.regenerate}\`.`);
+        const line = `STALE — ${stale.join(" + ")}${e.paths.length > 1 ? ` (one artifact in ${e.paths.length} files: ${e.paths.join(", ")})` : ""}: the committed file differs from what its generator produces from today's inputs. Regenerate and commit ${e.paths.length > 1 ? "ALL of them together" : "it"}: \`${e.regenerate}\`.`;
+        // CONTENT SCOPING (Lead ruling, CC-3, 2026-10-04): a branch is strict for an artifact whose declared inputs it
+        // touched (or its generator / outputs). Staleness it did not cause is LOUD and named on the report-only channel
+        // — it does not block an unrelated PR. --strict (CI) keeps every stale artifact a hard failure.
+        const owned = typeof x.touched === "function" ? x.touched(e) : true;
+        if (!strict && owned === false) {
+          unverifiableHere.push(`STALE ON MAIN, NOT THIS BRANCH'S INPUTS — ${line.slice("STALE — ".length)} This branch touched none of ${e.generator}'s declared inputs; the next PR that does must regenerate it, and CI --strict fails it until then.`);
+          stats.unverifiableHere++;
+        } else {
+          stats.stale++;
+          problems.push(line);
+        }
       }
     }
   }
@@ -149,4 +159,32 @@ export function gitPredicates(root) {
     isTracked: (p) => ok(`git ls-files --error-unmatch "${p}"`),
     isIgnored: (p) => ok(`git check-ignore -q "${p}"`),
   };
+}
+
+/** Glob (with ** and *) -> RegExp over repo-relative paths. A trailing "/" means everything under it. */
+export function globToRe(glob) {
+  const g = glob.endsWith("/") ? `${glob}**` : glob;
+  const re = g.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*\*\//g, "\u0000").replace(/\*\*/g, "\u0001").replace(/\*/g, "[^/]*")
+    .replace(/\u0000/g, "(?:.*/)?").replace(/\u0001/g, ".*");
+  return new RegExp(`^${re}$`);
+}
+
+/**
+ * Did this branch touch the entry's declared inputs? `changed` = repo-relative files changed vs the merge-base (null =
+ * unknown -> true, fail closed). An entry with no `watch` is always touched (fail closed). Touching the generator or an
+ * output always counts. A file matching `watch` counts — and when the entry declares `watchPattern`, only if one of its
+ * changed lines (diffLines(file)) matches it (a backend file with no new POST route does not change the inventory).
+ */
+export function entryTouched(entry, changed, diffLines = () => []) {
+  if (!Array.isArray(changed)) return true;
+  if (!Array.isArray(entry.watch) || entry.watch.length === 0) return true;
+  if (changed.includes(entry.generator) || (entry.paths ?? []).some((p) => changed.includes(p))) return true;
+  const res = entry.watch.map(globToRe);
+  const pattern = entry.watchPattern ? new RegExp(entry.watchPattern) : null;
+  for (const f of changed) {
+    if (!res.some((r) => r.test(f))) continue;
+    if (!pattern) return true;
+    if (diffLines(f).some((l) => pattern.test(l))) return true;
+  }
+  return false;
 }

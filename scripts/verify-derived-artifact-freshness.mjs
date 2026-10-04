@@ -45,7 +45,7 @@ import {
   ensureResolvable,
   fetchHealthzVersionSync,
 } from "./lib/live-verified-stamps.mjs";
-import { analyseGenerated, generatorsOnDisk, gitPredicates, regenerateInScratch } from "./lib/generated-artifacts.mjs";
+import { analyseGenerated, entryTouched, generatorsOnDisk, gitPredicates, regenerateInScratch } from "./lib/generated-artifacts.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const REGISTRY = path.join(ROOT, "docs/specs/DERIVED-ARTIFACTS.json");
@@ -252,6 +252,40 @@ function selftest() {
     if (!r.problems.some((p) => p.includes("did not produce it") && p.includes("boom: schema drift"))) throw new Error(r.problems.join("|"));
   });
 
+  // CONTENT SCOPING (Lead ruling, CC-3, 2026-10-04) — cases (i)-(iv) + the line-pattern narrowing.
+  const scoped = { generator: "scripts/gen-s.mjs", mode: "regen-diff", paths: ["s.md"], regenerate: "node scripts/gen-s.mjs", why: "w", watch: ["apps/backend/src/**/*.ts"], watchPattern: "app\\.post\\(" };
+  const staleRegen = new Map([["s.md", { committed: "old", fresh: "new" }]]);
+  t("(i) branch touched a declared input -> STALE FAILS", () => {
+    const r = analyseGenerated(G({ generatorsOnDisk: ["scripts/gen-s.mjs"], entries: [scoped], regen: staleRegen,
+      touched: (e) => entryTouched(e, ["apps/backend/src/x.routes.ts"], () => ["+  app.post(\"/api/v1/new\", h)"]) }));
+    if (!r.problems.some((p) => p.startsWith("STALE — s.md"))) throw new Error(r.problems.join("|"));
+  });
+  t("(ii) branch touched none of its inputs -> LOUD report-only, not a failure", () => {
+    const r = analyseGenerated(G({ generatorsOnDisk: ["scripts/gen-s.mjs"], entries: [scoped], regen: staleRegen,
+      touched: (e) => entryTouched(e, ["docs/bus/x.md", "scripts/verify-y.mjs"]) }));
+    eq(r.problems.length, 0, r.problems.join("|"));
+    if (!r.unverifiableHere.some((u) => u.startsWith("STALE ON MAIN, NOT THIS BRANCH'S INPUTS") && u.includes("s.md"))) throw new Error(JSON.stringify(r.unverifiableHere));
+  });
+  t("(ii-b) watched file changed but no line matches watchPattern -> report-only", () => {
+    const r = analyseGenerated(G({ generatorsOnDisk: ["scripts/gen-s.mjs"], entries: [scoped], regen: staleRegen,
+      touched: (e) => entryTouched(e, ["apps/backend/src/fix.ts"], () => ["+  const x = 1;"]) }));
+    eq(r.problems.length, 0, r.problems.join("|"));
+  });
+  t("(iii) --strict -> STALE FAILS even when the branch touched nothing", () => {
+    const r = analyseGenerated(G({ generatorsOnDisk: ["scripts/gen-s.mjs"], entries: [scoped], regen: staleRegen, strict: true,
+      touched: () => false }));
+    if (!r.problems.some((p) => p.startsWith("STALE — s.md"))) throw new Error(r.problems.join("|"));
+  });
+  t("(iv) an entry with no declared watch, or an unknown change set, is the branch's -> STALE FAILS (fail closed)", () => {
+    const noWatch = { ...scoped, watch: undefined };
+    if (entryTouched(noWatch, ["docs/x.md"]) !== true) throw new Error("no watch must count as touched");
+    if (entryTouched(scoped, null) !== true) throw new Error("unknown change set must count as touched");
+    if (entryTouched(scoped, ["s.md"]) !== true) throw new Error("touching the output must count");
+    const r = analyseGenerated(G({ generatorsOnDisk: ["scripts/gen-s.mjs"], entries: [noWatch], regen: staleRegen,
+      touched: (e) => entryTouched(e, ["docs/x.md"]) }));
+    if (!r.problems.some((p) => p.startsWith("STALE — s.md"))) throw new Error(r.problems.join("|"));
+  });
+
   const bad = T.filter((x) => !x[1]);
   for (const [n, ok, e] of T) console.log(`  ${ok ? "PASS" : "FAIL"}  ${n}${e ? " — " + e : ""}`);
   console.log(`${LABEL} --selftest ${bad.length ? "FAIL" : "PASS"} ${T.length - bad.length}/${T.length}`);
@@ -314,10 +348,25 @@ function main() {
   //     real, and if that secret is ever missing or empty the job FAILS instead of quietly reporting
   //     UNVERIFIABLE. That is where freshness is actually proven.
   const strict = process.argv.includes("--strict");
+  // CONTENT SCOPING (Lead ruling, 2026-10-04): what did THIS branch change since it left origin/main? Unknown -> null ->
+  // every artifact is this branch's (fail closed). The working tree counts too (the hook runs before the commit lands).
+  let changed = null;
+  try {
+    const base = execSync("git merge-base HEAD origin/main", { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+    const files = execSync(`git diff --name-only ${base}`, { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+    changed = files.split("\n").map((f) => f.trim()).filter(Boolean);
+    var diffLines = (f) => {
+      try {
+        return execSync(`git diff -U0 ${base} -- "${f}"`, { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], maxBuffer: 64 * 1024 * 1024 })
+          .split("\n").filter((l) => /^[+-](?![+-])/.test(l));
+      } catch { return ["<diff unavailable>"]; }
+    };
+  } catch { changed = null; }
   const g = analyseGenerated({
     entries: generated, generatorsOnDisk: onDisk, ...gitPredicates(ROOT),
     regen: regenerateInScratch(ROOT, generated),
     strict, hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
+    touched: (e) => entryTouched(e, changed, typeof diffLines === "function" ? diffLines : () => ["<diff unavailable>"]),
   });
   problems.push(...g.problems);
   if (g.stats.registered !== g.stats.generators) problems.push(`generators registered ${g.stats.registered} of ${g.stats.generators} on disk — every one must declare its artifact`);
