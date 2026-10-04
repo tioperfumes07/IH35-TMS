@@ -92,6 +92,9 @@ export function collectFailures(src = source) {
   if (!/is_multi_unit/.test(src.panel) || !/data\.reconciled/.test(src.panel)) {
     failures.push(`${panelPath}: panel no longer distinguishes multi-unit or surfaces the reconciled flag`);
   }
+  if (/fontSize:\s*11\b/.test(src.panel)) {
+    failures.push(`${panelPath}: leftover fontSize: 11 — use text-section-header`);
+  }
   if (!/import \{ LoadUnitCostSplitPanel \} from "\.\/LoadUnitCostSplitPanel"/.test(src.tab)) {
     failures.push(`${tabPath}: LoadDetailCostsTab no longer imports the split panel`);
   }
@@ -129,6 +132,7 @@ if (process.argv.includes("--selftest")) {
     ["panel export", "panel", /export function LoadUnitCostSplitPanel/, "function LoadUnitCostSplitPanel"],
     ["panel calls api", "panel", /getLoadUnitCostSplit\(/g, "getNope("],
     ["panel testid", "panel", /data-testid="load-unit-cost-split"/, 'data-testid="x"'],
+    ["panel leftover fontSize 11", "panel", /$/, "\n<span style={{ fontSize: 11 }}>plant</span>"],
     ["tab import", "tab", /import \{ LoadUnitCostSplitPanel \} from "\.\/LoadUnitCostSplitPanel";\n/, ""],
     ["tab mount", "tab", /<LoadUnitCostSplitPanel loadId=\{load\.id\} operatingCompanyId=\{opco\} currency=\{currency\} \/>/, "<div />"],
     ["api client", "api", /export function getLoadUnitCostSplit\(/, "function getLoadUnitCostSplit("],

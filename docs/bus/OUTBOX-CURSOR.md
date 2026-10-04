@@ -1,3 +1,15 @@
+## 2026-10-04T12:24Z · BANK-F91502 LoadUnitCostSplit leftover fontSize 11 labels WIRED · this PR
+
+DONE: LoadUnitCostSplitPanel labels fontSize 11 → text-section-header; leftover refuse on verify-load-unit-cost-split-wired; EVEN 11088 --selftest + live.
+
+NEXT: leftover fontSize 11 chrome (TruckLine Status / SettlementKpiGrid / CashFlowKpiStrip) · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T12:23Z · BANK-F91501 Settlements leftover WIRED CI · tip `a7cdcc7ff0`
+
+DONE: #25243 — SettlementsToursRegister totals text-section-header; verify-steps/11082 leftover refuse --selftest + live.
+
+NEXT: BANK-F91502 LoadUnitCostSplit leftover fontSize: 11 labels + leftover refuse on 11088 · skip pile parked · HH12 no migrations this tick.
+
 ## 2026-10-04T12:18Z · BANK-F91501 Settlements leftover fontSize 11 totals WIRED · this PR
 
 DONE: SettlementsToursRegister totals label fontSize 11 → text-section-header; leftover refuse on verify-settlements-list-button-height-uniform; EVEN 11082 --selftest + live.
