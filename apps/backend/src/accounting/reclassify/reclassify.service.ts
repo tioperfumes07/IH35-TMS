@@ -24,6 +24,7 @@ import { withCurrentUser } from "../../auth/db.js";
 import { createJournalEntryOnClient, reverseJournalEntryNoFlip } from "../journal-entries.service.js";
 import { PostingEngineError } from "../posting-engine.service.js";
 import { writeTransactionSourceLink } from "../accounting-spine-emit.js";
+import { syncReeferFuelForExpenseLine } from "../../fuel/reefer-fuel.service.js";
 
 type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }> };
 
@@ -653,6 +654,12 @@ export async function rewriteDocumentLine(
         [p.source_transaction_line_id, companyId, target.item_id ?? null, target.load_id ?? null],
       );
       if ((r.rowCount ?? 0) === 0) notes.push(`${type} line not found; item / load not moved`);
+      // U25 — Diesel <-> Reefer Diesel: the fuel transaction's category (IFTA in / out), the gallons and the trailer follow
+      // the item. Same account, so the ledger does not move; the Form 4136 reefer-fuel credit reads this category.
+      else if (type === "expense" && target.item_id) {
+        const reeferNote = await syncReeferFuelForExpenseLine(client, companyId, p.source_transaction_line_id);
+        if (reeferNote) notes.push(reeferNote);
+      }
     }
   }
   if (type === "expense") {
@@ -953,6 +960,10 @@ export async function undoReclassifyBatch(input: { operating_company_id: string;
           `UPDATE ${table} SET item_id = CASE WHEN $2 THEN $3::uuid ELSE item_id END, load_id = CASE WHEN $4 THEN $5::uuid ELSE load_id END WHERE id = $1::uuid`,
           [l.source_transaction_line_id, itemMoved, l.from_item_id, loadMoved, l.from_load_id],
         );
+        // U25 — undoing Diesel -> Reefer Diesel puts the fuel transaction back in its category (and back on IFTA).
+        if (itemMoved && l.source_transaction_type === "expense") {
+          await syncReeferFuelForExpenseLine(client, input.operating_company_id, l.source_transaction_line_id);
+        }
       }
       if (l.source_transaction_type === "expense" && l.source_transaction_id) {
         if (l.source_transaction_line_id) await client.query(`UPDATE accounting.expense_lines SET expense_account_uuid = $2::uuid WHERE id = $1::uuid`, [l.source_transaction_line_id, l.from_account_id]);

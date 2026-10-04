@@ -49,6 +49,7 @@ import type {
   SettlementCreatorPostResult,
   SettlementCreatorPreview,
 } from "./settlement-creator.types.js";
+import { isReeferFuelItemName } from "../fuel/reefer-fuel.service.js";
 
 export type { DbClient };
 
@@ -413,6 +414,8 @@ export async function previewSettlementCreator(
       const card = exp.card ?? "relay";
       const rail = await accountByRole(client, draft.operating_company_id, cardRailRole(card));
       const itemAcct = await previewExpenseLineAccount(client, draft.operating_company_id, exp, blockers);
+      const reeferRefusal = await reeferFuelExpenseRefusal(client, draft.operating_company_id, exp, (itemAcct as { item_id?: string | null } | null)?.item_id ?? null);
+      if (reeferRefusal) blockers.push(reeferRefusal);
       push({
         load_number: exp.load_number ?? null,
         account_number: itemAcct?.account_number ?? null,
@@ -1068,19 +1071,23 @@ export async function postSettlementCreatorInClientTx(
     }
 
     const fuelType = fuel.fuel_type ?? "diesel";
+    // U25 — a reefer fill records the trailer it fueled when this company owns or leases it (ROUND 373.5: a record never
+    // references another company's equipment; today USMCA owns / leases no trailer, so the trailer stays empty).
     const inserted = await client.query<{ id: string }>(
       `
         INSERT INTO fuel.fuel_transactions (
           operating_company_id, vendor_id, load_id, driver_id, unit_id,
           fuel_type, gallons, price_per_gallon, total_cost,
           purchased_at, transaction_at, transaction_reference, location_city,
-          source, load_required, load_exemption_reason, created_by_user_id, source_row_hash
+          source, load_required, load_exemption_reason, created_by_user_id, source_row_hash, trailer_id
         )
         VALUES (
           $1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::uuid,
           $6, $7, $8, $9,
           $10::timestamptz, $10::timestamptz, $11, $12,
-          'manual', $13, $14, $15::uuid, $16
+          'manual', $13, $14, $15::uuid, $16,
+          (SELECT eq.id FROM mdata.equipment eq WHERE eq.id = $17::uuid
+              AND (eq.owner_company_id = $1::uuid OR eq.currently_leased_to_company_id = $1::uuid))
         )
         RETURNING id::text
       `,
@@ -1101,6 +1108,7 @@ export async function postSettlementCreatorInClientTx(
         loadId ? null : "Settlement Creator fuel line with no load number on the PDF row.",
         actorUserId,
         enteredFuelRowHash(draft.operating_company_id, vendor.id, fuel.invoice),
+        fuelType === "reefer_diesel" ? draft.trailer_id ?? null : null,
       ],
     );
     const fuelId = inserted.rows[0]!.id;
@@ -1186,6 +1194,8 @@ export async function postSettlementCreatorInClientTx(
     if (!itemAcct) {
       throw new SettlementCreatorError("expense_account_missing", `No expense account for Comp. Exp. "${exp.item_name}".`);
     }
+    const reeferRefusal = await reeferFuelExpenseRefusal(client, draft.operating_company_id, exp, itemAcct.item_id);
+    if (reeferRefusal) throw new SettlementCreatorError("reefer_fuel_needs_gallons", reeferRefusal);
     const loadId = await resolveLineLoadId(client, draft.operating_company_id, exp);
     const expenseNumber = await nextExpenseDisplayId(
       client as never,
@@ -1793,6 +1803,22 @@ async function previewExpenseLineAccount(
 
 function pickedAccount(p: ResolvedLineAccount) {
   return { id: p.account_id, account_number: p.account_number, account_name: p.account_name, item_id: p.item_id };
+}
+
+/**
+ * U25 — reefer fuel is entered as a FUEL purchase (Fuel: Reefer diesel) with its gallons and the trailer, never as a
+ * company expense with no gallons: the federal reefer-fuel credit (Form 4136) counts gallons.
+ */
+const REEFER_FUEL_AS_EXPENSE_MESSAGE =
+  "is reefer fuel: enter it under Fuel purchases with Fuel = Reefer diesel, its gallons and the trailer (the reefer-fuel tax credit counts gallons)";
+async function reeferFuelExpenseRefusal(client: DbClient, operatingCompanyId: string, exp: { item_id?: string | null; item_name: string }, resolvedItemId: string | null): Promise<string | null> {
+  const itemId = resolvedItemId ?? exp.item_id ?? null;
+  let name = exp.item_name ?? "";
+  if (itemId) {
+    const r = await client.query<{ item_name: string }>(`SELECT item_name FROM catalogs.items WHERE id = $1::uuid AND (operating_company_id = $2::uuid OR operating_company_id IS NULL)`, [itemId, operatingCompanyId]);
+    name = r.rows[0]?.item_name ?? name;
+  }
+  return isReeferFuelItemName(name) ? `"${exp.item_name}" ${REEFER_FUEL_AS_EXPENSE_MESSAGE}` : null;
 }
 
 export class SettlementCreatorError extends Error {

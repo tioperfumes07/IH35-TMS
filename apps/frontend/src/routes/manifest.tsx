@@ -334,6 +334,7 @@ const FaultCodeAlertsPage = React.lazy(() =>
 );
 const DeadheadReportPage = React.lazy(() => import("../pages/reports/DeadheadReportPage").then((m) => ({ default: m.DeadheadReportPage })));
 const PostedWhileTourOpenReportPage = React.lazy(() => import("../pages/reports/PostedWhileTourOpenReportPage").then((m) => ({ default: m.PostedWhileTourOpenReportPage })));
+const ReeferFuelCreditReportPage = React.lazy(() => import("../pages/reports/ReeferFuelCreditReportPage").then((m) => ({ default: m.ReeferFuelCreditReportPage })));
 const AuditActivityByUserPage = React.lazy(() => import("../pages/reports/audit/AuditActivityByUserPage").then((m) => ({ default: m.AuditActivityByUserPage })));
 const AuditActivityByModulePage = React.lazy(() => import("../pages/reports/audit/AuditActivityByModulePage").then((m) => ({ default: m.AuditActivityByModulePage })));
 const AuditFinancialChangeLogPage = React.lazy(() => import("../pages/reports/audit/AuditFinancialChangeLogPage").then((m) => ({ default: m.AuditFinancialChangeLogPage })));
@@ -3969,6 +3970,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <PostedWhileTourOpenReportPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/reefer-fuel-credit"
+          element={
+            <ProtectedRoute>
+              <ReeferFuelCreditReportPage />
             </ProtectedRoute>
           }
         />
