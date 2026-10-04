@@ -321,7 +321,8 @@ def attribute_unheaded_expenses(cdoc, ddoc):
       3. date     - the row's date falls inside exactly one load's own dated span (its fuel + stop dates);
          on a boundary day, a lumper / washout goes to the load DELIVERING that day and a scale ticket to the load
          PICKING UP that day (the stop event the charge belongs to); before every load's span -> the first load
-         (deadhead into its pickup); after every span -> the last load;
+         (deadhead into its pickup); after every span -> the last load; still shared -> the unfinished load with the
+         EARLIEST first pickup (owner rule, loadAtTimeSql) — a same-pickup tie is refused;
       4. single   - the document has exactly one load.
     Anything else is REFUSED into the returned gaps list - never guessed. Returns (attributed, gaps).
     """
@@ -370,6 +371,20 @@ def attribute_unheaded_expenses(cdoc, ddoc):
                           for st in (dloads.get(ln, {}).get("stops") or [])
                           if st.get("type") == stop and st.get("date") == row["date"]}
                     if len(on) == 1: target, how = next(iter(on)), f"stop:{stop}"
+                if target is None and len(inside) > 1:
+                    # TIEBREAK (owner rule 2026-10-01, the same one the database engines use — loadAtTimeSql in
+                    # apps/backend/src/maintenance/driver-attribution.ts): a truck holds its next load while still running
+                    # the current one, and "the load at time T" is the UNFINISHED load with the EARLIEST first pickup — the
+                    # load already rolling owns everything until its delivery. A charge dated inside two loads' spans with
+                    # nothing else proving it goes there. Two loads with the same first pickup is a true tie: refused.
+                    first_pick = {}
+                    for ln in inside:
+                        picks = [st.get("date") for st in (dloads.get(ln, {}).get("stops") or [])
+                                 if st.get("type") == "pickup" and re.match(r"\d{4}-\d{2}-\d{2}$", str(st.get("date") or ""))]
+                        first_pick[ln] = min(picks) if picks else span[ln][0]
+                    earliest = min(first_pick.values())
+                    cand = [ln for ln, d in first_pick.items() if d == earliest]
+                    if len(cand) == 1: target, how = cand[0], "earliest-pickup"
                 if target is None and not inside and span:
                     # Outside every load's span on this document: before the first load starts it is the deadhead
                     # INTO that load (tolls / crossings on the way to the pickup); after the last load ends it is the
