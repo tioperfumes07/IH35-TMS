@@ -132,7 +132,7 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
                 where it has the width to be a real table. Nothing is hidden — every bucket is still
                 there, one click away, and now readable. */}
             <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{k.label}</div>
-            <div className="mt-0.5 text-2xl font-semibold leading-tight tabular-nums text-slate-900">{fmtValue(k)}</div>
+            <div className="mt-0.5 text-[22px] font-semibold leading-tight tabular-nums text-slate-900">{fmtValue(k)}</div>
             {k.compare_value != null ? (
               <div className="mt-0.5 truncate text-[11px] tabular-nums text-slate-500">{k.compare_label} {fmtCompare(k)}</div>
             ) : null}
