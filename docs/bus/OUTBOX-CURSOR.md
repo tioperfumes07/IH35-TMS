@@ -1,3 +1,15 @@
+## 2026-10-04T13:42Z · BANK-F91510 LocationMap leftover muted WIRED · this PR
+
+DONE: LocationMapModal leftover #64748b/#94a3b8 → house muted #4B5563; leftover refuse on verify-lists-maintenance-generic-catalog-connectivity-exact; unused EVEN 4132 --selftest + live.
+
+NEXT: leftover muted chrome (SafetyDashboardFilter #475569 / TypeTabBar #94a3b8 / WO pie status colors stay) · skip pile parked · HH13 no migrations this tick.
+
+## 2026-10-04T13:38Z · BANK-F91509 CreateWO leftover muted WIRED CI · tip `91610ff89e`
+
+DONE: #25251 — CreateWorkOrderModal leftover muted #4B5563; verify-steps/2090 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (LocationMap SVG labels / WO pie status colors stay) · skip pile parked · HH12 no migrations this tick.
+
 ## 2026-10-04T13:32Z · BANK-F91509 CreateWO leftover muted WIRED · this PR
 
 DONE: CreateWorkOrderModal leftover #94a3b8/#475569 → house muted #4B5563; leftover refuse on verify-wo-create-part-task-required; EVEN 2090 --selftest + live.
