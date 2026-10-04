@@ -1,3 +1,9 @@
+## 2026-10-04T08:06Z · BANK-F91447 C-25 DisputesHub three-way split WIRED CI · tip `ca1fa9c537`
+
+DONE: #25189 — verify-steps/1014 now runs ops/verify-c25-disputes-hub-split --selftest.
+
+NEXT: BANK-F91448 wire C-36 maint tabs 16→9 into 2390 · C-21/C-22 fail=triage · skip pile parked · HH08 no migrations.
+
 ## 2026-10-04T08:00Z · BANK-F91446 C-24 QBO parity tail WIRED CI · tip `4ca691095d`
 
 DONE: #25188 — verify-steps/12342 now runs ops/verify-c24-qbo-parity-tail --selftest.
