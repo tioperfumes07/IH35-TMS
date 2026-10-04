@@ -211,7 +211,7 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
             </div>
             <div className="text-xs text-gray-600">{typeLabel} · {money(deducted)} / {money(owed)}</div>
             {rail ? (
-              <div className="mt-0.5 text-[11px] text-slate-600" data-testid="auto-deduction-policy-recovery-meta">
+              <div className="mt-0.5 text-xs text-slate-600" data-testid="auto-deduction-policy-recovery-meta">
                 Recovery: {RAIL_LABELS[rail] ?? rail}
                 {mayEscrow ? " · may draw escrow" : " · escrow blocked"}
               </div>
