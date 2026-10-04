@@ -1,10 +1,10 @@
 {
-  "healthzSha": "02297db",
-  "generated_at": "2026-10-04T04:47:31.908Z",
+  "healthzSha": "2ae0bd7",
+  "generated_at": "2026-10-04T05:07:05.060Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "02297db",
+    "deployedSha": "2ae0bd7",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,60 @@
   },
   "recentActivity": [
     {
+      "number": 25157,
+      "title": "FINDING: N/A LANE: DOCS (OUTBOX-CURSOR ROUND 389.2 CURSOR DONE stamp)",
+      "state": "merged",
+      "mergedAtCt": "10/04/2026, 12:02 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25157",
+      "sha": "0e078096f0",
+      "committedAtIso": "2026-10-04T00:02:43-05:00"
+    },
+    {
+      "number": 25156,
+      "title": "FINDING: UI-F3892 LANE: NON-FINANCIAL (ROUND 389.2 wire 3 triage guards via verify-steps)",
+      "state": "merged",
+      "mergedAtCt": "10/04/2026, 12:02 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25156",
+      "sha": "3d33a83cc5",
+      "committedAtIso": "2026-10-04T00:02:18-05:00"
+    },
+    {
+      "number": 25155,
+      "title": "FINDING: N/A (CLAIM-RESERVE 12408/12410/12412 — ROUND 389.2 CURSOR triage wire)",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 11:59 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25155",
+      "sha": "824b4ca4e6",
+      "committedAtIso": "2026-10-03T23:59:24-05:00"
+    },
+    {
+      "number": 25153,
+      "title": "Cursor- ROUND 389.2 triage 3 FAILING orphan UI guards + ROUND 390.1 restore bank-line release",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 11:56 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25153",
+      "sha": "fe1f3fd2f0",
+      "committedAtIso": "2026-10-03T23:56:23-05:00"
+    },
+    {
+      "number": 25154,
+      "title": "FINDING: ACCT-F9977 LANE: FINANCIAL (ROUND 390, step 1 of 2: the purge DRY RUN the owner approves from — the existing zero-reset engine's plan now also prints, per table, the gate between the plan and an actual delete: WORM rows RETAINED and named, the refuse_financial_row_delete arm that admits it under an owner AUTH, live documents that must be VOIDED first, and tables where ih35_app has no DELETE policy. Read-only; the live path is step 2, merge held)",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 11:54 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25154",
+      "sha": "2ae0bd7e04",
+      "committedAtIso": "2026-10-03T23:54:31-05:00"
+    },
+    {
+      "number": 25152,
+      "title": "FINDING: N/A (CLAIM-RESERVE 12449 -- reservation-only commit, no code fix: renumber the Lead batch's 12441-verify-arriving-soon-serves-geofence-state, which collides with main's 12441-verify-no-reversal-of-a-reversal)",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 11:49 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25152",
+      "sha": "00a20f6a44",
+      "committedAtIso": "2026-10-03T23:49:05-05:00"
+    },
+    {
       "number": 25151,
       "title": "FINDING: LST-F3317 LANE: FINANCIAL -- ROUND 368.2(b): the journal-entry RESTORE path (805a5bb97b) made a reversing entry stop being live without releasing the bank lines that name it — main red on verify-every-void-releases-its-bank-lines; it now releases first",
       "state": "merged",
@@ -2157,60 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25148",
       "sha": "45954d411d",
       "committedAtIso": "2026-10-03T23:29:23-05:00"
-    },
-    {
-      "number": 25147,
-      "title": "FINDING: ACCT-F2026100407 LANE: FINANCIAL (three reds on main from CC-2 changes blocked every seat's push — C6 on the create-only recurring worker, the U17 reclassify panel missing from the wizard inventory, and two bill/invoice filter checks pinned to function names FILTER-MULTI-01 replaced)",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 11:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25147",
-      "sha": "15a2b58898",
-      "committedAtIso": "2026-10-03T23:28:48-05:00"
-    },
-    {
-      "number": 25146,
-      "title": "Cursor- ROUND 389.2 wire 39 PASSING orphan UI guards (verify-steps 12330-12406)",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 11:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25146",
-      "sha": "9901c7317d",
-      "committedAtIso": "2026-10-03T23:28:03-05:00"
-    },
-    {
-      "number": 25145,
-      "title": "FINDING: ACCT-F9981 LANE: FINANCIAL (ROUND 389.3 ruling 2: driver sub-accounts are numbered <parent>-00-nnn with ONE nnn per driver across 1245/1255/1256/1257/2100 — the 28 live DRIVERCASHAD896665-* advance accounts are renamed in place to 1245-00-<the driver's escrow nnn>, both writers number from one shared allocator, and advance creation provisions a missing account instead of refusing)",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 11:25 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25145",
-      "sha": "f96c83c9c1",
-      "committedAtIso": "2026-10-03T23:25:00-05:00"
-    },
-    {
-      "number": 25144,
-      "title": "FINDING: ACCT-F9979 LANE: FINANCIAL (verify-sweep-c6-money-insert-requires-je-poster red on main for every seat: two CC-1 writers carry no C6 exemption — driver_finance.escrow_balances identity row (moves no money since 202615380100) and the open-settlement pay line (posted once at settlement close) — each now names why it posts no JE)",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 11:23 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25144",
-      "sha": "a956d5dfa5",
-      "committedAtIso": "2026-10-03T23:23:09-05:00"
-    },
-    {
-      "number": 25142,
-      "title": "FINDING: N/A LANE: DOCS (CC-3: ROUND 393 batch-five push blocked by three guards already red on main — verbatim, with owners)",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 11:22 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25142",
-      "sha": "7579288805",
-      "committedAtIso": "2026-10-03T23:22:01-05:00"
-    },
-    {
-      "number": 25141,
-      "title": "Cursor- CLAIM-RESERVE 12330-12406 — ROUND 389.2 orphan UI guards (39 EVEN slots)",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 11:21 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25141",
-      "sha": "cd031832c9",
-      "committedAtIso": "2026-10-03T23:21:58-05:00"
     }
   ]
 }
