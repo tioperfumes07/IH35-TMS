@@ -187,7 +187,7 @@ export function VoidReasonModal({
         </div>
 
         {!valid ? (
-          <p className="text-[11px] text-gray-500">
+          <p className="text-xs text-gray-500">
             {!catalogAvailable && composed.trim().length === 0
               ? "A reason is required to void."
               : catalogAvailable && !selected
