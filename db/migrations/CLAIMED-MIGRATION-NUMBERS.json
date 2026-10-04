@@ -2187,5 +2187,10 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-10-01",
     "purpose": "B-1b Account Register ✓ blank↔C: accounting.journal_entry_postings.register_cleared (+at/by) so register can toggle cleared without inventing a second engine; R stays locked via closed reconciliation."
+  },
+  "202615410930": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-04",
+    "purpose": "fuel provider-transaction uniqueness per PRODUCT LINE: one ticket may carry diesel + DEF + reefer; key (company, vendor, receipt, fuel_type) — the 202615370600 trigger refused/merged every DEF sharing a ticket with its diesel"
   }
 }
