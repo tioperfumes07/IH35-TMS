@@ -92,12 +92,13 @@ function runSelftest() {
       for (const e of leftoverGood) console.error(`  ✗ ${e}`);
       process.exit(1);
     }
-    const leftoverPlant = `${live}\n<div className="text-[11px] text-[#8A92AB]" style={{ color: "#334155" }}>plant</div>`;
+    const leftoverPlant = `${live}\n<div className="text-[11px] text-slate-600 border-slate-300 bg-slate-50 text-[#8A92AB]" style={{ color: "#334155" }}>plant</div>`;
     const leftoverBad = [];
     leftoverRefusePage(label, leftoverPlant, leftoverBad);
     if (
       !leftoverBad.some((e) => e.includes("leftover text-[11px]")) ||
-      !leftoverBad.some((e) => e.includes("leftover off-scale muted"))
+      !leftoverBad.some((e) => e.includes("leftover off-scale muted")) ||
+      !leftoverBad.some((e) => e.includes("leftover slate class"))
     ) {
       console.error(`[verify-home-quickjump-counts] SELFTEST FAIL ${label} leftover plant escaped`, leftoverBad);
       process.exit(1);
@@ -120,6 +121,9 @@ function leftoverRefusePage(label, src, bucket) {
   }
   if (src.includes("#8A92AB") || src.includes("#334155") || src.includes("#475569")) {
     bucket.push(`${label}: leftover off-scale muted`);
+  }
+  if (src.includes("text-slate-") || src.includes("border-slate-") || src.includes("bg-slate-")) {
+    bucket.push(`${label}: leftover slate class`);
   }
 }
 
