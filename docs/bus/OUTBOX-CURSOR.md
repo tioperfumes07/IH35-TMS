@@ -1,8 +1,14 @@
-## 2026-10-04T19:20Z · BANK-F91543 CashFlow leftover slate classes · this PR
+## 2026-10-04T19:22Z · BANK-F91544 CustomerProfit leftover slate classes · this PR
 
-DONE: CashFlowOverviewPage leftover text-slate-* / border-slate-* → house #4B5563 / #1F2A44 / #E5E7EB; leftover refuse LIVE on EVEN 3850 print-letter leftoverHits (3742 LIVE-FAILS formatDateUS vs mmmDd — not a leftover host).
+DONE: CustomerProfitabilityPage leftover FLAG_UI / A/R link / min-rev slate-* → house #4B5563 / #1F2A44 / #E5E7EB / #F7F8FA; leftover refuse LIVE on EVEN 3862 print-letter leftoverHits.
 
-NEXT: leftover muted chrome (TripPairingBoard slate-* / OwnerHome / remaining pages / skip pile) · skip pile parked · HH16 leftovers first.
+NEXT: leftover muted chrome (ProfitPerTruck slate-* / TripPairingBoard / OwnerHome / skip pile) · skip pile parked · HH16 leftovers first.
+
+## 2026-10-04T19:20Z · BANK-F91543 CashFlow leftover slate classes WIRED CI · tip `3768ae3a58`
+
+DONE: #25285 — CashFlowOverview leftover text-slate-* / border-slate-* → house tokens; leftover refuse LIVE on EVEN 3850 print-letter leftoverHits.
+
+NEXT: leftover muted chrome (CustomerProfit / TripPairing / OwnerHome / skip pile) · skip pile parked · HH16 leftovers first.
 
 ## 2026-10-04T19:15Z · BANK-F91542 CargoSensor leftover slate classes WIRED CI · tip `5b71005af8`
 

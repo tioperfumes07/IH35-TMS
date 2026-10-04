@@ -71,19 +71,19 @@ function currentQuarterRange() {
 
 const FLAG_UI: Record<CustomerProfitFlag, { className: string; label: string }> = {
   high_margin: {
-    className: "border-slate-300 bg-slate-100 text-[#1f2a44]",
+    className: "border-[#E5E7EB] bg-[#F7F8FA] text-[#1F2A44]",
     label: CUSTOMER_PROFITABILITY_FLAG_LABELS.high_margin,
   },
   low_margin: {
-    className: "border-slate-300 bg-slate-100 text-slate-700",
+    className: "border-[#E5E7EB] bg-[#F7F8FA] text-[#4B5563]",
     label: CUSTOMER_PROFITABILITY_FLAG_LABELS.low_margin,
   },
   past_due: {
-    className: "border-slate-300 bg-slate-100 text-slate-700",
+    className: "border-[#E5E7EB] bg-[#F7F8FA] text-[#4B5563]",
     label: CUSTOMER_PROFITABILITY_FLAG_LABELS.past_due,
   },
   declining_revenue: {
-    className: "border-slate-200 bg-slate-50 text-slate-800",
+    className: "border-[#E5E7EB] bg-[#F7F8FA] text-[#1F2A44]",
     label: CUSTOMER_PROFITABILITY_FLAG_LABELS.declining_revenue,
   },
 };
@@ -167,7 +167,7 @@ export function CustomerProfitabilityPage() {
             <span className="text-gray-900">{money(r.ar_aging_balance_cents)}</span>
           ) : (
             <span
-              className="cursor-pointer text-slate-700 underline"
+              className="cursor-pointer text-[#1F2A44] underline"
               onClick={(e) => {
                 e.stopPropagation();
                 navigate(`/reports/ar-aging?customer_id=${encodeURIComponent(r.customer_id)}`);
@@ -194,7 +194,7 @@ export function CustomerProfitabilityPage() {
             {(r.flags ?? []).map((f) => {
               const meta = FLAG_UI[f as CustomerProfitFlag];
               const label = meta?.label ?? formatCustomerProfitabilityFlagLabel(f);
-              const className = meta?.className ?? "border-slate-200 bg-slate-50 text-slate-700";
+              const className = meta?.className ?? "border-[#E5E7EB] bg-[#F7F8FA] text-[#4B5563]";
               return (
                 <span key={f} className={`rounded-sm border px-1.5 py-0.5 text-xs font-semibold ${className}`} title={String(f)}>
                   {label}
@@ -349,8 +349,8 @@ export function CustomerProfitabilityPage() {
         onReset={staged.reset}
         applyDisabled={!staged.dirty}
       >
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Min rev ($)</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Min rev ($)</span>
           <MoneyInput
             valueDollars={staged.draft.minRevDollars ? Number(staged.draft.minRevDollars) : null}
             onChangeDollars={(d) => staged.setDraft((p) => ({ ...p, minRevDollars: d == null ? "" : String(d) }))}
