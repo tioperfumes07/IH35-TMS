@@ -6,5 +6,6 @@ export default {
     // BANK-F91509 + BANK-F91513 — CreateWorkOrderModal leftover #94a3b8/#475569/#aab6cd refuse.
     // BANK-F91523 — leftover SVG/help border #cbd5e1 → house #E5E7EB.
     // BANK-F91526 — leftover field/section borders #d6dae1/#e6e9ee → house #E5E7EB.
+    // BANK-F91531 — leftover Tailwind slate-* classes → house #1F2A44 / #4B5563 / #E5E7EB / #F7F8FA.
   },
 };
