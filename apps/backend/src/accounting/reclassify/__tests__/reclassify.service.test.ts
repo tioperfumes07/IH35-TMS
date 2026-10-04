@@ -179,6 +179,49 @@ describe("Reclassify engine — document line rewrite (invoice / cash documents)
 });
 
 // U24 (owner): reclassify by item and by load.
+describe("Reclassify engine — a fuel purchase's adopted entry (ROUND 290.1)", () => {
+  const fuelPosting = {
+    posting_id: "p-fuel", journal_entry_id: "je-fuel", account_id: "acc-5000", class_id: null, entity_uuid: null, entity_type: null,
+    debit_or_credit: "debit", amount_cents: 3071, description: null, source_transaction_type: "fuel_event", source_transaction_id: "fuel-1",
+    source_transaction_line_id: null, document_number: null, posting_status: "posted", reversed_by_line_id: null, reversal_of_line_id: null,
+    control_reason: null, already_reclassified: false,
+  } as unknown as SelectedPosting;
+  const fake = (adoptRows: unknown[]) => {
+    const calls: Array<{ sql: string; params: unknown[] }> = [];
+    return {
+      calls,
+      client: { query: async (sql: string, params: unknown[] = []) => {
+        calls.push({ sql, params });
+        if (/FROM accounting\.expenses e\s+WHERE e\.operating_company_id = \$1::uuid AND e\.journal_entry_id = \$2::uuid/.test(sql)) return { rows: adoptRows, rowCount: adoptRows.length };
+        return { rows: [], rowCount: 1 };
+      } } as never,
+    };
+  };
+
+  it("rewrites the ADOPTING expense's line (used to refuse every fed fuel purchase as 'no line rewrite yet')", async () => {
+    const { calls, client } = fake([{ expense_id: "exp-1", line_id: "el-1", lines: "1" }]);
+    const r = await rewriteDocumentLine(client, "co", fuelPosting, { account_id: "acc-5010", class_id: null, location_id: null, entity_uuid: null, entity_type: null });
+    expect(r.updated).toBe(true);
+    expect(calls[0]!.params).toEqual(["co", "je-fuel", "fuel-1", 3071, "acc-5010", "acc-5000"]);
+    const upd = calls.find((c) => /UPDATE accounting\.expense_lines SET expense_account_uuid/.test(c.sql))!;
+    expect(upd.params).toEqual(["el-1", "co", "acc-5010"]);
+  });
+
+  it("refuses by name when no live expense, or more than one, adopts the entry — the ledger never moves alone", async () => {
+    for (const rows of [[], [{ expense_id: "a", line_id: "x", lines: "1" }, { expense_id: "b", line_id: "y", lines: "1" }]]) {
+      const r = await rewriteDocumentLine(fake(rows).client, "co", fuelPosting, { account_id: "acc-5010", class_id: null, location_id: null, entity_uuid: null, entity_type: null });
+      expect(r.updated).toBe(false);
+      expect(r.note).toMatch(/live expense documents adopt this entry \(need exactly 1\)/);
+    }
+  });
+
+  it("refuses when the adopting expense has no single line of the posting's amount", async () => {
+    const r = await rewriteDocumentLine(fake([{ expense_id: "exp-1", line_id: "el-1", lines: "2" }]).client, "co", fuelPosting, { account_id: "acc-5010", class_id: null, location_id: null, entity_uuid: null, entity_type: null });
+    expect(r.updated).toBe(false);
+    expect(r.note).toMatch(/has 2 lines of 3071 cents/);
+  });
+});
+
 describe("Reclassify engine — by item / by load (U24)", () => {
   const ITEM_DIESEL = "11111111-0000-4000-8000-000000000001";
   const ITEM_REEFER = "11111111-0000-4000-8000-000000000002";

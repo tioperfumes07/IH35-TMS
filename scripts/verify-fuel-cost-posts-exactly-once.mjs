@@ -118,8 +118,8 @@ export function classifyFuelPostsOnce(input) {
   checks.push({
     id: "A",
     name: "NO_LIVE_FUEL_TRANSACTION_JES",
-    expected: "0 live fuel_event JEs",
-    live: `${fuelJesCount} live fuel_event JE(s)`,
+    expected: "0 orphan live fuel_event postings (not adopted by a live expense, not a reclass of one)",
+    live: `${fuelJesCount} orphan live fuel_event posting(s)`,
     pass: fuelJesCount === 0,
   });
   if (fuelJesCount > 0) {
@@ -326,6 +326,12 @@ async function measureLive(client) {
   // A: LIVE fuel_event postings only — a JE that's been reversed (reversed_by_je_id set) or that
   // is itself a reversal (reverses_je_id set) is history, not a live posting. Matches
   // fuel-expense-document.service.ts's own adoption-query liveness test exactly (one definition).
+  // CC-2 2026-10-04 — A counts ORPHAN live fuel_event postings, which is what THE RULING above forbids ("NEVER posts a NEW,
+  // LIVE JE outside the documented adopt-or-post path"). It used to count EVERY live fuel_event posting, including the
+  // ones the ruling explicitly allows: an entry ADOPTED by its live expense document (ROUND 290.1 — the feed posts, the
+  // document adopts), and the RECLASSIFICATION entry the one reclass engine writes against such a leg (it keeps the
+  // leg's source). Counting those turned every correctly fed fuel purchase into a red. An orphan is a live fuel_event
+  // posting whose entry is neither adopted by a live expense for that same fuel transaction nor an applied reclass entry.
   const fuelJeRes = await client.query(
     `SELECT count(*)::int AS cnt FROM accounting.journal_entry_postings jep
        JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
@@ -334,7 +340,13 @@ async function measureLive(client) {
         AND je.voided_at IS NULL
         AND je.reversed_by_je_id IS NULL
         AND je.reverses_je_id IS NULL
-        AND je.status = 'posted'`,
+        AND je.status = 'posted'
+        AND NOT EXISTS (SELECT 1 FROM accounting.expenses e
+                         WHERE e.operating_company_id = jep.operating_company_id AND e.journal_entry_id = je.id
+                           AND e.source_fuel_transaction_id::text = jep.source_transaction_id::text AND e.voided_at IS NULL)
+        AND NOT EXISTS (SELECT 1 FROM accounting.reclassify_batch_lines rl
+                         WHERE rl.operating_company_id = jep.operating_company_id AND rl.reclass_journal_entry_id = je.id
+                           AND rl.result = 'applied')`,
     [USMCA_COMPANY_ID],
   );
 
