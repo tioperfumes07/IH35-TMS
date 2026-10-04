@@ -44,16 +44,28 @@ if (!shared.includes("SlidersHorizontal")) {
   failures.push("CollapsedListFilters: expected SlidersHorizontal Filters icon (Dispatch FilterBar parity)");
 }
 
-// BANK-F91383 leftover refuse — SafetyDashboardFilter page-scoped text token ratchet
-if (src.includes("text-[11px]")) failures.push("SafetyDashboardFilter.tsx: leftover text-[11px]");
-if (src.includes("#8A92AB")) failures.push("SafetyDashboardFilter.tsx: leftover off-scale muted #8A92AB");
+function leftoverRefuse(text) {
+  const hits = [];
+  if (text.includes("text-[11px]")) hits.push("SafetyDashboardFilter.tsx: leftover text-[11px]");
+  if (text.includes("#8A92AB") || text.includes("#334155") || text.includes("#64748b") || text.includes("#475569") || text.includes("#94a3b8")) {
+    hits.push("SafetyDashboardFilter.tsx: leftover off-scale muted");
+  }
+  return hits;
+}
+
+// BANK-F91383 + BANK-F91511 leftover refuse — SafetyDashboardFilter page-scoped muted ratchet
+failures.push(...leftoverRefuse(src));
 
 if (process.argv.includes("--selftest")) {
-  const leftoverPlant = src + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
-  const plantFails = [];
-  if (leftoverPlant.includes("text-[11px]")) plantFails.push("leftover text-[11px]");
-  if (!plantFails.includes("leftover text-[11px]")) {
+  const leftoverHits = leftoverRefuse('<div className="text-[11px] text-[#8A92AB]">plant</div>');
+  if (!leftoverHits.length) {
     console.error("FAIL verify-safety-filter-chrome --selftest: leftover plant escaped");
+    process.exit(1);
+  }
+  // BANK-F91511 leftover plant — inactive pill leftover slate
+  const leftoverSlateHits = leftoverRefuse('color: "#475569"');
+  if (!leftoverSlateHits.length) {
+    console.error("FAIL verify-safety-filter-chrome --selftest: leftover #475569 plant escaped");
     process.exit(1);
   }
   console.log("PASS verify-safety-filter-chrome --selftest — leftover plant detected");

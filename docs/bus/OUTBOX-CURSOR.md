@@ -1,3 +1,15 @@
+## 2026-10-04T13:55Z · BANK-F91511 SafetyDashboardFilter leftover muted WIRED · this PR
+
+DONE: SafetyDashboardFilter inactive pill leftover #475569 → house muted #4B5563; leftover refuse on verify-safety-filter-chrome; EVEN 1230 --selftest + live.
+
+NEXT: leftover muted chrome (TypeTabBar #94a3b8 / WO pie status colors stay) · skip pile parked · HH13 no migrations this tick.
+
+## 2026-10-04T13:50Z · BANK-F91510 LocationMap leftover muted WIRED CI · tip `061942eabe`
+
+DONE: #25252 — LocationMapModal leftover muted #4B5563; verify-steps/4132 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (SafetyDashboardFilter #475569 / TypeTabBar #94a3b8 / WO pie status colors stay) · skip pile parked · HH13 no migrations this tick.
+
 ## 2026-10-04T13:42Z · BANK-F91510 LocationMap leftover muted WIRED · this PR
 
 DONE: LocationMapModal leftover #64748b/#94a3b8 → house muted #4B5563; leftover refuse on verify-lists-maintenance-generic-catalog-connectivity-exact; unused EVEN 4132 --selftest + live.
