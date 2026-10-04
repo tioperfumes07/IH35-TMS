@@ -87,7 +87,20 @@ const ZERO_RESET_ROOTS = [
   "accounting.company_settlements", "accounting.deposits", "driver_finance.driver_bills", "driver_finance.driver_settlements",
   "driver_finance.settlement_lines", "driver_finance.driver_advances", "driver_finance.driver_reimbursements",
   "driver_finance.driver_settlement_deductions", "driver_finance.driver_liabilities", "fuel.fuel_transactions",
+  // AUTH-400 (owner law: "NO TRACE OF ANY PREVIOUS DOCUMENT … escrow ledger … reclassify batches … reconciliation sessions
+  // and matches"): every transaction table, not only those an FK reaches. The rehearsal's own proof caught the gap —
+  // "accounting.escrow_postings still has 47 row(s)" (postings with no link to a deleted entry were never planned).
+  "accounting.escrow_postings", "driver_finance.escrow_ledger", "driver_finance.escrow_balances",
+  "accounting.reclassify_batches", "accounting.reclassify_batch_lines", "dispatch.stop_arrivals",
+  "accounting.payment_applications", "accounting.load_revenue_recognition_postings", "accounting.posting_batches",
+  "accounting.outbox_events", "accounting.period_cash_basis_snapshot",
+  "expense_attribution.expense_load_links", "driver_finance.presettlement_link_suggestions",
+  "driver_finance.payrun_gl_runs", "driver_finance.driver_settlement_gl_runs", "driver_finance.driver_settlement_gl_bills",
+  "banking.reconciliation_sessions", "banking.reconciliation_matches", "banking.reconciliation_drift_alerts",
 ];
+// The one named exception inside the preserved banking schema: reconciliation work is a TRANSACTION trace (owner law);
+// the bank lines and bank accounts themselves stay preserved (bank lines go back to For Review via RESET_TABLES).
+const ZERO_RESET_BANKING_PURGE = new Set(["banking.reconciliation_sessions", "banking.reconciliation_matches", "banking.reconciliation_drift_alerts"]);
 const ZERO_RESET_DELETE_SCHEMAS = new Set(["accounting", "driver_finance", "dispatch", "fuel", "expense_attribution", "factoring", "docs", "geo", "integrations", "legal", "telematics", "maintenance"]);
 const MASTER_TABLES = [
   "mdata.customers", "mdata.drivers", "mdata.vendors", "mdata.locations", "mdata.units", "mdata.equipment",
@@ -119,6 +132,7 @@ async function companyColumnTables(c: Q): Promise<string[]> {
 }
 function zeroResetPreserved(table: string): boolean {
   if (table === "mdata.loads" || table === "mdata.load_stops") return false;
+  if (ZERO_RESET_BANKING_PURGE.has(table)) return false;
   if (RESET_TABLES.has(table)) return false;
   return PRESERVED_SCHEMAS.has(table.split(".")[0]) || !ZERO_RESET_DELETE_SCHEMAS.has(table.split(".")[0]) || MASTER_TABLES.includes(table)
     || /(^|\.)(pay_rate|driver_pay_rate|factors?$|factor_)/.test(table);
@@ -128,9 +142,16 @@ function zeroResetPreserved(table: string): boolean {
 type ResetRef = { table: string; col: string; vals: string[]; kind: "bank" | "unlink" | "rows" };
 const RESETS: ResetRef[] = [];
 const ESCAPED_REPORT: string[] = [];
+// AUTH-400 purge rehearsal (2026-10-04): an FK CYCLE among planned tables (mdata.loads <-> docs.files, both nullable) made the
+// topological order fall back to depth order and delete mdata.loads before its real child driver_finance.settlement_lines
+// ("violates foreign key constraint settlement_lines_load_same_entity_fkey" — rolled back). A cycle is now CUT at a
+// nullable link: those links on the planned rows are cleared before the deletes, recorded here and printed in the dry run.
+type CycleCut = { child: string; col: string; parent: string; parentCol: string };
+const CYCLE_CUTS: CycleCut[] = [];
 function isMasterOrPreserve(table: string): boolean {
   const schema = table.split(".")[0];
   if (table === "mdata.loads" || table === "mdata.load_stops") return false;
+  if (ZERO_RESET_BANKING_PURGE.has(table)) return false;
   return MASTER_TABLES.includes(table) || ["identity", "org", "catalogs", "preserve", "audit", "_system", "lib", "mdata"].includes(schema)
     || /(^|\.)(pay_rate|driver_pay_rate|factors?$|factor_)/.test(table);
 }
@@ -464,10 +485,62 @@ async function expand(c: Q, plan: Plan, why: Map<string, string>, report: string
   const edges = fks.filter((f) => inPlan.has(f.child) && inPlan.has(f.parent) && f.child !== f.parent);
   const order: string[] = [];
   const left = new Set(byDepth);
+  const cut = new Set<Fk>();
+  CYCLE_CUTS.length = 0; // expand() may re-enter (reversal partners) — only the final ordering's cuts count
+  const realCol = (e: Fk) => (e.cols > 1 && e.childCol === "operating_company_id" && e.childCol2 ? e.childCol2 : e.childCol);
+  const realParentCol = (e: Fk) => (e.cols > 1 && e.childCol === "operating_company_id" && e.parentCol2 ? e.parentCol2 : e.parentCol);
+  const nullableCache = new Map<string, boolean>();
+  const isNullable = async (e: Fk) => {
+    const k = `${e.child}.${realCol(e)}`;
+    if (!nullableCache.has(k)) {
+      const nn = (await c.query<{ nn: boolean }>(`SELECT attnotnull AS nn FROM pg_attribute WHERE attrelid = $1::regclass AND attname = $2`, [e.child, realCol(e)])).rows[0]?.nn;
+      nullableCache.set(k, nn === false);
+    }
+    return nullableCache.get(k)!;
+  };
+  // A load stamp (load_id / *_load_id) is protected by the load-born-document law: cut it only when nothing else breaks the cycle.
+  const isLoadStamp = (e: Fk) => /(^|_)load_id$/.test(realCol(e));
+  const live = (e: Fk) => !cut.has(e) && left.has(e.child) && left.has(e.parent);
+  // Strongly connected components of the remaining graph (t -> child that must go first): only edges INSIDE a component
+  // form a cycle; every other blocking edge resolves on its own as its child's component is emptied.
+  const sccs = () => {
+    let idx = 0; const index = new Map<string, number>(); const low = new Map<string, number>(); const on = new Set<string>(); const st: string[] = []; const out: string[][] = [];
+    const succ = (t: string) => edges.filter((e) => e.parent === t && live(e)).map((e) => e.child);
+    const strong = (v: string) => {
+      index.set(v, idx); low.set(v, idx); idx++; st.push(v); on.add(v);
+      for (const w of succ(v)) {
+        if (!index.has(w)) { strong(w); low.set(v, Math.min(low.get(v)!, low.get(w)!)); }
+        else if (on.has(w)) low.set(v, Math.min(low.get(v)!, index.get(w)!));
+      }
+      if (low.get(v) === index.get(v)) { const comp: string[] = []; let w: string; do { w = st.pop()!; on.delete(w); comp.push(w); } while (w !== v); out.push(comp); }
+    };
+    for (const t of byDepth) if (left.has(t) && !index.has(t)) strong(t);
+    return out;
+  };
   while (left.size) {
-    const ready = byDepth.filter((t) => left.has(t) && !edges.some((e) => e.parent === t && left.has(e.child)));
-    const pick = ready.length ? ready : [byDepth.find((t) => left.has(t))!];
-    for (const t of pick) { order.push(t); left.delete(t); }
+    let ready = byDepth.filter((t) => left.has(t) && !edges.some((e) => e.parent === t && live(e)));
+    if (!ready.length) {
+      // Every remaining table waits on another: break ONE cycle with the fewest, safest cuts.
+      let best: { t: string; inCycle: Fk[]; score: number } | null = null;
+      for (const comp of sccs().filter((x) => x.length > 1)) {
+        const inComp = new Set(comp);
+        for (const t of comp) {
+          const inCycle = edges.filter((e) => e.parent === t && live(e) && inComp.has(e.child));
+          let ok = inCycle.length > 0;
+          for (const e of inCycle) if (!(await isNullable(e))) { ok = false; break; }
+          if (!ok) continue;
+          const score = inCycle.filter(isLoadStamp).length * 1000 + inCycle.length;
+          if (!best || score < best.score) best = { t, inCycle, score };
+        }
+      }
+      if (best) {
+        for (const e of best.inCycle) { cut.add(e); CYCLE_CUTS.push({ child: e.child, col: realCol(e), parent: best.t, parentCol: realParentCol(e) }); }
+        continue; // re-evaluate: the cut table (and anything only it blocked) can now go in true dependency order
+      }
+      report.push(`BLOCKER FK cycle with no nullable link to cut among: ${[...left].join(", ")} — resolve before APPLY`);
+      ready = [byDepth.find((t) => left.has(t))!];
+    }
+    for (const t of ready) { order.push(t); left.delete(t); }
   }
   return order;
 }
@@ -618,6 +691,7 @@ async function main() {
          FROM accounting.journal_entry_postings WHERE journal_entry_uuid::text = ANY($1::text[])`, [planJes])).rows[0];
     console.log(`SCOPE ${SCOPE} — PLAN (delete order, deepest first):`);
     for (const t of order) console.log(`  ${t.padEnd(55)} ${plan.get(t)?.size ?? 0}`);
+    for (const k of CYCLE_CUTS) console.log(`  ~ FK CYCLE CUT: ${k.child}.${k.col} -> ${k.parent}.${k.parentCol} (nullable) cleared on the planned rows before the deletes`);
     for (const e of ESCAPED_REPORT) {
       console.log(`  ${e.startsWith("BLOCKER") || e.startsWith("UNHANDLED") ? "!" : "~"} ${e}`);
       if (e.startsWith("BLOCKER") || e.startsWith("UNHANDLED")) report.push(e);
@@ -750,6 +824,29 @@ async function main() {
          SELECT $1::uuid, 'auth_purge', $2, $3, d.${pk}::text, $4, to_jsonb(d) FROM ${t} d WHERE d.${pk}::text = ANY($5::text[])`,
         [USMCA, AUTH_ID, t, `ROUND 326 ${SCOPE}`, rows]);
     }
+    // Cycle cuts first (recorded above in audit.record_deletions with the links intact): clear each nullable link that
+    // points at a planned row, so the dependency order holds.
+    for (const k of CYCLE_CUTS) {
+      const parentRows = [...(plan.get(k.parent) ?? [])];
+      const ppk = await pkOf(client, k.parent);
+      if (!parentRows.length || !ppk) continue;
+      const u = await client.query(
+        `UPDATE ${k.child} SET ${k.col} = NULL WHERE ${k.col}::text IN (SELECT ${k.parentCol}::text FROM ${k.parent} WHERE ${ppk}::text = ANY($1::text[]))`,
+        [parentRows]);
+      console.log(`  cycle cut: ${k.child}.${k.col} -> ${k.parent} cleared on ${u.rowCount ?? 0} row(s)`);
+    }
+    // AUTH-400 (Lead): the final check reports the WHOLE shortfall by table, with before/after counts — never only the first.
+    const proofTables: string[] = [];
+    const before: Record<string, number> = {};
+    if (SCOPE === "zero-reset") {
+      for (const t of new Set([...order, ...ZERO_RESET_ROOTS, "accounting.journal_entry_postings", "accounting.journal_entries"])) {
+        if (!(await client.query<{ ok: boolean }>(`SELECT to_regclass($1) IS NOT NULL AS ok`, [t])).rows[0]?.ok) continue;
+        const hasCo = (await client.query<{ ok: boolean }>(`SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema || '.' || table_name = $1 AND column_name = 'operating_company_id') AS ok`, [t])).rows[0]?.ok;
+        if (!hasCo) continue;
+        proofTables.push(t);
+        before[t] = Number((await client.query<{ n: string }>(`SELECT count(*)::text AS n FROM ${t} WHERE operating_company_id = $1::uuid`, [USMCA])).rows[0]?.n);
+      }
+    }
     const counts: Record<string, number> = {};
     for (const t of order) {
       const pk = await pkOf(client, t);
@@ -770,24 +867,30 @@ async function main() {
     if (orphansLeft.length) throw new Error(`ORPHAN PROOF FAILED: ${orphansLeft.length} posting line(s) still name a removed document — rolled back`);
     if (SCOPE === "zero-reset") {
       // PROOF, same transaction: GL to zero, every deleted table to zero for the company, master data unchanged.
-      const gl = Number((await client.query<{ n: string }>(`SELECT count(*)::text AS n FROM accounting.journal_entry_postings WHERE operating_company_id = $1::uuid`, [USMCA])).rows[0]?.n);
-      if (gl !== 0) throw new Error(`ZERO-RESET PROOF FAILED: ${gl} GL posting(s) remain — rolled back`);
-      for (const t of new Set([...order, ...ZERO_RESET_ROOTS])) {
-        const hasCo = (await client.query<{ ok: boolean }>(`SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema || '.' || table_name = $1 AND column_name = 'operating_company_id') AS ok`, [t])).rows[0]?.ok;
-        if (!hasCo) continue;
-        const left = Number((await client.query<{ n: string }>(`SELECT count(*)::text AS n FROM ${t} WHERE operating_company_id = $1::uuid`, [USMCA])).rows[0]?.n);
-        if (left !== 0) throw new Error(`ZERO-RESET PROOF FAILED: ${t} still has ${left} row(s) — rolled back`);
+      // Every failure is collected and the whole table printed before the rollback, so an unplanned class names itself.
+      const failures: string[] = [];
+      const after: Record<string, number> = {};
+      for (const t of proofTables) after[t] = Number((await client.query<{ n: string }>(`SELECT count(*)::text AS n FROM ${t} WHERE operating_company_id = $1::uuid`, [USMCA])).rows[0]?.n);
+      console.log("ZERO-RESET COUNTS (USMCA rows) — table: before -> after");
+      for (const t of proofTables.sort()) {
+        if (before[t] || after[t]) console.log(`  ${after[t] ? "!" : " "} ${t.padEnd(55)} ${String(before[t]).padStart(7)} -> ${after[t]}`);
+        if (after[t]) failures.push(`${t} still has ${after[t]} row(s) (was ${before[t]})`);
       }
       // ROUND 359 ADDITION 2 — PROOF that no row escaped its company: every delete-schema table with the column has zero
       // company-less rows left (a company-filtered count cannot see them).
       for (const t of await companyColumnTables(client)) {
         if (zeroResetPreserved(t) || !ZERO_RESET_DELETE_SCHEMAS.has(t.split(".")[0])) continue;
         const escaped = Number((await client.query<{ n: string }>(`SELECT count(*)::text AS n FROM ${t} WHERE operating_company_id IS NULL`)).rows[0]?.n);
-        if (escaped !== 0) throw new Error(`ROWS ESCAPED THEIR COMPANY: ${t} has ${escaped} row(s) with operating_company_id IS NULL — rolled back`);
+        if (escaped !== 0) failures.push(`${t} has ${escaped} row(s) with operating_company_id IS NULL (escaped its company)`);
       }
       const masterAfter = await masterCounts(client);
       for (const [t, n] of Object.entries(masterBefore ?? {})) {
-        if (masterAfter[t] !== n) throw new Error(`ZERO-RESET PROOF FAILED: master table ${t} changed ${n} -> ${masterAfter[t]} — rolled back`);
+        if (masterAfter[t] !== n) failures.push(`master table ${t} changed ${n} -> ${masterAfter[t]}`);
+      }
+      if (failures.length) {
+        console.log("ZERO-RESET PROOF FAILED — every shortfall:");
+        for (const f of failures) console.log(`  ✗ ${f}`);
+        throw new Error(`ZERO-RESET PROOF FAILED: ${failures.length} shortfall(s) — ${failures.join("; ")} — rolled back`);
       }
       console.log("ZERO-RESET PROOF: GL postings 0; every deleted table 0 for the company AND 0 with no company; master data unchanged:", JSON.stringify(masterAfter));
     }
