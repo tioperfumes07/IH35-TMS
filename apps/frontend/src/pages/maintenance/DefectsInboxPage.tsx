@@ -110,7 +110,7 @@ export function DefectsInboxPage() {
               kind="maintenance_defect"
               id={row.id}
               label="Detail"
-              className="rounded-sm border border-gray-300 px-2 py-1 text-[11px] hover:bg-gray-50"
+              className="rounded-sm border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
               data-testid={`defect-detail-link-${row.id}`}
             />
             <Button size="sm" variant="secondary" onClick={() => runTriage(row.id, "assign")}>
