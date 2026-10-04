@@ -132,7 +132,7 @@ export function CustomerEditModal({ open, customer, operatingCompanyId, saving =
           shown={parentCustomerOptions.length}
           limit={5000}
           hint="Type to search for a parent customer that is not listed."
-          className="text-[11px] text-slate-600"
+          className="text-xs text-slate-600"
         />
         <div className="flex justify-end gap-2 border-t border-gray-200 pt-3">
           <Button type="button" variant="secondary" onClick={onClose}>

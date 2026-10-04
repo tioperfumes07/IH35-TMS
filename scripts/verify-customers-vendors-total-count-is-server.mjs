@@ -101,6 +101,13 @@ function assertGuard(sources) {
     if (!/Array\.isArray\(\s*(?:raw|paymentTermsQuery\.data\?\.payment_terms)/.test(sources.customerEditModal)) {
       errors.push(`${CUSTOMER_EDIT_MODAL}: must Array.isArray-guard payment_terms before mapping`);
     }
+    // BANK-F91415 leftover refuse — CustomerEditModal page-scoped text token ratchet
+    if (sources.customerEditModal.includes("text-[11px]")) {
+      errors.push(`${CUSTOMER_EDIT_MODAL}: leftover text-[11px] — use text-xs`);
+    }
+    if (sources.customerEditModal.includes("#8A92AB")) {
+      errors.push(`${CUSTOMER_EDIT_MODAL}: leftover #8A92AB — use #4B5563`);
+    }
   }
 
   // 3 — pages must not pass array .length into totalCount
@@ -274,6 +281,15 @@ function selftest() {
     queryFn: () => listPaymentTermOptions(companyId).then((r) => r.payment_terms),
     const paymentTermOptions = paymentTermsQuery.data ?? [];
         `,
+      },
+      wantMin: 1,
+    },
+    // BANK-F91415 leftover plant — CustomerEditModal page-scoped text token ratchet
+    {
+      name: "leftover text-[11px]/#8A92AB plant -> FAIL",
+      in: {
+        ...base,
+        customerEditModal: goodCustomerEditModal + '\n<p className="text-[11px] text-[#8A92AB]">plant</p>\n',
       },
       wantMin: 1,
     },
