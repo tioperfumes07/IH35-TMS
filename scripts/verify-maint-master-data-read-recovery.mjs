@@ -43,6 +43,9 @@ const vendorChecks = [
   [/if \(!archiveTarget \|\| listQ\.isError\) return;/, "vendor archive must fail closed on roster error"],
 ];
 for (const [pattern, message] of vendorChecks) if (!pattern.test(vendorSource)) liveFailures.push(`vendors: ${message}`);
+// BANK-F91315 leftover refuse — VendorsPage.tsx page-scoped text token ratchet
+if (vendorSource.includes("text-[11px]")) liveFailures.push("vendors: leftover text-[11px]");
+if (vendorSource.includes("#8A92AB") || vendorSource.includes("#334155")) liveFailures.push("vendors: leftover off-scale muted");
 if (!/kpisQuery\.isError[\s\S]*Couldn't load parts inventory summary[\s\S]*kpisQuery\.refetch\(\)/.test(sources.parts)) {
   liveFailures.push("parts: KPI read failure must replace false-zero summary with exact Retry");
 }
@@ -82,6 +85,12 @@ if (process.argv.includes("--selftest")) {
   }
   if (caught !== mutations.length) {
     console.error(`verify-maint-master-data-read-recovery --selftest FAIL (${caught}/${mutations.length})`);
+    process.exit(1);
+  }
+  // BANK-F91315 leftover plant — VendorsPage page-scoped text token ratchet
+  const leftoverPlant = vendorSource + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!leftoverPlant.includes("text-[11px]")) {
+    console.error("verify-maint-master-data-read-recovery --selftest FAIL leftover plant escaped");
     process.exit(1);
   }
   console.log(`verify-maint-master-data-read-recovery --selftest PASS (${caught}/${mutations.length} planted defects red)`);
