@@ -117,6 +117,9 @@ contains("apps/frontend/src/components/maintenance/DvirSeverityBadge.tsx", badge
   { pattern: /export function DvirSeverityBadge/, label: "badge export" },
   { pattern: /observation/, label: "observation level" },
 ]);
+// BANK-F91360 leftover refuse — DvirSeverityBadge page-scoped text token ratchet
+if (badge.includes("text-[11px]")) failures.push("DvirSeverityBadge.tsx: leftover text-[11px]");
+if (badge.includes("#8A92AB")) failures.push("DvirSeverityBadge.tsx: leftover off-scale muted #8A92AB");
 
 const manifest = read("apps/frontend/src/routes/manifest.tsx");
 contains("apps/frontend/src/routes/manifest.tsx", manifest, [

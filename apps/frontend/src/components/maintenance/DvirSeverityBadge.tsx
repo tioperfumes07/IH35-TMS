@@ -27,7 +27,7 @@ export function DvirSeverityBadge({
     <span
       data-testid="dvir-severity-badge"
       data-severity={key || "unknown"}
-      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${style.className} ${className}`}
+      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${style.className} ${className}`}
     >
       {style.label}
     </span>
