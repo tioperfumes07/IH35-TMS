@@ -21,6 +21,15 @@ import fs from "node:fs";
 const LABEL = "verify-cash-flow-rolling-ledger-4-fixes";
 const SERVICE_FILE = "apps/backend/src/cash-flow/cash-flow.service.ts";
 const TAB_FILE = "apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx";
+const STATUS_PILL = "apps/frontend/src/components/shared/statusPill.ts";
+
+/** BANK-F91422 leftover refuse — statusPill page-scoped text token ratchet. */
+export function checkStatusPillLeftovers(src) {
+  const failures = [];
+  if (src.includes("text-[11px]")) failures.push("statusPill leftover text-[11px] — use text-xs");
+  if (src.includes("#8A92AB")) failures.push("statusPill leftover #8A92AB — use #4B5563");
+  return failures;
+}
 
 export function serviceResolvesRealCustomerName(src) {
   return (
@@ -110,12 +119,20 @@ function StatusPill({ row }) {
   if (tabHasInvoiceDateColumn(goodTab.replace('key: "invoice_date",\n      label: "Invoice date",', "")))
     failures.push("tabHasInvoiceDateColumn false-positive when the column is removed");
 
+  // BANK-F91422 leftover plant — statusPill page-scoped text token ratchet
+  const livePill = fs.readFileSync(STATUS_PILL, "utf8");
+  if (checkStatusPillLeftovers(livePill).length) failures.push("live statusPill already failing leftover refuse");
+  const leftoverPlant = livePill + '\nconst plant = "text-[11px] text-[#8A92AB]";\n';
+  if (!checkStatusPillLeftovers(leftoverPlant).some((f) => f.includes("leftover"))) {
+    failures.push("leftover text-[11px]/#8A92AB plant escaped");
+  }
+
   if (failures.length) {
     console.error(`${LABEL}: SELFTEST FAIL`);
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: SELFTEST PASS (10/10 cases)`);
+  console.log(`${LABEL}: SELFTEST PASS (10/10 cases + leftover plant)`);
   process.exit(0);
 }
 
@@ -136,6 +153,11 @@ if (!fs.existsSync(TAB_FILE)) {
   if (!tabDefaultsSelectedDateToToday(src)) failures.push(`${TAB_FILE}: tabDefaultsSelectedDateToToday contract not satisfied`);
   if (!statusPillCollapsesForFactoringRows(src)) failures.push(`${TAB_FILE}: statusPillCollapsesForFactoringRows contract not satisfied`);
   if (!tabHasInvoiceDateColumn(src)) failures.push(`${TAB_FILE}: tabHasInvoiceDateColumn contract not satisfied`);
+}
+if (!fs.existsSync(STATUS_PILL)) {
+  failures.push(`${STATUS_PILL}: FILE MISSING`);
+} else {
+  failures.push(...checkStatusPillLeftovers(fs.readFileSync(STATUS_PILL, "utf8")));
 }
 
 if (failures.length) {
