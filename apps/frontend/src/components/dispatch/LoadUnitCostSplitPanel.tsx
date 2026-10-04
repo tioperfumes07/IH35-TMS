@@ -55,10 +55,10 @@ export function LoadUnitCostSplitPanel({
       style={{ padding: 8 }}
     >
       <div className="ldt-rowbar" style={{ marginBottom: 6 }}>
-        <span className="ldt-muted" style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em", color: "#4B5563" }}>
+        <span className="ldt-muted text-section-header" style={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em", color: "#4B5563" }}>
           {multi ? "Vehicle swap — cost split by miles each truck ran" : "Cost by truck"}
         </span>
-        <span className="ldt-muted" style={{ fontSize: 11 }}>
+        <span className="ldt-muted text-section-header">
           {formatMoneyCents(data.pool_cents, currency)} · basis: {BASIS_LABEL[data.miles_basis] ?? data.miles_basis}
         </span>
       </div>
@@ -100,7 +100,7 @@ export function LoadUnitCostSplitPanel({
         )}
       </ResizableTable>
       {!data.reconciled ? (
-        <div style={{ fontSize: 11, color: "#B91C1C", marginTop: 4 }} data-testid="load-unit-cost-split-unreconciled">
+        <div className="text-section-header" style={{ color: "#B91C1C", marginTop: 4 }} data-testid="load-unit-cost-split-unreconciled">
           Split does not reconcile to the cost pool — do not trust these figures.
         </div>
       ) : null}
