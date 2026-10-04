@@ -34,6 +34,7 @@ import invoicesPlugin from "../../apps/backend/src/accounting/invoices.routes.js
 import { registerFuelTransactionsRoutes } from "../../apps/backend/src/fuel/fuel-transactions.routes.js";
 import { searchVendorsForAutocomplete } from "../../apps/backend/src/mdata/vendor-autocomplete.shared.js";
 import { postFuelExpenseFromEvent } from "../../apps/backend/src/accounting/fuel-posting/poster.service.js";
+import { createExpenseFromFuelTransaction } from "../../apps/backend/src/fuel/fuel-expense-document.service.js";
 import { postLoadRevenueLatch } from "../../apps/backend/src/accounting/revrec-delivery-posting/poster.service.js";
 import { ensureSettlementFromFedBills, closeFedSettlementIfRequested } from "../../apps/backend/src/feed/ensure-settlement-from-fed-bills.service.js";
 
@@ -620,6 +621,11 @@ async function feedOne(
     // It wins over anything read from the description; with neither, the reference stays NULL.
     const receipt = (typeof (f as { invoice?: unknown }).invoice === "string" && (f as { invoice: string }).invoice.trim()) || parsed.invoice;
     const fuelDate = documentLineDate(f, rec); // R-177: the document's purchase date, never delivery
+    // 2026-10-04: where the fill happened is the document's location column (carried by build_feed_input); a description
+    // is never a place ("Fuel-DEF-Diesel Exhaust Fluid" was written into location_city on every DEF row).
+    const location =
+      (typeof (f as { location?: unknown }).location === "string" && (f as { location: string }).location.trim()) ||
+      (parsed.invoice && /\binv\s/i.test(f.description || "") ? parsed.location : null);
     const fuelId = await withCurrentUser(OWNER, async (c) => {
       await setScopedCompanyContext(c, OWNER, USMCA);
       const vendorId = await resolveVendor(c as unknown as pg.PoolClient, parsed.vendor);
@@ -640,7 +646,7 @@ async function feedOne(
           f.fuel_type,
           Number(f.quantity || 0),
           Number(f.amount),
-          parsed.location,
+          location,
           receipt,
           rowHash,
           OWNER,
@@ -650,10 +656,12 @@ async function feedOne(
       );
       let id = ins.rows[0]?.id;
       if (!id) {
-        const ex = await c.query<{ id: string }>(
-          `SELECT id::text FROM fuel.fuel_transactions WHERE operating_company_id=$1::uuid AND source_row_hash=$2 LIMIT 1`,
+        const ex = await c.query<{ id: string; voided: boolean }>(
+          `SELECT id::text, (voided_at IS NOT NULL) AS voided FROM fuel.fuel_transactions WHERE operating_company_id=$1::uuid AND source_row_hash=$2 LIMIT 1`,
           [USMCA, rowHash]
         );
+        // A voided row keeps its hash; re-feeding must never post a voided fill back to life.
+        if (ex.rows[0]?.voided) throw new Error(`fuel row ${ex.rows[0].id} for ${receipt ?? parsed.hashKey} is VOIDED — re-create it through the engine, not the feed`);
         id = ex.rows[0]?.id;
       }
       if (!id) throw new Error(`fuel insert failed ${parsed.hashKey}`);
@@ -672,6 +680,13 @@ async function feedOne(
       // a re-run is safe — the insert is keyed on source_row_hash and the poster answers already_posted.
       throw new Error(`fuel GL refused for ${receipt ?? parsed.hashKey} ($${f.amount}, load ${loadId}): ${(e as Error).message}`);
     });
+    // ROUND 290.1 canonical rule (fuel-expense-document.service.ts): every path that creates a fuel row creates its expense
+    // document in the same operation. This feed posted the JE only; the documents were back-filled later (R-168).
+    const fuelDoc = await withCurrentUser(OWNER, async (c) => {
+      await setScopedCompanyContext(c, OWNER, USMCA);
+      return createExpenseFromFuelTransaction(c as never, { operating_company_id: USMCA, fuel_transaction_id: fuelId, requesting_user_uuid: OWNER });
+    });
+    if (fuelDoc.outcome === "refused") throw new Error(`fuel expense document refused for ${receipt ?? parsed.hashKey} (load ${loadId}): ${fuelDoc.reason}`);
     report.push(`FUEL ${f.fuel_type} ${receipt ?? "no receipt number"} $${f.amount}`);
   }
 

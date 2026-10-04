@@ -1,6 +1,6 @@
 {
-  "_comment": "ROUND-290.3, 2026-09-30. 16 pre-fix driver-holder escrow releases (all source_type='reconciliation') credited/debited 1090 Undeposited Funds via postEscrowTransactionOnClient()'s old unconditional cash_clearing counter-leg. The engine is fixed (routes driver holders to driver_payroll_clearing/2170); these 16 documents are the owner-ordered follow-up correction, BY DOCUMENT, never by a blanket JE. This ceiling only shrinks.",
+  "_comment": "ROUND-290.3, 2026-09-30. 16 pre-fix driver-holder escrow releases (all source_type='reconciliation') credited/debited 1090 Undeposited Funds via postEscrowTransactionOnClient()'s old unconditional cash_clearing counter-leg. The engine is fixed (routes driver holders to driver_payroll_clearing/2170); these 16 documents are the owner-ordered follow-up correction, BY DOCUMENT, never by a blanket JE. This ceiling only shrinks. 2026-10-04 (CC-3): 16 -> 6 \u2014 AUTH-213 reversed nine of these releases through the void engine; a reversed document and its reversal are excluded (they net to zero).",
   "established": "2026-09-30",
-  "bad_documents_ceiling": 16,
-  "measured_at": "2026-09-30T00:00:00Z"
+  "bad_documents_ceiling": 6,
+  "measured_at": "2026-10-04T21:00:00Z"
 }

@@ -431,6 +431,7 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
         operatingCompanyId: b.operating_company_id,
         vendorId: b.vendor_id ?? null,
         reference: b.transaction_reference,
+        fuelType: b.fuel_type,
       });
       if (sameProviderTxn) return { error: "fuel_provider_transaction_already_recorded" as const, existing: sameProviderTxn };
 

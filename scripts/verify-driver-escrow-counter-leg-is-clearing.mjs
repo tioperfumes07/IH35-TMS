@@ -107,6 +107,10 @@ try {
     JOIN catalogs.accounts ca ON ca.id = p.account_id
     JOIN accounting.escrow_accounts ea ON ea.id::text = p.source_transaction_id::text
     WHERE je.voided_at IS NULL
+      -- A reversed document and its reversal net to zero: that pair IS the by-document correction (reverse + repost)
+      -- this guard orders, not live debt (AUTH-213 reversed nine 09-24 releases, 2026-10-04).
+      AND je.reversed_by_je_id IS NULL
+      AND je.reverses_je_id IS NULL
       AND p.source_transaction_type = 'escrow_account'
       AND ea.holder_type = 'driver'
       AND ca.account_subtype = 'Undeposited Funds'

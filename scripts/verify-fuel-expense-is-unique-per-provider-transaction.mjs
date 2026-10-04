@@ -27,7 +27,7 @@ const out = await withUnscopedReadOnly(LABEL, async (c) => {
       WHERE f.voided_at IS NULL
         AND btrim(f.transaction_reference) ~ '^[0-9]+$'
         AND ${NOT_FROZEN_SQL("f.operating_company_id")}
-      GROUP BY co.code, f.operating_company_id, f.vendor_id, btrim(f.transaction_reference)
+      GROUP BY co.code, f.operating_company_id, f.vendor_id, btrim(f.transaction_reference), f.fuel_type -- one purchase per PRODUCT LINE (202615410930)
      HAVING count(*) > 1
       ORDER BY 1, 2`
   );
