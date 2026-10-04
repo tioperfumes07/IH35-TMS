@@ -1997,6 +1997,16 @@
       "claimed_at": "2026-10-03",
       "purpose": "ROUND 373.4: credit memos and vendor credits post — accounting.credit_memos.account_id / journal_entry_id (Dr the income it reduces / Cr A/R) and accounting.vendor_credits.account_id / journal_entry_id (Dr A/P / Cr the expense it reduces), posted at creation through the engine, reversed on void"
     },
+    "202615380400": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-04",
+      "purpose": "ROUND 394 ruling 1 step 2a (CC-1): driver_finance.v_driver_advance_balances -- each advance's disbursed / recovered / outstanding derived from the GL on the driver's own 1245 sub-account (oldest-first); recompute_driver_debt + views.banking_account_tiles read it instead of driver_advances.outstanding_balance."
+    },
+    "202615380500": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-04",
+      "purpose": "ROUND 394 ruling 1 step 2b (CC-1): DROP driver_finance.driver_advances.outstanding_balance after every reader is derived (2a) and deployed."
+    },
     "202615380300": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-04",
