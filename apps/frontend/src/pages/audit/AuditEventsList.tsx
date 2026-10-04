@@ -178,8 +178,8 @@ export function AuditEventsList() {
             tableTestId="audit-events-list-table"
             renderExpanded={(row) => (
               <div>
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Payload (JSON)</div>
-                <pre className="mt-2 max-h-[420px] overflow-auto whitespace-pre-wrap wrap-break-word rounded-sm border border-gray-200 bg-white p-3 text-[11px] text-gray-900">
+                <div className="text-xs font-semibold uppercase tracking-wide text-gray-600">Payload (JSON)</div>
+                <pre className="mt-2 max-h-[420px] overflow-auto whitespace-pre-wrap wrap-break-word rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-900">
                   {JSON.stringify(row.payload ?? {}, null, 2)}
                 </pre>
               </div>
