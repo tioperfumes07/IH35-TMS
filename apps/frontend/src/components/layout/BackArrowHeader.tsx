@@ -45,13 +45,13 @@ export function BackArrowHeader({ backTo, breadcrumb, title, countBadge, actions
             }
             navigate(backTo);
           }}
-          className="inline-flex items-center gap-1 rounded-xs border-0 bg-transparent px-1 py-0.5 text-[11px] font-semibold text-(--text-secondary) no-underline hover:bg-(--bg-surface-alt) hover:text-(--text-primary)"
+          className="inline-flex items-center gap-1 rounded-xs border-0 bg-transparent px-1 py-0.5 text-xs font-semibold text-(--text-secondary) no-underline hover:bg-(--bg-surface-alt) hover:text-(--text-primary)"
         >
           <span aria-hidden>←</span>
           <span>Back</span>
         </button>
         <h1 className="m-0 text-xs font-semibold">{title}</h1>
-        {countBadge !== undefined ? <span className="ml-1 text-[11px] text-(--text-secondary)">{countBadge}</span> : null}
+        {countBadge !== undefined ? <span className="ml-1 text-xs text-(--text-secondary)">{countBadge}</span> : null}
         <div className="ml-auto flex gap-2">{actions}</div>
       </div>
     </div>
