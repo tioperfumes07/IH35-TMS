@@ -79,7 +79,16 @@ function selftest() {
     for (const f of goodFindings) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log("verify-fuel-gl-map-codes-no-silent-alias --selftest OK (ACCT-F5024 class scope)");
+  // BANK-F91292 leftover plant — FuelGlMappingCoverage page-scoped text token ratchet
+  const leftoverPlant = '<div className="text-[11px] text-[#8A92AB]">plant</div>';
+  const leftoverHits = [];
+  if (leftoverPlant.includes("text-[11px]")) leftoverHits.push(`${coverageRel}: leftover text-[11px]`);
+  if (leftoverPlant.includes("#8A92AB") || leftoverPlant.includes("#334155")) leftoverHits.push(`${coverageRel}: leftover off-scale muted`);
+  if (!leftoverHits.some((e) => e.includes("leftover text-[11px]")) || !leftoverHits.some((e) => e.includes("leftover off-scale muted"))) {
+    console.error("verify-fuel-gl-map-codes-no-silent-alias --selftest FAIL leftover plant escaped", leftoverHits);
+    process.exit(1);
+  }
+  console.log("verify-fuel-gl-map-codes-no-silent-alias --selftest OK (ACCT-F5024 class scope + leftover plant)");
   process.exit(0);
 }
 
@@ -148,6 +157,9 @@ if (coverage) {
   if (/FUEL_GL_CATEGORY_CODES[\s\S]{0,200}"fuel"/.test(coverage)) {
     errors.push(`${coverageRel} must not treat free-text "fuel" as a canonical fuelKind code`);
   }
+  // BANK-F91292 leftover refuse — FuelGlMappingCoverage.tsx page-scoped text token ratchet
+  if (coverage.includes("text-[11px]")) errors.push(`${coverageRel}: leftover text-[11px]`);
+  if (coverage.includes("#8A92AB") || coverage.includes("#334155")) errors.push(`${coverageRel}: leftover off-scale muted`);
 }
 
 if (hold) {
