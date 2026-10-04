@@ -1,3 +1,13 @@
+## 2026-10-04T05:25Z · BANK-F91425..F91426 leftover drain CLOSED · page-scoped text-[11px] drained
+
+DONE:
+- #25159 BANK-F91425 PredictiveAlertsPage text-[11px]→text-xs (hang: verify-maintenance-home-read-recovery)
+- #25160 BANK-F91426 LoadQualityEventsReverseSection text-[11px]→text-xs + ambient-red CHECK text-sm→text-xs (hang: verify-load-quality-events-reverse-link)
+
+MEASURED: after F91426 tip `143391e351`, `rg text-[11px]` in apps/frontend/src/*.tsx outside skip pile = **0** page-scoped leftovers. Remaining hits are skip pile only (BookLoad*/Combobox/EntityPicker/ParityTable/DrillKpiCard/ListView/NavyPageSubNav/UniversalListToolbar/DateTimePicker/DataTable/ProgramTracker/FinalAdditions/InstallPWA/FormField) + BankingControlBox comment.
+
+NEXT: BANK-F91427 FactoringCashFlowPanel C8 dead-KPI drills · park Round 348 / 363-CUR-A · skip-pile / ambient Fleet Avg Age stay overflow. HH00 no migrations.
+
 ## 2026-10-04T05:00Z · ROUND 389.2 CURSOR DONE · 39 PASS + 3 triage WIRED
 
 DONE:
