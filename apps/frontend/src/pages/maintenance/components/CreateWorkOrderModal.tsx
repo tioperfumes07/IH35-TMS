@@ -111,7 +111,7 @@ function AssetLocationMap({ parts, onAdd, onChange, onRemove }: { parts: Seriali
         <button type="button" data-testid="wo-add-serialized-part" onClick={onAdd} className="rounded-sm bg-[#1f2a44] px-2 py-0.5 text-xs font-semibold text-white">+ Create part</button>
       </div>
       {parts.length === 0 ? (
-        <div className="px-3 py-3 text-xs text-[#94a3b8]">No serialized items placed. Add a tire/battery/lamp/mirror to capture its position + serial (chain-of-custody).</div>
+        <div className="px-3 py-3 text-xs text-[#4B5563]">No serialized items placed. Add a tire/battery/lamp/mirror to capture its position + serial (chain-of-custody).</div>
       ) : (
         <div className="space-y-2 p-2.5">
           {parts.map((sp, i) => {
@@ -121,7 +121,7 @@ function AssetLocationMap({ parts, onAdd, onChange, onRemove }: { parts: Seriali
                 <div className="mb-1.5 flex flex-wrap gap-1">
                   {LOC_CATS.map((c) => (
                     <button type="button" key={c.key} onClick={() => onChange(i, { part_type: c.key, position_code: "" })}
-                      className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${c.key === sp.part_type ? "bg-[#1d2b45] text-white" : "bg-[#f8fafc] text-[#475569]"}`}>{c.label}</button>
+                      className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${c.key === sp.part_type ? "bg-[#1d2b45] text-white" : "bg-[#f8fafc] text-[#4B5563]"}`}>{c.label}</button>
                   ))}
                   <button type="button" onClick={() => onRemove(i)} className="ml-auto rounded-sm border border-[#d6dae1] px-2 text-xs text-[#b91c1c]">Remove</button>
                 </div>
@@ -130,13 +130,13 @@ function AssetLocationMap({ parts, onAdd, onChange, onRemove }: { parts: Seriali
                   <svg viewBox="0 0 430 110" className="mb-1 h-16 w-full">
                     <rect x="60" y="30" width="120" height="50" rx="8" fill="#eef2f7" stroke="#cbd5e1" />
                     <rect x="185" y="42" width="210" height="34" rx="6" fill="#f1f5f9" stroke="#cbd5e1" />
-                    <text x="120" y="60" fontSize="9" fill="#94a3b8" textAnchor="middle">TRACTOR</text>
-                    <text x="290" y="63" fontSize="9" fill="#94a3b8" textAnchor="middle">TRAILER</text>
+                    <text x="120" y="60" fontSize="9" fill="#4B5563" textAnchor="middle">TRACTOR</text>
+                    <text x="290" y="63" fontSize="9" fill="#4B5563" textAnchor="middle">TRAILER</text>
                   </svg>
                   <div className="flex flex-wrap gap-1">
                     {cat.positions.map((pos) => (
                       <button type="button" key={pos} onClick={() => onChange(i, { position_code: pos })}
-                        className={`rounded-sm border px-2 py-0.5 text-xs font-bold ${sp.position_code === pos ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-[#94a3b8] bg-white text-[#475569]"}`}>{pos}</button>
+                        className={`rounded-sm border px-2 py-0.5 text-xs font-bold ${sp.position_code === pos ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-[#4B5563] bg-white text-[#4B5563]"}`}>{pos}</button>
                     ))}
                   </div>
                 </div>
@@ -1352,7 +1352,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                 </>
               ) : null}
               {paymentTiming === "in_house" ? (
-                <div className="rounded-md border border-[#d6dae1] bg-[#f1f5f9] px-2 py-1.5 text-xs text-[#475569]">In-house — no vendor invoice. Parts drawn from inventory; labor costed internally.</div>
+                <div className="rounded-md border border-[#d6dae1] bg-[#f1f5f9] px-2 py-1.5 text-xs text-[#4B5563]">In-house — no vendor invoice. Parts drawn from inventory; labor costed internally.</div>
               ) : null}
             </div>
           </div>
@@ -1372,7 +1372,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
 
         {/* Footer — Cancel / Save draft / Create work order (green) */}
         <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 border-t border-[#d6dae1] pt-2.5" data-testid="wo-responsive-footer">
-          <div className="mr-auto min-w-0 text-xs text-[#475569]">Completing a PM recalculates next-due → PM Countdown</div>
+          <div className="mr-auto min-w-0 text-xs text-[#4B5563]">Completing a PM recalculates next-due → PM Countdown</div>
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
           <Button type="button" variant="secondary" disabled={paymentTiming !== "in_house" || !preSaveChecksOk} onClick={() => void submit("wo_only")}>Save draft</Button>
           <Button
