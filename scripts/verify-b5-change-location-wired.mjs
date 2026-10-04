@@ -53,6 +53,10 @@ function main() {
   assertIncludes(page, "FuelStopLocationPicker", "ReclassifyTransactionsPage");
   assertIncludes(page, "to_location_id: toLocation", "ReclassifyTransactionsPage");
   assertIncludes(page, 'data-testid="reclassify-to-location"', "ReclassifyTransactionsPage");
+  // BANK-F91430 — ORDERS §B-5 left pane PERIOD BALANCES chrome (From/To + label).
+  assertIncludes(page, 'data-b5-period-balances="1"', "ReclassifyTransactionsPage");
+  assertIncludes(page, 'data-b5-period-from-to="1"', "ReclassifyTransactionsPage");
+  assertIncludes(page, "Accounts · period balances", "ReclassifyTransactionsPage");
   assertNotIncludes(page, "not available yet", "ReclassifyTransactionsPage");
   assertNotIncludes(page, "Location is not a posting column", "ReclassifyTransactionsPage");
 
@@ -76,6 +80,17 @@ function selftest() {
     main();
   } catch (err) {
     console.error(`${LABEL}: SELFTEST FAIL — ${err instanceof Error ? err.message : err}`);
+    process.exit(1);
+  }
+  // BANK-F91430 plant — ORDERS §B-5 period-balances label must be catchable if drifted.
+  const page = read("apps/frontend/src/pages/accounting/ReclassifyTransactionsPage.tsx");
+  const planted = page.replace("Accounts · period balances", "Accounts · balances from the ledger");
+  if (planted === page || planted.includes("Accounts · period balances")) {
+    console.error(`${LABEL}: SELFTEST FAIL — period-balances plant inert`);
+    process.exit(1);
+  }
+  if (!planted.includes("Accounts · balances from the ledger")) {
+    console.error(`${LABEL}: SELFTEST FAIL — period-balances plant did not land`);
     process.exit(1);
   }
   console.log(`${LABEL}: SELFTEST PASS`);

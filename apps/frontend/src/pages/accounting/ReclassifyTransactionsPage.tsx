@@ -277,7 +277,8 @@ export function ReclassifyTransactionsPage() {
         {/* LEFT PANE — THE WHOLE CHART OF ACCOUNTS (LAW 363.8): every account, 0.00 included, balances derived from the GL. */}
         <aside className="shrink-0 overflow-y-auto rounded border border-gray-200 bg-white" style={{ width: `${paneWidthCh}ch` }} data-testid="reclassify-account-tree" data-b5-period-balances="1" data-r368-whole-chart="1">
           <div className="border-b border-gray-200 p-2">
-            <div className="text-xs font-bold uppercase tracking-wide text-gray-600">Accounts · balances from the ledger</div>
+            {/* BANK-F91430 — ORDERS §B-5 left pane PERIOD BALANCES label (ops verify-b5-reclassify-batch). */}
+            <div className="text-xs font-bold uppercase tracking-wide text-gray-600">Accounts · period balances</div>
             <div className="mt-2 inline-flex rounded border border-gray-300 text-xs" role="tablist" aria-label="Statement" data-testid="reclassify-side">
               {([["profit_and_loss", "Profit & Loss"], ["balance_sheet", "Balance Sheet"], ["statistical", "Statistical"]] as const).map(([k, label]) => (
                 <button key={k} type="button" role="tab" aria-selected={side === k} onClick={() => setSide(k)} className={`px-2 py-1 ${side === k ? "bg-slate-100 font-semibold" : ""}`} data-testid={`reclassify-side-${k}`}>
@@ -395,7 +396,9 @@ export function ReclassifyTransactionsPage() {
                     <tr>
                       <th className="p-2 w-6"></th>
                       {shownCols.map((c) =>
-                        c.sort ? (
+                        c.key === "account_no" ? (
+                          <th key={c.key} className="p-2 text-center" data-testid="reclassify-col-account-no">{c.label}</th>
+                        ) : c.sort ? (
                           <th key={c.key} className="p-2 text-center" aria-sort={sort.key === c.sort ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}>
                             <button type="button" className="font-bold uppercase" onClick={() => toggleSort(c.sort!)} data-testid={`reclassify-sort-${c.sort}`}>{c.label}{sortMark(c.sort)}</button>
                           </th>
@@ -416,7 +419,13 @@ export function ReclassifyTransactionsPage() {
                       return (
                       <tr key={l.posting_id} className={`border-t border-gray-100 ${selected.has(l.posting_id) ? "bg-slate-100" : ""} ${why ? "text-slate-600" : ""}`} data-testid={`reclassify-line-${l.posting_id}`} title={why ?? undefined}>
                         <td className="p-2"><input type="checkbox" checked={selected.has(l.posting_id)} onChange={() => toggle(l)} disabled={!!why} aria-label={why ? `Not reclassifiable: ${why}` : "Select line"} /></td>
-                        {shownCols.map((c) => <td key={c.key} className={`p-2${c.right ? " text-right tabular-nums" : ""}${c.key === "date" || c.key === "account_no" ? " whitespace-nowrap" : ""}${c.key === "memo" ? " max-w-[22rem] truncate" : ""}`} title={c.key === "memo" ? l.description ?? "" : undefined} data-b5-account-no={c.key === "account_no" ? "1" : undefined}>{cell(c.key, l, doc)}</td>)}
+                        {shownCols.map((c) =>
+                          c.key === "account_no" ? (
+                            <td key={c.key} className="p-2 whitespace-nowrap" data-b5-account-no="1">{cell(c.key, l, doc)}</td>
+                          ) : (
+                            <td key={c.key} className={`p-2${c.right ? " text-right tabular-nums" : ""}${c.key === "date" ? " whitespace-nowrap" : ""}${c.key === "memo" ? " max-w-[22rem] truncate" : ""}`} title={c.key === "memo" ? l.description ?? "" : undefined}>{cell(c.key, l, doc)}</td>
+                          ),
+                        )}
                       </tr>
                       );
                     })}
