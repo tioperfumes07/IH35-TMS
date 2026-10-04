@@ -126,7 +126,7 @@ export type ReclassifyBatch = {
   id: string; created_at: string; reason: string; status: "applied" | "undone"; lines_requested: number; lines_applied: number; lines_refused: number; amount_cents_moved: number;
   to_account_id: string | null; to_account_number: string | null; to_account_name: string | null; to_class_id: string | null; to_class_name: string | null;
   to_location_id: string | null; to_location_name: string | null;
-  to_entity_uuid: string | null; to_entity_type: string | null; undone_at: string | null; undo_reason: string | null; created_by_email: string | null;
+  to_entity_uuid: string | null; to_entity_type: string | null; to_entity_name?: string | null; undone_at: string | null; undo_reason: string | null; created_by_email: string | null;
   override_refusals?: boolean;
 };
 

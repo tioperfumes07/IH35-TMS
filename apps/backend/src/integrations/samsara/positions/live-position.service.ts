@@ -9,6 +9,10 @@ const positionCache = new Map<string, { data: unknown; expires: number }>();
 export interface LivePositionRow {
   load_uuid: string;
   unit_uuid: string;
+  /** Human load number — LST-F407-B: never label the map row with a truncated uuid. */
+  load_number: string | null;
+  /** Human unit number — LST-F407-B. */
+  unit_number: string | null;
   lat: number;
   lng: number;
   speed_mph: number | null;
@@ -43,12 +47,15 @@ export async function getLivePositionsForActiveLoads(
   const res = await client.query<{
     load_uuid: string;
     unit_uuid: string;
+    load_number: string | null;
+    unit_number: string | null;
     lat: string;
     lng: string;
     speed_mph: string | null;
     recorded_at: string;
   }>(
     `SELECT l.id::text AS load_uuid, u.id::text AS unit_uuid,
+            l.load_number::text AS load_number, u.unit_number::text AS unit_number,
             p.lat::text, p.lng::text, p.speed_mph::text, p.recorded_at::text
      FROM mdata.loads l
      JOIN mdata.units u ON u.id = l.assigned_unit_id
@@ -69,6 +76,8 @@ export async function getLivePositionsForActiveLoads(
   const rows: LivePositionRow[] = res.rows.map((r) => ({
     load_uuid: r.load_uuid,
     unit_uuid: r.unit_uuid,
+    load_number: r.load_number,
+    unit_number: r.unit_number,
     lat: Number(r.lat),
     lng: Number(r.lng),
     speed_mph: r.speed_mph != null ? Number(r.speed_mph) : null,
@@ -107,6 +116,8 @@ export async function getPositionForUnit(
   const row: LivePositionRow = {
     load_uuid: "",
     unit_uuid: r.unit_uuid,
+    load_number: null,
+    unit_number: null,
     lat: Number(r.lat),
     lng: Number(r.lng),
     speed_mph: r.speed_mph != null ? Number(r.speed_mph) : null,

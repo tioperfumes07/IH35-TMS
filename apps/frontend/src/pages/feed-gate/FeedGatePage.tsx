@@ -127,7 +127,7 @@ export function FeedGatePage() {
           {rows.length === 0 && !list.isLoading && !list.isError ? <tr><td className="p-2 text-xs text-slate-500" colSpan={6}>No feed has been run yet. Approving a settlement runs its gate automatically.</td></tr> : null}
           {rows.map((i) => (
             <tr key={i.id} className="border-t border-slate-200" data-testid="feed-gate-row">
-              <td className="p-2 text-xs"><Link className="underline" to={`/feed-gate/${i.id}`}>{i.subject_label ?? `${i.feed_kind} ${i.subject_id.slice(0, 8)}`}</Link></td>
+              <td className="p-2 text-xs"><Link className="underline" to={`/feed-gate/${i.id}`}>{i.subject_label ?? `${i.feed_kind} — name not available`}</Link></td>
               <td className="p-2 text-xs">{i.driver_name ?? "—"}</td>
               <td className="p-2"><Badge status={i.status} /></td>
               <td className="p-2 text-xs">{i.checks_failed} / {i.checks_total}</td>

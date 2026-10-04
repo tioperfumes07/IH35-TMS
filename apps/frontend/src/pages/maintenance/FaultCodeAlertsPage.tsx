@@ -248,8 +248,8 @@ export function FaultCodeAlertsPage() {
       {deepLinkFaultId ? (
         <p className="text-xs text-slate-600" data-testid="fault-code-alerts-deep-link-banner">
           {deepLinkRow
-            ? `Showing alert ${deepLinkFaultId.slice(0, 8)}… · unit `
-            : `Alert ${deepLinkFaultId.slice(0, 8)}… not in this result set · `}
+            ? `Showing alert ${deepLinkRow.fault_code?.trim() || "Fault"} · unit `
+            : `Alert not in this result set · `}
           {deepLinkRow ? (
             <EntityLinkOrTombstone kind="unit" id={deepLinkRow.unit_id} name={deepLinkRow.unit_number} noun="Unit" />
           ) : (

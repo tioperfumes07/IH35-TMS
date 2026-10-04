@@ -54,7 +54,7 @@ export function NeedsDeliveryAuthorizationPage() {
       });
     },
     onSuccess: (res) => {
-      pushToast(`Authorized ${active?.load_number ?? ""} · ${res.authorization_id.slice(0, 8)}…`, "success");
+      pushToast(`Authorized ${active?.load_number ?? "load"}`, "success");
       setActive(null);
       setReason("");
       setCustomerOk(false);

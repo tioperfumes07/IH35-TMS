@@ -1036,7 +1036,7 @@ export function UsersPage() {
               </p>
               {probeJobId && probeJobQuery.data ? (
                 <p className="mt-1 text-xs text-slate-500">
-                  Job {probeJobId.slice(0, 8)}…{" "}
+                  Probe job{" "}
                   <span
                     className={
                       probeJobQuery.data.status === "completed"
