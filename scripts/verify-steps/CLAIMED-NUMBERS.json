@@ -13097,5 +13097,20 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-all-posting-paths-gated"
+  },
+  "15641": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-coa-canonical"
+  },
+  "15645": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-migration-filenames"
+  },
+  "15649": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-expense-detail-human-labels"
   }
 }
