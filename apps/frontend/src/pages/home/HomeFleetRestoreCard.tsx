@@ -54,7 +54,7 @@ export function HomeFleetRestoreCard({ operatingCompanyId }: Props) {
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Fleet Restore Cost</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Fleet Restore Cost</div>
           <div className="mt-1 font-semibold">
             {money(data.total_remaining_cents)} remaining across {data.unit_count} unit{data.unit_count === 1 ? "" : "s"}
           </div>
