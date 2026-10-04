@@ -108,8 +108,8 @@ export function LocationMapModal({
     <Modal open={open} onClose={onClose} title="Location map">
       <div className="space-y-3 text-xs">
         <svg viewBox="0 0 380 140" className="h-[220px] w-full rounded-sm border border-gray-200 bg-white">
-          <rect x="12" y="50" width="150" height="56" rx="8" fill="#f8fafc" stroke="#94a3b8" />
-          <rect x="210" y="50" width="158" height="56" rx="8" fill="#f8fafc" stroke="#94a3b8" />
+          <rect x="12" y="50" width="150" height="56" rx="8" fill="#f8fafc" stroke="#4B5563" />
+          <rect x="210" y="50" width="158" height="56" rx="8" fill="#f8fafc" stroke="#4B5563" />
 
           <rect
             className="axle-group"
@@ -118,9 +118,9 @@ export function LocationMapModal({
             width="28"
             height="50"
             rx="4"
-            style={{ fill: "rgba(31,42,68,0.04)", stroke: "#94a3b8", strokeDasharray: "3 3" }}
+            style={{ fill: "rgba(31,42,68,0.04)", stroke: "#4B5563", strokeDasharray: "3 3" }}
           />
-          <text x="12" y="116" fontSize="8" fill="#64748b">
+          <text x="12" y="116" fontSize="8" fill="#4B5563">
             Steer Axle
           </text>
 
@@ -131,9 +131,9 @@ export function LocationMapModal({
             width="70"
             height="60"
             rx="4"
-            style={{ fill: "rgba(31,42,68,0.04)", stroke: "#94a3b8", strokeDasharray: "3 3" }}
+            style={{ fill: "rgba(31,42,68,0.04)", stroke: "#4B5563", strokeDasharray: "3 3" }}
           />
-          <text x="80" y="116" fontSize="8" fill="#64748b">
+          <text x="80" y="116" fontSize="8" fill="#4B5563">
             Drive Tandem
           </text>
 
@@ -144,9 +144,9 @@ export function LocationMapModal({
             width="78"
             height="60"
             rx="4"
-            style={{ fill: "rgba(31,42,68,0.04)", stroke: "#94a3b8", strokeDasharray: "3 3" }}
+            style={{ fill: "rgba(31,42,68,0.04)", stroke: "#4B5563", strokeDasharray: "3 3" }}
           />
-          <text x="260" y="116" fontSize="8" fill="#64748b">
+          <text x="260" y="116" fontSize="8" fill="#4B5563">
             Trailer Tandem
           </text>
 
@@ -160,7 +160,7 @@ export function LocationMapModal({
                 onMouseEnter={() => setInfoCode(point.code)}
                 onClick={() => toggleCode(point.code)}
               >
-                <circle cx={point.x} cy={point.y} r={6} fill={active ? "#1f2a44" : "#e5e7eb"} stroke={active ? "#1f2a44" : "#94a3b8"} />
+                <circle cx={point.x} cy={point.y} r={6} fill={active ? "#1f2a44" : "#e5e7eb"} stroke={active ? "#1f2a44" : "#4B5563"} />
                 <text x={point.x + 8} y={point.y + 3} fontSize="7" fill="#0f172a">
                   {point.code}
                 </text>
