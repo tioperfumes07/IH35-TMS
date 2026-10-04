@@ -907,7 +907,7 @@ const LIVE_DOMAIN_GUARDS = [
   // U25 (owner) — reefer diesel: category, gallons and IFTA follow the item; the Form 4136 credit report counts gallons.
   [
     "verify-reefer-fuel-credit",
-    ["apps/backend/src/fuel/", "apps/backend/src/accounting/reclassify/", "apps/backend/src/accounting/reefer-fuel-credit.routes.ts", "apps/backend/src/driver-finance/settlement-creator.service.ts", "apps/backend/src/ifta/", "apps/frontend/src/pages/reports/ReeferFuelCreditReportPage.tsx", "apps/frontend/src/pages/settlements/SettlementCreatorDrawer.tsx", "scripts/verify-reefer-fuel-credit.mjs"],
+    ["apps/backend/src/fuel/", "apps/backend/src/feed/seed-settlement-document.service.ts", "scripts/alwaystrack/parse_settlements.py", "db/migrations/202615400700_reefer_fuel_type_from_relay_product.sql", "apps/backend/src/accounting/reclassify/", "apps/backend/src/accounting/reefer-fuel-credit.routes.ts", "apps/backend/src/driver-finance/settlement-creator.service.ts", "apps/backend/src/ifta/", "apps/frontend/src/pages/reports/ReeferFuelCreditReportPage.tsx", "apps/frontend/src/pages/settlements/SettlementCreatorDrawer.tsx", "scripts/verify-reefer-fuel-credit.mjs"],
   ],
   // ROUND 368.2(b) — a bank line may not sit matched to nothing (deferred constraint triggers, both sides).
   [

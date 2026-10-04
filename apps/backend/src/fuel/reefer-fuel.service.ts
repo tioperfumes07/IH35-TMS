@@ -61,7 +61,7 @@ export async function syncReeferFuelForExpenseLine(client: Db, companyId: string
         `UPDATE accounting.expense_lines
             SET quantity = $3::numeric, unit_of_measure = 'gal', rate_cents = round(amount_cents::numeric / $3::numeric, 4),
                 -- the fill's trailer only when this company owns or leases it (ROUND 373.5 cross-company refusal)
-                trailer_id = COALESCE(trailer_id, (SELECT eq.id FROM mdata.equipment eq WHERE eq.id = $4::uuid
+                trailer_id = COALESCE(trailer_id, (SELECT eq.id FROM mdata.equipment eq WHERE eq.id = $4::uuid AND eq.equipment_type ~* 'reefer'
                                                      AND (eq.owner_company_id = $2::uuid OR eq.currently_leased_to_company_id = $2::uuid)))
           WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
         [expenseLineId, companyId, gallons, row.ft_trailer],
@@ -80,7 +80,7 @@ export async function syncReeferFuelForExpenseLine(client: Db, companyId: string
 }
 
 export type ReeferCreditRow = {
-  source: "fuel_card" | "expense";
+  source: "fuel_card" | "expense" | "relay_feed";
   source_id: string;
   expense_id: string | null;
   expense_line_id: string | null;
@@ -92,6 +92,8 @@ export type ReeferCreditRow = {
   unit_number: string | null;
   trailer_id: string | null;
   trailer_number: string | null;
+  /** mdata.equipment.equipment_type of the trailer — a reefer fill on a non-Reefer trailer is flagged. */
+  trailer_type: string | null;
   load_id: string | null;
   load_number: string | null;
   gallons: number | null;
@@ -137,10 +139,31 @@ export async function listReeferFuelForCredit(client: Db, companyId: string, fro
           AND ft.id IS NULL
           AND e.transaction_date::date BETWEEN $2::date AND $3::date
      )
+     ,
+     -- ROUND 391.2 — the Relay feed's own Reefer product lines (product code 033) that no reefer fuel row carries yet:
+     -- real reefer purchases the fuel table never received. Counted from the feed so the quarter's gallons are whole;
+     -- a feed line that matches a reefer_diesel fuel row (same unit, +/-1 day, same gallons) is counted once, from the row.
+     feed AS (
+       SELECT 'relay_feed'::text AS source, l.id::text AS source_id, NULL::text AS expense_id, NULL::text AS expense_line_id,
+              t.relay_fuel_code AS document_number, (t.relay_created_at)::date AS d, t.merchant_name AS vendor_name,
+              NULLIF(concat_ws(', ', t.location_city, t.location_state), '') AS location,
+              t.matched_unit_id AS unit_id, NULL::uuid AS trailer_id, NULL::uuid AS load_id,
+              l.volume::numeric AS gallons, COALESCE(l.total_discounted_price_cents, l.total_retail_price_cents, 0)::bigint AS cost_cents
+         FROM integrations.relay_fuel_transaction_lines l
+         JOIN integrations.relay_fuel_transactions t ON t.id = l.relay_fuel_transaction_id
+        WHERE l.operating_company_id = $1::uuid AND l.fuel_type = 'reefer' AND l.voided_at IS NULL AND t.voided_at IS NULL
+          AND l.volume > 0
+          AND (t.relay_created_at)::date BETWEEN $2::date AND $3::date
+          AND NOT EXISTS (
+            SELECT 1 FROM fuel.fuel_transactions ft
+             WHERE ft.operating_company_id = t.operating_company_id AND ft.fuel_type = 'reefer_diesel' AND ft.voided_at IS NULL
+               AND ft.unit_id = t.matched_unit_id AND round(ft.gallons::numeric, 3) = round(l.volume::numeric, 3)
+               AND abs(COALESCE(ft.purchased_at, ft.transaction_at)::date - (t.relay_created_at)::date) <= 1)
+     )
      SELECT x.source, x.source_id, x.expense_id, x.expense_line_id, x.document_number, x.d::text AS date, x.vendor_name, x.location,
-            x.unit_id::text, u.unit_number, x.trailer_id::text, tr.equipment_number AS trailer_number,
+            x.unit_id::text, u.unit_number, x.trailer_id::text, tr.equipment_number AS trailer_number, tr.equipment_type AS trailer_type,
             x.load_id::text, l.load_number, x.gallons::float AS gallons, x.cost_cents::bigint AS cost_cents
-       FROM (SELECT * FROM card UNION ALL SELECT * FROM manual) x
+       FROM (SELECT * FROM card UNION ALL SELECT * FROM manual UNION ALL SELECT * FROM feed) x
        LEFT JOIN mdata.units u ON u.id = x.unit_id
        LEFT JOIN mdata.equipment tr ON tr.id = x.trailer_id
        LEFT JOIN mdata.loads l ON l.id = x.load_id
@@ -167,6 +190,53 @@ export class ReeferGallonsError extends Error {
   }
 }
 
+/** The trailer must be this company's (owned or leased) and a Reefer — reefer fuel on a dry van is refused. */
+async function assertReeferTrailer(client: Db, companyId: string, trailerId: string): Promise<void> {
+  const t = await client.query<{ equipment_type: string | null }>(
+    `SELECT equipment_type FROM mdata.equipment WHERE id = $1::uuid AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)`,
+    [trailerId, companyId],
+  );
+  if (!t.rows[0]) throw new ReeferGallonsError("TRAILER_NOT_FOUND", "Trailer not found among this company's owned or leased trailers.");
+  if (!/reefer/i.test(t.rows[0].equipment_type ?? "")) {
+    throw new ReeferGallonsError("TRAILER_NOT_REEFER", `That trailer is a ${t.rows[0].equipment_type ?? "non-reefer"} trailer — reefer fuel goes to a Reefer trailer.`);
+  }
+}
+
+/**
+ * ROUND 391.2 — "trailer_id on every reefer row": set the Reefer trailer a reefer fill went into, on the fuel transaction
+ * (and its expense line) or on a reefer fuel expense line. No money moves.
+ */
+export async function setReeferTrailer(
+  client: Db,
+  companyId: string,
+  input: { source: "fuel_card" | "expense"; source_id: string; trailer_id: string },
+): Promise<{ updated: number }> {
+  await assertReeferTrailer(client, companyId, input.trailer_id);
+  if (input.source === "fuel_card") {
+    const r = await client.query(
+      `UPDATE fuel.fuel_transactions SET trailer_id = $3::uuid
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND fuel_type = 'reefer_diesel' AND voided_at IS NULL`,
+      [input.source_id, companyId, input.trailer_id],
+    );
+    if ((r.rowCount ?? 0) === 0) throw new ReeferGallonsError("LINE_NOT_FOUND", "Reefer fuel transaction not found in this company.");
+    await client.query(
+      `UPDATE accounting.expense_lines el SET trailer_id = $3::uuid
+         FROM accounting.expenses e
+        WHERE e.id = el.expense_id AND e.source_fuel_transaction_id = $1::uuid AND e.operating_company_id = $2::uuid AND e.voided_at IS NULL`,
+      [input.source_id, companyId, input.trailer_id],
+    );
+    return { updated: r.rowCount ?? 0 };
+  }
+  const r = await client.query(
+    `UPDATE accounting.expense_lines el SET trailer_id = $3::uuid
+       FROM catalogs.items i
+      WHERE el.id = $1::uuid AND el.operating_company_id = $2::uuid AND i.id = el.item_id AND ${REEFER_FUEL_ITEM_SQL("i")}`,
+    [input.source_id, companyId, input.trailer_id],
+  );
+  if ((r.rowCount ?? 0) === 0) throw new ReeferGallonsError("LINE_NOT_FOUND", "Reefer fuel expense line not found in this company.");
+  return { updated: r.rowCount ?? 0 };
+}
+
 /**
  * Record the gallons (and the trailer) of a reefer fuel expense line from its receipt. The amount never changes; the
  * line becomes quantity = gallons, unit "gal", rate = amount / gallons. The audit trigger records the change.
@@ -190,13 +260,7 @@ export async function recordReeferGallons(
   if (!row) throw new ReeferGallonsError("LINE_NOT_FOUND", "Expense line not found in this company.");
   if (row.voided) throw new ReeferGallonsError("EXPENSE_VOIDED", "The expense is voided.");
   if (!row.is_reefer) throw new ReeferGallonsError("NOT_REEFER_FUEL", "Gallons are recorded here only for a reefer fuel line.");
-  if (input.trailer_id) {
-    const t = await client.query(
-      `SELECT 1 FROM mdata.equipment WHERE id = $1::uuid AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)`,
-      [input.trailer_id, companyId],
-    );
-    if (!t.rows[0]) throw new ReeferGallonsError("TRAILER_NOT_FOUND", "Trailer not found in this company.");
-  }
+  if (input.trailer_id) await assertReeferTrailer(client, companyId, input.trailer_id);
   const upd = await client.query<{ rate_cents: string }>(
     `UPDATE accounting.expense_lines
         SET quantity = $3::numeric, unit_of_measure = 'gal', rate_cents = round(amount_cents::numeric / $3::numeric, 4),

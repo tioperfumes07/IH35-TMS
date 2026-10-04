@@ -69,6 +69,11 @@ def sections(lines):
 
 # A trailing numeric token: an optionally-negative, optionally-comma-grouped decimal.
 NUMTOK = re.compile(r"^-?[\d,]+\.\d+$")
+# ROUND 393.2 (CC-2): a fuel row's product code (Item column) and a real invoice / reference number.
+PRODUCT_RE = re.compile(r"^(fuel[-\s]|def\b|reefer\b|diesel\b)", re.I)
+INVOICE_RE = re.compile(r"(?=[A-Za-z0-9-]*\d)[A-Za-z0-9-]{3,}")
+# Overflow tail of a wrapped product name (e.g. "ustFluid") -- starts mid-word in lowercase, letters only: never a location or invoice.
+OVERFLOW_RE = re.compile(r"[a-z][A-Za-z]{2,11}")
 
 
 def trailing_numbers(s, n):
@@ -211,10 +216,19 @@ def parse_company(path):
         # free text remains, split on 2+ spaces (best-effort, not money-bearing).
         rp = re.split(r"\s{2,}", rest.strip())
         vendor = rp[0] if rp else ""
-        location = rp[1] if len(rp) > 1 else ""
-        invoice = rp[2] if len(rp) > 2 else None
+        others = rp[1:]
+        # ROUND 393.2 / 391.2 (CC-2) -- read by MEANING, not by slot. When the source row's Location cell is empty
+        # the Item / product name ("Fuel-DEF-Diesel Exhaust Fluid", "Fuel-Reefer-Diesel") sits where the location
+        # was and its overflow lands in the invoice slot -- that is how 4 USMCA fuel rows were stored with the
+        # reference "ustFluid". The product code is kept as `product` (fuel_type is set FROM it downstream, never
+        # inferred); an invoice is accepted only if it looks like one (no spaces, has a digit).
+        product = next((x for x in others if PRODUCT_RE.match(x)), None)
+        rest_fields = [x for x in others if x != product]
+        invoice = next((x for x in reversed(rest_fields) if INVOICE_RE.fullmatch(x)), None)
+        location_fields = [x for x in rest_fields if x != invoice and not OVERFLOW_RE.fullmatch(x)]
+        location = location_fields[0] if location_fields else ""
         fu.append({"load": cl, "date": date_, "vendor": vendor, "location": location,
-                    "invoice": invoice, "gallons": g, "cpg": c, "receipt": r, "fees": f,
+                    "invoice": invoice, "product": product, "gallons": g, "cpg": c, "receipt": r, "fees": f,
                     "disc": dc, "discpg": dpg, "actual": a})
     d["fuel_purchases"] = fu
     d["fuel_totals"] = ft

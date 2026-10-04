@@ -18,7 +18,7 @@ import { Button } from "../../components/Button";
 import { SelectCombobox } from "../../components/Combobox";
 import { formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
-import { getReeferFuelCreditReport, recordReeferFuelGallons, type ReeferCreditRow } from "../../api/reports";
+import { getReeferFuelCreditReport, recordReeferFuelGallons, setReeferFuelTrailer, type ReeferCreditRow } from "../../api/reports";
 
 function quarterRange(year: number, quarter: number): { from: string; to: string } {
   const startMonth = (quarter - 1) * 3 + 1;
@@ -72,6 +72,30 @@ function RecordGallons({ row, companyId }: { row: ReeferCreditRow; companyId: st
   );
 }
 
+// ROUND 391.2 — "trailer_id on every reefer row": pick the Reefer trailer a fill went into (only a Reefer is accepted).
+function SetTrailer({ row, companyId }: { row: ReeferCreditRow; companyId: string }) {
+  const queryClient = useQueryClient();
+  const [trailerId, setTrailerId] = useState<string | null>(null);
+  const save = useMutation({
+    mutationFn: () =>
+      setReeferFuelTrailer(companyId, {
+        source: row.source === "fuel_card" ? "fuel_card" : "expense",
+        source_id: row.source === "fuel_card" ? row.source_id : (row.expense_line_id as string),
+        trailer_id: trailerId as string,
+      }),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["reports", "reefer-fuel-credit"] }),
+  });
+  return (
+    <div className="flex flex-wrap items-center gap-1" data-testid="reefer-set-trailer">
+      <EntityPicker kind="trailer" operatingCompanyId={companyId} value={trailerId} onChange={(next) => setTrailerId(next ?? null)} allowCreate={false} placeholder="Reefer trailer" dataTestId="reefer-set-trailer-picker" />
+      <Button size="sm" variant="secondary" disabled={!trailerId || save.isPending} onClick={() => save.mutate()}>
+        {save.isPending ? "Saving…" : "Set"}
+      </Button>
+      {save.isError ? <span className="text-xs text-red-600">{save.error instanceof Error ? save.error.message : "Not saved."}</span> : null}
+    </div>
+  );
+}
+
 export function ReeferFuelCreditReportPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -94,7 +118,14 @@ export function ReeferFuelCreditReportPage() {
         key: "document_number",
         label: "Document",
         sortable: true,
-        render: (r) => (r.expense_id ? <EntityLink kind="expense" id={r.expense_id} label={r.document_number ?? "Expense"} /> : "Fuel card"),
+        render: (r) =>
+          r.expense_id ? (
+            <EntityLink kind="expense" id={r.expense_id} label={r.document_number ?? "Expense"} />
+          ) : r.source === "relay_feed" ? (
+            `Relay ${r.document_number ?? ""}`.trim()
+          ) : (
+            "Fuel card"
+          ),
       },
       { key: "vendor_name", label: "Vendor", sortable: true, render: (r) => r.vendor_name ?? "—" },
       { key: "location", label: "Location", sortable: true, render: (r) => r.location ?? "—" },
@@ -104,7 +135,20 @@ export function ReeferFuelCreditReportPage() {
         label: "Trailer",
         sortable: true,
         render: (r) =>
-          r.trailer_id ? <EntityLink kind="trailer" id={r.trailer_id} label={r.trailer_number ?? "Trailer"} /> : "—",
+          r.trailer_id ? (
+            <span>
+              <EntityLink kind="trailer" id={r.trailer_id} label={r.trailer_number ?? "Trailer"} />
+              {r.trailer_type && !/reefer/i.test(r.trailer_type) ? (
+                <span className="ml-1 text-xs text-red-600" data-testid="reefer-trailer-not-reefer">
+                  ({r.trailer_type} — not a reefer trailer)
+                </span>
+              ) : null}
+            </span>
+          ) : r.source !== "relay_feed" ? (
+            <SetTrailer row={r} companyId={companyId} />
+          ) : (
+            "—"
+          ),
       },
       { key: "load_number", label: "Load", sortable: true, render: (r) => (r.load_id ? <EntityLink kind="load" id={r.load_id} label={r.load_number ?? "Load"} /> : "—") },
       {

@@ -10,11 +10,11 @@
 
 | bucket | n | meaning |
 |---|---:|---|
-| **create** (collection POST) | 336 | `POST /api/v1/mdata/customers` — creates a top-level record |
+| **create** (collection POST) | 337 | `POST /api/v1/mdata/customers` — creates a top-level record |
 | **nested create** (child POST) | 273 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
 | action (NOT a create) | 250 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 72 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 931 | |
+| **TOTAL POST endpoints** | 932 | |
 | UI files with `+ Create`/`+ Book` | 195 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
@@ -54,7 +54,7 @@ blocking the wire — per the owner's standing instruction.
 expected downstream effect (balanced JE, both-way link) — that is CC-3's verification, handed over
 after creation; a GL/posting failure goes to CC-1.
 
-### accounting — 71 create-surface(s)
+### accounting — 72 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
@@ -121,6 +121,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/accounting/recurring-templates` | `apps/backend/src/accounting/recurring-template-detail.routes.ts:150` | — | — | — |
 | create | `/api/v1/accounting/related-party-loans` | `apps/backend/src/accounting/related-party-loan-posting/routes.ts:339` | — | — | — |
 | nested | `/api/v1/accounting/reports/reefer-fuel-credit/lines/:id/gallons` | `apps/backend/src/accounting/reefer-fuel-credit.routes.ts:57` | — | — | — |
+| create | `/api/v1/accounting/reports/reefer-fuel-credit/trailer` | `apps/backend/src/accounting/reefer-fuel-credit.routes.ts:88` | — | — | — |
 | create | `/api/v1/accounting/sales-tax/agencies` | `apps/backend/src/accounting/sales-tax/routes.ts:79` | — | — | — |
 | nested | `/api/v1/accounting/sales-tax/returns/:id/file` | `apps/backend/src/accounting/sales-tax/routes.ts:292` | — | — | — |
 | nested | `/api/v1/accounting/sales-tax/returns/:id/mark-paid` | `apps/backend/src/accounting/sales-tax/routes.ts:332` | — | — | — |

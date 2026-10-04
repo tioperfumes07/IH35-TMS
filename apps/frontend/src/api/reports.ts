@@ -1461,7 +1461,7 @@ export function listLoadsWithoutTour(operatingCompanyId: string) {
 
 // U25 — Reefer fuel credit (IRS Form 4136, nontaxable use of diesel).
 export type ReeferCreditRow = {
-  source: "fuel_card" | "expense";
+  source: "fuel_card" | "expense" | "relay_feed";
   source_id: string;
   expense_id: string | null;
   expense_line_id: string | null;
@@ -1473,6 +1473,7 @@ export type ReeferCreditRow = {
   unit_number: string | null;
   trailer_id: string | null;
   trailer_number: string | null;
+  trailer_type?: string | null;
   load_id: string | null;
   load_number: string | null;
   gallons: number | null;
@@ -1504,4 +1505,11 @@ export function recordReeferFuelGallons(operatingCompanyId: string, expenseLineI
     `/api/v1/accounting/reports/reefer-fuel-credit/lines/${expenseLineId}/gallons`,
     { method: "POST", body: { operating_company_id: operatingCompanyId, ...body } },
   );
+}
+
+export function setReeferFuelTrailer(operatingCompanyId: string, body: { source: "fuel_card" | "expense"; source_id: string; trailer_id: string }) {
+  return apiRequest<{ updated: number }>(`/api/v1/accounting/reports/reefer-fuel-credit/trailer`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId, ...body },
+  });
 }

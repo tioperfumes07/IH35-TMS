@@ -1072,7 +1072,7 @@ export async function postSettlementCreatorInClientTx(
 
     const fuelType = fuel.fuel_type ?? "diesel";
     // U25 — a reefer fill records the trailer it fueled when this company owns or leases it (ROUND 373.5: a record never
-    // references another company's equipment; today USMCA owns / leases no trailer, so the trailer stays empty).
+    // references another company's equipment) and only a Reefer trailer (reefer fuel never goes to a dry van).
     const inserted = await client.query<{ id: string }>(
       `
         INSERT INTO fuel.fuel_transactions (
@@ -1086,7 +1086,7 @@ export async function postSettlementCreatorInClientTx(
           $6, $7, $8, $9,
           $10::timestamptz, $10::timestamptz, $11, $12,
           'manual', $13, $14, $15::uuid, $16,
-          (SELECT eq.id FROM mdata.equipment eq WHERE eq.id = $17::uuid
+          (SELECT eq.id FROM mdata.equipment eq WHERE eq.id = $17::uuid AND eq.equipment_type ~* 'reefer'
               AND (eq.owner_company_id = $1::uuid OR eq.currently_leased_to_company_id = $1::uuid))
         )
         RETURNING id::text
