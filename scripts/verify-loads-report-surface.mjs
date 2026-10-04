@@ -53,6 +53,10 @@ export function assertLoadsReportSurface(srcs) {
   if (/fontSize:\s*11\b/.test(srcs.page)) {
     fails.push("LoadsReportPage leftover fontSize: 11 — use text-section-header");
   }
+  // BANK-F91541 leftover refuse — filter/KPI leftover Tailwind slate-*
+  if (srcs.page.includes("text-slate-") || srcs.page.includes("border-slate-") || srcs.page.includes("bg-slate-")) {
+    fails.push("LoadsReportPage leftover slate class");
+  }
   if (!/exportFilename="loads-report.csv"/.test(srcs.page)) {
     fails.push("LoadsReportPage must export CSV via ParityTable exportFilename");
   }
@@ -85,6 +89,11 @@ async function selftest() {
   const leftoverPlant = { ...srcs, page: `${srcs.page}\n<span style={{ fontSize: 11 }}>plant</span>` };
   if (!assertLoadsReportSurface(leftoverPlant).some((e) => e.includes("leftover fontSize: 11"))) {
     console.error(`${LABEL} SELFTEST FAILED: leftover fontSize: 11 plant escaped`);
+    process.exit(1);
+  }
+  const leftoverSlatePlant = { ...srcs, page: `${srcs.page}\n<label className="text-xs text-slate-600">plant</label>` };
+  if (!assertLoadsReportSurface(leftoverSlatePlant).some((e) => e.includes("leftover slate class"))) {
+    console.error(`${LABEL} SELFTEST FAILED: leftover slate class plant escaped`);
     process.exit(1);
   }
   console.log(`${LABEL} selftest OK`);
