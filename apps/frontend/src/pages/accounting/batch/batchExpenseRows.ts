@@ -1,5 +1,6 @@
-/**
 import { companyToday } from "../../../lib/businessDate";
+
+/**
  * BATCH TRANSACTIONS — pure row logic (Lead 2026-10-01, owner QBO spec §23 "Batch transactions":
  * "One spreadsheet-style grid to enter MANY documents of one type at once … paste from a spreadsheet;
  * duplicate a row; fill-down; validation per cell before Save; Save posts every row as its own

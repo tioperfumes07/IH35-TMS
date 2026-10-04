@@ -16,6 +16,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityPicker } from "../../components/EntityPicker";
 import { Button } from "../../components/Button";
 import { SelectCombobox } from "../../components/Combobox";
+import { useStagedListFilters } from "../../components/table";
 import { formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { getReeferFuelCreditReport, recordReeferFuelGallons, setReeferFuelTrailer, type ReeferCreditRow } from "../../api/reports";
@@ -99,7 +100,10 @@ function SetTrailer({ row, companyId }: { row: ReeferCreditRow; companyId: strin
 export function ReeferFuelCreditReportPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [{ year, quarter }, setPeriod] = useState(currentQuarter);
+  const emptyFilters = currentQuarter();
+  const [applied, setApplied] = useState(emptyFilters);
+  const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
+  const { year, quarter } = applied;
   const { from, to } = quarterRange(year, quarter);
 
   const reportQuery = useQuery({
@@ -180,7 +184,7 @@ export function ReeferFuelCreditReportPage() {
     [companyId],
   );
 
-  const years = [year - 1, year, year + 1].filter((y, i, a) => a.indexOf(y) === i);
+  const years = [staged.draft.year - 1, staged.draft.year, staged.draft.year + 1].filter((y, i, a) => a.indexOf(y) === i);
 
   return (
     <div className="space-y-4 p-4">
@@ -196,7 +200,12 @@ export function ReeferFuelCreditReportPage() {
       <div className="flex flex-wrap items-end gap-3">
         <label className="text-xs font-semibold text-gray-600">
           Year
-          <SelectCombobox value={String(year)} onChange={(e) => setPeriod({ year: Number(e.target.value), quarter })} aria-label="Year" data-testid="reefer-year">
+          <SelectCombobox
+            value={String(staged.draft.year)}
+            onChange={(e) => staged.setDraft((p) => ({ ...p, year: Number(e.target.value) }))}
+            aria-label="Year"
+            data-testid="reefer-year"
+          >
             {years.map((y) => (
               <option key={y} value={y}>
                 {y}
@@ -206,7 +215,12 @@ export function ReeferFuelCreditReportPage() {
         </label>
         <label className="text-xs font-semibold text-gray-600">
           Quarter
-          <SelectCombobox value={String(quarter)} onChange={(e) => setPeriod({ year, quarter: Number(e.target.value) })} aria-label="Quarter" data-testid="reefer-quarter">
+          <SelectCombobox
+            value={String(staged.draft.quarter)}
+            onChange={(e) => staged.setDraft((p) => ({ ...p, quarter: Number(e.target.value) }))}
+            aria-label="Quarter"
+            data-testid="reefer-quarter"
+          >
             {[1, 2, 3, 4].map((q) => (
               <option key={q} value={q}>
                 Q{q}
@@ -215,8 +229,17 @@ export function ReeferFuelCreditReportPage() {
           </SelectCombobox>
         </label>
         <span className="text-xs text-gray-500">
-          {formatDateUS(from)} – {formatDateUS(to)}
+          {formatDateUS(quarterRange(staged.draft.year, staged.draft.quarter).from)} – {formatDateUS(quarterRange(staged.draft.year, staged.draft.quarter).to)}
         </span>
+        <Button size="sm" variant="secondary" disabled={!staged.dirty} onClick={staged.apply} data-testid="reefer-apply">
+          Apply
+        </Button>
+        <Button size="sm" variant="tertiary" disabled={!staged.dirty} onClick={staged.cancel} data-testid="reefer-cancel">
+          Cancel
+        </Button>
+        <Button size="sm" variant="tertiary" onClick={staged.reset} data-testid="reefer-reset">
+          Reset
+        </Button>
       </div>
 
       {/* Report parity: every data-bearing report prints (the Form 4136 claim is filed from this page). */}

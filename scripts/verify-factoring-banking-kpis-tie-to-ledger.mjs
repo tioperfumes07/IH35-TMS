@@ -79,7 +79,7 @@ try {
   bref.cash_position = Number((await one(`SELECT COALESCE(sum(${bookOf("a.ledger_account_id")}),0)::bigint s FROM banking.bank_accounts a
     JOIN catalogs.accounts ca ON ca.id = a.ledger_account_id WHERE ${acctWhere} AND ca.account_type = 'Asset'`)).s);
   const t = await one(`SELECT count(*)::int n,
-      COALESCE(sum(abs(amount_cents)) FILTER (WHERE reconciliation_cleared IS NOT TRUE),0)::bigint unclr,
+      COALESCE(sum(CASE WHEN is_credit THEN abs(amount_cents) ELSE -abs(amount_cents) END) FILTER (WHERE reconciliation_cleared IS NOT TRUE),0)::bigint unclr,
       COALESCE(sum(abs(amount_cents)) FILTER (WHERE review_state = 'for_review' AND is_credit),0)::bigint uin,
       COALESCE(sum(abs(amount_cents)) FILTER (WHERE review_state = 'for_review' AND NOT is_credit),0)::bigint uout,
       count(*) FILTER (WHERE review_state IN ('matched','categorized','transfer'))::int res,
@@ -98,7 +98,7 @@ try {
       COALESCE(sum((SELECT sum(abs(b.amount_cents)) FROM banking.bank_transactions b WHERE fp.factoring_advance_id IS NOT NULL
         AND b.matched_factoring_advance_id = fp.factoring_advance_id AND b.voided_at IS NULL AND b.merged_into_bank_transaction_id IS NULL)),0)::bigint r
     FROM accounting.factoring_purchases fp WHERE fp.operating_company_id = '${USMCA}' AND fp.status = 'posted' AND fp.purchase_date BETWEEN '${FROM}' AND '${TO}'`);
-  bref.factoring_wires_vs_expected = Number(w.r) - Number(w.e);
+  bref.factoring_wires_vs_expected = Number(w.r);
   // ROUND 335 item 2 — driver escrow, own walk: every account at or below the ACTIVE escrow_liability_default binding.
   const esc = await one(`WITH RECURSIVE t AS (
         SELECT account_id AS id FROM accounting.chart_of_accounts_roles

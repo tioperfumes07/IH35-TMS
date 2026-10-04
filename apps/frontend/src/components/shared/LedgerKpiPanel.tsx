@@ -18,17 +18,28 @@ import { colors } from "../../design/tokens";
 // match the rest of the system instead of disappearing into the page.
 const KPI_TILE_STYLE = { backgroundColor: colors.kpiTileBg, borderColor: colors.kpiTileBorder };
 
-const LINK_COLUMNS: Record<string, { kind: EntityKind; labelFrom?: string }> = {
-  purchase_id: { kind: "factoring_purchase", labelFrom: "display_id" },
-  journal_entry_id: { kind: "journal_entry" },
-  bank_transaction_id: { kind: "bank_transaction" },
-  invoice_id: { kind: "invoice", labelFrom: "invoice_display_id" },
-  load_id: { kind: "load" },
-  customer_id: { kind: "customer" },
-  factoring_advance_id: { kind: "factoring_advance" },
-  bill_id: { kind: "bill" },
-  settlement_id: { kind: "settlement" },
-  bank_account_id: { kind: "bank_account", labelFrom: "bank_account" },
+/** Every drill id column is an EntityLink. 15 kinds, each verified against resolveEntityRoute. */
+export const DRILL_ID_COLUMN_KIND: Record<string, EntityKind> = {
+  purchase_id: "factoring_purchase",
+  journal_entry_id: "journal_entry",
+  bank_transaction_id: "bank_transaction",
+  invoice_id: "invoice",
+  load_id: "load",
+  customer_id: "customer",
+  factoring_advance_id: "factoring_advance",
+  bill_id: "bill",
+  settlement_id: "settlement",
+  bank_account_id: "bank_account",
+  fuel_transaction_id: "fuel_transaction",
+  expense_id: "expense",
+  vendor_id: "vendor",
+  driver_id: "driver",
+  account_id: "account",
+};
+const LABEL_FROM: Partial<Record<string, string>> = {
+  purchase_id: "display_id",
+  invoice_id: "invoice_display_id",
+  bank_account_id: "bank_account",
 };
 const HIDDEN = new Set(["display_id", "invoice_display_id", "posting_id", "source_transaction_id", "bank_account"]);
 
@@ -56,11 +67,28 @@ function fmtValue(k: LedgerKpi) {
   return String(k.value);
 }
 
+function primaryId(row: Record<string, unknown>): { kind: EntityKind; id: string } | null {
+  for (const [col, kind] of Object.entries(DRILL_ID_COLUMN_KIND)) {
+    const id = row[col];
+    if (id != null && id !== "") return { kind, id: String(id) };
+  }
+  return null;
+}
+
 function cell(col: string, row: Record<string, unknown>) {
   const v = row[col];
   if (v == null || v === "") return "—";
-  const link = LINK_COLUMNS[col];
-  if (link) return <EntityLink kind={link.kind} id={String(v)} label={link.labelFrom && row[link.labelFrom] ? String(row[link.labelFrom]) : "open"} />;
+  if (col === "primary_label") {
+    const target = primaryId(row);
+    if (target) return <EntityLink kind={target.kind} id={target.id} label={String(v)} className="underline" />;
+    return String(v);
+  }
+  const kind = DRILL_ID_COLUMN_KIND[col];
+  if (kind) {
+    const from = LABEL_FROM[col];
+    const label = from && row[from] ? String(row[from]) : row.primary_label ? String(row.primary_label) : "open";
+    return <EntityLink kind={kind} id={String(v)} label={label} className="underline" />;
+  }
   if (col.endsWith("_cents")) return <span className="tabular-nums">{formatUsdCents(Number(v))}</span>;
   if (/date$/.test(col)) return formatDateUS(String(v).slice(0, 10));
   return String(v);
@@ -120,7 +148,7 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
         {kpis.data ? <span className="text-slate-600">{formatDateUS(kpis.data.range.from)} – {formatDateUS(kpis.data.range.to)}</span> : null}
       </div>
       {kpis.isLoading ? <p className="text-xs text-slate-600">Loading…</p> : null}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
         {(kpis.data?.kpis ?? []).map((k) => (
           <button
             key={k.key}
@@ -131,22 +159,30 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
             data-testid={`${domain}-kpi-${k.key}`}
             title={`${k.source}${k.gl_account ? ` · GL ${k.gl_account}` : ""}`}
           >
-            {/* BANK-F2026100303 — A KPI TILE IS ONE NUMBER.
-                What was here: label, value, compare, and EVERY bucket joined with " · ", all five
-                lines at text-xs in the same slate-600 grey, inside a tile one fifth of the row wide.
-                Driver Escrow and Cash Position carry the most buckets, so those two tiles rendered as
-                a wall of text with no number you could find — the owner's exact complaint, and the
-                reason a KPI stops being a KPI. The headline was `text-xs`, the SAME SIZE as its own
-                label and footnotes, so nothing had hierarchy.
-                Fixed the way QuickBooks and NetSuite do it: the number is the tile. One muted label
-                above it, at most one comparison line under it, and the breakdown moved to the drill
-                where it has the width to be a real table. Nothing is hidden — every bucket is still
-                there, one click away, and now readable. */}
+            {/* BANK-F2026100303 — A KPI TILE IS ONE NUMBER, except factoring wires vs expected
+                which the owner wants as two quantities side by side, not a variance stacked on
+                Expected. 12 banking tiles at lg:grid-cols-6 is two rows — three rows was "too many
+                kpi boxes". */}
             <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{k.label}</div>
-            <div className="mt-0.5 text-[22px] font-semibold leading-tight tabular-nums text-slate-900">{fmtValue(k)}</div>
-            {k.compare_value != null ? (
-              <div className="mt-0.5 truncate text-[11px] tabular-nums text-slate-500">{k.compare_label} {fmtCompare(k)}</div>
-            ) : null}
+            {k.key === "factoring_wires_vs_expected" && k.compare_value != null ? (
+              <div className="mt-0.5 flex items-baseline justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-[11px] text-slate-500">Wires</div>
+                  <div className="text-[22px] font-semibold leading-tight tabular-nums text-slate-900">{fmtValue(k)}</div>
+                </div>
+                <div className="min-w-0 text-right">
+                  <div className="text-[11px] text-slate-500">{k.compare_label}</div>
+                  <div className="text-[22px] font-semibold leading-tight tabular-nums text-slate-900">{fmtCompare(k)}</div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="mt-0.5 text-[22px] font-semibold leading-tight tabular-nums text-slate-900">{fmtValue(k)}</div>
+                {k.compare_value != null ? (
+                  <div className="mt-0.5 truncate text-[11px] tabular-nums text-slate-500">{k.compare_label} {fmtCompare(k)}</div>
+                ) : null}
+              </>
+            )}
             <div className="mt-1 text-[11px] text-slate-400">
               {k.empty_reason ?? `${k.row_count} row${k.row_count === 1 ? "" : "s"}${bucketCount(k) ? ` · ${bucketCount(k)} breakdown${bucketCount(k) === 1 ? "" : "s"}` : ""}`}
             </div>
