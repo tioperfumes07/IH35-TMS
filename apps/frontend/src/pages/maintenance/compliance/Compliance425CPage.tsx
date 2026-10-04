@@ -37,7 +37,7 @@ export function Compliance425CPage() {
         key: "payload",
         label: "Payload",
         render: (row) => (
-          <pre className="max-h-28 overflow-auto whitespace-pre-wrap text-[11px]">{JSON.stringify(row.payload ?? {}, null, 2)}</pre>
+          <pre className="max-h-28 overflow-auto whitespace-pre-wrap text-xs">{JSON.stringify(row.payload ?? {}, null, 2)}</pre>
         ),
       },
     ],
