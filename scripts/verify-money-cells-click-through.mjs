@@ -18,16 +18,16 @@ const LABEL = "verify-money-cells-click-through";
 const PANEL = "apps/frontend/src/components/shared/LedgerKpiPanel.tsx";
 /**
  * SHRINK-ONLY RATCHET — money cells that are NOT click-through. MEASURED 2026-10-04 with the
- * corrected detector: 237 money cells in apps/frontend/src, 147 not click-through once HTML
+ * corrected detector: 237 money cells in apps/frontend/src, 103 not click-through once HTML
  * export/print templates are excluded. Was 42 against a then-reported 3 — 39 slots of slack, so
  * the ratchet could not catch a regression in either direction.
  *
  * STILL CONSERVATIVE, deliberately: some of the 141 are declared as table column config
  * (`cellClass: "text-right tabular-nums"`) whose row renderer drills elsewhere in the file, which
- * a proximity window cannot resolve. That makes 147 an upper bound, and an upper bound is a safe
+ * a proximity window cannot resolve. That makes 103 an upper bound, and an upper bound is a safe
  * ratchet: it can only be lowered. Do not raise it.
  */
-const SHRINK_ONLY_BASELINE = 147;
+const SHRINK_ONLY_BASELINE = 103;
 
 function stripComments(src) {
   return String(src ?? "")
@@ -64,7 +64,18 @@ function moneyCellHits(src) {
     // An HTML EXPORT/PRINT template, not a UI cell: `style="..."` is a STRING attribute, which is
     // invalid in JSX (JSX requires style={{...}}), so its presence proves this className lives in a
     // hand-built HTML string for export or print. A printed cell must never be a link.
-    const isHtmlExportTemplate = /style="/.test(window);
+    // Two proofs that this className lives in a hand-built HTML string for EXPORT or PRINT rather
+    // than in JSX, and a printed cell must never be a link:
+    //   style="..."  — a STRING style attribute, invalid in JSX (which requires style={{...}})
+    //   esc(...)     — the repo's HTML-escaping helper; it only appears when interpolating into
+    //                  markup being assembled as text
+    // MEASURED 2026-10-04: `style="` alone left 43 of 147 counted cells inside esc() export
+    // strings — 7 in FinancialStatementsPage (where ALL of its cells are export-only, so the file
+    // appeared to owe 15 drills and in fact owes none), 6 in ProfitPerTruckPage, and so on. Those
+    // 43 were permanent noise in the ratchet: unfixable by design, and they hid the real count.
+    // The backward reach is needed because `esc(` usually precedes the className in the row string.
+    const exportWindow = src.slice(Math.max(0, m.index - 200), Math.min(src.length, m.index + expr.length + 200));
+    const isHtmlExportTemplate = /style="/.test(window) || /\besc\(/.test(exportWindow);
     hits.push({
       expr,
       htmlExport: isHtmlExportTemplate,
@@ -134,14 +145,14 @@ function selftest() {
     }
   `;
   const cases = [
-    { name: "click-through money cells", panel: goodPanel, shrinkOnlyCount: 147, expectFail: false },
-    { name: "panel money not EntityLink", panel: `if (col.endsWith("_cents")) return <span className={QBO_MONEY_CELL_CLASS}>{v}</span>;`, shrinkOnlyCount: 147, expectFail: true },
-    { name: "panel missing shrink-0", panel: `if (col.endsWith("_cents")) return <EntityLink className={QBO_MONEY_CELL_CLASS} />;`, shrinkOnlyCount: 147, expectFail: true },
-    { name: "ratchet up from 147", panel: goodPanel, shrinkOnlyCount: 148, expectFail: true },
-    { name: "missing _cents branch", panel: `return <EntityLink className={\`\${QBO_MONEY_CELL_CLASS} shrink-0 whitespace-nowrap\`} />;`, shrinkOnlyCount: 147, expectFail: true },
+    { name: "click-through money cells", panel: goodPanel, shrinkOnlyCount: 103, expectFail: false },
+    { name: "panel money not EntityLink", panel: `if (col.endsWith("_cents")) return <span className={QBO_MONEY_CELL_CLASS}>{v}</span>;`, shrinkOnlyCount: 103, expectFail: true },
+    { name: "panel missing shrink-0", panel: `if (col.endsWith("_cents")) return <EntityLink className={QBO_MONEY_CELL_CLASS} />;`, shrinkOnlyCount: 103, expectFail: true },
+    { name: "ratchet up from 103", panel: goodPanel, shrinkOnlyCount: 104, expectFail: true },
+    { name: "missing _cents branch", panel: `return <EntityLink className={\`\${QBO_MONEY_CELL_CLASS} shrink-0 whitespace-nowrap\`} />;`, shrinkOnlyCount: 103, expectFail: true },
     // LST-F405 — a STALE baseline must fail too, or slack accumulates invisibly (42 vs 3).
-    { name: "baseline stale (below)", panel: goodPanel, shrinkOnlyCount: 146, expectFail: true },
-    { name: "baseline exact", panel: goodPanel, shrinkOnlyCount: 147, expectFail: false },
+    { name: "baseline stale (below)", panel: goodPanel, shrinkOnlyCount: 102, expectFail: true },
+    { name: "baseline exact", panel: goodPanel, shrinkOnlyCount: 103, expectFail: false },
   ];
   let pass = 0;
   for (const c of cases) {
