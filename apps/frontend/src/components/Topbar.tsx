@@ -412,7 +412,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
             {qboSyncPill?.needsReconnect && companyId ? (
               <button
                 type="button"
-                className="ml-2 rounded-sm border border-red-300/60 px-2 py-0.5 text-[11px] font-semibold hover:bg-red-500/20"
+                className="ml-2 rounded-sm border border-red-300/60 px-2 py-0.5 text-xs font-semibold hover:bg-red-500/20"
                 onClick={() => {
                   window.location.href = getQboAuthorizeStartUrl(companyId);
                 }}
