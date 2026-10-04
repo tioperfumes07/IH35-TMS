@@ -1,3 +1,9 @@
+## 2026-10-04T07:18Z · BANK-F91439 C-52 toast dock corrected + WIRED CI · tip `08b499b381`
+
+DONE: #25181 — C-52 requires top-14 right-3 (C-65 owns bottom-3); step 3018 runs ops/verify-c52-alerts-side-dock.
+
+NEXT: BANK-F91440 wire C-19 With-transactions default into 2232 · invoice match banner already in B-1 pack on 1158 · skip pile parked · HH07 no migrations.
+
 ## 2026-10-04T07:12Z · BANK-F91438 C-50 bound pin WIRED CI · tip `2398b720c1`
 
 DONE: #25180 — verify-steps/118 now runs ops/verify-c50-active-company-bound-pin --selftest.
