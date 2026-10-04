@@ -25,6 +25,9 @@ function check() {
   assert(/data-testid=["']border-wizard-step-4-entitylinks["']/.test(src), "must expose border-wizard-step-4-entitylinks");
   assert(/kind=["']vendor["']/.test(src), "must EntityLink kind=vendor");
   assert(/form\.customsBrokerId/.test(src), "must key off form.customsBrokerId");
+  // BANK-F91404 leftover refuse — WizardStep4 page-scoped text token ratchet
+  assert(!src.includes("text-[11px]"), "leftover text-[11px] — use text-xs (ORDERS size token)");
+  assert(!src.includes("#8A92AB"), "leftover #8A92AB — use #4B5563 (ORDERS muted token)");
 }
 
 function selftest() {
@@ -44,6 +47,18 @@ function selftest() {
     fs.writeFileSync(FILE, original);
   }
   assert(failed, "--selftest expected FAIL when broker link testid removed");
+  // BANK-F91404 leftover plant — WizardStep4 page-scoped text token ratchet
+  const leftoverPlant = original + '\n<p className="text-[11px] text-[#8A92AB]">plant</p>\n';
+  fs.writeFileSync(FILE, leftoverPlant);
+  let leftoverFailed = false;
+  try {
+    check();
+  } catch {
+    leftoverFailed = true;
+  } finally {
+    fs.writeFileSync(FILE, original);
+  }
+  assert(leftoverFailed, "--selftest expected FAIL on leftover text-[11px]/#8A92AB plant");
   check();
   console.log(`${LABEL}: OK — selftest PASS`);
 }
