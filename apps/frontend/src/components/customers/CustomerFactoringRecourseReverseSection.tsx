@@ -61,7 +61,7 @@ export function CustomerFactoringRecourseReverseSection({ operatingCompanyId, cu
       </div>
       {recourseInvoices.length > 0 ? (
         <div className="mt-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Recourse at risk</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Recourse at risk</p>
           <ul className="mt-1 space-y-1">
             {recourseInvoices.slice(0, 5).map((row) => (
               <li key={row.factoring_advance_id}>
@@ -83,7 +83,7 @@ export function CustomerFactoringRecourseReverseSection({ operatingCompanyId, cu
       {chargebacks.length > 0 ? (
         <div className="mt-3">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Chargebacks</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Chargebacks</p>
             <EntityLink
               kind="factoring_chargebacks_customer"
               id={customerId}

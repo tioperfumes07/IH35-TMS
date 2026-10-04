@@ -116,6 +116,10 @@ export function assertFactoringRecourseChargebacksReverse(sources) {
     problems.push(`${SECTION}: must not import react-router Link`);
   }
 
+  // BANK-F91342 leftover refuse — CustomerFactoringRecourseReverseSection page-scoped text token ratchet
+  if (section.includes("text-[11px]")) problems.push(`${SECTION}: leftover text-[11px]`);
+  if (section.includes("#8A92AB")) problems.push(`${SECTION}: leftover off-scale muted #8A92AB`);
+
   return problems;
 }
 
@@ -193,6 +197,15 @@ function selftest() {
       console.error(`${LABEL} SELFTEST FAIL — mutation ${i} escaped detection`);
       process.exit(1);
     }
+  }
+  // BANK-F91342 leftover plant
+  const leftoverPlant = {
+    ...good,
+    [SECTION]: good[SECTION] + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n',
+  };
+  if (!assertFactoringRecourseChargebacksReverse(leftoverPlant).some((p) => p.includes("leftover text-[11px]"))) {
+    console.error(`${LABEL} SELFTEST FAIL — leftover plant escaped`);
+    process.exit(1);
   }
   console.log(`${LABEL} SELFTEST PASS — ${mutations.length} mutations all detected`);
   process.exit(0);
