@@ -9,6 +9,9 @@
  * Posting happens when the settlement is closed (the single settlement poster bills the line on its load's A/P bill).
  * Refuses by name: settlement not found / not open, no load on the settlement, a named load not on it, bad amount.
  */
+// C6-MONEY-JE-EXEMPT: a settlement_lines row on an OPEN settlement is a pay-line draft, not a posted amount — the single
+// settlement poster (settlement close: the per-load A/P bill via settlement-ap-chain) posts its balanced JE when the
+// settlement closes; posting here would book the same pay twice.
 import type pg from "pg";
 import { attributeToLoad, loadSettlementLoadBills } from "./settlement-ap-chain.service.js";
 import { recomputeSettlementHeader } from "./settlement-load-reassignment.service.js";

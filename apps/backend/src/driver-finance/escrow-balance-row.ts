@@ -12,6 +12,8 @@
  */
 type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 
+// C6-MONEY-JE-EXEMPT: identity row only — driver_finance.escrow_balances carries no amount since 202615380100, so this
+// INSERT moves no money; the escrow money is the driver's 2100-00-nnn GL sub-account, posted by each caller's own JE.
 // ESCROW-SYNC-EXEMPT: identity row only — this writes no amount (KILL THE SECOND SYSTEM tables 2-5), so there is nothing to
 // sync to the GL; every caller makes its own GL / escrow_postings write (forfeit, separation, pay-run close, unwind,
 // settlement approval, history backfill).
