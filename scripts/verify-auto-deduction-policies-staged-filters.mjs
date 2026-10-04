@@ -43,6 +43,9 @@ function assertPage(src) {
   if (!/const rows = policiesQuery\.isError \? \[\] : \(policiesQuery\.data\?\.rows \?\? \[\]\);/.test(src)) {
     errors.push("grouped rows must be suppressed (not just the empty-state text) while the read is erroring — stale Pause/Cancel/Resume rows must not render");
   }
+  // BANK-F91367 leftover refuse — AutoDeductionPolicies page-scoped text token ratchet
+  if (src.includes("text-[11px]")) errors.push("AutoDeductionPolicies.tsx: leftover text-[11px]");
+  if (src.includes("#8A92AB")) errors.push("AutoDeductionPolicies.tsx: leftover off-scale muted #8A92AB");
   return errors;
 }
 
@@ -99,6 +102,13 @@ function selftest() {
     }
   }
   if (!allCaught) process.exit(1);
+  // BANK-F91367 leftover plant — AutoDeductionPolicies page-scoped text token ratchet
+  const production = fs.readFileSync(path.join(process.cwd(), TARGET), "utf8");
+  const leftover = production + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!assertPage(leftover).some((e) => e.includes("leftover text-[11px]"))) {
+    console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`, assertPage(leftover));
+    process.exit(1);
+  }
   console.log(`${LABEL} selftest PASS (${mutations.length} DRV-MONEY-F7449 regressions caught)`);
 }
 
