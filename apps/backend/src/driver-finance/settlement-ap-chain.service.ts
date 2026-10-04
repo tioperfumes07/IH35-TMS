@@ -199,7 +199,7 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
   const runId = run.rows[0].id;
 
   // 1. One A/P bill per load, GL posted in this transaction.
-  const posted: Array<{ b: ApChainLoadBill; billId: string; billJeId: string | null; total: number }> = [];
+  const posted: Array<{ b: ApChainLoadBill; billId: string; billJeId: string; total: number }> = [];
   for (const b of bills) {
     const ls = lines.get(b.driverBillId)!;
     const total = ls.reduce((s, l) => s + l.amountCents, 0);
@@ -229,7 +229,14 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
     } as never, input.actorUserId);
     const billId = String((bill as { id: string }).id);
     const p = await postSourceTransactionInClientTx(client as never, { operating_company_id: opco, source_transaction_type: "bill", source_transaction_id: billId, posting_purpose: "initial_post" } as never, { userId: input.actorUserId } as never);
-    posted.push({ b, billId, billJeId: (p as { journal_entry_id?: string | null })?.journal_entry_id ?? null, total });
+    const billJeId = (p as { journal_entry_id?: string | null })?.journal_entry_id ?? null;
+    // AUTH-400 rehearsal (2026-10-04): 90 settlement GL-bill rows with NO bill_journal_entry_id made 45 settlements
+    // unvoidable ("missing its original journal-entry linkage") — the reversal engine reverses exactly what this row names.
+    // A bill posted here with no journal entry to name is refused, never recorded with a null link.
+    if (!billJeId) {
+      throw new SettlementApChainError("BILL_JOURNAL_ENTRY_MISSING", `${input.label}: load ${b.loadNumber}'s A/P bill posted no journal entry — the settlement could never be reversed`, { load_number: b.loadNumber, bill_id: billId });
+    }
+    posted.push({ b, billId, billJeId, total });
   }
 
   // 2. Non-cash applications: advances (own load first), deductions + chargebacks, escrow last.
@@ -316,6 +323,10 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
           WHERE p.operating_company_id = $1::uuid AND p.source_transaction_type = 'bill_payment' AND p.source_transaction_id::text = $2 LIMIT 1`,
         [opco, cashBpId]
       )).rows[0]?.je ?? null;
+      // Same rule for the cash leg: a net-pay payment whose GL cannot be found is never recorded with a null link.
+      if (!cashJeId) {
+        throw new SettlementApChainError("CASH_PAYMENT_JOURNAL_ENTRY_MISSING", `${input.label}: load ${x.b.loadNumber}'s net-pay payment posted no journal entry — the settlement could never be reversed`, { load_number: x.b.loadNumber, bill_payment_id: cashBpId });
+      }
     }
     await client.query(
       `UPDATE driver_finance.driver_bills SET settled_in_settlement_id = $2::uuid, status = 'paid', updated_at = now()

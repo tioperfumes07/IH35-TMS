@@ -91,6 +91,20 @@ export class PostingLineIsAlreadyAReversalError extends Error {
   }
 }
 
+/**
+ * AUTH-400 — refused: the line named in reversal_of_line_id is ALREADY reversed by another line. A line is reversed
+ * exactly once; a second reversal manufactures the opposite of the original's money (measured on the AUTH-400 rehearsal:
+ * reclassify's out-leg named expense line 8314452b without stamping its reversed_by_line_id, so the line read as live
+ * and the expense void reversed it a second time).
+ */
+export class PostingLineAlreadyReversedError extends Error {
+  readonly code = "posting_line_already_reversed";
+  constructor(readonly targetLineId: string) {
+    super(`posting_line_already_reversed: posting ${targetLineId} is already reversed by another line — a line is reversed exactly once`);
+    this.name = "PostingLineAlreadyReversedError";
+  }
+}
+
 async function writeLine(
   client: PostingWriterClient,
   line: PostingLineWrite,
@@ -183,6 +197,21 @@ async function writeLine(
     // so there is nothing to link.
     if (opts.skipOnIdempotencyConflict) return null;
     throw new Error("posting_line_insert_failed");
+  }
+
+  // AUTH-400 — BOTH DIRECTIONS, ALWAYS, HERE. A reversal line names its original (reversal_of_line_id); the original
+  // must name it back (reversed_by_line_id) in the same transaction, or every liveness check reads the original as
+  // live and the next void reverses it again. Callers no longer have to remember the second half (reclassify did not).
+  // Only an unreversed original is stamped; one already reversed by ANOTHER line refuses the whole write.
+  if (line.reversal_of_line_id) {
+    const back = await client.query<{ id: string }>(
+      `UPDATE accounting.journal_entry_postings
+          SET reversed_by_line_id = $2::uuid, updated_at = now()
+        WHERE id = $1::uuid AND (reversed_by_line_id IS NULL OR reversed_by_line_id = $2::uuid)
+        RETURNING id::text`,
+      [line.reversal_of_line_id, postingId]
+    );
+    if (!back.rows[0]) throw new PostingLineAlreadyReversedError(line.reversal_of_line_id);
   }
 
   await client.query(
