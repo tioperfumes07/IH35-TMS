@@ -1,3 +1,9 @@
+## 2026-10-04T09:44Z · BANK-F91469 R313 maintenance designs WIRED CI · tip `e2390d2006`
+
+DONE: #25211 — verify-steps/3458 now runs ops/verify-r313-maintenance-designs --selftest.
+
+NEXT: BANK-F91470 wire customers ORDERS complete into 3560 · C-21 odometer + C-22 fail=triage · skip pile parked · HH09 no migrations.
+
 ## 2026-10-04T09:38Z · BANK-F91468 R319 driver Fuel tab WIRED CI · tip `7427568425`
 
 DONE: #25210 — verify-steps/1012 now runs ops/verify-r319-driver-fuel-tab --selftest.
