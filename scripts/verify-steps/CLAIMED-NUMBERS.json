@@ -13017,5 +13017,85 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-tms-account-push-tenant-chain"
+  },
+  "15577": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-accounting-catalog-creator"
+  },
+  "15581": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bill-payment-panel-labels"
+  },
+  "15585": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bills-page-human-labels"
+  },
+  "15589": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-coa-resolver-entity-scope"
+  },
+  "15593": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-expense-class-id-parity"
+  },
+  "15597": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-payment-detail-human-labels"
+  },
+  "15601": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-vendors-by-category-pager-total"
+  },
+  "15605": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-vendors-tenant-scope"
+  },
+  "15609": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-company-violation-creator-draft-lifecycle"
+  },
+  "15613": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-user-detail-linked-read-failure-exclusion"
+  },
+  "15617": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-hos-violation-create-lifecycle"
+  },
+  "15621": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-legal-matters-role-gate"
+  },
+  "15625": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-safety-complete-driver-roster-vertical"
+  },
+  "15629": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-migration-no-unknown-roles"
+  },
+  "15633": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-pm-due-live-odometer"
+  },
+  "15637": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-all-posting-paths-gated"
   }
 }
