@@ -1,6 +1,6 @@
 {
   "healthzSha": "2ae0bd7",
-  "generated_at": "2026-10-04T05:07:05.060Z",
+  "generated_at": "2026-10-04T05:22:14.189Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
@@ -2123,6 +2123,42 @@
   },
   "recentActivity": [
     {
+      "number": 25161,
+      "title": "FINDING: BANK-F2026100409 LANE: FINANCIAL (two static reds on main blocking every seat: verify-sql-column-existence and verify-surface-bar-modal-inventory — one is a REAL broken query: the Account Register's cleared-status lateral ordered by bt.txn_date, a column banking.bank_transactions does not have)",
+      "state": "merged",
+      "mergedAtCt": "10/04/2026, 12:21 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25161",
+      "sha": "aad80ce192",
+      "committedAtIso": "2026-10-04T00:21:56-05:00"
+    },
+    {
+      "number": 25160,
+      "title": "FINDING: BANK-F91426 LoadQualityEventsReverseSection date badge off-scale text-[11px]",
+      "state": "merged",
+      "mergedAtCt": "10/04/2026, 12:20 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25160",
+      "sha": "143391e351",
+      "committedAtIso": "2026-10-04T00:20:47-05:00"
+    },
+    {
+      "number": 25159,
+      "title": "FINDING: BANK-F91425 LANE: NON-FINANCIAL (PredictiveAlertsPage text-[11px] → text-xs)",
+      "state": "merged",
+      "mergedAtCt": "10/04/2026, 12:14 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25159",
+      "sha": "d7e23a9497",
+      "committedAtIso": "2026-10-04T00:14:57-05:00"
+    },
+    {
+      "number": 25158,
+      "title": "FINDING: N/A LANE: DOCS (CC-3: ROUND 393 batch-five still blocked — two static reds on main, owners named; why the push lands on the static fallback)",
+      "state": "merged",
+      "mergedAtCt": "10/04/2026, 12:13 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25158",
+      "sha": "88160616f6",
+      "committedAtIso": "2026-10-04T00:13:29-05:00"
+    },
+    {
       "number": 25157,
       "title": "FINDING: N/A LANE: DOCS (OUTBOX-CURSOR ROUND 389.2 CURSOR DONE stamp)",
       "state": "merged",
@@ -2175,42 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25152",
       "sha": "00a20f6a44",
       "committedAtIso": "2026-10-03T23:49:05-05:00"
-    },
-    {
-      "number": 25151,
-      "title": "FINDING: LST-F3317 LANE: FINANCIAL -- ROUND 368.2(b): the journal-entry RESTORE path (805a5bb97b) made a reversing entry stop being live without releasing the bank lines that name it — main red on verify-every-void-releases-its-bank-lines; it now releases first",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 11:47 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25151",
-      "sha": "6439a0ac7d",
-      "committedAtIso": "2026-10-03T23:47:09-05:00"
-    },
-    {
-      "number": 25150,
-      "title": "FINDING: ACCT-F2026100408 LANE: FINANCIAL (verify-reclassify-batches-are-whole red on main after ROUND 390.1: it required the reclassify undo to call reverseJournalEntryNoFlip, which 390.1 correctly replaced — a reclass JE's out-leg is itself a reversal, and a reversal of a reversal is now refused by the writer)",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 11:43 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25150",
-      "sha": "02297db87d",
-      "committedAtIso": "2026-10-03T23:43:21-05:00"
-    },
-    {
-      "number": 25149,
-      "title": "FINDING: ACCT-F9978 LANE: FINANCIAL (ROUND 390.1: a reversal line is TERMINAL — the one posting-line writer refuses, by name, a line that reverses a line which is itself a reversal; reinstate, check unvoid and reclassify undo now restore reversed money as fresh lines instead of \"voiding the void's reversing JE\"; the zero-tolerance chain guard is added)",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 11:32 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25149",
-      "sha": "805a5bb97b",
-      "committedAtIso": "2026-10-03T23:32:13-05:00"
-    },
-    {
-      "number": 25148,
-      "title": "FINDING: N/A (CLAIM-RESERVE verify-step — reservation-only commit, no code fix)",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 11:29 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25148",
-      "sha": "45954d411d",
-      "committedAtIso": "2026-10-03T23:29:23-05:00"
     }
   ]
 }
