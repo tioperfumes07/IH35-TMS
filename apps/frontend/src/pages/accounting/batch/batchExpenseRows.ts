@@ -1,4 +1,5 @@
 /**
+import { companyToday } from "../../../lib/businessDate";
  * BATCH TRANSACTIONS — pure row logic (Lead 2026-10-01, owner QBO spec §23 "Batch transactions":
  * "One spreadsheet-style grid to enter MANY documents of one type at once … paste from a spreadsheet;
  * duplicate a row; fill-down; validation per cell before Save; Save posts every row as its own
@@ -57,7 +58,7 @@ export function normalizeDate(v: string): string {
     return `${y}-${m[1]!.padStart(2, "0")}-${m[2]!.padStart(2, "0")}`;
   }
   const d = new Date(s);
-  return Number.isNaN(d.getTime()) ? "" : d.toISOString().slice(0, 10);
+  return Number.isNaN(d.getTime()) ? "" : companyToday(d);
 }
 
 /** Per-cell validation. Returns {} when the row is ready to post. */

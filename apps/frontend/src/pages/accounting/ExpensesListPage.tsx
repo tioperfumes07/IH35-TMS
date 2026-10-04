@@ -49,6 +49,7 @@ const STATUS_OPTIONS: Array<{ value: "" | ExpenseListStatus; label: string }> = 
 ];
 
 import { formatUsdCents } from "../../lib/money";
+import { companyToday } from "../../lib/businessDate";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -159,7 +160,7 @@ export function ExpensesListPage() {
   // U17 — the expenses whose posted lines the reclassify drawer shows (null = closed).
   const [reclassifyIds, setReclassifyIds] = useState<string[] | null>(null);
   const [showAccountNumbers] = useShowAccountNumbers();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = companyToday();
   const reclassifyAccountsQuery = useQuery({
     queryKey: ["expenses-reclassify-accounts", selectedCompanyId],
     queryFn: () => getReclassifyAccountTree(selectedCompanyId ?? "", today, today),
