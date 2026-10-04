@@ -10127,5 +10127,200 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-driver-subaccount-numbers-one-per-driver"
+  },
+  "12330": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-accounting-hub-honest-labels"
+  },
+  "12332": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-accounting-subnav-grouped"
+  },
+  "12334": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-accounting-subpages-have-subnav"
+  },
+  "12336": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-audit-fix-12-bills-has-subnav-and-create"
+  },
+  "12338": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-audit-fix-3-list-view-toggle-renders"
+  },
+  "12340": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-audit-reports-subnav-present"
+  },
+  "12342": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-banking-designview-qbo-parity"
+  },
+  "12344": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-banking-qbo-parity-chrome"
+  },
+  "12346": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-customers-vendors-have-list-view"
+  },
+  "12348": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-design-parity"
+  },
+  "12350": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-list-defaults-active-only"
+  },
+  "12352": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-factoring-outstanding-liability-honest-label"
+  },
+  "12354": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-finance-hub-off-honest-state"
+  },
+  "12356": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-form-425c-static-gets-before-id"
+  },
+  "12358": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-form425c-attachments-upload-wired"
+  },
+  "12360": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-form425c-econ-link-pack"
+  },
+  "12362": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-form425c-exhibit-c-unverified-opening"
+  },
+  "12364": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-form425c-exhibit-d-real-quarter"
+  },
+  "12366": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-form425c-exhibit-f-invoice-null-label"
+  },
+  "12368": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-form425c-profiles-bank-accounts-remove"
+  },
+  "12370": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-form425c-qbimport-paren-negative"
+  },
+  "12372": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-legal-breadcrumb-tail-4"
+  },
+  "12374": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-list-defaults-and-kpi-shape"
+  },
+  "12376": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-lists-dispatch-subnav-complete"
+  },
+  "12378": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-lists-fleet-subnav-complete"
+  },
+  "12380": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-lists-safety-subnav-complete"
+  },
+  "12382": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-master-detail-selected-row-url-addressable"
+  },
+  "12384": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-money-list-toolbar-one-and-multiselect"
+  },
+  "12386": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-navy-subnav-x-of-178"
+  },
+  "12388": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-no-sidebar-flyout"
+  },
+  "12390": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-parity-table-resize-sort-contract"
+  },
+  "12392": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-parity-banking-home"
+  },
+  "12394": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-parity-bills-invoices-lists"
+  },
+  "12396": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-parity-customers"
+  },
+  "12398": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-parity-name-plus-type-option-labels"
+  },
+  "12400": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-parity-vendors"
+  },
+  "12402": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-responsive-layout"
+  },
+  "12404": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-section7-palette-nonfinancial"
+  },
+  "12406": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-subnav-manifest"
   }
 }
