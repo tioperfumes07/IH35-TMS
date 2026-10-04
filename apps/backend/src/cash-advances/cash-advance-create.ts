@@ -9,7 +9,7 @@ import { releaseBankLinesNamingDocument } from "../accounting/void.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { voidSettlementDeduction } from "../driver-finance/settlement-deduction-void.service.js";
 import { nextCashAdvanceDisplayId } from "./display-id.js";
-import { DriverAdvanceAccountError, resolveDriverAdvanceSubAccount } from "../driver-finance/driver-advance-account-resolver.js";
+import { DriverAdvanceAccountError, ensureDriverAdvanceSubAccount } from "../driver-finance/driver-advance-account-resolver.js";
 
 type PgishClient = {
   query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }>;
@@ -325,10 +325,10 @@ export async function createDriverCashAdvanceCore(
   }
 
   // ROUND 394 RULING 1 — the advance is a receivable on the driver's OWN 1245 sub-account; disbursement
-  // debits it and pay-run close credits it. Refuse here, before any row is written, when the driver has
-  // no own sub-account bound under the advance_recovery parent — never an advance that cannot post.
+  // debits it and pay-run close credits it. ROUND 389.3 RULING 2 — provision it here when missing (1245-00-nnn,
+  // his one driver number), the way hire does; refuse only if that cannot be done, before any row is written.
   try {
-    await resolveDriverAdvanceSubAccount(client as never, companyId, String(body.driver_id));
+    await ensureDriverAdvanceSubAccount(client as never, { operatingCompanyId: companyId, driverId: String(body.driver_id), actorUserId: actorUserUuid });
   } catch (err) {
     if (err instanceof DriverAdvanceAccountError) return { ok: false, code: 409, error: err.code.toLowerCase(), message: err.message };
     throw err;

@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("../../audit/crud-audit.js", () => ({ appendCrudAudit: vi.fn(async () => undefined) }));
+// ROUND 389.3 RULING 2 — the advance parent resolves through the advance_recovery ROLE, not by name.
+const { mockRole } = vi.hoisted(() => ({ mockRole: vi.fn(async () => "asset-parent" as string | null) }));
+vi.mock("../coa-roles/resolver.service.js", () => ({ resolveRoleAccountOptional: mockRole }));
 
 const { runDriverSubAccountBackfill, parseDriverRosterCsv } = await import("../driver-subaccount-backfill.service.js");
 
@@ -49,7 +52,7 @@ describe("driver sub-account bulk backfill — DRY-RUN", () => {
         { id: "d1", first_name: "Ana", last_name: "Reyes" }, // both missing -> CREATE/CREATE
         { id: "d2", first_name: "Beto", last_name: "Cruz" }, // asset exists, escrow missing
       ],
-      existingNames: new Set(["Driver Cash Advance- Beto Cruz"]),
+      existingNames: new Set(["Beto Cruz — Driver Cash Advance"]),
       // d2 already has an A/P vendor; d1 does not — so the third primitive is asserted independently
       // of the two sub-accounts rather than moving in lockstep with them.
       existingVendorDriverIds: new Set(["d2"]),
@@ -86,6 +89,7 @@ describe("driver sub-account bulk backfill — DRY-RUN", () => {
         return { rows: [] };
       }),
     };
+    mockRole.mockResolvedValueOnce(null); // no advance_recovery binding in this chart
     const report = await runDriverSubAccountBackfill(client as never, { operatingCompanyId: "trk" });
     expect(report.rows[0]).toMatchObject({ asset_subaccount: "SKIP-no-parent", escrow_subaccount: "SKIP-no-parent" });
     expect(report.totals.no_parent).toBe(1);

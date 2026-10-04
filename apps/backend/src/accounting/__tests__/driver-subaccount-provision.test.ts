@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("../../audit/crud-audit.js", () => ({ appendCrudAudit: vi.fn(async () => undefined) }));
+// ROUND 389.3 RULING 2 — the advance parent is the account bound to the advance_recovery ROLE (1245).
+const { mockResolveRoleAccountOptional } = vi.hoisted(() => ({ mockResolveRoleAccountOptional: vi.fn() }));
+vi.mock("../coa-roles/resolver.service.js", () => ({ resolveRoleAccountOptional: mockResolveRoleAccountOptional }));
 
 const {
   provisionDriverAdvanceSubAccount,
@@ -20,9 +23,13 @@ const ARGS = { operatingCompanyId: "oc", driverId: "drv-1", driverName: "Domingo
 
 function makeClient(opts: { parentId: string | null; alreadyExists?: string | null }) {
   const sqls: { sql: string; params: unknown[] }[] = [];
+  mockResolveRoleAccountOptional.mockReset();
+  mockResolveRoleAccountOptional.mockResolvedValue(opts.parentId);
   const client = {
     query: vi.fn(async (sql: string, params?: unknown[]) => {
       sqls.push({ sql, params: params ?? [] });
+      // ROUND 389.3 — the per-driver number allocator: no existing number for this driver, highest used is 006.
+      if (sql.includes("max(substring(account_number")) return { rows: [{ n: 6 }] };
       if (sql.includes("WHERE account_name = $1") && sql.includes("parent_account_id IS NULL")) {
         return { rows: opts.parentId ? [{ id: opts.parentId }] : [] }; // resolveCanonicalParentAccount
       }
@@ -36,53 +43,49 @@ function makeClient(opts: { parentId: string | null; alreadyExists?: string | nu
   return { client, sqls };
 }
 
-describe("driver advance sub-account provisioning", () => {
-  it("names the sub-account exactly like the live precedent: 'Driver Cash Advance- <Name>'", () => {
-    expect(driverAdvanceSubAccountName("Domingo Barrientos")).toBe("Driver Cash Advance- Domingo Barrientos");
+describe("driver advance sub-account provisioning (ROUND 389.3 ruling 2: 1245-00-nnn)", () => {
+  it("names the sub-account in the escrow shape: '<Name> — Driver Cash Advance'", () => {
+    expect(driverAdvanceSubAccountName("Domingo Barrientos")).toBe("Domingo Barrientos — Driver Cash Advance");
   });
 
-  it("creates the ASSET sub-account nested under the resolved parent, postable, no hardcoded UUID", async () => {
-    const { client, sqls } = makeClient({ parentId: "parent-149" });
+  it("creates the ASSET sub-account under the advance_recovery role parent, numbered <parent>-00-<driver nnn>", async () => {
+    const { client, sqls } = makeClient({ parentId: "parent-1245" });
     const r = await provisionDriverAdvanceSubAccount(client as never, ARGS);
-    expect(r).toMatchObject({ created: true, accountName: "Driver Cash Advance- Domingo Barrientos" });
-    const insert = sqls.find((s) => s.sql.includes("INSERT INTO catalogs.accounts"))!;
-    // name, parent, postable=true, type Asset, account_number NULL
-    expect(insert.params[0]).toBe("Driver Cash Advance- Domingo Barrientos");
-    expect(insert.params[1]).toBe("parent-149");
+    expect(r).toMatchObject({ created: true, accountName: "Domingo Barrientos — Driver Cash Advance" });
+    expect(mockResolveRoleAccountOptional).toHaveBeenCalledWith(client, "oc", "advance_recovery");
+    expect(sqls.some((q) => q.sql.includes("parent_account_id IS NULL"))).toBe(false); // never a name lookup
+    const insert = sqls.find((q) => q.sql.includes("INSERT INTO catalogs.accounts"))!;
+    expect(insert.params[0]).toBe("Domingo Barrientos — Driver Cash Advance");
+    expect(insert.params[1]).toBe("parent-1245");
+    expect(insert.sql).toContain("p.account_number || '-00-' || $6"); // 1245-00-nnn from the parent's own number
+    expect(insert.params[5]).toBe("007"); // next driver number after the highest used (006), zero-padded
     expect(insert.sql).toContain("'Asset'");
-    expect(insert.sql).toContain("true"); // is_postable
-    // ROW-259 (2026-08-03) briefly derived a local sequence number here; ROUND 181 (owner law: no
-    // auto numbers without written owner approval) reverted that — a new driver sub-account gets NO
-    // auto-generated number, matching the SAME NULL-number contract this file's escrow/reimbursement
-    // leaves already use. This test was stale (still asserting ROW-259's lpad()-derived number,
-    // which the source code's own ROUND-181 comment documents as intentionally removed) — confirmed
-    // failing identically on plain origin/main, unrelated to any change in this commit; fixed forward.
-    expect(insert.sql).toContain("NULL,"); // account_number NULL — ROUND 181, no auto numbers on leaves
-    expect(insert.sql).toContain("p.account_subtype"); // subtype still inherited from the parent
-    // parent resolved by NAME + type, not a hardcoded uuid
-    const parentLookup = sqls[0].sql;
-    expect(parentLookup).toContain("account_name = $1");
-    expect(parentLookup).toContain("operating_company_id = $3::uuid"); // AF-1 entity scope
-    expect(sqls[0].params).toEqual(["Driver Cash Advance", "Asset", "oc"]);
-    // INSERT carries operating_company_id (per-entity nesting, no cross-entity leak)
-    expect(insert.sql).toContain("operating_company_id");
-    expect(insert.params[4]).toBe("oc");
+    expect(insert.sql).toContain("p.account_subtype");
+    expect(insert.params[4]).toBe("oc"); // entity-pinned
+  });
+
+  it("uses the driver number it is given (hire allocates ONE number for advance and escrow)", async () => {
+    const { client, sqls } = makeClient({ parentId: "parent-1245" });
+    await provisionDriverAdvanceSubAccount(client as never, { ...ARGS, nnn: "001" });
+    expect(sqls.find((q) => q.sql.includes("INSERT INTO catalogs.accounts"))!.params[5]).toBe("001");
+    expect(sqls.some((q) => q.sql.includes("max(substring(account_number"))).toBe(false);
   });
 
   it("is idempotent — skips when the sub-account already exists (no INSERT)", async () => {
-    const { client, sqls } = makeClient({ parentId: "parent-149", alreadyExists: "existing-acct" });
+    const { client, sqls } = makeClient({ parentId: "parent-1245", alreadyExists: "existing-acct" });
     const r = await provisionDriverAdvanceSubAccount(client as never, ARGS);
     expect(r).toEqual({ created: false, reason: "already_exists", accountId: "existing-acct" });
-    expect(sqls.some((s) => s.sql.includes("INSERT INTO catalogs.accounts"))).toBe(false);
+    expect(sqls.some((q) => q.sql.includes("INSERT INTO catalogs.accounts"))).toBe(false);
   });
 
-  it("graceful no-op when the parent chart lacks 'Driver Cash Advance' (e.g. TRK) — no INSERT, no throw", async () => {
+  it("graceful no-op when the entity has no advance_recovery binding (e.g. TRK) — no INSERT, no throw", async () => {
     const { client, sqls } = makeClient({ parentId: null });
     const r = await provisionDriverAdvanceSubAccount(client as never, ARGS);
     expect(r).toEqual({ created: false, reason: "parent_not_found" });
-    expect(sqls.some((s) => s.sql.includes("INSERT INTO catalogs.accounts"))).toBe(false);
+    expect(sqls.some((q) => q.sql.includes("INSERT INTO catalogs.accounts"))).toBe(false);
   });
 });
+
 
 // R-185 (Claude-Lead ruling, owner-approved 2026-09-25) — "one cost, one payable": driver-paid
 // expense reimbursements post Dr item / Cr 2175-<driver>. Owner ruling 2026-09-25 ("already been

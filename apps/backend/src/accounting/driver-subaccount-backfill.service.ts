@@ -4,7 +4,7 @@
 // hardcoding. DEFAULT MODE = DRY-RUN (zero writes). The real write run requires explicit apply=true.
 
 import {
-  planDriverSubAccount,
+  planDriverAdvanceSubAccount,
   planDriverEscrowSubAccount,
   driverAdvanceSubAccountName,
   driverEscrowSubAccountName,
@@ -12,13 +12,13 @@ import {
   provisionDriverEscrowSubAccount,
   upsertDriverAdvanceAccountLink,
   upsertDriverEscrowAccountLink,
-  DRIVER_ADVANCE_PARENT_NAME,
   type SubAccountPlan,
 } from "./driver-subaccount-provision.service.js";
 // ACCT-F164 — the THIRD financial primitive a driver needs. Escrow + advance sub-accounts alone do
 // not make a driver payable: A/P needs a VENDOR. Nothing else in the backend creates one except the
 // QBO puller, which never runs for USMCA (no QuickBooks, locked decision §8.5).
 import { ensureDriverApVendor } from "./driver-vendor-link.service.js";
+import { allocateDriverSubAccountNnn } from "./driver-subaccount-number.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -92,9 +92,7 @@ export async function runDriverSubAccountBackfill(
   for (const d of drivers) {
     totals.drivers_scanned += 1;
 
-    const assetPlan = await planDriverSubAccount(client, {
-      parentName: DRIVER_ADVANCE_PARENT_NAME,
-      parentType: "Asset",
+    const assetPlan = await planDriverAdvanceSubAccount(client, {
       subAccountName: driverAdvanceSubAccountName(d.driverName),
       operatingCompanyId: input.operatingCompanyId,
     });
@@ -124,7 +122,9 @@ export async function runDriverSubAccountBackfill(
     // (they are idempotent — skip when the account exists but still return its accountId) so an EXISTING
     // driver whose account exists but whose link was never stored gets its link backfilled too.
     if (apply && input.actorUserId) {
-      const provArgs = { operatingCompanyId: input.operatingCompanyId, driverId: d.driverId, driverName: d.driverName, actorUserId: input.actorUserId };
+      // ROUND 389.3 RULING 2 — one number per driver for both sub-accounts.
+      const nnn = await allocateDriverSubAccountNnn(client, input.operatingCompanyId, d.driverId);
+      const provArgs = { operatingCompanyId: input.operatingCompanyId, driverId: d.driverId, driverName: d.driverName, actorUserId: input.actorUserId, nnn };
       const advRes = await provisionDriverAdvanceSubAccount(client, provArgs);
       const escRes = await provisionDriverEscrowSubAccount(client, { ...provArgs, hireDate: d.hireDate ?? null });
       if (advRes.accountId) {

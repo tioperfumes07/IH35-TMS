@@ -48,6 +48,7 @@ import {
   upsertDriverAdvanceAccountLink,
   upsertDriverEscrowAccountLink,
 } from "../accounting/driver-subaccount-provision.service.js";
+import { allocateDriverSubAccountNnn } from "../accounting/driver-subaccount-number.js";
 import { registerDriverPdfExportRoutes } from "./driver-pdf-export.routes.js";
 import { registerDriverTrainingRoutes } from "./driver-training.routes.js";
 import { registerDriverW8benRoutes } from "./driver-w8ben.routes.js";
@@ -1013,6 +1014,9 @@ export async function createDriverCanonical(
               driverId: String(row.id),
               driverName: `${row.first_name ?? ""} ${row.last_name ?? ""}`.trim(),
               actorUserId: authUser.uuid,
+              // ROUND 389.3 RULING 2 — ONE number per driver under every parent: allocated once, used for both
+              // his 1245-00-nnn advance and his 2100-00-nnn escrow sub-account.
+              nnn: await allocateDriverSubAccountNnn(client, resolvedOperatingCompanyId, String(row.id)),
             };
             // Provision BOTH sub-accounts AND STORE the returned account ids against the driver so the
             // driver <-> account link is reachable both directions (no orphan). The provisioners return
