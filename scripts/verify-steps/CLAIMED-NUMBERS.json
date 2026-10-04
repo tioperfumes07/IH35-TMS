@@ -14087,5 +14087,300 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-driver-company-scope"
+  },
+  "16433": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-create-access-provenance"
+  },
+  "16437": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-create-cdl-class-catalog-backed"
+  },
+  "16441": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-create-conflict-field-honesty"
+  },
+  "16445": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-create-mints-vendor"
+  },
+  "16449": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-creator-active-companies-only"
+  },
+  "16453": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-day-summary-empty-state-not-red"
+  },
+  "16457": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-day-summary-route-mounted"
+  },
+  "16461": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-detail-company-scope"
+  },
+  "16465": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-document-alerts-exact-range"
+  },
+  "16469": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-entity-default"
+  },
+  "16473": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-export-pdf-resolves-api-url"
+  },
+  "16477": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-f7334-canonical-tags-wired"
+  },
+  "16481": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-hos-manual-edit-complete-audit"
+  },
+  "16485": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-hub-request-driver-link"
+  },
+  "16489": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-hub-surfaces-pack"
+  },
+  "16493": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-identity-mirror-write-identity"
+  },
+  "16497": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-import-modal-lifecycle"
+  },
+  "16501": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-import-response-honesty"
+  },
+  "16505": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-inactivity-preview"
+  },
+  "16509": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-layover-datepicker-labels"
+  },
+  "16513": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-leave-request-reverse"
+  },
+  "16517": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-leave-review-cas"
+  },
+  "16521": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-list-excludes-deactivated"
+  },
+  "16525": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-listing-excludes-pseudo-users"
+  },
+  "16529": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-maint-history-failure-exclusion"
+  },
+  "16533": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-manager-home"
+  },
+  "16537": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-message-delivery-handler-scope"
+  },
+  "16541": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-message-delivery-write-scope"
+  },
+  "16545": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-message-persistence-identity"
+  },
+  "16549": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-message-read-company-lifecycle"
+  },
+  "16553": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-modal-datepicker-labels"
+  },
+  "16557": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-onboarding-action-company-lifecycle"
+  },
+  "16561": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-onboarding-completion-fail-loud"
+  },
+  "16565": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-operations-depth"
+  },
+  "16569": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-pairing-units-key"
+  },
+  "16573": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-phone-login-disable-reenable"
+  },
+  "16577": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-phone-login-link-cas"
+  },
+  "16581": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-picker-limit"
+  },
+  "16585": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-profile-border-credentials-complete"
+  },
+  "16589": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-profile-deactivate-failure-lifecycle"
+  },
+  "16593": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-profile-dead-actions"
+  },
+  "16597": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-profile-default-truck-symmetry"
+  },
+  "16601": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-profile-dp1-routes"
+  },
+  "16605": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-profile-dp2"
+  },
+  "16609": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-profile-dqf-kpi-actions"
+  },
+  "16613": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-profile-hos-source"
+  },
+  "16617": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-profile-license-endorsements"
+  },
+  "16621": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-profile-navigation"
+  },
+  "16625": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-profile-part2-sections-complete"
+  },
+  "16629": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-profile-pdf-export-puppeteer"
+  },
+  "16633": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-profile-scope"
+  },
+  "16637": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-profile-sections-complete"
+  },
+  "16641": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-profile-training-records-rls"
+  },
+  "16645": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-pwa-dispatch-view"
+  },
+  "16649": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-pwa-i18n-coverage"
+  },
+  "16653": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-pwa-incident-full"
+  },
+  "16657": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-pwa-load-status-gate"
+  },
+  "16661": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-qualification-gate-shared"
+  },
+  "16665": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-qualification-update-audit-failure-truth"
   }
 }
