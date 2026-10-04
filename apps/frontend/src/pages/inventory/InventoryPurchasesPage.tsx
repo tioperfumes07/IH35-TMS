@@ -231,7 +231,7 @@ export function InventoryPurchasesPage() {
                 dataAttributes={{ "data-inventory-purchases-filter-toolbar": "collapsed" }}
               >
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <label className="text-[11px] text-slate-600">
+                  <label className="text-xs text-slate-600">
                     Vendor
                     <SelectCombobox
                       value={stagedFilters.draft.vendorFilter}
@@ -247,7 +247,7 @@ export function InventoryPurchasesPage() {
                       ))}
                     </SelectCombobox>
                   </label>
-                  <label className="text-[11px] text-slate-600">
+                  <label className="text-xs text-slate-600">
                     Status
                     <SelectCombobox
                       value={stagedFilters.draft.statusFilter}

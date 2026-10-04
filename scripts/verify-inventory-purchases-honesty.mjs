@@ -61,6 +61,13 @@ export function computeFailures(source) {
   if (!/workOrderLinkedOnly[\s\S]*Boolean\(row\.work_order_id\)/.test(source)) {
     errors.push("Purchase History linked-only filter must use the canonical work-order FK");
   }
+  // BANK-F91320 leftover refuse — InventoryPurchasesPage.tsx page-scoped text token ratchet
+  if (source.includes("text-[11px]")) {
+    errors.push("InventoryPurchasesPage.tsx: leftover text-[11px]");
+  }
+  if (source.includes("#8A92AB")) {
+    errors.push("InventoryPurchasesPage.tsx: leftover off-scale muted #8A92AB");
+  }
   return errors;
 }
 
@@ -114,6 +121,12 @@ function selftest() {
     }
   }
   if (!ok) process.exit(1);
+  // BANK-F91320 leftover plant — InventoryPurchasesPage page-scoped text token ratchet
+  const leftoverPlant = good + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!computeFailures(leftoverPlant).some((f) => f.includes("leftover text-[11px]"))) {
+    console.error("SELFTEST FAIL — leftover plant escaped");
+    process.exit(1);
+  }
   console.log(`${LABEL} --selftest OK`);
 }
 
