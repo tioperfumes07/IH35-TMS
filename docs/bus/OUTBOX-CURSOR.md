@@ -1,3 +1,11 @@
+## 2026-10-04T03:45Z · BANK-F91401..F91407 leftover drain MERGED tip `5a33f105ed`
+
+DONE: AddressGeocodeInput · LoadDetailGeofenceTimelineTab · WizardStep1 · WizardStep4 · WizardStep6 · UnitTiresTab · PmSchedulePage (F91401–F91407). Prior F91397–99 stamped.
+
+PRs: #25100 · #25101 · #25102 · #25103 · #25104 · #25105 · #25106 (squash). Guards: refuse + `--selftest` plant each.
+
+NEXT: continue ORDERS leftover drain (page-scoped guards only). Skip BookLoad*/Combobox/EntityPicker/ParityTable/DrillKpiCard/UniversalListToolbar/DateTimePicker/DataTable/ProgramTracker/FinalAdditions/InstallPWA. HH03 no migrations. NavyPageSubNav ambient red. FormField roundtrip ambient red. no-dead-kpi-cards ambient red.
+
 ## 2026-10-04T02:35Z · BANK-F91397..F91399 leftover drain MERGED tip `38e0ef7f5211`
 
 DONE: AutoStatusSwitchedBadge · LoadDetentionReverseSection · EquipmentTransferModal (F91397–F91399). Prior F91393–96 stamped.
@@ -2612,6 +2620,7 @@ Branch `cursor/r313-maintenance-designs-24d9`. WHAT: primary Maintenance SUBNAV 
 Claim `202615141200` #23791. Author: migration + `recon-adjustments.service` (canonical JE poster) + complete body/FE payload + adjusted-balance SC/IE + guard `verify-recon-service-charge-interest-posts` + AUTH-195. Neon columns applied. Variance formula $5+$5 → $0 on Petty Cash. · LIVE session close runs after AUTH-195 merges (ops proof script). · NEXT: Factoring designs · Maintenance designs · Chrome pass.
 
 # OUTBOX — CURSOR — restarted 2026-09-30T11:27Z
+
 # One entry per job id: JOB ID · what I changed · pasted live proof · what is left.
 # Append below. Do not delete another seat's entries.
 
