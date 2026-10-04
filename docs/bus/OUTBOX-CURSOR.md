@@ -1,3 +1,9 @@
+## 2026-10-04T08:50Z · BANK-F91460 E-42 dashcam viewer WIRED CI · tip `284f73551c`
+
+DONE: #25202 — verify-steps/2204 now runs ops/verify-e42-dashcam-viewer --selftest.
+
+NEXT: BANK-F91461 wire E-41 engine-status-board into 3564 · C-21 odometer + C-22 fail=triage · skip pile parked · HH08 no migrations.
+
 ## 2026-10-04T08:42Z · BANK-F91459 E-44 stops/miles profile WIRED CI · tip `0444b4bfb9`
 
 DONE: #25201 — verify-steps/4584 now runs ops/verify-e44-stops-miles-profile --selftest.
