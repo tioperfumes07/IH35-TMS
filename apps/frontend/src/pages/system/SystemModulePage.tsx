@@ -545,7 +545,7 @@ function strokeForLink(state: TxHealthLink["state"]): { color: string; dash?: st
   // TXH_LINK_STATE_WIRED TXH_LINK_STATE_MISSING TXH_LINK_STATE_NA TXH_LINK_STATE_BLOCKED
   if (state === "wired") return { color: "#4B5563" };
   if (state === "missing") return { color: "#dc2626", dash: "6 4" };
-  if (state === "not_applicable") return { color: "#94a3b8", dash: "1 3" };
+  if (state === "not_applicable") return { color: "#4B5563", dash: "1 3" };
   if (state === "blocked_by_constraint") return { color: "#b45309", dash: "4 3" };
   return { color: "#4B5563" };
 }
