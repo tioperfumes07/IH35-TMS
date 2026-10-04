@@ -1,10 +1,10 @@
 {
-  "healthzSha": "805a5bb",
-  "generated_at": "2026-10-04T04:43:38.202Z",
+  "healthzSha": "2ae0bd7",
+  "generated_at": "2026-10-04T06:48:36.669Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "805a5bb",
+    "deployedSha": "2ae0bd7",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 25150,
-      "title": "FINDING: ACCT-F2026100408 LANE: FINANCIAL (verify-reclassify-batches-are-whole red on main after ROUND 390.1: it required the reclassify undo to call reverseJournalEntryNoFlip, which 390.1 correctly replaced — a reclass JE's out-leg is itself a reversal, and a reversal of a reversal is now refused by the writer)",
+      "number": 25177,
+      "title": "FINDING: BANK-F91436 wire C-51 banking Home+Escrow ops into CI step 12392",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 11:43 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25150",
-      "sha": "02297db87d",
-      "committedAtIso": "2026-10-03T23:43:21-05:00"
+      "mergedAtCt": "10/04/2026, 01:45 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25177",
+      "sha": "4c70a5cab4",
+      "committedAtIso": "2026-10-04T01:45:56-05:00"
     },
     {
-      "number": 25149,
-      "title": "FINDING: ACCT-F9978 LANE: FINANCIAL (ROUND 390.1: a reversal line is TERMINAL — the one posting-line writer refuses, by name, a line that reverses a line which is itself a reversal; reinstate, check unvoid and reclassify undo now restore reversed money as fresh lines instead of \"voiding the void's reversing JE\"; the zero-tolerance chain guard is added)",
+      "number": 25176,
+      "title": "FINDING: ACCT-F2026100411 LANE: FINANCIAL (four static reds on main blocking every seat: the CC-2 share of verify-regclass-fallback-intent, the reefer credit report had no Print, and two Load-costs register tests asserted behaviour the owner overruled)",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 11:32 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25149",
-      "sha": "805a5bb97b",
-      "committedAtIso": "2026-10-03T23:32:13-05:00"
+      "mergedAtCt": "10/04/2026, 01:45 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25176",
+      "sha": "edc291794d",
+      "committedAtIso": "2026-10-04T01:45:38-05:00"
     },
     {
-      "number": 25148,
-      "title": "FINDING: N/A (CLAIM-RESERVE verify-step — reservation-only commit, no code fix)",
+      "number": 25175,
+      "title": "FINDING: BANK-F91435 wire B-4 check-creator ops into CI step 3832",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 11:29 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25148",
-      "sha": "45954d411d",
-      "committedAtIso": "2026-10-03T23:29:23-05:00"
+      "mergedAtCt": "10/04/2026, 01:42 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25175",
+      "sha": "0bedf9ca93",
+      "committedAtIso": "2026-10-04T01:42:38-05:00"
     },
     {
-      "number": 25147,
-      "title": "FINDING: ACCT-F2026100407 LANE: FINANCIAL (three reds on main from CC-2 changes blocked every seat's push — C6 on the create-only recurring worker, the U17 reclassify panel missing from the wizard inventory, and two bill/invoice filter checks pinned to function names FILTER-MULTI-01 replaced)",
+      "number": 25174,
+      "title": "FINDING: BANK-F91434 wire B-3 feed/match ops into CI step 1222",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 11:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25147",
-      "sha": "15a2b58898",
-      "committedAtIso": "2026-10-03T23:28:48-05:00"
+      "mergedAtCt": "10/04/2026, 01:38 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25174",
+      "sha": "6cd4690e3b",
+      "committedAtIso": "2026-10-04T01:38:42-05:00"
     },
     {
-      "number": 25146,
-      "title": "Cursor- ROUND 389.2 wire 39 PASSING orphan UI guards (verify-steps 12330-12406)",
+      "number": 25173,
+      "title": "FINDING: BANK-F91433 wire B-2 recon ops into CI step 1436",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 11:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25146",
-      "sha": "9901c7317d",
-      "committedAtIso": "2026-10-03T23:28:03-05:00"
+      "mergedAtCt": "10/04/2026, 01:31 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25173",
+      "sha": "cd6393e80f",
+      "committedAtIso": "2026-10-04T01:31:31-05:00"
     },
     {
-      "number": 25145,
-      "title": "FINDING: ACCT-F9981 LANE: FINANCIAL (ROUND 389.3 ruling 2: driver sub-accounts are numbered <parent>-00-nnn with ONE nnn per driver across 1245/1255/1256/1257/2100 — the 28 live DRIVERCASHAD896665-* advance accounts are renamed in place to 1245-00-<the driver's escrow nnn>, both writers number from one shared allocator, and advance creation provisions a missing account instead of refusing)",
+      "number": 25172,
+      "title": "FINDING: BANK-F91432 wire B-1 register connectivity ops into CI step 1158",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 11:25 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25145",
-      "sha": "f96c83c9c1",
-      "committedAtIso": "2026-10-03T23:25:00-05:00"
+      "mergedAtCt": "10/04/2026, 01:25 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25172",
+      "sha": "f4d9e5f189",
+      "committedAtIso": "2026-10-04T01:25:23-05:00"
     },
     {
-      "number": 25144,
-      "title": "FINDING: ACCT-F9979 LANE: FINANCIAL (verify-sweep-c6-money-insert-requires-je-poster red on main for every seat: two CC-1 writers carry no C6 exemption — driver_finance.escrow_balances identity row (moves no money since 202615380100) and the open-settlement pay line (posted once at settlement close) — each now names why it posts no JE)",
+      "number": 25171,
+      "title": "FINDING: OUTBOX-CURSOR BANK-F91431 MERGED tip de05e37ad4",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 11:23 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25144",
-      "sha": "a956d5dfa5",
-      "committedAtIso": "2026-10-03T23:23:09-05:00"
+      "mergedAtCt": "10/04/2026, 01:18 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25171",
+      "sha": "8f6b3d9bac",
+      "committedAtIso": "2026-10-04T01:18:56-05:00"
     },
     {
-      "number": 25142,
-      "title": "FINDING: N/A LANE: DOCS (CC-3: ROUND 393 batch-five push blocked by three guards already red on main — verbatim, with owners)",
+      "number": 25170,
+      "title": "FINDING: BANK-F91431 wire ops B-5 reclassify-batch into CI step 12270",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 11:22 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25142",
-      "sha": "7579288805",
-      "committedAtIso": "2026-10-03T23:22:01-05:00"
+      "mergedAtCt": "10/04/2026, 01:17 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25170",
+      "sha": "de05e37ad4",
+      "committedAtIso": "2026-10-04T01:17:58-05:00"
     },
     {
-      "number": 25141,
-      "title": "Cursor- CLAIM-RESERVE 12330-12406 — ROUND 389.2 orphan UI guards (39 EVEN slots)",
+      "number": 25169,
+      "title": "FINDING: BANK-F91430 B-5 reclassify period-balances + Account no. chrome",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 11:21 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25141",
-      "sha": "cd031832c9",
-      "committedAtIso": "2026-10-03T23:21:58-05:00"
+      "mergedAtCt": "10/04/2026, 01:13 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25169",
+      "sha": "f102fd26a2",
+      "committedAtIso": "2026-10-04T01:13:55-05:00"
     },
     {
-      "number": 25140,
-      "title": "CC-2-389.4: recurring worker never posts (R1) + bank-feed guard recomputes from DB (R2) + bank-feed-gl-posting triage",
+      "number": 25168,
+      "title": "FINDING: N/A (CLAIMED-REGEN — reservation-only commit, no code fix: the verify-step claims for the Lead's ROUND 393 batch-five (r389 wires 165 orphan guards as verify-steps), split out of the squashed batch so the feature commit does not edit CLAIMED-NUMBERS.json)",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 10:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25140",
-      "sha": "4693704449",
-      "committedAtIso": "2026-10-03T22:31:51-05:00"
+      "mergedAtCt": "10/04/2026, 01:07 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25168",
+      "sha": "7fffca8fd9",
+      "committedAtIso": "2026-10-04T01:07:36-05:00"
     }
   ]
 }
