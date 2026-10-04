@@ -272,7 +272,7 @@ export function ReeferFuelCreditReportPage() {
       ) : null}
 
       {totals && totals.fills_missing_gallons > 0 ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-xs text-slate-700" data-testid="reefer-missing-banner">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#4B5563]" data-testid="reefer-missing-banner">
           {totals.fills_missing_gallons} reefer fill{totals.fills_missing_gallons > 1 ? "s have" : " has"} no gallons — the credit counts only gallons
           on record. Enter them from the receipt in the Gallons column.
         </div>
