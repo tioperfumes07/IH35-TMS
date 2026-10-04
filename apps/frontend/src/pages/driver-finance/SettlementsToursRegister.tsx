@@ -155,7 +155,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
             className={`ldt-btn ${state === s ? "p" : "g"} capitalize`}
           >
             {s === "open" ? "Pre-Settlement (open)" : "Settlement (closed)"}
-            <span className={`ml-1 inline-flex min-w-[16px] items-center justify-center rounded-sm px-1 ${state === s ? "bg-white/20 text-white" : "bg-gray-100 text-[#6B7280]"}`} style={{ fontSize: 10 }}>
+            <span className={`ml-1 inline-flex min-w-[16px] items-center justify-center rounded-sm px-1 text-section-header ${state === s ? "bg-white/20 text-white" : "bg-gray-100 text-[#6B7280]"}`}>
               {(s === "open" ? openCount : closedCount) ?? "\u2014"}
             </span>
           </button>
