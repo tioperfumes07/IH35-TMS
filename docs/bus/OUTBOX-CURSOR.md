@@ -1,3 +1,9 @@
+## 2026-10-04T07:42Z · BANK-F91443 C-06 viewport auto-adjust WIRED CI · tip `b35f63a232`
+
+DONE: #25185 — verify-steps/3122 now runs ops/verify-c06-viewport-auto-adjust --selftest.
+
+NEXT: BANK-F91444 wire C-37 house table format into 1176 · C-23 kanban PASS next · C-21/C-22 fail=triage · skip pile parked · HH07 no migrations.
+
 ## 2026-10-04T07:36Z · BANK-F91442 C-05 minimum-scroll WIRED CI · tip `5d476b9e06`
 
 DONE: #25184 — verify-steps/11836 now runs ops/verify-c05-minimum-scroll --selftest.
