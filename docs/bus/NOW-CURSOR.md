@@ -1,4 +1,14 @@
-# NOW — CURSOR — leftover/slate RESUMES after BANK-F91551
+# NOW — CURSOR — standing engine ENG-CF (D-4) then ENG-7D / ENG-MATCH
+
+363-CUR-A remainder CLOSED on tip `#25399` `6d6a20fc2b`. Leftover after F91552 is overflow.
+Owner: no Chrome — owner walks Chrome. Excel of 96h jobs:
+`/Users/jorgemunoz/Downloads/CURSOR-10-4-26-ASSIGNED WORKED ETC.xlsx`
+
+NOW: ENG-CF cash-flow classifier — Faro full recourse → FINANCING on 2150 / factoring_advance;
+1200/1230/1235 reserve + collections stay OPERATING (ASU 2016-15 investing never touches the 1.5%).
+NEXT after merge: ENG-7D unmatched_7d must ALERT not count · then ENG-MATCH two bank-match defects.
+
+# WAS — leftover/slate RESUMES after BANK-F91551
 
 **r396 is LIVE** and later lives still carry the boot fix. First live: `dep-db18ngpmgk9c73d5dfgg` sha `f256a2cc11` (#25300).
 
