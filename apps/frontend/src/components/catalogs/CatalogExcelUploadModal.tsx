@@ -126,7 +126,7 @@ export function CatalogExcelUploadModal({ open, catalogName, displayName, onClos
         <div className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-slate-700">
           <div className="font-semibold">{statusLabel}</div>
           {jobQuery.data ? (
-            <div className="mt-1 grid grid-cols-3 gap-2 text-[11px]">
+            <div className="mt-1 grid grid-cols-3 gap-2 text-xs">
               <span>Total: {jobQuery.data.rows_total}</span>
               <span>OK: {jobQuery.data.rows_succeeded}</span>
               <span>Failed: {jobQuery.data.rows_failed}</span>
