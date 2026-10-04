@@ -1,3 +1,15 @@
+## 2026-10-04T12:36Z · BANK-F91504 LoadsReport leftover fontSize 11 totals WIRED · this PR
+
+DONE: LoadsReportPage totals label fontSize 11 → text-section-header; leftover refuse on verify-loads-report-surface; unused EVEN 4126 --selftest + live.
+
+NEXT: leftover fontSize 11 chrome (LaneProfit ticks already 11 / Deadhead ticks already 11) · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T12:35Z · BANK-F91503 TruckLine Status leftover WIRED CI · tip `35d6fed3d6`
+
+DONE: #25245 — TruckLineBoard Status text-section-header; verify-steps/4122 leftover refuse --selftest + live.
+
+NEXT: BANK-F91504 LoadsReport leftover fontSize: 11 totals + leftover refuse on 4126 · skip pile parked · HH12 no migrations this tick.
+
 ## 2026-10-04T12:30Z · BANK-F91503 TruckLine Status leftover fontSize 11 WIRED · this PR
 
 DONE: TruckLineBoard Status label fontSize 11 → text-section-header; leftover refuse on verify-truck-line-units-only; unused EVEN 4122 --selftest + live.

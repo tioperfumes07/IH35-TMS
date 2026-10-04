@@ -50,6 +50,9 @@ export function assertLoadsReportSurface(srcs) {
   if (!/footerCells/.test(srcs.page)) {
     fails.push("LoadsReportPage must render ParityTable footerCells totals row");
   }
+  if (/fontSize:\s*11\b/.test(srcs.page)) {
+    fails.push("LoadsReportPage leftover fontSize: 11 — use text-section-header");
+  }
   if (!/exportFilename="loads-report.csv"/.test(srcs.page)) {
     fails.push("LoadsReportPage must export CSV via ParityTable exportFilename");
   }
@@ -77,6 +80,11 @@ async function selftest() {
   const fails = assertLoadsReportSurface(srcs);
   if (fails.length) {
     console.error(`${LABEL} SELFTEST FAILED:\n  - ${fails.join("\n  - ")}`);
+    process.exit(1);
+  }
+  const leftoverPlant = { ...srcs, page: `${srcs.page}\n<span style={{ fontSize: 11 }}>plant</span>` };
+  if (!assertLoadsReportSurface(leftoverPlant).some((e) => e.includes("leftover fontSize: 11"))) {
+    console.error(`${LABEL} SELFTEST FAILED: leftover fontSize: 11 plant escaped`);
     process.exit(1);
   }
   console.log(`${LABEL} selftest OK`);

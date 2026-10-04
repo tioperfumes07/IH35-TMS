@@ -255,7 +255,7 @@ export function LoadsReportPage() {
   const footerCells = query.data
     ? {
         load_number: (
-          <span className="font-semibold uppercase tracking-[0.4px] text-gray-600" style={{ fontSize: 11 }}>
+          <span className="font-semibold uppercase tracking-[0.4px] text-gray-600 text-section-header">
             Totals ({filtered.length})
           </span>
         ),
