@@ -306,17 +306,21 @@ export async function commitFaroReserveImport(
   let imported = 0;
   for (const r of preview.rows.filter((x) => !x.already_imported)) {
     const entry = await client.query<{ id: string }>(
+      // KILL THE SECOND SYSTEM (owner 2026-10-03, tables 10 + 11): Faro's printed running balance and the short-pay
+      // "Balance:" figure are NOT stored. The parser already refuses any row where previous balance + amount != printed
+      // balance and checks the short-pay arithmetic, so both are recomputable from the movement rows and the note; the
+      // one external fact kept is the statement's ending balance, on the register account (below), as for every feed.
       `INSERT INTO accounting.faro_reserve_entries
-         (operating_company_id, register, bank_account_id, entry_kind, faro_entry_id, entry_date, amount_cents, running_balance_cents,
-          faro_invoice_number, po_ref, debtor_name, pmt_ref, note, occurrence, short_pay_balance_cents, short_pay_paid_cents,
+         (operating_company_id, register, bank_account_id, entry_kind, faro_entry_id, entry_date, amount_cents,
+          faro_invoice_number, po_ref, debtor_name, pmt_ref, note, occurrence, short_pay_paid_cents,
           counterparty, import_batch_ref, created_by_user_id)
-       VALUES ($1::uuid, $2, $3::uuid, $4, $5, $6::date, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19::uuid)
+       VALUES ($1::uuid, $2, $3::uuid, $4, $5, $6::date, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17::uuid)
        ON CONFLICT DO NOTHING
        RETURNING id::text`,
       [
         input.operating_company_id, preview.register, input.bank_account_id, r.entry_kind, r.faro_entry_id, r.entry_date, r.amount_cents,
-        r.running_balance_cents, r.faro_invoice_number, r.po_ref, r.debtor_name, r.pmt_ref, r.note, r.occurrence,
-        r.short_pay_balance_cents, r.short_pay_paid_cents, r.counterparty, batchRef, input.actor_user_id,
+        r.faro_invoice_number, r.po_ref, r.debtor_name, r.pmt_ref, r.note, r.occurrence,
+        r.short_pay_paid_cents, r.counterparty, batchRef, input.actor_user_id,
       ]
     );
     const entryId = entry.rows[0]?.id;
@@ -340,7 +344,26 @@ export async function commitFaroReserveImport(
     await client.query(`UPDATE accounting.faro_reserve_entries SET bank_transaction_id = $1::uuid WHERE id = $2::uuid`, [bank.rows[0]!.id, entryId]);
     imported += 1;
   }
-  return { register: preview.register, imported, already_imported: preview.rows.length - preview.new_count, rejected: preview.rejected, batch_ref: batchRef };
+  // The statement balance: Faro's ending balance for this register, kept where every feed keeps its bank's balance
+  // (banking.bank_accounts.current_balance_cents), which the tie-out engine compares to the register's GL account (1230 /
+  // 1235). Written only when this report reaches at least as far as anything already imported, so re-importing an older
+  // report never rolls the statement back.
+  const lastDate = preview.rows.reduce<string | null>((m, r) => (m == null || r.entry_date > m ? r.entry_date : m), null);
+  let statementUpdated = false;
+  if (preview.ending_balance_cents != null && lastDate != null) {
+    const u = await client.query(
+      `UPDATE banking.bank_accounts b SET current_balance_cents = $3, last_synced_at = now(), updated_at = now()
+        WHERE b.id = $1::uuid AND b.operating_company_id = $2::uuid
+          AND $4::date >= COALESCE((SELECT max(e.entry_date) FROM accounting.faro_reserve_entries e
+                                     WHERE e.operating_company_id = $2::uuid AND e.bank_account_id = $1::uuid), $4::date)`,
+      [input.bank_account_id, input.operating_company_id, preview.ending_balance_cents, lastDate]
+    );
+    statementUpdated = (u.rowCount ?? 0) === 1;
+  }
+  return {
+    register: preview.register, imported, already_imported: preview.rows.length - preview.new_count, rejected: preview.rejected, batch_ref: batchRef,
+    statement_balance_cents: statementUpdated ? preview.ending_balance_cents : null, statement_updated: statementUpdated,
+  };
 }
 
 type EntryRow = {
@@ -508,19 +531,27 @@ export async function faroReserveDepositsOn(client: DbClient, oci: string, date:
 
 export async function listFaroReserveEntries(client: DbClient, oci: string, bankAccountId: string) {
   const r = await client.query<Record<string, unknown>>(
-    `SELECT e.id::text, e.register, e.entry_kind, e.faro_entry_id, e.entry_date::text, e.amount_cents::text, e.running_balance_cents::text,
+    // running_balance_cents is DERIVED (tables 10 + 11): the register's statement balance minus every movement after this
+    // row. End-of-day balances are exact; within one day rows run in a fixed order (import, Faro ID, occurrence), which
+    // can differ from Faro's printed order inside that day. NULL until a statement balance exists for the register.
+    `SELECT e.id::text, e.register, e.entry_kind, e.faro_entry_id, e.entry_date::text, e.amount_cents::text,
+            CASE WHEN b.last_synced_at IS NULL THEN NULL ELSE
+              (b.current_balance_cents - COALESCE(sum(e.amount_cents) OVER (
+                 ORDER BY e.entry_date, e.created_at, e.faro_entry_id NULLS LAST, e.occurrence, e.id
+                 ROWS BETWEEN 1 FOLLOWING AND UNBOUNDED FOLLOWING), 0))::text END AS running_balance_cents,
             e.faro_invoice_number, e.po_ref, e.debtor_name, e.pmt_ref, e.note, e.counterparty, e.bank_transaction_id::text,
             e.journal_entry_id::text, e.posted_at::text, e.short_pay_resolution, e.short_pay_reason, e.short_pay_credit_memo_id::text,
             e.short_pay_resolution_journal_entry_id::text, l.invoice_id::text, i.display_id AS invoice_display_id, l.customer_id::text,
             c.customer_name, l.purchase_id::text, p.display_id AS purchase_display_id
        FROM accounting.faro_reserve_entries e
+       JOIN banking.bank_accounts b ON b.id = e.bank_account_id AND b.operating_company_id = e.operating_company_id
        LEFT JOIN accounting.factoring_purchase_lines l
               ON l.operating_company_id = e.operating_company_id AND l.faro_invoice_number = e.faro_invoice_number AND l.voided_at IS NULL
        LEFT JOIN accounting.factoring_purchases p ON p.id = l.purchase_id
        LEFT JOIN accounting.invoices i ON i.id = l.invoice_id
        LEFT JOIN mdata.customers c ON c.id = l.customer_id
       WHERE e.operating_company_id = $1::uuid AND e.bank_account_id = $2::uuid
-      ORDER BY e.entry_date, e.created_at`,
+      ORDER BY e.entry_date, e.created_at, e.faro_entry_id NULLS LAST, e.occurrence, e.id`,
     [oci, bankAccountId]
   );
   return r.rows.map((x) => ({ ...x, amount_cents: Number(x.amount_cents), running_balance_cents: x.running_balance_cents == null ? null : Number(x.running_balance_cents) }));

@@ -4,7 +4,7 @@ const { mockCreateJe, mockResolveRole } = vi.hoisted(() => ({ mockCreateJe: vi.f
 vi.mock("../../accounting/journal-entries.service.js", () => ({ createJournalEntryOnClient: mockCreateJe }));
 vi.mock("../../accounting/coa-roles/resolver.service.js", () => ({ resolveRoleAccount: mockResolveRole }));
 
-import { FaroReserveError, kindOf, parseFaroReserveReport, postFaroReserveEntryOnClient } from "../faro-reserve-entries.service.js";
+import { FaroReserveError, commitFaroReserveImport, kindOf, parseFaroReserveReport, postFaroReserveEntryOnClient } from "../faro-reserve-entries.service.js";
 
 const H = `"ID","Inv","PO Ref#","Debtor","Pmt Ref","Note","Date","Amount","Balance"`;
 const BEGIN = `"","","","","","Beginning Balance","","","0.00"`;
@@ -155,5 +155,57 @@ describe("Faro reserve posters — post what the line says", () => {
     expect(je.postings[0]).toMatchObject({ account_id: "acct:factor_cash_reserve_held", debit_or_credit: "debit", source_transaction_id: "e-cash" });
     expect(je.postings[1]).toMatchObject({ account_id: "acct:factor_reserve_held", debit_or_credit: "credit", source_transaction_id: "e-esc" });
     expect(mockCreateJe).toHaveBeenCalledTimes(1);
+  });
+});
+
+// KILL THE SECOND SYSTEM (owner 2026-10-03), tables 10 + 11: the import stores no Faro balance per row; the one external fact
+// kept is Faro's statement ending balance, on the register account, and only from a report at least as new as what is held.
+describe("Faro reserve import — no stored balances; statement balance on the register account", () => {
+  const csv = [
+    H, BEGIN,
+    `"393702","002","4483","IMPACT BULK LOGISTICS LLC","","Escrow Reserve Held","08/10/2026","45.00","45.00"`,
+    `"394572","004","2239480","Watco","","Transfer Escrow to Cash","09/10/2026","-25.50","19.50"`,
+  ].join("\n");
+  const fakeClient = (statementRowCount: number) => {
+    const calls: { sql: string; params: unknown[] }[] = [];
+    let n = 0;
+    const client = {
+      calls,
+      query: vi.fn(async (sql: string, params: unknown[] = []) => {
+        calls.push({ sql, params });
+        if (/SELECT r\.role FROM banking\.bank_accounts/.test(sql)) return { rows: [{ role: "factor_reserve_held" }], rowCount: 1 };
+        if (/INSERT INTO accounting\.faro_reserve_entries/.test(sql)) return { rows: [{ id: `e${++n}` }], rowCount: 1 };
+        if (/INSERT INTO banking\.bank_transactions/.test(sql)) return { rows: [{ id: `bt${n}` }], rowCount: 1 };
+        if (/UPDATE banking\.bank_accounts b SET current_balance_cents/.test(sql)) return { rows: [], rowCount: statementRowCount };
+        return { rows: [], rowCount: 0 };
+      }),
+    };
+    return client;
+  };
+  const input = { operating_company_id: OPCO, bank_account_id: "11111111-1111-1111-1111-111111111111", text: csv, actor_user_id: "22222222-2222-2222-2222-222222222222" };
+
+  it("inserts neither running_balance_cents nor short_pay_balance_cents", async () => {
+    const c = fakeClient(1);
+    await commitFaroReserveImport(c as never, input);
+    const inserts = c.calls.filter((x) => /INSERT INTO accounting\.faro_reserve_entries/.test(x.sql));
+    expect(inserts).toHaveLength(2);
+    for (const i of inserts) {
+      expect(i.sql).not.toMatch(/running_balance_cents|short_pay_balance_cents/);
+      expect(i.params).toHaveLength(17);
+    }
+  });
+
+  it("keeps Faro's ending balance on the register account, guarded to the newest report", async () => {
+    const c = fakeClient(1);
+    const out = await commitFaroReserveImport(c as never, input);
+    const upd = c.calls.find((x) => /UPDATE banking\.bank_accounts b SET current_balance_cents/.test(x.sql))!;
+    expect(upd.params).toEqual([input.bank_account_id, OPCO, 1950, "2026-09-10"]);
+    expect(upd.sql).toMatch(/\$4::date >= COALESCE\(\(SELECT max\(e\.entry_date\)/);
+    expect(out).toMatchObject({ imported: 2, statement_updated: true, statement_balance_cents: 1950 });
+  });
+
+  it("an older report imports its rows but never rolls the statement balance back", async () => {
+    const out = await commitFaroReserveImport(fakeClient(0) as never, input);
+    expect(out).toMatchObject({ imported: 2, statement_updated: false, statement_balance_cents: null });
   });
 });

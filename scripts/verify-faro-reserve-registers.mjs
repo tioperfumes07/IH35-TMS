@@ -53,6 +53,18 @@ export function check(src) {
   if (!/await writeFactoringSpineLinks\(client, oci, je\.id, "faro_short_pay_write_down"\)/.test(sp)) fails.push(`${F.shortpay}: the write-down lost its shared spine link`);
   if (/role\("factor_transaction_fee"\)/.test(s)) fails.push(`${F.svc}: a Faro poster expenses to 6405 — Faro's Schedule Fee is the Default Interest already accrued in 2155`);
   if (/role\("ar_control"\)|"ar_control"/.test(s)) fails.push(`${F.svc}: a Faro poster resolves ar_control — A/R never left under secured borrowing`);
+  // KILL THE SECOND SYSTEM (owner 2026-10-03), tables 10 + 11: Faro's printed running balance and the short-pay "Balance:"
+  // are recomputable (the parser refuses a discontinuous row and checks the short-pay arithmetic), so neither is stored or
+  // read; the register's balance is derived from the statement balance kept on the register account, which the tie-out
+  // engine compares to GL 1230 / 1235.
+  const insert = /INSERT INTO accounting\.faro_reserve_entries\s*\(([^)]*)\)/.exec(s)?.[1] ?? "";
+  if (/running_balance_cents|short_pay_balance_cents/.test(insert)) fails.push(`${F.svc}: the import stores a balance the ledger derives (running_balance_cents / short_pay_balance_cents)`);
+  if (/\b(?:running_balance_cents|short_pay_balance_cents)\s*=(?!=)/.test(s)) fails.push(`${F.svc}: a stored Faro balance is written by UPDATE`);
+  if (/\be\.(?:running_balance_cents|short_pay_balance_cents)\b/.test(s)) fails.push(`${F.svc}: the register reads a stored Faro balance instead of deriving it`);
+  if (!/b\.current_balance_cents - COALESCE\(sum\(e\.amount_cents\) OVER \(/.test(s)) fails.push(`${F.svc}: the register balance is not derived from the statement balance and the movement rows`);
+  if (!/UPDATE banking\.bank_accounts b SET current_balance_cents = \$3, last_synced_at = now\(\)/.test(s) || !/AND \$4::date >= COALESCE\(\(SELECT max\(e\.entry_date\)/.test(s)) {
+    fails.push(`${F.svc}: the import does not keep Faro's statement balance on the register account (newest report only)`);
+  }
   if (!/user\.role !== "Owner"\) return reply\.code\(403\)\.send\(\{ error: "faro_reserve_import_owner_only" \}\)/.test(src.routes)) {
     fails.push(`${F.routes}: the report import is not Owner-only`);
   }
@@ -70,6 +82,10 @@ if (process.argv.includes("--selftest")) {
     ["deposit posts", { svc: g.svc.replace('throw new FaroReserveError("faro_rsv_deposit_posts_with_its_payment_match")', "void 0") }],
     ["swap accepted", { svc: g.svc.replace('"inv_po_swapped"', '"ok"') }],
     ["spine write dropped", { svc: g.svc.replace("await writeFactoringSpineLinks(client, oci, je.id,", "void (client, oci, je.id,") }],
+    ["stored running balance written again", { svc: g.svc.replace("entry_date, amount_cents,\n          faro_invoice_number", "entry_date, amount_cents, running_balance_cents,\n          faro_invoice_number") }],
+    ["stored balance read by the register", { svc: g.svc.replace("CASE WHEN b.last_synced_at IS NULL THEN NULL ELSE", "e.running_balance_cents, CASE WHEN b.last_synced_at IS NULL THEN NULL ELSE") }],
+    ["stored balance written by UPDATE", { svc: g.svc.replace("SET journal_entry_id = $1::uuid, posted_at = now()", "SET running_balance_cents = 0, journal_entry_id = $1::uuid, posted_at = now()") }],
+    ["statement balance not kept", { svc: g.svc.replace("UPDATE banking.bank_accounts b SET current_balance_cents = $3", "UPDATE banking.bank_accounts b SET updated_at = $3") }],
     ["reader off the spine", { reader: g.reader.replace("FROM accounting.transaction_source_links tsl", "FROM accounting.journal_entry_postings tsl") }],
     ["write-down open to all", { shortpay: g.shortpay.replace('if (input.actor_role !== "Owner") throw new ShortPayResolutionError("short_pay_resolution_owner_only");', "") }],
     ["write-down skips subledger", { shortpay: g.shortpay.replace("INSERT INTO accounting.credit_memo_applications", "INSERT INTO accounting.nothing") }],
@@ -118,13 +134,24 @@ try {
        AND NOT EXISTS (SELECT 1 FROM accounting.transaction_source_links t
                         WHERE t.journal_entry_posting_id = p.id AND t.linked_object_type = 'invoice' AND t.linked_object_id = l.invoice_id::text)`)).rows;
   if (unlinked.length) bad.push(...unlinked.map((r) => ({ id: r.id, entry_kind: "leg without invoice spine link" })));
+  // Tables 10 + 11, live: nothing stores a Faro balance (ceiling 0; once the columns are dropped this is vacuous by
+  // construction), and every register that holds entries has a statement balance for the tie-out to compare.
+  const storedCols = (await c.query(`SELECT column_name FROM information_schema.columns WHERE table_schema = 'accounting'
+      AND table_name = 'faro_reserve_entries' AND column_name IN ('running_balance_cents', 'short_pay_balance_cents')`)).rows.map((r) => r.column_name);
+  for (const col of storedCols) {
+    const k = Number((await c.query(`SELECT count(*)::int n FROM accounting.faro_reserve_entries WHERE ${col} IS NOT NULL`)).rows[0].n);
+    if (k) bad.push({ id: `${k} row(s)`, entry_kind: `store ${col} (second system, ceiling 0)` });
+  }
+  const noStatement = (await c.query(`SELECT DISTINCT e.bank_account_id::text AS id FROM accounting.faro_reserve_entries e
+      JOIN banking.bank_accounts b ON b.id = e.bank_account_id WHERE b.last_synced_at IS NULL`)).rows;
+  for (const r of noStatement) bad.push({ id: r.id, entry_kind: "register holds Faro entries but no statement balance" });
   const n = Number((await c.query(`SELECT count(*)::int n FROM accounting.faro_reserve_entries`)).rows[0].n);
   await c.query("ROLLBACK");
   if (bad.length) {
     console.error(`${LABEL}: LIVE FAIL — ${bad.length} entr(ies) off their register or posted without a stamped register leg: ${bad.slice(0, 5).map((r) => `${r.id} ${r.entry_kind}`).join(", ")}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: PASS — static 17/17; live: ${n} Faro entr(ies), all on their register and stamped; positive control 2/2 register roles bound`);
+  console.log(`${LABEL}: PASS — static clean; live: 0 stored Faro balances (${storedCols.length} legacy column(s) present), every register with entries has a statement balance; ${n} Faro entr(ies), all on their register and stamped; positive control 2/2 register roles bound`);
 } catch (err) {
   console.error(`${LABEL}: FAIL — live check could not run: ${err.message}`);
   process.exit(1);

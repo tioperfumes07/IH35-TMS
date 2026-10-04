@@ -2228,3 +2228,14 @@ Measured on the DIRECT endpoint (USMCA), before any repoint:
 
 ## 2026-10-04 — CC-2 status (NOT idle; merges STOPPED per the P0 main-cannot-boot order)
 Queue items named in the 2026-10-04 Lead order are DONE and merged (#25140): verify-bank-feed-gl-posting matcher + 5/5 selftest; recurring worker create-only (+ bill generator never posts, its date check fixed); bank-feed guard per-machine cache deleted, recomputed from DB. Also merged today: AUTH-207/209 duplicate-fuel voids (99794138, 1848853), AUTH-210/211 reefer trailers + 5015, 393.2 writer repoint (#25136), 202615400800, and fixes for main reds (#25147 #25150 #25161 #25165 #25176). NOW: ROUND 389.2 wiring — 79 verify-step numbers claimed (#25295, merged before I read the stop), step files staged locally, NOT pushed until a backend deploy is live; then hooks ON, no --no-verify. Receipt 99530579 is CC-3's per the order.
+
+## 2026-10-04 (evening) — CC-2 DONE census, fast-merge (owner-authorized), each at gate_exit=0 on its own diff
+| Item | PR · squash | Note |
+|---|---|---|
+| 60-check wiring batch (ROUND 389.2) | #25380 · 95326476 | 60/60 wrapped guards PASS live; deploy dep-db1asrhh83ns73dbo9ug |
+| No-DB static sweep was querying PRODUCTION (ROUND 370 credential fallback) — isolation restored + OPTION 3 UNVERIFIABLE-here | #25392 · 7f59b92a | sweep 422 s -> 126 s, 0 prod reads, 27 UNVERIFIABLE-here by name (stderr), never a pass, refused under CI |
+| Settlement-engine sums counted voided lines (6 sites filtered is_active only) | #25394 · fe3ac1b4 | void stamp required; guard map corrected; 0 numeric change today (355/355 live) |
+| The five static reds on main, each at its root | #25395 · 0037e76e | wall-clock ratchet 16 -> 13 (anchored to job runs / the engine's own window), ops-scripts baseline 125 -> 123, no baseline grown |
+| Tables 10 + 11 (KILL THE SECOND SYSTEM) step 1 — readers repointed | THIS PR | Faro statement balance kept on the register account (tie-out engine compares it to 1230/1235); register balance derived; columns dropped next PR |
+Queue #2 (cc-2/two-main-red-fixes) needed no merge: both fixes reached main via #25376 (Cursor) and baf8688cca (CC-1).
+Open on my list: tables 10 + 11 step 2 (drop the two columns); the 9 failing-guard verdicts (due 2026-10-06 20:00Z); release unused verify-step claims.
