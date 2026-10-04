@@ -309,8 +309,8 @@ export function CashFlowOverviewPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={projection} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(v) => mmmDd(v) || String(v)} />
-                  <YAxis tickFormatter={(v) => money(Number(v))} width={72} tick={{ fontSize: 10 }} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={(v) => mmmDd(v) || String(v)} />
+                  <YAxis tickFormatter={(v) => money(Number(v))} width={72} tick={{ fontSize: 11 }} />
                   <Tooltip
                     content={({ active, payload, label }) =>
                       active && payload?.length ? (
@@ -346,7 +346,7 @@ export function CashFlowOverviewPage() {
                   <BarChart data={bar7}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                    <YAxis tickFormatter={(v) => money(Number(v))} width={68} tick={{ fontSize: 10 }} />
+                    <YAxis tickFormatter={(v) => money(Number(v))} width={68} tick={{ fontSize: 11 }} />
                     <Tooltip formatter={(v) => money(Number(v))} />
                     <Bar dataKey="v" fill="#0d9488" name="Amount" />
                   </BarChart>

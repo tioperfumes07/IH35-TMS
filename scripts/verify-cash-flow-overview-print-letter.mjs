@@ -31,6 +31,7 @@ function leftoverHits(src) {
   const bucket = [];
   if (src.includes("text-[11px]")) bucket.push("leftover text-[11px]");
   if (src.includes("#8A92AB") || src.includes("#334155")) bucket.push("leftover off-scale muted");
+  if (/fontSize:\s*10\b/.test(src)) bucket.push("leftover fontSize: 10");
   return bucket;
 }
 
@@ -40,11 +41,12 @@ function leftoverRefuse(src) {
 
 function selftest() {
   assertSource();
-  const leftoverPlant = `${fs.readFileSync(PAGE, "utf8")}\n<div className="text-[11px] text-[#8A92AB]" style={{ color: "#334155" }}>plant</div>`;
+  const leftoverPlant = `${fs.readFileSync(PAGE, "utf8")}\n<div className="text-[11px] text-[#8A92AB]" style={{ color: "#334155", fontSize: 10 }}>plant</div>`;
   const leftoverBad = leftoverHits(leftoverPlant);
   if (
     !leftoverBad.some((e) => e.includes("leftover text-[11px]")) ||
-    !leftoverBad.some((e) => e.includes("leftover off-scale muted"))
+    !leftoverBad.some((e) => e.includes("leftover off-scale muted")) ||
+    !leftoverBad.some((e) => e.includes("leftover fontSize: 10"))
   ) {
     fail("leftover plant escaped");
   }
