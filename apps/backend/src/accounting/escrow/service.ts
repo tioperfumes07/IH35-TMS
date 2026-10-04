@@ -331,6 +331,34 @@ export async function postEscrowTransactionOnClient(
     const escrowAccount = accountRes.rows[0];
     if (!escrowAccount) throw new Error("escrow_account_not_found");
     if (escrowAccount.status !== "active") throw new Error("escrow_account_not_active");
+    // ESCROW-RELEASE-CLAIM (Lead, 2026-10-04): a release is one event per escrow claim. It must name the claim it
+    // settles, and a second release of the same claim is a no-op that returns the first — never a second debit.
+    // 09-24 posted nine claimless $25 releases (source_id NULL) that nothing could tie to a settlement.
+    if (input.posting_type === "release") {
+      if (!input.source_id) throw new Error("escrow_release_requires_claim");
+      const prior = await client.query<EscrowPosting>(
+        `
+          SELECT id::text, operating_company_id::text, escrow_account_id::text, posting_type::text, amount_cents::bigint,
+                 source_type::text, source_id::text, note, posted_at::text, posted_by_user_id::text,
+                 linked_journal_entry_id::text, created_at::text
+            FROM accounting.escrow_postings
+           WHERE operating_company_id = $1::uuid AND escrow_account_id = $2::uuid AND posting_type = 'release'
+             AND source_type = $3 AND source_id = $4::uuid AND amount_cents = $5::bigint
+           ORDER BY posted_at
+           LIMIT 1
+        `,
+        [input.operating_company_id, input.escrow_account_id, input.source_type, input.source_id, input.amount_cents]
+      );
+      const first = prior.rows[0];
+      if (first) {
+        return {
+          posting: { ...first, amount_cents: cents(first.amount_cents) },
+          balance_cents: cents(escrowAccount.balance_cents),
+          linked_journal_entry_id: first.linked_journal_entry_id ?? null,
+          idempotent_replay: true as const,
+        };
+      }
+    }
     if (input.posting_type === "release" && cents(escrowAccount.balance_cents) < input.amount_cents) {
       throw new Error("escrow_release_exceeds_balance");
     }
@@ -588,6 +616,26 @@ export async function recordEscrowPostingOnly(
       `escrow_account_bridge_missing: driver ${input.driver_id} has no accounting.escrow_accounts bridge (holder_type='driver') — ` +
         `cannot sync the canonical GL liability balance (ACCT-R-01)`
     );
+  }
+
+  // ESCROW-RELEASE-FLOOR (Lead, 2026-10-04): a release or forfeiture is recorded after the JE that moved the 2100
+  // sub-account (same transaction), so the books already show the balance it leaves. Held in trust cannot go below
+  // zero: refuse by name, never clamp, never record a partial. 09-24/25 the settlement unwind reversed full deposits
+  // that claimless releases had already drawn, and three drivers went to a debit balance ($150 / $50 / $25).
+  if (input.posting_type !== "deposit") {
+    const held = await client.query<{ balance_cents: string | number | null }>(
+      `SELECT balance_cents FROM accounting.v_escrow_account_balance WHERE escrow_account_id = $1::uuid AND operating_company_id = $2::uuid`,
+      [escrowAccountId, input.operating_company_id]
+    );
+    const row = held.rows[0];
+    if (!row) throw new Error(`escrow_balance_unavailable: escrow account ${escrowAccountId}`);
+    const after = cents(row.balance_cents);
+    if (after < 0) {
+      throw new Error(
+        `escrow_release_exceeds_held_balance: escrow account ${escrowAccountId} would hold ${after} cents after this ` +
+          `${input.posting_type} of ${amount} — a driver's escrow is held in trust and cannot go below zero`
+      );
+    }
   }
 
   const posting = await client.query<{ id: string }>(
