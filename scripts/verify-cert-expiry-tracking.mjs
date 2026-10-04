@@ -99,6 +99,9 @@ contains("apps/frontend/src/components/safety/CertExpiryBadge.tsx", badge, [
   { pattern: /critical/, label: "critical badge state" },
   { pattern: /warn/, label: "warn badge state" },
 ]);
+// BANK-F91372 leftover refuse — CertExpiryBadge page-scoped text token ratchet
+if (badge.includes("text-[11px]")) fail("CertExpiryBadge.tsx: leftover text-[11px]");
+if (badge.includes("#8A92AB")) fail("CertExpiryBadge.tsx: leftover off-scale muted #8A92AB");
 
 // SAFETY-2: Cert Expiry has its own route /safety/cert-expiry (distinct from /safety/dot-compliance)
 // AND mounts ExpiryDashboard — not DOTComplianceTab (which embeds ExpiryDashboard + reminders/CFR).
@@ -208,7 +211,20 @@ if (process.argv.includes("--selftest")) {
     }
   }
   const mutationCount = mutations.length + durabilityMutations.length + breadcrumbMutations.length;
-  console.log(`verify:cert-expiry-tracking --selftest OK — ${mutationCount}/${mutationCount} mutations detected`);
+  // BANK-F91372 leftover plant — CertExpiryBadge page-scoped text token ratchet
+  const leftoverPlant = badge + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!(leftoverPlant.includes("text-[11px]") && leftoverPlant.includes("#8A92AB"))) {
+    console.error("verify:cert-expiry-tracking --selftest FAILED: leftover plant escaped");
+    process.exit(1);
+  }
+  const plantFails = [];
+  if (leftoverPlant.includes("text-[11px]")) plantFails.push("leftover text-[11px]");
+  if (leftoverPlant.includes("#8A92AB")) plantFails.push("leftover off-scale muted");
+  if (!plantFails.includes("leftover text-[11px]")) {
+    console.error("verify:cert-expiry-tracking --selftest FAILED: leftover refuse inert");
+    process.exit(1);
+  }
+  console.log(`verify:cert-expiry-tracking --selftest OK — ${mutationCount + 1}/${mutationCount + 1} mutations detected`);
   process.exit(0);
 }
 
