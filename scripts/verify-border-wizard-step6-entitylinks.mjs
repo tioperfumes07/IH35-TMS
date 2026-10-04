@@ -32,6 +32,9 @@ function check() {
   }
   assert(/entityLabel\(form\.customsBrokerLabel, form\.customsBrokerId, "Vendor"\)/.test(src), "broker review link must use its retained human label");
   assert(!/entityLabel\(null, form\.(loadId|unitId|driverId|customsBrokerId)/.test(src), "review must not rebuild labels from UUIDs");
+  // BANK-F91405 leftover refuse — WizardStep6 page-scoped text token ratchet
+  assert(!src.includes("text-[11px]"), "leftover text-[11px] — use text-xs (ORDERS size token)");
+  assert(!src.includes("#8A92AB"), "leftover #8A92AB — use #4B5563 (ORDERS muted token)");
 }
 
 function selftest() {
@@ -51,6 +54,18 @@ function selftest() {
     fs.writeFileSync(FILE, original);
   }
   assert(failed, "--selftest expected FAIL when strip testid removed");
+  // BANK-F91405 leftover plant — WizardStep6 page-scoped text token ratchet
+  const leftoverPlant = original + '\n<p className="text-[11px] text-[#8A92AB]">plant</p>\n';
+  fs.writeFileSync(FILE, leftoverPlant);
+  let leftoverFailed = false;
+  try {
+    check();
+  } catch {
+    leftoverFailed = true;
+  } finally {
+    fs.writeFileSync(FILE, original);
+  }
+  assert(leftoverFailed, "--selftest expected FAIL on leftover text-[11px]/#8A92AB plant");
   check();
   console.log(`${LABEL}: OK — selftest PASS`);
 }

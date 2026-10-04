@@ -24,7 +24,7 @@ export function WizardStep6({ form, ports, result, pdfUrl }: Props) {
       {/* Exact Leaves border_crossing_wizard review — form held UUIDs with no EntityLinks */}
       {hasIds ? (
         <div
-          className="flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] text-slate-700"
+          className="flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs text-slate-700"
           data-testid="border-wizard-step-6-entitylinks"
         >
           {form.loadId ? (
