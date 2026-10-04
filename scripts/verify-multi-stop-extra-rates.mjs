@@ -60,6 +60,9 @@ const checks = [
   ["accounting from-load includes stop extras", fromLoad.includes("dispatch.stop_extra_rates") && fromLoad.includes("invoice_line_uuid")],
   ["backend index registers routes", indexTs.includes("registerLoadStopExtraRateRoutes")],
   ["spec doc references WF-053", docs.includes("WF-053")],
+  // BANK-F91400 leftover refuse — MultiStopExtraRateEditor page-scoped text token ratchet
+  ["MultiStopExtraRateEditor has no leftover text-[11px]", !editor.includes("text-[11px]")],
+  ["MultiStopExtraRateEditor has no leftover #8A92AB", !editor.includes("#8A92AB")],
 ];
 for (const failure of scopeFailures(service)) checks.push([failure, false]);
 
@@ -73,6 +76,11 @@ if (process.argv.includes("--selftest")) {
   ];
   for (const [index, mutation] of mutations.entries()) {
     if (scopeFailures(mutation).length === 0) checks.push([`selftest scope mutation ${index + 1} escaped`, false]);
+  }
+  // BANK-F91400 leftover plant — MultiStopExtraRateEditor page-scoped text token ratchet
+  const leftoverPlant = editor + '\n<p className="text-[11px] text-[#8A92AB]">plant</p>\n';
+  if (!(leftoverPlant.includes("text-[11px]") && leftoverPlant.includes("#8A92AB"))) {
+    checks.push(["leftover plant escaped", false]);
   }
 }
 

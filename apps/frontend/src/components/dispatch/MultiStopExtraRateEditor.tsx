@@ -18,7 +18,7 @@ export function MultiStopExtraRateEditor({ control, register, stopIndex }: Props
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-gray-50 p-2">
       <div className="flex items-center justify-between">
-        <p className="text-[11px] font-semibold text-gray-700">Per-stop extra rates</p>
+        <p className="text-xs font-semibold text-gray-700">Per-stop extra rates</p>
         <button
           type="button"
           className="text-xs font-semibold text-[#1f2a44] hover:underline"
