@@ -1,3 +1,11 @@
+## 2026-10-04T02:19Z · BANK-F91385..F91392 leftover drain MERGED tip `2469976535`
+
+DONE: FinancialUnitPLSection · TireWearProjectionChart · DriverAssignmentSection · CreateDriverModal · DeadheadOptimizerPanel · ConvertIssueToWOModal · CreateBillModal · CreateExpenseModal (F91385–F91392). Prior F91382–84 stamped.
+
+PRs: #25076 · #25078 · #25079 · #25080 · #25081 · #25083 · #25085 · #25087 (squash). Guards: refuse + `--selftest` plant each.
+
+NEXT: continue ORDERS leftover drain (page-scoped guards only). Skip BookLoad*/Combobox/EntityPicker/ParityTable/DrillKpiCard/UniversalListToolbar/DateTimePicker/DataTable/ProgramTracker/FinalAdditions/InstallPWA. HH02 no migrations. NavyPageSubNav ambient red. FormField roundtrip ambient red. no-dead-kpi-cards ambient red.
+
 ## 2026-10-04T03:10Z · BANK-F91382..F91384 leftover drain MERGED tip `c4f06c268b36`
 
 DONE: SafetyGroupNav · SafetyDashboardFilter · PhotoGallery (F91382–F91384). Prior F91377–81 stamped.
