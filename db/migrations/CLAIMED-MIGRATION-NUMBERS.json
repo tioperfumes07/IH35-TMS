@@ -2096,6 +2096,11 @@
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-04",
       "purpose": "ROUND 390 (a)/(c): deferred constraint trigger refuses any transaction that deletes a financial document while a journal_entry_posting still names it (no orphaned GL)"
+    },
+    "202615410200": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-04",
+      "purpose": "AUTH-400 clean slate: append-only escrow_postings + stop_arrivals admit DELETE of rows listed in _system.purge_authorized_rows under an open AUTH (ARM L), nothing else"
     }
   },
   "202613590001": {
