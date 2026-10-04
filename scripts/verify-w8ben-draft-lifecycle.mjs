@@ -22,7 +22,7 @@ const bodyTokens = [
 
 function failures(input = source) {
   const reset = input.match(/const resetDraft = useCallback\(\(\) => \{([\s\S]*?)\n  \}, \[driverName\]\);/)?.[1] ?? "";
-  return [
+  const missing = [
     ["reset complete W-8BEN draft", resetTokens.every((part) => reset.includes(part))],
     ["reset on open/company/driver change", /if \(open\) resetDraft\(\);\s*\}, \[open, companyId, driverId, resetDraft\]\);/.test(input)],
     ["request snapshots driver/company/body", /const input = \{[\s\S]*driverId,[\s\S]*companyId,[\s\S]*generation: requestGenerationRef\.current,[\s\S]*body: \{/.test(input)],
@@ -32,7 +32,11 @@ function failures(input = source) {
     ["dirty drawer confirmation", input.includes("confirmDiscardOnClose") && input.includes("isDirty={isDirty}")],
     ["cancel uses confirm-aware close", input.includes("onRegisterAttemptClose") && /variant="secondary" onClick=\{attemptClose\}/.test(input)],
     ["canonical driver/company writer remains", /createDriverW8ben\(input\.driverId, input\.companyId, input\.body\)/.test(input)],
+    // BANK-F91310 leftover refuse — W8BenModal.tsx page-scoped text token ratchet
+    ["leftover text-[11px]", !input.includes("text-[11px]")],
+    ["leftover off-scale muted", !input.includes("#8A92AB") && !input.includes("#334155")],
   ].filter(([, ok]) => !ok).map(([name]) => name);
+  return missing;
 }
 
 if (process.argv.includes("--selftest")) {
@@ -49,6 +53,12 @@ if (process.argv.includes("--selftest")) {
     failures(noConfirm).includes("dirty drawer confirmation"),
   ];
   if (checks.some((ok) => !ok)) process.exit(1);
+  // BANK-F91310 leftover plant — W8BenModal page-scoped text token ratchet
+  const leftoverPlant = source + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!failures(leftoverPlant).includes("leftover text-[11px]")) {
+    console.error("verify-w8ben-draft-lifecycle selftest FAIL — leftover plant escaped");
+    process.exit(1);
+  }
   console.log("verify-w8ben-draft-lifecycle selftest PASS — 5/5 stale/discard W-8BEN mutations red");
   process.exit(0);
 }
