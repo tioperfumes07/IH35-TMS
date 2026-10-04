@@ -108,7 +108,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
             -- deductions_total) so Dispatch can show it as its own board column.
             COALESCE((
               SELECT SUM(sl.amount) FROM driver_finance.settlement_lines sl
-              WHERE sl.settlement_id = s.id AND sl.line_type = 'escrow_contribution' AND sl.is_active = true
+              WHERE sl.settlement_id = s.id AND sl.line_type = 'escrow_contribution' AND sl.is_active = true AND sl.voided_at IS NULL
             ), 0) AS escrow_contribution_total
           FROM driver_finance.driver_settlements s
           LEFT JOIN mdata.drivers d ON d.id = s.driver_id AND d.operating_company_id = s.operating_company_id
