@@ -14,7 +14,11 @@ import { loadSettlementRef } from "../../lib/settlementRefLoader";
  *   - an OPEN tour / pre-settlement renders "PENDING" (not blank, not a number, not the retired
  *     "Open" status word — ROUND 167, owner 2026-09-28: "THERE IS NO SETTLEMENT 001, 003, 005, 007").
  *   - NO link at all renders "Not on a tour" — plainly, never an empty cell.
- *   - a real settlement number deep-links to it (EntityLink kind="settlement").
+ *   - UI-F395 (owner, ROUND 395, verbatim: "ALL MUST BE CLICKACBLE AND TAKE SUS SOMEWHERE"):
+ *     EVERY state that has a presettlement_link_id is a link to that settlement — the real number,
+ *     PENDING, and closed-but-unnumbered alike. PENDING and the dash used to render as dead <span>s,
+ *     so two of the three live states were unreachable from the column. Only "Not on a tour", which
+ *     by definition has no id and therefore nowhere to go, stays plain text.
  *
  * LOADS FENCE — this component only READS presettlement_link_id (via the settlement-refs endpoint
  * or a caller-supplied prop); it never writes load status, tour, or trip linkage.
@@ -53,15 +57,27 @@ export function SettlementRefCell({ loadId, operatingCompanyId, settlement }: Pr
 
   const label = settlementLabel(resolved);
   if (label === "PENDING") {
-    return <span className="font-medium text-slate-700">PENDING</span>;
+    return (
+      <EntityLink
+        kind="settlement"
+        id={resolved.presettlement_link_id}
+        label="PENDING"
+        className="font-medium text-slate-700 hover:underline"
+        title="Tour still open — the settlement number is minted when AlwaysTrack settles it"
+      />
+    );
   }
   // A closed settlement whose AlwaysTrack document number hasn't been stamped yet — a real,
   // distinct case from "no settlement at all" (never collapse the two into the same bare dash).
   if (label === "—") {
     return (
-      <span className="cursor-help border-b border-dotted border-gray-400 text-gray-500" title="Settlement closed, document number not yet stamped">
-        —
-      </span>
+      <EntityLink
+        kind="settlement"
+        id={resolved.presettlement_link_id}
+        label="—"
+        className="border-b border-dotted border-gray-400 text-gray-500 hover:text-gray-700"
+        title="Settlement closed, document number not yet stamped"
+      />
     );
   }
 
