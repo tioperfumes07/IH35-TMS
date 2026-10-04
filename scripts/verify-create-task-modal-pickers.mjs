@@ -26,6 +26,9 @@ function assertSrc(src) {
   if (profileBlock && /<select[\s>]/.test(profileBlock)) problems.push("profile still bare <select>");
   const assigneeBlock = code.match(/data-testid="create-task-assignee-picker"[\s\S]{0,600}?Scheduled date/)?.[0];
   if (assigneeBlock && /<select[\s>]/.test(assigneeBlock)) problems.push("assignee still bare <select>");
+  // BANK-F91306 leftover refuse — CreateTaskModal.tsx page-scoped text token ratchet
+  if (src.includes("text-[11px]")) problems.push("leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155")) problems.push("leftover off-scale muted");
   return problems;
 }
 
@@ -43,6 +46,17 @@ if (SELFTEST) {
   const live = assertSrc(read());
   if (live.length) {
     console.error(`${LABEL} SELFTEST FAILED live: ${live.join(" | ")}`);
+    process.exit(1);
+  }
+  // BANK-F91306 leftover plant — CreateTaskModal page-scoped text token ratchet
+  const filePath = path.join(ROOT, FILE);
+  const realGood = fs.readFileSync(filePath, "utf8");
+  const leftoverPlant = realGood + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  fs.writeFileSync(filePath, leftoverPlant);
+  const leftoverProblems = assertSrc(leftoverPlant);
+  fs.writeFileSync(filePath, realGood);
+  if (!leftoverProblems.length) {
+    console.error(`${LABEL} SELFTEST FAILED: leftover plant escaped`);
     process.exit(1);
   }
   console.log(`${LABEL} SELFTEST PASS`);
