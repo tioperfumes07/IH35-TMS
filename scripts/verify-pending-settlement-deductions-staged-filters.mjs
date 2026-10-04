@@ -28,6 +28,9 @@ function assertPage(src) {
   if (/const \[driverFilter,\s*setDriverFilterState\]/.test(src)) {
     errors.push("must not keep hand-rolled silent filter useState");
   }
+  // BANK-F91366 leftover refuse — PendingSettlementDeductionsPanel page-scoped text token ratchet
+  if (src.includes("text-[11px]")) errors.push("PendingSettlementDeductionsPanel.tsx: leftover text-[11px]");
+  if (src.includes("#8A92AB")) errors.push("PendingSettlementDeductionsPanel.tsx: leftover off-scale muted #8A92AB");
   return errors;
 }
 
@@ -50,6 +53,13 @@ function selftest() {
   `;
   if (assertPage(bad).length === 0 || assertPage(good).length > 0) {
     console.error(`${LABEL} SELFTEST FAIL`, { bad: assertPage(bad), good: assertPage(good) });
+    process.exit(1);
+  }
+  // BANK-F91366 leftover plant — PendingSettlementDeductionsPanel page-scoped text token ratchet
+  const production = fs.readFileSync(path.join(process.cwd(), TARGET), "utf8");
+  const leftover = production + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!assertPage(leftover).some((e) => e.includes("leftover text-[11px]"))) {
+    console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`, assertPage(leftover));
     process.exit(1);
   }
   console.log(`${LABEL} selftest PASS`);
