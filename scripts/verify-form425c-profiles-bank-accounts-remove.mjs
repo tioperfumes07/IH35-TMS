@@ -24,6 +24,9 @@ export function collectProblems(src) {
   if (!src.includes('aria-label={`Remove bank account')) {
     problems.push(`${PAGE}: Remove button must be labeled per-row, not an unlabeled icon`);
   }
+  // BANK-F91375 leftover refuse — ProfilesTab page-scoped text token ratchet
+  if (src.includes("text-[11px]")) problems.push("ProfilesTab.tsx: leftover text-[11px]");
+  if (src.includes("#8A92AB")) problems.push("ProfilesTab.tsx: leftover off-scale muted #8A92AB");
   return problems;
 }
 
@@ -43,6 +46,15 @@ if (process.argv.includes("--selftest")) {
   }
   if (collectProblems(bad).length < 2) {
     console.error(`${LABEL} --selftest FAIL bad too weak`);
+    process.exit(1);
+  }
+  // BANK-F91375 leftover plant — ProfilesTab page-scoped text token ratchet
+  const leftover =
+    fs.readFileSync(path.join(ROOT, PAGE), "utf8") +
+    '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  const leftoverProblems = collectProblems(leftover);
+  if (!leftoverProblems.some((p) => p.includes("leftover text-[11px]"))) {
+    console.error(`${LABEL} --selftest FAIL leftover plant escaped`, leftoverProblems);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);
