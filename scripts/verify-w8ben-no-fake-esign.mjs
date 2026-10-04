@@ -50,6 +50,9 @@ function failures(modal = read(MODAL), section = read(SECTION)) {
   if (/Certification signature name/.test(modal)) {
     out.push(`${MODAL}: certification label still claims signature`);
   }
+  // BANK-F91351 leftover refuse — W8BenSection page-scoped text token ratchet
+  if (section.includes("text-[11px]")) out.push(`${SECTION}: leftover text-[11px]`);
+  if (section.includes("#8A92AB")) out.push(`${SECTION}: leftover off-scale muted #8A92AB`);
   return out;
 }
 
@@ -62,6 +65,12 @@ function selftest() {
     if (red.status === 0) throw new Error("removed blocked copy did not redden guard");
   } finally {
     fs.writeFileSync(modalPath, original);
+  }
+  // BANK-F91351 leftover plant
+  const sectionLive = read(SECTION);
+  const planted = failures(read(MODAL), sectionLive + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n');
+  if (!planted.some((f) => f.includes("leftover text-[11px]"))) {
+    throw new Error("W8BenSection leftover plant escaped");
   }
   console.log("verify-w8ben-no-fake-esign --selftest PASS — blocked-banner removal reddened guard");
 }
