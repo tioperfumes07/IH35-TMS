@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Modal } from "../Modal";
 import { EntityLink, type EntityKind } from "./EntityLink";
 import { formatDateUS } from "../../lib/formatDate";
-import { formatUsdCents } from "../../lib/money";
+import { formatUsdCents, QBO_MONEY_CELL_CLASS } from "../../lib/money";
 
 const LINK_COLUMNS: Record<string, { kind: EntityKind; labelFrom?: string }> = {
   purchase_id: { kind: "factoring_purchase", labelFrom: "display_id" },
@@ -165,7 +165,7 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
                       <tr key={b.label}>
                         <td className="text-left">{b.label}</td>
                         <td className="text-right">{b.count}</td>
-                        {drillKpi.unit === "cents" ? <td className="text-right">{formatUsdCents(b.cents)}</td> : null}
+                        {drillKpi.unit === "cents" ? <td className={QBO_MONEY_CELL_CLASS}>{formatUsdCents(b.cents)}</td> : null}
                       </tr>
                     ))}
                   </tbody>
@@ -174,7 +174,7 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
                       <td className="text-left">Total</td>
                       <td className="text-right">{drillKpi.buckets.reduce((s, b) => s + b.count, 0)}</td>
                       {drillKpi.unit === "cents" ? (
-                        <td className="text-right">{formatUsdCents(drillKpi.buckets.reduce((s, b) => s + b.cents, 0))}</td>
+                        <td className={QBO_MONEY_CELL_CLASS}>{formatUsdCents(drillKpi.buckets.reduce((s, b) => s + b.cents, 0))}</td>
                       ) : null}
                     </tr>
                   </tfoot>
