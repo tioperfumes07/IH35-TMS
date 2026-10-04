@@ -44,6 +44,16 @@ const LINE_COMMENT_RE = /\/\/[^\n]*/g;
 // justified as a genuine business-time rule.
 const KNOWN_WALL_CLOCK_FILES = 13;
 
+// LST-F404 (Lead, 2026-10-04) — the escape hatch the comment above promised and never built. A file that is CORRECTLY
+// clock-dependent (a freshness / liveness probe whose verdict is SUPPOSED to change as time passes) is recorded here BY
+// NAME with its reason; a number alone can never satisfy this guard. Rules (all enforced, selftested):
+//   * every entry carries a non-empty reason;
+//   * every entry names a file that still matches (an entry for a fixed file is stale -> FAIL, the list cannot rot);
+//   * justified files are reported by name and are NOT counted against KNOWN_WALL_CLOCK_FILES.
+// Empty on 2026-10-04: the two the Lead named (bank-tieout-live, preserve-ledger) were anchored to their job's last
+// recorded run by CC-2 (0037e76ecf), so they no longer match and must not be listed.
+export const JUSTIFIED_WALL_CLOCK = {};
+
 const SELF_FILENAME = path.basename(fileURLToPath(import.meta.url));
 
 export function findWallClockFiles(dir) {
@@ -60,6 +70,22 @@ export function findWallClockFiles(dir) {
     }
   }
   return hits.sort();
+}
+
+/** The verdict, pure: hits (files matching), the named allowlist, the unreviewed baseline. */
+export function evaluate(hits, justified, baseline) {
+  const problems = [];
+  for (const [file, reason] of Object.entries(justified)) {
+    if (typeof reason !== "string" || reason.trim().length < 10) problems.push(`JUSTIFIED entry ${file} has no reason — no silent entries`);
+    if (!hits.includes(file)) problems.push(`JUSTIFIED entry ${file} no longer matches — remove it (the allowlist cannot rot)`);
+  }
+  const justifiedHits = hits.filter((h) => Object.prototype.hasOwnProperty.call(justified, h));
+  const unreviewed = hits.filter((h) => !Object.prototype.hasOwnProperty.call(justified, h));
+  if (unreviewed.length > baseline) problems.push(`${unreviewed.length} unreviewed file(s) use a rolling now()/CURRENT_DATE - interval window, GREW past the ratchet baseline of ${baseline}`);
+  // The defect that carried a phantom 14th slot for five days: an improvement that is only a NOTE leaves room for a
+  // new offender to take the freed slot silently. A lower count must be ratcheted down in the same commit.
+  if (unreviewed.length < baseline) problems.push(`${unreviewed.length} unreviewed < baseline ${baseline} — ratchet down in this commit (lower KNOWN_WALL_CLOCK_FILES to ${unreviewed.length})`);
+  return { problems, unreviewed, justifiedHits };
 }
 
 function selftest() {
@@ -86,6 +112,18 @@ function selftest() {
     !WALL_CLOCK_RE.test(commentOnly.replace(LINE_COMMENT_RE, ""))
   );
 
+  // LST-F404 — the five cases the Lead named.
+  const A = "scripts/verify-a.mjs", B = "scripts/verify-b.mjs", C = "scripts/verify-c.mjs";
+  const why = "freshness probe — staleness cannot be measured without the clock";
+  {
+    const r = evaluate([A, B], { [B]: why }, 1);
+    t("1. a JUSTIFIED file that still matches passes and is reported by name", r.problems.length === 0 && r.justifiedHits.includes(B) && !r.unreviewed.includes(B));
+  }
+  t("2. a JUSTIFIED entry with an empty reason fails", evaluate([A, B], { [B]: "" }, 1).problems.some((x) => /no reason/.test(x)));
+  t("3. unreviewed count above the baseline fails", evaluate([A, B, C], {}, 2).problems.some((x) => /GREW/.test(x)));
+  t("4. unreviewed count below the baseline fails (ratchet down in this commit)", evaluate([A], {}, 2).problems.some((x) => /ratchet down in this commit/.test(x)));
+  t("5. a JUSTIFIED entry naming a file that no longer matches fails", evaluate([A], { [B]: why }, 1).problems.some((x) => /no longer matches/.test(x)));
+
   if (KNOWN_WALL_CLOCK_FILES < 0 || !Number.isInteger(KNOWN_WALL_CLOCK_FILES)) {
     failures.push("ratchet baseline must be a non-negative integer");
   }
@@ -99,15 +137,13 @@ function selftest() {
 
 function run() {
   const hits = findWallClockFiles(SCRIPTS_DIR);
-  if (hits.length > KNOWN_WALL_CLOCK_FILES) {
-    console.error(`${LABEL}: FAIL — ${hits.length} file(s) use a rolling now()/CURRENT_DATE - interval window, GREW past the ratchet baseline of ${KNOWN_WALL_CLOCK_FILES}:`);
-    for (const h of hits) console.error(`  ✗ ${h}`);
+  const { problems, unreviewed, justifiedHits } = evaluate(hits, JUSTIFIED_WALL_CLOCK, KNOWN_WALL_CLOCK_FILES);
+  if (problems.length) {
+    console.error(`${LABEL}: FAIL — ${problems.join("; ")}`);
+    for (const h of unreviewed) console.error(`  ✗ ${h}`);
     process.exit(1);
   }
-  if (hits.length < KNOWN_WALL_CLOCK_FILES) {
-    console.log(`${LABEL}: NOTE — ratchet improved (${hits.length} < baseline ${KNOWN_WALL_CLOCK_FILES}). Lower KNOWN_WALL_CLOCK_FILES in this file to match.`);
-  }
-  console.log(`${LABEL}: PASS — ${hits.length} file(s) still use a rolling wall-clock window (ratchet baseline ${KNOWN_WALL_CLOCK_FILES}, never grows). Each is queued for individual review (fix or justify as a genuine business-time rule): ${hits.join(", ") || "none"}.`);
+  console.log(`${LABEL}: PASS — ${unreviewed.length} unreviewed + ${justifiedHits.length} justified (named${justifiedHits.length ? ": " + justifiedHits.join(", ") : ""}). Ratchet baseline ${KNOWN_WALL_CLOCK_FILES}, never grows; each unreviewed file is queued to be fixed or justified by name: ${unreviewed.join(", ") || "none"}.`);
 }
 
 if (process.argv.includes("--selftest")) {
