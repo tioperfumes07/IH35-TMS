@@ -62,7 +62,7 @@ export function VendorMappingIntegrityCard({ data, isLoading, isError, onRetry }
     <section className="rounded-sm border border-slate-200 bg-white">
       <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2">
         <div className="text-xs font-semibold text-slate-900">Vendor Mapping Integrity</div>
-        <span className={`inline-flex rounded-sm border px-2 py-0.5 text-[11px] font-semibold ${pillClass(status)}`}>{statusLabel(status)}</span>
+        <span className={`inline-flex rounded-sm border px-2 py-0.5 text-xs font-semibold ${pillClass(status)}`}>{statusLabel(status)}</span>
       </div>
       <div className="space-y-1 px-3 py-2">
         <div className="flex items-center justify-between rounded-sm bg-slate-50 px-2 py-1.5 text-xs">
