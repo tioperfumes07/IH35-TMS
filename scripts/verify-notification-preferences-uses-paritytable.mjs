@@ -85,6 +85,9 @@ function assertMigrated(src, backendSrc) {
       `${BACKEND}: GET and PATCH must both carry the canonical 60/min rate limit`,
     );
   }
+  // BANK-F91371 leftover refuse — NotificationPreferencesPage page-scoped text token ratchet
+  if (src.includes("text-[11px]")) errors.push("NotificationPreferencesPage.tsx: leftover text-[11px]");
+  if (src.includes("#8A92AB")) errors.push("NotificationPreferencesPage.tsx: leftover off-scale muted #8A92AB");
   return errors;
 }
 
@@ -162,6 +165,15 @@ function selftest() {
       `${LABEL} --selftest FAIL missing-rate-limit mutation escaped`,
       unboundedErrors,
     );
+    process.exit(1);
+  }
+  // BANK-F91371 leftover plant — NotificationPreferencesPage page-scoped text token ratchet
+  const leftover =
+    fs.readFileSync(path.join(ROOT, PAGE), "utf8") +
+    '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  const leftoverErrors = assertMigrated(leftover, backendGood);
+  if (!leftoverErrors.some((e) => e.includes("leftover text-[11px]"))) {
+    console.error(`${LABEL} --selftest FAIL leftover plant escaped`, leftoverErrors);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);
