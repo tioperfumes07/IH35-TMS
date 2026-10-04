@@ -122,7 +122,7 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
                         ) : null}
                       </div>
                       <span
-                        className="mt-1 text-[11px] leading-none uppercase"
+                        className="mt-1 text-xs leading-none uppercase"
                         style={{
                           color: "white",
                           letterSpacing: "0.4px",
