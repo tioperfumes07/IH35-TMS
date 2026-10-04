@@ -82,6 +82,15 @@ export type PostingLineWrite = {
   load_id?: string | null;
 };
 
+/** ROUND 390.1 — refused: the line named in reversal_of_line_id is itself a reversal (a reversal is terminal). */
+export class PostingLineIsAlreadyAReversalError extends Error {
+  readonly code = "posting_line_is_already_a_reversal";
+  constructor(readonly targetLineId: string) {
+    super(`posting_line_is_already_a_reversal: posting ${targetLineId} is itself a reversal — a reversal line is terminal and is never reversed`);
+    this.name = "PostingLineIsAlreadyAReversalError";
+  }
+}
+
 async function writeLine(
   client: PostingWriterClient,
   line: PostingLineWrite,
@@ -95,6 +104,20 @@ async function writeLine(
         `was written with source_transaction_type=${String(line.source_transaction_type)} ` +
         `source_transaction_id=${String(line.source_transaction_id)}`
     );
+  }
+
+  // ROUND 390.1 — A REVERSAL LINE IS TERMINAL. Reversing a line that is itself a reversal re-posts the original's sign
+  // and manufactures money that is not owed (measured 2026-10-04: 60 of 60 phantom A/P lines, $2,976.63, were
+  // "Void reversal: REVERSAL: …" — the second void reversing the first void's line). Every reversal in the system is
+  // written through this function, so it is refused here, by name, before anything is written.
+  if (line.reversal_of_line_id) {
+    const target = await client.query<{ is_reversal: boolean }>(
+      `SELECT reversal_of_line_id IS NOT NULL AS is_reversal FROM accounting.journal_entry_postings WHERE id = $1::uuid`,
+      [line.reversal_of_line_id]
+    );
+    if (target.rows[0]?.is_reversal) {
+      throw new PostingLineIsAlreadyAReversalError(line.reversal_of_line_id);
+    }
   }
 
   const ins = await client.query<{ id: string }>(

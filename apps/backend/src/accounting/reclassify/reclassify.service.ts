@@ -10,7 +10,8 @@
  * stays intact and linked. The source document line (expense_lines / bill_lines) is rewritten so the
  * document and the ledger agree; when it cannot be (no 1:1 line, or a bill's vendor — A/P subledger),
  * the batch line says so in document_update_note instead of pretending. Closed period → refused.
- * Undo = reverse every reclass JE of the batch (reverseJournalEntryNoFlip) + restore document lines.
+ * Undo = restore every reclass JE of the batch (restoreReversedJournalEntryInClientTx: the original line back as a fresh
+ * line, the in-leg reversed — ROUND 390.1, a reversal is terminal) + restore document lines.
  *
  * Linkage declaration (TRANSACTION-LINKAGE-LAW): reclassify_batches → identity.users (actor),
  * catalogs.accounts / catalogs.classes (targets); reclassify_batch_lines → journal_entry_postings
@@ -21,7 +22,7 @@
  * reclassification; audit.audit_events one row per document per batch.
  */
 import { withCurrentUser } from "../../auth/db.js";
-import { createJournalEntryOnClient, reverseJournalEntryNoFlip } from "../journal-entries.service.js";
+import { createJournalEntryOnClient, restoreReversedJournalEntryInClientTx } from "../journal-entries.service.js";
 import { PostingEngineError } from "../posting-engine.service.js";
 import { writeTransactionSourceLink } from "../accounting-spine-emit.js";
 import { syncReeferFuelForExpenseLine } from "../../fuel/reefer-fuel.service.js";
@@ -941,8 +942,10 @@ export async function undoReclassifyBatch(input: { operating_company_id: string;
     const jes = await client.query<{ je: string }>(`SELECT DISTINCT reclass_journal_entry_id::text AS je FROM accounting.reclassify_batch_lines WHERE batch_id = $1::uuid AND result = 'applied' AND reclass_journal_entry_id IS NOT NULL`, [input.batch_id]);
     let reversed = 0;
     for (const row of jes.rows) {
-      const r = await reverseJournalEntryNoFlip(client as never, { operatingCompanyId: input.operating_company_id, journalEntryId: row.je, reason: `Undo reclassify batch ${input.batch_id}: ${reason}`, actorUserId: actor.userId });
-      const undoId = r.reversal.reversal_journal_entry_id ?? null;
+      // ROUND 390.1 — a reversal line is terminal. The reclass JE's out-leg IS a reversal (of the original line), so the
+      // undo restores the original as a fresh line and reverses only the in-leg (restoreReversedJournalEntryInClientTx).
+      const r = await restoreReversedJournalEntryInClientTx(client as never, { operatingCompanyId: input.operating_company_id, journalEntryId: row.je, reason: `Undo reclassify batch ${input.batch_id}: ${reason}`, actorUserId: actor.userId, actorRole: actor.role });
+      const undoId = r.restore_journal_entry_id ?? null;
       if (undoId) await linkReclassEntry(client as DbClient, input.operating_company_id, undoId, { type: "journal_entry", id: row.je }, input.batch_id, "reclassify_undo");
       await client.query(`UPDATE accounting.reclassify_batch_lines SET undo_journal_entry_id = $2::uuid WHERE batch_id = $1::uuid AND reclass_journal_entry_id = $3::uuid`, [input.batch_id, undoId, row.je]);
       reversed += 1;
