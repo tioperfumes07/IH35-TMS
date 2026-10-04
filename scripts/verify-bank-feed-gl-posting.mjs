@@ -18,6 +18,23 @@ const fail = (m) => {
   console.error(`FAIL verify-bank-feed-gl-posting: ${m}`);
   process.exit(1);
 };
+if (process.argv.includes("--selftest")) {
+  // The engine-call rule must pass both engine entry points and fail a service that posts no engine call or writes GL inline.
+  const re = /\bpostSourceTransaction(?:InClientTx)?\(/;
+  const inline = /INSERT\s+INTO\s+accounting\.journal_entr/i;
+  const cases = [
+    ["in-tx engine call passes", re.test("await postSourceTransactionInClientTx(client, x)"), true],
+    ["bare engine call passes", re.test("await postSourceTransaction(x)"), true],
+    ["no engine call fails", re.test("await client.query(sql)"), false],
+    ["look-alike name fails", re.test("await myPostSourceTransactionWrapper(x)"), false],
+    ["inline GL write is caught", inline.test("INSERT INTO accounting.journal_entry_postings (a) VALUES ($1)"), true],
+  ];
+  const bad = cases.filter(([, got, want]) => got !== want);
+  for (const [n, got, want] of cases) console.log(`  ${got === want ? "PASS" : "FAIL"}  ${n}`);
+  if (bad.length) { console.error(`verify-bank-feed-gl-posting --selftest FAIL (${bad.length})`); process.exit(1); }
+  console.log(`verify-bank-feed-gl-posting --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(0);
+}
 
 const engine = readFileSync(join(root, "apps/backend/src/accounting/posting-engine.service.ts"), "utf8");
 const service = readFileSync(join(root, "apps/backend/src/banking/bank-feed-gl-posting.service.ts"), "utf8");
@@ -44,7 +61,11 @@ if (!/isEnabled\(/.test(service)) fail("service must resolve the flag via isEnab
 if (!/reason:\s*"driver_advance_branch"/.test(service)) fail("driver-advance CEDE interlock (driver_advance_branch) must exist");
 if (!/reason:\s*"already_matched_to_bill"/.test(service)) fail("matched-to-bill interlock (already_matched_to_bill) must exist");
 if (!/reason:\s*"is_transfer"/.test(service)) fail("own-bank transfer interlock (is_transfer) must exist");
-if (!/postSourceTransaction\(/.test(service)) fail("service must post via postSourceTransaction (reuse the engine — no new GL math)");
+// ROUND 389.4 triage (CC-2): the service posts through the engine's in-transaction entry point
+// postSourceTransactionInClientTx (the categorize write and its GL post commit together). The old regex accepted only the
+// bare postSourceTransaction( and failed verified-correct code. Either engine entry point passes; anything else fails.
+const ENGINE_CALL_RE = /\bpostSourceTransaction(?:InClientTx)?\(/;
+if (!ENGINE_CALL_RE.test(service)) fail("service must post via postSourceTransaction / postSourceTransactionInClientTx (reuse the engine — no new GL math)");
 
 // 4. No inline GL writes in banking routes/services.
 for (const [name, src] of [

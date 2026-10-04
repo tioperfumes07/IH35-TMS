@@ -11,26 +11,22 @@
 //    apps/backend/src/accounting/bank-recon/** contains no INSERT/UPDATE/DELETE
 //    and calls no function that does. The handler list is derived from the
 //    router file (recon-worklist.routes.ts), not hard-coded.
-// 2. LIVE: the USMCA row count in banking.bank_transactions is derived from the
-//    table itself and asserted unchanged against the prior run's derived value
-//    (stored in a baseline file next to this guard). NOT a literal 1133 pasted
-//    in the file.
+// 2. LIVE, recomputed from the database on EVERY run (ROUND 389.4 RULING 2):
+//    every USMCA bank line came from a feed — no line has a NULL source, a
+//    suggest / candidate / auto-match source, or a 'plaid' source without its
+//    plaid_transaction_id. A suggest path that wrote a bank line would surface
+//    here. (Was: the row count asserted unchanged against a per-machine cache
+//    file the guard wrote itself — green on one laptop and red on another for the
+//    same commit, and red on every legitimate feed import. Deleted.)
 // 3. LIVE: zero journal entries exist whose source_transaction_type is a
 //    suggestion/candidate path. Only accept/resolve paths post.
 //
-// Self-arming POPULATION check — never a flag, never an env var, never a
-// hand-kept count. Baseline 0 for the JE check; the bank_transactions count is
-// a derived value stored in a baseline file (shrink-only is NOT the right
-// model for a fixed population — the count must be EXACTLY what it was last
-// run, never changed).
-//
-// --write-baseline is FORBIDDEN. The baseline file is written only by the
-// guard itself on first run (when no baseline exists) and updated only when
-// the derived count matches the prior baseline (proving no change occurred).
+// No stored state of any kind: both live checks are recomputed from the
+// database on every run; REQUIRES_LIVE_DB fails closed without one.
 //
 // Self-test: node scripts/verify-bank-match-suggest-is-read-only.mjs --selftest
 export const REQUIRES_LIVE_DB =
-  "banking.bank_transactions row count + journal entry source_transaction_type — must fail-closed, never skip";
+  "banking.bank_transactions provenance + journal entry source_transaction_type — must fail-closed, never skip";
 
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 import fs from "node:fs";
@@ -40,7 +36,6 @@ const LABEL = "verify-bank-match-suggest-is-read-only";
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const BANK_RECON_DIR = path.join(ROOT, "apps/backend/src/accounting/bank-recon");
-const BASELINE_FILE = path.join(ROOT, "scripts", "verify-bank-match-suggest-is-read-only.baseline.json");
 
 // Suggestion/candidate source_transaction_type values that must NEVER appear
 // on a journal entry. Only accept/resolve paths post JEs.
@@ -174,6 +169,18 @@ export function extractCalledFunctions(handlerSource, fullFileSource) {
   return result;
 }
 
+/**
+ * A bank line's provenance problem, or null when it came from a feed. Pure — exported for selftest.
+ * @param {{ source: string|null, plaid_transaction_id: string|null }} row
+ */
+export const SUGGEST_SOURCE_RE = /suggest|candidate|auto[_-]?match/i;
+export function bankLineProvenanceProblem(row) {
+  if (!row.source || !String(row.source).trim()) return "no source";
+  if (SUGGEST_SOURCE_RE.test(String(row.source))) return `born from a suggestion path (source=${row.source})`;
+  if (row.source === "plaid" && !row.plaid_transaction_id) return "plaid line without its plaid_transaction_id";
+  return null;
+}
+
 function runSelftest() {
   const fixtures = [
     // Clean: GET handler with no writes
@@ -276,10 +283,25 @@ function runSelftest() {
     }
   }
 
+  // ROUND 389.4 RULING 2 — the provenance check, both directions.
+  const prov = [
+    ["plaid line with its id is from a feed", { source: "plaid", plaid_transaction_id: "abc" }, null],
+    ["csv import line is from a feed", { source: "csv_import", plaid_transaction_id: null }, null],
+    ["line with no source fails", { source: null, plaid_transaction_id: null }, "no source"],
+    ["line born from a suggestion fails", { source: "bank_recon_suggest", plaid_transaction_id: null }, "suggestion"],
+    ["auto-match line fails", { source: "auto_match", plaid_transaction_id: null }, "suggestion"],
+    ["plaid line without its id fails", { source: "plaid", plaid_transaction_id: null }, "plaid_transaction_id"],
+  ];
+  for (const [name, row, exp] of prov) {
+    const got = bankLineProvenanceProblem(row);
+    const ok = (exp === null && got === null) || (exp && got && got.includes(exp));
+    if (!ok) { console.error(`${LABEL} --selftest FAIL — ${name}: expected ${exp}, got ${got}`); fail += 1; } else pass += 1;
+  }
+
   if (fail > 0) {
     process.exitCode = 1;
   } else {
-    console.log(`${LABEL} --selftest PASS — ${pass} classifier fixtures all correct`);
+    console.log(`${LABEL} --selftest PASS — ${pass} classifier + provenance fixtures all correct`);
   }
 }
 
@@ -308,14 +330,17 @@ async function measureLive(client) {
   await client.query("BEGIN");
   await client.query("SELECT set_config('app.bypass_rls','lucia',false)");
 
-  // Check 2: bank_transactions row count for USMCA
+  // Check 2: provenance of every USMCA bank line, recomputed now (no stored count).
   const btRes = await client.query(
-    `SELECT count(*)::int AS cnt
+    `SELECT id::text, source, plaid_transaction_id
        FROM banking.bank_transactions
       WHERE operating_company_id = $1::uuid`,
     [USMCA_COMPANY_ID],
   );
-  const btCount = btRes.rows[0].cnt;
+  const btCount = btRes.rows.length;
+  const orphanLines = btRes.rows
+    .map((r) => ({ id: r.id, problem: bankLineProvenanceProblem(r) }))
+    .filter((r) => r.problem);
 
   // Check 3: JEs with forbidden source_transaction_type (on postings table, not journal_entries)
   const jeRes = await client.query(
@@ -328,7 +353,7 @@ async function measureLive(client) {
   );
 
   await client.query("ROLLBACK");
-  return { btCount, forbiddenJEs: jeRes.rows };
+  return { btCount, orphanLines, forbiddenJEs: jeRes.rows };
 }
 
 function run({ selftest }) {
@@ -355,7 +380,7 @@ async function runFull() {
   // CHECK 2 + 3: Live — bank_transactions count + forbidden JEs
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
-    const { btCount, forbiddenJEs } = await measureLive(client);
+    const { btCount, orphanLines, forbiddenJEs } = await measureLive(client);
 
     // Check 3: forbidden JEs (baseline 0)
     if (forbiddenJEs.length > 0) {
@@ -368,38 +393,21 @@ async function runFull() {
       return;
     }
 
-    // Check 2: bank_transactions count unchanged from prior run
-    let baseline = null;
-    if (fs.existsSync(BASELINE_FILE)) {
-      baseline = JSON.parse(fs.readFileSync(BASELINE_FILE, "utf8"));
+    // Check 2: every bank line came from a feed (recomputed from the database on this run).
+    if (btCount === 0) {
+      console.error(`${LABEL}: LIVE FAIL — 0 USMCA bank lines read; an empty result is an instrument problem, not a verdict.`);
+      process.exitCode = 1;
+      return;
     }
-
-    if (!baseline) {
-      // First run — write the baseline (this is the ONLY time the baseline is created)
-      const measured = {
-        measured_at: new Date().toISOString(),
-        bank_transactions_count: btCount,
-        _comment: "bank_transactions count for USMCA — derived from the table, never hardcoded. Asserted unchanged every run.",
-      };
-      fs.writeFileSync(BASELINE_FILE, JSON.stringify(measured, null, 2) + "\n");
-      console.log(
-        `${LABEL}: LIVE PASS — bank_transactions=${btCount} (baseline written on first run), 0 forbidden JEs. Baseline 0 held.`,
-      );
-    } else {
-      const priorCount = baseline.bank_transactions_count;
-      if (btCount !== priorCount) {
-        console.error(
-          `${LABEL}: LIVE FAIL — bank_transactions count changed: ${priorCount} → ${btCount}. ` +
-            `banking.bank_transactions is never created, deleted or modified for USMCA. ` +
-            `If this is a legitimate feed change, update the baseline file with the new derived count.`,
-        );
-        process.exitCode = 1;
-        return;
-      }
-      console.log(
-        `${LABEL}: LIVE PASS — bank_transactions=${btCount} (unchanged from prior run), 0 forbidden JEs. Baseline 0 held.`,
-      );
+    if (orphanLines.length > 0) {
+      const sample = orphanLines.slice(0, 10).map((r) => `  ${r.id}: ${r.problem}`).join("\n");
+      console.error(`${LABEL}: LIVE FAIL — ${orphanLines.length} bank line(s) not born from a feed:\n${sample}`);
+      process.exitCode = 1;
+      return;
     }
+    console.log(
+      `${LABEL}: LIVE PASS — ${btCount} USMCA bank line(s), every one born from a feed (recomputed this run, no stored count); 0 forbidden JEs.`,
+    );
   } finally {
     client.release();
     await pool.end();

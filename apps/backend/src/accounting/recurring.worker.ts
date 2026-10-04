@@ -1,5 +1,4 @@
 import type { PoolClient } from "pg";
-import { insertPostingLineWithSpineIfNew } from "./posting-line-writer.js";
 import { CronExpressionParser } from "cron-parser";
 import { DateTime } from "luxon";
 import crypto from "node:crypto";
@@ -7,12 +6,6 @@ import { withLuciaBypass } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-revenue-resolution.service.js";
 import { invoiceLineTotalCents } from "./invoice-line-total.js";
-// ACCT-LINK-01 regression fix (GO-1405 Recipe B, 2026-08-29): this recurring-JE template insert
-// never populated journal_entry_type_id -- one of several direct posters contributing to the live
-// 46/2214 (2%) density gap. Leaf module, no accounting-service imports.
-import { hasJournalEntryTypeColumn, resolveJournalEntryTypeId } from "./journal-entry-type-resolver.js";
-// ACCT-PERIOD-CLOSE-01: this recurring-JE template insert had no closed-period check at all.
-import { ensureOpenPeriod } from "./posting-engine.service.js";
 import { nextInvoiceDisplayId, nextExpenseDisplayId } from "./display-id.js";
 import { recomputeInvoiceTotals } from "./shared.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
@@ -244,116 +237,6 @@ async function materializeBill(client: PoolClient, tmpl: Record<string, unknown>
   return billId;
 }
 
-async function materializeJournal(client: PoolClient, tmpl: Record<string, unknown>, actorId: string) {
-  const oc = String(tmpl.operating_company_id);
-  const body = tmpl.template_payload as Record<string, unknown>;
-  const entryDate = String(body.entry_date ?? companyBusinessDate());
-  const memo = typeof body.memo === "string" ? body.memo : null;
-  const postings = Array.isArray(body.postings) ? (body.postings as Record<string, unknown>[]) : [];
-  if (postings.length < 2) throw new Error("recurring_journal_min_two_lines");
-
-  let debits = 0;
-  let credits = 0;
-  for (const p of postings) {
-    const side = String(p.debit_or_credit ?? "");
-    const amt = Number(p.amount_cents ?? 0);
-    if (side === "debit") debits += amt;
-    else if (side === "credit") credits += amt;
-  }
-  if (debits !== credits || debits <= 0) throw new Error("recurring_journal_not_balanced");
-
-  await ensureOpenPeriod(client, oc, entryDate);
-  const recurringTypeColPresent = await hasJournalEntryTypeColumn(client);
-  const recurringTypeId = recurringTypeColPresent
-    ? await resolveJournalEntryTypeId(client, { source: "auto", memo })
-    : null;
-  const header = recurringTypeColPresent
-    ? await client.query<{ id: string }>(
-        `
-      INSERT INTO accounting.journal_entries (
-        operating_company_id,
-        entry_date,
-        memo,
-        status,
-        source,
-        journal_entry_type_id,
-        created_by_user_id,
-        qbo_sync_pending,
-        created_at,
-        updated_at,
-        -- ACCT-F353 stage 2 — a manual recurring-JE template has no source document (the postings
-        -- come straight from the template payload) and the template table itself carries no
-        -- is_sample_data; explicit false, matching ACCT-F212's own documented policy in
-        -- posting-engine.service.ts ("everything else returns false rather than guessing").
-        is_sample_data
-      )
-      VALUES ($1::uuid,$2::date,$3,'posted','auto',$4::uuid,$5::uuid,true,now(),now(),false)
-      RETURNING id::text
-    `,
-        [oc, entryDate, memo, recurringTypeId, actorId]
-      )
-    : await client.query<{ id: string }>(
-        `
-      INSERT INTO accounting.journal_entries (
-        operating_company_id,
-        entry_date,
-        memo,
-        status,
-        source,
-        created_by_user_id,
-        qbo_sync_pending,
-        created_at,
-        updated_at,
-        is_sample_data
-      )
-      VALUES ($1::uuid,$2::date,$3,'posted','auto',$4::uuid,true,now(),now(),false)
-      RETURNING id::text
-    `,
-        [oc, entryDate, memo, actorId]
-      );
-  const jeId = header.rows[0]?.id;
-  if (!jeId) throw new Error("recurring_journal_insert_failed");
-
-  let seq = 1;
-  for (const p of postings) {
-    // ROUND 393.3 — the line and its spine row through the ONE writer (posting-line-writer.ts), in this transaction.
-    // The source is the recurring TEMPLATE this entry materialises (the object CODER-12 already linked each line to),
-    // never the journal entry as its own source; a template has no load. BLOCK 2: deterministic key per template +
-    // entry_date so a re-materialisation of the same period is a no-op (uq_jep_company_idempotency_line).
-    // NOT FIXED HERE, AND STILL OPEN: verify-money-engine-linkage — "NO REVERSE, AND IT IS A WORKER". This is a scheduled
-    // path that writes money with no undo, against the owner's standing law that nothing posts from a timer. Routing its
-    // lines through the writer gives them lineage; it does not make a timer a legitimate poster.
-    await insertPostingLineWithSpineIfNew(client as never, {
-      operating_company_id: oc,
-      journal_entry_uuid: jeId,
-      line_sequence: seq,
-      account_id: String(p.account_id),
-      class_id: p.class_id ? String(p.class_id) : null,
-      entity_uuid: p.entity_uuid ? String(p.entity_uuid) : null,
-      debit_or_credit: String(p.debit_or_credit) as "debit" | "credit",
-      amount_cents: Number(p.amount_cents ?? 0),
-      description: p.description != null ? String(p.description) : null,
-      idempotency_key: `recurring_je:${String(tmpl.id)}:${entryDate}`,
-      source_transaction_type: "recurring_template",
-      source_transaction_id: String(tmpl.id),
-      relationship_role: "recurring_source",
-    });
-    seq += 1;
-  }
-
-  // CODER-12 audit-spine: the immutable audit event for this materialized JE is the
-  // audit.append_event -> audit.audit_events call below (canonical, DB-trigger immutable per the
-  // blueprint). events.log_event is NOT used (its valid_subject_type CHECK rejects accounting subjects
-  // -> would fail-loud + roll back the materialization). The per-line links above carry traceability.
-  await client.query(`SELECT audit.append_event($1,$2,$3::jsonb,NULL,$4)`, [
-    "accounting.recurring_template.materialized",
-    "info",
-    JSON.stringify({ template_id: tmpl.id, entity: "journal_entry", entity_id: jeId }),
-    "P7-W2-RECURRING",
-  ]);
-  return jeId;
-}
-
 async function materializeExpense(client: PoolClient, tmpl: Record<string, unknown>, actorId: string) {
   const oc = String(tmpl.operating_company_id);
   const body = tmpl.template_payload as Record<string, unknown>;
@@ -398,7 +281,9 @@ async function materializeExpense(client: PoolClient, tmpl: Record<string, unkno
       VALUES (
         $1::uuid,
         $2::uuid,
-        'posted',
+        -- ROUND 389.4 RULING 1 — the worker CREATES, it never books: the expense lands as a draft (posting_status
+        -- 'unposted', no journal entry) and is posted through the expense's own post path, which has void and reversal.
+        'draft',
         $3::date,
         $4::bigint,
         $5,
@@ -463,8 +348,9 @@ async function processOneTemplate(client: PoolClient, tmplId: string): Promise<E
     entityId = await materializeBill(client, tmpl, actorId);
     entityType = "bill";
   } else if (kind === "journal_entry") {
-    entityId = await materializeJournal(client, tmpl, actorId);
-    entityType = "journal_entry";
+    // ROUND 389.4 RULING 1 — a journal entry has no pending state: materializing one IS posting it, from a timer, with no
+    // undo. Refused; the tick never selects this kind (below) and this throw is the backstop. Post it by hand.
+    throw new Error("recurring_journal_entry_never_posts_from_a_timer");
   } else if (kind === "expense") {
     entityId = await materializeExpense(client, tmpl, actorId);
     entityType = "expense";
@@ -510,6 +396,8 @@ export async function processRecurringTemplatesTick(limit = 50): Promise<{ attem
         SELECT id::text
         FROM accounting.recurring_templates
         WHERE is_active = true AND next_run_at <= now()
+          -- ROUND 389.4 RULING 1: a journal-entry template is never run from a timer (see processOneTemplate).
+          AND kind <> 'journal_entry'
         ORDER BY next_run_at ASC
         LIMIT $1
       `,
