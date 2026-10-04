@@ -16,7 +16,7 @@
 // tokens, and never from a hardcoded white/grey Tailwind pair. Checked statically, by reading the
 // source — not by trusting a comment that says it complies.
 //
-// Rule 17: wired ONLY via scripts/verify-steps/14633-verify-kpi-tiles-obey-tile-color-law.mjs
+// Rule 17: wired ONLY via scripts/verify-steps/14873-verify-kpi-tiles-obey-tile-color-law.mjs
 //
 // Usage:
 //   node scripts/verify-kpi-tiles-obey-tile-color-law.mjs --selftest
