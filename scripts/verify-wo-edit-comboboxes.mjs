@@ -29,12 +29,21 @@ function audit(src) {
     f.push(`${FILE}: must import SelectCombobox from ../../../components/Combobox`);
   }
   leftoverRefuse(src, f);
+  leftoverRefusePaymentTiming(f);
   return f;
 }
 
 function leftoverRefuse(src, failures) {
   if (src.includes("text-[11px]")) failures.push("leftover text-[11px]");
   if (src.includes("#8A92AB") || src.includes("#334155")) failures.push("leftover off-scale muted");
+}
+
+const PAYMENT_TIMING = "apps/frontend/src/pages/maintenance/components/CreateWOSectionPaymentTiming.tsx";
+
+function leftoverRefusePaymentTiming(failures, paymentSrc = readFileSync(PAYMENT_TIMING, "utf8")) {
+  // BANK-F91285 leftover refuse — CreateWOSectionPaymentTiming page-scoped
+  if (paymentSrc.includes("text-[11px]")) failures.push(`${PAYMENT_TIMING}: leftover text-[11px]`);
+  if (paymentSrc.includes("#8A92AB") || paymentSrc.includes("#334155")) failures.push(`${PAYMENT_TIMING}: leftover off-scale muted`);
 }
 
 function main() {
@@ -61,6 +70,12 @@ function main() {
     const leftoverFailures = audit(leftoverPlant);
     if (!leftoverFailures.includes("leftover text-[11px]") || !leftoverFailures.includes("leftover off-scale muted")) {
       console.error(`SELFTEST FAIL: leftover plant escaped — ${leftoverFailures.join("; ")}`);
+      process.exit(1);
+    }
+    const paymentPlant = [];
+    leftoverRefusePaymentTiming(paymentPlant, '<div className="text-[11px] text-[#8A92AB]">plant</div>');
+    if (!paymentPlant.some((e) => e.includes("leftover text-[11px]")) || !paymentPlant.some((e) => e.includes("leftover off-scale muted"))) {
+      console.error(`SELFTEST FAIL: PaymentTiming leftover plant escaped — ${paymentPlant.join("; ")}`);
       process.exit(1);
     }
     console.log("SELFTEST OK: guard trips on regression + leftover plant rejected");
