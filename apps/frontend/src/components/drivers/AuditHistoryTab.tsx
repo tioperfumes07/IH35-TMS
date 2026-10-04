@@ -158,7 +158,7 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
         label: "Event",
         sortable: true,
         render: (row) => (
-          <span className="text-[11px] text-gray-900" title={row.event_type}>
+          <span className="text-xs text-gray-900" title={row.event_type}>
             {humanizeAuditEventType(row.event_type)}
           </span>
         ),
@@ -308,7 +308,7 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
       ) : (
         <div className="overflow-auto rounded-sm border border-gray-200 bg-white p-2">
           {!auditQuery.isLoading && events.length === 0 ? (
-            <p className="px-2 py-3 text-center text-[11px] text-gray-500" data-testid="driver-audit-empty">
+            <p className="px-2 py-3 text-center text-xs text-gray-500" data-testid="driver-audit-empty">
               No audit events for this driver.
             </p>
           ) : (
@@ -334,7 +334,7 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
             />
           )}
           {!auditQuery.isLoading && !auditQuery.isError && totalCount > pageSize ? (
-            <div className="mt-2 flex items-center justify-between gap-2 border-t border-gray-100 pt-2 text-[11px]" data-testid="driver-audit-server-pager">
+            <div className="mt-2 flex items-center justify-between gap-2 border-t border-gray-100 pt-2 text-xs" data-testid="driver-audit-server-pager">
               <Button size="sm" variant="secondary" disabled={page === 0 || auditQuery.isFetching} onClick={() => setPage((current) => Math.max(0, current - 1))}>
                 Previous
               </Button>
