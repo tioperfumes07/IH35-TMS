@@ -21,7 +21,7 @@ const DEAD = [
   "IFTA_TRIP_METHODOLOGY_ENABLED",
 ];
 
-function check() {
+function check(svcOverride) {
   const errors = [];
   const mig = fs.readFileSync(path.join(ROOT, MIG), "utf8");
   if (!/ADD COLUMN IF NOT EXISTS archived_at/.test(mig)) {
@@ -30,7 +30,7 @@ function check() {
   for (const key of DEAD) {
     if (!mig.includes(`'${key}'`)) errors.push(`migration missing archive of ${key}`);
   }
-  const svc = fs.readFileSync(path.join(ROOT, SERVICE), "utf8");
+  const svc = svcOverride ?? fs.readFileSync(path.join(ROOT, SERVICE), "utf8");
   if (!/if \(flag\.archived_at\) return false/.test(svc)) {
     errors.push("isEnabled must short-circuit on archived_at");
   }
@@ -82,16 +82,13 @@ function selftest() {
     console.error("selftest FAIL: could not strip archived_at short-circuit");
     process.exit(1);
   }
-  fs.writeFileSync(abs, broken);
-  try {
-    const errors = check();
+  {
+    const errors = check(broken);
     if (!errors.length) {
       console.error("selftest FAIL: expected errors");
       process.exit(1);
     }
     console.log("selftest PASS: stripped short-circuit → FAIL as expected");
-  } finally {
-    fs.writeFileSync(abs, original);
   }
 }
 

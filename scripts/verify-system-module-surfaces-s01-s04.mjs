@@ -25,13 +25,13 @@ function exists(relativePath) {
   return fs.existsSync(path.join(ROOT, relativePath));
 }
 
-export function run() {
+export function run(srcOverride) {
   const failures = [];
-  if (!exists(FILE)) {
+  if (srcOverride === undefined && !exists(FILE)) {
     failures.push(`MISSING: ${FILE}`);
     return failures;
   }
-  const src = read(FILE);
+  const src = srcOverride !== undefined ? srcOverride : read(FILE);
 
   // S01 — canonical tab set + live QBO recon/sync
   const requiredTabs = ["overview", "qbo-recon", "qbo-sync", "program", "software", "claude-coder"];
@@ -90,17 +90,13 @@ export function run() {
 function main() {
   const args = process.argv.slice(2);
   if (args.includes("--selftest")) {
-    const realPath = path.join(ROOT, FILE);
-    const backup = fs.readFileSync(realPath, "utf8");
+    const backup = read(FILE);
     try {
-      fs.writeFileSync(
-        realPath,
+      const plantedSrc =
         backup
           .replace(/getProgramTracker/g, "fetchTracker")
-          .replace("onRetry={() => void health.refetch()}", "onRetry={() => undefined}"),
-        "utf8",
-      );
-      const planted = run();
+          .replace("onRetry={() => void health.refetch()}", "onRetry={() => undefined}");
+      const planted = run(plantedSrc);
       if (planted.length === 0) {
         console.error("[verify-system-module-surfaces-s01-s04] SELFTEST FAIL: planted rename did not fail");
         process.exit(1);
@@ -111,7 +107,7 @@ function main() {
       }
       console.log(`[verify-system-module-surfaces-s01-s04] SELFTEST PASS (${planted.length} planted failures detected, including health retry)`);
     } finally {
-      fs.writeFileSync(realPath, backup, "utf8");
+      // nothing written to disk
     }
     process.exit(0);
   }

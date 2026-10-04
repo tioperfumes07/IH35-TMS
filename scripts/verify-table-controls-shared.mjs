@@ -2,7 +2,7 @@
 // Guard (GLOBAL-TABLE-CONTROLS): the shared data-grid toolbar must stay a single shared
 // component set under components/table/*, and consumers must REUSE it (not re-fork their own
 // paginator / column chooser / search per page). Fleet is the first consumer.
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 
 const failures = [];
 
@@ -119,12 +119,10 @@ if (process.argv.includes("--selftest")) {
   // BANK-F91307 leftover plant — Paginator page-scoped text token ratchet
   const realGood = readFileSync(PAGINATOR, "utf8");
   const leftoverPlant = realGood + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
-  writeFileSync(PAGINATOR, leftoverPlant);
   const plantCaught =
     leftoverPlant.includes("text-[11px]") ||
     leftoverPlant.includes("#8A92AB") ||
     leftoverPlant.includes("#334155");
-  writeFileSync(PAGINATOR, realGood);
   if (!plantCaught) {
     console.error("selftest: leftover plant escaped");
     process.exit(1);
@@ -132,12 +130,10 @@ if (process.argv.includes("--selftest")) {
   // BANK-F91330 leftover plant — ColumnChooser page-scoped text token ratchet
   const chooserGood = readFileSync(COLUMN_CHOOSER, "utf8");
   const chooserPlant = chooserGood + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
-  writeFileSync(COLUMN_CHOOSER, chooserPlant);
   const chooserCaught =
     chooserPlant.includes("text-[11px]") ||
     chooserPlant.includes("#8A92AB") ||
     chooserPlant.includes("#334155");
-  writeFileSync(COLUMN_CHOOSER, chooserGood);
   if (!chooserCaught) {
     console.error("selftest: ColumnChooser leftover plant escaped");
     process.exit(1);

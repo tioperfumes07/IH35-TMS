@@ -19,7 +19,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -35,6 +34,11 @@ const CUSTOMERS = path.join(ROOT, "apps/frontend/src/pages/Customers.tsx");
 const FE = path.join(ROOT, "apps/frontend/src");
 
 const CHROME_TOKEN = /(?:^|\s)(?:rounded(?:-\S+)?|border(?:-\S+)?|p[xytblr]?-\S+|text-\S+|focus:\S+|hover:border\S*)(?:\s|$)/;
+
+const OVERRIDES = new Map();
+function readSrc(p) {
+  return OVERRIDES.has(p) ? OVERRIDES.get(p) : fs.readFileSync(p, "utf8");
+}
 
 function walkTsx(dir, out = []) {
   if (!fs.existsSync(dir)) return out;
@@ -99,7 +103,7 @@ function scanCallSites() {
   for (const file of walkTsx(FE)) {
     const rel = path.relative(ROOT, file).split(path.sep).join("/");
     if (rel.endsWith("components/forms/DatePicker.tsx")) continue;
-    const src = fs.readFileSync(file, "utf8");
+    const src = readSrc(file);
     for (const attrs of extractDatePickerAttrs(src)) {
       for (const cm of attrs.matchAll(/className="([^"]*)"/g)) {
         if (CHROME_TOKEN.test(` ${cm[1]} `)) {
@@ -116,9 +120,9 @@ function scanCallSites() {
   return findings;
 }
 
-function run() {
+function collectErrors() {
   const errors = [];
-  const dp = fs.readFileSync(DATEPICKER, "utf8");
+  const dp = readSrc(DATEPICKER);
   if (!dp.includes("partitionDatePickerClassName")) {
     errors.push("DatePicker.tsx must define partitionDatePickerClassName (strip border/rounded/px/py from className)");
   }
@@ -161,7 +165,7 @@ function run() {
     errors.push("DatePicker outer wrapper must use partitioned shell classes only");
   }
 
-  const dtp = fs.readFileSync(DATETIMEPICKER, "utf8");
+  const dtp = readSrc(DATETIMEPICKER);
   if (!dtp.includes("parseDateUS")) {
     errors.push("DateTimePicker must import/use parseDateUS for typed MM/DD/YYYY entry (MOD-03)");
   }
@@ -187,16 +191,16 @@ function run() {
     errors.push("DatePicker popover must expose data-date-picker-popover=open while open (MOD-02 parent guard)");
   }
 
-  const modal = fs.readFileSync(MODAL, "utf8");
+  const modal = readSrc(MODAL);
   if (!modal.includes('[data-date-picker-popover="open"]')) {
     errors.push("Modal useEscapeKey must yield when a date picker popover is open (MOD-02)");
   }
-  const parityDrawer = fs.readFileSync(PARITY_DRAWER, "utf8");
+  const parityDrawer = readSrc(PARITY_DRAWER);
   if (!parityDrawer.includes('[data-date-picker-popover="open"]')) {
     errors.push("ParityDrawer Escape must yield when a date picker popover is open (MOD-02 insurance wizard)");
   }
 
-  const hist = fs.readFileSync(HISTORY, "utf8");
+  const hist = readSrc(HISTORY);
   if (!hist.includes('data-testid="assignment-history-filter-apply"')) {
     errors.push("AssignmentHistoryPage must expose Apply (assignment-history-filter-apply)");
   }
@@ -213,7 +217,7 @@ function run() {
     errors.push("AssignmentHistory To must htmlFor/id assignment-history-to (GO-2310)");
   }
 
-  const border = fs.readFileSync(BORDER, "utf8");
+  const border = readSrc(BORDER);
   if (!border.includes('htmlFor="border-crossing-from"') || !border.includes('id="border-crossing-from"')) {
     errors.push("BorderCrossingHistory From must htmlFor/id border-crossing-from (GO-2310)");
   }
@@ -221,7 +225,7 @@ function run() {
     errors.push("BorderCrossingHistory To must htmlFor/id border-crossing-to (GO-2310)");
   }
 
-  const trip = fs.readFileSync(TRIP, "utf8");
+  const trip = readSrc(TRIP);
   if (/<label[^>]*>(?:(?!<\/label>)[\s\S])*<DatePicker/.test(trip)) {
     errors.push("TripProfitability must not wrap DatePicker inside <label> (GO-2310 click-theft); use htmlFor + DatePicker id");
   }
@@ -232,7 +236,7 @@ function run() {
     errors.push("TripProfitability To must htmlFor/id trip-profit-to");
   }
 
-  const contracts = fs.readFileSync(CONTRACTS, "utf8");
+  const contracts = readSrc(CONTRACTS);
   if (/<label[^>]*>(?:(?!<\/label>)[\s\S])*<DatePicker/.test(contracts)) {
     errors.push("CustomerContractsTab must not wrap DatePicker inside <label> (GO-2310 click-theft)");
   }
@@ -243,7 +247,7 @@ function run() {
     errors.push("CustomerContractsTab Expiration must htmlFor/id customer-contract-expiration");
   }
 
-  const customers = fs.readFileSync(CUSTOMERS, "utf8");
+  const customers = readSrc(CUSTOMERS);
   if (!customers.includes('htmlFor="customers-tx-from"') || !customers.includes('id="customers-tx-from"')) {
     errors.push("Customers transaction Date range From must htmlFor/id customers-tx-from");
   }
@@ -252,7 +256,11 @@ function run() {
   }
 
   errors.push(...scanCallSites());
+  return errors;
+}
 
+function run() {
+  const errors = collectErrors();
   if (errors.length) {
     console.error("verify-datepicker-classname-no-box-in-box FAIL:");
     for (const e of errors.slice(0, 40)) console.error(" -", e);
@@ -264,27 +272,32 @@ function run() {
   );
 }
 
+// In-process red check: plant the mutated text via the read override (no file is written),
+// and report whether the checker would FAIL (any error) — same signal as the old subprocess exit != 0.
+function redWith(file, text) {
+  OVERRIDES.set(file, text);
+  try {
+    return collectErrors().length > 0;
+  } finally {
+    OVERRIDES.delete(file);
+  }
+}
+
 function selftest() {
   const bak = fs.readFileSync(DATEPICKER, "utf8");
-  try {
+  {
     const broken = bak
       .replace(/partitionDatePickerClassName/g, "partitionDatePickerClassNameREMOVED")
       .replace(/\$\{shell\}/g, "${className}");
-    fs.writeFileSync(DATEPICKER, broken);
-    const red = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
-      cwd: ROOT,
-      encoding: "utf8",
-    });
-    if (red.status === 0) {
+    const red = redWith(DATEPICKER, broken);
+    if (!red) {
       console.error("verify-datepicker-classname-no-box-in-box --selftest FAIL: broken DatePicker did not redden");
       process.exit(1);
     }
-  } finally {
-    fs.writeFileSync(DATEPICKER, bak);
   }
   // Call-site arm: poison the from-date DatePicker className (className precedes data-testid).
   const histBak = fs.readFileSync(HISTORY, "utf8");
-  try {
+  {
     const poisoned = histBak.replace(
       /className="w-full"(\s*\n\s*data-testid="assignment-history-from-date")/,
       'className="w-full border border-gray-300"$1',
@@ -293,38 +306,26 @@ function selftest() {
       console.error("selftest FAIL: could not poison assignment-history-from-date DatePicker className");
       process.exit(1);
     }
-    fs.writeFileSync(HISTORY, poisoned);
-    const red = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
-      cwd: ROOT,
-      encoding: "utf8",
-    });
-    if (red.status === 0) {
+    const red = redWith(HISTORY, poisoned);
+    if (!red) {
       console.error("verify-datepicker-classname-no-box-in-box --selftest FAIL: bordered call site did not redden");
       process.exit(1);
     }
-  } finally {
-    fs.writeFileSync(HISTORY, histBak);
   }
-  try {
+  {
     const orphaned = histBak.replace(`htmlFor="assignment-history-from"`, `data-orphaned="assignment-history-from"`);
     if (orphaned === histBak) {
       console.error("selftest FAIL: could not orphan assignment-history-from htmlFor");
       process.exit(1);
     }
-    fs.writeFileSync(HISTORY, orphaned);
-    const red = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
-      cwd: ROOT,
-      encoding: "utf8",
-    });
-    if (red.status === 0) {
+    const red = redWith(HISTORY, orphaned);
+    if (!red) {
       console.error("verify-datepicker-classname-no-box-in-box --selftest FAIL: orphaned assignment From label did not redden");
       process.exit(1);
     }
-  } finally {
-    fs.writeFileSync(HISTORY, histBak);
   }
   const tripBak = fs.readFileSync(TRIP, "utf8");
-  try {
+  {
     const wrapped = tripBak.replace(
       `htmlFor="trip-profit-from"`,
       `data-orphaned="trip-profit-from"`,
@@ -333,20 +334,14 @@ function selftest() {
       console.error("selftest FAIL: could not orphan trip-profit-from htmlFor");
       process.exit(1);
     }
-    fs.writeFileSync(TRIP, wrapped);
-    const red = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
-      cwd: ROOT,
-      encoding: "utf8",
-    });
-    if (red.status === 0) {
+    const red = redWith(TRIP, wrapped);
+    if (!red) {
       console.error("verify-datepicker-classname-no-box-in-box --selftest FAIL: orphaned trip From label did not redden");
       process.exit(1);
     }
-  } finally {
-    fs.writeFileSync(TRIP, tripBak);
   }
   const contractsBak = fs.readFileSync(CONTRACTS, "utf8");
-  try {
+  {
     const orphaned = contractsBak.replace(
       `htmlFor="customer-contract-effective"`,
       `data-orphaned="customer-contract-effective"`,
@@ -355,17 +350,11 @@ function selftest() {
       console.error("selftest FAIL: could not orphan customer-contract-effective htmlFor");
       process.exit(1);
     }
-    fs.writeFileSync(CONTRACTS, orphaned);
-    const red = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
-      cwd: ROOT,
-      encoding: "utf8",
-    });
-    if (red.status === 0) {
+    const red = redWith(CONTRACTS, orphaned);
+    if (!red) {
       console.error("verify-datepicker-classname-no-box-in-box --selftest FAIL: orphaned contract Effective label did not redden");
       process.exit(1);
     }
-  } finally {
-    fs.writeFileSync(CONTRACTS, contractsBak);
   }
   console.log("verify-datepicker-classname-no-box-in-box --selftest PASS");
 }

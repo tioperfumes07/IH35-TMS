@@ -105,13 +105,13 @@ function selftest() {
       "apps/backend/src/mdata/loads.routes.ts",
       "apps/frontend/src/pages/dispatch/DispatchBoard.tsx",
     ]) {
-      const abs = join(tmp, rel);
-      mkdirSync(dirname(abs), { recursive: true });
-      writeFileSync(abs, read(rel));
+      const tmpAbs = join(tmp, rel);
+      mkdirSync(dirname(tmpAbs), { recursive: true });
+      writeFileSync(tmpAbs, read(rel));
     }
-    const poisonAbs = join(tmp, "apps/frontend/src/pages/Dispatch.tsx");
-    mkdirSync(dirname(poisonAbs), { recursive: true });
-    writeFileSync(poisonAbs, poisonDispatch);
+    const tmpPoisonAbs = join(tmp, "apps/frontend/src/pages/Dispatch.tsx");
+    mkdirSync(dirname(tmpPoisonAbs), { recursive: true });
+    writeFileSync(tmpPoisonAbs, poisonDispatch);
     const planted = runChecks(tmp);
     if (!planted.some((e) => e.includes("force list view"))) {
       console.error(`${LABEL} SELFTEST FAIL — planted history/list regression not caught`);

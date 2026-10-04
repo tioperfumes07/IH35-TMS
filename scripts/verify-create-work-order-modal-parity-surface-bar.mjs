@@ -14,8 +14,8 @@ function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-export function check() {
-  const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+export function check(srcOverride) {
+  const src = srcOverride ?? fs.readFileSync(path.join(ROOT, PAGE), "utf8");
   assert(src.includes("ParityTable"), "CreateWorkOrderModal: must use ParityTable");
   assert(src.includes('storageKey="create-wo-modal-edit-cost-lines"'), "CreateWorkOrderModal: storageKey");
   assert(src.includes('tableTestId="create-wo-edit-cost-lines-table"'), "CreateWorkOrderModal: tableTestId");
@@ -27,22 +27,18 @@ export function check() {
 
 function selftest() {
   check();
-  const filePath = path.join(ROOT, PAGE);
-  const good = fs.readFileSync(filePath, "utf8");
   const planted = [
     "export function CreateWorkOrderModal() {",
     '  return <table className="min-w-full" data-testid="create-wo-edit-cost-lines-table"><tbody /></table>;',
     "}",
     "",
   ].join("\n");
-  fs.writeFileSync(filePath, planted);
   let failed = false;
   try {
-    check();
+    check(planted);
   } catch {
     failed = true;
   }
-  fs.writeFileSync(filePath, good);
   assert(failed, "selftest: expected FAIL on raw HTML table");
   console.log("verify-create-work-order-modal-parity-surface-bar --selftest PASS");
 }

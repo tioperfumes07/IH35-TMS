@@ -84,34 +84,34 @@ export function scan(opts = {}) {
 function selftest() {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "disputes-refs-"));
   try {
-    const src = path.join(tmp, "apps/backend/src");
-    fs.mkdirSync(path.join(src, "__tests__"), { recursive: true });
+    const tmpSrc = path.join(tmp, "apps/backend/src");
+    fs.mkdirSync(path.join(tmpSrc, "__tests__"), { recursive: true });
     fs.writeFileSync(
-      path.join(src, "clean.ts"),
+      path.join(tmpSrc, "clean.ts"),
       "await q(`SELECT id FROM driver_finance.driver_settlement_disputes WHERE id = $1`);\n// comment about settlements.settlement_disputes is fine\n"
     );
     fs.writeFileSync(
-      path.join(src, "bad-reader.ts"),
+      path.join(tmpSrc, "bad-reader.ts"),
       "await q(`SELECT d.* FROM settlements.settlement_disputes d WHERE d.id = $1`);\n"
     );
     fs.writeFileSync(
-      path.join(src, "bad-writer.ts"),
+      path.join(tmpSrc, "bad-writer.ts"),
       "await q(`INSERT INTO settlements.settlement_disputes (settlement_id) VALUES ($1)`);\n"
     );
     fs.writeFileSync(
-      path.join(src, "bad-update.ts"),
+      path.join(tmpSrc, "bad-update.ts"),
       "await q(`UPDATE settlements.settlement_disputes SET status = $2 WHERE id = $1`);\n"
     );
     fs.writeFileSync(
-      path.join(src, "bad-probe.ts"),
+      path.join(tmpSrc, "bad-probe.ts"),
       "await q(`SELECT to_regclass('settlements.settlement_disputes') IS NOT NULL AS ok`);\n"
     );
     fs.writeFileSync(
-      path.join(src, "old-routes.deprecated.ts"),
+      path.join(tmpSrc, "old-routes.deprecated.ts"),
       "await q(`SELECT id FROM settlements.settlement_disputes`);\n"
     );
     fs.writeFileSync(
-      path.join(src, "__tests__/mock.test.ts"),
+      path.join(tmpSrc, "__tests__/mock.test.ts"),
       "if (sql.includes('FROM settlements.settlement_disputes')) {}\n"
     );
 

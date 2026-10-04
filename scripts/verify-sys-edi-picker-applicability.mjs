@@ -16,11 +16,13 @@ const WIZ = "apps/frontend/src/pages/integrations/edi/EdiSetupWizard.tsx";
 const SERVICE = "apps/backend/src/integrations/edi/setup.service.ts";
 const LEAF = "system.wizard.edi_setup";
 
-function read(rel) {
+function readDisk(rel) {
   return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
 }
 
-function analyze() {
+// overrides: {relPath: plantedText} so --selftest plants in memory; no file is written.
+function analyze(overrides = {}) {
+  const read = (rel) => overrides[rel] ?? readDisk(rel);
   const failures = [];
   const j = JSON.parse(read(REQ));
   const leaf = (j.leaves ?? []).find((l) => l.id === LEAF);
@@ -74,37 +76,23 @@ function fail(msg) {
 }
 
 function selftest() {
-  const reqPath = path.join(process.cwd(), REQ);
-  const wizPath = path.join(process.cwd(), WIZ);
-  const servicePath = path.join(process.cwd(), SERVICE);
-  const original = fs.readFileSync(reqPath, "utf8");
-  const originalWizard = fs.readFileSync(wizPath, "utf8");
-  const originalService = fs.readFileSync(servicePath, "utf8");
-  try {
+  const original = readDisk(REQ);
+  const originalWizard = readDisk(WIZ);
+  const originalService = readDisk(SERVICE);
+  {
     const j = JSON.parse(original);
     const leaf = (j.leaves ?? []).find((l) => l.id === LEAF);
     if (!leaf) fail("selftest: leaf missing");
     leaf.required = [...new Set([...(leaf.required ?? []), "picker_law"])];
-    fs.writeFileSync(reqPath, JSON.stringify(j, null, 2) + "\n");
-    const bad = analyze();
+    const bad = analyze({ [REQ]: JSON.stringify(j, null, 2) + "\n" });
     if (!bad.some((m) => /must not require picker_law/.test(m))) {
       fail("selftest expected picker_law reclaim to fail");
     }
-  } finally {
-    fs.writeFileSync(reqPath, original);
   }
-  try {
-    fs.writeFileSync(wizPath, originalWizard.replace('aria-labelledby="configured-edi-partners"', 'aria-labelledby="broken"'));
-    if (!analyze().some((m) => /render configured partners/.test(m))) fail("selftest expected reload visibility mutation to fail");
-    fs.writeFileSync(wizPath, originalWizard);
-    fs.writeFileSync(wizPath, originalWizard.replace("onRetry={() => void partnersQuery.refetch()}", "onRetry={() => undefined}"));
-    if (!analyze().some((m) => /retry the exact query/.test(m))) fail("selftest expected configured-partners retry mutation to fail");
-    fs.writeFileSync(wizPath, originalWizard);
-    fs.writeFileSync(servicePath, originalService.replace("supported_transactions,", "connection_config,\n        supported_transactions,"));
-    if (!analyze().some((m) => /must not return connection_config/.test(m))) fail("selftest expected secret projection mutation to fail");
-  } finally {
-    fs.writeFileSync(wizPath, originalWizard);
-    fs.writeFileSync(servicePath, originalService);
+  {
+    if (!analyze({ [WIZ]: originalWizard.replace('aria-labelledby="configured-edi-partners"', 'aria-labelledby="broken"') }).some((m) => /render configured partners/.test(m))) fail("selftest expected reload visibility mutation to fail");
+    if (!analyze({ [WIZ]: originalWizard.replace("onRetry={() => void partnersQuery.refetch()}", "onRetry={() => undefined}") }).some((m) => /retry the exact query/.test(m))) fail("selftest expected configured-partners retry mutation to fail");
+    if (!analyze({ [SERVICE]: originalService.replace("supported_transactions,", "connection_config,\n        supported_transactions,") }).some((m) => /must not return connection_config/.test(m))) fail("selftest expected secret projection mutation to fail");
   }
   const good = analyze();
   if (good.length) fail(`selftest expected GOOD after restore: ${good.join("; ")}`);

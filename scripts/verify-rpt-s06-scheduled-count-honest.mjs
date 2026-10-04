@@ -5,27 +5,28 @@
  */
 
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = process.cwd();
 const FILE = "apps/frontend/src/pages/reports/ScheduledReportsPanel.tsx";
 
-function read(relativePath) {
-  return fs.readFileSync(path.join(ROOT, relativePath), "utf8");
+function read(relativePath, root = ROOT) {
+  return fs.readFileSync(path.join(root, relativePath), "utf8");
 }
 
-function exists(relativePath) {
-  return fs.existsSync(path.join(ROOT, relativePath));
+function exists(relativePath, root = ROOT) {
+  return fs.existsSync(path.join(root, relativePath));
 }
 
-export function run() {
+export function run(root = ROOT) {
   const failures = [];
-  if (!exists(FILE)) {
+  if (!exists(FILE, root)) {
     failures.push(`MISSING: ${FILE}`);
     return failures;
   }
-  const src = read(FILE);
+  const src = read(FILE, root);
 
   if (!/apiRequest\s*<\{ rows: ScheduledRow\[\] \}>\s*\(\s*withCompany\("\/api\/v1\/reports\/scheduled"/.test(src)) {
     failures.push(`${FILE}: must fetch scheduled reports from /api/v1/reports/scheduled scoped by company`);
@@ -57,20 +58,25 @@ export function run() {
 function main() {
   const args = process.argv.slice(2);
   if (args.includes("--selftest")) {
-    const realPath = path.join(ROOT, FILE);
+    const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "verify-rpt-s06-scheduled-count-honest-selftest-"));
+    for (const rel of [FILE]) {
+      fs.mkdirSync(path.dirname(path.join(tmpRoot, rel)), { recursive: true });
+      fs.writeFileSync(path.join(tmpRoot, rel), read(rel), "utf8");
+    }
+    const realPath = path.join(tmpRoot, FILE);
     const backup = fs.readFileSync(realPath, "utf8");
     try {
       // Real copy is "No custom schedules ..." — plant the mutation against the actual phrase so
       // it isn't a silent no-op.
       fs.writeFileSync(realPath, backup.replace(/No custom schedules/g, "5 active schedules"), "utf8");
-      const planted = run();
+      const planted = run(tmpRoot);
       if (planted.length === 0) {
         console.error("[verify-rpt-s06-scheduled-count-honest] SELFTEST FAIL: planted hardcoded count did not fail");
         process.exit(1);
       }
       console.log(`[verify-rpt-s06-scheduled-count-honest] SELFTEST PASS (${planted.length} planted failures detected)`);
     } finally {
-      fs.writeFileSync(realPath, backup, "utf8");
+      fs.rmSync(tmpRoot, { recursive: true, force: true });
     }
     process.exit(0);
   }

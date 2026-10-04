@@ -7,6 +7,7 @@
  * --selftest plants a set_config('app.active_company_id') and expects FAIL.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -24,9 +25,9 @@ function walk(dir, out = []) {
   return out;
 }
 
-function check() {
+function check(srcDir = SRC) {
   const errors = [];
-  for (const abs of walk(SRC)) {
+  for (const abs of walk(srcDir)) {
     const src = fs.readFileSync(abs, "utf8");
     if (!FORBIDDEN.test(src)) continue;
     const rel = path.relative(ROOT, abs).replace(/\\/g, "/");
@@ -46,20 +47,22 @@ function main() {
 }
 
 function selftest() {
-  const plant = path.join(SRC, "auth", "__guc_selftest_plant.ts");
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "guc-selftest-"));
+  const plant = path.join(tmpRoot, "auth", "__guc_selftest_plant.ts");
+  fs.mkdirSync(path.dirname(plant), { recursive: true });
   fs.writeFileSync(
     plant,
     `await client.query("SELECT set_config('app.active_company_id', $1::text, true)", [x]);\n`,
   );
   try {
-    const errors = check();
+    const errors = check(tmpRoot);
     if (!errors.length) {
       console.error("selftest FAIL: expected errors after planting writer");
       process.exit(1);
     }
     console.log("selftest PASS: planted writer → FAIL as expected");
   } finally {
-    fs.unlinkSync(plant);
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
   }
 }
 

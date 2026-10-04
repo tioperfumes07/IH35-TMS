@@ -76,14 +76,12 @@ function selftest() {
       return;
     }
     const mutated = original.slice(0, fallbackStart) + original.slice(fallbackEnd);
-    fs.writeFileSync(RESYNC_FILE, mutated);
     let caught = false;
     try {
       checkResyncFile(mutated);
       caught = process.exitCode === 1;
     } finally {
       process.exitCode = undefined;
-      fs.writeFileSync(RESYNC_FILE, original);
     }
     if (!caught) {
       console.error("SELFTEST INERT: dropping the create-fallback branch was not caught.");
@@ -104,14 +102,12 @@ function selftest() {
       process.exitCode = 1;
       return;
     }
-    fs.writeFileSync(RESYNC_FILE, mutated);
     let caught = false;
     try {
       checkResyncFile(mutated);
       caught = process.exitCode === 1;
     } finally {
       process.exitCode = undefined;
-      fs.writeFileSync(RESYNC_FILE, original);
     }
     if (!caught) {
       console.error("SELFTEST INERT: swallowing non-load_has_no_rate errors was not caught.");

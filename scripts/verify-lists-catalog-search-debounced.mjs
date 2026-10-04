@@ -32,14 +32,21 @@ function walkTsx(dir, out = []) {
   return out;
 }
 
+// In-memory plants for --selftest: the checker reads through this map first, so no tracked file is ever written.
+const PLANTED_SOURCES = new Map();
+function readSrc(file) {
+  const planted = PLANTED_SOURCES.get(path.resolve(file));
+  return planted !== undefined ? planted : fs.readFileSync(file, "utf8");
+}
+
 export function check() {
-  const inputSrc = fs.readFileSync(path.join(ROOT, INPUT), "utf8");
+  const inputSrc = readSrc(path.join(ROOT, INPUT));
   assert(inputSrc.includes("TableSearch"), `${INPUT}: must wrap TableSearch for debounced emit`);
-  const optionsSrc = fs.readFileSync(path.join(ROOT, OPTIONS), "utf8");
+  const optionsSrc = readSrc(path.join(ROOT, OPTIONS));
   assert(/keepPreviousData/.test(optionsSrc), `${OPTIONS}: must export keepPreviousData placeholder`);
 
   for (const rel of ANCHOR_PAGES) {
-    const src = fs.readFileSync(path.join(ROOT, rel), "utf8");
+    const src = readSrc(path.join(ROOT, rel));
     assert(src.includes("CatalogListSearchInput"), `${rel}: must use CatalogListSearchInput`);
     assert(
       src.includes("...catalogListSearchQueryOptions"),
@@ -49,7 +56,7 @@ export function check() {
   }
 
   const catalogPages = walkTsx(LISTS_GLOB).filter((file) => {
-    const src = fs.readFileSync(file, "utf8");
+    const src = readSrc(file);
     return (
       /placeholder=["']Search by code/.test(src) ||
       /search:\s*search\s*\|\|/.test(src) ||
@@ -59,7 +66,7 @@ export function check() {
 
   for (const file of catalogPages) {
     const rel = path.relative(ROOT, file);
-    const src = fs.readFileSync(file, "utf8");
+    const src = readSrc(file);
     assert(!/setSearch\(event\.target\.value\)/.test(src), `${rel}: raw per-keystroke search forbidden`);
     assert(!/setSearch\(e\.target\.value\)/.test(src), `${rel}: raw per-keystroke search forbidden`);
     const relToLists = path.relative(LISTS_GLOB, file);
@@ -124,14 +131,14 @@ function selftest() {
   const bad = good
     .replace("CatalogListSearchInput", "BrokenCatalogSearchInput")
     .replace("...catalogListSearchQueryOptions,", "");
-  fs.writeFileSync(anchor, bad);
+  PLANTED_SOURCES.set(path.resolve(anchor), bad);
   let failed = false;
   try {
     check();
   } catch {
     failed = true;
   }
-  fs.writeFileSync(anchor, good);
+  PLANTED_SOURCES.delete(path.resolve(anchor));
   assert(failed, "selftest: expected FAIL when CatalogListSearchInput removed");
 
   // Depth regression: plant ../../../../ on a nested safety page.
@@ -142,14 +149,14 @@ function selftest() {
     'from "../../../../components/lists/CatalogListSearchInput"',
   );
   assert(nestedBad !== nestedGood, "selftest: depth plant must change file");
-  fs.writeFileSync(nested, nestedBad);
+  PLANTED_SOURCES.set(path.resolve(nested), nestedBad);
   let depthFailed = false;
   try {
     check();
   } catch {
     depthFailed = true;
   }
-  fs.writeFileSync(nested, nestedGood);
+  PLANTED_SOURCES.delete(path.resolve(nested));
   assert(depthFailed, "selftest: expected FAIL on ../../../../ import depth");
 
   // Root depth regression: pages/lists/*.tsx must use ../../ not ../../../
@@ -160,14 +167,14 @@ function selftest() {
     'from "../../../components/lists/CatalogListSearchInput"',
   );
   assert(rootBad !== rootGood, "selftest: root depth plant must change file");
-  fs.writeFileSync(rootCatalog, rootBad);
+  PLANTED_SOURCES.set(path.resolve(rootCatalog), rootBad);
   let rootDepthFailed = false;
   try {
     check();
   } catch {
     rootDepthFailed = true;
   }
-  fs.writeFileSync(rootCatalog, rootGood);
+  PLANTED_SOURCES.delete(path.resolve(rootCatalog));
   assert(rootDepthFailed, "selftest: expected FAIL on root ../../../ import depth");
 
   console.log("verify-lists-catalog-search-debounced --selftest PASS");

@@ -13,9 +13,9 @@
  * This guard fails if any app.get/app.post handler in the file reads `operating_company_id` (query
  * or body) without also calling resolveOperatingCompanyId(...) in the same handler body.
  *
- * --selftest mutates the REAL route file (replaces the first resolveOperatingCompanyId(...) call
+ * --selftest plants into a copy of the REAL route file's text (replaces the first resolveOperatingCompanyId(...) call
  * with a raw pass-through, reproducing the exact historical bug pattern), proves the check fails,
- * then restores the original file content from an in-memory backup in a `finally` block.
+ * entirely in memory (the planted text is passed to check(); no file is written).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -65,7 +65,7 @@ function main() {
 
   if (args.includes("--selftest")) {
     const backup = fs.readFileSync(realPath, "utf8");
-    try {
+    {
       const goodErrors = check(backup);
       if (goodErrors.length !== 0) {
         console.error(`[${LABEL}] SELFTEST FAIL: real (fixed) file flagged as bad:`, goodErrors);
@@ -78,15 +78,12 @@ function main() {
       // Plant the exact historical bug: one handler falls back to a raw, unvalidated pass-through
       // instead of resolving membership.
       const plantedBad = backup.replace(RESOLVE_CALL_NEEDLE, "(requestedCompanyId || \"\")");
-      fs.writeFileSync(realPath, plantedBad, "utf8");
       const plantedErrors = check(plantedBad);
       if (plantedErrors.length === 0) {
         console.error(`[${LABEL}] SELFTEST FAIL: planted raw-trust regression was not caught`);
         process.exit(1);
       }
       console.log(`[${LABEL}] SELFTEST PASS (${plantedErrors.length} planted failure(s) detected)`);
-    } finally {
-      fs.writeFileSync(realPath, backup, "utf8");
     }
     process.exit(0);
   }

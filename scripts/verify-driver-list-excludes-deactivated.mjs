@@ -38,8 +38,8 @@ export function run(root = process.cwd()) {
 }
 
 function selftest() {
-  const dir = fs.mkdtempSync("/tmp/driver-list-deactivated-guard-selftest-");
-  const tmpFile = `${dir}/${REL}`;
+  const tmpDir = fs.mkdtempSync("/tmp/driver-list-deactivated-guard-selftest-");
+  const tmpFile = `${tmpDir}/${REL}`;
   fs.mkdirSync(tmpFile.slice(0, tmpFile.lastIndexOf("/")), { recursive: true });
 
   const fixed = `
@@ -55,7 +55,7 @@ async function handler() {
 }
 `;
   fs.writeFileSync(tmpFile, fixed);
-  const passFailures = run(dir);
+  const passFailures = run(tmpDir);
   if (passFailures.length) throw new Error("PASS fail (should be clean): " + JSON.stringify(passFailures));
 
   // Mutation 1: drop the deactivated_at filter branch entirely (the exact regression).
@@ -67,7 +67,7 @@ async function handler() {
     ""
   );
   fs.writeFileSync(tmpFile, broken1);
-  const f1 = run(dir);
+  const f1 = run(tmpDir);
   if (f1.length === 0) throw new Error("FAIL to catch: removing the deactivated_at IS NULL branch went undetected");
 
   // Mutation 2: flip the default to true (silently ambient instead of an explicit admin opt-in).
@@ -76,10 +76,10 @@ async function handler() {
     "include_deactivated: z.coerce.boolean().optional().default(true)"
   );
   fs.writeFileSync(tmpFile, broken2);
-  const f2 = run(dir);
+  const f2 = run(tmpDir);
   if (f2.length === 0) throw new Error("FAIL to catch: flipping include_deactivated's default to true went undetected");
 
-  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(tmpDir, { recursive: true, force: true });
   console.log("verify-driver-list-excludes-deactivated SELFTEST PASS");
 }
 

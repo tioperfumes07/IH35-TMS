@@ -5,6 +5,7 @@
  * Cursor even claim: 2096.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -55,12 +56,12 @@ if (process.argv.includes("--selftest")) {
     for (const p of baseline) console.error("  - " + p);
     process.exit(1);
   }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-saf-b29-incidents-drivers-"));
+  const stubRoot = fs.mkdtempSync(path.join(os.tmpdir(), "tmp-saf-b29-incidents-drivers-"));
   try {
-    const dir = path.join(stubRoot, "apps/frontend/src/pages/safety/components");
-    fs.mkdirSync(dir, { recursive: true });
+    const tmpStubDir = path.join(stubRoot, "apps/frontend/src/pages/safety/components");
+    fs.mkdirSync(tmpStubDir, { recursive: true });
     fs.writeFileSync(
-      path.join(dir, "SafetyIncidentsClusterSurface.tsx"),
+      path.join(tmpStubDir, "SafetyIncidentsClusterSurface.tsx"),
       `import { listDrivers } from "../../../api/mdata";
 const driversQuery = useQuery({
   queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, limit: 200 }),

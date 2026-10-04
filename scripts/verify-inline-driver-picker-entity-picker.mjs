@@ -84,33 +84,33 @@ if (process.argv.includes("--selftest")) {
     for (const p of baseline) console.error("  - " + p);
     process.exit(1);
   }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-inline-drv-ep-"));
+  const tmpStubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-inline-drv-ep-"));
   try {
-    const regDir = path.join(stubRoot, "apps/frontend/src/components/parity");
-    fs.mkdirSync(regDir, { recursive: true });
+    const tmpStubDir = path.join(tmpStubRoot, "apps/frontend/src/components/parity");
+    fs.mkdirSync(tmpStubDir, { recursive: true });
     fs.writeFileSync(
-      path.join(regDir, "entityPickerRegistry.ts"),
+      path.join(tmpStubDir, "entityPickerRegistry.ts"),
       `export type EntityPickerKind = "unit";
 const ENTITY_PICKERS = { unit: { readTable: "mdata.units", writeTable: "mdata.units", serverSearch: true, list: async () => [] } };
 export function getEntityPickerConfig() { return ENTITY_PICKERS.unit; }`
     );
-    fs.writeFileSync(path.join(regDir, "EntityPicker.tsx"), `export function EntityPicker() { return null; }`);
-    fs.mkdirSync(path.join(stubRoot, "apps/frontend/src/api"), { recursive: true });
-    fs.writeFileSync(path.join(stubRoot, "apps/frontend/src/api/mdata.ts"), `export function listDrivers() {}`);
-    fs.mkdirSync(path.join(stubRoot, "apps/frontend/src/components/dispatch"), { recursive: true });
+    fs.writeFileSync(path.join(tmpStubDir, "EntityPicker.tsx"), `export function EntityPicker() { return null; }`);
+    fs.mkdirSync(path.join(tmpStubRoot, "apps/frontend/src/api"), { recursive: true });
+    fs.writeFileSync(path.join(tmpStubRoot, "apps/frontend/src/api/mdata.ts"), `export function listDrivers() {}`);
+    fs.mkdirSync(path.join(tmpStubRoot, "apps/frontend/src/components/dispatch"), { recursive: true });
     fs.writeFileSync(
-      path.join(stubRoot, "apps/frontend/src/components/dispatch/InlineDriverPicker.tsx"),
+      path.join(tmpStubRoot, "apps/frontend/src/components/dispatch/InlineDriverPicker.tsx"),
       `listDrivers({ limit: 200, status: "Active" })
 <Combobox options={driverOptions} onSearch={setDriverSearch} />
 <CreateDriverModal open={driverCreateOpen} />`
     );
-    const planted = collectProblems(stubRoot);
+    const planted = collectProblems(tmpStubRoot);
     if (!planted.some((p) => /EntityPicker kind=driver/.test(p) || /driver kind/.test(p) || /listDrivers/.test(p))) {
       console.error(`${LABEL} SELFTEST FAIL: planted stub did not FAIL`);
       process.exit(1);
     }
   } finally {
-    fs.rmSync(stubRoot, { recursive: true, force: true });
+    fs.rmSync(tmpStubRoot, { recursive: true, force: true });
   }
   console.log(`${LABEL} SELFTEST OK`);
 } else {

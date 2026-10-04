@@ -16,16 +16,17 @@ const REGISTRY = "apps/frontend/src/components/parity/catalogPickerRegistry.ts";
 const FACTORY = "apps/backend/src/catalogs/driver/factory.ts";
 const INDEX = "apps/backend/src/catalogs/driver/index.ts";
 
-function readRel(root, rel) {
+function readRel(root, rel, overrides) {
+  if (overrides && Object.prototype.hasOwnProperty.call(overrides, rel)) return overrides[rel];
   const p = path.join(root, rel);
   if (!fs.existsSync(p)) return null;
   return fs.readFileSync(p, "utf8");
 }
 
 /** @returns {string[]} */
-export function collectProblems(root = ROOT) {
+export function collectProblems(root = ROOT, overrides = null) {
   const problems = [];
-  const modal = readRel(root, MODAL);
+  const modal = readRel(root, MODAL, overrides);
   const registry = readRel(root, REGISTRY);
   const factory = readRel(root, FACTORY);
   const index = readRel(root, INDEX);
@@ -90,17 +91,13 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   // BANK-F91246 leftover plant on EscrowForfeitModal
-  const abs = path.join(ROOT, MODAL);
-  const original = fs.readFileSync(abs, "utf8");
-  try {
-    fs.writeFileSync(abs, `${original}\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n`);
-    const leftover = collectProblems();
-    if (!leftover.includes("leftover text-[11px]") || !leftover.includes("leftover off-scale muted")) {
-      console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`, leftover);
-      process.exit(1);
-    }
-  } finally {
-    fs.writeFileSync(abs, original);
+  const original = fs.readFileSync(path.join(ROOT, MODAL), "utf8");
+  const leftover = collectProblems(ROOT, {
+    [MODAL]: `${original}\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n`,
+  });
+  if (!leftover.includes("leftover text-[11px]") || !leftover.includes("leftover off-scale muted")) {
+    console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`, leftover);
+    process.exit(1);
   }
   console.log(`${LABEL} SELFTEST OK — leftover plant rejected`);
 } else {

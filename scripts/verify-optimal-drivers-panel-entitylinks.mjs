@@ -20,8 +20,7 @@ function assert(cond, msg) {
   if (!cond) throw new Error(`${LABEL}: ${msg}`);
 }
 
-function check() {
-  const src = fs.readFileSync(FILE, "utf8");
+function check(src = fs.readFileSync(FILE, "utf8")) {
   assert(/EntityLink/.test(src), "must import/use EntityLink");
   assert(/kind=["']driver["']/.test(src), "must EntityLink kind=driver");
   assert(
@@ -45,27 +44,21 @@ function selftest() {
   ];
   for (const broken of mutations) {
     assert(broken !== original, "--selftest plant must mutate source");
-    fs.writeFileSync(FILE, broken);
     let failed = false;
     try {
-      check();
+      check(broken);
     } catch {
       failed = true;
-    } finally {
-      fs.writeFileSync(FILE, original);
     }
     assert(failed, "--selftest expected planted defect to fail");
   }
   // BANK-F91298 leftover plant — OptimalDriversPanel page-scoped text token ratchet
   const leftoverPlant = original + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
-  fs.writeFileSync(FILE, leftoverPlant);
   let leftoverFailed = false;
   try {
-    check();
+    check(leftoverPlant);
   } catch {
     leftoverFailed = true;
-  } finally {
-    fs.writeFileSync(FILE, original);
   }
   assert(leftoverFailed, "--selftest leftover plant escaped");
   check();

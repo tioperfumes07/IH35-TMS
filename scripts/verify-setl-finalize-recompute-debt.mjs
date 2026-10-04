@@ -18,11 +18,12 @@ function fail(msg) {
   process.exit(1);
 }
 
-function audit() {
+// texts: optional in-memory overrides {routes, mig} so --selftest plants into a string, never a file.
+function audit(texts = {}) {
   const problems = [];
-  if (!fs.existsSync(ROUTES)) problems.push(`missing ${ROUTES}`);
+  if (texts.routes === undefined && !fs.existsSync(ROUTES)) problems.push(`missing ${ROUTES}`);
   else {
-    const src = fs.readFileSync(ROUTES, "utf8");
+    const src = texts.routes ?? fs.readFileSync(ROUTES, "utf8");
     if (!/await client\.query\(\s*["']SAVEPOINT recompute_debt_sync["']\s*\)/.test(src)) {
       problems.push("settlements.routes.ts recomputeDebtSync must use SAVEPOINT recompute_debt_sync");
     }
@@ -33,9 +34,9 @@ function audit() {
       problems.push("settlements.routes.ts must still call recompute_driver_debt");
     }
   }
-  if (!fs.existsSync(MIGRATION)) problems.push(`missing migration ${MIGRATION}`);
+  if (texts.mig === undefined && !fs.existsSync(MIGRATION)) problems.push(`missing migration ${MIGRATION}`);
   else {
-    const sql = fs.readFileSync(MIGRATION, "utf8");
+    const sql = texts.mig ?? fs.readFileSync(MIGRATION, "utf8");
     if (
       !/CREATE OR REPLACE FUNCTION\s+driver_finance\.recompute_driver_debt\s*\(\s*uuid\s*\)/i.test(sql) &&
       !/CREATE OR REPLACE FUNCTION\s+driver_finance\.recompute_driver_debt\s*\(\s*p_driver_id\s+uuid\s*\)/i.test(sql)
@@ -61,22 +62,12 @@ function selftest() {
     'await client.query("SAVEPOINT recompute_debt_sync")',
     'await client.query("SAVEPOINT __plant_missing__")'
   );
-  fs.writeFileSync(ROUTES, brokenRoutes);
-  try {
-    if (audit().length === 0) fail("selftest: expected FAIL after removing SAVEPOINT");
-    planted += 1;
-  } finally {
-    fs.writeFileSync(ROUTES, routes);
-  }
+  if (audit({ routes: brokenRoutes }).length === 0) fail("selftest: expected FAIL after removing SAVEPOINT");
+  planted += 1;
 
   const brokenMig = mig.replaceAll("recompute_driver_debt", "recompute_driver_debt_REMOVED");
-  fs.writeFileSync(MIGRATION, brokenMig);
-  try {
-    if (audit().length === 0) fail("selftest: expected FAIL after renaming function in migration");
-    planted += 1;
-  } finally {
-    fs.writeFileSync(MIGRATION, mig);
-  }
+  if (audit({ mig: brokenMig }).length === 0) fail("selftest: expected FAIL after renaming function in migration");
+  planted += 1;
 
   const clean = audit();
   if (clean.length) fail(`selftest cleanup still red: ${clean.join("; ")}`);

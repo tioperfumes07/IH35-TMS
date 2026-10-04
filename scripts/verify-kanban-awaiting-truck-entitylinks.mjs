@@ -22,8 +22,7 @@ function assert(cond, msg) {
   if (!cond) throw new Error(`${LABEL}: ${msg}`);
 }
 
-function check() {
-  const src = fs.readFileSync(FILE, "utf8");
+function check(src = fs.readFileSync(FILE, "utf8")) {
   assert(/function AwaitingTruckCard/.test(src), "AwaitingTruckCard must exist");
   const start = src.indexOf("function AwaitingTruckCard");
   // Boundary: the next function declaration after AwaitingTruckCard. Handle both
@@ -46,14 +45,11 @@ function selftest() {
     'data-testid="planted-missing"'
   );
   assert(broken !== original, "--selftest plant must mutate testid");
-  fs.writeFileSync(FILE, broken);
   let failed = false;
   try {
-    check();
+    check(broken);
   } catch {
     failed = true;
-  } finally {
-    fs.writeFileSync(FILE, original);
   }
   assert(failed, "--selftest expected FAIL when unit link testid removed");
   check();

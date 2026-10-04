@@ -14,6 +14,7 @@
  * --selftest replants a bare return on the PWA helper and expects FAIL.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -72,7 +73,7 @@ function check(root = ROOT) {
 }
 
 function selftest() {
-  const tmp = fs.mkdtempSync(path.join(ROOT, "tmp-cls-latch-"));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tmp-cls-latch-"));
   try {
     for (const pin of PINS) {
       const dest = path.join(tmp, pin.file);
@@ -84,10 +85,10 @@ function selftest() {
       path.join(ROOT, "scripts/verify-regclass-fallback-intent.mjs"),
       path.join(tmp, "scripts/verify-regclass-fallback-intent.mjs")
     );
-    const helper = path.join(tmp, "apps/backend/src/pwa/driver-notifications.ts");
-    let src = fs.readFileSync(helper, "utf8");
+    const tmpHelper = path.join(tmp, "apps/backend/src/pwa/driver-notifications.ts");
+    let src = fs.readFileSync(tmpHelper, "utf8");
     src = src.replace(/if \(!ok\) \{[\s\S]*?return false;\s*\}/, "if (!ok) return;");
-    fs.writeFileSync(helper, src);
+    fs.writeFileSync(tmpHelper, src);
     const errs = check(tmp);
     if (errs.length === 0) {
       console.error(`${LABEL} selftest FAIL — bare-return replant did not redden`);

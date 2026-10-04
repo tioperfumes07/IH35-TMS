@@ -8,11 +8,13 @@ const LOADS_ROUTES = "apps/backend/src/dispatch/loads.routes.ts";
 const TRIP_PAIRING = "apps/backend/src/dispatch/trip-pairing-board.service.ts";
 const SAMSARA_CLIENT = "apps/backend/src/integrations/samsara/samsara-client.ts";
 
-export function verify() {
+export function verify(overrides = {}) {
+  const readSrc = (rel) =>
+    Object.prototype.hasOwnProperty.call(overrides, rel) ? overrides[rel] : fs.readFileSync(path.join(ROOT, rel), "utf8");
   const errors = [];
 
   // 1. loads.routes.ts must coalesce city/state from vehicle_locations
-  const loads = fs.readFileSync(path.join(ROOT, LOADS_ROUTES), "utf8");
+  const loads = readSrc(LOADS_ROUTES);
   if (!loads.includes("COALESCE(p.city, loc.city)")) {
     errors.push("loads.routes.ts must COALESCE(p.city, loc.city) for dispatch board location_city");
   }
@@ -24,7 +26,7 @@ export function verify() {
   }
 
   // 2. trip-pairing-board.service.ts must coalesce city/state
-  const trip = fs.readFileSync(path.join(ROOT, TRIP_PAIRING), "utf8");
+  const trip = readSrc(TRIP_PAIRING);
   if (!trip.includes("COALESCE(p.city, g.city)")) {
     errors.push("trip-pairing-board.service.ts must COALESCE(p.city, g.city) for trip pairing location");
   }
@@ -33,7 +35,7 @@ export function verify() {
   }
 
   // 3. Samsara client must have the fallback types retry
-  const client = fs.readFileSync(path.join(ROOT, SAMSARA_CLIENT), "utf8");
+  const client = readSrc(SAMSARA_CLIENT);
   if (!client.includes("gps,engineStates")) {
     errors.push("samsara-client must include the minimal fallback types set (gps,engineStates)");
   }
@@ -53,9 +55,7 @@ if (process.argv.includes("--selftest")) {
   // Plant a missing COALESCE in loads.routes.ts
   const original = fs.readFileSync(path.join(ROOT, LOADS_ROUTES), "utf8");
   const planted = original.replace("COALESCE(p.city, loc.city)", "p.city");
-  fs.writeFileSync(LOADS_ROUTES, planted);
-  const errors = verify();
-  fs.writeFileSync(LOADS_ROUTES, original);
+  const errors = verify({ [LOADS_ROUTES]: planted });
   if (!errors.some((e) => e.includes("COALESCE(p.city, loc.city)"))) {
     console.error("SELFTEST FAIL: planted missing COALESCE was not detected");
     process.exit(1);

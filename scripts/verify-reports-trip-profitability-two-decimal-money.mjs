@@ -4,6 +4,7 @@
  * LV-REPORTS-TRIP-PROFITABILITY-ZERO-DECIMAL-MONEY
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 
@@ -11,13 +12,13 @@ const LABEL = "verify-reports-trip-profitability-two-decimal-money";
 const PAGE = "apps/frontend/src/pages/dispatch/TripProfitability.tsx";
 const CARD = "apps/frontend/src/components/dispatch/tabs/SettlementProfitabilityCard.tsx";
 
-function read(rel) {
-  return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
+function read(rel, root = process.cwd()) {
+  return fs.readFileSync(path.join(root, rel), "utf8");
 }
 
-function analyze() {
+function analyze(root = process.cwd()) {
   const failures = [];
-  const page = read(PAGE);
+  const page = read(PAGE, root);
   if (!/from ["'].*lib\/money["']/.test(page) || !/formatUsdCents/.test(page)) {
     failures.push("TripProfitability must import formatUsdCents from lib/money");
   }
@@ -31,7 +32,7 @@ function analyze() {
     failures.push("local money() helper must delegate to formatUsdCents");
   }
 
-  const card = read(CARD);
+  const card = read(CARD, root);
   if (/maximumFractionDigits:\s*0/.test(card)) {
     failures.push("SettlementProfitabilityCard must not configure zero-decimal currency formatting");
   }
@@ -50,37 +51,42 @@ function fail(msg) {
 }
 
 function selftest() {
-  const pagePath = path.join(process.cwd(), PAGE);
-  const original = fs.readFileSync(pagePath, "utf8");
+  // Plant into a mkdtemp copy — never write tracked source.
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "trip-profit-selftest-"));
   try {
+    for (const rel of [PAGE, CARD]) {
+      fs.mkdirSync(path.dirname(path.join(tmpRoot, rel)), { recursive: true });
+      fs.writeFileSync(path.join(tmpRoot, rel), read(rel));
+    }
+    const tmpPagePath = path.join(tmpRoot, PAGE);
+    const original = fs.readFileSync(tmpPagePath, "utf8");
     const bad = original.replace(
       /return formatUsdCents\(cents\);/,
       'return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format((Number(cents) || 0) / 100);',
     );
     if (bad === original) fail("selftest could not plant zero-decimal Intl format");
-    fs.writeFileSync(pagePath, bad);
-    const planted = analyze();
+    fs.writeFileSync(tmpPagePath, bad);
+    const planted = analyze(tmpRoot);
     if (!planted.some((m) => /zero-decimal|hand-roll|formatUsdCents/.test(m))) {
       fail(`selftest expected page fail; got: ${planted.join("; ")}`);
     }
-  } finally {
-    fs.writeFileSync(pagePath, original);
-  }
-  const cardPath = path.join(process.cwd(), CARD);
-  const cardOriginal = fs.readFileSync(cardPath, "utf8");
-  try {
+    fs.writeFileSync(tmpPagePath, original);
+
+    const tmpCardPath = path.join(tmpRoot, CARD);
+    const cardOriginal = fs.readFileSync(tmpCardPath, "utf8");
     const badCard = cardOriginal.replace(
       /maximumFractionDigits:\s*2/,
       "maximumFractionDigits: 0",
     );
     if (badCard === cardOriginal) fail("selftest could not plant zero-decimal on SettlementProfitabilityCard");
-    fs.writeFileSync(cardPath, badCard);
-    const planted = analyze();
-    if (!planted.some((m) => /SettlementProfitabilityCard/.test(m))) {
-      fail(`selftest expected card fail; got: ${planted.join("; ")}`);
+    fs.writeFileSync(tmpCardPath, badCard);
+    const plantedCard = analyze(tmpRoot);
+    if (!plantedCard.some((m) => /SettlementProfitabilityCard/.test(m))) {
+      fail(`selftest expected card fail; got: ${plantedCard.join("; ")}`);
     }
+    fs.writeFileSync(tmpCardPath, cardOriginal);
   } finally {
-    fs.writeFileSync(cardPath, cardOriginal);
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
   }
   const good = analyze();
   if (good.length) fail(`selftest expected GOOD: ${good.join("; ")}`);

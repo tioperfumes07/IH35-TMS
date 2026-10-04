@@ -115,33 +115,33 @@ export function analyzeCapabilities(capabilities, sourceText, root = ROOT) {
 }
 
 function selftest() {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "capability-regression-"));
-  const registered = path.join(root, "apps/backend/src/registered.ts");
-  const moved = path.join(root, "apps/backend/src/moved.ts");
-  const cap = { id: "CAP-1", symbol: "criticalCapability", file: "apps/backend/src/registered.ts", line: 1 };
-  fs.mkdirSync(path.dirname(registered), { recursive: true });
-  fs.writeFileSync(registered, "export function criticalCapability() {}\n");
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "capability-regression-"));
+  const tmpRegistered = path.join(tmpRoot, "apps/backend/src/tmpRegistered.ts");
+  const moved = path.join(tmpRoot, "apps/backend/src/moved.ts");
+  const cap = { id: "CAP-1", symbol: "criticalCapability", file: "apps/backend/src/tmpRegistered.ts", line: 1 };
+  fs.mkdirSync(path.dirname(tmpRegistered), { recursive: true });
+  fs.writeFileSync(tmpRegistered, "export function criticalCapability() {}\n");
 
-  const good = analyzeCapabilities([cap], new Map([[registered, "export function criticalCapability() {}\n"]]), root);
+  const good = analyzeCapabilities([cap], new Map([[tmpRegistered, "export function criticalCapability() {}\n"]]), tmpRoot);
   if (good.errors.length !== 0) fail(`SELFTEST known-good fixture failed: ${good.errors.join("; ")}`);
 
-  const missing = analyzeCapabilities([cap], new Map([[registered, "export function anotherCapability() {}\n"]]), root);
+  const missing = analyzeCapabilities([cap], new Map([[tmpRegistered, "export function anotherCapability() {}\n"]]), tmpRoot);
   if (!missing.errors.some((e) => e.includes("MISSING"))) fail("SELFTEST missing-symbol mutation escaped");
 
   const movedResult = analyzeCapabilities(
     [cap],
-    new Map([[registered, "export function anotherCapability() {}\n"], [moved, "export function criticalCapability() {}\n"]]),
-    root,
+    new Map([[tmpRegistered, "export function anotherCapability() {}\n"], [moved, "export function criticalCapability() {}\n"]]),
+    tmpRoot,
   );
   if (!movedResult.errors.some((e) => e.includes("MOVED"))) fail("SELFTEST moved-symbol mutation escaped");
 
   const duplicate = analyzeCapabilities(
     [cap],
-    new Map([[registered, "export function criticalCapability() {}\n"], [moved, "export const criticalCapability = () => {};\n"]]),
-    root,
+    new Map([[tmpRegistered, "export function criticalCapability() {}\n"], [moved, "export const criticalCapability = () => {};\n"]]),
+    tmpRoot,
   );
   if (!duplicate.errors.some((e) => e.includes("DUPLICATE"))) fail("SELFTEST duplicate-symbol mutation escaped");
-  fs.rmSync(root, { recursive: true, force: true });
+  fs.rmSync(tmpRoot, { recursive: true, force: true });
   console.log(`[${LABEL}] SELFTEST PASS 3/3 — missing, moved, and duplicate mutations all RED`);
   process.exit(0);
 }

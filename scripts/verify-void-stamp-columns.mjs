@@ -100,7 +100,7 @@ function walk(dir, out = []) {
  *  no AST — false positives (flagging a file that doesn't really write it) fail safe by forcing a
  *  human look, which is exactly the guard's job; false negatives are what this file's own full-repo
  *  grep at authoring time already ruled out for the zero-tolerance tables. */
-function findWriters(files, schema, table) {
+function findWriters(files, schema, table, plantedText = new Map()) {
   const qualified = `${schema}.${table}`;
   const updateRe = new RegExp(`UPDATE\\s+${schema}\\s*\\.\\s*${table}\\b`, "i");
   const hits = [];
@@ -117,7 +117,7 @@ function findWriters(files, schema, table) {
     // problem or an unreadable file fails loudly rather than becoming a silent pass.
     let text;
     try {
-      text = fs.readFileSync(file, "utf8");
+      text = plantedText.has(file) ? plantedText.get(file) : fs.readFileSync(file, "utf8");
     } catch (err) {
       if (err?.code === "ENOENT") continue;
       throw err;
@@ -314,25 +314,21 @@ async function selftest() {
   const target = path.join(ROOT, "apps/backend/src/accounting/invoices.routes.ts");
   const original = fs.readFileSync(target, "utf8");
   const planted = original + `\n// SELFTEST PLANT: UPDATE accounting.invoices SET voided_at = now() WHERE id = $1;\n`;
-  fs.writeFileSync(target, planted);
-  try {
+  const plantedText = new Map([[target, planted]]);
+  {
     const loadsTargetRel = "apps/backend/src/mdata/loads-create-status.ts";
     const loadsTarget = path.join(ROOT, loadsTargetRel);
     const loadsOriginal = fs.readFileSync(loadsTarget, "utf8");
-    fs.writeFileSync(loadsTarget, loadsOriginal + `\n// SELFTEST PLANT: UPDATE mdata.loads SET voided_at = now() WHERE id = $1;\n`);
-    try {
+    plantedText.set(loadsTarget, loadsOriginal + `\n// SELFTEST PLANT: UPDATE mdata.loads SET voided_at = now() WHERE id = $1;\n`);
+    {
       const files2 = walk(BACKEND_SRC);
-      const loadsWriters = findWriters(files2, "mdata", "loads");
+      const loadsWriters = findWriters(files2, "mdata", "loads", plantedText);
       if (!loadsWriters.includes(loadsTargetRel)) {
         console.error(`${LABEL} --selftest FAILED: detector did not catch a planted zero-tolerance violation.`);
         process.exit(1);
       }
       console.log(`${LABEL} --selftest OK — detector caught a planted violation on a zero-tolerance table.`);
-    } finally {
-      fs.writeFileSync(loadsTarget, loadsOriginal);
     }
-  } finally {
-    fs.writeFileSync(target, original);
   }
 
   // ROUND 122 ADDITION: the status-value acceptance check is DB-independent and pure

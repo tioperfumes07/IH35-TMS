@@ -8,6 +8,7 @@
  */
 
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -17,25 +18,25 @@ const API = "apps/frontend/src/api/reports.ts";
 const ROUTES = "apps/backend/src/reports/settlement-summary.routes.ts";
 const MANIFEST = "apps/frontend/src/routes/manifest.tsx";
 
-function read(relativePath) {
-  return fs.readFileSync(path.join(ROOT, relativePath), "utf8");
+function read(relativePath, root = ROOT) {
+  return fs.readFileSync(path.join(root, relativePath), "utf8");
 }
 
-function exists(relativePath) {
-  return fs.existsSync(path.join(ROOT, relativePath));
+function exists(relativePath, root = ROOT) {
+  return fs.existsSync(path.join(root, relativePath));
 }
 
-export function run() {
+export function run(root = ROOT) {
   const failures = [];
   for (const f of [PAGE, API, ROUTES, MANIFEST]) {
-    if (!exists(f)) failures.push(`MISSING: ${f}`);
+    if (!exists(f, root)) failures.push(`MISSING: ${f}`);
   }
   if (failures.length) return failures;
 
-  const page = read(PAGE);
-  const api = read(API);
-  const routes = read(ROUTES);
-  const manifest = read(MANIFEST);
+  const page = read(PAGE, root);
+  const api = read(API, root);
+  const routes = read(ROUTES, root);
+  const manifest = read(MANIFEST, root);
 
   // FE page — company context + scoped fetch
   if (!/useCompanyContext/.test(page)) {
@@ -104,18 +105,23 @@ export function run() {
 function main() {
   const args = process.argv.slice(2);
   if (args.includes("--selftest")) {
-    const realPath = path.join(ROOT, PAGE);
+    const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "verify-rpt-s03-settlement-summary-selftest-"));
+    for (const rel of [PAGE, API, ROUTES, MANIFEST]) {
+      fs.mkdirSync(path.dirname(path.join(tmpRoot, rel)), { recursive: true });
+      fs.writeFileSync(path.join(tmpRoot, rel), read(rel), "utf8");
+    }
+    const realPath = path.join(tmpRoot, PAGE);
     const backup = fs.readFileSync(realPath, "utf8");
     try {
       fs.writeFileSync(realPath, backup.replace(/useCompanyContext/g, "useBrokenCompany"), "utf8");
-      const planted = run();
+      const planted = run(tmpRoot);
       if (planted.length === 0) {
         console.error("[verify-rpt-s03-settlement-summary] SELFTEST FAIL: planted company-context break did not fail");
         process.exit(1);
       }
       console.log(`[verify-rpt-s03-settlement-summary] SELFTEST PASS (${planted.length} planted failures detected)`);
     } finally {
-      fs.writeFileSync(realPath, backup, "utf8");
+      fs.rmSync(tmpRoot, { recursive: true, force: true });
     }
     process.exit(0);
   }

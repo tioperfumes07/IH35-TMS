@@ -8,7 +8,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-lst-picker01-fine-create-driver-entity-picker";
@@ -69,20 +68,10 @@ function main() {
 }
 
 function selftest() {
-  const fp = path.join(ROOT, PAGE);
-  const original = fs.readFileSync(fp, "utf8");
+  const original = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
   const planted = original.replace(/kind=["']driver["']/g, 'kind="unit"');
-  fs.writeFileSync(fp, planted);
-  try {
-    const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
-      cwd: ROOT,
-      encoding: "utf8",
-    });
-    if (r.status === 0) throw new Error("selftest expected FAIL");
-    console.log(`${LABEL}: selftest PASS`);
-  } finally {
-    fs.writeFileSync(fp, original);
-  }
+  if (collectProblems(ROOT, { [PAGE]: planted }).length === 0) throw new Error("selftest expected FAIL");
+  console.log(`${LABEL}: selftest PASS`);
 }
 
 if (process.argv.includes("--selftest")) selftest();

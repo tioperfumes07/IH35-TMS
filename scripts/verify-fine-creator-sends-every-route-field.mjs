@@ -20,7 +20,7 @@
  * field to the route tomorrow and it is in scope the moment it lands, which is the only way this
  * stops recurring.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const ROOT = new URL("..", import.meta.url).pathname.replace(/\/$/, "");
@@ -71,9 +71,9 @@ function creatorPayloadKeys(src) {
   return keys;
 }
 
-export function run() {
+export function run(creatorOverride) {
   const routesSrc = readFileSync(ROUTES, "utf8");
-  const creatorSrc = readFileSync(CREATOR, "utf8");
+  const creatorSrc = creatorOverride ?? readFileSync(CREATOR, "utf8");
 
   const fields = routeFields(routesSrc);
   if (!fields || fields.length === 0) {
@@ -134,12 +134,7 @@ function selftest() {
       process.exit(1);
     }
     let caught;
-    try {
-      writeFileSync(CREATOR, original.replace(re, ""), "utf8");
-      caught = run();
-    } finally {
-      writeFileSync(CREATOR, original, "utf8");
-    }
+    caught = run(original.replace(re, ""));
     if (caught.ok || !caught.missing.includes(field)) {
       console.error(`SELFTEST FAIL: dropping "${field}" was NOT caught.\nGuard said: ${caught.message}`);
       process.exit(1);

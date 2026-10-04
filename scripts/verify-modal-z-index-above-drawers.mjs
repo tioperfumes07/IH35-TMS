@@ -106,8 +106,7 @@ function maxArbitraryZIndex(excludeFiles) {
   return max;
 }
 
-function modalZIndex() {
-  const text = fs.readFileSync(MODAL, "utf8");
+function modalZIndex(text = fs.readFileSync(MODAL, "utf8")) {
   // Only match the z-[N] literal inside the actual "fixed inset-0 z-[N] ..." className strings —
   // NOT prose mentions of z-[N] in surrounding comments (e.g. this file's own root-cause comment
   // references the old z-[70] and LoadDetailDrawer's z-[210] by name).
@@ -131,8 +130,8 @@ function comboboxListboxZIndex() {
   return Number(constMatch[1]);
 }
 
-function check() {
-  const modalZ = modalZIndex();
+function check(modalText) {
+  const modalZ = modalZIndex(modalText);
   const maxOther = maxArbitraryZIndex([
     MODAL,
     COMBOBOX,
@@ -164,14 +163,11 @@ function selftest() {
   const original = fs.readFileSync(MODAL, "utf8");
   const broken = original.replace(/z-\[215\]/g, "z-[1]");
   assert(broken !== original, "selftest mutation did not match — Modal.tsx's z-[215] literal changed");
-  fs.writeFileSync(MODAL, broken);
   let failed = false;
   try {
-    check();
+    check(broken);
   } catch {
     failed = true;
-  } finally {
-    fs.writeFileSync(MODAL, original);
   }
   assert(failed, "--selftest expected FAIL when Modal's z-index is dropped below every drawer's");
   check();

@@ -132,9 +132,9 @@ function selftest() {
     // BANK-F91355 leftover plant
     const voidRel = "apps/frontend/src/components/accounting/VoidReasonModal.tsx";
     const liveVoid = fs.readFileSync(path.join(ROOT, voidRel), "utf8");
-    const plantAbs = path.join(tmp, voidRel);
-    fs.mkdirSync(path.dirname(plantAbs), { recursive: true });
-    fs.writeFileSync(plantAbs, liveVoid + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n');
+    const tmpPlantAbs = path.join(tmp, voidRel);
+    fs.mkdirSync(path.dirname(tmpPlantAbs), { recursive: true });
+    fs.writeFileSync(tmpPlantAbs, liveVoid + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n');
     // Copy remaining CHECK files as live so only leftover fails
     for (const c of CHECKS) {
       if (c.file === voidRel) continue;

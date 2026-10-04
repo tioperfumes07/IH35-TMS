@@ -12,12 +12,12 @@ const MANIFEST = "apps/frontend/src/routes/manifest.tsx";
 const API = "apps/frontend/src/api/dispatch.ts";
 const SERVICE = "apps/backend/src/dispatch/planner.service.ts";
 
-function assertLive() {
+function assertLive(over = {}) {
   const problems = [];
-  const page = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
-  const manifest = fs.readFileSync(path.join(ROOT, MANIFEST), "utf8");
-  const api = fs.readFileSync(path.join(ROOT, API), "utf8");
-  const service = fs.readFileSync(path.join(ROOT, SERVICE), "utf8");
+  const page = over[PAGE] ?? fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+  const manifest = over[MANIFEST] ?? fs.readFileSync(path.join(ROOT, MANIFEST), "utf8");
+  const api = over[API] ?? fs.readFileSync(path.join(ROOT, API), "utf8");
+  const service = over[SERVICE] ?? fs.readFileSync(path.join(ROOT, SERVICE), "utf8");
   if (!/path="\/dispatch\/planner"/.test(manifest) || !/PlannerCalendarPage/.test(manifest)) {
     problems.push("manifest missing /dispatch/planner → PlannerCalendarPage");
   }
@@ -54,18 +54,12 @@ if (SELFTEST) {
     console.error(`${LABEL} SELFTEST FAILED live: ${live.join(" | ")}`);
     process.exit(1);
   }
-  const pagePath = path.join(ROOT, PAGE);
-  const servicePath = path.join(ROOT, SERVICE);
-  const orig = fs.readFileSync(pagePath, "utf8");
-  const serviceOrig = fs.readFileSync(servicePath, "utf8");
-  fs.writeFileSync(pagePath, orig.replace(/data-testid="dispatch-planner-honest-empty"/, 'data-testid="x"'));
-  try {
-    if (!assertLive().length) {
-      console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);
-      process.exit(1);
-    }
-  } finally {
-    fs.writeFileSync(pagePath, orig);
+  const orig = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+  const serviceOrig = fs.readFileSync(path.join(ROOT, SERVICE), "utf8");
+  const plantedPage = orig.replace(/data-testid="dispatch-planner-honest-empty"/, 'data-testid="x"');
+  if (!assertLive({ [PAGE]: plantedPage }).length) {
+    console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);
+    process.exit(1);
   }
   const serviceMutations = [
     ["pickup load", "AND load_id = $3::uuid", "AND TRUE"],
@@ -77,14 +71,9 @@ if (SELFTEST) {
   ];
   for (const [label, before, after] of serviceMutations) {
     const mutant = serviceOrig.replace(before, after);
-    fs.writeFileSync(servicePath, mutant);
-    try {
-      if (!assertLive().length) {
-        console.error(`${LABEL} SELFTEST FAILED: ${label} planted defect not caught`);
-        process.exit(1);
-      }
-    } finally {
-      fs.writeFileSync(servicePath, serviceOrig);
+    if (!assertLive({ [SERVICE]: mutant }).length) {
+      console.error(`${LABEL} SELFTEST FAILED: ${label} planted defect not caught`);
+      process.exit(1);
     }
   }
   console.log(`${LABEL} SELFTEST PASS — 7/7 surface/write mutations caught`);

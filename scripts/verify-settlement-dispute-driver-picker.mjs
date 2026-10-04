@@ -7,6 +7,7 @@
  * Claim 2152.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -80,20 +81,20 @@ if (process.argv.includes("--selftest")) {
     console.error(LABEL, baseline);
     process.exit(1);
   }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-dispute-drv-"));
+  const tmpStubRoot = fs.mkdtempSync(path.join(os.tmpdir(), "dispute-drv-"));
   try {
-    const dir = path.join(stubRoot, "apps/frontend/src/pages/drivers");
-    fs.mkdirSync(dir, { recursive: true });
+    const tmpDir = path.join(tmpStubRoot, "apps/frontend/src/pages/drivers");
+    fs.mkdirSync(tmpDir, { recursive: true });
     fs.writeFileSync(
-      path.join(dir, "SettlementDisputeModal.tsx"),
+      path.join(tmpDir, "SettlementDisputeModal.tsx"),
       `listDrivers({ limit: 200 })\n<Combobox options={driverOptions} />\nconst DISPUTE_TYPES = [];\n`
     );
-    if (!collectProblems(stubRoot).length) {
+    if (!collectProblems(tmpStubRoot).length) {
       console.error("plant miss");
       process.exit(1);
     }
   } finally {
-    fs.rmSync(stubRoot, { recursive: true, force: true });
+    fs.rmSync(tmpStubRoot, { recursive: true, force: true });
   }
   console.log(LABEL, "SELFTEST OK");
 } else {

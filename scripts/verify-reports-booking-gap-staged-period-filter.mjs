@@ -58,9 +58,7 @@ function fail(msg) {
 }
 
 function selftest() {
-  const pagePath = path.join(process.cwd(), PAGE);
-  const original = fs.readFileSync(pagePath, "utf8");
-  try {
+  {
     const bad = `
 export function BookingGapReport() {
   const [period, setPeriod] = useState("week");
@@ -75,11 +73,8 @@ export function BookingGapReport() {
   );
 }
 `;
-    fs.writeFileSync(pagePath, bad);
     const planted = analyze(bad);
     if (planted.length === 0) fail("selftest expected planted unstaged period to fail");
-  } finally {
-    fs.writeFileSync(pagePath, original);
   }
   const good = analyze();
   if (good.length) fail(`selftest expected GOOD: ${good.join("; ")}`);

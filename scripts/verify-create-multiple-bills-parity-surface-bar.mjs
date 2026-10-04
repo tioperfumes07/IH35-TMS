@@ -14,8 +14,7 @@ function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-export function check() {
-  const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+export function check(src = fs.readFileSync(path.join(ROOT, PAGE), "utf8")) {
   assert(src.includes("ParityTable"), "CreateMultipleBillsPage: must use ParityTable");
   assert(src.includes('storageKey="create-multiple-bills-draft"'), "CreateMultipleBillsPage: storageKey");
   assert(src.includes('tableTestId="create-multiple-bills-table"'), "CreateMultipleBillsPage: tableTestId");
@@ -35,14 +34,12 @@ function selftest() {
     "}",
     "",
   ].join("\n");
-  fs.writeFileSync(filePath, planted);
   let failed = false;
   try {
-    check();
+    check(planted);
   } catch {
     failed = true;
   }
-  fs.writeFileSync(filePath, good);
   assert(failed, "selftest: expected FAIL on raw HTML table");
   console.log("verify-create-multiple-bills-parity-surface-bar --selftest PASS");
 }

@@ -161,10 +161,10 @@ function selftest() {
       fs.writeFileSync(abs, "// poison — createControl stripped\nexport {};\n");
     }
     // Plant CTL-04 dupe: actions Create without createControl
-    const plant = path.join(tmp, "apps/frontend/src/pages/accounting/PlantDupCreate.tsx");
-    fs.mkdirSync(path.dirname(plant), { recursive: true });
+    const tmpPlant = path.join(tmp, "apps/frontend/src/pages/accounting/PlantDupCreate.tsx");
+    fs.mkdirSync(path.dirname(tmpPlant), { recursive: true });
     fs.writeFileSync(
-      plant,
+      tmpPlant,
       `export function Plant() {\n  return (\n    <AccountingSubNavWrapper\n      title="X"\n      actions={<button>+ Create</button>}\n    >\n      <div />\n    </AccountingSubNavWrapper>\n  );\n}\n`,
     );
     const planted = runChecks(tmp);

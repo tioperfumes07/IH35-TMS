@@ -30,9 +30,9 @@ function countMatches(source, pattern) {
   return (source.match(pattern) || []).length;
 }
 
-export function run() {
+/** Pure over the register text (defaults to the tracked file); the selftest passes planted strings. */
+export function run(register = read(REGISTER_PATH)) {
   const errors = [];
-  const register = read(REGISTER_PATH);
   const parityTable = read(PARITY_TABLE_PATH);
 
   // ONE gear: the page's own second "View settings" gear must be gone, ParityTable's canonical
@@ -138,16 +138,15 @@ export function run() {
 }
 
 function selftest() {
-  const registerPath = path.join(ROOT, REGISTER_PATH);
-  const backup = fs.readFileSync(registerPath, "utf8");
-  try {
+  // Every plant is a string passed to run() — the tracked register file is never written (LST-F408).
+  const backup = read(REGISTER_PATH);
+  {
     // Plant #1: bring back the second "View settings" gear button.
     let planted = backup.replace(
       'gearButtonTestId="banking-transactions-gear"',
       'gearButtonTestId="banking-transactions-gear" aria-label="View settings"'
     );
-    fs.writeFileSync(registerPath, planted, "utf8");
-    let errors = run();
+    let errors = run(planted);
     if (!errors.some((e) => e.includes("second 'View settings' gear"))) {
       throw new Error("planted 'View settings' gear reintroduction not detected");
     }
@@ -158,8 +157,7 @@ function selftest() {
       'data-testid="bank-date-filter-button"',
       'data-testid="bank-date-filter-button-2">By month</button><button data-testid="bank-date-filter-button"'
     );
-    fs.writeFileSync(registerPath, planted, "utf8");
-    errors = run();
+    errors = run(planted);
     if (!errors.some((e) => e.includes("By month"))) {
       throw new Error("planted duplicate standalone grouping control not detected");
     }
@@ -169,15 +167,12 @@ function selftest() {
       /<p className="mt-2 text-\[11px\] font-semibold uppercase tracking-\[0\.4px\] text-gray-500">Automation review<\/p>[\s\S]*?<\/label>\n/,
       ""
     );
-    fs.writeFileSync(registerPath, planted, "utf8");
-    errors = run();
+    errors = run(planted);
     if (!errors.some((e) => e.includes("automation honesty checkbox"))) {
       throw new Error("planted removal of the automation honesty checkbox from gearExtra not detected");
     }
 
     console.log(`[verify-banking-toolbar-single] SELFTEST PASS (3 planted failures detected across 3 variants)`);
-  } finally {
-    fs.writeFileSync(registerPath, backup, "utf8");
   }
 }
 

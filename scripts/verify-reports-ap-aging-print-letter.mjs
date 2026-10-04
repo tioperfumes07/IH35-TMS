@@ -10,17 +10,20 @@ const SELF = path.join(ROOT, "scripts/verify-reports-ap-aging-print-letter.mjs")
 const PAGE = path.join(ROOT, "apps/frontend/src/pages/reports/APAgingPage.tsx");
 const HELPER = path.join(ROOT, "apps/frontend/src/lib/openPrintableDocument.ts");
 
+let throwOnFail = false;
+
 function fail(msg) {
+  if (throwOnFail) throw new Error(msg);
   console.error(`FAIL verify-reports-ap-aging-print-letter: ${msg}`);
   process.exit(1);
 }
 
-function assertSource() {
+function assertSource(pageText) {
   if (!fs.existsSync(PAGE)) fail("missing reports APAgingPage");
   if (!fs.existsSync(HELPER)) fail("missing openPrintableDocument");
   const helper = fs.readFileSync(HELPER, "utf8");
   if (!helper.includes("export function printLetterHtml")) fail("missing printLetterHtml");
-  const page = fs.readFileSync(PAGE, "utf8");
+  const page = pageText ?? fs.readFileSync(PAGE, "utf8");
   if (!page.includes("printLetterHtml")) fail("APAgingPage must use printLetterHtml");
   if (!/onClick=\{printLetter\}/.test(page)) fail("Print must call printLetter");
   if (/onClick=\{\(\) => window\.print\(\)\}/.test(page)) fail("must not window.print() on SPA");
@@ -33,14 +36,19 @@ function assertSource() {
 function selftest() {
   assertSource();
   const backup = fs.readFileSync(PAGE, "utf8");
+  const planted = backup.replace(/onClick=\{printLetter\}/, 'onClick={() => window.print()}');
+  // Pure check on the planted text - no tracked file is ever written.
+  const plantedText = planted.includes("window.print()") ? planted : `${backup}\nonClick={() => window.print()}\n`;
+  throwOnFail = true;
+  let detected = false;
   try {
-    const planted = backup.replace(/onClick=\{printLetter\}/, 'onClick={() => window.print()}');
-    fs.writeFileSync(PAGE, planted.includes("window.print()") ? planted : `${backup}\nonClick={() => window.print()}\n`);
-    const r = spawnSync(process.execPath, [SELF], { encoding: "utf8" });
-    if (r.status === 0) fail("mutated still passed");
+    assertSource(plantedText);
+  } catch {
+    detected = true;
   } finally {
-    fs.writeFileSync(PAGE, backup);
+    throwOnFail = false;
   }
+  if (!detected) fail("mutated still passed");
   console.log("PASS: verify-reports-ap-aging-print-letter --selftest");
 }
 

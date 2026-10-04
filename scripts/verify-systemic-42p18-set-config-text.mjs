@@ -29,10 +29,10 @@ function walk(dir, out = []) {
   return out;
 }
 
-function audit() {
+function audit(overrides = new Map()) {
   const problems = [];
   for (const file of walk(SRC)) {
-    const text = fs.readFileSync(file, "utf8");
+    const text = overrides.has(file) ? overrides.get(file) : fs.readFileSync(file, "utf8");
     if (BAD.test(text)) problems.push(path.relative(ROOT, file));
   }
   return problems;
@@ -49,14 +49,13 @@ function selftest() {
     "set_config('app.operating_company_id', $1::text, true)",
     "set_config('app.operating_company_id', $1, true)"
   );
-  fs.writeFileSync(target, planted);
   try {
-    if (audit().length === 0) {
+    if (audit(new Map([[target, planted]])).length === 0) {
       console.error(`[${LABEL}] FAIL selftest expected offenders`);
       process.exit(1);
     }
   } finally {
-    fs.writeFileSync(target, orig);
+    // nothing written to disk
   }
   console.log(`[${LABEL}] selftest PASS`);
 }

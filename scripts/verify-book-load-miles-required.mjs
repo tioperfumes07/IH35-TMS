@@ -13,9 +13,11 @@ function assert(cond, msg, errors) {
   if (!cond) errors.push(msg);
 }
 
-export function run() {
+const MODAL_REL = "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx";
+
+/** Pure over the modal text (defaults to the tracked file); the selftest passes a planted string. */
+export function run(modal = read(MODAL_REL)) {
   const errors = [];
-  const modal = read("apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx");
   const strip = read("apps/frontend/src/pages/dispatch/components/book-load-v4/MilesStrip.tsx");
 
   assert(
@@ -59,15 +61,14 @@ export function run() {
 }
 
 function selftest() {
-  const modalPath = path.join(ROOT, "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx");
-  const backup = fs.readFileSync(modalPath, "utf8");
-  try {
+  // Planted into a string only — the tracked modal is never written (LST-F408).
+  const backup = read(MODAL_REL);
+  {
     const patched = backup.replace(
       /if \(saveMode === "book_dispatch"\) \{\n      if \(\!\(Number\(values\.miles_practical\) > 0\)\) \{[\s\S]*?\n      \}\n    \}/,
       ""
     );
-    fs.writeFileSync(modalPath, patched, "utf8");
-    const planted = run();
+    const planted = run(patched);
     if (!planted.some((e) => e.includes("practical miles"))) {
       throw new Error("planted practical miles validation removal not detected");
     }
@@ -75,8 +76,6 @@ function selftest() {
       throw new Error("planted shortest miles validation removal not detected");
     }
     console.log(`[verify-book-load-miles-required] SELFTEST PASS (${planted.length} planted failures detected)`);
-  } finally {
-    fs.writeFileSync(modalPath, backup, "utf8");
   }
 }
 

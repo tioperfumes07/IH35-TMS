@@ -3,6 +3,7 @@
  * CreateWorkOrderModal outside-vendor ReferenceSelect server search. Cursor even claim: 2112.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -45,27 +46,27 @@ if (process.argv.includes("--selftest")) {
     for (const p of baseline) console.error("  - " + p);
     process.exit(1);
   }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-createwo-vendor-"));
+  const tmpStubRoot = fs.mkdtempSync(path.join(os.tmpdir(), "createwo-vendor-"));
   try {
-    const dir = path.join(stubRoot, "apps/frontend/src/pages/maintenance/components");
-    fs.mkdirSync(dir, { recursive: true });
+    const tmpDir = path.join(tmpStubRoot, "apps/frontend/src/pages/maintenance/components");
+    fs.mkdirSync(tmpDir, { recursive: true });
     fs.writeFileSync(
-      path.join(dir, "CreateWorkOrderModal.tsx"),
+      path.join(tmpDir, "CreateWorkOrderModal.tsx"),
       `<EntityPicker kind="unit" operatingCompanyId={id} />
 `
     );
-    const planted = collectProblems(stubRoot);
+    const planted = collectProblems(tmpStubRoot);
     if (!planted.length) {
       console.error(`${LABEL} SELFTEST FAIL: planted stub did not FAIL`);
       process.exit(1);
     }
-    fs.writeFileSync(path.join(dir, "CreateWorkOrderModal.tsx"), `<EntityPicker kind="vendor" operatingCompanyId={id} />\n`);
-    if (!collectProblems(stubRoot).length) {
+    fs.writeFileSync(path.join(tmpDir, "CreateWorkOrderModal.tsx"), `<EntityPicker kind="vendor" operatingCompanyId={id} />\n`);
+    if (!collectProblems(tmpStubRoot).length) {
       console.error(`${LABEL} SELFTEST FAIL: missing allowCreate did not FAIL`);
       process.exit(1);
     }
   } finally {
-    fs.rmSync(stubRoot, { recursive: true, force: true });
+    fs.rmSync(tmpStubRoot, { recursive: true, force: true });
   }
   console.log(`${LABEL} SELFTEST OK`);
 } else {

@@ -14,8 +14,8 @@ function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-export function check() {
-  const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+export function check(srcOverride) {
+  const src = srcOverride ?? fs.readFileSync(path.join(ROOT, PAGE), "utf8");
   assert(src.includes("ParityTable"), "HosHistorySection: must use ParityTable");
   assert(src.includes('storageKey="hos-history-events"'), "HosHistorySection: must set storageKey");
   assert(src.includes('tableTestId="hos-history-table"'), "HosHistorySection: must keep hos-history-table test id");
@@ -39,25 +39,21 @@ function selftest() {
     );
   assert(planted.includes("<table"), "selftest plant must include raw table");
   assert(!planted.includes("ParityTable"), "selftest plant must remove ParityTable");
-  fs.writeFileSync(filePath, planted);
   let failed = false;
   try {
-    check();
+    check(planted);
   } catch {
     failed = true;
   }
-  fs.writeFileSync(filePath, good);
   assert(failed, "selftest: expected FAIL on raw HTML table");
   // BANK-F91303 leftover plant — HosHistorySection page-scoped text token ratchet
   const leftoverPlant = good + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
-  fs.writeFileSync(filePath, leftoverPlant);
   let leftoverFailed = false;
   try {
-    check();
+    check(leftoverPlant);
   } catch {
     leftoverFailed = true;
   }
-  fs.writeFileSync(filePath, good);
   assert(leftoverFailed, "selftest: leftover plant escaped");
   console.log("verify-hos-history-parity-surface-bar --selftest PASS");
 }

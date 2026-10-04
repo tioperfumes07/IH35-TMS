@@ -7,6 +7,7 @@
  */
 
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -14,22 +15,22 @@ const ROOT = process.cwd();
 const FILE = "apps/frontend/src/pages/reports/ReportsHome.tsx";
 const CARD_FILE = "apps/frontend/src/components/reports/IftaPreparerCard.tsx";
 
-function read(relativePath) {
-  return fs.readFileSync(path.join(ROOT, relativePath), "utf8");
+function read(relativePath, root = ROOT) {
+  return fs.readFileSync(path.join(root, relativePath), "utf8");
 }
 
-function exists(relativePath) {
-  return fs.existsSync(path.join(ROOT, relativePath));
+function exists(relativePath, root = ROOT) {
+  return fs.existsSync(path.join(root, relativePath));
 }
 
-export function run() {
+export function run(root = ROOT) {
   const failures = [];
-  if (!exists(FILE)) failures.push(`MISSING: ${FILE}`);
-  if (!exists(CARD_FILE)) failures.push(`MISSING: ${CARD_FILE}`);
+  if (!exists(FILE, root)) failures.push(`MISSING: ${FILE}`);
+  if (!exists(CARD_FILE, root)) failures.push(`MISSING: ${CARD_FILE}`);
   if (failures.length) return failures;
 
-  const homeSrc = read(FILE);
-  const cardSrc = read(CARD_FILE);
+  const homeSrc = read(FILE, root);
+  const cardSrc = read(CARD_FILE, root);
 
   // RPT-S01
   if (!/CategoryHoverNav/.test(homeSrc)) {
@@ -85,24 +86,29 @@ export function run() {
 function main() {
   const args = process.argv.slice(2);
   if (args.includes("--selftest")) {
-    const realPath = path.join(ROOT, FILE);
+    const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "verify-rpt-s01-s05-reports-home-ifta-selftest-"));
+    for (const rel of [FILE, CARD_FILE]) {
+      fs.mkdirSync(path.dirname(path.join(tmpRoot, rel)), { recursive: true });
+      fs.writeFileSync(path.join(tmpRoot, rel), read(rel), "utf8");
+    }
+    const realPath = path.join(tmpRoot, FILE);
     const backup = fs.readFileSync(realPath, "utf8");
     try {
       fs.writeFileSync(realPath, backup.replace(/Accounting \+ financial reports/g, ""), "utf8");
-      const planted = run();
+      const planted = run(tmpRoot);
       if (planted.length === 0) {
         console.error("[verify-rpt-s01-s05-reports-home-ifta] SELFTEST FAIL: planted missing section did not fail");
         process.exit(1);
       }
       fs.writeFileSync(realPath, backup.replace("Branded financial compilations", "QBO-standard branded compilations"), "utf8");
-      const qboCopyPlanted = run();
+      const qboCopyPlanted = run(tmpRoot);
       if (!qboCopyPlanted.some((failure) => failure.includes("must not claim a QBO standard"))) {
         console.error("[verify-rpt-s01-s05-reports-home-ifta] SELFTEST FAIL: planted QBO copy did not fail");
         process.exit(1);
       }
       console.log(`[verify-rpt-s01-s05-reports-home-ifta] SELFTEST PASS (${planted.length} section failures + QBO-copy mutation detected)`);
     } finally {
-      fs.writeFileSync(realPath, backup, "utf8");
+      fs.rmSync(tmpRoot, { recursive: true, force: true });
     }
     process.exit(0);
   }

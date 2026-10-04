@@ -1,12 +1,10 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
-const SELF = path.join(ROOT, "scripts/verify-cash-flow-overview-print-letter.mjs");
 const PAGE = path.join(ROOT, "apps/frontend/src/pages/reports/CashFlowOverviewPage.tsx");
 const HELPER = path.join(ROOT, "apps/frontend/src/lib/openPrintableDocument.ts");
 
@@ -15,16 +13,16 @@ function fail(msg) {
   process.exit(1);
 }
 
-function assertSource() {
-  if (!fs.existsSync(PAGE)) fail("missing CashFlowOverviewPage");
-  if (!fs.existsSync(HELPER)) fail("missing openPrintableDocument");
+function assertSource(pageSrc, failFn = fail) {
+  if (!fs.existsSync(PAGE)) failFn("missing CashFlowOverviewPage");
+  if (!fs.existsSync(HELPER)) failFn("missing openPrintableDocument");
   const helper = fs.readFileSync(HELPER, "utf8");
-  if (!helper.includes("export function printLetterHtml")) fail("missing printLetterHtml");
-  const page = fs.readFileSync(PAGE, "utf8");
-  if (!page.includes("printLetterHtml")) fail("CashFlowOverviewPage must use printLetterHtml");
-  if (!/onClick=\{printLetter\}/.test(page)) fail("Print must call printLetter");
-  if (/onClick=\{\(\) => window\.print\(\)\}/.test(page)) fail("must not window.print() on SPA");
-  leftoverRefuse(page);
+  if (!helper.includes("export function printLetterHtml")) failFn("missing printLetterHtml");
+  const page = pageSrc ?? fs.readFileSync(PAGE, "utf8");
+  if (!page.includes("printLetterHtml")) failFn("CashFlowOverviewPage must use printLetterHtml");
+  if (!/onClick=\{printLetter\}/.test(page)) failFn("Print must call printLetter");
+  if (/onClick=\{\(\) => window\.print\(\)\}/.test(page)) failFn("must not window.print() on SPA");
+  leftoverRefuse(page, failFn);
 }
 
 function leftoverHits(src) {
@@ -38,8 +36,8 @@ function leftoverHits(src) {
   return bucket;
 }
 
-function leftoverRefuse(src) {
-  for (const e of leftoverHits(src)) fail(`CashFlowOverviewPage.tsx: ${e}`);
+function leftoverRefuse(src, failFn = fail) {
+  for (const e of leftoverHits(src)) failFn(`CashFlowOverviewPage.tsx: ${e}`);
 }
 
 function selftest() {
@@ -55,14 +53,19 @@ function selftest() {
     fail("leftover plant escaped");
   }
   const backup = fs.readFileSync(PAGE, "utf8");
+  const planted = backup.replace(/onClick=\{printLetter\}/, 'onClick={() => window.print()}');
+  let caught = false;
   try {
-    const planted = backup.replace(/onClick=\{printLetter\}/, 'onClick={() => window.print()}');
-    fs.writeFileSync(PAGE, planted.includes("window.print()") ? planted : `${backup}\nonClick={() => window.print()}\n`);
-    const r = spawnSync(process.execPath, [SELF], { encoding: "utf8" });
-    if (r.status === 0) fail("mutated still passed");
-  } finally {
-    fs.writeFileSync(PAGE, backup);
+    assertSource(
+      planted.includes("window.print()") ? planted : `${backup}\nonClick={() => window.print()}\n`,
+      (msg) => {
+        throw new Error(msg);
+      },
+    );
+  } catch {
+    caught = true;
   }
+  if (!caught) fail("mutated still passed");
   console.log("PASS: verify-cash-flow-overview-print-letter --selftest");
 }
 

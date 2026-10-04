@@ -10,7 +10,11 @@ import process from "node:process";
 const LABEL = "verify-reports-cancellations-by-date-iso-chrome";
 const PAGE = "apps/frontend/src/pages/reports/CancellationsReportPage.tsx";
 
+// Selftest plants go through this in-memory overlay - no tracked file is ever written.
+const SELFTEST_OVERLAY = new Map();
+
 function read(rel) {
+  if (SELFTEST_OVERLAY.has(rel)) return SELFTEST_OVERLAY.get(rel);
   return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
 }
 
@@ -54,13 +58,13 @@ function selftest() {
       'if (formatAsDate) {\n          return <span className="font-medium text-gray-800">{row.label}</span>;',
     );
     if (bad === original) fail("selftest could not plant raw ISO date label");
-    fs.writeFileSync(pagePath, bad);
+    SELFTEST_OVERLAY.set(PAGE, bad);
     const planted = analyze();
     if (!planted.some((m) => /raw row\.label|cancellationsByDateLabel|formatAsDate/.test(m))) {
       fail(`selftest expected page fail; got: ${planted.join("; ")}`);
     }
   } finally {
-    fs.writeFileSync(pagePath, original);
+    SELFTEST_OVERLAY.delete(PAGE);
   }
   const good = analyze();
   if (good.length) fail(`selftest expected GOOD: ${good.join("; ")}`);

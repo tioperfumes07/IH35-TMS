@@ -3,6 +3,7 @@
  * LST-F13 — mounted Lists routes must appear in DOMAIN_CONFIG (hub reachable).
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -39,15 +40,18 @@ function selftest() {
   const abs = path.join(ROOT, MAP);
   const original = fs.readFileSync(abs, "utf8");
   const planted = original.replace(/catalogKey: "parts-catalog"/g, 'catalogKey: "parts-catalog-REMOVED"');
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "lst-f13-selftest-"));
   try {
-    fs.writeFileSync(abs, planted);
-    const caught = run();
+    const tmpAbs = path.join(tmpRoot, MAP);
+    fs.mkdirSync(path.dirname(tmpAbs), { recursive: true });
+    fs.writeFileSync(tmpAbs, planted);
+    const caught = run(tmpRoot);
     if (!caught.some((f) => f.includes("parts-catalog"))) {
       console.error("SELFTEST FAIL: planted removal not caught");
       process.exit(1);
     }
   } finally {
-    fs.writeFileSync(abs, original);
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
   }
   console.log("verify-lst-f13-orphan-catalog-hub --selftest OK");
 }

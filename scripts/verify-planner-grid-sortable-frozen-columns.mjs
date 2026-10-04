@@ -77,12 +77,12 @@ if (process.argv.includes("--selftest")) {
       fs.mkdirSync(path.dirname(dest), { recursive: true });
       fs.copyFileSync(path.join(ROOT, rel), dest);
     }
-    const gridPath = path.join(tmpRoot, GRID);
-    const gridSrc = fs.readFileSync(gridPath, "utf8").replace(/toggleSort/g, "toggleSortREMOVED");
-    fs.writeFileSync(gridPath, gridSrc);
-    const callerPath = path.join(tmpRoot, CALLERS[0]);
-    const callerSrc = fs.readFileSync(callerPath, "utf8").replace(/sortKey:/g, "sortKeyREMOVED:");
-    fs.writeFileSync(callerPath, callerSrc);
+    const tmpGridPath = path.join(tmpRoot, GRID);
+    const gridSrc = fs.readFileSync(tmpGridPath, "utf8").replace(/toggleSort/g, "toggleSortREMOVED");
+    fs.writeFileSync(tmpGridPath, gridSrc);
+    const tmpCallerPath = path.join(tmpRoot, CALLERS[0]);
+    const callerSrc = fs.readFileSync(tmpCallerPath, "utf8").replace(/sortKey:/g, "sortKeyREMOVED:");
+    fs.writeFileSync(tmpCallerPath, callerSrc);
     const planted = collectProblems(tmpRoot);
     if (planted.length < 2) {
       console.error(`${LABEL} SELFTEST FAIL: expected at least 2 problems on the planted mutant, got ${planted.length}: ${JSON.stringify(planted)}`);

@@ -12,7 +12,11 @@ import { spawnSync } from "node:child_process";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
+// Selftest plants go through this in-memory overlay - no tracked file is ever written.
+const SELFTEST_OVERLAY = new Map();
+
 function read(rel) {
+  if (SELFTEST_OVERLAY.has(rel)) return SELFTEST_OVERLAY.get(rel);
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
@@ -107,39 +111,39 @@ export function run() {
 }
 
 function selftest() {
-  const realPath = path.join(ROOT, "apps/frontend/src/pages/program/ProgramModuleNav.tsx");
-  const finalPath = path.join(ROOT, "apps/frontend/src/pages/program/FinalAdditionsPage.tsx");
-  const requiredPath = path.join(ROOT, "docs/specs/scoreboard/modules/program.required.json");
-  const backup = fs.readFileSync(realPath, "utf8");
-  const finalBackup = fs.readFileSync(finalPath, "utf8");
-  const requiredBackup = fs.readFileSync(requiredPath, "utf8");
+  const NAV = "apps/frontend/src/pages/program/ProgramModuleNav.tsx";
+  const FINAL = "apps/frontend/src/pages/program/FinalAdditionsPage.tsx";
+  const REQUIRED = "docs/specs/scoreboard/modules/program.required.json";
+  const TRACKER = "apps/frontend/src/pages/program/ProgramTrackerPage.tsx";
+  const MODULE = "apps/frontend/src/pages/program/ModuleCompletionPage.tsx";
+  const backup = read(NAV);
+  const finalBackup = read(FINAL);
+  const requiredBackup = read(REQUIRED);
   try {
-    fs.writeFileSync(realPath, backup.replace(/to="\/program\/modules"/, 'to="/program/_removed_modules"'), "utf8");
+    SELFTEST_OVERLAY.set(NAV, backup.replace(/to="\/program\/modules"/, 'to="/program/_removed_modules"'));
     const planted = run();
     if (!planted.some((e) => e.includes("/program/modules"))) {
       console.error("[verify-program-surfaces-s01-s05] SELFTEST FAIL: planted route removal not detected");
       process.exit(1);
     }
-    fs.writeFileSync(finalPath, finalBackup.replace("Pending (includes legacy GATED tags)", "Gated (owner)"), "utf8");
+    SELFTEST_OVERLAY.set(FINAL, finalBackup.replace("Pending (includes legacy GATED tags)", "Gated (owner)"));
     const ownerGatePlanted = run();
     if (!ownerGatePlanted.some((e) => e.includes("owner-gated")) || !ownerGatePlanted.some((e) => e.includes("Pending denominator"))) {
       console.error("[verify-program-surfaces-s01-s05] SELFTEST FAIL: planted owner-gate regression not detected");
       process.exit(1);
     }
-    fs.writeFileSync(finalPath, finalBackup, "utf8");
-    fs.writeFileSync(realPath, backup, "utf8");
-    const trackerPath = path.join(ROOT, "apps/frontend/src/pages/program/ProgramTrackerPage.tsx");
-    const trackerBackup = fs.readFileSync(trackerPath, "utf8");
-    fs.writeFileSync(
-      trackerPath,
+    SELFTEST_OVERLAY.delete(FINAL);
+    SELFTEST_OVERLAY.delete(NAV);
+    const trackerBackup = read(TRACKER);
+    SELFTEST_OVERLAY.set(
+      TRACKER,
       trackerBackup
         .replace("Historical GATED tag; no owner approval required", "Gated (owner)")
         .replace("no owner approval is required", "owner approval is required")
         .replace("includes legacy GATED tags", "Tracked pending"),
-      "utf8",
     );
     const trackerPlanted = run();
-    fs.writeFileSync(trackerPath, trackerBackup, "utf8");
+    SELFTEST_OVERLAY.delete(TRACKER);
     if (
       !trackerPlanted.some((e) => e.includes("Program Tracker")) ||
       !trackerPlanted.some((e) => e.includes("owner approval") || e.includes("legacy GATED") || e.includes("owner-gated"))
@@ -149,21 +153,17 @@ function selftest() {
     }
     const requiredJson = JSON.parse(requiredBackup);
     requiredJson.leaves.find((leaf) => leaf.id === "program.panel.thread").route_hint = "/program";
-    fs.writeFileSync(requiredPath, JSON.stringify(requiredJson, null, 2), "utf8");
+    SELFTEST_OVERLAY.set(REQUIRED, JSON.stringify(requiredJson, null, 2));
     const threadRoutePlanted = run();
     if (!threadRoutePlanted.some((e) => e.includes("program.panel.thread"))) {
       console.error("[verify-program-surfaces-s01-s05] SELFTEST FAIL: planted thread route mismatch not detected");
       process.exit(1);
     }
-    const modulePath = path.join(ROOT, "apps/frontend/src/pages/program/ModuleCompletionPage.tsx");
-    const moduleBackup = fs.readFileSync(modulePath, "utf8");
-    fs.writeFileSync(
-      modulePath,
-      `${moduleBackup}\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n`,
-      "utf8",
-    );
+    SELFTEST_OVERLAY.delete(REQUIRED);
+    const moduleBackup = read(MODULE);
+    SELFTEST_OVERLAY.set(MODULE, `${moduleBackup}\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n`);
     const leftoverPlanted = run();
-    fs.writeFileSync(modulePath, moduleBackup, "utf8");
+    SELFTEST_OVERLAY.delete(MODULE);
     if (
       !leftoverPlanted.some((e) => e.includes("leftover text-[11px]")) ||
       !leftoverPlanted.some((e) => e.includes("leftover off-scale muted"))
@@ -173,9 +173,7 @@ function selftest() {
     }
     console.log(`[verify-program-surfaces-s01-s05] SELFTEST PASS (${planted.length} planted failures detected)`);
   } finally {
-    fs.writeFileSync(realPath, backup, "utf8");
-    fs.writeFileSync(finalPath, finalBackup, "utf8");
-    fs.writeFileSync(requiredPath, requiredBackup, "utf8");
+    SELFTEST_OVERLAY.clear();
   }
 }
 

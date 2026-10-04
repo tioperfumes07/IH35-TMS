@@ -175,52 +175,52 @@ if (process.argv.includes("--selftest")) {
     for (const p of baseline) console.error("  - " + p);
     process.exit(1);
   }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-ep-load-sweep-"));
+  const tmpStubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-ep-load-sweep-"));
   try {
-    const regDir = path.join(stubRoot, "apps/frontend/src/components/parity");
-    fs.mkdirSync(regDir, { recursive: true });
+    const tmpRegDir = path.join(tmpStubRoot, "apps/frontend/src/components/parity");
+    fs.mkdirSync(tmpRegDir, { recursive: true });
     fs.writeFileSync(
-      path.join(regDir, "entityPickerRegistry.ts"),
+      path.join(tmpRegDir, "entityPickerRegistry.ts"),
       `export const ENTITY_PICKERS = { unit: { list: async () => [] } };`
     );
-    fs.mkdirSync(path.join(stubRoot, "apps/frontend/src/pages/banking/components"), { recursive: true });
+    fs.mkdirSync(path.join(tmpStubRoot, "apps/frontend/src/pages/banking/components"), { recursive: true });
     fs.writeFileSync(
-      path.join(stubRoot, "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx"),
+      path.join(tmpStubRoot, "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx"),
       `import { LoadAutocomplete } from "../../../components/banking/LoadAutocomplete";
 listLoads({ limit: 200 })
 <LoadAutocomplete companyId={id} value="" onChange={() => {}} />`
     );
     fs.writeFileSync(
-      path.join(stubRoot, "apps/frontend/src/pages/banking/components/BankTransactionSplitModal.tsx"),
+      path.join(tmpStubRoot, "apps/frontend/src/pages/banking/components/BankTransactionSplitModal.tsx"),
       `listLoads({})
 <Combobox options={loadOptions} />`
     );
-    fs.mkdirSync(path.join(stubRoot, "apps/frontend/src/pages/factoring"), { recursive: true });
+    fs.mkdirSync(path.join(tmpStubRoot, "apps/frontend/src/pages/factoring"), { recursive: true });
     fs.writeFileSync(
-      path.join(stubRoot, "apps/frontend/src/pages/factoring/FactoringHome.tsx"),
+      path.join(tmpStubRoot, "apps/frontend/src/pages/factoring/FactoringHome.tsx"),
       `listLoads({ limit: 200 })
 <Combobox options={[]} />`
     );
-    fs.mkdirSync(path.join(stubRoot, "apps/frontend/src/pages/dispatch"), { recursive: true });
+    fs.mkdirSync(path.join(tmpStubRoot, "apps/frontend/src/pages/dispatch"), { recursive: true });
     fs.writeFileSync(
-      path.join(stubRoot, "apps/frontend/src/pages/dispatch/PodReviewPage.tsx"),
+      path.join(tmpStubRoot, "apps/frontend/src/pages/dispatch/PodReviewPage.tsx"),
       `listDispatchLoads({ limit: 50 })
 {loadOptions.map((load) => <option key={load.id} />)}`
     );
-    fs.mkdirSync(path.join(stubRoot, "apps/frontend/src/components/banking"), { recursive: true });
-    fs.writeFileSync(path.join(stubRoot, "apps/frontend/src/components/banking/LoadAutocomplete.tsx"), "export {}");
-    fs.mkdirSync(path.join(stubRoot, "apps/frontend/src/components/driver-profile"), { recursive: true });
+    fs.mkdirSync(path.join(tmpStubRoot, "apps/frontend/src/components/banking"), { recursive: true });
+    fs.writeFileSync(path.join(tmpStubRoot, "apps/frontend/src/components/banking/LoadAutocomplete.tsx"), "export {}");
+    fs.mkdirSync(path.join(tmpStubRoot, "apps/frontend/src/components/driver-profile"), { recursive: true });
     fs.writeFileSync(
-      path.join(stubRoot, "apps/frontend/src/components/driver-profile/LoadsSection.tsx"),
+      path.join(tmpStubRoot, "apps/frontend/src/components/driver-profile/LoadsSection.tsx"),
       `listDispatchLoads({ operating_company_id: operatingCompanyId, driver: driverId })\n<EntityLink kind="load" id={row.id} />`
     );
-    const planted = collectProblems(stubRoot);
+    const planted = collectProblems(tmpStubRoot);
     if (planted.length < 5 || !planted.some((problem) => problem.includes("table-only load read lost"))) {
       console.error(`${LABEL} SELFTEST FAIL: planted stub did not FAIL hard enough`, planted);
       process.exit(1);
     }
   } finally {
-    fs.rmSync(stubRoot, { recursive: true, force: true });
+    fs.rmSync(tmpStubRoot, { recursive: true, force: true });
   }
   console.log(`${LABEL} SELFTEST OK`);
 } else {

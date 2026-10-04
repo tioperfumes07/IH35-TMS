@@ -14,7 +14,11 @@ import process from "node:process";
 const LABEL = "verify-reports-ifta-preparer-no-owner-approval-copy";
 const PAGE = "apps/frontend/src/pages/reports/tax-regulatory/IftaPreparer.tsx";
 
+// Selftest plants go through this in-memory overlay - no tracked file is ever written.
+const SELFTEST_OVERLAY = new Map();
+
 function read(rel) {
+  if (SELFTEST_OVERLAY.has(rel)) return SELFTEST_OVERLAY.get(rel);
   return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
 }
 
@@ -57,13 +61,13 @@ function selftest() {
       /subtitle=\{`[^`]*`\}/,
       "subtitle={`${quarter} · 4-step wizard (mileage, fuel, tax, owner approval)`}",
     );
-    fs.writeFileSync(pagePath, planted);
+    SELFTEST_OVERLAY.set(PAGE, planted);
     const bad = analyze(planted);
     if (!bad.some((m) => /must not say "owner approval"/.test(m))) {
       fail("selftest expected owner-approval subtitle reintroduction to fail");
     }
   } finally {
-    fs.writeFileSync(pagePath, original);
+    SELFTEST_OVERLAY.delete(PAGE);
   }
   const good = analyze(original);
   if (good.length) fail(`selftest expected GOOD after restore: ${good.join("; ")}`);

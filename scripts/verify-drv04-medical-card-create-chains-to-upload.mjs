@@ -44,8 +44,8 @@ export function run(root = process.cwd()) {
 
 function selftest() {
   const path = new URL(import.meta.url).pathname;
-  const dir = fs.mkdtempSync("/tmp/drv04-guard-selftest-");
-  const tmpFile = `${dir}/${REL}`;
+  const tmpDir = fs.mkdtempSync("/tmp/drv04-guard-selftest-");
+  const tmpFile = `${tmpDir}/${REL}`;
   fs.mkdirSync(tmpFile.slice(0, tmpFile.lastIndexOf("/")), { recursive: true });
 
   const fixedSnippet = `
@@ -64,16 +64,16 @@ export function MedicalCardsHistorySection() {
 }
 `;
   fs.writeFileSync(tmpFile, fixedSnippet);
-  const passFailures = run(dir);
+  const passFailures = run(tmpDir);
   if (passFailures.length) throw new Error("PASS fail (should be clean): " + JSON.stringify(passFailures));
 
   // Mutation: strip the chain-to-upload call — the exact DRV-04 regression.
   const broken = fixedSnippet.replace("      setUploadCardId(result.id);\n", "");
   fs.writeFileSync(tmpFile, broken);
-  const f1 = run(dir);
+  const f1 = run(tmpDir);
   if (f1.length === 0) throw new Error("FAIL to catch: removing setUploadCardId(result.id) went undetected");
 
-  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(tmpDir, { recursive: true, force: true });
   console.log("verify-drv04-medical-card-create-chains-to-upload SELFTEST PASS");
   void path;
 }

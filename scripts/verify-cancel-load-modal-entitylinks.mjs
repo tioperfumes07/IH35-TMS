@@ -21,9 +21,7 @@ function assert(cond, msg) {
   if (!cond) throw new Error(`${LABEL}: ${msg}`);
 }
 
-function check() {
-  const modal = fs.readFileSync(MODAL, "utf8");
-  const drawer = fs.readFileSync(DRAWER, "utf8");
+function check(modal = fs.readFileSync(MODAL, "utf8"), drawer = fs.readFileSync(DRAWER, "utf8")) {
   assert(/EntityLinkOrTombstone/.test(modal), "modal must use EntityLinkOrTombstone");
   assert(
     /data-testid=["']cancel-load-modal-entitylinks["']/.test(modal),
@@ -42,26 +40,20 @@ function selftest() {
     'data-testid="planted-missing"'
   );
   assert(broken !== original, "--selftest plant must mutate testid");
-  fs.writeFileSync(MODAL, broken);
   let failed = false;
   try {
-    check();
+    check(broken);
   } catch {
     failed = true;
-  } finally {
-    fs.writeFileSync(MODAL, original);
   }
   assert(failed, "--selftest expected FAIL when entitylinks testid removed");
   const mislabeled = original.replace(/name=\{loadNumber\}/, "name={loadId}");
   assert(mislabeled !== original, "--selftest identity plant must match");
-  fs.writeFileSync(MODAL, mislabeled);
   let identityFailed = false;
   try {
-    check();
+    check(mislabeled);
   } catch {
     identityFailed = true;
-  } finally {
-    fs.writeFileSync(MODAL, original);
   }
   assert(identityFailed, "--selftest expected FAIL when load UUID replaces human label");
   check();

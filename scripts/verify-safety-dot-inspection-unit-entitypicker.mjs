@@ -5,6 +5,7 @@
  * Cursor even claim: 2164.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -79,12 +80,12 @@ if (process.argv.includes("--selftest")) {
     for (const p of baseline) console.error("  - " + p);
     process.exit(1);
   }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-dot-unit-ep-"));
+  const stubRoot = fs.mkdtempSync(path.join(os.tmpdir(), "tmp-dot-unit-ep-"));
   try {
-    const dir = path.join(stubRoot, "apps/frontend/src/pages/safety/tabs");
-    fs.mkdirSync(dir, { recursive: true });
+    const tmpStubDir = path.join(stubRoot, "apps/frontend/src/pages/safety/tabs");
+    fs.mkdirSync(tmpStubDir, { recursive: true });
     fs.writeFileSync(
-      path.join(dir, "DOTInspectionsTab.tsx"),
+      path.join(tmpStubDir, "DOTInspectionsTab.tsx"),
       `const unitSearch = "";
 listUnits({ search: unitSearch });
 <div data-testid="dot-inspection-unit-picker"><Combobox options={unitOptions} /></div>
@@ -92,9 +93,9 @@ listUnits({ search: unitSearch });
 <DriverPickerWithCreate />
 `
     );
-    const routeDir = path.join(stubRoot, "apps/backend/src/routes/safety");
-    fs.mkdirSync(routeDir, { recursive: true });
-    fs.writeFileSync(path.join(routeDir, "dot-inspections.ts"), "INSERT INTO safety.dot_inspections (fmcsa_level) VALUES ($7)");
+    const tmpRouteDir = path.join(stubRoot, "apps/backend/src/routes/safety");
+    fs.mkdirSync(tmpRouteDir, { recursive: true });
+    fs.writeFileSync(path.join(tmpRouteDir, "dot-inspections.ts"), "INSERT INTO safety.dot_inspections (fmcsa_level) VALUES ($7)");
     const planted = collectProblems(stubRoot);
     if (!planted.length) {
       console.error(`${LABEL} SELFTEST FAIL: planted stub did not FAIL`);

@@ -57,7 +57,7 @@ const REQUIRED_FILES = {
   ],
 };
 
-function staticCheck() {
+function staticCheck(planted = {}) {
   const errors = [];
   for (const [rel, needles] of Object.entries(REQUIRED_FILES)) {
     const full = path.join(ROOT, rel);
@@ -65,7 +65,7 @@ function staticCheck() {
       errors.push(`missing file ${rel}`);
       continue;
     }
-    const body = fs.readFileSync(full, "utf8");
+    const body = planted[rel] ?? fs.readFileSync(full, "utf8");
     for (const n of needles) {
       if (!body.includes(n)) errors.push(`${rel} missing ${JSON.stringify(n)}`);
     }
@@ -131,14 +131,9 @@ if (process.argv.includes("--selftest")) {
   const boardPath = path.join(ROOT, "apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx");
   const orig = fs.readFileSync(boardPath, "utf8");
   const mutated = orig.replace('testId: "col-line-haul"', 'testId: "col-line-haul-REMOVED"');
-  fs.writeFileSync(boardPath, mutated);
-  try {
-    const errs = staticCheck();
-    if (!errs.some((e) => e.includes("col-line-haul"))) {
-      throw new Error("selftest: removing col-line-haul did not fail the guard");
-    }
-  } finally {
-    fs.writeFileSync(boardPath, orig);
+  const errs = staticCheck({ "apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx": mutated });
+  if (!errs.some((e) => e.includes("col-line-haul"))) {
+    throw new Error("selftest: removing col-line-haul did not fail the guard");
   }
   console.log(`${LABEL}: PASS --selftest`);
   process.exit(0);

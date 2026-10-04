@@ -9,6 +9,7 @@
  * first used in October (due Nov 30) vanishes behind the annual Aug 31 line.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -20,16 +21,16 @@ const FILINGS = "apps/frontend/src/pages/compliance/Form2290Filings.tsx";
 const ROUTES = "apps/backend/src/compliance/form-2290.routes.ts";
 const GENERATOR = "apps/backend/src/compliance/form-2290-generator.ts";
 
-function read(rel) {
-  return fs.readFileSync(path.join(ROOT, rel), "utf8");
+function read(rel, root = ROOT) {
+  return fs.readFileSync(path.join(root, rel), "utf8");
 }
 
 export function run(root = ROOT) {
   const failures = [];
-  const permits = read(PERMITS);
-  const filings = read(FILINGS);
-  const routes = read(ROUTES);
-  const generator = read(GENERATOR);
+  const permits = read(PERMITS, root);
+  const filings = read(FILINGS, root);
+  const routes = read(ROUTES, root);
+  const generator = read(GENERATOR, root);
 
   if (!permits.includes("per_unit_deadlines")) {
     failures.push(`${PERMITS}: must read per_unit_deadlines from the upcoming-deadline API (SAF-ORPH-04)`);
@@ -83,14 +84,18 @@ function selftest() {
   const clean = run();
   t("current tree passes", clean.length === 0);
 
-  const permitsPath = path.join(ROOT, PERMITS);
   const original = read(PERMITS);
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "saf-orph04-selftest-"));
   try {
+    for (const rel of [PERMITS, FILINGS, ROUTES, GENERATOR]) {
+      fs.mkdirSync(path.dirname(path.join(tmpRoot, rel)), { recursive: true });
+      fs.writeFileSync(path.join(tmpRoot, rel), read(rel));
+    }
     const stripped = original.replace(/per_unit_deadlines/g, "deadline_only");
-    fs.writeFileSync(permitsPath, stripped);
-    t("missing per_unit_deadlines fails", run().some((f) => f.includes("per_unit_deadlines")));
+    fs.writeFileSync(path.join(tmpRoot, PERMITS), stripped);
+    t("missing per_unit_deadlines fails", run(tmpRoot).some((f) => f.includes("per_unit_deadlines")));
   } finally {
-    fs.writeFileSync(permitsPath, original);
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
   }
 
   console.log(bad === 0 ? `${LABEL} --selftest OK` : `${LABEL} --selftest FAILED (${bad})`);

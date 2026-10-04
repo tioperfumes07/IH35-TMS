@@ -42,8 +42,8 @@ export function run(root = process.cwd()) {
 }
 
 function selftest() {
-  const dir = fs.mkdtempSync("/tmp/drv07-guard-selftest-");
-  const tmpFile = `${dir}/${REL}`;
+  const tmpDir = fs.mkdtempSync("/tmp/drv07-guard-selftest-");
+  const tmpFile = `${tmpDir}/${REL}`;
   fs.mkdirSync(tmpFile.slice(0, tmpFile.lastIndexOf("/")), { recursive: true });
 
   const fixedSnippet = `
@@ -62,16 +62,16 @@ export function BackgroundChecksSection() {
 }
 `;
   fs.writeFileSync(tmpFile, fixedSnippet);
-  const passFailures = run(dir);
+  const passFailures = run(tmpDir);
   if (passFailures.length) throw new Error("PASS fail (should be clean): " + JSON.stringify(passFailures));
 
   // Mutation: strip the chain-to-upload call — the exact DRV-07 regression.
   const broken = fixedSnippet.replace("      setUploadCheckId(result.id);\n", "");
   fs.writeFileSync(tmpFile, broken);
-  const f1 = run(dir);
+  const f1 = run(tmpDir);
   if (f1.length === 0) throw new Error("FAIL to catch: removing setUploadCheckId(result.id) went undetected");
 
-  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(tmpDir, { recursive: true, force: true });
   console.log("verify-drv07-background-check-create-chains-to-upload SELFTEST PASS");
 }
 

@@ -112,18 +112,13 @@ function main() {
     const target = path.join(ROOT, "apps/backend/src/accounting/invoices-bulk.routes.ts");
     const original = fs.readFileSync(target, "utf8");
     const planted = original.replace(/E_USE_BULK_VOID/g, "E_CLOSED_PATH_REMOVED");
+    let failed = false;
     try {
-      fs.writeFileSync(target, planted);
-      let failed = false;
-      try {
-        assert.match(fs.readFileSync(target, "utf8"), /E_USE_BULK_VOID/);
-      } catch {
-        failed = true;
-      }
-      assert.equal(failed, true, "selftest must FAIL when E_USE_BULK_VOID removed");
-    } finally {
-      fs.writeFileSync(target, original);
+      assert.match(planted, /E_USE_BULK_VOID/);
+    } catch {
+      failed = true;
     }
+    assert.equal(failed, true, "selftest must FAIL when E_USE_BULK_VOID removed");
     console.log("verify-bulk-void-via-void-service --selftest PASS");
     return;
   }

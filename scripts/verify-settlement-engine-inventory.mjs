@@ -231,27 +231,27 @@ if (process.argv.includes("--selftest")) {
         "",
       ].join("\n")
     );
-    const srcRoot = path.join(tmp, "apps/backend/src");
-    fs.mkdirSync(path.join(srcRoot, "settlements/disputes"), { recursive: true });
+    const tmpSrcRoot = path.join(tmp, "apps/backend/src");
+    fs.mkdirSync(path.join(tmpSrcRoot, "settlements/disputes"), { recursive: true });
     fs.writeFileSync(
-      path.join(srcRoot, "known-deprecated.ts"),
+      path.join(tmpSrcRoot, "known-deprecated.ts"),
       "await q(`INSERT INTO payroll.driver_settlements (id) VALUES ($1)`);\n"
     );
     fs.writeFileSync(
-      path.join(srcRoot, "sneaky-new-writer.ts"),
+      path.join(tmpSrcRoot, "sneaky-new-writer.ts"),
       "await q(`UPDATE payroll.driver_settlements SET status = 'x'`);\n"
     );
     fs.writeFileSync(
-      path.join(srcRoot, "settlements/disputes/disputes.routes.ts"),
+      path.join(tmpSrcRoot, "settlements/disputes/disputes.routes.ts"),
       "await q(`INSERT INTO settlements.settlement_disputes (id) VALUES ($1)`);\n"
     );
     fs.writeFileSync(
-      path.join(srcRoot, "sneaky-settlements-writer.ts"),
+      path.join(tmpSrcRoot, "sneaky-settlements-writer.ts"),
       "await q(`INSERT INTO settlements.team_split_configs (id) VALUES ($1)`);\n"
     );
-    fs.mkdirSync(path.join(srcRoot, "__tests__"), { recursive: true });
+    fs.mkdirSync(path.join(tmpSrcRoot, "__tests__"), { recursive: true });
     fs.writeFileSync(
-      path.join(srcRoot, "__tests__/mock.ts"),
+      path.join(tmpSrcRoot, "__tests__/mock.ts"),
       "if (sql.includes('INSERT INTO payroll.driver_settlements')) {}\n"
     );
 

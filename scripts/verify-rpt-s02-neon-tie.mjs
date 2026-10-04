@@ -11,6 +11,7 @@
  */
 
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
@@ -30,24 +31,24 @@ const BS_SERVICE = "apps/backend/src/accounting/balance-sheet.service.ts";
 const JEP_FILTER =
   /je\.status\s*<>\s*'voided'[\s\S]*p\.posting_batch_id IS NULL OR pb\.batch_status IN \('posted', 'reversed'\)/;
 
-function read(relativePath) {
-  return fs.readFileSync(path.join(ROOT, relativePath), "utf8");
+function read(relativePath, root = ROOT) {
+  return fs.readFileSync(path.join(root, relativePath), "utf8");
 }
 
-function exists(relativePath) {
-  return fs.existsSync(path.join(ROOT, relativePath));
+function exists(relativePath, root = ROOT) {
+  return fs.existsSync(path.join(root, relativePath));
 }
 
-export function runStatic() {
+export function runStatic(root = ROOT) {
   const failures = [];
   for (const f of [TB_SERVICE, PL_SERVICE, BS_SERVICE]) {
-    if (!exists(f)) failures.push(`MISSING: ${f}`);
+    if (!exists(f, root)) failures.push(`MISSING: ${f}`);
   }
   if (failures.length) return failures;
 
-  const tb = read(TB_SERVICE);
-  const pl = read(PL_SERVICE);
-  const bs = read(BS_SERVICE);
+  const tb = read(TB_SERVICE, root);
+  const pl = read(PL_SERVICE, root);
+  const bs = read(BS_SERVICE, root);
 
   if (!/FROM accounting\.journal_entry_postings p/.test(tb)) {
     failures.push(`${TB_SERVICE}: must aggregate from accounting.journal_entry_postings`);
@@ -283,7 +284,12 @@ async function runLive() {
 async function main() {
   const args = process.argv.slice(2);
   if (args.includes("--selftest")) {
-    const realPath = path.join(ROOT, TB_SERVICE);
+    const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "verify-rpt-s02-neon-tie-selftest-"));
+    for (const rel of [TB_SERVICE, PL_SERVICE, BS_SERVICE]) {
+      fs.mkdirSync(path.dirname(path.join(tmpRoot, rel)), { recursive: true });
+      fs.writeFileSync(path.join(tmpRoot, rel), read(rel), "utf8");
+    }
+    const realPath = path.join(tmpRoot, TB_SERVICE);
     const backup = fs.readFileSync(realPath, "utf8");
     try {
       fs.writeFileSync(
@@ -294,14 +300,14 @@ async function main() {
         ),
         "utf8",
       );
-      const planted = runStatic();
+      const planted = runStatic(tmpRoot);
       if (planted.length === 0) {
         console.error(`[${LABEL}] SELFTEST FAIL: planted TB balanced break did not fail`);
         process.exit(1);
       }
       console.log(`[${LABEL}] SELFTEST PASS (${planted.length} planted failures detected)`);
     } finally {
-      fs.writeFileSync(realPath, backup, "utf8");
+      fs.rmSync(tmpRoot, { recursive: true, force: true });
     }
     process.exit(0);
   }

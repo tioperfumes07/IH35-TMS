@@ -66,11 +66,11 @@ export function run(root = ROOT) {
 }
 
 function selftest() {
-  const dir = fs.mkdtempSync("/tmp/drv03-dqf-checklist-selftest-");
+  const tmpDir = fs.mkdtempSync("/tmp/drv03-dqf-checklist-selftest-");
   const write = (content) => {
-    const abs = path.join(dir, REL);
-    fs.mkdirSync(path.dirname(abs), { recursive: true });
-    fs.writeFileSync(abs, content);
+    const tmpAbs = path.join(tmpDir, REL);
+    fs.mkdirSync(path.dirname(tmpAbs), { recursive: true });
+    fs.writeFileSync(tmpAbs, content);
   };
 
   const fixed = `
@@ -83,7 +83,7 @@ function selftest() {
     } />
   `;
   write(fixed);
-  const clean = run(dir);
+  const clean = run(tmpDir);
   if (clean.length) throw new Error("PASS fail (should be clean): " + JSON.stringify(clean));
 
   // Regress: drop the live catalog fetch, revert to the exact old hardcoded slot list.
@@ -91,7 +91,7 @@ function selftest() {
     const DQF_SLOTS = [["identity","INE"],["mexican_federal_license","MX"],["passport","Passport"],["cdl","CDL"],["medical","Medical"]];
   `;
   write(regressed);
-  const caught = run(dir);
+  const caught = run(tmpDir);
   if (!caught.some((p) => p.includes("hardcoded"))) throw new Error("FAIL to catch: old hardcoded 5-slot list regression went undetected");
   if (!caught.some((p) => p.includes("listRequiredDocumentTypes"))) throw new Error("FAIL to catch: missing live catalog fetch went undetected");
 
@@ -103,12 +103,12 @@ function selftest() {
     <SaveDropdown disabled={!identityStepReady} />
     <span>{unsatisfiedHardBlockDqfItems.length}</span>
   `);
-  const unwired = run(dir);
+  const unwired = run(tmpDir);
   if (!unwired.some((p) => p.includes("no longer wired"))) {
     throw new Error("FAIL to catch: hard_block gate silently removed from Save's disabled prop went undetected");
   }
 
-  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(tmpDir, { recursive: true, force: true });
   console.log(`${LABEL} --selftest OK`);
 }
 

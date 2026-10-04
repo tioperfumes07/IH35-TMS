@@ -16,7 +16,11 @@ const LABEL = "verify-user-s05-admin-mutation-opco";
 const SELFTEST = process.argv.includes("--selftest");
 const USERS_ROUTES = "apps/backend/src/identity/users.routes.ts";
 
+// Selftest plants go here (rel path -> planted text); nothing is written to disk.
+const PLANTED = new Map();
+
 function read(rel) {
+  if (PLANTED.has(rel)) return PLANTED.get(rel);
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
@@ -87,17 +91,16 @@ if (SELFTEST) {
     console.error(`${LABEL} SELFTEST FAILED live: ${live.join(" | ")}`);
     process.exit(1);
   }
-  const routesPath = path.join(ROOT, USERS_ROUTES);
-  const orig = fs.readFileSync(routesPath, "utf8");
+  const orig = read(USERS_ROUTES);
   const broken = orig.replaceAll("TARGET_USER_IN_ACTOR_COMPANY_SCOPE_SQL", "TARGET_USER_SCOPE_REMOVED");
-  fs.writeFileSync(routesPath, broken);
+  PLANTED.set(USERS_ROUTES, broken);
   try {
     if (!assertLive().length) {
       console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);
       process.exit(1);
     }
   } finally {
-    fs.writeFileSync(routesPath, orig);
+    PLANTED.delete(USERS_ROUTES);
   }
   console.log(`${LABEL} SELFTEST PASS`);
   process.exit(0);

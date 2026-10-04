@@ -107,9 +107,9 @@ if (process.argv.includes("--selftest")) {
   for (const { name, content, expectProblems } of cases) {
     const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "rate-per-mile-guard-"));
     try {
-      const full = path.join(tmpRoot, SERVICE);
-      fs.mkdirSync(path.dirname(full), { recursive: true });
-      fs.writeFileSync(full, content);
+      const tmpFull = path.join(tmpRoot, SERVICE);
+      fs.mkdirSync(path.dirname(tmpFull), { recursive: true });
+      fs.writeFileSync(tmpFull, content);
       const problems = collectProblems(tmpRoot);
       if (problems.length !== expectProblems) {
         console.error(

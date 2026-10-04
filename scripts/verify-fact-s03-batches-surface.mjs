@@ -15,9 +15,9 @@ function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
-function assertLive() {
+function assertLive(wizardOverride) {
   const problems = [];
-  const wizard = read(WIZARD);
+  const wizard = wizardOverride ?? read(WIZARD);
   const detail = read(DETAIL);
   const manifest = read(MANIFEST);
   if (!/path="\/factoring\/batches\/new"/.test(manifest)) problems.push("batches/new route missing");
@@ -39,14 +39,12 @@ if (SELFTEST) {
   }
   const pagePath = path.join(ROOT, WIZARD);
   const orig = fs.readFileSync(pagePath, "utf8");
-  fs.writeFileSync(pagePath, orig.replace(/data-testid="factoring-batches-honest-empty"/, 'data-testid="x"'));
-  try {
-    if (!assertLive().length) {
+  const planted = orig.replace(/data-testid="factoring-batches-honest-empty"/, 'data-testid="x"');
+  {
+    if (!assertLive(planted).length) {
       console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);
       process.exit(1);
     }
-  } finally {
-    fs.writeFileSync(pagePath, orig);
   }
   console.log(`${LABEL} SELFTEST PASS`);
   process.exit(0);

@@ -3,7 +3,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILE = path.join(ROOT, "apps/frontend/src/components/drivers/CreateDriverModal.tsx");
 
@@ -26,12 +25,8 @@ function run() {
 }
 function selftest() {
   const original = fs.readFileSync(FILE, "utf8");
-  try {
-    const planted = original.replace("<label htmlFor={key}", "<label data-orphaned={key}");
-    fs.writeFileSync(FILE, planted);
-    const red = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], { cwd: ROOT, encoding: "utf8" });
-    if (red.status === 0) throw new Error("orphaned label did not redden guard");
-  } finally { fs.writeFileSync(FILE, original); }
+  const planted = original.replace("<label htmlFor={key}", "<label data-orphaned={key}");
+  if (errors(planted).length === 0) throw new Error("orphaned label did not redden guard");
   console.log("verify-create-driver-control-label-association --selftest PASS — orphaned label reddened guard");
 }
 if (process.argv.includes("--selftest")) selftest(); else run();

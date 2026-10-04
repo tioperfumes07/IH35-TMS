@@ -91,35 +91,35 @@ export function scan(opts = {}) {
 function selftest() {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "team-split-refs-"));
   try {
-    const src = path.join(tmp, "apps/backend/src");
-    fs.mkdirSync(path.join(src, "__tests__"), { recursive: true });
+    const tmpSrc = path.join(tmp, "apps/backend/src");
+    fs.mkdirSync(path.join(tmpSrc, "__tests__"), { recursive: true });
     fs.writeFileSync(
-      path.join(src, "clean.ts"),
+      path.join(tmpSrc, "clean.ts"),
       "await q(`SELECT split_method FROM mdata.driver_teams WHERE is_active = true`);\n" +
         "// comment mentioning settlements.team_split_configs is fine\n"
     );
     fs.writeFileSync(
-      path.join(src, "bad-reader.ts"),
+      path.join(tmpSrc, "bad-reader.ts"),
       "await q(`SELECT primary_ratio FROM settlements.team_split_configs WHERE status = 'active'`);\n"
     );
     fs.writeFileSync(
-      path.join(src, "bad-writer.ts"),
+      path.join(tmpSrc, "bad-writer.ts"),
       "await q(`INSERT INTO settlements.team_split_load_overrides (load_id) VALUES ($1)`);\n"
     );
     fs.writeFileSync(
-      path.join(src, "bad-probe.ts"),
+      path.join(tmpSrc, "bad-probe.ts"),
       "await q(`SELECT to_regclass('settlements.team_split_configs') IS NOT NULL AS ok`);\n"
     );
     fs.writeFileSync(
-      path.join(src, "old-engine.deprecated.ts"),
+      path.join(tmpSrc, "old-engine.deprecated.ts"),
       "await q(`SELECT id FROM settlements.team_split_configs`);\n"
     );
     fs.writeFileSync(
-      path.join(src, "__tests__/mock.test.ts"),
+      path.join(tmpSrc, "__tests__/mock.test.ts"),
       "if (sql.includes('FROM settlements.team_split_configs')) {}\n"
     );
     fs.writeFileSync(
-      path.join(src, "fixture.test.ts"),
+      path.join(tmpSrc, "fixture.test.ts"),
       "await q(`UPDATE settlements.team_split_configs SET status = 'ended'`);\n"
     );
 

@@ -4,6 +4,7 @@
  * Cursor even claim: 2118.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -157,25 +158,25 @@ if (process.argv.includes("--selftest")) {
     for (const p of baseline) console.error("  - " + p);
     process.exit(1);
   }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-bookload-customer-"));
+  const tmpStubRoot = fs.mkdtempSync(path.join(os.tmpdir(), "bookload-customer-"));
   try {
-    const dir = path.join(stubRoot, "apps/frontend/src/pages/dispatch/components");
-    fs.mkdirSync(dir, { recursive: true });
+    const tmpDir = path.join(tmpStubRoot, "apps/frontend/src/pages/dispatch/components");
+    fs.mkdirSync(tmpDir, { recursive: true });
     fs.writeFileSync(
-      path.join(dir, "BookLoadCustomerSection.tsx"),
+      path.join(tmpDir, "BookLoadCustomerSection.tsx"),
       `listCustomers({ operating_company_id: id, limit: 5000 })
 <ReferenceSelect createKind="customer" options={customerOptions} />
 `
     );
-    const planted = collectProblems(stubRoot);
+    const planted = collectProblems(tmpStubRoot);
     if (!planted.length) {
       console.error(`${LABEL} SELFTEST FAIL: planted stub did not FAIL`);
       process.exit(1);
     }
 
     for (const rel of [FILE, LIVE_WIZARD]) {
-      const target = path.join(stubRoot, rel);
-      fs.mkdirSync(path.dirname(target), { recursive: true });
+      const tmpTarget = path.join(tmpStubRoot, rel);
+      fs.mkdirSync(path.dirname(tmpTarget), { recursive: true });
       const source = readRel(ROOT, rel);
       if (!source) throw new Error(`missing selftest source ${rel}`);
       // Mutate whichever shape the real source actually carries today (the raw ternary or the
@@ -183,9 +184,9 @@ if (process.argv.includes("--selftest")) {
       const mutated = source.includes('label: entityLabel(c.display_name, c.id, "Customer")')
         ? source.replace('label: entityLabel(c.display_name, c.id, "Customer")', "label: c.id")
         : source.replace("label: c.display_name.trim() || c.id", "label: c.id");
-      fs.writeFileSync(target, mutated);
+      fs.writeFileSync(tmpTarget, mutated);
     }
-    const labelMutation = collectProblems(stubRoot);
+    const labelMutation = collectProblems(tmpStubRoot);
     if (!labelMutation.some((problem) => problem.includes("typed canonical Customer display_name contract"))) {
       console.error(`${LABEL} SELFTEST FAIL: real-source display_name mutation did not FAIL`);
       process.exit(1);
@@ -200,15 +201,15 @@ if (process.argv.includes("--selftest")) {
         /disabled=\{customersQuery\.isError\}/,
         "disabled={customersQuery.isLoading || customersQuery.isError}",
       );
-      fs.writeFileSync(path.join(stubRoot, rel), mutated);
+      fs.writeFileSync(path.join(tmpStubRoot, rel), mutated);
     }
-    const foldMutation = collectProblems(stubRoot);
+    const foldMutation = collectProblems(tmpStubRoot);
     if (!foldMutation.some((problem) => problem.includes("never fold isLoading into disabled (WIZ-46)"))) {
       console.error(`${LABEL} SELFTEST FAIL: WIZ-46 isLoading→disabled fold was not caught`);
       process.exit(1);
     }
   } finally {
-    fs.rmSync(stubRoot, { recursive: true, force: true });
+    fs.rmSync(tmpStubRoot, { recursive: true, force: true });
   }
   console.log(`${LABEL} SELFTEST OK`);
 } else {

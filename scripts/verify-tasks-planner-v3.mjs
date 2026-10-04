@@ -109,11 +109,26 @@ if (process.argv.includes("--selftest")) {
     console.error("[verify-tasks-v3] --selftest could not plant FAIL-TSK1 regression");
     process.exit(1);
   }
-  fs.writeFileSync(abs, broken);
+  // Plant into a mkdtemp copy of every file this guard reads; never touch tracked source.
+  const os = await import("node:os");
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "verify-tasks-v3-"));
   try {
+    for (const rel of [
+      "db/migrations/202606120001_tasks_planner_v3.sql",
+      "apps/backend/src/tasks/task.routes.ts",
+      "apps/backend/src/index.ts",
+      "apps/frontend/src/api/tasks.ts",
+      "apps/frontend/src/pages/tasks/TaskPlannerGrid.tsx",
+      "apps/frontend/src/pages/tasks/TaskBoardPage.tsx",
+    ]) {
+      const dest = path.join(tmpRoot, rel);
+      fs.mkdirSync(path.dirname(dest), { recursive: true });
+      fs.copyFileSync(path.join(ROOT, rel), dest);
+    }
+    fs.writeFileSync(path.join(tmpRoot, "apps/frontend/src/pages/tasks/TaskPlannerGrid.tsx"), broken);
     const { spawnSync } = await import("node:child_process");
     const r = spawnSync(process.execPath, [path.join(ROOT, "scripts/verify-tasks-planner-v3.mjs")], {
-      cwd: ROOT,
+      cwd: tmpRoot,
       encoding: "utf8",
     });
     if (r.status === 0) {
@@ -122,6 +137,6 @@ if (process.argv.includes("--selftest")) {
     }
     console.log("[verify-tasks-v3] --selftest PASS: planted regression failed closed");
   } finally {
-    fs.writeFileSync(abs, orig);
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
   }
 }

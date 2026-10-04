@@ -49,12 +49,9 @@ if (SELFTEST) {
     process.exit(1);
   }
   // BANK-F91306 leftover plant — CreateTaskModal page-scoped text token ratchet
-  const filePath = path.join(ROOT, FILE);
-  const realGood = fs.readFileSync(filePath, "utf8");
+  const realGood = read();
   const leftoverPlant = realGood + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
-  fs.writeFileSync(filePath, leftoverPlant);
   const leftoverProblems = assertSrc(leftoverPlant);
-  fs.writeFileSync(filePath, realGood);
   if (!leftoverProblems.length) {
     console.error(`${LABEL} SELFTEST FAILED: leftover plant escaped`);
     process.exit(1);

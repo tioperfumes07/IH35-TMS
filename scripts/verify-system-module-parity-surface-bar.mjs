@@ -14,8 +14,8 @@ function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-export function check() {
-  const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+export function check(srcOverride) {
+  const src = srcOverride !== undefined ? srcOverride : fs.readFileSync(path.join(ROOT, PAGE), "utf8");
   assert(src.includes("ParityTable"), "SystemModulePage: must use ParityTable");
   assert(src.includes('storageKey="system-program-phases"'), "SystemModulePage: phases storageKey");
   assert(src.includes('storageKey="system-service-checks"'), "SystemModulePage: service-checks storageKey");
@@ -28,22 +28,18 @@ export function check() {
 
 function selftest() {
   check();
-  const filePath = path.join(ROOT, PAGE);
-  const good = fs.readFileSync(filePath, "utf8");
   const planted = [
     "export function SystemModulePage() {",
     '  return <table className="w-full" data-testid="system-program-phases-table"><tbody /></table>;',
     "}",
     "",
   ].join("\n");
-  fs.writeFileSync(filePath, planted);
   let failed = false;
   try {
-    check();
+    check(planted);
   } catch {
     failed = true;
   }
-  fs.writeFileSync(filePath, good);
   assert(failed, "selftest: expected FAIL on raw HTML table");
   console.log("verify-system-module-parity-surface-bar --selftest PASS");
 }

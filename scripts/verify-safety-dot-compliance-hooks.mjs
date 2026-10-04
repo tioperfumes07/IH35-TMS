@@ -46,19 +46,16 @@ export function DOTComplianceTab() {
   if (badHit.ok) fail("selftest expected BAD snippet to fail");
   if (!goodHit.ok) fail(`selftest expected GOOD snippet to pass: ${goodHit.reason}`);
   // BANK-F91250 leftover plant on DOTComplianceTab
-  const abs = path.join(process.cwd(), TARGET);
-  const original = fs.readFileSync(abs, "utf8");
-  try {
-    fs.writeFileSync(abs, `${original}\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n`);
-    const plant = fs.readFileSync(abs, "utf8");
+  const original = fs.readFileSync(path.join(process.cwd(), TARGET), "utf8");
+  {
+    // planted into a string -- no file is written
+    const plant = `${original}\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n`;
     const leftoverHits = [];
     if (plant.includes("text-[11px]")) leftoverHits.push("leftover text-[11px]");
     if (plant.includes("#8A92AB") || plant.includes("#334155")) leftoverHits.push("leftover off-scale muted");
     if (!leftoverHits.includes("leftover text-[11px]") || !leftoverHits.includes("leftover off-scale muted")) {
       fail(`leftover plant escaped: ${leftoverHits.join("; ")}`);
     }
-  } finally {
-    fs.writeFileSync(abs, original);
   }
   console.log(`${LABEL} selftest PASS — detects hook-after-return; leftover plant rejected`);
 }

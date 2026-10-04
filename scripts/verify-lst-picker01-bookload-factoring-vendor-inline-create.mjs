@@ -4,6 +4,7 @@
  * createKind=vendor (same-table write to mdata.vendors). Cursor even claim: 2098.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -59,14 +60,14 @@ if (process.argv.includes("--selftest")) {
     for (const p of baseline) console.error("  - " + p);
     process.exit(1);
   }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-lst-picker01-bookload-factor-"));
+  const tmpStubRoot = fs.mkdtempSync(path.join(os.tmpdir(), "tmp-lst-picker01-bookload-factor-"));
   try {
-    const dir = path.join(stubRoot, "apps/frontend/src/pages/dispatch/components");
-    const regDir = path.join(stubRoot, "apps/frontend/src/components/parity");
-    fs.mkdirSync(dir, { recursive: true });
-    fs.mkdirSync(regDir, { recursive: true });
+    const tmpPageDir = path.join(tmpStubRoot, "apps/frontend/src/pages/dispatch/components");
+    const tmpRegDir = path.join(tmpStubRoot, "apps/frontend/src/components/parity");
+    fs.mkdirSync(tmpPageDir, { recursive: true });
+    fs.mkdirSync(tmpRegDir, { recursive: true });
     fs.writeFileSync(
-      path.join(dir, "BookLoadModalV4.tsx"),
+      path.join(tmpPageDir, "BookLoadModalV4.tsx"),
       `export function BookLoadModalV4() {
   return (
     <SelectCombobox value={factoring_company_vendor_id}>
@@ -76,14 +77,14 @@ if (process.argv.includes("--selftest")) {
 }
 `
     );
-    fs.copyFileSync(path.join(ROOT, REGISTRY), path.join(regDir, "catalogPickerRegistry.ts"));
-    const planted = collectProblems(stubRoot);
+    fs.copyFileSync(path.join(ROOT, REGISTRY), path.join(tmpRegDir, "catalogPickerRegistry.ts"));
+    const planted = collectProblems(tmpStubRoot);
     if (!planted.some((p) => /EntityPicker|createKind=vendor|listVendors/.test(p))) {
       console.error(`${LABEL} SELFTEST FAIL: planted SelectCombobox stub did not FAIL`);
       process.exit(1);
     }
   } finally {
-    fs.rmSync(stubRoot, { recursive: true, force: true });
+    fs.rmSync(tmpStubRoot, { recursive: true, force: true });
   }
   console.log(`${LABEL} SELFTEST OK`);
 } else {

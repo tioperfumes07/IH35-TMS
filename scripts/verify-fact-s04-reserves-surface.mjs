@@ -32,14 +32,12 @@ if (SELFTEST) {
   }
   const pagePath = path.join(ROOT, PAGE);
   const orig = fs.readFileSync(pagePath, "utf8");
-  fs.writeFileSync(pagePath, orig.replace(/data-testid="factoring-reserves-need-company"/, 'data-testid="x"'));
-  try {
-    if (!assertLive(read()).length) {
+  const planted = orig.replace(/data-testid="factoring-reserves-need-company"/, 'data-testid="x"');
+  {
+    if (!assertLive(planted).length) {
       console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);
       process.exit(1);
     }
-  } finally {
-    fs.writeFileSync(pagePath, orig);
   }
   console.log(`${LABEL} SELFTEST PASS`);
   process.exit(0);

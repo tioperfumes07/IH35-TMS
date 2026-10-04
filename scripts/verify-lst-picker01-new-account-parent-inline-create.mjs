@@ -9,7 +9,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-lst-picker01-new-account-parent-inline-create";
@@ -83,17 +82,10 @@ function main() {
 }
 
 function selftest() {
-  const fp = path.join(ROOT, DRAWER);
-  const original = fs.readFileSync(fp, "utf8");
+  const original = fs.readFileSync(path.join(ROOT, DRAWER), "utf8");
   const planted = original.replace(/createKind=["']account["']/g, 'createKind="vendor"');
-  fs.writeFileSync(fp, planted);
-  try {
-    const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], { cwd: ROOT, encoding: "utf8" });
-    if (r.status === 0) throw new Error("selftest expected FAIL");
-    console.log(`${LABEL}: selftest PASS`);
-  } finally {
-    fs.writeFileSync(fp, original);
-  }
+  if (collectProblems(ROOT, { [DRAWER]: planted }).length === 0) throw new Error("selftest expected FAIL");
+  console.log(`${LABEL}: selftest PASS`);
 }
 
 if (process.argv.includes("--selftest")) selftest();

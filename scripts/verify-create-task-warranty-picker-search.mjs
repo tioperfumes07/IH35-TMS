@@ -4,6 +4,7 @@
  * no silent native <select> over limit:1000/5000 pages. Cursor even claim: 2108.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -67,33 +68,33 @@ if (process.argv.includes("--selftest")) {
     for (const p of baseline) console.error("  - " + p);
     process.exit(1);
   }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-task-warranty-"));
+  const tmpStubRoot = fs.mkdtempSync(path.join(os.tmpdir(), "task-warranty-"));
   try {
-    const taskDir = path.join(stubRoot, "apps/frontend/src/components/tasks");
-    const warDir = path.join(stubRoot, "apps/frontend/src/pages/maintenance");
-    fs.mkdirSync(taskDir, { recursive: true });
-    fs.mkdirSync(warDir, { recursive: true });
+    const tmpTaskDir = path.join(tmpStubRoot, "apps/frontend/src/components/tasks");
+    const tmpWarDir = path.join(tmpStubRoot, "apps/frontend/src/pages/maintenance");
+    fs.mkdirSync(tmpTaskDir, { recursive: true });
+    fs.mkdirSync(tmpWarDir, { recursive: true });
     fs.writeFileSync(
-      path.join(taskDir, "CreateTaskModal.tsx"),
+      path.join(tmpTaskDir, "CreateTaskModal.tsx"),
       `import { listVendors, listDrivers, listUnits } from "../../api/mdata";
 const vendorsQuery = useQuery({ queryFn: () => listVendors({ limit: 1000 }) });
 {entityOptions.map((o) => (<option key={o.id} value={o.id}>{o.label}</option>))}
 `
     );
     fs.writeFileSync(
-      path.join(warDir, "WarrantyClaimsPage.tsx"),
+      path.join(tmpWarDir, "WarrantyClaimsPage.tsx"),
       `listVendors({ operating_company_id: companyId, status: "active", limit: 1000 })
 <ReferenceSelect createKind="vendor" options={vendorOptions} />
 `
     );
-    const planted = collectProblems(stubRoot);
+    const planted = collectProblems(tmpStubRoot);
     if (planted.length < 2) {
       console.error(`${LABEL} SELFTEST FAIL: planted stub did not FAIL enough (${planted.length})`);
       for (const p of planted) console.error("  - " + p);
       process.exit(1);
     }
   } finally {
-    fs.rmSync(stubRoot, { recursive: true, force: true });
+    fs.rmSync(tmpStubRoot, { recursive: true, force: true });
   }
   console.log(`${LABEL} SELFTEST OK`);
 } else {

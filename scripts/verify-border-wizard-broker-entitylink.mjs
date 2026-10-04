@@ -19,8 +19,7 @@ function assert(cond, msg) {
   if (!cond) throw new Error(`${LABEL}: ${msg}`);
 }
 
-function check() {
-  const src = fs.readFileSync(FILE, "utf8");
+function check(src = fs.readFileSync(FILE, "utf8")) {
   assert(/data-testid=["']border-wizard-broker-link["']/.test(src), "must expose border-wizard-broker-link");
   assert(/data-testid=["']border-wizard-step-4-entitylinks["']/.test(src), "must expose border-wizard-step-4-entitylinks");
   assert(/kind=["']vendor["']/.test(src), "must EntityLink kind=vendor");
@@ -37,26 +36,20 @@ function selftest() {
     'data-testid="planted-missing"'
   );
   assert(broken !== original, "--selftest plant must mutate testid");
-  fs.writeFileSync(FILE, broken);
   let failed = false;
   try {
-    check();
+    check(broken);
   } catch {
     failed = true;
-  } finally {
-    fs.writeFileSync(FILE, original);
   }
   assert(failed, "--selftest expected FAIL when broker link testid removed");
   // BANK-F91404 leftover plant — WizardStep4 page-scoped text token ratchet
   const leftoverPlant = original + '\n<p className="text-[11px] text-[#8A92AB]">plant</p>\n';
-  fs.writeFileSync(FILE, leftoverPlant);
   let leftoverFailed = false;
   try {
-    check();
+    check(leftoverPlant);
   } catch {
     leftoverFailed = true;
-  } finally {
-    fs.writeFileSync(FILE, original);
   }
   assert(leftoverFailed, "--selftest expected FAIL on leftover text-[11px]/#8A92AB plant");
   check();

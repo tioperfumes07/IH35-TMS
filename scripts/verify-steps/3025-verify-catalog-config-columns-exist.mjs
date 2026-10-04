@@ -81,12 +81,13 @@ function parseConfigs(src) {
 /** Tables the baseline does not cover — reported loudly, never silently skipped. */
 const uncovered = [];
 
-function audit() {
+// over: {config, tables} in-memory overrides so --selftest never writes a tracked file.
+function audit(over = {}) {
   const problems = [];
   uncovered.length = 0;
-  if (!fs.existsSync(CONFIG_FILE)) return [`missing ${path.relative(ROOT, CONFIG_FILE)}`];
-  const src = fs.readFileSync(CONFIG_FILE, "utf8");
-  const tables = loadBaselineTables();
+  if (over.config === undefined && !fs.existsSync(CONFIG_FILE)) return [`missing ${path.relative(ROOT, CONFIG_FILE)}`];
+  const src = over.config ?? fs.readFileSync(CONFIG_FILE, "utf8");
+  const tables = over.tables ?? loadBaselineTables();
   const configs = parseConfigs(src);
 
   if (configs.length === 0) {
@@ -169,10 +170,7 @@ function selftest() {
   const originalBaseline = fs.readFileSync(BASELINE_FILE, "utf8");
   let planted = 0;
 
-  const restore = () => {
-    fs.writeFileSync(CONFIG_FILE, originalConfig);
-    fs.writeFileSync(BASELINE_FILE, originalBaseline);
-  };
+  const restore = () => {}; // nothing on disk is ever mutated; plants are in-memory
 
   // 1. Reintroduce the exact defect this finding is about: a config naming a phantom column.
   const withPhantom = originalConfig.replace(
@@ -183,8 +181,7 @@ function selftest() {
     restore();
     fail("selftest INERT: could not plant a phantom column — the guard proves nothing");
   }
-  fs.writeFileSync(CONFIG_FILE, withPhantom);
-  let problems = audit();
+  let problems = audit({ config: withPhantom });
   restore();
   if (problems.length === 0) fail("selftest: expected FAIL after planting a phantom allowedColumns entry");
   planted += 1;
@@ -198,8 +195,7 @@ function selftest() {
     restore();
     fail("selftest INERT: could not plant a phantom displayNameColumn");
   }
-  fs.writeFileSync(CONFIG_FILE, withPhantomDisplay);
-  problems = audit();
+  problems = audit({ config: withPhantomDisplay });
   restore();
   if (problems.length === 0) fail("selftest: expected FAIL after planting a phantom displayNameColumn");
   planted += 1;
@@ -218,15 +214,13 @@ function selftest() {
   }
   const { key: victimKey, physical: victimCol } = victim;
   tablesRef[victimKey] = tablesRef[victimKey].filter((c) => c !== victimCol);
-  fs.writeFileSync(BASELINE_FILE, JSON.stringify(baselineObj, null, 2));
-  problems = audit();
+  problems = audit({ tables: tablesRef });
   restore();
   if (problems.length === 0) fail(`selftest: expected FAIL after removing display_name from ${victimKey}`);
   planted += 1;
 
   // 4. A parser that matches nothing must FAIL, not pass vacuously — the way this class of guard dies.
-  fs.writeFileSync(CONFIG_FILE, "export const nothingHere = 1;\n");
-  problems = audit();
+  problems = audit({ config: "export const nothingHere = 1;\n" });
   restore();
   if (problems.length === 0) fail("selftest: expected FAIL when 0 configs parse (inert-guard detection)");
   planted += 1;

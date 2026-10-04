@@ -15,7 +15,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILE = "apps/backend/src/maintenance/two-section-service.ts";
 
-function read() {
+function read(srcOverride) {
+  if (srcOverride !== undefined) return srcOverride;
   return fs.readFileSync(path.join(ROOT, FILE), "utf8");
 }
 
@@ -23,8 +24,8 @@ function assert(cond, msg, errors) {
   if (!cond) errors.push(`${FILE}: ${msg}`);
 }
 
-export function run() {
-  const src = read();
+export function run(srcOverride) {
+  const src = read(srcOverride);
   const errors = [];
 
   // Locate the render-v5 post-insert UPDATE block (the second UPDATE after the VMRS block).
@@ -47,9 +48,8 @@ export function run() {
 }
 
 function selftest() {
-  const p = path.join(ROOT, FILE);
-  const backup = fs.readFileSync(p, "utf8");
-  try {
+  const backup = fs.readFileSync(path.join(ROOT, FILE), "utf8");
+  {
     const planted = backup.replace(
       /(UPDATE maintenance\.work_orders\s*SET)([\s\S]*?)(WHERE id = \$\d)/s,
       (all, set, body, where) => {
@@ -59,15 +59,12 @@ function selftest() {
         return all;
       }
     );
-    fs.writeFileSync(p, planted, "utf8");
-    const plantedErrors = run();
+    const plantedErrors = run(planted);
     if (!plantedErrors.some((e) => e.includes("opened_at"))) {
       console.error("verify-wo-create-no-opened-at-update: SELFTEST FAIL — planted opened_at SET was not detected");
       process.exit(1);
     }
     console.log(`verify-wo-create-no-opened-at-update: SELFTEST PASS (${plantedErrors.length} planted failures detected)`);
-  } finally {
-    fs.writeFileSync(p, backup, "utf8");
   }
 }
 

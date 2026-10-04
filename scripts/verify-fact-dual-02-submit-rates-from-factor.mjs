@@ -11,7 +11,11 @@ import { fileURLToPath } from "node:url";
 const ROOT = process.cwd();
 const FILE = "apps/frontend/src/pages/accounting/SubmitFactoringModal.tsx";
 
+// Selftest plants go here (rel path -> planted text); the tracked file is never written.
+const SELFTEST_OVERRIDES = new Map();
+
 function read(relativePath) {
+  if (SELFTEST_OVERRIDES.has(relativePath)) return SELFTEST_OVERRIDES.get(relativePath);
   return fs.readFileSync(path.join(ROOT, relativePath), "utf8");
 }
 
@@ -50,10 +54,8 @@ export function run() {
 function main() {
   const args = process.argv.slice(2);
   if (args.includes("--selftest")) {
-    const realPath = path.join(ROOT, FILE);
-    const backup = fs.readFileSync(realPath, "utf8");
     try {
-      fs.writeFileSync(realPath, "export function SubmitFactoringModal() { return null; }\n", "utf8");
+      SELFTEST_OVERRIDES.set(FILE, "export function SubmitFactoringModal() { return null; }\n");
       const planted = run();
       if (planted.length === 0) {
         console.error("[verify-fact-dual-02-submit-rates-from-factor] SELFTEST FAIL: planted stub did not fail");
@@ -61,7 +63,7 @@ function main() {
       }
       console.log(`[verify-fact-dual-02-submit-rates-from-factor] SELFTEST PASS (${planted.length} planted failures detected)`);
     } finally {
-      fs.writeFileSync(realPath, backup, "utf8");
+      SELFTEST_OVERRIDES.clear();
     }
     process.exit(0);
   }

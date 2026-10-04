@@ -6,6 +6,7 @@
  * Cursor even claim: 2312.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -54,12 +55,12 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
 
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-contract-silent-cap-"));
+  const tmpStubRoot = fs.mkdtempSync(path.join(os.tmpdir(), ".tmp-contract-silent-cap-"));
   try {
-    const dir = path.join(stubRoot, "apps/frontend/src/pages/legal/contracts");
-    fs.mkdirSync(dir, { recursive: true });
+    const tmpStubDir = path.join(tmpStubRoot, "apps/frontend/src/pages/legal/contracts");
+    fs.mkdirSync(tmpStubDir, { recursive: true });
     fs.writeFileSync(
-      path.join(dir, "UnifiedContractCreatorModal.tsx"),
+      path.join(tmpStubDir, "UnifiedContractCreatorModal.tsx"),
       `
 const driversQuery = useQuery({
   queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, limit: 200 }),
@@ -69,27 +70,27 @@ const driversQuery = useQuery({
 }} />
 `
     );
-    const planted = collectProblems(stubRoot);
+    const planted = collectProblems(tmpStubRoot);
     if (!planted.length) {
       console.error(`${LABEL} SELFTEST FAIL: planted silent roster did not FAIL`);
       process.exit(1);
     }
-    const leftoverRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-contract-leftover-"));
+    const tmpLeftoverRoot = fs.mkdtempSync(path.join(os.tmpdir(), ".tmp-contract-leftover-"));
     try {
-      const leftoverDir = path.join(leftoverRoot, "apps/frontend/src/pages/legal/contracts");
-      fs.mkdirSync(leftoverDir, { recursive: true });
+      const tmpLeftoverDir = path.join(tmpLeftoverRoot, "apps/frontend/src/pages/legal/contracts");
+      fs.mkdirSync(tmpLeftoverDir, { recursive: true });
       const live = fs.readFileSync(path.join(ROOT, FILE), "utf8");
-      fs.writeFileSync(path.join(leftoverDir, "UnifiedContractCreatorModal.tsx"), `${live}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`);
-      const leftover = collectProblems(leftoverRoot);
+      fs.writeFileSync(path.join(tmpLeftoverDir, "UnifiedContractCreatorModal.tsx"), `${live}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`);
+      const leftover = collectProblems(tmpLeftoverRoot);
       if (!leftover.some((p) => p.includes("leftover"))) {
         console.error(`${LABEL} SELFTEST FAIL: leftover plant escaped`);
         process.exit(1);
       }
     } finally {
-      fs.rmSync(leftoverRoot, { recursive: true, force: true });
+      fs.rmSync(tmpLeftoverRoot, { recursive: true, force: true });
     }
   } finally {
-    fs.rmSync(stubRoot, { recursive: true, force: true });
+    fs.rmSync(tmpStubRoot, { recursive: true, force: true });
   }
 
   console.log(`${LABEL} SELFTEST OK`);

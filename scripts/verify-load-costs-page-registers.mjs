@@ -134,9 +134,9 @@ if (process.argv.includes("--selftest")) {
     }
     const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "load-costs-page-registers-guard-"));
     try {
-      const full = path.join(tmpRoot, PAGE);
-      fs.mkdirSync(path.dirname(full), { recursive: true });
-      fs.writeFileSync(full, mutated);
+      const tmpFull = path.join(tmpRoot, PAGE);
+      fs.mkdirSync(path.dirname(tmpFull), { recursive: true });
+      fs.writeFileSync(tmpFull, mutated);
       const problems = collectProblems(tmpRoot);
       if (problems.length !== expectProblems) {
         console.error(

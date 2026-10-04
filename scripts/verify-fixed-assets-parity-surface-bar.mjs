@@ -14,8 +14,8 @@ function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-export function check() {
-  const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+export function check(srcOverride) {
+  const src = srcOverride ?? fs.readFileSync(path.join(ROOT, PAGE), "utf8");
   assert(src.includes("ParityTable"), "FixedAssetsPage: must use ParityTable");
   assert(src.includes('storageKey="fixed-asset-depreciation-schedule"'), "FixedAssetsPage: schedule storageKey");
   assert(src.includes('tableTestId="fixed-asset-depreciation-schedule-table"'), "FixedAssetsPage: schedule tableTestId");
@@ -35,14 +35,12 @@ function selftest() {
     "}",
     "",
   ].join("\n");
-  fs.writeFileSync(filePath, planted);
   let failed = false;
   try {
-    check();
+    check(planted);
   } catch {
     failed = true;
   }
-  fs.writeFileSync(filePath, good);
   assert(failed, "selftest: expected FAIL on raw HTML table");
   console.log("verify-fixed-assets-parity-surface-bar --selftest PASS");
 }

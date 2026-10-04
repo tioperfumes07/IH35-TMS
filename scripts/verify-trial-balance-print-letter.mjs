@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -30,13 +31,23 @@ function assertSource() {
 function selftest() {
   assertSource();
   const backup = fs.readFileSync(PAGE, "utf8");
+  // Plant into a mkdtemp mirror of the tree (script + files it reads); never write tracked source.
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "verify-trial-balance-print-letter-"));
   try {
     const planted = backup.replace(/onClick=\{printLetter\}/, 'onClick={() => window.print()}');
-    fs.writeFileSync(PAGE, planted.includes("window.print()") ? planted : `${backup}\nonClick={() => window.print()}\n`);
-    const r = spawnSync(process.execPath, [SELF], { encoding: "utf8" });
+    for (const abs of [SELF, HELPER, PAGE]) {
+      const dest = path.join(tmpRoot, path.relative(ROOT, abs));
+      fs.mkdirSync(path.dirname(dest), { recursive: true });
+      fs.copyFileSync(abs, dest);
+    }
+    fs.writeFileSync(
+      path.join(tmpRoot, path.relative(ROOT, PAGE)),
+      planted.includes("window.print()") ? planted : `${backup}\nonClick={() => window.print()}\n`,
+    );
+    const r = spawnSync(process.execPath, [path.join(tmpRoot, path.relative(ROOT, SELF))], { encoding: "utf8" });
     if (r.status === 0) fail("mutated still passed");
   } finally {
-    fs.writeFileSync(PAGE, backup);
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
   }
   console.log("PASS: verify-trial-balance-print-letter --selftest");
 }

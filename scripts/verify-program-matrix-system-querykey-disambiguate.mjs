@@ -15,7 +15,11 @@ const LABEL = "verify-program-matrix-system-querykey-disambiguate";
 const PREVIEW = "apps/frontend/src/pages/program/ModuleMatrixPreviewPage.tsx";
 const SYSTEM = "apps/frontend/src/pages/program/ModuleMatrixSystemView.tsx";
 
+// Selftest plants go through this in-memory overlay - no tracked file is ever written.
+const SELFTEST_OVERLAY = new Map();
+
 function read(rel) {
+  if (SELFTEST_OVERLAY.has(rel)) return SELFTEST_OVERLAY.get(rel);
   return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
 }
 
@@ -84,8 +88,8 @@ function selftest() {
     );
     if (badPreview === previewOrig) fail("selftest could not plant colliding preview queryKey");
     if (badSystem === systemOrig) fail("selftest could not plant colliding system queryKey");
-    fs.writeFileSync(previewPath, badPreview);
-    fs.writeFileSync(systemPath, badSystem);
+    SELFTEST_OVERLAY.set(PREVIEW, badPreview);
+    SELFTEST_OVERLAY.set(SYSTEM, badSystem);
     const planted = analyze();
     if (
       !planted.some((m) => /bare moduleId|colliding|scope/.test(m)) ||
@@ -95,8 +99,8 @@ function selftest() {
     }
     console.log(`${LABEL} --selftest OK (planted collision detected)`);
   } finally {
-    fs.writeFileSync(previewPath, previewOrig);
-    fs.writeFileSync(systemPath, systemOrig);
+    SELFTEST_OVERLAY.delete(PREVIEW);
+    SELFTEST_OVERLAY.delete(SYSTEM);
   }
 }
 

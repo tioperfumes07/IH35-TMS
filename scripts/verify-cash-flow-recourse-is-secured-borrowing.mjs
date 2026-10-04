@@ -5,6 +5,7 @@
  * does not touch 1200/1230/1235 reserve.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 const SERVICE = "apps/backend/src/accounting/cash-flow.service.ts";
@@ -38,8 +39,8 @@ export function run(root = process.cwd()) {
 
 function selftest() {
   const tmp = fs.mkdtempSync(path.join(process.env.TMPDIR || "/tmp", "cf-recourse-"));
-  const dir = path.join(tmp, "apps/backend/src/accounting");
-  fs.mkdirSync(dir, { recursive: true });
+  const tmpDir = path.join(tmp, "apps/backend/src/accounting");
+  fs.mkdirSync(tmpDir, { recursive: true });
   const good = `export function resolveCashFlowBucket() {}
 const FARO_FINANCING_NUMBERS = new Set(["2150"]);
 factoring_advance
@@ -47,12 +48,12 @@ const FARO_RESERVE_NUMBERS = new Set(["1230"]);
 factoring_reserve_release
 const COLLECTION_SOURCES = new Set(["factoring_customer_payment"]);
 return { bucket: "financing", unclassified: false };`;
-  fs.writeFileSync(path.join(dir, "cash-flow.service.ts"), good);
+  fs.writeFileSync(path.join(tmpDir, "cash-flow.service.ts"), good);
   if (run(tmp).length) {
     console.error("verify-cash-flow-recourse-is-secured-borrowing --selftest FAIL clean");
     process.exit(1);
   }
-  fs.writeFileSync(path.join(dir, "cash-flow.service.ts"), "export function nope() {}");
+  fs.writeFileSync(path.join(tmpDir, "cash-flow.service.ts"), "export function nope() {}");
   if (!run(tmp).length) {
     console.error("verify-cash-flow-recourse-is-secured-borrowing --selftest FAIL plant");
     process.exit(1);

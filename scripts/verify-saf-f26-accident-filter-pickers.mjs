@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -24,12 +25,14 @@ export function run(root = ROOT) {
 function selftest() {
   const clean = run();
   if (clean.length) { console.error("SELFTEST FAIL already red", clean); process.exit(1); }
-  const abs = path.join(ROOT, PAGE);
-  const original = fs.readFileSync(abs, "utf8");
+  const original = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "saf-f26-selftest-"));
   try {
-    fs.writeFileSync(abs, original.replace(/allowCreate=\{false\}/g, "allowCreate={true}"));
-    if (!run().some((f) => f.includes("allowCreate"))) { console.error("SELFTEST FAIL"); process.exit(1); }
-  } finally { fs.writeFileSync(abs, original); }
+    const tmpPage = path.join(tmpRoot, PAGE);
+    fs.mkdirSync(path.dirname(tmpPage), { recursive: true });
+    fs.writeFileSync(tmpPage, original.replace(/allowCreate=\{false\}/g, "allowCreate={true}"));
+    if (!run(tmpRoot).some((f) => f.includes("allowCreate"))) { console.error("SELFTEST FAIL"); process.exit(1); }
+  } finally { fs.rmSync(tmpRoot, { recursive: true, force: true }); }
   console.log("verify-saf-f26-accident-filter-pickers --selftest OK");
 }
 if (process.argv.includes("--selftest")) selftest();

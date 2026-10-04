@@ -136,41 +136,41 @@ if (process.argv.includes("--selftest")) {
     for (const p of baseline) console.error("  - " + p);
     process.exit(1);
   }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-ep-trailer-sweep-"));
+  const tmpStubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-ep-trailer-sweep-"));
   try {
-    const regDir = path.join(stubRoot, "apps/frontend/src/components/parity");
-    fs.mkdirSync(regDir, { recursive: true });
+    const tmpRegDir = path.join(tmpStubRoot, "apps/frontend/src/components/parity");
+    fs.mkdirSync(tmpRegDir, { recursive: true });
     fs.writeFileSync(
-      path.join(regDir, "entityPickerRegistry.ts"),
+      path.join(tmpRegDir, "entityPickerRegistry.ts"),
       `export const ENTITY_PICKERS = { unit: { readTable: "mdata.units", writeTable: "mdata.units", list: async () => [] } };`
     );
-    fs.mkdirSync(path.join(stubRoot, "apps/frontend/src/pages/banking/components"), { recursive: true });
+    fs.mkdirSync(path.join(tmpStubRoot, "apps/frontend/src/pages/banking/components"), { recursive: true });
     fs.writeFileSync(
-      path.join(stubRoot, "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx"),
+      path.join(tmpStubRoot, "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx"),
       `import { TrailerAutocomplete } from "../../../components/banking/TrailerAutocomplete";
 listUnits({ include: "trailers", limit: 500 })
 <TrailerAutocomplete companyId={id} value="" onChange={() => {}} />`
     );
     fs.writeFileSync(
-      path.join(stubRoot, "apps/frontend/src/pages/banking/components/BankTransactionSplitModal.tsx"),
+      path.join(tmpStubRoot, "apps/frontend/src/pages/banking/components/BankTransactionSplitModal.tsx"),
       `include: "trailers"`
     );
-    fs.mkdirSync(path.join(stubRoot, "apps/frontend/src/components/banking"), { recursive: true });
-    fs.writeFileSync(path.join(stubRoot, "apps/frontend/src/components/banking/TrailerAutocomplete.tsx"), "export {}");
-    fs.mkdirSync(path.join(stubRoot, "apps/frontend/src/components/insurance"), { recursive: true });
+    fs.mkdirSync(path.join(tmpStubRoot, "apps/frontend/src/components/banking"), { recursive: true });
+    fs.writeFileSync(path.join(tmpStubRoot, "apps/frontend/src/components/banking/TrailerAutocomplete.tsx"), "export {}");
+    fs.mkdirSync(path.join(tmpStubRoot, "apps/frontend/src/components/insurance"), { recursive: true });
     for (const file of ["PolicyCreateModal.tsx", "PolicyCreateWizard.tsx"]) {
       fs.writeFileSync(
-        path.join(stubRoot, "apps/frontend/src/components/insurance", file),
+        path.join(tmpStubRoot, "apps/frontend/src/components/insurance", file),
         `listAllUnits({ include: "trailers" })\n<EntityPicker kind="trailer" />`,
       );
     }
-    const planted = collectProblems(stubRoot);
+    const planted = collectProblems(tmpStubRoot);
     if (planted.length < 7) {
       console.error(`${LABEL} SELFTEST FAIL: planted stub did not FAIL hard enough`, planted);
       process.exit(1);
     }
   } finally {
-    fs.rmSync(stubRoot, { recursive: true, force: true });
+    fs.rmSync(tmpStubRoot, { recursive: true, force: true });
   }
   console.log(`${LABEL} SELFTEST OK`);
 } else {

@@ -13,8 +13,9 @@
  *   4. migration never enables QBO push flags
  *   5. --selftest planted defect fails closed
  */
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync, writeFileSync, existsSync, mkdtempSync, mkdirSync, copyFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, dirname } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
@@ -91,14 +92,22 @@ function checkWiring() {
 const isSelftest = process.argv.includes("--selftest");
 
 if (isSelftest) {
-  const original = readFileSync(routesPath, "utf8");
-  const planted = original
-    .replace(/postOperatingActivationEntries,/g, "")
-    .replace(/const activation = await postOperatingActivationEntries\([\s\S]*?\);/m, "const activation = null;");
-  writeFileSync(routesPath, planted);
+  // Plant into a mkdtemp copy of the files the check reads — never the tracked tree.
+  const tmpRoot = mkdtempSync(join(tmpdir(), "lease-bridge-jes-selftest-"));
   try {
+    for (const p of [routesPath, postingPath, mathPath, resolverPath, migrationPath]) {
+      const dest = join(tmpRoot, p.slice(ROOT.length + 1));
+      mkdirSync(dirname(dest), { recursive: true });
+      copyFileSync(p, dest);
+    }
+    const tmpRoutes = join(tmpRoot, "apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts");
+    const original = readFileSync(routesPath, "utf8");
+    const planted = original
+      .replace(/postOperatingActivationEntries,/g, "")
+      .replace(/const activation = await postOperatingActivationEntries\([\s\S]*?\);/m, "const activation = null;");
+    writeFileSync(tmpRoutes, planted);
     const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
-      cwd: ROOT,
+      cwd: tmpRoot,
       encoding: "utf8",
     });
     if (r.status === 0) {
@@ -106,7 +115,7 @@ if (isSelftest) {
     }
     console.log("PASS: planted defect (activation unwired) fails closed");
   } finally {
-    writeFileSync(routesPath, original);
+    rmSync(tmpRoot, { recursive: true, force: true });
   }
 } else {
   checkWiring();

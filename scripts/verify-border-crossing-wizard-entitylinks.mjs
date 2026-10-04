@@ -20,8 +20,8 @@ function assert(cond, msg) {
   if (!cond) throw new Error(`${LABEL}: ${msg}`);
 }
 
-function check() {
-  const src = fs.readFileSync(FILE, "utf8");
+/** Pure over the source text (defaults to the tracked file); the selftest passes planted strings. */
+function check(src = fs.readFileSync(FILE, "utf8")) {
   assert(/EntityLink/.test(src), "must import/use EntityLink");
   assert(
     /data-testid=["']border-wizard-step-1-entitylinks["']/.test(src),
@@ -53,26 +53,20 @@ function selftest() {
     'loadLabel: ""'
   );
   assert(broken !== original, "--selftest plant must remove retained load label");
-  fs.writeFileSync(FILE, broken);
   let failed = false;
   try {
-    check();
+    check(broken);
   } catch {
     failed = true;
-  } finally {
-    fs.writeFileSync(FILE, original);
   }
   assert(failed, "--selftest expected FAIL when entitylinks testid removed");
   // BANK-F91403 leftover plant — WizardStep1 page-scoped text token ratchet
   const leftoverPlant = original + '\n<p className="text-[11px] text-[#8A92AB]">plant</p>\n';
-  fs.writeFileSync(FILE, leftoverPlant);
   let leftoverFailed = false;
   try {
-    check();
+    check(leftoverPlant);
   } catch {
     leftoverFailed = true;
-  } finally {
-    fs.writeFileSync(FILE, original);
   }
   assert(leftoverFailed, "--selftest expected FAIL on leftover text-[11px]/#8A92AB plant");
   check();

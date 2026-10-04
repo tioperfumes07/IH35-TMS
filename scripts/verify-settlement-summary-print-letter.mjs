@@ -1,26 +1,26 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
-const SELF = path.join(ROOT, "scripts/verify-settlement-summary-print-letter.mjs");
 const PAGE = path.join(ROOT, "apps/frontend/src/pages/reports/SettlementSummaryPage.tsx");
 const HELPER = path.join(ROOT, "apps/frontend/src/lib/openPrintableDocument.ts");
 
+class GuardFail extends Error {}
+
 function fail(msg) {
-  console.error(`FAIL verify-settlement-summary-print-letter: ${msg}`);
-  process.exit(1);
+  throw new GuardFail(msg);
 }
 
-function assertSource() {
+// pageOverride: planted text for --selftest (no file is written).
+function assertSource(pageOverride) {
   if (!fs.existsSync(PAGE)) fail("missing SettlementSummaryPage");
   if (!fs.existsSync(HELPER)) fail("missing openPrintableDocument");
   const helper = fs.readFileSync(HELPER, "utf8");
   if (!helper.includes("export function printLetterHtml")) fail("missing printLetterHtml");
-  const page = fs.readFileSync(PAGE, "utf8");
+  const page = pageOverride ?? fs.readFileSync(PAGE, "utf8");
   if (!page.includes("printLetterHtml")) fail("SettlementSummaryPage must use printLetterHtml");
   if (!/onClick=\{printLetter\}/.test(page)) fail("Print must call printLetter");
   if (/onClick=\{\(\) => window\.print\(\)\}/.test(page)) fail("must not window.print() on SPA");
@@ -30,19 +30,27 @@ function assertSource() {
 function selftest() {
   assertSource();
   const backup = fs.readFileSync(PAGE, "utf8");
+  const planted = backup.replace(/onClick=\{printLetter\}/, 'onClick={() => window.print()}');
+  const plantedText = planted.includes("window.print()") ? planted : `${backup}\nonClick={() => window.print()}\n`;
+  let detected = false;
   try {
-    const planted = backup.replace(/onClick=\{printLetter\}/, 'onClick={() => window.print()}');
-    fs.writeFileSync(PAGE, planted.includes("window.print()") ? planted : `${backup}\nonClick={() => window.print()}\n`);
-    const r = spawnSync(process.execPath, [SELF], { encoding: "utf8" });
-    if (r.status === 0) fail("mutated still passed");
-  } finally {
-    fs.writeFileSync(PAGE, backup);
+    assertSource(plantedText);
+  } catch (err) {
+    if (!(err instanceof GuardFail)) throw err;
+    detected = true;
   }
+  if (!detected) fail("mutated still passed");
   console.log("PASS: verify-settlement-summary-print-letter --selftest");
 }
 
-if (process.argv.includes("--selftest")) selftest();
-else {
-  assertSource();
-  console.log("PASS: verify-settlement-summary-print-letter");
+try {
+  if (process.argv.includes("--selftest")) selftest();
+  else {
+    assertSource();
+    console.log("PASS: verify-settlement-summary-print-letter");
+  }
+} catch (err) {
+  if (!(err instanceof GuardFail)) throw err;
+  console.error(`FAIL verify-settlement-summary-print-letter: ${err.message}`);
+  process.exit(1);
 }

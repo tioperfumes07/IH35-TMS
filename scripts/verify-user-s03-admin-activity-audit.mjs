@@ -15,7 +15,11 @@ const MANIFEST = "apps/frontend/src/routes/manifest.tsx";
 const ACTIVITY = "apps/frontend/src/pages/admin/ActivityLogPage.tsx";
 const AUDIT = "apps/frontend/src/pages/admin/audit-log/AuditLogViewer.tsx";
 
+// Selftest plants go here (rel path -> planted text); nothing is written to disk.
+const PLANTED = new Map();
+
 function read(rel) {
+  if (PLANTED.has(rel)) return PLANTED.get(rel);
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
@@ -105,10 +109,9 @@ if (SELFTEST) {
     console.error(`${LABEL} SELFTEST FAILED live: ${live.join(" | ")}`);
     process.exit(1);
   }
-  const sidebarPath = path.join(ROOT, SIDEBAR);
-  const orig = fs.readFileSync(sidebarPath, "utf8");
-  fs.writeFileSync(
-    sidebarPath,
+  const orig = read(SIDEBAR);
+  PLANTED.set(
+    SIDEBAR,
     orig.replace('{ label: "Activity log", to: "/admin/activity" }', '{ label: "Activity log", to: "/admin/activity-REMOVED" }')
   );
   try {
@@ -117,7 +120,7 @@ if (SELFTEST) {
       process.exit(1);
     }
   } finally {
-    fs.writeFileSync(sidebarPath, orig);
+    PLANTED.delete(SIDEBAR);
   }
   console.log(`${LABEL} SELFTEST PASS`);
   process.exit(0);

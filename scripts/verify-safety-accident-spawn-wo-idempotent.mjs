@@ -11,7 +11,7 @@
  *   2. GET :id returns spawned_work_orders from that same lookup
  *   3. the drawer hydrates from detail + EntityLink-drills each WO
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const ROOT = new URL("..", import.meta.url).pathname.replace(/\/$/, "");
@@ -100,10 +100,11 @@ const CHECKS = [
   },
 ];
 
-export function run() {
+// `overrides` maps file path -> planted source text, so the selftest never writes a file.
+export function run(overrides = {}) {
   const failed = [];
   for (const c of CHECKS) {
-    const src = strip(readFileSync(c.file, "utf8"));
+    const src = strip(overrides[c.file] ?? readFileSync(c.file, "utf8"));
     if (!c.test(src)) failed.push(c);
   }
   const ok = failed.length === 0;
@@ -125,43 +126,40 @@ function selftest() {
   // Both the early-return payload and the audit payload carry `reused: true` — plant all of them.
   const planted = original.replaceAll("reused: true", "reused_was_true");
   try {
-    writeFileSync(ROUTES, planted, "utf8");
-    const caught = run();
+    const caught = run({ [ROUTES]: planted });
     if (caught.ok || !/spawn-reuses/.test(caught.message)) {
       console.error(`SELFTEST FAIL: spawn-reuses plant not caught.\n${caught.message}`);
       process.exit(1);
     }
     console.log("  caught: spawn-reuses plant");
   } finally {
-    writeFileSync(ROUTES, original, "utf8");
+    // planted text lived only in memory; nothing to restore
   }
   const noVendorFk = original
     .replace(/\n\s*vendor_id,/, "")
     .replace(/\n\s*accident\.vendor_id \?\? null,/, "");
   try {
-    writeFileSync(ROUTES, noVendorFk, "utf8");
-    const caught = run();
+    const caught = run({ [ROUTES]: noVendorFk });
     if (caught.ok || !/vendor-forward-fk/.test(caught.message)) {
       console.error(`SELFTEST FAIL: vendor-forward-fk plant not caught.\n${caught.message}`);
       process.exit(1);
     }
     console.log("  caught: vendor-forward-fk plant");
   } finally {
-    writeFileSync(ROUTES, original, "utf8");
+    // planted text lived only in memory; nothing to restore
   }
   const noTrailerFk = original
     .replace(/\n\s*equipment_id,/, "")
     .replace(/\n\s*accident\.trailer_id \?\? null,/, "");
   try {
-    writeFileSync(ROUTES, noTrailerFk, "utf8");
-    const caught = run();
+    const caught = run({ [ROUTES]: noTrailerFk });
     if (caught.ok || !/trailer-forward-fk/.test(caught.message)) {
       console.error(`SELFTEST FAIL: trailer-forward-fk plant not caught.\n${caught.message}`);
       process.exit(1);
     }
     console.log("  caught: trailer-forward-fk plant");
   } finally {
-    writeFileSync(ROUTES, original, "utf8");
+    // planted text lived only in memory; nothing to restore
   }
   const after = run();
   if (!after.ok) {
@@ -172,29 +170,27 @@ function selftest() {
     .replace(/\n\s*insurance_claim_id,/, "")
     .replace(/\n\s*accident\.insurance_claim_id \?\? null,/, "");
   try {
-    writeFileSync(ROUTES, noClaimFk, "utf8");
-    const caught = run();
+    const caught = run({ [ROUTES]: noClaimFk });
     if (caught.ok || !/claim-forward-fk/.test(caught.message)) {
       console.error(`SELFTEST FAIL: claim-forward-fk plant not caught.\n${caught.message}`);
       process.exit(1);
     }
     console.log("  caught: claim-forward-fk plant");
   } finally {
-    writeFileSync(ROUTES, original, "utf8");
+    // planted text lived only in memory; nothing to restore
   }
   const noLoadFk = original
     .replace(/\n\s*load_id,/, "")
     .replace(/\n\s*accident\.load_id \?\? null,/, "");
   try {
-    writeFileSync(ROUTES, noLoadFk, "utf8");
-    const caught = run();
+    const caught = run({ [ROUTES]: noLoadFk });
     if (caught.ok || !/load-forward-fk/.test(caught.message)) {
       console.error(`SELFTEST FAIL: load-forward-fk plant not caught.\n${caught.message}`);
       process.exit(1);
     }
     console.log("  caught: load-forward-fk plant");
   } finally {
-    writeFileSync(ROUTES, original, "utf8");
+    // planted text lived only in memory; nothing to restore
   }
   const noClaimBackfill = original.replace(
     /if \(accidentClaimId && accidentClaimId !== first\.insurance_claim_id\) \{[\s\S]*?\n {8}\}\n/,
@@ -205,15 +201,14 @@ function selftest() {
     process.exit(1);
   }
   try {
-    writeFileSync(ROUTES, noClaimBackfill, "utf8");
-    const caught = run();
+    const caught = run({ [ROUTES]: noClaimBackfill });
     if (caught.ok || !/claim-backfill-on-reuse/.test(caught.message)) {
       console.error(`SELFTEST FAIL: claim-backfill-on-reuse plant not caught.\n${caught.message}`);
       process.exit(1);
     }
     console.log("  caught: claim-backfill-on-reuse plant");
   } finally {
-    writeFileSync(ROUTES, original, "utf8");
+    // planted text lived only in memory; nothing to restore
   }
   const afterBackfill = run();
   if (!afterBackfill.ok) {

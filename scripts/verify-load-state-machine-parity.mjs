@@ -3,7 +3,7 @@
  * GUARD: the shared-types load state machine must stay equivalent to the backend canon,
  * and the office drawer must never offer an exception outcome as a one-click button.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 
 const CANON = "apps/backend/src/dispatch/load-state-machine.ts";
 const MIRROR = "packages/shared-types/src/dispatch/load-state-machine.ts";
@@ -11,10 +11,10 @@ const EXCEPTION_OUTCOMES = new Set(["cancelled", "abandoned", "driver_walkoff", 
 
 const failures = [];
 
-function readSources() {
+function readSources(mirrorOverride) {
   return {
     canon: readFileSync(CANON, "utf8"),
-    mirror: readFileSync(MIRROR, "utf8"),
+    mirror: mirrorOverride ?? readFileSync(MIRROR, "utf8"),
   };
 }
 
@@ -74,9 +74,9 @@ function parseAliases(src, label) {
   return map;
 }
 
-function runChecks() {
+function runChecks(mirrorOverride) {
   failures.length = 0;
-  const { canon, mirror } = readSources();
+  const { canon, mirror } = readSources(mirrorOverride);
 
   const canonStatuses = statusesFromEnum(canon);
   const mirrorStatuses = statusesFromUnion(mirror);
@@ -181,15 +181,12 @@ if (process.argv.includes("--selftest")) {
     },
   ];
   for (const case_ of planted) {
-    writeFileSync(MIRROR, case_.mutate(original));
-    runChecks();
+    runChecks(case_.mutate(original));
     if (failures.length === 0 || !case_.expect.test(failures.join("\n"))) {
-      writeFileSync(MIRROR, original);
       console.error(`verify-load-state-machine-parity --selftest: FAIL — planted "${case_.name}" did not fail as expected`);
       process.exit(1);
     }
   }
-  writeFileSync(MIRROR, original);
   runChecks();
   if (failures.length > 0) {
     console.error("verify-load-state-machine-parity --selftest: FAIL — restore did not pass");

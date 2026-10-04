@@ -44,9 +44,9 @@ function selftest() {
   }
   const tmp = fs.mkdtempSync(path.join(ROOT, "scripts", ".docs-foundation-preview-selftest-"));
   try {
-    const abs = path.join(tmp, FILE);
-    fs.mkdirSync(path.dirname(abs), { recursive: true });
-    fs.writeFileSync(abs, "// poison — no preview linkage\n");
+    const tmpAbs = path.join(tmp, FILE);
+    fs.mkdirSync(path.dirname(tmpAbs), { recursive: true });
+    fs.writeFileSync(tmpAbs, "// poison — no preview linkage\n");
     const planted = runChecks(tmp);
     if (planted.length < CHECKS.length) {
       console.error(`${LABEL} SELFTEST FAIL — planted misses not all caught (${planted.length}/${CHECKS.length})`);

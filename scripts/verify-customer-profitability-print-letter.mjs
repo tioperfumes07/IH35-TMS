@@ -15,16 +15,16 @@ function fail(msg) {
   process.exit(1);
 }
 
-function assertSource() {
-  if (!fs.existsSync(PAGE)) fail("missing CustomerProfitabilityPage");
-  if (!fs.existsSync(HELPER)) fail("missing openPrintableDocument");
+function assertSource(pageOverride, onFail = fail) {
+  if (!fs.existsSync(PAGE)) onFail("missing CustomerProfitabilityPage");
+  if (!fs.existsSync(HELPER)) onFail("missing openPrintableDocument");
   const helper = fs.readFileSync(HELPER, "utf8");
-  if (!helper.includes("export function printLetterHtml")) fail("missing printLetterHtml");
-  const page = fs.readFileSync(PAGE, "utf8");
-  if (!page.includes("printLetterHtml")) fail("CustomerProfitabilityPage must use printLetterHtml");
-  if (!/onClick=\{printLetter\}/.test(page)) fail("Print must call printLetter");
-  if (/onClick=\{\(\) => window\.print\(\)\}/.test(page)) fail("must not window.print() on SPA");
-  leftoverRefuse(page);
+  if (!helper.includes("export function printLetterHtml")) onFail("missing printLetterHtml");
+  const page = pageOverride ?? fs.readFileSync(PAGE, "utf8");
+  if (!page.includes("printLetterHtml")) onFail("CustomerProfitabilityPage must use printLetterHtml");
+  if (!/onClick=\{printLetter\}/.test(page)) onFail("Print must call printLetter");
+  if (/onClick=\{\(\) => window\.print\(\)\}/.test(page)) onFail("must not window.print() on SPA");
+  leftoverRefuse(page, onFail);
 }
 
 function leftoverHits(src) {
@@ -38,8 +38,8 @@ function leftoverHits(src) {
   return bucket;
 }
 
-function leftoverRefuse(src) {
-  for (const e of leftoverHits(src)) fail(`CustomerProfitabilityPage.tsx: ${e}`);
+function leftoverRefuse(src, onFail = fail) {
+  for (const e of leftoverHits(src)) onFail(`CustomerProfitabilityPage.tsx: ${e}`);
 }
 
 function selftest() {
@@ -55,13 +55,18 @@ function selftest() {
     fail("leftover plant escaped");
   }
   const backup = fs.readFileSync(PAGE, "utf8");
-  try {
+  {
     const planted = backup.replace(/onClick=\{printLetter\}/, 'onClick={() => window.print()}');
-    fs.writeFileSync(PAGE, planted.includes("window.print()") ? planted : `${backup}\nonClick={() => window.print()}\n`);
-    const r = spawnSync(process.execPath, [SELF], { encoding: "utf8" });
-    if (r.status === 0) fail("mutated still passed");
-  } finally {
-    fs.writeFileSync(PAGE, backup);
+    const plantedPage = planted.includes("window.print()") ? planted : `${backup}\nonClick={() => window.print()}\n`;
+    let caught = false;
+    try {
+      assertSource(plantedPage, (m) => {
+        throw new Error(m);
+      });
+    } catch {
+      caught = true;
+    }
+    if (!caught) fail("mutated still passed");
   }
   console.log("PASS: verify-customer-profitability-print-letter --selftest");
 }

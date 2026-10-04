@@ -10,6 +10,8 @@
  * trail via appendCrudAudit.
  */
 import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
 const ROUTES_REL = "apps/backend/src/accounting/expenses.routes.ts";
 
@@ -63,6 +65,10 @@ function selftest() {
   }
   const filePath = `${root}/${ROUTES_REL}`;
   const original = fs.readFileSync(filePath, "utf8");
+  // Plant into a temp copy only — the tracked source is never written.
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "expense-draft-edit-"));
+  const tmpCopyPath = path.join(tmpRoot, ROUTES_REL);
+  fs.mkdirSync(path.dirname(tmpCopyPath), { recursive: true });
 
   const mutations = [
     ["draft/unposted status gate removed", original.replace(
@@ -86,17 +92,19 @@ function selftest() {
       process.exit(1);
     }
     try {
-      fs.writeFileSync(filePath, mutated, "utf8");
-      const caught = run(root);
+      fs.writeFileSync(tmpCopyPath, mutated, "utf8");
+      const caught = run(tmpRoot);
       if (!caught.length) {
         console.error(`SELFTEST FAIL: planted regression "${name}" not caught.`);
         process.exit(1);
       }
       console.log(`  caught: ${name}`);
-    } finally {
-      fs.writeFileSync(filePath, original, "utf8");
+    } catch (e) {
+      fs.rmSync(tmpRoot, { recursive: true, force: true });
+      throw e;
     }
   }
+  fs.rmSync(tmpRoot, { recursive: true, force: true });
 
   const after = run(root);
   if (after.length) {

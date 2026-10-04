@@ -27,10 +27,9 @@ function assert(cond, msg, errors) {
   if (!cond) errors.push(msg);
 }
 
-export function run() {
+export function run(modal = read("apps/frontend/src/components/Modal.tsx")) {
   const errors = [];
 
-  const modal = read("apps/frontend/src/components/Modal.tsx");
   assert(
     modal.includes("z-[215]"),
     "Modal overlay must remain at z-[215] so nested ParityDrawer z-[218] can stack above it",
@@ -84,21 +83,15 @@ export function run() {
 }
 
 function selftest() {
-  const p = path.join(ROOT, "apps/frontend/src/components/Modal.tsx");
   const backup = read("apps/frontend/src/components/Modal.tsx");
-  try {
-    // Plant a higher z-index — should be caught
-    const planted = backup.replace(/z-\[215\]/g, "z-[219]");
-    fs.writeFileSync(p, planted, "utf8");
-    const plantedErrors = run();
-    if (!plantedErrors.some((e) => e.includes("z-[216+]"))) {
-      console.error(`${LABEL}: SELFTEST FAIL — planted z-[219] was not detected`);
-      process.exit(1);
-    }
-    console.log(`${LABEL}: SELFTEST PASS (${plantedErrors.length} planted failures detected)`);
-  } finally {
-    fs.writeFileSync(p, backup, "utf8");
+  // Plant a higher z-index in the string — should be caught
+  const planted = backup.replace(/z-\[215\]/g, "z-[219]");
+  const plantedErrors = run(planted);
+  if (!plantedErrors.some((e) => e.includes("z-[216+]"))) {
+    console.error(`${LABEL}: SELFTEST FAIL — planted z-[219] was not detected`);
+    process.exit(1);
   }
+  console.log(`${LABEL}: SELFTEST PASS (${plantedErrors.length} planted failures detected)`);
 }
 
 function main() {

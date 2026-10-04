@@ -20,8 +20,8 @@ function assert(cond, msg) {
   if (!cond) throw new Error(`${LABEL}: ${msg}`);
 }
 
-function check() {
-  const src = fs.readFileSync(PAGE, "utf8");
+function check(srcOverride) {
+  const src = srcOverride ?? fs.readFileSync(PAGE, "utf8");
   assert(/txFilters\s*=\s*useStagedListFilters/.test(src), "Customers.tsx must define txFilters via useStagedListFilters");
   assert(
     /data-customers-tx-filter-toolbar["']\s*:\s*["']collapsed["']/.test(src) || /data-customers-tx-filter-toolbar=["']collapsed["']/.test(src),
@@ -56,14 +56,11 @@ function selftest() {
   const broken = original
     .replace(/onApply=\{txFilters\.apply\}/, "onApply={() => {}}")
     .replace(/txFilters\.draft\.statusFilter/g, "statusFilter");
-  fs.writeFileSync(PAGE, broken);
   let failed = false;
   try {
-    check();
+    check(broken);
   } catch {
     failed = true;
-  } finally {
-    fs.writeFileSync(PAGE, original);
   }
   assert(failed, "--selftest expected FAIL when Apply wiring / draft binding is mutated away");
   check();

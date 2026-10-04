@@ -10,7 +10,11 @@ import process from "node:process";
 const LABEL = "verify-reports-scheduled-custom-raw-chrome-delete";
 const PAGE = "apps/frontend/src/pages/reports/ScheduledReportsPage.tsx";
 
+// Selftest plants go through this in-memory overlay - no tracked file is ever written.
+const SELFTEST_OVERLAY = new Map();
+
 function read(rel) {
+  if (SELFTEST_OVERLAY.has(rel)) return SELFTEST_OVERLAY.get(rel);
   return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
 }
 
@@ -60,7 +64,7 @@ function selftest() {
       .replace(/>\s*Deactivate\s*</, ">Delete<")
       .replace(/pushToast\("Deactivated"/, 'pushToast("Deleted"');
     if (bad === original) fail("selftest could not plant raw chrome/Delete");
-    fs.writeFileSync(pagePath, bad);
+    SELFTEST_OVERLAY.set(PAGE, bad);
     const planted = analyze();
     if (
       !planted.some((m) =>
@@ -70,7 +74,7 @@ function selftest() {
       fail(`selftest expected page fail; got: ${planted.join("; ")}`);
     }
   } finally {
-    fs.writeFileSync(pagePath, original);
+    SELFTEST_OVERLAY.delete(PAGE);
   }
   const good = analyze();
   if (good.length) fail(`selftest expected GOOD: ${good.join("; ")}`);

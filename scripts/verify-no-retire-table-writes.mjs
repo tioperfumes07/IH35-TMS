@@ -161,10 +161,10 @@ export function checkRetireRefs(opts = {}) {
 function selftest() {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "retire-refs-"));
   try {
-    const src = path.join(tmp, "apps/backend/src");
-    fs.mkdirSync(path.join(src, "__tests__"), { recursive: true });
+    const tmpSrc = path.join(tmp, "apps/backend/src");
+    fs.mkdirSync(path.join(tmpSrc, "__tests__"), { recursive: true });
     fs.writeFileSync(
-      path.join(src, "clean.ts"),
+      path.join(tmpSrc, "clean.ts"),
       [
         "await q(`SELECT id FROM driver_finance.driver_settlements WHERE id = $1`);",
         "// comment about payroll.driver_settlements is fine",
@@ -173,22 +173,22 @@ function selftest() {
         "await q(`SELECT count(*) FROM accounting.qbo_remote_counts`);",
       ].join("\n") + "\n"
     );
-    fs.writeFileSync(path.join(src, "bad-select.ts"), "await q(`SELECT gross_cents FROM payroll.driver_settlements WHERE id = $1`);\n");
-    fs.writeFileSync(path.join(src, "bad-insert.ts"), "await q(`INSERT INTO settlements.settlement_disputes (settlement_id) VALUES ($1)`);\n");
-    fs.writeFileSync(path.join(src, "bad-update.ts"), "await q(`UPDATE settlements.team_split_configs SET status = $2 WHERE id = $1`);\n");
-    fs.writeFileSync(path.join(src, "bad-delete.ts"), "await q(`DELETE FROM payroll.driver_settlement_line_items WHERE id = $1`);\n");
-    fs.writeFileSync(path.join(src, "bad-join.ts"), "await q(`SELECT 1 FROM x JOIN settlements.team_split_load_overrides o ON o.load_id = x.id`);\n");
-    fs.writeFileSync(path.join(src, "bad-wildcard.ts"), "await q(`INSERT INTO payroll.tax_withholding (id) VALUES ($1)`);\n");
-    fs.writeFileSync(path.join(src, "bad-singular.ts"), "await q(`SELECT id FROM settlement.settlement_deduction`);\n");
-    fs.writeFileSync(path.join(src, "bad-qbo.ts"), "await q(`UPDATE accounting.qbo_accounts SET name = $1`);\n");
-    fs.writeFileSync(path.join(src, "bad-island.ts"), "await q(`SELECT id FROM dispatch.loads WHERE status = 'PENDING'`);\n");
-    fs.writeFileSync(path.join(src, "bad-probe-regclass.ts"), "await q(`SELECT to_regclass('payroll.driver_settlements') IS NOT NULL AS ok`);\n");
-    fs.writeFileSync(path.join(src, "bad-probe-priv.ts"), "await q(`SELECT has_table_privilege(current_user, 'settlements.settlement_disputes', 'SELECT') AS ok`);\n");
-    fs.writeFileSync(path.join(src, "legacy-bank.ts"), "await q(`SELECT 1 FROM bank.reconciliation_matches rm WHERE rm.id = $1`);\n");
-    fs.writeFileSync(path.join(src, "legacy-maint.ts"), "await q(`INSERT INTO maint.pm_schedule (id) VALUES ($1)`);\n");
-    fs.writeFileSync(path.join(src, "legacy-cancel.ts"), "await q(`SELECT id FROM catalogs.load_cancellation_reasons`);\n");
-    fs.writeFileSync(path.join(src, "old-engine.deprecated.ts"), "await q(`SELECT id FROM payroll.driver_settlements`);\n");
-    fs.writeFileSync(path.join(src, "__tests__/mock.test.ts"), "if (sql.includes('FROM payroll.driver_settlements')) {}\n");
+    fs.writeFileSync(path.join(tmpSrc, "bad-select.ts"), "await q(`SELECT gross_cents FROM payroll.driver_settlements WHERE id = $1`);\n");
+    fs.writeFileSync(path.join(tmpSrc, "bad-insert.ts"), "await q(`INSERT INTO settlements.settlement_disputes (settlement_id) VALUES ($1)`);\n");
+    fs.writeFileSync(path.join(tmpSrc, "bad-update.ts"), "await q(`UPDATE settlements.team_split_configs SET status = $2 WHERE id = $1`);\n");
+    fs.writeFileSync(path.join(tmpSrc, "bad-delete.ts"), "await q(`DELETE FROM payroll.driver_settlement_line_items WHERE id = $1`);\n");
+    fs.writeFileSync(path.join(tmpSrc, "bad-join.ts"), "await q(`SELECT 1 FROM x JOIN settlements.team_split_load_overrides o ON o.load_id = x.id`);\n");
+    fs.writeFileSync(path.join(tmpSrc, "bad-wildcard.ts"), "await q(`INSERT INTO payroll.tax_withholding (id) VALUES ($1)`);\n");
+    fs.writeFileSync(path.join(tmpSrc, "bad-singular.ts"), "await q(`SELECT id FROM settlement.settlement_deduction`);\n");
+    fs.writeFileSync(path.join(tmpSrc, "bad-qbo.ts"), "await q(`UPDATE accounting.qbo_accounts SET name = $1`);\n");
+    fs.writeFileSync(path.join(tmpSrc, "bad-island.ts"), "await q(`SELECT id FROM dispatch.loads WHERE status = 'PENDING'`);\n");
+    fs.writeFileSync(path.join(tmpSrc, "bad-probe-regclass.ts"), "await q(`SELECT to_regclass('payroll.driver_settlements') IS NOT NULL AS ok`);\n");
+    fs.writeFileSync(path.join(tmpSrc, "bad-probe-priv.ts"), "await q(`SELECT has_table_privilege(current_user, 'settlements.settlement_disputes', 'SELECT') AS ok`);\n");
+    fs.writeFileSync(path.join(tmpSrc, "legacy-bank.ts"), "await q(`SELECT 1 FROM bank.reconciliation_matches rm WHERE rm.id = $1`);\n");
+    fs.writeFileSync(path.join(tmpSrc, "legacy-maint.ts"), "await q(`INSERT INTO maint.pm_schedule (id) VALUES ($1)`);\n");
+    fs.writeFileSync(path.join(tmpSrc, "legacy-cancel.ts"), "await q(`SELECT id FROM catalogs.load_cancellation_reasons`);\n");
+    fs.writeFileSync(path.join(tmpSrc, "old-engine.deprecated.ts"), "await q(`SELECT id FROM payroll.driver_settlements`);\n");
+    fs.writeFileSync(path.join(tmpSrc, "__tests__/mock.test.ts"), "if (sql.includes('FROM payroll.driver_settlements')) {}\n");
 
     const { violations, legacy } = checkRetireRefs({ roots: [path.join(tmp, "apps/backend/src")], relFrom: tmp });
     const hasV = (f) => violations.some((v) => v.includes(f));

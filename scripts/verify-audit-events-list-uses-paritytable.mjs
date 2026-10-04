@@ -111,12 +111,11 @@ function selftest() {
     process.exit(1);
   }
   // BANK-F91314 leftover plant — AuditEventsList page-scoped text token ratchet
+  // Planted into a string only — the tracked page is never written (LST-F408).
   const filePath = path.join(ROOT, PAGE);
   const realGood = fs.readFileSync(filePath, "utf8");
   const leftoverPlant = realGood + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
-  fs.writeFileSync(filePath, leftoverPlant);
   const plantErrors = assertMigrated(leftoverPlant);
-  fs.writeFileSync(filePath, realGood);
   if (plantErrors.length < 1) {
     console.error(`${LABEL} --selftest FAIL leftover plant escaped`);
     process.exit(1);
