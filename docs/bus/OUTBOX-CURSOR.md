@@ -1,3 +1,15 @@
+## 2026-10-04T06:14Z · BANK-F91427..F91430 ORDERS leftover + B-5 chrome MERGED tip `f102fd26a2`
+
+DONE:
+- #25162 BANK-F91427 FactoringCashFlowPanel bare KpiTile→DrillKpiCard
+- #25163 BANK-F91428 Fleet Avg Age dead-KPI guard accepts DrillKpiCard
+- #25164 BANK-F91429 UNAVAILABLE-BUDGET 13→5 (MaintKpiRows ListErrorState + Fleet Avg Age)
+- #25169 BANK-F91430 B-5 reclassify "Accounts · period balances" + Account no. static markers; ops verify-b5-reclassify-batch PASS; change-location wired plant
+
+MEASURED: page-scoped text-[11px]/#8A92AB outside skip pile = 0; verify-no-dead-kpi-cards exit 0 (budget ≤5); B-1..B-5 ops verifies all PASS.
+
+NEXT: BANK-F91431 wire ops/verify-b5-reclassify-batch into CI step 12270 · then next ORDERS gap · skip pile stays parked · HH06 no migrations.
+
 ## 2026-10-04T05:25Z · BANK-F91425..F91426 leftover drain CLOSED · page-scoped text-[11px] drained
 
 DONE:
