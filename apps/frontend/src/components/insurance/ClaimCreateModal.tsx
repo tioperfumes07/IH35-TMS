@@ -387,7 +387,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
               dataTestId="claim-create-load-picker"
             />
             {suggestionPinned && form.load_id && suggestionQuery.data?.data?.load_id === form.load_id ? (
-              <span className="text-[11px] text-slate-600" data-testid="claim-create-load-suggested">
+              <span className="text-xs text-slate-600" data-testid="claim-create-load-suggested">
                 Auto-filled from active trip for this driver/unit/trailer on the accident date.
               </span>
             ) : null}
