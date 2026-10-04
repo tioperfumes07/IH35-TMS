@@ -1,3 +1,9 @@
+## 2026-10-04T10:08Z · BANK-F91476 AccountingHome leftover WIRED CI · tip `9298bc9297`
+
+DONE: #25218 — AccountingHome AP accent #4B5563; verify-steps/3870 runs verify-accounting-home --selftest + live.
+
+NEXT: BANK-F91477 OwnerHome leftover #334155 + wire leftover refuse into 3888 · skip pile parked · HH10 no migrations.
+
 ## 2026-10-04T10:00Z · BANK-F91475 C-22 MaintKpiRows LOAD_FAIL WIRED CI · tip `acf9a8e191`
 
 DONE: #25217 — MaintKpiRows unavailable={LOAD_FAIL}; verify-steps/3526 runs ops/verify-c22-tabs-kpis --selftest.
