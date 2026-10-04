@@ -1,3 +1,9 @@
+## 2026-10-04T07:12Z · BANK-F91438 C-50 bound pin WIRED CI · tip `2398b720c1`
+
+DONE: #25180 — verify-steps/118 now runs ops/verify-c50-active-company-bound-pin --selftest.
+
+NEXT: BANK-F91439 correct C-52 toast dock (top-14, not C-65 bottom-3) + wire into 3018 · skip pile parked · HH06 no migrations.
+
 ## 2026-10-04T07:05Z · BANK-F91437 C-53 recon shell restored + WIRED CI · tip `7523d47352`
 
 DONE: #25178 — ReconciliationTabContent A-27 pending + must reach $0.00; step 1356 runs ops/verify-c53-recon-screen-shell.
