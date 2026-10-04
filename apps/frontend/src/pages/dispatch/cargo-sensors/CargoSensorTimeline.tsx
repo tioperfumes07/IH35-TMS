@@ -110,7 +110,7 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
 
   if (query.isError) {
     return (
-      <div className="space-y-2 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700" role="alert" data-cargo-sensor-timeline-error>
+      <div className="space-y-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]" role="alert" data-cargo-sensor-timeline-error>
         <div>Failed to load cargo sensor timeline.</div>
         <Button type="button" size="sm" variant="secondary" onClick={() => void query.refetch()}>
           Retry cargo sensors
@@ -141,7 +141,7 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
           query.data.incidents.map((incident) => (
             <article
               key={incident.id}
-              className="p-2 text-xs text-slate-700"
+              className="p-2 text-xs text-[#1F2A44]"
             >
               <div className="flex flex-wrap justify-between gap-2">
                 <strong className="capitalize">{incident.breach_kind} · {incident.severity}</strong>
@@ -188,7 +188,7 @@ export function CargoSensorTimeline({ loadId, operatingCompanyId }: Props) {
         shown={query.data.rows.length}
         limit={240}
         hint="Sensor timeline is capped — contact support for older readings."
-        className="text-xs text-slate-600"
+        className="text-xs text-[#4B5563]"
       />
     </section>
   );
