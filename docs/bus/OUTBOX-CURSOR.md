@@ -1,3 +1,15 @@
+## 2026-10-04T12:30Z · BANK-F91503 TruckLine Status leftover fontSize 11 WIRED · this PR
+
+DONE: TruckLineBoard Status label fontSize 11 → text-section-header; leftover refuse on verify-truck-line-units-only; unused EVEN 4122 --selftest + live.
+
+NEXT: leftover fontSize 11 chrome (SettlementKpiGrid / CashFlowKpiStrip / LoadsReport) · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T12:29Z · BANK-F91502 LoadUnitCostSplit leftover WIRED CI · tip `4f10a33362`
+
+DONE: #25244 — LoadUnitCostSplitPanel labels text-section-header; verify-steps/11088 leftover refuse --selftest + live.
+
+NEXT: BANK-F91503 TruckLine Status leftover fontSize: 11 + leftover refuse on 4122 · skip pile parked · HH12 no migrations this tick.
+
 ## 2026-10-04T12:24Z · BANK-F91502 LoadUnitCostSplit leftover fontSize 11 labels WIRED · this PR
 
 DONE: LoadUnitCostSplitPanel labels fontSize 11 → text-section-header; leftover refuse on verify-load-unit-cost-split-wired; EVEN 11088 --selftest + live.
