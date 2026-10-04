@@ -2106,6 +2106,11 @@
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-04",
       "purpose": "KILL THE SECOND SYSTEM tables 10 + 11, step 2: drop accounting.faro_reserve_entries.running_balance_cents and short_pay_balance_cents. Readers repointed in #25401 (register balance derived from the statement balance on the register account; 0 live rows; no view/function references either column)."
+    },
+    "202615410300": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-04",
+      "purpose": "AUTH-400: a posting line is reversed exactly once — unique index on journal_entry_postings(reversal_of_line_id)"
     }
   },
   "202613590001": {
