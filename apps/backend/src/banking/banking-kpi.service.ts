@@ -129,7 +129,7 @@ export async function computeBankingKpis(client: DbClient, oci: string, range: B
 
   const cash = (await client.query<{ bank_account: string; account_number: string; balance: string }>(
     `SELECT a.bank_account, a.account_number, ${BOOK_BALANCE} AS balance FROM (${ACCOUNTS} AND ca.account_type = 'Asset') a ORDER BY a.account_number`, base)).rows;
-  const cashDays = num((await client.query<{ n: number }>(`SELECT count(*)::int n FROM (${CASH_DAYS}) c`, base)).rows[0]?.n);
+  const cashDays = num((await client.query<{ n: number }>(`SELECT count(*)::int AS n FROM (${CASH_DAYS}) c`, base)).rows[0]?.n);
   out.push({ key: "cash_position", label: "Cash position (book)", unit: "cents", value: cash.reduce((s, r) => s + num(r.balance), 0),
     source: "Posted general-ledger balance of each bank account as of the end date (detail: per account, per day)",
     gl_account: cash.map((r) => r.account_number).join(", ") || null, row_count: cashDays,
@@ -137,10 +137,10 @@ export async function computeBankingKpis(client: DbClient, oci: string, range: B
     empty_reason: cash.length === 0 ? "No active bank account is linked to a GL cash account — link it on Cash / GL setup." : cashDays === 0 ? "No posted cash activity in this range." : null });
 
   const clr = (await client.query<{ n: number; cn: number; cv: string; un: number; uv: string }>(
-    `SELECT count(*)::int n, count(*) FILTER (WHERE b.reconciliation_cleared IS TRUE)::int cn,
-            COALESCE(sum(${ABS}) FILTER (WHERE b.reconciliation_cleared IS TRUE), 0)::bigint cv,
-            count(*) FILTER (WHERE b.reconciliation_cleared IS NOT TRUE)::int un,
-            COALESCE(sum(${ABS}) FILTER (WHERE b.reconciliation_cleared IS NOT TRUE), 0)::bigint uv
+    `SELECT count(*)::int AS n, count(*) FILTER (WHERE b.reconciliation_cleared IS TRUE)::int AS cn,
+            COALESCE(sum(${ABS}) FILTER (WHERE b.reconciliation_cleared IS TRUE), 0)::bigint AS cv,
+            count(*) FILTER (WHERE b.reconciliation_cleared IS NOT TRUE)::int AS un,
+            COALESCE(sum(${ABS}) FILTER (WHERE b.reconciliation_cleared IS NOT TRUE), 0)::bigint AS uv
        FROM banking.bank_transactions b WHERE ${IN_SCOPE}`, base)).rows[0]!;
   const noLines = clr.n === 0 ? "No bank line in this range." : null;
   out.push({ key: "cleared_vs_uncleared", label: "Uncleared (vs cleared)", unit: "cents", value: num(clr.uv), compare_value: num(clr.cv), compare_label: "Cleared",
@@ -149,13 +149,13 @@ export async function computeBankingKpis(client: DbClient, oci: string, range: B
 
   for (const [key, label, dir] of [["unmatched_inflow", "Unmatched inflow", true], ["unmatched_outflow", "Unmatched outflow", false]] as const) {
     const r = (await client.query<{ n: number; v: string }>(
-      `SELECT count(*)::int n, COALESCE(sum(${ABS}), 0)::bigint v FROM banking.bank_transactions b WHERE ${IN_SCOPE} AND ${UNMATCHED} AND b.is_credit = ${dir}`, base)).rows[0]!;
+      `SELECT count(*)::int AS n, COALESCE(sum(${ABS}), 0)::bigint AS v FROM banking.bank_transactions b WHERE ${IN_SCOPE} AND ${UNMATCHED} AND b.is_credit = ${dir}`, base)).rows[0]!;
     out.push({ key, label, unit: "cents", value: num(r.v), source: "Bank lines still in For Review", gl_account: null, row_count: r.n,
       empty_reason: noLines ?? (r.n === 0 ? `Every ${dir ? "deposit" : "payment"} in this range is matched or categorized.` : null) });
   }
 
   const mr = (await client.query<{ n: number; m: number }>(
-    `SELECT count(*)::int n, count(*) FILTER (WHERE ${RESOLVED})::int m FROM banking.bank_transactions b WHERE ${IN_SCOPE}`, base)).rows[0]!;
+    `SELECT count(*)::int AS n, count(*) FILTER (WHERE ${RESOLVED})::int AS m FROM banking.bank_transactions b WHERE ${IN_SCOPE}`, base)).rows[0]!;
   out.push({ key: "match_rate", label: "Match rate", unit: "percent", value: mr.n > 0 ? Number(((mr.m / mr.n) * 100).toFixed(2)) : null,
     compare_value: mr.m, compare_label: "Resolved lines", source: "Bank lines matched, categorized or recorded as transfers, out of all lines (excluded left out)",
     gl_account: null, row_count: mr.n, empty_reason: noLines });
@@ -167,7 +167,7 @@ export async function computeBankingKpis(client: DbClient, oci: string, range: B
     empty_reason: gap.length === 0 ? "No bank account with a live feed is linked to a GL account." : null });
 
   const w = (await client.query<{ n: number; e: string; r: string }>(
-    `SELECT count(*)::int n, COALESCE(sum(expected_cents), 0)::bigint e, COALESCE(sum(received_cents), 0)::bigint r FROM (${WIRES}) w`, base)).rows[0]!;
+    `SELECT count(*)::int AS n, COALESCE(sum(expected_cents), 0)::bigint AS e, COALESCE(sum(received_cents), 0)::bigint AS r FROM (${WIRES}) w`, base)).rows[0]!;
   out.push({ key: "factoring_wires_vs_expected", label: "Factoring wires vs expected", unit: "cents", value: num(w.r) - num(w.e), compare_value: num(w.e), compare_label: "Expected",
     source: "Faro wires matched to purchases, minus the net each posted purchase was due", gl_account: "1090 Undeposited Funds", row_count: w.n,
     empty_reason: w.n === 0 ? "No posted factoring purchase in this range — the Owner posts purchases on Submit to Factor." : null });
@@ -177,7 +177,7 @@ export async function computeBankingKpis(client: DbClient, oci: string, range: B
     ["settlement_drafts", "Settlement drafts", `b.matched_settlement_id IS NOT NULL`, "No bank payment matched to a driver settlement in this range."],
   ] as const) {
     const r = (await client.query<{ n: number; v: string }>(
-      `SELECT count(*)::int n, COALESCE(sum(${ABS}), 0)::bigint v FROM banking.bank_transactions b WHERE ${IN_SCOPE} AND b.is_credit = false AND ${pred}`, base)).rows[0]!;
+      `SELECT count(*)::int AS n, COALESCE(sum(${ABS}), 0)::bigint AS v FROM banking.bank_transactions b WHERE ${IN_SCOPE} AND b.is_credit = false AND ${pred}`, base)).rows[0]!;
     out.push({ key, label, unit: "cents", value: num(r.v), source: key === "fuel_drafts" ? "Bank payments matched to fuel or Relay fuel purchases" : "Bank payments matched to driver settlements", gl_account: null, row_count: r.n,
       empty_reason: r.n === 0 ? why : null });
   }
@@ -188,11 +188,11 @@ export async function computeBankingKpis(client: DbClient, oci: string, range: B
   const unbound = root.n === 0 ? "Driver Escrow is not bound to a GL account — bind it on Cash / GL setup." : null;
   const glLabel = root.label ? `${root.label} (+ sub-accounts)` : null;
   const held = (await client.query<{ n: number; v: string }>(
-    `SELECT count(*)::int n, COALESCE(sum(CASE WHEN e.debit_or_credit = 'credit' THEN e.amount_cents ELSE -e.amount_cents END), 0)::bigint v
+    `SELECT count(*)::int AS n, COALESCE(sum(CASE WHEN e.debit_or_credit = 'credit' THEN e.amount_cents ELSE -e.amount_cents END), 0)::bigint AS v
        FROM (${escrowPostings("balance", null)}) e`, base)).rows[0]!;
   const perAcct = (await client.query<{ label: string; v: string }>(
     `SELECT e.account_number || ' ' || e.account_name AS label,
-            sum(CASE WHEN e.debit_or_credit = 'credit' THEN e.amount_cents ELSE -e.amount_cents END)::bigint v
+            sum(CASE WHEN e.debit_or_credit = 'credit' THEN e.amount_cents ELSE -e.amount_cents END)::bigint AS v
        FROM (${escrowPostings("balance", null)}) e GROUP BY 1 HAVING sum(CASE WHEN e.debit_or_credit = 'credit' THEN e.amount_cents ELSE -e.amount_cents END) <> 0
       ORDER BY 1`, base)).rows;
   out.push({ key: "escrow_held", label: "Driver escrow held", unit: "cents", value: num(held.v),
@@ -205,7 +205,7 @@ export async function computeBankingKpis(client: DbClient, oci: string, range: B
     ["escrow_deductions", "Escrow deductions / releases", "debit", "No escrow deduction or release in this range."],
   ] as const) {
     const r = (await client.query<{ n: number; v: string }>(
-      `SELECT count(*)::int n, COALESCE(sum(e.amount_cents), 0)::bigint v FROM (${escrowPostings("activity", side)}) e`, base)).rows[0]!;
+      `SELECT count(*)::int AS n, COALESCE(sum(e.amount_cents), 0)::bigint AS v FROM (${escrowPostings("activity", side)}) e`, base)).rows[0]!;
     out.push({ key, label, unit: "cents", value: num(r.v), source: side === "credit" ? "Escrow contributions posted in the date range" : "Escrow deductions and releases posted in the date range",
       gl_account: glLabel, row_count: r.n, empty_reason: unbound ?? (r.n === 0 ? why : null) });
   }

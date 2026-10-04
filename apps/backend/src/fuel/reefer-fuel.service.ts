@@ -58,12 +58,12 @@ export async function syncReeferFuelForExpenseLine(client: Db, companyId: string
     const gallons = Number(row.gallons);
     if (gallons > 0) {
       await client.query(
-        `UPDATE accounting.expense_lines
-            SET quantity = $3::numeric, unit_of_measure = 'gal', rate_cents = round(amount_cents::numeric / $3::numeric, 4),
+        `UPDATE accounting.expense_lines el
+            SET quantity = $3::numeric, unit_of_measure = 'gal', rate_cents = round(el.amount_cents::numeric / $3::numeric, 4),
                 -- the fill's trailer only when this company owns or leases it (ROUND 373.5 cross-company refusal)
-                trailer_id = COALESCE(trailer_id, (SELECT eq.id FROM mdata.equipment eq WHERE eq.id = $4::uuid AND eq.equipment_type ~* 'reefer'
+                trailer_id = COALESCE(el.trailer_id, (SELECT eq.id FROM mdata.equipment eq WHERE eq.id = $4::uuid AND eq.equipment_type ~* 'reefer'
                                                      AND (eq.owner_company_id = $2::uuid OR eq.currently_leased_to_company_id = $2::uuid)))
-          WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+          WHERE el.id = $1::uuid AND el.operating_company_id = $2::uuid`,
         [expenseLineId, companyId, gallons, row.ft_trailer],
       );
     }

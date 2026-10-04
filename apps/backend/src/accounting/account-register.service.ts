@@ -774,7 +774,7 @@ export async function saveAccountRegisterInline(
                   WHEN bool_or(bt.id IS NOT NULL) THEN 'C'
                   ELSE ''
                 END AS match_status,
-                (array_agg(bt.id::text ORDER BY bt.txn_date DESC NULLS LAST))[1] AS bank_txn_id,
+                (array_agg(bt.id::text ORDER BY bt.transaction_date DESC NULLS LAST))[1] AS bank_txn_id,
                 MAX(NULLIF(btrim(bt.categorization_location), '')) AS location_label
            FROM banking.bank_transactions bt
            LEFT JOIN banking.reconciliation_sessions rs
