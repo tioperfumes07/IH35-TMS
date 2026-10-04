@@ -27,7 +27,43 @@ const cols = async (client, schema, table) => {
   return rows;
 };
 
+// ROUND 373.3 (CC-1) — WIRED, NO LONGER MEASUREMENT-ONLY. The 3,908 unlinked postings are journal_entries.source
+// 'auto', written 2026-09-24 → 2026-09-30, before the writers were fixed; their backfill was WITHDRAWN (ROUND 380 —
+// the documents are gone, the purge takes them). From here:
+//   RULE 1 — unlinked postings on USMCA never exceed the pinned ceiling (shrink-only: lower it as the purge runs).
+//   RULE 2 — 0 unlinked postings created on or after LINK_REQUIRED_SINCE (measured 2026-10-03: 0 in the last 3 days of
+//            78 postings; every one of the 10 code paths that INSERTs journal_entry_postings writes its link per line).
+//   RULE 3 — once migration 202615360500 is applied, trg_new_posting_has_spine_link is installed and enabled: a
+//            posting that reaches COMMIT without a transaction_source_links row is refused (ROUND 373.3's INSERT side;
+//            trg_live_posting_keeps_spine_link only guards link DELETE / UPDATE).
+export const UNLINKED_CEILING = 3908;
+export const LINK_REQUIRED_SINCE = "2026-10-01T00:00:00Z";
+export function evaluate({ unlinked, unlinkedSince, migrationApplied, trigger }) {
+  const out = [];
+  if (unlinked > UNLINKED_CEILING) out.push(`RULE 1: ${unlinked} unlinked postings > ceiling ${UNLINKED_CEILING} — a new posting was written without its spine link`);
+  if (unlinked < UNLINKED_CEILING) out.push(`RULE 1 RATCHET: ${unlinked} unlinked < ceiling ${UNLINKED_CEILING} — lower UNLINKED_CEILING to ${unlinked} so it can only shrink`);
+  if (unlinkedSince > 0) out.push(`RULE 2: ${unlinkedSince} posting(s) created since ${LINK_REQUIRED_SINCE} have no spine link`);
+  if (migrationApplied && (!trigger || trigger.enabled === "D")) out.push("RULE 3: 202615360500 applied but trg_new_posting_has_spine_link is missing or disabled");
+  return out;
+}
+if (process.argv.includes("--selftest")) {
+  const ok = { unlinked: UNLINKED_CEILING, unlinkedSince: 0, migrationApplied: true, trigger: { enabled: "O" } };
+  const cases = [
+    ["at the ceiling, none new, trigger armed passes", evaluate(ok).length === 0],
+    ["a new unlinked posting fails (RULE 1)", evaluate({ ...ok, unlinked: UNLINKED_CEILING + 1 }).some((x) => x.startsWith("RULE 1:"))],
+    ["the purge shrinking the count demands the ceiling drop", evaluate({ ...ok, unlinked: UNLINKED_CEILING - 5 }).some((x) => x.startsWith("RULE 1 RATCHET"))],
+    ["an unlinked posting since the cutoff fails (RULE 2)", evaluate({ ...ok, unlinkedSince: 1 }).some((x) => x.startsWith("RULE 2"))],
+    ["migration applied without the trigger fails (RULE 3)", evaluate({ ...ok, trigger: null }).some((x) => x.startsWith("RULE 3"))],
+    ["before the migration, no trigger is fine", evaluate({ ...ok, migrationApplied: false, trigger: null }).length === 0],
+  ];
+  for (const [n, pass] of cases) console.log(`  ${pass ? "✓" : "✗"} ${n}`);
+  const bad = cases.filter(([, pass]) => !pass).length;
+  console.log(bad ? `${LABEL} --selftest FAIL` : `${LABEL} --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
+}
+
 const main = async () => {
+  let verdict = [];
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
     await client.query("BEGIN READ ONLY");
@@ -95,6 +131,17 @@ const main = async () => {
 
     const unlinked = await client.query(unlinkedSql, args);
     console.log(`  postings with NO spine link: ${unlinked.rows[0].n}\n`);
+    const unlinkedSince = postKey
+      ? (await client.query(
+          `SELECT count(*)::int AS n FROM accounting.journal_entry_postings p
+            ${scope} ${scope ? "AND" : "WHERE"} p.created_at >= $${args.length + 1}::timestamptz
+              AND NOT EXISTS (SELECT 1 FROM accounting.transaction_source_links l WHERE l."${postKey}" = p."${postPk}")`,
+          [...args, LINK_REQUIRED_SINCE])).rows[0].n
+      : 0;
+    const migrationApplied = (await client.query(`SELECT 1 FROM _system._schema_migrations WHERE filename LIKE '202615360500%'`)).rows.length > 0;
+    const trig = (await client.query(`SELECT tgenabled AS enabled FROM pg_trigger WHERE tgname = 'trg_new_posting_has_spine_link' AND tgrelid = 'accounting.journal_entry_postings'::regclass`)).rows[0] ?? null;
+    verdict = evaluate({ unlinked: unlinked.rows[0].n, unlinkedSince, migrationApplied, trigger: trig });
+    console.log(`  unlinked since ${LINK_REQUIRED_SINCE}: ${unlinkedSince} · refusal migration applied: ${migrationApplied} · trigger: ${trig ? "installed" : "absent"}\n`);
 
     // Group the unlinked by the journal entry's own source, so each group names a writer.
     const srcCol = ["source_type", "source", "entry_type", "kind", "origin"].find((c) => jeNames.has(c));
@@ -124,7 +171,11 @@ const main = async () => {
     client.release();
     await pool.end();
   }
-  console.log(`\n${LABEL}: measurement only — it reports, it does not fail a push.`);
+  if (verdict.length) {
+    console.error(`\n${LABEL}: FAIL\n  ${verdict.join("\n  ")}`);
+    return 1;
+  }
+  console.log(`\n${LABEL}: OK — unlinked postings at the pinned ceiling ${UNLINKED_CEILING} (the withdrawn 09-24..09-30 population), 0 since ${LINK_REQUIRED_SINCE}; the INSERT-side refusal is armed where its migration has applied.`);
   return 0;
 };
 
