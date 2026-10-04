@@ -7275,7 +7275,11 @@ scope: USMCA ONLY. Lead 2026-10-04 ("88 'RELAY ATLANTA' bank charges … 69 of t
   1 refused by name (fc461eb6 — Relay T169 09-10 $684.35, no USMCA load at fill time).
 action: DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-04-cc3-post-already-matched-fuel-lines.mts --apply --auth AUTH-216
 expires_at: 2026-10-05T05:22:53Z
-status: OPEN
+status: WITHDRAWN
+withdrawn_at: 2026-10-04T22:18:08Z
+withdrawn_by: CC-3
+reason: the apply was refused at COMMIT by the fuel_wallet_relay floor (202615330600) — nothing persisted; Lead ruling ACCT-F403
+  then showed 44 of the 69 duplicate settlement-line fuel already booked. Superseded by the ACCT-F403 corrections.
 THIS AUTHORIZATION DOES NOT COVER: any DELETE; any unmatched bank line; the refused line fc461eb6.
 
 ## AUTH-217
@@ -7289,7 +7293,10 @@ scope: USMCA ONLY. Lead ruling ACCT-F403 Option 1 (2026-10-04: "The AlwaysTrack 
   fired): 6 reversals, 0 live fuel_event postings.
 action: DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-04-cc3-def-relay-rail-unpost.mts --apply --auth AUTH-217
 expires_at: 2026-10-05T04:05:48Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-04T22:18:08Z
+consumed_by: CC-3
+row_counts: 6 fuel_event JEs reversed (executeVoidCancel journal_entry), 6 expenses voided; live fuel_event postings 12 -> 0; 0 deletes.
 THIS AUTHORIZATION DOES NOT COVER: any DELETE; the fuel rows; any other posting.
 
 ## AUTH-218
@@ -7300,5 +7307,8 @@ scope: USMCA ONLY. Void-is-whole follow-up to AUTH-217 (ACCT-F403): the six sett
   Owner standing order 2026-10-04 + Lead ruling ACCT-F403. Prod dry run (deferred constraints fired): 6 voided.
 action: DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-04-cc3-def-relay-rail-fuel-void.mts --apply --auth AUTH-218
 expires_at: 2026-10-05T04:15:26Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-04T22:18:08Z
+consumed_by: CC-3
+row_counts: 6 fuel rows voided (executeVoidCancel fuel_transaction); verify-void-is-whole 6 -> 0; 0 deletes.
 THIS AUTHORIZATION DOES NOT COVER: any DELETE; any other fuel row.
