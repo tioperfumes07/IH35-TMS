@@ -914,6 +914,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-reclassify-batch-check-covers-targets",
     ["apps/backend/src/accounting/reclassify/", "db/migrations/", "scripts/verify-reclassify-batch-check-covers-targets.mjs"],
   ],
+  // ROUND 389.4 RULING 1 (CC-2) — the recurring worker never posts: it creates documents only.
+  [
+    "verify-recurring-worker-never-posts",
+    ["apps/backend/src/accounting/recurring.worker.ts", "apps/backend/src/cron/recurring-templates.cron.ts", "apps/backend/src/accounting/bills/recurring/", "apps/backend/src/jobs/recurring-bill-generator-worker.ts", "scripts/verify-recurring-worker-never-posts.mjs"],
+  ],
   // ROUND 368.2(b) — a bank line may not sit matched to nothing (deferred constraint triggers, both sides).
   [
     "verify-no-bank-line-is-matched-to-nothing",

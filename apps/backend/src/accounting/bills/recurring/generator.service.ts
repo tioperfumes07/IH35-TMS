@@ -1,15 +1,12 @@
 import { DateTime } from "luxon";
 import { withLuciaBypass } from "../../../auth/db.js";
-import { createBill } from "../../bills.service.js";
-import { postSourceTransaction } from "../../posting-engine.service.js";
-import { isEnabled } from "../../../lib/feature-flags/service.js";
+import { createBillInClientTx } from "../../bills.service.js";
 import { listActiveTemplatesDue, type RecurringBillTemplate } from "./template.service.js";
 
-// GL-posting kill switch for recurring-bill autopost. A recurring bill's autopost IS bill posting, so it
-// is gated by the SAME per-entity flag as every other bill post — resolved via lib.feature_flags
-// (isEnabled) per operating_company_id, NOT a raw process.env global (which would flip autopost on for
-// EVERY entity at once, violating the per-entity kill-switch rule). Default OFF.
-const BILL_GL_POSTING_FLAG_KEY = "BILL_GL_POSTING_ENABLED";
+// ROUND 389.4 RULING 1 — the recurring generator CREATES the bill and never books it. createBillInClientTx writes the bill
+// and its lines on this generator's own locked transaction and never auto-posts (createBill() posts the GL whenever
+// BILL_GL_POSTING_ENABLED is on for the entity — live ON for USMCA — so calling it from a timer WAS posting from a timer).
+// The bill is posted through its own post path (POST /api/v1/accounting/bills/:id/post-gl), which has void and reversal.
 
 export function computeNextGenerationDate(currentDate: string, frequency: string): string {
   const dt = DateTime.fromISO(currentDate, { zone: "utc" });
@@ -47,8 +44,13 @@ export async function generateFromTemplate(
   // real duplicate AP bill (and duplicate GL JE if BILL_GL_POSTING_ENABLED), and then race a blind,
   // non-CAS UPDATE where the last write wins.
   const { billUuid, nextGenerationDate, template } = await withLuciaBypass(async (client) => {
-    const res = await client.query<RecurringBillTemplate>(
-      `SELECT * FROM accounting.recurring_bill_templates WHERE uuid = $1::uuid FOR UPDATE`,
+    // next_generation_date is read as ISO text too: node-postgres returns a DATE column as a JS Date, and
+    // String(Date) ("Sun Oct 04 2026 ...") sorts after every ISO date, so the already-generated check below refused
+    // every run — the generator could never produce a bill. Compared as 'YYYY-MM-DD' text, straight from SQL (no JS
+    // timezone shift).
+    const res = await client.query<RecurringBillTemplate & { next_generation_date_iso: string | null }>(
+      `SELECT *, next_generation_date::text AS next_generation_date_iso
+         FROM accounting.recurring_bill_templates WHERE uuid = $1::uuid FOR UPDATE`,
       [templateUuid]
     );
     const tmpl = res.rows[0];
@@ -59,7 +61,7 @@ export async function generateFromTemplate(
     // A concurrent call that was blocked on the lock above and only now proceeds: the freshly-locked
     // row may already show generation advanced past this cycle (the first caller won the race and
     // committed while we waited). Reject rather than silently duplicate.
-    if (tmpl.next_generation_date && String(tmpl.next_generation_date) > targetDate) {
+    if (tmpl.next_generation_date_iso && tmpl.next_generation_date_iso > targetDate) {
       throw new Error("recurring_bill_already_generated_for_period");
     }
 
@@ -106,7 +108,8 @@ export async function generateFromTemplate(
       throw new Error("recurring_bill_template_missing_line_items");
     }
 
-    const bill = await createBill(
+    const bill = await createBillInClientTx(
+      client as never,
       {
         operatingCompanyId: tmpl.operating_company_id,
         vendorId: tmpl.vendor_uuid,
@@ -133,7 +136,7 @@ export async function generateFromTemplate(
         SET next_generation_date = $2::date, updated_at = now()
         WHERE uuid = $1::uuid AND next_generation_date IS NOT DISTINCT FROM $3::date
       `,
-      [templateUuid, nextDate, tmpl.next_generation_date]
+      [templateUuid, nextDate, tmpl.next_generation_date_iso]
     );
     if (upd.rowCount === 0) throw new Error("recurring_bill_template_generation_race");
 
@@ -148,34 +151,6 @@ export async function generateFromTemplate(
 
     return { billUuid: billId, nextGenerationDate: nextDate, template: tmpl };
   });
-
-  // GL-posting gate: the bill (AP record) is always created above, but auto-posting it to the GL is
-  // held behind a default-OFF, PER-ENTITY flag resolved via lib.feature_flags (isEnabled) — consistent
-  // with FIN-18/21/22/VOID, which never post until Jorge flips them on with the accountant. Resolved on
-  // a scoped client for THIS template's operating_company_id, so a flip is per-entity (never a raw
-  // process.env global that would enable autopost for every entity at once). Default OFF => no-op.
-  const autoPostEnabled = await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [template.operating_company_id]);
-    return isEnabled(client, BILL_GL_POSTING_FLAG_KEY, {
-      operating_company_id: template.operating_company_id,
-      user_uuid: actorUserId,
-    });
-  });
-  if (template.auto_post && autoPostEnabled) {
-    try {
-      await postSourceTransaction(
-        {
-          operating_company_id: template.operating_company_id,
-          source_transaction_type: "bill",
-          source_transaction_id: billUuid,
-        },
-        { userId: actorUserId }
-      );
-    } catch (err) {
-      // log but don't fail — bill already created
-      console.error("[recurring-bills] auto_post failed for bill", billUuid, err);
-    }
-  }
 
   return { billUuid, nextGenerationDate };
 }

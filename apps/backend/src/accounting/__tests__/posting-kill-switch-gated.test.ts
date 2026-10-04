@@ -47,6 +47,8 @@ vi.mock("../../qbo/tms-bill-push-chain.service.js", () => ({
 // Recurring generator's bill creator.
 vi.mock("../bills.service.js", () => ({
   createBill: async () => ({ id: "bill-recurring-1" }),
+  // ROUND 389.4 RULING 1 — the recurring generator creates through the never-auto-posting variant.
+  createBillInClientTx: async () => ({ id: "bill-recurring-1" }),
   // LV-BILL-MDATA-VENDOR-FK-OPTOUT sweep (poster.service.ts) calls this best-effort during WO-close;
   // mirror the real function's contract (null when unresolved) so it never blocks the kill-switch path.
   resolveMdataVendorIdBestEffort: async () => null,
@@ -137,8 +139,9 @@ describe("kill-switch: maintenance / WO-close bill poster no-ops when BILL_GL_PO
   });
 });
 
-describe("kill-switch: recurring-bill autopost no-ops when BILL_GL_POSTING_ENABLED is OFF", () => {
-  it("generates the bill but posts NOTHING to the GL even when template.auto_post is true", async () => {
+describe("ROUND 389.4 RULING 1: the recurring-bill generator creates the bill and NEVER posts it", () => {
+  it("generates the bill but posts NOTHING to the GL — auto_post true AND BILL_GL_POSTING_ENABLED ON (the worst case)", async () => {
+    isEnabledMock.mockResolvedValue(true); // flag ON for the entity, as it is live for USMCA
     queryHandler = async (sql) => {
       if (/FROM accounting\.recurring_bill_templates/.test(sql)) {
         return {
@@ -167,8 +170,7 @@ describe("kill-switch: recurring-bill autopost no-ops when BILL_GL_POSTING_ENABL
     const res = await generateFromTemplate("tmpl-1", "2026-07-05", "user-1");
 
     expect(res.billUuid).toBe("bill-recurring-1"); // bill still created
-    expect(postSpy).not.toHaveBeenCalled(); // autopost is a no-op with the flag OFF
-    expect(isEnabledMock).toHaveBeenCalledWith(fakeClient, "BILL_GL_POSTING_ENABLED", expect.objectContaining({ operating_company_id: OC }));
+    expect(postSpy).not.toHaveBeenCalled(); // a timer never posts — the bill posts through its own post path
   });
 });
 
