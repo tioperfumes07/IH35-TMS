@@ -1,3 +1,9 @@
+## 2026-10-04T09:08Z · BANK-F91463 E-40 faults-view WIRED CI · tip `a270b01059`
+
+DONE: #25205 — verify-steps/4030 now runs ops/verify-e40-faults-view --selftest.
+
+NEXT: BANK-F91464 wire maint filelinks + engines widget into 3012 · C-21 odometer + C-22 fail=triage · skip pile parked · HH08 no migrations.
+
 ## 2026-10-04T09:02Z · BANK-F91462 E-41 engine-status-savepoint WIRED CI · tip `1334f178a6`
 
 DONE: #25204 — verify-steps/982 now runs ops/verify-e41-engine-status-savepoint --selftest.
