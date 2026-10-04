@@ -35,6 +35,9 @@ function inspect(parts) {
   if (!/opts\?: \{ months\?: number; operatingCompanyId\?: string; runId\?: string \}/.test(parts.cron)) errors.push("backfill has no company/run target option");
   if (!/activeCompanyIds\.filter\(\(\{ id \}\) => id === opts\.operatingCompanyId\)/.test(parts.cron)) errors.push("backfill does not narrow active companies to target");
   if (!parts.cron.includes("relay_fuel_ingest_backfill_company_not_active")) errors.push("inactive target is not rejected");
+  // BANK-F91323 leftover refuse — RelayHistoryImport.tsx page-scoped text token ratchet
+  if (parts.control.includes("text-[11px]")) errors.push("RelayHistoryImport.tsx: leftover text-[11px]");
+  if (parts.control.includes("#8A92AB")) errors.push("RelayHistoryImport.tsx: leftover off-scale muted #8A92AB");
   return errors;
 }
 
@@ -60,7 +63,13 @@ if (process.argv.includes("--selftest")) {
     console.error(`verify-relay-history-import-company-scope SELFTEST FAIL — ${missed.length}/${mutations.length} mutation(s) survived: ${missed.map(([name]) => name).join(", ")}`);
     process.exit(1);
   }
-  console.log(`verify-relay-history-import-company-scope selftest PASS — ${mutations.length}/${mutations.length} planted defects rejected`);
+  // BANK-F91323 leftover plant — RelayHistoryImport page-scoped text token ratchet
+  const leftoverPlant = { ...source, control: source.control + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n' };
+  if (!inspect(leftoverPlant).some((e) => e.includes("leftover text-[11px]"))) {
+    console.error("verify-relay-history-import-company-scope SELFTEST FAIL — leftover plant escaped");
+    process.exit(1);
+  }
+  console.log(`verify-relay-history-import-company-scope selftest PASS — ${mutations.length}/${mutations.length} planted defects rejected + leftover plant`);
   process.exit(0);
 }
 
