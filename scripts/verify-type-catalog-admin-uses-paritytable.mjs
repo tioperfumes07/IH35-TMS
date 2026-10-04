@@ -56,6 +56,13 @@ function assertMigrated(src) {
   if (!src.includes("Deactivate")) {
     errors.push(`${PAGE}: must preserve Deactivate action`);
   }
+  // BANK-F91321 leftover refuse — TypeCatalogAdmin.tsx page-scoped text token ratchet
+  if (src.includes("text-[11px]")) {
+    errors.push(`${PAGE}: leftover text-[11px]`);
+  }
+  if (src.includes("#8A92AB")) {
+    errors.push(`${PAGE}: leftover off-scale muted #8A92AB`);
+  }
   return errors;
 }
 
@@ -101,6 +108,12 @@ function selftest() {
   }
   if (badErrors.length < 3) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
+    process.exit(1);
+  }
+  // BANK-F91321 leftover plant — TypeCatalogAdmin page-scoped text token ratchet
+  const leftoverPlant = good + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!assertMigrated(leftoverPlant).some((e) => e.includes("leftover text-[11px]"))) {
+    console.error(`${LABEL} --selftest FAIL — leftover plant escaped`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);
