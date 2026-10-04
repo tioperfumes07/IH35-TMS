@@ -12,9 +12,18 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-qbo-vendor-linkage-uses-paritytable";
 const PAGE = "apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx";
+const MODAL = "apps/frontend/src/components/qbo/VendorLinkageModal.tsx";
 
 const DRIVER_LABELS = ["Driver", "Current Vendor", "Status", "Actions"];
 const ASSET_LABELS = ["Unit", "QBO Class", "Actions"];
+
+/** BANK-F91425 leftover refuse — VendorLinkageModal page-scoped text token ratchet. */
+export function checkVendorLinkageModalLeftovers(src) {
+  const errors = [];
+  if (src.includes("text-[11px]")) errors.push("VendorLinkageModal leftover text-[11px] — use text-xs");
+  if (src.includes("#8A92AB")) errors.push("VendorLinkageModal leftover #8A92AB — use #4B5563");
+  return errors;
+}
 
 function assertMigrated(src) {
   const errors = [];
@@ -109,6 +118,17 @@ function selftest() {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
     process.exit(1);
   }
+  // BANK-F91425 leftover plant — VendorLinkageModal page-scoped text token ratchet
+  const liveModal = fs.readFileSync(path.join(ROOT, MODAL), "utf8");
+  if (checkVendorLinkageModalLeftovers(liveModal).length) {
+    console.error(`${LABEL} --selftest FAIL: live VendorLinkageModal already failing leftover refuse`);
+    process.exit(1);
+  }
+  const leftoverPlant = liveModal + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!checkVendorLinkageModalLeftovers(leftoverPlant).some((f) => f.includes("leftover"))) {
+    console.error(`${LABEL} --selftest FAIL: leftover text-[11px]/#8A92AB plant escaped`);
+    process.exit(1);
+  }
   console.log(`${LABEL} --selftest PASS`);
 }
 
@@ -118,7 +138,10 @@ function main() {
     return;
   }
   const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
-  const errors = assertMigrated(src);
+  const errors = [
+    ...assertMigrated(src),
+    ...checkVendorLinkageModalLeftovers(fs.readFileSync(path.join(ROOT, MODAL), "utf8")),
+  ];
   if (errors.length) {
     console.error(`FAIL ${LABEL}:`);
     for (const e of errors) console.error(`  - ${e}`);

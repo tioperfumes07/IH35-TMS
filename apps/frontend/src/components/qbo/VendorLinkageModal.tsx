@@ -76,7 +76,7 @@ export function VendorLinkageModal({
     >
       <div className="font-semibold text-gray-900">{row.display_name}</div>
       <div className="text-gray-600">{entityLabel(row.company_name, row.qbo_vendor_id, "QBO vendor")}</div>
-      {"score" in row && row.score !== undefined ? <div className="text-[11px] text-slate-700">Score: {Number(row.score).toFixed(2)}</div> : null}
+      {"score" in row && row.score !== undefined ? <div className="text-xs text-slate-700">Score: {Number(row.score).toFixed(2)}</div> : null}
     </button>
   );
 
