@@ -50,7 +50,9 @@ export async function withUnscopedReadOnly(label, fn) {
   // gate wherever the gate credential was the source, and handed the guard the pooler (ih35_app SET ROLE leak) elsewhere.
   const url = directGuardUrl(process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL || resolveGateReadonlyDbUrl());
   if (!url) {
-    console.error(`${label}: FAIL — needs DATABASE_URL or the gate credential (live, unscoped). A guard that cannot look is not a pass.`);
+    // Canonical refusal wording ("DATABASE_URL not set"), shared with lib/require-live-db.mjs, so the no-DB static sweep
+    // classifies it as UNVERIFIABLE-here (never a pass) instead of a static FAIL. Still exits 1.
+    console.error(`${label}: FAIL — DATABASE_URL not set and no gate credential resolved (live, unscoped). A guard that cannot look is not a pass.`);
     process.exit(1);
   }
   const { default: pg } = await import("pg");

@@ -24,8 +24,10 @@ const SCOPE_INHERITANCE = [
     child: "accounting.bill_lines",
     parentIdCol: "bill_id",
     parent: "accounting.bills",
-    status: "deferred",
-    deferredTo: "db-integrity-hardening-0519 (owner-gated FK migration)",
+    // Promoted 2026-10-04 (CC-2): 202615350100_no_row_escapes_its_company added the FK. Prod carries
+    // bill_lines_bill_same_entity_fkey (operating_company_id, bill_id) -> bills, VALIDATED, which is the scope
+    // inheritance itself; the plain bill_lines_bill_id_fkey is NOT VALID (enforced for every new row).
+    status: "enforced",
   },
 ];
 

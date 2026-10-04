@@ -126,8 +126,6 @@
     "scripts/verify-db-test-units-are-sample-data.mjs",
     "scripts/verify-no-bulk-test-void.mjs",
     "scripts/verify-no-leak-test-pollution.mjs",
-    "scripts/verify-shared-coa-role-tests-serialized.mjs",
-    "scripts/verify-usmca-no-active-test-fixtures.mjs",
-    "scripts/verify-vendor-test-fixture-guard.mjs"
+    "scripts/verify-shared-coa-role-tests-serialized.mjs"
   ]
 }
