@@ -293,7 +293,7 @@ export function EquipmentTypesPage() {
                         {typeRow.is_active ? "Active" : "Inactive"}
                       </span>
                     </div>
-                    <div className="mt-0.5 flex items-center gap-2 text-[11px] text-gray-500">
+                    <div className="mt-0.5 flex items-center gap-2 text-xs text-gray-500">
                       <span>Sort {typeRow.sort_order}</span>
                       <span>•</span>
                       <span>{typeRow.line_items.length} line items</span>
@@ -354,7 +354,7 @@ export function EquipmentTypesPage() {
                                 <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">Required</span>
                               ) : null}
                             </div>
-                            <div className="mt-0.5 text-[11px] text-gray-500">
+                            <div className="mt-0.5 text-xs text-gray-500">
                               {lineItemUnitLabel(item.unit)} • sort {item.sort_order}
                             </div>
                           </div>
