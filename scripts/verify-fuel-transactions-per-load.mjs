@@ -164,7 +164,7 @@ async function live() {
     const liveRes = await client.query(
       `SELECT ft.id::text AS id, ft.source_row_hash, ft.total_cost, ft.fuel_type,
               ft.transaction_reference, ft.transaction_at::date::text AS txn_date,
-              ft.voided_at, ft.archived_at, ft.notes, ft.void_reason, regexp_replace(l.load_number, '^VOID-(.+)-[0-9a-f]{8}$', '\\1') AS load_number
+              ft.voided_at, ft.archived_at, ft.voided_by_user_id::text AS voided_by_user_id, ft.notes, ft.void_reason, regexp_replace(l.load_number, '^VOID-(.+)-[0-9a-f]{8}$', '\\1') AS load_number
          FROM fuel.fuel_transactions ft
          LEFT JOIN mdata.loads l ON l.id = ft.load_id
         WHERE ft.operating_company_id = $1::uuid`,
@@ -241,9 +241,29 @@ async function live() {
     // 2. row count / dollar total — shrink-only four-arm ratchet against
     // scripts/verify-fuel-transactions-per-load.baseline.json (Lead ruling, ROUND 30.6). See the
     // file header for the full rationale; this is deliberately NOT the old exact-match-171 check.
-    const liveCount = undocumentedActiveRows.length;
-    const liveCents = undocumentedActiveRows.reduce((s, r) => s + Math.round(Number(r.total_cost) * 100), 0);
+    const liveCount0 = undocumentedActiveRows.length;
+    const liveCents0 = undocumentedActiveRows.reduce((s, r) => s + Math.round(Number(r.total_cost) * 100), 0);
     const baseline = loadBaseline();
+    // 2026-10-04 (CC-2, at CC-3's request): a GOVERNED void after the baseline was measured is reconciled movement, not
+    // drift — before this, every owner-authorized void turned the gate red for every seat until someone re-stamped the
+    // baseline by hand. Governed = stampDocumentVoided's full signature on the row: voided_at = archived_at, a
+    // voided_by_user_id, and a non-empty void_reason. A silent drop (any part missing) and any GROWTH still fail.
+    const isGovernedVoid = (r) =>
+      r.archived_at != null && r.voided_at != null && r.voided_by_user_id &&
+      r.void_reason && !/^\s*$/.test(r.void_reason) &&
+      new Date(r.voided_at).getTime() === new Date(r.archived_at).getTime();
+    const sinceBaseline = baseline && baseline.measured_at ? new Date(baseline.measured_at).getTime() : null;
+    const governedOut = sinceBaseline == null ? [] :
+      liveRes.rows.filter((r) => isGovernedVoid(r) && new Date(r.archived_at).getTime() > sinceBaseline);
+    const liveCount = liveCount0 + governedOut.length;
+    const liveCents = liveCents0 + governedOut.reduce((s, r) => s + Math.round(Number(r.total_cost) * 100), 0);
+    if (governedOut.length > 0) {
+      console.log(
+        `${LABEL}: ${governedOut.length} governed void(s) since the baseline (${baseline.measured_at}) counted as reconciled ` +
+          `movement — live ${liveCount0} rows / $${(liveCents0 / 100).toFixed(2)}; re-stamp the baseline when convenient: ` +
+          governedOut.map((r) => `${r.id.slice(0, 8)} $${Number(r.total_cost).toFixed(2)}`).join(", ")
+      );
+    }
     if (!baseline) {
       if (liveCount === ORIGINAL_COUNT && liveCents === ORIGINAL_TOTAL_CENTS) {
         // No baseline yet AND live still matches the original B1 target exactly — the pre-ratchet
@@ -395,8 +415,15 @@ async function live() {
       console.error(`${LABEL}: LIVE FAIL — ${newDupes.length} NEW receipt(s) live on more than one load (invoice|cents|loads), not in the disclosed baseline list: ${newDupes.join("; ")}`);
       failures++;
     }
-    if (resolvedDupes.length > 0) {
-      console.error(`${LABEL}: LIVE FAIL — disclosed duplicate receipt(s) no longer live on >1 load — good news; remove from cross_load_duplicate_receipts: ${resolvedDupes.join("; ")}`);
+    // A disclosed pair resolved by a governed void of one copy is reported, not failed (same rule as the count above).
+    const governedRefs = new Set(governedOut.map((r) => `${r.transaction_reference}|${Math.round(Number(r.total_cost) * 100)}`));
+    const resolvedByGovernedVoid = resolvedDupes.filter((k) => governedRefs.has(k.split("|").slice(0, 2).join("|")));
+    const resolvedUnexplained = resolvedDupes.filter((k) => !resolvedByGovernedVoid.includes(k));
+    if (resolvedByGovernedVoid.length > 0) {
+      console.log(`${LABEL}: disclosed duplicate(s) resolved by a governed void — remove from cross_load_duplicate_receipts when re-stamping: ${resolvedByGovernedVoid.join("; ")}`);
+    }
+    if (resolvedUnexplained.length > 0) {
+      console.error(`${LABEL}: LIVE FAIL — disclosed duplicate receipt(s) no longer live on >1 load — good news; remove from cross_load_duplicate_receipts: ${resolvedUnexplained.join("; ")}`);
       failures++;
     }
     if (liveDupes.length > 0 && newDupes.length === 0 && resolvedDupes.length === 0) {
