@@ -106,7 +106,7 @@ function StopCard({ stop }: { stop: GeofenceStop }) {
       className={`relative rounded-sm border p-3 text-xs ${stop.is_layover ? "border-slate-200 bg-slate-100" : "border-gray-200 bg-white"}`}
     >
       {stop.is_layover && (
-        <div className="mb-1 text-[11px] font-bold uppercase tracking-widest text-slate-700">
+        <div className="mb-1 text-xs font-bold uppercase tracking-widest text-slate-700">
           Layover — dwell &gt; 8 hours
         </div>
       )}
