@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { AmountLink } from "../../components/shared/AmountLink";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
@@ -297,7 +298,23 @@ export function BalanceSheetPage() {
                           line.account_name || "—"
                         )}
                       </td>
-                      <td className="px-3 py-2 text-right tabular-nums">{money(line.amount)}</td>
+                      <td className="px-3 py-2 text-right tabular-nums">
+                        <AmountLink
+                          filter={
+                            line.account_id
+                              ? {
+                                  target: "register",
+                                  accountId: line.account_id,
+                                  from: `${applied.asOfDate.slice(0, 7)}-01`,
+                                  to: applied.asOfDate,
+                                }
+                              : null
+                          }
+                          data-testid={`bs-amount-${line.account_code || line.account_name}`}
+                        >
+                          {money(line.amount)}
+                        </AmountLink>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -342,7 +359,23 @@ export function BalanceSheetPage() {
                             line.account_name || "—"
                           )}
                         </td>
-                        <td className="px-3 py-2 text-right tabular-nums">{money(line.amount)}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">
+                        <AmountLink
+                          filter={
+                            line.account_id
+                              ? {
+                                  target: "register",
+                                  accountId: line.account_id,
+                                  from: `${applied.asOfDate.slice(0, 7)}-01`,
+                                  to: applied.asOfDate,
+                                }
+                              : null
+                          }
+                          data-testid={`bs-amount-${line.account_code || line.account_name}`}
+                        >
+                          {money(line.amount)}
+                        </AmountLink>
+                      </td>
                       </tr>
                     ))
                   )}
@@ -386,7 +419,23 @@ export function BalanceSheetPage() {
                             line.account_name || "—"
                           )}
                         </td>
-                        <td className="px-3 py-2 text-right tabular-nums">{money(line.amount)}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">
+                        <AmountLink
+                          filter={
+                            line.account_id
+                              ? {
+                                  target: "register",
+                                  accountId: line.account_id,
+                                  from: `${applied.asOfDate.slice(0, 7)}-01`,
+                                  to: applied.asOfDate,
+                                }
+                              : null
+                          }
+                          data-testid={`bs-amount-${line.account_code || line.account_name}`}
+                        >
+                          {money(line.amount)}
+                        </AmountLink>
+                      </td>
                       </tr>
                     ))
                   )}
