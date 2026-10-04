@@ -1,3 +1,15 @@
+## 2026-10-04T14:38Z · BANK-F91515 TripPairing dashed leftover muted WIRED · this PR
+
+DONE: TripPairingBoard dashed-legend leftover #94a3b8 → house muted #4B5563; leftover refuse on verify-trip-pairing-leg-columns; unused EVEN 4130 --selftest + live. TR #64748b stays.
+
+NEXT: leftover muted chrome (WO pie status colors stay / RMBuckets In Progress stay / trip-type SB stay) · skip pile parked · HH13 no migrations this tick.
+
+## 2026-10-04T14:36Z · BANK-F91514 RouteDiagram dest leftover muted WIRED CI · tip `f98a6c1e8d`
+
+DONE: #25256 — RouteDiagramSvg dest leftover muted #4B5563; verify-steps/4104 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (TripPairing dashed #94a3b8 / WO pie status colors stay) · skip pile parked · HH13 no migrations this tick.
+
 ## 2026-10-04T14:28Z · BANK-F91514 RouteDiagram dest leftover muted WIRED · this PR
 
 DONE: RouteDiagramSvg destination leftover #475569 → house muted #4B5563; leftover refuse on verify-fuel-planner-degraded-honesty; EVEN 4104 --selftest + live.

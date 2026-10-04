@@ -95,7 +95,7 @@ function LegendSwatch({ color, dashed, label }: { color?: string; dashed?: boole
     <span className="inline-flex items-center gap-1.5 text-xs text-slate-600">
       <span
         className="inline-block h-3 w-3 rounded-xs"
-        style={dashed ? { border: "1px dashed #94a3b8", background: "#f1f5f9" } : { backgroundColor: color }}
+        style={dashed ? { border: "1px dashed #4B5563", background: "#f1f5f9" } : { backgroundColor: color }}
       />
       {label}
     </span>
