@@ -16162,5 +16162,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-xlsx-upload-magic-bytes"
+  },
+  "18093": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-no-orphaned-gl"
   }
 }
