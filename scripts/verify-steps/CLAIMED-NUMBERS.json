@@ -10112,5 +10112,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-ap-control-written-only-by-documents"
+  },
+  "12429": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-advance-posts-to-drivers-own-subaccount"
   }
 }
