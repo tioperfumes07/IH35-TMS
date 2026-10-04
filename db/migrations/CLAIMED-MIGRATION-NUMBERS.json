@@ -2192,5 +2192,10 @@
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-04",
     "purpose": "fuel provider-transaction uniqueness per PRODUCT LINE: one ticket may carry diesel + DEF + reefer; key (company, vendor, receipt, fuel_type) — the 202615370600 trigger refused/merged every DEF sharing a ticket with its diesel"
+  },
+  "202615410940": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-04",
+    "purpose": "integrations.relay_fuel_transactions.posted_to_gl is DERIVED (bank-match JE): clear the 75 stale true flags with no JE behind them and refuse a stored true (Lead posted_to_gl order)"
   }
 }
