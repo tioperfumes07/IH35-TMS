@@ -12452,5 +12452,20 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-cash-flow-contract"
+  },
+  "15125": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-posting-column-contract"
+  },
+  "15129": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-tenant-scope-on-routes"
+  },
+  "15133": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-acct-utc-today-defaults"
   }
 }
