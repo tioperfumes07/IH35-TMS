@@ -212,6 +212,14 @@ export const COA_ROLE_VALUES = [
   "driver_settlements_payable",
   /** 4200 Accessorial / Detention Income — customer accessorial charges (settlement creator projection). */
   "accessorial_revenue",
+  /**
+   * ROUND 394 RULING 2 — what a driver owes the company, each on its own account so a settlement deduction can say
+   * what it is (migration 202615380300, USMCA): 1255 damage, 1256 fines, 1257 negative settlement. Posted on creation
+   * (Dr receivable), recovered through settlement (Cr receivable), written off only by a reversing entry.
+   */
+  "driver_damage_receivable",
+  "driver_fine_receivable",
+  "driver_negative_settlement_receivable",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];
