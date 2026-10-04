@@ -68,9 +68,15 @@ const checks = [
   ["routes", /SET promoted_to_damage_report_id = \$2[\s\S]*WHERE id = \$1[\s\S]*AND operating_company_id = \$3[\s\S]*\[params\.data\.issue_id, damageReportId, query\.data\.operating_company_id\]/, "damage conversion source update is explicitly company-scoped"],
 ];
 
-const failures = (candidate) => checks
-  .filter(([key, pattern]) => !pattern.test(candidate[key]))
-  .map(([, , label]) => label);
+const failures = (candidate) => {
+  const found = checks
+    .filter(([key, pattern]) => !pattern.test(candidate[key]))
+    .map(([, , label]) => label);
+  // BANK-F91300 leftover refuse — RoadServiceActivePanel.tsx page-scoped text token ratchet
+  if (candidate.roadside?.includes("text-[11px]")) found.push("RoadServiceActivePanel.tsx: leftover text-[11px]");
+  if (candidate.roadside?.includes("#8A92AB") || candidate.roadside?.includes("#334155")) found.push("RoadServiceActivePanel.tsx: leftover off-scale muted");
+  return found;
+};
 
 const found = failures(sources);
 if (found.length) {
@@ -86,7 +92,14 @@ if (process.argv.includes("--self-test")) {
       process.exit(1);
     }
   }
-  console.log(`verify-maintenance-work-order-entity-drills: SELF-TEST PASS — ${checks.length} planted defects rejected`);
+  // BANK-F91300 leftover plant — RoadServiceActivePanel page-scoped text token ratchet
+  const leftoverPlant = sources.roadside + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  const leftoverHits = failures({ ...sources, roadside: leftoverPlant });
+  if (!leftoverHits.some((e) => e.includes("leftover text-[11px]")) || !leftoverHits.some((e) => e.includes("leftover off-scale muted"))) {
+    console.error("verify-maintenance-work-order-entity-drills: SELF-TEST FAIL — leftover plant escaped", leftoverHits.filter((e) => e.includes("leftover")));
+    process.exit(1);
+  }
+  console.log(`verify-maintenance-work-order-entity-drills: SELF-TEST PASS — ${checks.length} planted defects rejected + leftover plant`);
 }
 
 console.log(`verify-maintenance-work-order-entity-drills: PASS — ${checks.length} WO/entity drill invariants`);

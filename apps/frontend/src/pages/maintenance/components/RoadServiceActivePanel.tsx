@@ -16,11 +16,11 @@ export function RoadServiceActivePanel({ roadside, onOpen }: Props) {
   return (
     <section className="overflow-hidden rounded-sm border border-gray-200 bg-white">
       <div className="flex items-center justify-between bg-gray-50 px-2 py-1">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Road Service Active</span>
+        <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Road Service Active</span>
         <span className="rounded-sm bg-white px-1.5 text-xs font-bold text-gray-600">{active.length}</span>
       </div>
       {active.length === 0 ? (
-        <div className="px-2 py-1.5 text-[11px] text-gray-400">No active road service</div>
+        <div className="px-2 py-1.5 text-xs text-gray-400">No active road service</div>
       ) : (
         <ul className="flex flex-col">
           {active.map((wo) => {
@@ -35,7 +35,7 @@ export function RoadServiceActivePanel({ roadside, onOpen }: Props) {
                       kind="unit"
                       id={wo.unit_id}
                       label={entityLabel(wo.unit_number, wo.unit_id, "Unit")}
-                      className="text-[11px] font-semibold"
+                      className="text-xs font-semibold"
                     />
                     {isOos ? (
                       <span className="text-xs font-bold tracking-wide" style={{ color: "#A32D2D" }}>
