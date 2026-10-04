@@ -20,6 +20,9 @@ function audit(s) {
   if (!/>\s*\+\s*Create Roadside WO\s*</.test(s.grid)) failures.push("RMBucketsGrid.tsx button must read '+ Create Roadside WO'");
   if (/>\s*\+\s*Roadside WO\s*</.test(s.list)) failures.push("RoadServiceList.tsx must not use the no-verb '+ Roadside WO' label");
   if (/>\s*\+\s*Roadside WO\s*</.test(s.grid)) failures.push("RMBucketsGrid.tsx must not use the no-verb '+ Roadside WO' label");
+  // BANK-F91316 leftover refuse — RMBucketsGrid.tsx page-scoped text token ratchet (size-only; navy accent #334155 kept)
+  if (s.grid.includes("text-[11px]")) failures.push("RMBucketsGrid.tsx: leftover text-[11px]");
+  if (s.grid.includes("#8A92AB")) failures.push("RMBucketsGrid.tsx: leftover off-scale muted #8A92AB");
   return failures;
 }
 
@@ -34,6 +37,12 @@ if (process.argv.includes("--selftest")) {
       console.error(`${LABEL} SELFTEST FAIL — ${name}`);
       process.exit(1);
     }
+  }
+  // BANK-F91316 leftover plant — RMBucketsGrid page-scoped text token ratchet
+  const leftoverPlant = { ...source, grid: source.grid + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n' };
+  if (!audit(leftoverPlant).some((f) => f.includes("leftover text-[11px]"))) {
+    console.error(`${LABEL} SELFTEST FAIL — leftover plant escaped`);
+    process.exit(1);
   }
   console.log(`${LABEL} SELFTEST PASS — ${mutations.length} mutations detected`);
   process.exit(0);

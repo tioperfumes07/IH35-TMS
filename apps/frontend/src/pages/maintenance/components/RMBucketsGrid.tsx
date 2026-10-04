@@ -61,7 +61,7 @@ function KanbanCard({
     <div className="rounded-sm border border-gray-200 bg-white" style={{ borderLeft: `3px solid ${accent}` }}>
       <div className="block w-full px-2 py-1.5 text-left hover:bg-gray-50">
         <div className="flex items-center justify-between gap-1">
-          <EntityLink kind="work_order" id={row.id} label={entityLabel(row.display_id, row.id, "Work order")} className="text-[11px] font-semibold text-gray-800" onClick={(event) => { event.preventDefault(); onOpen(row.id); }} />
+          <EntityLink kind="work_order" id={row.id} label={entityLabel(row.display_id, row.id, "Work order")} className="text-xs font-semibold text-gray-800" onClick={(event) => { event.preventDefault(); onOpen(row.id); }} />
           {row.source_type ? <span className="rounded-sm bg-gray-100 px-1 text-xs font-bold tracking-wide text-gray-600">{row.source_type}</span> : null}
         </div>
         <div className="flex min-w-0 flex-wrap items-center gap-x-1 text-xs text-gray-500">
@@ -125,7 +125,7 @@ export function RMBucketsGrid({ inHouse, external, roadside, onOpen, onAdvanceSt
         {columns.map((col) => (
           <div key={col.key} className="rounded-sm border border-gray-200 bg-gray-50">
             <div className="flex items-center justify-between border-b border-gray-200 px-2 py-1" style={{ borderTop: `2px solid ${col.accent}` }}>
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-700">{col.title}</span>
+              <span className="text-xs font-semibold uppercase tracking-wide text-gray-700">{col.title}</span>
               <span className="rounded-sm bg-white px-1.5 text-xs font-bold text-gray-600">{col.rows.length}</span>
             </div>
             <div className="max-h-112 space-y-1 overflow-y-auto p-1.5">
