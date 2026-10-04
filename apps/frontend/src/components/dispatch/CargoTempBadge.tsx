@@ -48,7 +48,7 @@ export function CargoTempBadge({ operatingCompanyId, loadId, reefer }: Props) {
     staleTime: 30_000,
   });
 
-  if (!reefer) return <span className="text-[11px] text-gray-300">—</span>;
+  if (!reefer) return <span className="text-xs text-gray-300">—</span>;
   if (timeline.isLoading) {
     return <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-500">Temp …</span>;
   }

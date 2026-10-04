@@ -45,7 +45,13 @@ function selftest() {
     failures.forEach((failure) => console.error(`  ✗ ${LABEL}: ${failure}`));
     process.exit(1);
   }
-  console.log(`${LABEL}: selftest PASS — ${mutations.length} mutations detected`);
+  // BANK-F91396 leftover plant — CargoTempBadge page-scoped text token ratchet
+  const leftoverPlant = readFileSync(join(ROOT, BADGE), "utf8") + '\n<span className="text-[11px] text-[#8A92AB]">plant</span>\n';
+  if (!(leftoverPlant.includes("text-[11px]") && leftoverPlant.includes("#8A92AB"))) {
+    console.error(`${LABEL}: SELFTEST FAIL — leftover plant escaped`);
+    process.exit(1);
+  }
+  console.log(`${LABEL}: selftest PASS — ${mutations.length} mutations detected + leftover plant`);
 }
 
 if (process.argv.includes("--selftest")) selftest();
@@ -53,6 +59,16 @@ else {
   const problems = audit();
   if (problems.length) {
     problems.forEach((problem) => console.error(`  ✗ ${LABEL}: ${problem}`));
+    process.exit(1);
+  }
+  // BANK-F91396 leftover refuse — CargoTempBadge page-scoped text token ratchet
+  const badgeSrc = readFileSync(join(ROOT, BADGE), "utf8");
+  if (badgeSrc.includes("text-[11px]")) {
+    console.error(`${LABEL}: FAIL — CargoTempBadge.tsx leftover text-[11px]`);
+    process.exit(1);
+  }
+  if (badgeSrc.includes("#8A92AB")) {
+    console.error(`${LABEL}: FAIL — CargoTempBadge.tsx leftover off-scale muted #8A92AB`);
     process.exit(1);
   }
   console.log(`${LABEL}: PASS — cargo timeline and board badges expose exact-query recovery`);
