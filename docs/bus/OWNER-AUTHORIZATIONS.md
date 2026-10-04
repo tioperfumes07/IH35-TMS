@@ -7134,7 +7134,13 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). Reefer trailer on 7 re
 action: DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-04-cc2-set-reefer-trailers-from-settlements.mts --apply --auth AUTH-210
   Dry-run first (default, no --apply).
 expires_at: 2026-10-04T21:56:29Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-04T02:01:38Z
+consumed_by: CC-2
+row_counts: setReeferTrailer updated 7 of 7: fuel.fuel_transactions c93014f7 -> 10222 (+ its expense line);
+  accounting.expense_lines e796d552, 41a626c8 -> 10209; d8c8db13, c2a8c40e -> 10222; 416a1b04 -> 10224; fc344d3a -> 10218.
+  0 deletes, 0 postings.
+proof_query: Reports > Reefer fuel credit — every listed row shows its trailer; SELECT trailer_id FROM the 7 ids -> all set.
 THIS AUTHORIZATION DOES NOT COVER: the 2026-09-08 T156 fill (load 13585 -> 10219: 10219 is typed DryVan, owned by IH 35
   Trucking LLC, frozen — its type is corrected first); the 13523-32 reefer line (receipt 99133290, also on 13534-28 — open
   duplicate); any equipment record; any other company.
