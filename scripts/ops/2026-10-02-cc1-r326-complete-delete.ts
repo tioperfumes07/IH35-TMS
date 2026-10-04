@@ -39,7 +39,7 @@ import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
-import { assertIsIntendedProduction } from "../lib/assert-not-production.mjs";
+import { assertIsIntendedProduction, assertNotProduction } from "../lib/assert-not-production.mjs";
 import { DOC_SOURCE as ORPHAN_DOC_SOURCE, orphanPlanProblems } from "../lib/orphan-gl.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
@@ -55,6 +55,7 @@ const SCOPE = (process.argv.find((a) => a.startsWith("--scope=")) ?? "").slice("
 // accounting.refuse_financial_row_delete arm that admits it under an owner AUTH; live documents that must be VOIDED
 // first; whether ih35_app has any DELETE policy). Read-only. The live path is a separate, held change.
 const R390_GATES = process.argv.includes("--r390-gates");
+const REHEARSAL_BRANCH = (process.argv.find((a) => a.startsWith("--rehearsal-branch=")) ?? "").slice("--rehearsal-branch=".length);
 const TRANSPORTATION_21 = ["13485", "13487", "13493", "13494", "13496", "13500", "13498", "13502", "13503", "13504", "13505", "13506", "13507", "13509", "13517", "13522", "13525", "13530", "13531", "13533", "13539"];
 const KEEP_DOCREFS = ["5817", "5818"];
 const TEST_ID = String.raw`(^|[^a-z])(e2e|demo|test|sample|fixture|practice|example)([^a-z]|$)`;
@@ -588,7 +589,14 @@ async function main() {
   await client.connect();
   console.log(APPLY ? `MODE: APPLY (${AUTH_ID}) — permanent delete` : "MODE: DRY RUN — read-only plan, nothing written");
   try {
-    if (APPLY) await assertIsIntendedProduction(client, { label: "scripts/ops/2026-10-02-cc1-r326-complete-delete.ts" });
+    // AUTH-400 — a purge must be rehearsable before it touches production: --rehearsal-branch=<neon branch id> runs the
+    // SAME APPLY (same AUTH, same proofs) only on that named non-production branch, refused anywhere else. Without it,
+    // APPLY runs only on the known production branch, exactly as before.
+    if (APPLY && REHEARSAL_BRANCH) {
+      await assertNotProduction(client, { label: "scripts/ops/2026-10-02-cc1-r326-complete-delete.ts (rehearsal)" });
+      const b = (await client.query<{ b: string | null }>(`SELECT current_setting('neon.branch_id', true) AS b`)).rows[0]?.b ?? null;
+      if (b !== REHEARSAL_BRANCH) throw new Error(`REHEARSAL REFUSED: connected to ${b ?? "(unknown)"}, --rehearsal-branch says ${REHEARSAL_BRANCH}`);
+    } else if (APPLY) await assertIsIntendedProduction(client, { label: "scripts/ops/2026-10-02-cc1-r326-complete-delete.ts" });
     await client.query(APPLY ? "BEGIN" : "BEGIN READ ONLY");
     if (APPLY) await client.query("SET LOCAL ROLE neondb_owner");
     await client.query("SET LOCAL app.bypass_rls = 'lucia'");
