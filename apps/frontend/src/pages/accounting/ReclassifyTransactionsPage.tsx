@@ -35,6 +35,7 @@ import {
   type ReclassifyBatchResult, type ReclassifyFacet, type ReclassifyFacets, type ReclassifyLine, type ReclassifyTreeAccount,
 } from "../../api/reclassify";
 import { docTarget, notReclassifiable } from "../../lib/reclassifyDrill";
+import { companyToday } from "../../lib/businessDate";
 
 const PAGE = 100;
 
@@ -42,7 +43,7 @@ const PAGE = 100;
 // posted through the To date, so a one-month window (the old last-month-to-today default) could never list what the
 // balance counts — and USMCA's whole book (operating since 2026-08-07) sits inside the fiscal year.
 function firstOfFiscalYear() { return `${new Date().getFullYear()}-01-01`; }
-function today() { return new Date().toISOString().slice(0, 10); }
+function today() { return companyToday(); }
 
 type SortKey = "date" | "type" | "num" | "name" | "memo" | "account" | "item" | "load" | "truck" | "driver" | "trailer" | "vendor" | "class" | "debit" | "credit" | "amount" | "balance";
 
