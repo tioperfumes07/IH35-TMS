@@ -1064,9 +1064,10 @@ export async function checkDriverCashAdvanceTieOutForCompany(client: DbClient, o
 
   const subRes = await client.query<{ cents: string | number }>(
     `
-      SELECT COALESCE(SUM(ROUND(outstanding_balance * 100)), 0)::bigint AS cents
-      FROM driver_finance.driver_advances
-      WHERE operating_company_id = $1::uuid AND status = 'outstanding'
+      -- ROUND 394 RULING 1 — the subledger is each advance's GL-derived outstanding (v_driver_advance_balances).
+      SELECT COALESCE(SUM(outstanding_cents), 0)::bigint AS cents
+      FROM driver_finance.v_driver_advance_balances
+      WHERE operating_company_id = $1::uuid
     `,
     [operatingCompanyId]
   );

@@ -24,11 +24,13 @@ export function collectFailures(src = loadSource()) {
   if (/\.catch\(\(\) => \(\{ rows: \[\{ cnt: 0 \}\]/.test(src)) {
     failures.push("reversal guard still swallows the query error to a hardcoded cnt:0");
   }
-  if (!/FROM driver_finance\.driver_liabilities/.test(src) || !/paid_to_date/.test(src)) {
-    failures.push("reversal guard does not read driver_liabilities.paid_to_date");
+  // ROUND 394 RULING 1 — "recovered" is read from the GL (driver_finance.v_driver_advance_balances.recovered_cents),
+  // not the liability's stored paid_to_date.
+  if (!/FROM driver_finance\.v_driver_advance_balances/.test(src) || !/recovered_cents/.test(src)) {
+    failures.push("reversal guard does not read the GL-derived recovered_cents (driver_finance.v_driver_advance_balances)");
   }
-  if (!/liabilityBalance && Number\(liabilityBalance\.paid_to_date \?\? 0\) > 0/.test(src)) {
-    failures.push("reversal guard does not block when paid_to_date is nonzero");
+  if (!/Number\(recoveredRes\.rows\[0\]\?\.recovered_cents \?\? 0\) > 0/.test(src)) {
+    failures.push("reversal guard does not block when the advance has any recovery on the GL");
   }
 
   return failures;
@@ -44,12 +46,12 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     [
       "block condition removed",
-      "if (liabilityBalance && Number(liabilityBalance.paid_to_date ?? 0) > 0) {",
+      "if (Number(recoveredRes.rows[0]?.recovered_cents ?? 0) > 0) {",
       "if (false) {",
     ],
     [
       "reverted to the broken settlement_lines query",
-      "SELECT paid_to_date, current_balance, original_amount\n          FROM driver_finance.driver_liabilities",
+      "SELECT recovered_cents::text\n          FROM driver_finance.v_driver_advance_balances",
       "SELECT COUNT(*)::int AS cnt\n          FROM driver_finance.settlement_lines\n          WHERE liability_id",
     ],
   ];
@@ -75,4 +77,4 @@ if (failures.length > 0) {
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log("verify-cash-advance-reversal-guard-fires: OK — a cash advance whose liability has any paid_to_date cannot be reversed");
+console.log("verify-cash-advance-reversal-guard-fires: OK — a cash advance with any recovery on the GL (v_driver_advance_balances.recovered_cents) cannot be reversed");

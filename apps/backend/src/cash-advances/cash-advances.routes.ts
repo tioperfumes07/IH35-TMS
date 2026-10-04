@@ -543,18 +543,22 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
       // economic event has already been recorded against THIS liability — by a settlement deduction,
       // by a manual mark-paid-off, or any other path — and reversing "no money moved" on top of that
       // would misstate the ledger. This is the correct-grain block, not an approximation.
-      const liabilityBalanceRes = await client.query(
+      //
+      // ROUND 394 RULING 1 — "recovered" is now read from the GL, not a stored copy: the advance's
+      // recovered_cents in driver_finance.v_driver_advance_balances (recoveries on the driver's own 1245
+      // sub-account, applied oldest-first — the same order the pay-run recovers in). Any recovery recorded
+      // against THIS advance blocks the reversal, exactly as paid_to_date > 0 did.
+      const recoveredRes = await client.query<{ recovered_cents: string }>(
         `
-          SELECT paid_to_date, current_balance, original_amount
-          FROM driver_finance.driver_liabilities
-          WHERE id = $1
+          SELECT recovered_cents::text
+          FROM driver_finance.v_driver_advance_balances
+          WHERE advance_id = $1::uuid
             AND operating_company_id = $2::uuid
           LIMIT 1
         `,
-        [advance.liability_id, companyId]
+        [advance.id, companyId]
       );
-      const liabilityBalance = liabilityBalanceRes.rows[0];
-      if (liabilityBalance && Number(liabilityBalance.paid_to_date ?? 0) > 0) {
+      if (Number(recoveredRes.rows[0]?.recovered_cents ?? 0) > 0) {
         return { code: 400 as const, error: "cannot_reverse_after_settlement_deductions" };
       }
 

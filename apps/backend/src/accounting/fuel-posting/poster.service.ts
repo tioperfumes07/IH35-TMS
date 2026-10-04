@@ -559,14 +559,17 @@ export async function getFuelAdvancesOutstandingForDriver(
           a.display_id::text,
           a.created_at::text,
           l.original_amount::text,
-          l.current_balance::text
+          (vb.outstanding_cents / 100.0)::text AS current_balance
         FROM driver_finance.driver_advances a
         JOIN driver_finance.driver_liabilities l ON l.id = a.liability_id
+        -- ROUND 394 RULING 1 — open = the advance's DERIVED outstanding (GL on the driver's own 1245
+        -- sub-account), never the liability's stored current_balance.
+        JOIN driver_finance.v_driver_advance_balances vb ON vb.advance_id = a.id
         WHERE a.operating_company_id = $1::uuid
           AND a.driver_id = $2::uuid
           AND lower(a.purpose) = 'fuel_deposit'
           AND COALESCE(a.disbursement_status, '') <> 'reversed'
-          AND COALESCE(l.current_balance, 0) > 0
+          AND vb.outstanding_cents > 0
         ORDER BY a.created_at DESC
       `,
       [operating_company_id, driver_id]

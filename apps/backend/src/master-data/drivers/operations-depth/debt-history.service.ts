@@ -45,7 +45,7 @@ export async function getDriverDebtHistory(
         operating_company_id::text,
         purpose AS advance_type,
         amount::text AS principal_amount,
-        outstanding_balance::text AS balance_remaining,
+        (SELECT round(vb.outstanding_cents / 100.0, 2) FROM driver_finance.v_driver_advance_balances vb WHERE vb.advance_id = driver_finance.driver_advances.id)::text AS balance_remaining,
         status,
         created_at::text
       FROM driver_finance.driver_advances

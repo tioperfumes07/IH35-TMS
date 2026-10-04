@@ -552,12 +552,14 @@ export async function registerBankingRoutes(app: FastifyInstance) {
                 da.id,
                 da.created_at::date AS txn_date,
                 COALESCE(da.memo, 'Cash advance outstanding') AS description,
-                da.outstanding_balance AS amount,
+                -- ROUND 394 RULING 1 — the advance's GL-derived outstanding, never a stored copy.
+                round(vb.outstanding_cents / 100.0, 2) AS amount,
                 'cash_advance'::text AS category,
                 'synced'::text AS status
               FROM driver_finance.driver_advances da
+              JOIN driver_finance.v_driver_advance_balances vb ON vb.advance_id = da.id
               WHERE da.operating_company_id = $1::uuid
-                AND da.status = 'outstanding'
+                AND vb.outstanding_cents > 0
               ORDER BY da.created_at DESC
               LIMIT $2 OFFSET $3
             `,

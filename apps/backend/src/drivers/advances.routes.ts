@@ -112,7 +112,7 @@ export async function registerDriverAdvancesRoutes(app: FastifyInstance) {
             disbursement_method, disbursement_status, recipient_type, recipient_name,
             linked_bill_id, linked_bill_payment_id, linked_bank_txn_id, linked_driver_bill_id,
             load_id, disbursement_reference, requires_owner_approval,
-            disbursed_at, posting_date, status, outstanding_balance, memo,
+            disbursed_at, posting_date, status, (SELECT round(vb.outstanding_cents / 100.0, 2) FROM driver_finance.v_driver_advance_balances vb WHERE vb.advance_id = driver_finance.driver_advances.id) AS outstanding_balance, memo,
             created_at, updated_at
           FROM driver_finance.driver_advances
           WHERE ${where.join(" AND ")}
