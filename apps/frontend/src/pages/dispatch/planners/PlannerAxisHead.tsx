@@ -8,7 +8,7 @@ import {
 import { formatPlannerDayLabel } from "./plannerDayLabel";
 
 const FROZEN =
-  "sticky left-0 z-20 border-b border-r-2 border-slate-400 bg-gray-50 px-2 py-1 text-left text-[11px] font-semibold text-slate-700";
+  "sticky left-0 z-20 border-b border-r-2 border-slate-400 bg-gray-50 px-2 py-1 text-left text-xs font-semibold text-slate-700";
 
 type PlannerAxisHeadProps = {
   days: string[];
@@ -27,7 +27,7 @@ export function PlannerAxisHead({ days, frozenColSpan, frozenDayCells }: Planner
           <th
             key={b.key}
             colSpan={b.span}
-            className="border-b border-l border-slate-300 bg-slate-50 px-1 py-0 text-left text-[11px] font-semibold text-slate-600"
+            className="border-b border-l border-slate-300 bg-slate-50 px-1 py-0 text-left text-xs font-semibold text-slate-600"
           >
             {b.label}
           </th>
@@ -49,7 +49,7 @@ export function PlannerAxisHead({ days, frozenColSpan, frozenDayCells }: Planner
 export function plannerFrozenThClass(sticky = false): string {
   return [
     sticky ? "sticky left-0 z-20" : "",
-    "border-b border-r-2 border-slate-400 bg-gray-50 px-2 py-1 text-left text-[11px] font-semibold text-slate-700",
+    "border-b border-r-2 border-slate-400 bg-gray-50 px-2 py-1 text-left text-xs font-semibold text-slate-700",
   ]
     .filter(Boolean)
     .join(" ");
