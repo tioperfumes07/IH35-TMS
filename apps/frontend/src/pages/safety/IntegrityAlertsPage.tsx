@@ -295,7 +295,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
         <button
           type="button"
           className="rounded-sm border px-3 py-1 text-xs font-semibold"
-          style={pageTab === "inbox" ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#cbd5e1", color: "#4B5563" }}
+          style={pageTab === "inbox" ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#E5E7EB", color: "#4B5563" }}
           onClick={() => setPageTab("inbox")}
         >
           Alerts inbox
@@ -303,7 +303,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
         <button
           type="button"
           className="rounded-sm border px-3 py-1 text-xs font-semibold"
-          style={pageTab === "rules" ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#cbd5e1", color: "#4B5563" }}
+          style={pageTab === "rules" ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#E5E7EB", color: "#4B5563" }}
           onClick={() => setPageTab("rules")}
         >
           Rules

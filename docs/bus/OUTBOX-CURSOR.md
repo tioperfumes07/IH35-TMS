@@ -1,8 +1,14 @@
-## 2026-10-04T15:24Z · BANK-F91521 Safety filter leftover border WIRED · this PR
+## 2026-10-04T15:32Z · BANK-F91522 Integrity leftover pill border WIRED · this PR
 
-DONE: SafetyDashboardFilter inactive-pill leftover #cbd5e1 → house border #E5E7EB; leftover refuse on verify-safety-filter-chrome; EVEN 1230 --selftest + live.
+DONE: IntegrityReportsTab + IntegrityAlertsPage inactive-pill leftover #cbd5e1 → house border #E5E7EB; leftover refuse on 4088 + 3996 --selftest + live.
 
-NEXT: leftover muted chrome (IntegrityReports same pill / WO pie stay) · skip pile parked · HH14 no migrations this tick.
+NEXT: leftover muted chrome (CreateWO/PlannerGrid #cbd5e1 / WO pie stay) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T15:30Z · BANK-F91521 Safety filter leftover border WIRED CI · tip `97f8553aba`
+
+DONE: #25263 — SafetyDashboardFilter leftover #cbd5e1 → #E5E7EB; verify-steps/1230 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (IntegrityReports/IntegrityAlerts same pill / WO pie stay) · skip pile parked · HH14 no migrations this tick.
 
 ## 2026-10-04T15:20Z · BANK-F91520 HOS status-dot leftover muted WIRED CI · tip `a363d1a357`
 
