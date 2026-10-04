@@ -20,6 +20,7 @@ import { formatQueryErrorDetail } from "../../lib/tableError";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { Button } from "../../components/Button";
+import { entityLabel } from "../../lib/entity-label";
 
 function cents(v: number | string | null | undefined): number {
   const n = typeof v === "string" ? Number(v) : v ?? 0;
@@ -324,7 +325,11 @@ function PurchaseDetailCard(props: {
           {detail.journal_entry_id ? (
             <div className="text-xs text-gray-600">
               Funding JE:{" "}
-              <EntityLink kind="journal_entry" id={detail.journal_entry_id} label={detail.journal_entry_id.slice(0, 8)} />
+              <EntityLink
+                kind="journal_entry"
+                id={detail.journal_entry_id}
+                label={entityLabel(detail.journal_entry_memo ?? null, detail.journal_entry_id, "Journal entry")}
+              />
               {detail.factoring_advance_id ? (
                 <>
                   {" · "}
@@ -332,7 +337,7 @@ function PurchaseDetailCard(props: {
                   <EntityLink
                     kind="factoring_advance"
                     id={detail.factoring_advance_id}
-                    label={detail.factoring_advance_display_id ?? detail.factoring_advance_id.slice(0, 8)}
+                    label={entityLabel(detail.factoring_advance_display_id ?? null, detail.factoring_advance_id, "Advance")}
                   />
                 </>
               ) : null}

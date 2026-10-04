@@ -7,10 +7,13 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { isDispatchMapProviderConfigured } from "../../lib/dispatch-map-provider";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 
 type MapPosition = {
   load_uuid: string;
   unit_uuid: string;
+  load_number?: string | null;
+  unit_number?: string | null;
   driver_uuid?: string | null;
   lat: number;
   lng: number;
@@ -112,8 +115,24 @@ export function MapView() {
         >
           {listRows.map((p) => (
             <li key={`${p.load_uuid}-${p.unit_uuid}`} className="flex flex-wrap gap-3 px-3 py-2 text-slate-700">
-              <span>Load {p.load_uuid.slice(0, 8)}</span>
-              <span>Unit {p.unit_uuid.slice(0, 8)}</span>
+              <span>
+                Load{" "}
+                <EntityLinkOrTombstone
+                  kind="load"
+                  id={p.load_uuid}
+                  name={p.load_number}
+                  noun="Load"
+                />
+              </span>
+              <span>
+                Unit{" "}
+                <EntityLinkOrTombstone
+                  kind="unit"
+                  id={p.unit_uuid}
+                  name={p.unit_number}
+                  noun="Unit"
+                />
+              </span>
               <span>
                 {p.lat.toFixed(4)}, {p.lng.toFixed(4)}
               </span>

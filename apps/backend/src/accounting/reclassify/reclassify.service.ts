@@ -1039,6 +1039,12 @@ export async function listReclassifyBatches(userId: string, operatingCompanyId: 
               b.to_account_id::text, a.account_number AS to_account_number, a.account_name AS to_account_name,
               b.to_class_id::text, c.class_name AS to_class_name, b.to_location_id::text, loc.location_name AS to_location_name,
               b.to_entity_uuid::text, b.to_entity_type,
+              CASE b.to_entity_type
+                WHEN 'vendor' THEN (SELECT v.vendor_name FROM mdata.vendors v WHERE v.id = b.to_entity_uuid)
+                WHEN 'customer' THEN (SELECT cu.customer_name FROM mdata.customers cu WHERE cu.id = b.to_entity_uuid)
+                WHEN 'driver' THEN (SELECT concat_ws(' ', d.first_name, d.last_name) FROM mdata.drivers d WHERE d.id = b.to_entity_uuid)
+                WHEN 'unit' THEN (SELECT un.unit_number::text FROM mdata.units un WHERE un.id = b.to_entity_uuid)
+                ELSE NULL END AS to_entity_name,
               b.undone_at::text, b.undo_reason, u.email AS created_by_email
          FROM accounting.reclassify_batches b
          LEFT JOIN catalogs.accounts a ON a.id = b.to_account_id

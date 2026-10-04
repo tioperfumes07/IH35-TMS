@@ -162,6 +162,7 @@ export type FactoringPurchaseLine = {
 
 export type FactoringPurchaseDetail = FactoringPurchaseListRow & {
   factoring_advance_display_id?: string | null;
+  journal_entry_memo?: string | null;
   bank_account_id?: string | null;
   bank_transaction_date?: string | null;
   bank_transaction_amount_cents?: number | string | null;

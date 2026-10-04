@@ -27,6 +27,7 @@ import { formatDateQboList } from "../../lib/formatDate";
 import { formatCurrencyFromCents } from "../lists/accounting/coa-list-utils";
 import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
+import { entityLabel } from "../../lib/entity-label";
 import { listClassesForJe, listCoaAccountsForJe } from "../../api/accounting";
 import { listCustomers, listVendors } from "../../api/mdata";
 import { FuelStopLocationPicker } from "../../components/locations/FuelStopLocationPicker";
@@ -466,11 +467,13 @@ export function ReclassifyTransactionsPage() {
 
           {lastResult ? (
             <div className="mt-3 rounded border border-slate-200 bg-slate-100 p-2 text-xs" data-testid="reclassify-result">
-              <div className="font-semibold">Batch {lastResult.batch_id.slice(0, 8)}: {lastResult.lines_applied} line(s) reclassified ({formatCurrencyFromCents(lastResult.amount_cents_moved)} moved), {lastResult.lines_refused} refused.</div>
+              <div className="font-semibold">
+                Reclassify complete: {lastResult.lines_applied} line(s) reclassified ({formatCurrencyFromCents(lastResult.amount_cents_moved)} moved), {lastResult.lines_refused} refused.
+              </div>
               <ul className="mt-1 space-y-0.5">
                 {lastResult.documents.map((d, i) => (
                   <li key={i}>
-                    {d.document_number ?? d.source_transaction_id ?? "line"} ({d.source_transaction_type ?? "journal entry"}): {d.refusal_reason ? <span className="text-red-700">refused — {d.refusal_reason}</span> : <>{d.lines_applied} line(s) → JE <EntityLink kind="journal_entry" id={d.reclass_journal_entry_id} label={d.reclass_journal_entry_id?.slice(0, 8) ?? ""} />{d.document_updated ? " · document updated" : <span className="text-slate-700 font-semibold"> · document NOT updated: {d.document_update_note}</span>}</>}
+                    {d.document_number ?? d.source_transaction_id ?? "line"} ({d.source_transaction_type ?? "journal entry"}): {d.refusal_reason ? <span className="text-red-700">refused — {d.refusal_reason}</span> : <>{d.lines_applied} line(s) → JE {d.reclass_journal_entry_id ? <EntityLink kind="journal_entry" id={d.reclass_journal_entry_id} label={d.document_number ? `Reclass · ${d.document_number}` : entityLabel(null, d.reclass_journal_entry_id, "Journal entry")} /> : "—"}{d.document_updated ? " · document updated" : <span className="text-slate-700 font-semibold"> · document NOT updated: {d.document_update_note}</span>}</>}
                   </li>
                 ))}
               </ul>
@@ -486,7 +489,7 @@ export function ReclassifyTransactionsPage() {
                   <tr key={b.id} className="border-t border-gray-100">
                     <td className="p-2 whitespace-nowrap">{formatDateQboList(b.created_at)}</td>
                     <td className="p-2">{b.created_by_email ?? "—"}</td>
-                    <td className="p-2">{[b.to_account_name ? `→ ${formatAccountDisplayLabel({ account_name: b.to_account_name, account_number: b.to_account_number }, { showNumber: showAccountNumbers })}` : null, b.to_class_name ? `class → ${b.to_class_name}` : null, b.to_location_name ? `location → ${b.to_location_name}` : null, b.to_entity_uuid ? `${b.to_entity_type} → ${b.to_entity_uuid.slice(0, 8)}` : null].filter(Boolean).join(" · ")}</td>
+                    <td className="p-2">{[b.to_account_name ? `→ ${formatAccountDisplayLabel({ account_name: b.to_account_name, account_number: b.to_account_number }, { showNumber: showAccountNumbers })}` : null, b.to_class_name ? `class → ${b.to_class_name}` : null, b.to_location_name ? `location → ${b.to_location_name}` : null, b.to_entity_uuid ? `${b.to_entity_type ?? "entity"} → ${entityLabel(b.to_entity_name ?? null, b.to_entity_uuid, b.to_entity_type === "vendor" ? "Vendor" : b.to_entity_type === "customer" ? "Customer" : b.to_entity_type === "driver" ? "Driver" : b.to_entity_type === "unit" ? "Unit" : "Entity")}` : null].filter(Boolean).join(" · ")}</td>
                     <td className="p-2 max-w-[18rem] truncate" title={b.reason}>{b.reason}</td>
                     <td className="p-2 text-right tabular-nums">{b.lines_applied}/{b.lines_requested}{b.lines_refused ? ` (${b.lines_refused} refused)` : ""}</td>
                     <td className="p-2 text-right tabular-nums">{formatCurrencyFromCents(b.amount_cents_moved)}</td>
