@@ -41,7 +41,7 @@ const COLUMNS: Array<ParityColumn<AdminActivityItem>> = [
     key: "action",
     label: "Action",
     sortable: true,
-    render: (row) => <span className="font-mono text-[11px] text-gray-900">{row.action}</span>,
+    render: (row) => <span className="font-mono text-xs text-gray-900">{row.action}</span>,
   },
   {
     key: "entity_type",
@@ -54,7 +54,7 @@ const COLUMNS: Array<ParityColumn<AdminActivityItem>> = [
     key: "payload_preview",
     label: "Payload preview",
     sortable: true,
-    render: (row) => <span className="font-mono text-[11px] text-gray-700">{row.payload_preview}</span>,
+    render: (row) => <span className="font-mono text-xs text-gray-700">{row.payload_preview}</span>,
   },
 ];
 
@@ -221,8 +221,8 @@ export function ActivityLogPage() {
             rowTestId={(row) => `admin-activity-log-row-${row.id}`}
             renderExpanded={(row) => (
               <div>
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Full payload (JSON)</div>
-                <pre className="mt-2 max-h-[420px] overflow-auto whitespace-pre-wrap wrap-break-word rounded-sm border border-gray-200 bg-white p-3 text-[11px] text-gray-900">
+                <div className="text-xs font-semibold uppercase tracking-wide text-gray-600">Full payload (JSON)</div>
+                <pre className="mt-2 max-h-[420px] overflow-auto whitespace-pre-wrap wrap-break-word rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-900">
                   {JSON.stringify(row.payload ?? {}, null, 2)}
                 </pre>
               </div>
