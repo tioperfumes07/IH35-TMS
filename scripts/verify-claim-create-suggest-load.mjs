@@ -31,6 +31,9 @@ export function assertClaimCreateSuggestLoad(sources) {
   if (!src.includes("claim-create-load-suggested")) {
     problems.push(`${MODAL}: missing data-testid claim-create-load-suggested for auto-fill honesty.`);
   }
+  // BANK-F91343 leftover refuse — ClaimCreateModal page-scoped text token ratchet
+  if (src.includes("text-[11px]")) problems.push(`${MODAL}: leftover text-[11px]`);
+  if (src.includes("#8A92AB")) problems.push(`${MODAL}: leftover off-scale muted #8A92AB`);
   return problems;
 }
 
@@ -49,6 +52,14 @@ function main() {
     });
     if (broken.length < 2) {
       console.error(`${LABEL} SELFTEST FAIL — planted defect weak (${broken.length})`);
+      process.exit(1);
+    }
+    // BANK-F91343 leftover plant
+    const leftoverPlant = assertClaimCreateSuggestLoad({
+      [MODAL]: read(MODAL) + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n',
+    });
+    if (!leftoverPlant.some((p) => p.includes("leftover text-[11px]"))) {
+      console.error(`${LABEL} SELFTEST FAIL — leftover plant escaped`);
       process.exit(1);
     }
     console.log(`${LABEL} SELFTEST PASS (${broken.length} planted failures)`);
