@@ -13197,5 +13197,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-wo-linked-expense-human-labels"
+  },
+  "15721": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-recurring-bills"
   }
 }
