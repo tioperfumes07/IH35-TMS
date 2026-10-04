@@ -1,3 +1,9 @@
+## 2026-10-04T07:48Z · BANK-F91444 C-37 house table format WIRED CI · tip `86512f16cc`
+
+DONE: #25186 — verify-steps/1176 now runs ops/verify-c37-house-table-format --selftest.
+
+NEXT: BANK-F91445 wire C-23 kanban stamp into 3956 · C-21/C-22 fail=triage · skip pile parked · HH07 no migrations.
+
 ## 2026-10-04T07:42Z · BANK-F91443 C-06 viewport auto-adjust WIRED CI · tip `b35f63a232`
 
 DONE: #25185 — verify-steps/3122 now runs ops/verify-c06-viewport-auto-adjust --selftest.
