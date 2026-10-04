@@ -74,6 +74,7 @@ import { apiRequest } from "../../api/client";
 import { FACTORING_TAB_PATH, factoringTabFromPath } from "../../router/route-manifest";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
+import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDocumentsNote";
 import { NotApplicable } from "../../components/money/NotApplicable";
 import type { NaReason } from "../../design/money-design-system";
 import { CollapsedListFilters } from "../../components/table/CollapsedListFilters";
@@ -1077,7 +1078,22 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               testId="factoring-kpi-outstanding-liability"
               label="Outstanding Liability Balance"
               value={summaryQuery.isError ? null : fmtCurrency(summary?.outstanding_liability_balance)}
-              hint="Point-in-time only — no daily history to trend"
+              hint={
+                summaryQuery.isError ? (
+                  "Point-in-time only — no daily history to trend"
+                ) : (
+                  <div className="space-y-1">
+                    <div>Point-in-time only — no daily history to trend</div>
+                    <div>
+                      Cleared{" "}
+                      {fmtCurrency((summary?.cleared_open_cents ?? 0) / 100)}. Applied factoring
+                      advances that have not been matched or categorized in Banking are named not
+                      cleared.
+                    </div>
+                    <UnclearedDocumentsNote docs={summary?.uncleared_documents ?? []} />
+                  </div>
+                )
+              }
               to={FACTORING_TAB_PATH.recourse_pipeline}
             />
             <DrillKpiCard
@@ -1489,6 +1505,11 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
             <div className="bg-gray-50 p-2">
               <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Total Loan Balance</div>
               <div className="text-xs font-medium text-gray-900">{fmtCurrency(summary?.outstanding_liability_balance)}</div>
+              <div className="mt-1 text-xs text-[#4B5563]">
+                Cleared {fmtCurrency((summary?.cleared_open_cents ?? 0) / 100)}. Applied factoring
+                advances that have not been matched or categorized in Banking are named not cleared.
+              </div>
+              <UnclearedDocumentsNote docs={summary?.uncleared_documents ?? []} />
             </div>
             <div className="bg-gray-50 p-2">
               <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Total Reserve (Savings)</div>

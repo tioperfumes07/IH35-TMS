@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { attachUncleared, type UnclearedDocument } from "../uncleared-applied-documents.js";
+import {
+  attachUncleared,
+  factoringClearedOpenCents,
+  type UnclearedDocument,
+} from "../uncleared-applied-documents.js";
 
 describe("attachUncleared — 363-CUR-A", () => {
   it("adds uncleared payments back onto the cleared balance and names them", () => {
@@ -22,5 +26,10 @@ describe("attachUncleared — 363-CUR-A", () => {
     expect(row.uncleared_cents).toBe(50_000);
     expect(row.uncleared_documents).toHaveLength(1);
     expect(row.uncleared_documents[0]?.document_number).toBe("500");
+  });
+
+  it("factoring liability cleared is GL minus unmatched wires, never plus", () => {
+    expect(factoringClearedOpenCents(200_000, 50_000)).toBe(150_000);
+    expect(factoringClearedOpenCents(200_000, 50_000)).not.toBe(250_000);
   });
 });

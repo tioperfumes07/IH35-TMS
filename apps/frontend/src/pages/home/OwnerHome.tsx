@@ -50,7 +50,7 @@ import { AttentionList } from "./AttentionList";
 import { FleetUtilizationGauge } from "./charts/FleetUtilizationGauge";
 import { WeeklyRevenueChart } from "./charts/WeeklyRevenueChart";
 import { WOStatusPieChart } from "./charts/WOStatusPieChart";
-import { formatShortDate, formatUsdFromCents, HomeKpiCard } from "./HomeKpiCard";
+import { FactoringBalanceClearedNote, formatShortDate, formatUsdFromCents, HomeKpiCard } from "./HomeKpiCard";
 import { HomeKpiRangeToggle, revenueKpiLabel } from "./HomeKpiRangeToggle";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 import { entityLabel } from "../../lib/entity-label";
@@ -554,7 +554,12 @@ export function OwnerHome({ auth }: Props) {
                 ? "This entity has no factoring contract"
                 : fb.status === "unverifiable" || fb.status === "accounting_exception"
                   ? `Factoring balance ${fb.status}${fb.unverifiable_reason ? `: ${unverifiableReasonText(fb.unverifiable_reason)}` : ""}`
-                  : `${fb.invoices_factored ?? 0} invoices factored`
+                  : (
+                    <>
+                      <div>{`${fb.invoices_factored ?? 0} invoices factored`}</div>
+                      <FactoringBalanceClearedNote fb={fb} />
+                    </>
+                  )
           }
         />
       </section>

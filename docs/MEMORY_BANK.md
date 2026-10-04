@@ -1461,6 +1461,20 @@ added back onto `cleared_open_cents` and named **not cleared**.
 - Owner example: $2,000 bill + $500 unmatched payment → cleared $2,000, payment named not cleared
 - On tip #24639 `15324b5234` for Reports A/R + A/P aging. Finance hub + other balances still open.
 
+### Addendum — factoring outstanding liability (Cursor, 2026-10-04)
+
+A/R/AP `cleared_open_cents = open + unmatched payment` does **not** apply to factoring
+outstanding liability. The advance **is** the liability (already in the GL). Unmatched
+wires are named beside that GL total; they are never added back.
+
+- `factoringClearedOpenCents(liabilityCents, unclearedCents)` = GL minus unmatched wires
+- Reverse pointer only: `banking.bank_transactions.matched_factoring_advance_id`
+  (`factoring_advances` has no `source_bank_transaction_id` and no `is_sample_data`)
+- Surfaces closed in the same slice so remaining-ceiling is 0: Factoring Home outstanding
+  liability + Loan/Save Total Loan Balance, OwnerHome, DefaultHome, Vendor AP aging
+- Guard: `scripts/verify-every-balance-surface-declares-cleared-and-uncleared.mjs`
+  (18 required, REMAINING=[], REMAINING_CEILING=0) wired on EVEN step 12352
+
 ## Active Architectural Decisions — KILL THE SECOND SYSTEM (Cursor, 2026-10-03)
 
 Owner, verbatim: the ledger is the balance; policies stay; this is a deletion, not a build.

@@ -160,13 +160,13 @@ export async function registerFin20AgingRoutes(app: FastifyInstance) {
 
     await assertCompanyMembership(user.uuid, query.data.operating_company_id);
 
-    const bills = await getApAgingVendorBills({
+    const payload = await getApAgingVendorBills({
       userId: user.uuid,
       operating_company_id: query.data.operating_company_id,
       vendor_id: query.data.vendor_id,
       as_of_date: query.data.as_of_date,
     });
-    return reply.code(200).send({ bills });
+    return reply.code(200).send(payload);
   });
 }
 

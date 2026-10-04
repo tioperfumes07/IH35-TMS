@@ -349,6 +349,15 @@ export type HomeFactoringBalance = {
   invoices_factored: number | null;
   status?: "ok" | "empty" | "unverifiable" | "accounting_exception";
   unverifiable_reason?: string | null;
+  /** 363-CUR-A — unmatched Faro advances named beside the liability. Cents, not dollars. */
+  uncleared_documents?: Array<{
+    document_type: string;
+    document_number: string;
+    document_date: string;
+    amount_cents: number;
+  }>;
+  uncleared_cents?: number;
+  cleared_open_cents?: number;
   /** Signed diagnostics (orphan legs, anomalies) — never used as Faro headline. */
   diagnostics?: {
     orphan_liability_role_cents?: number;
@@ -628,6 +637,9 @@ export async function fetchHomeFactoringBalance(companyId: string): Promise<Home
   );
   const reserve = nullableCents(raw.reserve_receivable_cents ?? raw.reserveCents);
   const invoices = nullableCents(raw.invoice_count ?? raw.invoices_factored);
+  const uncleared_documents = Array.isArray(raw.uncleared_documents)
+    ? (raw.uncleared_documents as HomeFactoringBalance["uncleared_documents"])
+    : [];
   return {
     outstanding_cents: liability,
     reserve_receivable_cents: reserve,
@@ -635,6 +647,9 @@ export async function fetchHomeFactoringBalance(companyId: string): Promise<Home
     status,
     unverifiable_reason:
       typeof raw.unverifiable_reason === "string" ? raw.unverifiable_reason : null,
+    uncleared_documents,
+    uncleared_cents: nullableCents(raw.uncleared_cents) ?? 0,
+    cleared_open_cents: nullableCents(raw.cleared_open_cents) ?? liability ?? undefined,
   };
 }
 

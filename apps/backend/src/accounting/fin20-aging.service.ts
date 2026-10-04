@@ -376,7 +376,12 @@ export async function getApAgingVendorBills(input: {
   operating_company_id: string;
   vendor_id: string;
   as_of_date?: string;
-}): Promise<ApAgingBillRow[]> {
+}): Promise<{
+  bills: ApAgingBillRow[];
+  uncleared_documents: UnclearedDocument[];
+  uncleared_cents: number;
+  cleared_open_cents: number;
+}> {
   return withCurrentUser(input.userId, async (client) => {
     await scopeCompany(client, input.operating_company_id);
 
@@ -460,7 +465,7 @@ export async function getApAgingVendorBills(input: {
           [input.operating_company_id, input.vendor_id]
         );
 
-    return res.rows.map((r) => ({
+    const bills = res.rows.map((r) => ({
       bill_id: String(r.bill_id),
       bill_number: r.bill_number == null ? null : String(r.bill_number),
       status: String(r.status ?? ""),
@@ -474,5 +479,19 @@ export async function getApAgingVendorBills(input: {
       journal_entry_id: r.journal_entry_id == null ? null : String(r.journal_entry_id),
       journal_entry_memo: r.journal_entry_memo == null ? null : String(r.journal_entry_memo),
     }));
+    const asOf = input.as_of_date ?? companyBusinessDate();
+    const unclearedAll = await listUnclearedBillPayments(client, input.operating_company_id, asOf);
+    const [row] = attachUncleared(
+      [{ vendor_id: input.vendor_id, open_cents: bills.reduce((s, b) => s + b.open_cents, 0) }],
+      unclearedAll,
+      "vendor_id",
+      (r) => r.open_cents,
+    );
+    return {
+      bills,
+      uncleared_documents: row.uncleared_documents,
+      uncleared_cents: row.uncleared_cents,
+      cleared_open_cents: row.cleared_open_cents,
+    };
   });
 }

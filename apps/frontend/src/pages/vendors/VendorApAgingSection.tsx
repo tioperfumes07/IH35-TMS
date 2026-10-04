@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { AR_AP_AGING_UI_FLAG, getApAgingBills } from "../../api/arApAging";
+import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDocumentsNote";
 import { companyToday } from "../../lib/businessDate";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -33,6 +34,7 @@ export function VendorApAgingSection({ operatingCompanyId, vendorId }: Props) {
   if (flagLoading || !enabled) return null;
 
   const bills = (query.data?.bills ?? []).filter((b) => b.open_cents > 0);
+  const clearedCents = query.data?.cleared_open_cents ?? bills.reduce((s, b) => s + b.open_cents, 0);
 
   return (
     <DataPanel title="AP aging (open bills)">
@@ -43,10 +45,15 @@ export function VendorApAgingSection({ operatingCompanyId, vendorId }: Props) {
         />
       ) : query.isLoading ? (
         <p className="text-xs text-gray-500">Loading open bills…</p>
-      ) : bills.length === 0 ? (
+      ) : bills.length === 0 && (query.data?.uncleared_documents?.length ?? 0) === 0 ? (
         <p className="text-xs text-gray-500">No open bills for this vendor.</p>
       ) : (
         <div className="space-y-1" data-testid="vendor-ap-aging-reverse">
+          <div className="rounded-sm border border-gray-200 bg-[#F7F8FA] px-2 py-1.5 text-xs text-[#1F2A44]">
+            Cleared {formatUsdCents(clearedCents)}. Applied payments that have not been matched or
+            categorized in Banking are named not cleared.
+            <UnclearedDocumentsNote docs={query.data?.uncleared_documents ?? []} />
+          </div>
           {bills.map((bill) => (
             <div key={bill.bill_id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 px-2 py-1.5 text-xs">
               <span className="flex items-center gap-2">
