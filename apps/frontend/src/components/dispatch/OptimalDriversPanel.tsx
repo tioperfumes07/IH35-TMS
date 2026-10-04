@@ -85,9 +85,9 @@ export function OptimalDriversPanel({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-xs font-bold uppercase tracking-wide text-slate-600">Ranked driver suggestions</p>
-          <p className="text-[11px] text-slate-500">Top 10 by HOS, proximity, eligibility, and recent performance</p>
+          <p className="text-xs text-slate-500">Top 10 by HOS, proximity, eligibility, and recent performance</p>
         </div>
-        <label className="flex items-center gap-1.5 text-[11px] text-slate-700">
+        <label className="flex items-center gap-1.5 text-xs text-slate-700">
           <input
             type="checkbox"
             checked={manualOverride}
@@ -154,7 +154,7 @@ export function OptimalDriversPanel({
                     </span>
                     {!d.hos_safe ? " · HOS risk" : ""}
                   </span>
-                  <span className="font-mono text-[11px] text-slate-700">{fmtScore(d.total_score)} pts</span>
+                  <span className="font-mono text-xs text-slate-700">{fmtScore(d.total_score)} pts</span>
                 </span>
                 <span className="text-xs text-slate-500">{breakdownLabel(d)}</span>
                 {blockedByHos ? <span className="text-xs text-slate-700">Insufficient HOS for estimated drive</span> : null}
@@ -166,7 +166,7 @@ export function OptimalDriversPanel({
       </ul> : null}
 
       {showOverrideWarning ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-[11px] text-slate-700">
+        <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-xs text-slate-700">
           Selected driver is not the top-ranked suggestion. Enable <strong>Manual override</strong> to confirm a non-optimal pick.
         </div>
       ) : null}
