@@ -25,6 +25,7 @@ const stateMachine = read("apps/backend/src/usmca/activation/activation-state-ma
 const routes = read("apps/backend/src/usmca/activation/activation.routes.ts");
 const panel = read("apps/frontend/src/pages/admin/USMCAActivationPanel.tsx");
 const adminPage = read("apps/frontend/src/pages/admin/AdminPage.tsx");
+const launchReadiness = read("apps/frontend/src/pages/admin/LaunchReadinessPage.tsx");
 const runbook = read("docs/runbooks/USMCA-JULY-2026-LAUNCH-RUNBOOK.md");
 const rollbackPlan = read("docs/runbooks/USMCA-ROLLBACK-PLAN.md");
 const trainingEN = read("data/training/usmca-driver-onboarding-EN.md");
@@ -91,7 +92,13 @@ if (process.argv.includes("--selftest")) {
   routeMutations.forEach((mutated, index) => {
     if (!activationRouteFailures(mutated).length) fail(`route selftest mutation ${index + 1} survived`);
   });
-  console.log(`[${LABEL}] SELFTEST PASS — ${mutations.length + routeMutations.length} launch-contract mutations rejected`);
+  // BANK-F91376 leftover plant — LaunchReadinessPage page-scoped text token ratchet
+  const leftoverPlant = launchReadiness + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!(leftoverPlant.includes("text-[11px]") && leftoverPlant.includes("#8A92AB"))) {
+    fail("leftover plant escaped");
+  }
+  if (!leftoverPlant.includes("text-[11px]")) fail("leftover refuse inert");
+  console.log(`[${LABEL}] SELFTEST PASS — ${mutations.length + routeMutations.length + 1} launch-contract mutations rejected`);
 }
 
 // Migration checks
@@ -125,6 +132,10 @@ if (!panel.includes("Transition to")) fail("panel must have Transition button");
 
 // Admin page check
 if (!adminPage.includes("USMCAActivationPanel")) fail("AdminPage must include USMCAActivationPanel");
+
+// BANK-F91376 leftover refuse — LaunchReadinessPage page-scoped text token ratchet
+if (launchReadiness.includes("text-[11px]")) fail("LaunchReadinessPage.tsx: leftover text-[11px]");
+if (launchReadiness.includes("#8A92AB")) fail("LaunchReadinessPage.tsx: leftover off-scale muted #8A92AB");
 
 // Runbook checks
 if (!runbook.includes("T-7 days")) fail("runbook must include T-7 days section");
