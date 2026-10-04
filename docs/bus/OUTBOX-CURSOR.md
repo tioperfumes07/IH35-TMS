@@ -1,3 +1,11 @@
+## 2026-10-04T06:25Z · BANK-F91432 B-1 register connectivity WIRED CI · tip `f4d9e5f189`
+
+DONE: #25172 — verify-steps/1158 now runs ops/verify-b1-account-register + online-banking + cash-advance match banners.
+
+LIVE PROOF: three B-1 ops --selftest + paritytable --selftest exit 0.
+
+NEXT: wire B-2 recon ops into an existing EVEN step · skip pile parked · HH06 no migrations.
+
 ## 2026-10-04T06:18Z · BANK-F91431 B-5 ops batch WIRED CI · tip `de05e37ad4`
 
 DONE: #25170 — verify-steps/12270 now runs ops/verify-b5-reclassify-batch (+ change-location). OUTBOX F91427..F91430 stamped.
