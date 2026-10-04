@@ -26,7 +26,7 @@ export function PageHeader({ backHref, onBack, breadcrumb, title, subtitle, acti
   return (
     <div className="mb-2 shrink-0">
       {breadcrumb && breadcrumb.length > 0 ? (
-        <div className="mb-1 text-[11px] uppercase tracking-wide text-gray-500">
+        <div className="mb-1 text-xs uppercase tracking-wide text-gray-500">
           {breadcrumb.map((item, index) => (
             <Fragment key={`${item}-${index}`}>
               <span>{item}</span>
@@ -84,7 +84,7 @@ export function PageHeader({ backHref, onBack, breadcrumb, title, subtitle, acti
             }}
           >
               <ArrowLeft className="h-4 w-4" />
-              <span className="text-[11px] font-semibold">Back</span>
+              <span className="text-xs font-semibold">Back</span>
           </button>
           {/*
             The title must NOT be squeezed by the subtitle. Observed live on /dispatch: the subtitle
