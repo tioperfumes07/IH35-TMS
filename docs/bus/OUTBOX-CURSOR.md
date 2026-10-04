@@ -1,3 +1,15 @@
+## 2026-10-04T18:15Z · BANK-F91537 LaneProfit leftover frame slate · this PR
+
+DONE: LaneProfitabilityPage leftover frame border-slate-* / divide-slate-* → house #E5E7EB; box-in-box needles retargeted (not deleted); leftover refuse on EVEN 2320 --selftest + live.
+
+NEXT: leftover muted chrome (remaining slate-* pages / skip pile) · skip pile parked · HH15 leftovers first.
+
+## 2026-10-04T18:05Z · BANK-F91536 HosTracker leftover slate classes WIRED CI · tip `7bb83f7fdd`
+
+DONE: #25278 — HosTrackerSection leftover Tailwind slate-* → house tokens; leftover refuse on EVEN 4036 --selftest + live.
+
+NEXT: leftover muted chrome (LaneProfit frame drain / remaining slate-* / skip pile) · skip pile parked · HH15 leftovers first.
+
 ## 2026-10-04T18:05Z · BANK-F91536 HosTracker leftover slate classes · this PR
 
 DONE: HosTrackerSection leftover Tailwind slate-* → house #1F2A44 / #0F1219 / #4B5563 / #E5E7EB / #F7F8FA; leftover refuse on EVEN 4036 --selftest + live.

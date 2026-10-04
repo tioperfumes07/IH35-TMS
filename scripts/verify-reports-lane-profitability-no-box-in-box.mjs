@@ -45,7 +45,7 @@ export function collectProblems(section) {
     problems.push(`${TARGET}: missing chart section header`);
   }
   const frames = section.match(
-    /<section className="overflow-hidden rounded-sm border border-slate-200 bg-white">/g,
+    /<section className="overflow-hidden rounded-sm border border-\[#E5E7EB\] bg-white">/g,
   );
   if (!frames || frames.length < 2) {
     problems.push(
@@ -54,7 +54,7 @@ export function collectProblems(section) {
   }
   const nested = section.match(NESTED_TILE_RE) ?? [];
   const innerNested = nested.filter(
-    (m) => !m.includes("overflow-hidden rounded-sm border border-slate-200 bg-white"),
+    (m) => !m.includes("overflow-hidden rounded-sm border border-[#E5E7EB] bg-white"),
   );
   if (innerNested.length > 0) {
     problems.push(
@@ -64,13 +64,13 @@ export function collectProblems(section) {
   if (/grid gap-3 md:grid-cols-3/.test(section)) {
     problems.push(`${TARGET}: must not use gap-3 nested KPI tile grids (box-in-box chrome)`);
   }
-  if (!/md:divide-x md:divide-slate-100/.test(section)) {
+  if (!/md:divide-x md:divide-\[#E5E7EB\]/.test(section)) {
     problems.push(`${TARGET}: KPI grid must flatten with md:divide-x columns`);
   }
-  if (!/border-t border-slate-100/.test(section)) {
+  if (!/border-t border-\[#E5E7EB\]/.test(section)) {
     problems.push(`${TARGET}: KPI cells must flatten with border-t rows`);
   }
-  if (!/border-b border-slate-200/.test(section)) {
+  if (!/border-b border-\[#E5E7EB\]/.test(section)) {
     problems.push(`${TARGET}: chart section must use border-b header strip inside single frame`);
   }
   return problems;
@@ -91,7 +91,7 @@ function leftoverRefuse(src) {
   if (/<YAxis\b(?![^/]*fontSize:\s*11)/.test(src)) {
     hits.push(`${TARGET}: leftover YAxis tick without locked 11px header scale`);
   }
-  if (src.includes("text-slate-")) {
+  if (src.includes("text-slate-") || src.includes("border-slate-") || src.includes("bg-slate-") || src.includes("divide-slate-")) {
     hits.push(`${TARGET}: leftover slate class`);
   }
   return hits;
@@ -99,13 +99,13 @@ function leftoverRefuse(src) {
 
 function selftest() {
   const good = `
-    <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
-      <div className="grid md:grid-cols-3 md:divide-x md:divide-slate-100">
-        <div className="border-t border-slate-100 px-4 py-3 first:border-t-0 md:border-t-0">Total loads</div>
+    <section className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
+      <div className="grid md:grid-cols-3 md:divide-x md:divide-[#E5E7EB]">
+        <div className="border-t border-[#E5E7EB] px-4 py-3 first:border-t-0 md:border-t-0">Total loads</div>
       </div>
     </section>
-    <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
-      <div className="border-b border-slate-200 px-4 py-2">
+    <section className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
+      <div className="border-b border-[#E5E7EB] px-4 py-2">
         <h2>Profit per mile by lane (top 8)</h2>
       </div>
       <div className="h-72 p-4">chart</div>
@@ -133,7 +133,7 @@ function selftest() {
   if (!leftoverMuted.some((h) => h.includes("leftover off-scale muted"))) {
     throw new Error("selftest leftover muted plant escaped");
   }
-  const leftoverSlateClass = leftoverRefuse('<div className="text-slate-600">plant</div>');
+  const leftoverSlateClass = leftoverRefuse('<div className="text-slate-600 border-slate-200 divide-slate-100">plant</div>');
   if (!leftoverSlateClass.some((h) => h.includes("leftover slate class"))) {
     throw new Error("selftest leftover slate class plant escaped");
   }
