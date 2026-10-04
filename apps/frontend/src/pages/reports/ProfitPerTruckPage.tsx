@@ -426,7 +426,7 @@ export function ProfitPerTruckPage() {
                   <YAxis tickFormatter={(v) => money(Number(v))} width={72} tick={{ fontSize: 10 }} />
                   <Tooltip formatter={(v) => money(Number(v))} />
                   <Legend />
-                  <Bar dataKey="revenuePerMile" name="Revenue / mi" fill="#334155" />
+                  <Bar dataKey="revenuePerMile" name="Revenue / mi" fill="#4B5563" />
                   <Bar dataKey="costPerMile" name="Cost / mi" fill="#f59e0b" />
                   <Bar dataKey="profitPerMile" name="Profit / mi" fill="#155e75" />
                 </BarChart>
