@@ -291,7 +291,7 @@ function BooksTreatmentNotice({ totalDollars }: { totalDollars: number }) {
     <div
       data-testid="wo-books-treatment"
       data-books-treatment={capitalizes ? "capitalize" : "expense"}
-      className="mt-2 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs text-slate-700"
+      className="mt-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs text-[#1F2A44]"
     >
       {capitalizes ? (
         <>
@@ -1132,11 +1132,11 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       <Modal open={open} onClose={handleModalClose} title="Work order created" sizePreset="md">
         <div className="space-y-3 text-xs text-sidebar-bg">
           <p className="text-xs text-gray-700">
-            Work order <EntityLink kind="work_order" id={createdWO.uuid} label={entityLabel(createdWO.display_id, createdWO.uuid, "Work order")} className="font-semibold text-slate-700 hover:underline" /> created.
+            Work order <EntityLink kind="work_order" id={createdWO.uuid} label={entityLabel(createdWO.display_id, createdWO.uuid, "Work order")} className="font-semibold text-[#1F2A44] hover:underline" /> created.
             {createdExpense ? (
               <>
                 {" "}Expense auto-created:{" "}
-                <EntityLink kind="expense" id={createdExpense.uuid} label="View expense →" className="font-semibold text-slate-700 hover:underline" />
+                <EntityLink kind="expense" id={createdExpense.uuid} label="View expense →" className="font-semibold text-[#1F2A44] hover:underline" />
               </>
             ) : null}
           </p>
@@ -1304,7 +1304,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                   onInvoiceOtherChange={setInvoiceOtherInput}
                 />
               ) : (
-                <div className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-2 text-xs text-slate-600">
+                <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-2 text-xs text-[#4B5563]">
                   No separate vendor invoice to reconcile for this payment type.
                 </div>
               )}

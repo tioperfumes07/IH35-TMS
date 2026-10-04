@@ -1,3 +1,15 @@
+## 2026-10-04T17:15Z · BANK-F91531 CreateWO leftover slate classes · this PR
+
+DONE: CreateWorkOrderModal leftover Tailwind slate-* → house #1F2A44 / #4B5563 / #E5E7EB / #F7F8FA; leftover refuse on EVEN 2090 --selftest + live.
+
+NEXT: leftover muted chrome (Safety / Integrity slate-* / skip pile) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T17:05Z · BANK-F91530 LocationMap leftover slate classes WIRED CI · tip `cd7e24b1ad`
+
+DONE: #25272 — LocationMapModal leftover Tailwind slate-* → house tokens; leftover refuse on EVEN 4132 --selftest + live.
+
+NEXT: leftover muted chrome (CreateWO slate-* / skip pile) · skip pile parked · HH14 no migrations this tick.
+
 ## 2026-10-04T17:05Z · BANK-F91530 LocationMap leftover slate classes · this PR
 
 DONE: LocationMapModal leftover Tailwind slate-* → house #1F2A44 / #0F1219 / #4B5563 / #F7F8FA; leftover refuse on EVEN 4132 --selftest + live.
