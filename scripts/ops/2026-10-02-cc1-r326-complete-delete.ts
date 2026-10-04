@@ -49,6 +49,11 @@ const AUTH_ID = (process.env.OWNER_AUTH_ID ?? "").trim();
 // whose re-reversed reversal left the bank GL $1.00 short of the real bank).
 const ALLOW_BANK_EFFECT = process.env.ALLOW_BANK_EFFECT === "1";
 const SCOPE = (process.argv.find((a) => a.startsWith("--scope=")) ?? "").slice("--scope=".length);
+// ROUND 390 (Lead, 2026-10-04) — the purge DRY RUN the owner approves from: with --r390-gates the zero-reset plan also
+// prints, per table, what stands between the plan and an actual delete (absolute WORM -> RETAINED and named; the
+// accounting.refuse_financial_row_delete arm that admits it under an owner AUTH; live documents that must be VOIDED
+// first; whether ih35_app has any DELETE policy). Read-only. The live path is a separate, held change.
+const R390_GATES = process.argv.includes("--r390-gates");
 const TRANSPORTATION_21 = ["13485", "13487", "13493", "13494", "13496", "13500", "13498", "13502", "13503", "13504", "13505", "13506", "13507", "13509", "13517", "13522", "13525", "13530", "13531", "13533", "13539"];
 const KEEP_DOCREFS = ["5817", "5818"];
 const TEST_ID = String.raw`(^|[^a-z])(e2e|demo|test|sample|fixture|practice|example)([^a-z]|$)`;
@@ -407,6 +412,65 @@ async function polymorphic(c: Q, plan: Plan, why: Map<string, string>): Promise<
   return n;
 }
 
+
+type R390Gate = { table: string; planned: number; gate: string; retained: number; mustVoid: number; noDeletePolicy: boolean };
+
+/** ROUND 390 — classify every planned table's delete gate from the live catalog (never a hand-kept list). */
+async function r390Gates(c: Q, order: string[], plan: Plan): Promise<R390Gate[]> {
+  const fin = (await c.query<{ src: string }>(`SELECT prosrc AS src FROM pg_proc WHERE oid = to_regprocedure('accounting.refuse_financial_row_delete()')`)).rows[0]?.src ?? "";
+  const arrays = [...fin.matchAll(/v_table = ANY \(ARRAY\[([\s\S]*?)\]\)/g)].map((m) => [...m[1].matchAll(/'([a-z_]+\.[a-z_]+)'/g)].map((x) => x[1]));
+  // The last four arrays, in the function's own order: ARM 0 true child, detail, document (must be voided), master (sample only).
+  const [trueChild, detail, documents, masters] = arrays.slice(-4).map((a) => new Set(a));
+  const trig = (await c.query<{ t: string; fn: string; fin: boolean }>(
+    `SELECT c.oid::regclass::text AS t, string_agg(DISTINCT p.oid::regprocedure::text, ', ') AS fn,
+            bool_or(p.oid = to_regprocedure('accounting.refuse_financial_row_delete()')) AS fin
+       FROM pg_trigger tg JOIN pg_class c ON c.oid = tg.tgrelid JOIN pg_proc p ON p.oid = tg.tgfoid
+      WHERE NOT tg.tgisinternal AND tg.tgenabled <> 'D' AND (tg.tgtype & 8) = 8 AND (tg.tgtype & 2) = 2 AND p.prosrc ~* 'raise\\s+exception'
+      GROUP BY 1`
+  )).rows;
+  const trigBy = new Map(trig.map((r) => [r.t, r]));
+  const rls = (await c.query<{ t: string; rls: boolean; del: boolean }>(
+    `SELECT c.oid::regclass::text AS t, c.relrowsecurity AS rls,
+            EXISTS (SELECT 1 FROM pg_policy p WHERE p.polrelid = c.oid AND p.polcmd IN ('d', '*')) AS del
+       FROM pg_class c WHERE c.relkind IN ('r', 'p')`
+  )).rows;
+  const rlsBy = new Map(rls.map((r) => [r.t, r]));
+  const out: R390Gate[] = [];
+  for (const t of order) {
+    const idsPlanned = [...(plan.get(t) ?? [])];
+    if (!idsPlanned.length) continue;
+    const tr = trigBy.get(t);
+    let gate = "none";
+    let retained = 0;
+    let mustVoid = 0;
+    if (tr && !tr.fin) {
+      gate = `WORM ${tr.fn} — RETAINED`;
+      retained = idsPlanned.length;
+    } else if (tr?.fin) {
+      if (trueChild.has(t)) gate = "financial ARM 0 (child of a voided document)";
+      else if (detail.has(t)) gate = "financial detail arm (owner AUTH)";
+      else if (documents.has(t)) {
+        gate = "financial document arm (owner AUTH, voided only)";
+        const pk = await pkOf(c, t);
+        const hasVoid = (await c.query(`SELECT 1 FROM information_schema.columns WHERE table_schema || '.' || table_name = $1 AND column_name = 'voided_at'`, [t])).rows.length > 0;
+        if (pk && hasVoid) {
+          mustVoid = Number((await c.query<{ n: string }>(`SELECT count(*)::text AS n FROM ${t} WHERE ${pk}::text = ANY($1::text[]) AND voided_at IS NULL`, [idsPlanned])).rows[0]?.n ?? 0);
+        }
+      } else if (masters.has(t)) {
+        gate = "financial master arm — sample rows only: REAL rows REFUSED (needs an owner-authorized entity-purge arm)";
+        const pk = await pkOf(c, t);
+        if (pk) retained = Number((await c.query<{ n: string }>(`SELECT count(*)::text AS n FROM ${t} WHERE ${pk}::text = ANY($1::text[]) AND is_sample_data IS DISTINCT FROM true`, [idsPlanned])).rows[0]?.n ?? 0);
+      } else {
+        gate = "financial — NO arm admits it: REFUSED for every role";
+        retained = idsPlanned.length;
+      }
+    }
+    const r = rlsBy.get(t);
+    out.push({ table: t, planned: idsPlanned.length, gate, retained, mustVoid, noDeletePolicy: Boolean(r?.rls && !r.del) });
+  }
+  return out;
+}
+
 async function masterCounts(c: Q): Promise<Record<string, number>> {
   const out: Record<string, number> = {};
   for (const t of MASTER_TABLES) {
@@ -451,6 +515,17 @@ async function main() {
       if (e.startsWith("BLOCKER") || e.startsWith("UNHANDLED")) report.push(e);
     }
     for (const r of [...new Set(report)]) if (!ESCAPED_REPORT.includes(r)) console.log(`  ! ${r}`);
+    if (R390_GATES) {
+      const gates = await r390Gates(client, order, plan);
+      console.log("ROUND 390 — DELETE GATES per planned table (reverse -> void -> purge; one transaction per document):");
+      console.log(`  ${"table".padEnd(48)} ${"rows".padStart(6)} ${"void 1st".padStart(8)} ${"retained".padStart(8)}  rls-del  gate`);
+      for (const g of gates) {
+        console.log(`  ${g.table.padEnd(48)} ${String(g.planned).padStart(6)} ${String(g.mustVoid).padStart(8)} ${String(g.retained).padStart(8)}  ${g.noDeletePolicy ? "NONE   " : "ok     "}  ${g.gate}`);
+      }
+      const sum = (f: (g: R390Gate) => number) => gates.reduce((n, g) => n + f(g), 0);
+      console.log(`ROUND 390 TOTALS: planned ${sum((g) => g.planned)} | live documents to VOID first ${sum((g) => g.mustVoid)} | RETAINED (WORM / refused) ${sum((g) => g.retained)} | tables where ih35_app has NO delete policy ${gates.filter((g) => g.noDeletePolicy).length}`);
+      for (const g of gates.filter((x) => x.retained > 0)) console.log(`  RETAINED ${g.table}: ${g.retained} row(s) — ${g.gate}`);
+    }
     console.log(`LEDGER (USMCA) before: DR ${ledgerBefore.dr} CR ${ledgerBefore.cr} unbalanced JEs ${ledgerBefore.unb}; removed by plan: DR ${removed.dr} CR ${removed.cr} (must be equal)`);
     if (removed.dr !== removed.cr) throw new Error("PLAN REFUSED: the JEs in scope do not net to zero — the ledger would not balance");
     if (SCOPE === "zero-reset") {

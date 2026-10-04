@@ -63,16 +63,21 @@ contains("apps/backend/src/reports/index.ts", reportsIndex, [
 ]);
 
 const exhibitsViewer = read("apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx");
-if (exhibitsViewer && /to="\/(legal|finance|accounting)\//.test(exhibitsViewer)) {
-  fail("apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx: leftover /425c must not steal /legal /finance /accounting prefixes");
+// Cross-module <Link to="/accounting|finance|legal/..."> jumps are allowed. Prefix theft means the
+// exhibits SURFACE itself is mounted under those namespaces (Route path), not that it links out.
+if (exhibitsViewer && /<Route[^>]*path=["']\/(legal|finance|accounting)\//.test(exhibitsViewer)) {
+  fail("apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx: exhibits surface must not mount under /legal /finance /accounting");
 }
 read("apps/frontend/src/components/form-425c/ExhibitCard.tsx");
 
 const manifest = read("apps/frontend/src/routes/manifest.tsx");
 contains("apps/frontend/src/routes/manifest.tsx", manifest, [
   { pattern: /ExhibitsViewer/, label: "ExhibitsViewer wired in manifest" },
-  { pattern: /\/reports\/form-425c\/exhibits/, label: "exhibits route path" },
+  { pattern: /path=["']\/425c\/exhibits["']/, label: "exhibits route path" },
 ]);
+if (manifest && /path=["']\/(legal|finance|accounting)\/[^"']*exhibits/.test(manifest)) {
+  fail("apps/frontend/src/routes/manifest.tsx: exhibits route must not steal /legal /finance /accounting prefixes");
+}
 
 const docs = read("docs/specs/gap-44-form-425c-exhibits.md");
 contains("docs/specs/gap-44-form-425c-exhibits.md", docs, [

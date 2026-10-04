@@ -8281,10 +8281,25 @@
     "claimed_at": "2026-10-04",
     "purpose": "verify-subnav-manifest"
   },
+  "12408": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-navy-page-subnav"
+  },
   "12409": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-03",
     "purpose": "verify-test-fixtures-refuse-production"
+  },
+  "12410": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-list-empty-settled"
+  },
+  "12412": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-form-425c-exhibits"
   },
   "12413": {
     "claimed_by": "claude",
