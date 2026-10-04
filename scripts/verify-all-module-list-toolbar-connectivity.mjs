@@ -127,6 +127,9 @@ export function verify(source) {
   if (!source[SELF].split("import fs")[0].includes(EXACT_HEADER)) failures.push("exact all-module gear header missing");
   const duplicate = (JSON.parse(source[FEED]).entries ?? []).some((row) => row.guard === SELF && row.cols?.includes("connectivity"));
   if (duplicate) failures.push("manual feed duplicates exact toolbar gear ownership");
+  // BANK-F91295 leftover refuse — ListViewGear.tsx page-scoped text token ratchet
+  if (source[CORE.listViewGear]?.includes("text-[11px]")) failures.push("ListViewGear.tsx: leftover text-[11px]");
+  if (source[CORE.listViewGear]?.includes("#8A92AB") || source[CORE.listViewGear]?.includes("#334155")) failures.push("ListViewGear.tsx: leftover off-scale muted");
   return failures;
 }
 
@@ -170,7 +173,13 @@ if (process.argv.includes("--self-test")) {
   mutations.forEach((mutate, index) => {
     if (!verify(mutate()).length) throw new Error(`self-test mutation ${index + 1} survived`);
   });
-  console.log(`PASS: ${mutations.length} planted list-toolbar gear defects were rejected`);
+  // BANK-F91295 leftover plant — ListViewGear page-scoped text token ratchet
+  const leftoverPlant = '<div className="text-[11px] text-[#8A92AB]">plant</div>';
+  const leftoverHits = verify({ ...source, [CORE.listViewGear]: leftoverPlant });
+  if (!leftoverHits.some((e) => e.includes("leftover text-[11px]")) || !leftoverHits.some((e) => e.includes("leftover off-scale muted"))) {
+    throw new Error(`leftover plant escaped: ${JSON.stringify(leftoverHits)}`);
+  }
+  console.log(`PASS: ${mutations.length} planted list-toolbar gear defects were rejected + leftover plant`);
 }
 
 console.log("PASS: 28 applicable modules inherit draft-to-Apply gear; Help remains explicit N/A");
