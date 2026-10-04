@@ -1,3 +1,9 @@
+## 2026-10-04T08:00Z · BANK-F91446 C-24 QBO parity tail WIRED CI · tip `4ca691095d`
+
+DONE: #25188 — verify-steps/12342 now runs ops/verify-c24-qbo-parity-tail --selftest.
+
+NEXT: BANK-F91447 wire C-25 disputes hub split into 1014 · C-21/C-22 fail=triage · skip pile parked · HH08 no migrations.
+
 ## 2026-10-04T07:54Z · BANK-F91445 C-23 kanban Dispatched-to-pickup WIRED CI · tip `1fdf72ea2d`
 
 DONE: #25187 — verify-steps/3956 now runs ops/verify-c23-kanban-dispatched-pickup --selftest.
