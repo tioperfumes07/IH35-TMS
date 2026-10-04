@@ -37,7 +37,7 @@ export function BrakeWearGauge({ position, thicknessMm, thresholdMm, projectedDa
     <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid={`brake-wear-gauge-${position}`}>
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="text-xs font-semibold text-gray-900">{position}</span>
-        <span className={`text-[11px] font-medium ${styles.text}`}>{styles.label}</span>
+        <span className={`text-xs font-medium ${styles.text}`}>{styles.label}</span>
       </div>
       <div className="relative h-3 w-full overflow-hidden rounded-full bg-gray-100">
         <div
@@ -51,12 +51,12 @@ export function BrakeWearGauge({ position, thicknessMm, thresholdMm, projectedDa
           title={`DOT min ${thresholdMm} mm`}
         />
       </div>
-      <div className="mt-1.5 flex items-center justify-between text-[11px] text-gray-600">
+      <div className="mt-1.5 flex items-center justify-between text-xs text-gray-600">
         <span>{thicknessMm != null ? `${thicknessMm.toFixed(1)} mm` : "—"}</span>
         <span>DOT min {thresholdMm} mm</span>
       </div>
       {projectedDate ? (
-        <p className="mt-1 text-[11px] text-amber-700">Projected service: {projectedDate}</p>
+        <p className="mt-1 text-xs text-amber-700">Projected service: {projectedDate}</p>
       ) : null}
     </div>
   );
