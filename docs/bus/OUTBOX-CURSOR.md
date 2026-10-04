@@ -1,3 +1,9 @@
+## 2026-10-04T00:50Z · BANK-F91309..F91313 leftover drain MERGED tip `e99d4c4778`
+
+DONE: BrakeWearGauge · W8BenModal · AuditHistoryTab · BorderCredentialsSection · FleetTable (F91309–F91313). Prior R393.4 4/4 PASS stamped.
+NEXT: AuditEventsList (2) · VendorsPage (2) · RMBucketsGrid (2) · CreateFuelTransactionModal (2). Skip pile still counting BookLoad* / ProgramTracker / FinalAdditions / ParityTable / UniversalListToolbar / DrillKpiCard / DataTable / DateTimePicker / EntityPicker / Combobox.
+NO seed · NO mig · NO Book Load · USMCA only. HH00 no migrations.
+
 ## 2026-10-04T00:42Z · ROUND 393.4 HONEST-SCREEN GUARDS — ALL 4 PASS tip `d832729cb5`
 
 Ran in order (no exemptions). Tip includes F91308 + claim 202615400930:
