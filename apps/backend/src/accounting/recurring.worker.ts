@@ -1,11 +1,11 @@
 import type { PoolClient } from "pg";
+import { insertPostingLineWithSpineIfNew } from "./posting-line-writer.js";
 import { CronExpressionParser } from "cron-parser";
 import { DateTime } from "luxon";
 import crypto from "node:crypto";
 import { withLuciaBypass } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-revenue-resolution.service.js";
-import { writeTransactionSourceLink } from "./accounting-spine-emit.js";
 import { invoiceLineTotalCents } from "./invoice-line-total.js";
 // ACCT-LINK-01 regression fix (GO-1405 Recipe B, 2026-08-29): this recurring-JE template insert
 // never populated journal_entry_type_id -- one of several direct posters contributing to the live
@@ -316,57 +316,28 @@ async function materializeJournal(client: PoolClient, tmpl: Record<string, unkno
 
   let seq = 1;
   for (const p of postings) {
-    const lineRes = await client.query<{ id: string }>(
-      `
-        INSERT INTO accounting.journal_entry_postings (
-          operating_company_id,
-          journal_entry_uuid,
-          line_sequence,
-          account_id,
-          class_id,
-          entity_uuid,
-          debit_or_credit,
-          amount_cents,
-          description,
-          idempotency_key,
-          load_id,
-          created_at,
-          updated_at
-        )
-        -- ROUND 363-CC1-A: a recurring-template JE has no source document and so no load — NULL by design.
-        VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5::uuid,$6::uuid,$7,$8,$9,$10,NULL,now(),now())
-        ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
-          WHERE idempotency_key IS NOT NULL DO NOTHING
-        RETURNING id::text
-      `,
-      [
-        oc,
-        jeId,
-        seq,
-        String(p.account_id),
-        p.class_id ? String(p.class_id) : null,
-        p.entity_uuid ? String(p.entity_uuid) : null,
-        String(p.debit_or_credit),
-        Number(p.amount_cents ?? 0),
-        p.description ?? null,
-        // BLOCK 2: deterministic key per recurring template+period so a re-materialization of the
-        // same template for the same entry_date is a safe no-op (uq_jep_company_idempotency_line),
-        // never a double-posted automated entry. Shared across lines; line_sequence distinguishes them.
-        `recurring_je:${String(tmpl.id)}:${entryDate}`,
-      ]
-    );
-    // CODER-12 audit-spine: link each materialized line to its recurring template. Skip on a
-    // BLOCK-2 conflict no-op (no row returned).
-    const postingId = lineRes.rows[0]?.id;
-    if (postingId) {
-      await writeTransactionSourceLink(client, {
-        operating_company_id: oc,
-        journal_entry_posting_id: postingId,
-        linked_object_type: "recurring_template",
-        linked_object_id: String(tmpl.id),
-        relationship_role: "recurring_source",
-      });
-    }
+    // ROUND 393.3 — the line and its spine row through the ONE writer (posting-line-writer.ts), in this transaction.
+    // The source is the recurring TEMPLATE this entry materialises (the object CODER-12 already linked each line to),
+    // never the journal entry as its own source; a template has no load. BLOCK 2: deterministic key per template +
+    // entry_date so a re-materialisation of the same period is a no-op (uq_jep_company_idempotency_line).
+    // NOT FIXED HERE, AND STILL OPEN: verify-money-engine-linkage — "NO REVERSE, AND IT IS A WORKER". This is a scheduled
+    // path that writes money with no undo, against the owner's standing law that nothing posts from a timer. Routing its
+    // lines through the writer gives them lineage; it does not make a timer a legitimate poster.
+    await insertPostingLineWithSpineIfNew(client as never, {
+      operating_company_id: oc,
+      journal_entry_uuid: jeId,
+      line_sequence: seq,
+      account_id: String(p.account_id),
+      class_id: p.class_id ? String(p.class_id) : null,
+      entity_uuid: p.entity_uuid ? String(p.entity_uuid) : null,
+      debit_or_credit: String(p.debit_or_credit) as "debit" | "credit",
+      amount_cents: Number(p.amount_cents ?? 0),
+      description: p.description != null ? String(p.description) : null,
+      idempotency_key: `recurring_je:${String(tmpl.id)}:${entryDate}`,
+      source_transaction_type: "recurring_template",
+      source_transaction_id: String(tmpl.id),
+      relationship_role: "recurring_source",
+    });
     seq += 1;
   }
 

@@ -35,8 +35,8 @@ const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 /** ROUND 391: the ONE writer inserts the posting, then its spine row, on the caller's client — nothing in between can skip it. */
 export function writerGaps(writer) {
   const f = [];
-  const fn = writer.match(/export async function insertPostingLineWithSpine\([\s\S]*?\n\}\n/);
-  if (!fn) return [`${FILES.writer}: insertPostingLineWithSpine not found`];
+  const fn = writer.match(/async function writeLine\([\s\S]*?\n\}\n/);
+  if (!fn) return [`${FILES.writer}: writeLine (the one insert path) not found`];
   const body = fn[0];
   const post = body.indexOf("INSERT INTO accounting.journal_entry_postings");
   const link = body.indexOf("INSERT INTO accounting.transaction_source_links");
@@ -69,7 +69,8 @@ export function check({ engine, voidSvc, writer = "" }) {
       !/reversePostedSourceTransaction[\s\S]*insertPostingLineWithSpine\(/.test(engine)) {
     f.push(`${FILES.engine}: the reversal path no longer writes its spine link`);
   }
-  if (!/const reversalPostingId = lineRes\.rows\[0\]\?\.id;\s*if \(reversalPostingId\) \{\s*await writeTransactionSourceLink\(client,/.test(voidSvc)) {
+  // ROUND 393.3: void writes each reversal leg through the writer, its spine row naming the voided entity as 'reversal_of'.
+  if (!/insertPostingLineWithSpineIfNew\(client[\s\S]{0,1400}relationship_role: "reversal_of",\s*spine_link: \{ linked_object_type: params\.entityType, linked_object_id: params\.entityId \}/.test(voidSvc)) {
     f.push(`${FILES.voidSvc}: each reversal leg must write its 'reversal_of' link on the same client`);
   }
   return f;
@@ -107,7 +108,7 @@ if (process.argv.includes("--selftest")) {
     ["the engine stops calling the writer", { ...real, engine: real.engine.replace("return insertPostingLinesWithSpine(\n    input.client", "return insertPostingLinesNoSpine(\n    input.client") }],
     ["the writer stops writing the link", { ...real, writer: real.writer.replace(/INSERT INTO accounting\.transaction_source_links/, "INSERT INTO accounting.audit_noop") }],
     ["the writer stops refusing a sourceless line", { ...real, writer: real.writer.replace("if (!line.source_transaction_type || !line.source_transaction_id) {", "if (false) {") }],
-    ["void stops writing the link", { ...real, voidSvc: real.voidSvc.replace("await writeTransactionSourceLink(client, {\n        operating_company_id: params.operatingCompanyId,\n        journal_entry_posting_id: reversalPostingId,", "await Promise.resolve({\n        operating_company_id: params.operatingCompanyId,\n        journal_entry_posting_id: reversalPostingId,") }],
+    ["void stops naming the voided entity on its spine", { ...real, voidSvc: real.voidSvc.replace('relationship_role: "reversal_of",', 'relationship_role: "source_transaction",') }],
   ];
   for (const [name, s] of plants) {
     if (JSON.stringify(s) === JSON.stringify(real)) fails.push(`plant did not change the source: ${name}`);

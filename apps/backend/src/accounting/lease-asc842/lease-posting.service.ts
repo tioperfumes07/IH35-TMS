@@ -22,6 +22,7 @@
 //
 // FLAG GATE: LEASE_GL_POSTING_ENABLED (default OFF) -> NO-OP, zero JEs / financial rows.
 
+import { insertPostingLineWithSpineIfNew } from "../posting-line-writer.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
@@ -259,40 +260,24 @@ async function postLeaseJournalEntry(
 
   let lineSequence = 1;
   for (const line of input.lines) {
-    const insRes = await client.query<{ id: string }>(
-      `INSERT INTO accounting.journal_entry_postings
-         (operating_company_id, journal_entry_uuid, line_sequence, account_id, debit_or_credit,
-          amount_cents, description, source_transaction_type, source_transaction_id, idempotency_key,
-          load_id, created_at, updated_at)
-       -- ROUND 363-CC1-A: the load stamp, resolved from this posting's own source document in the same statement.
-       VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, $8, $9, $10,
-               accounting.posting_source_load_id($8::text, $9::text), now(), now())
-       ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
-         WHERE idempotency_key IS NOT NULL DO NOTHING
-       RETURNING id::text`,
-      [
-        input.operatingCompanyId,
-        journalEntryId,
-        lineSequence,
-        line.account_id,
-        line.debit_or_credit,
-        line.amount_cents,
-        line.description,
-        input.sourceType,
-        input.leaseContractId,
-        input.idempotencyKey,
-      ]
-    );
-    const postingId = insRes.rows[0]?.id;
+    // ROUND 393.3 — the line and its spine row through the ONE writer (posting-line-writer.ts), in this transaction:
+    // source = this posting kind on its lease contract; spine = lease_contract / lease_source (as before); the shared
+    // idempotency key keeps a re-post a no-op. Line-specific links below are additional cross-references.
+    const postingId = await insertPostingLineWithSpineIfNew(client as never, {
+      operating_company_id: input.operatingCompanyId,
+      journal_entry_uuid: journalEntryId,
+      line_sequence: lineSequence,
+      account_id: line.account_id,
+      debit_or_credit: line.debit_or_credit,
+      amount_cents: line.amount_cents,
+      description: line.description,
+      source_transaction_type: input.sourceType,
+      source_transaction_id: input.leaseContractId,
+      idempotency_key: input.idempotencyKey,
+      relationship_role: "lease_source",
+      spine_link: { linked_object_type: "lease_contract", linked_object_id: input.leaseContractId },
+    });
     if (postingId) {
-      // Source link: lease_contract -> this posting line (always), plus any line-specific links.
-      await writeTransactionSourceLink(client as never, {
-        operating_company_id: input.operatingCompanyId,
-        journal_entry_posting_id: postingId,
-        linked_object_type: "lease_contract",
-        linked_object_id: input.leaseContractId,
-        relationship_role: "lease_source",
-      });
       for (const link of line.links) {
         await writeTransactionSourceLink(client as never, {
           operating_company_id: input.operatingCompanyId,
