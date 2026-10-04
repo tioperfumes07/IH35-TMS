@@ -1,3 +1,9 @@
+## 2026-10-04T09:26Z · BANK-F91466 R319 vendor engines WIRED CI · tip `fd9ba2a58b`
+
+DONE: #25208 — verify-steps/960 now runs ops/verify-r319-vendor-engines --selftest.
+
+NEXT: BANK-F91467 wire R319 customer-details engines into 984 · C-21 odometer + C-22 fail=triage · skip pile parked · HH09 no migrations.
+
 ## 2026-10-04T09:20Z · BANK-F91465 PM due source + unit faults reverse WIRED CI · tip `00a9d573e3`
 
 DONE: #25207 — verify-steps/5620 now runs ops/verify-maint-pm-due-source-faults --selftest.
