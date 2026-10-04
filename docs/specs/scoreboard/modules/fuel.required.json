@@ -277,6 +277,26 @@
       ]
     },
     {
+      "id": "fuel.modal.card_overage_void",
+      "tab": "Modals",
+      "sub": "Modal: Void Card Overage (reverses the 1250 receivable)",
+      "route_hint": "surface://pages/fuel/card-overage/VoidOverageModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/fuel/card-overage/VoidOverageModal.tsx",
+      "owned_surface_paths": [],
+      "required": ["connectivity", "qbo_chrome"]
+    },
+    {
+      "id": "fuel.modal.card_overage_exempt",
+      "tab": "Modals",
+      "sub": "Modal: Exempt Card Overage",
+      "route_hint": "surface://pages/fuel/card-overage/ExemptOverageModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/fuel/card-overage/ExemptOverageModal.tsx",
+      "owned_surface_paths": [],
+      "required": ["connectivity", "qbo_chrome"]
+    },
+    {
       "id": "fuel.modal.upload_loves_prices",
       "tab": "Modals",
       "sub": "Modal: Upload Loves Prices",
