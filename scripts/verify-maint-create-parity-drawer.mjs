@@ -162,7 +162,13 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAILED`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS`);
+  // BANK-F91392 leftover plant — CreateExpenseModal page-scoped text token ratchet
+  const leftoverPlant = read(EXPENSE) + '\n<p className="text-[11px] text-[#8A92AB]">plant</p>\n';
+  if (!(leftoverPlant.includes("text-[11px]") && leftoverPlant.includes("#8A92AB"))) {
+    console.error(`${LABEL} SELFTEST FAIL — leftover plant escaped`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS + leftover plant`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -180,6 +186,16 @@ const failures = assertMaintenanceParityDrawer({
 if (failures.length) {
   console.error(`${LABEL}: FAIL`);
   for (const f of failures) console.error(`  - ${f}`);
+  process.exit(1);
+}
+// BANK-F91392 leftover refuse — CreateExpenseModal page-scoped text token ratchet
+const expenseSrc = read(EXPENSE);
+if (expenseSrc.includes("text-[11px]")) {
+  console.error(`${LABEL}: FAIL — CreateExpenseModal.tsx leftover text-[11px]`);
+  process.exit(1);
+}
+if (expenseSrc.includes("#8A92AB")) {
+  console.error(`${LABEL}: FAIL — CreateExpenseModal.tsx leftover off-scale muted #8A92AB`);
   process.exit(1);
 }
 console.log(`${LABEL}: OK — Maintenance drawers preserved; /list browses; bare lists; /new is route-only`);
