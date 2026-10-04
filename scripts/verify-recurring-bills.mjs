@@ -78,9 +78,16 @@ contains("apps/backend/src/accounting/bills/recurring/generator.service.ts", gen
   { pattern: /export.*computeNextGenerationDate/, label: "computeNextGenerationDate export" },
   { pattern: /export.*runRecurringBillGeneratorTick/, label: "runRecurringBillGeneratorTick export" },
   { pattern: /recurring_bill_generation_log/, label: "writes to generation_log" },
-  { pattern: /auto_post/, label: "auto_post logic" },
-  { pattern: /postSourceTransaction/, label: "uses posting engine for auto_post" },
-  { pattern: /createBill/, label: "uses createBill (no new financial code)" },
+  { pattern: /createBillInClientTx/, label: "uses createBillInClientTx (creates the bill, never books it — ROUND 389.4 R1)" },
+]);
+// ROUND 389.4 RULING 1 (#25140): the timer CREATES the bill and never posts it; the bill posts through its own
+// post-gl path, which has void and reversal. Any posting call here is posting from a timer.
+// Code only — the file's own comments name createBill() to explain why it is not called.
+const generatorCode = generatorSvc.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+notContains("apps/backend/src/accounting/bills/recurring/generator.service.ts", generatorCode, [
+  { pattern: /postSourceTransaction\s*\(/, label: "postSourceTransaction( (the generator must never post — ROUND 389.4 R1)" },
+  { pattern: /\bcreateBill\s*\(/, label: "createBill( (auto-posts when BILL_GL_POSTING_ENABLED — use createBillInClientTx)" },
+  { pattern: /postBill\w*\s*\(/, label: "a postBill*( call (the generator must never post)" },
 ]);
 
 // ── Routes ───────────────────────────────────────────────────────────────────
