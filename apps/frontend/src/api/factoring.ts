@@ -27,6 +27,15 @@ export type FactoringSummary = {
   // chargeback_balance above (both are outstanding_liability_signed_cents, Advance + Reserve
   // still owed to the factor — not a real chargeback/recourse figure) — prefer this field.
   outstanding_liability_balance: number;
+  /** 363-CUR-A — unmatched Faro advances named beside the liability. Cents, not dollars. */
+  uncleared_documents?: Array<{
+    document_type: string;
+    document_number: string;
+    document_date: string;
+    amount_cents: number;
+  }>;
+  uncleared_cents?: number;
+  cleared_open_cents?: number;
   last_advance_at: string | null;
   active_factor_count: number;
   single_factor_invariant_ok: boolean;

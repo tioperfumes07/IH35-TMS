@@ -24,6 +24,11 @@ import {
   computeFactoringBalanceInvoiceLinkage,
   type FactoringBalanceInvoiceLinkageResult,
 } from "./factoring-balance-invoice-linkage.service.js";
+import {
+  factoringClearedOpenCents,
+  listUnclearedFactoringAdvances,
+} from "../accounting/uncleared-applied-documents.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 function revenuePayload(result: RevenueGlLinkageResult) {
   return {
@@ -624,21 +629,41 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
     // Never read superseded views.factoring_summary (0124 dead companies.current_reserve_balance).
     // Never silent catch → fabricated $0.
     try {
-      const result = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) =>
-        computeFactoringBalanceInvoiceLinkage(client, {
-          operatingCompanyId: parsed.data.operating_company_id,
-        })
+      const { result, uncleared } = await withCompanyScope(
+        user.uuid,
+        parsed.data.operating_company_id,
+        async (client) => {
+          const result = await computeFactoringBalanceInvoiceLinkage(client, {
+            operatingCompanyId: parsed.data.operating_company_id,
+          });
+          if (result.status === "unverifiable" || result.status === "accounting_exception") {
+            return { result, uncleared: [] as Awaited<ReturnType<typeof listUnclearedFactoringAdvances>> };
+          }
+          const uncleared = await listUnclearedFactoringAdvances(
+            client,
+            parsed.data.operating_company_id,
+            companyBusinessDate(),
+          );
+          return { result, uncleared };
+        },
       );
+      const uncleared_cents = uncleared.reduce((s, d) => s + d.amount_cents, 0);
+      const payload = {
+        ...factoringBalancePayload(result),
+        uncleared_documents: uncleared,
+        uncleared_cents,
+        cleared_open_cents: factoringClearedOpenCents(result.outstanding_liability_cents ?? 0, uncleared_cents),
+      };
       if (result.status === "unverifiable" || result.status === "accounting_exception") {
         return {
-          ...factoringBalancePayload(result),
+          ...payload,
           error:
             result.status === "accounting_exception"
               ? "factoring_balance_invoice_linkage_accounting_exception"
               : "factoring_balance_invoice_linkage_unverifiable",
         };
       }
-      return factoringBalancePayload(result);
+      return payload;
     } catch (err) {
       req.log.error({ err }, "home.factoring-balance invoice linkage failed");
       return reply.code(500).send({

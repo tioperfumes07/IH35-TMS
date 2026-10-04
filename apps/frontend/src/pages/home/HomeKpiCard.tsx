@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
+import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDocumentsNote";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import type { HomeFactoringBalance } from "../../api/home";
 
 type Props = {
   label: string;
@@ -70,4 +72,19 @@ export function formatShortDate(iso: string | null | undefined): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+/** 363-CUR-A — Factoring Balance KPI names unmatched Faro advances beside the GL liability. */
+export function FactoringBalanceClearedNote({ fb }: { fb: HomeFactoringBalance | undefined }) {
+  if (!fb || fb.status === "unverifiable" || fb.status === "accounting_exception") return null;
+  if (fb.outstanding_cents == null) return null;
+  return (
+    <div className="space-y-1">
+      <div>
+        Cleared {formatUsdFromCents(fb.cleared_open_cents ?? fb.outstanding_cents)}. Applied factoring
+        advances that have not been matched or categorized in Banking are named not cleared.
+      </div>
+      <UnclearedDocumentsNote docs={fb.uncleared_documents ?? []} />
+    </div>
+  );
 }

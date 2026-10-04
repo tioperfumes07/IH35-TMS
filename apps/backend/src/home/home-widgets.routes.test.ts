@@ -61,6 +61,12 @@ describe("home-widgets factoring-balance invoice linkage (0280-05)", () => {
     expect(routesSrc).not.toContain("FROM views.factoring_summary");
   });
 
+  it("names unmatched Faro advances beside the liability (363-CUR-A)", () => {
+    expect(routesSrc).toContain("listUnclearedFactoringAdvances");
+    expect(routesSrc).toContain("factoringClearedOpenCents");
+    expect(routesSrc).toContain("uncleared_documents");
+  });
+
   it("does not read the dead factoring.company_balances table / columns", () => {
     expect(routesSrc).not.toContain("factoring.company_balances");
     expect(routesSrc).not.toMatch(/SUM\(reserve_cents\)/);

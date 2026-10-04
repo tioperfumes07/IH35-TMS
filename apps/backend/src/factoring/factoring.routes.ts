@@ -9,6 +9,10 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { FACTORING_REPURCHASE_DEADLINE_DAYS } from "../accounting/factoring-posting/contract-config.js";
 import { resolveCanonicalActiveFactor } from "../home/factoring-balance-invoice-linkage.service.js";
 import { loadCostRollupLateral, LOAD_COST_ROLLUP_SELECT } from "../accounting/load-cost-rollup.sql.js";
+import {
+  factoringClearedOpenCents,
+  listUnclearedFactoringAdvances,
+} from "../accounting/uncleared-applied-documents.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -125,7 +129,14 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
           `,
         [companyId]
       );
-      return { row: res.rows[0] ?? null, activeFactor };
+      const uncleared = await listUnclearedFactoringAdvances(client, companyId, companyBusinessDate());
+      const uncleared_cents = uncleared.reduce((s, d) => s + d.amount_cents, 0);
+      return {
+        row: res.rows[0] ?? null,
+        activeFactor,
+        uncleared_documents: uncleared,
+        uncleared_cents,
+      };
     });
 
     const fallback = {
@@ -155,7 +166,21 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
     const reserve = await withCompanyScope(user.uuid, companyId, (client) =>
       factoringBookReserveCents(client, companyId, companyBusinessDate())
     );
-    return withCanonicalFactorIdentity({ ...(summary.row ?? fallback), reserve_balance: reserve.total / 100 }, summary.activeFactor);
+    const liabilityDollars = Number(
+      (summary.row ?? fallback).outstanding_liability_balance ?? fallback.outstanding_liability_balance ?? 0,
+    );
+    return withCanonicalFactorIdentity(
+      {
+        ...(summary.row ?? fallback),
+        reserve_balance: reserve.total / 100,
+        uncleared_documents: summary.uncleared_documents,
+        uncleared_cents: summary.uncleared_cents,
+        // Liability is already the GL total. Do not add uncleared advances back — they ARE the
+        // liability. Cleared = GL minus the unmatched wires we name beside it.
+        cleared_open_cents: factoringClearedOpenCents(Math.round(liabilityDollars * 100), summary.uncleared_cents),
+      },
+      summary.activeFactor,
+    );
   }
   );
 

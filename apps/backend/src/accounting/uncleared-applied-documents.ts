@@ -35,6 +35,14 @@ function bundleFor(partyId: string, docs: UnclearedDocument[], openCents: number
   };
 }
 
+/**
+ * Factoring outstanding liability is already the GL total. Unmatched advances are named beside
+ * that total — they are not added back. Cleared = GL minus the unmatched wires.
+ */
+export function factoringClearedOpenCents(liabilityCents: number, unclearedCents: number): number {
+  return Math.round(liabilityCents) - unclearedCents;
+}
+
 export function attachUncleared<T extends Record<string, unknown>>(
   rows: T[],
   docs: UnclearedDocument[],
@@ -156,6 +164,70 @@ export async function listUnclearedBillPayments(
   return res.rows.map((r) => ({
     party_id: String(r.party_id ?? ""),
     document_type: String(r.document_type ?? "bill payment"),
+    document_number: String(r.document_number ?? ""),
+    document_date: String(r.document_date ?? ""),
+    amount_cents: Number(r.amount_cents ?? 0),
+  }));
+}
+
+/**
+ * 363-CUR-A remainder — Factoring Home outstanding liability.
+ * An advance that is on the books (voided_at IS NULL) but has no bank MATCH and no register_cleared
+ * JE is uncleared. factoring_advances has no source_bank_transaction_id; the reverse pointer is
+ * banking.bank_transactions.matched_factoring_advance_id. Amount is the same net-to-company the
+ * deposit writer uses. Do not add these cents back into outstanding_liability — they already are
+ * the liability. The surface names the document beside the GL total.
+ */
+export async function listUnclearedFactoringAdvances(
+  client: Queryable,
+  operatingCompanyId: string,
+  asOfDate: string,
+): Promise<UnclearedDocument[]> {
+  const res = await client.query(
+    `
+      SELECT
+        COALESCE(fa.factoring_company_vendor_id::text, 'unknown') AS party_id,
+        'factoring advance'::text AS document_type,
+        COALESCE(NULLIF(btrim(fa.display_id), ''), fa.id::text) AS document_number,
+        COALESCE(fa.advanced_at::date, fa.faro_purchase_date)::text AS document_date,
+        GREATEST(
+          0,
+          COALESCE(fa.invoice_total_cents, 0)
+          - COALESCE(fa.reserve_amount_cents, 0)
+          - COALESCE(fa.factor_fee_cents, 0)
+          - COALESCE(fa.wire_fee_cents, 0)
+          - COALESCE(fa.cash_rsv_cents, 0)
+        )::bigint AS amount_cents
+      FROM accounting.factoring_advances fa
+      WHERE fa.operating_company_id = $1::uuid
+        AND fa.voided_at IS NULL
+        AND COALESCE(fa.status, '') <> 'voided'
+        AND COALESCE(fa.advanced_at::date, fa.faro_purchase_date) <= $2::date
+        AND NOT EXISTS (
+          SELECT 1
+          FROM banking.bank_transactions bt
+          WHERE bt.operating_company_id = fa.operating_company_id
+            AND bt.matched_factoring_advance_id = fa.id
+        )
+        AND NOT EXISTS (
+          SELECT 1
+          FROM accounting.journal_entry_postings jep
+          JOIN accounting.journal_entries je
+            ON je.id = jep.journal_entry_uuid
+           AND je.operating_company_id = jep.operating_company_id
+          WHERE jep.operating_company_id = fa.operating_company_id
+            AND jep.source_transaction_type = 'factoring_advance'
+            AND jep.source_transaction_id = fa.id::text
+            AND je.voided_at IS NULL
+            AND COALESCE(jep.register_cleared, false)
+        )
+      ORDER BY COALESCE(fa.advanced_at::date, fa.faro_purchase_date), fa.display_id, fa.id
+    `,
+    [operatingCompanyId, asOfDate],
+  );
+  return res.rows.map((r) => ({
+    party_id: String(r.party_id ?? ""),
+    document_type: String(r.document_type ?? "factoring advance"),
     document_number: String(r.document_number ?? ""),
     document_date: String(r.document_date ?? ""),
     amount_cents: Number(r.amount_cents ?? 0),

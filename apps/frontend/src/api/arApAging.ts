@@ -107,7 +107,12 @@ export function getArAgingInvoices(operatingCompanyId: string, customerId: strin
 }
 
 export function getApAgingBills(operatingCompanyId: string, vendorId: string, asOfDate: string) {
-  return apiRequest<{ bills: ApAgingBillRow[] }>(
+  return apiRequest<{
+    bills: ApAgingBillRow[];
+    uncleared_documents: AgingUnclearedDocument[];
+    uncleared_cents: number;
+    cleared_open_cents: number;
+  }>(
     withCompany(
       `/api/v1/accounting/fin20/ap-aging/bills?vendor_id=${encodeURIComponent(vendorId)}&as_of_date=${encodeURIComponent(asOfDate)}`,
       operatingCompanyId
