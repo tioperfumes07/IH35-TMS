@@ -28,6 +28,7 @@ import path from "node:path";
 import process from "node:process";
 
 const repoRoot = process.cwd();
+const NOTIF_DD = "apps/frontend/src/components/notifications/NotificationDropdown.tsx";
 
 const CHECKS = [
   {
@@ -99,6 +100,16 @@ if (process.argv.includes("--selftest")) {
   const buggyFails = checkActionLinks(buggy).length > 0;
   const fixedPasses = checkActionLinks(fixed).length === 0;
 
+  // BANK-F91293 leftover plant — NotificationDropdown page-scoped text token ratchet
+  const leftoverPlant = '<div className="text-[11px] text-[#8A92AB]">plant</div>';
+  const leftoverHits = [];
+  if (leftoverPlant.includes("text-[11px]")) leftoverHits.push(`${NOTIF_DD}: leftover text-[11px]`);
+  if (leftoverPlant.includes("#8A92AB") || leftoverPlant.includes("#334155")) leftoverHits.push(`${NOTIF_DD}: leftover off-scale muted`);
+  if (!leftoverHits.some((e) => e.includes("leftover text-[11px]")) || !leftoverHits.some((e) => e.includes("leftover off-scale muted"))) {
+    console.error("verify:notification-action-links-match-routes selftest FAIL leftover plant escaped", leftoverHits);
+    process.exit(1);
+  }
+
   if (buggyFails && fixedPasses) {
     console.log("verify:notification-action-links-match-routes selftest OK");
     process.exit(0);
@@ -109,8 +120,19 @@ if (process.argv.includes("--selftest")) {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const { ok, offenders } = run();
-  if (!ok) {
-    console.error("verify:notification-action-links-match-routes FAIL:\n  " + offenders.map((o) => "✗ " + o).join("\n  "));
+  const leftover = [];
+  // BANK-F91293 leftover refuse — NotificationDropdown.tsx page-scoped text token ratchet
+  const notifAbs = path.join(repoRoot, NOTIF_DD);
+  if (!fs.existsSync(notifAbs)) {
+    leftover.push(`${NOTIF_DD}: file not found`);
+  } else {
+    const notifSrc = fs.readFileSync(notifAbs, "utf8");
+    if (notifSrc.includes("text-[11px]")) leftover.push(`${NOTIF_DD}: leftover text-[11px]`);
+    if (notifSrc.includes("#8A92AB") || notifSrc.includes("#334155")) leftover.push(`${NOTIF_DD}: leftover off-scale muted`);
+  }
+  const all = [...(ok ? [] : offenders), ...leftover];
+  if (all.length) {
+    console.error("verify:notification-action-links-match-routes FAIL:\n  " + all.map((o) => "✗ " + o).join("\n  "));
     process.exit(1);
   }
   console.log("verify:notification-action-links-match-routes OK — all three action_link literals match their registered frontend routes");
