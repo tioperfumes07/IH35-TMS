@@ -234,6 +234,7 @@ export function ReportsHomePage() {
                   ["maintenance-cost-per-unit", "Maintenance cost per unit"],
                   ["geofence-dwell", "Geofence dwell report"],
                   ["posted-while-tour-open", "Posted while tour open"],
+                  ["reefer-fuel-credit", "Reefer fuel credit"],
                   ["scheduled-reports", "Default report subscriptions"],
                 ] as const
               ).map(([id, label]) => (

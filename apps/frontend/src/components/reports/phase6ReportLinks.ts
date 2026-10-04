@@ -18,6 +18,8 @@ export const PHASE_6_REPORT_HREFS: Record<string, string> = {
   "scheduled-reports": "/reports/scheduled",
   // ACC-51 (LAW §2 reversal plan, read-only) — Accounting → Reports → "Posted while tour open".
   "posted-while-tour-open": "/reports/posted-while-tour-open",
+  // U25 — reefer diesel gallons for the federal fuel tax credit (Form 4136).
+  "reefer-fuel-credit": "/reports/reefer-fuel-credit",
 };
 
 export function phase6ReportHref(reportId: string): string | undefined {

@@ -1458,3 +1458,50 @@ export function listLoadsWithoutTour(operatingCompanyId: string) {
     withCompany(`/api/v1/reports/loads-without-tour`, operatingCompanyId),
   );
 }
+
+// U25 — Reefer fuel credit (IRS Form 4136, nontaxable use of diesel).
+export type ReeferCreditRow = {
+  source: "fuel_card" | "expense";
+  source_id: string;
+  expense_id: string | null;
+  expense_line_id: string | null;
+  document_number: string | null;
+  date: string;
+  vendor_name: string | null;
+  location: string | null;
+  unit_id: string | null;
+  unit_number: string | null;
+  trailer_id: string | null;
+  trailer_number: string | null;
+  load_id: string | null;
+  load_number: string | null;
+  gallons: number | null;
+  cost_cents: number;
+  price_per_gallon_cents: number | null;
+};
+
+export type ReeferCreditReport = {
+  rows: ReeferCreditRow[];
+  totals: {
+    fills: number;
+    fills_missing_gallons: number;
+    fills_missing_trailer: number;
+    gallons: number;
+    cost_cents: number;
+    cost_cents_with_gallons: number;
+    credit_rate_cents_per_gallon: number;
+    estimated_credit_cents: number;
+  };
+};
+
+export function getReeferFuelCreditReport(operatingCompanyId: string, from: string, to: string) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId, from, to });
+  return apiRequest<ReeferCreditReport>(`/api/v1/accounting/reports/reefer-fuel-credit?${q.toString()}`);
+}
+
+export function recordReeferFuelGallons(operatingCompanyId: string, expenseLineId: string, body: { gallons: number; trailer_id?: string | null }) {
+  return apiRequest<{ expense_line_id: string; gallons: number; rate_cents: number }>(
+    `/api/v1/accounting/reports/reefer-fuel-credit/lines/${expenseLineId}/gallons`,
+    { method: "POST", body: { operating_company_id: operatingCompanyId, ...body } },
+  );
+}

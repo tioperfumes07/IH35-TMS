@@ -1120,6 +1120,23 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       data-testid={`sc-fuel-invoice-${idx}`}
                     />
                   </Field>
+                  {/* U25 — reefer diesel is its own fuel (out of IFTA, counted for the federal reefer-fuel credit). */}
+                  <Field label="Fuel">
+                    <select
+                      className={inputClass}
+                      value={fuel.fuel_type ?? "diesel"}
+                      onChange={(e) => {
+                        const next = [...fuels];
+                        next[idx] = { ...fuel, fuel_type: e.target.value as "diesel" | "def" | "reefer_diesel" };
+                        setFuels(next);
+                      }}
+                      data-testid={`sc-fuel-type-${idx}`}
+                    >
+                      <option value="diesel">Truck diesel</option>
+                      <option value="reefer_diesel">Reefer diesel</option>
+                      <option value="def">DEF</option>
+                    </select>
+                  </Field>
                   <Field label="Gallons">
                     <input
                       className={inputClass}

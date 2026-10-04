@@ -904,6 +904,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-accounting-way-back-is-breadcrumb",
     ["apps/frontend/src/pages/accounting/", "apps/frontend/src/pages/banking/", "apps/frontend/src/components/accounting/", "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx", "scripts/verify-accounting-way-back-is-breadcrumb.mjs"],
   ],
+  // U25 (owner) — reefer diesel: category, gallons and IFTA follow the item; the Form 4136 credit report counts gallons.
+  [
+    "verify-reefer-fuel-credit",
+    ["apps/backend/src/fuel/", "apps/backend/src/accounting/reclassify/", "apps/backend/src/accounting/reefer-fuel-credit.routes.ts", "apps/backend/src/driver-finance/settlement-creator.service.ts", "apps/backend/src/ifta/", "apps/frontend/src/pages/reports/ReeferFuelCreditReportPage.tsx", "apps/frontend/src/pages/settlements/SettlementCreatorDrawer.tsx", "scripts/verify-reefer-fuel-credit.mjs"],
+  ],
   // ROUND 368.2(b) — a bank line may not sit matched to nothing (deferred constraint triggers, both sides).
   [
     "verify-no-bank-line-is-matched-to-nothing",
