@@ -37,9 +37,9 @@ export function KpiStatCard({ label, value, sub, to, onClick, disabled, disabled
   const text = TONE_TEXT[tone];
   const content = (
     <>
-      <div className={`text-[11px] font-semibold uppercase tracking-wide ${text.label}`}>{label}</div>
+      <div className={`text-xs font-semibold uppercase tracking-wide ${text.label}`}>{label}</div>
       <div className={`mt-1 text-page-title font-bold ${text.value}`} title={value}>{value}</div>
-      {sub ? <div className={`mt-0.5 text-[11px] ${text.sub}`}>{sub}</div> : null}
+      {sub ? <div className={`mt-0.5 text-xs ${text.sub}`}>{sub}</div> : null}
     </>
   );
   if (disabled) {

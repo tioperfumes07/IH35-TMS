@@ -29,6 +29,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-factoring-no-duplicate-kpi-band";
 const TRACKER = "apps/frontend/src/pages/factoring/ReserveTracker.tsx";
+const KPI_STAT = "apps/frontend/src/components/layout/KpiStatCard.tsx";
 
 function read(rel) {
   const p = path.join(ROOT, rel);
@@ -62,6 +63,14 @@ export function checkNoDuplicateBand(src) {
   return failures;
 }
 
+/** BANK-F91420 leftover refuse — KpiStatCard page-scoped text token ratchet. */
+export function checkKpiStatCardLeftovers(src) {
+  const failures = [];
+  if (src.includes("text-[11px]")) failures.push("KpiStatCard leftover text-[11px] — use text-xs");
+  if (src.includes("#8A92AB")) failures.push("KpiStatCard leftover #8A92AB — use #4B5563");
+  return failures;
+}
+
 export function run() {
   const failures = [];
   const { ok, src, err } = read(TRACKER);
@@ -70,6 +79,12 @@ export function run() {
     return { ok: false, failures };
   }
   failures.push(...checkNoDuplicateBand(src));
+  const kpi = read(KPI_STAT);
+  if (!kpi.ok) {
+    failures.push(kpi.err);
+  } else {
+    failures.push(...checkKpiStatCardLeftovers(kpi.src));
+  }
   return { ok: failures.length === 0, failures };
 }
 
@@ -100,7 +115,18 @@ if (process.argv.includes("--selftest")) {
     for (const [name] of failed) console.error(`  ✗ ${name}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS (${checks.length} checks)`);
+  // BANK-F91420 leftover plant — KpiStatCard page-scoped text token ratchet
+  const liveKpi = read(KPI_STAT);
+  if (!liveKpi.ok || checkKpiStatCardLeftovers(liveKpi.src).length) {
+    console.error(`${LABEL} --selftest FAIL: live KpiStatCard already failing leftover refuse`);
+    process.exit(1);
+  }
+  const leftoverPlant = liveKpi.src + '\n<p className="text-[11px] text-[#8A92AB]">plant</p>\n';
+  if (!checkKpiStatCardLeftovers(leftoverPlant).some((f) => f.includes("leftover"))) {
+    console.error(`${LABEL} --selftest FAIL: leftover text-[11px]/#8A92AB plant escaped`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} --selftest PASS (${checks.length} checks + leftover plant)`);
   process.exit(0);
 }
 
