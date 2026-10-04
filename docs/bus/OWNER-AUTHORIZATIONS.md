@@ -7277,3 +7277,17 @@ action: DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-04-cc3-post-alrea
 expires_at: 2026-10-05T05:22:53Z
 status: OPEN
 THIS AUTHORIZATION DOES NOT COVER: any DELETE; any unmatched bank line; the refused line fc461eb6.
+
+## AUTH-217
+issued_at: 2026-10-04T22:05:48Z
+scope: USMCA ONLY. Lead ruling ACCT-F403 Option 1 (2026-10-04: "The AlwaysTrack settlement line is a DRIVER-FACING figure. It is
+  not the company's cost and must never post fuel") + owner standing order 2026-10-04. Reverse the six DEF postings AUTH-215
+  made from settlement lines on the Relay rail (receipts 99301244 99442334 99444239 2885954 99602755 99912182): each adopted
+  fuel_event JE reversed through executeVoidCancel('journal_entry'), each expense document voided. The six fuel rows stay (the
+  settlement record; they link to their Relay fill in the ACCT-F403 corrections). Turns verify-fuel-cost-posts-exactly-once
+  green (12 live fuel_event postings -> 0; 5000 vs expense lines off by $170.63 -> 0). Prod dry run (deferred constraints
+  fired): 6 reversals, 0 live fuel_event postings.
+action: DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-04-cc3-def-relay-rail-unpost.mts --apply --auth AUTH-217
+expires_at: 2026-10-05T04:05:48Z
+status: OPEN
+THIS AUTHORIZATION DOES NOT COVER: any DELETE; the fuel rows; any other posting.
