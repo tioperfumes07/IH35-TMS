@@ -79,7 +79,8 @@ const SHAPE_FALLBACK_PREDICATE = /operating_company_id\s*=\s*\$1::uuid/;
 for (const fn of ["resolveFallbackByAccountShape", "listFallbackAccountIds"]) {
   const body = bodyOf(fn);
   if (body === null) {
-    failures.push(`resolver no longer defines ${fn}() — entity-scope guard cannot verify the shape fallback`);
+    // The shape fallback was removed (only mapped + legacy-binding resolution remain, both pinned above).
+    // If a shape-fallback helper is ever reintroduced it is checked below; absence is the safe state.
     continue;
   }
   if (!SHAPE_FALLBACK_PREDICATE.test(body)) {

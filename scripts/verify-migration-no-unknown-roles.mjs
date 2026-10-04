@@ -66,7 +66,23 @@ function stripLineComments(sql) {
  * Handles: GRANT priv ON obj TO role1, role2
  * Skips: dynamic GRANT inside format() strings (inside single quotes).
  */
-function extractGrantedRoles(sql) {
+/**
+ * A GRANT to role R that sits INSIDE `IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'R') THEN ... END IF;`
+ * can never raise "role does not exist" (it only runs where R exists), so it is not the GAP-81 failure class.
+ * Remove only those self-guarded GRANTs (same role in the guard and the GRANT); an unguarded GRANT, or a GRANT
+ * guarded by a different role's existence check, is still scanned.
+ */
+function stripSelfGuardedRoleGrants(sql) {
+  const guardRe =
+    /IF\s+EXISTS\s*\(\s*SELECT\s+1\s+FROM\s+pg_roles\s+WHERE\s+rolname\s*=\s*'([A-Za-z0-9_]+)'\s*\)\s*THEN([\s\S]*?)END\s+IF\s*;/gi;
+  return sql.replace(guardRe, (block, role, body) => {
+    const grantToRole = new RegExp(`\\bGRANT\\b[^;]*?\\bTO\\s+"?${role}"?\\s*;`, "gi");
+    return block.replace(body, body.replace(grantToRole, ""));
+  });
+}
+
+function extractGrantedRoles(rawSql) {
+  const sql = stripSelfGuardedRoleGrants(stripLineComments(rawSql));
   // Remove single-quoted string literals to avoid matching inside format('GRANT...')
   const noStrings = sql.replace(/'(?:[^']|'')*'/g, "''");
   const clean = stripLineComments(noStrings);

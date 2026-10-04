@@ -14,6 +14,10 @@ const live = {
   parts: read("apps/frontend/src/pages/maintenance/parts/PartsMasterDataPage.tsx"),
 };
 
+// The calls are multi-line (prettier-formatted) object literals; allow any whitespace between args.
+const ACTIVE_ROSTER_CALL = /listAllVendors\(\{\s*operating_company_id: companyId,\s*active_company_only: true,?\s*\}\)/;
+const INACTIVE_ROSTER_CALL = /listAllVendors\(\{\s*operating_company_id: companyId,\s*status: "inactive",?\s*\}\)/;
+
 function verify(s) {
   const helper = s.api.slice(s.api.indexOf("export async function listAllVendors"), s.api.indexOf("export function getVendor"));
   const checks = [
@@ -22,8 +26,8 @@ function verify(s) {
     ["deduplicated IDs", /seen\.has\(vendor\.id\)/.test(helper) && /seen\.add\(vendor\.id\)/.test(helper)],
     ["progress-safe offset", /offset \+= page\.vendors\.length/.test(helper) && /page\.vendors\.length === 0/.test(helper)],
     ["deterministic vendor order", /ORDER BY created_at DESC, id DESC/.test(s.backend)],
-    ["active master complete", /listAllVendors\(\{ operating_company_id: companyId, active_company_only: true \}\)/.test(s.vendors)],
-    ["inactive master complete", /listAllVendors\(\{ operating_company_id: companyId, status: "inactive" \}\)/.test(s.vendors)],
+    ["active master complete", ACTIVE_ROSTER_CALL.test(s.vendors)],
+    ["inactive master complete", INACTIVE_ROSTER_CALL.test(s.vendors)],
     ["parts suggestions complete", /listAllVendors\(\{ operating_company_id: companyId \}\)\.then\(\(r\) => r\.vendors\)/.test(s.parts)],
     ["parts suggestions remain denormalized", /vendor_default is a denormalized text label, not a[\s\S]*vendor_id FK/.test(s.parts)],
   ];
@@ -41,8 +45,8 @@ if (process.argv.includes("--selftest")) {
     ["total drift accepted", { ...live, api: live.api.replace('if (page.total !== expectedTotal) throw new Error("Vendor roster changed during pagination. Retry.");', 'if (false) throw new Error("Vendor roster changed during pagination. Retry.");') }],
     ["early empty accepted", { ...live, api: live.api.replace('if (page.vendors.length === 0) throw new Error("Vendor roster pagination stopped before the reported total.");', 'if (false) throw new Error("Vendor roster pagination stopped before the reported total.");') }],
     ["unstable SQL", { ...live, backend: live.backend.replace(", id DESC", "") }],
-    ["active first page", { ...live, vendors: live.vendors.replace("listAllVendors({ operating_company_id: companyId, active_company_only: true })", "listVendors({ operating_company_id: companyId, limit: 5000, active_company_only: true })") }],
-    ["inactive first page", { ...live, vendors: live.vendors.replace("listAllVendors({ operating_company_id: companyId, status: \"inactive\" })", "listVendors({ operating_company_id: companyId, limit: 5000, status: \"inactive\" })") }],
+    ["active first page", { ...live, vendors: live.vendors.replace(ACTIVE_ROSTER_CALL, "listVendors({ operating_company_id: companyId, limit: 5000, active_company_only: true })") }],
+    ["inactive first page", { ...live, vendors: live.vendors.replace(INACTIVE_ROSTER_CALL, "listVendors({ operating_company_id: companyId, limit: 5000, status: \"inactive\" })") }],
     ["parts first page", { ...live, parts: live.parts.replace("listAllVendors({ operating_company_id: companyId })", "listVendors({ operating_company_id: companyId })") }],
   ];
   for (const [label, mutation] of mutations) {

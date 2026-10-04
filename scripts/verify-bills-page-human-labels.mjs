@@ -17,18 +17,21 @@ function assert(src) {
   if (/allocationBill\.bill_number\s*\|\|\s*allocationBill\.id\.slice\(0,\s*8\)/.test(src)) {
     problems.push(`${FILE}: allocation billLabel still uses id.slice`);
   }
-  if (!/entityLabel\(bill\.bill_number,\s*bill\.id,\s*"Bill"\)/.test(src)) {
-    problems.push(`${FILE}: must use entityLabel(bill_number, id, Bill)`);
+  // Current shape: the Bill # cell renders the trimmed display_id with an honest "No bill #"
+  // fallback (never an id slice). The older entityLabel(bill_number, id, "Bill") shape is still accepted.
+  const entityLabelShape = /entityLabel\(bill\.bill_number,\s*bill\.id,\s*"Bill"\)/.test(src);
+  const honestFallbackShape = /label=\{number !== "" \? number : "No bill #"\}/.test(src);
+  if (!entityLabelShape && !honestFallbackShape) {
+    problems.push(`${FILE}: must use entityLabel(bill_number, id, Bill) or the honest "No bill #" fallback`);
   }
   return problems;
 }
 
 if (SELFTEST) {
   const live = fs.readFileSync(path.join(ROOT, FILE), "utf8");
-  const planted = live.replace(
-    /entityLabel\(bill\.bill_number,\s*bill\.id,\s*"Bill"\)/g,
-    "bill.bill_number || bill.id.slice(0, 8)",
-  );
+  const planted = live
+    .replace(/entityLabel\(bill\.bill_number,\s*bill\.id,\s*"Bill"\)/g, "bill.bill_number || bill.id.slice(0, 8)")
+    .replace(/label=\{number !== "" \? number : "No bill #"\}/g, "label={bill.bill_number || bill.id.slice(0, 8)}");
   if (!assert(planted).length) {
     console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);
     process.exit(1);

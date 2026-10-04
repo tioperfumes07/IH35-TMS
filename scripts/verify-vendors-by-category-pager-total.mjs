@@ -28,8 +28,10 @@ export function check(text) {
   // With no categoryFilter, by-category must total the FULL merged roster (same server counts as "all"),
   // not the plain active-only vendorsQuery total.
   const serverTotalDeclIdx = text.indexOf("const vendorsServerTotal =");
-  const serverTotalBlock = serverTotalDeclIdx >= 0 ? text.slice(serverTotalDeclIdx, serverTotalDeclIdx + 500) : "";
-  if (!/\(vendorsQuery\.data\?\.total \?\? 0\) \+ \(inactiveVendorsQuery\.data\?\.total \?\? 0\)[\s\S]*?:\s*vendorsQuery\.data\?\.total \?\? 0;/.test(serverTotalBlock)) {
+  const serverTotalBlock = serverTotalDeclIdx >= 0 ? text.slice(serverTotalDeclIdx, serverTotalDeclIdx + 900) : "";
+  // Anchored on the by-category branch itself (the "all" branch above it also sums active+inactive, so an
+  // unanchored match would be vacuous): by-category -> categoryFilter ? byCategory : active+inactive : active-only.
+  if (!/listStatus === "by-category"\s*\?\s*categoryFilter\s*\?\s*vendorTabCounts\.byCategory\s*:\s*\(vendorsQuery\.data\?\.total \?\? 0\) \+ \(inactiveVendorsQuery\.data\?\.total \?\? 0\)\s*:\s*vendorsQuery\.data\?\.total \?\? 0;/.test(serverTotalBlock)) {
     failures.push(`${FILE} the by-category+no-categoryFilter branch no longer sums the active+inactive server totals`);
   }
   return failures;

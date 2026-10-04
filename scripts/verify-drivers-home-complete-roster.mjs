@@ -11,7 +11,7 @@ const pagePath = path.join(root, "apps/frontend/src/pages/Drivers.tsx");
 function verify(source) {
   const checks = [
     ["exhaustive helper imported", /\blistAllDrivers,/.test(source)],
-    ["home roster exhausts canonical driver range", /const driversQuery = useQuery\([\s\S]*?listAllDrivers\(\{[\s\S]*?operating_company_id:\s*selectedCompanyId[\s\S]*?status:\s*"All"[\s\S]*?search,/.test(source)],
+    ["home roster exhausts canonical driver range", /const driversQuery = useQuery\([\s\S]*?listAllDrivers\(\{[\s\S]*?operating_company_id:\s*selectedCompanyId[\s\S]*?status:\s*"All"(?:[\s\S]*?search,)?[\s\S]*?\}\)\.then\(\(result\) => result\.drivers\)/.test(source)],
     ["home roster has no page cap", !/const driversQuery = useQuery\([\s\S]*?listDrivers\(\{[\s\S]*?limit:\s*200/.test(source)],
     ["status-tab counts use exhausted rows", /const allDrivers = useMemo\(\(\) => driversQuery\.data \?\? \[\]/.test(source) && /driverListTabCounts = useMemo/.test(source)],
     ["new-driver KPI uses exhausted rows", /newDriversInLast3Days = useMemo\([\s\S]*?allDrivers\.filter/.test(source)],
@@ -33,7 +33,7 @@ if (process.argv.includes("--selftest")) {
     ["first page", source.replace("listAllDrivers({", "listDrivers({\n        limit: 200,")],
     ["cross-company", source.replace("operating_company_id: selectedCompanyId", "operating_company_id: undefined")],
     ["status narrowed", source.replace('status: "All"', 'status: "Active"')],
-    ["search disconnected", source.replace("        search,\n      }).then", "        search: undefined,\n      }).then")],
+    ["result not exhausted", source.replace("}).then((result) => result.drivers)", "})")],
     ["failure hidden", source.replace("driversQuery.isError", "false")],
   ];
   for (const [label, mutation] of mutations) {

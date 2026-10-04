@@ -11,7 +11,15 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const detailPage = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/accounting/BillPaymentDetailPage.tsx"), "utf8");
 const apiTypes = fs.readFileSync(path.join(ROOT, "apps/frontend/src/api/accounting.ts"), "utf8");
 const backend = fs.readFileSync(path.join(ROOT, "apps/backend/src/accounting/bills.service.ts"), "utf8");
+const banner = fs.readFileSync(path.join(ROOT, "apps/frontend/src/components/accounting/OnlineBankingMatchBanner.tsx"), "utf8");
 const errors = [];
+// The bank-transaction hop is now rendered by the shared OnlineBankingMatchBanner: the page must pass
+// the bank txn id/date/description to it, and the banner itself must format the date and keep an
+// honest (non-UUID) fallback label.
+const bannerRendersBankHop =
+  /<OnlineBankingMatchBanner[\s\S]*?bankTransactionId=\{payment\.matched_bank_transaction_id\}[\s\S]*?txnDate=\{payment\.matched_bank_transaction_date\}[\s\S]*?description=\{payment\.matched_bank_transaction_description\}[\s\S]*?\/>/.test(detailPage) &&
+  /formatDateUS\(txnDate\)/.test(banner) &&
+  /description\?\.trim\(\) \|\| "Bank transaction"/.test(banner);
 
 if (!/journal_entry_date/.test(apiTypes) || !/journal_entry_memo/.test(apiTypes)) {
   errors.push("BillPayment type missing journal_entry_date / journal_entry_memo");
@@ -28,7 +36,7 @@ if (!/bt\.transaction_date/.test(backend)) {
 if (!/formatDateUS\(payment\.journal_entry_date\)/.test(detailPage)) {
   errors.push("BillPaymentDetailPage does not render journal entry date");
 }
-if (!/formatDateUS\(payment\.matched_bank_transaction_date\)/.test(detailPage)) {
+if (!/formatDateUS\(payment\.matched_bank_transaction_date\)/.test(detailPage) && !bannerRendersBankHop) {
   errors.push("BillPaymentDetailPage does not render bank transaction date");
 }
 // The real fallback now renders entityLabel(null, payment.X_id, "...") instead of a truncated
@@ -36,10 +44,10 @@ if (!/formatDateUS\(payment\.matched_bank_transaction_date\)/.test(detailPage)) 
 // sentinel rather than 8 meaningless hex characters (entity-label.ts's documented law against
 // exactly this truncated-slice anti-pattern, same class already fixed for BillDetailPage.tsx
 // this session). Accept either shape.
-if (!/payment\.journal_entry_id\.slice\(0,\s*8\)/.test(detailPage) && !/entityLabel\(null,\s*payment\.journal_entry_id,/.test(detailPage)) {
+if (!/payment\.journal_entry_id\.slice\(0,\s*8\)/.test(detailPage) && !/entityLabel\(null,\s*payment\.journal_entry_id,/.test(detailPage) && !/entityLabel\(payment\.journal_entry_memo,\s*payment\.journal_entry_id,/.test(detailPage)) {
   errors.push("BillPaymentDetailPage missing an honest fallback for journal entry");
 }
-if (!/payment\.matched_bank_transaction_id\.slice\(0,\s*8\)/.test(detailPage) && !/entityLabel\(null,\s*payment\.matched_bank_transaction_id,/.test(detailPage)) {
+if (!/payment\.matched_bank_transaction_id\.slice\(0,\s*8\)/.test(detailPage) && !/entityLabel\(null,\s*payment\.matched_bank_transaction_id,/.test(detailPage) && !bannerRendersBankHop) {
   errors.push("BillPaymentDetailPage missing an honest fallback for bank transaction");
 }
 

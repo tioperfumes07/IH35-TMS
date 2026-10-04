@@ -11,7 +11,14 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const detailPage = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/accounting/PaymentDetailPage.tsx"), "utf8");
 const apiTypes = fs.readFileSync(path.join(ROOT, "apps/frontend/src/api/accounting.ts"), "utf8");
 const backend = fs.readFileSync(path.join(ROOT, "apps/backend/src/accounting/payments.routes.ts"), "utf8");
+const banner = fs.readFileSync(path.join(ROOT, "apps/frontend/src/components/accounting/OnlineBankingMatchBanner.tsx"), "utf8");
 const errors = [];
+// The bank-transaction hop is rendered by the shared OnlineBankingMatchBanner: the page must hand it the
+// bank txn id/date/description and the banner must format the date with an honest (non-UUID) label.
+const bannerRendersBankHop =
+  /<OnlineBankingMatchBanner[\s\S]*?bankTransactionId=\{payment\.matched_bank_transaction_id\}[\s\S]*?txnDate=\{payment\.matched_bank_transaction_date\}[\s\S]*?description=\{payment\.matched_bank_transaction_description\}[\s\S]*?\/>/.test(detailPage) &&
+  /formatDateUS\(txnDate\)/.test(banner) &&
+  /description\?\.trim\(\) \|\| "Bank transaction"/.test(banner);
 
 if (!/deposited_to_account_number/.test(apiTypes) || !/deposited_to_account_name/.test(apiTypes)) {
   errors.push("Payment type missing deposited_to_account_number / deposited_to_account_name");
@@ -31,7 +38,7 @@ if (!/function accountLabel/.test(detailPage)) {
 if (!/accountLabel\(\s*payment\.deposited_to_account_name/.test(detailPage)) {
   errors.push("PaymentDetailPage deposited_to label does not use account name/number");
 }
-if (!/formatDateUS\(payment\.matched_bank_transaction_date\)/.test(detailPage)) {
+if (!/formatDateUS\(payment\.matched_bank_transaction_date\)/.test(detailPage) && !bannerRendersBankHop) {
   errors.push("PaymentDetailPage does not render bank transaction date");
 }
 

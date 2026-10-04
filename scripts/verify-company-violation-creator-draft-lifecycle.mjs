@@ -24,7 +24,7 @@ function failures(input = source) {
     ["actual close retires request and resets", /const handleClose = useCallback\(\(\) => \{\s*if \(mutation\.isPending\) return;\s*companyGenerationRef\.current \+= 1;\s*resetDraft\(\);\s*resetMutation\(\);\s*onClose\(\);/.test(input)],
     ["dirty drawer confirmation", input.includes("confirmDiscardOnClose") && input.includes("isDirty={isDirty}")],
     ["cancel uses confirm-aware close", input.includes("onRegisterAttemptClose") && /variant="secondary" onClick=\{attemptClose\} disabled=\{mutation\.isPending\}/.test(input)],
-    ["create snapshots company and payload", /createCompanyViolation\(input\.companyId, input\.payload\)/.test(input)],
+    ["create snapshots company and payload", /createCompanyViolation\(input\.companyId, (?:input\.payload\)|\{ \.\.\.input\.payload\b)/.test(input)],
     ["company transition advances generation", /companyGenerationRef\.current \+= 1;\s*if \(!open\) return;/.test(input)],
     ["stale success is rejected", /input\.generation !== companyGenerationRef\.current/.test(input)],
     ["stale error is hidden", /mutation\.variables\?\.generation === companyGenerationRef\.current/.test(input)],
@@ -38,7 +38,7 @@ if (process.argv.includes("--selftest")) {
   const staleCompany = source.replace("[open, operatingCompanyId, resetDraft, resetMutation]", "[open, resetDraft, resetMutation]");
   const staleClose = source.replace("companyGenerationRef.current += 1;\n    resetDraft();\n    resetMutation();", "resetDraft();\n    resetMutation();");
   const staleCallback = source.replace("input.generation !== companyGenerationRef.current", "false");
-  const mutableCompany = source.replace("createCompanyViolation(input.companyId, input.payload)", "createCompanyViolation(operatingCompanyId, input.payload)");
+  const mutableCompany = source.replace("createCompanyViolation(input.companyId, ", "createCompanyViolation(operatingCompanyId, ");
   const bypassCancel = source.replace("onClick={attemptClose}", "onClick={handleClose}");
   const noConfirm = source.replace("confirmDiscardOnClose", "");
   const checks = [
