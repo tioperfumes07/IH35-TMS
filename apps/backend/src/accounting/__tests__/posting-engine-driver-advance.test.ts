@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 // B3: driver_advance source type in the posting engine. Pure unit test — DB + resolvers mocked.
 
-const { mockQuery, mockWithCurrentUser, mockResolveAccountForCategory, mockResolveRoleAccountOptional } = vi.hoisted(
+const { mockQuery, mockWithCurrentUser, mockResolveDriverAdvanceSubAccount, mockResolveRoleAccountOptional } = vi.hoisted(
   () => {
     const query = vi.fn();
     return {
@@ -10,7 +10,7 @@ const { mockQuery, mockWithCurrentUser, mockResolveAccountForCategory, mockResol
       mockWithCurrentUser: vi.fn(async (_userId: string, fn: (client: { query: typeof query }) => unknown) =>
         fn({ query })
       ),
-      mockResolveAccountForCategory: vi.fn(),
+      mockResolveDriverAdvanceSubAccount: vi.fn(),
       mockResolveRoleAccountOptional: vi.fn(),
     };
   }
@@ -23,15 +23,22 @@ vi.mock("../../auth/db.js", async (orig) => {
   const actual = (await orig()) as Record<string, unknown>;
   return { ...actual, withCurrentUser: mockWithCurrentUser };
 });
-vi.mock("../expense-category-map/resolver.service.js", () => ({ resolveAccountForCategory: mockResolveAccountForCategory }));
+// ROUND 394 RULING 1 — the advance debit is the driver's OWN 1245 sub-account, never the shared
+// cash_advance category account.
+vi.mock("../../driver-finance/driver-advance-account-resolver.js", () => ({
+  resolveDriverAdvanceSubAccount: mockResolveDriverAdvanceSubAccount,
+  DriverAdvanceAccountError: class DriverAdvanceAccountError extends Error {},
+}));
 vi.mock("../coa-roles/resolver.service.js", () => ({ resolveRoleAccountOptional: mockResolveRoleAccountOptional }));
 
 const { postSourceTransaction } = await import("../posting-engine.service.js");
+const { DriverAdvanceAccountError } = await import("../../driver-finance/driver-advance-account-resolver.js");
 
 const OPCO = "11111111-1111-4111-8111-111111111111";
+const DRIVER_ID = "55555555-5555-4555-8555-555555555555";
 const ACTOR = "22222222-2222-4222-8222-222222222222";
 const ADV = "44444444-4444-4444-8444-444444444444";
-const DEBIT = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"; // QBO-149 Driver Cash Advance (B1 resolver)
+const DEBIT = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"; // the driver's own 1245 sub-account (ROUND 394)
 const CREDIT = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"; // operator-chosen source/bank
 const DEFAULT_CASH = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
 
@@ -69,6 +76,7 @@ function installMock(
             disbursed_at: "2026-06-13T00:00:00Z",
             created_at: "2026-06-13T00:00:00Z",
             from_bank_account_id: fromBankAccountId,
+            driver_id: DRIVER_ID,
           },
         ],
       };
@@ -102,8 +110,8 @@ function installMock(
 describe("posting-engine driver_advance source type (B3)", () => {
   it("posts balanced Dr QBO-149 / Cr chosen account with the user-settable (back-dated) posting_date", async () => {
     mockWithCurrentUser.mockClear();
-    mockResolveAccountForCategory.mockReset();
-    mockResolveAccountForCategory.mockResolvedValue({ account_id: DEBIT, posting_side: "debit" });
+    mockResolveDriverAdvanceSubAccount.mockReset();
+    mockResolveDriverAdvanceSubAccount.mockResolvedValue(DEBIT);
     mockResolveRoleAccountOptional.mockReset();
     const cap = installMock({ posting_date: "2026-05-25" });
 
@@ -119,14 +127,9 @@ describe("posting-engine driver_advance source type (B3)", () => {
 
     expect(result.result).toBe("posted");
     expect(result.source_transaction_type).toBe("driver_advance");
-    // ACCT-F2026092584 — passes this function's own client (4th arg) so the read runs on it, not a
-    // second withLuciaBypass connection.
-    expect(mockResolveAccountForCategory).toHaveBeenCalledWith(
-      OPCO,
-      "cash_advance",
-      "cash_advance",
-      expect.objectContaining({ query: expect.any(Function) })
-    );
+    // ROUND 394 RULING 1 — the debit is the advance driver's OWN 1245 sub-account, resolved on this
+    // function's own client (ACCT-F2026092584), never the shared cash_advance category account.
+    expect(mockResolveDriverAdvanceSubAccount).toHaveBeenCalledWith(expect.objectContaining({ query: expect.any(Function) }), OPCO, DRIVER_ID);
 
     // posting_date drives the journal entry date — cash given May 25 posts as 2026-05-25.
     expect(cap.getEntryDate()).toBe("2026-05-25");
@@ -151,8 +154,8 @@ describe("posting-engine driver_advance source type (B3)", () => {
 
   it("falls back to the company-default cash account when credit_account_id is omitted", async () => {
     mockWithCurrentUser.mockClear();
-    mockResolveAccountForCategory.mockReset();
-    mockResolveAccountForCategory.mockResolvedValue({ account_id: DEBIT, posting_side: "debit" });
+    mockResolveDriverAdvanceSubAccount.mockReset();
+    mockResolveDriverAdvanceSubAccount.mockResolvedValue(DEBIT);
     mockResolveRoleAccountOptional.mockReset();
     mockResolveRoleAccountOptional.mockResolvedValue(DEFAULT_CASH);
     const cap = installMock();
@@ -169,8 +172,8 @@ describe("posting-engine driver_advance source type (B3)", () => {
 
   it("refuses to post when the advance is not disbursed", async () => {
     mockWithCurrentUser.mockClear();
-    mockResolveAccountForCategory.mockReset();
-    mockResolveAccountForCategory.mockResolvedValue({ account_id: DEBIT, posting_side: "debit" });
+    mockResolveDriverAdvanceSubAccount.mockReset();
+    mockResolveDriverAdvanceSubAccount.mockResolvedValue(DEBIT);
     mockResolveRoleAccountOptional.mockReset();
     installMock({ status: "approved" });
 
@@ -190,8 +193,8 @@ describe("posting-engine driver_advance source type (B3)", () => {
   // CLS-CASH-OUT-CREDITS-CLEARING-ACCOUNT / LV-ADVANCE-CREDITS-UNDEPOSITED-NOT-THE-BANK / ACCT-F358.
   it("ACCT-F358: credits the advance's OWN bank via the bank->GL bridge when from_bank_account_id is set and no override is supplied", async () => {
     mockWithCurrentUser.mockClear();
-    mockResolveAccountForCategory.mockReset();
-    mockResolveAccountForCategory.mockResolvedValue({ account_id: DEBIT, posting_side: "debit" });
+    mockResolveDriverAdvanceSubAccount.mockReset();
+    mockResolveDriverAdvanceSubAccount.mockResolvedValue(DEBIT);
     mockResolveRoleAccountOptional.mockReset();
     const BANK_ACCOUNT_ID = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
     const BANK_LEDGER_ACCOUNT_ID = "ffffffff-ffff-4fff-8fff-ffffffffffff";
@@ -211,8 +214,8 @@ describe("posting-engine driver_advance source type (B3)", () => {
 
   it("ACCT-F358: fails LOUD (never falls back to a clearing account) when the named bank has no ledger_account_id bridge", async () => {
     mockWithCurrentUser.mockClear();
-    mockResolveAccountForCategory.mockReset();
-    mockResolveAccountForCategory.mockResolvedValue({ account_id: DEBIT, posting_side: "debit" });
+    mockResolveDriverAdvanceSubAccount.mockReset();
+    mockResolveDriverAdvanceSubAccount.mockResolvedValue(DEBIT);
     mockResolveRoleAccountOptional.mockReset();
     const BANK_ACCOUNT_ID = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
     installMock({ fromBankAccountId: BANK_ACCOUNT_ID, bankLedgerAccountId: null });
@@ -228,8 +231,8 @@ describe("posting-engine driver_advance source type (B3)", () => {
 
   it("ACCT-F358: an explicit credit_account_id still overrides the advance's own named bank", async () => {
     mockWithCurrentUser.mockClear();
-    mockResolveAccountForCategory.mockReset();
-    mockResolveAccountForCategory.mockResolvedValue({ account_id: DEBIT, posting_side: "debit" });
+    mockResolveDriverAdvanceSubAccount.mockReset();
+    mockResolveDriverAdvanceSubAccount.mockResolvedValue(DEBIT);
     mockResolveRoleAccountOptional.mockReset();
     const BANK_ACCOUNT_ID = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
     const cap = installMock({ fromBankAccountId: BANK_ACCOUNT_ID, bankLedgerAccountId: "should-not-be-used" });
@@ -250,8 +253,8 @@ describe("posting-engine driver_advance source type (B3)", () => {
 
   it("ACCT-F5653: refuses to post when credit_account_id does not resolve for this operating_company_id", async () => {
     mockWithCurrentUser.mockClear();
-    mockResolveAccountForCategory.mockReset();
-    mockResolveAccountForCategory.mockResolvedValue({ account_id: DEBIT, posting_side: "debit" });
+    mockResolveDriverAdvanceSubAccount.mockReset();
+    mockResolveDriverAdvanceSubAccount.mockResolvedValue(DEBIT);
     mockResolveRoleAccountOptional.mockReset();
     installMock();
     const FOREIGN_ACCOUNT = "99999999-9999-4999-8999-999999999999"; // belongs to no entity in this mock
@@ -267,5 +270,19 @@ describe("posting-engine driver_advance source type (B3)", () => {
         { userId: ACTOR }
       )
     ).rejects.toMatchObject({ code: "CREDIT_ACCOUNT_CROSS_ENTITY" });
+  });
+  it("ROUND 394 RULING 1: a driver with no own 1245 sub-account FAILS CLOSED — no shared-account fallback", async () => {
+    mockResolveDriverAdvanceSubAccount.mockReset();
+    mockResolveDriverAdvanceSubAccount.mockRejectedValue(new DriverAdvanceAccountError("no own sub-account"));
+    mockResolveRoleAccountOptional.mockReset();
+    const cap = installMock({ posting_date: "2026-05-25" });
+
+    await expect(
+      postSourceTransaction(
+        { operating_company_id: OPCO, source_transaction_type: "driver_advance", source_transaction_id: ADV, credit_account_id: CREDIT },
+        { userId: ACTOR }
+      )
+    ).rejects.toMatchObject({ code: "ACCOUNT_MAPPING_MISSING" });
+    expect(cap.lines).toHaveLength(0);
   });
 });

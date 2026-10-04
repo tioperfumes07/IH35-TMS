@@ -1,10 +1,10 @@
 {
-  "healthzSha": "27abed0",
-  "generated_at": "2026-10-04T01:24:30.843Z",
+  "healthzSha": "e1307f1",
+  "generated_at": "2026-10-04T01:31:21.051Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "27abed0",
+    "deployedSha": "e1307f1",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 25009,
-      "title": "Cursor-BANK-F91338 GeofencesPage text-[11px]→text-xs leftover drain",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 08:22 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25009",
-      "sha": "da3d34f5ba",
-      "committedAtIso": "2026-10-03T20:22:53-05:00"
-    },
-    {
-      "number": 25008,
-      "title": "Cursor-BANK-F91337 FinanceHubPage text-[11px]→text-xs leftover drain",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 08:22 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25008",
-      "sha": "3e13563bed",
-      "committedAtIso": "2026-10-03T20:22:20-05:00"
-    },
-    {
-      "number": 25006,
-      "title": "FINDING: N/A (CLAIM-RESERVE 12429 -- reservation-only commit, no code fix)",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 08:22 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25006",
-      "sha": "c552b7d6db",
-      "committedAtIso": "2026-10-03T20:22:03-05:00"
-    },
-    {
-      "number": 25005,
-      "title": "Cursor-BANK-F91336 ELD Unidentified+Violations text-[11px]→text-xs leftover drain",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 08:21 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25005",
-      "sha": "e1307f1217",
-      "committedAtIso": "2026-10-03T20:21:46-05:00"
-    },
-    {
-      "number": 25004,
-      "title": "Cursor-BANK-F91335 PoliciesList text-[11px]→text-xs leftover drain",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 08:21 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25004",
-      "sha": "98992a8ec9",
-      "committedAtIso": "2026-10-03T20:21:14-05:00"
-    },
-    {
-      "number": 25003,
-      "title": "Cursor-BANK-F91334 StatusBarMobile text-[11px]→text-xs leftover drain",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 08:20 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25003",
-      "sha": "157836686f",
-      "committedAtIso": "2026-10-03T20:20:30-05:00"
-    },
-    {
-      "number": 25002,
-      "title": "Cursor-BANK-F91333 ServiceTimeline text-[11px]→text-xs leftover drain",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 08:19 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25002",
-      "sha": "34c1763c76",
-      "committedAtIso": "2026-10-03T20:19:43-05:00"
-    },
-    {
-      "number": 25001,
-      "title": "Cursor-BANK-F91332 ReportCard text-[11px]→text-xs leftover drain",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 08:18 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25001",
-      "sha": "27abed02df",
-      "committedAtIso": "2026-10-03T20:18:46-05:00"
-    },
-    {
       "number": 0,
-      "title": "Cursor-BANK-F91331 InspectionScoreBadge text-[11px]→text-xs leftover drain",
+      "title": "Cursor-BANK-F91349 DocumentsTab text-[11px]→text-xs leftover drain",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 08:14 PM CT",
+      "mergedAtCt": "10/03/2026, 08:30 PM CT",
       "url": "",
-      "sha": "d9e49321e2",
-      "committedAtIso": "2026-10-03T20:14:17-05:00"
+      "sha": "26394f1e46",
+      "committedAtIso": "2026-10-03T20:30:31-05:00"
     },
     {
-      "number": 24999,
-      "title": "FINDING: ACCT-F3722 LANE: FINANCIAL (ROUND 391.2 + 393.2 parser — reefer fuel_type FROM THE FEED's product code: Relay product 033 \"Reefer\" holds 9 USMCA lines / 632.770 gal, but every USMCA fuel row came in through the settlement import as diesel, so 202.770 reefer gallons sat in IFTA as taxable road fuel and the rest were invisible to the credit. The 4 rows the feed proves are reefer (one-to-one: unit, +/-1 day, gallons to the thousandth) become reefer_diesel; Q3 IFTA taxable gallons 29,584.108 -> 29,381.338 (-202.770, all the UNKNOWN jurisdiction); the Reefer fuel credit report counts the feed's 5 unmatched reefer lines too (Q3: 632.770 gal whole). The settlement parser now emits the product code and accepts only a real invoice (the \"ustFluid\" reference), and the feed writer takes fuel_type from that product code)",
+      "number": 25023,
+      "title": "Cursor-BANK-F91348 IftaPreparerCard text-[11px]→text-xs leftover drain",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 08:13 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24999",
-      "sha": "c43c038380",
-      "committedAtIso": "2026-10-03T20:13:38-05:00"
+      "mergedAtCt": "10/03/2026, 08:29 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25023",
+      "sha": "6a932696ff",
+      "committedAtIso": "2026-10-03T20:29:50-05:00"
+    },
+    {
+      "number": 25022,
+      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: migrations 202615380400 + 202615380500 for CC-1 ROUND 394 ruling 1 step 2 — derived advance balance, then drop outstanding_balance)",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 08:29 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25022",
+      "sha": "90cae35a7c",
+      "committedAtIso": "2026-10-03T20:29:31-05:00"
+    },
+    {
+      "number": 25021,
+      "title": "Cursor-OUTBOX BANK-F91344..F91347 leftover drain MERGED tip 35226af73a",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 08:29 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25021",
+      "sha": "32b685a594",
+      "committedAtIso": "2026-10-03T20:29:18-05:00"
+    },
+    {
+      "number": 25020,
+      "title": "Cursor-BANK-F91347 AtRiskDriverCard text-[11px]→text-xs leftover drain",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 08:28 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25020",
+      "sha": "35226af73a",
+      "committedAtIso": "2026-10-03T20:28:36-05:00"
+    },
+    {
+      "number": 25019,
+      "title": "Cursor-BANK-F91346 HOSStatusSection text-[11px]→text-xs leftover drain",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 08:28 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25019",
+      "sha": "6c10af3ff2",
+      "committedAtIso": "2026-10-03T20:28:00-05:00"
+    },
+    {
+      "number": 25018,
+      "title": "Cursor-BANK-F91345 TriSignalHoverDetail text-[11px]→text-xs leftover drain",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 08:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25018",
+      "sha": "baca6999ad",
+      "committedAtIso": "2026-10-03T20:27:58-05:00"
+    },
+    {
+      "number": 25007,
+      "title": "FINDING: FUEL-DUP-99794138 LANE: claude — owner-authorized void of duplicate fuel receipt 99794138 (load 13571 copy), AUTH-207",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 08:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25007",
+      "sha": "42fb2be121",
+      "committedAtIso": "2026-10-03T20:27:30-05:00"
+    },
+    {
+      "number": 25017,
+      "title": "Cursor-BANK-F91344 FuelFraudBadge text-[11px]→text-xs leftover drain",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 08:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25017",
+      "sha": "3f9e212886",
+      "committedAtIso": "2026-10-03T20:27:26-05:00"
+    },
+    {
+      "number": 25016,
+      "title": "Cursor-OUTBOX BANK-F91339..F91343 leftover drain MERGED tip 65ce3012df",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 08:27 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25016",
+      "sha": "c11dfec217",
+      "committedAtIso": "2026-10-03T20:27:01-05:00"
     }
   ]
 }

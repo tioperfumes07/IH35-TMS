@@ -9,6 +9,7 @@ import { releaseBankLinesNamingDocument } from "../accounting/void.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { voidSettlementDeduction } from "../driver-finance/settlement-deduction-void.service.js";
 import { nextCashAdvanceDisplayId } from "./display-id.js";
+import { DriverAdvanceAccountError, resolveDriverAdvanceSubAccount } from "../driver-finance/driver-advance-account-resolver.js";
 
 type PgishClient = {
   query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }>;
@@ -321,6 +322,16 @@ export async function createDriverCashAdvanceCore(
     String(driver.status ?? "").toLowerCase() !== "active"
   ) {
     return { ok: false, code: 400, error: "driver_not_active" };
+  }
+
+  // ROUND 394 RULING 1 — the advance is a receivable on the driver's OWN 1245 sub-account; disbursement
+  // debits it and pay-run close credits it. Refuse here, before any row is written, when the driver has
+  // no own sub-account bound under the advance_recovery parent — never an advance that cannot post.
+  try {
+    await resolveDriverAdvanceSubAccount(client as never, companyId, String(body.driver_id));
+  } catch (err) {
+    if (err instanceof DriverAdvanceAccountError) return { ok: false, code: 409, error: err.code.toLowerCase(), message: err.message };
+    throw err;
   }
 
   if (body.load_id) {

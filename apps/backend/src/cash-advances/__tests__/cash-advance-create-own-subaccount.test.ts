@@ -1,16 +1,23 @@
 import { describe, expect, it, vi } from "vitest";
 
-// B3: createEmployeeLoanCore (type='loan' fallback) is additive over createDriverCashAdvanceCore.
+// ROUND 394 RULING 1 — an advance is a receivable on the driver's OWN 1245 sub-account. Creation must
+// refuse a driver with no bound own sub-account BEFORE any row is written, so no advance can exist that
+// the posting engine cannot debit to that driver.
 
+const { mockResolve } = vi.hoisted(() => ({ mockResolve: vi.fn() }));
 vi.mock("../display-id.js", () => ({ nextCashAdvanceDisplayId: vi.fn(async () => "CA-1") }));
 vi.mock("../../audit/crud-audit.js", () => ({ appendCrudAudit: vi.fn() }));
-// ROUND 394 RULING 1 — creation requires the driver's own 1245 sub-account; covered by its own tests.
-vi.mock("../../driver-finance/driver-advance-account-resolver.js", () => ({
-  resolveDriverAdvanceSubAccount: vi.fn(async () => "driver-own-advance-sub"),
-  DriverAdvanceAccountError: class DriverAdvanceAccountError extends Error {},
-}));
+vi.mock("../../driver-finance/driver-advance-account-resolver.js", () => {
+  class DriverAdvanceAccountError extends Error {
+    constructor(public readonly code: string, message: string) {
+      super(message);
+    }
+  }
+  return { resolveDriverAdvanceSubAccount: mockResolve, DriverAdvanceAccountError };
+});
 
-const { createDriverCashAdvanceCore, createEmployeeLoanCore } = await import("../cash-advance-create.js");
+const { createDriverCashAdvanceCore } = await import("../cash-advance-create.js");
+const { DriverAdvanceAccountError } = await import("../../driver-finance/driver-advance-account-resolver.js");
 
 const ACTOR = "22222222-2222-4222-8222-222222222222";
 const OPCO = "11111111-1111-4111-8111-111111111111";
@@ -51,21 +58,24 @@ const baseBody = {
   repayment_schedule: { weekly_installment_amount: 50, total_periods: 10, cadence: "weekly" as const },
 };
 
-describe("createDriverCashAdvanceCore (existing behavior unchanged)", () => {
-  it("books driver_liabilities.type = 'advance' when no liability_type is provided", async () => {
+describe("createDriverCashAdvanceCore — the driver's own Cash-Advance sub-account (ROUND 394)", () => {
+  it("refuses an unbound driver with a named 409 and writes nothing", async () => {
+    mockResolve.mockReset();
+    mockResolve.mockRejectedValue(new DriverAdvanceAccountError("DRIVER_ADVANCE_ACCOUNT_MISSING", "no own sub-account"));
+    const { client } = makeClient();
+    const res = await createDriverCashAdvanceCore(client, ACTOR, OPCO, baseBody);
+    expect(res).toMatchObject({ ok: false, code: 409, error: "driver_advance_account_missing" });
+    const writes = client.query.mock.calls.filter(([sql]) => /INSERT INTO|UPDATE /.test(String(sql)));
+    expect(writes).toHaveLength(0);
+  });
+
+  it("resolves the advance driver's own sub-account for this company, then books the advance", async () => {
+    mockResolve.mockReset();
+    mockResolve.mockResolvedValue("driver-own-advance-sub");
     const { client, captured } = makeClient();
     const res = await createDriverCashAdvanceCore(client, ACTOR, OPCO, baseBody);
     expect(res.ok).toBe(true);
+    expect(mockResolve).toHaveBeenCalledWith(client, OPCO, "d1");
     expect(captured.liabilityType).toBe("advance");
-  });
-});
-
-describe("createEmployeeLoanCore (B3 no-trip/no-bill fallback)", () => {
-  it("books driver_liabilities.type = 'loan' with no linked bill", async () => {
-    const { client, captured } = makeClient();
-    const res = await createEmployeeLoanCore(client, ACTOR, OPCO, baseBody);
-    expect(res.ok).toBe(true);
-    expect(captured.liabilityType).toBe("loan");
-    expect(captured.linkedBillId).toBe(null);
   });
 });
