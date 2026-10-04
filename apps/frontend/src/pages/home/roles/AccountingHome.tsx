@@ -171,7 +171,7 @@ export function AccountingHome({ auth }: Props) {
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <AgingBucketCard title="Accounts Receivable Aging" buckets={homeQuery.data?.ar_aging} accent="#1F2A44" />
-        <AgingBucketCard title="Accounts Payable Aging" buckets={homeQuery.data?.ap_aging} accent="#334155" />
+        <AgingBucketCard title="Accounts Payable Aging" buckets={homeQuery.data?.ap_aging} accent="#4B5563" />
       </section>
 
       <AccountingPendingApprovalsPanel data={homeQuery.data} isLoading={homeQuery.isLoading} />
