@@ -1,3 +1,15 @@
+## 2026-10-04T12:12Z · BANK-F91500 TourLoadRows leftover fontSize 11 totals WIRED · this PR
+
+DONE: TourLoadRows totals label fontSize 11 → text-section-header; leftover refuse on verify-load-costs-settlement-legs-columns; EVEN 10520 --selftest + live.
+
+NEXT: leftover fontSize 11 chrome (Settlements totals / TruckLine Status / LoadUnitCostSplit) · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T12:11Z · BANK-F91499 CargoSensor leftover WIRED CI · tip `d0f434d7a2`
+
+DONE: #25241 — CargoSensorTimeline ticks fontSize 11; verify-steps/4120 leftover refuse --selftest + live.
+
+NEXT: BANK-F91500 TourLoadRows leftover fontSize: 11 totals + leftover refuse on 10520 · skip pile parked · HH12 no migrations this tick.
+
 ## 2026-10-04T12:05Z · BANK-F91499 CargoSensor leftover fontSize 10 ticks WIRED · this PR
 
 DONE: CargoSensorTimeline ticks + axis labels 10 → 11; leftover refuse fontSize 10 on verify-go20-cargo-incidents; unused EVEN 4120 --selftest + live.

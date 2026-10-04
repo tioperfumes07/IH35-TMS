@@ -111,6 +111,7 @@ function analyze(src) {
   if (!/mmmDd\(/.test(rows)) errors.push("TourLoadRows Started/Closed dates must use the compact mmmDd formatter");
   if (!/maxWidth:\s*112/.test(rows)) errors.push("TourLoadRows date columns must be capped (maxWidth 112) so a 10-char date can't be 218px");
   if (!/not opened/.test(rows)) errors.push('TourLoadRows company-settlement empty state must be a "not opened" pill');
+  if (/fontSize:\s*11\b/.test(rows)) errors.push("TourLoadRows.tsx: leftover fontSize: 11 — use text-section-header");
 
   // 5. backend legs[] projection
   if (!/legs:\s*live\.map\(\(l\)\s*=>\s*\(\{\s*load_id:\s*l\.load_id/.test(backend)) {
@@ -167,6 +168,7 @@ if (process.argv.includes("--selftest")) {
     ["rows dates uncapped", withField("rows", (s) => s.replace(/maxWidth: 112/g, "maxWidth: 999"))],
     ["rows company not-opened dropped", withField("rows", (s) => s.replace(/not opened/g, "none"))],
     ["rows restores compound Legs cell", withField("rows", (s) => `${s}\n// <TourLegsCell legs={r.legs} />`)],
+    ["rows leftover fontSize 11", withField("rows", (s) => `${s}\n<span style={{ fontSize: 11 }}>plant</span>`)],
     ["setl drops separate columns", withField("setl", (s) => s.replace(/\.\.\.tourLoadColumns\(/g, "...goneColumns("))],
     ["setl money wraps", withField("setl", (s) => s.replace(/key: "revenue", label: "Revenue", testId: "setl-tour-col-revenue", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums"/g, 'key: "revenue", label: "Revenue", testId: "setl-tour-col-revenue", sortable: true, cellClass: "text-right tabular-nums"'))],
     ["backend drops legs projection", withField("backend", (s) => s.replace(/legs: live\.map\(\(l\) => \(\{\n\s*load_id: l\.load_id,/, "legs: live.map((l) => ({\n        dropped_load_id: l.load_id,"))],
