@@ -132,7 +132,7 @@ export function PmSchedulePage() {
         render: (row) => (
           <button
             type="button"
-            className="rounded-sm border border-gray-300 px-2 py-0.5 text-[11px]"
+            className="rounded-sm border border-gray-300 px-2 py-0.5 text-xs"
             onClick={() => generateM.mutate({
               id: row.id,
               companyId,

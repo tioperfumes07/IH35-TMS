@@ -21,6 +21,9 @@ function audit(s) {
   if (!/listMaintenancePmSchedules\(operatingCompanyId, \{ unit_id: unitId \}\)/.test(s.reverse) || !/ListErrorBanner/.test(s.reverse)) failures.push("reverse section must use exact filter and honest error state");
   if (!/kind=["']pm_schedule["']/.test(s.reverse) || !/id=\{row\.id\}/.test(s.reverse) || !/row\.id === highlightedScheduleId/.test(s.page)) failures.push("reverse rows must drill to highlighted canonical schedule");
   if (!/UnitPmSchedulesReverseSection[\s\S]{0,160}unitId=\{id\}/.test(s.profile)) failures.push("unit profile reverse mount missing");
+  // BANK-F91407 leftover refuse — PmSchedulePage page-scoped text token ratchet
+  if (s.page.includes("text-[11px]")) failures.push("page leftover text-[11px] — use text-xs");
+  if (s.page.includes("#8A92AB")) failures.push("page leftover #8A92AB — use #4B5563");
   return failures;
 }
 if (process.argv.includes("--selftest")) {
@@ -38,6 +41,11 @@ if (process.argv.includes("--selftest")) {
   for (const [name, key, pattern, replacement] of mutations) {
     const changed = { ...source, [key]: source[key].replace(pattern, replacement) };
     if (changed[key] === source[key] || audit(changed).length === 0) { console.error(`${LABEL} SELFTEST FAIL — ${name}`); process.exit(1); }
+  }
+  // BANK-F91407 leftover plant — PmSchedulePage page-scoped text token ratchet
+  {
+    const leftover = { ...source, page: source.page + '\n<p className="text-[11px] text-[#8A92AB]">plant</p>\n' };
+    if (audit(leftover).length === 0) { console.error(`${LABEL} SELFTEST FAIL — leftover plant escaped`); process.exit(1); }
   }
   console.log(`${LABEL} SELFTEST PASS — ${mutations.length} mutations detected`); process.exit(0);
 }
