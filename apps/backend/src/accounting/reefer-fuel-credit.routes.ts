@@ -6,7 +6,7 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
-import { listReeferFuelForCredit, recordReeferGallons, ReeferGallonsError } from "../fuel/reefer-fuel.service.js";
+import { listReeferFuelForCredit, recordReeferGallons, ReeferGallonsError, setReeferTrailer } from "../fuel/reefer-fuel.service.js";
 
 /**
  * Federal excise tax on diesel recoverable for a nontaxable (off-highway) use such as a reefer unit — 24.3 cents per
@@ -83,6 +83,34 @@ export async function registerReeferFuelCreditRoutes(app: FastifyInstance) {
       }
     },
   );
+
+  // ROUND 391.2 — set the Reefer trailer of a reefer fill (fuel-card transaction or reefer fuel expense line).
+  app.post("/api/v1/accounting/reports/reefer-fuel-credit/trailer", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    const body = z
+      .object({
+        operating_company_id: z.string().uuid(),
+        source: z.enum(["fuel_card", "expense"]),
+        source_id: z.string().uuid(),
+        trailer_id: z.string().uuid(),
+      })
+      .safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+    await assertCompanyMembership(String(user.uuid), body.data.operating_company_id);
+    try {
+      const result = await withCompanyScope(String(user.uuid), body.data.operating_company_id, (client) =>
+        setReeferTrailer(client as never, body.data.operating_company_id, body.data),
+      );
+      return reply.code(200).send(result);
+    } catch (err) {
+      if (err instanceof ReeferGallonsError) {
+        return reply.code(err.code === "LINE_NOT_FOUND" || err.code === "TRAILER_NOT_FOUND" ? 404 : 400).send({ error: err.code, message: err.message });
+      }
+      throw err;
+    }
+  });
 }
 
 export default fp(

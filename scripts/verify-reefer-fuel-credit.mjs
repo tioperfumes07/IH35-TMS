@@ -35,6 +35,15 @@ if (!routes.includes('"/api/v1/accounting/reports/reefer-fuel-credit"') || !rout
 if (!/reports\/reefer-fuel-credit/.test(read("apps/frontend/src/routes/manifest.tsx"))) fails.push("reefer fuel credit page not routed");
 if (!/"reefer-fuel-credit", "Reefer fuel credit"/.test(read("apps/frontend/src/pages/reports/ReportsHome.tsx"))) fails.push("Reefer fuel credit missing from the Reports catalog");
 
+// ROUND 391.2 / 393.2 — reefer comes FROM THE FEED's product code, never inferred.
+const mig = read("db/migrations/202615400700_reefer_fuel_type_from_relay_product.sql");
+if (!/l\.fuel_type = 'reefer'/.test(mig) || !/one_to_one/.test(mig)) fails.push("202615400700 must mark reefer only from Relay product lines, one-to-one");
+if (!/feed AS \(/.test(svc) || !/l\.fuel_type = 'reefer'/.test(svc)) fails.push("credit report must count the Relay feed's reefer lines no fuel row carries");
+const parser = read("scripts/alwaystrack/parse_settlements.py");
+if (!/"product": product/.test(parser) || !/INVOICE_RE\.fullmatch/.test(parser)) fails.push("settlement parser must emit the product code and accept only a real invoice");
+const seed = read("apps/backend/src/feed/seed-settlement-document.service.ts");
+if (!/fuelTypeFromProductCode\(line\.product\)/.test(seed) || !/providerReferenceOrNull\(line\.invoice\)/.test(seed)) fails.push("feed fuel writer must take fuel_type from the product code and store only a real reference");
+
 if (fails.length) {
   console.error(`${LABEL}: FAIL\n  ${fails.join("\n  ")}`);
   process.exit(1);

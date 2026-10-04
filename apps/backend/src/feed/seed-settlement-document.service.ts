@@ -104,6 +104,8 @@ export type TruthFuelPurchase = {
   vendor: string;
   location: string;
   invoice: string;
+  /** ROUND 393.2 — the row's product code (Item column) when the parser found one; fuel_type is set FROM it. */
+  product?: string | null;
   gallons: number;
   cpg: number;
   receipt: number;
@@ -324,7 +326,7 @@ export type SeedPlanLoad = {
      */
     isReimbursementSurvivor: boolean;
   }>;
-  fuelLines: Array<{ date: string; vendor: string; location: string; invoice: string; gallons: number; amountCents: number }>;
+  fuelLines: Array<{ date: string; vendor: string; location: string; invoice: string; product?: string | null; gallons: number; amountCents: number }>;
 };
 
 export type SeedPlan = {
@@ -428,6 +430,7 @@ export function parseSettlementDocumentPlan(companyDoc: TruthCompanyDoc, driverD
         vendor: f.vendor,
         location: f.location,
         invoice: f.invoice,
+        product: f.product ?? null,
         gallons: f.gallons,
         amountCents: dollarsToCents(f.actual),
       })),
@@ -904,7 +907,7 @@ function sanitizeFuelLocation(raw: string | null | undefined): { city: string | 
   return { city: text, state: null };
 }
 
-// STEP 5 — fuel.fuel_transactions. fuel_type is ALWAYS 'diesel' here — the truth JSON's
+// STEP 5 — fuel.fuel_transactions. fuel_type comes from the row's product code (ROUND 393.2; diesel when none) — the truth JSON's
 // fuel_purchases[] is diesel-only by construction (DEF/reefer print under expenses[] on these
 // documents; do not reclassify them into fuel even though the DB CHECK would technically allow
 // 'def'/'reefer_diesel' — see verify-alwaystrack-parity.mjs's own fuel_type='diesel' filter,
@@ -913,6 +916,23 @@ function sanitizeFuelLocation(raw: string | null | undefined): { city: string | 
 // OWNER LAW 2026-10-02 — fuel cards are bank accounts. This inserts the fuel.fuel_transactions
 // row (composition / cost attribution) only. GL posts when Banking matches the card line via
 // postFuelFillOnBankMatch → postFuelExpenseOnClient. Never call postFuelExpenseFromEvent here.
+// ROUND 393.2 / 391.2 (CC-2) — fuel_type comes FROM THE FEED's product code, never inferred from an amount or a
+// gallon count: "Fuel-DEF-…" / "DEF" -> def, "Fuel-Reefer-…" / "Reefer" -> reefer_diesel (out of IFTA, counted for the
+// federal reefer-fuel credit). A row with no product code is truck diesel, as this section always was.
+export function fuelTypeFromProductCode(product: string | null | undefined): "diesel" | "def" | "reefer_diesel" {
+  const p = (product ?? "").toLowerCase();
+  if (/\breefer\b|reefer-/.test(p)) return "reefer_diesel";
+  if (/\bdef\b|-def-|exhaust fluid/.test(p)) return "def";
+  return "diesel";
+}
+
+// ROUND 393.2 — a stored provider reference must look like one (no spaces, at least one digit). The parser once stored
+// the overflow of a wrapped product name ("ustFluid") here; such text is not a reference and is never written as one.
+export function providerReferenceOrNull(raw: string | null | undefined): string | null {
+  const t = (raw ?? "").trim();
+  return t && !/\s/.test(t) && /\d/.test(t) ? t : null;
+}
+
 async function seedFuel(
   client: QueryableClient,
   operatingCompanyId: string,
@@ -936,7 +956,8 @@ async function seedFuel(
   // driver's settlement for another load (99530579, 1848853, 99794138 were recorded and posted twice that way). The
   // provider's transaction ID is the key: the same purchase on the same load is this re-run; on another load it is
   // refused by name, never recorded twice and never silently merged.
-  const sameProviderTxn = await findLiveFuelByProviderTransactionId(client, { operatingCompanyId, vendorId, reference: line.invoice });
+  const reference = providerReferenceOrNull(line.invoice);
+  const sameProviderTxn = reference ? await findLiveFuelByProviderTransactionId(client, { operatingCompanyId, vendorId, reference }) : null;
   if (sameProviderTxn) {
     if (sameProviderTxn.load_id === loadId) return { fuelTransactionId: sameProviderTxn.id, postedAt: line.date, amountCents: line.amountCents };
     throw new FuelProviderTransactionDuplicateError(String(line.invoice).trim(), sameProviderTxn.id, sameProviderTxn.load_number);
@@ -952,10 +973,10 @@ async function seedFuel(
        gallons, total_cost, location_city, location_state, transaction_reference, source,
        source_row_hash, created_by_user_id, updated_by_user_id, driver_id, unit_id, trailer_id
      )
-     VALUES ($1::uuid, $2::date, $2::date, $3::uuid, $4::uuid, 'diesel', $5, $6, $7, $8, $9, 'import',
+     VALUES ($1::uuid, $2::date, $2::date, $3::uuid, $4::uuid, $15, $5, $6, $7, $8, $9, 'import',
              $10, $11::uuid, $11::uuid, $12::uuid, $13::uuid, $14::uuid)
      RETURNING id::text`,
-    [operatingCompanyId, line.date, loadId, vendorId, line.gallons, line.amountCents / 100, locationCity, locationState, line.invoice, rowHash, actorUserId, driverId, unitId, trailerId]
+    [operatingCompanyId, line.date, loadId, vendorId, line.gallons, line.amountCents / 100, locationCity, locationState, reference, rowHash, actorUserId, driverId, unitId, trailerId, fuelTypeFromProductCode(line.product)]
   );
   return { fuelTransactionId: inserted.rows[0].id, postedAt: line.date, amountCents: line.amountCents };
 }
