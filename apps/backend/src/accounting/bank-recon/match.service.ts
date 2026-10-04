@@ -6,7 +6,7 @@ import {
   bankTransactionHiddenFilterSql,
   isBankAccountHideEnabled,
 } from "../../banking/bank-account-visibility.js";
-import { writeTransactionSourceLink } from "../accounting-spine-emit.js";
+import { insertPostingLineWithSpine } from "../posting-line-writer.js";
 import { applyCashBasisSuppression, type CashBasisEntry } from "../cash-basis/engine.js";
 import { backlinkBankTransactionToInvoice } from "../payments/bank-invoice-backlink.service.js";
 import { assertBankTxnNotInReconciledSession } from "../../banking/closed-session-immutability.js";
@@ -1102,39 +1102,27 @@ async function postDifferenceJournalEntry(
 
   const cashSide = shouldDebitCash ? "debit" : "credit";
   const diffSide = shouldDebitCash ? "credit" : "debit";
-  const linesRes = await client.query<{ id: string }>(
-    `
-      INSERT INTO accounting.journal_entry_postings (
-        operating_company_id,
-        journal_entry_uuid,
-        account_id,
-        debit_or_credit,
-        amount_cents,
-        description,
-        line_sequence,
-        idempotency_key,
-        load_id,
-        created_at,
-        updated_at
-      )
-      -- ROUND 363-CC1-A: a reconciliation variance belongs to the bank account, not to any load — NULL by design.
-      VALUES
-        ($1::uuid, $2::uuid, $3::uuid, $4::text, $5::int, 'Bank reconciliation variance leg', 1, concat('bank-recon-var:', $2::text), NULL, now(), now()),
-        ($1::uuid, $2::uuid, $6::uuid, $7::text, $5::int, 'Bank reconciliation offset leg',  2, concat('bank-recon-off:', $2::text), NULL, now(), now())
-      RETURNING id::text
-    `,
-    [input.operating_company_id, journalEntryId, cashAccountId, cashSide, magnitude, input.difference_account_id, diffSide]
-  );
-
-  // CODER-12 audit-spine: link each variance posting line to the bank transaction it reconciles
-  // (per-line grain), same transaction. (The match-only path / banking.reconciliation_matches write
-  // posts no GL JE and gets no link.)
-  for (const row of linesRes.rows) {
-    await writeTransactionSourceLink(client, {
+  // ROUND 393.2 — the one posting-line writer. Each variance leg's real source is the bank transaction it reconciles
+  // (it carried none inline before), and its spine row says so with the same role as before. A reconciliation variance
+  // belongs to the bank account, not to a load: the resolver returns NULL for a bank transaction.
+  // LAW 363.6 ("a match posts nothing") is NOT settled by this repoint — whether "Resolve difference" should post at the
+  // match at all is flagged to the Lead (OUTBOX-CC-2, ROUND 393.2).
+  const legs = [
+    { account_id: cashAccountId, side: cashSide, description: "Bank reconciliation variance leg", key: `bank-recon-var:${journalEntryId}`, seq: 1 },
+    { account_id: input.difference_account_id, side: diffSide, description: "Bank reconciliation offset leg", key: `bank-recon-off:${journalEntryId}`, seq: 2 },
+  ] as const;
+  for (const leg of legs) {
+    await insertPostingLineWithSpine(client, {
       operating_company_id: input.operating_company_id,
-      journal_entry_posting_id: row.id,
-      linked_object_type: "bank_transaction",
-      linked_object_id: input.bank_transaction_id,
+      journal_entry_uuid: journalEntryId,
+      line_sequence: leg.seq,
+      account_id: leg.account_id,
+      debit_or_credit: leg.side,
+      amount_cents: magnitude,
+      description: leg.description,
+      idempotency_key: leg.key,
+      source_transaction_type: "bank_transaction",
+      source_transaction_id: input.bank_transaction_id,
       relationship_role: "bank_reconciliation_variance",
     });
   }

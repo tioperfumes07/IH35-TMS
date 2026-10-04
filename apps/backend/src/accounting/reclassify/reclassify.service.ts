@@ -598,7 +598,10 @@ export function buildReclassPairs(
     return [
       // U24 / LAW 363.3 — a load move re-stamps the legs: the reversing leg keeps the line's old load, the repost carries
       // the new one. Without a load move both legs take the stamp from the document (undefined = the writer's default).
-      { ...base, account_id: p.account_id, class_id: p.class_id, location_id: p.location_id, entity_uuid: p.entity_uuid, entity_type: p.entity_type, debit_or_credit: flip, load_id: target.to_load_id ? (p.load_id ?? null) : undefined },
+      // ROUND 393.2 — the out-leg names the line it undoes (reversal_of_line_id) and the in-leg the document line, so each
+      // leg's load stamp is the one its own source resolves to (verify-every-load-born-posting-carries-its-load RULE 2);
+      // before, both legs fell back to the document HEADER's load and a load move stamped a load its source contradicted.
+      { ...base, account_id: p.account_id, class_id: p.class_id, location_id: p.location_id, entity_uuid: p.entity_uuid, entity_type: p.entity_type, debit_or_credit: flip, load_id: target.to_load_id ? (p.load_id ?? null) : undefined, source_transaction_line_id: p.source_transaction_line_id, reversal_of_line_id: p.posting_id },
       {
         ...base,
         account_id: target.to_account_id ?? p.account_id,
@@ -608,6 +611,7 @@ export function buildReclassPairs(
         entity_type: target.to_entity_uuid ? (target.to_entity_type ?? null) : p.entity_type,
         debit_or_credit: p.debit_or_credit,
         load_id: target.to_load_id ?? undefined,
+        source_transaction_line_id: p.source_transaction_line_id,
       },
     ];
   });

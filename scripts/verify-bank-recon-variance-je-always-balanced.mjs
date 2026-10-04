@@ -47,37 +47,33 @@ export function checkVarianceJeBalancedShape(source) {
     );
   }
 
-  // Both posting-line VALUES rows must reference the SAME amount placeholder ($5 today, but this
-  // matches whichever placeholder is shared rather than hardcoding the number) — if a future edit
-  // gives the two legs independently-computed amounts, the structural balance guarantee breaks.
-  const insertBlockMatch = source.match(
-    /INSERT INTO accounting\.journal_entry_postings[\s\S]{0,400}?VALUES\s*\n([\s\S]{0,600}?)RETURNING/
-  );
-  if (!insertBlockMatch) {
-    failures.push("could not locate the two-leg journal_entry_postings INSERT ... VALUES block at all");
+  // ROUND 393.2 — the two legs are written by the one posting-line writer, one call per leg in a loop over a fixed
+  // two-entry legs array. The structural proof is the same: exactly two legs, one on cashSide and one on diffSide, NEITHER
+  // carrying its own amount, and the single writer call inside the loop posting the ONE shared magnitude for both.
+  const legsMatch = source.match(/const legs = \[([\s\S]*?)\] as const;/);
+  if (!legsMatch) {
+    failures.push("could not locate the two-leg `const legs = [...] as const` array the variance writer loops over");
   } else {
-    const valuesBlock = insertBlockMatch[1];
-    const rows = valuesBlock
-      .split("\n")
-      .map((l) => l.trim())
-      .filter((l) => l.startsWith("("));
-    if (rows.length !== 2) {
-      failures.push(`expected exactly 2 posting VALUES rows (cash leg + offset leg), found ${rows.length}`);
+    const entries = legsMatch[1].split("\n").map((l) => l.trim()).filter((l) => l.startsWith("{"));
+    if (entries.length !== 2) {
+      failures.push(`expected exactly 2 variance legs (cash leg + offset leg), found ${entries.length}`);
     } else {
-      // Extract every $N placeholder used for amount_cents (5th positional column in each row).
-      const amountPlaceholders = rows.map((row) => {
-        const cols = row.replace(/^\(|\)[,]?$/g, "").split(",").map((c) => c.trim());
-        return cols[4]; // amount_cents is the 5th column, 0-indexed 4
-      });
-      if (amountPlaceholders[0] !== amountPlaceholders[1]) {
-        failures.push(
-          `the two posting rows use DIFFERENT amount placeholders (${amountPlaceholders[0]} vs ` +
-            `${amountPlaceholders[1]}) instead of sharing one magnitude value — this can post an unbalanced JE`
-        );
+      if (!/side: cashSide\b/.test(entries[0]) || !/side: diffSide\b/.test(entries[1])) {
+        failures.push("the two legs are no longer one on cashSide and one on diffSide — they could post on the SAME side");
+      }
+      if (entries.some((e) => /amount/i.test(e))) {
+        failures.push("a leg carries its OWN amount instead of sharing the one magnitude — this can post an unbalanced JE");
       }
     }
+    const loop = source.match(/for \(const leg of legs\) \{([\s\S]*?)\n  \}/);
+    if (!loop) {
+      failures.push("could not locate the `for (const leg of legs)` loop that writes the legs");
+    } else {
+      if (!/amount_cents: magnitude,/.test(loop[1])) failures.push("the leg writer no longer posts the ONE shared magnitude for every leg");
+      if (!/debit_or_credit: leg\.side,/.test(loop[1])) failures.push("the leg writer no longer takes each leg's side from the legs array");
+      if (!/insertPostingLineWithSpine\(/.test(loop[1])) failures.push("the legs are no longer written through the one posting-line writer");
+    }
   }
-
   return failures;
 }
 
@@ -85,19 +81,17 @@ function runSelftest() {
   const good = `
   const cashSide = shouldDebitCash ? "debit" : "credit";
   const diffSide = shouldDebitCash ? "credit" : "debit";
-  const linesRes = await client.query<{ id: string }>(
-    \`
-      INSERT INTO accounting.journal_entry_postings (
-        operating_company_id, journal_entry_uuid, account_id, debit_or_credit, amount_cents,
-        description, line_sequence, idempotency_key, created_at, updated_at
-      )
-      VALUES
-        ($1::uuid, $2::uuid, $3::uuid, $4::text, $5::int, 'Bank reconciliation variance leg', 1, concat('bank-recon-var:', $2::text), now(), now()),
-        ($1::uuid, $2::uuid, $6::uuid, $7::text, $5::int, 'Bank reconciliation offset leg',  2, concat('bank-recon-off:', $2::text), now(), now())
-      RETURNING id::text
-    \`,
-    [input.operating_company_id, journalEntryId, cashAccountId, cashSide, magnitude, input.difference_account_id, diffSide]
-  );
+  const legs = [
+    { account_id: cashAccountId, side: cashSide, description: "Bank reconciliation variance leg", key: \`bank-recon-var:\${journalEntryId}\`, seq: 1 },
+    { account_id: input.difference_account_id, side: diffSide, description: "Bank reconciliation offset leg", key: \`bank-recon-off:\${journalEntryId}\`, seq: 2 },
+  ] as const;
+  for (const leg of legs) {
+    await insertPostingLineWithSpine(client, {
+      debit_or_credit: leg.side,
+      amount_cents: magnitude,
+      description: leg.description,
+    });
+  }
   `;
   if (checkVarianceJeBalancedShape(good).length !== 0) {
     throw new Error(
@@ -106,8 +100,7 @@ function runSelftest() {
     );
   }
 
-  const brokenAmounts = good
-    .replace("($1::uuid, $2::uuid, $6::uuid, $7::text, $5::int,", "($1::uuid, $2::uuid, $6::uuid, $7::text, $8::int,");
+  const brokenAmounts = good.replace("side: diffSide,", "side: diffSide, amount_cents: magnitude + 1,");
   if (checkVarianceJeBalancedShape(brokenAmounts).length === 0) {
     throw new Error("selftest: two posting rows with DIFFERENT amount placeholders must be flagged — it was not");
   }
@@ -120,7 +113,15 @@ function runSelftest() {
     throw new Error("selftest: diffSide matching cashSide instead of opposing it must be flagged — it was not");
   }
 
-  console.log(`[${LABEL}] --selftest OK (correct shape passes; mismatched-amount and same-side mutations both correctly detected)`);
+  const brokenLegSide = good.replace("side: diffSide,", "side: cashSide,");
+  if (checkVarianceJeBalancedShape(brokenLegSide).length === 0) {
+    throw new Error("selftest: both legs on cashSide must be flagged — it was not");
+  }
+  const brokenLoop = good.replace("amount_cents: magnitude,", "amount_cents: leg.seq * magnitude,");
+  if (checkVarianceJeBalancedShape(brokenLoop).length === 0) {
+    throw new Error("selftest: a per-leg amount in the writer loop must be flagged — it was not");
+  }
+  console.log(`[${LABEL}] --selftest OK (correct shape passes; per-leg amount, same-side legs, opposite-side defs and loop-amount mutations all detected)`);
 }
 
 if (process.argv.includes("--selftest")) {

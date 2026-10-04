@@ -1,7 +1,7 @@
 import { assertNoHistoricalJournalCoverage } from "../driver-finance/settlement-historical-attribution.service.js";
 import crypto from "node:crypto";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { writeTransactionSourceLink } from "./accounting-spine-emit.js";
+import { insertPostingLineWithSpineIfNew } from "./posting-line-writer.js";
 import { withCurrentUser } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
@@ -65,6 +65,10 @@ type CreatePostingInput = {
   /** The document this line posts for (e.g. "invoice" + the invoice id). Both or neither. */
   source_transaction_type?: string | null;
   source_transaction_id?: string | null;
+  /** ROUND 393.2 — the document LINE this posting is for (the reclassify engine names it so the load resolves per line). */
+  source_transaction_line_id?: string | null;
+  /** ROUND 393.2 — this posting undoes that one (a reclass out-leg); its load resolves to the reversed line's load. */
+  reversal_of_line_id?: string | null;
 };
 
 export type CreateJournalEntryInput = {
@@ -96,6 +100,13 @@ export type CreateJournalEntryInput = {
    */
   source_transaction_type?: string | null;
   source_transaction_id?: string | null;
+  /**
+   * ROUND 393.2 — what the spine row of each line names, when it is not the source document itself (the factoring
+   * lifecycle names the factoring_advance, with the lifecycle type as its role). Omitted: the source document, as the
+   * one posting-line writer does by default. Never applies to a hand-keyed entry (that one names the journal entry).
+   */
+  spine_link?: { linked_object_type: string; linked_object_id: string } | null;
+  relationship_role?: string | null;
   postings: CreatePostingInput[];
 };
 
@@ -256,69 +267,43 @@ export async function createJournalEntryOnClient(
 
   let lineSequence = 1;
   for (const posting of input.postings) {
-    const lineRes = await client.query<{ id: string }>(
-      `
-        INSERT INTO accounting.journal_entry_postings (
-          operating_company_id,
-          journal_entry_uuid,
-          line_sequence,
-          account_id,
-          class_id,
-          location_id,
-          entity_uuid,
-          entity_type,
-          debit_or_credit,
-          amount_cents,
-          description,
-          idempotency_key,
-          source_transaction_type,
-          source_transaction_id,
-          load_id,
-          created_at,
-          updated_at
-        )
-        -- ROUND 363-CC1-A: the load stamp, resolved from this posting's own source document in the same statement.
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,
-                COALESCE($15::uuid, accounting.posting_source_load_id($13::text, $14::text)),now(),now())
-        ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
-          WHERE idempotency_key IS NOT NULL DO NOTHING
-        RETURNING id::text
-      `,
-      [
-        input.operating_company_id,
-        header.id,
-        lineSequence,
-        posting.account_id,
-        posting.class_id ?? null,
-        posting.location_id ?? null,
-        posting.entity_uuid ?? null,
-        // BANK-F5330 / P23 — must travel with entity_uuid: migration 202612670000's CHECK rejects
-        // one set without the other.
-        posting.entity_type ?? null,
-        posting.debit_or_credit,
-        posting.amount_cents,
-        posting.description ?? null,
-        // BLOCK 2: every money insert carries a key. A manual JE has no natural idempotency token,
-        // so the key is keyed to its freshly-generated header id (unique per entry) — this populates
-        // the column + satisfies the unique-index backstop without changing manual-JE behavior.
-        `manual_je:${header.id}`,
-        posting.source_transaction_type ?? input.source_transaction_type ?? (isHandKeyed ? "manual_je" : null),
-        posting.source_transaction_id ?? input.source_transaction_id ?? (isHandKeyed ? header.id : null),
-        posting.load_id ?? null,
-      ]
-    );
-    // CODER-12 audit-spine: one source link per inserted posting line, same transaction. On a
-    // BLOCK-2 ON CONFLICT no-op (no row returned) the original line already carries its link → skip.
-    const postingId = lineRes.rows[0]?.id;
-    if (postingId) {
-      await writeTransactionSourceLink(client, {
-        operating_company_id: input.operating_company_id,
-        journal_entry_posting_id: postingId,
-        linked_object_type: "journal_entry",
-        linked_object_id: header.id,
-        relationship_role: "manual_entry",
-      });
-    }
+    // ROUND 393.2 — the one posting-line writer: the line and its spine row together. BLOCK 2: every money insert
+    // carries a key; a manual JE has no natural token, so the key is its freshly-generated header id, and a replay of the
+    // same (key, line) writes nothing and no second link (insertPostingLineWithSpineIfNew).
+    // The line's source is the REAL document an automated caller names; only a hand-keyed entry is its own source
+    // (manual_je = this header), and its spine row keeps naming the journal entry as a manual entry.
+    const sourceType = posting.source_transaction_type ?? input.source_transaction_type ?? (isHandKeyed ? "manual_je" : null);
+    const sourceId = posting.source_transaction_id ?? input.source_transaction_id ?? (isHandKeyed ? header.id : null);
+    // An automated entry names its source document up front — the writer refuses an unsourced line at INSERT, so the
+    // old pattern of stamping the source after the insert (afterInsertBeforeCommit) is gone; the factoring lifecycle,
+    // its only user, now passes its source in. The refusal keeps this service's own error code.
+    if (!sourceType || !sourceId) throw new Error("journal_entry_posting_source_required");
+    await insertPostingLineWithSpineIfNew(client, {
+      operating_company_id: input.operating_company_id,
+      journal_entry_uuid: header.id,
+      line_sequence: lineSequence,
+      account_id: posting.account_id,
+      class_id: posting.class_id ?? null,
+      location_id: posting.location_id ?? null,
+      entity_uuid: posting.entity_uuid ?? null,
+      // BANK-F5330 / P23 — must travel with entity_uuid: migration 202612670000's CHECK rejects one set without the other.
+      entity_type: posting.entity_type ?? null,
+      debit_or_credit: posting.debit_or_credit,
+      amount_cents: posting.amount_cents,
+      description: posting.description ?? null,
+      idempotency_key: `manual_je:${header.id}`,
+      source_transaction_type: sourceType as string,
+      source_transaction_id: sourceId as string,
+      source_transaction_line_id: posting.source_transaction_line_id ?? null,
+      reversal_of_line_id: posting.reversal_of_line_id ?? null,
+      load_id: posting.load_id ?? null,
+      ...(sourceType === "manual_je"
+        ? { spine_link: { linked_object_type: "journal_entry", linked_object_id: header.id }, relationship_role: "manual_entry" }
+        : {
+            ...(input.spine_link ? { spine_link: input.spine_link } : {}),
+            ...(input.relationship_role ? { relationship_role: input.relationship_role } : {}),
+          }),
+    });
     lineSequence += 1;
   }
 

@@ -10,6 +10,7 @@ const LABEL = "verify-reclassify-by-item-and-load";
 const fails = [];
 const svc = readFileSync("apps/backend/src/accounting/reclassify/reclassify.service.ts", "utf8");
 const je = readFileSync("apps/backend/src/accounting/journal-entries.service.ts", "utf8");
+const writer = readFileSync("apps/backend/src/accounting/posting-line-writer.ts", "utf8");
 const page = readFileSync("apps/frontend/src/pages/accounting/ReclassifyTransactionsPage.tsx", "utf8");
 const mig = readFileSync("db/migrations/202615380600_reclassify_by_item_and_load.sql", "utf8");
 const need = [
@@ -19,7 +20,10 @@ const need = [
   [svc, /from_item_id, to_item_id, from_load_id, to_load_id\)/, "batch lines no longer record from/to item and load"],
   [svc, /const itemMoved = l\.to_item_id !== l\.from_item_id;/, "undo no longer restores an item / load move"],
   [svc, /by item and by load apply to expense and bill lines/, "item / load moves are no longer limited to expense and bill lines"],
-  [je, /COALESCE\(\$15::uuid, accounting\.posting_source_load_id\(\$13::text, \$14::text\)\)/, "the JE writer no longer accepts an explicit leg load stamp"],
+  // ROUND 393.2 — the explicit leg load stamp moved into the ONE posting-line writer: the JE service passes the leg's
+  // load_id through, and the writer lets it win over the source-resolved stamp. Same invariant, new home.
+  [je, /load_id: posting\.load_id \?\? null,/, "the JE service no longer passes an explicit leg load stamp to the writer"],
+  [writer, /COALESCE\(\$18::uuid, accounting\.posting_source_load_id\(/, "the posting-line writer no longer accepts an explicit leg load stamp"],
   [page, /data-testid="reclassify-to-item"/, "the Reclassify form lost Change item"],
   [page, /data-testid="reclassify-to-load"/, "the Reclassify form lost Change load"],
   [mig, /ADD COLUMN IF NOT EXISTS from_load_id uuid/, "202615380600 lost the batch-line load columns"],

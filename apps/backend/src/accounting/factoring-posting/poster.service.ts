@@ -746,7 +746,16 @@ async function createFactoringJournalEntryAtomically(opts: {
     await client.query(`SAVEPOINT factoring_lifecycle_je_create`);
     try {
       const header = await createJournalEntry(
-        opts.je,
+        // ROUND 393.2 — the one posting-line writer refuses a line with no source at INSERT, so the lifecycle names its
+        // source up front: the same (type, advance) and factoring_advance spine row attachFactoringLifecycleSourceLinksStrict
+        // stamped after the insert. Its conflict check accepts exactly this source; its UPDATE and link insert become no-ops.
+        {
+          ...opts.je,
+          source_transaction_type: opts.source_transaction_type,
+          source_transaction_id: opts.factoring_advance_id,
+          spine_link: { linked_object_type: "factoring_advance", linked_object_id: opts.factoring_advance_id },
+          relationship_role: opts.source_transaction_type,
+        },
         { userId: opts.actor_user_id, role: "system" },
         {
           client,

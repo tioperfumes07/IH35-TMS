@@ -11,6 +11,7 @@ import { ensureOpenPeriod, resolvePostingTemplateId } from "../posting-engine.se
 // populated journal_entry_type_id -- one of several direct posters contributing to the live
 // 46/2214 (2%) density gap. Leaf module, no accounting-service imports.
 import { hasJournalEntryTypeColumn, resolveJournalEntryTypeId } from "../journal-entry-type-resolver.js";
+import { insertPostingLineWithSpine } from "../posting-line-writer.js";
 
 // ACCT-LINK-05: fuel_event is a hardcoded source_transaction_type literal outside the shared
 // PostingSourceType union (fuel posting has its own poster, not the generic posting-engine). Stamp the
@@ -452,62 +453,25 @@ export async function postFuelExpenseOnClient(client: DbClient, input: FuelPosti
 
   let sequence = 1;
   for (const line of lineValues) {
-    const postingInsert = await client.query<{ id: string }>(
-      `
-        INSERT INTO accounting.journal_entry_postings (
-          operating_company_id,
-          journal_entry_uuid,
-          line_sequence,
-          account_id,
-          debit_or_credit,
-          amount_cents,
-          description,
-          source_transaction_type,
-          source_transaction_id,
-          source_transaction_line_id,
-          posting_batch_id,
-          idempotency_key,
-          class_id,
-          load_id,
-          created_at,
-          updated_at
-        )
-        -- ROUND 363-CC1-A: the load stamp, resolved from this posting's own source document in the same statement.
-        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, 'fuel_event', $8, NULL, $9::uuid, $10, $11::uuid,
-                accounting.posting_source_load_id('fuel_event', $8::text), now(), now())
-        RETURNING id::text
-      `,
-      [
-        input.operating_company_id,
-        journalEntryId,
-        sequence,
-        line.account_id,
-        line.debit_or_credit,
-        line.amount_cents,
-        line.description,
-        input.fuel_event_id,
-        postingBatchId,
-        idempotencyKey,
-        classResolution.class_id,
-      ]
-    );
-    const postingId = postingInsert.rows[0]?.id;
-    if (!postingId) throw new Error("fuel_posting_line_create_failed");
+    // ROUND 393.2 — the one posting-line writer: the line and its spine row (fuel_event, fuel_expense / fuel_offset)
+    // together, exactly as this poster wrote them by hand before.
+    const postingId = await insertPostingLineWithSpine(client, {
+      operating_company_id: input.operating_company_id,
+      journal_entry_uuid: journalEntryId,
+      line_sequence: sequence,
+      account_id: line.account_id,
+      debit_or_credit: line.debit_or_credit,
+      amount_cents: line.amount_cents,
+      description: line.description,
+      source_transaction_type: "fuel_event",
+      source_transaction_id: input.fuel_event_id,
+      posting_batch_id: postingBatchId,
+      idempotency_key: idempotencyKey,
+      class_id: classResolution.class_id,
+      relationship_role: line.debit_or_credit === "debit" ? "fuel_expense" : "fuel_offset",
+    });
     postingIds.push(postingId);
 
-    await client.query(
-      `
-        INSERT INTO accounting.transaction_source_links (
-          operating_company_id,
-          journal_entry_posting_id,
-          linked_object_type,
-          linked_object_id,
-          relationship_role
-        )
-        VALUES ($1::uuid, $2::uuid, 'fuel_event', $3, $4)
-      `,
-      [input.operating_company_id, postingId, input.fuel_event_id, line.debit_or_credit === "debit" ? "fuel_expense" : "fuel_offset"]
-    );
     sequence += 1;
   }
 

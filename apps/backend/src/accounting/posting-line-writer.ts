@@ -1,3 +1,5 @@
+// C6-MONEY-JE-EXEMPT: this IS the posting-line writer the balanced-JE posters call (posting engine, createJournalEntry and every
+// door repointed in ROUND 393.2); it writes one line + its spine row inside the caller's balanced entry, never a JE on its own.
 /**
  * posting-line-writer — THE ONE PLACE A GL POSTING LINE IS WRITTEN.
  *
@@ -28,14 +30,16 @@
  * The existing rows need no backfill either: the owner is purging and re-creating this data. With the
  * writers fixed first, every re-created document gets a complete spine by construction.
  */
-import type { QueryResult } from "pg";
-
-/** The minimum client shape this writer needs — satisfied by pg.Client, PoolClient and the app's wrappers. */
+/**
+ * The minimum client shape this writer needs — satisfied by pg.Client, PoolClient and the app's wrappers (DbClient,
+ * QueryableClient). ROUND 393.2: it reads only `rows`, so it asks for only `rows`; demanding pg's full QueryResult
+ * refused the app's own client types at every repointed door.
+ */
 export type PostingWriterClient = {
   query<T extends Record<string, unknown> = Record<string, unknown>>(
     sql: string,
     params?: unknown[]
-  ): Promise<QueryResult<T>>;
+  ): Promise<{ rows: T[] }>;
 };
 
 export type PostingLineWrite = {
@@ -67,6 +71,15 @@ export type PostingLineWrite = {
    * (void.service: the voided entity, which on a reinstate hop differs from the line's resolved true source).
    */
   spine_link?: { linked_object_type: string; linked_object_id: string } | null;
+  /** ROUND 393.2 — the location dimension a hand-keyed journal line carries. */
+  location_id?: string | null;
+  /** ROUND 393.2 — travels with entity_uuid (202612670000's CHECK refuses one set without the other). */
+  entity_type?: string | null;
+  /**
+   * ROUND 393.2 — a load the CALLER names (a hand-keyed journal line can name its load). Wins over the stamp resolved
+   * from the source document only when given; omitted, the load is resolved exactly as before.
+   */
+  load_id?: string | null;
 };
 
 async function writeLine(
@@ -102,6 +115,8 @@ async function writeLine(
         class_id,
         entity_uuid,
         reversal_of_line_id,
+        location_id,
+        entity_type,
         load_id,
         created_at,
         updated_at
@@ -110,7 +125,8 @@ async function writeLine(
       -- same statement, so it can never disagree with the source it was derived from. A reversal line
       -- carries the load of the line it reverses (its document may already be gone).
       VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, $8, $9, $10, $11::uuid, $12, $13::uuid, $14::uuid, $15::uuid,
-              accounting.posting_source_load_id($8::text, $9::text, $10::text, $15::uuid), now(), now())
+              $16::uuid, $17,
+              COALESCE($18::uuid, accounting.posting_source_load_id($8::text, $9::text, $10::text, $15::uuid)), now(), now())
       ${opts.skipOnIdempotencyConflict
         ? "ON CONFLICT (operating_company_id, idempotency_key, line_sequence) WHERE idempotency_key IS NOT NULL DO NOTHING"
         : ""}
@@ -132,6 +148,9 @@ async function writeLine(
       line.class_id ?? null,
       line.entity_uuid ?? null,
       line.reversal_of_line_id ?? null,
+      line.location_id ?? null,
+      line.entity_type ?? null,
+      line.load_id ?? null,
     ]
   );
 
