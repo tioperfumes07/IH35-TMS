@@ -124,7 +124,7 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
             {pods.length} POD(s) · {bols.length} generated BOL(s)
           </p>
           {bols.length > 0 ? (
-        <ul className="space-y-1 text-xs text-[#334155]">
+        <ul className="space-y-1 text-xs text-[#4B5563]">
           {bols.map((bol: BolDocumentSummary) => (
             <li key={bol.id} className="flex items-center justify-between gap-2">
               <span>
