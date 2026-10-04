@@ -37,6 +37,7 @@ export type AccountingSubNavSection =
   | "billpay"
   | "invoices"
   | "maint_shop"
+  | "reclassify"
   | "reports"
   | "more";
 
@@ -55,6 +56,10 @@ export const GROUP_LABELS = {
   invoices: "Invoices",
   // U14 (owner, 2026-10-03): "Maintenance & shop" kept, renamed "Work orders & bills".
   maint_shop: "Work orders & bills",
+  // U15 (owner, 2026-10-04): "THE RECLASSIFY TRANSACTIONS ENGINE IS IN MORE IN ACCOUNTING, I HAD
+  // ASKED YOU TO HAVE THAT ONE SHOW IN THE ACCOUNTING TABS, NEXT TO WORK ORDERS AND BILLS."
+  // Promoted out of "More ▾" to a first-class top-row leaf beside Work orders & bills.
+  reclassify: "Reclassify",
   reports: "Reports",
   more: "More",
 } as const satisfies Record<AccountingSubNavSection, string>;
@@ -138,7 +143,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   { label: "Journal entries", path: "/accounting/journal-entries", section: "more" },
   { label: "Account Register", path: "/accounting/account-register", section: "more" },
   { label: "All Transactions", path: "/accounting/transactions", section: "more" },
-  { label: "Reclassify transactions", path: "/accounting/reclassify", section: "more" },
+  { label: "Reclassify transactions", path: "/accounting/reclassify", section: "reclassify" },
   { label: "Batch transactions", path: "/accounting/batch-transactions", section: "more" },
   { label: "Recurring transactions", path: "/accounting/recurring-transactions", section: "more" },
   { label: "Integration transactions", path: "/accounting/integration-transactions", section: "more" },
@@ -272,6 +277,8 @@ export const ACCOUNTING_SUB_NAV_ITEMS: readonly NavItem[] = [
       leafOf("/accounting/bills/fuel"),
     ],
   },
+  // U15 (owner, 2026-10-04) — Reclassify sits beside Work orders & bills, not inside More.
+  leafOf("/accounting/reclassify"),
   leafOf("/accounting/reports"), // Reports
   // More stays chevron-only (no single default destination).
   { label: GROUP_LABELS.more, children: childrenOf("more") },

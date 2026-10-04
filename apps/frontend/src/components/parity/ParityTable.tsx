@@ -16,6 +16,7 @@
  */
 import {
   Fragment,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -794,28 +795,33 @@ export function ParityTable<T>({
   // document.body portal at `position: fixed`, measured from a live getBoundingClientRect() read,
   // right-aligned under the gear button to preserve its current visual placement.
   const PARITY_GEAR_Z_INDEX = 220;
-  useLayoutEffect(() => {
-    if (!gearOpen || !gearRef.current) return;
-    const rect = gearRef.current.getBoundingClientRect();
-    setGearPanelStyle({
+  // LST-F400 CLASS B — the portal escaped the `overflow: hidden` CLIP and left HEIGHT unbounded: a
+  // fixed panel does not move on page scroll, so the tail of a long column list was unreachable by
+  // any gesture. The same style object was also computed in TWO places (mount + reposition), so a
+  // fix to one would silently miss the other. ONE door now, bounded and scrollable.
+  const measureGearPanelStyle = useCallback((anchor: HTMLElement): CSSProperties => {
+    const rect = anchor.getBoundingClientRect();
+    return {
       position: "fixed",
       top: rect.bottom,
       right: window.innerWidth - rect.right,
+      maxHeight: Math.max(window.innerHeight - rect.bottom - 2, 160),
+      overflowY: "auto",
+      overscrollBehavior: "contain",
       zIndex: PARITY_GEAR_Z_INDEX,
-    });
-  }, [gearOpen]);
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!gearOpen || !gearRef.current) return;
+    setGearPanelStyle(measureGearPanelStyle(gearRef.current));
+  }, [gearOpen, measureGearPanelStyle]);
 
   useEffect(() => {
     if (!gearOpen) return undefined;
     function reposition() {
       if (!gearRef.current) return;
-      const rect = gearRef.current.getBoundingClientRect();
-      setGearPanelStyle({
-        position: "fixed",
-        top: rect.bottom,
-        right: window.innerWidth - rect.right,
-        zIndex: PARITY_GEAR_Z_INDEX,
-      });
+      setGearPanelStyle(measureGearPanelStyle(gearRef.current));
     }
     window.addEventListener("resize", reposition);
     document.addEventListener("scroll", reposition, true);

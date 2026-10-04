@@ -202,7 +202,11 @@ export const spacing = {
 // OWNER DESIGN LAW 2026-10-02 rule 2 (docs/design/00-OWNER-DESIGN-LAW-READ-BEFORE-ANY-SCREEN.md): "ONE CONTROL
 // HEIGHT — 34px for every filter, select and search box in the app. 40px for a field being edited in a form."
 // Supersedes D52 (2026-09-30, h-10 / 40px). h-8.5 = 34px. Border chrome stays on the Combobox / TableSearch shell.
-export const FILTER_CONTROL_SIZE_CLASS = "h-8.5 min-w-[10rem] text-xs";
+/** The 34px height alone, with no min-width. A control that must be `w-full` (an in-panel search
+ * box inside a dropdown) owes the same HEIGHT but must not inherit `min-w-[10rem]`, which fights it.
+ * One source of truth: FILTER_CONTROL_SIZE_CLASS is composed from this, never duplicated. */
+export const FILTER_CONTROL_HEIGHT_CLASS = "h-8.5";
+export const FILTER_CONTROL_SIZE_CLASS = `${FILTER_CONTROL_HEIGHT_CLASS} min-w-[10rem] text-xs`;
 
 /** FORM FIELD LAW — a SEPARATE, deliberately shorter scale for a dense data-entry FORM (Book Load
  * and any future wizard), where `Combobox`/`ReferenceSelect`/`EntityPicker` sit on the same grid

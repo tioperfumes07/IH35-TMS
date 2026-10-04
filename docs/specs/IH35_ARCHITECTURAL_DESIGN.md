@@ -212,9 +212,9 @@ Rule 05: the approved PNG/nav wins. **NEVER-DELETE (§F.24):** every routed surf
 reachable; nothing is removed to “match” an older flat tab table.
 
 **Live top row (exact):**
-Accounting · Bills ▾ · Expenses ▾ · Bill payment ▾ · Invoices ▾ · Work orders & bills ▾ · Reports · More ▾
+Accounting · Bills ▾ · Expenses ▾ · Bill payment ▾ · Invoices ▾ · Work orders & bills ▾ · Reclassify · Reports · More ▾
 
-(Owner UI register 2026-10-03: U14 renamed *Maintenance & shop* → **Work orders & bills**; U13 removed Accounting's *Vendors* / *Customers* tabs — they were pure redirects to the `/vendors` and `/customers` modules, which stay in the sidebar; U4 removed *Expenses List* — it rendered the same page as *Expenses*. Every route stays mounted, so old links still land.)
+(Owner UI register 2026-10-03: U15 (owner 2026-10-04) promoted *Reclassify transactions* out of More ▾ to a top-row leaf beside **Work orders & bills** — "I HAD ASKED YOU TO HAVE THAT ONE SHOW IN THE ACCOUNTING TABS, NEXT TO WORK ORDERS AND BILLS"; U14 renamed *Maintenance & shop* → **Work orders & bills**; U13 removed Accounting's *Vendors* / *Customers* tabs — they were pure redirects to the `/vendors` and `/customers` modules, which stay in the sidebar; U4 removed *Expenses List* — it rendered the same page as *Expenses*. Every route stays mounted, so old links still land.)
 
 (U3, same date: **Load costs** left Accounting — it lives in Dispatch at `/dispatch/load-costs` and shows each load's cost from the ledger; `/accounting/load-costs[/:loadId]` redirect there.)
 
@@ -226,9 +226,10 @@ Accounting · Bills ▾ · Expenses ▾ · Bill payment ▾ · Invoices ▾ · W
 | **Bill payment ▾** | Bill payment, Vendor balances/credits, Accounts payable, AP Aging | AP side |
 | **Invoices ▾** | Invoices list, Receive Payment, Undeposited Funds, AR Aging, Collections | ACCT-F5050 — promoted from More ▾ so AR is peer to Bills / Expenses / Bill payment (owner 2026-08-13); route `/accounting/invoices` unchanged |
 | **Work orders & bills ▾** | Work orders & bills hub + shop-cost bill shortcuts | Cross-link to Bills ▾ (renamed from Maintenance & shop, U14) |
+| **Reclassify** | Reclassify transactions (account tree rail + bulk reclassify) | U15 — promoted from More ▾ to a top-row leaf, owner 2026-10-04; route `/accounting/reclassify` unchanged, hub tab added |
 | **Reports** | Top-level leaf | Vendors / Customers removed from Accounting (U13) — use the sidebar modules |
 | **More ▾ — Factoring / settlements** | Factoring, Faro CSV, Factor recon, Settlements, Pre-settlements, Escrow, queues | Cross-module |
-| **More ▾ — Ledger** | Journal entries, Account Register, All Transactions, Recurring / Integration txns | Former flat JE / Register |
+| **More ▾ — Ledger** | Journal entries, Account Register, All Transactions, Recurring / Integration txns | Former flat JE / Register; *Reclassify transactions* LEFT this bucket under U15 |
 | **More ▾ — Period / analysis** | Sales tax, Month close, Period close, Period comparison, Cash forecast, Multi-entity | Period Close + analysis |
 | **More ▾ — Back office** | Revenue recognition, Fixed assets, Allocations, Prepaid, My accountant, Payroll | Allocations MVP live |
 | **More ▾ — Audit / sync / catalogs** | Audit trail, Posting lineage, Posting Templates (Lists), QBO sync drift, Chart of Accounts, Account Type / Detail Type, Payment methods, Expense category map, CoA roles | CoA + Settings + QBO Sync Status live here |
