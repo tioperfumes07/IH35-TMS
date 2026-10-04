@@ -58,10 +58,12 @@ function check(sources) {
     );
   }
 
-  // BANK-F91382 leftover refuse — SafetyGroupNav page-scoped text token ratchet
+  // BANK-F91481 leftover refuse — SafetyGroupNav page-scoped muted token ratchet
   const navSrc = sources[NAV] ?? "";
   if (navSrc.includes("text-[11px]")) errors.push("SafetyGroupNav.tsx: leftover text-[11px]");
-  if (navSrc.includes("#8A92AB")) errors.push("SafetyGroupNav.tsx: leftover off-scale muted #8A92AB");
+  if (navSrc.includes("#8A92AB") || navSrc.includes("#334155")) {
+    errors.push("SafetyGroupNav.tsx: leftover off-scale muted");
+  }
 
   return errors;
 }
@@ -97,10 +99,9 @@ function selftest() {
         '<SafetyGroupNav groups={SAFETY_GROUPS} activeTabId={activeTabId} onTabChange={(tabId) => { navigate(findSafetyTab(tabId)?.tab.route ?? "/safety/driver-files"); }} />'
       ),
     })],
-    // BANK-F91382 leftover plant — SafetyGroupNav page-scoped text token ratchet
-    ["SafetyGroupNav leftover text-[11px] plant", (s) => ({
+    ["SafetyGroupNav leftover plant", (s) => ({
       ...s,
-      [NAV]: s[NAV] + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n',
+      [NAV]: `${s[NAV]}\n<div className="text-[11px] text-[#8A92AB]" style={{ color: "#334155" }}>plant</div>`,
     })],
   ];
   for (const [name, mutate] of mutations) {

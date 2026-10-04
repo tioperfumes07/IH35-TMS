@@ -64,7 +64,7 @@ export function SafetyGroupNav({ groups, activeTabId, onTabChange }: Props) {
                         NEW
                       </span>
                     ) : tab.badge === "renamed" ? (
-                      <span className="rounded-sm px-1.5 py-0.5 text-xs font-bold" style={{ background: "#f1f5f9", color: "#334155" }}>
+                      <span className="rounded-sm px-1.5 py-0.5 text-xs font-bold" style={{ background: "#f1f5f9", color: "#4B5563" }}>
                         RENAMED
                       </span>
                     ) : null}
