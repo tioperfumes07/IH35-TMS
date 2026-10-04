@@ -7112,5 +7112,12 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). Duplicate fuel receipt
 action: DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-04-cc2-void-duplicate-fuel-1848853.mts --apply --auth AUTH-209
   Dry-run first (default, no --apply).
 expires_at: 2026-10-04T21:50:00Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-04T01:52:56Z
+consumed_by: CC-2
+row_counts: accounting.expenses 98ad3749 (13543-9) voided by executeVoidCancel('expense') with reversing entry e9610099;
+  fuel.fuel_transactions 73caf437 voided by executeVoidCancel('fuel_transaction'); 0 deletes. Keep copy 13547 / 737e377b
+  still posted.
+proof_query: postings for source 98ad3749 + JE e9610099 net 0 on every account; fuel.fuel_transactions
+  transaction_reference '1848853' AND voided_at IS NULL -> 1.
 THIS AUTHORIZATION DOES NOT COVER: receipt 99530579 (copies six days apart — receipts first); any other company or document.
