@@ -14672,5 +14672,305 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-fault-auto-wo-idempotency"
+  },
+  "16901": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fault-auto-wo-notification-wired"
+  },
+  "16905": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fault-auto-wo-rls"
+  },
+  "16909": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-feed-day-preflight-is-enforced"
+  },
+  "16913": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-financial-entity-scope"
+  },
+  "16917": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fine-create-suggest-load"
+  },
+  "16921": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fine-lifecycle-scope-snapshot"
+  },
+  "16925": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fleet-company-catalog-read-recovery"
+  },
+  "16929": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fleet-creator-company-label-association"
+  },
+  "16933": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fleet-creators-reset-selected-company"
+  },
+  "16937": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fleet-trip-cost-scope-lifecycle"
+  },
+  "16941": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-forced-driver-ack"
+  },
+  "16945": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-form2290-units-scope"
+  },
+  "16949": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fuel-create-resets-on-company-change"
+  },
+  "16953": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fuel-load-attribution-failure-truth"
+  },
+  "16957": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fuel-loves-upload-invalid-row-truth"
+  },
+  "16961": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fuel-planner-active-driver-compliance"
+  },
+  "16965": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fuel-planner-send-company-lifecycle"
+  },
+  "16969": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fuel-planner-settings-company-lifecycle"
+  },
+  "16973": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fuel-planner-settings-write-identity"
+  },
+  "16977": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fuel-upload-async-lifecycle"
+  },
+  "16981": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fuel-upload-creator-draft-lifecycle"
+  },
+  "16985": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-gate-exception-sets-never-grow"
+  },
+  "16989": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-geofence-ack-company-lifecycle"
+  },
+  "16993": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-geofence-departure-on-speed"
+  },
+  "16997": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-geofence-detector-tenant-scope"
+  },
+  "17001": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-geofence-engine"
+  },
+  "17005": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-geofence-events-append-only"
+  },
+  "17009": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-geofence-odometer-capture-freshness"
+  },
+  "17013": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-geofence-state-machine-no-terminal-state"
+  },
+  "17017": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-geofence-state-machine-registered"
+  },
+  "17021": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-geofence-state-machine"
+  },
+  "17025": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-go20-cargo-sensor-incidents-schema"
+  },
+  "17029": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-go20-late-arrival-aggregates-schema"
+  },
+  "17033": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-held-migrations-not-runnable"
+  },
+  "17037": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-hide-voided-filter"
+  },
+  "17041": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-hold-merge-gate"
+  },
+  "17045": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-hold-migrations-registered"
+  },
+  "17049": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-home-attention-tenant-scope"
+  },
+  "17053": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-hos-clocks-tenant-scope"
+  },
+  "17057": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-hos-violation-action-company-lifecycle"
+  },
+  "17061": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-hos-violation-void-reason"
+  },
+  "17065": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-identity-users-last-login-at-column"
+  },
+  "17069": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-identity-users-preferred-language"
+  },
+  "17073": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-in-house-parts-allocation-company-scope"
+  },
+  "17077": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-incident-auto-workflow-wo-backlink-company-scope"
+  },
+  "17081": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-incident-auto-workflow-wo-backlink-fail-loud"
+  },
+  "17085": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-incidents-cluster-create-suggest-load"
+  },
+  "17089": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-insurance-claim-create-scope-lifecycle"
+  },
+  "17093": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-insurance-coi-create-scope-lifecycle"
+  },
+  "17097": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-insurance-coi-update-scope-lifecycle"
+  },
+  "17101": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-insurance-expiry-company-date"
+  },
+  "17105": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-insurance-lawsuit-create-scope-lifecycle"
+  },
+  "17109": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-insurance-schema"
+  },
+  "17113": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-integrity-alert-actions-company-lifecycle"
+  },
+  "17117": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-integrity-alert-detail-action-company-lifecycle"
+  },
+  "17121": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-integrity-anomaly-tenant-scope"
+  },
+  "17125": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-integrity-review-company-lifecycle"
+  },
+  "17129": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-internal-fine-actions-company-lifecycle"
+  },
+  "17133": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-internal-fine-create-suggest-load"
+  },
+  "17137": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-internal-labor-company-scope-class"
   }
 }
