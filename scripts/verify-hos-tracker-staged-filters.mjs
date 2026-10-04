@@ -51,6 +51,9 @@ function leftoverRefuse(src) {
   ) {
     hits.push(`${TARGET}: leftover off-scale muted`);
   }
+  if (src.includes("text-slate-") || src.includes("border-slate-") || src.includes("bg-slate-")) {
+    hits.push(`${TARGET}: leftover slate class`);
+  }
   return hits;
 }
 
@@ -83,6 +86,11 @@ function selftest() {
   const leftoverHits = leftoverRefuse('style={{ background: driver.available ? dot : "#94A3B8" }}');
   if (!leftoverHits.some((h) => h.includes("leftover off-scale muted"))) {
     console.error(`${LABEL} SELFTEST FAIL leftover #94A3B8 plant escaped`);
+    process.exit(1);
+  }
+  const leftoverSlateClass = leftoverRefuse('<div className="text-slate-700 border-slate-200 bg-slate-100">plant</div>');
+  if (!leftoverSlateClass.some((h) => h.includes("leftover slate class"))) {
+    console.error(`${LABEL} SELFTEST FAIL leftover slate class plant escaped`);
     process.exit(1);
   }
   console.log(`${LABEL} selftest PASS`);
