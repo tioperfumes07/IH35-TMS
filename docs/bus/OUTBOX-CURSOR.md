@@ -1,8 +1,14 @@
-## 2026-10-04T19:28Z · BANK-F91545 ProfitPerTruck leftover slate classes · this PR
+## 2026-10-04T19:35Z · BANK-F91546 TripPairing leftover slate classes · this PR
 
-DONE: ProfitPerTruckPage leftover FLAG_UI / flag filter slate-* → house #4B5563 / #1F2A44 / #E5E7EB / #F7F8FA; leftover refuse LIVE on EVEN 3854 print-letter leftoverHits.
+DONE: TripPairingBoard leftover text-slate-* / border-slate-* / bg-slate-* → house #4B5563 / #1F2A44 / #E5E7EB / #F7F8FA; leftover refuse on EVEN 4130 (TR #64748b parked).
 
-NEXT: leftover muted chrome (TripPairingBoard slate-* / OwnerHome / skip pile) · skip pile parked · HH16 leftovers first.
+NEXT: leftover muted chrome (OwnerHome / DefaultHome / remaining pages / skip pile) · skip pile parked · HH16 leftovers first.
+
+## 2026-10-04T19:28Z · BANK-F91545 ProfitPerTruck leftover slate classes WIRED CI · tip `d7f1802d9e`
+
+DONE: #25287 — ProfitPerTruck leftover FLAG_UI / flag filter slate-* → house tokens; leftover refuse LIVE on EVEN 3854 print-letter leftoverHits.
+
+NEXT: leftover muted chrome (TripPairingBoard / OwnerHome / skip pile) · skip pile parked · HH16 leftovers first.
 
 ## 2026-10-04T19:22Z · BANK-F91544 CustomerProfit leftover slate classes WIRED CI · tip `ef51c9ebd8`
 
