@@ -1,3 +1,15 @@
+## 2026-10-04T14:22Z · BANK-F91513 CreateWO help leftover muted WIRED · this PR
+
+DONE: CreateWorkOrderModal leftover #aab6cd help → house muted #4B5563; leftover refuse on verify-wo-create-part-task-required; EVEN 2090 --selftest + live.
+
+NEXT: leftover muted chrome (WO pie status colors stay / RMBuckets In Progress stay / #1d2b45 navy chips stay) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T14:18Z · BANK-F91512 TypeTabBar leftover muted WIRED CI · tip `1451422396`
+
+DONE: #25254 — TypeTabBar leftover muted #4B5563; verify-steps/1710 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (CreateWO #aab6cd / WO pie status colors stay) · skip pile parked · HH14 no migrations this tick.
+
 ## 2026-10-04T14:12Z · BANK-F91512 TypeTabBar leftover muted WIRED · this PR
 
 DONE: TypeTabBar inactive tab leftover #94a3b8 → house muted #4B5563; leftover refuse on verify-acct-r09-bill-subnav-type-contract; EVEN 1710 --selftest + live.

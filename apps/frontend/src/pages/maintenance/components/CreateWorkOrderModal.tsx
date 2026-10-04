@@ -107,7 +107,7 @@ function AssetLocationMap({ parts, onAdd, onChange, onRemove }: { parts: Seriali
     <div data-testid="wo-asset-location" className="mt-2 overflow-hidden rounded-lg border border-[#d6dae1] bg-white">
       <div className="flex items-center gap-2 bg-[#0f1a30] px-2.5 py-1.5 text-white">
         <span className="text-xs font-extrabold uppercase tracking-wide">Asset location &amp; serial</span>
-        <span className="ml-auto text-xs text-[#aab6cd]">tires · batteries · lamps · mirrors — where it sits + serial</span>
+        <span className="ml-auto text-xs text-[#4B5563]">tires · batteries · lamps · mirrors — where it sits + serial</span>
         <button type="button" data-testid="wo-add-serialized-part" onClick={onAdd} className="rounded-sm bg-[#1f2a44] px-2 py-0.5 text-xs font-semibold text-white">+ Create part</button>
       </div>
       {parts.length === 0 ? (
