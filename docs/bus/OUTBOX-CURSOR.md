@@ -1,3 +1,9 @@
+## 2026-10-04T08:56Z · BANK-F91461 E-41 engine-status-board WIRED CI · tip `7e0ad3cd1b`
+
+DONE: #25203 — verify-steps/3564 now runs ops/verify-e41-engine-status-board --selftest.
+
+NEXT: BANK-F91462 wire E-41 engine-status-savepoint into 982 · C-21 odometer + C-22 fail=triage · skip pile parked · HH08 no migrations.
+
 ## 2026-10-04T08:50Z · BANK-F91460 E-42 dashcam viewer WIRED CI · tip `284f73551c`
 
 DONE: #25202 — verify-steps/2204 now runs ops/verify-e42-dashcam-viewer --selftest.
