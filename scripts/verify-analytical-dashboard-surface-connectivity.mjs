@@ -101,6 +101,11 @@ export function verify(source) {
   need("reportLaneModal", "export function LaneDetailModal", "lane detail modal must remain implemented");
   need("reportScheduleModal", "export function ScheduleReportModal", "schedule report modal must remain implemented");
   need("reportFlyout", "export function ReportFlyoutPanel", "report flyout panel must remain implemented");
+  // BANK-F91308 leftover refuse — ReportFlyoutPanel.tsx page-scoped text token ratchet
+  if (source.reportFlyout.includes("text-[11px]")) failures.push("ReportFlyoutPanel.tsx: leftover text-[11px]");
+  if (source.reportFlyout.includes("#8A92AB") || source.reportFlyout.includes("#334155")) {
+    failures.push("ReportFlyoutPanel.tsx: leftover off-scale muted");
+  }
   need("scheduledPanel", "export function ScheduledReportsPanel", "scheduled reports panel must remain implemented");
   need("balanceSheet", "export function BalanceSheetPage", "balance sheet surface must remain implemented");
 
@@ -137,6 +142,8 @@ if (process.argv.includes("--self-test")) {
     ["reportsRunner", "<RunnerFilters", '<button disabled aria-label="Save (available soon)">Save</button><RunnerFilters'],
     ["reportLaneModal", "export function LaneDetailModal", "function BrokenLaneModal"], ["reportScheduleModal", "export function ScheduleReportModal", "function BrokenScheduleModal"],
     ["reportFlyout", "export function ReportFlyoutPanel", "function BrokenFlyout"], ["scheduledPanel", "export function ScheduledReportsPanel", "function BrokenScheduledPanel"],
+    // BANK-F91308 leftover plant — ReportFlyoutPanel page-scoped text token ratchet
+    ["reportFlyout", "export function ReportFlyoutPanel", 'export function ReportFlyoutPanel\n<div className="text-[11px] text-[#8A92AB]">plant</div>'],
     ["balanceSheet", "export function BalanceSheetPage", "function BrokenBalanceSheet"], ["routes", 'path="/cash-flow"', 'path="/broken-cash-flow"'],
     ["routes", 'path="/fuel/card-overage"', 'path="/broken-fuel"'], ["routes", 'path="/home/ops"', 'path="/broken-home"'],
     ["routes", 'path="/program/matrix"', 'path="/broken-program"'], ["routes", 'path="/reports/profit-loss"', 'path="/broken-report"'],
