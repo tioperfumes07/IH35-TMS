@@ -28,7 +28,8 @@ import {
   ReinstateDocumentError,
 } from "./reinstate-document.service.js";
 
-export const EXPENSE_GL_POSTING_FLAG_KEY = "EXPENSE_GL_POSTING_ENABLED";
+import { EXPENSE_GL_POSTING_FLAG_KEY } from "./expense-gl-posting-flag.js";
+export { EXPENSE_GL_POSTING_FLAG_KEY } from "./expense-gl-posting-flag.js";
 
 function accountingRoles(role: string) {
   return ["Owner", "Administrator", "Accountant"].includes(role);

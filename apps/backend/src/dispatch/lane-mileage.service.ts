@@ -5,7 +5,8 @@
  * Never derive short miles from practical. Never rebuild stats from Pay / RPM without the team flag.
  * Owner 2026-09-01: customer pays the typed rate; practical miles compute revenue per mile only.
  */
-export const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+import { USMCA_COMPANY_ID } from "../org/company-ids.js";
+export { USMCA_COMPANY_ID } from "../org/company-ids.js";
 
 export type LaneMileageRow = {
   id: string;

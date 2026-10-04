@@ -15,7 +15,7 @@ import { ensureOpenPeriod, postSourceTransactionInClientTx, PostingEngineError }
 import { resolveExpenseCategoryId } from "../expense-category-catalog.js";
 import { reassignDraftAttachments } from "../../documents/attachments.service.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
-import { EXPENSE_GL_POSTING_FLAG_KEY } from "../expenses.routes.js";
+import { EXPENSE_GL_POSTING_FLAG_KEY } from "../expense-gl-posting-flag.js";
 import { advanceCheckStockAfterUse } from "./check-stock.service.js";
 
 export type CreateCheckLineInput = {

@@ -8,6 +8,7 @@
  * PARALLEL BOOKS: posts to the TMS GL only. Does NOT enable QBO_JE_PUSH_ENABLED / entity push.
  * Idempotent via postFuelExpenseFromEvent's posting_batches key (fuel_event_id = fuel.fuel_transactions.id).
  */
+import { EXPENSE_GL_POSTING_FLAG_KEY } from "../expense-gl-posting-flag.js";
 import { withLuciaBypass } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import {
@@ -19,7 +20,7 @@ import {
 } from "./poster.service.js";
 
 /** Same key as expenses.routes — fuel expense is an expense-class GL post. */
-export const FUEL_EXPENSE_GL_POSTING_FLAG_KEY = "EXPENSE_GL_POSTING_ENABLED";
+export const FUEL_EXPENSE_GL_POSTING_FLAG_KEY = EXPENSE_GL_POSTING_FLAG_KEY;
 
 const SYSTEM_ACTOR_USER_ID = process.env.SYSTEM_ACTOR_USER_ID ?? "00000000-0000-4000-8000-000000000001";
 
@@ -80,7 +81,7 @@ function resolvePostingPath(candidate: FuelTxnGlPostCandidate): FuelPostingPath 
 }
 
 /** USMCA operating_company_id — the only entity R-153.6/153.7's owner-stated rail rule applies to. */
-const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+import { USMCA_COMPANY_ID } from "../../org/company-ids.js";
 
 /**
  * R-30.1-A (A/P control contamination fix, 2026-09-22) — SUPERSEDES the old FUEL-08 behavior of

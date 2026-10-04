@@ -18,11 +18,8 @@ import { isLoadTourOpen } from "./tour-open-gate.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { randomUUID } from "node:crypto";
 
-// Same flag every other expense-GL-posting call site gates on (expenses.routes.ts's own
-// EXPENSE_GL_POSTING_FLAG_KEY = "EXPENSE_GL_POSTING_ENABLED") — a local literal, not an import from
-// that routes file, matching fuel-posting/maybe-post-from-fuel-transaction.service.ts's own
-// FUEL_EXPENSE_GL_POSTING_FLAG_KEY precedent (a service file never imports a *.routes.ts module).
-const EXPENSE_GL_POSTING_FLAG_KEY = "EXPENSE_GL_POSTING_ENABLED";
+// The one expense GL-posting flag key, shared by every expense-GL call site (accounting/expense-gl-posting-flag.ts).
+import { EXPENSE_GL_POSTING_FLAG_KEY } from "./expense-gl-posting-flag.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
