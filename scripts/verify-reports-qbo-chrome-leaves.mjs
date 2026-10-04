@@ -147,6 +147,10 @@ export function audit(opts = {}) {
   const deadheadSrc = opts.reportPageSources?.["DeadheadReportPage.tsx"] ?? read(`${REPORTS_DIR}/DeadheadReportPage.tsx`);
   if (deadheadSrc.includes("text-[11px]")) failures.push("DeadheadReportPage.tsx: leftover text-[11px]");
   if (deadheadSrc.includes("#8A92AB")) failures.push("DeadheadReportPage.tsx: leftover off-scale muted #8A92AB");
+  // BANK-F91419 leftover refuse — CustomReportBuilder page-scoped text token ratchet
+  const customBuilderSrc = opts.customReportBuilderSrc ?? read(`${REPORTS_DIR}/CustomReportBuilder.tsx`);
+  if (customBuilderSrc.includes("text-[11px]")) failures.push("CustomReportBuilder.tsx: leftover text-[11px]");
+  if (customBuilderSrc.includes("#8A92AB")) failures.push("CustomReportBuilder.tsx: leftover off-scale muted #8A92AB");
 
   return { failures };
 }
@@ -203,6 +207,14 @@ function selftest() {
   const mutLeftover = audit({ reportPageSources: { "DeadheadReportPage.tsx": deadheadPlant } });
   if (!mutLeftover.failures.some((f) => /DeadheadReportPage\.tsx: leftover text-\[11px\]/.test(f))) {
     console.error(`${LABEL} SELFTEST FAIL — DeadheadReportPage leftover plant escaped`);
+    process.exit(1);
+  }
+  // BANK-F91419 leftover plant — CustomReportBuilder page-scoped text token ratchet
+  const customPlant =
+    read(`${REPORTS_DIR}/CustomReportBuilder.tsx`) + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  const mutCustom = audit({ customReportBuilderSrc: customPlant });
+  if (!mutCustom.failures.some((f) => /CustomReportBuilder\.tsx: leftover text-\[11px\]/.test(f))) {
+    console.error(`${LABEL} SELFTEST FAIL — CustomReportBuilder leftover plant escaped`);
     process.exit(1);
   }
 
