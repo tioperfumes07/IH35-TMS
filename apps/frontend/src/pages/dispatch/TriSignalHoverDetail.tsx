@@ -16,7 +16,7 @@ function fmtMinutes(value: number | null) {
 
 export function TriSignalHoverDetail({ signal }: { signal: TriSignalResult }) {
   return (
-    <div className="space-y-1 text-[11px] text-slate-700" data-testid="tri-signal-hover-detail">
+    <div className="space-y-1 text-xs text-slate-700" data-testid="tri-signal-hover-detail">
       <div className="font-semibold text-slate-900">{signal.reason}</div>
       <div>ETA slip: {fmtMinutes(signal.slip_minutes)}</div>
       <div>HOS remaining: {fmtMinutes(signal.hos_remaining_minutes)}</div>

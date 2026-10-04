@@ -80,7 +80,10 @@ contains("apps/frontend/src/components/dispatch/TriSignalPill.tsx", pill, [
   { pattern: /bg-red-100/, label: "red pill" },
 ]);
 
-read("apps/frontend/src/pages/dispatch/TriSignalHoverDetail.tsx");
+const triHover = read("apps/frontend/src/pages/dispatch/TriSignalHoverDetail.tsx");
+// BANK-F91345 leftover refuse — TriSignalHoverDetail page-scoped text token ratchet
+if (triHover.includes("text-[11px]")) fail("TriSignalHoverDetail.tsx: leftover text-[11px]");
+if (triHover.includes("#8A92AB")) fail("TriSignalHoverDetail.tsx: leftover off-scale muted #8A92AB");
 
 const board = read("apps/frontend/src/pages/dispatch/DispatchBoard.tsx");
 contains("apps/frontend/src/pages/dispatch/DispatchBoard.tsx", board, [
@@ -117,6 +120,12 @@ if (selftest) {
   const plantedFailure = failures.find((failure) => failure.includes("selftest failed"));
   if (plantedFailure) {
     console.error(`verify-cap-5-tri-signal SELFTEST FAILED: ${plantedFailure}`);
+    process.exit(1);
+  }
+  // BANK-F91345 leftover plant
+  const hoverPlant = triHover + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!(hoverPlant.includes("text-[11px]") || hoverPlant.includes("#8A92AB"))) {
+    console.error("verify-cap-5-tri-signal SELFTEST FAIL — leftover plant escaped");
     process.exit(1);
   }
   console.log("verify-cap-5-tri-signal SELFTEST PASS (1/1 planted regression rejected)");
