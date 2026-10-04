@@ -1,3 +1,9 @@
+## 2026-10-04T11:12Z · BANK-F91488 ProfitPerTruck leftover WIRED CI · tip `42e145e2d2`
+
+DONE: #25230 — ProfitPerTruck revenue/mi #4B5563; verify-steps/3854 leftover refuse live.
+
+NEXT: BANK-F91489 CashFlowOverview leftover #334155 + leftover refuse on 3850 · skip pile parked · HH11 no migrations.
+
 ## 2026-10-04T11:08Z · BANK-F91487 plannerTimeAxis leftover WIRED CI · tip `9a25f3679e`
 
 DONE: #25229 — plannerTimeAxis today-inset #4B5563; verify-steps/4106 leftover refuse --selftest + live.

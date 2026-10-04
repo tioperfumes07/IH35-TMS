@@ -87,7 +87,7 @@ function MiniSparkline({ values }: { values: number[] }) {
     <div className="h-10 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
-          <Line type="monotone" dataKey="v" stroke="#334155" strokeWidth={1.5} dot={false} />
+          <Line type="monotone" dataKey="v" stroke="#4B5563" strokeWidth={1.5} dot={false} />
         </LineChart>
       </ResponsiveContainer>
     </div>
