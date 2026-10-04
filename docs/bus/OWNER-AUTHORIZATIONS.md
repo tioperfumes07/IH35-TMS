@@ -7181,3 +7181,21 @@ proof_query: account 5015 net = 194,481 cents ($1,944.81); trial balance diff 0;
   verify-fuel-cost-posts-exactly-once, verify-every-load-born-posting-carries-its-load all LIVE PASS after phase 2.
 THIS AUTHORIZATION DOES NOT COVER: any other field or record of IH 35 Trucking LLC or IH 35 Transportation; receipt
   99530579; any DELETE; any company other than USMCA.
+
+## AUTH-212
+issued_at: 2026-10-04T18:55:19Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). Owner AUTH-398-FUEL, CC-3 chat 2026-10-04 ("FUEL AUTH: BOTH
+  AUTHORIZED"). (1) Receipt 99530579 ($510.61): void the load 13533 copy — accounting.expenses 63431792-5f13-4b1b-b918-a0feda813ddc
+  (postVoidReversal + stampDocumentVoided) and fuel.fuel_transactions dfb30f22-35b2-4375-9d6f-7adedf579469 (stampDocumentVoided)
+  through executeVoidCancel; keep the load 13548 copy (fuel 432798f4, expense 7ec5b0cb), asserted live after. Owner ruling:
+  "assign the receipt for the second load" — 13548. (2) The four DEF rows whose transaction_reference is the invented
+  'ustFluid' (6171784d, 9b2b027e, 24b04710 on 13509; 0f1bb337 on 13568): reference -> NULL; the settlement lines (5770, 5794)
+  print no receipt number. Amount, load and GL asserted unchanged. Prod dry run (withLuciaBypass, thrown, rolled back):
+  expense void ok with reversing entry (2 lines, Dr 51061 / Cr 51061), fuel void ok, 1 live copy of 99530579 left, 4
+  references cleared; nothing persisted (re-read: dry-run JE absent, all 6 rows unchanged).
+action: DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-04-cc3-fuel-auth-398.mts --apply --auth AUTH-212
+  Dry-run first (default, no --apply).
+expires_at: 2026-10-05T00:55:19Z
+status: OPEN
+THIS AUTHORIZATION DOES NOT COVER: any DELETE; the expense memos that still read "ref ustFluid"; receipts 1848853 /
+  99794138 (done under AUTH-207 / AUTH-209); any other document or company.
