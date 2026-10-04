@@ -1346,7 +1346,7 @@ export function TruckLineBoard({
         {statusFilter !== "all" ? (
           <button
             type="button"
-            className="h-7 rounded-sm border border-[#CBD5E1] px-2 text-xs text-[#4B5563]"
+            className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs text-[#4B5563]"
             data-testid="truck-line-status-filter-clear"
             onClick={() => setStatusFilter("all")}
           >
