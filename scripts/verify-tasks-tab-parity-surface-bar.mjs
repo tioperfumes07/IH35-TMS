@@ -24,6 +24,9 @@ export function check(filePath = path.join(ROOT, PAGE)) {
   assert(src.includes("fetchTasksByTarget"), "TasksTab: keep tasks-by-target API");
   assert(src.includes("CreateTaskModal"), "TasksTab: keep + Create modal");
   assert(src.includes("+ Create"), "TasksTab: keep + Create label");
+  // BANK-F91328 leftover refuse — TasksTab.tsx page-scoped text token ratchet
+  assert(!src.includes("text-[11px]"), "TasksTab.tsx: leftover text-[11px]");
+  assert(!src.includes("#8A92AB"), "TasksTab.tsx: leftover off-scale muted #8A92AB");
 }
 
 // GUARD-SELFTEST-MUTATES-SOURCE fix: never write the plant into the real tracked file. Copy it
@@ -52,6 +55,21 @@ async function selftest() {
     },
   );
   assert(failed, "selftest: expected FAIL on raw HTML table");
+
+  // BANK-F91328 leftover plant — TasksTab page-scoped text token ratchet
+  let leftoverCaught = false;
+  await withMutatedCopy(
+    realPath,
+    (good) => good + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n',
+    (tmpPath) => {
+      try {
+        check(tmpPath);
+      } catch (e) {
+        if (String(e.message || e).includes("leftover text-[11px]")) leftoverCaught = true;
+      }
+    },
+  );
+  assert(leftoverCaught, "selftest: leftover plant escaped");
   console.log("verify-tasks-tab-parity-surface-bar --selftest PASS");
 }
 
