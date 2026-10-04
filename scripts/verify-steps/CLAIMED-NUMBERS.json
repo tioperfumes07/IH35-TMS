@@ -10322,5 +10322,10 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-10-04",
     "purpose": "verify-subnav-manifest"
+  },
+  "12441": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-no-reversal-of-a-reversal"
   }
 }
