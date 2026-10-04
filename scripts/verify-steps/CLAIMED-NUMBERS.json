@@ -11417,5 +11417,400 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-every-void-route-reverses"
+  },
+  "12083": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-a5-audit-emit-banking"
+  },
+  "12087": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-audit-fix-17-factoring-power-user-ux"
+  },
+  "12091": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bank-account-company-assignment"
+  },
+  "12095": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bank-account-hide-capability-fails-closed"
+  },
+  "12099": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bank-account-visibility-honesty"
+  },
+  "12103": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bank-bulk"
+  },
+  "12107": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bank-feed-category-seed"
+  },
+  "12111": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bank-kpi-authoritative-cash-no-fake-zero"
+  },
+  "12115": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bank-match-candidate-sources"
+  },
+  "12119": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bank-memo-write-not-json"
+  },
+  "12123": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bank-recon-already-matched-conflict-status"
+  },
+  "12127": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bank-recon-expense-match-part2a"
+  },
+  "12131": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bank-recon-match-tenant-scope"
+  },
+  "12135": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bank-recon-poster-ledger-account-id"
+  },
+  "12139": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bank-recon-tolerance-from-q11"
+  },
+  "12143": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bank-recon-ui-tenant-scope"
+  },
+  "12147": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bank-recon-variance-uses-q8"
+  },
+  "12151": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bank-register-account-picker"
+  },
+  "12155": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bank-register-sign"
+  },
+  "12159": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bank-register-sort-group"
+  },
+  "12163": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bank-transaction-push-gate"
+  },
+  "12167": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bank-undo-releases-every-match-column"
+  },
+  "12171": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-banking-bulk-contract"
+  },
+  "12175": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-banking-categorize-ux-honesty"
+  },
+  "12179": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-banking-data-visibility"
+  },
+  "12183": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-banking-empty-state-entity-aware"
+  },
+  "12187": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-banking-factoring-virtual-fe-wired"
+  },
+  "12191": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-banking-fromto-derived"
+  },
+  "12195": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-banking-inline-create"
+  },
+  "12199": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-banking-nav-clickthrough"
+  },
+  "12203": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-banking-no-orphan-pages"
+  },
+  "12207": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-banking-recon-workspace-refetch"
+  },
+  "12211": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-banking-sync-strip-transaction-count"
+  },
+  "12215": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-banking-transfers-list-single-pager"
+  },
+  "12219": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-banking-workflow-b-archived"
+  },
+  "12223": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bulk-mark-factored-zero-rows-check"
+  },
+  "12227": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-customer-factoring-reverse-error-recovery"
+  },
+  "12231": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-daily-recon"
+  },
+  "12235": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-dispatch-factoring-queue-deeplinks"
+  },
+  "12239": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fact-dual-02-submit-rates-from-factor"
+  },
+  "12243": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fact-dual-03-routes-resolve-canonical-factor"
+  },
+  "12247": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fact-unit-01-banking-factor-register-scale"
+  },
+  "12251": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-factor-admin-assign-factor-picker"
+  },
+  "12255": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-factor-recon-tolerance-from-q11"
+  },
+  "12259": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-factoring-batch-writes-factoring-status"
+  },
+  "12263": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-factoring-customer-retention-human-labels"
+  },
+  "12267": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-factoring-destructive-actions-have-confirm"
+  },
+  "12271": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-factoring-event-one-live-claim"
+  },
+  "12275": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-factoring-fees-not-netted-against-revenue"
+  },
+  "12279": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-factoring-forward-only-chrome"
+  },
+  "12283": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-factoring-package-metadata-failures-caught"
+  },
+  "12287": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-factoring-package-popup-block-honesty"
+  },
+  "12291": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-factoring-pledge-nets-credit-memos"
+  },
+  "12295": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-factoring-profile"
+  },
+  "12299": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-factoring-sidebar-nav"
+  },
+  "12303": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-factoring-summary-dollars-unit"
+  },
+  "12307": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-factoring-tab-submit-factor-picker"
+  },
+  "12311": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-factoring-vendor-merge-banner-deeplink"
+  },
+  "12315": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-factoring-void-enumerates-all-postings"
+  },
+  "12319": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-faro-deduction-capture"
+  },
+  "12323": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-faro-purchase-day-feed-law"
+  },
+  "12327": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-faro-tabs-real-data"
+  },
+  "12331": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-invoice-factor-profile-linkage"
+  },
+  "12335": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-plaid-cron-registered"
+  },
+  "12339": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-plaid-status-derived-from-state"
+  },
+  "12343": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-plaid-token-encrypted-at-rest"
+  },
+  "12347": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-posting-prepaid-factoring-register-human-labels"
+  },
+  "12351": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-recon-cron-registered"
+  },
+  "12355": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-recon-read-only"
+  },
+  "12359": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-reconciler-exceptions"
+  },
+  "12363": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-reconciler-route-read-only"
+  },
+  "12367": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-reconciliation-constants"
+  },
+  "12371": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-relay-internal-bank-no-post"
+  },
+  "12375": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-relay-wallet-bank-feed"
+  },
+  "12379": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-reserve-dashboard-factor-picker"
+  },
+  "12383": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-reserve-tracker-factor-picker"
+  },
+  "12387": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-rpt-s04-fuel-reconciliation"
+  },
+  "12391": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-transfer-bank-balance-update-zero-rows-check"
+  },
+  "12395": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-wave-c-gl-je-system-qbo-recon"
   }
 }
