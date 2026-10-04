@@ -150,10 +150,25 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
+  // BANK-F91344 leftover plant — FuelFraudBadge (selftest exits before live badge read)
+  const badgeLive = read("apps/frontend/src/components/fuel/FuelFraudBadge.tsx");
+  const badgePlant = badgeLive + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!(badgePlant.includes("text-[11px]") || badgePlant.includes("#8A92AB"))) {
+    console.error("verify-cap-11-fuel-fraud selftest FAIL — leftover plant escaped");
+    process.exit(1);
+  }
+  // Also assert live tree is clean for leftover
+  if (badgeLive.includes("text-[11px]") || badgeLive.includes("#8A92AB")) {
+    console.error("verify-cap-11-fuel-fraud selftest FAIL — live FuelFraudBadge still has leftover");
+    process.exit(1);
+  }
   console.log("verify-cap-11-fuel-fraud selftest PASS — 3 rejected-PATCH + 2 false-zero mutations proven");
   process.exit(0);
 }
-read("apps/frontend/src/components/fuel/FuelFraudBadge.tsx");
+const fuelFraudBadge = read("apps/frontend/src/components/fuel/FuelFraudBadge.tsx");
+// BANK-F91344 leftover refuse — FuelFraudBadge page-scoped text token ratchet
+if (fuelFraudBadge.includes("text-[11px]")) fail("FuelFraudBadge.tsx: leftover text-[11px]");
+if (fuelFraudBadge.includes("#8A92AB")) fail("FuelFraudBadge.tsx: leftover off-scale muted #8A92AB");
 
 const indexTs = read("apps/backend/src/index.ts");
 contains("apps/backend/src/index.ts", indexTs, [
