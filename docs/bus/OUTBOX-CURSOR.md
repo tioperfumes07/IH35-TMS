@@ -1,3 +1,9 @@
+## 2026-10-04T10:16Z · BANK-F91478 DefaultHome leftover WIRED CI · tip `737e4efa1d`
+
+DONE: #25220 — DefaultHome KPI warn/healthy #4B5563; verify-steps/3886 runs leftover refuse --selftest + live.
+
+NEXT: BANK-F91479 IftaPreparerCard leftover #334155 + wire leftover refuse into 3884 · skip pile parked · HH10 no migrations.
+
 ## 2026-10-04T10:12Z · BANK-F91477 OwnerHome leftover WIRED CI · tip `f1d9ec57fc`
 
 DONE: #25219 — OwnerHome KPI warn/healthy #4B5563; verify-steps/3888 runs verify-home-quickjump-counts leftover refuse --selftest + live.

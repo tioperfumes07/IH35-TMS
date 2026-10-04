@@ -105,9 +105,14 @@ if (fs.existsSync(iftaCard)) {
   if (/<BasisSelector\b|from\s+["'][^"']*BasisSelector["']/.test(iftaSource)) {
     failures.push("BasisSelector must not be used in IFTA report/card surface");
   }
-  // BANK-F91348 leftover refuse — IftaPreparerCard page-scoped text token ratchet
-  if (iftaSource.includes("text-[11px]")) failures.push("IftaPreparerCard.tsx: leftover text-[11px]");
-  if (iftaSource.includes("#8A92AB")) failures.push("IftaPreparerCard.tsx: leftover off-scale muted #8A92AB");
+  leftoverRefuseIfta(iftaSource, failures);
+}
+
+function leftoverRefuseIfta(src, bucket) {
+  if (src.includes("text-[11px]")) bucket.push("IftaPreparerCard.tsx: leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155")) {
+    bucket.push("IftaPreparerCard.tsx: leftover off-scale muted");
+  }
 }
 
 const ownerPolicySources = Object.fromEntries(
@@ -116,10 +121,20 @@ const ownerPolicySources = Object.fromEntries(
 failures.push(...auditOwnerPolicyCopy(ownerPolicySources));
 
 if (process.argv.includes("--selftest")) {
-  // BANK-F91348 leftover plant
-  const iftaPlant = iftaSource + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
-  if (!(iftaPlant.includes("text-[11px]") || iftaPlant.includes("#8A92AB"))) {
-    failures.push("SELFTEST inert — IftaPreparerCard leftover plant escaped");
+  const leftoverGood = [];
+  leftoverRefuseIfta(iftaSource, leftoverGood);
+  if (leftoverGood.length) {
+    failures.push("SELFTEST FAIL — live IftaPreparerCard leftover tokens present");
+    failures.push(...leftoverGood);
+  }
+  const leftoverPlant = `${iftaSource}\n<div className="text-[11px] text-[#8A92AB]" style={{ color: "#334155" }}>plant</div>`;
+  const leftoverBad = [];
+  leftoverRefuseIfta(leftoverPlant, leftoverBad);
+  if (
+    !leftoverBad.some((e) => e.includes("leftover text-[11px]")) ||
+    !leftoverBad.some((e) => e.includes("leftover off-scale muted"))
+  ) {
+    failures.push("SELFTEST FAIL leftover plant escaped");
   }
   for (const rel of ownerPolicySurfaces) {
     const mutant = {

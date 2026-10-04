@@ -13,9 +13,9 @@ function ReadyBadge({ label }: { label: string }) {
   // status badge (including this "ready" state) uses the locked neutral navy/slate palette.
   const palette =
     label === "waiting for quarter close"
-      ? { bg: "#f1f5f9", fg: "#334155" }
+      ? { bg: "#f1f5f9", fg: "#4B5563" }
       : label === "waiting for data"
-        ? { bg: "#e2e8f0", fg: "#334155" }
+        ? { bg: "#e2e8f0", fg: "#4B5563" }
         : { bg: "#e2e8f0", fg: "#1f2a44" };
   return (
     <span className="rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.04em]" style={{ background: palette.bg, color: palette.fg }}>
@@ -32,10 +32,10 @@ export function IftaPreparerCard({ status }: Props) {
   const canSubmit = typedConfirm.trim().toUpperCase() === requiredPhrase;
 
   return (
-    <section className="rounded-sm border border-[#334155] border-l-[3px] bg-white">
-      <div className="flex items-center justify-between border-b border-[#334155] bg-[#f1f5f9] px-3 py-2">
-        <h3 className="text-xs font-semibold uppercase tracking-[0.04em] text-[#334155]">IFTA Quarterly Preparer</h3>
-        <div className="text-xs text-[#334155]">
+    <section className="rounded-sm border border-[#4B5563] border-l-[3px] bg-white">
+      <div className="flex items-center justify-between border-b border-[#4B5563] bg-[#f1f5f9] px-3 py-2">
+        <h3 className="text-xs font-semibold uppercase tracking-[0.04em] text-[#4B5563]">IFTA Quarterly Preparer</h3>
+        <div className="text-xs text-[#4B5563]">
           {status.currentQuarter} due {formatDateUS(status.nextDueAt)} ({status.daysUntilDue}d)
         </div>
       </div>
@@ -71,7 +71,7 @@ export function IftaPreparerCard({ status }: Props) {
           <button
             type="button"
             disabled
-            className="inline-flex items-center gap-1 rounded-sm border border-[#334155] px-3 py-1.5 text-xs font-semibold text-[#334155] opacity-60"
+            className="inline-flex items-center gap-1 rounded-sm border border-[#4B5563] px-3 py-1.5 text-xs font-semibold text-[#4B5563] opacity-60"
           >
             Generate IFTA-ready CSV
           </button>
@@ -79,7 +79,7 @@ export function IftaPreparerCard({ status }: Props) {
           <button
             type="button"
             onClick={() => setConfirmOpen(true)}
-            className="inline-flex items-center gap-1 rounded-sm border border-[#334155] bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#334155] hover:bg-[#e2e8f0]"
+            className="inline-flex items-center gap-1 rounded-sm border border-[#4B5563] bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#4B5563] hover:bg-[#e2e8f0]"
           >
             Generate IFTA-ready CSV
           </button>
@@ -112,7 +112,7 @@ export function IftaPreparerCard({ status }: Props) {
             <button
               type="button"
               disabled={!canSubmit}
-              className="rounded-sm border border-[#334155] bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#334155] disabled:opacity-50"
+              className="rounded-sm border border-[#4B5563] bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#4B5563] disabled:opacity-50"
               onClick={() => setConfirmOpen(false)}
             >
               Submit
