@@ -72,6 +72,10 @@ export function run() {
     failures.push(`${FILES.mdp}: must use canonical forecast mutation APIs`);
   }
 
+  // BANK-F91304 leftover refuse — ManualDailyProjectionsTab.tsx page-scoped text token ratchet
+  if (mdpSrc.includes("text-[11px]")) failures.push(`${FILES.mdp}: leftover text-[11px]`);
+  if (mdpSrc.includes("#8A92AB") || mdpSrc.includes("#334155")) failures.push(`${FILES.mdp}: leftover off-scale muted`);
+
   // No raw fetch / XMLHttpRequest.
   for (const [label, src] of Object.entries({ [FILES.avp]: avpSrc, [FILES.mdp]: mdpSrc })) {
     if (/\bfetch\s*\(|XMLHttpRequest|axios/.test(src)) {
@@ -94,7 +98,20 @@ function main() {
         console.error("[verify-cash-flow-tabs-entity-scoped] SELFTEST FAIL: planted rename did not fail");
         process.exit(1);
       }
-      console.log(`[verify-cash-flow-tabs-entity-scoped] SELFTEST PASS (${planted.length} planted failures detected)`);
+      // BANK-F91304 leftover plant — ManualDailyProjectionsTab page-scoped text token ratchet
+      const mdpPath = path.join(ROOT, FILES.mdp);
+      const mdpBackup = fs.readFileSync(mdpPath, "utf8");
+      try {
+        fs.writeFileSync(mdpPath, mdpBackup + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n', "utf8");
+        const leftoverHits = run();
+        if (!leftoverHits.some((e) => e.includes("leftover text-[11px]")) || !leftoverHits.some((e) => e.includes("leftover off-scale muted"))) {
+          console.error("[verify-cash-flow-tabs-entity-scoped] SELFTEST FAIL leftover plant escaped", leftoverHits.filter((e) => e.includes("leftover")));
+          process.exit(1);
+        }
+      } finally {
+        fs.writeFileSync(mdpPath, mdpBackup, "utf8");
+      }
+      console.log(`[verify-cash-flow-tabs-entity-scoped] SELFTEST PASS (${planted.length} planted failures detected + leftover plant)`);
     } finally {
       fs.writeFileSync(realPath, backup, "utf8");
     }
