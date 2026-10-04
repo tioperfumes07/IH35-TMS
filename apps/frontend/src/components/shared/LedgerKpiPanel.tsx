@@ -46,6 +46,8 @@ const HIDDEN = new Set(["display_id", "invoice_display_id", "posting_id", "sourc
 export type LedgerKpi = {
   key: string;
   label: string;
+  /** Tile headline. Drill rows use drill_label — do not reuse this name on LINE_COLS. */
+  primary_label?: string;
   unit: "cents" | "percent" | "days" | "count";
   value: number | null;
   compare_value?: number | null;
@@ -78,7 +80,7 @@ function primaryId(row: Record<string, unknown>): { kind: EntityKind; id: string
 function cell(col: string, row: Record<string, unknown>) {
   const v = row[col];
   if (v == null || v === "") return "—";
-  if (col === "primary_label") {
+  if (col === "drill_label") {
     const target = primaryId(row);
     if (target) return <EntityLink kind={target.kind} id={target.id} label={String(v)} className="underline" />;
     return String(v);
@@ -86,10 +88,16 @@ function cell(col: string, row: Record<string, unknown>) {
   const kind = DRILL_ID_COLUMN_KIND[col];
   if (kind) {
     const from = LABEL_FROM[col];
-    const label = from && row[from] ? String(row[from]) : row.primary_label ? String(row.primary_label) : "open";
+    const label = from && row[from] ? String(row[from]) : row.drill_label ? String(row.drill_label) : "open";
     return <EntityLink kind={kind} id={String(v)} label={label} className="underline" />;
   }
-  if (col.endsWith("_cents")) return <span className="tabular-nums">{formatUsdCents(Number(v))}</span>;
+  if (col.endsWith("_cents")) {
+    const formatted = formatUsdCents(Number(v));
+    const target = primaryId(row);
+    const cls = `${QBO_MONEY_CELL_CLASS} shrink-0 whitespace-nowrap`;
+    if (target) return <EntityLink kind={target.kind} id={target.id} label={formatted} className={`${cls} underline`} />;
+    return <span className={cls}>{formatted}</span>;
+  }
   if (/date$/.test(col)) return formatDateUS(String(v).slice(0, 10));
   return String(v);
 }
@@ -163,15 +171,15 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
                 which the owner wants as two quantities side by side, not a variance stacked on
                 Expected. 12 banking tiles at lg:grid-cols-6 is two rows — three rows was "too many
                 kpi boxes". */}
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{k.label}</div>
-            {k.key === "factoring_wires_vs_expected" && k.compare_value != null ? (
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{k.primary_label ?? k.label}</div>
+            {(k.key === "factoring_wires_vs_expected" || k.key === "cleared_vs_uncleared") && k.compare_value != null ? (
               <div className="mt-0.5 flex items-baseline justify-between gap-2">
                 <div className="min-w-0">
-                  <div className="text-[11px] text-slate-500">Wires</div>
+                  <div className="text-[11px] text-slate-500">{k.key === "cleared_vs_uncleared" ? "In" : "Wires"}</div>
                   <div className="text-[22px] font-semibold leading-tight tabular-nums text-slate-900">{fmtValue(k)}</div>
                 </div>
                 <div className="min-w-0 text-right">
-                  <div className="text-[11px] text-slate-500">{k.compare_label}</div>
+                  <div className="text-[11px] text-slate-500">{k.compare_label ?? (k.key === "cleared_vs_uncleared" ? "Out" : "Expected")}</div>
                   <div className="text-[22px] font-semibold leading-tight tabular-nums text-slate-900">{fmtCompare(k)}</div>
                 </div>
               </div>

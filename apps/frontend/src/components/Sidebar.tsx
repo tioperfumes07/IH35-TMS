@@ -72,7 +72,7 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
         />
       ) : null}
       <aside
-        className={`sidebar z-50 shrink-0 flex-col text-white md:z-auto md:flex max-lg:overflow-x-hidden ${
+        className={`sidebar z-50 min-h-0 shrink-0 flex-col overflow-y-auto overscroll-contain text-white md:z-auto md:flex max-lg:overflow-x-hidden ${
           mobileOpen ? "fixed inset-y-0 left-0 flex w-20 md:relative md:inset-auto" : "hidden md:flex"
         }`}
         // NAVY-NOT-BLACK LAW (owner ruling 2026-09-04) — was a hardcoded rgb(27, 35, 51) / #1B2333
@@ -82,7 +82,7 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
         // already owner-approved for the table header row (#14314F, 2026-09-03).
         style={{ background: colors.sidebarBg, borderRight: `1px solid ${colors.sidebarBorder}` }}
       >
-        <div className="flex h-full flex-col items-center gap-1 py-2">
+        <div className="flex min-h-full flex-col items-center gap-1 py-2">
           {visibleMetas.map((meta) => {
             const forceReportsActive = meta.id === "reports" && location.pathname.startsWith("/reports/");
             const forceAccountingActive = meta.id === "accounting" && location.pathname.startsWith("/accounting");

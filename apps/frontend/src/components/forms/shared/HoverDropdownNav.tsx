@@ -55,13 +55,24 @@ export const NAV_DROPDOWN_Z_INDEX = 220;
 
 export function measureNavDropdownStyle(anchor: HTMLElement): CSSProperties {
   const rect = anchor.getBoundingClientRect();
-  return {
-    position: "fixed",
-    top: rect.bottom,
+  const gap = 8;
+  const spaceBelow = window.innerHeight - rect.bottom - gap;
+  const spaceAbove = rect.top - gap;
+  const flipAbove = spaceBelow < 160;
+  const maxHeight = Math.max(80, flipAbove ? spaceAbove : spaceBelow);
+  const shared = {
+    position: "fixed" as const,
     left: rect.left,
     minWidth: rect.width,
+    maxHeight,
+    overflowY: "auto" as const,
+    overscrollBehavior: "contain" as const,
     zIndex: NAV_DROPDOWN_Z_INDEX,
   };
+  if (flipAbove) {
+    return { ...shared, bottom: window.innerHeight - rect.top };
+  }
+  return { ...shared, top: rect.bottom };
 }
 
 function DropdownColumn({

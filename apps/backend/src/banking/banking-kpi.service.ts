@@ -34,6 +34,8 @@ export type BankingKpiKey = (typeof BANKING_KPI_KEYS)[number];
 export type BankingKpi = {
   key: BankingKpiKey;
   label: string;
+  /** Headline on the tile. Not a drill-row column — those use drill_label. */
+  primary_label?: string;
   unit: "cents" | "percent" | "count";
   value: number | null;
   compare_value?: number | null;
@@ -56,7 +58,7 @@ const RESOLVED = `b.review_state IN ('matched', 'categorized', 'transfer')`;
 const UNMATCHED = `b.review_state = 'for_review'`;
 const ABS = `abs(b.amount_cents)`;
 const FUEL = `(b.matched_fuel_transaction_id IS NOT NULL OR b.matched_relay_fuel_transaction_id IS NOT NULL)`;
-const LINE_COLS = `b.id AS bank_transaction_id, COALESCE(left(b.description, 80), b.id::text) AS primary_label, b.transaction_date, b.bank_account_id, COALESCE(ba.display_name, ba.account_name) AS bank_account,
+const LINE_COLS = `b.id AS bank_transaction_id, COALESCE(left(b.description, 80), b.id::text) AS drill_label, b.transaction_date, b.bank_account_id, COALESCE(ba.display_name, ba.account_name) AS bank_account,
   left(b.description, 120) AS description, b.is_credit, ${ABS} AS amount_cents, b.review_state, b.reconciliation_cleared, b.pending,
   b.matched_invoice_id AS invoice_id, b.matched_bill_id AS bill_id, b.matched_settlement_id AS settlement_id,
   b.matched_factoring_advance_id AS factoring_advance_id, b.matched_journal_entry_id AS journal_entry_id, b.matched_load_id AS load_id`;
@@ -75,7 +77,7 @@ const BOOK_BALANCE = `(SELECT COALESCE(sum(CASE WHEN jp.debit_or_credit = 'debit
 const CASH_DAYS = `
   WITH a AS (${ACCOUNTS} AND ca.account_type = 'Asset'),
   d AS (
-    SELECT a.bank_account_id, a.bank_account, a.bank_account AS primary_label, a.account_number, je.entry_date,
+    SELECT a.bank_account_id, a.bank_account, a.bank_account AS drill_label, a.account_number, je.entry_date,
            sum(CASE WHEN jp.debit_or_credit = 'debit' THEN jp.amount_cents ELSE -jp.amount_cents END)::bigint AS day_net_cents
       FROM a JOIN accounting.journal_entry_postings jp ON jp.account_id = a.ledger_account_id
       JOIN accounting.journal_entries je ON je.id = jp.journal_entry_uuid AND je.status = 'posted' AND je.operating_company_id = $1::uuid
@@ -86,14 +88,14 @@ const CASH_DAYS = `
    WHERE x.entry_date BETWEEN $2::date AND $3::date`;
 /** Bank-feed balance vs GL book balance, per account with a live feed. */
 const RECON_GAP = `
-  SELECT a.bank_account_id, a.bank_account, a.bank_account AS primary_label, a.account_number, a.current_balance_cents AS bank_balance_cents, ${BOOK_BALANCE} AS book_balance_cents,
+  SELECT a.bank_account_id, a.bank_account, a.bank_account AS drill_label, a.account_number, a.current_balance_cents AS bank_balance_cents, ${BOOK_BALANCE} AS book_balance_cents,
          (a.current_balance_cents - ${BOOK_BALANCE})::bigint AS gap_cents,
          (SELECT s.id FROM banking.reconciliation_sessions s WHERE s.bank_account_id = a.bank_account_id AND s.voided_at IS NULL
            ORDER BY s.period_end DESC LIMIT 1) AS reconciliation_session_id
     FROM (${ACCOUNTS} AND ba.plaid_account_id IS NOT NULL) a`;
 /** Each posted factoring purchase in range: the net Faro owes the bank vs what was matched to it. */
 const WIRES = `
-  SELECT p.id AS purchase_id, p.display_id, p.display_id AS primary_label, p.purchase_date, p.factoring_advance_id, p.net_to_company_cents AS expected_cents,
+  SELECT p.id AS purchase_id, p.display_id, p.display_id AS drill_label, p.purchase_date, p.factoring_advance_id, p.net_to_company_cents AS expected_cents,
          COALESCE(w.received, 0)::bigint AS received_cents, (COALESCE(w.received, 0) - p.net_to_company_cents)::bigint AS variance_cents,
          w.bank_transaction_id
     FROM accounting.factoring_purchases p
@@ -115,7 +117,7 @@ const ESCROW_TREE = `
      WHERE r.operating_company_id = $1::uuid AND r.role = 'escrow_liability_default' AND r.is_active),
   tree AS (SELECT id FROM root UNION SELECT a.id FROM catalogs.accounts a JOIN tree t ON a.parent_account_id = t.id)`;
 const escrowPostings = (when: "balance" | "activity", side: "credit" | "debit" | null) => `${ESCROW_TREE}
-  SELECT je.id AS journal_entry_id, je.entry_date, ca.account_number, ca.account_name, ca.account_name AS primary_label, p.debit_or_credit, p.amount_cents,
+  SELECT je.id AS journal_entry_id, je.entry_date, ca.account_number, ca.account_name, ca.account_name AS drill_label, p.debit_or_credit, p.amount_cents,
          p.source_transaction_type, p.source_transaction_id, left(je.memo, 120) AS memo
     FROM tree JOIN accounting.journal_entry_postings p ON p.account_id = tree.id
     JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.status = 'posted' AND je.operating_company_id = $1::uuid
@@ -136,22 +138,27 @@ export async function computeBankingKpis(client: DbClient, oci: string, range: B
     buckets: cash.map((r) => ({ label: `${r.bank_account} (${r.account_number})`, count: 0, cents: num(r.balance) })),
     empty_reason: cash.length === 0 ? "No active bank account is linked to a GL cash account — link it on Cash / GL setup." : cashDays === 0 ? "No posted cash activity in this range." : null });
 
-  const clr = (await client.query<{ n: number; un: number; uv: string; uin: string; uout: string; uin_n: number; uout_n: number }>(
+  const clr = (await client.query<{ n: number; un: number; cn: number; uv: string; cv: string; uin: string; uout: string; uin_n: number; uout_n: number }>(
     `SELECT count(*)::int AS n,
             count(*) FILTER (WHERE b.reconciliation_cleared IS NOT TRUE)::int AS un,
+            count(*) FILTER (WHERE b.reconciliation_cleared IS TRUE)::int AS cn,
             COALESCE(sum(CASE WHEN b.is_credit THEN ${ABS} ELSE -${ABS} END) FILTER (WHERE b.reconciliation_cleared IS NOT TRUE), 0)::bigint AS uv,
+            COALESCE(sum(CASE WHEN b.is_credit THEN ${ABS} ELSE -${ABS} END) FILTER (WHERE b.reconciliation_cleared IS TRUE), 0)::bigint AS cv,
             COALESCE(sum(${ABS}) FILTER (WHERE b.reconciliation_cleared IS NOT TRUE AND b.is_credit), 0)::bigint AS uin,
             COALESCE(sum(${ABS}) FILTER (WHERE b.reconciliation_cleared IS NOT TRUE AND NOT b.is_credit), 0)::bigint AS uout,
             count(*) FILTER (WHERE b.reconciliation_cleared IS NOT TRUE AND b.is_credit)::int AS uin_n,
             count(*) FILTER (WHERE b.reconciliation_cleared IS NOT TRUE AND NOT b.is_credit)::int AS uout_n
        FROM banking.bank_transactions b WHERE ${IN_SCOPE}`, base)).rows[0]!;
   const noLines = clr.n === 0 ? "No bank line in this range." : null;
-  out.push({ key: "cleared_vs_uncleared", label: "Uncleared", unit: "cents", value: num(clr.uv),
-    source: "Uncleared bank lines as signed net (money in minus money out). Absolute-value sum is forbidden — it printed $1,278,141.34 against a live net of -$191,642.10.",
+  out.push({ key: "cleared_vs_uncleared", label: "Uncleared", primary_label: "Uncleared", unit: "cents",
+    value: num(clr.uin), compare_value: num(clr.uout), compare_label: "Out",
+    source: "Uncleared deposits-in and payments-out as two quantities. Net and cleared live in the breakdown — never a single signed-net headline.",
     gl_account: null, row_count: clr.un,
     buckets: [
       { label: "In", count: clr.uin_n, cents: num(clr.uin) },
       { label: "Out", count: clr.uout_n, cents: num(clr.uout) },
+      { label: "Net", count: clr.un, cents: num(clr.uv) },
+      { label: "Cleared", count: clr.cn, cents: num(clr.cv) },
     ], empty_reason: noLines });
 
   for (const [key, label, dir] of [["unmatched_inflow", "Unmatched inflow", true], ["unmatched_outflow", "Unmatched outflow", false]] as const) {

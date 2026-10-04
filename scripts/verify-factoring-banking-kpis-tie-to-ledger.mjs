@@ -79,14 +79,14 @@ try {
   bref.cash_position = Number((await one(`SELECT COALESCE(sum(${bookOf("a.ledger_account_id")}),0)::bigint s FROM banking.bank_accounts a
     JOIN catalogs.accounts ca ON ca.id = a.ledger_account_id WHERE ${acctWhere} AND ca.account_type = 'Asset'`)).s);
   const t = await one(`SELECT count(*)::int n,
-      COALESCE(sum(CASE WHEN is_credit THEN abs(amount_cents) ELSE -abs(amount_cents) END) FILTER (WHERE reconciliation_cleared IS NOT TRUE),0)::bigint unclr,
+      COALESCE(sum(abs(amount_cents)) FILTER (WHERE reconciliation_cleared IS NOT TRUE AND is_credit),0)::bigint unin,
       COALESCE(sum(abs(amount_cents)) FILTER (WHERE review_state = 'for_review' AND is_credit),0)::bigint uin,
       COALESCE(sum(abs(amount_cents)) FILTER (WHERE review_state = 'for_review' AND NOT is_credit),0)::bigint uout,
       count(*) FILTER (WHERE review_state IN ('matched','categorized','transfer'))::int res,
       COALESCE(sum(abs(amount_cents)) FILTER (WHERE NOT is_credit AND (matched_fuel_transaction_id IS NOT NULL OR matched_relay_fuel_transaction_id IS NOT NULL)),0)::bigint fuel,
       COALESCE(sum(abs(amount_cents)) FILTER (WHERE NOT is_credit AND matched_settlement_id IS NOT NULL),0)::bigint st
     FROM banking.bank_transactions t WHERE ${live}`);
-  bref.cleared_vs_uncleared = Number(t.unclr);
+  bref.cleared_vs_uncleared = Number(t.unin);
   bref.unmatched_inflow = Number(t.uin);
   bref.unmatched_outflow = Number(t.uout);
   bref.match_rate = t.n > 0 ? Number(((t.res / t.n) * 100).toFixed(2)) : 0;
