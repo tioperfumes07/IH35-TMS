@@ -1,11 +1,10 @@
-# NOW-CURSOR — 2026-10-04T23:30Z
+# NOW-CURSOR — 2026-10-04T23:35Z
 
-**CLOSED:** LST-F407-B #25433 · LST-F407-C #25438 · LST-F405 #25435 · LST-F408 on tip. uuid + silent-list + money-cells clickthrough all exit 0 on tip `e27f7c5298`.
+**SHIPPING:** ENG-7D / BANK-F2026100405 — unmatched_7d is an integrity digest ALERT (age + document pointer), not a recency CATEGORIZE counter. This PR.
 
-**NOW:** ENG-7D unmatched_7d must ALERT not count (branch was `cursor/bank-f363-7d-unmatched-alert-c89b`).
+**CLOSED tip:** LST-F407-B #25433 · LST-F407-C #25438 · LST-F405 #25435 · LST-F408. uuid + silent-list + money-cells clickthrough exit 0.
 
-**NEXT:** ENG-MATCH · 367.9 / 363-CUR-B/C. No Chrome. No ACCT-F406 data corrections.
-
+**NEXT after merge:** ENG-MATCH · 367.9 / 363-CUR-B/C. No Chrome. No ACCT-F406 data corrections.
 
 # NOW — CURSOR — standing engine ENG-CF (D-4) then ENG-7D / ENG-MATCH
 

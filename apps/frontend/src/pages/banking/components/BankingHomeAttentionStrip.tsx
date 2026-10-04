@@ -11,6 +11,8 @@ export type BankingHomeAttentionFacts = {
   qboConnected: boolean;
   escrowBalanceCents: number;
   escrowDriverCount: number;
+  unmatchedAged7d: number;
+  unmatched7dAlertOpen: boolean;
 };
 
 type Props = {
@@ -52,9 +54,23 @@ export function BankingHomeAttentionStrip({
     facts.qboConnected,
     facts.escrowDriverCount,
     facts.escrowBalanceCents,
+    facts.unmatchedAged7d,
+    facts.unmatched7dAlertOpen,
   ]);
 
   const rows: AttentionRow[] = [];
+
+  if (facts.unmatchedAged7d > 0) {
+    rows.push({
+      id: "unmatched-7d-alert",
+      tone: "bad",
+      title: `${facts.unmatchedAged7d.toLocaleString()} unmatched for 7+ days — ALERT`,
+      body: facts.unmatched7dAlertOpen
+        ? "Owner A1: a number is not an alert. This pages Owner/Administrator and is open on Integrity Alerts until every aged line is matched to a document."
+        : "Owner A1: bank lines older than 7 days still have no bill, expense, invoice, settlement, or payment. Match them — categorizing the account is not a match.",
+      action: { label: "Match now", onClick: onCategorize },
+    });
+  }
 
   if (facts.transactionCount > 0 && facts.uncategorizedCount > 0) {
     rows.push({

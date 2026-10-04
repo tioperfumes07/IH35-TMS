@@ -5,6 +5,12 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { autoCategorize } from "../integrations/plaid/plaid.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import {
+  BANK_UNMATCHED_7D_RULE_CODE,
+  UNMATCHED_7D_THRESHOLD_DAYS,
+  countAgedMatchedBankLines,
+  loadAgedUnmatchedDigest,
+} from "./unmatched-7d-alert.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -109,22 +115,41 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
         `,
         [query.data.operating_company_id]
       );
-      const txRes = await client.query<{ matched: number; unmatched: number }>(
-        `
-          SELECT
-            COUNT(*) FILTER (WHERE coa_account_id IS NOT NULL)::int AS matched,
-            COUNT(*) FILTER (WHERE coa_account_id IS NULL)::int AS unmatched
-          FROM banking.bank_transactions
-          WHERE operating_company_id = $1::uuid
-            AND created_at >= (now() - interval '7 day')
-            AND array_length(plaid_category, 1) IS NOT NULL
-        `,
-        [query.data.operating_company_id]
+      const digest = await loadAgedUnmatchedDigest(
+        client,
+        query.data.operating_company_id,
+        UNMATCHED_7D_THRESHOLD_DAYS
       );
+      const matchedAged = await countAgedMatchedBankLines(
+        client,
+        query.data.operating_company_id,
+        UNMATCHED_7D_THRESHOLD_DAYS
+      );
+      const alertRes = await client.query<{ id: string; resolution_status: string | null }>(
+        `
+          SELECT ia.id::text AS id, ia.resolution_status
+          FROM safety.integrity_alerts ia
+          JOIN safety.integrity_alert_rules r
+            ON r.id = ia.rule_id
+           AND r.operating_company_id = ia.operating_company_id
+          WHERE ia.operating_company_id = $1::uuid
+            AND r.rule_code = $2
+            AND COALESCE(ia.resolution_status, 'unresolved') IN ('unresolved', 'investigating')
+            AND (ia.snoozed_until IS NULL OR ia.snoozed_until <= now())
+          ORDER BY ia.created_at DESC
+          LIMIT 1
+        `,
+        [query.data.operating_company_id, BANK_UNMATCHED_7D_RULE_CODE]
+      );
+      const alert = alertRes.rows[0] ?? null;
       return {
         active_rules: Number(rulesRes.rows[0]?.count ?? 0),
-        matched_7d: Number(txRes.rows[0]?.matched ?? 0),
-        unmatched_7d: Number(txRes.rows[0]?.unmatched ?? 0),
+        matched_7d: matchedAged,
+        unmatched_7d: digest.unmatched_count,
+        unmatched_7d_alert_open: digest.unmatched_count > 0,
+        unmatched_7d_alert_id: alert?.id ?? null,
+        threshold_days: UNMATCHED_7D_THRESHOLD_DAYS,
+        oldest_unmatched_date: digest.oldest_transaction_date,
       };
     });
     return stats;
