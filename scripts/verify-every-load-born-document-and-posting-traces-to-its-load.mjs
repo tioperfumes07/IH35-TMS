@@ -22,6 +22,7 @@ export const REQUIRES_LIVE_DB = "the load refusals and the reversal-to-load walk
 const LABEL = "verify-every-load-born-document-and-posting-traces-to-its-load";
 const MIGRATION = "db/migrations/202615330931_load_born_rows_refuse_a_null_load.sql";
 const STAMP_MIGRATION = "202615350500_journal_entry_postings_load_id_stamp.sql";
+const BACKFILL_MIGRATION = "202615390931_posting_load_id_backfill_where_provable.sql";
 
 export const TRIGGERS = [
   ["accounting.journal_entry_postings", "trg_load_born_posting_carries_its_load"],
@@ -85,7 +86,10 @@ const facts = await withUnscopedReadOnly(LABEL, async (c) => {
     UNION ALL SELECT 'driver_finance.driver_bills', b.id::text FROM driver_finance.driver_bills b WHERE b.load_id IS NULL AND ${NOT_FROZEN_SQL("b.operating_company_id")}
     UNION ALL SELECT 'accounting.load_revenue_recognition_postings', r.id::text FROM accounting.load_revenue_recognition_postings r WHERE r.load_id IS NULL AND ${NOT_FROZEN_SQL("r.operating_company_id")}
     UNION ALL SELECT 'dispatch.load_charge_lines', l.id::text FROM dispatch.load_charge_lines l WHERE l.load_id IS NULL AND ${NOT_FROZEN_SQL("l.operating_company_id")}`)).rows;
-  const since = stampAt ?? "infinity";
+  // 363-CC3-A: once 202615390931 has stamped every provable EXISTING posting, the unstamped / broken-walk rules hold for
+  // ALL TIME, not only since the stamp; history without a provable load (documents gone) stays reported.
+  const backfilled = (await c.query(`SELECT 1 FROM _system._schema_migrations WHERE filename = $1`, [BACKFILL_MIGRATION])).rowCount > 0;
+  const since = backfilled ? "-infinity" : stampAt ?? "infinity";
   const unstamped = (await c.query(`
     SELECT count(*)::int AS n FROM accounting.journal_entry_postings p
      WHERE p.created_at >= $1::timestamptz AND p.load_id IS NULL AND ${NOT_FROZEN_SQL("p.operating_company_id")}
@@ -99,7 +103,7 @@ const facts = await withUnscopedReadOnly(LABEL, async (c) => {
   const history = (await c.query(`
     SELECT count(*)::int AS n FROM accounting.journal_entry_postings p
      WHERE p.created_at < $1::timestamptz AND p.load_id IS NULL AND ${NOT_FROZEN_SQL("p.operating_company_id")}`, [since])).rows[0].n;
-  return { applied: Boolean(applied), stampAt, triggers, loadless, unstamped, walk, history };
+  return { applied: Boolean(applied), stampAt, backfilled, triggers, loadless, unstamped, walk, history };
 });
 const live = liveGaps(facts);
 if (!facts.applied) {
@@ -107,5 +111,5 @@ if (!facts.applied) {
 } else {
   fails.push(...live);
 }
-console.log(`${LABEL}: load-less load-born documents ${facts.loadless.length} (pinned ${PINNED_LOADLESS.length}); postings since the stamp unstamped ${facts.unstamped}; reversals since the stamp ${facts.walk.reversals}, broken walks ${facts.walk.broken}; pre-stamp postings without a load ${facts.history} (purge population, reported)`);
+console.log(`${LABEL}: load-less load-born documents ${facts.loadless.length} (pinned ${PINNED_LOADLESS.length}); ${facts.backfilled ? "postings (all time, backfill applied)" : "postings since the stamp"} unstamped ${facts.unstamped}; reversals ${facts.backfilled ? "(all time)" : "since the stamp"} ${facts.walk.reversals}, broken walks ${facts.walk.broken}${facts.backfilled ? "" : `; pre-stamp postings without a load ${facts.history} (purge population, reported)`}`);
 report(LABEL, fails, "every load-born row carries its load and every reversal walks back to it");
