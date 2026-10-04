@@ -1,3 +1,9 @@
+## 2026-10-04T07:30Z · BANK-F91441 C-04 row treatment WIRED CI · tip `0cbecb2a65`
+
+DONE: #25183 — verify-steps/10602 now runs ops/verify-c04-row-treatment --selftest.
+
+NEXT: BANK-F91442 wire C-05 minimum-scroll into 11836 · skip pile parked · HH07 no migrations.
+
 ## 2026-10-04T07:24Z · BANK-F91440 C-19 With-transactions default WIRED CI · tip `c0c24b4242`
 
 DONE: #25182 — verify-steps/2232 now runs ops/verify-c19-has-transactions-default --selftest. Invoice match banner already on 1158 B-1 pack.
