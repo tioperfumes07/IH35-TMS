@@ -12717,5 +12717,305 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-expenses-list-readonly"
+  },
+  "15337": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-form2290-generate-draft-ct-period-boundary"
+  },
+  "15341": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fuel-stop-planner-uses-cap-hos"
+  },
+  "15345": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-go19-bill-driver-recovery-parity"
+  },
+  "15349": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-heatmap-tenant-scope"
+  },
+  "15353": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-home-record-expense-modal"
+  },
+  "15357": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-hos-driver-map-preview"
+  },
+  "15361": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-ifta-non-taxable-jurisdiction"
+  },
+  "15365": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-insurance-down-payment"
+  },
+  "15369": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-insurance-payment-schedule-mark-paid-scope-snapshot"
+  },
+  "15373": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-insurance-payment-schedule-policy-company-link"
+  },
+  "15377": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-insurance-renewal-atomic-bill-schedule"
+  },
+  "15381": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-internal-fine-liability-backlink-checked"
+  },
+  "15385": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-inv2-no-hard-delete-accounting"
+  },
+  "15389": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-invoice-create-does-not-leave-accounting"
+  },
+  "15393": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-invoice-create-modal-from-load-single-pager"
+  },
+  "15397": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-invoice-line-patch-parameter-order"
+  },
+  "15401": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-invoice-lines-account-id-required"
+  },
+  "15405": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-invoice-maint-shop-human-labels"
+  },
+  "15409": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-je-source-links-expense-display-id"
+  },
+  "15413": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-je-void-money-control-flag-gate"
+  },
+  "15417": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maint-parts-invoice-link-company-audits"
+  },
+  "15421": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-money-dispatch-opco-resolver"
+  },
+  "15425": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-mor-cash-no-phantom-columns"
+  },
+  "15429": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-multi-entity-accounting-filter"
+  },
+  "15433": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-no-duplicate-active-account-names"
+  },
+  "15437": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-no-swallow-on-money-paths"
+  },
+  "15441": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-no-zero-rate-invoice-from-load"
+  },
+  "15445": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-paybill-detail-human-labels"
+  },
+  "15449": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-payment-application-no-overpay"
+  },
+  "15453": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-payment-application-tenant-chain"
+  },
+  "15457": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-payment-detail-entity-links"
+  },
+  "15461": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-payment-qbo-integration-human-labels"
+  },
+  "15465": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-payment-recording-contract"
+  },
+  "15469": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-period-cash-basis-snapshot-readonly"
+  },
+  "15473": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-period-cash-basis-snapshot-shape"
+  },
+  "15477": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-period-money-control-flag-gate"
+  },
+  "15481": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-photo-comparison-staging-incident-identity"
+  },
+  "15485": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-property-tax-rendition-id-param-validated"
+  },
+  "15489": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-accounts-parent-first"
+  },
+  "15493": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-invoices-mirror-shape"
+  },
+  "15497": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-relay-deposit-classifier-no-post"
+  },
+  "15501": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-relay-deposit-review-company-lifecycle"
+  },
+  "15505": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-reserve-docs-liabilities-human-labels"
+  },
+  "15509": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-road-service-wo-bill-race-locked"
+  },
+  "15513": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-safety-leave-requests-exact-paging"
+  },
+  "15517": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-safety-photo-comparison-exact-paging"
+  },
+  "15521": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-safety-temp-cover-exact-paging"
+  },
+  "15525": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-sales-tax-routes-tenant-scope"
+  },
+  "15529": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-settlement-dispute-je-gate"
+  },
+  "15533": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-settlement-engine-inventory"
+  },
+  "15537": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-settlement-escrow-cap"
+  },
+  "15541": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-settlement-escrow-resolver"
+  },
+  "15545": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-settlement-payrun-gl-flag-gate"
+  },
+  "15549": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-sidebar-contract"
+  },
+  "15553": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-sidebar-items-locked"
+  },
+  "15557": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-status-bar-height-at-mobile"
+  },
+  "15561": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-tax-document-immutability"
+  },
+  "15565": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-tax-form-threshold-year-keyed"
+  },
+  "15569": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-tire-wear-failure-exclusion"
+  },
+  "15573": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-tms-account-push-tenant-chain"
   }
 }
