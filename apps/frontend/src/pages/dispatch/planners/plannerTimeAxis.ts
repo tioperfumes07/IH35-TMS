@@ -78,7 +78,7 @@ export function plannerDayBodyClass(isoYmd: string, todayYmd: string, extra = ""
   return [
     "h-[34px] px-0 py-0 text-center",
     monthStart ? "border-l-2 border-l-slate-500" : "border-l border-l-slate-300",
-    today ? "shadow-[inset_3px_0_0_0_#334155]" : "",
+    today ? "shadow-[inset_3px_0_0_0_#4B5563]" : "",
     weekend && !today ? "bg-slate-100" : "",
     extra,
   ]
