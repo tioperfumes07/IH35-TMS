@@ -92,7 +92,7 @@ export function TaskLinkPicker({ operatingCompanyId, targetType, targetId, label
                     <>
                       {t.title}
                       {t.anticipated_category ? (
-                        <span className="ml-1 text-[11px] text-slate-500">({t.anticipated_category})</span>
+                        <span className="ml-1 text-xs text-slate-500">({t.anticipated_category})</span>
                       ) : null}
                     </>
                   ),
@@ -116,7 +116,7 @@ export function TaskLinkPicker({ operatingCompanyId, targetType, targetId, label
                     <button
                       type="button"
                       disabled={linkMutation.isPending}
-                      className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-200 disabled:opacity-50"
+                      className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-200 disabled:opacity-50"
                       onClick={() => linkMutation.mutate(t)}
                     >
                       Link & complete

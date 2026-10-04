@@ -24,6 +24,9 @@ export function check(filePath = path.join(ROOT, PAGE)) {
   assert(src.includes("createTaskLink"), "TaskLinkPicker: keep createTaskLink");
   assert(src.includes("Link &amp; complete") || src.includes("Link & complete"), "TaskLinkPicker: keep link action");
   assert(!/<table\b/.test(src), "TaskLinkPicker: must not use raw HTML table");
+  // BANK-F91329 leftover refuse — TaskLinkPicker.tsx page-scoped text token ratchet
+  assert(!src.includes("text-[11px]"), "TaskLinkPicker.tsx: leftover text-[11px]");
+  assert(!src.includes("#8A92AB"), "TaskLinkPicker.tsx: leftover off-scale muted #8A92AB");
 }
 
 // GUARD-SELFTEST-MUTATES-SOURCE fix: never write the plant into the real tracked file. Copy it
@@ -52,6 +55,21 @@ async function selftest() {
     },
   );
   assert(failed, "selftest: expected FAIL on raw HTML table");
+
+  // BANK-F91329 leftover plant — TaskLinkPicker page-scoped text token ratchet
+  let leftoverCaught = false;
+  await withMutatedCopy(
+    realPath,
+    (good) => good + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n',
+    (tmpPath) => {
+      try {
+        check(tmpPath);
+      } catch (e) {
+        if (String(e.message || e).includes("leftover text-[11px]")) leftoverCaught = true;
+      }
+    },
+  );
+  assert(leftoverCaught, "selftest: leftover plant escaped");
   console.log("verify-task-link-picker-parity-surface-bar --selftest PASS");
 }
 
