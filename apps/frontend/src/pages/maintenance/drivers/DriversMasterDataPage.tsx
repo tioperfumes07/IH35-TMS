@@ -210,7 +210,7 @@ export function DriversMasterDataPage() {
       label: "Source",
       sortable: true,
       render: (row) => (
-        <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">{row.source}</span>
+        <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-700">{row.source}</span>
       ),
     },
   ];
@@ -256,7 +256,7 @@ export function DriversMasterDataPage() {
           }}>
             CSV Import
           </Button>
-          {!driversQuery.isError && !csvEnabled ? <span className="text-[11px] text-amber-700">CSV fallback disabled for projected entity</span> : null}
+          {!driversQuery.isError && !csvEnabled ? <span className="text-xs text-amber-700">CSV fallback disabled for projected entity</span> : null}
         </div>
         {driversQuery.isError ? (
           <ListErrorState
