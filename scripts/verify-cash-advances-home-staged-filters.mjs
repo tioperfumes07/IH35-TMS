@@ -33,6 +33,9 @@ function assertPage(src) {
   if (/const \[driverPickerId,\s*setDriverPickerId\]/.test(src)) {
     errors.push("must not keep hand-rolled silent filter useState");
   }
+  // BANK-F91357 leftover refuse — CashAdvancesHome page-scoped text token ratchet
+  if (src.includes("text-[11px]")) errors.push("CashAdvancesHome.tsx: leftover text-[11px]");
+  if (src.includes("#8A92AB")) errors.push("CashAdvancesHome.tsx: leftover off-scale muted #8A92AB");
   return errors;
 }
 
@@ -54,6 +57,13 @@ function selftest() {
   `;
   if (assertPage(bad).length === 0 || assertPage(good).length > 0) {
     console.error(`${LABEL} SELFTEST FAIL`, { bad: assertPage(bad), good: assertPage(good) });
+    process.exit(1);
+  }
+  // BANK-F91357 leftover plant
+  const live = fs.readFileSync(path.join(process.cwd(), TARGET), "utf8");
+  const planted = assertPage(live + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n');
+  if (!planted.some((e) => e.includes("leftover text-[11px]"))) {
+    console.error(`${LABEL} SELFTEST FAIL — CashAdvancesHome leftover plant escaped`);
     process.exit(1);
   }
   console.log(`${LABEL} selftest PASS`);

@@ -10,6 +10,11 @@ vi.mock("../display-id.js", () => ({
   nextCashAdvanceDisplayId: vi.fn(async () => `CA-${++displayIdCounter}`),
 }));
 vi.mock("../../audit/crud-audit.js", () => ({ appendCrudAudit: vi.fn() }));
+// ROUND 394 RULING 1 — creation requires the driver's own 1245 sub-account; covered by its own tests.
+vi.mock("../../driver-finance/driver-advance-account-resolver.js", () => ({
+  resolveDriverAdvanceSubAccount: vi.fn(async () => "driver-own-advance-sub"),
+  DriverAdvanceAccountError: class DriverAdvanceAccountError extends Error {},
+}));
 
 const { createDriverCashAdvanceCore } = await import("../cash-advance-create.js");
 

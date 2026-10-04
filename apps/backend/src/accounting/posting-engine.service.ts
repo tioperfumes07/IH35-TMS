@@ -4,7 +4,7 @@ import { boundJeMemo, sourceDocumentLabel } from "./je-memo.js";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
 import { resolveRoleAccountOptional, resolveReimbursementExpenseAccount, resolveRoleAccount } from "./coa-roles/resolver.service.js";
 import { STANDING_LATCH_JE_PREDICATE } from "./revrec-delivery-posting/poster.service.js";
-import { resolveAccountForCategory } from "./expense-category-map/resolver.service.js";
+import { DriverAdvanceAccountError, resolveDriverAdvanceSubAccount } from "../driver-finance/driver-advance-account-resolver.js";
 import { resolveBillLineDebitAccount, BillLineAccountError } from "./bill-account-resolver.js";
 import {
   assertLoadRevenueHasSourceLoad,
@@ -2266,6 +2266,19 @@ async function buildVendorCreditOverpayLines(
   };
 }
 
+// ROUND 394 RULING 1 — the advance debit account: the driver's OWN 1245 sub-account, resolved through
+// driver_finance.driver_advance_accounts and checked against the advance_recovery role parent. Both
+// advance builders use it; a missing link is a named PostingEngineError, never a shared fallback.
+async function resolveDriverAdvanceDebitAccount(client: DbClient, operatingCompanyId: string, driverId: string | null): Promise<string> {
+  if (!driverId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Driver advance has no driver_id to resolve the driver's own Cash-Advance sub-account");
+  try {
+    return await resolveDriverAdvanceSubAccount(client, operatingCompanyId, driverId);
+  } catch (err) {
+    if (err instanceof DriverAdvanceAccountError) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", `${err.code}: ${err.message}`);
+    throw err;
+  }
+}
+
 // Cash advance posting (modeled on buildBillPaymentLines):
 //   DEBIT  the cash_advance mapped account (B1 expense_category_account_map, resolved by
 //          category + operating_company_id — never hardcoded).
@@ -2282,6 +2295,7 @@ async function buildCashAdvanceLines(
   const requestRes = await client.query<{
     id: string;
     requested_amount_cents: string;
+    driver_id: string;
     status: string;
     posting_date: string;
     display_id: string | null;
@@ -2291,6 +2305,7 @@ async function buildCashAdvanceLines(
       SELECT
         id::text,
         requested_amount_cents::bigint,
+        driver_id::text,
         status::text,
         COALESCE(reviewed_at, submitted_at, created_at)::date::text AS posting_date,
         display_id,
@@ -2314,8 +2329,9 @@ async function buildCashAdvanceLines(
 
   // ACCT-F2026092584 — pass this function's own client so the read runs on it, not a second
   // withLuciaBypass connection (which needs SET LOCAL ROLE ih35_app — unavailable to some callers).
-  const mapped = await resolveAccountForCategory(operatingCompanyId, "cash_advance", "cash_advance", client);
-  const debitAccountId = mapped.account_id;
+  // ROUND 394 RULING 1 — Dr the driver's OWN 1245 sub-account (bridge + role-bound parent), never the
+  // shared cash_advance category account. An unbound driver fails closed.
+  const debitAccountId = await resolveDriverAdvanceDebitAccount(client, operatingCompanyId, request.driver_id);
 
   // ACCT-F5687 — same precedence as buildDriverAdvanceLines' CHAIN-04 fix (ACCT-F358): an explicit
   // caller-supplied credit_account_id still overrides, THEN the request's own from_bank_account_id
@@ -2387,6 +2403,7 @@ async function buildDriverAdvanceLines(
   const advanceRes = await client.query<{
     id: string;
     amount: string;
+    driver_id: string;
     disbursement_status: string;
     posting_date: string | null;
     disbursed_at: string | null;
@@ -2398,6 +2415,7 @@ async function buildDriverAdvanceLines(
       SELECT
         id::text,
         amount::text,
+        driver_id::text,
         disbursement_status::text,
         posting_date::text,
         disbursed_at::text,
@@ -2423,8 +2441,9 @@ async function buildDriverAdvanceLines(
 
   // ACCT-F2026092584 — pass this function's own client so the read runs on it, not a second
   // withLuciaBypass connection (which needs SET LOCAL ROLE ih35_app — unavailable to some callers).
-  const mapped = await resolveAccountForCategory(operatingCompanyId, "cash_advance", "cash_advance", client);
-  const debitAccountId = mapped.account_id;
+  // ROUND 394 RULING 1 — Dr the driver's OWN 1245 sub-account (bridge + role-bound parent), never the
+  // shared cash_advance category account. An unbound driver fails closed.
+  const debitAccountId = await resolveDriverAdvanceDebitAccount(client, operatingCompanyId, advance.driver_id);
 
   // CLS-CASH-OUT-CREDITS-CLEARING-ACCOUNT / LV-ADVANCE-CREDITS-UNDEPOSITED-NOT-THE-BANK — this used to
   // be `creditAccountId ?? resolveDisbursementCashAccountForCompany(...)`, so an advance that named its

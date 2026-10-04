@@ -1,3 +1,11 @@
+## 2026-10-04T02:00Z · BANK-F91349..F91364 leftover drain MERGED tip `cf206a45ab`
+
+DONE: DocumentsTab · AssignFuelCardDrawer · W8BenSection · ScheduledReportsPanel · JournalEntryTypePicker · FMCSAVerificationModal · VoidReasonModal · PerformanceScorecard · CashAdvancesHome · CompliancePanel · QuickAssignModal · DvirSeverityBadge · DriverProfileStopsMilesSection · DeadheadReportPage · DriverDqfComplianceChip · AssetSummaryCards (F91349–F91364). Prior F91344–47 stamped.
+
+PRs: #25024 · #25025 · #25027 · #25028 · #25029 · #25030 · #25032 · #25035 · #25036 · #25037 · #25038 · #25039 · #25041 · #25042 · #25043 · #25044 (squash). Guards: refuse + `--selftest` plant each.
+
+NEXT: continue ORDERS leftover drain (page-scoped guards only). Skip BookLoad*/Combobox/EntityPicker/ParityTable/DrillKpiCard/UniversalListToolbar/DateTimePicker/DataTable/ProgramTracker/FinalAdditions/InstallPWA. HH01 no migrations.
+
 ## 2026-10-04T01:55Z · BANK-F91344..F91347 leftover drain MERGED tip `35226af73a`
 
 DONE: FuelFraudBadge · TriSignalHoverDetail · HOSStatusSection · AtRiskDriverCard (F91344–F91347). Prior F91339–43 stamped.

@@ -60,6 +60,9 @@ function failures(candidate) {
   } catch {
     missing.push("safety Required matrix parses");
   }
+  // BANK-F91356 leftover refuse — PerformanceScorecardSection page-scoped text token ratchet
+  if (candidate.performanceSection.includes("text-[11px]")) missing.push("PerformanceScorecardSection.tsx: leftover text-[11px]");
+  if (candidate.performanceSection.includes("#8A92AB")) missing.push("PerformanceScorecardSection.tsx: leftover off-scale muted #8A92AB");
   return missing;
 }
 
@@ -89,8 +92,8 @@ if (process.argv.includes("--selftest")) {
     ["routes", "parsedAggregateQuery.data.operating_company_id", "undefined", "aggregate membership scope"],
     ["pdf", "query.data.operating_company_id", "undefined", "PDF membership scope"],
     ["w8benRoutes", "d.operating_company_id = $2::uuid", "TRUE", "W-8BEN canonical roster predicate"],
-    ["w8benRoutes", 'return reply.code(404).send({ error: "mdata_driver_not_found" })', "return { rows: [] }", "W-8BEN reverse GET parent scope and honest 404"],
-    ["w8benRoutes", "if (!(await driverOnCompanyRoster(client, params.data.id, query.data.operating_company_id))) return null;", "", "W-8BEN reverse GET parent scope and honest 404"],
+    ["w8benRoutes", 'if (rows === null) return reply.code(404).send({ error: "mdata_driver_not_found" });', "if (rows === null) return { rows: [] };", "W-8BEN reverse GET parent scope and honest 404"],
+    ["w8benRoutes", "if (!(await driverOnCompanyRoster(client, params.data.id, query.data.operating_company_id))) return null;", "", "W-8BEN reverse GET parent scope and honest 404", true],
     ["w8benRoutes", "if (!(await driverOnCompanyRoster(client, params.data.id, query.data.operating_company_id))) return null;", "", "W-8BEN forward create parent scope and honest 404", true],
     ["page", "driver.first_name", "driver.id.slice", "real driver identity"],
     ["page", "dqMissingCount", "removedDqCount", "derived safety counts", true],
@@ -102,6 +105,14 @@ if (process.argv.includes("--selftest")) {
     const mutant = { ...sources, [key]: replaceEvery ? sources[key].replaceAll(needle, replacement) : sources[key].replace(needle, replacement) };
     if (mutant[key] === sources[key]) throw new Error(`fixture drifted: ${expected}`);
     if (!failures(mutant).includes(expected)) throw new Error(`mutation escaped: ${expected}`);
+  }
+  // BANK-F91356 leftover plant
+  const leftoverPlant = {
+    ...sources,
+    performanceSection: sources.performanceSection + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n',
+  };
+  if (!failures(leftoverPlant).some((m) => m.includes("leftover text-[11px]"))) {
+    throw new Error("PerformanceScorecardSection leftover plant escaped");
   }
   console.log(`verify-safety-driver-profile-connectivity SELFTEST PASS — ${mutations.length}/${mutations.length} planted defects caught`);
   process.exit(0);

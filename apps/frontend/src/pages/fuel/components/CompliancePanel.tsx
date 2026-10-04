@@ -16,7 +16,7 @@ export function CompliancePanel({ sourceAvailable, sentToDriverAt, fleetPct, fle
       <Row label="Fleet recommendations tracked" value={!sourceAvailable || fleetTotalRecommendations === null ? "Not available" : `${fleetTotalRecommendations}`} />
       <Row label="Last week non-compliance count" value="Not available" />
       <Row label="Top non-compliance reason" value="Not available" />
-      <div className="mt-2 rounded-sm bg-slate-100 px-2 py-1 text-[11px] text-slate-700">Relay match confidence: high when station+timestamp+unit align.</div>
+      <div className="mt-2 rounded-sm bg-slate-100 px-2 py-1 text-xs text-slate-700">Relay match confidence: high when station+timestamp+unit align.</div>
     </div>
   );
 }

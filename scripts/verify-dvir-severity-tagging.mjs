@@ -117,6 +117,9 @@ contains("apps/frontend/src/components/maintenance/DvirSeverityBadge.tsx", badge
   { pattern: /export function DvirSeverityBadge/, label: "badge export" },
   { pattern: /observation/, label: "observation level" },
 ]);
+// BANK-F91360 leftover refuse — DvirSeverityBadge page-scoped text token ratchet
+if (badge.includes("text-[11px]")) failures.push("DvirSeverityBadge.tsx: leftover text-[11px]");
+if (badge.includes("#8A92AB")) failures.push("DvirSeverityBadge.tsx: leftover off-scale muted #8A92AB");
 
 const manifest = read("apps/frontend/src/routes/manifest.tsx");
 contains("apps/frontend/src/routes/manifest.tsx", manifest, [
@@ -166,6 +169,20 @@ if (process.argv.includes("--selftest")) {
   const overrideMutant = `${severityService.slice(0, overrideCompanyIndex)}PLANTED_SCOPE${severityService.slice(overrideCompanyIndex + overrideCompany.length)}`;
   if (overrideAuditProblems(overrideMutant).length === 0) {
     console.error("verify:dvir-severity-tagging SELFTEST FAILED — safety.dvir.severity_override");
+    process.exit(1);
+  }
+  // BANK-F91360 leftover plant
+  const leftoverPlant = badge + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!(leftoverPlant.includes("text-[11px]") && leftoverPlant.includes("#8A92AB"))) {
+    console.error("verify:dvir-severity-tagging SELFTEST FAILED — DvirSeverityBadge leftover plant escaped");
+    process.exit(1);
+  }
+  // Refuse must trip on planted source when re-run through the same predicates
+  const plantFails = [];
+  if (leftoverPlant.includes("text-[11px]")) plantFails.push("leftover text-[11px]");
+  if (leftoverPlant.includes("#8A92AB")) plantFails.push("leftover off-scale muted");
+  if (!plantFails.includes("leftover text-[11px]")) {
+    console.error("verify:dvir-severity-tagging SELFTEST FAILED — leftover refuse inert");
     process.exit(1);
   }
   console.log(`verify:dvir-severity-tagging SELFTEST PASS — ${routingAuditEvents.length + 1}/${routingAuditEvents.length + 1} tenantless audit mutations red`);

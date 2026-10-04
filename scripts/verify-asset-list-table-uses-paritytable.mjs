@@ -14,6 +14,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-asset-list-table-uses-paritytable";
 const TABLE = "apps/frontend/src/components/assets/AssetListTable.tsx";
 const PAGE = "apps/frontend/src/pages/assets/AssetsWorkspacePage.tsx";
+const SUMMARY = "apps/frontend/src/components/assets/AssetSummaryCards.tsx";
 
 const REQUIRED_LABELS = [
   "Unit",
@@ -115,6 +116,16 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAILED — bad fixture not caught`);
     process.exit(1);
   }
+  // BANK-F91364 leftover plant — AssetSummaryCards page-scoped text token ratchet
+  const summaryPlant =
+    fs.readFileSync(path.join(ROOT, SUMMARY), "utf8") + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  const leftoverFails = [];
+  if (summaryPlant.includes("text-[11px]")) leftoverFails.push("AssetSummaryCards.tsx: leftover text-[11px]");
+  if (summaryPlant.includes("#8A92AB")) leftoverFails.push("AssetSummaryCards.tsx: leftover off-scale muted #8A92AB");
+  if (!leftoverFails.includes("AssetSummaryCards.tsx: leftover text-[11px]")) {
+    console.error(`${LABEL} SELFTEST FAILED — AssetSummaryCards leftover plant escaped`);
+    process.exit(1);
+  }
   console.log(`${LABEL}: selftest PASS`);
 }
 
@@ -126,6 +137,10 @@ if (process.argv.includes("--selftest")) {
 const tableSrc = fs.readFileSync(path.join(ROOT, TABLE), "utf8");
 const pageSrc = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
 const errors = assertMigrated(tableSrc, pageSrc);
+// BANK-F91364 leftover refuse — AssetSummaryCards page-scoped text token ratchet
+const summarySrc = fs.readFileSync(path.join(ROOT, SUMMARY), "utf8");
+if (summarySrc.includes("text-[11px]")) errors.push("AssetSummaryCards.tsx: leftover text-[11px]");
+if (summarySrc.includes("#8A92AB")) errors.push("AssetSummaryCards.tsx: leftover off-scale muted #8A92AB");
 if (errors.length) {
   console.error(`${LABEL}: FAIL`);
   for (const e of errors) console.error(`  - ${e}`);

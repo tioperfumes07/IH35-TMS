@@ -181,7 +181,7 @@ export function DriverProfileStopsMilesSection({
         {!q.isLoading && !q.isError ? (
           <div className="rounded-sm bg-gray-50 px-2 py-1 text-center">
             <p className="text-page-title font-bold text-slate-900">{readMiles.toFixed(1)}</p>
-            <p className="text-[11px] uppercase text-gray-500">Read miles</p>
+            <p className="text-xs uppercase text-gray-500">Read miles</p>
           </div>
         ) : null}
       </div>

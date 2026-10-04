@@ -40,6 +40,10 @@ function verify(read = (file) => fs.readFileSync(path.join(root, file), "utf8"))
   for (const token of ['id="driver-dqf-checklist"', "scrollIntoView", "focus={dqfFocus}", 'focus === "expiry_alerts"', 'item.expiry_pill === "red"', 'item.expiry_pill === "amber"', "rows={visibleItems}", "onClearFocus"]) {
     if (!source.includes(token) && !target.includes(token)) throw new Error(`required action token missing: ${token}`);
   }
+  // BANK-F91363 leftover refuse — DriverDqfComplianceChip page-scoped text token ratchet
+  const chip = read("apps/frontend/src/pages/drivers/components/DriverDqfComplianceChip.tsx");
+  if (chip.includes("text-[11px]")) throw new Error("DriverDqfComplianceChip.tsx: leftover text-[11px]");
+  if (chip.includes("#8A92AB")) throw new Error("DriverDqfComplianceChip.tsx: leftover off-scale muted #8A92AB");
   return registry.actions.length;
 }
 
@@ -58,6 +62,8 @@ if (process.argv.includes("--selftest")) {
     ["missing anchor", "apps/frontend/src/pages/drivers/DriverProfilePage.tsx", (text) => text.replace('id="driver-dqf-checklist"', 'id="driver-dqf-checklist-PLANTED"')],
     ["missing filtered rows", "apps/frontend/src/pages/drivers/components/DriverDqfPanel.tsx", (text) => text.replace("rows={visibleItems}", "rows={itemsQ.data ?? []}")],
     ["missing red alert", "apps/frontend/src/pages/drivers/components/DriverDqfPanel.tsx", (text) => text.replace('item.expiry_pill === "red"', "false")],
+    // BANK-F91363 leftover plant
+    ["leftover text-[11px]", "apps/frontend/src/pages/drivers/components/DriverDqfComplianceChip.tsx", (text) => text + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n'],
   ];
   let detected = 0;
   for (const [, file, mutate] of cases) {

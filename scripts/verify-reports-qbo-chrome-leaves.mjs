@@ -143,6 +143,11 @@ export function audit(opts = {}) {
     if (!hasRealReportChrome(src)) failures.push(`${file}: missing the real PageHeader + ReportsSubNav chrome signature`);
   }
 
+  // BANK-F91362 leftover refuse — DeadheadReportPage page-scoped text token ratchet
+  const deadheadSrc = opts.reportPageSources?.["DeadheadReportPage.tsx"] ?? read(`${REPORTS_DIR}/DeadheadReportPage.tsx`);
+  if (deadheadSrc.includes("text-[11px]")) failures.push("DeadheadReportPage.tsx: leftover text-[11px]");
+  if (deadheadSrc.includes("#8A92AB")) failures.push("DeadheadReportPage.tsx: leftover off-scale muted #8A92AB");
+
   return { failures };
 }
 
@@ -189,6 +194,15 @@ function selftest() {
   const mut6 = audit({ reportPageSources: { "ProfitLossPage.tsx": "// poison — no chrome\n" } });
   if (!mut6.failures.some((f) => /ProfitLossPage\.tsx: missing/.test(f))) {
     console.error(`${LABEL} SELFTEST FAIL — report page poison mutation not caught`);
+    process.exit(1);
+  }
+
+  // BANK-F91362 leftover plant — DeadheadReportPage page-scoped text token ratchet
+  const deadheadPlant =
+    read(`${REPORTS_DIR}/DeadheadReportPage.tsx`) + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  const mutLeftover = audit({ reportPageSources: { "DeadheadReportPage.tsx": deadheadPlant } });
+  if (!mutLeftover.failures.some((f) => /DeadheadReportPage\.tsx: leftover text-\[11px\]/.test(f))) {
+    console.error(`${LABEL} SELFTEST FAIL — DeadheadReportPage leftover plant escaped`);
     process.exit(1);
   }
 
