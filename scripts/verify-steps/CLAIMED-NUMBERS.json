@@ -16177,5 +16177,15 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-append-only-purge-arm-is-listed-only"
+  },
+  "18105": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-settlement-gl-bills-link-their-entries"
+  },
+  "18109": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-reversal-links-both-directions"
   }
 }
