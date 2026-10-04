@@ -116,6 +116,10 @@ export function run(overrides = {}) {
   if (!/path="\/finance\/calculator"/.test(routes)) failures.push("routes: missing /finance/calculator route");
   if (!/path="\/finance\/amortization"/.test(routes)) failures.push("routes: missing /finance/amortization route");
 
+  // BANK-F91337 leftover refuse — FinanceHubPage page-scoped text token ratchet
+  if (hub.includes("text-[11px]")) failures.push("FinanceHubPage.tsx: leftover text-[11px]");
+  if (hub.includes("#8A92AB")) failures.push("FinanceHubPage.tsx: leftover off-scale muted #8A92AB");
+
   return failures;
 }
 
@@ -157,6 +161,13 @@ function selftest() {
   const plantedHonest = run({ ...real, projections: honestlyBuilt });
   if (plantedHonest.some((f) => f.includes("FinanceProjectionsPage"))) {
     console.error(`[verify-finance-hub-surfaces-s01-s08] SELFTEST FAIL: a genuinely-built, honestly flag-gated surface (placeholder language removed, real flag/message/API calls intact) was wrongly flagged: ${plantedHonest.join("; ")}`);
+    process.exit(1);
+  }
+
+  // BANK-F91337 leftover plant — FinanceHubPage page-scoped text token ratchet
+  const leftoverPlant = run({ ...real, hub: real.hub + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n' });
+  if (!leftoverPlant.some((f) => f.includes("leftover text-[11px]"))) {
+    console.error("[verify-finance-hub-surfaces-s01-s08] SELFTEST FAIL — leftover plant escaped");
     process.exit(1);
   }
 
