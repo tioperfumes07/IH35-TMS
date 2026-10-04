@@ -204,7 +204,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
     [users],
   );
 
-  const labelCls = "block text-[11px] font-semibold uppercase tracking-wide text-gray-600";
+  const labelCls = "block text-xs font-semibold uppercase tracking-wide text-gray-600";
   const inputCls = "mt-1 w-full rounded-sm border border-gray-300 bg-white px-2 py-1.5 text-xs text-gray-800 focus:border-slate-300 focus:outline-hidden";
 
   return (
@@ -231,7 +231,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
         </div>
 
         {presetLink ? (
-          <p className="text-[11px] text-slate-600">
+          <p className="text-xs text-slate-600">
             Linked to <span className="font-semibold">{presetLink.label ?? `${presetLink.target_type}`}</span> — appears in its Tasks tab.
           </p>
         ) : null}
@@ -408,7 +408,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
           />
         </div>
 
-        <p className="text-[11px] text-gray-500">New tasks start with status <span className="font-semibold">Pending</span>; change it on the board after creating.</p>
+        <p className="text-xs text-gray-500">New tasks start with status <span className="font-semibold">Pending</span>; change it on the board after creating.</p>
 
         <div className="flex items-center justify-end gap-2 pt-1">
           <button type="button" className="rounded-sm border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50" onClick={onClose}>
