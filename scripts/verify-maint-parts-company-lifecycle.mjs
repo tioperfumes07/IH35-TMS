@@ -38,6 +38,9 @@ function inspect(value) {
   if ((value.match(/input\.generation !== actionGenerationRef\.current/g) ?? []).length < 4) failures.push("four stale successes rejected");
   if ((value.match(/input\.generation === actionGenerationRef\.current/g) ?? []).length < 4) failures.push("four stale errors rejected");
   if ((value.match(/await refresh\(input\.companyId\)/g) ?? []).length < 4) failures.push("four submitted-company refreshes");
+  // BANK-F91369 leftover refuse — PartsMasterDataPage page-scoped text token ratchet
+  if (value.includes("text-[11px]")) failures.push("PartsMasterDataPage.tsx: leftover text-[11px]");
+  if (value.includes("#8A92AB")) failures.push("PartsMasterDataPage.tsx: leftover off-scale muted #8A92AB");
   return failures;
 }
 
@@ -69,7 +72,12 @@ if (process.argv.includes("--selftest")) {
     const mutant = `${backendSource.slice(0, companyIndex)}PLANTED_SCOPE:${backendSource.slice(companyIndex + "operating_company_id:".length)}`;
     if (inspectBackend(mutant).length === 0) throw new Error(`selftest missed ${event} tenantless audit`);
   }
-  const count = mutations.length + auditEvents.length;
+  // BANK-F91369 leftover plant — PartsMasterDataPage page-scoped text token ratchet
+  const leftover = source + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!inspect(leftover).some((e) => String(e).includes("leftover text-[11px]"))) {
+    throw new Error("selftest leftover plant escaped");
+  }
+  const count = mutations.length + auditEvents.length + 1;
   console.log(`verify-maint-parts-company-lifecycle --selftest PASS (${count}/${count} planted defects red)`);
   process.exit(0);
 }

@@ -156,7 +156,7 @@ export function NotificationPreferencesPage() {
         key: "event",
         label: "Event",
         sortable: true,
-        render: (row) => <span className="font-mono text-[11px] text-slate-800">{row.event}</span>,
+        render: (row) => <span className="font-mono text-xs text-slate-800">{row.event}</span>,
       },
       checkboxCol("email"),
       checkboxCol("sms"),

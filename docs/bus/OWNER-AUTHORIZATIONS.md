@@ -7100,3 +7100,24 @@ proof_query: SELECT ft.trailer_id, el.trailer_id FROM fuel.fuel_transactions ft 
   -> fc534b3d / fc534b3d.
 THIS AUTHORIZATION DOES NOT COVER: the T156 fills of 2026-09-08 and 2026-09-10 (two or three candidate trailers each — the
   owner picks); the equipment record of trailer 10219 or 10224 (owned by IH 35 Trucking LLC — frozen); any other company.
+
+## AUTH-209
+issued_at: 2026-10-04T01:50:00Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). Duplicate fuel receipt 1848853 ONLY: accounting.expenses
+  98ad3749-fb8f-4a40-b5b6-1197f6bc0bbf (13543-9) and fuel.fuel_transactions 73caf437-6e58-4ee9-b6dc-4538f50c34cf (load 13543),
+  through the governed void executors (expense -> postVoidReversal + stampDocumentVoided; fuel_transaction -> stampDocumentVoided).
+  Owner, CC-2 chat 2026-10-04: "YES I AUTHOROIZE YOU" (void the duplicates) and, naming the load, "IT BELONGS TO THE SECOND
+  LOAD, 547". The 13547 copy (expense 13547 / fuel 737e377b) is kept and asserted live. Prod dry run (rolled back): expense
+  voided with a reversing entry, fuel voided, 1 live copy of 1848853 left.
+action: DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-04-cc2-void-duplicate-fuel-1848853.mts --apply --auth AUTH-209
+  Dry-run first (default, no --apply).
+expires_at: 2026-10-04T21:50:00Z
+status: CONSUMED
+consumed_at: 2026-10-04T01:52:56Z
+consumed_by: CC-2
+row_counts: accounting.expenses 98ad3749 (13543-9) voided by executeVoidCancel('expense') with reversing entry e9610099;
+  fuel.fuel_transactions 73caf437 voided by executeVoidCancel('fuel_transaction'); 0 deletes. Keep copy 13547 / 737e377b
+  still posted.
+proof_query: postings for source 98ad3749 + JE e9610099 net 0 on every account; fuel.fuel_transactions
+  transaction_reference '1848853' AND voided_at IS NULL -> 1.
+THIS AUTHORIZATION DOES NOT COVER: receipt 99530579 (copies six days apart — receipts first); any other company or document.

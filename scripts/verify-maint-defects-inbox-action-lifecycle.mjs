@@ -18,6 +18,9 @@ function inspect(value) {
     [/runTriage\(row\.id, "assign"\)[\s\S]*runTriage\(row\.id, "escalate"\)[\s\S]*runTriage\(row\.id, "convert_to_wo"\)/, "all mounted actions must use the guarded submitter"],
   ];
   for (const [pattern, message] of checks) if (!pattern.test(value)) failures.push(message);
+  // BANK-F91368 leftover refuse — DefectsInboxPage page-scoped text token ratchet
+  if (value.includes("text-[11px]")) failures.push("DefectsInboxPage.tsx: leftover text-[11px]");
+  if (value.includes("#8A92AB")) failures.push("DefectsInboxPage.tsx: leftover off-scale muted #8A92AB");
   return failures;
 }
 
@@ -54,7 +57,12 @@ if (process.argv.includes("--selftest")) {
   if (inspectBackend(backendSource.replace(companyToken, "PLANTED_SCOPE: body.data.operating_company_id")).length === 0) {
     throw new Error("selftest missed tenantless triage audits");
   }
-  console.log(`verify-maint-defects-inbox-action-lifecycle --selftest PASS (${mutations.length + 1}/${mutations.length + 1})`);
+  // BANK-F91368 leftover plant — DefectsInboxPage page-scoped text token ratchet
+  const leftover = source + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!inspect(leftover).some((e) => e.includes("leftover text-[11px]"))) {
+    throw new Error("selftest leftover plant escaped");
+  }
+  console.log(`verify-maint-defects-inbox-action-lifecycle --selftest PASS (${mutations.length + 2}/${mutations.length + 2})`);
   process.exit(0);
 }
 

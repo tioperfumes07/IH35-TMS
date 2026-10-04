@@ -152,7 +152,7 @@ export function PendingSettlementDeductionsPanel() {
           </Button>
         </div>
         <div className="relative mb-2 flex flex-wrap items-end gap-2 px-2" data-testid="settlement-deductions-filters">
-          <label className="text-[11px] text-slate-600">
+          <label className="text-xs text-slate-600">
             Driver
             <EntityPicker
               kind="driver"
