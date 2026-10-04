@@ -175,8 +175,8 @@ export function DriverLoadStatusesPage() {
                       {status.is_active ? "Active" : "Inactive"}
                     </span>
                   </div>
-                  <div className="mt-0.5 text-[11px] text-gray-600">Sort {status.sort_order}</div>
-                  {status.description ? <div className="mt-0.5 text-[11px] text-gray-600">{status.description}</div> : null}
+                  <div className="mt-0.5 text-xs text-gray-600">Sort {status.sort_order}</div>
+                  {status.description ? <div className="mt-0.5 text-xs text-gray-600">{status.description}</div> : null}
                 </div>
                 {canManage ? (
                   <Button

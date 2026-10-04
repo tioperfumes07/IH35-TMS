@@ -82,6 +82,9 @@ export function assertDriverLoadStatusesPerEntity(sources) {
     "updateDriverLoadStatus(companyId, id, payload)",
     "enabled: Boolean(companyId)",
   ]) if (!page.includes(token)) errs.push(`Lists page must bind selected company: ${token}`);
+  // BANK-F91327 leftover refuse — DriverLoadStatusesPage.tsx page-scoped text token ratchet
+  if (page.includes("text-[11px]")) errs.push("DriverLoadStatusesPage.tsx: leftover text-[11px]");
+  if (page.includes("#8A92AB")) errs.push("DriverLoadStatusesPage.tsx: leftover off-scale muted #8A92AB");
 
   return errs;
 }
@@ -110,12 +113,19 @@ if (SELFTEST) {
   const liveProblems = assertDriverLoadStatusesPerEntity(live);
   if (liveProblems.length) failures.push(`live FAIL: ${liveProblems.join(" | ")}`);
 
+  // BANK-F91327 leftover plant — DriverLoadStatusesPage page-scoped text token ratchet
+  expectCaught(
+    "leftover-text-11px",
+    { ...live, [PAGE]: live[PAGE] + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n' },
+    "leftover text-[11px]",
+  );
+
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:`);
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 8 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 9 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
