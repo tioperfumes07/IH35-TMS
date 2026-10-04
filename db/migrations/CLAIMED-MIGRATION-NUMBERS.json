@@ -2046,6 +2046,11 @@
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-04",
       "purpose": "PICKUP of Lead branch claude/r391-one-posting-line-writer (ROUND 391.2): reefer diesel gets its own account 5015 Reefer Diesel (Off-Highway) and role reefer_fuel_expense -- authored by the Lead, pushed by CC-3 (Lead worktree cannot push)"
+    },
+    "202615400700": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-04",
+      "purpose": "ROUND 391.2 (CC-2): reefer fuel_type from the FEED's product code — the USMCA fuel.fuel_transactions rows that exactly match a Relay product-033 'Reefer' line (same unit, +/-1 day, gallons to 3 decimals, one-to-one) become fuel_type 'reefer_diesel' (out of IFTA); nothing inferred, nothing matched by amount."
     }
   },
   "202613590001": {
