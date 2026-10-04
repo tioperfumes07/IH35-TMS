@@ -14972,5 +14972,295 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-internal-labor-company-scope-class"
+  },
+  "17141": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-internal-labor-create-identity"
+  },
+  "17145": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-inv1-no-hard-delete-load-stops"
+  },
+  "17149": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-is-posting-flag-void"
+  },
+  "17153": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-je-void-reverses-not-voids"
+  },
+  "17157": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-lane-profitability-cache-rls"
+  },
+  "17161": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-lawsuit-policy-customer-human-labels"
+  },
+  "17165": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-legal-contract-batch-download-silent-noop"
+  },
+  "17169": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-legal-entity-scope"
+  },
+  "17173": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-legal-tenant-scope"
+  },
+  "17177": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-lists-drivers-domain-no-duplicate-catalog-tiles"
+  },
+  "17181": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-lists-f6704-catalog-registry-equipment-cross-opco"
+  },
+  "17185": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-live-db-schema-script-wiring"
+  },
+  "17189": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-live-domain-guards-are-diff-scoped"
+  },
+  "17193": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-load-cancellation-reasons-create-description-null-400"
+  },
+  "17197": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-load-delivery-dates-separated"
+  },
+  "17201": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-load-drawer-geofence-read-recovery"
+  },
+  "17205": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-load-drawer-stops-read-recovery"
+  },
+  "17209": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-load-geofence-timeline-label-parser"
+  },
+  "17213": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-load-import-dry-run-default"
+  },
+  "17217": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-load-linkage-renders-both-directions"
+  },
+  "17221": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-load-profitability-card-wired"
+  },
+  "17225": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-load-progress-no-db-writes"
+  },
+  "17229": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-load-reassign-selected-driver-label"
+  },
+  "17233": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-load-safety-reverse-includes-events"
+  },
+  "17237": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-load-template-preserves-sample-data"
+  },
+  "17241": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-load-test-baseline"
+  },
+  "17245": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-load-transitions-from-state-machine"
+  },
+  "17249": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-loads-bulk-transition-row-lock"
+  },
+  "17253": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-loads-mileage-columns-numeric-precision"
+  },
+  "17257": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maint-convert-issue-wo-company-lifecycle"
+  },
+  "17261": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maint-convert-issue-wo-draft-lifecycle"
+  },
+  "17265": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maint-driver-reports-action-lifecycle"
+  },
+  "17269": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maint-drivers-company-audits"
+  },
+  "17273": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maint-inspections-company-photo-lifecycle"
+  },
+  "17277": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maint-labor-vendor-company-link"
+  },
+  "17281": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maint-pm-auto-engine-action-lifecycle"
+  },
+  "17285": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maint-pm-schedule-company-lifecycle"
+  },
+  "17289": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maint-road-service-company-audits"
+  },
+  "17293": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maint-tire-work-order-company-link"
+  },
+  "17297": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maint-vehicles-company-audits"
+  },
+  "17301": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maint-wo-complete-cas"
+  },
+  "17305": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maint-wo-edit-company-result"
+  },
+  "17309": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maint-wo-oos-estimate-read-honesty"
+  },
+  "17313": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maint-wo-resolved-vendor-label"
+  },
+  "17317": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maint-wo-status-close-parity"
+  },
+  "17321": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maint-wo-terminal-line-add-lock"
+  },
+  "17325": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maint-wo-transition-cas"
+  },
+  "17329": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maint-wo-vendor-linkage"
+  },
+  "17333": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maint-work-order-status-company-scope"
+  },
+  "17337": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maintenance-dtc-auto-wo-exact-pager"
+  },
+  "17341": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maintenance-kpi-pm-compliance-exact-range"
+  },
+  "17345": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maintenance-labor-codes-complete-feed"
+  },
+  "17349": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maintenance-pm-countdown-failure-exclusion"
+  },
+  "17353": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maintenance-rm-status-company-lifecycle"
+  },
+  "17357": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maintenance-tire-program-company-asset-lifecycle"
+  },
+  "17361": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maintenance-vendor-history-exact-range-vertical"
+  },
+  "17365": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maintenance-wo-lines-status-history-rls"
+  },
+  "17369": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maintenance-wo-parts-links-exact-range"
   }
 }
