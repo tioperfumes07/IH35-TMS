@@ -29,9 +29,14 @@ type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
 
-async function relationExists(client: DbClient, relation: string): Promise<boolean> {
-  const res = await client.query<{ ok: boolean }>(`SELECT to_regclass($1) IS NOT NULL AS ok`, [relation]);
-  return Boolean(res.rows[0]?.ok);
+/**
+ * Fail closed (CLS-LATCH-TABLE-ABSENT-SILENT-DEGRADE): every table this file reads exists in production (measured
+ * 2026-10-04). If one is ever missing, that is a broken schema — throw `<table>_unavailable` instead of answering
+ * with an empty list or a silent no-op that would read as "nothing to show".
+ */
+async function requireRelation(client: DbClient, relation: string): Promise<void> {
+  const res = await client.query(`SELECT to_regclass($1) IS NOT NULL AS ok`, [relation]);
+  if (!res.rows[0]?.ok) throw new Error(`${relation.replace(".", "_")}_unavailable`);
 }
 
 type ProjectionRow = {
@@ -189,10 +194,11 @@ export async function runPredictiveAlertsWorkerTick(
   let autoClosed = 0;
 
   await withLuciaBypassImpl(async (client) => {
-    if (!(await relationExists(client, "maintenance.predictive_alerts"))) return;
-    const brakeExists = await relationExists(client, "maintenance.brake_projections");
-    const tireExists = await relationExists(client, "maintenance.tire_projections");
-    if (!brakeExists && !tireExists) return;
+    await requireRelation(client, "maintenance.predictive_alerts");
+    await requireRelation(client, "maintenance.brake_projections");
+    await requireRelation(client, "maintenance.tire_projections");
+    const brakeExists = true;
+    const tireExists = true;
 
     const companies = await client.query<{ id: string }>(
       `SELECT id::text FROM org.companies WHERE is_active = true AND deactivated_at IS NULL`

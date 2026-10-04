@@ -212,7 +212,7 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/mdata/customers/:customer_id/quality-events` | `apps/backend/src/mdata/customer-quality-events.routes.ts:238` | — | — | — |
 | nested | `/api/v1/mdata/customers/:id/fmcsa-link` | `apps/backend/src/catalogs/fmcsa.routes.ts:225` | — | — | — |
 | nested | `/api/v1/mdata/customers/:id/verify-fmcsa` | `apps/backend/src/mdata/customers.routes.ts:1452` | — | — | — |
-| create | `/api/v1/mdata/driver-tags` | `apps/backend/src/mdata/driver-tags.routes.ts:102` | — | — | — |
+| create | `/api/v1/mdata/driver-tags` | `apps/backend/src/mdata/driver-tags.routes.ts:107` | — | — | — |
 | create | `/api/v1/mdata/driver-teams` | `apps/backend/src/mdata/driver-teams.routes.ts:260` | — | — | — |
 | nested | `/api/v1/mdata/driver-teams/:id/replace-driver` | `apps/backend/src/mdata/driver-teams.routes.ts:461` | — | — | — |
 | create | `/api/v1/mdata/drivers` | `apps/backend/src/mdata/drivers.routes.ts:1530` | — | — | — |
@@ -228,7 +228,7 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/mdata/drivers/:id/training` | `apps/backend/src/mdata/driver-training.routes.ts:79` | — | — | — |
 | nested | `/api/v1/mdata/drivers/:id/w8ben` | `apps/backend/src/mdata/driver-w8ben.routes.ts:215` | — | — | — |
 | create | `/api/v1/mdata/drivers/bulk-invite` | `apps/backend/src/mdata/drivers.routes.ts:1802` | — | — | — |
-| create | `/api/v1/mdata/drivers/bulk-tag` | `apps/backend/src/mdata/driver-tags.routes.ts:174` | — | — | — |
+| create | `/api/v1/mdata/drivers/bulk-tag` | `apps/backend/src/mdata/driver-tags.routes.ts:179` | — | — | — |
 | create | `/api/v1/mdata/drivers/check-returning` | `apps/backend/src/mdata/driver-returning-detection.routes.ts:155` | — | — | — |
 | create | `/api/v1/mdata/equipment` | `apps/backend/src/mdata/equipment.routes.ts:252` | — | — | — |
 | create | `/api/v1/mdata/equipment-log` | `apps/backend/src/mdata/equipment-log.routes.ts:146` | — | — | — |
@@ -328,7 +328,7 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/maintenance/pm-schedule/:id/generate-wo` | `apps/backend/src/maintenance/pm-schedule.routes.ts:173` | — | — | — |
 | nested | `/api/v1/maintenance/pre-flight-dvir/:defectId/route` | `apps/backend/src/maintenance/pre-flight-dvir.routes.ts:163` | — | — | — |
 | nested | `/api/v1/maintenance/pre-flight/defects/:id/route` | `apps/backend/src/maintenance/pre-flight/routes.ts:171` | — | — | — |
-| nested | `/api/v1/maintenance/predictive-alerts/:id/create-work-order` | `apps/backend/src/maintenance/predictive-alerts.routes.ts:121` | — | — | — |
+| nested | `/api/v1/maintenance/predictive-alerts/:id/create-work-order` | `apps/backend/src/maintenance/predictive-alerts.routes.ts:126` | — | — | — |
 | create | `/api/v1/maintenance/reefer-hours/ingest-samsara` | `apps/backend/src/maintenance/reefer-hours.routes.ts:513` | — | — | — |
 | create | `/api/v1/maintenance/reefer-hours/log` | `apps/backend/src/maintenance/reefer-hours.routes.ts:413` | — | — | — |
 | create | `/api/v1/maintenance/service-history` | `apps/backend/src/maintenance/service-history-backfill.routes.ts:72` | — | — | — |

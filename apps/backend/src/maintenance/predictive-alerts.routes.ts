@@ -3,7 +3,7 @@
  * maintenance.predictive_alerts is the alert layer over maintenance.brake_projections /
  * maintenance.tire_projections, populated nightly by apps/backend/src/jobs/predictive-alerts-worker.ts.
  *
- * relationExists-guarded throughout — safe to deploy ahead of the migration landing on any given
+ * requireRelation-guarded throughout (fails closed with <table>_unavailable) — was safe to deploy ahead of the migration on any given
  * environment (matches this file's siblings, e.g. pm-alerts.routes.ts).
  */
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
@@ -48,9 +48,14 @@ async function withCompany<T>(userId: string, companyId: string, fn: (client: an
   });
 }
 
-async function relationExists(client: any, relation: string): Promise<boolean> {
+/**
+ * Fail closed (CLS-LATCH-TABLE-ABSENT-SILENT-DEGRADE): every table this file reads exists in production (measured
+ * 2026-10-04). If one is ever missing, that is a broken schema — throw `<table>_unavailable` instead of answering
+ * with an empty list or a silent no-op that would read as "nothing to show".
+ */
+async function requireRelation(client: any, relation: string): Promise<void> {
   const res = await client.query(`SELECT to_regclass($1) IS NOT NULL AS ok`, [relation]);
-  return Boolean(res.rows[0]?.ok);
+  if (!res.rows[0]?.ok) throw new Error(`${relation.replace(".", "_")}_unavailable`);
 }
 
 export async function registerMaintenancePredictiveAlertsRoutes(app: FastifyInstance) {
@@ -64,7 +69,7 @@ export async function registerMaintenancePredictiveAlertsRoutes(app: FastifyInst
       if (!query.success) return validationError(reply, query.error);
 
       const result = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
-        if (!(await relationExists(client, "maintenance.predictive_alerts"))) return { alerts: [], total_count: 0 };
+        await requireRelation(client, "maintenance.predictive_alerts");
 
         const values: unknown[] = [query.data.operating_company_id];
         const filters = [`a.operating_company_id = $1::uuid`, `a.voided_at IS NULL`];
@@ -130,7 +135,7 @@ export async function registerMaintenancePredictiveAlertsRoutes(app: FastifyInst
       if (!body.success) return validationError(reply, body.error);
 
       const result = await withCompany(user.uuid, body.data.operating_company_id, async (client) => {
-        if (!(await relationExists(client, "maintenance.predictive_alerts"))) return { notFound: true as const };
+        await requireRelation(client, "maintenance.predictive_alerts");
 
         const lockedRes = await client.query(
           `
@@ -219,7 +224,7 @@ export async function registerMaintenancePredictiveAlertsRoutes(app: FastifyInst
       if (!body.success) return validationError(reply, body.error);
 
       const updated = await withCompany(user.uuid, body.data.operating_company_id, async (client) => {
-        if (!(await relationExists(client, "maintenance.predictive_alerts"))) return null;
+        await requireRelation(client, "maintenance.predictive_alerts");
         const res = await client.query(
           `
             UPDATE maintenance.predictive_alerts

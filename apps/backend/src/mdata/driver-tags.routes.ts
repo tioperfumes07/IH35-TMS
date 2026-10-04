@@ -3,7 +3,7 @@
  * Canonical company-scoped driver tags: catalogs.driver_tags (the tag catalog) +
  * mdata.driver_tag_memberships (append-only membership; removal archives, never deletes).
  *
- * relationExists-guarded throughout — safe to deploy ahead of the migration landing on any given
+ * requireRelation-guarded throughout (fails closed with <table>_unavailable) — was safe to deploy ahead of the migration on any given
  * environment.
  */
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
@@ -55,9 +55,14 @@ function validationError(reply: FastifyReply, err: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: err.flatten() });
 }
 
-async function relationExists(client: any, relation: string): Promise<boolean> {
+/**
+ * Fail closed (CLS-LATCH-TABLE-ABSENT-SILENT-DEGRADE): every table this file reads exists in production (measured
+ * 2026-10-04). If one is ever missing, that is a broken schema — throw `<table>_unavailable` instead of answering
+ * with an empty list or a silent no-op that would read as "nothing to show".
+ */
+async function requireRelation(client: any, relation: string): Promise<void> {
   const res = await client.query(`SELECT to_regclass($1) IS NOT NULL AS ok`, [relation]);
-  return Boolean(res.rows[0]?.ok);
+  if (!res.rows[0]?.ok) throw new Error(`${relation.replace(".", "_")}_unavailable`);
 }
 
 async function withCompany<T>(
@@ -83,7 +88,7 @@ export async function registerDriverTagsRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
 
     const result = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
-      if (!(await relationExists(client, "catalogs.driver_tags"))) return { tags: [] };
+      await requireRelation(client, "catalogs.driver_tags");
       const res = await client.query(
         `
           SELECT id::text, code, label, color, is_active, created_at::text
@@ -106,7 +111,7 @@ export async function registerDriverTagsRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     const result = await withCompany(user.uuid, body.data.operating_company_id, async (client) => {
-      if (!(await relationExists(client, "catalogs.driver_tags"))) return { unavailable: true as const };
+      await requireRelation(client, "catalogs.driver_tags");
       const existing = await client.query(
         `SELECT id::text, code, label, color FROM catalogs.driver_tags
           WHERE operating_company_id = $1::uuid AND code = $2 AND archived_at IS NULL`,
@@ -146,7 +151,7 @@ export async function registerDriverTagsRoutes(app: FastifyInstance) {
       if (!query.success) return validationError(reply, query.error);
 
       const result = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
-        if (!(await relationExists(client, "mdata.driver_tag_memberships"))) return { memberships: {} };
+        await requireRelation(client, "mdata.driver_tag_memberships");
         const res = await client.query(
           `
             SELECT m.driver_id::text, t.id::text AS tag_id, t.code, t.label, t.color
@@ -184,7 +189,7 @@ export async function registerDriverTagsRoutes(app: FastifyInstance) {
       }
 
       const result = await withCompany(user.uuid, body.data.operating_company_id, async (client, scopedCompanyId) => {
-        if (!(await relationExists(client, "mdata.driver_tag_memberships"))) return { unavailable: true as const };
+        await requireRelation(client, "mdata.driver_tag_memberships");
 
         // Cross-company IDs fail: both the tag and every driver_id must belong to the scoped
         // company (RLS already enforces this at the row level; this is a fast, explicit
