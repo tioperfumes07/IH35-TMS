@@ -872,9 +872,25 @@ async function main() {
       const after: Record<string, number> = {};
       for (const t of proofTables) after[t] = Number((await client.query<{ n: string }>(`SELECT count(*)::text AS n FROM ${t} WHERE operating_company_id = $1::uuid`, [USMCA])).rows[0]?.n);
       console.log("ZERO-RESET COUNTS (USMCA rows) — table: before -> after");
+      // Two rules, precisely: (a) every TRANSACTION table (the owner's list = ZERO_RESET_ROOTS, plus the ledger) reaches ZERO
+      // for the company; (b) in every OTHER planned table, every row the plan named is gone — such a table is touched only
+      // through rows linked to a deleted record (rehearsal 4: geo.geofence_state_transitions is truck/location telemetry,
+      // preserved like positions and HOS; only its load-linked rows were planned, and "zero for the company" was a false
+      // shortfall).
+      const mustBeZero = new Set([...ZERO_RESET_ROOTS, "accounting.journal_entry_postings", "accounting.journal_entries"]);
       for (const t of proofTables.sort()) {
-        if (before[t] || after[t]) console.log(`  ${after[t] ? "!" : " "} ${t.padEnd(55)} ${String(before[t]).padStart(7)} -> ${after[t]}`);
-        if (after[t]) failures.push(`${t} still has ${after[t]} row(s) (was ${before[t]})`);
+        let leftover = after[t];
+        let rule = "zero";
+        if (!mustBeZero.has(t)) {
+          rule = "planned rows gone";
+          const pk = await pkOf(client, t);
+          const planned = [...(plan.get(t) ?? [])];
+          leftover = pk && planned.length
+            ? Number((await client.query<{ n: string }>(`SELECT count(*)::text AS n FROM ${t} WHERE ${pk}::text = ANY($1::text[])`, [planned])).rows[0]?.n)
+            : 0;
+        }
+        if (before[t] || after[t]) console.log(`  ${leftover ? "!" : " "} ${t.padEnd(55)} ${String(before[t]).padStart(7)} -> ${String(after[t]).padStart(7)}  [${rule}${leftover ? `: ${leftover} left` : ""}]`);
+        if (leftover) failures.push(`${t}: ${leftover} row(s) left under rule "${rule}" (company rows ${before[t]} -> ${after[t]})`);
       }
       // ROUND 359 ADDITION 2 — PROOF that no row escaped its company: every delete-schema table with the column has zero
       // company-less rows left (a company-filtered count cannot see them).
