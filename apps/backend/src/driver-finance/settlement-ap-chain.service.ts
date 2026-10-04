@@ -32,7 +32,7 @@ export class SettlementApChainError extends Error {
 
 export type ApChainLoadBill = { driverBillId: string; loadId: string; loadNumber: string; grossCents: number; spanStart: string | null; spanEnd: string | null };
 export type ApChainPayItem = { kind: "pay" | "reimbursement" | "detention_pay"; cents: number; accountId: string; loadId: string | null; date: string | null; description: string };
-export type ApChainApplication = { kind: "advance" | "deduction" | "chargeback" | "escrow"; cents: number; accountId: string; description: string; advanceId?: string; preferredLoadId?: string | null };
+export type ApChainApplication = { kind: "advance" | "deduction" | "chargeback" | "escrow"; cents: number; accountId: string; description: string; advanceId?: string; preferredLoadId?: string | null; /** ROUND 389.3 R1 — the driver a per-driver receivable credit belongs to (1257 recovery). */ entityDriverId?: string | null };
 
 /** Pure: the load a dated item belongs to — the load whose dates cover the date, else the nearest load by date. */
 export function attributeToLoad(bills: ApChainLoadBill[], date: string | null): ApChainLoadBill | null {
@@ -52,6 +52,23 @@ export function attributeToLoad(bills: ApChainLoadBill[], date: string | null): 
 }
 
 /** Pure: allocate an application across bills' remaining balances — preferred bill first, then oldest-first. */
+/**
+ * ROUND 389.3 R1 — how much of each application (in application order) the load bills can absorb. Applications fill the
+ * bills' total capacity in order; whatever is left over is unapplied — the driver's negative settlement (Dr 1257).
+ */
+export function planApplicationCapacity(appCents: number[], capacity: number): { applied: number[]; unappliedCents: number } {
+  let left = Math.max(0, capacity);
+  let unappliedCents = 0;
+  const applied = appCents.map((c) => {
+    const want = Math.max(0, c);
+    const take = Math.min(want, left);
+    left -= take;
+    unappliedCents += want - take;
+    return take;
+  });
+  return { applied, unappliedCents };
+}
+
 export function allocateApplication(remaining: Map<string, number>, order: string[], cents: number, preferredBillKey?: string | null): Array<{ key: string; cents: number }> {
   const out: Array<{ key: string; cents: number }> = [];
   let left = cents;
@@ -223,13 +240,14 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
   const firstNoncashBp = new Map<string, string>();
   const rank = { advance: 0, deduction: 1, chargeback: 1, escrow: 2 } as const;
   let unappliedCents = 0;
-  for (const app of [...input.applications].sort((a, z) => rank[a.kind] - rank[z.kind])) {
+  const orderedApps = [...input.applications].sort((a, z) => rank[a.kind] - rank[z.kind]);
+  const capacityPlan = planApplicationCapacity(orderedApps.map((a) => a.cents), [...remaining.values()].reduce((n, v) => n + v, 0));
+  for (const [appIndex, app] of orderedApps.entries()) {
     if (app.cents <= 0) continue;
     const preferred = app.preferredLoadId ? posted.find((x) => x.b.loadId === app.preferredLoadId)?.billId ?? null : null;
     // ROUND 389.3 R1 — a negative-net settlement: apply only what the load bills still hold; the excess is what the
     // driver owes the company (Dr 1257 below), never an over-applied A/P bill.
-    const capacity = [...remaining.values()].reduce((n, v) => n + v, 0);
-    const applyCents = Math.min(app.cents, capacity);
+    const applyCents = capacityPlan.applied[appIndex] ?? 0;
     unappliedCents += app.cents - applyCents;
     const parts = applyCents > 0 ? allocateApplication(remaining, order, applyCents, preferred) : [];
     for (const part of parts) {
@@ -249,7 +267,7 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
         );
       }
     }
-    appPostings.push({ account_id: app.accountId, debit_or_credit: "credit", amount_cents: app.cents, description: `${input.label} — ${app.description}` });
+    appPostings.push({ account_id: app.accountId, debit_or_credit: "credit", amount_cents: app.cents, description: `${input.label} — ${app.description}`, ...(app.entityDriverId ? { entity_type: "driver", entity_uuid: app.entityDriverId } : {}) } as never);
   }
   // ROUND 389.3 R1 — the excess is a DRIVER RECEIVABLE: Dr 1257 driver_negative_settlement_receivable, the driver on the
   // line and the settlement as the entry's source (both directions). It must equal the pay-run's shortfall exactly.

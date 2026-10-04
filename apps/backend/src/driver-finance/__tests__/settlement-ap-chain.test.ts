@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { allocateApplication, attributeToLoad, type ApChainLoadBill } from "../settlement-ap-chain.service.js";
+import { allocateApplication, attributeToLoad, planApplicationCapacity, type ApChainLoadBill } from "../settlement-ap-chain.service.js";
 import { payLineType } from "../settlement-pay-line.service.js";
 
 const loads: ApChainLoadBill[] = [
@@ -38,5 +38,17 @@ describe("ROUND 326 single settlement poster — owner rules", () => {
   it("a detention line is detention pay; layover / bonus / stop pay / other are extra pay", () => {
     expect(payLineType("detention")).toBe("detention_pay");
     for (const k of ["layover", "bonus", "stop_pay", "other"] as const) expect(payLineType(k)).toBe("extra_pay");
+  });
+});
+
+describe("ROUND 389.3 R1 — negative settlement: applications beyond the load bills are the driver's receivable (1257)", () => {
+  it("applications within the bills' capacity apply in full, nothing unapplied", () => {
+    expect(planApplicationCapacity([30_000, 20_000], 100_000)).toEqual({ applied: [30_000, 20_000], unappliedCents: 0 });
+  });
+  it("the excess over capacity is unapplied — in application order, never an over-applied bill", () => {
+    expect(planApplicationCapacity([60_000, 50_000, 10_000], 80_000)).toEqual({ applied: [60_000, 20_000, 0], unappliedCents: 40_000 });
+  });
+  it("no bills (zero capacity): every cent is the driver's shortfall", () => {
+    expect(planApplicationCapacity([12_345], 0)).toEqual({ applied: [0], unappliedCents: 12_345 });
   });
 });

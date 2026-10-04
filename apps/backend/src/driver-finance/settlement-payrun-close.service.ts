@@ -850,6 +850,27 @@ export async function closeSettlementPayRun(
       );
     }
 
+    // ROUND 389.3 RULING 1, step 2 — RECOVER the driver's open negative-settlement receivable (1257, his lines carry
+    // entity_type 'driver') from this settlement's positive net, capped so net pay never falls below the resolved floor
+    // and never goes negative (which would mint a new shortfall). One engine: it credits 1257 as an application inside the
+    // same settlement entry the advance / deduction recoveries use. Skipped when a signed document fixes this net.
+    let negativeSettlementRecoveryCents = 0;
+    const nsrAccountId = netCents > 0 && !groundTruthDoc ? await resolvePayRunRoleAccount(client, opco, "driver_negative_settlement_receivable") : null;
+    if (nsrAccountId) {
+      const open = Number((await client.query<{ n: string }>(
+        `SELECT COALESCE(sum(CASE debit_or_credit WHEN 'debit' THEN amount_cents ELSE -amount_cents END), 0)::text AS n
+           FROM accounting.journal_entry_postings
+          WHERE operating_company_id = $1::uuid AND account_id = $2::uuid AND entity_type = 'driver' AND entity_uuid = $3::uuid`,
+        [opco, nsrAccountId, settlement.driver_id]
+      )).rows[0]?.n ?? 0);
+      negativeSettlementRecoveryCents = Math.max(0, Math.min(open, netCents - Math.max(0, floorCents)));
+      if (negativeSettlementRecoveryCents > 0) {
+        netCents -= negativeSettlementRecoveryCents;
+        breakdown.net_cents = netCents;
+        (breakdown as unknown as Record<string, unknown>).negative_settlement_recovery_cents = negativeSettlementRecoveryCents;
+      }
+    }
+
     const label = `Settlement ${settlement.display_id ?? settlement.id}`;
 
     // ── Resolve the credit target accounts (missing => STOP, never guess). ────────────────────────────
@@ -966,6 +987,9 @@ export async function closeSettlementPayRun(
     let paymentMethod: { id: string; name: string; glAccountId: string } | null = null;
     if (input.paymentMethodId) paymentMethod = await resolvePaymentMethod(client, opco, input.paymentMethodId);
     let payoutBankAccountId: string | null = null;
+    if (negativeSettlementRecoveryCents > 0 && nsrAccountId) {
+      legs.push({ account_id: nsrAccountId, debit_or_credit: "credit", amount_cents: negativeSettlementRecoveryCents, description: `${label} — negative settlement recovered`, entity_type: "driver", entity_uuid: settlement.driver_id } as never);
+    }
     if (shortfallCents > 0 && shortfallAccountId) {
       legs.push({ account_id: shortfallAccountId, debit_or_credit: "debit", amount_cents: shortfallCents, description: `${label} — negative settlement: owed by the driver`, entity_type: "driver", entity_uuid: settlement.driver_id } as never);
     }
@@ -1223,6 +1247,9 @@ export async function closeSettlementPayRun(
       const acct = await resolvePayRunRoleAccount(client, opco, roleKey);
       if (!acct) throw new SettlementPayRunError("DEDUCTION_RECOVERY_ACCOUNT_MISSING", `No active '${roleKey}' CoA role designation for a settlement deduction bucket`, { role_key: roleKey });
       applications.push({ kind: "deduction", cents, accountId: acct, description: `${roleKey.replace(/_/g, " ")}` });
+    }
+    if (negativeSettlementRecoveryCents > 0 && nsrAccountId) {
+      applications.push({ kind: "deduction", cents: negativeSettlementRecoveryCents, accountId: nsrAccountId, description: "negative settlement recovered", entityDriverId: settlement.driver_id });
     }
     if (chargebacksCents > 0) {
       const cbAcct = await resolvePayRunRoleAccount(client, opco, "abandonment_chargeback_recovery");
