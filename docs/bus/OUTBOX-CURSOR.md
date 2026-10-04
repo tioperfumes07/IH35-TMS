@@ -1,3 +1,9 @@
+## 2026-10-04T10:34Z · BANK-F91481 SafetyGroupNav leftover WIRED CI · tip `fa452880d8`
+
+DONE: #25223 — SafetyGroupNav RENAMED badge #4B5563; verify-steps/3880 runs leftover refuse --selftest + live.
+
+NEXT: BANK-F91482 LoadBolPanel leftover #334155 + leftover refuse on 2366 · skip pile parked · HH10 no migrations.
+
 ## 2026-10-04T10:28Z · BANK-F91480 RMBucketsGrid leftover WIRED CI · tip `8c83c0a944`
 
 DONE: #25222 — RMBucketsGrid Completed accent #4B5563; verify-steps/4190 leftover refuse now catches #334155.
