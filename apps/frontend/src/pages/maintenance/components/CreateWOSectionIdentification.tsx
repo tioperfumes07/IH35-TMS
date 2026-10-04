@@ -47,7 +47,7 @@ type Props = {
 function Field({ label, children }: { label: string; children: JSX.Element }) {
   return (
     <div className="space-y-1">
-      <label className="text-[11px] font-semibold text-gray-600">{label}</label>
+      <label className="text-xs font-semibold text-gray-600">{label}</label>
       {children}
     </div>
   );

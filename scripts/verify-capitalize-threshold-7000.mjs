@@ -107,6 +107,9 @@ function uiErrors(modalSrc, identificationSrc) {
     const block = identificationSrc.match(new RegExp(`<EntityPicker[\\s\\S]{0,220}?kind=["']${kind}["'][\\s\\S]{0,420}?>`))?.[0] ?? "";
     if (!block.includes("allowCreate")) errors.push(`${kind} picker must explicitly expose + Create`);
   }
+  // BANK-F91412 leftover refuse — CreateWOSectionIdentification page-scoped text token ratchet
+  if (identificationSrc.includes("text-[11px]")) errors.push("CreateWOSectionIdentification leftover text-[11px] — use text-xs");
+  if (identificationSrc.includes("#8A92AB")) errors.push("CreateWOSectionIdentification leftover #8A92AB — use #4B5563");
   return errors;
 }
 
@@ -177,6 +180,11 @@ function selftest() {
   }
   if (!uiErrors(uiGood.replace("7_000", "7_500"), pickerGood).some((e) => e.includes("$7,000"))) {
     console.error(`${LABEL} --selftest FAIL — planted UI threshold drift escaped`);
+    process.exit(1);
+  }
+  // BANK-F91412 leftover plant — CreateWOSectionIdentification page-scoped text token ratchet
+  if (!uiErrors(uiGood, pickerGood + '\n<p className="text-[11px] text-[#8A92AB]">plant</p>\n').some((e) => e.includes("leftover"))) {
+    console.error(`${LABEL} --selftest FAIL — leftover text-[11px]/#8A92AB plant escaped`);
     process.exit(1);
   }
 
