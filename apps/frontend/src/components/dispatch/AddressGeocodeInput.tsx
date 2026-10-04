@@ -235,7 +235,7 @@ export function AddressGeocodeInput({
         </ul>
       ) : null}
       {enabled && error ? (
-        <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-red-700" role="alert">
+        <div className="mt-1 flex items-center justify-between gap-2 text-xs text-red-700" role="alert">
           <span>{error}</span>
           <button
             type="button"
