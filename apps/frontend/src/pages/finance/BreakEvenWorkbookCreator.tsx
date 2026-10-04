@@ -163,7 +163,7 @@ export function BreakEvenWorkbookCreator({ operatingCompanyId, liveMiles, liveRe
       <div className="space-y-2">
         {lines.map((line, idx) => (
           <div key={`${line.category_kind}-${line.category_label}`} className="grid gap-2 sm:grid-cols-[7rem_1fr_8rem] sm:items-center">
-            <span className="text-[11px] font-semibold uppercase text-slate-500">{line.category_kind}</span>
+            <span className="text-xs font-semibold uppercase text-slate-500">{line.category_kind}</span>
             <span className="text-xs text-slate-800">{line.category_label}</span>
             <MoneyInput
               valueCents={line.monthly_estimate_cents}
