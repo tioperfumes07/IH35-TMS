@@ -2091,6 +2091,11 @@
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-04",
       "purpose": "Reclassify by load (U24) is refused by the database: accounting.reclassify_batches_changes_something counts only account/class/entity/location, so a load-only batch violates it. Widen the CHECK to include to_item_id and to_load_id, the same set the engine already accepts. (Re-claim of 202615401000, in band.)"
+    },
+    "202615410100": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-04",
+      "purpose": "ROUND 390 (a)/(c): deferred constraint trigger refuses any transaction that deletes a financial document while a journal_entry_posting still names it (no orphaned GL)"
     }
   },
   "202613590001": {
