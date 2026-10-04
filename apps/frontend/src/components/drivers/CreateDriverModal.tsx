@@ -1524,7 +1524,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                   className="rounded-sm border border-slate-200 bg-white px-2 py-1.5 text-xs"
                 />
                 {pendingDocs[key] ? (
-                  <span className="text-[11px] text-slate-600">{pendingDocs[key]?.name}</span>
+                  <span className="text-xs text-slate-600">{pendingDocs[key]?.name}</span>
                 ) : null}
               </div>
             ))}
@@ -1546,7 +1546,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                     </div>
                     <div className="font-medium capitalize">{event.event_type}</div>
                     <div>{event.summary}</div>
-                    <div className="text-[11px] text-gray-600">From prior record under name {event.matched_driver_name}</div>
+                    <div className="text-xs text-gray-600">From prior record under name {event.matched_driver_name}</div>
                   </div>
                 ))}
               </div>
