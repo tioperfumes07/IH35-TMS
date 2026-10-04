@@ -202,7 +202,7 @@ export function UploadZone({
           <div key={row.id} className="flex items-center justify-between rounded-sm border border-slate-200 px-2 py-1">
             <div className="min-w-0">
               <div className="truncate text-xs font-medium text-slate-800">{row.filename}</div>
-              <div className="text-[11px] text-slate-500">
+              <div className="text-xs text-slate-500">
                 {Math.round(Number(row.size_bytes || 0) / 1024)} KB - {row.content_type}
               </div>
             </div>

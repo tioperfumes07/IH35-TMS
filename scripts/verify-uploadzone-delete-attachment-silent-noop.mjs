@@ -39,6 +39,9 @@ export function audit(src) {
   if (silentDelete.test(src)) {
     problems.push(`${TARGET}: Delete must not use bare async onClick without try/catch`);
   }
+  // BANK-F91377 leftover refuse — UploadZone page-scoped text token ratchet
+  if (src.includes("text-[11px]")) problems.push("UploadZone.tsx: leftover text-[11px]");
+  if (src.includes("#8A92AB")) problems.push("UploadZone.tsx: leftover off-scale muted #8A92AB");
   return problems;
 }
 
@@ -63,6 +66,13 @@ function selftest() {
   const failures = [];
   if (audit(good).length) failures.push(`good fixture rejected: ${audit(good).join(" | ")}`);
   if (!audit(silent).length) failures.push("planted silent delete was not detected");
+  // BANK-F91377 leftover plant — UploadZone page-scoped text token ratchet
+  const leftover =
+    readFileSync(join(ROOT, TARGET), "utf8") +
+    '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!audit(leftover).some((p) => p.includes("leftover text-[11px]"))) {
+    failures.push("leftover plant escaped");
+  }
   if (failures.length) {
     failures.forEach((failure) => console.error(`  ✗ ${LABEL}: ${failure}`));
     process.exit(1);
