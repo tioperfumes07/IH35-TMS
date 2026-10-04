@@ -11817,5 +11817,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-arriving-soon-serves-geofence-state"
+  },
+  "14625": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-negative-settlement-posts-1257"
   }
 }
