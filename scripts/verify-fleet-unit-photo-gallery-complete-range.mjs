@@ -21,6 +21,9 @@ export function verify(sources = {}) {
     ["stable complete order", /ORDER BY p\.taken_at DESC NULLS LAST, p\.created_at DESC/.test(query)],
     ["no silent row cap", !/\bLIMIT\s+\d+/i.test(query) && !/\bFETCH\s+FIRST\b/i.test(query)],
     ["unit-empty truth", /No unit photos yet\./.test(gallery) && !/No driver photos yet\./.test(gallery)],
+    // BANK-F91384 leftover refuse — PhotoGallery page-scoped text token ratchet
+    ["leftover text-[11px]", !gallery.includes("text-[11px]")],
+    ["leftover off-scale muted #8A92AB", !gallery.includes("#8A92AB")],
   ];
   return checks.filter(([, ok]) => !ok).map(([name]) => name);
 }
@@ -31,6 +34,8 @@ if (process.argv.includes("--selftest")) {
     ["reintroduced cap", { ...live, service: live.service.replace("ORDER BY p.taken_at DESC NULLS LAST, p.created_at DESC", "ORDER BY p.taken_at DESC NULLS LAST, p.created_at DESC\n      LIMIT 20") }],
     ["dropped company scope", { ...live, service: live.service.replace("AND p.operating_company_id = $2::uuid", "AND TRUE") }],
     ["wrong empty identity", { ...live, gallery: live.gallery.replace("No unit photos yet.", "No driver photos yet.") }],
+    // BANK-F91384 leftover plant — PhotoGallery page-scoped text token ratchet
+    ["leftover text-[11px] plant", { ...live, gallery: live.gallery + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n' }],
   ];
   for (const [name, sources] of mutations) {
     if (verify(sources).length === 0) throw new Error(`selftest did not catch ${name}`);
