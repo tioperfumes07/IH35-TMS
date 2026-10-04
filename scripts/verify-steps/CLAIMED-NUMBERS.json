@@ -12452,5 +12452,35 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-cash-flow-contract"
+  },
+  "15125": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-auto-deduction-policy-driver-label-survives-archive"
+  },
+  "15129": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-cancelled-load-leaves-no-live-money"
+  },
+  "15133": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-cash-flow-cpm-routes"
+  },
+  "15137": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-cash-flow-overview-chargeback-link-destination"
+  },
+  "15141": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-cash-flow-projection-snapshot-wired"
+  },
+  "15145": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-cash-flow-tabs-entity-scoped"
   }
 }
