@@ -7312,3 +7312,23 @@ consumed_at: 2026-10-04T22:18:08Z
 consumed_by: CC-3
 row_counts: 6 fuel rows voided (executeVoidCancel fuel_transaction); verify-void-is-whole 6 -> 0; 0 deletes.
 THIS AUTHORIZATION DOES NOT COVER: any DELETE; any other fuel row.
+
+## AUTH-400
+issued_at: 2026-10-04T22:50:00Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). OWNER LAW — CLEAN SLATE (2026-10-04, ~/Downloads/10-04-2026-OWNER-LAW-CLEAN-SLATE-AUTH-400.md:
+  "NO TRACE OF ANY PREVIOUS DOCUMENT, LOAD, INVOICE, FACTORING PURCHASE … AS IF I JUST PURCHASED A QUICKBOOKS SUBSCRIPTION AND BARELY
+  CONNECTED MY BANK ACCOUNTS") + Lead ruling AUTH-400 (2026-10-04): "AUTH-400 — that is the number … covers the whole clean-slate plan
+  … The $1.00 bank effect on 1000 is APPROVED … INVOICE CHAINS: IN." + the five purge decisions ruled (fuel, escrow_ledger, reclassify
+  purged; bank lines KEPT and returned to For Review; sanctioned delete path; real loads for this run only) + owner "I follow your
+  recommendations" (2026-10-04) for the one legacy link (COMPLETE). Supersedes AUTH-397. Target: journal_entry_postings = 0 and
+  journal_entries = 0 for USMCA. KEEP: catalogs.*, org.*, identity.*, mdata.drivers/units/equipment/customers/vendors, banking.bank_accounts,
+  banking.bank_transactions (1,009, returned to For Review, unmatched), audit.* and WORM records.
+  Neon backup branch BEFORE any write: br-fragrant-meadow-akuxvf8d (auth400-backup-before-clean-slate-2026-10-04, LSN E9/9653B4F8, 22:40:05Z).
+  Rehearsed on fresh prod copies br-gentle-unit-akkn14he and br-small-leaf-akjde74y (void stage to 0 live lines, 0 double reversals).
+action: (1) complete the ONE legacy one-sided reversal link: UPDATE accounting.journal_entry_postings SET reversed_by_line_id =
+  '34b485eb-6343-4489-95de-e5475b21c89d' WHERE id = '8314452b-ed51-4ef1-9917-4cc339b0ed04' AND reversed_by_line_id IS NULL (+ audit event);
+  (2) OWNER_AUTH_ID=AUTH-400 DATABASE_URL=<prod direct> npx tsx apps/backend/scripts/auth400-void-stage.mts --branch=br-fancy-credit-akjnd07a --apply;
+  (3) OWNER_AUTH_ID=AUTH-400 APPLY=1 ALLOW_BANK_EFFECT=1 DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-02-cc1-r326-complete-delete.ts --scope=zero-reset
+expires_at: 2026-10-05T22:50:00Z
+status: OPEN
+THIS AUTHORIZATION DOES NOT COVER: TRANSP or TRK; any bank line DELETE; any master/catalog/identity row; seeding any data.
