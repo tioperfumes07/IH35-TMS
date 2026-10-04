@@ -3597,17 +3597,17 @@
   "4431": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-2",
-    "purpose": "verify-legal-contract-signer-phone-e164"
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): its guard is already wired under another step; no step file at this number. Was: verify-legal-contract-signer-phone-e164"
   },
   "4435": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-2",
-    "purpose": "verify-driver-detail-catalog-failure-truth"
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): its guard is already wired under another step; no step file at this number. Was: verify-driver-detail-catalog-failure-truth"
   },
   "4439": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-2",
-    "purpose": "verify-unit-wear-telemetry-failure-truth"
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): its guard is already wired under another step; no step file at this number. Was: verify-unit-wear-telemetry-failure-truth"
   },
   "4441": {
     "claimed_at": "2026-08-23",
@@ -3617,7 +3617,7 @@
   "4443": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-2",
-    "purpose": "verify-fleet-location-hos-shared-drivers"
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): its guard is already wired under another step; no step file at this number. Was: verify-fleet-location-hos-shared-drivers"
   },
   "4445": {
     "claimed_at": "2026-08-23",
@@ -3627,7 +3627,7 @@
   "4447": {
     "claimed_at": "2026-08-23",
     "claimed_by": "cc-2",
-    "purpose": "verify-vehicle-driver-history-shared-label"
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): its guard is already wired under another step; no step file at this number. Was: verify-vehicle-driver-history-shared-label"
   },
   "4449": {
     "claimed_at": "2026-08-23",
@@ -4699,7 +4699,7 @@
   "9881": {
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-2",
-    "purpose": "verify-banking-factoring-timeline-no-silent-catch"
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): its guard is already wired under another step; no step file at this number. Was: verify-banking-factoring-timeline-no-silent-catch"
   },
   "9882": {
     "claimedBy": "cursor",
@@ -5050,7 +5050,7 @@
   "10103": {
     "claimed_at": "2026-08-30",
     "claimed_by": "cc-2",
-    "purpose": "verify-reconciliation-one-open-per-account-period (GO-ACCT-01 control fix)"
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): no guard file was ever written; no step file at this number. Was: verify-reconciliation-one-open-per-account-period (GO-ACCT-01 control fix)"
   },
   "10105": {
     "claimed_at": "2026-08-30",
@@ -6095,7 +6095,7 @@
   "10791": {
     "claimed_at": "2026-09-06",
     "claimed_by": "cc-2",
-    "purpose": "verify-round1621-rule-match-prefill"
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): its guard is already wired under another step; no step file at this number. Was: verify-round1621-rule-match-prefill"
   },
   "10795": {
     "claimed_by": "cc-2",
@@ -6110,7 +6110,7 @@
   "10799": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-07",
-    "purpose": "verify-unit-single-active-load"
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): its guard is already wired under another step; no step file at this number. Was: verify-unit-single-active-load"
   },
   "10801": {
     "claimed_by": "claude",
@@ -6120,7 +6120,7 @@
   "10803": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-07",
-    "purpose": "verify-unmatch-clears-both-sides"
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): its guard is already wired under another step; no step file at this number. Was: verify-unmatch-clears-both-sides"
   },
   "10807": {
     "claimed_by": "cc-2",
@@ -6135,7 +6135,7 @@
   "10811": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-07",
-    "purpose": "verify-unmatch-clears-both-sides"
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): its guard is already wired under another step; no step file at this number. Was: verify-unmatch-clears-both-sides"
   },
   "10813": {
     "claimed_by": "claude",
@@ -6145,7 +6145,7 @@
   "10815": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-08",
-    "purpose": "verify-factoring-equipment-vendor-merges-collapsed-filters"
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): its guard is already wired under another step; no step file at this number. Was: verify-factoring-equipment-vendor-merges-collapsed-filters"
   },
   "10819": {
     "claimed_by": "cc-2",
@@ -6255,7 +6255,7 @@
   "10863": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-09",
-    "purpose": "verify-cron-automatch-excludes-voided"
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): no guard file was ever written; no step file at this number. Was: verify-cron-automatch-excludes-voided"
   },
   "10865": {
     "claimed_by": "claude",
@@ -7611,7 +7611,7 @@
   "12063": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-01",
-    "purpose": "verify-faro-statement-tieout: every imported Faro statement line is matched to an advance or a bank line, or named unmatched with the difference; no plug rows."
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): no guard file was ever written; no step file at this number. Was: verify-faro-statement-tieout: every imported Faro statement line is matched to an advance or a bank line, or named unmatched with the difference; no plug rows."
   },
   "12065": {
     "claimed_by": "claude",
@@ -7671,7 +7671,7 @@
   "12087": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-04",
-    "purpose": "verify-audit-fix-17-factoring-power-user-ux"
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): its guard is already wired under another step; no step file at this number. Was: verify-audit-fix-17-factoring-power-user-ux"
   },
   "12089": {
     "claimed_by": "CC-1",
@@ -7681,7 +7681,7 @@
   "12091": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-04",
-    "purpose": "verify-bank-account-company-assignment"
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): its guard is already wired under another step; no step file at this number. Was: verify-bank-account-company-assignment"
   },
   "12093": {
     "claimed_by": "CC-1",
@@ -7691,7 +7691,7 @@
   "12095": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-04",
-    "purpose": "verify-bank-account-hide-capability-fails-closed"
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): its guard is already wired under another step; no step file at this number. Was: verify-bank-account-hide-capability-fails-closed"
   },
   "12097": {
     "claimed_by": "CC-1",
@@ -7701,7 +7701,7 @@
   "12099": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-04",
-    "purpose": "verify-bank-account-visibility-honesty"
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): its guard is already wired under another step; no step file at this number. Was: verify-bank-account-visibility-honesty"
   },
   "12101": {
     "claimed_by": "CC-1",
@@ -7731,7 +7731,7 @@
   "12111": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-04",
-    "purpose": "verify-bank-kpi-authoritative-cash-no-fake-zero"
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): its guard is already wired under another step; no step file at this number. Was: verify-bank-kpi-authoritative-cash-no-fake-zero"
   },
   "12113": {
     "claimed_by": "CC-1",
@@ -7771,7 +7771,7 @@
   "12127": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-04",
-    "purpose": "verify-bank-recon-expense-match-part2a"
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): its guard is already wired under another step; no step file at this number. Was: verify-bank-recon-expense-match-part2a"
   },
   "12129": {
     "claimed_by": "CC-1",
@@ -7791,7 +7791,7 @@
   "12135": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-04",
-    "purpose": "verify-bank-recon-poster-ledger-account-id"
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): its guard is already wired under another step; no step file at this number. Was: verify-bank-recon-poster-ledger-account-id"
   },
   "12137": {
     "claimed_by": "CC-1",
@@ -7831,7 +7831,7 @@
   "12151": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-04",
-    "purpose": "verify-bank-register-account-picker"
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): its guard is already wired under another step; no step file at this number. Was: verify-bank-register-account-picker"
   },
   "12153": {
     "claimed_by": "CC-1",
@@ -7921,7 +7921,7 @@
   "12187": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-04",
-    "purpose": "verify-banking-factoring-virtual-fe-wired"
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): its guard is already wired under another step; no step file at this number. Was: verify-banking-factoring-virtual-fe-wired"
   },
   "12189": {
     "claimed_by": "CC-1",
@@ -8252,7 +8252,7 @@
   "12315": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-04",
-    "purpose": "verify-factoring-void-enumerates-all-postings"
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): its guard is already wired under another step; no step file at this number. Was: verify-factoring-void-enumerates-all-postings"
   },
   "12317": {
     "claimed_by": "CC-1",
@@ -8389,7 +8389,7 @@
   "12347": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-04",
-    "purpose": "verify-posting-prepaid-factoring-register-human-labels"
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): its guard is already wired under another step; no step file at this number. Was: verify-posting-prepaid-factoring-register-human-labels"
   },
   "12348": {
     "claimed_by": "cursor",
@@ -8629,7 +8629,7 @@
   "12395": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-04",
-    "purpose": "verify-wave-c-gl-je-system-qbo-recon"
+    "purpose": "RELEASED UNUSED 2026-10-04 (CC-2): its guard is already wired under another step; no step file at this number. Was: verify-wave-c-gl-je-system-qbo-recon"
   },
   "12396": {
     "claimed_by": "cursor",
@@ -16202,5 +16202,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-rail-highlight-tracks-loaded-filter"
+  },
+  "12399": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-no-service-imports-an-http-route-module"
   }
 }
