@@ -113,6 +113,9 @@ async function run() {
     if (m.dreamlineSubledgerRows < BASELINE.dreamlineSubledgerRows) {
       failures.push(`Dreamline sub-ledger rows dropped below the ratchet floor: ${m.dreamlineSubledgerRows} < ${BASELINE.dreamlineSubledgerRows}`);
     }
+    if (m.relayPostedCount > m.relayPostedTraceable) {
+      failures.push(`Relay: ${m.relayPostedCount - m.relayPostedTraceable} row(s) claim posted_to_gl=true with no journal entry behind them — posted is derived, never stored (202615410940)`);
+    }
     if (m.relayPostedTraceable < BASELINE.relayPostedTraceable) {
       failures.push(`Relay posted_to_gl-and-traceable rows dropped below the ratchet floor: ${m.relayPostedTraceable} < ${BASELINE.relayPostedTraceable}`);
     }

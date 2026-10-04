@@ -38,7 +38,7 @@ export type FuelTxnGlPostCandidate = {
   gallons?: number | null;
   /** Relay cash_advance → driver_advance path when a driver is matched. */
   cash_advance?: boolean;
-  /** When set, flip integrations.relay_fuel_transactions.posted_to_gl after a successful post. */
+  /** The Relay staging row this fill came from (rail selection only — posted is derived, never stored; 202615410940). */
   relay_fuel_transaction_id?: string | null;
   /**
    * FUEL-08 — real payment method drives the company_direct credit side.
@@ -234,22 +234,6 @@ export function buildFuelTxnJeMemo(args: {
   return parts.join(" ").slice(0, 200);
 }
 
-async function markRelayPostedToGl(relayFuelTransactionId: string, operatingCompanyId: string): Promise<void> {
-  await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-    await client.query(
-      `
-        UPDATE integrations.relay_fuel_transactions
-           SET posted_to_gl = true,
-               updated_at = now()
-         WHERE id = $1::uuid
-           AND operating_company_id = $2::uuid
-           AND posted_to_gl = false
-      `,
-      [relayFuelTransactionId, operatingCompanyId]
-    );
-  });
-}
 
 /**
  * Flag-gated TMS GL post for one canonical fuel transaction. Safe to call repeatedly (idempotent).
@@ -331,11 +315,9 @@ export async function maybePostFuelExpenseFromCanonicalTxn(
       }),
     });
 
-    if (candidate.relay_fuel_transaction_id && (posting.result === "posted" || posting.result === "already_posted")) {
-      await markRelayPostedToGl(candidate.relay_fuel_transaction_id, candidate.operating_company_id).catch(() => {
-        // Non-fatal — JE already exists; posted_to_gl is a staging convenience flag.
-      });
-    }
+    // 202615410940: integrations.relay_fuel_transactions.posted_to_gl is DERIVED (the matched bank line's journal entry,
+    // fuel/relay-fills.routes.ts) and the database refuses a stored true. The old markRelayPostedToGl flip outlived every
+    // JE behind it (75 USMCA rows flagged, 0 traceable) and is gone.
 
     // ROUND 290.1 — the fuel-to-expense bridge is mandatory, not optional. postFuelExpenseFromEvent
     // (above) posts the JE directly from the fuel event with no accounting.expenses document
