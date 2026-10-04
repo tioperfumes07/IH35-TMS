@@ -1,8 +1,14 @@
-## 2026-10-04T16:32Z · BANK-F91525 TruckLine Clear leftover border WIRED · this PR
+## 2026-10-04T16:40Z · BANK-F91526 CreateWO leftover field border WIRED · this PR
 
-DONE: TruckLine Clear leftover border-[#CBD5E1] → house #E5E7EB; leftover refuse on EVEN 4122 --selftest + live. SVG fill stays locked.
+DONE: CreateWorkOrderModal leftover #d6dae1/#e6e9ee → house #E5E7EB; leftover refuse on EVEN 2090 --selftest + live.
 
-NEXT: leftover muted chrome (SystemModule code stay / skip pile / WO pie stay) · skip pile parked · HH14 no migrations this tick.
+NEXT: leftover muted chrome (LocationMap #d1d5db / SystemModule code stay / skip pile) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T16:38Z · BANK-F91525 TruckLine Clear leftover border WIRED CI · tip `3186848332`
+
+DONE: #25267 — TruckLine Clear leftover border-[#CBD5E1] → #E5E7EB; verify-steps/4122 leftover refuse --selftest + live. SVG fill stays locked.
+
+NEXT: leftover muted chrome (CreateWO field borders / SystemModule code stay / skip pile) · skip pile parked · HH14 no migrations this tick.
 
 ## 2026-10-04T16:30Z · BANK-F91524 PlannerGrid dwell leftover border WIRED CI · tip `7b55249e1d`
 
