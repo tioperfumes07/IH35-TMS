@@ -1,8 +1,14 @@
-## 2026-10-04T19:40Z · BANK-F91547 OwnerHome + DefaultHome leftover slate classes · this PR
+## 2026-10-04T19:48Z · BANK-F91548 AccountingHome leftover slate classes · this PR
 
-DONE: OwnerHome + DefaultHome leftover text-slate-* / border-slate-* / bg-slate-* → house #4B5563 / #1F2A44 / #0F1219 / #E5E7EB / #F7F8FA; leftover refuse on EVEN 3888 + 3886.
+DONE: AccountingHome leftover text-slate-* / border-slate-* / bg-slate-* / divide-slate-* → house tokens; leftover refuse on EVEN 3870; uncleared notice retargeted to house #F7F8FA not amber.
 
-NEXT: leftover muted chrome (AccountingHome slate-* / remaining pages / skip pile) · skip pile parked · HH16 leftovers first.
+NEXT: leftover muted chrome (remaining pages / skip pile) · skip pile parked · HH16 leftovers first.
+
+## 2026-10-04T19:40Z · BANK-F91547 OwnerHome + DefaultHome leftover slate classes WIRED CI · tip `eebbb7c82a`
+
+DONE: #25289 — OwnerHome + DefaultHome leftover slate-* → house tokens; leftover refuse on EVEN 3888 + 3886.
+
+NEXT: leftover muted chrome (AccountingHome / remaining pages / skip pile) · skip pile parked · HH16 leftovers first.
 
 ## 2026-10-04T19:35Z · BANK-F91546 TripPairing leftover slate classes WIRED CI · tip `d977d97c18`
 
