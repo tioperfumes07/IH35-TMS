@@ -1,3 +1,9 @@
+## 2026-10-04T06:52Z · BANK-F91435 B-4 check-creator ops WIRED CI · tip `0bedf9ca93`
+
+DONE: #25175 — verify-steps/3832 now runs ops/verify-b4-check-creator --selftest. B-1..B-5 ops packs all in CI.
+
+NEXT: BANK-F91436 wire C-51 banking Home+Escrow ops into 12392 · skip pile parked · HH06 no migrations.
+
 ## 2026-10-04T06:45Z · BANK-F91434 B-3 feed/match ops WIRED CI · tip `6cd4690e3b`
 
 DONE: #25174 — verify-steps/1222 now runs ops/verify-b3-bank-feed-match --selftest.
