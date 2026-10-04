@@ -7258,5 +7258,10 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). Owner standing order 2
 action: DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-04-cc3-def-rows-to-signed-source.mts --apply --auth AUTH-215
   Dry-run first (default, no --apply).
 expires_at: 2026-10-05T04:56:06Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-04T21:11:11Z
+consumed_by: CC-3
+row_counts: 9 voids through executeVoidCancel (4 fuel + their expenses, 5 R145 expenses), each expense with a reversing entry; 6 DEF
+  purchases created (fuel db98d022 d6053286 b7a746e4 e16a0cb4 696237be cb583ff7, each with its expense document and JE on the
+  proven load); 0 deletes. proof_query: DEF cost on these purchases 27568 -> 17063 cents (the 10505 double removed).
 THIS AUTHORIZATION DOES NOT COVER: any DELETE; 5800's 30.30 (receipt 2885953, a different purchase); any other fuel row.
