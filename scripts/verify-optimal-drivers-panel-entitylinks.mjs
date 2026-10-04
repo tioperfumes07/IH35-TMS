@@ -32,6 +32,9 @@ function check() {
   assert(/stopPropagation/.test(src), "EntityLink click must stopPropagation so select still works");
   assert(!/<button[\s\S]{0,500}data-testid=\{`optimal-driver-row-/.test(src), "must not nest driver links inside a button");
   assert(/role="button"[\s\S]{0,80}tabIndex=\{rowDisabled \? -1 : 0\}/.test(src), "row shell must retain enabled keyboard activation");
+  // BANK-F91298 leftover refuse — OptimalDriversPanel.tsx page-scoped text token ratchet
+  assert(!src.includes("text-[11px]"), "OptimalDriversPanel.tsx: leftover text-[11px]");
+  assert(!src.includes("#8A92AB") && !src.includes("#334155"), "OptimalDriversPanel.tsx: leftover off-scale muted");
 }
 
 function selftest() {
@@ -53,8 +56,20 @@ function selftest() {
     }
     assert(failed, "--selftest expected planted defect to fail");
   }
+  // BANK-F91298 leftover plant — OptimalDriversPanel page-scoped text token ratchet
+  const leftoverPlant = original + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  fs.writeFileSync(FILE, leftoverPlant);
+  let leftoverFailed = false;
+  try {
+    check();
+  } catch {
+    leftoverFailed = true;
+  } finally {
+    fs.writeFileSync(FILE, original);
+  }
+  assert(leftoverFailed, "--selftest leftover plant escaped");
   check();
-  console.log(`${LABEL}: OK — selftest PASS (2/2 planted defects rejected)`);
+  console.log(`${LABEL}: OK — selftest PASS (2/2 planted defects rejected + leftover plant)`);
 }
 
 const mode = process.argv.includes("--selftest") ? "selftest" : "check";
