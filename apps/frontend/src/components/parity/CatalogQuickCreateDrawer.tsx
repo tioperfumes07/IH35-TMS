@@ -120,7 +120,7 @@ export function CatalogQuickCreateDrawer({
 
         {fields.map((field) => (
           <label className="block" key={field.name}>
-            <span className="text-xs font-medium text-[#334155]">
+            <span className="text-xs font-medium text-[#4B5563]">
               {field.label}
               {field.required ? " *" : ""}
             </span>

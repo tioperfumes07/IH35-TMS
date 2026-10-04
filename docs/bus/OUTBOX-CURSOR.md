@@ -1,3 +1,9 @@
+## 2026-10-04T10:36Z · BANK-F91482 LoadBolPanel leftover WIRED CI · tip `608a146264`
+
+DONE: #25224 — LoadBolPanel stored-BOL list #4B5563; verify-steps/3882 runs leftover refuse --selftest + live.
+
+NEXT: BANK-F91483 CatalogQuickCreateDrawer leftover #334155 + leftover refuse on 1510 · skip pile parked · HH10 no migrations.
+
 ## 2026-10-04T10:34Z · BANK-F91481 SafetyGroupNav leftover WIRED CI · tip `fa452880d8`
 
 DONE: #25223 — SafetyGroupNav RENAMED badge #4B5563; verify-steps/3880 runs leftover refuse --selftest + live.
