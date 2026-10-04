@@ -195,6 +195,8 @@ export type PostingErrorCode =
   | "BILL_AP_NOT_POSTED"
   | "PERIOD_LOCKED"
   | "UNBALANCED_ENTRY"
+  | "REVERSAL_NOT_BALANCED"
+  | "POSTING_LINE_ALREADY_REVERSED"
   | "ACCOUNT_MAPPING_MISSING"
   | "CREDIT_ACCOUNT_CROSS_ENTITY"
   | "ADVANCE_NOT_POSTING_ELIGIBLE"
@@ -3327,12 +3329,25 @@ async function executeSourceReversalOnClient(
              debit_or_credit, amount_cents::bigint, description
       FROM accounting.journal_entry_postings
       WHERE operating_company_id = $1::uuid
-        AND posting_batch_id = $2::uuid
-      ORDER BY line_sequence ASC, created_at ASC
+        AND reversed_by_line_id IS NULL
+        AND reversal_of_line_id IS NULL
+        AND (posting_batch_id = $2::uuid OR (source_transaction_type = $3 AND source_transaction_id = $4))
+      ORDER BY created_at ASC, line_sequence ASC
     `,
-    [input.operating_company_id, original.posting_batch_id]
+    // AUTH-400 — every LIVE line naming this document, and only those. The batch alone is wrong both ways once anything
+    // else touched the document: a line a reclassify already reversed was reversed a SECOND time (rehearsal: expense
+    // line 8314452b), and the reclass in-leg now carrying that money was never reversed — a void that left the
+    // document's own GL live. Live lines naming one document always balance (every writer posts balanced entries and
+    // every reversal names its original); the balance check below refuses if they ever do not.
+    [input.operating_company_id, original.posting_batch_id, sourceType, sourceId]
   );
-  if (!originalLines.rows.length) throw new PostingEngineError("SOURCE_NOT_FOUND", "No posted lines found to reverse");
+  if (!originalLines.rows.length) throw new PostingEngineError("SOURCE_NOT_FOUND", "No live posted lines found to reverse");
+  {
+    const net = originalLines.rows.reduce((n, r) => n + (r.debit_or_credit === "debit" ? Number(r.amount_cents) : -Number(r.amount_cents)), 0);
+    if (net !== 0) {
+      throw new PostingEngineError("REVERSAL_NOT_BALANCED", `The live lines naming ${sourceType} ${sourceId} do not balance (${net}c) — refusing a partial reversal`);
+    }
+  }
 
   const headerDate = await client.query<{ entry_date: string }>(
     `
@@ -3471,10 +3486,13 @@ async function executeSourceReversalOnClient(
         UPDATE accounting.journal_entry_postings
         SET reversed_by_line_id = $2::uuid,
             updated_at = now()
-        WHERE id = $1::uuid AND operating_company_id = $3::uuid
+        WHERE id = $1::uuid AND operating_company_id = $3::uuid AND reversed_by_line_id IS NULL
       `,
       [row.id, reversalLineId, input.operating_company_id]
-    );
+    ).then((u) => {
+      // AUTH-400 — a line is reversed exactly once: never overwrite another reversal's back-link.
+      if (!u.rowCount) throw new PostingEngineError("POSTING_LINE_ALREADY_REVERSED", `posting ${row.id} is already reversed by another line`);
+    });
     await client.query(
       `
         INSERT INTO accounting.transaction_source_links (

@@ -47,8 +47,10 @@ function makeFakeClient(opts: { existingVoidedAt?: string | null; existingVoidRe
   return { client, calls };
 }
 
+// The DOCUMENT's own stamp (the UPDATE that writes voided_at). Since ROUND 138 the same transaction also cascades the void
+// to the document's children (invoice -> invoice_lines soft-delete), so "the last UPDATE" is no longer the stamp.
 function lastUpdateCall(calls: Array<{ sql: string; values?: unknown[] }>) {
-  const update = [...calls].reverse().find((c) => c.sql.trim().startsWith("UPDATE"));
+  const update = [...calls].reverse().find((c) => c.sql.trim().startsWith("UPDATE") && /voided_at\s*=/.test(c.sql));
   if (!update) throw new Error("no UPDATE call captured");
   return update;
 }
@@ -133,7 +135,9 @@ describe("stampDocumentVoided — ROUND 122 P0: per-family status value, never o
       voidedByUserId: ACTOR,
     });
     expect(result.already_voided).toBe(true);
-    expect(calls.some((c) => c.sql.trim().startsWith("UPDATE"))).toBe(false);
+    // The document row is never re-written (no second voided_at stamp). The ROUND 138 child cascade may run again — it
+    // is idempotent by design (soft_deleted_at IS NULL guard) and is how an un-cascaded backlog closes.
+    expect(calls.some((c) => c.sql.trim().startsWith("UPDATE") && /voided_at\s*=/.test(c.sql))).toBe(false);
   });
 
   it("refuses a different reason on an already-voided document, never silently overwrites", async () => {

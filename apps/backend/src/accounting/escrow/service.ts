@@ -334,20 +334,23 @@ export async function postEscrowTransactionOnClient(
     // ESCROW-RELEASE-CLAIM (Lead, 2026-10-04): a release is one event per escrow claim. It must name the claim it
     // settles, and a second release of the same claim is a no-op that returns the first — never a second debit.
     // 09-24 posted nine claimless $25 releases (source_id NULL) that nothing could tie to a settlement.
-    if (input.posting_type === "release") {
-      if (!input.source_id) throw new Error("escrow_release_requires_claim");
+    // AUTH-400 rehearsal (2026-10-04): the same one-event rule for a DEPOSIT that names its source (a settlement, a
+    // document) — measured on prod, four releases were posted 2-6 times by repeated clicks before the release rule;
+    // a sourced deposit had the identical gap. A deposit with no source (a manual adjustment) is not deduplicated.
+    if (input.posting_type === "release" || (input.posting_type === "deposit" && input.source_id)) {
+      if (input.posting_type === "release" && !input.source_id) throw new Error("escrow_release_requires_claim");
       const prior = await client.query<EscrowPosting>(
         `
           SELECT id::text, operating_company_id::text, escrow_account_id::text, posting_type::text, amount_cents::bigint,
                  source_type::text, source_id::text, note, posted_at::text, posted_by_user_id::text,
                  linked_journal_entry_id::text, created_at::text
             FROM accounting.escrow_postings
-           WHERE operating_company_id = $1::uuid AND escrow_account_id = $2::uuid AND posting_type = 'release'
+           WHERE operating_company_id = $1::uuid AND escrow_account_id = $2::uuid AND posting_type = $6
              AND source_type = $3 AND source_id = $4::uuid AND amount_cents = $5::bigint
            ORDER BY posted_at
            LIMIT 1
         `,
-        [input.operating_company_id, input.escrow_account_id, input.source_type, input.source_id, input.amount_cents]
+        [input.operating_company_id, input.escrow_account_id, input.source_type, input.source_id, input.amount_cents, input.posting_type]
       );
       const first = prior.rows[0];
       if (first) {

@@ -79,7 +79,6 @@ const OWNED = new Set([
 // Deleting a document ALWAYS takes the JEs that post for it.
 // ROUND 390: the document -> posting-source map is shared with the DB trigger's migration and verify-no-orphaned-gl.
 const DOC_SOURCE: Record<string, string[]> = ORPHAN_DOC_SOURCE;
-const WORM = new Set(["accounting.journal_entries", "accounting.journal_entry_postings", "accounting.invoices", "accounting.invoice_lines"]);
 // ROUND 326 queue item 22 — zero-reset roots (every row of the company), master data that must survive, bank lines kept.
 const ZERO_RESET_ROOTS = [
   "mdata.loads", "accounting.journal_entries", "accounting.bills", "accounting.bill_payments", "accounting.invoices", "accounting.payments",
@@ -514,9 +513,10 @@ async function r390Gates(c: Q, order: string[], plan: Plan): Promise<R390Gate[]>
   const arrays = [...fin.matchAll(/v_table = ANY \(ARRAY\[([\s\S]*?)\]\)/g)].map((m) => [...m[1].matchAll(/'([a-z_]+\.[a-z_]+)'/g)].map((x) => x[1]));
   // The last four arrays, in the function's own order: ARM 0 true child, detail, document (must be voided), master (sample only).
   const [trueChild, detail, documents, masters] = arrays.slice(-4).map((a) => new Set(a));
-  const trig = (await c.query<{ t: string; fn: string; fin: boolean }>(
+  const trig = (await c.query<{ t: string; fn: string; fin: boolean; arml: boolean }>(
     `SELECT c.oid::regclass::text AS t, string_agg(DISTINCT p.oid::regprocedure::text, ', ') AS fn,
-            bool_or(p.oid = to_regprocedure('accounting.refuse_financial_row_delete()')) AS fin
+            bool_or(p.oid = to_regprocedure('accounting.refuse_financial_row_delete()')) AS fin,
+            bool_and(p.prosrc ~ 'purge_authorized_rows') AS arml
        FROM pg_trigger tg JOIN pg_class c ON c.oid = tg.tgrelid JOIN pg_proc p ON p.oid = tg.tgfoid
       WHERE NOT tg.tgisinternal AND tg.tgenabled <> 'D' AND (tg.tgtype & 8) = 8 AND (tg.tgtype & 2) = 2 AND p.prosrc ~* 'raise\\s+exception'
       GROUP BY 1`
@@ -536,7 +536,11 @@ async function r390Gates(c: Q, order: string[], plan: Plan): Promise<R390Gate[]>
     let gate = "none";
     let retained = 0;
     let mustVoid = 0;
-    if (tr && !tr.fin) {
+    if (tr && !tr.fin && tr.arml) {
+      // AUTH-400: every refusing trigger on this table admits a row listed for the AUTH (ARM L) — and APPLY lists every
+      // planned row of every table, so it is removed under the AUTH, not retained.
+      gate = `WORM ${tr.fn} — ARM L (listed under the AUTH)`;
+    } else if (tr && !tr.fin) {
       gate = `WORM ${tr.fn} — RETAINED`;
       retained = idsPlanned.length;
     } else if (tr?.fin) {
@@ -546,7 +550,9 @@ async function r390Gates(c: Q, order: string[], plan: Plan): Promise<R390Gate[]>
         gate = "financial document arm (owner AUTH, voided only)";
         const pk = await pkOf(c, t);
         const hasVoid = (await c.query(`SELECT 1 FROM information_schema.columns WHERE table_schema || '.' || table_name = $1 AND column_name = 'voided_at'`, [t])).rows.length > 0;
-        if (pk && hasVoid) {
+        if (t === "accounting.journal_entries") {
+          mustVoid = Number((await c.query<{ n: string }>(`SELECT count(*)::text AS n FROM accounting.journal_entries WHERE id::text = ANY($1::text[]) AND reversed_by_je_id IS NULL AND reverses_je_id IS NULL`, [idsPlanned])).rows[0]?.n ?? 0);
+        } else if (pk && hasVoid) {
           mustVoid = Number((await c.query<{ n: string }>(`SELECT count(*)::text AS n FROM ${t} WHERE ${pk}::text = ANY($1::text[]) AND voided_at IS NULL`, [idsPlanned])).rows[0]?.n ?? 0);
         }
       } else if (masters.has(t)) {
@@ -554,8 +560,9 @@ async function r390Gates(c: Q, order: string[], plan: Plan): Promise<R390Gate[]>
         const pk = await pkOf(c, t);
         if (pk) retained = Number((await c.query<{ n: string }>(`SELECT count(*)::text AS n FROM ${t} WHERE ${pk}::text = ANY($1::text[]) AND is_sample_data IS DISTINCT FROM true`, [idsPlanned])).rows[0]?.n ?? 0);
       } else {
-        gate = "financial — NO arm admits it: REFUSED for every role";
-        retained = idsPlanned.length;
+        // ARM L of refuse_financial_row_delete admits ANY listed row of a table it guards (before every other arm), and
+        // APPLY lists every planned row — so this table is removed under the AUTH. (Was misreported as REFUSED.)
+        gate = "financial ARM L (listed under the AUTH)";
       }
     }
     const r = rlsBy.get(t);
@@ -726,9 +733,10 @@ async function main() {
       const pk = await pkOf(client, t);
       const rows = [...(plan.get(t) ?? [])];
       if (!pk || !rows.length) continue;
-      if (WORM.has(t)) {
-        await client.query(`INSERT INTO _system.purge_authorized_rows (auth_id, table_name, row_pk, reason) SELECT $1, $2, x, $3 FROM unnest($4::text[]) x ON CONFLICT DO NOTHING`, [AUTH_ID, t, `ROUND 326 ${SCOPE}`, rows]);
-      }
+      // AUTH-400: list EVERY planned row of EVERY table, not only the WORM set — escrow_ledger, reclassify batches, fuel,
+      // escrow_postings and stop_arrivals are admitted only through ARM L, so an unlisted row was refused mid-run.
+      // The list is the owner's AUTH record of exactly what this run removes (audit.record_deletions holds the rows).
+      await client.query(`INSERT INTO _system.purge_authorized_rows (auth_id, table_name, row_pk, reason) SELECT $1, $2, x, $3 FROM unnest($4::text[]) x ON CONFLICT DO NOTHING`, [AUTH_ID, t, `ROUND 326 ${SCOPE}`, rows]);
       await client.query(
         `INSERT INTO audit.record_deletions (operating_company_id, deletion_route, auth_id, table_name, row_pk, reason, row_data)
          SELECT $1::uuid, 'auth_purge', $2, $3, d.${pk}::text, $4, to_jsonb(d) FROM ${t} d WHERE d.${pk}::text = ANY($5::text[])`,

@@ -159,10 +159,10 @@ describe("escrow service balance math", () => {
       linked_journal_entry_id: "je-1", created_at: "",
     };
     const seen: string[] = [];
-    mocked.queryMock.mockImplementation(async (sql: string) => {
+    mocked.queryMock.mockImplementation(async (sql: string, values?: unknown[]) => {
       seen.push(sql);
       if (sql.includes("FROM accounting.escrow_accounts") && sql.includes("FOR UPDATE")) return { rows: [account] };
-      if (sql.includes("FROM accounting.escrow_postings") && sql.includes("posting_type = 'release'")) return { rows: [first] };
+      if (sql.includes("FROM accounting.escrow_postings") && sql.includes("posting_type = $6") && values?.[5] === "release") return { rows: [first] };
       return { rows: [] };
     });
     const out = (await releaseEscrow(
@@ -170,6 +170,31 @@ describe("escrow service balance math", () => {
       { userId: "user-1", role: "Accountant" }
     )) as { posting: { id: string }; idempotent_replay?: boolean };
     expect(out.posting.id).toBe("posting-1");
+    expect(out.idempotent_replay).toBe(true);
+    expect(seen.some((q) => q.includes("INSERT INTO accounting.escrow_postings"))).toBe(false);
+    expect(mocked.createJournalEntryMock).not.toHaveBeenCalled();
+  });
+
+  // AUTH-400 — a deposit that names its source is one event too: a second identical deposit returns the first.
+  it("a second deposit of the same source and amount is a no-op that returns the first", async () => {
+    mocked.createJournalEntryMock.mockClear();
+    const first = {
+      id: "posting-d1", operating_company_id: "oc-1", escrow_account_id: "escrow-1", posting_type: "deposit", amount_cents: 5000,
+      source_type: "settlement", source_id: CLAIM, note: null, posted_at: "", posted_by_user_id: "user-1",
+      linked_journal_entry_id: "je-d1", created_at: "",
+    };
+    const seen: string[] = [];
+    mocked.queryMock.mockImplementation(async (sql: string, values?: unknown[]) => {
+      seen.push(sql);
+      if (sql.includes("FROM accounting.escrow_accounts") && sql.includes("FOR UPDATE")) return { rows: [account] };
+      if (sql.includes("FROM accounting.escrow_postings") && sql.includes("posting_type = $6") && values?.[5] === "deposit") return { rows: [first] };
+      return { rows: [] };
+    });
+    const out = (await depositEscrow(
+      { operating_company_id: "oc-1", escrow_account_id: "escrow-1", amount_cents: 5000, source_type: "settlement", source_id: CLAIM } as never,
+      { userId: "user-1", role: "Accountant" }
+    )) as { posting: { id: string }; idempotent_replay?: boolean };
+    expect(out.posting.id).toBe("posting-d1");
     expect(out.idempotent_replay).toBe(true);
     expect(seen.some((q) => q.includes("INSERT INTO accounting.escrow_postings"))).toBe(false);
     expect(mocked.createJournalEntryMock).not.toHaveBeenCalled();

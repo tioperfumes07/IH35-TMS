@@ -619,7 +619,7 @@ export async function restoreReversedJournalEntryInClientTx(
     source_transaction_type: string | null; source_transaction_id: string | null; source_transaction_line_id: string | null;
     o_id: string | null; o_account_id: string | null; o_side: "debit" | "credit" | null; o_amount_cents: string | null; o_description: string | null;
     o_class_id: string | null; o_location_id: string | null; o_entity_uuid: string | null; o_entity_type: string | null; o_load_id: string | null;
-    o_source_type: string | null; o_source_id: string | null; o_source_line_id: string | null;
+    o_source_type: string | null; o_source_id: string | null; o_source_line_id: string | null; o_reversed_by: string | null;
   }>(
     `SELECT l.id::text, l.account_id::text, l.debit_or_credit, l.amount_cents::text, l.description,
             l.class_id::text, l.location_id::text, l.entity_uuid::text, l.entity_type, l.load_id::text,
@@ -627,7 +627,8 @@ export async function restoreReversedJournalEntryInClientTx(
             o.id::text AS o_id, o.account_id::text AS o_account_id, o.debit_or_credit AS o_side, o.amount_cents::text AS o_amount_cents,
             o.description AS o_description, o.class_id::text AS o_class_id, o.location_id::text AS o_location_id,
             o.entity_uuid::text AS o_entity_uuid, o.entity_type AS o_entity_type, o.load_id::text AS o_load_id,
-            o.source_transaction_type AS o_source_type, o.source_transaction_id AS o_source_id, o.source_transaction_line_id AS o_source_line_id
+            o.source_transaction_type AS o_source_type, o.source_transaction_id AS o_source_id, o.source_transaction_line_id AS o_source_line_id,
+            o.reversed_by_line_id::text AS o_reversed_by
        FROM accounting.journal_entry_postings l
        LEFT JOIN accounting.journal_entry_postings o ON o.id = l.reversal_of_line_id
       WHERE l.journal_entry_uuid = $1::uuid AND l.operating_company_id = $2::uuid
@@ -635,6 +636,18 @@ export async function restoreReversedJournalEntryInClientTx(
     [journalEntryId, operatingCompanyId]
   );
   if (!lines.rows.length) throw new Error("journal_entry_nothing_to_restore");
+  // AUTH-400 rehearsal — a fresh copy is written only for an original this entry ACTUALLY cancelled: its own
+  // reversed_by_line_id must name this entry's reversal line. An original that is still live (a one-sided link — the
+  // reclassify defect fixed in the posting-line writer) would be duplicated: the rehearsal produced two live $24.59
+  // debits on one expense, and every later void of that expense was rightly refused as unbalanced.
+  for (const l of lines.rows) {
+    if (l.o_id && l.o_reversed_by !== l.id) {
+      throw Object.assign(
+        new Error(`restore_original_not_cancelled_by_this_entry: line ${l.o_id} is ${l.o_reversed_by ? `reversed by ${l.o_reversed_by}` : "still live"}, not by ${l.id} — restoring it would duplicate it`),
+        { code: "restore_original_not_cancelled_by_this_entry" }
+      );
+    }
+  }
   const cutoff = (await client.query<{ c: string | null }>(`SELECT accounting.closed_period_cutoff($1::uuid)::text AS c`, [operatingCompanyId])).rows[0]?.c ?? null;
   const restoreDate = resolveReversalDate(x.entry_date, cutoff, todayIso());
   const postings = lines.rows.map((l) =>
