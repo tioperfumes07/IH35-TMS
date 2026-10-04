@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -43,31 +44,32 @@ function selftest() {
     console.error("SELFTEST FAIL already red", clean);
     process.exit(1);
   }
-  const abs = path.join(ROOT, PAGE);
-  const original = fs.readFileSync(abs, "utf8");
+  const original = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "saf-f32-selftest-"));
+  const tmpPage = path.join(tmpRoot, PAGE);
+  fs.mkdirSync(path.dirname(tmpPage), { recursive: true });
   try {
     fs.writeFileSync(
-      abs,
+      tmpPage,
       original.replace(
         "const deadline = deadlineQ.data?.deadline ?? null;",
         'const deadline = deadlineQ.data?.deadline ?? "Aug 31";'
       )
     );
-    if (!run().some((f) => f.includes("hardcode"))) {
-      console.error("SELFTEST FAIL planted hardcode not caught", run());
+    if (!run(tmpRoot).some((f) => f.includes("hardcode"))) {
+      console.error("SELFTEST FAIL planted hardcode not caught", run(tmpRoot));
       process.exit(1);
     }
-    fs.writeFileSync(abs, original);
     fs.writeFileSync(
-      abs,
+      tmpPage,
       original.replace(/per_unit_deadlines/g, "deadline_only")
     );
-    if (!run().some((f) => f.includes("per_unit_deadlines"))) {
-      console.error("SELFTEST FAIL planted missing per_unit_deadlines not caught", run());
+    if (!run(tmpRoot).some((f) => f.includes("per_unit_deadlines"))) {
+      console.error("SELFTEST FAIL planted missing per_unit_deadlines not caught", run(tmpRoot));
       process.exit(1);
     }
   } finally {
-    fs.writeFileSync(abs, original);
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
   }
   console.log("verify-saf-f32-permits-deadline-honesty --selftest OK");
 }

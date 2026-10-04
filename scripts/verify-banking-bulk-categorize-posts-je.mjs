@@ -68,39 +68,39 @@ export function run(root = process.cwd()) {
 }
 
 if (process.argv.includes("--selftest")) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "verify-banking-bulk-categorize-je-"));
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "verify-banking-bulk-categorize-je-"));
   const routePath = path.join(process.cwd(), ROUTE_PATH);
-  const copiedPath = path.join(root, ROUTE_PATH);
-  fs.mkdirSync(path.dirname(copiedPath), { recursive: true });
-  fs.writeFileSync(copiedPath, fs.readFileSync(routePath, "utf8"));
+  const tmpCopiedPath = path.join(tmpRoot, ROUTE_PATH);
+  fs.mkdirSync(path.dirname(tmpCopiedPath), { recursive: true });
+  fs.writeFileSync(tmpCopiedPath, fs.readFileSync(routePath, "utf8"));
 
-  if (run(root).length) throw new Error(`PASS case failed: ${run(root).join("; ")}`);
+  if (run(tmpRoot).length) throw new Error(`PASS case failed: ${run(tmpRoot).join("; ")}`);
 
-  const original = fs.readFileSync(copiedPath, "utf8");
+  const original = fs.readFileSync(tmpCopiedPath, "utf8");
   const bulkStart = original.indexOf('app.post("/api/v1/banking/transactions/categorize-bulk"');
   const awaitedPoster = original.indexOf("await maybePostBankCategorizationToGl", bulkStart);
   if (awaitedPoster < 0) throw new Error("could not locate categorize-bulk poster for selftest");
   const mutated = `${original.slice(0, awaitedPoster)}void maybePostBankCategorizationToGl${original.slice(
     awaitedPoster + "await maybePostBankCategorizationToGl".length
   )}`;
-  fs.writeFileSync(copiedPath, mutated);
-  if (!run(root).length) throw new Error("FAIL case was not detected after removing categorize-bulk awaited poster");
+  fs.writeFileSync(tmpCopiedPath, mutated);
+  if (!run(tmpRoot).length) throw new Error("FAIL case was not detected after removing categorize-bulk awaited poster");
 
   // Legacy dual-path: strip poster from /bulk-categorize while leaving categorize-bulk OK.
-  fs.writeFileSync(copiedPath, original);
+  fs.writeFileSync(tmpCopiedPath, original);
   const legacyStart = original.indexOf('app.post("/api/v1/banking/transactions/bulk-categorize"');
   const legacyPoster = original.indexOf("await maybePostBankCategorizationToGl", legacyStart);
   if (legacyPoster < 0) throw new Error("could not locate bulk-categorize poster for selftest");
   const legacyMutated = `${original.slice(0, legacyPoster)}/*removed*/${original.slice(
     legacyPoster + "await maybePostBankCategorizationToGl".length
   )}`;
-  fs.writeFileSync(copiedPath, legacyMutated);
-  const legacyFails = run(root);
+  fs.writeFileSync(tmpCopiedPath, legacyMutated);
+  const legacyFails = run(tmpRoot);
   if (!legacyFails.some((f) => f.includes("bulk-categorize"))) {
     throw new Error(`FAIL case was not detected for legacy bulk-categorize: ${legacyFails.join("; ")}`);
   }
 
-  fs.rmSync(root, { recursive: true, force: true });
+  fs.rmSync(tmpRoot, { recursive: true, force: true });
   console.log("verify-banking-bulk-categorize-posts-je --selftest OK");
 } else {
   const failures = run();

@@ -59,11 +59,11 @@ export function run(root = ROOT) {
 }
 
 function selftest() {
-  const dir = fs.mkdtempSync("/tmp/drv03-server-gate-selftest-");
+  const tmpDir = fs.mkdtempSync("/tmp/drv03-server-gate-selftest-");
   const write = (content) => {
-    const abs = path.join(dir, REL);
-    fs.mkdirSync(path.dirname(abs), { recursive: true });
-    fs.writeFileSync(abs, content);
+    const tmpAbs = path.join(tmpDir, REL);
+    fs.mkdirSync(path.dirname(tmpAbs), { recursive: true });
+    fs.writeFileSync(tmpAbs, content);
   };
 
   const fixed = `
@@ -84,12 +84,12 @@ function selftest() {
     }
   `;
   write(fixed);
-  const clean = run(dir);
+  const clean = run(tmpDir);
   if (clean.length) throw new Error("PASS fail (should be clean): " + JSON.stringify(clean));
 
   // Regress: gate removed entirely.
   write(`const res = await client.query(\`INSERT INTO mdata.drivers (id) VALUES ($1)\`, [1]);`);
-  const removed = run(dir);
+  const removed = run(tmpDir);
   if (!removed.some((p) => p.includes("hardcoded list or was removed"))) {
     throw new Error("FAIL to catch: gate removal went undetected");
   }
@@ -108,7 +108,7 @@ function selftest() {
       return { status: 409, body: { error: "driver_dqf_required_document_missing", missing: created.missing } };
     }
   `);
-  const afterInsert = run(dir);
+  const afterInsert = run(tmpDir);
   if (!afterInsert.some((p) => p.includes("must run BEFORE"))) {
     throw new Error("FAIL to catch: gate-after-insert regression went undetected");
   }
@@ -125,12 +125,12 @@ function selftest() {
     const res = await client.query(\`INSERT INTO mdata.drivers (id) VALUES ($1)\`, [1]);
     return { status: 400, body: { error: String(created.error) } };
   `);
-  const genericFallback = run(dir);
+  const genericFallback = run(tmpDir);
   if (!genericFallback.some((p) => p.includes("must map to 409"))) {
     throw new Error("FAIL to catch: 409 mapping silently dropped went undetected");
   }
 
-  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(tmpDir, { recursive: true, force: true });
   console.log(`${LABEL} --selftest OK`);
 }
 

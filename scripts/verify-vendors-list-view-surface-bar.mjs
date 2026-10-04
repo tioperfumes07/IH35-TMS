@@ -7,6 +7,7 @@
  * Master-detail sidebar is a distinct contract — do not "fix" by duplicating chrome there.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -47,19 +48,27 @@ function assertSource() {
 function selftest() {
   assertSource();
   const backup = fs.readFileSync(LIST, "utf8");
+  // Plant into a mkdtemp mirror of the tree (script + files it reads); never write tracked source.
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "verify-vendors-list-view-"));
   try {
+    for (const abs of [SELF, LIST, PARITY]) {
+      const dest = path.join(tmpRoot, path.relative(ROOT, abs));
+      fs.mkdirSync(path.dirname(dest), { recursive: true });
+      fs.copyFileSync(abs, dest);
+    }
+    const tmpList = path.join(tmpRoot, path.relative(ROOT, LIST));
     const planted = backup.replace(/<ParityTable[\s\S]*?\/>/, "<div data-broken-vendors-list />");
     if (planted === backup) {
       // multiline self-closing may not match — strip ParityTable import usage instead
       const planted2 = backup.replace("ParityTable", "BrokenTable").replace("<BrokenTable", "<div").replace("BrokenTable<", "div");
-      fs.writeFileSync(LIST, planted2.includes("BrokenTable") ? planted2 : backup.replace(/ParityTable/g, "XParityTable"));
+      fs.writeFileSync(tmpList, planted2.includes("BrokenTable") ? planted2 : backup.replace(/ParityTable/g, "XParityTable"));
     } else {
-      fs.writeFileSync(LIST, planted);
+      fs.writeFileSync(tmpList, planted);
     }
-    const r = spawnSync(process.execPath, [SELF], { encoding: "utf8" });
+    const r = spawnSync(process.execPath, [path.join(tmpRoot, path.relative(ROOT, SELF))], { encoding: "utf8" });
     if (r.status === 0) fail("mutated VendorsListView still passed");
   } finally {
-    fs.writeFileSync(LIST, backup);
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
   }
   console.log("PASS: verify-vendors-list-view-surface-bar --selftest");
 }

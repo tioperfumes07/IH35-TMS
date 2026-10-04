@@ -57,22 +57,22 @@ if (process.argv.includes("--selftest")) {
     for (const p of baseline) console.error("  - " + p);
     process.exit(1);
   }
-  const stubRoot = fs.mkdtempSync(path.join(os.tmpdir(), "fleet-edit-driver-"));
+  const tmpStubRoot = fs.mkdtempSync(path.join(os.tmpdir(), "fleet-edit-driver-"));
   try {
-    const dir = path.join(stubRoot, "apps/frontend/src/components/fleet");
-    fs.mkdirSync(dir, { recursive: true });
+    const tmpStubDir = path.join(tmpStubRoot, "apps/frontend/src/components/fleet");
+    fs.mkdirSync(tmpStubDir, { recursive: true });
     fs.writeFileSync(
-      path.join(dir, "EditVehicleModal.tsx"),
+      path.join(tmpStubDir, "EditVehicleModal.tsx"),
       `{ key: "assigned_driver_id", label: "Default Driver ID", type: "text", tab: "Quick-availability" }
 <input id="assigned_driver_id" type="text" value={draft.assigned_driver_id} />`
     );
-    const planted = collectProblems(stubRoot);
+    const planted = collectProblems(tmpStubRoot);
     if (!planted.length) {
       console.error(`${LABEL} SELFTEST FAIL: planted stub did not FAIL`);
       process.exit(1);
     }
   } finally {
-    fs.rmSync(stubRoot, { recursive: true, force: true });
+    fs.rmSync(tmpStubRoot, { recursive: true, force: true });
   }
   console.log(`${LABEL} SELFTEST OK`);
 } else {

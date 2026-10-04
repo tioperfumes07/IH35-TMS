@@ -94,25 +94,25 @@ export function checkLegacyFixedAssetsRefs(opts = {}) {
 function selftest() {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-fa-"));
   try {
-    const src = path.join(tmp, "apps/backend/src");
-    fs.mkdirSync(path.join(src, "__tests__"), { recursive: true });
+    const tmpSrc = path.join(tmp, "apps/backend/src");
+    fs.mkdirSync(path.join(tmpSrc, "__tests__"), { recursive: true });
     fs.writeFileSync(
-      path.join(src, "ok.ts"),
+      path.join(tmpSrc, "ok.ts"),
       [
         "await q(`SELECT id FROM accounting.fixed_assets WHERE id = $1`);",
         "const n = data.fixed_assets.length;",
         "// doc: legacy fixed_assets.assets was retired",
       ].join("\n") + "\n"
     );
-    fs.writeFileSync(path.join(src, "bad-from.ts"), "await q(`SELECT 1 FROM fixed_assets.assets WHERE id = $1`);\n");
-    fs.writeFileSync(path.join(src, "bad-insert.ts"), "await q(`INSERT INTO fixed_assets.assets (name) VALUES ($1)`);\n");
-    fs.writeFileSync(path.join(src, "bad-update.ts"), "await q(`UPDATE fixed_assets.asset_classes SET name = $1`);\n");
+    fs.writeFileSync(path.join(tmpSrc, "bad-from.ts"), "await q(`SELECT 1 FROM fixed_assets.assets WHERE id = $1`);\n");
+    fs.writeFileSync(path.join(tmpSrc, "bad-insert.ts"), "await q(`INSERT INTO fixed_assets.assets (name) VALUES ($1)`);\n");
+    fs.writeFileSync(path.join(tmpSrc, "bad-update.ts"), "await q(`UPDATE fixed_assets.asset_classes SET name = $1`);\n");
     fs.writeFileSync(
-      path.join(src, "__tests__/t.test.ts"),
+      path.join(tmpSrc, "__tests__/t.test.ts"),
       "await q(`DELETE FROM fixed_assets.disposals WHERE id = $1`);\n"
     );
 
-    const v = checkLegacyFixedAssetsRefs({ roots: [src], relFrom: tmp });
+    const v = checkLegacyFixedAssetsRefs({ roots: [tmpSrc], relFrom: tmp });
     const has = (f) => v.some((x) => x.includes(f));
     const checks = [
       ["canonical accounting.fixed_assets ok", !has("ok.ts")],

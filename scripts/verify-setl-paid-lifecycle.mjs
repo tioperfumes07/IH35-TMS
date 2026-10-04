@@ -16,13 +16,14 @@ function fail(msg) {
   process.exit(1);
 }
 
-function audit() {
+// srcOverride: planted text for --selftest (no file is written).
+function audit(srcOverride) {
   const problems = [];
-  if (!fs.existsSync(SVC)) {
+  if (srcOverride === undefined && !fs.existsSync(SVC)) {
     problems.push(`missing ${SVC}`);
     return problems;
   }
-  const src = fs.readFileSync(SVC, "utf8");
+  const src = srcOverride ?? fs.readFileSync(SVC, "utf8");
   if (!src.includes("paid_at = COALESCE(paid_at, now())")) {
     problems.push("markPaidManually UPDATE must set paid_at = COALESCE(paid_at, now())");
   }
@@ -46,22 +47,12 @@ function selftest() {
   let planted = 0;
 
   const broken = original.replace("paid_at = COALESCE(paid_at, now()),", "/* planted */");
-  fs.writeFileSync(SVC, broken);
-  try {
-    if (audit().length === 0) fail("selftest: expected FAIL after removing COALESCE paid_at");
-    planted += 1;
-  } finally {
-    fs.writeFileSync(SVC, original);
-  }
+  if (audit(broken).length === 0) fail("selftest: expected FAIL after removing COALESCE paid_at");
+  planted += 1;
 
   const brokenHeal = original.replace("AND paid_at IS NULL", "AND paid_at IS NOT NULL /* planted */");
-  fs.writeFileSync(SVC, brokenHeal);
-  try {
-    if (audit().length === 0) fail("selftest: expected FAIL after breaking heal predicate");
-    planted += 1;
-  } finally {
-    fs.writeFileSync(SVC, original);
-  }
+  if (audit(brokenHeal).length === 0) fail("selftest: expected FAIL after breaking heal predicate");
+  planted += 1;
 
   console.log(`[${LABEL}] selftest PASS (${planted} plants)`);
 }

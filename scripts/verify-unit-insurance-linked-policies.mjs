@@ -154,14 +154,12 @@ function selftest() {
       process.exitCode = 1;
       return;
     }
-    fs.writeFileSync(BACKEND_FILE, mutated);
     let caught = false;
     try {
       checkBackend(mutated);
       caught = process.exitCode === 1;
     } finally {
       process.exitCode = undefined;
-      fs.writeFileSync(BACKEND_FILE, originalBackend);
     }
     if (!caught) {
       console.error("SELFTEST INERT: dropping the real unit_id filter was not caught.");
@@ -279,14 +277,12 @@ function selftest() {
       process.exitCode = 1;
       return;
     }
-    fs.writeFileSync(FRONTEND_FILE, mutated);
     let caught = false;
     try {
       checkFrontend(mutated);
       caught = process.exitCode === 1;
     } finally {
       process.exitCode = undefined;
-      fs.writeFileSync(FRONTEND_FILE, originalFrontend);
     }
     if (!caught) {
       console.error("SELFTEST INERT: reverting the empty-state condition was not caught.");

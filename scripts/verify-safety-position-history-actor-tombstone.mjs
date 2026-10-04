@@ -6,17 +6,16 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 const TARGET = path.join(ROOT, "apps/frontend/src/pages/safety/PositionHistoryPage.tsx");
-const SELF = path.join(ROOT, "scripts/verify-safety-position-history-actor-tombstone.mjs");
+
+class GuardFail extends Error {}
 
 function fail(msg) {
-  console.error(`FAIL: ${msg}`);
-  process.exit(1);
+  throw new GuardFail(msg);
 }
 
 function assertSource(src) {
@@ -43,25 +42,32 @@ function assertSource(src) {
 function selftest() {
   const good = fs.readFileSync(TARGET, "utf8");
   assertSource(good);
-  const backup = good;
-  const bad = good
+    const bad = good
     .replaceAll("isUnresolvedEntityTombstone", "NEVER_TOMBSTONE")
     .replaceAll("position-history-actor-tombstone", "gone");
-  fs.writeFileSync(TARGET, bad);
+  // Pure check on the planted string -- no tracked file is written.
+  let detected = false;
   try {
-    const r = spawnSync(process.execPath, [SELF], { encoding: "utf8" });
-    if (r.status === 0) {
-      fail("--selftest: mutated source still passed (guard not mutation-proven)");
-    }
-  } finally {
-    fs.writeFileSync(TARGET, backup);
+    assertSource(bad);
+  } catch (err) {
+    if (!(err instanceof GuardFail)) throw err;
+    detected = true;
+  }
+  if (!detected) {
+    fail("--selftest: mutated source still passed (guard not mutation-proven)");
   }
   console.log("PASS: verify-safety-position-history-actor-tombstone --selftest");
 }
 
-if (process.argv.includes("--selftest")) {
-  selftest();
-} else {
-  assertSource(fs.readFileSync(TARGET, "utf8"));
-  console.log("PASS: verify-safety-position-history-actor-tombstone");
+try {
+  if (process.argv.includes("--selftest")) {
+    selftest();
+  } else {
+    assertSource(fs.readFileSync(TARGET, "utf8"));
+    console.log("PASS: verify-safety-position-history-actor-tombstone");
+  }
+} catch (err) {
+  if (!(err instanceof GuardFail)) throw err;
+  console.error(`FAIL: ${err.message}`);
+  process.exit(1);
 }

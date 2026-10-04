@@ -14,8 +14,8 @@ function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-export function check() {
-  const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+/** Pure over the page text (defaults to the tracked file); the selftest passes a planted string. */
+export function check(src = fs.readFileSync(path.join(ROOT, PAGE), "utf8")) {
   assert(src.includes("ParityTable"), "BankAccountVisibilityPage: must use ParityTable");
   assert(src.includes('storageKey="bank-account-visibility"'), "BankAccountVisibilityPage: must set storageKey");
   assert(src.includes('tableTestId="bank-account-visibility-table"'), "BankAccountVisibilityPage: must set tableTestId");
@@ -26,22 +26,18 @@ export function check() {
 
 function selftest() {
   check();
-  const filePath = path.join(ROOT, PAGE);
-  const good = fs.readFileSync(filePath, "utf8");
   const planted = [
     "export function BankAccountVisibilityPage() {",
     '  return <table className="min-w-full" data-testid="bank-account-visibility-table"><tbody /></table>;',
     "}",
     "",
   ].join("\n");
-  fs.writeFileSync(filePath, planted);
   let failed = false;
   try {
-    check();
+    check(planted);
   } catch {
     failed = true;
   }
-  fs.writeFileSync(filePath, good);
   assert(failed, "selftest: expected FAIL on raw HTML table");
   console.log("verify-bank-account-visibility-parity-surface-bar --selftest PASS");
 }

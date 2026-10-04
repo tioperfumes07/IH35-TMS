@@ -5,6 +5,7 @@
  * Cursor even claim: 2300.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -64,12 +65,12 @@ if (process.argv.includes("--selftest")) {
     for (const p of baseline) console.error("  - " + p);
     process.exit(1);
   }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-runner-filters-"));
+  const stubRoot = fs.mkdtempSync(path.join(os.tmpdir(), "tmp-runner-filters-"));
   try {
-    const dir = path.join(stubRoot, "apps/frontend/src/pages/reports/runners");
-    fs.mkdirSync(dir, { recursive: true });
+    const tmpStubDir = path.join(stubRoot, "apps/frontend/src/pages/reports/runners");
+    fs.mkdirSync(tmpStubDir, { recursive: true });
     fs.writeFileSync(
-      path.join(dir, "RunnerFilters.tsx"),
+      path.join(tmpStubDir, "RunnerFilters.tsx"),
       `listDrivers({ status: "Active", search: "", operating_company_id: id, limit: 200 })
 if (filter.type === "driver_select") {
   return <SelectCombobox value={v} onChange={onChange} />;

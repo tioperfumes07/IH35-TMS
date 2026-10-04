@@ -19,9 +19,10 @@ function read(rel) {
   return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
 }
 
-function analyze() {
+function analyze(planted = {}) {
   const failures = [];
-  const page = read(PAGE);
+  const readSrc = (rel) => planted[rel] ?? read(rel);
+  const page = readSrc(PAGE);
   if (!/function signerKind\(/.test(page)) {
     failures.push("page must define module-level signerKind");
   }
@@ -42,12 +43,12 @@ function analyze() {
     failures.push("list must EntityLink with computed kind");
   }
 
-  const api = read(API);
+  const api = readSrc(API);
   if (!/export type LegalContractSummary = \{[\s\S]*?signer_entity_id: string \| null;/.test(api)) {
     failures.push("LegalContractSummary must include signer_entity_id");
   }
 
-  const svc = read(SVC);
+  const svc = readSrc(SVC);
   // list query block — require signer_entity_id near signer_type in SELECT
   if (!/ci\.signer_type,\s*\n\s*ci\.signer_entity_id,/.test(svc)) {
     failures.push("listContractInstances SELECT must include ci.signer_entity_id after signer_type");
@@ -75,13 +76,12 @@ function selftest() {
       },`,
     );
     if (bad === original) fail("selftest could not plant plain-text list signer");
-    fs.writeFileSync(pagePath, bad);
-    const planted = analyze();
+    const planted = analyze({ [PAGE]: bad });
     if (!planted.some((m) => /plain-text|signer-link|EntityLink/.test(m))) {
       fail(`selftest expected list fail; got: ${planted.join("; ")}`);
     }
   } finally {
-    fs.writeFileSync(pagePath, original);
+    // nothing written to disk; planted text is passed in-memory
   }
 
   const svcPath = path.join(process.cwd(), SVC);
@@ -89,13 +89,12 @@ function selftest() {
   try {
     const bad = svcOriginal.replace(/ci\.signer_type,\s*\n\s*ci\.signer_entity_id,/, "ci.signer_type,");
     if (bad === svcOriginal) fail("selftest could not drop list signer_entity_id");
-    fs.writeFileSync(svcPath, bad);
-    const planted = analyze();
+    const planted = analyze({ [SVC]: bad });
     if (!planted.some((m) => /signer_entity_id/.test(m))) {
       fail(`selftest expected service fail; got: ${planted.join("; ")}`);
     }
   } finally {
-    fs.writeFileSync(svcPath, svcOriginal);
+    // in-memory plant only
   }
 
   const good = analyze();

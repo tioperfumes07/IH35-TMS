@@ -19,13 +19,13 @@ function exists(relativePath) {
   return fs.existsSync(path.join(ROOT, relativePath));
 }
 
-export function run() {
+export function run(srcOverride) {
   const failures = [];
-  if (!exists(FILE)) {
+  if (srcOverride === undefined && !exists(FILE)) {
     failures.push(`MISSING: ${FILE}`);
     return failures;
   }
-  const src = read(FILE);
+  const src = srcOverride !== undefined ? srcOverride : read(FILE);
 
   if (!/getQboSyncHealth\s*\(/.test(src)) {
     failures.push(`${FILE}: must call getQboSyncHealth to load QBO sync status`);
@@ -49,18 +49,16 @@ export function run() {
 function main() {
   const args = process.argv.slice(2);
   if (args.includes("--selftest")) {
-    const realPath = path.join(ROOT, FILE);
-    const backup = fs.readFileSync(realPath, "utf8");
+    const backup = read(FILE);
     try {
-      fs.writeFileSync(realPath, backup.replace(/OFF \(by design\)/g, "ON"), "utf8");
-      const planted = run();
+      const planted = run(backup.replace(/OFF \(by design\)/g, "ON"));
       if (planted.length === 0) {
         console.error("[verify-sys-s05-qbo-sync-writeback-off] SELFTEST FAIL: planted 'ON' did not fail");
         process.exit(1);
       }
       console.log(`[verify-sys-s05-qbo-sync-writeback-off] SELFTEST PASS (${planted.length} planted failures detected)`);
     } finally {
-      fs.writeFileSync(realPath, backup, "utf8");
+      // nothing written to disk
     }
     process.exit(0);
   }

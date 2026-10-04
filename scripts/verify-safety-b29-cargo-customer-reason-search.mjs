@@ -3,7 +3,7 @@
  * GUARD: Cargo claim claimant + reason pickers server-search (SAF-B29).
  * Wave-2 wired driver/unit/load; customer + reason stayed silent 200-cap.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const ROOT = new URL("..", import.meta.url).pathname.replace(/\/$/, "");
@@ -11,8 +11,8 @@ const FILE = join(ROOT, "apps/frontend/src/pages/safety/components/CargoClaimInt
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
 const LABEL = "verify-safety-b29-cargo-customer-reason-search";
 
-export function run() {
-  const s = strip(readFileSync(FILE, "utf8"));
+export function run(plantedText) {
+  const s = strip(plantedText ?? readFileSync(FILE, "utf8"));
   const checks = [
     ["customer-term-state", /const \[customerSearch, setCustomerSearch\] = useState/.test(s)],
     ["reason-term-state", /const \[reasonSearch, setReasonSearch\] = useState/.test(s)],
@@ -40,15 +40,12 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAIL: already red`);
     process.exit(1);
   }
-  try {
-    writeFileSync(FILE, original.replace(", customerSearch]", "]"), "utf8");
-    const caught = run();
+  {
+    const caught = run(original.replace(", customerSearch]", "]"));
     if (caught.ok || !caught.failed.includes("customer-in-query-key")) {
       console.error(`${LABEL} SELFTEST FAIL: not caught`, caught.message);
       process.exit(1);
     }
-  } finally {
-    writeFileSync(FILE, original, "utf8");
   }
   console.log(`${LABEL} SELFTEST OK`);
 }

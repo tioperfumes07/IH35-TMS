@@ -9,7 +9,7 @@
  * role-gated and SETTLEMENT_GL_POSTING_ENABLED-gated — re-anchored to where that poster now lives.
  *
  * Prove: fails on pre-fix main; passes on this fix.
- * --selftest mutates the real routes source (write + restore).
+ * --selftest plants the defect in an in-memory copy of the routes source (no file is written).
  *
  * Rule 17: verify-step only — do not edit package.json / locked-guards / ci.yml.
  */
@@ -94,15 +94,10 @@ function selftest() {
     process.exit(1);
   }
 
-  try {
-    fs.writeFileSync(ROUTES, planted, "utf8");
-    const bad = run();
-    if (bad.length === 0) {
-      console.error(`[${LABEL}] --selftest FAIL: removing forward route did not fail the guard`);
-      process.exit(1);
-    }
-  } finally {
-    fs.writeFileSync(ROUTES, original, "utf8");
+  const bad = analyzeRoutesSource(planted);
+  if (bad.length === 0) {
+    console.error(`[${LABEL}] --selftest FAIL: removing forward route did not fail the guard`);
+    process.exit(1);
   }
 
   const restored = run();

@@ -4,6 +4,7 @@
  * Cursor even claim: 2134.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -42,23 +43,23 @@ if (process.argv.includes("--selftest")) {
     for (const p of baseline) console.error("  - " + p);
     process.exit(1);
   }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-cash-adv-req-"));
+  const tmpStubRoot = fs.mkdtempSync(path.join(os.tmpdir(), ".tmp-cash-adv-req-"));
   try {
-    const dir = path.join(stubRoot, "apps/frontend/src/pages/driver-finance");
-    fs.mkdirSync(dir, { recursive: true });
+    const tmpStubDir = path.join(tmpStubRoot, "apps/frontend/src/pages/driver-finance");
+    fs.mkdirSync(tmpStubDir, { recursive: true });
     fs.writeFileSync(
-      path.join(dir, "CashAdvanceRequestsPage.tsx"),
+      path.join(tmpStubDir, "CashAdvanceRequestsPage.tsx"),
       `listDrivers({ operating_company_id: companyId, status: "Active", limit: 500 })
 <Combobox options={driverOptions} value={newDriverId} />
 `
     );
-    const planted = collectProblems(stubRoot);
+    const planted = collectProblems(tmpStubRoot);
     if (!planted.length) {
       console.error(`${LABEL} SELFTEST FAIL: planted stub did not FAIL`);
       process.exit(1);
     }
   } finally {
-    fs.rmSync(stubRoot, { recursive: true, force: true });
+    fs.rmSync(tmpStubRoot, { recursive: true, force: true });
   }
   console.log(`${LABEL} SELFTEST OK`);
 } else {

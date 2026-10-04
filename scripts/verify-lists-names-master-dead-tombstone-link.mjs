@@ -43,9 +43,8 @@ function fail(msg) {
 }
 
 function selftest() {
-  const pagePath = path.join(process.cwd(), PAGE);
-  const original = fs.readFileSync(pagePath, "utf8");
-  try {
+  const original = read();
+  {
     const mutations = [
       ["tombstone predicate", /isUnresolvedEntityTombstone/g, "NO_TOMBSTONE"],
       ["canonical route comparison", /expected === row\.link_to_module_page/, "true"],
@@ -55,12 +54,9 @@ function selftest() {
     for (const [name, pattern, replacement] of mutations) {
       const bad = original.replace(pattern, replacement);
       if (bad === original) fail(`selftest mutation did not apply: ${name}`);
-      fs.writeFileSync(pagePath, bad);
-      const planted = analyze(read());
+      const planted = analyze(bad);
       if (!planted.length) fail(`selftest expected fail: ${name}`);
     }
-  } finally {
-    fs.writeFileSync(pagePath, original);
   }
   const good = analyze(read());
   if (good.length) fail(`selftest expected GOOD: ${good.join("; ")}`);

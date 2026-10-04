@@ -84,14 +84,12 @@ function selftest() {
       process.exitCode = 1;
       return;
     }
-    fs.writeFileSync(BACKEND_SERVICE, mutated);
     let caught = false;
     try {
       checkBackend(mutated);
       caught = process.exitCode === 1;
     } finally {
       process.exitCode = undefined;
-      fs.writeFileSync(BACKEND_SERVICE, original);
     }
     if (!caught) {
       console.error("SELFTEST INERT: reintroducing an uncast comparison was not caught.");
@@ -110,14 +108,12 @@ function selftest() {
       process.exitCode = 1;
       return;
     }
-    fs.writeFileSync(PAGE_FILE, mutated);
     let caught = false;
     try {
       checkPage(mutated);
       caught = process.exitCode === 1;
     } finally {
       process.exitCode = undefined;
-      fs.writeFileSync(PAGE_FILE, original);
     }
     if (!caught) {
       console.error("SELFTEST INERT: dropping the assignTempCover call was not caught.");
@@ -136,14 +132,12 @@ function selftest() {
       process.exitCode = 1;
       return;
     }
-    fs.writeFileSync(PAGE_FILE, mutated);
     let caught = false;
     try {
       checkPage(mutated);
       caught = process.exitCode === 1;
     } finally {
       process.exitCode = undefined;
-      fs.writeFileSync(PAGE_FILE, original);
     }
     if (!caught) {
       console.error("SELFTEST INERT: dropping the cancelTempCover call was not caught.");

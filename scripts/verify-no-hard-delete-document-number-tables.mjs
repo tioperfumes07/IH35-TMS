@@ -107,17 +107,17 @@ export function assertNoHardDeleteDocumentNumberTables(opts = {}) {
 
 function selftest() {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "go18-gap5-display-id-"));
-  const displayDir = path.join(tmp, "apps/backend/src/accounting");
-  const plantDir = path.join(tmp, "apps/backend/src/accounting");
-  fs.mkdirSync(displayDir, { recursive: true });
+  const tmpDisplayDir = path.join(tmp, "apps/backend/src/accounting");
+  const tmpPlantDir = path.join(tmp, "apps/backend/src/accounting");
+  fs.mkdirSync(tmpDisplayDir, { recursive: true });
   const realDisplay = path.join(ROOT, DISPLAY_ID_REL);
   if (!fs.existsSync(realDisplay)) {
     console.error(`[${LABEL}] SELFTEST FAIL — missing ${DISPLAY_ID_REL} on this tree`);
     process.exit(1);
   }
-  fs.copyFileSync(realDisplay, path.join(displayDir, "display-id.ts"));
+  fs.copyFileSync(realDisplay, path.join(tmpDisplayDir, "display-id.ts"));
   fs.writeFileSync(
-    path.join(plantDir, "planted-hard-delete.ts"),
+    path.join(tmpPlantDir, "planted-hard-delete.ts"),
     "await client.query(`DELETE FROM accounting.credit_memos WHERE id = $1`);\n",
   );
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** CLS-VENDOR-COMBOBOX-ROSTER — no Combobox roster over listVendors without ReferenceSelect vendor. */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -48,13 +49,13 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAIL — clean tree already red: ${live.join(", ")}`);
     process.exit(1);
   }
-  const tmp = fs.mkdtempSync(path.join(ROOT, "scripts", ".no-combobox-listvendors-selftest-"));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "no-combobox-listvendors-selftest-"));
   try {
     const rel = "apps/frontend/src/pages/maintenance/parts/PlantedOffenderPage.tsx";
-    const abs = path.join(tmp, rel);
-    fs.mkdirSync(path.dirname(abs), { recursive: true });
+    const tmpAbs = path.join(tmp, rel);
+    fs.mkdirSync(path.dirname(tmpAbs), { recursive: true });
     fs.writeFileSync(
-      abs,
+      tmpAbs,
       `listVendors({ operating_company_id: companyId });\n<Combobox options={vendorOptions} value={vendor} onChange={setVendor} />\n`,
     );
     const planted = scan(tmp);
@@ -63,10 +64,10 @@ function selftest() {
       process.exit(1);
     }
     const allowedRel = "apps/frontend/src/pages/maintenance/parts/PartsMasterDataPage.tsx";
-    const allowedAbs = path.join(tmp, allowedRel);
-    fs.mkdirSync(path.dirname(allowedAbs), { recursive: true });
+    const tmpAllowedAbs = path.join(tmp, allowedRel);
+    fs.mkdirSync(path.dirname(tmpAllowedAbs), { recursive: true });
     fs.writeFileSync(
-      allowedAbs,
+      tmpAllowedAbs,
       `listVendors({ operating_company_id: companyId });\n<Combobox options={vendorOptions} value={vendor} onChange={setVendor} />\n`,
     );
     const withAllowed = scan(tmp);

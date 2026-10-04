@@ -14,8 +14,7 @@ function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-export function check() {
-  const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+export function check(src = fs.readFileSync(path.join(ROOT, PAGE), "utf8")) {
   assert(src.includes("ParityTable"), "CashAdvanceRequestsPage: must use ParityTable");
   assert(src.includes('storageKey="cash-advance-requests"'), "CashAdvanceRequestsPage: must set storageKey");
   assert(!/<table\b/.test(src), "CashAdvanceRequestsPage: must not use raw HTML table");
@@ -39,24 +38,20 @@ function selftest() {
     );
   assert(planted.includes("<table"), "selftest plant must include raw table");
   assert(!planted.includes("ParityTable"), "selftest plant must remove ParityTable");
-  fs.writeFileSync(filePath, planted);
   let failed = false;
   try {
-    check();
+    check(planted);
   } catch {
     failed = true;
   }
-  fs.writeFileSync(filePath, good);
   assert(failed, "selftest: expected FAIL on raw HTML table");
 
-  fs.writeFileSync(filePath, `${good}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`);
   let leftoverFailed = false;
   try {
-    check();
+    check(`${good}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`);
   } catch (err) {
     leftoverFailed = String(err).includes("leftover");
   }
-  fs.writeFileSync(filePath, good);
   assert(leftoverFailed, "selftest: expected FAIL on leftover text-[11px]");
   console.log("verify-cash-advance-requests-parity-surface-bar --selftest PASS");
 }

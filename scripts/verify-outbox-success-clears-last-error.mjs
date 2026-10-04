@@ -37,15 +37,14 @@ function selftest() {
     `last_error = CASE WHEN $2::text = '' THEN NULL ELSE left($2, 2000) END,\n$1updated_at = now()`
   );
   if (planted === orig) throw new Error("selftest: could not plant pre-fix last_error write");
-  fs.writeFileSync(PROC, planted);
   try {
-    const errors = check(fs.readFileSync(PROC, "utf8"));
+    const errors = check(planted);
     if (!errors.some((e) => e.includes("LV-OUTBOX-ERRCOL") || e.includes("last_error"))) {
       throw new Error("selftest: planted defect did not fail: " + JSON.stringify(errors));
     }
     console.log("selftest PASS — planted success→last_error write fails:", errors.find((e) => e.includes("LV-OUTBOX")));
   } finally {
-    fs.writeFileSync(PROC, orig);
+    // planted text lives only in memory; nothing to restore
   }
 }
 

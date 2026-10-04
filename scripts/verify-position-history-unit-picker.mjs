@@ -4,6 +4,7 @@
  * Cursor even claim: 2126. LST-F5197 — filter writes URL via setSearchParams.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -49,12 +50,12 @@ if (process.argv.includes("--selftest")) {
     for (const p of baseline) console.error("  - " + p);
     process.exit(1);
   }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-position-history-"));
+  const stubRoot = fs.mkdtempSync(path.join(os.tmpdir(), "tmp-position-history-"));
   try {
-    const dir = path.join(stubRoot, "apps/frontend/src/pages/safety");
-    fs.mkdirSync(dir, { recursive: true });
+    const tmpDir = path.join(stubRoot, "apps/frontend/src/pages/safety");
+    fs.mkdirSync(tmpDir, { recursive: true });
     fs.writeFileSync(
-      path.join(dir, "PositionHistoryPage.tsx"),
+      path.join(tmpDir, "PositionHistoryPage.tsx"),
       `<label>Unit ID:</label>
 <input type="text" value={unitFilter} placeholder="Filter by unit" />
 `

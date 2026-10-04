@@ -11,7 +11,11 @@ import { fileURLToPath } from "node:url";
 const ROOT = process.cwd();
 const FILE = "apps/backend/src/banking/banking.routes.ts";
 
+// Selftest plants go here (rel path -> planted text); the tracked file is never written.
+const SELFTEST_OVERRIDES = new Map();
+
 function read(relativePath) {
+  if (SELFTEST_OVERRIDES.has(relativePath)) return SELFTEST_OVERRIDES.get(relativePath);
   return fs.readFileSync(path.join(ROOT, relativePath), "utf8");
 }
 
@@ -51,10 +55,9 @@ export function run() {
 function main() {
   const args = process.argv.slice(2);
   if (args.includes("--selftest")) {
-    const realPath = path.join(ROOT, FILE);
-    const backup = fs.readFileSync(realPath, "utf8");
+    const backup = fs.readFileSync(path.join(ROOT, FILE), "utf8");
     try {
-      fs.writeFileSync(realPath, backup.replace(/\(\s*fa\.advance_amount_cents::numeric\s*\/\s*100\s*\)/g, "fa.advance_amount_cents"), "utf8");
+      SELFTEST_OVERRIDES.set(FILE, backup.replace(/\(\s*fa\.advance_amount_cents::numeric\s*\/\s*100\s*\)/g, "fa.advance_amount_cents"));
       const planted = run();
       if (planted.length === 0) {
         console.error("[verify-fact-unit-01-banking-factor-register-scale] SELFTEST FAIL: planted raw-cents amount did not fail");
@@ -62,7 +65,7 @@ function main() {
       }
       console.log(`[verify-fact-unit-01-banking-factor-register-scale] SELFTEST PASS (${planted.length} planted failures detected)`);
     } finally {
-      fs.writeFileSync(realPath, backup, "utf8");
+      SELFTEST_OVERRIDES.clear();
     }
     process.exit(0);
   }

@@ -59,16 +59,16 @@ export function run(root = ROOT) {
 }
 
 function selftest() {
-  const dir = fs.mkdtempSync("/tmp/samsara-addresses-selftest-");
+  const tmpDir = fs.mkdtempSync("/tmp/samsara-addresses-selftest-");
   const writeClient = (content) => {
-    const abs = path.join(dir, CLIENT_REL);
-    fs.mkdirSync(path.dirname(abs), { recursive: true });
-    fs.writeFileSync(abs, content);
+    const tmpAbs = path.join(tmpDir, CLIENT_REL);
+    fs.mkdirSync(path.dirname(tmpAbs), { recursive: true });
+    fs.writeFileSync(tmpAbs, content);
   };
   const writeCollector = (content) => {
-    const abs = path.join(dir, COLLECTOR_REL);
-    fs.mkdirSync(path.dirname(abs), { recursive: true });
-    fs.writeFileSync(abs, content);
+    const tmpAbs = path.join(tmpDir, COLLECTOR_REL);
+    fs.mkdirSync(path.dirname(tmpAbs), { recursive: true });
+    fs.writeFileSync(tmpAbs, content);
   };
 
   const goodClient = `
@@ -88,7 +88,7 @@ function selftest() {
   `;
   writeClient(goodClient);
   writeCollector(goodCollector);
-  const clean = run(dir);
+  const clean = run(tmpDir);
   if (clean.length) throw new Error("PASS fail (should be clean): " + JSON.stringify(clean));
 
   // Regress: type declared, dispatch never wired (the exact silent-gap shape).
@@ -98,7 +98,7 @@ function selftest() {
       return entityType === "drivers" ? client.countDrivers() : client.countVehicles();
     }
   `);
-  const undispatched = run(dir);
+  const undispatched = run(tmpDir);
   if (!undispatched.some((p) => p.includes("silently fall through"))) {
     throw new Error("FAIL to catch: declared-but-undispatched addresses type went undetected");
   }
@@ -106,12 +106,12 @@ function selftest() {
 
   // Regress: type removed entirely.
   writeClient(`export type SamsaraRemoteEntityType = "drivers" | "vehicles";`);
-  const removed = run(dir);
+  const removed = run(tmpDir);
   if (!removed.some((p) => p.includes('no longer includes "addresses"'))) {
     throw new Error("FAIL to catch: SamsaraRemoteEntityType regression went undetected");
   }
 
-  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(tmpDir, { recursive: true, force: true });
   console.log(`${LABEL} --selftest OK`);
 }
 

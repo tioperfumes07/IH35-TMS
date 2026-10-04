@@ -65,14 +65,12 @@ function selftest() {
       process.exitCode = 1;
       return;
     }
-    fs.writeFileSync(FILE, mutated);
     let caught = false;
     try {
       check(mutated);
       caught = process.exitCode === 1;
     } finally {
       process.exitCode = undefined;
-      fs.writeFileSync(FILE, original);
     }
     if (!caught) {
       console.error("SELFTEST INERT: reintroducing the redactedFormMetadata leak was not caught.");
@@ -93,14 +91,12 @@ function selftest() {
       process.exitCode = 1;
       return;
     }
-    fs.writeFileSync(FILE, mutated);
     let caught = false;
     try {
       check(mutated);
       caught = process.exitCode === 1;
     } finally {
       process.exitCode = undefined;
-      fs.writeFileSync(FILE, original);
     }
     if (!caught) {
       console.error("SELFTEST INERT: reintroducing the buildAuthorizationUrl leak was not caught.");

@@ -87,16 +87,16 @@ export function assertNoHardDeleteBillLines(opts = {}) {
 
 function selftest() {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "f9-02-bill-lines-"));
-  const pullerDir = path.join(tmp, "apps/backend/src/qbo-sync");
-  const migDir = path.join(tmp, "db/migrations");
-  fs.mkdirSync(pullerDir, { recursive: true });
-  fs.mkdirSync(migDir, { recursive: true });
+  const tmpPullerDir = path.join(tmp, "apps/backend/src/qbo-sync");
+  const tmpMigDir = path.join(tmp, "db/migrations");
+  fs.mkdirSync(tmpPullerDir, { recursive: true });
+  fs.mkdirSync(tmpMigDir, { recursive: true });
   fs.writeFileSync(
-    path.join(migDir, "202609010040_f9_02_bill_lines_void_not_delete.sql"),
+    path.join(tmpMigDir, "202609010040_f9_02_bill_lines_void_not_delete.sql"),
     "-- DO NOT RUN ON PROD\nALTER TABLE accounting.bill_lines ADD COLUMN IF NOT EXISTS voided_at timestamptz;\nALTER TABLE accounting.bill_lines ADD COLUMN IF NOT EXISTS voided_reason text;\n"
   );
   fs.writeFileSync(
-    path.join(pullerDir, "ap-bills-puller.ts"),
+    path.join(tmpPullerDir, "ap-bills-puller.ts"),
     `DELETE FROM accounting.bill_lines bl USING accounting.bills b WHERE 1=1;\n`
   );
   const planted = assertNoHardDeleteBillLines({ root: tmp });

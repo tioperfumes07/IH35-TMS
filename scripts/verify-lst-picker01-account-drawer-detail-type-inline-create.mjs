@@ -11,7 +11,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-lst-picker01-account-drawer-detail-type-inline-create";
@@ -82,26 +81,12 @@ function main() {
 }
 
 function selftest() {
-  const fp = path.join(ROOT, PAGE);
-  const original = fs.readFileSync(fp, "utf8");
+  const original = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
   const planted = original.replace(/createKind=["']detail_type["']/g, 'createKind="vendor"');
-  fs.writeFileSync(fp, planted);
-  try {
-    const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], { cwd: ROOT, encoding: "utf8" });
-    if (r.status === 0) throw new Error("selftest expected FAIL (createKind mutation)");
-  } finally {
-    fs.writeFileSync(fp, original);
-  }
+  if (collectProblems(ROOT, { [PAGE]: planted }).length === 0) throw new Error("selftest expected FAIL (createKind mutation)");
 
-  const original2 = fs.readFileSync(fp, "utf8");
-  const planted2 = original2.replace(/createExtras=\{\{\s*account_type_id:[^}]*\}\}/, "");
-  fs.writeFileSync(fp, planted2);
-  try {
-    const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], { cwd: ROOT, encoding: "utf8" });
-    if (r.status === 0) throw new Error("selftest expected FAIL (createExtras mutation)");
-  } finally {
-    fs.writeFileSync(fp, original2);
-  }
+  const planted2 = original.replace(/createExtras=\{\{\s*account_type_id:[^}]*\}\}/, "");
+  if (collectProblems(ROOT, { [PAGE]: planted2 }).length === 0) throw new Error("selftest expected FAIL (createExtras mutation)");
 
   console.log(`${LABEL}: selftest PASS`);
 }

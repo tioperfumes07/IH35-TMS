@@ -14,9 +14,9 @@ function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
-function assertLive() {
+function assertLive(pageOverride) {
   const problems = [];
-  const src = read(PAGE);
+  const src = pageOverride ?? read(PAGE);
   const manifest = read(MANIFEST);
   if (!/path="\/factoring\/submit"/.test(manifest)) problems.push("submit route missing");
   if (!manifest.includes("SubmissionQueue")) problems.push("SubmissionQueue not mounted");
@@ -36,14 +36,12 @@ if (SELFTEST) {
   }
   const pagePath = path.join(ROOT, PAGE);
   const orig = fs.readFileSync(pagePath, "utf8");
-  fs.writeFileSync(pagePath, orig.replace(/data-testid="factoring-submit-honest-empty"/, 'data-testid="x"'));
-  try {
-    if (!assertLive().length) {
+  const planted = orig.replace(/data-testid="factoring-submit-honest-empty"/, 'data-testid="x"');
+  {
+    if (!assertLive(planted).length) {
       console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);
       process.exit(1);
     }
-  } finally {
-    fs.writeFileSync(pagePath, orig);
   }
   console.log(`${LABEL} SELFTEST PASS`);
   process.exit(0);

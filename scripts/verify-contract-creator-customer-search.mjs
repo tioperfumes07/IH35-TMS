@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** UnifiedContractCreatorModal — customer ReferenceSelect + server search. Claim 2154. */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -64,22 +65,22 @@ export function collectProblems(root = ROOT) {
 if (process.argv.includes("--selftest")) {
   const baseline = collectProblems();
   if (baseline.length) { console.error(LABEL, baseline); process.exit(1); }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-contract-cust-"));
+  const tmpStubRoot = fs.mkdtempSync(path.join(os.tmpdir(), ".tmp-contract-cust-"));
   try {
-    const dir = path.join(stubRoot, "apps/frontend/src/pages/legal/contracts");
-    fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, "UnifiedContractCreatorModal.tsx"),
+    const tmpStubDir = path.join(tmpStubRoot, "apps/frontend/src/pages/legal/contracts");
+    fs.mkdirSync(tmpStubDir, { recursive: true });
+    fs.writeFileSync(path.join(tmpStubDir, "UnifiedContractCreatorModal.tsx"),
       `signerType === "customer"\n<SelectCombobox>{customerPartyOptions.map()}</SelectCombobox>\nlistCustomers({ operating_company_id })\n`);
-    if (!collectProblems(stubRoot).length) { console.error("plant miss"); process.exit(1); }
+    if (!collectProblems(tmpStubRoot).length) { console.error("plant miss"); process.exit(1); }
     // CatalogReferenceSelect usage over a capped local roster (no server search) must fail.
-    fs.writeFileSync(path.join(dir, "UnifiedContractCreatorModal.tsx"),
+    fs.writeFileSync(path.join(tmpStubDir, "UnifiedContractCreatorModal.tsx"),
       `<CatalogReferenceSelect kind="customer" allowCreate operatingCompanyId={operatingCompanyId} value={signerEntityId || null} onChange={(id, option) => {}} />\n`);
-    const cdir = path.join(stubRoot, "apps/frontend/src/components/legal");
-    fs.mkdirSync(cdir, { recursive: true });
-    fs.writeFileSync(path.join(cdir, "CatalogReferenceSelect.tsx"),
+    const tmpStubCdir = path.join(tmpStubRoot, "apps/frontend/src/components/legal");
+    fs.mkdirSync(tmpStubCdir, { recursive: true });
+    fs.writeFileSync(path.join(tmpStubCdir, "CatalogReferenceSelect.tsx"),
       `listCustomers({ operating_company_id: operatingCompanyId, limit: 2000 })\n<ReferenceSelect createKind={kind} />\n`);
-    if (!collectProblems(stubRoot).length) { console.error("plant miss (capped CatalogReferenceSelect)"); process.exit(1); }
-  } finally { fs.rmSync(stubRoot, { recursive: true, force: true }); }
+    if (!collectProblems(tmpStubRoot).length) { console.error("plant miss (capped CatalogReferenceSelect)"); process.exit(1); }
+  } finally { fs.rmSync(tmpStubRoot, { recursive: true, force: true }); }
   console.log(LABEL, "SELFTEST OK");
 } else {
   const problems = collectProblems();

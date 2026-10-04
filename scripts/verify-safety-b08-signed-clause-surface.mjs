@@ -6,7 +6,7 @@
  * field — operators saw a blocked Forfeit with no column explaining why. This guard locks the
  * list column + summary that read the server boolean (never invent a signed clause client-side).
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const ROOT = new URL("..", import.meta.url).pathname.replace(/\/$/, "");
@@ -39,8 +39,9 @@ const CHECKS = [
   },
 ];
 
-export function run() {
-  const src = stripComments(readFileSync(TAB, "utf8"));
+// `plantedText` replaces the on-disk source so the selftest never writes a file.
+export function run(plantedText) {
+  const src = stripComments(plantedText ?? readFileSync(TAB, "utf8"));
   const failed = CHECKS.filter((c) => !c.test(src));
   const ok = failed.length === 0;
   return {
@@ -78,16 +79,13 @@ function selftest() {
       console.error(`SELFTEST FAIL: anchor for "${c.name}" not found.`);
       process.exit(1);
     }
-    try {
-      writeFileSync(TAB, original.replace(c.find, c.replace), "utf8");
-      const caught = run();
+    {
+      const caught = run(original.replace(c.find, c.replace));
       if (caught.ok || !caught.failed.includes(c.expect)) {
         console.error(`SELFTEST FAIL: "${c.name}" was NOT caught.\n${caught.message}`);
         process.exit(1);
       }
       console.log(`  caught: ${c.name}`);
-    } finally {
-      writeFileSync(TAB, original, "utf8");
     }
   }
   console.log(`SELFTEST PASS: ${cases.length} planted defects caught.`);

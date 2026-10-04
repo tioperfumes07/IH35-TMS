@@ -109,11 +109,11 @@ export function run(root = ROOT) {
 }
 
 function selftest() {
-  const dir = fs.mkdtempSync("/tmp/driver-list-active-only-selftest-");
+  const tmpDir = fs.mkdtempSync("/tmp/driver-list-active-only-selftest-");
   const write = (rel, content) => {
-    const abs = path.join(dir, rel);
-    fs.mkdirSync(path.dirname(abs), { recursive: true });
-    fs.writeFileSync(abs, content);
+    const tmpAbs = path.join(tmpDir, rel);
+    fs.mkdirSync(path.dirname(tmpAbs), { recursive: true });
+    fs.writeFileSync(tmpAbs, content);
   };
 
   // 1. Named fix present and clean.
@@ -121,12 +121,12 @@ function selftest() {
     "apps/frontend/src/pages/drivers/DriversListPage.tsx",
     `const [showInactive, setShowInactive] = useState(false);\nlistDrivers({status: driverStatusFilter});\n`
   );
-  const clean = run(dir);
+  const clean = run(tmpDir);
   if (clean.length) throw new Error("PASS fail (should be clean): " + JSON.stringify(clean));
 
   // 2. Regress the named fix (toggle removed) -> caught.
   write("apps/frontend/src/pages/drivers/DriversListPage.tsx", `listDrivers({status: "All"});\n`);
-  const regressed = run(dir);
+  const regressed = run(tmpDir);
   if (!regressed.some((p) => p.includes("DriversListPage.tsx"))) {
     throw new Error("FAIL to catch: DriversListPage.tsx regression went undetected");
   }
@@ -137,7 +137,7 @@ function selftest() {
 
   // 3. Systemic net: a brand-new file with an unguarded status:"All" call -> caught.
   write("apps/frontend/src/pages/some/NewDriverListPage.tsx", `listDrivers({ operating_company_id: x, status: "All" })`);
-  const newOffender = run(dir);
+  const newOffender = run(tmpDir);
   if (!newOffender.some((p) => p.includes("NewDriverListPage.tsx"))) {
     throw new Error("FAIL to catch: a brand-new unguarded status:\"All\" call went undetected");
   }
@@ -147,10 +147,10 @@ function selftest() {
     "apps/frontend/src/pages/some/HonestDriverListPage.tsx",
     `const [showInactive] = useState(false);\nlistDrivers({ operating_company_id: x, status: "All" })`
   );
-  const honest = run(dir).filter((p) => p.includes("HonestDriverListPage.tsx"));
+  const honest = run(tmpDir).filter((p) => p.includes("HonestDriverListPage.tsx"));
   if (honest.length) throw new Error("FAIL: a toggle-gated status:\"All\" call must not be flagged: " + JSON.stringify(honest));
 
-  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(tmpDir, { recursive: true, force: true });
   console.log(`${LABEL} SELFTEST PASS`);
 }
 

@@ -13,7 +13,11 @@ import process from "node:process";
 const LABEL = "verify-reports-geofence-reconciliation-display-dates";
 const PAGE = "apps/frontend/src/pages/reports/GeofenceReconciliationReport.tsx";
 
+// Selftest plants go through this in-memory overlay - no tracked file is ever written.
+const SELFTEST_OVERLAY = new Map();
+
 function read(rel) {
+  if (SELFTEST_OVERLAY.has(rel)) return SELFTEST_OVERLAY.get(rel);
   return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
 }
 
@@ -51,13 +55,13 @@ function selftest() {
       /emptyText=\{`No anomalies found for \$\{formatDateUS\(appliedDate\)\}\.`\}/,
       "emptyText={`No anomalies found for ${appliedDate}.`}",
     );
-    fs.writeFileSync(pagePath, planted);
+    SELFTEST_OVERLAY.set(PAGE, planted);
     const bad = analyze(planted);
     if (!bad.some((m) => /raw appliedDate|formatDateUS\(appliedDate\)/.test(m))) {
       fail(`selftest expected raw emptyText interpolation to fail: ${bad.join("; ") || "none"}`);
     }
   } finally {
-    fs.writeFileSync(pagePath, original);
+    SELFTEST_OVERLAY.delete(PAGE);
   }
   const good = analyze(original);
   if (good.length) fail(`selftest expected GOOD after restore: ${good.join("; ")}`);

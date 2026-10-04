@@ -41,9 +41,10 @@ const REGISTRY_CHECKS = [
   },
 ];
 
-export function run() {
-  const pickerSrc = stripComments(readFileSync(PICKER, "utf8"));
-  const registrySrc = stripComments(readFileSync(REGISTRY, "utf8"));
+// overrides: {picker, registry} planted text for --selftest (no file is written).
+export function run(overrides = {}) {
+  const pickerSrc = stripComments(overrides.picker ?? readFileSync(PICKER, "utf8"));
+  const registrySrc = stripComments(overrides.registry ?? readFileSync(REGISTRY, "utf8"));
   const failed = [
     ...WRAPPER_CHECKS.filter((c) => !c.test(pickerSrc)),
     ...REGISTRY_CHECKS.filter((c) => !c.test(registrySrc)),
@@ -60,9 +61,7 @@ export function run() {
 }
 
 function selftest() {
-  const { writeFileSync } = fs;
   const originalPicker = readFileSync(PICKER, "utf8");
-  const originalRegistry = readFileSync(REGISTRY, "utf8");
   const baseline = run();
   if (!baseline.ok) {
     console.error(`SELFTEST FAIL: repository already red.\n${baseline.message}`);
@@ -71,47 +70,29 @@ function selftest() {
   const cases = [
     {
       name: "wrapper stops delegating to EntityPicker",
-      mutate: () => writeFileSync(PICKER, `export function DriverPickerWithCreate() { return null; }`, "utf8"),
+      planted: `export function DriverPickerWithCreate() { return null; }`,
       expect: "delegates-entity-picker",
-      restore: () => writeFileSync(PICKER, originalPicker, "utf8"),
     },
     {
       name: "wrapper reintroduces local listDrivers",
-      mutate: () =>
-        writeFileSync(
-          PICKER,
-          originalPicker.replace(
-            "kind=\"driver\"",
-            'kind="driver"\nlistDrivers({ operating_company_id: operatingCompanyId, limit: 200 })'
-          ),
-          "utf8"
-        ),
+      planted: originalPicker.replace(
+        "kind=\"driver\"",
+        'kind="driver"\nlistDrivers({ operating_company_id: operatingCompanyId, limit: 200 })'
+      ),
       expect: "no-local-listDrivers",
-      restore: () => writeFileSync(PICKER, originalPicker, "utf8"),
     },
   ];
   for (const c of cases) {
-    try {
-      c.mutate();
-      const caught = run();
-      if (caught.ok || !caught.failed.includes(c.expect)) {
-        console.error(`SELFTEST FAIL: "${c.name}" not caught.\n${caught.message}`);
-        process.exit(1);
-      }
-      console.log(`  caught: ${c.name}`);
-    } finally {
-      c.restore();
+    // Plants go into the in-memory string passed to run(); no tracked file is written.
+    const caught = run({ picker: c.planted });
+    if (caught.ok || !caught.failed.includes(c.expect)) {
+      console.error(`SELFTEST FAIL: "${c.name}" not caught.\n${caught.message}`);
+      process.exit(1);
     }
+    console.log(`  caught: ${c.name}`);
   }
-  const after = run();
-  if (!after.ok) {
-    console.error(`SELFTEST FAIL: restore did not return to green.\n${after.message}`);
-    process.exit(1);
-  }
-  console.log(`SELFTEST PASS: all ${cases.length} planted defects caught, restore green.`);
+  console.log(`SELFTEST PASS: all ${cases.length} planted defects caught.`);
 }
-
-import * as fs from "node:fs";
 
 if (process.argv.includes("--selftest")) selftest();
 else {

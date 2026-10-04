@@ -12,7 +12,11 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
+// Selftest plants (rel path -> planted text); nothing is written to disk.
+const PLANTED = new Map();
+
 function read(rel) {
+  if (PLANTED.has(rel)) return PLANTED.get(rel);
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
@@ -83,15 +87,11 @@ function selftest() {
   // (unlike a throw/return), so a failing selftest left the real, money-critical
   // book-load.service.ts permanently mutated on disk instead of restored. Fixed by recording
   // failure and exiting only AFTER the finally has restored the backup, unconditionally.
-  const realPath = path.join(ROOT, "apps/backend/src/dispatch/book-load.service.ts");
-  const backup = fs.readFileSync(realPath, "utf8");
+  const realRel = "apps/backend/src/dispatch/book-load.service.ts";
+  const backup = read(realRel);
   let failed = false;
   try {
-    fs.writeFileSync(
-      realPath,
-      backup.replace(/load\.driver_pay_rate_per_mile/, "load._removed_driver_pay_rate_per_mile"),
-      "utf8",
-    );
+    PLANTED.set(realRel, backup.replace(/load\.driver_pay_rate_per_mile/, "load._removed_driver_pay_rate_per_mile"));
     const planted = run();
     if (!planted.some((e) => e.includes("driver_pay_rate_per_mile"))) {
       console.error("[verify-usmca-driver-bill-per-load-rate] SELFTEST FAIL: planted override removal not detected");
@@ -100,7 +100,7 @@ function selftest() {
       console.log(`[verify-usmca-driver-bill-per-load-rate] SELFTEST PASS (${planted.length} planted failures detected)`);
     }
   } finally {
-    fs.writeFileSync(realPath, backup, "utf8");
+    PLANTED.delete(realRel);
   }
   if (failed) process.exit(1);
 }

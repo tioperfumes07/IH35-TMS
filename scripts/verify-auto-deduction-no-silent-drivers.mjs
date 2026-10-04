@@ -7,6 +7,7 @@
  * @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leaves":["drivers.panel.auto_deduction_policies"],"task":"CLASS-F5878-DRIVER-DEDUCTION-PANELS-REVERSE-EXACT-LEAVES","vertical":"class-sweep"}
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -78,12 +79,12 @@ if (process.argv.includes("--selftest")) {
     for (const p of [...baseline, ...evidenceBaseline]) console.error("  - " + p);
     process.exit(1);
   }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-auto-deduct-"));
+  const stubRoot = fs.mkdtempSync(path.join(os.tmpdir(), "auto-deduct-"));
   try {
-    const dir = path.join(stubRoot, "apps/frontend/src/pages/drivers");
-    fs.mkdirSync(dir, { recursive: true });
+    const tmpDir = path.join(stubRoot, "apps/frontend/src/pages/drivers");
+    fs.mkdirSync(tmpDir, { recursive: true });
     fs.writeFileSync(
-      path.join(dir, "AutoDeductionPolicies.tsx"),
+      path.join(tmpDir, "AutoDeductionPolicies.tsx"),
       `listDrivers({ operating_company_id: operatingCompanyId, limit: 200 })
 const driverNameById = new Map()
 `

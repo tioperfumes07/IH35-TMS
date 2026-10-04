@@ -1,12 +1,10 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
-const SELF = path.join(ROOT, "scripts/verify-ap-aging-print-letter.mjs");
 const PAGE = path.join(ROOT, "apps/frontend/src/pages/accounting/AccountsPayableAgingPage.tsx");
 const HELPER = path.join(ROOT, "apps/frontend/src/lib/openPrintableDocument.ts");
 
@@ -15,30 +13,32 @@ function fail(msg) {
   process.exit(1);
 }
 
+/** Pure check over the source text — selftests pass planted strings; nothing on disk is written. */
+function checkSource(page, helper) {
+  const errs = [];
+  if (!helper.includes("export function printLetterHtml")) errs.push("missing printLetterHtml");
+  if (!page.includes("printLetterHtml")) errs.push("AccountsPayableAgingPage must use printLetterHtml");
+  if (/onClick=\{\(\) => window\.print\(\)\}/.test(page)) errs.push("must not window.print() on SPA");
+  if (!page.includes("UnclearedDocumentsNote")) errs.push("AccountsPayableAgingPage must name uncleared documents via UnclearedDocumentsNote");
+  if (!page.includes("not cleared")) errs.push("AccountsPayableAgingPage must label uncleared payments not cleared");
+  if (!page.includes("cleared_open_cents")) errs.push("AccountsPayableAgingPage must show the cleared balance");
+  return errs;
+}
+
 function assertSource() {
   if (!fs.existsSync(PAGE)) fail("missing AccountsPayableAgingPage");
   if (!fs.existsSync(HELPER)) fail("missing openPrintableDocument");
-  const helper = fs.readFileSync(HELPER, "utf8");
-  if (!helper.includes("export function printLetterHtml")) fail("missing printLetterHtml");
-  const page = fs.readFileSync(PAGE, "utf8");
-  if (!page.includes("printLetterHtml")) fail("AccountsPayableAgingPage must use printLetterHtml");
-  if (/onClick=\{\(\) => window\.print\(\)\}/.test(page)) fail("must not window.print() on SPA");
-  if (!page.includes("UnclearedDocumentsNote")) fail("AccountsPayableAgingPage must name uncleared documents via UnclearedDocumentsNote");
-  if (!page.includes("not cleared")) fail("AccountsPayableAgingPage must label uncleared payments not cleared");
-  if (!page.includes("cleared_open_cents")) fail("AccountsPayableAgingPage must show the cleared balance");
+  const errs = checkSource(fs.readFileSync(PAGE, "utf8"), fs.readFileSync(HELPER, "utf8"));
+  if (errs.length) fail(errs[0]);
 }
 
 function selftest() {
   assertSource();
   const backup = fs.readFileSync(PAGE, "utf8");
+  const helper = fs.readFileSync(HELPER, "utf8");
   const planted = backup.replace(/onClick=\{printLetter\}/, 'onClick={() => window.print()}');
-  fs.writeFileSync(PAGE, planted.includes("window.print()") ? planted : `${backup}\nonClick={() => window.print()}\n`);
-  try {
-    const r = spawnSync(process.execPath, [SELF], { encoding: "utf8" });
-    if (r.status === 0) fail("mutated still passed");
-  } finally {
-    fs.writeFileSync(PAGE, backup);
-  }
+  const mutated = planted.includes("window.print()") ? planted : `${backup}\nonClick={() => window.print()}\n`;
+  if (!checkSource(mutated, helper).length) fail("mutated still passed");
   console.log("PASS: verify-ap-aging-print-letter --selftest");
 }
 

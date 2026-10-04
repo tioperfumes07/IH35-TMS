@@ -22,8 +22,7 @@ async function loadBuilder() {
   return null;
 }
 
-function assertAmountParserFromSource() {
-  const src = read("apps/backend/src/lib/list-search/build-list-search.ts");
+function assertAmountParserFromSource(src = read("apps/backend/src/lib/list-search/build-list-search.ts")) {
   assert.match(src, /export function parseAmountSearchToken\(/);
   assert.match(src, /dollar_range/);
   assert.match(src, /kind: "exact"/);
@@ -157,19 +156,15 @@ function selftest() {
   const original = fs.readFileSync(target, "utf8");
   const planted = original.replace(/export function parseAmountSearchToken[\s\S]*?^}/m, "/* PLANTED_REMOVED */");
   assert.notEqual(planted, original);
+  // Planted text is checked in memory — the tracked file is never written.
+  let failed = false;
   try {
-    fs.writeFileSync(target, planted);
-    let failed = false;
-    try {
-      assertAmountParserFromSource();
-      assertRoutesUseBuilder();
-    } catch {
-      failed = true;
-    }
-    assert.equal(failed, true, "selftest must FAIL when parseAmountSearchToken is removed");
-  } finally {
-    fs.writeFileSync(target, original);
+    assertAmountParserFromSource(planted);
+    assertRoutesUseBuilder();
+  } catch {
+    failed = true;
   }
+  assert.equal(failed, true, "selftest must FAIL when parseAmountSearchToken is removed");
   console.log("verify-list-search-builder --selftest PASS");
 }
 

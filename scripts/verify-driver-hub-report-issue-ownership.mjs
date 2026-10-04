@@ -16,11 +16,11 @@ const DRV_REQ = "docs/specs/scoreboard/modules/drivers.required.json";
 const HUB_PAGE = "apps/frontend/src/pages/home/DriverHubPage.tsx";
 const LOAD_PAGE = "apps/frontend/src/pages/driver/DriverLoadDetailPage.tsx";
 
-function read(rel) {
-  return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
-}
-
-function analyze() {
+function analyze(overrides = {}) {
+  const read = (rel) =>
+    Object.prototype.hasOwnProperty.call(overrides, rel)
+      ? overrides[rel]
+      : fs.readFileSync(path.join(process.cwd(), rel), "utf8");
   const failures = [];
   const hub = JSON.parse(read(HUB_REQ));
   const drv = JSON.parse(read(DRV_REQ));
@@ -68,39 +68,30 @@ function fail(msg) {
 }
 
 function selftest() {
-  // Structural: analyze() on real tree should pass after fix; plant hub claim.
-  const hubPath = path.join(process.cwd(), HUB_REQ);
-  const original = fs.readFileSync(hubPath, "utf8");
-  try {
-    const j = JSON.parse(original);
-    j.leaves = [
-      ...(j.leaves ?? []),
-      {
-        id: "driver-hub.modal.report_issue",
-        surface_path: "pages/driver/ReportIssueModal.tsx",
-        required: ["connectivity"],
-      },
-    ];
-    fs.writeFileSync(hubPath, JSON.stringify(j, null, 2) + "\n");
-    const bad = analyze();
-    if (!bad.some((m) => /must not claim/.test(m))) {
-      fail("selftest expected hub claim to fail");
-    }
-  } finally {
-    fs.writeFileSync(hubPath, original);
+  // Pure: planted text is passed to analyze() as an override; no tracked file is written.
+  const original = fs.readFileSync(path.join(process.cwd(), HUB_REQ), "utf8");
+  const j = JSON.parse(original);
+  j.leaves = [
+    ...(j.leaves ?? []),
+    {
+      id: "driver-hub.modal.report_issue",
+      surface_path: "pages/driver/ReportIssueModal.tsx",
+      required: ["connectivity"],
+    },
+  ];
+  const bad = analyze({ [HUB_REQ]: JSON.stringify(j, null, 2) + "\n" });
+  if (!bad.some((m) => /must not claim/.test(m))) {
+    fail("selftest expected hub claim to fail");
   }
   const good = analyze();
   if (good.length) fail(`selftest expected GOOD after restore: ${good.join("; ")}`);
-  const modalPath = path.join(process.cwd(), "apps/frontend/src/pages/driver/ReportIssueModal.tsx");
-  const modalOrig = fs.readFileSync(modalPath, "utf8");
-  try {
-    fs.writeFileSync(modalPath, modalOrig.replace(/EntityLink/g, "SpanLink").replace(/kind=["']load["']/, 'kind="unit"'));
-    const planted = analyze();
-    if (!planted.some((m) => /EntityLink kind=load/.test(m))) {
-      fail("selftest expected EntityLink kind=load plant to fail");
-    }
-  } finally {
-    fs.writeFileSync(modalPath, modalOrig);
+  const modalRel = "apps/frontend/src/pages/driver/ReportIssueModal.tsx";
+  const modalOrig = fs.readFileSync(path.join(process.cwd(), modalRel), "utf8");
+  const planted = analyze({
+    [modalRel]: modalOrig.replace(/EntityLink/g, "SpanLink").replace(/kind=["']load["']/, 'kind="unit"'),
+  });
+  if (!planted.some((m) => /EntityLink kind=load/.test(m))) {
+    fail("selftest expected EntityLink kind=load plant to fail");
   }
   console.log(`${LABEL} selftest PASS`);
 }

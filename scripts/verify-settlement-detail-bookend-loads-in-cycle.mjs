@@ -21,8 +21,7 @@ function assert(cond, msg) {
   if (!cond) throw new Error(`${LABEL}: ${msg}`);
 }
 
-function check() {
-  const routes = fs.readFileSync(ROUTES, "utf8");
+function check(routes = fs.readFileSync(ROUTES, "utf8")) {
   // Isolate the GET :id settlement header SELECT (payment_state + first_load_id).
   assert(
     /\/api\/v1\/driver-finance\/settlements\/:id/.test(routes),
@@ -46,14 +45,11 @@ function selftest() {
     "/* planted: bookends removed */"
   );
   assert(broken !== original, "--selftest plant must remove bookend SELECT");
-  fs.writeFileSync(ROUTES, broken);
   let failed = false;
   try {
-    check();
+    check(broken);
   } catch {
     failed = true;
-  } finally {
-    fs.writeFileSync(ROUTES, original);
   }
   assert(failed, "--selftest expected FAIL when bookend SELECT removed");
   check();

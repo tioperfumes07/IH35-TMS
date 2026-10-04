@@ -40,13 +40,14 @@ function stripTs(src) {
   return src.replace(/\/\*[\s\S]*?\*\//g, " ").split("\n").map((l) => l.replace(/\/\/.*$/, "")).join("\n");
 }
 
-function audit() {
+// over: {mig, route} planted text for --selftest (no file is written).
+function audit(over = {}) {
   const problems = [];
 
-  if (!fs.existsSync(MIGRATION)) {
+  if (over.mig === undefined && !fs.existsSync(MIGRATION)) {
     problems.push(`missing migration ${path.relative(ROOT, MIGRATION)}`);
   } else {
-    const sql = stripSql(fs.readFileSync(MIGRATION, "utf8"));
+    const sql = stripSql(over.mig ?? fs.readFileSync(MIGRATION, "utf8"));
     if (!/ALTER TABLE\s+accounting\.invoice_lines/i.test(sql)) {
       problems.push("migration must ALTER TABLE accounting.invoice_lines");
     }
@@ -61,11 +62,11 @@ function audit() {
     }
   }
 
-  if (!fs.existsSync(ROUTE)) {
+  if (over.route === undefined && !fs.existsSync(ROUTE)) {
     problems.push(`missing ${path.relative(ROOT, ROUTE)}`);
     return problems;
   }
-  const src = stripTs(fs.readFileSync(ROUTE, "utf8"));
+  const src = stripTs(over.route ?? fs.readFileSync(ROUTE, "utf8"));
 
   // qbo_item_id must still be accepted — both linkages coexist by design.
   if (!/qbo_item_id/.test(src)) {
@@ -94,32 +95,24 @@ function audit() {
 function selftest() {
   const originalMig = fs.readFileSync(MIGRATION, "utf8");
   const originalRoute = fs.readFileSync(ROUTE, "utf8");
-  const restore = () => {
-    fs.writeFileSync(MIGRATION, originalMig);
-    fs.writeFileSync(ROUTE, originalRoute);
-  };
   let planted = 0;
 
+  // Each mutation returns the planted {mig, route} text; nothing on disk is written.
   const mutations = [
-    ["FK downgraded to a bare uuid", () => fs.writeFileSync(MIGRATION, originalMig.replace(/item_id\s+uuid\s+REFERENCES\s+catalogs\.items\s*\(\s*id\s*\)/i, "item_id uuid"))],
-    ["qbo_item_id dropped (would break QBO-realm entities)", () => fs.writeFileSync(MIGRATION, originalMig.replace(/COMMIT;/, "ALTER TABLE accounting.invoice_lines DROP COLUMN qbo_item_id;\nCOMMIT;"))],
-    ["create path stops persisting item_id", () => fs.writeFileSync(ROUTE, originalRoute.replace(/\n\s*item_id,\n(\s*display_order\n)/, "\n$1"))],
-    ["patch path stops persisting item_id", () => fs.writeFileSync(ROUTE, originalRoute.replace(/if \("item_id" in body\.data\) add\("item_id", body\.data\.item_id \?\? null\);/, ""))],
+    ["FK downgraded to a bare uuid", () => ({ mig: originalMig.replace(/item_id\s+uuid\s+REFERENCES\s+catalogs\.items\s*\(\s*id\s*\)/i, "item_id uuid") })],
+    ["qbo_item_id dropped (would break QBO-realm entities)", () => ({ mig: originalMig.replace(/COMMIT;/, "ALTER TABLE accounting.invoice_lines DROP COLUMN qbo_item_id;\nCOMMIT;") })],
+    ["create path stops persisting item_id", () => ({ route: originalRoute.replace(/\n\s*item_id,\n(\s*display_order\n)/, "\n$1") })],
+    ["patch path stops persisting item_id", () => ({ route: originalRoute.replace(/if \("item_id" in body\.data\) add\("item_id", body\.data\.item_id \?\? null\);/, "") })],
   ];
 
   for (const [name, mutate] of mutations) {
-    restore();
-    const beforeMig = fs.readFileSync(MIGRATION, "utf8");
-    const beforeRoute = fs.readFileSync(ROUTE, "utf8");
-    mutate();
+    const over = mutate();
     const changed =
-      fs.readFileSync(MIGRATION, "utf8") !== beforeMig || fs.readFileSync(ROUTE, "utf8") !== beforeRoute;
+      (over.mig !== undefined && over.mig !== originalMig) || (over.route !== undefined && over.route !== originalRoute);
     if (!changed) {
-      restore();
       fail(`selftest INERT: mutation "${name}" did not apply — the guard proves nothing`);
     }
-    const stillClean = audit().length === 0;
-    restore();
+    const stillClean = audit(over).length === 0;
     if (stillClean) fail(`selftest: expected FAIL after mutation "${name}"`);
     planted += 1;
   }

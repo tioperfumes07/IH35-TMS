@@ -6,6 +6,7 @@
  * Run: node scripts/verify-mdata-loads-driver-dqf-gate.mjs [--selftest]
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -57,16 +58,18 @@ export function run(root = ROOT) {
 }
 
 function selftest() {
-  const targetPath = path.join(ROOT, TARGET);
-  const backup = fs.readFileSync(targetPath, "utf8");
+  const backup = fs.readFileSync(path.join(ROOT, TARGET), "utf8");
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "mdata-loads-dqf-selftest-"));
   try {
+    const tmpTarget = path.join(tmpRoot, TARGET);
+    fs.mkdirSync(path.dirname(tmpTarget), { recursive: true });
     const broken = backup.replace(/gateMdataLoadDriverAssignment/g, "/* removed */");
-    fs.writeFileSync(targetPath, broken, "utf8");
-    const planted = run();
+    fs.writeFileSync(tmpTarget, broken, "utf8");
+    const planted = run(tmpRoot);
     if (!planted.length) throw new Error("planted gate removal not detected");
     console.log(`[${LABEL}] SELFTEST PASS (${planted.length} planted failures)`);
   } finally {
-    fs.writeFileSync(targetPath, backup, "utf8");
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
   }
 }
 

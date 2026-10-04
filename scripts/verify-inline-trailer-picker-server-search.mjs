@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** InlineTrailerPicker — EntityPicker kind=trailer (mdata.equipment, not listUnits include:trailers). Claim 2148. */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -26,13 +27,13 @@ export function collectProblems(root = ROOT) {
 if (process.argv.includes("--selftest")) {
   const baseline = collectProblems();
   if (baseline.length) { console.error(LABEL, "SELFTEST FAIL", baseline); process.exit(1); }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-inline-trl-"));
+  const tmpStubRoot = fs.mkdtempSync(path.join(os.tmpdir(), ".tmp-inline-trl-"));
   try {
-    const dir = path.join(stubRoot, "apps/frontend/src/components/dispatch");
-    fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, "InlineTrailerPicker.tsx"), `listUnits({ limit: 500, include: "trailers" })\nqueryKey: ["dispatch","inline-trailers",id]\n`);
-    if (!collectProblems(stubRoot).length) { console.error("planted miss"); process.exit(1); }
-  } finally { fs.rmSync(stubRoot, { recursive: true, force: true }); }
+    const tmpStubDir = path.join(tmpStubRoot, "apps/frontend/src/components/dispatch");
+    fs.mkdirSync(tmpStubDir, { recursive: true });
+    fs.writeFileSync(path.join(tmpStubDir, "InlineTrailerPicker.tsx"), `listUnits({ limit: 500, include: "trailers" })\nqueryKey: ["dispatch","inline-trailers",id]\n`);
+    if (!collectProblems(tmpStubRoot).length) { console.error("planted miss"); process.exit(1); }
+  } finally { fs.rmSync(tmpStubRoot, { recursive: true, force: true }); }
   console.log(LABEL, "SELFTEST OK");
 } else {
   const problems = collectProblems();

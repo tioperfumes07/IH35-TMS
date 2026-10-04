@@ -27,8 +27,8 @@ function compactBody(src) {
   return src.slice(start, end);
 }
 
-function check() {
-  const body = compactBody(fs.readFileSync(FILE, "utf8"));
+function check(src = fs.readFileSync(FILE, "utf8")) {
+  const body = compactBody(src);
   assert(/data-testid=["']kanban-compact-driver-link["']/.test(body), "must expose kanban-compact-driver-link");
   assert(/data-testid=["']kanban-compact-unit-link["']/.test(body), "must expose kanban-compact-unit-link");
   assert(/data-testid=["']kanban-compact-load-link["']/.test(body), "must expose kanban-compact-load-link");
@@ -42,14 +42,11 @@ function selftest() {
     'data-testid="planted-missing"'
   );
   assert(broken !== original, "--selftest plant must mutate testid");
-  fs.writeFileSync(FILE, broken);
   let failed = false;
   try {
-    check();
+    check(broken);
   } catch {
     failed = true;
-  } finally {
-    fs.writeFileSync(FILE, original);
   }
   assert(failed, "--selftest expected FAIL when driver link testid removed");
   check();

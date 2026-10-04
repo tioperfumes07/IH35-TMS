@@ -22,8 +22,7 @@ function assert(cond, msg) {
   if (!cond) throw new Error(`${LABEL}: ${msg}`);
 }
 
-function check() {
-  const editor = fs.readFileSync(EDITOR, "utf8");
+function check(editor = fs.readFileSync(EDITOR, "utf8")) {
   assert(/ReferenceSelect/.test(editor), "MultiStopEditor must import/use ReferenceSelect");
   assert(/createKind=["']pickup_time_type["']/.test(editor), 'ReferenceSelect createKind="pickup_time_type" required');
   assert(/pickup_time_type_id/.test(editor), "FE must carry pickup_time_type_id on stop rows");
@@ -40,14 +39,11 @@ function check() {
 function selftest() {
   const original = fs.readFileSync(EDITOR, "utf8");
   const broken = original.replace(/createKind=["']pickup_time_type["']/, 'createKind="detention_reason"');
-  fs.writeFileSync(EDITOR, broken);
   let failed = false;
   try {
-    check();
+    check(broken);
   } catch {
     failed = true;
-  } finally {
-    fs.writeFileSync(EDITOR, original);
   }
   assert(failed, "--selftest expected FAIL when createKind is mutated away from pickup_time_type");
   check();

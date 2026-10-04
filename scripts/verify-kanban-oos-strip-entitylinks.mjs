@@ -32,8 +32,7 @@ function mutateOos(src, from, to) {
   return src.slice(0, start) + src.slice(start).replace(from, to);
 }
 
-function check() {
-  const src = fs.readFileSync(FILE, "utf8");
+function check(src = fs.readFileSync(FILE, "utf8")) {
   const body = oosBody(src);
   assert(/data-testid=["']kanban-oos-load-link["']/.test(body), "must expose kanban-oos-load-link");
   assert(/data-testid=["']kanban-oos-driver-link["']/.test(body), "must expose kanban-oos-driver-link");
@@ -52,14 +51,11 @@ function selftest() {
   ];
   for (const broken of mutations) {
     assert(broken !== original, "--selftest plant must mutate source");
-    fs.writeFileSync(FILE, broken);
     let failed = false;
     try {
-      check();
+      check(broken);
     } catch {
       failed = true;
-    } finally {
-      fs.writeFileSync(FILE, original);
     }
     assert(failed, "--selftest expected planted defect to fail");
   }

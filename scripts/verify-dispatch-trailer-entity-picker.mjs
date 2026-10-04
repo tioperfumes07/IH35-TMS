@@ -89,42 +89,42 @@ if (process.argv.includes("--selftest")) {
     for (const p of baseline) console.error("  - " + p);
     process.exit(1);
   }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-disp-trailer-ep-"));
+  const tmpStubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-disp-trailer-ep-"));
   try {
-    const regDir = path.join(stubRoot, "apps/frontend/src/components/parity");
-    fs.mkdirSync(regDir, { recursive: true });
+    const tmpRegDir = path.join(tmpStubRoot, "apps/frontend/src/components/parity");
+    fs.mkdirSync(tmpRegDir, { recursive: true });
     fs.writeFileSync(
-      path.join(regDir, "entityPickerRegistry.ts"),
+      path.join(tmpRegDir, "entityPickerRegistry.ts"),
       `export type EntityPickerKind = "unit";
 const ENTITY_PICKERS = { unit: { readTable: "mdata.units", writeTable: "mdata.units", serverSearch: true, list: async () => [] } };
 export function getEntityPickerConfig() { return ENTITY_PICKERS.unit; }`
     );
-    fs.writeFileSync(path.join(regDir, "EntityPicker.tsx"), `export function EntityPicker() { return null; }`);
-    fs.mkdirSync(path.join(stubRoot, "apps/frontend/src/api"), { recursive: true });
-    fs.writeFileSync(path.join(stubRoot, "apps/frontend/src/api/mdata.ts"), `export function listEquipment() {}`);
-    const qaDir = path.join(stubRoot, "apps/frontend/src/pages/dispatch/components");
-    fs.mkdirSync(qaDir, { recursive: true });
+    fs.writeFileSync(path.join(tmpRegDir, "EntityPicker.tsx"), `export function EntityPicker() { return null; }`);
+    fs.mkdirSync(path.join(tmpStubRoot, "apps/frontend/src/api"), { recursive: true });
+    fs.writeFileSync(path.join(tmpStubRoot, "apps/frontend/src/api/mdata.ts"), `export function listEquipment() {}`);
+    const tmpQaDir = path.join(tmpStubRoot, "apps/frontend/src/pages/dispatch/components");
+    fs.mkdirSync(tmpQaDir, { recursive: true });
     fs.writeFileSync(
-      path.join(qaDir, "QuickAssignModal.tsx"),
+      path.join(tmpQaDir, "QuickAssignModal.tsx"),
       `listUnits({ include: "trailers", limit: 500 })
 <Combobox options={trailerOptions} onSearch={setTrailerSearch} />`
     );
     fs.writeFileSync(
-      path.join(qaDir, "BookLoadEquipmentSection.tsx"),
+      path.join(tmpQaDir, "BookLoadEquipmentSection.tsx"),
       `listUnits({ include: "trailers" })`
     );
-    fs.mkdirSync(path.join(stubRoot, "apps/frontend/src/components/dispatch"), { recursive: true });
+    fs.mkdirSync(path.join(tmpStubRoot, "apps/frontend/src/components/dispatch"), { recursive: true });
     fs.writeFileSync(
-      path.join(stubRoot, "apps/frontend/src/components/dispatch/InlineTrailerPicker.tsx"),
+      path.join(tmpStubRoot, "apps/frontend/src/components/dispatch/InlineTrailerPicker.tsx"),
       `listUnits({ limit: 500, include: "trailers" })`
     );
-    const planted = collectProblems(stubRoot);
+    const planted = collectProblems(tmpStubRoot);
     if (!planted.some((p) => /EntityPicker kind=trailer/.test(p) || /trailer kind/.test(p) || /listUnits/.test(p))) {
       console.error(`${LABEL} SELFTEST FAIL: planted stub did not FAIL`);
       process.exit(1);
     }
   } finally {
-    fs.rmSync(stubRoot, { recursive: true, force: true });
+    fs.rmSync(tmpStubRoot, { recursive: true, force: true });
   }
   console.log(`${LABEL} SELFTEST OK`);
 } else {

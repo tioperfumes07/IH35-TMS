@@ -5,6 +5,7 @@
  * Cursor even claim: 2160.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -83,12 +84,12 @@ if (process.argv.includes("--selftest")) {
     for (const p of baseline) console.error("  - " + p);
     process.exit(1);
   }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-accidents-list-filters-"));
+  const stubRoot = fs.mkdtempSync(path.join(os.tmpdir(), "tmp-accidents-list-filters-"));
   try {
-    const dir = path.join(stubRoot, "apps/frontend/src/pages/safety");
-    fs.mkdirSync(dir, { recursive: true });
+    const tmpStubDir = path.join(stubRoot, "apps/frontend/src/pages/safety");
+    fs.mkdirSync(tmpStubDir, { recursive: true });
     fs.writeFileSync(
-      path.join(dir, "AccidentsPage.tsx"),
+      path.join(tmpStubDir, "AccidentsPage.tsx"),
       `export function AccidentsPage() {
   return (
     <ParityTable filterBar={

@@ -3,7 +3,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const MODAL = "apps/frontend/src/components/drivers/W8BenModal.tsx";
@@ -57,15 +56,10 @@ function failures(modal = read(MODAL), section = read(SECTION)) {
 }
 
 function selftest() {
-  const modalPath = path.join(ROOT, MODAL);
   const original = read(MODAL);
-  try {
-    fs.writeFileSync(modalPath, original.replace(BLOCKED_COPY, "template pending"));
-    const red = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], { cwd: ROOT });
-    if (red.status === 0) throw new Error("removed blocked copy did not redden guard");
-  } finally {
-    fs.writeFileSync(modalPath, original);
-  }
+  // Pure check on planted text; nothing is written to disk.
+  const red = failures(original.replace(BLOCKED_COPY, "template pending"), read(SECTION));
+  if (red.length === 0) throw new Error("removed blocked copy did not redden guard");
   // BANK-F91351 leftover plant
   const sectionLive = read(SECTION);
   const planted = failures(read(MODAL), sectionLive + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n');

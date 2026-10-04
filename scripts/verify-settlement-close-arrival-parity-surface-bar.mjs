@@ -14,8 +14,7 @@ function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-export function check() {
-  const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+export function check(src = fs.readFileSync(path.join(ROOT, PAGE), "utf8")) {
   assert(src.includes("ParityTable"), "SettlementCloseArrivalPage: must use ParityTable");
   assert(src.includes('storageKey="settlement-close-draft-je"'), "SettlementCloseArrivalPage: must set storageKey");
   assert(src.includes('tableTestId="settlement-close-draft-je-table"'), "SettlementCloseArrivalPage: must set tableTestId");
@@ -27,22 +26,19 @@ export function check() {
 
 function selftest() {
   check();
-  const filePath = path.join(ROOT, PAGE);
-  const good = fs.readFileSync(filePath, "utf8");
   const planted = [
     "export function SettlementCloseArrivalPage() {",
     '  return <table className="min-w-full" data-testid="settlement-close-draft-je-table"><tbody /></table>;',
     "}",
     "",
   ].join("\n");
-  fs.writeFileSync(filePath, planted);
+  // Pure check on the planted string -- no tracked file is written.
   let failed = false;
   try {
-    check();
+    check(planted);
   } catch {
     failed = true;
   }
-  fs.writeFileSync(filePath, good);
   assert(failed, "selftest: expected FAIL on raw HTML table");
   console.log("verify-settlement-close-arrival-parity-surface-bar --selftest PASS");
 }

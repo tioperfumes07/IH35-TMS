@@ -83,13 +83,15 @@ function stripSqlComments(sql) {
     .join("\n");
 }
 
-function audit() {
+// overrides: {absolutePath: plantedText} so --selftest plants in memory; no tracked file is written.
+function audit(overrides = {}) {
+  const readSrc = (p) => overrides[p] ?? fs.readFileSync(p, "utf8");
   const problems = [];
   const files = walk(SCAN_DIR);
   let scanned = 0;
 
   for (const file of files) {
-    const src = fs.readFileSync(file, "utf8");
+    const src = readSrc(file);
     if (!src.includes("journal_entries")) continue;
 
     // ★ A backtick inside a SQL `--` comment TERMINATES the surrounding template literal, silently
@@ -144,7 +146,7 @@ function audit() {
   }
 
   for (const consumer of FRONTEND_CONSUMERS) {
-    const src = fs.readFileSync(path.join(ROOT, consumer.file), "utf8");
+    const src = readSrc(path.join(ROOT, consumer.file));
     if (!consumer.required.test(src)) {
       problems.push(`${consumer.file}: JE link discards the memo label supplied by its payload`);
     }
@@ -172,13 +174,9 @@ function selftest() {
   for (const [name, mutate] of mutations) {
     const broken = mutate(original);
     if (broken === original) {
-      fs.writeFileSync(target, original);
       fail(`selftest INERT: mutation "${name}" did not apply — the guard proves nothing`);
     }
-    // Restore BEFORE failing: process.exit() does not run finally blocks.
-    fs.writeFileSync(target, broken);
-    const stillClean = audit().problems.length === 0;
-    fs.writeFileSync(target, original);
+    const stillClean = audit({ [target]: broken }).problems.length === 0;
     if (stillClean) fail(`selftest: expected FAIL after mutation "${name}"`);
     planted += 1;
   }
@@ -193,9 +191,7 @@ function selftest() {
   if (lineageBroken === lineageOriginal) {
     fail(`selftest INERT: audit-trail/service.ts mutation did not apply — the guard proves nothing for this shape`);
   }
-  fs.writeFileSync(lineageTarget, lineageBroken);
-  const lineageStillClean = audit().problems.length === 0;
-  fs.writeFileSync(lineageTarget, lineageOriginal);
+  const lineageStillClean = audit({ [lineageTarget]: lineageBroken }).problems.length === 0;
   if (lineageStillClean) fail("selftest: expected FAIL after dropping je.memo from listAccountingSourceLineage (jp.journal_entry_uuid shape)");
   planted += 1;
 
@@ -207,9 +203,7 @@ function selftest() {
     const original = fs.readFileSync(target, "utf8");
     const broken = original.replace(consumer.required, 'entityLabel(null, "lost-id", "Journal entry")');
     if (broken === original) fail(`selftest INERT: frontend mutation did not apply to ${consumer.file}`);
-    fs.writeFileSync(target, broken);
-    const stillClean = audit().problems.length === 0;
-    fs.writeFileSync(target, original);
+    const stillClean = audit({ [target]: broken }).problems.length === 0;
     if (stillClean) fail(`selftest: expected FAIL after ${consumer.file} discarded its JE memo`);
     planted += 1;
   }

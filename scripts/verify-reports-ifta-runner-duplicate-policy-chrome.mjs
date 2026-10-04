@@ -13,7 +13,11 @@ const CANONICAL = "apps/frontend/src/pages/reports/tax-regulatory/IftaPreparer.t
 const LEGACY = "apps/frontend/src/pages/reports/ifta/IFTAPreparer.tsx";
 const POLICY = "Tax filing prep only — no ledger posting";
 
+// Selftest plants go through this in-memory overlay - no tracked file is ever written.
+const SELFTEST_OVERLAY = new Map();
+
 function read(rel) {
+  if (SELFTEST_OVERLAY.has(rel)) return SELFTEST_OVERLAY.get(rel);
   return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
 }
 
@@ -52,13 +56,13 @@ function selftest() {
       '"ifta-quarterly": "/reports/ifta"',
     );
     if (bad === original) fail("selftest could not plant legacy alias");
-    fs.writeFileSync(runnerPath, bad);
+    SELFTEST_OVERLAY.set(RUNNER, bad);
     const planted = analyze();
     if (!planted.some((m) => /ifta-preparer|legacy \/reports\/ifta/.test(m))) {
       fail(`selftest expected alias fail; got: ${planted.join("; ")}`);
     }
   } finally {
-    fs.writeFileSync(runnerPath, original);
+    SELFTEST_OVERLAY.delete(RUNNER);
   }
   const good = analyze();
   if (good.length) fail(`selftest expected GOOD: ${good.join("; ")}`);

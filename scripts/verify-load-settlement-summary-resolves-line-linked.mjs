@@ -22,8 +22,7 @@ function assert(cond, msg) {
   if (!cond) throw new Error(`${LABEL}: ${msg}`);
 }
 
-function check() {
-  const src = fs.readFileSync(ROUTES, "utf8");
+function check(src = fs.readFileSync(ROUTES, "utf8")) {
   assert(
     /\/api\/v1\/dispatch\/loads\/:loadId\/settlement-summary/.test(src),
     "must mount GET /api/v1/dispatch/loads/:loadId/settlement-summary"
@@ -54,26 +53,20 @@ function selftest() {
     `AND s.settlement_model = 'load_bookended'\n           AND (s.first_load_id = $2 OR s.last_load_id = $2)\n         ORDER BY`
   );
   assert(broken !== original, "--selftest plant must mutate dual-path WHERE");
-  fs.writeFileSync(ROUTES, broken);
   let failed = false;
   try {
-    check();
+    check(broken);
   } catch {
     failed = true;
-  } finally {
-    fs.writeFileSync(ROUTES, original);
   }
   assert(failed, "--selftest expected FAIL when load_bookended-only filter is restored");
   const noSharedDriver = original.replace("settlement_summary_driver_dca.is_authorized = true", "settlement_summary_driver_dca.is_authorized = false");
   assert(noSharedDriver !== original, "--selftest plant must mutate shared-driver authorization");
-  fs.writeFileSync(ROUTES, noSharedDriver);
   failed = false;
   try {
-    check();
+    check(noSharedDriver);
   } catch {
     failed = true;
-  } finally {
-    fs.writeFileSync(ROUTES, original);
   }
   assert(failed, "--selftest expected FAIL when shared-driver authorization is disabled");
   check();

@@ -41,20 +41,16 @@ function fail(msg) {
 }
 
 function selftest() {
-  const pagePath = path.join(process.cwd(), PAGE);
-  const original = fs.readFileSync(pagePath, "utf8");
-  try {
+  const original = read();
+  {
     const bad = original
       .replace(/isUnresolvedEntityTombstone/g, "NOT_A_TOMBSTONE_CHECK")
       .replace(
         /render: \(row\) => <DriverTeamMemberCell row=\{row\} slot="primary" \/>,/,
         'render: (row) => <EntityLink kind="driver" id={row.primary_driver_id} label={driverTeamMemberName(row, "primary")} />,',
       );
-    fs.writeFileSync(pagePath, bad);
-    const planted = analyze(read());
+    const planted = analyze(bad);
     if (!planted.length) fail(`selftest expected fail; got none`);
-  } finally {
-    fs.writeFileSync(pagePath, original);
   }
   const good = analyze(read());
   if (good.length) fail(`selftest expected GOOD: ${good.join("; ")}`);

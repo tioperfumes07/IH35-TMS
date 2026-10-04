@@ -9,11 +9,12 @@ const VENDOR_CREATE_MODAL = "apps/frontend/src/components/vendors/VendorCreateMo
 const BACKFILL_SCRIPT = "scripts/backfill-vendor-default-expense-account.ts";
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
-export function verify() {
+export function verify(planted = {}) {
+  const readSrc = (rel) => (rel in planted ? planted[rel] : fs.readFileSync(path.join(ROOT, rel), "utf8"));
   const errors = [];
 
   // 1. VendorEditDrawer must have the default-expense-account prompt
-  const editSource = fs.readFileSync(path.join(ROOT, VENDOR_EDIT_DRAWER), "utf8");
+  const editSource = readSrc(VENDOR_EDIT_DRAWER);
   if (!editSource.includes('data-testid="vendor-default-expense-account-prompt"')) {
     errors.push("VendorEditDrawer must include the default-expense-account prompt (data-testid=\"vendor-default-expense-account-prompt\")");
   }
@@ -65,12 +66,7 @@ if (process.argv.includes("--selftest")) {
   // Plant a missing prompt
   const original = fs.readFileSync(path.join(ROOT, VENDOR_EDIT_DRAWER), "utf8");
   const planted = original.replace('data-testid="vendor-default-expense-account-prompt"', 'data-testid="planted-removed"');
-  const tmpPath = VENDOR_EDIT_DRAWER + ".selftest-tmp";
-  fs.writeFileSync(tmpPath, planted);
-  fs.renameSync(tmpPath, VENDOR_EDIT_DRAWER);
-  const errors = verify();
-  // Restore
-  fs.writeFileSync(VENDOR_EDIT_DRAWER, original);
+  const errors = verify({ [VENDOR_EDIT_DRAWER]: planted });
   if (!errors.some((e) => e.includes("vendor-default-expense-account-prompt"))) {
     console.error("SELFTEST FAIL: planted missing prompt was not detected");
     process.exit(1);

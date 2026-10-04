@@ -17,13 +17,13 @@ function fail(msg) {
   process.exit(1);
 }
 
-function audit() {
+function audit(srcOverride) {
   const problems = [];
-  if (!fs.existsSync(LATCH)) {
+  if (srcOverride === undefined && !fs.existsSync(LATCH)) {
     problems.push(`missing ${LATCH}`);
     return problems;
   }
-  const src = fs.readFileSync(LATCH, "utf8");
+  const src = srcOverride ?? fs.readFileSync(LATCH, "utf8");
   if (!src.includes("async function convertAndSendInvoiceOnDelivery")) {
     problems.push("convertAndSendInvoiceOnDelivery must exist");
   }
@@ -47,21 +47,15 @@ function selftest() {
   const noOpen = original
     .replaceAll(`query("SAVEPOINT ${SP}")`, 'query("SELECT 1 /* planted */")')
     .replaceAll(`query('SAVEPOINT ${SP}')`, "query('SELECT 1 /* planted */')");
-  fs.writeFileSync(LATCH, noOpen);
-  try {
-    if (audit().length === 0) fail("selftest: expected FAIL after removing SAVEPOINT open");
+  {
+    if (audit(noOpen).length === 0) fail("selftest: expected FAIL after removing SAVEPOINT open");
     planted += 1;
-  } finally {
-    fs.writeFileSync(LATCH, original);
   }
 
   const noRb = original.replaceAll(`ROLLBACK TO SAVEPOINT ${SP}`, "ROLLBACK TO SAVEPOINT __plant__");
-  fs.writeFileSync(LATCH, noRb);
-  try {
-    if (audit().length === 0) fail("selftest: expected FAIL after removing ROLLBACK TO SAVEPOINT");
+  {
+    if (audit(noRb).length === 0) fail("selftest: expected FAIL after removing ROLLBACK TO SAVEPOINT");
     planted += 1;
-  } finally {
-    fs.writeFileSync(LATCH, original);
   }
 
   if (planted < 2) fail(`selftest planted ${planted}/2`);

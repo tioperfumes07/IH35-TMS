@@ -134,9 +134,9 @@ if (process.argv.includes("--selftest")) {
   for (const { name, override, expectProblems } of cases) {
     const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "mega-tour-reuse-guard-"));
     try {
-      const full = path.join(tmpRoot, SERVICE_FILE);
-      fs.mkdirSync(path.dirname(full), { recursive: true });
-      fs.writeFileSync(full, override);
+      const tmpFull = path.join(tmpRoot, SERVICE_FILE);
+      fs.mkdirSync(path.dirname(tmpFull), { recursive: true });
+      fs.writeFileSync(tmpFull, override);
       const problems = collectProblems(tmpRoot);
       if (problems.length !== expectProblems) {
         console.error(

@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-function read(rel) {
+function readDisk(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
@@ -13,8 +13,10 @@ function assert(cond, msg, errors) {
   if (!cond) errors.push(msg);
 }
 
-export function run() {
+// overrides: {relPath: plantedText} -- lets --selftest plant into a string; no file is written.
+export function run(overrides = {}) {
   const errors = [];
+  const read = (rel) => overrides[rel] ?? readDisk(rel);
   const page = read("apps/frontend/src/pages/driver-finance/SettlementsPage.tsx");
   const companyPage = read("apps/frontend/src/pages/driver-finance/CompanySettlementsPage.tsx");
   const detail = read("apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx");
@@ -90,35 +92,26 @@ export function run() {
 }
 
 function selftest() {
-  const pagePath = path.join(ROOT, "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx");
-  const companyPath = path.join(ROOT, "apps/frontend/src/pages/driver-finance/CompanySettlementsPage.tsx");
-  const backup = fs.readFileSync(pagePath, "utf8");
-  const companyBackup = fs.readFileSync(companyPath, "utf8");
-  try {
-    const patched = backup.replace(/const kpiBaseQuery = useQuery\(\{[\s\S]*?\n  \}\);\n/, "");
-    fs.writeFileSync(pagePath, patched, "utf8");
-    const planted = run();
-    if (!planted.some((e) => e.includes("unfiltered list for KPI base"))) {
-      throw new Error("planted kpiBaseQuery removal not detected");
-    }
-    fs.writeFileSync(pagePath, backup, "utf8");
+  const PAGE_REL = "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx";
+  const COMPANY_REL = "apps/frontend/src/pages/driver-finance/CompanySettlementsPage.tsx";
+  const backup = readDisk(PAGE_REL);
+  const companyBackup = readDisk(COMPANY_REL);
 
-    // REG-005 — removing the home KPI strip from either page must be caught.
-    fs.writeFileSync(pagePath, backup.replace('data-testid="settlements-home-kpi-strip"', 'data-testid="x"'), "utf8");
-    if (!run().some((e) => e.includes("settlements-home-kpi-strip"))) {
-      throw new Error("planted driver-settlements KPI strip removal not detected");
-    }
-    fs.writeFileSync(pagePath, backup, "utf8");
-
-    fs.writeFileSync(companyPath, companyBackup.replace('data-testid="company-settlements-kpi-strip"', 'data-testid="x"'), "utf8");
-    if (!run().some((e) => e.includes("company-settlements-kpi-strip"))) {
-      throw new Error("planted company-settlements KPI strip removal not detected");
-    }
-    console.log(`[verify-settlement-fe-honesty] SELFTEST PASS — kpiBaseQuery + REG-005 driver/company strip mutations detected`);
-  } finally {
-    fs.writeFileSync(pagePath, backup, "utf8");
-    fs.writeFileSync(companyPath, companyBackup, "utf8");
+  const patched = backup.replace(/const kpiBaseQuery = useQuery\(\{[\s\S]*?\n  \}\);\n/, "");
+  const planted = run({ [PAGE_REL]: patched });
+  if (!planted.some((e) => e.includes("unfiltered list for KPI base"))) {
+    throw new Error("planted kpiBaseQuery removal not detected");
   }
+
+  // REG-005 — removing the home KPI strip from either page must be caught.
+  if (!run({ [PAGE_REL]: backup.replace('data-testid="settlements-home-kpi-strip"', 'data-testid="x"') }).some((e) => e.includes("settlements-home-kpi-strip"))) {
+    throw new Error("planted driver-settlements KPI strip removal not detected");
+  }
+
+  if (!run({ [COMPANY_REL]: companyBackup.replace('data-testid="company-settlements-kpi-strip"', 'data-testid="x"') }).some((e) => e.includes("company-settlements-kpi-strip"))) {
+    throw new Error("planted company-settlements KPI strip removal not detected");
+  }
+  console.log(`[verify-settlement-fe-honesty] SELFTEST PASS — kpiBaseQuery + REG-005 driver/company strip mutations detected`);
 }
 
 function main() {

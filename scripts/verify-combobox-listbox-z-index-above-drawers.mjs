@@ -82,8 +82,7 @@ function maxArbitraryZIndex(excludeFiles) {
   return max;
 }
 
-function comboboxListboxZIndex() {
-  const text = fs.readFileSync(COMBOBOX, "utf8");
+function comboboxListboxZIndex(text = fs.readFileSync(COMBOBOX, "utf8")) {
   const matches = [...text.matchAll(/zIndex:\s*(\d+|[A-Z_][A-Z0-9_]*)/g)];
   assert(matches.length > 0, "no zIndex assignment found in Combobox.tsx measureListboxStyle");
   // Resolve a named constant (e.g. LISTBOX_Z_INDEX) if that's what's assigned, else take the numeric literal.
@@ -95,8 +94,8 @@ function comboboxListboxZIndex() {
   return Number(constMatch[1]);
 }
 
-function check() {
-  const listboxZ = comboboxListboxZIndex();
+function check(comboboxSrc) {
+  const listboxZ = comboboxListboxZIndex(comboboxSrc);
   const maxOther = maxArbitraryZIndex([COMBOBOX, DRIVER_ONBOARDING_TOUR, STALE_DEPLOY_BANNER, TOAST_CONTAINER, MILES_INVERT_ACK_DIALOG]);
   assert(
     listboxZ >= maxOther,
@@ -111,14 +110,11 @@ function selftest() {
   // Force the listbox z-index absurdly low so it must be below whatever the real codebase max is.
   const broken = original.replace(/const LISTBOX_Z_INDEX = \d+;/, "const LISTBOX_Z_INDEX = 1;");
   assert(broken !== original, "selftest mutation did not match — LISTBOX_Z_INDEX constant shape changed");
-  fs.writeFileSync(COMBOBOX, broken);
   let failed = false;
   try {
-    check();
+    check(broken);
   } catch {
     failed = true;
-  } finally {
-    fs.writeFileSync(COMBOBOX, original);
   }
   assert(failed, "--selftest expected FAIL when the listbox z-index is dropped below every drawer's");
   check();

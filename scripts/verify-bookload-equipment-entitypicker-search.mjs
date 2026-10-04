@@ -4,6 +4,7 @@
  * Cursor even claim: 2100.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -125,7 +126,7 @@ if (process.argv.includes("--selftest")) {
       console.error(`${LABEL} SELFTEST FAIL: ${label} mutation was inert`);
       process.exit(1);
     }
-    const mutationRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-bookload-fk-"));
+    const mutationRoot = fs.mkdtempSync(path.join(os.tmpdir(), "bookload-fk-"));
     try {
       for (const sourceRel of [FILE, MODAL_FILE, BOOK_LOAD_SERVICE, TRIP_PAIRING_FILE, TIMELINE_FILE]) {
         const target = path.join(mutationRoot, sourceRel);
@@ -140,12 +141,12 @@ if (process.argv.includes("--selftest")) {
       fs.rmSync(mutationRoot, { recursive: true, force: true });
     }
   }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-bookload-equip-"));
+  const tmpStubRoot = fs.mkdtempSync(path.join(os.tmpdir(), "bookload-equip-"));
   try {
-    const dir = path.join(stubRoot, "apps/frontend/src/pages/dispatch/components");
-    fs.mkdirSync(dir, { recursive: true });
+    const tmpDir = path.join(tmpStubRoot, "apps/frontend/src/pages/dispatch/components");
+    fs.mkdirSync(tmpDir, { recursive: true });
     fs.writeFileSync(
-      path.join(dir, "BookLoadEquipmentSection.tsx"),
+      path.join(tmpDir, "BookLoadEquipmentSection.tsx"),
       `export function BookLoadEquipmentSection() {
   const unitsQuery = useQuery({ queryFn: () => listUnits({ limit: 500 }) });
   return (
@@ -157,13 +158,13 @@ if (process.argv.includes("--selftest")) {
 }
 `
     );
-    const planted = collectProblems(stubRoot);
+    const planted = collectProblems(tmpStubRoot);
     if (!planted.some((p) => /EntityPicker/.test(p))) {
       console.error(`${LABEL} SELFTEST FAIL: planted SelectCombobox stub did not FAIL EntityPicker`);
       process.exit(1);
     }
   } finally {
-    fs.rmSync(stubRoot, { recursive: true, force: true });
+    fs.rmSync(tmpStubRoot, { recursive: true, force: true });
   }
   console.log(`${LABEL} SELFTEST OK`);
 } else {

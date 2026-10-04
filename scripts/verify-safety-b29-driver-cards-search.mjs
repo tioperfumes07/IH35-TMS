@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 /** SAF-B29 — Driver Safety Cards roster must server-search (not silent 200-cap). */
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const ROOT = new URL("..", import.meta.url).pathname.replace(/\/$/, "");
 const FILE = join(ROOT, "apps/frontend/src/components/safety/DriverSafetyCards.tsx");
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
 
-export function run() {
-  const s = strip(readFileSync(FILE, "utf8"));
+export function run(plantedText) {
+  const s = strip(plantedText ?? readFileSync(FILE, "utf8"));
   const checks = [
     ["term-is-state", /const \[rosterSearch, setRosterSearch\] = useState/.test(s)],
     ["term-reaches-server", /search:\s*rosterSearch \|\| undefined/.test(s)],
@@ -34,16 +34,13 @@ function selftest() {
     console.error("SELFTEST FAIL: already red");
     process.exit(1);
   }
-  try {
-    writeFileSync(FILE, original.replace(", rosterSearch]", "]"), "utf8");
-    const caught = run();
+  {
+    const caught = run(original.replace(", rosterSearch]", "]"));
     if (caught.ok || !caught.failed.includes("term-in-query-key")) {
       console.error("SELFTEST FAIL: not caught", caught.message);
       process.exit(1);
     }
     console.log("  caught: query key");
-  } finally {
-    writeFileSync(FILE, original, "utf8");
   }
   console.log("SELFTEST PASS");
 }

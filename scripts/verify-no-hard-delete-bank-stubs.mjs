@@ -119,29 +119,29 @@ export function assertNoHardDeleteBankStubs(opts = {}) {
 
 function selftest() {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "f9-01-bank-stub-"));
-  const dedupDir = path.join(tmp, "apps/backend/src/banking");
-  const plaidDir = path.join(tmp, "apps/backend/src/integrations/plaid");
-  const migDir = path.join(tmp, "db/migrations");
-  fs.mkdirSync(dedupDir, { recursive: true });
-  fs.mkdirSync(plaidDir, { recursive: true });
-  fs.mkdirSync(migDir, { recursive: true });
-  const viewDir = path.join(tmp, "apps/frontend/src/pages/banking/components");
-  const apiDir = path.join(tmp, "apps/frontend/src/api");
-  fs.mkdirSync(viewDir, { recursive: true });
-  fs.mkdirSync(apiDir, { recursive: true });
+  const tmpDedupDir = path.join(tmp, "apps/backend/src/banking");
+  const tmpPlaidDir = path.join(tmp, "apps/backend/src/integrations/plaid");
+  const tmpMigDir = path.join(tmp, "db/migrations");
+  fs.mkdirSync(tmpDedupDir, { recursive: true });
+  fs.mkdirSync(tmpPlaidDir, { recursive: true });
+  fs.mkdirSync(tmpMigDir, { recursive: true });
+  const tmpViewDir = path.join(tmp, "apps/frontend/src/pages/banking/components");
+  const tmpApiDir = path.join(tmp, "apps/frontend/src/api");
+  fs.mkdirSync(tmpViewDir, { recursive: true });
+  fs.mkdirSync(tmpApiDir, { recursive: true });
   fs.writeFileSync(
-    path.join(migDir, "202609010050_f9_01_bank_tx_stub_void_not_delete.sql"),
+    path.join(tmpMigDir, "202609010050_f9_01_bank_tx_stub_void_not_delete.sql"),
     "-- DO NOT RUN ON PROD\nALTER TABLE banking.bank_transactions ADD COLUMN IF NOT EXISTS voided_at timestamptz;\nALTER TABLE banking.bank_transactions ADD COLUMN IF NOT EXISTS merged_into_bank_transaction_id uuid;\nCREATE UNIQUE INDEX uq_bank_transactions_account_dedup_active ON banking.bank_transactions (bank_account_id, dedup_hash) WHERE voided_at IS NULL;\n"
   );
   fs.writeFileSync(
-    path.join(dedupDir, "bank-tx-dedup.ts"),
+    path.join(tmpDedupDir, "bank-tx-dedup.ts"),
     `await client.query(\`DELETE FROM banking.bank_transactions WHERE id = $1\`, [stubId]);\n`
   );
-  fs.writeFileSync(path.join(plaidDir, "plaid.service.ts"), "// planted: pending replacement retirement removed\n");
-  fs.writeFileSync(path.join(dedupDir, "p7-wave2.routes.ts"), "supersede-plaid-pending\n");
-  fs.writeFileSync(path.join(apiDir, "banking.ts"), "supersedePlaidPendingTransaction\n");
+  fs.writeFileSync(path.join(tmpPlaidDir, "plaid.service.ts"), "// planted: pending replacement retirement removed\n");
+  fs.writeFileSync(path.join(tmpDedupDir, "p7-wave2.routes.ts"), "supersede-plaid-pending\n");
+  fs.writeFileSync(path.join(tmpApiDir, "banking.ts"), "supersedePlaidPendingTransaction\n");
   fs.writeFileSync(
-    path.join(viewDir, "BankingTransactionsDesignView.tsx"),
+    path.join(tmpViewDir, "BankingTransactionsDesignView.tsx"),
     'className={`relative flex items-center justify-end gap-1 ${menuOpen ? "" : ""}`}\n' +
       '<div className="absolute right-0 top-7 z-20 min-w-[220px]">Supersede pending duplicate</div>\n'
   );

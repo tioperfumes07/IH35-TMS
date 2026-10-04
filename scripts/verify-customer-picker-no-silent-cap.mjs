@@ -125,11 +125,11 @@ export function run(root = ROOT) {
 }
 
 function selftest() {
-  const dir = fs.mkdtempSync("/tmp/customer-picker-cap-selftest-");
+  const tmpDir = fs.mkdtempSync("/tmp/customer-picker-cap-selftest-");
   const write = (rel, content) => {
-    const abs = path.join(dir, rel);
-    fs.mkdirSync(path.dirname(abs), { recursive: true });
-    fs.writeFileSync(abs, content);
+    const tmpAbs = path.join(tmpDir, rel);
+    fs.mkdirSync(path.dirname(tmpAbs), { recursive: true });
+    fs.writeFileSync(tmpAbs, content);
   };
 
   // 1. All 6 named files present, correct, clean.
@@ -141,12 +141,12 @@ function selftest() {
         : `const PICKER_PAGE = 200;\nimport { CappedListNotice } from "x";\n`
     );
   }
-  const clean = run(dir);
+  const clean = run(tmpDir);
   if (clean.length) throw new Error("PASS fail (should be clean): " + JSON.stringify(clean));
 
   // 2. Regress one named fix's limit below the floor -> must be caught.
   write("apps/frontend/src/pages/UserDetail.tsx", `const CUSTOMER_PICKER_LIMIT = 200;\nimport { CappedListNotice } from "x";\n`);
-  const regressedLimit = run(dir);
+  const regressedLimit = run(tmpDir);
   if (!regressedLimit.some((p) => p.includes("UserDetail.tsx"))) {
     throw new Error("FAIL to catch: regressed named-fix limit went undetected");
   }
@@ -157,7 +157,7 @@ function selftest() {
 
   // 3. Strip CappedListNotice from a named fix -> must be caught.
   write("apps/frontend/src/pages/factoring/FactorAdmin.tsx", `const CUSTOMER_PICKER_LIMIT = 2000;\n`);
-  const regressedNotice = run(dir);
+  const regressedNotice = run(tmpDir);
   if (!regressedNotice.some((p) => p.includes("FactorAdmin.tsx"))) {
     throw new Error("FAIL to catch: regressed CappedListNotice removal went undetected");
   }
@@ -171,7 +171,7 @@ function selftest() {
     "apps/frontend/src/pages/some/NewPickerPage.tsx",
     `listCustomers({ operating_company_id: x, limit: 100, search: y })`
   );
-  const newOffender = run(dir);
+  const newOffender = run(tmpDir);
   if (!newOffender.some((p) => p.includes("NewPickerPage.tsx"))) {
     throw new Error("FAIL to catch: a brand-new low-cap listCustomers call with no notice went undetected");
   }
@@ -182,10 +182,10 @@ function selftest() {
     "apps/frontend/src/pages/some/HonestPickerPage.tsx",
     `import { CappedListNotice } from "x";\nlistCustomers({ operating_company_id: x, limit: 100, search: y })`
   );
-  const honestOffender = run(dir).filter((p) => p.includes("HonestPickerPage.tsx"));
+  const honestOffender = run(tmpDir).filter((p) => p.includes("HonestPickerPage.tsx"));
   if (honestOffender.length) throw new Error("FAIL: an honestly-notice-wired low cap must not be flagged: " + JSON.stringify(honestOffender));
 
-  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(tmpDir, { recursive: true, force: true });
   console.log(`${LABEL} SELFTEST PASS`);
 }
 

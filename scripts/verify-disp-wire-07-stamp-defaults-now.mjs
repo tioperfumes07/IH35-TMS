@@ -19,7 +19,8 @@ const CALLERS = [
   "apps/backend/src/mdata/loads.routes.ts",
 ];
 
-function read(rel) {
+function read(rel, overrides = {}) {
+  if (Object.prototype.hasOwnProperty.call(overrides, rel)) return overrides[rel];
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
@@ -27,9 +28,9 @@ function assert(cond, msg, errors) {
   if (!cond) errors.push(msg);
 }
 
-export function run() {
+export function run(overrides = {}) {
   const errors = [];
-  const helper = read(HELPER);
+  const helper = read(HELPER, overrides);
 
   assert(
     /export\s+async\s+function\s+stampFinalActiveDeliveryDeparture\b/.test(helper),
@@ -53,7 +54,7 @@ export function run() {
   );
 
   for (const caller of CALLERS) {
-    const src = read(caller);
+    const src = read(caller, overrides);
     assert(
       /stampFinalActiveDeliveryDeparture\s*\([^)]*\)/.test(src),
       `${caller} must invoke stampFinalActiveDeliveryDeparture`,
@@ -70,24 +71,19 @@ export function run() {
 }
 
 function selftest() {
-  const p = path.join(ROOT, HELPER);
-  const backup = fs.readFileSync(p, "utf8");
-  try {
-    const planted = backup.replace(
-      /COALESCE\(\$3::timestamptz,\s*now\(\)\)/,
-      "$3::timestamptz"
-    );
-    fs.writeFileSync(p, planted, "utf8");
-    const plantedErrors = run();
-    assert(
-      plantedErrors.some((e) => e.includes("now()") || e.includes("deliveredAt is null")),
-      "selftest expected planted COALESCE removal to be detected",
-      plantedErrors
-    );
-    console.log(`verify-disp-wire-07-stamp-defaults-now: SELFTEST PASS (${plantedErrors.length} planted failures detected)`);
-  } finally {
-    fs.writeFileSync(p, backup, "utf8");
-  }
+  // Pure: the planted text is passed in as an override; no file is written.
+  const backup = read(HELPER);
+  const planted = backup.replace(
+    /COALESCE\(\$3::timestamptz,\s*now\(\)\)/,
+    "$3::timestamptz"
+  );
+  const plantedErrors = run({ [HELPER]: planted });
+  assert(
+    plantedErrors.some((e) => e.includes("now()") || e.includes("deliveredAt is null")),
+    "selftest expected planted COALESCE removal to be detected",
+    plantedErrors
+  );
+  console.log(`verify-disp-wire-07-stamp-defaults-now: SELFTEST PASS (${plantedErrors.length} planted failures detected)`);
 }
 
 function main() {

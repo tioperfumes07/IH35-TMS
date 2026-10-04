@@ -21,6 +21,7 @@
  * --selftest removes one value from one source in a scratch copy and expects a mismatch.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -147,7 +148,7 @@ export function check(root = ROOT) {
 }
 
 function selftest() {
-  const tmp = fs.mkdtempSync(path.join(ROOT, "tmp-disb-method-"));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tmp-disb-method-"));
   let failMsg = null;
   try {
     for (const src of SOURCES) {
@@ -156,10 +157,10 @@ function selftest() {
       fs.copyFileSync(path.join(ROOT, src.file), dest);
     }
     // Plant: strip "comchek" from ONLY the frontend METHOD_OPTIONS source.
-    const modalPath = path.join(tmp, "apps/frontend/src/pages/cash-advances/components/CreateAdvanceModal.tsx");
-    let modalSrc = fs.readFileSync(modalPath, "utf8");
+    const tmpModalPath = path.join(tmp, "apps/frontend/src/pages/cash-advances/components/CreateAdvanceModal.tsx");
+    let modalSrc = fs.readFileSync(tmpModalPath, "utf8");
     modalSrc = modalSrc.replace(/\s*\{ value: "comchek"[^}]*\},/, "");
-    fs.writeFileSync(modalPath, modalSrc);
+    fs.writeFileSync(tmpModalPath, modalSrc);
 
     const errs = check(tmp);
     if (!errs.some((e) => e.includes("CreateAdvanceModal.tsx"))) {

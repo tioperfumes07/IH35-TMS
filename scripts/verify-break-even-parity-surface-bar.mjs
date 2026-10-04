@@ -14,8 +14,7 @@ function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-export function check() {
-  const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+export function check(src = fs.readFileSync(path.join(ROOT, PAGE), "utf8")) {
   assert(src.includes("ParityTable"), "BreakEvenPage: must use ParityTable");
   assert(src.includes('storageKey="break-even-expense-lines"'), "BreakEvenPage: storageKey");
   assert(src.includes('tableTestId="break-even-expense-lines-table"'), "BreakEvenPage: tableTestId");
@@ -36,14 +35,12 @@ function selftest() {
     "}",
     "",
   ].join("\n");
-  fs.writeFileSync(filePath, planted);
   let failed = false;
   try {
-    check();
+    check(planted);
   } catch {
     failed = true;
   }
-  fs.writeFileSync(filePath, good);
   assert(failed, "selftest: expected FAIL on raw HTML table");
   console.log("verify-break-even-parity-surface-bar --selftest PASS");
 }

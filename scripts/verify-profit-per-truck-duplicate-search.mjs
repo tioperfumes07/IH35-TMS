@@ -14,8 +14,7 @@ function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-export function check() {
-  const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+export function check(src = fs.readFileSync(path.join(ROOT, PAGE), "utf8")) {
   assert(src.includes("ParityTable"), "ProfitPerTruckPage: must use ParityTable");
   assert(!/\[search,\s*setSearch\]/.test(src), "ProfitPerTruckPage: must not keep page-local search state");
   assert(!/Search truck\/driver/.test(src), "ProfitPerTruckPage: must not mount Search truck/driver input");
@@ -24,22 +23,19 @@ export function check() {
 
 function selftest() {
   check();
-  const filePath = path.join(ROOT, PAGE);
-  const good = fs.readFileSync(filePath, "utf8");
+  const good = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
   const bad =
     good.replace(
       /const \[flagFilter/,
       `const [search, setSearch] = useState("");\n  const [flagFilter`,
     ) +
     `\n<label>Search truck/driver<input value={search} onChange={() => {}} /></label>\n`;
-  fs.writeFileSync(filePath, bad);
   let failed = false;
   try {
-    check();
+    check(bad);
   } catch {
     failed = true;
   }
-  fs.writeFileSync(filePath, good);
   assert(failed, "selftest: expected FAIL with page-local search restored");
   console.log("verify-profit-per-truck-duplicate-search --selftest PASS");
 }

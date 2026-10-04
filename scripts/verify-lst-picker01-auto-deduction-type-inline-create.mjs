@@ -5,6 +5,7 @@
  * Cursor even claim: 2094.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -70,14 +71,14 @@ if (process.argv.includes("--selftest")) {
     for (const p of baseline) console.error("  - " + p);
     process.exit(1);
   }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-lst-picker01-auto-deduction-"));
+  const tmpStubRoot = fs.mkdtempSync(path.join(os.tmpdir(), "tmp-lst-picker01-auto-deduction-"));
   try {
-    const pageDir = path.join(stubRoot, "apps/frontend/src/pages/drivers");
-    const regDir = path.join(stubRoot, "apps/frontend/src/components/parity");
-    fs.mkdirSync(pageDir, { recursive: true });
-    fs.mkdirSync(regDir, { recursive: true });
+    const tmpPageDir = path.join(tmpStubRoot, "apps/frontend/src/pages/drivers");
+    const tmpRegDir = path.join(tmpStubRoot, "apps/frontend/src/components/parity");
+    fs.mkdirSync(tmpPageDir, { recursive: true });
+    fs.mkdirSync(tmpRegDir, { recursive: true });
     fs.writeFileSync(
-      path.join(pageDir, "AutoDeductionPolicies.tsx"),
+      path.join(tmpPageDir, "AutoDeductionPolicies.tsx"),
       `export function AutoDeductionPolicies() {
   return (
     <SelectCombobox aria-label="Deduction type" value={deductionType}>
@@ -88,14 +89,14 @@ if (process.argv.includes("--selftest")) {
 }
 `
     );
-    fs.copyFileSync(path.join(ROOT, REGISTRY), path.join(regDir, "catalogPickerRegistry.ts"));
-    const planted = collectProblems(stubRoot);
+    fs.copyFileSync(path.join(ROOT, REGISTRY), path.join(tmpRegDir, "catalogPickerRegistry.ts"));
+    const planted = collectProblems(tmpStubRoot);
     if (!planted.some((p) => /createKind=driver_deduction_type/.test(p))) {
       console.error(`${LABEL} SELFTEST FAIL: planted SelectCombobox stub did not FAIL createKind`);
       process.exit(1);
     }
   } finally {
-    fs.rmSync(stubRoot, { recursive: true, force: true });
+    fs.rmSync(tmpStubRoot, { recursive: true, force: true });
   }
   console.log(`${LABEL} SELFTEST OK`);
 } else {

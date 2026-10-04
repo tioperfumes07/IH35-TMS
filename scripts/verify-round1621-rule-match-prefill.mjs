@@ -26,6 +26,7 @@
 // node scripts/verify-round1621-rule-match-prefill.mjs
 // node scripts/verify-round1621-rule-match-prefill.mjs --selftest
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -33,18 +34,18 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const VIEW = "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx";
 const API = "apps/frontend/src/api/banking.ts";
 
-function read(rel) {
-  return fs.readFileSync(path.join(ROOT, rel), "utf8");
+function read(rel, root = ROOT) {
+  return fs.readFileSync(path.join(root, rel), "utf8");
 }
 
 function assert(cond, msg, errors) {
   if (!cond) errors.push(msg);
 }
 
-export function run() {
+export function run(root = ROOT) {
   const errors = [];
-  const view = read(VIEW);
-  const api = read(API);
+  const view = read(VIEW, root);
+  const api = read(API, root);
 
   assert(
     /rule_match:\s*BankTransactionRuleMatch\s*\|\s*null/.test(api),
@@ -88,29 +89,34 @@ export function run() {
 }
 
 function selftest() {
-  const p = path.join(ROOT, VIEW);
-  const backup = fs.readFileSync(p, "utf8");
+  const backup = read(VIEW);
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "round1621-selftest-"));
   try {
+    for (const rel of [VIEW, API]) {
+      fs.mkdirSync(path.dirname(path.join(tmpRoot, rel)), { recursive: true });
+      fs.writeFileSync(path.join(tmpRoot, rel), read(rel), "utf8");
+    }
+    const tmpViewPath = path.join(tmpRoot, VIEW);
     // Plant #1: remove the never-clobber guard.
     let planted = backup.replace("if (existing?.accountId || existing?.vendorId) return;\n    ", "");
     if (planted === backup) throw new Error("selftest setup failed: never-clobber guard not found");
-    fs.writeFileSync(p, planted, "utf8");
-    let errors = run();
+    fs.writeFileSync(tmpViewPath, planted, "utf8");
+    let errors = run(tmpRoot);
     if (!errors.some((e) => e.includes("never overwrite an operator's own pick"))) {
       throw new Error("planted removal of the never-clobber guard not detected");
     }
 
     // Plant #2: remove the visible pre-fill note.
     planted = backup.replace('data-testid="banking-rule-match-prefill-note"', 'data-testid="renamed"');
-    fs.writeFileSync(p, planted, "utf8");
-    errors = run();
+    fs.writeFileSync(tmpViewPath, planted, "utf8");
+    errors = run(tmpRoot);
     if (!errors.some((e) => e.includes("visible note"))) {
       throw new Error("planted removal of the visible pre-fill note not detected");
     }
 
     console.log("[verify-round1621-rule-match-prefill] SELFTEST PASS (2 planted failures detected)");
   } finally {
-    fs.writeFileSync(p, backup, "utf8");
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
   }
 }
 

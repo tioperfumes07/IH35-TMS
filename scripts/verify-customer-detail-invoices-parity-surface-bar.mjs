@@ -14,8 +14,8 @@ function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-export function check() {
-  const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+export function check(srcOverride) {
+  const src = srcOverride ?? fs.readFileSync(path.join(ROOT, PAGE), "utf8");
   assert(src.includes("ParityTable"), "CustomerDetail: must use ParityTable");
   assert(src.includes('storageKey="customer-detail-recent-invoices"'), "CustomerDetail: recent invoices storageKey");
   assert(src.includes('tableTestId="customer-detail-recent-invoices-table"'), "CustomerDetail: recent invoices tableTestId");
@@ -28,22 +28,18 @@ export function check() {
 
 function selftest() {
   check();
-  const filePath = path.join(ROOT, PAGE);
-  const good = fs.readFileSync(filePath, "utf8");
   const planted = [
     "export function CustomerDetail() {",
     '  return <table className="min-w-full" data-testid="customer-detail-recent-invoices-table"><tbody /></table>;',
     "}",
     "",
   ].join("\n");
-  fs.writeFileSync(filePath, planted);
   let failed = false;
   try {
-    check();
+    check(planted);
   } catch {
     failed = true;
   }
-  fs.writeFileSync(filePath, good);
   assert(failed, "selftest: expected FAIL on raw HTML table");
   console.log("verify-customer-detail-invoices-parity-surface-bar --selftest PASS");
 }

@@ -55,14 +55,14 @@ function isBespokeDrawer(src) {
   return /<aside\b/.test(src) && /role="dialog"/.test(src) && /fixed right-0/.test(src);
 }
 
-export function run() {
+export function run(overrides = {}) {
   const files = SAFETY_DIRS.flatMap((d) => walk(join(ROOT, d)));
   // A "drawer" is anything that renders a modal dialog surface, however it is named.
   const drawers = [];
   const offenders = [];
 
   for (const f of files) {
-    const raw = readFileSync(f, "utf8");
+    const raw = Object.prototype.hasOwnProperty.call(overrides, f) ? overrides[f] : readFileSync(f, "utf8");
     const src = stripComments(raw);
     const rendersDrawer = /ParityDrawer/.test(src) || isBespokeDrawer(src);
     if (!rendersDrawer) continue;
@@ -101,7 +101,6 @@ export function run() {
  * A fixture would only prove the regex compiles; this proves the guard still sees the repository.
  */
 function selftest() {
-  const { writeFileSync } = fs;
   const target = join(ROOT, "apps/frontend/src/pages/safety/components/CompanyViolationDetailDrawer.tsx");
   const original = readFileSync(target, "utf8");
 
@@ -125,13 +124,7 @@ function selftest() {
     process.exit(1);
   }
 
-  let caught;
-  try {
-    writeFileSync(target, reverted, "utf8");
-    caught = run();
-  } finally {
-    writeFileSync(target, original, "utf8");
-  }
+  const caught = run({ [target]: reverted });
 
   if (caught.ok || !caught.offenders.some((o) => o.endsWith("CompanyViolationDetailDrawer.tsx"))) {
     console.error(`SELFTEST FAIL: a reverted bespoke drawer was NOT caught.\n${caught.message}`);

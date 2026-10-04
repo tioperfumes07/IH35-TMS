@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** LST-F154 — FE must not toast/banner String((error as Error)?.message) — use userFacingApiError. */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -44,16 +45,17 @@ function offenders(files) {
 const files = walk(SRC);
 
 if (SELFTEST) {
-  const probe = path.join(SRC, "__cu09_optional_selftest_probe__.tsx");
-  fs.writeFileSync(probe, 'pushToast(String((error as Error)?.message ?? "x"), "error");\n');
+  const tmpProbeDir = fs.mkdtempSync(path.join(os.tmpdir(), "cu09-probe-"));
+  const tmpProbe = path.join(tmpProbeDir, "__cu09_optional_selftest_probe__.tsx");
+  fs.writeFileSync(tmpProbe, 'pushToast(String((error as Error)?.message ?? "x"), "error");\n');
   try {
-    const planted = offenders([probe]);
+    const planted = offenders([tmpProbe]);
     if (!planted.length) {
       console.error(`${LABEL} SELFTEST FAILED: planted not caught`);
       process.exit(1);
     }
   } finally {
-    fs.unlinkSync(probe);
+    fs.rmSync(tmpProbeDir, { recursive: true, force: true });
   }
   const live = offenders(files);
   if (live.length) {

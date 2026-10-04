@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** PolicyCreateModal — covered units use the shared server-search EntityPicker. Claim 2156. */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -23,11 +24,11 @@ export function collectProblems(root = ROOT) {
 if (process.argv.includes("--selftest")) {
   const baseline = collectProblems();
   if (baseline.length) { console.error(LABEL, baseline); process.exit(1); }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-policy-modal-"));
+  const stubRoot = fs.mkdtempSync(path.join(os.tmpdir(), "tmp-policy-modal-"));
   try {
-    const dir = path.join(stubRoot, "apps/frontend/src/components/insurance");
-    fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, "PolicyCreateModal.tsx"), `listAllUnits({ include: "trailers", limit: 500 })\n<input data-testid="policy-create-unit-search" />\n`);
+    const tmpDir = path.join(stubRoot, "apps/frontend/src/components/insurance");
+    fs.mkdirSync(tmpDir, { recursive: true });
+    fs.writeFileSync(path.join(tmpDir, "PolicyCreateModal.tsx"), `listAllUnits({ include: "trailers", limit: 500 })\n<input data-testid="policy-create-unit-search" />\n`);
     if (!collectProblems(stubRoot).length) { console.error("plant miss"); process.exit(1); }
   } finally { fs.rmSync(stubRoot, { recursive: true, force: true }); }
   console.log(LABEL, "SELFTEST OK");

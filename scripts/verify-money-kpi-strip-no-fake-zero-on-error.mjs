@@ -251,14 +251,12 @@ function selftest() {
       originalBills.slice(0, kpiStripStart) +
       `kpiStrip={\n        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">\n          {billKpiCard("Open Bills", money(billKpis.openAmount), \`\${billKpis.openCount} open\`)}\n        </div>\n      }` +
       originalBills.slice(braceEnd + "      }".length);
-    fs.writeFileSync(BILLS_PAGE, mutated);
     let caught = false;
     try {
       checkBillsPage(mutated);
       caught = process.exitCode === 1;
     } finally {
       process.exitCode = undefined;
-      fs.writeFileSync(BILLS_PAGE, originalBills);
     }
     if (!caught) {
       console.error("SELFTEST INERT: dropping billsQuery.isError branch was not caught.");
@@ -279,14 +277,12 @@ function selftest() {
       process.exitCode = 1;
       return;
     }
-    fs.writeFileSync(SETTLEMENTS_PAGE, mutated);
     let caught = false;
     try {
       checkSettlementsPage(mutated);
       caught = process.exitCode === 1;
     } finally {
       process.exitCode = undefined;
-      fs.writeFileSync(SETTLEMENTS_PAGE, originalSettlements);
     }
     if (!caught) {
       console.error("SELFTEST INERT: dropping kpiBaseQuery.isError branch was not caught.");
@@ -308,14 +304,12 @@ function selftest() {
       process.exitCode = 1;
       return;
     }
-    fs.writeFileSync(INVOICES_PAGE, mutated);
     let caught = false;
     try {
       checkInvoicesPage(mutated);
       caught = process.exitCode === 1;
     } finally {
       process.exitCode = undefined;
-      fs.writeFileSync(INVOICES_PAGE, original);
     }
     if (!caught) {
       console.error("SELFTEST INERT: dropping query.isError from InvoicesListPage was not caught.");
@@ -337,14 +331,12 @@ function selftest() {
       process.exitCode = 1;
       return;
     }
-    fs.writeFileSync(EXPENSES_PAGE, mutated);
     let caught = false;
     try {
       checkExpensesPage(mutated);
       caught = process.exitCode === 1;
     } finally {
       process.exitCode = undefined;
-      fs.writeFileSync(EXPENSES_PAGE, original);
     }
     if (!caught) {
       console.error("SELFTEST INERT: dropping query.isError from ExpensesListPage was not caught.");
@@ -367,14 +359,12 @@ function selftest() {
       process.exitCode = 1;
       return;
     }
-    fs.writeFileSync(FACTORING_HOME, mutated);
     let caught = false;
     try {
       checkFactoringHome(mutated);
       caught = process.exitCode === 1;
     } finally {
       process.exitCode = undefined;
-      fs.writeFileSync(FACTORING_HOME, original);
     }
     if (!caught) {
       console.error("SELFTEST INERT: dropping FactoringHome summaryQuery.isError was not caught.");
@@ -397,14 +387,12 @@ function selftest() {
       process.exitCode = 1;
       return;
     }
-    fs.writeFileSync(MAINT_HOME, mutated);
     let caught = false;
     try {
       checkMaintenanceHome(mutated, originalRows);
       caught = process.exitCode === 1;
     } finally {
       process.exitCode = undefined;
-      fs.writeFileSync(MAINT_HOME, original);
     }
     if (!caught) {
       console.error("SELFTEST INERT: restoring MaintenanceHome zero-object fallback was not caught.");
@@ -431,14 +419,12 @@ function selftest() {
       process.exitCode = 1;
       return;
     }
-    fs.writeFileSync(SERVICE_LOCATION, mutated);
     let caught = false;
     try {
       checkServiceLocationPage(mutated);
       caught = process.exitCode === 1;
     } finally {
       process.exitCode = undefined;
-      fs.writeFileSync(SERVICE_LOCATION, original);
     }
     if (!caught) {
       console.error("SELFTEST INERT: restoring ServiceLocationPage zero-object fallback was not caught.");
@@ -460,14 +446,12 @@ function selftest() {
       process.exitCode = 1;
       return;
     }
-    fs.writeFileSync(SEVERE_OOS, mutated);
     let caught = false;
     try {
       checkSevereRepairOosTab(mutated);
       caught = process.exitCode === 1;
     } finally {
       process.exitCode = undefined;
-      fs.writeFileSync(SEVERE_OOS, original);
     }
     if (!caught) {
       console.error("SELFTEST INERT: dropping SevereRepairOosTab rollupQuery.isError was not caught.");
@@ -490,14 +474,12 @@ function selftest() {
       process.exitCode = 1;
       return;
     }
-    fs.writeFileSync(SAFETY_EVENTS, mutated);
     let caught = false;
     try {
       checkSafetyEventsPage(mutated);
       caught = process.exitCode === 1;
     } finally {
       process.exitCode = undefined;
-      fs.writeFileSync(SAFETY_EVENTS, original);
     }
     if (!caught) {
       console.error("SELFTEST INERT: dropping SafetyEventsPage kpiQuery.isError was not caught.");
@@ -519,14 +501,12 @@ function selftest() {
       process.exitCode = 1;
       return;
     }
-    fs.writeFileSync(DISPATCH_OVERVIEW, mutated);
     let caught = false;
     try {
       checkDispatchOverview(mutated);
       caught = process.exitCode === 1;
     } finally {
       process.exitCode = undefined;
-      fs.writeFileSync(DISPATCH_OVERVIEW, original);
     }
     if (!caught) {
       console.error("SELFTEST INERT: dropping DispatchOverview dashboardQ.isError was not caught.");
@@ -573,14 +553,12 @@ function selftest() {
       process.exitCode = 1;
       return;
     }
-    fs.writeFileSync(ACCOUNTING_HUB, mutated);
     let caught = false;
     try {
       checkAccountingHub(mutated);
       caught = process.exitCode === 1;
     } finally {
       process.exitCode = undefined;
-      fs.writeFileSync(ACCOUNTING_HUB, original);
     }
     if (!caught) {
       console.error("SELFTEST INERT: dropping AccountingHub billsQ.isError was not caught.");
@@ -602,14 +580,12 @@ function selftest() {
       process.exitCode = 1;
       return;
     }
-    fs.writeFileSync(PAYMENTS_PAGE, mutated);
     let caught = false;
     try {
       checkPaymentsPage(mutated);
       caught = process.exitCode === 1;
     } finally {
       process.exitCode = undefined;
-      fs.writeFileSync(PAYMENTS_PAGE, original);
     }
     if (!caught) {
       console.error("SELFTEST INERT: dropping PaymentsListPage query.isError was not caught.");
@@ -631,14 +607,12 @@ function selftest() {
       process.exitCode = 1;
       return;
     }
-    fs.writeFileSync(BILL_PAYMENTS_PAGE, mutated);
     let caught = false;
     try {
       checkBillPaymentsPage(mutated);
       caught = process.exitCode === 1;
     } finally {
       process.exitCode = undefined;
-      fs.writeFileSync(BILL_PAYMENTS_PAGE, original);
     }
     if (!caught) {
       console.error("SELFTEST INERT: dropping BillPaymentsListPage paymentsQuery.isError was not caught.");

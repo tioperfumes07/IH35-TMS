@@ -17,7 +17,7 @@
  * a static guard cannot see them — claiming otherwise would be exactly the fake-green this codebase
  * has been burned by. The revoke is proven by the migration's live application, recorded in its PR.
  */
-import { readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const ROOT = new URL("..", import.meta.url).pathname.replace(/\/$/, "");
@@ -44,16 +44,18 @@ function walk(dir, out = []) {
   return out;
 }
 
-export function run() {
+/** `overrides`: absolute path -> planted text (selftest). Nothing is ever written to disk. */
+export function run(overrides = new Map()) {
+  const textOf = (f) => (overrides.has(f) ? overrides.get(f) : readFileSync(f, "utf8"));
   const files = APP_DIRS.flatMap((d) => walk(join(ROOT, d)));
   const offenders = [];
   for (const f of files) {
-    const text = readFileSync(f, "utf8");
+    const text = textOf(f);
     if (new RegExp(`\\b${RETIRED}\\b`).test(text)) offenders.push(relative(ROOT, f));
   }
 
   // The canonical table must still be wired — retiring the twin is only safe while the real one works.
-  const canonicalWired = files.some((f) => new RegExp(`\\b${CANONICAL}\\b`).test(readFileSync(f, "utf8")));
+  const canonicalWired = files.some((f) => new RegExp(`\\b${CANONICAL}\\b`).test(textOf(f)));
 
   const problems = [];
   if (offenders.length > 0) {
@@ -99,13 +101,7 @@ function selftest() {
     process.exit(1);
   }
 
-  let caught;
-  try {
-    writeFileSync(target, `${original}\n// selftest: ${RETIRED}\n`, "utf8");
-    caught = run();
-  } finally {
-    writeFileSync(target, original, "utf8");
-  }
+  const caught = run(new Map([[target, `${original}\n// selftest: ${RETIRED}\n`]]));
 
   if (caught.ok || !caught.offenders.some((o) => o.endsWith("catalogs/fuel/index.ts"))) {
     console.error(`SELFTEST FAIL: a planted reference to the retired table was NOT caught.\n${caught.message}`);

@@ -11,7 +11,11 @@ const LABEL = "verify-reports-customer-profitability-flag-human-labels";
 const LIB = "apps/frontend/src/lib/formatCustomerProfitabilityFlagLabel.ts";
 const PAGE = "apps/frontend/src/pages/reports/CustomerProfitabilityPage.tsx";
 
+// Selftest plants go through this in-memory overlay - no tracked file is ever written.
+const SELFTEST_OVERLAY = new Map();
+
 function read(rel) {
+  if (SELFTEST_OVERLAY.has(rel)) return SELFTEST_OVERLAY.get(rel);
   return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
 }
 
@@ -55,13 +59,13 @@ function selftest() {
       'label: "high_margin"',
     );
     if (bad === original) fail("selftest could not plant raw high_margin label");
-    fs.writeFileSync(pagePath, bad);
+    SELFTEST_OVERLAY.set(PAGE, bad);
     const planted = analyze();
     if (!planted.some((m) => /raw API tokens|High margin from shared/.test(m))) {
       fail(`selftest expected page fail; got: ${planted.join("; ")}`);
     }
   } finally {
-    fs.writeFileSync(pagePath, original);
+    SELFTEST_OVERLAY.delete(PAGE);
   }
   const good = analyze();
   if (good.length) fail(`selftest expected GOOD: ${good.join("; ")}`);

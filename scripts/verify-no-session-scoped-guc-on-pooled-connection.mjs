@@ -71,18 +71,18 @@ export function run(root = ROOT) {
 function selftest() {
   const dir = fs.mkdtempSync("/tmp/session-guc-selftest-");
   const relFile = `${SRC_DIR}/fake.service.ts`;
-  const absFile = path.join(dir, relFile);
-  fs.mkdirSync(path.dirname(absFile), { recursive: true });
+  const tmpAbsFile = path.join(dir, relFile);
+  fs.mkdirSync(path.dirname(tmpAbsFile), { recursive: true });
 
   fs.writeFileSync(
-    absFile,
+    tmpAbsFile,
     `await client.query(\`SELECT set_config('app.operating_company_id', $1::text, true)\`, [id]);\n`
   );
   const clean = run(dir);
   if (clean.length) throw new Error("PASS fail (should be clean): " + JSON.stringify(clean));
 
   fs.writeFileSync(
-    absFile,
+    tmpAbsFile,
     `await client.query(\`SELECT set_config('app.operating_company_id', $1::text, false)\`, [id]);\n`
   );
   const caught = run(dir);
@@ -90,12 +90,12 @@ function selftest() {
 
   // Test files are exempt -- the risk this guard targets doesn't apply to a single-worker test
   // connection.
-  const testFile = path.join(dir, SRC_DIR, "fake.service.test.ts");
+  const tmpTestFile = path.join(dir, SRC_DIR, "fake.service.test.ts");
   fs.writeFileSync(
-    testFile,
+    tmpTestFile,
     `await client.query(\`SELECT set_config('app.operating_company_id', $1::text, false)\`, [id]);\n`
   );
-  fs.writeFileSync(absFile, `// clean\n`);
+  fs.writeFileSync(tmpAbsFile, `// clean\n`);
   const testFileExempt = run(dir);
   if (testFileExempt.length !== 0) throw new Error("FAIL: test files must be exempt, got " + JSON.stringify(testFileExempt));
 

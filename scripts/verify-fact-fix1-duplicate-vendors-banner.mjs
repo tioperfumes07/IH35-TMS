@@ -22,7 +22,11 @@ function fail(message) {
   failures.push(message);
 }
 
+// Selftest plants go here (rel path -> planted text); the tracked file is never written.
+const SELFTEST_OVERRIDES = new Map();
+
 function read(relativePath) {
+  if (SELFTEST_OVERRIDES.has(relativePath)) return SELFTEST_OVERRIDES.get(relativePath);
   return fs.readFileSync(path.join(ROOT, relativePath), "utf8");
 }
 
@@ -95,12 +99,9 @@ export function run() {
 function main() {
   const args = process.argv.slice(2);
   if (args.includes("--selftest")) {
-    const realApi = path.join(ROOT, API);
-    const realBanner = path.join(ROOT, BANNER);
-    const backup = fs.readFileSync(realApi, "utf8");
-    const bannerBackup = fs.readFileSync(realBanner, "utf8");
+    const bannerBackup = fs.readFileSync(path.join(ROOT, BANNER), "utf8");
     try {
-      fs.writeFileSync(realApi, "// selftest empty api\n", "utf8");
+      SELFTEST_OVERRIDES.set(API, "// selftest empty api\n");
       const planted = run();
       if (planted.length === 0) {
         console.error(
@@ -108,13 +109,13 @@ function main() {
         );
         process.exit(1);
       }
-      fs.writeFileSync(realApi, backup, "utf8");
+      SELFTEST_OVERRIDES.delete(API);
       const mutations = [
         bannerBackup.replace("scanQuery.isError", "scanQuery.isSuccess"),
         bannerBackup.replace("scanQuery.refetch()", "window.location.reload()"),
       ];
       for (const mutation of mutations) {
-        fs.writeFileSync(realBanner, mutation, "utf8");
+        SELFTEST_OVERRIDES.set(BANNER, mutation);
         if (run().length === 0) {
           console.error("[verify-fact-fix1-duplicate-vendors-banner] SELFTEST FAIL: recovery mutation escaped");
           process.exit(1);
@@ -122,8 +123,7 @@ function main() {
       }
       console.log(`[verify-fact-fix1-duplicate-vendors-banner] SELFTEST PASS (${planted.length + mutations.length} planted failures detected)`);
     } finally {
-      fs.writeFileSync(realApi, backup, "utf8");
-      fs.writeFileSync(realBanner, bannerBackup, "utf8");
+      SELFTEST_OVERRIDES.clear();
     }
     process.exit(0);
   }

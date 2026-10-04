@@ -16,13 +16,13 @@ const LABEL = "verify-customer-profitability-no-uuid-labels";
 const API = "apps/backend/src/reports/customer-profitability.routes.ts";
 const PAGE = "apps/frontend/src/pages/reports/CustomerProfitabilityPage.tsx";
 
-function read(rel) {
-  return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
+function read(rel, over = {}) {
+  return over[rel] ?? fs.readFileSync(path.join(process.cwd(), rel), "utf8");
 }
 
-function analyze() {
+function analyze(over = {}) {
   const failures = [];
-  const api = read(API);
+  const api = read(API, over);
   if (/customer_name:\s*nameMap\.get\(customerId\)\s*\?\?\s*customerId/.test(api)) {
     failures.push("API must not fall back customer_name to raw customerId UUID");
   }
@@ -35,7 +35,7 @@ function analyze() {
   if (/\.catch\(\(\) => \(\{ rows: \[\] as Array<\{ customer_id: string; open_cents/.test(api)) {
     failures.push("API must not catch a failed AR-open aggregate as empty — that paints $0 AR");
   }
-  const page = read(PAGE);
+  const page = read(PAGE, over);
   if (!/isUnresolvedCustomerTombstone/.test(page)) {
     failures.push("page must gate drills with isUnresolvedCustomerTombstone");
   }
@@ -75,7 +75,7 @@ function fail(msg) {
 function selftest() {
   const pagePath = path.join(process.cwd(), PAGE);
   const original = fs.readFileSync(pagePath, "utf8");
-  try {
+  {
     const customerColStart = original.indexOf('key: "customer_name"');
     const customerColEnd = original.indexOf('key: "load_count"', customerColStart);
     if (customerColStart < 0 || customerColEnd < 0) fail("selftest could not locate customer_name column");
@@ -85,8 +85,7 @@ function selftest() {
       original.slice(0, objectStart) +
       '{ key: "customer_name", label: "Customer", sortable: true, render: (r) => <EntityLink kind="customer" id={r.customer_id} label={customerDisplayLabel(r)} className="font-medium text-gray-900" /> },\n      { ' +
       original.slice(customerColEnd);
-    fs.writeFileSync(pagePath, badLink);
-    const plantedLink = analyze();
+    const plantedLink = analyze({ [PAGE]: badLink });
     if (!plantedLink.some((m) => /unconditionally mount EntityLink|tombstone test id/.test(m))) {
       fail(`selftest expected unconditional EntityLink fail; got: ${plantedLink.join("; ")}`);
     }
@@ -96,41 +95,32 @@ function selftest() {
       "navigate(`/customers/${r.customer_id}?tab=billing`);",
     );
     if (badClick === original) fail("selftest could not plant unconditional onRowClick");
-    fs.writeFileSync(pagePath, badClick);
-    const plantedClick = analyze();
+    const plantedClick = analyze({ [PAGE]: badClick });
     if (!plantedClick.some((m) => /onRowClick must no-op/.test(m))) {
       fail(`selftest expected onRowClick fail; got: ${plantedClick.join("; ")}`);
     }
-  } finally {
-    fs.writeFileSync(pagePath, original);
   }
 
   const apiPath = path.join(process.cwd(), API);
   const apiOriginal = fs.readFileSync(apiPath, "utf8");
-  try {
+  {
     const bad = apiOriginal.replace(
       /customer_name:\s*nameMap\.get\(customerId\)\s*\?\?\s*"[^"]+",/,
       "customer_name: nameMap.get(customerId) ?? customerId,",
     );
     if (bad === apiOriginal) fail("selftest could not plant UUID fallback");
-    fs.writeFileSync(apiPath, bad);
-    const planted = analyze();
+    const planted = analyze({ [API]: bad });
     if (!planted.some((m) => /raw customerId/.test(m))) fail("selftest expected UUID fallback to fail");
-  } finally {
-    fs.writeFileSync(apiPath, apiOriginal);
   }
 
-  try {
+  {
     const withCatch =
       apiOriginal +
       `\n.catch(() => ({ rows: [] as Array<{ customer_id: string; cost_cents: string }> }));\n`;
-    fs.writeFileSync(apiPath, withCatch);
-    const plantedCatch = analyze();
+    const plantedCatch = analyze({ [API]: withCatch });
     if (!plantedCatch.some((m) => /cost aggregate as empty/.test(m))) {
       fail(`selftest expected cost catch fail; got: ${plantedCatch.join("; ")}`);
     }
-  } finally {
-    fs.writeFileSync(apiPath, apiOriginal);
   }
 
   const good = analyze();

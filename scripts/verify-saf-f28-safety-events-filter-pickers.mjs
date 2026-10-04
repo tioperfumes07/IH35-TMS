@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -31,16 +32,18 @@ function selftest() {
     console.error("SELFTEST FAIL already red", clean);
     process.exit(1);
   }
-  const abs = path.join(ROOT, PAGE);
-  const original = fs.readFileSync(abs, "utf8");
+  const original = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "saf-f28-selftest-"));
   try {
-    fs.writeFileSync(abs, original.replace(/allowCreate=\{false\}/g, "allowCreate={true}"));
-    if (!run().some((f) => f.includes("allowCreate"))) {
+    const tmpPage = path.join(tmpRoot, PAGE);
+    fs.mkdirSync(path.dirname(tmpPage), { recursive: true });
+    fs.writeFileSync(tmpPage, original.replace(/allowCreate=\{false\}/g, "allowCreate={true}"));
+    if (!run(tmpRoot).some((f) => f.includes("allowCreate"))) {
       console.error("SELFTEST FAIL planted allowCreate miss not detected");
       process.exit(1);
     }
   } finally {
-    fs.writeFileSync(abs, original);
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
   }
   console.log("verify-saf-f28-safety-events-filter-pickers --selftest OK");
 }

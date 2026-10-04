@@ -15,9 +15,12 @@ const ROUTES = "apps/backend/src/dispatch/loads.routes.ts";
 const GATE = "assertDriverQualifiedForLoad";
 const LABEL = "verify-fail-d1-update-load-dqf";
 
+// Selftest plant (text) for TARGET; the tracked file is never written.
+let TARGET_OVERRIDE = null;
+
 export function run() {
   const errors = [];
-  const src = fs.readFileSync(path.join(ROOT, TARGET), "utf8");
+  const src = TARGET_OVERRIDE ?? fs.readFileSync(path.join(ROOT, TARGET), "utf8");
   const routes = fs.readFileSync(path.join(ROOT, ROUTES), "utf8");
 
   if (!src.includes(`${GATE}(client,`)) {
@@ -46,14 +49,14 @@ function selftest() {
   const backup = fs.readFileSync(targetPath, "utf8");
   try {
     const broken = backup.replace(`${GATE}(client,`, "/* removed gate */(");
-    fs.writeFileSync(targetPath, broken, "utf8");
+    TARGET_OVERRIDE = broken;
     const planted = run();
     if (!planted.some((e) => e.includes(`must call ${GATE} when driver assignment changes`))) {
       throw new Error("planted gate removal not detected");
     }
     console.log(`[${LABEL}] SELFTEST PASS (${planted.length} planted failures detected)`);
   } finally {
-    fs.writeFileSync(targetPath, backup, "utf8");
+    TARGET_OVERRIDE = null;
   }
 }
 

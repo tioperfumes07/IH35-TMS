@@ -39,10 +39,11 @@ function voidPaymentFn(src) {
   return endRel === -1 ? rest : rest.slice(0, endRel);
 }
 
-function audit() {
+// srcOverride: planted text for --selftest (no file is written).
+function audit(srcOverride) {
   const problems = [];
-  if (!fs.existsSync(TARGET)) return [`missing ${path.relative(ROOT, TARGET)}`];
-  const src = fs.readFileSync(TARGET, "utf8");
+  if (srcOverride === undefined && !fs.existsSync(TARGET)) return [`missing ${path.relative(ROOT, TARGET)}`];
+  const src = srcOverride ?? fs.readFileSync(TARGET, "utf8");
   const fn = voidPaymentFn(src);
   if (!fn) {
     return ["could not locate voidBillPaymentInClientTx — the guard cannot verify it and must not pass silently"];
@@ -122,13 +123,9 @@ function selftest() {
   for (const [name, mutate] of mutations) {
     const broken = mutate(original);
     if (broken === original) {
-      fs.writeFileSync(TARGET, original);
       fail(`selftest INERT: mutation "${name}" did not apply — the guard proves nothing`);
     }
-    // Restore BEFORE failing: process.exit() does not run finally blocks.
-    fs.writeFileSync(TARGET, broken);
-    const stillClean = audit().length === 0;
-    fs.writeFileSync(TARGET, original);
+    const stillClean = audit(broken).length === 0;
     if (stillClean) fail(`selftest: expected FAIL after mutation "${name}"`);
     planted += 1;
   }

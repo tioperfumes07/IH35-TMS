@@ -20,8 +20,7 @@ function assert(cond, msg) {
   if (!cond) throw new Error(`${LABEL}: ${msg}`);
 }
 
-function check() {
-  const src = fs.readFileSync(FILE, "utf8");
+function check(src = fs.readFileSync(FILE, "utf8")) {
   assert(/EntityLinkOrTombstone/.test(src), "must use EntityLinkOrTombstone");
   assert(
     /data-testid=["']load-settlement-tab-driver-entitylink["']/.test(src),
@@ -37,14 +36,11 @@ function selftest() {
     'data-testid="planted-missing"'
   );
   assert(broken !== original, "--selftest plant must mutate testid");
-  fs.writeFileSync(FILE, broken);
   let failed = false;
   try {
-    check();
+    check(broken);
   } catch {
     failed = true;
-  } finally {
-    fs.writeFileSync(FILE, original);
   }
   assert(failed, "--selftest expected FAIL when driver entitylink testid removed");
   check();

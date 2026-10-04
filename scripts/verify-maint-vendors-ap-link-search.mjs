@@ -4,6 +4,7 @@
  * Cursor even claim: 2114.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -45,24 +46,24 @@ if (process.argv.includes("--selftest")) {
     for (const p of baseline) console.error("  - " + p);
     process.exit(1);
   }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-maint-vendors-"));
+  const tmpStubRoot = fs.mkdtempSync(path.join(os.tmpdir(), "tmp-maint-vendors-"));
   try {
-    const dir = path.join(stubRoot, "apps/frontend/src/pages/maintenance/vendors");
-    fs.mkdirSync(dir, { recursive: true });
+    const tmpDir = path.join(tmpStubRoot, "apps/frontend/src/pages/maintenance/vendors");
+    fs.mkdirSync(tmpDir, { recursive: true });
     fs.writeFileSync(
-      path.join(dir, "VendorsPage.tsx"),
+      path.join(tmpDir, "VendorsPage.tsx"),
       `import { Combobox } from "../../../components/shared/Combobox";
 listVendors({ operating_company_id: companyId, status: "active", limit: 1000 })
 <Combobox options={apVendorOptions} value={draft.mdata_vendor_id} />
 `
     );
-    const planted = collectProblems(stubRoot);
+    const planted = collectProblems(tmpStubRoot);
     if (!planted.length) {
       console.error(`${LABEL} SELFTEST FAIL: planted stub did not FAIL`);
       process.exit(1);
     }
   } finally {
-    fs.rmSync(stubRoot, { recursive: true, force: true });
+    fs.rmSync(tmpStubRoot, { recursive: true, force: true });
   }
   console.log(`${LABEL} SELFTEST OK`);
 } else {

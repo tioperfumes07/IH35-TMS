@@ -33,8 +33,8 @@ function checkList() {
   assert(!source.includes('useState<CustomerTabId>("transaction_list")'), `local tab useState still present in ${LIST_PAGE}`);
 }
 
-function checkDetail() {
-  const source = fs.readFileSync(path.join(ROOT, DETAIL_PAGE), "utf8");
+function checkDetail(sourceOverride) {
+  const source = sourceOverride ?? fs.readFileSync(path.join(ROOT, DETAIL_PAGE), "utf8");
   assert(/parseCustomerDetailPageTab/.test(source), `${DETAIL_PAGE} must parse ?tab= via parseCustomerDetailPageTab`);
   assert(/CUSTOMER_DETAIL_TAB_QUERY/.test(source), `${DETAIL_PAGE} must map every CustomerTab to a query slug`);
   assert(/COI:\s*["']coi["']/.test(source), `${DETAIL_PAGE} must map COI → tab=coi`);
@@ -54,17 +54,13 @@ function run() {
 }
 
 function selftest() {
-  const detailPath = path.join(ROOT, DETAIL_PAGE);
-  const original = fs.readFileSync(detailPath, "utf8");
+  const original = fs.readFileSync(path.join(ROOT, DETAIL_PAGE), "utf8");
   const broken = original.replace(/COI:\s*["']coi["']/, 'COI: "ignore"');
-  fs.writeFileSync(detailPath, broken);
   let failed = false;
   try {
-    checkDetail();
+    checkDetail(broken);
   } catch {
     failed = true;
-  } finally {
-    fs.writeFileSync(detailPath, original);
   }
   assert(failed, "--selftest expected FAIL when COI slug mapping is mutated away");
   run();

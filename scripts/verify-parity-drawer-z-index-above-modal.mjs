@@ -20,6 +20,7 @@
  * Self-test: node scripts/verify-parity-drawer-z-index-above-modal.mjs --selftest
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -89,7 +90,7 @@ function selftest() {
   };
   assert(!live(), `SELFTEST FAIL — clean tree already red: ${live()?.message}`);
 
-  const tmp = fs.mkdtempSync(path.join(ROOT, "scripts", ".parity-drawer-zindex-selftest-"));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "parity-drawer-zindex-selftest-"));
   try {
     const drawerRel = "apps/frontend/src/components/parity/ParityDrawer.tsx";
     const modalRel = "apps/frontend/src/components/Modal.tsx";
@@ -103,9 +104,9 @@ function selftest() {
     const drawerSrc = fs.readFileSync(path.join(ROOT, drawerRel), "utf8");
     const poisoned = drawerSrc.replace(/stackAboveModal \? "z-\[\d+\]" : "z-\[60\]"/, 'stackAboveModal ? "z-[80]" : "z-[60]"');
     assert(poisoned !== drawerSrc, "selftest mutation did not match — ParityDrawer.tsx's stackAboveModal ternary literal changed");
-    const drawerDst = path.join(tmp, drawerRel);
-    fs.mkdirSync(path.dirname(drawerDst), { recursive: true });
-    fs.writeFileSync(drawerDst, poisoned);
+    const tmpDrawerDst = path.join(tmp, drawerRel);
+    fs.mkdirSync(path.dirname(tmpDrawerDst), { recursive: true });
+    fs.writeFileSync(tmpDrawerDst, poisoned);
     let failed = false;
     try {
       check(tmp);

@@ -14,14 +14,8 @@ function analyze(src) {
 }
 function fail(msg) { console.error(`${LABEL} FAIL: ${msg}`); process.exit(1); }
 function selftest() {
-  const pagePath = path.join(process.cwd(), PAGE);
-  const original = fs.readFileSync(pagePath, "utf8");
-  try {
-    fs.writeFileSync(pagePath, original.replace(/isUnresolvedEntityTombstone/g, "NO").replace("brokers-list-name-tombstone", "brokers-list-name-link"));
-    if (!analyze(read()).length) fail("selftest expected fail");
-  } finally {
-    fs.writeFileSync(pagePath, original);
-  }
+  const original = read();
+  if (!analyze(original.replace(/isUnresolvedEntityTombstone/g, "NO").replace("brokers-list-name-tombstone", "brokers-list-name-link")).length) fail("selftest expected fail");
   if (analyze(read()).length) fail(`selftest expected GOOD`);
   console.log(`${LABEL} selftest PASS`);
 }

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -7,7 +8,8 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 const SELF = path.join(ROOT, "scripts/verify-finance-arap-aging-print-letter.mjs");
-const PAGE = path.join(ROOT, "apps/frontend/src/pages/finance/ArApAgingPage.tsx");
+// Selftest points the child at a temp copy via this env var; the tracked page is never written.
+const PAGE = process.env.IH35_SELFTEST_PAGE_PATH || path.join(ROOT, "apps/frontend/src/pages/finance/ArApAgingPage.tsx");
 const HELPER = path.join(ROOT, "apps/frontend/src/lib/openPrintableDocument.ts");
 
 function fail(msg) {
@@ -33,13 +35,15 @@ function assertSource() {
 function selftest() {
   assertSource();
   const backup = fs.readFileSync(PAGE, "utf8");
+  const planted = backup.replace(/onClick=\{printLetter\}/, "onClick={() => window.print()}");
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "verify-finance-arap-aging-print-letter-"));
+  const tmpPagePath = path.join(tmpDir, path.basename(PAGE));
   try {
-    const planted = backup.replace(/onClick=\{printLetter\}/, "onClick={() => window.print()}");
-    fs.writeFileSync(PAGE, planted.includes("window.print()") ? planted : `${backup}\nonClick={() => window.print()}\n`);
-    const r = spawnSync(process.execPath, [SELF], { encoding: "utf8" });
+    fs.writeFileSync(tmpPagePath, planted.includes("window.print()") ? planted : `${backup}\nonClick={() => window.print()}\n`);
+    const r = spawnSync(process.execPath, [SELF], { encoding: "utf8", env: { ...process.env, IH35_SELFTEST_PAGE_PATH: tmpPagePath } });
     if (r.status === 0) fail("mutated still passed");
   } finally {
-    fs.writeFileSync(PAGE, backup);
+    fs.rmSync(tmpDir, { recursive: true, force: true });
   }
   console.log("PASS: verify-finance-arap-aging-print-letter --selftest");
 }

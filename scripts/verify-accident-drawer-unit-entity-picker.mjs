@@ -111,19 +111,19 @@ listDispatchLoads({ limit: 200 })
       console.error(`${LABEL} SELFTEST FAIL: planted stub did not FAIL`);
       process.exit(1);
     }
-    const leftoverRoot = fs.mkdtempSync(path.join(os.tmpdir(), "accident-leftover-"));
+    const tmpLeftoverRoot = fs.mkdtempSync(path.join(os.tmpdir(), "accident-leftover-"));
     try {
-      const leftoverDir = path.join(leftoverRoot, "apps/frontend/src/components/safety");
-      fs.mkdirSync(leftoverDir, { recursive: true });
+      const tmpLeftoverDir = path.join(tmpLeftoverRoot, "apps/frontend/src/components/safety");
+      fs.mkdirSync(tmpLeftoverDir, { recursive: true });
       const live = readRel(ROOT, FILE) ?? "";
       fs.writeFileSync(
-        path.join(leftoverDir, "AccidentReportDrawer.tsx"),
+        path.join(tmpLeftoverDir, "AccidentReportDrawer.tsx"),
         `${live}\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n`,
       );
-      const epDir = path.join(leftoverRoot, "apps/frontend/src/components");
+      const epDir = path.join(tmpLeftoverRoot, "apps/frontend/src/components");
       fs.mkdirSync(epDir, { recursive: true });
       fs.copyFileSync(path.join(ROOT, ENTITY_PICKER), path.join(epDir, "EntityPicker.tsx"));
-      const leftover = collectProblems(leftoverRoot);
+      const leftover = collectProblems(tmpLeftoverRoot);
       if (
         !leftover.some((p) => p.includes("leftover text-[11px]")) ||
         !leftover.some((p) => p.includes("leftover off-scale muted"))
@@ -132,7 +132,7 @@ listDispatchLoads({ limit: 200 })
         process.exit(1);
       }
     } finally {
-      fs.rmSync(leftoverRoot, { recursive: true, force: true });
+      fs.rmSync(tmpLeftoverRoot, { recursive: true, force: true });
     }
   } finally {
     fs.rmSync(tmpRoot, { recursive: true, force: true });

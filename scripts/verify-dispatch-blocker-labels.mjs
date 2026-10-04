@@ -11,7 +11,9 @@
  *
  * Asserts the service selects the labels and the panel prefers them.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdtempSync, mkdirSync, rmSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { spawnSync } from "node:child_process";
 
 const SVC = "apps/backend/src/dispatch/driver-availability.service.ts";
@@ -88,11 +90,22 @@ if (process.argv.includes("--selftest")) {
     svc.replace('code: "E_DRIVER_NOT_FOUND"', 'code: "E_DRIVER_REPAIR_BLOCK"'),
   ];
   let rejected = 0;
-  for (const mutated of mutations) {
-    writeFileSync(SVC, mutated);
-    const result = spawnSync(process.execPath, [process.argv[1]], { encoding: "utf8" });
-    writeFileSync(SVC, svc);
-    if (result.status !== 0) rejected += 1;
+  // Plant into a temp copy of every file the checks read (they are cwd-relative); the
+  // child runs with cwd=temp dir, so no tracked file is ever written.
+  const tmpRoot = mkdtempSync(path.join(os.tmpdir(), "verify-dispatch-blocker-labels-"));
+  try {
+    for (const rel of [SVC, UI, "apps/backend/src/dispatch/load-assign.routes.ts", "apps/frontend/src/pages/dispatch/DispatchBoard.tsx"]) {
+      mkdirSync(path.dirname(path.join(tmpRoot, rel)), { recursive: true });
+      writeFileSync(path.join(tmpRoot, rel), readFileSync(rel, "utf8"));
+    }
+    const tmpSvc = path.join(tmpRoot, SVC);
+    for (const mutated of mutations) {
+      writeFileSync(tmpSvc, mutated);
+      const result = spawnSync(process.execPath, [path.resolve(process.argv[1])], { encoding: "utf8", cwd: tmpRoot });
+      if (result.status !== 0) rejected += 1;
+    }
+  } finally {
+    rmSync(tmpRoot, { recursive: true, force: true });
   }
   if (rejected !== mutations.length) {
     console.error(`FAIL verify-dispatch-blocker-labels selftest: ${rejected}/${mutations.length} defects rejected`);

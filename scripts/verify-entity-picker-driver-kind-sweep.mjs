@@ -115,25 +115,25 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
 
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-ep-driver-sweep-"));
+  const tmpStubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-ep-driver-sweep-"));
   try {
-    const dir = path.join(stubRoot, "apps/frontend/src/components/example");
-    fs.mkdirSync(dir, { recursive: true });
+    const tmpDir = path.join(tmpStubRoot, "apps/frontend/src/components/example");
+    fs.mkdirSync(tmpDir, { recursive: true });
     fs.writeFileSync(
-      path.join(dir, "BadDriverPicker.tsx"),
+      path.join(tmpDir, "BadDriverPicker.tsx"),
       `import { listDrivers } from "../../api/mdata";
 import { Combobox } from "../Combobox";
 const driversQuery = listDrivers({});
 <Combobox options={driverOptions} />
 `
     );
-    const planted = collectProblems(stubRoot);
+    const planted = collectProblems(tmpStubRoot);
     if (!planted.some((p) => p.includes("BadDriverPicker.tsx"))) {
       console.error(`${LABEL} SELFTEST FAIL: planted offender did not FAIL`);
       process.exit(1);
     }
   } finally {
-    fs.rmSync(stubRoot, { recursive: true, force: true });
+    fs.rmSync(tmpStubRoot, { recursive: true, force: true });
   }
   console.log(`${LABEL} SELFTEST OK`);
 } else {

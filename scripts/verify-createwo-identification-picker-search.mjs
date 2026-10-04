@@ -4,6 +4,7 @@
  * no listDrivers(limit:500) / listVendors|listCustomers silent pages. Cursor even claim: 2104.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -62,25 +63,25 @@ if (process.argv.includes("--selftest")) {
     for (const p of baseline) console.error("  - " + p);
     process.exit(1);
   }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-createwo-id-"));
+  const tmpStubRoot = fs.mkdtempSync(path.join(os.tmpdir(), "createwo-id-"));
   try {
-    const dir = path.join(stubRoot, "apps/frontend/src/pages/maintenance/components");
-    fs.mkdirSync(dir, { recursive: true });
+    const tmpDir = path.join(tmpStubRoot, "apps/frontend/src/pages/maintenance/components");
+    fs.mkdirSync(tmpDir, { recursive: true });
     fs.writeFileSync(
-      path.join(dir, "CreateWOSectionIdentification.tsx"),
+      path.join(tmpDir, "CreateWOSectionIdentification.tsx"),
       `import { listDrivers, listVendors } from "../../../api/mdata";
 const driversQuery = useQuery({ queryFn: () => listDrivers({ limit: 500 }) });
 const vendorsQuery = useQuery({ queryFn: () => listVendors({ limit: 1000 }) });
 export function X() { return <Combobox options={vehicleOptions} />; }
 `
     );
-    const planted = collectProblems(stubRoot);
+    const planted = collectProblems(tmpStubRoot);
     if (!planted.some((p) => /EntityPicker|listDrivers|1000/.test(p))) {
       console.error(`${LABEL} SELFTEST FAIL: planted stub did not FAIL`);
       process.exit(1);
     }
   } finally {
-    fs.rmSync(stubRoot, { recursive: true, force: true });
+    fs.rmSync(tmpStubRoot, { recursive: true, force: true });
   }
   console.log(`${LABEL} SELFTEST OK`);
 } else {

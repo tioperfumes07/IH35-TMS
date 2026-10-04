@@ -19,6 +19,7 @@
  * Self-test: node scripts/verify-confirm-discard-dialog-z-index-above-modal.mjs --selftest
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -87,7 +88,7 @@ function selftest() {
   };
   assert(!live(), `SELFTEST FAIL — clean tree already red: ${live()?.message}`);
 
-  const tmp = fs.mkdtempSync(path.join(ROOT, "scripts", ".confirm-discard-zindex-selftest-"));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), ".confirm-discard-zindex-selftest-"));
   try {
     for (const rel of [MODAL_REL, COMBOBOX_REL]) {
       const dst = path.join(tmp, rel);
@@ -98,9 +99,9 @@ function selftest() {
     const dialogSrc = fs.readFileSync(path.join(ROOT, DIALOG_REL), "utf8");
     const poisoned = dialogSrc.replace(/"fixed inset-0 z-\[\d+\]/, '"fixed inset-0 z-[80]');
     assert(poisoned !== dialogSrc, "selftest mutation did not match — ConfirmDiscardDialog.tsx's z-[N] literal changed");
-    const dialogDst = path.join(tmp, DIALOG_REL);
-    fs.mkdirSync(path.dirname(dialogDst), { recursive: true });
-    fs.writeFileSync(dialogDst, poisoned);
+    const tmpDialogDst = path.join(tmp, DIALOG_REL);
+    fs.mkdirSync(path.dirname(tmpDialogDst), { recursive: true });
+    fs.writeFileSync(tmpDialogDst, poisoned);
     let failed = false;
     try {
       check(tmp);

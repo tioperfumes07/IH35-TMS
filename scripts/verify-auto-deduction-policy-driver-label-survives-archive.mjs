@@ -19,14 +19,18 @@ import fs from "node:fs";
 const ROUTES_REL = "apps/backend/src/settlements/auto-deductions/policy.routes.ts";
 
 export function run(root = process.cwd()) {
-  const failures = [];
   let src;
   try {
     src = fs.readFileSync(`${root}/${ROUTES_REL}`, "utf8");
   } catch {
     return [`${ROUTES_REL}: missing`];
   }
+  return checkSource(src);
+}
 
+/** Pure check over the route source text — the selftest passes a planted string (LST-F408). */
+export function checkSource(src) {
+  const failures = [];
   if (!/mdata\.resolve_driver_label_same_company\(p\.driver_id,\s*p\.operating_company_id\)\s+AS\s+driver_name/.test(src)) {
     failures.push(
       `${ROUTES_REL}: driver_name must resolve via mdata.resolve_driver_label_same_company(p.driver_id, p.operating_company_id) — the durable historical-label resolver, not a filtered LEFT JOIN`
@@ -73,17 +77,13 @@ function selftest() {
     console.error("SELFTEST FAIL: plant pattern did not match anything to replace.");
     process.exit(1);
   }
-  try {
-    fs.writeFileSync(`${root}/${ROUTES_REL}`, planted, "utf8");
-    const caught = run(root);
-    if (!caught.length) {
-      console.error("SELFTEST FAIL: planted regression not caught.");
-      process.exit(1);
-    }
-    console.log(`  caught: ${caught.length} finding(s) on the pre-fix shape`);
-  } finally {
-    fs.writeFileSync(`${root}/${ROUTES_REL}`, original, "utf8");
+  // Planted into a string only — the tracked route file is never written.
+  const caught = checkSource(planted);
+  if (!caught.length) {
+    console.error("SELFTEST FAIL: planted regression not caught.");
+    process.exit(1);
   }
+  console.log(`  caught: ${caught.length} finding(s) on the pre-fix shape`);
 
   const after = run(root);
   if (after.length) {

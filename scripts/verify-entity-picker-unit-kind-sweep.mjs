@@ -100,25 +100,25 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
 
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-ep-unit-sweep-"));
+  const tmpStubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-ep-unit-sweep-"));
   try {
-    const dir = path.join(stubRoot, "apps/frontend/src/components/example");
-    fs.mkdirSync(dir, { recursive: true });
+    const tmpStubDir = path.join(tmpStubRoot, "apps/frontend/src/components/example");
+    fs.mkdirSync(tmpStubDir, { recursive: true });
     fs.writeFileSync(
-      path.join(dir, "BadUnitPicker.tsx"),
+      path.join(tmpStubDir, "BadUnitPicker.tsx"),
       `import { listUnits } from "../../api/mdata";
 import { Combobox } from "../Combobox";
 const unitsQuery = listUnits({});
 <Combobox options={unitOptions} />
 `
     );
-    const planted = collectProblems(stubRoot);
+    const planted = collectProblems(tmpStubRoot);
     if (!planted.some((p) => p.includes("BadUnitPicker.tsx"))) {
       console.error(`${LABEL} SELFTEST FAIL: planted offender did not FAIL`);
       process.exit(1);
     }
   } finally {
-    fs.rmSync(stubRoot, { recursive: true, force: true });
+    fs.rmSync(tmpStubRoot, { recursive: true, force: true });
   }
   console.log(`${LABEL} SELFTEST OK`);
 } else {

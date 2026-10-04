@@ -14,8 +14,8 @@ function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-export function check() {
-  const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+export function check(srcOverride) {
+  const src = srcOverride !== undefined ? srcOverride : fs.readFileSync(path.join(ROOT, PAGE), "utf8");
   assert(src.includes("ParityTable"), "UsersPage: must use ParityTable");
   assert(!/\[search,\s*setSearch\]/.test(src), "UsersPage: must not keep page-local search state");
   assert(!/placeholder=["']Search users["']/.test(src), "UsersPage: must not mount Search users input");
@@ -24,19 +24,16 @@ export function check() {
 
 function selftest() {
   check();
-  const filePath = path.join(ROOT, PAGE);
-  const good = fs.readFileSync(filePath, "utf8");
+  const good = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
   const bad =
     good.replace(/const \[inviteOpen/, `const [search, setSearch] = useState("");\n  const [inviteOpen`) +
     `\n<input placeholder="Search users" value={search} />\n`;
-  fs.writeFileSync(filePath, bad);
   let failed = false;
   try {
-    check();
+    check(bad);
   } catch {
     failed = true;
   }
-  fs.writeFileSync(filePath, good);
   assert(failed, "selftest: expected FAIL with page-local search restored");
   console.log("verify-users-list-duplicate-search --selftest PASS");
 }

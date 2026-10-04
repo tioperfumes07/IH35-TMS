@@ -13,7 +13,11 @@ const SELFTEST = process.argv.includes("--selftest");
 const PAGE = "apps/frontend/src/pages/Users.tsx";
 const TEST = "apps/frontend/src/pages/Users.test.tsx";
 
+// Selftest plants go here (rel path -> planted text); nothing is written to disk.
+const PLANTED = new Map();
+
 function read(rel) {
+  if (PLANTED.has(rel)) return PLANTED.get(rel);
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
@@ -60,16 +64,15 @@ if (SELFTEST) {
     console.error(`${LABEL} SELFTEST FAILED live: ${live.join(" | ")}`);
     process.exit(1);
   }
-  const pagePath = path.join(ROOT, PAGE);
-  const orig = fs.readFileSync(pagePath, "utf8");
-  fs.writeFileSync(pagePath, orig.replace("required_approver_user_id", "approver_user_id_REMOVED"));
+  const orig = read(PAGE);
+  PLANTED.set(PAGE, orig.replace("required_approver_user_id", "approver_user_id_REMOVED"));
   try {
     if (!assertLive().length) {
       console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);
       process.exit(1);
     }
   } finally {
-    fs.writeFileSync(pagePath, orig);
+    PLANTED.delete(PAGE);
   }
   console.log(`${LABEL} SELFTEST PASS`);
   process.exit(0);

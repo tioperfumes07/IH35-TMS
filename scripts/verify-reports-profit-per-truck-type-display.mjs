@@ -14,7 +14,11 @@ const LABEL = "verify-reports-profit-per-truck-type-display";
 const PAGE = "apps/frontend/src/pages/reports/ProfitPerTruckPage.tsx";
 const API = "apps/backend/src/reports/profit-per-truck.routes.ts";
 
+// Selftest plants go through this in-memory overlay - no tracked file is ever written.
+const SELFTEST_OVERLAY = new Map();
+
 function read(rel) {
+  if (SELFTEST_OVERLAY.has(rel)) return SELFTEST_OVERLAY.get(rel);
   return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
 }
 
@@ -61,13 +65,13 @@ function selftest() {
       /key:\s*["']truck_type["'][\s\S]*?render:\s*\(r\)\s*=>\s*displayTruckType\(r\.truck_type\)\s*\},/,
       '{ key: "truck_type", label: "Type", sortable: true },',
     );
-    fs.writeFileSync(pagePath, planted);
+    SELFTEST_OVERLAY.set(PAGE, planted);
     const bad = analyze();
     if (!bad.some((m) => /displayTruckType|bare ParityTable/.test(m))) {
       fail(`selftest expected bare Type column to fail: ${bad.join("; ") || "none"}`);
     }
   } finally {
-    fs.writeFileSync(pagePath, original);
+    SELFTEST_OVERLAY.delete(PAGE);
   }
   const good = analyze();
   if (good.length) fail(`selftest expected GOOD after restore: ${good.join("; ")}`);

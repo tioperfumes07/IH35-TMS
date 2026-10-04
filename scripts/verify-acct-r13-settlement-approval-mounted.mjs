@@ -12,9 +12,9 @@
  * engine — see scripts/verify-no-orphan-routes.mjs). This guard does not touch it and does not
  * require it to be mounted.
  *
- * --selftest mutates the REAL apps/backend/src/index.ts (strips every line mentioning
- * registerSettlementApprovalRoutes), proves the check fails, then restores the original file
- * content from an in-memory backup in a `finally` block — no synthetic fixture strings.
+ * --selftest reads the REAL apps/backend/src/index.ts, strips every line mentioning
+ * registerSettlementApprovalRoutes IN MEMORY, and proves check() fails on that planted text —
+ * no synthetic fixture strings, and no tracked file is ever written (LST-F408).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -58,7 +58,7 @@ function main() {
   if (args.includes("--selftest")) {
     const routesSrc = read(ROUTES);
     const backup = fs.readFileSync(realIndexPath, "utf8");
-    try {
+    {
       const goodErrors = check(backup, routesSrc);
       if (goodErrors.length !== 0) {
         console.error(`[${LABEL}] SELFTEST FAIL: real mounted index.ts flagged as bad:`, goodErrors);
@@ -66,7 +66,7 @@ function main() {
       }
 
       // Plant the exact regression this guard exists to catch: drop every line referencing the
-      // symbol (import line + call line) from the REAL index.ts, then re-run the same check.
+      // symbol (import line + call line) from the REAL index.ts text (in memory), then re-run the same check.
       const mutated = backup
         .split("\n")
         .filter((line) => !line.includes("registerSettlementApprovalRoutes"))
@@ -75,15 +75,12 @@ function main() {
         console.error(`[${LABEL}] SELFTEST SETUP FAIL: could not locate registerSettlementApprovalRoutes in index.ts to mutate`);
         process.exit(1);
       }
-      fs.writeFileSync(realIndexPath, mutated, "utf8");
       const plantedErrors = check(mutated, routesSrc);
       if (plantedErrors.length === 0) {
         console.error(`[${LABEL}] SELFTEST FAIL: planted unmount regression was not caught`);
         process.exit(1);
       }
       console.log(`[${LABEL}] SELFTEST PASS (${plantedErrors.length} planted failure(s) detected)`);
-    } finally {
-      fs.writeFileSync(realIndexPath, backup, "utf8");
     }
     process.exit(0);
   }

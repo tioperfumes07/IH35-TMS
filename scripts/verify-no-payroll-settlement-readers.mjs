@@ -84,13 +84,13 @@ export function scan(opts = {}) {
 function selftest() {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "payroll-readers-"));
   try {
-    const src = path.join(tmp, "apps/backend/src");
-    fs.mkdirSync(path.join(src, "__tests__"), { recursive: true });
-    fs.writeFileSync(path.join(src, "clean.ts"), "await q(`SELECT gross_pay FROM driver_finance.driver_settlements`);\n// comment about payroll.driver_settlements is fine\n");
-    fs.writeFileSync(path.join(src, "bad-reader.ts"), "await q(`SELECT gross_cents FROM payroll.driver_settlements WHERE id = $1`);\n");
-    fs.writeFileSync(path.join(src, "bad-probe.ts"), "await q(`SELECT has_table_privilege(current_user, 'payroll.driver_settlements', 'SELECT') AS ok`);\n");
-    fs.writeFileSync(path.join(src, "old-engine.deprecated.ts"), "await q(`SELECT id FROM payroll.driver_settlements`);\n");
-    fs.writeFileSync(path.join(src, "__tests__/mock.test.ts"), "if (sql.includes('FROM payroll.driver_settlements')) {}\n");
+    const tmpSrc = path.join(tmp, "apps/backend/src");
+    fs.mkdirSync(path.join(tmpSrc, "__tests__"), { recursive: true });
+    fs.writeFileSync(path.join(tmpSrc, "clean.ts"), "await q(`SELECT gross_pay FROM driver_finance.driver_settlements`);\n// comment about payroll.driver_settlements is fine\n");
+    fs.writeFileSync(path.join(tmpSrc, "bad-reader.ts"), "await q(`SELECT gross_cents FROM payroll.driver_settlements WHERE id = $1`);\n");
+    fs.writeFileSync(path.join(tmpSrc, "bad-probe.ts"), "await q(`SELECT has_table_privilege(current_user, 'payroll.driver_settlements', 'SELECT') AS ok`);\n");
+    fs.writeFileSync(path.join(tmpSrc, "old-engine.deprecated.ts"), "await q(`SELECT id FROM payroll.driver_settlements`);\n");
+    fs.writeFileSync(path.join(tmpSrc, "__tests__/mock.test.ts"), "if (sql.includes('FROM payroll.driver_settlements')) {}\n");
 
     const findings = scan({ roots: [path.join(tmp, "apps/backend/src")], relFrom: tmp });
     const checks = [

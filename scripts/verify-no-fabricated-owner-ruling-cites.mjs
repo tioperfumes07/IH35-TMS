@@ -11,6 +11,7 @@
  * claim are allowed (they are attributions, not document cites).
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 const ROOT = process.cwd();
@@ -28,17 +29,17 @@ function walk(dir, out = [], exts = /\.(tsx?|jsx?|mjs|cjs|md)$/i) {
   return out;
 }
 
-function loadDocsCorpus() {
-  const files = DOCS_DIRS.flatMap((d) => walk(path.join(ROOT, d), [], /\.md$/i));
+function loadDocsCorpus(root = ROOT) {
+  const files = DOCS_DIRS.flatMap((d) => walk(path.join(root, d), [], /\.md$/i));
   return files.map((f) => fs.readFileSync(f, "utf8")).join("\n").toLowerCase();
 }
 
-function violations() {
-  const corpus = loadDocsCorpus();
+function violations(root = ROOT) {
+  const corpus = loadDocsCorpus(root);
   const errors = [];
-  for (const file of SCAN_DIRS.flatMap((d) => walk(path.join(ROOT, d), [], /\.(tsx?|jsx?|mjs|cjs)$/i))) {
+  for (const file of SCAN_DIRS.flatMap((d) => walk(path.join(root, d), [], /\.(tsx?|jsx?|mjs|cjs)$/i))) {
     const src = fs.readFileSync(file, "utf8");
-    const rel = path.relative(ROOT, file);
+    const rel = path.relative(root, file);
     if (/B4\s*\(\s*owner\s+ruling/i.test(src)) {
       errors.push(`${rel}: fabricated "B4 (owner ruling" citation`);
     }
@@ -59,21 +60,19 @@ function violations() {
 
 function selftest() {
   const planted = "/* B4 (owner ruling, GO-21 register 2026-09-02): Equipment/load type moved to section B */";
-  const tmpDir = path.join(ROOT, "apps/frontend/src");
-  const tmp = path.join(tmpDir, `_fabricated_ruling_selftest_${process.pid}.tsx`);
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "fabricated-ruling-selftest-"));
+  const tmpDir = path.join(tmpRoot, "apps/frontend/src");
+  fs.mkdirSync(tmpDir, { recursive: true });
+  const tmp = path.join(tmpDir, "_fabricated_ruling_selftest.tsx");
   fs.writeFileSync(tmp, planted);
   try {
-    const errs = violations();
+    const errs = violations(tmpRoot);
     const hit = errs.some((e) => /B4\s*\(\s*owner\s+ruling/i.test(e) || e.includes("fabricated"));
     if (!hit) {
       throw new Error(`selftest did not catch planted B4 fabricated cite; errs=${JSON.stringify(errs)}`);
     }
   } finally {
-    try {
-      fs.unlinkSync(tmp);
-    } catch {
-      /* ignore */
-    }
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
   }
   console.log("PASS verify-no-fabricated-owner-ruling-cites --selftest");
 }

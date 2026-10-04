@@ -11,6 +11,7 @@
  * restores byte-for-byte.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -92,8 +93,7 @@ function selftest() {
     process.exit(1);
   }
 
-  const abs = path.join(ROOT, ROUTES);
-  const original = fs.readFileSync(abs, "utf8");
+  const original = fs.readFileSync(path.join(ROOT, ROUTES), "utf8");
   const planted = original.replace(
     /export async function renderSafetyReportXlsx[\s\S]*?\n\}/,
     `export async function renderSafetyReportXlsx(): Promise<Buffer> {
@@ -112,11 +112,14 @@ function selftest() {
   }
 
   let caught;
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "saf-b31-selftest-"));
   try {
-    fs.writeFileSync(abs, planted, "utf8");
-    caught = run();
+    const tmpRoutes = path.join(tmpRoot, ROUTES);
+    fs.mkdirSync(path.dirname(tmpRoutes), { recursive: true });
+    fs.writeFileSync(tmpRoutes, planted, "utf8");
+    caught = run(tmpRoot);
   } finally {
-    fs.writeFileSync(abs, original, "utf8");
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
   }
 
   if (caught.length === 0) {

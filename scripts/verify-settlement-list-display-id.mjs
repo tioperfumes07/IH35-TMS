@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-function read(rel) {
+function readDisk(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
@@ -13,8 +13,10 @@ function assert(cond, msg, errors) {
   if (!cond) errors.push(msg);
 }
 
-export function run() {
+// overrides: {relPath: plantedText} so --selftest plants into a string; no file is written.
+export function run(overrides = {}) {
   const errors = [];
+  const read = (rel) => overrides[rel] ?? readDisk(rel);
   const migration = read("db/migrations/202608101200_add_display_id_to_driver_settlement_with_debt_view.sql");
   const routes = read("apps/backend/src/driver-finance/settlements.routes.ts");
   const api = read("apps/frontend/src/api/driverFinance.ts");
@@ -61,55 +63,43 @@ export function run() {
 }
 
 function selftest() {
-  const apiPath = path.join(ROOT, "apps/frontend/src/api/driverFinance.ts");
-  const pagePath = path.join(ROOT, "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx");
-  const headerPath = path.join(ROOT, "apps/frontend/src/pages/driver-finance/components/SettlementHeader.tsx");
-  const apiBackup = fs.readFileSync(apiPath, "utf8");
-  const pageBackup = fs.readFileSync(pagePath, "utf8");
-  const headerBackup = fs.readFileSync(headerPath, "utf8");
-  try {
-    const patched = apiBackup.replace(
-      /(export type SettlementListRow = \{[\s\S]*?)(\n  display_id: string \| null;)/,
-      "$1"
-    );
-    fs.writeFileSync(apiPath, patched, "utf8");
-    const planted = run();
-    if (!planted.some((e) => e.includes("SettlementListRow"))) {
-      throw new Error("planted type removal not detected");
-    }
+  const API_REL = "apps/frontend/src/api/driverFinance.ts";
+  const PAGE_REL = "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx";
+  const HEADER_REL = "apps/frontend/src/pages/driver-finance/components/SettlementHeader.tsx";
+  const apiBackup = readDisk(API_REL);
+  const pageBackup = readDisk(PAGE_REL);
+  const headerBackup = readDisk(HEADER_REL);
 
-    // Plant: drop manual_paid from setFilter's state union only — must FAIL.
-    const pagePlanted = pageBackup.replace(
-      /(function setFilter\(\s*state:\s*[\s\S]*?)\| "manual_paid"/,
-      "$1"
-    );
-    fs.writeFileSync(pagePath, pagePlanted, "utf8");
-    // Restore API so this plant is isolated to the setFilter check.
-    fs.writeFileSync(apiPath, apiBackup, "utf8");
-    const plantedPage = run();
-    if (!plantedPage.some((e) => e.includes("manual_paid"))) {
-      throw new Error("planted setFilter manual_paid removal not detected");
-    }
-
-    fs.writeFileSync(headerPath, `${headerBackup}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`, "utf8");
-    const plantedHeader = run();
-    if (!plantedHeader.some((e) => e.includes("text-[11px]") || e.includes("#8A92AB") || e.includes("#334155"))) {
-      throw new Error("planted SettlementHeader leftover tokens not detected");
-    }
-
-    fs.writeFileSync(headerPath, headerBackup, "utf8");
-    fs.writeFileSync(pagePath, `${pageBackup}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`, "utf8");
-    const plantedList = run();
-    if (!plantedList.some((e) => e.includes("SettlementsPage leftover"))) {
-      throw new Error("planted SettlementsPage leftover tokens not detected");
-    }
-
-    console.log(`[verify-settlement-list-display-id] SELFTEST PASS (${planted.length}+${plantedPage.length}+${plantedHeader.length}+${plantedList.length} planted failures detected)`);
-  } finally {
-    fs.writeFileSync(apiPath, apiBackup, "utf8");
-    fs.writeFileSync(pagePath, pageBackup, "utf8");
-    fs.writeFileSync(headerPath, headerBackup, "utf8");
+  const patched = apiBackup.replace(
+    /(export type SettlementListRow = \{[\s\S]*?)(\n  display_id: string \| null;)/,
+    "$1"
+  );
+  const planted = run({ [API_REL]: patched });
+  if (!planted.some((e) => e.includes("SettlementListRow"))) {
+    throw new Error("planted type removal not detected");
   }
+
+  // Plant: drop manual_paid from setFilter's state union only — must FAIL.
+  const pagePlanted = pageBackup.replace(
+    /(function setFilter\(\s*state:\s*[\s\S]*?)\| "manual_paid"/,
+    "$1"
+  );
+  const plantedPage = run({ [PAGE_REL]: pagePlanted });
+  if (!plantedPage.some((e) => e.includes("manual_paid"))) {
+    throw new Error("planted setFilter manual_paid removal not detected");
+  }
+
+  const plantedHeader = run({ [HEADER_REL]: `${headerBackup}\n<div className="text-[11px] text-[#8A92AB]">plant</div>` });
+  if (!plantedHeader.some((e) => e.includes("text-[11px]") || e.includes("#8A92AB") || e.includes("#334155"))) {
+    throw new Error("planted SettlementHeader leftover tokens not detected");
+  }
+
+  const plantedList = run({ [PAGE_REL]: `${pageBackup}\n<div className="text-[11px] text-[#8A92AB]">plant</div>` });
+  if (!plantedList.some((e) => e.includes("SettlementsPage leftover"))) {
+    throw new Error("planted SettlementsPage leftover tokens not detected");
+  }
+
+  console.log(`[verify-settlement-list-display-id] SELFTEST PASS (${planted.length}+${plantedPage.length}+${plantedHeader.length}+${plantedList.length} planted failures detected)`);
 }
 
 function main() {

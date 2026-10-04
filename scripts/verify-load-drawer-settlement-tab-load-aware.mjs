@@ -69,14 +69,12 @@ function selftest() {
       process.exitCode = 1;
       return;
     }
-    fs.writeFileSync(CARD_FILE, mutated);
     let caught = false;
     try {
       checkCardFile(mutated);
       caught = process.exitCode === 1;
     } finally {
       process.exitCode = undefined;
-      fs.writeFileSync(CARD_FILE, original);
     }
     if (!caught) {
       console.error("SELFTEST INERT: neutering the resolved-settlement branch was not caught.");
@@ -94,14 +92,12 @@ function selftest() {
       process.exitCode = 1;
       return;
     }
-    fs.writeFileSync(CARD_FILE, mutated);
     let caught = false;
     try {
       checkCardFile(mutated);
       caught = process.exitCode === 1;
     } finally {
       process.exitCode = undefined;
-      fs.writeFileSync(CARD_FILE, original);
     }
     if (!caught) {
       console.error("SELFTEST INERT: reverting the fallback label was not caught.");

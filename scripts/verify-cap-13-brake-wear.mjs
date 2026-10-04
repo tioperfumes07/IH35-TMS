@@ -170,9 +170,7 @@ if (process.argv.includes("--selftest")) {
   const gaugePath = path.join(ROOT, GAUGE);
   const realGood = fs.readFileSync(gaugePath, "utf8");
   const leftoverPlant = realGood + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
-  fs.writeFileSync(gaugePath, leftoverPlant);
   const plantCaught = leftoverPlant.includes("text-[11px]");
-  fs.writeFileSync(gaugePath, realGood);
   if (!plantCaught) {
     console.error("verify:cap-13-brake-wear --selftest FAILED — leftover plant escaped");
     process.exit(1);

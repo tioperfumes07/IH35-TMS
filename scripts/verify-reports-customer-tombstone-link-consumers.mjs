@@ -23,7 +23,11 @@ const LOAD_DETAIL = "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx"
 const DRIVER_LOADS = "apps/frontend/src/components/driver-profile/LoadsSection.tsx";
 const ENTITY_LINK_OR_TOMBSTONE = "apps/frontend/src/components/shared/EntityLinkOrTombstone.tsx";
 
+// Selftest plants go through this in-memory overlay - no tracked file is ever written.
+const SELFTEST_OVERLAY = new Map();
+
 function read(rel) {
+  if (SELFTEST_OVERLAY.has(rel)) return SELFTEST_OVERLAY.get(rel);
   return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
 }
 
@@ -159,13 +163,13 @@ function selftest() {
       'return <EntityLink kind={entityKind} id={row.key} label={label} className="font-medium text-gray-800" />;',
     );
     if (bad === cancOriginal) fail("selftest could not plant unconditional cancellations EntityLink");
-    fs.writeFileSync(cancPath, bad);
+    SELFTEST_OVERLAY.set(CANCELLATIONS, bad);
     const planted = analyze();
     if (!planted.some((m) => /CancellationsReportPage|tombstone test id|unconditionally/.test(m))) {
       fail(`selftest expected cancellations fail; got: ${planted.join("; ")}`);
     }
   } finally {
-    fs.writeFileSync(cancPath, cancOriginal);
+    SELFTEST_OVERLAY.delete(CANCELLATIONS);
   }
 
   const dispPath = path.join(process.cwd(), DISPATCH);
@@ -176,13 +180,13 @@ function selftest() {
       'render: (row) => <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />,',
     );
     if (bad === dispOriginal) fail("selftest could not plant unconditional dispatch EntityLink");
-    fs.writeFileSync(dispPath, bad);
+    SELFTEST_OVERLAY.set(DISPATCH, bad);
     const planted = analyze();
     if (!planted.some((m) => /DispatchMarginPage|unconditionally mount EntityLink|tombstone test id/.test(m))) {
       fail(`selftest expected dispatch fail; got: ${planted.join("; ")}`);
     }
   } finally {
-    fs.writeFileSync(dispPath, dispOriginal);
+    SELFTEST_OVERLAY.delete(DISPATCH);
   }
 
   const mgmtPath = path.join(process.cwd(), MANAGEMENT);
@@ -197,13 +201,13 @@ function selftest() {
       '<EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} />',
     );
     if (bad === mgmtOriginal) fail("selftest could not plant unconditional management EntityLink");
-    fs.writeFileSync(mgmtPath, bad);
+    SELFTEST_OVERLAY.set(MANAGEMENT, bad);
     const planted = analyze();
     if (!planted.some((m) => /ManagementReportPackagePage|unconditionally EntityLink/.test(m))) {
       fail(`selftest expected management fail; got: ${planted.join("; ")}`);
     }
   } finally {
-    fs.writeFileSync(mgmtPath, mgmtOriginal);
+    SELFTEST_OVERLAY.delete(MANAGEMENT);
   }
 
   const loadPath = path.join(process.cwd(), LOAD_DETAIL);
@@ -213,13 +217,13 @@ function selftest() {
       .replace(/isUnresolvedEntityTombstone/g, "NEVER_TOMBSTONE")
       .replace(/load-detail-customer-tombstone/g, "REMOVED");
     if (bad === loadOriginal) fail("selftest could not plant LoadDetailDrawer tombstone regression");
-    fs.writeFileSync(loadPath, bad);
+    SELFTEST_OVERLAY.set(LOAD_DETAIL, bad);
     const planted = analyze();
     if (!planted.some((m) => /LoadDetailDrawer/.test(m))) {
       fail(`selftest expected LoadDetailDrawer fail; got: ${planted.join("; ")}`);
     }
   } finally {
-    fs.writeFileSync(loadPath, loadOriginal);
+    SELFTEST_OVERLAY.delete(LOAD_DETAIL);
   }
 
   // ACCT-F5552: prove the trust-but-verify branch actually reads EntityLinkOrTombstone.tsx rather than
@@ -241,13 +245,13 @@ function selftest() {
       'render: (row) => (\n      <EntityLink\n        kind="customer"\n        id={row.customer_id}\n        label={entityLabel(row.customer_name, row.customer_id, "Customer")}\n      />\n    ),',
     );
     if (bad === driverOriginal) fail("selftest could not plant LoadsSection unconditional EntityLink");
-    fs.writeFileSync(driverPath, bad);
+    SELFTEST_OVERLAY.set(DRIVER_LOADS, bad);
     const planted = analyze();
     if (!planted.some((m) => /LoadsSection/.test(m))) {
       fail(`selftest expected LoadsSection fail; got: ${planted.join("; ")}`);
     }
   } finally {
-    fs.writeFileSync(driverPath, driverOriginal);
+    SELFTEST_OVERLAY.delete(DRIVER_LOADS);
   }
 
   const good = analyze();

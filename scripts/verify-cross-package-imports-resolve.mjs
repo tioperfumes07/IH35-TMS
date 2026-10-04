@@ -31,8 +31,8 @@ function resolveExportPath(rel) {
   return null;
 }
 
-function collectExportedSymbols() {
-  const indexSrc = read(SHARED_INDEX);
+function collectExportedSymbols(indexOverride) {
+  const indexSrc = indexOverride ?? read(SHARED_INDEX);
   const symbols = new Set();
   const fails = [];
 
@@ -74,9 +74,9 @@ function parseNamedImports(spec) {
     .filter(Boolean);
 }
 
-export function assertCrossPackageImportsResolve() {
+export function assertCrossPackageImportsResolve(indexOverride) {
   const fails = [];
-  const { symbols, fails: barrelFails } = collectExportedSymbols();
+  const { symbols, fails: barrelFails } = collectExportedSymbols(indexOverride);
   fails.push(...barrelFails);
 
   if (!symbols.has("getOfficeTransitionButtons")) {
@@ -109,15 +109,12 @@ if (process.argv.includes("--selftest")) {
     "./dispatch/load-state-machine.js",
     "./dispatch/missing-fake-module.js"
   );
-  fs.writeFileSync(SHARED_INDEX, badIndex);
-  try {
-    const planted = assertCrossPackageImportsResolve();
+  {
+    const planted = assertCrossPackageImportsResolve(badIndex);
     if (!planted.some((f) => f.includes("missing file"))) {
       console.error(`${LABEL} SELFTEST FAIL — planted missing export not detected`);
       process.exit(1);
     }
-  } finally {
-    fs.writeFileSync(SHARED_INDEX, indexBackup);
   }
   console.log(`${LABEL} --selftest PASS`);
   process.exit(0);
