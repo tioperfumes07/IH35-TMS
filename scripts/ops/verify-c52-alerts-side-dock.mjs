@@ -17,7 +17,10 @@ export function check(sources) {
   const f = [];
   if (!/data-c52-alert-dock="1"/.test(sources.toast)) f.push("ToastProvider missing data-c52-alert-dock");
   if (!/pointer-events-none fixed/.test(sources.toast)) f.push("Toast dock must be fixed + pointer-events-none container");
-  if (!/bottom-3 right-3/.test(sources.toast)) f.push("Toast dock must be bottom-right side dock");
+  // House: toasts sit top-14 right-3 so they clear the topbar. C-65 banking attention
+  // already owns bottom-3 right-3 — stacking both in the same corner is a collision.
+  if (!/top-14 right-3/.test(sources.toast)) f.push("Toast dock must be top-right side dock (top-14 right-3)");
+  if (/bottom-3 right-3/.test(sources.toast)) f.push("Toast dock must not sit on C-65 bottom-3 right-3");
   if (!/rounded-sm/.test(sources.toast)) f.push("Toast chips must use rounded-sm (SQUARE-EDGES)");
   if (/rounded-md/.test(sources.toast)) f.push("Toast must not use rounded-md");
   if (!/toast-dismiss/.test(sources.toast)) f.push("Toast must expose dismiss control");
@@ -41,10 +44,12 @@ const sources = {
 
 if (process.argv.includes("--selftest")) {
   const good = { ...sources };
-  const bad = { ...sources, toast: sources.toast.replace("rounded-sm", "rounded-md") };
+  const badRadius = { ...sources, toast: sources.toast.replace("rounded-sm", "rounded-md") };
+  const badCorner = { ...sources, toast: sources.toast.replace("top-14 right-3", "bottom-3 right-3") };
   const checks = [
     ["good passes", check(good).length === 0],
-    ["rounded-md fails", check(bad).some((m) => /rounded-md/.test(m))],
+    ["rounded-md fails", check(badRadius).some((m) => /rounded-md/.test(m))],
+    ["C-65 collision fails", check(badCorner).some((m) => /C-65|top-right/.test(m))],
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
