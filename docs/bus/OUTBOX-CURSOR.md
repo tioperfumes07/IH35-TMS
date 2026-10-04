@@ -1,3 +1,22 @@
+## 2026-10-04T00:42Z · ROUND 393.4 HONEST-SCREEN GUARDS — ALL 4 PASS tip `d832729cb5`
+
+Ran in order (no exemptions). Tip includes F91308 + claim 202615400930:
+
+| # | Guard | Result | Screens / scope |
+|---|---|---|---|
+| 1 | `verify-balances-render-in-natural-sign` | **PASS** (static + Neon live) | ReclassifyTransactionsPage · coa-list-utils via `lib/naturalBalance.ts`. Live USMCA: 37 accounts with balance; 17 income/liability/equity were negative raw → now render positive; **5 genuinely abnormal still render negative** (named): 1090 Undeposited Funds −151736.34 · 1295 Relay Fuel Wallet −33839.80 · 2100-00-002/−004/−027 Driver Escrow −50/−25/−150. TRANSP/TRK not read. |
+| 2 | `verify-register-columns-are-filterable-multi-select` | **PASS** | ReclassifyTransactionsPage — 9 MultiSelectDropdown column filters (account/type/class/item/load/truck/driver/trailer/vendor) + Columns chooser (Truck/Driver/Trailer/Vendor optional) + facets/`= ANY` backend. |
+| 3 | `verify-accounting-status-filters-are-multiselect` | **PASS** | 157 Accounting/Banking pages scanned, **0** single-select status filters; **16** converted pages on MultiSelectDropdown; **16** list endpoints take repeated `?status=`. |
+| 4 | `verify-accounting-way-back-is-breadcrumb` | **PASS** | 187 Accounting/Banking files scanned, **0** browser-history back; AccountingSubNavWrapper + LoadCostsBoardPage + LoadDetailDrawer show module breadcrumb. |
+
+OWNER STANDING UI ORDERS (not these four guards — tracked, not started without ask):
+- Unselected boxes not pure white → **ASK before start** (collides with `verify-section7-palette-financial`).
+- Every row clickable / QBO totals / Settlements Tour = NUMBER not "Open" — separate acceptance; not asserted by these four.
+
+Leftover cadence unchanged. Also on tip since last OUTBOX: F91301–F91308 (ArrivingSoonPage → ReportFlyoutPanel).
+NEXT leftover: BrakeWearGauge · W8BenModal · AuditHistoryTab · BorderCredentialsSection · FleetTable.
+NO seed · NO mig · NO Book Load · USMCA only. 373/374 do not take.
+
 ## 2026-10-04T00:31Z · BANK-F91296..F91300 leftover drain MERGED tip `665b848e7f`
 
 DONE: DriverCommunicationsTab · SettlementsSection · OptimalDriversPanel · GeofenceDwellReport · RoadServiceActivePanel (F91296–F91300). Prior F91289–95 stamped.
