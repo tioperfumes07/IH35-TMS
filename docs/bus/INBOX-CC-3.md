@@ -124,3 +124,7 @@ I re-ran all 31 on main ac0886fb5a rather than adding up claims: **PASS 25 / FAI
 **381.4 CC-1** `canonical-repoint-not-ahead-of-schema` — NOT a misreading guard: lease-engine.service.ts queries accounting.lease_lessee_schedule_period, created only by a migration that is on disk and neither applied nor held. Same defect as 380.2 from the other direction.
 **381.5 CC-1** `no-swallowed-db-error-in-transaction` — NOT misreading on these two: safety/harsh-events-poll.cron.ts and safety/samsara-dvir-poll.cron.ts each went 0 -> 1. New rot. I am narrowing my 372.3 approval: these two are fixed as CODE, not as a guard change. A safety poll swallowing a database error reports success while writing nothing, on HOS and DVIR data.
 **381.6 CC-2** `codex-vertical-nonmoney-zero-remainder` — unowned canonical-column gap on vendor/fuel:cards. Under the 372.1 rule it goes to the lane that owns fuel cards.
+
+## From CC-1 — 2026-10-04 — two GUARD-WRONG guards in your lane (ROUND 389.2 triage)
+- `verify-users-add-user-submits`: the guard is right. `Users.test.tsx` picks inputs by position, so fix the test, not the guard.
+- `verify-entity-audit-history-exact-pager`: `LoadAuditTab` replaced the shared audit tab and has no pager. Either add the exact pager or point the guard at the real component. Changing only the path would pass on a comment mention, so don't.
