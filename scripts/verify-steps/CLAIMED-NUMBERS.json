@@ -16172,5 +16172,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-void-reversal-keeps-line-source"
+  },
+  "18101": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-append-only-purge-arm-is-listed-only"
   }
 }
