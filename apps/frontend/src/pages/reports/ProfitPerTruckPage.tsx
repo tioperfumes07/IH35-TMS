@@ -56,19 +56,19 @@ function currentQuarterRange() {
 
 const FLAG_UI: Record<ProfitPerTruckFlag, { className: string; label: string }> = {
   most_profitable: {
-    className: "border-slate-300 bg-slate-100 text-[#1f2a44]",
+    className: "border-[#E5E7EB] bg-[#F7F8FA] text-[#1F2A44]",
     label: PROFIT_PER_TRUCK_FLAG_LABELS.most_profitable,
   },
   least_profitable: {
-    className: "border-slate-300 bg-slate-100 text-slate-700",
+    className: "border-[#E5E7EB] bg-[#F7F8FA] text-[#4B5563]",
     label: PROFIT_PER_TRUCK_FLAG_LABELS.least_profitable,
   },
   high_maintenance: {
-    className: "border-slate-300 bg-slate-100 text-slate-700",
+    className: "border-[#E5E7EB] bg-[#F7F8FA] text-[#4B5563]",
     label: PROFIT_PER_TRUCK_FLAG_LABELS.high_maintenance,
   },
   underutilized: {
-    className: "border-slate-200 bg-slate-50 text-slate-800",
+    className: "border-[#E5E7EB] bg-[#F7F8FA] text-[#1F2A44]",
     label: PROFIT_PER_TRUCK_FLAG_LABELS.underutilized,
   },
 };
@@ -172,7 +172,7 @@ export function ProfitPerTruckPage() {
             {(r.flags ?? []).map((f) => {
               const meta = FLAG_UI[f];
               const label = meta?.label ?? formatProfitPerTruckFlagLabel(f);
-              const className = meta?.className ?? "border-slate-200 bg-slate-50 text-slate-800";
+              const className = meta?.className ?? "border-[#E5E7EB] bg-[#F7F8FA] text-[#1F2A44]";
               return (
                 <span key={f} className={`rounded-sm border px-1.5 py-0.5 text-xs font-semibold ${className}`} title={label}>
                   {label}
@@ -358,10 +358,10 @@ export function ProfitPerTruckPage() {
         onReset={staged.reset}
         applyDisabled={!staged.dirty}
       >
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Flag</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Flag</span>
           <SelectCombobox
-            className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
+            className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.flagFilter}
             onChange={(event) => staged.setDraft((p) => ({ ...p, flagFilter: event.target.value as FlagFilter }))}
           >
