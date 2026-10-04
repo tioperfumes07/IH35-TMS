@@ -22,7 +22,7 @@ import { resolveSamsaraApiToken } from "../integrations/samsara/samsara-token.js
 import { samsaraDriverMessagingEnabled } from "../integrations/samsara/messaging/driver-message-delivery.service.js";
 import { ingestDriverReplies } from "../integrations/samsara/messaging/driver-message-inbound.service.js";
 
-const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+import { USMCA_COMPANY_ID } from "../org/company-ids.js";
 const CRON_NAME = "integrations.samsara_driver_replies";
 let initialized = false;
 

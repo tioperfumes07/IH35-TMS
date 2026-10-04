@@ -1,6 +1,6 @@
 import { withLuciaBypass } from "../auth/db.js";
 
-const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+import { USMCA_COMPANY_ID } from "../org/company-ids.js";
 const FALLBACK = { latitude: 27.65149, longitude: -99.63094 };
 let cached = FALLBACK;
 

@@ -38,7 +38,8 @@ const PURGE_STATE_PATH = process.env.PURGE_STATE_PATH || path.join(ROOT, "purge_
 const PURGE_WINDOW_HOURS = 72;
 
 /** USMCA only — the packet's own scope. A different company id refuses before any query runs. */
-export const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+import { USMCA_COMPANY_ID } from "../org/company-ids.js";
+export { USMCA_COMPANY_ID } from "../org/company-ids.js";
 
 export type FeedDayPreflightCheckResult = {
   check: 1 | 2 | 3 | 4 | 5 | 6;

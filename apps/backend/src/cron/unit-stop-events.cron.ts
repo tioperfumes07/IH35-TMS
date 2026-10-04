@@ -22,7 +22,7 @@ import { SamsaraClient } from "../integrations/samsara/samsara-client.js";
 import { resolveSamsaraApiToken } from "../integrations/samsara/samsara-token.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 
-const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+import { USMCA_COMPANY_ID } from "../org/company-ids.js";
 const CRON_NAME = "telematics.unit_stop_events";
 let initialized = false;
 

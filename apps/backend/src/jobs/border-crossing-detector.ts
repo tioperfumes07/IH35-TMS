@@ -15,7 +15,7 @@
 import type { FastifyInstance } from "fastify";
 import { withLuciaBypass } from "../auth/db.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
-import { USMCA_COMPANY_ID } from "../org/companies.routes.js";
+import { USMCA_COMPANY_ID } from "../org/company-ids.js";
 import { projectBorderCrossingsFromFenceEvents } from "../integrations/samsara/border-crossings/detector.service.js";
 
 const WORKER_NAME = "dispatch.border_crossing_detector";

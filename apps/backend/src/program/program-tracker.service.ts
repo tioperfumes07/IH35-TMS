@@ -16,7 +16,7 @@
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import path from "node:path";
 import { resolveMonorepoRoot } from "../lib/monorepo-root.js";
-import { resolveBackendVersion } from "../health/health.routes.js";
+import { resolveBackendVersion } from "../health/build-identity.js";
 import { getObjectTextIfExists } from "../storage/r2-client.js";
 
 const ROOT = resolveMonorepoRoot(import.meta.url);

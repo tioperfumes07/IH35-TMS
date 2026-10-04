@@ -2,7 +2,7 @@ import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
-import { registerWebPushAckRoutes } from "../notifications/web-push-dispatcher.js";
+import { registerWebPushAckRoutes } from "../notifications/web-push-ack.routes.js";
 import { requireDriverSession } from "./auth.js";
 
 const bodySchema = z.object({

@@ -1,4 +1,5 @@
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
+import { isOwnerOrAdmin } from "../lib/authz/roles.js";
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
@@ -65,9 +66,7 @@ export function isWriteRole(role: string): boolean {
   return role === "Owner" || role === "Administrator" || role === "Manager";
 }
 
-export function isOwnerOrAdmin(role: string): boolean {
-  return role === "Owner" || role === "Administrator";
-}
+export { isOwnerOrAdmin } from "../lib/authz/roles.js";
 
 export function assertBulkActionAllowed(
   role: string,

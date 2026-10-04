@@ -13,7 +13,7 @@ import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { captureGeofenceOdometerEvents, getGeofenceOdometerCaptureStatus } from "../integrations/samsara/geofences/geofence-odometer-capture.service.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 
-const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+import { USMCA_COMPANY_ID } from "../org/company-ids.js";
 const CRON_NAME = "telematics.geofence_odometer_captures";
 let initialized = false;
 

@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 
-const path = "apps/backend/src/maintenance/reefer-hours.routes.ts";
-const source = fs.readFileSync(path, "utf8");
+// CC-2 2026-10-04: the reefer persistence logic moved to reefer-hours.service.ts (plain service, so the cron imports it
+// without the route layer); the route file keeps request handling. Both are read together.
+const path = "apps/backend/src/maintenance/reefer-hours.service.ts + reefer-hours.routes.ts";
+const source = ["apps/backend/src/maintenance/reefer-hours.service.ts", "apps/backend/src/maintenance/reefer-hours.routes.ts"]
+  .map((p) => fs.readFileSync(p, "utf8")).join("\n");
 const checks = [
   [/FROM mdata\.equipment WHERE id = \$1[\s\S]*?deactivated_at IS NULL LIMIT 1/, "specs reject inactive trailer"],
   [/const specsId = insert\.rows\[0\]\?\.id == null \? null : String\(insert\.rows\[0\]\.id\)/, "specs insert identity"],

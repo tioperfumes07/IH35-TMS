@@ -6,7 +6,7 @@ import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
-import { TRACTOR_POSITIONS } from "../maintenance/tires.routes.js";
+import { TRACTOR_POSITIONS } from "../maintenance/tire-positions.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { getLatestForUnit } from "../integrations/samsara/cap-12-tire-tread/measurement.service.js";
 import {

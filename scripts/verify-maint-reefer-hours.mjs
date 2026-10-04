@@ -10,6 +10,8 @@ const ROOT = process.cwd();
 const paths = {
   migration: path.join(ROOT, "db/migrations/0366_maint_reefer_hours.sql"),
   routes: path.join(ROOT, "apps/backend/src/maintenance/reefer-hours.routes.ts"),
+  // CC-2 2026-10-04: the domain logic (company boundary, ingest, PM) lives in the service; read both together.
+  routesService: path.join(ROOT, "apps/backend/src/maintenance/reefer-hours.service.ts"),
   routesTest: path.join(ROOT, "apps/backend/src/maintenance/__tests__/reefer-hours.routes.test.ts"),
   section: path.join(ROOT, "apps/frontend/src/components/trailer-profile/TrailerReeferSection.tsx"),
   sectionTest: path.join(ROOT, "apps/frontend/src/components/trailer-profile/__tests__/TrailerReeferSection.test.tsx"),
@@ -58,7 +60,7 @@ function reeferWriteLifecycleProblems(section) {
 function main() {
   const failures = [];
   const migration = read(paths.migration);
-  const routes = read(paths.routes);
+  const routes = read(paths.routes) + "\n" + read(paths.routesService);
   const routesTest = read(paths.routesTest);
   const section = read(paths.section);
   const sectionTest = read(paths.sectionTest);
@@ -175,7 +177,7 @@ if (process.argv.includes("--selftest")) {
   ];
   const escaped = mutations.filter((mutation) => [...reeferWriteFailureProblems(mutation), ...reeferWriteLifecycleProblems(mutation)].length === 0);
   if (escaped.length) fail(`--selftest: ${escaped.length}/${mutations.length} reefer write-failure mutations escaped`);
-  const routes = read(paths.routes);
+  const routes = read(paths.routes) + "\n" + read(paths.routesService);
   const backendMutations = [
     routes.replaceAll("l.equipment_id = $1 AND l.operating_company_id = $2::uuid", "l.equipment_id = $1"),
     routes.replaceAll("rs.equipment_id = $1 AND rs.operating_company_id = $2::uuid", "rs.equipment_id = $1"),

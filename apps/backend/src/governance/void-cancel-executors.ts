@@ -14,7 +14,7 @@
 // reversal + every subledger/status flip + the request decision are atomic (all-or-nothing).
 
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { settleWorkOrderFinancialLinkage } from "../work-orders/work-orders.routes.js";
+import { settleWorkOrderFinancialLinkage } from "../work-orders/work-order-financial-settle.service.js";
 import { auditVoid, isVoidEnforcementEnabled, postVoidReversal, releaseBankLinesNamingDocument } from "../accounting/void.service.js";
 import { reverseJournalEntryNoFlip } from "../accounting/journal-entries.service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";

@@ -9,7 +9,7 @@
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
-import { ingestReeferHoursFromSamsaraForCompany } from "../maintenance/reefer-hours.routes.js";
+import { ingestReeferHoursFromSamsaraForCompany } from "../maintenance/reefer-hours.service.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import { tryXactSingleFlight } from "../lib/single-flight.js";

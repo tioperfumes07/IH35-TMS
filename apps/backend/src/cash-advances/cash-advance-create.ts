@@ -106,7 +106,7 @@ export type CreateDriverCashAdvanceCoreResult =
 // SET-24) -- that model can never legitimately apply to a USMCA driver, for any purpose, even one
 // an explicit caller override requests. Enforced HERE, at the service boundary, not in a React
 // dropdown -- a rule only the UI enforces is not enforced (owner's own words).
-const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+import { USMCA_COMPANY_ID } from "../org/company-ids.js";
 
 export function resolveEconomicRouting(
   purpose: CashAdvancePurpose,

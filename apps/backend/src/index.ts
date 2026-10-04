@@ -353,7 +353,7 @@ import { registerMaintenanceDriversRoutes } from "./maintenance/drivers.routes.j
 import { registerMaintenancePartsRoutes } from "./maintenance/parts.routes.js";
 import { registerMaintenanceDefectsRoutes } from "./maintenance/defects.routes.js";
 import { registerPreFlightDvirRoutes } from "./maintenance/pre-flight-dvir.routes.js";
-import { registerMaintenancePmAutoEngineRoutes } from "./maintenance/pm-auto-engine.service.js";
+import { registerMaintenancePmAutoEngineRoutes } from "./maintenance/pm-auto-engine.routes.js";
 import { registerMaintenanceServiceTimelineRoutes } from "./maintenance/service-timeline.service.js";
 import { registerUnitMaintenanceHistoryRoutes } from "./maintenance/unit-maintenance-history.routes.js";
 import { registerMaintenanceKpiRoutes } from "./maintenance/kpi.routes.js";
@@ -362,11 +362,11 @@ import { initializeOdometerSnapshotCron } from "./telematics/odometer-snapshot.c
 import { initializeLeaseBillCron } from "./leases/lease-bill.cron.js";
 import { registerLeaseRoutes } from "./leases/lease.routes.js";
 import { initializeRosterIntegrityCron } from "./fleet/roster-integrity.cron.js";
-import { registerRosterIntegrityRoutes } from "./fleet/roster-integrity.service.js";
+import { registerRosterIntegrityRoutes } from "./fleet/roster-integrity.routes.js";
 import { initializeBankTieoutCron } from "./banking/bank-tieout.cron.js";
-import { registerBankTieoutRoutes } from "./banking/bank-tieout.service.js";
+import { registerBankTieoutRoutes } from "./banking/bank-tieout.routes.js";
 import { initializeLoadRealDrivenMilesCron } from "./telematics/load-real-driven-miles.cron.js";
-import { registerLoadRealDrivenMilesRoutes } from "./telematics/load-real-driven-miles.service.js";
+import { registerLoadRealDrivenMilesRoutes } from "./telematics/load-real-driven-miles.routes.js";
 import { registerThreeMileCpmRoutes } from "./reports/three-mile-cpm.service.js";
 import { registerOdometerManualRoutes } from "./telematics/odometer-manual.routes.js";
 import { registerFaultCodeAlertsRoutes } from "./maintenance/fault-code-alerts.routes.js";

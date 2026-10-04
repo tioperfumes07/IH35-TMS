@@ -23,7 +23,10 @@ function loadSource() {
 export function collectFailures(src = loadSource()) {
   const failures = [];
 
-  if (!src.includes(`const USMCA_COMPANY_ID = "${USMCA_ID}"`)) {
+  // CC-2 2026-10-04: the id has ONE definition, org/company-ids.ts (17 local copies removed); this file imports it.
+  const ids = readFileSync("apps/backend/src/org/company-ids.ts", "utf8");
+  const imported = /import \{ USMCA_COMPANY_ID \} from "\.\.\/org\/company-ids\.js";/.test(src) && ids.includes(`export const USMCA_COMPANY_ID = "${USMCA_ID}"`);
+  if (!imported && !src.includes(`const USMCA_COMPANY_ID = "${USMCA_ID}"`)) {
     failures.push("USMCA_COMPANY_ID constant missing or does not match the real USMCA operating_company_id");
   }
   if (!/if \(operatingCompanyId === USMCA_COMPANY_ID\) return "load_expense";/.test(src)) {

@@ -17,7 +17,7 @@ const {
 vi.mock("node-cron", () => ({ default: { schedule: scheduleMock } }));
 vi.mock("../auth/db.js", () => ({ withLuciaBypass: withLuciaBypassMock }));
 vi.mock("../lib/background-jobs.js", () => ({ wrapBackgroundJobTick: wrapBackgroundJobTickMock }));
-vi.mock("../maintenance/reefer-hours.routes.js", () => ({
+vi.mock("../maintenance/reefer-hours.service.js", () => ({
   ingestReeferHoursFromSamsaraForCompany: ingestReeferHoursMock,
 }));
 

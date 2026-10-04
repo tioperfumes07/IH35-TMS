@@ -20,7 +20,7 @@ import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { runLoadStopGeofenceSync } from "../telematics/load-stop-geofence-sync.service.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 
-const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+import { USMCA_COMPANY_ID } from "../org/company-ids.js";
 const CRON_NAME = "telematics.load_stop_geofence_sync";
 let initialized = false;
 

@@ -10,7 +10,7 @@
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 import { withLuciaBypass } from "../auth/db.js";
 import { runBankOrphanBackfill } from "../banking/bank-orphan-backfill.service.js";
-import { USMCA_COMPANY_ID } from "../org/companies.routes.js";
+import { USMCA_COMPANY_ID } from "../org/company-ids.js";
 import { logger } from "../observability/structured-logger.js";
 import { HealthCheckError } from "./health-errors.js";
 
