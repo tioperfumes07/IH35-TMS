@@ -141,7 +141,7 @@ export function CreateBillModal({
             />
           </div>
           {!linkReady ? (
-            <p className="md:col-span-2 text-[11px] text-amber-800">
+            <p className="md:col-span-2 text-xs text-amber-800">
               Select a work order so this bill carries Maintenance linkage (WO FK).
             </p>
           ) : null}

@@ -88,7 +88,13 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`${LABEL} SELFTEST PASS — ${mutations.length} mutations detected`);
+  // BANK-F91391 leftover plant — CreateBillModal page-scoped text token ratchet
+  const leftoverPlant = good + '\n<p className="text-[11px] text-[#8A92AB]">plant</p>\n';
+  if (!(leftoverPlant.includes("text-[11px]") && leftoverPlant.includes("#8A92AB"))) {
+    console.error(`${LABEL} SELFTEST FAIL — leftover plant escaped`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — ${mutations.length} mutations detected + leftover plant`);
   process.exit(0);
 }
 
@@ -98,6 +104,16 @@ const failures = audit(
 );
 if (failures.length) {
   console.error(`${LABEL} FAIL\n- ${failures.join("\n- ")}`);
+  process.exit(1);
+}
+// BANK-F91391 leftover refuse — CreateBillModal page-scoped text token ratchet
+const createBillSrc = fs.readFileSync(path.join(ROOT, FILE), "utf8");
+if (createBillSrc.includes("text-[11px]")) {
+  console.error(`${LABEL} FAIL — CreateBillModal.tsx leftover text-[11px]`);
+  process.exit(1);
+}
+if (createBillSrc.includes("#8A92AB")) {
+  console.error(`${LABEL} FAIL — CreateBillModal.tsx leftover off-scale muted #8A92AB`);
   process.exit(1);
 }
 console.log(`${LABEL} PASS — Maintenance's Create Bill path is a real, WO-FK-stamped ap_bill create surface`);
