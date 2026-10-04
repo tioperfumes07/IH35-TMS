@@ -107,6 +107,11 @@ export function verify(source) {
     failures.push("ReportFlyoutPanel.tsx: leftover off-scale muted");
   }
   need("scheduledPanel", "export function ScheduledReportsPanel", "scheduled reports panel must remain implemented");
+  // BANK-F91352 leftover refuse — ScheduledReportsPanel.tsx page-scoped text token ratchet
+  if (source.scheduledPanel.includes("text-[11px]")) failures.push("ScheduledReportsPanel.tsx: leftover text-[11px]");
+  if (source.scheduledPanel.includes("#8A92AB") || source.scheduledPanel.includes("#334155")) {
+    failures.push("ScheduledReportsPanel.tsx: leftover off-scale muted");
+  }
   need("balanceSheet", "export function BalanceSheetPage", "balance sheet surface must remain implemented");
 
   for (const [key, ids] of Object.entries(REQUIRED_LEAVES)) {
@@ -144,6 +149,8 @@ if (process.argv.includes("--self-test")) {
     ["reportFlyout", "export function ReportFlyoutPanel", "function BrokenFlyout"], ["scheduledPanel", "export function ScheduledReportsPanel", "function BrokenScheduledPanel"],
     // BANK-F91308 leftover plant — ReportFlyoutPanel page-scoped text token ratchet
     ["reportFlyout", "export function ReportFlyoutPanel", 'export function ReportFlyoutPanel\n<div className="text-[11px] text-[#8A92AB]">plant</div>'],
+    // BANK-F91352 leftover plant — ScheduledReportsPanel page-scoped text token ratchet
+    ["scheduledPanel", "export function ScheduledReportsPanel", 'export function ScheduledReportsPanel\n<div className="text-[11px] text-[#8A92AB]">plant</div>'],
     ["balanceSheet", "export function BalanceSheetPage", "function BrokenBalanceSheet"], ["routes", 'path="/cash-flow"', 'path="/broken-cash-flow"'],
     ["routes", 'path="/fuel/card-overage"', 'path="/broken-fuel"'], ["routes", 'path="/home/ops"', 'path="/broken-home"'],
     ["routes", 'path="/program/matrix"', 'path="/broken-program"'], ["routes", 'path="/reports/profit-loss"', 'path="/broken-report"'],

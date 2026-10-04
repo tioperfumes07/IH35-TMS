@@ -116,7 +116,7 @@ export function ScheduledReportsPanel() {
           >
             <div className="flex items-start justify-between gap-2">
               <div>
-                <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">
+                <div className="text-xs font-semibold uppercase tracking-[0.04em] text-slate-500">
                   {row.cadence_label}
                 </div>
                 <div className="mt-0.5 text-xs font-semibold text-slate-800">
