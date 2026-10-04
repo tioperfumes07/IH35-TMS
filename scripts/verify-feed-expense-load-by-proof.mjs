@@ -8,7 +8,9 @@
 //
 // Runs the REAL scripts/feed/engines/parse_settlements.py attribute_unheaded_expenses on fixtures shaped like 5770 / 5794
 // and checks every proof rule; statically checks the parser keeps unheaded rows off the last load and the builder
-// carries `invoice`. --selftest plants the old behaviour and must fail.
+// carries `invoice`. A shared day with nothing else proving the load goes to the unfinished load with the EARLIEST first
+// pickup (owner rule, the same loadAtTimeSql the database engines use); a same-first-pickup tie is refused.
+// --selftest plants the old behaviour and must fail.
 import { readFileSync, mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
@@ -48,13 +50,29 @@ d = {"loads": {"A": {"stops": [{"type":"pickup","date":"2026-09-04"},{"type":"de
                "B": {"stops": [{"type":"pickup","date":"2026-09-06"},{"type":"deliver","date":"2026-09-10"}]}}}
 n, g = attribute_unheaded_expenses(c, d)
 out["boundary"] = {"A": [e["load_by"] for e in c["loads"]["A"]["expenses"]], "B": [e["load_by"] for e in c["loads"]["B"]["expenses"]], "gaps": len(g)}
+# TIEBREAK: overlapping loads (truck holds its next load) -> the unfinished load with the earliest first pickup; a
+# same-first-pickup tie is refused
+c = {"doc_no": "T", "loads": {"N": load(), "S": load(), "X": load()},
+     "unheaded_expenses": [X("2026-08-31","9","Road Service-Truck Repair",617.17)]}
+d = {"loads": {"N": {"stops": [{"type":"pickup","date":"2026-08-27"},{"type":"deliver","date":"2026-09-02"}]},
+               "S": {"stops": [{"type":"pickup","date":"2026-08-29"},{"type":"deliver","date":"2026-08-31"}]},
+               "X": {"stops": [{"type":"pickup","date":"2026-09-20"},{"type":"deliver","date":"2026-09-22"}]}}}
+attribute_unheaded_expenses(c, d)
+out["tiebreak"] = {k: [e["load_by"] for e in v["expenses"]] for k, v in c["loads"].items()}
+c = {"doc_no": "Z", "loads": {"P": load(), "Q": load()}, "unheaded_expenses": [X("2026-09-05","8","Road Service-Truck Repair",10.0)]}
+d = {"loads": {"P": {"stops": [{"type":"pickup","date":"2026-09-04"},{"type":"deliver","date":"2026-09-06"}]},
+               "Q": {"stops": [{"type":"pickup","date":"2026-09-04"},{"type":"deliver","date":"2026-09-07"}]}}}
+n, g = attribute_unheaded_expenses(c, d)
+out["true_tie"] = {"gaps": len(g)}
 print(json.dumps(out))
 `;
 
 const WANT = {
   "5770": { "13503": [["99301244", "receipt"], ["99442334", "receipt"]], "13509": [["99444239", "date"]] },
   "5794": { "13558": [["2885954", "driver"]], "13568": [] },
-  boundary: { A: ["stop:deliver"], B: [], gaps: 1 },
+  boundary: { A: ["stop:deliver", "earliest-pickup"], B: [], gaps: 0 },
+  tiebreak: { N: ["earliest-pickup"], S: [], X: [] },
+  true_tie: { gaps: 1 },
 };
 
 function run(parserSrc, builderSrc) {
@@ -92,6 +110,8 @@ if (process.argv.includes("--selftest")) {
     ["receipt rule removed", parser.replace('if len(hit) == 1:\n            target, how = next(iter(hit)), "receipt"', "pass"), builder],
     ["builder drops invoice", parser, builder.replaceAll('["invoice"] =', '["inv_dropped"] =')],
     ["same receipt twice", parser, builder.replace("for src_lines in (_cl_exp,", "for src_lines in ((cl.get(\"expenses\") or []),")],
+    ["tiebreak removed", parser.replace('if len(cand) == 1: target, how = cand[0], "earliest-pickup"', "pass"), builder],
+    ["tie guessed", parser.replace('if len(cand) == 1: target, how = cand[0], "earliest-pickup"', 'if cand: target, how = sorted(cand)[0], "earliest-pickup"'), builder],
     ["boundary guessed", parser.replace('if len(on) == 1: target, how = next(iter(on)), f"stop:{stop}"', 'if on: target, how = sorted(on)[-1], f"stop:{stop}"').replace('stop = "deliver" if', 'stop = "deliver" if True or'), builder],
   ];
   const live = run(parser, builder);
