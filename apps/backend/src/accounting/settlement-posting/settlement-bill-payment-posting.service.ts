@@ -932,6 +932,23 @@ export async function reverseSettlementBillPaymentInClientTx(
     );
     const run = runRes.rows[0] ?? null;
     if (!run || run.status !== "posted") {
+      // AUTH-400 (CC-3, 2026-10-04): "nothing to reverse" is only true when NOTHING in the ledger still names this settlement.
+      // Two legacy settlements had no GL run but a live pay-run close entry; this returned nothing_to_reverse, the
+      // dispatcher stamped the document voided, and the entry stayed live — a partial void (verify-void-is-whole red).
+      // A settlement with live GL and no run this engine can reverse is refused by name, never voided over its money.
+      const liveGl = await client.query<{ n: number; jes: string | null }>(
+        `SELECT count(*)::int AS n, string_agg(DISTINCT journal_entry_uuid::text, ',') AS jes
+           FROM accounting.journal_entry_postings
+          WHERE operating_company_id = $1::uuid AND source_transaction_type = 'driver_settlement' AND source_transaction_id = $2
+            AND reversed_by_line_id IS NULL AND reversal_of_line_id IS NULL`,
+        [opco, settlementId]
+      );
+      if (liveGl.rows[0]?.n) {
+        throw new SettlementBillPaymentError(
+          "LIVE_GL_WITHOUT_REVERSIBLE_RUN",
+          `Settlement ${settlementId} still has ${liveGl.rows[0].n} live posting line(s) (entries ${liveGl.rows[0].jes}) but no posted GL run this engine can reverse — refusing to void it over live money`
+        );
+      }
       return { result: "nothing_to_reverse", settlement_id: settlementId, run_id: run?.id ?? null };
     }
 

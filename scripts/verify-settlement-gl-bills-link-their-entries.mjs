@@ -16,10 +16,13 @@ import { readFileSync } from "node:fs";
 
 const LABEL = "verify-settlement-gl-bills-link-their-entries";
 const FILE = "apps/backend/src/driver-finance/settlement-ap-chain.service.ts";
+const REVERSAL = "apps/backend/src/accounting/settlement-posting/settlement-bill-payment-posting.service.ts";
 const read = (rel) => readFileSync(new URL(`../${rel}`, import.meta.url), "utf8");
 
-export function problems(src) {
+export function problems(src, rev = read(REVERSAL)) {
   const p = [];
+  // AUTH-400 (CC-3 report): the reversal engine must never report nothing_to_reverse while live GL still names the settlement.
+  if (!/"LIVE_GL_WITHOUT_REVERSIBLE_RUN"/.test(rev) || !/if \(liveGl\.rows\[0\]\?\.n\) \{/.test(rev)) p.push("settlement reversal must refuse LIVE_GL_WITHOUT_REVERSIBLE_RUN when no reversible run exists but live GL names the settlement");
   if (!/if \(!billJeId\) \{\s*throw new SettlementApChainError\("BILL_JOURNAL_ENTRY_MISSING"/.test(src)) p.push("chain must refuse a load bill that posted no journal entry (BILL_JOURNAL_ENTRY_MISSING)");
   if (!/if \(!cashJeId\) \{\s*throw new SettlementApChainError\("CASH_PAYMENT_JOURNAL_ENTRY_MISSING"/.test(src)) p.push("chain must refuse a net-pay payment whose journal entry cannot be found (CASH_PAYMENT_JOURNAL_ENTRY_MISSING)");
   if (!/x\.billId, x\.billJeId, cashBpId, cashJeId,/.test(src)) p.push("the GL-bill INSERT must write bill_journal_entry_id and cash_journal_entry_id");
@@ -35,11 +38,12 @@ const plants = [
   ["INSERT writes null bill entry", src.replace("x.billId, x.billJeId, cashBpId, cashJeId,", "x.billId, null, cashBpId, cashJeId,")],
 ];
 const missed = plants.filter(([, s]) => problems(s).length === 0).map(([n]) => n);
+if (!problems(src, read(REVERSAL).replace("if (liveGl.rows[0]?.n) {", "if (false) {")).length) missed.push("settlement void over live GL");
 if (own.length || missed.length) {
   console.error(`${LABEL}: FAIL — ${[...own, ...missed.map((n) => `plant '${n}' not caught`)].join("; ")}`);
   process.exit(1);
 }
-console.log(`${LABEL}: static PASS (${plants.length}/${plants.length} plants caught)`);
+console.log(`${LABEL}: static PASS (${plants.length + 1}/${plants.length + 1} plants caught)`);
 if (process.argv.includes("--selftest")) process.exit(0);
 
 if (process.argv.includes("--live")) {

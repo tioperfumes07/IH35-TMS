@@ -152,7 +152,8 @@ export type SettlementBillPaymentErrorCode =
   | "SOURCE_POSTING_LINK_MISSING"
   | "SETTLEMENT_TOTALS_INCONSISTENT"
   | "UNBALANCED_ENTRY"
-  | "SETTLEMENT_ALREADY_POSTED_BY_OTHER_POSTER";
+  | "SETTLEMENT_ALREADY_POSTED_BY_OTHER_POSTER"
+  | "LIVE_GL_WITHOUT_REVERSIBLE_RUN";
 
 export class SettlementBillPaymentError extends Error {
   code: SettlementBillPaymentErrorCode;

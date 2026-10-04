@@ -239,3 +239,34 @@ describe("settlement Bill+BillPayment reversal orchestration", () => {
     expect(mocks.appendAudit).toHaveBeenCalledTimes(1);
   });
 });
+
+// AUTH-400 (CC-3 report, 2026-10-04): a settlement with NO posted GL run but a live pay-run close entry was voided over its
+// money — "nothing_to_reverse" while the ledger still named it. Now refused by name; a settlement nothing names still no-ops.
+describe("reverseSettlementBillPaymentInClientTx — no reversible run", () => {
+  const actor = { userId: USER, role: "Owner" } as never;
+  function noRunClient(liveLines: number) {
+    return {
+      query: vi.fn(async (sql: string) => {
+        if (sql.includes("FROM driver_finance.driver_settlement_gl_runs")) return { rows: [] };
+        if (sql.includes("source_transaction_type = 'driver_settlement'") && sql.includes("reversed_by_line_id IS NULL")) {
+          return { rows: [{ n: liveLines, jes: liveLines ? "je-payrun-close" : null }] };
+        }
+        return { rows: [] };
+      }),
+    };
+  }
+
+  it("refuses LIVE_GL_WITHOUT_REVERSIBLE_RUN when live posting lines still name the settlement", async () => {
+    const { reverseSettlementBillPaymentInClientTx } = await import("../settlement-bill-payment-posting.service.js");
+    await expect(
+      reverseSettlementBillPaymentInClientTx(noRunClient(5) as never, { operatingCompanyId: COMPANY, settlementId: SETTLEMENT, reason: "void" }, actor, "2026-10-04")
+    ).rejects.toMatchObject({ code: "LIVE_GL_WITHOUT_REVERSIBLE_RUN" });
+  });
+
+  it("returns nothing_to_reverse only when nothing in the ledger names the settlement", async () => {
+    const { reverseSettlementBillPaymentInClientTx } = await import("../settlement-bill-payment-posting.service.js");
+    await expect(
+      reverseSettlementBillPaymentInClientTx(noRunClient(0) as never, { operatingCompanyId: COMPANY, settlementId: SETTLEMENT, reason: "void" }, actor, "2026-10-04")
+    ).resolves.toMatchObject({ result: "nothing_to_reverse" });
+  });
+});
