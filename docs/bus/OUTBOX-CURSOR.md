@@ -1,3 +1,37 @@
+## 2026-10-04T18:05Z · leftover RESUMES · r393/r394/r395 ON MAIN
+
+DONE: after-live order complete on tip — r393 #25309, r394 #25317, r395 #25322. r396 first live `dep-db18ngpmgk9c73d5dfgg`. Condition 5: #25143 CLOSED with 2–4s fail/skip fleet; did not admin-merge it. Unique collisions 14445/14633 already renumbered on main (#25321).
+
+NEXT: leftover/slate sweep resumes after BANK-F91551. Next unmerged leftover page.
+
+Files Modified: docs/bus/NOW-CURSOR.md, docs/bus/OUTBOX-CURSOR.md
+
+## 2026-10-04T17:55Z · leftover/slate PARKED · r393 ON MAIN · next r394
+
+DONE: leftover/slate parked at BANK-F91551. r396 first live `dep-db18ngpmgk9c73d5dfgg` (#25300); current healthz `c6efd379f6` live `dep-db1918ecdcgs73espap0`. r393 landed via #25309 `2a6438d954` (supersedes #25143 CLOSED). Condition 5: #25143 CI was 2–4s fail/skip, `build-typecheck-heavy` SKIPPED — did not admin-merge it.
+
+NEXT: r394 already on main via #25317 (step 14633). Claim EVEN **14868** then author r395 from Lead `c68ae8f2bd` (14433 already taken). Leftover stays parked.
+
+Files Modified: docs/bus/NOW-CURSOR.md, docs/bus/OUTBOX-CURSOR.md
+
+## 2026-10-04T17:49Z · #25143 rematched · STOP dead CI
+
+DONE: Lead r393 tip 461846608c merged onto live main → `ebc3fee25c` pushed to `claude/r393-batch-five`. GitHub mergeable=MERGEABLE.
+
+STOP: #25143 CI is the #25153 pattern — 34 fail in 2–3s, `build-typecheck-heavy` SKIPPED. Condition 5: do not admin-merge past a dead fleet. r394/r395 not opened.
+
+NEXT: owner decides on the dead CI fleet. Leftover stays parked at F91551.
+
+Files Modified: none this stamp — r393 lives on `claude/r393-batch-five`
+
+## 2026-10-04T17:42Z · leftover/slate PARKED at BANK-F91551 · r396 LIVE
+
+DONE: leftover/slate sweep parked at BANK-F91551 (#25293). r396 #25300 is on main; backend deploy `dep-db18ngpmgk9c73d5dfgg` status=`live` sha `f256a2cc1178e0f91c37f65494bc66a168aa7fba`. healthz/shallow 200 same sha. Condition 5 named: #25300 CI was the #25153 2–4s failure/skip fleet (`build-typecheck-heavy` SKIPPED); merge already on main before this seat pushed; I did not admin-merge it. Leftover timer unsubscribed.
+
+NEXT: #25143 r393 → r394 (14421) → r395 (14433). Leftover sweep stays parked until that sequence is on tip.
+
+Files Modified: docs/bus/NOW-CURSOR.md, docs/bus/OUTBOX-CURSOR.md
+
 ## 2026-10-04T20:12Z · BANK-F91551 LoadCosts leftover slate classes · this PR
 
 DONE: LoadCostsBoard leftover text-slate-* → house #1F2A44 / #4B5563; leftover refuse on EVEN 4110.
