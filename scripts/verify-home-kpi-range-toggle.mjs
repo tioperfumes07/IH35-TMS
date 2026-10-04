@@ -27,9 +27,10 @@ const QBO_HOME = "apps/frontend/src/pages/home/QboStyleHomePage.tsx";
 const API_HOME = "apps/frontend/src/api/home.ts";
 const ROUTES = "apps/backend/src/home/home-widgets.routes.ts";
 const SERVICE = "apps/backend/src/home/revenue-gl-linkage.service.ts";
+const WEEKLY_CHART = "apps/frontend/src/pages/home/charts/WeeklyRevenueChart.tsx";
 
 /** Pure checks — takes text so --selftest can inject fixtures. */
-export function check({ toggle, ownerHome, defaultHome, qboHome, apiHome, routes, service }) {
+export function check({ toggle, ownerHome, defaultHome, qboHome, apiHome, routes, service, weeklyChart }) {
   const f = [];
 
   if (!toggle) {
@@ -117,6 +118,10 @@ export function check({ toggle, ownerHome, defaultHome, qboHome, apiHome, routes
   if (toggle && toggle.includes("text-[11px]")) f.push(`${TOGGLE}: leftover text-[11px]`);
   if (toggle && toggle.includes("#8A92AB")) f.push(`${TOGGLE}: leftover off-scale muted #8A92AB`);
 
+  // BANK-F91427 leftover refuse — WeeklyRevenueChart page-scoped text token ratchet
+  if (weeklyChart && weeklyChart.includes("text-[11px]")) f.push(`${WEEKLY_CHART}: leftover text-[11px]`);
+  if (weeklyChart && weeklyChart.includes("#8A92AB")) f.push(`${WEEKLY_CHART}: leftover off-scale muted #8A92AB`);
+
   return f;
 }
 
@@ -136,6 +141,7 @@ export function run() {
     apiHome: read(API_HOME),
     routes: read(ROUTES),
     service: read(SERVICE),
+    weeklyChart: read(WEEKLY_CHART),
   });
 }
 
@@ -232,6 +238,15 @@ if (process.argv.includes("--selftest")) {
   };
   if (!check(leftoverPlant).some((x) => x.includes("leftover text-[11px]"))) {
     console.error(`${LABEL} --selftest FAIL — leftover plant escaped`);
+    process.exit(1);
+  }
+  // BANK-F91427 leftover plant — WeeklyRevenueChart page-scoped text token ratchet
+  const weeklyPlant = {
+    ...good,
+    weeklyChart: (good.weeklyChart || "// clean chart") + '\n<p className="text-[11px] text-[#8A92AB]">plant</p>\n',
+  };
+  if (!check(weeklyPlant).some((x) => x.includes("WeeklyRevenueChart") && x.includes("leftover text-[11px]"))) {
+    console.error(`${LABEL} --selftest FAIL — WeeklyRevenueChart leftover plant escaped`);
     process.exit(1);
   }
 

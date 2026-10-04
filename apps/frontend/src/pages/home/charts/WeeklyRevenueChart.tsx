@@ -54,7 +54,7 @@ export function WeeklyRevenueChart({ operatingCompanyId }: Props) {
   return (
     <div className="home-recharts-print w-full">
       <h3 className="mb-2 text-xs font-semibold text-slate-900">Weekly revenue</h3>
-      <p className="mb-2 text-[11px] text-slate-500">Invoice basis (GL posted available per-day on API)</p>
+      <p className="mb-2 text-xs text-slate-500">Invoice basis (GL posted available per-day on API)</p>
       <ResponsiveContainer width="100%" height={240}>
         <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
