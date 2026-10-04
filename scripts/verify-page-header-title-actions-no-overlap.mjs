@@ -51,6 +51,9 @@ export function checkPageHeaderNoOverlap(src) {
       `${HEADER_FILE}: neither safe header layout is complete — require natural title wrapping or the overflow-hidden title + z-50 shrink-0 actions containment pair.`,
     );
   }
+  // BANK-F91379 leftover refuse — PageHeader page-scoped text token ratchet
+  if (src.includes("text-[11px]")) offenders.push("PageHeader.tsx: leftover text-[11px]");
+  if (src.includes("#8A92AB")) offenders.push("PageHeader.tsx: leftover off-scale muted #8A92AB");
   return offenders;
 }
 
@@ -98,9 +101,14 @@ if (process.argv.includes("--selftest")) {
   const containedPasses = checkPageHeaderNoOverlap(contained).length === 0;
   const clipRemovalFails = checkPageHeaderNoOverlap(containedWithoutClip).length > 0;
   const actionBoundaryRemovalFails = checkPageHeaderNoOverlap(containedWithoutActionBoundary).length > 0;
+  // BANK-F91379 leftover plant — PageHeader page-scoped text token ratchet
+  const leftover =
+    fs.readFileSync(path.join(repoRoot, HEADER_FILE), "utf8") +
+    '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  const leftoverFails = checkPageHeaderNoOverlap(leftover).some((e) => e.includes("leftover text-[11px]"));
 
-  if (buggyFails && fixedPasses && containedPasses && clipRemovalFails && actionBoundaryRemovalFails) {
-    console.log("verify:page-header-title-actions-no-overlap selftest OK — 5/5 layout states distinguished");
+  if (buggyFails && fixedPasses && containedPasses && clipRemovalFails && actionBoundaryRemovalFails && leftoverFails) {
+    console.log("verify:page-header-title-actions-no-overlap selftest OK — 5/5 layout states distinguished + leftover plant");
     process.exit(0);
   }
   console.error("verify:page-header-title-actions-no-overlap selftest FAILED", {
@@ -109,6 +117,7 @@ if (process.argv.includes("--selftest")) {
     containedPasses,
     clipRemovalFails,
     actionBoundaryRemovalFails,
+    leftoverFails,
   });
   process.exit(1);
 }
