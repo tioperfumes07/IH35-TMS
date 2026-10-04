@@ -28,7 +28,7 @@ function ChannelBadge({ channel }: { channel: string }) {
       ? "bg-slate-100 text-slate-700"
       : "bg-slate-100 text-slate-700";
   return (
-    <span className={`inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${classes}`}>
+    <span className={`inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wide ${classes}`}>
       <ChannelIcon channel={channel} />
       {channel === "in_app" ? "In-App" : channel.toUpperCase()}
     </span>
@@ -38,7 +38,7 @@ function ChannelBadge({ channel }: { channel: string }) {
 function DirectionBadge({ direction }: { direction: "inbound" | "outbound" }) {
   return (
     <span
-      className={`rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
+      className={`rounded px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wide ${
         direction === "inbound" ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-600"
       }`}
     >
@@ -161,14 +161,14 @@ export function DriverCommunicationsTab({
                     <ChannelBadge channel={entry.channel} />
                     <DirectionBadge direction={entry.direction} />
                     {entry.urgency ? (
-                      <span className="rounded-sm bg-red-100 px-1.5 py-0.5 text-[11px] font-semibold text-red-700 uppercase">
+                      <span className="rounded-sm bg-red-100 px-1.5 py-0.5 text-xs font-semibold text-red-700 uppercase">
                         {entry.urgency}
                       </span>
                     ) : null}
                     <DeliveryBadge status={entry.delivery_status} />
                   </div>
                   <p className="wrap-break-word text-xs text-gray-900">{entry.message}</p>
-                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-500">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
                     <span>{formatTs(entry.created_at)}</span>
                     {entry.delivery_ref ? <span>ref: {entry.delivery_ref}</span> : null}
                   </div>
