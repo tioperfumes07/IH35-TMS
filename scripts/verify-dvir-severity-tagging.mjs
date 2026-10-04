@@ -171,6 +171,20 @@ if (process.argv.includes("--selftest")) {
     console.error("verify:dvir-severity-tagging SELFTEST FAILED — safety.dvir.severity_override");
     process.exit(1);
   }
+  // BANK-F91360 leftover plant
+  const leftoverPlant = badge + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!(leftoverPlant.includes("text-[11px]") && leftoverPlant.includes("#8A92AB"))) {
+    console.error("verify:dvir-severity-tagging SELFTEST FAILED — DvirSeverityBadge leftover plant escaped");
+    process.exit(1);
+  }
+  // Refuse must trip on planted source when re-run through the same predicates
+  const plantFails = [];
+  if (leftoverPlant.includes("text-[11px]")) plantFails.push("leftover text-[11px]");
+  if (leftoverPlant.includes("#8A92AB")) plantFails.push("leftover off-scale muted");
+  if (!plantFails.includes("leftover text-[11px]")) {
+    console.error("verify:dvir-severity-tagging SELFTEST FAILED — leftover refuse inert");
+    process.exit(1);
+  }
   console.log(`verify:dvir-severity-tagging SELFTEST PASS — ${routingAuditEvents.length + 1}/${routingAuditEvents.length + 1} tenantless audit mutations red`);
   process.exit(0);
 }
