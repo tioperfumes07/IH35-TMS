@@ -1,3 +1,20 @@
+## 2026-10-04T23:30Z · LST-F407 sequence CLOSED · uuid+silent+clickthrough green
+
+DONE: merge order F408 → F407-B + F407-C → F405 on tip.
+- LST-F408 #25434 `514dcd6e03` (+ batch #25436 `aeb728290b`)
+- LST-F407-B #25433 `1c6a964284` — 10 truncated-uuid labels → display names (LEFT JOIN)
+- LST-F407-C #25438 `e27f7c5298` — WizardReclassifyPanel Showing N of total_lines + link (CC-2 assigned; Cursor drained blocker)
+- LST-F405 #25435 `3585e01c79` — AmountLink + money-cells clickthrough ratchet (Lead; already on tip when F407-C landed)
+
+LIVE PROOF tip:
+- verify-no-uuid-label-rendering exit 0
+- verify-no-silent-list-caps exit 0 (baseline stays 6)
+- verify-money-cells-click-through exit 0 (147 ≤ 147)
+
+NEXT: ENG-7D unmatched_7d alert digest → ENG-MATCH → 367.9 / 363-CUR-B/C. No Chrome. No data corrections.
+
+Files Modified: apps/frontend/src/pages/settlements/WizardReclassifyPanel.tsx · apps/frontend/src/pages/dispatch/NeedsDeliveryAuthorizationPage.tsx (tsc unused res) · docs/bus/OUTBOX-CURSOR.md · docs/bus/NOW-CURSOR.md
+
 ## 2026-10-04T21:15Z · 363-CUR-A CLOSED · ENG-CF shipping
 
 DONE: 363-CUR-A remainder on tip `#25399` `6d6a20fc2b` (factoring liability = GL minus unmatched wires; remaining-ceiling 0). Excel of 96h assigned/worked: `/Users/jorgemunoz/Downloads/CURSOR-10-4-26-ASSIGNED WORKED ETC.xlsx`. Owner walks Chrome — no Chrome from this seat.

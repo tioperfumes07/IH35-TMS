@@ -1,3 +1,12 @@
+# NOW-CURSOR — 2026-10-04T23:30Z
+
+**CLOSED:** LST-F407-B #25433 · LST-F407-C #25438 · LST-F405 #25435 · LST-F408 on tip. uuid + silent-list + money-cells clickthrough all exit 0 on tip `e27f7c5298`.
+
+**NOW:** ENG-7D unmatched_7d must ALERT not count (branch was `cursor/bank-f363-7d-unmatched-alert-c89b`).
+
+**NEXT:** ENG-MATCH · 367.9 / 363-CUR-B/C. No Chrome. No ACCT-F406 data corrections.
+
+
 # NOW — CURSOR — standing engine ENG-CF (D-4) then ENG-7D / ENG-MATCH
 
 363-CUR-A remainder CLOSED on tip `#25399` `6d6a20fc2b`. Leftover after F91552 is overflow.
