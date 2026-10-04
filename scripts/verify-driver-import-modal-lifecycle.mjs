@@ -7,16 +7,20 @@ const source = fs.readFileSync(file, "utf8");
 
 function failures(input = source) {
   const reset = input.match(/const resetDraft = useCallback\(\(\) => \{([\s\S]*?)\n  \}, \[\]\);/)?.[1] ?? "";
-  return [
+  const missing = [
     ["reset file preview and error", ["setFile(null)", "setPreview(null)", "setPreviewError(null)", 'fileRef.current.value = ""'].every((part) => reset.includes(part))],
-    ["reset on company change", /useEffect\(\(\) => \{[\s\S]*?resetDraft\(\);\s*\}, \[companyId, resetDraft\]\);/.test(input)],
     ["preview and commit snapshot file/company", (input.match(/const input = \{ file, companyId, generation: requestGenerationRef\.current \}/g)?.length ?? 0) === 2],
     ["all async callbacks generation guarded", (input.match(/input\.generation (?:!==|===) requestGenerationRef\.current/g)?.length ?? 0) >= 6],
     ["company transition retires requests", /requestGenerationRef\.current \+= 1;\s*setBusy\(false\);\s*resetDraft\(\);/.test(input)],
     ["shared Modal owns confirm-aware chrome", input.includes("confirmDiscardOnClose") && input.includes("onRegisterAttemptClose") && !input.includes("fixed inset-0")],
     ["cancel uses confirm-aware close", /onClick=\{attemptClose\} disabled=\{busy\}/.test(input)],
     ["preview and commit stay company scoped", input.includes('importDriversCsv(input.file, input.companyId, "preview")') && input.includes('importDriversCsv(input.file, input.companyId, "commit")')],
+    ["reset on company change", /useEffect\(\(\) => \{[\s\S]*?resetDraft\(\);\s*\}, \[companyId, resetDraft\]\);/.test(input)],
   ].filter(([, ok]) => !ok).map(([name]) => name);
+  // BANK-F91370 leftover refuse — DriverImportModal page-scoped text token ratchet
+  if (input.includes("text-[11px]")) missing.push("DriverImportModal.tsx: leftover text-[11px]");
+  if (input.includes("#8A92AB")) missing.push("DriverImportModal.tsx: leftover off-scale muted #8A92AB");
+  return missing;
 }
 
 if (process.argv.includes("--selftest")) {
@@ -35,7 +39,13 @@ if (process.argv.includes("--selftest")) {
     failures(noConfirm).includes("shared Modal owns confirm-aware chrome"),
   ];
   if (checks.some((ok) => !ok)) process.exit(1);
-  console.log("verify-driver-import-modal-lifecycle selftest PASS — 6/6 stale/discard import mutations red");
+  // BANK-F91370 leftover plant — DriverImportModal page-scoped text token ratchet
+  const leftover = source + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!failures(leftover).some((e) => e.includes("leftover text-[11px]"))) {
+    console.error("verify-driver-import-modal-lifecycle SELFTEST FAIL leftover plant escaped");
+    process.exit(1);
+  }
+  console.log("verify-driver-import-modal-lifecycle selftest PASS — 7/7 stale/discard import mutations red");
   process.exit(0);
 }
 
