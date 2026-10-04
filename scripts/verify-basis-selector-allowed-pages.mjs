@@ -113,6 +113,9 @@ function leftoverRefuseIfta(src, bucket) {
   if (src.includes("#8A92AB") || src.includes("#334155") || src.includes("#e2e8f0") || src.includes("#E2E8F0")) {
     bucket.push("IftaPreparerCard.tsx: leftover off-scale muted");
   }
+  if (src.includes("text-slate-") || src.includes("border-slate-") || src.includes("bg-slate-")) {
+    bucket.push("IftaPreparerCard.tsx: leftover slate class");
+  }
 }
 
 const ownerPolicySources = Object.fromEntries(
@@ -127,12 +130,13 @@ if (process.argv.includes("--selftest")) {
     failures.push("SELFTEST FAIL — live IftaPreparerCard leftover tokens present");
     failures.push(...leftoverGood);
   }
-  const leftoverPlant = `${iftaSource}\n<div className="text-[11px] text-[#8A92AB]" style={{ color: "#334155", background: "#e2e8f0" }}>plant</div>`;
+  const leftoverPlant = `${iftaSource}\n<div className="text-[11px] text-[#8A92AB] text-slate-700 border-slate-200 bg-slate-50" style={{ color: "#334155", background: "#e2e8f0" }}>plant</div>`;
   const leftoverBad = [];
   leftoverRefuseIfta(leftoverPlant, leftoverBad);
   if (
     !leftoverBad.some((e) => e.includes("leftover text-[11px]")) ||
-    !leftoverBad.some((e) => e.includes("leftover off-scale muted"))
+    !leftoverBad.some((e) => e.includes("leftover off-scale muted")) ||
+    !leftoverBad.some((e) => e.includes("leftover slate class"))
   ) {
     failures.push("SELFTEST FAIL leftover plant escaped");
   }
