@@ -215,6 +215,7 @@ export async function applyPendingDeductionsToSettlementWithNetFloor(
         -- this SUM overstates GROSS, which raises the deduction cap the 5% net-pay floor exists to
         -- enforce -- i.e. it lets a driver be over-deducted. Table is empty today; latent until pay-runs start.
         AND is_active = true
+        AND voided_at IS NULL
     `,
     [input.settlementId]
   );

@@ -319,6 +319,7 @@ async function loadAccruedEscrowContributionCents(client: DbClient, settlementId
       WHERE settlement_id = $1::uuid
         AND line_type = 'escrow_contribution'
         AND is_active = true
+        AND voided_at IS NULL
     `,
     [settlementId]
   );

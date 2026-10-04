@@ -345,8 +345,10 @@ export async function aggregateSettlementTotals(
         -- ACCT-F156: settlement_lines soft-deletes via is_active, so an inactive line stays here with
         -- its amount. Unfiltered, this misstates ALL THREE aggregates at once -- earnings, deductions
         -- and reimbursements -- which is the driver's entire settlement. Table is empty today; latent
-        -- until pay-runs start, which is exactly when nobody re-audits it.
+        -- until pay-runs start, which is exactly when nobody re-audits it. The void stamp is the system's one void
+        -- convention and nothing in the database pairs it with is_active, so both are required.
         AND is_active = true
+        AND voided_at IS NULL
     `,
     [settlementId]
   );
