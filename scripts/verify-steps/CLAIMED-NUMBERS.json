@@ -15262,5 +15262,305 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-maintenance-wo-parts-links-exact-range"
+  },
+  "17373": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maintenance-work-order-detail-read-recovery"
+  },
+  "17377": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-master-data-list-active-company-scope"
+  },
+  "17381": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-mdata-deactivate-rls-bypass-wrap"
+  },
+  "17385": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-mdata-loads-patch-writes-assignment-history"
+  },
+  "17389": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-mdata-write-entity-scope"
+  },
+  "17393": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-medical-card-create-company-lifecycle"
+  },
+  "17397": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-medical-card-update-audit-failure-truth"
+  },
+  "17401": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-migration-empty-db-safe"
+  },
+  "17405": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-migration-idempotency"
+  },
+  "17409": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-migration-no-runtime-raise"
+  },
+  "17413": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-migration-runner-hardening"
+  },
+  "17417": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-migrations-no-postgis-dependency"
+  },
+  "17421": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-migrations-no-uuid-pk-reference"
+  },
+  "17425": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-mobile-responsive-audit"
+  },
+  "17429": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-multi-entity-access-scope"
+  },
+  "17433": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-multi-entity-separation"
+  },
+  "17437": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-no-bare-health-references"
+  },
+  "17441": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-no-deprecated-schema-creates"
+  },
+  "17445": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-no-double-reversed-fuel-postings"
+  },
+  "17449": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-no-flaky-endpoints-on-page-load"
+  },
+  "17453": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-no-orphaned-driver-merge-references"
+  },
+  "17457": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-no-phantom-entity-columns"
+  },
+  "17461": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-no-session-scoped-guc-on-pooled-connection"
+  },
+  "17465": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-no-unauthorized-production-write"
+  },
+  "17469": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-no-unscoped-company-delete"
+  },
+  "17473": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-notification-center-rls-per-user"
+  },
+  "17477": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-one-feed-path-per-purchase"
+  },
+  "17481": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-open-wo-shared-predicate"
+  },
+  "17485": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-owner-bulk-cancel-select-prevoid"
+  },
+  "17489": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-parts-purchase-scope-snapshot"
+  },
+  "17493": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-pcmiler-flag-gated"
+  },
+  "17497": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-per-entity-only-flag-gates"
+  },
+  "17501": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-photo-comparison-create-link-company-scope"
+  },
+  "17505": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-photo-comparison-diff-result-company-scope"
+  },
+  "17509": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-photo-comparison-post-trip-company-scope"
+  },
+  "17513": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-photo-comparison-post-trip-evidence-company-scope"
+  },
+  "17517": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-planner-driver-error-message"
+  },
+  "17521": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-planner-load-templates"
+  },
+  "17525": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-pm-alerts-append-only"
+  },
+  "17529": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-pm-alerts-tenant-scope"
+  },
+  "17533": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-pm-auto-engine-persistence-identities"
+  },
+  "17537": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-pm-schedule-create-identity"
+  },
+  "17541": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-pm-schedule-generate-active-unit"
+  },
+  "17545": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-pm-schedule-generate-wo-real"
+  },
+  "17549": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-policy-create-wizard-scope-snapshot"
+  },
+  "17553": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-positions-latest-rls"
+  },
+  "17557": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-predispatch-panel-mounted"
+  },
+  "17561": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-prepaid-post-flag-gate"
+  },
+  "17565": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-conflict-detection-tenant-scope"
+  },
+  "17569": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-customer-sync-tenant-chain"
+  },
+  "17573": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-entity-push-gates"
+  },
+  "17577": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-masterdata-recurring-all-connected-opcos"
+  },
+  "17581": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-push-gates"
+  },
+  "17585": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-push-rls-tenant-scope"
+  },
+  "17589": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-reauth-observability"
+  },
+  "17593": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-sync-customer-vendor-counts"
+  },
+  "17597": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-sync-event-log-tenant-scope"
+  },
+  "17601": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-sync-health-tenant-scope"
+  },
+  "17605": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-sync-repair-dead-letter-gate"
+  },
+  "17609": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-qbo-sync-routes-auth"
   }
 }
