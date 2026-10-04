@@ -5,8 +5,12 @@ import fs from "node:fs";
 const route = fs.readFileSync("apps/backend/src/maintenance/arriving-soon.routes.ts", "utf8");
 const api = fs.readFileSync("apps/frontend/src/api/maintenance.ts", "utf8");
 const page = fs.readFileSync("apps/frontend/src/pages/maintenance/ArrivingSoonPage.tsx", "utf8");
+const filterBar = fs.readFileSync(
+  "apps/frontend/src/pages/maintenance/components/ArrivingSoonFilterBar.tsx",
+  "utf8",
+);
 
-function failures(routeSource = route, pageSource = page) {
+function failures(routeSource = route, pageSource = page, filterBarSource = filterBar) {
   const companyScopedWoJoins = routeSource.match(/wo\.operating_company_id = \$1::uuid/g)?.length ?? 0;
   const missing = [
     ["both data/count WO joins company-scoped", routeSource.includes("wo.id = ii.promoted_to_wo_id") && companyScopedWoJoins === 2],
@@ -21,6 +25,9 @@ function failures(routeSource = route, pageSource = page) {
   // BANK-F91301 leftover refuse — ArrivingSoonPage.tsx page-scoped text token ratchet
   if (pageSource.includes("text-[11px]")) missing.push("ArrivingSoonPage.tsx: leftover text-[11px]");
   if (pageSource.includes("#8A92AB") || pageSource.includes("#334155")) missing.push("ArrivingSoonPage.tsx: leftover off-scale muted");
+  // BANK-F91378 leftover refuse — ArrivingSoonFilterBar page-scoped text token ratchet
+  if (filterBarSource.includes("text-[11px]")) missing.push("ArrivingSoonFilterBar.tsx: leftover text-[11px]");
+  if (filterBarSource.includes("#8A92AB")) missing.push("ArrivingSoonFilterBar.tsx: leftover off-scale muted #8A92AB");
   return missing;
 }
 
@@ -39,7 +46,14 @@ if (process.argv.includes("--selftest")) {
     console.error("verify-arriving-soon-work-order-reverse selftest FAIL leftover plant escaped", leftoverHits.filter((e) => e.includes("leftover")));
     process.exit(1);
   }
-  console.log("verify-arriving-soon-work-order-reverse selftest PASS — 2/2 data/count scope and drill mutations red + leftover plant");
+  // BANK-F91378 leftover plant — ArrivingSoonFilterBar page-scoped text token ratchet
+  const filterPlant = filterBar + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  const filterHits = failures(route, page, filterPlant);
+  if (!filterHits.some((e) => e.includes("ArrivingSoonFilterBar.tsx: leftover text-[11px]"))) {
+    console.error("verify-arriving-soon-work-order-reverse selftest FAIL filter leftover plant escaped", filterHits.filter((e) => e.includes("leftover")));
+    process.exit(1);
+  }
+  console.log("verify-arriving-soon-work-order-reverse selftest PASS — 2/2 data/count scope and drill mutations red + leftover plants");
   process.exit(0);
 }
 
