@@ -1,3 +1,9 @@
+## 2026-10-04T08:00Z · BANK-F91452 C-21 maintenance-shell D24–D32 WIRED CI · tip `5238e72502`
+
+DONE: #25194 — verify-steps/3788 now runs ops/verify-c21-maintenance-shell --selftest.
+
+NEXT: BANK-F91453 wire factoring r315 home cash-flow into 4012 · C-21 odometer + C-22 fail=triage · skip pile parked · HH08 no migrations.
+
 ## 2026-10-04T08:30Z · BANK-F91451 C-20 Driver Profile module shell WIRED CI · tip `ec5992627c`
 
 DONE: #25193 — verify-steps/3382 now runs ops/verify-c20-driver-profile-module --selftest.
