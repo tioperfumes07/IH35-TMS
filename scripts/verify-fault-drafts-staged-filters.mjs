@@ -40,6 +40,9 @@ function assertPage(src) {
   if (!/!draftsQuery\.isError \? <ParityTable[\s\S]*?\/> : null/.test(src)) {
     errors.push("failed fault-drafts read must not mount a misleading empty table");
   }
+  // BANK-F91365 leftover refuse — FaultDraftsPage page-scoped text token ratchet
+  if (src.includes("text-[11px]")) errors.push("FaultDraftsPage.tsx: leftover text-[11px]");
+  if (src.includes("#8A92AB")) errors.push("FaultDraftsPage.tsx: leftover off-scale muted #8A92AB");
   return errors;
 }
 
@@ -76,6 +79,12 @@ function selftest() {
   `;
   if (assertPage(bad).length === 0 || assertPage(good).length > 0) {
     console.error(`${LABEL} SELFTEST FAIL`, { bad: assertPage(bad), good: assertPage(good) });
+    process.exit(1);
+  }
+  // BANK-F91365 leftover plant — FaultDraftsPage page-scoped text token ratchet
+  const leftover = production + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!assertPage(leftover).some((e) => e.includes("leftover text-[11px]"))) {
+    console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`, assertPage(leftover));
     process.exit(1);
   }
   console.log(`${LABEL} selftest PASS`);

@@ -191,7 +191,7 @@ export function FaultDraftsPage() {
       ) : null}
 
       <div className="relative flex flex-wrap items-end gap-3" data-testid="fault-drafts-filters">
-        <label className="text-[11px] text-slate-600">
+        <label className="text-xs text-slate-600">
           Unit
           <EntityPicker
             kind="unit"
