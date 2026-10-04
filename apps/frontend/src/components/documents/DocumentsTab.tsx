@@ -211,7 +211,7 @@ export function DocumentsTab({ entityType, entityId, entityName, operatingCompan
             render: (row) => (
               <div className="min-w-[220px]">
                 <EntityLink kind="document" id={row.id} label={row.original_filename} className={row.deleted_at ? "text-gray-500 line-through" : "text-gray-900"} data-testid="entity-document-record-link" />
-                {row.deleted_at ? <div className="text-[11px] text-red-600">Deleted</div> : null}
+                {row.deleted_at ? <div className="text-xs text-red-600">Deleted</div> : null}
               </div>
             ),
           },
