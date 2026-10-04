@@ -137,6 +137,10 @@ export function audit(src) {
     failures.push(`${FILES.cardReverse}: unit and driver profiles must list their fuel cards back (cards reverse_link)`);
   }
 
+  // BANK-F91350 leftover refuse — AssignFuelCardDrawer page-scoped text token ratchet
+  if (src.cardDrawer.includes("text-[11px]")) failures.push(`${FILES.cardDrawer}: leftover text-[11px]`);
+  if (src.cardDrawer.includes("#8A92AB")) failures.push(`${FILES.cardDrawer}: leftover off-scale muted #8A92AB`);
+
   return failures;
 }
 
@@ -150,6 +154,15 @@ if (process.argv.includes("--selftest")) {
   const good = loadSrc(ROOT);
   if (audit(good).length) {
     console.error(`${LABEL} SELFTEST FAIL — real repo state rejected:\n- ${audit(good).join("\n- ")}`);
+    process.exit(1);
+  }
+  // BANK-F91350 leftover plant
+  const leftoverPlant = {
+    ...good,
+    cardDrawer: good.cardDrawer + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n',
+  };
+  if (!audit(leftoverPlant).some((f) => f.includes("leftover text-[11px]"))) {
+    console.error(`${LABEL} SELFTEST FAIL — AssignFuelCardDrawer leftover plant escaped`);
     process.exit(1);
   }
   const mutations = [

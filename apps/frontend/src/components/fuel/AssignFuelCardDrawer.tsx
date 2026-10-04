@@ -106,7 +106,7 @@ export function AssignFuelCardDrawer({ open, operatingCompanyId, onClose, onCrea
             placeholder="1234"
             data-testid="fuel-cards-assign-digits"
           />
-          {cardDigits && !digitsValid ? <span className="mt-1 block text-[11px] text-red-700">4-6 digits only.</span> : null}
+          {cardDigits && !digitsValid ? <span className="mt-1 block text-xs text-red-700">4-6 digits only.</span> : null}
         </label>
 
         <label className="block font-semibold text-gray-700">
