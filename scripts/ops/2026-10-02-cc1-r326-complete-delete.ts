@@ -40,6 +40,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { assertIsIntendedProduction } from "../lib/assert-not-production.mjs";
+import { DOC_SOURCE as ORPHAN_DOC_SOURCE, orphanPlanProblems } from "../lib/orphan-gl.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -76,11 +77,8 @@ const OWNED = new Set([
 // A document's postings reference it by text id (source_transaction_type + source_transaction_id) with no FK — the
 // 2026-09-30 purge deleted 1,091 expenses and their invoices but left 2,035 JEs behind (A/P overstated $2,976.63).
 // Deleting a document ALWAYS takes the JEs that post for it.
-const DOC_SOURCE: Record<string, string[]> = {
-  "accounting.expenses": ["expense"], "accounting.invoices": ["invoice"], "accounting.bills": ["bill"],
-  "accounting.bill_payments": ["bill_payment"], "accounting.payments": ["payment", "customer_payment"],
-  "driver_finance.driver_settlements": ["driver_settlement"], "mdata.loads": ["load"], "accounting.factoring_advances": ["factoring_advance"],
-};
+// ROUND 390: the document -> posting-source map is shared with the DB trigger's migration and verify-no-orphaned-gl.
+const DOC_SOURCE: Record<string, string[]> = ORPHAN_DOC_SOURCE;
 const WORM = new Set(["accounting.journal_entries", "accounting.journal_entry_postings", "accounting.invoices", "accounting.invoice_lines"]);
 // ROUND 326 queue item 22 — zero-reset roots (every row of the company), master data that must survive, bank lines kept.
 const ZERO_RESET_ROOTS = [
@@ -474,6 +472,20 @@ async function expand(c: Q, plan: Plan, why: Map<string, string>, report: string
   return order;
 }
 
+/** Every posting line naming a document the plan removes (the input of orphanPlanProblems / the after-delete proof). */
+async function orphanPostingsFor(c: Q, plan: Plan) {
+  const out: { id: string; source_transaction_type: string; source_transaction_id: string; reversed_by_line_id: string | null; reversal_of_line_id: string | null }[] = [];
+  for (const [table, types] of Object.entries(DOC_SOURCE)) {
+    const docs = [...(plan.get(table) ?? [])];
+    if (!docs.length) continue;
+    out.push(...(await c.query<(typeof out)[number]>(
+      `SELECT id::text, source_transaction_type, source_transaction_id, reversed_by_line_id::text, reversal_of_line_id::text
+         FROM accounting.journal_entry_postings WHERE source_transaction_type = ANY($1::text[]) AND source_transaction_id = ANY($2::text[])`,
+      [types, docs])).rows);
+  }
+  return out;
+}
+
 /** References with no foreign key (polymorphic text ids): document links and JE source links to a deleted record. */
 async function polymorphic(c: Q, plan: Plan, why: Map<string, string>): Promise<number> {
   let n = 0;
@@ -636,6 +648,13 @@ async function main() {
       report.push(msg);
       console.log(`  ! ${msg}`);
     }
+    // ROUND 390 (a)+(b): a planned document with LIVE GL is refused (reverse first); a planned document some posting
+    // names that the plan does not also remove is refused (it would leave orphaned GL).
+    const docPostings = await orphanPostingsFor(client, plan);
+    for (const b of orphanPlanProblems(Object.fromEntries(Object.keys(DOC_SOURCE).map((t) => [t, [...(plan.get(t) ?? [])]])), docPostings, plan.get("accounting.journal_entry_postings") ?? new Set<string>())) {
+      report.push(b);
+      console.log(`  ! ${b}`);
+    }
     if (report.some((r) => r.startsWith("UNHANDLED") || r.startsWith("BLOCKER"))) {
       if (APPLY) throw new Error("PLAN REFUSED: independent records reference the deleted set — each needs a decision before APPLY");
     }
@@ -730,6 +749,9 @@ async function main() {
                 HAVING sum(CASE WHEN debit_or_credit::text = 'debit' THEN amount_cents ELSE -amount_cents END) <> 0) u)::text AS unb
          FROM accounting.journal_entry_postings WHERE operating_company_id = $1::uuid`, [USMCA])).rows[0];
     if (after.dr !== after.cr || Number(after.unb) !== 0) throw new Error(`LEDGER CHECK FAILED after delete: DR ${after.dr} CR ${after.cr} unbalanced ${after.unb} — rolled back`);
+    // ROUND 390 (b) PROOF, same transaction: no posting line still names a document this run removed.
+    const orphansLeft = await orphanPostingsFor(client, plan);
+    if (orphansLeft.length) throw new Error(`ORPHAN PROOF FAILED: ${orphansLeft.length} posting line(s) still name a removed document — rolled back`);
     if (SCOPE === "zero-reset") {
       // PROOF, same transaction: GL to zero, every deleted table to zero for the company, master data unchanged.
       const gl = Number((await client.query<{ n: string }>(`SELECT count(*)::text AS n FROM accounting.journal_entry_postings WHERE operating_company_id = $1::uuid`, [USMCA])).rows[0]?.n);
