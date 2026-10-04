@@ -1,3 +1,15 @@
+## 2026-10-04T11:22Z · BANK-F91491 LoadCosts leftover fontSize 10 WIRED · this PR
+
+DONE: LoadCostsBoard status chip / service chip / tab-count 10px → text-section-header; leftover refuse on verify-load-costs-board-no-truncation-no-wrap; unused EVEN 4110 --selftest + live.
+
+NEXT: leftover fontSize: 11 totals / headerInk #1F2937 · skip pile parked · HH11 no migrations.
+
+## 2026-10-04T11:18Z · BANK-F91490 TripPairingBoard leftover WIRED CI · tip `c7dda1f4ac`
+
+DONE: #25232 — TripPairingBoard SB #4B5563; verify-steps/4108 leftover refuse --selftest + live.
+
+NEXT: BANK-F91491 LoadCosts leftover fontSize: 10 + leftover refuse on 4110 · skip pile parked · HH11 no migrations.
+
 ## 2026-10-04T11:16Z · BANK-F91489 CashFlowOverview leftover WIRED CI · tip `fa5fb2c1da`
 
 DONE: #25231 — CashFlowOverview line #4B5563; verify-steps/3850 leftover refuse live.
