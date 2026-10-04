@@ -54,6 +54,13 @@ function analyze(modalSrc, reconcileSrc) {
   if (!/tied = partsOk && laborOk && otherOk/.test(reconcileSrc)) {
     failures.push(`${reconcilePath}: the overall "tied" gate no longer requires the Other bucket — it could show "Reconciled" while Other has an open variance`);
   }
+  // BANK-F91322 leftover refuse — CreateWOSectionReconcile.tsx page-scoped text token ratchet (size-only; red #A32D2D kept)
+  if (reconcileSrc.includes("text-[11px]")) {
+    failures.push(`${reconcilePath}: leftover text-[11px]`);
+  }
+  if (reconcileSrc.includes("#8A92AB")) {
+    failures.push(`${reconcilePath}: leftover off-scale muted #8A92AB`);
+  }
 
   return failures;
 }
@@ -98,7 +105,14 @@ function selftest() {
     process.exit(1);
   }
 
-  console.log("verify-wo-reconcile-covers-full-total --selftest: OK (good files clean, both targeted mutations caught)");
+  // BANK-F91322 leftover plant — CreateWOSectionReconcile page-scoped text token ratchet
+  const leftoverPlant = reconcileSrc + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!analyze(modalSrc, leftoverPlant).some((f) => f.includes("leftover text-[11px]"))) {
+    console.error("verify-wo-reconcile-covers-full-total --selftest: leftover plant escaped");
+    process.exit(1);
+  }
+
+  console.log("verify-wo-reconcile-covers-full-total --selftest: OK (good files clean, both targeted mutations caught + leftover plant)");
 }
 
 if (process.argv.includes("--selftest")) {
