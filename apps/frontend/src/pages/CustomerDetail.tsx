@@ -311,7 +311,7 @@ function CustomerFinancialOverviewSection(props: {
         <div className="max-h-56 space-y-1 overflow-auto text-xs">
           {props.summary.recent_loads.map((l) => (
             <div key={l.id} className="flex justify-between gap-2 border-b border-gray-100 py-1">
-              <EntityLinkOrTombstone kind="load" id={l.id} name={l.load_number} noun="Load" className="truncate text-slate-700 hover:underline" />
+              <EntityLinkOrTombstone kind="load" id={l.id} name={l.load_number} noun="Load" className="truncate text-[#1F2A44] hover:underline" />
               <StatusBadge variant="neutral">{l.status ?? "—"}</StatusBadge>
               <span>{formatUsdCents(Number(l.rate_total_cents ?? 0))}</span>
             </div>
@@ -328,7 +328,7 @@ function CustomerFinancialOverviewSection(props: {
                 id={d.id}
                 name={d.filename}
                 noun="Document"
-                className="truncate text-slate-700 hover:underline"
+                className="truncate text-[#1F2A44] hover:underline"
                 data-testid="customer-financial-document-record-link"
               />
               <span className="text-gray-500">{d.category ?? ""}</span>
@@ -1307,7 +1307,7 @@ export function CustomerDetailPage() {
                   id={customer.parent_customer_id}
                   name={customer.parent_customer_name}
                   noun="Customer"
-                  className="self-start text-xs font-medium text-slate-700 underline underline-offset-2 hover:opacity-80"
+                  className="self-start text-xs font-medium text-[#1F2A44] underline underline-offset-2 hover:opacity-80"
                   data-testid="customer-parent-record-link"
                 />
               ) : (
@@ -1327,7 +1327,7 @@ export function CustomerDetailPage() {
                         id={sub.id}
                         name={sub.customer_code ? `${sub.name} (${sub.customer_code})` : sub.name}
                         noun="Customer"
-                        className="text-left text-xs font-medium text-slate-700 underline underline-offset-2 hover:opacity-80"
+                        className="text-left text-xs font-medium text-[#1F2A44] underline underline-offset-2 hover:opacity-80"
                         data-testid={`customer-sub-record-link-${sub.id}`}
                       />
                     </li>
@@ -1377,7 +1377,7 @@ export function CustomerDetailPage() {
               />
               <button
                 type="button"
-                className="self-start text-xs font-medium text-slate-700 underline underline-offset-2"
+                className="self-start text-xs font-medium text-[#1F2A44] underline underline-offset-2"
                 onClick={() => navigate("/lists/accounting/payment-terms")}
               >
                 Manage Payment Terms
@@ -1793,13 +1793,13 @@ export function CustomerDetailPage() {
                   {event.related_load_id ? (
                     <div className="mt-1 text-xs text-gray-600">
                       Load:{" "}
-                      <EntityLinkOrTombstone kind="load" id={event.related_load_id} name={event.related_load_number} noun="Load" className="text-slate-700 hover:underline" data-testid="customer-quality-related-load-link" />
+                      <EntityLinkOrTombstone kind="load" id={event.related_load_id} name={event.related_load_number} noun="Load" className="text-[#1F2A44] hover:underline" data-testid="customer-quality-related-load-link" />
                     </div>
                   ) : null}
                   {event.related_invoice_id ? (
                     <div className="mt-1 text-xs text-gray-600">
                       Invoice:{" "}
-                      <EntityLinkOrTombstone kind="invoice" id={event.related_invoice_id} name={event.related_invoice_display_id} noun="Invoice" className="text-slate-700 hover:underline" data-testid="customer-quality-related-invoice-link" />
+                      <EntityLinkOrTombstone kind="invoice" id={event.related_invoice_id} name={event.related_invoice_display_id} noun="Invoice" className="text-[#1F2A44] hover:underline" data-testid="customer-quality-related-invoice-link" />
                     </div>
                   ) : null}
                   {event.details ? <div className="mt-1 text-xs text-gray-600">{event.details}</div> : null}
@@ -1904,7 +1904,7 @@ export function CustomerDetailPage() {
                 sortable: true,
                 cellClass: "font-medium",
                 render: (load) => (
-                  <EntityLinkOrTombstone kind="load" id={load.id} name={load.load_number} noun="Load" className="text-slate-700 hover:underline" />
+                  <EntityLinkOrTombstone kind="load" id={load.id} name={load.load_number} noun="Load" className="text-[#1F2A44] hover:underline" />
                 ),
               },
               {
@@ -1986,7 +1986,7 @@ export function CustomerDetailPage() {
               </label>
               <button
                 type="button"
-                className="text-xs font-semibold text-slate-700 underline"
+                className="text-xs font-semibold text-[#1F2A44] underline"
                 onClick={() =>
                   navigate(
                     `/reports/customer-profitability?customer_id=${encodeURIComponent(id)}&period_start=${pnlRange.start}&period_end=${pnlRange.end}`
@@ -2027,7 +2027,7 @@ export function CustomerDetailPage() {
                 {(customerPnlRow.flags ?? []).length > 0 ? (
                   <div className="mt-3 flex flex-wrap gap-1">
                     {(customerPnlRow.flags ?? []).map((f) => (
-                      <span key={f} className="rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-[#1f2a44]">
+                      <span key={f} className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#1f2a44]">
                         {f}
                       </span>
                     ))}
@@ -2154,9 +2154,9 @@ export function CustomerDetailPage() {
 
       {activeTab === "Billing & Receivables" ? (
         <div className="space-y-3" data-testid="customer-billing-ar-readonly" data-cust-ar-readonly="1">
-          <p className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs text-slate-700">
+          <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs text-[#1F2A44]">
             Invoices and A/R on this customer profile are read only. Record payments from{" "}
-            <a href="/accounting/payments?create=1" className="font-semibold text-slate-800 underline">
+            <a href="/accounting/payments?create=1" className="font-semibold text-[#0F1219] underline">
               Accounting → Receive payment
             </a>
             .
@@ -2206,7 +2206,7 @@ export function CustomerDetailPage() {
                   <div>Cleared: {billingSummary?.cleared_open_cents == null ? "-" : formatCurrencyCents(billingSummary.cleared_open_cents)}</div>
                   <UnclearedDocumentsNote docs={billingSummary?.uncleared_documents ?? []} />
                   {(billingSummary?.uncleared_cents ?? 0) > 0 ? (
-                    <p className="mt-2 rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
+                    <p className="mt-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
                       Applied payments that have not been matched or categorized in Banking are named not cleared.
                     </p>
                   ) : null}
@@ -2221,13 +2221,13 @@ export function CustomerDetailPage() {
               </DataPanel>
             </>
           ) : null}
-          <div className="md:col-span-3 rounded-sm border border-dashed border-gray-200 bg-white px-3 py-2 text-xs text-slate-600" data-testid="customer-record-payment-disabled">
+          <div className="md:col-span-3 rounded-sm border border-dashed border-gray-200 bg-white px-3 py-2 text-xs text-[#4B5563]" data-testid="customer-record-payment-disabled">
             Record Payment is disabled on the customer profile (ORDERS: invoices + A/R read only). Use Accounting → Receive payment.
           </div>
           <div className="md:col-span-3 rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-xs font-semibold text-gray-900">Payment history</div>
             {paymentsBackendPending ? (
-              <p className="text-xs text-slate-700">
+              <p className="text-xs text-[#1F2A44]">
                 Backend pending — payment history unavailable until backend ships (P6-T11204).
               </p>
             ) : customerPaymentsListState.isError ? (
@@ -2281,7 +2281,7 @@ export function CustomerDetailPage() {
                                 id={application.invoice_id}
                                 name={application.invoice_display_id}
                                 noun="Invoice"
-                                className="font-medium text-slate-700 hover:underline"
+                                className="font-medium text-[#1F2A44] hover:underline"
                               />
                               <span className="tabular-nums">{formatCurrencyCents(application.amount_cents)}</span>
                             </div>
@@ -2356,7 +2356,7 @@ export function CustomerDetailPage() {
               <h3 className="text-xs font-semibold text-gray-900">Recent Invoices</h3>
               <button
                 type="button"
-                className="text-xs font-semibold text-slate-700 underline"
+                className="text-xs font-semibold text-[#1F2A44] underline"
                 onClick={() => navigate(`/accounting/invoices?customer_id=${encodeURIComponent(id)}&status=active`)}
               >
                 View all
