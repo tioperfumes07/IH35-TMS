@@ -6,6 +6,7 @@
  * Dr 1257 driver_negative_settlement_receivable (by role), the driver on the line and the settlement as the entry's source.
  * STATIC: RULE 1 pay-run close no longer throws NET_PAY_NEGATIVE, floors net at 0 and resolves the 1257 role;
  *         RULE 2 the A/P chain applies only what the bills hold and posts the excess Dr 1257, tied to the shortfall.
+ *         RULE 5 a later positive net recovers the driver's open 1257 balance (capped at the floor), Cr 1257 with the driver.
  * LIVE (--live, USMCA): RULE 3 no closed settlement with net_pay < 0; RULE 4 GL 1257 (debit balance) = sum of the
  *         negative-settlement lines posted (and, once recovery lands, net of their recoveries) — reported.
  * --selftest fails on a planted negative-net refusal and on a chain that over-applies A/P.
@@ -24,7 +25,8 @@ export function staticProblems(read) {
   if (/throw new SettlementPayRunError\(\s*"NET_PAY_NEGATIVE"/.test(c)) out.push("RULE 1 pay-run close still refuses a negative net");
   if (!/resolvePayRunRoleAccount\(client, opco, "driver_negative_settlement_receivable"\)/.test(c) || !/netCents = 0;/.test(c)) out.push("RULE 1 pay-run close does not floor net at 0 and resolve the 1257 role");
   const a = read(F.chain) ?? "";
-  if (!/Math\.min\(app\.cents, capacity\)/.test(a) || !/SHORTFALL_DOES_NOT_TIE/.test(a) || !/account_id: input\.shortfallAccountId, debit_or_credit: "debit"/.test(a)) out.push("RULE 2 the A/P chain does not post the excess Dr 1257 tied to the shortfall");
+  if (!/planApplicationCapacity\(orderedApps/.test(a) || !/SHORTFALL_DOES_NOT_TIE/.test(a) || !/account_id: input\.shortfallAccountId, debit_or_credit: "debit"/.test(a)) out.push("RULE 2 the A/P chain does not post the excess Dr 1257 tied to the shortfall");
+  if (!/negativeSettlementRecoveryCents = Math\.max\(0, Math\.min\(open, netCents - Math\.max\(0, floorCents\)\)\)/.test(c) || !/entityDriverId: settlement\.driver_id/.test(c)) out.push("RULE 5 pay-run close does not recover the driver's open 1257 balance (capped at the floor) through the application entry");
   return out;
 }
 
@@ -40,7 +42,8 @@ if (isMain) {
     const cases = [
       ["the shipped tree passes", staticProblems(real).length === 0],
       ["a planted negative-net refusal fails", staticProblems((f) => (f === F.close ? (real(f) ?? "") + '\nthrow new SettlementPayRunError(\n "NET_PAY_NEGATIVE", "x");' : real(f))).some((x) => x.startsWith("RULE 1"))],
-      ["a chain that over-applies A/P fails", staticProblems(plant(F.chain, "Math.min(app.cents, capacity)", "app.cents")).some((x) => x.startsWith("RULE 2"))],
+      ["a chain that over-applies A/P fails", staticProblems(plant(F.chain, "planApplicationCapacity(orderedApps", "unusedPlan(orderedApps")).some((x) => x.startsWith("RULE 2"))],
+      ["a close that never recovers 1257 fails", staticProblems(plant(F.close, "entityDriverId: settlement.driver_id", "x")).some((x) => x.startsWith("RULE 5"))],
     ];
     for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
     const bad = cases.filter(([, ok]) => !ok).length;
