@@ -1,3 +1,15 @@
+## 2026-10-04T12:18Z · BANK-F91501 Settlements leftover fontSize 11 totals WIRED · this PR
+
+DONE: SettlementsToursRegister totals label fontSize 11 → text-section-header; leftover refuse on verify-settlements-list-button-height-uniform; EVEN 11082 --selftest + live.
+
+NEXT: leftover fontSize 11 chrome (TruckLine Status / LoadUnitCostSplit / SettlementKpiGrid) · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T12:17Z · BANK-F91500 TourLoadRows leftover WIRED CI · tip `e09067a575`
+
+DONE: #25242 — TourLoadRows totals text-section-header; verify-steps/10520 leftover refuse --selftest + live.
+
+NEXT: BANK-F91501 Settlements leftover fontSize: 11 totals + leftover refuse on 11082 · skip pile parked · HH12 no migrations this tick.
+
 ## 2026-10-04T12:12Z · BANK-F91500 TourLoadRows leftover fontSize 11 totals WIRED · this PR
 
 DONE: TourLoadRows totals label fontSize 11 → text-section-header; leftover refuse on verify-load-costs-settlement-legs-columns; EVEN 10520 --selftest + live.
