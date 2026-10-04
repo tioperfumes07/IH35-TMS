@@ -4,7 +4,7 @@ import type { Row, Section } from "./telematicsColumns";
 export function SectionTable({ ownerKey, section, rows }: { ownerKey: string; section: Section; rows: Row[] }) {
   return (
     <div className="space-y-1" data-testid={`telematics-links-${section.key}`}>
-      <h4 className="text-[11px] font-bold uppercase text-gray-600">
+      <h4 className="text-xs font-bold uppercase text-gray-600">
         {section.title} ({rows.length})
       </h4>
       <p className="text-xs text-slate-600">{section.note}</p>
