@@ -67,6 +67,9 @@ function check(sources) {
   for (const key of ["preferred", "inventory", "catalog", "arriving", "transit"]) {
     if (/from "react-router-dom"/.test(sources[key])) failures.push(`${FILES[key]}: ad-hoc Link import bypasses EntityLink`);
   }
+  // BANK-F91413 leftover refuse — InTransitIssuesTable page-scoped text token ratchet
+  if (sources.transit.includes("text-[11px]")) failures.push(`${FILES.transit}: leftover text-[11px] — use text-xs`);
+  if (sources.transit.includes("#8A92AB")) failures.push(`${FILES.transit}: leftover #8A92AB — use #4B5563`);
   return failures;
 }
 
@@ -112,6 +115,11 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
       leaf.required = leaf.required.filter((column) => column !== "reverse_link");
       if (check({ ...sources, [key]: JSON.stringify(matrix) }).length === 0) missed.push(`${key}: ${id} Required plant escaped`);
     }
+  }
+  // BANK-F91413 leftover plant — InTransitIssuesTable page-scoped text token ratchet
+  {
+    const leftover = { ...sources, transit: sources.transit + '\n<p className="text-[11px] text-[#8A92AB]">plant</p>\n' };
+    if (check(leftover).length === 0) missed.push("transit: leftover text-[11px]/#8A92AB plant escaped");
   }
   if (missed.length) {
     console.error(`${LABEL} SELFTEST FAIL\n${missed.join("\n")}`);

@@ -79,7 +79,7 @@ export function InTransitIssuesTable({ issues, totalCount, loading = false, onTr
   const rowActions = (issue: InTransitIssue) => (
     <button
       type="button"
-      className="rounded-sm border border-slate-300 px-2 py-0.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+      className="rounded-sm border border-slate-300 px-2 py-0.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
       onClick={() => onTriage(issue)}
     >
       Triage
