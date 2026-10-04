@@ -6120,6 +6120,7 @@
       "purchased_at",
       "qbo_class_id",
       "qbo_expense_id",
+      "relay_fuel_transaction_id",
       "source",
       "source_doc_id",
       "source_row_hash",

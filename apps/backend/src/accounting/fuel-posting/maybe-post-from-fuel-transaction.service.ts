@@ -105,22 +105,39 @@ const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
  * company keeps the pre-153.7 fail-closed/cash behavior unchanged (never widen an entity-specific
  * owner fact into a global default).
  */
+/**
+ * ACCT-F403 (Lead ruling Option 1, 2026-10-04) — a settlement-derived fuel row on the RELAY rail posts no fuel. Relay is a
+ * prepaid wallet (1295): the cost is the Relay fill, at what Relay charged, posted when its wallet line is matched in Banking
+ * (postFuelFillOnBankMatch kind 'relay_fuel'). The AlwaysTrack settlement line is driver-facing; it LINKS to that fill
+ * (fuel.fuel_transactions.relay_fuel_transaction_id). Every fuel-row posting path resolves its rail here, so this is the door.
+ */
+export class RelayFillLinksNotPostsError extends Error {
+  readonly code = "relay_fill_links_not_posts";
+  constructor(public readonly fuelTransactionId: string) {
+    super(
+      `relay_fill_links_not_posts: fuel transaction ${fuelTransactionId} is on the Relay rail — it links to its Relay fill and posts ` +
+        `no fuel; the fill posts at Relay's charge when its wallet line is matched in Banking (ACCT-F403)`
+    );
+  }
+}
+
 export function resolveCompanyDirectCreditPreference(
   candidate: FuelTxnGlPostCandidate,
   txnSignals?: { fuel_card_id?: string | null; fuel_card_code?: string | null; notes?: string | null; source?: string | null } | null
 ): CompanyDirectCredit {
+  if (candidate.company_direct_credit === "relay_fuel_wallet") throw new RelayFillLinksNotPostsError(candidate.fuel_transaction_id);
   if (candidate.company_direct_credit) return candidate.company_direct_credit;
 
   const code = (txnSignals?.fuel_card_code ?? "").toUpperCase();
   if (code === "DREAMLINE") return "dreamline_card_payable";
-  if (code === "RELAY") return "relay_fuel_wallet";
-  // Legacy Relay-bridge rows created before fuel_card_id was stamped to the RELAY catalog row —
-  // still Relay-settled by construction of the bridge itself.
-  if (candidate.relay_fuel_transaction_id) return "relay_fuel_wallet";
+  // ACCT-F403: every Relay-rail answer below is a fill that posts from its wallet line, never from this fuel row.
+  if (code === "RELAY") throw new RelayFillLinksNotPostsError(candidate.fuel_transaction_id);
+  // Legacy Relay-bridge rows created before fuel_card_id was stamped to the RELAY catalog row.
+  if (candidate.relay_fuel_transaction_id) throw new RelayFillLinksNotPostsError(candidate.fuel_transaction_id);
 
-  // R-153.7: for USMCA only, no-evidence rows are owner-stated Relay, not "cash" -- checked BEFORE
-  // the cardSignaled throw below, since an owner FACT supersedes the "cannot identify" refusal.
-  if (candidate.operating_company_id === USMCA_COMPANY_ID) return "relay_fuel_wallet";
+  // R-153.7: for USMCA only, no-evidence rows are owner-stated Relay -- checked BEFORE the cardSignaled throw below, since
+  // an owner FACT supersedes the "cannot identify" refusal. Relay -> the row links, it does not post (ACCT-F403).
+  if (candidate.operating_company_id === USMCA_COMPANY_ID) throw new RelayFillLinksNotPostsError(candidate.fuel_transaction_id);
 
   const notes = (txnSignals?.notes ?? "").toLowerCase();
   const cardSignaled =

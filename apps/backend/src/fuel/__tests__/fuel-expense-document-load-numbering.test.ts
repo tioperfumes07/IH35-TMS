@@ -18,7 +18,7 @@ type Call = { sql: string; values: unknown[] };
  * SELECTs fall back to a plausible single row rather than crashing, since this function's
  * dependency chain (credit-rail resolution) is not the subject under test here.
  */
-function fakeClient(opts: { hasLoad: boolean; fuelType?: string; adopted?: boolean }) {
+function fakeClient(opts: { hasLoad: boolean; fuelType?: string; adopted?: boolean; relayRail?: boolean }) {
   const calls: Call[] = [];
   let seq = 0;
   const client = {
@@ -47,6 +47,12 @@ function fakeClient(opts: { hasLoad: boolean; fuelType?: string; adopted?: boole
             },
           ],
         };
+      }
+      // ACCT-F403: these cases exercise the document itself, so the fill is on a non-Relay rail (Dreamline card);
+      // a USMCA row with no card is Relay and returns relay_link (covered in the load-numbering suite).
+      if (/ft\.fuel_card_id::text AS fuel_card_id/.test(sql)) {
+        if (opts.relayRail) return { rows: [{ fuel_card_id: null, fuel_card_code: null, notes: null, source: "import" }] };
+        return { rows: [{ fuel_card_id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd", fuel_card_code: "DREAMLINE", notes: null, source: "import" }] };
       }
       if (/FROM accounting\.expenses/.test(sql) && /source_fuel_transaction_id = \$2/.test(sql)) {
         return { rows: [] }; // not already created
@@ -154,5 +160,14 @@ describe("R-169 fix 2 — the function always writes its own expense_lines row",
     const withoutLoad = fakeClient({ hasLoad: false });
     await createExpenseFromFuelTransaction(withoutLoad.client as never, { operating_company_id: OPCO, fuel_transaction_id: FUEL_ID });
     expect(insertsTo(withoutLoad.calls, "expense_attribution\\.expense_load_links")).toHaveLength(0);
+  });
+});
+
+describe("ACCT-F403 — a Relay-rail settlement fuel row links to its Relay fill and gets no document", () => {
+  it("returns relay_link and writes nothing for a USMCA row with no card (Relay)", async () => {
+    const { client, calls } = fakeClient({ hasLoad: true, relayRail: true });
+    const r = await createExpenseFromFuelTransaction(client as never, { operating_company_id: OPCO, fuel_transaction_id: FUEL_ID });
+    expect(r.outcome).toBe("relay_link");
+    expect(calls.some((c) => /INSERT INTO accounting\.expenses\b/.test(c.sql))).toBe(false);
   });
 });

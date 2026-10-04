@@ -60,6 +60,11 @@ function fakeClient(opts: {
           ],
         };
       }
+      // ACCT-F403: these cases exercise the document itself, so the fill is on a non-Relay rail (Dreamline card);
+      // a USMCA row with no card is Relay and returns relay_link (covered in the load-numbering suite).
+      if (/ft\.fuel_card_id::text AS fuel_card_id/.test(sql)) {
+        return { rows: [{ fuel_card_id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd", fuel_card_code: "DREAMLINE", notes: null, source: "import" }] };
+      }
       if (/FROM accounting\.expenses/.test(sql) && /source_fuel_transaction_id = \$2/.test(sql)) {
         return { rows: [] };
       }

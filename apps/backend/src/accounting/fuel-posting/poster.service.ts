@@ -324,7 +324,31 @@ export async function postFuelExpenseOnClient(client: DbClient, input: FuelPosti
     creditAccountId = await resolveFuelAdvanceLiabilityAccount(client, input.operating_company_id);
     creditResolutionSource = "driver_advance_liability_account";
   } else {
-    const companyDirect = await resolveCompanyDirectCreditAccount(client, input.operating_company_id, input.company_direct_credit ?? "cash");
+    // ACCT-F403: a fuel_event that is a fuel.fuel_transactions row resolves its rail through the one resolver — never a
+    // silent "cash" default. A Relay-rail settlement row is refused there (it links to its Relay fill; the fill posts).
+    // A Relay fill itself (fuel_event = integrations.relay_fuel_transactions id) always arrives with its rail named.
+    let credit = input.company_direct_credit;
+    if (!credit) {
+      const isFuelRow = await client.query(
+        `SELECT 1 FROM fuel.fuel_transactions WHERE id::text = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+        [input.fuel_event_id, input.operating_company_id]
+      );
+      if (isFuelRow.rows.length) {
+        const { loadFuelTxnCreditSignals, resolveCompanyDirectCreditPreference } = await import("./maybe-post-from-fuel-transaction.service.js");
+        const signals = await loadFuelTxnCreditSignals(client as never, input.operating_company_id, input.fuel_event_id);
+        credit = resolveCompanyDirectCreditPreference(
+          {
+            operating_company_id: input.operating_company_id,
+            fuel_transaction_id: input.fuel_event_id,
+            fuel_type: input.fuel_kind,
+            transaction_at: input.posted_at,
+            amount_cents: input.amount_cents,
+          } as never,
+          signals
+        );
+      }
+    }
+    const companyDirect = await resolveCompanyDirectCreditAccount(client, input.operating_company_id, credit ?? "cash");
     creditAccountId = companyDirect.account_id;
     creditResolutionSource = companyDirect.source;
   }

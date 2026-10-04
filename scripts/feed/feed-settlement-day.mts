@@ -33,8 +33,6 @@ import { registerVendorRoutes } from "../../apps/backend/src/mdata/vendors.route
 import invoicesPlugin from "../../apps/backend/src/accounting/invoices.routes.js";
 import { registerFuelTransactionsRoutes } from "../../apps/backend/src/fuel/fuel-transactions.routes.js";
 import { searchVendorsForAutocomplete } from "../../apps/backend/src/mdata/vendor-autocomplete.shared.js";
-import { postFuelExpenseFromEvent } from "../../apps/backend/src/accounting/fuel-posting/poster.service.js";
-import { createExpenseFromFuelTransaction } from "../../apps/backend/src/fuel/fuel-expense-document.service.js";
 import { postLoadRevenueLatch } from "../../apps/backend/src/accounting/revrec-delivery-posting/poster.service.js";
 import { ensureSettlementFromFedBills, closeFedSettlementIfRequested } from "../../apps/backend/src/feed/ensure-settlement-from-fed-bills.service.js";
 
@@ -667,27 +665,12 @@ async function feedOne(
       if (!id) throw new Error(`fuel insert failed ${parsed.hashKey}`);
       return id;
     });
-    await postFuelExpenseFromEvent({
-      operating_company_id: USMCA,
-      actor_user_id: OWNER,
-      fuel_event_id: fuelId,
-      fuel_kind: f.fuel_type === "def" ? "def" : f.fuel_type === "reefer_diesel" ? "reefer_diesel" : "diesel",
-      posted_at: fuelDate,
-      amount_cents: cents(f.amount),
-      posting_path: "company_direct",
-    }).catch((e) => {
-      // 2026-10-04: a fuel row with no GL is a silent hole (the row exists, the books do not). Fail the feed day loudly;
-      // a re-run is safe — the insert is keyed on source_row_hash and the poster answers already_posted.
-      throw new Error(`fuel GL refused for ${receipt ?? parsed.hashKey} ($${f.amount}, load ${loadId}): ${(e as Error).message}`);
-    });
-    // ROUND 290.1 canonical rule (fuel-expense-document.service.ts): every path that creates a fuel row creates its expense
-    // document in the same operation. This feed posted the JE only; the documents were back-filled later (R-168).
-    const fuelDoc = await withCurrentUser(OWNER, async (c) => {
-      await setScopedCompanyContext(c, OWNER, USMCA);
-      return createExpenseFromFuelTransaction(c as never, { operating_company_id: USMCA, fuel_transaction_id: fuelId, requesting_user_uuid: OWNER });
-    });
-    if (fuelDoc.outcome === "refused") throw new Error(`fuel expense document refused for ${receipt ?? parsed.hashKey} (load ${loadId}): ${fuelDoc.reason}`);
-    report.push(`FUEL ${f.fuel_type} ${receipt ?? "no receipt number"} $${f.amount}`);
+    // OWNER LAW 2026-10-02 + ACCT-F403 (Lead ruling Option 1, 2026-10-04): a fuel fill posts when its card bank line is
+    // matched in Banking, never at import. This settlement feed records the fuel row (the settlement's record, gallons,
+    // load, receipt) and posts NOTHING — no fuel JE, no expense document. A Relay-rail line's cost is its Relay fill, at
+    // Relay's charge; it links through fuel.fuel_transactions.relay_fuel_transaction_id. (verify-fuel-cost-posts-exactly-once
+    // went red when a settlement line was posted and adopted, 2026-10-04 / AUTH-217.)
+    report.push(`FUEL ${f.fuel_type} ${receipt ?? "no receipt number"} $${f.amount} — recorded; posts on bank match`);
   }
 
   let ei = 0;

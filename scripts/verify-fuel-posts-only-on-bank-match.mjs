@@ -7,6 +7,10 @@
 //   2. a NEW caller of the fuel GL poster appears outside the poster, the retired import path and the bank-match engine;
 //   3. integrations.relay_fuel_transactions.posted_to_gl is set by hand outside the retired path, or the Relay fills
 //      screen reads the stored flag instead of deriving it from a journal entry.
+//   4. ACCT-F403 (Lead ruling Option 1, 2026-10-04): a Relay-rail settlement fuel row can create a fuel posting — the
+//      rail resolver returns the Relay wallet instead of refusing (relay_fill_links_not_posts), the poster silently
+//      defaults a fuel row to "cash", the expense-document path does not turn the refusal into relay_link, or the
+//      database door (202615410950: only a Relay fill or a reversal may credit the fuel_wallet_relay account) is gone.
 // Static, <1s. --selftest plants each regression.
 import fs from "node:fs";
 import path from "node:path";
@@ -19,6 +23,8 @@ const POSTER = "apps/backend/src/accounting/fuel-posting/poster.service.ts";
 const MATCH = "apps/backend/src/accounting/bank-recon/match.service.ts";
 const FILLS = "apps/backend/src/fuel/relay-fills.routes.ts";
 const FEED = "apps/backend/src/feed/seed-settlement-document.service.ts";
+const DOC = "apps/backend/src/fuel/fuel-expense-document.service.ts";
+const DOOR = "db/migrations/202615410950_relay_wallet_consumed_only_by_relay_fill.sql";
 // Allowlist = poster + gated import path + bank-match engine only. Feed retired 2026-10-02
 // (owner: fuel posts only on bank match). No REPORTED_OTHER_LANE exemption.
 
@@ -52,6 +58,19 @@ export function check(files) {
     if (/SET\s+posted_to_gl\s*=\s*true/i.test(src)) problems.push(`${f}: sets relay posted_to_gl by hand`);
   }
   if (/\br\.posted_to_gl\b/.test(files[FILLS] ?? "")) problems.push(`${FILLS}: reads the stored posted_to_gl flag instead of deriving it from a journal entry`);
+
+  // 4. ACCT-F403 — the Relay-fill door.
+  const rs = maybe.indexOf("export function resolveCompanyDirectCreditPreference(");
+  const re = rs < 0 ? -1 : maybe.indexOf("\n}\n", rs);
+  const resolver = rs < 0 ? "" : maybe.slice(rs, re);
+  if (!resolver) problems.push(`${MAYBE}: resolveCompanyDirectCreditPreference not found (fails closed)`);
+  if (/return\s+"relay_fuel_wallet"/.test(resolver)) problems.push(`${MAYBE}: the rail resolver lets a fuel row post to the Relay wallet — a Relay-rail settlement row must link to its fill, not post`);
+  if (resolver && !/USMCA_COMPANY_ID\) throw new RelayFillLinksNotPostsError/.test(resolver)) problems.push(`${MAYBE}: the USMCA no-card (Relay) default must refuse with RelayFillLinksNotPostsError`);
+  if (/input\.company_direct_credit \?\? "cash"/.test(files[POSTER] ?? "")) problems.push(`${POSTER}: a fuel row silently defaults to "cash" — it must resolve its rail (a Relay fill would post twice)`);
+  if (!/err instanceof RelayFillLinksNotPostsError\) return \{ outcome: "relay_link"/.test(files[DOC] ?? "")) problems.push(`${DOC}: a Relay-rail fuel row must return relay_link (no document, no posting)`);
+  const door = files[DOOR] ?? "";
+  if (!/trg_relay_wallet_consumed_only_by_relay_fill/.test(door) || !/fuel_wallet_relay/.test(door) || !/integrations\.relay_fuel_transactions/.test(door))
+    problems.push(`${DOOR}: the database door (only a Relay fill or a reversal credits the Relay wallet) is missing`);
   return problems;
 }
 
@@ -65,6 +84,8 @@ function load() {
     }
   };
   walk("apps/backend/src");
+  const door = path.join(ROOT, DOOR);
+  if (fs.existsSync(door)) out[DOOR] = fs.readFileSync(door, "utf8");
   return out;
 }
 
@@ -76,6 +97,10 @@ if (process.argv.includes("--selftest")) {
     ["new fuel poster caller", { ...real, "apps/backend/src/x/new.ts": "await postFuelExpenseFromEvent(input)" }],
     ["hand-set posted_to_gl", { ...real, "apps/backend/src/x/new.ts": "UPDATE integrations.relay_fuel_transactions SET posted_to_gl = true" }],
     ["fills reads stored flag", { ...real, [FILLS]: real[FILLS] + "\n// r.posted_to_gl" }],
+    ["resolver posts Relay", { ...real, [MAYBE]: real[MAYBE].replace("if (candidate.operating_company_id === USMCA_COMPANY_ID) throw new RelayFillLinksNotPostsError(candidate.fuel_transaction_id);", 'if (candidate.operating_company_id === USMCA_COMPANY_ID) return "relay_fuel_wallet";') }],
+    ["poster cash default", { ...real, [POSTER]: real[POSTER].replace('credit ?? "cash"', 'input.company_direct_credit ?? "cash"') }],
+    ["document posts Relay", { ...real, [DOC]: real[DOC].replace('if (err instanceof RelayFillLinksNotPostsError) return { outcome: "relay_link"', "if (false) return { outcome: \"relay_link\"") }],
+    ["database door gone", { ...real, [DOOR]: "" }],
   ];
   const missed = cases.filter(([, files]) => check(files).length === 0).map(([n]) => n);
   if (missed.length) { console.error(`${LABEL} --selftest FAIL: not caught: ${missed.join("; ")}`); process.exit(1); }

@@ -1129,6 +1129,8 @@ export async function postSettlementCreatorInClientTx(
     if (doc.outcome === "refused") {
       throw new SettlementCreatorError("fuel_expense_refused", doc.reason);
     }
+    // ACCT-F403: outcome "relay_link" — a Relay-rail fill posts from its wallet line, so this row gets no document and no
+    // posting here (falls past the branch below by design).
     if (doc.outcome === "created" || doc.outcome === "already_exists") {
       expenseIds.push(doc.expense_id);
       // Stamp Comp. Exp. card rail already set by fuel writer; post through existing engine.
