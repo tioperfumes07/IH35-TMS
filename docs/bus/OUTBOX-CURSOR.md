@@ -1,4 +1,13 @@
+## 2026-10-04T02:40Z · BANK-F91371..F91376 leftover drain MERGED tip `8ee3f3c547`
+
+DONE: NotificationPreferencesPage · CertExpiryBadge · LegalTemplateDetailPage · VendorMappingIntegrityCard · ProfilesTab · LaunchReadinessPage (F91371–F91376). Prior F91365–70 stamped.
+
+PRs: #25055 · #25058 · #25059 · #25060 · #25062 · #25063 (squash). Guards: refuse + `--selftest` plant each.
+
+NEXT: continue ORDERS leftover drain (page-scoped guards only). Skip BookLoad*/Combobox/EntityPicker/ParityTable/DrillKpiCard/UniversalListToolbar/DateTimePicker/DataTable/ProgramTracker/FinalAdditions/InstallPWA. HH01 no migrations.
+
 ## 2026-10-04T02:12Z · BANK-F91365..F91370 leftover drain MERGED tip `5bfeafcf79`
+
 
 DONE: FaultDraftsPage · PendingSettlementDeductionsPanel · AutoDeductionPolicies · DefectsInboxPage · PartsMasterDataPage · DriverImportModal (F91365–F91370). Prior F91349–64 stamped.
 
