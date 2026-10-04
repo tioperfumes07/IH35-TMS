@@ -234,10 +234,10 @@ export function LaneProfitabilityPage() {
         onReset={staged.reset}
         applyDisabled={!staged.dirty}
       >
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Period</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Period</span>
           <SelectCombobox
-            className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
+            className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.period}
             onChange={(e) => staged.setDraft((p) => ({ ...p, period: e.target.value as LaneProfitabilityPeriod }))}
           >
@@ -247,8 +247,8 @@ export function LaneProfitabilityPage() {
             <option value="custom">Custom</option>
           </SelectCombobox>
         </label>
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Min rev ($)</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Min rev ($)</span>
           <MoneyInput
             valueDollars={staged.draft.minRevenue ? Number(staged.draft.minRevenue) : null}
             onChangeDollars={(d) => staged.setDraft((p) => ({ ...p, minRevenue: d == null ? "" : String(d) }))}
@@ -257,12 +257,12 @@ export function LaneProfitabilityPage() {
             name="reports-lane-profitability-min-revenue"
           />
         </label>
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Min loads</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Min loads</span>
           <input
             type="number"
             min={0}
-            className="h-7 w-20 rounded-sm border border-slate-300 px-2 text-xs"
+            className="h-7 w-20 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.minLoads}
             onChange={(e) => staged.setDraft((p) => ({ ...p, minLoads: e.target.value }))}
             data-testid="reports-lane-profitability-min-loads"
@@ -295,8 +295,8 @@ export function LaneProfitabilityPage() {
           <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
             <div className="grid md:grid-cols-3 md:divide-x md:divide-slate-100">
               <div className="border-t border-slate-100 px-4 py-3 first:border-t-0 md:border-t-0">
-                <div className="text-xs uppercase text-slate-500">Total loads</div>
-                <div className="text-page-title font-semibold text-slate-900">{query.data.totals.load_count}</div>
+                <div className="text-xs uppercase text-[#4B5563]">Total loads</div>
+                <div className="text-page-title font-semibold text-[#0F1219]">{query.data.totals.load_count}</div>
               </div>
               <div className="border-t border-slate-100 bg-emerald-50 px-4 py-3 md:border-t-0">
                 <div className="text-xs uppercase text-emerald-800">Most profitable lane</div>
@@ -325,7 +325,7 @@ export function LaneProfitabilityPage() {
 
           <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
             <div className="border-b border-slate-200 px-4 py-2">
-              <h2 className="text-xs font-semibold text-slate-900">Profit per mile by lane (top 8)</h2>
+              <h2 className="text-xs font-semibold text-[#0F1219]">Profit per mile by lane (top 8)</h2>
             </div>
             <div className="h-72 p-4">
               <ResponsiveContainer width="100%" height="100%">
