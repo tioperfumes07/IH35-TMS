@@ -13502,5 +13502,290 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-bulk-audit-per-id"
+  },
+  "15965": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bulk-update-rls-where"
+  },
+  "15969": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-cancel-load-human-errors"
+  },
+  "15973": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-cancel-load-modal-stale-scope"
+  },
+  "15977": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-cancellations-report-wired"
+  },
+  "15981": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-canonical-audit-table-name"
+  },
+  "15985": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-cargo-claim-create-suggest-load"
+  },
+  "15989": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-catalog-audit-event-types-id-column"
+  },
+  "15993": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-catalogs-items-classes-entity-scope"
+  },
+  "15997": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-chat-schema-integrity"
+  },
+  "16001": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-company-violations-reverse-range"
+  },
+  "16005": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-complaints-actions-company-lifecycle"
+  },
+  "16009": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-complaints-driver-names"
+  },
+  "16013": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-compliance-dashboard-aggregate-sources"
+  },
+  "16017": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-compliance-notification-rules-rls"
+  },
+  "16021": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-create-driver-company-lifecycle"
+  },
+  "16025": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-create-driver-control-label-association"
+  },
+  "16029": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-create-driver-drawer-discard-lifecycle"
+  },
+  "16033": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-create-driver-handwritten-label-association"
+  },
+  "16037": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-create-driver-invite-request-lifecycle"
+  },
+  "16041": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-create-trailer-company-lifecycle"
+  },
+  "16045": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-create-user-grants-company-access"
+  },
+  "16049": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-create-wo-modal-contract"
+  },
+  "16053": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-csa-mitigation-company-lifecycle"
+  },
+  "16057": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-csa-pull-company-lifecycle"
+  },
+  "16061": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-csa-score-actions-company-lifecycle"
+  },
+  "16065": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-customer-autocomplete-canonical"
+  },
+  "16069": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-customer-contract-upload"
+  },
+  "16073": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-customer-detail-route"
+  },
+  "16077": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-customer-fmcsa-history-complete-range"
+  },
+  "16081": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-customer-free-time-catalog"
+  },
+  "16085": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-customer-picker-no-silent-cap"
+  },
+  "16089": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-customer-profile-catalog-failure-exclusion"
+  },
+  "16093": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-customer-relationship-health-complete-range"
+  },
+  "16097": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-customer-routes-registered"
+  },
+  "16101": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-customer-status-badge-honors-deactivated-at"
+  },
+  "16105": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-customers-vendors-gaps"
+  },
+  "16109": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-da-test-scheduler-company-lifecycle"
+  },
+  "16113": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-damage-auto-claim-explicit-company-scope"
+  },
+  "16117": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-damage-continuity-explicit-company-scope"
+  },
+  "16121": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-dashcam-clips-tenant-scope"
+  },
+  "16125": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-dashcam-rbac-restrict"
+  },
+  "16129": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-day-summary-tenant-scope"
+  },
+  "16133": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-deadhead-cache-rls"
+  },
+  "16137": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-deep-audit-a-driver-edit-modal"
+  },
+  "16141": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-deep-audit-a-equipment-assignments"
+  },
+  "16145": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-default-driver-truck-atomic-identity"
+  },
+  "16149": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-dispatch-at-risk-complete-range"
+  },
+  "16153": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-dispatch-auth-gates-wired"
+  },
+  "16157": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-dispatch-auto-status-audit-failure-honesty"
+  },
+  "16161": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-dispatch-blocker-labels"
+  },
+  "16165": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-dispatch-board-hos-columns"
+  },
+  "16169": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-dispatch-cancel-approval-gate"
+  },
+  "16173": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-dispatch-cancel-reason-catalog"
+  },
+  "16177": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-dispatch-cancellation-write-identity"
+  },
+  "16181": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-dispatch-card-unit-first"
+  },
+  "16185": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-dispatch-cargo-sensor-read-recovery"
+  },
+  "16189": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-dispatch-chat-error-honesty"
   }
 }
