@@ -53,6 +53,9 @@ function assertPage(src) {
   if (src.includes("text-[11px]")) errors.push("leftover text-[11px]");
   if (src.includes("#8A92AB") || src.includes("#334155")) errors.push("leftover off-scale muted");
   if (src.includes("#cbd5e1") || src.includes("#CBD5E1")) errors.push("leftover #cbd5e1 border");
+  if (src.includes("text-slate-") || src.includes("border-slate-") || src.includes("bg-slate-")) {
+    errors.push("leftover slate class");
+  }
   return errors;
 }
 
@@ -79,9 +82,9 @@ function selftest() {
     process.exit(1);
   }
   // BANK-F91245 leftover plant + BANK-F91522 leftover #cbd5e1 border plant
-  const leftoverPlant = `${good}\n<div className="text-[11px] text-[#8A92AB]" style={{ color: "#334155", borderColor: "#cbd5e1" }}>plant</div>`;
+  const leftoverPlant = `${good}\n<div className="text-[11px] text-[#8A92AB] text-slate-700 bg-slate-700" style={{ color: "#334155", borderColor: "#cbd5e1" }}>plant</div>`;
   const leftover = assertPage(leftoverPlant);
-  if (!leftover.includes("leftover text-[11px]") || !leftover.includes("leftover off-scale muted") || !leftover.includes("leftover #cbd5e1 border")) {
+  if (!leftover.includes("leftover text-[11px]") || !leftover.includes("leftover off-scale muted") || !leftover.includes("leftover #cbd5e1 border") || !leftover.includes("leftover slate class")) {
     console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`, leftover);
     process.exit(1);
   }
