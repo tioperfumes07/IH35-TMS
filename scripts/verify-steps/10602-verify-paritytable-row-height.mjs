@@ -26,7 +26,7 @@ const FILE = path.join(process.cwd(), "apps/frontend/src/components/parity/Parit
 
 export default {
   name: "verify-paritytable-row-height",
-  run: async () => {
+  run: async (ctx) => {
     const src = fs.readFileSync(FILE, "utf8");
 
     // REGRESSION GUARD 1: the old unconditional default must not return.
@@ -56,5 +56,11 @@ export default {
       "PASS verify-paritytable-row-height: ParityTable.tsx body <td> defaults to truncate " +
         "(whitespace-nowrap text-ellipsis) with allowWrap opt-in intact.",
     );
+    // BANK-F91441 — C-04 house row treatment (hover/stripe/divider). Never ran in CI.
+    if (ctx?.run) {
+      const rc = await ctx.run("node", ["scripts/ops/verify-c04-row-treatment.mjs", "--selftest"]);
+      if (rc !== 0 && rc !== undefined) return 1;
+    }
+    return 0;
   },
 };
