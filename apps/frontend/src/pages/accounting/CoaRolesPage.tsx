@@ -76,6 +76,7 @@ const ROLE_LABELS: Record<CoaRole, string> = {
   fuel_card_payable_dreamline: "Dreamline diesel card payable",
   driver_settlements_payable: "Driver settlements payable",
   accessorial_revenue: "Accessorial / detention income",
+  reefer_fuel_expense: "Reefer diesel (off-highway)",
 };
 
 export function CoaRolesPage() {

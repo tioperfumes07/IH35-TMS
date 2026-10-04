@@ -193,6 +193,28 @@
       "note": null
     },
     {
+      "file": "accounting/posting-line-writer.ts",
+      "stamps": [
+        "operating_company_id",
+        "account_id",
+        "load_id"
+      ],
+      "missing_stamps": [
+        "driver_id",
+        "unit_id",
+        "trailer_id",
+        "customer_id",
+        "vendor_id",
+        "settlement_id",
+        "invoice_id",
+        "journal_entry_id",
+        "item_id"
+      ],
+      "reverse": "accounting/void.service.ts",
+      "reverse_waived_reason": null,
+      "note": "ROUND 391 \u2014 THE one writer for a GL posting line. It inserts the posting and its accounting.transaction_source_links row in the caller's transaction and throws if the line carries no source_transaction_type/id, so a posting without lineage is not writable. It is not a new way to create money: it is the single implementation the existing doors call. Measured live 2026-10-03 \u2014 7,909 postings vs 4,355 spine rows, because nine services insert postings directly and only fuel-posting also wrote the spine. The journal entry linkage IS carried, as the real column name journal_entry_uuid \u2014 the register's stamp list uses journal_entry_id, which this file does not spell, so it is declared missing rather than claimed falsely. load_id is stamped by accounting.posting_source_load_id() in the same INSERT, resolved from the posting's own source document. The remaining stamps are the SOURCE DOCUMENT's to carry \u2014 this writer never invents a driver, unit, trailer, customer, vendor, settlement, invoice or item that its caller did not supply. Reversal is accounting/void.service.ts, unchanged: reverse the entry, never edit or delete the posting."
+    },
+    {
       "file": "accounting/recurring.worker.ts",
       "stamps": [
         "operating_company_id",

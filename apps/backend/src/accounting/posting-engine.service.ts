@@ -1,3 +1,4 @@
+import { insertPostingLinesWithSpine, type PostingWriterClient } from "./posting-line-writer.js";
 import { withCurrentUser } from "../auth/db.js";
 import { boundJeMemo, sourceDocumentLabel } from "./je-memo.js";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
@@ -851,69 +852,30 @@ async function insertPostingLines(input: {
   sourceId: string;
   lines: PostingLineDraft[];
 }) {
-  const postingIds: string[] = [];
-  let sequence = 1;
-  for (const line of input.lines) {
-    const ins = await input.client.query<{ id: string }>(
-      `
-        INSERT INTO accounting.journal_entry_postings (
-          operating_company_id,
-          journal_entry_uuid,
-          line_sequence,
-          account_id,
-          debit_or_credit,
-          amount_cents,
-          description,
-          source_transaction_type,
-          source_transaction_id,
-          source_transaction_line_id,
-          posting_batch_id,
-          idempotency_key,
-          class_id,
-          load_id,
-          created_at,
-          updated_at
-        )
-        -- ROUND 363-CC1-A: the load stamp, resolved from this posting's own source document in the same statement.
-        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, $8, $9, $10, $11::uuid, $12, $13::uuid,
-                accounting.posting_source_load_id($8::text, $9::text, $10::text, NULL), now(), now())
-        RETURNING id::text
-      `,
-      [
-        input.operatingCompanyId,
-        input.journalEntryId,
-        sequence,
-        line.account_id,
-        line.debit_or_credit,
-        line.amount_cents,
-        line.description,
-        input.sourceType,
-        input.sourceId,
-        line.source_transaction_line_id,
-        input.postingBatchId,
-        input.idempotencyKey,
-        line.class_id ?? null,
-      ]
-    );
-    const postingId = ins.rows[0]?.id;
-    if (!postingId) throw new Error("posting_line_insert_failed");
-    postingIds.push(postingId);
-    await input.client.query(
-      `
-        INSERT INTO accounting.transaction_source_links (
-          operating_company_id,
-          journal_entry_posting_id,
-          linked_object_type,
-          linked_object_id,
-          relationship_role
-        )
-        VALUES ($1::uuid, $2::uuid, $3, $4, $5)
-      `,
-      [input.operatingCompanyId, postingId, input.sourceType, input.sourceId, line.relationship_role ?? "source_transaction"]
-    );
-    sequence += 1;
-  }
-  return postingIds;
+  // ROUND 391 — the posting insert and its transaction_source_links row used to live here, inline.
+  // Eight OTHER services also INSERT INTO accounting.journal_entry_postings directly, and only one of
+  // them (fuel-posting) ever wrote the spine row, which is the whole of the 3,908 postings measured
+  // with no lineage. Both statements now live in ONE writer (posting-line-writer.ts) that every door
+  // calls, so a posting without its lineage row is not something a caller can choose to write.
+  return insertPostingLinesWithSpine(
+    input.client as unknown as PostingWriterClient,
+    input.lines.map((line, index) => ({
+      operating_company_id: input.operatingCompanyId,
+      journal_entry_uuid: input.journalEntryId,
+      line_sequence: index + 1,
+      account_id: line.account_id,
+      debit_or_credit: line.debit_or_credit,
+      amount_cents: line.amount_cents,
+      description: line.description,
+      source_transaction_type: input.sourceType,
+      source_transaction_id: input.sourceId,
+      source_transaction_line_id: line.source_transaction_line_id,
+      posting_batch_id: input.postingBatchId,
+      idempotency_key: input.idempotencyKey,
+      class_id: line.class_id ?? null,
+      relationship_role: line.relationship_role ?? "source_transaction",
+    }))
+  );
 }
 
 function assertBalanced(lines: PostingLineDraft[]) {

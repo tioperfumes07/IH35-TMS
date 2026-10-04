@@ -2298,6 +2298,8 @@ export const COA_ROLE_VALUES = [
   "fuel_card_payable_dreamline",
   "driver_settlements_payable",
   "accessorial_revenue",
+  // ROUND 391.2 (202615400930) — reefer diesel, its own account (federal off-highway credit; off IFTA).
+  "reefer_fuel_expense",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];

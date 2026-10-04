@@ -15,6 +15,28 @@ const MIG_DIR = "db/migrations";
 const FIX = "202615260100_je_reversed_by_one_to_many.sql";
 const VOID = "apps/backend/src/accounting/void.service.ts";
 
+
+/**
+ * The body of the loop that starts with `marker`, read by balancing braces rather than by counting
+ * characters, so work added inside the loop never looks like the stamp being removed. Returns null
+ * when the loop is gone entirely — which is itself the regression this guard exists to catch.
+ */
+function loopBodyAfter(source, marker) {
+  const at = source.indexOf(marker);
+  if (at === -1) return null;
+  const open = source.indexOf("{", at);
+  if (open === -1) return null;
+  let depth = 0;
+  for (let i = open; i < source.length; i += 1) {
+    if (source[i] === "{") depth += 1;
+    else if (source[i] === "}") {
+      depth -= 1;
+      if (depth === 0) return source.slice(open, i + 1);
+    }
+  }
+  return null;
+}
+
 export function problems(migrations, voidSrc) {
   const p = [];
   const fix = migrations.find((m) => m.name === FIX);
@@ -23,7 +45,22 @@ export function problems(migrations, voidSrc) {
     if (m.name <= FIX) continue;
     if (/CREATE\s+UNIQUE\s+INDEX[\s\S]{0,200}journal_entries\s*\(\s*reversed_by_je_id\s*\)/i.test(m.sql)) p.push(`${MIG_DIR}/${m.name} makes journal_entries.reversed_by_je_id unique again (multi-JE voids would fail)`);
   }
-  if (!/for \(const row of src\.rows\)[\s\S]{0,300}SET reversed_by_je_id = \$2::uuid/.test(voidSrc)) p.push(`${VOID}: postVoidReversal must stamp reversed_by_je_id on every original it reverses`);
+  // ROUND 393 (Lead, 2026-10-04) — this used to require `SET reversed_by_je_id = $2::uuid` within 300
+  // CHARACTERS of `for (const row of src.rows)`. That is a proximity test, not a behaviour test, and a
+  // later legitimate change broke it: ROUND 368.2(b) inserted releaseBankLinesNamingDocument() at the
+  // top of the same loop, pushing the UPDATE past the window. The guard then reported
+  // "postVoidReversal must stamp reversed_by_je_id on every original it reverses" while the code was
+  // doing exactly that — measured live the same day: 1,469 originals reversed, 1,469 carrying
+  // reversed_by_je_id, 0 originals reversed more than once. A guard that cries wolf teaches the team
+  // to ignore it, which is worse than no guard. It now reads the LOOP BODY by balancing braces and
+  // asserts the UPDATE is inside it, so any amount of legitimate work may be added to the loop and
+  // only REMOVING the stamp fails.
+  const stampLoop = loopBodyAfter(voidSrc, "for (const row of src.rows)");
+  if (stampLoop === null) {
+    p.push(`${VOID}: postVoidReversal no longer loops over every original (for (const row of src.rows))`);
+  } else if (!/UPDATE accounting\.journal_entries SET reversed_by_je_id = \$2::uuid/.test(stampLoop)) {
+    p.push(`${VOID}: postVoidReversal must stamp reversed_by_je_id on every original it reverses`);
+  }
   return p;
 }
 

@@ -1,10 +1,10 @@
 {
-  "healthzSha": "e1307f1",
-  "generated_at": "2026-10-04T01:31:21.051Z",
+  "healthzSha": "5bfeafc",
+  "generated_at": "2026-10-04T01:56:35.899Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "e1307f1",
+    "deployedSha": "5bfeafc",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 0,
-      "title": "Cursor-BANK-F91349 DocumentsTab text-[11px]→text-xs leftover drain",
+      "number": 25056,
+      "title": "FINDING: FUEL-DUP-1848853 LANE: claude — AUTH-209 consumed (1848853 duplicate on 13543 voided) + verify-fuel-transactions-per-load re-reconciled 321 -> 320",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 08:30 PM CT",
-      "url": "",
-      "sha": "26394f1e46",
-      "committedAtIso": "2026-10-03T20:30:31-05:00"
+      "mergedAtCt": "10/03/2026, 08:55 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25056",
+      "sha": "a556326bbb",
+      "committedAtIso": "2026-10-03T20:55:50-05:00"
     },
     {
-      "number": 25023,
-      "title": "Cursor-BANK-F91348 IftaPreparerCard text-[11px]→text-xs leftover drain",
+      "number": 25055,
+      "title": "Cursor-BANK-F91371 NotificationPreferencesPage text-[11px]→text-xs leftover drain",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 08:29 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25023",
-      "sha": "6a932696ff",
-      "committedAtIso": "2026-10-03T20:29:50-05:00"
+      "mergedAtCt": "10/03/2026, 08:53 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25055",
+      "sha": "decb72c2c8",
+      "committedAtIso": "2026-10-03T20:53:35-05:00"
     },
     {
-      "number": 25022,
-      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: migrations 202615380400 + 202615380500 for CC-1 ROUND 394 ruling 1 step 2 — derived advance balance, then drop outstanding_balance)",
+      "number": 25054,
+      "title": "Cursor-OUTBOX F91365-70 leftover drain MERGED tip 5bfeafcf79",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 08:29 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25022",
-      "sha": "90cae35a7c",
-      "committedAtIso": "2026-10-03T20:29:31-05:00"
+      "mergedAtCt": "10/03/2026, 08:52 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25054",
+      "sha": "aac555b71a",
+      "committedAtIso": "2026-10-03T20:52:43-05:00"
     },
     {
-      "number": 25021,
-      "title": "Cursor-OUTBOX BANK-F91344..F91347 leftover drain MERGED tip 35226af73a",
+      "number": 25053,
+      "title": "FINDING: FUEL-DUP-1848853 LANE: claude — owner-authorized void of duplicate fuel receipt 1848853 (load 13543 copy), AUTH-209",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 08:29 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25021",
-      "sha": "32b685a594",
-      "committedAtIso": "2026-10-03T20:29:18-05:00"
+      "mergedAtCt": "10/03/2026, 08:52 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25053",
+      "sha": "72c8f5c1ca",
+      "committedAtIso": "2026-10-03T20:52:31-05:00"
     },
     {
-      "number": 25020,
-      "title": "Cursor-BANK-F91347 AtRiskDriverCard text-[11px]→text-xs leftover drain",
+      "number": 25052,
+      "title": "Cursor-BANK-F91370 DriverImportModal text-[11px]→text-xs leftover drain",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 08:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25020",
-      "sha": "35226af73a",
-      "committedAtIso": "2026-10-03T20:28:36-05:00"
+      "mergedAtCt": "10/03/2026, 08:51 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25052",
+      "sha": "5bfeafcf79",
+      "committedAtIso": "2026-10-03T20:51:55-05:00"
     },
     {
-      "number": 25019,
-      "title": "Cursor-BANK-F91346 HOSStatusSection text-[11px]→text-xs leftover drain",
+      "number": 25051,
+      "title": "Cursor-BANK-F91369 PartsMasterDataPage text-[11px]→text-xs leftover drain",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 08:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25019",
-      "sha": "6c10af3ff2",
-      "committedAtIso": "2026-10-03T20:28:00-05:00"
+      "mergedAtCt": "10/03/2026, 08:51 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25051",
+      "sha": "9281a41092",
+      "committedAtIso": "2026-10-03T20:51:07-05:00"
     },
     {
-      "number": 25018,
-      "title": "Cursor-BANK-F91345 TriSignalHoverDetail text-[11px]→text-xs leftover drain",
+      "number": 25050,
+      "title": "Cursor-BANK-F91368 DefectsInboxPage text-[11px]→text-xs leftover drain",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 08:27 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25018",
-      "sha": "baca6999ad",
-      "committedAtIso": "2026-10-03T20:27:58-05:00"
+      "mergedAtCt": "10/03/2026, 08:50 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25050",
+      "sha": "0de70293a9",
+      "committedAtIso": "2026-10-03T20:50:12-05:00"
     },
     {
-      "number": 25007,
-      "title": "FINDING: FUEL-DUP-99794138 LANE: claude — owner-authorized void of duplicate fuel receipt 99794138 (load 13571 copy), AUTH-207",
+      "number": 25049,
+      "title": "Cursor-BANK-F91367 AutoDeductionPolicies text-[11px]→text-xs leftover drain",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 08:27 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25007",
-      "sha": "42fb2be121",
-      "committedAtIso": "2026-10-03T20:27:30-05:00"
+      "mergedAtCt": "10/03/2026, 08:49 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25049",
+      "sha": "b467cfa22e",
+      "committedAtIso": "2026-10-03T20:49:32-05:00"
     },
     {
-      "number": 25017,
-      "title": "Cursor-BANK-F91344 FuelFraudBadge text-[11px]→text-xs leftover drain",
+      "number": 25048,
+      "title": "Cursor-BANK-F91366 PendingSettlementDeductionsPanel text-[11px]→text-xs leftover drain",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 08:27 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25017",
-      "sha": "3f9e212886",
-      "committedAtIso": "2026-10-03T20:27:26-05:00"
+      "mergedAtCt": "10/03/2026, 08:48 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25048",
+      "sha": "be9133a850",
+      "committedAtIso": "2026-10-03T20:48:53-05:00"
     },
     {
-      "number": 25016,
-      "title": "Cursor-OUTBOX BANK-F91339..F91343 leftover drain MERGED tip 65ce3012df",
+      "number": 25046,
+      "title": "Cursor-BANK-F91365 FaultDraftsPage text-[11px]→text-xs leftover drain",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 08:27 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25016",
-      "sha": "c11dfec217",
-      "committedAtIso": "2026-10-03T20:27:01-05:00"
+      "mergedAtCt": "10/03/2026, 08:48 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25046",
+      "sha": "ba63d321a8",
+      "committedAtIso": "2026-10-03T20:48:03-05:00"
     }
   ]
 }
