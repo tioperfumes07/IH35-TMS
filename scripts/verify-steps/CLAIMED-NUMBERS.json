@@ -10102,5 +10102,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-03",
     "purpose": "verify-arriving-soon-serves-pm-and-wo-due"
+  },
+  "12421": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-every-posting-has-its-spine-link"
   }
 }
