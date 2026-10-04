@@ -10117,5 +10117,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-driver-advance-posts-to-drivers-own-subaccount"
+  },
+  "12433": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-receivables-post-on-creation"
   }
 }
