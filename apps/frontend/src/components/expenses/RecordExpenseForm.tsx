@@ -334,7 +334,7 @@ export function RecordExpenseForm({
             limit={RECORD_EXPENSE_VENDOR_LIST_CAP}
             total={vendorsQuery.data?.total ?? null}
             hint="Type in the vendor field to search, or narrow with filters on the Vendors list."
-            className="mt-1 text-[11px] text-slate-600"
+            className="mt-1 text-xs text-slate-600"
           />
         </div>
       </label>
@@ -580,7 +580,7 @@ export function RecordExpenseForm({
             allowClear
           />
           {suggestionPinned && values.loadId && suggestionQuery.data?.data?.load_id === values.loadId ? (
-            <p className="mt-1 text-[11px] text-slate-600" data-testid="record-expense-load-suggested">
+            <p className="mt-1 text-xs text-slate-600" data-testid="record-expense-load-suggested">
               Auto-filled from active trip for this driver/unit on the payment date (same as work orders).
             </p>
           ) : null}

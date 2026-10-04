@@ -68,7 +68,11 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   // BANK-F91393 leftover plant — TwoSectionLineEditor page-scoped text token ratchet
-  const leftoverPlant = fs.readFileSync(BILL, "utf8") + '\n<span className="text-[11px] text-[#8A92AB]">plant</span>\n';
+  // BANK-F91394 leftover plant — RecordExpenseForm page-scoped text token ratchet
+  const leftoverPlant =
+    fs.readFileSync(BILL, "utf8") +
+    fs.readFileSync(EXPENSE, "utf8") +
+    '\n<span className="text-[11px] text-[#8A92AB]">plant</span>\n';
   if (!(leftoverPlant.includes("text-[11px]") && leftoverPlant.includes("#8A92AB"))) {
     console.error("SELFTEST FAIL: leftover plant escaped");
     process.exit(1);
@@ -79,7 +83,8 @@ if (process.argv.includes("--selftest")) {
 
 for (const p of [BILL, EXPENSE]) if (!fs.existsSync(p)) { console.error(`GUARD FAIL: missing ${p}`); process.exit(1); }
 const billSrc = fs.readFileSync(BILL, "utf8");
-const errors = [...assertBill(billSrc), ...assertExpense(fs.readFileSync(EXPENSE, "utf8"))];
+const expenseSrc = fs.readFileSync(EXPENSE, "utf8");
+const errors = [...assertBill(billSrc), ...assertExpense(expenseSrc)];
 if (errors.length) {
   console.error("GUARD FAIL — Bill/Expense Category selectors must source the FULL Chart-of-Accounts:");
   for (const e of errors) console.error("  - " + e);
@@ -92,6 +97,15 @@ if (billSrc.includes("text-[11px]")) {
 }
 if (billSrc.includes("#8A92AB")) {
   console.error("GUARD FAIL — TwoSectionLineEditor.tsx leftover off-scale muted #8A92AB");
+  process.exit(1);
+}
+// BANK-F91394 leftover refuse — RecordExpenseForm page-scoped text token ratchet
+if (expenseSrc.includes("text-[11px]")) {
+  console.error("GUARD FAIL — RecordExpenseForm.tsx leftover text-[11px]");
+  process.exit(1);
+}
+if (expenseSrc.includes("#8A92AB")) {
+  console.error("GUARD FAIL — RecordExpenseForm.tsx leftover off-scale muted #8A92AB");
   process.exit(1);
 }
 console.log("verify-bill-expense-category-full-coa OK — Bill + Expense Category selectors source the full COA");
