@@ -395,28 +395,26 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
       const unmatchedBank = await countUncategorizedTransactions(client, parsed.data.operating_company_id);
       // U3 (owner, 2026-10-03): "the LIVE load set + current cost FROM THE LEDGER". The cost columns above are summed
       // from the documents (expenses / bills / driver bills); this is what the general ledger itself carries for each
-      // load: expense + cost-of-goods postings, net of reversals, with the balance predicate. A posting's load is the
-      // stamped load_id, or — for postings written before the stamp (0 of 3,523 USMCA cost postings carry one; the
-      // backfill is boarded) — the ledger's own single definition, accounting.posting_source_load_id(). One grouped
-      // read for the whole board, never a per-load scan.
+      // load: expense + cost-of-goods postings, net of reversals, with the balance predicate. A posting's load is its
+      // stamped load_id — CC-3's 202615390931 stamped every provable posting (2,736 on USMCA, reversal lines walked to
+      // their original's load) and the load-born guard keeps every new posting stamped, so the column IS the ledger's
+      // load. Measured on prod: same 102 loads and $189,354.55 as posting_source_load_id(), 0 loads differing, 1,187 ms
+      // -> 257 ms (ix_journal_entry_postings_load_id). One grouped read for the whole board, never a per-load scan.
       const loadIds = (result.rows as Array<{ load_id: string }>).map((r) => r.load_id);
       const ledger = loadIds.length
         ? ((await client.query(
-            `SELECT x.load_id::text AS load_id, sum(x.net)::text AS cents
-               FROM (
-                 SELECT COALESCE(p.load_id, accounting.posting_source_load_id(p.source_transaction_type, p.source_transaction_id, p.source_transaction_line_id, p.reversal_of_line_id)) AS load_id,
-                        CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END AS net
-                   FROM accounting.journal_entry_postings p
-                   JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
-                   LEFT JOIN accounting.posting_batches pb ON pb.id = p.posting_batch_id AND pb.operating_company_id = p.operating_company_id
-                   JOIN catalogs.accounts a ON a.id = p.account_id
-                  WHERE p.operating_company_id = $1::uuid
-                    AND je.status <> 'voided'
-                    AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
-                    AND a.account_type IN ('Expense', 'CostOfGoodsSold', 'OtherExpense')
-               ) x
-              WHERE x.load_id = ANY($2::uuid[])
-              GROUP BY x.load_id`,
+            `SELECT p.load_id::text AS load_id,
+                    sum(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END)::text AS cents
+               FROM accounting.journal_entry_postings p
+               JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
+               LEFT JOIN accounting.posting_batches pb ON pb.id = p.posting_batch_id AND pb.operating_company_id = p.operating_company_id
+               JOIN catalogs.accounts a ON a.id = p.account_id
+              WHERE p.operating_company_id = $1::uuid
+                AND p.load_id = ANY($2::uuid[])
+                AND je.status <> 'voided'
+                AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
+                AND a.account_type IN ('Expense', 'CostOfGoodsSold', 'OtherExpense')
+              GROUP BY p.load_id`,
             [parsed.data.operating_company_id, loadIds]
           )) as { rows: Array<{ load_id: string; cents: string }> })
         : { rows: [] as Array<{ load_id: string; cents: string }> };
