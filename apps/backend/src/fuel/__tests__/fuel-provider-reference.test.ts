@@ -33,17 +33,25 @@ describe("enteredFuelRowHash", () => {
 describe("refuseDuplicateProviderTransaction", () => {
   it("refuses by name when a live row already records the provider ID", async () => {
     const client = { query: vi.fn(async () => ({ rows: [{ id: "fuel-1", load_id: "l-1", load_number: "13557" }] })) };
-    await expect(refuseDuplicateProviderTransaction(client, { operatingCompanyId: CO, vendorId: VENDOR, reference: "99794138" })).rejects.toBeInstanceOf(
+    await expect(refuseDuplicateProviderTransaction(client, { operatingCompanyId: CO, vendorId: VENDOR, reference: "99794138", fuelType: "diesel" })).rejects.toBeInstanceOf(
       FuelProviderTransactionDuplicateError
     );
   });
   it("does not even query for a reference that is not a provider key", async () => {
     const client = { query: vi.fn(async () => ({ rows: [{ id: "fuel-1" }] })) };
-    await refuseDuplicateProviderTransaction(client, { operatingCompanyId: CO, vendorId: VENDOR, reference: "DEF-13534-1" });
+    await refuseDuplicateProviderTransaction(client, { operatingCompanyId: CO, vendorId: VENDOR, reference: "DEF-13534-1", fuelType: "def" });
     expect(client.query).not.toHaveBeenCalled();
   });
   it("lets a new provider ID through", async () => {
     const client = { query: vi.fn(async () => ({ rows: [] })) };
-    await expect(refuseDuplicateProviderTransaction(client, { operatingCompanyId: CO, vendorId: VENDOR, reference: "12345" })).resolves.toBeUndefined();
+    await expect(refuseDuplicateProviderTransaction(client, { operatingCompanyId: CO, vendorId: VENDOR, reference: "12345", fuelType: "diesel" })).resolves.toBeUndefined();
+  });
+
+  it("keys the provider ID per PRODUCT LINE — a DEF on the diesel's ticket is its own purchase (202615410930)", async () => {
+    const client = { query: vi.fn(async (_sql: string, _v?: unknown[]) => ({ rows: [] as Array<Record<string, unknown>> })) };
+    await refuseDuplicateProviderTransaction(client, { operatingCompanyId: CO, vendorId: VENDOR, reference: "99301244", fuelType: "def" });
+    const [sql, values] = client.query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toMatch(/f\.fuel_type::text IS NOT DISTINCT FROM \$4::text/);
+    expect(values[3]).toBe("def");
   });
 });

@@ -14,7 +14,6 @@ const LABEL = "verify-fuel-expense-is-unique-per-provider-transaction";
 
 const AWAITING_OWNER_AUTH = new Map([
   // provider ID -> the two fuel rows (both posted, neither bank-matched, 2026-10-03)
-  ["99530579", "USMCA 510.61 — loads 13533 (2026-08-20) and 13548 (2026-08-26): one transaction cannot carry two dates"],
 ]);
 
 const out = await withUnscopedReadOnly(LABEL, async (c) => {
@@ -27,7 +26,7 @@ const out = await withUnscopedReadOnly(LABEL, async (c) => {
       WHERE f.voided_at IS NULL
         AND btrim(f.transaction_reference) ~ '^[0-9]+$'
         AND ${NOT_FROZEN_SQL("f.operating_company_id")}
-      GROUP BY co.code, f.operating_company_id, f.vendor_id, btrim(f.transaction_reference)
+      GROUP BY co.code, f.operating_company_id, f.vendor_id, btrim(f.transaction_reference), f.fuel_type -- one purchase per PRODUCT LINE (202615410930)
      HAVING count(*) > 1
       ORDER BY 1, 2`
   );

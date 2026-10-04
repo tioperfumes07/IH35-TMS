@@ -66,6 +66,25 @@ for (const needle of ["fuel_provider_transaction_already_recorded", "BEFORE INSE
   if (!mig.includes(needle)) fails.push(`202615370600: database refusal lost "${needle}"`);
 }
 
+// 202615410930 (CC-3, 2026-10-04): the key is per PRODUCT LINE — one Love's ticket prints diesel, DEF and reefer under one
+// receipt. Without fuel_type the database refused every DEF sharing a ticket with its diesel, and the app pre-check
+// returned the DIESEL row for a same-load DEF, silently merging the DEF cost away.
+const LATEST = "db/migrations/202615410930_fuel_provider_transaction_unique_per_product_line.sql";
+let latest = "";
+try { latest = readFileSync(LATEST, "utf8"); } catch { fails.push(`${LATEST}: missing — the per-product-line key is gone (fails closed)`); }
+for (const needle of ["f.fuel_type IS NOT DISTINCT FROM NEW.fuel_type", "voided_at, operating_company_id, fuel_type", "fuel_provider_transaction_already_recorded"]) {
+  if (latest && !latest.includes(needle)) fails.push(`202615410930: the per-product-line refusal lost "${needle}"`);
+}
+const later = readdirSync("db/migrations").filter((m) => /^\d{12}_.*\.sql$/.test(m) && m > "202615410930_" && readFileSync(`db/migrations/${m}`, "utf8").includes("refuse_duplicate_provider_transaction"));
+for (const m of later) if (!readFileSync(`db/migrations/${m}`, "utf8").includes("fuel_type IS NOT DISTINCT FROM NEW.fuel_type")) fails.push(`${m}: redefines the refusal without the product line`);
+const helperSrc = readFileSync(`${ROOT}/fuel/${HELPER}.ts`, "utf8");
+if (!/f\.fuel_type::text IS NOT DISTINCT FROM \$4::text/.test(helperSrc)) fails.push(`${HELPER}.ts: the pre-check no longer keys on the product line (fuel_type)`);
+for (const f of writers) {
+  const src = readFileSync(f, "utf8");
+  const calls = src.match(/(findLiveFuelByProviderTransactionId|refuseDuplicateProviderTransaction)\(client, \{[\s\S]*?\}\)/g) || [];
+  for (const call of calls) if (!/fuelType:/.test(call)) fails.push(`${f}: a provider-ID check passes no fuelType — a DEF line would collide with (or merge into) the diesel line`);
+}
+
 if (fails.length) {
   console.error(`${LABEL}: FAIL\n  ${fails.join("\n  ")}`);
   process.exit(1);

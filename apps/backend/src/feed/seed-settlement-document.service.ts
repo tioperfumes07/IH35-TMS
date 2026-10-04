@@ -957,7 +957,9 @@ async function seedFuel(
   // provider's transaction ID is the key: the same purchase on the same load is this re-run; on another load it is
   // refused by name, never recorded twice and never silently merged.
   const reference = providerReferenceOrNull(line.invoice);
-  const sameProviderTxn = reference ? await findLiveFuelByProviderTransactionId(client, { operatingCompanyId, vendorId, reference }) : null;
+  const sameProviderTxn = reference
+    ? await findLiveFuelByProviderTransactionId(client, { operatingCompanyId, vendorId, reference, fuelType: fuelTypeFromProductCode(line.product) })
+    : null;
   if (sameProviderTxn) {
     if (sameProviderTxn.load_id === loadId) return { fuelTransactionId: sameProviderTxn.id, postedAt: line.date, amountCents: line.amountCents };
     throw new FuelProviderTransactionDuplicateError(String(line.invoice).trim(), sameProviderTxn.id, sameProviderTxn.load_number);

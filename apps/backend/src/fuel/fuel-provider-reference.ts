@@ -47,10 +47,14 @@ export class FuelProviderTransactionDuplicateError extends Error {
 
 type Queryable = { query: (text: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> };
 
-/** The live fuel row already carrying this provider transaction ID for this company and vendor, if any. */
+/**
+ * The live fuel row already carrying this provider transaction ID for this company, vendor and PRODUCT LINE, if any.
+ * One Love's ticket prints diesel, DEF and reefer fuel as separate lines under one receipt (202615410930) — the product is
+ * part of the key, so a DEF line is never mistaken for (and merged into) the diesel line on the same ticket.
+ */
 export async function findLiveFuelByProviderTransactionId(
   client: Queryable,
-  input: { operatingCompanyId: string; vendorId: string | null; reference: string | null | undefined }
+  input: { operatingCompanyId: string; vendorId: string | null; reference: string | null | undefined; fuelType: string | null }
 ): Promise<{ id: string; load_id: string | null; load_number: string | null } | null> {
   const providerId = providerTransactionId(input.reference);
   if (!providerId) return null;
@@ -61,10 +65,11 @@ export async function findLiveFuelByProviderTransactionId(
       WHERE f.operating_company_id = $1::uuid
         AND f.vendor_id IS NOT DISTINCT FROM $2::uuid
         AND btrim(f.transaction_reference) = $3
+        AND f.fuel_type::text IS NOT DISTINCT FROM $4::text
         AND f.voided_at IS NULL
       ORDER BY f.created_at
       LIMIT 1`,
-    [input.operatingCompanyId, input.vendorId, providerId]
+    [input.operatingCompanyId, input.vendorId, providerId, input.fuelType]
   );
   const row = res.rows[0] as { id: string; load_id: string | null; load_number: string | null } | undefined;
   return row ?? null;
@@ -73,7 +78,7 @@ export async function findLiveFuelByProviderTransactionId(
 /** Throws FuelProviderTransactionDuplicateError when the provider transaction is already recorded. */
 export async function refuseDuplicateProviderTransaction(
   client: Queryable,
-  input: { operatingCompanyId: string; vendorId: string | null; reference: string | null | undefined }
+  input: { operatingCompanyId: string; vendorId: string | null; reference: string | null | undefined; fuelType: string | null }
 ): Promise<void> {
   const existing = await findLiveFuelByProviderTransactionId(client, input);
   if (existing) throw new FuelProviderTransactionDuplicateError(providerTransactionId(input.reference)!, existing.id, existing.load_number);

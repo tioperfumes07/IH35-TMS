@@ -236,6 +236,7 @@ def main():
                     # R-177: the document's own purchase date per fuel line (was dropped; the feeder then used delivery)
                     lines[-1]["date"] = f.get("date")
                     lines[-1]["invoice"] = f.get("invoice") or None  # the printed receipt, or nothing
+                    lines[-1]["location"] = f.get("location") or None  # where the fill happened, as printed
 
                 # ---- every remaining money line from both documents
                 #
@@ -308,6 +309,7 @@ def main():
                         lines.append(line(k, d, None, None, None, amt, src))
                         lines[-1]["date"] = x.get("date")  # R-177: the document's own line date
                         lines[-1]["invoice"] = x.get("invoice") or None  # the printed receipt, or nothing
+                        lines[-1]["location"] = x.get("location") or None  # where it happened, as printed
                         if x.get("load_by"): lines[-1]["load_by"] = x["load_by"]
             except Fail as e:
                 failures.append(f"load {ln} ({src}): {e}")

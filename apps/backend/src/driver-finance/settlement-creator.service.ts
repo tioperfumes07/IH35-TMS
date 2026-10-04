@@ -1064,7 +1064,12 @@ export async function postSettlementCreatorInClientTx(
     // too, 202615370600). source_row_hash is NOT NULL since 202614220000 and this INSERT never set it (every Settlement
     // Creator fuel line failed with 23502); it is keyed on the provider ID when there is one.
     try {
-      await refuseDuplicateProviderTransaction(client, { operatingCompanyId: draft.operating_company_id, vendorId: vendor.id, reference: fuel.invoice });
+      await refuseDuplicateProviderTransaction(client, {
+        operatingCompanyId: draft.operating_company_id,
+        vendorId: vendor.id,
+        reference: fuel.invoice,
+        fuelType: fuel.fuel_type ?? "diesel",
+      });
     } catch (err) {
       if (err instanceof FuelProviderTransactionDuplicateError) throw new SettlementCreatorError(err.code, `Fuel line ${fuel.date}: ${err.message}`);
       throw err;
