@@ -645,6 +645,34 @@ export async function rewriteDocumentLine(
 ): Promise<{ updated: boolean; note: string | null }> {
   const type = p.source_transaction_type;
   if (!type || !p.source_transaction_id) return { updated: false, note: "hand-keyed journal entry: no source document to rewrite (ledger moved by the reclass JE)" };
+  // A fuel purchase's entry is ADOPTED by its expense document (ROUND 290.1: the feed posts, the document adopts that
+  // entry), so the expense IS the document that must follow the ledger. Before (CC-2 2026-10-04) a fuel_event leg was
+  // refused here as "no line rewrite yet", which meant no feed-posted fuel cost could ever be reclassified. The line is
+  // the adopting expense's line of this exact amount (the line already on the target account is preferred); anything
+  // ambiguous or missing is refused by name, so the ledger never moves without its document.
+  if (type === "fuel_event") {
+    const adopt = await client.query<{ expense_id: string; line_id: string | null; lines: string }>(
+      `SELECT e.id::text AS expense_id,
+              (SELECT el.id::text FROM accounting.expense_lines el
+                WHERE el.expense_id = e.id AND el.operating_company_id = e.operating_company_id AND el.amount_cents = $4::bigint
+                ORDER BY (el.expense_account_uuid = $5::uuid) DESC, (el.expense_account_uuid = $6::uuid) DESC, el.line_sequence
+                LIMIT 1) AS line_id,
+              (SELECT count(*) FROM accounting.expense_lines el
+                WHERE el.expense_id = e.id AND el.operating_company_id = e.operating_company_id AND el.amount_cents = $4::bigint)::text AS lines
+         FROM accounting.expenses e
+        WHERE e.operating_company_id = $1::uuid AND e.journal_entry_id = $2::uuid
+          AND e.source_fuel_transaction_id::text = $3 AND e.voided_at IS NULL`,
+      [companyId, p.journal_entry_id, p.source_transaction_id, p.amount_cents, target.account_id ?? p.account_id, p.account_id],
+    );
+    if (adopt.rows.length !== 1) {
+      return { updated: false, note: `fuel_event: ${adopt.rows.length} live expense documents adopt this entry (need exactly 1); nothing moved` };
+    }
+    const a = adopt.rows[0]!;
+    if (!a.line_id || Number(a.lines) !== 1) {
+      return { updated: false, note: `fuel_event: the adopting expense has ${a.lines} lines of ${p.amount_cents} cents (need exactly 1); nothing moved` };
+    }
+    return rewriteDocumentLine(client, companyId, { ...p, source_transaction_type: "expense", source_transaction_id: a.expense_id, source_transaction_line_id: a.line_id }, target);
+  }
   const notes: string[] = [];
   // U24 — the item and the load live on the document LINE; without the posting's line id the move is refused, never guessed.
   if ((target.item_id || target.load_id) && (type === "expense" || type === "bill")) {
