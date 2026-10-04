@@ -154,7 +154,7 @@ function ContributingLoadsList({
         </ul>
       )}
       {typeof totalCount === "number" && totalCount > loads.length ? (
-        <p className="mt-1 text-[11px] text-gray-500">
+        <p className="mt-1 text-xs text-gray-500">
           +{totalCount - loads.length} more load{totalCount - loads.length === 1 ? "" : "s"} this period (showing
           {" "}
           {loads.length} of {totalCount}).
