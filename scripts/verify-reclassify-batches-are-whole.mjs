@@ -18,7 +18,12 @@ function staticFailures(src) {
   if (/UPDATE\s+accounting\.journal_entry_postings/i.test(src)) out.push("service UPDATEs journal_entry_postings (WORM: postings are never edited)");
   if (/DELETE\s+FROM\s+accounting\.journal_entry_postings/i.test(src)) out.push("service DELETEs journal_entry_postings");
   if (!src.includes('journal_entry_type_code: "RECLASSIFICATION"')) out.push("reclass JE is not typed RECLASSIFICATION");
-  if (!src.includes("reverseJournalEntryNoFlip")) out.push("undo does not use the canonical linked reversal");
+  // ROUND 390.1 (CC-1, #25149): a reversal line is TERMINAL. A reclass JE's out-leg is itself a reversal of the original
+  // line, so the canonical undo is restoreReversedJournalEntryInClientTx (the original comes back as a fresh line, the
+  // in-leg is reversed; header-linked, idempotent). Reversing the reclass JE again (reverseJournalEntryNoFlip) would write
+  // a reversal of a reversal — refused by the posting-line writer — so the old path is now itself a failure.
+  if (!/\brestoreReversedJournalEntryInClientTx\s*\(/.test(src)) out.push("undo does not use the canonical restore of a reversing entry (restoreReversedJournalEntryInClientTx)");
+  if (/\breverseJournalEntryNoFlip\s*\(/.test(src)) out.push("undo reverses the reclass JE again (reverseJournalEntryNoFlip) — a reversal of a reversal, refused since ROUND 390.1");
   if (!src.includes("SAVEPOINT reclass_doc")) out.push("per-document savepoint missing (one bad document must not roll back the batch)");
   return out;
 }
@@ -28,7 +33,10 @@ if (process.argv.includes("--selftest")) {
   if (staticFailures(src).length) { console.error(`${LABEL}: selftest FAIL on the real source`, staticFailures(src)); process.exit(1); }
   const plant = src.replace('journal_entry_type_code: "RECLASSIFICATION"', 'journal_entry_type_code: "GENERAL"') + "\nUPDATE accounting.journal_entry_postings SET x = 1";
   if (staticFailures(plant).length < 2) { console.error(`${LABEL}: selftest FAIL — planted regressions escaped`); process.exit(1); }
-  console.log(`${LABEL}: selftest PASS (static 5/5, 2 planted regressions caught)`);
+  // ROUND 390.1 undo path, both directions: the old reverse-the-reclass-JE call fails, a missing restore fails.
+  const oldUndo = src.replace(/\brestoreReversedJournalEntryInClientTx\s*\(/g, "reverseJournalEntryNoFlip(");
+  if (staticFailures(oldUndo).length < 2) { console.error(`${LABEL}: selftest FAIL — the pre-390.1 undo (reverse a reversing JE) escaped`); process.exit(1); }
+  console.log(`${LABEL}: selftest PASS (static, 2 planted regressions + the pre-390.1 undo caught)`);
   process.exit(0);
 }
 
