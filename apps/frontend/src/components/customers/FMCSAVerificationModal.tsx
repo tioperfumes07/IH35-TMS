@@ -138,7 +138,7 @@ export function FMCSAVerificationModal({
           </div>
 
           {inputError ? <div className="text-xs text-red-600">{inputError}</div> : null}
-          {displayLookupValue ? <div className="text-[11px] text-gray-500">Searching: {lookupType.toUpperCase()} {displayLookupValue}</div> : null}
+          {displayLookupValue ? <div className="text-xs text-gray-500">Searching: {lookupType.toUpperCase()} {displayLookupValue}</div> : null}
           <div>
             <Button onClick={() => void runLookup()} loading={lookupMutation.isPending}>
               Verify
@@ -163,7 +163,7 @@ export function FMCSAVerificationModal({
               <div><strong>Insurance Status:</strong> {result.insurance_status ?? "-"}</div>
               <div><strong>Safety Rating:</strong> {result.safety_rating ?? "NONE"}</div>
             </div>
-            <div className="text-[11px] text-gray-500">Fetched at {new Date(result.fetched_at).toLocaleString()}</div>
+            <div className="text-xs text-gray-500">Fetched at {new Date(result.fetched_at).toLocaleString()}</div>
           </section>
         ) : null}
 
