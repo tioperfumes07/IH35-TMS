@@ -229,6 +229,29 @@ async function roots(c: Q, plan: Plan, why: Map<string, string>) {
     for (const k of keep) plan.get("driver_finance.driver_settlements")?.delete(k);
     return;
   }
+  if (SCOPE === "unwind397") {
+    // AUTH-397-UNWIND (Lead, 2026-10-04): EXACTLY the double reversals — a JE that reverses a JE which is itself a
+    // reversal (a.reverses_je_id -> b WHERE b.reverses_je_id IS NOT NULL). Nothing outside that set: the plan refuses
+    // below unless it holds 61 entries / 122 lines. The engine cannot reverse them (a 4th level is refused by
+    // posting_line_is_already_a_reversal), so the unwind is their removal under the AUTH.
+    add(plan, "accounting.journal_entries", await ids(c,
+      `SELECT a.id::text AS id FROM accounting.journal_entries a
+         JOIN accounting.journal_entries b ON b.id = a.reverses_je_id
+        WHERE a.operating_company_id = $1::uuid AND b.reverses_je_id IS NOT NULL`, [USMCA]),
+      why, "AUTH-397-UNWIND: reversal of a reversal (double reversal)");
+    return;
+  }
+  if (SCOPE === "unwind397-chain") {
+    // The same 61, WITH the two entries each one chains to (b = the reversal it reversed, c = the original b reversed).
+    // Shown for the Lead's ruling only: removing the 61 alone leaves b's back-pointers naming deleted rows.
+    add(plan, "accounting.journal_entries", await ids(c,
+      `SELECT x.id::text AS id FROM accounting.journal_entries a
+         JOIN accounting.journal_entries b ON b.id = a.reverses_je_id
+         CROSS JOIN LATERAL (VALUES (a.id), (b.id), (b.reverses_je_id)) x(id)
+        WHERE a.operating_company_id = $1::uuid AND b.reverses_je_id IS NOT NULL`, [USMCA]),
+      why, "AUTH-397-UNWIND whole chain: original, its reversal, the reversal of that reversal");
+    return;
+  }
   if (SCOPE === "orphan-postings") {
     // JEs that post for a document that no longer exists (the ledger must never carry a line without its document).
     for (const [table, types] of Object.entries(DOC_SOURCE)) {
@@ -269,7 +292,7 @@ async function roots(c: Q, plan: Plan, why: Map<string, string>) {
     }
     return;
   }
-  throw new Error("--scope=transportation21 | --scope=usmca-clean | --scope=orphan-postings | --scope=zero-reset is required");
+  throw new Error("--scope=transportation21 | --scope=usmca-clean | --scope=orphan-postings | --scope=unwind397 | --scope=unwind397-chain | --scope=zero-reset is required");
 }
 
 async function fkGraph(c: Q): Promise<Fk[]> {
@@ -299,9 +322,44 @@ async function pkOf(c: Q, table: string): Promise<string | null> {
   return r.rows[0]?.a ?? null;
 }
 
+/**
+ * The plan must hold WHOLE entries and nothing may point into it from outside (AUTH-397-UNWIND, 2026-10-04):
+ *   - every planned posting line's entry header is planned (a line without its header is never deleted alone);
+ *   - no line OUTSIDE the plan names a planned line in reversal_of_line_id / reversed_by_line_id, and no entry outside
+ *     the plan names a planned entry in reverses_je_id / reversed_by_je_id. Removing the planned side would need an
+ *     UPDATE of that back-pointer on a posting / header — never done here; it is reported for the owner to decide.
+ */
+async function backPointerBlockers(c: Q, plan: Plan, report: string[]) {
+  const lines = [...(plan.get("accounting.journal_entry_postings") ?? [])];
+  const jes = [...(plan.get("accounting.journal_entries") ?? [])];
+  if (lines.length) {
+    const headless = (await c.query<{ je: string; n: string }>(
+      `SELECT journal_entry_uuid::text AS je, count(*)::text AS n FROM accounting.journal_entry_postings
+        WHERE id::text = ANY($1::text[]) AND NOT (journal_entry_uuid::text = ANY($2::text[])) GROUP BY 1`, [lines, jes])).rows;
+    if (headless.length) report.push(`BLOCKER accounting.journal_entry_postings: ${headless.reduce((n, r) => n + Number(r.n), 0)} planned line(s) belong to ${headless.length} entr(ies) NOT in the plan (${headless.slice(0, 5).map((r) => r.je).join(", ")}) — a line is never deleted without its entry`);
+    const ptr = (await c.query<{ col: string; n: string; jes: string }>(
+      `SELECT col, count(*)::text AS n, count(DISTINCT je)::text AS jes FROM (
+         SELECT 'reversed_by_line_id' AS col, p.journal_entry_uuid AS je FROM accounting.journal_entry_postings p
+          WHERE p.reversed_by_line_id::text = ANY($1::text[]) AND NOT (p.id::text = ANY($1::text[]))
+         UNION ALL
+         SELECT 'reversal_of_line_id', p.journal_entry_uuid FROM accounting.journal_entry_postings p
+          WHERE p.reversal_of_line_id::text = ANY($1::text[]) AND NOT (p.id::text = ANY($1::text[]))) x GROUP BY col`, [lines])).rows;
+    for (const r of ptr) report.push(`BLOCKER accounting.journal_entry_postings.${r.col}: ${r.n} line(s) in ${r.jes} entr(ies) OUTSIDE the plan point at a planned line — removing it needs an UPDATE of that back-pointer on a posting (not done; owner decides: clear the pointer under the AUTH, or widen the AUTH to the whole chain)`);
+  }
+  if (jes.length) {
+    const hp = (await c.query<{ col: string; n: string }>(
+      `SELECT col, count(*)::text AS n FROM (
+         SELECT 'reversed_by_je_id' AS col FROM accounting.journal_entries j WHERE j.reversed_by_je_id::text = ANY($1::text[]) AND NOT (j.id::text = ANY($1::text[]))
+         UNION ALL
+         SELECT 'reverses_je_id' FROM accounting.journal_entries j WHERE j.reverses_je_id::text = ANY($1::text[]) AND NOT (j.id::text = ANY($1::text[]))) x GROUP BY col`, [jes])).rows;
+    for (const r of hp) report.push(`BLOCKER accounting.journal_entries.${r.col}: ${r.n} entr(ies) OUTSIDE the plan point at a planned entry — same decision as the line back-pointers`);
+  }
+}
+
 /** Collect every row hanging off the plan through foreign keys, recursively. Returns the delete order (deepest first). */
 async function expand(c: Q, plan: Plan, why: Map<string, string>, report: string[]) {
   const fks = await fkGraph(c);
+  const compositeRefs: { child: string; col: string; parent: string; ids: string[] }[] = [];
   const depth = new Map<string, number>([...plan.keys()].map((t) => [t, 0]));
   let changed = true;
   let guard = 0;
@@ -312,6 +370,11 @@ async function expand(c: Q, plan: Plan, why: Map<string, string>, report: string
       if (!parentIds?.size || NEVER_RECURSE.has(fk.child)) continue;
       // JE <-> JE reversal links are handled by the reversal-partner step below (both halves always go together).
       if (fk.child === "accounting.journal_entries" && fk.parent === "accounting.journal_entries") continue;
+      // Posting <-> posting reversal links (reversal_of_line_id / reversed_by_line_id) are BACK-POINTERS between two
+      // entries, not ownership: following them pulled the reversed entry's lines and the original's lines into the plan
+      // without their headers (AUTH-397-UNWIND dry run, 2026-10-04: 366 lines planned for 61 entries holding 122).
+      // A line outside the plan that still points at a planned line is reported below as a BLOCKER instead.
+      if (fk.child === "accounting.journal_entry_postings" && fk.parent === "accounting.journal_entry_postings") continue;
       const parentPk = await pkOf(c, fk.parent);
       if (!parentPk) continue;
       const vals = fk.parentCol === parentPk ? [...parentIds]
@@ -346,7 +409,20 @@ async function expand(c: Q, plan: Plan, why: Map<string, string>, report: string
         continue;
       }
       if (fk.cols > 1 || !fk.childPk) {
-        const n = (await c.query<{ n: string }>(`SELECT count(*)::text AS n FROM ${fk.child} WHERE ${fk.childCol}::text = ANY($1::text[])`, [vals])).rows[0]?.n;
+        // A composite (operating_company_id, x) FK matches on its SECOND column; counting by operating_company_id alone
+        // reported every row of the company (4,439 / 355 false UNHANDLED on the AUTH-397-UNWIND dry run).
+        const comp = fk.cols > 1 && fk.childCol === "operating_company_id" && fk.childCol2 && fk.parentCol2;
+        const cCol = comp ? fk.childCol2! : fk.childCol;
+        const cVals = comp
+          ? (await c.query<{ v: string }>(`SELECT ${fk.parentCol2}::text AS v FROM ${fk.parent} WHERE ${parentPk}::text = ANY($1::text[]) AND ${fk.parentCol2} IS NOT NULL`, [[...parentIds]])).rows.map((r) => r.v)
+          : vals;
+        if (comp && fk.childPk) {
+          // Judged AFTER the walk: its rows usually arrive through a single-column FK in a later pass.
+          const ck = (await c.query<{ id: string }>(`SELECT ${fk.childPk}::text AS id FROM ${fk.child} WHERE ${cCol}::text = ANY($1::text[])`, [cVals])).rows.map((r) => r.id);
+          if (ck.length) compositeRefs.push({ child: fk.child, col: cCol, parent: fk.parent, ids: ck });
+          continue;
+        }
+        const n = (await c.query<{ n: string }>(`SELECT count(*)::text AS n FROM ${fk.child} WHERE ${cCol}::text = ANY($1::text[])`, [cVals])).rows[0]?.n;
         if (Number(n) > 0) report.push(`UNHANDLED ${fk.child}.${fk.childCol} -> ${fk.parent}: ${n} row(s) (no single-column primary key / multi-column FK) — resolve before APPLY`);
         continue;
       }
@@ -377,6 +453,11 @@ async function expand(c: Q, plan: Plan, why: Map<string, string>, report: string
     const partners = await ids(c, `SELECT x.id::text AS id FROM (SELECT reversed_by_je_id AS id FROM accounting.journal_entries WHERE id::text = ANY($1::text[]) UNION SELECT id FROM accounting.journal_entries WHERE reverses_je_id::text = ANY($1::text[])) x WHERE x.id IS NOT NULL`, [[...jes]]);
     if (add(plan, "accounting.journal_entries", partners, why, "reversal partner of a deleted JE")) return expand(c, plan, why, report);
   }
+  for (const r of compositeRefs) {
+    const missing = [...new Set(r.ids)].filter((k) => !plan.get(r.child)?.has(k));
+    if (missing.length) report.push(`BLOCKER ${r.child}.${r.col} -> ${r.parent}: ${missing.length} row(s) reference the deleted set through a composite FK and are not in the plan — decide per row (${missing.slice(0, 5).join(", ")})`);
+  }
+  await backPointerBlockers(c, plan, report);
   const byDepth = [...plan.keys()].sort((a, b) => (depth.get(b) ?? 0) - (depth.get(a) ?? 0));
   if (SCOPE !== "zero-reset") return byDepth;
   // ROUND 326 queue item 22: delete order is TOPOLOGICAL over the FK graph — a table goes only after every table
