@@ -64,14 +64,14 @@ export function NotificationDropdown({ notifications, onClose, onMarkRead, onDis
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
                     <p className="text-xs font-medium text-gray-900">{item.title}</p>
-                    <span className="shrink-0 text-[11px] text-gray-500">{relativeTime(item.created_at)}</span>
+                    <span className="shrink-0 text-xs text-gray-500">{relativeTime(item.created_at)}</span>
                   </div>
                   {item.body ? <p className="mt-0.5 line-clamp-2 text-xs text-gray-600">{item.body}</p> : null}
                   <div className="mt-1 flex flex-wrap gap-2">
                     {!item.read_at ? (
                       <button
                         type="button"
-                        className="text-[11px] font-medium text-slate-700 hover:underline"
+                        className="text-xs font-medium text-slate-700 hover:underline"
                         onClick={() => void onMarkRead(item.id)}
                       >
                         Mark read
@@ -79,7 +79,7 @@ export function NotificationDropdown({ notifications, onClose, onMarkRead, onDis
                     ) : null}
                     <button
                       type="button"
-                      className="text-[11px] font-medium text-gray-600 hover:underline"
+                      className="text-xs font-medium text-gray-600 hover:underline"
                       onClick={() => void onDismiss(item.id)}
                     >
                       Dismiss
@@ -87,7 +87,7 @@ export function NotificationDropdown({ notifications, onClose, onMarkRead, onDis
                     {item.action_link ? (
                       <Link
                         to={item.action_link}
-                        className="inline-flex items-center gap-0.5 text-[11px] font-medium text-slate-700 hover:underline"
+                        className="inline-flex items-center gap-0.5 text-xs font-medium text-slate-700 hover:underline"
                         onClick={onClose}
                       >
                         <LinkIcon className="h-3 w-3" />
