@@ -149,7 +149,69 @@ function isGuarded(src, rel) {
   ).test(src);
 }
 
+// CC-3 2026-10-04 (LST-F407-D): a relation can be guarded through a HELPER — lessee-posting.service.ts's
+// lesseeSchemaReady() runs to_regclass('accounting.lease_lessee_schedule_period'), and lease-engine / lease-buyout (via
+// buyoutSchemaReady -> lesseeSchemaReady) refuse by name or degrade with a reason before they read it. The file-local
+// check above could not see that and reported two correct, guarded reads as phantoms. GUARD_HELPERS maps every function
+// whose body checks a relation (directly, or by calling another such function) to the relations it guards.
+const FN_RE = /(?:export\s+)?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\([^)]*\)[^{]*\{/g;
+function functionsOf(src) {
+  const out = [];
+  let m;
+  FN_RE.lastIndex = 0;
+  while ((m = FN_RE.exec(src))) {
+    let depth = 0, i = m.index + m[0].length - 1;
+    for (; i < src.length; i++) { if (src[i] === "{") depth++; else if (src[i] === "}" && --depth === 0) break; }
+    out.push({ name: m[1], body: src.slice(m.index, i + 1) });
+  }
+  return out;
+}
+const REGCLASS_LIT_RE = /(?:to_regclass|tableExists|relationExists|regclassExists)\s*\([^)]*['"`]([a-z_][a-z0-9_]*\.[a-z_][a-z0-9_]*)['"`]/gi;
+export function buildGuardHelpers(sources) {
+  const fns = sources.flatMap((src) => functionsOf(src));
+  const helpers = new Map(); // name -> Set(relation)
+  for (const f of fns) {
+    let m;
+    REGCLASS_LIT_RE.lastIndex = 0;
+    while ((m = REGCLASS_LIT_RE.exec(f.body))) {
+      if (!helpers.has(f.name)) helpers.set(f.name, new Set());
+      helpers.get(f.name).add(m[1].toLowerCase());
+    }
+  }
+  for (let pass = 0; pass < 4; pass++) {
+    let grew = false;
+    for (const f of fns) {
+      for (const [name, rels] of [...helpers]) {
+        if (name === f.name || !new RegExp(`\\b${name}\\s*\\(`).test(f.body)) continue;
+        if (!helpers.has(f.name)) helpers.set(f.name, new Set());
+        for (const r of rels) if (!helpers.get(f.name).has(r)) { helpers.get(f.name).add(r); grew = true; }
+      }
+    }
+    if (!grew) break;
+  }
+  return helpers;
+}
+function guardedByHelper(src, rel, helpers) {
+  for (const [name, rels] of helpers) if (rels.has(rel) && new RegExp(`\\b${name}\\s*\\(`).test(src)) return true;
+  return false;
+}
+
 if (SELFTEST) {
+  {
+    const h = buildGuardHelpers([
+      "export async function ready(c) { return c.query(`SELECT to_regclass('accounting.x_y') IS NOT NULL`); }",
+      "async function readyMore(c) { if (!(await ready(c))) return false; return true; }",
+    ]);
+    if (!guardedByHelper("if (!(await readyMore(c))) throw e; SELECT * FROM accounting.x_y", "accounting.x_y", h)) {
+      console.error("verify-phantom-relations SELFTEST FAIL — a relation guarded through a helper chain was not recognized"); process.exit(1);
+    }
+    if (guardedByHelper("SELECT * FROM accounting.x_y", "accounting.x_y", h)) {
+      console.error("verify-phantom-relations SELFTEST FAIL — an unguarded read was accepted through the helper map"); process.exit(1);
+    }
+    if (guardedByHelper("await ready(c); SELECT * FROM accounting.other_t", "accounting.other_t", h)) {
+      console.error("verify-phantom-relations SELFTEST FAIL — a helper guarding ANOTHER relation was accepted"); process.exit(1);
+    }
+  }
   const relation = "dispatch.cargo_sensor_incidents";
   if (!isGuarded(`await tableExists(client, "${relation}"); SELECT * FROM ${relation}`, relation)) {
     console.error("verify-phantom-relations SELFTEST FAIL — literal tableExists guard was not recognized");
@@ -163,6 +225,7 @@ if (SELFTEST) {
   process.exit(0);
 }
 
+const GUARD_HELPERS = buildGuardHelpers(walk(BACKEND).map((f) => readFileSync(f, "utf8")));
 const newPhantoms = []; // { file, rel }
 const debtSeen = new Set();
 const guardedSkipped = [];
@@ -186,7 +249,7 @@ for (const file of walk(BACKEND)) {
     if (canonical.has(relation)) continue;
     if (seen.has(relation)) continue;
     seen.add(relation);
-    if (isGuarded(src, relation)) {
+    if (isGuarded(src, relation) || guardedByHelper(src, relation, GUARD_HELPERS)) {
       guardedSkipped.push({ file: rel, rel: relation });
       continue;
     }
