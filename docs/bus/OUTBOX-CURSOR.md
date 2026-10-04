@@ -1,3 +1,9 @@
+## 2026-10-04T07:24Z · BANK-F91440 C-19 With-transactions default WIRED CI · tip `c0c24b4242`
+
+DONE: #25182 — verify-steps/2232 now runs ops/verify-c19-has-transactions-default --selftest. Invoice match banner already on 1158 B-1 pack.
+
+NEXT: BANK-F91441 wire C-04 row treatment into 10602 · skip pile parked · HH07 no migrations.
+
 ## 2026-10-04T07:18Z · BANK-F91439 C-52 toast dock corrected + WIRED CI · tip `08b499b381`
 
 DONE: #25181 — C-52 requires top-14 right-3 (C-65 owns bottom-3); step 3018 runs ops/verify-c52-alerts-side-dock.
