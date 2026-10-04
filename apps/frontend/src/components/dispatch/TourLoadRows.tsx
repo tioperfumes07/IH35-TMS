@@ -140,7 +140,7 @@ export function tourLoadFooter(state: "open" | "closed") {
     return n;
   };
   return {
-    tour: (v: TourLoadRow[]) => <span className="font-semibold uppercase tracking-[0.4px] text-gray-600" style={{ fontSize: 11 }} data-testid="tour-totals-label">Totals ({new Set(v.map(r => r.settlement_id)).size} tours · {v.filter(r => r.load_id).length} loads)</span>,
+    tour: (v: TourLoadRow[]) => <span className="font-semibold uppercase tracking-[0.4px] text-gray-600 text-section-header" data-testid="tour-totals-label">Totals ({new Set(v.map(r => r.settlement_id)).size} tours · {v.filter(r => r.load_id).length} loads)</span>,
     revenue: (v: TourLoadRow[]) => fmt(v.reduce((n, r) => n + r.load_revenue_cents, 0)),
     costs: (v: TourLoadRow[]) => fmt(v.reduce((n, r) => n + r.load_costs_cents, 0)),
     driver_pay: (v: TourLoadRow[]) => fmt(v.reduce((n, r) => n + r.load_driver_pay_cents, 0)),
