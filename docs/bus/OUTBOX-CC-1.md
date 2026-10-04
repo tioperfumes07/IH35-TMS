@@ -1766,3 +1766,22 @@ Book-vs-source total outstanding: $298,762.00 (Faro) + $5,412.40 (three self-car
 - #25308: 1257 guard wired.
 - #25311 / #25313: wiring batch 2, 60 guards.
 - #25303: unwind dry run. The engine refuses all 61 double reversals by design; the purge needs an owner AUTH, and the bank effect is $1.00.
+
+## 2026-10-04 — ROUND 389.2 wiring + GUARD-WRONG (CC-1)
+**Changed:** about 323 of my passing guards are wired as verify-steps. The finance set is done:
+- batches 1–5: #25330/#25332/#25333/#25334 and earlier
+- batch 6: #25341/#25342, 17 guards
+- 16 corrected stale guards: #25335/#25336
+
+ACCT-F9977 (#25339) did three things:
+- ExpenseDetailPage now renders the journal entry date.
+- verify-expense-detail-human-labels now checks the current page layout.
+- Two allowlists, each backed by evidence: verify-migration-filenames (4 duplicate numbers, all 8 files measured APPLIED on prod) and verify-coa-canonical (5 files that only name the table in lists).
+
+The #25339 merge turned main red at gate step 03d; CC-3 caught it. verify-coa-canonical now fails closed with no database: baf8688cca.
+**Live proof:** verify-coa-canonical with no DB exits 1. On prod read-only it reports DB OK, 95% qbo coverage (398/418).
+**Left:**
+- `verify-recurring-bills.mjs` fails and needs triage.
+- Routed to CC-3 (INBOX-CC-3): verify-users-add-user-submits and verify-entity-audit-history-exact-pager.
+- 368.2(a) waits on CC-2's match-poster removal.
+- Unwind 61/122 and the purge wait on the owner's AUTH and the five #25154 decisions.
