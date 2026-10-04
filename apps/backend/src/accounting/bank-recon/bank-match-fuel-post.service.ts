@@ -14,7 +14,7 @@ import {
   mapFuelTypeToPostingKind,
   resolveCompanyDirectCreditPreference,
 } from "../fuel-posting/maybe-post-from-fuel-transaction.service.js";
-import { postFuelExpenseOnClient, type FuelPostingResult } from "../fuel-posting/poster.service.js";
+import { postFuelExpenseOnClient, type FuelCategoryCode, type FuelPostingResult } from "../fuel-posting/poster.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -22,7 +22,9 @@ type DbClient = {
 
 export class FuelMatchPostError extends Error {
   constructor(
-    public code: "fuel_fill_not_found" | "fuel_fill_missing_unit" | "fuel_fill_missing_load" | "fuel_fill_zero_amount",
+    public code:
+      | "fuel_fill_not_found" | "fuel_fill_missing_unit" | "fuel_fill_missing_load" | "fuel_fill_zero_amount"
+      | "relay_fill_unknown_product" | "relay_fill_has_no_fuel_lines" | "relay_fill_lines_do_not_foot",
     message: string
   ) {
     super(message);
@@ -200,9 +202,11 @@ async function postRelayFuelFill(
                        HAVING count(*) = 1))::text AS unit_id,
              COALESCE(u.unit_number, r.matched_unit_number)::text AS unit_number,
              r.location_state::text AS location_state,
+             -- IFTA taxable gallons are ROAD diesel only: reefer (off-road) and DEF are not motor fuel (CC-2 2026-10-04;
+             -- this used to sum diesel + reefer + DEF, overstating IFTA gallons on every mixed fill).
              (SELECT sum(l.volume)::text FROM integrations.relay_fuel_transaction_lines l
                WHERE l.relay_fuel_transaction_id = r.id AND l.voided_at IS NULL AND l.volume_uom = 'gallons'
-                 AND l.fuel_type IN ('diesel', 'reefer', 'def')) AS gallons,
+                 AND l.fuel_type = 'diesel') AS gallons,
              r.merchant_name::text AS merchant_name
         FROM integrations.relay_fuel_transactions r
         LEFT JOIN mdata.units u ON u.id = r.matched_unit_id
@@ -233,11 +237,41 @@ async function postRelayFuelFill(
     throw new FuelMatchPostError("fuel_fill_zero_amount", `relay_fuel ${input.fill_id}: amount_cents must be > 0`);
   }
 
+  // One Relay ticket, several products (CC-2 2026-10-04). This used to post the WHOLE fill as diesel, so a fill's DEF
+  // landed in 5000 Fuel & Diesel and its reefer diesel too, while their items say 5010 / 5015. Each product line is now
+  // its own leg on its own item's account. Measured on USMCA: 117 of 117 itemised fills pay exactly the sum of their
+  // lines' discounted prices, so the legs foot to the wallet credit with no plug; a fill whose lines do not foot, or that
+  // carries no fuel line at all (a scale ticket is not fuel), is refused by name.
+  const linesRes = await client.query<{ fuel_type: string; cents: string }>(
+    `SELECT l.fuel_type, sum(l.total_discounted_price_cents)::bigint::text AS cents
+       FROM integrations.relay_fuel_transaction_lines l
+      WHERE l.relay_fuel_transaction_id = $1::uuid AND l.voided_at IS NULL
+      GROUP BY l.fuel_type`,
+    [input.fill_id]
+  );
+  const RELAY_KIND: Record<string, FuelCategoryCode> = { diesel: "diesel", def: "def", reefer: "reefer" };
+  const unknown = linesRes.rows.filter((l) => !RELAY_KIND[l.fuel_type]);
+  if (unknown.length) {
+    throw new FuelMatchPostError("relay_fill_unknown_product", `relay_fuel ${input.fill_id}: product line(s) ${unknown.map((l) => l.fuel_type).join(", ")} have no fuel item — refusing rather than posting them as diesel`);
+  }
+  const costLines = linesRes.rows
+    .map((l) => ({ fuel_kind: RELAY_KIND[l.fuel_type]!, amount_cents: Math.round(Number(l.cents ?? 0)) }))
+    .filter((l) => l.amount_cents > 0);
+  if (!costLines.length) {
+    throw new FuelMatchPostError("relay_fill_has_no_fuel_lines", `relay_fuel ${input.fill_id}: no fuel product line (e.g. a scale ticket) — this is not a fuel posting; categorize the bank line instead`);
+  }
+  const linesCents = costLines.reduce((t, l) => t + l.amount_cents, 0);
+  if (linesCents !== amountCents) {
+    throw new FuelMatchPostError("relay_fill_lines_do_not_foot", `relay_fuel ${input.fill_id}: product lines ${linesCents} != paid ${amountCents} — refusing rather than plugging the difference`);
+  }
+  const primary = [...costLines].sort((a, b) => b.amount_cents - a.amount_cents)[0]!.fuel_kind;
+
   return postFuelExpenseOnClient(client, {
     operating_company_id: input.operating_company_id,
     actor_user_id: input.actor_user_uuid,
     fuel_event_id: input.fill_id,
-    fuel_kind: "diesel",
+    fuel_kind: primary,
+    cost_lines: costLines,
     posted_at: row.transaction_at,
     amount_cents: amountCents,
     posting_path: "company_direct",
@@ -247,7 +281,7 @@ async function postRelayFuelFill(
     ifta_gallons: row.gallons != null ? Number(row.gallons) : null,
     company_direct_credit: "relay_fuel_wallet",
     memo: buildFuelTxnJeMemo({
-      fuel_type: "diesel",
+      fuel_type: costLines.map((l) => l.fuel_kind).join("+"),
       load_number: load.load_number,
       unit_number: row.unit_number,
       vendor_name: row.merchant_name,
