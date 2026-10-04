@@ -219,7 +219,7 @@ export function DeadheadReportPage() {
             <div className="rounded-sm border border-gray-200 bg-white p-4">
               <div className="text-xs text-gray-500">Est. deadhead cost</div>
               <div className="text-page-title font-semibold">{money(reportQuery.data.fleet.estimated_deadhead_cost_cents)}</div>
-              <div className="text-[11px] text-gray-500">Fuel CPM × 1.4 driver-pay adj</div>
+              <div className="text-xs text-gray-500">Fuel CPM × 1.4 driver-pay adj</div>
             </div>
             <div className="rounded-sm border border-gray-200 bg-white p-4">
               <div className="text-xs text-gray-500">Trucks tracked</div>
