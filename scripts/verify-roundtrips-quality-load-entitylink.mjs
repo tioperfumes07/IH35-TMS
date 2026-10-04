@@ -84,6 +84,9 @@ function leftoverRefuse(text) {
   ) {
     hits.push(`${TIMELINE}: leftover off-scale muted`);
   }
+  if (text.includes("text-slate-") || text.includes("border-slate-") || text.includes("bg-slate-")) {
+    hits.push(`${TIMELINE}: leftover slate class`);
+  }
   return hits;
 }
 
@@ -216,6 +219,7 @@ if (process.argv.includes("--selftest")) {
     [round, qual, api, route.replace("invalid_related_invoice_id", "invalid_related_record_id"), timeline, legs],
     [round, qual, api, route.replace("related_invoice_display_id: relatedInvoiceDisplayId", "related_invoice_display_id: null"), timeline, legs],
     [round, qual, api, route, timeline.replace('["--dwl" as string]: "#4B5563"', '["--dwl" as string]: "#94a3b8"'), legs],
+    [round, qual, api, route, timeline.replace("bg-[#F7F8FA]", "bg-slate-50").replace("text-[#4B5563]", "text-slate-600").replaceAll("border-[#E5E7EB]", "border-slate-300"), legs],
   ];
   if (mutations.some((args) => !audit(...args).length)) {
     console.error(`${LABEL} SELFTEST FAIL — planted RoundTrips regression not caught`);

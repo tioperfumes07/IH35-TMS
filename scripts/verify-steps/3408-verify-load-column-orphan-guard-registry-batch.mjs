@@ -13,6 +13,7 @@ export default {
   name: "verify-load-column-orphan-guard-registry-batch",
   async run(ctx) {
     // BANK-F91518: leftover --dwl #94a3b8 muted; leftover refuse on verify-roundtrips-quality-load-entitylink --selftest + live
+    // BANK-F91538: leftover frame bg-slate-50 / text-slate-600 / border-slate-300 → house tokens; leftover refuse now also slate-* classes
     await ctx.run("node", ["scripts/verify-roundtrips-quality-load-entitylink.mjs", "--selftest"]);
     for (const guard of guards) await ctx.run("node", [`scripts/${guard}`]);
   },
