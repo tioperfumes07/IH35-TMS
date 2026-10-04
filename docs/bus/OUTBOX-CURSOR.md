@@ -1,3 +1,9 @@
+## 2026-10-04T07:36Z · BANK-F91442 C-05 minimum-scroll WIRED CI · tip `5d476b9e06`
+
+DONE: #25184 — verify-steps/11836 now runs ops/verify-c05-minimum-scroll --selftest.
+
+NEXT: BANK-F91443 wire C-06 viewport auto-adjust into 3122 · skip pile parked · HH07 no migrations.
+
 ## 2026-10-04T07:30Z · BANK-F91441 C-04 row treatment WIRED CI · tip `0cbecb2a65`
 
 DONE: #25183 — verify-steps/10602 now runs ops/verify-c04-row-treatment --selftest.
