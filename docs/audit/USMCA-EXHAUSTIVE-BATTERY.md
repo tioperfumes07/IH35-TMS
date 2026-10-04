@@ -61,7 +61,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/accounting/1099-corrections` | `apps/backend/src/accounting/p7-wave2.routes.ts:505` | — | — | — |
 | create | `/api/v1/accounting/account-register/inline-save` | `apps/backend/src/accounting/account-register.routes.ts:102` | — | — | — |
 | create | `/api/v1/accounting/account-register/toggle-cleared` | `apps/backend/src/accounting/account-register.routes.ts:70` | — | — | — |
-| create | `/api/v1/accounting/bank-deposits` | `apps/backend/src/accounting/bank-deposits.routes.ts:90` | — | — | — |
+| create | `/api/v1/accounting/bank-deposits` | `apps/backend/src/accounting/bank-deposits.routes.ts:94` | — | — | — |
 | nested | `/api/v1/accounting/bill-payments/:id/post-gl` | `apps/backend/src/accounting/bill-payment-gl.routes.ts:19` | — | — | — |
 | nested | `/api/v1/accounting/bill-payments/:id/unvoid` | `apps/backend/src/accounting/bills.routes.ts:801` | — | — | — |
 | create | `/api/v1/accounting/bills` | `apps/backend/src/accounting/bills.routes.ts:518` | — | — | — |
