@@ -121,3 +121,49 @@ describe("WIZ-46 shared Combobox contract", () => {
     expect(input).toHaveValue("NCC");
   });
 });
+
+describe("BANK-FILTER-BLUR-01 — a filter's typed text must survive losing focus", () => {
+  // The live defect: the Banking register's "Filter by description" is a Combobox whose onSearch IS
+  // the filter. Typing narrowed the register; clicking away ran closeListbox() -> setQuery("") ->
+  // the onSearch effect -> setDescriptionFilter("") and every transaction came back. The operator
+  // watches a filter they just set undo itself. Asserted on the LAST onSearch call, because what
+  // matters is the value the parent is left holding after focus leaves.
+  it("searchIsValue: clicking away leaves the filter applied and visible", async () => {
+    const user = userEvent.setup();
+    const onSearch = vi.fn();
+    render(
+      <div>
+        <Combobox options={options} value={null} onChange={() => {}} onSearch={onSearch} searchIsValue />
+        <button type="button">elsewhere</button>
+      </div>
+    );
+
+    const input = screen.getByRole("combobox");
+    await user.click(input);
+    await user.type(input, "f");
+    expect(onSearch).toHaveBeenLastCalledWith("f");
+
+    await user.click(screen.getByRole("button", { name: "elsewhere" }));
+
+    expect(input).toHaveAttribute("aria-expanded", "false");
+    expect(onSearch).toHaveBeenLastCalledWith("f"); // still filtered
+    expect(input).toHaveValue("f"); // and still shown — an applied filter that renders empty is the same lie reversed
+  });
+
+  it("without searchIsValue a picker still clears its query on close (unchanged)", async () => {
+    const user = userEvent.setup();
+    const onSearch = vi.fn();
+    render(
+      <div>
+        <Combobox options={options} value={null} onChange={() => {}} onSearch={onSearch} />
+        <button type="button">elsewhere</button>
+      </div>
+    );
+
+    const input = screen.getByRole("combobox");
+    await user.click(input);
+    await user.type(input, "f");
+    await user.click(screen.getByRole("button", { name: "elsewhere" }));
+    expect(onSearch).toHaveBeenLastCalledWith("");
+  });
+});

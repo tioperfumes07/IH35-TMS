@@ -90,6 +90,20 @@ jobs:
             scripts/verify-diesel-expense-fuel-dedupe.mjs \
             scripts/verify-fuel-relay-txn-vendor-unmatched.mjs \
             scripts/verify-no-test-markers-in-live-tables.mjs
+      # ROUND 389 (LEAD) — the ONLY place a credential-gated derived artifact's freshness can actually be
+      # proven. scripts/canonical-relations.json is regenerated from the live schema, so its generator
+      # declares requiresDatabase; every other job runs guards through scripts/verify-static.mjs, which
+      # DELETES DATABASE_URL by design. There the entry reports UNVERIFIABLE HERE (named and loud, never
+      # silently green) — verify-step 14385. Here the secret exists, so --strict regenerates and diffs it
+      # for real, and if PROD_READONLY_DATABASE_URL is ever missing or empty this step FAILS rather than
+      # reporting the gap as unverifiable. Before this, the guard was wired to no workflow at all and the
+      # artifact's freshness was checked NOWHERE.
+      - name: Derived artifact freshness — strict, incl. the DB-gated canonical relations
+        env:
+          DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
+          DATABASE_DIRECT_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
+          PGOPTIONS: '-c default_transaction_read_only=on -c statement_timeout=30000'
+        run: node scripts/verify-derived-artifact-freshness.mjs --strict
 
   verify-branch-fresh:
     # Base-DEPENDENT gate: it asserts the PR base is 0 commits behind origin/main.

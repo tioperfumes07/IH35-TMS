@@ -1,48 +1,52 @@
 {
-  "note": "ROUND 326 (CC-1). Shrink-only. Remove entries as the owner-ordered complete delete runs; never add.",
+ "note": "ROUND 326 (CC-1). Shrink-only. Remove entries as the owner-ordered complete delete runs; never add.",
+ "measured_at": "2026-10-02",
+ "transportation_loads_under_usmca": {
+  "measured_at": "2026-10-03",
+  "source": "prod read-only 2026-10-03: mdata.loads where source_entity_code <> the owning company's code \u2014 21 rows, all source_entity_code='TRANSP' under USMCA. OWNER RULING 2026-10-03, verbatim: \"THEY ARE FROM TRANSPORTATION AREN'T THEY, YES, THERE WILL BE NO MORE TRANSPORTATION LOADS AND I WILL SEED THE CORRECT LOADS NOW SO NO ISSUES.\" These 21 are correct provenance from moving Transportation's loads into USMCA, not corruption. 13497 / 13508 / 13510 / 13511 are the four the ratchet flagged as new on 2026-10-03 and are accepted under that ruling. Shrink-only still applies: the owner's re-seed and the purge should REMOVE entries, never add.",
+  "load_numbers": [
+   "13485",
+   "13487",
+   "13493",
+   "13494",
+   "13496",
+   "13497",
+   "13498",
+   "13500",
+   "13502",
+   "13503",
+   "13504",
+   "13505",
+   "13506",
+   "13507",
+   "13508",
+   "13509",
+   "13510",
+   "13511",
+   "13517",
+   "13522",
+   "13525",
+   "13530",
+   "13531",
+   "13533",
+   "13539"
+  ]
+ },
+ "cancelled_with_live_revrec": {
   "measured_at": "2026-10-02",
-  "transportation_loads_under_usmca": {
-    "measured_at": "2026-10-02",
-    "source": "docs/bus/10-02-2026-CC-1-TRANSPORTATION-REVREC-LEAK-ENGINE.md (owner Faro reconciliation, Company = IH)",
-    "load_numbers": [
-      "13485",
-      "13487",
-      "13493",
-      "13494",
-      "13496",
-      "13500",
-      "13498",
-      "13502",
-      "13503",
-      "13504",
-      "13505",
-      "13506",
-      "13507",
-      "13509",
-      "13517",
-      "13522",
-      "13525",
-      "13530",
-      "13531",
-      "13533",
-      "13539"
-    ]
-  },
-  "cancelled_with_live_revrec": {
-    "measured_at": "2026-10-02",
-    "source": "prod read-only: cancelled loads with an active latch row on a standing JE",
-    "load_numbers": [
-      "13481",
-      "13482",
-      "13485",
-      "13487",
-      "13489",
-      "13493",
-      "13494",
-      "13495",
-      "13496",
-      "13500",
-      "13501"
-    ]
-  }
+  "source": "prod read-only: cancelled loads with an active latch row on a standing JE",
+  "load_numbers": [
+   "13481",
+   "13482",
+   "13485",
+   "13487",
+   "13489",
+   "13493",
+   "13494",
+   "13495",
+   "13496",
+   "13500",
+   "13501"
+  ]
+ }
 }

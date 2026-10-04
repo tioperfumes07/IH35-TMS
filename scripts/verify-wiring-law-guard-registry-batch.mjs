@@ -3,7 +3,15 @@
 import { classifyGuards } from "./verify-guard-wired.mjs";
 
 const LABEL = "verify-wiring-law-guard-registry-batch";
-const MAX_REMAINING = 93;
+// ROUND 389 (Lead, 2026-10-03) — ratcheted 93 -> 3. 155 guards existed in scripts/ that no workflow
+// and no verify-step ever executed; measured against production, 155 of 158 PASSED. They were not
+// filler — they cover the natural-sign rendering, the bills sub-tab types, multi-select columns, the
+// whole Reclassify screen, duplicate refusal, and the undo / void / reversal / cancellation set that
+// gates the purge. verify-guards-do-not-run-as-ih35_app, the check on the checkers, was itself one of
+// them. All 155 are now wired as verify-steps. The 3 that remain are the 3 that FAIL, named in
+// docs/bus/10-03-2026-LEAD-RULING-WIRE-THE-ORPHAN-GUARDS.md; the ceiling is set to exactly that count
+// so the debt cannot quietly regrow and so reaching 0 means those three are fixed, not hidden.
+const MAX_REMAINING = 3;
 const REQUIRED = [
   "verify-fully-wired-complete-bar-present.mjs",
   "verify-honest-built-launch-law-present.mjs",

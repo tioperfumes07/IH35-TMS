@@ -17,6 +17,7 @@
  */
 import fs from "node:fs";
 import os from "node:os";
+import { resolveGateReadonlyDbUrl } from "./lib/gate-db-credential.mjs";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -1748,31 +1749,35 @@ function touchesMoneyPath() {
 // string from its own dedicated "READONLY GATE CREDENTIAL (ih35_ci_readonly)" section (a fenced
 // code block, not the whole file) so a stray edit elsewhere in that doc can't be misread as this
 // credential. Read once, memoized, never logged (it's a live credential).
-const MASTER_KEYS_FILE = path.join(
-  os.homedir(),
-  "Desktop/09-28-2026-IH35-MASTER-KEYS-ENVS-SINGLE-SOURCE-OF-TRUTH.md"
-);
-const READONLY_SECTION_RE =
-  /## READONLY GATE CREDENTIAL[^\n]*\n(?:(?!\n## )[^\n]*\n)*?\s*(postgresql:\/\/\S+)/;
-let cachedReadonlyDbUrl;
+// ROUND 386 (Lead) — this block used to carry its OWN copy of the credential-resolution logic,
+// byte-for-byte duplicating scripts/lib/gate-db-credential.mjs, which lib/require-live-db.mjs
+// already imports. Two copies of one rule is one rule that will drift. The lib is now the only
+// implementation; this is the gate's view of it.
+//
+// The caller's WRITE credential is captured BEFORE anything below can replace process.env.
+// verify-workflow-requests-entity-scoped is the one gated guard that must INSERT / SET ROLE
+// ih35_app, and it is handed this value explicitly — never the read-only one.
+const CALLER_WRITER_DATABASE_URL = process.env.DATABASE_URL;
+
 function resolveGuardDatabaseUrl() {
-  if (cachedReadonlyDbUrl !== undefined) return cachedReadonlyDbUrl;
-  // An explicit env var always wins — lets a seat without the file (or CI, which injects its own
-  // scoped secret) opt in without touching this file.
-  if (process.env.DATABASE_URL_READONLY) {
-    cachedReadonlyDbUrl = process.env.DATABASE_URL_READONLY;
-    return cachedReadonlyDbUrl;
+  return resolveGateReadonlyDbUrl() ?? CALLER_WRITER_DATABASE_URL;
+}
+
+// ROUND 386 — the substitution below used to be gated on `env.DATABASE_URL` ALREADY being set, so
+// it could only ever REPLACE a connection string, never SUPPLY one. .husky/pre-push deliberately
+// does not source .env (Rule 18 / CURSOR-PIPELINE-REPAIR P0-1), so on every push DATABASE_URL was
+// unset, the substitution never fired, and every live guard failed with "needs DATABASE_URL — a
+// guard that cannot look is not a pass". Measured on this branch: 30 gate phases passed and
+// verify-every-load-born-document-and-posting-traces-to-its-load failed for exactly that reason,
+// with a working read-only credential sitting unread two files away. Resolving once here means a
+// live guard either looks at production or fails closed — it can no longer be blocked by the
+// absence of an environment variable the hook is designed not to set.
+if (!process.env.DATABASE_URL) {
+  const gateDbUrl = resolveGuardDatabaseUrl();
+  if (gateDbUrl) {
+    process.env.DATABASE_URL = gateDbUrl;
+    console.log(`[${LABEL}] resolved the read-only gate credential for this run (value never logged).`);
   }
-  try {
-    const doc = fs.readFileSync(MASTER_KEYS_FILE, "utf8");
-    const match = doc.match(READONLY_SECTION_RE);
-    cachedReadonlyDbUrl = match ? match[1].trim() : undefined;
-  } catch {
-    cachedReadonlyDbUrl = undefined;
-  }
-  // No readonly credential available locally — fall back to whatever DATABASE_URL the caller
-  // already set (unchanged behavior; never block a seat that hasn't fetched the readonly role yet).
-  return cachedReadonlyDbUrl ?? process.env.DATABASE_URL;
 }
 
 const localOutcomes = { passed: 0, failed: 0, skipped: 0 };
@@ -1788,10 +1793,11 @@ function runNode(rel, extraEnv = {}, args = []) {
   const script = path.join(ROOT, rel);
   console.log(`[${LABEL}] RUN ${rel}${args.length ? ` ${args.join(" ")}` : ""}`);
   const env = { ...process.env, ...extraEnv };
-  // Only override when a live DB is actually in play (DATABASE_URL set) and the caller didn't
-  // already pin a specific connection string via extraEnv (e.g. a test harness).
-  if (env.DATABASE_URL && !extraEnv.DATABASE_URL) {
-    env.DATABASE_URL = resolveGuardDatabaseUrl();
+  // ROUND 386 — SUPPLY the read-only credential when the caller pinned none, rather than only
+  // replacing one that already exists. A test harness that pins DATABASE_URL via extraEnv still wins.
+  if (!extraEnv.DATABASE_URL) {
+    const resolved = resolveGuardDatabaseUrl();
+    if (resolved) env.DATABASE_URL = resolved;
   }
   // Every guard reads the DIRECT endpoint — never the pooler, where the app's SET ROLE ih35_app leaks.
   const res = spawnSync(process.execPath, [script, ...args], {
@@ -1885,7 +1891,9 @@ for (const [name, rel] of STEPS) {
 {
   const name = "verify-workflow-requests-entity-scoped";
   const rel = "scripts/verify-workflow-requests-entity-scoped.mjs";
-  const writerUrl = process.env.DATABASE_URL;
+  // ROUND 386 — the CALLER's writer URL, captured before the gate put the read-only one on the
+  // environment. Reading process.env here would hand this writing guard a read-only role.
+  const writerUrl = CALLER_WRITER_DATABASE_URL;
   const code = writerUrl ? runNode(rel, { DATABASE_URL: writerUrl }) : runNode(rel);
   if (code !== 0) {
     failStep(name);
@@ -2084,12 +2092,80 @@ const changedForLiveDomains = (() => {
 // DATA_WRITE_PATHS match now also requires dataWritePathFileActuallyWrites() to say yes: real .sql
 // migrations always do (unconditionally, by file type); everything else under either prefix is
 // content-checked for an actual DB client import, with a manifest escape hatch for edge cases.
+// GATE-SCOPE-03 (LEAD, ROUND 389) — a PURE UNIT TEST cannot change live data, so it cannot arm a
+// live-domain guard on its own. These guards query PRODUCTION (e.g. verify-factoring-fees-are-
+// financing-costs asserts the live CoA parents factoring fee/interest under 6810); nothing a vitest
+// file does can move a production row or a chart-of-accounts parent. Confirmed live: a two-line
+// type-narrowing fix in apps/backend/src/factoring/__tests__/faro-reserve-entries.service.test.ts
+// armed that guard, which then failed closed for want of DATABASE_URL — blocking a push whose diff
+// could not possibly affect what the guard asserts. The DoD's own guard law: "A selftest must also
+// assert the CORRECTED shape is not flagged — false positives burn trust as fast as misses," and
+// "a guard that cries wolf is worse than no guard."
+//
+// This GENERALIZES the per-file test exceptions already in the accounting branch below
+// (account-register.service.test.ts, account-register.guard.test.ts) instead of adding a fifth
+// hardcoded path. Deliberately NARROW:
+//   · `*.db.test.ts` is NOT exempt — those run against a database and are real data paths.
+//   · The guard's own file (`f === rel`), DATA_WRITE_PATHS and ONE_SHOT_WRITER_RE are all checked
+//     BEFORE this, so changing a guard or a migration still arms it.
+//   · It only stops a test file from being the SOLE trigger. Any non-test file in the domain in the
+//     same diff arms the guard exactly as before.
+const PURE_UNIT_TEST_RE = /(?:^|\/)__tests__\/|\.(?:test|spec)\.[cm]?tsx?$/;
+const isPureUnitTestPath = (f) => PURE_UNIT_TEST_RE.test(f) && !/\.db\.test\.[cm]?tsx?$/.test(f);
+
+// GATE-SCOPE-04 (LEAD, ROUND 389) — a COMMENT-ONLY diff cannot change a production row, so it cannot
+// arm a live-domain guard. Measured, not assumed: this reads the file's real diff and returns true
+// only when EVERY added and removed line is a comment or blank.
+//
+// Confirmed live and measured: two comment-only edits — the inline `C6-MONEY-JE-EXEMPT:` markers on
+// apps/backend/src/driver-finance/escrow-balance-row.ts and settlement-pay-line.service.ts, 0
+// non-comment changed lines in each — armed TWENTY-FOUR production-querying live-domain guards
+// (escrow, settlement, AP-control, load-to-cash, reconciler, …), every one of which then failed
+// closed for want of DATABASE_URL. Twenty-four live prod queries demanded to clear two comments.
+// Same false-positive class as GATE-SCOPE-03, and the same discipline GATE-SCOPE-02 already
+// established for the sibling DATA_WRITE_PATHS branch: content-check the diff, do not trust the path.
+//
+// NARROW, and in the live-domain loop ONLY — this matters, because comments in this repo DO carry
+// meaning to STATIC guards (`C6-MONEY-JE-EXEMPT`, `ESCROW-SYNC-EXEMPT`, `ALLOW_OFFLINE_SKIP`). Those
+// guards read the comment text and run on every push with no credential; they are untouched. What
+// cannot happen is a comment moving a row in production, which is all a live-domain guard inspects.
+//   · TS/JS only. A .sql / .py / .yml comment syntax is not parsed here — those arm as before.
+//   · FAILS CLOSED in every uncertain case: a failed `git diff`, an unreadable diff, or a changed
+//     line that is not unambiguously a line comment (a continuation line inside a /* */ block that
+//     does not start with `*`) all count as code and ARM the guard.
+//   · Only stops a comment-only file being the SOLE trigger; any real code change in the domain in
+//     the same diff arms it exactly as before.
+// `//`, `/*`, `*/`, a blank line, or a `*` block-continuation. The `*` case is narrowed on purpose:
+// `*foo() {` is a legal TypeScript generator method and also starts with `*`, so a continuation line
+// is only accepted when it carries no `(` and no `=` — otherwise it reads as code and ARMS.
+const COMMENT_OR_BLANK_RE = /^[+-]\s*(?:\/\/|\/\*|\*\/|$)/;
+const BLOCK_CONTINUATION_RE = /^[+-]\s*\*(?!\/)([^(=]*)$/;
+const changedLineIsCommentOrBlank = (l) => COMMENT_OR_BLANK_RE.test(l) || BLOCK_CONTINUATION_RE.test(l);
+const commentOnlyDiffCache = new Map();
+function domainDiffIsCommentOnly(f) {
+  if (!/\.[cm]?[jt]sx?$/.test(f)) return false; // TS/JS only — everything else arms as before
+  if (commentOnlyDiffCache.has(f)) return commentOnlyDiffCache.get(f);
+  let verdict = false;
+  const d = spawnSync("git", ["diff", "--unified=0", "origin/main...HEAD", "--", f], { cwd: ROOT, encoding: "utf8" });
+  if ((d.status ?? 1) === 0 && typeof d.stdout === "string") {
+    const changed = d.stdout
+      .split("\n")
+      .filter((l) => /^[+-]/.test(l) && !/^(?:\+\+\+|---)/.test(l));
+    // An empty changed set is NOT a pass — a file listed as changed with no readable diff is
+    // exactly the "cannot tell" case, and cannot-tell arms the guard.
+    verdict = changed.length > 0 && changed.every(changedLineIsCommentOrBlank);
+  }
+  commentOnlyDiffCache.set(f, verdict);
+  return verdict;
+}
+
 for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
   const rel = `scripts/${name}.mjs`;
   const touched =
     changedForLiveDomains === null ||
     changedForLiveDomains.some((f) => {
       if (f === rel || ONE_SHOT_WRITER_RE.test(f)) return true;
+      if (isPureUnitTestPath(f)) return false; // GATE-SCOPE-03 — see above
       if (DATA_WRITE_PATHS.some((p) => f.startsWith(p))) {
         const diff = spawnSync("git", ["diff", "--unified=0", "origin/main...HEAD", "--", f], {
           cwd: ROOT,
@@ -2098,9 +2174,26 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
         if ((diff.status ?? 1) !== 0) return true;
         return dataWritePathDiffActuallyWrites(f, ROOT, diff.stdout || "");
       }
+      if (domainDiffIsCommentOnly(f)) return false; // GATE-SCOPE-04 — see above
       if (
         domainPaths.some((p) => {
           if (!f.startsWith(p)) return false;
+          // GATE-SCOPE-05 (LEAD, ROUND 389) — a BLANKET "scripts/" domain prefix is a path match,
+          // not a promise the file writes anything. GATE-SCOPE-02 already ruled exactly this for
+          // DATA_WRITE_PATHS ("a path match, not a content promise") and installed the content
+          // check; one entry's hand-written "scripts/" domain sidesteps it, because DATA_WRITE_PATHS
+          // is only ["db/migrations/", "scripts/ops/"]. Confirmed live: verify-no-posting-update-
+          // outside-document-edit declares ["db/migrations/", "apps/backend/src/", "scripts/"] and
+          // was armed by 170 four-line scripts/verify-steps/NNNN-*.mjs wrappers, none of which can
+          // UPDATE a posting row. So a blanket scripts/ match gets the SAME already-reviewed content
+          // check (shared implementation, never a second copy): it arms only when the added diff
+          // introduces a real financial write. The guard's own file still arms unconditionally via
+          // the `f === rel` test above, and scripts/ops/ keeps going through DATA_WRITE_PATHS.
+          if (p === "scripts/") {
+            const d = spawnSync("git", ["diff", "--unified=0", "origin/main...HEAD", "--", f], { cwd: ROOT, encoding: "utf8" });
+            if ((d.status ?? 1) !== 0) return true; // cannot tell -> arm
+            return dataWritePathDiffActuallyWrites(f, ROOT, d.stdout || "");
+          }
           // GATE-SCOPE bank-recon (2026-09-28): blanket accounting/ must not pull MatchDrawer /
           // accept-multi-match into every tip-debt money guard. bank-recon owns its own guards
           // (verify-no-match-persisted-outside-accept-handler lists match.service.ts explicitly).
@@ -2216,12 +2309,31 @@ const e7Batch2 = [
     return [file, indexOnly ? [] : ["--live"]];
   }),
 ];
+// GATE-SCOPE-04b (LEAD, ROUND 389) — the SAME comment-only content check the LIVE_DOMAIN_GUARDS
+// loop applies, in the E7 batch-2 scope decision, through the SAME helper so the two can never
+// drift apart. Confirmed live: verify-draft-load-saves-and-is-visible owns the blanket path
+// "apps/backend" in scripts/.gate-step-map.json, so the two comment-only C6-MONEY-JE-EXEMPT markers
+// put it in scope and it failed closed for want of DATABASE_URL — the identical false positive,
+// one code path over. Narrowing the scope input (not guardIsInScope itself, which verify-static
+// also uses) keeps this confined to this gate. Everything the check cannot read as a comment still
+// counts as code, so an alwaysRun guard and any real backend change are unaffected.
+// Both narrowings, because this loop bypasses the branch that applies them: GATE-SCOPE-03 (a pure
+// unit test) and GATE-SCOPE-04 (a comment-only diff). Measured here: the one file that kept
+// verify-draft-load-saves-and-is-visible in scope was
+// apps/backend/src/factoring/__tests__/faro-reserve-entries.service.test.ts matching that guard's
+// blanket owned path "apps/backend" — a vitest file against a guard that queries live draft loads.
+// `*.db.test.ts` stays non-exempt, so this guard's own owned db test still arms it, as intended.
+const changedForLiveDomainsNoCommentOnly =
+  changedForLiveDomains === null
+    ? null
+    : changedForLiveDomains.filter((f) => !isPureUnitTestPath(f) && !domainDiffIsCommentOnly(f));
+
 const e7Batch2Skipped = [];
 for (const [file, args] of e7Batch2) {
   const entry = gateStepMap.entries?.[file];
   const inScope = entry?.alwaysRun
     ? Boolean(process.env.DATABASE_URL)
-    : changedForLiveDomains === null || guardIsInScope(file, entry, changedForLiveDomains);
+    : changedForLiveDomains === null || guardIsInScope(file, entry, changedForLiveDomainsNoCommentOnly);
   if (!inScope) {
     e7Batch2Skipped.push(file);
     continue;

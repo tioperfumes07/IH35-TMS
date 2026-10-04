@@ -3,7 +3,11 @@
 import { classifyGuards } from "./verify-guard-wired.mjs";
 
 const LABEL = "verify-tms-native-mixed-linkage-guard-registry-batch";
-const MAX_REMAINING = 91;
+// ROUND 389 (Lead, 2026-10-03) — ratcheted 91 -> 3 alongside its sibling
+// verify-wiring-law-guard-registry-batch.mjs; see that file and
+// docs/bus/10-03-2026-LEAD-RULING-WIRE-THE-ORPHAN-GUARDS.md. 155 orphan guards wired, 3 remain and
+// all 3 are failing guards named in the ruling.
+const MAX_REMAINING = 3;
 const REQUIRED = [
   "verify-qbo-categories-tms-catalog-connectivity.mjs",
   "verify-operating-report-entity-reverse-leaves.mjs",

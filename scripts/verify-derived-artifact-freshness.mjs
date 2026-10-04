@@ -221,6 +221,37 @@ function selftest() {
     if (!r.problems.some((p) => p.includes("failing closed"))) throw new Error(r.problems.join("|"));
   });
 
+  // ROUND 389 (LEAD) — requiresDatabase. Five cases: the credential-gated entry is NEVER silently green,
+  // it is a HARD fail under strict (CI), it behaves exactly as before once the credential exists, an
+  // uncommitted output still fails even when gated, and a non-gated generator failure now carries its
+  // own stderr. Each case deletes exactly what its assertion requires.
+  const dbEntry = { generator: "scripts/gen-db.mjs", mode: "regen-diff", paths: ["d.json"], regenerate: "node scripts/gen-db.mjs", volatile: [], requiresDatabase: true, why: "w" };
+  t("requiresDatabase with no DATABASE_URL is UNVERIFIABLE, named, and NOT a silent pass", () => {
+    const r = analyseGenerated(G({ generatorsOnDisk: ["scripts/gen-db.mjs"], entries: [dbEntry], regen: new Map(), hasDatabaseUrl: false }));
+    eq(r.problems.length, 0, r.problems.join("|"));
+    eq(r.stats.unverifiableHere, 1, "not counted");
+    if (!r.unverifiableHere.some((u) => u.includes("UNVERIFIABLE HERE") && u.includes("DATABASE_URL") && u.includes("gen-db.mjs"))) throw new Error(JSON.stringify(r.unverifiableHere));
+  });
+  t("requiresDatabase with no DATABASE_URL is a HARD FAIL under strict (CI)", () => {
+    const r = analyseGenerated(G({ generatorsOnDisk: ["scripts/gen-db.mjs"], entries: [dbEntry], regen: new Map(), hasDatabaseUrl: false, strict: true }));
+    if (!r.problems.some((p) => p.includes("UNVERIFIABLE HERE") && p.includes("d.json"))) throw new Error(r.problems.join("|"));
+    eq(r.stats.unverifiableHere, 0, "strict must not route it to the soft channel");
+  });
+  t("requiresDatabase WITH DATABASE_URL still catches staleness (no exemption once provable)", () => {
+    const r = analyseGenerated(G({ generatorsOnDisk: ["scripts/gen-db.mjs"], entries: [dbEntry], hasDatabaseUrl: true,
+      regen: new Map([["d.json", { committed: "old", fresh: "new" }]]) }));
+    if (!r.problems.some((p) => p.startsWith("STALE — d.json"))) throw new Error(r.problems.join("|"));
+  });
+  t("requiresDatabase output that is NOT committed FAILS even while credential-gated", () => {
+    const r = analyseGenerated(G({ generatorsOnDisk: ["scripts/gen-db.mjs"], entries: [dbEntry], regen: new Map(), hasDatabaseUrl: false, isTracked: () => false }));
+    if (!r.problems.some((p) => p.includes("d.json: declared output is not committed"))) throw new Error(r.problems.join("|"));
+  });
+  t("a NON-gated generator failure reports the generator's own stderr, not an anonymous message", () => {
+    const r = analyseGenerated(G({ generatorsOnDisk: ["scripts/gen-x.mjs"], entries: [pairEntry], hasDatabaseUrl: false,
+      regen: new Map([["a.json", { committed: "1", fresh: null, error: "boom: schema drift" }], ["a.ts", { committed: "2", fresh: "2" }]]) }));
+    if (!r.problems.some((p) => p.includes("did not produce it") && p.includes("boom: schema drift"))) throw new Error(r.problems.join("|"));
+  });
+
   const bad = T.filter((x) => !x[1]);
   for (const [n, ok, e] of T) console.log(`  ${ok ? "PASS" : "FAIL"}  ${n}${e ? " — " + e : ""}`);
   console.log(`${LABEL} --selftest ${bad.length ? "FAIL" : "PASS"} ${T.length - bad.length}/${T.length}`);
@@ -273,12 +304,28 @@ function main() {
   // ROUND 363-CC3-C — every generator in scripts/ is declared and checked by its mode.
   const generated = Array.isArray(cfg.generated) ? cfg.generated : [];
   const onDisk = generatorsOnDisk(ROOT);
-  const g = analyseGenerated({ entries: generated, generatorsOnDisk: onDisk, ...gitPredicates(ROOT), regen: regenerateInScratch(ROOT, generated) });
+  // ROUND 389 (LEAD) — strict is EXPLICIT, never inferred from CI, and this is deliberate. Most CI jobs
+  // run guards through scripts/verify-static.mjs, which DELETES DATABASE_URL on purpose (its line 171, so
+  // live-prod guards see it unset and cannot reach prod). Keying strict off `CI === "true"` would therefore
+  // make this guard a hard failure in exactly the job that is designed not to have the credential — the
+  // whole fleet blocked by the flag meant to protect it. So:
+  //   verify-step (under verify-static, no credential) -> no --strict: UNVERIFIABLE, named, loud, passes
+  //   the live job that holds secrets.PROD_READONLY_DATABASE_URL -> --strict: regenerates and diffs for
+  //     real, and if that secret is ever missing or empty the job FAILS instead of quietly reporting
+  //     UNVERIFIABLE. That is where freshness is actually proven.
+  const strict = process.argv.includes("--strict");
+  const g = analyseGenerated({
+    entries: generated, generatorsOnDisk: onDisk, ...gitPredicates(ROOT),
+    regen: regenerateInScratch(ROOT, generated),
+    strict, hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
+  });
   problems.push(...g.problems);
   if (g.stats.registered !== g.stats.generators) problems.push(`generators registered ${g.stats.registered} of ${g.stats.generators} on disk — every one must declare its artifact`);
 
-  console.log(`${LABEL}: live=${liveSha} checked=${stats.checked + g.stats.checked} (stamp ${stats.checked} + generated ${g.stats.checked}) generators=${g.stats.generators} registered=${g.stats.registered} fresh=${stats.fresh} stale=${stats.stale + g.stats.stale}`);
+  console.log(`${LABEL}: live=${liveSha} checked=${stats.checked + g.stats.checked} (stamp ${stats.checked} + generated ${g.stats.checked}) generators=${g.stats.generators} registered=${g.stats.registered} fresh=${stats.fresh} stale=${stats.stale + g.stats.stale} unverifiable_here=${g.stats.unverifiableHere}${strict ? " (strict: unverifiable counts as FAIL)" : ""}`);
   for (const w of warnings) console.log(`  warn: ${w}`);
+  // Loud, named, and not a pass. Printed even on the OK path so nobody reads a green line as "all proven".
+  for (const u of g.unverifiableHere ?? []) console.log(`  UNVERIFIABLE HERE: ${u}`);
   if (problems.length) {
     console.error(`${LABEL} FAIL — ${problems.length} problem(s):`);
     for (const p of problems) console.error(`  - ${p}`);

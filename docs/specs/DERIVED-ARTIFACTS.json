@@ -1,5 +1,5 @@
 {
-  "note": "Every STORED derived answer in the product. Prefer recompute-on-read; anything listed here is a stored answer and must declare the deploy SHA + timestamp it was computed against. verify-derived-artifact-freshness.mjs fails when a listed artifact is missing, undatable, computed on undeployed code, or stale. This list may GROW only when recompute-on-read is genuinely impossible — and shrinks when an artifact moves to computed-on-read. Module Matrix V1–V6 left this list 2026-08-29: GET /api/v1/program/module-matrix?scope=system.verifierRollup is derived at request time (same law as scenario-tracker.service.ts).",
+  "note": "Every STORED derived answer in the product. Prefer recompute-on-read; anything listed here is a stored answer and must declare the deploy SHA + timestamp it was computed against. verify-derived-artifact-freshness.mjs fails when a listed artifact is missing, undatable, computed on undeployed code, or stale. This list may GROW only when recompute-on-read is genuinely impossible \u2014 and shrinks when an artifact moves to computed-on-read. Module Matrix V1\u2013V6 left this list 2026-08-29: GET /api/v1/program/module-matrix?scope=system.verifierRollup is derived at request time (same law as scenario-tracker.service.ts).",
   "artifacts": [
     {
       "path": "docs/audit/program-scoreboard.json",
@@ -12,7 +12,7 @@
       "why": "Sat without top-level healthzSha/generated_at (unfalsifiable). deployedSha 14daeed was 59 commits behind live on 2026-08-29; maxDeploysBehind 80 is temporary until the regen command shrinks it."
     }
   ],
-  "generated_note": "ROUND 363-CC3-C — EVERY generator in scripts/ (gen-*.mjs / generate-*.mjs) declares its artifact here; verify-derived-artifact-freshness fails on any generator not listed. 'Stale' means an artifact's OUTPUT WAS NOT REBUILT AFTER MAIN MOVED — its committed content differs from what its own generator produces from the committed inputs today. It does NOT mean a PR was built wrong or never merged; nothing is lost; the fix is to run `regenerate` and commit the result. Modes: regen-diff = the guard regenerates in a scratch worktree and compares every path (a pair is several paths of ONE artifact — regenerating one member without the other fails); not-committed = gitignored, rebuilt on every use, must stay untracked; historical = a one-off whose output is a dated record, never regenerated. 'volatile' lists the only lines allowed to differ between two runs of the same generator (measured by running it twice).",
+  "generated_note": "ROUND 363-CC3-C \u2014 EVERY generator in scripts/ (gen-*.mjs / generate-*.mjs) declares its artifact here; verify-derived-artifact-freshness fails on any generator not listed. 'Stale' means an artifact's OUTPUT WAS NOT REBUILT AFTER MAIN MOVED \u2014 its committed content differs from what its own generator produces from the committed inputs today. It does NOT mean a PR was built wrong or never merged; nothing is lost; the fix is to run `regenerate` and commit the result. Modes: regen-diff = the guard regenerates in a scratch worktree and compares every path (a pair is several paths of ONE artifact \u2014 regenerating one member without the other fails); not-committed = gitignored, rebuilt on every use, must stay untracked; historical = a one-off whose output is a dated record, never regenerated. 'volatile' lists the only lines allowed to differ between two runs of the same generator (measured by running it twice).",
   "generated": [
     {
       "generator": "scripts/gen-program-scoreboard.mjs",
@@ -34,7 +34,7 @@
         "docs/audit/program-scoreboard.json"
       ],
       "regenerate": "node scripts/audit-coverage-scoreboard.mjs --emit-program-json && node scripts/gen-program-scoreboard.mjs",
-      "why": "the stamp entry under 'artifacts' (healthzSha / generated_at) — its pair member is the gen-program-scoreboard entry."
+      "why": "the stamp entry under 'artifacts' (healthzSha / generated_at) \u2014 its pair member is the gen-program-scoreboard entry."
     },
     {
       "generator": "scripts/gen-block-created-dates.mjs",
@@ -145,6 +145,19 @@
         "docs/batch-8/normal-ledgered-migrations.txt"
       ],
       "why": "one-off Batch 8 ledger backfill (2026-07); its outputs are the dated record of that run and are never regenerated against today's ledger."
+    },
+    {
+      "generator": "scripts/verify-schema-parity.mjs",
+      "mode": "regen-diff",
+      "paths": [
+        "docs/schema-parity-baseline.json"
+      ],
+      "inputs": [
+        "db/migrations/**"
+      ],
+      "regenerate": "node scripts/verify-schema-parity.mjs --update",
+      "volatile": [],
+      "why": "the column contract verify-sql-column-existence reads. It was registered NOWHERE, so it rotted silently: measured 2026-10-04, 439 columns that exist in production were missing from it (driver_settlements.predecessor/successor_settlement_id, units.fuel_tank_capacity_gallons, bank_transactions.review_bucket/resolution_kind among them), and the guard reported correct code as broken. The DDL parser was never the problem - nobody ran --update and nothing could notice. Registered so staleness is a failure, not a surprise."
     }
   ]
 }

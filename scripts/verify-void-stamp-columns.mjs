@@ -106,7 +106,22 @@ function findWriters(files, schema, table) {
   const hits = [];
   for (const file of files) {
     if (file === path.join(ROOT, THE_ONE_WRITER)) continue;
-    const text = fs.readFileSync(file, "utf8");
+    // ROUND 389 (LEAD) — a file can vanish between the enumeration and this read. Confirmed live in
+    // the pre-push gate: this guard CRASHED (ENOENT) on
+    // apps/backend/src/auth/__guc_selftest_plant.ts — another guard's selftest PLANT file, created
+    // and deleted by a concurrent seat's process on this shared dev machine (the contention this
+    // repo's own guard comments already document). A crash is not a verdict: the guard died instead
+    // of reporting, and took the whole push with it.
+    // ENOENT only, and deliberately: a file that no longer exists cannot contain a writer, so
+    // skipping it changes no assertion. EVERY other read error still throws, so a permissions
+    // problem or an unreadable file fails loudly rather than becoming a silent pass.
+    let text;
+    try {
+      text = fs.readFileSync(file, "utf8");
+    } catch (err) {
+      if (err?.code === "ENOENT") continue;
+      throw err;
+    }
     if (!updateRe.test(text)) continue;
     // Scan each UPDATE...; statement block (naive, brace/paren-agnostic: split on semicolons is too
     // coarse for SQL-in-template-literals, so instead scan a window of lines following each UPDATE

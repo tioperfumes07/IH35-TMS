@@ -42,6 +42,12 @@ import { ReceiptAttach } from "../../components/documents/ReceiptAttach";
 import { PostingPill } from "../../components/accounting/PostingPill";
 import { CreateBillModal } from "../maintenance/components/CreateBillModal";
 import { companyToday, addDaysIso, monthBoundsIso } from "../../lib/businessDate";
+import {
+  BILL_STATUS_FILTER_VALUES,
+  driverBillMatchesStatusFilter,
+  statusFilterNeedsServerNarrowing,
+  vendorBillMatchesStatusFilter,
+} from "./billStatusFilter";
 import { userFacingApiError } from "../../lib/api-error-message";
 
 export const BILL_LIST_CATEGORIES = ["maintenance", "repair", "fuel", "driver"] as const;
@@ -256,7 +262,8 @@ export function BillsPage() {
   const [highlightedBillId, setHighlightedBillId] = useState<string | null>(() => deepLinkBillId);
   // RPT-155 / RPT-PAR-1: honor deep-link ?status=&vendor_id=&has_balance= so A/P Aging drill
   // (has_balance=true — includes partial) and legacy Pay-now unpaid land pre-filtered.
-  const STATUS_FILTER_VALUES = new Set(["unpaid", "partial", "paid", "voided", "active", "all", "posted"]);
+  // BILLS-STATUS-VOCAB-01 — one source for the option list and for the predicates that read it.
+  const STATUS_FILTER_VALUES = new Set<string>(BILL_STATUS_FILTER_VALUES);
   const initialStatus = searchParams.get("status");
   // FILTER-MULTI-01: Status is now a real multi-select (checkbox dropdown, e.g. "Open + Partial"
   // at once) — array state, seeded from the single-value deep-link contract above (still exactly
@@ -402,10 +409,15 @@ export function BillsPage() {
   // own `status` vocabulary and no vendor at all, so only statusFilter (when non-empty) applies to
   // them — a selected vendor-bill-only status (e.g. "Paid") correctly shows 0 driver bills rather
   // than silently ignoring the filter.
+  // BILLS-STATUS-VOCAB-01 — was `statusFilter.includes(bill.status)`, which compared the server's
+  // pseudo-statuses ("active" by default) to a driver bill's own status vocabulary and dropped all
+  // 136 live rows. The shared predicate honours the server's meaning and never re-applies a
+  // narrowing the server already did.
+  const serverNarrowedStatus = statusFilter.length === 1;
   const driverBillRows = (billsQuery.data?.rows ?? [])
     .filter((row) => row.bill_type === "driver_bill")
     .map((row) => row.bill as DriverBillListRow)
-    .filter((bill) => statusFilter.length === 0 || statusFilter.includes(bill.status));
+    .filter((bill) => driverBillMatchesStatusFilter(bill, statusFilter, serverNarrowedStatus));
 
   const rows = useMemo(() => {
     const all = (billsQuery.data?.rows ?? [])
@@ -414,7 +426,7 @@ export function BillsPage() {
     let next = all.filter((bill) => {
       if (bill.id === deepLinkBillId) return true; // keep deep-linked bill visible regardless of filters
       if (categoryFilter.length > 0 && !categoryFilter.some((c) => billMatchesCategory(bill, c as BillListCategory))) return false;
-      if (statusFilter.length > 0 && !statusFilter.includes(bill.status)) return false;
+      if (!vendorBillMatchesStatusFilter(bill, statusFilter, serverNarrowedStatus)) return false;
       if (vendorFilter.length > 0 && !vendorFilter.includes(bill.vendor_id ?? "")) return false;
       return true;
     });
@@ -427,7 +439,7 @@ export function BillsPage() {
       }
     }
     return next;
-  }, [billsQuery.data?.rows, categoryFilter, statusFilter, vendorFilter, deepLinkBillId]);
+  }, [billsQuery.data?.rows, categoryFilter, statusFilter, serverNarrowedStatus, vendorFilter, deepLinkBillId]);
 
   const billKpis = useMemo(() => {
     const all = (billsQuery.data?.rows ?? [])
@@ -823,6 +835,15 @@ export function BillsPage() {
           allLabel="All (include voided)"
           data-testid="bills-status-filter"
         />
+        {/* BILLS-STATUS-VOCAB-01 — "Posted (GL)" is a server-side join (journal_entries.status =
+            'posted'); the register only applies it when it is the SOLE selection. Combined with
+            another status the list is NOT narrowed by it, and says so rather than quietly dropping
+            or quietly keeping rows. */}
+        {statusFilterNeedsServerNarrowing(statusFilter) ? (
+          <p className="text-xs text-slate-700" data-testid="bills-status-server-only-notice">
+            “Posted (GL)” narrows only when selected on its own — these results are not filtered by GL posting.
+          </p>
+        ) : null}
         <MultiSelectDropdown
           label="Category"
           options={BILL_LIST_CATEGORIES.map((cat) => ({ value: cat, label: cat.charAt(0).toUpperCase() + cat.slice(1) }))}
