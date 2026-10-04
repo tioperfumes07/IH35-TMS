@@ -8,7 +8,7 @@ const page = fs.readFileSync("apps/frontend/src/pages/maintenance/ArrivingSoonPa
 
 function failures(routeSource = route, pageSource = page) {
   const companyScopedWoJoins = routeSource.match(/wo\.operating_company_id = \$1::uuid/g)?.length ?? 0;
-  return [
+  const missing = [
     ["both data/count WO joins company-scoped", routeSource.includes("wo.id = ii.promoted_to_wo_id") && companyScopedWoJoins === 2],
     ["converted-only history", routeSource.includes("ii.promoted_to_wo_id IS NOT NULL")],
     ["human WO label", routeSource.includes("wo.display_id AS work_order_display_id")],
@@ -18,6 +18,10 @@ function failures(routeSource = route, pageSource = page) {
     ["canonical unit drill", pageSource.includes('kind="unit" id={conversion.unit_id}')],
     ["typed read model", api.includes("recent_conversions: ArrivingSoonConversion[]")],
   ].filter(([, ok]) => !ok).map(([name]) => name);
+  // BANK-F91301 leftover refuse — ArrivingSoonPage.tsx page-scoped text token ratchet
+  if (pageSource.includes("text-[11px]")) missing.push("ArrivingSoonPage.tsx: leftover text-[11px]");
+  if (pageSource.includes("#8A92AB") || pageSource.includes("#334155")) missing.push("ArrivingSoonPage.tsx: leftover off-scale muted");
+  return missing;
 }
 
 if (process.argv.includes("--selftest")) {
@@ -28,7 +32,14 @@ if (process.argv.includes("--selftest")) {
     failures(route, badPage).includes("canonical WO drill"),
   ];
   if (checks.some((ok) => !ok)) process.exit(1);
-  console.log("verify-arriving-soon-work-order-reverse selftest PASS — 2/2 data/count scope and drill mutations red");
+  // BANK-F91301 leftover plant — ArrivingSoonPage page-scoped text token ratchet
+  const leftoverPlant = page + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  const leftoverHits = failures(route, leftoverPlant);
+  if (!leftoverHits.some((e) => e.includes("leftover text-[11px]")) || !leftoverHits.some((e) => e.includes("leftover off-scale muted"))) {
+    console.error("verify-arriving-soon-work-order-reverse selftest FAIL leftover plant escaped", leftoverHits.filter((e) => e.includes("leftover")));
+    process.exit(1);
+  }
+  console.log("verify-arriving-soon-work-order-reverse selftest PASS — 2/2 data/count scope and drill mutations red + leftover plant");
   process.exit(0);
 }
 
