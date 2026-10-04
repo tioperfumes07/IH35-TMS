@@ -83,7 +83,7 @@ export function SafetyDashboardFilter({
 
   return (
     <div
-      className="flex flex-wrap items-center gap-2 border-b border-gray-200 bg-white px-[22px] py-2 text-[11px]"
+      className="flex flex-wrap items-center gap-2 border-b border-gray-200 bg-white px-[22px] py-2 text-xs"
       data-safety-filter-toolbar="collapsed"
     >
       <CollapsedListFilters activeFilterCount={activeCount} testIdPrefix="safety" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>

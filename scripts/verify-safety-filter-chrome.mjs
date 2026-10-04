@@ -44,6 +44,22 @@ if (!shared.includes("SlidersHorizontal")) {
   failures.push("CollapsedListFilters: expected SlidersHorizontal Filters icon (Dispatch FilterBar parity)");
 }
 
+// BANK-F91383 leftover refuse — SafetyDashboardFilter page-scoped text token ratchet
+if (src.includes("text-[11px]")) failures.push("SafetyDashboardFilter.tsx: leftover text-[11px]");
+if (src.includes("#8A92AB")) failures.push("SafetyDashboardFilter.tsx: leftover off-scale muted #8A92AB");
+
+if (process.argv.includes("--selftest")) {
+  const leftoverPlant = src + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  const plantFails = [];
+  if (leftoverPlant.includes("text-[11px]")) plantFails.push("leftover text-[11px]");
+  if (!plantFails.includes("leftover text-[11px]")) {
+    console.error("FAIL verify-safety-filter-chrome --selftest: leftover plant escaped");
+    process.exit(1);
+  }
+  console.log("PASS verify-safety-filter-chrome --selftest — leftover plant detected");
+  process.exit(0);
+}
+
 if (failures.length) {
   console.error("FAIL verify-safety-filter-chrome:");
   for (const f of failures) console.error(" -", f);
