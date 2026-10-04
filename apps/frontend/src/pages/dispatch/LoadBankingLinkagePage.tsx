@@ -61,8 +61,8 @@ export function LoadBankingLinkagePage() {
       ) : null}
       <p className="text-xs text-gray-600">
         Reverse Law §9 for this load. Persisted categorization tags only — draft Match/Categorize fields are not
-        links. EntityLink <code className="text-[11px]">kind=&quot;load&quot;</code> opens the board at{" "}
-        <code className="text-[11px]">/dispatch/loads/:id</code>; this page is the bank-feed reverse surface only.
+        links. EntityLink <code className="text-xs">kind=&quot;load&quot;</code> opens the board at{" "}
+        <code className="text-xs">/dispatch/loads/:id</code>; this page is the bank-feed reverse surface only.
       </p>
       {companyId ? (
         <LinkedBankTransactionsPanel companyId={companyId} linkage={{ kind: "load_id", id }} />

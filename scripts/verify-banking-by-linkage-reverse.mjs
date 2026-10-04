@@ -94,6 +94,13 @@ export function run(root = process.cwd()) {
   if (!load.includes("LinkedBankTransactionsPanel") || !load.includes("load_id")) {
     failures.push("LoadBankingLinkagePage must mount panel with load_id");
   }
+  // BANK-F91325 leftover refuse — LoadBankingLinkagePage.tsx page-scoped text token ratchet
+  if (load.includes("text-[11px]")) {
+    failures.push("LoadBankingLinkagePage.tsx: leftover text-[11px]");
+  }
+  if (load.includes("#8A92AB")) {
+    failures.push("LoadBankingLinkagePage.tsx: leftover off-scale muted #8A92AB");
+  }
   if (!/LinkedBankTransactionsPanel[\s\S]{0,220}?kind:\s*"vendor_id"/.test(vendor)) {
     failures.push("VendorDetail must mount LinkedBankTransactionsPanel with vendor_id");
   }
@@ -237,6 +244,14 @@ if (process.argv.includes("--selftest")) {
   }
   if (!evidenceFailures(matrixSource, selfSource.replace('"leaves":["load.banking"]', '"leaves":["load.detail"]')).some((failure) => failure.includes("Built annotation"))) {
     throw new Error("FAIL fail: changing exact load.banking Built leaf should trip");
+  }
+  // BANK-F91325 leftover plant — LoadBankingLinkagePage page-scoped text token ratchet
+  mk(
+    "apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx",
+    'LinkedBankTransactionsPanel\nload_id\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n',
+  );
+  if (!run(tmp).some((f) => f.includes("leftover text-[11px]"))) {
+    throw new Error("FAIL fail: leftover plant escaped");
   }
   fs.rmSync(tmp, { recursive: true, force: true });
   console.log("verify-banking-by-linkage-reverse --selftest OK");
