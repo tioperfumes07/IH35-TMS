@@ -62,6 +62,9 @@ function leftoverRefuse(src) {
   if (src.includes("#8A92AB") || src.includes("#334155") || src.includes("#64748b") || src.includes("#94a3b8") || src.includes("#d1d5db") || src.includes("#D1D5DB")) {
     hits.push(`${LOC_MAP}: leftover off-scale muted`);
   }
+  if (src.includes("text-slate-") || src.includes("border-slate-") || src.includes("bg-slate-")) {
+    hits.push(`${LOC_MAP}: leftover slate class`);
+  }
   return hits;
 }
 
@@ -87,6 +90,11 @@ if (process.argv.includes("--selftest")) {
   const leftoverSlateHits = leftoverRefuse('<text fill="#64748b"></text><rect stroke="#94a3b8" /><div style="border: 1px solid #d1d5db" />');
   if (!leftoverSlateHits.some((e) => e.includes("leftover off-scale muted"))) {
     throw new Error(`leftover slate plant escaped: ${JSON.stringify(leftoverSlateHits)}`);
+  }
+  // BANK-F91530 leftover plant — LocationMapModal leftover Tailwind slate-* classes
+  const leftoverSlateClassHits = leftoverRefuse('<div className="text-slate-700 border-slate-200 bg-slate-50">plant</div>');
+  if (!leftoverSlateClassHits.some((e) => e.includes("leftover slate class"))) {
+    throw new Error(`leftover slate class plant escaped: ${JSON.stringify(leftoverSlateClassHits)}`);
   }
   console.log(`verify-lists-maintenance-generic-catalog-connectivity-exact SELFTEST PASS — ${mutants.length + 1} planted defects rejected + leftover plant`);
   process.exit(0);

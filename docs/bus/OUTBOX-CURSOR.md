@@ -1,3 +1,15 @@
+## 2026-10-04T17:05Z · BANK-F91530 LocationMap leftover slate classes · this PR
+
+DONE: LocationMapModal leftover Tailwind slate-* → house #1F2A44 / #0F1219 / #4B5563 / #F7F8FA; leftover refuse on EVEN 4132 --selftest + live.
+
+NEXT: leftover muted chrome (CreateWO / Safety / Integrity slate-* / skip pile) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T16:55Z · BANK-F91529 IftaPreparer leftover slate classes WIRED CI · tip `0bb4597c3c`
+
+DONE: #25271 — IftaPreparerCard leftover Tailwind slate-* → house tokens; leftover refuse on EVEN 3884 --selftest + live.
+
+NEXT: leftover muted chrome (LocationMap slate-* / WO pie empty stay / skip pile) · skip pile parked · HH14 no migrations this tick.
+
 ## 2026-10-04T16:55Z · BANK-F91529 IftaPreparer leftover slate classes · this PR
 
 DONE: IftaPreparerCard leftover Tailwind slate-* → house #4B5563 / #1F2A44 / #E5E7EB / #F7F8FA; leftover refuse on EVEN 3884 --selftest + live.
