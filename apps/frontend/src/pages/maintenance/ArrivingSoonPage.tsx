@@ -176,7 +176,7 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
     ? (card: ArrivingSoonCardType) => (
         <button
           type="button"
-          className="rounded-sm border border-slate-300 px-2 py-0.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+          className="rounded-sm border border-slate-300 px-2 py-0.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
           onClick={() => setSelectedCard(card)}
         >
           Convert to WO
@@ -188,7 +188,7 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
   // IS NULL), so there is no work order to link to yet; the action is "Convert to WO" above.
   const renderExpanded = (card: ArrivingSoonCardType) => (
     <div className="space-y-1">
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+      <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
         Open issues ({card.total_open_issues})
       </div>
       {card.issues.length === 0 ? (
@@ -237,7 +237,7 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
 
       {recentConversions.length > 0 ? (
         <section className="rounded-sm border border-slate-200 bg-white p-3" data-testid="maint-arriving-soon-recent-conversions">
-          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Recently converted to work orders</div>
+          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Recently converted to work orders</div>
           <ul className="divide-y divide-slate-100">
             {recentConversions.map((conversion) => (
               <li key={conversion.issue_id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-xs">
