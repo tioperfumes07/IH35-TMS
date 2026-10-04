@@ -13,6 +13,7 @@ import {
 } from "./posting-engine.service.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 import { unmatchBankTransactionOnClient } from "./bank-recon/recon-worklist.service.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 export class BankDepositError extends Error {
   constructor(
@@ -53,6 +54,9 @@ type DbClient = {
 
 async function withCompanyTx<T>(userId: string, operatingCompanyId: string, fn: (client: DbClient) => Promise<T>): Promise<T> {
   return withCurrentUser(userId, async (client) => {
+    // ROUND 389.2 triage (verify-tenant-scope-on-routes, CODE-WRONG): an Owner's RLS admits EVERY company, so the
+    // company id the caller names must be checked against the user's own membership before it scopes anything.
+    await assertCompanyMembership(client as never, userId, operatingCompanyId);
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     return fn(client);
   });

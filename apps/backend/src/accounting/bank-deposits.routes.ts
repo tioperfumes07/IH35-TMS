@@ -7,6 +7,7 @@ import type { FastifyInstance, FastifyReply } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import {
   BankDepositError,
   createBankDeposit,
@@ -58,6 +59,7 @@ async function bankDepositsRoutes(app: FastifyInstance) {
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query);
     if (!query.success) return validationError(reply, query.error);
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const rows = await listUndepositedReceipts(query.data.operating_company_id, user.uuid);
     return { rows, count: rows.length };
   });
@@ -67,6 +69,7 @@ async function bankDepositsRoutes(app: FastifyInstance) {
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query);
     if (!query.success) return validationError(reply, query.error);
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const rows = await listBankDeposits(query.data.operating_company_id, user.uuid, {
       limit: query.data.limit,
       offset: query.data.offset,
@@ -82,6 +85,7 @@ async function bankDepositsRoutes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query);
     if (!params.success) return validationError(reply, params.error);
     if (!query.success) return validationError(reply, query.error);
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const row = await getBankDeposit(query.data.operating_company_id, user.uuid, params.data.id);
     if (!row) return reply.code(404).send({ error: "NOT_FOUND", message: "Deposit not found" });
     return { deposit: row };
@@ -92,6 +96,7 @@ async function bankDepositsRoutes(app: FastifyInstance) {
     if (!user) return;
     const body = createBodySchema.safeParse(req.body);
     if (!body.success) return validationError(reply, body.error);
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     try {
       const created = await createBankDeposit({
         operatingCompanyId: body.data.operating_company_id,
@@ -136,6 +141,7 @@ async function bankDepositsRoutes(app: FastifyInstance) {
     > = [];
     for (let i = 0; i < body.data.rows.length; i++) {
       const row = body.data.rows[i]!;
+      await assertCompanyMembership(user.uuid, body.data.operating_company_id);
       try {
         const deposit = await createBankDeposit({
           operatingCompanyId: body.data.operating_company_id,
@@ -175,6 +181,7 @@ async function bankDepositsRoutes(app: FastifyInstance) {
     const body = voidBodySchema.safeParse(req.body);
     if (!params.success) return validationError(reply, params.error);
     if (!body.success) return validationError(reply, body.error);
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     try {
       const voided = await voidBankDeposit({
         operatingCompanyId: body.data.operating_company_id,
