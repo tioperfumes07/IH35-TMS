@@ -7169,6 +7169,15 @@ action: TWO PHASES under this one authorization.
   mismatches) -> phase 2 refused -> 202615400800 -> phase 2 (1 line, 0 refused; both 13523-32 lines on load 13534).
   Dry-run first (default, no --apply).
 expires_at: 2026-10-04T22:22:02Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-04T03:29:58Z (phase 1 2026-10-04T02:50:59Z; phase 2 after 202615400800 applied 03:29:20Z)
+consumed_by: CC-2
+row_counts: STEP 1 mdata.equipment 10219 DryVan -> Reefer (+ fleet.trailer.updated audit). STEP 2 fuel 097923fb trailer -> 10219.
+  STEP 3 expense 13534-28 (81ff108d) voided by executeVoidCancel, reversing entry 3f8d123d. STEP 4 applyReclassify:
+  A 99cbc6a7 1 line, C 81639cc3 6 lines, D 308449fb 4 lines (phase 1); B c8375b8f 1 line (phase 2); 0 refused.
+  0 deletes.
+proof_query: account 5015 net = 194,481 cents ($1,944.81); trial balance diff 0; 13523-32's two lines both on load 13534
+  (DEF 5010 $24.59, reefer 5015 $246.04); verify-expense-line-account-matches-item, verify-costs-are-expenses-not-handwritten-jes,
+  verify-fuel-cost-posts-exactly-once, verify-every-load-born-posting-carries-its-load all LIVE PASS after phase 2.
 THIS AUTHORIZATION DOES NOT COVER: any other field or record of IH 35 Trucking LLC or IH 35 Transportation; receipt
   99530579; any DELETE; any company other than USMCA.
