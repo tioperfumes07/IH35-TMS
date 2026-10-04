@@ -1,3 +1,11 @@
+## 2026-10-04T06:18Z · BANK-F91431 B-5 ops batch WIRED CI · tip `de05e37ad4`
+
+DONE: #25170 — verify-steps/12270 now runs ops/verify-b5-reclassify-batch (+ change-location). OUTBOX F91427..F91430 stamped.
+
+LIVE PROOF: `node scripts/verify-steps/12270-verify-b5-change-location-wired.mjs` exit 0.
+
+NEXT: continue ORDERS leftover cadence · B-1..B-5 ops PASS · skip pile parked · HH06 no migrations.
+
 ## 2026-10-04T06:14Z · BANK-F91427..F91430 ORDERS leftover + B-5 chrome MERGED tip `f102fd26a2`
 
 DONE:
