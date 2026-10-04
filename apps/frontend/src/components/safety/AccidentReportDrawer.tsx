@@ -348,7 +348,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
       })
       .catch((error) => {
         if (lifecycleGenerationRef.current !== generation) return;
-        pushToast(String((error as Error).message || "Spawn Liability failed — add positive cost lines and an active driver, then retry."), "error");
+        pushToast(userFacingApiError(error, "Spawn Liability failed — add positive cost lines and an active driver, then retry."), "error");
       })
       .finally(() => {
         if (lifecycleGenerationRef.current === generation) setActionPending(false);

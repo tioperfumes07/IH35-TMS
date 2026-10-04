@@ -28,6 +28,10 @@ function assertAll(srcs) {
       problems.push(`${file}: still stringifies Error.message into toast/error`);
     }
   }
+  // BANK-F91353 leftover refuse — JournalEntryTypePicker page-scoped text token ratchet
+  const jePicker = FILES[2];
+  if (srcs[jePicker]?.includes("text-[11px]")) problems.push(`${jePicker}: leftover text-[11px]`);
+  if (srcs[jePicker]?.includes("#8A92AB")) problems.push(`${jePicker}: leftover off-scale muted #8A92AB`);
   return problems;
 }
 
@@ -39,6 +43,15 @@ if (SELFTEST) {
   planted[FILES[0]] = planted[FILES[0]].replaceAll("userFacingApiError(", "String((error as Error).message || ");
   if (!assertAll(planted).length) {
     console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);
+    process.exit(1);
+  }
+  // BANK-F91353 leftover plant
+  const leftoverPlant = {
+    ...srcs,
+    [FILES[2]]: srcs[FILES[2]] + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n',
+  };
+  if (!assertAll(leftoverPlant).some((p) => p.includes("leftover text-[11px]"))) {
+    console.error(`${LABEL} SELFTEST FAILED: JournalEntryTypePicker leftover plant escaped`);
     process.exit(1);
   }
   const live = assertAll(srcs);
