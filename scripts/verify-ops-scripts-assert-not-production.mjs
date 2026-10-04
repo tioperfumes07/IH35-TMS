@@ -67,7 +67,16 @@ function stripAssertImportLine(src) {
 // UPDATE must be SQL-shaped — `UPDATE <relation> [AS alias] SET` (the relation may be an interpolated ${...}) — so English
 // prose in a report string ("needs an UPDATE of that back-pointer", r326) is never read as a write. INSERT INTO and
 // DELETE FROM are already unambiguous. CC-2 2026-10-04.
-const SQL_WRITE_RE = /\b(INSERT\s+INTO|UPDATE\s+(?:ONLY\s+)?(?:\$\{[^}]+\}|[\w."]+)\s+(?:(?:AS\s+)?\w+\s+)?SET\b|DELETE\s+FROM)/i;
+// LST-F402 (Lead, 2026-10-04): INSERT INTO and DELETE FROM are shape-checked too — a real write carries its SQL frame
+// (INSERT INTO <rel> (cols | VALUES | SELECT; DELETE FROM <rel> WHERE | USING | RETURNING | end of statement). Prose cannot
+// supply the frame ("we will delete from the plan later"). Shape, not keyword — never loosened.
+const SQL_REL = String.raw`(?:\$\{[^}]+\}|[\w."\[\]]+)`;
+const SQL_WRITE_RE = new RegExp(
+  String.raw`\b(INSERT\s+INTO\s+${SQL_REL}\s*(?:\(|VALUES\b|SELECT\b)` +
+    String.raw`|DELETE\s+FROM\s+(?:ONLY\s+)?${SQL_REL}(?:\s+(?:AS\s+)?\w+)??\s*(?:WHERE\b|USING\b|RETURNING\b|;|\x60|"|'|$)` +
+    String.raw`|UPDATE\s+(?:ONLY\s+)?${SQL_REL}\s+(?:(?:AS\s+)?\w+\s+)?SET\b)`,
+  "im"
+);
 
 // Known mutating engine functions this session's ops scripts actually call. Add to this list as
 // new mutating engines are introduced -- do NOT remove an entry to make a script pass.
@@ -232,6 +241,22 @@ if (process.argv.includes("--selftest")) {
   `;
   if (isViolation(commentedOut)) failures.push("a write inside a comment was flagged as a real write");
 
+  // LST-F402 — the six shapes the Lead named, plus three real-world shapes from the purge engine.
+  const shapes = [
+    ["report.push(`needs an UPDATE of that back-pointer`)", false],
+    ["await c.query(`UPDATE mdata.loads SET x=1`)", true],
+    ["await c.query(`DELETE FROM a.b WHERE id=$1`)", true],
+    ["await c.query(`INSERT INTO a.b (x) VALUES ($1)`)", true],
+    ["// we will delete from the plan later", false],
+    ["await c.query(`SELECT id FROM a.b`)", false],
+    ["console.log(`we will delete from the plan later`)", false],
+    ["await c.query(`DELETE FROM ${t} d WHERE d.id = ANY($1)`)", true],
+    ["await c.query(`INSERT INTO _system.purge_authorized_rows (auth_id) SELECT $1`)", true],
+  ];
+  for (const [src, want] of shapes) {
+    if (analyze(src).hasWrite !== want) failures.push(`analyze(${JSON.stringify(src)}).hasWrite should be ${want}`);
+  }
+
   if (collectProblems([{ file: "x.ts", src: violationSql }]).length !== 1) {
     failures.push("collectProblems did not surface the unguarded write");
   }
@@ -242,7 +267,7 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   console.log(
-    `${LABEL} SELFTEST OK — 8/8 (no assertion anywhere caught, assertion-after-write caught, ` +
+    `${LABEL} SELFTEST OK — 17/17 (9 LST-F402 shape cases, no assertion anywhere caught, assertion-after-write caught, ` +
       `assertNotProduction-then-write passes, assertIsIntendedProduction-then-mutating-fn passes, ` +
       `mutating-function-only guarded case passes, mutating-function-only unguarded caught, ` +
       `read-only script passes, commented-out write ignored, end-to-end)`
