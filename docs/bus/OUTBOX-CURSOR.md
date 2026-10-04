@@ -1,3 +1,15 @@
+## 2026-10-04T18:25Z · BANK-F91538 RoundTrips leftover slate classes · this PR
+
+DONE: RoundTripsTimeline leftover bg-slate-50 / text-slate-600 / border-slate-300 → house #F7F8FA / #4B5563 / #E5E7EB; leftover refuse on EVEN 3408 --selftest + live. SB #475569 stays locked.
+
+NEXT: leftover muted chrome (TripPairingBoard slate-* / remaining pages / skip pile) · skip pile parked · HH15 leftovers first.
+
+## 2026-10-04T18:25Z · BANK-F91537 LaneProfit leftover frame slate WIRED CI · tip `36dcf3618f`
+
+DONE: #25279 — LaneProfitability leftover frame border-slate-* / divide-slate-* → house #E5E7EB; box-in-box needles retargeted, not deleted; leftover refuse on EVEN 2320 --selftest + live.
+
+NEXT: leftover muted chrome (RoundTrips slate-* / remaining pages / skip pile) · skip pile parked · HH15 leftovers first.
+
 ## 2026-10-04T18:15Z · BANK-F91537 LaneProfit leftover frame slate · this PR
 
 DONE: LaneProfitabilityPage leftover frame border-slate-* / divide-slate-* → house #E5E7EB; box-in-box needles retargeted (not deleted); leftover refuse on EVEN 2320 --selftest + live.
