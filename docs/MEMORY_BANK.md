@@ -1502,6 +1502,31 @@ SQL on both cash-basis and accrual walks now projects `account_number`, `system_
 - Guard: `scripts/verify-cash-flow-recourse-is-secured-borrowing.mjs` wired on EVEN 3848
 - Unit: `apps/backend/src/accounting/__tests__/cash-flow-recourse-secured-borrowing.test.ts`
 
+## Active Architectural Decisions — ENG-7D unmatched 7 days is an ALERT (Cursor, 2026-10-04)
+
+Owner A1: "Alert after 7 days unmatched (single threshold, not 30/90)." A COUNT on a page
+nobody fetched is not an alert. Two bank-match defects were joined to D-6 and die here:
+
+1. "unmatched" was `coa_account_id IS NULL` (CATEGORIZE). Match is a live document pointer
+   (`matched_bill_id` / expense / invoice / settlement / payment / JE / advance / fuel /
+   load / transfer — ROUND 368.2 family). Split/transfer status is a match.
+2. The window was recency (`created_at >= now()-7d`). A1 is AGE: `transaction_date` is 7+
+   Chicago days old AND still unmatched.
+
+Permanent writer: integrity-alert cron (`integrity-alert-engine.cron`, withJobLease) upserts
+ONE digest alert per company (`subject_key = bank_unmatched_7d:company`). 831 per-line
+alerts were rejected (orphan_bill LIMIT-50 lesson). Zero aged unmatched auto-resolves the
+event + alert. New alerts page Owner/Administrator via existing
+`banking.transaction.flagged` (`notifyOwnersBankUnmatched7d`). Do not invent a prefs type.
+
+Stats `GET /api/v1/banking/categorization-rules/stats` now returns the digest count, not
+the recency CATEGORIZE counter. Banking Home + Categorization Rules render an ALERT row
+(`data-testid=unmatched-7d-alert`). Do not fire evaluate on GET stats — cron is the writer.
+
+- Helper: `apps/backend/src/banking/unmatched-7d-alert.ts` (`ensureBankUnmatched7dRule` at the engine door — CREATE-only catalog, not a money seed, not a migration. ACCT-F406.)
+- Guard: `scripts/verify-unmatched-7d-is-an-alert.mjs` wired on EVEN 3996
+- Live USMCA (lucia, 2026-10-04): aged unmatched 831 · aged uncategorized 900 · live lines 987
+
 ## Active Architectural Decisions — KILL THE SECOND SYSTEM (Cursor, 2026-10-03)
 
 Owner, verbatim: the ledger is the balance; policies stay; this is a deletion, not a build.

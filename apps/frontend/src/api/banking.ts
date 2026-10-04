@@ -370,6 +370,10 @@ export type CategorizationRulesStats = {
   active_rules: number;
   matched_7d: number;
   unmatched_7d: number;
+  unmatched_7d_alert_open: boolean;
+  unmatched_7d_alert_id: string | null;
+  threshold_days: number;
+  oldest_unmatched_date: string | null;
 };
 
 export type CategorizationPreviewTransaction = {

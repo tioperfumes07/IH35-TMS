@@ -1,4 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const notifyOwnersBankUnmatched7d = vi.fn().mockResolvedValue(undefined);
+vi.mock("../../notifications/dispatcher.js", () => ({
+  notifyOwnersBankUnmatched7d: (...args: unknown[]) => notifyOwnersBankUnmatched7d(...args),
+}));
+
 import {
   evaluateIntegrityRulesForTenant,
   INTEGRITY_ALERT_ENGINE_VERSION,
@@ -12,10 +18,11 @@ describe("integrity alert engine service (A23-12)", () => {
 
   beforeEach(() => {
     query.mockReset();
+    notifyOwnersBankUnmatched7d.mockClear();
   });
 
   it("exports engine version", () => {
-    expect(INTEGRITY_ALERT_ENGINE_VERSION).toBe("a23-12-v1");
+    expect(INTEGRITY_ALERT_ENGINE_VERSION).toBe("a23-12-v2");
   });
 
   it("lists rules for tenant", async () => {
@@ -30,6 +37,7 @@ describe("integrity alert engine service (A23-12)", () => {
 
   it("evaluates fuel anomaly rule and inserts event + alert", async () => {
     query
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 })
       .mockResolvedValueOnce({
         rows: [
           {
@@ -66,6 +74,7 @@ describe("integrity alert engine service (A23-12)", () => {
 
   it("skips alert insert when event already linked", async () => {
     query
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 })
       .mockResolvedValueOnce({
         rows: [
           {
@@ -95,5 +104,93 @@ describe("integrity alert engine service (A23-12)", () => {
     const result = await evaluateIntegrityRulesForTenant({ query }, COMPANY);
     expect(result.events_inserted).toBe(1);
     expect(result.alerts_inserted).toBe(0);
+  });
+
+  it("ENG-7D: aged unmatched digest inserts one company alert and pages owners", async () => {
+    query
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: "rule-7d",
+            operating_company_id: COMPANY,
+            rule_code: "bank_unmatched_7d",
+            rule_name: "Bank line unmatched 7+ days",
+            source_view: "banking.bank_transactions",
+            alert_category: "accounting_integrity",
+            subject_type: "accounting",
+            threshold_config: { stale_days: 7 },
+            severity: "critical",
+            enabled: true,
+          },
+        ],
+        rowCount: 1,
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            unmatched_count: 831,
+            oldest_transaction_date: "2026-08-01",
+            newest_transaction_date: "2026-09-26",
+            sample_bank_transaction_ids: ["bt-1"],
+          },
+        ],
+        rowCount: 1,
+      })
+      .mockResolvedValueOnce({
+        rows: [{ id: "evt-7d", integrity_alert_id: null }],
+        rowCount: 1,
+      })
+      .mockResolvedValueOnce({ rows: [{ id: "alert-7d" }], rowCount: 1 })
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 });
+
+    const result = await evaluateIntegrityRulesForTenant({ query }, COMPANY);
+    expect(result.rules_scanned).toBe(1);
+    expect(result.events_inserted).toBe(1);
+    expect(result.alerts_inserted).toBe(1);
+    expect(notifyOwnersBankUnmatched7d).toHaveBeenCalledWith({
+      operatingCompanyId: COMPANY,
+      unmatchedCount: 831,
+      summary: "831 bank lines unmatched for 7+ days oldest 2026-08-01",
+    });
+  });
+
+  it("ENG-7D: zero aged unmatched auto-resolves and does not page", async () => {
+    query
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: "rule-7d-clear",
+            operating_company_id: COMPANY,
+            rule_code: "bank_unmatched_7d",
+            rule_name: "Bank line unmatched 7+ days",
+            source_view: "banking.bank_transactions",
+            alert_category: "accounting_integrity",
+            subject_type: "accounting",
+            threshold_config: { stale_days: 7 },
+            severity: "critical",
+            enabled: true,
+          },
+        ],
+        rowCount: 1,
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            unmatched_count: 0,
+            oldest_transaction_date: null,
+            newest_transaction_date: null,
+            sample_bank_transaction_ids: [],
+          },
+        ],
+        rowCount: 1,
+      })
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 });
+
+    const result = await evaluateIntegrityRulesForTenant({ query }, COMPANY);
+    expect(result.events_inserted).toBe(0);
+    expect(result.alerts_inserted).toBe(0);
+    expect(notifyOwnersBankUnmatched7d).not.toHaveBeenCalled();
   });
 });

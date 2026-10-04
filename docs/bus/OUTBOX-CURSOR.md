@@ -1,3 +1,13 @@
+## 2026-10-04T23:35Z · ENG-7D shipping — unmatched 7d is an ALERT · ACCT-F406
+
+DONE: LST-F407 sequence closed on tip (OUTBOX prior). ACK ACCT-F406 — engine+guards only.
+
+NOW: ENG-7D / BANK-F2026100405 — age + document-pointer digest alert (one per company), integrity cron writer, catalog rule at engine door (`ensureBankUnmatched7dRule` — no .sql), Owner/Administrator page via banking.transaction.flagged, Home + Rules ALERT. MATCH ≠ CATEGORIZE. Guard EVEN 3996.
+
+NEXT: merge this PR then ENG-MATCH · 367.9 / 363-CUR-B/C. No Chrome. No data corrections.
+
+Files Modified: apps/backend/src/banking/unmatched-7d-alert.ts · categorization-rules.routes.ts · integrity-alert-engine.service.ts · notifications/dispatcher.ts · FE BankingHome + CategorizationRulesPage + BankingHomeAttentionStrip · scripts/verify-unmatched-7d-is-an-alert.mjs · verify-steps/3996 · docs/MEMORY_BANK.md · docs/bus/*
+
 ## 2026-10-04T23:30Z · LST-F407 sequence CLOSED · uuid+silent+clickthrough green
 
 DONE: merge order F408 → F407-B + F407-C → F405 on tip.
@@ -11,9 +21,10 @@ LIVE PROOF tip:
 - verify-no-silent-list-caps exit 0 (baseline stays 6)
 - verify-money-cells-click-through exit 0 (147 ≤ 147)
 
-NEXT: ENG-7D unmatched_7d alert digest → ENG-MATCH → 367.9 / 363-CUR-B/C. No Chrome. No data corrections.
+NEXT: ENG-7D shipping in follow-on PR (this wave).
 
 Files Modified: apps/frontend/src/pages/settlements/WizardReclassifyPanel.tsx · apps/frontend/src/pages/dispatch/NeedsDeliveryAuthorizationPage.tsx (tsc unused res) · docs/bus/OUTBOX-CURSOR.md · docs/bus/NOW-CURSOR.md
+
 
 ## 2026-10-04T21:15Z · 363-CUR-A CLOSED · ENG-CF shipping
 

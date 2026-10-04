@@ -5,5 +5,7 @@ export default {
     // BANK-F91534 — leftover Tailwind slate-* classes → house #4B5563 / #1F2A44.
     await ctx.run("node", ["scripts/verify-integrity-alerts-staged-filters.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-integrity-alerts-staged-filters.mjs"]);
+    await ctx.run("node", ["scripts/verify-unmatched-7d-is-an-alert.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-unmatched-7d-is-an-alert.mjs"]);
   },
 };

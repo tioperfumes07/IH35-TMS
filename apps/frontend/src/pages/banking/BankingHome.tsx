@@ -10,6 +10,7 @@ import {
   getQboSyncQueueStats,
   getReconciliationSessions,
   getEscrowDriverBalances,
+  getCategorizationRulesStats,
   createPettyCashAccount,
   reorderBankAccounts,
 } from "../../api/banking";
@@ -190,6 +191,11 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   const uncategorizedQuery = useQuery({
     queryKey: ["banking", "uncategorized", companyId],
     queryFn: () => getBankingUncategorized(companyId, { limit: 8 }),
+    enabled: Boolean(companyId),
+  });
+  const unmatched7dQuery = useQuery({
+    queryKey: ["banking", "categorization-rules-stats", companyId],
+    queryFn: () => getCategorizationRulesStats(companyId),
     enabled: Boolean(companyId),
   });
   // C-51 — Driver Escrow liability pool headcount for Home attention strip.
@@ -571,6 +577,8 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               escrowDriverCount: (escrowBalancesQuery.data?.drivers ?? []).filter(
                 (d) => Number(d.escrow_balance ?? 0) !== 0
               ).length,
+              unmatchedAged7d: Number(unmatched7dQuery.data?.unmatched_7d ?? 0),
+              unmatched7dAlertOpen: Boolean(unmatched7dQuery.data?.unmatched_7d_alert_open),
             }}
             onCategorize={() => {
               setTransactionsInitialFilter("uncategorized");

@@ -1,4 +1,15 @@
-export const INTEGRITY_ALERT_ENGINE_VERSION = "a23-12-v1";
+import {
+  BANK_UNMATCHED_7D_RULE_CODE,
+  BANK_UNMATCHED_7D_SUBJECT_KEY,
+  UNMATCHED_7D_THRESHOLD_DAYS,
+  detectionSummaryForDigest,
+  ensureBankUnmatched7dRule,
+  loadAgedUnmatchedDigest,
+  resolveBankUnmatched7dEvents,
+} from "../banking/unmatched-7d-alert.js";
+import { notifyOwnersBankUnmatched7d } from "../notifications/dispatcher.js";
+
+export const INTEGRITY_ALERT_ENGINE_VERSION = "a23-12-v2";
 
 type IntegrityAlertRule = {
   id: string;
@@ -51,6 +62,7 @@ export async function evaluateIntegrityRulesForTenant(
   client: QueryableClient,
   operatingCompanyId: string
 ): Promise<{ rules_scanned: number; events_inserted: number; alerts_inserted: number }> {
+  await ensureBankUnmatched7dRule(client, operatingCompanyId);
   const rulesRes = await client.query<IntegrityAlertRule>(
     `
       SELECT *
@@ -71,6 +83,17 @@ export async function evaluateIntegrityRulesForTenant(
       const inserted = await upsertEventAndAlert(client, operatingCompanyId, rule, match);
       if (inserted.event) eventsInserted += 1;
       if (inserted.alert) alertsInserted += 1;
+      if (inserted.alert && rule.rule_code === BANK_UNMATCHED_7D_RULE_CODE) {
+        const metric = match.detection_metric as { unmatched_count?: number };
+        await notifyOwnersBankUnmatched7d({
+          operatingCompanyId,
+          unmatchedCount: Number(metric.unmatched_count ?? 0),
+          summary: match.detection_summary,
+        }).catch((err) => {
+          // Alert row is the durable page; a notify failure must not roll back the watchdog tick.
+          console.error("[integrity-alert-engine] bank_unmatched_7d notify failed", err);
+        });
+      }
     }
   }
 
@@ -341,6 +364,26 @@ async function evaluateRuleMatches(
       detection_metric: row,
       source_view: rule.source_view,
     }));
+  }
+
+  if (rule.rule_code === BANK_UNMATCHED_7D_RULE_CODE) {
+    const staleDays = thresholdNumber(config, "stale_days", UNMATCHED_7D_THRESHOLD_DAYS);
+    const digest = await loadAgedUnmatchedDigest(client, operatingCompanyId, staleDays);
+    if (digest.unmatched_count <= 0) {
+      await resolveBankUnmatched7dEvents(client, operatingCompanyId, rule.id);
+      return [];
+    }
+    return [
+      {
+        subject_key: BANK_UNMATCHED_7D_SUBJECT_KEY,
+        subject_driver_id: null,
+        subject_unit_id: null,
+        subject_vendor_id: null,
+        detection_summary: detectionSummaryForDigest(digest, staleDays),
+        detection_metric: { ...digest, stale_days: staleDays, threshold_days: staleDays },
+        source_view: rule.source_view || "banking.bank_transactions",
+      },
+    ];
   }
 
   return [];

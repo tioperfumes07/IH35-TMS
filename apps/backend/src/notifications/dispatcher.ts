@@ -487,3 +487,31 @@ export async function notifyAbandonedLoadStakeholders(input: {
     )
   );
 }
+
+/** ENG-7D — A1 pages Owner/Administrator. A number on a page is not an alert. */
+export async function notifyOwnersBankUnmatched7d(input: {
+  operatingCompanyId: string;
+  unmatchedCount: number;
+  summary: string;
+}) {
+  if (input.unmatchedCount <= 0) return;
+  const headline = `${input.unmatchedCount} bank line${input.unmatchedCount === 1 ? "" : "s"} unmatched for 7+ days`;
+  const bodyText = `${input.summary}. Open Banking → For review and match each line to its bill, expense, invoice, settlement, or payment.`;
+  const recipients = await listCompanyUserIdsByRoles(input.operatingCompanyId, ["Owner", "Administrator"]);
+  await Promise.all(
+    recipients.map((userId) =>
+      dispatchNotification({
+        user_id: userId,
+        event_type: "banking.transaction.flagged",
+        payload: {
+          operating_company_id: input.operatingCompanyId,
+          unmatched_count: input.unmatchedCount,
+          threshold_days: 7,
+          headline,
+          bodyText,
+          sms_body: headline,
+        },
+      }).catch(() => undefined)
+    )
+  );
+}

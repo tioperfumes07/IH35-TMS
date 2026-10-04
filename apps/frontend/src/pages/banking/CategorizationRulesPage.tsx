@@ -7,6 +7,7 @@ import {
   deactivateCategorizationRule,
   getCategorizationPreview,
   getCategorizationRules,
+  getCategorizationRulesStats,
   getCoaAccounts,
   type CategorizationRule,
   updateCategorizationRule,
@@ -62,6 +63,11 @@ export function CategorizationRulesPage() {
   const previewQuery = useQuery({
     queryKey: ["banking", "categorization-rules-preview", companyId],
     queryFn: () => getCategorizationPreview(companyId),
+    enabled: Boolean(companyId && canAccess(auth.user?.role)),
+  });
+  const statsQuery = useQuery({
+    queryKey: ["banking", "categorization-rules-stats", companyId],
+    queryFn: () => getCategorizationRulesStats(companyId),
     enabled: Boolean(companyId && canAccess(auth.user?.role)),
   });
 
@@ -195,7 +201,24 @@ export function CategorizationRulesPage() {
   return (
     <div className="space-y-3">
       <PageHeader backHref="/banking" title="Auto-Categorize Rules" subtitle="Map Plaid category patterns to Chart of Accounts" />
-      {rulesQuery.isError || previewQuery.isError || accountsQuery.isError ? <ListErrorBanner onRetry={() => void refresh()} /> : null}
+      {rulesQuery.isError || previewQuery.isError || accountsQuery.isError || statsQuery.isError ? <ListErrorBanner onRetry={() => void refresh()} /> : null}
+      {Number(statsQuery.data?.unmatched_7d ?? 0) > 0 ? (
+        <div
+          role="alert"
+          data-testid="unmatched-7d-alert"
+          className="rounded-sm border border-[#E5E7EB] bg-[#fdecea] px-3 py-2 text-xs text-[#0F1219]"
+          style={{ borderLeft: "3px solid #B42318" }}
+        >
+          <p className="font-semibold">
+            {Number(statsQuery.data?.unmatched_7d).toLocaleString()} bank lines unmatched for {statsQuery.data?.threshold_days ?? 7}+ days — ALERT
+          </p>
+          <p className="mt-0.5 text-[#6B7280]">
+            This is not a counter. Owner A1 pages after 7 days unmatched (single threshold). Match each line to a document
+            {statsQuery.data?.oldest_unmatched_date ? ` (oldest ${statsQuery.data.oldest_unmatched_date})` : ""}.
+            {statsQuery.data?.unmatched_7d_alert_id ? " Open on Integrity Alerts until the last aged line is matched." : ""}
+          </p>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
         <div className="rounded-sm border border-gray-200 bg-white p-3">
