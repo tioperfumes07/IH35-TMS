@@ -31,6 +31,15 @@ import { resolve, join } from "node:path";
 const ROOT = resolve(new URL("..", import.meta.url).pathname);
 const LABEL = "verify-no-partial-optional-chain";
 const SCAN_DIRS = ["apps/frontend/src", "apps/driver-pwa/src"];
+const ERROR_BOUNDARY = "apps/frontend/src/components/ErrorBoundary.tsx";
+
+/** BANK-F91423 leftover refuse — ErrorBoundary page-scoped text token ratchet. */
+export function checkErrorBoundaryLeftovers(src) {
+  const out = [];
+  if (src.includes("text-[11px]")) out.push("ErrorBoundary leftover text-[11px] — use text-xs");
+  if (src.includes("#8A92AB")) out.push("ErrorBoundary leftover #8A92AB — use #4B5563");
+  return out;
+}
 
 /** Array/collection members whose call on `undefined` throws. */
 const MEMBERS = "filter|map|reduce|forEach|some|every|find|findIndex|flatMap|join|slice|sort|length";
@@ -83,6 +92,8 @@ function collectFiles() {
 function run() {
   const files = collectFiles();
   const problems = files.flatMap(({ path, src }) => partialChainProblems(path, src));
+  const ebSrc = readFileSync(resolve(ROOT, ERROR_BOUNDARY), "utf8");
+  problems.push(...checkErrorBoundaryLeftovers(ebSrc));
   if (problems.length) {
     console.error(`[${LABEL}] FAILED — ${problems.length} partial optional chain(s):`);
     for (const p of problems) console.error(`  ✗ ${p}`);
@@ -148,6 +159,21 @@ function selftest() {
     ok = false;
   } else {
     console.log("SELFTEST: re-planting the Border Credentials category lookup defect -> caught");
+  }
+
+  // BANK-F91423 leftover plant — ErrorBoundary page-scoped text token ratchet
+  const ebLive = readFileSync(resolve(ROOT, ERROR_BOUNDARY), "utf8");
+  if (checkErrorBoundaryLeftovers(ebLive).length) {
+    console.error("SELFTEST FAIL: live ErrorBoundary already failing leftover refuse");
+    ok = false;
+  } else {
+    const leftoverPlant = ebLive + '\n<pre className="text-[11px] text-[#8A92AB]">plant</pre>\n';
+    if (!checkErrorBoundaryLeftovers(leftoverPlant).some((f) => f.includes("leftover"))) {
+      console.error("SELFTEST FAIL: leftover text-[11px]/#8A92AB plant escaped");
+      ok = false;
+    } else {
+      console.log("SELFTEST: ErrorBoundary leftover plant -> caught");
+    }
   }
 
   if (!ok) process.exit(1);
