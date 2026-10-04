@@ -1,3 +1,15 @@
+## 2026-10-04T14:48Z · BANK-F91516 PlannerGrid rule-day leftover muted WIRED · this PR
+
+DONE: PlannerGrid --rule-day leftover #94a3b8 → house muted #4B5563; leftover refuse on verify-planner-column-lines; unused EVEN 4140 --selftest + live.
+
+NEXT: leftover muted chrome (WO pie status colors stay / RMBuckets In Progress stay / trip-type SB stay) · skip pile parked · HH13 no migrations this tick.
+
+## 2026-10-04T14:44Z · BANK-F91515 TripPairing dashed leftover muted WIRED CI · tip `0b51bdd15e`
+
+DONE: #25257 — TripPairingBoard dashed leftover muted #4B5563; verify-steps/4130 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (PlannerGrid --rule-day #94a3b8 / WO pie status colors stay) · skip pile parked · HH13 no migrations this tick.
+
 ## 2026-10-04T14:38Z · BANK-F91515 TripPairing dashed leftover muted WIRED · this PR
 
 DONE: TripPairingBoard dashed-legend leftover #94a3b8 → house muted #4B5563; leftover refuse on verify-trip-pairing-leg-columns; unused EVEN 4130 --selftest + live. TR #64748b stays.
