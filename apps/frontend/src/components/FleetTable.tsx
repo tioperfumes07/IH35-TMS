@@ -588,7 +588,7 @@ export function FleetTable({
           dataAttributes={{ "data-fleet-filter-toolbar": "collapsed" }}
         >
           <div className="space-y-2">
-            <div className="inline-flex rounded-sm border border-gray-300 bg-white p-0.5 text-[11px]" data-list-status-filter="fleet">
+            <div className="inline-flex rounded-sm border border-gray-300 bg-white p-0.5 text-xs" data-list-status-filter="fleet">
               {(["active", "inactive", "all"] as const).map((value) => (
                 <button
                   key={value}
@@ -648,7 +648,7 @@ export function FleetTable({
         />
         <button
           type="button"
-          className="rounded-sm border border-red-300 bg-white px-2 py-1 text-[11px] font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"
+          className="rounded-sm border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"
           disabled={bulkApplying || selection.count === 0}
           onClick={onInactivateSelected}
         >
@@ -657,7 +657,7 @@ export function FleetTable({
         {softDeleteFilter !== "active" ? (
           <button
             type="button"
-            className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
             disabled={bulkApplying || selection.count === 0}
             onClick={onReactivateSelected}
           >
