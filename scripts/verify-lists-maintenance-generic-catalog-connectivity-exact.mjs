@@ -3,6 +3,7 @@
 import fs from "node:fs";
 
 const SELF = "scripts/verify-lists-maintenance-generic-catalog-connectivity-exact.mjs";
+const LOC_MAP = "apps/frontend/src/components/maintenance/LocationMapModal.tsx";
 const HEADER = fs.readFileSync(SELF, "utf8").split("\n")[1];
 const FILES = {
   matrix: "docs/specs/scoreboard/modules/lists.required.json",
@@ -68,10 +69,22 @@ if (process.argv.includes("--selftest")) {
   for (const [key, mutant] of mutants) if (!audit({ ...original, [key]: mutant }).length) throw new Error(`mutation survived: ${key}`);
   const self = fs.readFileSync(SELF, "utf8");
   if (!audit({ ...original, self: self.replace(HEADER, `${HEADER}.broken`) }).length) throw new Error("header mutation survived");
-  console.log(`verify-lists-maintenance-generic-catalog-connectivity-exact SELFTEST PASS — ${mutants.length + 1} planted defects rejected`);
+  // BANK-F91294 leftover plant — LocationMapModal page-scoped text token ratchet
+  const leftoverPlant = '<div className="text-[11px] text-[#8A92AB]">plant</div>';
+  const leftoverHits = [];
+  if (leftoverPlant.includes("text-[11px]")) leftoverHits.push(`${LOC_MAP}: leftover text-[11px]`);
+  if (leftoverPlant.includes("#8A92AB") || leftoverPlant.includes("#334155")) leftoverHits.push(`${LOC_MAP}: leftover off-scale muted`);
+  if (!leftoverHits.some((e) => e.includes("leftover text-[11px]")) || !leftoverHits.some((e) => e.includes("leftover off-scale muted"))) {
+    throw new Error(`leftover plant escaped: ${JSON.stringify(leftoverHits)}`);
+  }
+  console.log(`verify-lists-maintenance-generic-catalog-connectivity-exact SELFTEST PASS — ${mutants.length + 1} planted defects rejected + leftover plant`);
   process.exit(0);
 }
 
 const failures = audit();
+// BANK-F91294 leftover refuse — LocationMapModal.tsx page-scoped text token ratchet
+const locMapSrc = fs.readFileSync(LOC_MAP, "utf8");
+if (locMapSrc.includes("text-[11px]")) failures.push(`${LOC_MAP}: leftover text-[11px]`);
+if (locMapSrc.includes("#8A92AB") || locMapSrc.includes("#334155")) failures.push(`${LOC_MAP}: leftover off-scale muted`);
 if (failures.length) { console.error(`verify-lists-maintenance-generic-catalog-connectivity-exact FAIL\n- ${failures.join("\n- ")}`); process.exit(1); }
 console.log("verify-lists-maintenance-generic-catalog-connectivity-exact PASS — 10 Maintenance catalogs × list/create retain hub→stable route→selected-company CRUD/reload connectivity");

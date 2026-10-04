@@ -170,7 +170,7 @@ export function LocationMapModal({
         </svg>
 
         <div
-          className="map-info-panel rounded-sm px-3 py-2 text-[11px] text-slate-700"
+          className="map-info-panel rounded-sm px-3 py-2 text-xs text-slate-700"
           style={{ backgroundColor: "white", border: "1px solid #d1d5db", borderLeft: "3px solid #1f2a44" }}
         >
           <div className="font-semibold text-slate-900">{infoCode}</div>
@@ -181,13 +181,13 @@ export function LocationMapModal({
 
         <div className="flex flex-wrap gap-1">
           {draft.map((code) => (
-            <span key={code} className="rounded-sm bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">
+            <span key={code} className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
               {code}
             </span>
           ))}
-          {draft.length === 0 ? <span className="text-[11px] text-slate-500">No locations selected</span> : null}
+          {draft.length === 0 ? <span className="text-xs text-slate-500">No locations selected</span> : null}
         </div>
-        {nodes.length === 0 ? <div className="text-[11px] text-amber-700">No catalog positions available for this company.</div> : null}
+        {nodes.length === 0 ? <div className="text-xs text-amber-700">No catalog positions available for this company.</div> : null}
 
         <div className="flex items-center justify-between">
           <button type="button" onClick={onClose} className="rounded-sm border border-gray-300 px-2 py-1 text-xs">
