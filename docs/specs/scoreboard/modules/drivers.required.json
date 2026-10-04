@@ -427,6 +427,20 @@
       ]
     },
     {
+      "id": "drivers.modal.add_pay_line",
+      "tab": "Modals",
+      "sub": "Modal: Add Pay Line (driver overview board)",
+      "route_hint": "surface://components/driver-finance/AddPayLineModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/driver-finance/AddPayLineModal.tsx",
+      "required": [
+        "connectivity",
+        "driver",
+        "settlement",
+        "picker_law"
+      ]
+    },
+    {
       "id": "drivers.modal.settlement_dispute_resolve",
       "tab": "Modals",
       "sub": "Modal: Settlement Dispute Resolve",

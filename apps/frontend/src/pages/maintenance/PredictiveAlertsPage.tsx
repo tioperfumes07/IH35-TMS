@@ -136,7 +136,7 @@ export function PredictiveAlertsPage() {
         alwaysVisible: true,
         render: (row) =>
           row.resolved_at ? (
-            <span className="text-[11px] text-gray-500">Resolved</span>
+            <span className="text-xs text-gray-500">Resolved</span>
           ) : (
             <div className="flex flex-wrap gap-1">
               {!row.work_order_id ? (

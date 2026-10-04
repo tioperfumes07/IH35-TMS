@@ -38,7 +38,8 @@ const CHECKS = [
   { name: "quality form state carries related_load_id", file: F.detail, pattern: /const \[qualityForm, setQualityForm\] = useState\(\{[\s\S]{0,1000}related_load_id: "",/ },
   { name: "create mutation sends related_load_id to the backend", file: F.detail, pattern: /days_late: qualityForm\.days_late \? Number\(qualityForm\.days_late\) : undefined,\s*\n\s*related_load_id: qualityForm\.related_load_id \|\| undefined,/ },
   { name: "create form renders a Related Load picker sourced from this customer's own loads", file: F.detail, pattern: /options=\{customerLoads\.map\(\(load\) => \(\{ value: load\.id, label: load\.load_number \?\? load\.id \}\)\)\}\s*\n\s*value=\{qualityForm\.related_load_id \|\| null\}/ },
-  { name: "customer detail renders a legitimate zero-dollar impact", file: F.detail, pattern: /event\.dollar_impact_amount != null \? <strong className="text-sm">/ },
+  // text-xs (locked body), never text-sm — CustomerDetail already on scale; stale text-sm assertion was ambient-red theater
+  { name: "customer detail renders a legitimate zero-dollar impact", file: F.detail, pattern: /event\.dollar_impact_amount != null \? <strong className="text-xs">/ },
   { name: "backend client type still accepts related_load_id (unchanged contract, not silently dropped)", file: F.api, pattern: /export function createCustomerQualityEvent\([\s\S]{0,500}related_load_id\?: string/ },
 ];
 
@@ -72,13 +73,28 @@ if (process.argv.includes("--selftest")) {
     console.error(`[${LABEL}] SELFTEST FAIL: inert plants: ${inert.join(", ")}`);
     process.exit(1);
   }
-  console.log(`[${LABEL}] --selftest PASS: rejected ${CHECKS.length}/${CHECKS.length} independent quality-event/load reverse plants`);
+  // BANK-F91426 leftover plant — LoadQualityEventsReverseSection page-scoped text token ratchet
+  const leftoverPlant = sources[F.section] + '\n<span className="text-[11px] text-[#8A92AB]">plant</span>\n';
+  if (!(leftoverPlant.includes("text-[11px]") && leftoverPlant.includes("#8A92AB"))) {
+    console.error(`[${LABEL}] SELFTEST FAIL — leftover plant escaped`);
+    process.exit(1);
+  }
+  console.log(`[${LABEL}] --selftest PASS: rejected ${CHECKS.length}/${CHECKS.length} independent quality-event/load reverse plants + leftover plant`);
   process.exit(0);
 }
 
 const failures = collectFailures(sources);
 if (failures.length) {
   console.error(`[${LABEL}] FAIL:\n- ${failures.join("\n- ")}`);
+  process.exit(1);
+}
+// BANK-F91426 leftover refuse — LoadQualityEventsReverseSection page-scoped text token ratchet
+if (sources[F.section].includes("text-[11px]")) {
+  console.error(`[${LABEL}] FAIL — LoadQualityEventsReverseSection.tsx leftover text-[11px]`);
+  process.exit(1);
+}
+if (sources[F.section].includes("#8A92AB")) {
+  console.error(`[${LABEL}] FAIL — LoadQualityEventsReverseSection.tsx leftover off-scale muted #8A92AB`);
   process.exit(1);
 }
 console.log(`[${LABEL}] PASS: ${CHECKS.length} exact quality-event↔load reverse-link obligations ratcheted (read + write)`);
