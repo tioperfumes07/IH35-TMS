@@ -10122,5 +10122,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-driver-receivables-post-on-creation"
+  },
+  "12437": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-subaccount-numbers-one-per-driver"
   }
 }

@@ -1997,6 +1997,11 @@
       "claimed_at": "2026-10-03",
       "purpose": "ROUND 373.4: credit memos and vendor credits post — accounting.credit_memos.account_id / journal_entry_id (Dr the income it reduces / Cr A/R) and accounting.vendor_credits.account_id / journal_entry_id (Dr A/P / Cr the expense it reduces), posted at creation through the engine, reversed on void"
     },
+    "202615390200": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-04",
+      "purpose": "ROUND 389.3 ruling 2 (CC-1): driver sub-account numbers 1245/1255/1256/1257/2100-00-nnn, one nnn per driver across parents (from the escrow sequence) — renames the DRIVERCASHAD896665-* advance sub-accounts in place (0 postings) and links duplicate driver records that already share an escrow account to the same advance account."
+    },
     "202615390100": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-04",
