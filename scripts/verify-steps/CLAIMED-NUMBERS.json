@@ -8322,9 +8322,9 @@
     "purpose": "verify-driver-subaccount-numbers-one-per-driver"
   },
   "12441": {
-    "claimed_at": "2026-10-03",
+    "claimed_at": "2026-10-04",
     "claimed_by": "claude",
-    "purpose": "verify-arriving-soon-serves-geofence-state"
+    "purpose": "verify-no-reversal-of-a-reversal"
   },
   "12453": {
     "claimed_at": "2026-10-03",

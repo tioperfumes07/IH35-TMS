@@ -31,6 +31,8 @@ vi.mock("../bills.service.js", () => ({
 
 vi.mock("../journal-entries.service.js", () => ({
   voidJournalEntry: vi.fn(async () => ({ reversal_journal_entry_id: null })),
+  // ROUND 390.1 — reinstate restores GL through restoreReversedJournalEntry (a reversal is terminal).
+  restoreReversedJournalEntry: vi.fn(async () => ({ restore_journal_entry_id: "restore-je", restore_date: "2026-10-04", already_restored: false })),
 }));
 
 import { reinstateDocument, ReinstateDocumentError } from "../reinstate-document.service.js";

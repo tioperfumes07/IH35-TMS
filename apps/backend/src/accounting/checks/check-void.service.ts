@@ -11,7 +11,7 @@ import { voidDocument } from "../void-document.service.js";
 import { stampDocumentVoided, stampDocumentReinstated } from "../void-document-stamp.service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { createCheck, type CreateCheckInput, type CreateCheckResult } from "./check-create.service.js";
-import { voidJournalEntry } from "../journal-entries.service.js";
+import { restoreReversedJournalEntry } from "../journal-entries.service.js";
 
 export class CheckVoidError extends Error {
   code: string;
@@ -262,7 +262,8 @@ export async function unvoidCheck(
   // expense stamp commits. Voids the void's reversing JE so the original expense JE stands alone.
   if (prepared.voidReversalJeId) {
     try {
-      await voidJournalEntry(operating_company_id, prepared.voidReversalJeId, `Unvoid check ${checkId}: ${reason}`, {
+      // ROUND 390.1 — restore the check's GL as fresh lines; the void's reversal is terminal, never reversed.
+      await restoreReversedJournalEntry(operating_company_id, prepared.voidReversalJeId, `Unvoid check ${checkId}: ${reason}`, {
         userId: actorUserId,
         role: "Owner",
       });
