@@ -1,3 +1,9 @@
+## 2026-10-04T10:52Z · BANK-F91485 WOStatusPieChart leftover WIRED CI · tip `17185197ce`
+
+DONE: #25227 — WOStatusPieChart open-slice #4B5563; verify-steps/4102 leftover refuse --selftest + live.
+
+NEXT: BANK-F91486 RouteDiagramSvg leftover #334155 + leftover refuse on 4104 · skip pile parked · HH10 no migrations.
+
 ## 2026-10-04T10:48Z · BANK-F91484 LegalSignPage leftover WIRED CI · tip `78a94b89d3`
 
 DONE: #25226 — LegalSignPage Send Code #4B5563; verify-steps/12372 leftover refuse --selftest + live.
