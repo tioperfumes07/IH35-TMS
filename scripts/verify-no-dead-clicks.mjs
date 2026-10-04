@@ -129,6 +129,9 @@ function walk(dir) {
   return out;
 }
 
+// BANK-F91291 leftover refuse — HomeKpiCard.tsx page-scoped text token ratchet
+const HOME_KPI = "apps/frontend/src/pages/home/HomeKpiCard.tsx";
+
 function selftest() {
   const cases = [
     {
@@ -209,6 +212,14 @@ function selftest() {
     console.error(`\n${LABEL} SELFTEST FAILED: ${failed}`);
     process.exit(1);
   }
+  const leftoverPlant = '<div className="text-[11px] text-[#8A92AB]">plant</div>';
+  const leftoverHits = [];
+  if (leftoverPlant.includes("text-[11px]")) leftoverHits.push(`${HOME_KPI}: leftover text-[11px]`);
+  if (leftoverPlant.includes("#8A92AB") || leftoverPlant.includes("#334155")) leftoverHits.push(`${HOME_KPI}: leftover off-scale muted`);
+  if (!leftoverHits.some((e) => e.includes("leftover text-[11px]")) || !leftoverHits.some((e) => e.includes("leftover off-scale muted"))) {
+    console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`, leftoverHits);
+    process.exit(1);
+  }
   console.log(`\n${LABEL} SELFTEST PASS`);
 }
 
@@ -224,6 +235,10 @@ for (const abs of files) {
   const source = fs.readFileSync(abs, "utf8");
   allErrors = allErrors.concat(assertGuard({ file: rel, source }));
 }
+
+const homeKpiSrc = fs.readFileSync(path.join(ROOT, HOME_KPI), "utf8");
+if (homeKpiSrc.includes("text-[11px]")) allErrors.push(`${HOME_KPI}: leftover text-[11px]`);
+if (homeKpiSrc.includes("#8A92AB") || homeKpiSrc.includes("#334155")) allErrors.push(`${HOME_KPI}: leftover off-scale muted`);
 
 const total = allErrors.length;
 
