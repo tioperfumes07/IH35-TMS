@@ -91,6 +91,9 @@ function leftoverRefuse(src) {
   if (/<YAxis\b(?![^/]*fontSize:\s*11)/.test(src)) {
     hits.push(`${TARGET}: leftover YAxis tick without locked 11px header scale`);
   }
+  if (src.includes("text-slate-")) {
+    hits.push(`${TARGET}: leftover slate class`);
+  }
   return hits;
 }
 
@@ -129,6 +132,10 @@ function selftest() {
   const leftoverMuted = leftoverRefuse('tick={{ fontSize: 10 }} stroke="#64748b"');
   if (!leftoverMuted.some((h) => h.includes("leftover off-scale muted"))) {
     throw new Error("selftest leftover muted plant escaped");
+  }
+  const leftoverSlateClass = leftoverRefuse('<div className="text-slate-600">plant</div>');
+  if (!leftoverSlateClass.some((h) => h.includes("leftover slate class"))) {
+    throw new Error("selftest leftover slate class plant escaped");
   }
   console.log(`${LABEL} --selftest OK`);
 }
