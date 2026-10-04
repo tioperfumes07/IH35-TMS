@@ -118,6 +118,10 @@ export type ApChainInput = {
   payItems: ApChainPayItem[];
   applications: ApChainApplication[];
   netCents: number;
+  /** ROUND 389.3 R1 — what the applications exceed the load bills by (a negative net floored at $0). Posted Dr 1257. */
+  shortfallCents?: number;
+  /** ROUND 389.3 R1 — the driver_negative_settlement_receivable account (1257), required when shortfallCents > 0. */
+  shortfallAccountId?: string | null;
   payoutBankAccountId: string | null;
   paymentReference?: string | null;
 };
@@ -218,10 +222,16 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
   const appPostings: Array<{ account_id: string; debit_or_credit: "debit" | "credit"; amount_cents: number; description: string }> = [];
   const firstNoncashBp = new Map<string, string>();
   const rank = { advance: 0, deduction: 1, chargeback: 1, escrow: 2 } as const;
+  let unappliedCents = 0;
   for (const app of [...input.applications].sort((a, z) => rank[a.kind] - rank[z.kind])) {
     if (app.cents <= 0) continue;
     const preferred = app.preferredLoadId ? posted.find((x) => x.b.loadId === app.preferredLoadId)?.billId ?? null : null;
-    const parts = allocateApplication(remaining, order, app.cents, preferred);
+    // ROUND 389.3 R1 — a negative-net settlement: apply only what the load bills still hold; the excess is what the
+    // driver owes the company (Dr 1257 below), never an over-applied A/P bill.
+    const capacity = [...remaining.values()].reduce((n, v) => n + v, 0);
+    const applyCents = Math.min(app.cents, capacity);
+    unappliedCents += app.cents - applyCents;
+    const parts = applyCents > 0 ? allocateApplication(remaining, order, applyCents, preferred) : [];
     for (const part of parts) {
       const bp = await payBillInClientTx(client, {
         operatingCompanyId: opco, billId: part.key, paymentDate: input.billDate, amountCents: part.cents, paymentMethod: "other",
@@ -240,6 +250,15 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
       }
     }
     appPostings.push({ account_id: app.accountId, debit_or_credit: "credit", amount_cents: app.cents, description: `${input.label} — ${app.description}` });
+  }
+  // ROUND 389.3 R1 — the excess is a DRIVER RECEIVABLE: Dr 1257 driver_negative_settlement_receivable, the driver on the
+  // line and the settlement as the entry's source (both directions). It must equal the pay-run's shortfall exactly.
+  if (unappliedCents !== (input.shortfallCents ?? 0)) {
+    throw new SettlementApChainError("SHORTFALL_DOES_NOT_TIE", `${input.label}: applications exceed the load bills by ${unappliedCents}c but the pay-run shortfall is ${input.shortfallCents ?? 0}c`, { unapplied_cents: unappliedCents, shortfall_cents: input.shortfallCents ?? 0 });
+  }
+  if (unappliedCents > 0) {
+    if (!input.shortfallAccountId) throw new SettlementApChainError("NEGATIVE_SETTLEMENT_RECEIVABLE_UNBOUND", `${input.label}: no driver_negative_settlement_receivable role binding for the ${unappliedCents}c shortfall`, { shortfall_cents: unappliedCents });
+    appPostings.push({ account_id: input.shortfallAccountId, debit_or_credit: "debit", amount_cents: unappliedCents, description: `${input.label} — negative settlement: owed by the driver`, entity_type: "driver", entity_uuid: input.driverId } as never);
   }
   let applicationJeId: string | null = null;
   if (appPostings.length >= 2) {
