@@ -94,6 +94,9 @@ function audit(sources) {
   if (!/FIXED DEPLOYED \(Codex Live 2026-08-16\):\*\* `LV-INSURANCE-LEGACY-FRONTEND-BUNDLE-BEHIND-BACKEND`/.test(board)) {
     failures.push("insurance split-deploy blocker must remain closed with exact deployed evidence");
   }
+  // BANK-F91335 leftover refuse — PoliciesList page-scoped text token ratchet
+  if (list.includes("text-[11px]")) failures.push("PoliciesList.tsx: leftover text-[11px]");
+  if (list.includes("#8A92AB")) failures.push("PoliciesList.tsx: leftover off-scale muted #8A92AB");
   return failures;
 }
 
@@ -121,6 +124,12 @@ if (process.argv.includes("--selftest")) {
     for (const failure of [...audit(real).map((x) => `real tree: ${x}`), ...missed.map((x) => `mutation not detected: ${x}`)]) {
       console.error(`  ✗ verify-insurance-policy-type-human-label: ${failure}`);
     }
+    process.exit(1);
+  }
+  // BANK-F91335 leftover plant — PoliciesList page-scoped text token ratchet
+  const leftoverPlant = { ...real, list: real.list + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n' };
+  if (!audit(leftoverPlant).some((f) => f.includes("leftover text-[11px]"))) {
+    console.error("verify-insurance-policy-type-human-label --selftest FAIL — leftover plant escaped");
     process.exit(1);
   }
   console.log(`verify-insurance-policy-type-human-label selftest PASS — ${mutations.length}/${mutations.length} planted defects detected`);

@@ -108,7 +108,7 @@ export function PoliciesList() {
     { key: "effective_date", label: "Effective Date", sortable: true, align: "right" as const, render: (p: InsurancePolicy) => formatDateUS(p.effective_date) },
     { key: "expiry_date", label: "Expiry Date", sortable: true, align: "right" as const, render: (p: InsurancePolicy) => formatDateUS(p.expiry_date) },
     { key: "status", label: "Status", sortable: true, render: (p: InsurancePolicy) => (
-      <span className={`rounded-sm px-2 py-0.5 text-[11px] font-semibold ${statusBadge(p.status)}`}>{p.status}</span>
+      <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${statusBadge(p.status)}`}>{p.status}</span>
     ) },
   ];
 
