@@ -946,8 +946,6 @@
       "posted_at",
       "posted_by_user_id",
       "register",
-      "running_balance_cents",
-      "short_pay_balance_cents",
       "short_pay_credit_memo_id",
       "short_pay_paid_cents",
       "short_pay_reason",
