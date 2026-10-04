@@ -1,10 +1,10 @@
 {
-  "healthzSha": "cd03183",
-  "generated_at": "2026-10-04T04:29:06.335Z",
+  "healthzSha": "45954d4",
+  "generated_at": "2026-10-04T04:34:08.527Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "cd03183",
+    "deployedSha": "45954d4",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 25149,
+      "title": "FINDING: ACCT-F9978 LANE: FINANCIAL (ROUND 390.1: a reversal line is TERMINAL — the one posting-line writer refuses, by name, a line that reverses a line which is itself a reversal; reinstate, check unvoid and reclassify undo now restore reversed money as fresh lines instead of \"voiding the void's reversing JE\"; the zero-tolerance chain guard is added)",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 11:32 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25149",
+      "sha": "805a5bb97b",
+      "committedAtIso": "2026-10-03T23:32:13-05:00"
+    },
+    {
+      "number": 25148,
+      "title": "FINDING: N/A (CLAIM-RESERVE verify-step — reservation-only commit, no code fix)",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 11:29 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25148",
+      "sha": "45954d411d",
+      "committedAtIso": "2026-10-03T23:29:23-05:00"
+    },
+    {
       "number": 25147,
       "title": "FINDING: ACCT-F2026100407 LANE: FINANCIAL (three reds on main from CC-2 changes blocked every seat's push — C6 on the create-only recurring worker, the U17 reclassify panel missing from the wizard inventory, and two bill/invoice filter checks pinned to function names FILTER-MULTI-01 replaced)",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25139",
       "sha": "bf2311b9eb",
       "committedAtIso": "2026-10-03T22:30:46-05:00"
-    },
-    {
-      "number": 25138,
-      "title": "FINDING: ACCT-F2026100401 LANE: FINANCIAL (reclassify by load is refused by the database — reclassify_batches_changes_something never learned U24's to_item_id / to_load_id, so every load-only batch fails at INSERT)",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 10:27 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25138",
-      "sha": "55f3c2eca8",
-      "committedAtIso": "2026-10-03T22:27:24-05:00"
-    },
-    {
-      "number": 25137,
-      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: migration 202615390300 for CC-1 — closed-period trigger admits the reversal link-back)",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 10:18 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25137",
-      "sha": "fd15d47d2b",
-      "committedAtIso": "2026-10-03T22:18:23-05:00"
     }
   ]
 }
