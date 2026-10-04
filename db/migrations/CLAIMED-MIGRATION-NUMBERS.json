@@ -2075,7 +2075,12 @@
     "202615401000": {
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-04",
-      "purpose": "Reclassify by load (U24) is refused by the database: accounting.reclassify_batches_changes_something counts only account/class/entity/location, so a load-only batch violates it. Widen the CHECK to include to_item_id and to_load_id, the same set the engine already accepts."
+      "purpose": "RELEASED UNUSED — out of the CC-2 band (HH 06-08, verify-migration-lane-band); re-claimed as 202615400800. No file was ever authored at this number."
+    },
+    "202615400800": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-04",
+      "purpose": "Reclassify by load (U24) is refused by the database: accounting.reclassify_batches_changes_something counts only account/class/entity/location, so a load-only batch violates it. Widen the CHECK to include to_item_id and to_load_id, the same set the engine already accepts. (Re-claim of 202615401000, in band.)"
     }
   },
   "202613590001": {
