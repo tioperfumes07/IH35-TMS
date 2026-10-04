@@ -196,7 +196,7 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
           drivers; IH35 policy renews yearly. Field-data capture only until an attorney-approved template ships.
         </p>
 
-        <div className="text-[11px] font-semibold uppercase text-slate-500">Part I — Beneficial owner</div>
+        <div className="text-xs font-semibold uppercase text-slate-500">Part I — Beneficial owner</div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1">
             <label className={labelCls}>Full legal name</label>
@@ -248,7 +248,7 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
           </div>
         </div>
 
-        <div className="text-[11px] font-semibold uppercase text-slate-500">Part II — Treaty claim (optional, usually N/A)</div>
+        <div className="text-xs font-semibold uppercase text-slate-500">Part II — Treaty claim (optional, usually N/A)</div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1">
             <label className={labelCls}>Treaty country</label>
@@ -260,7 +260,7 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
           </div>
         </div>
 
-        <div className="text-[11px] font-semibold uppercase text-slate-500">Part III — Certification (typed metadata only)</div>
+        <div className="text-xs font-semibold uppercase text-slate-500">Part III — Certification (typed metadata only)</div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1">
             <label className={labelCls}>Certification name (typed — not e-signed)</label>
