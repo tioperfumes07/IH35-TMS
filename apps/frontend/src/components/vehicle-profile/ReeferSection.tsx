@@ -33,7 +33,7 @@ export function ReeferSection({ reefer }: { reefer: ReeferData }) {
             id={reefer.attached_trailer_id}
             name={reefer.equipment_number}
             noun="Trailer"
-            className="font-semibold text-slate-700 hover:underline"
+            className="font-semibold text-[#1F2A44] hover:underline"
             data-testid="vp-reefer-trailer-link"
           />
         ) : (
