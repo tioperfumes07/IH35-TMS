@@ -156,7 +156,15 @@ if (SELFTEST) {
     console.error(`${LABEL} SELFTEST FAILED live: ${live.join(" | ")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS`);
+  // BANK-F91395 leftover plant — FinesDeductionsCard page-scoped text token ratchet
+  const leftoverPlant =
+    srcs["apps/frontend/src/components/dispatch/tabs/FinesDeductionsCard.tsx"] +
+    '\n<span className="text-[11px] text-[#8A92AB]">plant</span>\n';
+  if (!(leftoverPlant.includes("text-[11px]") && leftoverPlant.includes("#8A92AB"))) {
+    console.error(`${LABEL} SELFTEST FAIL — leftover plant escaped`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS + leftover plant`);
   process.exit(0);
 }
 
@@ -164,6 +172,19 @@ const problems = assertAll(read());
 if (problems.length) {
   console.error(`${LABEL} FAILED:`);
   for (const p of problems) console.error(`  ${p}`);
+  process.exit(1);
+}
+// BANK-F91395 leftover refuse — FinesDeductionsCard page-scoped text token ratchet
+const finesSrc = fs.readFileSync(
+  path.join(ROOT, "apps/frontend/src/components/dispatch/tabs/FinesDeductionsCard.tsx"),
+  "utf8",
+);
+if (finesSrc.includes("text-[11px]")) {
+  console.error(`${LABEL} FAIL — FinesDeductionsCard.tsx leftover text-[11px]`);
+  process.exit(1);
+}
+if (finesSrc.includes("#8A92AB")) {
+  console.error(`${LABEL} FAIL — FinesDeductionsCard.tsx leftover off-scale muted #8A92AB`);
   process.exit(1);
 }
 console.log(`${LABEL} OK`);
