@@ -72,6 +72,14 @@ sources.forEach((src, i) => {
 });
 failures = failures.concat(auditDefectDetail(defectSource));
 
+// BANK-F91414 leftover refuse — TireProgramPage page-scoped text token ratchet
+{
+  const tireIdx = PAGE_HEADER_FILES.indexOf("apps/frontend/src/pages/maintenance/TireProgramPage.tsx");
+  const tireSrc = tireIdx >= 0 ? sources[tireIdx] : "";
+  if (tireSrc.includes("text-[11px]")) failures.push("TireProgramPage leftover text-[11px] — use text-xs");
+  if (tireSrc.includes("#8A92AB")) failures.push("TireProgramPage leftover #8A92AB — use #4B5563");
+}
+
 if (failures.length) {
   console.error(`verify-maintenance-leaf-back-buttons-wired FAIL\n- ${failures.join("\n- ")}`);
   process.exit(1);
@@ -111,6 +119,21 @@ if (process.argv.includes("--selftest")) {
   const mutDefectFailures = auditDefectDetail(mutatedDefect);
   if (mutDefectFailures.length === 0) throw new Error("mutation escaped for DefectDetailPage.tsx");
   caught += 1;
+
+  // BANK-F91414 leftover plant — TireProgramPage page-scoped text token ratchet
+  {
+    total += 1;
+    const tireIdx = PAGE_HEADER_FILES.indexOf("apps/frontend/src/pages/maintenance/TireProgramPage.tsx");
+    if (tireIdx < 0) throw new Error("TireProgramPage missing from PAGE_HEADER_FILES");
+    const mutSources = [...sources];
+    mutSources[tireIdx] = sources[tireIdx] + '\n<p className="text-[11px] text-[#8A92AB]">plant</p>\n';
+    let mutFailures = mutSources.flatMap((src, j) => auditPageHeaderFile(PAGE_HEADER_FILES[j], src));
+    const tireSrc = mutSources[tireIdx];
+    if (tireSrc.includes("text-[11px]")) mutFailures = mutFailures.concat(["TireProgramPage leftover text-[11px] — use text-xs"]);
+    if (tireSrc.includes("#8A92AB")) mutFailures = mutFailures.concat(["TireProgramPage leftover #8A92AB — use #4B5563"]);
+    if (mutFailures.length === 0) throw new Error("leftover text-[11px]/#8A92AB plant escaped");
+    caught += 1;
+  }
 
   console.log(`verify-maintenance-leaf-back-buttons-wired SELFTEST PASS — ${caught}/${total} mutations detected`);
 }
