@@ -92,7 +92,7 @@ export function LaunchReadinessPage() {
                 </div>
               </div>
               {data.migrations.pending_filenames.length ? (
-                <div className="mt-3 max-h-32 overflow-auto rounded-sm bg-gray-50 p-2 font-mono text-[11px] text-gray-700">
+                <div className="mt-3 max-h-32 overflow-auto rounded-sm bg-gray-50 p-2 font-mono text-xs text-gray-700">
                   {data.migrations.pending_filenames.join(", ")}
                 </div>
               ) : null}
