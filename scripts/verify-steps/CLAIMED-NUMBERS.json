@@ -16187,5 +16187,20 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-reversal-links-both-directions"
+  },
+  "18113": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-scroll-containers-are-reachable"
+  },
+  "18125": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-one-control-height"
+  },
+  "18137": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-rail-highlight-tracks-loaded-filter"
   }
 }
