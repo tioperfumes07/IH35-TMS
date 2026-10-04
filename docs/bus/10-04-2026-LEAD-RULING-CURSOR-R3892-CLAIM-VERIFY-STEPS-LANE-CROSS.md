@@ -25,3 +25,23 @@ RULED: CURSOR may ADD keys to `scripts/verify-steps/CLAIMED-NUMBERS.json` **and*
 
 This ruling does not give CURSOR anything in CC-1's money / GL / posting lane. The 39 guards are
 UI / design-law / chrome verifiers already measured PASS with DATABASE_URL stripped.
+
+## Amendment 2026-10-04 — CURSOR triage of 3 FAILING orphan UI guards
+
+ROUND 389.2 also assigns CURSOR **3 FAILING** orphan guards (Claude Lead
+`10-04-2026-Claude-Lead-NOT-WIRED-204-FAILING-BY-SEAT.md`):
+
+- `scripts/verify-navy-page-subnav.mjs`
+- `scripts/verify-list-empty-settled.mjs`
+- `scripts/verify-form-425c-exhibits.mjs`
+
+Those script files are lane-owned by CC-1 in `verify-lane-ownership`, but Claude Lead
+explicitly ordered CURSOR to triage them (code-wrong vs guard-wrong), fix, prove, then wire.
+The triage also touches `apps/backend/src/reports/index.ts` (UNASSIGNED) where the 425c exhibits
+route surface must match the guard.
+
+RULED: CURSOR may EDIT the three verify scripts named above and ADD the minimal reports-index
+wiring required for the 425c exhibits guard to pass, for ROUND 389.2 triage only. Same
+`LANE_CROSS` filename. After green, CURSOR reserves EVEN verify-step numbers and wires the
+three via `scripts/verify-steps/<N>-verify-<slug>.mjs` under the same ruling's ADD-ONLY /
+EVEN-band limits.
