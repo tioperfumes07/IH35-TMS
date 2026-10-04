@@ -11167,5 +11167,255 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
+  },
+  "14413": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-bank-recon-poster-ledger-account-id"
+  },
+  "14417": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-credit-memo-liability-zero-posting-lines"
+  },
+  "14421": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-escrow-ledger-fk-canonical"
+  },
+  "14425": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-every-posting-has-a-source"
+  },
+  "14429": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-expense-gl-posting"
+  },
+  "14433": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-factoring-void-enumerates-all-postings"
+  },
+  "14437": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fh2-no-posting"
+  },
+  "14441": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fh3-no-posting"
+  },
+  "14445": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fh4-no-posting"
+  },
+  "14449": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-fuel-gl-poster-callers"
+  },
+  "14453": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-gl-invariants-inv3-real-only-basis"
+  },
+  "14457": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-insurance-posting-dates-business-date"
+  },
+  "14461": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-journal-entry-detail-human-labels"
+  },
+  "14465": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-journal-entry-types-real"
+  },
+  "14469": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-ledger-parity-static"
+  },
+  "14473": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-legal-no-gl-writes"
+  },
+  "14477": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maint-parts-ledger-company-audits"
+  },
+  "14481": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maintenance-posting-uses-resolver"
+  },
+  "14485": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-maintenance-reports-complete-ledger"
+  },
+  "14489": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-no-posting-to-inactive-account"
+  },
+  "14493": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-no-unledgered-migrations"
+  },
+  "14497": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-odometer-ledger-has-one-writer"
+  },
+  "14501": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-posting-engine-mvp-contract"
+  },
+  "14505": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-posting-hits-designed-accounts"
+  },
+  "14509": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-posting-idempotency"
+  },
+  "14513": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-posting-lineage-ui-contract"
+  },
+  "14517": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-posting-prepaid-factoring-register-human-labels"
+  },
+  "14521": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-recent-activity-ledger-sourced"
+  },
+  "14525": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-record-expense-driverless-posting"
+  },
+  "14529": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-revrec-bill-posting-tagged-invoice-source"
+  },
+  "14533": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-sales-tax-posting-split"
+  },
+  "14537": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-settlement-gl-flag-gate"
+  },
+  "14541": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-wave-c-gl-je-system-qbo-recon"
+  },
+  "14545": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-wo-posting-preview-fails-closed"
+  },
+  "14549": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-cash-flow-void-exclusion"
+  },
+  "14553": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-civil-fines-voidable"
+  },
+  "14557": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-deduction-void-never-forgives"
+  },
+  "14561": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-dispatcher-safety-event-edit-void-immutable"
+  },
+  "14565": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-dispatcher-safety-event-void-cas"
+  },
+  "14569": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-escrow-counts-deactivated-inclusion-parity"
+  },
+  "14573": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-escrow-separation-90day-gate"
+  },
+  "14577": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-safety-event-edit-void-immutable"
+  },
+  "14581": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-driver-safety-event-void-cas"
+  },
+  "14585": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-e10-reversal-is-idempotent"
+  },
+  "14589": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-escrow-amount-conservation"
+  },
+  "14593": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-escrow-collections-transfer-human-labels"
+  },
+  "14597": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-escrow-emits-audit"
+  },
+  "14601": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-escrow-forfeit-scope-snapshot"
+  },
+  "14605": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-escrow-tenant-scope"
+  },
+  "14609": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-every-void-route-reverses"
   }
 }
