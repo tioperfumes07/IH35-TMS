@@ -25,6 +25,7 @@ import { fileURLToPath } from "node:url";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILE_PATH = path.join(root, "apps/frontend/src/pages/dispatch/DispatchOverview.tsx");
+const DATA_PANEL = path.join(root, "apps/frontend/src/components/layout/DataPanel.tsx");
 const LABEL = "verify-dispatch-overview-panel-error-states";
 
 const QUERIES = ["exposureLoadsQ", "atRiskLateQ", "detentionQ", "borderQ", "oosLoadsQ"];
@@ -46,6 +47,14 @@ export function checkDispatchOverviewPanelErrorStates(src) {
   return problems;
 }
 
+/** BANK-F91421 leftover refuse — DataPanel page-scoped text token ratchet. */
+export function checkDataPanelLeftovers(src) {
+  const problems = [];
+  if (src.includes("text-[11px]")) problems.push("DataPanel leftover text-[11px] — use text-xs");
+  if (src.includes("#8A92AB")) problems.push("DataPanel leftover #8A92AB — use #4B5563");
+  return problems;
+}
+
 if (process.argv.includes("--selftest")) {
   const failures = [];
 
@@ -61,6 +70,16 @@ if (process.argv.includes("--selftest")) {
   const unwired = good.replace("query={detentionQ}", "query={{ isLoading: false, isError: false, refetch: () => undefined }}");
   if (checkDispatchOverviewPanelErrorStates(unwired).length !== 1) failures.push("an unwired detention panel was not caught exactly once");
 
+  // BANK-F91421 leftover plant — DataPanel page-scoped text token ratchet
+  const dataPanelSrc = fs.readFileSync(DATA_PANEL, "utf8");
+  if (checkDataPanelLeftovers(dataPanelSrc).length) {
+    failures.push("live DataPanel already failing leftover refuse");
+  }
+  const leftoverPlant = dataPanelSrc + '\n<a className="text-[11px] text-[#8A92AB]">plant</a>\n';
+  if (!checkDataPanelLeftovers(leftoverPlant).some((f) => f.includes("leftover"))) {
+    failures.push("leftover text-[11px]/#8A92AB plant escaped");
+  }
+
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:`);
     for (const f of failures) console.error("  - " + f);
@@ -68,13 +87,16 @@ if (process.argv.includes("--selftest")) {
   }
   console.log(
     `${LABEL} SELFTEST OK — the real pre-fix defect caught (5/5), the real fixed file clears, a ` +
-      `partial fix (one of five) caught (4/4).`
+      `partial fix (one of five) caught (4/4), DataPanel leftover plant detected.`,
   );
   process.exit(0);
 }
 
 const src = fs.readFileSync(FILE_PATH, "utf8");
-const problems = checkDispatchOverviewPanelErrorStates(src);
+const problems = [
+  ...checkDispatchOverviewPanelErrorStates(src),
+  ...checkDataPanelLeftovers(fs.readFileSync(DATA_PANEL, "utf8")),
+];
 if (problems.length) {
   console.error(`${LABEL} FAIL — ${problems.length} problem(s):`);
   for (const p of problems) console.error("  ✗ " + p);
