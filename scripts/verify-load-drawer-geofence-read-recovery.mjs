@@ -18,6 +18,9 @@ export function audit(src) {
   if (!/if \(query\.isLoading\)[\s\S]{0,500}if \(query\.error\)/.test(src)) {
     problems.push("loading and error states are no longer ordered before empty/data states");
   }
+  // BANK-F91402 leftover refuse — LoadDetailGeofenceTimelineTab page-scoped text token ratchet
+  if (src.includes("text-[11px]")) problems.push("leftover text-[11px] — use text-xs (ORDERS size token)");
+  if (src.includes("#8A92AB")) problems.push("leftover #8A92AB — use #4B5563 (ORDERS muted token)");
   return problems;
 }
 
@@ -32,6 +35,8 @@ function selftest() {
     ["retry label", good.replace("Retry timeline", "Try later")],
     ["exact refetch", good.replace("query.refetch()", "window.location.reload()")],
     ["state order", good.replace("if (query.isLoading)", "if (query.error)")],
+    // BANK-F91402 leftover plant — LoadDetailGeofenceTimelineTab page-scoped text token ratchet
+    ["leftover text token", good + '\n<p className="text-[11px] text-[#8A92AB]">plant</p>\n'],
   ];
   const failures = [];
   if (audit(good).length) failures.push(`good fixture rejected: ${audit(good).join(" | ")}`);
