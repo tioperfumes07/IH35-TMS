@@ -63,8 +63,12 @@ function fmtCompare(k: LedgerKpi) {
   return String(v);
 }
 
-function fmtBucket(k: LedgerKpi, b: { label: string; count: number; cents: number }) {
-  return k.unit === "cents" && !/^\d/.test(b.label) ? `${b.label}: ${formatUsdCents(b.cents)}` : `${b.label}${/^\d/.test(b.label) ? "d" : ""}: ${b.count}`;
+/** BANK-F2026100303 — fmtBucket is gone. It existed only to flatten every bucket into one inline
+ *  string for the tile, which is the defect: Driver Escrow and Cash Position have the most buckets,
+ *  so those tiles became unreadable. The tile now reports HOW MANY breakdowns there are and the
+ *  drill renders them as a real table. */
+function bucketCount(k: LedgerKpi) {
+  return k.buckets?.length ?? 0;
 }
 
 type Props<K extends string> = {
@@ -116,15 +120,25 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
             data-testid={`${domain}-kpi-${k.key}`}
             title={`${k.source}${k.gl_account ? ` · GL ${k.gl_account}` : ""}`}
           >
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">{k.label}</div>
-            <div className="mt-1 text-xs font-semibold tabular-nums text-slate-900">{fmtValue(k)}</div>
+            {/* BANK-F2026100303 — A KPI TILE IS ONE NUMBER.
+                What was here: label, value, compare, and EVERY bucket joined with " · ", all five
+                lines at text-xs in the same slate-600 grey, inside a tile one fifth of the row wide.
+                Driver Escrow and Cash Position carry the most buckets, so those two tiles rendered as
+                a wall of text with no number you could find — the owner's exact complaint, and the
+                reason a KPI stops being a KPI. The headline was `text-xs`, the SAME SIZE as its own
+                label and footnotes, so nothing had hierarchy.
+                Fixed the way QuickBooks and NetSuite do it: the number is the tile. One muted label
+                above it, at most one comparison line under it, and the breakdown moved to the drill
+                where it has the width to be a real table. Nothing is hidden — every bucket is still
+                there, one click away, and now readable. */}
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{k.label}</div>
+            <div className="mt-0.5 text-2xl font-semibold leading-tight tabular-nums text-slate-900">{fmtValue(k)}</div>
             {k.compare_value != null ? (
-              <div className="text-xs tabular-nums text-slate-600">{k.compare_label} {fmtCompare(k)}</div>
+              <div className="mt-0.5 truncate text-[11px] tabular-nums text-slate-500">{k.compare_label} {fmtCompare(k)}</div>
             ) : null}
-            {k.buckets ? (
-              <div className="text-xs tabular-nums text-slate-600">{k.buckets.map((b) => fmtBucket(k, b)).join(" · ")}</div>
-            ) : null}
-            <div className="mt-1 text-xs text-slate-600">{k.empty_reason ?? `${k.row_count} row(s) · drill`}</div>
+            <div className="mt-1 text-[11px] text-slate-400">
+              {k.empty_reason ?? `${k.row_count} row${k.row_count === 1 ? "" : "s"}${bucketCount(k) ? ` · ${bucketCount(k)} breakdown${bucketCount(k) === 1 ? "" : "s"}` : ""}`}
+            </div>
           </button>
         ))}
       </div>
@@ -132,6 +146,41 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
         <Modal open onClose={() => setDrillKey(null)} title={drillKpi ? `${drillKpi.label} — ${drillKpi.row_count} row(s)` : "KPI rows"}>
           <div className="text-xs" data-testid={`${domain}-kpi-drill`}>
             {drillKpi ? <p className="mb-2 text-slate-600">Source: {drillKpi.source}{drillKpi.gl_account ? ` · GL ${drillKpi.gl_account}` : ""}</p> : null}
+            {/* BANK-F2026100303 — the breakdown lives HERE, not crammed into the tile. Full width,
+                every bucket, right-aligned tabular figures, and a total that ties so the owner can
+                check the tile's headline against the sum of its parts without leaving the modal. */}
+            {drillKpi?.buckets?.length ? (
+              <div className="mb-3" data-testid={`${domain}-kpi-drill-breakdown`}>
+                <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Breakdown</div>
+                <table className="w-full tabular-nums">
+                  <thead>
+                    <tr>
+                      <th className="text-left font-semibold text-slate-600">bucket</th>
+                      <th className="text-right font-semibold text-slate-600">rows</th>
+                      {drillKpi.unit === "cents" ? <th className="text-right font-semibold text-slate-600">amount</th> : null}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {drillKpi.buckets.map((b) => (
+                      <tr key={b.label}>
+                        <td className="text-left">{b.label}</td>
+                        <td className="text-right">{b.count}</td>
+                        {drillKpi.unit === "cents" ? <td className="text-right">{formatUsdCents(b.cents)}</td> : null}
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t border-slate-200 font-semibold">
+                      <td className="text-left">Total</td>
+                      <td className="text-right">{drillKpi.buckets.reduce((s, b) => s + b.count, 0)}</td>
+                      {drillKpi.unit === "cents" ? (
+                        <td className="text-right">{formatUsdCents(drillKpi.buckets.reduce((s, b) => s + b.cents, 0))}</td>
+                      ) : null}
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            ) : null}
             {drill.isLoading ? <p>Loading rows…</p> : null}
             {drill.data && !drill.data.rows.length ? <p className="text-slate-600">{drillKpi?.empty_reason ?? "No rows."}</p> : null}
             {cols.length ? (
