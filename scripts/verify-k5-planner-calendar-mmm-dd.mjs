@@ -17,6 +17,7 @@ const LABEL = "verify-k5-planner-calendar-mmm-dd";
 const SELFTEST = process.argv.includes("--selftest");
 
 const AXIS_HEAD = "apps/frontend/src/pages/dispatch/planners/PlannerAxisHead.tsx";
+const AXIS_TS = "apps/frontend/src/pages/dispatch/planners/plannerTimeAxis.ts";
 const DAY_LABEL = "apps/frontend/src/pages/dispatch/planners/plannerDayLabel.ts";
 
 function read(rel) {
@@ -45,6 +46,11 @@ function assertLive(overrides = {}) {
   // BANK-F91302 leftover refuse — PlannerAxisHead.tsx page-scoped text token ratchet
   if (axisHead.includes("text-[11px]")) problems.push(`${AXIS_HEAD}: leftover text-[11px]`);
   if (axisHead.includes("#8A92AB") || axisHead.includes("#334155")) problems.push(`${AXIS_HEAD}: leftover off-scale muted`);
+
+  // BANK-F91487 leftover refuse — plannerTimeAxis.ts today-inset leftover muted
+  const axisTs = get(AXIS_TS);
+  if (axisTs.includes("text-[11px]")) problems.push(`${AXIS_TS}: leftover text-[11px]`);
+  if (axisTs.includes("#8A92AB") || axisTs.includes("#334155")) problems.push(`${AXIS_TS}: leftover off-scale muted`);
 
   // formatPlannerDayLabel must produce MMM-DD format
   const dayLabel = get(DAY_LABEL);
@@ -86,6 +92,15 @@ if (SELFTEST) {
   const leftoverHits = assertLive({ [AXIS_HEAD]: leftoverPlant });
   if (!leftoverHits.some((e) => e.includes("leftover text-[11px]")) || !leftoverHits.some((e) => e.includes("leftover off-scale muted"))) {
     console.error(`${LABEL} SELFTEST FAILED leftover plant escaped`, leftoverHits.filter((e) => e.includes("leftover")));
+    process.exit(1);
+  }
+  const axisTsPlant = read(AXIS_TS) + '\n<div className="text-[11px] text-[#8A92AB]" style={{ color: "#334155" }}>plant</div>\n';
+  const axisTsHits = assertLive({ [AXIS_TS]: axisTsPlant });
+  if (
+    !axisTsHits.some((e) => e.includes(`${AXIS_TS}: leftover text-[11px]`)) ||
+    !axisTsHits.some((e) => e.includes(`${AXIS_TS}: leftover off-scale muted`))
+  ) {
+    console.error(`${LABEL} SELFTEST FAILED leftover axis-ts plant escaped`, axisTsHits.filter((e) => e.includes("leftover")));
     process.exit(1);
   }
   console.log(`${LABEL} SELFTEST PASS — 2/2 mutations caught + leftover plant`);

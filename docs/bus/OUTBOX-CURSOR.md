@@ -1,3 +1,9 @@
+## 2026-10-04T11:00Z · BANK-F91486 RouteDiagramSvg leftover WIRED CI · tip `301e659e3d`
+
+DONE: #25228 — RouteDiagramSvg origin fill #4B5563; verify-steps/4104 leftover refuse --selftest + live.
+
+NEXT: BANK-F91487 plannerTimeAxis leftover #334155 + leftover refuse on 4106 · skip pile parked · HH11 no migrations.
+
 ## 2026-10-04T10:52Z · BANK-F91485 WOStatusPieChart leftover WIRED CI · tip `17185197ce`
 
 DONE: #25227 — WOStatusPieChart open-slice #4B5563; verify-steps/4102 leftover refuse --selftest + live.
