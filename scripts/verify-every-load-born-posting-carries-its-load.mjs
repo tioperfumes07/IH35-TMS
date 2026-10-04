@@ -34,6 +34,9 @@ const INSERT_RE = /INSERT\s+INTO\s+accounting\.journal_entry_postings\b/gi;
 export function postingInserts(src) {
   const out = [];
   for (const m of src.matchAll(INSERT_RE)) {
+    // A comment that MENTIONS the insert is not one (the r391 writer's header prose tripped RULE 1).
+    const lineStart = src.lastIndexOf("\n", m.index) + 1;
+    if (/^\s*(\/\/|\*|\/\*)/.test(src.slice(lineStart, m.index))) continue;
     const end = src.indexOf("`", m.index);
     out.push(src.slice(m.index, end === -1 ? undefined : end));
   }
@@ -112,6 +115,8 @@ if (isMain) {
       ["stated NULL-by-design insert passes", f(nul).length === 0],
       ["insert without load_id fails", f(missing).some((x) => x.startsWith("RULE 1"))],
       ["unexplained NULL fails", f(silentNull).some((x) => x.startsWith("RULE 1"))],
+      ["a comment that mentions the INSERT is not an insert", f("// Nine services INSERT INTO accounting.journal_entry_postings directly.\n *   INSERT INTO accounting.journal_entry_postings x\n" + ok).length === 0],
+      ["a real insert after a comment is still checked", f("// note\n" + missing).some((x) => x.startsWith("RULE 1"))],
       ["live clean passes", liveFailures({ mismatched: [] }).length === 0],
       ["live mismatch fails", liveFailures({ mismatched: [{ id: "p1", source_transaction_type: "expense", source_transaction_id: "e1", load_id: null, expected: "l1" }] }).length === 1],
     ];

@@ -220,6 +220,9 @@ export const COA_ROLE_VALUES = [
   "driver_damage_receivable",
   "driver_fine_receivable",
   "driver_negative_settlement_receivable",
+  /** ROUND 391.2 (migration 202615400930) — 5015 Reefer Diesel (Off-Highway): refrigeration-unit diesel, kept off 5000 so
+   *  its gallons can be claimed against the federal off-highway credit and excluded from IFTA taxable gallons. */
+  "reefer_fuel_expense",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];

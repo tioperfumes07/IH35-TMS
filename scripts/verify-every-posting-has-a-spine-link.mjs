@@ -26,16 +26,34 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = {
   engine: "apps/backend/src/accounting/posting-engine.service.ts",
   voidSvc: "apps/backend/src/accounting/void.service.ts",
+  writer: "apps/backend/src/accounting/posting-line-writer.ts",
 };
 /** COMMITTED ceiling (shrink-only): postings stranded by the AUTH-177 purge, by source type. Measured 2026-10-03. */
 export const STRANDED_CEILING = { expense: 3860, invoice: 48 };
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
-export function check({ engine, voidSvc }) {
+/** ROUND 391: the ONE writer inserts the posting, then its spine row, on the caller's client — nothing in between can skip it. */
+export function writerGaps(writer) {
+  const f = [];
+  const fn = writer.match(/export async function insertPostingLineWithSpine\([\s\S]*?\n\}\n/);
+  if (!fn) return [`${FILES.writer}: insertPostingLineWithSpine not found`];
+  const body = fn[0];
+  const post = body.indexOf("INSERT INTO accounting.journal_entry_postings");
+  const link = body.indexOf("INSERT INTO accounting.transaction_source_links");
+  if (post < 0 || link < 0 || post > link) f.push(`${FILES.writer}: must insert the posting and THEN its transaction_source_links row`);
+  if (!/await client\.query[\s\S]{0,40}INSERT INTO accounting\.transaction_source_links/.test(body)) f.push(`${FILES.writer}: the link must be written on the caller's client (same transaction)`);
+  if (!/if \(!line\.source_transaction_type \|\| !line\.source_transaction_id\)\s*\{[\s\S]{0,400}throw new Error/.test(body)) f.push(`${FILES.writer}: a line with no source must be refused`);
+  return f;
+}
+
+export function check({ engine, voidSvc, writer = "" }) {
   const f = [];
   const fn = engine.match(/async function insertPostingLines\([\s\S]*?\n\}\n/);
+  const viaWriter = Boolean(fn && /insertPostingLinesWithSpine\(\s*input\.client/.test(fn[0]));
   if (!fn) f.push(`${FILES.engine}: insertPostingLines not found`);
-  else {
+  else if (viaWriter) {
+    f.push(...writerGaps(writer));
+  } else {
     const body = fn[0];
     const loop = body.indexOf("for (const line of input.lines)");
     const post = body.indexOf("INSERT INTO accounting.journal_entry_postings");
@@ -47,7 +65,8 @@ export function check({ engine, voidSvc }) {
       f.push(`${FILES.engine}: the link must be written on the posting's own client (same transaction)`);
     }
   }
-  if ((engine.match(/INSERT INTO accounting\.transaction_source_links/g) ?? []).length < 2) {
+  if ((engine.match(/INSERT INTO accounting\.transaction_source_links/g) ?? []).length + (viaWriter ? 1 : 0) < 2 &&
+      !/reversePostedSourceTransaction[\s\S]*insertPostingLineWithSpine\(/.test(engine)) {
     f.push(`${FILES.engine}: the reversal path no longer writes its spine link`);
   }
   if (!/const reversalPostingId = lineRes\.rows\[0\]\?\.id;\s*if \(reversalPostingId\) \{\s*await writeTransactionSourceLink\(client,/.test(voidSvc)) {
@@ -85,6 +104,9 @@ if (process.argv.includes("--selftest")) {
   );
   const plants = [
     ["poster stops writing the link", { ...real, engine: engineNoLink }],
+    ["the engine stops calling the writer", { ...real, engine: real.engine.replace("return insertPostingLinesWithSpine(\n    input.client", "return insertPostingLinesNoSpine(\n    input.client") }],
+    ["the writer stops writing the link", { ...real, writer: real.writer.replace(/INSERT INTO accounting\.transaction_source_links/, "INSERT INTO accounting.audit_noop") }],
+    ["the writer stops refusing a sourceless line", { ...real, writer: real.writer.replace("if (!line.source_transaction_type || !line.source_transaction_id) {", "if (false) {") }],
     ["void stops writing the link", { ...real, voidSvc: real.voidSvc.replace("await writeTransactionSourceLink(client, {\n        operating_company_id: params.operatingCompanyId,\n        journal_entry_posting_id: reversalPostingId,", "await Promise.resolve({\n        operating_company_id: params.operatingCompanyId,\n        journal_entry_posting_id: reversalPostingId,") }],
   ];
   for (const [name, s] of plants) {
