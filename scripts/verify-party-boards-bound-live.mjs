@@ -104,8 +104,12 @@ try {
     const ov = engine.overview, D = ov.driver_id;
     const due = (await c.query(`SELECT coalesce(sum(net_pay),0) v, count(*)::int n FROM driver_finance.driver_settlements WHERE operating_company_id = $1 AND driver_id = $2
        AND voided_at IS NULL AND reversed_at IS NULL AND coalesce(is_presettlement, false) = false AND payment_state = 'unpaid' AND paid_at IS NULL`, [USMCA, D])).rows[0];
+    // Recompute over the EXACT window the engine summed (it returns it), never this guard's own clock: two separate now()
+    // reads straddling a UTC midnight would disagree on the calendar alone (ROUND 251 item 7 — no verdict from wall-clock).
+    const win = ov.tiles.miles_30d_window;
+    if (!win || !/^\d{4}-\d{2}-\d{2}$/.test(win.from) || !/^\d{4}-\d{2}-\d{2}$/.test(win.to)) fails.push(`overview miles_30d_window missing or malformed: ${JSON.stringify(win)}`);
     const mi = (await c.query(`SELECT coalesce(sum(distance_mi),0) mi, coalesce(sum(fuel_burned_gal),0) g FROM integrations.samsara_fuel_reports
-       WHERE subject_kind = 'driver' AND driver_id = $1 AND report_date >= (now() - interval '30 days')::date AND report_date <= now()::date`, [D])).rows[0];
+       WHERE subject_kind = 'driver' AND driver_id = $1 AND report_date >= $2::date AND report_date <= $3::date`, [D, win?.from ?? null, win?.to ?? null])).rows[0];
     eq("overview settlement due (cents)", ov.tiles.settlement_due_cents, Math.round(Number(due.v) * 100));
     eq("overview settlements due (count)", ov.tiles.settlements_due, due.n);
     eq("overview miles 30d (Samsara driver)", ov.tiles.miles_30d, Math.round(Number(mi.mi)));

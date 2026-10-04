@@ -12,9 +12,10 @@ import { withUnscopedReadOnly, NOT_FROZEN_SQL, report } from "./lib/bank-feed-st
 
 const LABEL = "verify-fuel-expense-is-unique-per-provider-transaction";
 
-const AWAITING_OWNER_AUTH = new Map([
-  // provider ID -> the two fuel rows (both posted, neither bank-matched, 2026-10-03)
-]);
+// provider ID -> the duplicated fuel rows awaiting an owner AUTH. Shrink-only; empty means every duplicate is resolved.
+// 99530579 (USMCA 510.61, loads 13533 / 13548) resolved 2026-10-04 by AUTH-212 (#25356): the 13533 copy voided through the
+// void engine. Removed here once the live check showed it no longer duplicated.
+const AWAITING_OWNER_AUTH = new Map([]);
 
 const out = await withUnscopedReadOnly(LABEL, async (c) => {
   const dup = await c.query(

@@ -5,9 +5,11 @@
  * balance), signs feed lines the canonical way (is_credit -> +|amount|), uses the same GL population for GL-only
  * lines (je.status <> 'voided', batch posted/reversed or none), never DELETEs tie-outs, keeps FORCE RLS and no DELETE
  * grant, and is wired (cron, routes, register header).
- * LIVE (DATABASE_URL set, table present): FAIL when a live bank account with a GL account has no tie-out row in the
- * last 36 h while the engine HAS produced rows (engine went silent); REPORT unexplained differences (real data, not
- * a code defect -- never reddens on them).
+ * LIVE (DATABASE_URL set, table present): FAIL when the tie-out cron's LAST RECORDED RUN (_system.job_leases,
+ * banking.bank_tieout_cron) left a live bank account with a GL account — one that existed when that run started — without
+ * a tie-out row for that run's business date. Anchored to the data, never this guard's clock (ROUND 251 item 7: a CI
+ * verdict must not depend on when CI runs). Whether the cron is still running at all is the job-heartbeat monitor's
+ * question, not a CI verdict. REPORT unexplained differences on that date (real data, not a code defect -- never reddens).
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -51,14 +53,21 @@ async function live() {
     await c.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
     const produced = Number((await c.query(`SELECT count(*)::int AS n FROM banking.bank_account_tieouts`)).rows[0]?.n ?? 0);
     if (produced === 0) { console.log(`${LABEL}: live half REPORT -- engine has not run yet (first nightly 05:50 CT or first register view).`); return []; }
+    // The cron computes every eligible account for todayCT() at tick time, so the run's business date is its start in CT.
+    const run = (await c.query(
+      `SELECT leased_at, (leased_at AT TIME ZONE 'America/Chicago')::date::text AS d FROM _system.job_leases
+        WHERE job_name = 'banking.bank_tieout_cron' AND last_finished_at IS NOT NULL AND last_finished_at >= leased_at`
+    )).rows[0];
+    if (!run) { console.log(`${LABEL}: live half REPORT -- no finished tie-out cron run recorded yet (rows so far came from register views).`); return []; }
     const missing = (await c.query(
       `SELECT ba.id::text, COALESCE(ba.display_name, ba.account_name) AS label FROM banking.bank_accounts ba
-        WHERE ba.is_active AND ba.deactivated_at IS NULL AND ba.ledger_account_id IS NOT NULL
-          AND NOT EXISTS (SELECT 1 FROM banking.bank_account_tieouts t WHERE t.bank_account_id = ba.id AND t.computed_at >= now() - interval '36 hours')`
+        WHERE ba.is_active AND ba.deactivated_at IS NULL AND ba.ledger_account_id IS NOT NULL AND ba.created_at <= $1
+          AND NOT EXISTS (SELECT 1 FROM banking.bank_account_tieouts t WHERE t.bank_account_id = ba.id AND t.tieout_date = $2::date)`,
+      [run.leased_at, run.d]
     )).rows;
-    const unexplained = (await c.query(`SELECT count(*)::int AS n FROM banking.bank_account_tieouts WHERE tieout_date >= CURRENT_DATE - 1 AND status = 'unexplained'`)).rows[0]?.n ?? 0;
-    console.log(`${LABEL}: live REPORT -- ${unexplained} account(s) with an unexplained difference in the last day (data to work, not a code defect).`);
-    return missing.map((m) => `live: bank account ${m.label} (${m.id}) has no tie-out in 36 h -- the engine went silent.`);
+    const unexplained = (await c.query(`SELECT count(*)::int AS n FROM banking.bank_account_tieouts WHERE tieout_date = $1::date AND status = 'unexplained'`, [run.d])).rows[0]?.n ?? 0;
+    console.log(`${LABEL}: live REPORT -- last cron run ${run.d}: ${unexplained} account(s) with an unexplained difference (data to work, not a code defect).`);
+    return missing.map((m) => `live: bank account ${m.label} (${m.id}) has no tie-out for ${run.d}, the date of the cron's last recorded run -- that run skipped it.`);
   } finally { await c.end(); }
 }
 

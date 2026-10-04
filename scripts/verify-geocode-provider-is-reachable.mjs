@@ -11,6 +11,10 @@
 // This guard is the permanent health check: it calls the SAME geocode path a real stop would use,
 // against a known-good, stable US address, so "provider_unavailable" (or any other failure) raises
 // loudly here instead of silently producing hundreds of uncoordinated stops again.
+// A live-provider check, not a static one: the no-DB static sweep makes no network calls and holds no provider key, so it
+// is EXCLUDED there by declaration (printed with this reason) and still runs for real in the gate / CI (CC-2 2026-10-04).
+export const REQUIRES_LIVE_DB =
+  "live network: geocodes a known address against the configured provider (Google Places / Trimble PC*MILER); the static sweep makes no network calls and holds no provider key";
 export const ALLOW_OFFLINE_SKIP =
   "live network health check (real geocode API call, no DATABASE_URL involved) -- honors SKIP_LIVE_NETWORK_CHECKS=true for environments with no provider credentials configured, same declared pattern verify-no-silent-db-skip.mjs requires.";
 

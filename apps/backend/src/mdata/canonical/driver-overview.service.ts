@@ -154,7 +154,8 @@ export async function readDriverOverview(client: Q, oc: string, driverId: string
   const due = (await q(`SELECT coalesce(sum(s.net_pay), 0) AS v, count(*)::int AS n FROM driver_finance.driver_settlements s WHERE s.operating_company_id = $1 AND s.driver_id = $2 AND ${DUE_SQL}`))[0];
   const escrow = (await q(`SELECT coalesce(sum(balance_cents), 0) AS v, count(*)::int AS n FROM driver_finance.v_driver_escrow_balance WHERE operating_company_id = $1 AND driver_id = $2`))[0];
   const mi30 = (await q(`SELECT ${driverSamsaraSql("distance_mi", "$2::uuid", "now() - interval '30 days'", "now()")} AS mi,
-      ${driverSamsaraSql("fuel_burned_gal", "$2::uuid", "now() - interval '30 days'", "now()")} AS g WHERE $1::uuid IS NOT NULL`))[0];
+      ${driverSamsaraSql("fuel_burned_gal", "$2::uuid", "now() - interval '30 days'", "now()")} AS g,
+      (now() - interval '30 days')::date::text AS from_d, now()::date::text AS to_d WHERE $1::uuid IS NOT NULL`))[0];
   const gal30 = mi30;
   const fleet30 = (await q(
     `SELECT coalesce(sum(m.mi), 0) AS mi, coalesce(sum(m.gal), 0) AS gal, count(*) FILTER (WHERE m.mi > 0)::int AS drivers
@@ -177,6 +178,9 @@ export async function readDriverOverview(client: Q, oc: string, driverId: string
       escrow_held_cents: n(escrow.n) ? n(escrow.v) : null, escrow_target_cents: settings?.escrow_target_cents == null ? null : n(settings.escrow_target_cents),
       miles_30d: Math.round(n(mi30.mi)), fleet_miles_30d_per_driver: Math.round(n(fleet30.mi) / fleetDrivers),
       mpg_30d: ratio(n(mi30.mi), n(gal30.g)), fleet_mpg_30d: ratio(n(fleet30.mi), n(fleet30.gal)),
+      // The exact report_date window (inclusive) the 30-day miles / MPG were summed over, read in the same statement, so a
+      // reader (or a parity guard) can reproduce the figure without consulting its own clock.
+      miles_30d_window: { from: String(mi30.from_d), to: String(mi30.to_d) },
       complaints_90d: complaints.length, fleet_complaints_avg_90d: Math.round((fleet.complaints / activeDrivers) * 10) / 10,
       integrity_flags_90d: integrityFlags90 + flagged.length,
     },

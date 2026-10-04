@@ -52,13 +52,16 @@ const SRC = path.join(ROOT, "apps", "backend", "src");
  * all three differ, and expense_lines has none:
  *     accounting.bill_lines            -> voided_at
  *     accounting.invoice_lines         -> soft_deleted_at
- *     driver_finance.settlement_lines  -> is_active
+ *     driver_finance.settlement_lines  -> voided_at  (CC-2 2026-10-04: was is_active. Prod carries BOTH columns,
+ *                                          voided_at is the void stamp every void writer sets, and NO constraint
+ *                                          pairs it with is_active — so a sum filtered on is_active alone counts a
+ *                                          line whose void stamp is set. Six settlement-engine sums did exactly that.)
  *     accounting.expense_lines         -> (none: hard-delete only; excluded by construction)
  */
 export const LINE_TABLE_SOFT_DELETE = {
   bill_lines: /voided_at\s+IS\s+NULL/i,
   invoice_lines: /soft_deleted_at\s+IS\s+NULL/i,
-  settlement_lines: /is_active\s*=\s*true|is_active\s+IS\s+TRUE/i,
+  settlement_lines: /voided_at\s+IS\s+NULL/i,
 };
 // Matches SUM(x) AND one level of nesting — SUM(ABS(sl.amount)), SUM(COALESCE(l.amount,0)).
 // The plain form missed loadChargebacksCents' SUM(ABS(sl.amount)) entirely: a guard that
@@ -160,6 +163,12 @@ async function selftest() {
   fs.writeFileSync(f, "const q = `SELECT SUM(b.amount_cents) FROM accounting.bills b WHERE b.id = $1`;");
   if (findUnfilteredSums(tmp).length !== 0) failures.push("case3 FAIL — non-line-table sum must not be flagged.");
 
+  // settlement_lines: the void stamp is required; is_active alone is not a void filter.
+  fs.writeFileSync(f, "const q = `SELECT SUM(amount) FROM driver_finance.settlement_lines WHERE settlement_id = $1 AND is_active = true`;");
+  if (findUnfilteredSums(tmp).length !== 1) failures.push("case5 FAIL — settlement_lines filtered on is_active only must go RED.");
+  fs.writeFileSync(f, "const q = `SELECT SUM(sl.amount) FROM driver_finance.settlement_lines sl WHERE sl.is_active = true AND sl.voided_at IS NULL`;");
+  if (findUnfilteredSums(tmp).length !== 0) failures.push("case6 FAIL — settlement_lines with the void stamp must be GREEN.");
+
   fs.writeFileSync(f, filtered);
   if (findUnfilteredSums(tmp).length !== 0) failures.push("case4 FAIL — restore must return GREEN.");
 
@@ -168,7 +177,7 @@ async function selftest() {
     for (const x of failures) console.error(`${LABEL} ${x}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — filtered GREEN, unfiltered RED, non-line-table ignored, restore GREEN`);
+  console.log(`${LABEL} SELFTEST PASS — filtered GREEN, unfiltered RED, non-line-table ignored, settlement_lines is_active-only RED, restore GREEN`);
   return 0;
 }
 

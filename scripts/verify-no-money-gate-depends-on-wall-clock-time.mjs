@@ -38,9 +38,11 @@ const LINE_COMMENT_RE = /\/\/[^\n]*/g;
 
 // Shrink-only ratchet. Measured live 2026-09-30 after fixing verify-no-document-without-a-ledger.mjs
 // (the one that caused this round's incident): 14 files still use a rolling wall-clock window.
+// 2026-10-04 (CC-2): 16 -> 13. bank-tieout-live and preserve-ledger anchored to their job's last recorded run,
+// party-boards-bound-live to the window the engine returns — no new file added, three removed.
 // Never raise this number -- only lower it as each file is individually fixed or explicitly
 // justified as a genuine business-time rule.
-const KNOWN_WALL_CLOCK_FILES = 14;
+const KNOWN_WALL_CLOCK_FILES = 13;
 
 const SELF_FILENAME = path.basename(fileURLToPath(import.meta.url));
 

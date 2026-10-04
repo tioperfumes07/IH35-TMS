@@ -64,7 +64,10 @@ function stripAssertImportLine(src) {
 // Raw-SQL write keywords, matched as the start of a SQL statement inside a template string / query
 // call -- deliberately broad (case-insensitive, word-boundary) since ops scripts build SQL as
 // plain strings, not through a query builder.
-const SQL_WRITE_RE = /\b(INSERT\s+INTO|UPDATE\s+\w|DELETE\s+FROM)/i;
+// UPDATE must be SQL-shaped — `UPDATE <relation> [AS alias] SET` (the relation may be an interpolated ${...}) — so English
+// prose in a report string ("needs an UPDATE of that back-pointer", r326) is never read as a write. INSERT INTO and
+// DELETE FROM are already unambiguous. CC-2 2026-10-04.
+const SQL_WRITE_RE = /\b(INSERT\s+INTO|UPDATE\s+(?:ONLY\s+)?(?:\$\{[^}]+\}|[\w."]+)\s+(?:(?:AS\s+)?\w+\s+)?SET\b|DELETE\s+FROM)/i;
 
 // Known mutating engine functions this session's ops scripts actually call. Add to this list as
 // new mutating engines are introduced -- do NOT remove an entry to make a script pass.
@@ -276,6 +279,12 @@ const violatingFiles = new Set(
 );
 const baseline = loadBaseline();
 const newViolations = [...violatingFiles].filter((f) => !baseline.has(f));
+// Shrink-only means it shrinks: a baselined file that no longer violates (fixed, or deleted) is named so it gets removed.
+const staleBaseline = [...baseline].filter((f) => !violatingFiles.has(f)).sort();
+if (staleBaseline.length) {
+  console.error(`${LABEL}: NOTE — ${staleBaseline.length} baselined file(s) no longer violate; remove them from ${path.relative(root, BASELINE_PATH)}:`);
+  for (const f of staleBaseline) console.error(`  - ${f}`);
+}
 
 console.error(`${LABEL}: checked ${sources.length} file(s) under scripts/ops/** and *rehearsal*/*test* scripts.`);
 console.error(`${LABEL}: ${violatingFiles.size} total unguarded write(s) (${baseline.size} pre-existing, baselined, shrink-only).`);
