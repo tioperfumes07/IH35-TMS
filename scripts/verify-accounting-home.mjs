@@ -57,7 +57,42 @@ contains("apps/backend/src/index.ts", indexTs, [
   { pattern: /registerAccountingRoleHomeRoutes/, label: "index registers accounting role-home routes" },
 ]);
 
+function leftoverRefuse(src, bucket) {
+  if (src.includes("text-[11px]")) bucket.push("apps/frontend/src/pages/home/roles/AccountingHome.tsx: leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155")) {
+    bucket.push("apps/frontend/src/pages/home/roles/AccountingHome.tsx: leftover off-scale muted");
+  }
+}
+
+function selftest() {
+  const good = read("apps/frontend/src/pages/home/roles/AccountingHome.tsx");
+  const leftoverGood = [];
+  leftoverRefuse(good, leftoverGood);
+  if (leftoverGood.length) {
+    console.error("verify:accounting-home SELFTEST FAIL — live leftover tokens present");
+    for (const e of leftoverGood) console.error(`  ✗ ${e}`);
+    process.exit(1);
+  }
+  const leftoverPlant = `${good}\n<div className="text-[11px] text-[#8A92AB]" style={{ color: "#334155" }}>plant</div>`;
+  const leftoverBad = [];
+  leftoverRefuse(leftoverPlant, leftoverBad);
+  if (
+    !leftoverBad.some((e) => e.includes("leftover text-[11px]")) ||
+    !leftoverBad.some((e) => e.includes("leftover off-scale muted"))
+  ) {
+    console.error("verify:accounting-home SELFTEST FAIL leftover plant escaped", leftoverBad);
+    process.exit(1);
+  }
+  console.log("verify:accounting-home SELFTEST PASS — leftover plant rejected");
+}
+
+if (process.argv.includes("--selftest")) {
+  selftest();
+  process.exit(0);
+}
+
 const accountingHome = read("apps/frontend/src/pages/home/roles/AccountingHome.tsx");
+leftoverRefuse(accountingHome, failures);
 contains("apps/frontend/src/pages/home/roles/AccountingHome.tsx", accountingHome, [
   { pattern: /AccountingKpiBar/, label: "KPI bar mounted" },
   { pattern: /AccountingPendingApprovalsPanel/, label: "pending approvals panel mounted" },

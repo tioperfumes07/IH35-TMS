@@ -1,3 +1,9 @@
+## 2026-10-04T10:00Z · BANK-F91475 C-22 MaintKpiRows LOAD_FAIL WIRED CI · tip `acf9a8e191`
+
+DONE: #25217 — MaintKpiRows unavailable={LOAD_FAIL}; verify-steps/3526 runs ops/verify-c22-tabs-kpis --selftest.
+
+NEXT: BANK-F91476 AccountingHome leftover #334155 + wire verify-accounting-home into 3870 · skip pile parked · HH09 no migrations.
+
 ## 2026-10-04T10:20Z · BANK-F91474 C-21 odometer honesty WIRED CI · tip `aa46a35475`
 
 DONE: #25216 — pm.routes returns odometer_reading_at from captured_at; verify-steps/3760 runs ops/verify-c21-odometer-honesty --selftest.
