@@ -1475,6 +1475,33 @@ wires are named beside that GL total; they are never added back.
 - Guard: `scripts/verify-every-balance-surface-declares-cleared-and-uncleared.mjs`
   (18 required, REMAINING=[], REMAINING_CEILING=0) wired on EVEN step 12352
 
+## Active Architectural Decisions — ENG-CF Faro cash flow is secured borrowing (Cursor, 2026-10-04)
+
+Standing-order D-4 / ENG-CF. Faro is full recourse → ASC 860 secured borrowing, not a sale.
+`resolveCashFlowBucket` used to key only `account_type` + `account_subtype`. Live USMCA CoA stores
+singular `OtherCurrentLiability` / `OtherCurrentAsset` while the operating sets used the QBO
+plurals, so 2150 (Factoring Advance) and 1230 (Factoring Reserves) fell through as unclassified
+OPERATING. ASU 2016-15 investing on a retained beneficial interest applies only to a SALE — it
+must never send 1200 / 1230 / 1235 reserve releases to INVESTING.
+
+Permanent classifier (same function, cash + accrual):
+
+1. Faro financing first — `source_transaction_type` in
+   `factoring_advance | factoring_chargeback | factoring_default_interest`, or
+   `system_purpose = factoring_advance_liability`, or account `2150` → FINANCING.
+2. Reserve + collections — account `1200 | 1230 | 1235`, purpose
+   `factoring_reserves | factor_cash_reserve_held`, source `factoring_reserve_release`, or
+   source `factoring_customer_payment | customer_payment | payment` → OPERATING, never INVESTING.
+3. Existing type/subtype path with aliases (`OtherCurrentAsset` → `OtherCurrentAssets`,
+   `OtherCurrentLiability` → `OtherCurrentLiabilities`).
+4. Unclassified still lands OPERATING and increments `unclassified_leg_count`.
+
+SQL on both cash-basis and accrual walks now projects `account_number`, `system_purpose`,
+`source_transaction_type` into the resolver. No new GL math. No stored cash-flow bucket.
+
+- Guard: `scripts/verify-cash-flow-recourse-is-secured-borrowing.mjs` wired on EVEN 3848
+- Unit: `apps/backend/src/accounting/__tests__/cash-flow-recourse-secured-borrowing.test.ts`
+
 ## Active Architectural Decisions — KILL THE SECOND SYSTEM (Cursor, 2026-10-03)
 
 Owner, verbatim: the ledger is the balance; policies stay; this is a deletion, not a build.

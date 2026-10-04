@@ -5,6 +5,9 @@ type CashFlowLegRow = {
   entry_date: string;
   account_type: string;
   account_subtype: string | null;
+  account_number: string | null;
+  system_purpose: string | null;
+  source_transaction_type: string | null;
   is_cash_account: boolean;
   debit_or_credit: "debit" | "credit";
   amount_cents: string | number;
@@ -55,12 +58,74 @@ const INVESTING_ASSET_SUBTYPES = new Set([
 ]);
 const FINANCING_LIABILITY_SUBTYPES = new Set(["LoanPayable", "NotesPayable", "OtherLongTermLiabilities"]);
 
-function resolveCashFlowBucket(leg: {
+const SUBTYPE_ALIASES: Record<string, string> = {
+  OtherCurrentAsset: "OtherCurrentAssets",
+  "Other Current Assets": "OtherCurrentAssets",
+  OtherCurrentLiability: "OtherCurrentLiabilities",
+  "Other Current Liabilities": "OtherCurrentLiabilities",
+};
+
+const FARO_FINANCING_SOURCES = new Set([
+  "factoring_advance",
+  "factoring_chargeback",
+  "factoring_default_interest",
+]);
+const FARO_FINANCING_PURPOSES = new Set(["factoring_advance_liability"]);
+const FARO_FINANCING_NUMBERS = new Set(["2150"]);
+
+const FARO_RESERVE_SOURCES = new Set(["factoring_reserve_release"]);
+const FARO_RESERVE_PURPOSES = new Set(["factoring_reserves", "factor_cash_reserve_held"]);
+const FARO_RESERVE_NUMBERS = new Set(["1200", "1230", "1235"]);
+
+const COLLECTION_SOURCES = new Set(["factoring_customer_payment", "customer_payment", "payment"]);
+
+function accountNumberKey(accountNumber: string | null | undefined): string {
+  const raw = String(accountNumber ?? "").trim();
+  const match = raw.match(/^(\d+)/);
+  return match ? match[1] : raw;
+}
+
+function normalizeSubtype(subtype: string | null | undefined): string {
+  const raw = String(subtype ?? "").trim();
+  if (!raw) return "";
+  return SUBTYPE_ALIASES[raw] ?? raw.replace(/\s+/g, "");
+}
+
+/**
+ * ROUND 354 D-4 / standing-order ENG-CF — Faro is full recourse → secured borrowing (ASC 860).
+ * Customer collections are OPERATING. Faro advances / chargebacks / default interest are FINANCING.
+ * ASU 2016-15 investing on a retained beneficial interest applies only to a SALE; it must never
+ * classify 1200/1230/1235 reserve releases as investing.
+ */
+export function resolveCashFlowBucket(leg: {
   account_type: string;
   account_subtype: string | null;
+  account_number?: string | null;
+  system_purpose?: string | null;
+  source_transaction_type?: string | null;
 }): { bucket: CashFlowBucket; unclassified: boolean } {
   const type = leg.account_type;
-  const subtype = leg.account_subtype ?? "";
+  const subtype = normalizeSubtype(leg.account_subtype);
+  const number = accountNumberKey(leg.account_number);
+  const purpose = String(leg.system_purpose ?? "").trim();
+  const source = String(leg.source_transaction_type ?? "").trim();
+
+  if (
+    FARO_FINANCING_SOURCES.has(source) ||
+    FARO_FINANCING_PURPOSES.has(purpose) ||
+    FARO_FINANCING_NUMBERS.has(number)
+  ) {
+    return { bucket: "financing", unclassified: false };
+  }
+
+  if (
+    FARO_RESERVE_SOURCES.has(source) ||
+    FARO_RESERVE_PURPOSES.has(purpose) ||
+    FARO_RESERVE_NUMBERS.has(number) ||
+    COLLECTION_SOURCES.has(source)
+  ) {
+    return { bucket: "operating", unclassified: false };
+  }
 
   if (type === "Income" || type === "OtherIncome" || type === "Expense" || type === "OtherExpense" || type === "CostOfGoodsSold") {
     return { bucket: "operating", unclassified: false };
@@ -251,6 +316,9 @@ async function getCashBasisSections(
           je.entry_date::text AS entry_date,
           COALESCE(a.account_type, '') AS account_type,
           a.account_subtype,
+          a.account_number,
+          a.system_purpose,
+          p.source_transaction_type,
           (p.account_id IN (SELECT id FROM cash_accounts)) AS is_cash_account,
           p.debit_or_credit,
           p.amount_cents::bigint AS amount_cents
@@ -296,7 +364,13 @@ async function getCashBasisSections(
         if (leg.is_cash_account) {
           cashNet += leg.debit_or_credit === "debit" ? amount : -amount;
         } else {
-          const resolved = resolveCashFlowBucket({ account_type: leg.account_type, account_subtype: leg.account_subtype });
+          const resolved = resolveCashFlowBucket({
+            account_type: leg.account_type,
+            account_subtype: leg.account_subtype,
+            account_number: leg.account_number,
+            system_purpose: leg.system_purpose,
+            source_transaction_type: leg.source_transaction_type,
+          });
           if (resolved.unclassified) unclassifiedLegCount += 1;
           nonCashLegs.push({
             account_type: leg.account_type,
@@ -384,6 +458,9 @@ async function getAccrualBasisSections(
   const legRows = await client.query<{
     account_type: string;
     account_subtype: string | null;
+    account_number: string | null;
+    system_purpose: string | null;
+    source_transaction_type: string | null;
     is_cash_account: boolean;
     debit_or_credit: "debit" | "credit";
     amount_cents: string | number;
@@ -392,6 +469,9 @@ async function getAccrualBasisSections(
       SELECT
         COALESCE(a.account_type, '') AS account_type,
         a.account_subtype,
+        a.account_number,
+        a.system_purpose,
+        p.source_transaction_type,
         (a.account_type = 'Asset' AND a.account_subtype = ANY($2::text[])) AS is_cash_account,
         p.debit_or_credit,
         p.amount_cents::bigint AS amount_cents
@@ -422,7 +502,13 @@ async function getAccrualBasisSections(
     if (leg.is_cash_account) continue;
     const amount = Number(leg.amount_cents ?? 0);
     const signedAmount = leg.debit_or_credit === "credit" ? amount : -amount;
-    const resolved = resolveCashFlowBucket({ account_type: leg.account_type, account_subtype: leg.account_subtype });
+    const resolved = resolveCashFlowBucket({
+      account_type: leg.account_type,
+      account_subtype: leg.account_subtype,
+      account_number: leg.account_number,
+      system_purpose: leg.system_purpose,
+      source_transaction_type: leg.source_transaction_type,
+    });
     if (resolved.unclassified) unclassifiedLegCount += 1;
     const label = `${leg.account_type}${leg.account_subtype ? `:${leg.account_subtype}` : ""}`;
     const targetMap = resolved.bucket === "operating" ? operatingByKey : resolved.bucket === "investing" ? investingByKey : financingByKey;

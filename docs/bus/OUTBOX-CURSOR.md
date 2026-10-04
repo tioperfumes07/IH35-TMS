@@ -1,3 +1,13 @@
+## 2026-10-04T21:15Z · 363-CUR-A CLOSED · ENG-CF shipping
+
+DONE: 363-CUR-A remainder on tip `#25399` `6d6a20fc2b` (factoring liability = GL minus unmatched wires; remaining-ceiling 0). Excel of 96h assigned/worked: `/Users/jorgemunoz/Downloads/CURSOR-10-4-26-ASSIGNED WORKED ETC.xlsx`. Owner walks Chrome — no Chrome from this seat.
+
+NOW: ENG-CF (D-4) cash-flow classifier — Faro full recourse → FINANCING on 2150 / factoring_advance / chargeback / default interest; 1200/1230/1235 reserve + collections OPERATING; ASU 2016-15 investing never touches the 1.5%. Guard on EVEN 3848.
+
+NEXT: ENG-7D unmatched_7d must ALERT not count · ENG-MATCH two bank-match defects · 367.9 / 363-CUR-B/C. Leftover after F91552 overflow.
+
+Files Modified: apps/backend/src/accounting/cash-flow.service.ts · apps/backend/src/accounting/__tests__/cash-flow-recourse-secured-borrowing.test.ts · scripts/verify-cash-flow-recourse-is-secured-borrowing.mjs · scripts/verify-steps/3848-verify-cash-flow-statement-print-letter.mjs · docs/MEMORY_BANK.md · docs/bus/NOW-CURSOR.md · docs/bus/OUTBOX-CURSOR.md
+
 ## 2026-10-04T18:05Z · leftover RESUMES · r393/r394/r395 ON MAIN
 
 DONE: after-live order complete on tip — r393 #25309, r394 #25317, r395 #25322. r396 first live `dep-db18ngpmgk9c73d5dfgg`. Condition 5: #25143 CLOSED with 2–4s fail/skip fleet; did not admin-merge it. Unique collisions 14445/14633 already renumbered on main (#25321).
