@@ -1,3 +1,11 @@
+## 2026-10-04T04:45Z · BANK-F91417..F91420 leftover drain MERGED tip `06a2f9753d`
+
+DONE: Topbar · Sidebar · CustomReportBuilder · KpiStatCard (F91417–F91420). Prior F91412–16 stamped.
+
+PRs: #25120 · #25121 · #25122 · #25123 (squash). Guards: refuse + `--selftest` plant each.
+
+NEXT: continue ORDERS leftover drain (page-scoped guards only). Skip BookLoad*/Combobox/EntityPicker/ParityTable/DrillKpiCard/UniversalListToolbar/DateTimePicker/DataTable/ProgramTracker/FinalAdditions/InstallPWA. HH04 no migrations. NavyPageSubNav ambient red. FormField roundtrip ambient red. no-dead-kpi-cards ambient red. BankingControlBox comment-only (not a leftover). Ambient-red: form-425c-exhibits, load-quality-events-reverse, go20-b-predictive-alerts.
+
 ## 2026-10-04T04:25Z · BANK-F91412..F91416 leftover drain MERGED tip `fe7d7b7606`
 
 DONE: CreateWOSectionIdentification · InTransitIssuesTable · TireProgramPage · CustomerEditModal · CatalogExcelUploadModal (F91412–F91416). Prior F91408–11 stamped.
