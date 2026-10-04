@@ -176,12 +176,16 @@ function mapStopType(t: string): "pickup" | "delivery" | "rest" {
   return "pickup";
 }
 
-function parseFuelDesc(desc: string): { vendor: string; invoice: string; location: string } {
+function parseFuelDesc(desc: string): { vendor: string; invoice: string | null; hashKey: string; location: string } {
   const invM = desc.match(/\binv\s+([A-Za-z0-9-]+)/i);
-  const invoice = invM?.[1] ?? (desc.replace(/[^A-Za-z0-9]+/g, "").slice(-8) || "UNK");
+  // The reference is the receipt number printed on the line, or nothing — never a slice of free text
+  // ("Fuel-DEF-Diesel Exhaust Fluid" became the reference "ustFluid" on four rows, 2026-10-04).
+  const invoice = invM?.[1] ?? null;
+  // Dedupe key only (source_row_hash). Unchanged, so rows already fed keep their hash and a re-run cannot double-insert.
+  const hashKey = invoice ?? (desc.replace(/[^A-Za-z0-9]+/g, "").slice(-8) || "UNK");
   const vendor = /^LOVES\b/i.test(desc) ? "LOVES" : /^PILOT\b/i.test(desc) ? "PILOT" : /^TA\b/i.test(desc) ? "TA" : "LOVES";
   const location = desc.replace(/^(LOVES|PILOT|TA)\s+/i, "").replace(/\s+inv\s+.*/i, "").trim() || "UNK";
-  return { vendor, invoice, location };
+  return { vendor, invoice, hashKey, location };
 }
 
 async function resolveVendor(client: pg.PoolClient, name: string): Promise<string> {
@@ -616,7 +620,7 @@ async function feedOne(
     const fuelId = await withCurrentUser(OWNER, async (c) => {
       await setScopedCompanyContext(c, OWNER, USMCA);
       const vendorId = await resolveVendor(c as unknown as pg.PoolClient, parsed.vendor);
-      const rowHash = `alwaystrack-settl:${USMCA}:${loadId}:${f.fuel_type}:${fi}:${cents(f.amount)}:${parsed.invoice}`;
+      const rowHash = `alwaystrack-settl:${USMCA}:${loadId}:${f.fuel_type}:${fi}:${cents(f.amount)}:${parsed.hashKey}`;
       const ins = await c.query<{ id: string }>(
         `INSERT INTO fuel.fuel_transactions (
            operating_company_id, transaction_at, purchased_at, load_id, vendor_id, fuel_type,
@@ -649,7 +653,7 @@ async function feedOne(
         );
         id = ex.rows[0]?.id;
       }
-      if (!id) throw new Error(`fuel insert failed ${parsed.invoice}`);
+      if (!id) throw new Error(`fuel insert failed ${parsed.hashKey}`);
       return id;
     });
     await postFuelExpenseFromEvent({
@@ -661,7 +665,7 @@ async function feedOne(
       amount_cents: cents(f.amount),
       posting_path: "company_direct",
     }).catch((e) => report.push(`WARN fuel GL: ${(e as Error).message}`));
-    report.push(`FUEL ${f.fuel_type} ${parsed.invoice} $${f.amount}`);
+    report.push(`FUEL ${f.fuel_type} ${parsed.invoice ?? "no receipt number"} $${f.amount}`);
   }
 
   let ei = 0;
