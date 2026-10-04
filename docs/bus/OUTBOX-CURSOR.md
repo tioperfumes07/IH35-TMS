@@ -1,3 +1,15 @@
+## 2026-10-04T12:05Z · BANK-F91499 CargoSensor leftover fontSize 10 ticks WIRED · this PR
+
+DONE: CargoSensorTimeline ticks + axis labels 10 → 11; leftover refuse fontSize 10 on verify-go20-cargo-incidents; unused EVEN 4120 --selftest + live.
+
+NEXT: leftover headerInk #1F2937 / remaining fontSize 11 chrome · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T12:04Z · BANK-F91498 TireWear leftover WIRED CI · tip `0a6572838d`
+
+DONE: #25240 — TireWearProjectionChart ticks fontSize 11; verify-steps/4118 leftover refuse --selftest + live.
+
+NEXT: BANK-F91499 CargoSensor leftover fontSize: 10 ticks + leftover refuse on 4120 · skip pile parked · HH12 no migrations this tick.
+
 ## 2026-10-04T11:58Z · BANK-F91498 TireWear leftover fontSize 10 ticks WIRED · this PR
 
 DONE: TireWearProjectionChart ticks 10 → 11; leftover refuse fontSize 10 on verify-cap-12-tire-tread; unused EVEN 4118 --selftest + live.
