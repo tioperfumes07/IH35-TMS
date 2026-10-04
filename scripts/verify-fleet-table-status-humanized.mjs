@@ -14,7 +14,7 @@
  * verify-no-raw-status-enum-in-ui.mjs's own header. This guard proves ONLY the FleetTable
  * regression stays fixed; it does not claim broader coverage.
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const FILE = join(process.cwd(), "apps", "frontend", "src", "components", "FleetTable.tsx");
@@ -36,6 +36,14 @@ export function statusCellIsHumanized(src) {
   const m = clean.match(/case\s+"status":\s*return\s+([^\n;]+);/);
   if (!m) return { found: false, humanized: false };
   return { found: true, humanized: /humanizeEnumLabel\s*\(/.test(m[1]) };
+}
+
+function leftoverRefuse(src) {
+  const errors = [];
+  // BANK-F91313 leftover refuse — FleetTable.tsx page-scoped text token ratchet
+  if (src.includes("text-[11px]")) errors.push("leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155")) errors.push("leftover off-scale muted");
+  return errors;
 }
 
 function selftest() {
@@ -67,11 +75,23 @@ function selftest() {
       console.log(`  selftest OK — ${c.name}`);
     }
   }
+  // BANK-F91313 leftover plant — FleetTable page-scoped text token ratchet
+  const realGood = readFileSync(FILE, "utf8");
+  const leftoverPlant = realGood + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  writeFileSync(FILE, leftoverPlant);
+  const plantErrors = leftoverRefuse(leftoverPlant);
+  writeFileSync(FILE, realGood);
+  if (plantErrors.length < 1) {
+    console.error("  selftest FAIL — leftover plant escaped");
+    bad++;
+  } else {
+    console.log("  selftest OK — leftover plant caught");
+  }
   if (bad) {
-    console.error(`SELFTEST FAIL — ${bad}/${cases.length}`);
+    console.error(`SELFTEST FAIL — ${bad} failures`);
     process.exit(1);
   }
-  console.log(`verify-fleet-table-status-humanized SELFTEST OK — ${cases.length}/${cases.length}`);
+  console.log(`verify-fleet-table-status-humanized SELFTEST OK — ${cases.length + 1}/${cases.length + 1}`);
 }
 
 function main() {
@@ -96,6 +116,11 @@ function main() {
       `verify-fleet-table-status-humanized FAIL — FleetTable's status cell returns the raw enum again ` +
         `(regressed to a bare .status read). Route it through humanizeEnumLabel().`
     );
+    process.exit(1);
+  }
+  const leftover = leftoverRefuse(src);
+  if (leftover.length) {
+    console.error(`verify-fleet-table-status-humanized FAIL — ${leftover.join("; ")}`);
     process.exit(1);
   }
   console.log("verify-fleet-table-status-humanized OK — FleetTable status column routes through humanizeEnumLabel");
