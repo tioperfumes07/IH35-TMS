@@ -7121,3 +7121,20 @@ row_counts: accounting.expenses 98ad3749 (13543-9) voided by executeVoidCancel('
 proof_query: postings for source 98ad3749 + JE e9610099 net 0 on every account; fuel.fuel_transactions
   transaction_reference '1848853' AND voided_at IS NULL -> 1.
 THIS AUTHORIZATION DOES NOT COVER: receipt 99530579 (copies six days apart — receipts first); any other company or document.
+
+## AUTH-210
+issued_at: 2026-10-04T01:56:29Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). Reefer trailer on 7 reefer fuel fills, each set to the trailer its
+  load's AllwaysTrack driver settlement prints ("Load N Truck T / Trailer X"), through setReeferTrailer (Reefer-type assert;
+  audit trigger): fuel c93014f7 (T156 09-10, load 13587, settlement 5807) -> 10222; expense lines e796d552 + 41a626c8
+  (13517, settlement 5774) -> 10209; d8c8db13 + c2a8c40e (13523, settlement 5781) -> 10222; 416a1b04 (13561, settlement
+  5795) -> 10224; fc344d3a (13599, settlement 5810) -> 10218. Owner, CC-2 chat 2026-10-04: "YES SET REEFER TRAILER ON EACH
+  FILL" and "IT SHOULD ALL BE IN THE COMPANY AND DRIVER SETTLEMENTS". Each row's load is re-asserted before writing. Prod
+  dry run (rolled back): 7 of 7 updated.
+action: DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-04-cc2-set-reefer-trailers-from-settlements.mts --apply --auth AUTH-210
+  Dry-run first (default, no --apply).
+expires_at: 2026-10-04T21:56:29Z
+status: OPEN
+THIS AUTHORIZATION DOES NOT COVER: the 2026-09-08 T156 fill (load 13585 -> 10219: 10219 is typed DryVan, owned by IH 35
+  Trucking LLC, frozen — its type is corrected first); the 13523-32 reefer line (receipt 99133290, also on 13534-28 — open
+  duplicate); any equipment record; any other company.
