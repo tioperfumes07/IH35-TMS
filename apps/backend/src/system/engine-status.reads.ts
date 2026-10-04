@@ -64,7 +64,7 @@ async function countLast24h(
     const exists = await relationExists(client, relation);
     if (!exists) {
       await client.query(`RELEASE SAVEPOINT ${sp}`);
-      return { count: null, note: `${relation} not present` };
+      return { count: null, note: `${relation.replace(".", "_")}_unavailable (${relation} not present)` };
     }
     const { schema, table } = splitRelation(relation);
     if (companyColumn) {

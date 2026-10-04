@@ -28,13 +28,15 @@ export async function loadPmOdometers(
   client: DbClient,
   operatingCompanyId: string,
   unitIds: string[]
-): Promise<{ byUnit: Map<string, PmOdometer>; stopEventsLive: boolean }> {
+): Promise<{ byUnit: Map<string, PmOdometer>; stopEventsLive: boolean; unavailableReason: string | null }> {
   const byUnit = new Map<string, PmOdometer>();
   const live = await client.query<{ ok: boolean }>(
     `SELECT to_regclass('telematics.unit_stop_events') IS NOT NULL AS ok`
   );
   const stopEventsLive = Boolean(live.rows[0]?.ok);
-  if (unitIds.length === 0) return { byUnit, stopEventsLive };
+  // Degrade WITH a signal: callers get a named reason, not just a silent false.
+  const unavailableReason = stopEventsLive ? null : "telematics_unit_stop_events_unavailable";
+  if (unitIds.length === 0) return { byUnit, stopEventsLive, unavailableReason };
 
   if (stopEventsLive) {
     const stops = await client.query<{ unit_id: string; odometer_mi: number | string; read_at: string | null }>(
@@ -86,7 +88,7 @@ export async function loadPmOdometers(
       });
     }
   }
-  return { byUnit, stopEventsLive };
+  return { byUnit, stopEventsLive, unavailableReason };
 }
 
 /** Why a unit has no odometer -- the ABSENT tier, worded once for every consumer. */
