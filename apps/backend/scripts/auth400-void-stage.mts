@@ -4,8 +4,11 @@
  *
  * Owner law (AUTH-400): "reverse -> void -> purge. No raw DELETE on a document that still has postings." The purge
  * engine (scripts/ops/2026-10-02-cc1-r326-complete-delete.ts) refuses any document with LIVE posting lines (ROUND 390 a);
- * this stage removes that condition the only legitimate way: every live document is voided through voidDocument()
- * (apps/backend/src/accounting/void-document.service.ts — the single entry point onto the existing reversal engines).
+ * this stage removes that condition the only legitimate way: every live document is voided WHOLE
+ * through executeVoidCancel (apps/backend/src/governance/void-cancel-executors.ts) — the WHOLE-void door the app's own
+ * void approvals use: it reverses the GL AND stamps the document header voided in one transaction. (The first production
+ * run used voidDocument, the GL-only dispatcher: every document's ledger was reversed but its header never stamped —
+ * verify-void-is-whole flagged 1,215 silent voids until the purge removed them.)
  * No GL math here, no UPDATE on a posting, no hand-written JE.
  *
  * ORDER — an unwind runs NEWEST FIRST (last in, first out), because later entries depend on earlier ones (rehearsal
@@ -13,7 +16,7 @@
  *   0. every applied reclassify batch, through the reclassify engine's own undo (undoReclassifyBatch), newest first —
  *      a reclass entry is never voided as a journal entry (its out-leg is a reversal, terminal);
  *   1. documents, dependents first: customer payments -> driver settlements -> bills -> invoices -> expenses, each type
- *      newest first; voidDocument reverses every LIVE line naming the document;
+ *      newest first; the executor reverses every LIVE line naming the document and stamps its header;
  *   2. every journal entry still carrying a live line (load revrec, escrow, manual, advance, reconciliation, the legacy
  *      pay-run close entries), newest first, repeated while it makes progress.
  * Each void is its OWN transaction. A refusal is recorded as a FINDING (type, id, error) and the run continues; nothing is
@@ -30,8 +33,7 @@
  */
 import fs from "node:fs";
 import pg from "pg";
-import { voidDocument, type VoidDocumentType } from "../src/accounting/void-document.service.js";
-import { todayIso } from "../src/accounting/void.service.js";
+import { executeVoidCancel } from "../src/governance/void-cancel-executors.js";
 import { undoReclassifyBatch } from "../src/accounting/reclassify/reclassify.service.js";
 
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -47,14 +49,20 @@ const url = process.env.DATABASE_URL;
 if (!url) throw new Error("DATABASE_URL (the target branch) is required");
 if (!BRANCH) throw new Error("--branch=<neon branch id> is required");
 
-/** Documents whose source carries a live line, per voidDocument type, in dependency order. */
-const DOC_STEPS: Array<{ type: VoidDocumentType; stt: string[]; table: string }> = [
-  { type: "customer_payment", stt: ["customer_payment", "payment"], table: "accounting.payments" },
-  { type: "settlement", stt: ["driver_settlement"], table: "driver_finance.driver_settlements" },
+/** Documents whose source carries a live line, per executeVoidCancel entity type, in dependency order. */
+const DOC_STEPS: Array<{ type: string; stt: string[]; table: string }> = [
+  { type: "payment", stt: ["customer_payment", "payment"], table: "accounting.payments" },
+  { type: "driver_settlement", stt: ["driver_settlement"], table: "driver_finance.driver_settlements" },
   { type: "bill", stt: ["bill"], table: "accounting.bills" },
   { type: "invoice", stt: ["invoice"], table: "accounting.invoices" },
   { type: "expense", stt: ["expense"], table: "accounting.expenses" },
+  { type: "fuel_transaction", stt: ["fuel_event"], table: "fuel.fuel_transactions" },
 ];
+const whole = (type: string, id: string) =>
+  executeVoidCancel(type, { client: client as never, operatingCompanyId: USMCA, entityId: id, action: "void", userId: OWNER, reason: REASON }).then((r) => {
+    if ((r as { kind?: string }).kind === "unsupported_entity") throw new Error(`executeVoidCancel: '${type}' is not supported`);
+    return r;
+  });
 const LIVE = `p.operating_company_id = $1::uuid AND p.reversed_by_line_id IS NULL AND p.reversal_of_line_id IS NULL`;
 
 const client = new pg.Client({ connectionString: url });
@@ -116,7 +124,7 @@ try {
     if (!APPLY) continue;
     for (const id of ids) {
       try {
-        await inTx(() => voidDocument(client as never, { operatingCompanyId: USMCA, type: step.type, id, reason: REASON, actor: { userId: OWNER, role: "Owner" }, currentBusinessDate: todayIso() }));
+        await inTx(() => whole(step.type, id));
         done[step.type] += 1;
       } catch (e) {
         findings.push({ type: step.type, id, error: String((e as Error).message ?? e).slice(0, 400) });
@@ -142,8 +150,7 @@ try {
       const failed: typeof findings = [];
       for (const id of jes) {
         try {
-          // voidJournalEntry opens its own connection (DATABASE_URL) by design — no wrapping transaction here.
-          await voidDocument(client as never, { operatingCompanyId: USMCA, type: "journal_entry", id, reason: REASON, actor: { userId: OWNER, role: "Owner" }, currentBusinessDate: todayIso() });
+          await inTx(() => whole("journal_entry", id));
           done.journal_entry += 1;
         } catch (e) {
           failed.push({ type: "journal_entry", id, error: String((e as Error).message ?? e).slice(0, 400) });
