@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { listFactoringPurchases, listPurchaseCandidates } from "../../api/factoring-purchases";
 import { ListErrorState } from "../../components/ListErrorState";
+import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
@@ -224,15 +225,48 @@ export function FactoringCashFlowPanel({ companyId, dateFrom, dateTo }: Props) {
         className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6"
         data-testid="factoring-home-cash-flow-kpis"
       >
-        <KpiTile testId="factoring-home-kpi-wires" label="Posted wires" value={String(totals.wires)} />
-        <KpiTile testId="factoring-home-kpi-invoices" label="Invoices on wires" value={String(totals.invoices)} />
-        <KpiTile testId="factoring-home-kpi-net" label="Net wired" value={formatUsdCents(totals.net)} />
-        <KpiTile testId="factoring-home-kpi-escrow" label="Escrow / day sum" value={formatUsdCents(totals.escrow)} />
-        <KpiTile testId="factoring-home-kpi-cash" label="Cash rsv / day sum" value={formatUsdCents(totals.cash)} />
-        <KpiTile
+        {/* BANK-F91427 — C8 dead-KPI fix: DrillKpiCard with real tab drills (was bare KpiTile divs). */}
+        <DrillKpiCard
+          testId="factoring-home-kpi-wires"
+          label="Posted wires"
+          value={String(totals.wires)}
+          to={FACTORING_TAB_PATH.payments_to_you}
+          size="sm"
+        />
+        <DrillKpiCard
+          testId="factoring-home-kpi-invoices"
+          label="Invoices on wires"
+          value={String(totals.invoices)}
+          to={FACTORING_TAB_PATH.payments_to_you}
+          size="sm"
+        />
+        <DrillKpiCard
+          testId="factoring-home-kpi-net"
+          label="Net wired"
+          value={formatUsdCents(totals.net)}
+          to={FACTORING_TAB_PATH.payments_to_you}
+          size="sm"
+        />
+        <DrillKpiCard
+          testId="factoring-home-kpi-escrow"
+          label="Escrow / day sum"
+          value={formatUsdCents(totals.escrow)}
+          to={FACTORING_TAB_PATH.escrow_account}
+          size="sm"
+        />
+        <DrillKpiCard
+          testId="factoring-home-kpi-cash"
+          label="Cash rsv / day sum"
+          value={formatUsdCents(totals.cash)}
+          to={FACTORING_TAB_PATH.cash_reserve}
+          size="sm"
+        />
+        <DrillKpiCard
           testId="factoring-home-kpi-projected"
           label="Projected open inv"
           value={projected ? String(projected.invoice_count) : "0"}
+          to={FACTORING_TAB_PATH.submit_invoice}
+          size="sm"
         />
       </div>
       {error ? (
@@ -256,21 +290,6 @@ export function FactoringCashFlowPanel({ companyId, dateFrom, dateTo }: Props) {
           tableTestId="factoring-home-cash-flow-table"
         />
       )}
-    </div>
-  );
-}
-
-function KpiTile({ testId, label, value }: { testId: string; label: string; value: string }) {
-  return (
-    <div
-      className="flex min-h-[93px] max-h-[101px] flex-col items-center justify-center rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-center"
-      data-testid={testId}
-    >
-      {/* Locked 11px header via inline style — do not use arbitrary text bracket classes */}
-      <div className="font-bold uppercase text-[#4B5563]" style={{ fontSize: "11px" }}>
-        {label}
-      </div>
-      <div className="mt-1 text-xs font-semibold tabular-nums text-[#0F1219]">{value}</div>
     </div>
   );
 }
