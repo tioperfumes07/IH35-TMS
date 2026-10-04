@@ -1,3 +1,9 @@
+## 2026-10-04T08:36Z · BANK-F91458 maint WO three dates WIRED CI · tip `df52e96a24`
+
+DONE: #25200 — verify-steps/3764 now runs ops/verify-maint-wo-three-dates --selftest.
+
+NEXT: BANK-F91459 wire E-44 stops/miles profile into 4584 · C-21 odometer + C-22 fail=triage · skip pile parked · HH08 no migrations.
+
 ## 2026-10-04T08:30Z · BANK-F91457 factoring FT5 setup email rates WIRED CI · tip `d214c9dd23`
 
 DONE: #25199 — verify-steps/4162 now runs ops/verify-factoring-ft5-setup-email-rates --selftest.
