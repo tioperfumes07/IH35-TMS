@@ -325,7 +325,7 @@ export function LegalTemplateDetailPage() {
                   Share this URL with outside counsel. It is single-use and expires in 30 days. Regenerate invalidates prior links.
                 </p>
                 {attorneyReviewUrl ? (
-                  <div className="break-all bg-slate-50 px-2 py-1 font-mono text-[11px] text-slate-800">
+                  <div className="break-all bg-slate-50 px-2 py-1 font-mono text-xs text-slate-800">
                     {attorneyReviewUrl}
                   </div>
                 ) : (
