@@ -11,12 +11,14 @@
  *
  * Usage:
  *   node scripts/verify-filter-input-aria-labels.mjs
- *   node scripts/verify-filter-input-aria-labels.mjs --selftest  # must FAIL
+ *   node scripts/verify-filter-input-aria-labels.mjs --selftest
  */
 import fs from "node:fs";
 import process from "node:process";
 
+const LABEL = "verify-filter-input-aria-labels";
 const repoRoot = process.cwd();
+const SEARCH_ITEM = "apps/frontend/src/components/shared/SearchResultItem.tsx";
 
 // (relative file, placeholder substring that identifies the filter control)
 const TARGETS = [
@@ -41,41 +43,62 @@ function hasAdjacentAriaLabel(lines, idx) {
   return false;
 }
 
-const failures = [];
-for (const [rel, placeholder] of TARGETS) {
-  const abs = `${repoRoot}/${rel}`;
-  let src;
-  try {
-    src = fs.readFileSync(abs, "utf8");
-  } catch {
-    failures.push(`${rel}: file missing (expected filter control "${placeholder}")`);
-    continue;
+/** BANK-F91428 leftover refuse — SearchResultItem page-scoped text token ratchet. */
+export function checkSearchResultItemLeftovers(src) {
+  const failures = [];
+  if (src.includes("text-[11px]")) failures.push("SearchResultItem leftover text-[11px] — use text-xs");
+  if (src.includes("#8A92AB")) failures.push("SearchResultItem leftover #8A92AB — use #4B5563");
+  return failures;
+}
+
+export function collectFailures() {
+  const failures = [];
+  for (const [rel, placeholder] of TARGETS) {
+    const abs = `${repoRoot}/${rel}`;
+    let src;
+    try {
+      src = fs.readFileSync(abs, "utf8");
+    } catch {
+      failures.push(`${rel}: file missing (expected filter control "${placeholder}")`);
+      continue;
+    }
+    const lines = src.split("\n");
+    const idx = lines.findIndex((l) => l.includes(placeholder));
+    if (idx === -1) {
+      // Placeholder text changed — surface it rather than silently pass.
+      failures.push(`${rel}: filter placeholder "${placeholder}" not found (update guard if intentionally renamed)`);
+      continue;
+    }
+    if (!hasAdjacentAriaLabel(lines, idx)) {
+      failures.push(`${rel}: filter control "${placeholder}" has no adjacent aria-label (accessible name lost)`);
+    }
   }
-  const lines = src.split("\n");
-  const idx = lines.findIndex((l) => l.includes(placeholder));
-  if (idx === -1) {
-    // Placeholder text changed — surface it rather than silently pass.
-    failures.push(`${rel}: filter placeholder "${placeholder}" not found (update guard if intentionally renamed)`);
-    continue;
-  }
-  if (!hasAdjacentAriaLabel(lines, idx)) {
-    failures.push(`${rel}: filter control "${placeholder}" has no adjacent aria-label (accessible name lost)`);
-  }
+  failures.push(...checkSearchResultItemLeftovers(fs.readFileSync(`${repoRoot}/${SEARCH_ITEM}`, "utf8")));
+  return failures;
 }
 
 if (process.argv.includes("--selftest")) {
-  if (failures.length > 0) {
-    console.error("SELFTEST should have passed on current tree but found:", failures);
+  const live = collectFailures();
+  if (live.length > 0) {
+    console.error(`${LABEL} SELFTEST should have passed on current tree but found:`, live);
     process.exit(1);
   }
-  console.log("verify-filter-input-aria-labels: selftest OK (current tree passes)");
+  // BANK-F91428 leftover plant — SearchResultItem page-scoped text token ratchet
+  const liveItem = fs.readFileSync(`${repoRoot}/${SEARCH_ITEM}`, "utf8");
+  const leftoverPlant = liveItem + '\n<span className="text-[11px] text-[#8A92AB]">plant</span>\n';
+  if (!checkSearchResultItemLeftovers(leftoverPlant).some((f) => f.includes("leftover"))) {
+    console.error(`${LABEL} SELFTEST FAIL: leftover text-[11px]/#8A92AB plant escaped`);
+    process.exit(1);
+  }
+  console.log(`${LABEL}: selftest OK (current tree passes + leftover plant)`);
   process.exit(0);
 }
 
+const failures = collectFailures();
 if (failures.length > 0) {
-  console.error("verify-filter-input-aria-labels FAILED:");
+  console.error(`${LABEL} FAILED:`);
   for (const f of failures) console.error("  - " + f);
   process.exit(1);
 }
-console.log(`verify-filter-input-aria-labels OK — ${TARGETS.length} filter controls have accessible names.`);
+console.log(`${LABEL} OK — ${TARGETS.length} filter controls have accessible names.`);
 process.exit(0);
