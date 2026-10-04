@@ -207,8 +207,8 @@ function withTimeout(promise, ms, label) {
 async function dbChecks(threshold) {
   const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
   if (!connectionString) {
-    console.log("verify:coa-canonical — DB checks SKIPPED (no DATABASE_DIRECT_URL/DATABASE_URL)");
-    return { skipped: true };
+    // ROUND 29.9-B: a live money guard that cannot connect is a FAIL, never a pass (gate step 03d).
+    throw new Error("verify:coa-canonical — FAIL — DATABASE_DIRECT_URL/DATABASE_URL not set; the live chart-of-accounts checks cannot run (fail-closed)");
   }
 
   // connectionTimeoutMillis bounds the connect() call itself; statement_timeout/query_timeout
@@ -224,9 +224,8 @@ async function dbChecks(threshold) {
   try {
     client = await withTimeout(pool.connect(), DB_CHECKS_TIMEOUT_MS, "the database (pool.connect)");
   } catch (e) {
-    console.log(`verify:coa-canonical — DB checks SKIPPED (cannot connect: ${String(e?.message || e)})`);
     await pool.end().catch(() => {});
-    return { skipped: true };
+    throw new Error(`verify:coa-canonical — FAIL — cannot connect to the database (fail-closed): ${String(e?.message || e)}`);
   }
 
   try {
