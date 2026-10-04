@@ -53,7 +53,7 @@ if (source.activeStrip.includes("text-[11px]")) {
 
 function leftoverRefuseDiagram(src, bucket) {
   if (src.includes("text-[11px]")) bucket.push("RouteDiagramSvg.tsx: leftover text-[11px]");
-  if (src.includes("#8A92AB") || src.includes("#334155")) {
+  if (src.includes("#8A92AB") || src.includes("#334155") || src.includes("#64748b") || src.includes("#475569") || src.includes("#94a3b8")) {
     bucket.push("RouteDiagramSvg.tsx: leftover off-scale muted");
   }
 }
@@ -98,6 +98,13 @@ if (process.argv.includes("--selftest")) {
     !leftoverBad.some((e) => e.includes("leftover off-scale muted"))
   ) {
     console.error("verify-fuel-planner-degraded-honesty selftest FAIL leftover plant escaped", leftoverBad);
+    process.exit(1);
+  }
+  // BANK-F91514 leftover plant — destination fill leftover slate
+  const leftoverDest = [];
+  leftoverRefuseDiagram('isDestination ? "#475569"', leftoverDest);
+  if (!leftoverDest.some((e) => e.includes("leftover off-scale muted"))) {
+    console.error("verify-fuel-planner-degraded-honesty selftest FAIL leftover #475569 plant escaped", leftoverDest);
     process.exit(1);
   }
   console.log(`verify-fuel-planner-degraded-honesty selftest PASS (${mutations.length}/${mutations.length})`);
