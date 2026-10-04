@@ -1,6 +1,6 @@
 import type { PoolClient } from "pg";
+import { insertPostingLineWithSpineIfNew } from "./posting-line-writer.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { writeTransactionSourceLink } from "./accounting-spine-emit.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 // ACCT-LINK-01 regression fix (GO-1405 Recipe B, 2026-08-29): this retained-earnings sweep JE
 // insert never populated journal_entry_type_id -- one of several direct posters contributing to
@@ -238,57 +238,25 @@ export async function insertRetainedEarningsClosingJournalIfNeeded(
 
   let seq = 1;
   for (const ln of lines) {
-    const lineRes = await client.query<{ id: string }>(
-      `
-        INSERT INTO accounting.journal_entry_postings (
-          operating_company_id,
-          journal_entry_uuid,
-          line_sequence,
-          account_id,
-          debit_or_credit,
-          amount_cents,
-          description,
-          idempotency_key,
-          load_id,
-          created_at,
-          updated_at
-        )
-        -- ROUND 363-CC1-A: the retained-earnings close spans the whole period — no load, NULL by design.
-        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, $8, NULL, now(), now())
-        ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
-          WHERE idempotency_key IS NOT NULL DO NOTHING
-        RETURNING id::text
-      `,
-      [
-        params.operating_company_id,
-        jeId,
-        seq,
-        ln.account_id,
-        ln.debit_or_credit,
-        ln.amount_cents,
-        ln.description,
-        // BLOCK 2: deterministic key per fiscal-year close so a re-run of the same year-end close is a
-        // safe no-op (uq_jep_company_idempotency_line) — a double-posted retained-earnings close is the
-        // worst-case duplicate, so this path is protected first. LOCKED DESIGN 2026-08-20: the key is
-        // scoped by the count of REVERSED prior closes (`:r{n}` suffix, absent on the first close so
-        // pre-existing rows keep matching), so a legitimate close-after-undo can never
-        // ON-CONFLICT-collide with the reversed close's rows and silently post a zero-line or
-        // unbalanced JE.
-        `period_close:FY${params.fiscal_year}:${params.period_end.slice(0, 10)}${reversedCloseCount > 0 ? `:r${reversedCloseCount}` : ""}`,
-      ]
-    );
-    // CODER-12 audit-spine: link each closing line to the fiscal-year close. Skip on a BLOCK-2
-    // conflict no-op (no row returned).
-    const postingId = lineRes.rows[0]?.id;
-    if (postingId) {
-      await writeTransactionSourceLink(client, {
-        operating_company_id: params.operating_company_id,
-        journal_entry_posting_id: postingId,
-        linked_object_type: "period_close",
-        linked_object_id: `FY${params.fiscal_year}`,
-        relationship_role: "period_close",
-      });
-    }
+    // ROUND 393.3 — the line and its spine row through the ONE writer (posting-line-writer.ts), in this transaction.
+    // The source is the fiscal-year close itself (period_close / FY<year> — the object CODER-12 already linked every
+    // closing line to), never the journal entry as its own source. No load: a resolver miss for 'period_close' is NULL.
+    // BLOCK 2: deterministic key per fiscal-year close so a re-run of the same year-end close is a safe no-op
+    // (uq_jep_company_idempotency_line) — LOCKED DESIGN 2026-08-20: scoped by the count of REVERSED prior closes
+    // (`:r{n}`, absent on the first close) so a close-after-undo never collides with the reversed close's rows.
+    await insertPostingLineWithSpineIfNew(client as never, {
+      operating_company_id: params.operating_company_id,
+      journal_entry_uuid: jeId,
+      line_sequence: seq,
+      account_id: ln.account_id,
+      debit_or_credit: ln.debit_or_credit,
+      amount_cents: ln.amount_cents,
+      description: ln.description,
+      idempotency_key: `period_close:FY${params.fiscal_year}:${params.period_end.slice(0, 10)}${reversedCloseCount > 0 ? `:r${reversedCloseCount}` : ""}`,
+      source_transaction_type: "period_close",
+      source_transaction_id: `FY${params.fiscal_year}`,
+      relationship_role: "period_close",
+    });
     seq += 1;
   }
 

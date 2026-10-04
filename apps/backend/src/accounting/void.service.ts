@@ -13,9 +13,9 @@ import { assertNoHistoricalJournalCoverage } from "../driver-finance/settlement-
 // are atomic. This module does not open its own transaction and does not modify the posting engine.
 
 import { releaseBankLineMatchesWhere } from "../banking/bank-line-release.js";
+import { insertPostingLineWithSpineIfNew } from "./posting-line-writer.js";
 import { boundJeMemo } from "./je-memo.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { writeTransactionSourceLink } from "./accounting-spine-emit.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 // ACCT-LINK-01 regression fix (GO-1405 Recipe B, 2026-08-29): this void-reversal insert never
@@ -746,66 +746,32 @@ export async function postVoidReversal(
 
   let seq = 1;
   for (const line of reversalLines) {
-    const lineRes = await client.query<{ id: string }>(
-      `
-        INSERT INTO accounting.journal_entry_postings
-          (operating_company_id, journal_entry_uuid, line_sequence, account_id, class_id, entity_uuid, debit_or_credit, amount_cents, description, idempotency_key, source_transaction_type, source_transaction_id, reversal_of_line_id, load_id)
-        -- ROUND 363-CC1-A: a reversal carries the load of the line it reverses (its document may already be gone).
-        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5::uuid, $6, $7, $8::bigint, $9, $10, $11, $12, $13::uuid,
-                accounting.posting_source_load_id($11::text, $12::text, NULL, $13::uuid))
-        ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
-          WHERE idempotency_key IS NOT NULL DO NOTHING
-        RETURNING id::text
-      `,
-      [
-        params.operatingCompanyId,
-        reversalJeId,
-        seq++,
-        line.account_id,
-        line.class_id,
-        line.entity_uuid,
-        line.debit_or_credit,
-        line.amount_cents,
-        line.description,
-        // BLOCK 2: deterministic key per voided entity so a second void of the same entity cannot
-        // double-post a reversing JE (uq_jep_company_idempotency_line). Shared across reversal lines.
-        `void:${params.entityType}:${params.entityId}`,
-        // LV-BILLPAY-VOID-NO-REVERSAL sub-finding — a reversal posting previously carried
-        // source_transaction_type/id = NULL, so any source-typed report (revenue-by-type, P&L
-        // drill-through, this exact class' subledger-vs-GL tie-out) summed the ORIGINAL posting into
-        // its type bucket and never saw the reversal, overstating that bucket by the full reversed
-        // amount even though the trial balance (which sums by account only, not by source type)
-        // stayed correct. Tagging the reversal with the SAME source_transaction_type/id as what it
-        // reverses (not inventing a new "reversal" type) means a source-typed sum sees BOTH legs and
-        // nets to zero, matching how the account-level total already behaves.
-        // REINSTATE-VOIDJE-REVERSAL-SEVERS-SOURCE-LINKAGE fix (2026-09-30) — trueType/trueId, NOT
-        // params.entityType/entityId: when this call is reversing a JE that is itself a reversal
-        // (the reinstate-restore path), resolveTrueReversalSource already resolved the real source
-        // document above, so this (and every future hop) stays tagged back to the true document,
-        // not to the intermediate 'journal_entry'/<reversal id>. See that function's own comment.
-        trueType,
-        trueId,
-        // ROUND 86 (Lead, 2026-09-23) — LINE-LEVEL reversal FK, the fix for the "stranded posting"
-        // this function's own comment below used to claim already existed. Mirrors
-        // posting-engine.service.ts's reversal path exactly: the new line points back at the
-        // original via reversal_of_line_id (set here, at insert); the original line is pointed
-        // forward at the new one via reversed_by_line_id (set by the UPDATE right after).
-        line.original_line_id,
-      ]
-    );
-    // CODER-12 audit-spine: link each reversal posting line back to the ORIGINAL entity
-    // (role 'reversal_of') — a separate, additional cross-reference (transaction_source_links),
-    // NOT the same thing as reversal_of_line_id/reversed_by_line_id above (this function's own
-    // prior comment conflated the two; see ROUND 86 above). Skip on a BLOCK-2 conflict no-op (no row).
-    const reversalPostingId = lineRes.rows[0]?.id;
+    // ROUND 393.3 — the line and its spine row through the ONE writer (posting-line-writer.ts), in this transaction.
+    // Every value is what this door wrote before:
+    //   idempotency_key  BLOCK 2: `void:<type>:<id>` — a second void of the same entity is a no-op (uq_jep_company_idempotency_line);
+    //   source           trueType/trueId (REINSTATE-VOIDJE-REVERSAL-SEVERS-SOURCE-LINKAGE: a reinstate hop stays tagged to the
+    //                    true document, so a source-typed sum sees both legs and nets to zero — LV-BILLPAY-VOID-NO-REVERSAL);
+    //   reversal_of_line_id  ROUND 86 line-level FK back to the original (its load is the original's load);
+    //   spine            CODER-12: the voided entity, role 'reversal_of' — so a purge can tell a reversed document from an
+    //                    unreversed one. A conflict no-op writes neither the line nor a link.
+    const reversalPostingId = await insertPostingLineWithSpineIfNew(client as never, {
+      operating_company_id: params.operatingCompanyId,
+      journal_entry_uuid: reversalJeId,
+      line_sequence: seq++,
+      account_id: line.account_id,
+      class_id: line.class_id,
+      entity_uuid: line.entity_uuid,
+      debit_or_credit: line.debit_or_credit,
+      amount_cents: line.amount_cents,
+      description: line.description,
+      idempotency_key: `void:${params.entityType}:${params.entityId}`,
+      source_transaction_type: trueType,
+      source_transaction_id: trueId,
+      reversal_of_line_id: line.original_line_id,
+      relationship_role: "reversal_of",
+      spine_link: { linked_object_type: params.entityType, linked_object_id: params.entityId },
+    });
     if (reversalPostingId) {
-      await writeTransactionSourceLink(client, {
-        operating_company_id: params.operatingCompanyId,
-        journal_entry_posting_id: reversalPostingId,
-        linked_object_type: params.entityType,
-        linked_object_id: params.entityId,
-        relationship_role: "reversal_of",
-      });
       // ROUND 86 — the other half of the line-level link: point the ORIGINAL line forward at
       // this new reversal line. Without this, the original stays a "stranded posting" — its own
       // JE correctly shows reversed_by_je_id, but any reader keyed on the LINE-level column
