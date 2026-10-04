@@ -474,7 +474,7 @@ export function DefaultHome({ auth }: Props) {
                 item.alert === "crit"
                   ? "border-l-[3px] border-l-crit"
                   : item.alert === "warn"
-                    ? "border-l-[3px] border-l-[#334155]"
+                    ? "border-l-[3px] border-l-[#4B5563]"
                     : "border-slate-200"
               }`}
             >
@@ -484,9 +484,9 @@ export function DefaultHome({ auth }: Props) {
                   item.alert === "crit"
                     ? "text-crit"
                     : item.alert === "warn"
-                      ? "text-[#334155]"
+                      ? "text-[#4B5563]"
                       : item.healthy
-                        ? "text-[#334155]"
+                        ? "text-[#4B5563]"
                         : "text-slate-900"
                 }`}
               >
