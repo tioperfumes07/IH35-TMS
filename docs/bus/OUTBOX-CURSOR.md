@@ -1,8 +1,14 @@
-## 2026-10-04T20:05Z · BANK-F91550 CustomerDetail leftover slate classes · this PR
+## 2026-10-04T20:12Z · BANK-F91551 LoadCosts leftover slate classes · this PR
 
-DONE: CustomerDetail leftover text-slate-* / border-slate-* / bg-slate-* → house #4B5563 / #1F2A44 / #0F1219 / #E5E7EB / #F7F8FA; leftover refuse on EVEN 4116.
+DONE: LoadCostsBoard leftover text-slate-* → house #1F2A44 / #4B5563; leftover refuse on EVEN 4110.
 
-NEXT: leftover muted chrome (remaining pages / skip pile) · skip pile parked · HH16 leftovers first.
+NEXT: leftover muted chrome (ReeferFuelCredit / remaining pages / skip pile) · skip pile parked · HH16 leftovers first.
+
+## 2026-10-04T20:05Z · BANK-F91550 CustomerDetail leftover slate classes WIRED CI · tip `75029ae9b2`
+
+DONE: #25292 — CustomerDetail leftover slate-* → house tokens; leftover refuse on EVEN 4116.
+
+NEXT: leftover muted chrome (LoadCosts / remaining pages / skip pile) · skip pile parked · HH16 leftovers first.
 
 ## 2026-10-04T19:55Z · BANK-F91549 SystemModule leftover slate classes WIRED CI · tip `38185ed5f6`
 

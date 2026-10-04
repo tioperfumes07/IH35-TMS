@@ -254,10 +254,10 @@ type RegisterRow = {
   attachmentEntityType?: "expense" | "bill"; attachmentEntityId?: string;
 };
 const REGISTER_COLUMNS: Array<ParityColumn<RegisterRow>> = [
-  { key: "number", label: "Number", testId: "reg-col-number", sortable: true, className: "whitespace-nowrap", sortValue: r => r.number, render: r => <span className="font-semibold text-slate-700">{r.number}</span> },
+  { key: "number", label: "Number", testId: "reg-col-number", sortable: true, className: "whitespace-nowrap", sortValue: r => r.number, render: r => <span className="font-semibold text-[#1F2A44]">{r.number}</span> },
   { key: "date", label: "Date", testId: "reg-col-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.date ?? "", render: r => r.date ? formatDateQboList(r.date) : DASH },
   { key: "party", label: "Vendor / Driver", testId: "reg-col-party", sortable: true, sortValue: r => r.party, render: r => r.party || DASH },
-  { key: "load", label: "Load Number", testId: "reg-col-load", sortable: true, className: "whitespace-nowrap", sortValue: r => r.loadNumber ?? "", render: r => r.loadId ? <Link className="font-semibold text-slate-700 underline" to={`/dispatch/load-costs/${r.loadId}?tab=Costs`}>{r.loadNumber ?? r.loadId}</Link> : DASH },
+  { key: "load", label: "Load Number", testId: "reg-col-load", sortable: true, className: "whitespace-nowrap", sortValue: r => r.loadNumber ?? "", render: r => r.loadId ? <Link className="font-semibold text-[#1F2A44] underline" to={`/dispatch/load-costs/${r.loadId}?tab=Costs`}>{r.loadNumber ?? r.loadId}</Link> : DASH },
   { key: "detail", label: "Description", testId: "reg-col-detail", sortable: true, sortValue: r => r.detail, render: r => <span className="text-[#4B5563]">{r.detail || DASH}</span> },
   // REG-PARSE (owner 2026-09-06 05:2xZ): receipt number, address and settlement number are their own columns.
   { key: "receipt_number", label: "Receipt no.", testId: "reg-col-receipt-number", sortable: true, className: "whitespace-nowrap", sortValue: r => r.receiptNumber ?? "", render: r => r.receiptNumber ? <span className="ldt-k">{r.receiptNumber}</span> : DASH },
@@ -268,7 +268,7 @@ const REGISTER_COLUMNS: Array<ParityColumn<RegisterRow>> = [
 ];
 /** LDT-1B: receipt on every expense/bill row of the Dispatch → Load costs registers (documents.attachments). */
 function receiptColumn(companyId: string): ParityColumn<RegisterRow> {
-  return { key: "receipt", label: "Receipt", testId: "reg-col-receipt", sortable: false, render: r => r.receiptEntity ? <ReceiptAttach operatingCompanyId={companyId} entityType={r.receiptEntity} entityId={r.id} testId="reg-receipt" /> : <span className="text-slate-400">{DASH}</span> };
+  return { key: "receipt", label: "Receipt", testId: "reg-col-receipt", sortable: false, render: r => r.receiptEntity ? <ReceiptAttach operatingCompanyId={companyId} entityType={r.receiptEntity} entityId={r.id} testId="reg-receipt" /> : <span className="text-[#4B5563]">{DASH}</span> };
 }
 
 // LCB-REG — Driver pay register (owner 2026-09-05, "loaded mi × rate · empty mi × rate · gross per
@@ -734,7 +734,7 @@ export function LoadCostsBoardPage() {
     deadhead_pay: visible.reduce((n, r) => n + (r.deadhead_pay_cents == null ? 0 : Number(r.deadhead_pay_cents)), 0), gross: driver,
   }), [visible, revenue, driver]);
   const columns: Array<ParityColumn<BoardRow>> = [
-    { key: "load", label: "Load Number", testId: "col-load", sortable: true, alwaysVisible: true, sortValue: r => r.load_number, render: r => <Link className="font-semibold text-slate-700 underline" to={`/dispatch/load-costs/${r.load_id}?tab=Costs`}>{r.load_number}</Link> },
+    { key: "load", label: "Load Number", testId: "col-load", sortable: true, alwaysVisible: true, sortValue: r => r.load_number, render: r => <Link className="font-semibold text-[#1F2A44] underline" to={`/dispatch/load-costs/${r.load_id}?tab=Costs`}>{r.load_number}</Link> },
     // LOAD-COSTS-RETURN-COLS (owner 2026-09-08, item 3): "Unassigned" is a distinct, real state
     // (no unit ever booked to this load) -- a plain "—" reads as "not measured", the same dash
     // every other untracked cell on this board already uses. Named so an operator scanning the
@@ -792,7 +792,7 @@ export function LoadCostsBoardPage() {
         return (
           <span title={ledger === docs ? "Matches the documents" : `Documents total ${fmt(docs)} — the ledger carries ${fmt(ledger)}`} data-testid="ledger-cost-cell">
             {fmt(ledger)}
-            {ledger !== docs ? <span className="ml-1 font-semibold text-slate-700" data-testid="ledger-cost-differs">≠ docs</span> : null}
+            {ledger !== docs ? <span className="ml-1 font-semibold text-[#1F2A44]" data-testid="ledger-cost-differs">≠ docs</span> : null}
           </span>
         );
       },
@@ -825,7 +825,7 @@ export function LoadCostsBoardPage() {
     // document (source_document_ref, already what settlement_display_id carries from the backend CTE),
     // rendered through the ONE settlementLabel() helper — "Open" while unsettled, a dash when closed-
     // unnumbered, NEVER the retired S-YYYY-NNNN display_id counter. alwaysVisible, beside every load number.
-    { key: "settlement", label: "Settlement/Tour", testId: "col-settlement", sortable: true, className: "whitespace-nowrap", alwaysVisible: true, sortValue: r => r.settlement_display_id ?? "", render: r => { const lbl = settlementLabel({ source_document_ref: r.settlement_display_id, status: r.status }); return r.settlement_id ? <Link className="font-semibold text-slate-700 underline" to={`/driver-finance/settlements?settlement_id=${r.settlement_id}`}>{lbl}</Link> : (r.settlement_display_id ? lbl : "—"); } },
+    { key: "settlement", label: "Settlement/Tour", testId: "col-settlement", sortable: true, className: "whitespace-nowrap", alwaysVisible: true, sortValue: r => r.settlement_display_id ?? "", render: r => { const lbl = settlementLabel({ source_document_ref: r.settlement_display_id, status: r.status }); return r.settlement_id ? <Link className="font-semibold text-[#1F2A44] underline" to={`/driver-finance/settlements?settlement_id=${r.settlement_id}`}>{lbl}</Link> : (r.settlement_display_id ? lbl : "—"); } },
     // LOAD-COSTS-RETURN-COLS (owner 2026-09-08): same source as Dispatch Home's "Units Needing
     // Return" tile (listUnitsWithoutLoad's own hours_since_last_delivery) -- never a second copy of
     // that math. Only the LATEST delivered row for a currently-idle unit gets a value; an older
