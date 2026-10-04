@@ -278,8 +278,9 @@ function selftest() {
     failures.push("case9 FAIL — maintenance request at the backend max was flagged");
   }
 
-  const tree = auditTree();
-  if (tree.length !== 0) failures.push(`case10 FAIL — real tree flagged against baseline: ${tree.join(" | ")}`);
+  // LST-F407 (Lead, 2026-10-04): no case walks the real repository here. A selftest proves the LOGIC on fixtures it
+  // controls; the real-tree check is the live run's job (it already fails on the same offenders). The old case10 made this
+  // selftest a function of other seats' commits and reported one regression twice.
 
   if (failures.length) {
     for (const f of failures) console.error(`  ✗ ${LABEL}: ${f}`);
