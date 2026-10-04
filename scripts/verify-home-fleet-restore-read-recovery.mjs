@@ -20,6 +20,9 @@ export function audit(src) {
     problems.push("estimated/actual/remaining economics were dropped");
   }
   if (!/unit_count === 0 && data\.total_estimated_cents === 0/.test(src)) problems.push("honest zero-row suppression was dropped");
+  // BANK-F91340 leftover refuse — HomeFleetRestoreCard page-scoped text token ratchet
+  if (src.includes("text-[11px]")) problems.push("HomeFleetRestoreCard.tsx: leftover text-[11px]");
+  if (src.includes("#8A92AB")) problems.push("HomeFleetRestoreCard.tsx: leftover off-scale muted #8A92AB");
   return problems;
 }
 
@@ -43,6 +46,12 @@ function selftest() {
   for (const [name, fixture] of mutations) if (!audit(fixture).length) failures.push(`${name} mutation escaped`);
   if (failures.length) {
     failures.forEach((failure) => console.error(`  ✗ ${LABEL}: ${failure}`));
+    process.exit(1);
+  }
+  // BANK-F91340 leftover plant — HomeFleetRestoreCard page-scoped text token ratchet
+  const leftoverPlant = good + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!audit(leftoverPlant).some((x) => x.includes("leftover text-[11px]"))) {
+    console.error(`  ✗ ${LABEL}: leftover plant escaped`);
     process.exit(1);
   }
   console.log(`${LABEL}: selftest PASS — ${mutations.length} mutations detected`);
