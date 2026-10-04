@@ -8326,6 +8326,11 @@
     "claimed_by": "claude",
     "purpose": "verify-no-reversal-of-a-reversal"
   },
+  "12449": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-arriving-soon-serves-geofence-state"
+  },
   "12453": {
     "claimed_at": "2026-10-03",
     "claimed_by": "claude",
