@@ -41,8 +41,12 @@ contains("apps/backend/src/reports/categories/routes.ts", routes, [
 ]);
 
 read("apps/frontend/src/components/reports/ReportCategoryHoverNav.tsx");
-read("apps/frontend/src/components/reports/ReportCard.tsx");
+const reportCard = read("apps/frontend/src/components/reports/ReportCard.tsx");
 read("apps/frontend/src/pages/reports/ReportsHub.tsx");
+
+// BANK-F91332 leftover refuse — ReportCard.tsx page-scoped text token ratchet (size-only; #1f2a44 accent kept)
+if (reportCard.includes("text-[11px]")) fail("apps/frontend/src/components/reports/ReportCard.tsx: leftover text-[11px]");
+if (reportCard.includes("#8A92AB")) fail("apps/frontend/src/components/reports/ReportCard.tsx: leftover off-scale muted #8A92AB");
 
 const nav = read("apps/frontend/src/components/reports/ReportCategoryHoverNav.tsx");
 contains("apps/frontend/src/components/reports/ReportCategoryHoverNav.tsx", nav, [
@@ -110,6 +114,24 @@ if (!wiredStep__reports_hub_9_categories) {
     "verify-reports-hub-9-categories: NOTE — no scripts/verify-steps/NNNN-verify-reports-hub-9-categories.mjs, so this guard does not execute " +
       "in CI. Wiring it requires a claimed step number (Rule 37); a package.json script does not wire it.",
   );
+}
+
+if (process.argv.includes("--selftest")) {
+  // BANK-F91332 leftover plant — ReportCard page-scoped text token ratchet
+  const leftoverPlant = reportCard + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  const plantFails =
+    leftoverPlant.includes("text-[11px]") || leftoverPlant.includes("#8A92AB");
+  if (!plantFails) {
+    console.error("verify-reports-hub-9-categories --selftest FAIL — leftover plant escaped");
+    process.exit(1);
+  }
+  if (failures.length > 0) {
+    console.error("verify-reports-hub-9-categories --selftest FAIL on live tree:");
+    for (const f of failures) console.error(`  - ${f}`);
+    process.exit(1);
+  }
+  console.log("verify-reports-hub-9-categories --selftest PASS");
+  process.exit(0);
 }
 
 if (failures.length > 0) {
