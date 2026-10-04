@@ -1,3 +1,11 @@
+## 2026-10-04T04:05Z · BANK-F91408..F91411 leftover drain MERGED tip `7ebd41f266`
+
+DONE: VendorDetailPage · CurrentPeriodTab · SettlementProfitabilityCard · Compliance425CPage (F91408–F91411). Prior F91401–07 stamped.
+
+PRs: #25108 · #25109 · #25111 · #25112 (squash). Guards: refuse + `--selftest` plant each.
+
+NEXT: continue ORDERS leftover drain (page-scoped guards only). Skip BookLoad*/Combobox/EntityPicker/ParityTable/DrillKpiCard/UniversalListToolbar/DateTimePicker/DataTable/ProgramTracker/FinalAdditions/InstallPWA. HH04 no migrations. NavyPageSubNav ambient red. FormField roundtrip ambient red. no-dead-kpi-cards ambient red.
+
 ## 2026-10-04T03:45Z · BANK-F91401..F91407 leftover drain MERGED tip `5a33f105ed`
 
 DONE: AddressGeocodeInput · LoadDetailGeofenceTimelineTab · WizardStep1 · WizardStep4 · WizardStep6 · UnitTiresTab · PmSchedulePage (F91401–F91407). Prior F91397–99 stamped.
