@@ -80,33 +80,38 @@ function runSelftest() {
     console.error(`[verify-home-quickjump-counts] SELFTEST FAILED — ${failed}/${cases.length}`);
     process.exit(1);
   }
-  const ownerHome = read(paths.ownerHome);
-  const leftoverGood = [];
-  leftoverRefuseOwnerHome(ownerHome, leftoverGood);
-  if (leftoverGood.length) {
-    console.error("[verify-home-quickjump-counts] SELFTEST FAIL — live OwnerHome leftover tokens present");
-    for (const e of leftoverGood) console.error(`  ✗ ${e}`);
-    process.exit(1);
+  for (const [label, rel] of [
+    ["OwnerHome.tsx", paths.ownerHome],
+    ["DefaultHome.tsx", paths.defaultHome],
+  ]) {
+    const live = read(rel);
+    const leftoverGood = [];
+    leftoverRefusePage(label, live, leftoverGood);
+    if (leftoverGood.length) {
+      console.error(`[verify-home-quickjump-counts] SELFTEST FAIL — live ${label} leftover tokens present`);
+      for (const e of leftoverGood) console.error(`  ✗ ${e}`);
+      process.exit(1);
+    }
+    const leftoverPlant = `${live}\n<div className="text-[11px] text-[#8A92AB]" style={{ color: "#334155" }}>plant</div>`;
+    const leftoverBad = [];
+    leftoverRefusePage(label, leftoverPlant, leftoverBad);
+    if (
+      !leftoverBad.some((e) => e.includes("leftover text-[11px]")) ||
+      !leftoverBad.some((e) => e.includes("leftover off-scale muted"))
+    ) {
+      console.error(`[verify-home-quickjump-counts] SELFTEST FAIL ${label} leftover plant escaped`, leftoverBad);
+      process.exit(1);
+    }
   }
-  const leftoverPlant = `${ownerHome}\n<div className="text-[11px] text-[#8A92AB]" style={{ color: "#334155" }}>plant</div>`;
-  const leftoverBad = [];
-  leftoverRefuseOwnerHome(leftoverPlant, leftoverBad);
-  if (
-    !leftoverBad.some((e) => e.includes("leftover text-[11px]")) ||
-    !leftoverBad.some((e) => e.includes("leftover off-scale muted"))
-  ) {
-    console.error("[verify-home-quickjump-counts] SELFTEST FAIL leftover plant escaped", leftoverBad);
-    process.exit(1);
-  }
-  console.log(`[verify-home-quickjump-counts] SELFTEST OK — ${cases.length}/${cases.length} + leftover plant rejected`);
+  console.log(`[verify-home-quickjump-counts] SELFTEST OK — ${cases.length}/${cases.length} + leftover plants rejected`);
 }
 
-function leftoverRefuseOwnerHome(src, bucket) {
+function leftoverRefusePage(label, src, bucket) {
   if (src.includes("text-[11px]")) {
-    bucket.push("OwnerHome.tsx: leftover text-[11px]");
+    bucket.push(`${label}: leftover text-[11px]`);
   }
   if (src.includes("#8A92AB") || src.includes("#334155")) {
-    bucket.push("OwnerHome.tsx: leftover off-scale muted");
+    bucket.push(`${label}: leftover off-scale muted`);
   }
 }
 
@@ -118,11 +123,9 @@ function main() {
   const failures = [];
   const homeQuickJumps = read(paths.homeQuickJumps);
   const defaultHome = read(paths.defaultHome);
-  if (defaultHome.includes("text-[11px]")) {
-    failures.push("DefaultHome.tsx: must not use text-[11px] — use text-xs or text-section-header");
-  }
+  leftoverRefusePage("DefaultHome.tsx", defaultHome, failures);
   const ownerHome = read(paths.ownerHome);
-  leftoverRefuseOwnerHome(ownerHome, failures);
+  leftoverRefusePage("OwnerHome.tsx", ownerHome, failures);
   const accountingManifest = read(paths.accountingManifest);
   const bankingNav = read(paths.bankingNav);
   const fuelTabsConfig = read(paths.fuelTabs);

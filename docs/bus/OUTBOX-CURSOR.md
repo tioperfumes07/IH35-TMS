@@ -1,3 +1,9 @@
+## 2026-10-04T10:12Z · BANK-F91477 OwnerHome leftover WIRED CI · tip `f1d9ec57fc`
+
+DONE: #25219 — OwnerHome KPI warn/healthy #4B5563; verify-steps/3888 runs verify-home-quickjump-counts leftover refuse --selftest + live.
+
+NEXT: BANK-F91478 DefaultHome leftover #334155 + wire leftover refuse into 3886 · skip pile parked · HH10 no migrations.
+
 ## 2026-10-04T10:08Z · BANK-F91476 AccountingHome leftover WIRED CI · tip `9298bc9297`
 
 DONE: #25218 — AccountingHome AP accent #4B5563; verify-steps/3870 runs verify-accounting-home --selftest + live.
