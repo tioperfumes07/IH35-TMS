@@ -1,7 +1,9 @@
 /**
  * reinstateDocument — ROUND 191 unit tests.
  * Mocks stampDocumentReinstated + find paths; asserts dispatcher coverage mirrors voidDocument types
- * that are wired, and refuses factoring_advance without AUTH (AUTH-113 hard line).
+ * that are wired, refuses a factoring_advance reinstate that would double-count a live twin (ROUND 292), and refuses
+ * 'deduction' as not yet wired. (Factoring / settlement / liability reinstates were wired by ROUND 285.2.1-R; the
+ * per-record AUTH is the calling ops script's duty, enforced by verify-ops-scripts-assert-not-production.)
  */
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
@@ -35,7 +37,7 @@ vi.mock("../journal-entries.service.js", () => ({
   restoreReversedJournalEntry: vi.fn(async () => ({ restore_journal_entry_id: "restore-je", restore_date: "2026-10-04", already_restored: false })),
 }));
 
-import { reinstateDocument, ReinstateDocumentError } from "../reinstate-document.service.js";
+import { FactoringTwinExistsError, reinstateDocument, ReinstateDocumentError } from "../reinstate-document.service.js";
 import { stampDocumentReinstated } from "../void-document-stamp.service.js";
 
 const OPCO = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -64,22 +66,17 @@ describe("reinstateDocument — R-191 universal unvoid", () => {
     vi.clearAllMocks();
   });
 
-  it("refuses factoring_advance without AUTH (AUTH-113 hard line)", async () => {
-    const client = makeClient([]);
-    await expect(
-      reinstateDocument(client, { ...base, type: "factoring_advance", id: "fa-1" })
-    ).rejects.toBeInstanceOf(ReinstateDocumentError);
-    await expect(
-      reinstateDocument(client, { ...base, type: "factoring_advance", id: "fa-1" })
-    ).rejects.toMatchObject({ code: "factoring_reinstate_requires_auth" });
+  it("factoring_advance: refuses when a live twin would double-count (ROUND 292); reinstates when there is none", async () => {
+    const twin = makeClient([{ needle: "FROM accounting.factoring_advances target", rows: [{ id: "fa-twin", display_id: "FAC-0001", matched_on: "faro_invoice_number" }] }]);
+    await expect(reinstateDocument(twin, { ...base, type: "factoring_advance", id: "fa-1" })).rejects.toBeInstanceOf(FactoringTwinExistsError);
+    await expect(reinstateDocument(makeClient([]), { ...base, type: "factoring_advance", id: "fa-1" })).resolves.toBeTruthy();
   });
 
-  it("refuses settlement / deduction / liability as not_yet_wired", async () => {
+  it("refuses deduction as not_yet_wired; settlement and liability are wired (ROUND 285.2.1-R)", async () => {
     const client = makeClient([]);
-    for (const type of ["settlement", "deduction", "liability"] as const) {
-      await expect(reinstateDocument(client, { ...base, type, id: "x-1" })).rejects.toMatchObject({
-        code: "not_yet_wired",
-      });
+    await expect(reinstateDocument(client, { ...base, type: "deduction", id: "x-1" })).rejects.toMatchObject({ code: "not_yet_wired" });
+    for (const type of ["settlement", "liability"] as const) {
+      await expect(reinstateDocument(client, { ...base, type, id: "x-1" })).resolves.toBeTruthy();
     }
   });
 

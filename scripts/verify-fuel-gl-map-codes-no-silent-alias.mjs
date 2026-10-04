@@ -116,9 +116,15 @@ if (poster) {
   if (!/FUEL_CATEGORY_CODES\s*=\s*\[\s*"diesel"\s*,\s*"def"\s*,\s*"reefer"\s*,\s*"oil"\s*,\s*"misc"\s*\]/.test(poster)) {
     errors.push(`${posterRel} must keep FUEL_CATEGORY_CODES = diesel|def|reefer|oil|misc (exact order)`);
   }
-  // Optional 4th argument: the caller's client (postFuelExpenseOnClient posts inside the bank-match transaction).
-  if (!/resolveAccountForCategory\(\s*input\.operating_company_id,\s*"fuel",\s*fuelKind\s*(,\s*client[^)]*)?\)/.test(poster)) {
-    errors.push(`${posterRel} must resolve debit via resolveAccountForCategory(..., "fuel", fuelKind)`);
+  // CC-2 2026-10-04: the debit account comes from the fuel-type ITEM (fuel-item-account.ts), the one rule the expense
+  // document also uses — never the per-category map, whose DEF / reefer rows said 5000 while the items say 5010 / 5015.
+  if (!/resolveFuelItem\(\s*client[^,]*,\s*input\.operating_company_id,\s*POSTING_KIND_FUEL_TYPE\[fuelKind\]/.test(poster)) {
+    errors.push(`${posterRel} must resolve debit via resolveFuelItem(client, oc, POSTING_KIND_FUEL_TYPE[fuelKind])`);
+  }
+  // No silent alias on the item side either: a kind without its own item (oil / misc) maps to null and REFUSES.
+  const itemRule = read("apps/backend/src/accounting/fuel-posting/fuel-item-account.ts");
+  if (!/oil:\s*null/.test(itemRule) || !/misc:\s*null/.test(itemRule) || !/def:\s*"def"/.test(itemRule) || !/reefer:\s*"reefer_diesel"/.test(itemRule)) {
+    errors.push("fuel-item-account.ts POSTING_KIND_FUEL_TYPE must map def->def, reefer->reefer_diesel and oil/misc->null (refuse, never alias to diesel)");
   }
   // Forbidden: silent alias of missing kind → category_code "fuel" (fake-post / invent mapping).
   if (/resolveAccountForCategory\([^)]*"fuel"\s*,\s*["']fuel["']/.test(poster)) {

@@ -66,6 +66,7 @@ describe("GO-CLOSE-188 DEFECT A — customer_payment_deposit sweep on match acce
     mockWithLuciaBypass.mockClear();
 
     mockQuery.mockImplementation(async (sql: string) => {
+      if (String(sql).includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "match-1" }], rowCount: 1 }; // an upsert RETURNING always returns its row
       const s = String(sql);
       // the sweep's own bank-ledger-account lookup (bank_transactions JOIN bank_accounts) — checked
       // BEFORE the general bank_transactions branch below since both match "FROM banking.bank_transactions".
@@ -137,6 +138,7 @@ describe("GO-CLOSE-188 DEFECT A — customer_payment_deposit sweep on match acce
     mockWithLuciaBypass.mockClear();
 
     mockQuery.mockImplementation(async (sql: string) => {
+      if (String(sql).includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "match-1" }], rowCount: 1 }; // an upsert RETURNING always returns its row
       const s = String(sql);
       if (s.includes("FROM banking.bank_transactions") && s.includes("SELECT")) return { rows: [bankTxnRow()] };
       if (s.includes("SELECT amount_cents::int FROM accounting.payments")) return { rows: [{ amount_cents: 100000 }] };

@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL } from "./expense-bank-match-sql.js";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -272,17 +273,6 @@ export type ExpenseListRow = {
   matched_bank_transaction_description: string | null;
 };
 
-/** Bank-recon accept stamps banking.bank_transactions.matched_expense_id — reverse hop for Expenses. */
-export const EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL = `
-  (
-    SELECT bt.id::text
-    FROM banking.bank_transactions bt
-    WHERE bt.operating_company_id = e.operating_company_id
-      AND bt.matched_expense_id = e.id
-    ORDER BY bt.transaction_date DESC, bt.created_at DESC
-    LIMIT 1
-  )
-`;
 
 const EXPENSE_MATCHED_BANK_TRANSACTION_LABEL_SQL = `
   (

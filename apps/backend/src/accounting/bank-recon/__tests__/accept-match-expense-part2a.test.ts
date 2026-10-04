@@ -37,6 +37,7 @@ describe("BLOCK-01 Part 2a — expense-link accept", () => {
     mockQuery.mockReset();
     mockWithLuciaBypass.mockClear();
     mockQuery.mockImplementation(async (sql: string) => {
+      if (String(sql).includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "match-1" }], rowCount: 1 }; // an upsert RETURNING always returns its row
       if (sql.includes("FROM banking.bank_transactions") && sql.includes("SELECT")) return { rows: [bankTxnRow()] };
       if (sql.includes("posting_status::text")) return { rows: [{ posting_status: "posted" }] };
       if (sql.includes("total_amount_cents::int")) return { rows: [{ amount_cents: 10000 }] }; // equal → zero variance
@@ -75,6 +76,7 @@ describe("BLOCK-01 Part 2a — expense-link accept", () => {
     mockQuery.mockReset();
     mockWithLuciaBypass.mockClear();
     mockQuery.mockImplementation(async (sql: string) => {
+      if (String(sql).includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "match-1" }], rowCount: 1 }; // an upsert RETURNING always returns its row
       if (sql.includes("FROM banking.bank_transactions") && sql.includes("SELECT")) return { rows: [bankTxnRow()] };
       if (sql.includes("posting_status::text")) return { rows: [{ posting_status: "unposted" }] };
       return { rows: [] };
@@ -96,6 +98,7 @@ describe("BLOCK-01 Part 2a — expense-link accept", () => {
     mockQuery.mockReset();
     mockWithLuciaBypass.mockClear();
     mockQuery.mockImplementation(async (sql: string) => {
+      if (String(sql).includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "match-1" }], rowCount: 1 }; // an upsert RETURNING always returns its row
       if (sql.includes("FROM banking.bank_transactions") && sql.includes("SELECT"))
         return { rows: [bankTxnRow({ review_state: "matched" })] };
       return { rows: [] };

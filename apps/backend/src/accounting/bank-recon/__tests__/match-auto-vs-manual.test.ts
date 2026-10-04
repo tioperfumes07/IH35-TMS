@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { findCandidates } from "../match.service.js";
+import { AUTO_MATCH_MEMO_SIMILARITY_MIN, findCandidates, memoSimilarity } from "../match.service.js";
 
 const { mockQuery, mockWithLuciaBypass } = vi.hoisted(() => {
   const query = vi.fn();
@@ -16,10 +16,11 @@ vi.mock("../../../auth/db.js", () => ({
 
 function setupBaseMocks() {
   mockQuery.mockImplementation(async (sql: string) => {
+      if (String(sql).includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "match-1" }], rowCount: 1 }; // an upsert RETURNING always returns its row
     if (sql.includes("FROM accounting.bill_payments")) return { rows: [] };
     if (sql.includes("FROM banking.transfers")) return { rows: [] };
     if (sql.includes("LEFT JOIN accounting.journal_entry_postings")) return { rows: [] };
-    if (sql.includes("INSERT INTO banking.reconciliation_matches")) return { rows: [] };
+    if (sql.includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "match-1" }], rowCount: 1 }; // an upsert RETURNING always returns its row
     return { rows: [] };
   });
 }
@@ -29,6 +30,7 @@ describe("bank-recon auto vs manual matching", () => {
     mockQuery.mockReset();
     setupBaseMocks();
     mockQuery.mockImplementation(async (sql: string) => {
+      if (String(sql).includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "match-1" }], rowCount: 1 }; // an upsert RETURNING always returns its row
       if (sql.includes("FROM banking.bank_transactions")) {
         return {
           rows: [
@@ -54,7 +56,7 @@ describe("bank-recon auto vs manual matching", () => {
       if (sql.includes("FROM accounting.bill_payments")) return { rows: [] };
       if (sql.includes("FROM banking.transfers")) return { rows: [] };
       if (sql.includes("LEFT JOIN accounting.journal_entry_postings")) return { rows: [] };
-      if (sql.includes("INSERT INTO banking.reconciliation_matches")) return { rows: [] };
+      if (sql.includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "match-1" }], rowCount: 1 }; // an upsert RETURNING always returns its row
       return { rows: [] };
     });
 
@@ -79,6 +81,7 @@ describe("bank-recon auto vs manual matching", () => {
     mockQuery.mockReset();
     setupBaseMocks();
     mockQuery.mockImplementation(async (sql: string) => {
+      if (String(sql).includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "match-1" }], rowCount: 1 }; // an upsert RETURNING always returns its row
       if (sql.includes("FROM banking.bank_transactions")) {
         return {
           rows: [
@@ -104,7 +107,7 @@ describe("bank-recon auto vs manual matching", () => {
       if (sql.includes("FROM accounting.bill_payments")) return { rows: [] };
       if (sql.includes("FROM banking.transfers")) return { rows: [] };
       if (sql.includes("LEFT JOIN accounting.journal_entry_postings")) return { rows: [] };
-      if (sql.includes("INSERT INTO banking.reconciliation_matches")) return { rows: [] };
+      if (sql.includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "match-1" }], rowCount: 1 }; // an upsert RETURNING always returns its row
       return { rows: [] };
     });
 
@@ -125,10 +128,14 @@ describe("bank-recon auto vs manual matching", () => {
   // transaction's real description under the old 0.8 bar -- a real match, unconditionally rejected.
   // This proves the recalibrated 0.5 bar now lets that real match through while match-auto-vs-manual's
   // sibling test above (genuinely unrelated content, similarity 0) still correctly stays manual-only.
-  it("auto-matches a JE candidate whose memo is boilerplate-diluted but is the real transaction", async () => {
+  // Owner ruling ROUND 157-C (2026-09-28, #22960): a JOURNAL ENTRY is never a match candidate ("expenses/JE/transfers/AR
+  // out"; ROUND 259 restored expenses only). This test used to expect the JE below to auto-match; it now locks in the
+  // ruling, and keeps the ACCT-F5604 boilerplate calibration (0.6 >= the 0.5 bar) as a direct assertion on the scorer.
+  it("never offers a journal entry as a match candidate (ROUND 157-C); boilerplate-diluted memo still clears the bar", async () => {
     mockQuery.mockReset();
     setupBaseMocks();
     mockQuery.mockImplementation(async (sql: string) => {
+      if (String(sql).includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "match-1" }], rowCount: 1 }; // an upsert RETURNING always returns its row
       if (sql.includes("FROM banking.bank_transactions")) {
         return {
           rows: [
@@ -162,7 +169,7 @@ describe("bank-recon auto vs manual matching", () => {
         };
       }
       if (sql.includes("LEFT JOIN accounting.journal_entry_postings")) return { rows: [] };
-      if (sql.includes("INSERT INTO banking.reconciliation_matches")) return { rows: [] };
+      if (sql.includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "match-1" }], rowCount: 1 }; // an upsert RETURNING always returns its row
       return { rows: [] };
     });
 
@@ -171,11 +178,10 @@ describe("bank-recon auto vs manual matching", () => {
       bank_transaction_id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
     });
 
-    expect(candidates[0]?.ledger_entry_kind).toBe("je");
-    expect(candidates[0]?.memo_similarity).toBeGreaterThanOrEqual(0.5);
-    expect(candidates[0]?.memo_similarity).toBeLessThan(0.8);
-    // ACCT-F26301 — auto_match still flags high confidence; findCandidates() itself never persists.
-    expect(candidates[0]?.auto_match).toBe(true);
+    expect(candidates.some((c) => c.ledger_entry_kind === "je")).toBe(false);
+    const sim = memoSimilarity("ACME Invoice 4500", "Bank categorization: ACME Invoice 4500 cb271ba0 posting");
+    expect(sim).toBeGreaterThanOrEqual(AUTO_MATCH_MEMO_SIMILARITY_MIN);
+    expect(sim).toBeLessThan(0.8);
     expect(
       mockQuery.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO banking.reconciliation_matches"))
     ).toBe(false);

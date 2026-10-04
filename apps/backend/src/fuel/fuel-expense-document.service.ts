@@ -81,6 +81,7 @@ import {
 } from "../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
 import { resolveCompanyDirectCreditAccount } from "../accounting/fuel-posting/poster.service.js";
 import { resolveLineItemAndAccount } from "../accounting/line-item-account.js";
+import { resolveFuelItem, resolveItemByName } from "../accounting/fuel-posting/fuel-item-account.js";
 
 export type QueryableClient = {
   query: <T = Record<string, unknown>>(
@@ -104,14 +105,8 @@ export type FuelExpenseDocumentInput = {
   account_id?: string | null;
 };
 
-// R-169 fix 2 — fuel.fuel_transactions.fuel_type CHECK: 'diesel' | 'def' | 'gas' | 'reefer_diesel' |
-// 'other' (verified live). Only the three the owner's fix names (diesel/DEF/reefer) have a real
-// catalog item today; 'gas'/'other' refuse rather than post to a guessed account.
-const FUEL_TYPE_ITEM_NAME: Record<string, string> = {
-  diesel: "Fuel-Truck Diesel",
-  def: "Fuel-DEF-Diesel Exhaust Fluid",
-  reefer_diesel: "Fuel-Reefer-Diesel",
-};
+// The fuel-type -> item -> account rule lives in accounting/fuel-posting/fuel-item-account.ts, shared with the fuel
+// poster so a document and its ledger entry can never name different accounts (CC-2 2026-10-04).
 
 // ROUND 192 (Lead, 2026-09-25) — Ruling R-30.1: fuel posts at NET, the card's own fee posts
 // separately, Dr 5005 / Cr the card rail. The account is not hardcoded here — it lives on this
@@ -119,40 +114,6 @@ const FUEL_TYPE_ITEM_NAME: Record<string, string> = {
 // AUTH-042; this file only ever resolves by name and refuses if the item or its account is
 // missing).
 const FUEL_FEE_ITEM_NAME = "Fuel Card Fee";
-
-/** Shared by resolveFuelItem (fuel-type-keyed) and the fee-line resolver (fixed name) — the
- *  account always lives on the catalog item, this function never guesses one. */
-async function resolveItemByName(
-  client: QueryableClient,
-  operatingCompanyId: string,
-  itemName: string,
-): Promise<{ itemId: string; expenseAccountId: string; itemName: string } | { refused: string }> {
-  const res = await client.query<{ id: string; expense_account_id: string | null }>(
-    `SELECT id::text, default_expense_account_id::text AS expense_account_id
-       FROM catalogs.items
-      WHERE item_name = $2 AND (operating_company_id = $1::uuid OR operating_company_id IS NULL)
-      ORDER BY (operating_company_id = $1::uuid) DESC
-      LIMIT 1`,
-    [operatingCompanyId, itemName],
-  );
-  const row = res.rows[0];
-  if (!row || !row.expense_account_id) {
-    return { refused: `catalogs.items "${itemName}" not found or has no default_expense_account_id for company ${operatingCompanyId} — refusing rather than posting to a default` };
-  }
-  return { itemId: row.id, expenseAccountId: row.expense_account_id, itemName };
-}
-
-async function resolveFuelItem(
-  client: QueryableClient,
-  operatingCompanyId: string,
-  fuelType: string | null,
-): Promise<{ itemId: string; expenseAccountId: string; itemName: string } | { refused: string }> {
-  const itemName = fuelType ? FUEL_TYPE_ITEM_NAME[fuelType] : undefined;
-  if (!itemName) {
-    return { refused: `fuel_type "${fuelType}" has no mapped catalogs.items entry — refusing rather than posting to a default (only diesel/def/reefer_diesel are mapped)` };
-  }
-  return resolveItemByName(client, operatingCompanyId, itemName);
-}
 
 /**
  * ROUND 363-CC2-D — the account a fuel line WILL post to, for a preview: the same rule createExpenseFromFuelTransaction

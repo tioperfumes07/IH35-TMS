@@ -146,11 +146,11 @@ describe("maintenance posting work-order to bill", () => {
       ])
     );
 
-    expect(mockResolveAccountForCategory).toHaveBeenCalledWith(
-      "11111111-1111-4111-8111-111111111111",
-      "maintenance",
-      "brakes"
-    );
+    // ACCT-F26027 (2026-09-07): a work-order bill line's account is decided ONCE per repair (capitalize vs expense, by COA
+    // role) or, when no account column is set, by the posting engine's bill-line resolver from the line's category. The
+    // poster itself never consults the per-category maintenance map; these expectations predated that change and had
+    // rotted unseen while the file could not load (bills.service imported a route module).
+    expect(mockResolveAccountForCategory).not.toHaveBeenCalled();
     expect(mockEnqueueTmsBillPushRequested).toHaveBeenCalled();
     expect(mockPostSourceTransaction).toHaveBeenCalledWith(
       expect.objectContaining({

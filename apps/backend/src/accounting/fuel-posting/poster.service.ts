@@ -1,5 +1,5 @@
 import { withLuciaBypass } from "../../auth/db.js";
-import { resolveAccountForCategory } from "../expense-category-map/resolver.service.js";
+import { POSTING_KIND_FUEL_TYPE, resolveFuelItem } from "./fuel-item-account.js";
 import { resolveRoleAccount, resolveRoleAccountOptional } from "../coa-roles/resolver.service.js";
 // ACCT-PERIOD-CLOSE-01: reuse the shared, exported ensureOpenPeriod (posting-engine.service.ts's
 // own PostingEngineError("PERIOD_LOCKED", ...) class) instead of this file's own local copy, which
@@ -308,7 +308,11 @@ export async function postFuelExpenseOnClient(client: DbClient, input: FuelPosti
   }
 
   const idempotencyKey = buildFuelIdempotencyKey(input);
-  const expense = await resolveAccountForCategory(input.operating_company_id, "fuel", fuelKind, client as never);
+  // The cost account is the fuel-type ITEM's account — the same rule the expense document uses (fuel-item-account.ts),
+  // never accounting.expense_category_account_map, whose DEF and reefer rows said 5000 while the items say 5010 / 5015.
+  const fuelItem = await resolveFuelItem(client as never, input.operating_company_id, POSTING_KIND_FUEL_TYPE[fuelKind] ?? null);
+  if ("refused" in fuelItem) throw new Error(`fuel_posting_account_refused: ${fuelItem.refused}`);
+  const expense = { account_id: fuelItem.expenseAccountId, item_id: fuelItem.itemId };
 
   const existing = await resolveExistingPostedResult(client, input.operating_company_id, idempotencyKey);
   if (existing) return existing;
@@ -332,7 +336,8 @@ export async function postFuelExpenseOnClient(client: DbClient, input: FuelPosti
       fuel_event_id: input.fuel_event_id,
       fuel_kind: fuelKind,
       fuel_expense_account_id: expense.account_id,
-      fuel_expense_resolution: "expense_category_map",
+      fuel_expense_resolution: "fuel_type_item",
+      fuel_item_id: expense.item_id,
       credit_account_id: creditAccountId,
       credit_resolution: creditResolutionSource,
       posting_path: input.posting_path,

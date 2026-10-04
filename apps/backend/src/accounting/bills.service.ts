@@ -19,7 +19,7 @@ import { insertTransferInClient, type TransferInput } from "../banking/transfers
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { vendorIdentitySetSql } from "./vendor-identity.js";
 import { cascadeVoidChildren } from "./cascade-void-engine.service.js";
-import { EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL } from "./expenses.routes.js";
+import { EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL } from "./expense-bank-match-sql.js";
 import {
   releaseBankLinesNamingDocument,
   auditVoid,
