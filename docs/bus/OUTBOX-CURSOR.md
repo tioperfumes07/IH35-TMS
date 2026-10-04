@@ -1,6 +1,12 @@
-## 2026-10-04T19:35Z · BANK-F91546 TripPairing leftover slate classes · this PR
+## 2026-10-04T19:40Z · BANK-F91547 OwnerHome + DefaultHome leftover slate classes · this PR
 
-DONE: TripPairingBoard leftover text-slate-* / border-slate-* / bg-slate-* → house #4B5563 / #1F2A44 / #E5E7EB / #F7F8FA; leftover refuse on EVEN 4130 (TR #64748b parked).
+DONE: OwnerHome + DefaultHome leftover text-slate-* / border-slate-* / bg-slate-* → house #4B5563 / #1F2A44 / #0F1219 / #E5E7EB / #F7F8FA; leftover refuse on EVEN 3888 + 3886.
+
+NEXT: leftover muted chrome (AccountingHome slate-* / remaining pages / skip pile) · skip pile parked · HH16 leftovers first.
+
+## 2026-10-04T19:35Z · BANK-F91546 TripPairing leftover slate classes WIRED CI · tip `d977d97c18`
+
+DONE: #25288 — TripPairing leftover slate-* → house tokens; leftover refuse on EVEN 4130 (TR #64748b parked).
 
 NEXT: leftover muted chrome (OwnerHome / DefaultHome / remaining pages / skip pile) · skip pile parked · HH16 leftovers first.
 
