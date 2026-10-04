@@ -24,11 +24,32 @@ function assertSource() {
   if (!page.includes("printLetterHtml")) fail("CustomerProfitabilityPage must use printLetterHtml");
   if (!/onClick=\{printLetter\}/.test(page)) fail("Print must call printLetter");
   if (/onClick=\{\(\) => window\.print\(\)\}/.test(page)) fail("must not window.print() on SPA");
-  if (page.includes("text-[11px]")) fail("CustomerProfitabilityPage.tsx: must not use text-[11px] — use text-section-header");
+  leftoverRefuse(page);
+}
+
+function leftoverHits(src) {
+  const bucket = [];
+  if (src.includes("text-[11px]")) bucket.push("leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155")) bucket.push("leftover off-scale muted");
+  if (/fontSize:\s*10\b/.test(src)) bucket.push("leftover fontSize: 10");
+  return bucket;
+}
+
+function leftoverRefuse(src) {
+  for (const e of leftoverHits(src)) fail(`CustomerProfitabilityPage.tsx: ${e}`);
 }
 
 function selftest() {
   assertSource();
+  const leftoverPlant = `${fs.readFileSync(PAGE, "utf8")}\n<div className="text-[11px] text-[#8A92AB]" style={{ color: "#334155", fontSize: 10 }}>plant</div>`;
+  const leftoverBad = leftoverHits(leftoverPlant);
+  if (
+    !leftoverBad.some((e) => e.includes("leftover text-[11px]")) ||
+    !leftoverBad.some((e) => e.includes("leftover off-scale muted")) ||
+    !leftoverBad.some((e) => e.includes("leftover fontSize: 10"))
+  ) {
+    fail("leftover plant escaped");
+  }
   const backup = fs.readFileSync(PAGE, "utf8");
   try {
     const planted = backup.replace(/onClick=\{printLetter\}/, 'onClick={() => window.print()}');

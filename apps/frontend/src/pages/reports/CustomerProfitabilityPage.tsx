@@ -404,9 +404,9 @@ export function CustomerProfitabilityPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={top5Chart} margin={{ top: 8, right: 24, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                  <YAxis yAxisId="left" tickFormatter={(v) => money(Number(v))} width={72} tick={{ fontSize: 10 }} />
-                  <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => `${v}%`} width={40} tick={{ fontSize: 10 }} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                  <YAxis yAxisId="left" tickFormatter={(v) => money(Number(v))} width={72} tick={{ fontSize: 11 }} />
+                  <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => `${v}%`} width={40} tick={{ fontSize: 11 }} />
                   <Tooltip
                     formatter={(value, name) =>
                       name === "marginPct" ? [`${Number(value).toFixed(1)}%`, "Margin %"] : [money(Number(value)), "Revenue"]
