@@ -43,6 +43,9 @@ function assertMigrated(src) {
   if (!src.includes("Couldn't load template detail")) {
     errors.push(`${PAGE}: ListErrorState must name the template-detail outage`);
   }
+  // BANK-F91373 leftover refuse — LegalTemplateDetailPage page-scoped text token ratchet
+  if (src.includes("text-[11px]")) errors.push("LegalTemplateDetailPage.tsx: leftover text-[11px]");
+  if (src.includes("#8A92AB")) errors.push("LegalTemplateDetailPage.tsx: leftover off-scale muted #8A92AB");
   return errors;
 }
 
@@ -77,6 +80,15 @@ function selftest() {
   }
   if (badErrors.length < 3) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
+    process.exit(1);
+  }
+  // BANK-F91373 leftover plant — LegalTemplateDetailPage page-scoped text token ratchet
+  const leftover =
+    fs.readFileSync(path.join(ROOT, PAGE), "utf8") +
+    '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  const leftoverErrors = assertMigrated(leftover);
+  if (!leftoverErrors.some((e) => e.includes("leftover text-[11px]"))) {
+    console.error(`${LABEL} --selftest FAIL leftover plant escaped`, leftoverErrors);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);
