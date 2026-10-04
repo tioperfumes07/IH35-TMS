@@ -34,6 +34,8 @@ function pick(...candidates: Array<unknown>): number | null {
 
 const days = (n: number | null) => (n === null ? null : `${n.toFixed(1)} d`);
 const usd = (n: number | null) => (n === null ? null : `$${n.toLocaleString()}`);
+/** C-22 query-error copy. One ListErrorState — not seven C8 `unavailable` tiles. */
+const LOAD_FAIL = "Could not load this figure";
 
 export function MaintKpiRows({ kpis, isError = false, onRetry, compact = false }: Props) {
   const dynamicKpis = kpis as Record<string, unknown>;
@@ -57,7 +59,8 @@ export function MaintKpiRows({ kpis, isError = false, onRetry, compact = false }
           <ListErrorState
             title="Couldn't load maintenance KPIs"
             status={0}
-            message="Work-order and PM figures are unavailable until the dashboard KPI query recovers."
+            message={LOAD_FAIL}
+            unavailable={LOAD_FAIL}
             onRetry={() => onRetry?.()}
           />
         </div>
