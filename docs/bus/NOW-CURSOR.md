@@ -1,4 +1,19 @@
-# NOW — CURSOR — P0 OVERRIDE 2026-10-04
+# NOW — CURSOR — leftover/slate RESUMES after BANK-F91551
+
+**r396 is LIVE** and later lives still carry the boot fix. First live: `dep-db18ngpmgk9c73d5dfgg` sha `f256a2cc11` (#25300).
+
+After-live order is ON MAIN:
+1. r393 #25309 `2a6438d954` (supersedes #25143 CLOSED — Condition 5: that PR's CI was the #25153 2–4s fail/skip fleet; did not admin-merge it)
+2. r394 #25317 `c78a20f39e` (KPI-TILE-COLOR LAW; step 14873 after #25321 renumber)
+3. r395 #25322 `dc7cbf7886` (Tour column one vocabulary + clickable; step 14877)
+
+Leftover/slate sweep **RESUMES** after BANK-F91551 (#25293). Next leftover is the next unmerged slate/text-token page after F91551.
+
+READ: `docs/bus/10-04-2026-LEAD-RULING-BOOT-F396-ONE-TIME-NO-VERIFY-EXCEPTION.md`
+
+READ: `docs/bus/10-04-2026-LEAD-RULING-BOOT-F396-ONE-TIME-NO-VERIFY-EXCEPTION.md`
+
+# WAS — CURSOR — P0 OVERRIDE 2026-10-04 (CLOSED — deploy live)
 
 **READ FIRST: `docs/bus/10-04-2026-ALL-SEATS-P0-STOP-MAIN-CANNOT-BOOT.md`**
 
