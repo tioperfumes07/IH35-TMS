@@ -22,6 +22,18 @@ import { fileURLToPath } from "node:url";
 const ROOT = resolve(fileURLToPath(import.meta.url), "../..");
 const BACKEND_SRC = join(ROOT, "apps/backend/src");
 
+/** `<postings alias>.journal_entry_id` / `journal_entry_postings.journal_entry_id` references in one SQL string. */
+export function postingsJournalEntryIdRefs(sql) {
+  const aliases = new Set(["journal_entry_postings"]);
+  for (const m of sql.matchAll(/(?:accounting\.)?journal_entry_postings\s+(?:AS\s+)?([a-z_][a-z0-9_]*)/gi)) {
+    const a = m[1].toLowerCase();
+    if (!["where", "join", "on", "left", "inner", "group", "order", "set", "using", "limit"].includes(a)) aliases.add(a);
+  }
+  const out = [];
+  for (const m of sql.matchAll(/\b([a-z_][a-z0-9_]*)\.journal_entry_id\b/gi)) if (aliases.has(m[1].toLowerCase())) out.push(m[0]);
+  return out;
+}
+
 function walk(dir, out = []) {
   if (!existsSync(dir)) return out;
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -123,15 +135,27 @@ for (const file of files) {
         }
       }
     }
-    if (/journal_entry_postings/i.test(sql)) {
-      if (/\bjournal_entry_id\b(?!\s*_uuid)/i.test(sql)) {
-        // Allow journal_entry_id_uuid pattern but catch bare journal_entry_id
-        if (!/journal_entry_uuid/i.test(sql)) {
-          failures.push(`${rel}: references \`journal_entry_id\` in journal_entry_postings context — use \`journal_entry_uuid\``);
-        }
-      }
+    // ROUND 389.2 triage (GUARD-WRONG): the old rule flagged ANY `journal_entry_id` in SQL that also mentioned
+    // journal_entry_postings — a false positive on other tables' real journal_entry_id columns (payrun_gl_runs), and a
+    // false negative whenever journal_entry_uuid appeared anywhere else in the same SQL. The column belongs to a table:
+    // flag journal_entry_id only when it is qualified by journal_entry_postings itself or by one of ITS aliases.
+    for (const ref of postingsJournalEntryIdRefs(sql)) {
+      failures.push(`${rel}: references \`${ref}\` on journal_entry_postings — the column is \`journal_entry_uuid\``);
     }
   }
+}
+
+if (process.argv.includes("--selftest")) {
+  const cases = [
+    ["the uncleared-documents defect shape fails", postingsJournalEntryIdRefs("FROM accounting.journal_entry_postings jep JOIN accounting.journal_entries je ON je.id = jep.journal_entry_id").length === 1],
+    ["it still fails when journal_entry_uuid appears elsewhere", postingsJournalEntryIdRefs("SELECT jep.journal_entry_uuid FROM accounting.journal_entry_postings jep WHERE jep.journal_entry_id = $1").length === 1],
+    ["another table's journal_entry_id (payrun_gl_runs r) passes", postingsJournalEntryIdRefs("FROM driver_finance.payrun_gl_runs r JOIN accounting.journal_entries je ON je.id = r.journal_entry_id WHERE EXISTS (SELECT 1 FROM accounting.journal_entry_postings p WHERE p.journal_entry_uuid = je.id)").length === 0],
+    ["the fixed join passes", postingsJournalEntryIdRefs("FROM accounting.journal_entry_postings jep JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid").length === 0],
+  ];
+  for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
+  const bad = cases.filter(([, ok]) => !ok).length;
+  console.log(bad ? "verify-posting-column-contract --selftest FAIL" : `verify-posting-column-contract --selftest PASS (${cases.length}/${cases.length})`);
+  process.exit(bad ? 1 : 0);
 }
 
 if (failures.length > 0) {
