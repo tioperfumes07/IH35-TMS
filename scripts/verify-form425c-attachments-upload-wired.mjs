@@ -42,6 +42,9 @@ export function collectProblems(homeSrc, tabSrc) {
   if (!tabSrc.includes("onAttachFile(line as number, file)") && !tabSrc.includes("onAttachFile(line, file)")) {
     problems.push(`${TAB_PAGE}: file picker must call onAttachFile(line, file)`);
   }
+  // BANK-F91409 leftover refuse — CurrentPeriodTab page-scoped text token ratchet
+  if (tabSrc.includes("text-[11px]")) problems.push(`${TAB_PAGE}: leftover text-[11px] — use text-xs`);
+  if (tabSrc.includes("#8A92AB")) problems.push(`${TAB_PAGE}: leftover #8A92AB — use #4B5563`);
 
   return problems;
 }
@@ -95,6 +98,11 @@ if (process.argv.includes("--selftest")) {
   }
   if (collectProblems(badHome, badTab).length < 5) {
     console.error(`${LABEL} --selftest FAIL bad too weak`);
+    process.exit(1);
+  }
+  // BANK-F91409 leftover plant — CurrentPeriodTab page-scoped text token ratchet
+  if (!collectProblems(goodHome, goodTab + '\n<p className="text-[11px] text-[#8A92AB]">plant</p>\n').some((m) => m.includes("leftover"))) {
+    console.error(`${LABEL} --selftest FAIL leftover plant escaped`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);
