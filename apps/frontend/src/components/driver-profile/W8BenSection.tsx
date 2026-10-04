@@ -35,7 +35,7 @@ export function W8BenSection({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h2 className="text-xs font-semibold text-gray-800">W-8BEN (foreign status)</h2>
-          <span className={`rounded-sm border px-2 py-0.5 text-[11px] font-semibold ${badge.cls}`}>{badge.label}</span>
+          <span className={`rounded-sm border px-2 py-0.5 text-xs font-semibold ${badge.cls}`}>{badge.label}</span>
         </div>
         <button
           type="button"
@@ -98,7 +98,7 @@ export function W8BenSection({
 function Field({ label, value }: { label: string; value: unknown }) {
   return (
     <div className="rounded-sm border border-gray-100 p-3">
-      <div className="text-[11px] uppercase text-gray-500">{label}</div>
+      <div className="text-xs uppercase text-gray-500">{label}</div>
       <div className="text-xs font-medium text-gray-900">{fmt(value)}</div>
     </div>
   );
