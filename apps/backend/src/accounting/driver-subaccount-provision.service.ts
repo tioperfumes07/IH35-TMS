@@ -16,6 +16,8 @@
 // IDEMPOTENT: never double-creates — checks by (operating_company_id, account_name, parent_account_id).
 
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
+import { allocateDriverSubAccountNnn } from "./driver-subaccount-number.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -253,7 +255,13 @@ export async function planDriverEscrowSubAccount(
 }
 
 /** "Driver Cash Advance- <Driver Name>" — matches the live precedent format exactly. */
+// ROUND 389.3 RULING 2 — "<DRIVER NAME> — Driver Cash Advance", the escrow shape ("<DRIVER NAME> — Driver Escrow").
 export function driverAdvanceSubAccountName(driverName: string): string {
+  return `${driverName.trim()} — Driver Cash Advance`;
+}
+
+/** The pre-ROUND-389.3 name, still matched so an account provisioned before the rename is found, never duplicated. */
+export function legacyDriverAdvanceSubAccountName(driverName: string): string {
   return `${DRIVER_ADVANCE_PARENT_NAME}- ${driverName.trim()}`;
 }
 
@@ -285,6 +293,18 @@ export function driverEscrowSubAccountName(driverName: string, hireDate?: string
   return `${driverName.trim()} — ${DRIVER_ESCROW_PARENT_NAME} (hired ${formatHireDateForName(hireDate ?? null)})`;
 }
 
+/** Dry-run plan for a driver's advance sub-account: parent by the advance_recovery ROLE (365.1), never by name. */
+export async function planDriverAdvanceSubAccount(
+  client: DbClient,
+  args: { subAccountName: string; operatingCompanyId: string }
+): Promise<SubAccountPlan> {
+  const parentId = await resolveRoleAccountOptional(client as never, args.operatingCompanyId, "advance_recovery");
+  if (!parentId) return { action: "skip_no_parent", subAccountName: args.subAccountName };
+  const existingId = await resolveChildAccountId(client, { subAccountName: args.subAccountName, parentId, operatingCompanyId: args.operatingCompanyId });
+  if (existingId) return { action: "skip_exists", parentId, existingId, subAccountName: args.subAccountName };
+  return { action: "create", parentId, subAccountName: args.subAccountName };
+}
+
 /**
  * Create the per-driver ASSET sub-account "Driver Cash Advance- <Name>" nested under the canonical
  * "Driver Cash Advance" parent. Idempotent + portable. Returns a result (does NOT throw for a missing
@@ -306,21 +326,36 @@ export function driverEscrowSubAccountName(driverName: string, hireDate?: string
  */
 export async function provisionDriverAdvanceSubAccount(
   client: DbClient,
-  input: { operatingCompanyId: string; driverId: string; driverName: string; actorUserId: string }
+  input: { operatingCompanyId: string; driverId: string; driverName: string; actorUserId: string; nnn?: string }
 ): Promise<ProvisionResult> {
   const name = driverAdvanceSubAccountName(input.driverName);
 
-  const plan = await planDriverSubAccount(client, {
-    parentName: DRIVER_ADVANCE_PARENT_NAME,
-    parentType: "Asset",
-    subAccountName: name,
-    operatingCompanyId: input.operatingCompanyId,
-  });
-  if (plan.action === "skip_no_parent") return { created: false, reason: "parent_not_found" };
-  if (plan.action === "skip_exists") return { created: false, reason: "already_exists", accountId: plan.existingId };
-  const parentId = plan.parentId;
+  // ROUND 389.3 RULING 2 — the parent is the account bound to the advance_recovery role (1245 Driver Cash Advances
+  // Receivable), never a name lookup (the name "Driver Cash Advance" matches nothing on USMCA, so every hire-time
+  // provision silently returned parent_not_found).
+  const parentId = await resolveRoleAccountOptional(client as never, input.operatingCompanyId, "advance_recovery");
+  if (!parentId) return { created: false, reason: "parent_not_found" };
 
-  const ins = await client.query<{ id: string }>(
+  // Already provisioned: the driver's own live link, else a live child carrying his name (new or pre-rename shape).
+  const linked = await client.query<{ id: string }>(
+    `
+      SELECT a.id::text
+        FROM driver_finance.driver_advance_accounts d
+        JOIN catalogs.accounts a ON a.id = d.coa_account_id
+       WHERE d.operating_company_id = $1::uuid AND d.driver_id = $2::uuid AND d.is_active
+         AND a.parent_account_id = $3::uuid AND a.deactivated_at IS NULL
+       LIMIT 1
+    `,
+    [input.operatingCompanyId, input.driverId, parentId]
+  );
+  if (linked.rows[0]) return { created: false, reason: "already_exists", accountId: linked.rows[0].id };
+  for (const candidate of [name, legacyDriverAdvanceSubAccountName(input.driverName)]) {
+    const existingId = await resolveChildAccountId(client, { subAccountName: candidate, parentId, operatingCompanyId: input.operatingCompanyId });
+    if (existingId) return { created: false, reason: "already_exists", accountId: existingId };
+  }
+
+  const nnn = input.nnn ?? (await allocateDriverSubAccountNnn(client, input.operatingCompanyId, input.driverId));
+  const ins = await client.query<{ id: string; account_number: string }>(
     `
       INSERT INTO catalogs.accounts (
         account_number, account_name, account_type, account_subtype, parent_account_id,
@@ -328,11 +363,8 @@ export async function provisionDriverAdvanceSubAccount(
         notes, created_by_user_id, updated_by_user_id, operating_company_id
       )
       SELECT
-        -- ROUND 181 (owner law: no auto numbers without written owner approval).
-        -- A new driver sub-account gets NO auto-generated number. Its name is the driver's name.
-        -- The previous code minted "DRIVERCASHAD896665-NNN" by appending a sequence to the parent
-        -- number — 47 such accounts now pollute the chart. Stop the generator here.
-        NULL,
+        -- ROUND 389.3 RULING 2 (owner-approved via the Lead): <parent>-00-nnn, nnn one per driver across parents.
+        p.account_number || '-00-' || $6,
         $1, 'Asset', p.account_subtype, p.id,
         NULL, true, 'USD',
         $3, $4::uuid, $4::uuid, $5::uuid
@@ -341,9 +373,9 @@ export async function provisionDriverAdvanceSubAccount(
       -- DEFEATED, so resolving the parent by id ALONE could inherit another entity's subtype and
       -- number prefix into this entity's chart. Both sides must name the same company.
       WHERE p.id = $2::uuid AND p.operating_company_id = $5::uuid
-      RETURNING id::text
+      RETURNING id::text, account_number
     `,
-    [name, parentId, `Auto-provisioned driver advance sub-account (driver ${input.driverId})`, input.actorUserId, input.operatingCompanyId]
+    [name, parentId, `Auto-provisioned driver advance sub-account (driver ${input.driverId})`, input.actorUserId, input.operatingCompanyId, nnn]
   );
   const accountId = ins.rows[0]!.id;
 
@@ -355,6 +387,7 @@ export async function provisionDriverAdvanceSubAccount(
       resource_type: "catalogs.accounts",
       resource_id: accountId,
       operating_company_id: input.operatingCompanyId,
+      account_number: ins.rows[0]!.account_number,
       account_name: name,
       account_type: "Asset",
       parent_account_id: parentId,
@@ -378,7 +411,7 @@ export async function provisionDriverAdvanceSubAccount(
  */
 export async function provisionDriverEscrowSubAccount(
   client: DbClient,
-  input: { operatingCompanyId: string; driverId: string; driverName: string; hireDate?: string | Date | null; actorUserId: string }
+  input: { operatingCompanyId: string; driverId: string; driverName: string; hireDate?: string | Date | null; actorUserId: string; nnn?: string }
 ): Promise<ProvisionResult> {
   const name = driverEscrowSubAccountName(input.driverName, input.hireDate ?? null);
 
@@ -396,6 +429,7 @@ export async function provisionDriverEscrowSubAccount(
   });
   if (existingId) return { created: false, reason: "already_exists", accountId: existingId };
 
+  const nnn = input.nnn ?? (await allocateDriverSubAccountNnn(client, input.operatingCompanyId, input.driverId));
   const ins = await client.query<{ id: string }>(
     `
       INSERT INTO catalogs.accounts (
@@ -404,10 +438,9 @@ export async function provisionDriverEscrowSubAccount(
         notes, created_by_user_id, updated_by_user_id, operating_company_id
       )
       SELECT
-        -- ROUND 181 (owner law: no auto numbers without written owner approval).
-        -- A new driver sub-account gets NO auto-generated number. Its name is the driver's name.
-        -- The previous code minted sequence numbers by appending to the parent number — stop.
-        NULL,
+        -- ROUND 389.3 RULING 2 (owner-approved via the Lead; supersedes ROUND 181's NULL, which
+        -- accounts_active_requires_account_number refuses): 2100-00-nnn, nnn one per driver across parents.
+        p.account_number || '-' || $6,
         $1, 'Liability', p.account_subtype, p.id,
         NULL, true, 'USD',
         $3, $4::uuid, $4::uuid, $5::uuid
@@ -418,7 +451,7 @@ export async function provisionDriverEscrowSubAccount(
       WHERE p.id = $2::uuid AND p.operating_company_id = $5::uuid
       RETURNING id::text
     `,
-    [name, parentId, `Auto-provisioned driver escrow sub-account (driver ${input.driverId})`, input.actorUserId, input.operatingCompanyId]
+    [name, parentId, `Auto-provisioned driver escrow sub-account (driver ${input.driverId})`, input.actorUserId, input.operatingCompanyId, nnn]
   );
   const accountId = ins.rows[0]!.id;
 
