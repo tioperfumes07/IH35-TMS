@@ -450,7 +450,7 @@ export function SettlementsPage() {
         dataAttributes={{ "data-settlements-filter-toolbar": "collapsed" }}
       >
         <div className="flex flex-wrap gap-3" data-testid="settlements-filters">
-          <label className="text-xs text-slate-600">
+          <label className="text-xs text-[#4B5563]">
             Driver
             <EntityPicker
               kind="driver"
@@ -802,7 +802,7 @@ function KpiCard({
     </>
   );
   const base = `rounded-sm border px-2 py-1 text-xs ${
-    active ? "border-slate-500 bg-slate-50" : "border-gray-200 bg-white"
+    active ? "border-[#4B5563] bg-[#F7F8FA]" : "border-gray-200 bg-white"
   }`;
   if (disabled) {
     return (

@@ -1,3 +1,15 @@
+## 2026-10-04T18:45Z · BANK-F91540 Settlements leftover slate classes · this PR
+
+DONE: SettlementsPage leftover text-slate-600 / border-slate-500 / bg-slate-50 → house #4B5563 / #F7F8FA; leftover refuse on EVEN 3348 --selftest + live.
+
+NEXT: leftover muted chrome (TripPairingBoard slate-* / OwnerHome / remaining pages / skip pile) · skip pile parked · HH15 leftovers first.
+
+## 2026-10-04T18:45Z · BANK-F91539 WeeklyRevenue leftover slate classes WIRED CI · tip `a9b10032ce`
+
+DONE: #25281 — WeeklyRevenueChart leftover text-slate-* / border-slate-* / bg-slate-* → house tokens; leftover refuse on EVEN 4124 --selftest + live.
+
+NEXT: leftover muted chrome (Settlements / TripPairing / remaining pages / skip pile) · skip pile parked · HH15 leftovers first.
+
 ## 2026-10-04T18:35Z · BANK-F91539 WeeklyRevenue leftover slate classes · this PR
 
 DONE: WeeklyRevenueChart leftover text-slate-* / border-slate-* / bg-slate-* → house #4B5563 / #0F1219 / #E5E7EB / #F7F8FA; leftover refuse on EVEN 4124 --selftest + live.
