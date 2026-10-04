@@ -24,7 +24,7 @@
 //   5. "Not on a tour" IS plain text — it has no id, so it has nowhere to go, and a link to
 //      nowhere would be the opposite of the ruling.
 //
-// Rule 17: wired ONLY via scripts/verify-steps/14433-verify-settlement-ref-cells-clickable-one-vocabulary.mjs
+// Rule 17: wired ONLY via scripts/verify-steps/14877-verify-settlement-ref-cells-clickable-one-vocabulary.mjs
 //
 // Usage:
 //   node scripts/verify-settlement-ref-cells-clickable-one-vocabulary.mjs --selftest
