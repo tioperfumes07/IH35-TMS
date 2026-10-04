@@ -1,3 +1,9 @@
+## 2026-10-04T08:24Z · BANK-F91450 C-57 driver-profile Integrity KPIs WIRED CI · tip `ef06271afa`
+
+DONE: #25192 — verify-steps/3384 now runs ops/verify-c57-driver-profile-integrity-kpis --selftest.
+
+NEXT: BANK-F91451 wire C-20 driver-profile module shell into 3382 · C-21/C-22 fail=triage · skip pile parked · HH08 no migrations.
+
 ## 2026-10-04T08:18Z · BANK-F91449 C-55 Regular + Master-detail WIRED CI · tip `01f2e09b7d`
 
 DONE: #25191 — verify-steps/12382 now runs ops/verify-c55-regular-master-detail --selftest.
