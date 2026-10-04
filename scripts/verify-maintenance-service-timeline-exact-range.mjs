@@ -26,6 +26,14 @@ function verify(service, api, component) {
 }
 
 const sources = [serviceFile, apiFile, componentFile].map((file) => fs.readFileSync(file, "utf8"));
+
+function leftoverRefuse(component) {
+  const errors = [];
+  if (component.includes("text-[11px]")) errors.push(`${componentFile}: leftover text-[11px]`);
+  if (component.includes("#8A92AB")) errors.push(`${componentFile}: leftover off-scale muted #8A92AB`);
+  return errors;
+}
+
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ["union", sources[0].replace("WITH timeline_unfiltered AS", "WITH removed_union AS"), sources[1], sources[2]],
@@ -46,10 +54,16 @@ if (process.argv.includes("--selftest")) {
     console.error(`verify-maintenance-service-timeline-exact-range selftest FAIL: ${survived.join(", ")} survived`);
     process.exit(1);
   }
+  // BANK-F91333 leftover plant — ServiceTimeline page-scoped text token ratchet
+  const leftoverPlant = sources[2] + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (leftoverRefuse(leftoverPlant).length === 0) {
+    console.error("verify-maintenance-service-timeline-exact-range --selftest FAIL — leftover plant escaped");
+    process.exit(1);
+  }
   console.log(`verify-maintenance-service-timeline-exact-range selftest PASS: ${mutations.length}/${mutations.length} rejected`);
   process.exit(0);
 }
-const errors = verify(...sources);
+const errors = [...verify(...sources), ...leftoverRefuse(sources[2])];
 if (errors.length) {
   console.error(errors.map((error) => `- ${error}`).join("\n"));
   process.exit(1);
