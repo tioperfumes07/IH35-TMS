@@ -99,11 +99,15 @@ for (const denied of deniedPages) {
 }
 
 const iftaCard = path.join(process.cwd(), "apps/frontend/src/components/reports/IftaPreparerCard.tsx");
+let iftaSource = "";
 if (fs.existsSync(iftaCard)) {
-  const source = fs.readFileSync(iftaCard, "utf8");
-  if (/<BasisSelector\b|from\s+["'][^"']*BasisSelector["']/.test(source)) {
+  iftaSource = fs.readFileSync(iftaCard, "utf8");
+  if (/<BasisSelector\b|from\s+["'][^"']*BasisSelector["']/.test(iftaSource)) {
     failures.push("BasisSelector must not be used in IFTA report/card surface");
   }
+  // BANK-F91348 leftover refuse — IftaPreparerCard page-scoped text token ratchet
+  if (iftaSource.includes("text-[11px]")) failures.push("IftaPreparerCard.tsx: leftover text-[11px]");
+  if (iftaSource.includes("#8A92AB")) failures.push("IftaPreparerCard.tsx: leftover off-scale muted #8A92AB");
 }
 
 const ownerPolicySources = Object.fromEntries(
@@ -112,6 +116,11 @@ const ownerPolicySources = Object.fromEntries(
 failures.push(...auditOwnerPolicyCopy(ownerPolicySources));
 
 if (process.argv.includes("--selftest")) {
+  // BANK-F91348 leftover plant
+  const iftaPlant = iftaSource + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!(iftaPlant.includes("text-[11px]") || iftaPlant.includes("#8A92AB"))) {
+    failures.push("SELFTEST inert — IftaPreparerCard leftover plant escaped");
+  }
   for (const rel of ownerPolicySurfaces) {
     const mutant = {
       ...ownerPolicySources,
