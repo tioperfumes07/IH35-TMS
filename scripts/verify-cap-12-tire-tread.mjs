@@ -120,6 +120,9 @@ checkContains("apps/frontend/src/components/maintenance/TireWearProjectionChart.
   { pattern: /TireWearProjectionChart/, label: "chart export" },
   { pattern: /ReferenceLine/, label: "projected replacement threshold line" },
 ]);
+// BANK-F91386 leftover refuse — TireWearProjectionChart page-scoped text token ratchet
+if (chart && chart.includes("text-[11px]")) fail("TireWearProjectionChart.tsx: leftover text-[11px]");
+if (chart && chart.includes("#8A92AB")) fail("TireWearProjectionChart.tsx: leftover off-scale muted #8A92AB");
 
 const unitTab = checkExists("apps/frontend/src/pages/maintenance/units/UnitTiresTab.tsx");
 checkContains("apps/frontend/src/pages/maintenance/units/UnitTiresTab.tsx", unitTab, [
@@ -173,7 +176,13 @@ if (process.argv.includes("--selftest")) {
     console.error(`verify:cap-12-tire-tread --selftest FAILED — ${escaped.length}/5 mutations escaped`);
     process.exit(1);
   }
-  console.log("verify:cap-12-tire-tread --selftest PASS — 5/5 mutations detected");
+  // BANK-F91386 leftover plant — TireWearProjectionChart page-scoped text token ratchet
+  const leftoverPlant = (chart ?? "") + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!(leftoverPlant.includes("text-[11px]") && leftoverPlant.includes("#8A92AB"))) {
+    console.error("verify:cap-12-tire-tread --selftest FAILED — leftover plant escaped");
+    process.exit(1);
+  }
+  console.log("verify:cap-12-tire-tread --selftest PASS — 5/5 mutations detected + leftover plant");
   process.exit(0);
 }
 
