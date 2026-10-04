@@ -110,6 +110,10 @@ function analyze(overrides = {}) {
   if (!self.split("/**\n * verify-")[0].includes(CONNECTIVITY_HEADER)) failures.push("exact Fleet financial P&L connectivity header missing");
   if (/"guard"\s*:\s*"scripts\/verify-fleet-unit-financial-pl-load-reverse\.mjs"/.test(feed)) failures.push("manual feed duplicates financial P&L reverse ownership");
 
+  // BANK-F91385 leftover refuse — FinancialUnitPLSection page-scoped text token ratchet
+  if (section.includes("text-[11px]")) failures.push("FinancialUnitPLSection.tsx: leftover text-[11px]");
+  if (section.includes("#8A92AB")) failures.push("FinancialUnitPLSection.tsx: leftover off-scale muted #8A92AB");
+
   return failures;
 }
 
@@ -143,6 +147,8 @@ function selftest() {
     ["Required connectivity removed", { required: read(REQUIRED).replace(/("id": "unit\.profile\.financial_pl"[\s\S]{0,260})"connectivity"/, '$1"connectivity_MISSING"') }],
     ["connectivity header removed", { self: read(SELF).replace(CONNECTIVITY_HEADER, CONNECTIVITY_HEADER.replace("connectivity", "load")) }],
     ["duplicate feed inserted", { feed: `[{"guard":"scripts/verify-fleet-unit-financial-pl-load-reverse.mjs"}]` }],
+    // BANK-F91385 leftover plant — FinancialUnitPLSection page-scoped text token ratchet
+    ["leftover text-[11px] plant", { section: section + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n' }],
   ];
   for (const [name, overrides] of mutations) {
     const before = analyze();
