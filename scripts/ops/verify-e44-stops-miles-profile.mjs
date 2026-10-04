@@ -30,14 +30,36 @@ function audit() {
   }
   const stopsSection = read("apps/frontend/src/components/driver-profile/DriverProfileStopsMilesSection.tsx");
   if (!/getDriverProfileStopsMiles/.test(stopsSection)) f.push("driver profile stops section must call getDriverProfileStopsMiles");
+  // BANK-F91361 leftover refuse — DriverProfileStopsMilesSection page-scoped text token ratchet
+  if (stopsSection.includes("text-[11px]")) f.push("DriverProfileStopsMilesSection.tsx: leftover text-[11px]");
+  if (stopsSection.includes("#8A92AB")) f.push("DriverProfileStopsMilesSection.tsx: leftover off-scale muted #8A92AB");
   return f;
+}
+
+if (SELFTEST) {
+  const stopsSection = read("apps/frontend/src/components/driver-profile/DriverProfileStopsMilesSection.tsx");
+  // BANK-F91361 leftover plant
+  const leftoverPlant = stopsSection + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!(leftoverPlant.includes("text-[11px]") && leftoverPlant.includes("#8A92AB"))) {
+    console.error(`${LABEL} SELFTEST FAIL — DriverProfileStopsMilesSection leftover plant escaped`);
+    process.exit(1);
+  }
+  const plantFails = [];
+  if (leftoverPlant.includes("text-[11px]")) plantFails.push("leftover text-[11px]");
+  if (leftoverPlant.includes("#8A92AB")) plantFails.push("leftover off-scale muted");
+  if (!plantFails.includes("leftover text-[11px]")) {
+    console.error(`${LABEL} SELFTEST FAIL — leftover refuse inert`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST: OK — leftover plant rejected`);
+  process.exit(0);
 }
 
 const failures = audit();
 if (failures.length) {
-  console.error(`${LABEL} ${SELFTEST ? "SELFTEST " : ""}FAIL:`);
+  console.error(`${LABEL} FAIL:`);
   for (const x of failures) console.error(`  - ${x}`);
   process.exit(1);
 }
-console.log(`${LABEL}${SELFTEST ? " SELFTEST" : ""}: OK`);
+console.log(`${LABEL}: OK`);
 process.exit(0);
