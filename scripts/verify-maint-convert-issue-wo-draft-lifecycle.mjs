@@ -28,13 +28,28 @@ if (process.argv.includes("--selftest")) {
     failures(staleCompany).includes("reset on open, company, issue, or suggestion change"),
   ];
   if (checks.some((ok) => !ok)) process.exit(1);
-  console.log("verify-maint-convert-issue-wo-draft-lifecycle selftest PASS — 2/2 stale-draft mutations red");
+  // BANK-F91390 leftover plant — ConvertIssueToWOModal page-scoped text token ratchet
+  const leftoverPlant = source + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (!(leftoverPlant.includes("text-[11px]") && leftoverPlant.includes("#8A92AB"))) {
+    console.error("verify-maint-convert-issue-wo-draft-lifecycle SELFTEST FAIL — leftover plant escaped");
+    process.exit(1);
+  }
+  console.log("verify-maint-convert-issue-wo-draft-lifecycle selftest PASS — 2/2 stale-draft mutations red + leftover plant");
   process.exit(0);
 }
 
 const missing = failures();
 if (missing.length) {
   console.error(`verify-maint-convert-issue-wo-draft-lifecycle FAIL — ${missing.join(", ")}`);
+  process.exit(1);
+}
+// BANK-F91390 leftover refuse — ConvertIssueToWOModal page-scoped text token ratchet
+if (source.includes("text-[11px]")) {
+  console.error("verify-maint-convert-issue-wo-draft-lifecycle FAIL — ConvertIssueToWOModal.tsx leftover text-[11px]");
+  process.exit(1);
+}
+if (source.includes("#8A92AB")) {
+  console.error("verify-maint-convert-issue-wo-draft-lifecycle FAIL — ConvertIssueToWOModal.tsx leftover off-scale muted #8A92AB");
   process.exit(1);
 }
 console.log("verify-maint-convert-issue-wo-draft-lifecycle PASS — nested WO creator resets per open/company/issue");
