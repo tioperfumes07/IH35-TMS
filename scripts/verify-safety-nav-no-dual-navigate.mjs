@@ -24,6 +24,7 @@ import { readFileSync } from "node:fs";
 
 const LABEL = "verify-safety-nav-no-dual-navigate";
 const FILE = "apps/frontend/src/pages/safety/SafetyLayout.tsx";
+const NAV = "apps/frontend/src/components/safety/SafetyGroupNav.tsx";
 
 function stripCommentsAndStrings(src) {
   return src
@@ -57,6 +58,11 @@ function check(sources) {
     );
   }
 
+  // BANK-F91382 leftover refuse — SafetyGroupNav page-scoped text token ratchet
+  const navSrc = sources[NAV] ?? "";
+  if (navSrc.includes("text-[11px]")) errors.push("SafetyGroupNav.tsx: leftover text-[11px]");
+  if (navSrc.includes("#8A92AB")) errors.push("SafetyGroupNav.tsx: leftover off-scale muted #8A92AB");
+
   return errors;
 }
 
@@ -66,6 +72,11 @@ function loadAll() {
     out[FILE] = readFileSync(FILE, "utf8");
   } catch {
     out[FILE] = "";
+  }
+  try {
+    out[NAV] = readFileSync(NAV, "utf8");
+  } catch {
+    out[NAV] = "";
   }
   return out;
 }
@@ -85,6 +96,11 @@ function selftest() {
         "<SafetyGroupNav groups={SAFETY_GROUPS} activeTabId={activeTabId} />",
         '<SafetyGroupNav groups={SAFETY_GROUPS} activeTabId={activeTabId} onTabChange={(tabId) => { navigate(findSafetyTab(tabId)?.tab.route ?? "/safety/driver-files"); }} />'
       ),
+    })],
+    // BANK-F91382 leftover plant — SafetyGroupNav page-scoped text token ratchet
+    ["SafetyGroupNav leftover text-[11px] plant", (s) => ({
+      ...s,
+      [NAV]: s[NAV] + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n',
     })],
   ];
   for (const [name, mutate] of mutations) {
