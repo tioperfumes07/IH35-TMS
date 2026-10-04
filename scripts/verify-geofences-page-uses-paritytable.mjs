@@ -57,6 +57,9 @@ function assertMigrated(src) {
   if (!src.includes("Create geofence")) {
     errors.push(`${PAGE}: must preserve create geofence form chrome`);
   }
+  // BANK-F91338 leftover refuse — GeofencesPage page-scoped text token ratchet
+  if (src.includes("text-[11px]")) errors.push(`${PAGE}: leftover text-[11px]`);
+  if (src.includes("#8A92AB")) errors.push(`${PAGE}: leftover off-scale muted #8A92AB`);
   return errors;
 }
 
@@ -103,6 +106,12 @@ function selftest() {
   }
   if (badErrors.length < 3) {
     console.error(`${LABEL} --selftest FAIL bad fixture should fail hard:`, badErrors);
+    process.exit(1);
+  }
+  // BANK-F91338 leftover plant — GeofencesPage page-scoped text token ratchet
+  const leftoverPlant = good + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  if (assertMigrated(leftoverPlant).filter((e) => e.includes("leftover text-[11px]")).length === 0) {
+    console.error(`${LABEL} --selftest FAIL — leftover plant escaped`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);
