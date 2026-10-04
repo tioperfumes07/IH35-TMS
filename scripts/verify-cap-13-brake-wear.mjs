@@ -106,6 +106,9 @@ contains("apps/frontend/src/components/maintenance/BrakeWearGauge.tsx", gauge, [
   { pattern: /brake-wear-gauge-/, label: "gauge test id" },
   { pattern: /green|amber|red/, label: "status colors" },
 ]);
+// BANK-F91309 leftover refuse — BrakeWearGauge.tsx page-scoped text token ratchet
+if (gauge.includes("text-[11px]")) failures.push("BrakeWearGauge.tsx: leftover text-[11px]");
+if (gauge.includes("#8A92AB") || gauge.includes("#334155")) failures.push("BrakeWearGauge.tsx: leftover off-scale muted");
 
 const unitTab = read("apps/frontend/src/pages/maintenance/units/UnitBrakesTab.tsx");
 contains("apps/frontend/src/pages/maintenance/units/UnitBrakesTab.tsx", unitTab, [
@@ -160,6 +163,18 @@ if (process.argv.includes("--selftest")) {
   const escaped = mutations.filter((fixture) => cap13WiringFailures(fixture).length === 0);
   if (escaped.length > 0) {
     console.error(`verify:cap-13-brake-wear --selftest FAILED — ${escaped.length}/5 mutations escaped`);
+    process.exit(1);
+  }
+  // BANK-F91309 leftover plant — BrakeWearGauge page-scoped text token ratchet
+  const GAUGE = "apps/frontend/src/components/maintenance/BrakeWearGauge.tsx";
+  const gaugePath = path.join(ROOT, GAUGE);
+  const realGood = fs.readFileSync(gaugePath, "utf8");
+  const leftoverPlant = realGood + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  fs.writeFileSync(gaugePath, leftoverPlant);
+  const plantCaught = leftoverPlant.includes("text-[11px]");
+  fs.writeFileSync(gaugePath, realGood);
+  if (!plantCaught) {
+    console.error("verify:cap-13-brake-wear --selftest FAILED — leftover plant escaped");
     process.exit(1);
   }
   console.log("verify:cap-13-brake-wear --selftest PASS — 5/5 mutations detected");
