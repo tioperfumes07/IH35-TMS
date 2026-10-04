@@ -1,10 +1,10 @@
 {
-  "healthzSha": "45954d4",
-  "generated_at": "2026-10-04T04:34:08.527Z",
+  "healthzSha": "02297db",
+  "generated_at": "2026-10-04T04:47:31.908Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "45954d4",
+    "deployedSha": "02297db",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 25151,
+      "title": "FINDING: LST-F3317 LANE: FINANCIAL -- ROUND 368.2(b): the journal-entry RESTORE path (805a5bb97b) made a reversing entry stop being live without releasing the bank lines that name it — main red on verify-every-void-releases-its-bank-lines; it now releases first",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 11:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25151",
+      "sha": "6439a0ac7d",
+      "committedAtIso": "2026-10-03T23:47:09-05:00"
+    },
+    {
+      "number": 25150,
+      "title": "FINDING: ACCT-F2026100408 LANE: FINANCIAL (verify-reclassify-batches-are-whole red on main after ROUND 390.1: it required the reclassify undo to call reverseJournalEntryNoFlip, which 390.1 correctly replaced — a reclass JE's out-leg is itself a reversal, and a reversal of a reversal is now refused by the writer)",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 11:43 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25150",
+      "sha": "02297db87d",
+      "committedAtIso": "2026-10-03T23:43:21-05:00"
+    },
+    {
       "number": 25149,
       "title": "FINDING: ACCT-F9978 LANE: FINANCIAL (ROUND 390.1: a reversal line is TERMINAL — the one posting-line writer refuses, by name, a line that reverses a line which is itself a reversal; reinstate, check unvoid and reclassify undo now restore reversed money as fresh lines instead of \"voiding the void's reversing JE\"; the zero-tolerance chain guard is added)",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25141",
       "sha": "cd031832c9",
       "committedAtIso": "2026-10-03T23:21:58-05:00"
-    },
-    {
-      "number": 25140,
-      "title": "CC-2-389.4: recurring worker never posts (R1) + bank-feed guard recomputes from DB (R2) + bank-feed-gl-posting triage",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 10:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25140",
-      "sha": "4693704449",
-      "committedAtIso": "2026-10-03T22:31:51-05:00"
-    },
-    {
-      "number": 25139,
-      "title": "FINDING: FUEL-REEFER-FINISH LANE: claude — AUTH-211 consumed: the reefer finish applied in both phases",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 10:30 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25139",
-      "sha": "bf2311b9eb",
-      "committedAtIso": "2026-10-03T22:30:46-05:00"
     }
   ]
 }
