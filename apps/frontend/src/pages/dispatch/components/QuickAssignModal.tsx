@@ -184,7 +184,7 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
             pickers alone leave selected identities non-navigable; expose EntityLinks. */}
         {hasSelected ? (
           <div
-            className="flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] text-slate-700"
+            className="flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs text-slate-700"
             data-testid="quick-assign-modal-entitylinks"
           >
             {driverId ? (

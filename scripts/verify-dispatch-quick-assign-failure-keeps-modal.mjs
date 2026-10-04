@@ -24,6 +24,9 @@ function verify(board, modal) {
   if (awaitedSubmit < 0 || successfulClose < 0 || successfulClose < awaitedSubmit) {
     failures.push("QuickAssignModal must close only after awaiting a successful submit");
   }
+  // BANK-F91359 leftover refuse — QuickAssignModal page-scoped text token ratchet
+  if (modal.includes("text-[11px]")) failures.push("QuickAssignModal.tsx: leftover text-[11px]");
+  if (modal.includes("#8A92AB")) failures.push("QuickAssignModal.tsx: leftover off-scale muted #8A92AB");
   return failures;
 }
 
