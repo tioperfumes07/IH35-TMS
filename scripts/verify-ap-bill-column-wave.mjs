@@ -113,7 +113,9 @@ const CHECKS = [
   {
     name: "LST-F5198: BillsPage must not keep silent patchEntityFilter",
     file: "apps/frontend/src/pages/accounting/BillsPage.tsx",
-    pattern: /^(?![\s\S]*function patchEntityFilter)[\s\S]*useStagedListFilters/,
+    // FILTER-MULTI-01 (CC-2, 2026-09-23) replaced the staged hook with immediate URL writes for unit/load; the invariant
+    // is unchanged: no silent client-only patchEntityFilter, and the unit filter writes the URL.
+    pattern: /^(?![\s\S]*function patchEntityFilter)[\s\S]*params\.set\("unit_id"/,
   },
   {
     name: "ACCT-F5049: BillsReverseSection Open Bills keeps filter query",
@@ -153,7 +155,9 @@ const CHECKS = [
     // survived Apply). source_load_id is still written on Apply, just via the single combined call.
     name: "LST-F5199: InvoicesListPage source_load_id filter write (single combined applyUrlFilters call)",
     file: "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
-    pattern: /function applyUrlFilters[\s\S]{0,700}source_load_id/,
+    // FILTER-MULTI-01 (CC-2, 2026-09-23): source_load_id got its own immediate URL setter (setSourceLoadFilter) — it can no
+    // longer be dropped by a combined apply. Either shape writes source_load_id to the URL; a page that stops writing it fails.
+    pattern: /function (?:applyUrlFilters|setSourceLoadFilter)[\s\S]{0,700}params\.set\("source_load_id"/,
   },
 
   {
