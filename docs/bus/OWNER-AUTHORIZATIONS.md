@@ -7055,3 +7055,19 @@ proof_query: node scripts/verify-void-is-whole.mjs against prod -> PASS 0 violat
 THIS AUTHORIZATION DOES NOT COVER: any load other than 13515; 13513; any journal entry or posting; the paid driver bill
   33d5debc or settlement 0936ca4e (the driven trip — whether its cost moves to 13513 is a Lead ruling); any DELETE;
   any company other than USMCA.
+
+## AUTH-207
+issued_at: 2026-10-04T01:20:01Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). Duplicate fuel receipt 99794138 ONLY: accounting.expenses
+  c0aa22b4-720c-43fb-bd92-3c003ed7267d (13571-5) and fuel.fuel_transactions e8415607-1c03-4b70-98d0-370c4e1ca9e1 (load 13571),
+  through the governed void executors (expense -> postVoidReversal + stampDocumentVoided; fuel_transaction -> stampDocumentVoided).
+  Owner, CC-2 chat 2026-10-04: "YES VOID DUPLICTATS" ... "YES I AUTHOROIZE YOU" (Lead ROUND 393.2: same-day true duplicates
+  1848853 and 99794138 — the owner authorises those two). The fill (2026-08-31) belongs to load 13557 (2026-08-28 -> 08-31);
+  the 13557 copy (13557-7 / 152e088a) is kept and asserted live. Prod dry run (rolled back): expense voided with a reversing
+  entry, fuel voided, 1 live copy of 99794138 left.
+action: DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-04-cc2-void-duplicate-fuel-99794138.mts --apply --auth AUTH-207
+  Dry-run first (default, no --apply).
+expires_at: 2026-10-04T21:20:01Z
+status: OPEN
+THIS AUTHORIZATION DOES NOT COVER: receipt 1848853 (its fill date 2026-08-26 is the boundary of loads 13543 / 13547 — the
+owner names the load first); receipt 99530579 (copies six days apart — receipts first); any other company or document.
