@@ -45,13 +45,28 @@ if (process.argv.includes("--selftest")) {
     failures(liveDocs).includes("documents and categories are snapshotted"),
   ];
   if (checks.some((ok) => !ok)) process.exit(1);
-  console.log("verify-create-driver-company-lifecycle selftest PASS — 6/6 stale-company/document mutations red");
+  // BANK-F91388 leftover plant — CreateDriverModal page-scoped text token ratchet
+  const leftoverPlant = source + '\n<span className="text-[11px] text-[#8A92AB]">plant</span>\n';
+  if (!(leftoverPlant.includes("text-[11px]") && leftoverPlant.includes("#8A92AB"))) {
+    console.error("verify-create-driver-company-lifecycle SELFTEST FAIL — leftover plant escaped");
+    process.exit(1);
+  }
+  console.log("verify-create-driver-company-lifecycle selftest PASS — 6/6 stale-company/document mutations red + leftover plant");
   process.exit(0);
 }
 
 const missing = failures();
 if (missing.length) {
   console.error(`verify-create-driver-company-lifecycle FAIL — ${missing.join(", ")}`);
+  process.exit(1);
+}
+// BANK-F91388 leftover refuse — CreateDriverModal page-scoped text token ratchet
+if (source.includes("text-[11px]")) {
+  console.error("verify-create-driver-company-lifecycle FAIL — CreateDriverModal.tsx leftover text-[11px]");
+  process.exit(1);
+}
+if (source.includes("#8A92AB")) {
+  console.error("verify-create-driver-company-lifecycle FAIL — CreateDriverModal.tsx leftover off-scale muted #8A92AB");
   process.exit(1);
 }
 console.log("verify-create-driver-company-lifecycle PASS — canonical driver wizard resets complete state per selected company/open cycle");
