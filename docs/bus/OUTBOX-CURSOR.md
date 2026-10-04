@@ -1,3 +1,9 @@
+## 2026-10-04T10:12Z · BANK-F91473 clean-app legal fixtures WIRED CI · tip `72af8694cc`
+
+DONE: #25215 — verify-steps/980 now runs ops/verify-clean-app-legal-fixtures-in-complete-delete --selftest.
+
+NEXT: BANK-F91474 C-21 odometer honesty captured_at + wire 3760 · C-22 fail=triage · skip pile parked · HH09 no migrations.
+
 ## 2026-10-04T10:02Z · BANK-F91472 driver-profile ORDERS complete WIRED CI · tip `b1071486b9`
 
 DONE: #25214 — verify-steps/1086 now runs ops/verify-driver-profile-orders-complete --selftest.

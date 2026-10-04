@@ -127,7 +127,7 @@ function mapDueRow(row: PmScheduleRow, odo: PmOdometer | null, stopEventsLive: b
     interval_days: row.interval_days,
     last_done_miles: row.last_done_miles,
     last_done_date: row.last_done_date,
-    odometer_reading_at: odo?.read_at ?? null,
+    odometer_reading_at: odo?.captured_at ?? odo?.read_at ?? null,
     odometer_source: odo?.source ?? null,
     odometer_note: odo ? null : absentOdometerReason(stopEventsLive),
     ...evaluation,
