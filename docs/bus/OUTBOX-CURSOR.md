@@ -1,3 +1,11 @@
+## 2026-10-04T01:25Z · BANK-F91331..F91338 leftover drain MERGED tip `da3d34f5ba`
+
+DONE: InspectionScoreBadge · ReportCard · ServiceTimeline · StatusBarMobile · PoliciesList · ELD Unidentified+Violations · FinanceHubPage · GeofencesPage (F91331–F91338). Prior F91323–30 stamped.
+
+PRs: #25000 · #25001 · #25002 · #25003 · #25004 · #25005 · #25008 · #25009 (squash). Guards: refuse + `--selftest` plant each.
+
+NEXT: continue ORDERS leftover drain (page-scoped guards only). Skip BookLoad*/Combobox/EntityPicker/ParityTable/DrillKpiCard/UniversalListToolbar/DateTimePicker/DataTable/ProgramTracker/FinalAdditions/InstallPWA. HH01 no migrations.
+
 ## 2026-10-04T01:12Z · BANK-F91323..F91330 leftover drain MERGED tip `8f089725b6`
 
 DONE: RelayHistoryImport · LiveDutyTab · LoadBankingLinkagePage · EquipmentTypesPage · DriverLoadStatusesPage · TasksTab · TaskLinkPicker · ColumnChooser/B-1 gear (F91323–F91330). Prior F91317–22 stamped.
