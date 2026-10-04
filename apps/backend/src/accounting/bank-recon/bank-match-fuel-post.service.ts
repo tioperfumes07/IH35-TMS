@@ -191,7 +191,13 @@ async function postRelayFuelFill(
       SELECT COALESCE(r.relay_created_at, r.created_at)::text AS transaction_at,
              ABS(COALESCE(r.total_amount_paid_cents, 0))::bigint::text AS amount_cents,
              r.matched_driver_id::text AS driver_id,
-             r.matched_unit_id::text AS unit_id,
+             -- BANK-F2026100403: Relay printed the unit number but ingest never resolved its id (fc461eb6, T169). The
+             -- number proves the unit only when exactly ONE active unit in the fleet carries it (one number, one truck); else refused.
+             COALESCE(r.matched_unit_id,
+                      (SELECT min(u2.id::text)::uuid FROM mdata.units u2
+                        WHERE u2.deactivated_at IS NULL
+                          AND btrim(u2.unit_number) = btrim(r.matched_unit_number)
+                       HAVING count(*) = 1))::text AS unit_id,
              COALESCE(u.unit_number, r.matched_unit_number)::text AS unit_number,
              r.location_state::text AS location_state,
              (SELECT sum(l.volume)::text FROM integrations.relay_fuel_transaction_lines l
@@ -248,4 +254,59 @@ async function postRelayFuelFill(
       fuel_card_code: "RELAY",
     }),
   });
+}
+
+/**
+ * BANK-F2026100403 (CC-3, 2026-10-04) — a fuel / Relay bank line MATCHED BEFORE the match-time poster existed has no
+ * journal entry: 69 USMCA Relay wallet lines were accepted on 2026-09-28 (R186), and ACCT-F9335 (#24158, 10-02) only posts
+ * inside a NEW accept. Nothing posted the lines already matched, so their fuel is in the bank but not in the books.
+ *
+ * This posts such a line through the SAME poster the accept uses (postFuelFillOnBankMatch) on the caller's transaction
+ * and stamps matched_journal_entry_id in one statement — exactly the state a fresh accept leaves. It refuses by name
+ * (never skips): a line that is not matched, already carries a JE, is voided, or whose fill cannot be posted (no unit /
+ * no load at fill time -> FuelMatchPostError) is reported to the caller, never half-posted.
+ */
+export async function postAlreadyMatchedFuelLine(
+  client: DbClient,
+  input: { operating_company_id: string; actor_user_uuid: string; bank_transaction_id: string }
+): Promise<{ bank_transaction_id: string; kind: "fuel_transaction" | "relay_fuel"; fill_id: string; journal_entry_id: string }> {
+  const lineRes = await client.query<{
+    review_state: string | null;
+    voided_at: string | null;
+    matched_journal_entry_id: string | null;
+    matched_fuel_transaction_id: string | null;
+    matched_relay_fuel_transaction_id: string | null;
+  }>(
+    `SELECT review_state::text, voided_at::text, matched_journal_entry_id::text,
+            matched_fuel_transaction_id::text, matched_relay_fuel_transaction_id::text
+       FROM banking.bank_transactions
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid
+      FOR UPDATE`,
+    [input.bank_transaction_id, input.operating_company_id]
+  );
+  const line = lineRes.rows[0];
+  if (!line) throw new Error(`bank_line_not_found: ${input.bank_transaction_id}`);
+  if (line.voided_at) throw new Error(`bank_line_voided: ${input.bank_transaction_id}`);
+  if (line.review_state !== "matched") throw new Error(`bank_line_not_matched: ${input.bank_transaction_id} (${line.review_state})`);
+  if (line.matched_journal_entry_id) throw new Error(`bank_line_already_posted: ${input.bank_transaction_id} -> ${line.matched_journal_entry_id}`);
+  const kind = line.matched_relay_fuel_transaction_id ? "relay_fuel" : line.matched_fuel_transaction_id ? "fuel_transaction" : null;
+  if (!kind) throw new Error(`bank_line_not_a_fuel_match: ${input.bank_transaction_id}`);
+  const fillId = (kind === "relay_fuel" ? line.matched_relay_fuel_transaction_id : line.matched_fuel_transaction_id)!;
+
+  const posted = await postFuelFillOnBankMatch(client, {
+    operating_company_id: input.operating_company_id,
+    actor_user_uuid: input.actor_user_uuid,
+    kind,
+    fill_id: fillId,
+  });
+  if (!posted.journal_entry_id) throw new Error(`fuel_post_returned_no_journal_entry: ${input.bank_transaction_id}`);
+  const stamped = await client.query(
+    `UPDATE banking.bank_transactions
+        SET matched_journal_entry_id = $3::uuid
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid
+        AND review_state = 'matched' AND matched_journal_entry_id IS NULL`,
+    [input.bank_transaction_id, input.operating_company_id, posted.journal_entry_id]
+  );
+  if (stamped.rowCount !== 1) throw new Error(`bank_line_stamp_lost: ${input.bank_transaction_id}`);
+  return { bank_transaction_id: input.bank_transaction_id, kind, fill_id: fillId, journal_entry_id: posted.journal_entry_id };
 }
