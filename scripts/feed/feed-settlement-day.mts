@@ -667,7 +667,11 @@ async function feedOne(
       posted_at: fuelDate,
       amount_cents: cents(f.amount),
       posting_path: "company_direct",
-    }).catch((e) => report.push(`WARN fuel GL: ${(e as Error).message}`));
+    }).catch((e) => {
+      // 2026-10-04: a fuel row with no GL is a silent hole (the row exists, the books do not). Fail the feed day loudly;
+      // a re-run is safe — the insert is keyed on source_row_hash and the poster answers already_posted.
+      throw new Error(`fuel GL refused for ${receipt ?? parsed.hashKey} ($${f.amount}, load ${loadId}): ${(e as Error).message}`);
+    });
     report.push(`FUEL ${f.fuel_type} ${receipt ?? "no receipt number"} $${f.amount}`);
   }
 

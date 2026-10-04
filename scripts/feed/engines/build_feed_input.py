@@ -258,10 +258,29 @@ def main():
                 # POSTS. The company expense and the driver's reimbursement are one cost and one
                 # payable to the driver, not two costs - that posting split is an open accounting
                 # question and is NOT silently changed here. Every suppression is reported.
+                # 2026-10-04 (CC-3): ONE PURCHASE, ONE COST. A company document can print the same receipt twice in its
+                # EXPENSES block - once as the company row (Y) and once as the row the DRIVER paid (Drv): same invoice,
+                # same amount, same date. Measured: 5794 does it three times (2885954 DEF 30.30, 4110126 22.14,
+                # 11012948 washout 49.32). That is one purchase the driver paid, not two costs; the Drv row is kept (it
+                # carries who paid) and its company twin is suppressed and reported.
+                _drv_keys = collections.Counter(
+                    (str(e.get("invoice")), r2(e.get("amount")), e.get("date"))
+                    for e in (cl.get("expenses") or []) if e.get("reimbursed") and e.get("invoice") and e.get("amount"))
+                _twin_skip = set()
+                for _i, e in enumerate(cl.get("expenses") or []):
+                    _k = (str(e.get("invoice")), r2(e.get("amount")), e.get("date"))
+                    if not e.get("reimbursed") and e.get("invoice") and _drv_keys.get(_k):
+                        _drv_keys[_k] -= 1
+                        _twin_skip.add(_i)
+                        suppressed.append({"load": ln, "doc": doc_no, "amount": r2(e.get("amount")),
+                                           "description": e.get("description"), "invoice": e.get("invoice"),
+                                           "reason": "SUPPRESSED_SAME_RECEIPT: the company row and the Drv row print "
+                                                     "one purchase (same invoice, amount, date); the Drv row is kept"})
+                _cl_exp = [e for _i, e in enumerate(cl.get("expenses") or []) if _i not in _twin_skip]
                 _reimb = collections.Counter(
-                    r2(e.get("amount")) for e in (cl.get("expenses") or [])
+                    r2(e.get("amount")) for e in _cl_exp
                     if e.get("reimbursed") and e.get("amount"))
-                for src_lines in ((cl.get("expenses") or []), (dl.get("lines") or [])):
+                for src_lines in (_cl_exp, (dl.get("lines") or [])):
                     _is_driver_side = src_lines is (dl.get("lines") or [])
                     for x in src_lines:
                         if _is_driver_side and x.get("amount"):
