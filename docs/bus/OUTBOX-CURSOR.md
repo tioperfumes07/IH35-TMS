@@ -1,3 +1,15 @@
+## 2026-10-04T15:05Z · BANK-F91518 RoundTrips --dwl leftover muted WIRED · this PR
+
+DONE: RoundTripsTimeline --dwl leftover #94a3b8 → house muted #4B5563; leftover refuse on verify-roundtrips-quality-load-entitylink; EVEN 3408 --selftest + live. SB #475569 stays locked.
+
+NEXT: leftover muted chrome (WO pie status colors stay / RMBuckets In Progress stay / trip-type SB stay) · skip pile parked · HH13 no migrations this tick.
+
+## 2026-10-04T14:58Z · BANK-F91517 SystemModule N/A leftover muted WIRED CI · tip `5de334f9f9`
+
+DONE: #25259 — SystemModulePage N/A leftover muted #4B5563; verify-steps/4142 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (RoundTrips --dwl #94a3b8 / WO pie status colors stay) · skip pile parked · HH13 no migrations this tick.
+
 ## 2026-10-04T14:58Z · BANK-F91517 SystemModule N/A leftover muted WIRED · this PR
 
 DONE: SystemModulePage not_applicable leftover #94a3b8 → house muted #4B5563; leftover refuse on verify-system-module; unused EVEN 4142 --selftest + live.

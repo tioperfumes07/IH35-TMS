@@ -79,7 +79,7 @@ export function RoundTripsTimeline({ loads, rangeFrom, rangeTo, onLoadClick }: P
     <div
       className="overflow-x-auto overflow-y-auto max-h-[70vh] rounded-sm border border-gray-200 bg-white"
       data-testid="round-trips-timeline"
-      style={{ ["--dwl" as string]: "#94a3b8" }}
+      style={{ ["--dwl" as string]: "#4B5563" }}
     >
       <div className="min-w-[720px]">
         <div
