@@ -185,6 +185,13 @@ export function auditGeocodeFailureRecovery(src) {
   if (/catch\s*\{\s*setResults\(\[\]\);?\s*\}/.test(src)) {
     problems.push(`${ADDRESS_GEOCODE}: the shipped silent catch returned — outage still looks like zero matches.`);
   }
+  // BANK-F91401 leftover refuse — AddressGeocodeInput page-scoped text token ratchet
+  if (src.includes("text-[11px]")) {
+    problems.push(`${ADDRESS_GEOCODE}: leftover text-[11px] — use text-xs (ORDERS size token).`);
+  }
+  if (src.includes("#8A92AB")) {
+    problems.push(`${ADDRESS_GEOCODE}: leftover #8A92AB — use #4B5563 (ORDERS muted token).`);
+  }
   return problems;
 }
 
@@ -249,6 +256,8 @@ if (process.argv.includes("--selftest")) {
     ["geocode retry action removed", () => auditGeocodeFailureRecovery(goodGeocode.replace(">Retry<", ">Wait<")), 1],
     ["geocode retry does not refetch", () => auditGeocodeFailureRecovery(goodGeocode.replace("generation + 1", "generation")), 1],
     ["geocode retry omitted from dependencies", () => auditGeocodeFailureRecovery(goodGeocode.replace(", retryGeneration]", "]")), 1],
+    // BANK-F91401 leftover plant — AddressGeocodeInput page-scoped text token ratchet
+    ["BANK-F91401 leftover plant", () => auditGeocodeFailureRecovery(goodGeocode + '\n<p className="text-[11px] text-[#8A92AB]">plant</p>\n'), 2],
   ];
 
   let bad = 0;
