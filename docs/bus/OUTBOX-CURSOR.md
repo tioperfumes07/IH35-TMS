@@ -1,3 +1,15 @@
+## 2026-10-04T05:00Z · ROUND 389.2 CURSOR DONE · 39 PASS + 3 triage WIRED
+
+DONE:
+- #25146 wire 39 PASSING orphan UI guards (12330–12406)
+- #25153 triage 3 FAILING (navy-page-subnav / list-empty-settled / form-425c-exhibits) — GUARD WRONG / STALE / MIXED; code+guard fixed; exit 0
+- #25155 CLAIM-RESERVE 12408/12410/12412
+- #25156 wire wrappers 12408/12410/12412
+
+LIVE PROOF: money-pr-local-gate exit 0 each PR; three triage guards exit 0; LANE_CROSS=10-04-2026-LEAD-RULING-CURSOR-R3892-CLAIM-VERIFY-STEPS-LANE-CROSS.md
+
+NEXT: resume ORDERS leftover drain (F91425+) · park Round 348 / 363-CUR-A · help r393-batch-five if still open.
+
 ## 2026-10-04T03:20Z · ROUND 389.2 still BLOCKED · leftovers timer deferred · r389 rebased for CC-1
 
 ORDERS leftovers cadence fired (HH03 — no migrations). Superseded by ROUND 389.2.
