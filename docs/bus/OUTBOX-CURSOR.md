@@ -1,3 +1,9 @@
+## 2026-10-04T08:12Z · BANK-F91448 C-36 maint tabs 16→9 WIRED CI · tip `ddbd74baf2`
+
+DONE: #25190 — verify-steps/2390 now runs ops/verify-c36-maint-tabs-16-to-9 --selftest.
+
+NEXT: BANK-F91449 wire C-55 Regular + Master-detail into 12382 · C-21/C-22 fail=triage · skip pile parked · HH08 no migrations.
+
 ## 2026-10-04T08:06Z · BANK-F91447 C-25 DisputesHub three-way split WIRED CI · tip `ca1fa9c537`
 
 DONE: #25189 — verify-steps/1014 now runs ops/verify-c25-disputes-hub-split --selftest.
