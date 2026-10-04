@@ -511,18 +511,18 @@ function TransactionRegister({ tab, companyId, loadsById, settlementsByLoad, nav
   // its own column so it never drifts if a column is reordered/hidden.
   const footerCells =
     tab === "driver_pay" ? {
-      number: (visibleRows: RegisterRow[]) => <span className="font-semibold uppercase tracking-[0.4px] text-gray-600" style={{ fontSize: 11 }} data-testid="reg-totals-label">Totals ({visibleRows.length})</span>,
+      number: (visibleRows: RegisterRow[]) => <span className="font-semibold uppercase tracking-[0.4px] text-section-header text-gray-600" data-testid="reg-totals-label">Totals ({visibleRows.length})</span>,
       gross: (visibleRows: RegisterRow[]) => <span className="text-gray-900" data-testid="reg-totals-amount">{fmt(visibleRows.reduce((n, r) => n + (r.grossCents ?? 0), 0))}</span>,
     }
     : tab === "broker_advances" ? {
-      date: (visibleRows: RegisterRow[]) => <span className="font-semibold uppercase tracking-[0.4px] text-gray-600" style={{ fontSize: 11 }} data-testid="reg-totals-label">Totals ({visibleRows.length})</span>,
+      date: (visibleRows: RegisterRow[]) => <span className="font-semibold uppercase tracking-[0.4px] text-section-header text-gray-600" data-testid="reg-totals-label">Totals ({visibleRows.length})</span>,
       amount: (visibleRows: RegisterRow[]) => <span className="text-gray-900" data-testid="reg-totals-amount">{fmt(visibleRows.reduce((n, r) => n + r.amountCents, 0))}</span>,
     }
     : tab === "documents" ? {
-      date: (visibleRows: RegisterRow[]) => <span className="font-semibold uppercase tracking-[0.4px] text-gray-600" style={{ fontSize: 11 }} data-testid="reg-totals-label">Totals ({visibleRows.length})</span>,
+      date: (visibleRows: RegisterRow[]) => <span className="font-semibold uppercase tracking-[0.4px] text-section-header text-gray-600" data-testid="reg-totals-label">Totals ({visibleRows.length})</span>,
     }
     : {
-      number: (visibleRows: RegisterRow[]) => <span className="font-semibold uppercase tracking-[0.4px] text-gray-600" style={{ fontSize: 11 }} data-testid="reg-totals-label">Totals ({visibleRows.length})</span>,
+      number: (visibleRows: RegisterRow[]) => <span className="font-semibold uppercase tracking-[0.4px] text-section-header text-gray-600" data-testid="reg-totals-label">Totals ({visibleRows.length})</span>,
       amount: (visibleRows: RegisterRow[]) => <span className="text-gray-900" data-testid="reg-totals-amount">{fmt(visibleRows.reduce((n, r) => n + r.amountCents, 0))}</span>,
     };
   return <div data-testid="load-costs-register"><ParityTable
@@ -896,7 +896,7 @@ export function LoadCostsBoardPage() {
               // (enableColumnReorder is on for this board) can never desync a total from the
               // wrong number again. `totals` is unchanged — it already aggregates over `visible`,
               // the same rows passed as `rows={visible}` above.
-              load: <span className="font-semibold uppercase tracking-[0.4px] text-gray-600" style={{ fontSize: 11 }} data-testid="load-costs-totals-label">Totals ({visible.length} loads)</span>,
+              load: <span className="font-semibold uppercase tracking-[0.4px] text-section-header text-gray-600" data-testid="load-costs-totals-label">Totals ({visible.length} loads)</span>,
               revenue: <span className="text-gray-900" data-testid="load-costs-totals-revenue">{fmt(totals.revenue)}</span>,
               late_fee: <span className="text-gray-900" data-testid="load-costs-totals-late-fee">{fmtDash(totals.late_fee)}</span>,
               lumper: <span className="text-gray-900" data-testid="load-costs-totals-lumper">{fmtDash(totals.lumper)}</span>,
