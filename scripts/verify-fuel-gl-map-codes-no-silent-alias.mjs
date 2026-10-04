@@ -143,8 +143,8 @@ if (maybe) {
   if (!/\[FUEL_GL_POST\] post failed/.test(maybe)) {
     errors.push(`${maybeRel} must warn on post failure (fail-honest; no silent swallow without log)`);
   }
-  if (/posted_to_gl\s*=\s*true/.test(maybe) && !/markRelayPostedToGl/.test(maybe)) {
-    errors.push(`${maybeRel} must only stamp posted_to_gl via markRelayPostedToGl after successful post`);
+  if (/posted_to_gl\s*=\s*true/.test(maybe)) {
+    errors.push(`${maybeRel} must never store posted_to_gl — it is derived from the matched bank line's journal entry (202615410940)`);
   }
 }
 
