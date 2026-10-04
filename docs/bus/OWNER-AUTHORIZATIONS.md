@@ -7090,6 +7090,13 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). ONE reefer fuel fill: 
 action: DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-04-cc2-set-reefer-trailer-t170-0909.mts --apply --auth AUTH-208
   Dry-run first (default, no --apply).
 expires_at: 2026-10-04T21:29:35Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-04T01:32:35Z
+consumed_by: CC-2
+row_counts: fuel.fuel_transactions 86658559 trailer_id NULL -> fc534b3d (10224); its accounting.expense_lines row -> fc534b3d;
+  setReeferTrailer updated 1; 0 deletes, 0 postings.
+proof_query: SELECT ft.trailer_id, el.trailer_id FROM fuel.fuel_transactions ft JOIN accounting.expenses e ON
+  e.source_fuel_transaction_id = ft.id JOIN accounting.expense_lines el ON el.expense_id = e.id WHERE ft.id = '86658559-...'
+  -> fc534b3d / fc534b3d.
 THIS AUTHORIZATION DOES NOT COVER: the T156 fills of 2026-09-08 and 2026-09-10 (two or three candidate trailers each — the
   owner picks); the equipment record of trailer 10219 or 10224 (owned by IH 35 Trucking LLC — frozen); any other company.
