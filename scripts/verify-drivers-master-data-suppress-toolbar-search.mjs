@@ -21,6 +21,9 @@ export function check(filePath = path.join(ROOT, PAGE)) {
   assert(/\[search,\s*setSearch\]/.test(src), "DriversMasterDataPage: must keep server-bound search");
   assert(/listMaintenanceDrivers\([^)]*\{\s*search\s*\}/.test(src), "DriversMasterDataPage: must pass search to listMaintenanceDrivers");
   assert(/suppressToolbarSearch/.test(src), "DriversMasterDataPage: must pass suppressToolbarSearch");
+  // BANK-F91318 leftover refuse — DriversMasterDataPage.tsx page-scoped text token ratchet
+  assert(!src.includes("text-[11px]"), "DriversMasterDataPage.tsx: leftover text-[11px]");
+  assert(!src.includes("#8A92AB"), "DriversMasterDataPage.tsx: leftover off-scale muted #8A92AB");
 }
 
 // GUARD-SELFTEST-MUTATES-SOURCE fix: never write the plant into the real tracked file. Copy it
@@ -45,6 +48,21 @@ async function selftest() {
     },
   );
   assert(failed, "selftest: expected FAIL without suppressToolbarSearch");
+
+  // BANK-F91318 leftover plant — DriversMasterDataPage page-scoped text token ratchet
+  let leftoverCaught = false;
+  await withMutatedCopy(
+    realPath,
+    (good) => good + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n',
+    (tmpPath) => {
+      try {
+        check(tmpPath);
+      } catch (e) {
+        if (String(e.message || e).includes("leftover text-[11px]")) leftoverCaught = true;
+      }
+    },
+  );
+  assert(leftoverCaught, "selftest: leftover plant escaped");
   console.log("verify-drivers-master-data-suppress-toolbar-search --selftest PASS");
 }
 
