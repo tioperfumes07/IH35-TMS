@@ -1,8 +1,14 @@
-## 2026-10-04T11:34Z · BANK-F91493 LoadCosts leftover fontSize 11 totals WIRED · this PR
+## 2026-10-04T11:40Z · BANK-F91494 CustomerDetail leftover fontSize 10 ticks WIRED · this PR
 
-DONE: LoadCostsBoard totals labels 11px inline → text-section-header; leftover refuse fontSize 10+11 on no-truncation; EVEN 4110 already hangs --selftest + live.
+DONE: CustomerDetail revenue chart ticks 10 → 11; leftover refuse on verify-customer-tab-bar-position-and-data-dot; unused EVEN 4116 --selftest + live.
 
-NEXT: leftover headerInk #1F2937 / chart ticks · skip pile parked · HH11 no migrations.
+NEXT: leftover headerInk #1F2937 / remaining chart ticks · skip pile parked · HH11 no migrations.
+
+## 2026-10-04T11:36Z · BANK-F91493 LoadCosts leftover WIRED CI · tip `34b39a4d44`
+
+DONE: #25235 — LoadCostsBoard totals text-section-header; verify-steps/4110 leftover refuse fontSize 10+11.
+
+NEXT: BANK-F91494 CustomerDetail leftover fontSize: 10 ticks + leftover refuse on 4116 · skip pile parked · HH11 no migrations.
 
 ## 2026-10-04T11:30Z · BANK-F91492 SettlementsTours leftover WIRED CI · tip `485ba32aa6`
 
