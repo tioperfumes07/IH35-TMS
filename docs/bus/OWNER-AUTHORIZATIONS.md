@@ -7144,3 +7144,31 @@ proof_query: Reports > Reefer fuel credit — every listed row shows its trailer
 THIS AUTHORIZATION DOES NOT COVER: the 2026-09-08 T156 fill (load 13585 -> 10219: 10219 is typed DryVan, owned by IH 35
   Trucking LLC, frozen — its type is corrected first); the 13523-32 reefer line (receipt 99133290, also on 13534-28 — open
   duplicate); any equipment record; any other company.
+
+## AUTH-211
+issued_at: 2026-10-04T02:22:02Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80) — the reefer finish. Owner, CC-2 chat 2026-10-04: "IT IS A REEFER
+  10219" and "OK LETS FINISH THEM ALL", answering (1) correct trailer 10219's type, (2) keep receipt 99133290's complete
+  document on load 13534 and void the extra copy, and the ROUND 391.2 order to post reefer to its own account 5015.
+  STEP 1 mdata.equipment 3c804758 (10219, owned by IH 35 Trucking LLC, leased to USMCA): equipment_type DryVan -> Reefer,
+    the trailer edit route's UPDATE (scoped to the USMCA lease) + fleet.trailer.updated audit. This is the ONLY write to a
+    frozen company's record, named by the owner.
+  STEP 2 fuel.fuel_transactions 097923fb (T156 2026-09-08, load 13585) trailer -> 10219 via setReeferTrailer (settlement 5803).
+  STEP 3 accounting.expenses 81ff108d (13534-28, reefer .04, duplicate of receipt 99133290) voided by executeVoidCancel.
+  STEP 4 applyReclassify, 4 batches: A 13523-32 reefer -> load 13534 + 5015; B 13523-32 DEF -> load 13534; C 6 reefer-item
+    lines 5000 -> 5015; D 4 Relay-proven reefer fuel-card fills -> item Fuel-Reefer-Diesel (5015).
+  Rehearsed on Neon fork br-crimson-darkness-akadt7ad (after 202615400800): all steps applied, 12 lines reclassed, 0 refused,
+  5015 = $1,944.81, trial balance diff 0. Prod dry run (steps 1-3, rolled back): ok.
+action: TWO PHASES under this one authorization.
+  PHASE 1 (now): DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-04-cc2-reefer-finish.mts --phase 1 --apply --auth AUTH-211
+    = steps 1-3 + batches A, C, D. Also turns verify-expense-line-account-matches-item green (red on main since 202615400930
+    pointed the reefer item at 5015 while these lines still posted to 5000).
+  PHASE 2 (after 202615400800 deploys): same command with --phase 2 = batch B (the DEF line's load move). The script refuses
+    phase 2 until the batch CHECK counts to_load_id.
+  Rehearsed in this exact order on Neon fork br-silent-haze-akqs5k94: phase 1 (1+6+4 lines, 0 refused; guard LIVE PASS 0
+  mismatches) -> phase 2 refused -> 202615400800 -> phase 2 (1 line, 0 refused; both 13523-32 lines on load 13534).
+  Dry-run first (default, no --apply).
+expires_at: 2026-10-04T22:22:02Z
+status: OPEN
+THIS AUTHORIZATION DOES NOT COVER: any other field or record of IH 35 Trucking LLC or IH 35 Transportation; receipt
+  99530579; any DELETE; any company other than USMCA.
