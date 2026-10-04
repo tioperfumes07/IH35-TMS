@@ -23,6 +23,9 @@ function assertPage(src) {
   if (/setActorUserId|setAction\(|setEntityType|setSince\(/.test(src) && !src.includes("useStagedListFilters")) {
     errors.push("must not keep hand-rolled draft state without useStagedListFilters");
   }
+  // BANK-F91286 leftover refuse — ActivityLogPage page-scoped text token ratchet
+  if (src.includes("text-[11px]")) errors.push(`${TARGET}: leftover text-[11px]`);
+  if (src.includes("#8A92AB") || src.includes("#334155")) errors.push(`${TARGET}: leftover off-scale muted`);
   return errors;
 }
 
@@ -42,6 +45,11 @@ function selftest() {
   `;
   if (assertPage(bad).length === 0 || assertPage(good).length > 0) {
     console.error(`${LABEL} SELFTEST FAIL`, { bad: assertPage(bad), good: assertPage(good) });
+    process.exit(1);
+  }
+  const leftover = assertPage(`${good}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`);
+  if (!leftover.some((e) => e.includes("leftover text-[11px]")) || !leftover.some((e) => e.includes("leftover off-scale muted"))) {
+    console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`, leftover);
     process.exit(1);
   }
   console.log(`${LABEL} selftest PASS`);
