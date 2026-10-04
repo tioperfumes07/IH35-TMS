@@ -74,9 +74,18 @@ if (process.argv.includes("--selftest")) {
 }
 
 const fails = [...entryPointGaps(), ...rewriteGaps()];
-// The SAME URL requireLiveDbOrExit connects with — including the gate credential when no DATABASE_URL is set (ROUND 384.1).
-// Probing the env alone dialled a default localhost whenever the gate credential was the source, and crashed the gate.
+// ROUND 384.1 + ROUND 386 (Lead) — resolve through the sanctioned gate credential (not env alone),
+// and refuse to connect when nothing resolves. An unset connection string makes pg dial localhost:5432.
 const raw = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL || resolveGateReadonlyDbUrl();
+if (!raw) {
+  console.error(
+    `FAIL ${LABEL}: no guard database credential resolved (DATABASE_DIRECT_URL, DATABASE_URL, ` +
+      `DATABASE_URL_READONLY, gate read-only credential). Refusing to connect — an unset ` +
+      `connection string makes pg dial localhost:5432, which would verify a local database and ` +
+      `report it as production.`
+  );
+  process.exit(1);
+}
 const handed = directGuardUrl(raw);
 if (raw && isPooledHost(host(handed))) fails.push(`the URL a guard is handed is still the pooler (${host(handed)})`);
 

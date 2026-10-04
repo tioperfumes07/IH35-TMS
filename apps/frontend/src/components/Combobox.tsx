@@ -48,6 +48,18 @@ type ComboboxProps = {
    * server matches whose label does not literally contain the typed text).
    * Optional and additive: every existing call site keeps its current client-side behaviour.
    */
+  /**
+   * BANK-FILTER-BLUR-01 — set this when the TYPED TEXT ITSELF IS THE VALUE (a list filter), not a
+   * typeahead for a picker that commits an id. A picker discards its query on close so the next
+   * open starts clean; a filter must not, because the query IS the filter. Measured defect: the
+   * Banking register's "Filter by description" is a Combobox with onSearch={setDescriptionFilter}.
+   * Typing "faro" narrowed the list, then clicking away ran closeListbox() → setQuery("") → the
+   * onSearch effect → setDescriptionFilter("") and the whole register silently reverted — the
+   * owner's report, "it shows faro on the filter but if i move from the filter the transactions go
+   * back to the order they are in". Default false, so every existing picker behaves exactly as
+   * before.
+   */
+  searchIsValue?: boolean;
   onSearch?: (query: string) => void;
   filterMode?: "contains" | "startsWith" | "fuzzy";
   /** Focus target for form validation (`[data-field="…"]`). */
@@ -172,6 +184,7 @@ export function Combobox({
   id,
   className,
   onSearch,
+  searchIsValue = false,
   ariaLabel,
   size = "md",
 }: ComboboxProps) {
@@ -218,7 +231,10 @@ export function Combobox({
   // (query empty); switch to the typed query only once there is one. onFocus selects the label so
   // the first keystroke cleanly replaces it (see below) — the FK is only dropped on real edit via
   // clearCommittedOnEdit, never on focus.
-  const displayValue = open && query.length > 0 ? query : selectedOption?.label ?? "";
+  // BANK-FILTER-BLUR-01: for a filter the typed text survives close, so it must stay VISIBLE too —
+  // a filter that is still applied but shows an empty box is the same lie in the other direction.
+  const displayValue =
+    (open || searchIsValue) && query.length > 0 ? query : selectedOption?.label ?? "";
 
   // SAF-F31: tell the parent what was typed so it can refetch server-side. Effect (not inline in the
   // input handler) so a programmatic query reset also reaches the parent and cannot leave the picker
@@ -316,7 +332,10 @@ export function Combobox({
 
   function closeListbox() {
     setOpen(false);
-    setQuery("");
+    // BANK-FILTER-BLUR-01: a picker clears its query on close so the next open starts clean and the
+    // parent refetches unfiltered (FE-COMBOBOX-STALE-LABEL above). A FILTER must keep it — clearing
+    // it fires onSearch("") and silently drops the filter the operator just set.
+    if (!searchIsValue) setQuery("");
     setActiveIndex(-1);
   }
 

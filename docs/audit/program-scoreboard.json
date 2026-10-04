@@ -1,10 +1,10 @@
 {
-  "healthzSha": "2ae0bd7",
-  "generated_at": "2026-10-04T17:31:15.395Z",
+  "healthzSha": "f256a2c",
+  "generated_at": "2026-10-04T17:43:29.383Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "2ae0bd7",
+    "deployedSha": "f256a2c",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,69 @@
   },
   "recentActivity": [
     {
+      "number": 25302,
+      "title": "FINDING: LST-F3320 LANE: NON-FINANCIAL -- regclass six fail closed: every to_regclass false branch in six files throws <schema>_<table>_unavailable or degrades with a signal (Lead LANE_CROSS 2026-10-04)",
+      "state": "merged",
+      "mergedAtCt": "10/04/2026, 12:41 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25302",
+      "sha": "526f40b71d",
+      "committedAtIso": "2026-10-04T12:41:23-05:00"
+    },
+    {
+      "number": 25301,
+      "title": "FINDING: N/A LANE: DOCS (CC-2 OUTBOX 2026-10-04 status line — not idle; merges stopped per the P0 main-cannot-boot order)",
+      "state": "merged",
+      "mergedAtCt": "10/04/2026, 12:39 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25301",
+      "sha": "c2f71228b7",
+      "committedAtIso": "2026-10-04T12:39:45-05:00"
+    },
+    {
+      "number": 25300,
+      "title": "Claude-3- P0 BOOT-F396: remove duplicate form-425c exhibits route mount (backend boot crash)",
+      "state": "merged",
+      "mergedAtCt": "10/04/2026, 12:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25300",
+      "sha": "f256a2cc11",
+      "committedAtIso": "2026-10-04T12:35:39-05:00"
+    },
+    {
+      "number": 25299,
+      "title": "FINDING: N/A LANE: DOCS (CC-1 ROUND 389.2 triage verdicts: 39 failing guards — 8 code-wrong, 20 guard-wrong, 1 now passes, 10 need a live DB)",
+      "state": "merged",
+      "mergedAtCt": "10/04/2026, 12:34 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25299",
+      "sha": "f19223637d",
+      "committedAtIso": "2026-10-04T12:34:57-05:00"
+    },
+    {
+      "number": 25296,
+      "title": "FINDING: N/A LANE: DOCS (CC-1 OUTBOX 2026-10-04: on ROUND 389.2 wiring batch 1; merges stopped per P0 main-cannot-boot)",
+      "state": "merged",
+      "mergedAtCt": "10/04/2026, 12:34 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25296",
+      "sha": "8f5bca5115",
+      "committedAtIso": "2026-10-04T12:34:26-05:00"
+    },
+    {
+      "number": 25297,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL (ROUND 389.2 wiring batch 1: 50 passing money guards (ledger / journal / posting / escrow / void-reversal) that no verify-step or workflow ever ran are wired as verify-steps 14413-14609, each claimed through the allocator (#25294))",
+      "state": "merged",
+      "mergedAtCt": "10/04/2026, 12:34 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25297",
+      "sha": "e6ffa3e238",
+      "committedAtIso": "2026-10-04T12:34:22-05:00"
+    },
+    {
+      "number": 25298,
+      "title": "FINDING: ACCT-F9976 LANE: FINANCIAL (ROUND 389.3 ruling 1, step 1: a negative-net settlement is no longer refused — net pay floors at $0.00 and the shortfall posts Dr 1257 driver_negative_settlement_receivable, the driver on the line and the settlement as the entry's source; the A/P chain applies only what the load bills hold)",
+      "state": "merged",
+      "mergedAtCt": "10/04/2026, 12:34 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25298",
+      "sha": "accbab99db",
+      "committedAtIso": "2026-10-04T12:34:19-05:00"
+    },
+    {
       "number": 25295,
       "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: CC-2 verify-steps 12083..12395 — ROUND 389.2 wiring of 79 passing banking/recon/plaid/factoring guards)",
       "state": "merged",
@@ -2148,69 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25293",
       "sha": "0d46e6481d",
       "committedAtIso": "2026-10-04T12:02:31-05:00"
-    },
-    {
-      "number": 25292,
-      "title": "Cursor- BANK-F91550 CustomerDetail leftover slate classes + leftover refuse on 4116",
-      "state": "merged",
-      "mergedAtCt": "10/04/2026, 11:55 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25292",
-      "sha": "75029ae9b2",
-      "committedAtIso": "2026-10-04T11:55:06-05:00"
-    },
-    {
-      "number": 25291,
-      "title": "Cursor- BANK-F91549 SystemModule leftover slate classes + leftover refuse on 4142",
-      "state": "merged",
-      "mergedAtCt": "10/04/2026, 11:51 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25291",
-      "sha": "38185ed5f6",
-      "committedAtIso": "2026-10-04T11:51:29-05:00"
-    },
-    {
-      "number": 25290,
-      "title": "Cursor- BANK-F91548 AccountingHome leftover slate classes + leftover refuse on 3870",
-      "state": "merged",
-      "mergedAtCt": "10/04/2026, 11:43 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25290",
-      "sha": "cf4631eb22",
-      "committedAtIso": "2026-10-04T11:43:13-05:00"
-    },
-    {
-      "number": 25289,
-      "title": "Cursor- BANK-F91547 OwnerHome + DefaultHome leftover slate classes + leftover refuse on 3888",
-      "state": "merged",
-      "mergedAtCt": "10/04/2026, 11:38 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25289",
-      "sha": "eebbb7c82a",
-      "committedAtIso": "2026-10-04T11:38:28-05:00"
-    },
-    {
-      "number": 25288,
-      "title": "FINDING: BANK-F91546 TripPairing leftover slate classes + leftover refuse on CI step 4130",
-      "state": "merged",
-      "mergedAtCt": "10/04/2026, 11:32 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25288",
-      "sha": "d977d97c18",
-      "committedAtIso": "2026-10-04T11:32:17-05:00"
-    },
-    {
-      "number": 25287,
-      "title": "FINDING: BANK-F91545 ProfitPerTruck leftover slate classes + leftover refuse on CI step 3854",
-      "state": "merged",
-      "mergedAtCt": "10/04/2026, 11:27 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25287",
-      "sha": "d7f1802d9e",
-      "committedAtIso": "2026-10-04T11:27:01-05:00"
-    },
-    {
-      "number": 25286,
-      "title": "FINDING: BANK-F91544 CustomerProfit leftover slate classes + leftover refuse on CI step 3862",
-      "state": "merged",
-      "mergedAtCt": "10/04/2026, 11:23 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25286",
-      "sha": "ef51c9ebd8",
-      "committedAtIso": "2026-10-04T11:23:05-05:00"
     }
   ]
 }
