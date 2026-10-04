@@ -1,3 +1,9 @@
+## 2026-10-04T08:12Z · BANK-F91454 factoring r315 Payments tabs WIRED CI · tip `4329135f7a`
+
+DONE: #25196 — verify-steps/1986 now runs ops/verify-factoring-r315-payments-tabs --selftest.
+
+NEXT: BANK-F91455 wire r315 reserves-shared into 1130 · C-21 odometer + C-22 fail=triage · skip pile parked · HH08 no migrations.
+
 ## 2026-10-04T08:06Z · BANK-F91453 factoring r315 Home cash-flow WIRED CI · tip `8598d8ed81`
 
 DONE: #25195 — verify-steps/4012 now runs ops/verify-factoring-r315-home-cash-flow --selftest.
