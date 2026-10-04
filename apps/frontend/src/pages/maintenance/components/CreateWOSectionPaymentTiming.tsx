@@ -17,7 +17,7 @@ export function CreateWOSectionPaymentTiming({ register, watch, setValue }: Prop
       <div className="space-y-2 text-xs">
         <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
           <div className="space-y-1">
-            <label className="text-[11px] font-semibold text-gray-600">Bill Terms</label>
+            <label className="text-xs font-semibold text-gray-600">Bill Terms</label>
             {/* C9: this select had `onChange={() => {}}`. Bill Terms IS sent (CreateWorkOrderModal
                 `bill_terms: values.bill_terms || undefined`) and the route accepts it — but the
                 handler was a no-op, so whatever the operator picked was thrown away and every WO
@@ -33,15 +33,15 @@ export function CreateWOSectionPaymentTiming({ register, watch, setValue }: Prop
             />
           </div>
           <div className="space-y-1">
-            <label className="text-[11px] font-semibold text-gray-600">Bill Date</label>
+            <label className="text-xs font-semibold text-gray-600">Bill Date</label>
             <DatePicker value={watch("bill_date") || ""} onChange={(v) => setValue("bill_date", v, { shouldDirty: true })} className="h-8 w-full" />
           </div>
           <div className="space-y-1">
-            <label className="text-[11px] font-semibold text-gray-600">Due Date (auto)</label>
+            <label className="text-xs font-semibold text-gray-600">Due Date (auto)</label>
             <DatePicker value={watch("due_date") || ""} onChange={(v) => setValue("due_date", v, { shouldDirty: true })} className="h-8 w-full bg-gray-100" disabled />
           </div>
         </div>
-        <div className="text-[11px] font-semibold text-gray-600">Payment Timing</div>
+        <div className="text-xs font-semibold text-gray-600">Payment Timing</div>
         <label className="flex items-center gap-2">
           <input type="radio" value="paid_same_day" {...register("payment_timing")} />
           Paid today
