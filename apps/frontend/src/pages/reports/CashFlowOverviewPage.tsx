@@ -250,10 +250,10 @@ export function CashFlowOverviewPage() {
         onReset={staged.reset}
         applyDisabled={!staged.dirty}
       >
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Group by</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Group by</span>
           <select
-            className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
+            className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.groupBy}
             onChange={(e) => staged.setDraft((p) => ({ ...p, groupBy: e.target.value }))}
             data-testid="reports-cash-flow-overview-group-by"
@@ -374,7 +374,7 @@ export function CashFlowOverviewPage() {
               <li>
                 Uncategorized transactions:{" "}
                 <strong>{query.data.current_state.uncategorized_transactions_count}</strong> —{" "}
-                <Link className="text-slate-700 underline" to="/banking/categorization-rules">
+                <Link className="text-[#1F2A44] underline" to="/banking/categorization-rules">
                   Open categorization
                 </Link>
               </li>
@@ -385,7 +385,7 @@ export function CashFlowOverviewPage() {
                     disputes surface that always showed 0 for this figure). Link to the real factoring
                     chargebacks page instead. */}
                 Open chargebacks: <strong>{money(query.data.current_state.chargebacks_open_cents)}</strong> —{" "}
-                <Link className="text-slate-700 underline" to="/factoring/chargebacks-fees">
+                <Link className="text-[#1F2A44] underline" to="/factoring/chargebacks-fees">
                   View chargebacks
                 </Link>
               </li>

@@ -1,3 +1,15 @@
+## 2026-10-04T19:20Z · BANK-F91543 CashFlow leftover slate classes · this PR
+
+DONE: CashFlowOverviewPage leftover text-slate-* / border-slate-* → house #4B5563 / #1F2A44 / #E5E7EB; leftover refuse LIVE on EVEN 3850 print-letter leftoverHits (3742 LIVE-FAILS formatDateUS vs mmmDd — not a leftover host).
+
+NEXT: leftover muted chrome (TripPairingBoard slate-* / OwnerHome / remaining pages / skip pile) · skip pile parked · HH16 leftovers first.
+
+## 2026-10-04T19:15Z · BANK-F91542 CargoSensor leftover slate classes WIRED CI · tip `5b71005af8`
+
+DONE: #25284 — CargoSensorTimeline leftover text-slate-* / border-slate-* / bg-slate-* → house tokens; leftover refuse on EVEN 4120 --selftest + live.
+
+NEXT: leftover muted chrome (CashFlow / TripPairing / remaining pages / skip pile) · skip pile parked · HH16 leftovers first.
+
 ## 2026-10-04T19:05Z · BANK-F91542 CargoSensor leftover slate classes · this PR
 
 DONE: CargoSensorTimeline leftover text-slate-* / border-slate-* / bg-slate-* → house #1F2A44 / #4B5563 / #E5E7EB / #F7F8FA; leftover refuse on EVEN 4120 --selftest + live.
