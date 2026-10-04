@@ -1,3 +1,9 @@
+## 2026-10-04T10:22Z · BANK-F91479 IftaPreparerCard leftover WIRED CI · tip `0c87f07b4c`
+
+DONE: #25221 — IftaPreparerCard #4B5563; verify-steps/3884 runs verify-basis-selector leftover refuse --selftest + live.
+
+NEXT: BANK-F91480 RMBucketsGrid leftover #334155 + leftover refuse on 4190 · skip pile parked · HH10 no migrations.
+
 ## 2026-10-04T10:16Z · BANK-F91478 DefaultHome leftover WIRED CI · tip `737e4efa1d`
 
 DONE: #25220 — DefaultHome KPI warn/healthy #4B5563; verify-steps/3886 runs leftover refuse --selftest + live.
