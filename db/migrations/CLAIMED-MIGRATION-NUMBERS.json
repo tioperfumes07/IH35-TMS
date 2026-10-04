@@ -2071,6 +2071,11 @@
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-04",
       "purpose": "ROUND 391.2 (CC-2): reefer fuel_type from the FEED's product code — the USMCA fuel.fuel_transactions rows that exactly match a Relay product-033 'Reefer' line (same unit, +/-1 day, gallons to 3 decimals, one-to-one) become fuel_type 'reefer_diesel' (out of IFTA); nothing inferred, nothing matched by amount."
+    },
+    "202615401000": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-04",
+      "purpose": "Reclassify by load (U24) is refused by the database: accounting.reclassify_batches_changes_something counts only account/class/entity/location, so a load-only batch violates it. Widen the CHECK to include to_item_id and to_load_id, the same set the engine already accepts."
     }
   },
   "202613590001": {
