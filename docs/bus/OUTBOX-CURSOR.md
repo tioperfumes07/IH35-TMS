@@ -1,3 +1,9 @@
+## 2026-10-04T10:48Z · BANK-F91484 LegalSignPage leftover WIRED CI · tip `78a94b89d3`
+
+DONE: #25226 — LegalSignPage Send Code #4B5563; verify-steps/12372 leftover refuse --selftest + live.
+
+NEXT: BANK-F91485 WOStatusPieChart leftover #334155 + leftover refuse on 4102 · skip pile parked · HH10 no migrations.
+
 ## 2026-10-04T10:40Z · BANK-F91483 CatalogQuickCreateDrawer leftover WIRED CI · tip `3db32a15e7`
 
 DONE: #25225 — CatalogQuickCreateDrawer field labels #4B5563; verify-steps/1510 leftover refuse now catches #334155.
