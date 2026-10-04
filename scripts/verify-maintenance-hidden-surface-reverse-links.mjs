@@ -33,6 +33,9 @@ const checks = [
 
 const failures = (candidate) => {
   const found = checks.filter(([key, pattern]) => !pattern.test(candidate[key])).map(([, , label]) => label);
+  // BANK-F91283 leftover refuse — ArrivingSoonCard page-scoped only
+  if (candidate.arriving?.includes("text-[11px]")) found.push("ArrivingSoonCard.tsx: leftover text-[11px]");
+  if (candidate.arriving?.includes("#8A92AB") || candidate.arriving?.includes("#334155")) found.push("ArrivingSoonCard.tsx: leftover off-scale muted");
   let matrix;
   try { matrix = JSON.parse(candidate.matrix); } catch (error) { found.push(`maintenance matrix must parse: ${error.message}`); }
   const leaves = [
@@ -92,7 +95,13 @@ if (process.argv.includes("--self-test")) {
   const feed = JSON.parse(sources.feed);
   feed.entries.unshift({ guard: GUARD, modules: ["maintenance"], cols: ["reverse_link"], leafRe: ".*" });
   if (!failures({ ...sources, feed: JSON.stringify(feed) }).length) throw new Error("feed mutation survived");
-  console.log("verify-maintenance-hidden-surface-reverse-links: SELF-TEST PASS — 23 planted defects rejected");
+  const leftoverPlant = { ...sources, arriving: `${sources.arriving}\n<div className="text-[11px] text-[#8A92AB]">plant</div>` };
+  const leftoverHits = failures(leftoverPlant);
+  if (!leftoverHits.some((e) => e.includes("leftover text-[11px]")) || !leftoverHits.some((e) => e.includes("leftover off-scale muted"))) {
+    console.error(`verify-maintenance-hidden-surface-reverse-links: SELF-TEST FAIL — leftover plant escaped: ${leftoverHits.join("; ")}`);
+    process.exit(1);
+  }
+  console.log("verify-maintenance-hidden-surface-reverse-links: SELF-TEST PASS — 23 planted defects rejected + leftover plant");
 }
 
 console.log(`verify-maintenance-hidden-surface-reverse-links: PASS — ${checks.length} hidden-surface reverse-link invariants`);
