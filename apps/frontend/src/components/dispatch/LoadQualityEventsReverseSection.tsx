@@ -62,7 +62,7 @@ export function LoadQualityEventsReverseSection({
           <ul className="space-y-2">
             {rows.map((event) => (
               <li key={event.id} className="text-xs text-slate-700" data-testid={`load-quality-event-${event.id}`}>
-                <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-[11px]">{formatDateUS(event.event_date)}</span>{" "}
+                <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs">{formatDateUS(event.event_date)}</span>{" "}
                 <StatusBadge variant={event.severity === "severe" ? "crit" : event.severity === "warning" ? "warn" : "info"}>
                   {event.severity}
                 </StatusBadge>{" "}
