@@ -19,6 +19,7 @@ function leftoverHits(src) {
   if (src.includes("#94a3b8")) hits.push("leftover off-scale muted #94a3b8");
   if (src.includes("#475569")) hits.push("leftover off-scale muted #475569");
   if (src.includes("#aab6cd")) hits.push("leftover off-scale muted #aab6cd");
+  if (src.includes("#cbd5e1") || src.includes("#CBD5E1")) hits.push("leftover #cbd5e1 border");
   return hits;
 }
 
@@ -67,7 +68,7 @@ function selftest() {
       console.error(`${LABEL} SELFTEST FAIL: not caught`, caught);
       process.exit(1);
     }
-    writeFileSync(tmpModal, original + '\n<div className="text-xs text-[#94a3b8] text-[#475569] text-[#aab6cd]">plant</div>\n', "utf8");
+    writeFileSync(tmpModal, original + '\n<div className="text-xs text-[#94a3b8] text-[#475569] text-[#aab6cd] border-[#cbd5e1]">plant</div>\n', "utf8");
     const leftoverCaught = run(tmpModal);
     if (leftoverCaught.ok || !leftoverCaught.failed.includes("leftover-muted")) {
       console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`, leftoverCaught);
