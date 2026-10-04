@@ -240,33 +240,23 @@ async function handleBillBulk(ctx: BulkPerEntityContext<BillBulkPayload>): Promi
     // opening a second transaction per item here would self-deadlock on the bill row's own lock,
     // same reasoning cc-payment.routes.ts documents for its own after-commit call. Flag-gated by
     // the SAME BILL_PAYMENT_GL_POSTING_ENABLED check postBillPaymentGlIfEnabled uses internally —
-    // no new flag, no new GL math. Best-effort: a post failure must not fail the whole batch or
-    // this one bill's payment record, but must not vanish silently either (SWL-1) — logged.
+    // no new flag, no new GL math. A post failure fails THIS item only (its savepoint), never silently.
     if (bulkPaymentId) {
-      try {
-        const glPostingEnabled = await isBillPaymentGlPostingEnabled(operatingCompanyId, actorUserId);
-        if (glPostingEnabled) {
-          await postSourceTransactionInClientTx(
-            // BulkPerEntityContext's client is a narrower structural type (non-generic query());
-            // same underlying pg client every other InClientTx caller passes, just typed loosely
-            // here for the bulk-framework's generic reuse across many entity kinds.
-            client as unknown as Parameters<typeof postSourceTransactionInClientTx>[0],
-            {
-              operating_company_id: operatingCompanyId,
-              source_transaction_type: "bill_payment",
-              source_transaction_id: bulkPaymentId,
-            },
-            { userId: actorUserId }
-          );
-        }
-      } catch (err) {
-        logger.warn("bills_bulk_bill_payment_gl_post_failed", {
-          err: err instanceof Error ? err.message : String(err),
-          company_id: operatingCompanyId,
-          bill_id: id,
-          bill_payment_id: bulkPaymentId,
-          bulk_call_id: bulkCallId,
-        });
+      // 363-CC1-B (CC-3, 2026-10-04): a bill payment posts on its creating transaction or not at all. A posting failure THROWS — processBulkPerId's per-item SAVEPOINT rolls this item (payment + postings) back and reports it failed; the batch continues. It used to be logged and swallowed, leaving a payment with no GL (the 2170 clearing never cleared).
+      const glPostingEnabled = await isBillPaymentGlPostingEnabled(operatingCompanyId, actorUserId);
+      if (glPostingEnabled) {
+        await postSourceTransactionInClientTx(
+          // BulkPerEntityContext's client is a narrower structural type (non-generic query());
+          // same underlying pg client every other InClientTx caller passes, just typed loosely
+          // here for the bulk-framework's generic reuse across many entity kinds.
+          client as unknown as Parameters<typeof postSourceTransactionInClientTx>[0],
+          {
+            operating_company_id: operatingCompanyId,
+            source_transaction_type: "bill_payment",
+            source_transaction_id: bulkPaymentId,
+          },
+          { userId: actorUserId }
+        );
       }
     }
 

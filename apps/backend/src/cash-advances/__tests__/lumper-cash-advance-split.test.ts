@@ -153,11 +153,10 @@ describe("disburseCashAdvanceSplit — C6 bill_payment leg GL poster", () => {
     );
   });
 
-  it("a poster failure does not abort the split disburse (best-effort)", async () => {
+  it("363-CC1-B: a poster failure aborts the split disburse — no bill payment commits without its postings", async () => {
     mockIsBillPaymentGlPostingEnabled.mockResolvedValue(true);
     mockPostSourceTransactionInClientTx.mockRejectedValueOnce(new Error("boom"));
-    const result = await disburseCashAdvanceSplit(ACTOR, OPCO, { advance_id: ADVANCE_ID, splits });
-    expect(result.ok).toBe(true);
+    await expect(disburseCashAdvanceSplit(ACTOR, OPCO, { advance_id: ADVANCE_ID, splits })).rejects.toThrow("boom");
     expect(mockPostSourceTransactionInClientTx).toHaveBeenCalledTimes(1);
   });
 
