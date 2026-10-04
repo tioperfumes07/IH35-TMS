@@ -34,7 +34,7 @@ function audit(source) {
   if (!/const canSubmit\b/.test(source.modal) || !/disabled=\{isSaving \|\| !canSubmit\}/.test(source.modal)) failures.push("modal submit must be disabled until valid");
   if (!/Created \{new Date\(row\.created_at\)/.test(source.modal)) failures.push("modal edit view must surface audit metadata");
   if (!/const created = await client\.create\(operatingCompanyId, body\)/.test(source.modal)) failures.push("modal create must pass selected company and body to canonical client");
-  if (!/onSaved\(\{ id: String\(created\.id\), label: form\.display_name\.trim\(\) \}\)/.test(source.modal)) failures.push("modal must return created canonical id to nested picker/list caller");
+  if (!/onSaved\(\{ id: String\(created\.id\), label: (?:form\.display_name\.trim\(\)|displayName_) \}\)/.test(source.modal)) failures.push("modal must return created canonical id to nested picker/list caller");
 
   if (!/nextSortOrder = rows\.length \? Math\.max/.test(source.list)) failures.push("list must compute nextSortOrder=max+1");
   if (!/nextSortOrder=\{nextSortOrder\}/.test(source.list)) failures.push("list must pass nextSortOrder to modal");

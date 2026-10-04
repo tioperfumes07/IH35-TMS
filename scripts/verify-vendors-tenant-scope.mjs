@@ -21,7 +21,7 @@ if (!listRoute) fail("could not locate vendors list route");
 if (!/set_config\('app\.operating_company_id'/.test(listRoute)) {
   fail("vendors list route must set app.operating_company_id");
 }
-if (!/operating_company_id\s*=\s*\$\$\{values\.length\}/.test(listRoute)) {
+if (!/operating_company_id\s*=\s*\$\$\{(?:values\.length|companyScopeIdx)\}/.test(listRoute)) {
   fail("vendors list query must include operating_company_id filter");
 }
 

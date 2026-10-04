@@ -32,7 +32,16 @@ const errors = [];
 // per-entity gate-resolver helper). A file gating this type must reference at least one of these.
 const MONITORED = {
   expense: ["EXPENSE_GL_POSTING_ENABLED", "EXPENSE_GL_POSTING_FLAG_KEY"],
-  bill: ["BILL_GL_POSTING_ENABLED", "BILL_GL_POSTING_FLAG_KEY", "SETTLEMENT_GL_POSTING_ENABLED", "SETTLEMENT_GL_POSTING_FLAG_KEY"],
+  bill: [
+    "BILL_GL_POSTING_ENABLED",
+    "BILL_GL_POSTING_FLAG_KEY",
+    "SETTLEMENT_GL_POSTING_ENABLED",
+    "SETTLEMENT_GL_POSTING_FLAG_KEY",
+    // Parts-inventory purchase poster (parts-inventory-posting/poster.service.ts) posts a "bill" gated by its
+    // own per-entity kill switch (default OFF) resolved through isEnabled().
+    "PARTS_PURCHASE_GL_POSTING_ENABLED",
+    "PARTS_PURCHASE_GL_POSTING_FLAG",
+  ],
   bill_payment: [
     "BILL_PAYMENT_GL_POSTING_ENABLED",
     "BILL_PAYMENT_GL_POSTING_FLAG_KEY",

@@ -30,14 +30,19 @@ const failures = [];
 const routeCount = (text.match(/\bapp\.(?:get|post|put|patch|delete)\b/g) ?? []).length;
 // Count requireRole gate calls. The `reply,` comma form matches call sites
 // (`requireRole(reply, role, [...])`) but NOT the helper definition (`requireRole(reply: FastifyReply`).
-const gateCalls = (text.match(/\brequireRole\(reply,/g) ?? []).length;
+// Money handlers (reserve / legal-fee / recovery) gate inline with an explicit role allow-list that 403s —
+// an equivalent gate, counted alongside requireRole call sites.
+const inlineGateCalls = (
+  text.match(/\[(?:"[A-Za-z]+",?\s*)+\]\.includes\(String\(authUser\.role \?\? ""\)\)\)\s*return reply\.code\(403\)/g) ?? []
+).length;
+const gateCalls = (text.match(/\brequireRole\(reply,/g) ?? []).length + inlineGateCalls;
 
 if (routeCount === 0) {
   failures.push("no route registrations found — matcher may be stale");
 }
 if (gateCalls < routeCount) {
   failures.push(
-    `only ${gateCalls} requireRole(reply, ...) gate call(s) for ${routeCount} route(s) — every handler must gate`
+    `only ${gateCalls} role gate call(s) (requireRole(reply, ...) or inline 403 allow-list) for ${routeCount} route(s) — every handler must gate`
   );
 }
 if (!/LEGAL_MATTERS_READ_ROLES/.test(text)) {

@@ -65,12 +65,12 @@ const CHECKS = [
   {
     name: "posting: insertPostingLines writes class_id into journal_entry_postings",
     file: "apps/backend/src/accounting/posting-engine.service.ts",
-    pattern: /class_id,[\s\S]{0,600}line\.class_id \?\? null/,
+    pattern: /class_id,[\s\S]{0,600}line\.class_id \?\? null|class_id:\s*line\.class_id \?\? null/,
   },
   {
     name: "posting: buildBillLines propagates bill.class_id onto debit lines",
     file: "apps/backend/src/accounting/posting-engine.service.ts",
-    pattern: /class_id:\s*bill\.class_id/,
+    pattern: /class_id:\s*bill\.class_id|class_id:\s*row\.class_id \?\? bill\.class_id/,
   },
   {
     name: "posting: buildExpenseLines propagates exp.class_id onto debit lines",

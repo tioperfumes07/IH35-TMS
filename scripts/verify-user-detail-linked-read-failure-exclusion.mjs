@@ -3,7 +3,7 @@ import fs from "node:fs";
 
 const file = "apps/frontend/src/pages/UserDetail.tsx";
 const contracts = [
-  "customersQuery.isError ? [] : customersQuery.data ?? []",
+  "customersQuery.isError ? [] : customersQuery.data?.customers ?? []",
   "[customersQuery.data, customersQuery.isError]",
   "const rows = safetyEventsQuery.isError ? [] : safetyEventsQuery.data ?? []",
   "[safetyEventsQuery.data, safetyEventsQuery.isError]",
