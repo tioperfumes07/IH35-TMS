@@ -831,9 +831,11 @@ export async function reinstateDocumentThenVoidReversal(
   const prepared = await runInTx((client) => reinstateDocument(client, { ...input, expectGlRestoreFollowUp: true }));
 
   if (prepared.reinstatedFromVoidJeId) {
-    const { voidJournalEntry } = await import("./journal-entries.service.js");
+    // ROUND 390.1 — a reversal line is terminal: the void's reversing JE is never itself reversed. The reinstated
+    // document's money comes back as FRESH copies of the lines the void cancelled (restoreReversedJournalEntry).
+    const { restoreReversedJournalEntry } = await import("./journal-entries.service.js");
     try {
-      await voidJournalEntry(
+      await restoreReversedJournalEntry(
         input.operatingCompanyId,
         prepared.reinstatedFromVoidJeId,
         `Unvoid ${input.type} ${input.id}: ${input.reason}`,
@@ -844,7 +846,7 @@ export async function reinstateDocumentThenVoidReversal(
       if (!/already.?void|voided/i.test(msg)) {
         throw new ReinstateDocumentError(
           "reinstate_reversal_void_failed",
-          `Document reinstated, but voiding the reversing JE failed: ${msg}`
+          `Document reinstated, but restoring its GL (the void's reversing JE) failed: ${msg}`
         );
       }
     }

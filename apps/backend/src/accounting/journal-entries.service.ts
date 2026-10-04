@@ -6,7 +6,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { pushJournalEntryToQuickBooksImmediateBestEffort } from "./journal-entry-qbo-push.service.js";
-import { auditVoid, canVoid, postVoidReversal } from "./void.service.js";
+import { auditVoid, canVoid, postVoidReversal, resolveReversalDate, todayIso } from "./void.service.js";
 // ACCT-PERIOD-CLOSE-01: this manual/API create path was the one JE-insert choke point with no
 // closed-period check at all -- accounting.periods' DB triggers (migration 0183) already block the
 // raw INSERT as a last resort, but this call gives a clean, typed PostingEngineError("PERIOD_LOCKED")
@@ -579,6 +579,141 @@ export async function reverseJournalEntryNoFlip(
     linkageWritten = true;
   }
   return { reversal, linkage_written: linkageWritten };
+}
+
+/**
+ * ROUND 390.1 — RESTORE what a reversing entry cancelled, WITHOUT reversing a reversal.
+ *
+ * A reversal line is terminal (posting-line-writer refuses a line whose reversal_of_line_id names another reversal), so
+ * the two paths whose PURPOSE is to bring reversed money back — reinstating a voided document, and undoing a reclassify
+ * — cannot "void the void's reversing JE" any more. This posts the same economics as that old reverse-of-reversal, in a
+ * shape the ledger can trust: for each line L of the reversing entry X,
+ *   - L is a reversal (reversal_of_line_id = O): a FRESH copy of the original line O (its account, side, amount,
+ *     dimensions, source document and load) — a new live line, not a reversal of L;
+ *   - L is an ordinary line (a reclassify in-leg): its normal reversal (reversal_of_line_id = L), which is allowed.
+ * Dated like any reversal (the entry's date, or today when that period is closed). Bidirectional header link
+ * (X.reversed_by_je_id / new.reverses_je_id) so a retry returns the existing restore. Only reinstate and reclassify
+ * undo call this — a raw void of a reversing entry stays refused.
+ */
+export async function restoreReversedJournalEntryInClientTx(
+  client: QueryableClient,
+  params: { operatingCompanyId: string; journalEntryId: string; reason: string; actorUserId: string; actorRole?: string }
+): Promise<{ restore_journal_entry_id: string; restore_date: string; already_restored: boolean }> {
+  const { operatingCompanyId, journalEntryId } = params;
+  const reason = params.reason.trim();
+  const head = await client.query<{ status: string; entry_date: string; reversed_by_je_id: string | null; is_sample_data: boolean | null }>(
+    `SELECT status, entry_date::text AS entry_date, reversed_by_je_id::text, is_sample_data
+       FROM accounting.journal_entries WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
+    [journalEntryId, operatingCompanyId]
+  );
+  const x = head.rows[0];
+  if (!x) throw new Error("journal_entry_not_found");
+  if (x.status !== "posted") throw new Error("journal_entry_not_postable");
+  if (x.reversed_by_je_id) {
+    const prior = await client.query<{ entry_date: string }>(`SELECT entry_date::text AS entry_date FROM accounting.journal_entries WHERE id = $1::uuid`, [x.reversed_by_je_id]);
+    return { restore_journal_entry_id: x.reversed_by_je_id, restore_date: prior.rows[0]?.entry_date ?? x.entry_date, already_restored: true };
+  }
+  const lines = await client.query<{
+    id: string; account_id: string; debit_or_credit: "debit" | "credit"; amount_cents: string; description: string | null;
+    class_id: string | null; location_id: string | null; entity_uuid: string | null; entity_type: string | null; load_id: string | null;
+    source_transaction_type: string | null; source_transaction_id: string | null; source_transaction_line_id: string | null;
+    o_id: string | null; o_account_id: string | null; o_side: "debit" | "credit" | null; o_amount_cents: string | null; o_description: string | null;
+    o_class_id: string | null; o_location_id: string | null; o_entity_uuid: string | null; o_entity_type: string | null; o_load_id: string | null;
+    o_source_type: string | null; o_source_id: string | null; o_source_line_id: string | null;
+  }>(
+    `SELECT l.id::text, l.account_id::text, l.debit_or_credit, l.amount_cents::text, l.description,
+            l.class_id::text, l.location_id::text, l.entity_uuid::text, l.entity_type, l.load_id::text,
+            l.source_transaction_type, l.source_transaction_id, l.source_transaction_line_id,
+            o.id::text AS o_id, o.account_id::text AS o_account_id, o.debit_or_credit AS o_side, o.amount_cents::text AS o_amount_cents,
+            o.description AS o_description, o.class_id::text AS o_class_id, o.location_id::text AS o_location_id,
+            o.entity_uuid::text AS o_entity_uuid, o.entity_type AS o_entity_type, o.load_id::text AS o_load_id,
+            o.source_transaction_type AS o_source_type, o.source_transaction_id AS o_source_id, o.source_transaction_line_id AS o_source_line_id
+       FROM accounting.journal_entry_postings l
+       LEFT JOIN accounting.journal_entry_postings o ON o.id = l.reversal_of_line_id
+      WHERE l.journal_entry_uuid = $1::uuid AND l.operating_company_id = $2::uuid
+      ORDER BY l.line_sequence`,
+    [journalEntryId, operatingCompanyId]
+  );
+  if (!lines.rows.length) throw new Error("journal_entry_nothing_to_restore");
+  const cutoff = (await client.query<{ c: string | null }>(`SELECT accounting.closed_period_cutoff($1::uuid)::text AS c`, [operatingCompanyId])).rows[0]?.c ?? null;
+  const restoreDate = resolveReversalDate(x.entry_date, cutoff, todayIso());
+  const postings = lines.rows.map((l) =>
+    l.o_id
+      ? {
+          // fresh copy of the ORIGINAL line the reversal cancelled — never a reversal of the reversal
+          account_id: l.o_account_id!,
+          debit_or_credit: l.o_side!,
+          amount_cents: Number(l.o_amount_cents),
+          description: l.o_description ? `Restored: ${l.o_description}` : "Restored",
+          class_id: l.o_class_id,
+          location_id: l.o_location_id,
+          entity_uuid: l.o_entity_uuid,
+          entity_type: (l.o_entity_type ?? null) as never,
+          load_id: l.o_load_id,
+          source_transaction_type: l.o_source_type,
+          source_transaction_id: l.o_source_id,
+          source_transaction_line_id: l.o_source_line_id,
+        }
+      : {
+          // an ordinary line in the entry (a reclassify in-leg): its normal reversal
+          account_id: l.account_id,
+          debit_or_credit: (l.debit_or_credit === "debit" ? "credit" : "debit") as "debit" | "credit",
+          amount_cents: Number(l.amount_cents),
+          description: l.description ? `Reversal: ${l.description}` : "Reversal",
+          class_id: l.class_id,
+          location_id: l.location_id,
+          entity_uuid: l.entity_uuid,
+          entity_type: (l.entity_type ?? null) as never,
+          load_id: l.load_id,
+          source_transaction_type: l.source_transaction_type,
+          source_transaction_id: l.source_transaction_id,
+          source_transaction_line_id: l.source_transaction_line_id,
+          reversal_of_line_id: l.id,
+        }
+  );
+  const created = await createJournalEntryOnClient(
+    client,
+    {
+      operating_company_id: operatingCompanyId,
+      entry_date: restoreDate,
+      memo: `Restore of journal entry ${journalEntryId}: ${reason}`,
+      source: "auto",
+      is_sample_data: Boolean(x.is_sample_data),
+      source_transaction_type: "journal_entry",
+      source_transaction_id: journalEntryId,
+      postings,
+    },
+    { userId: params.actorUserId, role: params.actorRole ?? "Owner" }
+  );
+  // Stamp the cancelled reversal lines' originals? No — the originals stay reversed by their reversal; the restore is a
+  // new live line. Header link only, so the reversing entry reads as restored and a retry is idempotent.
+  if (await hasReversalLinkageColumns(client)) {
+    await client.query(`UPDATE accounting.journal_entries SET reversed_by_je_id = $2::uuid, updated_at = now() WHERE id = $1::uuid AND operating_company_id = $3::uuid`, [journalEntryId, created.id, operatingCompanyId]);
+    await client.query(`UPDATE accounting.journal_entries SET reverses_je_id = $2::uuid, void_reason = $3, updated_at = now() WHERE id = $1::uuid AND operating_company_id = $4::uuid`, [created.id, journalEntryId, reason, operatingCompanyId]);
+  }
+  return { restore_journal_entry_id: created.id, restore_date: restoreDate, already_restored: false };
+}
+
+/** Own-connection wrapper for the reinstate routes (same money-control gate, role check and audit as voidJournalEntry). */
+export async function restoreReversedJournalEntry(
+  operatingCompanyId: string,
+  journalEntryId: string,
+  reason: string,
+  actor: { userId: string; role: string }
+) {
+  return withCurrentUser(actor.userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    const enabled = await isEnabled(client, MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY, { operating_company_id: operatingCompanyId, user_uuid: actor.userId });
+    if (!enabled) throw new Error("void_reversal_disabled");
+    if (!canVoid(actor.role)) throw new Error("forbidden_void_owner_or_accountant_only");
+    if (!reason || !reason.trim()) throw new Error("void_reason_required");
+    const r = await restoreReversedJournalEntryInClientTx(client, { operatingCompanyId, journalEntryId, reason, actorUserId: actor.userId, actorRole: actor.role });
+    await appendCrudAudit(client as never, actor.userId, "accounting.journal_entry.restored", {
+      resource_type: "accounting.journal_entries", resource_id: journalEntryId, operating_company_id: operatingCompanyId,
+      restore_journal_entry_id: r.restore_journal_entry_id, restore_date: r.restore_date, reason: reason.trim(),
+    }, "warning", "ROUND-390.1-RESTORE");
+    return r;
+  });
 }
 
 export async function voidJournalEntry(
