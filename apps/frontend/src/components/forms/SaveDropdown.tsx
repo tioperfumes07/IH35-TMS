@@ -238,7 +238,18 @@ export function SaveDropdown({
           ref={menuRef}
           role="menu"
           data-testid="save-dropdown-menu"
-          style={{ position: "fixed", top: menuPos.top, right: menuPos.right, transform: menuPos.up ? "translateY(-100%)" : undefined }}
+          // LST-F400 CLASS B — a `position: fixed` menu does not move on page scroll, so with no
+          // maxHeight anything past the viewport edge is unreachable by ANY gesture. Bound it to the
+          // space on the side it actually opens toward and give it its own scroller.
+          style={{
+            position: "fixed",
+            top: menuPos.top,
+            right: menuPos.right,
+            transform: menuPos.up ? "translateY(-100%)" : undefined,
+            maxHeight: Math.max(menuPos.up ? menuPos.top - 2 : window.innerHeight - menuPos.top - 2, 160),
+            overflowY: "auto",
+            overscrollBehavior: "contain",
+          }}
           className="z-[1000] min-w-[220px] rounded-sm border border-gray-200 bg-white py-1 text-left text-xs shadow-lg"
         >
           {actionList.map((item) => (

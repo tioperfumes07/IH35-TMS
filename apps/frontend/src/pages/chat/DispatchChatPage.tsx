@@ -119,7 +119,7 @@ export function DispatchChatPage() {
           ) : null}
           <div className="flex min-h-0 flex-1 gap-4">
           {/* Thread list */}
-          <aside className="flex w-72 flex-col overflow-y-auto rounded-sm border border-slate-200">
+          <aside className="flex min-h-0 w-72 flex-col overflow-y-auto rounded-sm border border-slate-200">
             {threadsQuery.isLoading ? (
               <p className="p-3 text-xs text-slate-500">Loading…</p>
             ) : threads.length === 0 && !threadsQuery.isError ? (

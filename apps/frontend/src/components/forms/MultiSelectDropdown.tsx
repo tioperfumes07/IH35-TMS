@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { FILTER_CONTROL_HEIGHT_CLASS, FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
 
 // LV-AUDIT-HISTORY-STATUS-SOURCE-SINGLE-SELECT: filters like Status/Source/Event type are naturally
 // multi-valued ("show me Active OR Inactive", "show me Dispatch OR Safety events") — a QuickBooks-style
@@ -86,7 +87,12 @@ export function MultiSelectDropdown({
         onClick={() => setOpen((v) => !v)}
         className={
           triggerClassName ??
-          "mt-1 flex items-center gap-1 rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs text-gray-900 hover:bg-gray-50"
+          // ONE CONTROL HEIGHT (OWNER DESIGN LAW 2026-10-02 rule 2, owner report 2026-10-04: "ALL BOXES,
+          // DATES, FILTERS ETC MUST BE UNIFORM FOLLOWING STANDARD DESIGN HEIGHTS"). This trigger carried
+          // NO height class at all -- py-1 let the glyph set its own height, so every one of the 27 call
+          // sites rendered a multi-select a few pixels shorter than the Combobox/date/search controls
+          // beside it. Take the height from the one token every other filter control takes it from.
+          `mt-1 flex items-center justify-between gap-1 rounded-sm border border-gray-300 bg-white px-2 text-gray-900 hover:bg-gray-50 ${FILTER_CONTROL_SIZE_CLASS}`
         }
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -105,7 +111,7 @@ export function MultiSelectDropdown({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={searchPlaceholder}
-              className="mb-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              className={`mb-1 w-full rounded-sm border border-gray-300 px-2 text-xs ${FILTER_CONTROL_HEIGHT_CLASS}`}
               data-testid={rest["data-testid"] ? `${rest["data-testid"]}-search` : undefined}
             />
           ) : null}

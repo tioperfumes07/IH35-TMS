@@ -41,6 +41,7 @@ type TabId =
   | "unmatched-needs-review"
   | "factoring"
   | "journal-entries"
+  | "reclassify"
   | "reports";
 
 export const TABS: Array<{ id: TabId; label: string; to?: string }> = [
@@ -55,6 +56,8 @@ export const TABS: Array<{ id: TabId; label: string; to?: string }> = [
   { id: "unmatched-needs-review", label: "Unmatched / Needs Review", to: "/banking/qbo-sync-queue" },
   { id: "factoring", label: "Factoring", to: "/accounting/factoring" },
   { id: "journal-entries", label: "Journal Entries", to: "/accounting/journal-entries" },
+  // U15 (owner, 2026-10-04) — Reclassify promoted out of "More ▾" into the Accounting tab row.
+  { id: "reclassify", label: "Reclassify", to: "/accounting/reclassify" },
   { id: "reports", label: "Reports", to: "/reports" },
 ];
 
@@ -93,6 +96,8 @@ export function accountingTabSubtitle(
       return "Faro factoring advances and reserve releases.";
     case "journal-entries":
       return "Manual journal entries and GL adjustments.";
+    case "reclassify":
+      return "Move posted transactions to a different account or class.";
     case "reports":
       return "Financial statements and account registers.";
   }
