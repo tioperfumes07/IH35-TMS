@@ -296,9 +296,68 @@ async function readOriginalGlPostings(
   client: QueryableClient,
   operatingCompanyId: string,
   entityType: VoidableEntityType,
-  entityId: string
+  entityId: string,
+  /** ACCT-F397 — only the reinstate-restore path may reverse a JE that is itself a reversal. */
+  allowReversalOfReversal = false
 ): Promise<GlPostingRow[]> {
   if (entityType === "journal_entry") {
+    // ACCT-F397 — THE SAME P0 THE SOURCE-LINKED BRANCH BELOW ALREADY CLOSED, STILL OPEN HERE.
+    //
+    // The 2026-09-23 fix added the canonical 4-column liveness predicate
+    // (status='posted' AND voided_at IS NULL AND reversed_by_je_id IS NULL AND reverses_je_id IS NULL)
+    // to the source-linked branch, so an already-dead JE's postings can never be pulled back into a
+    // later reversal. This branch -- entityType 'journal_entry', i.e. voiding a JE directly -- got
+    // NONE of it: it selected every posting on the header unconditionally. So voiding a JE that was
+    // itself a reversal reversed it again (credit -> debit -> CREDIT AGAIN), and voiding an
+    // already-reversed JE reversed it twice.
+    //
+    // MEASURED LIVE ON USMCA (bypass_rls, read-only), the day this was written:
+    //   61  journal_entries reverse an entry that is ITSELF a reversal
+    //       (a.reverses_je_id -> b WHERE b.reverses_je_id IS NOT NULL)
+    //   122 posting lines reverse a line that was itself a reversal
+    //       (x.reversal_of_line_id -> y WHERE y.reversal_of_line_id IS NOT NULL)
+    //   $5,955.26 across those 122 lines -- $2,977.63 per side.
+    // That is the A/P 2000 contamination: 60 credit-only journal_entry lines carrying $2,976.63
+    // whose memos read "Void reversal: REVERSAL: Expense EXP-...". Not a projection. The ledger
+    // still balances (debits = credits = $2,181,835.64) because a double reversal is balanced --
+    // which is exactly why it was invisible to a trial-balance check and had to be found on the FK
+    // chain.
+    //
+    // WHY THIS FAILS CLOSED INSTEAD OF FILTERING. The source-linked branch can safely filter,
+    // because it fans out over many JE headers and dropping a dead one still leaves the live ones.
+    // Here there is exactly ONE target. Filtering it away would return zero rows, and
+    // postVoidReversal treats zero rows as "nothing to reverse" and returns SUCCESS with
+    // reversal_journal_entry_id: null -- a silent no-op reported as a completed void on a money
+    // surface. That is a fake green. It throws, and the error names which condition failed.
+    //
+    // Reversal-of-a-reversal IS legitimate on exactly one path: reinstate-restore (see
+    // resolveTrueReversalSource). That caller declares the intent with
+    // allowReversalOfReversal: true; nothing else may.
+    const live = await client.query<{
+      status: string | null;
+      voided: boolean;
+      already_reversed: boolean;
+      is_itself_a_reversal: boolean;
+    }>(
+      `
+        SELECT je.status,
+               (je.voided_at IS NOT NULL) AS voided,
+               (je.reversed_by_je_id IS NOT NULL) AS already_reversed,
+               (je.reverses_je_id IS NOT NULL) AS is_itself_a_reversal
+        FROM accounting.journal_entries je
+        WHERE je.operating_company_id = $1::uuid AND je.id = $2::uuid
+      `,
+      [operatingCompanyId, entityId]
+    );
+    const je = live.rows[0];
+    if (!je) throw new Error(`void_reversal_journal_entry_not_found: ${entityId}`);
+    if (je.status !== "posted") throw new Error(`void_reversal_je_not_posted: ${entityId} status=${je.status ?? "null"}`);
+    if (je.voided) throw new Error(`void_reversal_je_already_voided: ${entityId}`);
+    if (je.already_reversed) throw new Error(`void_reversal_je_already_reversed: ${entityId}`);
+    if (je.is_itself_a_reversal && !allowReversalOfReversal) {
+      throw new Error(`void_reversal_je_is_itself_a_reversal: ${entityId}`);
+    }
+
     const res = await client.query<GlPostingRow>(
       `
         SELECT id::text, account_id::text, class_id::text, entity_uuid::text,
@@ -644,6 +703,12 @@ export async function postVoidReversal(
     originalDate: string;
     memo: string;
     currentDate?: string;
+    /**
+     * ACCT-F397 — declare, explicitly, that this call is the reinstate-restore path and is
+     * REVERSING A REVERSAL on purpose. Every other caller leaves this unset and gets a thrown
+     * `void_reversal_je_is_itself_a_reversal` instead of a second, money-moving reversal.
+     */
+    allowReversalOfReversal?: boolean;
   },
   actor: { userId: string }
 ): Promise<VoidReversalResult> {
@@ -668,7 +733,13 @@ export async function postVoidReversal(
     entityId: params.entityId,
   }, actor);
 
-  const originalLines = await readOriginalGlPostings(client, params.operatingCompanyId, params.entityType, params.entityId);
+  const originalLines = await readOriginalGlPostings(
+    client,
+    params.operatingCompanyId,
+    params.entityType,
+    params.entityId,
+    params.allowReversalOfReversal === true
+  );
   if (originalLines.length === 0) {
     return { reversal_journal_entry_id: null, reversal_date: null, closed_period_reversal: false, reversed_line_count: 0 };
   }
