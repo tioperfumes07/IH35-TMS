@@ -66,6 +66,7 @@ import {
 import { isCoaRole, resolveRoleAccountOptional, resolveReimbursementExpenseAccount } from "../accounting/coa-roles/resolver.service.js";
 import { categorizeSettlementLines } from "./settlement-line-categorize.service.js";
 import { ensureEscrowBalanceRow } from "./escrow-balance-row.js";
+import { resolveDriverAdvanceSubAccountOptional } from "./driver-advance-account-resolver.js";
 
 /**
  * The escrow cap rendered for human-readable ledger text. DERIVED from ESCROW_CAP_CENTS — never a
@@ -915,15 +916,16 @@ export async function closeSettlementPayRun(
     }
 
     if (appliedAdvanceRecoveryCents > 0) {
-      // Cr cash-advance CLEARING (the advance_recovery role account) — reduces the driver-advance receivable.
+      // ROUND 394 RULING 1 — Cr the driver's OWN 1245 sub-account, the same account the disbursement
+      // debited (bridge + advance_recovery role parent), never the shared role account itself.
       // appliedAdvanceRecoveryCents, not the full advanceRecoveriesCents total — a B7 partial
       // loan-recovery decision caps what THIS settlement actually clears; the remainder stays a
-      // receivable on the advance's own outstanding_balance and posts again at the next close.
-      const advAcct = await resolvePayRunRoleAccount(client, opco, "advance_recovery");
+      // receivable and posts again at the next close.
+      const advAcct = await resolveDriverAdvanceSubAccountOptional(client, opco, settlement.driver_id);
       if (!advAcct) {
         throw new SettlementPayRunError(
-          "ADVANCE_CLEARING_ACCOUNT_MISSING",
-          "No active 'advance_recovery' (cash-advance clearing) CoA role designation for advance recoveries"
+          "DRIVER_ADVANCE_ACCOUNT_MISSING",
+          `Driver ${settlement.driver_id} has no own Cash-Advance sub-account under the advance_recovery parent (driver_finance.driver_advance_accounts)`
         );
       }
       legs.push({ account_id: advAcct, debit_or_credit: "credit", amount_cents: appliedAdvanceRecoveryCents, description: `${label} — cash-advance recovery` });
@@ -1185,10 +1187,7 @@ export async function closeSettlementPayRun(
     }
     const applications: ApChainApplication[] = [];
     if (recoverySnapshots.length) {
-      const own = (await client.query<{ coa: string | null }>(
-        `SELECT coa_account_id::text AS coa FROM driver_finance.driver_advance_accounts WHERE operating_company_id = $1::uuid AND driver_id = $2::uuid AND is_active LIMIT 1`,
-        [opco, settlement.driver_id]
-      )).rows[0]?.coa ?? null;
+      const own = await resolveDriverAdvanceSubAccountOptional(client, opco, settlement.driver_id);
       if (!own) throw new SettlementPayRunError("DRIVER_ADVANCE_ACCOUNT_MISSING", `Driver ${settlement.driver_id} has no Cash-Advance account (driver_advance_accounts) to apply the advance against`);
       const links = await client.query<{ id: string; load_id: string | null }>(
         `SELECT a.id::text, COALESCE(a.load_id, db.load_id)::text AS load_id FROM driver_finance.driver_advances a
