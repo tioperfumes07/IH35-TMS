@@ -44,7 +44,7 @@ export function WizardStep4({ form, brokers, operatingCompanyId, onChange }: Pro
       {/* Exact Leaves border_crossing_wizard:vendor — Combobox alone left broker UUID non-navigable */}
       {form.customsBrokerId ? (
         <div
-          className="flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] text-slate-700"
+          className="flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs text-slate-700"
           data-testid="border-wizard-step-4-entitylinks"
         >
           <span>
