@@ -269,6 +269,13 @@
         "is_active"
       ]
     },
+    "accounting.lease_lessee_schedule_period": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ]
+    },
     "accounting.lease_schedule_period": {
       "canonical_column": "deleted_at",
       "predicate": "deleted_at IS NULL",

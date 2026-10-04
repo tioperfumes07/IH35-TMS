@@ -12,6 +12,11 @@
  */
 type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 
+// C6-MONEY-JE-EXEMPT: driver_finance.escrow_balances carries NO amount column in production
+// (br-fancy-credit-akjnd07a, verified 2026-10-04: id, operating_company_id, driver_id, last_settlement_id,
+// last_updated_at, release_scheduled_at, release_claims_window_days, status, created_at — the current/held/released
+// cents columns were dropped by migration 202615380100). This INSERT moves zero money, so there is no balanced JE to
+// post; the dollars live in the driver's 2100-00-nnn GL sub-account and every caller posts its own GL entry.
 // ESCROW-SYNC-EXEMPT: identity row only — this writes no amount (KILL THE SECOND SYSTEM tables 2-5), so there is nothing to
 // sync to the GL; every caller makes its own GL / escrow_postings write (forfeit, separation, pay-run close, unwind,
 // settlement approval, history backfill).

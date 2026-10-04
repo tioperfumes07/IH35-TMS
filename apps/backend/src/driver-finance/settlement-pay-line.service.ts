@@ -9,6 +9,14 @@
  * Posting happens when the settlement is closed (the single settlement poster bills the line on its load's A/P bill).
  * Refuses by name: settlement not found / not open, no load on the settlement, a named load not on it, bad amount.
  */
+// C6-MONEY-JE-EXEMPT: a pay line on an OPEN settlement is an accrual, not a journal entry — this service refuses
+// unless the header is open and unlocked (OPEN_STATUSES / locked_at check below), and the GL posting is the single
+// settlement poster at close. Verified in-tree 2026-10-04, both line types this writer can produce reach the GL:
+//   · 'extra_pay'     → SETTLEMENT_EARNINGS_LINE_TYPES (settlement-line-buckets.ts) → gross_pay →
+//                        settlement-payrun-close.service.ts createJournalEntry (debits==credits or it aborts)
+//   · 'detention_pay' → settlement-payrun-close.service.ts posts its own leg, Dr detention_pay_expense
+// The line carries posting_account_id (role driver_pay_expense) at birth precisely so the close poster uses the
+// mapped account, never a hardcoded number, and is_active = true is its void marker (ACCT-F156).
 import type pg from "pg";
 import { attributeToLoad, loadSettlementLoadBills } from "./settlement-ap-chain.service.js";
 import { recomputeSettlementHeader } from "./settlement-load-reassignment.service.js";
