@@ -13112,5 +13112,90 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-04",
     "purpose": "verify-expense-detail-human-labels"
+  },
+  "15653": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-tms-bill-line-item-shape"
+  },
+  "15657": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-tms-bill-push-tenant-chain"
+  },
+  "15661": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-tms-invoice-line-item-shape"
+  },
+  "15665": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-tms-invoice-push-tenant-chain"
+  },
+  "15669": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-ui1-no-stub-accounting-modules"
+  },
+  "15673": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-uncategorized-expense-mapping"
+  },
+  "15677": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-uncategorized-expense-seed"
+  },
+  "15681": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-unit-finance-linkage-tab"
+  },
+  "15685": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-unit-linked-expense-human-labels"
+  },
+  "15689": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-vehicle-driver-overlap-lifecycle"
+  },
+  "15693": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-vendor-balances-view-excludes-draft-bills"
+  },
+  "15697": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-vendor-bill-user-dispatch-uuid-human-labels"
+  },
+  "15701": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-vendor-credits-filter-badge-uses-roster"
+  },
+  "15705": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-vendor-money-human-labels"
+  },
+  "15709": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-vendor-non-money-backfill"
+  },
+  "15713": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-warranty-reimburse-update-checked"
+  },
+  "15717": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-wo-linked-expense-human-labels"
   }
 }
