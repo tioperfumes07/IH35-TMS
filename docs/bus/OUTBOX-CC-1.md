@@ -1749,3 +1749,20 @@ Book-vs-source total outstanding: $298,762.00 (Faro) + $5,412.40 (three self-car
 - Test Owner grant bed20058: remove on the owner's word.
 - Five purge decisions listed in #25154.
 - `ih35_ci_readonly` is not read-only (BYPASSRLS + write grants): escalated.
+
+## 2026-10-04 (later) — CC-1: the Lead's merge queue is landed (owner fast-merge order)
+
+**Merged:**
+1. **#25317** `claude/kpi-banking-home-now` (c78a20f), rebased. Force-push was not permitted, so it went out as a new branch; #25310 is closed as superseded.
+2. **#25143**: already on main via CC-3's squash 2a6438d954.
+3. **#25318** f397, void never reverses a reversal (4b004f2b).
+4. **#25322** r395, Tour column. Cherry-picked onto main because the original branch was stacked on squashed history.
+
+**Step-number collisions** those branches brought onto main: 14445 / 14633 / 14433, renumbered to 14869 / 14873 / 14877 (#25320 claims, #25321 + #25322 renames). verify-verify-step-numbers-unique is green.
+
+**Also merged:**
+- #25305: A/R and A/P aging joined on a column that does not exist.
+- #25306: R1 step 2, recover 1257.
+- #25308: 1257 guard wired.
+- #25311 / #25313: wiring batch 2, 60 guards.
+- #25303: unwind dry run. The engine refuses all 61 double reversals by design; the purge needs an owner AUTH, and the bank effect is $1.00.
