@@ -50,6 +50,15 @@ const COA_ACCOUNT_REF_ALLOWLIST = new Set([
   //     references the forbidden table name only to ENFORCE this exact canonicalization law.
   "db/migrations/202606151500_expense_uncategorized_account_and_role.sql",
   "scripts/verify-uncategorized-expense-seed.mjs",
+  // Reviewed 2026-10-04 (CC-1): each names the table only inside a LIST of table names, never reads or
+  // writes it as the chart of accounts — a server-assertion denylist, two entity-column guards' and the
+  // R342 rename migration's "tables without operating_company_id" lists, and the linkage-law catalog
+  // entry that classes it NOT_TRANSACTIONAL.
+  "scripts/cert-checks/fw-server-assertions.mjs",
+  "scripts/verify-no-opco-filter-on-tables-without-it.mjs",
+  "scripts/verify-one-entity-column.mjs",
+  "scripts/verify-transaction-linkage-law.mjs",
+  "db/migrations/202615330400_r342_one_entity_column_rename.sql",
 ]);
 
 const SCAN_DIRS = ["apps", "scripts", "db/migrations"];

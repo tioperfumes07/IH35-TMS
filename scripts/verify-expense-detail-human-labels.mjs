@@ -15,6 +15,7 @@ const LABEL = "verify-expense-detail-human-labels";
 const DETAIL = "apps/frontend/src/pages/accounting/ExpenseDetailPage.tsx";
 const API = "apps/frontend/src/api/accounting.ts";
 const BACKEND = "apps/backend/src/accounting/expenses.routes.ts";
+const BANNER = "apps/frontend/src/components/accounting/OnlineBankingMatchBanner.tsx";
 
 function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
@@ -25,6 +26,7 @@ function assertExpenseDetailHumanLabels() {
   const detailPage = read(DETAIL);
   const apiTypes = read(API);
   const backend = read(BACKEND);
+  const banner = read(BANNER);
 
   if (!/journal_entry_date/.test(apiTypes) || !/journal_entry_memo/.test(apiTypes)) {
     errors.push("ExpenseDetail type missing journal_entry_date / journal_entry_memo");
@@ -41,8 +43,13 @@ function assertExpenseDetailHumanLabels() {
   if (!/formatDateUS\(expense\.journal_entry_date\)/.test(detailPage)) {
     errors.push("ExpenseDetailPage does not render journal entry date");
   }
-  if (!/formatDateUS\(expense\.matched_bank_transaction_date\)/.test(detailPage)) {
-    errors.push("ExpenseDetailPage does not render bank transaction date");
+  // The bank hop moved into OnlineBankingMatchBanner (date + description props, date rendered there).
+  if (!/txnDate=\{expense\.matched_bank_transaction_date\}/.test(detailPage) ||
+      !/description=\{expense\.matched_bank_transaction_description\}/.test(detailPage)) {
+    errors.push("ExpenseDetailPage must pass matched bank transaction date + description to OnlineBankingMatchBanner");
+  }
+  if (!/formatDateUS\(txnDate\)/.test(banner)) {
+    errors.push("OnlineBankingMatchBanner does not render the bank transaction date");
   }
   if (/entityLabel\(\s*null\s*,\s*expense\.journal_entry_id/.test(detailPage)) {
     errors.push("ExpenseDetailPage must not entityLabel(null, journal_entry_id) — use journal_entry_memo");
@@ -53,11 +60,9 @@ function assertExpenseDetailHumanLabels() {
   if (/\.slice\(\s*0\s*,\s*8\s*\)/.test(detailPage)) {
     errors.push("ExpenseDetailPage must not use UUID slice chrome for JE/bank labels");
   }
-  if (!/entityLabel\(\s*expense\.journal_entry_memo/.test(detailPage)) {
-    errors.push("ExpenseDetailPage must fall back to entityLabel(journal_entry_memo, …) when date missing");
-  }
-  if (!/entityLabel\(\s*expense\.matched_bank_transaction_description/.test(detailPage)) {
-    errors.push("ExpenseDetailPage must fall back to entityLabel(matched_bank_transaction_description, …)");
+  // JE label: the humanMemo of journal_entry_memo (never a uuid) — replaced entityLabel(memo, …).
+  if (!/humanMemo\(\s*expense\.journal_entry_memo/.test(detailPage)) {
+    errors.push("ExpenseDetailPage must label the journal entry from humanMemo(journal_entry_memo, …)");
   }
   return errors;
 }
@@ -69,8 +74,8 @@ function selftest() {
     process.exit(1);
   }
   const planted = read(DETAIL).replace(
-    /entityLabel\(\s*expense\.journal_entry_memo[^)]+\)/,
-    "entityLabel(null, expense.journal_entry_id, \"Journal entry\")",
+    /humanMemo\(\s*expense\.journal_entry_memo/,
+    "entityLabel(null, expense.journal_entry_id",
   );
   if (planted === read(DETAIL)) {
     console.error(`${LABEL} SELFTEST FAIL: planted mutation did not change source`);

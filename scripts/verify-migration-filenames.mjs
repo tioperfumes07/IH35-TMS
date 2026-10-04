@@ -129,6 +129,27 @@ const HISTORICAL_TIMESTAMP_DUP_ALLOWLIST = new Set([
   "202614400000",
   "202614490000",
   "202614550000",
+  // ACCEPTED 2026-10-04 (CC-1, ROUND 389.2 GUARD-WRONG triage) on the same proof: all eight files are
+  // already applied on production, read from _system._schema_migrations on br-fancy-credit-akjnd07a
+  // inside a READ ONLY transaction, applied order recorded:
+  //
+  //   202614420000_fuel_transactions_genesis_anchor_gross_cost_discount_fee.sql 2026-09-28T05:17:33.237Z
+  //   202614430000_fuel_transactions_genesis_anchor_gross_cost_discount_fee.sql 2026-09-28T05:27:05.600Z
+  //   202614420000_mdata_drivers_merged_into_driver_id.sql                     2026-09-28T06:03:54.243Z
+  //   202614430000_worm_check_engine_banking_tables.sql                        2026-09-28T07:51:48.549Z
+  //   202614560000_geocode_precision_google_native_values.sql                  2026-09-29T01:20:20.439Z
+  //   202614560000_expenses_review_queue.sql                                   2026-09-29T20:44:07.846Z
+  //   202614570000_fix_driver_samsara_accounts_rls_empty_uuid_cast.sql         2026-09-29T17:38:34.042Z
+  //   202614570000_factoring_advance_status_matches_voided_at.sql              2026-09-29T22:18:02.019Z
+  //
+  // Each pair touches different objects (fuel transactions vs driver merge, fuel vs banking WORM,
+  // geocode precision vs the expense review queue, samsara-account RLS vs factoring advance status).
+  // Renaming would re-run the bodies under a new ledger identity (checksum freeze). A NEW duplicate
+  // still fails.
+  "202614420000",
+  "202614430000",
+  "202614560000",
+  "202614570000",
 ]);
 
 function fail(lines) {

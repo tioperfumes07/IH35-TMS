@@ -307,11 +307,14 @@ export function ExpenseDetailPage() {
             <EntityLink
               kind="journal_entry"
               id={expense.journal_entry_id}
-              label={humanMemo(
-                expense.journal_entry_memo,
-                expense.id,
-                expenseHumanNumber(expense.expense_number) ?? "Expense",
-              )}
+              label={[
+                expense.journal_entry_date ? formatDateUS(expense.journal_entry_date) : null,
+                humanMemo(
+                  expense.journal_entry_memo,
+                  expense.id,
+                  expenseHumanNumber(expense.expense_number) ?? "Expense",
+                ),
+              ].filter(Boolean).join(" · ")}
             />
           </DataPanelRow>
         ) : null}
