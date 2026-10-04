@@ -183,6 +183,9 @@ try {
           `CC-3-${authId}`,
         ]);
       } else {
+        // Fire every DEFERRED constraint trigger now, so the dry run proves what COMMIT would (2026-10-04: the 1295
+        // asset floor refused AUTH-216 at commit after a dry run that never reached it).
+        await c.query("SET CONSTRAINTS ALL IMMEDIATE");
         throw new Error("PROOF_ROLLBACK");
       }
     },
