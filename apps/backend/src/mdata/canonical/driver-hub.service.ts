@@ -76,7 +76,7 @@ export async function readDriverHubPanel(client: Q, oc: string, driverId: string
   const one = async (sql: string) => (await client.query(sql, [oc, driverId])).rows[0];
   const due = await one(`SELECT coalesce(sum(s.net_pay), 0) AS v FROM driver_finance.driver_settlements s WHERE s.operating_company_id = $1 AND s.driver_id = $2 AND ${DUE_SQL}`);
   const escrow = await one(`SELECT coalesce(sum(balance_cents), 0) AS v, count(*)::int AS n FROM driver_finance.v_driver_escrow_balance WHERE operating_company_id = $1 AND driver_id = $2`);
-  const adv = await one(`SELECT coalesce(sum(outstanding_balance), 0) AS v FROM driver_finance.driver_advances WHERE operating_company_id = $1 AND driver_id = $2 AND voided_at IS NULL`);
+  const adv = await one(`SELECT coalesce(sum(vb.outstanding_cents), 0) / 100.0 AS v FROM driver_finance.driver_advances a JOIN driver_finance.v_driver_advance_balances vb ON vb.advance_id = a.id WHERE a.operating_company_id = $1 AND a.driver_id = $2 AND a.voided_at IS NULL`);
   // CC-3 2e: the one driver-miles definition (Samsara per-driver distance) — never a planned-miles fallback.
   const miles = await one(
     `SELECT ${driverSamsaraSql("distance_mi", "$2::uuid", "now() - interval '30 days'", "now()")} AS v,

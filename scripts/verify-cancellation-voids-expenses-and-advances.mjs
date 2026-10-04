@@ -33,8 +33,9 @@ export function collectFailures(src = loadSource()) {
   if (!/FROM driver_finance\.driver_advances a[\s\S]{0,300}WHERE a\.load_id = \$1::uuid/.test(src)) {
     failures.push("load-linked driver_advances query is missing or malformed");
   }
-  if (!/unreversableAdvances = loadAdvancesRes\.rows\.filter\(\(r\) => Number\(r\.paid_to_date \?\? 0\) > 0\)/.test(src)) {
-    failures.push("advance-reversal cascade does not gate on paid_to_date > 0 (would silently un-recover a real settlement deduction)");
+  // ROUND 394 RULING 1 — gate on the GL-derived recovered_cents (v_driver_advance_balances), not paid_to_date.
+  if (!/unreversableAdvances = loadAdvancesRes\.rows\.filter\(\(r\) => Number\(r\.recovered_cents \?\? 0\) > 0\)/.test(src) || !/driver_finance\.v_driver_advance_balances/.test(src)) {
+    failures.push("advance-reversal cascade does not gate on the GL-derived recovered_cents > 0 (would silently un-recover a real settlement recovery)");
   }
   if (!/load_cancel_blocked_unreversable_advance/.test(src)) {
     failures.push("advance-reversal cascade does not fail loud on an unreversable advance");
@@ -61,8 +62,8 @@ if (process.argv.includes("--selftest")) {
       "REMOVED({",
     ],
     [
-      "paid_to_date gate removed",
-      "const unreversableAdvances = loadAdvancesRes.rows.filter((r) => Number(r.paid_to_date ?? 0) > 0);",
+      "recovered_cents gate removed",
+      "const unreversableAdvances = loadAdvancesRes.rows.filter((r) => Number(r.recovered_cents ?? 0) > 0);",
       "const unreversableAdvances = [];",
     ],
   ];
@@ -88,4 +89,4 @@ if (failures.length > 0) {
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log("verify-cancellation-voids-expenses-and-advances: OK — load cancellation voids open expenses (releasing their bank matches for free) and reverses load-linked advances/liabilities, gated on paid_to_date");
+console.log("verify-cancellation-voids-expenses-and-advances: OK — load cancellation voids open expenses (releasing their bank matches for free) and reverses load-linked advances/liabilities, gated on the GL-derived recovered_cents");

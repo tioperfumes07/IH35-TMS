@@ -262,8 +262,8 @@ after creation; a GL/posting failure goes to CC-1.
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
-| nested | `/api/v1/banking/accounts/:id/hide` | `apps/backend/src/banking/banking.routes.ts:878` | — | — | — |
-| nested | `/api/v1/banking/accounts/:id/unhide` | `apps/backend/src/banking/banking.routes.ts:903` | — | — | — |
+| nested | `/api/v1/banking/accounts/:id/hide` | `apps/backend/src/banking/banking.routes.ts:880` | — | — | — |
+| nested | `/api/v1/banking/accounts/:id/unhide` | `apps/backend/src/banking/banking.routes.ts:905` | — | — | — |
 | create | `/api/v1/banking/accounts/faro-reserve` | `apps/backend/src/banking/banking.routes.ts:367` | — | — | — |
 | create | `/api/v1/banking/accounts/petty-cash` | `apps/backend/src/banking/banking.routes.ts:314` | — | — | — |
 | create | `/api/v1/banking/accounts/visibility` | `apps/backend/src/banking/banking.routes.ts:394` | — | — | — |
@@ -295,7 +295,7 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/banking/transactions/:id/skip` | `apps/backend/src/banking/categorization.routes.ts:1028` | — | — | — |
 | nested | `/api/v1/banking/transactions/:id/supersede-plaid-pending` | `apps/backend/src/banking/p7-wave2.routes.ts:36` | — | — | — |
 | nested | `/api/v1/banking/transactions/:id/transfer` | `apps/backend/src/banking/categorization.routes.ts:937` | — | — | — |
-| nested | `/api/v1/banking/transactions/:id/undo-categorization` | `apps/backend/src/banking/banking.routes.ts:727` | — | — | — |
+| nested | `/api/v1/banking/transactions/:id/undo-categorization` | `apps/backend/src/banking/banking.routes.ts:729` | — | — | — |
 | create | `/api/v1/banking/transactions/bulk-categorize` | `apps/backend/src/banking/categorization.routes.ts:1165` | — | — | — |
 | create | `/api/v1/banking/transactions/bulk-post-as-bills` | `apps/backend/src/banking/categorization.routes.ts:1282` | — | — | — |
 | create | `/api/v1/banking/transactions/categorize-bulk` | `apps/backend/src/banking/categorization.routes.ts:813` | — | — | — |

@@ -70,7 +70,7 @@ export async function readDriverProfile(client: Q, companyId: string, driverId: 
 
   // 3. Advances
   const advances = (await rows(
-    `SELECT id, display_id, amount, outstanding_balance, purpose, status, disbursement_status, disbursed_at, posting_date,
+    `SELECT id, display_id, amount, (SELECT round(vb.outstanding_cents / 100.0, 2) FROM driver_finance.v_driver_advance_balances vb WHERE vb.advance_id = driver_finance.driver_advances.id) AS outstanding_balance, purpose, status, disbursement_status, disbursed_at, posting_date,
             load_id, recovered_in_settlement_id
        FROM driver_finance.driver_advances
       WHERE operating_company_id = $1 AND driver_id = $2 AND voided_at IS NULL

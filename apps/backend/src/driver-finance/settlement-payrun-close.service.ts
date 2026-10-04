@@ -439,7 +439,13 @@ async function loadSettlementPayItems(
   return items;
 }
 
-/** Un-recovered outstanding advances for the driver (recovered_in_settlement_id IS NULL). Read-only + FOR UPDATE. */
+/**
+ * Un-recovered outstanding advances for the driver, oldest first. ROUND 394 RULING 1 — the amount owed is the
+ * advance's DERIVED outstanding (driver_finance.v_driver_advance_balances: what it put on the driver's own 1245
+ * sub-account less the driver's recoveries, oldest-first), never the stored outstanding_balance. A reversed or
+ * undisbursed advance owes $0 and is not recovered (the stored-balance fallback to the full amount recovered a
+ * reversed advance in full). Locks the advance rows (FOR UPDATE OF a).
+ */
 async function loadRecoverableAdvances(
   client: DbClient,
   operatingCompanyId: string,
@@ -448,31 +454,24 @@ async function loadRecoverableAdvances(
   const res = await client.query<{
     id: string;
     display_id: string | null;
-    amount: string;
-    outstanding_balance: string;
+    outstanding_cents: string;
     liability_id: string | null;
   }>(
     `
-      SELECT id::text, display_id, amount::text, outstanding_balance::text, liability_id::text
-      FROM driver_finance.driver_advances
-      WHERE operating_company_id = $1::uuid
-        AND driver_id = $2::uuid
-        AND recovered_in_settlement_id IS NULL
-        AND status NOT IN ('void', 'cancelled', 'recovered')
-      ORDER BY created_at ASC, id ASC
-      FOR UPDATE
+      SELECT a.id::text, a.display_id, vb.outstanding_cents::text, a.liability_id::text
+      FROM driver_finance.driver_advances a
+      JOIN driver_finance.v_driver_advance_balances vb ON vb.advance_id = a.id
+      WHERE a.operating_company_id = $1::uuid
+        AND a.driver_id = $2::uuid
+        AND a.recovered_in_settlement_id IS NULL
+        AND a.status NOT IN ('void', 'cancelled', 'recovered')
+        AND vb.outstanding_cents > 0
+      ORDER BY a.created_at ASC, a.id ASC
+      FOR UPDATE OF a
     `,
     [operatingCompanyId, driverId]
   );
-  return res.rows
-    .map((r) => {
-      // Recover the outstanding balance if positive, else the original amount (advance not yet amortized).
-      const outstanding = dollarsToCents(r.outstanding_balance);
-      const amount = dollarsToCents(r.amount);
-      const cents = outstanding > 0 ? outstanding : amount;
-      return { id: r.id, display_id: r.display_id, amount_cents: cents, liability_id: r.liability_id };
-    })
-    .filter((a) => a.amount_cents > 0);
+  return res.rows.map((r) => ({ id: r.id, display_id: r.display_id, amount_cents: Number(r.outstanding_cents), liability_id: r.liability_id }));
 }
 
 /**

@@ -652,7 +652,8 @@ describe("ledger-integrity-detectors.service — B6 driver cash advance tie-out 
         rows: [{ closing_balance_cents: "10000", normal_balance: "debit" }],
       },
       {
-        match: (sql) => sql.includes("driver_finance.driver_advances") && sql.includes("outstanding_balance"),
+        // ROUND 394 RULING 1 — the subledger is the GL-derived outstanding, never the stored outstanding_balance.
+        match: (sql) => sql.includes("driver_finance.v_driver_advance_balances") && sql.includes("outstanding_cents"),
         rows: [{ cents: "15000" }],
       },
     ]);

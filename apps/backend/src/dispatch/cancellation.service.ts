@@ -593,14 +593,15 @@ export async function cancelLoadInClientTx(
           liability_id: string | null;
           linked_bill_payment_id: string | null;
           linked_bill_id: string | null;
-          paid_to_date: string | null;
+          recovered_cents: string | null;
         }>(
           `
+            -- ROUND 394 RULING 1 — recovered is the GL-derived recovered_cents (v_driver_advance_balances),
+            -- not the liability's stored paid_to_date.
             SELECT a.id::text, a.liability_id::text, a.linked_bill_payment_id::text, a.linked_bill_id::text,
-                   l.paid_to_date::text
+                   vb.recovered_cents::text
               FROM driver_finance.driver_advances a
-              LEFT JOIN driver_finance.driver_liabilities l
-                ON l.id = a.liability_id AND l.operating_company_id = a.operating_company_id
+              LEFT JOIN driver_finance.v_driver_advance_balances vb ON vb.advance_id = a.id
              WHERE a.load_id = $1::uuid
                AND a.operating_company_id = $2::uuid
                AND a.disbursement_status <> 'reversed'
@@ -608,13 +609,13 @@ export async function cancelLoadInClientTx(
           `,
           [input.load_id, input.operating_company_id]
         );
-        const unreversableAdvances = loadAdvancesRes.rows.filter((r) => Number(r.paid_to_date ?? 0) > 0);
+        const unreversableAdvances = loadAdvancesRes.rows.filter((r) => Number(r.recovered_cents ?? 0) > 0);
         if (unreversableAdvances.length > 0) {
           throw Object.assign(
             new Error(
               `load_cancel_blocked_unreversable_advance: advance(s) ${unreversableAdvances
                 .map((r) => r.id)
-                .join(", ")} already have settlement deductions recorded against them (paid_to_date > 0) — real money already moved, cannot be silently reversed by a cancellation. Resolve manually.`
+                .join(", ")} already have recoveries recorded against them on the GL (recovered_cents > 0) — real money already moved, cannot be silently reversed by a cancellation. Resolve manually.`
             ),
             { code: "load_cancel_blocked_unreversable_advance", details: unreversableAdvances }
           );
