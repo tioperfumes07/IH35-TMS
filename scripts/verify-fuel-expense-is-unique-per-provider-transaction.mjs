@@ -15,7 +15,6 @@ const LABEL = "verify-fuel-expense-is-unique-per-provider-transaction";
 const AWAITING_OWNER_AUTH = new Map([
   // provider ID -> the two fuel rows (both posted, neither bank-matched, 2026-10-03)
   ["99530579", "USMCA 510.61 — loads 13533 (2026-08-20) and 13548 (2026-08-26): one transaction cannot carry two dates"],
-  ["1848853", "USMCA 585.36 — loads 13543 and 13547, 2026-08-26"],
 ]);
 
 const out = await withUnscopedReadOnly(LABEL, async (c) => {
