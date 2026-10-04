@@ -88,7 +88,7 @@ export function QboSyncDetailPage() {
         label: "Kind",
         sortable: true,
         render: (row) => (
-          <span className={`rounded-sm border px-2 py-0.5 text-[11px] font-semibold uppercase ${kindPillClass(row.kind)}`}>{row.kind}</span>
+          <span className={`rounded-sm border px-2 py-0.5 text-xs font-semibold uppercase ${kindPillClass(row.kind)}`}>{row.kind}</span>
         ),
       },
       {
@@ -96,7 +96,7 @@ export function QboSyncDetailPage() {
         label: "Severity",
         sortable: true,
         render: (row) => (
-          <span className={`rounded-sm border px-2 py-0.5 text-[11px] font-semibold uppercase ${severityPillClass(row.severity)}`}>
+          <span className={`rounded-sm border px-2 py-0.5 text-xs font-semibold uppercase ${severityPillClass(row.severity)}`}>
             {row.severity}
           </span>
         ),
@@ -175,8 +175,8 @@ export function QboSyncDetailPage() {
           emptyText={listState.isEmpty ? "No QBO sync events match the selected filters." : undefined}
           renderExpanded={(row) => (
             <div>
-              <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">Detail</div>
-              <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-all rounded-sm border border-slate-200 bg-white p-2 text-[11px] text-slate-700">
+              <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-600">Detail</div>
+              <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-all rounded-sm border border-slate-200 bg-white p-2 text-xs text-slate-700">
                 {JSON.stringify(row.detail ?? {}, null, 2)}
               </pre>
             </div>
