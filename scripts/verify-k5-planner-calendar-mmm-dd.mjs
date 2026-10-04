@@ -42,6 +42,9 @@ function assertLive(overrides = {}) {
   if (!/border-l/.test(axisHead)) {
     problems.push("PlannerAxisHead must have border-l for pronounced column lines");
   }
+  // BANK-F91302 leftover refuse — PlannerAxisHead.tsx page-scoped text token ratchet
+  if (axisHead.includes("text-[11px]")) problems.push(`${AXIS_HEAD}: leftover text-[11px]`);
+  if (axisHead.includes("#8A92AB") || axisHead.includes("#334155")) problems.push(`${AXIS_HEAD}: leftover off-scale muted`);
 
   // formatPlannerDayLabel must produce MMM-DD format
   const dayLabel = get(DAY_LABEL);
@@ -78,7 +81,14 @@ if (SELFTEST) {
     console.error(`${LABEL} SELFTEST FAILED: bare day number not caught`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 2/2 mutations caught`);
+  // BANK-F91302 leftover plant — PlannerAxisHead page-scoped text token ratchet
+  const leftoverPlant = orig + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+  const leftoverHits = assertLive({ [AXIS_HEAD]: leftoverPlant });
+  if (!leftoverHits.some((e) => e.includes("leftover text-[11px]")) || !leftoverHits.some((e) => e.includes("leftover off-scale muted"))) {
+    console.error(`${LABEL} SELFTEST FAILED leftover plant escaped`, leftoverHits.filter((e) => e.includes("leftover")));
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — 2/2 mutations caught + leftover plant`);
   process.exit(0);
 }
 
