@@ -28,7 +28,7 @@ describe("BankingKpiPanel (bank feed + ledger KPI engine)", () => {
     kpisMock.mockResolvedValue({ range, kpis: [
       { key: "cash_position", label: "Cash position (book)", unit: "cents", value: 11855431, source: "s", gl_account: "1000", row_count: 75, empty_reason: null,
         buckets: [{ label: "USMCA FREIGHT (1000)", count: 0, cents: 15239411 }] },
-      { key: "cleared_vs_uncleared", label: "Uncleared (vs cleared)", unit: "cents", value: 500, compare_value: 1000, compare_label: "Cleared", source: "s", gl_account: null, row_count: 3, empty_reason: null },
+      { key: "cleared_vs_uncleared", label: "Uncleared", primary_label: "Uncleared", unit: "cents", value: 500, compare_value: 1000, compare_label: "Out", source: "s", gl_account: null, row_count: 3, empty_reason: null },
       { key: "factoring_wires_vs_expected", label: "Factoring wires vs expected", unit: "cents", value: 0, compare_value: 0, compare_label: "Expected", source: "s", gl_account: null, row_count: 0,
         empty_reason: "No posted factoring purchase in this range." },
     ] });
@@ -38,7 +38,10 @@ describe("BankingKpiPanel (bank feed + ledger KPI engine)", () => {
     expect(screen.queryByText("USMCA FREIGHT (1000): $152,394.11")).toBeNull();
     // the tile says a breakdown exists instead of printing it
     expect(screen.getByText("75 rows · 1 breakdown")).toBeTruthy();
-    expect(screen.getByText("Cleared $10.00")).toBeTruthy();
+    expect(screen.getByText("In")).toBeTruthy();
+    expect(screen.getByText("Out")).toBeTruthy();
+    expect(screen.getByText("$5.00")).toBeTruthy();
+    expect(screen.getByText("$10.00")).toBeTruthy();
     expect(screen.getByText("No posted factoring purchase in this range.")).toBeTruthy();
   });
 

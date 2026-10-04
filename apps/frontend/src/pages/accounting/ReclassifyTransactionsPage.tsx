@@ -36,6 +36,7 @@ import {
 } from "../../api/reclassify";
 import { docTarget, notReclassifiable } from "../../lib/reclassifyDrill";
 import { companyToday } from "../../lib/businessDate";
+import { colors } from "../../design/tokens";
 
 const PAGE = 100;
 
@@ -307,7 +308,7 @@ export function ReclassifyTransactionsPage() {
           {accountsQ.error ? <div className="p-2"><ListErrorState {...formatQueryErrorDetail(accountsQ.error)} onRetry={() => void accountsQ.refetch()} /></div> : null}
           <ul className="text-xs">
             <li>
-              <button type="button" onClick={() => openAccount(null)} className={`flex w-full items-center justify-between px-2 py-1 text-left hover:bg-slate-50 ${f.accountIds.length === 0 ? "bg-slate-100 font-semibold" : ""}`}>
+              <button type="button" onClick={() => openAccount(null)} aria-current={!applied || applied.accountIds.length === 0 ? "true" : undefined} className={`flex w-full items-center justify-between px-2 py-1 text-left hover:bg-slate-50 ${!applied || applied.accountIds.length === 0 ? "bg-slate-100 font-semibold" : ""}`} style={!applied || applied.accountIds.length === 0 ? { borderLeft: `3px solid ${colors.accent}` } : undefined}>
                 <span>All accounts</span>
               </button>
             </li>
@@ -316,7 +317,7 @@ export function ReclassifyTransactionsPage() {
             ) : null}
             {tree.map(({ a, depth, rollupCents, hasChildren }) => (
               <li key={a.account_id}>
-                <button type="button" onClick={() => openAccount(a.account_id)} title={`${a.account_type ?? ""}${a.detail_type_name ? ` · ${a.detail_type_name}` : ""}${a.is_active ? "" : " · inactive"} — opening ${formatCurrencyFromCents(naturalCentsForType(a.opening_cents, a.account_type))}, period ${formatCurrencyFromCents(naturalCentsForType(a.period_activity_cents, a.account_type))}`} className={`flex w-full items-center justify-between gap-2 py-1 pr-2 text-left hover:bg-slate-50 ${f.accountIds.includes(a.account_id) ? "bg-slate-100 font-semibold" : ""}`} style={{ paddingLeft: `${0.5 + depth * 1}rem` }} data-testid={`reclassify-account-${a.account_id}`}>
+                <button type="button" onClick={() => openAccount(a.account_id)} aria-current={applied?.accountIds.length === 1 && applied.accountIds[0] === a.account_id ? "true" : undefined} title={`${a.account_type ?? ""}${a.detail_type_name ? ` · ${a.detail_type_name}` : ""}${a.is_active ? "" : " · inactive"} — opening ${formatCurrencyFromCents(naturalCentsForType(a.opening_cents, a.account_type))}, period ${formatCurrencyFromCents(naturalCentsForType(a.period_activity_cents, a.account_type))}`} className={`flex w-full items-center justify-between gap-2 py-1 pr-2 text-left hover:bg-slate-50 ${applied?.accountIds.length === 1 && applied.accountIds[0] === a.account_id ? "bg-slate-100 font-semibold" : ""}`} style={{ paddingLeft: `${0.5 + depth * 1}rem`, ...(applied?.accountIds.length === 1 && applied.accountIds[0] === a.account_id ? { borderLeft: `3px solid ${colors.accent}` } : {}) }} data-testid={`reclassify-account-${a.account_id}`}>
                   {/* showAccountNumbers gate — formatAccountDisplayLabel hides the number unless the toggle is on */}
                   <span className="min-w-0 whitespace-normal break-words">
                     {formatAccountDisplayLabel({ account_name: a.account_name, account_number: a.account_number }, { showNumber: showAccountNumbers })}
