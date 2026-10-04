@@ -82,7 +82,7 @@ export async function listUnclearedCustomerPayments(
           SELECT 1
           FROM accounting.journal_entry_postings jep
           JOIN accounting.journal_entries je
-            ON je.id = jep.journal_entry_id
+            ON je.id = jep.journal_entry_uuid
            AND je.operating_company_id = jep.operating_company_id
           WHERE jep.operating_company_id = p.operating_company_id
             AND jep.source_transaction_type = 'customer_payment'
@@ -139,7 +139,7 @@ export async function listUnclearedBillPayments(
           SELECT 1
           FROM accounting.journal_entry_postings jep
           JOIN accounting.journal_entries je
-            ON je.id = jep.journal_entry_id
+            ON je.id = jep.journal_entry_uuid
            AND je.operating_company_id = jep.operating_company_id
           WHERE jep.operating_company_id = bp.operating_company_id
             AND jep.source_transaction_type = 'bill_payment'
