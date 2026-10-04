@@ -1,8 +1,14 @@
-## 2026-10-04T16:44Z · BANK-F91527 LocationMap leftover border WIRED · this PR
+## 2026-10-04T16:50Z · BANK-F91528 IftaPreparer leftover #e2e8f0 WIRED · this PR
 
-DONE: LocationMapModal info-panel leftover #d1d5db → house #E5E7EB; leftover refuse on EVEN 4132 --selftest + live.
+DONE: IftaPreparerCard leftover #e2e8f0 chip/hover → house #F7F8FA / #E5E7EB; leftover refuse on EVEN 3884 --selftest + live.
 
-NEXT: leftover muted chrome (SystemModule code stay / skip pile / WO pie stay) · skip pile parked · HH14 no migrations this tick.
+NEXT: leftover muted chrome (WO pie empty stay / SystemModule code stay / skip pile) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T16:48Z · BANK-F91527 LocationMap leftover border WIRED CI · tip `5fc24b468a`
+
+DONE: #25269 — LocationMapModal leftover #d1d5db → #E5E7EB; verify-steps/4132 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (IftaPreparer #e2e8f0 / SystemModule code stay / skip pile) · skip pile parked · HH14 no migrations this tick.
 
 ## 2026-10-04T16:42Z · BANK-F91526 CreateWO leftover field border WIRED CI · tip `38884cff4f`
 

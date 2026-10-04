@@ -15,8 +15,8 @@ function ReadyBadge({ label }: { label: string }) {
     label === "waiting for quarter close"
       ? { bg: "#f1f5f9", fg: "#4B5563" }
       : label === "waiting for data"
-        ? { bg: "#e2e8f0", fg: "#4B5563" }
-        : { bg: "#e2e8f0", fg: "#1f2a44" };
+        ? { bg: "#F7F8FA", fg: "#4B5563" }
+        : { bg: "#F7F8FA", fg: "#1f2a44" };
   return (
     <span className="rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.04em]" style={{ background: palette.bg, color: palette.fg }}>
       {label}
@@ -79,7 +79,7 @@ export function IftaPreparerCard({ status }: Props) {
           <button
             type="button"
             onClick={() => setConfirmOpen(true)}
-            className="inline-flex items-center gap-1 rounded-sm border border-[#4B5563] bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#4B5563] hover:bg-[#e2e8f0]"
+            className="inline-flex items-center gap-1 rounded-sm border border-[#4B5563] bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#4B5563] hover:bg-[#E5E7EB]"
           >
             Generate IFTA-ready CSV
           </button>

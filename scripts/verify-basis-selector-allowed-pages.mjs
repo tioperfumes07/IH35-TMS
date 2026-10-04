@@ -110,7 +110,7 @@ if (fs.existsSync(iftaCard)) {
 
 function leftoverRefuseIfta(src, bucket) {
   if (src.includes("text-[11px]")) bucket.push("IftaPreparerCard.tsx: leftover text-[11px]");
-  if (src.includes("#8A92AB") || src.includes("#334155")) {
+  if (src.includes("#8A92AB") || src.includes("#334155") || src.includes("#e2e8f0") || src.includes("#E2E8F0")) {
     bucket.push("IftaPreparerCard.tsx: leftover off-scale muted");
   }
 }
@@ -127,7 +127,7 @@ if (process.argv.includes("--selftest")) {
     failures.push("SELFTEST FAIL — live IftaPreparerCard leftover tokens present");
     failures.push(...leftoverGood);
   }
-  const leftoverPlant = `${iftaSource}\n<div className="text-[11px] text-[#8A92AB]" style={{ color: "#334155" }}>plant</div>`;
+  const leftoverPlant = `${iftaSource}\n<div className="text-[11px] text-[#8A92AB]" style={{ color: "#334155", background: "#e2e8f0" }}>plant</div>`;
   const leftoverBad = [];
   leftoverRefuseIfta(leftoverPlant, leftoverBad);
   if (
