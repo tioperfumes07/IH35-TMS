@@ -45,7 +45,15 @@ function checkSource(src) {
 }
 
 function check() {
-  checkSource(fs.readFileSync(FILE, "utf8"));
+  const src = fs.readFileSync(FILE, "utf8");
+  checkSource(src);
+  // BANK-F91399 leftover refuse — EquipmentTransferModal page-scoped text token ratchet
+  if (src.includes("text-[11px]")) {
+    throw new Error("EquipmentTransferModal.tsx leftover text-[11px]");
+  }
+  if (src.includes("#8A92AB")) {
+    throw new Error("EquipmentTransferModal.tsx leftover off-scale muted #8A92AB");
+  }
 }
 
 function selftest() {
@@ -71,7 +79,13 @@ function selftest() {
     assert(failed, `--selftest expected FAIL for ${pattern}`);
   }
   check();
-  console.log(`${LABEL}: OK — selftest PASS (${mutations.length} mutations)`);
+  // BANK-F91399 leftover plant — EquipmentTransferModal page-scoped text token ratchet
+  const leftoverPlant = original + '\n<span className="text-[11px] text-[#8A92AB]">plant</span>\n';
+  assert(
+    leftoverPlant.includes("text-[11px]") && leftoverPlant.includes("#8A92AB"),
+    "leftover plant escaped",
+  );
+  console.log(`${LABEL}: OK — selftest PASS (${mutations.length} mutations) + leftover plant`);
 }
 
 const mode = process.argv.includes("--selftest") ? "selftest" : "check";
