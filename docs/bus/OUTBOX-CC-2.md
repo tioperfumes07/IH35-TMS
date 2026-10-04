@@ -2198,3 +2198,30 @@ trigger; TRANSP not touched). Finish test on fork br-billowing-heart-akkt6s3g: 2
 both paths, account balance at every step, trial balance unchanged across every match and unmatch. Seven guards, ceiling 0.
 Full result + the five decisions for the lead: docs/bus/10-03-2026-CC-2-ROUND-360-RESULT-BANK-FEED-STATE-MACHINE.md.
 Relay webhook secret: generated, set on Render backend, signed call verified live; value is in the master key file only.
+
+## ROUND 393.2 — the 3,908 unlinked postings: measured cause is the AUTH-177 purge, not the nine doors (2026-10-04)
+
+Measured on the DIRECT endpoint (USMCA), before any repoint:
+- **All nine doors already write a spine link per posting.** Each one calls `writeTransactionSourceLink` or inserts the link inline, next to the posting:
+  - match, settlement-posting, journal-entries, amortization (mine)
+  - void, lease-posting, period-close RE, recurring.worker (CC-3's)
+  - the engine's `insertPostingLines`, which inserts posting and link together
+- **By source type, 0 unlinked postings** for journal_entry 775, manual_je 46, driver_settlement 420, bank_reconciliation 6, load 387, bill 96, fuel_event 510, escrow_account 32, driver_cash_advance 24 and customer_payment 14. The only unlinked are expense 3,860 and invoice 48.
+- **Who wrote the unlinked rows:** 3,836 carry the ENGINE's own key `ih35:posting-mvp:v1`; the other 72 carry `void:invoice` / `void:expense`.
+- **The links were written, then deleted.** `audit.row_changes` holds exactly **3,908 DELETEs on accounting.transaction_source_links, 2026-09-30 17:19:10 to 17:28:12Z**. One per now-unlinked posting, with no user role, all in the AUTH-177 purge window (#23435 / #23464).
+  - The same window deleted 1,091 expenses, 1,095 expense lines, 31 invoices, 31 invoice lines and 632 reconciliation matches.
+  - The postings survived because WORM refuses deletes on journal_entry_postings.
+- **The source document of every one of the 3,908 no longer exists** (0 of 3,908 found).
+- **The ledger effect is 0.** The orphans net to 0. A/R 1100 and Unbilled 1150 each show ±$89,469.00 inside the set, but the 48 invoice-typed reversals each point at a live, linked original (48/48), so every pair still nets to zero.
+- **It cannot recur.** 202615360500 (live 2026-10-04 00:22Z) refuses a posting without its link at commit, and `trg_live_posting_keeps_spine_link` refuses deleting a link out from under a live posting.
+
+**What this means for 393.2 and 393.3:**
+- Repointing the eight doors to `posting-line-writer.ts` is still worth doing: one insert path, and the allowlist shrinks.
+- But it **changes 0 of the 3,908 and fixes no live defect.** Those are posting lines of purged documents, so they are purge scope, not writer scope.
+- They belong in the owner's purge-and-re-create, which is consistent with the order's "NO BACKFILL".
+- I will still repoint my four once the writer is on main (it is not yet: `claude/r391-one-posting-line-writer` is held by CC-3). The writer needs optional fields first, or each repoint loses data the door writes today:
+  - relationship_role per line
+  - location_id, entity_uuid / entity_type
+  - a load_id override
+  - reversal_of_line_id
+  - an on-conflict skip for idempotency_key paths
