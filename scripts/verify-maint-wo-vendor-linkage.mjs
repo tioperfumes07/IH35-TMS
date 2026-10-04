@@ -62,6 +62,9 @@ export function checkLinkage(routes, vendorsPage, maintenanceApi, vendorDetailPa
   if (!/entityLabel\(vendor\.mdata_vendor_name, vendor\.mdata_vendor_id, "Vendor"\)/.test(vendorDetailPage)) {
     failures.push("VendorDetailPage must render the resolved AP vendor label with its canonical FK");
   }
+  // BANK-F91408 leftover refuse — VendorDetailPage page-scoped text token ratchet
+  if (vendorDetailPage.includes("text-[11px]")) failures.push("VendorDetailPage leftover text-[11px] — use text-xs");
+  if (vendorDetailPage.includes("#8A92AB")) failures.push("VendorDetailPage leftover #8A92AB — use #4B5563");
 
   return failures;
 }
@@ -101,6 +104,8 @@ function selftest() {
     ["missing FE picker caught", checkLinkage(goodRoutes, "", goodApi, goodDetail).length > 0],
     ["missing AP vendor label join caught", checkLinkage(goodRoutes.replace("ap_vendor.vendor_name AS mdata_vendor_name", ""), goodPage, goodApi, goodDetail).some((f) => f.includes("resolve the canonical AP vendor label"))],
     ["null AP vendor label caught", checkLinkage(goodRoutes, goodPage, goodApi, `vendor.mdata_vendor_id entityLabel(null, vendor.mdata_vendor_id, "Vendor")`).some((f) => f.includes("resolved AP vendor label"))],
+    // BANK-F91408 leftover plant — VendorDetailPage page-scoped text token ratchet
+    ["leftover text token plant", checkLinkage(goodRoutes, goodPage, goodApi, goodDetail + '\n<p className="text-[11px] text-[#8A92AB]">plant</p>\n').some((f) => f.includes("leftover"))],
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
