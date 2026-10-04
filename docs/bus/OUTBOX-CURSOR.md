@@ -1,8 +1,14 @@
-## 2026-10-04T16:50Z · BANK-F91528 IftaPreparer leftover #e2e8f0 WIRED · this PR
+## 2026-10-04T16:55Z · BANK-F91529 IftaPreparer leftover slate classes · this PR
 
-DONE: IftaPreparerCard leftover #e2e8f0 chip/hover → house #F7F8FA / #E5E7EB; leftover refuse on EVEN 3884 --selftest + live.
+DONE: IftaPreparerCard leftover Tailwind slate-* → house #4B5563 / #1F2A44 / #E5E7EB / #F7F8FA; leftover refuse on EVEN 3884 --selftest + live.
 
-NEXT: leftover muted chrome (WO pie empty stay / SystemModule code stay / skip pile) · skip pile parked · HH14 no migrations this tick.
+NEXT: leftover muted chrome (other slate-* pages / WO pie empty stay / skip pile) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T16:50Z · BANK-F91528 IftaPreparer leftover #e2e8f0 WIRED CI · tip `2edef3a2f3`
+
+DONE: #25270 — IftaPreparerCard leftover #e2e8f0 chip/hover → house #F7F8FA / #E5E7EB; leftover refuse on EVEN 3884 --selftest + live.
+
+NEXT: leftover muted chrome (Ifta slate-* / WO pie empty stay / skip pile) · skip pile parked · HH14 no migrations this tick.
 
 ## 2026-10-04T16:48Z · BANK-F91527 LocationMap leftover border WIRED CI · tip `5fc24b468a`
 
