@@ -69,7 +69,24 @@ const LIVE_FLAG_FILES = new Map([
 // suite, a deliberate ~6-10 MINUTE dev workflow tool (docs/CLAUDE.md, npm run verify:local-ci).
 // Spawning it here with any reasonable per-guard timeout can only ever time out, never pass —
 // caught live: 8s timeout, 25s timeout, both hit, standalone run exceeded 120s outright.
-const NOT_A_CANDIDATE = new Set(["verify-static.mjs", "verify-no-silent-db-skip.mjs", "verify-local-ci.mjs"]);
+// ROUND 389 (LEAD) — verify-derived-artifact-freshness.mjs joins them, same reason, measured not
+// claimed: it creates a git worktree of HEAD and runs TEN generators as child processes inside it.
+// Standalone with the stripped env it exits correctly in 7s (9s with --strict) — against this
+// harness's 8s per-file bound, and under its 16-way pool, that is a guaranteed "timed out", which
+// this file reports as a hang. Confirmed live: PASS standalone, FAIL inside the gate, same commit.
+// Raising the bound for all 341 files to fit one git-worktree guard would weaken the harness.
+// Nothing is lost by excluding it from this SPAWN SWEEP: it does not silently skip — it does its
+// full work with no credential, regenerates and diffs 11 of its 12 artifacts, and reports the
+// twelfth (the requiresDatabase one) as UNVERIFIABLE HERE, named and counted, even on the OK path.
+// And it is now genuinely executed: verify-step 14385 plus the --strict step in ci.yml's
+// required-live-load-guard, the one job holding the read-only secret. Before ROUND 389 it was wired
+// to no workflow at all, which is the gap this exclusion does NOT recreate.
+const NOT_A_CANDIDATE = new Set([
+  "verify-static.mjs",
+  "verify-no-silent-db-skip.mjs",
+  "verify-local-ci.mjs",
+  "verify-derived-artifact-freshness.mjs",
+]);
 
 function candidateFiles() {
   return fs

@@ -49,6 +49,19 @@ because the fix has to land somewhere and this is the branch that unblocks the p
 **Ruled:** authorized. The three code files are a comment and a type narrowing — no money moves
 differently because of them. CC-2 and CC-3 keep their lanes; this ruling does not transfer anything.
 
+### 2.1 Second commit — blocker 4, found while pushing blockers 1-3
+
+| Path | Owner | Why LEAD |
+|---|---|---|
+| `scripts/lib/generated-artifacts.mjs` | CC-1 | the decision core discarded the registry's own `requiresDatabase` declaration |
+| `scripts/verify-derived-artifact-freshness.mjs` | CC-1 | same guard; strict mode + the UNVERIFIABLE channel |
+| `scripts/verify-steps/14385-verify-derived-artifact-freshness.mjs` | CC-1 | wiring an orphan guard — this branch's entire purpose |
+| `scripts/verify-steps/CLAIMED-NUMBERS.json` | CC-1 | 14385 claimed in the lead band (≡1 mod 4) by the allocator, not by hand |
+| `.github/workflows/ci.yml` | **LEAD** | no cross — LEAD's own lane |
+
+Same ruling, same reasoning: pipeline work, in CC-1's paths because the orphan census spans every
+seat. CC-1 keeps the lane.
+
 ---
 
 ## 3. PROOF FOR EACH BLOCKER — NO EXEMPTION WITHOUT EVIDENCE
@@ -163,3 +176,99 @@ Results: `verify-test-typecheck-ratchet: OK — no NEW TS2339 in test files (bas
 re-generate the map from prod (`_generated_from` is the authoritative path) and confirm this entry
 survives verbatim. If prod lands a different soft-delete column than the DDL declares, the map
 follows **prod**, not the migration — the map's own `_generated_from` says so.
+
+---
+
+## 6. BLOCKER 4 — THE GUARD THAT RAN NOWHERE AND BLOCKED EVERYONE
+
+Found while pushing blockers 1-3: `verify-derived-artifact-freshness` failed the local gate on
+`scripts/canonical-relations.json` with `` `node scripts/gen-canonical-relations.mjs` did not
+produce it ``. Measured on a pristine `origin/main` worktree: **the same failure, and one more**
+(`docs/audit/program-scoreboard.json` 101 commits behind, ceiling 80). Pre-existing, not mine.
+
+### The mechanism, named
+
+Three separate facts the guard collapsed into one anonymous sentence:
+
+1. `scripts/gen-canonical-relations.mjs` regenerates from the **live schema** and exits 2 with
+   `DATABASE_URL is required (read-only connection string)` when there is no credential.
+2. `docs/specs/DERIVED-ARTIFACTS.json` **already declared** `"requiresDatabase": true` on that
+   entry — the registry knew. `analyseGenerated()` in `scripts/lib/generated-artifacts.mjs`
+   **never read the field**.
+3. So a missing credential reported in the exact words of a genuinely broken generator. Every
+   local push on every branch failed closed on it.
+
+And the half that makes it worse: **`verify-derived-artifact-freshness` was wired into no
+verify-step and named in no workflow.** Its only caller was the local `money-pr-local-gate`. CI,
+which holds `secrets.PROD_READONLY_DATABASE_URL` (`ci.yml:66`), never ran it. So the artifact's
+freshness was proven **nowhere**, while the guard blocked every push claiming it could not tell.
+That is the orphan-guard class this whole branch exists to close, caught in the act.
+
+A note on method: my first reading of the generator was `EXIT=0`, because I had piped it to
+`tail`. The DoD's own §5 warns that pipes mask exit codes. It exits 2. Corrected before it reached
+a finding.
+
+### The fix — and the trap I nearly built into it
+
+`analyseGenerated` now honours the entry's own declaration:
+
+| | no `DATABASE_URL` | `DATABASE_URL` present |
+|---|---|---|
+| `requiresDatabase: true` | **UNVERIFIABLE HERE** — named with the var and the exact command, counted in `unverifiable_here=N`, printed even on the OK path. Still fails if the output is not committed. | regenerated and diffed exactly as before — no exemption once it is provable |
+| no `requiresDatabase` | hard problem as before, **now carrying the generator's own stderr** | unchanged |
+| `--strict` | **hard FAIL** | regenerated and diffed |
+
+Then it is wired: **verify-step 14385** (lead band ≡1 mod 4, allocated by
+`scripts/claim-verify-step.mjs`, never by hand).
+
+**The trap:** my first version keyed strict off `process.env.CI === "true"`. That would have been
+a fleet-wide outage. Most CI jobs run guards through `scripts/verify-static.mjs`, which **deletes
+`DATABASE_URL` on purpose** (its line 171, so live-prod guards cannot reach prod). Strict-on-CI
+would therefore have made this guard a hard failure in exactly the job designed not to have the
+credential — the flag meant to protect the invariant blocking every push instead. Caught by
+reading `verify-static.mjs` before wiring rather than after CI went red.
+
+So strict is **explicit only**, and the two runs are split by where the credential actually lives:
+
+- **verify-step 14385** — under `verify-static`, no credential, no `--strict`: the gated entry
+  reports UNVERIFIABLE HERE, the other ten generators are regenerated and diffed for real.
+- **`ci.yml` `required-live-load-guard`** — the one job holding the read-only secret, with
+  `--strict`: the gated entry is regenerated and diffed against live schema, and if that secret
+  is ever missing or empty the step **FAILS** instead of reporting the gap as unverifiable.
+
+Nothing is skipped, which is this guard's own stated law. The gap is named where it cannot be
+proven and proven where it can.
+
+### Proof, both directions
+
+```
+verify-derived-artifact-freshness --selftest PASS 21/21
+  (5 new cases, each deleting exactly what its assertion requires)
+  PASS  requiresDatabase with no DATABASE_URL is UNVERIFIABLE, named, and NOT a silent pass
+  PASS  requiresDatabase with no DATABASE_URL is a HARD FAIL under strict (CI)
+  PASS  requiresDatabase WITH DATABASE_URL still catches staleness (no exemption once provable)
+  PASS  requiresDatabase output that is NOT committed FAILS even while credential-gated
+  PASS  a NON-gated generator failure reports the generator's own stderr, not an anonymous message
+
+LOCAL  (no credential)  exit 0
+  unverifiable_here=1
+  UNVERIFIABLE HERE: scripts/canonical-relations.json ... Prove it where the credential exists:
+    `DATABASE_URL="<read-only conn>" node scripts/gen-canonical-relations.mjs` (CI supplies it).
+
+STRICT (no credential)  exit 1
+  unverifiable_here=0 (strict: unverifiable counts as FAIL)
+  FAIL — 1 problem(s): scripts/canonical-relations.json: UNVERIFIABLE HERE ...
+```
+
+The strict run failing without the credential **is** the fail-closed proof: the same input that
+passes locally cannot pass in the job that is supposed to prove it.
+
+### What is still not proven
+
+`scripts/canonical-relations.json` freshness itself. The ruling doc of 2026-10-03 measured it
+stale (855 -> 894 relations). I did not and will not run that generator: it needs a live
+connection string, and I do not handle the owner's credentials — stated twice before in this
+session and unchanged. Verify-step 14385 plus the strict CI step are what prove it, in the job
+that already holds the secret. **If that CI step comes back red on first run, the artifact is
+stale and the fix is to regenerate and commit it — not to soften the guard.** Named here so
+nobody reads the green local line as "all proven".

@@ -8936,6 +8936,16 @@
     "claimed_at": "2026-10-04",
     "purpose": "verify-ap-control-ties-subledger"
   },
+  "14385": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-derived-artifact-freshness"
+  },
+  "14397": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-arrival-detection-wired-on-poll-path"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
