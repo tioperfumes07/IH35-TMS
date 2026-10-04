@@ -58,6 +58,11 @@ export function check({
     f.push(`${BOARD_FILE}: the segment filter has no "LOCAL" case -- the board's LOCAL toggle would be dead`);
   }
 
+  if (board.includes("text-[11px]")) f.push(`${BOARD_FILE}: leftover text-[11px]`);
+  if (board.includes("#8A92AB") || board.includes("#334155")) {
+    f.push(`${BOARD_FILE}: leftover off-scale muted`);
+  }
+
   return f;
 }
 
@@ -65,7 +70,7 @@ function selftest() {
   const goodMigration = "ALTER TYPE mdata.trip_type_enum ADD VALUE IF NOT EXISTS 'LOCAL' AFTER 'SB';";
   const goodSchema = 'trip_type: z.enum(["NB", "TR", "SB", "LOCAL"]).optional(),';
   const goodBoard = `
-    const TRIP_COLOR: Record<"NB" | "TR" | "SB" | "LOCAL", string> = { NB: "#1F2A44", TR: "#64748b", SB: "#334155", LOCAL: "#0f172a" };
+    const TRIP_COLOR: Record<"NB" | "TR" | "SB" | "LOCAL", string> = { NB: "#1F2A44", TR: "#64748b", SB: "#4B5563", LOCAL: "#0f172a" };
     <LegendSwatch color={TRIP_COLOR.LOCAL} label="LOCAL Laredo—Laredo" />
     case "LOCAL": return t.legs.some((l) => l.trip_type === "LOCAL");
   `;
@@ -89,6 +94,15 @@ function selftest() {
   }
   if (escaped.length) {
     console.error(`${LABEL} SELFTEST FAIL — escaped: ${escaped.join(", ")}`);
+    process.exit(1);
+  }
+  const leftoverPlant = `${goodBoard}\n<div className="text-[11px] text-[#8A92AB]" style={{ color: "#334155" }}>plant</div>`;
+  const leftoverHits = check({ migration: goodMigration, schema: goodSchema, board: leftoverPlant });
+  if (
+    !leftoverHits.some((e) => e.includes("leftover text-[11px]")) ||
+    !leftoverHits.some((e) => e.includes("leftover off-scale muted"))
+  ) {
+    console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`, leftoverHits);
     process.exit(1);
   }
   console.log(`${LABEL} SELFTEST OK — ${cases.length}/${cases.length} plants rejected`);

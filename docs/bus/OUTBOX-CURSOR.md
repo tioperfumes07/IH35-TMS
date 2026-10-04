@@ -1,3 +1,9 @@
+## 2026-10-04T11:16Z · BANK-F91489 CashFlowOverview leftover WIRED CI · tip `fa5fb2c1da`
+
+DONE: #25231 — CashFlowOverview line #4B5563; verify-steps/3850 leftover refuse live.
+
+NEXT: BANK-F91490 TripPairingBoard leftover #334155 + leftover refuse on 4108 · skip pile parked · HH11 no migrations.
+
 ## 2026-10-04T11:12Z · BANK-F91488 ProfitPerTruck leftover WIRED CI · tip `42e145e2d2`
 
 DONE: #25230 — ProfitPerTruck revenue/mi #4B5563; verify-steps/3854 leftover refuse live.

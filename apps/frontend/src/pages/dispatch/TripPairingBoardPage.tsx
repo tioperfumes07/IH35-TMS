@@ -19,7 +19,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 // Three distinguishable navy-family shades replace the old SB green (#16a34a) and any blue/purple.
 // TRIP-LOCAL-ENUM (owner order 2026-09-06): LOCAL (Laredo->Laredo) gets its own navy-family shade,
 // same rule — no blue/purple/green.
-const TRIP_COLOR: Record<"NB" | "TR" | "SB" | "LOCAL", string> = { NB: "#1F2A44", TR: "#64748b", SB: "#334155", LOCAL: "#0f172a" };
+const TRIP_COLOR: Record<"NB" | "TR" | "SB" | "LOCAL", string> = { NB: "#1F2A44", TR: "#64748b", SB: "#4B5563", LOCAL: "#0f172a" };
 
 type Segment = "All" | "NB" | "TR" | "SB" | "LOCAL" | "open" | "upnorth";
 // SORT-A1-FALSE-POSITIVE: named `text`, not `label` — this is a segment-toggle caption array, not
