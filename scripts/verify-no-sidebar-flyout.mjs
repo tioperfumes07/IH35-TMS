@@ -28,15 +28,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+const LABEL = "verify-no-sidebar-flyout";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SRC = path.join(ROOT, "apps", "frontend", "src");
 const SIDEBAR_FILE = path.join(SRC, "components", "Sidebar.tsx");
 
 const FILENAME_PATTERN = /SidebarFlyout|FlyoutMenu/i;
 const TEST_OR_STORY = /\.(test|spec|stories)\.[jt]sx?$/i;
-
-/** @type {string[]} */
-const failures = [];
 
 function walk(dir, out = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -51,43 +49,83 @@ function walk(dir, out = []) {
   return out;
 }
 
-// --- CHECK A: reintroduced component file --------------------------------
-const allFiles = walk(SRC);
-for (const file of allFiles) {
-  const base = path.basename(file);
-  if (TEST_OR_STORY.test(base)) continue;
-  if (FILENAME_PATTERN.test(base)) {
-    failures.push(
-      `CHECK A: reintroduced sidebar-flyout component file: ${path.relative(ROOT, file)}\n` +
-        `  Jorge's §7 lock: a single 80px navy sidebar, no hover-flyout submenu. ` +
-        `This pattern was already built+deleted twice — do not re-add it.`,
-    );
+/** @param {{ sidebarSrc?: string, allFiles?: string[] }} [opts] */
+export function audit(opts = {}) {
+  const failures = [];
+
+  // --- CHECK A: reintroduced component file --------------------------------
+  const allFiles = opts.allFiles ?? walk(SRC);
+  for (const file of allFiles) {
+    const base = path.basename(file);
+    if (TEST_OR_STORY.test(base)) continue;
+    if (FILENAME_PATTERN.test(base)) {
+      failures.push(
+        `CHECK A: reintroduced sidebar-flyout component file: ${path.relative(ROOT, file)}\n` +
+          `  Jorge's §7 lock: a single 80px navy sidebar, no hover-flyout submenu. ` +
+          `This pattern was already built+deleted twice — do not re-add it.`,
+      );
+    }
   }
+
+  // --- CHECK B: live sidebar wiring ------------------------------------------
+  if (!fs.existsSync(SIDEBAR_FILE) && opts.sidebarSrc == null) {
+    failures.push(
+      `CHECK B: expected live sidebar component missing at ${path.relative(ROOT, SIDEBAR_FILE)} ` +
+        `— guard cannot verify it is flyout-free. If Sidebar.tsx moved, update SIDEBAR_FILE in this script.`,
+    );
+  } else {
+    const source = opts.sidebarSrc ?? fs.readFileSync(SIDEBAR_FILE, "utf8");
+    if (/flyout/i.test(source)) {
+      failures.push(
+        `CHECK B: components/Sidebar.tsx references "flyout" — the live sidebar must never ` +
+          `render a hover-triggered flyout submenu (§7: single 80px navy sidebar only).`,
+      );
+    }
+    const importFlyoutRe = /import\s+[^;]*from\s+["'][^"']*flyout[^"']*["']/gi;
+    if (importFlyoutRe.test(source)) {
+      failures.push(
+        `CHECK B: components/Sidebar.tsx imports a module whose path contains "flyout" — ` +
+          `the live sidebar must not wire in a flyout submenu component.`,
+      );
+    }
+    // BANK-F91418 leftover refuse — Sidebar page-scoped text token ratchet
+    if (source.includes("text-[11px]")) {
+      failures.push("Sidebar leftover text-[11px] — use text-xs");
+    }
+    if (source.includes("#8A92AB")) {
+      failures.push("Sidebar leftover #8A92AB — use #4B5563");
+    }
+  }
+
+  return failures;
 }
 
-// --- CHECK B: live sidebar wiring ------------------------------------------
-if (!fs.existsSync(SIDEBAR_FILE)) {
-  failures.push(
-    `CHECK B: expected live sidebar component missing at ${path.relative(ROOT, SIDEBAR_FILE)} ` +
-      `— guard cannot verify it is flyout-free. If Sidebar.tsx moved, update SIDEBAR_FILE in this script.`,
-  );
-} else {
-  const source = fs.readFileSync(SIDEBAR_FILE, "utf8");
-  if (/flyout/i.test(source)) {
-    failures.push(
-      `CHECK B: components/Sidebar.tsx references "flyout" — the live sidebar must never ` +
-        `render a hover-triggered flyout submenu (§7: single 80px navy sidebar only).`,
-    );
+if (process.argv.includes("--selftest")) {
+  const live = audit();
+  if (live.length) {
+    console.error(`${LABEL} selftest FAIL: live already failing`);
+    for (const f of live) console.error(" -", f);
+    process.exit(1);
   }
-  const importFlyoutRe = /import\s+[^;]*from\s+["'][^"']*flyout[^"']*["']/gi;
-  if (importFlyoutRe.test(source)) {
-    failures.push(
-      `CHECK B: components/Sidebar.tsx imports a module whose path contains "flyout" — ` +
-        `the live sidebar must not wire in a flyout submenu component.`,
-    );
+  const sidebarSrc = fs.readFileSync(SIDEBAR_FILE, "utf8");
+  const flyoutPlant = audit({ sidebarSrc: sidebarSrc + "\nconst flyout = true;\n" });
+  if (!flyoutPlant.some((f) => /CHECK B:.*flyout/.test(f))) {
+    console.error(`${LABEL} selftest FAIL: flyout keyword plant escaped`);
+    process.exit(1);
   }
+  // BANK-F91418 leftover plant — Sidebar page-scoped text token ratchet
+  const leftoverPlant = audit({
+    sidebarSrc: sidebarSrc + '\n<span className="text-[11px] text-[#8A92AB]">plant</span>\n',
+  });
+  if (!leftoverPlant.some((f) => f.includes("leftover"))) {
+    console.error(`${LABEL} selftest FAIL: leftover text-[11px]/#8A92AB plant escaped`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} selftest PASS — flyout + leftover plants detected`);
+  process.exit(0);
 }
 
+const failures = audit();
 if (failures.length > 0) {
   console.error("verify:no-sidebar-flyout FAILED\n");
   for (const f of failures) console.error(`- ${f}\n`);
