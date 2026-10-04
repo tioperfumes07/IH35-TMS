@@ -89,6 +89,12 @@ function selftest() {
       process.exit(1);
     }
   }
+  // BANK-F91515 leftover plant — dashed legend leftover slate (TR #64748b stays)
+  const leftoverHits = leftoverRefuse('border: "1px dashed #94a3b8"');
+  if (!leftoverHits.length) {
+    console.error(`${LABEL} SELFTEST FAIL leftover #94a3b8 plant escaped`);
+    process.exit(1);
+  }
   console.log(`${LABEL} SELFTEST OK — collapsed-column regression rejected; 1/2/3 TR legs -> 1/2/3 columns confirmed`);
 }
 
@@ -102,7 +108,17 @@ const src = fs.readFileSync(PAGE_PATH, "utf8");
 const failures = [];
 if (!hasNoCollapsedStacking(src)) failures.push(`"↳ leg" collapsed-stacking text found — triangulation legs must render as SEPARATE columns, never stacked in one cell`);
 if (!hasExpandingTriangulationColumns(src)) failures.push(`triangulation columns are not built as one-per-leg-index from a data-derived count (computeMaxTriangulationLegs -> Array.from({length: trCount}, ...) -> ...triangulationColumns spread)`);
-if (src.includes("text-[11px]")) failures.push(`${PAGE_PATH}: must not use text-[11px] — use text-xs or text-section-header`);
+function leftoverRefuse(text) {
+  const hits = [];
+  if (text.includes("text-[11px]")) hits.push(`${PAGE_PATH}: leftover text-[11px]`);
+  // TR trip-type #64748b stays; dashed-legend leftover #94a3b8 does not.
+  if (text.includes("#8A92AB") || text.includes("#334155") || text.includes("#475569") || text.includes("#94a3b8")) {
+    hits.push(`${PAGE_PATH}: leftover off-scale muted`);
+  }
+  return hits;
+}
+
+failures.push(...leftoverRefuse(src));
 
 if (failures.length) {
   console.error(`${LABEL}: FAIL`);
