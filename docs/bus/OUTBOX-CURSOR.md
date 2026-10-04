@@ -1,3 +1,15 @@
+## 2026-10-04T13:12Z · BANK-F91507 Settlements DataPanel leftover #64748b WIRED · this PR
+
+DONE: SettlementsPage Open Driver Bills DataPanel accent #64748b → house muted #4B5563; leftover refuse on verify-settlements-module-one-readout; EVEN 3348 --selftest + live.
+
+NEXT: leftover muted chrome (DefaultHome/OwnerHome #475569 / CreateWO empty / LocationMap) · skip pile parked · HH12 no migrations this tick.
+
+## 2026-10-04T13:08Z · BANK-F91506 CatalogQuickCreate leftover WIRED CI · tip `36ea73382f`
+
+DONE: #25248 — CatalogQuickCreateDrawer help/target #4B5563; verify-steps/1510 leftover refuse --selftest + live.
+
+NEXT: leftover muted #64748b chrome (Settlements DataPanel / RMBuckets / CreateWO empty) · skip pile parked · HH12 no migrations this tick.
+
 ## 2026-10-04T13:00Z · BANK-F91506 CatalogQuickCreate leftover #64748b WIRED · this PR
 
 DONE: CatalogQuickCreateDrawer help/target text #64748b → house muted #4B5563; leftover refuse on verify-lst-picker-config-driven; EVEN 1510 --selftest + live.

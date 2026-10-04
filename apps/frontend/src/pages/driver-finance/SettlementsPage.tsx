@@ -747,13 +747,13 @@ function OpenDriverBillsPanel({
 
   if (loading) {
     return (
-      <DataPanel title={`Open Driver Bills · loading…`} accentColor="#64748b">
+      <DataPanel title={`Open Driver Bills · loading…`} accentColor="#4B5563">
         <p className="text-xs text-gray-500">Loading open driver bills…</p>
       </DataPanel>
     );
   }
   return (
-    <DataPanel title={`Open Driver Bills · ${totalCount} · ${formatUsdCents(totalGrossCents)}`} accentColor="#64748b">
+    <DataPanel title={`Open Driver Bills · ${totalCount} · ${formatUsdCents(totalGrossCents)}`} accentColor="#4B5563">
       {items.length === 0 ? (
         <p className="text-xs text-gray-500">No open driver bills — all driver pay is either settled or not yet booked.</p>
       ) : (
