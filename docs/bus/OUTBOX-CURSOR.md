@@ -1,6 +1,6 @@
 ## 2026-10-04T20:12Z · BANK-F91551 LoadCosts leftover slate classes · this PR
 
-DONE: LoadCostsBoard leftover text-slate-* → house #1F2A44 / #4B5563; leftover refuse on EVEN 4116? 4110.
+DONE: LoadCostsBoard leftover text-slate-* → house #1F2A44 / #4B5563; leftover refuse on EVEN 4110.
 
 NEXT: leftover muted chrome (ReeferFuelCredit / remaining pages / skip pile) · skip pile parked · HH16 leftovers first.
 
