@@ -45,3 +45,15 @@ wiring required for the 425c exhibits guard to pass, for ROUND 389.2 triage only
 `LANE_CROSS` filename. After green, CURSOR reserves EVEN verify-step numbers and wires the
 three via `scripts/verify-steps/<N>-verify-<slug>.mjs` under the same ruling's ADD-ONLY /
 EVEN-band limits.
+
+## Amendment 2026-10-04b — ROUND 390.1 restore path bank-line release (gate unblock)
+
+Tip main after ROUND 390.1 (#25148) left `restoreReversedJournalEntryInClientTx` setting
+`reversed_by_je_id` without `releaseBankLinesNamingDocument` — `verify-every-void-releases-its-bank-lines`
+fails on `apps/backend/src/accounting/journal-entries.service.ts` and blocks every CURSOR push that
+sets DATABASE_URL. This is the ROUND 368.2(b) pattern already used in `posting-engine.service.ts`.
+
+RULED: CURSOR may ADD the one `releaseBankLinesNamingDocument(... matched_journal_entry_id ...)`
+call immediately before the restore path's `SET reversed_by_je_id` in
+`apps/backend/src/accounting/journal-entries.service.ts`. No other JE void/post math. Same
+`LANE_CROSS` filename.
