@@ -1997,6 +1997,11 @@
       "claimed_at": "2026-10-03",
       "purpose": "ROUND 373.4: credit memos and vendor credits post — accounting.credit_memos.account_id / journal_entry_id (Dr the income it reduces / Cr A/R) and accounting.vendor_credits.account_id / journal_entry_id (Dr A/P / Cr the expense it reduces), posted at creation through the engine, reversed on void"
     },
+    "202615390100": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-04",
+      "purpose": "ROUND 394 ruling 2 step 2 (CC-1): driver_finance.driver_settlement_deductions.liability_id -> driver_liabilities (the deduction that recovers a posted driver receivable — damage / fine / negative settlement — credits that receivable at settlement close, not a recovery income account)."
+    },
     "202615380400": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-04",
