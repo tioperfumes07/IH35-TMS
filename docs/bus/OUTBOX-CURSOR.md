@@ -1,3 +1,15 @@
+## 2026-10-04T18:35Z · BANK-F91539 WeeklyRevenue leftover slate classes · this PR
+
+DONE: WeeklyRevenueChart leftover text-slate-* / border-slate-* / bg-slate-* → house #4B5563 / #0F1219 / #E5E7EB / #F7F8FA; leftover refuse on EVEN 4124 --selftest + live.
+
+NEXT: leftover muted chrome (TripPairingBoard slate-* / OwnerHome / remaining pages / skip pile) · skip pile parked · HH15 leftovers first.
+
+## 2026-10-04T18:35Z · BANK-F91538 RoundTrips leftover slate classes WIRED CI · tip `16a098ac61`
+
+DONE: #25280 — RoundTripsTimeline leftover bg-slate-50 / text-slate-600 / border-slate-300 → house tokens; leftover refuse on EVEN 3408 --selftest + live. SB #475569 stays locked.
+
+NEXT: leftover muted chrome (WeeklyRevenue / TripPairing / remaining pages / skip pile) · skip pile parked · HH15 leftovers first.
+
 ## 2026-10-04T18:25Z · BANK-F91538 RoundTrips leftover slate classes · this PR
 
 DONE: RoundTripsTimeline leftover bg-slate-50 / text-slate-600 / border-slate-300 → house #F7F8FA / #4B5563 / #E5E7EB; leftover refuse on EVEN 3408 --selftest + live. SB #475569 stays locked.

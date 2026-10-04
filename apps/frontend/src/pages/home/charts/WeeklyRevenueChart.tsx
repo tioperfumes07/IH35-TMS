@@ -21,11 +21,11 @@ export function WeeklyRevenueChart({ operatingCompanyId }: Props) {
   });
 
   if (!cid) {
-    return <div className="text-xs text-slate-500">Select a company to view weekly revenue.</div>;
+    return <div className="text-xs text-[#4B5563]">Select a company to view weekly revenue.</div>;
   }
 
   if (query.isLoading) {
-    return <div className="h-[240px] animate-pulse rounded-sm bg-slate-100" />;
+    return <div className="h-[240px] animate-pulse rounded-sm bg-[#F7F8FA]" />;
   }
 
   if (query.isError) {
@@ -43,8 +43,8 @@ export function WeeklyRevenueChart({ operatingCompanyId }: Props) {
   if (data.length === 0 || !hasRevenue) {
     return (
       <div className="home-recharts-print w-full">
-        <h3 className="mb-2 text-xs font-semibold text-slate-900">Weekly revenue</h3>
-        <div className="flex h-[240px] items-center justify-center rounded-sm border border-dashed border-slate-200 text-xs text-slate-500">
+        <h3 className="mb-2 text-xs font-semibold text-[#0F1219]">Weekly revenue</h3>
+        <div className="flex h-[240px] items-center justify-center rounded-sm border border-dashed border-[#E5E7EB] text-xs text-[#4B5563]">
           No revenue recorded in the last 7 days.
         </div>
       </div>
@@ -53,8 +53,8 @@ export function WeeklyRevenueChart({ operatingCompanyId }: Props) {
 
   return (
     <div className="home-recharts-print w-full">
-      <h3 className="mb-2 text-xs font-semibold text-slate-900">Weekly revenue</h3>
-      <p className="mb-2 text-xs text-slate-500">Invoice basis (GL posted available per-day on API)</p>
+      <h3 className="mb-2 text-xs font-semibold text-[#0F1219]">Weekly revenue</h3>
+      <p className="mb-2 text-xs text-[#4B5563]">Invoice basis (GL posted available per-day on API)</p>
       <ResponsiveContainer width="100%" height={240}>
         <LineChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
