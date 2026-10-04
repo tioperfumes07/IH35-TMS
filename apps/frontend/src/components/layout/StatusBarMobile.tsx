@@ -115,7 +115,7 @@ export function StatusBarMobile({
           {active.key === "sync" ? (
             <button
               type="button"
-              className="mt-2 rounded-sm border border-slate-500 px-2 py-1 text-[11px] font-semibold hover:bg-white/10"
+              className="mt-2 rounded-sm border border-slate-500 px-2 py-1 text-xs font-semibold hover:bg-white/10"
               onClick={() => {
                 onOpenQboSyncDashboard();
                 setOpenKey(null);
@@ -127,7 +127,7 @@ export function StatusBarMobile({
           {active.action ? (
             <button
               type="button"
-              className="mt-2 rounded-sm border border-slate-500 px-2 py-1 text-[11px] font-semibold hover:bg-white/10"
+              className="mt-2 rounded-sm border border-slate-500 px-2 py-1 text-xs font-semibold hover:bg-white/10"
               onClick={() => {
                 active.action?.onClick();
                 setOpenKey(null);
