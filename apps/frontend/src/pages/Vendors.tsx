@@ -546,10 +546,10 @@ export function VendorsPage() {
         ),
       },
       { key: "status", label: "Status", sortable: true, render: (r) => r.status },
-      { key: "amount", label: "Amount", render: (r) => fmtMoney(r.amount_cents) },
+      { key: "amount", label: "Amount", sortable: true, render: (r) => fmtMoney(r.amount_cents) },
       {
         key: "balance",
-        label: "Balance",
+        label: "Balance", sortable: true,
         render: (r) => fmtMoney(Number(r.balance_cents ?? Number(r.amount_cents ?? 0) - Number(r.paid_cents ?? 0))),
       },
       { key: "load_no", label: "Load #", sortable: true, sortValue: (r) => r.linked_load_number ?? "", render: (r) => r.linked_load_id ? <EntityLinkOrTombstone kind="load" id={r.linked_load_id} name={r.linked_load_number} noun="Load" /> : "—" },
@@ -565,7 +565,7 @@ export function VendorsPage() {
   const expenseColumns = useMemo<ParityColumn<ExpenseListRow>[]>(
     () => [
       { key: "date", label: "Date", sortable: true, render: (r) => mmmDd(r.transaction_date) || "—" },
-      { key: "description", label: "Description", render: (r) => r.memo ?? r.line_description ?? "—" },
+      { key: "description", label: "Description", sortable: true, render: (r) => r.memo ?? r.line_description ?? "—" },
       {
         key: "load",
         label: "Load",
@@ -576,7 +576,7 @@ export function VendorsPage() {
             "—"
           ),
       },
-      { key: "amount", label: "Amount", render: (r) => fmtMoney(Number(r.total_amount_cents ?? 0)) },
+      { key: "amount", label: "Amount", sortable: true, render: (r) => fmtMoney(Number(r.total_amount_cents ?? 0)) },
       { key: "status", label: "Status", sortable: true, render: (r) => r.status ?? "—" },
     ],
     [],

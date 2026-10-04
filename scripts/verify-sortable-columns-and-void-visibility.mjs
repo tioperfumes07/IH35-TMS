@@ -76,6 +76,12 @@ function countMissingSortableDeclarations(src) {
     // if it declares a label — a labeled column is a sortable candidate by this repo's own
     // convention (ParityTable/DataTable both gate the header button on `column.sortable`).
     if (!/\blabel\s*:/.test(block)) continue; // key-only entries (e.g. row config) are not columns
+    // 2026-10-04 (CC-3): a table column always names its `key`; option lists (`{ value, label }`), badge/status maps
+    // (`{ variant, label }`) and chips/menu items (`{ key, label, clear | onClick }`) are not columns. They were the
+    // false-positive class this baseline's own DRIFT-4/DRIFT-6 notes documented and never removed — now excluded, and
+    // the baseline lowered to the true count (tighter, never raised).
+    if (!/\bkey\s*:/.test(block)) continue;
+    if (/\b(value|variant|tone|clear|onClick|onSelect|href|to)\s*:/.test(block)) continue;
     if (!/\bsortable\s*:/.test(block)) n++;
   }
   return n;
@@ -290,6 +296,12 @@ if (process.argv.includes("--selftest")) {
     ];
   `;
   assert.equal(countMissingSortableDeclarations(a1Src), 1, "exactly one labeled column lacks sortable");
+  // 2026-10-04: option lists and status maps are NOT columns, even in a ParityTable file.
+  assert.equal(
+    countMissingSortableDeclarations(`<ParityTable/>; const O = [{ value: "a", label: "A" }, { variant: "warn", label: "Open" }, { key: "x", label: "X", onClick: f }];`),
+    0,
+    "option / badge / menu objects are not counted as columns"
+  );
 
   // A2: has_more present + no sortMode="external" => flagged; with sortMode="external" => not.
   const a2BadSrc = `

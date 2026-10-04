@@ -44,14 +44,14 @@ export function RosterIntegrityPage() {
   const columns = useMemo<ParityColumn<RosterFinding>[]>(
     () => [
       { key: "severity", label: "Severity", alwaysVisible: true, sortValue: (r) => ({ critical: 0, warning: 1, info: 2 })[r.severity], render: (r) => SEVERITY_LABEL[r.severity] },
-      { key: "rule_code", label: "Check", render: (r) => rules[r.rule_code]?.label ?? r.rule_code },
+      { key: "rule_code", label: "Check", sortable: true, render: (r) => rules[r.rule_code]?.label ?? r.rule_code },
       {
         key: "unit_number",
         label: "Unit",
         sortValue: (r) => r.unit_number,
         render: (r) => (r.unit_id ? <EntityLink kind="unit" id={r.unit_id} label={r.unit_number ?? "Unit"} className="underline" /> : r.samsara_vehicle_id ? `Samsara ${r.samsara_vehicle_id}` : "—"),
       },
-      { key: "detail", label: "Finding", render: (r) => r.detail },
+      { key: "detail", label: "Finding", sortable: true, render: (r) => r.detail },
       {
         key: "policy_number",
         label: "Policy",
@@ -62,7 +62,7 @@ export function RosterIntegrityPage() {
         label: "Insurer",
         render: (r) => (r.insurer_vendor_id ? <EntityLink kind="vendor" id={r.insurer_vendor_id} label="Insurer" className="underline" /> : "—"),
       },
-      { key: "first_detected_at", label: "First seen", sortValue: (r) => r.first_detected_at, render: (r) => formatDateTimeUS(r.first_detected_at) },
+      { key: "first_detected_at", label: "First seen", sortable: true, sortValue: (r) => r.first_detected_at, render: (r) => formatDateTimeUS(r.first_detected_at) },
       {
         key: "state",
         label: "State",

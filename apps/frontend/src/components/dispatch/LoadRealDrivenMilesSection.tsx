@@ -18,10 +18,10 @@ function mi(v: number | null | undefined): string {
 }
 
 const LEG_COLUMNS: ParityColumn<LoadRealDrivenLeg>[] = [
-  { key: "sequence_number", label: "Stop", alwaysVisible: true, render: (l) => String(l.sequence_number) },
-  { key: "kind", label: "Leg", render: (l) => (l.kind === "deadhead" ? "Deadhead (from previous load)" : "Loaded") },
-  { key: "from_at", label: "From", render: (l) => (l.from_at ? formatDateTimeUS(l.from_at) : "—") },
-  { key: "to_at", label: "To", render: (l) => (l.to_at ? formatDateTimeUS(l.to_at) : "—") },
+  { key: "sequence_number", label: "Stop", sortable: true, alwaysVisible: true, render: (l) => String(l.sequence_number) },
+  { key: "kind", label: "Leg", sortable: true, render: (l) => (l.kind === "deadhead" ? "Deadhead (from previous load)" : "Loaded") },
+  { key: "from_at", label: "From", sortable: true, render: (l) => (l.from_at ? formatDateTimeUS(l.from_at) : "—") },
+  { key: "to_at", label: "To", sortable: true, render: (l) => (l.to_at ? formatDateTimeUS(l.to_at) : "—") },
   {
     key: "miles",
     label: "Real driven",
