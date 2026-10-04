@@ -116,6 +116,11 @@ export function collectProblems(sources = Object.fromEntries(Object.entries(path
   // BANK-F91324 leftover refuse — LiveDutyTab.tsx page-scoped text token ratchet
   if (liveDuty.includes("text-[11px]")) problems.push("LiveDutyTab.tsx: leftover text-[11px]");
   if (liveDuty.includes("#8A92AB")) problems.push("LiveDutyTab.tsx: leftover off-scale muted #8A92AB");
+  // BANK-F91336 leftover refuse — UnidentifiedTab + ViolationsTab page-scoped text token ratchet
+  if (unidentified.includes("text-[11px]")) problems.push("UnidentifiedTab.tsx: leftover text-[11px]");
+  if (unidentified.includes("#8A92AB")) problems.push("UnidentifiedTab.tsx: leftover off-scale muted #8A92AB");
+  if (violations.includes("text-[11px]")) problems.push("ViolationsTab.tsx: leftover text-[11px]");
+  if (violations.includes("#8A92AB")) problems.push("ViolationsTab.tsx: leftover off-scale muted #8A92AB");
 
   return problems;
 }
@@ -145,6 +150,17 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
   if (!collectProblems(leftoverPlant).some((p) => p.includes("leftover text-[11px]"))) {
     console.error(`${LABEL} --selftest FAIL — leftover plant escaped`);
     process.exit(1);
+  }
+  // BANK-F91336 leftover plant — UnidentifiedTab + ViolationsTab
+  for (const [key, label] of [["unidentified", "UnidentifiedTab.tsx"], ["violations", "ViolationsTab.tsx"]]) {
+    const plant = {
+      ...real,
+      [key]: real[key] + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n',
+    };
+    if (!collectProblems(plant).some((p) => p.includes(`${label}: leftover text-[11px]`))) {
+      console.error(`${LABEL} --selftest FAIL — leftover plant escaped on ${label}`);
+      process.exit(1);
+    }
   }
   console.log(`${LABEL} --selftest OK`);
   process.exit(0);
