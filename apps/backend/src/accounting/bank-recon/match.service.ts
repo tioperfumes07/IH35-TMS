@@ -231,7 +231,7 @@ const AUTO_MATCH_DATE_WINDOW_DAYS = 5;
 // 2026-09-06 (lead, BANK-MATCH-QBO): the constant read 0.8 while the calibration note above and the
 // regression test (match-auto-vs-manual: boilerplate-diluted JE, similarity 0.6, must auto-match)
 // both say 0.5 — the test was failing on main. Restored to the measured value.
-const AUTO_MATCH_MEMO_SIMILARITY_MIN = 0.5;
+export const AUTO_MATCH_MEMO_SIMILARITY_MIN = 0.5;
 
 function normalizeText(input: string | null | undefined) {
   return String(input ?? "")
@@ -248,7 +248,7 @@ function tokenize(input: string) {
     .filter(Boolean);
 }
 
-function memoSimilarity(aRaw: string | null | undefined, bRaw: string | null | undefined) {
+export function memoSimilarity(aRaw: string | null | undefined, bRaw: string | null | undefined) {
   const a = tokenize(normalizeText(aRaw));
   const b = tokenize(normalizeText(bRaw));
   if (a.length === 0 || b.length === 0) return 0;
@@ -950,7 +950,11 @@ async function storeMatch(
       input.actor_user_uuid,
     ]
   );
-  return res.rows[0]!.id;
+  // An upsert with RETURNING always yields its row in Postgres; if it ever does not, refuse by name rather than crash
+  // on undefined.id and leave the caller's transaction half-written.
+  const matchId = res.rows[0]?.id;
+  if (!matchId) throw new Error(`reconciliation_match_not_stored:${input.bank_transaction_id}:${input.ledger_entry_kind}:${input.ledger_entry_id}`);
+  return matchId;
 }
 
 function computeCashBasisRevenueFromActualCashHit(input: { bankAmountCents: number; ledgerAmountCents: number; asOfDate: string }) {

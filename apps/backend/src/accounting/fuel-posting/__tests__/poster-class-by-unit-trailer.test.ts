@@ -22,9 +22,18 @@ vi.mock("../../../auth/db.js", async (orig) => {
   return { ...actual, withLuciaBypass: mockWithLuciaBypass };
 });
 
-vi.mock("../../expense-category-map/resolver.service.js", () => ({
-  resolveAccountForCategory: mockResolveAccountForCategory,
-}));
+// The poster resolves its cost account through the fuel-type ITEM (fuel-item-account.ts, CC-2 2026-10-04); the hoisted
+// mock keeps its name and is called as resolveFuelItem(client, operating_company_id, fuel_type).
+vi.mock("../fuel-item-account.js", async (orig) => {
+  const actual = await orig<typeof import("../fuel-item-account.js")>();
+  return {
+    ...actual,
+    resolveFuelItem: async (client: unknown, oc: string, fuelType: string | null) => {
+      const r = await mockResolveAccountForCategory(client, oc, fuelType);
+      return { itemId: "item-fuel", expenseAccountId: r.account_id, itemName: `item:${fuelType}` };
+    },
+  };
+});
 
 const OPCO = "11111111-1111-4111-8111-111111111111";
 const UNIT_ID = "33333333-3333-4333-8333-333333333333";

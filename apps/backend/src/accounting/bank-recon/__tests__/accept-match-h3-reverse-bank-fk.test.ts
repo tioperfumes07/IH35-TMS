@@ -27,6 +27,15 @@ vi.mock("../../cash-basis/engine.js", () => ({
   applyCashBasisSuppression: vi.fn((entries: unknown[]) => entries),
 }));
 
+// This file tests the reverse bank FKs a match stamps. The deposit sweep the match then fires is the posting engine's
+// job and has its own test (accept-match-customer-payment-deposit-sweep.test.ts); here it is isolated and only its
+// call is asserted, so a fake that knows nothing of cash-account mappings cannot fail an FK test.
+const { mockPostSourceTransaction } = vi.hoisted(() => ({ mockPostSourceTransaction: vi.fn(async () => ({ journal_entry_id: "je-sweep" })) }));
+vi.mock("../../posting-engine.service.js", async (orig) => {
+  const actual = await orig<typeof import("../../posting-engine.service.js")>();
+  return { ...actual, ensureOpenPeriod: vi.fn(async () => undefined), postSourceTransactionInClientTx: mockPostSourceTransaction };
+});
+
 vi.mock("../../../banking/bank-account-visibility.js", () => ({
   bankAccountHiddenFilterSql: () => "",
   bankTransactionHiddenFilterSql: () => "",
@@ -52,6 +61,9 @@ function bankTxnRow(overrides: Record<string, unknown> = {}) {
     merchant_name: "Customer",
     notes: null,
     review_state: "for_review",
+    // The bank account's GL account (banking.bank_accounts.ledger_account_id) — a bridged register, as on prod; the
+    // deposit sweep refuses an unbridged one (DEPOSIT_BANK_LEDGER_ACCOUNT_MISSING).
+    bank_ledger_account_id: "acct-bank-ledger",
     ...overrides,
   };
 }
@@ -61,6 +73,7 @@ describe("WAVE-H3 acceptMatch reverse bank FK stamps", () => {
     mockQuery.mockReset();
     mockWithLuciaBypass.mockClear();
     mockQuery.mockImplementation(async (sql: string) => {
+      if (String(sql).includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "match-1" }], rowCount: 1 }; // an upsert RETURNING always returns its row
       if (sql.includes("FROM banking.bank_transactions") && sql.includes("SELECT")) return { rows: [bankTxnRow()] };
       if (sql.includes("FROM accounting.payments") && sql.includes("amount_cents")) {
         return { rows: [{ amount_cents: 50000 }] };
@@ -98,6 +111,7 @@ describe("WAVE-H3 acceptMatch reverse bank FK stamps", () => {
     mockWithLuciaBypass.mockClear();
     const INVOICE = "99999999-9999-4999-8999-999999999999";
     mockQuery.mockImplementation(async (sql: string) => {
+      if (String(sql).includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "match-1" }], rowCount: 1 }; // an upsert RETURNING always returns its row
       const s = String(sql);
       if (s.includes("FROM banking.bank_transactions") && s.includes("SELECT")) return { rows: [bankTxnRow()] };
       if (s.includes("FROM accounting.payments") && s.includes("amount_cents") && !s.includes("source_bank_transaction_id")) {
@@ -134,12 +148,15 @@ describe("WAVE-H3 acceptMatch reverse bank FK stamps", () => {
     );
     expect(backlink).toBeDefined();
     expect(backlink?.[1]).toEqual([INVOICE, PAYMENT, BANK_TX, OPCO]);
+    // The match fires the deposit sweep for this payment (GO-CLOSE-188 DEFECT A).
+    expect(mockPostSourceTransaction).toHaveBeenCalled();
   });
 
   it("bill_payment match stamps source_bank_transaction_id + from_bank_account_id", async () => {
     mockQuery.mockReset();
     mockWithLuciaBypass.mockClear();
     mockQuery.mockImplementation(async (sql: string) => {
+      if (String(sql).includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "match-1" }], rowCount: 1 }; // an upsert RETURNING always returns its row
       if (sql.includes("FROM banking.bank_transactions") && sql.includes("SELECT")) return { rows: [bankTxnRow()] };
       if (sql.includes("FROM accounting.bill_payments") && sql.includes("amount_cents")) {
         return { rows: [{ amount_cents: 50000 }] };

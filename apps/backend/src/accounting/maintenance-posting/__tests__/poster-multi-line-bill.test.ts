@@ -142,18 +142,12 @@ describe("maintenance posting multi-line bill", () => {
     expect(result.bill_id).toBe("bill-existing");
     expect(result.bill_action).toBe("reused");
     expect(result.ledger_posting).toBe("already_posted");
-    expect(mockResolveAccountForCategory).toHaveBeenCalledTimes(2);
-    expect(mockResolveAccountForCategory).toHaveBeenNthCalledWith(
-      1,
-      "11111111-1111-4111-8111-111111111111",
-      "maintenance",
-      "pm_preventive"
-    );
-    expect(mockResolveAccountForCategory).toHaveBeenNthCalledWith(
-      2,
-      "11111111-1111-4111-8111-111111111111",
-      "maintenance",
-      "ac"
-    );
+    // ACCT-F26027 (2026-09-07): a work-order bill line's account is decided ONCE per repair (capitalize vs expense, by COA
+    // role) or, when no account column is set, by the posting engine's bill-line resolver from the line's category. The
+    // poster itself never consults the per-category maintenance map; these expectations predated that change and had
+    // rotted unseen while the file could not load (bills.service imported a route module).
+    expect(mockResolveAccountForCategory).not.toHaveBeenCalled();
+    const lineInserts = mockQuery.mock.calls.filter((c) => String(c[0]).includes("INSERT INTO accounting.bill_lines"));
+    expect(lineInserts.length).toBe(2);
   });
 });

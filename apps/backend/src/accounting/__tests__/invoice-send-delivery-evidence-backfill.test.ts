@@ -30,7 +30,9 @@ const {
 } = vi.hoisted(() => ({
   mockAppendCrudAudit: vi.fn(async () => undefined),
   mockEnqueueEmail: vi.fn(async () => ({ queueId: "q1" })),
-  mockPostInvoiceGlIfEnabled: vi.fn(async () => ({ posted: false, reason: "posting_disabled" as const })),
+  // Lead ROUND 332 item 1: issuing the invoice IS the posting event — a disabled poster refuses the send. A send that
+  // proceeds therefore had its A/R entry posted; the stub models exactly that.
+  mockPostInvoiceGlIfEnabled: vi.fn(async () => ({ posted: true as const, result: { journal_entry_id: "je-ar" } })),
   mockEnqueueTmsInvoicePushRequested: vi.fn(async () => undefined),
   mockRecomputeInvoiceTotals: vi.fn(async () => undefined),
   mockFinalActiveDeliveryDepartureAt: vi.fn(async () => null as string | null),
