@@ -9811,6 +9811,11 @@
     "claimed_at": "2026-10-04",
     "purpose": "verify-every-void-route-reverses"
   },
+  "14621": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-04",
+    "purpose": "verify-arriving-soon-serves-geofence-state"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
