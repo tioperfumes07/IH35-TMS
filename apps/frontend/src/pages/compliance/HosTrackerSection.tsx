@@ -160,12 +160,12 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
           const verdict = driverVerdict(driver);
           const dot = driver.current_duty_status
             ? DUTY_COLOR[driver.current_duty_status]
-            : "#94A3B8";
+            : "#4B5563";
           return (
             <span className={`inline-flex items-center gap-1 font-semibold ${verdict.cls}`}>
               <span
                 className="inline-block h-[7px] w-[7px] rounded-full"
-                style={{ background: driver.available ? dot : "#94A3B8" }}
+                style={{ background: driver.available ? dot : "#4B5563" }}
               />
               {driver.available && driver.current_duty_status
                 ? DUTY_LABEL[driver.current_duty_status]

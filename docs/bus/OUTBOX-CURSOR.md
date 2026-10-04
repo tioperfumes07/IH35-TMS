@@ -1,3 +1,15 @@
+## 2026-10-04T15:18Z · BANK-F91520 HOS status-dot leftover muted WIRED · this PR
+
+DONE: HosTrackerSection status-dot leftover #94A3B8 → house muted #4B5563; leftover refuse on verify-hos-tracker-staged-filters; EVEN 4036 --selftest + live.
+
+NEXT: leftover muted chrome (WO pie status colors stay / RMBuckets In Progress stay / trip-type SB stay) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T15:14Z · BANK-F91519 LaneProfitability YAxis leftover tick WIRED CI · tip `508443189a`
+
+DONE: #25261 — LaneProfitability YAxis leftover tick 11px; verify-steps/2320 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (HOS status-dot #94A3B8 / WO pie status colors stay) · skip pile parked · HH14 no migrations this tick.
+
 ## 2026-10-04T15:12Z · BANK-F91519 LaneProfitability YAxis leftover tick WIRED · this PR
 
 DONE: LaneProfitability YAxis leftover Recharts tick → locked 11px header scale; leftover refuse on verify-reports-lane-profitability-no-box-in-box; EVEN 2320 --selftest + live.
