@@ -21,6 +21,9 @@ function inspect(value) {
     [/key: "status"[\s\S]{0,180}render: \(row\) => humanizeEnumLabel\(row\.status\)/, "report status leaks its persisted machine key"],
   ];
   for (const [pattern, message] of checks) if (!pattern.test(value)) failures.push(message);
+  // BANK-F91288 leftover refuse — DriverReportsQueuePage page-scoped text token ratchet
+  if (value.includes("text-[11px]")) failures.push(`${FILE}: leftover text-[11px]`);
+  if (value.includes("#8A92AB") || value.includes("#334155")) failures.push(`${FILE}: leftover off-scale muted`);
   return failures;
 }
 
@@ -39,6 +42,11 @@ if (process.argv.includes("--selftest")) {
   for (const [before, after] of mutations) {
     if (!source.includes(before)) throw new Error(`selftest fixture missing: ${before}`);
     if (inspect(source.replace(before, after)).length === 0) throw new Error(`selftest missed: ${before}`);
+  }
+  const leftover = inspect(`${source}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`);
+  if (!leftover.some((e) => e.includes("leftover text-[11px]")) || !leftover.some((e) => e.includes("leftover off-scale muted"))) {
+    console.error(`SELFTEST FAIL leftover plant escaped: ${leftover.join("; ")}`);
+    process.exit(1);
   }
   console.log(`verify-maint-driver-reports-action-lifecycle --selftest PASS (${mutations.length}/${mutations.length})`);
   process.exit(0);
