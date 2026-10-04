@@ -195,6 +195,9 @@ function hasVoidFilter(listSrc) {
   if (/<option\s+value=["'`]void(?:ed)?["'`]/.test(listSrc)) return true;
   if (/\bvalue\s*:\s*["'`]void(?:ed)?["'`]\s*,\s*label\s*:/.test(listSrc)) return true;
   if (/(?:Set\(\[|new Set\(\[)[^\]]*["'`]void(?:ed)?["'`]/.test(listSrc)) return true;
+  // U12 (CC-2, 2026-10-03): status filters build their options through the shared statusOptions({ value: label })
+  // helper (lib/statusListParams.ts) — a "voided" key there IS a void filter option.
+  if (/\bstatusOptions\(\s*\{[^}]*["'`]?void(?:ed)?["'`]?\s*:/.test(listSrc)) return true;
   return false;
 }
 

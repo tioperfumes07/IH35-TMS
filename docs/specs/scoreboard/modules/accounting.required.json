@@ -1406,6 +1406,54 @@
         "connectivity",
         "reverse_link"
       ]
+    },
+    {
+      "id": "accounting.modal.decide_fault",
+      "tab": "Modals",
+      "sub": "Modal: Decide Fault",
+      "route_hint": "surface://pages/accounting/DisputesHubPage.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/accounting/DisputesHubPage.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "accounting.panel.factoring_interest_accrual",
+      "tab": "Panels",
+      "sub": "Panel: Factoring Interest Accrual",
+      "route_hint": "surface://pages/accounting/FactoringInterestAccrualPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/accounting/FactoringInterestAccrualPanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "accounting.panel.faro_cash_reserve_reclass",
+      "tab": "Panels",
+      "sub": "Panel: Faro Cash Reserve Reclass",
+      "route_hint": "surface://pages/accounting/FaroCashReserveReclassPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/accounting/FaroCashReserveReclassPanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
+      "id": "accounting.panel.register_inline_edit",
+      "tab": "Panels",
+      "sub": "Panel: Register Inline Edit",
+      "route_hint": "surface://pages/accounting/RegisterInlineEditPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "pages/accounting/RegisterInlineEditPanel.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
     }
   ],
   "honesty_note": {
