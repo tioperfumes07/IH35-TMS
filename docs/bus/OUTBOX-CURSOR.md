@@ -1,3 +1,15 @@
+## 2026-10-04T15:12Z · BANK-F91519 LaneProfitability YAxis leftover tick WIRED · this PR
+
+DONE: LaneProfitability YAxis leftover Recharts tick → locked 11px header scale; leftover refuse on verify-reports-lane-profitability-no-box-in-box; EVEN 2320 --selftest + live.
+
+NEXT: leftover muted chrome (WO pie status colors stay / RMBuckets In Progress stay / trip-type SB stay) · skip pile parked · HH13 no migrations this tick.
+
+## 2026-10-04T15:08Z · BANK-F91518 RoundTrips --dwl leftover muted WIRED CI · tip `db615d02b9`
+
+DONE: #25260 — RoundTripsTimeline --dwl leftover muted #4B5563; verify-steps/3408 leftover refuse --selftest + live.
+
+NEXT: leftover muted chrome (LaneProfitability YAxis tick / WO pie status colors stay) · skip pile parked · HH13 no migrations this tick.
+
 ## 2026-10-04T15:05Z · BANK-F91518 RoundTrips --dwl leftover muted WIRED · this PR
 
 DONE: RoundTripsTimeline --dwl leftover #94a3b8 → house muted #4B5563; leftover refuse on verify-roundtrips-quality-load-entitylink; EVEN 3408 --selftest + live. SB #475569 stays locked.

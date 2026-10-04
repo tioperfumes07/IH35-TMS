@@ -76,6 +76,24 @@ export function collectProblems(section) {
   return problems;
 }
 
+function leftoverRefuse(src) {
+  const hits = [];
+  if (src.includes("text-[11px]")) hits.push(`${TARGET}: leftover text-[11px]`);
+  if (
+    src.includes("#8A92AB") ||
+    src.includes("#334155") ||
+    src.includes("#64748b") ||
+    src.includes("#475569") ||
+    src.includes("#94a3b8")
+  ) {
+    hits.push(`${TARGET}: leftover off-scale muted`);
+  }
+  if (/<YAxis\b(?![^/]*fontSize:\s*11)/.test(src)) {
+    hits.push(`${TARGET}: leftover YAxis tick without locked 11px header scale`);
+  }
+  return hits;
+}
+
 function selftest() {
   const good = `
     <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
@@ -104,6 +122,14 @@ function selftest() {
   if (goodP.length) throw new Error(`selftest good failed: ${goodP.join("; ")}`);
   const badP = collectProblems(bad);
   if (badP.length < 2) throw new Error(`selftest bad not flagged enough: ${badP.join("; ")}`);
+  const leftoverHits = leftoverRefuse('<YAxis tickFormatter={(v) => `$${v}`} />');
+  if (!leftoverHits.some((h) => h.includes("YAxis tick"))) {
+    throw new Error("selftest leftover YAxis plant escaped");
+  }
+  const leftoverMuted = leftoverRefuse('tick={{ fontSize: 10 }} stroke="#64748b"');
+  if (!leftoverMuted.some((h) => h.includes("leftover off-scale muted"))) {
+    throw new Error("selftest leftover muted plant escaped");
+  }
   console.log(`${LABEL} --selftest OK`);
 }
 
@@ -116,7 +142,7 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
 
 if (IS_MAIN) {
   const src = fs.readFileSync(path.join(ROOT, TARGET), "utf8");
-  const problems = collectProblems(kpiAndChartSections(src));
+  const problems = [...collectProblems(kpiAndChartSections(src)), ...leftoverRefuse(src)];
   if (problems.length) {
     console.error(`${LABEL} FAIL:`);
     for (const p of problems) console.error(`  - ${p}`);
