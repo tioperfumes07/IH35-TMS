@@ -1,4 +1,13 @@
+## 2026-10-04T02:55Z · BANK-F91377..F91381 leftover drain MERGED tip `026a76b89d`
+
+DONE: UploadZone · ArrivingSoonFilterBar · PageHeader · BackArrowHeader · TelematicsSectionTable (F91377–F91381). Prior F91371–76 stamped.
+
+PRs: #25065 · #25067 · #25068 · #25069 · #25070 (squash). Guards: refuse + `--selftest` plant each.
+
+NEXT: continue ORDERS leftover drain (page-scoped guards only). Skip BookLoad*/Combobox/EntityPicker/ParityTable/DrillKpiCard/UniversalListToolbar/DateTimePicker/DataTable/ProgramTracker/FinalAdditions/InstallPWA. HH01 no migrations. NavyPageSubNav ambient red (locked bg token). FormField roundtrip ambient red (BookLoad skip pile).
+
 ## 2026-10-04T02:40Z · BANK-F91371..F91376 leftover drain MERGED tip `8ee3f3c547`
+
 
 DONE: NotificationPreferencesPage · CertExpiryBadge · LegalTemplateDetailPage · VendorMappingIntegrityCard · ProfilesTab · LaunchReadinessPage (F91371–F91376). Prior F91365–70 stamped.
 
