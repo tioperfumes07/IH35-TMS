@@ -57,6 +57,13 @@ function auditBackArrowHeader(source) {
   if (!/<span>Back<\/span>/.test(stripped)) {
     failures.push(`${BACK_ARROW_HEADER}: must show a visible Back label (not icon-only)`);
   }
+  // BANK-F91380 leftover refuse — BackArrowHeader page-scoped text token ratchet
+  if (stripped.includes("text-[11px]")) {
+    failures.push(`${BACK_ARROW_HEADER}: leftover text-[11px]`);
+  }
+  if (source.includes("#8A92AB")) {
+    failures.push(`${BACK_ARROW_HEADER}: leftover off-scale muted #8A92AB`);
+  }
   return failures;
 }
 
@@ -151,6 +158,11 @@ if (process.argv.includes("--selftest")) {
       name: "AccountingSubNavWrapper Back control off-scale text-[11px]",
       target: "accounting",
       mutate: (t) => t.replace('<div data-testid="accounting-breadcrumb">', '<div data-testid="accounting-breadcrumb" className="text-[11px]">'),
+    },
+    {
+      name: "BackArrowHeader leftover text-[11px] plant",
+      target: "backArrow",
+      mutate: (t) => t + '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n',
     },
   ];
   let caught = 0;
