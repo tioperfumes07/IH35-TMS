@@ -1,6 +1,12 @@
-## 2026-10-04T15:40Z · BANK-F91523 CreateWO leftover #cbd5e1 border WIRED · this PR
+## 2026-10-04T15:48Z · BANK-F91524 PlannerGrid dwell leftover border WIRED · this PR
 
-DONE: CreateWorkOrderModal SVG/help leftover #cbd5e1 → house border #E5E7EB; leftover refuse on EVEN 2090 --selftest + live.
+DONE: PlannerGrid .pg-dwell leftover #cbd5e1 → house border #E5E7EB; leftover refuse on EVEN 4140 --selftest + live.
+
+NEXT: leftover muted chrome (TruckLine select #CBD5E1 / SystemModule code / WO pie stay) · skip pile parked · HH14 no migrations this tick.
+
+## 2026-10-04T15:46Z · BANK-F91523 CreateWO leftover #cbd5e1 border WIRED CI · tip `08117d5fac`
+
+DONE: #25265 — CreateWorkOrderModal SVG/help leftover #cbd5e1 → #E5E7EB; verify-steps/2090 leftover refuse --selftest + live.
 
 NEXT: leftover muted chrome (PlannerGrid #cbd5e1 / TruckLine select / WO pie stay) · skip pile parked · HH14 no migrations this tick.
 
