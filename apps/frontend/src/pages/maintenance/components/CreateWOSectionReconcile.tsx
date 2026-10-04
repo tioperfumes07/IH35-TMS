@@ -180,11 +180,11 @@ export function CreateWOSectionReconcile({
         />
       </div>
       {tied ? (
-        <div data-testid="reconcile-status-ok" className="mt-1 text-[11px] font-semibold text-slate-600">
+        <div data-testid="reconcile-status-ok" className="mt-1 text-xs font-semibold text-slate-600">
           Reconciled — WO parts &amp; labor tie to the vendor invoice.
         </div>
       ) : (
-        <div data-testid="reconcile-status-blocked" className="mt-1 text-[11px] font-semibold text-[#A32D2D]">
+        <div data-testid="reconcile-status-blocked" className="mt-1 text-xs font-semibold text-[#A32D2D]">
           Create is blocked — WO totals must tie to the vendor invoice. Resolve the variance above.
         </div>
       )}
