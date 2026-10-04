@@ -1,3 +1,11 @@
+## 2026-10-04T01:55Z · BANK-F91344..F91347 leftover drain MERGED tip `35226af73a`
+
+DONE: FuelFraudBadge · TriSignalHoverDetail · HOSStatusSection · AtRiskDriverCard (F91344–F91347). Prior F91339–43 stamped.
+
+PRs: #25017 · #25018 · #25019 · #25020 (squash). Guards: refuse + `--selftest` plant each.
+
+NEXT: continue ORDERS leftover drain (page-scoped guards only). Skip BookLoad*/Combobox/EntityPicker/ParityTable/DrillKpiCard/UniversalListToolbar/DateTimePicker/DataTable/ProgramTracker/FinalAdditions/InstallPWA. HH01 no migrations.
+
 ## 2026-10-04T01:40Z · BANK-F91339..F91343 leftover drain MERGED tip `65ce3012df`
 
 DONE: HomeKpiRangeToggle · HomeFleetRestoreCard · FilingsComplianceDue · FactoringRecourse reverse · ClaimCreateModal (F91339–F91343). Prior F91331–38 stamped.
