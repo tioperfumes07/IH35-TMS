@@ -1,3 +1,9 @@
+## 2026-10-04T08:24Z · BANK-F91456 factoring FT2 escrow/cash tabs WIRED CI · tip `a09269e1d0`
+
+DONE: #25198 — verify-steps/10594 now runs ops/verify-factoring-ft2-escrow-cash-tabs --selftest.
+
+NEXT: BANK-F91457 wire FT5 setup email rates into 4162 · C-21 odometer + C-22 fail=triage · skip pile parked · HH08 no migrations.
+
 ## 2026-10-04T08:18Z · BANK-F91455 factoring r315 shared reserves WIRED CI · tip `897595e7f1`
 
 DONE: #25197 — verify-steps/1130 now runs ops/verify-factoring-r315-reserves-shared --selftest.
