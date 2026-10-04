@@ -1,3 +1,11 @@
+## 2026-10-04T01:40Z · BANK-F91339..F91343 leftover drain MERGED tip `65ce3012df`
+
+DONE: HomeKpiRangeToggle · HomeFleetRestoreCard · FilingsComplianceDue · FactoringRecourse reverse · ClaimCreateModal (F91339–F91343). Prior F91331–38 stamped.
+
+PRs: #25011 · #25012 · #25013 · #25014 · #25015 (squash). Guards: refuse + `--selftest` plant each.
+
+NEXT: continue ORDERS leftover drain (page-scoped guards only). Skip BookLoad*/Combobox/EntityPicker/ParityTable/DrillKpiCard/UniversalListToolbar/DateTimePicker/DataTable/ProgramTracker/FinalAdditions/InstallPWA. HH01 no migrations.
+
 ## 2026-10-04T01:25Z · BANK-F91331..F91338 leftover drain MERGED tip `da3d34f5ba`
 
 DONE: InspectionScoreBadge · ReportCard · ServiceTimeline · StatusBarMobile · PoliciesList · ELD Unidentified+Violations · FinanceHubPage · GeofencesPage (F91331–F91338). Prior F91323–30 stamped.
