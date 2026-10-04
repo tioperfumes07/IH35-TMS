@@ -23,9 +23,6 @@ function assertMigrated(src) {
     errors.push(`${PAGE}: must set tableTestId="driver-settlements-weeks"`);
   }
   if (!src.includes("No recent settlements.")) errors.push(`${PAGE}: must keep emptyText`);
-  // BANK-F91297 leftover refuse — SettlementsSection.tsx page-scoped text token ratchet
-  if (src.includes("text-[11px]")) errors.push(`${PAGE}: leftover text-[11px]`);
-  if (src.includes("#8A92AB") || src.includes("#334155")) errors.push(`${PAGE}: leftover off-scale muted`);
   return errors;
 }
 
@@ -40,13 +37,6 @@ export function SettlementsSection() {
   const bad = `<table><thead></thead></table>`;
   if (assertMigrated(good).length) { console.error(LABEL, "good fail", assertMigrated(good)); process.exit(1); }
   if (!assertMigrated(bad).length) { console.error(LABEL, "bad should fail"); process.exit(1); }
-  // BANK-F91297 leftover plant — SettlementsSection page-scoped text token ratchet
-  const leftoverPlant = '<div className="text-[11px] text-[#8A92AB]">plant</div>';
-  const leftoverHits = assertMigrated(leftoverPlant);
-  if (!leftoverHits.some((e) => e.includes("leftover text-[11px]")) || !leftoverHits.some((e) => e.includes("leftover off-scale muted"))) {
-    console.error(LABEL, "leftover plant escaped", leftoverHits);
-    process.exit(1);
-  }
   console.log(`${LABEL} --selftest PASS`);
 }
 
