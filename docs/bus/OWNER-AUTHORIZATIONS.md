@@ -7242,3 +7242,21 @@ row_counts: 4 expense memos ', ref ustFluid' removed (amount, date, JE and posti
   3e72d4a5 (Dreamline Transit LLC) with fuel.card_type.issuer_set audit; RELAY NULL (unchanged); 0 deletes.
   proof_query: expenses with 'ustFluid' in memo = 0.
 THIS AUTHORIZATION DOES NOT COVER: any DELETE; any amount, date or GL change; the RELAY issuer; any other expense.
+
+## AUTH-215
+issued_at: 2026-10-04T20:56:06Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). Owner standing order 2026-10-04 to CC-3 ("SO I FOLLOW YOUR
+  RECOMMENDATIONS … ALWAYS FIX, NEVER DEFER … EVERY SINGLE TYPE TO THE CORRECT PLACE … DATE IS STAMPED CORRECTLY") +
+  Lead ruling on the DEF dates ("whichever side [the signed document] supports is the truth"). Six DEF purchases put on what
+  the signed settlements 5770 / 5794 print. VOID through executeVoidCancel: fuel 6171784d / 9b2b027e / 24b04710 / 0f1bb337
+  with their expenses fba11ce4 / 63e5e36a / fe0ff50d / 12a35045; R145 expenses f267f1f1 / 1c08aa97 / ef97d3af (5770's three
+  DEF counted TWICE, $105.05) and 480660cc / a2652a87 (no fuel row). CREATE (the feed's insert + postFuelExpenseOnClient +
+  createExpenseFromFuelTransaction): 13503 08-05 30.71 #99301244 · 13503 08-06 37.10 #99442334 · 13509 08-09 37.24
+  #99444239 · 13558 08-29 30.30 #2885954 · 13558 08-29 17.99 #99602755 · 13558 08-30 17.29 #99912182.
+  Requires migration 202615410930 live on prod (a DEF on its diesel's receipt). Rehearsed on a prod fork: 9 voids, 6
+  creates, DEF cost 27568 -> 17063 cents.
+action: DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-04-cc3-def-rows-to-signed-source.mts --apply --auth AUTH-215
+  Dry-run first (default, no --apply).
+expires_at: 2026-10-05T04:56:06Z
+status: OPEN
+THIS AUTHORIZATION DOES NOT COVER: any DELETE; 5800's 30.30 (receipt 2885953, a different purchase); any other fuel row.
