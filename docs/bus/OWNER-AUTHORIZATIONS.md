@@ -7265,3 +7265,15 @@ row_counts: 9 voids through executeVoidCancel (4 fuel + their expenses, 5 R145 e
   purchases created (fuel db98d022 d6053286 b7a746e4 e16a0cb4 696237be cb583ff7, each with its expense document and JE on the
   proven load); 0 deletes. proof_query: DEF cost on these purchases 27568 -> 17063 cents (the 10505 double removed).
 THIS AUTHORIZATION DOES NOT COVER: any DELETE; 5800's 30.30 (receipt 2885953, a different purchase); any other fuel row.
+
+## AUTH-216
+issued_at: 2026-10-04T21:22:53Z
+scope: USMCA ONLY. Lead 2026-10-04 ("88 'RELAY ATLANTA' bank charges … 69 of them matching Relay fuel records … OPEN IT AS ITS
+  OWN FINDING … Name the engine") + owner standing order 2026-10-04 ("ALWAYS FIX, NEVER DEFER"). Post the 69 USMCA fuel / Relay
+  bank lines that were MATCHED on 2026-09-28 before the match-time poster existed, through postAlreadyMatchedFuelLine (the same
+  postFuelFillOnBankMatch a fresh accept uses), stamping matched_journal_entry_id. Prod dry run: 69 candidates, 68 posted,
+  1 refused by name (fc461eb6 — Relay T169 09-10 $684.35, no USMCA load at fill time).
+action: DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-04-cc3-post-already-matched-fuel-lines.mts --apply --auth AUTH-216
+expires_at: 2026-10-05T05:22:53Z
+status: OPEN
+THIS AUTHORIZATION DOES NOT COVER: any DELETE; any unmatched bank line; the refused line fc461eb6.

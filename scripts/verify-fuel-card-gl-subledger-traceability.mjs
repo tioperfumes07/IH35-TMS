@@ -36,6 +36,11 @@ const DREAMLINE_VENDOR_ID = "3e72d4a5-e6e7-497a-932e-2d3062502be2";
 // Baseline measured 2026-09-30: Dreamline has 0 sub-ledger rows full stop; Relay has 75
 // posted_to_gl=true rows, 0 traceable via source_transaction_id. Ratchet floor: the traceable
 // count must never DROP below these (it may only rise, if a future fix links them up).
+// Shrink-only: matched fuel bank lines the engine refuses to post, each named with its refusal (BANK-F2026100403).
+const MATCHED_FUEL_LINE_DEBT = {
+  "fc461eb6-d1b1-48af-ba36-b6a5a8e5bb01": "Relay T169 2026-09-10 $684.35 — no USMCA load on T169 at fill time (fuel_fill_missing_load)",
+};
+
 const BASELINE = {
   dreamlineSubledgerRows: 0,
   relayPostedTraceable: 0,
@@ -74,7 +79,18 @@ async function measure(client) {
     [USMCA, [DREAMLINE_GL_ACCOUNT_ID, RELAY_GL_ACCOUNT_ID]]
   );
 
+  // BANK-F2026100403: a fuel / Relay bank line that is MATCHED carries the fill's journal entry (the match posts it). Lines
+  // matched before the match-time poster existed were posted by postAlreadyMatchedFuelLine; one is refused by name.
+  const unposted = await client.query(
+    `SELECT id::text FROM banking.bank_transactions
+      WHERE operating_company_id = $1::uuid AND voided_at IS NULL AND review_state = 'matched'
+        AND matched_journal_entry_id IS NULL
+        AND (matched_relay_fuel_transaction_id IS NOT NULL OR matched_fuel_transaction_id IS NOT NULL)`,
+    [USMCA]
+  );
+
   return {
+    matchedFuelLinesWithoutJe: unposted.rows.map((r) => r.id),
     dreamlineSubledgerRows: dreamline.rows[0].n,
     relayPostedCount: relay.rows[0].posted_count,
     relayPostedTraceable: relay.rows[0].posted_traceable,
@@ -112,6 +128,12 @@ async function run() {
     const failures = [];
     if (m.dreamlineSubledgerRows < BASELINE.dreamlineSubledgerRows) {
       failures.push(`Dreamline sub-ledger rows dropped below the ratchet floor: ${m.dreamlineSubledgerRows} < ${BASELINE.dreamlineSubledgerRows}`);
+    }
+    for (const id of m.matchedFuelLinesWithoutJe) {
+      if (!MATCHED_FUEL_LINE_DEBT[id]) failures.push(`bank line ${id} is matched to a fuel fill but carries no journal entry — the fill is in the bank and not in the books`);
+    }
+    for (const id of Object.keys(MATCHED_FUEL_LINE_DEBT)) {
+      if (!m.matchedFuelLinesWithoutJe.includes(id)) failures.push(`MATCHED_FUEL_LINE_DEBT lists ${id} but it is posted now — remove it (shrink-only)`);
     }
     if (m.relayPostedCount > m.relayPostedTraceable) {
       failures.push(`Relay: ${m.relayPostedCount - m.relayPostedTraceable} row(s) claim posted_to_gl=true with no journal entry behind them — posted is derived, never stored (202615410940)`);
