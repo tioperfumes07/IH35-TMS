@@ -58,7 +58,10 @@ if (!/accounting\/chart-of-accounts\/register\/\$\{row\.id\}/.test(COA_LIST)) {
   errors.push("CoA list: missing 'View register' deep-link to /accounting/chart-of-accounts/register/${row.id}");
 }
 // --- CLICK-THROUGH: CoA list → P&L report ---
-if (!/to=["']\/reports\/profit-loss["']/.test(COA_LIST)) {
+const coaRunReportLink =
+  /to=["']\/reports\/profit-loss["']/.test(COA_LIST) ||
+  /window\.location\.assign\(["']\/reports\/profit-loss["']\)/.test(COA_LIST);
+if (!coaRunReportLink) {
   errors.push("CoA list: missing 'Run report' link to /reports/profit-loss for P&L accounts");
 }
 // --- CLICK-THROUGH: CoA list → Edit drawer ---

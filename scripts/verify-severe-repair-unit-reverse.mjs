@@ -37,7 +37,7 @@ if (process.argv.includes("--selftest")) {
     ["route", "route", /query\.data\.unit_id/, "undefined"],
     ["scope", "service", /e\.operating_company_id = \$1::uuid/, "TRUE"],
     ["filter", "service", /\(\$2::uuid IS NULL OR e\.unit_id = \$2::uuid\)/, "TRUE"],
-    ["api", "api", /params\.set\("unit_id", filters\.unit_id\)/, "void filters.unit_id"],
+    ["api", "api", /listSevereRepairEstimates\(companyId: string, filters: \{ unit_id\?: string \} = \{\}\)/, "listSevereRepairEstimates(companyId: string)"],
     ["reverse", "reverse", /unit_id: unitId/, "unit_id: operatingCompanyId"],
     ["error", "reverse", /query\.isError \? <ListErrorState/, "query.isError ? <div"],
     ["drill_kind", "reverse", /kind="work_order"/, 'kind="unit"'],
