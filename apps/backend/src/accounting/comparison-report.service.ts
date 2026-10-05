@@ -1,7 +1,8 @@
 import { withCompanyScope } from "./shared.js";
 import { getProfitLossReport, type ProfitLossLine, type ProfitLossReport } from "./profit-loss.service.js";
 import { getBalanceSheetReport, type BalanceSheetLine, type BalanceSheetReport } from "./balance-sheet.service.js";
-import { transformProfitLossToCashBasis, transformBalanceSheetToCashBasis } from "./cash-basis/report-transforms.js";
+import { transformBalanceSheetToCashBasis } from "./cash-basis/report-transforms.js";
+import { getCashBasisProfitLossReport } from "./cash-basis/profit-loss-cash.service.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 
 export type ComparisonReportType = "pl" | "bs";
@@ -146,16 +147,23 @@ async function resolvePLForPeriod(input: {
   basis: ComparisonBasis;
   period: ResolvedPeriod;
 }) {
-  const accrual = await getProfitLossReport({
+  // ACCT-F412 — the cash column of a comparison report is computed from the postings. Converting
+  // the accrual report here produced two IDENTICAL columns labelled "accrual" and "cash", which is
+  // worse than no comparison at all: it reads as confirmation that the two bases agree.
+  if (input.basis === "cash") {
+    return getCashBasisProfitLossReport({
+      userId: input.userId,
+      operating_company_id: input.operatingCompanyId,
+      from_date: input.period.startDate,
+      to_date: input.period.endDate,
+    });
+  }
+  return getProfitLossReport({
     userId: input.userId,
     operating_company_id: input.operatingCompanyId,
     from_date: input.period.startDate,
     to_date: input.period.endDate,
   });
-  if (input.basis === "cash") {
-    return transformProfitLossToCashBasis(accrual, input.period.endDate);
-  }
-  return accrual;
 }
 
 async function resolveBSForPeriod(input: {

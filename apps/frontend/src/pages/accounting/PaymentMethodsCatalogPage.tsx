@@ -187,7 +187,7 @@ export function PaymentMethodsCatalogPage() {
         rowActions={
           canWrite
             ? (row) => (
-                <div className="flex flex-wrap justify-end gap-2">
+                <div className="flex flex-nowrap justify-end gap-2">
                   <Button
                     size="sm"
                     variant="secondary"

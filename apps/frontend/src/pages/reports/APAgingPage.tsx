@@ -500,7 +500,7 @@ export function APAgingPage() {
           navigate(apAgingBillsListHref(r.vendor_id));
         }}
         rowActions={(r) => (
-          <div className="flex flex-wrap justify-end gap-1">
+          <div className="flex flex-nowrap justify-end gap-1">
             <Button
               size="sm"
               variant="secondary"

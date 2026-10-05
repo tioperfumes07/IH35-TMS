@@ -305,7 +305,7 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId, readOnly 
             rowActions={(row) => {
               const id = String(row.id ?? "");
               return (
-                <span className="inline-flex flex-wrap justify-end gap-2">
+                <span className="inline-flex flex-nowrap justify-end gap-2">
                   {!row.ended_at ? (
                     <Button type="button" size="sm" variant="secondary" onClick={() => void stopMut.mutateAsync(id)} disabled={stopMut.isPending}>
                       Stop
