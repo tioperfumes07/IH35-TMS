@@ -1377,6 +1377,60 @@ async function stampReverseBankPointerOnAccept(
 }
 
 /**
+ * ENG-SPINE follow-up — payment accept follow-ups that 1:1 already ran and multi-document
+ * skipped (CLS-LINKAGE-ONEWAY on the invoice pointer + Faro rsv deposit JE).
+ *
+ * ACCT-F5620: applyPayment backlinks the invoice once, at apply time, when
+ * source_bank_transaction_id is still null. Re-attempt here after the reverse stamp so
+ * matched_invoice_id can fill. Fill-only-NULL; never throws; never guesses when several
+ * invoices share one payment.
+ *
+ * GO-CLOSE-188: 1090 sweep after the reverse stamp so the poster can resolve the bank.
+ * OWNER-ORDER §3.1: Faro Rsv Deposits on this bank date (DR 1235 / CR due-from-affiliate).
+ * Date-keyed and pending-only — N payments on one wire share one date; first call posts,
+ * the rest find no pending rows.
+ *
+ * One helper so 1:1 and multi-document accept cannot drift.
+ */
+async function runPaymentAcceptFollowUps(
+  client: DbClient,
+  args: {
+    operatingCompanyId: string;
+    paymentId: string;
+    actorUserUuid: string;
+    paymentDate: string;
+  }
+): Promise<void> {
+  const invoiceRes = await client.query<{ invoice_id: string }>(
+    `SELECT DISTINCT invoice_id::text AS invoice_id
+       FROM accounting.payment_applications
+      WHERE payment_id = $1::uuid
+        AND operating_company_id = $2::uuid
+        AND invoice_id IS NOT NULL`,
+    [args.paymentId, args.operatingCompanyId]
+  );
+  await backlinkBankTransactionToInvoice(
+    client,
+    args.operatingCompanyId,
+    args.paymentId,
+    invoiceRes.rows.map((r) => r.invoice_id)
+  );
+  await sweepMatchedReceiptToBank(
+    client,
+    args.operatingCompanyId,
+    "customer_payment_deposit",
+    args.paymentId,
+    args.actorUserUuid
+  );
+  await postFaroRsvDepositsOnPaymentMatch(client, {
+    operating_company_id: args.operatingCompanyId,
+    payment_date: args.paymentDate,
+    actor_user_id: args.actorUserUuid,
+    matched_payment_id: args.paymentId,
+  });
+}
+
+/**
  * ROUND 315 OWNER-ONLY LAW: matching a bank deposit to a factoring purchase is the Owner's act alone. Runs in its own
  * committed transaction BEFORE the match transaction, so the refusal's audit row survives the thrown 403.
  */
@@ -1637,51 +1691,11 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
     });
 
     if (matchKind === "payment") {
-      // ACCT-F5620 (re-applied a 3rd time — see docs/bus/OUTBOX-CC-1.md /
-      // DEVIN-A-STALE-BRANCH-REPEATEDLY-DELETES-MERGED-CODE-FIXES for why) — the payment→invoice
-      // back-link (backlinkBankTransactionToInvoice, scripts/verify-bank-invoice-backlink.mjs) only
-      // runs ONCE, synchronously, inside apply.service.ts's applyPayment, at the moment invoice
-      // applications happen. When a payment is applied to an invoice FIRST and only matched to a
-      // bank transaction LATER via this reconciliation accept flow (the ordering every live USMCA
-      // case has actually taken — source_bank_transaction_id above was NULL before this UPDATE),
-      // that one-time attempt always ran with no source bank transaction yet and never gets a
-      // second chance: the bank line stays matched_payment_id-only forever, matched_invoice_id
-      // permanently NULL. hop.bank ("a bank line matched to an invoice") measured 0 on prod for
-      // exactly this reason even after the writer shipped. Re-attempt the SAME fill-only-NULL,
-      // single-invoice-only, never-throws backlink here — now that source_bank_transaction_id is
-      // set — using whatever invoice(s) this payment has already been applied to.
-      const invoiceRes = await client.query<{ invoice_id: string }>(
-        `SELECT DISTINCT invoice_id::text AS invoice_id
-           FROM accounting.payment_applications
-          WHERE payment_id = $1::uuid
-            AND operating_company_id = $2::uuid
-            AND invoice_id IS NOT NULL`,
-        [matchLedgerEntryId, input.operating_company_id]
-      );
-      await backlinkBankTransactionToInvoice(
-        client,
-        input.operating_company_id,
-        matchLedgerEntryId,
-        invoiceRes.rows.map((r) => r.invoice_id)
-      );
-
-      // GO-CLOSE-188 DEFECT A — deposit-sweep. source_bank_transaction_id is now set (above), so the
-      // sweep poster can resolve the real bank's ledger account and move the payment's GL out of its
-      // holding account (Undeposited Funds / cash_clearing) into the account bank reconciliation
-      // actually reconciles. Best-effort: a genuinely ineligible payment (voided, QBO-origin, already
-      // posted straight to this bank) is a normal,
-      // expected skip — never fails the match itself. Any OTHER error still surfaces (fail loud, not
-      // silent) since it would mean real money moved with no GL trail.
-      // ROUND 326 queue item 12: one sweep helper, strict skip list (a missing bank / clearing mapping is no longer a
-      // silent skip — it would leave the receipt in 1090 with the money already at the bank).
-      await sweepMatchedReceiptToBank(client, input.operating_company_id, "customer_payment_deposit", matchLedgerEntryId, input.actor_user_uuid);
-      // OWNER-ORDER §3.1 — Rsv Deposits Faro held back on this payment date post with the match
-      // (CC-2 faroReserveDepositsOn; DR 1235 / CR due-from-affiliate).
-      await postFaroRsvDepositsOnPaymentMatch(client, {
-        operating_company_id: input.operating_company_id,
-        payment_date: txn.transaction_date.slice(0, 10),
-        actor_user_id: input.actor_user_uuid,
-        matched_payment_id: matchLedgerEntryId,
+      await runPaymentAcceptFollowUps(client, {
+        operatingCompanyId: input.operating_company_id,
+        paymentId: matchLedgerEntryId,
+        actorUserUuid: input.actor_user_uuid,
+        paymentDate: txn.transaction_date.slice(0, 10),
       });
     } else if (matchKind === "factoring_advance") {
       // OWNER-ORDER §3.1 — reserve register by accounting.chart_of_accounts_roles
@@ -1919,7 +1933,12 @@ export async function acceptExactMultiDocumentMatch(input: {
         transactionDate: txn.transaction_date.slice(0, 10),
       });
       if (entry.ledger_entry_kind === "payment") {
-        await sweepMatchedReceiptToBank(client, input.operating_company_id, "customer_payment_deposit", entry.ledger_entry_id, input.actor_user_uuid);
+        await runPaymentAcceptFollowUps(client, {
+          operatingCompanyId: input.operating_company_id,
+          paymentId: entry.ledger_entry_id,
+          actorUserUuid: input.actor_user_uuid,
+          paymentDate: txn.transaction_date.slice(0, 10),
+        });
       } else if (entry.ledger_entry_kind === "factoring_advance") {
         await sweepMatchedReceiptToBank(client, input.operating_company_id, "factoring_advance_deposit", entry.ledger_entry_id, input.actor_user_uuid);
       }

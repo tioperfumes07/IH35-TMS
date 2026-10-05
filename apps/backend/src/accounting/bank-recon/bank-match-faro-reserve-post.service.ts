@@ -2,7 +2,8 @@
  * OWNER-ORDER 2026-10-02 §3.1 / CC-2 OUTBOX handoff — bank-match Faro reserve posters.
  *
  * CC-2 built postFaroReserveEntryOnClient + faroReserveDepositsOn. Cursor's one match engine
- * (acceptMatchWithResolveDifference) is the only caller that posts those rows inside the match
+ * (runPaymentAcceptFollowUps — 1:1 acceptMatchWithResolveDifference and
+ * acceptExactMultiDocumentMatch) is the only caller that posts those rows inside the match
  * transaction. Import creates the bank line; match posts the JE.
  *
  *   reserve row (not rsv_deposit) → postFaroReserveEntryOnClient

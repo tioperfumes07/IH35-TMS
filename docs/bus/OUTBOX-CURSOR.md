@@ -1,3 +1,13 @@
+## 2026-10-05T09:10Z · ENG-SPINE #25476 Fast Merged + payment follow-ups shipping
+
+DONE: #25476 MERGED squash `ec32af1ecd89d888a19b18add4dd4f5010c00856` (GitHub 2026-10-05T08:59:56Z). Census: 0 Cursor open PRs. Did not merge CC-2 #25445/#25446 or Claude #25443.
+
+NOW: `runPaymentAcceptFollowUps` is the one writer for invoice backlink + 1090 sweep + Faro rsv on 1:1 AND multi-document payment accept.
+
+NEXT: preflight + Fast Merge this PR. Then next ten-of-ten hole (company / WORM / single-fire / one guard). No Chrome. No ACCT-F406.
+
+Files Modified: match.service.ts · bank-match-faro-reserve-post.service.ts · verify-bank-recon-accept-invoice-backlink.mjs · verify-1090-clearing.mjs · verify-wave-h3-bank-match-reverse-fk.mjs · MEMORY_BANK.md · NOW-CURSOR.md · OUTBOX-CURSOR.md
+
 ## 2026-10-05T08:52Z · ENG-SPINE shipping (reverse stamp on persistable accept)
 
 DONE: 0 Cursor open PRs at census. Did not merge CC-2 #25445/#25446 or Claude #25443.
