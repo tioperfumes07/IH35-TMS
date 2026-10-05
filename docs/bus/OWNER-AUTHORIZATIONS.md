@@ -7366,3 +7366,12 @@ row_counts: 84 rows deleted in one transaction (code e2fe056619; rehearsed on br
   audit.record_deletions. Ledger DR 0 = CR 0 before and after.
 proof_query: verify-no-test-markers-in-live-tables (prod): PASS — 0 marked rows / 102 scoped rows; verify-void-is-whole PASS 0.
 THIS AUTHORIZATION DOES NOT COVER: any row not in the 84-id list; any real (non-test) maintenance row; TRANSP / TRK.
+
+## AUTH-402
+issued_at: 2026-10-05T16:02:00Z
+scope: production Neon project tiny-field-89581227, branch br-fancy-credit-akjnd07a — cluster role ih35_guard_reader only (CREATE ROLE + GRANT pg_read_all_data + ALTER ROLE SET default_transaction_read_only). No table, row or company data is written.
+action: OWNER_AUTH_ID=AUTH-402 node --env-file=~/.ih35-gate.env scripts/ops/2026-10-05-cc2-provision-guard-reader-role.mjs <0600 local password file>
+expires_at: 2026-10-06T15:02:00Z
+status: OPEN
+owner_words: "APIS AND TOKENS AND ALL ENVS ARE IN APIS FOLDER IN DESKTOP YOU HAVE FULL PERMISSION AND AUTHORIZATIONS. CONTINUE- I FOLLOW YOUR RECOMMENDATIONS." (2026-10-05, in reply to CC-2's recommendation that the read-only gate role be made genuinely read-only)
+why: ih35_ci_readonly is a neon_superuser + ih35_app member and holds INSERT/UPDATE/DELETE on the ledger; Neon refuses REVOKE neon_superuser. A SQL-created role is not a member. Rehearsed on br-summer-art-akio7il7: 739 of 741 DB guards identical under both roles; the 2 differences fixed in #25506.
