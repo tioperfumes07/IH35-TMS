@@ -79,12 +79,31 @@ describe("APAgingPage drill-through", () => {
     expect(reportsApi.getApAgingReport).toHaveBeenCalledWith(COMPANY_ID, expect.any(String));
   });
 
-  it("row click drills to has_balance bills list filtered by vendor", async () => {
+  // ACCT-F410-C — RETRACTION. ACCT-F410-B asserted the vendor name must NOT reach the vendor
+  // profile, because it had turned that cell into a link to the bill list. CC-2 measured that this
+  // made the NAME and the TOTAL resolve to the same url. The name is an ENTITY link again, so what
+  // is asserted is what the page actually promises: the name opens the vendor, and clicking it does
+  // NOT also fire the row's drill — stopPropagation is the whole fix, and its absence on A/R is
+  // what made two navigations race there.
+  it("the vendor name is an entity link to the vendor, and does not also fire the row drill", async () => {
     const user = userEvent.setup();
     render(wrap(<APAgingPage />));
     await waitFor(() => expect(screen.getByText("Loves Travel Stops")).toBeInTheDocument());
+    const link = screen.getByText("Loves Travel Stops").closest("a");
+    expect(link).not.toBeNull();
+    expect(link).toHaveAttribute("href", expect.stringContaining(VENDOR_ID));
+    // The row drill navigates with navigate(); the name must not trigger it.
+    mockNavigate.mockClear();
     await user.click(screen.getByText("Loves Travel Stops"));
-    expect(mockNavigate).toHaveBeenCalledWith(apAgingBillsListHref(VENDOR_ID));
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it("the open-balance bill list is still one click away — on the Total cell and on Pay now", async () => {
+    render(wrap(<APAgingPage />));
+    await waitFor(() => expect(screen.getByText("Loves Travel Stops")).toBeInTheDocument());
+    const total = screen.getByTestId(`ap-aging-total-${VENDOR_ID}`);
+    expect(total.tagName).toBe("A");
+    expect(total).toHaveAttribute("href", apAgingBillsListHref(VENDOR_ID));
   });
 
   it("Pay now remains and targets the has_balance bills list (keyboard)", async () => {

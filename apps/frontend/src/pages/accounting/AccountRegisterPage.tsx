@@ -1,7 +1,7 @@
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BankTieoutHeader } from "../../components/banking/BankTieoutHeader";
@@ -252,7 +252,7 @@ export function AccountRegisterPage() {
   // Deep-link (QBO parity):
   // - CoA "View register" → /accounting/chart-of-accounts/register/:accountId (GL id)
   // - Banking → /accounting/account-register?accountId=<bankAccountId> (resolved via banking API → ledger_account_id)
-  // Report drilldowns also pass ?from_date=&to_date=&basis= as query params.
+  // Report drilldowns also pass ?from_date=&to_date=&basis= as query params — all three are read.
   const { accountId: routeAccountId } = useParams<{ accountId?: string }>();
   const queryAccountId = searchParams.get("accountId");
   const deepLinkAccountId = (routeAccountId ?? queryAccountId ?? "").trim();
@@ -260,6 +260,11 @@ export function AccountRegisterPage() {
   const initial = monthBoundsIso(companyToday());
   const paramFrom = searchParams.get("from_date");
   const paramTo = searchParams.get("to_date");
+  // ACCT-F410 — the register now ANSWERS in the basis it is asked for. Before this, the comment
+  // above claimed report drilldowns pass ?basis= and this page simply never read it, so a
+  // cash-basis figure landed on an accrual register whose total disagreed with the number clicked.
+  // Anything other than "cash" is accrual (@decision Q7: basis defaults to accrual).
+  const paramBasis = searchParams.get("basis") === "cash" ? "cash" : "accrual";
   const [accountId, setAccountId] = useState(deepLinkAccountId);
   const [fromDate, setFromDate] = useState(paramFrom ?? initial.start);
   const [toDate, setToDate] = useState(paramTo ?? initial.end);
@@ -316,7 +321,9 @@ export function AccountRegisterPage() {
   }, [deepLinkAccountId, bankPickerRows]);
 
   const registerQuery = useQuery({
-    queryKey: ["account-register", companyId, accountId, fromDate, toDate, search, typeLabel],
+    // ACCT-F410 — basis is part of the query identity. Without it, switching basis would show the
+    // previous basis's cached payload: the same figures under a different header.
+    queryKey: ["account-register", companyId, accountId, fromDate, toDate, search, typeLabel, paramBasis],
     queryFn: () =>
       getAccountRegister({
         operating_company_id: companyId,
@@ -325,6 +332,7 @@ export function AccountRegisterPage() {
         to_date: toDate,
         search: search.trim() || undefined,
         type: typeLabel ? TYPE_TO_SOURCE[typeLabel] : undefined,
+        basis: paramBasis === "cash" ? "cash" : undefined,
       }),
     enabled: Boolean(companyId && accountId),
   });
@@ -734,7 +742,47 @@ export function AccountRegisterPage() {
   ) : undefined;
 
   return (
-    <AccountingSubNavWrapper title="Account Register" subtitle="Running-balance ledger over the chart of accounts" kpiStrip={kpiStrip}>
+    <AccountingSubNavWrapper
+      title="Account Register"
+      subtitle={
+        paramBasis === "cash"
+          ? "Running-balance ledger over the chart of accounts · Cash basis"
+          : "Running-balance ledger over the chart of accounts · Accrual basis"
+      }
+      kpiStrip={kpiStrip}
+    >
+      {/* ACCT-F410 — a register full of real transactions showing ZEROS has to explain itself, or
+          it reads as a broken query. Empty is a question, not an answer: this names the basis, the
+          account and the decision behind the zeros, and offers the accrual view in one click. */}
+      {report?.cash_basis_suppressed ? (
+        <div
+          className="mb-3 rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+          data-testid="register-cash-basis-suppressed"
+        >
+          <span className="font-semibold">Cash basis — this account is not recognized.</span>{" "}
+          {report.account.account_name} is the control account for the accrual side, so on a cash
+          basis every amount below is zero and the balance stays flat. The transactions are real and
+          still listed; cash basis denies them recognition, not existence. This is the same answer
+          the Trial Balance and Balance Sheet give this account on cash basis.{" "}
+          <Link
+            to={`/accounting/chart-of-accounts/register/${accountId}${
+              fromDate && toDate ? `?from_date=${fromDate}&to_date=${toDate}` : ""
+            }`}
+            className="font-semibold underline underline-offset-2"
+          >
+            Show the accrual register
+          </Link>
+        </div>
+      ) : paramBasis === "cash" ? (
+        <div
+          className="mb-3 rounded-sm border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+          data-testid="register-cash-basis"
+        >
+          <span className="font-semibold">Cash basis.</span> This account is recognized identically
+          on both bases, so these rows match the accrual register. Only the A/R and A/P control
+          accounts differ.
+        </div>
+      ) : null}
       {/* ROUND 313 BANK-TIEOUT-01: a bank account's GL register leads with its feed-vs-GL tie-out. */}
       {tieoutBankAccountId ? <BankTieoutHeader companyId={companyId} bankAccountId={tieoutBankAccountId} /> : null}
       {/* Primary controls + on-demand filter (collapsed by default) */}

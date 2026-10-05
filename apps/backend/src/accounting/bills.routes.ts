@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { AGING_BUCKET_IDS, agingWindowFromBucket } from "./aging/buckets.js";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
@@ -76,6 +77,22 @@ const listBillsQuerySchema = companyQuerySchema.extend({
   status: z.enum(["open", "partial", "paid", "voided", "unpaid", "active", "all", "posted"]).optional(),
   date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  // ACCT-F411 — the A/P AGING WINDOW, so an aging bucket on a report has a destination that
+  // reproduces it. Days OVERDUE relative to as_of, inclusive on both ends, measured off the same
+  // due-date expression ap-aging.service.ts reconstructs: COALESCE(b.due_date, b.bill_date).
+  // Boundaries come from accounting/aging/buckets.ts — the one place they exist — so the bucket a
+  // report counts and the bucket this filter selects cannot drift. Applied BEFORE LIMIT/OFFSET,
+  // same discipline as has_balance, or a bucket's total would be a page slice and not the bucket.
+  // as_of defaults to the company business date when a window is sent without one.
+  as_of: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  // One id, or several when a report column merges buckets (the A/P table's "0–30" is
+  // current + 1-30). Several must be CONTIGUOUS; the server rejects a gap rather than spanning it.
+  aging_bucket: z
+    .union([
+      z.enum(AGING_BUCKET_IDS as unknown as [string, ...string[]]),
+      z.array(z.enum(AGING_BUCKET_IDS as unknown as [string, ...string[]])),
+    ])
+    .optional(),
   search: z.string().trim().max(200).optional(),
   // ACCT-F5035 — claim→bill reverse (create stamps insurance_claim_id; list never filtered).
   insurance_claim_id: z.string().uuid().optional(),
@@ -270,6 +287,20 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     // this file in board row 2782 (MEMBERSHIP-ASSERT-PASS3-MONEY-LANE-SCOPE) for the complete list.
     await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
 
+    // ACCT-F411 — the wire carries WHICH bucket(s) were clicked, never day numbers, so the caller
+    // never holds the boundaries and cannot drift from them. A non-contiguous selection cannot be
+    // one window and silently spanning the gap would OVERSTATE the list, so it is a 400 — empty or
+    // wrong is a question, not an answer.
+    let agingWindow;
+    try {
+      agingWindow = agingWindowFromBucket(query.data.aging_bucket);
+    } catch (error) {
+      return reply.code(400).send({
+        error: "invalid_aging_bucket",
+        message: String((error as Error)?.message ?? "invalid_aging_bucket"),
+      });
+    }
+
     const listOptions = {
       status:
         query.data.status === "unpaid"
@@ -280,6 +311,14 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       fromDate: query.data.date_from,
       toDate: query.data.date_to,
       hasBalance: query.data.has_balance,
+      // ACCT-F411 — a contradictory window (max below min) THROWS in parseAgingWindow rather than
+      // quietly returning zero rows that look like a working filter. Empty is a question, not an
+      // answer, so it is surfaced as a 400 below instead of an empty list.
+      // ACCT-F411 — the wire carries WHICH bucket was clicked, not two day numbers, so the
+      // caller never holds the boundaries and cannot drift from them. The schema accepts only
+      // AGING_BUCKET_IDS, so a window whose max is below its min is impossible by construction.
+      agingWindow,
+      agingAsOf: query.data.as_of,
       search: query.data.search,
       insuranceClaimId: query.data.insurance_claim_id,
       legalMatterId: query.data.legal_matter_id,
@@ -325,11 +364,33 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
     await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
 
+    // ACCT-F411 — the wire carries WHICH bucket(s) were clicked, never day numbers, so the caller
+    // never holds the boundaries and cannot drift from them. A non-contiguous selection cannot be
+    // one window and silently spanning the gap would OVERSTATE the list, so it is a 400 — empty or
+    // wrong is a question, not an answer.
+    let agingWindow;
+    try {
+      agingWindow = agingWindowFromBucket(query.data.aging_bucket);
+    } catch (error) {
+      return reply.code(400).send({
+        error: "invalid_aging_bucket",
+        message: String((error as Error)?.message ?? "invalid_aging_bucket"),
+      });
+    }
+
     const listOptions = {
       status: query.data.status === "unpaid" ? ("open" as const) : query.data.status === "all" ? ("all" as const) : query.data.status,
       fromDate: query.data.date_from,
       toDate: query.data.date_to,
       hasBalance: query.data.has_balance,
+      // ACCT-F411 — a contradictory window (max below min) THROWS in parseAgingWindow rather than
+      // quietly returning zero rows that look like a working filter. Empty is a question, not an
+      // answer, so it is surfaced as a 400 below instead of an empty list.
+      // ACCT-F411 — the wire carries WHICH bucket was clicked, not two day numbers, so the
+      // caller never holds the boundaries and cannot drift from them. The schema accepts only
+      // AGING_BUCKET_IDS, so a window whose max is below its min is impossible by construction.
+      agingWindow,
+      agingAsOf: query.data.as_of,
       search: query.data.search,
       insuranceClaimId: query.data.insurance_claim_id,
       legalMatterId: query.data.legal_matter_id,

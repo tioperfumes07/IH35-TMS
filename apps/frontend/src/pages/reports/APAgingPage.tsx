@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { AmountLink } from "../../components/shared/AmountLink";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -15,9 +17,16 @@ import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
-import { apAgingBillsListHref, apAgingVendorProfileHref } from "./agingDrillThrough";
+// ACCT-F411 — AP_BUCKET_0_30 is named in agingDrillThrough, not spelled out here: the "0–30"
+// column is current + 1-30 and guessing one of the two would drill to half the money it shows.
+import {
+  AP_BUCKET_0_30,
+  apAgingBillsFilter,
+  apAgingBillsListHref,
+  apAgingBucketFilter,
+  apAgingVendorProfileHref,
+} from "./agingDrillThrough";
 import { entityLabel } from "../../lib/entity-label";
-import { EntityLink } from "../../components/shared/EntityLink";
 import { useExportAction } from "../../hooks/useExportAction";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityPicker } from "../../components/EntityPicker";
@@ -179,17 +188,134 @@ export function APAgingPage() {
 
   const columns = useMemo<ParityColumn<APAgingRowWithBucket>[]>(
     () => [
-      { key: "vendor_name", label: "Vendor", sortable: true, render: (r) => <EntityLink kind="vendor" id={r.vendor_id} label={entityLabel(r.vendor_name, r.vendor_id, "Vendor")} className="font-medium text-gray-900" onClick={(event) => event.stopPropagation()} /> },
-      { key: "total_open_cents", label: "Total", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.total_open_cents) },
+      // ACCT-F410-C — RETRACTION, and CC-2 was right. ACCT-F410-B turned this cell from an
+      // EntityLink-to-the-vendor into an AmountLink to the open-balance bill list, on the reasoning
+      // that it contradicted the page's "row drill -> bills" design and duplicated the Vendor
+      // profile row action. CC-2 measured the result: the NAME and the TOTAL then resolved to the
+      // SAME url, which is a real duplication, and it cost the page its entity link.
+      //
+      // The original was coherent and I misread it. A NAME is an ENTITY, and EntityLink is this
+      // app's convention for one. stopPropagation stops the name click from ALSO firing the row
+      // drill — it does not make the row drill unreachable, because every other cell in the row
+      // still fires it. Name -> vendor, amounts -> transactions, row -> open bills: three
+      // destinations, no collision.
+      //
+      // What WAS a defect, and stays fixed, is A/R: the same cell there had NO stopPropagation, so
+      // the name click fired the name's navigation AND the row's and the two raced.
+      {
+        key: "vendor_name",
+        label: "Vendor",
+        sortable: true,
+        render: (r) => (
+          <EntityLink
+            kind="vendor"
+            id={r.vendor_id}
+            label={entityLabel(r.vendor_name, r.vendor_id, "Vendor")}
+            className="font-medium text-gray-900"
+            onClick={(event) => event.stopPropagation()}
+          />
+        ),
+      },
+      // ACCT-F411 — the Total is every open bill for this vendor, which the has_balance list
+      // already reproduces, so no bucket rides along.
+      {
+        key: "total_open_cents",
+        label: "Total",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (r) => (
+          <AmountLink
+            filter={isVendorUuid(r.vendor_id) ? apAgingBillsFilter(r.vendor_id) : null}
+            data-testid={`ap-aging-total-${r.vendor_id}`}
+          >
+            {money(r.total_open_cents)}
+          </AmountLink>
+        ),
+      },
       { key: "cleared_open_cents", label: "Cleared", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.cleared_open_cents) },
       { key: "uncleared_cents", label: "Not cleared", sortable: true, render: (r) => <UnclearedDocumentsNote docs={r.uncleared_documents} /> },
-      { key: "bucket_0_30_cents", label: "0–30", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_0_30_cents) },
-      { key: "bucket_31_60_cents", label: "31–60", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_31_60_cents) },
-      { key: "bucket_61_90_cents", label: "61–90", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_61_90_cents) },
-      { key: "bucket_91_plus_cents", label: "91+", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_91_plus_cents) },
+      {
+        key: "bucket_0_30_cents",
+        label: "0–30",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (r) => (
+          <AmountLink
+            filter={
+              isVendorUuid(r.vendor_id)
+                ? apAgingBucketFilter(r.vendor_id, AP_BUCKET_0_30, appliedFilters.asOfDate)
+                : null
+            }
+            data-testid={`ap-aging-bucket-0-30-${r.vendor_id}`}
+          >
+            {money(r.bucket_0_30_cents)}
+          </AmountLink>
+        ),
+      },
+      {
+        key: "bucket_31_60_cents",
+        label: "31–60",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (r) => (
+          <AmountLink
+            filter={
+              isVendorUuid(r.vendor_id)
+                ? apAgingBucketFilter(r.vendor_id, "d31_60", appliedFilters.asOfDate)
+                : null
+            }
+            data-testid={`ap-aging-bucket-31-60-${r.vendor_id}`}
+          >
+            {money(r.bucket_31_60_cents)}
+          </AmountLink>
+        ),
+      },
+      {
+        key: "bucket_61_90_cents",
+        label: "61–90",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (r) => (
+          <AmountLink
+            filter={
+              isVendorUuid(r.vendor_id)
+                ? apAgingBucketFilter(r.vendor_id, "d61_90", appliedFilters.asOfDate)
+                : null
+            }
+            data-testid={`ap-aging-bucket-61-90-${r.vendor_id}`}
+          >
+            {money(r.bucket_61_90_cents)}
+          </AmountLink>
+        ),
+      },
+      {
+        key: "bucket_91_plus_cents",
+        label: "91+",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (r) => (
+          <AmountLink
+            filter={
+              isVendorUuid(r.vendor_id)
+                ? apAgingBucketFilter(r.vendor_id, "d90_plus", appliedFilters.asOfDate)
+                : null
+            }
+            data-testid={`ap-aging-bucket-91-plus-${r.vendor_id}`}
+          >
+            {money(r.bucket_91_plus_cents)}
+          </AmountLink>
+        ),
+      },
       { key: "last_payment_date", label: "Last Pmt", sortable: true, render: (r) => (r.last_payment_date ? mmmDd(r.last_payment_date) : "—") },
     ],
-    [],
+    // ACCT-F411 — asOfDate is now IN the cells (a bucket means nothing without it), so it must be
+    // a dependency or every drill would carry the as-of from first render after the filter changes.
+    [appliedFilters.asOfDate],
   );
 
   return (

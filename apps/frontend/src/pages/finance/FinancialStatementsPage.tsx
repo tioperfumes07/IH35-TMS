@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { AmountLink } from "../../components/shared/AmountLink";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { Button } from "../../components/Button";
@@ -86,10 +87,6 @@ function downloadCsv(fileName: string, rows: string[][]) {
 // account_id was already on every line (StatementLine.account_id / AccountingTrialBalanceRow's
 // account_code-keyed row) but was never read here, so every row linked to the same page — a
 // dead-end drill-through, not a canonical one.
-function registerHref(accountId: string, fromDate: string, toDate: string, basis: string) {
-  const params = new URLSearchParams({ from_date: fromDate, to_date: toDate, basis });
-  return `/accounting/chart-of-accounts/register/${accountId}?${params}`;
-}
 
 function AccountCell({
   code,
@@ -107,15 +104,29 @@ function AccountCell({
   basis: string;
 }) {
   const display = name || code || "—";
-  if (!accountId) return <span>{display}</span>;
+  // AmountLink owns THE BASIS RULE: a cash-basis figure gets no register drill, because the
+  // register is accrual-only (in the page AND in account-register.service.ts) and the two would
+  // not tie. This cell was passing `basis` into a local registerHref that the register silently
+  // dropped, so under Cash basis every row here landed on a register total that disagreed with
+  // the statement. Basis now goes through the one primitive, which renders plain text instead.
   return (
-    <Link
-      to={registerHref(accountId, fromDate, toDate, basis)}
+    <AmountLink
+      filter={
+        accountId
+          ? {
+              target: "register",
+              accountId,
+              from: fromDate,
+              to: toDate,
+              basis: basis === "cash" ? "cash" : "accrual",
+            }
+          : null
+      }
       className="text-slate-700 underline-offset-2 hover:underline"
       title="View ledger detail"
     >
       {display}
-    </Link>
+    </AmountLink>
   );
 }
 

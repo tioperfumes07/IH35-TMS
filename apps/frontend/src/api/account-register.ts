@@ -34,6 +34,10 @@ export type AccountRegisterRow = {
 };
 
 export type AccountRegisterReport = {
+  /** ACCT-F410 — the basis the server computed this payload in. */
+  basis?: "accrual" | "cash";
+  /** ACCT-F410 — true when cash basis suppressed this account (it is the A/R or A/P control). */
+  cash_basis_suppressed?: boolean;
   account: {
     account_id: string;
     account_code: string;
@@ -64,6 +68,8 @@ export function getAccountRegister(input: {
   to_date: string;
   search?: string;
   type?: string;
+  /** ACCT-F410 — the register answers in this basis. Omitted = accrual (@decision Q7). */
+  basis?: "accrual" | "cash";
 }) {
   const q = new URLSearchParams({
     operating_company_id: input.operating_company_id,
@@ -73,6 +79,9 @@ export function getAccountRegister(input: {
   });
   if (input.search) q.set("search", input.search);
   if (input.type) q.set("type", input.type);
+  // ACCT-F410 — only sent when it is "cash": an explicit basis=accrual would be identical, and
+  // leaving it off keeps every existing cached query key and URL byte-identical to today's.
+  if (input.basis === "cash") q.set("basis", "cash");
   return apiRequest<AccountRegisterReport>(`/api/v1/accounting/account-register?${q.toString()}`);
 }
 

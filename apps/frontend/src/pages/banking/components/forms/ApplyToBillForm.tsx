@@ -158,6 +158,7 @@ export function ApplyToBillForm({ value, onChange, operatingCompanyId }: Props) 
           />
         </Field>
         <Field label="Vendor">
+          <>
           <ReferenceSelect
             value={value.vendor_id ? String(value.vendor_id) : null}
             onChange={(next) => onChange({ ...value, vendor_id: next ?? "" })}
@@ -179,6 +180,7 @@ export function ApplyToBillForm({ value, onChange, operatingCompanyId }: Props) 
               className="mt-1 block font-semibold text-[#1F2A44] underline"
             />
           ) : null}
+          </>
         </Field>
         <Field label="A/P Account">
           <ReferenceSelect

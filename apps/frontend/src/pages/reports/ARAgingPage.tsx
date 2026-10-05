@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { AmountLink } from "../../components/shared/AmountLink";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -13,9 +15,16 @@ import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useStagedListFilters } from "../../components/table";
-import { arAgingCustomerProfileHref, arAgingInvoiceListHref } from "./agingDrillThrough";
+// ACCT-F411 — AR_BUCKET_0_30 is named in agingDrillThrough, not spelled out here: the "0–30"
+// column is current + 1-30 and guessing one of the two would drill to half the money it shows.
+import {
+  AR_BUCKET_0_30,
+  arAgingBucketFilter,
+  arAgingCustomerProfileHref,
+  arAgingInvoiceFilter,
+  arAgingInvoiceListHref,
+} from "./agingDrillThrough";
 import { entityLabel } from "../../lib/entity-label";
-import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useExportAction } from "../../hooks/useExportAction";
 import { EntityPicker } from "../../components/EntityPicker";
@@ -98,17 +107,112 @@ export function ARAgingPage() {
 
   const columns = useMemo<ParityColumn<ARAgingRowWithBucket>[]>(
     () => [
-      { key: "customer_name", label: "Customer", sortable: true, render: (r) => <EntityLink kind="customer" id={r.customer_id} label={entityLabel(r.customer_name, r.customer_id, "Customer")} className="font-medium text-gray-900" /> },
-      { key: "total_open_cents", label: "Total", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.total_open_cents) },
+      // ACCT-F410-C — the REAL A/R defect, fixed the right way this time. This cell was an
+      // EntityLink to the customer with NO stopPropagation, so clicking the name fired the name's
+      // navigation AND the row's onRowClick: two navigations racing on one click. ACCT-F410-B
+      // "fixed" it by replacing the entity link with an AmountLink to the invoice list, which CC-2
+      // correctly measured as duplicating the Total cell's destination and losing the entity link.
+      // The fix is the missing stopPropagation, matching A/P: name -> customer, amounts ->
+      // transactions, row -> open invoices. Three destinations, no race, no duplication.
+      {
+        key: "customer_name",
+        label: "Customer",
+        sortable: true,
+        render: (r) => (
+          <EntityLink
+            kind="customer"
+            id={r.customer_id}
+            label={entityLabel(r.customer_name, r.customer_id, "Customer")}
+            className="font-medium text-gray-900"
+            onClick={(event) => event.stopPropagation()}
+          />
+        ),
+      },
+      // ACCT-F411 — the Total is every open invoice for this customer, which the has_balance list
+      // already reproduces, so no bucket rides along.
+      {
+        key: "total_open_cents",
+        label: "Total",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (r) => (
+          <AmountLink
+            filter={arAgingInvoiceFilter(r.customer_id)}
+            data-testid={`ar-aging-total-${r.customer_id}`}
+          >
+            {money(r.total_open_cents)}
+          </AmountLink>
+        ),
+      },
       { key: "cleared_open_cents", label: "Cleared", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.cleared_open_cents) },
       { key: "uncleared_cents", label: "Not cleared", sortable: true, render: (r) => <UnclearedDocumentsNote docs={r.uncleared_documents} /> },
-      { key: "bucket_0_30_cents", label: "0–30", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_0_30_cents) },
-      { key: "bucket_31_60_cents", label: "31–60", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_31_60_cents) },
-      { key: "bucket_61_90_cents", label: "61–90", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_61_90_cents) },
-      { key: "bucket_91_plus_cents", label: "91+", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_91_plus_cents) },
+      {
+        key: "bucket_0_30_cents",
+        label: "0–30",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (r) => (
+          <AmountLink
+            filter={arAgingBucketFilter(r.customer_id, AR_BUCKET_0_30, appliedFilters.asOfDate)}
+            data-testid={`ar-aging-bucket-0-30-${r.customer_id}`}
+          >
+            {money(r.bucket_0_30_cents)}
+          </AmountLink>
+        ),
+      },
+      {
+        key: "bucket_31_60_cents",
+        label: "31–60",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (r) => (
+          <AmountLink
+            filter={arAgingBucketFilter(r.customer_id, "d31_60", appliedFilters.asOfDate)}
+            data-testid={`ar-aging-bucket-31-60-${r.customer_id}`}
+          >
+            {money(r.bucket_31_60_cents)}
+          </AmountLink>
+        ),
+      },
+      {
+        key: "bucket_61_90_cents",
+        label: "61–90",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (r) => (
+          <AmountLink
+            filter={arAgingBucketFilter(r.customer_id, "d61_90", appliedFilters.asOfDate)}
+            data-testid={`ar-aging-bucket-61-90-${r.customer_id}`}
+          >
+            {money(r.bucket_61_90_cents)}
+          </AmountLink>
+        ),
+      },
+      {
+        key: "bucket_91_plus_cents",
+        label: "91+",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (r) => (
+          <AmountLink
+            filter={arAgingBucketFilter(r.customer_id, "d90_plus", appliedFilters.asOfDate)}
+            data-testid={`ar-aging-bucket-91-plus-${r.customer_id}`}
+          >
+            {money(r.bucket_91_plus_cents)}
+          </AmountLink>
+        ),
+      },
       { key: "last_payment_date", label: "Last Pmt", sortable: true, render: (r) => (r.last_payment_date ? mmmDd(r.last_payment_date) : "—") },
     ],
-    [],
+    // ACCT-F411 — asOfDate is now IN the cells (a bucket means nothing without it), so it must be
+    // a dependency or every drill would keep carrying the as-of from first render after the filter
+    // changes: the figures would update and the links would not.
+    [appliedFilters.asOfDate],
   );
 
   function exportCsv() {

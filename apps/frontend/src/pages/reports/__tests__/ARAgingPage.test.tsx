@@ -81,13 +81,22 @@ describe("ARAgingPage drill-through", () => {
     expect(reportsApi.getArAgingReport).toHaveBeenCalledWith(COMPANY_ID, expect.any(String));
   });
 
-  it("row click drills to invoice list filtered by customer + has_balance", async () => {
+  // ACCT-F410-C — the A/R defect was a MISSING stopPropagation, not the entity link. Without it
+  // the name click fired the name's navigation AND the row's onRowClick and the two raced. This
+  // asserts both halves of the fix: the name is an entity link to the customer, and clicking it
+  // does not also fire the row drill.
+  it("the customer name is an entity link to the customer, and does not also fire the row drill", async () => {
     const user = userEvent.setup();
     render(wrap(<ARAgingPage />));
-    await waitFor(() => expect(screen.getByText("Acme Freight")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByTestId(`ar-aging-total-${CUSTOMER_ID}`)).toBeInTheDocument());
+    const total = screen.getByTestId(`ar-aging-total-${CUSTOMER_ID}`);
+    expect(total).toHaveAttribute("href", arAgingInvoiceListHref(CUSTOMER_ID));
+    const nameLink = screen.getByText("Acme Freight").closest("a");
+    expect(nameLink).not.toBeNull();
+    expect(nameLink).toHaveAttribute("href", expect.stringContaining(CUSTOMER_ID));
+    mockNavigate.mockClear();
     await user.click(screen.getByText("Acme Freight"));
-    expect(mockNavigate).toHaveBeenCalledWith(arAgingInvoiceListHref(CUSTOMER_ID));
-    expect(arAgingInvoiceListHref(CUSTOMER_ID)).toContain("has_balance=true");
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   it("Open invoices row action is keyboard-reachable (Enter) without nested row conflict", async () => {
