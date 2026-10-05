@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { AmountLink, type AmountFilter } from "../../components/shared/AmountLink";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
@@ -39,15 +39,13 @@ const SYNTHETIC_ACCOUNT_IDS = new Set(["cash-basis-ar-row", "cash-basis-ap-row"]
 function tbFilter(
   canDrill: unknown,
   accountId: string | undefined,
-  applied: { start: string; end: string }
+  applied: { start: string; end: string; basis: AccountingBasis }
 ): AmountFilter | null {
   if (!canDrill || !accountId) return null;
-  return { target: "register", accountId, from: applied.start, to: applied.end };
-}
-
-function registerHref(accountId: string, fromDate: string, toDate: string, basis: string) {
-  const params = new URLSearchParams({ from_date: fromDate, to_date: toDate, basis });
-  return `/accounting/chart-of-accounts/register/${accountId}?${params}`;
+  // basis goes through verbatim. AmountLink owns THE BASIS RULE — a cash-basis figure gets no
+  // register drill, because the register is accrual-only and the two would not tie. This page does
+  // not decide that; if it did, the rule would drift page by page.
+  return { target: "register", accountId, from: applied.start, to: applied.end, basis: applied.basis };
 }
 
 function currentQuarterRange() {
@@ -345,16 +343,13 @@ export function TrialBalancePage() {
                 <tr key={row.account_id} className="border-b border-gray-100">
                   {showCodes ? <td className="px-3 py-2 font-medium text-gray-900">{row.account_code || "—"}</td> : null}
                   <td className="px-3 py-2">
-                    {canDrill ? (
-                      <Link
-                        to={registerHref(row.account_id!, applied.start, applied.end, applied.basis)}
-                        className="text-slate-700 underline-offset-2 hover:underline"
-                      >
-                        {row.account_name || "—"}
-                      </Link>
-                    ) : (
-                      row.account_name || "—"
-                    )}
+                    <AmountLink
+                      filter={tbFilter(canDrill, row.account_id, applied)}
+                      className="text-slate-700 underline-offset-2 hover:underline"
+                      data-testid={`tb-name-${row.account_code || row.account_name}`}
+                    >
+                      {row.account_name || "—"}
+                    </AmountLink>
                   </td>
                   <td className="px-3 py-2">{formatAccountTypeLabel(row.account_type)}</td>
                   {/* LST-F405 — the account NAME drilled, the AMOUNTS did not. Reuses the page's own

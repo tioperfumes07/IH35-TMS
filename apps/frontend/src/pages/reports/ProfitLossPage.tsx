@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { AmountLink } from "../../components/shared/AmountLink";
+import { useSearchParams } from "react-router-dom";
+import { AmountLink, type AmountFilter } from "../../components/shared/AmountLink";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -42,9 +42,16 @@ function sortLines(lines: AccountingProfitLossLine[]) {
   return [...lines].sort((a, b) => String(a.account_code || "").localeCompare(String(b.account_code || "")));
 }
 
-function registerHref(accountId: string, fromDate: string, toDate: string, basis: string) {
-  const params = new URLSearchParams({ from_date: fromDate, to_date: toDate, basis });
-  return `/accounting/chart-of-accounts/register/${accountId}?${params}`;
+/** One place that turns a P&L line into an AmountLink filter, so the account NAME link and the
+ *  AMOUNT link cannot drift apart and the basis is carried on both. AmountLink owns THE BASIS RULE
+ *  — a cash-basis figure gets no register drill, because the register is accrual-only and the two
+ *  would not tie. This page passes the applied basis through and decides nothing itself. */
+function plFilter(
+  accountId: string | null | undefined,
+  applied: { start: string; end: string; basis: AccountingBasis }
+): AmountFilter | null {
+  if (!accountId) return null;
+  return { target: "register", accountId, from: applied.start, to: applied.end, basis: applied.basis };
 }
 
 export function ProfitLossPage() {
@@ -291,27 +298,20 @@ export function ProfitLossPage() {
                       <tr key={`${section.key}-${line.account_code}-${line.account_name}`} className="border-b border-gray-100">
                         {showCodes ? <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td> : null}
                         <td className="px-3 py-2">
-                          {line.account_id ? (
-                            <Link
-                              to={registerHref(line.account_id, applied.start, applied.end, applied.basis)}
-                              className="text-slate-700 underline-offset-2 hover:underline"
-                            >
-                              {line.account_name || "—"}
-                            </Link>
-                          ) : (
-                            line.account_name || "—"
-                          )}
+                          <AmountLink
+                            filter={plFilter(line.account_id, applied)}
+                            className="text-slate-700 underline-offset-2 hover:underline"
+                            data-testid={`pl-name-${line.account_code || line.account_name}`}
+                          >
+                            {line.account_name || "—"}
+                          </AmountLink>
                         </td>
                         <td className="px-3 py-2">{formatAccountTypeLabel(line.account_type)}</td>
                         <td className="px-3 py-2 text-right tabular-nums">
                           {/* LST-F405 — the account NAME drilled; the AMOUNT did not. The filter
                               behind this figure IS its drill target: this account over this period. */}
                           <AmountLink
-                            filter={
-                              line.account_id
-                                ? { target: "register", accountId: line.account_id, from: applied.start, to: applied.end }
-                                : null
-                            }
+                            filter={plFilter(line.account_id, applied)}
                             data-testid={`pl-amount-${line.account_id || line.account_name}`}
                           >
                             {money(line.amount)}

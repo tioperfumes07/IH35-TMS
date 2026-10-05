@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { AmountLink, type AmountFilter } from "../../components/shared/AmountLink";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
@@ -84,13 +85,33 @@ function money(cents: number) {
 // LINK-F5186 (report.management): same pattern already used by the standalone P&L/Balance Sheet
 // pages -- an account line drills into its own register, which carries the real journal_entry
 // EntityLink per posting.
-function plRegisterHref(accountId: string, fromDate: string, toDate: string, basis: string) {
-  const params = new URLSearchParams({ from_date: fromDate, to_date: toDate, basis });
-  return `/accounting/chart-of-accounts/register/${accountId}?${params}`;
+/** ACCT-F410-A — the P&L and Balance Sheet sections of this package each had their OWN
+ *  register-URL builder that put `basis` in the query string, which the register silently drops.
+ *  Both now go through the one primitive, which owns THE BASIS RULE: a cash-basis figure gets no
+ *  register drill, because the register is accrual-only and the two would not tie. The NAME link
+ *  and the AMOUNT link share one filter per row so they cannot drift apart. */
+function plFilter(
+  accountId: string | null | undefined,
+  fromDate: string,
+  toDate: string,
+  basis: AccountingBasis
+): AmountFilter | null {
+  if (!accountId) return null;
+  return { target: "register", accountId, from: fromDate, to: toDate, basis };
 }
-function bsRegisterHref(accountId: string, asOfDate: string, basis: string) {
-  const params = new URLSearchParams({ from_date: `${asOfDate.slice(0, 7)}-01`, to_date: asOfDate, basis });
-  return `/accounting/chart-of-accounts/register/${accountId}?${params}`;
+function bsFilter(
+  accountId: string | null | undefined,
+  asOfDate: string,
+  basis: AccountingBasis
+): AmountFilter | null {
+  if (!accountId) return null;
+  return {
+    target: "register",
+    accountId,
+    from: `${asOfDate.slice(0, 7)}-01`,
+    to: asOfDate,
+    basis,
+  };
 }
 
 function currentMonthRange() {
@@ -137,15 +158,22 @@ function PLSection({ companyId, fromDate, toDate, basis, searchQuery }: { compan
               <tr key={`${line.account_code}-${line.account_name}`} className="border-b border-gray-50">
                 <td className="py-0.5 pl-2 text-slate-600">{line.account_code}</td>
                 <td className="py-0.5 pl-1 text-slate-800">
-                  {line.account_id ? (
-                    <Link to={plRegisterHref(line.account_id, fromDate, toDate, basis)} className="hover:underline">
-                      {line.account_name}
-                    </Link>
-                  ) : (
-                    line.account_name
-                  )}
+                  <AmountLink
+                    filter={plFilter(line.account_id, fromDate, toDate, basis)}
+                    className="hover:underline"
+                    data-testid={`mrp-pl-name-${line.account_code || line.account_name}`}
+                  >
+                    {line.account_name}
+                  </AmountLink>
                 </td>
-                <td className="py-0.5 text-right text-slate-800 tabular-nums">{money(line.amount)}</td>
+                <td className="py-0.5 text-right text-slate-800 tabular-nums">
+                  <AmountLink
+                    filter={plFilter(line.account_id, fromDate, toDate, basis)}
+                    data-testid={`mrp-pl-amount-${line.account_code || line.account_name}`}
+                  >
+                    {money(line.amount)}
+                  </AmountLink>
+                </td>
               </tr>
             ))}
             <tr className="font-semibold border-t border-slate-200">
@@ -196,9 +224,13 @@ function BSSection({ companyId, asOfDate, basis, searchQuery }: { companyId: str
           <span className="text-slate-600 pl-2">
             {line.account_code}{" "}
             {line.account_id ? (
-              <Link to={bsRegisterHref(line.account_id, asOfDate, basis)} className="hover:underline">
+              <AmountLink
+                filter={bsFilter(line.account_id, asOfDate, basis)}
+                className="hover:underline"
+                data-testid={`mrp-bs-name-${line.account_code || line.account_name}`}
+              >
                 {line.account_name}
-              </Link>
+              </AmountLink>
             ) : (
               line.account_name
             )}

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { AmountLink } from "../../components/shared/AmountLink";
-import { Link, useSearchParams } from "react-router-dom";
+import { AmountLink, type AmountFilter } from "../../components/shared/AmountLink";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -35,9 +35,22 @@ function sortLines(lines: AccountingBalanceSheetLine[]) {
   return [...lines].sort((a, b) => String(a.account_code || "").localeCompare(String(b.account_code || "")));
 }
 
-function registerHref(accountId: string, asOfDate: string, basis: string) {
-  const params = new URLSearchParams({ from_date: `${asOfDate.slice(0, 7)}-01`, to_date: asOfDate, basis });
-  return `/accounting/chart-of-accounts/register/${accountId}?${params}`;
+/** One place that turns a balance-sheet line into an AmountLink filter, used by the account NAME
+ *  link and the AMOUNT link on all three sections, so they cannot drift apart. AmountLink owns THE
+ *  BASIS RULE — a cash-basis figure gets no register drill, because the register is accrual-only
+ *  and the two would not tie. This page passes the applied basis through and decides nothing. */
+function bsFilter(
+  accountId: string | null | undefined,
+  applied: { asOfDate: string; basis: AccountingBasis }
+): AmountFilter | null {
+  if (!accountId) return null;
+  return {
+    target: "register",
+    accountId,
+    from: `${applied.asOfDate.slice(0, 7)}-01`,
+    to: applied.asOfDate,
+    basis: applied.basis,
+  };
 }
 
 export function BalanceSheetPage() {
@@ -290,26 +303,17 @@ export function BalanceSheetPage() {
                     <tr key={`asset-${line.account_code}-${line.account_name}`} className="border-b border-gray-100">
                       {showCodes ? <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td> : null}
                       <td className="px-3 py-2">
-                        {line.account_id ? (
-                          <Link to={registerHref(line.account_id, applied.asOfDate, applied.basis)} className="text-slate-700 underline-offset-2 hover:underline">
-                            {line.account_name || "—"}
-                          </Link>
-                        ) : (
-                          line.account_name || "—"
-                        )}
+                        <AmountLink
+                          filter={bsFilter(line.account_id, applied)}
+                          className="text-slate-700 underline-offset-2 hover:underline"
+                          data-testid={`bs-name-${line.account_code || line.account_name}`}
+                        >
+                          {line.account_name || "—"}
+                        </AmountLink>
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums">
                         <AmountLink
-                          filter={
-                            line.account_id
-                              ? {
-                                  target: "register",
-                                  accountId: line.account_id,
-                                  from: `${applied.asOfDate.slice(0, 7)}-01`,
-                                  to: applied.asOfDate,
-                                }
-                              : null
-                          }
+                          filter={bsFilter(line.account_id, applied)}
                           data-testid={`bs-amount-${line.account_code || line.account_name}`}
                         >
                           {money(line.amount)}
@@ -351,26 +355,17 @@ export function BalanceSheetPage() {
                       <tr key={`liability-${line.account_code}-${line.account_name}`} className="border-b border-gray-100">
                         {showCodes ? <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td> : null}
                         <td className="px-3 py-2">
-                          {line.account_id ? (
-                            <Link to={registerHref(line.account_id, applied.asOfDate, applied.basis)} className="text-slate-700 underline-offset-2 hover:underline">
-                              {line.account_name || "—"}
-                            </Link>
-                          ) : (
-                            line.account_name || "—"
-                          )}
+                          <AmountLink
+                            filter={bsFilter(line.account_id, applied)}
+                            className="text-slate-700 underline-offset-2 hover:underline"
+                            data-testid={`bs-name-${line.account_code || line.account_name}`}
+                          >
+                            {line.account_name || "—"}
+                          </AmountLink>
                         </td>
                         <td className="px-3 py-2 text-right tabular-nums">
                         <AmountLink
-                          filter={
-                            line.account_id
-                              ? {
-                                  target: "register",
-                                  accountId: line.account_id,
-                                  from: `${applied.asOfDate.slice(0, 7)}-01`,
-                                  to: applied.asOfDate,
-                                }
-                              : null
-                          }
+                          filter={bsFilter(line.account_id, applied)}
                           data-testid={`bs-amount-${line.account_code || line.account_name}`}
                         >
                           {money(line.amount)}
@@ -411,26 +406,17 @@ export function BalanceSheetPage() {
                       <tr key={`equity-${line.account_code}-${line.account_name}`} className="border-b border-gray-100">
                         {showCodes ? <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td> : null}
                         <td className="px-3 py-2">
-                          {line.account_id ? (
-                            <Link to={registerHref(line.account_id, applied.asOfDate, applied.basis)} className="text-slate-700 underline-offset-2 hover:underline">
-                              {line.account_name || "—"}
-                            </Link>
-                          ) : (
-                            line.account_name || "—"
-                          )}
+                          <AmountLink
+                            filter={bsFilter(line.account_id, applied)}
+                            className="text-slate-700 underline-offset-2 hover:underline"
+                            data-testid={`bs-name-${line.account_code || line.account_name}`}
+                          >
+                            {line.account_name || "—"}
+                          </AmountLink>
                         </td>
                         <td className="px-3 py-2 text-right tabular-nums">
                         <AmountLink
-                          filter={
-                            line.account_id
-                              ? {
-                                  target: "register",
-                                  accountId: line.account_id,
-                                  from: `${applied.asOfDate.slice(0, 7)}-01`,
-                                  to: applied.asOfDate,
-                                }
-                              : null
-                          }
+                          filter={bsFilter(line.account_id, applied)}
                           data-testid={`bs-amount-${line.account_code || line.account_name}`}
                         >
                           {money(line.amount)}

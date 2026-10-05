@@ -51,10 +51,26 @@ const DEFAULT_LINK_CLASSNAME = "text-slate-700 hover:underline";
  *     (same component also mounts at /accounting/account-register with ?accountId=; the path form
  *      is the house convention — 12 page files use it vs 5 for the query form)
  *
- * KNOWN GAP, NOT PAPERED OVER: AccountRegisterPage reads only accountId / from_date / to_date. It
- * does NOT read `basis`. BalanceSheetPage's local registerHref already passes basis and the
- * register silently ignores it, so a CASH-basis balance sheet drills into an ACCRUAL register.
- * This component does not pass basis rather than pretend it works. Filed as the basis gap.
+ * THE BASIS RULE — a cash-basis figure gets NO register drill, and this is the whole reason:
+ * AccountRegisterPage reads accountId / from_date / to_date and NOTHING ELSE. It does not read
+ * `basis`, and the backend register service has no basis concept at all (measured 2026-10-05:
+ * zero occurrences of `basis` in account-register.routes.ts and account-register.service.ts).
+ * The register is therefore always ACCRUAL. Meanwhile the cash-basis reports are computed through
+ * accounting/cash-basis/engine.ts `applyCashBasisSuppression`, which zeroes AR/AP control rows
+ * (@decision Q3) and zeroes any invoice_revenue / bill_expense / driver_settlement not settled by
+ * the as-of date (@decision Q5, VQ5). So a cash-basis figure and the accrual register DO NOT TIE,
+ * by construction and by locked decision — not by accident.
+ *
+ * TrialBalancePage, ProfitLossPage and BalanceSheetPage were each passing `basis` into a local
+ * registerHref and the register was silently dropping it, so every account-name link on those
+ * three pages under Cash basis already landed on a register whose total disagreed with the figure
+ * clicked. resolveAmountRoute now returns null for basis "cash", which renders plain text. A link
+ * that navigates to a different number than the one you clicked is worse than no link.
+ *
+ * To make cash-basis figures drill, the REGISTER must learn the basis — accept it, map each
+ * posting to a CashBasisEntry and run the same `applyCashBasisSuppression` the reports run, so the
+ * register ties to the report by construction rather than by coincidence. That is a backend block,
+ * named ACCT-F410, and until it lands this null is the honest answer, not a placeholder.
  *   /accounting/bills             BillsPage.tsx             vendor_id · status · has_balance · category
  *   /accounting/invoices          InvoicesListPage.tsx      customer_id · has_balance · not_sent
  *
@@ -68,7 +84,18 @@ export type AmountFilter =
    * GL postings for one account, optionally bounded by a period. The P&L / Balance Sheet case.
    * accountId is the one field the register cannot filter without.
    */
-  | { target: "register"; accountId: string; from?: string | null; to?: string | null }
+  | {
+      target: "register";
+      accountId: string;
+      from?: string | null;
+      to?: string | null;
+      /**
+       * The basis the FIGURE was computed on. "cash" yields NO route — see THE BASIS RULE above.
+       * Omitted or "accrual" drills normally. Callers pass their report's applied basis straight
+       * through; they must not decide this themselves, or the rule drifts per page.
+       */
+      basis?: "accrual" | "cash" | null;
+    }
   /** Vendor bills, narrowed by the params BillsPage reads. */
   | {
       target: "bills";
@@ -105,12 +132,15 @@ export function resolveAmountRoute(filter: AmountFilter | null | undefined): str
   switch (filter.target) {
     case "register":
       if (!filter.accountId) return null;
+      // THE BASIS RULE (see header). The register is accrual-only, in the page AND in the backend
+      // service, so a cash-basis figure has no destination that reproduces it. Null, not a guess.
+      if (filter.basis === "cash") return null;
       // PATH form, not the query form. BOTH routes mount the SAME component
       // (AccountRegisterPage reads useParams accountId AND searchParams accountId), and the path
       // form is the house convention: 12 page files use it, 5 use the query form. Using the path
       // form here consolidates onto the majority instead of adding a third spelling.
-      // from_date / to_date are read by AccountRegisterPage (verified). `basis` is NOT read by it,
-      // so this deliberately does not pass one — see the file header note on the basis gap.
+      // from_date / to_date are read by AccountRegisterPage (verified). `basis` is NOT emitted:
+      // the register does not read it, and the cash case already returned null above.
       return `/accounting/chart-of-accounts/register/${filter.accountId}${qs([
         ["from_date", filter.from],
         ["to_date", filter.to],
