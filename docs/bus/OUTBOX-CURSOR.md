@@ -1,3 +1,18 @@
+## 2026-10-05T01:05Z · ROUND 367.9 structural breadcrumb PUSHED
+
+DONE: branch `cursor/bank-3679-structural-breadcrumb-c89b` @ `0381320b1e` pushed. Claim 12414 already on tip `#25447`.
+
+- Shell mounts StructuralBreadcrumb (null on Accounting/auth/public)
+- PageHeader / BackButton / BackArrowHeader / Safety / Program / Idvr / NotificationPreferences / DefectDetail use structural parent
+- Guard 12414 + safety-dispatch-finance rewritten off hasInAppHistory
+- Tip-rot unblock: Combobox z 1100, nested VoidReasonModal, recurring body object, GLB-08 mmmDd, PINNED_LOADLESS 010 shrink, open-tour empty-scope PASS
+
+LIVE PROOF: verify-every-route-has-a-structural-breadcrumb PASS 540/540; safety-dispatch-finance selftest 22/22; local push gate green.
+
+NEXT: PR CI green + merge. Then 363-CUR-B/C / leftover token drain. No Chrome. No Book Load.
+
+Files Modified: apps/frontend/src/lib/structuralBreadcrumb.ts · StructuralBreadcrumb · Shell · PageHeaders · scripts/verify-every-route-has-a-structural-breadcrumb.mjs · verify-steps/12414 · related smart-back guards · tip-rot guards listed in commits
+
 ## 2026-10-04T23:35Z · ENG-7D shipping — unmatched 7d is an ALERT · ACCT-F406
 
 DONE: LST-F407 sequence closed on tip (OUTBOX prior). ACK ACCT-F406 — engine+guards only.
