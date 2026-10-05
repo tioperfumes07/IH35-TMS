@@ -277,10 +277,12 @@ const FUEL_CHECKS: FeedCheckDef[] = [
                   WHEN NOT EXISTS (SELECT 1 FROM accounting.expenses e WHERE e.source_fuel_transaction_id = f.id AND e.voided_at IS NULL AND e.posting_status = 'posted') THEN 'fuel expense exists but is not posted' END,
              '/fuel/transactions/' || f.id::text, (SELECT jsonb_build_object('expense', e.expense_number, 'posting_status', e.posting_status, 'journal_entry_id', e.journal_entry_id) FROM accounting.expenses e WHERE e.source_fuel_transaction_id = f.id AND e.voided_at IS NULL ORDER BY e.created_at DESC LIMIT 1)
         FROM fuel.fuel_transactions f WHERE f.operating_company_id = $1::uuid AND f.id = $2::uuid AND f.voided_at IS NULL` },
+  // An assignment names its card by LAST DIGITS (fuel_card_assignments has no fuel_card_id); this is the same match
+  // resolveUnitByCard (fuel/fuel-card-assignments.service.ts) uses: digit tail, live, effective at the fill.
   { key: "fuel.card_assigned", group: "linkage", sql: `
       SELECT 'fuel.fuel_transactions', f.id, 'Fuel ' || to_char(f.transaction_at, 'YYYY-MM-DD') || ' $' || round(coalesce(f.total_cost, 0), 2),
-             CASE WHEN f.fuel_card_id IS NULL THEN NULL ELSE EXISTS (SELECT 1 FROM fuel.fuel_card_assignments a WHERE a.fuel_card_id = f.fuel_card_id AND (a.unit_id = f.unit_id OR a.driver_id = f.driver_id)) END,
-             CASE WHEN f.fuel_card_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM fuel.fuel_card_assignments a WHERE a.fuel_card_id = f.fuel_card_id AND (a.unit_id = f.unit_id OR a.driver_id = f.driver_id)) THEN 'fuel card is not assigned to this truck or driver' END,
+             CASE WHEN f.fuel_card_id IS NULL THEN NULL ELSE EXISTS (SELECT 1 FROM fuel.fuel_card_assignments a WHERE a.operating_company_id = f.operating_company_id AND a.voided_at IS NULL AND right(regexp_replace(f.fuel_card_id::text, '[^0-9]', '', 'g'), length(a.card_last_digits)) = a.card_last_digits AND a.effective_from <= f.transaction_at AND (a.effective_to IS NULL OR a.effective_to > f.transaction_at) AND (a.unit_id = f.unit_id OR a.driver_id = f.driver_id)) END,
+             CASE WHEN f.fuel_card_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM fuel.fuel_card_assignments a WHERE a.operating_company_id = f.operating_company_id AND a.voided_at IS NULL AND right(regexp_replace(f.fuel_card_id::text, '[^0-9]', '', 'g'), length(a.card_last_digits)) = a.card_last_digits AND a.effective_from <= f.transaction_at AND (a.effective_to IS NULL OR a.effective_to > f.transaction_at) AND (a.unit_id = f.unit_id OR a.driver_id = f.driver_id)) THEN 'fuel card is not assigned to this truck or driver' END,
              '/fuel/cards', jsonb_build_object('fuel_card_id', f.fuel_card_id)
         FROM fuel.fuel_transactions f WHERE f.operating_company_id = $1::uuid AND f.id = $2::uuid AND f.voided_at IS NULL` },
 ];

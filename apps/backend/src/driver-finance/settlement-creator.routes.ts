@@ -268,8 +268,7 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
                   await client.query(
                     `
                       UPDATE accounting.factoring_advances
-                         SET submitted_at = $2::timestamptz,
-                             updated_at = now()
+                         SET submitted_at = $2::timestamptz
                        WHERE id = $1::uuid
                          AND operating_company_id = $3::uuid
                     `,
