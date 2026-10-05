@@ -5,6 +5,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { AssetFiltersBar } from "../../components/assets/AssetFiltersBar";
 import { AssetListTable } from "../../components/assets/AssetListTable";
 import { AssetSummaryCards } from "../../components/assets/AssetSummaryCards";
@@ -158,6 +159,16 @@ export function AssetsWorkspacePage() {
         <>
           <AssetSummaryCards summary={rows.length ? summary : EMPTY_SUMMARY} />
           <AssetFiltersBar lifecycle={lifecycle} onLifecycleChange={setLifecycle} />
+          {visibleRows[0] ? (
+            <p className="text-xs">
+              <EntityLink
+                kind="unit"
+                id={visibleRows[0].id}
+                label={entityLabel(visibleRows[0].unit_number, visibleRows[0].id, "Unit")}
+                className="font-medium text-[#1F2A44] underline"
+              />
+            </p>
+          ) : null}
           <AssetListTable rows={visibleRows} isLoading={isLoading} />
         </>
       )}

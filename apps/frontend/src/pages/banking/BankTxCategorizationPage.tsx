@@ -27,6 +27,7 @@ import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { coaAccountReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { formatUsdCents } from "../../lib/money";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 function txDate(tx: Record<string, unknown>) {
   return String(tx.transaction_date ?? tx.txn_date ?? "");
@@ -346,7 +347,13 @@ export function BankTxCategorizationPage() {
                     }
                   />
                   <span className="truncate">
-                    {a.institution_name ?? "Bank"} — {a.account_name ?? a.id.slice(0, 6)}
+                    {a.institution_name ?? "Bank"} —{" "}
+                    <EntityLink
+                      kind="bank_account"
+                      id={a.id}
+                      label={a.account_name ?? a.id.slice(0, 6)}
+                      className="font-semibold text-[#1F2A44] underline"
+                    />
                   </span>
                 </label>
               );

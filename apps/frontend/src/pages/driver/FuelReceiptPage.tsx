@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listDriverFuelUnits } from "../../api/driver";
 import { Combobox } from "../../components/Combobox";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 export function FuelReceiptPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -164,6 +165,14 @@ export function FuelReceiptPage() {
           className="mt-1 w-full"
           dataTestId="driver-fuel-unit-picker"
         />
+        {truckId ? (
+          <EntityLink
+            kind="unit"
+            id={truckId}
+            label={entityLabel(unitOptions.find((opt) => opt.value === truckId)?.label, truckId, "Unit")}
+            className="mt-1 block font-semibold text-[#1F2A44] underline"
+          />
+        ) : null}
       </label>
       <label className="block text-xs font-medium text-slate-600">
         Odometer

@@ -27,6 +27,7 @@ import { Combobox } from "../../components/Combobox";
 import { transitionDispatchLoad } from "../../api/dispatch";
 import type { DispatchStatus } from "../../api/dispatch";
 import { formatMoneyCents } from "../../components/dispatch/constants";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { LOCKED_BORDER, LOCKED_TEXT_SECONDARY } from "../../design/locked-baseline-tokens";
 import { useLoadCostRollups } from "../../hooks/useLoadCostRollups";
 import {
@@ -1462,7 +1463,9 @@ export function TruckLineBoard({
                           data-unit-id={g.unit_id}
                         >
                           <div className="truck-line-v4-unit-cell">
-                            <div className="truck-line-v4-unit font-semibold text-[#0F1219]">{r.unit_number}</div>
+                            <div className="truck-line-v4-unit font-semibold text-[#0F1219]">
+                              <EntityLink kind="unit" id={r.unit_id} label={r.unit_number} className="font-semibold text-[#0F1219] underline" />
+                            </div>
                             <div className="truck-line-v4-sub text-[#6B7280]">available truck</div>
                           </div>
                           <div className="truck-line-v4-tour-cell"><span className="truck-line-v4-sub text-[#6B7280]">—</span></div>
@@ -1507,7 +1510,7 @@ export function TruckLineBoard({
                         <div className="truck-line-v4-unit-cell">
                           <div className="truck-line-v4-unit font-semibold text-[#0F1219]">
                             {returnTrip ? <span className="mr-1 text-[#16A34A]" aria-hidden>↳</span> : null}
-                            {g.unit_number}
+                            <EntityLink kind="unit" id={g.unit_id} label={g.unit_number} className="font-semibold text-[#0F1219] underline" />
                           </div>
                           {conflict ? (
                             <div className="truck-line-v4-cap font-semibold text-[#DC2626]" data-testid={`truck-line-schedule-conflict-${g.unit_id}`}>

@@ -16,6 +16,8 @@ import { DriverPickerWithCreate } from "../../../../components/drivers/DriverPic
 import { EntityPicker } from "../../../../components/EntityPicker";
 import { ReferenceSelect } from "../../../../components/parity/ReferenceSelect";
 import { vendorReferenceOption } from "../../../../components/parity/referenceOptionLabels";
+import { entityLabel } from "../../../../lib/entity-label";
+import { EntityLink } from "../../../../components/shared/EntityLink";
 import { SelectCombobox } from "../../../../components/Combobox";
 
 type Props = {
@@ -165,6 +167,18 @@ export function ApplyToBillForm({ value, onChange, operatingCompanyId }: Props) 
             placeholder="Select vendor..."
             disabled={!operatingCompanyId}
           />
+          {value.vendor_id ? (
+            <EntityLink
+              kind="vendor"
+              id={String(value.vendor_id)}
+              label={entityLabel(
+                vendorOptions.find((opt) => opt.value === String(value.vendor_id))?.label,
+                String(value.vendor_id),
+                "Vendor",
+              )}
+              className="mt-1 block font-semibold text-[#1F2A44] underline"
+            />
+          ) : null}
         </Field>
         <Field label="A/P Account">
           <ReferenceSelect
