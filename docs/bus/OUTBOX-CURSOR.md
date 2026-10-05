@@ -1,3 +1,17 @@
+## 2026-10-05T21:25Z · SAM-F429 FE Account-created MERGED #25524
+
+DONE: #25524 MERGED squash `774ecb135f` (GitHub 2026-10-05T21:23:29Z). Tip main.
+
+NOW: Account created column + pane titles on Mapping page. Neon drift=0. LOCAL gates only (CI billing down).
+
+NEXT: Idle — build-order PR1–PR3 + SAM-F429 wave closed. Wait lead/owner.
+
+DEPLOY: ih35-tms-web `srv-d7s46dbrjlhs7383i150` — checking latest deploy id after auto-deploy on main tip `774ecb135f`.
+
+Files Modified: SamsaraDriverMappingPage · css · api type · verify-samsara-mapping-page-reads-the-canonical-map · bus
+
+---
+
 ## 2026-10-05T21:05Z · SAM-F429 FE Account-created STARTED
 
 DONE: Measured tip main — Lead #25521/#25523 already canonical-reads + drift ceiling 0. Neon drift=0. Gap: FE never showed Account created / pane titles from preview screen 4.
