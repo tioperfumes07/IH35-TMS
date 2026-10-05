@@ -38,10 +38,24 @@ export function stripComments(src) {
     .replace(/--[^\n]*/g, "");
 }
 
-/** Isolate the reuse SELECT against driver_settlements that gates trip_closed_at IS NULL. */
+/**
+ * Isolate openLoadBookendedSettlement's OWN reuse SELECT — scoped to that function's body, no character cap.
+ *
+ * 2026-10-05: the old extractor was an unscoped first-match with a {0,1400} window. The reuse query grew
+ * past 1,400 characters (MEGA-TOUR-RULING's settlement_lines EXISTS), so the regex silently skipped it
+ * and matched closeLoadBookendedSettlementForDriver's close finder 300 lines later — a different query
+ * that has no anchor check by design. The guard then reported the engine as missing a predicate it had.
+ * Scoping to the function body means a growing query is still read, and a query elsewhere in the file
+ * can never stand in for it (either way).
+ */
 export function reuseQuery(src) {
   const clean = stripComments(src);
-  const m = /SELECT[\s\S]{0,200}?FROM\s+driver_finance\.driver_settlements[\s\S]{0,1400}?FOR\s+UPDATE/i.exec(clean);
+  const fnIdx = clean.indexOf("export async function openLoadBookendedSettlement");
+  if (fnIdx === -1) return null;
+  const after = clean.slice(fnIdx + 1);
+  const next = after.search(/\n(?:export\s+)?async\s+function\s/);
+  const body = next === -1 ? after : after.slice(0, next);
+  const m = /SELECT[\s\S]{0,200}?FROM\s+driver_finance\.driver_settlements[\s\S]*?FOR\s+UPDATE/i.exec(body);
   return m ? m[0] : null;
 }
 
@@ -158,15 +172,18 @@ export function collectProblems(src) {
 
 if (process.argv.includes("--selftest")) {
   const failures = [];
-  const GOOD_REUSE =
+  const REUSE_FN = (q) => `export async function openLoadBookendedSettlement(client, input) { const r = await client.query(\`${q}\`); }`;
+  const GOOD_REUSE_SQL =
     "SELECT s.id FROM driver_finance.driver_settlements s WHERE s.trip_closed_at IS NULL AND s.status = 'open' AND s.voided_at IS NULL AND s.first_load_id IS NOT NULL AND EXISTS (SELECT 1 FROM mdata.loads fl WHERE fl.id = s.first_load_id AND fl.soft_deleted_at IS NULL AND fl.status::text <> 'cancelled') ORDER BY s.created_at DESC LIMIT 1 FOR UPDATE";
+  const GOOD_REUSE = REUSE_FN(GOOD_REUSE_SQL);
   const GOOD_READER =
     "export async function getActiveSettlementForDriver(client, input) { const res = await client.query(`SELECT id, display_id FROM driver_finance.driver_settlements WHERE driver_id = $1 AND trip_closed_at IS NULL AND status = 'open' AND voided_at IS NULL ORDER BY created_at DESC LIMIT 1`); }";
   const GOOD_CLOSE_FINDER =
     "async function closeLoadBookendedSettlementForDriver(client, opts) { const busyRes = await client.query(`SELECT count(*)::int AS cnt FROM mdata.loads l WHERE l.id <> $2`); const openRes = await client.query(`SELECT id FROM driver_finance.driver_settlements WHERE operating_company_id = $1::uuid AND driver_id = $2 AND settlement_model = 'load_bookended' AND trip_closed_at IS NULL AND status = 'open' ORDER BY created_at DESC LIMIT 1 FOR UPDATE`); }";
   const GOOD = `${GOOD_REUSE}\n${GOOD_READER}\n${GOOD_CLOSE_FINDER}`;
-  const BARE_REUSE =
-    "SELECT id FROM driver_finance.driver_settlements WHERE driver_id = $1 AND trip_closed_at IS NULL ORDER BY created_at DESC LIMIT 1 FOR UPDATE";
+  const BARE_REUSE = REUSE_FN(
+    "SELECT id FROM driver_finance.driver_settlements WHERE driver_id = $1 AND trip_closed_at IS NULL ORDER BY created_at DESC LIMIT 1 FOR UPDATE"
+  );
   const BARE = `${BARE_REUSE}\n${GOOD_READER}\n${GOOD_CLOSE_FINDER}`;
 
   if (collectProblems(GOOD).length !== 0) failures.push("the fully-fixed reuse+reader queries were flagged");
@@ -180,8 +197,9 @@ if (process.argv.includes("--selftest")) {
     failures.push("a reuse query without status = 'open' was NOT caught");
   }
   // Anchor present but liveness not checked — the half-fix.
-  const HALF =
-    `SELECT s.id FROM driver_finance.driver_settlements s WHERE s.trip_closed_at IS NULL AND s.status = 'open' AND s.first_load_id IS NOT NULL ORDER BY s.created_at DESC LIMIT 1 FOR UPDATE\n${GOOD_READER}`;
+  const HALF = `${REUSE_FN(
+    "SELECT s.id FROM driver_finance.driver_settlements s WHERE s.trip_closed_at IS NULL AND s.status = 'open' AND s.first_load_id IS NOT NULL ORDER BY s.created_at DESC LIMIT 1 FOR UPDATE"
+  )}\n${GOOD_READER}\n${GOOD_CLOSE_FINDER}`;
   if (!collectProblems(HALF).some((p) => /still LIVE/.test(p))) {
     failures.push("a NOT NULL check without liveness was accepted — that is the half-fix");
   }
@@ -224,16 +242,27 @@ if (process.argv.includes("--selftest")) {
     failures.push("the close-finder query with no status filter at all was NOT caught");
   }
 
+  // 2026-10-05 drift: a reuse query longer than the old 1,400-char window must still be read in full.
+  const LONG = REUSE_FN(GOOD_REUSE_SQL.replace("ORDER BY", `AND s.id IS NOT NULL ${"AND true ".repeat(300)}ORDER BY`));
+  if (collectProblems(`${LONG}\n${GOOD_READER}\n${GOOD_CLOSE_FINDER}`).length !== 0) {
+    failures.push("a long (>1,400 char) fully-fixed reuse query was flagged — the extractor is capped again");
+  }
+  // ...and a correct query in ANOTHER function must not stand in for a bare reuse query.
+  const ELSEWHERE = `${BARE_REUSE}\nasync function other(c) { await c.query(\`${GOOD_REUSE_SQL}\`); }\n${GOOD_READER}\n${GOOD_CLOSE_FINDER}`;
+  if (!collectProblems(ELSEWHERE).some((p) => /still LIVE/.test(p))) {
+    failures.push("a fixed query in another function satisfied the bare reuse query — extractor is unscoped");
+  }
+
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:`);
     for (const f of failures) console.error("  - " + f);
     process.exit(1);
   }
   console.log(
-    `${LABEL} SELFTEST OK — 13/13 (fully-fixed passes, missing liveness/anchor/open-whitelist each ` +
+    `${LABEL} SELFTEST OK — 15/15 (fully-fixed passes, missing liveness/anchor/open-whitelist each ` +
       `caught, half-fix caught, comment cannot fake, missing reuse query fails closed, blacklist ` +
       `regression caught on reuse+reader+close-finder independently, missing reader/close-finder ` +
-      `fail closed)`
+      `fail closed, >1,400-char query read in full, query in another function cannot stand in)`
   );
   process.exit(0);
 }

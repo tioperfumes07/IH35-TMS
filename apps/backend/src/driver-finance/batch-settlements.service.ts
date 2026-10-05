@@ -126,25 +126,25 @@ async function listSet01LoadsInTx(
         (
           SELECT (s.scheduled_arrival_at AT TIME ZONE 'America/Chicago')::date::text
           FROM mdata.load_stops s
-          WHERE s.load_id = l.id AND s.stop_type IN ('pickup', 'PICKUP')
+          WHERE s.load_id = l.id AND s.stop_type = 'pickup'
           ORDER BY s.sequence_number NULLS LAST, s.created_at
           LIMIT 1
         ) AS pickup_date,
         (
           SELECT (s.scheduled_arrival_at AT TIME ZONE 'America/Chicago')::date::text
           FROM mdata.load_stops s
-          WHERE s.load_id = l.id AND s.stop_type IN ('delivery', 'DELIVERY')
+          WHERE s.load_id = l.id AND s.stop_type = 'delivery'
           ORDER BY s.sequence_number DESC NULLS LAST, s.created_at DESC
           LIMIT 1
         ) AS delivery_date,
         (
           SELECT s.city FROM mdata.load_stops s
-          WHERE s.load_id = l.id AND s.stop_type IN ('pickup', 'PICKUP')
+          WHERE s.load_id = l.id AND s.stop_type = 'pickup'
           ORDER BY s.sequence_number NULLS LAST, s.created_at LIMIT 1
         ) AS pickup_city,
         (
           SELECT s.city FROM mdata.load_stops s
-          WHERE s.load_id = l.id AND s.stop_type IN ('delivery', 'DELIVERY')
+          WHERE s.load_id = l.id AND s.stop_type = 'delivery'
           ORDER BY s.sequence_number DESC NULLS LAST, s.created_at DESC LIMIT 1
         ) AS delivery_city,
         l.miles_practical::text AS miles_practical,
@@ -189,14 +189,14 @@ async function listSet01LoadsInTx(
           EXISTS (
             SELECT 1 FROM mdata.load_stops s
             WHERE s.load_id = l.id
-              AND s.stop_type IN ('pickup', 'PICKUP')
+              AND s.stop_type = 'pickup'
               AND (s.scheduled_arrival_at AT TIME ZONE 'America/Chicago')::date
                   BETWEEN $3::date AND $4::date
           )
           OR EXISTS (
             SELECT 1 FROM mdata.load_stops s
             WHERE s.load_id = l.id
-              AND s.stop_type IN ('delivery', 'DELIVERY')
+              AND s.stop_type = 'delivery'
               AND (s.scheduled_arrival_at AT TIME ZONE 'America/Chicago')::date
                   BETWEEN $3::date AND $4::date
           )
