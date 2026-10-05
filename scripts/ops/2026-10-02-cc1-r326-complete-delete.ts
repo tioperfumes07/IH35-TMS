@@ -36,6 +36,7 @@
  * The engine feeds no data: it only deletes what the owner ordered deleted.
  */
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
@@ -248,6 +249,22 @@ async function roots(c: Q, plan: Plan, why: Map<string, string>) {
     for (const k of keep) plan.get("driver_finance.driver_settlements")?.delete(k);
     return;
   }
+  if (SCOPE === "listed") {
+    // Owner-approved explicit list (e.g. the 38 test-marked maintenance rows, 2026-10-05): --list=<file.json>, shaped
+    // {"schema.table": ["id", ...]}. ONLY these rows are roots; the FK walk, cycle cuts, AUTH listing, audit record and
+    // in-transaction proofs are exactly the clean slate's. Every id must exist in USMCA — a missing id is a BLOCKER.
+    const listFile = (process.argv.find((a) => a.startsWith("--list=")) ?? "").slice("--list=".length);
+    if (!listFile) throw new Error("--scope=listed requires --list=<file.json>");
+    const listed = JSON.parse(readFileSync(listFile, "utf8")) as Record<string, string[]>;
+    for (const [t, rowIds] of Object.entries(listed)) {
+      if (!(await c.query<{ ok: boolean }>(`SELECT to_regclass($1) IS NOT NULL AS ok`, [t])).rows[0]?.ok) throw new Error(`--list names a table that does not exist: ${t}`);
+      const found = await ids(c, `SELECT id::text AS id FROM ${t} WHERE operating_company_id = $1::uuid AND id::text = ANY($2::text[])`, [USMCA, rowIds]);
+      const missing = rowIds.filter((x) => !found.includes(x));
+      if (missing.length) ESCAPED_REPORT.push(`BLOCKER ${t}: ${missing.length} listed id(s) not found in USMCA (${missing.slice(0, 5).join(", ")})`);
+      add(plan, t, found, why, `owner-approved list ${listFile}`);
+    }
+    return;
+  }
   if (SCOPE === "unwind397") {
     // AUTH-397-UNWIND (Lead, 2026-10-04): EXACTLY the double reversals — a JE that reverses a JE which is itself a
     // reversal (a.reverses_je_id -> b WHERE b.reverses_je_id IS NOT NULL). Nothing outside that set: the plan refuses
@@ -311,7 +328,7 @@ async function roots(c: Q, plan: Plan, why: Map<string, string>) {
     }
     return;
   }
-  throw new Error("--scope=transportation21 | --scope=usmca-clean | --scope=orphan-postings | --scope=unwind397 | --scope=unwind397-chain | --scope=zero-reset is required");
+  throw new Error("--scope=transportation21 | --scope=usmca-clean | --scope=orphan-postings | --scope=unwind397 | --scope=unwind397-chain | --scope=listed --list=<file> | --scope=zero-reset is required");
 }
 
 async function fkGraph(c: Q): Promise<Fk[]> {
