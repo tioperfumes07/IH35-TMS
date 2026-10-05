@@ -1,3 +1,15 @@
+## 2026-10-05T22:24Z · ENG-7D single-fire MERGED #25527 · DRV-F420 #25526 closed
+
+DONE: #25527 MERGED squash `c6b88cd10e` (GitHub 2026-10-05T22:23:59Z). integrity cron `leaseSeconds: JOB_LEASE_SECONDS`. Guard PASS + --selftest OK. Prior #25526 Log-complaint stay `c383c1c561`.
+
+NOW: Both pending Cursor reds from this wave closed. Tip main. LOCAL gates only (CI billing down).
+
+NEXT: Trigger BE deploy once for #25527 lease; FE autoDeploy for #25526. Idle unless new owner row.
+
+Files Modified: integrity-alert-engine.cron · verify-unmatched-7d-is-an-alert · MEMORY_BANK · DriverOverviewBoard · bus
+
+---
+
 ## 2026-10-05T22:19Z · DRV-F420 Log-complaint MERGED #25526 · ENG-7D single-fire STARTED
 
 DONE: #25526 MERGED squash `c383c1c561` (GitHub 2026-10-05T22:19:05Z). `+ Log complaint` → `driverProfileTabHref(..., "Complaints")`. leave-profile guard PASS.
