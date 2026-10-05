@@ -21,6 +21,7 @@
  * driver stays unresolved with a named reason (see relay-fuel-driver-match.ts) — and the unit via the
  * "Truck #" prompt.
  */
+import { linkRelayFillToSettlementFuelRows } from "../../fuel/relay-fill-link.service.js";
 import { relayMoneyField, type RelayFuelTransaction } from "./relay-client.js";
 import type { DbClient } from "./db-client.type.js";
 import { resolveRelayDriverMatch, type RelayDriverUnresolvedReason } from "./relay-fuel-driver-match.js";
@@ -355,6 +356,10 @@ export async function upsertRelayFuelTransaction(
       ]
     );
   }
+
+  // ACCT-F403: the fill links the settlement fuel row(s) that describe it (one rule, fuel/relay-fill-link.service.ts). Lines are
+  // in place, so per-product gallons are known. Ambiguous or absent -> no link (the settlement side retries when it arrives).
+  await linkRelayFillToSettlementFuelRows(client as never, operatingCompanyId, relayFuelTransactionId);
 
   // ROUND 43 FOLLOW-UP item 2: no fuel.fuel_transactions bridge, no GL candidate. The raw Relay
   // staging upsert above (integrations.relay_fuel_transactions) IS the system of record for what

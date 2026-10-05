@@ -11,6 +11,8 @@
 //      rail resolver returns the Relay wallet instead of refusing (relay_fill_links_not_posts), the poster silently
 //      defaults a fuel row to "cash", the expense-document path does not turn the refusal into relay_link, or the
 //      database door (202615410950: only a Relay fill or a reversal may credit the fuel_wallet_relay account) is gone.
+//   5. ACCT-F403 link: a creation point of either side does not call the one linker (fuel/relay-fill-link.service.ts) — the
+//      Settlement Creator, the app settlement seeder, the Relay ingest — so a Relay-rail settlement row never links.
 // Static, <1s. --selftest plants each regression.
 import fs from "node:fs";
 import path from "node:path";
@@ -25,6 +27,11 @@ const FILLS = "apps/backend/src/fuel/relay-fills.routes.ts";
 const FEED = "apps/backend/src/feed/seed-settlement-document.service.ts";
 const DOC = "apps/backend/src/fuel/fuel-expense-document.service.ts";
 const DOOR = "db/migrations/202615410950_relay_wallet_consumed_only_by_relay_fill.sql";
+const LINK_SITES = {
+  "apps/backend/src/driver-finance/settlement-creator.service.ts": /linkSettlementFuelRowToRelayFill\(/,
+  "apps/backend/src/feed/seed-settlement-document.service.ts": /linkSettlementFuelRowToRelayFill\(/,
+  "apps/backend/src/integrations/relay-payments/relay-fuel-ingest.service.ts": /linkRelayFillToSettlementFuelRows\(/,
+};
 // Allowlist = poster + gated import path + bank-match engine only. Feed retired 2026-10-02
 // (owner: fuel posts only on bank match). No REPORTED_OTHER_LANE exemption.
 
@@ -71,6 +78,10 @@ export function check(files) {
   const door = files[DOOR] ?? "";
   if (!/trg_relay_wallet_consumed_only_by_relay_fill/.test(door) || !/fuel_wallet_relay/.test(door) || !/integrations\.relay_fuel_transactions/.test(door))
     problems.push(`${DOOR}: the database door (only a Relay fill or a reversal credits the Relay wallet) is missing`);
+  // 5. ACCT-F403 — both sides link through the one rule.
+  for (const [f, re] of Object.entries(LINK_SITES)) {
+    if (!re.test(files[f] ?? "")) problems.push(`${f}: creates a Relay fill / settlement fuel row without calling the one linker (fuel/relay-fill-link.service.ts) — the settlement row would never link to its fill`);
+  }
   return problems;
 }
 
@@ -101,6 +112,8 @@ if (process.argv.includes("--selftest")) {
     ["poster cash default", { ...real, [POSTER]: real[POSTER].replace('credit ?? "cash"', 'input.company_direct_credit ?? "cash"') }],
     ["document posts Relay", { ...real, [DOC]: real[DOC].replace('if (err instanceof RelayFillLinksNotPostsError) return { outcome: "relay_link"', "if (false) return { outcome: \"relay_link\"") }],
     ["database door gone", { ...real, [DOOR]: "" }],
+    ["creator never links", { ...real, ["apps/backend/src/driver-finance/settlement-creator.service.ts"]: real["apps/backend/src/driver-finance/settlement-creator.service.ts"].replaceAll("linkSettlementFuelRowToRelayFill(", "noop(") }],
+    ["ingest never links", { ...real, ["apps/backend/src/integrations/relay-payments/relay-fuel-ingest.service.ts"]: real["apps/backend/src/integrations/relay-payments/relay-fuel-ingest.service.ts"].replaceAll("linkRelayFillToSettlementFuelRows(", "noop(") }],
   ];
   const missed = cases.filter(([, files]) => check(files).length === 0).map(([n]) => n);
   if (missed.length) { console.error(`${LABEL} --selftest FAIL: not caught: ${missed.join("; ")}`); process.exit(1); }

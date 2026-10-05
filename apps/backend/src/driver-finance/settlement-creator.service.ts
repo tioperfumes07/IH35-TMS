@@ -7,6 +7,7 @@
  * Spec: docs/bus/09-25-2026-Devin-A-ROUND-180-SETTLEMENT-CREATOR-COMPANY-AND-DRIVER.md
  */
 
+import { linkSettlementFuelRowToRelayFill } from "../fuel/relay-fill-link.service.js";
 import { stampDocumentVoided } from "../accounting/void-document-stamp.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { createExpenseFromFuelTransaction, resolveFuelLineAccount } from "../fuel/fuel-expense-document.service.js";
@@ -1130,7 +1131,8 @@ export async function postSettlementCreatorInClientTx(
       throw new SettlementCreatorError("fuel_expense_refused", doc.reason);
     }
     // ACCT-F403: outcome "relay_link" — a Relay-rail fill posts from its wallet line, so this row gets no document and no
-    // posting here (falls past the branch below by design).
+    // posting here; it LINKS to its Relay fill (one rule, fuel/relay-fill-link.service.ts) when exactly one proves it.
+    if (doc.outcome === "relay_link") await linkSettlementFuelRowToRelayFill(client as never, draft.operating_company_id, fuelId);
     if (doc.outcome === "created" || doc.outcome === "already_exists") {
       expenseIds.push(doc.expense_id);
       // Stamp Comp. Exp. card rail already set by fuel writer; post through existing engine.

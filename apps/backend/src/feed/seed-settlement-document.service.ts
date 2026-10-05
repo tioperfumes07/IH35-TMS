@@ -54,6 +54,7 @@
 // truth-JSON entries for all 34 documents in the 5769-5803 range (see the companion --selftest
 // script) — totals tie exactly to verify-alwaystrack-parity.mjs's own --selftest targets.
 
+import { linkSettlementFuelRowToRelayFill } from "../fuel/relay-fill-link.service.js";
 import type { QueryResultRow } from "pg";
 import { createLoadWithFullSideEffects, type BookLoadInput } from "../dispatch/book-load.service.js";
 import { createHistoricalDriverBill } from "../driver-finance/historical-driver-bill-backfill.service.js";
@@ -980,6 +981,8 @@ async function seedFuel(
      RETURNING id::text`,
     [operatingCompanyId, line.date, loadId, vendorId, line.gallons, line.amountCents / 100, locationCity, locationState, reference, rowHash, actorUserId, driverId, unitId, trailerId, fuelTypeFromProductCode(line.product)]
   );
+  // ACCT-F403: the settlement row links to the Relay fill it describes when exactly one proves it (posts nothing itself).
+  await linkSettlementFuelRowToRelayFill(client as never, operatingCompanyId, inserted.rows[0].id);
   return { fuelTransactionId: inserted.rows[0].id, postedAt: line.date, amountCents: line.amountCents };
 }
 

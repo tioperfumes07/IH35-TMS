@@ -12,6 +12,7 @@
  *
  * Auth: E11_LEAD_AUTH=1 or E11_AUTH_ID=AUTH-NNN. Non-pooler DATABASE_URL required.
  */
+import { linkSettlementFuelRowToRelayFill } from "../../apps/backend/src/fuel/relay-fill-link.service.js";
 import { randomUUID } from "node:crypto";
 import { readFileSync, existsSync } from "node:fs";
 import { spawnSync } from "node:child_process";
@@ -670,7 +671,11 @@ async function feedOne(
     // load, receipt) and posts NOTHING — no fuel JE, no expense document. A Relay-rail line's cost is its Relay fill, at
     // Relay's charge; it links through fuel.fuel_transactions.relay_fuel_transaction_id. (verify-fuel-cost-posts-exactly-once
     // went red when a settlement line was posted and adopted, 2026-10-04 / AUTH-217.)
-    report.push(`FUEL ${f.fuel_type} ${receipt ?? "no receipt number"} $${f.amount} — recorded; posts on bank match`);
+    const relayLink = await withCurrentUser(OWNER, async (c) => {
+      await setScopedCompanyContext(c, OWNER, USMCA);
+      return linkSettlementFuelRowToRelayFill(c as never, USMCA, fuelId);
+    });
+    report.push(`FUEL ${f.fuel_type} ${receipt ?? "no receipt number"} $${f.amount} — recorded; posts on bank match; relay link ${relayLink.linked ?? `pending (${relayLink.candidates} candidates)`}`);
   }
 
   let ei = 0;
