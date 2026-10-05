@@ -1,3 +1,4 @@
+import { stampCustomerPaymentVoided } from "./payment-void-stamp.service.js";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
@@ -735,24 +736,9 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
       // governance executor's own flip UPDATE (void-cancel-executors.ts) — if a race somehow still
       // reached here, this UPDATE affects zero rows and the response below stays honestly a no-op
       // rather than silently overwriting a payment another call already voided.
-      const flipped = await client.query(
-        `
-          UPDATE accounting.payments
-          SET voided_at = now(),
-              voided_by_user_id = $2,
-              void_reason = $3
-          WHERE id = $1
-            AND voided_at IS NULL
-        `,
-        [params.data.id, user.uuid, body.data.void_reason]
-      );
-      if ((flipped.rowCount ?? 0) === 0) return { code: 409 as const, error: "payment_already_voided" };
-
-      // INV-2: void-never-delete — archive all applications when voiding; never hard-delete.
-      await client.query(
-        `UPDATE accounting.payment_applications SET unapplied_at = now(), unapplied_by_user_id = $2 WHERE payment_id = $1 AND unapplied_at IS NULL`,
-        [params.data.id, user.uuid]
-      );
+      // The one customer-payment void-stamp writer (stamp + INV-2 archive of applications), shared with every void door.
+      const flipped = await stampCustomerPaymentVoided(client as never, { operatingCompanyId: query.data.operating_company_id, paymentId: params.data.id, userId: user.uuid, reason: body.data.void_reason });
+      if (flipped.already_voided) return { code: 409 as const, error: "payment_already_voided" };
 
       // ACCT-F151 — REVERSE THE RECEIPT IN THE GL ON VOID.
       //

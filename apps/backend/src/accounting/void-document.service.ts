@@ -58,6 +58,8 @@ import { reversePostedSourceTransactionInClientTx } from "./posting-engine.servi
 import { reverseFactoringAdvanceEvent } from "./factoring-posting/poster.service.js";
 import { reverseSettlementForVoid, reverseDeductionForVoid } from "../driver-finance/void-document-callees.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { stampDocumentVoided } from "./void-document-stamp.service.js";
+import { stampCustomerPaymentVoided } from "./payment-void-stamp.service.js";
 
 export type VoidDocumentType =
   | "bill"
@@ -154,7 +156,10 @@ export async function voidDocument(
         const code = (err as { code?: string })?.code;
         if (code !== "SOURCE_NOT_FOUND") throw err;
       }
-      return { voidedAt: nowIso(), reversalJournalEntryId };
+      // AUTH-400 — a void is WHOLE at this door: the ledger reversed AND the header stamped, in this transaction. Callers
+      // that also stamp (check-void) pass the same reason and actor, which the stamp treats as an idempotent replay.
+      const stamped = await stampDocumentVoided(client as never, { operatingCompanyId: input.operatingCompanyId, family: "expense", documentId: input.id, voidReason: input.reason, voidedByUserId: input.actor.userId });
+      return { voidedAt: stamped.voided_at ?? nowIso(), reversalJournalEntryId };
     }
 
     case "invoice":
@@ -173,6 +178,15 @@ export async function voidDocument(
         },
         { userId: input.actor.userId }
       );
+      // AUTH-400 — whole at the door: stamp the header (invoice through the one void-stamp writer; customer payment through
+      // its one writer). The bank-line undo and the settlement creator called this alone and left silent voids.
+      if (input.type === "invoice") {
+        const stamped = await stampDocumentVoided(client as never, { operatingCompanyId: input.operatingCompanyId, family: "invoice", documentId: input.id, voidReason: input.reason, voidedByUserId: input.actor.userId });
+        return { voidedAt: stamped.voided_at ?? nowIso(), reversalJournalEntryId: reversal.reversal_journal_entry_id };
+      }
+      if (input.type === "customer_payment") {
+        await stampCustomerPaymentVoided(client as never, { operatingCompanyId: input.operatingCompanyId, paymentId: input.id, userId: input.actor.userId, reason: input.reason });
+      }
       return { voidedAt: nowIso(), reversalJournalEntryId: reversal.reversal_journal_entry_id };
     }
 
@@ -200,8 +214,11 @@ export async function voidDocument(
         actor_user_id: input.actor.userId,
         reason: input.reason,
       });
+      // AUTH-400 — stamp the advance once its event is reversed (the reversal opened its own connection by design; this
+      // write follows it, exactly the order factoring-advances.routes.ts uses).
+      const stamped = await stampDocumentVoided(client as never, { operatingCompanyId: input.operatingCompanyId, family: "factoring_advance", documentId: input.id, voidReason: input.reason, voidedByUserId: input.actor.userId });
       return {
-        voidedAt: nowIso(),
+        voidedAt: stamped.voided_at ?? nowIso(),
         reversalJournalEntryId: result.reversed ? result.reversal_journal_entry_id : null,
       };
     }
