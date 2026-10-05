@@ -1,3 +1,27 @@
+## 2026-10-05T19:48Z · PR2 SAMSARA MAPPING STARTED
+
+DONE: Split page + additive save + MultiSelect filters + targets CDL/count + guard selftest 7/7. Shipping Fast Merge.
+
+NOW: LOCAL gates → push → ManagePullRequest → squash-merge. CI billing down — LOCAL only in PR body.
+
+NEXT: Merge PR2 → OUTBOX merge line → PR3 Fleet home.
+
+Files Modified: SamsaraDriverMappingPage · css · api · driver-mapping.routes · verify-samsara-one-canonical-map · bus
+
+---
+
+## 2026-10-05T19:32Z · PR1 DRIVER PROFILE MERGED #25517
+
+DONE: #25517 MERGED squash `2026f27d5a` (GitHub 2026-10-05T19:31:31Z). Tip main.
+
+NOW: DriverOverviewBoard owns 12 strip + 5 More + Edit on `/drivers/:id` via `?tab=`. party-boards reads board+tabs surface. LOCAL gates only (CI billing down).
+
+NEXT: PR2 Samsara mapping five laws → PR3 Fleet home.
+
+Files Modified: DriverOverviewBoard · DriverEditForm · driverProfileTabs · CollapsibleProfileCard · party-board.css · factories · verify-party-boards-bound-live · verify-driver-profile-* · SPEC
+
+---
+
 ## 2026-10-05T18:44Z · PR1 DRIVER PROFILE STARTED
 
 DONE: Lead-out orders read. Fleet stripped from this branch (PR3 later). Samsara mapping is PR2.

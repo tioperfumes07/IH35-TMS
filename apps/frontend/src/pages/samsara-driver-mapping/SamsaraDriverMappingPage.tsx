@@ -1,85 +1,73 @@
-import { useMemo, useState } from "react";
-import { UniversalListToolbar } from "../../components/table/UniversalListToolbar";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Combobox, type ComboboxOption } from "../../components/Combobox";
-import { DataPanel } from "../../components/layout/DataPanel";
-import { DataTable, type DataTableColumn } from "../../components/DataTable";
-import { useCompanyContext } from "../../contexts/CompanyContext";
-import { useToast } from "../../components/Toast";
-import {
-  listSamsaraProfiles,
-  listMappingTargets,
-  mapSamsaraDrivers,
-  unmapSamsaraDrivers,
-  type SamsaraProfile,
-  type ProfilesQuery,
-} from "../../api/samsara-driver-mapping";
-import { userFacingApiError } from "../../lib/api-error-message";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { useToast } from "../../components/Toast";
+import { useCompanyContext } from "../../contexts/CompanyContext";
+import {
+  listMappingTargets,
+  listSamsaraProfiles,
+  mapSamsaraDrivers,
+  unmapSamsaraDrivers,
+  type MappingTarget,
+  type SamsaraProfile,
+} from "../../api/samsara-driver-mapping";
+import { userFacingApiError } from "../../lib/api-error-message";
+import "../../components/boards/party-board.css";
+import "./samsara-driver-mapping.css";
 
 /**
- * E20 Part B (Lead spec, Round 92/94) -- the Samsara Driver Mapping page. Consumes the 4 real
- * endpoints E20 Part A shipped (#22357): GET /samsara/profiles, GET /samsara/mapping-targets,
- * POST /samsara/map, POST /samsara/unmap.
+ * PR2 — split Samsara Driver Mapping (owner preview screen 4 · 2026-10-05).
  *
- * "663 unmapped is the DEFAULT VIEW, not a footnote" -- status defaults to "unmapped".
- * "Mapped / unmapped / ambiguous are three distinct states" -- the status filter picks
- * mapped/unmapped/all; within unmapped, each row's own resolver_suggestion status (unmatched /
- * matched / ambiguous) renders as its own named state, never collapsed into one generic blank.
- * "Nothing on this page writes a pairing the backend did not resolve" -- a suggestion is always
- * a proposal the operator reviews and confirms through the same target picker every manual map
- * uses; ambiguous never auto-picks, matched never auto-applies.
+ * LEFT: drivers & vendors. RIGHT: Samsara usernames for the selected person.
+ * Save is ADDITIVE — already-mapped-to-this rows stay ticked+locked; new ticks ADD;
+ * save never clears prior mappings. Nothing writes to Samsara.
  */
 
-const STATUS_TABS: Array<{ value: NonNullable<ProfilesQuery["status"]>; text: string }> = [
-  { value: "unmapped", text: "Unmapped" },
-  { value: "mapped", text: "Mapped" },
-  { value: "all", text: "All" },
+const STATUS_OPTS = [
+  { value: "active", label: "Active" },
+  { value: "past", label: "Past" },
+];
+const MAPPING_OPTS = [
+  { value: "unmapped", label: "No Samsara user" },
+  { value: "mapped", label: "Has Samsara user(s)" },
+];
+const KIND_OPTS = [
+  { value: "driver", label: "Drivers" },
+  { value: "vendor", label: "Vendors" },
+];
+const SHOW_OPTS = [
+  { value: "unmapped", label: "Unmapped only" },
+  { value: "all", label: "All" },
+  { value: "mine", label: "Mapped to this person" },
+];
+const SAM_STATUS_OPTS = [
+  { value: "active", label: "Active in Samsara" },
+  { value: "inactive", label: "Inactive in Samsara" },
 ];
 
-const PAGE_SIZE = 100;
-
-function suggestionLabel(profile: SamsaraProfile): { text: string; tone: "muted" | "ok" | "warn" } {
-  if (profile.mapped) return { text: "—", tone: "muted" };
-  const s = profile.resolver_suggestion;
-  if (s.status === "matched") return { text: "Suggested match found", tone: "ok" };
-  if (s.status === "ambiguous") return { text: `Ambiguous (${s.candidate_ids.length} candidates)`, tone: "warn" };
-  return { text: "No suggestion", tone: "muted" };
+function mappedToThis(p: SamsaraProfile, person: MappingTarget): boolean {
+  if (person.kind === "driver") return p.local_driver_id === person.id;
+  return p.local_vendor_id === person.id;
 }
 
-function mappedToLabel(profile: SamsaraProfile): string {
-  if (profile.local_driver_id) {
-    const base = profile.driver_name ?? "Driver — not visible";
-    return profile.mapped_target_deactivated ? `${base} (inactive)` : base;
+function mappedElsewhere(p: SamsaraProfile, person: MappingTarget): boolean {
+  if (!p.mapped) return false;
+  return !mappedToThis(p, person);
+}
+
+function mappedLabel(p: SamsaraProfile): string {
+  if (p.local_driver_id) {
+    const base = p.driver_name ?? "Driver — not visible";
+    return p.mapped_target_deactivated ? `${base} (inactive)` : base;
   }
-  if (profile.local_vendor_id) {
-    const base = profile.vendor_name ?? "Vendor — not visible";
-    return profile.mapped_target_deactivated ? `${base} (deactivated)` : base;
+  if (p.local_vendor_id) {
+    const base = p.vendor_name ?? "Vendor — not visible";
+    return p.mapped_target_deactivated ? `${base} (deactivated)` : base;
   }
   return "—";
 }
-
-function mappedToCell(profile: SamsaraProfile) {
-  if (profile.local_driver_id) {
-    const base = profile.driver_name ?? "Driver — not visible";
-    const label = profile.mapped_target_deactivated ? `${base} (inactive)` : base;
-    return <EntityLink kind="driver" id={profile.local_driver_id} label={label} />;
-  }
-  if (profile.local_vendor_id) {
-    const base = profile.vendor_name ?? "Vendor — not visible";
-    const label = profile.mapped_target_deactivated ? `${base} (deactivated)` : base;
-    return <EntityLink kind="vendor" id={profile.local_vendor_id} label={label} />;
-  }
-  return "—";
-}
-
-type TargetPickerState = {
-  kind: "driver" | "vendor";
-  samsaraDriverIds: string[];
-  /** Pre-filled when a single row's own "matched" suggestion opened the picker. */
-  suggestedTargetId?: string;
-};
 
 export function SamsaraDriverMappingPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -87,382 +75,437 @@ export function SamsaraDriverMappingPage() {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
 
-  const [status, setStatus] = useState<NonNullable<ProfilesQuery["status"]>>("unmapped");
-  const [search, setSearch] = useState("");
-  const [cursor, setCursor] = useState(0);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [picker, setPicker] = useState<TargetPickerState | null>(null);
-  const [pickerTargetId, setPickerTargetId] = useState<string | null>(null);
-  const [pickerFilter, setPickerFilter] = useState<"active" | "past" | "all">("active");
+  const [leftSearch, setLeftSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string[]>(["active"]);
+  const [mappingFilter, setMappingFilter] = useState<string[]>([]);
+  const [kindFilter, setKindFilter] = useState<string[]>(["driver"]);
+  const [selectedPerson, setSelectedPerson] = useState<MappingTarget | null>(null);
+
+  const [rightSearch, setRightSearch] = useState("");
+  // Default: unmapped candidates + already-mapped-to-this (locked ticks must stay visible).
+  const [showFilter, setShowFilter] = useState<string[]>(["unmapped", "mine"]);
+  const [samStatusFilter, setSamStatusFilter] = useState<string[]>([]);
+  const [ticked, setTicked] = useState<Set<string>>(new Set());
+  const [retireEmptied, setRetireEmptied] = useState(false);
+
+  const leftFilter: "active" | "past" | "all" =
+    statusFilter.length === 0 || statusFilter.length === 2
+      ? "all"
+      : statusFilter.includes("active")
+        ? "active"
+        : "past";
+
+  const kinds = kindFilter.length === 0 ? (["driver", "vendor"] as const) : (kindFilter as Array<"driver" | "vendor">);
+
+  const driversQuery = useQuery({
+    queryKey: ["samsara", "mapping-targets", companyId, "driver", leftFilter, leftSearch],
+    queryFn: () => listMappingTargets(companyId, { kind: "driver", filter: leftFilter, q: leftSearch || undefined, limit: 500 }),
+    enabled: Boolean(companyId) && kinds.includes("driver"),
+    staleTime: 15_000,
+  });
+  const vendorsQuery = useQuery({
+    queryKey: ["samsara", "mapping-targets", companyId, "vendor", leftFilter, leftSearch],
+    queryFn: () => listMappingTargets(companyId, { kind: "vendor", filter: leftFilter, q: leftSearch || undefined, limit: 500 }),
+    enabled: Boolean(companyId) && kinds.includes("vendor"),
+    staleTime: 15_000,
+  });
+
+  const leftRows = useMemo(() => {
+    const rows: MappingTarget[] = [];
+    if (kinds.includes("driver")) rows.push(...(driversQuery.data?.targets ?? []));
+    if (kinds.includes("vendor")) rows.push(...(vendorsQuery.data?.targets ?? []));
+    return rows.filter((r) => {
+      if (mappingFilter.length === 0) return true;
+      const n = r.mapped_samsara_count ?? 0;
+      const wantsUnmapped = mappingFilter.includes("unmapped");
+      const wantsMapped = mappingFilter.includes("mapped");
+      if (wantsUnmapped && wantsMapped) return true;
+      if (wantsUnmapped) return n === 0;
+      if (wantsMapped) return n > 0;
+      return true;
+    });
+  }, [driversQuery.data, vendorsQuery.data, kinds, mappingFilter]);
 
   const profilesQuery = useQuery({
-    queryKey: ["samsara", "driver-mapping", "profiles", companyId, status, search, cursor],
-    queryFn: () => listSamsaraProfiles(companyId, { status, q: search || undefined, limit: PAGE_SIZE, cursor }),
-    enabled: Boolean(companyId),
+    queryKey: ["samsara", "driver-mapping", "profiles", companyId, "all", rightSearch],
+    queryFn: () => listSamsaraProfiles(companyId, { status: "all", q: rightSearch || undefined, limit: 500 }),
+    enabled: Boolean(companyId) && Boolean(selectedPerson),
     staleTime: 15_000,
   });
 
-  const targetsQuery = useQuery({
-    queryKey: ["samsara", "driver-mapping", "targets", companyId, picker?.kind, pickerFilter],
-    queryFn: () => listMappingTargets(companyId, { kind: picker!.kind, filter: pickerFilter }),
-    enabled: Boolean(companyId) && Boolean(picker),
-    staleTime: 15_000,
-  });
+  const rightRows = useMemo(() => {
+    if (!selectedPerson) return [] as SamsaraProfile[];
+    const show = showFilter.length === 0 ? ["all"] : showFilter;
+    return (profilesQuery.data?.profiles ?? []).filter((p) => {
+      const mine = mappedToThis(p, selectedPerson);
+      const unmapped = !p.mapped;
+      let showOk = false;
+      if (show.includes("all")) showOk = true;
+      if (show.includes("unmapped") && unmapped) showOk = true;
+      if (show.includes("mine") && mine) showOk = true;
+      if (!showOk) return false;
+      if (samStatusFilter.length === 0) return true;
+      const active = String(p.samsara_status ?? "").toLowerCase() === "active";
+      if (samStatusFilter.includes("active") && samStatusFilter.includes("inactive")) return true;
+      if (samStatusFilter.includes("active")) return active;
+      if (samStatusFilter.includes("inactive")) return !active;
+      return true;
+    });
+  }, [profilesQuery.data, selectedPerson, showFilter, samStatusFilter]);
 
-  const targetOptions: ComboboxOption[] = useMemo(
-    () =>
-      (targetsQuery.data?.targets ?? []).map((t) => ({
-        value: t.id,
-        label: t.active ? t.name : `${t.name} (inactive)`,
-      })),
-    [targetsQuery.data?.targets]
-  );
+  // Lock + pre-tick rows already mapped to THIS person. Additive save never clears them.
+  useEffect(() => {
+    if (!selectedPerson) {
+      setTicked(new Set());
+      setRetireEmptied(false);
+      return;
+    }
+    const locked = new Set(
+      (profilesQuery.data?.profiles ?? []).filter((p) => mappedToThis(p, selectedPerson)).map((p) => p.samsara_driver_id)
+    );
+    setTicked(locked);
+    setRetireEmptied(false);
+  }, [selectedPerson, profilesQuery.data]);
 
-  // Owner law 2026-10-05: many Samsara users -> ONE driver profile; Samsara names are never changed.
-  const [retireEmptied, setRetireEmptied] = useState(false);
   const mapMutation = useMutation({
-    mutationFn: (body: { samsara_driver_ids: string[]; target_kind: "driver" | "vendor"; target_id: string; retire_emptied_drivers?: boolean }) =>
-      mapSamsaraDrivers(companyId, body),
-    onSuccess: (res, vars) => {
+    mutationFn: (body: {
+      samsara_driver_ids: string[];
+      target_kind: "driver" | "vendor";
+      target_id: string;
+      retire_emptied_drivers?: boolean;
+    }) => mapSamsaraDrivers(companyId, body),
+    onSuccess: (res) => {
       const retired = res.retired_driver_ids?.length ?? 0;
       const kept = res.kept_live?.length ?? 0;
       pushToast(
-        `Mapped ${res.mapped_count} profile(s)` +
-          (retired > 0 ? ` — ${retired} duplicate driver record(s) merged into this driver` : "") +
-          (kept > 0 ? ` — ${kept} kept: ${res.kept_live!.map((k) => k.reason).join("; ")}` : "") +
-          (res.missing_samsara_driver_ids.length > 0 ? ` — ${res.missing_samsara_driver_ids.length} no longer exist` : ""),
+        res.mapped_count === 0
+          ? "Already mapped — nothing changed (additive save is a no-op)"
+          : `Mapped ${res.mapped_count} Samsara user(s)` +
+              (retired > 0 ? ` — ${retired} duplicate driver record(s) merged` : "") +
+              (kept > 0 ? ` — ${kept} kept: ${res.kept_live!.map((k) => k.reason).join("; ")}` : ""),
         "success"
       );
       setRetireEmptied(false);
-      setSelected(new Set());
-      setPicker(null);
-      setPickerTargetId(null);
       void queryClient.invalidateQueries({ queryKey: ["samsara", "driver-mapping", "profiles", companyId] });
-      void vars;
+      void queryClient.invalidateQueries({ queryKey: ["samsara", "mapping-targets", companyId] });
     },
     onError: (error) => pushToast(userFacingApiError(error, "Failed to map"), "error"),
   });
 
   const unmapMutation = useMutation({
-    mutationFn: (samsaraDriverIds: string[]) => unmapSamsaraDrivers(companyId, { samsara_driver_ids: samsaraDriverIds }),
+    mutationFn: (ids: string[]) => unmapSamsaraDrivers(companyId, { samsara_driver_ids: ids }),
     onSuccess: (res) => {
       pushToast(`Unmapped ${res.unmapped_count} profile(s)`, "success");
-      setSelected(new Set());
       void queryClient.invalidateQueries({ queryKey: ["samsara", "driver-mapping", "profiles", companyId] });
+      void queryClient.invalidateQueries({ queryKey: ["samsara", "mapping-targets", companyId] });
     },
     onError: (error) => pushToast(userFacingApiError(error, "Failed to unmap"), "error"),
   });
 
-  const rows = profilesQuery.data?.profiles ?? [];
-  const selectedRows = rows.filter((r) => selected.has(r.samsara_driver_id));
-  const selectedMappedCount = selectedRows.filter((r) => r.mapped).length;
-
-  const toggleRow = (id: string) => {
-    setSelected((prev) => {
+  const toggleTick = (p: SamsaraProfile) => {
+    if (!selectedPerson) return;
+    if (mappedToThis(p, selectedPerson)) return; // locked
+    if (mappedElsewhere(p, selectedPerson)) {
+      pushToast(`Mapped to ${mappedLabel(p)} — unmap there first`, "error");
+      return;
+    }
+    setTicked((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-  const toggleAllOnPage = () => {
-    const pageIds = rows.map((r) => r.samsara_driver_id);
-    const allSelected = pageIds.length > 0 && pageIds.every((id) => selected.has(id));
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (allSelected) pageIds.forEach((id) => next.delete(id));
-      else pageIds.forEach((id) => next.add(id));
+      if (next.has(p.samsara_driver_id)) next.delete(p.samsara_driver_id);
+      else next.add(p.samsara_driver_id);
       return next;
     });
   };
 
-  const columns: DataTableColumn<SamsaraProfile>[] = [
-    {
-      key: "select",
-      label: "",
-      sortable: false,
-      render: (row) => (
-        <input
-          type="checkbox"
-          checked={selected.has(row.samsara_driver_id)}
-          onChange={() => toggleRow(row.samsara_driver_id)}
-          data-testid={`profile-select-${row.samsara_driver_id}`}
-        />
-      ),
-    },
-    {
-      key: "samsara_name",
-      label: "Samsara name",
-      sortable: true,
-      sortValue: (row) => row.samsara_name ?? "",
-      render: (row) => row.samsara_name || "—",
-    },
-    {
-      key: "samsara_driver_id",
-      label: "Samsara ID",
-      sortable: true,
-      sortValue: (row) => row.samsara_driver_id,
-      render: (row) => <span className="font-mono text-xs">{row.samsara_driver_id}</span>,
-    },
-    {
-      key: "last_seen_at",
-      label: "Last seen",
-      sortable: true,
-      sortValue: (row) => row.last_seen_at ?? "",
-      render: (row) => (row.last_seen_at ? new Date(row.last_seen_at).toLocaleDateString() : "—"),
-    },
-    {
-      key: "mapped_to",
-      label: "Mapped to",
-      sortable: true,
-      sortValue: (row) => mappedToLabel(row),
-      render: (row) => mappedToCell(row),
-    },
-    {
-      key: "suggestion",
-      label: "Resolver suggestion",
-      sortable: true,
-      sortValue: (row) => row.resolver_suggestion.status,
-      render: (row) => {
-        const { text, tone } = suggestionLabel(row);
-        // §7 nonfinancial palette: slate tokens only — tone is carried by weight/italics, not color.
-        const toneClass = tone === "ok" ? "font-semibold text-slate-700" : tone === "warn" ? "italic text-slate-600" : "text-slate-500";
-        return (
-          <span className="flex items-center gap-2">
-            <span className={`text-xs ${toneClass}`}>{text}</span>
-            {row.resolver_suggestion.status === "matched" ? (
-              <button
-                type="button"
-                className="text-xs font-semibold text-slate-700 underline"
-                data-testid={`apply-suggestion-${row.samsara_driver_id}`}
-                onClick={() =>
-                  mapMutation.mutate({
-                    samsara_driver_ids: [row.samsara_driver_id],
-                    target_kind: "driver",
-                    target_id: (row.resolver_suggestion as { status: "matched"; target_id: string }).target_id,
-                  })
-                }
-                disabled={mapMutation.isPending}
-              >
-                Use suggestion
-              </button>
-            ) : null}
-          </span>
-        );
-      },
-    },
-  ];
+  const saveAdditive = () => {
+    if (!selectedPerson) return;
+    // ADDITIVE: only POST ids not already mapped to this person. Never unmap as part of save.
+    const already = new Set(
+      (profilesQuery.data?.profiles ?? []).filter((p) => mappedToThis(p, selectedPerson)).map((p) => p.samsara_driver_id)
+    );
+    const toAdd = [...ticked].filter((id) => !already.has(id));
+    if (toAdd.length === 0 && !retireEmptied) {
+      pushToast("Already mapped — nothing changed (additive save is a no-op)", "success");
+      return;
+    }
+    if (toAdd.length === 0 && retireEmptied) {
+      // Same-person retire needs at least one id in the body — use a locked id as the no-op map carrier.
+      const carrier = [...already][0];
+      if (!carrier) {
+        pushToast("Map at least one Samsara user before retiring a duplicate", "error");
+        return;
+      }
+      mapMutation.mutate({
+        samsara_driver_ids: [carrier],
+        target_kind: selectedPerson.kind,
+        target_id: selectedPerson.id,
+        retire_emptied_drivers: selectedPerson.kind === "driver" ? true : false,
+      });
+      return;
+    }
+    mapMutation.mutate({
+      samsara_driver_ids: toAdd,
+      target_kind: selectedPerson.kind,
+      target_id: selectedPerson.id,
+      retire_emptied_drivers: selectedPerson.kind === "driver" ? retireEmptied : false,
+    });
+  };
+
+  const newTickCount = selectedPerson
+    ? [...ticked].filter(
+        (id) => !(profilesQuery.data?.profiles ?? []).some((p) => p.samsara_driver_id === id && mappedToThis(p, selectedPerson))
+      ).length
+    : 0;
 
   return (
-    <div className="space-y-4 p-4">
-      <PageHeader title="Samsara Driver Mapping" subtitle="Map Samsara telematics profiles to real drivers or vendors — never auto-applied" />
-      {!companyId ? <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-xs text-red-700">Select an operating company.</div> : null}
-      <DataPanel title="Samsara profiles">
-        <div className="flex items-center gap-3 border-b border-gray-200 px-3 py-2">
-          {STATUS_TABS.map((tab) => (
-            <button
-              key={tab.value}
-              type="button"
-              className={`text-xs font-semibold uppercase tracking-wide ${status === tab.value ? "text-slate-900 underline" : "text-slate-500"}`}
-              onClick={() => {
-                setStatus(tab.value);
-                setCursor(0);
-                setSelected(new Set());
-              }}
-              data-testid={`status-tab-${tab.value}`}
-            >
-              {tab.text}
-            </button>
-          ))}
-          {/* Round 296: the house toolbar is the one search -- debounced, run by the server over every profile in the
-              status scope; "N of M" = matching of that scope. The table's own per-page toolbar is hidden. */}
-          <div className="ml-auto" data-testid="profiles-search">
-            <UniversalListToolbar
-              search={search}
-              onSearchChange={(value) => {
-                setSearch(value);
-                setCursor(0);
-                setSelected(new Set());
-              }}
-              columns={[]}
-              range={null}
-              onRangeApply={() => undefined}
-              hideRange
-              resultCount={profilesQuery.data?.total ?? rows.length}
-              totalCount={profilesQuery.data?.scope_total ?? rows.length}
-              searchPlaceholder="Search name or Samsara ID"
+    <div className="sdm" data-testid="samsara-driver-mapping-page">
+      <PageHeader
+        title="Samsara driver mapping"
+        subtitle="Many Samsara usernames → one driver profile. Nothing is written to Samsara. Saving adds — it never replaces."
+      />
+
+      <div className="sdm-split">
+        {/* LEFT — drivers & vendors */}
+        <section className="sdm-pane" data-testid="sdm-left-pane">
+          <div className="sdm-filters">
+            <input
+              className="de-ctrl wsearch sdm-input"
+              placeholder="Search name…"
+              value={leftSearch}
+              onChange={(e) => setLeftSearch(e.target.value)}
+              data-testid="sdm-left-search"
+            />
+            <MultiSelectDropdown
+              label="Status"
+              options={STATUS_OPTS}
+              selected={statusFilter}
+              onChange={setStatusFilter}
+              allLabel="All statuses"
+              searchable
+              className="wmd"
+              data-testid="sdm-filter-status"
+            />
+            <MultiSelectDropdown
+              label="Mapping"
+              options={MAPPING_OPTS}
+              selected={mappingFilter}
+              onChange={setMappingFilter}
+              allLabel="Any mapping"
+              searchable
+              className="wmd"
+              data-testid="sdm-filter-mapping"
+            />
+            <MultiSelectDropdown
+              label="Kind"
+              options={KIND_OPTS}
+              selected={kindFilter}
+              onChange={setKindFilter}
+              allLabel="Drivers + vendors"
+              searchable
+              className="ws"
+              data-testid="sdm-filter-kind"
             />
           </div>
-        </div>
-        {selected.size > 0 ? (
-          <div className="flex items-center gap-2 border-b border-gray-200 bg-slate-50 px-3 py-2">
-            <span className="text-xs font-semibold text-slate-700">{selected.size} selected</span>
-            <button
-              type="button"
-              className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
-              onClick={() => setPicker({ kind: "driver", samsaraDriverIds: [...selected] })}
-              data-testid="bulk-map-to-driver"
-            >
-              Map to Driver
-            </button>
-            <button
-              type="button"
-              className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
-              onClick={() => setPicker({ kind: "vendor", samsaraDriverIds: [...selected] })}
-              data-testid="bulk-map-to-vendor"
-            >
-              Map to Vendor
-            </button>
-            <button
-              type="button"
-              className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-40"
-              disabled={selectedMappedCount === 0 || unmapMutation.isPending}
-              onClick={() => unmapMutation.mutate([...selected])}
-              data-testid="bulk-unmap"
-            >
-              Unmap{selectedMappedCount > 0 ? ` (${selectedMappedCount})` : ""}
-            </button>
-            <button type="button" className="ml-auto text-xs text-slate-500 underline" onClick={() => setSelected(new Set())}>
-              Clear
-            </button>
-          </div>
-        ) : null}
-        {profilesQuery.isLoading ? <p className="px-3 py-3 text-xs text-gray-500">Loading Samsara profiles…</p> : null}
-        {profilesQuery.isError ? (
-          <p className="px-3 py-3 text-xs text-red-700" data-testid="profiles-error">
-            Couldn&apos;t load Samsara profiles. Try refreshing the page.
-          </p>
-        ) : null}
-        {!profilesQuery.isLoading && !profilesQuery.isError && rows.length === 0 ? (
-          <p className="px-3 py-3 text-xs text-gray-500" data-testid="profiles-empty">
-            No {status === "unmapped" ? "unmapped" : status === "mapped" ? "mapped" : ""} Samsara profiles
-            {search ? ` matching "${search}"` : ""}.
-          </p>
-        ) : null}
-        {!profilesQuery.isLoading && !profilesQuery.isError && rows.length > 0 ? (
-          <>
-            <div className="flex items-center gap-2 border-b border-gray-100 px-3 py-1">
-              <input
-                type="checkbox"
-                checked={rows.length > 0 && rows.every((r) => selected.has(r.samsara_driver_id))}
-                onChange={toggleAllOnPage}
-                data-testid="select-all-on-page"
-              />
-              <span className="text-xs text-gray-500">Select all on this page ({rows.length})</span>
-            </div>
-            <DataTable columns={columns} rows={rows} rowKey={(row) => row.samsara_driver_id} hideToolbar />
-          </>
-        ) : null}
-        {/* Real paging (was "Load more", which REPLACED the rows with the next page). */}
-        {cursor > 0 || profilesQuery.data?.next_cursor != null ? (
-          <div className="flex items-center justify-between border-t border-gray-200 px-3 py-2 text-xs text-slate-600">
-            <span>
-              {rows.length > 0 ? `${cursor + 1}–${cursor + rows.length}` : "0"} of {profilesQuery.data?.total ?? rows.length}
-            </span>
-            <span className="flex gap-2">
-              <button
-                type="button"
-                className="font-semibold text-slate-700 underline disabled:opacity-40"
-                disabled={cursor === 0}
-                onClick={() => {
-                  setCursor(Math.max(0, cursor - PAGE_SIZE));
-                  setSelected(new Set());
-                }}
-                data-testid="profiles-prev-page"
-              >
-                Previous
-              </button>
-              <button
-                type="button"
-                className="font-semibold text-slate-700 underline disabled:opacity-40"
-                disabled={profilesQuery.data?.next_cursor == null}
-                onClick={() => {
-                  setCursor(profilesQuery.data!.next_cursor!);
-                  setSelected(new Set());
-                }}
-                data-testid="profiles-load-more"
-              >
-                Next
-              </button>
-            </span>
-          </div>
-        ) : null}
-      </DataPanel>
 
-      {picker ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" data-testid="target-picker-modal">
-          <div className="w-96 rounded-sm border border-gray-300 bg-white p-4 shadow-lg">
-            <h3 className="text-xs font-semibold text-slate-900">
-              Map {picker.samsaraDriverIds.length} profile(s) to a {picker.kind}
-            </h3>
-            <div className="mt-2 flex gap-2 text-xs">
-              {(["active", "past", "all"] as const).map((f) => (
+          <table className="ih-table sdm-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>CDL</th>
+                <th>Samsara users</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {leftRows.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="sdm-empty">
+                    No people match these filters.
+                  </td>
+                </tr>
+              ) : (
+                leftRows.map((row) => {
+                  const selected = selectedPerson?.id === row.id && selectedPerson.kind === row.kind;
+                  return (
+                    <tr
+                      key={`${row.kind}-${row.id}`}
+                      className={selected ? "sdm-row-selected" : undefined}
+                      data-testid={`sdm-person-${row.kind}-${row.id}`}
+                      onClick={() => setSelectedPerson(row)}
+                    >
+                      <td>
+                        <EntityLink kind={row.kind} id={row.id} label={row.active ? row.name : `${row.name} (inactive)`} />
+                      </td>
+                      <td>{row.kind === "driver" ? row.cdl_number || "—" : "—"}</td>
+                      <td className="tabular-nums text-center">{row.mapped_samsara_count ?? 0}</td>
+                      <td>
+                        <button
+                          type="button"
+                          className="sdm-map-btn de-ctrl"
+                          data-testid={`sdm-map-btn-${row.id}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedPerson(row);
+                          }}
+                        >
+                          Map
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </section>
+
+        {/* RIGHT — Samsara usernames for the selected person */}
+        <section className="sdm-pane" data-testid="sdm-right-pane">
+          {!selectedPerson ? (
+            <div className="sdm-empty-pane">Select a driver or vendor on the left to map Samsara usernames.</div>
+          ) : (
+            <>
+              <div className="sdm-right-hdr">
+                <div>
+                  <div className="sdm-person-name">{selectedPerson.name}</div>
+                  <div className="sdm-person-sub">
+                    {selectedPerson.kind === "driver" ? "Driver" : "Vendor"} · several active Samsara usernames on one
+                    profile is ordinary
+                  </div>
+                </div>
                 <button
-                  key={f}
                   type="button"
-                  className={pickerFilter === f ? "font-semibold text-slate-900 underline" : "text-slate-500"}
-                  onClick={() => setPickerFilter(f)}
+                  className="sdm-save de-ctrl"
+                  data-testid="sdm-save"
+                  disabled={mapMutation.isPending || (newTickCount === 0 && !retireEmptied)}
+                  onClick={saveAdditive}
                 >
-                  {f}
+                  Save mapping{newTickCount > 0 ? ` (+${newTickCount})` : ""}
                 </button>
-              ))}
-            </div>
-            <div className="mt-2">
-              <Combobox
-                options={targetOptions}
-                value={pickerTargetId}
-                onChange={setPickerTargetId}
-                loading={targetsQuery.isLoading}
-                placeholder={`Search ${picker.kind}s…`}
-              />
-            </div>
-            {picker.kind === "driver" ? (
-              <label className="mt-3 flex items-start gap-2 text-xs text-slate-700" data-testid="target-picker-retire-emptied">
+              </div>
+
+              <div className="sdm-filters">
                 <input
-                  type="checkbox"
-                  className="mt-0.5"
-                  checked={retireEmptied}
-                  onChange={(e) => setRetireEmptied(e.target.checked)}
+                  className="de-ctrl wsearch sdm-input"
+                  placeholder="Filter Samsara username…"
+                  value={rightSearch}
+                  onChange={(e) => setRightSearch(e.target.value)}
+                  data-testid="sdm-right-search"
                 />
-                <span>
-                  Same person: merge the old driver record into this driver when it no longer holds a Samsara user.
-                  Samsara names are not changed.
-                </span>
-              </label>
-            ) : null}
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                type="button"
-                className="rounded-sm border border-gray-300 px-3 py-1 text-xs"
-                onClick={() => {
-                  setPicker(null);
-                  setPickerTargetId(null);
-                  setRetireEmptied(false);
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="rounded-sm bg-slate-800 px-3 py-1 text-xs font-semibold text-white disabled:opacity-40"
-                disabled={!pickerTargetId || mapMutation.isPending}
-                data-testid="target-picker-confirm"
-                onClick={() =>
-                  pickerTargetId &&
-                  mapMutation.mutate({
-                    samsara_driver_ids: picker.samsaraDriverIds,
-                    target_kind: picker.kind,
-                    target_id: pickerTargetId,
-                    retire_emptied_drivers: picker.kind === "driver" && retireEmptied,
-                  })
-                }
-              >
-                Confirm map
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+                <MultiSelectDropdown
+                  label="Show"
+                  options={SHOW_OPTS}
+                  selected={showFilter}
+                  onChange={setShowFilter}
+                  allLabel="All rows"
+                  searchable
+                  className="wmd"
+                  data-testid="sdm-filter-show"
+                />
+                <MultiSelectDropdown
+                  label="Samsara status"
+                  options={SAM_STATUS_OPTS}
+                  selected={samStatusFilter}
+                  onChange={setSamStatusFilter}
+                  allLabel="Any Samsara status"
+                  searchable
+                  className="wmd"
+                  data-testid="sdm-filter-sam-status"
+                />
+              </div>
+
+              <table className="ih-table sdm-table">
+                <thead>
+                  <tr>
+                    <th className="sdm-tick-col" />
+                    <th>Username</th>
+                    <th>Samsara ID</th>
+                    <th>Status</th>
+                    <th>Mapped to</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rightRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="sdm-empty">
+                        No Samsara users match these filters.
+                      </td>
+                    </tr>
+                  ) : (
+                    rightRows.map((p) => {
+                      const mine = mappedToThis(p, selectedPerson);
+                      const elsewhere = mappedElsewhere(p, selectedPerson);
+                      const checked = ticked.has(p.samsara_driver_id);
+                      return (
+                        <tr key={p.samsara_driver_id} data-testid={`sdm-sam-${p.samsara_driver_id}`}>
+                          <td className="sdm-tick-col">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              disabled={mine || elsewhere}
+                              title={
+                                mine
+                                  ? "Already mapped here — locked (additive save)"
+                                  : elsewhere
+                                    ? `Mapped to ${mappedLabel(p)} — unmap there first`
+                                    : undefined
+                              }
+                              onChange={() => toggleTick(p)}
+                              data-testid={`profile-select-${p.samsara_driver_id}`}
+                            />
+                          </td>
+                          <td>{p.samsara_name || "—"}</td>
+                          <td className="font-mono text-xs">{p.samsara_driver_id}</td>
+                          <td>{p.samsara_status || "—"}</td>
+                          <td>
+                            {mine ? (
+                              <span data-testid={`sdm-mapped-here-${p.samsara_driver_id}`}>This person</span>
+                            ) : elsewhere ? (
+                              <span className="sdm-elsewhere">
+                                {p.local_driver_id ? (
+                                  <EntityLink kind="driver" id={p.local_driver_id} label={mappedLabel(p)} />
+                                ) : p.local_vendor_id ? (
+                                  <EntityLink kind="vendor" id={p.local_vendor_id} label={mappedLabel(p)} />
+                                ) : (
+                                  mappedLabel(p)
+                                )}
+                                <button
+                                  type="button"
+                                  className="sdm-unmap-link"
+                                  data-testid={`sdm-unmap-${p.samsara_driver_id}`}
+                                  disabled={unmapMutation.isPending}
+                                  onClick={() => unmapMutation.mutate([p.samsara_driver_id])}
+                                >
+                                  Unmap
+                                </button>
+                              </span>
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+
+              {selectedPerson.kind === "driver" ? (
+                <label className="sdm-same-person" data-testid="sdm-same-person">
+                  <input
+                    type="checkbox"
+                    checked={retireEmptied}
+                    onChange={(e) => setRetireEmptied(e.target.checked)}
+                    data-testid="sdm-retire-emptied"
+                  />
+                  Same person — retire the emptied duplicate driver record into this one (only when it holds no
+                  Samsara user and has no open settlement)
+                </label>
+              ) : null}
+            </>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

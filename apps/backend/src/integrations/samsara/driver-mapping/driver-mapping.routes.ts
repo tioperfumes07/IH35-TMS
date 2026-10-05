@@ -264,6 +264,7 @@ export async function registerSamsaraDriverMappingRoutes(app: FastifyInstance) {
                   (r.local_vendor_id && r.vendor_deactivated_at)
               ),
               last_seen_at: r.last_seen_at,
+              samsara_status: r.driver_activation_status,
               // NEVER a pick: "matched" is the only status a caller may show as a suggestion;
               // "ambiguous" must show every candidate; "unmatched" is reported, not hidden.
               resolver_suggestion: suggestion ?? { status: "unmatched" },
@@ -299,28 +300,41 @@ export async function registerSamsaraDriverMappingRoutes(app: FastifyInstance) {
         }
 
         if (kind === "driver") {
-          const conditions = [`operating_company_id = $1::uuid`];
+          const conditions = [`d.operating_company_id = $1::uuid`];
           const params: unknown[] = [operating_company_id];
-          if (filter === "active") conditions.push(`status IN ('Active', 'Probation')`);
-          if (filter === "past") conditions.push(`status NOT IN ('Active', 'Probation')`);
+          if (filter === "active") conditions.push(`d.status IN ('Active', 'Probation')`);
+          if (filter === "past") conditions.push(`d.status NOT IN ('Active', 'Probation')`);
           if (q) {
             params.push(`%${q.toLowerCase()}%`);
-            conditions.push(`lower(first_name || ' ' || last_name) LIKE $${params.length}`);
+            conditions.push(`lower(d.first_name || ' ' || d.last_name) LIKE $${params.length}`);
           }
           params.push(limit);
-          const rows = await client.query<{ id: string; name: string; status: string }>(
+          // Canonical map count (mdata.driver_samsara_accounts) — many active Samsara users per driver is ordinary.
+          const rows = await client.query<{ id: string; name: string; status: string; cdl_number: string | null; mapped_samsara_count: number }>(
             `
-              SELECT id::text AS id, (first_name || ' ' || last_name) AS name, status
-              FROM mdata.drivers
+              SELECT d.id::text AS id,
+                     (d.first_name || ' ' || d.last_name) AS name,
+                     d.status,
+                     d.cdl_number,
+                     (SELECT count(*)::int FROM mdata.driver_samsara_accounts a
+                       WHERE a.driver_id = d.id AND a.is_active) AS mapped_samsara_count
+              FROM mdata.drivers d
               WHERE ${conditions.join(" AND ")}
-              ORDER BY last_name ASC, first_name ASC
+              ORDER BY d.last_name ASC, d.first_name ASC
               LIMIT $${params.length}
             `,
             params
           );
           return {
             status: "ok" as const,
-            targets: rows.rows.map((r) => ({ id: r.id, name: r.name, kind: "driver" as const, active: ["Active", "Probation"].includes(r.status) })),
+            targets: rows.rows.map((r) => ({
+              id: r.id,
+              name: r.name,
+              kind: "driver" as const,
+              active: ["Active", "Probation"].includes(r.status),
+              cdl_number: r.cdl_number,
+              mapped_samsara_count: Number(r.mapped_samsara_count ?? 0),
+            })),
           };
         }
 
@@ -336,19 +350,35 @@ export async function registerSamsaraDriverMappingRoutes(app: FastifyInstance) {
           conditions.push(`lower(vendor_name) LIKE $${params.length}`);
         }
         params.push(limit);
-        const rows = await client.query<{ id: string; name: string; deactivated_at: string | null }>(
+        const rows = await client.query<{ id: string; name: string; deactivated_at: string | null; mapped_samsara_count: number }>(
           `
-            SELECT id::text AS id, vendor_name AS name, deactivated_at::text AS deactivated_at
-            FROM mdata.vendors
-            WHERE ${conditions.join(" AND ")}
-            ORDER BY vendor_name ASC
+            SELECT v.id::text AS id, v.vendor_name AS name, v.deactivated_at::text AS deactivated_at,
+                   (SELECT count(*)::int FROM integrations.samsara_drivers sd
+                     WHERE sd.operating_company_id = v.operating_company_id
+                       AND sd.local_vendor_id = v.id) AS mapped_samsara_count
+            FROM mdata.vendors v
+            WHERE ${conditions
+              .map((c) =>
+                c
+                  .replace("operating_company_id", "v.operating_company_id")
+                  .replace("deactivated_at", "v.deactivated_at")
+                  .replace("lower(vendor_name)", "lower(v.vendor_name)")
+              )
+              .join(" AND ")}
+            ORDER BY v.vendor_name ASC
             LIMIT $${params.length}
           `,
           params
         );
         return {
           status: "ok" as const,
-          targets: rows.rows.map((r) => ({ id: r.id, name: r.name, kind: "vendor" as const, active: !r.deactivated_at })),
+          targets: rows.rows.map((r) => ({
+            id: r.id,
+            name: r.name,
+            kind: "vendor" as const,
+            active: !r.deactivated_at,
+            mapped_samsara_count: Number(r.mapped_samsara_count ?? 0),
+          })),
         };
       });
 

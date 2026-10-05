@@ -6,10 +6,12 @@ function withCompany(path: string, companyId: string) {
 }
 
 /**
- * E20 Part B (Lead spec, Round 92/94) -- the frontend consumer of E20 Part A's 4 REST endpoints
- * (apps/backend/src/integrations/samsara/driver-mapping/driver-mapping.routes.ts, #22357).
- * NEVER AUTO-MAP: resolver_suggestion is informational only -- a caller decides what to do with
- * it, and only POST /map ever writes local_driver_id/local_vendor_id.
+ * Samsara Driver Mapping — five laws (owner 2026-10-05):
+ * 1. Nothing is ever written to Samsara.
+ * 2. A driver may hold several ACTIVE Samsara usernames at once (ordinary, not an error).
+ * 3. Never deactivate a driver because one username went inactive.
+ * 4. Saving is ADDITIVE — the second save adds; it never replaces or clears.
+ * 5. Samsara names are never changed; the map is the answer.
  */
 
 export type ResolverSuggestion =
@@ -29,6 +31,8 @@ export type SamsaraProfile = {
   /** true when the mapped target has since gone inactive/deactivated -- a real, named state. */
   mapped_target_deactivated: boolean;
   last_seen_at: string | null;
+  /** Samsara-side activation (read-only mirror). Never written back. */
+  samsara_status?: string | null;
   resolver_suggestion: ResolverSuggestion;
 };
 
@@ -36,9 +40,7 @@ export type ProfilesResponse = {
   status: "ok";
   profiles: SamsaraProfile[];
   next_cursor: number | null;
-  /** Rows matching status + search (round 296 "N"). */
   total?: number;
-  /** Rows in the status scope before the search (round 296 "M"). */
   scope_total?: number;
 };
 
@@ -66,6 +68,8 @@ export type MappingTarget = {
   name: string;
   kind: "driver" | "vendor";
   active: boolean;
+  cdl_number?: string | null;
+  mapped_samsara_count?: number;
 };
 
 export type MappingTargetsResponse = {
