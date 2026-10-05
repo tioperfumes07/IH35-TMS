@@ -1,12 +1,12 @@
-# NOW-CURSOR — 2026-10-05T20:20Z
+# NOW-CURSOR — 2026-10-05T20:25Z
 
-**SHIPPING:** PR3 FLEET HOME — title Fleet · 6 tabs · 7 KPI tiles · FLT-F428 banner only (no invented expiry tile).
+**DONE:** Build orders PR1→PR2→PR3 all Fast Merged.
 
-**CLOSED tip:** PR2 #25518 `87576c5d09` — Samsara split + additive save. PR1 #25517 profile tabs.
+**CLOSED tip:** PR3 #25519 `84fea98b6b` Fleet home · PR2 #25518 `87576c5d09` Samsara · PR1 #25517 `2026f27d5a` profile.
 
-**LOCAL GATES ONLY** — GitHub CI billing down. Fast Merge.
+**LOCAL GATES ONLY** — CI billing down. No Chrome this seat.
 
-**NEXT:** Fast Merge PR3 → done this build-order wave.
+**NEXT:** Idle on this wave — wait lead/owner next board row.
 
 ---
-# WAS — PR2 SAMSARA MERGED #25518
+# WAS — PR3 FLEET shipping

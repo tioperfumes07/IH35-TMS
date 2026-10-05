@@ -1,3 +1,16 @@
+## 2026-10-05T20:24Z · PR3 FLEET HOME MERGED #25519
+
+DONE: #25519 MERGED squash `84fea98b6b` (GitHub 2026-10-05T20:24:21Z). Tip main.
+
+NOW: Fleet title sentence-case · 7 KPI · 6 tabs · FLT-F428 banner only. Build-order wave closed.
+
+NEXT: Idle — wait lead/owner next row.
+
+Files Modified: FleetHomePage · FleetHomePage.test · verify-module-home-is-not-a-list · bus
+
+---
+
+## 2026-10-05T20:18Z · PR2 SAMSARA MAPPING MERGED #25518
 ## 2026-10-05T20:18Z · PR2 SAMSARA MAPPING MERGED #25518
 
 DONE: #25518 MERGED squash `87576c5d09` (GitHub 2026-10-05T20:18:51Z). Tip main.
