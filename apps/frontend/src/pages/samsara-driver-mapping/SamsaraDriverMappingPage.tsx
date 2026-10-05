@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useToast } from "../../components/Toast";
@@ -126,6 +127,10 @@ export function SamsaraDriverMappingPage() {
       return true;
     });
   }, [driversQuery.data, vendorsQuery.data, kinds, mappingFilter]);
+
+  // Silent-cap law: the API limits each pane to 500 rows — say so when the cap binds.
+  const leftCapped =
+    (driversQuery.data?.targets.length ?? 0) >= 500 || (vendorsQuery.data?.targets.length ?? 0) >= 500;
 
   const profilesQuery = useQuery({
     queryKey: ["samsara", "driver-mapping", "profiles", companyId, "all", rightSearch],
@@ -311,6 +316,17 @@ export function SamsaraDriverMappingPage() {
             />
           </div>
 
+          {(driversQuery.isError || vendorsQuery.isError) && (
+            <ListErrorState
+              title="Couldn't load drivers and vendors"
+              status={0}
+              message={((driversQuery.error ?? vendorsQuery.error) as Error)?.message}
+              onRetry={() => {
+                void driversQuery.refetch();
+                void vendorsQuery.refetch();
+              }}
+            />
+          )}
           <table className="ih-table sdm-table">
             <thead>
               <tr>
@@ -361,6 +377,11 @@ export function SamsaraDriverMappingPage() {
               )}
             </tbody>
           </table>
+          {leftCapped && (
+            <div className="sdm-empty" data-testid="sdm-left-capped">
+              Showing the first 500 matching people — narrow the filters to see the rest.
+            </div>
+          )}
         </section>
 
         {/* RIGHT — Samsara usernames for the selected person */}
@@ -421,6 +442,15 @@ export function SamsaraDriverMappingPage() {
                 />
               </div>
 
+              {profilesQuery.isError ? (
+                <ListErrorState
+                  title="Couldn't load Samsara users"
+                  status={0}
+                  message={(profilesQuery.error as Error)?.message}
+                  onRetry={() => void profilesQuery.refetch()}
+                />
+              ) : (
+              <>
               <table className="ih-table sdm-table">
                 <thead>
                   <tr>
@@ -500,6 +530,27 @@ export function SamsaraDriverMappingPage() {
                   )}
                 </tbody>
               </table>
+              {(() => {
+                const total = profilesQuery.data?.total ?? profilesQuery.data?.scope_total;
+                const capped = (profilesQuery.data?.profiles.length ?? 0) >= 500 || profilesQuery.data?.next_cursor != null;
+                if (total != null && rightRows.length < total) {
+                  return (
+                    <div className="sdm-empty" data-testid="sdm-right-capped">
+                      Showing {rightRows.length} of {total} Samsara users — narrow the filters to see the rest.
+                    </div>
+                  );
+                }
+                if (capped) {
+                  return (
+                    <div className="sdm-empty" data-testid="sdm-right-capped">
+                      Showing the first 500 Samsara users — narrow the filters to see the rest.
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+              </>
+              )}
 
               {selectedPerson.kind === "driver" ? (
                 <label className="sdm-same-person" data-testid="sdm-same-person">

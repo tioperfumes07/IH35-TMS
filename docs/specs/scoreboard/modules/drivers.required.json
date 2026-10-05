@@ -206,7 +206,8 @@
       "sub": "Driver detail",
       "route_hint": "/drivers/:id",
       "owned_surface_paths": [
-        "components/drivers/DriverCommunicationsTab.tsx"
+        "components/drivers/DriverCommunicationsTab.tsx",
+        "pages/drivers/DriverEditForm.tsx"
       ],
       "required": [
         "driver",

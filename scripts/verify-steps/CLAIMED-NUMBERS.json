@@ -16242,5 +16242,30 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-05",
     "purpose": "verify-samsara-one-canonical-map"
+  },
+  "18189": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-05",
+    "purpose": "verify-aging-bucket-ids-match-the-ladder"
+  },
+  "18213": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-05",
+    "purpose": "verify-driver-profile-matches-approved-tabs"
+  },
+  "18237": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-05",
+    "purpose": "verify-module-home-is-not-a-list"
+  },
+  "18261": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-05",
+    "purpose": "verify-reclassify-batch-check-covers-targets"
+  },
+  "18285": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-05",
+    "purpose": "verify-recurring-worker-never-posts"
   }
 }

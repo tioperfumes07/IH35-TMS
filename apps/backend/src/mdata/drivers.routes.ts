@@ -244,6 +244,7 @@ const createDriverBodySchema = z.object({
   visa_type: z.string().trim().max(100).optional(),
   visa_number: z.string().trim().max(100).optional(),
   visa_expires_at: isoDateSchema.optional(),
+  visa_b1_status: z.string().trim().max(40).nullable().optional(),
   passport_number: z.string().trim().max(100).optional(),
   passport_expires_at: isoDateSchema.optional(),
   // 49 CFR 391.21(b)(2) — date of birth is a statutory element of the driver application. Accepted
@@ -920,7 +921,7 @@ export async function createDriverCanonical(
               status, notes, prior_driver_id, rehire_count, is_rehire,
             operating_company_id, created_by_user_id, updated_by_user_id, is_sample_data
             ) VALUES (
-            $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$42,$43
+            $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$43,$44
             )
             RETURNING
               id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
@@ -951,6 +952,7 @@ export async function createDriverCanonical(
           b.visa_type ?? null,
           b.visa_number ?? null,
           b.visa_expires_at ?? null,
+          b.visa_b1_status ?? null,
           b.passport_number ?? null,
           b.passport_expires_at ?? null,
           b.ine_number ?? null,

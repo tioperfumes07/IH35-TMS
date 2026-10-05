@@ -13,10 +13,14 @@ const { mockQuery, mockWithLuciaBypass } = vi.hoisted(() => {
 });
 
 const { mockPostSourceTransaction } = vi.hoisted(() => ({
-  mockPostSourceTransaction: vi.fn(async () => ({ journal_entry_id: "je-sweep" })),
+  mockPostSourceTransaction: vi.fn(
+    async (_client: unknown, _p: { source_transaction_type?: string; source_transaction_id?: string }) => ({
+      journal_entry_id: "je-sweep",
+    }),
+  ),
 }));
 const { mockChargeback, mockLoadAmounts } = vi.hoisted(() => ({
-  mockChargeback: vi.fn(async () => ({ posted: true, journal_entry_id: "je-cb-1" })),
+  mockChargeback: vi.fn(async (_p: { factoring_advance_id?: string }) => ({ posted: true, journal_entry_id: "je-cb-1" })),
   mockLoadAmounts: vi.fn(async () => ({ liability_cents: 25000, recoursed_ar_cents: 25000 })),
 }));
 const { mockIsReserve, mockLoadFaro, mockPostFaro } = vi.hoisted(() => ({
