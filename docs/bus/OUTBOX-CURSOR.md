@@ -1,3 +1,15 @@
+## 2026-10-05T22:00Z · DRV-F420 Log-complaint stay-on-profile STARTED
+
+DONE: Measured tip — guard `verify-driver-profile-tabs-stay-on-the-profile` FAIL RULE 1: board hard-linked `/safety/complaints` from `+ Log complaint` (line 316 navigate). View all already used `driverProfileTabHref(..., "Complaints")`.
+
+NOW: Retarget `+ Log complaint` to Complaints tab on `/drivers/:id`. Guard PASS + --selftest PASS. LOCAL gates (CI billing down). Fast Merge.
+
+NEXT: push → PR → squash-merge → eng-7d single-fire lease from stash.
+
+Files Modified: DriverOverviewBoard · bus
+
+---
+
 ## 2026-10-05T21:25Z · SAM-F429 FE Account-created MERGED #25524
 
 DONE: #25524 MERGED squash `774ecb135f` (GitHub 2026-10-05T21:23:29Z). Tip main.
