@@ -8,6 +8,11 @@
 // 202614220000 — both omitted it), and migration 202615370600 still carries the database refusal.
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { runGuard, runGuardInFixture, statusOf, outputOf, reportSelftest } from "./lib/guard-selftest.mjs";
+import { fileURLToPath } from "node:url";
+
+
+if (process.argv.includes("--selftest")) selftest();
 
 const LABEL = "verify-duplicate-expense-is-refused-or-ruled-never-silent";
 const ROOT = "apps/backend/src";
@@ -90,3 +95,16 @@ if (fails.length) {
   process.exit(1);
 }
 console.log(`${LABEL}: PASS — ${writers.length} writers of fuel.fuel_transactions; every one refuses or is keyed by the provider transaction ID; the database refuses too (202615370600)`);
+
+// --selftest (Devin build order 2026-10-05): one case that MUST pass (the real tree) and one
+// that MUST fail (a throwaway tree missing this guard's inputs — proves it fails closed,
+// never a vacuous green).
+function selftest() {
+  const me = fileURLToPath(import.meta.url);
+  const real = runGuard(me);
+  const missing = runGuardInFixture(me, {});
+  reportSelftest("verify-duplicate-expense-is-refused-or-ruled-never-silent", [
+    { name: "real repo tree passes", pass: statusOf(real) === 0, detail: statusOf(real) === 0 ? undefined : outputOf(real).slice(-400) },
+    { name: "guard fails closed when its inputs are absent", pass: statusOf(missing) !== 0 },
+  ]);
+}

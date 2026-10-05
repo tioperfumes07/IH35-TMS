@@ -14,6 +14,11 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { createRequire } from "node:module";
+import { runGuard, runGuardInFixture, statusOf, outputOf, reportSelftest } from "./lib/guard-selftest.mjs";
+import { fileURLToPath } from "node:url";
+
+
+if (process.argv.includes("--selftest")) selftest();
 
 const LABEL = "verify-every-route-has-a-structural-breadcrumb";
 const fails = [];
@@ -207,3 +212,16 @@ console.log(
 // silence unused import warnings in some bundlers
 void createRequire;
 void pathToFileURL;
+
+// --selftest (Devin build order 2026-10-05): one case that MUST pass (the real tree) and one
+// that MUST fail (a throwaway tree missing this guard's inputs — proves it fails closed,
+// never a vacuous green).
+function selftest() {
+  const me = fileURLToPath(import.meta.url);
+  const real = runGuard(me);
+  const missing = runGuardInFixture(me, {});
+  reportSelftest("verify-every-route-has-a-structural-breadcrumb", [
+    { name: "real repo tree passes", pass: statusOf(real) === 0, detail: statusOf(real) === 0 ? undefined : outputOf(real).slice(-400) },
+    { name: "guard fails closed when its inputs are absent", pass: statusOf(missing) !== 0 },
+  ]);
+}

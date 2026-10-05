@@ -6,8 +6,15 @@
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { runGuard, withTmpFixture, statusOf, outputOf, reportSelftest } from "./lib/guard-selftest.mjs";
 
-const ROOT = resolve(fileURLToPath(import.meta.url), "..", "..");
+
+if (process.argv.includes("--selftest")) selftest();
+
+// VERIFY_ROOT lets --selftest point the whole guard at a throwaway tree (never tracked source).
+const ROOT = process.env.VERIFY_ROOT
+  ? resolve(process.env.VERIFY_ROOT)
+  : resolve(fileURLToPath(import.meta.url), "..", "..");
 const LABEL = "verify-legal-deadline-alerts";
 const read = (rel) => readFileSync(resolve(ROOT, rel), "utf8");
 
@@ -49,3 +56,19 @@ if (problems.length) {
   process.exit(1);
 }
 console.log(`${LABEL}: OK — deadline/expiry engine + route + /legal/alerts surface wired`);
+
+// --selftest (Devin build order 2026-10-05): one case that MUST pass (the real tree) and one
+// that MUST fail (a throwaway tree missing this guard's inputs — proves it fails closed,
+// never a vacuous green). This guard resolves paths against its own ROOT, so the fixture is
+// pointed at via VERIFY_ROOT, not cwd.
+function selftest() {
+  const me = fileURLToPath(import.meta.url);
+  const real = runGuard(me);
+  const missing = withTmpFixture({}, [], (tmp) =>
+    runGuard(me, { cwd: tmp, env: { VERIFY_ROOT: tmp } }),
+  );
+  reportSelftest("verify-legal-deadline-alerts", [
+    { name: "real repo tree passes", pass: statusOf(real) === 0, detail: statusOf(real) === 0 ? undefined : outputOf(real).slice(-400) },
+    { name: "guard fails closed when its inputs are absent", pass: statusOf(missing) !== 0 },
+  ]);
+}

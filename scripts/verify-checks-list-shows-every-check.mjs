@@ -3,6 +3,11 @@
 //   1. GET /api/v1/checks/all unions every check: expense checks, bills paid by check, driver settlements paid by check
 //   2. the Checks page reads it and filters type / status / bank account (multi-select), payee search, date range
 import { readFileSync } from "node:fs";
+import { runGuard, runGuardInFixture, statusOf, outputOf, reportSelftest } from "./lib/guard-selftest.mjs";
+import { fileURLToPath } from "node:url";
+
+
+if (process.argv.includes("--selftest")) selftest();
 
 const LABEL = "verify-checks-list-shows-every-check";
 const fails = [];
@@ -23,3 +28,16 @@ if (fails.length) {
   process.exit(1);
 }
 console.log(`${LABEL}: PASS — the Checks list shows every check (expense, bill payment, driver settlement) with full filters`);
+
+// --selftest (Devin build order 2026-10-05): one case that MUST pass (the real tree) and one
+// that MUST fail (a throwaway tree missing this guard's inputs — proves it fails closed,
+// never a vacuous green).
+function selftest() {
+  const me = fileURLToPath(import.meta.url);
+  const real = runGuard(me);
+  const missing = runGuardInFixture(me, {});
+  reportSelftest("verify-checks-list-shows-every-check", [
+    { name: "real repo tree passes", pass: statusOf(real) === 0, detail: statusOf(real) === 0 ? undefined : outputOf(real).slice(-400) },
+    { name: "guard fails closed when its inputs are absent", pass: statusOf(missing) !== 0 },
+  ]);
+}

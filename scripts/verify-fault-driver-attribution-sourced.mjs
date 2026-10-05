@@ -8,6 +8,11 @@
  * (fuel / settlement attribution depend on it unchanged).
  */
 import { readFileSync } from "node:fs";
+import { runGuard, runGuardInFixture, statusOf, outputOf, reportSelftest } from "./lib/guard-selftest.mjs";
+import { fileURLToPath } from "node:url";
+
+if (process.argv.includes("--selftest")) selftest();
+
 const helper = readFileSync("apps/backend/src/maintenance/driver-attribution.ts", "utf8");
 const fails = [];
 const fn = (helper.match(/export function driverAtTimeWithLoadFallbackSql[\s\S]*?\n}\n/) ?? [""])[0];
@@ -24,3 +29,16 @@ for (const f of ["apps/backend/src/maintenance/fault-code-alerts.routes.ts", "ap
 }
 if (fails.length) { console.error("verify-fault-driver-attribution-sourced: FAIL\n  " + fails.join("\n  ")); process.exit(1); }
 console.log("verify-fault-driver-attribution-sourced: OK (resolver shape + 3 readers)");
+
+// --selftest (Devin build order 2026-10-05): one case that MUST pass (the real tree) and one
+// that MUST fail (a throwaway tree missing this guard's inputs — proves it fails closed,
+// never a vacuous green).
+function selftest() {
+  const me = fileURLToPath(import.meta.url);
+  const real = runGuard(me);
+  const missing = runGuardInFixture(me, {});
+  reportSelftest("verify-fault-driver-attribution-sourced", [
+    { name: "real repo tree passes", pass: statusOf(real) === 0, detail: statusOf(real) === 0 ? undefined : outputOf(real).slice(-400) },
+    { name: "guard fails closed when its inputs are absent", pass: statusOf(missing) !== 0 },
+  ]);
+}

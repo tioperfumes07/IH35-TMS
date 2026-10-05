@@ -4,6 +4,11 @@
 //   2. migration 202615370700 adds bills.bill_category with the fact-derived BEFORE INSERT default
 //   3. createBill applies the operator's chosen type; the bill form sends the type tab it shows
 import { readFileSync } from "node:fs";
+import { runGuard, runGuardInFixture, statusOf, outputOf, reportSelftest } from "./lib/guard-selftest.mjs";
+import { fileURLToPath } from "node:url";
+
+
+if (process.argv.includes("--selftest")) selftest();
 
 const LABEL = "verify-bills-sub-tabs-filter-by-stored-type";
 const fails = [];
@@ -26,3 +31,16 @@ if (fails.length) {
   process.exit(1);
 }
 console.log(`${LABEL}: PASS — Bills sub-tabs filter by the stored bill_category (fact-derived default, operator choice wins); no memo-word guessing`);
+
+// --selftest (Devin build order 2026-10-05): one case that MUST pass (the real tree) and one
+// that MUST fail (a throwaway tree missing this guard's inputs — proves it fails closed,
+// never a vacuous green).
+function selftest() {
+  const me = fileURLToPath(import.meta.url);
+  const real = runGuard(me);
+  const missing = runGuardInFixture(me, {});
+  reportSelftest("verify-bills-sub-tabs-filter-by-stored-type", [
+    { name: "real repo tree passes", pass: statusOf(real) === 0, detail: statusOf(real) === 0 ? undefined : outputOf(real).slice(-400) },
+    { name: "guard fails closed when its inputs are absent", pass: statusOf(missing) !== 0 },
+  ]);
+}
