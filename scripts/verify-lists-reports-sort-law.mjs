@@ -53,6 +53,8 @@ for (const file of [...listTsxFiles(listsDir), ...listTsxFiles(reportsDir)]) {
       const labelMatch = colDef.match(/label:\s*["'`]([^"'`]+)["'`]/);
       const label = labelMatch ? labelMatch[1] : "";
       if (label === "Actions" || label === "actions") continue;
+      // SaveDropdown / gear menu items are `{ key, label, onSelect }` — not ParityTable columns.
+      if (/\bonSelect\s*:/.test(colDef)) continue;
       failures.push(`${file}: column "${label}" has no sortable: true`);
     }
   }

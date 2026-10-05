@@ -2,7 +2,7 @@ import { createContext, useContext, useMemo, useState } from "react";
 import { useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { getLatestCsa, getSafetyKpis, getUserPreferences, patchUserPreferences } from "../../api/safety";
 import { AnomalyAlertBadge } from "../../components/safety/AnomalyAlertBadge";
 import { SAFETY_GROUPS, findSafetyTab, findSafetyTabByPath } from "../../components/safety/SAFETY_TABS_CONFIG";
@@ -16,7 +16,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { CSAScoreCard } from "./components/CSAScoreCard";
 import { SafetyKpiRow } from "./components/SafetyKpiRow";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { hasInAppHistory } from "../../lib/smart-back";
+import { structuralParentHref } from "../../lib/structuralBreadcrumb";
 
 type SafetyUiContextValue = {
   filter: SafetyDriverFilter;
@@ -149,32 +149,21 @@ export function SafetyLayout() {
       <div className="space-y-0">
         <div className="flex items-end justify-between border-b border-gray-200 bg-white px-[22px] py-3">
           <div className="space-y-1">
+            {/* ROUND 367.9 — Shell renders the structural breadcrumb; Up is structural, never history. */}
             <div className="flex items-center gap-2 text-xs text-slate-400">
               <button
                 type="button"
                 aria-label="Back"
                 onClick={() => {
-                  if (hasInAppHistory(window.history.state)) {
-                    navigate(-1);
-                    return;
-                  }
-                  navigate("/home");
+                  navigate(structuralParentHref(location.pathname));
                 }}
                 className="inline-flex items-center gap-1 rounded-sm px-1 py-0.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
                 <span>Back</span>
               </button>
-              <span>Modules</span>
-              <span>&gt;</span>
-              <Link to="/safety/home" className="hover:text-slate-600">
-                Safety
-              </Link>
               {activeTabId === "home" ? null : (
-                <>
-                  <span>&gt;</span>
-                  <span>{activeMeta?.group.label ?? "Driver Files & Training"}</span>
-                </>
+                <span className="text-slate-500">{activeMeta?.group.label ?? "Driver Files & Training"}</span>
               )}
             </div>
             <h2 className="text-page-title font-semibold text-slate-900">Safety</h2>

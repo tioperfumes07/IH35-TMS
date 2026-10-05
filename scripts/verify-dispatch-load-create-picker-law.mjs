@@ -49,7 +49,7 @@ if (process.argv.includes("--selftest")) {
     ["unit-picker", "equipment", /kind="unit"/g, 'kind="trailer"'],
     ["driver-picker", "equipment", /<DriverPickerWithCreate/g, "<DriverPickerWithCreateRemoved"],
     ["stop-shared-date", "stops", /<DatePicker/g, '<input type="date"'],
-    ["stop-native-date", "stops", /<DatePicker data-testid=\{`stop-date-\$\{index\}`\}/, '<input type="date" data-testid={`stop-date-${index}`}'],
+    ["stop-native-date", "stops", /<DatePicker box="field" data-testid=\{`stop-date-\$\{index\}`\}/, '<input type="date" data-testid={`stop-date-${index}`}'],
     ["picker-outside-dismiss", "combobox", /document\.addEventListener\("mousedown", onDocumentClick\)/, "void onDocumentClick"],
     ["picker-escape-dismiss", "combobox", /event\.key === "Escape"/, 'event.key === "Never"'],
     ["picker-no-forced-selection", "comboboxTest", /expect\(onChange\)\.not\.toHaveBeenCalled\(\)/, "expect(onChange).toHaveBeenCalled()"],

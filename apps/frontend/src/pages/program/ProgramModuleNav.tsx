@@ -7,9 +7,9 @@
  * Links use literal string paths in `to="..."` (not `to={var}`) so verify-scenario-tracker-reachable can
  * prove the door exists with a static regex — same pattern as PROG-NAV-01's original fix.
  */
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./program-module-nav.css";
-import { hasInAppHistory } from "../../lib/smart-back";
+import { structuralParentHref } from "../../lib/structuralBreadcrumb";
 
 export type ProgramNavTab =
   | "scenario"
@@ -21,24 +21,15 @@ export type ProgramNavTab =
 
 export function ProgramModuleNav({ active }: { active: ProgramNavTab }) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   return (
     <nav className="program-module-nav" data-testid="program-module-nav" aria-label="Program module">
-      {/*
-        UI-BACK-BUTTON-MISSING-ENTIRELY: none of the 3 pages that render this shared nav strip
-        (ScenarioTrackerHome, ModuleMatrixPreviewPage, LegacyAuditScoreboardPage) had any back
-        control -- added here, once, instead of in each page, since this nav is already the one
-        thing all of them share. Existing tab <Link>s keep their literal to="..." strings unchanged
-        (verify-scenario-tracker-reachable depends on that static shape).
-      */}
+      {/* ROUND 367.9 — Up is structural; Shell owns the breadcrumb trail. */}
       <button
         type="button"
         aria-label="Back"
         onClick={() => {
-          if (hasInAppHistory(window.history.state)) {
-            navigate(-1);
-            return;
-          }
-          navigate("/home");
+          navigate(structuralParentHref(pathname));
         }}
         className="program-module-nav__tab"
         style={{ border: 0, background: "transparent", cursor: "pointer" }}

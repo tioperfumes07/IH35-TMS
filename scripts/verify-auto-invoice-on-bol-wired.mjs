@@ -31,7 +31,10 @@ mustContain("apps/backend/src/accounting/auto-invoice-on-bol.service.ts", [
   "accounting.invoice.awaiting_bol",
   "listLoadsAwaitingBolInvoice",
   "buildInvoiceFromLoad",
-  "dfc.code = 'bol'",
+  // ROUND 285.4.10 evolved to bol+pod evidence via ANY($2); keep "bol" + the ANY predicate wired.
+  "BILLING_EVIDENCE_DOC_CODES",
+  'dfc.code = ANY($2::text[])',
+  '"bol"',
 ]);
 
 mustContain("apps/backend/src/dispatch/delivery-evidence-latch.ts", [
@@ -47,7 +50,9 @@ mustContain("apps/backend/src/docs/files.routes.ts", [
 mustContain("apps/backend/src/docs/maybe-fire-auto-invoice-after-bol.ts", [
   "autoInvoiceOnBol",
   "autoSubmitDeliveredLoadToFactor",
-  'category_code !== "bol"',
+  // Evidence gate is now bol+pod via BILLING_EVIDENCE_DOC_CODES.includes(category_code).
+  "BILLING_EVIDENCE_DOC_CODES",
+  "category_code",
 ]);
 
 mustContain("apps/backend/src/dispatch/awaiting-bol-invoice.routes.ts", [

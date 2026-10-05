@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { Fragment } from "react";
 import { useNavigate } from "react-router-dom";
-import { hasInAppHistory } from "../../lib/smart-back";
 
 type BackArrowHeaderProps = {
   backTo: string;
@@ -25,24 +24,11 @@ export function BackArrowHeader({ backTo, breadcrumb, title, countBadge, actions
         ))}
       </div>
       <div className="flex items-center gap-2.5">
-        {/*
-          UI-BACK-BUTTON-IGNORES-REAL-NAVIGATION-HISTORY (third component, same defect class as
-          components/layout/PageHeader.tsx and components/forms/shared/PageHeader.tsx): this was a
-          plain <Link to={backTo}>, so every one of the ~35+ pages using this header (the whole
-          catalog-list-page family: dispatch/driver/maintenance/fuel/fleet/accounting/reference
-          catalogs) always returned to the SAME hardcoded parent regardless of where the user
-          actually navigated from. Same fix as the other two headers: prefer true history-based
-          back whenever real in-app navigation history exists, falling back to `backTo` only on a
-          direct URL load/refresh. See lib/smart-back.ts for the verified idx>0 signal.
-        */}
+        {/* ROUND 367.9 — Up is structural: always the named parent route, never navigate(-1). */}
         <button
           type="button"
           aria-label="Back"
           onClick={() => {
-            if (hasInAppHistory(window.history.state)) {
-              navigate(-1);
-              return;
-            }
             navigate(backTo);
           }}
           className="inline-flex items-center gap-1 rounded-xs border-0 bg-transparent px-1 py-0.5 text-xs font-semibold text-(--text-secondary) no-underline hover:bg-(--bg-surface-alt) hover:text-(--text-primary)"

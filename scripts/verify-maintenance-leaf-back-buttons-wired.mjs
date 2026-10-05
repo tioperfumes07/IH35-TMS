@@ -1,14 +1,8 @@
 #!/usr/bin/env node
 /**
- * UI-BACK-BUTTON-MISSING-ENTIRELY — audit wave 3 (Maintenance). Owner report (2026-08-25): "many
- * leafs or tabs are missing the back arrow return button." A systemwide route-manifest audit found
- * 13 routed /maintenance/* leaf pages with NO shared wrapper (unlike Accounting's
- * AccountingSubNavWrapper) and NO back control at all -- each had its own bespoke title bar. 12 of
- * the 13 now render the standard PageHeader with backHref="/maintenance" (the Maintenance module
- * hub); the 13th, WorkOrderNewPage.tsx, is a modal-only deep-link route that already returns to
- * /maintenance on close and is correctly excluded. DefectDetailPage.tsx additionally had a REAL but
- * hardcoded back <Link> (a UI-BACK-BUTTON-IGNORES-REAL-NAVIGATION-HISTORY instance, not a missing
- * one) -- upgraded to the same smart-back pattern as the rest of the app.
+ * UI-BACK-BUTTON-MISSING-ENTIRELY — audit wave 3 (Maintenance), updated for ROUND 367.9.
+ * Maintenance leaf pages keep PageHeader backHref="/maintenance". DefectDetailPage Up is
+ * structural navigate("/maintenance/defects") — never hasInAppHistory / navigate(-1).
  */
 import fs from "node:fs";
 
@@ -50,15 +44,11 @@ function auditPageHeaderFile(file, source) {
 function auditDefectDetail(source) {
   const failures = [];
   const stripped = stripComments(source);
-  if (!/import\s*\{\s*hasInAppHistory\s*\}\s*from\s*["'][./]*lib\/smart-back["']/.test(stripped)) {
-    failures.push(`${DEFECT_DETAIL_FILE}: must import hasInAppHistory from the shared smart-back helper`);
+  if (!/navigate\(\s*["']\/maintenance\/defects["']\s*\)/.test(stripped)) {
+    failures.push(`${DEFECT_DETAIL_FILE}: Up must navigate("/maintenance/defects") (structural list parent)`);
   }
-  const historyIdx = stripped.indexOf("hasInAppHistory(window.history.state)");
-  const fallbackIdx = stripped.indexOf('navigate("/maintenance/defects")');
-  if (historyIdx < 0 || fallbackIdx < 0 || historyIdx > fallbackIdx) {
-    failures.push(
-      `${DEFECT_DETAIL_FILE}: the hasInAppHistory check must run BEFORE the /maintenance/defects fallback`
-    );
+  if (/hasInAppHistory|navigate\(\s*-1\s*\)/.test(stripped)) {
+    failures.push(`${DEFECT_DETAIL_FILE}: must not use hasInAppHistory or navigate(-1) (ROUND 367.9)`);
   }
   return failures;
 }
@@ -72,7 +62,6 @@ sources.forEach((src, i) => {
 });
 failures = failures.concat(auditDefectDetail(defectSource));
 
-// BANK-F91414 leftover refuse — TireProgramPage page-scoped text token ratchet
 {
   const tireIdx = PAGE_HEADER_FILES.indexOf("apps/frontend/src/pages/maintenance/TireProgramPage.tsx");
   const tireSrc = tireIdx >= 0 ? sources[tireIdx] : "";
@@ -89,7 +78,6 @@ if (process.argv.includes("--selftest")) {
   let caught = 0;
   let total = 0;
 
-  // One planted mutation per PageHeader file: remove the <PageHeader back control entirely.
   for (let i = 0; i < PAGE_HEADER_FILES.length; i++) {
     total += 1;
     const mutated = sources[i].replace(/<PageHeader\b[\s\S]*?\/>/, "<div />");
@@ -101,26 +89,12 @@ if (process.argv.includes("--selftest")) {
     caught += 1;
   }
 
-  // DefectDetailPage: reorder so the fallback runs before the history check (dead-codes the fix).
   total += 1;
-  const mutatedDefect = defectSource.replace(
-    `if (hasInAppHistory(window.history.state)) {
-              navigate(-1);
-              return;
-            }
-            navigate("/maintenance/defects");`,
-    `navigate("/maintenance/defects");
-            if (hasInAppHistory(window.history.state)) {
-              navigate(-1);
-              return;
-            }`
-  );
+  const mutatedDefect = defectSource.replace('navigate("/maintenance/defects")', 'navigate(-1)');
   if (mutatedDefect === defectSource) throw new Error("mutation for DefectDetailPage.tsx did not change source -- inert");
-  const mutDefectFailures = auditDefectDetail(mutatedDefect);
-  if (mutDefectFailures.length === 0) throw new Error("mutation escaped for DefectDetailPage.tsx");
+  if (auditDefectDetail(mutatedDefect).length === 0) throw new Error("mutation escaped for DefectDetailPage.tsx");
   caught += 1;
 
-  // BANK-F91414 leftover plant — TireProgramPage page-scoped text token ratchet
   {
     total += 1;
     const tireIdx = PAGE_HEADER_FILES.indexOf("apps/frontend/src/pages/maintenance/TireProgramPage.tsx");
@@ -139,5 +113,5 @@ if (process.argv.includes("--selftest")) {
 }
 
 console.log(
-  `verify-maintenance-leaf-back-buttons-wired PASS — all 12 Maintenance leaf pages have a back control (${PAGE_HEADER_FILES.length} via PageHeader + 1 smart-back link)`
+  `verify-maintenance-leaf-back-buttons-wired PASS — all 12 Maintenance leaf pages have a back control (${PAGE_HEADER_FILES.length} via PageHeader + 1 structural Up on DefectDetail)`,
 );

@@ -7,7 +7,6 @@ import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { CreateWorkOrderModal } from "./components/CreateWorkOrderModal";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
-import { hasInAppHistory } from "../../lib/smart-back";
 
 export function DefectDetailPage() {
   const { defectId = "" } = useParams();
@@ -90,22 +89,12 @@ export function DefectDetailPage() {
 
   return (
     <div className="space-y-4" data-testid="maint-dvir-defect-detail">
-      {/*
-        UI-BACK-BUTTON-IGNORES-REAL-NAVIGATION-HISTORY: this was a plain <Link to="/maintenance/defects">
-        -- always the same hardcoded target regardless of where the user actually came from (e.g. a
-        unit profile's defect list, not just the defects inbox). Upgraded to the same smart-back
-        pattern as the rest of the app: prefer real in-app history, fall back to the defects inbox
-        only on a direct load/refresh.
-      */}
+      {/* ROUND 367.9 — structural Up to the defects list, never navigate(-1). */}
       <div className="flex items-center gap-2 text-xs">
         <button
           type="button"
           aria-label="Back"
           onClick={() => {
-            if (hasInAppHistory(window.history.state)) {
-              navigate(-1);
-              return;
-            }
             navigate("/maintenance/defects");
           }}
           className="border-0 bg-transparent p-0 text-slate-700 hover:underline"

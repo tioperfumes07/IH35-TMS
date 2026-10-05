@@ -63,11 +63,10 @@ try {
 
   const layoutPageHeader = read("apps/frontend/src/components/layout/PageHeader.tsx");
   const formPageHeader = read("apps/frontend/src/components/forms/shared/PageHeader.tsx");
-  assertIncludes(layoutPageHeader, "navigate(-1)", "Layout PageHeader back navigation missing");
-  assertIncludes(formPageHeader, "navigate(-1)", "Form PageHeader back navigation missing");
+  // ROUND 367.9 — Up is structuralParentHref / backHref, never navigate(-1) / lastModuleHref history.
+  assertIncludes(layoutPageHeader, "structuralParentHref", "Layout PageHeader structural Up missing");
+  assertIncludes(formPageHeader, "structuralParentHref", "Form PageHeader structural Up missing");
   assertIncludes(formPageHeader, "string | BreadcrumbItem", "Form PageHeader must accept string[] breadcrumbs from leaf pages");
-  assertIncludes(layoutPageHeader, "lastModuleHref", "Layout PageHeader must remember last sidebar module");
-  assertIncludes(formPageHeader, "lastModuleHref", "Form PageHeader must remember last sidebar module");
   const app = read("apps/frontend/src/App.tsx");
   assertIncludes(app, "<ScrollToTop", "App must mount CC-2 ScrollToTop (do not duplicate RouteScrollReset)");
   const statementsPrint = read("apps/frontend/src/pages/finance/FinancialStatementsPage.tsx");
@@ -80,7 +79,7 @@ try {
   const fuelPlanner = read("apps/frontend/src/pages/fuel/FuelPlannerHome.tsx");
   assertIncludes(fuelPlanner, 'backHref="/home"', "Fuel module header must have a module-parent backHref");
   const safetyLayout = read("apps/frontend/src/pages/safety/SafetyLayout.tsx");
-  assertIncludes(safetyLayout, "hasInAppHistory", "Safety layout back must prefer in-app history");
+  assertIncludes(safetyLayout, "structuralParentHref", "Safety layout Up must be structural (ROUND 367.9)");
   const customerCreate = read("apps/frontend/src/components/customers/CustomerProfileForm.tsx");
   assertIncludes(customerCreate, "properPersonOrPlaceName", "Customer create/update payload must title-case names/addresses");
   const vendorCreate = read("apps/frontend/src/components/vendors/VendorCreateModal.tsx");

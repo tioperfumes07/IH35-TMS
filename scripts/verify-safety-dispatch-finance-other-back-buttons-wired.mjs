@@ -1,16 +1,13 @@
 #!/usr/bin/env node
 /**
- * UI-BACK-BUTTON-MISSING-ENTIRELY / UI-BACK-BUTTON-IGNORES-REAL-NAVIGATION-HISTORY — audit wave 4.
- * Owner report (2026-08-25): "many leafs or tabs are missing the back arrow return button... make
- * sure that those that have it take you back to the correct module."
+ * ROUND 367.9 SUPERSEDES UI-BACK-BUTTON-MISSING-ENTIRELY /
+ * UI-BACK-BUTTON-IGNORES-REAL-NAVIGATION-HISTORY for these leaves.
  *
- * Continuing the systemwide route-manifest audit: 10 Safety alias-tab leaves, 1 Dispatch leaf
- * (MapView), 4 Finance leaves, and 9 other standalone leaves (3 of which share ProgramModuleNav,
- * fixed once there) had no back control at all; 3 more (DefectDetailPage in wave 3, IdvrDetailPage
- * and NotificationPreferencesPage here) had a REAL but hardcoded back link -- the wrong-destination
- * defect class, not missing. This guard mutation-proves a representative sample across every
- * sub-class fixed in this wave: a plain PageHeader-backed leaf, the shared ProgramModuleNav fix,
- * and a smart-back-upgraded hardcoded link.
+ * Owner 2026-10-03: Up is structural (Module › List › Record), never browser history.
+ * PageHeader-backed leaves keep a back control; ProgramModuleNav + IdvrDetail +
+ * NotificationPreferences navigate to a structural parent — never hasInAppHistory / navigate(-1).
+ *
+ * Filename kept (CLAIMED step continuity). Contract body updated to the structural law.
  */
 import fs from "node:fs";
 
@@ -44,11 +41,16 @@ const FINANCE_PAGE_HEADER_FILES = [
 
 const PROGRAM_MODULE_NAV_FILE = "apps/frontend/src/pages/program/ProgramModuleNav.tsx";
 
-// Files where a hardcoded back <Link>/<button> was upgraded to the smart-back pattern (idvr detail
-// had TWO instances; notification preferences also had two).
-const SMART_BACK_UPGRADE_FILES = [
-  "apps/frontend/src/pages/safety/IdvrDetailPage.tsx",
-  "apps/frontend/src/pages/settings/NotificationPreferencesPage.tsx",
+// Files where a hardcoded / smart-back link was upgraded to structural Up (ROUND 367.9).
+const STRUCTURAL_UP_FILES = [
+  {
+    file: "apps/frontend/src/pages/safety/IdvrDetailPage.tsx",
+    parentHref: "/safety/idvr",
+  },
+  {
+    file: "apps/frontend/src/pages/settings/NotificationPreferencesPage.tsx",
+    parentHref: "/settings",
+  },
 ];
 
 function stripComments(text) {
@@ -67,23 +69,34 @@ function auditPageHeaderFile(file, source) {
 function auditProgramModuleNav(source) {
   const failures = [];
   const stripped = stripComments(source);
-  if (!/import\s*\{\s*hasInAppHistory\s*\}\s*from\s*["'][./]*lib\/smart-back["']/.test(stripped)) {
-    failures.push(`${PROGRAM_MODULE_NAV_FILE}: must import hasInAppHistory from the shared smart-back helper`);
+  if (!/structuralParentHref/.test(stripped)) {
+    failures.push(`${PROGRAM_MODULE_NAV_FILE}: must use structuralParentHref for Up (ROUND 367.9)`);
+  }
+  if (!/navigate\(\s*structuralParentHref\(pathname\)\s*\)/.test(stripped)) {
+    failures.push(`${PROGRAM_MODULE_NAV_FILE}: back handler must navigate(structuralParentHref(pathname))`);
   }
   if (!/aria-label=["']Back["']/.test(stripped)) {
     failures.push(`${PROGRAM_MODULE_NAV_FILE}: must render a back control (aria-label="Back")`);
   }
+  if (/hasInAppHistory/.test(stripped) || /navigate\(\s*-1\s*\)/.test(stripped)) {
+    failures.push(
+      `${PROGRAM_MODULE_NAV_FILE}: must not use hasInAppHistory or navigate(-1) — Up is structural (ROUND 367.9)`,
+    );
+  }
   return failures;
 }
 
-function auditSmartBackUpgrade(file, source) {
+function auditStructuralUp(file, parentHref, source) {
   const failures = [];
   const stripped = stripComments(source);
-  if (!/import\s*\{\s*hasInAppHistory\s*\}\s*from\s*["'][./]*lib\/smart-back["']/.test(stripped)) {
-    failures.push(`${file}: must import hasInAppHistory from the shared smart-back helper`);
+  const escaped = parentHref.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  if (!new RegExp(`navigate\\(\\s*["']${escaped}["']\\s*\\)`).test(stripped)) {
+    failures.push(`${file}: Up must navigate("${parentHref}") — structural parent (ROUND 367.9)`);
   }
-  if (!/hasInAppHistory\(window\.history\.state\)/.test(stripped)) {
-    failures.push(`${file}: back-button handler must call hasInAppHistory(window.history.state)`);
+  if (/hasInAppHistory/.test(stripped) || /navigate\(\s*-1\s*\)/.test(stripped)) {
+    failures.push(
+      `${file}: must not use hasInAppHistory or navigate(-1) — Up is structural (ROUND 367.9)`,
+    );
   }
   return failures;
 }
@@ -91,13 +104,17 @@ function auditSmartBackUpgrade(file, source) {
 const pageHeaderSources = PAGE_HEADER_FILES.map((f) => fs.readFileSync(f, "utf8"));
 const financeSources = FINANCE_PAGE_HEADER_FILES.map((f) => fs.readFileSync(f, "utf8"));
 const programNavSource = fs.readFileSync(PROGRAM_MODULE_NAV_FILE, "utf8");
-const smartBackSources = SMART_BACK_UPGRADE_FILES.map((f) => fs.readFileSync(f, "utf8"));
+const structuralSources = STRUCTURAL_UP_FILES.map(({ file }) => fs.readFileSync(file, "utf8"));
 
 let failures = [];
 pageHeaderSources.forEach((src, i) => (failures = failures.concat(auditPageHeaderFile(PAGE_HEADER_FILES[i], src))));
 financeSources.forEach((src, i) => (failures = failures.concat(auditPageHeaderFile(FINANCE_PAGE_HEADER_FILES[i], src))));
 failures = failures.concat(auditProgramModuleNav(programNavSource));
-smartBackSources.forEach((src, i) => (failures = failures.concat(auditSmartBackUpgrade(SMART_BACK_UPGRADE_FILES[i], src))));
+structuralSources.forEach((src, i) => {
+  failures = failures.concat(
+    auditStructuralUp(STRUCTURAL_UP_FILES[i].file, STRUCTURAL_UP_FILES[i].parentHref, src),
+  );
+});
 
 if (failures.length) {
   console.error(`verify-safety-dispatch-finance-other-back-buttons-wired FAIL\n- ${failures.join("\n- ")}`);
@@ -132,23 +149,24 @@ if (process.argv.includes("--selftest")) {
     caught += 1;
   }
 
-  // ProgramModuleNav: remove the back button entirely.
+  // ProgramModuleNav: remove structuralParentHref usage.
   total += 1;
-  const mutatedNav = programNavSource.replace(
-    /<button\s+type="button"\s+aria-label="Back"[\s\S]*?<\/button>/,
-    ""
-  );
+  const mutatedNav = programNavSource.replace(/structuralParentHref/g, "MISSING");
   if (mutatedNav === programNavSource) throw new Error("mutation for ProgramModuleNav.tsx did not change source -- inert");
   if (auditProgramModuleNav(mutatedNav).length === 0) throw new Error("mutation escaped for ProgramModuleNav.tsx");
   caught += 1;
 
-  // Smart-back-upgrade files: remove the hasInAppHistory import.
-  for (let i = 0; i < SMART_BACK_UPGRADE_FILES.length; i++) {
+  // Structural-Up files: break the parent navigate target.
+  for (let i = 0; i < STRUCTURAL_UP_FILES.length; i++) {
     total += 1;
-    const mutated = smartBackSources[i].replace(/import\s*\{\s*hasInAppHistory\s*\}[^\n]*\n/, "");
-    if (mutated === smartBackSources[i]) throw new Error(`mutation for ${SMART_BACK_UPGRADE_FILES[i]} did not change source -- inert`);
-    if (auditSmartBackUpgrade(SMART_BACK_UPGRADE_FILES[i], mutated).length === 0) {
-      throw new Error(`mutation escaped for ${SMART_BACK_UPGRADE_FILES[i]}`);
+    const { file, parentHref } = STRUCTURAL_UP_FILES[i];
+    const mutated = structuralSources[i].replace(
+      new RegExp(`navigate\\(\\s*["']${parentHref.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["']\\s*\\)`),
+      'navigate("/wrong")',
+    );
+    if (mutated === structuralSources[i]) throw new Error(`mutation for ${file} did not change source -- inert`);
+    if (auditStructuralUp(file, parentHref, mutated).length === 0) {
+      throw new Error(`mutation escaped for ${file}`);
     }
     caught += 1;
   }
@@ -157,5 +175,5 @@ if (process.argv.includes("--selftest")) {
 }
 
 console.log(
-  `verify-safety-dispatch-finance-other-back-buttons-wired PASS — ${PAGE_HEADER_FILES.length + FINANCE_PAGE_HEADER_FILES.length} leaf pages have a back control, ProgramModuleNav fixes 3 more, ${SMART_BACK_UPGRADE_FILES.length} hardcoded back links upgraded to smart-back`
+  `verify-safety-dispatch-finance-other-back-buttons-wired PASS — ${PAGE_HEADER_FILES.length + FINANCE_PAGE_HEADER_FILES.length} leaf pages have a back control, ProgramModuleNav + ${STRUCTURAL_UP_FILES.length} leaves use structural Up (ROUND 367.9)`,
 );

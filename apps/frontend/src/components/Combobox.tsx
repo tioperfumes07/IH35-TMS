@@ -145,8 +145,9 @@ function measureListboxStyle(anchor: HTMLElement): CSSProperties {
   // its listbox with real, matching options — confirmed reachable and clickable in the accessibility
   // tree, with the underlying catalog fetch returning 200 — but the drawer's own opaque panel painted
   // over it, so the dropdown was invisible and unusable to an actual user. 220 sits above every explicit
-  // z-index in the codebase (max found: z-[210]) so no known drawer/modal can occlude it again.
-  const LISTBOX_Z_INDEX = 240;
+  // z-index in the codebase (DatePicker / SaveDropdown at z-[1000]) so no known drawer/modal
+  // or peer portaled picker can occlude it again.
+  const LISTBOX_Z_INDEX = 1100;
   if (openUp) {
     return {
       position: "fixed",

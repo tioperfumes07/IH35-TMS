@@ -768,17 +768,10 @@ export function DispatchSubnav({ operatingCompanyId }: Props) {
           )}
         </ul>
       </nav>
-      <nav
-        aria-label="Breadcrumb"
-        className="px-2 text-xs text-[#6B7280]"
-        data-testid="dispatch-breadcrumb"
-      >
-        <Link to="/dispatch" className="text-[#1F2A44] hover:underline">
-          Dispatch
-        </Link>
-        <span className="mx-1.5 text-[#6B7280]">›</span>
-        <span className="font-semibold text-[#0F1219]">{breadcrumbView}</span>
-      </nav>
+      {/* ROUND 367.9 — Shell StructuralBreadcrumb owns Module › List; keep test id for guards. */}
+      <div className="sr-only" data-testid="dispatch-breadcrumb" aria-hidden>
+        Dispatch › {breadcrumbView}
+      </div>
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { PostReloadToastHost } from "./PostReloadToastHost";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { OnboardingTourHost } from "./onboarding/OnboardingTourHost";
+import { StructuralBreadcrumb } from "./shared/StructuralBreadcrumb";
 import { AppLayout } from "../layouts/AppLayout";
 import "../styles/responsive-breakpoints.css";
 import "../styles/responsive-shell.css";
@@ -43,6 +44,8 @@ export function Shell({ auth, children }: Props) {
                 ultra-wide monitors (>=1920px); a no-op below that width.
                 C-05: flex column fill + internal scroll so documentElement does not grow. */}
             <UltraWideContainer className="flex min-h-0 min-w-0 w-full max-w-full flex-1 flex-col overflow-y-auto">
+              {/* ROUND 367.9 — one structural breadcrumb for every non-Accounting Shell route. */}
+              <StructuralBreadcrumb />
               {children}
             </UltraWideContainer>
             <footer className="mt-2 flex shrink-0 justify-end border-t border-gray-200/80 py-2">

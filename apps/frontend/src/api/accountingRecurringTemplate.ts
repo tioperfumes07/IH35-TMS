@@ -68,6 +68,7 @@ export type CreateRecurringExpenseTemplateInput = {
 export function createAccountingRecurringExpenseTemplate(input: CreateRecurringExpenseTemplateInput) {
   return apiRequest<{ id: string }>(`/api/v1/accounting/recurring-templates`, {
     method: "POST",
-    body: JSON.stringify({ ...input, kind: "expense" }),
+    // apiRequest JSON.stringifies body — pass the object, never a pre-stringified string.
+    body: { ...input, kind: "expense" },
   });
 }
