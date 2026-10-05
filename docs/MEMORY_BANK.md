@@ -1513,7 +1513,9 @@ nobody fetched is not an alert. Two bank-match defects were joined to D-6 and di
 2. The window was recency (`created_at >= now()-7d`). A1 is AGE: `transaction_date` is 7+
    Chicago days old AND still unmatched.
 
-Permanent writer: integrity-alert cron (`integrity-alert-engine.cron`, withJobLease) upserts
+Permanent writer: integrity-alert cron (`integrity-alert-engine.cron`, withJobLease via
+`wrapBackgroundJobTick(..., { leaseSeconds: JOB_LEASE_SECONDS })` — standing order point 9
+single-fire; landed 2026-10-05 so both Render instances cannot double-page Owners) upserts
 ONE digest alert per company (`subject_key = bank_unmatched_7d:company`). 831 per-line
 alerts were rejected (orphan_bill LIMIT-50 lesson). Zero aged unmatched auto-resolves the
 event + alert. New alerts page Owner/Administrator via existing
