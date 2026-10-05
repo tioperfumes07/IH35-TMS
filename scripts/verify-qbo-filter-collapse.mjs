@@ -193,8 +193,11 @@ if (!workOrdersTable.includes('<EntityPicker') || !workOrdersTable.includes('kin
 }
 
 const manualJeList = read("apps/frontend/src/pages/accounting/ManualJEListPage.tsx");
-if (!manualJeList.includes("listCoaAccountsForJe") || !manualJeList.includes("<ReferenceSelect")) {
-  failures.push("ManualJEListPage: account filter must use the entity-scoped chart picker");
+if (!manualJeList.includes("listCoaAccountsForJe") || !/label="Account"/.test(manualJeList) || !manualJeList.includes("<MultiSelectDropdown")) {
+  failures.push("ManualJEListPage: account filter must use the entity-scoped multi-select chart picker");
+}
+if (/<(ReferenceSelect|SelectCombobox|select)\b[\s\S]{0,800}All accounts/.test(manualJeList)) {
+  failures.push("ManualJEListPage: account filter must not regress to a single-select All-accounts control");
 }
 
 const accountRegister = read("apps/frontend/src/pages/accounting/AccountRegisterPage.tsx");

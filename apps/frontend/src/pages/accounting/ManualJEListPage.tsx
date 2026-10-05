@@ -17,7 +17,6 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { visibleDocumentLabel } from "../../lib/entity-label";
 import { VoidedRowBadge, voidedRowClassName } from "../../components/accounting/VoidedRowIndicator";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { coaAccountReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
@@ -137,7 +136,7 @@ export function ManualJEListPage() {
   const [sourceFilter, setSourceFilter] = useState<string[]>([]);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const [accountId, setAccountId] = useState("");
+  const [accountIds, setAccountIds] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const statusParam = statusFilter.length === 1 ? (statusFilter[0] as JournalEntryStatus) : undefined;
   const sourceParam = sourceFilter.length === 1 ? (sourceFilter[0] as JournalEntrySource) : undefined;
@@ -171,17 +170,17 @@ export function ManualJEListPage() {
   // Reset to the first page whenever a filter changes so offset paging stays coherent.
   useEffect(() => {
     setPage(0);
-  }, [statusParam, sourceParam, fromDate, toDate, accountId]);
+  }, [statusParam, sourceParam, fromDate, toDate, accountIds]);
 
   const entriesQuery = useQuery({
-    queryKey: ["journal-entries", companyId, statusParam, sourceParam, fromDate, toDate, accountId, page],
+    queryKey: ["journal-entries", companyId, statusParam, sourceParam, fromDate, toDate, accountIds, page],
     queryFn: () =>
       listJournalEntries(companyId, {
         status: statusParam,
         source: sourceParam,
         from_date: fromDate || undefined,
         to_date: toDate || undefined,
-        account_id: accountId || undefined,
+        account_ids: accountIds.length ? accountIds : undefined,
         limit: PAGE_SIZE,
         offset: page * PAGE_SIZE,
       }),
@@ -304,7 +303,7 @@ export function ManualJEListPage() {
     (statusFilter.length === 1 && statusFilter[0] !== "posted" ? 1 : 0) +
     (statusFilter.length === 0 || statusFilter.length === 2 ? 1 : 0) +
     (fromDate || toDate ? 1 : 0) +
-    (accountId ? 1 : 0);
+    (accountIds.length ? 1 : 0);
 
   const filterBar = (
     <MoneyListToolbar
@@ -319,7 +318,7 @@ export function ManualJEListPage() {
         setStatusFilter(["posted"]);
         setFromDate("");
         setToDate("");
-        setAccountId("");
+        setAccountIds([]);
         setSearch("");
       }}
     >
@@ -343,16 +342,14 @@ export function ManualJEListPage() {
         onChange={setSourceFilter}
         allLabel="All sources"
       />
-      <ReferenceSelect
-        value={accountId || null}
-        onChange={(next) => setAccountId(next ?? "")}
+      <MultiSelectDropdown
+        label="Account"
         options={accountOptions}
-        createKind="account"
-        operatingCompanyId={companyId}
-        placeholder="All accounts"
-        disabled={!companyId}
-        loading={accountsQuery.isLoading}
-        onOptionCreated={() => void accountsQuery.refetch()}
+        selected={accountIds}
+        onChange={setAccountIds}
+        allLabel="All accounts"
+        searchable
+        data-testid="manual-je-filter-account"
       />
       <DateRangePresets from={fromDate} to={toDate} onChange={(next) => { setFromDate(next.from); setToDate(next.to); }} data-testid="manual-je-date-range" />
     </MoneyListToolbar>

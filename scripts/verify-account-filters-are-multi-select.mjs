@@ -30,10 +30,10 @@ const RECLASSIFY = "apps/frontend/src/pages/accounting/ReclassifyTransactionsPag
 
 /**
  * SHRINK-ONLY — pages that still expose a single-select "All accounts" filter.
- * Measured 2026-10-05 after converting BankingObligationReconcile + Plaid company tx.
+ * Measured 2026-10-05 after converting Audit Trail + Manual JE (remainder).
  * May only fall.
  */
-const SINGLE_SELECT_BASELINE = 2;
+const SINGLE_SELECT_BASELINE = 0;
 
 const ALL_ACCOUNTS_SELECT_RE =
   /<(SelectCombobox|ReferenceSelect|select)\b[\s\S]{0,1200}All accounts/;

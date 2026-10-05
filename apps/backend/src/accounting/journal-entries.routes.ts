@@ -60,6 +60,11 @@ const listQuerySchema = companyQuerySchema.extend({
   source: sourceSchema.optional(),
   status: statusSchema.optional(),
   account_id: z.string().uuid().optional(),
+  account_ids: z
+    .preprocess((value) => {
+      if (typeof value !== "string" || !value.trim()) return undefined;
+      return value.split(",").map((id) => id.trim()).filter(Boolean);
+    }, z.array(z.string().uuid()).optional()),
   from_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   to_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
@@ -159,6 +164,7 @@ export async function registerJournalEntryRoutes(app: FastifyInstance) {
       source: query.data.source,
       status: query.data.status,
       account_id: query.data.account_id,
+      account_ids: query.data.account_ids,
       from_date: query.data.from_date,
       to_date: query.data.to_date,
       limit: query.data.limit,

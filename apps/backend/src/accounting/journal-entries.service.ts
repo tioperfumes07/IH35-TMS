@@ -933,6 +933,7 @@ export async function listJournalEntries(input: {
   source?: JournalEntrySource;
   status?: JournalEntryStatus;
   account_id?: string;
+  account_ids?: string[];
   from_date?: string;
   to_date?: string;
   limit: number;
@@ -958,12 +959,18 @@ export async function listJournalEntries(input: {
       values.push(input.to_date);
       filters.push(`je.entry_date <= $${values.length}::date`);
     }
-    if (input.account_id) {
-      values.push(input.account_id);
+    const accountIds = [
+      ...new Set([
+        ...(input.account_ids ?? []),
+        ...(input.account_id ? [input.account_id] : []),
+      ]),
+    ];
+    if (accountIds.length) {
+      values.push(accountIds);
       filters.push(`EXISTS (
         SELECT 1 FROM accounting.journal_entry_postings p
         WHERE p.journal_entry_uuid = je.id
-          AND p.account_id = $${values.length}
+          AND p.account_id = ANY($${values.length}::uuid[])
       )`);
     }
     values.push(input.limit, input.offset);
