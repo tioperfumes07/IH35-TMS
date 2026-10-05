@@ -13,6 +13,7 @@ import { assertNoHistoricalJournalCoverage } from "../driver-finance/settlement-
 // are atomic. This module does not open its own transaction and does not modify the posting engine.
 
 import { releaseBankLineMatchesWhere } from "../banking/bank-line-release.js";
+import { BANK_LINE_DOCUMENT_POINTER_COLUMNS } from "../banking/bank-line-match-pointer.js";
 import { insertPostingLineWithSpineIfNew } from "./posting-line-writer.js";
 import { boundJeMemo } from "./je-memo.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -671,13 +672,10 @@ export async function unmatchBankTransactionById(
  * through a matched_* pointer, in the same transaction, before the 26 document-side refusals
  * (202615360600, disarmed by 202615360700 until this held) can see a dead link. The release is recorded first
  * (banking.release_bank_line_matches — LAW 363.9, the match is kept), then the line goes back to For review with the
- * shared reset. The column is checked against the closed list of the 13 pointers, never interpolated from input.
+ * shared reset. The column is the ENG-MATCH list (14 pointers including matched_deposit_id), never a second copy
+ * and never interpolated from input.
  */
-const RELEASABLE_POINTER_COLUMNS = new Set([
-  "matched_load_id", "matched_bill_id", "matched_settlement_id", "matched_expense_id", "matched_transfer_id",
-  "matched_payment_id", "matched_bill_payment_id", "matched_journal_entry_id", "matched_factoring_advance_id",
-  "matched_invoice_id", "matched_fuel_transaction_id", "matched_relay_fuel_transaction_id", "matched_advance_id",
-]);
+const RELEASABLE_POINTER_COLUMNS = new Set<string>(BANK_LINE_DOCUMENT_POINTER_COLUMNS);
 export async function releaseBankLinesNamingDocument(
   client: QueryableClient,
   params: { operatingCompanyId: string; pointerColumn: string; documentId: string },

@@ -19,6 +19,8 @@ const FILES = {
   reconcile: "apps/backend/src/banking/obligation-reconcile.routes.ts",
   kpiGuard: "scripts/verify-factoring-banking-kpis-tie-to-ledger.mjs",
   feedLinks: "scripts/lib/bank-feed-state-machine.mjs",
+  voidReleaser: "apps/backend/src/accounting/void.service.ts",
+  voidGuard: "scripts/verify-every-void-releases-its-bank-lines.mjs",
 };
 
 function read(rel) {
@@ -95,6 +97,14 @@ function liveCheck() {
   }
   if (!feedLinks.includes("matched_deposit_id")) {
     errors.push(`${FILES.feedLinks} LINK_COLUMNS must include matched_deposit_id (ROUND 373.4)`);
+  }
+  const voidReleaser = read(FILES.voidReleaser);
+  const voidGuard = read(FILES.voidGuard);
+  if (!voidReleaser.includes("BANK_LINE_DOCUMENT_POINTER_COLUMNS")) {
+    errors.push(`${FILES.voidReleaser} RELEASABLE_POINTER_COLUMNS must be the helper list (deposit was dropped from a second copy)`);
+  }
+  if (!voidGuard.includes("matched_deposit_id") || !voidGuard.includes("accounting.deposits")) {
+    errors.push(`${FILES.voidGuard} POINTER/DOCUMENTS must include accounting.deposits / matched_deposit_id`);
   }
   if (kpiGuard.includes("review_state = 'for_review' AND is_credit")) {
     errors.push(`${FILES.kpiGuard} still ties unmatched KPI to review_state`);

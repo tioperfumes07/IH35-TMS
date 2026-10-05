@@ -1,10 +1,10 @@
 # NOW-CURSOR — 2026-10-04T23:35Z
 
-**SHIPPING:** ENG-MATCH — unmatched is a live document pointer (not For-review / not CATEGORIZE). This PR.
+**SHIPPING:** ENG-REVERSE — void releaser is the 14-pointer helper list (deposit included).
 
-**CLOSED tip:** ENG-7D #25440 · 367.9 #25451 · 363-CUR-B/C #25457/#25468–#25473. Cursor open PRs = 0.
+**CLOSED tip:** ENG-MATCH #25474 `e6f85b273e` · ENG-7D #25440 · 367.9 #25451 · 363-CUR-B/C #25457/#25468–#25473.
 
-**NEXT after merge:** full engine ten of ten. No Chrome. No ACCT-F406 data corrections.
+**NEXT:** Fast Merge this PR, then next ten-of-ten hole. No Chrome. No ACCT-F406 data corrections.
 
 # NOW — CURSOR — standing engine ENG-CF (D-4) then ENG-7D / ENG-MATCH
 
