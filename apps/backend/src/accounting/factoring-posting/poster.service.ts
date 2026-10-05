@@ -1730,6 +1730,35 @@ export async function reverseFactoringAdvanceEventInClientTx(
       reversal_journal_entry_id: reversal.reversal_journal_entry_id,
     });
   }
+  // ACCT-F409 (CC-2 2026-10-04) — the advance's DEPOSIT SWEEP (Dr bank / Cr the clearing account, source
+  // 'factoring_advance_deposit', id = the advance) is posted by the generic engine when the advance is matched to its bank
+  // line, and is NOT a lifecycle posting key — so voiding a swept advance reversed its funding legs and left the sweep
+  // standing: the clearing account went negative by the advance on every void (same defect as a customer-payment void).
+  // Reverse it here with the same primitive, on the same client, in the same transaction.
+  const sweeps = await client.query<{ je: string }>(
+    `SELECT DISTINCT je.id::text AS je
+       FROM accounting.journal_entry_postings p
+       JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
+      WHERE p.operating_company_id = $1::uuid
+        AND p.source_transaction_type = 'factoring_advance_deposit' AND p.source_transaction_id = $2
+        AND je.status = 'posted' AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL`,
+    [input.operating_company_id, input.factoring_advance_id]
+  );
+  for (const sw of sweeps.rows) {
+    const { reversal } = await reverseJournalEntryNoFlip(client, {
+      operatingCompanyId: input.operating_company_id,
+      journalEntryId: sw.je,
+      reason: `${input.reason} — reverses its deposit sweep`,
+      actorUserId: input.actor_user_id,
+    });
+    if (!reversal.reversal_journal_entry_id) throw new Error("factoring_advance_sweep_reversal_journal_entry_id_missing");
+    allReversed.push({
+      source_transaction_type: "factoring_advance_deposit",
+      event_key: "deposit_sweep",
+      original_journal_entry_id: sw.je,
+      reversal_journal_entry_id: reversal.reversal_journal_entry_id,
+    });
+  }
   // Funding is the canonical "primary" reversal for the two backward-compatible top-level fields —
   // it is always present (findAllLifecyclePostingKeyJes only returns keys that exist, and funding is
   // written by the same posting call that creates the advance's liability in the first place) unless
