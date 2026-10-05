@@ -48,7 +48,7 @@ function loadBaseline() {
  * @param {Array<{samsara_driver_id: string, local_driver_id: string|null, local_vendor_id: string|null, driver_deactivated: boolean}>} rows
  * @returns {{hardProblems: string[], deactivatedCount: number, deactivatedSamples: string[]}}
  */
-export function checkMappingIntegrity(rows) {
+export function checkMappingIntegrity(rows, cutoff = null) {
   const hardProblems = [];
 
   // Failure 1: one samsara_driver_id, two or more rows (this table is one-row-per-profile, so
@@ -78,12 +78,38 @@ export function checkMappingIntegrity(rows) {
   }
 
   // Failure 3 (ratcheted, not hard): mapped to a deactivated driver.
+  // 2026-10-05: the ceiling exists to catch "a NEW mapping was made to a driver who is not currently active". The
+  // 05:15 auto-deactivation job retires drivers who ALREADY had a mapping (Concepcion Cordova 424a3bb9 et al., 10-05),
+  // which raised the count with no mapping made at all. So, measured from timestamps:
+  //   - a mapping ROW created after the cutoff AND after its driver's deactivated_at = a new mapping onto an inactive
+  //     driver -> HARD (rows created before the cutoff, e.g. the 2026-09-05 bulk import, are the baselined debt);
+  //   - a driver deactivated after the baseline cutoff, mapped before = retired by deactivation -> reported for a
+  //     human re-map (NEVER AUTO-MAP), not counted against the ceiling;
+  //   - everything else (inactive at the cutoff, or no deactivated_at) = the baselined debt -> ratcheted as before.
   const deactivated = rows.filter((r) => r.local_driver_id && r.driver_deactivated);
+  const at = (v) => (v == null ? null : new Date(v).getTime());
+  const cut = at(cutoff);
+  const retired = [];
+  const ratcheted = [];
+  for (const r of deactivated) {
+    const deact = at(r.deactivated_at);
+    const made = at(r.mapping_created_at);
+    if (deact != null && made != null && made > deact && (cut == null || made > cut)) {
+      hardProblems.push(
+        `samsara_driver_id ${r.samsara_driver_id} was mapped (row created ${new Date(made).toISOString()}) to driver ${r.local_driver_id} AFTER that driver was deactivated (${new Date(deact).toISOString()}) -- NEVER AUTO-MAP onto an inactive driver`
+      );
+    } else if (cut != null && deact != null && deact > cut) {
+      retired.push(r);
+    } else {
+      ratcheted.push(r);
+    }
+  }
 
   return {
     hardProblems,
-    deactivatedCount: deactivated.length,
-    deactivatedSamples: deactivated.slice(0, 20).map((r) => `samsara_driver_id ${r.samsara_driver_id} -> driver ${r.local_driver_id} (deactivated)`),
+    deactivatedCount: ratcheted.length,
+    deactivatedSamples: ratcheted.slice(0, 20).map((r) => `samsara_driver_id ${r.samsara_driver_id} -> driver ${r.local_driver_id} (deactivated)`),
+    retiredByDeactivation: retired.map((r) => `samsara_driver_id ${r.samsara_driver_id} -> driver ${r.local_driver_id} (deactivated ${new Date(r.deactivated_at).toISOString()}, after the baseline; needs a human re-map)`),
   };
 }
 
@@ -128,7 +154,8 @@ async function live() {
     const res = await client.query(
       `
         SELECT sd.samsara_driver_id, sd.local_driver_id::text, sd.local_vendor_id::text,
-               (d.status NOT IN ('Active', 'Probation')) AS driver_deactivated
+               (d.status NOT IN ('Active', 'Probation')) AS driver_deactivated,
+               d.deactivated_at, sd.created_at AS mapping_created_at
           FROM integrations.samsara_drivers sd
           LEFT JOIN mdata.drivers d ON d.id = sd.local_driver_id
          WHERE sd.operating_company_id = $1::uuid
@@ -139,8 +166,12 @@ async function live() {
 
     const total = res.rows.length;
     const mapped = res.rows.filter((r) => r.local_driver_id || r.local_vendor_id).length;
-    const { hardProblems, deactivatedCount, deactivatedSamples } = checkMappingIntegrity(res.rows);
     const baseline = loadBaseline();
+    const { hardProblems, deactivatedCount, deactivatedSamples, retiredByDeactivation } = checkMappingIntegrity(
+      res.rows,
+      baseline?.measured_at ?? null
+    );
+    for (const r of retiredByDeactivation) console.log(`  · ${r}`);
     const ratchet = evaluateDeactivatedRatchet(deactivatedCount, baseline);
 
     if (hardProblems.length > 0) {
@@ -204,7 +235,7 @@ function selftest() {
     },
   ];
   let caught = 0;
-  const totalCases = structuralCases.length + 5;
+  let totalCases = structuralCases.length + 5;
   for (const c of structuralCases) {
     const verdict = checkMappingIntegrity(c.rows);
     if (verdict.hardProblems.length === c.wantHard && verdict.deactivatedCount === c.wantDeactivated) {
@@ -231,6 +262,25 @@ function selftest() {
       console.error(`${LABEL}: SELFTEST FAIL — ratchet case "${c.name}" expected ok=${c.wantOk}, got ok=${verdict.ok} (${verdict.message})`);
     }
   }
+
+  // 2026-10-05 timestamp arms: a mapping row made AFTER the deactivation is HARD; a driver deactivated after the
+  // cutoff with an older mapping is retired-by-deactivation (not ratcheted); inactive at the cutoff stays ratcheted.
+  const CUT = "2026-09-24T00:30:00Z";
+  const m = (id, deact, made) => ({ samsara_driver_id: id, local_driver_id: "d" + id, local_vendor_id: null, driver_deactivated: true, deactivated_at: deact, mapping_created_at: made });
+  const tsCases = [
+    { name: "new mapping onto an inactive driver is HARD", rows: [m("1", "2026-09-10T00:00:00Z", "2026-10-01T00:00:00Z")], want: { hard: 1, count: 0, retired: 0 } },
+    { name: "deactivated after the cutoff, mapped before -> retired, not ratcheted", rows: [m("2", "2026-10-05T05:15:00Z", "2026-09-05T00:00:00Z")], want: { hard: 0, count: 0, retired: 1 } },
+    { name: "inactive at the cutoff -> ratcheted debt", rows: [m("3", "2026-09-10T00:00:00Z", "2026-09-05T00:00:00Z")], want: { hard: 0, count: 1, retired: 0 } },
+    { name: "a pre-cutoff row onto an inactive driver is the baselined debt", rows: [m("5", "2026-07-30T00:00:00Z", "2026-09-05T00:00:00Z")], want: { hard: 0, count: 1, retired: 0 } },
+    { name: "no deactivated_at -> ratcheted debt", rows: [m("4", null, "2026-09-05T00:00:00Z")], want: { hard: 0, count: 1, retired: 0 } },
+  ];
+  for (const c of tsCases) {
+    const r = checkMappingIntegrity(c.rows, CUT);
+    const got = { hard: r.hardProblems.length, count: r.deactivatedCount, retired: r.retiredByDeactivation.length };
+    if (got.hard === c.want.hard && got.count === c.want.count && got.retired === c.want.retired) caught++;
+    else console.error(`${LABEL}: SELFTEST FAIL — "${c.name}" expected ${JSON.stringify(c.want)}, got ${JSON.stringify(got)}`);
+  }
+  totalCases += tsCases.length;
 
   if (caught !== totalCases) {
     console.error(`${LABEL}: SELFTEST FAILED ${caught}/${totalCases} planted case(s) matched expected verdict.`);
