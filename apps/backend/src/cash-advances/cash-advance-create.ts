@@ -186,7 +186,7 @@ export async function createDriverCashAdvanceCore(
         SELECT gross_amount_cents
         FROM driver_finance.driver_bills
         WHERE id = $1
-          AND operating_company_id = $2
+          AND operating_company_id = $2::uuid
         LIMIT 1
       `,
       [body.linked_driver_bill_id, companyId]
@@ -198,7 +198,7 @@ export async function createDriverCashAdvanceCore(
       `
         SELECT COALESCE(SUM(amount), 0) AS covered
         FROM driver_finance.driver_advances
-        WHERE operating_company_id = $1
+        WHERE operating_company_id = $1::uuid
           AND linked_driver_bill_id = $2
           AND voided_at IS NULL
       `,

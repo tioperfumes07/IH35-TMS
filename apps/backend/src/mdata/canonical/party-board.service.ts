@@ -36,7 +36,7 @@ export async function readCustomerBoard(client: Q, oc: string, range: BoardRange
                 sum(amount_open_cents) FILTER (WHERE current_date - due_date BETWEEN 61 AND 90) AS a_61_90,
                 sum(amount_open_cents) FILTER (WHERE current_date - due_date > 90) AS a_90
            FROM accounting.invoices
-          WHERE operating_company_id = $1 AND voided_at IS NULL AND status <> 'void' AND issue_date >= ${from}
+          WHERE operating_company_id = $1::uuid AND voided_at IS NULL AND status <> 'void' AND issue_date >= ${from}
           GROUP BY customer_id)
        SELECT c.id, c.customer_name AS name, c.status::text AS status, c.deactivated_at, c.factoring_eligible,
               fv.vendor_name AS factor_name,
@@ -47,7 +47,7 @@ export async function readCustomerBoard(client: Q, oc: string, range: BoardRange
          FROM mdata.customers c
          LEFT JOIN inv ON inv.customer_id = c.id
          LEFT JOIN mdata.vendors fv ON fv.id = c.factoring_company_vendor_id
-        WHERE c.operating_company_id = $1
+        WHERE c.operating_company_id = $1::uuid
         ORDER BY coalesce(inv.open, 0) DESC, coalesce(inv.billed, 0) DESC, c.customer_name`,
       [oc]
     )
@@ -64,7 +64,7 @@ export async function readCustomerBoard(client: Q, oc: string, range: BoardRange
     range,
     kpis: {
       with_transactions: withTx.length, in_the_book: rows.length, open_invoices: (await client.query(
-        `SELECT count(*)::int AS n FROM accounting.invoices WHERE operating_company_id = $1 AND voided_at IS NULL AND status <> 'void'
+        `SELECT count(*)::int AS n FROM accounting.invoices WHERE operating_company_id = $1::uuid AND voided_at IS NULL AND status <> 'void'
            AND amount_open_cents > 0 AND issue_date >= ${from}`, [oc])).rows[0].n,
       billed_cents: sum("billed_cents"), ar_open_cents: sum("open_cents"), collected_cents: sum("collected_cents"),
       invoices: sum("invoices"), invoices_with_payment: sum("paid_invoices"),
@@ -87,13 +87,13 @@ export async function readVendorBoard(client: Q, oc: string, range: BoardRange) 
          SELECT e.vendor_uuid AS vendor_id, count(*)::int AS txns, sum(e.total_amount_cents) AS spend, max(e.transaction_date) AS last_paid,
                 mode() WITHIN GROUP (ORDER BY pa.account_name) AS pays_through
            FROM accounting.expenses e LEFT JOIN catalogs.accounts pa ON pa.id = e.payment_account_uuid
-          WHERE e.operating_company_id = $1 AND e.voided_at IS NULL AND e.vendor_uuid IS NOT NULL AND e.transaction_date >= ${from}
+          WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND e.vendor_uuid IS NOT NULL AND e.transaction_date >= ${from}
           GROUP BY e.vendor_uuid),
        cat AS (
          SELECT DISTINCT ON (e.vendor_uuid) e.vendor_uuid AS vendor_id, a.account_name AS category
            FROM accounting.expenses e JOIN accounting.expense_lines el ON el.expense_id = e.id
            LEFT JOIN catalogs.accounts a ON a.id = el.expense_account_uuid
-          WHERE e.operating_company_id = $1 AND e.voided_at IS NULL AND e.vendor_uuid IS NOT NULL AND e.transaction_date >= ${from}
+          WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND e.vendor_uuid IS NOT NULL AND e.transaction_date >= ${from}
           GROUP BY e.vendor_uuid, a.account_name
           ORDER BY e.vendor_uuid, sum(coalesce(el.amount_cents, round(el.amount * 100))) DESC NULLS LAST),
        bills AS (
@@ -101,7 +101,7 @@ export async function readVendorBoard(client: Q, oc: string, range: BoardRange) 
                 sum(b.amount_cents - coalesce(b.paid_cents, 0)) FILTER (WHERE b.amount_cents - coalesce(b.paid_cents, 0) > 0) AS open_cents,
                 count(*) FILTER (WHERE b.amount_cents - coalesce(b.paid_cents, 0) > 0)::int AS open_bills
            FROM accounting.bills b
-          WHERE b.operating_company_id = $1 AND b.voided_at IS NULL AND b.revoked_at IS NULL AND b.status <> 'void'
+          WHERE b.operating_company_id = $1::uuid AND b.voided_at IS NULL AND b.revoked_at IS NULL AND b.status <> 'void'
           GROUP BY 1)
        SELECT v.id, v.vendor_name AS name, v.deactivated_at, coalesce(cat.category, v.vendor_category, v.vendor_type::text) AS category,
               coalesce(exp.txns, 0) AS txns, coalesce(exp.spend, 0) AS spend_cents, exp.last_paid, exp.pays_through,
@@ -110,7 +110,7 @@ export async function readVendorBoard(client: Q, oc: string, range: BoardRange) 
          LEFT JOIN exp ON exp.vendor_id = v.id
          LEFT JOIN cat ON cat.vendor_id = v.id
          LEFT JOIN bills ON bills.vendor_key = v.id::text
-        WHERE v.operating_company_id = $1
+        WHERE v.operating_company_id = $1::uuid
         ORDER BY coalesce(exp.spend, 0) DESC, coalesce(bills.open_cents, 0) DESC, v.vendor_name`,
       [oc]
     )
@@ -126,7 +126,7 @@ export async function readVendorBoard(client: Q, oc: string, range: BoardRange) 
               coalesce(sum(coalesce(el.amount_cents, round(el.amount * 100))), 0) AS total
          FROM accounting.expenses e JOIN accounting.expense_lines el ON el.expense_id = e.id
          LEFT JOIN catalogs.accounts a ON a.id = el.expense_account_uuid
-        WHERE e.operating_company_id = $1 AND e.voided_at IS NULL AND e.vendor_uuid IS NOT NULL AND e.transaction_date >= ${from}`,
+        WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND e.vendor_uuid IS NOT NULL AND e.transaction_date >= ${from}`,
       [oc]
     )
   ).rows[0];
@@ -134,7 +134,7 @@ export async function readVendorBoard(client: Q, oc: string, range: BoardRange) 
     await client.query(
       `SELECT count(*)::int AS n, coalesce(sum(total_amount_paid_cents), 0) AS cents, min(relay_created_at) AS since
          FROM integrations.relay_fuel_transactions
-        WHERE operating_company_id = $1 AND voided_at IS NULL AND coalesce(is_active, true) AND posted_to_gl IS NOT TRUE`,
+        WHERE operating_company_id = $1::uuid AND voided_at IS NULL AND coalesce(is_active, true) AND posted_to_gl IS NOT TRUE`,
       [oc]
     )
   ).rows[0];

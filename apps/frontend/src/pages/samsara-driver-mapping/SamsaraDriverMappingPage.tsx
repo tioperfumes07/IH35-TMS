@@ -130,7 +130,7 @@ export function SamsaraDriverMappingPage() {
 
   // Silent-cap law: the API limits each pane to 500 rows — say so when the cap binds.
   const leftCapped =
-    (driversQuery.data?.targets.length ?? 0) >= 500 || (vendorsQuery.data?.targets.length ?? 0) >= 500;
+    (driversQuery.data?.targets?.length ?? 0) >= 500 || (vendorsQuery.data?.targets?.length ?? 0) >= 500;
 
   const profilesQuery = useQuery({
     queryKey: ["samsara", "driver-mapping", "profiles", companyId, "all", rightSearch],
@@ -532,7 +532,7 @@ export function SamsaraDriverMappingPage() {
               </table>
               {(() => {
                 const total = profilesQuery.data?.total ?? profilesQuery.data?.scope_total;
-                const capped = (profilesQuery.data?.profiles.length ?? 0) >= 500 || profilesQuery.data?.next_cursor != null;
+                const capped = (profilesQuery.data?.profiles?.length ?? 0) >= 500 || profilesQuery.data?.next_cursor != null;
                 if (total != null && rightRows.length < total) {
                   return (
                     <div className="sdm-empty" data-testid="sdm-right-capped">

@@ -201,7 +201,7 @@ export async function createExpenseFromFuelTransaction(
             location_city, location_state, archived_at::text,
             gross_cost::text, discount_amount::text, fee_amount::text
        FROM fuel.fuel_transactions
-      WHERE id = $1 AND operating_company_id = $2`,
+      WHERE id = $1 AND operating_company_id = $2::uuid`,
     [input.fuel_transaction_id, input.operating_company_id],
   );
   const fuel = fuelRes.rows[0];
@@ -226,7 +226,7 @@ export async function createExpenseFromFuelTransaction(
   const existing = await client.query<{ id: string; expense_number: string | null }>(
     `SELECT id::text, expense_number
        FROM accounting.expenses
-      WHERE operating_company_id = $1 AND source_fuel_transaction_id = $2 AND voided_at IS NULL
+      WHERE operating_company_id = $1::uuid AND source_fuel_transaction_id = $2 AND voided_at IS NULL
       LIMIT 1`,
     [input.operating_company_id, fuel.id],
   );
@@ -355,7 +355,7 @@ export async function createExpenseFromFuelTransaction(
        FROM accounting.transaction_source_links l
        JOIN accounting.journal_entry_postings p ON p.id = l.journal_entry_posting_id
        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
-      WHERE l.operating_company_id = $1
+      WHERE l.operating_company_id = $1::uuid
         AND l.linked_object_type = 'fuel_event'
         AND l.linked_object_id = $2::text
         AND p.journal_entry_uuid IS NOT NULL

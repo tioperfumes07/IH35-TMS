@@ -170,7 +170,7 @@ export async function fetchUnifiedFleetList(
          AND work_order.operating_company_id = estimate.operating_company_id
          AND work_order.voided_at IS NULL
         WHERE estimate.unit_id = mdata.units.id
-          AND estimate.operating_company_id = $${truckCompanyParamIndex}
+          AND estimate.operating_company_id = $${truckCompanyParamIndex}::uuid
           AND estimate.estimate_status IN ('open', 'awaiting_approval', 'approved')
         ORDER BY estimate.estimated_completion_date ASC NULLS LAST, estimate.refreshed_at DESC
         LIMIT 1

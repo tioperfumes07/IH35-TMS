@@ -26,8 +26,8 @@ export async function readDriverOverview(client: Q, oc: string, driverId: string
     `SELECT d.id, d.first_name, d.last_name, d.status::text AS status, d.phone, d.cdl_state, d.cdl_number, d.cdl_expires_at,
             d.dot_medical_expires_at, d.hire_date,
             (SELECT u.unit_number FROM telematics.vehicle_driver_assignments a JOIN mdata.units u ON u.id = a.unit_id
-              WHERE a.operating_company_id = $1 AND a.driver_id = d.id ORDER BY (a.ended_at IS NULL) DESC, a.started_at DESC LIMIT 1) AS unit
-       FROM mdata.drivers d WHERE d.id = $2 AND d.operating_company_id = $1`, [oc, driverId])).rows[0];
+              WHERE a.operating_company_id = $1::uuid AND a.driver_id = d.id ORDER BY (a.ended_at IS NULL) DESC, a.started_at DESC LIMIT 1) AS unit
+       FROM mdata.drivers d WHERE d.id = $2 AND d.operating_company_id = $1::uuid`, [oc, driverId])).rows[0];
   if (!d) return null;
   const q = async (sql: string, extra: unknown[] = []) => (await client.query(sql, [oc, driverId, ...extra])).rows;
 
@@ -41,12 +41,12 @@ export async function readDriverOverview(client: Q, oc: string, driverId: string
             (SELECT coalesce(sum(sl.amount), 0) FROM driver_finance.settlement_lines sl WHERE sl.settlement_id = s.id AND sl.voided_at IS NULL AND coalesce(sl.is_active, true) AND sl.line_type IN ${ADDITIONAL}) AS additional,
             (SELECT coalesce(sum(abs(sl.amount)), 0) FROM driver_finance.settlement_lines sl WHERE sl.settlement_id = s.id AND sl.voided_at IS NULL AND coalesce(sl.is_active, true) AND sl.line_type IN ${DEDUCTION}) AS deductions
        FROM driver_finance.driver_settlements s
-      WHERE s.operating_company_id = $1 AND s.driver_id = $2 AND s.voided_at IS NULL AND s.reversed_at IS NULL AND coalesce(s.is_sample_data, false) = false
+      WHERE s.operating_company_id = $1::uuid AND s.driver_id = $2 AND s.voided_at IS NULL AND s.reversed_at IS NULL AND coalesce(s.is_sample_data, false) = false
       ORDER BY coalesce(s.period_end, s.created_at::date) DESC LIMIT 12`)).map((r) => ({
     id: r.id, display_id: r.display_id, status: r.status, closed_at: r.closed_at, loads: n(r.loads), miles: Math.round(n(r.miles)),
     line_haul_cents: cents(r.line_haul), additional_cents: cents(r.additional), deductions_cents: cents(r.deductions), net_cents: cents(r.net_pay),
   }));
-  const settlementCount = n((await q(`SELECT count(*) AS c FROM driver_finance.driver_settlements s WHERE s.operating_company_id = $1 AND s.driver_id = $2 AND s.voided_at IS NULL AND s.reversed_at IS NULL`))[0].c);
+  const settlementCount = n((await q(`SELECT count(*) AS c FROM driver_finance.driver_settlements s WHERE s.operating_company_id = $1::uuid AND s.driver_id = $2 AND s.voided_at IS NULL AND s.reversed_at IS NULL`))[0].c);
 
   // Additional payments (90 days): every extra / detention / reimbursement line, with who approved it
   const additional = (await q(
@@ -54,7 +54,7 @@ export async function readDriverOverview(client: Q, oc: string, driverId: string
             s.id AS settlement_id, s.display_id AS settlement, coalesce(nullif(trim(coalesce(u.first_name, '') || ' ' || coalesce(u.last_name, '')), ''), u.email) AS approved_by
        FROM driver_finance.settlement_lines sl JOIN driver_finance.driver_settlements s ON s.id = sl.settlement_id
        LEFT JOIN mdata.loads l ON l.id = sl.load_id LEFT JOIN identity.users u ON u.id = sl.approved_by
-      WHERE s.operating_company_id = $1 AND s.driver_id = $2 AND s.voided_at IS NULL AND s.reversed_at IS NULL AND sl.voided_at IS NULL
+      WHERE s.operating_company_id = $1::uuid AND s.driver_id = $2 AND s.voided_at IS NULL AND s.reversed_at IS NULL AND sl.voided_at IS NULL
         AND coalesce(sl.is_active, true) AND sl.line_type IN ${ADDITIONAL} AND sl.created_at >= now() - interval '90 days'
       ORDER BY sl.created_at DESC`)).map((r) => ({ ...r, amount_cents: cents(r.amount) }));
 
@@ -65,7 +65,7 @@ export async function readDriverOverview(client: Q, oc: string, driverId: string
             coalesce(c.resolution, c.status) AS outcome, c.chargeback_cents, c.severity
        FROM safety.complaints c LEFT JOIN catalogs.complaint_types ct ON ct.id = c.complaint_type_id
        LEFT JOIN mdata.loads l ON l.id = c.load_id LEFT JOIN mdata.customers cu ON cu.id = c.complainant_customer_id
-      WHERE c.operating_company_id = $1 AND c.respondent_driver_id = $2 AND c.voided_at IS NULL
+      WHERE c.operating_company_id = $1::uuid AND c.respondent_driver_id = $2 AND c.voided_at IS NULL
         AND coalesce(c.complaint_date::timestamptz, c.filed_at, c.created_at) >= now() - interval '90 days'
       ORDER BY 2 DESC`)).map((r) => ({ ...r, cost_cents: r.chargeback_cents == null ? null : n(r.chargeback_cents) }));
 
@@ -75,30 +75,30 @@ export async function readDriverOverview(client: Q, oc: string, driverId: string
        SELECT r.id, initcap(replace(coalesce(r.report_type, 'report'), '_', ' ')) AS kind, u.unit_number AS unit, left(r.description, 120) AS what, r.reported_at AS at,
               initcap(replace(coalesce(r.status, 'open'), '_', ' ')) AS outcome, NULL::bigint AS cost_cents, 'driver_report' AS entity
          FROM maintenance.driver_reports r LEFT JOIN mdata.loads l ON l.id = r.load_id LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
-        WHERE r.operating_company_id = $1 AND r.driver_id = $2
+        WHERE r.operating_company_id = $1::uuid AND r.driver_id = $2
        UNION ALL
        SELECT v.id, 'DVIR', u.unit_number, CASE WHEN v.has_major_defect THEN 'Major defect' ELSE 'Defect' END, v.submitted_at,
               CASE WHEN w.closed_at IS NOT NULL THEN 'Repaired' WHEN w.id IS NOT NULL THEN 'Work order open' ELSE 'Open' END,
               coalesce(w.actual_cost_cents, round(w.total_actual_cost * 100)::bigint), 'dvir'
          FROM safety.dvir_submissions v LEFT JOIN mdata.units u ON u.id = v.unit_id LEFT JOIN maintenance.work_orders w ON w.id = v.follow_up_wo_id
-        WHERE v.operating_company_id = $1 AND v.driver_id = $2 AND v.has_any_defect
+        WHERE v.operating_company_id = $1::uuid AND v.driver_id = $2 AND v.has_any_defect
      ) x ORDER BY at DESC NULLS LAST LIMIT 12`)).map((r) => ({ ...r, cost_cents: r.cost_cents == null ? null : n(r.cost_cents) }));
 
   // Integrity: his rates per 100k miles he drove vs the fleet, over 90 days
   const integ = (await q(
-    `WITH drv AS (SELECT d.id FROM mdata.drivers d WHERE d.operating_company_id = $1 AND d.merged_into_driver_id IS NULL AND d.status::text IN ('Active', 'Probation')),
+    `WITH drv AS (SELECT d.id FROM mdata.drivers d WHERE d.operating_company_id = $1::uuid AND d.merged_into_driver_id IS NULL AND d.status::text IN ('Active', 'Probation')),
      miles AS (SELECT d.id, ${driverSamsaraSql("distance_mi", "d.id", "now() - interval '90 days'", "now()")} AS mi,
                       ${driverSamsaraSql("fuel_burned_gal", "d.id", "now() - interval '90 days'", "now()")} AS burned FROM drv d),
      fuel AS (SELECT f.driver_id AS id, count(*) AS fills, count(*) FILTER (WHERE f.load_id IS NULL) AS unlinked
-                FROM fuel.fuel_transactions f WHERE f.operating_company_id = $1 AND f.voided_at IS NULL AND f.archived_at IS NULL
+                FROM fuel.fuel_transactions f WHERE f.operating_company_id = $1::uuid AND f.voided_at IS NULL AND f.archived_at IS NULL
                  AND coalesce(f.purchased_at, f.transaction_at) >= now() - interval '90 days' GROUP BY f.driver_id),
      flags AS (SELECT f.driver_id AS id, count(*) AS n FROM fuel.fraud_alerts a JOIN fuel.fuel_transactions f ON f.id = a.fuel_transaction_uuid
-                WHERE a.operating_company_id = $1 AND a.detected_at >= now() - interval '90 days' GROUP BY f.driver_id),
-     comp AS (SELECT c.respondent_driver_id AS id, count(*) AS n FROM safety.complaints c WHERE c.operating_company_id = $1 AND c.voided_at IS NULL
+                WHERE a.operating_company_id = $1::uuid AND a.detected_at >= now() - interval '90 days' GROUP BY f.driver_id),
+     comp AS (SELECT c.respondent_driver_id AS id, count(*) AS n FROM safety.complaints c WHERE c.operating_company_id = $1::uuid AND c.voided_at IS NULL
                 AND coalesce(c.complaint_date::timestamptz, c.filed_at, c.created_at) >= now() - interval '90 days' GROUP BY 1),
-     acc AS (SELECT a.driver_id AS id, count(*) AS n FROM safety.accidents a WHERE a.operating_company_id = $1 AND a.voided_at IS NULL AND a.event_datetime >= now() - interval '90 days' GROUP BY 1),
+     acc AS (SELECT a.driver_id AS id, count(*) AS n FROM safety.accidents a WHERE a.operating_company_id = $1::uuid AND a.voided_at IS NULL AND a.event_datetime >= now() - interval '90 days' GROUP BY 1),
      dmg AS (SELECT v.driver_id AS id, coalesce(sum(coalesce(w.actual_cost_cents, round(w.total_actual_cost * 100))), 0) AS c FROM safety.dvir_submissions v
-                JOIN maintenance.work_orders w ON w.id = v.follow_up_wo_id WHERE v.operating_company_id = $1 AND v.submitted_at >= now() - interval '90 days' GROUP BY 1)
+                JOIN maintenance.work_orders w ON w.id = v.follow_up_wo_id WHERE v.operating_company_id = $1::uuid AND v.submitted_at >= now() - interval '90 days' GROUP BY 1)
      SELECT d.id = $2::uuid AS is_him, coalesce(m.mi, 0) AS mi, coalesce(m.burned, 0) AS gal, coalesce(f.fills, 0) AS fills, coalesce(f.unlinked, 0) AS unlinked,
             coalesce(fl.n, 0) AS flags, coalesce(c.n, 0) AS complaints, coalesce(a.n, 0) AS accidents, coalesce(dm.c, 0) AS damage_cents
        FROM drv d LEFT JOIN miles m ON m.id = d.id LEFT JOIN fuel f ON f.id = d.id LEFT JOIN flags fl ON fl.id = d.id
@@ -118,12 +118,12 @@ export async function readDriverOverview(client: Q, oc: string, driverId: string
     { key: "accidents_100k", label: "Accidents per 100k mi", his: per100k(me.accidents, me.mi), fleet: per100k(fleet.accidents, fleet.mi), worse: "higher" },
   ];
   const flagged = integrity.filter((i) => i.his != null && i.fleet != null && (i.worse === "higher" ? i.his > i.fleet * 1.5 : i.his < i.fleet * 0.85)).map((i) => i.key);
-  const integrityFlags90 = n((await q(`SELECT count(*) AS c FROM safety.integrity_alerts WHERE operating_company_id = $1 AND subject_driver_id = $2 AND created_at >= now() - interval '90 days'`))[0].c);
+  const integrityFlags90 = n((await q(`SELECT count(*) AS c FROM safety.integrity_alerts WHERE operating_company_id = $1::uuid AND subject_driver_id = $2 AND created_at >= now() - interval '90 days'`))[0].c);
 
   // Trucks he has held: assignment windows, miles on his loads in each window, MPG off his fuel in each window
   const trucks = (await q(
     `WITH a AS (SELECT unit_id, started_at, ended_at, coalesce(ended_at, now()) AS e FROM telematics.vehicle_driver_assignments
-                 WHERE operating_company_id = $1 AND driver_id = $2),
+                 WHERE operating_company_id = $1::uuid AND driver_id = $2),
           m AS (SELECT a.*, CASE WHEN unit_id = lag(unit_id) OVER w AND started_at <= lag(e) OVER w + interval '1 day' THEN 0 ELSE 1 END AS brk
                   FROM a WINDOW w AS (ORDER BY started_at)),
           g AS (SELECT m.*, sum(brk) OVER (ORDER BY started_at) AS grp FROM m),
@@ -137,22 +137,22 @@ export async function readDriverOverview(client: Q, oc: string, driverId: string
 
   // Pay terms
   const rate = (await q(`SELECT basis_type, rate_per_mile_cents, rate_empty_per_mile_cents, flat_per_load_cents, miles_basis FROM driver_finance.driver_pay_rates
-      WHERE operating_company_id = $1 AND driver_id = $2 AND is_active AND (effective_to IS NULL OR effective_to >= current_date) ORDER BY effective_from DESC LIMIT 1`))[0] ?? null;
-  const settings = (await q(`SELECT escrow_target_cents, worker_class, net_pay_floor_pct FROM driver_finance.driver_pay_settings WHERE operating_company_id = $1 AND driver_id = $2`))[0] ?? null;
+      WHERE operating_company_id = $1::uuid AND driver_id = $2 AND is_active AND (effective_to IS NULL OR effective_to >= current_date) ORDER BY effective_from DESC LIMIT 1`))[0] ?? null;
+  const settings = (await q(`SELECT escrow_target_cents, worker_class, net_pay_floor_pct FROM driver_finance.driver_pay_settings WHERE operating_company_id = $1::uuid AND driver_id = $2`))[0] ?? null;
 
   // Compliance
   const lastDrug = (await q(
     `SELECT max(at) AS at FROM (
-       SELECT test_date::timestamptz AS at FROM safety.drug_test WHERE operating_company_id = $1 AND driver_id = $2 AND voided_at IS NULL
+       SELECT test_date::timestamptz AS at FROM safety.drug_test WHERE operating_company_id = $1::uuid AND driver_id = $2 AND voided_at IS NULL
        UNION ALL SELECT coalesce(collected_at, scheduled_at) FROM safety.da_test_records WHERE operating_company_id::text = $1::text AND driver_uuid = $2
-       UNION ALL SELECT test_date::timestamptz FROM compliance.drug_alcohol_test_results WHERE operating_company_id = $1 AND driver_id = $2) x`))[0]?.at ?? null;
-  const mvr = (await q(`SELECT max(expiry_date) AS d FROM safety.driver_qualification_files WHERE operating_company_id = $1 AND driver_id = $2 AND voided_at IS NULL AND item_name ~* 'mvr|motor vehicle record'`))[0]?.d ?? null;
-  const med = (await q(`SELECT max(expiry_date) AS d FROM safety.medical_cards WHERE operating_company_id = $1 AND driver_id = $2 AND voided_at IS NULL`))[0]?.d ?? d.dot_medical_expires_at ?? null;
-  const hosV = n((await q(`SELECT count(*) AS c FROM safety.hos_violations WHERE operating_company_id = $1 AND driver_id = $2 AND voided_at IS NULL AND occurred_at >= now() - interval '90 days'`))[0].c);
+       UNION ALL SELECT test_date::timestamptz FROM compliance.drug_alcohol_test_results WHERE operating_company_id = $1::uuid AND driver_id = $2) x`))[0]?.at ?? null;
+  const mvr = (await q(`SELECT max(expiry_date) AS d FROM safety.driver_qualification_files WHERE operating_company_id = $1::uuid AND driver_id = $2 AND voided_at IS NULL AND item_name ~* 'mvr|motor vehicle record'`))[0]?.d ?? null;
+  const med = (await q(`SELECT max(expiry_date) AS d FROM safety.medical_cards WHERE operating_company_id = $1::uuid AND driver_id = $2 AND voided_at IS NULL`))[0]?.d ?? d.dot_medical_expires_at ?? null;
+  const hosV = n((await q(`SELECT count(*) AS c FROM safety.hos_violations WHERE operating_company_id = $1::uuid AND driver_id = $2 AND voided_at IS NULL AND occurred_at >= now() - interval '90 days'`))[0].c);
 
   // Tiles
-  const due = (await q(`SELECT coalesce(sum(s.net_pay), 0) AS v, count(*)::int AS n FROM driver_finance.driver_settlements s WHERE s.operating_company_id = $1 AND s.driver_id = $2 AND ${DUE_SQL}`))[0];
-  const escrow = (await q(`SELECT coalesce(sum(balance_cents), 0) AS v, count(*)::int AS n FROM driver_finance.v_driver_escrow_balance WHERE operating_company_id = $1 AND driver_id = $2`))[0];
+  const due = (await q(`SELECT coalesce(sum(s.net_pay), 0) AS v, count(*)::int AS n FROM driver_finance.driver_settlements s WHERE s.operating_company_id = $1::uuid AND s.driver_id = $2 AND ${DUE_SQL}`))[0];
+  const escrow = (await q(`SELECT coalesce(sum(balance_cents), 0) AS v, count(*)::int AS n FROM driver_finance.v_driver_escrow_balance WHERE operating_company_id = $1::uuid AND driver_id = $2`))[0];
   const mi30 = (await q(`SELECT ${driverSamsaraSql("distance_mi", "$2::uuid", "now() - interval '30 days'", "now()")} AS mi,
       ${driverSamsaraSql("fuel_burned_gal", "$2::uuid", "now() - interval '30 days'", "now()")} AS g,
       (now() - interval '30 days')::date::text AS from_d, now()::date::text AS to_d WHERE $1::uuid IS NOT NULL`))[0];
@@ -161,7 +161,7 @@ export async function readDriverOverview(client: Q, oc: string, driverId: string
     `SELECT coalesce(sum(m.mi), 0) AS mi, coalesce(sum(m.gal), 0) AS gal, count(*) FILTER (WHERE m.mi > 0)::int AS drivers
        FROM (SELECT d.id, ${driverSamsaraSql("distance_mi", "d.id", "now() - interval '30 days'", "now()")} AS mi,
                     ${driverSamsaraSql("fuel_burned_gal", "d.id", "now() - interval '30 days'", "now()")} AS gal FROM mdata.drivers d
-              WHERE d.operating_company_id = $1 AND d.merged_into_driver_id IS NULL AND (d.status::text IN ('Active', 'Probation') OR d.id = $2::uuid)) m`))[0];
+              WHERE d.operating_company_id = $1::uuid AND d.merged_into_driver_id IS NULL AND (d.status::text IN ('Active', 'Probation') OR d.id = $2::uuid)) m`))[0];
   const fleetDrivers = Math.max(n(fleet30.drivers), 1);
   const activeDrivers = Math.max(integ.length, 1);
   const additionalSum = additional.reduce((t, r) => t + r.amount_cents, 0);
