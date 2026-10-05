@@ -14,6 +14,7 @@ import { CatalogReferenceSelect } from "../../../components/legal/CatalogReferen
 import { useListState } from "../../../components/list-state";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { entityLabel } from "../../../lib/entity-label";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { normalizePickedEntityPhoneToE164 } from "../../../lib/phone-format";
 import { LegalTemplateNewModal } from "../templates/LegalTemplateNewModal";
 
@@ -372,8 +373,14 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                           }
                         />
                         <span>
-                          {u.unit_number} · {u.year ?? ""} {u.make ?? ""} {u.model ?? ""}
-                          <span className="ml-1 font-mono text-xs text-slate-400">{u.vin}</span>
+                          <EntityLink
+                            kind="unit"
+                            id={u.id}
+                            label={entityLabel(u.unit_number, u.id, "Unit")}
+                            className="text-xs font-semibold text-[#1F2A44] underline"
+                          />{" "}
+                          · {u.year ?? ""} {u.make ?? ""} {u.model ?? ""}
+                          <span className="ml-1 font-mono text-xs text-[#6B7280]">{u.vin}</span>
                         </span>
                       </label>
                     ))

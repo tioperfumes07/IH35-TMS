@@ -13,6 +13,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { ListErrorState } from "../../../components/ListErrorState";
 import { useToast } from "../../../components/Toast";
 import { entityLabel } from "../../../lib/entity-label";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { Combobox } from "../../../components/Combobox";
 import { CatalogReferenceSelect } from "../../../components/legal/CatalogReferenceSelect";
@@ -153,7 +154,13 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
         sortValue: (row) => row.unit.unit_number,
         render: (row) => (
           <>
-            {row.unit.unit_number} <span className="text-xs text-slate-500">{[row.unit.make, row.unit.model, row.unit.year].filter(Boolean).join(" ")}</span>
+            <EntityLink
+              kind="unit"
+              id={row.unit.id}
+              label={entityLabel(row.unit.unit_number, row.unit.id, "Unit")}
+              className="text-xs font-semibold text-[#1F2A44] underline"
+            />{" "}
+            <span className="text-xs text-[#6B7280]">{[row.unit.make, row.unit.model, row.unit.year].filter(Boolean).join(" ")}</span>
           </>
         ),
       },

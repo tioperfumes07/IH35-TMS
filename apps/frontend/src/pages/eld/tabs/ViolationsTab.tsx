@@ -1,4 +1,5 @@
 import { entityLabel } from "../../../lib/entity-label";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -36,9 +37,12 @@ export function ViolationsTab({ operatingCompanyId }: Props) {
           const id = String(row.driver_id ?? "");
           if (!id) return "—";
           return (
-            <Link to={`/drivers/${id}/hos`} className="font-medium text-slate-700 hover:underline">
-              {String(row.driver_display_id ?? entityLabel(row.driver_name, id, "Driver"))}
-            </Link>
+            <EntityLink
+              kind="driver"
+              id={id}
+              label={String(row.driver_display_id ?? entityLabel(row.driver_name, id, "Driver"))}
+              className="font-medium text-[#1F2A44] underline"
+            />
           );
         },
       },
