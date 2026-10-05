@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { exitIfMeasuredEmptyByPurge } from './lib/purge-window.mjs';
 import { pathToFileURL } from 'node:url';
 const require = createRequire(import.meta.url);
 export const REQUIRES_LIVE_DB = 'Posted expense load linkage; missing/unreachable DB fails closed.';
@@ -125,13 +126,13 @@ export async function main() {
     await client.query("SET LOCAL app.bypass_rls='lucia'");
     await client.query("SELECT set_config('app.operating_company_id',$1,true)",[COMPANY]);
     const rows = (await client.query(LINKAGE_SQL,[COMPANY])).rows;
-    // AUTH-400 / clean-app purge can leave USMCA with 0 posted expenses. Empty scope has
-    // nothing to violate — pass closed, do not invent a fake-green by skipping the query.
+    // Lead ruling 2026-10-05: an empty scope is NOT a pass. After a verified purge it is the purge window — EMPTY BY PURGE,
+    // measured, ending on the FIRST posted expense; outside the window it fails closed.
     if (!rows.length) {
-      const holdsEmpty = await client.query("SELECT count(*)::int AS n FROM accounting.expenses WHERE operating_company_id=$1::uuid AND posting_hold_reason='tour_open' AND voided_at IS NULL", [COMPANY]);
-      console.log(JSON.stringify({measured_at:new Date().toISOString(),company:COMPANY,linked:0,violations:[],historical_tour_open_holds:holdsEmpty.rows[0].n,empty_scope:true}));
-      console.log(`${LABEL} PASS — 0 posted USMCA expenses (empty scope; nothing to violate)`);
-      return;
+      await client.query('ROLLBACK').catch(()=>{});
+      await client.end().catch(()=>{});
+      exitIfMeasuredEmptyByPurge('verify-open-tour-posts-nothing', 'posted USMCA expenses', rows.length);
+      throw new Error('No posted USMCA expenses visible; cannot prove linkage on empty scope');
     }
     const holds = await client.query("SELECT count(*)::int AS n FROM accounting.expenses WHERE operating_company_id=$1::uuid AND posting_hold_reason='tour_open' AND voided_at IS NULL", [COMPANY]);
     assert.ok(holds.rows[0].n <= KNOWN_STALE_TOUR_OPEN_HOLDS, `historical tour-open holds grew: ${holds.rows[0].n} > ${KNOWN_STALE_TOUR_OPEN_HOLDS}`);

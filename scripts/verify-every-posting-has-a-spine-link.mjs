@@ -19,6 +19,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { exitIfMeasuredEmptyByPurge } from "./lib/purge-window.mjs";
 export const REQUIRES_LIVE_DB = "reads accounting.journal_entry_postings against accounting.transaction_source_links";
 
 const LABEL = "verify-every-posting-has-a-spine-link";
@@ -167,7 +168,11 @@ try {
     [USMCA]
   )).rows[0].n);
   await c.query("ROLLBACK");
-  if (total === 0) { console.error(`${LABEL}: FAIL — 0 posted USMCA postings read; an empty result is an instrument problem, not a pass`); process.exit(1); }
+  if (total === 0) {
+    // Lead ruling 2026-10-05: an empty book after a verified purge is the purge window — measured, ends on the first row.
+    exitIfMeasuredEmptyByPurge("verify-every-posting-has-a-spine-link", "posted USMCA postings", total);
+    console.error(`${LABEL}: FAIL — 0 posted USMCA postings read; an empty result is an instrument problem, not a pass`); process.exit(1);
+  }
   const bad = judge(rows);
   if (bad.length) { console.error(`${LABEL}: FAIL\n  ${bad.join("\n  ")}`); process.exit(1); }
   const stranded = rows.filter((r) => Number(r.unlinked_doc_gone) > 0).map((r) => `${r.source_type} ${r.unlinked_doc_gone}`).join(", ") || "none";

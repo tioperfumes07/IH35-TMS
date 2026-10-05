@@ -16,6 +16,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { exitIfMeasuredEmptyByPurge } from "./lib/purge-window.mjs";
 export const REQUIRES_LIVE_DB = "derives every settlement deduction's balance from its settlement lines, unscoped";
 
 const LABEL = "verify-settlement-deduction-balance-derived";
@@ -126,7 +127,11 @@ try {
       FROM driver_finance.driver_settlement_deductions d
       LEFT JOIN app a ON a.did = d.id`)).rows;
   await c.query("ROLLBACK");
-  if (rows.length === 0) { console.error(`${LABEL}: FAIL — 0 deductions read; an empty result is an instrument problem, not a pass`); process.exit(1); }
+  if (rows.length === 0) {
+    // Lead ruling 2026-10-05: measured empty after a verified purge — the exemption ends on the first deduction row.
+    exitIfMeasuredEmptyByPurge("verify-settlement-deduction-balance-derived", "settlement deductions", rows.length);
+    console.error(`${LABEL}: FAIL — 0 deductions read; an empty result is an instrument problem, not a pass`); process.exit(1);
+  }
   const overApplied = rows.filter((r) => Number(r.applied) > Number(r.amount)).map((r) => r.id);
   const drifted = rows.filter((r) => !r.voided && Number(r.stored) !== Math.max(Number(r.amount) - Number(r.applied), 0)).map((r) => r.id);
   const bad = judge({ overApplied, drifted });

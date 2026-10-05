@@ -13,7 +13,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { EXPECTED_ZERO_PATH, PURGE_STATE_PATH, PURGE_WINDOW_GUARDS, PURGE_WINDOW_HOURS, purgeWindow } from "./lib/purge-window.mjs";
+import { EXPECTED_ZERO_PATH, MEASURED_EMPTY_GUARDS, PURGE_STATE_PATH, PURGE_WINDOW_GUARDS, PURGE_WINDOW_HOURS, purgeWindow } from "./lib/purge-window.mjs";
 
 const LABEL = "verify-purge-window-exemption";
 export const ALLOW_OFFLINE_SKIP = "static source and state-file checks; never connects to a database";
@@ -26,15 +26,27 @@ const failures = [];
 const callers = fs
   .readdirSync(path.join(ROOT, "scripts"))
   .filter((f) => f.endsWith(".mjs") && f !== path.basename(fileURLToPath(import.meta.url)))
-  .filter((f) => /exitIfEmptyByPurge\s*\(|purgeWindowFor\s*\(/.test(fs.readFileSync(path.join(ROOT, "scripts", f), "utf8")))
+  .filter((f) => /exitIfEmptyByPurge\s*\(|purgeWindowFor\s*\(|exitIfMeasuredEmptyByPurge\s*\(/.test(fs.readFileSync(path.join(ROOT, "scripts", f), "utf8")))
   .map((f) => f.replace(/\.mjs$/, ""))
   .sort();
 const expected = [...PURGE_WINDOW_GUARDS].sort();
 // STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
 // Lead ROUND 347 (2026-10-03) removed verify-void-is-whole from the window: ten -> nine.
-if (PURGE_WINDOW_GUARDS.length !== 9) failures.push(`PURGE_WINDOW_GUARDS lists ${PURGE_WINDOW_GUARDS.length} guards; the rulings name nine (ROUND 347 removed verify-void-is-whole)`);
-for (const c of callers) if (!expected.includes(c)) failures.push(`${c} calls the purge-window helper but is not one of the ten`);
-for (const e of expected) if (!callers.includes(e)) failures.push(`${e} is one of the ten but no longer calls the purge-window helper at its empty-table arm`);
+// Lead ruling 2026-10-05 (after AUTH-400): nine -> twelve. The three new guards are MEASURED-EMPTY guards: they may only call
+// exitIfMeasuredEmptyByPurge with their own measured live-row count, so the exemption ends on the first row, per guard.
+// STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
+if (PURGE_WINDOW_GUARDS.length !== 12) failures.push(`PURGE_WINDOW_GUARDS lists ${PURGE_WINDOW_GUARDS.length} guards; the rulings name twelve (nine + three measured-empty, Lead 2026-10-05)`);
+for (const g of MEASURED_EMPTY_GUARDS) {
+  const p = path.join(ROOT, "scripts", `${g}.mjs`);
+  const src = fs.existsSync(p) ? fs.readFileSync(p, "utf8") : "";
+  if (/\bexitIfEmptyByPurge\s*\(|\bpurgeWindowFor\s*\(/.test(src)) failures.push(`${g} is a measured-empty guard but calls the unmeasured purge-window helper — the exemption must end on the first row`);
+  const calls = [...src.matchAll(/exitIfMeasuredEmptyByPurge\s*\(\s*["'`][^"'`]+["'`]\s*,\s*["'`][^"'`]+["'`]\s*,\s*([^)]+)\)/g)];
+  if (!calls.length) failures.push(`${g} is a measured-empty guard but never calls exitIfMeasuredEmptyByPurge`);
+  for (const c of calls) if (/^\s*\d+\s*$/.test(c[1])) failures.push(`${g} passes a literal (${c[1].trim()}) instead of its measured live-row count`);
+}
+if (MEASURED_EMPTY_GUARDS.some((g) => !PURGE_WINDOW_GUARDS.includes(g))) failures.push("every measured-empty guard must also be in PURGE_WINDOW_GUARDS");
+for (const c of callers) if (!expected.includes(c)) failures.push(`${c} calls the purge-window helper but is not one of the twelve`);
+for (const e of expected) if (!callers.includes(e)) failures.push(`${e} is one of the twelve but no longer calls the purge-window helper at its empty-table arm`);
 
 const gate = fs.readFileSync(GATE, "utf8");
 const sites = (gate.match(/code !== 0 && !acceptedAsEmptyByPurge\(/g) ?? []).length;
@@ -57,6 +69,19 @@ const cases = [
 ];
 for (const [name, state, now, want] of cases) {
   if (purgeWindow(state, now).open !== want) failures.push(`window "${name}" should be ${want ? "open" : "closed"}`);
+}
+// Lead ruling 2026-10-05 — the measured exemption ends on the FIRST row, whatever the window says: with one live row the
+// helper must return (the guard then runs its real check); with a non-count it must fail closed. Run in a child process
+// because the empty branch exits.
+{
+  const lib = path.join(ROOT, "scripts/lib/purge-window.mjs");
+  const probe = (rows) => spawnSync(process.execPath, ["--input-type=module", "-e",
+    `import { exitIfMeasuredEmptyByPurge } from ${JSON.stringify(lib)}; exitIfMeasuredEmptyByPurge("verify-open-tour-posts-nothing", "x", ${rows}); console.log("RETURNED");`],
+    { encoding: "utf8", env: { ...process.env, PURGE_STATE_PATH: path.join(ROOT, "purge_state.json") } });
+  const one = probe(1);
+  if (one.status !== 0 || !one.stdout.includes("RETURNED")) failures.push("measured exemption did not end on the first live row (1 row must return to the guard's real check)");
+  const bad = probe('"zero"');
+  if (bad.status !== 1) failures.push("measured exemption accepted a non-count — it must fail closed");
 }
 
 if (fs.existsSync(PURGE_STATE_PATH)) {
