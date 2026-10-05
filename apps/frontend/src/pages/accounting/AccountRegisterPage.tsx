@@ -756,7 +756,7 @@ export function AccountRegisterPage() {
           account and the decision behind the zeros, and offers the accrual view in one click. */}
       {report?.cash_basis_suppressed ? (
         <div
-          className="mb-3 rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+          className="mb-3 rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
           data-testid="register-cash-basis-suppressed"
         >
           <span className="font-semibold">Cash basis — this account is not recognized.</span>{" "}
