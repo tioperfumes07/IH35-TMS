@@ -258,7 +258,12 @@ async function roots(c: Q, plan: Plan, why: Map<string, string>) {
     const listed = JSON.parse(readFileSync(listFile, "utf8")) as Record<string, string[]>;
     for (const [t, rowIds] of Object.entries(listed)) {
       if (!(await c.query<{ ok: boolean }>(`SELECT to_regclass($1) IS NOT NULL AS ok`, [t])).rows[0]?.ok) throw new Error(`--list names a table that does not exist: ${t}`);
-      const found = await ids(c, `SELECT id::text AS id FROM ${t} WHERE operating_company_id = $1::uuid AND id::text = ANY($2::text[])`, [USMCA, rowIds]);
+      // The table's own primary key (maintenance.work_order_lines keys on uuid), and the company filter only where the table
+      // carries the column — a child table without it is scoped by its listed ids (each one owned by a listed USMCA parent).
+      const pk = await pkOf(c, t);
+      if (!pk) throw new Error(`--list names a table with no single-column primary key: ${t}`);
+      const hasCo = (await c.query<{ ok: boolean }>(`SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema || '.' || table_name = $1 AND column_name = 'operating_company_id') AS ok`, [t])).rows[0]?.ok;
+      const found = await ids(c, `SELECT ${pk}::text AS id FROM ${t} WHERE ${hasCo ? "operating_company_id = $1::uuid AND " : "$1::uuid IS NOT NULL AND "}${pk}::text = ANY($2::text[])`, [USMCA, rowIds]);
       const missing = rowIds.filter((x) => !found.includes(x));
       if (missing.length) ESCAPED_REPORT.push(`BLOCKER ${t}: ${missing.length} listed id(s) not found in USMCA (${missing.slice(0, 5).join(", ")})`);
       add(plan, t, found, why, `owner-approved list ${listFile}`);
@@ -495,7 +500,10 @@ async function expand(c: Q, plan: Plan, why: Map<string, string>, report: string
   }
   await backPointerBlockers(c, plan, report);
   const byDepth = [...plan.keys()].sort((a, b) => (depth.get(b) ?? 0) - (depth.get(a) ?? 0));
-  if (SCOPE !== "zero-reset") return byDepth;
+  // AUTH-401 dry run: a listed scope puts every root at depth 0, so depth order deleted maintenance.work_orders BEFORE its
+  // own work_order_lines. Dependency (topological) order — with the same cycle cuts — is right for every scope that
+  // deletes more than one table; depth order stays only for the single-population legacy scopes that never needed it.
+  if (SCOPE !== "zero-reset" && SCOPE !== "listed") return byDepth;
   // ROUND 326 queue item 22: delete order is TOPOLOGICAL over the FK graph — a table goes only after every table
   // referencing it (children first); a cycle falls back to the depth order for what remains.
   const inPlan = new Set(byDepth);
