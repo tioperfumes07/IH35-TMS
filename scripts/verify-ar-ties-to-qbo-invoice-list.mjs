@@ -211,7 +211,16 @@ async function main() {
         WHERE l.operating_company_id = $1::uuid`,
       [USMCA]
     );
+    // A load a governed purge deleted is not a mismatch: audit.record_deletions holds every row the purge removed, with
+    // its AUTH (2026-10-05: AUTH-400 deleted 149 USMCA loads, so 48 QBO rows read "(load not found)"). Read, never assumed.
+    const purgedRes = await client.query(
+      `SELECT row_data->>'load_number' AS load_number, auth_id FROM audit.record_deletions
+        WHERE table_name = 'mdata.loads' AND auth_id IS NOT NULL AND operating_company_id = $1::uuid`,
+      [USMCA]
+    );
     await client.query("ROLLBACK");
+    const purgedLoads = new Map(purgedRes.rows.map((r) => [r.load_number, r.auth_id]));
+    const purged = [];
 
     const byLoad = new Map(res.rows.map((r) => [r.load_number, r]));
     const loadByNumber = new Map(loadRes.rows.map((r) => [r.load_number, r]));
@@ -245,6 +254,10 @@ async function main() {
           });
           continue;
         }
+        if (!load && purgedLoads.has(row.load)) {
+          purged.push({ ...row, auth_id: purgedLoads.get(row.load) });
+          continue;
+        }
         const amountOk = load && Number(load.rate_total_cents) === qboCents;
         const nameOk = load && customerNamesLikelyMatch(load.customer_name, row.name);
         if (!load || !amountOk || !nameOk) {
@@ -270,6 +283,8 @@ async function main() {
     console.log(`  unmatched (blank/text LOAD, never guessed): ${unmatchedBlank.length} row(s), $${(unmatchedCents / 100).toFixed(2)}`);
     console.log(`  excluded (different billing entity): ${excludedWrongEntity.length} row(s)`);
     console.log(`  excluded (load soft-deleted/cancelled in our book, never auto-invoiced; QBO-side correction pending): ${softDeleted.length} row(s)`);
+    console.log(`  excluded (load deleted by a governed purge, audit.record_deletions; re-entered by the owner after the purge): ${purged.length} row(s)`);
+    for (const d of purged) console.log(`    - load ${d.load}: ${d.name} $${d.amount} (deleted under ${d.auth_id})`);
     for (const d of softDeleted) {
       const why = d.soft_deleted_at
         ? `soft_deleted_at ${new Date(d.soft_deleted_at).toISOString()}`
