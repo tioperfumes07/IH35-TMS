@@ -12,8 +12,6 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { TimePicker } from "../../components/forms/TimePicker";
-import { hasInAppHistory } from "../../lib/smart-back";
-
 const CHANNELS: NotificationChannelKey[] = ["email", "sms", "whatsapp", "in_app"];
 
 type EventPrefRow = { event: string };
@@ -25,14 +23,8 @@ function labelForChannel(ch: NotificationChannelKey): string {
 
 export function NotificationPreferencesPage() {
   const navigate = useNavigate();
-  // UI-BACK-BUTTON-IGNORES-REAL-NAVIGATION-HISTORY: both back links below were hardcoded to
-  // /settings regardless of where the user actually came from -- same smart-back pattern as the
-  // rest of the app.
+  // ROUND 367.9 — structural Up to Settings, never navigate(-1).
   const goBack = () => {
-    if (hasInAppHistory(window.history.state)) {
-      navigate(-1);
-      return;
-    }
     navigate("/settings");
   };
   const { pushToast } = useToast();

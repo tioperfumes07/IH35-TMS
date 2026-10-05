@@ -24,7 +24,8 @@ export function Breadcrumb({ items }: Props) {
               ) : (
                 <span className={isLast ? "font-semibold text-slate-800" : "text-slate-600"}>{item.label}</span>
               )}
-              {!isLast ? <span className="text-slate-400">/</span> : null}
+              {/* ROUND 367.9 — LAW separator is › (Module › List › Record), not /. */}
+              {!isLast ? <span className="text-slate-400">›</span> : null}
             </li>
           );
         })}

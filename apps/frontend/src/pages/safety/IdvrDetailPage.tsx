@@ -6,8 +6,6 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { DvirMaintenanceInspectionsReverseSection } from "../../components/maintenance/DvirMaintenanceInspectionsReverseSection";
-import { hasInAppHistory } from "../../lib/smart-back";
-
 type DefectRow = Record<string, unknown>;
 
 export function IdvrDetailPage() {
@@ -15,14 +13,8 @@ export function IdvrDetailPage() {
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  // UI-BACK-BUTTON-IGNORES-REAL-NAVIGATION-HISTORY: both back links below were hardcoded to
-  // /safety/idvr regardless of where the user actually came from -- same smart-back pattern as the
-  // rest of the app.
+  // ROUND 367.9 — structural Up to the IDVR list, never navigate(-1).
   const goBack = () => {
-    if (hasInAppHistory(window.history.state)) {
-      navigate(-1);
-      return;
-    }
     navigate("/safety/idvr");
   };
 

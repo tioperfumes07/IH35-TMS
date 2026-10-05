@@ -1,13 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PageHeader } from "./PageHeader";
 
-// PageHeader's back control is a <button> that calls navigate(), not an <a href> — §7 requires the
-// arrow on every module header, and it falls back to navigate(-1) when no backHref is given. These tests
-// were written against the older anchor-with-href markup, so they asserted `href` and expected NO back
-// control on a root page. Both are stale: assert the DESTINATION instead, which is the behaviour that
-// actually matters and which an href-only check never proved was wired to anything.
+// ROUND 367.9 — Up is structural (route parent / backHref), never navigate(-1).
 const navigateSpy = vi.fn();
 vi.mock("react-router-dom", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-router-dom")>();
@@ -51,15 +47,16 @@ describe("PageHeader primitive (invariant #21)", () => {
     expect(screen.getByText("14 new in last 3 days")).toBeInTheDocument();
   });
 
-  it("keeps the back arrow on a root-style page and falls back to history", () => {
+  it("keeps the back arrow on a root-style page and uses structural parent", () => {
     render(
-      <MemoryRouter>
+      <MemoryRouter initialEntries={["/home"]}>
         <PageHeader title="Home" />
       </MemoryRouter>,
     );
-    // §7: the arrow stays on every module header; with no backHref it goes back in history.
     fireEvent.click(screen.getByTestId("page-header-back"));
-    expect(navigateSpy).toHaveBeenCalledWith(-1);
+    // Module home has no parent crumb — structuralParentHref falls back to /home.
+    expect(navigateSpy).toHaveBeenCalledWith("/home");
+    expect(navigateSpy).not.toHaveBeenCalledWith(-1);
     expect(screen.queryByTestId("page-header-breadcrumb")).toBeNull();
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Home");
   });
@@ -73,38 +70,15 @@ describe("PageHeader primitive (invariant #21)", () => {
     expect(screen.queryByTestId("page-header-breadcrumb")).toBeNull();
   });
 
-  // UI-BACK-BUTTON-IGNORES-REAL-NAVIGATION-HISTORY: a static backHref always won even when the user
-  // genuinely navigated within the app to reach this page, sending them to the same hardcoded parent
-  // regardless of where they actually came from. Real in-app history (window.history.state.idx > 0)
-  // must now win over backHref.
-  describe("smart back (UI-BACK-BUTTON-IGNORES-REAL-NAVIGATION-HISTORY)", () => {
-    const originalState = window.history.state;
-    afterEach(() => {
-      window.history.replaceState(originalState, "");
-    });
-
-    it("prefers real history over backHref once the user has navigated in-app", () => {
-      window.history.replaceState({ idx: 1, key: "abc123", usr: null }, "");
-      render(
-        <MemoryRouter>
-          <PageHeader title="Work Order" backHref="/maintenance" />
-        </MemoryRouter>,
-      );
-      fireEvent.click(screen.getByTestId("page-header-back"));
-      expect(navigateSpy).toHaveBeenCalledWith(-1);
-      expect(navigateSpy).not.toHaveBeenCalledWith("/maintenance");
-    });
-
-    it("still falls back to backHref on a direct load/refresh (idx 0)", () => {
-      window.history.replaceState({ idx: 0 }, "");
-      render(
-        <MemoryRouter>
-          <PageHeader title="Work Order" backHref="/maintenance" />
-        </MemoryRouter>,
-      );
-      fireEvent.click(screen.getByTestId("page-header-back"));
-      expect(navigateSpy).toHaveBeenCalledWith("/maintenance");
-    });
+  it("prefers backHref over structural parent (explicit parent wins)", () => {
+    render(
+      <MemoryRouter initialEntries={["/maintenance/work-orders/1"]}>
+        <PageHeader title="Work Order" backHref="/maintenance" />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByTestId("page-header-back"));
+    expect(navigateSpy).toHaveBeenCalledWith("/maintenance");
+    expect(navigateSpy).not.toHaveBeenCalledWith(-1);
   });
 
   it("applies single-line ellipsis styles to H1 (invariant #23)", () => {

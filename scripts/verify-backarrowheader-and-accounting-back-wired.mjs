@@ -1,63 +1,35 @@
 #!/usr/bin/env node
 /**
- * UI-BACK-BUTTON audit wave 2 — owner report (2026-08-25): "many leafs or tabs are missing the back
- * arrow return button. make sure that those that have it take you back to the correct module."
+ * UI-BACK-BUTTON audit wave 2 — updated for ROUND 367.9 / U18.
  *
- * A systemwide route-manifest audit (every routed page resolved to its ACTUAL rendered header, not
- * just a per-file grep) found two more defects beyond the first wave's two PageHeader components:
- *
- * 1. WRONG-DESTINATION: components/layout/BackArrowHeader.tsx (the third back-button component in
- *    the app -- backs the whole catalog-list-page family, ~35+ direct + delegated pages) was a plain
- *    <Link to={backTo}>, always returning to the same hardcoded parent regardless of where the user
- *    actually came from -- same defect class as the first wave's two PageHeader components.
- * 2. MISSING ENTIRELY: pages/accounting/AccountingSubNavWrapper.tsx (the module header for every one
- *    of the ~49 routed /accounting/* pages -- the whole Accounting module) had NO back control at
- *    all. Confirmed by resolving all ~400 unique routed leaf files to their real rendered header
- *    (following one level of thin-wrapper delegation), not a shallow per-file grep.
- *
- * Both are now wired to the same lib/smart-back.ts hasInAppHistory signal as the first wave. This
- * guard asserts both wiring sites stay correct and aren't quietly reverted.
+ * BackArrowHeader: structural navigate(backTo) — never history.
+ * AccountingSubNavWrapper: breadcrumb way back (CC-2), never history.
+ * BackButton: structuralParentHref / fallbackTo — never navigate(-1).
  */
 import fs from "node:fs";
 
 const BACK_ARROW_HEADER = "apps/frontend/src/components/layout/BackArrowHeader.tsx";
 const ACCOUNTING_WRAPPER = "apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx";
-// REG-007 (Cursor 2026-09-10) — the last 4 unconditional navigate(-1) sites migrated to smart-back.
 const REG007_FILES = [
   "apps/frontend/src/components/shared/BackButton.tsx",
-  // U18 — LoadCostsBoardPage and RecurringBillCreate left this list: their way back is now the module breadcrumb /
-  // the parent page (verify-accounting-way-back-is-breadcrumb), not history.
 ];
 
 function stripComments(text) {
   return text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|\s)\/\/.*$/gm, "$1");
 }
 
-function auditImportsHelper(file, source) {
+function auditBackArrowHeader(source) {
   const failures = [];
   const stripped = stripComments(source);
-  if (!/import\s*\{\s*hasInAppHistory\s*\}\s*from\s*["'][./]*lib\/smart-back["']/.test(stripped)) {
-    failures.push(`${file}: must import hasInAppHistory from the shared smart-back helper`);
+  if (!/navigate\(\s*backTo\s*\)/.test(stripped)) {
+    failures.push(`${BACK_ARROW_HEADER}: must navigate(backTo) — structural parent route`);
   }
-  if (!/hasInAppHistory\(window\.history\.state\)/.test(stripped)) {
-    failures.push(`${file}: back-button handler must call hasInAppHistory(window.history.state)`);
-  }
-  return { failures, stripped };
-}
-
-function auditBackArrowHeader(source) {
-  const { failures, stripped } = auditImportsHelper(BACK_ARROW_HEADER, source);
-  const historyIdx = stripped.indexOf("hasInAppHistory(window.history.state)");
-  const fallbackIdx = stripped.indexOf("navigate(backTo)");
-  if (historyIdx < 0 || fallbackIdx < 0 || historyIdx > fallbackIdx) {
-    failures.push(
-      `${BACK_ARROW_HEADER}: the hasInAppHistory check must run BEFORE the navigate(backTo) fallback, or backTo always wins`
-    );
+  if (/hasInAppHistory|navigate\(\s*-1\s*\)/.test(stripped)) {
+    failures.push(`${BACK_ARROW_HEADER}: must not use hasInAppHistory or navigate(-1) (ROUND 367.9)`);
   }
   if (!/<span>Back<\/span>/.test(stripped)) {
     failures.push(`${BACK_ARROW_HEADER}: must show a visible Back label (not icon-only)`);
   }
-  // BANK-F91380 leftover refuse — BackArrowHeader page-scoped text token ratchet
   if (stripped.includes("text-[11px]")) {
     failures.push(`${BACK_ARROW_HEADER}: leftover text-[11px]`);
   }
@@ -68,9 +40,6 @@ function auditBackArrowHeader(source) {
 }
 
 function auditAccountingWrapper(source) {
-  // U18 (owner UI register 2026-10-03) — "Back is browser history — becomes a breadcrumb, parent always the module home".
-  // The wrapper still must give every Accounting page a visible way back (it was once missing entirely), but that way
-  // back is now the breadcrumb Accounting / [parent] / page, and it must never pop browser history.
   const failures = [];
   const stripped = stripComments(source);
   if (!/<Breadcrumb items=\{breadcrumb\}/.test(stripped)) {
@@ -82,19 +51,20 @@ function auditAccountingWrapper(source) {
   if (/hasInAppHistory|navigate\(-1\)|history\.back\(/.test(stripped)) {
     failures.push(`${ACCOUNTING_WRAPPER}: must not go back through browser history (U18)`);
   }
-  // BANK-F91096 — ORDERS chrome: Back control uses text-xs, not text-[11px].
   if (stripped.includes("text-[11px]")) {
     failures.push(`${ACCOUNTING_WRAPPER}: must not use text-[11px] — use text-xs`);
   }
   return failures;
 }
 
-// REG-007 — each migrated file must import + call hasInAppHistory and carry NO unconditional
-// `navigate(-1)` back handler (`onClick={() => navigate(-1)}`) left behind.
 function auditReg007(file, source) {
-  const { failures, stripped } = auditImportsHelper(file, source);
-  if (/onClick=\{\(\)\s*=>\s*navigate\(-1\)\}/.test(stripped)) {
-    failures.push(`${file}: still has an unconditional onClick={() => navigate(-1)} — migrate it to the hasInAppHistory smart-back pattern`);
+  const failures = [];
+  const stripped = stripComments(source);
+  if (!/structuralParentHref/.test(stripped)) {
+    failures.push(`${file}: must use structuralParentHref for Up (ROUND 367.9)`);
+  }
+  if (/hasInAppHistory|onClick=\{\(\)\s*=>\s*navigate\(-1\)\}|navigate\(\s*-1\s*\)/.test(stripped)) {
+    failures.push(`${file}: must not use history-based back (ROUND 367.9)`);
   }
   return failures;
 }
@@ -113,26 +83,9 @@ if (failures.length) {
 if (process.argv.includes("--selftest")) {
   const mutations = [
     {
-      name: "remove hasInAppHistory import from BackArrowHeader",
+      name: "reintroduce navigate(-1) in BackArrowHeader",
       target: "backArrow",
-      mutate: (t) => t.replace('import { hasInAppHistory } from "../../lib/smart-back";\n', ""),
-    },
-    {
-      name: "reorder BackArrowHeader so navigate(backTo) runs first (dead-code the fix)",
-      target: "backArrow",
-      mutate: (t) =>
-        t.replace(
-          `if (hasInAppHistory(window.history.state)) {
-              navigate(-1);
-              return;
-            }
-            navigate(backTo);`,
-          `navigate(backTo);
-            if (hasInAppHistory(window.history.state)) {
-              navigate(-1);
-              return;
-            }`
-        ),
+      mutate: (t) => t.replace("navigate(backTo);", "navigate(-1);"),
     },
     {
       name: "remove the breadcrumb from AccountingSubNavWrapper entirely",
@@ -179,14 +132,19 @@ if (process.argv.includes("--selftest")) {
     if (mutFailures.length === 0) throw new Error(`mutation escaped: "${name}" was not caught`);
     caught += 1;
   }
-  // REG-007 mutations: each migrated file must fail if its smart-back import is stripped or a bare
-  // navigate(-1) handler is reintroduced.
   let reg007Caught = 0;
   const reg007Mutations = [];
   for (const f of REG007_FILES) {
-    const src = fs.readFileSync(f, "utf8");
-    reg007Mutations.push({ name: `strip smart-back import from ${f}`, file: f, mutate: (t) => t.replace(/import\s*\{\s*hasInAppHistory\s*\}\s*from\s*["'][./]*lib\/smart-back["'];?\n/, "") });
-    reg007Mutations.push({ name: `reintroduce bare navigate(-1) in ${f}`, file: f, mutate: (t) => `${t}\n<button onClick={() => navigate(-1)} />` });
+    reg007Mutations.push({
+      name: `strip structuralParentHref from ${f}`,
+      file: f,
+      mutate: (t) => t.replace(/structuralParentHref/g, "MISSING"),
+    });
+    reg007Mutations.push({
+      name: `reintroduce bare navigate(-1) in ${f}`,
+      file: f,
+      mutate: (t) => `${t}\n<button onClick={() => navigate(-1)} />`,
+    });
   }
   for (const { name, file, mutate } of reg007Mutations) {
     const orig = fs.readFileSync(file, "utf8");
@@ -199,5 +157,5 @@ if (process.argv.includes("--selftest")) {
 }
 
 console.log(
-  "verify-backarrowheader-and-accounting-back-wired PASS — BackArrowHeader smart-back with a visible Back label; AccountingSubNavWrapper way back = breadcrumb to the Accounting home (U18), no history"
+  "verify-backarrowheader-and-accounting-back-wired PASS — BackArrowHeader structural Up + visible Back; AccountingSubNavWrapper breadcrumb home (U18); BackButton structuralParentHref",
 );
