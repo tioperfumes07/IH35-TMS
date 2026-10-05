@@ -90,12 +90,18 @@ if (!vendors.includes("data-vendors-filter-toolbar")) {
 // The CHROME-04 collapse was reversed by owner order: the filters must be visible without clicking
 // a Filters popover. The transaction-list filters (txFilters/txnFilters) stay collapsed.
 const customersPage = read("apps/frontend/src/pages/Customers.tsx");
-if (!customersPage.includes('data-customers-roster-filter-toolbar="inline"')) {
+if (
+  !customersPage.includes('data-customers-roster-filter-toolbar="inline"') &&
+  !customersPage.includes('"data-customers-roster-filter-toolbar": "inline"')
+) {
   failures.push("Customers.tsx: missing data-customers-roster-filter-toolbar=\"inline\" marker (K.9 inline filter bar)");
 }
 {
   const beforeTxFiltersPopover = customersPage.split("<CollapsedListFilters")[0] ?? customersPage;
-  if (!/data-list-status-filter="customers"/.test(beforeTxFiltersPopover)) {
+  if (
+    !/data-list-status-filter="customers"/.test(beforeTxFiltersPopover) &&
+    !/"data-list-status-filter": "customers"/.test(beforeTxFiltersPopover)
+  ) {
     failures.push("Customers.tsx: roster Status chips must be inline (visible on first load) before the transaction filters popover");
   }
 }
@@ -109,6 +115,25 @@ if (!vendorsPage.includes('data-vendors-roster-filter-toolbar="inline"')) {
   if (!/data-list-status-filter="vendors"/.test(beforeTxnFiltersPopover)) {
     failures.push("Vendors.tsx: roster Status chips must be inline (visible on first load) before the transaction filters popover");
   }
+}
+
+// FILTER-MULTI-01 (owner 2026-09-23) superseded CHROME-03 for accounting money lists: Bills,
+// Expenses, Invoices, Manual JE use MoneyListToolbar (always-visible TOOLBAR-ONE) instead of
+// CollapsedListFilters popover. Accept MoneyListToolbar + data-money-list-toolbar="visible".
+const MONEY_LIST_TOOLBAR_PREFIX = new Map([
+  ["apps/frontend/src/pages/accounting/BillsPage.tsx", "bills"],
+  ["apps/frontend/src/pages/accounting/ExpensesListPage.tsx", "expenses"],
+  ["apps/frontend/src/pages/accounting/InvoicesListPage.tsx", "invoices"],
+  ["apps/frontend/src/pages/accounting/ManualJEListPage.tsx", "manual-je"],
+]);
+
+function hasFilterToolbarGoldPattern(src, rel, marker) {
+  if (src.includes("CollapsedListFilters") && src.includes(marker)) return true;
+  const prefix = MONEY_LIST_TOOLBAR_PREFIX.get(rel);
+  if (prefix && src.includes("MoneyListToolbar") && src.includes(`testIdPrefix="${prefix}"`)) {
+    return true;
+  }
+  return false;
 }
 
 // CHROME-03 — Accounting money lists collapse filters behind Filters popover
@@ -153,11 +178,12 @@ for (const [rel, marker] of [
   ["apps/frontend/src/pages/maintenance/FleetTablePage.tsx", "data-fleet-page-filter-toolbar"],
 ]) {
   const src = read(rel);
-  if (!src.includes("CollapsedListFilters")) {
-    failures.push(`${rel}: must use CollapsedListFilters`);
-  }
-  if (!src.includes(marker)) {
-    failures.push(`${rel}: missing ${marker} collapsed marker`);
+  if (!hasFilterToolbarGoldPattern(src, rel, marker)) {
+    if (!src.includes("CollapsedListFilters") && !MONEY_LIST_TOOLBAR_PREFIX.has(rel)) {
+      failures.push(`${rel}: must use CollapsedListFilters`);
+    } else {
+      failures.push(`${rel}: missing ${marker} collapsed marker`);
+    }
   }
 }
 

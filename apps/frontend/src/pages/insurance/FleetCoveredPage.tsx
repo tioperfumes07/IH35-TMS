@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { getInsuranceFleetCovered, type InsuranceCoverageType, type InsuranceFleetCoveredUnit } from "../../api/insurance";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -37,7 +38,18 @@ export function FleetCoveredPage() {
   const allocationMethods = useMemo(() => [...new Set(coveredRows.flatMap((row) => row.coverages.map((coverage) => coverage.allocation_method)))], [coveredRows]);
 
   const columns = useMemo<Array<ParityColumn<InsuranceFleetCoveredUnit>>>(() => [
-    { key: "unit_number", label: "Unit #", sortable: true, alwaysVisible: true, render: (row) => row.unit_id ? <Link className="text-blue-700 underline" to={`/fleet/units/${row.unit_id}`}>{row.unit_number}</Link> : row.equipment_id ? <Link className="text-blue-700 underline" to={`/fleet/trailers/${row.equipment_id}`}>{row.unit_number}</Link> : row.unit_number },
+    {
+      key: "unit_number",
+      label: "Unit #",
+      sortable: true,
+      alwaysVisible: true,
+      render: (row) =>
+        row.unit_id
+          ? <EntityLink kind="unit" id={row.unit_id} label={row.unit_number} className="text-blue-700 underline" />
+          : row.equipment_id
+            ? <EntityLink kind="trailer" id={row.equipment_id} label={row.unit_number} className="text-blue-700 underline" />
+            : row.unit_number,
+    },
     { key: "vehicle_type", label: "Type", sortable: true, render: (row) => label(row.vehicle_type) },
     { key: "vehicle_class", label: "Class", sortable: true, render: (row) => label(row.vehicle_class) },
     { key: "year_make_model", label: "Year Make Model", sortable: true, sortValue: (row) => `${row.year ?? ""} ${row.make ?? ""} ${row.model ?? ""}`, render: (row) => dataValue([row.year, row.make, row.model].filter(Boolean).join(" ")) },

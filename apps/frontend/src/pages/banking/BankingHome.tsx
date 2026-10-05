@@ -16,6 +16,7 @@ import {
 } from "../../api/banking";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { EntityEmptyState } from "../../components/shared/EntityEmptyState";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
@@ -981,16 +982,13 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                     key={row.id}
                     className={`grid w-full grid-cols-[1fr_auto_auto] items-center border-b border-gray-100 px-3 py-1.5 text-xs ${selectedId === row.id ? "bg-slate-100" : "hover:bg-gray-50"}`}
                   >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedAccountId(row.id);
-                        navigate(`/banking/accounts/${row.id}`);
-                      }}
+                    <EntityLink
+                      kind="bank_account"
+                      id={row.id}
+                      label={row.displayName}
                       className="truncate text-left"
-                    >
-                      {row.displayName}
-                    </button>
+                      onClick={() => setSelectedAccountId(row.id)}
+                    />
                     <span className="font-medium tabular-nums">{money.format(row.balance)}</span>
                     <span className="flex flex-col">
                       <button

@@ -17,11 +17,18 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
 const FILE = "apps/frontend/src/pages/accounting/AccountingHubPage.tsx";
 
+function stripComments(text) {
+  return String(text ?? "")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/(^|[^:])\/\/.*$/gm, "$1");
+}
+
 export function check(text) {
   const failures = [];
+  const body = stripComments(text);
   const labelCallRe =
-    /label:\s*entityLabel\(\s*row\.vendor_name\s*\|\|\s*row\.bill_number\s*\|\|\s*row\.reference_number\s*\|\|\s*row\.check_number\s*\|\|\s*row\.memo\s*,\s*row\.id\s*,\s*"Payment"\s*,?\s*\)/;
-  if (!labelCallRe.test(text)) {
+    /(?:label:\s*|const\s+label\s*=\s*)entityLabel\(\s*row\.vendor_name\s*\|\|\s*row\.bill_number\s*\|\|\s*row\.reference_number\s*\|\|\s*row\.check_number\s*\|\|\s*row\.memo\s*,\s*row\.id\s*,\s*"Payment"\s*,?\s*\)/;
+  if (!labelCallRe.test(body)) {
     failures.push(
       `${FILE} "FIND TRANSACTIONS" bill-payment label no longer prefers row.vendor_name/row.bill_number before the reference_number/check_number/memo fallbacks`,
     );
@@ -43,7 +50,7 @@ function run() {
 function selftest() {
   const text = fs.readFileSync(path.join(root, FILE), "utf8");
   const offender = text.replace(
-    'entityLabel(\n          row.vendor_name || row.bill_number || row.reference_number || row.check_number || row.memo,\n          row.id,\n          "Payment",\n        )',
+    /const label = entityLabel\(\s*row\.vendor_name \|\| row\.bill_number \|\| row\.reference_number \|\| row\.check_number \|\| row\.memo,\s*row\.id,\s*"Payment",\s*\)/,
     'entityLabel(row.reference_number || row.check_number || row.memo, row.id, "Payment")',
   );
   if (offender === text) {

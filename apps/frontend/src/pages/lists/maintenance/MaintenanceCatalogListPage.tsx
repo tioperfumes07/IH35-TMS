@@ -33,6 +33,7 @@ export function MaintenanceCatalogListPage({ client, displayName, breadcrumbPath
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [status, setStatus] = useState<"true" | "false" | "all">("true");
+  const [showVoided, setShowInactive] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedRow, setSelectedRow] = useState<MaintenanceCatalogRow | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -94,6 +95,18 @@ export function MaintenanceCatalogListPage({ client, displayName, breadcrumbPath
           <option value="false">Inactive</option>
           <option value="all">All</option>
         </SelectCombobox>
+        <label className="flex items-center gap-2 text-xs text-gray-700">
+          <input
+            type="checkbox"
+            checked={showVoided}
+            onChange={(event) => {
+              setShowInactive(event.target.checked);
+              setStatus(event.target.checked ? "all" : "true");
+            }}
+            className="h-3.5 w-3.5 rounded-sm border-gray-300"
+          />
+          Show voided
+        </label>
       </div>
 
       {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Search/Status filters above

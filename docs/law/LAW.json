@@ -964,5 +964,12 @@
     "source_file": "docs/bus/10-03-2026-ALL-SEATS-ROUND-380-THE-BACKFILL-IS-WITHDRAWN-AND-FOUR-RULINGS.md",
     "guard": "scripts/verify-samsara-history-is-never-an-operational-path-into-a-frozen-company.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-10-05-RECORD-NAMING-CELLS-CLICK-THROUGH",
+    "title": "ROUND 363-CUR-B — every page cell that names a record (account, load, driver, unit, vendor, customer, document) must mount EntityLink, AmountLink, or EntityLinkOrTombstone; Reclassify left-pane account tree opens register with stopPropagation while row still filters",
+    "source_file": "docs/bus/10-03-2026-CURSOR-ROUND-363-CLEARED-UNCLEARED-EVERYWHERE-AND-THE-CLICK-THROUGH-SWEEP.md",
+    "guard": "scripts/verify-record-naming-cells-are-click-through.mjs",
+    "type": "enforced"
   }
 ]

@@ -64,6 +64,7 @@ export function SafetyGenericCatalogListPage({ client, displayName, breadcrumbPa
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [status, setStatus] = useState<"true" | "false" | "all">("true");
+  const [showVoided, setShowInactive] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedRow, setSelectedRow] = useState<SafetyGenericCatalogRow | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -81,7 +82,7 @@ export function SafetyGenericCatalogListPage({ client, displayName, breadcrumbPa
   const query = useQuery({
     // Round 296: every row of the catalog (status narrows server-side on the indexed is_active; the route caps at
     // max(200) per page, so read page after page), then the house toolbar (ParityTable's UniversalListToolbar) is the
-    // one search over all of it with "N of M". No page search box, no "Show inactive" double filter.
+    // one search over all of it with "N of M". No page search box, no "Show voided" double filter.
     queryKey: ["catalogs", "safety-generic", displayName, companyId, status],
     queryFn: () => fetchAllCatalogPages(client.list, { operating_company_id: companyId, is_active: status }),
     enabled: Boolean(companyId),
@@ -115,6 +116,18 @@ export function SafetyGenericCatalogListPage({ client, displayName, breadcrumbPa
 
       <div className="flex items-end gap-2 rounded-sm border border-gray-200 bg-white p-3">
         <CatalogStatusFilterCombobox value={status} onChange={setStatus} />
+        <label className="flex items-center gap-2 text-xs text-gray-700">
+          <input
+            type="checkbox"
+            checked={showVoided}
+            onChange={(event) => {
+              setShowInactive(event.target.checked);
+              setStatus(event.target.checked ? "all" : "true");
+            }}
+            className="h-3.5 w-3.5 rounded-sm border-gray-300"
+          />
+          Show voided
+        </label>
       </div>
 
       <ParityTable

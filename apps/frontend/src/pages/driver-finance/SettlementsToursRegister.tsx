@@ -9,7 +9,8 @@ import { settlementNumber } from "../../lib/settlementNumber";
 // the owner cannot act on. The number is allocated at tour close by the P1 numbering work.
 const tourLabel = (r: TourListRow) => settlementNumber(r) ?? (r.is_open ? "Open" : "No number");
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { mmmDd } from "../../lib/formatDate";
@@ -25,18 +26,18 @@ import { tourLoadColumns } from "../../components/dispatch/TourLegsCell";
 // GET /api/v1/driver-finance/tours?state=open|closed via listTours() (api/tourReadout.ts), one row
 // per tour, expanded to the SAME TourPreSettlementTab / TourSettlementTab keyed by settlement_id.
 // Columns and palette (.ldt-*) mirror LoadCostsBoardPage's TourRegister so the two surfaces show one
-// truth; the Tour link routes to ?settlement_id= so the existing detail view keeps working.
+// truth; the Tour link routes to /driver-finance/settlements?settlement_id= so the existing detail view keeps working.
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const fmt = (c: number) => money.format(c / 100);
 const DASH = "\u2014";
 
 const TOUR_COLUMNS = (state: "open" | "closed", companyId: string, rows: readonly TourListRow[]): ParityColumn<TourListRow>[] => [
-  { key: "tour", label: "Settlement/Tour", alwaysVisible: true, testId: "setl-tour-col-id", sortable: true, className: "whitespace-nowrap", minWidth: 90, sortValue: r => tourLabel(r), render: r => <Link className="ldt-link font-semibold" style={{ display: "inline" }} to={`/driver-finance/settlements?settlement_id=${encodeURIComponent(r.settlement_id)}`}>{tourLabel(r)}</Link> },
+  { key: "tour", label: "Settlement/Tour", alwaysVisible: true, testId: "setl-tour-col-id", sortable: true, className: "whitespace-nowrap", minWidth: 90, sortValue: r => tourLabel(r), render: r => <EntityLink kind="settlement" id={r.settlement_id} label={tourLabel(r)} className="ldt-link font-semibold" /> },
   // COLUMN-ORDERING LAW (owner 2026-09-11): Load renders immediately next to Settlement, same as
   // every other surface this rule is applied to — before Driver/Unit, not after.
   ...tourLoadColumns("setl-tour-col", rows),
-  { key: "driver", label: "Driver", testId: "setl-tour-col-driver", sortable: true, minWidth: 120, maxWidth: 200, cellClass: "whitespace-nowrap", sortValue: r => r.driver_name ?? "", render: r => <span className="block max-w-[200px] truncate" title={r.driver_name ?? ""}>{r.driver_name ?? DASH}</span> },
-  { key: "unit", label: "Unit", testId: "setl-tour-col-unit", sortable: true, minWidth: 56, maxWidth: 64, className: "whitespace-nowrap", sortValue: r => r.unit_number ?? "", render: r => r.unit_number ?? DASH },
+  { key: "driver", label: "Driver", testId: "setl-tour-col-driver", sortable: true, minWidth: 120, maxWidth: 200, cellClass: "whitespace-nowrap", sortValue: r => r.driver_name ?? "", render: r => <EntityLinkOrTombstone kind="driver" id={r.driver_id} name={r.driver_name} noun="Driver" className="block max-w-[200px] truncate" /> },
+  { key: "unit", label: "Unit", testId: "setl-tour-col-unit", sortable: true, minWidth: 56, maxWidth: 64, className: "whitespace-nowrap", sortValue: r => r.unit_number ?? "", render: r => <EntityLinkOrTombstone kind="unit" id={r.unit_id} name={r.unit_number} noun="Unit" /> },
   // NEW-10 (owner 2026-09-07): "date started" + "delivery date" of the ORIGINAL load that created the
   // (re)settlement. Distinct from the tour-level "Started" (trip-open) stamp below — these are the
   // original load's own first-pickup / last-delivery stop dates, tooltip-tagged with its load number.

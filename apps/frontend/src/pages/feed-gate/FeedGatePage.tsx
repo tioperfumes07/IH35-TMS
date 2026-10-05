@@ -7,6 +7,8 @@
  */
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -19,17 +21,69 @@ const STATUS_CLS: Record<string, string> = {
 const GROUP_ORDER = ["driver_pay", "load", "revenue", "controls", "costs", "fuel", "linkage", "stamps"];
 const GROUP_LABEL: Record<string, string> = { driver_pay: "Driver pay", load: "Loads", revenue: "Revenue / invoices", controls: "Ledger & controls", costs: "Costs / expenses", fuel: "Fuel", linkage: "Linkage", stamps: "Date stamps" };
 
+function feedKindToEntityKind(feedKind: string | null | undefined): EntityKind | null {
+  switch (feedKind) {
+    case "settlement":
+      return "settlement";
+    case "load":
+      return "load";
+    case "invoice":
+      return "invoice";
+    case "expense":
+      return "expense";
+    case "bill":
+      return "bill";
+    case "deposit":
+      return "deposit";
+    case "bill_payment":
+      return "bill_payment";
+    default:
+      return null;
+  }
+}
+
+function subjectTableToEntityKind(subjectTable: string | null | undefined, feedKind?: string | null): EntityKind | null {
+  const table = subjectTable?.toLowerCase() ?? "";
+  if (table.includes("driver_settlements")) return "settlement";
+  if (table.includes("loads")) return "load";
+  if (table.includes("invoices")) return "invoice";
+  if (table.includes("expenses")) return "expense";
+  if (table.includes("bills") && !table.includes("bill_payment")) return "bill";
+  if (table.includes("bill_payment")) return "bill_payment";
+  if (table.includes("deposit")) return "deposit";
+  return feedKindToEntityKind(feedKind);
+}
+
+function FeedSubjectLabel({
+  label,
+  subjectId,
+  feedKind,
+  subjectTable,
+}: {
+  label: string | null | undefined;
+  subjectId: string | null | undefined;
+  feedKind?: string | null;
+  subjectTable?: string | null;
+}) {
+  const display = label ?? "—";
+  const kind = subjectTableToEntityKind(subjectTable, feedKind);
+  if (!subjectId || !kind) return <>{display}</>;
+  return <EntityLink kind={kind} id={subjectId} label={display} />;
+}
+
 function Badge({ status }: { status: string }) {
   return <span className={`rounded px-1.5 py-0.5 text-xs font-semibold uppercase ${STATUS_CLS[status] ?? "bg-slate-200"}`} data-testid={`feed-gate-status-${status}`}>{status}</span>;
 }
 
-function CheckRow({ c }: { c: FeedCheck }) {
+function CheckRow({ c, feedKind }: { c: FeedCheck; feedKind?: string | null }) {
   const cls = c.status === "fail" ? "border-l-4 border-red-600 bg-red-50" : c.status === "pass" ? "border-l-4 border-slate-700" : "border-l-4 border-slate-300 text-slate-500";
   return (
     <tr className={cls} data-testid={`feed-gate-check-${c.check_key}`} data-status={c.status}>
       <td className="p-2 text-xs font-semibold uppercase">{c.status}</td>
       <td className="p-2 text-xs">{c.check_key}</td>
-      <td className="p-2 text-xs">{c.subject_label ?? "—"}</td>
+      <td className="p-2 text-xs">
+        <FeedSubjectLabel label={c.subject_label} subjectId={c.subject_id} feedKind={feedKind} subjectTable={c.subject_table} />
+      </td>
       <td className="p-2 text-xs">{c.status === "fail" ? c.missing : c.status === "na" ? (c.missing ?? "not applicable") : "ok"}</td>
       <td className="p-2 text-xs">{c.status === "fail" && c.fix_link ? <Link className="underline" to={c.fix_link}>Fix →</Link> : null}</td>
     </tr>
@@ -85,7 +139,7 @@ export function FeedGateIntakePage() {
         <div key={g} className="mb-4">
           <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-600">{GROUP_LABEL[g] ?? g} · {checks.filter((c) => c.check_group === g && c.status === "fail").length} red</h2>
           <table className="w-full border-collapse"><thead><tr className="text-left text-xs text-slate-500"><th className="p-2">Status</th><th className="p-2">Check</th><th className="p-2">Subject</th><th className="p-2">What is missing</th><th className="p-2">Fix</th></tr></thead>
-            <tbody>{checks.filter((c) => c.check_group === g).map((c) => <CheckRow key={c.id} c={c} />)}</tbody></table>
+            <tbody>{checks.filter((c) => c.check_group === g).map((c) => <CheckRow key={c.id} c={c} feedKind={intake?.feed_kind} />)}</tbody></table>
         </div>
       ))}
     </div>
@@ -127,8 +181,25 @@ export function FeedGatePage() {
           {rows.length === 0 && !list.isLoading && !list.isError ? <tr><td className="p-2 text-xs text-slate-500" colSpan={6}>No feed has been run yet. Approving a settlement runs its gate automatically.</td></tr> : null}
           {rows.map((i) => (
             <tr key={i.id} className="border-t border-slate-200" data-testid="feed-gate-row">
-              <td className="p-2 text-xs"><Link className="underline" to={`/feed-gate/${i.id}`}>{i.subject_label ?? `${i.feed_kind} — name not available`}</Link></td>
-              <td className="p-2 text-xs">{i.driver_name ?? "—"}</td>
+              <td className="p-2 text-xs">
+                {feedKindToEntityKind(i.feed_kind) && i.subject_id ? (
+                  <span className="inline-flex items-center gap-1">
+                    <EntityLink
+                      kind={feedKindToEntityKind(i.feed_kind)!}
+                      id={i.subject_id}
+                      label={i.subject_label ?? `${i.feed_kind} — name not available`}
+                    />
+                    <Link className="underline text-slate-600" to={`/feed-gate/${i.id}`}>Gate</Link>
+                  </span>
+                ) : (
+                  <Link className="underline" to={`/feed-gate/${i.id}`}>
+                    {i.subject_label ?? `${i.feed_kind} — name not available`}
+                  </Link>
+                )}
+              </td>
+              <td className="p-2 text-xs">
+                <EntityLinkOrTombstone kind="driver" id={i.driver_id} name={i.driver_name} noun="Driver" />
+              </td>
               <td className="p-2"><Badge status={i.status} /></td>
               <td className="p-2 text-xs">{i.checks_failed} / {i.checks_total}</td>
               <td className="p-2 text-xs">{i.last_run_at ? formatDateTimeUS(i.last_run_at) : "—"}</td>

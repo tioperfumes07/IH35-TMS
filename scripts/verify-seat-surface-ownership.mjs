@@ -58,7 +58,16 @@ const BRANCH_PREFIXES = [
 ];
 
 const LABEL = "verify-seat-surface-ownership";
-const AUTH_RE = /SURFACE-BREACH-AUTHORIZED:\s*([A-Za-z0-9-]+)/i;
+const AUTH_RE = /SURFACE-BREACH-AUTHORIZED:\s*([A-Za-z0-9-]+)/gi;
+
+/** All seats named in SURFACE-BREACH-AUTHORIZED lines (app-wide sweeps may list one per owner). */
+export function authorizedSeatsFromBody(commitBody) {
+  const seats = new Set();
+  for (const match of String(commitBody ?? "").matchAll(AUTH_RE)) {
+    if (match[1]) seats.add(match[1]);
+  }
+  return seats;
+}
 
 export function seatForBranch(branch) {
   const b = (branch || "").toLowerCase();
@@ -102,8 +111,7 @@ export function surfaceOwnerForFile(filePath) {
  */
 export function checkSurfaceOwnership(branch, changedFiles, commitBody) {
   const actingSeat = seatForBranch(branch);
-  const authMatch = AUTH_RE.exec(commitBody || "");
-  const authorizedSeat = authMatch ? authMatch[1] : null;
+  const authorizedSeats = authorizedSeatsFromBody(commitBody);
 
   const failures = [];
   for (const file of changedFiles) {
@@ -111,7 +119,7 @@ export function checkSurfaceOwnership(branch, changedFiles, commitBody) {
     if (!owner) continue; // unowned/shared territory — never a breach
     if (owner === actingSeat) continue; // touching your own surface is fine
 
-    if (authorizedSeat && authorizedSeat.toLowerCase() === owner.toLowerCase()) continue; // escape hatch used correctly
+    if (authorizedSeats.has(owner)) continue; // escape hatch used correctly
 
     failures.push(
       actingSeat
@@ -157,6 +165,20 @@ function runSelftest() {
   );
   if (authorized.length !== 0) throw new Error(`selftest: SURFACE-BREACH-AUTHORIZED naming the real owner must waive the breach — got ${JSON.stringify(authorized)}`);
 
+  const multiAuth = checkSurfaceOwnership(
+    "cursor/sweep",
+    [
+      "apps/frontend/src/pages/accounting/VendorBalancesPage.tsx",
+      "apps/frontend/src/pages/banking/BankingHome.tsx",
+      "apps/frontend/src/pages/reports/ProfitLossPage.tsx",
+      "apps/frontend/src/pages/maintenance/MaintKpiDashboardPage.tsx",
+    ],
+    "SURFACE-BREACH-AUTHORIZED: CC-1 sweep\nSURFACE-BREACH-AUTHORIZED: CC-2 sweep\nSURFACE-BREACH-AUTHORIZED: Cascade sweep\nSURFACE-BREACH-AUTHORIZED: Codex sweep",
+  );
+  if (multiAuth.length !== 0) {
+    throw new Error(`selftest: multiple SURFACE-BREACH-AUTHORIZED lines must waive each named owner — got ${JSON.stringify(multiAuth)}`);
+  }
+
   // Escape hatch misuse: authorization names the WRONG seat — must still fail.
   const wrongAuth = checkSurfaceOwnership(
     "cc2/fix-thing",
@@ -180,7 +202,7 @@ function runSelftest() {
   }
 
   console.log(
-    `[${LABEL}] --selftest OK (own-surface passes; shared/unowned files never breach; unauthorized cross-surface rejected naming the real owner; a CORRECT fix in the wrong surface is still rejected; SURFACE-BREACH-AUTHORIZED naming the real owner waives it; naming the wrong seat does not; an unmapped branch prefix fails closed; bare-filename entries match by basename)`
+    `[${LABEL}] --selftest OK (own-surface passes; shared/unowned files never breach; unauthorized cross-surface rejected naming the real owner; a CORRECT fix in the wrong surface is still rejected; SURFACE-BREACH-AUTHORIZED naming the real owner waives it; multiple SURFACE-BREACH-AUTHORIZED lines waive each named owner; naming the wrong seat does not; an unmapped branch prefix fails closed; bare-filename entries match by basename)`
   );
 }
 

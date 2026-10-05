@@ -63,7 +63,12 @@ const CHECKS = [
   { name: "customers: /accounting/customers redirects to the real, already-verified /customers page", file: "apps/frontend/src/routes/manifest.tsx", pattern: /path="\/accounting\/customers"[\s\S]{0,200}Navigate to="\/customers"/ },
   { name: "coa: ChartOfAccountsListPage real ListView + AccountDrawer nested create", file: "apps/frontend/src/pages/lists/accounting/ChartOfAccountsListPage.tsx", pattern: /<ListView[\s\S]*<AccountDrawer/ },
   { name: "period_close: MonthClosePage real chrome", file: "apps/frontend/src/pages/accounting/MonthClosePage.tsx", pattern: /(ParityTable|ParityDrawer|MoneyInput|DatePicker)/ },
-  { name: "chrome.toolbar_filter: BillsPage CollapsedListFilters Apply/Reset/Cancel triad", file: "apps/frontend/src/pages/accounting/BillsPage.tsx", pattern: /CollapsedListFilters[\s\S]*onApply=\{staged\.apply\}[\s\S]*onReset=\{staged\.reset\}[\s\S]*onCancel=\{staged\.cancel\}/ },
+  {
+    name: "chrome.toolbar_filter: BillsPage filter toolbar (CollapsedListFilters triad OR FILTER-MULTI-01 MoneyListToolbar)",
+    file: "apps/frontend/src/pages/accounting/BillsPage.tsx",
+    pattern:
+      /CollapsedListFilters[\s\S]*onApply=\{staged\.apply\}[\s\S]*onReset=\{staged\.reset\}[\s\S]*onCancel=\{staged\.cancel\}|MoneyListToolbar[\s\S]*testIdPrefix="bills"[\s\S]*onClearAll=|MoneyListToolbar[\s\S]*onClearAll=[\s\S]*testIdPrefix="bills"/,
+  },
   { name: "invoices.create / accounting.parity.invoice_create: InvoiceCreateModal real ParityDrawer", file: "apps/frontend/src/pages/accounting/InvoiceCreateModal.tsx", pattern: /<ParityDrawer/ },
   { name: "payments.receive: RecordPaymentModal real ParityDrawer + MoneyInput", file: "apps/frontend/src/pages/accounting/RecordPaymentModal.tsx", pattern: /(ParityDrawer)[\s\S]*MoneyInput/ },
   { name: "je.create: ManualJEModal real ParityDrawer", file: "apps/frontend/src/components/accounting/ManualJEModal.tsx", pattern: /<ParityDrawer/ },

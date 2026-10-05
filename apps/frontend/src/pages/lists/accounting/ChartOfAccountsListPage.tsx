@@ -22,6 +22,7 @@ import { useAuth } from "../../../auth/useAuth";
 import { AccountDrawer } from "./AccountDrawer";
 import { CoaBatchActions } from "./CoaBatchActions";
 import { MoreActionsMenu } from "../../../components/shared/MoreActionsMenu";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { useShowAccountNumbers } from "../../../lib/useShowAccountNumbers";
 import {
   applyCollapsedVisibility,
@@ -141,7 +142,7 @@ function buildColumns(
           ) : (
             <span className="w-3 shrink-0" />
           )}
-          <span className="truncate">{row.name}</span>
+          <EntityLink kind="account" id={row.id} label={row.name} className="truncate" />
         </div>
       ),
     },

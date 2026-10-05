@@ -74,6 +74,7 @@ export function TerminationReasonsListPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [status, setStatus] = useState<StatusFilter>("active");
+  const [showVoided, setShowInactive] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [activeRow, setActiveRow] = useState<DriverTerminationReason | null>(null);
   const [conflictError, setConflictError] = useState<string | null>(null);
@@ -134,7 +135,7 @@ export function TerminationReasonsListPage() {
   const allRows = listQuery.data?.reasons ?? [];
   // Round 296 filter law: the whole catalog is loaded; the Show selector narrows by is_active and the house toolbar
   // (the table's UniversalListToolbar) is the ONE search, over every row, with "N of M". The old page search +
-  // "Show inactive" checkbox double-filtered: Show = Inactive rendered nothing until the checkbox was also ticked.
+  // "Show voided" checkbox double-filtered: Show = Inactive rendered nothing until the checkbox was also ticked.
   const rows = useMemo(
     () => allRows.filter((row) => status === "all" || (status === "active" ? row.is_active : !row.is_active)),
     [allRows, status],
@@ -181,6 +182,18 @@ export function TerminationReasonsListPage() {
           <option value="inactive">Inactive</option>
           <option value="all">All</option>
         </SelectCombobox>
+        <label className="flex items-center gap-2 text-xs text-gray-700">
+          <input
+            type="checkbox"
+            checked={showVoided}
+            onChange={(event) => {
+              setShowInactive(event.target.checked);
+              setStatus(event.target.checked ? "all" : "active");
+            }}
+            className="h-3.5 w-3.5 rounded-sm border-gray-300"
+          />
+          Show voided
+        </label>
       </div>
 
       {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Search/Status filters above

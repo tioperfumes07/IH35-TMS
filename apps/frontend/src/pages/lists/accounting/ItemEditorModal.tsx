@@ -31,6 +31,7 @@ import { Combobox } from "../../../components/Combobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { EntityPicker } from "../../../components/EntityPicker";
 import { Modal } from "../../../components/Modal";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 
 const ITEM_TYPES = [
@@ -388,6 +389,16 @@ export function ItemEditorModal({
                   />
                 </div>
                 {errors.incomeAccountId ? <p className="mt-1 text-xs text-red-700">{errors.incomeAccountId}</p> : null}
+                {form.incomeAccountId ? (
+                  <p className="mt-1 text-xs text-slate-600">
+                    Open register:{" "}
+                    <EntityLink
+                      kind="account"
+                      id={form.incomeAccountId}
+                      label={incomeOptions.find((o) => o.value === form.incomeAccountId)?.label ?? "Income account"}
+                    />
+                  </p>
+                ) : null}
               </label>
             </div>
           )}
@@ -458,6 +469,16 @@ export function ItemEditorModal({
                   />
                 </div>
                 {errors.expenseAccountId ? <p className="mt-1 text-xs text-red-700">{errors.expenseAccountId}</p> : null}
+                {form.expenseAccountId ? (
+                  <p className="mt-1 text-xs text-slate-600">
+                    Open register:{" "}
+                    <EntityLink
+                      kind="account"
+                      id={form.expenseAccountId}
+                      label={expenseOptions.find((o) => o.value === form.expenseAccountId)?.label ?? "Expense account"}
+                    />
+                  </p>
+                ) : null}
               </label>
             </div>
           )}

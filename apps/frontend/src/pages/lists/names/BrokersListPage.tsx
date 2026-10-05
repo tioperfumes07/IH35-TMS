@@ -25,11 +25,12 @@ export function BrokersListPage() {
   const companyId = selectedCompanyId ?? "";
   const [createOpen, setCreateOpen] = useState(false);
   const [status, setStatus] = useState<"active" | "inactive" | "all">("active");
+  const [showVoided, setShowInactive] = useState(false);
 
   const query = useQuery({
     // Round 296: every broker of the chosen status (customer_type + status narrow server-side; listAllCustomers reads
     // every page to the total), then the house toolbar (DataTable's UniversalListToolbar) is the one search with
-    // "N of M". The page search + "Show inactive" checkbox are gone (two searches, double status filter).
+    // "N of M". The page search + "Show voided" checkbox are gone (two searches, double status filter).
     queryKey: ["names", "brokers", companyId, status],
     queryFn: () =>
       listAllCustomers({
@@ -86,6 +87,18 @@ export function BrokersListPage() {
             <option value="inactive">Inactive</option>
             <option value="all">All</option>
           </SelectCombobox>
+        </label>
+        <label className="flex items-center gap-2 text-xs text-gray-700">
+          <input
+            type="checkbox"
+            checked={showVoided}
+            onChange={(event) => {
+              setShowInactive(event.target.checked);
+              setStatus(event.target.checked ? "all" : "active");
+            }}
+            className="h-3.5 w-3.5 rounded-sm border-gray-300"
+          />
+          Show voided
         </label>
       </div>
 

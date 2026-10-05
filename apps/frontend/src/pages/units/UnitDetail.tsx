@@ -21,6 +21,7 @@ import { ComplaintsReverseSection } from "../../components/safety/ComplaintsReve
 import { FuelCardsReverseSection } from "../../components/fuel/FuelCardsReverseSection";
 import { getUnit } from "../../api/mdata";
 import { ListErrorState } from "../../components/ListErrorState";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 type UnitDetailTab = "permits" | "toll-tags" | "tasks" | "brakes" | "tires" | "finance";
 
@@ -44,7 +45,6 @@ export function UnitDetail() {
     : unitQuery.isError
       ? "Unit identity unavailable"
       : entityLabel(unitQuery.data?.unit_number, id, "Unit");
-
   useEffect(() => {
     const tab = searchParams.get("tab");
     if (
@@ -67,6 +67,11 @@ export function UnitDetail() {
         title={unitLabel}
         subtitle="Permits, toll tags, and finance linkage"
       />
+      {!unitQuery.isPending && !unitQuery.isError && id ? (
+        <p className="text-xs text-gray-600">
+          <EntityLink kind="unit" id={id} label={unitLabel} />
+        </p>
+      ) : null}
       {!companyId ? <p className="text-xs text-red-600">Select operating company.</p> : null}
       {unitQuery.isError ? (
         <ListErrorState title="Couldn't load unit identity" status={0} message={(unitQuery.error as Error)?.message} onRetry={() => void unitQuery.refetch()} />

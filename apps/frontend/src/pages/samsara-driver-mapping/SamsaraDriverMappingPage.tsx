@@ -16,6 +16,7 @@ import {
 } from "../../api/samsara-driver-mapping";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 /**
  * E20 Part B (Lead spec, Round 92/94) -- the Samsara Driver Mapping page. Consumes the 4 real
@@ -55,6 +56,20 @@ function mappedToLabel(profile: SamsaraProfile): string {
   if (profile.local_vendor_id) {
     const base = profile.vendor_name ?? "Vendor — not visible";
     return profile.mapped_target_deactivated ? `${base} (deactivated)` : base;
+  }
+  return "—";
+}
+
+function mappedToCell(profile: SamsaraProfile) {
+  if (profile.local_driver_id) {
+    const base = profile.driver_name ?? "Driver — not visible";
+    const label = profile.mapped_target_deactivated ? `${base} (inactive)` : base;
+    return <EntityLink kind="driver" id={profile.local_driver_id} label={label} />;
+  }
+  if (profile.local_vendor_id) {
+    const base = profile.vendor_name ?? "Vendor — not visible";
+    const label = profile.mapped_target_deactivated ? `${base} (deactivated)` : base;
+    return <EntityLink kind="vendor" id={profile.local_vendor_id} label={label} />;
   }
   return "—";
 }
@@ -193,7 +208,7 @@ export function SamsaraDriverMappingPage() {
       label: "Mapped to",
       sortable: true,
       sortValue: (row) => mappedToLabel(row),
-      render: (row) => mappedToLabel(row),
+      render: (row) => mappedToCell(row),
     },
     {
       key: "suggestion",

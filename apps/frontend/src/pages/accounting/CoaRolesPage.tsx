@@ -11,6 +11,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { coaAccountReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 const ROLE_LABELS: Record<CoaRole, string> = {
   ar_control: "AR control",
@@ -143,6 +144,9 @@ export function CoaRolesPage() {
       render: (row) => {
         const value = draftByRole[row.role] ?? row.account_id ?? "";
         const accountOptions = (accountsQuery.data?.accounts ?? []).map(coaAccountReferenceOption);
+        const selectedLabel =
+          accountOptions.find((opt) => opt.value === value)?.label ??
+          (row.account_name ? `${row.account_number ?? ""} · ${row.account_name}`.trim() : null);
         return (
           <div className="min-w-[280px]">
             <ReferenceSelect
@@ -157,6 +161,11 @@ export function CoaRolesPage() {
               loading={accountsQuery.isLoading}
               onOptionCreated={() => void accountsQuery.refetch()}
             />
+            {value ? (
+              <p className="mt-1 text-xs text-slate-600">
+                Open: <EntityLink kind="account" id={value} label={selectedLabel ?? row.account_name ?? "Account"} />
+              </p>
+            ) : null}
           </div>
         );
       },
