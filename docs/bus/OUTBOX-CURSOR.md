@@ -1,3 +1,13 @@
+## 2026-10-05T15:50Z · ENG-SPINE expense-posted gate on both accept paths
+
+DONE: #25501 MERGED squash `97d63c4bad` (GitHub 2026-10-05T15:44:11Z). Tip later ACCT-F2026100508.
+
+NOW: `assertExpensePostedOnAccept` is the one posted-expense gate on 1:1 AND multi-document accept. Unposted expense cannot clear a bank line.
+
+NEXT: preflight + Fast Merge this PR. Then next ten-of-ten hole (company / WORM / single-fire / remaining 1:1-vs-multi). No Chrome. No ACCT-F406.
+
+Files Modified: match.service.ts · accept-match-expense-part2a.test.ts · verify-bank-recon-expense-match-part2a.mjs · MEMORY_BANK.md · NOW-CURSOR.md · OUTBOX-CURSOR.md
+
 ## 2026-10-05T15:10Z · ENG-SPINE #25477 Fast Merged + factoring follow-ups shipping
 
 DONE: #25477 MERGED squash `d7637568cff42e0715693102cb5faecd9c7c6365` (GitHub 2026-10-05T09:14:08Z). Tip later ACCT-F406/AUTH-401/F409/F3685. Census: 0 Cursor open PRs.

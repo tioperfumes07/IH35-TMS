@@ -1,10 +1,10 @@
-# NOW-CURSOR — 2026-10-05T15:10Z
+# NOW-CURSOR — 2026-10-05T15:50Z
 
-**SHIPPING:** ENG-SPINE factoring-advance follow-ups — 1:1 and multi-document accept share `runFactoringAdvanceAcceptFollowUps` + `postPendingFaroReserveRowOnAccept`.
+**SHIPPING:** ENG-SPINE expense-posted gate — 1:1 and multi-document accept share `assertExpensePostedOnAccept`.
 
-**CLOSED tip:** ENG-SPINE payment follow-ups #25477 `d7637568cf` · reverse stamp #25476 · ENG-REVERSE #25475 · ENG-MATCH #25474 · ENG-7D · 367.9 · 363-CUR-B/C.
+**CLOSED tip:** ENG-SPINE factoring follow-ups #25501 `97d63c4bad` · payment follow-ups #25477 · reverse stamp #25476 · ENG-REVERSE #25475 · ENG-MATCH #25474.
 
-**NEXT:** Fast Merge this PR. Then next ten-of-ten hole. No Chrome. No ACCT-F406.
+**NEXT:** Fast Merge this PR. Then next ten-of-ten hole (company / WORM / single-fire). No Chrome. No ACCT-F406.
 
 # NOW — CURSOR — standing engine ENG-CF (D-4) then ENG-7D / ENG-MATCH
 

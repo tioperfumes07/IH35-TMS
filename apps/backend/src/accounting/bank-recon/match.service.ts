@@ -1377,6 +1377,29 @@ async function stampReverseBankPointerOnAccept(
 }
 
 /**
+ * ENG-SPINE — expense accept is link + clear only (no new JE). The expense must already
+ * be posted; otherwise clearing the bank line would leave the expense's own JE unrecorded.
+ * 1:1 already refused unposted. Multi-document skipped the gate (CLS-LINKAGE-ONEWAY).
+ * One helper so the two accept paths cannot drift.
+ */
+async function assertExpensePostedOnAccept(
+  client: DbClient,
+  operatingCompanyId: string,
+  expenseId: string
+): Promise<void> {
+  const posted = await client.query<{ posting_status: string }>(
+    `SELECT posting_status::text
+       FROM accounting.expenses
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid
+      LIMIT 1`,
+    [expenseId, operatingCompanyId]
+  );
+  const status = posted.rows[0]?.posting_status;
+  if (!status) throw new Error("expense_not_found");
+  if (status !== "posted") throw new Error("expense_not_posted");
+}
+
+/**
  * ENG-SPINE follow-up — payment accept follow-ups that 1:1 already ran and multi-document
  * skipped (CLS-LINKAGE-ONEWAY on the invoice pointer + Faro rsv deposit JE).
  *
@@ -1582,19 +1605,8 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
       throw new Error("bank_transaction_already_matched");
     }
 
-    // Expense accept is link + clear only (no new JE): the expense must already be posted to GL,
-    // otherwise clearing it against a bank line would leave the expense's own JE unrecorded.
     if (input.ledger_entry_kind === "expense") {
-      const posted = await client.query<{ posting_status: string }>(
-        `SELECT posting_status::text
-           FROM accounting.expenses
-          WHERE id = $1::uuid AND operating_company_id = $2::uuid
-          LIMIT 1`,
-        [input.ledger_entry_id, input.operating_company_id]
-      );
-      const status = posted.rows[0]?.posting_status;
-      if (!status) throw new Error("expense_not_found");
-      if (status !== "posted") throw new Error("expense_not_posted");
+      await assertExpensePostedOnAccept(client, input.operating_company_id, input.ledger_entry_id);
     }
 
     // OWNER-ORDER §3.1 / CC-2 handoff — Faro reserve ROW on this bank line posts through
@@ -1907,6 +1919,9 @@ export async function acceptExactMultiDocumentMatch(input: {
         throw new Error(`match_kind_not_acceptable:${entry.ledger_entry_kind}`);
       }
       await refuseReceiptAlreadyOnADeposit(client, input.operating_company_id, entry.ledger_entry_kind, entry.ledger_entry_id);
+      if (entry.ledger_entry_kind === "expense") {
+        await assertExpensePostedOnAccept(client, input.operating_company_id, entry.ledger_entry_id);
+      }
     }
 
     for (const entry of input.entries) {

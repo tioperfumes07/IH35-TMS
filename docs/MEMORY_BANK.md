@@ -1617,6 +1617,22 @@ Guards: `verify-1090-clearing.mjs` + `verify-one-bank-match-writer-writes-je.mjs
 `verify-wave-h3-bank-match-reverse-fk.mjs`. Vitest
 `accept-match-factoring-advance-follow-ups.test.ts`.
 
+## Active Architectural Decisions — ENG-SPINE expense posted on both accept paths (Cursor, 2026-10-05)
+
+Expense accept is link + clear only — no new expense JE. 1:1
+`acceptMatchWithResolveDifference` already refused `posting_status <> posted`
+(`expense_not_posted`). `acceptExactMultiDocumentMatch` skipped the gate
+(CLS-LINKAGE-ONEWAY): a batch that included an unposted expense cleared the bank
+line with no expense JE.
+
+Permanent: `assertExpensePostedOnAccept` is the one gate. Both accept paths call
+it. Multi still refuses fuel (`multi_match_fuel_not_supported`) and nonzero
+variance. No new reverse column. No mass backfill. No ACCT-F406.
+
+Guard: `verify-bank-recon-expense-match-part2a.mjs` (helper + both callers;
+`--selftest` 2/2). Vitest `accept-match-expense-part2a.test.ts` includes
+multi-document unposted refuse.
+
 ## Active Architectural Decisions — KILL THE SECOND SYSTEM (Cursor, 2026-10-03)
 
 Owner, verbatim: the ledger is the balance; policies stay; this is a deletion, not a build.
