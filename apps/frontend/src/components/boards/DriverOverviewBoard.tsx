@@ -313,7 +313,7 @@ export function DriverOverviewBoard(props: {
                   <button
                     type="button"
                     className="dd-add"
-                    onClick={() => navigate(`/safety/complaints?driver_id=${o.driver.id}`)}
+                    onClick={() => navigate(driverProfileTabHref(o.driver.id, "Complaints"))}
                     data-testid="driver-log-complaint"
                   >
                     + Log complaint
