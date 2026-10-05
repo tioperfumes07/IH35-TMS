@@ -32,14 +32,29 @@ export async function readDriverProfile(client: Q, companyId: string, driverId: 
     )
   ).rows[0];
   if (!d) return null;
-  const args = [companyId, driverId];
+  // MERGED IDENTITY (2026-10-05): a driver is this id plus every duplicate merged into it (at any depth). The merges
+  // ran as one-shot ops scripts that moved some rows and left others — documents, for one, stayed on the merged-away
+  // id (live: ANGEL ALFONSO SOSA's 10 file links sit on fba21d80, merged into 52037e93, and his profile read "No
+  // document is linked"). Re-pointing rows is not the fix (ACCT-F406); every block reads through the identity set,
+  // the same rule driver-profile-tabs already applies with COALESCE(merged_into_driver_id, id).
+  const identity = (
+    await client.query(
+      `WITH RECURSIVE ids AS (
+         SELECT id FROM mdata.drivers WHERE id = $2 AND operating_company_id = $1
+         UNION
+         SELECT m.id FROM mdata.drivers m JOIN ids ON m.merged_into_driver_id = ids.id WHERE m.operating_company_id = $1
+       ) SELECT id FROM ids`,
+      [companyId, driverId]
+    )
+  ).rows.map((r: { id: string }) => r.id);
+  const args = [companyId, identity];
   const rows = async (sql: string, extra: unknown[] = []) => (await client.query(sql, [...args, ...extra])).rows;
 
   // 1. Pay basis — the rate card (current + history).
   const rates = (await rows(
     `SELECT id, basis_type, rate_per_mile_cents, rate_empty_per_mile_cents, flat_per_load_cents, miles_basis,
             effective_from, effective_to, is_active, is_test_data, notes
-       FROM driver_finance.driver_pay_rates WHERE operating_company_id = $1 AND driver_id = $2
+       FROM driver_finance.driver_pay_rates WHERE operating_company_id = $1 AND driver_id = ANY($2::uuid[])
       ORDER BY is_active DESC, effective_from DESC`
   )).map((r) => ({ ...r, rate_per_mile_cents: r.rate_per_mile_cents == null ? null : n(r.rate_per_mile_cents),
     rate_empty_per_mile_cents: r.rate_empty_per_mile_cents == null ? null : n(r.rate_empty_per_mile_cents),
@@ -51,7 +66,7 @@ export async function readDriverProfile(client: Q, companyId: string, driverId: 
     `SELECT s.id, s.display_id, s.status, s.period_start, s.period_end, s.first_load_number, s.last_load_number,
             s.gross_pay, s.deductions_total, s.reimbursements_total, s.net_pay, s.paid_at, s.settlement_model, s.is_presettlement
        FROM driver_finance.driver_settlements s
-      WHERE s.operating_company_id = $1 AND s.driver_id = $2 AND s.voided_at IS NULL AND s.reversed_at IS NULL
+      WHERE s.operating_company_id = $1 AND s.driver_id = ANY($2::uuid[]) AND s.voided_at IS NULL AND s.reversed_at IS NULL
         AND s.status <> 'cancelled' AND s.is_sample_data IS NOT TRUE
       ORDER BY s.period_start DESC NULLS LAST LIMIT 52`
   )).map((s) => ({ ...s, gross_cents: cents(s.gross_pay), deductions_cents: cents(s.deductions_total),
@@ -73,7 +88,7 @@ export async function readDriverProfile(client: Q, companyId: string, driverId: 
     `SELECT id, display_id, amount, (SELECT round(vb.outstanding_cents / 100.0, 2) FROM driver_finance.v_driver_advance_balances vb WHERE vb.advance_id = driver_finance.driver_advances.id) AS outstanding_balance, purpose, status, disbursement_status, disbursed_at, posting_date,
             load_id, recovered_in_settlement_id
        FROM driver_finance.driver_advances
-      WHERE operating_company_id = $1 AND driver_id = $2 AND voided_at IS NULL
+      WHERE operating_company_id = $1 AND driver_id = ANY($2::uuid[]) AND voided_at IS NULL
       ORDER BY coalesce(posting_date, created_at::date) DESC`
   )).map((a) => ({ ...a, amount_cents: cents(a.amount), outstanding_cents: cents(a.outstanding_balance) }));
 
@@ -82,7 +97,7 @@ export async function readDriverProfile(client: Q, companyId: string, driverId: 
     `SELECT ea.id, ea.purpose, ea.status, COALESCE(vb.balance_cents, 0) AS balance_cents, ea.coa_account_id
        FROM accounting.escrow_accounts ea
        LEFT JOIN driver_finance.v_driver_escrow_balance vb ON vb.escrow_account_id = ea.id
-      WHERE ea.operating_company_id = $1 AND ea.holder_type = 'driver' AND ea.holder_id = $2 ORDER BY ea.purpose`
+      WHERE ea.operating_company_id = $1 AND ea.holder_type = 'driver' AND ea.holder_id = ANY($2::uuid[]) ORDER BY ea.purpose`
   )).map((x) => ({ ...x, balance_cents: n(x.balance_cents) }));
   const escrowPostings = escrowAccounts.length
     ? (await client.query(
@@ -99,7 +114,7 @@ export async function readDriverProfile(client: Q, companyId: string, driverId: 
     `SELECT id, deduction_type, amount_cents, remaining_balance_cents, reason, status, is_held, applied_to_settlement_id,
             load_id, source_expense_id, source_fuel_transaction_id, created_at
        FROM driver_finance.driver_settlement_deductions
-      WHERE operating_company_id = $1 AND driver_id = $2 AND voided_at IS NULL
+      WHERE operating_company_id = $1 AND driver_id = ANY($2::uuid[]) AND voided_at IS NULL
       ORDER BY created_at DESC`
   )).map((x) => ({ ...x, amount_cents: n(x.amount_cents), remaining_balance_cents: x.remaining_balance_cents == null ? null : n(x.remaining_balance_cents) }));
 
@@ -107,7 +122,7 @@ export async function readDriverProfile(client: Q, companyId: string, driverId: 
   const reimbursements = (await rows(
     `SELECT id, reimbursement_type, amount_cents, reason, pay_mode, status, posting_date, paid_at, load_id, applied_to_settlement_id, journal_entry_id
        FROM driver_finance.driver_reimbursements
-      WHERE operating_company_id = $1 AND driver_id = $2 AND voided_at IS NULL AND status <> 'void'
+      WHERE operating_company_id = $1 AND driver_id = ANY($2::uuid[]) AND voided_at IS NULL AND status <> 'void'
       ORDER BY coalesce(posting_date, created_at::date) DESC`
   )).map((x) => ({ ...x, amount_cents: n(x.amount_cents) }));
 
@@ -118,7 +133,7 @@ export async function readDriverProfile(client: Q, companyId: string, driverId: 
        FROM fuel.fuel_transactions f
        LEFT JOIN mdata.units u ON u.id = f.unit_id
        LEFT JOIN mdata.vendors v ON v.id = f.vendor_id
-      WHERE f.operating_company_id = $1 AND f.driver_id = $2 AND f.voided_at IS NULL AND f.archived_at IS NULL
+      WHERE f.operating_company_id = $1 AND f.driver_id = ANY($2::uuid[]) AND f.voided_at IS NULL AND f.archived_at IS NULL
       ORDER BY coalesce(f.purchased_at, f.transaction_at) DESC LIMIT 50`
   )).map((f) => ({ ...f, gallons: f.gallons == null ? null : n(f.gallons), total_cents: n(f.total_cents) }));
 
@@ -126,16 +141,16 @@ export async function readDriverProfile(client: Q, companyId: string, driverId: 
   const units = await rows(
     `SELECT a.id, a.unit_id, u.unit_number, a.started_at, a.ended_at, a.source
        FROM telematics.vehicle_driver_assignments a LEFT JOIN mdata.units u ON u.id = a.unit_id
-      WHERE a.operating_company_id = $1 AND a.driver_id = $2
+      WHERE a.operating_company_id = $1 AND a.driver_id = ANY($2::uuid[])
       ORDER BY a.started_at DESC LIMIT 25`
   );
   const trailers = await rows(
     `SELECT e.id, e.equipment_number, e.equipment_type, 'assigned' AS source, NULL::timestamptz AS last_seen_at
-       FROM mdata.equipment e WHERE e.assigned_driver_id = $2 AND (e.owner_company_id = $1 OR e.currently_leased_to_company_id = $1)
+       FROM mdata.equipment e WHERE e.assigned_driver_id = ANY($2::uuid[]) AND (e.owner_company_id = $1 OR e.currently_leased_to_company_id = $1)
      UNION ALL
      SELECT e.id, e.equipment_number, e.equipment_type, 'dvir', max(s.submitted_at)
        FROM safety.dvir_submissions s JOIN mdata.equipment e ON e.id = s.trailer_equipment_id
-      WHERE s.operating_company_id = $1 AND s.driver_id = $2
+      WHERE s.operating_company_id = $1 AND s.driver_id = ANY($2::uuid[])
       GROUP BY e.id, e.equipment_number, e.equipment_type
      ORDER BY 5 DESC NULLS FIRST`
   );
@@ -143,12 +158,12 @@ export async function readDriverProfile(client: Q, companyId: string, driverId: 
   // 9. Loads run
   const loads = (await rows(
     `SELECT l.id, l.load_number, l.status, l.rate_total_cents, l.assigned_unit_id, u.unit_number,
-            CASE WHEN l.assigned_primary_driver_id = $2::uuid THEN 'primary' ELSE 'secondary' END AS seat,
+            CASE WHEN l.assigned_primary_driver_id = ANY($2::uuid[]) THEN 'primary' ELSE 'secondary' END AS seat,
             (SELECT s.city || ', ' || s.state FROM mdata.load_stops s WHERE s.load_id = l.id AND s.soft_deleted_at IS NULL AND s.stop_type = 'pickup' ORDER BY s.sequence_number LIMIT 1) AS origin,
             (SELECT s.city || ', ' || s.state FROM mdata.load_stops s WHERE s.load_id = l.id AND s.soft_deleted_at IS NULL AND s.stop_type = 'delivery' ORDER BY s.sequence_number DESC LIMIT 1) AS destination,
             (SELECT min(s.scheduled_arrival_at) FROM mdata.load_stops s WHERE s.load_id = l.id AND s.soft_deleted_at IS NULL) AS first_stop_at
        FROM mdata.loads l LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
-      WHERE l.operating_company_id = $1 AND (l.assigned_primary_driver_id = $2::uuid OR l.assigned_secondary_driver_id = $2::uuid)
+      WHERE l.operating_company_id = $1 AND (l.assigned_primary_driver_id = ANY($2::uuid[]) OR l.assigned_secondary_driver_id = ANY($2::uuid[]))
         AND l.voided_at IS NULL AND l.soft_deleted_at IS NULL AND l.canceled_at IS NULL AND ${canonicalNotCancelledLoadClause("l")}
       ORDER BY first_stop_at DESC NULLS LAST LIMIT 50`
   )).map((l) => ({ ...l, rate_total_cents: n(l.rate_total_cents) }));
@@ -156,30 +171,30 @@ export async function readDriverProfile(client: Q, companyId: string, driverId: 
   // 10. Safety events (incident register + Samsara harsh events)
   const safety = await rows(
     `SELECT id, 'safety_event' AS source, event_type AS kind, severity, status, occurred_at AS at, title, related_load_id AS load_id
-       FROM safety.safety_events WHERE operating_company_id = $1 AND subject_driver_id = $2
+       FROM safety.safety_events WHERE operating_company_id = $1 AND subject_driver_id = ANY($2::uuid[])
      UNION ALL
      SELECT id, 'harsh_event', event_kind, severity, NULL, event_at, NULL, NULL
-       FROM safety.harsh_events WHERE operating_company_id = $1 AND driver_id = $2
+       FROM safety.harsh_events WHERE operating_company_id = $1 AND driver_id = ANY($2::uuid[])
      ORDER BY at DESC NULLS LAST LIMIT 50`
   );
 
   // 11. Drug and alcohol
   const drugAlcohol = await rows(
     `SELECT id, 'drug_test' AS source, test_type::text AS test_type, result::text AS result, test_date AS at, lab_name AS detail
-       FROM safety.drug_test WHERE operating_company_id = $1 AND driver_id = $2 AND voided_at IS NULL
+       FROM safety.drug_test WHERE operating_company_id = $1 AND driver_id = ANY($2::uuid[]) AND voided_at IS NULL
      UNION ALL
      SELECT uuid, 'da_test_record', coalesce(test_kind, test_type)::text, result::text, coalesce(collected_at, scheduled_at)::date, chain_of_custody_id
-       FROM safety.da_test_records WHERE operating_company_id::text = $1::text AND driver_uuid = $2
+       FROM safety.da_test_records WHERE operating_company_id::text = $1::text AND driver_uuid = ANY($2::uuid[])
      UNION ALL
      SELECT id, 'compliance_result', test_type::text || ' / ' || test_reason::text, result::text, test_date, lab_id
-       FROM compliance.drug_alcohol_test_results WHERE operating_company_id = $1 AND driver_id = $2
+       FROM compliance.drug_alcohol_test_results WHERE operating_company_id = $1 AND driver_id = ANY($2::uuid[])
      ORDER BY at DESC NULLS LAST`
   );
 
   // 12. Medical card (card register, else the driver record's DOT medical expiry)
   const cards = await rows(
     `SELECT id, card_number, issued_date, expiry_date, source_doc_id
-       FROM safety.medical_cards WHERE operating_company_id = $1 AND driver_id = $2 AND voided_at IS NULL
+       FROM safety.medical_cards WHERE operating_company_id = $1 AND driver_id = ANY($2::uuid[]) AND voided_at IS NULL
       ORDER BY expiry_date DESC NULLS LAST`
   );
   const medExpiry = cards[0]?.expiry_date ?? d.dot_medical_expires_at ?? null;
@@ -198,7 +213,7 @@ export async function readDriverProfile(client: Q, companyId: string, driverId: 
     `SELECT ds.id, ds.policy_id, p.insurer_name, p.policy_number, p.coverage_type, p.effective_date, p.expiry_date,
             ds.submitted_at, ds.confirmed_by_insurer_at, ds.is_active
        FROM insurance.driver_schedule ds LEFT JOIN insurance.policy p ON p.id = ds.policy_id
-      WHERE ds.operating_company_id = $1 AND ds.driver_id = $2 AND ds.voided_at IS NULL
+      WHERE ds.operating_company_id = $1 AND ds.driver_id = ANY($2::uuid[]) AND ds.voided_at IS NULL
       ORDER BY ds.is_active DESC, p.expiry_date DESC NULLS LAST`
   );
 
@@ -206,13 +221,13 @@ export async function readDriverProfile(client: Q, companyId: string, driverId: 
   const documents = await rows(
     `SELECT f.id, 'file' AS source, f.original_filename AS name, NULL::text AS doc_type, f.document_date, f.expiration_date, fl.created_at AS added_at
        FROM docs.file_links fl JOIN docs.files f ON f.id = fl.file_id
-      WHERE fl.entity_type = 'driver' AND fl.entity_id = $2 AND fl.deleted_at IS NULL AND f.deleted_at IS NULL AND f.operating_company_id = $1
+      WHERE fl.entity_type = 'driver' AND fl.entity_id = ANY($2::uuid[]) AND fl.deleted_at IS NULL AND f.deleted_at IS NULL AND f.operating_company_id = $1
      UNION ALL
      SELECT id, 'driver_document', file_name, doc_type, effective_date, expiry_date, created_at
-       FROM safety.driver_documents WHERE operating_company_id = $1 AND driver_id = $2 AND voided_at IS NULL
+       FROM safety.driver_documents WHERE operating_company_id = $1 AND driver_id = ANY($2::uuid[]) AND voided_at IS NULL
      UNION ALL
      SELECT id, 'dq_file', item_name, status, effective_date, expiry_date, created_at
-       FROM safety.driver_qualification_files WHERE operating_company_id = $1 AND driver_id = $2 AND voided_at IS NULL
+       FROM safety.driver_qualification_files WHERE operating_company_id = $1 AND driver_id = ANY($2::uuid[]) AND voided_at IS NULL
      ORDER BY added_at DESC`
   );
 
@@ -220,26 +235,26 @@ export async function readDriverProfile(client: Q, companyId: string, driverId: 
   const hosAgg = await rows(
     `SELECT duty_status, round(sum(extract(epoch FROM (least(coalesce(ended_at, now()), now()) - greatest(started_at, now() - interval '8 days'))) / 3600)::numeric, 1) AS hours
        FROM hos.duty_status_events
-      WHERE operating_company_id = $1 AND driver_id = $2 AND coalesce(ended_at, now()) > now() - interval '8 days'
+      WHERE operating_company_id = $1 AND driver_id = ANY($2::uuid[]) AND coalesce(ended_at, now()) > now() - interval '8 days'
       GROUP BY duty_status ORDER BY 2 DESC`
   );
   const hosLast = (await rows(
     `SELECT duty_status, started_at, ended_at, unit_id, source FROM hos.duty_status_events
-      WHERE operating_company_id = $1 AND driver_id = $2 ORDER BY started_at DESC LIMIT 1`
+      WHERE operating_company_id = $1 AND driver_id = ANY($2::uuid[]) ORDER BY started_at DESC LIMIT 1`
   ))[0] ?? null;
 
   const hosClock = (await rows(
     `SELECT duty_status, driving_hours_remaining, on_duty_hours_remaining, cycle_hours_remaining, time_to_next_break_minutes, polled_at
-       FROM samsara.hos_snapshots WHERE operating_company_id = $1 AND driver_uuid = $2 ORDER BY polled_at DESC LIMIT 1`
+       FROM samsara.hos_snapshots WHERE operating_company_id = $1 AND driver_uuid = ANY($2::uuid[]) ORDER BY polled_at DESC LIMIT 1`
   ))[0] ?? null;
 
   // 17. Samsara linkage
   const samsara = await rows(
     `SELECT a.samsara_driver_id, a.samsara_username, CASE WHEN a.is_active THEN 'active' ELSE 'inactive' END AS status, a.last_login_at AS last_at, 'account' AS source
-       FROM mdata.driver_samsara_accounts a WHERE a.operating_company_id = $1 AND a.driver_id = $2
+       FROM mdata.driver_samsara_accounts a WHERE a.operating_company_id = $1 AND a.driver_id = ANY($2::uuid[])
      UNION ALL
      SELECT sd.samsara_driver_id, NULL, sd.driver_activation_status, sd.last_seen_at, 'mirror'
-       FROM integrations.samsara_drivers sd WHERE sd.operating_company_id = $1 AND sd.local_driver_id = $2`
+       FROM integrations.samsara_drivers sd WHERE sd.operating_company_id = $1 AND sd.local_driver_id = ANY($2::uuid[])`
   );
 
   const block = <T>(value: T, reason: string | null): ProfileBlock<T> => ({ value, empty_reason: reason });
