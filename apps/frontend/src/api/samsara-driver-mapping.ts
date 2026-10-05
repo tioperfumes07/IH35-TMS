@@ -33,6 +33,11 @@ export type SamsaraProfile = {
   last_seen_at: string | null;
   /** Samsara-side activation (read-only mirror). Never written back. */
   samsara_status?: string | null;
+  /**
+   * Samsara account createdAtTime from the mirrored raw_payload (SAM-F429).
+   * Null renders as — , never invented. Backend field: samsara_created_at.
+   */
+  samsara_created_at?: string | null;
   resolver_suggestion: ResolverSuggestion;
 };
 
