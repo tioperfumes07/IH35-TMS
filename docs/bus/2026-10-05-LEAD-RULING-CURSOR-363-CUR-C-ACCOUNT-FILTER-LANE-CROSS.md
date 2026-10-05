@@ -17,6 +17,7 @@ This work may touch:
 - `scripts/verify-qbo-filter-collapse.mjs` — retarget Manual JE ReferenceSelect assertion to MultiSelectDropdown
 - `apps/backend/src/accounting/journal-entries.routes.ts` + `journal-entries.service.ts` + FE `listJournalEntries` — set-based `account_ids` ANY (Rule 53; one query, not N)
 - `apps/frontend/src/api/accounting.ts` — pass `account_ids`
+- `apps/frontend/src/pages/banking/TransfersListPage.tsx` — Account + All list filter → MultiSelectDropdown
 
 ## Why
 

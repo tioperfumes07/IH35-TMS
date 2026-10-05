@@ -37,6 +37,9 @@ const SINGLE_SELECT_BASELINE = 0;
 
 const ALL_ACCOUNTS_SELECT_RE =
   /<(SelectCombobox|ReferenceSelect|select)\b[\s\S]{0,1200}All accounts/;
+/** Missed by All-accounts only: list-bar Account + empty All option (Transfers). */
+const ACCOUNT_LABEL_ALL_SELECT_RE =
+  /(?:^|[>\n])\s*Account\s*\n[\s\S]{0,240}<(SelectCombobox|ReferenceSelect|select)\b[\s\S]{0,500}<option value="">All(?: accounts)?/;
 const MULTI_ACCOUNT_FILTER_RE =
   /<MultiSelectDropdown\b[^>]*label="(?:Account|Bank account)"/;
 
@@ -61,7 +64,9 @@ export function measureSingleSelectAccountFilters(srcByRel) {
   const offenders = [];
   for (const [rel, src] of Object.entries(srcByRel)) {
     const body = stripComments(src);
-    if (!ALL_ACCOUNTS_SELECT_RE.test(body)) continue;
+    const isSingle =
+      ALL_ACCOUNTS_SELECT_RE.test(body) || ACCOUNT_LABEL_ALL_SELECT_RE.test(body);
+    if (!isSingle) continue;
     if (MULTI_ACCOUNT_FILTER_RE.test(body)) continue;
     offenders.push(rel);
   }
