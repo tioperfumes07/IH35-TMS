@@ -1,10 +1,10 @@
 {
-  "healthzSha": "88f6c0c",
-  "generated_at": "2026-10-05T20:42:50.885Z",
+  "healthzSha": "a4e4461",
+  "generated_at": "2026-10-05T21:10:25.940Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "88f6c0c",
+    "deployedSha": "a4e4461",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,33 @@
   },
   "recentActivity": [
     {
+      "number": 25523,
+      "title": "FINDING: SAM-F429-C LANE: NON-FINANCIAL — the Samsara two-map drift ceiling sat at 27 while production measured 0, and the guard had no rule forcing it down",
+      "state": "merged",
+      "mergedAtCt": "10/05/2026, 03:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25523",
+      "sha": "a4e4461dcb",
+      "committedAtIso": "2026-10-05T15:57:20-05:00"
+    },
+    {
+      "number": 25522,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL — regenerate the program scoreboard: 81 commits behind main blocked every seat's gate at verify-derived-artifact-freshness",
+      "state": "merged",
+      "mergedAtCt": "10/05/2026, 03:54 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25522",
+      "sha": "43fcdfe9df",
+      "committedAtIso": "2026-10-05T15:54:50-05:00"
+    },
+    {
+      "number": 25521,
+      "title": "Lead — SAM-F429 one Samsara map for both panes (backfill migration removed: rehearsal inserted 0, would report 78)",
+      "state": "merged",
+      "mergedAtCt": "10/05/2026, 03:49 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25521",
+      "sha": "7bbfc3e0b2",
+      "committedAtIso": "2026-10-05T15:49:58-05:00"
+    },
+    {
       "number": 25520,
       "title": "FINDING: N/A — bus OUTBOX PR3 #25519 Fast Merge closed build-order wave",
       "state": "merged",
@@ -2184,33 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25514",
       "sha": "6f29be1657",
       "committedAtIso": "2026-10-05T11:38:07-05:00"
-    },
-    {
-      "number": 25513,
-      "title": "FINDING: N/A (CLAIM-RESERVE 18165 -- reservation-only commit, no code fix)",
-      "state": "merged",
-      "mergedAtCt": "10/05/2026, 11:36 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25513",
-      "sha": "1ac83abf61",
-      "committedAtIso": "2026-10-05T11:36:12-05:00"
-    },
-    {
-      "number": 25512,
-      "title": "FINDING: ACCT-F412 LANE: FINANCIAL -- the cash-basis P&L was the accrual P&L; it is now computed from the postings and their documents' settlements (plus ACCT-F413 and UI-F414)",
-      "state": "merged",
-      "mergedAtCt": "10/05/2026, 11:34 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25512",
-      "sha": "9b5809f1c0",
-      "committedAtIso": "2026-10-05T11:34:31-05:00"
-    },
-    {
-      "number": 25511,
-      "title": "FINDING: BANK-F3688",
-      "state": "merged",
-      "mergedAtCt": "10/05/2026, 11:18 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25511",
-      "sha": "5acc3a0794",
-      "committedAtIso": "2026-10-05T11:18:56-05:00"
     }
   ]
 }
