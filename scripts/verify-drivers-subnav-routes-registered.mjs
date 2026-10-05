@@ -29,8 +29,8 @@ function extractSubnavPaths(driversPageSrc, routeManifestSrc) {
   for (const m of routeManifestSrc.matchAll(/:\s*["'](\/drivers\/[^"']+)["']/g)) {
     paths.add(m[1]);
   }
-  // Root /drivers from DRIVERS_SUBTAB_PATH.drivers
-  if (/drivers:\s*["']\/drivers["']/.test(routeManifestSrc)) {
+  // Root /drivers from DRIVERS_SUBTAB_PATH.home (or legacy .drivers)
+  if (/home:\s*["']\/drivers["']/.test(routeManifestSrc) || /drivers:\s*["']\/drivers["']/.test(routeManifestSrc)) {
     paths.add("/drivers");
   }
   return [...paths].sort();
@@ -71,13 +71,15 @@ function selftest() {
   `;
   const routeManifest = `
     export const DRIVERS_SUBTAB_PATH = {
-      drivers: "/drivers",
+      home: "/drivers",
+      roster: "/drivers/roster",
       profiles: "/drivers/profiles",
       leave: "/drivers/leave",
     };
   `;
   const goodManifest = `
     path="/drivers"
+    path="/drivers/roster"
     path="/drivers/profiles"
     path="/drivers/leave"
     path="/drivers/auto-deductions"

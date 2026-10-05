@@ -57,6 +57,9 @@ vi.mock("../../components/drivers/DriverLateArrivalCard", () => ({ DriverLateArr
 vi.mock("../../components/driver-profile/DriverTeamsReverseSection", () => ({ DriverTeamsReverseSection: () => null }));
 vi.mock("../../components/driver-profile/DriverTeamSplitConfigReverseSection", () => ({ DriverTeamSplitConfigReverseSection: () => null }));
 vi.mock("../../components/safety/MedicalCardsHistorySection", () => ({ MedicalCardsHistorySection: () => null }));
+vi.mock("../../components/boards/DriverOverviewBoard", () => ({
+  DriverOverviewBoard: () => <div data-testid="driver-overview-board-stub" />,
+}));
 vi.mock("../../components/driver-profile/ActionBar", () => ({
   ActionBar: () => <div data-testid="dp-section-12-action-bar" />,
 }));
@@ -134,9 +137,9 @@ describe("DriverProfilePage", () => {
     render(
       <QueryClientProvider client={client}>
         <ToastProvider>
-          <MemoryRouter initialEntries={["/drivers/d1/profile"]}>
+          <MemoryRouter initialEntries={["/drivers/d1"]}>
             <Routes>
-              <Route path="/drivers/:id/profile" element={<DriverProfilePage />} />
+              <Route path="/drivers/:id" element={<DriverProfilePage />} />
             </Routes>
           </MemoryRouter>
         </ToastProvider>
@@ -144,7 +147,7 @@ describe("DriverProfilePage", () => {
     );
 
     expect(await screen.findByTestId("dp-tab-overview")).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Section navigation" })).toBeInTheDocument();
+    expect(screen.getByTestId("driver-overview-board-stub")).toBeInTheDocument();
     expect(screen.getByTestId("driver-profile-kpi-strip")).toBeInTheDocument();
     expect(screen.getAllByRole("heading", { name: "Alex Rivera" }).length).toBeGreaterThan(0);
     expect(screen.getByTestId("driver-dqf-panel-stub")).toBeInTheDocument();
@@ -157,9 +160,9 @@ describe("DriverProfilePage", () => {
     render(
       <QueryClientProvider client={client}>
         <ToastProvider>
-          <MemoryRouter initialEntries={["/drivers/d1/profile?tab=settlements"]}>
+          <MemoryRouter initialEntries={["/drivers/d1?tab=settlements"]}>
             <Routes>
-              <Route path="/drivers/:id/profile" element={<DriverProfilePage />} />
+              <Route path="/drivers/:id" element={<DriverProfilePage />} />
             </Routes>
           </MemoryRouter>
         </ToastProvider>

@@ -1,6 +1,7 @@
-/** Canonical Drivers module subnav (query-synced on `/drivers?subtab=`). Block A24-2 + C-33. */
+/** Canonical Drivers module subnav. DRV-F418 — /drivers is Home; roster is its own tab. */
 export const DRIVERS_SUBNAV = [
-  { id: "drivers", label: "Drivers" },
+  { id: "home", label: "Home" },
+  { id: "roster", label: "Roster" },
   { id: "profiles", label: "Profiles" },
   { id: "settlements", label: "Settlements ▾" },
   { id: "pre_settlements", label: "Pre-settlements" },
@@ -13,7 +14,7 @@ export const DRIVERS_SUBNAV = [
 
 export type DriversSubnavId = (typeof DRIVERS_SUBNAV)[number]["id"];
 
-/** List status filters on the primary Drivers subtab (`?status=`). */
+/** List status filters on the Roster subtab (`?status=`). */
 export const DRIVERS_LIST_STATUS_TABS = [
   { id: "all", label: "All" },
   { id: "active", label: "Active" },
@@ -44,8 +45,8 @@ export const DRIVERS_KPI_STRIP = [
   { id: "escrow", label: "Escrow" },
 ] as const;
 
-/** Canonical inventory for count/nav integrity guards (Block A24-2). Still 9 subtabs after C-33 reshape. */
-export const DRIVERS_CANONICAL_SUBNAV_COUNT = 9;
+/** Canonical inventory for count/nav integrity guards. Home + Roster + 8 peers = 10. */
+export const DRIVERS_CANONICAL_SUBNAV_COUNT = 10;
 export const DRIVERS_CANONICAL_LIST_STATUS_TAB_COUNT = 6;
 export const DRIVERS_CANONICAL_KPI_COUNT = 7;
 export const DRIVERS_CANONICAL_MODULE_NAV_COUNT = 2;
@@ -53,12 +54,14 @@ export const DRIVERS_CANONICAL_MODULE_NAV_COUNT = 2;
 export const DRIVERS_SUBNAV_IDS = DRIVERS_SUBNAV.map((tab) => tab.id);
 
 export function parseDriverSubnav(searchParams: URLSearchParams): DriversSubnavId {
-  const raw = (searchParams.get("subtab") ?? "drivers").toLowerCase();
+  const raw = (searchParams.get("subtab") ?? "home").toLowerCase();
   // C-33 redirects — retired peer tabs map onto their new homes.
-  if (raw === "permits") return "drivers";
+  if (raw === "permits") return "home";
   if (raw === "deductions") return "settlements";
-  if (raw === "disputes") return "drivers";
-  return (DRIVERS_SUBNAV_IDS as readonly string[]).includes(raw) ? (raw as DriversSubnavId) : "drivers";
+  if (raw === "disputes") return "home";
+  // Legacy first-tab id was "drivers" (the roster). Roster is now its own tab.
+  if (raw === "drivers") return "roster";
+  return (DRIVERS_SUBNAV_IDS as readonly string[]).includes(raw) ? (raw as DriversSubnavId) : "home";
 }
 
 export function parseDriverListStatus(searchParams: URLSearchParams): DriversListStatusId {
@@ -70,11 +73,12 @@ export function parseDriverListStatus(searchParams: URLSearchParams): DriversLis
     : "active";
 }
 
-/** Secondary Drivers home view (`?view=` on `/drivers`). Default = drivers roster. */
-export const DRIVERS_HOME_VIEW_IDS = ["drivers", "teams"] as const;
+/** Roster view toggle (`?view=` on `/drivers/roster`). Default = roster list. */
+export const DRIVERS_HOME_VIEW_IDS = ["roster", "teams"] as const;
 export type DriversHomeViewId = (typeof DRIVERS_HOME_VIEW_IDS)[number];
 
 export function parseDriversHomeView(searchParams: URLSearchParams): DriversHomeViewId {
-  const raw = (searchParams.get("view") ?? "drivers").toLowerCase();
-  return (DRIVERS_HOME_VIEW_IDS as readonly string[]).includes(raw) ? (raw as DriversHomeViewId) : "drivers";
+  const raw = (searchParams.get("view") ?? "roster").toLowerCase();
+  if (raw === "drivers") return "roster";
+  return (DRIVERS_HOME_VIEW_IDS as readonly string[]).includes(raw) ? (raw as DriversHomeViewId) : "roster";
 }

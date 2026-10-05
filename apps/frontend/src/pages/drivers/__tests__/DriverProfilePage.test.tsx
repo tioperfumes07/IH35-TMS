@@ -17,6 +17,9 @@ vi.mock("../../../api/requiredDocuments", () => ({
   listRequiredDocumentTypes: vi.fn().mockResolvedValue([]),
 }));
 
+vi.mock("../../../components/boards/DriverOverviewBoard", () => ({
+  DriverOverviewBoard: () => <div data-testid="driver-overview-board-stub" />,
+}));
 vi.mock("../components/DriverDqfPanel", () => ({
   DriverDqfPanel: () => <div data-testid="driver-dqf-panel-stub">DQF checklist</div>,
 }));
@@ -149,14 +152,14 @@ const profileFixture = {
   deductions: [],
 };
 
-function renderPage(entry = "/drivers/d-test-1/profile") {
+function renderPage(entry = "/drivers/d-test-1") {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
       <ToastProvider>
         <MemoryRouter initialEntries={[entry]}>
           <Routes>
-            <Route path="/drivers/:id/profile" element={<DriverProfilePage />} />
+            <Route path="/drivers/:id" element={<DriverProfilePage />} />
           </Routes>
         </MemoryRouter>
       </ToastProvider>
@@ -176,7 +179,7 @@ describe("DriverProfilePage", () => {
   it("renders Overview sections under the tab strip (C-20)", async () => {
     renderPage();
     expect(await screen.findByTestId("dp-tab-overview")).toBeTruthy();
-    expect(screen.getByRole("navigation", { name: "Section navigation" })).toBeTruthy();
+    expect(screen.getByTestId("driver-overview-board-stub")).toBeTruthy();
     expect(screen.getByTestId("driver-profile-kpi-strip")).toBeTruthy();
     expect(screen.getByTestId("dp-section-1-identity")).toBeTruthy();
     expect(screen.getByTestId("dp-section-2-license")).toBeTruthy();
@@ -188,18 +191,13 @@ describe("DriverProfilePage", () => {
     expect(screen.getByTestId("dp-section-12-action-bar")).toBeTruthy();
   });
 
-  it("renders Settlements / Safety / Documents on their tabs (C-20 A-13)", async () => {
-    renderPage("/drivers/d-test-1/profile?tab=settlements");
+  it("renders Settlements / Documents on their tabs (C-20 A-13)", async () => {
+    renderPage("/drivers/d-test-1?tab=settlements");
     expect(await screen.findByTestId("dp-tab-settlements")).toBeTruthy();
     expect(screen.getByTestId("dp-section-8-settlements")).toBeTruthy();
 
     cleanup();
-    renderPage("/drivers/d-test-1/profile?tab=safety");
-    expect(await screen.findByTestId("dp-tab-safety")).toBeTruthy();
-    expect(screen.getByTestId("dp-section-9-training")).toBeTruthy();
-
-    cleanup();
-    renderPage("/drivers/d-test-1/profile?tab=documents");
+    renderPage("/drivers/d-test-1?tab=documents");
     expect(await screen.findByTestId("dp-tab-documents")).toBeTruthy();
     expect(screen.getByTestId("dp-section-10-border")).toBeTruthy();
     expect(screen.getByTestId("dp-section-11-documents")).toBeTruthy();

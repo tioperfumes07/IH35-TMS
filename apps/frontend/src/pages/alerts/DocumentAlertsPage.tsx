@@ -105,7 +105,7 @@ function InboxRow({
     onError: (err) => pushToast(userFacingApiError(err, "Could not acknowledge the alert"), "error"),
   });
 
-  const profileLink = event.driver_id ? `/drivers/${event.driver_id}/profile` : "/safety/permits";
+  const profileLink = event.driver_id ? `/drivers/${event.driver_id}` : "/safety/permits";
 
   return (
     <li

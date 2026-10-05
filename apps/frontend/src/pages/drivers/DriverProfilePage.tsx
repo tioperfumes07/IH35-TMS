@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { DriverTelematicsPanel } from "../../components/telematics/DriverTelematicsPanel";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { AddPayLineModal } from "../../components/driver-finance/AddPayLineModal";
+import { DriverOverviewBoard } from "../../components/boards/DriverOverviewBoard";
+import { Button } from "../../components/Button";
+import { SettlementDisputeList } from "./SettlementDisputeList";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { apiRequest } from "../../api/client";
 import { deactivateDriver, reactivateDriver } from "../../api/mdata";
@@ -74,8 +78,8 @@ import { W8BenModal } from "../../components/drivers/W8BenModal";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { KpiStrip } from "../../components/layout/KpiStrip";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
-import { SegmentedControl } from "../../components/SegmentedControl";
+import { EldEditHistoryTimeline } from "../../components/safety/EldEditHistoryTimeline";
+import { AuditHistoryTab } from "../../components/drivers/AuditHistoryTab";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { colors } from "../../design/tokens";
@@ -89,11 +93,8 @@ import { resolveApiUrl } from "../../api/client";
 import { ListErrorState } from "../../components/ListErrorState";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
 import {
-  DRIVER_PROFILE_REPORTS,
   DRIVER_PROFILE_TAB_QUERY,
-  DRIVER_PROFILE_TABS,
   parseDriverProfileTab,
-  type DriverProfileReport,
   type DriverProfileTab,
 } from "./driverProfileTabs";
 
@@ -219,24 +220,24 @@ type DriverProfilePageProps = {
 export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProfilePageProps = {}) {
   const { id: routeId = "" } = useParams();
   const id = driverIdProp ?? routeId;
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
   const [addTrainingOpen, setAddTrainingOpen] = useState(false);
   const [w8benOpen, setW8benOpen] = useState(false);
+  const [addPayOpen, setAddPayOpen] = useState(false);
   const [dqfFocus, setDqfFocus] = useState<"all" | "present" | "missing" | "expired" | "expiry_alerts">("all");
-  // C-20 / D11 — tabs own the URL; KPIs render BELOW the tab strip (never above).
-  const activeTab = parseDriverProfileTab(searchParams.get("tab"));
+  // DRV-F416 — tab is ?tab= parsed from the URL, not useState. Back restores the tab.
+  const activeTab = parseDriverProfileTab(searchParams);
   const setActiveTab = (next: DriverProfileTab) => {
     const nextParams = new URLSearchParams(searchParams);
     const slug = DRIVER_PROFILE_TAB_QUERY[next];
     if (slug === "overview") nextParams.delete("tab");
     else nextParams.set("tab", slug);
-    setSearchParams(nextParams, { replace: true });
+    setSearchParams(nextParams, { replace: false });
   };
-  const [activeReport, setActiveReport] = useState<DriverProfileReport>("Statement");
-
   const focusDqf = (focus: typeof dqfFocus) => {
     setDqfFocus(focus);
     if (activeTab !== "Overview") setActiveTab("Overview");
@@ -391,14 +392,28 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
     <div className="space-y-3" data-testid="driver-profile-page" data-active-tab={activeTab}>
       <PageHeader
         title={displayName}
-        subtitle="Driver profile · qualification file (DQF)"
-        breadcrumb={["Drivers", "Qualification profiles", displayName]}
+        subtitle="Driver profile"
+        breadcrumb={["Drivers", "Roster", displayName]}
         onBack={onBack}
-        backHref="/drivers?subtab=profiles"
+        backHref="/drivers/roster"
         actions={
           <div className="flex flex-wrap items-center gap-2">
             {!itemsQ.isError ? <DriverDqfComplianceChip summary={summary} /> : null}
             <StatusBadge status={driver.status} />
+            <Button type="button" size="sm" variant="secondary" onClick={() => navigate(`/drivers/${id}?tab=edit`)} data-testid="driver-profile-edit">
+              Edit
+            </Button>
+            <Button type="button" size="sm" variant="secondary" onClick={() => setAddPayOpen(true)} data-testid="driver-add-payment">
+              Add payment
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => navigate(`/driver-finance/settlement-creator?driver_id=${id}`)}
+              data-testid="driver-run-settlement"
+            >
+              Run settlement
+            </Button>
             {driver.status !== "Terminated" ? (
               <button
                 type="button"
@@ -427,20 +442,12 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
                 Back to list
               </button>
             ) : (
-              <Link to="/drivers?subtab=profiles" className="text-xs font-semibold text-slate-600 hover:underline">
-                All profiles
+              <Link to="/drivers/roster" className="text-xs font-semibold text-slate-600 hover:underline">
+                All drivers
               </Link>
             )}
           </div>
         }
-      />
-
-      {/* C-11 / D11 — tab strip FIRST; KPIs must never sit above tabs. */}
-      <NavyPageSubNav
-        items={DRIVER_PROFILE_TABS.map((tab) => ({ label: tab, to: `#${DRIVER_PROFILE_TAB_QUERY[tab]}` }))}
-        activeId={activeTab}
-        onTabChange={(next) => setActiveTab(next as DriverProfileTab)}
-        itemIds={[...DRIVER_PROFILE_TABS]}
       />
 
       {/* C-11 — one horizontal KPI band below tabs (Overview only so other tabs keep one-screen density). */}
@@ -512,7 +519,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
                       : String(integrityComplaints)
                 }
                 accent={integrityComplaints > 0 ? colors.warn.strong : colors.positive.strong}
-                to={integrityQ.isError && !integrity404 ? undefined : `/safety/complaints?driver_id=${id}`}
+                to={integrityQ.isError && !integrity404 ? undefined : `/drivers/${id}?tab=complaints`}
                 disabled={integrityQ.isError && !integrity404}
                 disabledReason={
                   integrityQ.isError && !integrity404 ? "Integrity profile could not be loaded." : undefined
@@ -521,6 +528,10 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
             </KpiStrip>
           </div>
         )
+      ) : null}
+
+      {companyId ? (
+        <DriverOverviewBoard operatingCompanyId={companyId} driverId={id} hideChrome />
       ) : null}
 
       {activeTab === "Overview" ? (
@@ -666,6 +677,100 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
               onAssignTruck={driver.status === "Terminated" ? undefined : openAssignTruck}
             />
           </div>
+          {/*
+            DRV-F420 — reverse linkage stays on the surviving profile (Rule 14 / Rule 07).
+            The 12+5 tabs live on DriverOverviewBoard; nothing is deleted from this page.
+          */}
+          <div className="space-y-3" data-testid="dp-overview-linkage">
+            {companyId ? <DriverProfileSafetyAttributedSection companyId={companyId} driverId={id} /> : null}
+            {companyId ? (
+              <div data-testid="dp-section-safety-telematics">
+                <DriverTelematicsPanel part="safety" driverId={id} operatingCompanyId={companyId} />
+              </div>
+            ) : null}
+            <div data-testid="dp-section-9-training">
+              <BackgroundChecksSection operatingCompanyId={companyId} driverId={id} />
+              <TrainingRecordsSection
+                records={aggregate.training_records ?? []}
+                totalCount={aggregate.training_records_total_count ?? aggregate.training_records?.length ?? 0}
+                driverId={id}
+                unavailable={aggregate.training_records_unavailable === true}
+                onAddTraining={() => setAddTrainingOpen(true)}
+              />
+            </div>
+            <div data-testid="dp-section-safety-reverse">
+              <DriverSafetyReverseSection
+                operatingCompanyId={companyId}
+                driverId={id}
+                data-testid="driver-profile-safety-reverse"
+              />
+              <DriverInTransitIssuesReverseSection operatingCompanyId={companyId} driverId={id} />
+              <DriverTempCoverReverseSection operatingCompanyId={companyId} driverId={id} />
+              <DriverHosViolationsReverseSection operatingCompanyId={companyId} driverId={id} />
+              <SafetyAlertsReverseSection operatingCompanyId={companyId} subjectKind="driver" subjectId={id} />
+            </div>
+            <div data-testid="dp-section-fines-reverse">
+              <DriverFinesReverseSection
+                operatingCompanyId={companyId}
+                driverId={id}
+                data-testid="driver-profile-fines-reverse"
+              />
+            </div>
+            <DriverWorkOrdersReverseSection
+              operatingCompanyId={companyId}
+              driverId={id}
+              data-testid="driver-profile-work-orders-reverse"
+            />
+            <div data-testid="dp-section-road-service-reverse">
+              <RoadServiceReverseSection
+                filter={{ driver_id: id }}
+                contextLabel="this driver"
+                data-testid="driver-profile-road-service-reverse"
+              />
+            </div>
+            <DriverReportsReverseSection operatingCompanyId={companyId} driverId={id} />
+            <div data-testid="dp-section-legal-matters">
+              <LegalMattersReverseSection
+                operatingCompanyId={companyId}
+                filter={{ related_driver_id: id }}
+                contextLabel="this driver"
+                data-testid="driver-profile-legal-matters"
+              />
+            </div>
+            <div data-testid="dp-section-insurance-claims">
+              <InsuranceClaimsReverseSection
+                operatingCompanyId={companyId}
+                filter={{ driver_id: id }}
+                contextLabel="this driver"
+                data-testid="driver-profile-insurance-claims"
+              />
+            </div>
+            <InsuranceLawsuitsReverseSection operatingCompanyId={companyId} filter={{ driver_id: id }} contextLabel="this driver" />
+            <div data-testid="dp-section-expenses-reverse">
+              <ExpensesReverseSection
+                operatingCompanyId={companyId}
+                filter={{ driver_id: id }}
+                contextLabel="this driver"
+                data-testid="driver-profile-expenses-reverse"
+              />
+            </div>
+            <div data-testid="dp-section-bills-reverse">
+              <BillsReverseSection
+                operatingCompanyId={companyId}
+                filter={{ driver_id: id }}
+                contextLabel="this driver"
+                data-testid="driver-profile-bills-reverse"
+              />
+            </div>
+            <CashForecastReverseSection operatingCompanyId={companyId} filter={{ party_ref_kind: "driver", party_ref_id: id }} />
+            <div className={`${MASTER_DETAIL.surfaceClass} p-3`} data-testid="dp-section-communications">
+              <DriverCommunicationsTab driverId={id} operatingCompanyId={companyId} />
+            </div>
+            <section data-testid="dp-section-activity" className={`${MASTER_DETAIL.surfaceClass} p-3`}>
+              <h2 className="mb-3 text-xs font-semibold text-slate-900">Audit History</h2>
+              <EntityAuditHistoryTab operatingCompanyId={companyId} entityType="driver" entityId={id} />
+            </section>
+          </div>
         </div>
       ) : null}
 
@@ -710,7 +815,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         </div>
       ) : null}
 
-      {activeTab === "Cash Advances" ? (
+      {activeTab === "Cash advances" ? (
         <div className="space-y-3" data-testid="dp-tab-cash-advances">
           <p className="text-xs text-slate-600">Cash advances on this driver are assets. Escrow is a liability held for this payee.</p>
           <div data-testid="dp-section-cash-advances-reverse">
@@ -730,9 +835,9 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         </div>
       ) : null}
 
-      {activeTab === "Deductions" ? (
-        <div className="space-y-3" data-testid="dp-tab-deductions">
-          <p className="text-xs text-slate-600">Deductions adjust settlement lines — they are not standalone posting documents.</p>
+      {activeTab === "Additional payments" ? (
+        <div className="space-y-3" data-testid="dp-tab-additional-payments">
+          <p className="text-xs text-slate-600">Additional payments and deductions adjust settlement lines — they are not standalone posting documents.</p>
           <div data-testid="dp-section-deductions-reverse">
             <DriverDeductionsReverseSection
               operatingCompanyId={companyId}
@@ -765,62 +870,21 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         </div>
       ) : null}
 
-      {activeTab === "Maintenance" ? (
-        <div className="space-y-3" data-testid="dp-tab-maintenance">
-          <DriverWorkOrdersReverseSection
-            operatingCompanyId={companyId}
-            driverId={id}
-            data-testid="driver-profile-work-orders-reverse"
-          />
-          <div data-testid="dp-section-road-service-reverse">
-            <RoadServiceReverseSection
+      {activeTab === "Complaints" ? (
+        <div className="space-y-3" data-testid="dp-tab-complaints">
+          <div className="flex justify-end">
+            <Link to={`/safety/complaints?driver_id=${id}`} className="text-xs font-semibold text-slate-700 hover:underline">
+              View all
+            </Link>
+          </div>
+          {companyId ? (
+            <ComplaintsReverseSection
+              operatingCompanyId={companyId}
               filter={{ driver_id: id }}
               contextLabel="this driver"
-              data-testid="driver-profile-road-service-reverse"
+              data-testid="driver-profile-complaints-tab"
             />
-          </div>
-          <DriverReportsReverseSection operatingCompanyId={companyId} driverId={id} />
-        </div>
-      ) : null}
-
-      {activeTab === "Safety" ? (
-        <div className="space-y-3" data-testid="dp-tab-safety">
-          {companyId ? (
-            <DriverProfileSafetyAttributedSection companyId={companyId} driverId={id} />
           ) : null}
-          {companyId ? (
-            <div data-testid="dp-section-safety-telematics">
-              <DriverTelematicsPanel part="safety" driverId={id} operatingCompanyId={companyId} />
-            </div>
-          ) : null}
-          <div data-testid="dp-section-9-training">
-            <BackgroundChecksSection operatingCompanyId={companyId} driverId={id} />
-            <TrainingRecordsSection
-              records={aggregate.training_records ?? []}
-              totalCount={aggregate.training_records_total_count ?? aggregate.training_records?.length ?? 0}
-              driverId={id}
-              unavailable={aggregate.training_records_unavailable === true}
-              onAddTraining={() => setAddTrainingOpen(true)}
-            />
-          </div>
-          <div data-testid="dp-section-safety-reverse">
-            <DriverSafetyReverseSection
-              operatingCompanyId={companyId}
-              driverId={id}
-              data-testid="driver-profile-safety-reverse"
-            />
-            <DriverInTransitIssuesReverseSection operatingCompanyId={companyId} driverId={id} />
-            <DriverTempCoverReverseSection operatingCompanyId={companyId} driverId={id} />
-            <DriverHosViolationsReverseSection operatingCompanyId={companyId} driverId={id} />
-            <SafetyAlertsReverseSection operatingCompanyId={companyId} subjectKind="driver" subjectId={id} />
-          </div>
-          <div data-testid="dp-section-fines-reverse">
-            <DriverFinesReverseSection
-              operatingCompanyId={companyId}
-              driverId={id}
-              data-testid="driver-profile-fines-reverse"
-            />
-          </div>
         </div>
       ) : null}
 
@@ -839,45 +903,6 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           <div data-testid="dp-section-11-documents">
             <DocumentsTab entityType="driver" entityId={id} entityName={displayName} operatingCompanyId={(profileDriver.operating_company_id as string | null | undefined) ?? companyId} />
           </div>
-        </div>
-      ) : null}
-
-      {activeTab === "Legal" ? (
-        <div className="space-y-3" data-testid="dp-tab-legal">
-          <div data-testid="dp-section-legal-matters">
-            <LegalMattersReverseSection
-              operatingCompanyId={companyId}
-              filter={{ related_driver_id: id }}
-              contextLabel="this driver"
-              data-testid="driver-profile-legal-matters"
-            />
-          </div>
-          <div data-testid="dp-section-insurance-claims">
-            <InsuranceClaimsReverseSection
-              operatingCompanyId={companyId}
-              filter={{ driver_id: id }}
-              contextLabel="this driver"
-              data-testid="driver-profile-insurance-claims"
-            />
-          </div>
-          <InsuranceLawsuitsReverseSection operatingCompanyId={companyId} filter={{ driver_id: id }} contextLabel="this driver" />
-          <div data-testid="dp-section-expenses-reverse">
-            <ExpensesReverseSection
-              operatingCompanyId={companyId}
-              filter={{ driver_id: id }}
-              contextLabel="this driver"
-              data-testid="driver-profile-expenses-reverse"
-            />
-          </div>
-          <div data-testid="dp-section-bills-reverse">
-            <BillsReverseSection
-              operatingCompanyId={companyId}
-              filter={{ driver_id: id }}
-              contextLabel="this driver"
-              data-testid="driver-profile-bills-reverse"
-            />
-          </div>
-          <CashForecastReverseSection operatingCompanyId={companyId} filter={{ party_ref_kind: "driver", party_ref_id: id }} />
         </div>
       ) : null}
 
@@ -905,55 +930,91 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         </div>
       ) : null}
 
-      {activeTab === "Communications" ? (
-        <div data-testid="dp-tab-communications" className={`${MASTER_DETAIL.surfaceClass} p-3`}>
-          <DriverCommunicationsTab driverId={id} operatingCompanyId={companyId} />
+      {activeTab === "Driver disputes" ? (
+        <div className="space-y-3" data-testid="dp-tab-driver-disputes">
+          <div className="flex justify-end">
+            <Link to="/drivers/disputes" className="text-xs font-semibold text-slate-700 hover:underline">
+              View all
+            </Link>
+          </div>
+          <SettlementDisputeList driverId={id} />
         </div>
       ) : null}
 
-      {activeTab === "Reports" ? (
-        <div className="space-y-3" data-testid="dp-tab-reports">
-          <p className="text-xs text-slate-600">
-            Payee reports for this driver — Statement, Activity, Transactions, and Deductions. Live totals wire next; this is the locked report surface.
-          </p>
-          <SegmentedControl
-            value={activeReport}
-            onChange={(v) => setActiveReport(v as DriverProfileReport)}
-            options={DRIVER_PROFILE_REPORTS.map((r) => ({ value: r, label: r, testId: `driver-report-${r.toLowerCase()}` }))}
-            dataAttributes={{ "data-driver-profile-reports": "true" }}
-          />
-          <section className={`${MASTER_DETAIL.surfaceClass} p-3`} data-testid={`driver-report-panel-${activeReport.toLowerCase()}`}>
-            <h2 className="mb-2 text-xs font-semibold uppercase text-slate-600">{activeReport}</h2>
-            {activeReport === "Statement" ? (
-              <p className="text-xs text-slate-700">
-                Running balance of amounts owed to or from this driver — settlement net pay, cash advances issued or recovered, and escrow held or released.
-              </p>
-            ) : null}
-            {activeReport === "Activity" ? (
-              <p className="text-xs text-slate-700">
-                Chronological money-event feed for this driver (no running balance). Same events as Statement, ordered by date.
-              </p>
-            ) : null}
-            {activeReport === "Transactions" ? (
-              <p className="text-xs text-slate-700">
-                Ledger postings behind this payee — every journal line linked through this driver’s settlements, advances, and escrow.
-              </p>
-            ) : null}
-            {activeReport === "Deductions" ? (
-              <p className="text-xs text-slate-700">
-                Every deduction applied to this driver, which settlement it landed on, and its recovery status.
-              </p>
-            ) : null}
-            <p className="mt-2 text-xs text-slate-500">Report data shell — accounting query wiring follows; this UI is the locked report surface.</p>
+      {activeTab === "Pay & escrow" ? (
+        <div className="space-y-3" data-testid="dp-tab-pay-escrow">
+          <DriverPaymentMethodsCard driverId={id} companyId={companyId} />
+          <DriverEscrowReverseSection operatingCompanyId={companyId} driverId={id} data-testid="driver-profile-pay-escrow" />
+        </div>
+      ) : null}
+
+      {activeTab === "Reports & damage" ? (
+        <div className="space-y-3" data-testid="dp-tab-reports-damage">
+          <DriverReportsReverseSection operatingCompanyId={companyId} driverId={id} />
+          <DriverWorkOrdersReverseSection operatingCompanyId={companyId} driverId={id} />
+          <RoadServiceReverseSection filter={{ driver_id: id }} contextLabel="this driver" />
+        </div>
+      ) : null}
+
+      {activeTab === "Safety & accidents" ? (
+        <div className="space-y-3" data-testid="dp-tab-safety-accidents">
+          {companyId ? <DriverProfileSafetyAttributedSection companyId={companyId} driverId={id} /> : null}
+          <DriverSafetyReverseSection operatingCompanyId={companyId} driverId={id} />
+          <DriverFinesReverseSection operatingCompanyId={companyId} driverId={id} />
+          <DriverHosViolationsReverseSection operatingCompanyId={companyId} driverId={id} />
+        </div>
+      ) : null}
+
+      {activeTab === "Safety file" ? (
+        <div className="space-y-3" data-testid="dp-tab-safety-file">
+          <LicenseSection license={aggregate.license} />
+          <MedicalCardSection medical={aggregate.medical_card} unavailable={aggregate.medical_card_unavailable === true} />
+          <DrugProgramSection drug={aggregate.drug_program} unavailable={aggregate.drug_program_unavailable === true} />
+          <BackgroundChecksSection operatingCompanyId={companyId} driverId={id} />
+        </div>
+      ) : null}
+
+      {activeTab === "ELD edits" ? (
+        <div className="space-y-3" data-testid="dp-tab-eld-edits">
+          {companyId ? <EldEditHistoryTimeline driverUuid={id} operatingCompanyId={companyId} /> : null}
+        </div>
+      ) : null}
+
+      {activeTab === "Legal matters" ? (
+        <div className="space-y-3" data-testid="dp-tab-legal-matters">
+          <LegalMattersReverseSection operatingCompanyId={companyId} filter={{ related_driver_id: id }} contextLabel="this driver" />
+          <InsuranceClaimsReverseSection operatingCompanyId={companyId} filter={{ driver_id: id }} contextLabel="this driver" />
+          <InsuranceLawsuitsReverseSection operatingCompanyId={companyId} filter={{ driver_id: id }} contextLabel="this driver" />
+        </div>
+      ) : null}
+
+      {activeTab === "QBO mapping" ? (
+        <div className="space-y-3" data-testid="dp-tab-qbo-mapping">
+          <section className={`${MASTER_DETAIL.surfaceClass} p-3`}>
+            <h2 className="mb-2 text-xs font-semibold text-slate-900">QBO vendor linkage</h2>
+            <p className="text-xs text-slate-600">
+              {profileDriver.qbo_vendor_id ? "Linked" : "Unlinked"}
+              {profileDriver.qbo_vendor_name ? ` · ${String(profileDriver.qbo_vendor_name)}` : ""}
+            </p>
           </section>
         </div>
       ) : null}
 
-      {activeTab === "Activity" ? (
-        <section data-testid="dp-tab-activity" className={`${MASTER_DETAIL.surfaceClass} p-3`}>
-          <h2 className="mb-3 text-xs font-semibold text-slate-900">Audit History</h2>
+      {activeTab === "Audit history" ? (
+        <div className="space-y-3" data-testid="dp-tab-audit-history">
+          {companyId ? <AuditHistoryTab driverId={id} operatingCompanyId={companyId} /> : null}
           <EntityAuditHistoryTab operatingCompanyId={companyId} entityType="driver" entityId={id} />
-        </section>
+        </div>
+      ) : null}
+
+      {companyId ? (
+        <AddPayLineModal
+          open={addPayOpen}
+          onClose={() => setAddPayOpen(false)}
+          operatingCompanyId={companyId}
+          driverId={id}
+          driverName={displayName}
+        />
       ) : null}
 
       <AddTrainingModal

@@ -1,3 +1,15 @@
+## 2026-10-05T18:44Z · PR1 DRIVER PROFILE STARTED
+
+DONE: Lead-out orders read. Fleet stripped from this branch (PR3 later). Samsara mapping is PR2.
+
+NOW: Shipping PR1 — DRV-F420/416/421/422/415. 17 tabs stay on `/drivers/:id` via `?tab=`. Edit is `?tab=edit` (12-group form). Local gates only (GitHub CI billing down).
+
+NEXT: Merge PR1 → bus one-liner → PR2 Samsara mapping (five laws) → PR3 Fleet home.
+
+Files Modified: DriverOverviewBoard · DriverEditForm · driverProfileTabs · DriverProfilePage · CollapsibleProfileCard · party-board.css · ActionBar · manifest · drivers.routes · api.ts · verify-driver-profile-tabs-stay-on-the-profile · verify-driver-profile-matches-approved-tabs · IH35_ARCHITECTURAL_DESIGN · SPEC
+
+---
+
 ## 2026-10-05T16:15Z · ENG-SPINE ledger amount fail-closed shipping
 
 DONE: #25507 MERGED squash `be23b54bb9` (GitHub 2026-10-05T16:08:58Z). Tip later ACCT-F406 #25508.

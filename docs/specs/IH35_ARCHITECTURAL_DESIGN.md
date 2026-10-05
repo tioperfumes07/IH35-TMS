@@ -461,13 +461,14 @@ Defects auto-spawn `maintenance.work_orders` with `origin='dvir'`. Maintenance t
 ### Top action button
 **+ Create Driver**
 
-### Sub-nav tabs (9 query-synced subtabs on `/drivers?subtab=` — locked design, Block A24-2 + C-33 Round 298.1)
+### Sub-nav tabs (10 query-synced subtabs — DRV-F418 Home at `/drivers`, roster at `/drivers/roster`)
 
-Canonical config: `apps/frontend/src/components/drivers/DRIVERS_TABS_CONFIG.ts` (`DRIVERS_CANONICAL_SUBNAV_COUNT = 9`).
+Canonical config: `apps/frontend/src/components/drivers/DRIVERS_TABS_CONFIG.ts` (`DRIVERS_CANONICAL_SUBNAV_COUNT = 10`).
 
 | Subtab id | Label | What it shows | Phase |
 |-----------|-------|---------------|-------|
-| `drivers` | Drivers | Driver list + status filters (`?status=`) | Phase 1 ✅ |
+| `home` | Home | Driver Home — KPI strip + alerts + what needs attention | DRV-F418 |
+| `roster` | Roster | Driver list + status filters (`?status=`) | DRV-F418 |
 | `profiles` | Profiles | Driver profile index (`DriversListPage`) | Phase 1 ✅ |
 | `settlements` | Settlements ▾ | Settlements panel + deductions sub-ledger | Phase 3 ✅ T11.7 |
 | `pre_settlements` | Pre-settlements | Pre-settlement queue panel | Phase 3 ✅ |
@@ -479,7 +480,7 @@ Canonical config: `apps/frontend/src/components/drivers/DRIVERS_TABS_CONFIG.ts` 
 
 **C-33 reshape (Round 296 / 298.1 — not peer tabs):** `permits` removed (unit-keyed at `safety.permits`, not driver). `deductions` folds under Settlements (a deduction has no life without a settlement). `disputes` is the three-way hub (Driver / Customer / Vendor — C-25 at `/accounting/disputes`), not a Drivers peer tab. Legacy paths `/drivers/permits`, `/drivers/deductions`, `/drivers/disputes`, `/drivers/auto-deductions` stay registered (Rule 07) and remap via `driversSubtabFromPath`.
 
-**Active-path law (2026-07-21 + C-33):** ONE Live mount — `pages/Drivers.tsx` (manifest lazy-imports it directly). `pages/drivers/DriversPage.tsx` is `@archived` re-export (Rule 07). **Team Splits** stays in the locked 9. `/drivers/auto-deductions` Navigate-redirects to `/drivers/deductions` → Settlements. **CI:** `verify:drivers-active-path` · `verify-list-defaults-and-kpi-shape.mjs`.
+**Active-path law (2026-07-21 + C-33 + DRV-F418):** ONE Live mount — `pages/Drivers.tsx` (manifest lazy-imports it directly). `pages/drivers/DriversPage.tsx` is `@archived` re-export (Rule 07). **Team Splits** stays in the locked 10. `/drivers/auto-deductions` Navigate-redirects to `/drivers/deductions` → Settlements. **CI:** `verify:drivers-active-path` · `verify-list-defaults-and-kpi-shape.mjs`.
 
 **Module nav surfaces (2):** `/drivers` hub + `/driver-finance/cash-advance-requests` (linked from module subnav and sidebar flyout).
 
@@ -1133,11 +1134,11 @@ Sections 7–11 on `VehicleProfilePage`: reefer (conditional), financial P&amp;L
 
 **PDF export:** Puppeteer HTML → `page.pdf()` (same pattern as settlement PDF renderer). `GET /api/v1/mdata/units/:id/export.pdf`.
 
-## Driver Profile (People module) — Part 1 (locked 2026-06-01)
+## Driver Profile (People module) — Part 1 (locked 2026-06-01; DRV-F420 / F416 / F421 2026-10-05)
 
-Route: `/drivers/:id/profile` renders `DriverProfilePage` with six sections (identity, license/endorsements, medical card, drug program, HOS, current assignment). Full driver record remains at `/drivers/:id` (`DriverDetailPage`).
+Route: `/drivers/:id` renders `DriverProfilePage` + `DriverOverviewBoard` (the surviving profile — DRV-F415 / F420). All 17 tabs stay on `/drivers/:id` via `?tab=` (`parseDriverProfileTab` / `driverProfileTabHref`): **12 strip** (Overview · Settlements · Additional payments · Cash advances · Pay & escrow · Loads · Fuel · Reports & damage · Complaints · Safety & accidents · Documents · Driver disputes) + **5 More** (Safety file · ELD edits · Legal matters · QBO mapping · Audit history). Edit is `/drivers/:id?tab=edit` (`DriverEditForm`); `/drivers/:id/edit` redirects to `?tab=edit`. `/drivers/:id/profile` redirects to `/drivers/:id`. `DriverDetail.tsx` retained on disk (Rule 07). Loads never opens Dispatch. Complaints / Disputes are driver-scoped on the profile. **CI:** `verify-driver-profile-tabs-stay-on-the-profile.mjs` · `verify-driver-profile-matches-approved-tabs.mjs`.
 
-**Tabs (C-20 + ROUND 319):** Overview · Settlements · Cash Advances · Deductions · Loads · **Fuel** (E-21/E-22 verdicts + fuel reverse; was incorrectly under Legal) · Maintenance · Safety · Documents · Legal · Communications · Reports · Activity.
+**Tabs (approved DriverDetail.dc.html):** Overview · Settlements · Additional payments · Cash advances · Loads · Fuel · Complaints · Documents · Driver disputes. Tab is URL-synced via `?tab=` (`parseDriverProfileTab`). Reverse linkage that the design does not name as a tab stays on Overview (Rule 14 / Rule 07) — it is not a second tab list.
 
 **License:** `mdata.drivers` CDL fields + six endorsement booleans (`0297`). Medical prefers `safety.medical_cards` with fallback to `dot_medical_expires_at`.
 

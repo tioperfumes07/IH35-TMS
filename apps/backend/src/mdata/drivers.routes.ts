@@ -328,8 +328,11 @@ const updateDriverBodySchema = z
     visa_type: z.string().trim().max(100).nullable().optional(),
     visa_number: z.string().trim().max(100).nullable().optional(),
     visa_expires_at: isoDateSchema.nullable().optional(),
+    visa_b1_status: z.string().trim().max(40).nullable().optional(),
+    date_of_birth: isoDateSchema.nullable().optional(),
     passport_number: z.string().trim().max(100).nullable().optional(),
     passport_expires_at: isoDateSchema.nullable().optional(),
+    passport_country: z.string().trim().max(2).nullable().optional(),
     ine_number: ineSchema.nullable().optional(),
     curp: curpSchema.nullable().optional(),
     mx_address_line1: z.string().trim().max(200).nullable().optional(),
@@ -909,7 +912,7 @@ export async function createDriverCanonical(
             INSERT INTO mdata.drivers (
               identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
               cdl_expires_at, hire_date, pay_basis, dot_medical_expires_at, hazmat_endorsement_expires_at,
-              visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
+              visa_type, visa_number, visa_expires_at, visa_b1_status, passport_number, passport_expires_at, ine_number, curp,
               date_of_birth, passport_country, mexican_license_number, mexican_license_expiration,
               mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
@@ -922,7 +925,7 @@ export async function createDriverCanonical(
             RETURNING
               id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
               cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
-              visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
+              visa_type, visa_number, visa_expires_at, visa_b1_status, passport_number, passport_expires_at, ine_number, curp,
               date_of_birth, passport_country, mexican_license_number, mexican_license_expiration,
               mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
@@ -1598,8 +1601,8 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             CASE WHEN has_b1_visa THEN COALESCE(NULLIF(visa_type, ''), 'B1') ELSE visa_type END AS visa_type,
             CASE WHEN has_b1_visa THEN COALESCE(visa_number, b1_visa_number) ELSE visa_number END AS visa_number,
             CASE WHEN has_b1_visa THEN COALESCE(visa_expires_at, b1_visa_expires_date) ELSE visa_expires_at END AS visa_expires_at,
-            has_b1_visa, b1_visa_number, b1_visa_expires_date,
-            passport_number, passport_expires_at, ine_number, curp,
+            has_b1_visa, b1_visa_number, b1_visa_expires_date, visa_b1_status,
+            passport_number, passport_expires_at, passport_country, date_of_birth, ine_number, curp,
             referred_by_driver_id, referral_source, referral_reward_paid_at, referral_reward_settlement_id,
             (SELECT NULLIF(trim(concat_ws(' ', referrer.first_name, referrer.last_name)), '')
                FROM mdata.drivers referrer
@@ -2232,8 +2235,11 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     if ("visa_type" in b) add("visa_type", b.visa_type ?? null);
     if ("visa_number" in b) add("visa_number", b.visa_number ?? null);
     if ("visa_expires_at" in b) add("visa_expires_at", b.visa_expires_at ?? null);
+    if ("visa_b1_status" in b) add("visa_b1_status", b.visa_b1_status ?? null);
+    if ("date_of_birth" in b) add("date_of_birth", b.date_of_birth ?? null);
     if ("passport_number" in b) add("passport_number", b.passport_number ?? null);
     if ("passport_expires_at" in b) add("passport_expires_at", b.passport_expires_at ?? null);
+    if ("passport_country" in b) add("passport_country", b.passport_country ?? null);
     if ("ine_number" in b) add("ine_number", b.ine_number ?? null);
     if ("curp" in b) add("curp", b.curp ?? null);
     if ("mx_address_line1" in b) add("mx_address_line1", b.mx_address_line1 ?? null);
@@ -2304,7 +2310,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             SELECT
               id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
               cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at, endorsement_h,
-              visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
+              visa_type, visa_number, visa_expires_at, visa_b1_status, passport_number, passport_expires_at, ine_number, curp,
               date_of_birth, passport_country, mexican_license_number, mexican_license_expiration,
               mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
@@ -2353,7 +2359,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             RETURNING
               id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
               cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at, endorsement_h,
-              visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
+              visa_type, visa_number, visa_expires_at, visa_b1_status, passport_number, passport_expires_at, ine_number, curp,
               date_of_birth, passport_country, mexican_license_number, mexican_license_expiration,
               mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,

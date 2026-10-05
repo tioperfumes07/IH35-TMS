@@ -221,7 +221,8 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
     case "drivers":
       return [
         { label: "Drivers Home", to: "/drivers" },
-        { label: "Profiles", to: "/drivers?subtab=profiles" },
+        { label: "Roster", to: "/drivers/roster" },
+        { label: "Profiles", to: "/drivers/profiles" },
         { label: "Settlements", to: "/drivers?subtab=settlements" },
         { label: "Cash Advances", to: "/drivers?subtab=cash_advances" },
         { label: "Cash Advance Requests", to: "/driver-finance/cash-advance-requests" },

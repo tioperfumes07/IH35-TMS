@@ -87,7 +87,7 @@
 .dd-pill { font-size: var(--ih-fs-pill); font-weight: 700; letter-spacing: var(--ih-ls-badge); text-transform: uppercase; color: var(--ih-card); background: var(--ih-navy-ink); border-radius: var(--ih-radius-chip); padding: 3px 7px; }
 .dd-btn { font: inherit; font-size: var(--ih-fs-body); padding: 0 14px; height: var(--ih-h-action); border: 1px solid var(--ih-border-control); background: var(--ih-card); color: var(--ih-navy-ink); border-radius: var(--ih-radius); cursor: pointer; }
 .dd-btn--primary { font-weight: 600; padding: 0 16px; border-color: var(--ih-navy); background: var(--ih-navy); color: var(--ih-card); }
-.dd-tabs { display: flex; gap: 2px; margin-top: 12px; flex-wrap: wrap; }
+.dd-tabs { display: flex; gap: 2px; margin-top: 12px; flex-wrap: nowrap; overflow-x: auto; }
 .dd-body { padding: 14px var(--ih-gutter) 22px; display: flex; flex-direction: column; gap: var(--ih-gap-card); }
 .dd-kpis { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--ih-gap-tile); }
 .dd-kpi-v { font-size: 20px; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; text-align: left; }
@@ -114,3 +114,14 @@
 .dd-tag--navy { background: var(--ih-navy-ink); }
 .dd-red { color: var(--ih-red); }
 @media (max-width: 1100px) { .dd-cols { grid-template-columns: 1fr; } .dd-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* Control law 2026-10-05 — named widths once; 34px everywhere; never inline style widths. */
+.wd { width: 132px; max-width: 100%; }   /* date */
+.wm { width: 120px; max-width: 100%; }   /* money */
+.wc { width: 104px; max-width: 100%; }   /* code */
+.ws { width: 156px; max-width: 100%; }   /* select/name min */
+.wmd { width: 200px; max-width: 100%; }  /* select/name max */
+.wsearch { width: 232px; max-width: 100%; } /* search */
+.wl { width: 268px; max-width: 100%; }   /* email */
+.wide { width: 100%; }                  /* notes only */
+.de-ctrl { height: 34px; box-sizing: border-box; }

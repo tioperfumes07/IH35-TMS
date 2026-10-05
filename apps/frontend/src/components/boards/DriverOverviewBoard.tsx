@@ -1,17 +1,25 @@
 /**
- * ROUND 326.5 — DriverDetail board, Overview (docs/design/boards/driver-customers-vendors/DriverDetail.dc.html):
- * identity header + Edit / Add payment / Run settlement, one tab strip, seven tiles across, then settlements (line
- * haul / additional / deductions), additional payments, complaints, reports & damage on the left; integrity against
- * the fleet, trucks he has held, pay terms and compliance on the right. GET /api/v1/mdata/boards/drivers/:id/overview.
+ * DRV-F420 / F416 / F421 / F422 / F415 — driver profile shell.
+ * All 17 tabs render here, scoped to this driver. Active tab is ?tab=.
  */
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AddPayLineModal } from "../driver-finance/AddPayLineModal";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ApiError, apiRequest } from "../../api/client";
 import { formatDateUS } from "../../lib/formatDate";
 import { ListErrorState } from "../ListErrorState";
 import { EntityLink, resolveEntityRoute } from "../shared/EntityLink";
+import { DriverSamsaraDuplicateBanner } from "../driver-profile/DriverSamsaraDuplicateBanner";
+import { DriverEditForm } from "../../pages/drivers/DriverEditForm";
+import {
+  DRIVER_PROFILE_MORE_TABS,
+  DRIVER_PROFILE_STRIP_TABS,
+  driverProfileTabHref,
+  parseDriverProfileTab,
+  type DriverProfileTab,
+} from "../../pages/drivers/driverProfileTabs";
+import { CollapsibleProfileCard } from "./CollapsibleProfileCard";
 import "../../design/ih35-design-tokens.css";
 import "./party-board.css";
 import { formatUsdCentsTable } from "../../lib/money";
@@ -36,39 +44,100 @@ type Overview = {
 };
 
 const usd = (c: number) => `${c < 0 ? "-" : ""}$${(Math.abs(c) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-// Owner design law 7 + lib/money C-35/C-37 (Lead ruling ROUND 330.6): MISSING renders "—", a real measured zero renders
-// "$0.00". The old ternary falsy-tested a number and turned every real $0.00 into "unknown".
 const money = (c: number | null | undefined) => formatUsdCentsTable(c);
 const int = (n: number) => n.toLocaleString("en-US");
 const day = (d: string | null | undefined) => (d ? formatDateUS(d) : "—");
 const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("");
 
-/** The board's tab strip — Overview is this screen; every other tab opens the existing tab / sub-view it names. */
-export const DRIVER_DETAIL_TABS = (id: string): Array<{ label: string; to: string }> => [
-  { label: "Overview", to: `/drivers/${id}` },
-  { label: "Settlements", to: `/drivers/${id}?tab=operations&op=settlement-history` },
-  { label: "Additional payments", to: `/drivers/${id}?tab=settlements` },
-  { label: "Cash advances", to: `/drivers/${id}?tab=operations&op=debt-history` },
-  { label: "Pay & escrow", to: `/drivers/${id}?tab=operations&op=escrow-history` },
-  { label: "Loads", to: `/drivers/${id}?tab=loads` },
-  { label: "Fuel", to: `/drivers/${id}?tab=operations&op=fuel-history` },
-  { label: "Reports & damage", to: `/drivers/${id}?tab=operations&op=maintenance-assignments` },
-  { label: "Complaints", to: `/safety/complaints?driver_id=${id}` },
-  { label: "Safety & accidents", to: `/drivers/${id}?tab=operations&op=accident-history` },
-  { label: "Documents", to: `/drivers/${id}?tab=documents` },
-  { label: "Driver disputes", to: `/drivers/disputes?driver_id=${id}` },
-];
+/** Every tab stays on /drivers/:id. Never /safety or /dispatch. */
+export const DRIVER_DETAIL_TABS = (id: string): Array<{ label: DriverProfileTab; to: string }> =>
+  DRIVER_PROFILE_STRIP_TABS.map((label) => ({ label, to: driverProfileTabHref(id, label) }));
 
 const kindTone = (k: string) => (/detention|layover|wait|late|damage/i.test(k) ? "amber" : /refus|accident/i.test(k) ? "red" : /bonus|report|mechanical/i.test(k) ? "navy" : "");
 const fmtIntegrity = (i: Integrity, v: number | null) => (v == null ? "—" : i.money ? usd(v) : `${v}${i.unit ?? ""}`);
 
-export function DriverOverviewBoard(props: { operatingCompanyId: string; driverId: string }) {
+function ProfileTabStrip({ driverId, activeTab }: { driverId: string; activeTab: DriverProfileTab }) {
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreActive = DRIVER_PROFILE_MORE_TABS.includes(activeTab as (typeof DRIVER_PROFILE_MORE_TABS)[number]);
+  return (
+    <nav className="dd-tabs" aria-label="Driver" data-testid="driver-profile-tab-strip">
+      {DRIVER_PROFILE_STRIP_TABS.map((label) => (
+        <Link
+          key={label}
+          className="pb-tab"
+          to={driverProfileTabHref(driverId, label)}
+          aria-current={activeTab === label ? "page" : undefined}
+        >
+          {label}
+        </Link>
+      ))}
+      <div className="relative">
+        <button
+          type="button"
+          className="pb-tab"
+          aria-expanded={moreOpen}
+          aria-haspopup="menu"
+          data-testid="driver-profile-more"
+          onClick={() => setMoreOpen((v) => !v)}
+        >
+          {moreActive ? activeTab : "More"} ▾
+        </button>
+        {moreOpen ? (
+          <div className="absolute left-0 z-20 mt-1 min-w-[180px] rounded-sm border border-[#D8E0E8] bg-white p-1 shadow-sm" role="menu">
+            {DRIVER_PROFILE_MORE_TABS.map((label) => (
+              <Link
+                key={label}
+                role="menuitem"
+                className="block px-2 py-1 text-[12px] text-[#0F1B2D] hover:bg-[#F1F4F7]"
+                to={driverProfileTabHref(driverId, label)}
+                onClick={() => setMoreOpen(false)}
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </nav>
+  );
+}
+
+export function DriverOverviewBoard(props: {
+  operatingCompanyId: string;
+  driverId: string;
+  /** When true, the page owns the identity header. The tab strip still renders here. */
+  hideChrome?: boolean;
+  children?: ReactNode;
+}) {
   const [addPayOpen, setAddPayOpen] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const activeTab = parseDriverProfileTab(searchParams);
   const q = useQuery({
     queryKey: ["driver-overview", props.operatingCompanyId, props.driverId],
     queryFn: () => apiRequest<Overview>(`/api/v1/mdata/boards/drivers/${props.driverId}/overview?operating_company_id=${props.operatingCompanyId}`),
+    enabled: activeTab !== "Edit",
   });
+  if (activeTab === "Edit") {
+    return (
+      <div className="pb" data-testid="driver-overview-board" data-active-tab="Edit">
+        {props.hideChrome ? null : (
+          <div className="dd-head">
+            <div className="pb-head-row">
+              <div className="dd-id">
+                <div className="pb-title">Edit driver</div>
+              </div>
+            </div>
+            <ProfileTabStrip driverId={props.driverId} activeTab={activeTab} />
+          </div>
+        )}
+        {props.hideChrome ? <ProfileTabStrip driverId={props.driverId} activeTab={activeTab} /> : null}
+        <div className="dd-body">
+          <DriverEditForm driverId={props.driverId} operatingCompanyId={props.operatingCompanyId} />
+        </div>
+      </div>
+    );
+  }
   if (q.isError) return <ListErrorState status={q.error instanceof ApiError ? q.error.status : 0} message="Could not load this driver." onRetry={() => void q.refetch()} />;
   if (!q.data) return <div className="pb"><div className="dd-body pb-muted">Loading driver…</div></div>;
   const o = q.data;
@@ -83,12 +152,16 @@ export function DriverOverviewBoard(props: { operatingCompanyId: string; driverI
     { label: "Escrow held", value: t.escrow_held_cents == null ? "—" : usd(t.escrow_held_cents), sub: t.escrow_target_cents ? `target ${usd(t.escrow_target_cents)}` : "no target set" },
     { label: "Miles, 30 days", value: t.miles_30d ? int(t.miles_30d) : "—", sub: `fleet ${int(t.fleet_miles_30d_per_driver)}` },
     { label: "MPG, 30 days", value: t.mpg_30d == null ? "—" : String(t.mpg_30d), sub: `fleet ${t.fleet_mpg_30d ?? "—"}` },
-    { label: "Complaints", value: int(t.complaints_90d), sub: `fleet avg ${t.fleet_complaints_avg_90d} · 90 days`, tone: t.complaints_90d > t.fleet_complaints_avg_90d && t.complaints_90d > 0 ? "amber" : "" },
+    { label: "Complaints", value: int(t.complaints_90d), sub: `fleet avg ${t.fleet_complaints_avg_90d} · 90 days`, tone: t.complaints_90d > t.fleet_complaints_avg_90d && t.complaints_90d > 0 ? "amber" : "", to: driverProfileTabHref(o.driver.id, "Complaints") },
     { label: "Integrity", value: flagged ? "Flagged" : "Clear", sub: `${int(t.integrity_flags_90d)} flags · 90 days`, tone: flagged ? "amber" : "navy" },
   ];
+  const scope = `driver-profile.${o.driver.id}.${activeTab}`;
 
   return (
-    <div className="pb" data-testid="driver-overview-board">
+    <div className="pb" data-testid="driver-overview-board" data-active-tab={activeTab}>
+      {props.hideChrome ? (
+        <ProfileTabStrip driverId={o.driver.id} activeTab={activeTab} />
+      ) : (
       <div className="dd-head">
         <div className="pb-head-row">
           <div className="dd-id">
@@ -98,41 +171,50 @@ export function DriverOverviewBoard(props: { operatingCompanyId: string; driverI
               <div className="pb-sub">
                 Unit {o.driver.unit ?? "—"} · {o.driver.phone ?? "no phone"} · CDL {o.driver.cdl ?? "—"} · hired {day(o.driver.hire_date)} · {o.driver.pay_basis ?? "no rate card"}
               </div>
+              <DriverSamsaraDuplicateBanner companyId={props.operatingCompanyId} driverId={o.driver.id} />
             </div>
             <span className="dd-pill">{o.driver.status}</span>
           </div>
           <div className="pb-head-actions">
-            <button type="button" className="dd-btn" onClick={() => navigate(`/drivers/${o.driver.id}?tab=profile`)}>Edit</button>
-            {/* ROUND 288.3 item 3: Add payment adds ONE extra-pay line through the pay-line engine (no longer the creator). */}
+            <Link className="dd-btn" to={driverProfileTabHref(o.driver.id, "Edit")} data-testid="driver-overview-edit">Edit</Link>
             <button type="button" className="dd-btn" onClick={() => setAddPayOpen(true)} data-testid="driver-add-payment">Add payment</button>
             <button type="button" className="dd-btn dd-btn--primary" onClick={runSettlement}>Run settlement</button>
           </div>
         </div>
-        <nav className="dd-tabs" aria-label="Driver">
-          {DRIVER_DETAIL_TABS(o.driver.id).map((tab, i) => (
-            <Link key={tab.label} className="pb-tab" to={tab.to} aria-current={i === 0 ? "page" : undefined}>{tab.label}</Link>
-          ))}
-        </nav>
+        <ProfileTabStrip driverId={o.driver.id} activeTab={activeTab} />
       </div>
+      )}
 
+      {activeTab !== "Overview" ? (
+        <div className="dd-body">{props.children}</div>
+      ) : (
       <div className="dd-body">
         <div className="dd-kpis" data-testid="driver-overview-kpis">
-          {tiles.map((k) => (
-            <div key={k.label} className={`pb-kpi${k.tone ? ` dd-kpi--${k.tone}` : ""}`}>
-              <div className="ih-hd">{k.label}</div>
-              <div className="dd-kpi-v">{k.value}</div>
-              <div className="dd-kpi-sub">{k.sub}</div>
-            </div>
-          ))}
+          {tiles.map((k) => {
+            const inner = (
+              <>
+                <div className="ih-hd">{k.label}</div>
+                <div className="dd-kpi-v">{k.value}</div>
+                <div className="dd-kpi-sub">{k.sub}</div>
+              </>
+            );
+            return k.to ? (
+              <Link key={k.label} className={`pb-kpi${k.tone ? ` dd-kpi--${k.tone}` : ""}`} to={k.to}>{inner}</Link>
+            ) : (
+              <div key={k.label} className={`pb-kpi${k.tone ? ` dd-kpi--${k.tone}` : ""}`}>{inner}</div>
+            );
+          })}
         </div>
 
         <div className="dd-cols">
           <div className="dd-col">
-            <div className="pb-card">
-              <div className="dd-card-head">
-                <div className="dd-card-title">Settlements</div>
-                <Link className="pb-link" to={`/drivers/${o.driver.id}?tab=operations&op=settlement-history`}>All {int(o.settlement_count)} →</Link>
-              </div>
+            <CollapsibleProfileCard
+              scope={scope}
+              cardId="settlements"
+              title="Settlements"
+              count={o.settlement_count}
+              action={<Link className="pb-link" to={driverProfileTabHref(o.driver.id, "Settlements")}>All {int(o.settlement_count)} →</Link>}
+            >
               {o.settlements.length === 0 ? <div className="dd-note">No settlement has been issued to this driver.</div> : (
                 <table className="ih-table">
                   <thead>
@@ -174,16 +256,16 @@ export function DriverOverviewBoard(props: { operatingCompanyId: string; driverI
                   </tfoot>
                 </table>
               )}
-            </div>
+            </CollapsibleProfileCard>
 
-            <div className="pb-card">
-              <div className="dd-card-head">
-                <div>
-                  <div className="dd-card-title">Additional payments</div>
-                  <div className="dd-card-sub">Anything paid outside line haul — it rides the settlement, it never becomes a separate cheque</div>
-                </div>
-                <button type="button" className="dd-add" onClick={runSettlement}>+ Add</button>
-              </div>
+            <CollapsibleProfileCard
+              scope={scope}
+              cardId="additional"
+              title="Additional payments"
+              subtitle="Anything paid outside line haul — it rides the settlement, it never becomes a separate cheque"
+              count={o.additional.length}
+              action={<button type="button" className="dd-add" onClick={runSettlement}>+ Add</button>}
+            >
               {o.additional.length === 0 ? <div className="dd-note">No additional payment in the last 90 days.</div> : (
                 <table className="ih-table">
                   <thead>
@@ -218,16 +300,30 @@ export function DriverOverviewBoard(props: { operatingCompanyId: string; driverI
                   </tfoot>
                 </table>
               )}
-            </div>
+            </CollapsibleProfileCard>
 
-            <div className="pb-card">
-              <div className="dd-card-head">
-                <div>
-                  <div className="dd-card-title">Complaints against the driver</div>
-                  <div className="dd-card-sub">Late, refused to roll, service failure — logged with who raised it and what it cost</div>
-                </div>
-                <button type="button" className="dd-add" onClick={() => navigate(`/safety/complaints?driver_id=${o.driver.id}`)}>+ Log complaint</button>
-              </div>
+            <CollapsibleProfileCard
+              scope={scope}
+              cardId="complaints"
+              title="Complaints against the driver"
+              subtitle="Late, refused to roll, service failure — logged with who raised it and what it cost"
+              count={o.complaints.length}
+              action={
+                <span className="inline-flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="dd-add"
+                    onClick={() => navigate(`/safety/complaints?driver_id=${o.driver.id}`)}
+                    data-testid="driver-log-complaint"
+                  >
+                    + Log complaint
+                  </button>
+                  <Link className="pb-link" to={driverProfileTabHref(o.driver.id, "Complaints")} data-testid="complaints-view-all">
+                    View all
+                  </Link>
+                </span>
+              }
+            >
               {o.complaints.length === 0 ? <div className="dd-note">No complaint against this driver in the last 90 days · fleet average {t.fleet_complaints_avg_90d}.</div> : (
                 <table className="ih-table">
                   <thead>
@@ -262,10 +358,9 @@ export function DriverOverviewBoard(props: { operatingCompanyId: string; driverI
                   </tfoot>
                 </table>
               )}
-            </div>
+            </CollapsibleProfileCard>
 
-            <div className="pb-card">
-              <div className="dd-card-head"><div className="dd-card-title">Reports &amp; damage he filed</div></div>
+            <CollapsibleProfileCard scope={scope} cardId="reports" title="Reports &amp; damage he filed" count={o.reports.length}>
               {o.reports.length === 0 ? <div className="dd-note">No driver report and no DVIR defect filed by this driver.</div> : (
                 <table className="ih-table">
                   <thead>
@@ -292,15 +387,17 @@ export function DriverOverviewBoard(props: { operatingCompanyId: string; driverI
                   </tbody>
                 </table>
               )}
-            </div>
+            </CollapsibleProfileCard>
           </div>
 
           <div className="dd-col">
-            <div className="pb-card">
-              <div className="dd-card-head">
-                <div className="dd-card-title">Integrity</div>
-                <span className={`dd-tag ${flagged ? "dd-tag--amber" : "dd-tag--navy"}`}>{flagged ? "Flagged" : "Clear"}</span>
-              </div>
+            <CollapsibleProfileCard
+              scope={scope}
+              cardId="integrity"
+              title="Integrity"
+              count={t.integrity_flags_90d}
+              action={<span className={`dd-tag ${flagged ? "dd-tag--amber" : "dd-tag--navy"}`}>{flagged ? "Flagged" : "Clear"}</span>}
+            >
               <div>
                 {o.integrity.map((i) => (
                   <div key={i.key} className="dd-kv">
@@ -315,15 +412,15 @@ export function DriverOverviewBoard(props: { operatingCompanyId: string; driverI
               <div className="dd-note">
                 Every rate is per mile <strong>he</strong> drove, from his own Samsara driver record — not a raw count, which would punish the hardest worker in the fleet. A band is evidence to look at, never a verdict.
               </div>
-            </div>
+            </CollapsibleProfileCard>
 
-            <div className="pb-card">
-              <div className="dd-card-head">
-                <div>
-                  <div className="dd-card-title">Trucks he has held</div>
-                  <div className="dd-card-sub">How damage gets pinned on the right man when trucks rotate</div>
-                </div>
-              </div>
+            <CollapsibleProfileCard
+              scope={scope}
+              cardId="trucks"
+              title="Trucks he has held"
+              subtitle="How damage gets pinned on the right man when trucks rotate"
+              count={o.trucks.length}
+            >
               {o.trucks.length === 0 ? <div className="dd-note">No truck assignment recorded for this driver.</div> : (
                 <table className="ih-table">
                   <tbody>
@@ -338,10 +435,9 @@ export function DriverOverviewBoard(props: { operatingCompanyId: string; driverI
                   </tbody>
                 </table>
               )}
-            </div>
+            </CollapsibleProfileCard>
 
-            <div className="pb-card">
-              <div className="dd-card-head"><div className="dd-card-title">Pay terms</div></div>
+            <CollapsibleProfileCard scope={scope} cardId="pay-terms" title="Pay terms">
               <div>
                 <div className="dd-kv"><span>Pay basis</span><span className="ih-num">{o.pay_terms.basis ?? "No rate card"}</span></div>
                 <div className="dd-kv"><span>Rate</span><span className="ih-num">{o.pay_terms.rate_per_mile_cents != null ? `${usd(o.pay_terms.rate_per_mile_cents)} / mi` : o.pay_terms.flat_per_load_cents != null ? `${usd(o.pay_terms.flat_per_load_cents)} / load` : "—"}</span></div>
@@ -350,10 +446,9 @@ export function DriverOverviewBoard(props: { operatingCompanyId: string; driverI
                 <div className="dd-kv"><span>Net pay floor</span><span className="ih-num">{o.pay_terms.net_pay_floor_pct != null ? `${o.pay_terms.net_pay_floor_pct}%` : "—"}</span></div>
                 <div className="dd-kv"><span>Escrow target</span><span className="ih-num">{money(o.pay_terms.escrow_target_cents)}</span></div>
               </div>
-            </div>
+            </CollapsibleProfileCard>
 
-            <div className="pb-card">
-              <div className="dd-card-head"><div className="dd-card-title">Compliance</div></div>
+            <CollapsibleProfileCard scope={scope} cardId="compliance" title="Compliance">
               <div>
                 <div className="dd-kv"><span>CDL expiration</span><span className="ih-num">{day(o.compliance.cdl_expires)}</span></div>
                 <div className="dd-kv"><span>Medical card</span><span className="ih-num">{day(o.compliance.medical_card)}</span></div>
@@ -361,10 +456,12 @@ export function DriverOverviewBoard(props: { operatingCompanyId: string; driverI
                 <div className="dd-kv"><span>Drug screen, last</span><span className="ih-num">{day(o.compliance.drug_screen_last)}</span></div>
                 <div className="dd-kv"><span>Hours violations, 90 days</span><span className="ih-num">{o.compliance.hos_violations_90d ? int(o.compliance.hos_violations_90d) : "None"}</span></div>
               </div>
-            </div>
+            </CollapsibleProfileCard>
           </div>
         </div>
+        {props.children}
       </div>
+      )}
       <AddPayLineModal open={addPayOpen} onClose={() => setAddPayOpen(false)} operatingCompanyId={props.operatingCompanyId} driverId={props.driverId} driverName={o.driver.name} />
     </div>
   );

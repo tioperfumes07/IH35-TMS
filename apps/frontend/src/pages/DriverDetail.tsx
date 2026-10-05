@@ -6,7 +6,7 @@ import { FORM_INPUT_CLASS, FORM_TEXTAREA_CLASS } from "../components/forms/input
 import { companyToday } from "../lib/businessDate";
 import { History, Pencil } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { apiRequest, ApiError } from "../api/client";
 import { W8BenSection } from "../components/driver-profile/W8BenSection";
 import { W8BenModal } from "../components/drivers/W8BenModal";
@@ -181,6 +181,8 @@ function formatReasonLabel(reason: string) {
 export function DriverDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const editOnly = location.pathname.endsWith("/edit");
   const { selectedCompanyId, isLoading: companyLoading } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [searchParams] = useSearchParams();
@@ -194,12 +196,16 @@ export function DriverDetailPage() {
     onError: (error: Error) => pushToast(error.message || "Could not start driver onboarding.", "error"),
   });
 
-  const [editMode, setEditMode] = useState(false);
+  const [editMode, setEditMode] = useState(true);
   const [activeTab, setActiveTab] = useState<DriverTab>("Profile");
   const [operationsSubView, setOperationsSubView] = useState<string>(
     OPERATIONS_DEPTH_SUBVIEWS[0]?.slug ?? "debt-history"
   );
   useEffect(() => {
+    if (editOnly) {
+      setActiveTab("Profile");
+      return;
+    }
     const t = searchParams.get("tab");
     if (t === "settlements" || t === "earnings") {
       setActiveTab("Earnings & Debt");
@@ -215,12 +221,12 @@ export function DriverDetailPage() {
       const op = searchParams.get("op");
       if (op && op in OPERATIONS_VIEW_BY_SLUG) setOperationsSubView(op);
     }
-  }, [searchParams]);
+  }, [searchParams, editOnly]);
   useEffect(() => {
     // Legacy /drivers/:id still forwards into the profile wizard. Retract lives on
     // DriverProfilePage.closeAssignTruck (delete assign_truck) — do not strip here or the wizard never opens.
     if (searchParams.get("assign_truck") === "1" && id) {
-      navigate(`/drivers/${id}/profile?assign_truck=1`, { replace: true });
+      navigate(`/drivers/${id}?assign_truck=1`, { replace: true });
     }
   }, [searchParams, id, navigate]);
   const [enableModalOpen, setEnableModalOpen] = useState(false);
@@ -975,12 +981,14 @@ export function DriverDetailPage() {
         }
       />
 
+      {editOnly ? null : (
       <NavyPageSubNav
         items={visibleTabs.map((tab) => ({ label: tab, to: `#${tab}` }))}
         activeId={activeTab}
         onTabChange={(nextTab) => setActiveTab(nextTab as DriverTab)}
         itemIds={visibleTabs}
       />
+      )}
 
       {/* ROUND 326 item 3: the whole driver in one read — pay, settlements + lines, advances, escrow, deductions,
           reimbursements, fuel, trucks + trailers, loads, safety, drug & alcohol, medical, CDL, insurance, documents,

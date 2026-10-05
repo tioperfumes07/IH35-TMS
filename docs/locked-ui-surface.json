@@ -538,7 +538,8 @@
       "Compliance"
     ],
     "drivers": [
-      "Drivers",
+      "Home",
+      "Roster",
       "Profiles",
       "Settlements \u25be",
       "Pre-settlements",

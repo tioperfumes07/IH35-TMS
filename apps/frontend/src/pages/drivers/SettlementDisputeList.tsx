@@ -24,7 +24,7 @@ function money(cents: number | null | undefined) {
   return `$${((Number(cents ?? 0) || 0) / 100).toFixed(2)}`;
 }
 
-export function SettlementDisputeList() {
+export function SettlementDisputeList({ driverId }: { driverId?: string } = {}) {
   const auth = useAuth();
   const isOwner = auth.user?.role === "Owner";
   const [statusFilter, setStatusFilter] = useState<SettlementDisputeStatus | "all">("all");
@@ -33,6 +33,7 @@ export function SettlementDisputeList() {
   const [resolvingDispute, setResolvingDispute] = useState<SettlementDisputeRow | null>(null);
   const { disputes, isLoading, isError, isSuccess, refetch, reviewDispute } = useSettlementDisputes({
     status: statusFilter === "all" ? undefined : statusFilter,
+    driverId,
   });
 
   const rows = useMemo(() => disputes, [disputes]);

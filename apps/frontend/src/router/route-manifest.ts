@@ -8,6 +8,7 @@ export type RouteManifestEntry = {
 /** Single source of truth for deep-linkable app routes (AUDIT-FIX-6, extended AUDIT-FIX-14). */
 export const ROUTE_MANIFEST: RouteManifestEntry[] = [
   { path: "/drivers", label: "Drivers Home", module: "drivers" },
+  { path: "/drivers/roster", label: "Driver Roster", module: "drivers" },
   { path: "/drivers/profiles", label: "Driver Profiles", module: "drivers" },
   { path: "/drivers/settlements", label: "Settlements", module: "drivers" },
   { path: "/drivers/pre-settlements", label: "Pre-settlements", module: "drivers" },
@@ -117,7 +118,8 @@ export function bankingTabFromPath(pathname: string): string {
 }
 
 export const DRIVERS_SUBTAB_PATH: Record<string, string> = {
-  drivers: "/drivers",
+  home: "/drivers",
+  roster: "/drivers/roster",
   profiles: "/drivers/profiles",
   settlements: "/drivers/settlements",
   pre_settlements: "/drivers/pre-settlements",
@@ -134,15 +136,17 @@ export const DRIVERS_SUBTAB_PATH: Record<string, string> = {
 
 export function driversSubtabFromPath(pathname: string): string {
   const norm = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+  // DRV-F418 — module root is Home; roster is its own path.
+  if (norm === "/drivers") return "home";
   // C-33 — Permits are unit-keyed (Safety). Deductions fold under Settlements. Disputes → hub.
-  if (norm === "/drivers/permits") return "drivers";
+  if (norm === "/drivers/permits") return "home";
   if (norm === "/drivers/deductions" || norm === "/drivers/auto-deductions") return "settlements";
-  if (norm === "/drivers/disputes") return "drivers";
+  if (norm === "/drivers/disputes") return "home";
   if (norm === "/driver-finance/cash-advance-requests") return "cash_advance_requests";
   for (const [id, routePath] of Object.entries(DRIVERS_SUBTAB_PATH)) {
     if (routePath === norm) return id;
   }
-  return "drivers";
+  return "home";
 }
 
 export const MAINTENANCE_TAB_PATH: Record<string, string> = {

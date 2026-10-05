@@ -44,6 +44,7 @@ const listDriversMock = vi.fn();
 
 vi.mock("../../../api/mdata", () => ({
   listDrivers: (...args: unknown[]) => listDriversMock(...args),
+  listAllDrivers: (...args: unknown[]) => listDriversMock(...args),
   checkReturningDriver: vi.fn().mockResolvedValue({ returning_driver: false }),
   listDriverTeams: vi.fn().mockResolvedValue({ teams: [] }),
   getDriverTeam: vi.fn(),
@@ -51,6 +52,29 @@ vi.mock("../../../api/mdata", () => ({
   updateDriverTeam: vi.fn(),
   deactivateDriverTeam: vi.fn(),
   createDriver: vi.fn(),
+}));
+
+vi.mock("../../../api/driverFinance", () => ({
+  listSettlements: vi.fn().mockResolvedValue({ settlements: [] }),
+  listPendingEscrowDeductions: vi.fn().mockResolvedValue({ deductions: [] }),
+}));
+vi.mock("../../../api/banking", () => ({
+  getEscrowDriverBalances: vi.fn().mockResolvedValue({ drivers: [] }),
+}));
+vi.mock("../../../api/cashAdvanceRequests", () => ({
+  cashAdvanceRequestsOfficeApi: { list: vi.fn().mockResolvedValue({ requests: [] }) },
+}));
+vi.mock("../../../api/liabilities", () => ({
+  getActiveLiabilities: vi.fn().mockResolvedValue({ liabilities: [] }),
+}));
+vi.mock("../../../api/dispatch", () => ({
+  listAllDispatchLoads: vi.fn().mockResolvedValue({ loads: [] }),
+}));
+vi.mock("../../../api/preSettlements", () => ({
+  listOpenPreSettlements: vi.fn().mockResolvedValue({ pre_settlements: [] }),
+}));
+vi.mock("../../../api/samsara", () => ({
+  getSamsaraHealth: vi.fn().mockResolvedValue({ ok: true }),
 }));
 
 function makeDriver(p: Pick<Driver, "id" | "first_name" | "last_name" | "status">): Driver {
@@ -72,20 +96,22 @@ function makeDriver(p: Pick<Driver, "id" | "first_name" | "last_name" | "status"
   });
 }
 
+function driversPageElement(queryClient: QueryClient) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <DriversPage />
+      </ToastProvider>
+    </QueryClientProvider>
+  );
+}
+
 function renderDriversAt(initialPath: string) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const router = createMemoryRouter(
     [
-      {
-        path: "/drivers",
-        element: (
-          <QueryClientProvider client={queryClient}>
-            <ToastProvider>
-              <DriversPage />
-            </ToastProvider>
-          </QueryClientProvider>
-        ),
-      },
+      { path: "/drivers", element: driversPageElement(queryClient) },
+      { path: "/drivers/roster", element: driversPageElement(queryClient) },
     ],
     { initialEntries: [initialPath] }
   );
@@ -104,16 +130,16 @@ describe("DriversPage list status tabs", () => {
     });
   });
 
-  it("default route (no status param) shows Active-only — hidden drivers excluded", async () => {
+  it("default roster (no status param) shows Active-only — hidden drivers excluded", async () => {
     // AUTO-01: the standalone roster defaults to Active so hidden (Inactive) drivers don't clutter it.
-    renderDriversAt("/drivers");
+    renderDriversAt("/drivers/roster");
     await waitFor(() => expect(listDriversMock).toHaveBeenCalledWith(expect.objectContaining({ status: "All" })));
     expect(await screen.findByText(/Ann ActiveOnly/)).toBeInTheDocument();
     expect(screen.queryByText(/Ike InactiveOnly/)).toBeNull();
   });
 
   it("?status=all shows every row (active + inactive + probation)", async () => {
-    renderDriversAt("/drivers?status=all");
+    renderDriversAt("/drivers/roster?status=all");
     expect(await screen.findByText(/Ann ActiveOnly/)).toBeInTheDocument();
     expect(screen.getByText(/Ike InactiveOnly/)).toBeInTheDocument();
     expect(screen.getByText(/Pete ProbationOnly/)).toBeInTheDocument();
@@ -121,17 +147,17 @@ describe("DriversPage list status tabs", () => {
   });
 
   it("?status=probation shows only probation drivers", async () => {
-    renderDriversAt("/drivers?status=probation");
+    renderDriversAt("/drivers/roster?status=probation");
     await waitFor(() => expect(listDriversMock).toHaveBeenCalledWith(expect.objectContaining({ status: "All" })));
     expect(screen.queryByText(/Ann ActiveOnly/)).toBeNull();
     expect(screen.queryByText(/Ike InactiveOnly/)).toBeNull();
-    expect(screen.getByText(/Pete ProbationOnly/)).toBeInTheDocument();
+    expect(await screen.findByText(/Pete ProbationOnly/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^probation \(1\)$/i })).toBeInTheDocument();
   });
 
   it("clicking Active from All filters to active and clears the status param (active is the default)", async () => {
     const user = userEvent.setup();
-    const router = renderDriversAt("/drivers?status=all");
+    const router = renderDriversAt("/drivers/roster?status=all");
     await screen.findByText(/Ike InactiveOnly/);
     await user.click(screen.getByRole("button", { name: /^active \(1\)$/i }));
     expect(screen.getByText(/Ann ActiveOnly/)).toBeInTheDocument();
@@ -141,7 +167,7 @@ describe("DriversPage list status tabs", () => {
 
   it("browser back returns to the All tab", async () => {
     const user = userEvent.setup();
-    const router = renderDriversAt("/drivers?status=all");
+    const router = renderDriversAt("/drivers/roster?status=all");
     await screen.findByText(/Ike InactiveOnly/);
     await user.click(screen.getByRole("button", { name: /^active \(1\)$/i }));
     await waitFor(() => expect(screen.queryByText(/Ike InactiveOnly/)).toBeNull());
@@ -158,7 +184,7 @@ describe("DriversPage list status tabs", () => {
 
   it("Teams tab switches to the teams roster and + Create Team", async () => {
     const user = userEvent.setup();
-    const router = renderDriversAt("/drivers");
+    const router = renderDriversAt("/drivers/roster");
     await screen.findByRole("button", { name: "+ Create Driver" });
     await user.click(screen.getByRole("button", { name: /^teams$/i }));
     expect(await screen.findByRole("button", { name: "+ Create Team" })).toBeInTheDocument();
@@ -167,17 +193,17 @@ describe("DriversPage list status tabs", () => {
   });
 
   it("?view=teams deep link opens Teams roster", async () => {
-    renderDriversAt("/drivers?view=teams");
+    renderDriversAt("/drivers/roster?view=teams");
     expect(await screen.findByRole("button", { name: "+ Create Team" })).toBeInTheDocument();
     expect(screen.queryByPlaceholderText("Search by name")).toBeNull();
   });
 
-  it("Drivers tab returns to the roster from Teams view", async () => {
+  it("List tab returns to the roster from Teams view", async () => {
     const user = userEvent.setup();
-    const router = renderDriversAt("/drivers?view=teams");
+    const router = renderDriversAt("/drivers/roster?view=teams");
     await screen.findByRole("button", { name: "+ Create Team" });
-    await user.click(screen.getByRole("button", { name: /^drivers$/i }));
-    expect(await screen.findByPlaceholderText("Search by name")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /^list$/i }));
+    expect(await screen.findByText(/Ann ActiveOnly/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "+ Create Team" })).toBeNull();
     expect(router.state.location.search).not.toContain("view=");
   });
