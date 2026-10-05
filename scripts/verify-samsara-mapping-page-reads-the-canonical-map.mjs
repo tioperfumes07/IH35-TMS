@@ -20,6 +20,9 @@
  *            UPDATE or DELETE a canonical row. Where the two maps disagree, canonical wins and the
  *            row is reported for a human.
  *   RULE 5 — the account-created date comes from the mirrored payload, never invented.
+ *   RULE 6 — the page must SURFACE that date (Account created column) and the exact pane
+ *            titles from the 2026-10-05 preview. Backend alone is not enough — the owner
+ *            opens Chrome, not the SQL.
  *
  * --selftest proves each rule can FAIL. A proof command that cannot fail is worse than no proof.
  */
@@ -27,6 +30,7 @@ import { readFileSync, existsSync } from "node:fs";
 
 const NAME = "verify-samsara-mapping-page-reads-the-canonical-map";
 const ROUTES = "apps/backend/src/integrations/samsara/driver-mapping/driver-mapping.routes.ts";
+const PAGE = "apps/frontend/src/pages/samsara-driver-mapping/SamsaraDriverMappingPage.tsx";
 const CANON = "mdata.driver_samsara_accounts";
 
 const read = (p) => (existsSync(p) ? readFileSync(p, "utf8") : null);
@@ -38,7 +42,7 @@ function listQuery(src) {
   return src.slice(start, i + 1400);
 }
 
-function run({ routes, migration }) {
+function run({ routes, migration, page }) {
   const out = [];
   if (routes === null) return [`RULE 1: ${ROUTES} is missing.`];
   const q = listQuery(routes);
@@ -69,6 +73,22 @@ function run({ routes, migration }) {
   if (!/raw_payload->>'createdAtTime'/.test(routes)) {
     out.push("RULE 5: the account-created date does not come from the mirrored Samsara payload.");
   }
+  if (page === null) {
+    out.push(`RULE 6: ${PAGE} is missing.`);
+  } else {
+    if (!/Account created/.test(page)) {
+      out.push("RULE 6: the right pane has no Account created column — the payload date never reaches Chrome.");
+    }
+    if (!/samsara_created_at/.test(page)) {
+      out.push("RULE 6: the page does not bind samsara_created_at (the field the list query returns).");
+    }
+    if (!/Driver \/ Vendor profile/.test(page)) {
+      out.push("RULE 6: left pane title is not 'Driver / Vendor profile' (preview screen 4).");
+    }
+    if (!/>\s*Samsara\s*</.test(page) && !/sdm-right-title[\s\S]{0,80}Samsara/.test(page)) {
+      out.push("RULE 6: right pane title is not 'Samsara' (preview screen 4).");
+    }
+  }
   return out;
 }
 
@@ -80,22 +100,30 @@ if (process.argv.includes("--selftest")) {
       WHERE a.operating_company_id = sd.operating_company_id AND a.is_active LIMIT 1) can ON true
     LEFT JOIN mdata.drivers md ON md.id = can.driver_id`;
   const goodM = "INSERT INTO mdata.driver_samsara_accounts ... ON CONFLICT DO NOTHING;";
+  const goodPage = `<h2 data-testid="sdm-left-title">Driver / Vendor profile</h2>
+    <h2 data-testid="sdm-right-title">Samsara</h2>
+    <th>Account created</th>
+    {formatDateUS(p.samsara_created_at) || "—"}`;
   const cases = [
-    ["a clean tree passes", { routes: goodQ, migration: goodM }, 0],
+    ["a clean tree passes", { routes: goodQ, migration: goodM, page: goodPage }, 0],
     ["rule 1 catches a page that never reads the canonical map",
-      { routes: goodQ.replace(/mdata\.driver_samsara_accounts/g, "integrations.samsara_drivers x").replace("raw_payload->>'createdAtTime'", "raw_payload->>'createdAtTime'"), migration: goodM }, 1],
+      { routes: goodQ.replace(/mdata\.driver_samsara_accounts/g, "integrations.samsara_drivers x").replace("raw_payload->>'createdAtTime'", "raw_payload->>'createdAtTime'"), migration: goodM, page: goodPage }, 1],
     ["rule 2 catches the legacy join",
-      { routes: goodQ + "\n LEFT JOIN mdata.drivers md ON md.id = sd.local_driver_id", migration: goodM }, 1],
+      { routes: goodQ + "\n LEFT JOIN mdata.drivers md ON md.id = sd.local_driver_id", migration: goodM, page: goodPage }, 1],
     ["rule 3 catches an unscoped lookup",
-      { routes: goodQ.replace("a.operating_company_id = sd.operating_company_id AND ", ""), migration: goodM }, 1],
+      { routes: goodQ.replace("a.operating_company_id = sd.operating_company_id AND ", ""), migration: goodM, page: goodPage }, 1],
     ["rule 3 catches ignoring is_active",
-      { routes: goodQ.replace(" AND a.is_active", ""), migration: goodM }, 1],
+      { routes: goodQ.replace(" AND a.is_active", ""), migration: goodM, page: goodPage }, 1],
     ["rule 4 catches a non-idempotent backfill",
-      { routes: goodQ, migration: "INSERT INTO mdata.driver_samsara_accounts ...;" }, 1],
+      { routes: goodQ, migration: "INSERT INTO mdata.driver_samsara_accounts ...;", page: goodPage }, 1],
     ["rule 4 catches a backfill that rewrites canonical",
-      { routes: goodQ, migration: goodM + " UPDATE mdata.driver_samsara_accounts SET driver_id = x;" }, 1],
+      { routes: goodQ, migration: goodM + " UPDATE mdata.driver_samsara_accounts SET driver_id = x;", page: goodPage }, 1],
     ["rule 5 catches an invented created date",
-      { routes: goodQ.replace("raw_payload->>'createdAtTime'", "now()"), migration: goodM }, 1],
+      { routes: goodQ.replace("raw_payload->>'createdAtTime'", "now()"), migration: goodM, page: goodPage }, 1],
+    ["rule 6 catches a page that never shows Account created",
+      { routes: goodQ, migration: goodM, page: goodPage.replace("Account created", "Created") }, 1],
+    ["rule 6 catches a page that ignores samsara_created_at",
+      { routes: goodQ, migration: goodM, page: goodPage.replace(/samsara_created_at/g, "last_seen_at") }, 1],
   ];
   let ok = 0;
   for (const [label, src, expected] of cases) {
@@ -114,10 +142,10 @@ try {
   if (f) migration = read(f);
 } catch { /* the guard still runs without it */ }
 
-const failures = run({ routes: read(ROUTES), migration });
+const failures = run({ routes: read(ROUTES), migration, page: read(PAGE) });
 if (failures.length > 0) {
   for (const f of failures) console.error(`${NAME}: ${f}`);
   console.error(`${NAME}: FAIL — ${failures.length} rule(s) broken.`);
   process.exit(1);
 }
-console.log(`${NAME}: PASS — the mapping page and the driver profile resolve through the same map (${CANON}); the backfill is idempotent and never rewrites a canonical row.`);
+console.log(`${NAME}: PASS — the mapping page and the driver profile resolve through the same map (${CANON}); Account created is on the page; the backfill is idempotent and never rewrites a canonical row.`);

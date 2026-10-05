@@ -14,6 +14,7 @@ import {
   type SamsaraProfile,
 } from "../../api/samsara-driver-mapping";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { formatDateUS } from "../../lib/formatDate";
 import "../../components/boards/party-board.css";
 import "./samsara-driver-mapping.css";
 
@@ -267,6 +268,9 @@ export function SamsaraDriverMappingPage() {
       <div className="sdm-split">
         {/* LEFT — drivers & vendors */}
         <section className="sdm-pane" data-testid="sdm-left-pane">
+          <h2 className="sdm-pane-title" data-testid="sdm-left-title">
+            Driver / Vendor profile
+          </h2>
           <div className="sdm-filters">
             <input
               className="de-ctrl wsearch sdm-input"
@@ -310,7 +314,7 @@ export function SamsaraDriverMappingPage() {
           <table className="ih-table sdm-table">
             <thead>
               <tr>
-                <th>Name</th>
+                <th>Driver / vendor (our app)</th>
                 <th>CDL</th>
                 <th>Samsara users</th>
                 <th />
@@ -361,6 +365,9 @@ export function SamsaraDriverMappingPage() {
 
         {/* RIGHT — Samsara usernames for the selected person */}
         <section className="sdm-pane" data-testid="sdm-right-pane">
+          <h2 className="sdm-pane-title" data-testid="sdm-right-title">
+            Samsara
+          </h2>
           {!selectedPerson ? (
             <div className="sdm-empty-pane">Select a driver or vendor on the left to map Samsara usernames.</div>
           ) : (
@@ -418,16 +425,17 @@ export function SamsaraDriverMappingPage() {
                 <thead>
                   <tr>
                     <th className="sdm-tick-col" />
-                    <th>Username</th>
+                    <th>Samsara username</th>
                     <th>Samsara ID</th>
-                    <th>Status</th>
+                    <th className="wd text-left">Account created</th>
+                    <th>Samsara status</th>
                     <th>Mapped to</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rightRows.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="sdm-empty">
+                      <td colSpan={6} className="sdm-empty">
                         No Samsara users match these filters.
                       </td>
                     </tr>
@@ -456,6 +464,9 @@ export function SamsaraDriverMappingPage() {
                           </td>
                           <td>{p.samsara_name || "—"}</td>
                           <td className="font-mono text-xs">{p.samsara_driver_id}</td>
+                          <td className="wd tabular-nums text-left" data-testid={`sdm-created-${p.samsara_driver_id}`}>
+                            {formatDateUS(p.samsara_created_at) || "—"}
+                          </td>
                           <td>{p.samsara_status || "—"}</td>
                           <td>
                             {mine ? (

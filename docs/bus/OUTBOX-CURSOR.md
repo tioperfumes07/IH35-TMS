@@ -1,3 +1,15 @@
+## 2026-10-05T21:05Z · SAM-F429 FE Account-created STARTED
+
+DONE: Measured tip main — Lead #25521/#25523 already canonical-reads + drift ceiling 0. Neon drift=0. Gap: FE never showed Account created / pane titles from preview screen 4.
+
+NOW: FE-only delta on tip main — pane titles + Account created binds `samsara_created_at` + guard RULE 6. LOCAL gates (CI billing down). Fast Merge.
+
+NEXT: push → PR → squash-merge → paste deploy id.
+
+Files Modified: SamsaraDriverMappingPage · css · api type · verify-samsara-mapping-page-reads-the-canonical-map · bus
+
+---
+
 ## 2026-10-05T20:24Z · PR3 FLEET HOME MERGED #25519
 
 DONE: #25519 MERGED squash `84fea98b6b` (GitHub 2026-10-05T20:24:21Z). Tip main.
