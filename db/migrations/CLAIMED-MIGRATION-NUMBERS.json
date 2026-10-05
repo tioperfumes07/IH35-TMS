@@ -2116,6 +2116,11 @@
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-04",
       "purpose": "AUTH-400: locked period_cash_basis_snapshot admits DELETE of rows listed in _system.purge_authorized_rows under an open AUTH (ARM L); UPDATE stays locked"
+    },
+    "202615410500": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-05",
+      "purpose": "AUTH-401: append-only maintenance.pm_alerts admits DELETE of rows listed in _system.purge_authorized_rows under an open AUTH (ARM L); nothing else"
     }
   },
   "202613590001": {
