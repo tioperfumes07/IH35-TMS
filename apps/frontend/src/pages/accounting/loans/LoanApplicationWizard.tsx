@@ -34,6 +34,8 @@ import { PARITY_MODAL_WIDTH } from "../../../components/parity/sizing";
 import { companyToday } from "../../../lib/businessDate";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
+import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 
 type Props = {
   open: boolean;
@@ -372,6 +374,18 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
                 loading={accountsQuery.isLoading}
                 onOptionCreated={() => void accountsQuery.refetch()}
               />
+              {form.account_id ? (
+                <EntityLink
+                  kind="account"
+                  id={form.account_id}
+                  label={entityLabel(
+                    accounts.find((a) => a.id === form.account_id)?.account_name,
+                    form.account_id,
+                    "Account",
+                  )}
+                  className="mt-1 block text-xs font-semibold text-[#1F2A44] underline"
+                />
+              ) : null}
               <p className="text-xs text-slate-500">
                 No default is applied. The account must be chosen explicitly — an unmapped loan refuses rather
                 than posting to a guessed account.

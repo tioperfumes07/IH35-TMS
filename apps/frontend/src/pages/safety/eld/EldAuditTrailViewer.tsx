@@ -12,6 +12,8 @@ import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { EldEditHistoryTimeline, type EldEditHistoryEntry } from "../../../components/safety/EldEditHistoryTimeline";
 import { useToast } from "../../../components/Toast";
 import { companyToday, addDaysIso } from "../../../lib/businessDate";
+import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 
 type EldAuditTrailResponse = {
   driver_uuid: string;
@@ -150,6 +152,14 @@ export function EldAuditTrailViewer() {
                 placeholder="Search driver…"
                 dataField="eld-audit-driver"
               />
+              {driverUuid ? (
+                <EntityLink
+                  kind="driver"
+                  id={driverUuid}
+                  label={entityLabel(historyQuery.data?.driver_name, driverUuid, "Driver")}
+                  className="mt-1 block text-xs font-semibold text-[#1F2A44] underline"
+                />
+              ) : null}
             </div>
           </label>
           <div className="text-xs text-gray-700">

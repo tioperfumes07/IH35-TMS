@@ -8,6 +8,8 @@ import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { CatalogReferenceSelect } from "../../../components/legal/CatalogReferenceSelect";
 import { getVendor } from "../../../api/mdata";
+import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 
@@ -188,6 +190,14 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
                     dataField="truck-lease-lessee-vendor"
                     className="w-full"
                   />
+                  {lesseeVendorId ? (
+                    <EntityLink
+                      kind="vendor"
+                      id={lesseeVendorId}
+                      label={entityLabel(lessee.legal_name, lesseeVendorId, "Vendor")}
+                      className="mt-1 block text-xs font-semibold text-[#1F2A44] underline"
+                    />
+                  ) : null}
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 mb-0.5">Legal Name *</label>
