@@ -9,6 +9,7 @@ import { companyToday } from "../../lib/businessDate";
 import { UnclearedDocumentsNote, type UnclearedDocumentNote } from "../../components/accounting/UnclearedDocumentsNote";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { Button } from "../../components/Button";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -122,26 +123,38 @@ export function VendorBalancesPage() {
             {balancesQuery.isLoading ? <p className="px-3 py-3 text-xs text-gray-500">Loading vendor balances...</p> : null}
             {!balancesQuery.isLoading && (balancesQuery.data?.rows ?? []).length === 0 ? <p className="px-3 py-3 text-xs text-gray-500">No outstanding balances.</p> : null}
             {(balancesQuery.data?.rows ?? []).map((row) => (
-              <button
+              <div
                 key={row.vendor_id}
-                type="button"
-                className={`w-full border-b border-gray-100 px-3 py-2 text-left hover:bg-gray-50 ${selectedVendorId === row.vendor_id ? "bg-slate-100" : ""}`}
-                onClick={() => {
-                  setSelectedVendorId(row.vendor_id);
-                  setSelectedBillId(null);
-                }}
+                className={`border-b border-gray-100 px-3 py-2 ${selectedVendorId === row.vendor_id ? "bg-slate-100" : ""}`}
               >
-                <div className="truncate text-xs font-semibold text-gray-900">{entityLabel(row.vendor_name, row.vendor_id, "Vendor")}</div>
-                <div className="mt-0.5 flex items-center justify-between text-xs text-gray-600">
-                  <span>{row.open_bill_count} open bills</span>
-                  <span className="font-semibold text-red-700">{money(row.balance_cents)}</span>
+                <div className="truncate text-xs font-semibold text-gray-900">
+                  <EntityLink
+                    kind="vendor"
+                    id={row.vendor_id}
+                    label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")}
+                    data-testid={`vendor-balances-vendor-${row.vendor_id}`}
+                  />
                 </div>
-                <div className="mt-0.5 text-xs text-slate-600">
-                  Cleared {money(row.balance_cents + (unclearedByVendorId.get(row.vendor_id)?.uncleared_cents ?? 0))}
-                </div>
-                <UnclearedDocumentsNote docs={unclearedByVendorId.get(row.vendor_id)?.uncleared_documents ?? []} />
-                <div className="text-xs text-gray-500">{row.next_due_date ? `Next due ${row.next_due_date}` : "No due date"}</div>
-              </button>
+                <button
+                  type="button"
+                  className="mt-0.5 w-full text-left hover:bg-gray-50"
+                  onClick={() => {
+                    setSelectedVendorId(row.vendor_id);
+                    setSelectedBillId(null);
+                  }}
+                  data-testid={`vendor-balances-select-${row.vendor_id}`}
+                >
+                  <div className="flex items-center justify-between text-xs text-gray-600">
+                    <span>{row.open_bill_count} open bills</span>
+                    <span className="font-semibold text-red-700">{money(row.balance_cents)}</span>
+                  </div>
+                  <div className="mt-0.5 text-xs text-slate-600">
+                    Cleared {money(row.balance_cents + (unclearedByVendorId.get(row.vendor_id)?.uncleared_cents ?? 0))}
+                  </div>
+                  <UnclearedDocumentsNote docs={unclearedByVendorId.get(row.vendor_id)?.uncleared_documents ?? []} />
+                  <div className="text-xs text-gray-500">{row.next_due_date ? `Next due ${row.next_due_date}` : "No due date"}</div>
+                </button>
+              </div>
             ))}
           </div>
         </section>
@@ -149,7 +162,20 @@ export function VendorBalancesPage() {
         <section className="rounded-sm border border-gray-200 bg-white">
           <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2">
             <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              {selectedVendor ? `Bills · ${entityLabel(selectedVendor.vendor_name, selectedVendor.vendor_id, "Vendor")}` : "Bills"}
+              {selectedVendor ? (
+                <>
+                  Bills ·{" "}
+                  <EntityLink
+                    kind="vendor"
+                    id={selectedVendor.vendor_id}
+                    label={entityLabel(selectedVendor.vendor_name, selectedVendor.vendor_id, "Vendor")}
+                    className="normal-case tracking-normal"
+                    data-testid="vendor-balances-selected-vendor"
+                  />
+                </>
+              ) : (
+                "Bills"
+              )}
             </div>
             {selectedVendor ? (
               <Button size="sm" variant="secondary" onClick={() => setMultiPayModalOpen(true)}>

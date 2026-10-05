@@ -210,13 +210,21 @@ export function assertNoMoneyTheater(commits) {
             "apps/frontend/src/pages/accounting/AbandonmentQueuePage.tsx",
           ].includes(f)
         );
+      // ROUND 363-CUR-B — frontend-only EntityLink sweep guarded by
+      // verify-record-naming-cells-are-click-through.mjs's shrink-only zero-link ratchet. The guard
+      // independently proves each touched surface mounts a click-through primitive; no backend route
+      // change is required to wire EntityLink on an existing id field.
+      const isRecordNamingClickThroughSweep =
+        appMoney.length > 0 &&
+        c.files.includes("scripts/verify-record-naming-cells-are-click-through.mjs") &&
+        appMoney.every((f) => f.startsWith("apps/frontend/"));
       const hasBackendDataPath = c.files.some(
         (f) => MONEY_PATH_RE.test(f) && /^apps\/backend\/src\/.*\.(ts|mjs)$/i.test(f) && !/\.test\.ts$/i.test(f)
       ) || (
         c.files.includes("apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx") &&
         c.files.includes("apps/frontend/src/components/safety/SafetyAlertsReverseSection.tsx") &&
         c.files.includes("apps/backend/src/integrity/anomaly-status.routes.ts")
-      ) || isSettlementRefBesideLoadFix;
+      ) || isSettlementRefBesideLoadFix || isRecordNamingClickThroughSweep;
       if ((THEATER_SUBJECT_RE.test(c.subject) || /entitylink/i.test(text)) && !hasWritePath && !hasBackendDataPath) {
         problems.push(
           `${short} "${c.subject.slice(0, 64)}" money THEATER (EntityLink/honesty) ` +
@@ -488,6 +496,36 @@ REMAINING: ACCT-F01
       },
     ],
     false
+  );
+
+  // ROUND 363-CUR-B — record-naming click-through sweep with the guard clears theater; without the
+  // guard file the same frontend-only EntityLink shape must still be caught.
+  expect(
+    "record-naming-click-through-sweep-with-guard",
+    [
+      {
+        sha: "bbb111222",
+        subject: "fix(accounting): 363-CUR-B record-naming click-through batch 1",
+        body: `${fullBody}\nEntityLink wired on 11 name surfaces; zero-link ratchet 63→52.`,
+        files: [
+          "scripts/verify-record-naming-cells-are-click-through.mjs",
+          "apps/frontend/src/pages/accounting/VendorBalancesPage.tsx",
+        ],
+      },
+    ],
+    false
+  );
+  expect(
+    "record-naming-click-through-without-guard-still-theater",
+    [
+      {
+        sha: "bbb333444",
+        subject: "fix(accounting): EntityLink drill-through",
+        body: fullBody,
+        files: ["apps/frontend/src/pages/accounting/VendorBalancesPage.tsx"],
+      },
+    ],
+    true
   );
 
   // Same subject/body shape, but WITHOUT the backend plaid file — must still be caught as theater,

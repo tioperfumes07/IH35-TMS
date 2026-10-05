@@ -321,7 +321,12 @@ export function ReclassifyTransactionsPage() {
                 <button type="button" onClick={() => openAccount(a.account_id)} aria-current={applied?.accountIds.includes(a.account_id) ? "true" : undefined} title={`${a.account_type ?? ""}${a.detail_type_name ? ` · ${a.detail_type_name}` : ""}${a.is_active ? "" : " · inactive"} — opening ${formatCurrencyFromCents(naturalCentsForType(a.opening_cents, a.account_type))}, period ${formatCurrencyFromCents(naturalCentsForType(a.period_activity_cents, a.account_type))}`} className={`flex w-full items-center justify-between gap-2 py-1 pr-2 text-left hover:bg-slate-50 ${applied?.accountIds.includes(a.account_id) ? "bg-slate-100 font-semibold" : ""}`} style={{ paddingLeft: `${0.5 + depth * 1}rem`, ...(applied?.accountIds.includes(a.account_id) ? { borderLeft: `3px solid ${colors.accent}` } : {}) }} data-testid={`reclassify-account-${a.account_id}`}>
                   {/* showAccountNumbers gate — formatAccountDisplayLabel hides the number unless the toggle is on */}
                   <span className="min-w-0 whitespace-normal break-words">
-                    {formatAccountDisplayLabel({ account_name: a.account_name, account_number: a.account_number }, { showNumber: showAccountNumbers })}
+                    <EntityLink
+                      kind="account"
+                      id={a.account_id}
+                      label={formatAccountDisplayLabel({ account_name: a.account_name, account_number: a.account_number }, { showNumber: showAccountNumbers })}
+                      onClick={(event) => event.stopPropagation()}
+                    />
                     {a.is_active ? null : <span className="ml-1 rounded bg-slate-200 px-1 text-xs">inactive</span>}
                   </span>
                   <span className="shrink-0 text-right tabular-nums">

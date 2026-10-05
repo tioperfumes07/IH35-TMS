@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
@@ -20,6 +20,8 @@ import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
 // ROUND-20.8 B11 — single derivation shared with Banking's own SyncStatusStrip so /accounting and
 // /banking can never show two different QBO-sync verdicts at the same moment again (see the
@@ -28,7 +30,7 @@ import { describeQboSyncStatus } from "../../lib/qbo-sync-status";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
-type AmountRow = { key: string; left: string; right: string; muted?: string };
+type AmountRow = { key: string; left: ReactNode; right: string; muted?: string };
 type TabId =
   | "home"
   | "bills"
@@ -337,35 +339,38 @@ export function AccountingHubPage() {
     .slice(0, 5)
     .map((row) => ({
       key: row.id,
-      left: row.driver_full_name || "Settlement",
+      left: row.driver_id
+        ? <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_full_name} noun="Driver" className="truncate" />
+        : (row.driver_full_name || "Settlement"),
       right: money.format(Number(row.net_pay ?? 0) / 100),
       muted: row.status,
     }));
 
   const findTransactionsRows: AmountRow[] = useMemo(() => {
-    const items: Array<{ key: string; label: string; date: string; amountCents: number; type: string }> = [];
+    const items: Array<{ key: string; left: ReactNode; date: string; amountCents: number; type: string }> = [];
     for (const row of billPayments.slice(0, 12)) {
+      const label = entityLabel(
+        row.vendor_name || row.bill_number || row.reference_number || row.check_number || row.memo,
+        row.id,
+        "Payment",
+      );
       items.push({
         key: `bp-${row.id}`,
-        // ACCOUNTING-HUB-FIND-TRANSACTIONS-BILL-PAYMENT-LABEL-IGNORES-AVAILABLE-VENDOR-NAME:
-        // reference_number/check_number/memo are commonly blank on routine payments. The
-        // backend's listBillPayments() already resolves vendor_name + bill_number on every row
-        // (same pattern BillPaymentsListPage.tsx already uses) -- prefer those before falling
-        // back to the free-text fields, so a resolvable payment never renders "Payment — not visible".
-        label: entityLabel(
-          row.vendor_name || row.bill_number || row.reference_number || row.check_number || row.memo,
-          row.id,
-          "Payment",
-        ),
+        left: row.mdata_vendor_id
+          ? <EntityLink kind="vendor" id={row.mdata_vendor_id} label={label} className="truncate" />
+          : label,
         date: row.payment_date,
         amountCents: Number(row.amount_cents ?? 0),
         type: "Bill payment",
       });
     }
     for (const row of receivePayments.slice(0, 12)) {
+      const paymentLabel = entityLabel(row.display_id || row.customer_name, row.id, "Payment");
       items.push({
         key: `rp-${row.id}`,
-        label: entityLabel(row.display_id || row.customer_name, row.id, "Payment"),
+        left: row.customer_id
+          ? <EntityLink kind="customer" id={row.customer_id} label={paymentLabel} className="truncate" />
+          : paymentLabel,
         date: row.payment_date,
         amountCents: Number(row.amount_cents ?? 0),
         type: "Receive payment",
@@ -376,7 +381,7 @@ export function AccountingHubPage() {
       .slice(0, 5)
       .map((item) => ({
         key: item.key,
-        left: item.label,
+        left: item.left,
         right: money.format(item.amountCents / 100),
         muted: item.type,
       }));
