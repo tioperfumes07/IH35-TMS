@@ -970,9 +970,9 @@ const SIBLINGS = [
     good: /entityLabel\(\s*bill\.vendor_name\s*,\s*bill\.vendor_id\s*,\s*"Vendor"\s*\)/,
   },
   {
-    rel: "apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx",
+    rel: "apps/frontend/src/pages/banking/components/DriverEscrowBoardSection.tsx",
     bad: /driver_name\s*\?\?\s*"Unknown"/,
-    good: /entityLabel\(\s*selectedDriver\.driver_name\s*,\s*selectedDriver\.driver_id\s*,\s*"Driver"\s*\)/,
+    good: /entityLabel\(\s*row\.driver_name\s*,\s*row\.driver_id\s*,\s*"Driver"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/maintenance/components/SevereRepairOosTab.tsx",
@@ -1283,8 +1283,8 @@ const SIBLINGS = [
   },
   {
     rel: "apps/frontend/src/pages/accounting/FactorReserveCard.tsx",
-    bad: /label=\{event\.display_id\}/,
-    good: /entityLabel\(\s*event\.display_id\s*,\s*event\.factoring_advance_id\s*,\s*"Advance"\s*\)/,
+    bad: /label=\{row\.invoice_display_id\s*\?\?\s*"Invoice"\}/,
+    good: /entityLabel\(\s*row\.invoice_display_id\s*,\s*row\.invoice_id\s*,\s*"Invoice"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx",
@@ -1298,8 +1298,8 @@ const SIBLINGS = [
   },
   {
     rel: "apps/frontend/src/pages/CustomerDetail.tsx",
-    bad: /label=\{inv\.display_id\}/,
-    good: /entityLabel\(\s*inv\.display_id\s*,\s*inv\.id\s*,\s*"Invoice"\s*\)|name=\{inv\.display_id\}/,
+    bad: /label=\{application\.invoice_display_id\}/,
+    good: /entityLabel\(\s*application\.invoice_display_id\s*,\s*application\.invoice_id\s*,\s*"Invoice"\s*\)|name=\{application\.invoice_display_id\}/,
   },
   {
     rel: "apps/frontend/src/pages/CustomerDetail.tsx",
@@ -1548,8 +1548,8 @@ const SIBLINGS = [
   },
   {
     rel: "apps/frontend/src/pages/accounting/FactorReserveCard.tsx",
-    bad: /- \{event\.customer_name\}/,
-    good: /entityLabel\(event\.customer_name, event\.customer_id, "Customer"\)/,
+    bad: /Reserve — \$\{drill\.customer_name\}/,
+    good: /entityLabel\(drill\.customer_name, drill\.customer_id, "Customer"\)/,
   },
   {
     rel: "apps/frontend/src/pages/safety/tabs/DrugAlcoholTab.tsx",

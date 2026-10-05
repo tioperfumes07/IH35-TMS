@@ -1329,7 +1329,9 @@ export function DispatchBoard({
         title="Click to edit — Owner only"
         data-testid={`presettlement-number-${settlementId}`}
       >
-        {openPreSettlement.settlement_number ?? "— click to set —"}
+        {openPreSettlement.settlement_number == null
+          ? "— click to set —"
+          : entityLabel(openPreSettlement.settlement_number, openPreSettlement.settlement_id, "Settlement")}
       </button>
     );
   };

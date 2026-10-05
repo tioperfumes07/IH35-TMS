@@ -27,7 +27,7 @@
       "reason": "WO-CLAIM-MONEY — accident generates no cost record (driver_id exists but UNENFORCED, see pointer register)."
     }
   ],
-  "unenforced_pointers_count": 47,
+  "unenforced_pointers_count": 49,
   "_pointer_doc": "A money-critical uuid declared with NO FOREIGN KEY. It accepts any value and dangles when its target is removed: wired in a column list, not in the database. Fixing these is additive-migration work (ADD CONSTRAINT ... NOT VALID, then VALIDATE after an orphan sweep) and is FINANCIAL CLUSTER — owner-approved, never self-merged.",
   "unenforced_pointers": [
     {
@@ -219,6 +219,16 @@
       "table": "insurance.schedule_confirmations",
       "column": "unit_id",
       "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): guard failing on a clean origin/main checkout (a88e37e6ce) while pushing an UNRELATED urgent fix. insurance.schedule_confirmations.policy_id/unit_id are unenforced pointers from an existing migration, never registered here at merge time. Not independently verified as intentional -- recording current reality so the repo-wide block clears; filed on the board for the owning lane to add the real FK or dispute."
+    },
+    {
+      "table": "banking.bank_account_tieouts",
+      "column": "ledger_account_id",
+      "reason": "Pre-existing on origin/main 1d731abdeb (measured 2026-10-05): column introduced by an existing migration without ADD CONSTRAINT and never registered here at merge time. Fix is additive-migration FK work (ADD CONSTRAINT ... NOT VALID + orphan sweep) in the owning financial lane — Devin-A cannot author migrations on this branch and the 10-05 build orders forbid migrations. Filed on the bus for the owning seat."
+    },
+    {
+      "table": "driver_finance.deduction_recovery_links",
+      "column": "driver_settlement_deduction_id",
+      "reason": "Pre-existing on origin/main 1d731abdeb (measured 2026-10-05): column introduced by an existing migration without ADD CONSTRAINT and never registered here at merge time. Fix is additive-migration FK work (ADD CONSTRAINT ... NOT VALID + orphan sweep) in the owning financial lane — Devin-A cannot author migrations on this branch and the 10-05 build orders forbid migrations. Filed on the bus for the owning seat."
     }
   ],
   "measured_at": "2026-09-24T00:30:00Z",

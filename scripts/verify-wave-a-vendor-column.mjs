@@ -6,7 +6,7 @@ const checks = [
   ["duplicate source-vendor drill", "apps/frontend/src/components/factoring/DuplicateVendorsBanner.tsx", /<EntityLink kind="vendor" id=\{p\.from_vendor_id\} label=\{p\.from_vendor_name\}/],
   ["duplicate target-vendor drill", "apps/frontend/src/components/factoring/DuplicateVendorsBanner.tsx", /<EntityLink kind="vendor" id=\{p\.to_vendor_id\} label=\{p\.to_vendor_name\}/],
   ["finance aging vendor drill", "apps/frontend/src/pages/finance/ArApAgingPage.tsx", /<EntityLink kind="vendor" id=\{r\.vendor_id\} label=\{entityLabel\(r\.vendor_name, r\.vendor_id, "Vendor"\)\}/],
-  ["AP aging vendor drill", "apps/frontend/src/pages/reports/APAgingPage.tsx", /<EntityLink kind="vendor" id=\{r\.vendor_id\} label=\{entityLabel\(r\.vendor_name, r\.vendor_id, "Vendor"\)\}/],
+  ["AP aging vendor drill", "apps/frontend/src/pages/reports/APAgingPage.tsx", /<EntityLink\s+kind="vendor"\s+id=\{r\.vendor_id\}\s+label=\{entityLabel\(r\.vendor_name,\s*r\.vendor_id,\s*"Vendor"\)\}/],
   ["vendor bill create FK", "apps/frontend/src/components/accounting/VendorBillForm.tsx", /vendor_id:\s*vendorKey/],
   ["insurance policy vendor FK", "apps/frontend/src/components/insurance/PolicyCreateWizard.tsx", /insurer_vendor_id:\s*id/],
   ["accident report vendor FK", "apps/frontend/src/components/safety/AccidentReportDrawer.tsx", /vendor_id:\s*vendorId\s*\|\|\s*null/],

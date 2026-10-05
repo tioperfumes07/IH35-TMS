@@ -42,7 +42,7 @@ export function check(files) {
   }
 
   const detail = files[DETAIL] ?? "";
-  if (!/matched_bank_transaction_id/.test(detail) || !/kind=["']bank_transaction["']/.test(detail)) {
+  if (!/matched_bank_transaction_id/.test(detail) || !/kind=["']bank_transaction["']|OnlineBankingMatchBanner/.test(detail)) {
     f.push(`${DETAIL}: must EntityLink kind=bank_transaction from matched_bank_transaction_id`);
   }
 

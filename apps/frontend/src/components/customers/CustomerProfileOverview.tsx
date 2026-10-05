@@ -11,6 +11,7 @@ import { formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { ListErrorState } from "../ListErrorState";
+import { EntityLink } from "../shared/EntityLink";
 import { ProfileKpi, ProfileSection } from "../profile/ProfileBlocks";
 
 type Block<T> = { value: T; empty_reason: string | null };
@@ -52,7 +53,7 @@ export function CustomerProfileOverview(props: { operatingCompanyId: string; cus
   const ph = p.payment_history.value;
 
   const loadCols: Array<ParityColumn<OpenLoad>> = [
-    { key: "load_number", label: "Load", sortable: true },
+    { key: "load_number", label: "Load", sortable: true, render: (r) => <EntityLink kind="load" id={r.id} label={r.load_number} /> },
     { key: "status", label: "Status", sortable: true },
     { key: "origin", label: "Origin", sortable: true },
     { key: "destination", label: "Destination", sortable: true },
@@ -70,7 +71,7 @@ export function CustomerProfileOverview(props: { operatingCompanyId: string; cus
   ];
   const rateCols: Array<ParityColumn<Rate>> = [
     { key: "pickup_at", label: "Pickup", sortable: true, render: (r) => formatDateUS(r.pickup_at) },
-    { key: "load_number", label: "Load", sortable: true },
+    { key: "load_number", label: "Load", sortable: true, render: (r) => <EntityLink kind="load" id={r.load_id} label={r.load_number} /> },
     { key: "origin", label: "Origin", sortable: true },
     { key: "destination", label: "Destination", sortable: true },
     { key: "loaded_miles", label: "Loaded mi", sortable: true, kind: "number" },
