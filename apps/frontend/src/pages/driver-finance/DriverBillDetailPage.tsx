@@ -9,6 +9,8 @@ import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
 import { visibleDocumentLabel } from "../../lib/entity-label";
 import { formatUsdCents } from "../../lib/money";
 import { VoidedBanner } from "../../components/accounting/VoidedBanner";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 /**
  * REG-023(b) (owner 2026-09-10: "the Open Driver Bill button is unwired — no driver_bills/:id route
@@ -70,6 +72,7 @@ export function DriverBillDetailPage() {
 
   const bill = query.data!;
   const label = visibleDocumentLabel(bill.bill_number, bill.id, "Driver bill");
+  const loadLabel = entityLabel(bill.load_number, bill.load_id, "Load");
   const subtitle = [statusLabel(bill.status), bill.driver_name ?? undefined, formatUsdCents(bill.gross_amount_cents)]
     .filter(Boolean)
     .join(" · ");
@@ -100,6 +103,9 @@ export function DriverBillDetailPage() {
           {/* ALL-SEATS LAW (owner, 2026-09-13) — every load-number reference (the breadcrumb above)
               carries a settlement/tour reference beside it. */}
           <p className="mb-2 text-xs text-gray-600">
+            <span className="font-semibold text-gray-500">Load: </span>
+            <EntityLink kind="load" id={bill.load_id} label={loadLabel} />
+            <span className="mx-2 text-gray-400">·</span>
             <span className="font-semibold text-gray-500">Settlement/Tour: </span>
             <SettlementRefCell loadId={bill.load_id} operatingCompanyId={selectedCompanyId!} />
           </p>

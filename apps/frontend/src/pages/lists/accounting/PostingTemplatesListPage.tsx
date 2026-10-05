@@ -15,6 +15,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AccountingCatalogProfileDrawer } from "./AccountingCatalogProfileDrawer";
 import { PostingTemplateModal } from "./PostingTemplateModal";
 import { SelectCombobox } from "../../../components/Combobox";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 function statusPillClass(isActive: boolean) {
   return isActive
@@ -86,9 +87,17 @@ export function PostingTemplatesListPage() {
         label: "Debit / Credit",
         sortable: true,
         render: (row) => {
-          const debit = accountLabel.get(String(row.metadata.debit_account_id ?? "")) ?? "—";
-          const credit = accountLabel.get(String(row.metadata.credit_account_id ?? "")) ?? "—";
-          return <span className="text-xs text-slate-600">{debit} → {credit}</span>;
+          const debitId = String(row.metadata.debit_account_id ?? "");
+          const creditId = String(row.metadata.credit_account_id ?? "");
+          const debit = accountLabel.get(debitId) ?? "—";
+          const credit = accountLabel.get(creditId) ?? "—";
+          return (
+            <span className="text-xs text-slate-600">
+              {debitId ? <EntityLink kind="account" id={debitId} label={debit} /> : debit}
+              {" → "}
+              {creditId ? <EntityLink kind="account" id={creditId} label={credit} /> : credit}
+            </span>
+          );
         },
       },
       {
