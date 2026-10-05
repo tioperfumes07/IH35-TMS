@@ -13,6 +13,8 @@ import { useToast } from "../../../components/Toast";
 import { JournalEntryTypePicker } from "../../../components/accounting/JournalEntryTypePicker";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { formatUsdCents } from "../../../lib/money";
+import { entityLabel } from "../../../lib/entity-label";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 // BANK-F5330 / P23-BANKING-RAW-UUID-BACKEND-GAPS — migration 202612670000 added entity_type as the
 // discriminator beside journal_entry_postings.entity_uuid. Same 4 kinds the exemption in
@@ -186,6 +188,18 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
                     placeholder="Account"
                     onOptionCreated={() => void accountsQuery.refetch()}
                   />
+                  {line.account_id ? (
+                    <EntityLink
+                      kind="account"
+                      id={line.account_id}
+                      label={entityLabel(
+                        accountOptions.find((opt) => opt.value === line.account_id)?.label,
+                        line.account_id,
+                        "Account",
+                      )}
+                      className="col-span-6 text-xs font-semibold text-[#1F2A44] underline"
+                    />
+                  ) : null}
                   <ReferenceSelect
                     value={line.class_id || null}
                     onChange={(next) => setLines((prev) => prev.map((row, i) => (i === idx ? { ...row, class_id: next ?? "" } : row)))}

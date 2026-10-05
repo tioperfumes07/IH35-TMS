@@ -15,6 +15,8 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { SelectCombobox } from "../../components/Combobox";
 import { useToast } from "../../components/Toast";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
+import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
@@ -129,6 +131,18 @@ export function ReconciliationWorkspacePage() {
               </option>
             ))}
           </SelectCombobox>
+          {effectiveAccountId ? (
+            <EntityLink
+              kind="bank_account"
+              id={effectiveAccountId}
+              label={entityLabel(
+                (accountsQuery.data?.accounts ?? []).find((a) => a.id === effectiveAccountId)?.account_name,
+                effectiveAccountId,
+                "Account",
+              )}
+              className="mt-1 block text-xs font-semibold text-[#1F2A44] underline"
+            />
+          ) : null}
         </label>
         <label>
           From

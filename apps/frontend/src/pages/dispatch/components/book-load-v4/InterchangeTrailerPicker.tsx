@@ -11,6 +11,8 @@ import { ReferenceSelect, type ReferenceOption } from "../../../../components/pa
 import { Button } from "../../../../components/Button";
 import { CappedListNotice } from "../../../../components/CappedListNotice";
 import { useToast } from "../../../../components/Toast";
+import { entityLabel } from "../../../../lib/entity-label";
+import { EntityLink } from "../../../../components/shared/EntityLink";
 
 type Props = {
   operatingCompanyId: string;
@@ -181,6 +183,18 @@ export function InterchangeTrailerPicker({ operatingCompanyId, value, onChange, 
                   dataTestId="interchange-counterparty-picker"
                 />
               )}
+              {newCounterpartyId ? (
+                <EntityLink
+                  kind={newCounterpartyType === "vendor" ? "vendor" : "customer"}
+                  id={newCounterpartyId}
+                  label={entityLabel(
+                    counterpartyOptions.find((opt) => opt.value === newCounterpartyId)?.label,
+                    newCounterpartyId,
+                    newCounterpartyType === "vendor" ? "Vendor" : "Customer",
+                  )}
+                  className="mt-1 block font-semibold text-[#1F2A44] underline"
+                />
+              ) : null}
               {newCounterpartyType === "vendor" ? (
                 <CappedListNotice
                   shown={vendorsQuery.data?.vendors?.length ?? 0}

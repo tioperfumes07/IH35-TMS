@@ -13,6 +13,8 @@ import {
   type HosSegment,
 } from "../../api/hosTracker";
 import { companyToday } from "../../lib/businessDate";
+import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 // SAFETY-1: the HOS date filter defaults to the current duty day in the CARRIER timezone
 // (America/Chicago), never the UTC calendar date (which rolls to "tomorrow" after ~19:00 CT and
@@ -144,6 +146,14 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
             dataField="hos-viewer-driver"
             allowClear
           />
+          {driverId ? (
+            <EntityLink
+              kind="driver"
+              id={driverId}
+              label={entityLabel(selectedName === "driver" ? null : selectedName, driverId, "Driver")}
+              className="mt-1 block text-xs font-semibold text-[#1F2A44] underline"
+            />
+          ) : null}
         </div>
         <div>
           <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Date</label>

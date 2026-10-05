@@ -8,6 +8,8 @@ import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { Button } from "../../components/Button";
 import { EntityPicker } from "../../components/EntityPicker";
+import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -740,6 +742,14 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                 className="mt-0"
                 dataTestId="sc-driver"
               />
+              {driverId ? (
+                <EntityLink
+                  kind="driver"
+                  id={driverId}
+                  label={entityLabel(null, driverId, "Driver")}
+                  className="mt-1 block text-xs font-semibold text-[#1F2A44] underline"
+                />
+              ) : null}
             </Field>
             <Field label="Truck">
               <EntityPicker

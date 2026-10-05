@@ -20,6 +20,7 @@ import { useToast } from "../../components/Toast";
 import { VendorLinkageModal } from "../../components/qbo/VendorLinkageModal";
 import { SelectCombobox } from "../../components/Combobox";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 type TabKey = "drivers" | "assets";
 
@@ -120,7 +121,14 @@ export function QboVendorLinkagePage() {
         label: "Driver",
         sortable: true,
         sortValue: (row) => driverDisplayName(row),
-        render: (row) => driverDisplayName(row),
+        render: (row) => (
+          <EntityLink
+            kind="driver"
+            id={row.id}
+            label={entityLabel(driverDisplayName(row), row.id, "Driver")}
+            className="font-medium text-[#1F2A44] underline"
+          />
+        ),
       },
       {
         key: "qbo_vendor_id",
@@ -166,6 +174,14 @@ export function QboVendorLinkagePage() {
         key: "unit_number",
         label: "Unit",
         sortable: true,
+        render: (row) => (
+          <EntityLink
+            kind="unit"
+            id={row.id}
+            label={entityLabel(row.unit_number, row.id, "Unit")}
+            className="font-medium text-[#1F2A44] underline"
+          />
+        ),
       },
       {
         key: "qbo_class_id",
