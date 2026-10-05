@@ -83,12 +83,12 @@ function ProfileTabStrip({ driverId, activeTab }: { driverId: string; activeTab:
           {moreActive ? activeTab : "More"} ▾
         </button>
         {moreOpen ? (
-          <div className="absolute left-0 z-20 mt-1 min-w-[180px] rounded-sm border border-[#E5E7EB] bg-white p-1 shadow-sm" role="menu">
+          <div className="absolute left-0 z-20 mt-1 min-w-[180px] rounded-sm border border-[#D8E0E8] bg-white p-1 shadow-sm" role="menu">
             {DRIVER_PROFILE_MORE_TABS.map((label) => (
               <Link
                 key={label}
                 role="menuitem"
-                className="block px-2 py-1 text-[12px] text-[#0F1219] hover:bg-[#F7F8FA]"
+                className="block px-2 py-1 text-[12px] text-[#0F1B2D] hover:bg-[#F1F4F7]"
                 to={driverProfileTabHref(driverId, label)}
                 onClick={() => setMoreOpen(false)}
               >

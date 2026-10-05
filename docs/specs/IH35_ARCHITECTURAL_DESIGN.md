@@ -1176,10 +1176,6 @@ Extends aggregate + `DriverProfilePage` with sections 7–12: performance scorec
 
 **Create vocabulary (A24-4, 2026-06-03):** Drivers hub header CTA standardized to **+ Create Driver** (replaces non-canonical "+ Driver"). Locked "+ Create" / "+ Book" rule applies module-wide; ARCHIVE-not-DELETE comment retained at source. **CI:** `verify:drivers-create-vocab`.
 
-## Fleet Home (Fleet module) — FLT-F424–F428 (2026-10-05)
-
-Route: `/fleet` is a **module home**, not a bare roster. Title **Fleet** (sentence case). Tabs (`fleetHomeTabs.ts` / `?tab=`): Home · Units · Trailers · Transfers · Roster integrity · Maintenance. Home carries a 7-tile KPI strip (units in service / in maintenance / out of service / unassigned · trailers in service / unhooked · open work orders) plus attention cards. **FLT-F428:** no registration / inspection / insurance expiry columns exist on `mdata.units` or `mdata.equipment` — keep the warning banner; do not invent a tile (needs its own migration + round). **CI:** `verify-module-home-is-not-a-list.mjs`.
-
 ## Trailer Profile (Fleet module) — Part 1 (locked 2026-06-02)
 
 Route: `/fleet/trailers/:id` renders `TrailerProfilePage` with eight sections (identity/status, type specs, assignment, conditional reefer telemetry, maintenance, compliance/plates, documents, action bar). Parallel to Vehicle Profile; data on `mdata.equipment` + `mdata.equipment_plates` (migration `0303`).

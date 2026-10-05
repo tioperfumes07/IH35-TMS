@@ -115,12 +115,13 @@
 .dd-red { color: var(--ih-red); }
 @media (max-width: 1100px) { .dd-cols { grid-template-columns: 1fr; } .dd-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
-/* DRV-F421 — named form widths (date 132 · money 120 · code 104 · select 156–200 · email 268). */
-.wd { width: 132px; max-width: 100%; }
-.wm { width: 120px; max-width: 100%; }
-.wc { width: 104px; max-width: 100%; }
-.ws { width: 156px; max-width: 100%; }
-.wmd { width: 200px; max-width: 100%; }
-.wl { width: 268px; max-width: 100%; }
-.wide { width: 100%; }
+/* Control law 2026-10-05 — named widths once; 34px everywhere; never inline style widths. */
+.wd { width: 132px; max-width: 100%; }   /* date */
+.wm { width: 120px; max-width: 100%; }   /* money */
+.wc { width: 104px; max-width: 100%; }   /* code */
+.ws { width: 156px; max-width: 100%; }   /* select/name min */
+.wmd { width: 200px; max-width: 100%; }  /* select/name max */
+.wsearch { width: 232px; max-width: 100%; } /* search */
+.wl { width: 268px; max-width: 100%; }   /* email */
+.wide { width: 100%; }                  /* notes only */
 .de-ctrl { height: 34px; box-sizing: border-box; }

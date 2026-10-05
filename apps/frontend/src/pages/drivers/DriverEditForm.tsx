@@ -16,11 +16,11 @@ import { getDriverProfileSamsara } from "../../api/driver-profile-tabs";
 import { driverProfileTabHref } from "./driverProfileTabs";
 import type { Driver, UpdateDriverInput } from "../../types/api";
 
-const CTRL = "de-ctrl h-[34px] rounded-sm border border-[#E5E7EB] bg-white px-2 text-[12px] text-[#0F1219] focus:outline focus:outline-2 focus:outline-[#14314F]";
+const CTRL = "de-ctrl h-[34px] rounded-sm border border-[#D8E0E8] bg-white px-2 text-[12px] text-[#0F1B2D] focus:outline focus:outline-2 focus:outline-[#14314F]";
 
 function clipClass(filled: boolean) {
   return `inline-flex h-[34px] w-[34px] items-center justify-center rounded-sm border text-[12px] ${
-    filled ? "border-[#14314F] bg-[#14314F] text-white" : "border-[#E5E7EB] bg-white text-[#6B7280]"
+    filled ? "border-[#14314F] bg-[#14314F] text-white" : "border-[#D8E0E8] bg-white text-[#64748B]"
   }`;
 }
 
@@ -54,7 +54,7 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label className="flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wide text-[#4B5563]">
+    <label className="flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wide text-[#475569]">
       {label}
       <span className={`block ${width}`}>{children}</span>
       {error ? <span className="text-[11px] font-medium normal-case text-red-700">{error}</span> : null}
@@ -73,8 +73,8 @@ function Clip({ name, filled }: { name: string; filled: boolean }) {
 
 function Group({ title, children, wide }: { title: string; children: React.ReactNode; wide?: boolean }) {
   return (
-    <section className={`rounded-sm border border-[#E5E7EB] bg-white p-3 ${wide ? "md:col-span-3" : ""}`} data-testid={`driver-edit-group-${title}`}>
-      <h2 className="mb-3 text-[11px] font-bold uppercase tracking-wide text-[#4B5563]">{title}</h2>
+    <section className={`rounded-sm border border-[#D8E0E8] bg-white p-3 ${wide ? "md:col-span-3" : ""}`} data-testid={`driver-edit-group-${title}`}>
+      <h2 className="mb-3 text-[11px] font-bold uppercase tracking-wide text-[#475569]">{title}</h2>
       <div className={wide ? "grid gap-3" : "grid grid-cols-1 gap-3 sm:grid-cols-2"}>{children}</div>
     </section>
   );
@@ -287,7 +287,7 @@ export function DriverEditForm({
     return <p className="p-3 text-[12px] text-red-700">Could not load this driver for edit.</p>;
   }
   if (!driver) {
-    return <p className="p-3 text-[12px] text-[#6B7280]">Loading edit form…</p>;
+    return <p className="p-3 text-[12px] text-[#64748B]">Loading edit form…</p>;
   }
 
   return (
@@ -306,7 +306,7 @@ export function DriverEditForm({
       }}
     >
       <div className="flex items-center justify-between">
-        <p className="text-[12px] text-[#6B7280]">One screen. Enter saves. Esc cancels.</p>
+        <p className="text-[12px] text-[#64748B]">One screen. Enter saves. Esc cancels.</p>
         <div className="flex gap-2">
           <button type="button" className={`${CTRL} ws`} onClick={cancel} data-testid="driver-edit-cancel">
             Cancel
@@ -372,7 +372,7 @@ export function DriverEditForm({
             <input className={`${CTRL} wl`} value={form.emergency_contact_address ?? ""} onChange={(e) => set("emergency_contact_address", e.target.value)} />
           </Field>
           <Field label="Notes" width="wide">
-            <textarea className="wide min-h-[68px] rounded-sm border border-[#E5E7EB] px-2 py-1 text-[12px] focus:outline focus:outline-2 focus:outline-[#14314F]" value={form.emergency_contact_notes ?? ""} onChange={(e) => set("emergency_contact_notes", e.target.value)} />
+            <textarea className="wide min-h-[68px] rounded-sm border border-[#D8E0E8] px-2 py-1 text-[12px] focus:outline focus:outline-2 focus:outline-[#14314F]" value={form.emergency_contact_notes ?? ""} onChange={(e) => set("emergency_contact_notes", e.target.value)} />
           </Field>
         </Group>
 
@@ -502,12 +502,12 @@ export function DriverEditForm({
         </Group>
 
         <Group title="Equipment he runs" wide>
-          <p className="text-[12px] text-[#6B7280]">Unticking deactivates the qualification. It is never deleted.</p>
+          <p className="text-[12px] text-[#64748B]">Unticking deactivates the qualification. It is never deleted.</p>
           <div className="flex flex-wrap gap-2" data-testid="driver-edit-equipment-chips">
             {chipTypes.map((chip) => {
               if (!chip.type) {
                 return (
-                  <span key={chip.label} className="rounded-sm border border-dashed border-[#E5E7EB] px-2 py-1 text-[12px] text-[#6B7280]">
+                  <span key={chip.label} className="rounded-sm border border-dashed border-[#D8E0E8] px-2 py-1 text-[12px] text-[#64748B]">
                     {chip.label}
                   </span>
                 );
@@ -516,14 +516,14 @@ export function DriverEditForm({
               const inactive = quals.find((q) => q.equipment_type_id === chip.type!.id && !q.is_active);
               const on = Boolean(active);
               return (
-                <label key={chip.type.id} className={`inline-flex h-[34px] items-center gap-2 rounded-sm border px-2 text-[12px] ${on ? "border-[#14314F] bg-[#F7F8FA]" : "border-[#E5E7EB]"}`}>
+                <label key={chip.type.id} className={`inline-flex h-[34px] items-center gap-2 rounded-sm border px-2 text-[12px] ${on ? "border-[#14314F] bg-[#F1F4F7]" : "border-[#D8E0E8]"}`}>
                   <input
                     type="checkbox"
                     checked={on}
                     onChange={() => void toggleQual(chip.type!.id, active?.id ?? null, inactive?.id ?? null)}
                   />
                   <span>{chip.label}</span>
-                  <span className="tabular-nums text-[#6B7280]">{active ? dateInput(active.qualified_at) || "—" : inactive ? "inactive" : ""}</span>
+                  <span className="tabular-nums text-[#64748B]">{active ? dateInput(active.qualified_at) || "—" : inactive ? "inactive" : ""}</span>
                 </label>
               );
             })}
@@ -531,7 +531,7 @@ export function DriverEditForm({
         </Group>
 
         <Group title="Tax">
-          <p className="text-[12px] text-[#6B7280]">W-9 / W-8BEN / W-8BEN-E live on the tax certificate. Capture signed date, ID type and tax ID there — not invented on the driver row.</p>
+          <p className="text-[12px] text-[#64748B]">W-9 / W-8BEN / W-8BEN-E live on the tax certificate. Capture signed date, ID type and tax ID there — not invented on the driver row.</p>
           <W8BenSection
             w8ben={{ status: "missing", on_file: false }}
             unavailable={false}
@@ -551,14 +551,14 @@ export function DriverEditForm({
         </Group>
 
         <Group title="Payment method">
-          <p className="text-[12px] text-[#6B7280]">Banking is masked. Changing it is an audited event and needs a second approval.</p>
+          <p className="text-[12px] text-[#64748B]">Banking is masked. Changing it is an audited event and needs a second approval.</p>
           <Field label="Account (masked)" width="wm">
             <input className={`${CTRL} wm text-right`} value={bankConfirm ? bankDraft.account : "•••• 1234"} readOnly={!bankConfirm} onChange={(e) => setBankDraft((c) => ({ ...c, account: e.target.value }))} />
           </Field>
           <Field label="Routing (masked)" width="wm">
             <input className={`${CTRL} wm text-right`} value={bankConfirm ? bankDraft.routing : "•••• 0000"} readOnly={!bankConfirm} onChange={(e) => setBankDraft((c) => ({ ...c, routing: e.target.value }))} />
           </Field>
-          <label className="flex items-center gap-2 text-[12px] text-[#0F1219]">
+          <label className="flex items-center gap-2 text-[12px] text-[#0F1B2D]">
             <input type="checkbox" checked={bankConfirm} onChange={(e) => setBankConfirm(e.target.checked)} />
             I have a second approval to change banking
           </label>
@@ -566,8 +566,8 @@ export function DriverEditForm({
         </Group>
 
         <Group title="Assignment">
-          <p className="text-[12px] text-[#6B7280]">Many Samsara users can map to this one driver.</p>
-          {accounts.length === 0 ? <p className="text-[12px] text-[#6B7280]">No Samsara users mapped.</p> : (
+          <p className="text-[12px] text-[#64748B]">Many Samsara users can map to this one driver.</p>
+          {accounts.length === 0 ? <p className="text-[12px] text-[#64748B]">No Samsara users mapped.</p> : (
             <ul className="text-[12px]" data-testid="driver-edit-samsara-list">
               {accounts.map((a) => (
                 <li key={a.samsara_driver_id}>
@@ -590,7 +590,7 @@ export function DriverEditForm({
         <Group title="Notes" wide>
           <Field label="Notes" width="wide">
             <textarea
-              className="wide min-h-[88px] w-full rounded-sm border border-[#E5E7EB] px-2 py-1 text-[12px] focus:outline focus:outline-2 focus:outline-[#14314F]"
+              className="wide min-h-[88px] w-full rounded-sm border border-[#D8E0E8] px-2 py-1 text-[12px] focus:outline focus:outline-2 focus:outline-[#14314F]"
               value={form.notes ?? ""}
               onChange={(e) => set("notes", e.target.value)}
             />

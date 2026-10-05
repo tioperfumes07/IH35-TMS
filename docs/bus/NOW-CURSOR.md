@@ -1,3 +1,12 @@
+# NOW-CURSOR — 2026-10-05T18:44Z
+
+**SHIPPING:** PR1 DRIVER PROFILE (DRV-F420 / F416 / F421 / F422 / F415) — tabs stay on `/drivers/:id`, `?tab=edit` form, collapse, Samsara list on profile. Fleet deferred to PR3. Samsara mapping rebuild is PR2.
+
+**LOCAL GATES ONLY** — GitHub CI billing down account-wide. Never imply green CI.
+
+**NEXT:** Fast Merge PR1 → OUTBOX merge line → PR2 Samsara (five laws) → PR3 Fleet home.
+
+---
 # NOW-CURSOR — 2026-10-05T16:15Z
 
 **SHIPPING:** ENG-SPINE ledger amount fail-closed — `requireLedgerAmountRow` refuses missing/voided/revoked documents on 1:1, multi, and preview.
