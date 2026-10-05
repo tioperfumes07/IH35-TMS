@@ -17,6 +17,8 @@ This PR may touch:
   stampCustomerPaymentVoided must release matched_payment_id bank lines BEFORE voided_at. Tip rot
   from AUTH-400 blocked 363-CUR-B ship; the release lives in the one stamp so every door (route,
   bulk-void, executor, voidDocument) is whole. No new GL math.
+- `scripts/verify-every-posting-has-its-spine-link.mjs` — shrink-only UNLINKED_CEILING 3908→0 after
+  purge emptied the withdrawn 09-24..09-30 unlinked population. The guard itself demanded the drop.
 
 ## Why
 

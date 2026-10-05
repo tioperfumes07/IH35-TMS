@@ -177,7 +177,7 @@ const main = async () => {
     console.error(`\n${LABEL}: FAIL\n  ${verdict.join("\n  ")}`);
     return 1;
   }
-  console.log(`\n${LABEL}: OK — unlinked postings at the pinned ceiling ${UNLINKED_CEILING} (the withdrawn 09-24..09-30 population), 0 since ${LINK_REQUIRED_SINCE}; the INSERT-side refusal is armed where its migration has applied.`);
+  console.log(`\n${LABEL}: OK — unlinked postings at the pinned ceiling ${UNLINKED_CEILING} (purge emptied the withdrawn 09-24..09-30 population), 0 since ${LINK_REQUIRED_SINCE}; the INSERT-side refusal is armed where its migration has applied.`);
   return 0;
 };
 
