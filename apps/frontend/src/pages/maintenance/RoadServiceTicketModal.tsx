@@ -5,6 +5,8 @@ import { EntityPicker } from "../../components/EntityPicker";
 import { SelectCombobox } from "../../components/Combobox";
 import { useRoadServiceTickets, type RoadServiceType } from "../../hooks/useRoadServiceTickets";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 type Props = {
   open: boolean;
@@ -105,6 +107,14 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
               placeholder="Select vendor…"
               dataField="road-service-vendor"
             />
+            {vendorId ? (
+              <EntityLink
+                kind="vendor"
+                id={vendorId}
+                label={entityLabel(vendorName, vendorId, "Vendor")}
+                className="mt-1 block font-semibold text-[#1F2A44] underline"
+              />
+            ) : null}
           </div>
         </label>
         <label className="block text-xs font-medium text-gray-700">

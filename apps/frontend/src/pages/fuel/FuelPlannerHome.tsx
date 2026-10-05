@@ -18,6 +18,8 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ActionButton } from "../../components/shared/ActionButton";
 import { EntityPicker } from "../../components/EntityPicker";
+import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useToast } from "../../components/Toast";
@@ -349,6 +351,20 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
           </div>
         }
       />
+      {effectiveDriverId ? (
+        <p className="text-xs">
+          <EntityLink
+            kind="driver"
+            id={effectiveDriverId}
+            label={entityLabel(
+              (savingsQuery.data?.top_driver as { driver_name?: string; driver_id?: string } | undefined)?.driver_name,
+              effectiveDriverId,
+              "Driver",
+            )}
+            className="font-medium text-[#1F2A44] underline"
+          />
+        </p>
+      ) : null}
 
       <NavyPageSubNav
         items={SUBNAV.map((item) => ({ label: item.label, to: FUEL_TAB_PATH[item.id] }))}

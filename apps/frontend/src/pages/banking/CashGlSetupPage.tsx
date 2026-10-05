@@ -9,6 +9,8 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 // B-1 Cash-GL setup (fork-A): map each bank account → its COA cash GL account, per entity.
 // Owner/Administrator only. NO posting, NO flag — setup only. Reads/writes banking.bank_accounts.ledger_account_id.
@@ -61,7 +63,14 @@ export function CashGlSetupPage() {
       key: "account_name",
       label: "Bank Account",
       sortable: true,
-      render: (bank) => <span className="font-medium text-slate-800">{bank.account_name}</span>,
+      render: (bank) => (
+        <EntityLink
+          kind="bank_account"
+          id={bank.id}
+          label={entityLabel(bank.account_name, bank.id, "Account")}
+          className="font-medium text-[#1F2A44] underline"
+        />
+      ),
     },
     {
       key: "ledger_account_id",

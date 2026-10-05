@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -76,11 +77,17 @@ export function PaymentMethodsCatalogPage() {
       {
         key: "gl_account_id",
         label: "GL account",
-        render: (row) => (
-          <span className="text-xs text-gray-600">
-            {row.gl_account_id ? entityLabel(accountNameById.get(row.gl_account_id), row.gl_account_id, "Account") : "Unassigned"}
-          </span>
-        ),
+        render: (row) =>
+          row.gl_account_id ? (
+            <EntityLink
+              kind="account"
+              id={row.gl_account_id}
+              label={entityLabel(accountNameById.get(row.gl_account_id), row.gl_account_id, "Account")}
+              className="text-xs font-medium text-[#1F2A44] underline"
+            />
+          ) : (
+            <span className="text-xs text-gray-600">Unassigned</span>
+          ),
       },
       {
         key: "is_active",

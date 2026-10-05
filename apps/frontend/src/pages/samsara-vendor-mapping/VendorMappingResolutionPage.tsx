@@ -17,6 +17,7 @@ import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 // P23-QBO-VENDOR-MAPPING-USES-MIRROR-ID: link/dedupe used to be free-text QBO-mirror-id inputs
 // (picker-law violation — the mirror is not a valid picker source). Both now address the canonical
@@ -172,7 +173,22 @@ export function VendorMappingResolutionPage() {
   const unmappedColumns = useMemo((): Array<ParityColumn<UnmappedRow>> => {
     return [
       { key: "samsara_driver_id", label: "Samsara driver", sortable: true },
-      { key: "driver_name", label: "Name", sortable: true },
+      {
+        key: "driver_name",
+        label: "Name",
+        sortable: true,
+        render: (row) =>
+          row.local_driver_id ? (
+            <EntityLink
+              kind="driver"
+              id={row.local_driver_id}
+              label={entityLabel(row.driver_name, row.local_driver_id, "Driver")}
+              className="font-medium text-[#1F2A44] underline"
+            />
+          ) : (
+            entityLabel(row.driver_name, row.local_driver_id, "Driver")
+          ),
+      },
       { key: "reason", label: "Reason", sortable: true },
       {
         key: "action",
@@ -377,6 +393,18 @@ export function VendorMappingResolutionPage() {
                   placeholder="Select vendor..."
                   loading={vendorsQuery.isLoading}
                 />
+                {draft.vendor_id ? (
+                  <EntityLink
+                    kind="vendor"
+                    id={draft.vendor_id}
+                    label={entityLabel(
+                      vendorOptions.find((o) => o.value === draft.vendor_id)?.label,
+                      draft.vendor_id,
+                      "Vendor",
+                    )}
+                    className="mt-1 block font-semibold text-[#1F2A44] underline"
+                  />
+                ) : null}
               </div>
             ) : null}
 

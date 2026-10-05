@@ -1,5 +1,7 @@
 import type { PlaidBankAccount } from "../../../api/banking";
 import { ActionButton } from "../../../components/shared/ActionButton";
+import { entityLabel } from "../../../lib/entity-label";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 export type ConnectionErrorRow = {
   accountId: string;
@@ -87,7 +89,13 @@ export function BankingHomeConnectionErrorStrip({
             data-sync-status={a.sync_status}
           >
             <p className="font-semibold text-[#0F1219]">
-              {row.label} — {copy.code}
+              <EntityLink
+                kind="bank_account"
+                id={a.id}
+                label={entityLabel(row.label, a.id, "Account")}
+                className="font-semibold text-[#0F1219] underline"
+              />{" "}
+              — {copy.code}
             </p>
             <p className="mt-0.5 leading-snug text-[#6B7280]">{copy.message}</p>
             {a.last_synced_at ? (
