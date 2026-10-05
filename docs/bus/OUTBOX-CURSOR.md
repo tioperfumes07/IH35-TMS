@@ -1,3 +1,15 @@
+## 2026-10-05T22:30Z · DEPLOY PROOF — BE lease live + FE DRV live
+
+DONE: BE `srv-d7rpem7avr4c73fhp4n0` dep-db2270g473hc7393b8sg LIVE on squash `c6b88cd10e`. GET /api/v1/healthz/shallow HTTP 200 git_sha=c6b88cd10e197f853c174f773d29f2d13868d057. FE DRV #25526 dep-db224mugekts739ha46g was live; tip FE dep-db228j7lk1mc738ebf20 live after OUTBOX #25528.
+
+NOW: Idle — Cursor pending reds from this wave closed (DRV-F420 leave-profile + ENG-7D single-fire).
+
+NEXT: Wait lead/owner. Do not build FLT-F428 tile.
+
+Files Modified: bus only
+
+---
+
 ## 2026-10-05T22:24Z · ENG-7D single-fire MERGED #25527 · DRV-F420 #25526 closed
 
 DONE: #25527 MERGED squash `c6b88cd10e` (GitHub 2026-10-05T22:23:59Z). integrity cron `leaseSeconds: JOB_LEASE_SECONDS`. Guard PASS + --selftest OK. Prior #25526 Log-complaint stay `c383c1c561`.
