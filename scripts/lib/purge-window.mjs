@@ -48,6 +48,8 @@ export const PURGE_WINDOW_GUARDS = Object.freeze([
   "verify-open-tour-posts-nothing",
   "verify-every-posting-has-a-spine-link",
   "verify-settlement-deduction-balance-derived",
+  // Lead ruling 2026-10-05 (second): same measured condition.
+  "verify-draft-load-saves-and-is-visible",
 ]);
 
 /** The guards whose exemption is gated on a MEASURED live-row count (Lead ruling 2026-10-05). */
@@ -55,6 +57,7 @@ export const MEASURED_EMPTY_GUARDS = Object.freeze([
   "verify-open-tour-posts-nothing",
   "verify-every-posting-has-a-spine-link",
   "verify-settlement-deduction-balance-derived",
+  "verify-draft-load-saves-and-is-visible",
 ]);
 
 export const EXPECTED_ZERO_PATH = path.join(ROOT, "scripts/purge/usmca-purge-expected-zero.generated.json");

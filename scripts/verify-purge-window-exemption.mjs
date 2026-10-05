@@ -35,7 +35,7 @@ const expected = [...PURGE_WINDOW_GUARDS].sort();
 // Lead ruling 2026-10-05 (after AUTH-400): nine -> twelve. The three new guards are MEASURED-EMPTY guards: they may only call
 // exitIfMeasuredEmptyByPurge with their own measured live-row count, so the exemption ends on the first row, per guard.
 // STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
-if (PURGE_WINDOW_GUARDS.length !== 12) failures.push(`PURGE_WINDOW_GUARDS lists ${PURGE_WINDOW_GUARDS.length} guards; the rulings name twelve (nine + three measured-empty, Lead 2026-10-05)`);
+if (PURGE_WINDOW_GUARDS.length !== 13) failures.push(`PURGE_WINDOW_GUARDS lists ${PURGE_WINDOW_GUARDS.length} guards; the rulings name thirteen (nine + four measured-empty, Lead 2026-10-05)`);
 for (const g of MEASURED_EMPTY_GUARDS) {
   const p = path.join(ROOT, "scripts", `${g}.mjs`);
   const src = fs.existsSync(p) ? fs.readFileSync(p, "utf8") : "";

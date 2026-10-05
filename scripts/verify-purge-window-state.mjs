@@ -36,7 +36,7 @@ export function staticViolations({ readScript, spec, state }) {
   // Lead ROUND 347 (2026-10-03) removed verify-void-is-whole from the window: ten -> nine.
   // Lead ruling 2026-10-05: nine -> twelve (three measured-empty guards after AUTH-400).
   // STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
-  if (PURGE_WINDOW_GUARDS.length !== 12) v.push(`the exemption lists ${PURGE_WINDOW_GUARDS.length} arms; exactly 12 are ruled (nine + three measured-empty, Lead 2026-10-05)`);
+  if (PURGE_WINDOW_GUARDS.length !== 13) v.push(`the exemption lists ${PURGE_WINDOW_GUARDS.length} arms; exactly 13 are ruled (nine + four measured-empty, Lead 2026-10-05)`);
   for (const arm of PURGE_WINDOW_GUARDS) {
     const src = readScript(arm);
     if (src == null) v.push(`${arm}: file missing`);
