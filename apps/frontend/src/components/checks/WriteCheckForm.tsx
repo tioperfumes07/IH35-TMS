@@ -1128,6 +1128,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
   }
 
   return (
+    <>
     <Modal open={open} onClose={onClose} title="Check" modalKind="check-write" sizePreset="xl">
       <div className="flex flex-col gap-4" data-b4-check-creator="1">
         {saveError ? <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">{saveError}</div> : null}
@@ -1834,6 +1835,8 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
           </div>
         </div>
       </div>
+    </Modal>
+      {/* Sibling overlays — never nest a second Modal shell inside <Modal> (verify-no-nested-modal-frames). */}
       <VoidReasonModal
         open={voidOpen}
         title="Void Check"
@@ -1895,6 +1898,6 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
           </div>
         </div>
       ) : null}
-    </Modal>
+    </>
   );
 }

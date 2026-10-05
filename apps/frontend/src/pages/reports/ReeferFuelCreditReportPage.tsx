@@ -18,7 +18,7 @@ import { Button } from "../../components/Button";
 import { SelectCombobox } from "../../components/Combobox";
 import { useStagedListFilters } from "../../components/table";
 import { formatUsdCents } from "../../lib/money";
-import { formatDateUS } from "../../lib/formatDate";
+import { mmmDd } from "../../lib/formatDate";
 import { getReeferFuelCreditReport, recordReeferFuelGallons, setReeferFuelTrailer, type ReeferCreditRow } from "../../api/reports";
 
 function quarterRange(year: number, quarter: number): { from: string; to: string } {
@@ -117,7 +117,7 @@ export function ReeferFuelCreditReportPage() {
 
   const columns = useMemo<ParityColumn<ReeferCreditRow>[]>(
     () => [
-      { key: "date", label: "Date", sortable: true, render: (r) => formatDateUS(r.date) },
+      { key: "date", label: "Date", sortable: true, render: (r) => mmmDd(r.date) },
       {
         key: "document_number",
         label: "Document",
@@ -229,7 +229,7 @@ export function ReeferFuelCreditReportPage() {
           </SelectCombobox>
         </label>
         <span className="text-xs text-gray-500">
-          {formatDateUS(quarterRange(staged.draft.year, staged.draft.quarter).from)} – {formatDateUS(quarterRange(staged.draft.year, staged.draft.quarter).to)}
+          {mmmDd(quarterRange(staged.draft.year, staged.draft.quarter).from)} – {mmmDd(quarterRange(staged.draft.year, staged.draft.quarter).to)}
         </span>
         <Button size="sm" variant="secondary" disabled={!staged.dirty} onClick={staged.apply} data-testid="reefer-apply">
           Apply

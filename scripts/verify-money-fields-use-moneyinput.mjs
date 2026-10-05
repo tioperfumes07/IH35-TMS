@@ -200,11 +200,11 @@ function selftest() {
     "apps/frontend/src/pages/finance/AmortizationPage.tsx",
   ].map((rel) => join(process.cwd(), rel));
   const MUTATIONS = [
-    { file: REAL_FILES[0], from: 'moneyField("Purchase price ($)", "purchasePrice")', to: 'field("Purchase price ($)", "purchasePrice", "number")' },
+    { file: REAL_FILES[0], from: 'moneyField("Purchase price ($) *", "purchasePrice")', to: 'field("Purchase price ($) *", "purchasePrice", "number")' },
     { file: REAL_FILES[0], from: 'moneyField("Down payment ($)", "downPayment")', to: 'field("Down payment ($)", "downPayment", "number")' },
     { file: REAL_FILES[0], from: 'moneyField("Loan amount ($)", "loanAmount")', to: 'field("Loan amount ($)", "loanAmount", "number")' },
     { file: REAL_FILES[0], from: 'moneyField("Salvage value ($)", "salvageValue")', to: 'field("Salvage value ($)", "salvageValue", "number")' },
-    { file: REAL_FILES[1], from: 'moneyField("Price ($)", "price")', to: 'field("Price ($)", "price", "number")' },
+    { file: REAL_FILES[1], from: 'moneyField("Price ($) *", "price")', to: 'field("Price ($) *", "price", "number")' },
     { file: REAL_FILES[1], from: 'moneyField("Down payment ($)", "down")', to: 'field("Down payment ($)", "down", "number")' },
     { file: REAL_FILES[2], from: 'moneyField("Principal ($)", "principal")', to: 'field("Principal ($)", "principal", "number")' },
   ];

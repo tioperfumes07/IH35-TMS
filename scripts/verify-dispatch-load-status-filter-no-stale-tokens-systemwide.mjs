@@ -51,8 +51,9 @@ export function check(files) {
   for (const [rel, text] of files) {
     let idx = text.indexOf("listDispatchLoads(");
     while (idx !== -1) {
-      // The call's argument object rarely exceeds a few hundred chars; look at a generous window.
-      const window = text.slice(idx, idx + 600);
+      // Argument objects can carry multi-line comments (DispatchOverview round-trip exposure);
+      // keep the window large enough that `status: [...]` is still inside the scanned call.
+      const window = text.slice(idx, idx + 2400);
       const closeIdx = window.indexOf(");");
       const callBlock = closeIdx === -1 ? window : window.slice(0, closeIdx);
       const statusMatch = callBlock.match(/status:\s*\[([^\]]*)\]/);

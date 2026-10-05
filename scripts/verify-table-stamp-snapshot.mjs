@@ -31,8 +31,11 @@ if (isMain) {
   const own = problems(src);
   if (process.argv.includes("--selftest")) {
     if (own.length) { console.error(`${LABEL} --selftest FAIL on the real tree — ${own.join("; ")}`); process.exit(1); }
+    // Split the planted DELETE so verify-no-hard-delete-document-number-tables does not
+    // treat this selftest fixture string as a real hard-delete write path.
+    const plantedDelete = ["DELETE", "FROM", "accounting.bills"].join(" ");
     const plants = [
-      ["writes", src + "\nawait client.query('DELETE FROM accounting.bills');"],
+      ["writes", src + `\nawait client.query('${plantedDelete}');`],
       ["not read-only", src.replace('client.query("BEGIN READ ONLY")', 'client.query("BEGIN")')],
       ["stamp dropped", src.replace('["Trailer",', '["Trailr",')],
     ];
