@@ -9,12 +9,17 @@
  *
  * Idempotent: an already-voided payment is left as it is (its first stamp stands) and reported already_voided.
  */
+import { releaseBankLinesNamingDocument } from "./void.service.js";
+
 type Q = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }> };
 
 export async function stampCustomerPaymentVoided(
   client: Q,
   input: { operatingCompanyId: string; paymentId: string; userId: string; reason: string }
 ): Promise<{ already_voided: boolean }> {
+  // ROUND 368.2(b): a document stops being live only after the bank lines that name it are released (a voided payment
+  // never keeps its bank match). Before the stamp, in the same transaction — as every other void door does.
+  await releaseBankLinesNamingDocument(client as never, { operatingCompanyId: input.operatingCompanyId, pointerColumn: "matched_payment_id", documentId: input.paymentId }, { userId: input.userId, reason: input.reason });
   const u = await client.query(
     `UPDATE accounting.payments SET voided_at = now(), voided_by_user_id = $2::uuid, void_reason = $3
       WHERE id = $1::uuid AND operating_company_id = $4::uuid AND voided_at IS NULL`,
