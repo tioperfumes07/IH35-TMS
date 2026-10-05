@@ -34,7 +34,7 @@ export const TRIGGERS = [
 
 /** Load-born documents measured with no load on 2026-10-03, provably un-attributable (ROUND 361 §B). Shrink-only. */
 export const PINNED_LOADLESS = [
-  { table: "accounting.invoices", display: "010", why: "USMCA from_load invoice, sent, $4,000.00, inserted 2026-09-30 05:38Z by a script with no load; no load provable from the row" },
+  // 2026-10-05: accounting.invoices display 010 now carries a load — pin removed (shrink-only).
 ];
 
 export function migrationGaps(sql) {
@@ -42,14 +42,14 @@ export function migrationGaps(sql) {
 }
 
 /** facts: { triggers: Set<name>, loadless: [{table, display}], unstamped, walk: {reversals, broken} } */
-export function liveGaps(x) {
+export function liveGaps(x, pins = PINNED_LOADLESS) {
   const f = [];
   for (const [tbl, t] of TRIGGERS) if (!x.triggers.has(t)) f.push(`refusal ${t} missing or disabled on ${tbl}`);
   const key = (r) => `${r.table}:${r.display}`;
-  const pinned = new Set(PINNED_LOADLESS.map(key));
+  const pinned = new Set(pins.map(key));
   for (const r of x.loadless) if (!pinned.has(key(r))) f.push(`load-born ${r.table} ${r.display} has no load and is not on the pinned list`);
   const seen = new Set(x.loadless.map(key));
-  for (const p of PINNED_LOADLESS) if (!seen.has(key(p))) f.push(`pinned ${p.table} ${p.display} no longer lacks a load — remove it from PINNED_LOADLESS (shrink-only)`);
+  for (const p of pins) if (!seen.has(key(p))) f.push(`pinned ${p.table} ${p.display} no longer lacks a load — remove it from PINNED_LOADLESS (shrink-only)`);
   if (x.unstamped > 0) f.push(`${x.unstamped} posting(s) written since the stamp went live name a load in their resolver but carry load_id NULL`);
   if (x.walk.broken > 0) f.push(`${x.walk.broken} of ${x.walk.reversals} reversal line(s) cannot walk reversal -> original -> load, or the load does not list them`);
   return f;
@@ -58,14 +58,15 @@ export function liveGaps(x) {
 const sql = readFileSync(MIGRATION, "utf8");
 if (process.argv.includes("--selftest")) {
   const all = new Set(TRIGGERS.map(([, t]) => t));
-  const clean = { triggers: all, loadless: [{ table: "accounting.invoices", display: "010" }], unstamped: 0, walk: { reversals: 3, broken: 0 } };
+  const clean = { triggers: all, loadless: [], unstamped: 0, walk: { reversals: 3, broken: 0 } };
   const cases = [
     ["migration real", migrationGaps(sql).length === 0],
     ["refusal dropped from migration", migrationGaps(sql.replace("CREATE TRIGGER trg_driver_bill_carries_its_load", "-- x")).length === 1],
     ["live clean", liveGaps(clean).length === 0],
     ["trigger disabled", liveGaps({ ...clean, triggers: new Set([...all].slice(1)) }).length === 1],
-    ["new load-less document", liveGaps({ ...clean, loadless: [...clean.loadless, { table: "driver_finance.driver_bills", display: "x" }] }).length === 1],
-    ["pinned row fixed but still pinned", liveGaps({ ...clean, loadless: [] }).length === 1],
+    ["new load-less document", liveGaps({ ...clean, loadless: [{ table: "driver_finance.driver_bills", display: "x" }] }).length === 1],
+    // Shrink-only contract: a pin whose row is no longer load-less must FAIL until removed.
+    ["pinned row fixed but still pinned", liveGaps({ ...clean, loadless: [] }, [{ table: "accounting.invoices", display: "ghost" }]).length === 1],
     ["unstamped posting", liveGaps({ ...clean, unstamped: 2 }).length === 1],
     ["broken walk", liveGaps({ ...clean, walk: { reversals: 3, broken: 1 } }).length === 1],
   ];
