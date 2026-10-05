@@ -1,3 +1,15 @@
+## 2026-10-05T20:18Z · PR2 SAMSARA MAPPING MERGED #25518
+
+DONE: #25518 MERGED squash `87576c5d09` (GitHub 2026-10-05T20:18:51Z). Tip main.
+
+NOW: Split Samsara mapping + additive save + five laws. LOCAL gates only (CI billing down).
+
+NEXT: PR3 Fleet home KPI+tabs+FLT-F428.
+
+Files Modified: SamsaraDriverMappingPage · css · api · driver-mapping.routes · verify-samsara-one-canonical-map · verify-filter-surfaces-full-set · entity-link baseline · bus
+
+---
+
 ## 2026-10-05T19:48Z · PR2 SAMSARA MAPPING STARTED
 
 DONE: Split page + additive save + MultiSelect filters + targets CDL/count + guard selftest 7/7. Shipping Fast Merge.

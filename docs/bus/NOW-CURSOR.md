@@ -1,14 +1,12 @@
-# NOW-CURSOR — 2026-10-05T19:55Z
+# NOW-CURSOR — 2026-10-05T20:20Z
 
-**SHIPPING:** PR2 SAMSARA MAPPING — five laws · split page · additive save · MultiSelect filters · `verify-samsara-one-canonical-map` 7/7.
+**SHIPPING:** PR3 FLEET HOME — title Fleet · 6 tabs · 7 KPI tiles · FLT-F428 banner only (no invented expiry tile).
 
-**CLOSED tip:** PR1 #25517 `2026f27d5a` — profile 12+5 tabs stay on `/drivers/:id`.
+**CLOSED tip:** PR2 #25518 `87576c5d09` — Samsara split + additive save. PR1 #25517 profile tabs.
 
 **LOCAL GATES ONLY** — GitHub CI billing down. Fast Merge.
 
-**NEXT:** Fast Merge PR2 → PR3 Fleet home KPI+tabs+FLT-F428.
+**NEXT:** Fast Merge PR3 → done this build-order wave.
 
 ---
-# WAS — 2026-10-05T18:44Z PR1 DRIVER PROFILE (now merged #25517)
-
-# WAS — ENG-SPINE / leftover slate — overflow after F91552; no Chrome this seat.
+# WAS — PR2 SAMSARA MERGED #25518
