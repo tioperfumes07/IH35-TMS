@@ -111,6 +111,7 @@ const DRIVER_DEFAULTS: Driver = {
   visa_type: null,
   visa_number: null,
   visa_expires_at: null,
+  visa_b1_status: null,
   has_b1_visa: false,
   b1_visa_number: null,
   b1_visa_expires_date: null,
