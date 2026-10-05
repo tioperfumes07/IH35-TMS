@@ -24,7 +24,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { filterPlaidBankAccountsForCompany } from "../../../lib/banking-company-filter";
 import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
 import { Link } from "react-router-dom";
-import { SelectCombobox } from "../../../components/Combobox";
+import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { useListState } from "../../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { formatUsdCents } from "../../../lib/money";
@@ -299,7 +299,7 @@ export function BankingPlaidConnectionsPanel({
 
 export function BankingCompanyTransactionsPanel({ companyId }: { companyId: string }) {
   const [q, setQ] = useState("");
-  const [accountFilter, setAccountFilter] = useState<string>("");
+  const [accountFilter, setAccountFilter] = useState<string[]>([]);
   const [sort, setSort] = useState<CompanyTransactionsSort>("date_desc");
 
   const accountsQuery = useQuery({
@@ -314,7 +314,7 @@ export function BankingCompanyTransactionsPanel({ companyId }: { companyId: stri
       getPlaidCompanyTransactions(companyId, {
         limit: 200,
         q: q.trim() || undefined,
-        bank_account_id: accountFilter || undefined,
+        bank_account_id: accountFilter.length === 1 ? accountFilter[0] : undefined,
         sort,
       }),
     enabled: Boolean(companyId),
@@ -324,7 +324,20 @@ export function BankingCompanyTransactionsPanel({ companyId }: { companyId: stri
     () => filterPlaidBankAccountsForCompany(accountsQuery.data?.accounts ?? [], companyId),
     [accountsQuery.data?.accounts, companyId]
   );
-  const rows = txQuery.data?.transactions ?? [];
+  const accountOptions = useMemo(
+    () =>
+      accounts.map((a: PlaidBankAccount) => ({
+        value: a.id,
+        label: `${a.institution_name || "Bank"} — ${a.account_name || "Account"}`,
+      })),
+    [accounts],
+  );
+  const rows = useMemo(() => {
+    const list = txQuery.data?.transactions ?? [];
+    if (accountFilter.length <= 1) return list;
+    const allow = new Set(accountFilter);
+    return list.filter((t) => t.bank_account_id && allow.has(t.bank_account_id));
+  }, [txQuery.data?.transactions, accountFilter]);
   // Empty message renders only once the transactions query settles, never mid-fetch.
   const txListState = useListState(txQuery, rows.length === 0);
 
@@ -402,19 +415,15 @@ export function BankingCompanyTransactionsPanel({ companyId }: { companyId: stri
           aria-label="Filter transactions by description"
           className="min-w-48 flex-1 rounded-sm border border-gray-300 px-2 py-1 text-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
         />
-        <SelectCombobox
-          value={accountFilter}
-          onChange={(e) => setAccountFilter(e.target.value)}
-          aria-label="Filter by account"
-          className="rounded-sm border border-gray-300 px-2 py-1 text-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
-        >
-          <option value="">All accounts</option>
-          {accounts.map((a: PlaidBankAccount) => (
-            <option key={a.id} value={a.id}>
-              {(a.institution_name || "Bank") + " — " + (a.account_name || "Account")}
-            </option>
-          ))}
-        </SelectCombobox>
+        <MultiSelectDropdown
+          label="Account"
+          options={accountOptions}
+          selected={accountFilter}
+          onChange={setAccountFilter}
+          allLabel="All accounts"
+          searchable
+          data-testid="plaid-tx-filter-account"
+        />
       </div>
       {txQuery.isError ? <p className="text-xs text-red-600">Unable to load transactions.</p> : null}
       <ParityTable<PlaidBankTransaction>

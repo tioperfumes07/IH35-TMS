@@ -16,7 +16,7 @@ import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { SelectCombobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { ReconMatchSuggestions } from "./ReconMatchSuggestions";
 import { formatDateUS } from "../../lib/formatDate";
@@ -47,7 +47,7 @@ export function BankingObligationReconcilePage() {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
 
-  const [accountFilter, setAccountFilter] = useState<string>("");
+  const [accountFilter, setAccountFilter] = useState<string[]>([]);
   const [selectedTxnIds, setSelectedTxnIds] = useState<Set<string>>(() => new Set());
   const [dragTxnId, setDragTxnId] = useState<string | null>(null);
 
@@ -61,7 +61,7 @@ export function BankingObligationReconcilePage() {
     queryKey: ["banking", "reconcile-unmatched", companyId, accountFilter],
     queryFn: () =>
       listUnmatchedReconcileTransactions(companyId, {
-        bank_account_id: accountFilter || undefined,
+        bank_account_id: accountFilter.length === 1 ? accountFilter[0] : undefined,
       }),
     enabled: Boolean(companyId) && ["Owner", "Administrator", "Accountant"].includes(auth.user?.role ?? ""),
   });
@@ -93,7 +93,20 @@ export function BankingObligationReconcilePage() {
   });
 
   const obligations = obligationsQuery.data?.obligations ?? [];
-  const transactions = txnsQuery.data?.transactions ?? [];
+  const accountOptions = useMemo(
+    () =>
+      (accountsQuery.data?.accounts ?? []).map((a) => ({
+        value: a.id,
+        label: `${a.institution_name ?? "Bank"} …${a.account_mask ?? ""}`,
+      })),
+    [accountsQuery.data?.accounts],
+  );
+  const transactions = useMemo(() => {
+    const rows = txnsQuery.data?.transactions ?? [];
+    if (accountFilter.length <= 1) return rows;
+    const allow = new Set(accountFilter);
+    return rows.filter((row) => allow.has(row.bank_account_id));
+  }, [txnsQuery.data?.transactions, accountFilter]);
 
   const toggleSelect = (id: string) => {
     setSelectedTxnIds((prev) => {
@@ -165,21 +178,15 @@ export function BankingObligationReconcilePage() {
       ) : null}
 
       <div className="flex flex-wrap items-center gap-2">
-        <label className="text-xs text-gray-600">
-          Account{" "}
-          <SelectCombobox
-            className="ml-1 rounded-sm border border-gray-300"
-            value={accountFilter}
-            onChange={(e) => setAccountFilter(e.target.value)}
-          >
-            <option value="">All</option>
-            {(accountsQuery.data?.accounts ?? []).map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.institution_name ?? "Bank"} …{a.account_mask ?? ""}
-              </option>
-            ))}
-          </SelectCombobox>
-        </label>
+        <MultiSelectDropdown
+          label="Account"
+          options={accountOptions}
+          selected={accountFilter}
+          onChange={setAccountFilter}
+          allLabel="All accounts"
+          searchable
+          data-testid="reconcile-filter-account"
+        />
       </div>
       {hasSelected ? (
         <div className="flex flex-wrap items-center gap-2 rounded-sm border border-slate-300 bg-slate-100 px-3 py-2">
