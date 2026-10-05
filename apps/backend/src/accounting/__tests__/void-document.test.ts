@@ -40,7 +40,17 @@ vi.mock("../../driver-finance/void-document-callees.service.js", () => ({
   })),
 }));
 
+// AUTH-400 — the door stamps the header (whole void); the stamp writers are mocked here and asserted below.
+vi.mock("../void-document-stamp.service.js", () => ({
+  stampDocumentVoided: vi.fn(async (_c: unknown, p: { documentId: string }) => ({ already_voided: false, voided_at: "2026-10-05T00:00:00.000Z", document_id: p.documentId })),
+}));
+vi.mock("../payment-void-stamp.service.js", () => ({
+  stampCustomerPaymentVoided: vi.fn(async () => ({ already_voided: false })),
+}));
+
 import { voidDocument } from "../void-document.service.js";
+import { stampDocumentVoided } from "../void-document-stamp.service.js";
+import { stampCustomerPaymentVoided } from "../payment-void-stamp.service.js";
 import { voidBillInClientTx, voidBillPaymentInClientTx } from "../bills.service.js";
 import { postVoidReversal } from "../void.service.js";
 import { reversePostedSourceTransactionInClientTx } from "../posting-engine.service.js";
@@ -188,5 +198,25 @@ describe("voidDocument — ROUND 31.2/32.2 dispatcher (not a new reversal engine
     // outcome: voided_applied_retained -- the owner-ruled "why would I forgive the debt" branch,
     // never a reversal.
     expect(result.reversalJournalEntryId).toBeNull();
+  });
+
+  // AUTH-400 — every document this door reverses is ALSO stamped voided, in the caller's transaction: the bank-line undo
+  // and the settlement creator called voidDocument alone and left silent voids (ledger dead, header live).
+  it("is WHOLE: expense, invoice, factoring_advance and customer_payment are stamped after their reversal", async () => {
+    const cases: Array<[string, string]> = [["expense", "exp-w"], ["invoice", "inv-w"], ["factoring_advance", "fa-w"]];
+    for (const [type, id] of cases) {
+      vi.mocked(stampDocumentVoided).mockClear();
+      await voidDocument(fakeClient, { ...baseInput, type: type as never, id });
+      expect(stampDocumentVoided).toHaveBeenCalledWith(
+        fakeClient,
+        expect.objectContaining({ family: type, documentId: id, voidReason: baseInput.reason, voidedByUserId: "user-1" })
+      );
+    }
+    vi.mocked(stampCustomerPaymentVoided).mockClear();
+    await voidDocument(fakeClient, { ...baseInput, type: "customer_payment", id: "cp-w" });
+    expect(stampCustomerPaymentVoided).toHaveBeenCalledWith(
+      fakeClient,
+      expect.objectContaining({ paymentId: "cp-w", userId: "user-1", reason: baseInput.reason })
+    );
   });
 });

@@ -6,6 +6,7 @@
  * Fail-stop = entire batch rolls back on first error (atomicFailStop on bulk factory).
  */
 
+import { stampCustomerPaymentVoided } from "./payment-void-stamp.service.js";
 import { buildPatchChanges, appendCrudAudit } from "../audit/crud-audit.js";
 import type { BulkPerEntityContext, BulkPerEntityResult } from "../bulk/bulk.types.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
@@ -170,28 +171,11 @@ export async function voidCustomerPaymentInBulk(
   if (!payment) return { ok: false, code: "E_NOT_FOUND", message: "Payment not found" };
   if (payment.voided_at) return { ok: false, code: "E_ALREADY_VOID", message: "Payment is already void" };
 
-  const flipped = await voidClient.query(
-    `
-      UPDATE accounting.payments
-      SET voided_at = now(),
-          voided_by_user_id = $2::uuid,
-          void_reason = $3
-      WHERE id = $1::uuid
-        AND voided_at IS NULL
-      RETURNING id
-    `,
-    [id, actorUserId, reason.trim()]
-  );
-  if (flipped.rows.length === 0) {
+  // The one customer-payment void-stamp writer (stamp + archive applications), shared with every void door.
+  const flipped = await stampCustomerPaymentVoided(voidClient as never, { operatingCompanyId, paymentId: id, userId: actorUserId, reason: reason.trim() });
+  if (flipped.already_voided) {
     return { ok: false, code: "E_ALREADY_VOID", message: "Payment is already void" };
   }
-
-  await voidClient.query(
-    `UPDATE accounting.payment_applications
-     SET unapplied_at = now(), unapplied_by_user_id = $2::uuid
-     WHERE payment_id = $1::uuid AND unapplied_at IS NULL`,
-    [id, actorUserId]
-  );
 
   let reversal: VoidReversalResult;
   try {
