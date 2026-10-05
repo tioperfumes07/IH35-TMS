@@ -43,6 +43,18 @@ export const PURGE_WINDOW_GUARDS = Object.freeze([
   // verify-void-is-whole REMOVED (Lead ROUND 347, 2026-10-03): it measures documents that exist (ledger vs header), not
   // an empty table, and under the open-ended seeding freeze it reported EMPTY BY PURGE indefinitely over real findings.
   "verify-settled-load-carries-settled-status",
+  // Lead ruling 2026-10-05 (after AUTH-400): three guards that failed closed on the empty post-purge book. They may ONLY use
+  // exitIfMeasuredEmptyByPurge — the exemption ends on the FIRST live row, per guard, measured (never a date, never a flag).
+  "verify-open-tour-posts-nothing",
+  "verify-every-posting-has-a-spine-link",
+  "verify-settlement-deduction-balance-derived",
+]);
+
+/** The guards whose exemption is gated on a MEASURED live-row count (Lead ruling 2026-10-05). */
+export const MEASURED_EMPTY_GUARDS = Object.freeze([
+  "verify-open-tour-posts-nothing",
+  "verify-every-posting-has-a-spine-link",
+  "verify-settlement-deduction-balance-derived",
 ]);
 
 export const EXPECTED_ZERO_PATH = path.join(ROOT, "scripts/purge/usmca-purge-expected-zero.generated.json");
@@ -107,6 +119,25 @@ export function exitIfEmptyByPurge(label, what) {
   if (!w.open) return;
   console.log(`${label}: EMPTY BY PURGE (verified ${w.verifiedAt}, ${w.expiresAt ? `expires ${w.expiresAt}` : w.reason}) — ${what} is empty; named skip, not a pass.`);
   process.exit(EMPTY_BY_PURGE_EXIT);
+}
+
+/**
+ * Lead ruling 2026-10-05: EMPTY BY PURGE only while the guard's OWN measured live-row count is exactly 0. The first live row
+ * ends the exemption for that guard — no date, no flag anyone clears by hand. A non-integer count fails closed (the guard
+ * must measure, not assume). Otherwise identical to exitIfEmptyByPurge (window open + allowlisted, else it returns and the
+ * guard fails as before).
+ */
+export function exitIfMeasuredEmptyByPurge(label, what, liveRows) {
+  if (!Number.isInteger(liveRows) || liveRows < 0) {
+    console.error(`${label}: FAIL — exitIfMeasuredEmptyByPurge needs the measured live-row count, got ${JSON.stringify(liveRows)}`);
+    process.exit(1);
+  }
+  if (liveRows !== 0) return;
+  if (!MEASURED_EMPTY_GUARDS.includes(label)) {
+    console.error(`${label}: FAIL — not one of the measured-empty purge-window guards.`);
+    process.exit(1);
+  }
+  exitIfEmptyByPurge(label, `${what} (measured live rows: 0)`);
 }
 
 /** The window as seen by one allowlisted guard, for a guard that must finish its other checks before

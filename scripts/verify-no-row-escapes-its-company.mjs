@@ -50,11 +50,17 @@ export const SHARED_BY_DESIGN = {
 
 /** table -> { max: allowed count, reason } */
 export const DEBT = {
-  "accounting.expense_lines": { max: 506, reason: "506 expense lines with no company and no parent (2026-09-05..21 imports) — purge population (ROUND 359: never repair a row about to be deleted; the zero-reset collects them, #24513)" },
-  "accounting.bill_lines": { max: 28, reason: "28 voided bill lines whose bills were deleted (2026-09-13 rows) — purge population" },
-  "dispatch.load_charge_lines": { max: 136, reason: "136 charge lines on 132 loads that no longer exist (2026-09-04..21) — purge population" },
+  // Emptied 2026-10-04: the AUTH-400 purge removed every company-less expense / bill / load-charge line (was 506 / 28 / 136).
 };
-export const PARENTLESS_EXPENSE_LINES_DEBT = { max: 506, reason: "506 expense lines with no parent (2026-09-05..21 imports) — purge population, collected by the zero-reset (#24513)" };
+export const PARENTLESS_EXPENSE_LINES_DEBT = { max: 0, reason: "AUTH-400 purge (2026-10-04) removed the 506 parentless expense lines; none may return" };
+
+// The selftest's own fixture debts (the pre-purge shape), so the real lists can shrink to empty without breaking it.
+const FIXTURE_DEBT = {
+  "accounting.expense_lines": { max: 506, reason: "fixture" },
+  "accounting.bill_lines": { max: 28, reason: "fixture" },
+  "dispatch.load_charge_lines": { max: 136, reason: "fixture" },
+};
+const FIXTURE_PARENTLESS = { max: 506, reason: "fixture" };
 
 const stripSql = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--[^\n]*/g, "");
 const CLOSURES = [
@@ -77,22 +83,22 @@ export function staticFailures({ files, read }) {
 }
 
 /** nullCounts: { "schema.table": n } (only tables with n > 0); parentless: n */
-export function liveFailures(nullCounts, parentless) {
+export function liveFailures(nullCounts, parentless, debt = DEBT, parentDebt = PARENTLESS_EXPENSE_LINES_DEBT) {
   const out = [];
   const notes = [];
   for (const [t, n] of Object.entries(nullCounts)) {
     if (SHARED_BY_DESIGN[t]) continue;
-    const d = DEBT[t];
+    const d = debt[t];
     if (!d) out.push(`RULE 1: ${t} has ${n} row(s) with NO company — invisible to every company-scoped query, guard and the purge.`);
     else if (n > d.max) out.push(`RULE 1: ${t} has ${n} company-less row(s), above its named debt of ${d.max} — a new row escaped.`);
   }
-  for (const [t, d] of Object.entries(DEBT)) {
+  for (const [t, d] of Object.entries(debt)) {
     const n = nullCounts[t] ?? 0;
     if (n === 0) out.push(`DEBT RATCHET: ${t} carries no company-less row any more — remove it from DEBT (ceiling drops).`);
     else if (n < d.max) notes.push(`${t} debt shrank ${d.max} -> ${n}: lower DEBT.max in the next PR.`);
   }
-  if (parentless > PARENTLESS_EXPENSE_LINES_DEBT.max) out.push(`RULE 2: ${parentless} expense line(s) with no parent, above the named debt of ${PARENTLESS_EXPENSE_LINES_DEBT.max}.`);
-  if (parentless === 0) out.push("DEBT RATCHET: no parentless expense line remains — set PARENTLESS_EXPENSE_LINES_DEBT.max to 0.");
+  if (parentless > parentDebt.max) out.push(`RULE 2: ${parentless} expense line(s) with no parent, above the named debt of ${parentDebt.max}.`);
+  if (parentless === 0 && parentDebt.max > 0) out.push("DEBT RATCHET: no parentless expense line remains — set PARENTLESS_EXPENSE_LINES_DEBT.max to 0.");
   return { out, notes };
 }
 
@@ -132,12 +138,14 @@ if (isMain) {
   if (process.argv.includes("--selftest")) {
     const base = { "accounting.expense_lines": 506, "accounting.bill_lines": 28, "dispatch.load_charge_lines": 136, "audit.row_changes": 160000 };
     const cases = [
-      ["named debt + shared passes", liveFailures(base, 506).out.length === 0],
-      ["a new company-less table fails", liveFailures({ ...base, "driver_finance.settlement_lines": 1 }, 506).out.length === 1],
-      ["debt growing fails", liveFailures({ ...base, "accounting.bill_lines": 29 }, 506).out.length === 1],
-      ["debt at zero fails until removed", liveFailures({ "accounting.expense_lines": 506, "dispatch.load_charge_lines": 136 }, 506).out.some((f) => f.startsWith("DEBT RATCHET"))],
-      ["parentless growing fails", liveFailures(base, 507).out.length === 1],
-      ["shared-by-design is never a defect", liveFailures({ ...base, "catalogs.detail_types": 144 }, 506).out.length === 0],
+      ["named debt + shared passes", liveFailures(base, 506, FIXTURE_DEBT, FIXTURE_PARENTLESS).out.length === 0],
+      ["a new company-less table fails", liveFailures({ ...base, "driver_finance.settlement_lines": 1 }, 506, FIXTURE_DEBT, FIXTURE_PARENTLESS).out.length === 1],
+      ["debt growing fails", liveFailures({ ...base, "accounting.bill_lines": 29 }, 506, FIXTURE_DEBT, FIXTURE_PARENTLESS).out.length === 1],
+      ["debt at zero fails until removed", liveFailures({ "accounting.expense_lines": 506, "dispatch.load_charge_lines": 136 }, 506, FIXTURE_DEBT, FIXTURE_PARENTLESS).out.some((f) => f.startsWith("DEBT RATCHET"))],
+      ["parentless growing fails", liveFailures(base, 507, FIXTURE_DEBT, FIXTURE_PARENTLESS).out.length === 1],
+      ["empty real lists: nothing company-less passes", liveFailures({ "audit.row_changes": 160000 }, 0).out.length === 0],
+      ["empty real lists: one company-less expense line fails", liveFailures({ "accounting.expense_lines": 1 }, 0).out.length === 1],
+      ["shared-by-design is never a defect", liveFailures({ ...base, "catalogs.detail_types": 144 }, 506, FIXTURE_DEBT, FIXTURE_PARENTLESS).out.length === 0],
     ];
     for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
     const bad = cases.filter(([, ok]) => !ok).length;

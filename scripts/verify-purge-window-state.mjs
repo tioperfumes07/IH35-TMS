@@ -34,11 +34,13 @@ export function staticViolations({ readScript, spec, state }) {
   const v = [];
   // STALE-LITERAL-OK: ruled arm count — the owner-ruled exemption list size, not a live measurement (tenth arm #22467)
   // Lead ROUND 347 (2026-10-03) removed verify-void-is-whole from the window: ten -> nine.
-  if (PURGE_WINDOW_GUARDS.length !== 9) v.push(`the exemption lists ${PURGE_WINDOW_GUARDS.length} arms; exactly 9 are ruled (ROUND 347 removed verify-void-is-whole)`);
+  // Lead ruling 2026-10-05: nine -> twelve (three measured-empty guards after AUTH-400).
+  // STALE-LITERAL-OK: structural assertion — exact count verified against array/fixture in this file
+  if (PURGE_WINDOW_GUARDS.length !== 12) v.push(`the exemption lists ${PURGE_WINDOW_GUARDS.length} arms; exactly 12 are ruled (nine + three measured-empty, Lead 2026-10-05)`);
   for (const arm of PURGE_WINDOW_GUARDS) {
     const src = readScript(arm);
     if (src == null) v.push(`${arm}: file missing`);
-    else if (!/exitIfEmptyByPurge\s*\(|purgeWindowFor\s*\(/.test(src)) v.push(`${arm}: no longer calls the purge-window helper`);
+    else if (!/exitIfEmptyByPurge\s*\(|purgeWindowFor\s*\(|exitIfMeasuredEmptyByPurge\s*\(/.test(src)) v.push(`${arm}: no longer calls the purge-window helper`);
   }
   for (const [arm, table] of LIVE_ARMS) {
     const src = readScript(arm) ?? "";

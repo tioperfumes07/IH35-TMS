@@ -33,23 +33,22 @@ export const TRIGGERS = [
 ];
 
 /** Load-born documents measured with no load on 2026-10-03, provably un-attributable (ROUND 361 §B). Shrink-only. */
-export const PINNED_LOADLESS = [
-  // 2026-10-05: accounting.invoices display 010 now carries a load — pin removed (shrink-only).
-];
+// Shrink-only. Invoice 010 (the one load-less load-born document) was removed by the AUTH-400 purge (2026-10-04) — 0 now.
+export const PINNED_LOADLESS = [];
 
 export function migrationGaps(sql) {
   return TRIGGERS.filter(([, t]) => !new RegExp(`CREATE (CONSTRAINT )?TRIGGER ${t}\\b`).test(sql)).map(([tbl, t]) => `${MIGRATION} no longer declares ${t} on ${tbl}`);
 }
 
 /** facts: { triggers: Set<name>, loadless: [{table, display}], unstamped, walk: {reversals, broken} } */
-export function liveGaps(x, pins = PINNED_LOADLESS) {
+export function liveGaps(x, pinnedList = PINNED_LOADLESS) {
   const f = [];
   for (const [tbl, t] of TRIGGERS) if (!x.triggers.has(t)) f.push(`refusal ${t} missing or disabled on ${tbl}`);
   const key = (r) => `${r.table}:${r.display}`;
-  const pinned = new Set(pins.map(key));
+  const pinned = new Set(pinnedList.map(key));
   for (const r of x.loadless) if (!pinned.has(key(r))) f.push(`load-born ${r.table} ${r.display} has no load and is not on the pinned list`);
   const seen = new Set(x.loadless.map(key));
-  for (const p of pins) if (!seen.has(key(p))) f.push(`pinned ${p.table} ${p.display} no longer lacks a load — remove it from PINNED_LOADLESS (shrink-only)`);
+  for (const p of pinnedList) if (!seen.has(key(p))) f.push(`pinned ${p.table} ${p.display} no longer lacks a load — remove it from PINNED_LOADLESS (shrink-only)`);
   if (x.unstamped > 0) f.push(`${x.unstamped} posting(s) written since the stamp went live name a load in their resolver but carry load_id NULL`);
   if (x.walk.broken > 0) f.push(`${x.walk.broken} of ${x.walk.reversals} reversal line(s) cannot walk reversal -> original -> load, or the load does not list them`);
   return f;
@@ -58,17 +57,18 @@ export function liveGaps(x, pins = PINNED_LOADLESS) {
 const sql = readFileSync(MIGRATION, "utf8");
 if (process.argv.includes("--selftest")) {
   const all = new Set(TRIGGERS.map(([, t]) => t));
-  const clean = { triggers: all, loadless: [], unstamped: 0, walk: { reversals: 3, broken: 0 } };
+  // The selftest pins its OWN fixture row, so it does not depend on what the real (shrink-only) list holds today.
+  const PIN = [{ table: "accounting.invoices", display: "010" }];
+  const clean = { triggers: all, loadless: [{ table: "accounting.invoices", display: "010" }], unstamped: 0, walk: { reversals: 3, broken: 0 } };
   const cases = [
     ["migration real", migrationGaps(sql).length === 0],
     ["refusal dropped from migration", migrationGaps(sql.replace("CREATE TRIGGER trg_driver_bill_carries_its_load", "-- x")).length === 1],
-    ["live clean", liveGaps(clean).length === 0],
-    ["trigger disabled", liveGaps({ ...clean, triggers: new Set([...all].slice(1)) }).length === 1],
-    ["new load-less document", liveGaps({ ...clean, loadless: [{ table: "driver_finance.driver_bills", display: "x" }] }).length === 1],
-    // Shrink-only contract: a pin whose row is no longer load-less must FAIL until removed.
-    ["pinned row fixed but still pinned", liveGaps({ ...clean, loadless: [] }, [{ table: "accounting.invoices", display: "ghost" }]).length === 1],
-    ["unstamped posting", liveGaps({ ...clean, unstamped: 2 }).length === 1],
-    ["broken walk", liveGaps({ ...clean, walk: { reversals: 3, broken: 1 } }).length === 1],
+    ["live clean", liveGaps(clean, PIN).length === 0],
+    ["trigger disabled", liveGaps({ ...clean, triggers: new Set([...all].slice(1)) }, PIN).length === 1],
+    ["new load-less document", liveGaps({ ...clean, loadless: [...clean.loadless, { table: "driver_finance.driver_bills", display: "x" }] }, PIN).length === 1],
+    ["pinned row fixed but still pinned", liveGaps({ ...clean, loadless: [] }, PIN).length === 1],
+    ["unstamped posting", liveGaps({ ...clean, unstamped: 2 }, PIN).length === 1],
+    ["broken walk", liveGaps({ ...clean, walk: { reversals: 3, broken: 1 } }, PIN).length === 1],
   ];
   const bad = cases.filter(([, v]) => !v);
   if (bad.length) { console.error(`${LABEL} selftest FAIL: ${bad.map(([n]) => n).join(", ")}`); process.exit(1); }
