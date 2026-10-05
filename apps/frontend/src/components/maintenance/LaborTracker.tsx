@@ -407,7 +407,7 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
                 const id = String(row.id ?? "");
                 const rate = row.labor_rate_cents_per_hour != null ? String(row.labor_rate_cents_per_hour) : "";
                 return (
-                  <span className="inline-flex flex-wrap justify-end gap-2">
+                  <span className="inline-flex flex-nowrap justify-end gap-2">
                     {!row.ended_at ? (
                       <Button
                         type="button"

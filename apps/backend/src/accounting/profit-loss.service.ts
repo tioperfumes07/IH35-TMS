@@ -1,4 +1,5 @@
 import { withCurrentUser } from "../auth/db.js";
+import { placeAccountType, signedSectionAmount } from "./profit-loss-sections.js";
 
 type ProfitLossAggregateRowDb = {
   account_id: string | null;
@@ -33,9 +34,11 @@ export type ProfitLossReport = {
   net_income: number;
 };
 
-const REVENUE_TYPES = new Set(["Income", "OtherIncome"]);
-const COGS_TYPES = new Set(["CostOfGoodsSold"]);
-const OPERATING_EXPENSE_TYPES = new Set(["Expense", "OtherExpense"]);
+// ACCT-F413 — the three local Sets that used to live here, plus the fall-through that caught
+// everything else, moved to ./profit-loss-sections.ts so the accrual and cash-basis renderings of
+// this statement cannot drift apart. The Sets claimed five types and the ROUND 384 safety net then
+// caught Assets, Liabilities and Equity — the Balance Sheet — and printed it under a heading that
+// told the owner his P&L was incomplete. Balance-sheet types are now excluded BY NAME.
 
 export async function getProfitLossReport(input: {
   userId: string;
@@ -112,64 +115,34 @@ export async function getProfitLossReport(input: {
     for (const row of res.rows) {
       const totalDebits = Number(row.total_debits ?? 0);
       const totalCredits = Number(row.total_credits ?? 0);
-      const accountType = row.account_type;
+      const placement = placeAccountType(row.account_type);
 
-      if (REVENUE_TYPES.has(accountType)) {
-        revenueLines.push({
-          ...(row.account_id ? { account_id: row.account_id } : {}),
-          account_code: row.account_code,
-          account_name: row.account_name,
-          account_type: accountType,
-          amount: totalCredits - totalDebits,
-        });
+      // ACCT-F413 — an account type the BALANCE SHEET claims is not a P&L question. It is excluded
+      // here by name, which is what ROUND 384's comment always said was happening and what the code
+      // never actually did.
+      if (placement.kind === "balance_sheet") continue;
+
+      const line: ProfitLossLine = {
+        ...(row.account_id ? { account_id: row.account_id } : {}),
+        account_code: row.account_code,
+        account_name: row.account_name,
+        account_type: row.account_type,
+        amount: signedSectionAmount(placement, totalDebits, totalCredits),
+      };
+
+      if (placement.kind === "profit_loss") {
+        if (placement.section === "revenue") revenueLines.push(line);
+        else if (placement.section === "cogs") cogsLines.push(line);
+        else operatingExpenseLines.push(line);
         continue;
       }
 
-      if (COGS_TYPES.has(accountType)) {
-        cogsLines.push({
-          ...(row.account_id ? { account_id: row.account_id } : {}),
-          account_code: row.account_code,
-          account_name: row.account_name,
-          account_type: accountType,
-          amount: totalDebits - totalCredits,
-        });
-        continue;
-      }
-
-      if (OPERATING_EXPENSE_TYPES.has(accountType)) {
-        operatingExpenseLines.push({
-          ...(row.account_id ? { account_id: row.account_id } : {}),
-          account_code: row.account_code,
-          account_name: row.account_name,
-          account_type: accountType,
-          amount: totalDebits - totalCredits,
-        });
-        continue;
-      }
-
-      // ROUND 384 (Lead, 2026-10-03) — AN UNMAPPED ACCOUNT TYPE USED TO FALL OFF THE P&L IN SILENCE.
-      //
-      // The three branches above cover Income, OtherIncome, CostOfGoodsSold, Expense and OtherExpense.
-      // Anything else simply reached the end of the loop and was never pushed anywhere: no line, no
-      // total, no warning. Money on such an account would be missing from the P&L and from net income,
-      // and the statement would still look complete and still foot.
-      //
-      // Measured on production 2026-10-03, the chart carries eight account types: CostOfGoodsSold,
-      // Asset, Liability, Income, Expense, OtherExpense, Equity and Statistical. Asset, Liability and
-      // Equity belong on the Balance Sheet and are correctly absent here. `Statistical` is QuickBooks'
-      // non-posting type and currently holds zero postings — so nothing is being dropped TODAY. The
-      // defect is that if it ever did, nobody would be told.
-      //
-      // LAW 368.3: a screen that cannot classify something says so. It never drops it. So an unmapped
-      // type with activity now comes back as its own labelled group, and net income says it is excluded.
+      // ROUND 384 / LAW 368.3 — a type NO statement claims. A screen that cannot classify something
+      // says so; it never drops it. This block is now empty whenever the chart is fully mapped,
+      // which is what makes it worth reading: a safety net that always fires stops being read, and
+      // the day something genuinely unmapped appears nobody notices it among the noise.
       if (totalDebits !== 0 || totalCredits !== 0) {
-        unclassifiedLines.push({
-          ...(row.account_id ? { account_id: row.account_id } : {}),
-          account_code: row.account_code,
-          account_name: row.account_name,
-          account_type: accountType,
-          amount: totalDebits - totalCredits,
-        });
+        unclassifiedLines.push(line);
       }
     }
 

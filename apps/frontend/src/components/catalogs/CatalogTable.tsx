@@ -170,7 +170,11 @@ export function CatalogTable({
           readOnly
             ? undefined
             : (row) => (
-                <div className="flex flex-wrap justify-end gap-2">
+                /* UI-F414 — NOT flex-wrap. Wrapping is what turned a too-narrow actions column
+                   into a vertical column of single letters instead of an honest overflow: the cell
+                   was 40px wide (ParityTable's old w-10) and the buttons obligingly folded to fit.
+                   The column is now sized for the pair; nowrap keeps any future squeeze visible. */
+                <div className="flex flex-nowrap justify-end gap-2">
                   <Button variant="secondary" size="sm" onClick={() => onEdit(row)}>
                     Edit
                   </Button>

@@ -413,7 +413,7 @@ export function CashAdvanceRequestsPage() {
             const isMaker = isMakerOfRequest(row, currentUserId);
             return (
               <div className="space-y-1 whitespace-nowrap">
-                <div className="flex flex-wrap justify-end gap-2">
+                <div className="flex flex-nowrap justify-end gap-2">
                   <Button
                     size="sm"
                     disabled={above || isMaker || approveMut.isPending}

@@ -1,5 +1,4 @@
 import type { BalanceSheetLine, BalanceSheetReport } from "../balance-sheet.service.js";
-import type { ProfitLossLine, ProfitLossReport } from "../profit-loss.service.js";
 import type { TrialBalanceRow, TrialBalanceSummary } from "../trial-balance.service.js";
 import { applyCashBasisSuppression, computeCashBasisAdjustment, type CashBasisEntry } from "./engine.js";
 
@@ -146,57 +145,23 @@ export function transformTrialBalanceToCashBasis(rows: TrialBalanceRow[], summar
   };
 }
 
-function profitLossLineToEntry(line: ProfitLossLine, sourceType: CashBasisEntry["source_type"], anchorDate: string): CashBasisEntry {
-  return {
-    entry_id: `${line.account_code}:${line.account_name}`,
-    account_code: line.account_code,
-    account_name: line.account_name,
-    account_type: line.account_type,
-    amount_cents: line.amount,
-    source_type: sourceType,
-    settlement_date: anchorDate,
-  };
-}
-
-function entryToProfitLossLine(entry: CashBasisEntry): ProfitLossLine {
-  return {
-    account_code: entry.account_code,
-    account_name: entry.account_name,
-    account_type: entry.account_type,
-    amount: entry.amount_cents,
-  };
-}
-
-export function transformProfitLossToCashBasis(report: ProfitLossReport, anchorDate: string): ProfitLossReport {
-  const entries = [
-    ...report.revenue.lines.map((line) => profitLossLineToEntry(line, "invoice_revenue", anchorDate)),
-    ...report.cogs.lines.map((line) => profitLossLineToEntry(line, "bill_expense", anchorDate)),
-    ...report.operating_expenses.lines.map((line) => profitLossLineToEntry(line, "bill_expense", anchorDate)),
-  ];
-  const transformed = applyCashBasisSuppression(entries, { as_of_date: anchorDate });
-  const revenueLines = transformed.filter((entry) => entry.account_type === "Income" || entry.account_type === "OtherIncome").map(entryToProfitLossLine);
-  const cogsLines = transformed.filter((entry) => entry.account_type === "CostOfGoodsSold").map(entryToProfitLossLine);
-  const operatingExpenseLines = transformed.filter((entry) => entry.account_type === "Expense" || entry.account_type === "OtherExpense").map(entryToProfitLossLine);
-  // ROUND 384 (Lead, 2026-10-03) — the cash-basis P&L is a SECOND implementation of the same report and
-  // it drops unmapped account types exactly as the accrual one did: these three filters claim Income,
-  // OtherIncome, CostOfGoodsSold, Expense and OtherExpense, and anything else is simply not selected by
-  // any of them. Surfaced here too, with the same rule: an unclassified line is a question, not a number,
-  // and it is never folded into a total (LAW 368.3 — a screen that cannot classify something says so).
-  const PL_TYPES = new Set(["Income", "OtherIncome", "CostOfGoodsSold", "Expense", "OtherExpense"]);
-  const unclassifiedLines = transformed
-    .filter((entry) => !PL_TYPES.has(entry.account_type))
-    .map(entryToProfitLossLine)
-    .filter((line) => line.amount !== 0);
-  const unclassifiedTotal = unclassifiedLines.reduce((sum, line) => sum + line.amount, 0);
-  const revenueTotal = revenueLines.reduce((sum, line) => sum + line.amount, 0);
-  const cogsTotal = cogsLines.reduce((sum, line) => sum + line.amount, 0);
-  const operatingExpensesTotal = operatingExpenseLines.reduce((sum, line) => sum + line.amount, 0);
-  return {
-    unclassified: { lines: unclassifiedLines, total: unclassifiedTotal },
-    revenue: { lines: revenueLines, total: revenueTotal },
-    cogs: { lines: cogsLines, total: cogsTotal },
-    gross_profit: revenueTotal - cogsTotal,
-    operating_expenses: { lines: operatingExpenseLines, total: operatingExpensesTotal },
-    net_income: revenueTotal - cogsTotal - operatingExpensesTotal,
-  };
-}
+/**
+ * ACCT-F412 — `transformProfitLossToCashBasis` WAS HERE AND IS DELETED, not deprecated.
+ *
+ * It took the finished accrual P&L — already GROUP BY account / SUM(amount_cents) — and tried to
+ * convert it to cash basis. By that point WHICH invoices produced the revenue, and whether any of
+ * them were paid, no longer existed in the data it was handed. With nothing to date a line by, it
+ * stamped every line `settlement_date = anchorDate`, where anchorDate IS the as-of date, so the
+ * engine's own rule (`recognized = settlement_date <= as_of`) recognized 100% of every line, every
+ * time. The cash-basis P&L was the accrual P&L with a different label, and the comparison report
+ * printed the same column twice under two basis names.
+ *
+ * An aggregate cannot be disaggregated. It is deleted rather than left exported because a function
+ * that silently returns accrual numbers when you ask for cash numbers is a loaded gun in a money
+ * path: the next caller would have no way to know. The replacement is
+ * `./profit-loss-cash.service.ts`, which reads the postings and their documents' settlements.
+ *
+ * The Balance Sheet and Trial Balance transforms above are NOT affected: @decision Q2 and Q3 restate
+ * those by SUPPRESSING the AR and AP control accounts, which is a per-account operation an aggregate
+ * can still answer. Only the P&L needed transaction-level data it did not have.
+ */

@@ -3,9 +3,9 @@ import { type ProfitLossReport } from "../profit-loss.service.js";
 import { type TrialBalanceRow, type TrialBalanceSummary } from "../trial-balance.service.js";
 import {
   transformBalanceSheetToCashBasis,
-  transformProfitLossToCashBasis,
   transformTrialBalanceToCashBasis,
 } from "./report-transforms.js";
+import { buildCashBasisProfitLossOnClient } from "./profit-loss-cash.service.js";
 import { resolveRoleAccountOptional } from "../coa-roles/resolver.service.js";
 
 type DbClient = {
@@ -280,7 +280,16 @@ export async function writePeriodCashBasisSnapshotAtClose(
     input.periodEnd,
     roleMatches
   );
-  const cashProfitLoss = transformProfitLossToCashBasis(accrualProfitLoss, input.periodEnd);
+  // ACCT-F412 — @decision Q9 freezes these numbers for the life of the closed period, so the
+  // snapshot must not freeze the OLD transform's output: that transform recognized every revenue and
+  // expense line in full (it had only the aggregated accrual report to work from), which would have
+  // locked an accrual P&L into the period's permanent cash-basis record. Computed from the postings
+  // instead, on THIS client, inside the close transaction, so the snapshot sees what the close sees.
+  const cashProfitLoss = await buildCashBasisProfitLossOnClient(client, {
+    operating_company_id: input.operatingCompanyId,
+    from: input.periodStart,
+    to: input.periodEnd,
+  });
   const payload = buildSnapshotPayload({
     operatingCompanyId: input.operatingCompanyId,
     periodId: input.periodId,

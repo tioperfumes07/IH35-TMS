@@ -91,6 +91,26 @@ export type ParityColumn<T> = {
   exportValue?: (row: T) => string | number | null | undefined;
 };
 
+/**
+ * UI-F414 — HOW WIDE THE ROW-ACTIONS COLUMN IS, and why it is not `w-10`.
+ *
+ * THE DEFECT: all three row-actions cells carried `className="w-10 px-2"` — 40px, of which `px-2`
+ * takes 16, leaving a 24px content box. ParityTable renders `table-fixed` by default
+ * (`columnLayout = "fixed"`), and under table-fixed the browser NEVER re-measures a column against
+ * its content: the declared width wins. So every Edit / Archive pair in every list screen in the app
+ * was laid out inside 24px. The buttons' `flex-wrap` then did the only thing it could and wrapped
+ * them one CHARACTER per line, which is why the Actions column renders as a vertical column of
+ * letters and cannot be clicked. The owner hit it on the catalogs; it was never a catalogs bug.
+ *
+ * THE NUMBER, from the classes rather than from taste. A `size="sm"` Button is
+ * `h-7 text-xs font-medium px-2` plus a 1px border each side (Button.tsx / design/tokens.ts), so at
+ * text-xs (12px) "Edit" is roughly 27 + 16 + 2 = 45px and "Archive" roughly 47 + 16 + 2 = 65px,
+ * `gap-2` adds 8, and the cell's own `px-2` adds 16: about 134px for the pair. 160 is that with
+ * headroom for a longer verb ("Restore", "Duplicate") without going wide enough to steal space the
+ * data columns need. A table with more buttons than that passes `rowActionsWidth`.
+ */
+export const ROW_ACTIONS_DEFAULT_WIDTH_PX = 160;
+
 export type ParityTableProps<T> = {
   columns: Array<ParityColumn<T>>;
   rows: T[];
@@ -124,6 +144,12 @@ export type ParityTableProps<T> = {
   batchActions?: (selected: T[]) => ReactNode;
   /** Per-row 3-dots action menu content. */
   rowActions?: (row: T) => ReactNode;
+  /**
+   * UI-F414 — the width of the row-actions column, in px. Defaults to ROW_ACTIONS_DEFAULT_WIDTH_PX.
+   * Raise it for a table whose row actions carry three or more labelled buttons; the default sizes
+   * the two-button case (Edit + Archive) that nearly every list screen uses.
+   */
+  rowActionsWidth?: number;
   /** Max selectable rows at once (mirrors useBulkSelection's cap). Unset = unlimited. Additive. */
   maxSelectable?: number;
   /** Fired when a selection toggle/select-all-on-page would exceed maxSelectable; the toggle is a no-op in that case. */
@@ -596,6 +622,7 @@ export function ParityTable<T>({
   selectable = false,
   batchActions,
   rowActions,
+  rowActionsWidth = ROW_ACTIONS_DEFAULT_WIDTH_PX,
   maxSelectable,
   onSelectionCapExceeded,
   selectedKeys: controlledSelectedKeys,
@@ -1419,7 +1446,11 @@ export function ParityTable<T>({
           );
         })}
         {rowActions ? (
-          <td className="px-2 text-right" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
+          <td
+            className="whitespace-nowrap px-2 text-right"
+            style={{ width: rowActionsWidth }}
+            onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
+          >
             {rowActions(row)}
           </td>
         ) : null}
@@ -1687,8 +1718,8 @@ export function ParityTable<T>({
               })()}
               {rowActions ? (
                 <th
-                  className="w-10 px-2"
-                  style={{ backgroundColor: colors.tableGroupBandBg, borderBottom: `1px solid ${colors.tableColumnRule}`, ...(board ? { backgroundColor: "var(--ih-thead)", borderBottom: `1px solid ${BOARD_RULE}` } : {}) }}
+                  className="px-2"
+                  style={{ width: rowActionsWidth, backgroundColor: colors.tableGroupBandBg, borderBottom: `1px solid ${colors.tableColumnRule}`, ...(board ? { backgroundColor: "var(--ih-thead)", borderBottom: `1px solid ${BOARD_RULE}` } : {}) }}
                 />
               ) : null}
             </tr>
@@ -1831,7 +1862,7 @@ export function ParityTable<T>({
                 </th>
               );
             })}
-            {rowActions ? <th className="w-10 px-2" style={{ backgroundColor: resolvedHeaderBg }} /> : null}
+            {rowActions ? <th className="px-2" style={{ width: rowActionsWidth, backgroundColor: resolvedHeaderBg }} /> : null}
           </tr>
         </thead>
         <tbody>
@@ -1917,7 +1948,7 @@ export function ParityTable<T>({
                   </td>
                 );
               })}
-              {rowActions ? <td className="w-10 px-2" /> : null}
+              {rowActions ? <td className="px-2" style={{ width: rowActionsWidth }} /> : null}
             </tr>
           </tfoot>
         ) : footer ? (

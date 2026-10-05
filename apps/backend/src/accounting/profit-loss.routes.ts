@@ -5,7 +5,7 @@ import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope 
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { DEFAULT_BASIS } from "./cash-basis/engine.js";
 import { CashBasisSnapshotMissingError, resolveCashBasisRead } from "./cash-basis/read-policy.service.js";
-import { transformProfitLossToCashBasis } from "./cash-basis/report-transforms.js";
+import { getCashBasisProfitLossReport } from "./cash-basis/profit-loss-cash.service.js";
 import { findClosedPeriodForDate, readPeriodCashBasisSnapshot } from "./cash-basis/snapshot.service.js";
 import { getProfitLossReport } from "./profit-loss.service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
@@ -60,15 +60,18 @@ export async function registerProfitLossRoutes(app: FastifyInstance) {
           closedPeriodId: snapshotResult.closedPeriodId,
           snapshotPayload: snapshotResult.snapshotPayload,
           reportKey: "profit_loss",
-          computeLiveCash: async () => {
-            const accrualReport = await getProfitLossReport({
+          // ACCT-F412 — the cash-basis P&L is COMPUTED FROM THE POSTINGS, not converted from the
+          // finished accrual report. The old call built the accrual report and handed it to
+          // transformProfitLossToCashBasis, which had nothing left to date the revenue by (the
+          // report is already GROUP BY account / SUM) and so recognized every line in full, every
+          // time — making the cash-basis P&L identical to the accrual one.
+          computeLiveCash: async () =>
+            getCashBasisProfitLossReport({
               userId: user.uuid,
               operating_company_id: query.data.operating_company_id,
               from_date: query.data.from_date,
-              to_date: query.data.to_date,
-            });
-            return transformProfitLossToCashBasis(accrualReport, anchorDate);
-          },
+              to_date: anchorDate,
+            }),
         });
         return reply.code(200).send({ ...(resolved.report as Record<string, unknown>), basis, source: resolved.source });
       } catch (error) {

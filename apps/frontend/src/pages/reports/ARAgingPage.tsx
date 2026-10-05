@@ -459,7 +459,7 @@ export function ARAgingPage() {
         // Open invoices + Customer profile kept as keyboard-reachable additive row actions.
         onRowClick={(r) => navigate(arAgingInvoiceListHref(r.customer_id))}
         rowActions={(r) => (
-          <div className="flex flex-wrap justify-end gap-1">
+          <div className="flex flex-nowrap justify-end gap-1">
             <Button
               size="sm"
               variant="secondary"

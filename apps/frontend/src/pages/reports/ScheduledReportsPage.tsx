@@ -221,7 +221,7 @@ export function ScheduledReportsPage() {
         exportFilename="scheduled-reports.csv"
         emptyText={preset ? `No ${preset.title.toLowerCase()} schedules exist for this company.` : "No schedules yet. Create one when the backend endpoint is live (P6-T11201)."}
         rowActions={(r) => (
-          <div className="flex flex-wrap justify-end gap-1">
+          <div className="flex flex-nowrap justify-end gap-1">
             <Button
               size="sm"
               variant="secondary"
