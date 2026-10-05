@@ -1562,6 +1562,28 @@ Do not invent VoidableEntityType members for settlement / transfer / deposit / l
 advance / relay — those families already call `releaseBankLinesNamingDocument`.
 No new GL math. No ACCT-F406.
 
+## Active Architectural Decisions — ENG-SPINE reverse stamp on match accept (Cursor, 2026-10-05)
+
+WAVE-H3 stamped `source_bank_transaction_id` on payment / bill_payment 1:1 accept only.
+Settlement accept wrote `matched_settlement_id` and left `paid_via_bank_txn_id` null.
+Multi-document accept stamped payment only — bill_payment and settlement stayed one-way.
+Unmatch cleared payment / bill_payment reverse FKs and left the settlement pointer.
+
+Permanent: `stampReverseBankPointerOnAccept` in `match.service.ts` is the one writer for
+every persistable kind that already has a reverse bank FK:
+
+- payment → `accounting.payments.source_bank_transaction_id` + `cleared_date`
+- bill_payment → `source_bank_transaction_id` + `from_bank_account_id` + `cleared_date`
+- settlement → `driver_finance.driver_settlements.paid_via_bank_txn_id`
+
+expense / transfer / je / factoring_advance / fuel / relay / deposit have no reverse
+bank FK — do not invent columns. 1:1 and multi-document accept share the helper.
+Unmatch clears `paid_via_bank_txn_id` scoped to this bank line. COALESCE. No mass
+backfill. No new GL math. No ACCT-F406.
+
+Guards: `verify-wave-h3-bank-match-reverse-fk.mjs` (1924) +
+`verify-unmatch-clears-both-sides.mjs` (10912). Vitest 4/4.
+
 ## Active Architectural Decisions — KILL THE SECOND SYSTEM (Cursor, 2026-10-03)
 
 Owner, verbatim: the ledger is the balance; policies stay; this is a deletion, not a build.

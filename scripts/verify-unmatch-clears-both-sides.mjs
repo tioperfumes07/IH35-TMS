@@ -81,6 +81,12 @@ export function checkUnmatchClearsBothSides(source) {
         "pointer stays orphaned."
     );
   }
+  if (!/UPDATE driver_finance\.driver_settlements[\s\S]{0,200}paid_via_bank_txn_id\s*=\s*NULL[\s\S]{0,300}paid_via_bank_txn_id\s*=\s*\$3::uuid/.test(body)) {
+    failures.push(
+      "unmatchBankTransaction does not clear driver_finance.driver_settlements.paid_via_bank_txn_id " +
+        "(scoped to the unmatched bank transaction) — the settlement reverse pointer stays orphaned."
+    );
+  }
 
   // ROUND 360: one UPDATE retires (voids as 'rejected') EVERY live match row of the line, whatever its kind — payment and
   // bill_payment included by construction. Accepted in place of the per-kind pushes.
@@ -133,6 +139,12 @@ function main() {
                     from_bank_account_id = NULL
               WHERE id = $1::uuid AND operating_company_id = $2::uuid
                 AND source_bank_transaction_id = $3::uuid\`);
+          }
+          if (row.prev_settlement_id) {
+            await client.query(\`UPDATE driver_finance.driver_settlements
+                SET paid_via_bank_txn_id = NULL
+              WHERE id = $1::uuid AND operating_company_id = $2::uuid
+                AND paid_via_bank_txn_id = $3::uuid\`);
           }
           const rejectedKinds = [];
           rejectedKinds.push({ kind: "payment", id: row.prev_payment_id });
