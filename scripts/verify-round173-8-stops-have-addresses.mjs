@@ -18,12 +18,36 @@ const STOP_IDS = [
   "14535624-dedc-4f9f-94ce-b5622798ec10", // 13638 delivery
 ];
 
+/** found: id -> address_line1 (live rows); purged: id -> auth_id from audit.record_deletions. */
+export function evaluate(ids, found, purged) {
+  const failures = [];
+  const purgedNotes = [];
+  for (const id of ids) {
+    if (found.has(id)) {
+      if (!found.get(id)) failures.push(`${id}: address_line1 is NULL`);
+    } else if (purged.has(id)) {
+      purgedNotes.push(`${id}: EMPTY BY PURGE (deleted under ${purged.get(id)}, audit.record_deletions)`);
+    } else {
+      failures.push(`${id}: the stop is gone and no governed deletion is on record`);
+    }
+  }
+  return { failures, purgedNotes };
+}
+
 function selftest() {
+  const e1 = evaluate(["a"], new Map([["a", null]]), new Map());
+  const e2 = evaluate(["a"], new Map(), new Map());
+  const e3 = evaluate(["a"], new Map(), new Map([["a", "AUTH-400"]]));
+  const e4 = evaluate(["a"], new Map([["a", null]]), new Map([["a", "AUTH-400"]]));
+  if (e1.failures.length !== 1 || e2.failures.length !== 1 || e3.failures.length !== 0 || e4.failures.length !== 1) {
+    console.error(`${LABEL} selftest FAIL — evaluate(): null address, ungoverned disappearance, governed purge, live-but-null`);
+    process.exit(1);
+  }
   if (STOP_IDS.length !== 8) {
     console.error(`${LABEL} SELFTEST FAILED: expected exactly the 8 stops named in the ROUND 173 order, got ${STOP_IDS.length}`);
     process.exit(1);
   }
-  console.log(`${LABEL} selftest OK — 8 stop ids pinned`);
+  console.log(`${LABEL} selftest OK — 8 stop ids pinned; evaluate() 4/4 (null address, ungoverned disappearance, governed purge, live-but-null)`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -48,20 +72,28 @@ async function main() {
       `SELECT id::text, address_line1 FROM mdata.load_stops WHERE id = ANY($1::uuid[])`,
       [STOP_IDS]
     );
+    // A pinned stop that is GONE is a regression unless a governed purge deleted it: audit.record_deletions holds
+    // every row a purge removed, with its AUTH (2026-10-05: AUTH-400 deleted all 8 with their loads). Read, never assumed.
+    const purged = await client.query(
+      `SELECT row_pk, auth_id FROM audit.record_deletions
+        WHERE table_name = 'mdata.load_stops' AND auth_id IS NOT NULL AND row_pk = ANY($1::text[])`,
+      [STOP_IDS]
+    );
     await client.query("ROLLBACK");
 
-    const found = new Map(res.rows.map((r) => [r.id, r.address_line1]));
-    const failures = [];
-    for (const id of STOP_IDS) {
-      const addr = found.get(id);
-      if (!addr) failures.push(`${id}: address_line1 is NULL or the stop is gone`);
-    }
+    const { failures, purgedNotes } = evaluate(
+      STOP_IDS,
+      new Map(res.rows.map((r) => [r.id, r.address_line1])),
+      new Map(purged.rows.map((r) => [r.row_pk, r.auth_id]))
+    );
+    for (const n of purgedNotes) console.log(`  · ${n}`);
     if (failures.length) {
       console.error(`${LABEL}: FAIL — ${failures.length} of ${STOP_IDS.length} pinned stops regressed:`);
       for (const f of failures) console.error(`  ✗ ${f}`);
       process.exit(1);
     }
-    console.log(`${LABEL}: PASS — all ${STOP_IDS.length} pinned stops still carry an address_line1.`);
+    const live = STOP_IDS.length - purgedNotes.length;
+    console.log(`${LABEL}: PASS — ${live} pinned stop(s) carry an address_line1; ${purgedNotes.length} EMPTY BY PURGE (governed deletion on record).`);
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
     console.error(`${LABEL}: FAIL — ${err.message}`);
