@@ -1547,6 +1547,21 @@ Guard: `scripts/verify-bank-match-is-a-document-pointer.mjs` wired on EVEN 3996.
 Independent KPI SQL in `verify-factoring-banking-kpis-tie-to-ledger.mjs` recomputes the
 same pointer set. No new GL math. No ACCT-F406 data corrections.
 
+## Active Architectural Decisions — ENG-REVERSE one pointer list on void (Cursor, 2026-10-05)
+
+ENG-MATCH named 14 live document pointers. `releaseBankLinesNamingDocument` kept a second
+closed list of 13 and omitted `matched_deposit_id`, so a deposit void could not use the
+shared releaser. `verify-every-void-releases-its-bank-lines` also omitted
+`accounting.deposits`, so a kill without release would not fail CI.
+
+Permanent: `RELEASABLE_POINTER_COLUMNS = new Set(BANK_LINE_DOCUMENT_POINTER_COLUMNS)`.
+`voidBankDeposit` releases `matched_deposit_id` (and the legacy JE pointer) set-based
+before `voided_at`. Guard POINTER/DOCUMENTS is 14 of 14, same list as the helper.
+
+Do not invent VoidableEntityType members for settlement / transfer / deposit / load /
+advance / relay — those families already call `releaseBankLinesNamingDocument`.
+No new GL math. No ACCT-F406.
+
 ## Active Architectural Decisions — KILL THE SECOND SYSTEM (Cursor, 2026-10-03)
 
 Owner, verbatim: the ledger is the balance; policies stay; this is a deletion, not a build.

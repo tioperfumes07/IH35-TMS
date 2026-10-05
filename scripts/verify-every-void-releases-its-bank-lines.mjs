@@ -3,7 +3,7 @@
  * ROUND 368.2(b) — FAILS IF a code path can make a document stop being live while a bank line still names it.
  * 202615360600 (CC-2) refuses that at COMMIT; it was disarmed (202615360700) because void paths did not release the
  * lines that name their document, and re-armed by 202615360930 once every one did (fork rehearsal in that file).
- *   static — every UPDATE in apps/backend/src that kills one of the 13 documents a bank line can name (voided_at /
+ *   static — every UPDATE in apps/backend/src that kills one of the 14 documents a bank line can name (voided_at /
  *            revoked_at / soft_deleted_at / reversed_by_je_id / status='void') sits in a function that releases first:
  *            releaseBankLinesNamingDocument, unmatchBankTransactionsForVoid (via postVoidReversal), stampDocumentVoided,
  *            releaseBankLineMatches(Where), or a void primitive that does (voidDocument / voidBill* / unmatch*). A new
@@ -38,6 +38,7 @@ export const DOCUMENTS = {
   "driver_finance.driver_settlements": "voided_at",
   "driver_finance.driver_advances": "voided_at",
   "integrations.relay_fuel_transactions": "voided_at",
+  "accounting.deposits": "voided_at",
 };
 /** table -> its bank-line pointer, and which shared primitives release that pointer for it. */
 export const POINTER = {
@@ -46,6 +47,7 @@ export const POINTER = {
   "accounting.factoring_advances": "matched_factoring_advance_id", "fuel.fuel_transactions": "matched_fuel_transaction_id",
   "banking.transfers": "matched_transfer_id", "mdata.loads": "matched_load_id", "driver_finance.driver_settlements": "matched_settlement_id",
   "driver_finance.driver_advances": "matched_advance_id", "integrations.relay_fuel_transactions": "matched_relay_fuel_transaction_id",
+  "accounting.deposits": "matched_deposit_id",
 };
 // postVoidReversal -> unmatchBankTransactionsForVoid releases by BANK_LINE_MATCHED_COLUMN (void.service.ts) for these.
 const VOID_CASCADE_COVERS = new Set(["accounting.bills", "accounting.bill_payments", "accounting.expenses", "accounting.payments",
@@ -101,6 +103,37 @@ function backendFiles() {
     .map((rel) => ({ rel, src: fs.readFileSync(path.join(ROOT, rel), "utf8") }));
 }
 
+/** ENG-REVERSE — POINTER must be the same closed list as BANK_LINE_DOCUMENT_POINTER_COLUMNS. */
+export function helperPointerColumns() {
+  const src = fs.readFileSync(path.join(ROOT, "apps/backend/src/banking/bank-line-match-pointer.ts"), "utf8");
+  const block = src.match(/BANK_LINE_DOCUMENT_POINTER_COLUMNS = \[([\s\S]*?)\] as const/);
+  if (!block) throw new Error("BANK_LINE_DOCUMENT_POINTER_COLUMNS missing from helper");
+  return [...block[1].matchAll(/"(matched_[a-z_]+)"/g)].map((m) => m[1]);
+}
+
+export function pointerListGaps() {
+  const helper = helperPointerColumns();
+  const named = Object.values(POINTER);
+  const f = [];
+  if (Object.keys(DOCUMENTS).length !== helper.length) {
+    f.push(`DOCUMENTS has ${Object.keys(DOCUMENTS).length} tables; helper has ${helper.length} pointers`);
+  }
+  if (named.length !== helper.length) {
+    f.push(`POINTER has ${named.length} columns; helper has ${helper.length}`);
+  }
+  for (const col of helper) {
+    if (!named.includes(col)) f.push(`POINTER missing helper column ${col}`);
+  }
+  for (const col of named) {
+    if (!helper.includes(col)) f.push(`POINTER has extra column ${col} not in helper`);
+  }
+  const voidSrc = fs.readFileSync(path.join(ROOT, "apps/backend/src/accounting/void.service.ts"), "utf8");
+  if (!voidSrc.includes("BANK_LINE_DOCUMENT_POINTER_COLUMNS")) {
+    f.push("void.service.ts RELEASABLE_POINTER_COLUMNS must be the helper list, not a second copy");
+  }
+  return f;
+}
+
 if (process.argv.includes("--selftest")) {
   const ok = { rel: "a.ts", src: "\nexport async function voidThing(client) {\n  await releaseBankLinesNamingDocument(client, { pointerColumn: \"matched_expense_id\" });\n  await client.query(`UPDATE accounting.expenses SET voided_at = now() WHERE id = $1`);\n}\n" };
   const bad = { rel: "b.ts", src: "\nexport async function voidThing(client) {\n  await client.query(`UPDATE accounting.expenses SET voided_at = now() WHERE id = $1`);\n}\n" };
@@ -112,6 +145,8 @@ if (process.argv.includes("--selftest")) {
     ["a non-killing update is ignored", staticGaps([other]).length === 0],
     ["a release in a DIFFERENT function does not count", staticGaps([neighbour]).length === 1],
     ["a release of ANOTHER pointer does not count", staticGaps([{ rel: "e.ts", src: "\nasync function v(client) {\n  await releaseBankLinesNamingDocument(client, { pointerColumn: \"matched_bill_payment_id\" });\n  await client.query(`UPDATE accounting.bills SET voided_at = now() WHERE id = $1`);\n}\n" }]).length === 1],
+    ["deposit kill without release FAILS", staticGaps([{ rel: "f.ts", src: "\nasync function v(client) {\n  await client.query(`UPDATE accounting.deposits SET voided_at = now() WHERE id = $1`);\n}\n" }]).length === 1],
+    ["POINTER covers every helper column", pointerListGaps().length === 0],
     ["the real tree is clean", staticGaps(backendFiles()).length === 0],
   ];
   const badCases = cases.filter(([, v]) => !v);
@@ -120,7 +155,7 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-const fails = staticGaps(backendFiles());
+const fails = [...staticGaps(backendFiles()), ...pointerListGaps()];
 const { client: c, pool } = await requireLiveDbOrExit({ label: LABEL });
 try {
   await c.query("BEGIN READ ONLY");

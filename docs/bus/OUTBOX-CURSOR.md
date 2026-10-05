@@ -1,3 +1,23 @@
+## 2026-10-05T08:40Z · ENG-REVERSE shipping (void releaser = 14 pointers)
+
+DONE: 0 Cursor open PRs at census. Deposit was missing from RELEASABLE_POINTER_COLUMNS and from verify-every-void-releases POINTER.
+
+NOW: releaser is BANK_LINE_DOCUMENT_POINTER_COLUMNS. voidBankDeposit set-based. Guard 14 of 14.
+
+NEXT: preflight + Fast Merge. Then next ten-of-ten hole. No Chrome. No ACCT-F406.
+
+Files Modified: void.service.ts · bank-deposits.service.ts · verify-every-void-releases-its-bank-lines.mjs · verify-bank-match-is-a-document-pointer.mjs · MEMORY_BANK.md · NOW-CURSOR.md · OUTBOX-CURSOR.md
+
+## 2026-10-05T08:24Z · ENG-MATCH Fast Merged #25474
+
+DONE: #25474 MERGED squash `e6f85b273e07bf9225675f3ed72699c4c138e64d` (GitHub 2026-10-05T08:24:12Z). Local gate PASS. Do not merge CC-2 #25445/#25446 or Claude #25443.
+
+NOW: unmatched is a live document pointer on tip. 989 USMCA for_review / 0 pointers.
+
+NEXT: full engine ten of ten (mechanical / money / reverse / reserve / spine / linkage / company / WORM / single-fire / one guard). No Chrome. No ACCT-F406.
+
+Files Modified: none this note — merge of cursor/eng-match-document-pointer-c89b
+
 ## 2026-10-05T03:20Z · ENG-MATCH categorized positive-control + deposit LINK_COLUMNS
 
 DONE: money-pr-local-gate had failed on verify-categorized-has-a-document (`0 live document links`). Neon lucia USMCA: 989 for_review, 0 categorized, 0 pointers.
