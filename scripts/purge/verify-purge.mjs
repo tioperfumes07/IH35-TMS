@@ -60,7 +60,10 @@ const MUST_BE_ZERO = spec.must_be_zero_after_purge;   // [{ table, where }]
 const MUST_SURVIVE = [
   ["banking.bank_transactions", "BANKING IS NOT PURGED - owner instruction"],
   ["banking.bank_accounts", "bank accounts"],
-  ["docs.files", "COMPLIANCE AND OWNER-UPLOADED EVIDENCE - only app-generated load artifacts may go"],
+  // Only EVIDENCE must survive: the classification (DOCS_FILES._rule) lets the app-generated artifacts of purged
+  // documents go. Counting the whole table failed AUTH-400 for deleting exactly those (302 portal/email load
+  // dispatch PDFs, every one with dispatch_load_id set). Load artifacts are checked the other way, in LOAD_ARTIFACTS.
+  ["docs.files", "COMPLIANCE AND OWNER-UPLOADED EVIDENCE - only app-generated load artifacts may go", "operating_company_id = '{CO}' AND dispatch_load_id IS NULL"],
   ["catalogs.accounts", "the chart of accounts"],
   ["catalogs.items", "the item catalog"],
   ["catalogs.qbo_categories", "the item categories"],
@@ -75,12 +78,40 @@ const MUST_SURVIVE = [
   ["accounting.periods", "accounting periods"],
 ];
 
-async function counts(sql) {
+/** The other half of docs.files: an app-generated load artifact whose load the purge deleted. */
+const LOAD_ARTIFACTS = "docs.files (load artifacts of purged loads)";
+const LOAD_ARTIFACTS_WHERE = "operating_company_id = '{CO}' AND dispatch_load_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM mdata.loads l WHERE l.id = docs.files.dispatch_load_id)";
+
+/**
+ * The purge's question is "did it delete what it had to" — about rows that EXISTED when it ran. The system keeps
+ * running after it: the bank feed is connected and its monitors write (AUTH-400: 9 reconciliation_drift_alerts at
+ * 10:40Z, ten hours after the purge). Counting those as "the purge did not finish" made a clean purge
+ * unverifiable forever. So, after the purge, a table with created_at is judged on rows created AT OR BEFORE
+ * purged_at (purge_state.json); rows created after are reported by name, never hidden. A table without
+ * created_at is judged on every row, as before. --before mode (no cutoff) counts every row.
+ */
+async function counts(sql, cutoff = null) {
   const out = {};
+  const post = {};
   for (const { table, where } of MUST_BE_ZERO) {
-    try { out[table] = Number((await sql(`SELECT count(*) AS n FROM ${table} WHERE ${where}`))[0].n); }
+    try {
+      let pred = where;
+      if (cutoff) {
+        const [schema, name] = table.split(".");
+        const hasCreated = (await sql(`SELECT 1 FROM information_schema.columns WHERE table_schema = '${schema}' AND table_name = '${name}' AND column_name = 'created_at'`)).length > 0;
+        if (hasCreated) {
+          pred = `(${where}) AND created_at <= '${cutoff}'::timestamptz`;
+          const after = Number((await sql(`SELECT count(*) AS n FROM ${table} WHERE (${where}) AND created_at > '${cutoff}'::timestamptz`))[0].n);
+          if (after > 0) post[table] = after;
+        }
+      }
+      out[table] = Number((await sql(`SELECT count(*) AS n FROM ${table} WHERE ${pred}`))[0].n);
+    }
     catch (e) { out[table] = `ERROR: ${String(e.message).split("\n")[0]}`; }
   }
+  try { out[LOAD_ARTIFACTS] = Number((await sql(`SELECT count(*) AS n FROM docs.files WHERE ${LOAD_ARTIFACTS_WHERE.replaceAll("{CO}", CO)}`))[0].n); }
+  catch (e) { out[LOAD_ARTIFACTS] = `ERROR: ${String(e.message).split("\n")[0]}`; }
+  Object.defineProperty(out, "__postPurge", { value: post, enumerable: false });
   for (const [table, , scope = "operating_company_id = '{CO}'"] of MUST_SURVIVE) {
     try {
       out[table] = Number(
@@ -110,7 +141,14 @@ async function main() {
   };
 
   const before = process.argv.includes("--before");
-  const now = await counts(sql);
+  let cutoff = null;
+  if (!before) {
+    const st = existsSync(PURGE_STATE) ? JSON.parse(readFileSync(PURGE_STATE, "utf8")) : {};
+    if (!st.purged_at || Number.isNaN(Date.parse(st.purged_at)))
+      fail(`REFUSED: ${PURGE_STATE} carries no valid purged_at. Whoever ran the purge writes it; without it there is no line between a leftover and new activity.`);
+    cutoff = new Date(st.purged_at).toISOString();
+  }
+  const now = await counts(sql, cutoff);
   await client.end();
 
   if (before) {
@@ -133,6 +171,17 @@ async function main() {
     const bad = typeof n !== "number" || n !== 0;
     console.log(`  ${bad ? "FAIL" : "ok  "}  ${String(n).padStart(8)}  ${table}   (was ${b})`);
     if (bad) problems.push(`${table} still holds ${n} row(s) - the purge did not finish`);
+  }
+  {
+    const n = now[LOAD_ARTIFACTS];
+    const bad = typeof n !== "number" || n !== 0;
+    console.log(`  ${bad ? "FAIL" : "ok  "}  ${String(n).padStart(8)}  ${LOAD_ARTIFACTS}`);
+    if (bad) problems.push(`${LOAD_ARTIFACTS}: ${n} row(s) still hang off loads the purge deleted`);
+  }
+  const post = now.__postPurge || {};
+  if (Object.keys(post).length) {
+    console.log(`\nCREATED AFTER THE PURGE (${cutoff}) - live activity, not purge leftovers; judged by their own guards:`);
+    for (const [t, n] of Object.entries(post)) console.log(`  note  ${String(n).padStart(8)}  ${t}`);
   }
 
   console.log("\nMUST SURVIVE - masters, banking and evidence");
