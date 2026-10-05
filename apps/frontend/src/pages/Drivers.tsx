@@ -230,9 +230,10 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
   const subnavTab = useMemo(() => {
     const raw = String(initialSubnav ?? driversSubtabFromPath(location.pathname));
     // C-33 remaps — retired peer tabs keep their URLs (Rule 07) but land on the new homes.
-    if (raw === "permits") return "drivers" as const;
+    if (raw === "permits") return "home" as const;
     if (raw === "deductions" || raw === "auto_deductions") return "settlements" as const;
-    if (raw === "disputes") return "drivers" as const;
+    if (raw === "disputes") return "home" as const;
+    if (raw === "drivers") return "roster" as const;
     return raw as DriversSubnavId | DriversExtendedSubtabId;
   }, [initialSubnav, location.pathname]);
   // C-02 / C-17 — Drivers Profiles share the same master-detail default + pref hook as Customers/Vendors.
@@ -587,8 +588,8 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
     setSearchParams(
       (prev) => {
         const nextParams = new URLSearchParams(prev);
-        // Drivers roster is the default home view — omit ?view= when on Drivers.
-        if (next === "drivers") nextParams.delete("view");
+        // Roster list is the default roster view — omit ?view= when on the list.
+        if (next === "roster") nextParams.delete("view");
         else nextParams.set("view", next);
         return nextParams;
       },
@@ -615,10 +616,10 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
       <KpiStrip>
         {/* KPI drill-through: Active/On Leave = roster status; On Loads = Dispatch board.
             Available has no dedicated segment yet — Active is the closest honest destination (not silent dead). */}
-        <KpiCard label="Active" number={`${activeCount}/${allDrivers.length}`} accent={colors.drivers.strong} to="/drivers?status=active" />
+        <KpiCard label="Active" number={`${activeCount}/${allDrivers.length}`} accent={colors.drivers.strong} to="/drivers/roster?status=active" />
         <KpiCard label="On Loads" number={String(onLoadsCount)} accent={colors.dispatch.strong} to="/dispatch?view=loads" />
-        <KpiCard label="Available" number={availableCount == null ? "—" : String(availableCount)} accent={colors.info.strong} to="/drivers?status=active" />
-        <KpiCard label="On Leave" number={String(onLeaveCount)} accent={colors.warn.strong} to="/drivers?status=on_leave" />
+        <KpiCard label="Available" number={availableCount == null ? "—" : String(availableCount)} accent={colors.info.strong} to="/drivers/roster?status=active" />
+        <KpiCard label="On Leave" number={String(onLeaveCount)} accent={colors.warn.strong} to="/drivers/roster?status=on_leave" />
         <KpiCard label="Settle Due" number={settleDueCount == null ? "—" : String(settleDueCount)} accent={colors.accounting.strong} to="/drivers/settlements" />
         <KpiCard label="Drivers Owe" number={totalDriversOwe == null ? "—" : formatMoney(totalDriversOwe)} accent={colors.crit.strong} to="/drivers/cash-advances" />
         <KpiCard label="Escrow" number={escrowTotal == null ? "—" : formatMoney(escrowTotal)} accent={colors.fleet.strong} to="/banking/driver-escrow" />
@@ -634,52 +635,56 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
         <span className="sr-only" data-testid="drivers-team-splits-tab" aria-hidden="true" />
       </div>
 
-      {/* C-33 BAND 2 — status chips + Drivers/Teams + view toggle + search on ONE line. */}
+      {/* DRV-F417 — filters are SegmentedControl chips, never a second NavyPageSubNav. Roster only. */}
+      {subnavTab === "roster" ? (
       <div
         className="flex flex-wrap items-center gap-2 rounded-sm border border-[#E5E7EB] bg-white px-2 py-1.5"
         data-c33-filter-band="true"
         data-testid="drivers-filter-band"
       >
-        <NavyPageSubNav
-          activeId={activeTab}
-          onTabChange={(id) => {
-            if (id === "drivers" || id === "teams") setDriversHomeView(id as DriversHomeViewId);
-          }}
-          items={[
-            { label: "Drivers", to: "#drivers" },
-            { label: "Teams", to: "#teams" },
+        <SegmentedControl
+          value={activeTab}
+          onChange={(id) => setDriversHomeView(id)}
+          testId="drivers-roster-view-toggle"
+          dataAttributes={{ "data-drivers-view-toggle": "roster-teams" }}
+          options={[
+            { value: "roster", label: "List", testId: "drivers-view-roster" },
+            { value: "teams", label: "Teams", testId: "drivers-view-teams" },
           ]}
-          itemIds={["drivers", "teams"]}
         />
-        {activeTab === "drivers" ? (
-          <>
-            <NavyPageSubNav
-              activeId={driverListStatus}
-              onTabChange={(id) => {
-                if ((DRIVER_LIST_STATUS_IDS as readonly string[]).includes(id)) setDriverListStatus(id as DriversListStatusId);
-              }}
-              items={DRIVERS_LIST_STATUS_TABS.map((tab) => ({
-                label: `${tab.label} (${driverListTabCounts[tab.id] ?? 0})`,
-                to: `#${tab.id}`,
-              }))}
-              itemIds={DRIVERS_LIST_STATUS_TABS.map((tab) => tab.id)}
-            />
-            {subnavTab === "profiles" ? (
-              <SegmentedControl
-                value={profilesViewMode}
-                onChange={setProfilesViewMode}
-                dataAttributes={{ "data-view-mode-toggle": "drivers", "data-c55-view-toggle": "1" }}
-                options={[
-                  { value: "list", label: "Regular", testId: "drivers-view-list" },
-                  { value: "master-detail", label: "Master-detail", testId: "drivers-view-master-detail" },
-                ]}
-              />
-            ) : null}
-          </>
+        {activeTab === "roster" ? (
+          <SegmentedControl
+            value={driverListStatus}
+            onChange={(id) => {
+              if ((DRIVER_LIST_STATUS_IDS as readonly string[]).includes(id)) setDriverListStatus(id);
+            }}
+            testId="drivers-status-chips"
+            dataAttributes={{ "data-drivers-status-chips": "true" }}
+            options={DRIVERS_LIST_STATUS_TABS.map((tab) => ({
+              value: tab.id,
+              label: `${tab.label} (${driverListTabCounts[tab.id] ?? 0})`,
+              testId: `drivers-status-${tab.id}`,
+            }))}
+          />
         ) : null}
       </div>
+      ) : null}
 
-      {activeTab === "teams" ? (
+      {subnavTab === "profiles" ? (
+        <div className="flex flex-wrap items-center gap-2 px-1" data-testid="drivers-profiles-view-toggle">
+          <SegmentedControl
+            value={profilesViewMode}
+            onChange={setProfilesViewMode}
+            dataAttributes={{ "data-view-mode-toggle": "drivers", "data-c55-view-toggle": "1" }}
+            options={[
+              { value: "list", label: "Regular", testId: "drivers-view-list" },
+              { value: "master-detail", label: "Master-detail", testId: "drivers-view-master-detail" },
+            ]}
+          />
+        </div>
+      ) : null}
+
+      {subnavTab === "roster" && activeTab === "teams" ? (
         <div className="space-y-3">
           <div className="flex justify-end">
             <Button size="sm" onClick={() => setTeamCreateOpen(true)}>+ Create Team</Button>
@@ -745,12 +750,13 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
         </div>
       ) : null}
 
-      {activeTab === "drivers" ? (
-        <>
+      <>
+          {subnavTab === "roster" && activeTab === "roster" ? (
           <p className="px-1 text-xs text-slate-600">
             Active = movement in the last 15 days (Rule 49). Status chips live in the filter band above.
           </p>
-          {subnavTab === "drivers" ? (
+          ) : null}
+          {subnavTab === "roster" && activeTab === "roster" ? (
             <>
               {driversQuery.isError ? (
                 <ListErrorState
@@ -900,8 +906,8 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               <PayRateTemplatesListPage />
             </div>
           ) : null}
-          {subnavTab === "drivers" ? (
-            <div className="grid auto-rows-fr gap-3 md:grid-cols-2">
+          {subnavTab === "home" ? (
+            <div className="grid auto-rows-fr gap-3 md:grid-cols-2" data-testid="drivers-home-attention">
               <PreSettlementsPanel rows={settlementsReadyRows} loading={settlementsQuery.isLoading} isError={settlementsQuery.isError} title="Settlements Ready" />
               <DataPanel title="Debt Alert · before any payment" accentColor={colors.crit.strong}>
                 {/* DRV-MONEY-F6110 — same false-clean-bill-of-health defect as the cash_advances tab
@@ -977,8 +983,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               </DataPanel>
             </div>
           ) : null}
-        </>
-      ) : null}
+      </>
 
       <Modal variant="drawer" open={teamCreateOpen} onClose={() => setTeamCreateOpen(false)} title="Create Team">
         <form

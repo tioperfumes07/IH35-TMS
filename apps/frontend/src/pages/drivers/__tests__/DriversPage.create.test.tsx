@@ -1,10 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ReactElement } from "react";
-import { MemoryRouter } from "react-router-dom";
+import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ApiError } from "../../../api/client";
 import { ToastProvider } from "../../../components/Toast";
 import { DriversPage } from "../../Drivers";
 
@@ -43,6 +41,7 @@ vi.mock("../../../api/catalogs", () => ({
 const createDriverMock = vi.fn();
 vi.mock("../../../api/mdata", () => ({
   listDrivers: vi.fn().mockResolvedValue({ drivers: [] }),
+  listAllDrivers: vi.fn().mockResolvedValue({ drivers: [] }),
   checkReturningDriver: vi.fn().mockResolvedValue({ returning_driver: false }),
   listDriverTeams: vi.fn().mockResolvedValue({ teams: [] }),
   getDriverTeam: vi.fn(),
@@ -52,84 +51,87 @@ vi.mock("../../../api/mdata", () => ({
   createDriver: (...args: unknown[]) => createDriverMock(...args),
 }));
 
-function wrap(ui: ReactElement) {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return (
-    <QueryClientProvider client={qc}>
-      <MemoryRouter>
-        <ToastProvider>{ui}</ToastProvider>
-      </MemoryRouter>
+vi.mock("../../../api/driverFinance", () => ({
+  listSettlements: vi.fn().mockResolvedValue({ settlements: [] }),
+  listPendingEscrowDeductions: vi.fn().mockResolvedValue({ deductions: [] }),
+}));
+vi.mock("../../../api/banking", () => ({
+  getEscrowDriverBalances: vi.fn().mockResolvedValue({ drivers: [] }),
+}));
+vi.mock("../../../api/cashAdvanceRequests", () => ({
+  cashAdvanceRequestsOfficeApi: { list: vi.fn().mockResolvedValue({ requests: [] }) },
+}));
+vi.mock("../../../api/liabilities", () => ({
+  getActiveLiabilities: vi.fn().mockResolvedValue({ liabilities: [] }),
+}));
+vi.mock("../../../api/dispatch", () => ({
+  listAllDispatchLoads: vi.fn().mockResolvedValue({ loads: [] }),
+}));
+vi.mock("../../../api/preSettlements", () => ({
+  listOpenPreSettlements: vi.fn().mockResolvedValue({ pre_settlements: [] }),
+}));
+vi.mock("../../../api/samsara", () => ({
+  getSamsaraHealth: vi.fn().mockResolvedValue({ ok: true }),
+}));
+
+function renderDriversHome(initialPath = "/drivers") {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const page = (
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <DriversPage />
+      </ToastProvider>
     </QueryClientProvider>
   );
-}
-
-async function clickSaveInCreateModal(user: ReturnType<typeof userEvent.setup>) {
-  const buttons = screen.getAllByRole("button", { name: /^Save$/i });
-  await user.click(buttons[buttons.length - 1]!);
+  const router = createMemoryRouter(
+    [
+      { path: "/drivers", element: page },
+      { path: "/drivers/roster", element: page },
+    ],
+    { initialEntries: [initialPath] }
+  );
+  render(<RouterProvider router={router} />);
+  return router;
 }
 
 describe("DriversPage create driver validation", () => {
   afterEach(cleanup);
 
-  it("shows inline field error when required fields missing", async () => {
+  it("opens the create wizard from Driver Home", async () => {
     const user = userEvent.setup();
-    render(wrap(<DriversPage />));
+    const router = renderDriversHome("/drivers");
     await user.click(screen.getByRole("button", { name: /\+ Create Driver/i }));
-    await screen.findByRole("heading", { name: /create driver/i });
-    await clickSaveInCreateModal(user);
-    await waitFor(() => {
-      expect(document.getElementById("first_name-error")).toBeTruthy();
-    });
+    expect(await screen.findByRole("heading", { name: /create driver/i })).toBeInTheDocument();
+    expect(screen.getByTestId("driver-create-wizard")).toBeInTheDocument();
+    expect(router.state.location.search).toContain("create=1");
+    expect(screen.getByRole("button", { name: /^next$/i })).toBeDisabled();
   });
 
-  it("clears first_name error when user types", async () => {
+  it("keeps Next disabled until identity fields are filled, then enables it", async () => {
     const user = userEvent.setup();
-    render(wrap(<DriversPage />));
-    await user.click(screen.getByRole("button", { name: /\+ Create Driver/i }));
-    await screen.findByRole("heading", { name: /create driver/i });
-    await clickSaveInCreateModal(user);
-    await waitFor(() => {
-      expect(document.getElementById("first_name-error")).toBeTruthy();
-    });
+    renderDriversHome("/drivers?create=1");
+    expect(await screen.findByRole("heading", { name: /create driver/i })).toBeInTheDocument();
+    const next = screen.getByRole("button", { name: /^next$/i });
+    expect(next).toBeDisabled();
     const firstName = document.querySelector<HTMLInputElement>('[data-field="first_name"]');
+    const lastName = document.querySelector<HTMLInputElement>('[data-field="last_name"]');
+    const phone = document.querySelector<HTMLInputElement>('[data-field="phone_input"]');
     expect(firstName).toBeTruthy();
-    await user.type(firstName!, "J");
-    await waitFor(() => {
-      expect(document.getElementById("first_name-error")).toBeNull();
-    });
+    await user.type(firstName!, "Jane");
+    await user.type(lastName!, "Doe");
+    await user.type(phone!, "5551234567");
+    await waitFor(() => expect(next).not.toBeDisabled());
   });
 
-  it("shows API field conflict on CDL fields", async () => {
-    createDriverMock.mockRejectedValue(
-      new ApiError(409, {
-        message: "Driver with this CDL already exists",
-        fieldErrors: { cdl_number: "Already in use", cdl_state: "Already in use" },
-      })
-    );
+  it("opens the licenses step after identity is complete", async () => {
     const user = userEvent.setup();
-    render(wrap(<DriversPage />));
-    await user.click(screen.getByRole("button", { name: /\+ Create Driver/i }));
-    await screen.findByRole("heading", { name: /create driver/i });
+    renderDriversHome("/drivers?create=1");
+    expect(await screen.findByRole("heading", { name: /create driver/i })).toBeInTheDocument();
     await user.type(document.querySelector('[data-field="first_name"]')!, "Jane");
     await user.type(document.querySelector('[data-field="last_name"]')!, "Doe");
     await user.type(document.querySelector('[data-field="phone_input"]')!, "5551234567");
-    await clickSaveInCreateModal(user);
-    // This asserted a single alert reading /Could not save/i. Two things were wrong with that, and
-    // neither was a product defect:
-    //  1. "Could not save" is VendorCreateModal's wording — the driver create modal never emits it.
-    //     It surfaces the API's own message, which is strictly better: "Driver with this CDL already
-    //     exists" tells the user what to fix; "Could not save" does not.
-    //  2. getByRole("alert") is singular, and the modal correctly raises TWO alerts — the toast and
-    //     the inline field error. Asserting there is exactly one alert forbids the inline error the
-    //     next assertion then requires.
-    // So the expectation is corrected to the real, correct behaviour rather than the product being
-    // bent to fit a stale string.
-    await waitFor(() => {
-      const alerts = screen.getAllByRole("alert");
-      expect(alerts.some((el) => /Driver with this CDL already exists/i.test(el.textContent ?? ""))).toBe(true);
-    });
-    await waitFor(() => {
-      expect(document.getElementById("cdl_number-error")).toBeTruthy();
-    });
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    expect(await screen.findByText(/step 2 of 4/i)).toBeInTheDocument();
+    expect(document.querySelector('[data-field="cdl_number"]')).toBeTruthy();
   });
 });

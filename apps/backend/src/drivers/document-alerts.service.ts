@@ -510,7 +510,7 @@ export async function dispatchDocumentAlertNotifications(
   const title = `Driver document: ${candidate.label}`;
   const body = `${candidate.driver_name} — ${candidate.label} expires ${candidate.expiry_date} (${candidate.days_until_expiry} days).`;
   const actionLink = candidate.driver_id
-    ? `/drivers/${candidate.driver_id}/profile`
+    ? `/drivers/${candidate.driver_id}`
     : `/safety/permits`;
 
   if (rule.notify_in_app) {

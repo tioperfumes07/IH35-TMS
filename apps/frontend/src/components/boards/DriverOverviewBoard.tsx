@@ -62,7 +62,12 @@ export const DRIVER_DETAIL_TABS = (id: string): Array<{ label: string; to: strin
 const kindTone = (k: string) => (/detention|layover|wait|late|damage/i.test(k) ? "amber" : /refus|accident/i.test(k) ? "red" : /bonus|report|mechanical/i.test(k) ? "navy" : "");
 const fmtIntegrity = (i: Integrity, v: number | null) => (v == null ? "—" : i.money ? usd(v) : `${v}${i.unit ?? ""}`);
 
-export function DriverOverviewBoard(props: { operatingCompanyId: string; driverId: string }) {
+export function DriverOverviewBoard(props: {
+  operatingCompanyId: string;
+  driverId: string;
+  /** When true, the surviving profile page owns the header + approved 9-tab strip. */
+  hideChrome?: boolean;
+}) {
   const [addPayOpen, setAddPayOpen] = useState(false);
   const navigate = useNavigate();
   const q = useQuery({
@@ -89,6 +94,7 @@ export function DriverOverviewBoard(props: { operatingCompanyId: string; driverI
 
   return (
     <div className="pb" data-testid="driver-overview-board">
+      {props.hideChrome ? null : (
       <div className="dd-head">
         <div className="pb-head-row">
           <div className="dd-id">
@@ -102,7 +108,7 @@ export function DriverOverviewBoard(props: { operatingCompanyId: string; driverI
             <span className="dd-pill">{o.driver.status}</span>
           </div>
           <div className="pb-head-actions">
-            <button type="button" className="dd-btn" onClick={() => navigate(`/drivers/${o.driver.id}?tab=profile`)}>Edit</button>
+            <button type="button" className="dd-btn" onClick={() => navigate(`/drivers/${o.driver.id}/edit`)}>Edit</button>
             {/* ROUND 288.3 item 3: Add payment adds ONE extra-pay line through the pay-line engine (no longer the creator). */}
             <button type="button" className="dd-btn" onClick={() => setAddPayOpen(true)} data-testid="driver-add-payment">Add payment</button>
             <button type="button" className="dd-btn dd-btn--primary" onClick={runSettlement}>Run settlement</button>
@@ -114,6 +120,7 @@ export function DriverOverviewBoard(props: { operatingCompanyId: string; driverI
           ))}
         </nav>
       </div>
+      )}
 
       <div className="dd-body">
         <div className="dd-kpis" data-testid="driver-overview-kpis">

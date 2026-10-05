@@ -30,7 +30,7 @@ function audit() {
   const tabs = read(FILES.tabs);
   if (!/NavyPageSubNav/.test(profile)) f.push(`${FILES.profile}: C-20 NavyPageSubNav missing`);
   if (!/DRIVER_PROFILE_TABS/.test(tabs)) f.push(`${FILES.tabs}: C-20 DRIVER_PROFILE_TABS missing`);
-  if (!/Settlements/.test(tabs) || !/Cash Advances/.test(tabs) || !/Deductions/.test(tabs)) {
+  if (!/Settlements/.test(tabs) || !/Cash advances/.test(tabs) || !/Additional payments/.test(tabs)) {
     f.push(`${FILES.tabs}: C-20 accounting tabs missing`);
   }
   // ROUND 319 ORDERS — Fuel is a first-class profile tab (E-21/E-22 verdicts), not under Legal.

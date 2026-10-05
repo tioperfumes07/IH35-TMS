@@ -221,7 +221,7 @@ async function loadClearinghouseItems(client: DbClient, operatingCompanyId: stri
     detail: `${r.name || "Driver"} — annual query (49 CFR §382.701)`,
     due_date: r.expires_at,
     status: r.expires_at ? statusFor(r.expires_at) : "overdue",
-    drill_through: `/drivers/${r.driver_id}/profile`,
+    drill_through: `/drivers/${r.driver_id}`,
     source: "real" as const,
   }));
 }
@@ -267,7 +267,7 @@ async function loadMvrItems(client: DbClient, operatingCompanyId: string, entity
     detail: `${r.name || "Driver"} — annual motor vehicle record review (49 CFR §391.25)`,
     due_date: r.expiry_date,
     status: r.expiry_date ? statusFor(r.expiry_date) : "overdue",
-    drill_through: `/drivers/${r.driver_id}/profile`,
+    drill_through: `/drivers/${r.driver_id}`,
     source: "real" as const,
   }));
 }

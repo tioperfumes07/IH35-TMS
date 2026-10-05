@@ -71,7 +71,7 @@ function audit(s) {
   if (!/<RoadServiceReverseSection[\s\S]*filter=\{\{ wo_id: id \}\}/.test(s.workOrderDetail)) failures.push("work-order detail must mount reverse section");
   for (const [key, id, route] of [
     ["maintenanceMatrix", "road_service.active", "/maintenance/road-service"],
-    ["driversMatrix", "profiles.detail", "/drivers/:id/profile"],
+    ["driversMatrix", "profiles.detail", "/drivers/:id"],
     ["fleetMatrix", "unit.profile.maintenance", "/fleet/units/:id"],
     ["vendorsMatrix", "detail.profile", "/vendors/:id"],
   ]) {
@@ -135,7 +135,7 @@ if (process.argv.includes("--selftest")) {
   }
   for (const [key, id, route] of [
     ["maintenanceMatrix", "road_service.active", "/maintenance/road-service"],
-    ["driversMatrix", "profiles.detail", "/drivers/:id/profile"],
+    ["driversMatrix", "profiles.detail", "/drivers/:id"],
     ["fleetMatrix", "unit.profile.maintenance", "/fleet/units/:id"],
     ["vendorsMatrix", "detail.profile", "/vendors/:id"],
   ]) {

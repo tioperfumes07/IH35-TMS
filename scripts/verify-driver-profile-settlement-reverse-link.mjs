@@ -43,7 +43,10 @@ export function check(sources) {
   }
   if (!profile?.includes("<SettlementsSection")) problems.push(`${PROFILE}: driver profile must mount SettlementsSection`);
   if (!profile?.includes("settlements={aggregate.settlements ?? {}}")) problems.push(`${PROFILE}: driver profile must feed SettlementsSection from the scoped aggregate`);
-  if (!/path="\/drivers\/:id\/profile"[\s\S]{0,180}<DriverProfilePage \/>/.test(manifest ?? "")) {
+  const canonicalMounted =
+    /function DriverDetailRoute\(\)[\s\S]{0,80}return <DriverProfilePage/.test(manifest ?? "") ||
+    /path="\/drivers\/:id\/profile"[\s\S]{0,180}<DriverProfilePage \/>/.test(manifest ?? "");
+  if (!canonicalMounted) {
     problems.push(`${MANIFEST}: canonical driver profile route must remain mounted`);
   }
 
@@ -80,7 +83,7 @@ if (process.argv.includes("--selftest")) {
     [BACKEND, /id::text AS settlement_id/, "NULL::text AS settlement_id"],
     [PROFILE, /<SettlementsSection/, "<RemovedSettlementsSection"],
     [PROFILE, /settlements=\{aggregate\.settlements \?\? \{\}\}/, "settlements={{}}"],
-    [MANIFEST, /path="\/drivers\/:id\/profile"/, 'path="/drivers/:id/removed"'],
+    [MANIFEST, /return <DriverProfilePage/, "return <RemovedProfile"],
     [SECTION, /settlement_id:\s*w\.settlement_id/, "settlement_id: undefined"],
     [SECTION, /kind="settlement"/, 'kind="driver"'],
     [SECTION, /id=\{row\.settlement_id\}/, "id={row.driver_id}"],

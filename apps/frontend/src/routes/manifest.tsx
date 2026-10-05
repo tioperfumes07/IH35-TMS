@@ -12,28 +12,24 @@ import type { ReactNode } from "react";
 import { useAuth } from "../auth/useAuth";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { PartyListSwitch, type PartyKind } from "../components/boards/PartyBoard";
-import { DriverHubBoard } from "../components/boards/DriverHubBoard";
-import { DriverOverviewBoard } from "../components/boards/DriverOverviewBoard";
 import { Shell } from "../components/Shell";
 import { resolveListsDomainHubKey } from "../pages/lists/components/AllCatalogsMap";
 import { catalogKeyToCatalogName } from "../hooks/useCatalogQuery";
-/** ROUND 326.5 — /drivers/:id opens on the DriverDetail board (Overview); any ?tab= opens the existing tab it names. */
+/** DRV-F415 — /drivers/:id is the approved profile (DriverProfilePage). Edit lives at /drivers/:id/edit. */
 function DriverDetailRoute() {
-  const { selectedCompanyId } = useCompanyContext();
-  const { id } = useParams();
-  const [params] = useSearchParams();
-  if (!selectedCompanyId || !id || params.has("tab")) return <DriverDetailPage />;
-  return <DriverOverviewBoard operatingCompanyId={selectedCompanyId} driverId={id} />;
+  return <DriverProfilePage />;
 }
 
-/** ROUND 326.5 — /drivers/profiles opens on the Driver Hub Home board; "List" (?view=list) is the existing page. */
+function DriverProfileAliasRedirect() {
+  const { id } = useParams();
+  const [params] = useSearchParams();
+  const q = params.toString();
+  return <Navigate to={`/drivers/${id}${q ? `?${q}` : ""}`} replace />;
+}
+
+/** DRV-F418 — Profiles tab is the profile index, not a second home board. */
 function DriverHubRoute() {
-  const { selectedCompanyId } = useCompanyContext();
-  const [params, setParams] = useSearchParams();
-  if (!selectedCompanyId || params.get("view") === "list" || params.has("create") || params.has("driver")) {
-    return <DriversSubtabRoute subnav="profiles" />;
-  }
-  return <DriverHubBoard operatingCompanyId={selectedCompanyId} onList={() => setParams({ view: "list" })} />;
+  return <DriversSubtabRoute subnav="profiles" />;
 }
 
 /**
@@ -1195,6 +1191,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DriversSubtabRoute subnav="leave" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drivers/roster"
+          element={
+            <ProtectedRoute>
+              <DriversSubtabRoute subnav="roster" />
             </ProtectedRoute>
           }
         />
@@ -5073,6 +5077,14 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/drivers/:id/edit"
+          element={
+            <ProtectedRoute>
+              <DriverDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/drivers/applicants"
           element={
             <ProtectedRoute>
@@ -5108,7 +5120,7 @@ export const ROUTES = React.Children.toArray(
           path="/drivers/:id/profile"
           element={
             <ProtectedRoute>
-              <DriverProfilePage />
+              <DriverProfileAliasRedirect />
             </ProtectedRoute>
           }
         />

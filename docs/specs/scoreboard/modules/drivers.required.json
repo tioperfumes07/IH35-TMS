@@ -204,7 +204,7 @@
       "id": "profiles.detail",
       "tab": "Profiles",
       "sub": "Driver detail",
-      "route_hint": "/drivers/:id/profile",
+      "route_hint": "/drivers/:id",
       "owned_surface_paths": [
         "components/drivers/DriverCommunicationsTab.tsx"
       ],

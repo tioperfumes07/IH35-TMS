@@ -13,6 +13,9 @@ vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
 }));
 
+vi.mock("../../../components/boards/DriverOverviewBoard", () => ({
+  DriverOverviewBoard: () => <div data-testid="driver-overview-board-stub" />,
+}));
 vi.mock("../../../components/driver-profile/DriverAssignmentHistorySection", () => ({
   DriverAssignmentHistorySection: () => null,
 }));
@@ -22,8 +25,17 @@ vi.mock("../../../components/driver-profile/DriverSamsaraDuplicateBanner", () =>
 vi.mock("../../../components/driver-profile/DriverProfileStopsMilesSection", () => ({
   DriverProfileStopsMilesSection: () => null,
 }));
+vi.mock("../../../components/driver-profile/DriverProfileSafetyAttributedSection", () => ({
+  DriverProfileSafetyAttributedSection: () => null,
+}));
+vi.mock("../../../components/driver-profile/DriverProfileFuelVerdictsSection", () => ({
+  DriverProfileFuelVerdictsSection: () => null,
+}));
 vi.mock("../../../components/drivers/DriverIntegritySection", () => ({ DriverIntegritySection: () => null }));
 vi.mock("../../../components/safety/ComplaintsReverseSection", () => ({ ComplaintsReverseSection: () => null }));
+vi.mock("../../../components/safety/BackgroundChecksSection", () => ({ BackgroundChecksSection: () => null }));
+vi.mock("../../../components/telematics/DriverTelematicsPanel", () => ({ DriverTelematicsPanel: () => null }));
+vi.mock("../../../components/drivers/DriverLateArrivalCard", () => ({ DriverLateArrivalCard: () => null }));
 vi.mock("../../../api/driver-integrity", () => ({
   getDriverIntegrityProfile: vi.fn().mockResolvedValue(null),
   countedComplaints: () => 0,
@@ -50,7 +62,7 @@ function renderPage(initialEntry: string) {
       <ToastProvider>
         <MemoryRouter initialEntries={[initialEntry]}>
           <Routes>
-            <Route path="/drivers/:id/profile" element={<DriverProfilePage />} />
+            <Route path="/drivers/:id" element={<DriverProfilePage />} />
           </Routes>
         </MemoryRouter>
       </ToastProvider>
@@ -71,7 +83,7 @@ describe("DriverProfilePage assign_truck deeplink", () => {
   });
 
   it("opens AssignTruckModal when ?assign_truck=1 is present", async () => {
-    renderPage("/drivers/d-test-1/profile?assign_truck=1");
+    renderPage("/drivers/d-test-1?assign_truck=1");
     expect(await screen.findByText("Assign default truck · Jane Driver")).toBeTruthy();
     expect(await screen.findByTestId("assign-truck-confirm")).toBeTruthy();
   });

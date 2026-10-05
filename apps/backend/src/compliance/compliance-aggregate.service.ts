@@ -45,7 +45,7 @@ function mapRow(row: Record<string, unknown>): ComplianceCredential {
       : ownerType === "equipment"
         ? `/fleet/trailers/${ownerId}`
         : ownerType === "driver"
-          ? `/drivers/${ownerId}/profile`
+          ? `/drivers/${ownerId}`
           : ownerType === "company"
             ? `/settings`
             : ownerType === "unit_plate"

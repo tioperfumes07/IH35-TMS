@@ -1666,3 +1666,15 @@ A BALANCE is derived from postings. A POLICY / DOCUMENT is stored.
   after table 1; CC-3 table 12 last. One table per PR. No hand-repair.
 - **R-1 waits** for table 1. R-2 is a policy and continues.
 - Law: `docs/bus/00-OWNER-ORDER-2026-10-03-KILL-THE-SECOND-SYSTEM.md`
+
+## Active Architectural Decisions — Drivers approved profile + Home/Roster (Cursor, 2026-10-05 DRV-F415–F419)
+
+Owner artifact `DriverDetail.dc.html`: one profile, nine tabs, URL-synced, module Home at `/drivers`.
+
+- **Survivor:** `pages/drivers/DriverProfilePage.tsx` at `/drivers/:id`. Name-click opens it.
+- **Edit:** `pages/DriverDetail.tsx` survives only at `/drivers/:id/edit` (editMode default on, no tab strip).
+- **Alias:** `/drivers/:id/profile` redirects to `/drivers/:id`.
+- **Tabs (order):** Overview · Settlements · Additional payments · Cash advances · Loads · Fuel · Complaints · Documents · Driver disputes. `parseDriverProfileTab` next to `driverProfileTabs.ts` (same shape as `parseDriverSubnav`).
+- **Not extra tabs:** Rule 14 reverse mounts that the design does not name stay on Overview. They are linkage, not a second tab list.
+- **Module nav:** Home (`/drivers`) + Roster (`/drivers/roster`) + 8 peers = 10. `DRIVERS_CANONICAL_SUBNAV_COUNT = 10`. Filters are `SegmentedControl`, never a second `NavyPageSubNav`.
+- **Guard:** `scripts/verify-driver-profile-matches-approved-tabs.mjs` (unnumbered — Rule 37; claim EVEN after merge).

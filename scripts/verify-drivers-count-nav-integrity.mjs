@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * Block A24-2: Drivers module count + nav integrity (canonical 9 subtabs / 6 list filters / 7 KPIs).
+ * Block A24-2 + DRV-F418: Drivers module count + nav integrity (canonical 10 subtabs / 6 list filters / 7 KPIs).
  */
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 
 const ROOT = process.cwd();
-const EXPECTED_SUBNAV_COUNT = 9;
+const EXPECTED_SUBNAV_COUNT = 10;
 const EXPECTED_LIST_STATUS_COUNT = 6;
 const EXPECTED_KPI_COUNT = 7;
 const EXPECTED_MODULE_NAV_COUNT = 2;
@@ -41,7 +41,7 @@ function main() {
   const failures = [];
 
   if (!tabsConfig.includes(`DRIVERS_CANONICAL_SUBNAV_COUNT = ${EXPECTED_SUBNAV_COUNT}`)) {
-    failures.push("DRIVERS_CANONICAL_SUBNAV_COUNT must be 9");
+    failures.push("DRIVERS_CANONICAL_SUBNAV_COUNT must be 10");
   }
   const subnavBlock = tabsConfig.slice(
     tabsConfig.indexOf("export const DRIVERS_SUBNAV"),
@@ -85,8 +85,8 @@ function main() {
   if (!driversFlyout.includes("/driver-finance/cash-advance-requests")) {
     failures.push("Drivers sidebar flyout must include cash advance requests route");
   }
-  if (!archDesign.includes("9 query-synced subtabs")) {
-    failures.push("ARCHITECTURAL_DESIGN must document 9 query-synced subtabs");
+  if (!archDesign.includes("10 query-synced subtabs")) {
+    failures.push("ARCHITECTURAL_DESIGN must document 10 query-synced subtabs");
   }
   if (!archDesign.includes("verify:drivers-count-nav-integrity")) {
     failures.push("ARCHITECTURAL_DESIGN must reference verify:drivers-count-nav-integrity");
