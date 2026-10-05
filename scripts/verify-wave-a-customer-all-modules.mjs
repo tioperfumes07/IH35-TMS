@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["accounting","banking","dispatch","driver-finance","factoring","legal","maintenance","mdata","planner","reports","safety","tasks","customers","compliance","inventory"],"cols":["customer_fk"],"leafRe":"\\.customer_id$","task":"WAVE-A-CUSTOMER-ALL-MODULES"} */
 /** Full-product customer FK contract across every module that genuinely owns it.
  *
  * LINK-F5165 (2026-08-14): same self-regression pattern already documented and fixed for ap_bill

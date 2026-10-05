@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["accounting","banking"],"cols":["bank","expense","reverse_link"],"leafRe":"expense","task":"ACCT-F17-EXPENSE-BANK-REVERSE","vertical":"column-wave"} */
 /**
  * ACCT-F17 — Expense → bank reverse drill (Law §9 twin of Receive Payment bank reverse).
  *

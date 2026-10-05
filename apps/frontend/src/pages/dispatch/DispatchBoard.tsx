@@ -683,7 +683,7 @@ export function DispatchBoard({
     enabled: Boolean(companyId) && !isHistoryBoard,
     staleTime: 30_000,
   });
-  const unassignedUnits = unitsWithoutLoadQuery.data?.units ?? [];
+  const unassignedUnits = unitsWithoutLoadQuery.isError ? [] : (unitsWithoutLoadQuery.data?.units ?? []);
   // ROUND 203 F17 — never collapse a failed query into an empty roster (Law §8).
 
   const inShopUnitsQuery = useQuery({

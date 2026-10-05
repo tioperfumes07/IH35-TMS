@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["accounting","banking","dispatch","driver-finance","factoring","fleet","legal","maintenance","mdata","planner","reports","safety","samsara","tasks","vendors","customers","compliance","docs","inventory"],"cols":["vendor_fk"],"leafRe":"\\.vendor_id$","task":"WAVE-A-VENDOR-ALL-MODULES"} */
 /** Full-product vendor FK census across every module that genuinely owns it; QBO sync is excluded.
  *
  * LINK-F5166 (2026-08-14): same self-regression pattern already documented and fixed for ap_bill

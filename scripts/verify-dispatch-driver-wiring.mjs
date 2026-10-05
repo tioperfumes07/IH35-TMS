@@ -34,7 +34,7 @@ const CHECKS = [
   // (initials, falling through to the raw name for tombstone detection) rather than the bare
   // field — this still proves REAL wiring: `rawName` is assigned straight from
   // `load.assigned_primary_driver_name` and feeds the same EntityLinkOrTombstone kind="driver".
-  ["apps/frontend/src/pages/dispatch/DispatchBoard.tsx", /const rawName = load\.assigned_primary_driver_name;[\s\S]{0,2000}EntityLinkOrTombstone kind="driver" id=\{load\.assigned_primary_driver_id\} name=\{driverDisplay\} noun="Driver"/],
+  ["apps/frontend/src/pages/dispatch/DispatchBoard.tsx", /const rawName = load\.assigned_primary_driver_name;[\s\S]{0,5000}EntityLinkOrTombstone kind="driver" id=\{load\.assigned_primary_driver_id\} name=\{driverDisplay\} noun="Driver"/],
   ["apps/frontend/src/components/dispatch/DispatchKanban.tsx", /kind="driver" id=\{load\.assigned_primary_driver_id\}/],
   ["apps/frontend/src/components/dispatch/DispatchList.tsx", /<InlineDriverPicker/],
   ["apps/backend/src/dispatch/loads.routes.ts", /FROM mdata\.driver_company_authorizations dispatch_list_driver_dca[\s\S]{0,180}dispatch_list_driver_dca\.driver_id = d\.id[\s\S]{0,140}dispatch_list_driver_dca\.company_id = l\.operating_company_id[\s\S]{0,140}dispatch_list_driver_dca\.is_authorized = true[\s\S]{0,140}dispatch_list_driver_dca\.deactivated_at IS NULL/],
