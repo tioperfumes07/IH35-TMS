@@ -49,18 +49,11 @@ export const SHARED_BY_DESIGN = {
 };
 
 /** table -> { max: allowed count, reason } */
-export const DEBT = {
-  // Emptied 2026-10-04: the AUTH-400 purge removed every company-less expense / bill / load-charge line (was 506 / 28 / 136).
-};
-export const PARENTLESS_EXPENSE_LINES_DEBT = { max: 0, reason: "AUTH-400 purge (2026-10-04) removed the 506 parentless expense lines; none may return" };
-
-// The selftest's own fixture debts (the pre-purge shape), so the real lists can shrink to empty without breaking it.
-const FIXTURE_DEBT = {
-  "accounting.expense_lines": { max: 506, reason: "fixture" },
-  "accounting.bill_lines": { max: 28, reason: "fixture" },
-  "dispatch.load_charge_lines": { max: 136, reason: "fixture" },
-};
-const FIXTURE_PARENTLESS = { max: 506, reason: "fixture" };
+// 2026-10-05: all three debts (expense_lines 506, bill_lines 28, load_charge_lines 136) measured 0 after the AUTH-400
+// zero-reset collected the purge population — removed (shrink-only). Any company-less row in them is now a RULE 1 failure.
+export const DEBT = {};
+// 2026-10-05: 506 -> 0 (collected by the AUTH-400 zero-reset). From here a single parentless expense line fails RULE 2.
+export const PARENTLESS_EXPENSE_LINES_DEBT = { max: 0, reason: "none — the zero-reset collected the 506 (2026-10-05)" };
 
 const stripSql = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--[^\n]*/g, "");
 const CLOSURES = [
@@ -83,7 +76,9 @@ export function staticFailures({ files, read }) {
 }
 
 /** nullCounts: { "schema.table": n } (only tables with n > 0); parentless: n */
-export function liveFailures(nullCounts, parentless, debt = DEBT, parentDebt = PARENTLESS_EXPENSE_LINES_DEBT) {
+// The debt is a parameter so the selftest proves the RULES on its own fixture: a selftest that reads the live
+// DEBT breaks every time the debt legitimately shrinks, and stops proving anything once it reaches zero.
+export function liveFailures(nullCounts, parentless, debt = DEBT, parentlessDebt = PARENTLESS_EXPENSE_LINES_DEBT) {
   const out = [];
   const notes = [];
   for (const [t, n] of Object.entries(nullCounts)) {
@@ -97,8 +92,9 @@ export function liveFailures(nullCounts, parentless, debt = DEBT, parentDebt = P
     if (n === 0) out.push(`DEBT RATCHET: ${t} carries no company-less row any more — remove it from DEBT (ceiling drops).`);
     else if (n < d.max) notes.push(`${t} debt shrank ${d.max} -> ${n}: lower DEBT.max in the next PR.`);
   }
-  if (parentless > parentDebt.max) out.push(`RULE 2: ${parentless} expense line(s) with no parent, above the named debt of ${parentDebt.max}.`);
-  if (parentless === 0 && parentDebt.max > 0) out.push("DEBT RATCHET: no parentless expense line remains — set PARENTLESS_EXPENSE_LINES_DEBT.max to 0.");
+  if (parentless > parentlessDebt.max) out.push(`RULE 2: ${parentless} expense line(s) with no parent, above the named debt of ${parentlessDebt.max}.`);
+  // Only while a debt is still named: once max is 0 (as this line instructs), a clean 0 is the goal state, not a failure.
+  if (parentless === 0 && parentlessDebt.max > 0) out.push("DEBT RATCHET: no parentless expense line remains — set PARENTLESS_EXPENSE_LINES_DEBT.max to 0.");
   return { out, notes };
 }
 
@@ -136,16 +132,23 @@ async function measure(client) {
 const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
   if (process.argv.includes("--selftest")) {
+    // Own fixture debt — never the live DEBT (see liveFailures).
+    const FX = { "accounting.expense_lines": { max: 506 }, "accounting.bill_lines": { max: 28 }, "dispatch.load_charge_lines": { max: 136 } };
+    const FXP = { max: 506 };
+    const lf = (n, p, d = FX, pd = FXP) => liveFailures(n, p, d, pd);
     const base = { "accounting.expense_lines": 506, "accounting.bill_lines": 28, "dispatch.load_charge_lines": 136, "audit.row_changes": 160000 };
     const cases = [
-      ["named debt + shared passes", liveFailures(base, 506, FIXTURE_DEBT, FIXTURE_PARENTLESS).out.length === 0],
-      ["a new company-less table fails", liveFailures({ ...base, "driver_finance.settlement_lines": 1 }, 506, FIXTURE_DEBT, FIXTURE_PARENTLESS).out.length === 1],
-      ["debt growing fails", liveFailures({ ...base, "accounting.bill_lines": 29 }, 506, FIXTURE_DEBT, FIXTURE_PARENTLESS).out.length === 1],
-      ["debt at zero fails until removed", liveFailures({ "accounting.expense_lines": 506, "dispatch.load_charge_lines": 136 }, 506, FIXTURE_DEBT, FIXTURE_PARENTLESS).out.some((f) => f.startsWith("DEBT RATCHET"))],
-      ["parentless growing fails", liveFailures(base, 507, FIXTURE_DEBT, FIXTURE_PARENTLESS).out.length === 1],
-      ["empty real lists: nothing company-less passes", liveFailures({ "audit.row_changes": 160000 }, 0).out.length === 0],
-      ["empty real lists: one company-less expense line fails", liveFailures({ "accounting.expense_lines": 1 }, 0).out.length === 1],
-      ["shared-by-design is never a defect", liveFailures({ ...base, "catalogs.detail_types": 144 }, 506, FIXTURE_DEBT, FIXTURE_PARENTLESS).out.length === 0],
+      ["named debt + shared passes", lf(base, 506).out.length === 0],
+      ["a new company-less table fails", lf({ ...base, "driver_finance.settlement_lines": 1 }, 506).out.length === 1],
+      ["debt growing fails", lf({ ...base, "accounting.bill_lines": 29 }, 506).out.length === 1],
+      ["debt at zero fails until removed", lf({ "accounting.expense_lines": 506, "dispatch.load_charge_lines": 136 }, 506).out.some((f) => f.startsWith("DEBT RATCHET"))],
+      ["parentless growing fails", lf(base, 507).out.length === 1],
+      ["parentless at zero fails while its debt is still named", lf(base, 0).out.some((f) => f.includes("PARENTLESS_EXPENSE_LINES_DEBT.max to 0"))],
+      ["shared-by-design is never a defect", lf({ ...base, "catalogs.detail_types": 144 }, 506).out.length === 0],
+      // The goal state: no debt named, nothing escaped. Before 2026-10-05 this FAILED (parentless===0 fired at max 0).
+      ["fully paid down (no debt, max 0, all zero) passes", lf({ "audit.row_changes": 160000 }, 0, {}, { max: 0 }).out.length === 0],
+      ["fully paid down: one escaped row fails", lf({ "accounting.bill_lines": 1 }, 0, {}, { max: 0 }).out.length === 1],
+      ["fully paid down: one parentless line fails", lf({}, 1, {}, { max: 0 }).out.length === 1],
     ];
     for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
     const bad = cases.filter(([, ok]) => !ok).length;

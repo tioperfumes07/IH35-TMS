@@ -26,7 +26,7 @@ function mockClient(handlers: Handler[]) {
       // now reads WO_VOID_ENABLED per-entity via lib.feature_flags instead of process.env; these tests
       // assert the flag-OFF behavior, so an unseeded flag (= OFF) is exactly right.
       if (String(sql).includes("lib.feature_flags")) return { rows: [] };
-      throw new Error(`unexpected SQL in mock: ${String(sql).slice(0, 120)}`);
+      throw new Error(`unexpected SQL in mock: ${String(sql).trim().slice(0, 160)}`);
     },
   };
   return { client, seen };
@@ -181,6 +181,11 @@ describe("governance void/cancel — atomic driver-settlement cancellation", () 
       // settlement_lines (matching the direct /settlements/:id/reverse route's own cascade) before
       // flipping the settlement itself -- teach the double this specific query.
       { match: (s) => s.includes("UPDATE driver_finance.settlement_lines"), rows: [] },
+      // cascadeVoidChildren also voids the settlement's own deductions (applied_to_settlement_id) — same cascade.
+      { match: (s) => s.includes("UPDATE driver_finance.driver_settlement_deductions"), rows: [] },
+      // ROUND 368.2(b): a void releases the bank lines that name its document (none here).
+      { match: (s) => s.includes("banking.release_bank_line_matches"), rows: [{ n: 0 }] },
+      { match: (s) => s.includes("UPDATE banking.bank_transactions"), rows: [] },
       { match: (s) => s.includes("UPDATE driver_finance.driver_settlements"), rows: [{ id: SETTLEMENT }] },
       { match: (s) => s.includes("audit.append_event"), rows: [] },
     ]);

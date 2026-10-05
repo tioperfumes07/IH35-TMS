@@ -24,6 +24,7 @@ import { voidBillPaymentInClientTx } from "../accounting/bills.service.js";
 // stampDocumentVoided (verify-void-stamp-columns.mjs's writer allowlist enforces this, zero-
 // tolerance, R-102.1-A). executeFuelTransaction below must never hand-write that column itself.
 import { stampDocumentVoided } from "../accounting/void-document-stamp.service.js";
+import { stampCustomerPaymentVoided } from "../accounting/payment-void-stamp.service.js";
 import { cascadeVoidChildren } from "../accounting/cascade-void-engine.service.js";
 import { writeOffDriverReceivableInClientTx } from "../driver-finance/driver-receivable-writeoff.service.js";
 
@@ -689,15 +690,8 @@ const executeCustomerPayment: EntityExecutor = async (ctx) => {
     await auditVoid(client, userId, "customer_payment", { operatingCompanyId, entityId, reason, reversal });
   }
 
-  await client.query(
-    `UPDATE accounting.payments SET voided_at = now(), voided_by_user_id = $2::uuid, void_reason = $3 WHERE id = $1::uuid`,
-    [entityId, userId, reason]
-  );
-  // INV-2: void-never-delete — archive all applications when voiding; never hard-delete.
-  await client.query(
-    `UPDATE accounting.payment_applications SET unapplied_at = now(), unapplied_by_user_id = $2 WHERE payment_id = $1 AND unapplied_at IS NULL`,
-    [entityId, userId]
-  );
+  // The one customer-payment void-stamp writer (shared with voidDocument('customer_payment')).
+  await stampCustomerPaymentVoided(client as never, { operatingCompanyId, paymentId: entityId, userId, reason });
 
   await appendCrudAudit(
     client,

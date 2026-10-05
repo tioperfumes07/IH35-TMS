@@ -36,6 +36,7 @@
  * The engine feeds no data: it only deletes what the owner ordered deleted.
  */
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
@@ -248,6 +249,22 @@ async function roots(c: Q, plan: Plan, why: Map<string, string>) {
     for (const k of keep) plan.get("driver_finance.driver_settlements")?.delete(k);
     return;
   }
+  if (SCOPE === "listed") {
+    // Owner-approved explicit list (e.g. the 38 test-marked maintenance rows, 2026-10-05): --list=<file.json>, shaped
+    // {"schema.table": ["id", ...]}. ONLY these rows are roots; the FK walk, cycle cuts, AUTH listing, audit record and
+    // in-transaction proofs are exactly the clean slate's. Every id must exist in USMCA — a missing id is a BLOCKER.
+    const listFile = (process.argv.find((a) => a.startsWith("--list=")) ?? "").slice("--list=".length);
+    if (!listFile) throw new Error("--scope=listed requires --list=<file.json>");
+    const listed = JSON.parse(readFileSync(listFile, "utf8")) as Record<string, string[]>;
+    for (const [t, rowIds] of Object.entries(listed)) {
+      if (!(await c.query<{ ok: boolean }>(`SELECT to_regclass($1) IS NOT NULL AS ok`, [t])).rows[0]?.ok) throw new Error(`--list names a table that does not exist: ${t}`);
+      const found = await ids(c, `SELECT id::text AS id FROM ${t} WHERE operating_company_id = $1::uuid AND id::text = ANY($2::text[])`, [USMCA, rowIds]);
+      const missing = rowIds.filter((x) => !found.includes(x));
+      if (missing.length) ESCAPED_REPORT.push(`BLOCKER ${t}: ${missing.length} listed id(s) not found in USMCA (${missing.slice(0, 5).join(", ")})`);
+      add(plan, t, found, why, `owner-approved list ${listFile}`);
+    }
+    return;
+  }
   if (SCOPE === "unwind397") {
     // AUTH-397-UNWIND (Lead, 2026-10-04): EXACTLY the double reversals — a JE that reverses a JE which is itself a
     // reversal (a.reverses_je_id -> b WHERE b.reverses_je_id IS NOT NULL). Nothing outside that set: the plan refuses
@@ -311,7 +328,7 @@ async function roots(c: Q, plan: Plan, why: Map<string, string>) {
     }
     return;
   }
-  throw new Error("--scope=transportation21 | --scope=usmca-clean | --scope=orphan-postings | --scope=unwind397 | --scope=unwind397-chain | --scope=zero-reset is required");
+  throw new Error("--scope=transportation21 | --scope=usmca-clean | --scope=orphan-postings | --scope=unwind397 | --scope=unwind397-chain | --scope=listed --list=<file> | --scope=zero-reset is required");
 }
 
 async function fkGraph(c: Q): Promise<Fk[]> {
@@ -799,6 +816,18 @@ async function main() {
             WHERE operating_company_id = $1::uuid AND (${matchedCols.map((c) => `${c} IS NOT NULL`).join(" OR ")})`,
           [USMCA, `ROUND 326 zero-reset ${AUTH_ID}`]
         );
+        // AUTH-400 rehearsal 5: the COMMIT was refused — "bank line … lost its relay_fuel match … with no released
+        // reconciliation_matches row" — because the plan also deleted the very release rows written just above. LAW 363.9
+        // (a send-back keeps the match) and the clean slate meet here: every OTHER reconciliation match is purged, but the
+        // 'purge_reset' release rows THIS run writes are its own record (like audit.record_deletions) and stay. Taken out
+        // of the plan by id, after the release, so nothing else is spared.
+        const keptReleases = (await client.query<{ id: string }>(
+          `SELECT id::text FROM banking.reconciliation_matches
+            WHERE operating_company_id = $1::uuid AND match_state = 'released' AND release_kind = 'purge_reset' AND released_at = now()`,
+          [USMCA]
+        )).rows.map((r) => r.id);
+        for (const id of keptReleases) plan.get("banking.reconciliation_matches")?.delete(id);
+        console.log(`  bank-line releases kept as this run's record (release_kind purge_reset): ${keptReleases.length}`);
         await client.query(
           `UPDATE banking.bank_transactions
               SET ${matchedCols.map((c) => `${c} = NULL`).join(", ")},
@@ -872,9 +901,30 @@ async function main() {
       const after: Record<string, number> = {};
       for (const t of proofTables) after[t] = Number((await client.query<{ n: string }>(`SELECT count(*)::text AS n FROM ${t} WHERE operating_company_id = $1::uuid`, [USMCA])).rows[0]?.n);
       console.log("ZERO-RESET COUNTS (USMCA rows) — table: before -> after");
+      // Two rules, precisely: (a) every TRANSACTION table (the owner's list = ZERO_RESET_ROOTS, plus the ledger) reaches ZERO
+      // for the company; (b) in every OTHER planned table, every row the plan named is gone — such a table is touched only
+      // through rows linked to a deleted record (rehearsal 4: geo.geofence_state_transitions is truck/location telemetry,
+      // preserved like positions and HOS; only its load-linked rows were planned, and "zero for the company" was a false
+      // shortfall).
+      const mustBeZero = new Set([...ZERO_RESET_ROOTS, "accounting.journal_entry_postings", "accounting.journal_entries"]);
+      // This run's own 'purge_reset' release rows stay (LAW 363.9); everything else in the table must be gone.
+      const ownReleases = Number((await client.query<{ n: string }>(
+        `SELECT count(*)::text AS n FROM banking.reconciliation_matches WHERE operating_company_id = $1::uuid AND match_state = 'released' AND release_kind = 'purge_reset' AND released_at = now()`,
+        [USMCA])).rows[0]?.n ?? 0);
+      if (after["banking.reconciliation_matches"] !== undefined) after["banking.reconciliation_matches"] -= ownReleases;
       for (const t of proofTables.sort()) {
-        if (before[t] || after[t]) console.log(`  ${after[t] ? "!" : " "} ${t.padEnd(55)} ${String(before[t]).padStart(7)} -> ${after[t]}`);
-        if (after[t]) failures.push(`${t} still has ${after[t]} row(s) (was ${before[t]})`);
+        let leftover = after[t];
+        let rule = "zero";
+        if (!mustBeZero.has(t)) {
+          rule = "planned rows gone";
+          const pk = await pkOf(client, t);
+          const planned = [...(plan.get(t) ?? [])];
+          leftover = pk && planned.length
+            ? Number((await client.query<{ n: string }>(`SELECT count(*)::text AS n FROM ${t} WHERE ${pk}::text = ANY($1::text[])`, [planned])).rows[0]?.n)
+            : 0;
+        }
+        if (before[t] || after[t]) console.log(`  ${leftover ? "!" : " "} ${t.padEnd(55)} ${String(before[t]).padStart(7)} -> ${String(after[t]).padStart(7)}  [${rule}${leftover ? `: ${leftover} left` : ""}]`);
+        if (leftover) failures.push(`${t}: ${leftover} row(s) left under rule "${rule}" (company rows ${before[t]} -> ${after[t]})`);
       }
       // ROUND 359 ADDITION 2 — PROOF that no row escaped its company: every delete-schema table with the column has zero
       // company-less rows left (a company-filtered count cannot see them).

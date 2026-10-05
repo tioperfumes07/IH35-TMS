@@ -7330,5 +7330,17 @@ action: (1) complete the ONE legacy one-sided reversal link: UPDATE accounting.j
   (2) OWNER_AUTH_ID=AUTH-400 DATABASE_URL=<prod direct> npx tsx apps/backend/scripts/auth400-void-stage.mts --branch=br-fancy-credit-akjnd07a --apply;
   (3) OWNER_AUTH_ID=AUTH-400 APPLY=1 ALLOW_BANK_EFFECT=1 DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-02-cc1-r326-complete-delete.ts --scope=zero-reset
 expires_at: 2026-10-05T22:50:00Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-05T00:40:00Z
+consumed_by: CC-1
+row_counts: (1) 1 legacy reversal link completed (8314452b -> 34b485eb) + audit event; (2) void stage: every live USMCA document voided through
+  the engines (prod live lines 1,844 -> 0, 0 lines reversed twice); (3) zero-reset purge (code bbfcb66d32, rehearsed on br-small-leaf-akjde74y):
+  journal_entry_postings 9,846 -> 0, journal_entries 4,627 -> 0, every owner-listed transaction table -> 0 (invoices, bills, expenses, loads,
+  settlements, fuel, factoring, escrow, reclassify, reconciliation …), 69 purge_reset bank-line releases kept as the run's record,
+  every deleted row in audit.record_deletions. Bank lines KEPT: 1,011 (1,009 + 2 arrived from the feed during the run), all for_review,
+  0 matched. Master data unchanged (customers 3,936 · drivers 270 · vendors 3,453 · locations 640 · units 196 · equipment 330, all
+  companies). TRANSP/TRK untouched. Backup branch br-fragrant-meadow-akuxvf8d kept.
+proof_query: USMCA: count(journal_entry_postings)=0, count(journal_entries)=0, sum DR = sum CR = 0, bank_transactions 1011/1011 for_review,
+  0 matched; live guards on prod: verify-void-is-whole PASS 0, verify-no-orphaned-gl LIVE PASS, verify-reversal-links-both-directions
+  LIVE PASS, verify-settlement-gl-bills-link-their-entries LIVE PASS, verify-no-reversal-of-a-reversal live chain 0.
 THIS AUTHORIZATION DOES NOT COVER: TRANSP or TRK; any bank line DELETE; any master/catalog/identity row; seeding any data.
