@@ -13,6 +13,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = {
   helper: "apps/backend/src/banking/unmatched-7d-alert.ts",
   engine: "apps/backend/src/safety/integrity-alert-engine.service.ts",
+  cron: "apps/backend/src/safety/integrity-alert-engine.cron.ts",
   stats: "apps/backend/src/banking/categorization-rules.routes.ts",
   notify: "apps/backend/src/notifications/dispatcher.ts",
   strip: "apps/frontend/src/pages/banking/components/BankingHomeAttentionStrip.tsx",
@@ -90,6 +91,22 @@ function liveCheck() {
     ])
   );
 
+  // Standing order point 9 — single-fire. ENG-7D's watchdog is this cron; without a lease
+  // both Render instances upsert the same digest and notify Owners twice every 6h.
+  const cron = read(FILES.cron);
+  errors.push(
+    ...assertNeedles(cron, FILES.cron, [
+      "JOB_LEASE_SECONDS",
+      "leaseSeconds: JOB_LEASE_SECONDS",
+      "wrapBackgroundJobTick",
+      "safety.integrity_alert_engine_cron",
+    ])
+  );
+  // Unleased call ends at app.log) — leased call has app.log, { leaseSeconds: … }.
+  if (/wrapBackgroundJobTick\([\s\S]*?app\.log\s*\)/.test(cron) && !/leaseSeconds:\s*JOB_LEASE_SECONDS/.test(cron)) {
+    errors.push(`${FILES.cron} wrapBackgroundJobTick must pass { leaseSeconds } (both instances would fire)`);
+  }
+
   errors.push(
     ...assertNeedles(stats, FILES.stats, [
       "unmatched_7d_alert_open",
@@ -139,7 +156,28 @@ function selftest() {
     console.error(`${LABEL} --selftest FAILED: mutation not visible`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest: OK (threshold plant visible)`);
+
+  // Lease plant: strip the option argument. Option must vanish; wrap must remain.
+  // Comments may still say "leaseSeconds" — assert the code option only.
+  const cron = read(FILES.cron);
+  if (!/leaseSeconds:\s*JOB_LEASE_SECONDS/.test(cron)) {
+    console.error(`${LABEL} --selftest: cron fixture missing leaseSeconds (tree not green)`);
+    process.exit(1);
+  }
+  const unleased = cron.replace(/,\s*\{\s*leaseSeconds:\s*JOB_LEASE_SECONDS\s*\}/, "");
+  if (/leaseSeconds:\s*JOB_LEASE_SECONDS/.test(unleased)) {
+    console.error(`${LABEL} --selftest: lease plant did not remove leaseSeconds option`);
+    process.exit(1);
+  }
+  if (!/wrapBackgroundJobTick/.test(unleased)) {
+    console.error(`${LABEL} --selftest: lease plant removed wrapBackgroundJobTick`);
+    process.exit(1);
+  }
+  if (!/wrapBackgroundJobTick\([\s\S]*?app\.log\s*\)/.test(unleased)) {
+    console.error(`${LABEL} --selftest: unleased wrap must end at app.log) so liveCheck can catch it`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} --selftest: OK (threshold plant + lease plant visible)`);
 }
 
 const arg = process.argv[2] ?? "";
