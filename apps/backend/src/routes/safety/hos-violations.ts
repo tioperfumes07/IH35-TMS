@@ -102,10 +102,11 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
         values,
       );
       const totalCount = Number(countRes.rows[0]?.total_count ?? 0);
-      values.push(query.data.limit);
-      const limitParam = values.length;
-      values.push(query.data.offset);
-      const offsetParam = values.length;
+      // The list query gets its OWN array (same class as dot-inspections): pushing onto `values` mutated the
+      // array the count query was already handed.
+      const listValues = [...values, query.data.limit, query.data.offset];
+      const limitParam = listValues.length - 1;
+      const offsetParam = listValues.length;
       // CLS-UUID-LABEL: no driver join — HOSViolationsTab's EntityLink reads row.driver_name
       // (undefined here), so it fell back to rendering the raw driver_id uuid. Mirrors the
       // driver-join pattern already used on accidents/dot_inspections/internal_fines/training.
@@ -131,7 +132,7 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
           ORDER BY hv.occurred_at DESC, hv.created_at DESC
           LIMIT $${limitParam} OFFSET $${offsetParam}
         `,
-        values
+        listValues
       );
       return { rows: res.rows, total_count: totalCount };
     });
