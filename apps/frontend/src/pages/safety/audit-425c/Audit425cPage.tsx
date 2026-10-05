@@ -124,17 +124,17 @@ function EventDetail({ row }: { row: AuditEventListItem }) {
       <dl className="grid gap-x-4 gap-y-1 sm:grid-cols-2">
         {facts.map(([label, value]) => (
           <div key={label} className="flex gap-2">
-            <dt className="w-32 shrink-0 font-semibold text-slate-700">{label}</dt>
-            <dd className="wrap-break-word text-slate-600">{value}</dd>
+            <dt className="w-32 shrink-0 font-semibold text-[#1F2A44]">{label}</dt>
+            <dd className="wrap-break-word text-[#4B5563]">{value}</dd>
           </div>
         ))}
       </dl>
       {link ? (
-        <Link to={link.to} className="inline-block font-semibold text-slate-700 underline">
+        <Link to={link.to} className="inline-block font-semibold text-[#1F2A44] underline">
           {link.label}
         </Link>
       ) : (
-        <span className="text-slate-500">No source-record route for this resource type.</span>
+        <span className="text-[#6B7280]">No source-record route for this resource type.</span>
       )}
     </div>
   );
@@ -210,14 +210,14 @@ export default function Audit425cPage() {
         label: "425C Section",
         sortable: true,
         sortValue: (row) => sectionLabelFor(payloadOf(row).resource_type),
-        render: (row) => <span className="text-slate-700">{sectionLabelFor(payloadOf(row).resource_type)}</span>,
+        render: (row) => <span className="text-[#1F2A44]">{sectionLabelFor(payloadOf(row).resource_type)}</span>,
       },
       {
         key: "event_type",
         label: "Action",
         sortable: true,
         render: (row) => (
-          <span className="inline-block rounded-sm bg-gray-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+          <span className="inline-block rounded-sm bg-gray-100 px-2 py-0.5 text-xs font-medium text-[#1F2A44]">
             {row.event_type}
           </span>
         ),
@@ -226,7 +226,7 @@ export default function Audit425cPage() {
         key: "summary",
         label: "Summary",
         sortable: true,
-        render: (row) => <span className="text-slate-600">{row.summary || "-"}</span>,
+        render: (row) => <span className="text-[#4B5563]">{row.summary || "-"}</span>,
       },
       {
         key: "line",
@@ -236,7 +236,7 @@ export default function Audit425cPage() {
         render: (row) => {
           const payload = payloadOf(row);
           const line = payload.line_number ?? payload.attachment_line;
-          return <span className="text-slate-600">{line == null ? "-" : String(line)}</span>;
+          return <span className="text-[#4B5563]">{line == null ? "-" : String(line)}</span>;
         },
       },
       {
@@ -244,7 +244,7 @@ export default function Audit425cPage() {
         label: "Actor",
         sortable: true,
         render: (row) => (
-          <span className="text-slate-600">
+          <span className="text-[#4B5563]">
             <EntityLink kind="user" id={row.actor_user_id} label={entityLabel(row.actor_email, row.actor_user_id, "User")} />
           </span>
         ),
@@ -255,9 +255,9 @@ export default function Audit425cPage() {
         render: (row) => {
           const payload = payloadOf(row);
           const link = sourceLinkFor(payload);
-          if (!link) return <span className="text-slate-500">-</span>;
+          if (!link) return <span className="text-[#6B7280]">-</span>;
           return (
-            <Link to={link.to} className="font-semibold text-slate-700 underline">
+            <Link to={link.to} className="font-semibold text-[#1F2A44] underline">
               {link.label}
             </Link>
           );
@@ -278,13 +278,13 @@ export default function Audit425cPage() {
       />
 
       {!enabled ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-slate-700">
+        <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-[#1F2A44]">
           Select an operating company to load its 425C audit trail.
         </div>
       ) : null}
 
       <div className="flex flex-wrap items-end gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3" data-testid="audit-425c-filters">
-        <div className="text-xs text-slate-600">
+        <div className="text-xs text-[#4B5563]">
           <label htmlFor="audit-425c-section-filter">425C section</label>
           <Combobox
             id="audit-425c-section-filter"
@@ -295,7 +295,7 @@ export default function Audit425cPage() {
             onChange={(next) => staged.setDraft((d) => ({ ...d, section: next as Form425cSectionId }))}
           />
         </div>
-        <div className="text-xs text-slate-600">
+        <div className="text-xs text-[#4B5563]">
           <label htmlFor="audit-425c-action-filter">Action</label>
           <Combobox
             id="audit-425c-action-filter"
@@ -309,7 +309,7 @@ export default function Audit425cPage() {
             onChange={(next) => staged.setDraft((d) => ({ ...d, action: next ?? "" }))}
           />
         </div>
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Actor
           <input
             className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-xs"
@@ -319,7 +319,7 @@ export default function Audit425cPage() {
             data-testid="audit-425c-actor-filter"
           />
         </label>
-        <div className="text-xs text-slate-600">
+        <div className="text-xs text-[#4B5563]">
           <label htmlFor="audit-425c-from-date">From</label>
           <DatePicker
             id="audit-425c-from-date"
@@ -329,7 +329,7 @@ export default function Audit425cPage() {
             data-testid="audit-425c-from-date"
           />
         </div>
-        <div className="text-xs text-slate-600">
+        <div className="text-xs text-[#4B5563]">
           <label htmlFor="audit-425c-to-date">To</label>
           <DatePicker
             id="audit-425c-to-date"
@@ -360,7 +360,7 @@ export default function Audit425cPage() {
       </div>
 
       {enabled && !auditQuery.isLoading && !auditQuery.isError ? (
-        <div className="rounded-sm border border-gray-200 bg-slate-50 p-2 text-xs text-slate-600">
+        <div className="rounded-sm border border-gray-200 bg-[#F7F8FA] p-2 text-xs text-[#4B5563]">
           Showing {rows.length} of {allEvents.length} loaded 425C events ({totalCount} match this entity and date range
           server-side; the reader returns at most {PAGE_LIMIT} per request). Narrow the date range if the loaded count is
           capped.
