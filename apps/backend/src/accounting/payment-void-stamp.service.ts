@@ -7,6 +7,11 @@
  * path (banking/bank-line-state-machine.service.ts) called it alone, so every such void was a SILENT void (ledger dead,
  * header live; verify-void-is-whole Direction 1). The stamp now lives in one function both doors call.
  *
+ * ROUND 368.2(b): release bank lines that still NAME this payment (matched_payment_id) BEFORE voided_at is written.
+ * Stamp-first doors (payments.routes + bulk-void) used to mark the header dead and leave bank lines pointing at it;
+ * the executor can stamp with no reverse when the surface gate is not reverse. postVoidReversal unmatch after this
+ * is idempotent. Same contract as stampDocumentVoided.
+ *
  * Idempotent: an already-voided payment is left as it is (its first stamp stands) and reported already_voided.
  */
 import { releaseBankLinesNamingDocument } from "./void.service.js";
@@ -17,9 +22,12 @@ export async function stampCustomerPaymentVoided(
   client: Q,
   input: { operatingCompanyId: string; paymentId: string; userId: string; reason: string }
 ): Promise<{ already_voided: boolean }> {
-  // ROUND 368.2(b): a document stops being live only after the bank lines that name it are released (a voided payment
-  // never keeps its bank match). Before the stamp, in the same transaction — as every other void door does.
-  await releaseBankLinesNamingDocument(client as never, { operatingCompanyId: input.operatingCompanyId, pointerColumn: "matched_payment_id", documentId: input.paymentId }, { userId: input.userId, reason: input.reason });
+  // ROUND 368.2(b) — release first, then the document stops being live. Every door that stamps goes through here.
+  await releaseBankLinesNamingDocument(
+    client as never,
+    { operatingCompanyId: input.operatingCompanyId, pointerColumn: "matched_payment_id", documentId: input.paymentId },
+    { userId: input.userId, reason: `void: customer_payment ${input.paymentId} — ${input.reason}` }
+  );
   const u = await client.query(
     `UPDATE accounting.payments SET voided_at = now(), voided_by_user_id = $2::uuid, void_reason = $3
       WHERE id = $1::uuid AND operating_company_id = $4::uuid AND voided_at IS NULL`,

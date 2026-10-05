@@ -13,6 +13,10 @@ This PR may touch:
 - `scripts/verify-no-money-theater.mjs` — narrow ROUND 363-CUR-B exemption only (guard-backed
   frontend EntityLink sweep is not Rule-23 theater; selftest arms included)
 - `scripts/entity-link-adoption-baseline.json` — intentional regen after wiring EntityLink on 11 surfaces
+- `apps/backend/src/accounting/payment-void-stamp.service.ts` — ROUND 368.2(b) one-writer hole:
+  stampCustomerPaymentVoided must release matched_payment_id bank lines BEFORE voided_at. Tip rot
+  from AUTH-400 blocked 363-CUR-B ship; the release lives in the one stamp so every door (route,
+  bulk-void, executor, voidDocument) is whole. No new GL math.
 
 ## Why
 
