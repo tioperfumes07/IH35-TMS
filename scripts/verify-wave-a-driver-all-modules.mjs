@@ -61,7 +61,9 @@ export function auditDriverColumn(sources, leaves) {
   // right above it): real count is 144 -- settlements.panel.open_pre_settlements (E11-D4) is a
   // genuine new P10 leaf, so removing one planted leaf from the real 144 landed exactly on the
   // stale 143 floor and the selftest's own mutation-detection stopped catching it.
-  if (p10Leaves.length < 144) failures.push(`priority-10 driver inventory unexpectedly shrank to ${p10Leaves.length}`);
+  // Floor re-verified live 2026-10-05 (Devin, push-gate): merged seats added 2 more P10 driver
+  // leaves — live count 146, so removing the planted leaf must trip below it. Bumped 144 -> 146.
+  if (p10Leaves.length < 146) failures.push(`priority-10 driver inventory unexpectedly shrank to ${p10Leaves.length}`);
   if (leaves.length < 210) failures.push(`all-module driver inventory unexpectedly shrank to ${leaves.length}`);
   const modules = new Set(leaves.map((leaf) => leaf.module));
   if (modules.size < 23) failures.push(`driver module inventory unexpectedly shrank to ${modules.size}`);
@@ -86,7 +88,7 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   const mutated = structuredClone(sources);
-  mutated.files["apps/frontend/src/pages/compliance/HosViewerSection.tsx"] = mutated.files["apps/frontend/src/pages/compliance/HosViewerSection.tsx"].replace('kind="driver"', 'kind="customer"');
+  mutated.files["apps/frontend/src/pages/compliance/HosViewerSection.tsx"] = mutated.files["apps/frontend/src/pages/compliance/HosViewerSection.tsx"].replaceAll('kind="driver"', 'kind="customer"');
   if (!auditDriverColumn(mutated, leaves).some((failure) => failure.includes("HosViewerSection"))) {
     console.error("verify-wave-a-driver-all-modules SELFTEST FAIL — all-module FK mutation escaped");
     process.exit(1);

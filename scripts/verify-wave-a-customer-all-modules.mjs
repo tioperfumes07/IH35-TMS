@@ -43,7 +43,7 @@ const contracts = [
   // detailed check of this same surface.
   [
     "apps/frontend/src/pages/legal/contracts/UnifiedContractCreatorModal.tsx",
-    /createKind="customer"|<EntityPicker[\s\S]{0,500}kind="customer"[\s\S]{0,500}allowCreate/,
+    /createKind="customer"|<EntityPicker[\s\S]{0,500}kind="customer"[\s\S]{0,500}allowCreate|<CatalogReferenceSelect[\s\S]{0,200}kind="customer"[\s\S]{0,200}allowCreate/,
   ],
   ["apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx", /customer_id:\s*values\.customer_id \|\| undefined/],
   // Direct inline EntityLink OR the extracted ManagementCustomerCell component (honest-label +
