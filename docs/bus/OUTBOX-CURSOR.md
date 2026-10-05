@@ -1,3 +1,15 @@
+## 2026-10-05T22:19Z · DRV-F420 Log-complaint MERGED #25526 · ENG-7D single-fire STARTED
+
+DONE: #25526 MERGED squash `c383c1c561` (GitHub 2026-10-05T22:19:05Z). `+ Log complaint` → `driverProfileTabHref(..., "Complaints")`. leave-profile guard PASS.
+
+NOW: ENG-7D integrity cron `leaseSeconds: JOB_LEASE_SECONDS` (standing order point 9 single-fire). Guard needles + lease plant --selftest. LOCAL gates (CI billing down). Fast Merge.
+
+NEXT: push → PR → squash-merge → OUTBOX merge line + FE/BE deploy proof.
+
+Files Modified: integrity-alert-engine.cron · verify-unmatched-7d-is-an-alert · DriverOverviewBoard (merged) · bus
+
+---
+
 ## 2026-10-05T22:00Z · DRV-F420 Log-complaint stay-on-profile STARTED
 
 DONE: Measured tip — guard `verify-driver-profile-tabs-stay-on-the-profile` FAIL RULE 1: board hard-linked `/safety/complaints` from `+ Log complaint` (line 316 navigate). View all already used `driverProfileTabHref(..., "Complaints")`.
