@@ -74,10 +74,20 @@ const SURFACES = [
     mustNot: [],
   },
   {
+    // Owner 2026-10-05 PR2 — split master-detail. Filters are MultiSelectDropdown over the FULL
+    // fetched set (limit 500, status all). No house toolbar / page pager — that was the one-column
+    // surface. Contract: split panes + MultiSelect + full-set profile fetch + additive save.
     name: "Samsara driver mapping (page)",
     file: "apps/frontend/src/pages/samsara-driver-mapping/SamsaraDriverMappingPage.tsx",
-    must: [/<UniversalListToolbar[\s\S]{0,500}resultCount=\{profilesQuery\.data\?\.total \?\? rows\.length\}/, /hideToolbar \/>/, /data-testid="profiles-prev-page"/],
-    mustNot: [/onChange=\{\(e\) => \{\s*setSearch\(e\.target\.value\)/],
+    must: [
+      /data-testid="sdm-left-pane"/,
+      /data-testid="sdm-right-pane"/,
+      /<MultiSelectDropdown/,
+      /listSamsaraProfiles\(companyId, \{ status: "all", q: rightSearch \|\| undefined, limit: 500 \}\)/,
+      /listMappingTargets\(companyId, \{ kind: "driver", filter: leftFilter, q: leftSearch \|\| undefined, limit: 500 \}\)/,
+      /\/\/ ADDITIVE: only POST ids not already mapped to this person/,
+    ],
+    mustNot: [/<UniversalListToolbar/, /data-testid="profiles-prev-page"/],
   },
   {
     name: "Samsara driver mapping (route)",

@@ -44,10 +44,22 @@ export function staticProblems(routesSrc, collectorSrc) {
   else {
     if (!/CANONICAL_ACCOUNT_UPSERT_SQL/.test(map)) p.push(`${ROUTES}: map does not write the canonical mdata.driver_samsara_accounts row`);
     if (!/CANONICAL_ACCOUNT_DEACTIVATE_SQL/.test(map)) p.push(`${ROUTES}: map to a vendor does not deactivate the canonical driver row`);
+    // LAW 4 — SAVING IS ADDITIVE. A second map must INSERT/UPSERT the new samsara_driver_id and must
+    // NEVER delete or clear other active accounts for that driver. A writer that replaces fails this.
+    if (/DELETE\s+FROM\s+mdata\.driver_samsara_accounts/i.test(map)) {
+      p.push(`${ROUTES}: map DELETEs driver_samsara_accounts — saving must be ADDITIVE, never replace`);
+    }
+    if (/UPDATE\s+mdata\.driver_samsara_accounts[\s\S]*SET\s+is_active\s*=\s*false[\s\S]*driver_id\s*=/i.test(map) &&
+        !/CANONICAL_ACCOUNT_DEACTIVATE_SQL/.test(map)) {
+      p.push(`${ROUTES}: map clears other accounts for the target driver — saving must be ADDITIVE`);
+    }
   }
   if (!unmap) p.push(`${ROUTES}: POST /api/v1/samsara/unmap not found`);
   else if (!/CANONICAL_ACCOUNT_DEACTIVATE_SQL/.test(unmap)) p.push(`${ROUTES}: unmap does not deactivate the canonical row`);
   if (!/INSERT INTO mdata\.driver_samsara_accounts/.test(routesSrc)) p.push(`${ROUTES}: CANONICAL_ACCOUNT_UPSERT_SQL no longer inserts into mdata.driver_samsara_accounts`);
+  if (!/ON CONFLICT\s*\(\s*samsara_driver_id\s*\)\s*DO UPDATE/i.test(routesSrc)) {
+    p.push(`${ROUTES}: canonical upsert must ON CONFLICT (samsara_driver_id) DO UPDATE — second save ADDS, does not replace siblings`);
+  }
   if (!/loadDriverIdBySamsaraId\(/.test(collectorSrc)) p.push(`${COLLECTOR}: does not resolve through the canonical map first`);
   if (!/shouldDeactivateDriverForSamsaraUser\(/.test(collectorSrc)) p.push(`${COLLECTOR}: deactivates a driver when ONE of his Samsara users is deactivated`);
   return p;
@@ -55,7 +67,8 @@ export function staticProblems(routesSrc, collectorSrc) {
 
 function selftest() {
   const good = `app.post("/api/v1/samsara/map", x => { q(CANONICAL_ACCOUNT_UPSERT_SQL); q(CANONICAL_ACCOUNT_DEACTIVATE_SQL) });
-    app.post("/api/v1/samsara/unmap", x => { q(CANONICAL_ACCOUNT_DEACTIVATE_SQL) }); const S = "INSERT INTO mdata.driver_samsara_accounts";`;
+    app.post("/api/v1/samsara/unmap", x => { q(CANONICAL_ACCOUNT_DEACTIVATE_SQL) }); const S = "INSERT INTO mdata.driver_samsara_accounts";
+    const U = "ON CONFLICT (samsara_driver_id) DO UPDATE";`;
   const col = "loadDriverIdBySamsaraId(c); shouldDeactivateDriverForSamsaraUser(s);";
   const bad = [];
   if (staticProblems(good, col).length) bad.push("the fixed shape was flagged");
@@ -63,8 +76,20 @@ function selftest() {
   if (!staticProblems(good.replace(`unmap", x => { q(CANONICAL_ACCOUNT_DEACTIVATE_SQL) }`, `unmap", x => { }`), col).some((m) => /unmap does not/.test(m))) bad.push("page-only unmap passed");
   if (!staticProblems(good, "shouldDeactivateDriverForSamsaraUser(s);").some((m) => /canonical map first/.test(m))) bad.push("legacy-column collector passed");
   if (!staticProblems(good, "loadDriverIdBySamsaraId(c);").some((m) => /ONE of his/.test(m))) bad.push("one-user deactivation passed");
+  // LAW 4 — a save that maps a second user must leave the first mapping intact.
+  const replaceWriter = good.replace(
+    "q(CANONICAL_ACCOUNT_UPSERT_SQL); ",
+    'q("DELETE FROM mdata.driver_samsara_accounts WHERE driver_id = $3"); q(CANONICAL_ACCOUNT_UPSERT_SQL); '
+  );
+  if (!staticProblems(replaceWriter, col).some((m) => /ADDITIVE|DELETEs driver_samsara/.test(m))) {
+    bad.push("replace-on-save (DELETE then upsert) was not caught");
+  }
+  const noConflict = good.replace('const U = "ON CONFLICT (samsara_driver_id) DO UPDATE";', "");
+  if (!staticProblems(noConflict, col).some((m) => /ON CONFLICT/.test(m))) {
+    bad.push("missing ON CONFLICT upsert (non-additive) was not caught");
+  }
   if (bad.length) { console.error(`${LABEL} SELFTEST FAILED:\n  - ${bad.join("\n  - ")}`); process.exit(1); }
-  console.log(`${LABEL} SELFTEST OK — 5/5 (fixed shape passes; page-only map, page-only unmap, legacy collector, one-user deactivation each caught)`);
+  console.log(`${LABEL} SELFTEST OK — 7/7 (fixed shape passes; page-only map, page-only unmap, legacy collector, one-user deactivation, replace-on-save, missing ON CONFLICT each caught)`);
   process.exit(0);
 }
 
