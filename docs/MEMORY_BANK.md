@@ -1527,6 +1527,26 @@ the recency CATEGORIZE counter. Banking Home + Categorization Rules render an AL
 - Guard: `scripts/verify-unmatched-7d-is-an-alert.mjs` wired on EVEN 3996
 - Live USMCA (lucia, 2026-10-04): aged unmatched 831 · aged uncategorized 900 · live lines 987
 
+## Active Architectural Decisions — ENG-MATCH pointer is the match (Cursor, 2026-10-05)
+
+ENG-7D fixed the 7-day ALERT writer. Residual callers still treated unmatched as the
+For-review worklist bucket or a five/three-column subset, so a categorized line with no
+document pointer counted as resolved and a for-review line with `matched_payment_id`
+could rematch.
+
+Permanent predicate: `apps/backend/src/banking/bank-line-match-pointer.ts`
+(`BANK_LINE_DOCUMENT_POINTER_COLUMNS` + split/transfer status). One list, including
+`matched_deposit_id` (ROUND 373.4) which ENG-7D omitted. Used by:
+
+1. ENG-7D aged digest (age stays `transaction_date`, Chicago).
+2. Banking KPI unmatched_inflow / unmatched_outflow / match_rate (Categorize ≠ Match).
+3. `acceptMatchWithResolveDifference` already-matched (pointer OR review_state matched).
+4. Link-suggestion pool and obligation-reconcile unmatched queue.
+
+Guard: `scripts/verify-bank-match-is-a-document-pointer.mjs` wired on EVEN 3996.
+Independent KPI SQL in `verify-factoring-banking-kpis-tie-to-ledger.mjs` recomputes the
+same pointer set. No new GL math. No ACCT-F406 data corrections.
+
 ## Active Architectural Decisions — KILL THE SECOND SYSTEM (Cursor, 2026-10-03)
 
 Owner, verbatim: the ledger is the balance; policies stay; this is a deletion, not a build.

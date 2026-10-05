@@ -21,6 +21,7 @@ describe("ENG-7D unmatched 7-day alert predicate", () => {
     expect(AGED_UNMATCHED_BANK_LINE_SQL).toContain("matched_expense_id");
     expect(AGED_UNMATCHED_BANK_LINE_SQL).toContain("matched_invoice_id");
     expect(AGED_UNMATCHED_BANK_LINE_SQL).toContain("matched_settlement_id");
+    expect(AGED_UNMATCHED_BANK_LINE_SQL).toContain("matched_deposit_id");
     expect(AGED_UNMATCHED_BANK_LINE_SQL).not.toContain("coa_account_id");
     expect(AGED_UNMATCHED_BANK_LINE_SQL).not.toContain("created_at");
     expect(AGED_UNMATCHED_BANK_LINE_SQL).not.toMatch(/30|90/);

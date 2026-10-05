@@ -34,6 +34,10 @@ import {
   postFaroReserveRowOnBankMatch,
   postFaroRsvDepositsOnPaymentMatch,
 } from "./bank-match-faro-reserve-post.service.js";
+import {
+  bankLineHasLiveDocumentPointer,
+  bankLinePointerSelectSql,
+} from "../../banking/bank-line-match-pointer.js";
 
 /**
  * ROUND 157-C / 156 MASTER SPEC — THIS FILE OWNS THE BANKING MATCH SURFACE.
@@ -125,7 +129,9 @@ type BankTxn = {
   merchant_name: string | null;
   notes: string | null;
   review_state: string | null;
-};
+  status: string | null;
+  transfer_kind: string | null;
+} & Record<string, unknown>;
 
 export type MatchCounterpartyKind = "vendor" | "customer" | null;
 
@@ -386,7 +392,8 @@ async function loadTransaction(
         bt.description,
         bt.merchant_name,
         bt.notes,
-        bt.review_state
+        bt.review_state,
+        ${bankLinePointerSelectSql("bt")}
       FROM banking.bank_transactions bt
       WHERE bt.id = $1::uuid
         AND bt.operating_company_id = $2::uuid
@@ -1348,8 +1355,9 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
     }
     await refuseReceiptAlreadyOnADeposit(client, input.operating_company_id, input.ledger_entry_kind, input.ledger_entry_id);
 
-    // Idempotency: a bank line already cleared (review_state='matched') must not be re-matched.
-    if (txn.review_state === "matched") {
+    // ENG-MATCH: already-matched is a live document pointer (or review_state='matched').
+    // review_state alone was the hole — a for_review row with matched_payment_id could rematch.
+    if (txn.review_state === "matched" || bankLineHasLiveDocumentPointer(txn)) {
       throw new Error("bank_transaction_already_matched");
     }
 
@@ -1774,7 +1782,9 @@ export async function acceptExactMultiDocumentMatch(input: {
     const txn = await loadTransaction(client, input.operating_company_id, input.bank_transaction_id, true);
     if (!txn) throw new Error("bank_transaction_not_found");
     await assertBankTxnNotInReconciledSession(client, input.bank_transaction_id, input.operating_company_id);
-    if (txn.review_state === "matched") throw new Error("bank_transaction_already_matched");
+    if (txn.review_state === "matched" || bankLineHasLiveDocumentPointer(txn)) {
+      throw new Error("bank_transaction_already_matched");
+    }
 
     for (const entry of input.entries) {
       if (!PERSISTABLE_MATCH_KINDS.has(entry.ledger_entry_kind)) {

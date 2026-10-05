@@ -20,6 +20,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { loadObligationCandidates } from "./obligation-reconcile.routes.js";
 import { rankLinkCandidates, type LinkSuggestion } from "./link-suggestion-engine.js";
+import { bankLineIsUnmatchedSql } from "./bank-line-match-pointer.js";
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -59,17 +60,9 @@ export async function registerBankingLinkSuggestionsRoutes(app: FastifyInstance)
       const payload = await withCurrentUser(user.uuid, async (client) => {
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [q.data.operating_company_id]);
 
-        // Only transactions still missing ALL FIVE columns the Lead's chain audit measured at
-        // 0/518 populated — a row already matched on any one of them is not a suggestion target.
-        // voided_at excluded the same way every other banking read excludes it.
-        //
-        // PR 2 addition: also require review_state = 'for_review'. A row can leave this queue
-        // without ever touching the 5 matched_* columns above — Exclude (PR 2's own action) sets
-        // review_state='excluded' with nothing else changed, and a separate flow can set
-        // 'categorized'/'matched'/'transfer' via matched_payment_id/matched_transfer_id/
-        // matched_journal_entry_id, none of which this route's candidate pool covers (see the
-        // scorable-types comment below). Without this filter an Excluded transaction would
-        // silently reappear here forever, making the Exclude action look like it did nothing.
+        // ENG-MATCH: suggestion targets are unmatched by live document pointer, not the
+        // old five-column subset and not review_state='for_review' (CATEGORIZE ≠ MATCH).
+        // Excluded stays out — Exclude never writes a pointer.
         const txnRes = await client.query<{
           id: string;
           transaction_date: string;
@@ -83,12 +76,8 @@ export async function registerBankingLinkSuggestionsRoutes(app: FastifyInstance)
           FROM banking.bank_transactions
           WHERE operating_company_id = $1::uuid
             AND voided_at IS NULL
-            AND review_state = 'for_review'
-            AND matched_expense_id IS NULL
-            AND matched_bill_id IS NULL
-            AND matched_load_id IS NULL
-            AND matched_settlement_id IS NULL
-            AND matched_invoice_id IS NULL
+            AND review_state IS DISTINCT FROM 'excluded'
+            AND ${bankLineIsUnmatchedSql()}
           ORDER BY transaction_date DESC, created_at DESC
           LIMIT $2
           `,

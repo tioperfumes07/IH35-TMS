@@ -1,10 +1,10 @@
 # NOW-CURSOR — 2026-10-04T23:35Z
 
-**SHIPPING:** ENG-7D / BANK-F2026100405 — unmatched_7d is an integrity digest ALERT (age + document pointer), not a recency CATEGORIZE counter. This PR.
+**SHIPPING:** ENG-MATCH — unmatched is a live document pointer (not For-review / not CATEGORIZE). This PR.
 
-**CLOSED tip:** LST-F407-B #25433 · LST-F407-C #25438 · LST-F405 #25435 · LST-F408. uuid + silent-list + money-cells clickthrough exit 0.
+**CLOSED tip:** ENG-7D #25440 · 367.9 #25451 · 363-CUR-B/C #25457/#25468–#25473. Cursor open PRs = 0.
 
-**NEXT after merge:** ENG-MATCH · 367.9 / 363-CUR-B/C. No Chrome. No ACCT-F406 data corrections.
+**NEXT after merge:** full engine ten of ten. No Chrome. No ACCT-F406 data corrections.
 
 # NOW — CURSOR — standing engine ENG-CF (D-4) then ENG-7D / ENG-MATCH
 

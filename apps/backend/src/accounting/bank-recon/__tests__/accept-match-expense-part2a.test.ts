@@ -94,6 +94,27 @@ describe("BLOCK-01 Part 2a — expense-link accept", () => {
     ).rejects.toThrow("expense_not_posted");
   });
 
+  it("rejects a for-review line that already has a live document pointer", async () => {
+    mockQuery.mockReset();
+    mockWithLuciaBypass.mockClear();
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("FROM banking.bank_transactions") && sql.includes("SELECT"))
+        return { rows: [bankTxnRow({ review_state: "for_review", matched_payment_id: "pay-1" })] };
+      return { rows: [] };
+    });
+
+    await expect(
+      acceptMatchWithResolveDifference({
+        operating_company_id: OPCO,
+        bank_transaction_id: BANK_TX,
+        actor_user_uuid: ACTOR,
+        ledger_entry_kind: "expense",
+        ledger_entry_id: EXPENSE,
+        difference_account_id: "00000000-0000-4000-8000-000000000000",
+      })
+    ).rejects.toThrow("bank_transaction_already_matched");
+  });
+
   it("rejects a bank line already cleared (idempotency)", async () => {
     mockQuery.mockReset();
     mockWithLuciaBypass.mockClear();

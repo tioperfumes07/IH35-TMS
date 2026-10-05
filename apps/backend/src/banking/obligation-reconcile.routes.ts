@@ -9,6 +9,11 @@ import { appendFactoringSuggestions } from "./recon.service.js";
 import { FactoringBankMatchError, applyMatch } from "../factoring/bank-match.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { acceptReconMatch } from "../accounting/bank-recon/recon-worklist.service.js";
+import {
+  bankLineHasLiveDocumentPointer,
+  bankLineIsUnmatchedSql,
+  bankLinePointerSelectSql,
+} from "./bank-line-match-pointer.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -321,18 +326,8 @@ export const OBLIGATION_EXISTENCE_SQL: Record<z.infer<typeof reconcileBodySchema
   factoring_batch: null,
 };
 
-function isUnreconciledTxnRow(row: {
-  matched_load_id: string | null;
-  matched_bill_id: string | null;
-  matched_settlement_id: string | null;
-  reconciled_obligation_id: string | null;
-}) {
-  return (
-    !row.reconciled_obligation_id &&
-    !row.matched_load_id &&
-    !row.matched_bill_id &&
-    !row.matched_settlement_id
-  );
+function isUnreconciledTxnRow(row: Record<string, unknown>) {
+  return !row.reconciled_obligation_id && !bankLineHasLiveDocumentPointer(row);
 }
 
 export async function registerBankingObligationReconcileRoutes(app: FastifyInstance) {
@@ -395,9 +390,7 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
           FROM banking.bank_transactions
           WHERE ${filters.join(" AND ")}
             AND reconciled_obligation_id IS NULL
-            AND matched_load_id IS NULL
-            AND matched_bill_id IS NULL
-            AND matched_settlement_id IS NULL
+            AND ${bankLineIsUnmatchedSql()}
           ORDER BY transaction_date DESC, created_at DESC
           LIMIT 500
         `,
@@ -453,10 +446,8 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
             transaction_date::text,
             description,
             merchant_name,
-            matched_load_id,
-            matched_bill_id,
-            matched_settlement_id,
-            reconciled_obligation_id
+            reconciled_obligation_id,
+            ${bankLinePointerSelectSql()}
           FROM banking.bank_transactions
           WHERE id = $1::uuid
             AND operating_company_id = $2::uuid

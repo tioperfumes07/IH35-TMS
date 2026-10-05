@@ -7,5 +7,7 @@ export default {
     await ctx.run("node", ["scripts/verify-integrity-alerts-staged-filters.mjs"]);
     await ctx.run("node", ["scripts/verify-unmatched-7d-is-an-alert.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-unmatched-7d-is-an-alert.mjs"]);
+    await ctx.run("node", ["scripts/verify-bank-match-is-a-document-pointer.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-bank-match-is-a-document-pointer.mjs"]);
   },
 };
