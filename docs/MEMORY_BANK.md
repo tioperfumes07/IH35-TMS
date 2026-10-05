@@ -1599,6 +1599,24 @@ column. No `paid_at` stamp. No mass backfill. No ACCT-F406.
 Guards: `verify-bank-recon-accept-invoice-backlink.mjs` + `verify-1090-clearing.mjs` +
 `verify-wave-h3-bank-match-reverse-fk.mjs`.
 
+## Active Architectural Decisions — ENG-SPINE factoring-advance follow-ups on both accept paths (Cursor, 2026-10-05)
+
+1:1 `acceptMatchWithResolveDifference` already ran the three-way after the reverse stamp:
+Faro reserve ROW already posted → skip; reserve-bank repurchase →
+`postFactoringChargebackEvent`; operating-bank funding wire →
+`factoring_advance_deposit` sweep. `acceptExactMultiDocumentMatch` always swept 1090
+and never chargebacked. Faro reserve ROW posting was 1:1-only.
+
+Permanent: `postPendingFaroReserveRowOnAccept` + `runFactoringAdvanceAcceptFollowUps`
+are the one writers. Both accept paths call them. Multi keeps N-advance match rows
+(does not rewrite each entry to `je`). A pending Faro ROW posts once; those advances
+skip sweep/chargeback. Typical Faro purchase-batch on an operating wire still sweeps.
+No new reverse column. No mass backfill. No ACCT-F406.
+
+Guards: `verify-1090-clearing.mjs` + `verify-one-bank-match-writer-writes-je.mjs` +
+`verify-wave-h3-bank-match-reverse-fk.mjs`. Vitest
+`accept-match-factoring-advance-follow-ups.test.ts`.
+
 ## Active Architectural Decisions — KILL THE SECOND SYSTEM (Cursor, 2026-10-03)
 
 Owner, verbatim: the ledger is the balance; policies stay; this is a deletion, not a build.

@@ -62,6 +62,12 @@ export function check(files) {
   ) {
     problems.push(`${MATCH}: reserve/recourse match must call postFactoringChargebackEvent with client (same txn)`);
   }
+  if (!/async function runFactoringAdvanceAcceptFollowUps/.test(match) || (match.split("runFactoringAdvanceAcceptFollowUps(").length - 1) < 3) {
+    problems.push(`${MATCH}: 1:1 and multi-document accept must share runFactoringAdvanceAcceptFollowUps`);
+  }
+  if (!/async function postPendingFaroReserveRowOnAccept/.test(match) || (match.split("postPendingFaroReserveRowOnAccept(").length - 1) < 3) {
+    problems.push(`${MATCH}: 1:1 and multi-document accept must share postPendingFaroReserveRowOnAccept`);
+  }
   if (!/isFaroReserveBankAccount|factor_reserve_held|factor_cash_reserve_held/.test(match)) {
     problems.push(`${MATCH}: missing Faro reserve-bank gate (factor_reserve_held / factor_cash_reserve_held)`);
   }
@@ -166,6 +172,14 @@ if (process.argv.includes("--selftest")) {
   const noFuel = { ...real, [MATCH]: real[MATCH].replace(/postFuelFillOnBankMatch/g, "NOT_THE_HOOK") };
   if (!check(noFuel).length) {
     console.error(`${LABEL} --selftest FAIL: missing fuel hook not caught`);
+    process.exit(1);
+  }
+  const noFactoringHelper = {
+    ...real,
+    [MATCH]: real[MATCH].replace(/async function runFactoringAdvanceAcceptFollowUps/g, "async function missingFactoringFollowUps"),
+  };
+  if (!check(noFactoringHelper).length) {
+    console.error(`${LABEL} --selftest FAIL: missing factoring follow-up helper not caught`);
     process.exit(1);
   }
   const silentUnmatch = {

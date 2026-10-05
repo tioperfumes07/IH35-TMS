@@ -4,7 +4,7 @@
  * transaction as a live "Accept" candidate once it is already resolved (review_state='matched'
  * via a direct Categorize posting its own JE). acceptMatchWithResolveDifference's own idempotency
  * guard (apps/backend/src/accounting/bank-recon/match.service.ts:
- * `if (txn.review_state === "matched") throw new Error("bank_transaction_already_matched")`)
+ * `if (txn.review_state === "matched" || bankLineHasLiveDocumentPointer(txn)) throw bank_transaction_already_matched`)
  * permanently rejects Accept for such a row, so surfacing it as actionable is a dead end.
  *
  * Live-reproduced 2026-08-22: categorized a real USMCA bank_transaction (Wire Transfer Fee,
@@ -30,7 +30,7 @@ const checks = [
   ],
   [
     "match",
-    /if \(txn\.review_state === "matched"\)[\s\S]{0,80}throw new Error\("bank_transaction_already_matched"\)/,
+    /if \(txn\.review_state === "matched" \|\| bankLineHasLiveDocumentPointer\(txn\)\)[\s\S]{0,80}throw new Error\("bank_transaction_already_matched"\)/,
     "acceptMatchWithResolveDifference still rejects an already-matched bank line (idempotency guard this fix routes around, not removes)",
   ],
 ];

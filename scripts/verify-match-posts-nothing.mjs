@@ -12,6 +12,7 @@
 //   postFuelFillOnBankMatch               unmatchBankTransactionOnClient (matchCreatedJe: fuel / relay)
 //   postFactoringChargebackEvent          unmatchBankTransactionOnClient (matchCreatedJe: factoring advance)
 //   postFaroReserveRowOnBankMatch         undo 'added' branch (kind declared by stampPosted) + Faro entry release
+//   postPendingFaroReserveRowOnAccept     same Faro row poster; 1:1 + multi share this wrapper
 // Static, ceiling 0: a posting call in match.service.ts outside this list FAILS; a listed poster whose reversal is gone
 // FAILS; the 'matched' undo branch must never void or revoke the document. The live proof is the fork finish test (trial
 // balance unchanged across match + unmatch for every document type).
@@ -33,6 +34,7 @@ export const MATCH_TIME_POSTERS = [
   "postFuelFillOnBankMatch",
   "postFactoringChargebackEvent",
   "postFaroReserveRowOnBankMatch",
+  "postPendingFaroReserveRowOnAccept",
 ];
 
 const strip = (src) => String(src).replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");

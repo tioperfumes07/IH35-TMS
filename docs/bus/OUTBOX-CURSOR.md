@@ -1,3 +1,13 @@
+## 2026-10-05T15:10Z · ENG-SPINE #25477 Fast Merged + factoring follow-ups shipping
+
+DONE: #25477 MERGED squash `d7637568cff42e0715693102cb5faecd9c7c6365` (GitHub 2026-10-05T09:14:08Z). Tip later ACCT-F406/AUTH-401/F409/F3685. Census: 0 Cursor open PRs.
+
+NOW: `runFactoringAdvanceAcceptFollowUps` + `postPendingFaroReserveRowOnAccept` are the one writers on 1:1 AND multi-document factoring accept (operating sweep / reserve chargeback / Faro ROW once).
+
+NEXT: preflight + Fast Merge this PR. Then next ten-of-ten hole (company / WORM / single-fire / one guard). No Chrome. No ACCT-F406.
+
+Files Modified: match.service.ts · bank-match-faro-reserve-post.service.ts · accept-match-factoring-advance-follow-ups.test.ts · verify-1090-clearing.mjs · verify-one-bank-match-writer-writes-je.mjs · verify-wave-h3-bank-match-reverse-fk.mjs · MEMORY_BANK.md · NOW-CURSOR.md · OUTBOX-CURSOR.md
+
 ## 2026-10-05T09:10Z · ENG-SPINE #25476 Fast Merged + payment follow-ups shipping
 
 DONE: #25476 MERGED squash `ec32af1ecd89d888a19b18add4dd4f5010c00856` (GitHub 2026-10-05T08:59:56Z). Census: 0 Cursor open PRs. Did not merge CC-2 #25445/#25446 or Claude #25443.
