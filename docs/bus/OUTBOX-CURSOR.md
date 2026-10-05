@@ -1,3 +1,18 @@
+## 2026-10-05T02:40Z · 363-CUR-C remainder shipping — Audit Trail + Manual JE multi-select
+
+DONE: Fast-merge #25471 `cc8b7dc985` (banking list bars). Remainder converts the last 2 single-select All-accounts list filters.
+
+- AccountingAuditTrailPage SelectCombobox → MultiSelectDropdown (0/1 API account_id; 2+ client Set)
+- ManualJEListPage ReferenceSelect → MultiSelectDropdown; listJournalEntries `account_ids` ANY (set-based, Rule 53)
+- Guards retargeted; SINGLE_SELECT_BASELINE 2→0
+- 363-CUR-B leftovers stay 4 honest (no id to open)
+
+LIVE PROOF: verify-account-filters-are-multi-select + lineage + qbo-filter-collapse in this PR.
+
+NEXT: preflight + fast-merge this remainder. No Chrome. No Book Load.
+
+Files Modified: AccountingAuditTrailPage · ManualJEListPage · journal-entries.routes/service · api/accounting.ts · verify-account-filters-are-multi-select · verify-accounting-audit-trail-lineage · verify-qbo-filter-collapse · LANE_CROSS ruling · OUTBOX-CURSOR
+
 ## 2026-10-05T01:05Z · ROUND 367.9 structural breadcrumb PUSHED
 
 DONE: branch `cursor/bank-3679-structural-breadcrumb-c89b` @ `0381320b1e` pushed. Claim 12414 already on tip `#25447`.

@@ -1925,6 +1925,7 @@ export function listJournalEntries(
     source?: JournalEntrySource;
     status?: JournalEntryStatus;
     account_id?: string;
+    account_ids?: string[];
     from_date?: string;
     to_date?: string;
     limit?: number;
@@ -1934,7 +1935,8 @@ export function listJournalEntries(
   const query = new URLSearchParams();
   if (params.source) query.set("source", params.source);
   if (params.status) query.set("status", params.status);
-  if (params.account_id) query.set("account_id", params.account_id);
+  if (params.account_ids?.length) query.set("account_ids", params.account_ids.join(","));
+  else if (params.account_id) query.set("account_id", params.account_id);
   if (params.from_date) query.set("from_date", params.from_date);
   if (params.to_date) query.set("to_date", params.to_date);
   if (params.limit) query.set("limit", String(params.limit));

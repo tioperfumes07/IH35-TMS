@@ -20,7 +20,7 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { KNOWN_ACCOUNTING_SOURCE_TRANSACTION_TYPES } from "../../lib/accounting-source-transaction-types";
 import { formatUsdCents } from "../../lib/money";
-import { SelectCombobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 
 function fmtMoneyCents(value: number) {
   return formatUsdCents(value);
@@ -171,8 +171,16 @@ export function AccountingAuditTrailPage() {
   const sourceIdParam = searchParams.get("source_id");
   const [sourceType, setSourceType] = useState(() => sourceTypeParam ?? "");
   const [sourceId, setSourceId] = useState(() => sourceIdParam ?? "");
-  const [accountId, setAccountId] = useState("");
-  const staged = useStagedListFilters({ applied: { sourceType, sourceId, accountId }, empty: { sourceType: "", sourceId: "", accountId: "" }, onApply: (next) => { setSourceType(next.sourceType); setSourceId(next.sourceId); setAccountId(next.accountId); } });
+  const [accountIds, setAccountIds] = useState<string[]>([]);
+  const staged = useStagedListFilters({
+    applied: { sourceType, sourceId, accountIds },
+    empty: { sourceType: "", sourceId: "", accountIds: [] as string[] },
+    onApply: (next) => {
+      setSourceType(next.sourceType);
+      setSourceId(next.sourceId);
+      setAccountIds(next.accountIds);
+    },
+  });
   const [lineageRows, setLineageRows] = useState<AccountingSourceLineageRow[] | null>(null);
   const [lineageKey, setLineageKey] = useState<{ source_transaction_type: string; source_transaction_id: string } | null>(null);
   // BANK-SORT-ROLLOUT-ACCT — audit event list sort persists in ?sort=&dir= via useUrlSort.
@@ -188,14 +196,14 @@ export function AccountingAuditTrailPage() {
   });
 
   const eventQuery = useInfiniteQuery({
-    queryKey: ["accounting-audit-trail", companyId, sourceType, sourceId, accountId],
+    queryKey: ["accounting-audit-trail", companyId, sourceType, sourceId, accountIds],
     queryFn: ({ pageParam }) =>
       listAccountingAuditTrail(companyId, {
         limit: 50,
         cursor: typeof pageParam === "string" ? pageParam : undefined,
         source_transaction_type: sourceType.trim() || undefined,
         source_transaction_id: sourceId.trim() || undefined,
-        account_id: accountId || undefined,
+        account_id: accountIds.length === 1 ? accountIds[0] : undefined,
       }),
     getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
     initialPageParam: undefined as string | undefined,
@@ -213,13 +221,21 @@ export function AccountingAuditTrailPage() {
     onError: (err) => pushToast(err instanceof Error ? err.message : "Source lineage lookup failed", "error"),
   });
 
-  const events = useMemo(
-    () => eventQuery.data?.pages?.flatMap((p) => p.events ?? []) ?? [],
-    [eventQuery.data?.pages],
-  );
+  const events = useMemo(() => {
+    const rows = eventQuery.data?.pages?.flatMap((p) => p.events ?? []) ?? [];
+    if (accountIds.length <= 1) return rows;
+    const allow = new Set(accountIds);
+    return rows.filter((row) => allow.has(row.account_id));
+  }, [eventQuery.data?.pages, accountIds]);
 
   const accountOptions = useMemo(
-    () => ((accountsQuery.data?.pages[0] as { accounts?: Array<{ id: string; account_number: string; account_name: string }> } | undefined)?.accounts ?? []),
+    () =>
+      ((accountsQuery.data?.pages[0] as { accounts?: Array<{ id: string; account_number: string; account_name: string }> } | undefined)?.accounts ?? []).map(
+        (account) => ({
+          value: account.id,
+          label: `${account.account_number} - ${account.account_name}`,
+        }),
+      ),
     [accountsQuery.data?.pages],
   );
 
@@ -340,7 +356,7 @@ export function AccountingAuditTrailPage() {
 
   const filterBar = (
     <CollapsedListFilters
-      activeFilterCount={(sourceType ? 1 : 0) + (sourceId ? 1 : 0) + (accountId ? 1 : 0)}
+      activeFilterCount={(sourceType ? 1 : 0) + (sourceId ? 1 : 0) + (accountIds.length ? 1 : 0)}
       onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
       testIdPrefix="audit-trail"
       dataAttributes={{ "data-audit-trail-filter-toolbar": "collapsed" }}
@@ -372,18 +388,15 @@ export function AccountingAuditTrailPage() {
         </label>
         <label className="text-xs text-slate-600">
           Account
-          <SelectCombobox
-            className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
-            value={staged.draft.accountId}
-            onChange={(e) => staged.setDraft({ ...staged.draft, accountId: e.target.value })}
-          >
-            <option value="">All accounts</option>
-            {accountOptions.map((account) => (
-              <option key={account.id} value={account.id}>
-                {account.account_number} - {account.account_name}
-              </option>
-            ))}
-          </SelectCombobox>
+          <MultiSelectDropdown
+            label="Account"
+            options={accountOptions}
+            selected={staged.draft.accountIds}
+            onChange={(next) => staged.setDraft({ ...staged.draft, accountIds: next })}
+            allLabel="All accounts"
+            searchable
+            data-testid="audit-trail-filter-account"
+          />
         </label>
       </div>
     </CollapsedListFilters>

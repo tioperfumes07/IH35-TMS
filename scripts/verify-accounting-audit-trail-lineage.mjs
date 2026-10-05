@@ -75,16 +75,13 @@ if (pageSource.includes('"Source transaction"')) {
 if (/entityLabel\(\s*null\s*,\s*row\.linked_object_id/.test(pageSource)) {
   fail("AccountingAuditTrailPage must not entityLabel(null, linked_object_id) — use display_id");
 }
-// The real filter now reads/writes through a staged-filter draft (Apply/Cancel/Reset —
-// staged.draft.accountId / staged.setDraft({ ..., accountId })) rather than binding the
-// SelectCombobox directly to the applied `accountId` state — a later, stricter UX pattern than an
-// immediate-apply binding. Accept either `value={accountId}` or `value={staged.draft.accountId}`
-// (bounded to a plain dotted-identifier chain, not an unbounded window).
-if (!/<SelectCombobox[\s\S]*?value=\{(?:staged\.draft\.)?accountId\}/.test(pageSource)) {
-  fail("audit trail account filter must use the searchable select adapter");
+// 363-CUR-C — owner: account filters on list bars are multi-select. The audit-trail
+// account filter drafts through staged.draft.accountIds + MultiSelectDropdown (Apply/Cancel/Reset).
+if (!/<MultiSelectDropdown[\s\S]*?label="Account"[\s\S]*?selected=\{(?:staged\.draft\.)?accountIds\}/.test(pageSource)) {
+  fail("audit trail account filter must use MultiSelectDropdown");
 }
-if (/<select[\s\S]*?value=\{(?:staged\.draft\.)?accountId\}/.test(pageSource)) {
-  fail("audit trail account filter must not regress to a native account-ID select");
+if (/<(SelectCombobox|select)\b[\s\S]{0,800}All accounts/.test(pageSource)) {
+  fail("audit trail account filter must not regress to a single-select All-accounts control");
 }
 
 if (process.argv.includes("--selftest")) {
