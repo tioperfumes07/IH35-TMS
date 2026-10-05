@@ -47,8 +47,14 @@ function analyze(engine, match) {
   if (!/import\s*\{\s*ensureOpenPeriod,\s*postSourceTransactionInClientTx,\s*PostingEngineError\s*\}\s*from\s*"\.\.\/posting-engine\.service\.js"/.test(match)) {
     failures.push(`${MATCH_FILE}: does not import postSourceTransactionInClientTx + PostingEngineError from posting-engine.service.js`);
   }
-  // ROUND 326 queue item 12: the sweep may run through the shared sweepMatchedReceiptToBank helper (1:1 AND multi-match).
-  if (!/source_transaction_type: "customer_payment_deposit"/.test(match) && !/sweepMatchedReceiptToBank\(client, input\.operating_company_id, "customer_payment_deposit"/.test(match)) {
+  // ROUND 326 + ENG-SPINE: the sweep runs through sweepMatchedReceiptToBank from
+  // runPaymentAcceptFollowUps (1:1 AND multi). The type literal is the third argument.
+  const sweepCall =
+    /source_transaction_type:\s*"customer_payment_deposit"/.test(match) ||
+    /sweepMatchedReceiptToBank\(\s*client,\s*(?:input\.operating_company_id|args\.operatingCompanyId),\s*"customer_payment_deposit"/.test(
+      match
+    );
+  if (!sweepCall) {
     failures.push(`${MATCH_FILE}: does not call the deposit-sweep poster on match accept`);
   }
   if (!/"DEPOSIT_ALREADY_AT_BANK"/.test(match) || !/"PAYMENT_NOT_POSTING_ELIGIBLE"/.test(match)) {
@@ -97,7 +103,16 @@ function selftest() {
     },
     {
       name: "match.service.ts loses the deposit-sweep call",
-      apply: (e, m) => [e, m.replace('source_transaction_type: "customer_payment_deposit",', 'source_transaction_type: "transfer",').replaceAll('sweepMatchedReceiptToBank(client, input.operating_company_id, "customer_payment_deposit"', 'noop(client, input.operating_company_id, "x"')],
+      apply: (e, m) => [
+        e,
+        m
+          .replace('source_transaction_type: "customer_payment_deposit",', 'source_transaction_type: "transfer",')
+          .replaceAll(
+            'sweepMatchedReceiptToBank(client, input.operating_company_id, "customer_payment_deposit"',
+            'noop(client, input.operating_company_id, "x"'
+          )
+          .replace('    "customer_payment_deposit",\n    args.paymentId', '    "transfer",\n    args.paymentId'),
+      ],
     },
     {
       name: "match.service.ts's skippable list drops DEPOSIT_ALREADY_AT_BANK",

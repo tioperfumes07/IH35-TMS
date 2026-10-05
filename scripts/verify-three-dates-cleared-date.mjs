@@ -99,10 +99,78 @@ function selftest() {
     ["bad3-no-transaction", assertGuard(goodMigration.replace("BEGIN;", "-- no txn").replace("COMMIT;", "-- no txn"), goodSplits, goodBulk, goodMatch, goodWorklist)],
     ["bad4-splits-not-wired", assertGuard(goodMigration, goodSplits.replace(/payment_date, cleared_date,/g, "payment_date,"), goodBulk, goodMatch, goodWorklist)],
     ["bad5-bulk-not-wired", assertGuard(goodMigration, goodSplits, goodBulk.replace(/payment_date,\n            cleared_date,/g, "payment_date,"), goodMatch, goodWorklist)],
-    ["bad6-match-payment-not-wired", assertGuard(goodMigration, goodSplits, goodBulk, goodMatch.replace("cleared_date = COALESCE(cleared_date, $4::date)\n          WHERE id = $2::uuid\n            AND operating_company_id = $3::uuid`,\n        [\n          input.bank_transaction_id,\n          input.ledger_entry_id,\n          input.operating_company_id,\n          txn.transaction_date.slice(0, 10),\n        ]", "WHERE id = $2::uuid\n            AND operating_company_id = $3::uuid`,\n        [input.bank_transaction_id, input.ledger_entry_id, input.operating_company_id]"), goodWorklist)],
-    ["bad7-match-bill-payment-not-wired", assertGuard(goodMigration, goodSplits, goodBulk, goodMatch.replace(",\n                cleared_date = COALESCE(cleared_date, $5::date),\n                updated_at = now()", ",\n                updated_at = now()"), goodWorklist)],
-    ["bad8-unmatch-payment-not-cleared", assertGuard(goodMigration, goodSplits, goodBulk, goodMatch, goodWorklist.replace("SET source_bank_transaction_id = NULL,\n                cleared_date = NULL\n          WHERE id = $1::uuid", "SET source_bank_transaction_id = NULL\n          WHERE id = $1::uuid"))],
-    ["bad9-unmatch-bill-payment-not-cleared", assertGuard(goodMigration, goodSplits, goodBulk, goodMatch, goodWorklist.replace("from_bank_account_id = NULL,\n                cleared_date = NULL,\n                updated_at = now()", "from_bank_account_id = NULL,\n                updated_at = now()"))],
+    [
+      "bad6-match-payment-not-wired",
+      assertGuard(
+        goodMigration,
+        goodSplits,
+        goodBulk,
+        goodMatch
+          .replace(
+            "cleared_date = COALESCE(cleared_date, $4::date)\n        WHERE id = $2::uuid\n          AND operating_company_id = $3::uuid`,\n      [args.bankTransactionId, args.ledgerEntryId, args.operatingCompanyId, args.transactionDate]",
+            "WHERE id = $2::uuid\n          AND operating_company_id = $3::uuid`,\n      [args.bankTransactionId, args.ledgerEntryId, args.operatingCompanyId]"
+          )
+          .replace(
+            "cleared_date = COALESCE(cleared_date, $4::date)\n          WHERE id = $2::uuid\n            AND operating_company_id = $3::uuid`,\n        [\n          input.bank_transaction_id,\n          input.ledger_entry_id,\n          input.operating_company_id,\n          txn.transaction_date.slice(0, 10),\n        ]",
+            "WHERE id = $2::uuid\n            AND operating_company_id = $3::uuid`,\n        [input.bank_transaction_id, input.ledger_entry_id, input.operating_company_id]"
+          ),
+        goodWorklist
+      ),
+    ],
+    [
+      "bad7-match-bill-payment-not-wired",
+      assertGuard(
+        goodMigration,
+        goodSplits,
+        goodBulk,
+        goodMatch
+          .replace(
+            ",\n              cleared_date = COALESCE(cleared_date, $5::date),\n              updated_at = now()",
+            ",\n              updated_at = now()"
+          )
+          .replace(
+            ",\n                cleared_date = COALESCE(cleared_date, $5::date),\n                updated_at = now()",
+            ",\n                updated_at = now()"
+          ),
+        goodWorklist
+      ),
+    ],
+    [
+      "bad8-unmatch-payment-not-cleared",
+      assertGuard(
+        goodMigration,
+        goodSplits,
+        goodBulk,
+        goodMatch,
+        goodWorklist
+          .replace(
+            "SET source_bank_transaction_id = NULL,\n              cleared_date = NULL\n        WHERE id = $1::uuid",
+            "SET source_bank_transaction_id = NULL\n        WHERE id = $1::uuid"
+          )
+          .replace(
+            "SET source_bank_transaction_id = NULL,\n                cleared_date = NULL\n          WHERE id = $1::uuid",
+            "SET source_bank_transaction_id = NULL\n          WHERE id = $1::uuid"
+          )
+      ),
+    ],
+    [
+      "bad9-unmatch-bill-payment-not-cleared",
+      assertGuard(
+        goodMigration,
+        goodSplits,
+        goodBulk,
+        goodMatch,
+        goodWorklist
+          .replace(
+            "from_bank_account_id = NULL,\n              cleared_date = NULL,\n              updated_at = now()",
+            "from_bank_account_id = NULL,\n              updated_at = now()"
+          )
+          .replace(
+            "from_bank_account_id = NULL,\n                cleared_date = NULL,\n                updated_at = now()",
+            "from_bank_account_id = NULL,\n                updated_at = now()"
+          )
+      ),
+    ],
   ];
 
   for (const [name, res] of mutations) {

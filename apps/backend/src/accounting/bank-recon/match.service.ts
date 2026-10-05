@@ -1431,6 +1431,107 @@ async function runPaymentAcceptFollowUps(
 }
 
 /**
+ * OWNER-ORDER §3.1 — post the pending Faro reserve ROW on this bank line (not rsv_deposit).
+ * 1:1 accept rewrites the match row to the JE. Multi-document keeps N-advance match rows and
+ * skips sweep/chargeback when this helper returned a JE. One writer so the two accept paths
+ * cannot drift (CLS-LINKAGE-ONEWAY on Faro posting).
+ */
+async function postPendingFaroReserveRowOnAccept(
+  client: DbClient,
+  args: {
+    operatingCompanyId: string;
+    bankTransactionId: string;
+    actorUserUuid: string;
+  }
+): Promise<{ journalEntryId: string | null; posterClearedBank: boolean }> {
+  const faroEntry = await loadFaroReserveEntryForBankTxn(
+    client,
+    args.operatingCompanyId,
+    args.bankTransactionId
+  );
+  if (faroEntry && faroEntry.entry_kind !== "rsv_deposit" && !faroEntry.journal_entry_id) {
+    const faroPost = await postFaroReserveRowOnBankMatch(client, {
+      operating_company_id: args.operatingCompanyId,
+      entry_id: faroEntry.id,
+      actor_user_id: args.actorUserUuid,
+    });
+    return { journalEntryId: faroPost.journal_entry_id, posterClearedBank: faroPost.poster_cleared_bank };
+  }
+  return { journalEntryId: null, posterClearedBank: false };
+}
+
+/**
+ * ENG-SPINE follow-up — factoring-advance accept follow-ups that 1:1 already ran and
+ * multi-document skipped (always swept 1090, never chargebacked a reserve-bank repurchase).
+ *
+ * OWNER-ORDER §3.1 — reserve register by accounting.chart_of_accounts_roles
+ * (factor_reserve_held / factor_cash_reserve_held), never catalogs.account_role_bindings.
+ *   · Faro report row on this bank line already posted → skip (do not also chargeback/sweep)
+ *   · Repurchase movement on a reserve bank (no Faro entry) → postFactoringChargebackEvent
+ *   · Ordinary funding wire on the operating bank → factoring_advance_deposit sweep
+ *
+ * One helper so 1:1 and multi-document accept cannot drift. Typical Faro purchase-batch
+ * (N advances on an operating wire) still sweeps. A reserve-bank repurchase wire matched
+ * to N advances chargebacks each advance. No new reverse column. No mass backfill.
+ */
+async function runFactoringAdvanceAcceptFollowUps(
+  client: DbClient,
+  args: {
+    operatingCompanyId: string;
+    factoringAdvanceId: string;
+    actorUserUuid: string;
+    bankTransactionId: string;
+    bankAccountId: string;
+    faroReserveJournalEntryId: string | null;
+  }
+): Promise<void> {
+  const reserveBank = await isFaroReserveBankAccount(
+    client,
+    args.operatingCompanyId,
+    args.bankAccountId
+  );
+  if (reserveBank && args.faroReserveJournalEntryId) {
+    return;
+  }
+  if (reserveBank) {
+    const amounts = await loadExactLinkedChargebackAmountsOnClient(
+      client,
+      args.operatingCompanyId,
+      args.factoringAdvanceId
+    );
+    const cb = await postFactoringChargebackEvent({
+      operating_company_id: args.operatingCompanyId,
+      factoring_advance_id: args.factoringAdvanceId,
+      actor_user_id: args.actorUserUuid,
+      chargeback_amount_cents: amounts.liability_cents,
+      default_interest_cents: 0,
+      recoursed_ar_cents: amounts.recoursed_ar_cents,
+      client,
+    });
+    if (!cb.posted) {
+      throw new Error(`factoring_recourse_post_failed:${cb.reason ?? "unknown"}`);
+    }
+    if (cb.journal_entry_id) {
+      await client.query(
+        `UPDATE banking.bank_transactions
+            SET matched_journal_entry_id = COALESCE(matched_journal_entry_id, $3::uuid),
+                updated_at = now()
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+        [args.bankTransactionId, args.operatingCompanyId, cb.journal_entry_id]
+      );
+    }
+    return;
+  }
+  await sweepMatchedReceiptToBank(
+    client,
+    args.operatingCompanyId,
+    "factoring_advance_deposit",
+    args.factoringAdvanceId,
+    args.actorUserUuid
+  );
+}
+
+/**
  * ROUND 315 OWNER-ONLY LAW: matching a bank deposit to a factoring purchase is the Owner's act alone. Runs in its own
  * committed transaction BEFORE the match transaction, so the refusal's audit row survives the thrown 403.
  */
@@ -1497,26 +1598,19 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
     }
 
     // OWNER-ORDER §3.1 / CC-2 handoff — Faro reserve ROW on this bank line posts through
-    // postFaroReserveEntryOnClient BEFORE storeMatch so the match row points at the JE the
+    // postPendingFaroReserveRowOnAccept BEFORE storeMatch so the match row points at the JE the
     // poster stamped (purchase funding JE for escrow_held; new JE for other kinds).
     // rsv_deposit refuses here and posts with the payment match via faroReserveDepositsOn.
-    let faroReserveJournalEntryId: string | null = null;
-    let faroPosterClearedBank = false;
     let matchKind: LedgerEntryKind = input.ledger_entry_kind;
     let matchLedgerEntryId = input.ledger_entry_id;
-    const faroEntry = await loadFaroReserveEntryForBankTxn(
-      client,
-      input.operating_company_id,
-      input.bank_transaction_id
-    );
-    if (faroEntry && faroEntry.entry_kind !== "rsv_deposit" && !faroEntry.journal_entry_id) {
-      const faroPost = await postFaroReserveRowOnBankMatch(client, {
-        operating_company_id: input.operating_company_id,
-        entry_id: faroEntry.id,
-        actor_user_id: input.actor_user_uuid,
-      });
-      faroReserveJournalEntryId = faroPost.journal_entry_id;
-      faroPosterClearedBank = faroPost.poster_cleared_bank;
+    const faroPosted = await postPendingFaroReserveRowOnAccept(client, {
+      operatingCompanyId: input.operating_company_id,
+      bankTransactionId: input.bank_transaction_id,
+      actorUserUuid: input.actor_user_uuid,
+    });
+    const faroReserveJournalEntryId = faroPosted.journalEntryId;
+    const faroPosterClearedBank = faroPosted.posterClearedBank;
+    if (faroReserveJournalEntryId) {
       matchKind = "je";
       matchLedgerEntryId = faroReserveJournalEntryId;
       // escrow_held: if the operator picked a JE, it must be the purchase funding JE.
@@ -1525,7 +1619,7 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
         input.ledger_entry_id !== faroReserveJournalEntryId
       ) {
         throw new Error(
-          `faro_reserve_je_mismatch:entry=${faroEntry.id}:expected=${faroReserveJournalEntryId}:got=${input.ledger_entry_id}`
+          `faro_reserve_je_mismatch:expected=${faroReserveJournalEntryId}:got=${input.ledger_entry_id}`
         );
       }
     }
@@ -1698,50 +1792,14 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
         paymentDate: txn.transaction_date.slice(0, 10),
       });
     } else if (matchKind === "factoring_advance") {
-      // OWNER-ORDER §3.1 — reserve register by accounting.chart_of_accounts_roles
-      // (factor_reserve_held / factor_cash_reserve_held), never catalogs.account_role_bindings.
-      //   · Faro report row on this bank line → already posted above via postFaroReserveEntryOnClient
-      //   · Repurchase movement (no Faro entry) → postFactoringChargebackEvent
-      //   · Ordinary funding wire on operating bank → deposit sweep
-      const reserveBank = await isFaroReserveBankAccount(
-        client,
-        input.operating_company_id,
-        txn.bank_account_id
-      );
-      if (reserveBank && faroReserveJournalEntryId) {
-        // Faro reserve row already posted in this transaction — do not also chargeback.
-      } else if (reserveBank) {
-        // Same open match client — match + recourse JE commit together or neither does.
-        const amounts = await loadExactLinkedChargebackAmountsOnClient(
-          client,
-          input.operating_company_id,
-          matchLedgerEntryId
-        );
-        const cb = await postFactoringChargebackEvent({
-          operating_company_id: input.operating_company_id,
-          factoring_advance_id: matchLedgerEntryId,
-          actor_user_id: input.actor_user_uuid,
-          chargeback_amount_cents: amounts.liability_cents,
-          default_interest_cents: 0,
-          recoursed_ar_cents: amounts.recoursed_ar_cents,
-          client,
-        });
-        if (!cb.posted) {
-          throw new Error(`factoring_recourse_post_failed:${cb.reason ?? "unknown"}`);
-        }
-        if (cb.journal_entry_id) {
-          await client.query(
-            `UPDATE banking.bank_transactions
-                SET matched_journal_entry_id = COALESCE(matched_journal_entry_id, $3::uuid),
-                    updated_at = now()
-              WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-            [input.bank_transaction_id, input.operating_company_id, cb.journal_entry_id]
-          );
-        }
-      } else {
-        // ROUND 261 (GO-CLOSE-188 DEFECT A, factoring side) — deposit-sweep for funding wires.
-        await sweepMatchedReceiptToBank(client, input.operating_company_id, "factoring_advance_deposit", matchLedgerEntryId, input.actor_user_uuid);
-      }
+      await runFactoringAdvanceAcceptFollowUps(client, {
+        operatingCompanyId: input.operating_company_id,
+        factoringAdvanceId: matchLedgerEntryId,
+        actorUserUuid: input.actor_user_uuid,
+        bankTransactionId: input.bank_transaction_id,
+        bankAccountId: txn.bank_account_id,
+        faroReserveJournalEntryId,
+      });
     }
 
     const cashBasisRevenueCents = computeCashBasisRevenueFromActualCashHit({
@@ -1876,6 +1934,17 @@ export async function acceptExactMultiDocumentMatch(input: {
       throw new Error(`multi_match_nonzero_variance:${varianceCents}`);
     }
 
+    // OWNER-ORDER §3.1 — post a pending Faro reserve ROW once on this bank line.
+    // Do NOT rewrite each multi entry to je (keep N-advance linkage). Follow-ups
+    // skip sweep/chargeback when this returned a JE.
+    const faroPosted = await postPendingFaroReserveRowOnAccept(client, {
+      operatingCompanyId: input.operating_company_id,
+      bankTransactionId: input.bank_transaction_id,
+      actorUserUuid: input.actor_user_uuid,
+    });
+    const faroReserveJournalEntryId = faroPosted.journalEntryId;
+    const faroPosterClearedBank = faroPosted.posterClearedBank;
+
     const toleranceCents = toleranceForAmount(txn.amount_cents);
     const txnMemo = `${txn.merchant_name ?? ""} ${txn.description ?? ""}`.trim();
     const matchIds: string[] = [];
@@ -1940,14 +2009,33 @@ export async function acceptExactMultiDocumentMatch(input: {
           paymentDate: txn.transaction_date.slice(0, 10),
         });
       } else if (entry.ledger_entry_kind === "factoring_advance") {
-        await sweepMatchedReceiptToBank(client, input.operating_company_id, "factoring_advance_deposit", entry.ledger_entry_id, input.actor_user_uuid);
+        await runFactoringAdvanceAcceptFollowUps(client, {
+          operatingCompanyId: input.operating_company_id,
+          factoringAdvanceId: entry.ledger_entry_id,
+          actorUserUuid: input.actor_user_uuid,
+          bankTransactionId: input.bank_transaction_id,
+          bankAccountId: txn.bank_account_id,
+          faroReserveJournalEntryId,
+        });
       }
     }
 
     // Stamp the first entry's clear-column (multi-doc has one bank line → one denormalized FK).
+    // Faro poster already set review_state='matched' + matched_journal_entry_id — still stamp
+    // the first advance pointer so the worklist keeps N-advance linkage.
     const first = input.entries[0]!;
     const matchedColumn = MATCHED_COLUMN_BY_KIND[first.ledger_entry_kind] ?? null;
-    if (matchedColumn) {
+    if (matchedColumn && faroPosterClearedBank) {
+      await client.query(
+        `UPDATE banking.bank_transactions
+            SET ${matchedColumn} = COALESCE(${matchedColumn}, $3::uuid),
+                categorized_by_user_id = COALESCE(categorized_by_user_id, $4::uuid),
+                categorized_at = COALESCE(categorized_at, now()),
+                updated_at = now()
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+        [input.bank_transaction_id, input.operating_company_id, first.ledger_entry_id, input.actor_user_uuid]
+      );
+    } else if (matchedColumn) {
       const cleared = await client.query(
         `UPDATE banking.bank_transactions
             SET review_state = 'matched', resolution_kind = 'matched',
