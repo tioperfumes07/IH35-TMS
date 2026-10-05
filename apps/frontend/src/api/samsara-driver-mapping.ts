@@ -87,12 +87,21 @@ export function listMappingTargets(
 export type MapResponse = {
   status: "ok";
   mapped_count: number;
+  canonical_count?: number;
+  retired_driver_ids?: string[];
+  kept_live?: Array<{ driver_id: string; reason: string }>;
   missing_samsara_driver_ids: string[];
 };
 
 export function mapSamsaraDrivers(
   companyId: string,
-  body: { samsara_driver_ids: string[]; target_kind: "driver" | "vendor"; target_id: string }
+  body: {
+    samsara_driver_ids: string[];
+    target_kind: "driver" | "vendor";
+    target_id: string;
+    /** Retire a duplicate driver record left with no Samsara user into the target profile. */
+    retire_emptied_drivers?: boolean;
+  }
 ) {
   return apiRequest<MapResponse>(withCompany("/api/v1/samsara/map", companyId), {
     method: "POST",

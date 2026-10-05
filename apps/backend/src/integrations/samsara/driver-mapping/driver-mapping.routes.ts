@@ -84,7 +84,33 @@ const mapSchema = z.object({
   samsara_driver_ids: z.array(z.string().min(1)).min(1).max(200),
   target_kind: z.enum(["driver", "vendor"]),
   target_id: z.string().uuid(),
+  // Owner law (2026-10-05): one driver profile holds MANY Samsara users; Samsara names are never changed.
+  // true = a driver row left holding no active Samsara user after this map is retired INTO the target
+  // (merged_into_driver_id, Inactive, locked manual_deactivate). Never automatic: the human ticks it.
+  retire_emptied_drivers: z.boolean().default(false),
 });
+
+/**
+ * CANONICAL MAP (2026-10-05). mdata.driver_samsara_accounts is the map every engine resolves through (sync, HOS,
+ * messaging, profile — driver-samsara-map.ts). This page used to write ONLY integrations.samsara_drivers.local_driver_id,
+ * so a human mapping changed nothing the engines see (measured: 27 USMCA Samsara users where the two maps named
+ * different driver rows). Every map / unmap now writes the canonical row in the same transaction.
+ */
+export const CANONICAL_ACCOUNT_UPSERT_SQL = `
+  INSERT INTO mdata.driver_samsara_accounts
+    (operating_company_id, driver_id, samsara_driver_id, samsara_username, is_active, created_by_user_id)
+  SELECT sd.operating_company_id, $3::uuid, sd.samsara_driver_id,
+         NULLIF(COALESCE(sd.raw_payload->>'username', sd.raw_payload->>'name'), ''), true, $4::uuid
+    FROM integrations.samsara_drivers sd
+   WHERE sd.operating_company_id = $1::uuid AND sd.samsara_driver_id = ANY($2::text[])
+  ON CONFLICT (samsara_driver_id) DO UPDATE
+     SET driver_id = EXCLUDED.driver_id, is_active = true, updated_at = now()
+   WHERE mdata.driver_samsara_accounts.operating_company_id = EXCLUDED.operating_company_id
+  RETURNING samsara_driver_id`;
+export const CANONICAL_ACCOUNT_DEACTIVATE_SQL = `
+  UPDATE mdata.driver_samsara_accounts SET is_active = false, updated_at = now()
+   WHERE operating_company_id = $1::uuid AND samsara_driver_id = ANY($2::text[]) AND is_active
+  RETURNING samsara_driver_id`;
 
 const unmapSchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -100,6 +126,8 @@ async function appendMappingAudit(
     samsaraDriverIds: string[];
     targetKind?: "driver" | "vendor";
     targetId?: string | null;
+    canonicalSamsaraDriverIds?: string[];
+    retiredDriverIds?: string[];
   }
 ) {
   await appendCrudAudit(
@@ -111,6 +139,8 @@ async function appendMappingAudit(
       samsara_driver_ids: params.samsaraDriverIds,
       target_kind: params.targetKind ?? null,
       target_id: params.targetId ?? null,
+      canonical_samsara_driver_ids: params.canonicalSamsaraDriverIds ?? [],
+      retired_driver_ids: params.retiredDriverIds ?? [],
     },
     "info",
     "E20-SAMSARA-MAPPING-ENGINE"
@@ -341,7 +371,7 @@ export async function registerSamsaraDriverMappingRoutes(app: FastifyInstance) {
 
       const parsed = mapSchema.safeParse(req.body ?? {});
       if (!parsed.success) return validationError(reply, parsed.error);
-      const { operating_company_id, samsara_driver_ids, target_kind, target_id } = parsed.data;
+      const { operating_company_id, samsara_driver_ids, target_kind, target_id, retire_emptied_drivers } = parsed.data;
       const ids = Array.from(new Set(samsara_driver_ids));
 
       const result = await withCompanyScope(user.uuid, operating_company_id, async (client: DbClient) => {
@@ -350,11 +380,14 @@ export async function registerSamsaraDriverMappingRoutes(app: FastifyInstance) {
         }
 
         if (target_kind === "driver") {
-          const target = await client.query<{ id: string }>(
-            `SELECT id::text AS id FROM mdata.drivers WHERE operating_company_id = $1::uuid AND id = $2::uuid LIMIT 1`,
+          const target = await client.query<{ id: string; merged_into: string | null }>(
+            `SELECT id::text AS id, merged_into_driver_id::text AS merged_into
+               FROM mdata.drivers WHERE operating_company_id = $1::uuid AND id = $2::uuid LIMIT 1`,
             [operating_company_id, target_id]
           );
           if (target.rows.length === 0) return { status: "target_not_found" as const };
+          // A merged-away record is not a profile; map to the driver it was merged into.
+          if (target.rows[0].merged_into) return { status: "target_is_merged" as const, survivor_id: target.rows[0].merged_into };
         } else {
           const target = await client.query<{ id: string }>(
             `SELECT id::text AS id FROM mdata.vendors WHERE operating_company_id = $1::uuid AND id = $2::uuid AND deactivated_at IS NULL LIMIT 1`,
@@ -387,6 +420,51 @@ export async function registerSamsaraDriverMappingRoutes(app: FastifyInstance) {
           [operating_company_id, ids, target_id]
         );
 
+        // Which driver held each moved Samsara user BEFORE this map (canonical rows), for the retire step.
+        const previous = await client.query<{ driver_id: string }>(
+          `SELECT DISTINCT driver_id::text FROM mdata.driver_samsara_accounts
+            WHERE operating_company_id = $1::uuid AND samsara_driver_id = ANY($2::text[]) AND driver_id <> $3::uuid`,
+          [operating_company_id, ids, target_id]
+        );
+        const canonical =
+          target_kind === "driver"
+            ? await client.query<{ samsara_driver_id: string }>(CANONICAL_ACCOUNT_UPSERT_SQL, [operating_company_id, ids, target_id, user.uuid])
+            : await client.query<{ samsara_driver_id: string }>(CANONICAL_ACCOUNT_DEACTIVATE_SQL, [operating_company_id, ids]);
+
+        const retired: string[] = [];
+        const keptLive: Array<{ driver_id: string; reason: string }> = [];
+        if (target_kind === "driver" && retire_emptied_drivers) {
+          for (const { driver_id } of previous.rows) {
+            const stillHeld = await client.query(
+              `SELECT 1 FROM mdata.driver_samsara_accounts WHERE driver_id = $1::uuid AND is_active LIMIT 1`,
+              [driver_id]
+            );
+            if ((stillHeld.rowCount ?? 0) > 0) {
+              keptLive.push({ driver_id, reason: "still holds another active Samsara user" });
+              continue;
+            }
+            const openSettlement = await client.query(
+              `SELECT 1 FROM driver_finance.driver_settlements
+                WHERE operating_company_id = $1::uuid AND driver_id = $2::uuid AND status = 'open' AND voided_at IS NULL LIMIT 1`,
+              [operating_company_id, driver_id]
+            );
+            if ((openSettlement.rowCount ?? 0) > 0) {
+              keptLive.push({ driver_id, reason: "has an open settlement — close it first" });
+              continue;
+            }
+            const r = await client.query(
+              `UPDATE mdata.drivers
+                  SET merged_into_driver_id = $3::uuid,
+                      status = CASE WHEN status = 'Terminated' THEN status ELSE 'Inactive'::mdata.driver_status END,
+                      deactivated_at = COALESCE(deactivated_at, now()),
+                      status_locked_at = now(), status_locked_reason = 'manual_deactivate', updated_at = now()
+                WHERE operating_company_id = $1::uuid AND id = $2::uuid AND merged_into_driver_id IS NULL AND id <> $3::uuid`,
+              [operating_company_id, driver_id, target_id]
+            );
+            if ((r.rowCount ?? 0) > 0) retired.push(driver_id);
+          }
+        }
+
         await appendMappingAudit(client, {
           actorUserUuid: user.uuid,
           operatingCompanyId: operating_company_id,
@@ -394,13 +472,23 @@ export async function registerSamsaraDriverMappingRoutes(app: FastifyInstance) {
           samsaraDriverIds: updated.rows.map((r) => r.samsara_driver_id),
           targetKind: target_kind,
           targetId: target_id,
+          canonicalSamsaraDriverIds: canonical.rows.map((r) => r.samsara_driver_id),
+          retiredDriverIds: retired,
         });
 
-        return { status: "ok" as const, mapped_count: updated.rowCount ?? 0, missing_samsara_driver_ids: missing };
+        return {
+          status: "ok" as const,
+          mapped_count: updated.rowCount ?? 0,
+          canonical_count: canonical.rowCount ?? 0,
+          retired_driver_ids: retired,
+          kept_live: keptLive,
+          missing_samsara_driver_ids: missing,
+        };
       });
 
       if (result.status === "forbidden") return reply.code(403).send({ error: "forbidden" });
       if (result.status === "target_not_found") return reply.code(404).send({ error: "target_not_found" });
+      if (result.status === "target_is_merged") return reply.code(409).send({ error: "target_is_merged", survivor_id: result.survivor_id });
       return reply.code(200).send(result);
     }
   );
@@ -435,14 +523,17 @@ export async function registerSamsaraDriverMappingRoutes(app: FastifyInstance) {
           [operating_company_id, ids]
         );
 
+        const canonical = await client.query<{ samsara_driver_id: string }>(CANONICAL_ACCOUNT_DEACTIVATE_SQL, [operating_company_id, ids]);
+
         await appendMappingAudit(client, {
           actorUserUuid: user.uuid,
           operatingCompanyId: operating_company_id,
           action: "unmap",
           samsaraDriverIds: updated.rows.map((r) => r.samsara_driver_id),
+          canonicalSamsaraDriverIds: canonical.rows.map((r) => r.samsara_driver_id),
         });
 
-        return { status: "ok" as const, unmapped_count: updated.rowCount ?? 0 };
+        return { status: "ok" as const, unmapped_count: updated.rowCount ?? 0, canonical_count: canonical.rowCount ?? 0 };
       });
 
       if (result.status === "forbidden") return reply.code(403).send({ error: "forbidden" });

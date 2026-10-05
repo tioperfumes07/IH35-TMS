@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { withLuciaBypass } from "../../auth/db.js";
 import { SamsaraClient } from "./samsara-client.js";
 import { getSamsaraConfigForCompany } from "./samsara.service.js";
+import { loadDriverIdBySamsaraId, loadSamsaraIdsByDriverId } from "./driver-samsara-map.js";
 
 /**
  * ROW-39 (owner 2026-09-05 15:04Z): "Samsara holds 732 deactivated drivers; the TMS mirror
@@ -68,6 +69,15 @@ export function resolveMirrorLocalDriverId(input: {
   return nameCandidates.length === 1 ? nameCandidates[0]! : null;
 }
 
+/**
+ * Owner law (2026-10-05): one driver profile holds MANY Samsara users (old usernames, second logins) and Samsara
+ * names are never changed. Samsara deactivating ONE of those users is that login retiring, not the driver leaving:
+ * the driver is deactivated only when NONE of his other canonical Samsara users is still active in Samsara.
+ */
+export function shouldDeactivateDriverForSamsaraUser(otherAccountActivationStatuses: Array<string | null>): boolean {
+  return !otherAccountActivationStatuses.some((s) => (s ?? "").toLowerCase() === "active");
+}
+
 async function appendAuditEvent(client: DbClient, eventClass: string, severity: "info" | "warning", payload: Record<string, unknown>) {
   await client.query(`SELECT audit.append_event($1, $2, $3::jsonb, NULL, $4)`, [
     eventClass,
@@ -118,11 +128,20 @@ export async function collectSamsaraDriverMirror(
 
     // Pre-load the local roster once (never a re-query per row) for the license/name match — matches
     // the R2/resolveOrCreate convention elsewhere in this repo of never guessing among ambiguous rows.
-    const roster = await client.query<{ id: string; samsara_driver_id: string | null; cdl_number: string | null; mexican_license_number: string | null; first_name: string | null; last_name: string | null }>(
-      `SELECT id::text, samsara_driver_id, cdl_number, mexican_license_number, first_name, last_name
+    const roster = await client.query<{ id: string; samsara_driver_id: string | null; cdl_number: string | null; mexican_license_number: string | null; first_name: string | null; last_name: string | null; merged_into: string | null }>(
+      `SELECT id::text, samsara_driver_id, cdl_number, mexican_license_number, first_name, last_name,
+              merged_into_driver_id::text AS merged_into
          FROM mdata.drivers WHERE operating_company_id = $1::uuid`,
       [operatingCompanyId]
     );
+    // CANONICAL MAP FIRST (2026-10-05): mdata.driver_samsara_accounts is the one answer to "which driver is this
+    // Samsara user" (driver-samsara-map.ts; merges followed). This collector resolved through the legacy
+    // mdata.drivers.samsara_driver_id column + license/name guesses, a third resolver that disagreed with the map
+    // the mapping page and every engine use. The heuristics now run only for a Samsara user the map has never seen,
+    // and a heuristic hit on a merged-away record resolves to its survivor.
+    const canonicalBySamsaraId = await loadDriverIdBySamsaraId(client, operatingCompanyId);
+    const samsaraIdsByDriver = await loadSamsaraIdsByDriverId(client, operatingCompanyId);
+    const survivorOf = new Map(roster.rows.map((r) => [r.id, r.merged_into ?? r.id]));
     const bySamsaraId = new Map<string, string[]>();
     const byLicense = new Map<string, string[]>();
     const byName = new Map<string, string[]>();
@@ -159,14 +178,17 @@ export async function collectSamsaraDriverMirror(
       // The explicit Samsara id on the local driver is the authoritative identity link. Resolve it
       // before the heuristic license/name fallbacks; duplicate names and reused/duplicated license
       // values must not erase a previously established one-to-one external identity.
-      const localDriverId = resolveMirrorLocalDriverId({
-        samsaraDriverId: driver.id,
-        licenseNumber,
-        normalizedName: name,
-        bySamsaraId,
-        byLicense,
-        byName,
-      });
+      const heuristicId = canonicalBySamsaraId.has(driver.id)
+        ? null
+        : resolveMirrorLocalDriverId({
+            samsaraDriverId: driver.id,
+            licenseNumber,
+            normalizedName: name,
+            bySamsaraId,
+            byLicense,
+            byName,
+          });
+      const localDriverId = canonicalBySamsaraId.get(driver.id) ?? (heuristicId ? survivorOf.get(heuristicId) ?? heuristicId : null);
 
       const res = await client.query<{ inserted: boolean }>(
         `
@@ -195,7 +217,28 @@ export async function collectSamsaraDriverMirror(
       // forced back to status='Active') when this collector itself set that lock -- real activity
       // (loads/telematics), not "Samsara says active," is still what the owner's own 2026-08-08 law
       // requires for reactivation; never overrides a human's own manual_deactivate lock.
-      if (localDriverId) {
+      let keepDriverActive = false;
+      if (localDriverId && activationStatus === "deactivated") {
+        const others = (samsaraIdsByDriver.get(localDriverId) ?? []).filter((sid) => sid !== driver.id);
+        if (others.length > 0) {
+          const st = await client.query<{ s: string | null }>(
+            `SELECT driver_activation_status AS s FROM integrations.samsara_drivers
+              WHERE operating_company_id = $1::uuid AND samsara_driver_id = ANY($2::text[])`,
+            [operatingCompanyId, others]
+          );
+          keepDriverActive = !shouldDeactivateDriverForSamsaraUser(st.rows.map((r) => r.s));
+          if (keepDriverActive) {
+            await appendAuditEvent(client, "samsara.driver_mirror_user_retired_driver_kept", "info", {
+              operating_company_id: operatingCompanyId,
+              collection_run_id: collectionRunId,
+              samsara_driver_id: driver.id,
+              driver_id: localDriverId,
+              other_samsara_driver_ids: others,
+            });
+          }
+        }
+      }
+      if (localDriverId && !keepDriverActive) {
         if (activationStatus === "deactivated") {
           await client.query(
             `
