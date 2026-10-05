@@ -20,6 +20,8 @@ const manifest = readFileSync("apps/frontend/src/routes/manifest.tsx", "utf8");
 const css = readFileSync("apps/frontend/src/components/boards/party-board.css", "utf8");
 const hubUi = readFileSync("apps/frontend/src/components/boards/DriverHubBoard.tsx", "utf8");
 const ddUi = readFileSync("apps/frontend/src/components/boards/DriverOverviewBoard.tsx", "utf8");
+const ddTabs = readFileSync("apps/frontend/src/pages/drivers/driverProfileTabs.ts", "utf8");
+const ddSurface = ddUi + "\n" + ddTabs;
 const fails = [];
 for (const k of ["customers", "vendors"]) if (!new RegExp(`<PartyListRoute kind="${k}">`).test(manifest)) fails.push(`/${k} must open on the board (PartyListRoute)`);
 for (const label of ["With transactions", "In the book", "Open invoices", "Billed", "A/R open", "Collected", "Spend YTD", "Fuel share", "Open bills", "Unposted fuel",
@@ -41,7 +43,7 @@ for (const label of ["Edit", "Add payment", "Run settlement", "Overview", "Addit
   "Safety & accidents", "Driver disputes", "Settlement due", "Additional pay", "Escrow held", "Miles, 30 days", "MPG, 30 days", "Integrity", "Line haul", "Deductions",
   "Net pay", "it rides the settlement, it never becomes a separate cheque", "+ Log complaint", "Reports &amp; damage he filed", "Trucks he has held", "Pay terms", "Compliance",
   "CDL expiration", "Medical card", "Annual MVR review", "Drug screen, last", "Hours violations, 90 days"]) {
-  if (!ddUi.includes(label)) fails.push(`driver detail control/label missing: "${label}"`);
+  if (!ddSurface.includes(label)) fails.push(`driver detail control/label missing: "${label}"`);
 }
 const ddSvc = readFileSync("apps/backend/src/mdata/canonical/driver-overview.service.ts", "utf8");
 for (const label of ["MPG against fleet", "Gallons per 100 mi", "Fills with no load link", "Fuel anomaly flags", "Complaints per 100k mi", "Damage $ per 100k mi", "Accidents per 100k mi"]) {

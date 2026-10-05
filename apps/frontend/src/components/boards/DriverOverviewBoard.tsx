@@ -309,9 +309,19 @@ export function DriverOverviewBoard(props: {
               subtitle="Late, refused to roll, service failure — logged with who raised it and what it cost"
               count={o.complaints.length}
               action={
-                <Link className="pb-link" to={driverProfileTabHref(o.driver.id, "Complaints")} data-testid="complaints-view-all">
-                  View all
-                </Link>
+                <span className="inline-flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="dd-add"
+                    onClick={() => navigate(`/safety/complaints?driver_id=${o.driver.id}`)}
+                    data-testid="driver-log-complaint"
+                  >
+                    + Log complaint
+                  </button>
+                  <Link className="pb-link" to={driverProfileTabHref(o.driver.id, "Complaints")} data-testid="complaints-view-all">
+                    View all
+                  </Link>
+                </span>
               }
             >
               {o.complaints.length === 0 ? <div className="dd-note">No complaint against this driver in the last 90 days · fleet average {t.fleet_complaints_avg_90d}.</div> : (
@@ -350,7 +360,7 @@ export function DriverOverviewBoard(props: {
               )}
             </CollapsibleProfileCard>
 
-            <CollapsibleProfileCard scope={scope} cardId="reports" title="Reports & damage he filed" count={o.reports.length}>
+            <CollapsibleProfileCard scope={scope} cardId="reports" title="Reports &amp; damage he filed" count={o.reports.length}>
               {o.reports.length === 0 ? <div className="dd-note">No driver report and no DVIR defect filed by this driver.</div> : (
                 <table className="ih-table">
                   <thead>
