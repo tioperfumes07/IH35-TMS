@@ -1,8 +1,10 @@
 import type { FastifyInstance } from "fastify";
 import { HeadBucketCommand, S3Client } from "@aws-sdk/client-s3";
 import { withLuciaBypass } from "../auth/db.js";
-import { USMCA_COMPANY_ID } from "../org/companies.routes.js";
+import { USMCA_COMPANY_ID } from "../org/company-ids.js";
 import { getAppReady } from "../lib/startup-ready.js";
+import { resolveBackendGitSha, resolveBackendVersion, resolveBuildRef, resolveBuildTimestamp } from "./build-identity.js";
+export { resolveBackendGitSha, resolveBackendVersion, resolveBuildRef, resolveBuildTimestamp } from "./build-identity.js";
 import { createResilientRedis, type RedisHealthStatus } from "../lib/redis.client.js";
 import { logger } from "../observability/structured-logger.js";
 import { LEDGER_FINANCIAL_HEALTH_CHECKS } from "./ledger-financial-health.checks.js";
@@ -833,47 +835,6 @@ async function checkSentryHeartbeat(): Promise<void> {
   }
 }
 
-export function resolveBackendVersion(): string {
-  return resolveBackendGitSha().slice(0, 7);
-}
-
-/** Full commit SHA when available (Render / GitHub CI); else `"dev"`. */
-export function resolveBackendGitSha(): string {
-  const renderCommit = process.env.RENDER_GIT_COMMIT?.trim();
-  if (renderCommit) return renderCommit;
-  const githubSha = process.env.GITHUB_SHA?.trim();
-  if (githubSha) return githubSha;
-  return "dev";
-}
-
-/**
- * HEALTH-NO-SHA-01 — build/serving identity timestamp (ISO-8601).
- * Prefer explicit bake env (`IH35_BUILD_AT` / `BUILD_TIMESTAMP`); else this Node process boot time
- * (on Render, a new deploy replaces the process — boot ≈ deploy of this instance).
- */
-export function resolveBuildTimestamp(): string {
-  const baked =
-    process.env.IH35_BUILD_AT?.trim() ||
-    process.env.BUILD_TIMESTAMP?.trim() ||
-    process.env.SOURCE_DATE?.trim();
-  if (baked) return baked;
-  return new Date(Date.now() - process.uptime() * 1000).toISOString();
-}
-
-/** Branch or tag the process was built from (Render / GitHub Actions). */
-export function resolveBuildRef(): string {
-  const renderBranch = process.env.RENDER_GIT_BRANCH?.trim();
-  if (renderBranch) return renderBranch;
-  const githubRefName = process.env.GITHUB_REF_NAME?.trim();
-  if (githubRefName) return githubRefName;
-  const githubRef = process.env.GITHUB_REF?.trim();
-  if (githubRef) {
-    const m = githubRef.match(/^refs\/(?:heads|tags)\/(.+)$/);
-    if (m?.[1]) return m[1];
-    return githubRef;
-  }
-  return "unknown";
-}
 
 /**
  * Shared identity fields — full `/healthz` and `/healthz/shallow` must both expose SHA.

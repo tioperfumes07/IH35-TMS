@@ -10,7 +10,8 @@ import { requireAuth } from "../auth/session-middleware.js";
 // Defense-in-depth for the entity-independence LAW: filter not-yet-launched entities out of the
 // company-list responses regardless of access/deactivated state, behind USMCA_ACTIVE (default OFF).
 // Flip USMCA_ACTIVE=1 at launch to expose it. Entity ids are share-nothing; this only hides USMCA.
-export const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+import { USMCA_COMPANY_ID } from "./company-ids.js";
+export { USMCA_COMPANY_ID } from "./company-ids.js";
 const USMCA_ACTIVE = process.env.USMCA_ACTIVE === "1";
 const RL_READ = { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } } as const;
 const RL_WRITE = { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } } as const;

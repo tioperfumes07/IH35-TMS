@@ -10,7 +10,7 @@ let initialized = false;
 // This cron runs under withLuciaBypass (RLS OFF). Without an operating_company_id predicate
 // the resolve-stale statement would touch every open reminder in every company on every tick
 // (engine-audit E-SCOPE / frozen-entity violation, ROUND 301 Cursor independent audit).
-const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+import { USMCA_COMPANY_ID } from "../org/company-ids.js";
 
 const REFRESH_SQL = `
   WITH candidates AS (

@@ -1,10 +1,7 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  evaluatePmAutoEngineStatus,
-  registerMaintenancePmAutoEngineRoutes,
-  runPmAutoEngineForTenant,
-} from "../pm-auto-engine.service.js";
+import { evaluatePmAutoEngineStatus, runPmAutoEngineForTenant } from "../pm-auto-engine.service.js";
+import { registerMaintenancePmAutoEngineRoutes } from "../pm-auto-engine.routes.js";
 
 const COMPANY = "11111111-1111-4111-8111-111111111111";
 

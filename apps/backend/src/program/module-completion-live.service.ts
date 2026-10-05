@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { resolveMonorepoRoot } from "../lib/monorepo-root.js";
-import { resolveBackendVersion } from "../health/health.routes.js";
+import { resolveBackendVersion } from "../health/build-identity.js";
 
 type Generator = {
   buildData: () => {

@@ -40,6 +40,9 @@ const REVERSAL_ENGINES = [
  * A route handler calling one of these transitively reaches a reversal engine.
  */
 const REVERSAL_WRAPPERS = [
+  // work-orders/work-order-financial-settle.service.ts — reverses the WO's linked bill / expense via postVoidReversal
+  // (moved out of work-orders.routes.ts, CC-2 2026-10-04); pinned by verify-wo-void-flag-gate.
+  "settleWorkOrderFinancialLinkage",
   "voidBill",
   "voidBillInClientTx",
   "voidBillPayment",
@@ -95,6 +98,7 @@ const ALL_REVERSAL_NAMES = [...REVERSAL_ENGINES, ...REVERSAL_WRAPPERS];
 const EXEMPT_ROUTES = [
   { pattern: /\/catalogs\/.*cancellation-reasons/, reason: "catalog CRUD" },
   { pattern: /\/catalogs\/void-cancel-reasons/, reason: "catalog CRUD" },
+  { pattern: /\/fleet\/roster-integrity\/:id\/void/, reason: "roster data-quality finding (fleet.roster_findings: no amount, no ledger); void-not-delete with reason — the route file became scannable when it left roster-integrity.service.ts (CC-2 2026-10-04)" },
   { pattern: /\/fuel\/card-assignments\/:id\/void/, reason: "E-22 card -> truck registry (master data, no amount, no ledger); void-not-delete with reason" },
   { pattern: /\/catalogs\/payment-methods\/.*\/void/, reason: "catalog config void" },
   { pattern: /\/mdata\/vendors\/.*\/payment-methods\/.*\/void/, reason: "vendor payment method config" },

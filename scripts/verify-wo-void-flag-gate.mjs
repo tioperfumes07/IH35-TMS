@@ -83,7 +83,9 @@ const read = (rel) => {
   if (!fs.existsSync(p)) { console.error(`verify-wo-void-flag-gate FAIL — missing ${rel}`); process.exit(1); }
   return fs.readFileSync(p, "utf8");
 };
-const errors = assertWoVoid({ route: read(ROUTE), migration: read(MIGRATION) });
+// CC-2 2026-10-04: settleWorkOrderFinancialLinkage (the gate + the reversal) moved to work-order-financial-settle.service.ts
+// so the governance executor imports it without the route layer; the route still calls it. Read both together.
+const errors = assertWoVoid({ route: read(ROUTE) + "\n" + read("apps/backend/src/work-orders/work-order-financial-settle.service.ts"), migration: read(MIGRATION) });
 if (errors.length) {
   console.error("verify-wo-void-flag-gate FAIL — WO_VOID_ENABLED gate broken:");
   for (const e of errors) console.error("  - " + e);

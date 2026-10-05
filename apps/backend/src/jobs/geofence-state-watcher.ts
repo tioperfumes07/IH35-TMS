@@ -19,7 +19,7 @@
 
 import type { FastifyInstance } from "fastify";
 import { withLuciaBypass } from "../auth/db.js";
-import { USMCA_COMPANY_ID } from "../org/companies.routes.js";
+import { USMCA_COMPANY_ID } from "../org/company-ids.js";
 import { fetchActiveGeofences, processGpsBatch } from "../integrations/samsara/geofences/state-machine/transitions.service.js";
 import { backfillGeofenceEventsFromPositions } from "../telematics/geofence-events-backfill.service.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";

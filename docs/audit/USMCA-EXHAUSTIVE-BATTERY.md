@@ -59,16 +59,16 @@ after creation; a GL/posting failure goes to CC-1.
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
 | create | `/api/v1/accounting/1099-corrections` | `apps/backend/src/accounting/p7-wave2.routes.ts:505` | — | — | — |
-| create | `/api/v1/accounting/account-register/inline-save` | `apps/backend/src/accounting/account-register.routes.ts:102` | — | — | — |
-| create | `/api/v1/accounting/account-register/toggle-cleared` | `apps/backend/src/accounting/account-register.routes.ts:70` | — | — | — |
+| create | `/api/v1/accounting/account-register/inline-save` | `apps/backend/src/accounting/account-register.routes.ts:129` | — | — | — |
+| create | `/api/v1/accounting/account-register/toggle-cleared` | `apps/backend/src/accounting/account-register.routes.ts:97` | — | — | — |
 | create | `/api/v1/accounting/bank-deposits` | `apps/backend/src/accounting/bank-deposits.routes.ts:94` | — | — | — |
 | nested | `/api/v1/accounting/bill-payments/:id/post-gl` | `apps/backend/src/accounting/bill-payment-gl.routes.ts:19` | — | — | — |
-| nested | `/api/v1/accounting/bill-payments/:id/unvoid` | `apps/backend/src/accounting/bills.routes.ts:801` | — | — | — |
-| create | `/api/v1/accounting/bills` | `apps/backend/src/accounting/bills.routes.ts:518` | — | — | — |
-| nested | `/api/v1/accounting/bills/:id/allocate` | `apps/backend/src/accounting/bills.routes.ts:900` | — | — | — |
-| nested | `/api/v1/accounting/bills/:id/pay` | `apps/backend/src/accounting/bills.routes.ts:619` | — | — | — |
+| nested | `/api/v1/accounting/bill-payments/:id/unvoid` | `apps/backend/src/accounting/bills.routes.ts:862` | — | — | — |
+| create | `/api/v1/accounting/bills` | `apps/backend/src/accounting/bills.routes.ts:579` | — | — | — |
+| nested | `/api/v1/accounting/bills/:id/allocate` | `apps/backend/src/accounting/bills.routes.ts:961` | — | — | — |
+| nested | `/api/v1/accounting/bills/:id/pay` | `apps/backend/src/accounting/bills.routes.ts:680` | — | — | — |
 | nested | `/api/v1/accounting/bills/:id/post-gl` | `apps/backend/src/accounting/bill-gl-draft.routes.ts:102` | — | — | — |
-| nested | `/api/v1/accounting/bills/:id/unvoid` | `apps/backend/src/accounting/bills.routes.ts:715` | — | — | — |
+| nested | `/api/v1/accounting/bills/:id/unvoid` | `apps/backend/src/accounting/bills.routes.ts:776` | — | — | — |
 | create | `/api/v1/accounting/bills/draft-je-preview` | `apps/backend/src/accounting/bill-gl-draft.routes.ts:45` | — | — | — |
 | create | `/api/v1/accounting/broker-advances` | `apps/backend/src/accounting/broker-advances.routes.ts:38` | — | — | — |
 | nested | `/api/v1/accounting/broker-advances/:id/disburse-to-driver-bill` | `apps/backend/src/accounting/broker-advances.routes.ts:76` | — | — | — |
@@ -87,12 +87,12 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/accounting/fixed-assets/register-trk-units` | `apps/backend/src/accounting/fixed-assets.routes.ts:415` | — | — | — |
 | create | `/api/v1/accounting/fixed-assets/register-unit` | `apps/backend/src/accounting/fixed-assets.routes.ts:381` | — | — | — |
 | nested | `/api/v1/accounting/invoice-disputes/:id/fault` | `apps/backend/src/accounting/invoice-disputes.routes.ts:186` | — | — | — |
-| create | `/api/v1/accounting/invoices` | `apps/backend/src/accounting/invoices.routes.ts:529` | — | — | — |
+| create | `/api/v1/accounting/invoices` | `apps/backend/src/accounting/invoices.routes.ts:576` | — | — | — |
 | nested | `/api/v1/accounting/invoices/:id/disputes` | `apps/backend/src/accounting/invoice-disputes.routes.ts:107` | — | — | — |
 | nested | `/api/v1/accounting/invoices/:id/lines` | `apps/backend/src/accounting/invoice-lines.routes.ts:96` | — | — | — |
-| nested | `/api/v1/accounting/invoices/:id/unvoid` | `apps/backend/src/accounting/invoices.routes.ts:1316` | — | — | — |
-| create | `/api/v1/accounting/invoices/from-load` | `apps/backend/src/accounting/invoices.routes.ts:757` | — | — | — |
-| create | `/api/v1/accounting/journal-entries` | `apps/backend/src/accounting/journal-entries.routes.ts:105` | — | — | — |
+| nested | `/api/v1/accounting/invoices/:id/unvoid` | `apps/backend/src/accounting/invoices.routes.ts:1363` | — | — | — |
+| create | `/api/v1/accounting/invoices/from-load` | `apps/backend/src/accounting/invoices.routes.ts:804` | — | — | — |
+| create | `/api/v1/accounting/journal-entries` | `apps/backend/src/accounting/journal-entries.routes.ts:110` | — | — | — |
 | create | `/api/v1/accounting/lease-posting/leases` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:99` | — | — | — |
 | nested | `/api/v1/accounting/lease-posting/leases/:lease_id/assets` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:140` | — | — | — |
 | nested | `/api/v1/accounting/lease-posting/leases/:lease_id/schedule` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:172` | — | — | — |
@@ -106,8 +106,8 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/accounting/opening-balance-register/finality` | `apps/backend/src/accounting/opening-balance-register/opening-balance-register.routes.ts:194` | — | — | — |
 | create | `/api/v1/accounting/opening-balance-register/import-from-fixture` | `apps/backend/src/accounting/opening-balance-register/opening-balance-register.routes.ts:150` | — | — | — |
 | create | `/api/v1/accounting/opening-balance-register/import-from-qbo` | `apps/backend/src/accounting/opening-balance-register/opening-balance-register.routes.ts:132` | — | — | — |
-| create | `/api/v1/accounting/payments` | `apps/backend/src/accounting/payments.routes.ts:405` | — | — | — |
-| nested | `/api/v1/accounting/payments/:id/unvoid` | `apps/backend/src/accounting/payments.routes.ts:831` | — | — | — |
+| create | `/api/v1/accounting/payments` | `apps/backend/src/accounting/payments.routes.ts:406` | — | — | — |
+| nested | `/api/v1/accounting/payments/:id/unvoid` | `apps/backend/src/accounting/payments.routes.ts:817` | — | — | — |
 | nested | `/api/v1/accounting/payments/:paymentId/applications` | `apps/backend/src/accounting/payment-applications.routes.ts:42` | — | — | — |
 | create | `/api/v1/accounting/periods` | `apps/backend/src/accounting/p7-wave2.routes.ts:182` | — | — | — |
 | create | `/api/v1/accounting/posting-engine-mvp/remediate-bank-ledger-repoint` | `apps/backend/src/accounting/posting-engine.routes.ts:218` | — | — | — |
@@ -322,22 +322,22 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/maintenance/internal-labor` | `apps/backend/src/maintenance/internal-labor.routes.ts:144` | — | — | — |
 | create | `/api/v1/maintenance/parts` | `apps/backend/src/maintenance/parts.routes.ts:210` | — | — | — |
 | create | `/api/v1/maintenance/parts-inventory/purchases` | `apps/backend/src/maintenance/parts-inventory.routes.ts:180` | — | — | — |
-| create | `/api/v1/maintenance/pm-auto-engine/run-now` | `apps/backend/src/maintenance/pm-auto-engine.service.ts:674` | — | — | — |
-| create | `/api/v1/maintenance/pm-auto-engine/settings` | `apps/backend/src/maintenance/pm-auto-engine.service.ts:642` | — | — | — |
+| create | `/api/v1/maintenance/pm-auto-engine/run-now` | `apps/backend/src/maintenance/pm-auto-engine.routes.ts:151` | — | — | — |
+| create | `/api/v1/maintenance/pm-auto-engine/settings` | `apps/backend/src/maintenance/pm-auto-engine.routes.ts:119` | — | — | — |
 | create | `/api/v1/maintenance/pm-schedule` | `apps/backend/src/maintenance/pm-schedule.routes.ts:121` | — | — | — |
 | nested | `/api/v1/maintenance/pm-schedule/:id/generate-wo` | `apps/backend/src/maintenance/pm-schedule.routes.ts:173` | — | — | — |
 | nested | `/api/v1/maintenance/pre-flight-dvir/:defectId/route` | `apps/backend/src/maintenance/pre-flight-dvir.routes.ts:163` | — | — | — |
 | nested | `/api/v1/maintenance/pre-flight/defects/:id/route` | `apps/backend/src/maintenance/pre-flight/routes.ts:171` | — | — | — |
 | nested | `/api/v1/maintenance/predictive-alerts/:id/create-work-order` | `apps/backend/src/maintenance/predictive-alerts.routes.ts:126` | — | — | — |
-| create | `/api/v1/maintenance/reefer-hours/ingest-samsara` | `apps/backend/src/maintenance/reefer-hours.routes.ts:513` | — | — | — |
-| create | `/api/v1/maintenance/reefer-hours/log` | `apps/backend/src/maintenance/reefer-hours.routes.ts:413` | — | — | — |
+| create | `/api/v1/maintenance/reefer-hours/ingest-samsara` | `apps/backend/src/maintenance/reefer-hours.routes.ts:186` | — | — | — |
+| create | `/api/v1/maintenance/reefer-hours/log` | `apps/backend/src/maintenance/reefer-hours.routes.ts:86` | — | — | — |
 | create | `/api/v1/maintenance/service-history` | `apps/backend/src/maintenance/service-history-backfill.routes.ts:72` | — | — | — |
 | create | `/api/v1/maintenance/severe-repair/export-pdf` | `apps/backend/src/maintenance/severe-repair-estimate.routes.ts:97` | — | — | — |
 | create | `/api/v1/maintenance/tire-tread/measurements` | `apps/backend/src/integrations/samsara/cap-12-tire-tread/routes.ts:61` | — | — | — |
-| create | `/api/v1/maintenance/tires/brands` | `apps/backend/src/maintenance/tires.routes.ts:335` | — | — | — |
-| create | `/api/v1/maintenance/tires/records` | `apps/backend/src/maintenance/tires.routes.ts:421` | — | — | — |
-| create | `/api/v1/maintenance/tires/replace` | `apps/backend/src/maintenance/tires.routes.ts:710` | — | — | — |
-| create | `/api/v1/maintenance/tires/tread-audit` | `apps/backend/src/maintenance/tires.routes.ts:789` | — | — | — |
+| create | `/api/v1/maintenance/tires/brands` | `apps/backend/src/maintenance/tires.routes.ts:308` | — | — | — |
+| create | `/api/v1/maintenance/tires/records` | `apps/backend/src/maintenance/tires.routes.ts:394` | — | — | — |
+| create | `/api/v1/maintenance/tires/replace` | `apps/backend/src/maintenance/tires.routes.ts:683` | — | — | — |
+| create | `/api/v1/maintenance/tires/tread-audit` | `apps/backend/src/maintenance/tires.routes.ts:762` | — | — | — |
 | nested | `/api/v1/maintenance/triage/:issue_id/convert-to-damage` | `apps/backend/src/maintenance/triage.routes.ts:206` | — | — | — |
 | nested | `/api/v1/maintenance/triage/:issue_id/convert-to-wo` | `apps/backend/src/maintenance/triage.routes.ts:58` | — | — | — |
 | create | `/api/v1/maintenance/vehicles` | `apps/backend/src/maintenance/vehicles.routes.ts:196` | — | — | — |
@@ -876,8 +876,8 @@ after creation; a GL/posting failure goes to CC-1.
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
-| create | `/api/v1/work-orders` | `apps/backend/src/work-orders/work-orders.routes.ts:701` | — | — | — |
-| nested | `/api/v1/work-orders/:id/photos` | `apps/backend/src/work-orders/work-orders.routes.ts:1425` | — | — | — |
+| create | `/api/v1/work-orders` | `apps/backend/src/work-orders/work-orders.routes.ts:509` | — | — | — |
+| nested | `/api/v1/work-orders/:id/photos` | `apps/backend/src/work-orders/work-orders.routes.ts:1233` | — | — | — |
 
 ### units — 2 create-surface(s)
 
@@ -1011,7 +1011,7 @@ after creation; a GL/posting failure goes to CC-1.
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
-| create | `/api/v1/org/user-company-access` | `apps/backend/src/org/companies.routes.ts:167` | — | — | — |
+| create | `/api/v1/org/user-company-access` | `apps/backend/src/org/companies.routes.ts:168` | — | — | — |
 
 ### payroll — 1 create-surface(s)
 

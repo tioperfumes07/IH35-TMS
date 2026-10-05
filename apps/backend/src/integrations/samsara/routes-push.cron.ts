@@ -19,7 +19,7 @@ import { wrapBackgroundJobTick } from "../../lib/background-jobs.js";
 import { assertTenantContext } from "../../cron/_helpers/tenant-context-guard.js";
 import { pushAllChangedRoutes, readBackSamsaraRoutes, samsaraRouteApiFor, samsaraRoutesPushEnabled } from "./routes-integration.service.js";
 
-const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+import { USMCA_COMPANY_ID } from "../../org/company-ids.js";
 const CRON_NAME = "integrations.samsara_routes_push";
 let initialized = false;
 

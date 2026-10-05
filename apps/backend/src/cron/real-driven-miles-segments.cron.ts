@@ -13,7 +13,7 @@ import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { getRealDrivenMilesSegmentStatus, materializeRealDrivenMilesSegmentsWithSource } from "../integrations/samsara/geofences/real-driven-miles.service.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 
-const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+import { USMCA_COMPANY_ID } from "../org/company-ids.js";
 const CRON_NAME = "telematics.real_driven_miles_segments";
 let initialized = false;
 

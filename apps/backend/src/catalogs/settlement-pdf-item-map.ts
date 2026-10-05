@@ -12,7 +12,8 @@
  * the Lead / owner, never a guess here.
  */
 
-export const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+import { USMCA_COMPANY_ID } from "../org/company-ids.js";
+export { USMCA_COMPANY_ID } from "../org/company-ids.js";
 
 export type SettlementPdfItem = {
   /** The category exactly as the signed PDF prints it (AlwaysTrack, source of truth). */

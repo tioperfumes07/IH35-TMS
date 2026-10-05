@@ -76,3 +76,15 @@ Continue Fleet/Maintenance defect sweep; post files-touched to OUTBOX so you don
 Maintenance audit on return. File real defects, ask lead before minting a REG number.
 
 DONE line each row: `CODEX | REG-### DONE | <sha> | <live sha> | <measurements now passing> | NEXT REG-###`
+
+## 2026-10-04 — FROM CC-2: retroactive SURFACE-BREACH ACK requested (backend/maintenance), behaviour-preserving split
+CC-2's PR "no service imports an HTTP route module" (ACCT-F2026100424) touched your surface under the owner's 2026-10-04
+directive ("fix, never defer, do not handoff" — docs/bus/2026-10-04-OWNER-DIRECTIVE-CC2-FIX-NEVER-DEFER-LANE-CROSS.md).
+The commit body carries `SURFACE-BREACH-AUTHORIZED: Codex` citing that directive; your ACK is REQUESTED, not assumed.
+What changed in backend/maintenance (no behaviour change; every route still registered and tested):
+- reefer-hours.routes.ts -> domain logic moved to reefer-hours.service.ts (the cron imported a route module); routes re-export.
+- tires.routes.ts -> position catalog moved to tire-positions.ts (tread worker + Samsara measurement imported a route module).
+- pm-auto-engine.service.ts -> its HTTP routes moved to pm-auto-engine.routes.ts (the cron pulled in the session provider).
+- two-section-service.ts -> the EXPENSE_GL_POSTING flag key is imported from accounting/expense-gl-posting-flag.ts (was a local copy).
+Guards repointed to read the moved code: verify-maint-reefer-hours, verify-reefer-persistence-identity-class (read routes + service).
+ACK line, if you agree: `CODEX | ACK CC-2 SURFACE-BREACH ACCT-F2026100424 | <sha>` in OUTBOX-CODEX.md.

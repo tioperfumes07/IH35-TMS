@@ -1,10 +1,10 @@
 {
-  "healthzSha": "4a03ec9",
-  "generated_at": "2026-10-04T21:55:05.702Z",
+  "healthzSha": "1c6a964",
+  "generated_at": "2026-10-04T23:10:26.396Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "4a03ec9",
+    "deployedSha": "1c6a964",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 25413,
-      "title": "FINDING: LST-F404 LANE: NON-FINANCIAL (the wall-clock ratchet had no way to justify a correctly clock-dependent file and let a below-baseline count pass as a NOTE — the phantom 14th slot; now a named allowlist with reasons and a ratchet that fails both ways)",
+      "number": 25434,
+      "title": "FINDING: LST-F408 LANE: NON-FINANCIAL (verify-acc20-void-unmatch-resets-review-state --selftest WROTE the planted defect into apps/backend/src/accounting/void.service.ts and restored it in finally — any interrupted run or concurrent commit carried the mutation; now the checks are a pure function of source text and the selftest writes nothing)",
       "state": "merged",
-      "mergedAtCt": "10/04/2026, 04:54 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25413",
-      "sha": "bc97418ea9",
-      "committedAtIso": "2026-10-04T16:54:24-05:00"
+      "mergedAtCt": "10/04/2026, 06:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25434",
+      "sha": "514dcd6e03",
+      "committedAtIso": "2026-10-04T18:08:04-05:00"
     },
     {
-      "number": 25412,
-      "title": "FINDING: N/A (CLAIM-RESERVE migration 202615410950 — reservation-only commit, no code fix)",
+      "number": 25433,
+      "title": "FINDING: LST-F407-B LANE: NON-FINANCIAL (10 truncated-uuid labels: return display names from the query and label the link; baseline stays empty — may only shrink)",
       "state": "merged",
-      "mergedAtCt": "10/04/2026, 04:48 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25412",
-      "sha": "4a03ec931d",
-      "committedAtIso": "2026-10-04T16:48:07-05:00"
+      "mergedAtCt": "10/04/2026, 06:05 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25433",
+      "sha": "1c6a964284",
+      "committedAtIso": "2026-10-04T18:05:56-05:00"
     },
     {
-      "number": 25411,
-      "title": "FIX: LST-F400 LANE: NON-FINANCIAL — app-wide scroll clip, unreachable fixed-menu tails, filter controls off the one height, Reclassify stranded in More, rail highlight tracking the draft filter",
+      "number": 25432,
+      "title": "FINDING: LST-F407-D LANE: NON-FINANCIAL -- verify-phantom-relations reported two guarded reads of the held lease-to-own table as phantoms: the snapshot was NOT stale (regenerated read-only: 897 relations, no diff); the guard could not see a to_regclass check made inside a helper. It now follows helper chains",
       "state": "merged",
-      "mergedAtCt": "10/04/2026, 04:48 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25411",
-      "sha": "95cfcbdb98",
-      "committedAtIso": "2026-10-04T16:48:00-05:00"
+      "mergedAtCt": "10/04/2026, 05:59 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25432",
+      "sha": "f2f9bec299",
+      "committedAtIso": "2026-10-04T17:59:20-05:00"
     },
     {
-      "number": 25410,
-      "title": "FINDING: N/A (CLAIM-RESERVE 18113 18125 18137 -- reservation-only commit, no code fix)",
+      "number": 25431,
+      "title": "FINDING: LST-F407 LANE: NON-FINANCIAL (two selftests walked the REAL repository: case10 made the logic test a function of other seats' commits and reported one regression twice; deleted, the live run keeps the tree check)",
       "state": "merged",
-      "mergedAtCt": "10/04/2026, 04:47 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25410",
-      "sha": "e409d722cb",
-      "committedAtIso": "2026-10-04T16:47:21-05:00"
+      "mergedAtCt": "10/04/2026, 05:54 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25431",
+      "sha": "a7f3b98d56",
+      "committedAtIso": "2026-10-04T17:54:00-05:00"
     },
     {
-      "number": 25409,
-      "title": "FINDING: LST-F402 LANE: NON-FINANCIAL (verify-ops-scripts-assert-not-production read English prose as SQL writes; INSERT INTO / DELETE FROM now shape-checked like UPDATE ... SET, baseline ratcheted 123 -> 122)",
+      "number": 25430,
+      "title": "FINDING: N/A LANE: DOCS (OUTBOX-CC-3 late 10-04 status)",
       "state": "merged",
-      "mergedAtCt": "10/04/2026, 04:44 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25409",
-      "sha": "1d4f87a884",
-      "committedAtIso": "2026-10-04T16:44:03-05:00"
+      "mergedAtCt": "10/04/2026, 05:50 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25430",
+      "sha": "69d565daec",
+      "committedAtIso": "2026-10-04T17:50:20-05:00"
     },
     {
-      "number": 25408,
-      "title": "Cursor- BANK-F2026100404 Faro cash-flow is secured borrowing not sale",
+      "number": 25429,
+      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: verify-step 12399 for the layering guard; RELEASE 26 dead CC-2 claims — 23 whose guards are wired under other steps, 3 with no guard file; 4423/4427 kept to wire their never-run guards)",
       "state": "merged",
-      "mergedAtCt": "10/04/2026, 04:38 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25408",
-      "sha": "a2899df346",
-      "committedAtIso": "2026-10-04T16:38:04-05:00"
+      "mergedAtCt": "10/04/2026, 05:49 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25429",
+      "sha": "b4e347c39f",
+      "committedAtIso": "2026-10-04T17:49:56-05:00"
     },
     {
-      "number": 25407,
-      "title": "FINDING: BANK-F2026100403 LANE: DOCS (ops dry runs fire DEFERRED constraints before the rollback throw — AUTH-216's dry run passed and its apply was refused at COMMIT by the 1295 asset floor; nothing persisted)",
+      "number": 25428,
+      "title": "FINDING: LST-F3323 LANE: NON-FINANCIAL -- the derived-artifact freshness check blocked every PR whenever main itself was stale (e.g. the USMCA battery after any seat added a route); it is now content-scoped: strict for an artifact whose declared inputs the branch touched, loud report-only otherwise, fully strict in CI (Lead ruling)",
       "state": "merged",
-      "mergedAtCt": "10/04/2026, 04:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25407",
-      "sha": "e91bb3fbbd",
-      "committedAtIso": "2026-10-04T16:31:53-05:00"
+      "mergedAtCt": "10/04/2026, 05:49 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25428",
+      "sha": "7c23e14f80",
+      "committedAtIso": "2026-10-04T17:49:47-05:00"
     },
     {
-      "number": 25406,
-      "title": "FINDING: BANK-F2026100403 LANE: FINANCIAL -- 69 USMCA Relay bank lines were MATCHED with no journal entry: matched on 2026-09-28 before the match-time poster existed, and nothing posts a line already matched; a Relay fill whose unit number was printed but never resolved could not post at all",
+      "number": 25427,
+      "title": "FINDING: ACCT-F9984 LANE: FINANCIAL (a settlement void returned nothing_to_reverse while a live pay-run close entry still named the settlement — the document was voided over its money; CC-3 caught it as verify-void-is-whole red during the AUTH-400 run)",
       "state": "merged",
-      "mergedAtCt": "10/04/2026, 04:25 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25406",
-      "sha": "ce0d597266",
-      "committedAtIso": "2026-10-04T16:25:40-05:00"
+      "mergedAtCt": "10/04/2026, 05:46 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25427",
+      "sha": "dc02e056b3",
+      "committedAtIso": "2026-10-04T17:46:04-05:00"
     },
     {
-      "number": 25405,
-      "title": "FINDING: N/A (CLAIM-RESERVE verify-steps — AUTH-400 settlement GL-bill links + reversal links both directions; reservation-only commit, no code fix)",
+      "number": 25426,
+      "title": "FINDING: ACCT-F9983 LANE: FINANCIAL (AUTH-400: the purge engine could not be rehearsed — APPLY ran only on production; now a branch-pinned --rehearsal-branch runs the same APPLY on a named non-production branch. AUTH-400 recorded in OWNER-AUTHORIZATIONS.md.)",
       "state": "merged",
-      "mergedAtCt": "10/04/2026, 04:23 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25405",
-      "sha": "9c15c1ba5e",
-      "committedAtIso": "2026-10-04T16:23:15-05:00"
+      "mergedAtCt": "10/04/2026, 05:42 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25426",
+      "sha": "720d3a7a31",
+      "committedAtIso": "2026-10-04T17:42:07-05:00"
     },
     {
-      "number": 25404,
-      "title": "FINDING: N/A (CLAIM-RESERVE migration 202615410300 — one reversal per posting line; reservation-only commit, no code fix)",
+      "number": 25425,
+      "title": "FINDING: ACCT-F2026100423 LANE: FINANCIAL (a Relay fill posted its WHOLE amount as diesel — every DEF and reefer line landed in 5000 — and its IFTA gallons summed diesel + reefer + DEF; one leg per product now, IFTA road diesel only)",
       "state": "merged",
-      "mergedAtCt": "10/04/2026, 04:22 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25404",
-      "sha": "090be2a997",
-      "committedAtIso": "2026-10-04T16:22:09-05:00"
+      "mergedAtCt": "10/04/2026, 05:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25425",
+      "sha": "af9bdf25dd",
+      "committedAtIso": "2026-10-04T17:35:54-05:00"
     }
   ]
 }

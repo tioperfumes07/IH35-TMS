@@ -14,7 +14,7 @@
 
 import { withCurrentUser } from "../auth/db.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { isOwnerOrAdmin } from "../bulk/bulk-update.factory.js";
+import { isOwnerOrAdmin } from "../lib/authz/roles.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { updateBankBalance } from "../accounting/bills.service.js";

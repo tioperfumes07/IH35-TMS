@@ -6,10 +6,8 @@ import { nextExpenseDisplayId } from "../accounting/display-id.js";
 import { postSourceTransactionInClientTx, PostingEngineError } from "../accounting/posting-engine.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 
-// Same flag key as accounting/expenses.routes.ts's own EXPENSE_GL_POSTING_FLAG_KEY, redefined here
-// (not imported) to avoid a service->routes import — mirrors the same pattern already used by
-// fuel-posting/maybe-post-from-fuel-transaction.service.ts's FUEL_EXPENSE_GL_POSTING_FLAG_KEY.
-const WO_EXPENSE_GL_POSTING_FLAG_KEY = "EXPENSE_GL_POSTING_ENABLED";
+// The one expense GL-posting flag key (accounting/expense-gl-posting-flag.ts), shared with every expense-GL call site.
+import { EXPENSE_GL_POSTING_FLAG_KEY as WO_EXPENSE_GL_POSTING_FLAG_KEY } from "../accounting/expense-gl-posting-flag.js";
 // Same flag key as accounting/bill-gl.service.ts's own BILL_GL_POSTING_FLAG_KEY, redefined here for
 // the same reason (avoid a service->service import cycle risk) — same value, same semantics.
 const WO_BILL_GL_POSTING_FLAG_KEY = "BILL_GL_POSTING_ENABLED";

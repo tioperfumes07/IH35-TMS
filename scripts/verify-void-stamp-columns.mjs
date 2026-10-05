@@ -71,7 +71,9 @@ const BASELINE_WRITERS = {
   "accounting.expenses": [
     "apps/backend/src/accounting/expenses.routes.ts",
     "apps/backend/src/accounting/expenses-bulk.routes.ts",
-    "apps/backend/src/work-orders/work-orders.routes.ts",
+    // CC-2 2026-10-04: the same writer, moved (settleWorkOrderFinancialLinkage left work-orders.routes.ts so the governance
+    // executor imports it without the route layer) — a rename, not a new writer.
+    "apps/backend/src/work-orders/work-order-financial-settle.service.ts",
     "apps/backend/src/governance/void-cancel-executors.ts",
   ],
   "accounting.journal_entries": [

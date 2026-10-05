@@ -3,7 +3,7 @@
  * Centralizes tread depth readings from DVIR, PM, tire service, and Samsara sensors.
  */
 import type { PoolClient } from "pg";
-import { positionGroupForCode } from "../../../maintenance/tires.routes.js";
+import { positionGroupForCode } from "../../../maintenance/tire-positions.js";
 
 export type TreadMeasurementSource =
   | "dvir_inspection"

@@ -31,6 +31,10 @@ function read(rel) {
   return fs.existsSync(abs) ? fs.readFileSync(abs, "utf8") : null;
 }
 
+// CC-2 2026-10-04: the build-identity functions live in health/build-identity.ts (a plain module, so services import them
+// without the route layer); health.routes.ts re-exports them. The checks read both files together.
+const BUILD_IDENTITY = "apps/backend/src/health/build-identity.ts";
+
 export function healthzShaErrors(src, workflowSrc) {
   const failures = [];
   if (!src) {
@@ -147,7 +151,7 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-const failures = healthzShaErrors(read(HEALTH), read(WORKFLOW));
+const failures = healthzShaErrors([read(HEALTH), read(BUILD_IDENTITY)].filter(Boolean).join("\n") || null, read(WORKFLOW));
 if (failures.length) {
   console.error(`${LABEL} — FAILED`);
   for (const f of failures) console.error(`- ${f}`);
