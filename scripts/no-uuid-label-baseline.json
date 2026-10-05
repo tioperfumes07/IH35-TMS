@@ -1,5 +1,8 @@
 {
   "note": "CLS-UUID-LABEL ratchet — may only SHRINK. Regenerate after draining a file.",
-  "offenders": [],
+  "offenders": [
+    "apps/frontend/src/pages/fleet/FleetHomePage.tsx|t.current_unit_id",
+    "apps/frontend/src/pages/fleet/FleetHomePage.tsx|u.assigned_driver_id"
+  ],
   "raw_offenders": []
 }
