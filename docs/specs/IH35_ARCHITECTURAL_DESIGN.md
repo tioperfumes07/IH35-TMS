@@ -1134,9 +1134,9 @@ Sections 7–11 on `VehicleProfilePage`: reefer (conditional), financial P&amp;L
 
 **PDF export:** Puppeteer HTML → `page.pdf()` (same pattern as settlement PDF renderer). `GET /api/v1/mdata/units/:id/export.pdf`.
 
-## Driver Profile (People module) — Part 1 (locked 2026-06-01)
+## Driver Profile (People module) — Part 1 (locked 2026-06-01; DRV-F420 / F416 / F421 2026-10-05)
 
-Route: `/drivers/:id` renders `DriverProfilePage` (the surviving profile — DRV-F415). Edit lives at `/drivers/:id/edit` (`DriverDetailPage`). `/drivers/:id/profile` redirects to `/drivers/:id`.
+Route: `/drivers/:id` renders `DriverProfilePage` + `DriverOverviewBoard` (the surviving profile — DRV-F415 / F420). All 17 tabs stay on `/drivers/:id` via `?tab=` (`parseDriverProfileTab` / `driverProfileTabHref`): **12 strip** (Overview · Settlements · Additional payments · Cash advances · Pay & escrow · Loads · Fuel · Reports & damage · Complaints · Safety & accidents · Documents · Driver disputes) + **5 More** (Safety file · ELD edits · Legal matters · QBO mapping · Audit history). Edit is `/drivers/:id?tab=edit` (`DriverEditForm`); `/drivers/:id/edit` redirects to `?tab=edit`. `/drivers/:id/profile` redirects to `/drivers/:id`. `DriverDetail.tsx` retained on disk (Rule 07). Loads never opens Dispatch. Complaints / Disputes are driver-scoped on the profile. **CI:** `verify-driver-profile-tabs-stay-on-the-profile.mjs` · `verify-driver-profile-matches-approved-tabs.mjs`.
 
 **Tabs (approved DriverDetail.dc.html):** Overview · Settlements · Additional payments · Cash advances · Loads · Fuel · Complaints · Documents · Driver disputes. Tab is URL-synced via `?tab=` (`parseDriverProfileTab`). Reverse linkage that the design does not name as a tab stays on Overview (Rule 14 / Rule 07) — it is not a second tab list.
 
@@ -1175,6 +1175,10 @@ Extends aggregate + `DriverProfilePage` with sections 7–12: performance scorec
 **Document expiry alert engine (A24-9, 2026-06-04):** Central rules + events in `safety.document_alert_rules` / `safety.document_alert_events` (migration **0350**); daily evaluator cron scans CDL, medical, training, DQF, uploaded docs, permits, hazmat at 90/60/30/7-day thresholds; email + in-app notifications; office inbox at `/drivers/alerts` with per-type rule editor. Legacy permit panel + DQF expiry chips remain (ARCHIVE-not-DELETE). **CI:** `verify:drivers-document-expiry-alerts`.
 
 **Create vocabulary (A24-4, 2026-06-03):** Drivers hub header CTA standardized to **+ Create Driver** (replaces non-canonical "+ Driver"). Locked "+ Create" / "+ Book" rule applies module-wide; ARCHIVE-not-DELETE comment retained at source. **CI:** `verify:drivers-create-vocab`.
+
+## Fleet Home (Fleet module) — FLT-F424–F428 (2026-10-05)
+
+Route: `/fleet` is a **module home**, not a bare roster. Title **Fleet** (sentence case). Tabs (`fleetHomeTabs.ts` / `?tab=`): Home · Units · Trailers · Transfers · Roster integrity · Maintenance. Home carries a 7-tile KPI strip (units in service / in maintenance / out of service / unassigned · trailers in service / unhooked · open work orders) plus attention cards. **FLT-F428:** no registration / inspection / insurance expiry columns exist on `mdata.units` or `mdata.equipment` — keep the warning banner; do not invent a tile (needs its own migration + round). **CI:** `verify-module-home-is-not-a-list.mjs`.
 
 ## Trailer Profile (Fleet module) — Part 1 (locked 2026-06-02)
 
