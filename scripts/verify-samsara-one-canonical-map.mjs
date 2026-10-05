@@ -27,7 +27,8 @@ const LABEL = "verify-samsara-one-canonical-map";
 const ROUTES = "apps/backend/src/integrations/samsara/driver-mapping/driver-mapping.routes.ts";
 const COLLECTOR = "apps/backend/src/integrations/samsara/driver-mirror-collector.ts";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
-export const DRIFT_CEILING = 27; // STALE-LITERAL-OK: measured live 2026-10-05, shrink-only
+// 2026-10-05 (CC-2): 27 -> 0, measured live after #25515 + SAM-F429 (#25521). One Samsara user naming two drivers now fails.
+export const DRIFT_CEILING = 0; // STALE-LITERAL-OK: measured live 2026-10-05, shrink-only
 
 function handlerBody(src, route) {
   const i = src.indexOf(`"${route}"`);
@@ -119,6 +120,8 @@ else {
     await c.query("ROLLBACK");
     console.log(`${LABEL}: live drift (page map vs canonical map) ${drift} (ceiling ${DRIFT_CEILING}, shrink-only)`);
     if (drift > DRIFT_CEILING) problems.push(`live: ${drift} Samsara users name different drivers in the two maps > ceiling ${DRIFT_CEILING}`);
+    // A ceiling above the measured count is slack that hides the next drift: it must come down in the same commit.
+    if (drift < DRIFT_CEILING) problems.push(`live: drift ${drift} < ceiling ${DRIFT_CEILING} — lower DRIFT_CEILING to ${drift} (shrink-only)`);
   } finally {
     await c.end();
   }
