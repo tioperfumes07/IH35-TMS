@@ -570,8 +570,8 @@ export function DriverEditForm({
           {accounts.length === 0 ? <p className="text-[12px] text-[#64748B]">No Samsara users mapped.</p> : (
             <ul className="text-[12px]" data-testid="driver-edit-samsara-list">
               {accounts.map((a) => (
-                <li key={a.samsara_driver_id}>
-                  {a.samsara_username || a.samsara_driver_id}
+                <li key={a.samsara_driver_id} data-samsara-driver-id={a.samsara_driver_id}>
+                  {a.samsara_username?.trim() ? a.samsara_username : "—"}
                   {a.is_active === false ? " · inactive" : ""}
                 </li>
               ))}
