@@ -774,44 +774,69 @@ async function refuseReceiptAlreadyOnADeposit(client: DbClient, operatingCompany
   }
 }
 
+/**
+ * ENG-SPINE / company+WORM — the one amount reader for 1:1 accept, multi-document
+ * accept, and preview. Missing / wrong-company / voided / revoked used to return 0,
+ * so 1:1 posted a difference JE for the full bank amount against a ghost document.
+ * Candidates already hide those rows. Accept takes raw ids from the route — fail closed.
+ */
+async function requireLedgerAmountRow(
+  res: { rows: Array<{ amount_cents: number }> },
+  kind: LedgerEntryKind
+): Promise<number> {
+  if (!res.rows[0]) throw new Error(`ledger_document_not_found:${kind}`);
+  return Math.abs(Number(res.rows[0].amount_cents ?? 0));
+}
+
 async function loadLedgerAmountCents(client: DbClient, operatingCompanyId: string, kind: LedgerEntryKind, entryId: string) {
   if (kind === "payment") {
     const res = await client.query<{ amount_cents: number }>(
-      `SELECT amount_cents::int FROM accounting.payments WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+      `SELECT amount_cents::int FROM accounting.payments
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
+        LIMIT 1`,
       [entryId, operatingCompanyId]
     );
-    return Math.abs(Number(res.rows[0]?.amount_cents ?? 0));
+    return requireLedgerAmountRow(res, kind);
   }
   if (kind === "bill_payment") {
     const res = await client.query<{ amount_cents: number }>(
-      `SELECT amount_cents::int FROM accounting.bill_payments WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+      `SELECT amount_cents::int FROM accounting.bill_payments
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid
+          AND voided_at IS NULL AND revoked_at IS NULL
+        LIMIT 1`,
       [entryId, operatingCompanyId]
     );
-    return Math.abs(Number(res.rows[0]?.amount_cents ?? 0));
+    return requireLedgerAmountRow(res, kind);
   }
   if (kind === "transfer") {
     const res = await client.query<{ amount_cents: number }>(
-      `SELECT amount_cents::int FROM banking.transfers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+      `SELECT amount_cents::int FROM banking.transfers
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND revoked_at IS NULL
+        LIMIT 1`,
       [entryId, operatingCompanyId]
     );
-    return Math.abs(Number(res.rows[0]?.amount_cents ?? 0));
+    return requireLedgerAmountRow(res, kind);
   }
   if (kind === "bill") {
     // bill amount = OPEN BALANCE (amount_cents − paid_cents), same basis as the candidate query.
     const res = await client.query<{ amount_cents: number }>(
       `SELECT (COALESCE(amount_cents, 0) - COALESCE(paid_cents, 0))::int AS amount_cents
-         FROM accounting.bills WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+         FROM accounting.bills
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND revoked_at IS NULL
+        LIMIT 1`,
       [entryId, operatingCompanyId]
     );
-    return Math.abs(Number(res.rows[0]?.amount_cents ?? 0));
+    return requireLedgerAmountRow(res, kind);
   }
   if (kind === "expense") {
     const res = await client.query<{ amount_cents: number }>(
       `SELECT total_amount_cents::int AS amount_cents
-         FROM accounting.expenses WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+         FROM accounting.expenses
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
+        LIMIT 1`,
       [entryId, operatingCompanyId]
     );
-    return Math.abs(Number(res.rows[0]?.amount_cents ?? 0));
+    return requireLedgerAmountRow(res, kind);
   }
   if (kind === "factoring_advance") {
     // Expected wire net = invoice − reserve − factor fee − wire fee − cash_rsv (ROUND 186 formula).
@@ -828,7 +853,7 @@ async function loadLedgerAmountCents(client: DbClient, operatingCompanyId: strin
         LIMIT 1`,
       [entryId, operatingCompanyId]
     );
-    return Math.abs(Number(res.rows[0]?.amount_cents ?? 0));
+    return requireLedgerAmountRow(res, kind);
   }
   if (kind === "fuel_transaction") {
     const res = await client.query<{ amount_cents: number }>(
@@ -838,7 +863,7 @@ async function loadLedgerAmountCents(client: DbClient, operatingCompanyId: strin
         LIMIT 1`,
       [entryId, operatingCompanyId]
     );
-    return Math.abs(Number(res.rows[0]?.amount_cents ?? 0));
+    return requireLedgerAmountRow(res, kind);
   }
   if (kind === "relay_fuel") {
     // Source of truth: integrations.relay_fuel_transactions (ROUND 186). Discount already in
@@ -850,18 +875,20 @@ async function loadLedgerAmountCents(client: DbClient, operatingCompanyId: strin
         LIMIT 1`,
       [entryId, operatingCompanyId]
     );
-    return Math.abs(Number(res.rows[0]?.amount_cents ?? 0));
+    return requireLedgerAmountRow(res, kind);
   }
   if (kind === "deposit") {
     // The amount that reached the bank: total receipts less any cash back (accounting.deposits CHECK deposits_amount_math).
+    // Candidates already require posted — accept takes raw ids, so refuse unposted here too.
     const res = await client.query<{ amount_cents: number }>(
       `SELECT amount_deposited_cents::int AS amount_cents
          FROM accounting.deposits
-        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid
+          AND voided_at IS NULL AND posting_status = 'posted'
         LIMIT 1`,
       [entryId, operatingCompanyId]
     );
-    return Math.abs(Number(res.rows[0]?.amount_cents ?? 0));
+    return requireLedgerAmountRow(res, kind);
   }
   if (kind === "settlement") {
     // Driver settlement net_pay is stored in dollars (numeric). Bank amount is cents.
@@ -872,7 +899,7 @@ async function loadLedgerAmountCents(client: DbClient, operatingCompanyId: strin
         LIMIT 1`,
       [entryId, operatingCompanyId]
     );
-    return Math.abs(Number(res.rows[0]?.amount_cents ?? 0));
+    return requireLedgerAmountRow(res, kind);
   }
   const res = await client.query<{ amount_cents: number }>(
     `
@@ -881,12 +908,13 @@ async function loadLedgerAmountCents(client: DbClient, operatingCompanyId: strin
       LEFT JOIN accounting.journal_entry_postings jep ON jep.journal_entry_uuid = je.id
       WHERE je.id = $1::uuid
         AND je.operating_company_id = $2::uuid
+        AND je.voided_at IS NULL
       GROUP BY je.id
       LIMIT 1
     `,
     [entryId, operatingCompanyId]
   );
-  return Math.abs(Number(res.rows[0]?.amount_cents ?? 0));
+  return requireLedgerAmountRow(res, kind);
 }
 
 async function storeMatch(

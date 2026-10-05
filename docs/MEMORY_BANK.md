@@ -1633,6 +1633,23 @@ Guard: `verify-bank-recon-expense-match-part2a.mjs` (helper + both callers;
 `--selftest` 2/2). Vitest `accept-match-expense-part2a.test.ts` includes
 multi-document unposted refuse.
 
+## Active Architectural Decisions — ENG-SPINE ledger amount fail-closed (Cursor, 2026-10-05)
+
+`loadLedgerAmountCents` is the one amount reader for 1:1 accept, multi-document
+accept, and preview. Payment / bill_payment / transfer / expense / bill / JE
+returned `$0` when the row was missing, wrong-company, voided, or revoked.
+1:1 then posted a difference JE for the full bank amount against a ghost
+document. Candidates already hid those rows; accept takes raw ids from the route.
+
+Permanent: `requireLedgerAmountRow` throws `ledger_document_not_found:<kind>`.
+Every kind's amount query carries the same live predicate the candidate query
+already uses (`voided_at` / `revoked_at` / deposit `posting_status=posted` /
+JE `voided_at`). No new reverse column. No mass backfill. No ACCT-F406.
+
+Guard: `verify-match-candidates-cover-all-documents.mjs` (amount loader
+fail-closed + `--selftest` plants). Vitest
+`accept-match-ledger-amount-fail-closed.test.ts`.
+
 ## Active Architectural Decisions — KILL THE SECOND SYSTEM (Cursor, 2026-10-03)
 
 Owner, verbatim: the ledger is the balance; policies stay; this is a deletion, not a build.

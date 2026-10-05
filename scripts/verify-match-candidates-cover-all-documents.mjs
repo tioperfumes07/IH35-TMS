@@ -80,6 +80,40 @@ export function assertCandidatesCoverAllDocuments(src) {
   return problems;
 }
 
+/** BANK-F3688 — amount loader fail-closed: missing/voided/revoked must not become $0. */
+export function assertLedgerAmountFailClosed(src) {
+  const problems = [];
+  const start = src.indexOf("async function loadLedgerAmountCents");
+  if (start < 0) {
+    problems.push(`${SERVICE}: loadLedgerAmountCents is gone — accept would have no live-document amount gate`);
+    return problems;
+  }
+  const next = src.indexOf("\nasync function ", start + 10);
+  const body = next > 0 ? src.slice(start, next) : src.slice(start);
+  if (!/requireLedgerAmountRow/.test(src) && !/ledger_document_not_found/.test(body)) {
+    problems.push(`${SERVICE}: loadLedgerAmountCents must refuse a missing/voided document (ledger_document_not_found)`);
+  }
+  if (!/function requireLedgerAmountRow/.test(src)) {
+    problems.push(`${SERVICE}: requireLedgerAmountRow must be the one fail-closed amount reader`);
+  }
+  if (!/SELECT amount_cents::int FROM accounting\.payments[\s\S]{0,160}voided_at IS NULL/.test(src)) {
+    problems.push(`${SERVICE}: payment amount load must exclude voided_at (candidates already do)`);
+  }
+  if (!/FROM accounting\.bill_payments[\s\S]{0,280}revoked_at IS NULL/.test(src)) {
+    problems.push(`${SERVICE}: bill_payment amount load must exclude revoked_at`);
+  }
+  if (!/FROM banking\.transfers[\s\S]{0,220}revoked_at IS NULL/.test(src)) {
+    problems.push(`${SERVICE}: transfer amount load must exclude revoked_at`);
+  }
+  if (!/FROM accounting\.journal_entries je[\s\S]{0,400}je\.voided_at IS NULL/.test(src)) {
+    problems.push(`${SERVICE}: JE amount load must exclude voided_at`);
+  }
+  if (!/FROM accounting\.deposits[\s\S]{0,280}posting_status = 'posted'/.test(src)) {
+    problems.push(`${SERVICE}: deposit amount load must require posting_status=posted`);
+  }
+  return problems;
+}
+
 const read = () => fs.readFileSync(path.join(ROOT, SERVICE), "utf8");
 
 if (process.argv.includes("--selftest")) {
@@ -104,19 +138,41 @@ if (process.argv.includes("--selftest")) {
   // 6 — the function itself removed.
   expect("function-gone", good.replace("async function fetchLedgerCandidates", "async function removedCandidates"), "fetchLedgerCandidates is gone");
 
+  const amountLive = assertLedgerAmountFailClosed(good);
+  if (amountLive.length) failures.push(`amount-live: ${amountLive.join(" | ")}`);
+  const amountExpect = (name, planted, needle) => {
+    const problems = assertLedgerAmountFailClosed(planted);
+    if (!problems.some((p) => p.includes(needle))) {
+      failures.push(`amount-${name}: planted defect NOT caught (got: ${problems.join(" | ") || "none"})`);
+    }
+  };
+  amountExpect(
+    "helper-gone",
+    good.replace("function requireLedgerAmountRow", "function requireLedgerAmountMaybe"),
+    "requireLedgerAmountRow"
+  );
+  amountExpect(
+    "payment-voided-dropped",
+    good.replace(
+      "SELECT amount_cents::int FROM accounting.payments\n        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL",
+      "SELECT amount_cents::int FROM accounting.payments\n        WHERE id = $1::uuid AND operating_company_id = $2::uuid"
+    ),
+    "voided_at"
+  );
+
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED (${failures.length})`);
     for (const f of failures) console.error(`  - ${f}`);
     process.exitCode = 1;
   } else {
-    console.log(`${LABEL} selftest 6/6 OK`);
+    console.log(`${LABEL} selftest 8/8 OK`);
   }
 } else {
-  const problems = assertCandidatesCoverAllDocuments(read());
+  const problems = [...assertCandidatesCoverAllDocuments(read()), ...assertLedgerAmountFailClosed(read())];
   if (problems.length) {
     console.error(`${LABEL} FAILED (${problems.length})`);
     for (const p of problems) console.error(`  - ${p}`);
     process.exit(1);
   }
-  console.log(`${LABEL} PASS — candidate universe covers expenses, bills, bill_payments and AR payments`);
+  console.log(`${LABEL} PASS — candidate universe covers expenses, bills, bill_payments and AR payments; amount loader fail-closed`);
 }
