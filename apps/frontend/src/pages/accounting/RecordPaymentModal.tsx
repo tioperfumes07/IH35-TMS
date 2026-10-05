@@ -15,6 +15,7 @@ import { companyToday } from "../../lib/businessDate";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { formatBankAccountPickerLabel } from "../banking/transferAccountPicker";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 type Props = {
   open: boolean;
@@ -362,6 +363,18 @@ export function RecordPaymentModal({
               placeholder="Select customer"
               disabled={!operatingCompanyId || customersQuery.isLoading}
             />
+            {customerId ? (
+              <EntityLink
+                kind="customer"
+                id={customerId}
+                label={entityLabel(
+                  customerOptions.find((opt) => opt.value === customerId)?.label,
+                  customerId,
+                  "Customer",
+                )}
+                className="text-xs font-semibold text-[#1F2A44] underline"
+              />
+            ) : null}
           </div>
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">

@@ -24,6 +24,8 @@ import {
 } from "../../../api/checks";
 import { getCashGlMapping } from "../../../api/banking";
 import { openPrintableDocument } from "../../../lib/openPrintableDocument";
+import { entityLabel } from "../../../lib/entity-label";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 function formatMoneyCents(cents: number): string {
   return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -334,6 +336,18 @@ export function CheckPrintPage() {
                   </option>
                 ))}
               </select>
+              {bankAccountId ? (
+                <EntityLink
+                  kind="bank_account"
+                  id={bankAccountId}
+                  label={entityLabel(
+                    depositoryBanks.find((a) => a.id === bankAccountId)?.account_name,
+                    bankAccountId,
+                    "Account",
+                  )}
+                  className="mt-1 block font-semibold text-[#1F2A44] underline"
+                />
+              ) : null}
             </label>
 
             <label className="text-xs font-semibold text-gray-700">

@@ -8,6 +8,7 @@ import { DatePicker } from "../../../../components/forms/DatePicker";
 import { ParityTable } from "../../../../components/parity/ParityTable";
 import { SelectCombobox } from "../../../../components/Combobox";
 import { entityLabel, visibleDocumentLabel } from "../../../../lib/entity-label";
+import { EntityLink } from "../../../../components/shared/EntityLink";
 
 type Props = {
   value: Record<string, unknown>;
@@ -134,7 +135,26 @@ export function BillPaymentForm({ value, onChange, operatingCompanyId }: Props) 
             {
               key: "bill",
               label: "Bill #",
-              render: (bill) => visibleDocumentLabel(bill.bill_number, bill.id, "Bill"),
+              render: (bill) => (
+                <EntityLink
+                  kind="bill"
+                  id={bill.id}
+                  label={visibleDocumentLabel(bill.bill_number, bill.id, "Bill")}
+                  className="font-semibold text-[#1F2A44] underline"
+                />
+              ),
+            },
+            {
+              key: "vendor",
+              label: "Vendor",
+              render: (bill) => (
+                <EntityLink
+                  kind="vendor"
+                  id={bill.vendor_id}
+                  label={entityLabel(bill.vendor_name, bill.vendor_id, "Vendor")}
+                  className="font-semibold text-[#1F2A44] underline"
+                />
+              ),
             },
             {
               key: "total",

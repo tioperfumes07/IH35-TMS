@@ -18,6 +18,7 @@ import { useAuth } from "../../auth/useAuth";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 // [HOLD-FOR-JORGE — TIER 1] Per-entity bank-account HIDE/EXCLUDE (build-and-hold, flag OFF by default).
 //
@@ -97,7 +98,9 @@ export function BankAccountVisibilityPage() {
       {
         key: "account_name",
         label: "Bank Account",
-        render: (account) => <span className="font-medium text-slate-800">{accountLabel(account)}</span>,
+        render: (account) => (
+          <EntityLink kind="bank_account" id={account.id} label={accountLabel(account)} className="font-medium text-[#1F2A44] underline" />
+        ),
       },
       {
         key: "institution_name",

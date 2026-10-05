@@ -6,6 +6,8 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { getHosDailyRoster, getHosEvents, DUTY_LABEL, DUTY_COLOR } from "../../api/hosTracker";
 import { companyToday, addDaysIso, formatInCompanyTimeZone } from "../../lib/businessDate";
+import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 // Compliance "HOS History" tab — the raw duty-status EVENT log (append-only `hos.duty_status_events`)
 // for a driver across a date range, for FMCSA audit / drill-down. Distinct from "HOS Viewer" (a single
@@ -124,6 +126,14 @@ export function HosHistorySection({ operatingCompanyId }: { operatingCompanyId: 
             dataField="hos-history-driver"
             allowClear
           />
+          {driverId ? (
+            <EntityLink
+              kind="driver"
+              id={driverId}
+              label={entityLabel(rosterName, driverId, "Driver")}
+              className="mt-1 block text-xs font-semibold text-[#1F2A44] underline"
+            />
+          ) : null}
         </div>
         <div>
           <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">From</label>

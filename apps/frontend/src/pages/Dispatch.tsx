@@ -26,6 +26,8 @@ import { RoundTrips } from "./dispatch/RoundTrips";
 import { DispatchSubnav } from "../components/dispatch/DispatchSubnav";
 import { PreSettlementsPanel } from "../components/driver-finance/PreSettlementsPanel";
 import { ListErrorBanner } from "../components/shared/ListErrorBanner";
+import { entityLabel } from "../lib/entity-label";
+import { EntityLink } from "../components/shared/EntityLink";
 import { SectionErrorBoundary } from "../components/SectionErrorBoundary";
 import { userFacingApiError } from "../lib/api-error-message";
 import { companyToday, addDaysIso } from "../lib/businessDate";
@@ -453,6 +455,16 @@ export function DispatchPage({
           </div>
         }
       />
+      {loadId ? (
+        <p className="text-xs">
+          <EntityLink
+            kind="load"
+            id={loadId}
+            label={entityLabel(loads.find((load) => load.id === loadId)?.load_number, loadId, "Load")}
+            className="font-medium text-[#1F2A44] underline"
+          />
+        </p>
+      ) : null}
 
       {/* verify-dispatch-secondary-nav-depth.mjs (Block B21-D12) expects this exact test-id;
           DispatchSubnav's own internal root carries "dispatch-queues-subnav" (a later rename) —

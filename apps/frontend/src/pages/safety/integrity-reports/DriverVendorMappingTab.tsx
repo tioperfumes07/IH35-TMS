@@ -6,6 +6,8 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 
 type FindingRow = { driver_uuid: string; driver_name: string | null; severity: string; drift_reason: string; _rowId: string };
 
@@ -70,7 +72,9 @@ export function DriverVendorMappingTab() {
 
   const columns = useMemo<ParityColumn<FindingRow>[]>(
     () => [
-      { key: "driver_uuid", label: "Driver", sortable: true, sortValue: (row) => row.driver_name ?? row.driver_uuid ?? "", render: (row) => row.driver_name ?? row.driver_uuid },
+      { key: "driver_uuid", label: "Driver", sortable: true, sortValue: (row) => row.driver_name ?? row.driver_uuid ?? "", render: (row) => (
+        <EntityLink kind="driver" id={row.driver_uuid} label={entityLabel(row.driver_name, row.driver_uuid, "Driver")} className="font-semibold text-[#1F2A44] underline" />
+      ) },
       { key: "severity", label: "Severity", sortable: true },
       { key: "drift_reason", label: "Drift reason" },
       {

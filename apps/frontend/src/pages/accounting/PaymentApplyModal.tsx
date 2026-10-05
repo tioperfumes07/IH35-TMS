@@ -5,6 +5,7 @@ import { SelectCombobox } from "../../components/Combobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import type { Invoice } from "../../api/accounting";
 import { entityLabel } from "../../lib/entity-label";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 type Props = {
   open: boolean;
@@ -84,7 +85,30 @@ export function PaymentApplyModal({ open, loading = false, unappliedCents, invoi
 
         <div className="rounded-sm border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600">
           Unapplied available: {money(unappliedCents)}
-          {selectedInvoice ? ` · Invoice open: ${money(selectedInvoice.amount_open_cents)}` : ""}
+          {selectedInvoice ? (
+            <>
+              {" · Invoice open: "}
+              {money(selectedInvoice.amount_open_cents)}
+              {" · "}
+              <EntityLink
+                kind="invoice"
+                id={selectedInvoice.id}
+                label={entityLabel(selectedInvoice.display_id, selectedInvoice.id, "Invoice")}
+                className="font-semibold text-[#1F2A44] underline"
+              />
+              {selectedInvoice.customer_id ? (
+                <>
+                  {" · "}
+                  <EntityLink
+                    kind="customer"
+                    id={selectedInvoice.customer_id}
+                    label={entityLabel(selectedInvoice.customer_name, selectedInvoice.customer_id, "Customer")}
+                    className="font-semibold text-[#1F2A44] underline"
+                  />
+                </>
+              ) : null}
+            </>
+          ) : null}
         </div>
 
         <div className="flex justify-end gap-2">
