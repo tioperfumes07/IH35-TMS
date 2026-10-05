@@ -145,7 +145,7 @@ function fmtCents(value: unknown) {
 // token) rather than an arbitrary-bracket size -- verify-ui-design-system-ratchet.mjs is
 // zero-tolerance on NET-NEW raw bracket font-size literals, and text-xs/sm/base/lg/xl/2xl/3xl are
 // the scale's own named exemptions (see that guard's own header comment).
-const DATE_FILTER_LABEL_CLASS = "flex flex-col gap-1 text-xs text-slate-600";
+const DATE_FILTER_LABEL_CLASS = "flex flex-col gap-1 text-xs text-[#4B5563]";
 
 function fmtDate(value: unknown) {
   if (!value) return "—";
@@ -599,7 +599,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
         <button
           type="button"
           data-testid={`${testIdPrefix}-view-summary`}
-          className={`px-2.5 py-1 text-xs font-semibold ${view === "summary" ? "bg-[#1F2A44] text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`}
+          className={`px-2.5 py-1 text-xs font-semibold ${view === "summary" ? "bg-[#1F2A44] text-white" : "bg-white text-[#1F2A44] hover:bg-[#F7F8FA]"}`}
           aria-pressed={view === "summary"}
           onClick={() => setView("summary")}
         >
@@ -608,7 +608,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
         <button
           type="button"
           data-testid={`${testIdPrefix}-view-detail`}
-          className={`border-l border-gray-300 px-2.5 py-1 text-xs font-semibold ${view === "detail" ? "bg-[#1F2A44] text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`}
+          className={`border-l border-gray-300 px-2.5 py-1 text-xs font-semibold ${view === "detail" ? "bg-[#1F2A44] text-white" : "bg-white text-[#1F2A44] hover:bg-[#F7F8FA]"}`}
           aria-pressed={view === "detail"}
           onClick={() => setView("detail")}
         >
@@ -966,14 +966,14 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
             */}
             <Link
               to={FACTORING_TAB_PATH.submit_invoice}
-              className="inline-flex items-center rounded-sm border border-slate-300 bg-slate-800 px-2.5 py-2 text-xs font-medium text-white hover:bg-slate-700"
+              className="inline-flex items-center rounded-sm border border-[#E5E7EB] bg-[#14314F] px-2.5 py-2 text-xs font-medium text-white hover:bg-[#1F2A44]"
               data-testid="factoring-submit-to-factor-link"
             >
               Submit to Factor
             </Link>
             <details className="relative inline-block">
               <summary
-                className="flex cursor-pointer list-none items-center gap-1 rounded-sm border border-slate-300 bg-white px-2.5 py-2 text-xs font-medium text-slate-800 hover:bg-slate-50 [&::-webkit-details-marker]:hidden"
+                className="flex cursor-pointer list-none items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2.5 py-2 text-xs font-medium text-[#1F2A44] hover:bg-[#F7F8FA] [&::-webkit-details-marker]:hidden"
                 data-testid="factoring-header-related-menu"
               >
                 Related ▾
@@ -981,21 +981,21 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               <div className="absolute right-0 z-20 mt-1 w-48 rounded-sm border border-gray-200 bg-white p-1 text-xs shadow-md">
                 <Link
                   to="/dispatch/factoring-queue"
-                  className="block rounded-sm px-2 py-1.5 text-slate-800 hover:bg-slate-50"
+                  className="block rounded-sm px-2 py-1.5 text-[#1F2A44] hover:bg-[#F7F8FA]"
                   data-testid="factoring-hub-dispatch-queue-reverse-link"
                 >
                   Dispatch queue
                 </Link>
                 <Link
                   to="/accounting/factoring"
-                  className="block rounded-sm px-2 py-1.5 text-slate-800 hover:bg-slate-50"
+                  className="block rounded-sm px-2 py-1.5 text-[#1F2A44] hover:bg-[#F7F8FA]"
                   data-testid="factoring-hub-accounting-advances-reverse-link"
                 >
                   Accounting advances
                 </Link>
                 <Link
                   to="/banking"
-                  className="block rounded-sm px-2 py-1.5 text-slate-800 hover:bg-slate-50"
+                  className="block rounded-sm px-2 py-1.5 text-[#1F2A44] hover:bg-[#F7F8FA]"
                   data-testid="factoring-hub-banking-entry-reverse-link"
                   title="Banking home — the factoring virtual bank (ROUND-20.8 B3 retired /banking/factoring)"
                 >
@@ -1003,7 +1003,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 </Link>
                 <button
                   type="button"
-                  className="block w-full rounded-sm px-2 py-1.5 text-left text-slate-800 hover:bg-slate-50"
+                  className="block w-full rounded-sm px-2 py-1.5 text-left text-[#1F2A44] hover:bg-[#F7F8FA]"
                   onClick={() => void queryClient.invalidateQueries({ queryKey: ["factoring"] })}
                   data-testid="factoring-header-refresh"
                 >
@@ -2347,7 +2347,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               <button
                 type="button"
                 data-testid="factoring-fees-paid-view-open-invoices"
-                className={`px-2.5 py-1 text-xs font-semibold ${feesPaidView === "open_invoices" ? "bg-[#1F2A44] text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`}
+                className={`px-2.5 py-1 text-xs font-semibold ${feesPaidView === "open_invoices" ? "bg-[#1F2A44] text-white" : "bg-white text-[#1F2A44] hover:bg-[#F7F8FA]"}`}
                 aria-pressed={feesPaidView === "open_invoices"}
                 onClick={() => setFeesPaidView("open_invoices")}
               >
@@ -2356,7 +2356,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               <button
                 type="button"
                 data-testid="factoring-fees-paid-view-all-fees"
-                className={`border-l border-gray-300 px-2.5 py-1 text-xs font-semibold ${feesPaidView === "all_fees" ? "bg-[#1F2A44] text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`}
+                className={`border-l border-gray-300 px-2.5 py-1 text-xs font-semibold ${feesPaidView === "all_fees" ? "bg-[#1F2A44] text-white" : "bg-white text-[#1F2A44] hover:bg-[#F7F8FA]"}`}
                 aria-pressed={feesPaidView === "all_fees"}
                 onClick={() => setFeesPaidView("all_fees")}
               >
@@ -2629,7 +2629,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   resetTestId="factoring-home-filter-reset"
                 >
                   <div className="flex flex-wrap items-end gap-3">
-                    <label className="text-xs text-slate-600">
+                    <label className="text-xs text-[#4B5563]">
                       Customer
                       <EntityPicker
                         kind="customer"
@@ -2642,7 +2642,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                         dataTestId="factoring-home-filter-customer"
                       />
                     </label>
-                    <label className="text-xs text-slate-600">
+                    <label className="text-xs text-[#4B5563]">
                       Load
                       <EntityPicker
                         kind="load"
@@ -2737,7 +2737,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                     cancelTestId="factoring-home-chargebacks-filter-cancel"
                     resetTestId="factoring-home-chargebacks-filter-reset"
                   >
-                    <label className="text-xs text-slate-600">
+                    <label className="text-xs text-[#4B5563]">
                       Customer
                       <EntityPicker
                         kind="customer"
@@ -2788,7 +2788,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
             <div className="font-medium text-gray-900">Single-factor invariant status</div>
             <div className="mt-1 text-gray-700">
               Active factors: {Number(settingsQuery.data?.current?.active_factor_count ?? 0)} · Status:{" "}
-              <span className={settingsQuery.data?.current?.single_factor_invariant_ok ? "text-slate-700" : "text-red-700"}>
+              <span className={settingsQuery.data?.current?.single_factor_invariant_ok ? "text-[#1F2A44]" : "text-red-700"}>
                 {settingsQuery.data?.current?.single_factor_invariant_ok ? "Compliant" : "Violation"}
               </span>
             </div>
@@ -2804,7 +2804,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 <button
                   type="button"
                   data-testid="factoring-statements-view-summary"
-                  className={`px-2.5 py-1 text-xs font-semibold ${statementsView === "summary" ? "bg-[#1F2A44] text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`}
+                  className={`px-2.5 py-1 text-xs font-semibold ${statementsView === "summary" ? "bg-[#1F2A44] text-white" : "bg-white text-[#1F2A44] hover:bg-[#F7F8FA]"}`}
                   aria-pressed={statementsView === "summary"}
                   onClick={() => setStatementsView("summary")}
                 >
@@ -2813,7 +2813,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 <button
                   type="button"
                   data-testid="factoring-statements-view-detail"
-                  className={`border-l border-gray-300 px-2.5 py-1 text-xs font-semibold ${statementsView === "detail" ? "bg-[#1F2A44] text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`}
+                  className={`border-l border-gray-300 px-2.5 py-1 text-xs font-semibold ${statementsView === "detail" ? "bg-[#1F2A44] text-white" : "bg-white text-[#1F2A44] hover:bg-[#F7F8FA]"}`}
                   aria-pressed={statementsView === "detail"}
                   onClick={() => setStatementsView("detail")}
                 >
@@ -2868,7 +2868,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 Deactivate active factor
               </Button>
             </div>
-            {!canDeactivate ? <div className="mt-2 text-xs text-slate-700">Only Owner role can deactivate an active factor.</div> : null}
+            {!canDeactivate ? <div className="mt-2 text-xs text-[#1F2A44]">Only Owner role can deactivate an active factor.</div> : null}
           </div>
           <div data-deactivate-factor-confirm-modal="true">
             <DeactivateFactorConfirmModal
@@ -3181,7 +3181,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 cancelTestId="factoring-home-equipment-filter-cancel"
                 resetTestId="factoring-home-equipment-filter-reset"
               >
-                <label className="text-xs text-slate-600">
+                <label className="text-xs text-[#4B5563]">
                   Lender vendor
                   <EntityPicker
                     kind="vendor"
@@ -3379,7 +3379,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                     resetTestId="factoring-home-merges-filter-reset"
                   >
                     <div className="flex flex-wrap items-end gap-3">
-                      <label className="text-xs text-slate-600">
+                      <label className="text-xs text-[#4B5563]">
                         Driver
                         <EntityPicker
                           kind="driver"
@@ -3392,7 +3392,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                           dataTestId="factoring-home-filter-driver"
                         />
                       </label>
-                      <label className="text-xs text-slate-600">
+                      <label className="text-xs text-[#4B5563]">
                         Vendor
                         <EntityPicker
                           kind="vendor"
