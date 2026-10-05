@@ -36,25 +36,27 @@ const cols = async (client, schema, table) => {
 //   RULE 3 — once migration 202615360500 is applied, trg_new_posting_has_spine_link is installed and enabled: a
 //            posting that reaches COMMIT without a transaction_source_links row is refused (ROUND 373.3's INSERT side;
 //            trg_live_posting_keeps_spine_link only guards link DELETE / UPDATE).
-export const UNLINKED_CEILING = 3908;
+// 3908 -> 0: the AUTH-400 purge (2026-10-05) removed every unlinked posting; the ceiling only shrinks.
+export const UNLINKED_CEILING = 0;
 export const LINK_REQUIRED_SINCE = "2026-10-01T00:00:00Z";
-export function evaluate({ unlinked, unlinkedSince, migrationApplied, trigger }) {
+export function evaluate({ unlinked, unlinkedSince, migrationApplied, trigger }, ceiling = UNLINKED_CEILING) {
   const out = [];
-  if (unlinked > UNLINKED_CEILING) out.push(`RULE 1: ${unlinked} unlinked postings > ceiling ${UNLINKED_CEILING} — a new posting was written without its spine link`);
-  if (unlinked < UNLINKED_CEILING) out.push(`RULE 1 RATCHET: ${unlinked} unlinked < ceiling ${UNLINKED_CEILING} — lower UNLINKED_CEILING to ${unlinked} so it can only shrink`);
+  if (unlinked > ceiling) out.push(`RULE 1: ${unlinked} unlinked postings > ceiling ${ceiling} — a new posting was written without its spine link`);
+  if (unlinked < ceiling) out.push(`RULE 1 RATCHET: ${unlinked} unlinked < ceiling ${ceiling} — lower ceiling to ${unlinked} so it can only shrink`);
   if (unlinkedSince > 0) out.push(`RULE 2: ${unlinkedSince} posting(s) created since ${LINK_REQUIRED_SINCE} have no spine link`);
   if (migrationApplied && (!trigger || trigger.enabled === "D")) out.push("RULE 3: 202615360500 applied but trg_new_posting_has_spine_link is missing or disabled");
   return out;
 }
 if (process.argv.includes("--selftest")) {
-  const ok = { unlinked: UNLINKED_CEILING, unlinkedSince: 0, migrationApplied: true, trigger: { enabled: "O" } };
+  const FIX_CEIL = 3908; // the pre-purge shape, so the real ceiling can sit at 0
+  const ok = { unlinked: FIX_CEIL, unlinkedSince: 0, migrationApplied: true, trigger: { enabled: "O" } };
   const cases = [
-    ["at the ceiling, none new, trigger armed passes", evaluate(ok).length === 0],
-    ["a new unlinked posting fails (RULE 1)", evaluate({ ...ok, unlinked: UNLINKED_CEILING + 1 }).some((x) => x.startsWith("RULE 1:"))],
-    ["the purge shrinking the count demands the ceiling drop", evaluate({ ...ok, unlinked: UNLINKED_CEILING - 5 }).some((x) => x.startsWith("RULE 1 RATCHET"))],
-    ["an unlinked posting since the cutoff fails (RULE 2)", evaluate({ ...ok, unlinkedSince: 1 }).some((x) => x.startsWith("RULE 2"))],
-    ["migration applied without the trigger fails (RULE 3)", evaluate({ ...ok, trigger: null }).some((x) => x.startsWith("RULE 3"))],
-    ["before the migration, no trigger is fine", evaluate({ ...ok, migrationApplied: false, trigger: null }).length === 0],
+    ["at the ceiling, none new, trigger armed passes", evaluate(ok, FIX_CEIL).length === 0],
+    ["a new unlinked posting fails (RULE 1)", evaluate({ ...ok, unlinked: FIX_CEIL + 1 }, FIX_CEIL).some((x) => x.startsWith("RULE 1:"))],
+    ["the purge shrinking the count demands the ceiling drop", evaluate({ ...ok, unlinked: FIX_CEIL - 5 }, FIX_CEIL).some((x) => x.startsWith("RULE 1 RATCHET"))],
+    ["an unlinked posting since the cutoff fails (RULE 2)", evaluate({ ...ok, unlinkedSince: 1 }, FIX_CEIL).some((x) => x.startsWith("RULE 2"))],
+    ["migration applied without the trigger fails (RULE 3)", evaluate({ ...ok, trigger: null }, FIX_CEIL).some((x) => x.startsWith("RULE 3"))],
+    ["before the migration, no trigger is fine", evaluate({ ...ok, migrationApplied: false, trigger: null }, FIX_CEIL).length === 0],
   ];
   for (const [n, pass] of cases) console.log(`  ${pass ? "✓" : "✗"} ${n}`);
   const bad = cases.filter(([, pass]) => !pass).length;

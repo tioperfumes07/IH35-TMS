@@ -26,6 +26,7 @@
  * Static + optional live read. No writes. Self-test: node scripts/verify-draft-load-saves-and-is-visible.mjs --selftest
  */
 import { execSync } from "node:child_process";
+import { exitIfMeasuredEmptyByPurge } from "./lib/purge-window.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -107,6 +108,8 @@ async function liveCheck() {
     );
     const total = Number(totalRes.rows[0].n);
     if (total === 0) {
+      // Lead ruling 2026-10-05: measured-empty purge window — EMPTY BY PURGE only while USMCA has 0 loads; the first load ends it.
+      exitIfMeasuredEmptyByPurge("verify-draft-load-saves-and-is-visible", "USMCA loads", total);
       console.error(`${LABEL}: LIVE FAIL — 0 live USMCA mdata.loads rows; completeness discriminator says this is an instrument problem, not a real zero`);
       return false;
     }
