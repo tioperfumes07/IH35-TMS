@@ -19,7 +19,7 @@ vi.mock("../../../contexts/CompanyContext", () => ({
   }),
 }));
 
-const printLetterHtmlMock = vi.fn(() => true);
+const printLetterHtmlMock = vi.fn((..._args: unknown[]) => true);
 vi.mock("../../../lib/openPrintableDocument", () => ({
   printLetterHtml: (...args: unknown[]) => printLetterHtmlMock(...args),
   openPrintableDocument: vi.fn(),
