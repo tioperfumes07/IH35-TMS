@@ -118,14 +118,22 @@ export function SamsaraDriverMappingPage() {
     [targetsQuery.data?.targets]
   );
 
+  // Owner law 2026-10-05: many Samsara users -> ONE driver profile; Samsara names are never changed.
+  const [retireEmptied, setRetireEmptied] = useState(false);
   const mapMutation = useMutation({
-    mutationFn: (body: { samsara_driver_ids: string[]; target_kind: "driver" | "vendor"; target_id: string }) =>
+    mutationFn: (body: { samsara_driver_ids: string[]; target_kind: "driver" | "vendor"; target_id: string; retire_emptied_drivers?: boolean }) =>
       mapSamsaraDrivers(companyId, body),
     onSuccess: (res, vars) => {
+      const retired = res.retired_driver_ids?.length ?? 0;
+      const kept = res.kept_live?.length ?? 0;
       pushToast(
-        `Mapped ${res.mapped_count} profile(s)${res.missing_samsara_driver_ids.length > 0 ? ` — ${res.missing_samsara_driver_ids.length} no longer exist` : ""}`,
+        `Mapped ${res.mapped_count} profile(s)` +
+          (retired > 0 ? ` — ${retired} duplicate driver record(s) merged into this driver` : "") +
+          (kept > 0 ? ` — ${kept} kept: ${res.kept_live!.map((k) => k.reason).join("; ")}` : "") +
+          (res.missing_samsara_driver_ids.length > 0 ? ` — ${res.missing_samsara_driver_ids.length} no longer exist` : ""),
         "success"
       );
+      setRetireEmptied(false);
       setSelected(new Set());
       setPicker(null);
       setPickerTargetId(null);
@@ -408,6 +416,20 @@ export function SamsaraDriverMappingPage() {
                 placeholder={`Search ${picker.kind}s…`}
               />
             </div>
+            {picker.kind === "driver" ? (
+              <label className="mt-3 flex items-start gap-2 text-xs text-slate-700" data-testid="target-picker-retire-emptied">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={retireEmptied}
+                  onChange={(e) => setRetireEmptied(e.target.checked)}
+                />
+                <span>
+                  Same person: merge the old driver record into this driver when it no longer holds a Samsara user.
+                  Samsara names are not changed.
+                </span>
+              </label>
+            ) : null}
             <div className="mt-4 flex justify-end gap-2">
               <button
                 type="button"
@@ -415,6 +437,7 @@ export function SamsaraDriverMappingPage() {
                 onClick={() => {
                   setPicker(null);
                   setPickerTargetId(null);
+                  setRetireEmptied(false);
                 }}
               >
                 Cancel
@@ -430,6 +453,7 @@ export function SamsaraDriverMappingPage() {
                     samsara_driver_ids: picker.samsaraDriverIds,
                     target_kind: picker.kind,
                     target_id: pickerTargetId,
+                    retire_emptied_drivers: picker.kind === "driver" && retireEmptied,
                   })
                 }
               >

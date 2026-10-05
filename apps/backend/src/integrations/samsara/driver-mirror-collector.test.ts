@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveMirrorLocalDriverId } from "./driver-mirror-collector.js";
+import { resolveMirrorLocalDriverId, shouldDeactivateDriverForSamsaraUser } from "./driver-mirror-collector.js";
 
 const map = (entries: Array<[string, string[]]>) => new Map(entries);
 
@@ -42,5 +42,17 @@ describe("resolveMirrorLocalDriverId", () => {
       byLicense: new Map(),
       byName: map([["name", ["name-driver"]]]),
     })).toBe("name-driver");
+  });
+});
+
+describe("shouldDeactivateDriverForSamsaraUser (owner law 2026-10-05: many Samsara users, one driver)", () => {
+  it("keeps the driver when another of his Samsara users is still active", () => {
+    expect(shouldDeactivateDriverForSamsaraUser(["deactivated", "active"])).toBe(false);
+  });
+  it("deactivates when he has no other Samsara user", () => {
+    expect(shouldDeactivateDriverForSamsaraUser([])).toBe(true);
+  });
+  it("deactivates when every other Samsara user is deactivated or unknown", () => {
+    expect(shouldDeactivateDriverForSamsaraUser(["deactivated", null])).toBe(true);
   });
 });

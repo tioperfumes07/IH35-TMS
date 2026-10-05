@@ -138,6 +138,34 @@ describe("SamsaraDriverMappingPage — E20 Part B", () => {
         samsara_driver_ids: ["sam-1"],
         target_kind: "driver",
         target_id: "drv-9",
+        retire_emptied_drivers: false,
+      })
+    );
+  });
+
+  it("same-person merge of the old driver record is sent only when the human ticks it", async () => {
+    vi.mocked(mappingApi.listSamsaraProfiles).mockResolvedValue({ status: "ok", profiles: [profile()], next_cursor: null });
+    vi.mocked(mappingApi.listMappingTargets).mockResolvedValue({
+      status: "ok",
+      targets: [{ id: "drv-9", name: "Jordan Ruiz", kind: "driver", active: true }],
+    });
+    vi.mocked(mappingApi.mapSamsaraDrivers).mockResolvedValue({
+      status: "ok", mapped_count: 1, retired_driver_ids: ["drv-old"], missing_samsara_driver_ids: [],
+    });
+    wrap(<SamsaraDriverMappingPage />);
+    fireEvent.click(await screen.findByTestId("profile-select-sam-1"));
+    fireEvent.click(screen.getByTestId("bulk-map-to-driver"));
+    const modal = within(await screen.findByTestId("target-picker-modal"));
+    fireEvent.focus(modal.getByRole("combobox"));
+    fireEvent.click(await screen.findByRole("option", { name: "Jordan Ruiz" }));
+    fireEvent.click(within(screen.getByTestId("target-picker-retire-emptied")).getByRole("checkbox"));
+    fireEvent.click(screen.getByTestId("target-picker-confirm"));
+    await waitFor(() =>
+      expect(mappingApi.mapSamsaraDrivers).toHaveBeenCalledWith("company-1", {
+        samsara_driver_ids: ["sam-1"],
+        target_kind: "driver",
+        target_id: "drv-9",
+        retire_emptied_drivers: true,
       })
     );
   });
