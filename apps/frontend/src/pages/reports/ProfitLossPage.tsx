@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { AmountLink } from "../../components/shared/AmountLink";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -302,7 +303,20 @@ export function ProfitLossPage() {
                           )}
                         </td>
                         <td className="px-3 py-2">{formatAccountTypeLabel(line.account_type)}</td>
-                        <td className="px-3 py-2 text-right tabular-nums">{money(line.amount)}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">
+                          {/* LST-F405 — the account NAME drilled; the AMOUNT did not. The filter
+                              behind this figure IS its drill target: this account over this period. */}
+                          <AmountLink
+                            filter={
+                              line.account_id
+                                ? { target: "register", accountId: line.account_id, from: applied.start, to: applied.end }
+                                : null
+                            }
+                            data-testid={`pl-amount-${line.account_id || line.account_name}`}
+                          >
+                            {money(line.amount)}
+                          </AmountLink>
+                        </td>
                       </tr>
                     ))
                   )}
