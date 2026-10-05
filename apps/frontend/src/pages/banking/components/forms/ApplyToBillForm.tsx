@@ -1,5 +1,5 @@
 // @archived — Workflow-B form: superseded by BankingTransactionsDesignView categorization. Enforced by verify-banking-workflow-b-archived.mjs.
-import type { JSX } from "react";
+import type { ReactNode } from "react";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listCatalogAccounts } from "../../../../api/catalog-accounts";
@@ -249,7 +249,18 @@ export function ApplyToBillForm({ value, onChange, operatingCompanyId }: Props) 
   );
 }
 
-function Field({ label, children }: { label: string; children: JSX.Element }) {
+/**
+ * BANK-F3685 — `children` was typed `JSX.Element`, i.e. EXACTLY ONE element. Cursor's 363-CUR-B
+ * batch 4 (cbbd4a8a0) added an EntityLink beside the Vendor and Bill controls, which is a second
+ * child, so `tsc -b` failed with TS2746 — and `npm run build` is
+ * `generate-module-completion-data && tsc -b && vite build`, so EVERY frontend Render build has
+ * failed since that commit landed.
+ *
+ * The annotation was the defect, not the usage: this component already composes a <span> plus
+ * whatever it is given, and a control plus its entity link is a reasonable field. ReactNode is what
+ * it always meant.
+ */
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="space-y-1">
       <span className="text-xs font-semibold text-gray-600">{label}</span>
