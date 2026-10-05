@@ -78,6 +78,21 @@ const MUST_SURVIVE = [
   ["accounting.periods", "accounting periods"],
 ];
 
+/**
+ * KEPT BY LAW inside tables the classification purges — each named with the rule that keeps it, reported by name and
+ * count on every run, never silently. A row in one of these tables that does NOT match its predicate still fails.
+ *   banking.reconciliation_matches, release_kind = 'purge_reset': the purge RELEASES every bank line's match before it
+ *     clears the pointers, and keeps those release rows as its own record (LAW 363.9: a send-back keeps the match;
+ *     trg_send_back_keeps_the_match refuses the COMMIT otherwise — AUTH-400 rehearsal 5). Same predicate the runner
+ *     uses to spare them: scripts/ops/2026-10-02-cc1-r326-complete-delete.ts.
+ *   accounting.ob_register_audit_events: append-only by its own trigger (ob_register_audit_append_only refuses EVERY
+ *     DELETE, with no AUTH arm). No purge can clear it; it is an audit trail, kept like audit.*.
+ */
+export const KEPT_BY_LAW = {
+  "banking.reconciliation_matches": { pred: "release_kind = 'purge_reset'", why: "the purge's own bank-line release record (LAW 363.9)" },
+  "accounting.ob_register_audit_events": { pred: "true", why: "append-only audit trail; its trigger refuses every DELETE" },
+};
+
 /** The other half of docs.files: an app-generated load artifact whose load the purge deleted. */
 const LOAD_ARTIFACTS = "docs.files (load artifacts of purged loads)";
 const LOAD_ARTIFACTS_WHERE = "operating_company_id = '{CO}' AND dispatch_load_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM mdata.loads l WHERE l.id = docs.files.dispatch_load_id)";
@@ -96,11 +111,16 @@ async function counts(sql, cutoff = null) {
   for (const { table, where } of MUST_BE_ZERO) {
     try {
       let pred = where;
+      const kept = KEPT_BY_LAW[table];
+      if (kept) {
+        out[`${table} (kept by law)`] = Number((await sql(`SELECT count(*) AS n FROM ${table} WHERE (${where}) AND (${kept.pred})`))[0].n);
+        pred = `(${pred}) AND NOT (${kept.pred})`;
+      }
       if (cutoff) {
         const [schema, name] = table.split(".");
         const hasCreated = (await sql(`SELECT 1 FROM information_schema.columns WHERE table_schema = '${schema}' AND table_name = '${name}' AND column_name = 'created_at'`)).length > 0;
         if (hasCreated) {
-          pred = `(${where}) AND created_at <= '${cutoff}'::timestamptz`;
+          pred = `(${pred}) AND created_at <= '${cutoff}'::timestamptz`;
           const after = Number((await sql(`SELECT count(*) AS n FROM ${table} WHERE (${where}) AND created_at > '${cutoff}'::timestamptz`))[0].n);
           if (after > 0) post[table] = after;
         }
@@ -171,6 +191,10 @@ async function main() {
     const bad = typeof n !== "number" || n !== 0;
     console.log(`  ${bad ? "FAIL" : "ok  "}  ${String(n).padStart(8)}  ${table}   (was ${b})`);
     if (bad) problems.push(`${table} still holds ${n} row(s) - the purge did not finish`);
+  }
+  for (const [t, k] of Object.entries(KEPT_BY_LAW)) {
+    const n = now[`${t} (kept by law)`];
+    if (typeof n === "number" && n > 0) console.log(`  kept  ${String(n).padStart(8)}  ${t} — ${k.why}`);
   }
   {
     const n = now[LOAD_ARTIFACTS];
