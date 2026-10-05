@@ -48,6 +48,7 @@ const BANK_TX = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const BANK_ACCT = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
 const PAYMENT = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
 const BILL_PAY = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+const SETTLEMENT = "ffffffff-ffff-4fff-8fff-ffffffffffff";
 
 function bankTxnRow(overrides: Record<string, unknown> = {}) {
   return {
@@ -182,5 +183,39 @@ describe("WAVE-H3 acceptMatch reverse bank FK stamps", () => {
     // 5th bound param here (payment's own bank_account_id is the 4th).
     expect(String(reverse?.[0])).toContain("cleared_date = COALESCE(cleared_date");
     expect(reverse?.[1]).toEqual([BANK_TX, BILL_PAY, OPCO, BANK_ACCT, "2026-07-31"]);
+  });
+
+  it("settlement match stamps driver_finance.driver_settlements.paid_via_bank_txn_id", async () => {
+    mockQuery.mockReset();
+    mockWithLuciaBypass.mockClear();
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (String(sql).includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "match-1" }], rowCount: 1 };
+      if (sql.includes("FROM banking.bank_transactions") && sql.includes("SELECT")) return { rows: [bankTxnRow({ amount_cents: -41200 })] };
+      if (sql.includes("FROM driver_finance.driver_settlements") && sql.includes("net_pay")) {
+        return { rows: [{ amount_cents: 41200 }] };
+      }
+      return { rows: [] };
+    });
+
+    await acceptMatchWithResolveDifference({
+      operating_company_id: OPCO,
+      bank_transaction_id: BANK_TX,
+      actor_user_uuid: ACTOR,
+      ledger_entry_kind: "settlement",
+      ledger_entry_id: SETTLEMENT,
+      difference_account_id: "00000000-0000-4000-8000-000000000000",
+    });
+
+    const reverse = mockQuery.mock.calls.find(([sql]) =>
+      String(sql).includes("UPDATE driver_finance.driver_settlements") && String(sql).includes("paid_via_bank_txn_id"),
+    );
+    expect(reverse).toBeDefined();
+    expect(String(reverse?.[0])).toContain("COALESCE(paid_via_bank_txn_id");
+    expect(reverse?.[1]).toEqual([BANK_TX, SETTLEMENT, OPCO]);
+
+    const forward = mockQuery.mock.calls.find(([sql]) =>
+      String(sql).includes("UPDATE banking.bank_transactions") && String(sql).includes("matched_settlement_id"),
+    );
+    expect(forward).toBeDefined();
   });
 });

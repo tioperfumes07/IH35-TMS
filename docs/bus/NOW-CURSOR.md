@@ -1,10 +1,10 @@
-# NOW-CURSOR — 2026-10-04T23:35Z
+# NOW-CURSOR — 2026-10-05T08:52Z
 
-**SHIPPING:** ENG-REVERSE — void releaser is the 14-pointer helper list (deposit included).
+**SHIPPING:** ENG-SPINE — both-way reverse bank FK on persistable match accept (settlement + multi bill_payment).
 
-**CLOSED tip:** ENG-MATCH #25474 `e6f85b273e` · ENG-7D #25440 · 367.9 #25451 · 363-CUR-B/C #25457/#25468–#25473.
+**CLOSED tip:** ENG-REVERSE #25475 `1b6380aa55` · ENG-MATCH #25474 · ENG-7D · 367.9 · 363-CUR-B/C.
 
-**NEXT:** Fast Merge this PR, then next ten-of-ten hole. No Chrome. No ACCT-F406 data corrections.
+**NEXT:** Fast Merge this PR. Then next ten-of-ten hole. No Chrome. No ACCT-F406.
 
 # NOW — CURSOR — standing engine ENG-CF (D-4) then ENG-7D / ENG-MATCH
 

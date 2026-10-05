@@ -457,6 +457,17 @@ export async function unmatchBankTransactionOnClient(
       [row.prev_bill_payment_id, input.operating_company_id, input.bank_transaction_id]
     );
   }
+  if (row.prev_settlement_id) {
+    await client.query(
+      `UPDATE driver_finance.driver_settlements
+          SET paid_via_bank_txn_id = NULL,
+              updated_at = now()
+        WHERE id = $1::uuid
+          AND operating_company_id = $2::uuid
+          AND paid_via_bank_txn_id = $3::uuid`,
+      [row.prev_settlement_id, input.operating_company_id, input.bank_transaction_id]
+    );
+  }
 
   // ROUND 363-CC3-B — what this unmatch let go of is exactly what it released above (every pointer, plus any live match
   // row with no pointer behind it). Nothing is flipped to 'rejected' in place any more: an unmatch is "undo my link", and

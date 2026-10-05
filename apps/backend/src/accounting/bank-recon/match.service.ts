@@ -1311,6 +1311,72 @@ export async function findCandidates(input: {
 }
 
 /**
+ * ENG-SPINE — both-way bank↔document on accept. Forward matched_* alone left the document's
+ * reverse pointer null (CLS-LINKAGE-ONEWAY). Only tables that already carry a bank-line FK
+ * are stamped — no new column, no invented VoidableEntityType.
+ *
+ *   payment         accounting.payments.source_bank_transaction_id + cleared_date
+ *   bill_payment    accounting.bill_payments.source_bank_transaction_id + from_bank_account_id + cleared_date
+ *   settlement      driver_finance.driver_settlements.paid_via_bank_txn_id
+ *
+ * expense / transfer / je / factoring_advance / fuel / relay / deposit have no reverse bank FK.
+ * COALESCE keeps create/categorize/payrun provenance. Unmatch clears the same columns, scoped.
+ * One helper so 1:1 accept and multi-document accept cannot drift.
+ */
+async function stampReverseBankPointerOnAccept(
+  client: DbClient,
+  args: {
+    kind: LedgerEntryKind;
+    ledgerEntryId: string;
+    bankTransactionId: string;
+    operatingCompanyId: string;
+    bankAccountId: string;
+    transactionDate: string;
+  }
+): Promise<void> {
+  if (args.kind === "payment") {
+    await client.query(
+      `UPDATE accounting.payments
+          SET source_bank_transaction_id = COALESCE(source_bank_transaction_id, $1::uuid),
+              cleared_date = COALESCE(cleared_date, $4::date)
+        WHERE id = $2::uuid
+          AND operating_company_id = $3::uuid`,
+      [args.bankTransactionId, args.ledgerEntryId, args.operatingCompanyId, args.transactionDate]
+    );
+    return;
+  }
+  if (args.kind === "bill_payment") {
+    await client.query(
+      `UPDATE accounting.bill_payments
+          SET source_bank_transaction_id = COALESCE(source_bank_transaction_id, $1::uuid),
+              from_bank_account_id = COALESCE(from_bank_account_id, $4::uuid),
+              cleared_date = COALESCE(cleared_date, $5::date),
+              updated_at = now()
+        WHERE id = $2::uuid
+          AND operating_company_id = $3::uuid`,
+      [
+        args.bankTransactionId,
+        args.ledgerEntryId,
+        args.operatingCompanyId,
+        args.bankAccountId,
+        args.transactionDate,
+      ]
+    );
+    return;
+  }
+  if (args.kind === "settlement") {
+    await client.query(
+      `UPDATE driver_finance.driver_settlements
+          SET paid_via_bank_txn_id = COALESCE(paid_via_bank_txn_id, $1::uuid),
+              updated_at = now()
+        WHERE id = $2::uuid
+          AND operating_company_id = $3::uuid`,
+      [args.bankTransactionId, args.ledgerEntryId, args.operatingCompanyId]
+    );
+  }
+}
+
+/**
  * ROUND 315 OWNER-ONLY LAW: matching a bank deposit to a factoring purchase is the Owner's act alone. Runs in its own
  * committed transaction BEFORE the match transaction, so the refusal's audit row survives the thrown 403.
  */
@@ -1549,9 +1615,10 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
       );
     }
 
-    // WAVE-H3 (LINK-007/008): reverse stamp money → bank. Forward-only matched_* left payments /
-    // bill_payments.source_bank_transaction_id null forever (CLS-LINKAGE-ONEWAY). COALESCE keeps
-    // create/categorize provenance if already set. No mass backfill — new accepts only.
+    // WAVE-H3 (LINK-007/008) + ENG-SPINE: reverse stamp money → bank for every persistable kind
+    // that already has a reverse bank FK. Forward-only matched_* left payments /
+    // bill_payments.source_bank_transaction_id and settlements.paid_via_bank_txn_id null
+    // (CLS-LINKAGE-ONEWAY). COALESCE keeps create/categorize/payrun provenance. No mass backfill.
     //
     // BANK-F26053 (THREE-DATES-COVERAGE-GAP follow-up, 2026-09-08): this is THE reconciliation
     // match-accept moment — cleared_date (added by migration 202613310400 specifically "until a
@@ -1560,21 +1627,16 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
     // already cleared via one of those direct-creation paths keeps its own timestamp; only a
     // payment created BEFORE its bank transaction cleared (the ordinary case) gets stamped here,
     // using the bank's own transaction_date — never re-dating payment_date (issued) itself.
-    if (matchKind === "payment") {
-      await client.query(
-        `UPDATE accounting.payments
-            SET source_bank_transaction_id = COALESCE(source_bank_transaction_id, $1::uuid),
-                cleared_date = COALESCE(cleared_date, $4::date)
-          WHERE id = $2::uuid
-            AND operating_company_id = $3::uuid`,
-        [
-          input.bank_transaction_id,
-          matchLedgerEntryId,
-          input.operating_company_id,
-          txn.transaction_date.slice(0, 10),
-        ]
-      );
+    await stampReverseBankPointerOnAccept(client, {
+      kind: matchKind,
+      ledgerEntryId: matchLedgerEntryId,
+      bankTransactionId: input.bank_transaction_id,
+      operatingCompanyId: input.operating_company_id,
+      bankAccountId: txn.bank_account_id,
+      transactionDate: txn.transaction_date.slice(0, 10),
+    });
 
+    if (matchKind === "payment") {
       // ACCT-F5620 (re-applied a 3rd time — see docs/bus/OUTBOX-CC-1.md /
       // DEVIN-A-STALE-BRANCH-REPEATEDLY-DELETES-MERGED-CODE-FIXES for why) — the payment→invoice
       // back-link (backlinkBankTransactionToInvoice, scripts/verify-bank-invoice-backlink.mjs) only
@@ -1621,24 +1683,6 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
         actor_user_id: input.actor_user_uuid,
         matched_payment_id: matchLedgerEntryId,
       });
-    } else if (matchKind === "bill_payment") {
-      // BANK-F26053 — same THREE-DATES-COVERAGE-GAP stamp as the payment branch above.
-      await client.query(
-        `UPDATE accounting.bill_payments
-            SET source_bank_transaction_id = COALESCE(source_bank_transaction_id, $1::uuid),
-                from_bank_account_id = COALESCE(from_bank_account_id, $4::uuid),
-                cleared_date = COALESCE(cleared_date, $5::date),
-                updated_at = now()
-          WHERE id = $2::uuid
-            AND operating_company_id = $3::uuid`,
-        [
-          input.bank_transaction_id,
-          matchLedgerEntryId,
-          input.operating_company_id,
-          txn.bank_account_id,
-          txn.transaction_date.slice(0, 10),
-        ]
-      );
     } else if (matchKind === "factoring_advance") {
       // OWNER-ORDER §3.1 — reserve register by accounting.chart_of_accounts_roles
       // (factor_reserve_held / factor_cash_reserve_held), never catalogs.account_role_bindings.
@@ -1859,19 +1903,22 @@ export async function acceptExactMultiDocumentMatch(input: {
       matchIds.push(reconciliationMatchId);
     }
 
-    // ROUND 326 queue item 12 (G-06): a batch wire matched to several receipts moves EVERY receipt out of 1090 — before
-    // this, the multi-match stored the matches and cleared the bank line but posted no sweep, so each advance's funding
-    // debit (and each payment) stayed in Undeposited Funds forever. Payments get the same bank stamp the 1:1 accept
-    // writes; advances are found by their own reconciliation match row (the sweep's second lookup).
+    // ROUND 326 queue item 12 (G-06) + ENG-SPINE: every persistable kind that has a reverse bank
+    // FK gets the same stamp the 1:1 accept writes (payment / bill_payment / settlement). A batch
+    // wire matched to several receipts also moves EVERY receipt out of 1090 — before this, the
+    // multi-match stored the matches and cleared the bank line but posted no sweep, so each
+    // advance's funding debit (and each payment) stayed in Undeposited Funds forever. Advances
+    // are found by their own reconciliation match row (the sweep's second lookup).
     for (const entry of input.entries) {
+      await stampReverseBankPointerOnAccept(client, {
+        kind: entry.ledger_entry_kind,
+        ledgerEntryId: entry.ledger_entry_id,
+        bankTransactionId: input.bank_transaction_id,
+        operatingCompanyId: input.operating_company_id,
+        bankAccountId: txn.bank_account_id,
+        transactionDate: txn.transaction_date.slice(0, 10),
+      });
       if (entry.ledger_entry_kind === "payment") {
-        await client.query(
-          `UPDATE accounting.payments
-              SET source_bank_transaction_id = COALESCE(source_bank_transaction_id, $1::uuid),
-                  cleared_date = COALESCE(cleared_date, $4::date)
-            WHERE id = $2::uuid AND operating_company_id = $3::uuid`,
-          [input.bank_transaction_id, entry.ledger_entry_id, input.operating_company_id, txn.transaction_date.slice(0, 10)]
-        );
         await sweepMatchedReceiptToBank(client, input.operating_company_id, "customer_payment_deposit", entry.ledger_entry_id, input.actor_user_uuid);
       } else if (entry.ledger_entry_kind === "factoring_advance") {
         await sweepMatchedReceiptToBank(client, input.operating_company_id, "factoring_advance_deposit", entry.ledger_entry_id, input.actor_user_uuid);

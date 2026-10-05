@@ -40,14 +40,25 @@ export function staticChecks(sources = {}) {
   ) {
     problems.push("acceptMatch must reverse-stamp bill_payments.source_bank_transaction_id + from_bank_account_id");
   }
-  // matchKind is the Faro-reserve rewrite of ledger_entry_kind (OWNER-ORDER §3.1); either gate is fine.
-  const paymentGate = /(?:ledger_entry_kind|matchKind)\s*===\s*"payment"/.test(svc);
-  const billPayGate = /(?:ledger_entry_kind|matchKind)\s*===\s*"bill_payment"/.test(svc);
-  if (!paymentGate || !billPayGate) {
-    problems.push("reverse stamps must be gated on payment / bill_payment kinds");
+  if (!/UPDATE driver_finance\.driver_settlements[\s\S]{0,200}paid_via_bank_txn_id\s*=\s*COALESCE/.test(svc)) {
+    problems.push("acceptMatch must reverse-stamp driver_finance.driver_settlements.paid_via_bank_txn_id via COALESCE");
   }
-  if (!/UPDATE accounting\.payments/.test(test) || !/UPDATE accounting\.bill_payments/.test(test)) {
-    problems.push("unit test must assert reverse UPDATEs for payment and bill_payment");
+  if (!/stampReverseBankPointerOnAccept\(/.test(svc) || !/acceptExactMultiDocumentMatch/.test(svc)) {
+    problems.push("1:1 and multi-document accept must share stampReverseBankPointerOnAccept — two copies drift");
+  }
+  // matchKind is the Faro-reserve rewrite of ledger_entry_kind (OWNER-ORDER §3.1); helper uses args.kind.
+  const paymentGate = /(?:ledger_entry_kind|matchKind|args\.kind)\s*===\s*"payment"/.test(svc);
+  const billPayGate = /(?:ledger_entry_kind|matchKind|args\.kind)\s*===\s*"bill_payment"/.test(svc);
+  const settlementGate = /(?:ledger_entry_kind|matchKind|args\.kind)\s*===\s*"settlement"/.test(svc);
+  if (!paymentGate || !billPayGate || !settlementGate) {
+    problems.push("reverse stamps must be gated on payment / bill_payment / settlement kinds");
+  }
+  if (
+    !/UPDATE accounting\.payments/.test(test) ||
+    !/UPDATE accounting\.bill_payments/.test(test) ||
+    !/UPDATE driver_finance\.driver_settlements/.test(test)
+  ) {
+    problems.push("unit test must assert reverse UPDATEs for payment, bill_payment, and settlement");
   }
   if (!/WAVE-H3/.test(test)) {
     problems.push("unit test must identify WAVE-H3");

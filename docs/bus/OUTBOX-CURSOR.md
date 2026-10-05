@@ -1,3 +1,23 @@
+## 2026-10-05T08:52Z · ENG-SPINE shipping (reverse stamp on persistable accept)
+
+DONE: 0 Cursor open PRs at census. Did not merge CC-2 #25445/#25446 or Claude #25443.
+
+NOW: one helper stamps payment / bill_payment / settlement reverse FKs on 1:1 and multi accept. Unmatch clears settlement `paid_via_bank_txn_id` scoped.
+
+NEXT: preflight + Fast Merge. Then next ten-of-ten hole. No Chrome. No ACCT-F406.
+
+Files Modified: match.service.ts · recon-worklist.service.ts · accept-match-h3-reverse-bank-fk.test.ts · verify-wave-h3-bank-match-reverse-fk.mjs · verify-unmatch-clears-both-sides.mjs · MEMORY_BANK.md · NOW-CURSOR.md · OUTBOX-CURSOR.md
+
+## 2026-10-05T08:39Z · ENG-REVERSE Fast Merged #25475
+
+DONE: #25475 MERGED squash `1b6380aa5539f51d76f7efb6b47da4d09be936c9` (GitHub 2026-10-05T08:39:02Z). Local gate PASS. Census before this PR: 0 Cursor open PRs. Did not merge CC-2 #25445/#25446 or Claude #25443.
+
+NOW: void releaser is BANK_LINE_DOCUMENT_POINTER_COLUMNS (14 including deposit). Guard 8/8. tip `1b6380aa55`.
+
+NEXT: ten of ten — spine / linkage on match accept. No Chrome. No ACCT-F406.
+
+Files Modified: void.service.ts · bank-deposits.service.ts · verify-every-void-releases-its-bank-lines.mjs · verify-bank-match-is-a-document-pointer.mjs · MEMORY_BANK.md
+
 ## 2026-10-05T08:40Z · ENG-REVERSE shipping (void releaser = 14 pointers)
 
 DONE: 0 Cursor open PRs at census. Deposit was missing from RELEASABLE_POINTER_COLUMNS and from verify-every-void-releases POINTER.
