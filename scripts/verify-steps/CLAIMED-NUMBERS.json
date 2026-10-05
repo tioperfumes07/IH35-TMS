@@ -16222,5 +16222,10 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-10-05",
     "purpose": "verify-account-filters-are-multi-select"
+  },
+  "18141": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-05",
+    "purpose": "verify-void-document-door-is-whole"
   }
 }
