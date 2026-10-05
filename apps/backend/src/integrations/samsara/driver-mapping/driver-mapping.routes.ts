@@ -62,6 +62,7 @@ type ProfileRow = {
   vendor_deactivated_at: string | null;
   raw_payload: Record<string, unknown> | null;
   last_seen_at: string | null;
+  samsara_created_at: string | null;
   driver_activation_status: string | null;
 };
 
@@ -201,7 +202,14 @@ export async function registerSamsaraDriverMappingRoutes(app: FastifyInstance) {
           `
             SELECT
               sd.samsara_driver_id,
-              sd.local_driver_id::text AS local_driver_id,
+              -- SAM-F429 — WHO THIS SAMSARA USER IS COMES FROM THE CANONICAL MAP, NOT THE LEGACY COLUMN.
+              -- This page used to answer from sd.local_driver_id while the driver profile answered
+              -- from mdata.driver_samsara_accounts (driver-profile.service.ts). The owner hit the
+              -- result on ANGEL ALFONSO SOSA: "0 Samsara users" on the profile and "mapped" here, at
+              -- the same moment, about the same person. Two maps, two answers, and the engines (sync,
+              -- HOS, messaging, profile) all follow the canonical one — so the mapping page was the
+              -- only screen showing the stale answer, which is the worst place for it to be.
+              can.driver_id::text AS local_driver_id,
               sd.local_vendor_id::text AS local_vendor_id,
               (md.first_name || ' ' || md.last_name) AS driver_name,
               mv.vendor_name AS vendor_name,
@@ -209,9 +217,21 @@ export async function registerSamsaraDriverMappingRoutes(app: FastifyInstance) {
               mv.deactivated_at::text AS vendor_deactivated_at,
               sd.raw_payload,
               sd.last_seen_at::text AS last_seen_at,
-              sd.driver_activation_status
+              sd.driver_activation_status,
+              -- The date the account was created IN SAMSARA. Samsara returns createdAtTime on the
+              -- driver object; it is kept in the mirrored payload. Null renders as — , never as a date.
+              (sd.raw_payload->>'createdAtTime') AS samsara_created_at
             FROM integrations.samsara_drivers sd
-            LEFT JOIN mdata.drivers md ON md.id = sd.local_driver_id
+            LEFT JOIN LATERAL (
+              SELECT a.driver_id
+                FROM mdata.driver_samsara_accounts a
+               WHERE a.operating_company_id = sd.operating_company_id
+                 AND a.samsara_driver_id = sd.samsara_driver_id
+                 AND a.is_active
+               ORDER BY a.updated_at DESC NULLS LAST
+               LIMIT 1
+            ) can ON true
+            LEFT JOIN mdata.drivers md ON md.id = can.driver_id
             LEFT JOIN mdata.vendors mv ON mv.id = sd.local_vendor_id
             WHERE ${conditions.join(" AND ")}
             ORDER BY sd.last_seen_at DESC NULLS LAST, sd.samsara_driver_id ASC
@@ -253,6 +273,7 @@ export async function registerSamsaraDriverMappingRoutes(app: FastifyInstance) {
             return {
               samsara_driver_id: r.samsara_driver_id,
               samsara_name: readSamsaraName(r.raw_payload),
+              samsara_created_at: r.samsara_created_at,
               mapped: Boolean(r.local_driver_id || r.local_vendor_id),
               local_driver_id: r.local_driver_id,
               local_vendor_id: r.local_vendor_id,
