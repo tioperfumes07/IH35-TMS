@@ -16237,5 +16237,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-05",
     "purpose": "verify-no-orphan-bookend-settlement-reuse"
+  },
+  "18165": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-05",
+    "purpose": "verify-samsara-one-canonical-map"
   }
 }
