@@ -2222,5 +2222,10 @@
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-04",
     "purpose": "ACCT-F403 (Lead ruling Option 1): a settlement-derived fuel row on the Relay rail posts NO fuel — fuel.fuel_transactions.relay_fuel_transaction_id links it to its Relay fill, and only a Relay fill (or a reversal) may credit the fuel_wallet_relay account"
+  },
+  "202615420900": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-05",
+    "purpose": "Re-run the 0359 NULLIF sweep: 5 live RLS policies (dispatch.customer_notify_preferences, dispatch.notify_log, maintenance.pm_schedule_runs, pm_auto_wo_log, pm_auto_engine_settings) still cast current_setting()::uuid bare and raise 22P02 on an empty company setting"
   }
 }
