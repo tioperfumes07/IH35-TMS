@@ -507,6 +507,10 @@ export function listInvoices(
     from_date?: string;
     to_date?: string;
     has_balance?: boolean;
+    /** ACCT-F411 — WHICH aging bucket, by name. The server resolves it against the one ladder. */
+    aging_bucket?: string | readonly string[];
+    /** The report's as-of date; a bucket means nothing without it. */
+    as_of?: string;
     /** Allowlisted column key — server ORDER BY (never client-only on a capped page). */
     sort?: string;
     dir?: "asc" | "desc";
@@ -523,6 +527,15 @@ export function listInvoices(
   if (params.from_date) query.set("from_date", params.from_date);
   if (params.to_date) query.set("to_date", params.to_date);
   if (params.has_balance) query.set("has_balance", "true");
+  // ACCT-F411 — the bucket and its as-of travel together or not at all: half of the pair would
+  // filter off the server's today instead of the report's as-of, which is a different number.
+  if (params.aging_bucket && params.as_of) {
+    // APPEND each id: a merged report column sends two, and set() would keep only the last.
+    for (const b of Array.isArray(params.aging_bucket) ? params.aging_bucket : [params.aging_bucket]) {
+      query.append("aging_bucket", String(b));
+    }
+    query.set("as_of", params.as_of);
+  }
   if (params.sort) query.set("sort", params.sort);
   if (params.dir) query.set("dir", params.dir);
   if (params.limit !== undefined) query.set("limit", String(params.limit));
@@ -816,6 +829,10 @@ export function listVendorBills(
     status?: BillStatus | "unpaid" | "active";
     include_balance?: boolean;
     has_balance?: boolean;
+    /** ACCT-F411 — WHICH aging bucket, by name. The server resolves it against the one ladder. */
+    aging_bucket?: string | readonly string[];
+    /** The report's as-of date; a bucket means nothing without it. */
+    as_of?: string;
     date_from?: string;
     date_to?: string;
     limit?: number;
@@ -827,6 +844,15 @@ export function listVendorBills(
   if (params.status) query.set("status", params.status);
   if (params.include_balance !== undefined) query.set("include_balance", String(params.include_balance));
   if (params.has_balance) query.set("has_balance", "true");
+  // ACCT-F411 — the bucket and its as-of travel together or not at all: half of the pair would
+  // filter off the server's today instead of the report's as-of, which is a different number.
+  if (params.aging_bucket && params.as_of) {
+    // APPEND each id: a merged report column sends two, and set() would keep only the last.
+    for (const b of Array.isArray(params.aging_bucket) ? params.aging_bucket : [params.aging_bucket]) {
+      query.append("aging_bucket", String(b));
+    }
+    query.set("as_of", params.as_of);
+  }
   if (params.date_from) query.set("date_from", params.date_from);
   if (params.date_to) query.set("date_to", params.date_to);
   if (params.limit !== undefined) query.set("limit", String(params.limit));
@@ -1120,6 +1146,10 @@ export function listBills(
     status?: BillStatus | "unpaid" | "active" | "all" | "posted";
     include_balance?: boolean;
     has_balance?: boolean;
+    /** ACCT-F411 — WHICH aging bucket, by name. The server resolves it against the one ladder. */
+    aging_bucket?: string | readonly string[];
+    /** The report's as-of date; a bucket means nothing without it. */
+    as_of?: string;
     date_from?: string;
     date_to?: string;
     search?: string;
@@ -1142,6 +1172,15 @@ export function listBills(
   if (params.status) query.set("status", params.status);
   if (params.include_balance !== undefined) query.set("include_balance", String(params.include_balance));
   if (params.has_balance) query.set("has_balance", "true");
+  // ACCT-F411 — the bucket and its as-of travel together or not at all: half of the pair would
+  // filter off the server's today instead of the report's as-of, which is a different number.
+  if (params.aging_bucket && params.as_of) {
+    // APPEND each id: a merged report column sends two, and set() would keep only the last.
+    for (const b of Array.isArray(params.aging_bucket) ? params.aging_bucket : [params.aging_bucket]) {
+      query.append("aging_bucket", String(b));
+    }
+    query.set("as_of", params.as_of);
+  }
   if (params.date_from) query.set("date_from", params.date_from);
   if (params.date_to) query.set("date_to", params.date_to);
   if (params.search?.trim()) query.set("search", params.search.trim());

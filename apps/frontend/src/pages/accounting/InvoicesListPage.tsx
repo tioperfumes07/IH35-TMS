@@ -136,6 +136,9 @@ function invoiceFilterFromSearchParams(searchParams: URLSearchParams): {
   statuses: string[];
   hasBalance: boolean;
   notSent: boolean;
+  /** ACCT-F411 — the aging bucket drill, read as a PAIR: see the comment at the read below. */
+  agingBuckets: string[];
+  agingAsOf: string | null;
 } {
   // U12 (owner UI register 2026-10-03) — status is a multi-select: ?status= repeats; "With balance" (has_balance) and
   // "Not sent" (not_sent) are their own toggles, not statuses. No status param = Active (FLT-03: lists open live, voided
@@ -144,10 +147,23 @@ function invoiceFilterFromSearchParams(searchParams: URLSearchParams): {
   const raw = searchParams.getAll("status").map((s) => s.trim()).filter(Boolean);
   // Legacy deep-links status=with_balance / status=not_sent keep working.
   const hasBalance = searchParams.get("has_balance") === "true" || raw.includes("with_balance");
+  // ACCT-F411 — the A/R AGING BUCKET drill. The report sends WHICH bucket plus its as-of date; the
+  // server resolves the bucket against the one ladder in accounting/aging/buckets.ts, the same
+  // module its aging report classifies with, so this list shows exactly the rows that figure
+  // counted. Both or neither: a bucket without an as-of would filter off the server's today
+  // instead of the report's as-of, which is a different number, so the pair is read as a pair.
+  // getAll, not get: a report column can merge buckets, so the drill may send the id twice
+  // (?aging_bucket=current&aging_bucket=d1_30). Reading only the first would filter to HALF the
+  // money the clicked cell shows — the exact wrong-number-behind-a-link defect this block closes.
+  const agingBucketsParam = searchParams.getAll("aging_bucket").map((b) => b.trim()).filter(Boolean);
+  const agingAsOfParam = searchParams.get("as_of");
+  const agingPairWhole = agingBucketsParam.length > 0 && Boolean(agingAsOfParam);
+  const agingBuckets = agingPairWhole ? agingBucketsParam : [];
+  const agingAsOf = agingPairWhole ? agingAsOfParam : null;
   const notSent = searchParams.get("not_sent") === "true" || raw.includes("not_sent");
   const picked = raw.filter((s) => s === "active" || s === "posted" || isRealInvoiceStatus(s));
   const statuses = raw.includes("all") ? [] : picked.length === 0 && !raw.some((s) => s === "with_balance" || s === "not_sent") ? ["active"] : picked;
-  return { customerId, statuses, hasBalance, notSent };
+  return { customerId, statuses, hasBalance, notSent, agingBuckets, agingAsOf };
 }
 
 export function InvoicesListPage() {
@@ -166,7 +182,7 @@ export function InvoicesListPage() {
   const [batchId, setBatchId] = useState("");
   // Bidirectional URL sync: customer_id / status / has_balance are searchParams-driven so
   // same-route updates and browser back/forward stay truthful (no local-only stale seed).
-  const { customerId, statuses, hasBalance, notSent } = invoiceFilterFromSearchParams(searchParams);
+  const { customerId, statuses, hasBalance, notSent, agingBuckets, agingAsOf } = invoiceFilterFromSearchParams(searchParams);
   // ACCT-F5049 — reverse Open Invoices keeps source_load_id (listInvoices already filters).
   const deepLinkSourceLoadId = searchParams.get("source_load_id");
   const [search, setSearch] = useState("");
@@ -331,12 +347,16 @@ export function InvoicesListPage() {
       // with the new server ORDER BY instead of silently reordering a stale cached page in memory.
       sortKey,
       sortDirection,
+      agingBuckets,
+      agingAsOf,
     ],
     queryFn: () =>
       listInvoices(selectedCompanyId!, {
         // U12 — every picked status goes to the server (active / posted pseudo-statuses + real ones); none = all.
         status: statuses,
         has_balance: hasBalance || undefined,
+        aging_bucket: agingBuckets.length ? agingBuckets : undefined,
+        as_of: agingAsOf || undefined,
         customer_id: customerParam,
         search: search || undefined,
         from_date: fromDate || undefined,

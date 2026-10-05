@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { AGING_BUCKET_IDS, agingWindowFromBucket, agingWindowPredicate } from "./aging/buckets.js";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
@@ -35,6 +36,21 @@ const listQuerySchema = companyQuerySchema.extend({
   // Aging / open-AR drill: filter full entity set by open balance BEFORE LIMIT/OFFSET
   // (mirrors accounting bills has_balance). Excludes draft/voided; includes sent/partial/etc.
   has_balance: z.coerce.boolean().optional(),
+  // ACCT-F411 — the A/R AGING WINDOW, so an aging bucket on a report has a destination that
+  // reproduces it. Days OVERDUE relative to as_of, inclusive both ends, measured off i.due_date —
+  // the same column ar-aging.service.ts buckets on. Boundaries come from
+  // accounting/aging/buckets.ts, the one place they exist, so the bucket a report counts and the
+  // bucket this filter selects cannot drift. Applied BEFORE LIMIT/OFFSET, same discipline as
+  // has_balance, or a bucket's total would be a page slice instead of the bucket.
+  as_of: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  // One id, or several when a report column merges buckets (the A/P table's "0–30" is
+  // current + 1-30). Several must be CONTIGUOUS; the server rejects a gap rather than spanning it.
+  aging_bucket: z
+    .union([
+      z.enum(AGING_BUCKET_IDS as unknown as [string, ...string[]]),
+      z.array(z.enum(AGING_BUCKET_IDS as unknown as [string, ...string[]])),
+    ])
+    .optional(),
   // SORT LAW — allowlisted column → SQL ORDER BY. Unknown sort falls back to issue_date.
   sort: z.string().trim().max(64).optional(),
   dir: z.enum(["asc", "desc"]).optional(),
@@ -316,6 +332,19 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
     const query = listQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     const q = query.data;
+    // ACCT-F411 — the wire carries WHICH bucket(s) were clicked, never day numbers, so the caller
+    // never holds the boundaries and cannot drift from them. A non-contiguous selection cannot be
+    // one window and silently spanning the gap would OVERSTATE the list, so it is a 400 — empty or
+    // wrong is a question, not an answer.
+    let agingWindow;
+    try {
+      agingWindow = agingWindowFromBucket(q.aging_bucket);
+    } catch (error) {
+      return reply.code(400).send({
+        error: "invalid_aging_bucket",
+        message: String((error as Error)?.message ?? "invalid_aging_bucket"),
+      });
+    }
     const listed = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
       // Extra filters only — entity predicates are SQL literals in BOTH count + list templates
       // (verify-mdata-entity-scope scans template text; interpolated JS where-clauses alone are insufficient).
@@ -379,6 +408,24 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         extraWhere.push("COALESCE(i.amount_open_cents, 0) > 0");
         extraWhere.push("i.voided_at IS NULL");
         extraWhere.push("i.status NOT IN ('draft', 'void', 'voided', 'paid')");
+      }
+      // ACCT-F411 — A/R aging window, off i.due_date, the same column ar-aging.service.ts buckets
+      // on. Boundaries from accounting/aging/buckets.ts, proven equivalent to the report's JS
+      // classifier against a live Postgres in aging/__tests__/buckets.sql.test.ts. Before
+      // LIMIT/OFFSET, so a bucket drill shows the bucket and not a page of it. A contradictory
+      // window (max below min) is rejected above as a 400 rather than returning zero rows that
+      // look like a working filter.
+      if (agingWindow) {
+        const predicate = agingWindowPredicate(
+          "i.due_date",
+          q.as_of ?? companyBusinessDate(),
+          agingWindow,
+          (value) => {
+            values.push(value);
+            return `$${values.length}`;
+          }
+        );
+        if (predicate) extraWhere.push(predicate);
       }
       // Same extra filters for COUNT and LIST (bind indices identical until LIMIT/OFFSET appended).
       const extraSql = extraWhere.length ? `AND ${extraWhere.join(" AND ")}` : "";

@@ -1,5 +1,14 @@
 import { useState } from "react";
 import { AmountLink, type AmountFilter } from "../../components/shared/AmountLink";
+// ACCT-F411 — the aging bucket drills. Unlike the A/P and A/R aging PAGES, this package's tables
+// carry current_cents and bucket_1_30_cents SEPARATELY, so each cell is exactly one bucket id and
+// no merged span is needed here.
+import {
+  apAgingBillsFilter,
+  apAgingBucketFilter,
+  arAgingBucketFilter,
+  arAgingInvoiceFilter,
+} from "./agingDrillThrough";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -296,12 +305,56 @@ function ARAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
               <td className="py-0.5 text-slate-800">
                 <ManagementCustomerCell customerId={row.customer_id} customerName={row.customer_name} />
               </td>
-              <td className="py-0.5 text-right tabular-nums">{money(row.current_cents)}</td>
-              <td className="py-0.5 text-right tabular-nums">{money(row.bucket_1_30_cents)}</td>
-              <td className="py-0.5 text-right tabular-nums">{money(row.bucket_31_60_cents)}</td>
-              <td className="py-0.5 text-right tabular-nums">{money(row.bucket_61_90_cents)}</td>
-              <td className="py-0.5 text-right tabular-nums">{money(row.bucket_91_plus_cents)}</td>
-              <td className="py-0.5 text-right font-semibold tabular-nums">{money(row.total_open_cents)}</td>
+              <td className="py-0.5 text-right tabular-nums">
+                <AmountLink
+                  filter={arAgingBucketFilter(row.customer_id, "current", asOfDate)}
+                  data-testid={`mrp-ar-current-${row.customer_id}`}
+                >
+                  {money(row.current_cents)}
+                </AmountLink>
+              </td>
+              <td className="py-0.5 text-right tabular-nums">
+                <AmountLink
+                  filter={arAgingBucketFilter(row.customer_id, "d1_30", asOfDate)}
+                  data-testid={`mrp-ar-1-30-${row.customer_id}`}
+                >
+                  {money(row.bucket_1_30_cents)}
+                </AmountLink>
+              </td>
+              <td className="py-0.5 text-right tabular-nums">
+                <AmountLink
+                  filter={arAgingBucketFilter(row.customer_id, "d31_60", asOfDate)}
+                  data-testid={`mrp-ar-31-60-${row.customer_id}`}
+                >
+                  {money(row.bucket_31_60_cents)}
+                </AmountLink>
+              </td>
+              <td className="py-0.5 text-right tabular-nums">
+                <AmountLink
+                  filter={arAgingBucketFilter(row.customer_id, "d61_90", asOfDate)}
+                  data-testid={`mrp-ar-61-90-${row.customer_id}`}
+                >
+                  {money(row.bucket_61_90_cents)}
+                </AmountLink>
+              </td>
+              <td className="py-0.5 text-right tabular-nums">
+                <AmountLink
+                  filter={arAgingBucketFilter(row.customer_id, "d90_plus", asOfDate)}
+                  data-testid={`mrp-ar-91-plus-${row.customer_id}`}
+                >
+                  {money(row.bucket_91_plus_cents)}
+                </AmountLink>
+              </td>
+              <td className="py-0.5 text-right font-semibold tabular-nums">
+                {/* ACCT-F411 — the Total is every open document for this ar, which the
+                    has_balance list already reproduces, so no bucket rides along. */}
+                <AmountLink
+                  filter={arAgingInvoiceFilter(row.customer_id)}
+                  data-testid={`mrp-ar-total-${row.customer_id}`}
+                >
+                  {money(row.total_open_cents)}
+                </AmountLink>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -345,12 +398,56 @@ function APAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
               <td className="py-0.5 text-slate-800">
                 <ManagementVendorCell vendorId={row.vendor_id} vendorName={row.vendor_name} />
               </td>
-              <td className="py-0.5 text-right tabular-nums">{money(row.current_cents)}</td>
-              <td className="py-0.5 text-right tabular-nums">{money(row.bucket_1_30_cents)}</td>
-              <td className="py-0.5 text-right tabular-nums">{money(row.bucket_31_60_cents)}</td>
-              <td className="py-0.5 text-right tabular-nums">{money(row.bucket_61_90_cents)}</td>
-              <td className="py-0.5 text-right tabular-nums">{money(row.bucket_91_plus_cents)}</td>
-              <td className="py-0.5 text-right font-semibold tabular-nums">{money(row.total_open_cents)}</td>
+              <td className="py-0.5 text-right tabular-nums">
+                <AmountLink
+                  filter={apAgingBucketFilter(row.vendor_id, "current", asOfDate)}
+                  data-testid={`mrp-ap-current-${row.vendor_id}`}
+                >
+                  {money(row.current_cents)}
+                </AmountLink>
+              </td>
+              <td className="py-0.5 text-right tabular-nums">
+                <AmountLink
+                  filter={apAgingBucketFilter(row.vendor_id, "d1_30", asOfDate)}
+                  data-testid={`mrp-ap-1-30-${row.vendor_id}`}
+                >
+                  {money(row.bucket_1_30_cents)}
+                </AmountLink>
+              </td>
+              <td className="py-0.5 text-right tabular-nums">
+                <AmountLink
+                  filter={apAgingBucketFilter(row.vendor_id, "d31_60", asOfDate)}
+                  data-testid={`mrp-ap-31-60-${row.vendor_id}`}
+                >
+                  {money(row.bucket_31_60_cents)}
+                </AmountLink>
+              </td>
+              <td className="py-0.5 text-right tabular-nums">
+                <AmountLink
+                  filter={apAgingBucketFilter(row.vendor_id, "d61_90", asOfDate)}
+                  data-testid={`mrp-ap-61-90-${row.vendor_id}`}
+                >
+                  {money(row.bucket_61_90_cents)}
+                </AmountLink>
+              </td>
+              <td className="py-0.5 text-right tabular-nums">
+                <AmountLink
+                  filter={apAgingBucketFilter(row.vendor_id, "d90_plus", asOfDate)}
+                  data-testid={`mrp-ap-91-plus-${row.vendor_id}`}
+                >
+                  {money(row.bucket_91_plus_cents)}
+                </AmountLink>
+              </td>
+              <td className="py-0.5 text-right font-semibold tabular-nums">
+                {/* ACCT-F411 — the Total is every open document for this ap, which the
+                    has_balance list already reproduces, so no bucket rides along. */}
+                <AmountLink
+                  filter={apAgingBillsFilter(row.vendor_id)}
+                  data-testid={`mrp-ap-total-${row.vendor_id}`}
+                >
+                  {money(row.total_open_cents)}
+                </AmountLink>
+              </td>
             </tr>
           ))}
         </tbody>

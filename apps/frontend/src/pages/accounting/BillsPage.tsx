@@ -272,6 +272,19 @@ export function BillsPage() {
     initialStatus && STATUS_FILTER_VALUES.has(initialStatus) ? [initialStatus] : ["active"]
   );
   const hasBalance = searchParams.get("has_balance") === "true";
+  // ACCT-F411 — the A/P AGING BUCKET drill. The report sends WHICH bucket plus its as-of date; the
+  // server resolves the bucket against the one ladder in accounting/aging/buckets.ts, which is the
+  // same module its aging report classifies with, so this list shows exactly the rows that figure
+  // counted. Both or neither: a bucket without an as-of would be filtered off the server's today
+  // instead of the report's as-of, which is a different number, so the pair is read as a pair.
+  // getAll, not get: the A/P aging table's "0–30" column is current + 1-30, so that drill sends
+  // the id twice (?aging_bucket=current&aging_bucket=d1_30). Reading only the first would filter to
+  // HALF the money the clicked cell shows.
+  const agingBucketsParam = searchParams.getAll("aging_bucket").map((b) => b.trim()).filter(Boolean);
+  const agingAsOfParam = searchParams.get("as_of");
+  const agingPairWhole = agingBucketsParam.length > 0 && Boolean(agingAsOfParam);
+  const agingBuckets = agingPairWhole ? agingBucketsParam : [];
+  const agingAsOf = agingPairWhole ? agingAsOfParam : null;
   // BILLS-DATERANGE-01: From/To bill_date filter (server-side via listBills date_from/date_to).
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -373,12 +386,16 @@ export function BillsPage() {
       sortKey,
       sortDirection,
       billType,
+      agingBuckets,
+      agingAsOf,
     ],
     queryFn: () =>
       listBillRegister(companyId, {
         include_balance: true,
         status: statusParam,
         has_balance: hasBalance || undefined,
+        aging_bucket: agingBuckets.length ? agingBuckets : undefined,
+        as_of: agingAsOf || undefined,
         vendor_id: vendorParam,
         date_from: dateFrom || undefined,
         date_to: dateTo || undefined,

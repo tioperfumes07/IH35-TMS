@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { agingWindowPredicate } from "./aging/buckets.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 import { resolveBillDisplayId } from "./display-id.js";
@@ -213,11 +214,28 @@ function applyBillListStatusFilter(where: string[], status: BillListStatus | und
   if (status !== "voided") where.push("b.revoked_at IS NULL");
 }
 
+/**
+ * ACCT-F411 — the A/P due date, as ap-aging.service.ts reconstructs it (its own SQL reads
+ * `COALESCE(b.due_date, b.bill_date)::text AS due_date` before bucketing). Declared once here so
+ * the list filter and the aging report measure overdue-ness off the SAME date. A bill with neither
+ * date is NULL, which the window predicate treats as "current" — the same answer the report's JS
+ * classifier gives it.
+ */
+export const BILL_AGING_DUE_DATE_SQL = "COALESCE(b.due_date, b.bill_date)";
+
 type ListBillsOptions = {
   status?: BillListStatus;
   fromDate?: string;
   toDate?: string;
   hasBalance?: boolean;
+  /**
+   * ACCT-F411 — the A/P aging window a bucket drill carries. Days OVERDUE relative to asOf,
+   * inclusive, off COALESCE(b.due_date, b.bill_date) — the same expression ap-aging.service.ts
+   * reconstructs, so this filter selects exactly the rows that bucket counted. Bounds come from
+   * accounting/aging/buckets.ts; null on either end means open on that end.
+   */
+  agingWindow?: { minDaysOverdue: number | null; maxDaysOverdue: number | null } | null;
+  agingAsOf?: string;
   /** SEARCH LAW — display_id · bill_number · vendor · amount$ · date · status · memo */
   search?: string;
   /** ACCT-F5035 — claim→bill reverse list filter (accounting.bills.insurance_claim_id). */
@@ -1040,6 +1058,20 @@ export async function listBillsByVendor(
       where.push(`${BILL_OPEN_BALANCE_SQL} > 0`);
       where.push("b.status NOT IN ('void', 'voided')");
     }
+    // ACCT-F411 — same A/P aging window as the company-wide list, same expression, same source of
+    // boundaries. A vendor's bucket drill must filter identically to the all-vendors one.
+    if (options.agingWindow) {
+      const predicate = agingWindowPredicate(
+        BILL_AGING_DUE_DATE_SQL,
+        options.agingAsOf ?? companyBusinessDate(),
+        options.agingWindow,
+        (value) => {
+          values.push(value);
+          return `$${values.length}`;
+        }
+      );
+      if (predicate) where.push(predicate);
+    }
     if (options.insuranceClaimId) {
       values.push(options.insuranceClaimId);
       where.push(`b.insurance_claim_id = $${values.length}::uuid`);
@@ -1229,6 +1261,23 @@ function buildAllBillsWhereClause(
     // LV-PAYABLE-SELECTOR-OFFERS-VOIDED-BILLS / ACCT-F5028: dollar open ≠ payable.
     where.push(`${BILL_OPEN_BALANCE_SQL} > 0`);
     where.push("b.status NOT IN ('void', 'voided')");
+  }
+  // ACCT-F411 — A/P aging window. BILL_AGING_DUE_DATE_SQL is the SAME due-date expression
+  // ap-aging.service.ts reconstructs, and the boundaries come from accounting/aging/buckets.ts,
+  // proven equivalent to the report's JS classifier against a live Postgres in
+  // aging/__tests__/buckets.sql.test.ts. Before LIMIT/OFFSET, so a bucket drill shows the bucket
+  // and not a page of it.
+  if (options.agingWindow) {
+    const predicate = agingWindowPredicate(
+      BILL_AGING_DUE_DATE_SQL,
+      options.agingAsOf ?? companyBusinessDate(),
+      options.agingWindow,
+      (value) => {
+        values.push(value);
+        return `$${values.length}`;
+      }
+    );
+    if (predicate) where.push(predicate);
   }
   if (options.insuranceClaimId) {
     values.push(options.insuranceClaimId);

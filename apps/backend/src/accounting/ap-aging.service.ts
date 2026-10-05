@@ -1,4 +1,5 @@
 import { withCurrentUser } from "../auth/db.js";
+import { assignAgingBucket } from "./aging/buckets.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import {
@@ -111,15 +112,15 @@ export function parseIsoDateOnly(value: string): number {
   return new Date(`${value}T00:00:00.000Z`).getTime();
 }
 
-export function assignAgingBucket(asOfDate: string, dueDate: string | null): AgingBucket {
-  if (!dueDate) return "current";
-  const daysOverdue = Math.floor((parseIsoDateOnly(asOfDate) - parseIsoDateOnly(dueDate)) / 86_400_000);
-  if (daysOverdue <= 0) return "current";
-  if (daysOverdue <= 30) return "d1_30";
-  if (daysOverdue <= 60) return "d31_60";
-  if (daysOverdue <= 90) return "d61_90";
-  return "d90_plus";
-}
+/**
+ * ACCT-F411 — the ladder moved to accounting/aging/buckets.ts, which is now its ONLY definition.
+ * Re-exported here so every existing importer of this symbol keeps working unchanged, and so the
+ * bills and invoices LIST filters can share the same boundaries instead of becoming a third and
+ * fourth copy. The behavior is identical — aging/__tests__/buckets.sql.test.ts pins every
+ * boundary (0/1, 30/31, 60/61, 90/91, no due date, future due date, leap day, DST) and proves the
+ * SQL form agrees with this JS form against a live Postgres.
+ */
+export { assignAgingBucket };
 
 /** Historical = strictly before company business today (same rule as FIN-20). */
 export function isHistoricalAsOf(asOfDate: string, today: string = companyBusinessDate()): boolean {

@@ -1,4 +1,5 @@
 import { withCurrentUser } from "../auth/db.js";
+import { assignAgingBucket } from "./aging/buckets.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import {
   attachUncleared,
@@ -170,8 +171,15 @@ export async function getArAgingReport(input: {
       const amount = Number(row.amount_open_cents ?? 0);
       if (amount <= 0) continue;
 
-      const dueTime = parseIsoDateOnly(row.due_date);
-      const daysOverdue = Math.floor((asOfTime - dueTime) / 86_400_000);
+      // ACCT-F411 — the 0/30/60/90 ladder used to be written out again right here, by hand, a
+      // second copy of the one in ap-aging.service.ts. Two copies had already drifted on the due
+      // date they read (A/P coalesces the bill date, A/R does not), and the two lists were about
+      // to make it four. accounting/aging/buckets.ts is now the only place the boundaries exist,
+      // and aging/__tests__/buckets.sql.test.ts proves its SQL and its JS agree against a live
+      // Postgres, so the bucket a report counts and the bucket a drilled list filters by cannot
+      // diverge. No number changes here: the matrix test pins every boundary to what this ladder
+      // already produced.
+      const bucket = assignAgingBucket(input.as_of_date, row.due_date);
 
       const key = row.customer_id;
       const customer = byCustomer.get(key) ?? {
@@ -188,17 +196,11 @@ export async function getArAgingReport(input: {
         cleared_open_cents: 0,
       };
 
-      if (daysOverdue <= 0) {
-        customer.current += amount;
-      } else if (daysOverdue <= 30) {
-        customer.d1_30 += amount;
-      } else if (daysOverdue <= 60) {
-        customer.d31_60 += amount;
-      } else if (daysOverdue <= 90) {
-        customer.d61_90 += amount;
-      } else {
-        customer.d90_plus += amount;
-      }
+      if (bucket === "current") customer.current += amount;
+      else if (bucket === "d1_30") customer.d1_30 += amount;
+      else if (bucket === "d31_60") customer.d31_60 += amount;
+      else if (bucket === "d61_90") customer.d61_90 += amount;
+      else customer.d90_plus += amount;
 
       customer.total_outstanding =
         customer.current + customer.d1_30 + customer.d31_60 + customer.d61_90 + customer.d90_plus;
