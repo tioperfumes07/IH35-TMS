@@ -51,6 +51,10 @@ function assertPage(src) {
   if (/patchSearchParam\("customer_id"/.test(src) || /patchSearchParam\("driver_id"/.test(src)) {
     errors.push("must not silently patch URL on every picker change");
   }
+  // BANK-F91556 leftover refuse — FactoringHome chrome uses house tokens, never Tailwind slate-*.
+  if (src.includes("text-slate-") || src.includes("border-slate-") || src.includes("bg-slate-")) {
+    errors.push("leftover slate class");
+  }
   return errors;
 }
 
@@ -101,6 +105,12 @@ function selftest() {
       good: assertPage(good),
       goodCollapsed: assertPage(goodCollapsed),
     });
+    process.exit(1);
+  }
+  const leftoverPlant = `${good}\n<div className="text-slate-600 border-slate-300 bg-slate-50">plant</div>`;
+  const leftover = assertPage(leftoverPlant);
+  if (!leftover.includes("leftover slate class")) {
+    console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`, leftover);
     process.exit(1);
   }
   console.log(`${LABEL} selftest PASS`);
