@@ -1,3 +1,5 @@
+import { bankLineHasLiveDocumentPointerSql, bankLineIsUnmatchedSql } from "./bank-line-match-pointer.js";
+
 /**
  * ENG-7D / ENG-MATCH — owner A1: Alert after 7 days unmatched. One threshold only.
  *
@@ -8,6 +10,9 @@
  *
  * A COUNT on a page is not an alert. The integrity-alert engine upserts one digest alert
  * per company and pages Owner/Administrator via banking.transaction.flagged.
+ *
+ * ENG-MATCH: the pointer predicate lives in bank-line-match-pointer.ts so KPI / accept /
+ * suggest / reconcile-unmatched cannot drift back to review_state or a CATEGORIZE-account null.
  */
 
 export const BANK_UNMATCHED_7D_RULE_CODE = "bank_unmatched_7d";
@@ -53,29 +58,11 @@ export async function ensureBankUnmatched7dRule(
   );
 }
 
-/** Live bank line with no live document pointer (ROUND 368.2 family, minus linked_entity_id-only counterparties that still name a document). */
+/** Live bank line with no live document pointer, aged 7+ Chicago days. */
 export const AGED_UNMATCHED_BANK_LINE_SQL = `
   bt.voided_at IS NULL
   AND bt.transaction_date <= ((now() AT TIME ZONE 'America/Chicago')::date - $2::int)
-  AND NOT (
-    num_nonnulls(
-      bt.matched_advance_id,
-      bt.matched_bill_id,
-      bt.matched_bill_payment_id,
-      bt.matched_expense_id,
-      bt.matched_factoring_advance_id,
-      bt.matched_fuel_transaction_id,
-      bt.matched_invoice_id,
-      bt.matched_journal_entry_id,
-      bt.matched_load_id,
-      bt.matched_payment_id,
-      bt.matched_relay_fuel_transaction_id,
-      bt.matched_settlement_id,
-      bt.matched_transfer_id
-    ) > 0
-    OR bt.status IN ('split', 'transfer')
-    OR bt.transfer_kind IS NOT NULL
-  )
+  AND ${bankLineIsUnmatchedSql("bt")}
 `;
 
 type QueryableClient = {
@@ -141,25 +128,7 @@ export async function countAgedMatchedBankLines(
       WHERE bt.operating_company_id = $1::uuid
         AND bt.voided_at IS NULL
         AND bt.transaction_date <= ((now() AT TIME ZONE 'America/Chicago')::date - $2::int)
-        AND (
-          num_nonnulls(
-            bt.matched_advance_id,
-            bt.matched_bill_id,
-            bt.matched_bill_payment_id,
-            bt.matched_expense_id,
-            bt.matched_factoring_advance_id,
-            bt.matched_fuel_transaction_id,
-            bt.matched_invoice_id,
-            bt.matched_journal_entry_id,
-            bt.matched_load_id,
-            bt.matched_payment_id,
-            bt.matched_relay_fuel_transaction_id,
-            bt.matched_settlement_id,
-            bt.matched_transfer_id
-          ) > 0
-          OR bt.status IN ('split', 'transfer')
-          OR bt.transfer_kind IS NOT NULL
-        )
+        AND ${bankLineHasLiveDocumentPointerSql("bt")}
     `,
     [operatingCompanyId, staleDays]
   );

@@ -80,9 +80,30 @@ try {
     JOIN catalogs.accounts ca ON ca.id = a.ledger_account_id WHERE ${acctWhere} AND ca.account_type = 'Asset'`)).s);
   const t = await one(`SELECT count(*)::int n,
       COALESCE(sum(abs(amount_cents)) FILTER (WHERE reconciliation_cleared IS NOT TRUE AND is_credit),0)::bigint unin,
-      COALESCE(sum(abs(amount_cents)) FILTER (WHERE review_state = 'for_review' AND is_credit),0)::bigint uin,
-      COALESCE(sum(abs(amount_cents)) FILTER (WHERE review_state = 'for_review' AND NOT is_credit),0)::bigint uout,
-      count(*) FILTER (WHERE review_state IN ('matched','categorized','transfer'))::int res,
+      COALESCE(sum(abs(amount_cents)) FILTER (WHERE t.is_credit AND NOT (
+        num_nonnulls(
+          t.matched_advance_id, t.matched_bill_id, t.matched_bill_payment_id, t.matched_deposit_id,
+          t.matched_expense_id, t.matched_factoring_advance_id, t.matched_fuel_transaction_id,
+          t.matched_invoice_id, t.matched_journal_entry_id, t.matched_load_id, t.matched_payment_id,
+          t.matched_relay_fuel_transaction_id, t.matched_settlement_id, t.matched_transfer_id
+        ) > 0 OR t.status IN ('split', 'transfer') OR t.transfer_kind IS NOT NULL
+      )),0)::bigint uin,
+      COALESCE(sum(abs(amount_cents)) FILTER (WHERE NOT t.is_credit AND NOT (
+        num_nonnulls(
+          t.matched_advance_id, t.matched_bill_id, t.matched_bill_payment_id, t.matched_deposit_id,
+          t.matched_expense_id, t.matched_factoring_advance_id, t.matched_fuel_transaction_id,
+          t.matched_invoice_id, t.matched_journal_entry_id, t.matched_load_id, t.matched_payment_id,
+          t.matched_relay_fuel_transaction_id, t.matched_settlement_id, t.matched_transfer_id
+        ) > 0 OR t.status IN ('split', 'transfer') OR t.transfer_kind IS NOT NULL
+      )),0)::bigint uout,
+      count(*) FILTER (WHERE
+        num_nonnulls(
+          t.matched_advance_id, t.matched_bill_id, t.matched_bill_payment_id, t.matched_deposit_id,
+          t.matched_expense_id, t.matched_factoring_advance_id, t.matched_fuel_transaction_id,
+          t.matched_invoice_id, t.matched_journal_entry_id, t.matched_load_id, t.matched_payment_id,
+          t.matched_relay_fuel_transaction_id, t.matched_settlement_id, t.matched_transfer_id
+        ) > 0 OR t.status IN ('split', 'transfer') OR t.transfer_kind IS NOT NULL
+      )::int res,
       COALESCE(sum(abs(amount_cents)) FILTER (WHERE NOT is_credit AND (matched_fuel_transaction_id IS NOT NULL OR matched_relay_fuel_transaction_id IS NOT NULL)),0)::bigint fuel,
       COALESCE(sum(abs(amount_cents)) FILTER (WHERE NOT is_credit AND matched_settlement_id IS NOT NULL),0)::bigint st
     FROM banking.bank_transactions t WHERE ${live}`);

@@ -3,9 +3,11 @@
 // purchase document — never display math in a component. Each KPI names its source, carries the row count behind it and
 // drills to exactly those rows (getBankingKpiDrill); the value and the drill share one predicate so they cannot disagree.
 //
-// Resolved / unmatched follows the canonical review_state (CHECK: for_review | categorized | excluded | matched | transfer):
-// matched / categorized / transfer = resolved, for_review = unmatched, excluded = out of scope. Direction is is_credit and
-// amounts are absolute (amount_cents sign is not consistent across feeds).
+import { bankLineHasLiveDocumentPointerSql, bankLineIsUnmatchedSql } from "./bank-line-match-pointer.js";
+
+// ENG-MATCH: unmatched / match_rate follow the live document pointer, not review_state and
+// not coa_account_id. Categorize is GL mapping. Match is a pointer (ROUND 368.2 + deposit).
+// Excluded stays out of scope. Direction is is_credit; amounts are absolute.
 //
 // Linkage (LINKAGE LAW §10-B): bank line -> bank account -> ledger account; matched_* -> invoice / bill / settlement / fuel
 // transaction / Relay fill / factoring advance / journal entry; reconciliation_session_id -> session. Every drill row carries
@@ -54,8 +56,8 @@ const num = (v: unknown) => (v == null ? 0 : Number(v));
 const LIVE = `b.operating_company_id = $1::uuid AND b.voided_at IS NULL AND b.merged_into_bank_transaction_id IS NULL
   AND NOT COALESCE(b.is_sample_data, false) AND b.transaction_date BETWEEN $2::date AND $3::date`;
 const IN_SCOPE = `${LIVE} AND b.review_state IS DISTINCT FROM 'excluded'`;
-const RESOLVED = `b.review_state IN ('matched', 'categorized', 'transfer')`;
-const UNMATCHED = `b.review_state = 'for_review'`;
+const RESOLVED = bankLineHasLiveDocumentPointerSql("b");
+const UNMATCHED = bankLineIsUnmatchedSql("b");
 const ABS = `abs(b.amount_cents)`;
 const FUEL = `(b.matched_fuel_transaction_id IS NOT NULL OR b.matched_relay_fuel_transaction_id IS NOT NULL)`;
 const LINE_COLS = `b.id AS bank_transaction_id, COALESCE(left(b.description, 80), b.id::text) AS drill_label, b.transaction_date, b.bank_account_id, COALESCE(ba.display_name, ba.account_name) AS bank_account,
@@ -164,14 +166,14 @@ export async function computeBankingKpis(client: DbClient, oci: string, range: B
   for (const [key, label, dir] of [["unmatched_inflow", "Unmatched inflow", true], ["unmatched_outflow", "Unmatched outflow", false]] as const) {
     const r = (await client.query<{ n: number; v: string }>(
       `SELECT count(*)::int AS n, COALESCE(sum(${ABS}), 0)::bigint AS v FROM banking.bank_transactions b WHERE ${IN_SCOPE} AND ${UNMATCHED} AND b.is_credit = ${dir}`, base)).rows[0]!;
-    out.push({ key, label, unit: "cents", value: num(r.v), source: "Bank lines still in For Review", gl_account: null, row_count: r.n,
-      empty_reason: noLines ?? (r.n === 0 ? `Every ${dir ? "deposit" : "payment"} in this range is matched or categorized.` : null) });
+    out.push({ key, label, unit: "cents", value: num(r.v), source: "Bank lines with no live document pointer (Match, not Categorize)", gl_account: null, row_count: r.n,
+      empty_reason: noLines ?? (r.n === 0 ? `Every ${dir ? "deposit" : "payment"} in this range has a live document pointer.` : null) });
   }
 
   const mr = (await client.query<{ n: number; m: number }>(
     `SELECT count(*)::int AS n, count(*) FILTER (WHERE ${RESOLVED})::int AS m FROM banking.bank_transactions b WHERE ${IN_SCOPE}`, base)).rows[0]!;
   out.push({ key: "match_rate", label: "Match rate", unit: "percent", value: mr.n > 0 ? Number(((mr.m / mr.n) * 100).toFixed(2)) : null,
-    compare_value: mr.m, compare_label: "Resolved lines", source: "Bank lines matched, categorized or recorded as transfers, out of all lines (excluded left out)",
+    compare_value: mr.m, compare_label: "Resolved lines", source: "Bank lines with a live document pointer or split/transfer, out of all lines (excluded left out)",
     gl_account: null, row_count: mr.n, empty_reason: noLines });
 
   const gap = (await client.query<{ bank_account: string; gap_cents: string }>(RECON_GAP, base)).rows;

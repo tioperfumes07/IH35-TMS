@@ -55,13 +55,21 @@ function liveCheck() {
       "accounting_integrity",
       '"stale_days": 7',
       "transaction_date",
+      "bankLineIsUnmatchedSql",
+      "resolveBankUnmatched7dEvents",
+    ])
+  );
+  const pointer = read("apps/backend/src/banking/bank-line-match-pointer.ts");
+  errors.push(
+    ...assertNeedles(pointer, "apps/backend/src/banking/bank-line-match-pointer.ts", [
       "matched_bill_id",
       "matched_expense_id",
       "matched_invoice_id",
       "matched_settlement_id",
-      "resolveBankUnmatched7dEvents",
+      "matched_deposit_id",
     ])
   );
+
   if (helper.includes("coa_account_id")) {
     errors.push(`${FILES.helper} must not key unmatched off coa_account_id (CATEGORIZE ≠ MATCH)`);
   }

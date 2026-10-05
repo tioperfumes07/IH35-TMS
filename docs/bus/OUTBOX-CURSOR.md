@@ -1,3 +1,15 @@
+## 2026-10-05T03:08Z · ENG-MATCH document-pointer shipping
+
+DONE: Cursor open PRs at census = 0 (CC-2 #25445/#25446 + Claude #25443 left). ENG-7D #25440 on tip.
+
+NOW: unmatched is a live document pointer (`bank-line-match-pointer.ts`, includes deposit). Wired into 7d alert, banking KPI, accept rematch, suggest pool, obligation unmatched. Guard 3996.
+
+LIVE PROOF: verify-bank-match-is-a-document-pointer + verify-unmatched-7d-is-an-alert exit 0; vitest 10/10.
+
+NEXT: fast-merge this PR. Then full engine ten of ten. No Chrome. No ACCT-F406 data corrections.
+
+Files Modified: bank-line-match-pointer · unmatched-7d-alert · banking-kpi · match.service · link-suggestions · obligation-reconcile · verify-bank-match-is-a-document-pointer · 3996 · MEMORY_BANK · OUTBOX-CURSOR
+
 ## 2026-10-05T02:48Z · 363-CUR-C Transfers Account filter shipping
 
 DONE: Fast-merge #25471 `cc8b7dc985` + #25472 `3e46e466a6` (All-accounts list bars → 0). Detector missed Transfers (`<option>All</option>`).
