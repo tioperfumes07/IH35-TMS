@@ -179,28 +179,20 @@ export async function disburseCashAdvanceSplit(
           // this stays on one client throughout (B10 fix, 2026-09-28: this file used to also manage
           // its own redundant nested BEGIN/COMMIT on this SAME connection, removed — see
           // DisburseSplitFailure above for how atomicity is still preserved). Flag-gated by the EXISTING
-          // BILL_PAYMENT_GL_POSTING_ENABLED check — no new flag, no new GL math. Best-effort: a post
-          // failure must not abort the whole split disburse, but must not vanish silently (SWL-1).
-          try {
-            const glPostingEnabled = await isBillPaymentGlPostingEnabled(companyId, actorUserUuid);
-            if (glPostingEnabled) {
-              await postSourceTransactionInClientTx(
-                client,
-                {
-                  operating_company_id: companyId,
-                  source_transaction_type: "bill_payment",
-                  source_transaction_id: billPaymentId,
-                },
-                { userId: actorUserUuid }
-              );
-            }
-          } catch (err) {
-            logger.warn("lumper_split_bill_payment_gl_post_failed", {
-              err: err instanceof Error ? err.message : String(err),
-              company_id: companyId,
-              bill_payment_id: billPaymentId,
-              advance_id: input.advance_id,
-            });
+          // BILL_PAYMENT_GL_POSTING_ENABLED check — no new flag, no new GL math. A post failure aborts the
+          // whole split disburse (no payment without its postings).
+          // 363-CC1-B (CC-3, 2026-10-04): a bill payment posts on its creating transaction or not at all. A posting failure THROWS and the whole split disburse rolls back (DisburseSplitFailure / withCurrentUser) — it used to be logged and swallowed, leaving a payment with no GL.
+          const glPostingEnabled = await isBillPaymentGlPostingEnabled(companyId, actorUserUuid);
+          if (glPostingEnabled) {
+            await postSourceTransactionInClientTx(
+              client,
+              {
+                operating_company_id: companyId,
+                source_transaction_type: "bill_payment",
+                source_transaction_id: billPaymentId,
+              },
+              { userId: actorUserUuid }
+            );
           }
         } else {
           // lumper expense leg → DR the 'reimbursement_expense' role (owner ruling ROW 0: lumper stays on that role —

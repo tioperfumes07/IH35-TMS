@@ -22,6 +22,9 @@
  *            trg_bill_payment_requires_postings exists on accounting.bill_payments, is enabled, and is a deferrable
  *            constraint trigger, initially deferred (fires at COMMIT). Rehearsed with real commits on a Neon fork: a cash
  *            payment with no postings is refused; a sample payment and a payment voided in the same transaction commit.
+ *   RULE 5 — (CC-3, 2026-10-04) the bill-payment posting call is never inside a try whose catch swallows the failure
+ *            (logs and continues). bills-bulk.routes.ts and lumper-cash-advance-split.ts did exactly that: RULE 1 saw the
+ *            in-tx call and passed while a failed post committed the payment with no GL — the 2170 clearing never cleared.
  * --selftest exercises every rule.
  */
 import { readFileSync, readdirSync, statSync } from "node:fs";
@@ -42,6 +45,40 @@ const IN_TX_POST_RE = /postBillPaymentGlIfEnabledInClientTx\s*\(|postSourceTrans
 const POST_COMMIT_RE = /\bpostBillPaymentGlIfEnabled\s*\(/;
 const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 
+function blockEnd(code, open) {
+  let depth = 0;
+  for (let i = open; i < code.length; i++) {
+    if (code[i] === "{") depth++;
+    else if (code[i] === "}" && --depth === 0) return i;
+  }
+  return code.length;
+}
+
+/** RULE 5: every try-block that contains the bill-payment posting call must have a catch that rethrows. */
+export function swallowedPostings(code) {
+  const out = [];
+  const tryRe = /\btry\s*\{/g;
+  let m;
+  while ((m = tryRe.exec(code))) {
+    const open = code.indexOf("{", m.index);
+    const close = blockEnd(code, open);
+    const body = code.slice(open, close);
+    const post = body.search(IN_TX_POST_RE);
+    if (post < 0) continue;
+    // A try that wraps the WHOLE transaction (the wrapper opens inside it) catches only after the rollback — the payment
+    // and its postings are already gone together. Only a try INSIDE the transaction can swallow a failed post.
+    const wrapper = body.search(/\bwith(CompanyScope|CurrentUser|LuciaBypass|Company)\s*\(|["'`]BEGIN["'`]/);
+    if (wrapper >= 0 && wrapper < post) continue;
+    const after = code.slice(close + 1);
+    const cm = /^\s*catch\s*(\([^)]*\))?\s*\{/.exec(after);
+    if (!cm) continue;
+    const cOpen = close + 1 + after.indexOf("{", cm.index);
+    const cBody = code.slice(cOpen, blockEnd(code, cOpen));
+    if (!/\bthrow\b/.test(cBody)) out.push(code.slice(0, m.index).split("\n").length);
+  }
+  return out;
+}
+
 export function staticFailures(files) {
   const failures = [];
   let inserters = 0;
@@ -51,6 +88,9 @@ export function staticFailures(files) {
       inserters++;
       if (!EXEMPT_INSERTERS[rel] && !IN_TX_POST_RE.test(code)) {
         failures.push(`RULE 1 ${rel}: inserts accounting.bill_payments but never posts it on the same transaction`);
+      }
+      for (const line of swallowedPostings(code)) {
+        failures.push(`RULE 5 ${rel}: the bill-payment posting (try near stripped line ${line}) sits in a catch that swallows the failure — a payment would commit with no GL`);
       }
     }
     if (rel !== "apps/backend/src/accounting/bill-payment-gl.service.ts" && POST_COMMIT_RE.test(code)) {
@@ -122,6 +162,9 @@ if (isMain) {
       ["insert + engine in-tx bill_payment passes", f([{ rel: "x.ts", src: ins + ' await postSourceTransactionInClientTx(client, { source_transaction_type: "bill_payment", source_transaction_id: id }, a);' }]).length === 0],
       ["insert with no posting fails", f([{ rel: "x.ts", src: ins }]).some((x) => x.startsWith("RULE 1"))],
       ["insert posting only the bill fails", f([{ rel: "x.ts", src: ins + ' await postSourceTransactionInClientTx(client, { source_transaction_type: "bill", source_transaction_id: id }, a);' }]).some((x) => x.startsWith("RULE 1"))],
+      ["post swallowed in a catch fails", f([{ rel: "z.ts", src: ins + ' try { await postSourceTransactionInClientTx(client, { source_transaction_type: "bill_payment", source_transaction_id: id }, a); } catch (err) { logger.warn("x"); }' }]).some((x) => x.startsWith("RULE 5"))],
+      ["try around the whole transaction passes (catch runs after rollback)", f([{ rel: "w.ts", src: 'try { await withCompanyScope(u, c, async (client) => { ' + ins + ' await postBillPaymentGlIfEnabledInClientTx(client, c, id, a); }); } catch (err) { return reply.code(500).send({}); }' }]).length === 0],
+      ["post in a catch that rethrows passes", f([{ rel: "z.ts", src: ins + ' try { await postSourceTransactionInClientTx(client, { source_transaction_type: "bill_payment", source_transaction_id: id }, a); } catch (err) { logger.warn("x"); throw err; }' }]).length === 0],
       ["post-commit caller fails", f([{ rel: "y.ts", src: "await postBillPaymentGlIfEnabled(c, id, a);" }]).some((x) => x.startsWith("RULE 2"))],
       ["QBO puller exempt", f([{ rel: "apps/backend/src/qbo-sync/ap-bill-payments-puller.ts", src: ins }]).length === 0],
       ["live at baseline passes", liveFailures(UNPOSTED_CASH_BASELINE).length === 0],
