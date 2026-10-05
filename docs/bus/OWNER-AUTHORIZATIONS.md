@@ -7344,3 +7344,17 @@ proof_query: USMCA: count(journal_entry_postings)=0, count(journal_entries)=0, s
   0 matched; live guards on prod: verify-void-is-whole PASS 0, verify-no-orphaned-gl LIVE PASS, verify-reversal-links-both-directions
   LIVE PASS, verify-settlement-gl-bills-link-their-entries LIVE PASS, verify-no-reversal-of-a-reversal live chain 0.
 THIS AUTHORIZATION DOES NOT COVER: TRANSP or TRK; any bank line DELETE; any master/catalog/identity row; seeding any data.
+
+## AUTH-401
+issued_at: 2026-10-05T14:40:00Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). Owner, verbatim (via CC-3): "ok. delete 38 test rows." + owner to CC-1, 2026-10-05:
+  "YOU HAVE THE YES TO INCLUDE THE CHILDREN". Exactly the 38 test-marked rows verify-no-test-markers-in-live-tables lists
+  (maintenance.work_orders 15, severe_repair_estimates 14, parts_inventory 5, road_service_tickets 2, catalogs.pm_intervals 1,
+  pm_schedules 1) + the 43 child rows of those 15 work orders (work_order_lines 15, wo_status_history 18, wo_time_entries 3,
+  internal_labor_log 1, wo_serialized_parts 1, parts_invoice_links 3, warranty_claims 2) + 3 rows that hang off the test rows
+  (maintenance.pm_alerts 1 for the test PM schedule; maintenance.parts_purchases 2 of the test parts — owner "I follow your
+  recommendations", 2026-10-05) = 84 rows, listed by id. Nothing else widens.
+action: OWNER_AUTH_ID=AUTH-401 APPLY=1 DATABASE_URL=<prod direct> npx tsx scripts/ops/2026-10-02-cc1-r326-complete-delete.ts --scope=listed --list=<auth401-list.json, 84 ids>
+expires_at: 2026-10-06T14:40:00Z
+status: OPEN
+THIS AUTHORIZATION DOES NOT COVER: any row not in the 84-id list; any real (non-test) maintenance row; TRANSP / TRK.
