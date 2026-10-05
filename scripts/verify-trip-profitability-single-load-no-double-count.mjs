@@ -13,11 +13,17 @@
  * trips now match their real source data exactly; every other (genuinely two-load) trip unchanged.
  *
  * Fix: only add the _sb side when sb_load_id is a genuinely different load from nb_load_id.
+ *
+ * RE-ANCHORED 2026-10-05 (Devin): the trip rollup was rewritten to aggregate through the
+ * canonical `settlement_loads` membership table — one row per load per settlement — so a load
+ * can only ever be summed once. The nb/sb dual-alias CASE WHEN shape no longer exists in this
+ * file; the invariant this guard now locks is (a) the rollup joins loads via settlement_loads
+ * (never via the first_load_id/last_load_id bookends), and (b) no dual-alias load join
+ * (first_load_id AND last_load_id both joining mdata.loads for the same rollup) can return.
  */
 import fs from "node:fs";
 
 const FILE = "apps/backend/src/dispatch/load-profitability.service.ts";
-const METRICS = ["revenue_cents", "driver_pay_cents", "fuel_cents", "maintenance_cents", "factoring_fee_cents"];
 
 function stripComments(text) {
   return text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|\s)\/\/.*$/gm, "$1");
@@ -26,15 +32,22 @@ function stripComments(text) {
 function audit(source) {
   const failures = [];
   const stripped = stripComments(source);
-  for (const metric of METRICS) {
-    const re = new RegExp(
-      `CASE WHEN t\\.sb_load_id IS NOT NULL AND t\\.sb_load_id != t\\.nb_load_id\\s*\\n\\s*THEN [^\\n]*\\s*\\n\\s*ELSE [^\\n]* END AS ${metric}\\b`
+  // (a) The trip rollup must aggregate loads through settlement_loads — canonical membership,
+  //     exactly one contribution per load per settlement.
+  if (!/FROM\s+settlement_loads\s+sl\s*\n\s*JOIN\s+mdata\.loads\s+l\b/i.test(stripped)) {
+    failures.push(
+      `${FILE}: trip rollup must aggregate loads via settlement_loads sl JOIN mdata.loads l (one row per load) — the bookend dual-join that double-counted single-load trips must not return`
     );
-    if (!re.test(stripped)) {
-      failures.push(
-        `${FILE}: ${metric} must be gated behind "sb_load_id != nb_load_id" (CASE WHEN) -- or single-load trips double-count it again`
-      );
-    }
+  }
+  // (b) Forbidden: re-deriving a trip's loads from the settlement bookends (first_load_id /
+  //     last_load_id) is exactly the shape that double-counted a one-load trip.
+  if (
+    /(?:first_load_id|last_load_id)\s*=\s*\w+\.id/.test(stripped) ||
+    /\w+\.id\s*=\s*\w+\.(?:first_load_id|last_load_id)/.test(stripped)
+  ) {
+    failures.push(
+      `${FILE}: load rollup joining via settlement first_load_id/last_load_id bookends is forbidden — use settlement_loads membership (bookends double-count single-load trips)`
+    );
   }
   return failures;
 }
@@ -48,24 +61,24 @@ if (failures.length) {
 }
 
 if (process.argv.includes("--selftest")) {
+  const mutations = [
+    // The bookend double-join returning.
+    ["JOIN mdata.loads l ON l.id = s.first_load_id JOIN mdata.loads l2 ON l2.id = s.last_load_id", "bookend"],
+    // The canonical settlement_loads membership join being replaced by a bookend join.
+    ["FROM settlement_loads sl\n      JOIN mdata.loads l", "membership"],
+  ];
   let caught = 0;
-  const total = METRICS.length;
-  for (const metric of METRICS) {
-    // Mutate just this one metric's CASE WHEN guard away, leaving the others intact, and confirm
-    // the guard still flags exactly this metric (proves each metric is independently checked, not
-    // one regex accidentally matching all five).
-    const re = new RegExp(
-      `CASE WHEN t\\.sb_load_id IS NOT NULL AND t\\.sb_load_id != t\\.nb_load_id\\s*\\n\\s*THEN ([^\\n]*)\\s*\\n\\s*ELSE ([^\\n]*) END AS ${metric}`
-    );
-    const match = source.match(re);
-    if (!match) throw new Error(`could not locate the CASE WHEN block for ${metric} to mutate -- fix the test regex`);
-    const mutated = source.replace(re, `${match[1]} AS ${metric}`);
-    if (mutated === source) throw new Error(`mutation for ${metric} did not change source -- inert`);
+  for (const [plant, tag] of mutations) {
+    const mutated =
+      tag === "bookend"
+        ? source + `\n      JOIN mdata.loads l_nb ON l_nb.id = s.first_load_id\n`
+        : source.replace(/FROM\s+settlement_loads\s+sl\s*\n\s*JOIN\s+mdata\.loads\s+l/i, "FROM mdata.loads l JOIN settlements s ON l.id = s.first_load_id");
+    if (mutated === source && tag !== "bookend") throw new Error(`mutation for ${tag} did not change source -- inert`);
     const mutFailures = audit(mutated);
-    if (!mutFailures.some((f) => f.includes(metric))) throw new Error(`mutation escaped: ${metric} was not caught`);
+    if (!mutFailures.length) throw new Error(`mutation escaped: ${tag} was not caught`);
     caught += 1;
   }
-  console.log(`verify-trip-profitability-single-load-no-double-count SELFTEST PASS — ${caught}/${total} mutations detected`);
+  console.log(`verify-trip-profitability-single-load-no-double-count SELFTEST PASS — ${caught}/${mutations.length} mutations detected`);
 }
 
 console.log(
