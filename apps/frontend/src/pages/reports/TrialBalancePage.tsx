@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { AmountLink, type AmountFilter } from "../../components/shared/AmountLink";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -31,6 +32,18 @@ function money(cents: number) {
 }
 
 const SYNTHETIC_ACCOUNT_IDS = new Set(["cash-basis-ar-row", "cash-basis-ap-row"]);
+
+/** One place that turns a trial-balance row into an AmountLink filter, so the three amount columns
+ *  cannot drift apart. Returns null when the row cannot drill, which AmountLink renders as plain
+ *  text rather than a dead link. */
+function tbFilter(
+  canDrill: unknown,
+  accountId: string | undefined,
+  applied: { start: string; end: string }
+): AmountFilter | null {
+  if (!canDrill || !accountId) return null;
+  return { target: "register", accountId, from: applied.start, to: applied.end };
+}
 
 function registerHref(accountId: string, fromDate: string, toDate: string, basis: string) {
   const params = new URLSearchParams({ from_date: fromDate, to_date: toDate, basis });
@@ -344,9 +357,25 @@ export function TrialBalancePage() {
                     )}
                   </td>
                   <td className="px-3 py-2">{formatAccountTypeLabel(row.account_type)}</td>
-                  <td className="px-3 py-2 text-right tabular-nums">{money(row.total_debits)}</td>
-                  <td className="px-3 py-2 text-right tabular-nums">{money(row.total_credits)}</td>
-                  <td className={`px-3 py-2 text-right ${row.net_balance < 0 ? "text-rose-700" : "text-slate-900"} tabular-nums`}>{money(row.net_balance)}</td>
+                  {/* LST-F405 — the account NAME drilled, the AMOUNTS did not. Reuses the page's own
+                      canDrill, which already excludes SYNTHETIC_ACCOUNT_IDS, so the synthetic
+                      cash-basis AR/AP rows stay plain text instead of linking to an id that is not
+                      a real account. The filter behind each figure IS its drill target. */}
+                  <td className="px-3 py-2 text-right tabular-nums">
+                    <AmountLink filter={tbFilter(canDrill, row.account_id, applied)} data-testid={`tb-debits-${row.account_code || row.account_name}`}>
+                      {money(row.total_debits)}
+                    </AmountLink>
+                  </td>
+                  <td className="px-3 py-2 text-right tabular-nums">
+                    <AmountLink filter={tbFilter(canDrill, row.account_id, applied)} data-testid={`tb-credits-${row.account_code || row.account_name}`}>
+                      {money(row.total_credits)}
+                    </AmountLink>
+                  </td>
+                  <td className={`px-3 py-2 text-right ${row.net_balance < 0 ? "text-rose-700" : "text-slate-900"} tabular-nums`}>
+                    <AmountLink filter={tbFilter(canDrill, row.account_id, applied)} data-testid={`tb-net-${row.account_code || row.account_name}`}>
+                      {money(row.net_balance)}
+                    </AmountLink>
+                  </td>
                 </tr>
               );
             })}

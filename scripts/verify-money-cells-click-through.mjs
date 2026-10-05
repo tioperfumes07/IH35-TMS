@@ -27,7 +27,7 @@ const PANEL = "apps/frontend/src/components/shared/LedgerKpiPanel.tsx";
  * a proximity window cannot resolve. That makes 103 an upper bound, and an upper bound is a safe
  * ratchet: it can only be lowered. Do not raise it.
  */
-const SHRINK_ONLY_BASELINE = 103;
+const SHRINK_ONLY_BASELINE = 102;
 
 function stripComments(src) {
   return String(src ?? "")
@@ -45,13 +45,46 @@ function walkTsx(dir, out = []) {
   return out;
 }
 
+/** Every className in the file with its OWN start index — className="…" or className={…} read with
+ *  BALANCED braces. The previous `/className=\{?([^}]+)\}?/g` stopped at the first `}`, so a
+ *  template literal holding an embedded conditional
+ *  (className={`px-3 text-right ${x < 0 ? "a" : "b"} tabular-nums`}) lost every class that follows
+ *  the conditional, and `[^}]+` then ran on into the NEXT element and reported its match at the
+ *  WRONG index. MEASURED 2026-10-05: 17 money cells were anchored at a wrong position that way,
+ *  TrialBalancePage's own net_balance column among them — which is why wiring 3 columns there
+ *  retired only 2 cells. A window anchored at the wrong character measures some OTHER cell's
+ *  clickability, which is the over-crediting this guard exists to prevent. */
+function classNameHits(src) {
+  const out = [];
+  const re = /className=/g;
+  let m;
+  while ((m = re.exec(src))) {
+    const i = m.index + m[0].length;
+    const ch = src[i];
+    if (ch === '"' || ch === "'") {
+      const end = src.indexOf(ch, i + 1);
+      if (end < 0) continue;
+      out.push({ index: m.index, expr: src.slice(i + 1, end) });
+    } else if (ch === "{") {
+      let depth = 0;
+      let j = i;
+      for (; j < src.length; j += 1) {
+        if (src[j] === "{") depth += 1;
+        else if (src[j] === "}") {
+          depth -= 1;
+          if (depth === 0) break;
+        }
+      }
+      out.push({ index: m.index, expr: src.slice(i + 1, j) });
+    }
+  }
+  return out;
+}
+
 /** One money cell: a className that is QBO_MONEY_CELL_CLASS or text-right+tabular-nums. */
 function moneyCellHits(src) {
   const hits = [];
-  const re = /className=\{?([^}]+)\}?/g;
-  let m;
-  while ((m = re.exec(src))) {
-    const expr = m[1];
+  for (const { index, expr } of classNameHits(src)) {
     const isMoney =
       /QBO_MONEY_CELL_CLASS/.test(expr) || (/\btext-right\b/.test(expr) && /\btabular-nums\b/.test(expr));
     if (!isMoney) continue;
@@ -60,7 +93,7 @@ function moneyCellHits(src) {
     // AmountLink and were scored clickable without being wired. In JSX the link is the ELEMENT'S
     // CHILD, so it always follows its own className — looking backward can only ever pick up a
     // sibling's link. Over-crediting is the fake green this guard exists to prevent.
-    const window = src.slice(m.index, Math.min(src.length, m.index + expr.length + 200));
+    const window = src.slice(index, Math.min(src.length, index + expr.length + 200));
     // An HTML EXPORT/PRINT template, not a UI cell: `style="..."` is a STRING attribute, which is
     // invalid in JSX (JSX requires style={{...}}), so its presence proves this className lives in a
     // hand-built HTML string for export or print. A printed cell must never be a link.
@@ -74,7 +107,7 @@ function moneyCellHits(src) {
     // appeared to owe 15 drills and in fact owes none), 6 in ProfitPerTruckPage, and so on. Those
     // 43 were permanent noise in the ratchet: unfixable by design, and they hid the real count.
     // The backward reach is needed because `esc(` usually precedes the className in the row string.
-    const exportWindow = src.slice(Math.max(0, m.index - 200), Math.min(src.length, m.index + expr.length + 200));
+    const exportWindow = src.slice(Math.max(0, index - 200), Math.min(src.length, index + expr.length + 200));
     const isHtmlExportTemplate = /style="/.test(window) || /\besc\(/.test(exportWindow);
     hits.push({
       expr,
@@ -145,14 +178,14 @@ function selftest() {
     }
   `;
   const cases = [
-    { name: "click-through money cells", panel: goodPanel, shrinkOnlyCount: 103, expectFail: false },
-    { name: "panel money not EntityLink", panel: `if (col.endsWith("_cents")) return <span className={QBO_MONEY_CELL_CLASS}>{v}</span>;`, shrinkOnlyCount: 103, expectFail: true },
-    { name: "panel missing shrink-0", panel: `if (col.endsWith("_cents")) return <EntityLink className={QBO_MONEY_CELL_CLASS} />;`, shrinkOnlyCount: 103, expectFail: true },
-    { name: "ratchet up from 103", panel: goodPanel, shrinkOnlyCount: 104, expectFail: true },
+    { name: "click-through money cells", panel: goodPanel, shrinkOnlyCount: 102, expectFail: false },
+    { name: "panel money not EntityLink", panel: `if (col.endsWith("_cents")) return <span className={QBO_MONEY_CELL_CLASS}>{v}</span>;`, shrinkOnlyCount: 102, expectFail: true },
+    { name: "panel missing shrink-0", panel: `if (col.endsWith("_cents")) return <EntityLink className={QBO_MONEY_CELL_CLASS} />;`, shrinkOnlyCount: 102, expectFail: true },
+    { name: "ratchet up from 102", panel: goodPanel, shrinkOnlyCount: 103, expectFail: true },
     { name: "missing _cents branch", panel: `return <EntityLink className={\`\${QBO_MONEY_CELL_CLASS} shrink-0 whitespace-nowrap\`} />;`, shrinkOnlyCount: 103, expectFail: true },
     // LST-F405 — a STALE baseline must fail too, or slack accumulates invisibly (42 vs 3).
-    { name: "baseline stale (below)", panel: goodPanel, shrinkOnlyCount: 102, expectFail: true },
-    { name: "baseline exact", panel: goodPanel, shrinkOnlyCount: 103, expectFail: false },
+    { name: "baseline stale (below)", panel: goodPanel, shrinkOnlyCount: 101, expectFail: true },
+    { name: "baseline exact", panel: goodPanel, shrinkOnlyCount: 102, expectFail: false },
   ];
   let pass = 0;
   for (const c of cases) {
