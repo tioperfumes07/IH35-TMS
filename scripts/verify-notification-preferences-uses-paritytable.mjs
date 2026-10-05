@@ -86,8 +86,12 @@ function assertMigrated(src, backendSrc) {
     );
   }
   // BANK-F91371 leftover refuse — NotificationPreferencesPage page-scoped text token ratchet
+  // BANK-F91555 leftover slate class refuse
   if (src.includes("text-[11px]")) errors.push("NotificationPreferencesPage.tsx: leftover text-[11px]");
   if (src.includes("#8A92AB")) errors.push("NotificationPreferencesPage.tsx: leftover off-scale muted #8A92AB");
+  if (src.includes("text-slate-") || src.includes("border-slate-") || src.includes("bg-slate-")) {
+    errors.push("NotificationPreferencesPage.tsx: leftover slate class");
+  }
   return errors;
 }
 
@@ -168,15 +172,19 @@ function selftest() {
     process.exit(1);
   }
   // BANK-F91371 leftover plant — NotificationPreferencesPage page-scoped text token ratchet
+  // BANK-F91555 leftover slate class plant
   const leftover =
     fs.readFileSync(path.join(ROOT, PAGE), "utf8") +
-    '\n<div className="text-[11px] text-[#8A92AB]">plant</div>\n';
+    '\n<div className="text-[11px] text-slate-600 border-slate-200 bg-slate-50 text-[#8A92AB]">plant</div>\n';
   const leftoverErrors = assertMigrated(leftover, backendGood);
-  if (!leftoverErrors.some((e) => e.includes("leftover text-[11px]"))) {
+  if (
+    !leftoverErrors.some((e) => e.includes("leftover text-[11px]")) ||
+    !leftoverErrors.some((e) => e.includes("leftover slate class"))
+  ) {
     console.error(`${LABEL} --selftest FAIL leftover plant escaped`, leftoverErrors);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS`);
+  console.log(`${LABEL} --selftest PASS leftover slate class plant`);
 }
 
 function main() {
