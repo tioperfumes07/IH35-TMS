@@ -16227,5 +16227,15 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-05",
     "purpose": "verify-void-document-door-is-whole"
+  },
+  "18149": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-05",
+    "purpose": "verify-enum-literals"
+  },
+  "18157": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-05",
+    "purpose": "verify-no-orphan-bookend-settlement-reuse"
   }
 }
