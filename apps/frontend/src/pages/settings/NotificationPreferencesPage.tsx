@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { FormEvent } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   getNotificationPreferences,
   patchNotificationPreferences,
@@ -12,7 +12,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { TimePicker } from "../../components/forms/TimePicker";
-import { structuralParentHref } from "../../lib/structuralBreadcrumb";
+
 
 const CHANNELS: NotificationChannelKey[] = ["email", "sms", "whatsapp", "in_app"];
 
@@ -25,9 +25,8 @@ function labelForChannel(ch: NotificationChannelKey): string {
 
 export function NotificationPreferencesPage() {
   const navigate = useNavigate();
-  const location = useLocation();
-  // ROUND 367.9: Up is structural (route-derived parent), never browser history.
-  const goBack = () => navigate(structuralParentHref(location.pathname));
+  // ROUND 367.9: Up is structural — /settings/notifications' route-derived parent is /settings.
+  const goBack = () => navigate("/settings");
   const { pushToast } = useToast();
   const qc = useQueryClient();
   const prefsQuery = useQuery({

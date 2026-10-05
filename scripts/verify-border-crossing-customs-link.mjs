@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["fleet"],"cols":["connectivity","reverse_link"],"task":"E-29-BORDER-CROSSING-CUSTOMS-LINK"}
  * E-29 addition: a detected border crossing links to the crossing the office declared (mdata.unit_border_crossings)
  * on a UNIQUE match only, and both sides read the other. Fails if the link step stops being unique-only, stops
  * running after the detector, or either reverse read disappears.
