@@ -312,7 +312,7 @@ export function ProfitLossPage() {
                                 ? { target: "register", accountId: line.account_id, from: applied.start, to: applied.end }
                                 : null
                             }
-                            data-testid={`pl-amount-${line.account_code || line.account_name}`}
+                            data-testid={`pl-amount-${line.account_id || line.account_name}`}
                           >
                             {money(line.amount)}
                           </AmountLink>
