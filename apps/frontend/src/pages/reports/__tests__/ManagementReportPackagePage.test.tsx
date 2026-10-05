@@ -19,6 +19,13 @@ vi.mock("../../../contexts/CompanyContext", () => ({
   }),
 }));
 
+const printLetterHtmlMock = vi.fn(() => true);
+vi.mock("../../../lib/openPrintableDocument", () => ({
+  printLetterHtml: (...args: unknown[]) => printLetterHtmlMock(...args),
+  openPrintableDocument: vi.fn(),
+  openCanonicalDocument: vi.fn(),
+}));
+
 vi.mock("../ReportsSubNav", () => ({
   ReportsSubNav: () => <nav aria-label="Reports subnav stub" />,
 }));
@@ -127,9 +134,15 @@ describe("ManagementReportPackagePage", () => {
     expect((await screen.findAllByRole("heading", { name: "Sales Performance" })).length).toBeGreaterThan(0);
   });
 
-  it("Apply is keyboard-activatable and Print / Save PDF remains available", async () => {
+  // ACCT-F410-B — this test asserted window.print() on the SPA SHELL, which is exactly what
+  // lib/openPrintableDocument.ts forbids in its own contract: "Never call window.print() on the
+  // SPA shell." Printing the shell prints the app chrome — sidebar, filter bar, buttons — instead
+  // of the report. The page correctly routes through printLetterHtml, which opens a standalone
+  // letter document whose own script prints itself. The test was enforcing the defect, so it has
+  // been inverted: the shell must NOT print, and the letter path must be taken.
+  it("Apply is keyboard-activatable and Print / Save PDF opens a letter document, never printing the SPA shell", async () => {
     const user = userEvent.setup();
-    const printSpy = vi.spyOn(window, "print").mockImplementation(() => undefined);
+    const shellPrintSpy = vi.spyOn(window, "print").mockImplementation(() => undefined);
     render(wrap(<ManagementReportPackagePage />));
     const apply = await screen.findByRole("button", { name: "Apply" });
     apply.focus();
@@ -137,7 +150,11 @@ describe("ManagementReportPackagePage", () => {
     const printBtn = screen.getByRole("button", { name: /Print \/ Save PDF/i });
     expect(printBtn).toBeEnabled();
     await user.click(printBtn);
-    expect(printSpy).toHaveBeenCalled();
-    printSpy.mockRestore();
+    expect(printLetterHtmlMock).toHaveBeenCalled();
+    const arg = printLetterHtmlMock.mock.calls[0][0] as { title: string; bodyHtml: string };
+    expect(arg.title).toBeTruthy();
+    expect(arg.bodyHtml).toBeTruthy();
+    expect(shellPrintSpy).not.toHaveBeenCalled();
+    shellPrintSpy.mockRestore();
   });
 });

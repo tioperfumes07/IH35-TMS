@@ -36,16 +36,29 @@ describe("RunnerFilters — date-picker Run report", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: /Filters/i }));
+    // ACCT-F410-B — this line used to OPEN the panel. RunnerFilters now mounts
+    // CollapsedListFilters with defaultOpen={true}, so the panel is already open on render and
+    // this click COLLAPSED it, which is why the date field could not be found. Measured from the
+    // failure's own DOM dump: data-runner-filter-toolbar="collapsed", aria-expanded="false" after
+    // the click. The panel's open state is asserted instead, so the test fails loudly if the
+    // default ever flips back rather than silently clicking the wrong way.
+    expect(screen.getByTestId("runner-filters-toggle")).toHaveAttribute("aria-expanded", "true");
 
-    const fromButton = screen.getByText("01/01/2026");
-    await user.click(fromButton);
-    // Calendar view opens on the "from" value's month (January 2026); pick day 20.
-    await user.click(screen.getByRole("button", { name: "20" }));
+    // ACCT-F410-B — this used getByText("01/01/2026"). DatePicker renders the date as an INPUT
+    // VALUE (components/forms/DatePicker.tsx: value={formatDateUS(value)} on a typed MM/DD/YYYY
+    // input), not as text content, so getByText could never match it. The assertion is the same;
+    // only the query is corrected to read the field the component actually renders.
+    expect(screen.getByDisplayValue("01/01/2026")).toBeInTheDocument();
+
+    // Open the "from" field's calendar and pick day 20 (the view opens on January 2026).
+    const calendarButtons = screen.getAllByRole("button", { name: /calendar/i });
+    await user.click(calendarButtons[0]);
+    // Day cells carry the ISO date as their accessible name (DatePicker: aria-label={iso}).
+    await user.click(screen.getByRole("button", { name: "2026-01-20" }));
 
     // The field must show the NEW pick, not silently revert -- proves the panel's outside-click
     // cancel no longer fires for the (still-to-be-clicked) Run report button.
-    expect(screen.getByText("01/20/2026")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("01/20/2026")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Run report" }));
 

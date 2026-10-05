@@ -79,12 +79,24 @@ describe("APAgingPage drill-through", () => {
     expect(reportsApi.getApAgingReport).toHaveBeenCalledWith(COMPANY_ID, expect.any(String));
   });
 
-  it("row click drills to has_balance bills list filtered by vendor", async () => {
-    const user = userEvent.setup();
+  // ACCT-F410-B — this test asserted the navigate SPY, which is an implementation detail: the
+  // vendor name is a real <a href>, so it navigates through the router rather than through
+  // navigate(). The destination is what the owner's law is about, so the destination is what is
+  // asserted — and it must be the SAME href the row click and "Pay now" use.
+  it("the vendor name links to the has_balance bills list for that vendor", async () => {
     render(wrap(<APAgingPage />));
     await waitFor(() => expect(screen.getByText("Loves Travel Stops")).toBeInTheDocument());
-    await user.click(screen.getByText("Loves Travel Stops"));
-    expect(mockNavigate).toHaveBeenCalledWith(apAgingBillsListHref(VENDOR_ID));
+    const link = screen.getByTestId(`ap-aging-vendor-${VENDOR_ID}`);
+    expect(link.tagName).toBe("A");
+    expect(link).toHaveAttribute("href", apAgingBillsListHref(VENDOR_ID));
+  });
+
+  it("the vendor name does NOT go to the vendor profile — that is its own row action", async () => {
+    render(wrap(<APAgingPage />));
+    await waitFor(() => expect(screen.getByText("Loves Travel Stops")).toBeInTheDocument());
+    const href = screen.getByTestId(`ap-aging-vendor-${VENDOR_ID}`).getAttribute("href");
+    expect(href).not.toBe(apAgingVendorProfileHref(VENDOR_ID));
+    expect(href).toContain("has_balance=true");
   });
 
   it("Pay now remains and targets the has_balance bills list (keyboard)", async () => {

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { AmountLink } from "../../components/shared/AmountLink";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -13,9 +14,8 @@ import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useStagedListFilters } from "../../components/table";
-import { arAgingCustomerProfileHref, arAgingInvoiceListHref } from "./agingDrillThrough";
+import { arAgingCustomerProfileHref, arAgingInvoiceFilter, arAgingInvoiceListHref } from "./agingDrillThrough";
 import { entityLabel } from "../../lib/entity-label";
-import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useExportAction } from "../../hooks/useExportAction";
 import { EntityPicker } from "../../components/EntityPicker";
@@ -98,7 +98,26 @@ export function ARAgingPage() {
 
   const columns = useMemo<ParityColumn<ARAgingRowWithBucket>[]>(
     () => [
-      { key: "customer_name", label: "Customer", sortable: true, render: (r) => <EntityLink kind="customer" id={r.customer_id} label={entityLabel(r.customer_name, r.customer_id, "Customer")} className="font-medium text-gray-900" /> },
+      // ACCT-F410-B — this cell was an EntityLink to the customer PROFILE and carried NO
+      // stopPropagation, so clicking the name fired the name's navigation AND the row's onRowClick
+      // and the two raced. It also duplicated the "Customer profile" row action. It now links to
+      // the SAME destination the row click uses, through the same filter. Profile stays on its
+      // own button.
+      {
+        key: "customer_name",
+        label: "Customer",
+        sortable: true,
+        render: (r) => (
+          <AmountLink
+            filter={arAgingInvoiceFilter(r.customer_id)}
+            className="font-medium text-gray-900 hover:underline"
+            title="Open invoices with a balance for this customer"
+            data-testid={`ar-aging-customer-${r.customer_id}`}
+          >
+            {entityLabel(r.customer_name, r.customer_id, "Customer")}
+          </AmountLink>
+        ),
+      },
       { key: "total_open_cents", label: "Total", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.total_open_cents) },
       { key: "cleared_open_cents", label: "Cleared", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.cleared_open_cents) },
       { key: "uncleared_cents", label: "Not cleared", sortable: true, render: (r) => <UnclearedDocumentsNote docs={r.uncleared_documents} /> },

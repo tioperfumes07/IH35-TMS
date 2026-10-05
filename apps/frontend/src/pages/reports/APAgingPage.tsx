@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { AmountLink } from "../../components/shared/AmountLink";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -15,9 +16,8 @@ import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
-import { apAgingBillsListHref, apAgingVendorProfileHref } from "./agingDrillThrough";
+import { apAgingBillsFilter, apAgingBillsListHref, apAgingVendorProfileHref } from "./agingDrillThrough";
 import { entityLabel } from "../../lib/entity-label";
-import { EntityLink } from "../../components/shared/EntityLink";
 import { useExportAction } from "../../hooks/useExportAction";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityPicker } from "../../components/EntityPicker";
@@ -179,7 +179,27 @@ export function APAgingPage() {
 
   const columns = useMemo<ParityColumn<APAgingRowWithBucket>[]>(
     () => [
-      { key: "vendor_name", label: "Vendor", sortable: true, render: (r) => <EntityLink kind="vendor" id={r.vendor_id} label={entityLabel(r.vendor_name, r.vendor_id, "Vendor")} className="font-medium text-gray-900" onClick={(event) => event.stopPropagation()} /> },
+      // ACCT-F410-B — this cell was an EntityLink to the vendor PROFILE with stopPropagation, which
+      // contradicted this page's own documented design ("row drill -> bills with open balance"),
+      // duplicated the "Vendor profile" row action below, and made the documented row drill
+      // unreachable from the vendor name — the most natural thing on the row to click. It now links
+      // to the SAME destination the row click and "Pay now" use, through the same filter, so the
+      // three cannot drift. The vendor profile is still one click away on its own button.
+      {
+        key: "vendor_name",
+        label: "Vendor",
+        sortable: true,
+        render: (r) => (
+          <AmountLink
+            filter={isVendorUuid(r.vendor_id) ? apAgingBillsFilter(r.vendor_id) : null}
+            className="font-medium text-gray-900 hover:underline"
+            title="Open bills with a balance for this vendor"
+            data-testid={`ap-aging-vendor-${r.vendor_id}`}
+          >
+            {entityLabel(r.vendor_name, r.vendor_id, "Vendor")}
+          </AmountLink>
+        ),
+      },
       { key: "total_open_cents", label: "Total", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.total_open_cents) },
       { key: "cleared_open_cents", label: "Cleared", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.cleared_open_cents) },
       { key: "uncleared_cents", label: "Not cleared", sortable: true, render: (r) => <UnclearedDocumentsNote docs={r.uncleared_documents} /> },

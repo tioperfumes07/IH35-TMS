@@ -81,13 +81,16 @@ describe("ARAgingPage drill-through", () => {
     expect(reportsApi.getArAgingReport).toHaveBeenCalledWith(COMPANY_ID, expect.any(String));
   });
 
-  it("row click drills to invoice list filtered by customer + has_balance", async () => {
-    const user = userEvent.setup();
+  // ACCT-F410-B — asserted the navigate SPY, an implementation detail: the customer name is a
+  // real <a href> and navigates through the router. The destination is the law, so the destination
+  // is asserted, and it must match the href the row click uses.
+  it("the customer name links to the has_balance invoice list for that customer", async () => {
     render(wrap(<ARAgingPage />));
-    await waitFor(() => expect(screen.getByText("Acme Freight")).toBeInTheDocument());
-    await user.click(screen.getByText("Acme Freight"));
-    expect(mockNavigate).toHaveBeenCalledWith(arAgingInvoiceListHref(CUSTOMER_ID));
-    expect(arAgingInvoiceListHref(CUSTOMER_ID)).toContain("has_balance=true");
+    await waitFor(() => expect(screen.getByTestId(`ar-aging-customer-${CUSTOMER_ID}`)).toBeInTheDocument());
+    const link = screen.getByTestId(`ar-aging-customer-${CUSTOMER_ID}`);
+    expect(link.tagName).toBe("A");
+    expect(link).toHaveAttribute("href", arAgingInvoiceListHref(CUSTOMER_ID));
+    expect(link.getAttribute("href")).toContain("has_balance=true");
   });
 
   it("Open invoices row action is keyboard-reachable (Enter) without nested row conflict", async () => {
