@@ -16212,5 +16212,15 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-10-04",
     "purpose": "verify-every-route-has-a-structural-breadcrumb"
+  },
+  "12416": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-05",
+    "purpose": "verify-record-naming-cells-are-click-through"
+  },
+  "12418": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-05",
+    "purpose": "verify-account-filters-are-multi-select"
   }
 }
