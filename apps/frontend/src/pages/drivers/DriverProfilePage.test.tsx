@@ -147,7 +147,7 @@ describe("DriverProfilePage", () => {
     );
 
     expect(await screen.findByTestId("dp-tab-overview")).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Section navigation" })).toBeInTheDocument();
+    expect(screen.getByTestId("driver-overview-board-stub")).toBeInTheDocument();
     expect(screen.getByTestId("driver-profile-kpi-strip")).toBeInTheDocument();
     expect(screen.getAllByRole("heading", { name: "Alex Rivera" }).length).toBeGreaterThan(0);
     expect(screen.getByTestId("driver-dqf-panel-stub")).toBeInTheDocument();

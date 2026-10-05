@@ -92,6 +92,8 @@ export type Driver = {
   visa_type: string | null;
   visa_number: string | null;
   visa_expires_at: string | null;
+  /** B1 work-auth status (migration 0302). Most of the fleet is B1. */
+  visa_b1_status: string | null;
   has_b1_visa: boolean;
   b1_visa_number: string | null;
   b1_visa_expires_date: string | null;
@@ -227,6 +229,7 @@ export type UpdateDriverInput = Partial<
     | "visa_type"
     | "visa_number"
     | "visa_expires_at"
+    | "visa_b1_status"
     | "passport_number"
     | "passport_expires_at"
     | "passport_country"

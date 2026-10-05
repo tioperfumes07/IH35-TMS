@@ -46,7 +46,7 @@ export function ActionBar({
         className="sticky bottom-0 z-10 flex flex-wrap gap-2 border-t border-gray-200 bg-white/95 p-3 backdrop-blur-sm"
         data-testid="dp-action-bar"
       >
-        <Button size="sm" variant="secondary" onClick={() => navigate(`/drivers/${driverId}/edit`)} data-testid="dp-action-edit">
+        <Button size="sm" variant="secondary" onClick={() => navigate(`/drivers/${driverId}?tab=edit`)} data-testid="dp-action-edit">
           Edit
         </Button>
         <Button

@@ -15,9 +15,14 @@ import { PartyListSwitch, type PartyKind } from "../components/boards/PartyBoard
 import { Shell } from "../components/Shell";
 import { resolveListsDomainHubKey } from "../pages/lists/components/AllCatalogsMap";
 import { catalogKeyToCatalogName } from "../hooks/useCatalogQuery";
-/** DRV-F415 — /drivers/:id is the approved profile (DriverProfilePage). Edit lives at /drivers/:id/edit. */
+/** DRV-F415 / F421 — /drivers/:id is the approved profile. /edit redirects to ?tab=edit. */
 function DriverDetailRoute() {
   return <DriverProfilePage />;
+}
+
+function DriverEditRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/drivers/${id}?tab=edit`} replace />;
 }
 
 function DriverProfileAliasRedirect() {
@@ -87,7 +92,7 @@ const DetailTypesListPage = React.lazy(() => import("../pages/lists/accounting/D
 const NamesMasterHub = React.lazy(() => import("../pages/lists/names/NamesMasterHub").then((m) => ({ default: m.NamesMasterHub })));
 const BrokersListPage = React.lazy(() => import("../pages/lists/names/BrokersListPage").then((m) => ({ default: m.BrokersListPage })));
 const LocationsListPage = React.lazy(() => import("../pages/lists/LocationsListPage").then((m) => ({ default: m.LocationsListPage })));
-const DriverDetailPage = React.lazy(() => import("../pages/DriverDetail").then((m) => ({ default: m.DriverDetailPage })));
+/* Rule 07 — DriverDetail.tsx stays in the tree; /edit redirects to ?tab=edit. */
 const DriverProfilePage = React.lazy(() => import("../pages/drivers/DriverProfilePage").then((m) => ({ default: m.DriverProfilePage })));
 const DriverLayoverHistoryPage = React.lazy(() => import("../pages/drivers/DriverLayoverHistoryPage").then((m) => ({ default: m.DriverLayoverHistoryPage })));
 const DriverHosDetailPage = React.lazy(() => import("../pages/drivers/DriverHosDetailPage").then((m) => ({ default: m.DriverHosDetailPage })));
@@ -5080,7 +5085,7 @@ export const ROUTES = React.Children.toArray(
           path="/drivers/:id/edit"
           element={
             <ProtectedRoute>
-              <DriverDetailPage />
+              <DriverEditRedirect />
             </ProtectedRoute>
           }
         />

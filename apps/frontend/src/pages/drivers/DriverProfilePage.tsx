@@ -78,7 +78,8 @@ import { W8BenModal } from "../../components/drivers/W8BenModal";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { KpiStrip } from "../../components/layout/KpiStrip";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
+import { EldEditHistoryTimeline } from "../../components/safety/EldEditHistoryTimeline";
+import { AuditHistoryTab } from "../../components/drivers/AuditHistoryTab";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { colors } from "../../design/tokens";
@@ -93,7 +94,6 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
 import {
   DRIVER_PROFILE_TAB_QUERY,
-  DRIVER_PROFILE_TABS,
   parseDriverProfileTab,
   type DriverProfileTab,
 } from "./driverProfileTabs";
@@ -400,7 +400,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           <div className="flex flex-wrap items-center gap-2">
             {!itemsQ.isError ? <DriverDqfComplianceChip summary={summary} /> : null}
             <StatusBadge status={driver.status} />
-            <Button type="button" size="sm" variant="secondary" onClick={() => navigate(`/drivers/${id}/edit`)} data-testid="driver-profile-edit">
+            <Button type="button" size="sm" variant="secondary" onClick={() => navigate(`/drivers/${id}?tab=edit`)} data-testid="driver-profile-edit">
               Edit
             </Button>
             <Button type="button" size="sm" variant="secondary" onClick={() => setAddPayOpen(true)} data-testid="driver-add-payment">
@@ -430,6 +430,13 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
               </button>
             ) : null}
             {visibilityError ? <span role="alert" className="text-xs text-red-600">{visibilityError}</span> : null}
+            <EntityLink
+              kind="driver"
+              id={driver.id}
+              label={displayName}
+              className="text-xs font-semibold text-slate-700 hover:underline"
+              data-testid="driver-profile-open-full-record-link"
+            />
             {onBack ? (
               <button type="button" onClick={onBack} className="text-xs font-semibold text-slate-600 hover:underline">
                 Back to list
@@ -441,20 +448,6 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
             )}
           </div>
         }
-      />
-
-      {/* DRV-F415 / F416 — approved 9 tabs; ?tab= is the source of truth (Back works). */}
-      <NavyPageSubNav
-        items={DRIVER_PROFILE_TABS.map((tab) => {
-          const slug = DRIVER_PROFILE_TAB_QUERY[tab];
-          return {
-            label: tab,
-            to: slug === "overview" ? `/drivers/${id}` : `/drivers/${id}?tab=${slug}`,
-          };
-        })}
-        activeId={activeTab}
-        onTabChange={(next) => setActiveTab(next as DriverProfileTab)}
-        itemIds={[...DRIVER_PROFILE_TABS]}
       />
 
       {/* C-11 — one horizontal KPI band below tabs (Overview only so other tabs keep one-screen density). */}
@@ -526,7 +519,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
                       : String(integrityComplaints)
                 }
                 accent={integrityComplaints > 0 ? colors.warn.strong : colors.positive.strong}
-                to={integrityQ.isError && !integrity404 ? undefined : `/safety/complaints?driver_id=${id}`}
+                to={integrityQ.isError && !integrity404 ? undefined : `/drivers/${id}?tab=complaints`}
                 disabled={integrityQ.isError && !integrity404}
                 disabledReason={
                   integrityQ.isError && !integrity404 ? "Integrity profile could not be loaded." : undefined
@@ -537,11 +530,12 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         )
       ) : null}
 
+      {companyId ? (
+        <DriverOverviewBoard operatingCompanyId={companyId} driverId={id} hideChrome />
+      ) : null}
+
       {activeTab === "Overview" ? (
         <div className="space-y-3" data-testid="dp-tab-overview">
-          {companyId ? (
-            <DriverOverviewBoard operatingCompanyId={companyId} driverId={id} hideChrome />
-          ) : null}
           <div data-testid="dp-section-1-identity">
             <IdentityHeader
               driver={profileDriver}
@@ -684,8 +678,8 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
             />
           </div>
           {/*
-            DRV-F415 — these are NOT extra tabs. The approved design names 9 tabs.
-            Rule 14 / Rule 07: reverse linkage stays on the surviving profile, under Overview.
+            DRV-F420 — reverse linkage stays on the surviving profile (Rule 14 / Rule 07).
+            The 12+5 tabs live on DriverOverviewBoard; nothing is deleted from this page.
           */}
           <div className="space-y-3" data-testid="dp-overview-linkage">
             {companyId ? <DriverProfileSafetyAttributedSection companyId={companyId} driverId={id} /> : null}
@@ -878,6 +872,11 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
 
       {activeTab === "Complaints" ? (
         <div className="space-y-3" data-testid="dp-tab-complaints">
+          <div className="flex justify-end">
+            <Link to={`/safety/complaints?driver_id=${id}`} className="text-xs font-semibold text-slate-700 hover:underline">
+              View all
+            </Link>
+          </div>
           {companyId ? (
             <ComplaintsReverseSection
               operatingCompanyId={companyId}
@@ -933,7 +932,78 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
 
       {activeTab === "Driver disputes" ? (
         <div className="space-y-3" data-testid="dp-tab-driver-disputes">
+          <div className="flex justify-end">
+            <Link to="/drivers/disputes" className="text-xs font-semibold text-slate-700 hover:underline">
+              View all
+            </Link>
+          </div>
           <SettlementDisputeList driverId={id} />
+        </div>
+      ) : null}
+
+      {activeTab === "Pay & escrow" ? (
+        <div className="space-y-3" data-testid="dp-tab-pay-escrow">
+          <DriverPaymentMethodsCard driverId={id} companyId={companyId} />
+          <DriverEscrowReverseSection operatingCompanyId={companyId} driverId={id} data-testid="driver-profile-pay-escrow" />
+        </div>
+      ) : null}
+
+      {activeTab === "Reports & damage" ? (
+        <div className="space-y-3" data-testid="dp-tab-reports-damage">
+          <DriverReportsReverseSection operatingCompanyId={companyId} driverId={id} />
+          <DriverWorkOrdersReverseSection operatingCompanyId={companyId} driverId={id} />
+          <RoadServiceReverseSection filter={{ driver_id: id }} contextLabel="this driver" />
+        </div>
+      ) : null}
+
+      {activeTab === "Safety & accidents" ? (
+        <div className="space-y-3" data-testid="dp-tab-safety-accidents">
+          {companyId ? <DriverProfileSafetyAttributedSection companyId={companyId} driverId={id} /> : null}
+          <DriverSafetyReverseSection operatingCompanyId={companyId} driverId={id} />
+          <DriverFinesReverseSection operatingCompanyId={companyId} driverId={id} />
+          <DriverHosViolationsReverseSection operatingCompanyId={companyId} driverId={id} />
+        </div>
+      ) : null}
+
+      {activeTab === "Safety file" ? (
+        <div className="space-y-3" data-testid="dp-tab-safety-file">
+          <LicenseSection license={aggregate.license} />
+          <MedicalCardSection medical={aggregate.medical_card} unavailable={aggregate.medical_card_unavailable === true} />
+          <DrugProgramSection drug={aggregate.drug_program} unavailable={aggregate.drug_program_unavailable === true} />
+          <BackgroundChecksSection operatingCompanyId={companyId} driverId={id} />
+        </div>
+      ) : null}
+
+      {activeTab === "ELD edits" ? (
+        <div className="space-y-3" data-testid="dp-tab-eld-edits">
+          {companyId ? <EldEditHistoryTimeline driverUuid={id} operatingCompanyId={companyId} /> : null}
+        </div>
+      ) : null}
+
+      {activeTab === "Legal matters" ? (
+        <div className="space-y-3" data-testid="dp-tab-legal-matters">
+          <LegalMattersReverseSection operatingCompanyId={companyId} filter={{ related_driver_id: id }} contextLabel="this driver" />
+          <InsuranceClaimsReverseSection operatingCompanyId={companyId} filter={{ driver_id: id }} contextLabel="this driver" />
+          <InsuranceLawsuitsReverseSection operatingCompanyId={companyId} filter={{ driver_id: id }} contextLabel="this driver" />
+        </div>
+      ) : null}
+
+      {activeTab === "QBO mapping" ? (
+        <div className="space-y-3" data-testid="dp-tab-qbo-mapping">
+          <section className={`${MASTER_DETAIL.surfaceClass} p-3`}>
+            <h2 className="mb-2 text-xs font-semibold text-slate-900">QBO vendor linkage</h2>
+            <p className="text-xs text-slate-600">
+              {profileDriver.qbo_vendor_id ? "Linked" : "Unlinked"}
+              {profileDriver.qbo_vendor_name ? ` · ${String(profileDriver.qbo_vendor_name)}` : ""}
+            </p>
+          </section>
+        </div>
+      ) : null}
+
+      {activeTab === "Audit history" ? (
+        <div className="space-y-3" data-testid="dp-tab-audit-history">
+          {companyId ? <AuditHistoryTab driverId={id} operatingCompanyId={companyId} /> : null}
+          <EntityAuditHistoryTab operatingCompanyId={companyId} entityType="driver" entityId={id} />
         </div>
       ) : null}
 

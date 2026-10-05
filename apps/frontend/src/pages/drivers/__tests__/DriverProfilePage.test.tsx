@@ -179,7 +179,7 @@ describe("DriverProfilePage", () => {
   it("renders Overview sections under the tab strip (C-20)", async () => {
     renderPage();
     expect(await screen.findByTestId("dp-tab-overview")).toBeTruthy();
-    expect(screen.getByRole("navigation", { name: "Section navigation" })).toBeTruthy();
+    expect(screen.getByTestId("driver-overview-board-stub")).toBeTruthy();
     expect(screen.getByTestId("driver-profile-kpi-strip")).toBeTruthy();
     expect(screen.getByTestId("dp-section-1-identity")).toBeTruthy();
     expect(screen.getByTestId("dp-section-2-license")).toBeTruthy();
