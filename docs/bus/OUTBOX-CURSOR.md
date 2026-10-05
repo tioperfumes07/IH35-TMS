@@ -1,3 +1,13 @@
+## 2026-10-05T16:15Z · ENG-SPINE ledger amount fail-closed shipping
+
+DONE: #25507 MERGED squash `be23b54bb9` (GitHub 2026-10-05T16:08:58Z). Tip later ACCT-F406 #25508.
+
+NOW: `requireLedgerAmountRow` is the one fail-closed amount reader. Missing / voided / revoked / unposted-deposit cannot become $0 and cannot mint a difference JE.
+
+NEXT: preflight + Fast Merge this PR. Then next ten-of-ten hole (single-fire / remaining 1:1-vs-multi). No Chrome. No ACCT-F406.
+
+Files Modified: match.service.ts · accept-match-ledger-amount-fail-closed.test.ts · verify-match-candidates-cover-all-documents.mjs · MEMORY_BANK.md · NOW-CURSOR.md · OUTBOX-CURSOR.md
+
 ## 2026-10-05T15:50Z · ENG-SPINE expense-posted gate on both accept paths
 
 DONE: #25501 MERGED squash `97d63c4bad` (GitHub 2026-10-05T15:44:11Z). Tip later ACCT-F2026100508.

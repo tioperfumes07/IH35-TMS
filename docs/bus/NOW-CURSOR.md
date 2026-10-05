@@ -1,10 +1,10 @@
-# NOW-CURSOR — 2026-10-05T15:50Z
+# NOW-CURSOR — 2026-10-05T16:15Z
 
-**SHIPPING:** ENG-SPINE expense-posted gate — 1:1 and multi-document accept share `assertExpensePostedOnAccept`.
+**SHIPPING:** ENG-SPINE ledger amount fail-closed — `requireLedgerAmountRow` refuses missing/voided/revoked documents on 1:1, multi, and preview.
 
-**CLOSED tip:** ENG-SPINE factoring follow-ups #25501 `97d63c4bad` · payment follow-ups #25477 · reverse stamp #25476 · ENG-REVERSE #25475 · ENG-MATCH #25474.
+**CLOSED tip:** ENG-SPINE expense-posted #25507 `be23b54bb9` · factoring follow-ups #25501 · payment follow-ups #25477.
 
-**NEXT:** Fast Merge this PR. Then next ten-of-ten hole (company / WORM / single-fire). No Chrome. No ACCT-F406.
+**NEXT:** Fast Merge this PR. Then next ten-of-ten hole (single-fire). No Chrome. No ACCT-F406.
 
 # NOW — CURSOR — standing engine ENG-CF (D-4) then ENG-7D / ENG-MATCH
 
