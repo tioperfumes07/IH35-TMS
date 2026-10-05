@@ -173,10 +173,11 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
         values,
       );
       const totalCount = Number(countRes.rows[0]?.total_count ?? 0);
-      values.push(query.data.limit);
-      const limitParam = values.length;
-      values.push(query.data.offset);
-      const offsetParam = values.length;
+      // The list query gets its OWN array (same class as dot-inspections): pushing onto `values` mutated the
+      // array the count query was already handed.
+      const listValues = [...values, query.data.limit, query.data.offset];
+      const limitParam = listValues.length - 1;
+      const offsetParam = listValues.length;
       // FAIL-CP1: the grid rendered raw driver uuids because the row carried only ids and
       // EntityLink falls back to printing `id` when given no label. On a privacy-gated discipline
       // record, "who complained about whom" is the entire content of the row — so resolve both
@@ -220,7 +221,7 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
          ${reverseFilter}
          ORDER BY c.filed_at DESC
          LIMIT $${limitParam} OFFSET $${offsetParam}`,
-        values
+        listValues
       );
       return { complaints: res.rows, total_count: totalCount };
     });

@@ -166,7 +166,10 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
            ${filters.join("\n           ")}`,
         values
       );
-      values.push(query.data.limit, query.data.offset);
+      // The list query gets its OWN array: pushing LIMIT/OFFSET onto `values` mutated the array the count query was
+      // already handed, so anything that kept that reference (a retry, a query log, a test double) saw 4 params
+      // against a 2-placeholder statement.
+      const listValues = [...values, query.data.limit, query.data.offset];
       // CLS-UUID-LABEL: this list never joined the driver/unit/WO names, so the frontend's
       // EntityLink rendered the raw driver_id/unit_id/auto_spawned_wo_id uuids with no label
       // (same class as LST-F105/107/108/109/111/112). Mirrors safety.accident_reports' join.
@@ -201,9 +204,9 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
             AND di.voided_at IS NULL
           ${filters.join("\n          ")}
           ORDER BY di.inspection_date DESC, di.created_at DESC
-          LIMIT $${values.length - 1} OFFSET $${values.length}
+          LIMIT $${listValues.length - 1} OFFSET $${listValues.length}
         `,
-        values
+        listValues
       );
       return { rows: res.rows, total_count: Number(countRes.rows[0]?.total_count ?? 0) };
     });

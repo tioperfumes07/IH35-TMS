@@ -24,7 +24,8 @@ describe("photo comparison session list paging", () => {
       },
     );
 
-    expect(result).toEqual({ sessions: [{ uuid: "session-101" }], totalCount: 237 });
+    // Rows come back normalized (SAF-F7528, #18324): a missing or invalid diff_findings reads as null, never a crash.
+    expect(result).toEqual({ sessions: [{ uuid: "session-101", diff_findings: null }], totalCount: 237 });
     expect(query).toHaveBeenCalledTimes(2);
     const [countSql, countValues] = query.mock.calls[0];
     const [pageSql, pageValues] = query.mock.calls[1];

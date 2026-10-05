@@ -36,6 +36,16 @@ vi.mock("../../audit/crud-audit.js", () => ({
   appendCrudAudit: mockAppendCrudAudit,
 }));
 
+// An approved fine posts its liability to the GL in the same transaction (Dr 1256 / Cr other_recovery, via the posting
+// engine). The engine has its own tests; here it is isolated and its call asserted, so this file tests the approval
+// control without faking the chart of accounts. (It used to 500 here: the engine's read of the just-inserted liability
+// had no answer in this fake — CC-2 2026-10-04.)
+const { mockPostSource } = vi.hoisted(() => ({ mockPostSource: vi.fn(async () => ({ journal_entry_id: "je-fine" })) }));
+vi.mock("../../accounting/posting-engine.service.js", async (orig) => ({
+  ...(await orig<typeof import("../../accounting/posting-engine.service.js")>()),
+  postSourceTransactionInClientTx: mockPostSource,
+}));
+
 // The OOS-inspection path imports the WO service; it is never reached by these fine tests, but stub it so
 // route registration does not pull in the full maintenance stack.
 vi.mock("../../maintenance/two-section-service.js", () => ({
@@ -137,6 +147,12 @@ describe("safety internal-fines approval control (FD1)", () => {
       },
     });
     expect(res.statusCode).toBe(201);
+    // The approved fine's liability is posted to the GL in the same transaction (source driver_liability, the new row).
+    expect(mockPostSource).toHaveBeenCalledWith(
+      expect.anything(), // the route's own transaction client
+      expect.objectContaining({ operating_company_id: COMPANY, source_transaction_type: "driver_liability", source_transaction_id: LIABILITY_ID }),
+      expect.objectContaining({ userId: expect.any(String) }),
+    );
     const body = res.json();
     expect(body.fine).toMatchObject({ id: FINE_ID });
     expect(body.liability).toMatchObject({ id: LIABILITY_ID, current_balance: 100, status: "pending_recovery" });
