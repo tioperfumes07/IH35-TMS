@@ -34,7 +34,10 @@ function walk(dir) {
 /** The SELECT ... FROM audit.audit_events span of a file, if any. */
 export function auditEventsSelects(src) {
   const spans = [];
-  const re = /SELECT([\s\S]{0,400}?)FROM\s+audit\.audit_events([\s\S]{0,300}?)(?:LIMIT|\)|`|$)/gi;
+  // The select list may not cross a FROM. 2026-10-05: the old `SELECT([\s\S]{0,400}?)FROM audit.audit_events`
+  // started at an EARLIER query's SELECT (loads.routes.ts: `SELECT id FROM mdata.loads …` ownership check) and
+  // ran on into the audit query, so the loads table's `id` was reported as a phantom audit_events column.
+  const re = /SELECT((?:(?!\bFROM\b)[\s\S]){0,400}?)FROM\s+audit\.audit_events([\s\S]{0,300}?)(?:LIMIT|\)|`|$)/gi;
   let m;
   while ((m = re.exec(src)) !== null) spans.push(`${m[1]} ${m[2]}`);
   return spans;
@@ -74,6 +77,11 @@ function selftest() {
   t("id::text cast is caught", analyse(CASTED).some((p) => p.includes('"id"')));
   t("the aliased fix passes", analyse(FIXED).length === 0);
   t("a comment naming the old column is not a defect", analyse(PROSE).length === 0);
+  // A preceding query's columns are not the audit query's (loads.routes.ts /:id/audit, 2026-10-05).
+  const PRECEDING = [{ file: "x.ts", src: "SELECT id FROM mdata.loads WHERE id = $1 LIMIT 1`);\nawait c.query(`SELECT uuid, created_at, payload\nFROM audit.audit_events\nORDER BY created_at DESC LIMIT 200" }];
+  t("an earlier query's id is not read as an audit_events column", analyse(PRECEDING).length === 0);
+  const PRECEDING_BROKEN = [{ file: "x.ts", src: PRECEDING[0].src.replace("SELECT uuid,", "SELECT id,") }];
+  t("a real phantom id after an earlier query is still caught", analyse(PRECEDING_BROKEN).some((p) => p.includes('"id"')));
   t("failure names the phantom column", (analyse(BROKEN)[0] || "").includes("emitted_at") || (analyse(BROKEN)[0] || "").includes('"id"'));
   return bad;
 }
@@ -81,7 +89,7 @@ function selftest() {
 if (process.argv[1] && process.argv[1].endsWith("verify-audit-events-column-names.mjs")) {
   if (process.argv.includes("--selftest")) {
     const bad = selftest();
-    console.log(bad === 0 ? `${LABEL} SELFTEST PASS — 5 cases` : `${LABEL} SELFTEST FAILED (${bad})`);
+    console.log(bad === 0 ? `${LABEL} SELFTEST PASS — 7 cases` : `${LABEL} SELFTEST FAILED (${bad})`);
     process.exit(bad === 0 ? 0 : 1);
   }
   const files = walk(SRC).map((file) => ({ file: file.replace(`${ROOT}/`, ""), src: readFileSync(file, "utf8") }));
