@@ -1,3 +1,13 @@
+## 2026-10-05T02:48Z · 363-CUR-C Transfers Account filter shipping
+
+DONE: Fast-merge #25471 `cc8b7dc985` + #25472 `3e46e466a6` (All-accounts list bars → 0). Detector missed Transfers (`<option>All</option>`).
+
+NOW: TransfersListPage MultiSelectDropdown; 0/1 account_id; 2+ client Set on from/to. Guard also names Account-label + All.
+
+NEXT: fast-merge this PR. No Chrome. No Book Load.
+
+Files Modified: TransfersListPage · verify-account-filters-are-multi-select · LANE_CROSS ruling · OUTBOX-CURSOR
+
 ## 2026-10-05T02:40Z · 363-CUR-C remainder shipping — Audit Trail + Manual JE multi-select
 
 DONE: Fast-merge #25471 `cc8b7dc985` (banking list bars). Remainder converts the last 2 single-select All-accounts list filters.

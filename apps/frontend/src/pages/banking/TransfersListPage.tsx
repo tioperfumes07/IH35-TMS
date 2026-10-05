@@ -119,8 +119,19 @@ export function TransfersListPage() {
   const [type, setType] = useState<TransferType | "">("");
   // U12 (owner UI register 2026-10-03) — status is a multi-select; default Active; none picked = every transfer.
   const [status, setStatus] = useState<Array<"active" | "revoked">>(["active"]);
-  const [accountId, setAccountId] = useState("");
-  const staged = useStagedListFilters({ applied: { fromDate, toDate, type, status, accountId }, empty: { fromDate: "", toDate: "", type: "" as const, status: [] as Array<"active" | "revoked">, accountId: "" }, onApply: (next) => { setFromDate(next.fromDate); setToDate(next.toDate); setType(next.type); setStatus(next.status); setAccountId(next.accountId); setOffset(0); } });
+  const [accountIds, setAccountIds] = useState<string[]>([]);
+  const staged = useStagedListFilters({
+    applied: { fromDate, toDate, type, status, accountIds },
+    empty: { fromDate: "", toDate: "", type: "" as const, status: [] as Array<"active" | "revoked">, accountIds: [] as string[] },
+    onApply: (next) => {
+      setFromDate(next.fromDate);
+      setToDate(next.toDate);
+      setType(next.type);
+      setStatus(next.status);
+      setAccountIds(next.accountIds);
+      setOffset(0);
+    },
+  });
   const [offset, setOffset] = useState(0);
   const [revokingId, setRevokingId] = useState("");
   const [transferModalOpen, setTransferModalOpen] = useState(false);
@@ -174,14 +185,14 @@ export function TransfersListPage() {
     enabled: Boolean(companyId),
   });
   const transfersQuery = useQuery({
-    queryKey: ["banking", "transfers", companyId, fromDate, toDate, type, status, accountId, offset],
+    queryKey: ["banking", "transfers", companyId, fromDate, toDate, type, status, accountIds, offset],
     queryFn: () =>
       listTransfers(companyId, {
         from: fromDate || undefined,
         to: toDate || undefined,
         type: (type || undefined) as TransferType | undefined,
         status,
-        accountId: accountId || undefined,
+        accountId: accountIds.length === 1 ? accountIds[0] : undefined,
         limit: PAGE_SIZE,
         offset,
       }),
@@ -193,13 +204,29 @@ export function TransfersListPage() {
     enabled: Boolean(companyId && deepLinkTransferId),
   });
 
+  const accountOptions = useMemo(
+    () =>
+      (bankAccountsQuery.data?.accounts ?? []).map((account) => ({
+        value: account.id,
+        label: `${account.institution_name || "Bank"} - ${account.account_name || "Account"}`,
+      })),
+    [bankAccountsQuery.data?.accounts],
+  );
+
   const rows = useMemo(() => {
     const listed = transfersQuery.data?.transfers ?? [];
+    const filtered =
+      accountIds.length <= 1
+        ? listed
+        : listed.filter((row) => {
+            const allow = new Set(accountIds);
+            return allow.has(row.from_account_id) || allow.has(row.to_account_id);
+          });
     const deep = deepLinkTransferQuery.data;
-    if (!deepLinkTransferId || !deep) return listed;
-    if (listed.some((t) => t.id === deep.id)) return listed;
-    return [deep, ...listed];
-  }, [transfersQuery.data?.transfers, deepLinkTransferQuery.data, deepLinkTransferId]);
+    if (!deepLinkTransferId || !deep) return filtered;
+    if (filtered.some((t) => t.id === deep.id)) return filtered;
+    return [deep, ...filtered];
+  }, [transfersQuery.data?.transfers, deepLinkTransferQuery.data, deepLinkTransferId, accountIds]);
   const hasNext = (transfersQuery.data?.transfers ?? []).length === PAGE_SIZE;
   // Empty message renders only once the transfers query settles, never mid-fetch.
   const listState = useListState(transfersQuery, (transfersQuery.data?.transfers ?? []).length === 0 && !deepLinkTransferId);
@@ -439,7 +466,7 @@ export function TransfersListPage() {
 
       <CollapsedListFilters
         activeFilterCount={
-          (fromDate || toDate ? 1 : 0) + (type ? 1 : 0) + (accountId ? 1 : 0) + (status.length ? 1 : 0)
+          (fromDate || toDate ? 1 : 0) + (type ? 1 : 0) + (accountIds.length ? 1 : 0) + (status.length ? 1 : 0)
         }
         onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
         testIdPrefix="transfers"
@@ -467,14 +494,15 @@ export function TransfersListPage() {
           </label>
           <label className="text-xs text-gray-600">
             Account
-            <SelectCombobox value={staged.draft.accountId} onChange={(e) => staged.setDraft({ ...staged.draft, accountId: e.target.value })} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs">
-              <option value="">All</option>
-              {(bankAccountsQuery.data?.accounts ?? []).map((account) => (
-                <option key={account.id} value={account.id}>
-                  {account.institution_name || "Bank"} - {account.account_name || "Account"}
-                </option>
-              ))}
-            </SelectCombobox>
+            <MultiSelectDropdown
+              label="Account"
+              options={accountOptions}
+              selected={staged.draft.accountIds}
+              onChange={(next) => staged.setDraft({ ...staged.draft, accountIds: next })}
+              allLabel="All accounts"
+              searchable
+              data-testid="transfers-filter-account"
+            />
           </label>
           <MultiSelectDropdown
             label="Status"
