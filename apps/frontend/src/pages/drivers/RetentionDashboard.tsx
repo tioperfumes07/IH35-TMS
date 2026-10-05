@@ -5,6 +5,7 @@ import { AtRiskDriverCard } from "../../components/drivers/AtRiskDriverCard";
 import { entityLabel } from "../../lib/entity-label";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 type RetentionRow = {
   driver_uuid: string;
@@ -73,6 +74,12 @@ export function RetentionDashboard() {
                 topFactors={factors}
               />
               <p className="text-xs text-slate-700" data-testid="driver-retention-late-arrival-rate">
+                <EntityLink
+                  kind="driver"
+                  id={row.driver_uuid}
+                  label="Open driver profile"
+                  className="mr-2 text-blue-700 underline"
+                />
                 Late arrival rate (30d): {lateArrivalRate == null ? "Unavailable" : `${(lateArrivalRate * 100).toFixed(1)}%`}
               </p>
               {row.features_missing.length > 0 ? <p className="text-xs text-slate-700">Score missing: {row.features_missing.map((key) => key.replace(/_/g, " ")).join(", ")}</p> : null}

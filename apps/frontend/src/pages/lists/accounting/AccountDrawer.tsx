@@ -23,6 +23,7 @@ import { type ComboboxOption } from "../../../components/Combobox";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 type Mode = "create" | "edit";
 
@@ -541,8 +542,25 @@ export function AccountDrawer({
                 </div>
                 <div className="space-y-1.5 text-xs text-slate-700">
                   <div className="font-semibold text-slate-900" data-testid="preview-name">
-                    {(form.account_name.trim() || "Untitled account")}
+                    {mode === "edit" && account?.id ? (
+                      <EntityLink kind="account" id={account.id} label={form.account_name.trim() || account.account_name || "Untitled account"} />
+                    ) : (
+                      form.account_name.trim() || "Untitled account"
+                    )}
                   </div>
+                  {form.parent_account_id ? (
+                    <div className="flex justify-between gap-3">
+                      <span className="text-slate-500">Parent account</span>
+                      <EntityLink
+                        kind="account"
+                        id={form.parent_account_id}
+                        label={
+                          parentAccountsQuery.data?.accounts?.find((a) => a.id === form.parent_account_id)?.account_name ??
+                          "Parent account"
+                        }
+                      />
+                    </div>
+                  ) : null}
                   <div className="flex justify-between gap-3">
                     <span className="text-slate-500">Classification</span>
                     <span className="text-right" data-testid="preview-classification">

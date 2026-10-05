@@ -19,6 +19,7 @@ import { CappedListNotice } from "../../../components/CappedListNotice";
 import { Modal } from "../../../components/Modal";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { SelectCombobox } from "../../../components/Combobox";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 /** Codes consumers stamp via source_template_code — must match resolvePostingTemplateId lookup. */
 export const POSTING_TEMPLATE_SOURCE_CODES = [
@@ -239,6 +240,16 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
             />
           </div>
           {errors.debitAccount ? <div className="mt-1 text-xs text-red-700">{errors.debitAccount}</div> : null}
+          {form.debitAccountId ? (
+            <p className="mt-1 text-xs text-slate-600">
+              Open register:{" "}
+              <EntityLink
+                kind="account"
+                id={form.debitAccountId}
+                label={accountOptions.find((o) => o.value === form.debitAccountId)?.label ?? "Debit account"}
+              />
+            </p>
+          ) : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
@@ -254,6 +265,16 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
             />
           </div>
           {errors.creditAccount ? <div className="mt-1 text-xs text-red-700">{errors.creditAccount}</div> : null}
+          {form.creditAccountId ? (
+            <p className="mt-1 text-xs text-slate-600">
+              Open register:{" "}
+              <EntityLink
+                kind="account"
+                id={form.creditAccountId}
+                label={accountOptions.find((o) => o.value === form.creditAccountId)?.label ?? "Credit account"}
+              />
+            </p>
+          ) : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600" data-testid="posting-template-default-class">

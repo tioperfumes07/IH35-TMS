@@ -10,6 +10,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { formatPlannerDayLabel } from "../dispatch/planners/plannerDayLabel";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
 import { useStagedListFilters } from "../../components/table";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 type DriverQualificationFilters = {
   includeInactive: boolean;
@@ -90,7 +91,7 @@ export function DriverQualificationReportPage() {
       label: "Driver",
       sortable: true,
       sortValue: (r) => driverName(r).toLowerCase(),
-      render: (r) => <span className="font-medium text-gray-900">{driverName(r)}</span>,
+      render: (r) => <EntityLink kind="driver" id={r.driver_id} label={driverName(r)} className="font-medium text-gray-900" />,
     },
     {
       key: "driver_status",

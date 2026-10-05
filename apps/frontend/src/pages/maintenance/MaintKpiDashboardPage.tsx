@@ -19,6 +19,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 type KpiTileId = MaintKpiDrilldownKind | "pm_compliance";
 type DrillRow = Record<string, unknown>;
@@ -256,7 +257,16 @@ export function MaintKpiDashboardPage() {
               tableTestId="idle-events-needs-review-table"
               emptyText="No idle events waiting for review."
               columns={[
-                { key: "unit", label: "Unit", sortable: true, sortValue: (r) => r.unit_number ?? "", render: (r) => r.unit_number ?? "—" },
+                {
+                  key: "unit",
+                  label: "Unit",
+                  sortable: true,
+                  sortValue: (r) => r.unit_number ?? "",
+                  render: (r) =>
+                    r.unit_id && r.unit_number
+                      ? <EntityLink kind="unit" id={r.unit_id} label={r.unit_number} />
+                      : r.unit_number ?? "—",
+                },
                 { key: "category", label: "Category", sortable: true, sortValue: (r) => r.category ?? "", render: (r) => r.category ?? "—" },
                 { key: "fault", label: "Fault", sortable: true, sortValue: (r) => r.fault ?? "", render: (r) => r.fault ?? "—" },
                 { key: "start", label: "Start", sortable: true, sortValue: (r) => r.started_at ?? "", render: (r) => r.started_at?.slice(0, 10) ?? "—" },
