@@ -306,7 +306,7 @@ export function BalanceSheetPage() {
                         <AmountLink
                           filter={bsFilter(line.account_id, applied)}
                           className="text-slate-700 underline-offset-2 hover:underline"
-                          data-testid={`bs-name-${line.account_code || line.account_name}`}
+                          data-testid={`bs-name-${line.account_id}`}
                         >
                           {line.account_name || "—"}
                         </AmountLink>
@@ -314,7 +314,7 @@ export function BalanceSheetPage() {
                       <td className="px-3 py-2 text-right tabular-nums">
                         <AmountLink
                           filter={bsFilter(line.account_id, applied)}
-                          data-testid={`bs-amount-${line.account_code || line.account_name}`}
+                          data-testid={`bs-amount-${line.account_id}`}
                         >
                           {money(line.amount)}
                         </AmountLink>
@@ -358,7 +358,7 @@ export function BalanceSheetPage() {
                           <AmountLink
                             filter={bsFilter(line.account_id, applied)}
                             className="text-slate-700 underline-offset-2 hover:underline"
-                            data-testid={`bs-name-${line.account_code || line.account_name}`}
+                            data-testid={`bs-name-${line.account_id}`}
                           >
                             {line.account_name || "—"}
                           </AmountLink>
@@ -366,7 +366,7 @@ export function BalanceSheetPage() {
                         <td className="px-3 py-2 text-right tabular-nums">
                         <AmountLink
                           filter={bsFilter(line.account_id, applied)}
-                          data-testid={`bs-amount-${line.account_code || line.account_name}`}
+                          data-testid={`bs-amount-${line.account_id}`}
                         >
                           {money(line.amount)}
                         </AmountLink>
@@ -409,7 +409,7 @@ export function BalanceSheetPage() {
                           <AmountLink
                             filter={bsFilter(line.account_id, applied)}
                             className="text-slate-700 underline-offset-2 hover:underline"
-                            data-testid={`bs-name-${line.account_code || line.account_name}`}
+                            data-testid={`bs-name-${line.account_id}`}
                           >
                             {line.account_name || "—"}
                           </AmountLink>
@@ -417,7 +417,7 @@ export function BalanceSheetPage() {
                         <td className="px-3 py-2 text-right tabular-nums">
                         <AmountLink
                           filter={bsFilter(line.account_id, applied)}
-                          data-testid={`bs-amount-${line.account_code || line.account_name}`}
+                          data-testid={`bs-amount-${line.account_id}`}
                         >
                           {money(line.amount)}
                         </AmountLink>

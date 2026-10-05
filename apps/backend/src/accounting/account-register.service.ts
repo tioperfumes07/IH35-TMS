@@ -4,6 +4,12 @@
 // Read-only: no posting, no mutation. Voided journal entries are excluded (their reversing entry is a
 // separate posted JE, so the net is already correct).
 
+// ACCT-F410 — the ONLY import in this file, and deliberately so. This module takes its client
+// structurally (QueryableClient below) to stay pure and unit-testable. applyCashBasisSuppression
+// is a pure function and importing it is what makes the register's basis the SAME decision the
+// Trial Balance and Balance Sheet already make, instead of a second implementation of it.
+import { applyCashBasisSuppression, type CashBasisEntry } from "./cash-basis/engine.js";
+
 type QueryableClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
@@ -99,6 +105,47 @@ export type AccountRegisterRow = {
   running_balance_cents: number;
 };
 
+/**
+ * ACCT-F410 — THE REGISTER'S BASIS. One rule, derived from the engine the reports already use.
+ *
+ * WHY THIS EXISTS
+ *   Five report pages let you click a figure and land here. Until now this register had no basis
+ *   concept at all — MEASURED 2026-10-05: zero occurrences of `basis` in this file and in
+ *   account-register.routes.ts — so a CASH-basis figure drilled into an ACCRUAL register and the
+ *   register's total disagreed with the number clicked. ACCT-F410-A stopped the lie by refusing the
+ *   drill (resolveAmountRoute returned null for cash, rendering plain text). This restores the
+ *   drill by making the register actually answer in the basis asked for.
+ *
+ * HOW IT TIES BY CONSTRUCTION, AND WHY IT IS NOT A SECOND IMPLEMENTATION
+ *   The reports do not compute cash basis per POSTING; they compute it per ACCOUNT, through
+ *   cash-basis/engine.ts `applyCashBasisSuppression`, with the account classified by its COA ROLE
+ *   (ar_control / ap_control, resolved by resolveRoleAccountOptional) and otherwise "other" —
+ *   see account-balances.service.ts inferSourceType and cash-basis/report-transforms.ts. This
+ *   register is ONE account, so it feeds that same engine the same single classification and gets
+ *   the same answer the Trial Balance and Balance Sheet get for that account. Nothing is
+ *   re-derived here; a per-posting classification would be a RICHER rule than the reports apply
+ *   and would therefore break the very tie it was meant to create.
+ *
+ * WHAT CASH BASIS DOES TO A REGISTER, concretely
+ *   - The A/R control or A/P control account: every posting is zeroed and the running balance stays
+ *     flat at zero, which is exactly @decision Q3 ("Trial Balance cash mode keeps AR/AP rows
+ *     present with zero balances") made visible one level down. The rows remain, because the
+ *     transactions are real; what cash basis denies them is recognition, not existence.
+ *   - Every other account: unchanged. That is not a shortcut — it is what the reports do, since
+ *     the engine passes source_type "other" straight through.
+ *
+ * NAMED, NOT FIXED HERE — ACCT-F412. The cash-basis P&L is currently IDENTICAL to the accrual P&L.
+ * cash-basis/report-transforms.ts `profitLossLineToEntry` sets `settlement_date: anchorDate` where
+ * anchorDate IS the as-of date, and the engine recognizes a line when settlement_date <= as_of, so
+ * every revenue and expense line is always recognized. MEASURED: an entry anchored that way keeps
+ * 100000 of 100000, while the same entry with settlement_date null correctly zeroes. So the
+ * transform is structurally present and economically inert — a cash-basis P&L that never defers
+ * unpaid revenue. That is an accounting decision about reported numbers, not a defect I may fix
+ * silently, so it is reported rather than changed. This register matching it is correct TODAY and
+ * will keep matching it after ACCT-F412, because both go through the same engine.
+ */
+export type AccountingBasis = "accrual" | "cash";
+
 export type AccountRegisterReport = {
   account: {
     account_id: string;
@@ -109,6 +156,14 @@ export type AccountRegisterReport = {
   };
   from_date: string;
   to_date: string;
+  /** ACCT-F410 — the basis this payload was computed in. The caller asked; this is the answer. */
+  basis: AccountingBasis;
+  /**
+   * True when cash basis actually suppressed this account (it is the A/R or A/P control). The UI
+   * says so on screen, because a register of real transactions showing zeros must explain itself
+   * rather than look like a broken query.
+   */
+  cash_basis_suppressed: boolean;
   opening_balance_cents: number;
   closing_balance_cents: number;
   /** Feed-side balance from banking.bank_accounts.current_balance_cents when a bank maps to this GL. */
@@ -186,6 +241,55 @@ export function buildRegisterRows(
   return { rows, total_debit_cents: totalDebit, total_credit_cents: totalCredit, closing_balance_cents: running };
 }
 
+/**
+ * ACCT-F410 — apply the basis to one account's postings. PURE, so it is unit-provable without a
+ * database, and it delegates the decision to cash-basis/engine.ts rather than restating it.
+ *
+ * The account is classified exactly as the reports classify it: by COA ROLE first (the ids the
+ * route resolved with resolveRoleAccountOptional), then by the engine's own name heuristic, which
+ * is what account-balances.service.ts inferSourceType does. One entry, one answer, and that answer
+ * is whatever the Trial Balance and Balance Sheet already show for this account.
+ */
+export function applyRegisterBasis(input: {
+  basis: AccountingBasis;
+  postings: RawPosting[];
+  account: { account_id: string; account_code: string; account_name: string; account_type: string };
+  asOfDate: string;
+  roleMatches?: { arControlAccountId?: string | null; apControlAccountId?: string | null };
+}): { postings: RawPosting[]; suppressed: boolean } {
+  if (input.basis !== "cash") return { postings: input.postings, suppressed: false };
+
+  // Role match first, heuristic second — the same order, and the same heuristic, the reports use.
+  const roleSource: CashBasisEntry["source_type"] =
+    input.roleMatches?.arControlAccountId && input.account.account_id === input.roleMatches.arControlAccountId
+      ? "ar_control"
+      : input.roleMatches?.apControlAccountId && input.account.account_id === input.roleMatches.apControlAccountId
+        ? "ap_control"
+        : "other";
+
+  const probe: CashBasisEntry = {
+    entry_id: input.account.account_id,
+    account_code: input.account.account_code,
+    account_name: input.account.account_name,
+    account_type: input.account.account_type,
+    // A non-zero probe: the engine answers by ZEROING a suppressed account, so a zero probe could
+    // not tell "suppressed" from "already zero". 1 cent in, 0 out means suppressed.
+    amount_cents: 1,
+    source_type: roleSource,
+  };
+  const [answer] = applyCashBasisSuppression([probe], { as_of_date: input.asOfDate });
+  const suppressed = (answer?.amount_cents ?? 1) === 0;
+  if (!suppressed) return { postings: input.postings, suppressed: false };
+
+  // Suppressed: the rows STAY — the transactions are real and the owner must still see them — and
+  // every amount goes to zero, so the register's totals and running balance land exactly where the
+  // report's number for this account does. @decision Q3.
+  return {
+    postings: input.postings.map((p) => ({ ...p, amount_cents: 0 })),
+    suppressed: true,
+  };
+}
+
 type BalanceFnRow = {
   account_id: string;
   account_code: string;
@@ -205,6 +309,15 @@ export async function getAccountRegister(
     to_date: string;
     search?: string | null;
     type?: string | null;
+    /** ACCT-F410 — defaults to accrual (@decision Q7: "Basis defaults to accrual"). */
+    basis?: AccountingBasis | null;
+    /**
+     * The company's COA role accounts, resolved by the ROUTE with resolveRoleAccountOptional, the
+     * same way trial-balance.routes.ts and balance-sheet.routes.ts resolve them. Passed in rather
+     * than looked up here so the register cannot answer from a different role mapping than the
+     * report the owner clicked from.
+     */
+    roleMatches?: { arControlAccountId?: string | null; apControlAccountId?: string | null } | null;
   }
 ): Promise<AccountRegisterReport> {
   // Opening balance + account meta from the shared balances function. opening_balance_cents is the raw net
@@ -512,10 +625,30 @@ export async function getAccountRegister(
     expense_payment_type: r.expense_payment_type ?? null,
   }));
 
+  // ACCT-F410 — apply the basis to the RAW POSTINGS, before the register is built, so the running
+  // balance, the period totals and the closing balance all follow from ONE decision instead of
+  // three places having to agree. See THE REGISTER'S BASIS at the top of this file.
+  const basis: AccountingBasis = input.basis === "cash" ? "cash" : "accrual";
+  const { postings: basisPostings, suppressed: cashBasisSuppressed } = applyRegisterBasis({
+    basis,
+    postings,
+    account: {
+      account_id: acct.account_id,
+      account_code: acct.account_code,
+      account_name: acct.account_name,
+      account_type: acct.account_type,
+    },
+    asOfDate: input.to_date,
+    roleMatches: input.roleMatches ?? undefined,
+  });
+
   const { rows, total_debit_cents, total_credit_cents, closing_balance_cents } = buildRegisterRows(
-    openingNatural,
+    // A suppressed account opens at zero too: the TB cash row for A/R is 0, not "no activity on top
+    // of an accrual opening balance". Leaving the opening in would make the register's first line
+    // disagree with the report in the only place the report has a number.
+    cashBasisSuppressed ? 0 : openingNatural,
     normal,
-    postings
+    basisPostings
   );
 
   // B-1 header: Bank balance (feed) vs Ending balance (book) + Reconciled through.
@@ -555,6 +688,8 @@ export async function getAccountRegister(
     },
     from_date: input.from_date,
     to_date: input.to_date,
+    basis,
+    cash_basis_suppressed: cashBasisSuppressed,
     opening_balance_cents: openingNatural,
     closing_balance_cents,
     bank_balance_cents: bankRow?.bank_balance_cents != null ? Number(bankRow.bank_balance_cents) : null,

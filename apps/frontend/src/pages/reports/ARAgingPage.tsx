@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { AmountLink } from "../../components/shared/AmountLink";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useQuery } from "@tanstack/react-query";
@@ -106,24 +107,25 @@ export function ARAgingPage() {
 
   const columns = useMemo<ParityColumn<ARAgingRowWithBucket>[]>(
     () => [
-      // ACCT-F410-B — this cell was an EntityLink to the customer PROFILE and carried NO
-      // stopPropagation, so clicking the name fired the name's navigation AND the row's onRowClick
-      // and the two raced. It also duplicated the "Customer profile" row action. It now links to
-      // the SAME destination the row click uses, through the same filter. Profile stays on its
-      // own button.
+      // ACCT-F410-C — the REAL A/R defect, fixed the right way this time. This cell was an
+      // EntityLink to the customer with NO stopPropagation, so clicking the name fired the name's
+      // navigation AND the row's onRowClick: two navigations racing on one click. ACCT-F410-B
+      // "fixed" it by replacing the entity link with an AmountLink to the invoice list, which CC-2
+      // correctly measured as duplicating the Total cell's destination and losing the entity link.
+      // The fix is the missing stopPropagation, matching A/P: name -> customer, amounts ->
+      // transactions, row -> open invoices. Three destinations, no race, no duplication.
       {
         key: "customer_name",
         label: "Customer",
         sortable: true,
         render: (r) => (
-          <AmountLink
-            filter={arAgingInvoiceFilter(r.customer_id)}
-            className="font-medium text-gray-900 hover:underline"
-            title="Open invoices with a balance for this customer"
-            data-testid={`ar-aging-customer-${r.customer_id}`}
-          >
-            {entityLabel(r.customer_name, r.customer_id, "Customer")}
-          </AmountLink>
+          <EntityLink
+            kind="customer"
+            id={r.customer_id}
+            label={entityLabel(r.customer_name, r.customer_id, "Customer")}
+            className="font-medium text-gray-900"
+            onClick={(event) => event.stopPropagation()}
+          />
         ),
       },
       // ACCT-F411 — the Total is every open invoice for this customer, which the has_balance list

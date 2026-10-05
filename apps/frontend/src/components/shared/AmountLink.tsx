@@ -59,41 +59,25 @@ const DEFAULT_LINK_CLASSNAME = "text-slate-700 hover:underline";
  *     (same component also mounts at /accounting/account-register with ?accountId=; the path form
  *      is the house convention — 12 page files use it vs 5 for the query form)
  *
- * THE BASIS RULE — a cash-basis figure gets NO register drill, and this is the whole reason:
- * AccountRegisterPage reads accountId / from_date / to_date and NOTHING ELSE. It does not read
- * `basis`, and the backend register service has no basis concept at all (measured 2026-10-05:
- * zero occurrences of `basis` in account-register.routes.ts and account-register.service.ts).
- * The register is therefore always ACCRUAL. Meanwhile the cash-basis reports are computed through
- * accounting/cash-basis/engine.ts `applyCashBasisSuppression`, which zeroes AR/AP control rows
- * (@decision Q3) and zeroes any invoice_revenue / bill_expense / driver_settlement not settled by
- * the as-of date (@decision Q5, VQ5). So a cash-basis figure and the accrual register DO NOT TIE,
- * by construction and by locked decision — not by accident.
+ * THE BASIS RULE — CLOSED by ACCT-F410. A cash-basis figure now drills, because the register
+ * learned the basis instead of the link pretending the mismatch away.
  *
- * TrialBalancePage, ProfitLossPage and BalanceSheetPage were each passing `basis` into a local
- * registerHref and the register was silently dropping it, so every account-name link on those
- * three pages under Cash basis already landed on a register whose total disagreed with the figure
- * clicked. resolveAmountRoute now returns null for basis "cash", which renders plain text. A link
- * that navigates to a different number than the one you clicked is worse than no link.
+ * What it was: AccountRegisterPage read accountId / from_date / to_date and nothing else, and
+ * account-register.service.ts had no basis concept at all (measured 2026-10-05: zero occurrences).
+ * Five report pages each put `basis` in the query string and the register silently dropped it, so
+ * a cash-basis figure landed on an ACCRUAL register whose total disagreed with the number clicked.
+ * ACCT-F410-A returned null here so the figure rendered as plain text — honest, but a lost drill.
  *
- * To make cash-basis figures drill, the REGISTER must learn the basis — accept it, map each
- * posting to a CashBasisEntry and run the same `applyCashBasisSuppression` the reports run, so the
- * register ties to the report by construction rather than by coincidence. That is a backend block,
- * named ACCT-F410, and until it lands this null is the honest answer, not a placeholder.
- *   /accounting/bills             BillsPage.tsx             vendor_id · status · has_balance · category
- *   /accounting/invoices          InvoicesListPage.tsx      customer_id · has_balance · not_sent
+ * What it is now: the register ACCEPTS `basis`, and for cash it runs the account through the same
+ * accounting/cash-basis/engine.ts `applyCashBasisSuppression` the Trial Balance and Balance Sheet
+ * run, classified by the same COA roles the route resolves with resolveRoleAccountOptional. So the
+ * register's answer IS the report's answer for that account — zero on the A/R and A/P control
+ * accounts (@decision Q3), unchanged everywhere else — and it ties by construction, not by review.
+ * Proven in apps/backend/src/accounting/__tests__/account-register-basis.test.ts, which asserts the
+ * register's output against the reports' own engine in both directions.
  *
- * AGING BUCKETS — now present, and note the SHAPE (ACCT-F411). The filter carries the bucket's
- * NAME (`agingBucket: "d31_60"`), never two day numbers. The boundaries live in exactly one place,
- * apps/backend/src/accounting/aging/buckets.ts, which is also where the aging reports classify, so
- * the figure and the drilled list agree by construction; the frontend never holds the numbers and
- * therefore cannot drift from them. It also means a window whose max is below its min cannot be
- * expressed at all. `agingAsOf` carries the report's as-of date, because "31-60 days overdue" is
- * only meaningful relative to one.
- *   /accounting/bills      aging_bucket · as_of   (bills.routes.ts listBillsQuerySchema)
- *   /accounting/invoices   aging_bucket · as_of   (invoices.routes.ts listQuerySchema)
- * Both apply the window BEFORE LIMIT/OFFSET, so a bucket drill shows the bucket and not a page of
- * it — proven against a live Postgres in aging/__tests__/list-window.sql.test.ts, including a bill
- * with no due date, which must age off its BILL date exactly as the A/P report ages it.
+ * So `basis` IS emitted now, and a cash-basis figure keeps its drill.
+ *
  */
 export type AmountFilter =
   /**
@@ -183,18 +167,17 @@ export function resolveAmountRoute(filter: AmountFilter | null | undefined): str
   switch (filter.target) {
     case "register":
       if (!filter.accountId) return null;
-      // THE BASIS RULE (see header). The register is accrual-only, in the page AND in the backend
-      // service, so a cash-basis figure has no destination that reproduces it. Null, not a guess.
-      if (filter.basis === "cash") return null;
       // PATH form, not the query form. BOTH routes mount the SAME component
       // (AccountRegisterPage reads useParams accountId AND searchParams accountId), and the path
       // form is the house convention: 12 page files use it, 5 use the query form. Using the path
       // form here consolidates onto the majority instead of adding a third spelling.
-      // from_date / to_date are read by AccountRegisterPage (verified). `basis` is NOT emitted:
-      // the register does not read it, and the cash case already returned null above.
+      // ACCT-F410 — from_date, to_date AND basis are all read by AccountRegisterPage and honored
+      // by account-register.service.ts. Only "cash" is emitted: accrual is the default on both
+      // sides (@decision Q7), so sending it would change every existing URL for no behavior.
       return `/accounting/chart-of-accounts/register/${filter.accountId}${qs([
         ["from_date", filter.from],
         ["to_date", filter.to],
+        ["basis", filter.basis === "cash" ? "cash" : null],
       ])}`;
     case "bills":
       // ACCT-F411 — a bucket without an as-of date is meaningless ("31-60 days" from when?), so

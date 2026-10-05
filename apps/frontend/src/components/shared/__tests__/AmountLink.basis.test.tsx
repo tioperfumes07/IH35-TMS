@@ -2,17 +2,17 @@ import { describe, expect, it } from "vitest";
 import { resolveAmountRoute, type AmountFilter } from "../AmountLink";
 
 /**
- * ACCT-F410-A — THE BASIS RULE.
+ * ACCT-F410 — THE BASIS RULE, now that the register answers in the basis asked for.
  *
- * The account register is accrual-only: AccountRegisterPage reads accountId / from_date / to_date
- * and nothing else, and account-register.service.ts has no basis concept at all. The cash-basis
- * reports run through accounting/cash-basis/engine.ts applyCashBasisSuppression, which zeroes
- * AR/AP control rows (@decision Q3) and zeroes invoice_revenue / bill_expense /
- * driver_settlement not settled by the as-of date (@decision Q5, VQ5). So a cash-basis figure and
- * the accrual register cannot tie. A link that navigates to a different number than the one you
- * clicked is worse than no link, so a cash-basis figure resolves to null and renders plain text.
+ * It used to be: a cash-basis figure got NO drill, because the register was accrual-only on both
+ * sides and the two could not tie. ACCT-F410 made the register accept `basis` and run the account
+ * through the same accounting/cash-basis/engine.ts `applyCashBasisSuppression` the Trial Balance
+ * and Balance Sheet run, classified by the same COA roles. So the drill is back, and what these
+ * tests pin is that the basis TRAVELS — because the failure mode of dropping it is invisible: the
+ * link still works, the register still renders a number, and the number is the wrong basis. That
+ * is exactly the defect ACCT-F410-A found across five report pages.
  */
-describe("resolveAmountRoute — THE BASIS RULE", () => {
+describe("resolveAmountRoute — the basis travels to the register", () => {
   const base = { target: "register" as const, accountId: "acct-1", from: "2026-01-01", to: "2026-03-31" };
 
   it("drills on accrual", () => {
@@ -27,18 +27,23 @@ describe("resolveAmountRoute — THE BASIS RULE", () => {
     );
   });
 
-  it("refuses to drill on cash, so the figure renders as plain text", () => {
-    expect(resolveAmountRoute({ ...base, basis: "cash" })).toBeNull();
+  it("CARRIES basis=cash into the register URL, so the register answers in cash basis", () => {
+    const route = resolveAmountRoute({ ...base, basis: "cash" });
+    expect(route).toBe(
+      "/accounting/chart-of-accounts/register/acct-1?from_date=2026-01-01&to_date=2026-03-31&basis=cash"
+    );
   });
 
-  it("never emits basis in the query string — the register does not read it", () => {
-    const route = resolveAmountRoute({ ...base, basis: "accrual" });
-    expect(route).not.toContain("basis");
+  it("does NOT emit basis for accrual — it is the default on both sides, so every existing URL is unchanged", () => {
+    expect(resolveAmountRoute({ ...base, basis: "accrual" })).not.toContain("basis");
+    expect(resolveAmountRoute(base)).not.toContain("basis");
   });
 
-  it("refuses cash even with every other field present", () => {
+  it("drills on cash even when the account is the A/R control — the register will zero it, not the link", () => {
+    // The honesty now lives in the REGISTER, not in a refused link: it zeroes a suppressed account
+    // and says so on screen. A link that silently answers in the wrong basis is the thing to stop.
     const filter: AmountFilter = { ...base, basis: "cash" };
-    expect(resolveAmountRoute(filter)).toBeNull();
+    expect(resolveAmountRoute(filter)).toContain("basis=cash");
   });
 
   it("still refuses a register filter with no accountId", () => {
@@ -123,7 +128,7 @@ describe("resolveAmountRoute — aging buckets", () => {
     ).toBe("/accounting/bills?vendor_id=v1&has_balance=true");
   });
 
-  it("still emits no basis param — the register rule is untouched by any of this", () => {
+  it("the bills and invoices targets carry no basis — only the register has one", () => {
     const route = resolveAmountRoute({
       target: "bills",
       vendorId: "v1",

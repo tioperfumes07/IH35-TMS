@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * ACCT-F410-A — a CASH-basis figure must never drill into the account register.
+ * ACCT-F410 — a CASH-basis figure must drill into a register that answers IN CASH BASIS.
  *
  * WHY THIS IS A GUARD AND NOT A CODE COMMENT
  *   The account register is ACCRUAL-ONLY, in the page and in the backend service. MEASURED
@@ -32,7 +32,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const LABEL = "verify-cash-basis-never-drills-accrual-register";
+const LABEL = "verify-cash-basis-drill-answers-in-cash-basis";
 const PRIMITIVE = "apps/frontend/src/components/shared/AmountLink.tsx";
 const SRC = "apps/frontend/src";
 const REGISTER_PATH = "/accounting/chart-of-accounts/register/";
@@ -42,20 +42,33 @@ export function stripComments(src) {
   return src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
 }
 
-/** RULE 1 — the primitive refuses the cash case. */
+/**
+ * RULE 1 is RETIRED. ACCT-F410 taught the register the basis, so a cash-basis figure now HAS a
+ * destination that reproduces it and the null branch in resolveAmountRoute was deleted. This
+ * guard's own header said that when the register learned the basis, the null branch and this rule
+ * must be removed TOGETHER, in the same commit, rather than a bypass being added here — and that
+ * is what happened. What survives is RULE 1b, which keeps the basis from being dropped on the
+ * floor again, and RULE 4, inverted: the register must STILL be basis-aware.
+ */
+
+/** RULE 1b — the primitive must carry basis and must EMIT it, or the drill silently goes accrual. */
 export function checkPrimitive(src) {
   const problems = [];
   const code = stripComments(src);
-  if (!/filter\.basis\s*===\s*"cash"/.test(code) || !/return null/.test(code)) {
-    problems.push(
-      `${PRIMITIVE}: resolveAmountRoute must return null when filter.basis === "cash" — the ` +
-        `register is accrual-only, so a cash-basis figure has no destination that reproduces it`
-    );
-  }
   if (!/basis\?:\s*"accrual"\s*\|\s*"cash"\s*\|\s*null/.test(code)) {
     problems.push(
       `${PRIMITIVE}: the register AmountFilter must carry basis?: "accrual" | "cash" | null, so a ` +
         `caller cannot omit it by accident and get a silent accrual drill`
+    );
+  }
+  // The emitted param is the whole point now. Before ACCT-F410 five pages put `basis` in the query
+  // string and the register dropped it; the failure mode of forgetting it here is identical, and
+  // invisible: the figure still links, and the register still answers — in the wrong basis.
+  if (!/\["basis",/.test(code)) {
+    problems.push(
+      `${PRIMITIVE}: resolveAmountRoute must EMIT the basis param for the register target. Without ` +
+        `it a cash-basis figure drills to an accrual register again — the same defect ACCT-F410-A ` +
+        `found, with the link restored and the mismatch back.`
     );
   }
   return problems;
@@ -116,20 +129,26 @@ export function checkNoRegisterHrefHelper(files) {
   return problems;
 }
 
-/** RULE 4 — the stated premise stays true: the register really is accrual-only. */
-export function checkRegisterIsStillAccrualOnly(backendSources) {
+/**
+ * RULE 4, INVERTED by ACCT-F410. It used to assert the register was still accrual-only, so the null
+ * branch could not be left behind after the register learned the basis. Now it asserts the
+ * opposite: the register must STAY basis-aware. If someone strips `basis` back out of the register
+ * service, every cash-basis drill in the app starts answering in accrual again — silently, because
+ * the link still works and the page still renders a number.
+ */
+export function checkRegisterIsBasisAware(backendSources) {
   const problems = [];
   const present = backendSources.filter((b) => b.exists);
   if (present.length === 0) {
     return { problems, unverifiableHereOk: "backend register sources not present in this tree" };
   }
-  const basisAware = present.filter((b) => /\bbasis\b/.test(stripComments(b.src)));
-  if (basisAware.length > 0) {
+  const blind = present.filter((b) => !/\bbasis\b/.test(stripComments(b.src)));
+  if (blind.length > 0) {
     problems.push(
-      `${basisAware.map((b) => b.file).join(", ")}: now mentions basis. If the register has learned ` +
-        `the basis (ACCT-F410), this guard's RULE 1 and the null branch in resolveAmountRoute must ` +
-        `be removed TOGETHER, in that same commit — a cash figure may then drill. If it has not, ` +
-        `the mention is a half-built basis path and the register is lying about its own numbers.`
+      `${blind.map((b) => b.file).join(", ")}: no longer mentions basis. ACCT-F410 made the register ` +
+        `answer in the basis it is asked for, through the same cash-basis engine the reports use. ` +
+        `Removing it does not break any link — it makes every cash-basis drill answer in ACCRUAL ` +
+        `while still showing a number, which is the exact defect this guard exists to prevent.`
     );
   }
   return { problems };
@@ -151,7 +170,7 @@ export function findProblems({ primitiveSrc, files, backendSources }) {
     ...checkNoHandBuiltRegisterRoutes(files),
     ...checkNoRegisterHrefHelper(files),
   ];
-  const accrual = checkRegisterIsStillAccrualOnly(backendSources);
+  const accrual = checkRegisterIsBasisAware(backendSources);
   problems.push(...accrual.problems);
   return { problems, unverifiableHereOk: accrual.unverifiableHereOk };
 }
@@ -162,15 +181,15 @@ function selftest() {
   const goodPrimitive = `
     export type AmountFilter = { target: "register"; accountId: string; basis?: "accrual" | "cash" | null };
     export function resolveAmountRoute(filter) {
-      if (filter.basis === "cash") return null;
-      return "/accounting/chart-of-accounts/register/" + filter.accountId;
+      return "/accounting/chart-of-accounts/register/" + filter.accountId + qs([["basis", filter.basis]]);
     }`;
-  const bs = [{ file: "account-register.service.ts", exists: true, src: "const rows = await q(SELECT 1);" }];
+  // ACCT-F410 — a GOOD backend register now MENTIONS basis; one that does not is the defect.
+  const bs = [{ file: "account-register.service.ts", exists: true, src: "const basis = input.basis ?? 'accrual';" }];
   const cases = [
     { name: "clean tree", primitiveSrc: goodPrimitive, files: [], backendSources: bs, expectFail: false },
     {
-      name: "primitive lost the cash branch",
-      primitiveSrc: goodPrimitive.replace('if (filter.basis === "cash") return null;', ""),
+      name: "primitive stopped EMITTING basis — the drill silently answers in accrual",
+      primitiveSrc: goodPrimitive.replace('+ qs([["basis", filter.basis]])', ""),
       files: [], backendSources: bs, expectFail: true,
     },
     {
@@ -204,9 +223,9 @@ function selftest() {
       files: [{ file: "routes/manifest.tsx", src: 'path: "/accounting/chart-of-accounts/register/:accountId",' }],
     },
     {
-      name: "backend grew a basis path while the null branch still stands",
+      name: "backend LOST its basis path — every cash drill answers in accrual again",
       primitiveSrc: goodPrimitive, files: [], expectFail: true,
-      backendSources: [{ file: "account-register.service.ts", exists: true, src: "const basis = input.basis;" }],
+      backendSources: [{ file: "account-register.service.ts", exists: true, src: "const rows = await q('SELECT 1');" }],
     },
     {
       name: "backend sources absent is unverifiable, not a pass",
@@ -252,7 +271,7 @@ else {
   }
   const note = unverifiableHereOk ? ` (${unverifiableHereOk})` : "";
   console.log(
-    `${LABEL} OK — resolveAmountRoute owns the register route and refuses basis "cash"; ` +
-      `${files.length} frontend file(s) hand-build none${note}.`
+    `${LABEL} OK — resolveAmountRoute owns the register route and CARRIES the basis into it; the ` +
+      `register service is basis-aware; ${files.length} frontend file(s) hand-build none${note}.`
   );
 }

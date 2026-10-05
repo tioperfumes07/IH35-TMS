@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { AmountLink } from "../../components/shared/AmountLink";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useQuery } from "@tanstack/react-query";
@@ -187,25 +188,32 @@ export function APAgingPage() {
 
   const columns = useMemo<ParityColumn<APAgingRowWithBucket>[]>(
     () => [
-      // ACCT-F410-B — this cell was an EntityLink to the vendor PROFILE with stopPropagation, which
-      // contradicted this page's own documented design ("row drill -> bills with open balance"),
-      // duplicated the "Vendor profile" row action below, and made the documented row drill
-      // unreachable from the vendor name — the most natural thing on the row to click. It now links
-      // to the SAME destination the row click and "Pay now" use, through the same filter, so the
-      // three cannot drift. The vendor profile is still one click away on its own button.
+      // ACCT-F410-C — RETRACTION, and CC-2 was right. ACCT-F410-B turned this cell from an
+      // EntityLink-to-the-vendor into an AmountLink to the open-balance bill list, on the reasoning
+      // that it contradicted the page's "row drill -> bills" design and duplicated the Vendor
+      // profile row action. CC-2 measured the result: the NAME and the TOTAL then resolved to the
+      // SAME url, which is a real duplication, and it cost the page its entity link.
+      //
+      // The original was coherent and I misread it. A NAME is an ENTITY, and EntityLink is this
+      // app's convention for one. stopPropagation stops the name click from ALSO firing the row
+      // drill — it does not make the row drill unreachable, because every other cell in the row
+      // still fires it. Name -> vendor, amounts -> transactions, row -> open bills: three
+      // destinations, no collision.
+      //
+      // What WAS a defect, and stays fixed, is A/R: the same cell there had NO stopPropagation, so
+      // the name click fired the name's navigation AND the row's and the two raced.
       {
         key: "vendor_name",
         label: "Vendor",
         sortable: true,
         render: (r) => (
-          <AmountLink
-            filter={isVendorUuid(r.vendor_id) ? apAgingBillsFilter(r.vendor_id) : null}
-            className="font-medium text-gray-900 hover:underline"
-            title="Open bills with a balance for this vendor"
-            data-testid={`ap-aging-vendor-${r.vendor_id}`}
-          >
-            {entityLabel(r.vendor_name, r.vendor_id, "Vendor")}
-          </AmountLink>
+          <EntityLink
+            kind="vendor"
+            id={r.vendor_id}
+            label={entityLabel(r.vendor_name, r.vendor_id, "Vendor")}
+            className="font-medium text-gray-900"
+            onClick={(event) => event.stopPropagation()}
+          />
         ),
       },
       // ACCT-F411 — the Total is every open bill for this vendor, which the has_balance list

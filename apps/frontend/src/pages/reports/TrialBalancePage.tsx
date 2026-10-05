@@ -346,7 +346,7 @@ export function TrialBalancePage() {
                     <AmountLink
                       filter={tbFilter(canDrill, row.account_id, applied)}
                       className="text-slate-700 underline-offset-2 hover:underline"
-                      data-testid={`tb-name-${row.account_code || row.account_name}`}
+                      data-testid={`tb-name-${row.account_id}`}
                     >
                       {row.account_name || "—"}
                     </AmountLink>
@@ -357,17 +357,17 @@ export function TrialBalancePage() {
                       cash-basis AR/AP rows stay plain text instead of linking to an id that is not
                       a real account. The filter behind each figure IS its drill target. */}
                   <td className="px-3 py-2 text-right tabular-nums">
-                    <AmountLink filter={tbFilter(canDrill, row.account_id, applied)} data-testid={`tb-debits-${row.account_code || row.account_name}`}>
+                    <AmountLink filter={tbFilter(canDrill, row.account_id, applied)} data-testid={`tb-debits-${row.account_id}`}>
                       {money(row.total_debits)}
                     </AmountLink>
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">
-                    <AmountLink filter={tbFilter(canDrill, row.account_id, applied)} data-testid={`tb-credits-${row.account_code || row.account_name}`}>
+                    <AmountLink filter={tbFilter(canDrill, row.account_id, applied)} data-testid={`tb-credits-${row.account_id}`}>
                       {money(row.total_credits)}
                     </AmountLink>
                   </td>
                   <td className={`px-3 py-2 text-right ${row.net_balance < 0 ? "text-rose-700" : "text-slate-900"} tabular-nums`}>
-                    <AmountLink filter={tbFilter(canDrill, row.account_id, applied)} data-testid={`tb-net-${row.account_code || row.account_name}`}>
+                    <AmountLink filter={tbFilter(canDrill, row.account_id, applied)} data-testid={`tb-net-${row.account_id}`}>
                       {money(row.net_balance)}
                     </AmountLink>
                   </td>

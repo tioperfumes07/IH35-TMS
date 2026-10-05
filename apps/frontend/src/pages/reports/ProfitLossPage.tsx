@@ -301,7 +301,7 @@ export function ProfitLossPage() {
                           <AmountLink
                             filter={plFilter(line.account_id, applied)}
                             className="text-slate-700 underline-offset-2 hover:underline"
-                            data-testid={`pl-name-${line.account_code || line.account_name}`}
+                            data-testid={`pl-name-${line.account_id}`}
                           >
                             {line.account_name || "—"}
                           </AmountLink>
@@ -312,7 +312,7 @@ export function ProfitLossPage() {
                               behind this figure IS its drill target: this account over this period. */}
                           <AmountLink
                             filter={plFilter(line.account_id, applied)}
-                            data-testid={`pl-amount-${line.account_id || line.account_name}`}
+                            data-testid={`pl-amount-${line.account_id}`}
                           >
                             {money(line.amount)}
                           </AmountLink>

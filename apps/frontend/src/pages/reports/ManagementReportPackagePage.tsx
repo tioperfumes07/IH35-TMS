@@ -170,7 +170,7 @@ function PLSection({ companyId, fromDate, toDate, basis, searchQuery }: { compan
                   <AmountLink
                     filter={plFilter(line.account_id, fromDate, toDate, basis)}
                     className="hover:underline"
-                    data-testid={`mrp-pl-name-${line.account_code || line.account_name}`}
+                    data-testid={`mrp-pl-name-${line.account_id}`}
                   >
                     {line.account_name}
                   </AmountLink>
@@ -178,7 +178,7 @@ function PLSection({ companyId, fromDate, toDate, basis, searchQuery }: { compan
                 <td className="py-0.5 text-right text-slate-800 tabular-nums">
                   <AmountLink
                     filter={plFilter(line.account_id, fromDate, toDate, basis)}
-                    data-testid={`mrp-pl-amount-${line.account_code || line.account_name}`}
+                    data-testid={`mrp-pl-amount-${line.account_id}`}
                   >
                     {money(line.amount)}
                   </AmountLink>
@@ -236,7 +236,7 @@ function BSSection({ companyId, asOfDate, basis, searchQuery }: { companyId: str
               <AmountLink
                 filter={bsFilter(line.account_id, asOfDate, basis)}
                 className="hover:underline"
-                data-testid={`mrp-bs-name-${line.account_code || line.account_name}`}
+                data-testid={`mrp-bs-name-${line.account_id}`}
               >
                 {line.account_name}
               </AmountLink>

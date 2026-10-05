@@ -54,7 +54,20 @@ await (async () => {
   try {
     const c = new Client({ connectionString: PG_URL });
     await c.connect();
-    await c.query("select 1");
+    // SAFETY, same rule as list-window.sql.test.ts. This file only ever makes a TEMP table, which
+    // is session-local and vanishes on disconnect — but the rule is "never write to a database that
+    // holds the company's books", not "write only harmless things to it". One rule, no judgement
+    // call per test. accounting.journal_entry_postings is the real system's fingerprint.
+    const fingerprint = await c.query<{ real: boolean }>(
+      "select to_regclass('accounting.journal_entry_postings') is not null as real"
+    );
+    if (fingerprint.rows[0]?.real) {
+      await c.end().catch(() => undefined);
+      throw new Error(
+        "REFUSING TO RUN: this connection is a real IH35 database (accounting.journal_entry_postings " +
+          "exists). Point AGING_TEST_PG_URL at an empty throwaway Postgres instead."
+      );
+    }
     await c.query("create temp table aging_probe (id int primary key, due_date date)");
     client = c;
   } catch (error) {
