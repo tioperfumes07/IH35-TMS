@@ -24,9 +24,13 @@ export function problems(src) {
   const match = strip(src.match);
   const mm = match.slice(match.indexOf("export async function acceptExactMultiDocumentMatch"));
   const mmBody = mm.slice(0, mm.indexOf("\nexport async function", 10) > 0 ? mm.indexOf("\nexport async function", 10) : mm.length);
-  if (!/sweepMatchedReceiptToBank\(client, input\.operating_company_id, "customer_payment_deposit", entry\.ledger_entry_id/.test(mmBody)
+  if (!/runPaymentAcceptFollowUps\(/.test(mmBody)
     || !/sweepMatchedReceiptToBank\(client, input\.operating_company_id, "factoring_advance_deposit", entry\.ledger_entry_id/.test(mmBody)) {
-    p.push("acceptExactMultiDocumentMatch must sweep EVERY payment and factoring-advance entry out of 1090");
+    p.push("acceptExactMultiDocumentMatch must sweep EVERY payment (via runPaymentAcceptFollowUps) and factoring-advance entry out of 1090");
+  }
+  if (!/async function runPaymentAcceptFollowUps/.test(match)
+    || !/sweepMatchedReceiptToBank\(\s*client,\s*args\.operatingCompanyId,\s*"customer_payment_deposit",\s*args\.paymentId/.test(match)) {
+    p.push("runPaymentAcceptFollowUps must sweep customer_payment_deposit so 1:1 and multi cannot drift");
   }
   const skip = match.match(/DEPOSIT_SWEEP_SKIPPABLE = \[([^\]]*)\]/);
   if (!skip) p.push("the shared DEPOSIT_SWEEP_SKIPPABLE list is missing");
@@ -54,6 +58,7 @@ if (isMain) {
     if (own.length) { console.error(`${LABEL} --selftest FAIL on the real tree — ${own.join("; ")}`); process.exit(1); }
     const plants = [
       ["multi-match sweeps nothing", { ...src, match: src.match.replaceAll('sweepMatchedReceiptToBank(client, input.operating_company_id, "factoring_advance_deposit", entry.ledger_entry_id', 'void (0, entry.ledger_entry_id') }],
+      ["multi-match payment helper gone", { ...src, match: src.match.replaceAll("await runPaymentAcceptFollowUps(client, {", "await missingPaymentFollowUps(client, {") }],
       ["config error skipped", { ...src, match: src.match.replace('"QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED"] as const', '"QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED", "ACCOUNT_MAPPING_MISSING"] as const') }],
       ["single-pointer lookup", { ...src, engine: src.engine.replace("rm.ledger_entry_kind = 'factoring_advance'", "rm.ledger_entry_kind = 'x'") }],
       ["1090 default back", { ...src, custPay: src.custPay.replace('"operating_bank");', '"undeposited_funds");') }],

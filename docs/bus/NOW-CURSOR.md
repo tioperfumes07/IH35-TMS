@@ -1,8 +1,8 @@
-# NOW-CURSOR — 2026-10-05T08:52Z
+# NOW-CURSOR — 2026-10-05T09:10Z
 
-**SHIPPING:** ENG-SPINE — both-way reverse bank FK on persistable match accept (settlement + multi bill_payment).
+**SHIPPING:** ENG-SPINE payment follow-ups — 1:1 and multi-document accept share `runPaymentAcceptFollowUps` (invoice backlink + 1090 sweep + Faro rsv).
 
-**CLOSED tip:** ENG-REVERSE #25475 `1b6380aa55` · ENG-MATCH #25474 · ENG-7D · 367.9 · 363-CUR-B/C.
+**CLOSED tip:** ENG-SPINE reverse stamp #25476 `ec32af1ecd` · ENG-REVERSE #25475 · ENG-MATCH #25474 · ENG-7D · 367.9 · 363-CUR-B/C.
 
 **NEXT:** Fast Merge this PR. Then next ten-of-ten hole. No Chrome. No ACCT-F406.
 

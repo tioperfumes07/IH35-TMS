@@ -46,6 +46,9 @@ export function staticChecks(sources = {}) {
   if (!/stampReverseBankPointerOnAccept\(/.test(svc) || !/acceptExactMultiDocumentMatch/.test(svc)) {
     problems.push("1:1 and multi-document accept must share stampReverseBankPointerOnAccept — two copies drift");
   }
+  if (!/async function runPaymentAcceptFollowUps/.test(svc) || !svc.includes("acceptExactMultiDocumentMatch") || (svc.split("runPaymentAcceptFollowUps(").length - 1) < 3) {
+    problems.push("1:1 and multi-document accept must share runPaymentAcceptFollowUps (definition + both callers)");
+  }
   // matchKind is the Faro-reserve rewrite of ledger_entry_kind (OWNER-ORDER §3.1); helper uses args.kind.
   const paymentGate = /(?:ledger_entry_kind|matchKind|args\.kind)\s*===\s*"payment"/.test(svc);
   const billPayGate = /(?:ledger_entry_kind|matchKind|args\.kind)\s*===\s*"bill_payment"/.test(svc);

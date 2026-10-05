@@ -1584,6 +1584,21 @@ backfill. No new GL math. No ACCT-F406.
 Guards: `verify-wave-h3-bank-match-reverse-fk.mjs` (1924) +
 `verify-unmatch-clears-both-sides.mjs` (10912). Vitest 4/4.
 
+## Active Architectural Decisions — ENG-SPINE payment follow-ups on both accept paths (Cursor, 2026-10-05)
+
+1:1 `acceptMatchWithResolveDifference` already ran invoice backlink (ACCT-F5620) + 1090
+sweep (GO-CLOSE-188) + Faro Rsv Deposits (OWNER-ORDER §3.1) after the reverse stamp.
+`acceptExactMultiDocumentMatch` swept 1090 only — a batch wire of several payments left
+`matched_invoice_id` null and never posted the date-keyed Faro rsv JEs.
+
+Permanent: `runPaymentAcceptFollowUps` is the one writer. Both accept paths call it after
+`stampReverseBankPointerOnAccept`. Faro is pending-only on the bank date — N payments on
+one wire share one date; first call posts, the rest find no pending rows. No new reverse
+column. No `paid_at` stamp. No mass backfill. No ACCT-F406.
+
+Guards: `verify-bank-recon-accept-invoice-backlink.mjs` + `verify-1090-clearing.mjs` +
+`verify-wave-h3-bank-match-reverse-fk.mjs`.
+
 ## Active Architectural Decisions — KILL THE SECOND SYSTEM (Cursor, 2026-10-03)
 
 Owner, verbatim: the ledger is the balance; policies stay; this is a deletion, not a build.
