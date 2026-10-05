@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { acceptMatchWithResolveDifference } from "../match.service.js";
+import { acceptExactMultiDocumentMatch, acceptMatchWithResolveDifference } from "../match.service.js";
 
 const { mockQuery, mockWithLuciaBypass } = vi.hoisted(() => {
   const query = vi.fn();
@@ -70,6 +70,25 @@ describe("BLOCK-01 Part 2a — expense-link accept", () => {
     expect(String(clear?.[0])).toContain("categorized_at");
     expect(String(clear?.[0])).toContain("updated_at");
     expect(clear?.[1]).toEqual([BANK_TX, OPCO, EXPENSE, ACTOR]);
+  });
+
+  it("multi-document accept rejects an unposted expense (same gate as 1:1)", async () => {
+    mockQuery.mockReset();
+    mockWithLuciaBypass.mockClear();
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("FROM banking.bank_transactions") && sql.includes("SELECT")) return { rows: [bankTxnRow()] };
+      if (sql.includes("posting_status::text")) return { rows: [{ posting_status: "unposted" }] };
+      return { rows: [] };
+    });
+
+    await expect(
+      acceptExactMultiDocumentMatch({
+        operating_company_id: OPCO,
+        bank_transaction_id: BANK_TX,
+        actor_user_uuid: ACTOR,
+        entries: [{ ledger_entry_kind: "expense", ledger_entry_id: EXPENSE }],
+      })
+    ).rejects.toThrow("expense_not_posted");
   });
 
   it("rejects an unposted expense (would orphan the expense's own JE)", async () => {
