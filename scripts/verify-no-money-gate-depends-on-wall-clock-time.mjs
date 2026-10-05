@@ -35,6 +35,13 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SCRIPTS_DIR = path.join(ROOT, "scripts");
 const WALL_CLOCK_RE = /(now\(\)|CURRENT_DATE)\s*-\s*interval/;
 const LINE_COMMENT_RE = /\/\/[^\n]*/g;
+// A guard that never reaches a database cannot depend on the database's clock: a static source scanner that holds
+// `now() - interval` as a NEEDLE it asserts is absent (verify-unmatched-7d-is-an-alert) is not a time-dependent gate.
+// Any of these markers means the file can run SQL, and then the window counts.
+const DB_ACCESS_RE = /DATABASE(?:_DIRECT)?_URL|from\s+["']pg["']|import\(\s*["']pg["']\s*\)|\.query\s*[(<]|withUnscopedReadOnly|requireLiveDb|lib\/require-live-db|pg-connection-options/;
+export function canReachDatabase(src) {
+  return DB_ACCESS_RE.test(src.replace(LINE_COMMENT_RE, ""));
+}
 
 // Shrink-only ratchet. Measured live 2026-09-30 after fixing verify-no-document-without-a-ledger.mjs
 // (the one that caused this round's incident): 14 files still use a rolling wall-clock window.
@@ -42,7 +49,10 @@ const LINE_COMMENT_RE = /\/\/[^\n]*/g;
 // party-boards-bound-live to the window the engine returns — no new file added, three removed.
 // Never raise this number -- only lower it as each file is individually fixed or explicitly
 // justified as a genuine business-time rule.
-const KNOWN_WALL_CLOCK_FILES = 13;
+// 2026-10-05 (CC-2): 13 -> 10. Files that cannot reach a database are no longer counted (canReachDatabase): four
+// static source scanners (cron-observability, qbo-sync-drift-acceptable, stalled-queue-reaper, unmatched-7d-is-an-alert;
+// node:fs/node:path only) held the window as text they check for, never as a query.
+const KNOWN_WALL_CLOCK_FILES = 10;
 
 // LST-F404 (Lead, 2026-10-04) — the escape hatch the comment above promised and never built. A file that is CORRECTLY
 // clock-dependent (a freshness / liveness probe whose verdict is SUPPOSED to change as time passes) is recorded here BY
@@ -65,7 +75,7 @@ export function findWallClockFiles(dir) {
     if (!fs.statSync(full).isFile()) continue;
     const src = fs.readFileSync(full, "utf8");
     const stripped = src.replace(LINE_COMMENT_RE, "");
-    if (WALL_CLOCK_RE.test(stripped)) {
+    if (WALL_CLOCK_RE.test(stripped) && canReachDatabase(src)) {
       hits.push(path.relative(ROOT, full).split(path.sep).join("/"));
     }
   }
@@ -123,6 +133,10 @@ function selftest() {
   t("3. unreviewed count above the baseline fails", evaluate([A, B, C], {}, 2).problems.some((x) => /GREW/.test(x)));
   t("4. unreviewed count below the baseline fails (ratchet down in this commit)", evaluate([A], {}, 2).problems.some((x) => /ratchet down in this commit/.test(x)));
   t("5. a JUSTIFIED entry naming a file that no longer matches fails", evaluate([A], { [B]: why }, 1).problems.some((x) => /no longer matches/.test(x)));
+  t("6. a static scanner holding the window only as a needle cannot reach a DB", !canReachDatabase(`const needle = "created_at >= (now() - interval '7 day')"; readFileSync(x);`));
+  t("7. a guard that queries a DB still can (pg import)", canReachDatabase(`import pg from "pg"; await c.query("SELECT now() - interval '1 day'")`));
+  t("8. a guard that queries through the shared harness still can", canReachDatabase(`await withUnscopedReadOnly(L, async (c) => c.query(sql))`));
+  t("9. a DB marker only in a comment does not count", !canReachDatabase(`// uses DATABASE_URL\nconst x = 1;`));
 
   if (KNOWN_WALL_CLOCK_FILES < 0 || !Number.isInteger(KNOWN_WALL_CLOCK_FILES)) {
     failures.push("ratchet baseline must be a non-negative integer");
