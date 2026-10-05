@@ -15,6 +15,7 @@ export const LINK_COLUMNS = [
   "matched_advance_id",
   "matched_bill_id",
   "matched_bill_payment_id",
+  "matched_deposit_id",
   "matched_expense_id",
   "matched_factoring_advance_id",
   "matched_fuel_transaction_id",

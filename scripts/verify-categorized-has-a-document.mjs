@@ -53,6 +53,7 @@ const statik = check(fs.readFileSync(path.join(ROOT, MIG), "utf8"));
 if (statik.length) report(LABEL, statik, "");
 const r = await withUnscopedReadOnly(LABEL, async (c, { hasBucket }) => {
   const cat = `${BUCKET_SQL(hasBucket)} = 'categorized' AND bt.voided_at IS NULL AND ${NOT_FROZEN_SQL()}`;
+  const categorized = Number((await c.query(`SELECT count(*) AS n FROM banking.bank_transactions bt WHERE ${cat}`)).rows[0].n);
   const noKind = hasBucket ? Number((await c.query(`SELECT count(*) AS n FROM banking.bank_transactions bt WHERE ${cat} AND bt.resolution_kind IS NULL`)).rows[0].n) : 0;
   const noLink = Number((await c.query(`SELECT count(*) AS n FROM banking.bank_transactions bt WHERE ${cat} AND NOT ${LINKED_SQL()}`)).rows[0].n);
   const dead = [];
@@ -66,10 +67,12 @@ const r = await withUnscopedReadOnly(LABEL, async (c, { hasBucket }) => {
     live += row.live;
     if (row.dead) dead.push(`${row.dead} categorized line(s) linked to a dead ${kind} (e.g. ${row.ids.join(", ")})`);
   }
-  return { noKind, noLink, dead, live };
+  return { categorized, noKind, noLink, dead, live };
 });
 const fails = [...r.dead];
 if (r.noKind) fails.push(`${r.noKind} categorized line(s) with no resolution_kind`);
 if (r.noLink) fails.push(`${r.noLink} categorized line(s) with no document link`);
-if (r.live === 0) fails.push("positive control: 0 live document links read — the instrument saw nothing; that is not a pass");
-report(LABEL, fails, `${r.total} bank lines (every non-frozen company, bypass=${r.bypass}${r.hasBucket ? "" : ", classifier preview"}); ${r.live} live document links on categorized lines; 0 without a kind, 0 without a link, 0 to a dead document`);
+// Bank lines exist (harness). 0 categorized after purge/unmatch is 0 liars — not a broken instrument.
+// Fail only when categorized rows exist and the live-document join sees none of them.
+if (r.categorized > 0 && r.live === 0) fails.push("positive control: categorized lines exist but 0 live document links read — the instrument saw nothing; that is not a pass");
+report(LABEL, fails, `${r.total} bank lines (every non-frozen company, bypass=${r.bypass}${r.hasBucket ? "" : ", classifier preview"}); ${r.categorized} categorized; ${r.live} live document links on categorized lines; 0 without a kind, 0 without a link, 0 to a dead document`);

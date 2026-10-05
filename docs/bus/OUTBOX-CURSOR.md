@@ -1,3 +1,13 @@
+## 2026-10-05T03:20Z · ENG-MATCH categorized positive-control + deposit LINK_COLUMNS
+
+DONE: money-pr-local-gate had failed on verify-categorized-has-a-document (`0 live document links`). Neon lucia USMCA: 989 for_review, 0 categorized, 0 pointers.
+
+NOW: categorized positive control fires only when categorized>0. LINK_COLUMNS includes matched_deposit_id. Pointer guard asserts it.
+
+NEXT: preflight + Fast Merge this PR. Then full engine ten of ten.
+
+Files Modified: bank-feed-state-machine.mjs · verify-categorized-has-a-document.mjs · verify-bank-match-is-a-document-pointer.mjs · OUTBOX-CURSOR
+
 ## 2026-10-05T03:08Z · ENG-MATCH document-pointer shipping
 
 DONE: Cursor open PRs at census = 0 (CC-2 #25445/#25446 + Claude #25443 left). ENG-7D #25440 on tip.

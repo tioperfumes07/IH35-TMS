@@ -18,6 +18,7 @@ const FILES = {
   suggest: "apps/backend/src/banking/link-suggestions.routes.ts",
   reconcile: "apps/backend/src/banking/obligation-reconcile.routes.ts",
   kpiGuard: "scripts/verify-factoring-banking-kpis-tie-to-ledger.mjs",
+  feedLinks: "scripts/lib/bank-feed-state-machine.mjs",
 };
 
 function read(rel) {
@@ -39,6 +40,7 @@ function liveCheck() {
   const suggest = read(FILES.suggest);
   const reconcile = read(FILES.reconcile);
   const kpiGuard = read(FILES.kpiGuard);
+  const feedLinks = read(FILES.feedLinks);
 
   for (const n of [
     "BANK_LINE_DOCUMENT_POINTER_COLUMNS",
@@ -90,6 +92,9 @@ function liveCheck() {
 
   if (!kpiGuard.includes("matched_deposit_id") || !kpiGuard.includes("num_nonnulls")) {
     errors.push(`${FILES.kpiGuard} independent SQL must recompute unmatched from document pointers`);
+  }
+  if (!feedLinks.includes("matched_deposit_id")) {
+    errors.push(`${FILES.feedLinks} LINK_COLUMNS must include matched_deposit_id (ROUND 373.4)`);
   }
   if (kpiGuard.includes("review_state = 'for_review' AND is_credit")) {
     errors.push(`${FILES.kpiGuard} still ties unmatched KPI to review_state`);
