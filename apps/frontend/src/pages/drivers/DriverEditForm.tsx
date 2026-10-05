@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Combobox } from "../../components/Combobox";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { DriverSamsaraDuplicateBanner } from "../../components/driver-profile/DriverSamsaraDuplicateBanner";
 import { DriverPaymentMethodsCard } from "../../components/driver-profile/DriverPaymentMethodsCard";
 import { W8BenSection } from "../../components/driver-profile/W8BenSection";
@@ -327,10 +328,10 @@ export function DriverEditForm({
             <input className={`${CTRL} wmd`} value={form.last_name ?? ""} onChange={(e) => set("last_name", e.target.value)} />
           </Field>
           <Field label="Date of birth" width="wd" error={fieldErrors.date_of_birth}>
-            <input type="date" className={`${CTRL} wd`} value={form.date_of_birth ?? ""} onChange={(e) => set("date_of_birth", e.target.value)} />
+            <DatePicker box="filter" className="wd" value={form.date_of_birth ?? ""} onChange={(v) => set("date_of_birth", v)} />
           </Field>
           <Field label="Hire date" width="wd">
-            <input type="date" className={`${CTRL} wd`} value={form.hire_date ?? ""} onChange={(e) => set("hire_date", e.target.value)} />
+            <DatePicker box="filter" className="wd" value={form.hire_date ?? ""} onChange={(v) => set("hire_date", v)} />
           </Field>
           <Field label="Status" width="ws">
             <Combobox className={`${CTRL} ws`} options={DRIVER_STATUS.map((v) => ({ value: v, label: v }))} value={form.status || null} onChange={(v) => set("status", v ?? "Active")} />
@@ -390,7 +391,7 @@ export function DriverEditForm({
             <Combobox className={`${CTRL} wc`} options={CDL_CLASSES.map((c) => ({ value: c, label: c }))} value={form.cdl_class || null} onChange={(v) => set("cdl_class", v ?? "")} />
           </Field>
           <Field label="CDL expires" width="wd">
-            <input type="date" className={`${CTRL} wd`} value={form.cdl_expires_at ?? ""} onChange={(e) => set("cdl_expires_at", e.target.value)} />
+            <DatePicker box="filter" className="wd" value={form.cdl_expires_at ?? ""} onChange={(v) => set("cdl_expires_at", v)} />
           </Field>
           <div className="flex items-end gap-2">
             <Field label="Mexican licence" width="wc">
@@ -399,20 +400,20 @@ export function DriverEditForm({
             <Clip name="Mexican licence" filled={Boolean(form.mexican_license_number)} />
           </div>
           <Field label="Mexican licence expires" width="wd">
-            <input type="date" className={`${CTRL} wd`} value={form.mexican_license_expiration ?? ""} onChange={(e) => set("mexican_license_expiration", e.target.value)} />
+            <DatePicker box="filter" className="wd" value={form.mexican_license_expiration ?? ""} onChange={(v) => set("mexican_license_expiration", v)} />
           </Field>
         </Group>
 
         <Group title="Medical & credentials">
           <div className="flex items-end gap-2">
             <Field label="Medical card expires" width="wd">
-              <input type="date" className={`${CTRL} wd`} value={form.dot_medical_expires_at ?? ""} onChange={(e) => set("dot_medical_expires_at", e.target.value)} />
+              <DatePicker box="filter" className="wd" value={form.dot_medical_expires_at ?? ""} onChange={(v) => set("dot_medical_expires_at", v)} />
             </Field>
             <Clip name="medical card" filled={Boolean(form.dot_medical_expires_at)} />
           </div>
           <div className="flex items-end gap-2">
             <Field label="Hazmat expires" width="wd">
-              <input type="date" className={`${CTRL} wd`} value={form.hazmat_endorsement_expires_at ?? ""} onChange={(e) => set("hazmat_endorsement_expires_at", e.target.value)} />
+              <DatePicker box="filter" className="wd" value={form.hazmat_endorsement_expires_at ?? ""} onChange={(v) => set("hazmat_endorsement_expires_at", v)} />
             </Field>
             <Clip name="hazmat" filled={Boolean(form.hazmat_endorsement_expires_at)} />
           </div>
@@ -423,7 +424,7 @@ export function DriverEditForm({
             <Clip name="TWIC" filled={Boolean(form.twic_card_number)} />
           </div>
           <Field label="TWIC expires" width="wd">
-            <input type="date" className={`${CTRL} wd`} value={form.twic_expiration ?? ""} onChange={(e) => set("twic_expiration", e.target.value)} />
+            <DatePicker box="filter" className="wd" value={form.twic_expiration ?? ""} onChange={(v) => set("twic_expiration", v)} />
           </Field>
           <div className="flex items-end gap-2">
             <Field label="FAST card" width="wc">
@@ -432,7 +433,7 @@ export function DriverEditForm({
             <Clip name="FAST" filled={Boolean(form.fast_card_number)} />
           </div>
           <Field label="FAST expires" width="wd">
-            <input type="date" className={`${CTRL} wd`} value={form.fast_card_expiration ?? ""} onChange={(e) => set("fast_card_expiration", e.target.value)} />
+            <DatePicker box="filter" className="wd" value={form.fast_card_expiration ?? ""} onChange={(v) => set("fast_card_expiration", v)} />
           </Field>
         </Group>
 
@@ -453,7 +454,7 @@ export function DriverEditForm({
             <input className={`${CTRL} wc`} value={form.visa_number ?? ""} onChange={(e) => set("visa_number", e.target.value)} />
           </Field>
           <Field label="Visa expires" width="wd">
-            <input type="date" className={`${CTRL} wd`} value={form.visa_expires_at ?? ""} onChange={(e) => set("visa_expires_at", e.target.value)} />
+            <DatePicker box="filter" className="wd" value={form.visa_expires_at ?? ""} onChange={(v) => set("visa_expires_at", v)} />
           </Field>
           <Field label="B1 status" width="ws">
             <Combobox
@@ -497,7 +498,7 @@ export function DriverEditForm({
             <Clip name="passport" filled={Boolean(form.passport_number)} />
           </div>
           <Field label="Passport expires" width="wd">
-            <input type="date" className={`${CTRL} wd`} value={form.passport_expires_at ?? ""} onChange={(e) => set("passport_expires_at", e.target.value)} />
+            <DatePicker box="filter" className="wd" value={form.passport_expires_at ?? ""} onChange={(v) => set("passport_expires_at", v)} />
           </Field>
         </Group>
 
