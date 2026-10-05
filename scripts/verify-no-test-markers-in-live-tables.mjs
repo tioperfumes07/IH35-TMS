@@ -87,15 +87,19 @@ export async function collectRows(client) {
   return result;
 }
 
+/** Roles a guard may measure as: the read-only reader (no write privilege anywhere) and the legacy gate role. */
+export const GUARD_READER_ROLES = ["ih35_guard_reader", "ih35_ci_readonly"];
+
 export async function runLive() {
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
     await client.query('BEGIN READ ONLY');
-    await client.query('SET LOCAL ROLE ih35_ci_readonly');
+    // No SET ROLE: the connection's own role is the reader (ih35_guard_reader is not a member of
+    // ih35_ci_readonly and cannot become it). The transaction is READ ONLY either way.
     await client.query("SET LOCAL app.bypass_rls='lucia'");
     await client.query("SELECT set_config('app.operating_company_id', $1, true)", [COMPANY]);
     const { rows: context } = await client.query("SELECT current_user AS role, current_setting('transaction_read_only') AS read_only, now() AS measured_at");
-    assert.equal(context[0].role, 'ih35_ci_readonly');
+    assert.ok(GUARD_READER_ROLES.includes(context[0].role), `measured as ${context[0].role}, not a guard reader role`);
     assert.equal(context[0].read_only, 'on');
     let rows = await collectRows(client);
     if (!rows.length) rows = await collectRows(client); // verify empty result, never silent RLS-zero

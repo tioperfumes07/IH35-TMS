@@ -46,8 +46,6 @@ const REQUIRED_BLOCKED_KEYS = [
 // The one key used for the live enable-attempt proof (#3 above) -- the hard core the owner named
 // first. Any of the 17 would do; this one is chosen because it is also the flag whose accidental
 // enable would be the single most consequential (real JEs pushed into QuickBooks).
-const PROOF_KEY = "QBO_JE_PUSH_ENABLED";
-const PROOF_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80"; // USMCA
 
 function selftest() {
   const failures = [];
@@ -113,28 +111,22 @@ async function main() {
 
     await client.query("ROLLBACK");
 
-    // #3 — the trigger actually raises, live, right now (not just present in a migration file).
-    await client.query("BEGIN");
-    let raised = false;
-    let raisedMessage = "";
-    try {
-      await client.query(
-        `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, user_uuid, enabled, set_by_user_uuid)
-         VALUES ($1, $2::uuid, NULL, true, 'e4117991-d2c0-406d-8cda-74e98d95bccd'::uuid)`,
-        [PROOF_KEY, PROOF_COMPANY_ID]
-      );
-    } catch (err) {
-      raised = true;
-      raisedMessage = err.message;
-    }
-    await client.query("ROLLBACK").catch(() => {});
-
-    if (!raised) {
-      failures.push(`${PROOF_KEY}: an INSERT with enabled=true did NOT raise — the trigger is missing or not firing`);
-    } else if (!raisedMessage.includes("QBO_FLAG_PERMANENTLY_BLOCKED")) {
-      failures.push(`${PROOF_KEY}: a write was refused, but not by the expected trigger (message: ${raisedMessage})`);
-    } else {
-      console.log(`${LABEL}: live enable-attempt proof — refused as expected:\n  ${raisedMessage}`);
+    // #3 — the refusal is INSTALLED and LIVE, proven from the catalog, never by writing to production. (This used to
+    // INSERT an enabled override inside a rolled-back transaction: a write probe from the gate credential. A guard
+    // credential that can write is the defect; under the read-only reader the INSERT is refused before the trigger
+    // is reached, so the probe proved nothing.) Both tables must carry an ENABLED trigger that fires BEFORE the write
+    // and runs a function that names catalogs.blocked_feature_flags and raises QBO_FLAG_PERMANENTLY_BLOCKED.
+    const trig = await client.query(
+      `SELECT t.tgrelid::regclass::text AS tbl, t.tgname, t.tgenabled, pg_get_triggerdef(t.oid) AS def,
+              position('QBO_FLAG_PERMANENTLY_BLOCKED' in p.prosrc) > 0 AS raises,
+              position('blocked_feature_flags' in p.prosrc) > 0 AS lists
+         FROM pg_trigger t JOIN pg_proc p ON p.oid = t.tgfoid
+        WHERE t.tgrelid IN ('lib.feature_flag_overrides'::regclass, 'lib.feature_flags'::regclass) AND NOT t.tgisinternal`
+    );
+    for (const [tbl, mustFireOn] of [["lib.feature_flag_overrides", /BEFORE INSERT OR UPDATE/], ["lib.feature_flags", /BEFORE (INSERT OR )?UPDATE/]]) {
+      const ok = trig.rows.find((r) => r.tbl === tbl && r.raises && r.lists && r.tgenabled !== "D" && mustFireOn.test(r.def));
+      if (!ok) failures.push(`${tbl}: no ENABLED BEFORE-write trigger whose function checks blocked_feature_flags and raises QBO_FLAG_PERMANENTLY_BLOCKED`);
+      else console.log(`${LABEL}: live refusal installed — ${tbl} ${ok.tgname} (enabled, ${mustFireOn.source})`);
     }
 
     if (failures.length) {
@@ -142,7 +134,7 @@ async function main() {
       for (const f of failures) console.error(`  ✗ ${f}`);
       process.exit(1);
     }
-    console.log(`${LABEL}: PASS — all 17 QBO flags blocked, resolve FALSE for every entity, and an attempted enable raises.`);
+    console.log(`${LABEL}: PASS — all 17 QBO flags blocked, resolve FALSE for every entity, and the enable refusal is installed and live on both flag tables.`);
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
     console.error(`${LABEL}: FAIL — ${err.message}`);
