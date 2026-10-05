@@ -799,6 +799,18 @@ async function main() {
             WHERE operating_company_id = $1::uuid AND (${matchedCols.map((c) => `${c} IS NOT NULL`).join(" OR ")})`,
           [USMCA, `ROUND 326 zero-reset ${AUTH_ID}`]
         );
+        // AUTH-400 rehearsal 5: the COMMIT was refused — "bank line … lost its relay_fuel match … with no released
+        // reconciliation_matches row" — because the plan also deleted the very release rows written just above. LAW 363.9
+        // (a send-back keeps the match) and the clean slate meet here: every OTHER reconciliation match is purged, but the
+        // 'purge_reset' release rows THIS run writes are its own record (like audit.record_deletions) and stay. Taken out
+        // of the plan by id, after the release, so nothing else is spared.
+        const keptReleases = (await client.query<{ id: string }>(
+          `SELECT id::text FROM banking.reconciliation_matches
+            WHERE operating_company_id = $1::uuid AND match_state = 'released' AND release_kind = 'purge_reset' AND released_at = now()`,
+          [USMCA]
+        )).rows.map((r) => r.id);
+        for (const id of keptReleases) plan.get("banking.reconciliation_matches")?.delete(id);
+        console.log(`  bank-line releases kept as this run's record (release_kind purge_reset): ${keptReleases.length}`);
         await client.query(
           `UPDATE banking.bank_transactions
               SET ${matchedCols.map((c) => `${c} = NULL`).join(", ")},
@@ -878,6 +890,11 @@ async function main() {
       // preserved like positions and HOS; only its load-linked rows were planned, and "zero for the company" was a false
       // shortfall).
       const mustBeZero = new Set([...ZERO_RESET_ROOTS, "accounting.journal_entry_postings", "accounting.journal_entries"]);
+      // This run's own 'purge_reset' release rows stay (LAW 363.9); everything else in the table must be gone.
+      const ownReleases = Number((await client.query<{ n: string }>(
+        `SELECT count(*)::text AS n FROM banking.reconciliation_matches WHERE operating_company_id = $1::uuid AND match_state = 'released' AND release_kind = 'purge_reset' AND released_at = now()`,
+        [USMCA])).rows[0]?.n ?? 0);
+      if (after["banking.reconciliation_matches"] !== undefined) after["banking.reconciliation_matches"] -= ownReleases;
       for (const t of proofTables.sort()) {
         let leftover = after[t];
         let rule = "zero";
