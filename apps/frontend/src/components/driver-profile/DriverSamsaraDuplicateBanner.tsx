@@ -3,6 +3,7 @@
  * GET /api/v1/drivers/:id/profile/samsara
  */
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { getDriverProfileSamsara } from "../../api/driver-profile-tabs";
 import { EntityLink } from "../shared/EntityLink";
 import { ListErrorState } from "../ListErrorState";
@@ -42,7 +43,17 @@ export function DriverSamsaraDuplicateBanner({
       data-dp-samsara="1"
       data-dp-samsara-duplicate={duplicate_warning ? "1" : "0"}
     >
-      <h2 className="mb-1 text-xs font-semibold text-slate-900">Samsara link</h2>
+      <div className="mb-1 flex items-center justify-between">
+        <h2 className="text-xs font-semibold text-slate-900">Samsara link</h2>
+        {/* Owner law 2026-10-05: many Samsara users map into ONE driver profile (Samsara names never change). */}
+        <Link
+          to="/samsara/driver-mapping"
+          className="text-xs font-semibold text-slate-700 underline"
+          data-testid="dp-samsara-open-mapping"
+        >
+          Map Samsara users
+        </Link>
+      </div>
       {samsara_accounts.length === 0 ? (
         <p className="text-xs text-slate-500">No Samsara account mapped to this driver.</p>
       ) : (
@@ -68,8 +79,8 @@ export function DriverSamsaraDuplicateBanner({
           role="status"
         >
           <strong className="font-semibold">Duplicate Samsara record warning.</strong> Another live local
-          driver still carries one of these Samsara ids. Show only — do not merge or deactivate from this
-          screen.
+          driver still carries one of these Samsara ids. Use Map Samsara users (tick “Same person”) to
+          bring them into one driver profile.
           <ul className="mt-1 list-disc pl-4">
             {other_live_drivers_with_these_ids.map((o) => {
               const samsaraTail = String(o.samsara_driver_id).slice(-6);
