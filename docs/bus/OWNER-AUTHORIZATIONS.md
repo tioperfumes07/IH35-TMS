@@ -7372,6 +7372,10 @@ issued_at: 2026-10-05T16:02:00Z
 scope: production Neon project tiny-field-89581227, branch br-fancy-credit-akjnd07a — cluster role ih35_guard_reader only (CREATE ROLE + GRANT pg_read_all_data + ALTER ROLE SET default_transaction_read_only). No table, row or company data is written.
 action: OWNER_AUTH_ID=AUTH-402 node --env-file=~/.ih35-gate.env scripts/ops/2026-10-05-cc2-provision-guard-reader-role.mjs <0600 local password file>
 expires_at: 2026-10-06T15:02:00Z
-status: OPEN
+status: CONSUMED
 owner_words: "APIS AND TOKENS AND ALL ENVS ARE IN APIS FOLDER IN DESKTOP YOU HAVE FULL PERMISSION AND AUTHORIZATIONS. CONTINUE- I FOLLOW YOUR RECOMMENDATIONS." (2026-10-05, in reply to CC-2's recommendation that the read-only gate role be made genuinely read-only)
 why: ih35_ci_readonly is a neon_superuser + ih35_app member and holds INSERT/UPDATE/DELETE on the ledger; Neon refuses REVOKE neon_superuser. A SQL-created role is not a member. Rehearsed on br-summer-art-akio7il7: 739 of 741 DB guards identical under both roles; the 2 differences fixed in #25506.
+consumed_at: 2026-10-05T16:15:00Z
+consumed_by: CC-2
+row_counts: 0 table rows. 1 role created (ih35_guard_reader) on br-fancy-credit-akjnd07a; 1 role grant (pg_read_all_data); 1 role setting (default_transaction_read_only=on).
+proof_query: SELECT rolname, rolconfig, member_of FROM pg_roles ... WHERE rolname IN ('ih35_guard_reader','ih35_ci_readonly') on br-fancy-credit-akjnd07a -> ih35_guard_reader {default_transaction_read_only=on} member_of {pg_read_all_data}. Logged in as it: 12,521 bank lines readable across companies; INSERT refused ("cannot execute INSERT in a read-only transaction"); with READ WRITE forced, refused ("permission denied for table journal_entries"). The gate credential on this machine (~/.ih35-gate.env) now connects as ih35_guard_reader; the previous file is kept as ~/.ih35-gate.env.ih35_ci_readonly.bak. Live guards under it: no-row-escapes, vendor-balances, spine-link, void-releases-bank-lines, qbo-flags-blocked, no-test-markers, void-is-whole PASS; draft-load EMPTY BY PURGE.
