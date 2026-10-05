@@ -116,7 +116,7 @@ export async function listReeferFuelForCredit(client: Db, companyId: string, fro
               ft.gallons::numeric AS gallons, round(COALESCE(ft.total_cost, 0) * 100)::bigint AS cost_cents
          FROM fuel.fuel_transactions ft
          LEFT JOIN accounting.expenses e ON e.source_fuel_transaction_id = ft.id AND e.operating_company_id = ft.operating_company_id AND e.voided_at IS NULL
-         LEFT JOIN LATERAL (SELECT x.id, x.load_id FROM accounting.expense_lines x WHERE x.expense_id = e.id ORDER BY x.line_sequence LIMIT 1) el ON true
+         LEFT JOIN LATERAL (SELECT first_line.id, first_line.load_id FROM accounting.expense_lines first_line WHERE first_line.expense_id = e.id ORDER BY first_line.line_sequence LIMIT 1) el ON true
          LEFT JOIN mdata.vendors v ON v.id = ft.vendor_id
         WHERE ft.operating_company_id = $1::uuid AND ft.fuel_type = 'reefer_diesel' AND ft.voided_at IS NULL AND ft.archived_at IS NULL
           AND COALESCE(ft.purchased_at, ft.transaction_at)::date BETWEEN $2::date AND $3::date

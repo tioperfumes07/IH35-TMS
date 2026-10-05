@@ -1,14 +1,8 @@
 {
   "note": "Known pre-existing phantom write targets (2026-06-28 audit). This list may only SHRINK — fixing one removes its line; NEW phantoms are not allowed. See docs/specs/SCHEMA-WRITE-INTEGRITY-AUDIT-2026-06-28.md.",
   "debt": [
-    "apps/backend/src/accounting/recurring.worker.ts: INSERT INTO accounting.expenses — column \"total_amount\" does not exist",
     "apps/backend/src/alerts/alert.routes.ts: INSERT INTO alerts.profile — column \"created_by_user_id\" does not exist",
-    "apps/backend/src/banking/banking.routes.ts: UPDATE banking.bank_accounts — SET column \"is_dip\" does not exist",
-    "apps/backend/src/banking/banking.routes.ts: UPDATE banking.bank_accounts — SET column \"tag\" does not exist",
-    "apps/backend/src/banking/banking.routes.ts: UPDATE banking.bank_accounts — SET column \"visible\" does not exist",
     "apps/backend/src/banking/manual-je.routes.deprecated.ts: INSERT INTO accounting.journal_entry_lines — TABLE not in migrated schema",
-    "apps/backend/src/cash-advances/cash-advances.routes.ts: UPDATE banking.bank_transactions — SET column \"advance_id\" does not exist",
-    "apps/backend/src/maintenance/two-section-service.ts: INSERT INTO accounting.expenses — column \"total_amount\" does not exist",
     "apps/backend/src/maintenance/vehicles.routes.ts: INSERT INTO mdata.units — column \"mileage\" does not exist"
   ]
 }

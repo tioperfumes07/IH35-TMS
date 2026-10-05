@@ -553,7 +553,7 @@ export async function getBankDeposit(operatingCompanyId: string, userId: string,
     if (!header.rows[0]) return null;
     const lines = await client.query(
       `
-      SELECT dl.id::text, dl.line_type, dl.amount_cents::bigint AS amount_cents, dl.memo,
+      SELECT dl.id::text, dl.line_type, dl.amount_cents::bigint AS amount_cents, dl.description AS memo,
              dl.source_payment_id::text AS source_payment_id,
              dl.source_factoring_advance_id::text AS source_factoring_advance_id,
              p.display_id AS payment_display_id,
@@ -574,7 +574,7 @@ export async function getBankDeposit(operatingCompanyId: string, userId: string,
           SELECT pa.invoice_id
             FROM accounting.payment_applications pa
            WHERE pa.payment_id = p.id AND pa.unapplied_at IS NULL
-           ORDER BY pa.created_at ASC
+           ORDER BY pa.applied_at ASC, pa.id ASC
            LIMIT 1
         ) pa0 ON TRUE
         LEFT JOIN accounting.invoices inv

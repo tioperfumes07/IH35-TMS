@@ -306,15 +306,19 @@ export async function dispatchNotification(input: DispatchNotificationInput): Pr
         channels.sms = { attempted: true };
         const body = buildSmsBody(input.event_type, payload);
         let smsQueueId: string | null = null;
+        // sms.queue / whatsapp.queue (0166_block_h_notification_queues) carry to_number|to_phone, status, error,
+        // attempts, sent_at and NO operating_company_id. The old column names (provider_status, provider_error, ...)
+        // never existed, so every insert failed and rolled back the whole dispatch, email and audit included; both
+        // queues held 0 rows on 2026-10-05. The company stays on the notification audit row.
         const smsQueueEnabled = await regclassExists(client as QueryableClient, "sms.queue");
         if (smsQueueEnabled) {
           const ins = await client.query<{ id: string }>(
             `
-              INSERT INTO sms.queue (operating_company_id, to_phone, body, provider_status)
-              VALUES ($1::uuid, $2, $3, 'queued')
+              INSERT INTO sms.queue (to_number, body, status)
+              VALUES ($1, $2, 'queued')
               RETURNING id
             `,
-            [operatingCompanyId, smsTo, body]
+            [smsTo, body]
           );
           smsQueueId = String(ins.rows[0]?.id ?? "");
         }
@@ -325,7 +329,9 @@ export async function dispatchNotification(input: DispatchNotificationInput): Pr
 
         if (smsQueueId) {
           await client.query(
-            `UPDATE sms.queue SET provider_status = $2, provider_error = $3 WHERE id = $1::uuid`,
+            `UPDATE sms.queue SET status = $2, error = $3, attempts = attempts + 1,
+                    sent_at = CASE WHEN $2 = 'sent' THEN now() ELSE sent_at END
+              WHERE id = $1::uuid`,
             [smsQueueId, smsResult.success ? "sent" : "failed", smsResult.error ?? null]
           );
         }
@@ -341,17 +347,12 @@ export async function dispatchNotification(input: DispatchNotificationInput): Pr
           const initialStatus = waVerified ? "queued" : "skipped";
           const ins = await client.query<{ id: string }>(
             `
-              INSERT INTO whatsapp.queue (
-                operating_company_id,
-                to_phone,
-                template_name,
-                variables,
-                provider_status
-              )
-              VALUES ($1::uuid, $2, $3, $4::jsonb, $5)
+              INSERT INTO whatsapp.queue (to_phone, template_name, body, status)
+              VALUES ($1, $2, $3, $4)
               RETURNING id
             `,
-            [operatingCompanyId, waPlan.to, waPlan.template_name, JSON.stringify(waPlan.variables), initialStatus]
+            // body is NOT NULL and the table has no variables column: the template variables are the body.
+            [waPlan.to, waPlan.template_name, JSON.stringify(waPlan.variables), initialStatus]
           );
           waQueueId = String(ins.rows[0]?.id ?? "");
         }
@@ -363,7 +364,7 @@ export async function dispatchNotification(input: DispatchNotificationInput): Pr
           channels.whatsapp.error = "unknown_whatsapp_template";
           if (waQueueId) {
             await client.query(
-              `UPDATE whatsapp.queue SET provider_status = 'failed', provider_error = $2 WHERE id = $1::uuid`,
+              `UPDATE whatsapp.queue SET status = 'failed', error = $2, attempts = attempts + 1 WHERE id = $1::uuid`,
               [waQueueId, "unknown_whatsapp_template"]
             );
           }
@@ -377,7 +378,9 @@ export async function dispatchNotification(input: DispatchNotificationInput): Pr
           if (!result.success) channels.whatsapp.error = result.error;
           if (waQueueId) {
             await client.query(
-              `UPDATE whatsapp.queue SET provider_status = $2, provider_error = $3 WHERE id = $1::uuid`,
+              `UPDATE whatsapp.queue SET status = $2, error = $3, attempts = attempts + 1,
+                      sent_at = CASE WHEN $2 = 'sent' THEN now() ELSE sent_at END
+                WHERE id = $1::uuid`,
               [waQueueId, result.success ? "sent" : "failed", result.error ?? null]
             );
           }

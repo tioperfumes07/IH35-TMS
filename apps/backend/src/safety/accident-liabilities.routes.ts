@@ -90,12 +90,10 @@ export async function registerAccidentLiabilitiesRoutes(app: FastifyInstance) {
       const rowsRes = await client.query(
         `
           SELECT al.*,
-                 ar.display_id AS accident_display_id,
                  NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS driver_name,
                  u.unit_number AS unit_number,
                  l.load_number AS load_number
             FROM safety.accident_liabilities al
-            LEFT JOIN safety.accident_reports ar ON ar.id = al.accident_id
             LEFT JOIN mdata.drivers d ON d.id = al.driver_id
             LEFT JOIN mdata.units u ON u.id = al.unit_id
             LEFT JOIN mdata.loads l ON l.id = al.load_id
