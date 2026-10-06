@@ -1,10 +1,10 @@
 {
-  "healthzSha": "a4e4461",
-  "generated_at": "2026-10-05T21:10:25.940Z",
+  "healthzSha": "084b670",
+  "generated_at": "2026-10-06T16:45:33.596Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "a4e4461",
+    "deployedSha": "084b670",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 25523,
-      "title": "FINDING: SAM-F429-C LANE: NON-FINANCIAL — the Samsara two-map drift ceiling sat at 27 while production measured 0, and the guard had no rule forcing it down",
+      "number": 25607,
+      "title": "Cursor-BANK-F4332 ONE QBO format layer + DatePicker year select (433-CUR #2)",
       "state": "merged",
-      "mergedAtCt": "10/05/2026, 03:57 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25523",
-      "sha": "a4e4461dcb",
-      "committedAtIso": "2026-10-05T15:57:20-05:00"
+      "mergedAtCt": "10/06/2026, 11:34 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25607",
+      "sha": "084b670689",
+      "committedAtIso": "2026-10-06T11:34:58-05:00"
     },
     {
-      "number": 25522,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL — regenerate the program scoreboard: 81 commits behind main blocked every seat's gate at verify-derived-artifact-freshness",
+      "number": 25606,
+      "title": "FINDING: LST-F419 LANE: FINANCIAL — migration-ledger hygiene and three more stale guards: five stale ledger_orphans exceptions removed (each measured in both prod ledgers), ledger snapshot 1417 -> 1421, three truthfully-held migrations recorded, legal reserve guard follows its bill",
       "state": "merged",
-      "mergedAtCt": "10/05/2026, 03:54 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25522",
-      "sha": "43fcdfe9df",
-      "committedAtIso": "2026-10-05T15:54:50-05:00"
+      "mergedAtCt": "10/06/2026, 11:25 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25606",
+      "sha": "e078287022",
+      "committedAtIso": "2026-10-06T11:25:49-05:00"
     },
     {
-      "number": 25521,
-      "title": "Lead — SAM-F429 one Samsara map for both panes (backfill migration removed: rehearsal inserted 0, would report 78)",
+      "number": 25605,
+      "title": "FINDING: N/A — CC-2 OUTBOX: ROUND 432 items 1-5 + ROUND 435 part 3",
       "state": "merged",
-      "mergedAtCt": "10/05/2026, 03:49 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25521",
-      "sha": "7bbfc3e0b2",
-      "committedAtIso": "2026-10-05T15:49:58-05:00"
+      "mergedAtCt": "10/06/2026, 11:24 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25605",
+      "sha": "2755627b2f",
+      "committedAtIso": "2026-10-06T11:24:33-05:00"
     },
     {
-      "number": 25520,
-      "title": "FINDING: N/A — bus OUTBOX PR3 #25519 Fast Merge closed build-order wave",
+      "number": 25601,
+      "title": "FINDING: ROUND-435-CC2 LANE: FINANCIAL — /factoring/reserves rendered a second Reserve screen (ReserveDashboard, a strict subset of the Reserve tab's ReserveTracker) and a dead second Factoring tab set sat in pages/factoring/index.tsx; the duplicate is gone, the old URL lands on the Reserve tab, and the survivor gained the honest states only the duplicate had",
       "state": "merged",
-      "mergedAtCt": "10/05/2026, 03:24 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25520",
-      "sha": "88f6c0cfe0",
-      "committedAtIso": "2026-10-05T15:24:58-05:00"
+      "mergedAtCt": "10/06/2026, 11:24 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25601",
+      "sha": "272c2ac31c",
+      "committedAtIso": "2026-10-06T11:24:06-05:00"
     },
     {
-      "number": 25519,
-      "title": "FINDING: PR3 FLEET — /fleet was a bare all-caps roster with no KPI strip and no module tabs",
+      "number": 25604,
+      "title": "FINDING: ACCT-F2026100608 LANE: FINANCIAL — a Relay reefer fill never became a reefer fuel row (IFTA counted its gallons as taxable road diesel) and never carried its trailer; the fill now decides the product and the trailer is stamped from records (USMCA IFTA taxable 29,206.678 -> 29,003.908 gal)",
       "state": "merged",
-      "mergedAtCt": "10/05/2026, 03:24 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25519",
-      "sha": "84fea98b6b",
-      "committedAtIso": "2026-10-05T15:24:21-05:00"
+      "mergedAtCt": "10/06/2026, 11:23 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25604",
+      "sha": "533d94071c",
+      "committedAtIso": "2026-10-06T11:23:13-05:00"
     },
     {
-      "number": 25518,
-      "title": "FINDING: PR2 SAMSARA — mapping page was one-column with replace-risk on save; owner law requires split panes + ADDITIVE save (second map never clears first) + never write Samsara",
+      "number": 25603,
+      "title": "FINDING: BANK-F4332 LANE: FINANCIAL — CLAIM-RESERVE EVEN 18350 for verify-qbo-format-layer (433-CUR #2).",
       "state": "merged",
-      "mergedAtCt": "10/05/2026, 03:18 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25518",
-      "sha": "87576c5d09",
-      "committedAtIso": "2026-10-05T15:18:51-05:00"
+      "mergedAtCt": "10/06/2026, 11:20 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25603",
+      "sha": "4682f790cb",
+      "committedAtIso": "2026-10-06T11:20:45-05:00"
     },
     {
-      "number": 25517,
-      "title": "Cursor- fix(drivers): DRV-F420 — profile 12+5 tabs stay on /drivers/:id; Edit ?tab=edit",
+      "number": 25602,
+      "title": "FINDING: LST-F418 LANE: FINANCIAL — 16 more money guards whose --selftest failed on main restored to the code they protect; four made purer or stricter, none weakened",
       "state": "merged",
-      "mergedAtCt": "10/05/2026, 02:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25517",
-      "sha": "2026f27d5a",
-      "committedAtIso": "2026-10-05T14:31:30-05:00"
+      "mergedAtCt": "10/06/2026, 11:17 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25602",
+      "sha": "977e6c3db4",
+      "committedAtIso": "2026-10-06T11:17:45-05:00"
     },
     {
-      "number": 25516,
-      "title": "FINDING: ROUND-181-1 LANE: NON-FINANCIAL -- the Samsara driver mapping page had no way in from the menu or the driver profile (only an owner-only /integrations/samsara page); the driver profile now links to it",
+      "number": 25600,
+      "title": "FINDING: ACCT-F2026100604 LANE: FINANCIAL -- ROUND 433.2 batch 4 onto MoneyCell: unwired money cells 43 -> 23 (6 wired to their record, 17 declared with a reason the guard lists); combined unwired+declared 46 -> 43",
       "state": "merged",
-      "mergedAtCt": "10/05/2026, 11:52 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25516",
-      "sha": "02906e8c43",
-      "committedAtIso": "2026-10-05T11:52:58-05:00"
+      "mergedAtCt": "10/06/2026, 11:15 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25600",
+      "sha": "17fcf92355",
+      "committedAtIso": "2026-10-06T11:15:41-05:00"
     },
     {
-      "number": 25515,
-      "title": "FINDING: ROUND-181-1 LANE: NON-FINANCIAL -- mapping several Samsara users to one driver in the app changed nothing the engines read: the Samsara Mapping page wrote a second map, and the mirror collector used a third resolver that deactivated a driver when ANY one of his Samsara users was retired (owner law 2026-10-05: many Samsara users, one driver profile; Samsara names never changed)",
+      "number": 25599,
+      "title": "FINDING: BANK-F4331 LANE: FINANCIAL — Categorize/Match opens as a dimmed Modal popup so register rows stop competing with the boxes.",
       "state": "merged",
-      "mergedAtCt": "10/05/2026, 11:41 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25515",
-      "sha": "d9b751c3dd",
-      "committedAtIso": "2026-10-05T11:41:09-05:00"
+      "mergedAtCt": "10/06/2026, 11:13 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25599",
+      "sha": "b38b71de42",
+      "committedAtIso": "2026-10-06T11:13:41-05:00"
     },
     {
-      "number": 25514,
-      "title": "FINDING: ACCT-F2026100512 LANE: FINANCIAL — three Lead guards ran nowhere: the cash-basis P&L, cash-basis drill and row-actions guards were in no chain, no verify-step and no gate map",
+      "number": 25598,
+      "title": "FINDING: N/A (CLAIM-RESERVE 12411 -- reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "10/05/2026, 11:38 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25514",
-      "sha": "6f29be1657",
-      "committedAtIso": "2026-10-05T11:38:07-05:00"
+      "mergedAtCt": "10/06/2026, 11:12 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25598",
+      "sha": "24268b8b92",
+      "committedAtIso": "2026-10-06T11:12:59-05:00"
     }
   ]
 }
