@@ -72,7 +72,7 @@ export function accountingTabSubtitle(
   tabId: TabId,
   metrics: { billsPaidMtdCents: number; avgDsoDays: number | null }
 ): string {
-  const billsPaid = money.format(metrics.billsPaidMtdCents / 100);
+  const billsPaid = formatUsdCents(metrics.billsPaidMtdCents);
   const dso = metrics.avgDsoDays == null ? "—" : `${Math.round(metrics.avgDsoDays)}d`;
   switch (tabId) {
     case "home":
@@ -341,7 +341,7 @@ export function AccountingHubPage() {
       left: row.driver_id
         ? <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_full_name} noun="Driver" className="truncate" />
         : (row.driver_full_name || "Settlement"),
-      right: money.format(Number(row.net_pay ?? 0) / 100),
+      right: formatUsdCents(Number(row.net_pay ?? 0)),
       muted: row.status,
     }));
 
@@ -381,7 +381,7 @@ export function AccountingHubPage() {
       .map((item) => ({
         key: item.key,
         left: item.left,
-        right: money.format(item.amountCents / 100),
+        right: formatUsdCents(item.amountCents),
         muted: item.type,
       }));
   }, [billPayments, receivePayments]);
@@ -412,12 +412,12 @@ export function AccountingHubPage() {
       {
         key: "tb-debits",
         left: "Grand debits",
-        right: money.format(summary.grand_total_debits / 100),
+        right: formatUsdCents(summary.grand_total_debits),
       },
       {
         key: "tb-credits",
         left: "Grand credits",
-        right: money.format(summary.grand_total_credits / 100),
+        right: formatUsdCents(summary.grand_total_credits),
       },
       {
         key: "tb-balanced",
@@ -447,17 +447,17 @@ export function AccountingHubPage() {
       {
         key: "pl-revenue",
         left: "Revenue",
-        right: money.format(report.revenue.total / 100),
+        right: formatUsdCents(report.revenue.total),
       },
       {
         key: "pl-gross",
         left: "Gross profit",
-        right: money.format(report.gross_profit / 100),
+        right: formatUsdCents(report.gross_profit),
       },
       {
         key: "pl-net",
         left: "Net income",
-        right: money.format(report.net_income / 100),
+        right: formatUsdCents(report.net_income),
         muted: report.net_income < 0 ? "loss" : "profit",
       },
     ];
@@ -469,18 +469,18 @@ export function AccountingHubPage() {
             without isError, so a failed bills/invoices/QBO fetch still painted $0.00 / 0 open. */}
         {billsQ.isError
           ? kpiCard("Open Bills", "—", "Error loading")
-          : kpiCard("Open Bills", money.format(openBillsAmountCents / 100), `${openBills.length} open`, openBills.length ? "danger" : "neutral")}
+          : kpiCard("Open Bills", formatUsdCents(openBillsAmountCents), `${openBills.length} open`, openBills.length ? "danger" : "neutral")}
         {billsQ.isError
           ? kpiCard("MTD Expenses", "—", "Error loading")
           : expensesQ.isError
             ? kpiCard("MTD Expenses", "—", "Error loading expenses")
-            : kpiCard("MTD Expenses", money.format(expensesMtdCents / 100), `${billsMtd.length} bills · ${directExpensesMtd.length} expenses`, "warn")}
+            : kpiCard("MTD Expenses", formatUsdCents(expensesMtdCents), `${billsMtd.length} bills · ${directExpensesMtd.length} expenses`, "warn")}
         {invoicesQ.isError
           ? kpiCard("Open Invoices", "—", "Error loading")
-          : kpiCard("Open Invoices", money.format(openInvoicesCents / 100), `${openInvoices.length} open`)}
+          : kpiCard("Open Invoices", formatUsdCents(openInvoicesCents), `${openInvoices.length} open`)}
         {invoicesQ.isError
           ? kpiCard("Overdue A/R", "—", "Error loading")
-          : kpiCard("Overdue A/R", money.format(overdueInvoiceCents / 100), `${overdueInvoices.length} overdue`, overdueInvoices.length ? "danger" : "neutral")}
+          : kpiCard("Overdue A/R", formatUsdCents(overdueInvoiceCents), `${overdueInvoices.length} overdue`, overdueInvoices.length ? "danger" : "neutral")}
         {qboQueueQ.isError
           ? kpiCard("Unmatched", "—", "Error loading")
           : kpiCard("Unmatched", String(unmatchedItems.length), "failed / blocked queue")}
