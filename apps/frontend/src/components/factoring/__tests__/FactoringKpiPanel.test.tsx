@@ -28,8 +28,12 @@ describe("FactoringKpiPanel (ledger KPI engine)", () => {
     wrap(<FactoringKpiPanel companyId="co" />);
     expect(await screen.findByText("$8,600.00")).toBeTruthy();
     expect(screen.getByText("97.91%")).toBeTruthy();
-    expect(screen.getByText("Contracted 97.00%")).toBeTruthy();
-    expect(screen.getByText("Faro has released no reserve in this range.")).toBeTruthy();
+    // ROUND 435 (owner: "the messages should not be there") — a tile is a name and a number; the comparison and the empty
+    // reason are not sentences inside the tile, they ride on its hover title (and the drill modal).
+    expect(screen.queryByText("Contracted 97.00%")).toBeNull();
+    expect(screen.queryByText("Faro has released no reserve in this range.")).toBeNull();
+    expect(screen.getByTestId("factoring-kpi-advance_rate").getAttribute("title")).toContain("Contracted 97.00%");
+    expect(screen.getByTestId("factoring-kpi-reserve_releases").getAttribute("title")).toContain("Faro has released no reserve in this range.");
   });
 
   it("drills a tile to its rows with linked ids", async () => {

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { colors, spacing } from "../../design/tokens";
 import "../../design/ih35-design-tokens.css";
 import "./board-kpi.css";
+import { kpiTileClasses } from "./kpiTileClasses";
 
 /**
  * C8 — the shared KPI/stat card. Two rules live here so no call site can forget either one.
@@ -119,7 +120,7 @@ export function DrillKpiCard({
       />
     );
   }
-  const compact = size === "sm";
+  const tile = kpiTileClasses(size);
   const shell = [
     // CENTER-EVERYTHING + KPI-TILE-SIZE LAW (owner ruling 2026-09-04, ORCH-measured): centered,
     // not left; padding 4px 8px (py-1 px-2) for every size, not a compact/md split — ORCH's spec
@@ -130,20 +131,15 @@ export function DrillKpiCard({
     // color to distinguish and darker border") — bg/border now come from the shell style below
     // (colors.kpiTileBg/kpiTileBorder), not a Tailwind bg-white/border-gray-200 pair; `active`
     // still gets its own distinct selected-state border, painted after the base style so it wins.
-    "block h-full w-full min-w-0 rounded-sm border px-2 py-1 text-center",
-    compact ? "text-[11px]" : "",
+    tile.shell,
   ].join(" ");
   const maxHeightStyle = { maxHeight: spacing.kpiTileMaxHeight };
   const kpiTileStyle = {
     backgroundColor: colors.kpiTileBg,
     borderColor: active ? colors.navy : colors.kpiTileBorder,
   };
-  const labelClass = compact
-    ? "text-[11px] uppercase tracking-wide text-gray-500"
-    : "text-[11px] uppercase tracking-wide text-gray-500";
-  const valueClass = compact
-    ? `font-semibold ${VALUE_TONE[valueTone]}`
-    : `mt-1 text-page-title font-semibold text-gray-900 ${VALUE_TONE[valueTone]}`;
+  const labelClass = tile.label;
+  const valueClass = `${tile.value} ${VALUE_TONE[valueTone]}`;
 
   const displayValue = unavailable
     ? KPI_NO_VALUE

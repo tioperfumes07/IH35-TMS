@@ -91,9 +91,12 @@ describe("FactoringHomePage Reserve tab (real, owner mega-report 2026-09-09)", (
     wrap(<FactoringHomePage initialTab="reserve" />);
 
     await screen.findByText("Reserve held on invoice 393702");
-    expect((await screen.findByTestId("factoring-reserves-shared-kpi-escrow")).textContent).toContain("$51.00");
-    expect(screen.getByTestId("factoring-reserves-shared-kpi-cash").textContent).toContain("$78.00");
-    expect(screen.getByTestId("factoring-reserves-shared-kpi-total").textContent).toContain("$129.00");
+    // ROUND 435 — no KPI twice: escrow and cash show once, in the page-level factoring KPI strip; the reserve panel adds the total.
+    expect((await screen.findByTestId("factoring-kpi-escrow_reserve_balance")).textContent).toContain("$51.00");
+    expect(screen.getByTestId("factoring-kpi-cash_reserve_balance").textContent).toContain("$78.00");
+    expect((await screen.findByTestId("factoring-reserves-shared-kpi-total")).textContent).toContain("$129.00");
+    expect(screen.queryByTestId("factoring-reserves-shared-kpi-escrow")).toBeNull();
+    expect(screen.queryByTestId("factoring-reserves-shared-kpi-cash")).toBeNull();
   });
 
   it("without an active factor, says the reserve ledger has nothing to scope to", async () => {

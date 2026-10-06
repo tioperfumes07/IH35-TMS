@@ -23,6 +23,7 @@ import { formatQueryErrorDetail } from "../../lib/tableError";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { FACTORING_TAB_PATH } from "../../router/route-manifest";
+import { DrillKpiCard } from "../layout/DrillKpiCard";
 
 function cents(v: number | string | null | undefined): number {
   const n = typeof v === "string" ? Number(v) : v ?? 0;
@@ -229,13 +230,39 @@ export function FactoringReservesSharedPanel({ companyId, host }: Props) {
           </div>
         </div>
 
+        {/* ROUND 435 — NO KPI TWICE. On the Factoring screen the page-level factoring KPI strip already shows the escrow
+            and cash reserve balances (same engine, same query), so this panel shows them only on the Banking host. */}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid={`${rootTestId}-kpi-strip`}>
-          <Kpi label={engine && engine.cash === null ? "Faro reserve" : "Escrow reserve"} value={engineMoney(engine?.escrow)} testId={`${rootTestId}-kpi-escrow`} />
-          <Kpi label="Cash reserve" value={engine ? engineMoney(engine.cash) : engineMoney(undefined)} testId={`${rootTestId}-kpi-cash`} />
-          <Kpi label="Total reserve" value={engineMoney(engine?.total)} testId={`${rootTestId}-kpi-total`} />
-          <Kpi
+          {host === "banking" ? (
+            <>
+              <DrillKpiCard
+                size="md"
+                label={engine && engine.cash === null ? "Faro reserve" : "Escrow reserve"}
+                value={engineMoney(engine?.escrow)}
+                to={FACTORING_TAB_PATH.escrow_account}
+                testId={`${rootTestId}-kpi-escrow`}
+              />
+              <DrillKpiCard
+                size="md"
+                label="Cash reserve"
+                value={engine ? engineMoney(engine.cash) : engineMoney(undefined)}
+                to={FACTORING_TAB_PATH.cash_reserve}
+                testId={`${rootTestId}-kpi-cash`}
+              />
+            </>
+          ) : null}
+          <DrillKpiCard
+            size="md"
+            label="Total reserve"
+            value={engineMoney(engine?.total)}
+            to={FACTORING_TAB_PATH.reserve_tracker}
+            testId={`${rootTestId}-kpi-total`}
+          />
+          <DrillKpiCard
+            size="md"
             label="CCG loans outstanding"
             value={loansQuery.isError ? "—" : formatUsdCents(loanOutstandingCents)}
+            to="/factoring/equipment-loans"
             testId={`${rootTestId}-kpi-ccg`}
           />
         </div>
@@ -300,14 +327,5 @@ export function FactoringReservesSharedPanel({ companyId, host }: Props) {
         )}
       </div>
     </section>
-  );
-}
-
-function Kpi({ label, value, testId }: { label: string; value: string; testId: string }) {
-  return (
-    <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1" data-testid={testId}>
-      <div className="text-center text-xs font-bold uppercase tracking-wide text-[#4B5563]">{label}</div>
-      <div className="text-center text-xs font-medium tabular-nums text-[#0F1219]">{value}</div>
-    </div>
   );
 }

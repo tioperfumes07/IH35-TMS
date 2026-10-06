@@ -28,6 +28,9 @@ const SRC = path.join(ROOT, "apps", "frontend", "src");
 const INDEX_CSS = path.join(SRC, "index.css");
 const KPI_CARD = path.join(SRC, "components", "layout", "KpiCard.tsx");
 const DRILL_KPI_CARD = path.join(SRC, "components", "layout", "DrillKpiCard.tsx");
+// ROUND 435 — DrillKpiCard draws its shell from kpiTileClasses.ts (shared with LedgerKpiPanel); the GLB-04 literal lives there.
+const KPI_TILE_CLASSES = path.join(SRC, "components", "layout", "kpiTileClasses.ts");
+const readDrillTile = () => fs.readFileSync(DRILL_KPI_CARD, "utf8") + "\n" + fs.readFileSync(KPI_TILE_CLASSES, "utf8");
 const TOKENS_TS = path.join(SRC, "design", "tokens.ts");
 
 /** The one picker that dismisses on outside mousedown. Everything else traps the user. */
@@ -155,7 +158,7 @@ function selftest() {
     process.exit(1);
   }
   const kpi = fs.readFileSync(KPI_CARD, "utf8");
-  const drill = fs.readFileSync(DRILL_KPI_CARD, "utf8");
+  const drill = readDrillTile();
   if (!kpi.includes('className="inline-flex h-full w-full min-w-0') ||
       !kpi.includes('className="block h-full w-full min-w-0') ||
       !drill.includes('"block h-full w-full min-w-0 rounded-sm border')) {
@@ -177,7 +180,7 @@ const argv = process.argv.slice(2);
 if (argv.includes("--selftest")) selftest();
 
 const kpi = fs.readFileSync(KPI_CARD, "utf8");
-const drill = fs.readFileSync(DRILL_KPI_CARD, "utf8");
+const drill = readDrillTile();
 if (!kpi.includes('className="inline-flex h-full w-full min-w-0') ||
     !kpi.includes('className="block h-full w-full min-w-0') ||
     !drill.includes('"block h-full w-full min-w-0 rounded-sm border')) {

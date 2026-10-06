@@ -231,42 +231,42 @@ export function FactoringCashFlowPanel({ companyId, dateFrom, dateTo }: Props) {
           label="Posted wires"
           value={String(totals.wires)}
           to={FACTORING_TAB_PATH.payments_to_you}
-          size="sm"
+          size="md"
         />
         <DrillKpiCard
           testId="factoring-home-kpi-invoices"
           label="Invoices on wires"
           value={String(totals.invoices)}
           to={FACTORING_TAB_PATH.payments_to_you}
-          size="sm"
+          size="md"
         />
         <DrillKpiCard
           testId="factoring-home-kpi-net"
           label="Net wired"
           value={formatUsdCents(totals.net)}
           to={FACTORING_TAB_PATH.payments_to_you}
-          size="sm"
+          size="md"
         />
         <DrillKpiCard
           testId="factoring-home-kpi-escrow"
-          label="Escrow / day sum"
+          label="Escrow withheld on wires"
           value={formatUsdCents(totals.escrow)}
           to={FACTORING_TAB_PATH.escrow_account}
-          size="sm"
+          size="md"
         />
         <DrillKpiCard
           testId="factoring-home-kpi-cash"
-          label="Cash rsv / day sum"
+          label="Cash reserve withheld on wires"
           value={formatUsdCents(totals.cash)}
           to={FACTORING_TAB_PATH.cash_reserve}
-          size="sm"
+          size="md"
         />
         <DrillKpiCard
           testId="factoring-home-kpi-projected"
-          label="Projected open inv"
+          label="Projected open invoices"
           value={projected ? String(projected.invoice_count) : "0"}
           to={FACTORING_TAB_PATH.submit_invoice}
-          size="sm"
+          size="md"
         />
       </div>
       {error ? (
