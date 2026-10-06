@@ -38,18 +38,39 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
   return req.user;
 }
 
+// LST-F417 — every error carries a sentence the operator can act on. A FE catch toasts `data.message ?? data.error`;
+// without the message the dispatcher sees the raw code (FAIL-U1).
+const CANCELLATION_ERROR_MESSAGES: Record<string, string> = {
+  E_CANCELLATION_NOTES_MIN_20: "Cancellation notes must be at least 20 characters.",
+  E_CANCELLATION_CHARGE_REQUIRED_WHEN_BILLABLE: "A billable cancellation needs a cancellation charge amount.",
+  E_CANCELLATION_RECORD_WRITE_FAILED: "The cancellation record could not be saved. Refresh the load and try again.",
+  E_CANCELLATION_LOAD_WRITE_FAILED: "The load could not be updated with the cancellation. Refresh the load and try again.",
+  E_LOAD_NOT_FOUND: "This load was not found in this company.",
+  E_NOT_FOUND: "This record was not found in this company.",
+  E_REASON_NOT_FOUND: "Choose a cancellation reason from the list.",
+  E_OWNER_ONLY: "Only the Owner can do this.",
+  E_REVERSAL_REASON_MIN_10: "The reason for undoing the cancellation must be at least 10 characters.",
+  E_RESTORE_STATUS_REQUIRED: "Choose the status the load returns to.",
+  E_NO_ACTIVE_CANCELLATION: "This load has no active cancellation to undo.",
+  E_CANCEL_STAMP_NOT_CLEARED: "The cancellation could not be cleared from the load. Refresh the load and try again.",
+};
+
+function errorPayload(code: string) {
+  return { error: code, message: CANCELLATION_ERROR_MESSAGES[code] ?? "The cancellation could not be completed." };
+}
+
 function mapServiceError(error: unknown) {
   const code = String((error as Error)?.message ?? "");
-  if (code === "E_CANCELLATION_NOTES_MIN_20") return { status: 400, payload: { error: code } };
-  if (code === "E_CANCELLATION_CHARGE_REQUIRED_WHEN_BILLABLE") return { status: 400, payload: { error: code } };
+  if (code === "E_CANCELLATION_NOTES_MIN_20") return { status: 400, payload: errorPayload(code) };
+  if (code === "E_CANCELLATION_CHARGE_REQUIRED_WHEN_BILLABLE") return { status: 400, payload: errorPayload(code) };
   if (code === "E_CANCELLATION_RECORD_WRITE_FAILED" || code === "E_CANCELLATION_LOAD_WRITE_FAILED") {
-    return { status: 409, payload: { error: code } };
+    return { status: 409, payload: errorPayload(code) };
   }
-  if (code === "E_LOAD_NOT_FOUND" || code === "E_NOT_FOUND") return { status: 404, payload: { error: code } };
-  if (code === "E_REASON_NOT_FOUND") return { status: 400, payload: { error: code } };
-  if (code === "E_OWNER_ONLY") return { status: 403, payload: { error: code } };
-  if (code === "E_REVERSAL_REASON_MIN_10" || code === "E_RESTORE_STATUS_REQUIRED") return { status: 400, payload: { error: code } };
-  if (code === "E_NO_ACTIVE_CANCELLATION" || code === "E_CANCEL_STAMP_NOT_CLEARED") return { status: 409, payload: { error: code } };
+  if (code === "E_LOAD_NOT_FOUND" || code === "E_NOT_FOUND") return { status: 404, payload: errorPayload(code) };
+  if (code === "E_REASON_NOT_FOUND") return { status: 400, payload: errorPayload(code) };
+  if (code === "E_OWNER_ONLY") return { status: 403, payload: errorPayload(code) };
+  if (code === "E_REVERSAL_REASON_MIN_10" || code === "E_RESTORE_STATUS_REQUIRED") return { status: 400, payload: errorPayload(code) };
+  if (code === "E_NO_ACTIVE_CANCELLATION" || code === "E_CANCEL_STAMP_NOT_CLEARED") return { status: 409, payload: errorPayload(code) };
   return null;
 }
 
@@ -121,7 +142,7 @@ export async function registerDispatchCancellationRoutes(app: FastifyInstance) {
   app.post("/api/v1/dispatch/loads/:id/cancellation/reverse", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
-    if (user.role !== "Owner") return reply.code(403).send({ error: "E_OWNER_ONLY" });
+    if (user.role !== "Owner") return reply.code(403).send(errorPayload("E_OWNER_ONLY"));
     const params = loadIdParamsSchema.safeParse(req.params ?? {});
     const body = z.object({
       operating_company_id: z.string().uuid(),

@@ -310,7 +310,7 @@ export async function registerRecurringTemplateDetailRoutes(app: FastifyInstance
         }
         return id ?? null;
       });
-      if (!updated) return reply.code(404).send({ error: "RECURRING_TEMPLATE_NOT_FOUND" });
+      if (!updated) return reply.code(404).send({ error: "RECURRING_TEMPLATE_NOT_FOUND", message: "Recurring template not found for this operating company." });
       return reply.send({ id: updated });
     }
   );
