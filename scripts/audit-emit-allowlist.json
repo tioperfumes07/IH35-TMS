@@ -462,10 +462,6 @@
       "reason": "Onboarding state — setup wizard progress, not a financial event"
     },
     {
-      "file": "apps/backend/src/payroll/driver-settlement.service.deprecated.ts",
-      "reason": "Payroll settlement service — spine emit handled in settlements-mvp routes"
-    },
-    {
       "file": "apps/backend/src/qbo/bill-payment-mapper.service.ts",
       "reason": "QBO bill payment mapper — integration mapping service"
     },

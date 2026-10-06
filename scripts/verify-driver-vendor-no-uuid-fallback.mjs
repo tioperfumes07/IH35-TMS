@@ -53,7 +53,6 @@ const RESOLVER = path.join("apps", "backend", "src", "accounting", "driver-vendo
 const SCAN_ROOT = path.join("apps", "backend", "src");
 const CALLERS = [
   path.join("apps", "backend", "src", "accounting", "settlement-posting", "settlement-bill-payment-posting.service.ts"),
-  path.join("apps", "backend", "src", "payroll", "driver-settlement.service.deprecated.ts"),
 ];
 const RESOLVER_FN = "resolveDriverVendorLink";
 

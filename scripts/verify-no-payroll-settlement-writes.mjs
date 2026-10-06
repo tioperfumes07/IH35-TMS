@@ -108,7 +108,7 @@ if (isMain) {
     console.error(`[${LABEL}] FAILED — ${failures.length} NEW payroll.* settlement write(s):`);
     for (const f of failures) console.error(`  ✗ ${f}`);
     console.error(`\nThe payroll.driver_settlements / driver_settlement_line_items ledger is RETIRE. Write the`);
-    console.error(`canonical driver_finance.* subledger instead (see driver-settlement.service.deprecated.ts map).`);
+    console.error(`canonical driver_finance.* subledger instead (settlement-payrun-close.service.ts → settlement-ap-chain.service.ts).`);
     process.exit(1);
   }
   console.log(`[${LABEL}] OK — no NEW writes to the RETIRE payroll.* settlement ledger.`);

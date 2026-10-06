@@ -64,10 +64,6 @@ export const KNOWN_DEBT = new Map([
     "apps/backend/src/safety/accident-liabilities.service.ts",
     "company-absorb decision posts a manual JE crediting ap_control with no payee — owner decision on payee vs accrued liability (LST-F414 follow-up)",
   ],
-  [
-    "apps/backend/src/payroll/driver-settlement.service.deprecated.ts",
-    "retired RETIRE-lane settlement writer, imported only by a test (buildDraftLines) — delete with its test (LST-F414 follow-up)",
-  ],
 ]);
 
 function walk(dir, out = []) {

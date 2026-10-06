@@ -537,7 +537,7 @@ export async function depositEscrow(
 
 /**
  * ACCT-F5645 — client-taking sibling of depositEscrow, for a caller that already holds its own open
- * transaction (e.g. driver-settlement.service.deprecated.ts's postSettlement, mid-way through building
+ * transaction (originally the retired payroll postSettlement, deleted in LST-F426, mid-way through building
  * a Bill + BillPayment on the same client) and needs the escrow deposit atomic with the rest of that
  * transaction, not committed on a second connection — the ACCT-F5644 pattern applied to deposits.
  */
