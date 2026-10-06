@@ -35,7 +35,7 @@ const ROOTS = [
 const OFF_PALETTE = /\b(bg|text|border|ring|from|to|via|divide|ring-offset|outline|decoration|placeholder|accent|fill|stroke)-(amber|emerald|green|yellow)-\d{2,3}\b/g;
 
 // Frozen count of pre-existing off-palette status classes in the financial tree (grandfathered).
-const BASELINE = 7; // tightened 2026-10-01 (CC-2, ROUND 315 step 3: Submit to Factor tab uses §7 slate tokens).
+const BASELINE = 4; // tightened 2026-10-06 (CC-1, ROUND 433: owner palette #25540/#25542 removed 3 off-palette status classes). Was 7 (2026-10-01).
 // previously 8: // REGRESSION FLAGGED 2026-09-05 (CC-3) — was 0 (Tier-1, 2026-07-20); grew to 6, all in
   // apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx (Cursor's banking module).
   // REGRESSION FLAGGED AGAIN 2026-09-07 (CC-3) — grew 6 -> 8: 2 new off-palette classes landed in
