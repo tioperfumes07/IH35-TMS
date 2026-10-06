@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import { expandLedgerMembership } from "./lib/expand-ledger-membership.mjs";
 
 function read(path) {
   return fs.readFileSync(path, "utf8");
@@ -52,17 +53,17 @@ try {
   }
 
   assertMatches(
-    service,
+    expandLedgerMembership(service),
     /je\.status\s*<>\s*'voided'/,
     "Trial balance must explicitly exclude voided journal entries",
   );
   assertMatches(
-    service,
+    expandLedgerMembership(service),
     /COALESCE\(je\.is_sample_data,\s*false\)\s*=\s*false/,
     "Trial balance must exclude is_sample_data (keep rows, stop counting them in reports)",
   );
   assertMatches(
-    service,
+    expandLedgerMembership(service),
     /p\.posting_batch_id IS NULL OR pb\.batch_status IN \('posted', 'reversed'\)/,
     "Trial balance must use reversal-safe posting batch filter",
   );

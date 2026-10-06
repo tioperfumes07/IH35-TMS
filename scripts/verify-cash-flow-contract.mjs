@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import { expandLedgerMembership } from "./lib/expand-ledger-membership.mjs";
 
 function read(path) {
   return fs.readFileSync(path, "utf8");
@@ -38,12 +39,12 @@ try {
   }
 
   assertMatches(
-    service,
+    expandLedgerMembership(service),
     /je\.status\s*<>\s*'voided'/,
     "Cash Flow must exclude voided journal entries",
   );
   assertMatches(
-    service,
+    expandLedgerMembership(service),
     /p\.posting_batch_id IS NULL OR pb\.batch_status IN \('posted', 'reversed'\)/,
     "Cash Flow must use reversal-safe posting batch filter",
   );

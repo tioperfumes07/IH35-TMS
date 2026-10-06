@@ -42,7 +42,13 @@ if (!partsRoutes.includes('app.patch("/api/v1/maint/parts/:id"')) failures.push(
 const pmRoutes = readIfExists(pmRoutesPath);
 if (!pmRoutes.includes("/api/v1/maint/pm/due")) failures.push("missing_maint_pm_due_route");
 if (!pmRoutes.includes("integrations.samsara_vehicles")) failures.push("missing_samsara_odometer_join");
-if (!pmRoutes.includes("extractSamsaraOdometerMi")) failures.push("missing_pm_due_odometer_compute");
+// E-15 (#23644): PM due reads the ONE shared odometer loader (cron, due engine and Maintenance Home use the same), and an
+// absent odometer is null with a reason (C-21) — never a confident zero. The route's own Samsara parse is gone.
+const sharedOdometer =
+  /import \{[^}]*\bloadPmOdometers\b[^}]*\} from "\.\.\/maintenance\/pm-current-odometer\.js"/.test(pmRoutes) &&
+  /loadPmOdometers\(client, parsed\.data\.operating_company_id,/.test(pmRoutes) &&
+  /absentOdometerReason\(/.test(pmRoutes);
+if (!pmRoutes.includes("extractSamsaraOdometerMi") && !sharedOdometer) failures.push("missing_pm_due_odometer_compute");
 // SWEEP-C2 (2026-09-02): POST/PATCH /api/v1/maint/pm/schedules were retired to 410 Gone — zero live
 // frontend callers on the legacy write path (superseded by /api/v1/maintenance/pm-schedules). The
 // recompute-on-write check below no longer applies to a route that performs no writes; asserting the
