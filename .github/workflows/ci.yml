@@ -168,7 +168,8 @@ jobs:
     # Was 25 → 45 — money/FA PRs with full verify:pre-commit + migration replay still
     # hit cancel at ~45m on FA-ARCHIVE (#3648) with no code failure. 75m headroom after
     # verify-step set growth on main.
-    timeout-minutes: 75
+    # Round 434: 75 -> 50. Real money/FA runs land ~45m; a hung job billed 75m before kill.
+    timeout-minutes: 50
 
     # Service container restored 2026-08-06 after the self-hosted experiment was reverted.
     #

@@ -1,15 +1,6 @@
 name: load-test-nightly
 
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - "tests/load/**"
-      - "scripts/verify-load-test-baseline.mjs"
-      - "db/migrations/202606080205_load_test_runs.sql"
-      - ".github/workflows/load-test-nightly.yml"
-      - "docs/audits/LOAD-TEST-BASELINE-2026-06-08.md"
-      - ".block-ready/BLOCK-08-TIER2-LOAD-TEST.json"
   schedule:
     - cron: "30 5 * * *"
   workflow_dispatch:
@@ -19,6 +10,10 @@ on:
         required: false
         type: boolean
         default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.sha || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   load-test-smoke:
