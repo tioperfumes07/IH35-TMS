@@ -131,6 +131,7 @@ const MONEY_LIST_TOOLBAR_PREFIX = new Map([
   ["apps/frontend/src/pages/driver-finance/SettlementsPage.tsx", "settlements"],
   ["apps/frontend/src/pages/customers/CustomersListView.tsx", "customers"],
   ["apps/frontend/src/pages/vendors/VendorsListView.tsx", "vendors"],
+  ["apps/frontend/src/pages/accounting/TransactionRegisterPage.tsx", "transaction-register"],
 ]);
 
 function hasFilterToolbarGoldPattern(src, rel, marker) {
