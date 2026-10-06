@@ -1,3 +1,15 @@
+## 2026-10-06T14:10Z · ENG-SPINE bill-payment → bill backlink shipping
+
+DONE: measured hole — bill-payment accept never wrote `matched_bill_id` (zero accept writers in apps/; bills.service drill dead). Payment already had ACCT-F5620 invoice backlink.
+
+NOW: `backlinkBankTransactionToBill` + `runBillPaymentAcceptFollowUps` on 1:1 and multi. Fill-only-NULL. Guard wave-h3 + no-automatch allowlist.
+
+NEXT: preflight + Fast Merge this PR. Then next ten-of-ten hole (company / WORM / single-fire / remaining kinds). No Chrome. No ACCT-F406.
+
+Files Modified: match.service.ts · bank-bill-backlink.service.ts · verify-wave-h3 · verify-no-automatch · h3 + backlink tests · MEMORY_BANK · this OUTBOX · NOW-CURSOR
+
+---
+
 ## 2026-10-05T22:30Z · DEPLOY PROOF — BE lease live + FE DRV live
 
 DONE: BE `srv-d7rpem7avr4c73fhp4n0` dep-db2270g473hc7393b8sg LIVE on squash `c6b88cd10e`. GET /api/v1/healthz/shallow HTTP 200 git_sha=c6b88cd10e197f853c174f773d29f2d13868d057. FE DRV #25526 dep-db224mugekts739ha46g was live; tip FE dep-db228j7lk1mc738ebf20 live after OUTBOX #25528.

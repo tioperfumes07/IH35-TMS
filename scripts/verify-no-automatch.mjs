@@ -47,6 +47,9 @@ const KNOWN_AUTOMATCH_DEBT = [];
 //   - bank-invoice-backlink.service.ts derives matched_invoice_id deterministically from
 //     accounting.payments.source_bank_transaction_id, a fact a human already established when
 //     recording that payment — not a scored candidate.
+//   - bank-bill-backlink.service.ts is the AP twin: derives matched_bill_id from
+//     accounting.bill_payments.source_bank_transaction_id + bill_id after a human accept.
+//     categorized_by_user_id is N/A — the accept already stamped it on the clearing UPDATE.
 //   - reconciliation.routes.ts + link-suggestions-actions.routes.ts + obligation-reconcile.routes.ts
 //     NO LONGER stamp matched_* on accept — they proxy acceptReconMatch →
 //     acceptMatchWithResolveDifference (match.service.ts stamps via dynamic column whitelist).
@@ -54,6 +57,7 @@ const KNOWN_AUTOMATCH_DEBT = [];
 const TARGET_COLUMN_WRITE_ALLOWLIST = new Set([
   "apps/backend/src/accounting/bank-recon/recon-worklist.service.ts",
   "apps/backend/src/accounting/payments/bank-invoice-backlink.service.ts",
+  "apps/backend/src/accounting/payments/bank-bill-backlink.service.ts",
 ]);
 
 const TARGET_COLUMNS = ["matched_expense_id", "matched_bill_id", "matched_load_id", "matched_settlement_id", "matched_invoice_id"];

@@ -1,12 +1,12 @@
-# NOW-CURSOR — 2026-10-05T20:25Z
+# NOW-CURSOR — 2026-10-06T14:10Z
 
-**DONE:** Build orders PR1→PR2→PR3 all Fast Merged.
+**DONE:** Measured next ENG-SPINE hole — bill-payment accept never stamped `matched_bill_id`.
 
-**CLOSED tip:** PR3 #25519 `84fea98b6b` Fleet home · PR2 #25518 `87576c5d09` Samsara · PR1 #25517 `2026f27d5a` profile.
+**NOW:** Shipping `runBillPaymentAcceptFollowUps` + `backlinkBankTransactionToBill` on both accept paths (AP twin of ACCT-F5620).
+
+**NEXT:** Fast Merge this PR. Then next ten-of-ten hole. No Chrome. No ACCT-F406.
 
 **LOCAL GATES ONLY** — CI billing down. No Chrome this seat.
 
-**NEXT:** Idle on this wave — wait lead/owner next board row.
-
 ---
-# WAS — PR3 FLEET shipping
+# WAS — idle after build-order PRs (owner overrode: continue engine)

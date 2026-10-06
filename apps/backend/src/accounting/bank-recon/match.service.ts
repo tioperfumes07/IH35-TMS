@@ -9,6 +9,7 @@ import {
 import { insertPostingLineWithSpine } from "../posting-line-writer.js";
 import { applyCashBasisSuppression, type CashBasisEntry } from "../cash-basis/engine.js";
 import { backlinkBankTransactionToInvoice } from "../payments/bank-invoice-backlink.service.js";
+import { backlinkBankTransactionToBill } from "../payments/bank-bill-backlink.service.js";
 import { assertBankTxnNotInReconciledSession } from "../../banking/closed-session-immutability.js";
 // ACCT-LINK-01 regression fix (GO-1405 Recipe B, 2026-08-29): this variance-JE insert never
 // populated journal_entry_type_id -- one of several direct posters contributing to the live
@@ -1482,6 +1483,42 @@ async function runPaymentAcceptFollowUps(
 }
 
 /**
+ * ENG-SPINE follow-up — bill-payment accept follow-up that neither path ran
+ * (CLS-LINKAGE-ONEWAY on matched_bill_id). Payment accept already backlinked the
+ * invoice (ACCT-F5620). Bill-payment accept stamped matched_bill_payment_id +
+ * source_bank_transaction_id and left the bill's bank hop empty.
+ *
+ * accounting.bill_payments.bill_id is the one bill this cash settled. Fill-only-NULL
+ * matched_bill_id after the reverse stamp so bills.service.ts (`bt.matched_bill_id`)
+ * and the Banking UI can drill bank ↔ bill. Never throws. Never guesses when several
+ * bills share one wire (the helper refuses). No new reverse column. No mass backfill.
+ *
+ * One helper so 1:1 and multi-document accept cannot drift.
+ */
+async function runBillPaymentAcceptFollowUps(
+  client: DbClient,
+  args: {
+    operatingCompanyId: string;
+    billPaymentId: string;
+  }
+): Promise<void> {
+  const billRes = await client.query<{ bill_id: string }>(
+    `SELECT bill_id::text AS bill_id
+       FROM accounting.bill_payments
+      WHERE id = $1::uuid
+        AND operating_company_id = $2::uuid
+        AND bill_id IS NOT NULL
+        AND voided_at IS NULL
+        AND revoked_at IS NULL
+      LIMIT 1`,
+    [args.billPaymentId, args.operatingCompanyId]
+  );
+  const billId = billRes.rows[0]?.bill_id;
+  if (!billId) return;
+  await backlinkBankTransactionToBill(client, args.operatingCompanyId, args.billPaymentId, [billId]);
+}
+
+/**
  * OWNER-ORDER §3.1 — post the pending Faro reserve ROW on this bank line (not rsv_deposit).
  * 1:1 accept rewrites the match row to the JE. Multi-document keeps N-advance match rows and
  * skips sweep/chargeback when this helper returned a JE. One writer so the two accept paths
@@ -1840,6 +1877,11 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
         bankAccountId: txn.bank_account_id,
         faroReserveJournalEntryId,
       });
+    } else if (matchKind === "bill_payment") {
+      await runBillPaymentAcceptFollowUps(client, {
+        operatingCompanyId: input.operating_company_id,
+        billPaymentId: matchLedgerEntryId,
+      });
     }
 
     const cashBasisRevenueCents = computeCashBasisRevenueFromActualCashHit({
@@ -2059,6 +2101,11 @@ export async function acceptExactMultiDocumentMatch(input: {
           bankTransactionId: input.bank_transaction_id,
           bankAccountId: txn.bank_account_id,
           faroReserveJournalEntryId,
+        });
+      } else if (entry.ledger_entry_kind === "bill_payment") {
+        await runBillPaymentAcceptFollowUps(client, {
+          operatingCompanyId: input.operating_company_id,
+          billPaymentId: entry.ledger_entry_id,
         });
       }
     }

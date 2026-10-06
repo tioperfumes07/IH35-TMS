@@ -52,6 +52,12 @@ export function staticChecks(sources = {}) {
   if (!/async function runFactoringAdvanceAcceptFollowUps/.test(svc) || (svc.split("runFactoringAdvanceAcceptFollowUps(").length - 1) < 3) {
     problems.push("1:1 and multi-document accept must share runFactoringAdvanceAcceptFollowUps (definition + both callers)");
   }
+  if (!/async function runBillPaymentAcceptFollowUps/.test(svc) || (svc.split("runBillPaymentAcceptFollowUps(").length - 1) < 3) {
+    problems.push("1:1 and multi-document accept must share runBillPaymentAcceptFollowUps (definition + both callers)");
+  }
+  if (!/backlinkBankTransactionToBill\(/.test(svc) || !/matched_bill_id/.test(svc)) {
+    problems.push("runBillPaymentAcceptFollowUps must call backlinkBankTransactionToBill so matched_bill_id is not one-way");
+  }
   if (!/async function postPendingFaroReserveRowOnAccept/.test(svc) || (svc.split("postPendingFaroReserveRowOnAccept(").length - 1) < 3) {
     problems.push("1:1 and multi-document accept must share postPendingFaroReserveRowOnAccept (definition + both callers)");
   }
