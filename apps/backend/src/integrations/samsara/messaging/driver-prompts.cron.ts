@@ -14,6 +14,7 @@
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../../../auth/db.js";
+import { assertTenantContext } from "../../../cron/_helpers/tenant-context-guard.js";
 import { wrapBackgroundJobTick } from "../../../lib/background-jobs.js";
 import { deliverChatMessageAfterCommit } from "./driver-message-delivery.service.js";
 import { driverPromptsEnabled, postDriverPromptsForRecentFenceEvents } from "./driver-prompts.service.js";
@@ -35,6 +36,7 @@ export function initializeDriverPromptsCron(app: FastifyInstance) {
       wrapBackgroundJobTick("integrations.samsara_driver_prompts", async () => {
         const out = await withLuciaBypass(async (client) => {
           // membership-scope-exempt: USMCA-only worker
+          assertTenantContext(USMCA, "integrations.samsara_driver_prompts");
           await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [USMCA]);
           return postDriverPromptsForRecentFenceEvents(client as never, USMCA, new Date(Date.now() - 30 * 60_000).toISOString());
         });
