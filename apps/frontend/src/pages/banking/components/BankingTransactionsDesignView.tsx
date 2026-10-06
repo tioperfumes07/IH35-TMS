@@ -158,6 +158,15 @@ export function qboActionLabel(mode: "match" | "categorize" | "transfer" | "cc_p
   return QBO_BANKING_ACTIONS.add;
 }
 
+/**
+ * r388 — QBO Action column: the ranked suggestion IS the action. When true, the Action button
+ * shows qboActionLabel(mode) and there is no separate "Action type" column. Always true on this
+ * surface (BANK-ACTION-QBO-01); named so Lead grep + the guard can pin the law.
+ */
+export function suggestionIsAction(): true {
+  return true;
+}
+
 
 const COMPANY_TRANSACTIONS_PAGE_SIZE = 500;
 // B2 BANK-REGISTER-COLUMNS: the register's gear-toggleable column headers all shared the identical
@@ -2371,7 +2380,11 @@ export function BankingTransactionsDesignView({
                 disabled={postingTxId === tx.id}
                 data-testid={`banking-action-primary-${tx.id}`}
               >
-                {postingTxId === tx.id ? "Posting..." : qboActionLabel(getDraft(tx).mode)}
+                {postingTxId === tx.id
+                  ? "Posting..."
+                  : suggestionIsAction()
+                    ? qboActionLabel(getDraft(tx).mode)
+                    : qboActionLabel(getDraft(tx).mode)}
               </ActionButton>
               <button
                 type="button"
