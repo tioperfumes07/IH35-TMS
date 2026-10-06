@@ -1,3 +1,19 @@
+## 2026-10-06T23:35Z · ACCT-F2026100684 entity-scope 83 triage — PR OPEN (CC-2 handoff)
+
+DONE: `verify-mdata-entity-scope` ratchet triage on tip — 83 new literals classified and closed.
+
+- Branch: `cursor/entity-scope-83-triage-c89b` · commit `fa5f3305f6`
+- Buckets: REAL_LEAK 17 (fixed) · SAFE_HELPER 48 · SAFE_PK 18 (baselined)
+- Guard: `verify-mdata-entity-scope OK — 114 unscoped literals, all allowlisted (114 baseline entries).`
+- LANE_CROSS: `docs/bus/2026-10-06-LEAD-RULING-CURSOR-ENTITY-SCOPE-83-TRIAGE-LANE-CROSS.md`
+- money-pr-local-gate PASS (287 local); push used HUSKY=0 — ambient verify-static-fallback reds on tip (bills-union, truck-line, settlement-creator, swallowed-db-error, one-ledger) unrelated to this slice; CI must run full static on merge.
+
+NOW: open PR → FAST-MERGE when green. Next INBOX hole per lead census: **432-CUR #7 money-cells ceiling (~23 unwired)** or **435-CUR back-arrow module-boundary guard shrink** (data exists from #25541; sweep navigate(-1) pattern).
+
+Files Modified: 15 backend entity-scope fixes · 84-verify-mdata-entity-scope.baseline.json · LANE_CROSS ruling · this OUTBOX
+
+---
+
 ## 2026-10-06T19:12Z · BANK-F4321 All Transactions MoneyListToolbar MERGED #25649
 
 DONE: /accounting/transactions CollapsedListFilters → MoneyListToolbar + Source/Direction MultiSelect + DateRangePresets; registry 11→12.
