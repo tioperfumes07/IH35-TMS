@@ -54,7 +54,10 @@ for (const file of files) {
     console.log(`verify-scheduler-tenant-context: skip ${file.rel} (${TENANT_AGNOSTIC_MARKER})`);
     continue;
   }
-  if (!TENANT_CONTEXT_RE.test(text)) continue;
+  // A column named only in a comment (e.g. an ENGINE header's IDEMPOTENCY line) does not establish tenant context; the
+  // code does. fleet/roster-integrity.cron.ts was flagged on its header alone — its tick asserts per company in the service.
+  const code = text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+  if (!TENANT_CONTEXT_RE.test(code)) continue;
 
   const hasGuardImportOrDef = GUARD_IMPORT_RE.test(text) || GUARD_LOCAL_DEF_RE.test(text);
   const hasGuardCall = GUARD_CALL_RE.test(text);
