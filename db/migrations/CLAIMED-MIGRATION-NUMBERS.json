@@ -2242,5 +2242,10 @@
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-06",
     "purpose": "ROUND 435: every legal contract instance is filed as a PDF in docs.files — docs.file_links accepts entity_type 'contract_instance', legal.contract_instances.pdf_file_id references the current filed PDF"
+  },
+  "202615431000": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-06",
+    "purpose": "FARO-F435 (Lead patch, applied by CC-2): views.factoring_repurchase_obligation — one row per factoring purchase line; day-35 default interest, repurchase deadline from the owner-decision due event, partial payment leaves it open. Unblocks three Faro guards that exited on the missing view."
   }
 }
