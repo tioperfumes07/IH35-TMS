@@ -1,3 +1,21 @@
+## 2026-10-06T17:40Z · ROUND 433-CUR hard four DONE
+
+DONE (all four Fast-Merged on tip main):
+1. Categorize/Match modal + B6 + B3 — prior #25599
+2. ONE QBO format layer + year DatePicker — #25607 squash `084b670689`
+3. r392 TILE_BUCKET_LIMIT + r388 suggestionIsAction — claim #25608 · feature #25609 squash `3ebe797b10`
+4. B7 match Description never carries internal id — claim #25610 · feature #25611 squash `7c2e82458b`
+
+B7 LIVE PROOF: `verify-match-description-no-internal-id` exit 0 (selftest + main); vitest operatorVisibleMatchText 5/5; Neon USMCA JE/expense session-uuid memos = 0; money-pr-local-gate PASS. Writer kill (bank-cat 8-hex, obligation id.slice) + toCandidate sanitize + FE humanMemo. UNVERIFIED: owner Chrome on /banking Match Description after FE deploy.
+
+NOW: CLAIM-RESERVE 18358 for 432-CUR #5 Bills one-register-at-a-time (tabs, never two tables). Then ship the Bills tabs feature.
+
+NEXT: 432-CUR remaining — #5 Bills two tables (this claim) · #1 multi-select sweep · #3 natural-sign already has naturalBalance/naturalSign on tip (wire-through if any surface still raw) · #7 money cells ceiling now 23 (was 89). 435-CUR back-arrow already MERGED #25581.
+
+Files Modified: this OUTBOX · CLAIMED 18358
+
+---
+
 ## 2026-10-06T15:00Z · ROUND 435-CUR back arrow stays in-module
 
 DONE: `inModuleBackHref` clamps 4 Up writers. `structuralParentHref` uses accountingFallbackCrumbs then module home (never `/home` from an Accounting leaf). Cross-module page literals retargeted (FactoringDetail, UnitDetail, Fleet/Fuel/CashFlow/Compliance/Settings/System/425c/Inventory/QBO).
