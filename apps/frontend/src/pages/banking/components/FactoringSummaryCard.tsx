@@ -60,12 +60,12 @@ export function FactoringSummaryCard({ reserve, outstandingLiability, lastAdvanc
       </div>
       <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
         <dt className="text-[#6B7280]">Reserves held</dt>
-        <dd className="text-right font-medium tabular-nums text-[#0F1219]">{reserve == null ? "—" : formatUsd(reserve)}</dd>
+        <dd className="text-right font-medium tabular-nums text-[#0F1219]">{reserve == null ? "—" : <Link to="/factoring/reserve" className="hover:underline">{formatUsd(reserve)}</Link>}</dd>
         <dt className="text-[#6B7280]" title="Gross invoice value purchased by the factor this month (posted purchases)">Purchased MTD (gross)</dt>
         <EngineLine kpi={mtd?.purchased ?? null} failed={Boolean(mtd?.failed)} testId="banking-factoring-card-purchased-mtd" to="/factoring/purchase-report" />
         <dt className="text-[#6B7280]">Outstanding liability</dt>
         <dd className="text-right font-medium tabular-nums text-[#0F1219]">
-          {formatUsd(outstandingLiability)}
+          <Link to="/factoring/account-summary" className="hover:underline">{formatUsd(outstandingLiability)}</Link>
         </dd>
         <dt className="text-[#6B7280]" title="Faro default interest accrued this month on purchases past 30 days">+30d aging fees MTD</dt>
         <EngineLine kpi={mtd?.defaultInterest ?? null} failed={Boolean(mtd?.failed)} testId="banking-factoring-card-aging-fees-mtd" to="/factoring/fees-paid" />

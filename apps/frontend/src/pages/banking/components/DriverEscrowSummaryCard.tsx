@@ -28,11 +28,12 @@ function Line({ kpi, failed, testId }: { kpi: BankingKpi | null; failed: boolean
   const quiet = kpi.value == null || kpi.row_count === 0;
   return (
     <dd
-      className={quiet ? "text-right text-[#6B7280]" : "text-right font-medium tabular-nums text-[#0F1219]"}
       data-testid={testId}
       title={quiet ? kpi.empty_reason ?? `${kpi.label}: none` : `${kpi.label}${kpi.gl_account ? ` · GL ${kpi.gl_account}` : ""} · ${kpi.row_count} posting(s)`}
+      className={quiet ? "text-right text-[#6B7280]" : "text-right font-medium tabular-nums text-[#0F1219]"}
     >
-      {formatUsdCents(kpi.value ?? 0)}
+      {/* ROUND 433.2 — the board lists every driver's escrow; its total ties to this figure. */}
+      {quiet ? formatUsdCents(kpi.value ?? 0) : <Link to="/banking/driver-escrow" className="hover:underline">{formatUsdCents(kpi.value ?? 0)}</Link>}
     </dd>
   );
 }

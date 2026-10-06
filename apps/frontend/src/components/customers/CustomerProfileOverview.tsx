@@ -4,6 +4,7 @@
  * GLOBAL-TYPE-SIZE-BASELINE tokens, tabular-nums on every money figure. Each block renders its value or the
  * engine's named empty reason — never a placeholder. Every row drills to its record (invoice/payment/load/vendor).
  */
+import { MoneyCell } from "../shared/MoneyCell";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../../api/client";
@@ -146,9 +147,9 @@ export function CustomerProfileOverview(props: { operatingCompanyId: string; cus
           <table className={`w-full ${money}`}>
             <tbody>
               <tr className="border-b border-[color:var(--ih-rule)]"><td className="py-1">Open AR</td><td className="py-1 text-right tabular-nums"><AmountLink filter={{ target: "invoices", customerId: props.customerId, hasBalance: true }} data-testid="customer-credit-open-ar">{formatUsdCents(c.open_ar_cents)}</AmountLink></td></tr>
-              <tr className="border-b border-[color:var(--ih-rule)]"><td className="py-1">Open loads not yet invoiced</td><td className="py-1 text-right tabular-nums">{formatUsdCents(c.uninvoiced_open_load_cents)}</td></tr>
-              <tr className="border-b border-[color:var(--ih-rule)] font-semibold"><td className="py-1">Exposure</td><td className={`py-1 text-right ${c.over_limit ? "text-red-600" : ""} tabular-nums`}>{formatUsdCents(c.exposure_cents)}</td></tr>
-              <tr><td className="py-1">Limit{c.credit_limit_source ? ` (${c.credit_limit_source})` : ""}</td><td className="py-1 text-right tabular-nums">{c.credit_limit_cents == null ? "Not set" : formatUsdCents(c.credit_limit_cents)}</td></tr>
+              <tr className="border-b border-[color:var(--ih-rule)]"><td className="py-1">Open loads not yet invoiced</td><td className="py-1"><MoneyCell cents={c.uninvoiced_open_load_cents} drill={{ none: "Loads delivered for this customer and not yet invoiced — each load opens from the Loads tab" }} /></td></tr>
+              <tr className="border-b border-[color:var(--ih-rule)] font-semibold"><td className="py-1">Exposure</td><td className="py-1"><MoneyCell cents={c.exposure_cents} className={c.over_limit ? "text-red-600" : undefined} drill={{ none: "Exposure = open A/R (linked above) + loads not yet invoiced; computed, no single list" }} /></td></tr>
+              <tr><td className="py-1">Limit{c.credit_limit_source ? ` (${c.credit_limit_source})` : ""}</td><td className="py-1">{c.credit_limit_cents == null ? <span className="block text-right">Not set</span> : <MoneyCell cents={c.credit_limit_cents} drill={{ none: "Credit limit is a customer setting, not a transaction" }} />}</td></tr>
             </tbody>
           </table>
         </Section>
@@ -169,7 +170,7 @@ export function CustomerProfileOverview(props: { operatingCompanyId: string; cus
               </tr>
               <tr className="border-b border-[color:var(--ih-rule)]"><td className="py-1">Recourse</td><td className="py-1 text-right">{f.recourse_type ?? "Factor default"}</td></tr>
               <tr className="border-b border-[color:var(--ih-rule)]"><td className="py-1">Purchased lines</td><td className="py-1 text-right">{f.purchased_line_count}</td></tr>
-              <tr><td className="py-1">Purchased gross</td><td className="py-1 text-right tabular-nums">{formatUsdCents(f.purchased_gross_cents)}</td></tr>
+              <tr><td className="py-1">Purchased gross</td><td className="py-1"><MoneyCell cents={f.purchased_gross_cents} drill={{ none: "Gross of this customer's invoices purchased by the factor — each opens from the Factoring tab" }} /></td></tr>
             </tbody>
           </table>
         </Section>

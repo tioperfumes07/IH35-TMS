@@ -6,6 +6,8 @@
  * change account / class / vendor (each optional) + reason → Apply → one RECLASSIFICATION JE per
  * document, audit each, results per document, Undo per batch.
  */
+import { AmountLink } from "../../components/shared/AmountLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { useMemo, useState, type ReactNode } from "react";
 import { useAuth } from "../../auth/useAuth";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
@@ -342,7 +344,9 @@ export function ReclassifyTransactionsPage() {
                     {a.is_active ? null : <span className="ml-1 rounded bg-slate-200 px-1 text-xs">inactive</span>}
                   </span>
                   <span className="shrink-0 text-right tabular-nums">
-                    {formatCurrencyFromCents(naturalCentsForType(a.closing_balance_cents, a.account_type))}
+                    {/* ROUND 433.2 — the balance opens the account's register through the period end (same nested-link
+                        pattern as the account name above; AmountLink stops the row button's click). */}
+                    <AmountLink filter={{ target: "register", accountId: a.account_id, to: toDate }}>{formatCurrencyFromCents(naturalCentsForType(a.closing_balance_cents, a.account_type))}</AmountLink>
                     {hasChildren ? <span className="block text-xs text-slate-600" title="This account plus its sub-accounts">Total {formatCurrencyFromCents(naturalCentsForType(rollupCents, a.account_type))}</span> : null}
                   </span>
                 </button>
@@ -462,7 +466,7 @@ export function ReclassifyTransactionsPage() {
                           c.key === "account_no" ? (
                             <td key={c.key} className="p-2 whitespace-nowrap" data-b5-account-no="1">{cell(c.key, l, doc)}</td>
                           ) : (
-                            <td key={c.key} className={`p-2${c.right ? " text-right tabular-nums" : ""}${c.key === "date" ? " whitespace-nowrap" : ""}${c.key === "memo" ? " max-w-[22rem] truncate" : ""}`} title={c.key === "memo" ? l.description ?? "" : undefined}>{cell(c.key, l, doc)}</td>
+                            <td key={c.key} className={`p-2${c.right ? " text-right tabular-nums" : ""}${c.key === "date" ? " whitespace-nowrap" : ""}${c.key === "memo" ? " max-w-[22rem] truncate" : ""}`} title={c.key === "memo" ? l.description ?? "" : undefined}>{c.key === "balance" ? <MoneyCell cents={oneAccountId ? acctNatural(l.running_balance_cents) : null} format={formatCurrencyFromCents} drill={{ none: "Running balance of this account through this line — each line opens its own document" }} /> : cell(c.key, l, doc)}</td>
                           ),
                         )}
                       </tr>
@@ -528,7 +532,7 @@ export function ReclassifyTransactionsPage() {
                     <td className="p-2">{[b.to_account_name ? `→ ${formatAccountDisplayLabel({ account_name: b.to_account_name, account_number: b.to_account_number }, { showNumber: showAccountNumbers })}` : null, b.to_class_name ? `class → ${b.to_class_name}` : null, b.to_location_name ? `location → ${b.to_location_name}` : null, b.to_entity_uuid ? `${b.to_entity_type ?? "entity"} → ${entityLabel(b.to_entity_name ?? null, b.to_entity_uuid, b.to_entity_type === "vendor" ? "Vendor" : b.to_entity_type === "customer" ? "Customer" : b.to_entity_type === "driver" ? "Driver" : b.to_entity_type === "unit" ? "Unit" : "Entity")}` : null].filter(Boolean).join(" · ")}</td>
                     <td className="p-2 max-w-[18rem] truncate" title={b.reason}>{b.reason}</td>
                     <td data-quantity className="p-2 text-right tabular-nums">{b.lines_applied}/{b.lines_requested}{b.lines_refused ? ` (${b.lines_refused} refused)` : ""}</td>
-                    <td className="p-2 text-right tabular-nums">{formatCurrencyFromCents(b.amount_cents_moved)}</td>
+                    <td className="p-2"><MoneyCell cents={b.amount_cents_moved} format={formatCurrencyFromCents} drill={{ none: "Amount this batch moved — its reclassification entries show on each reclassified line (marked reclassified)" }} /></td>
                     <td className="p-2">{b.status}{b.undone_at ? ` ${formatDateQboList(b.undone_at)}` : ""}{b.override_refusals ? <span className="ml-1 font-semibold text-slate-700" data-testid={`reclassify-batch-override-${b.id}`}>· owner override</span> : null}</td>
                     <td className="p-2">
                       {b.status === "applied" && b.lines_applied > 0 ? (

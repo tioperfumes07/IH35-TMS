@@ -4,6 +4,7 @@
  * Master-detail / List, gear), then data: the driver list sorted by settlement due and the selected driver's panel
  * (five figures, integrity, recent activity, linked counts). Every figure comes from GET /api/v1/mdata/boards/drivers.
  */
+import { MoneyCell } from "../shared/MoneyCell";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
@@ -264,7 +265,7 @@ export function DriverHubBoard(props: { operatingCompanyId: string; onList: () =
                     <td><button type="button" className="pb-name" onClick={() => setSelected(r.id)}>{r.name}</button></td>
                     {show("unit") ? <td className="pb-strong">{r.unit ?? <span className="ih-empty">—</span>}</td> : null}
                     {show("basis") ? <td className="pb-sub-sm">{r.basis ?? "—"}</td> : null}
-                    {show("due") ? <td className="ih-num pb-strong text-right tabular-nums">{money(r.due_cents)}</td> : null}
+                    {show("due") ? <td className="ih-num pb-strong"><MoneyCell cents={r.due_cents} format={money} drill={{ entity: { kind: "driver", id: r.id } }} /></td> : null}
                   </tr>
                 ))}
                 {h && rows.length === 0 ? <tr><td colSpan={4} className="pb-muted">No driver matches this filter.</td></tr> : null}

@@ -27,9 +27,9 @@ const PANEL = "apps/frontend/src/components/shared/LedgerKpiPanel.tsx";
  * a proximity window cannot resolve. That makes 103 an upper bound, and an upper bound is a safe
  * ratchet: it can only be lowered. Do not raise it.
  */
-const SHRINK_ONLY_BASELINE = 23; // 2026-10-06 ROUND 433.2 batch 4: 43 -> 23 onto MoneyCell (wired: escrow held -> escrow record, bank tiles -> bank account, categorize queue -> bank line, approvals Dr/Cr -> journal entry, wizard line -> its document; declared: footers, running/opening/closing balances, settings, KPI breakdown)
+const SHRINK_ONLY_BASELINE = 0; // 2026-10-06 ROUND 433.2 batch 5: 23 -> 0. Every money cell opens its record / exact list, or is a MoneyCell { none } with a listed reason. Any new raw money cell fails.
 /** MoneyCell { none: reason } declarations on main (listed at run time). Unwired + declared may never grow. */
-const DECLARED_NO_DRILL = 20; // 2026-10-06 ROUND 433.2 batch 3: 55 -> 49 (dispatch load costs x3 -> load, driver hub activity -> its record, unit NBV -> fixed asset, lease allocation -> lease)
+const DECLARED_NO_DRILL = 33; // 2026-10-06 ROUND 433.2 batch 3: 55 -> 49 (dispatch load costs x3 -> load, driver hub activity -> its record, unit NBV -> fixed asset, lease allocation -> lease)
 
 function stripComments(src) {
   return String(src ?? "")
@@ -133,7 +133,11 @@ function moneyCellHits(src) {
       // "which entity is this" for a single transaction, AmountLink carries the FILTER behind a
       // sum to the filtered list. Both are click-through; counting only EntityLink would mark
       // every correctly-wired report total as dead.
-      clickThrough: /EntityLink|AmountLink/.test(window),
+      // ROUND 433.2: a react-router <Link to={…}> INSIDE the cell is a drill too (KPI tiles route to their own list);
+      // the forward window means it is this cell's child, not a sibling's.
+      // A <MoneyCell> inside the cell carries its own drill, validated and counted by scanMoneyCells (wired or a declared
+      // reason) — counting the wrapper here too would count one figure twice.
+      clickThrough: /EntityLink|AmountLink|<MoneyCell\b|<Link\b[^>]*\bto=/.test(window),
     });
   }
   return hits;
@@ -250,6 +254,8 @@ function selftest() {
     ["an <input> is a field, not a cell", `<input className="text-right tabular-nums" value={v} />`, 0],
     ["a MoneyInput is a field", `<MoneyInput className="text-right tabular-nums" valueDollars={v} />`, 0],
     ["a declared quantity is not money", `<td data-quantity className="text-right tabular-nums">{p.total}</td>`, 0],
+    ["a <MoneyCell> inside the cell is accounted by the MoneyCell scan", `<td className="text-right tabular-nums"><MoneyCell cents={x} drill={{ none: "a footer that sums the rows above" }} /></td>`, 0],
+    ["a <Link to> inside the cell is a drill", `<dd className="text-right tabular-nums"><Link to={to}>{money(x)}</Link></dd>`, 0],
     ["data-quantity on a SIBLING does not exempt this cell", `<td data-quantity className="x">{n}</td><td className="text-right tabular-nums">{money(x)}</td>`, 1],
   ];
   const declCases = [
