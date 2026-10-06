@@ -2232,5 +2232,10 @@
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-05",
     "purpose": "Re-run the 0359 NULLIF sweep: 5 live RLS policies (dispatch.customer_notify_preferences, dispatch.notify_log, maintenance.pm_schedule_runs, pm_auto_wo_log, pm_auto_engine_settings) still cast current_setting()::uuid bare and raise 22P02 on an empty company setting"
+  },
+  "202615430500": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-06",
+    "purpose": "ACCT-F2026100601: accounting.fn_account_balances_as_of adopts the one ledger-membership rule (excludes is_sample_data entries, as every statement already does) so Reclassify and account balances agree with the TB, BS and P&L"
   }
 }
