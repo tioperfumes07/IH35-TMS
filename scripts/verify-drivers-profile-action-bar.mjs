@@ -48,7 +48,10 @@ function main() {
   if (!actionBar.includes("SendMessageModal")) failures.push("ActionBar must mount SendMessageModal");
   if (!actionBar.includes("<SuspendConfirmModal")) failures.push("ActionBar must mount SuspendConfirmModal");
   if (!actionBar.includes("TerminateConfirmModal")) failures.push("ActionBar must mount TerminateConfirmModal");
-  if (!actionBar.includes('navigate(`/drivers/${driverId}`)')) failures.push("Edit must navigate to driver detail");
+  // DRV-F420 (#25517): the profile is /drivers/:id and Edit is its own tab there (?tab=edit) — still the driver's page.
+  if (!actionBar.includes('navigate(`/drivers/${driverId}`)') && !actionBar.includes('navigate(`/drivers/${driverId}?tab=edit`)')) {
+    failures.push("Edit must navigate to the driver's own page (/drivers/:id, Edit tab)");
+  }
   if (!actionBar.includes("dp-action-send-message")) failures.push("Send Message button must be wired");
   if (!actionBar.includes("dp-export-pdf")) failures.push("Export PDF link must remain present");
   if (!actionBar.includes("resolveApiUrl(") || !actionBar.includes("/api/v1/mdata/drivers/")) {
@@ -60,8 +63,14 @@ function main() {
   if (!trailerActionBar.includes("resolveApiUrl(") || !trailerActionBar.includes("/api/v1/mdata/equipment/")) {
     failures.push("WIRE-01: trailer Export PDF must use resolveApiUrl");
   }
-  if (!/overflow-x:\s*auto/.test(hoverNavCss) || !/min-width:\s*max-content/.test(hoverNavCss)) {
-    failures.push("UI-01: HoverDropdownNav menubar must overflow-x auto + min-width max-content (dispatch 13-tab clip)");
+  // UI-01's goal — no tab clipped off the bar — is now met by the owner's U2 ruling (2026-10-03, a27325557d): the
+  // menubar WRAPS onto a second row so every tab is visible at any width; it no longer scrolls sideways.
+  const menubarRule = hoverNavCss.match(/\.hover-dropdown-nav ul\[role="menubar"\]\s*\{([^}]*)\}/)?.[1] ?? "";
+  const navRule = hoverNavCss.match(/\.hover-dropdown-nav\s*\{([^}]*)\}/)?.[1] ?? "";
+  const wraps = /flex-wrap:\s*wrap/.test(menubarRule) && !/min-width:\s*max-content/.test(menubarRule) && !/overflow-x:\s*(hidden|clip)/.test(navRule);
+  const scrolls = /overflow-x:\s*auto/.test(hoverNavCss) && /min-width:\s*max-content/.test(hoverNavCss);
+  if (!wraps && !scrolls) {
+    failures.push("UI-01 / U2: HoverDropdownNav menubar must show every tab (wrap per U2, or scroll) — never clip");
   }
 
   if (!sendModal.includes("sendDriverProfileMessage")) failures.push("SendMessageModal must call sendDriverProfileMessage");
