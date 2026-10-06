@@ -3514,7 +3514,7 @@ export function BankingTransactionsDesignView({
                 >
                   {String(suggestion.category ?? suggestion.kind ?? "candidate")} ·{" "}
                   {/* B7 — suggestion.description may echo a prior bank memo; never fall through to the UUID id. */}
-                  {suggestion.description?.trim()
+                  {typeof suggestion.description === "string" && suggestion.description.trim()
                     ? humanMemo(suggestion.description)
                     : String(suggestion.category ?? suggestion.kind ?? "Similar transaction")}
                 </button>
