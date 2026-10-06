@@ -37,7 +37,9 @@ export function check(src, testSrc) {
   if (!/UPDATE accounting\.journal_entry_postings\s*\n\s*SET source_transaction_type = 'invoice', source_transaction_id = \$2/.test(src)) {
     failures.push(`${FILE}: no longer UPDATEs the posting's source_transaction_type/source_transaction_id to 'invoice'`);
   }
-  if (!/AND source_transaction_type IS NULL/.test(src)) {
+  // LST-F418: scoped to the tagging UPDATE itself — the phrase appears elsewhere in the poster, so a file-wide match
+  // stayed green with this UPDATE's guard removed.
+  if (!/SET source_transaction_type = 'invoice'[\s\S]{0,240}?AND source_transaction_type IS NULL/.test(src)) {
     failures.push(`${FILE}: the tagging UPDATE no longer guards on source_transaction_type IS NULL (could clobber an existing, differently-sourced tag)`);
   }
 
@@ -96,10 +98,8 @@ function selftest() {
   }
 
   // Mutation 2: the IS NULL guard is dropped (could clobber an existing tag from another source).
-  const offenderB = src.replace(
-    "              WHERE id = $1::uuid\n                AND source_transaction_type IS NULL\n",
-    "              WHERE id = $1::uuid\n"
-  );
+  // LST-F418: the tag now targets line 1 of the entry (WHERE journal_entry_uuid … AND line_sequence = 1); whitespace-tolerant.
+  const offenderB = src.replace(/(AND line_sequence = 1)\s*\n\s*AND source_transaction_type IS NULL/, "$1");
   if (offenderB === src) {
     console.error("FAIL(selftest): offender B mutation did not change the file — pattern out of sync");
     process.exit(1);

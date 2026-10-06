@@ -40,7 +40,9 @@ function checkSources(svcSrc, routesSrc) {
 
   // Ordering: netCents assignment that includes escrow/advance/chargeback must appear BEFORE the throw.
   const netIdx = svcSrc.search(
-    /const netCents\s*=\s*[\s\S]*?escrowContributionCents[\s\S]*?advanceRecoveriesCents[\s\S]*?chargebacksCents/
+    // LST-F418: ACCT-F9976 made it `let` (a negative net is re-stated below) and ACCT-F26307 renamed the advance leg to
+    // appliedAdvanceRecoveryCents — the same withholdings, in the same order, before the floor.
+    /(?:const|let) netCents\s*=\s*[\s\S]*?escrowContributionCents[\s\S]*?(?:advanceRecoveriesCents|appliedAdvanceRecoveryCents)[\s\S]*?chargebacksCents/
   );
   const throwIdx = svcSrc.search(/SettlementPayRunError\(\s*\n?\s*"NET_PAY_FLOOR_BREACH"/);
   assert(netIdx >= 0, "netCents must subtract escrow + advance + chargebacks", problems);
@@ -83,6 +85,9 @@ function selftest() {
   `;
   const g = checkSources(goodSvc, goodRoutes);
   if (g.length) throw new Error(`${LABEL} selftest: compliant fixture flagged: ${g.join("; ")}`);
+  // LST-F418: the live shape (let + appliedAdvanceRecoveryCents) is compliant too.
+  const g2 = checkSources(goodSvc.replace("const netCents", "let netCents").replace("advanceRecoveriesCents", "appliedAdvanceRecoveryCents"), goodRoutes);
+  if (g2.length) throw new Error(`${LABEL} selftest: compliant live-shape fixture flagged: ${g2.join("; ")}`);
   const b1 = checkSources(badSvc, goodRoutes);
   if (!b1.length) throw new Error(`${LABEL} selftest: missing-floor defect NOT caught`);
   const b2 = checkSources(badOrder, goodRoutes);

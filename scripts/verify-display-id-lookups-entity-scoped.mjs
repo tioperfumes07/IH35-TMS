@@ -43,6 +43,10 @@ export function auditSql(src, file = "<mem>") {
   for (const m of src.matchAll(SQL_BLOCK)) {
     const block = m[1];
     if (!FILTERS_DISPLAY_ID.test(block)) continue; // merely SELECTing display_id is fine
+    // LST-F418: judge only a STATEMENT (it names its table). A predicate fragment pushed into a WHERE list
+    // (purchase-candidates search) is scoped by its enclosing query, and the naive backtick pairing can also span plain
+    // JS between two templates (settlements.routes.ts) — neither is a lookup, and both were reported as one.
+    if (!/\b(?:FROM|UPDATE|DELETE)\b/.test(block)) continue;
     if (SCOPED.test(block)) continue;
     const line = src.slice(0, m.index).split("\n").length;
     const snippet = block.replace(/\s+/g, " ").trim().slice(0, 90);

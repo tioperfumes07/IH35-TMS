@@ -32,7 +32,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-pdf-render-date-object-stringify";
 
 const INVOICE_RENDER = "apps/backend/src/accounting/invoice-render.routes.ts";
-const SETTLEMENT_RENDER = "apps/backend/src/driver-finance/settlement-render.routes.ts";
+// LST-F418: c57f610b4b (locked v10 documents) moved the settlement SQL + rendering into settlement-document.service.ts;
+// settlement-render.routes.ts only delegates to buildDriverSettlementDocument now.
+const SETTLEMENT_RENDER = "apps/backend/src/driver-finance/settlement-document.service.ts";
 const DISPATCH_SHEET = "apps/backend/src/dispatch/dispatch-sheet.routes.ts";
 
 function readRel(root, rel, overrides) {

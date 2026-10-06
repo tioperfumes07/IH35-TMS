@@ -30,7 +30,8 @@ function failures(sources) {
     out.push(`${FILE}: source_transaction_display_id reads src_bill.display_id with no src_bill.bill_number fallback — display_id is 0.07% populated live, this tombstones almost every bill-sourced JE label`);
   }
 
-  const linkMatch = text.match(/COALESCE\(link_inv\.display_id,\s*link_bill\.display_id(,\s*link_bill\.bill_number)?\)/);
+  // LST-F418: more fallbacks follow bill_number now (dispute, settlement, load, unit …), so match the prefix, not a ")".
+  const linkMatch = text.match(/COALESCE\(link_inv\.display_id,\s*link_bill\.display_id(,\s*link_bill\.bill_number)?[,)]/);
   if (!linkMatch) {
     out.push(`${FILE}: linked_object_display_id COALESCE expression not found — re-check this guard`);
   } else if (!linkMatch[1]) {
@@ -58,8 +59,8 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
       file: FILE,
       mutate: (text) =>
         text.replace(
-          "COALESCE(link_inv.display_id, link_bill.display_id, link_bill.bill_number)",
-          "COALESCE(link_inv.display_id, link_bill.display_id)"
+          "COALESCE(link_inv.display_id, link_bill.display_id, link_bill.bill_number,",
+          "COALESCE(link_inv.display_id, link_bill.display_id,"
         ),
     },
   ];
