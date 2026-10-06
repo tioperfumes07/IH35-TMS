@@ -29,7 +29,14 @@ export function staticFailures(read = (p) => readFileSync(join(ROOT, p), "utf8")
   const out = [];
   for (const [file, type] of [["apps/backend/src/accounting/credit-memos.routes.ts", "credit_memo"], ["apps/backend/src/accounting/vendor-credits.routes.ts", "vendor_credit"]]) {
     const src = read(file);
-    if (!new RegExp(`postSourceTransactionInClientTx\\([\\s\\S]{0,240}?source_transaction_type:\\s*"${type}"`).test(src)) out.push(`RULE 1 ${file}: create does not post "${type}" on its own transaction`);
+    // LST-F414: a vendor credit's create is the one writer createVendorCreditInClientTx (vendor-credits.service.ts),
+    // shared by the route and the insurance refund / fleet-remove posters — the route must call it and it must post.
+    const postsHere = new RegExp(`postSourceTransactionInClientTx\\([\\s\\S]{0,240}?source_transaction_type:\\s*"${type}"`);
+    const delegated =
+      type === "vendor_credit" &&
+      /await createVendorCreditInClientTx\(client/.test(src) &&
+      postsHere.test(read("apps/backend/src/accounting/vendor-credits.service.ts"));
+    if (!postsHere.test(src) && !delegated) out.push(`RULE 1 ${file}: create does not post "${type}" on its own transaction`);
     if (!new RegExp(`reversePostedSourceTransactionInClientTx\\([\\s\\S]{0,240}?source_transaction_type:\\s*"${type}"`).test(src)) out.push(`RULE 1 ${file}: void does not reverse "${type}" through the engine`);
   }
   const engine = read("apps/backend/src/accounting/posting-engine.service.ts");
@@ -76,11 +83,20 @@ if (isMain) {
       "apps/backend/src/accounting/credit-memos.routes.ts": 'postSourceTransactionInClientTx(client, { operating_company_id: x, source_transaction_type: "credit_memo" }) reversePostedSourceTransactionInClientTx(client, { operating_company_id: x, source_transaction_type: "credit_memo" })',
       "apps/backend/src/accounting/vendor-credits.routes.ts": 'postSourceTransactionInClientTx(client, { operating_company_id: x, source_transaction_type: "vendor_credit" }) reversePostedSourceTransactionInClientTx(client, { operating_company_id: x, source_transaction_type: "vendor_credit" })',
       "apps/backend/src/accounting/posting-engine.service.ts": 'if (sourceType === "vendor_credit") return buildX(); if (sourceType === "credit_memo") return buildY();',
+      "apps/backend/src/accounting/vendor-credits.service.ts": "",
+    };
+    // LST-F414 shape: the route delegates create to the one writer, which posts.
+    const delegatedGood = {
+      ...good,
+      "apps/backend/src/accounting/vendor-credits.routes.ts": 'await createVendorCreditInClientTx(client, {}) reversePostedSourceTransactionInClientTx(client, { operating_company_id: x, source_transaction_type: "vendor_credit" })',
+      "apps/backend/src/accounting/vendor-credits.service.ts": 'postSourceTransactionInClientTx(client, { operating_company_id: x, source_transaction_type: "vendor_credit" })',
     };
     const cases = [
       ["static clean passes", staticFailures((p) => good[p]).length === 0],
       ["a create that does not post fails", staticFailures((p) => good[p].replace('postSourceTransactionInClientTx(client, { operating_company_id: x, source_transaction_type: "credit_memo" })', "")).some((x) => x.startsWith("RULE 1"))],
       ["a void that does not reverse fails", staticFailures((p) => good[p].replace('reversePostedSourceTransactionInClientTx(client, { operating_company_id: x, source_transaction_type: "vendor_credit" })', "")).some((x) => x.startsWith("RULE 1"))],
+      ["a create delegated to the one writer passes", staticFailures((p) => delegatedGood[p]).length === 0],
+      ["a delegated writer that does not post fails", staticFailures((p) => (p.endsWith("vendor-credits.service.ts") ? "" : delegatedGood[p])).some((x) => x.startsWith("RULE 1"))],
       ["an engine without the dispatch fails", staticFailures((p) => good[p].replace('if (sourceType === "credit_memo") return buildY();', "")).some((x) => x.startsWith("RULE 1"))],
       ["live clean passes", liveFailures({ applied: true, unpostedMemos: 0, unpostedVendorCredits: 0 }).length === 0],
       ["an unposted credit memo fails", liveFailures({ applied: true, unpostedMemos: 1, unpostedVendorCredits: 0 }).some((x) => x.startsWith("RULE 2"))],

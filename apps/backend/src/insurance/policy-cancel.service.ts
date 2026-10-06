@@ -6,24 +6,24 @@
  *   2. Stops FUTURE, NOT-YET-ISSUED schedule rows by setting bill_status='cancelled'
  *      (rows with bill_uuid IS NULL and due_date >= cancelled_on). Already-issued
  *      bills (bill_uuid set) are left untouched — issued AP is never deleted here.
- *   3. Books the unearned-premium refund as a SEPARATE credit line via the existing
- *      accounting service createJournalEntry() (per VQ6 — NOT a negative premium and
- *      NO new financial code). Unearned premium is pro-rated by remaining days.
+ *   3. Books the unearned-premium refund as a VENDOR CREDIT to the insurer against
+ *      insurance_expense (LST-F414; per VQ6 — NOT a negative premium and NO new
+ *      financial code). Unearned premium is pro-rated by remaining days.
  *
  * Idempotency (in addition to the HTTP Idempotency-Key middleware that already covers
  * /api/v1/insurance/policies/*):
  *   - An already-cancelled policy is a no-op (returns the current state).
- *   - The refund journal entry is deduped by its deterministic memo, so a retry after
- *     a partial failure (JE committed, policy update not yet) never double-posts. The
- *     JE is posted BEFORE the policy is flipped to 'cancelled' so a crash in between is
- *     recoverable on retry.
+ *   - The refund vendor credit is deduped by its deterministic memo (its notes), so a
+ *     retry after a partial failure (credit committed, policy update not yet) never
+ *     double-posts. The credit is issued BEFORE the policy is flipped to 'cancelled' so
+ *     a crash in between is recoverable on retry.
  *
  * All DB work is RLS-scoped to the operating company.
  */
 
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
-import { createJournalEntry } from "../accounting/journal-entries.service.js";
+import { createVendorCreditInClientTx } from "../accounting/vendor-credits.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { recordPendingRefundObligation } from "./refund-obligation.service.js";
@@ -37,6 +37,7 @@ type PolicyRow = {
   status: string;
   policy_number: string;
   insurer_name: string;
+  vendor_id: string | null;
   total_premium_cents: string | number;
   effective_date: string;
   expiry_date: string;
@@ -46,6 +47,8 @@ type PolicyRow = {
 
 export type CancelRefund = {
   journal_entry_id: string;
+  /** LST-F414 — the refund is a vendor credit to the insurer (A/P is written only by its documents, ROUND 393.1). */
+  vendor_credit_id: string;
   amount_cents: number;
   reused: boolean;
 };
@@ -77,6 +80,7 @@ const CANCEL_SELECT = `
   status,
   policy_number,
   insurer_name,
+  vendor_id::text,
   total_premium_cents::bigint,
   effective_date::text,
   expiry_date::text,
@@ -148,35 +152,34 @@ export async function cancelInsurancePolicy(input: CancelPolicyInput): Promise<C
       input.cancelledOn
     );
 
-    let apAccountId: string | null = null;
+    // LST-F414 — the refund reduces what is owed to the INSURER, so it is that vendor's credit, against the same
+    // insurance_expense account the premium bills debited (policy-bill-schedule.service.ts). It used to be a raw
+    // `insurance_policy` journal line on ap_control crediting expense_default, which ROUND 393.1's write-time rule
+    // refuses and which never reversed the account the premium hit.
     let expenseAccountId: string | null = null;
-    let existingRefundJeId: string | null = null;
+    let existingRefund: { vendor_credit_id: string; journal_entry_id: string | null } | null = null;
     if (unearnedCents > 0) {
-      apAccountId = await resolveRoleAccountOptional(client, input.operatingCompanyId, "ap_control");
-      expenseAccountId = await resolveRoleAccountOptional(client, input.operatingCompanyId, "expense_default");
-      const memo = refundMemo(policy.id, policy.policy_number);
-      const existing = await client.query<{ id: string }>(
+      expenseAccountId = await resolveRoleAccountOptional(client, input.operatingCompanyId, "insurance_expense");
+      const existing = await client.query<{ id: string; journal_entry_id: string | null }>(
         `
-          SELECT id::text
-          FROM accounting.journal_entries
+          SELECT id::text, journal_entry_id::text
+          FROM accounting.vendor_credits
           WHERE operating_company_id = $1::uuid
-            AND status = 'posted'
-            AND memo = $2
+            AND notes = $2
+            AND voided_at IS NULL
           ORDER BY created_at ASC
           LIMIT 1
         `,
-        [input.operatingCompanyId, memo]
+        [input.operatingCompanyId, refundMemo(policy.id, policy.policy_number)]
       );
-      existingRefundJeId = existing.rows[0]?.id ?? null;
+      existingRefund = existing.rows[0] ? { vendor_credit_id: existing.rows[0].id, journal_entry_id: existing.rows[0].journal_entry_id } : null;
     }
-
     return {
       kind: "proceed" as const,
       policy,
       unearnedCents,
-      apAccountId,
       expenseAccountId,
-      existingRefundJeId,
+      existingRefund,
     };
   });
 
@@ -187,45 +190,41 @@ export async function cancelInsurancePolicy(input: CancelPolicyInput): Promise<C
   let refund: CancelRefund | null = null;
   let refundSkippedReason: string | null = null;
   if (pre.unearnedCents > 0) {
-    if (pre.existingRefundJeId) {
-      refund = { journal_entry_id: pre.existingRefundJeId, amount_cents: pre.unearnedCents, reused: true };
-    } else if (pre.apAccountId && pre.expenseAccountId) {
-      const memo = refundMemo(pre.policy.id, pre.policy.policy_number);
-      const description = `Unearned premium refund on cancellation of policy ${pre.policy.policy_number} (${pre.policy.insurer_name})`;
-      const je = await createJournalEntry(
-        {
-          operating_company_id: input.operatingCompanyId,
-          entry_date: input.cancelledOn,
-          memo,
-          source: "auto",
-          source_transaction_type: "insurance_policy",
-          source_transaction_id: input.policyId,
-          postings: [
-            // Debit AP control: reduce the payable owed to the insurer for the unearned portion.
-            {
-              account_id: pre.apAccountId,
-              debit_or_credit: "debit",
-              amount_cents: pre.unearnedCents,
-              description,
-            },
-            // Credit insurance expense: the separate credit line (reverses unearned premium).
-            {
-              account_id: pre.expenseAccountId,
-              debit_or_credit: "credit",
-              amount_cents: pre.unearnedCents,
-              description,
-            },
-          ],
-        },
-        { userId: input.userId, role: input.role }
-      );
-      refund = { journal_entry_id: je.id, amount_cents: pre.unearnedCents, reused: false };
-    } else {
+    if (pre.existingRefund) {
+      refund = {
+        journal_entry_id: pre.existingRefund.journal_entry_id ?? "",
+        vendor_credit_id: pre.existingRefund.vendor_credit_id,
+        amount_cents: pre.unearnedCents,
+        reused: true,
+      };
+    } else if (!pre.expenseAccountId) {
       // No COA role mapping resolvable — cancellation still proceeds; refund must be booked manually.
       refundSkippedReason = "coa_role_mapping_not_found";
+    } else if (!pre.policy.vendor_id) {
+      // No insurer vendor on the policy — there is no one to hold the credit. Durable obligation below, never a plug.
+      refundSkippedReason = "insurer_vendor_missing";
+    } else {
+      const vendorId = pre.policy.vendor_id;
+      const expenseAccountId = pre.expenseAccountId;
+      const credit = await withCompanyScope(input.userId, input.operatingCompanyId, (client) =>
+        createVendorCreditInClientTx(client, {
+          operatingCompanyId: input.operatingCompanyId,
+          vendorId,
+          issueDate: input.cancelledOn,
+          amountCents: pre.unearnedCents,
+          accountId: expenseAccountId,
+          notes: refundMemo(pre.policy.id, pre.policy.policy_number),
+          userId: input.userId,
+        })
+      );
+      refund = {
+        journal_entry_id: credit.journal_entry_id ?? "",
+        vendor_credit_id: credit.id,
+        amount_cents: pre.unearnedCents,
+        reused: false,
+      };
     }
   }
-
   // --- Phase 3: flip the policy to cancelled + stop future unissued schedule rows. ---
   const result = await withCompanyScope(input.userId, input.operatingCompanyId, async (client) => {
     const updatedRes = await client.query(
@@ -283,7 +282,7 @@ export async function cancelInsurancePolicy(input: CancelPolicyInput): Promise<C
           unearned_premium_cents: pre.unearnedCents,
           refund_obligation_id: refundObligationId,
           intended_debit_role: "ap_control",
-          intended_credit_role: "expense_default",
+          intended_credit_role: "insurance_expense",
           deterministic_memo: refundMemo(pre.policy.id, pre.policy.policy_number),
           reason: refundSkippedReason,
         },

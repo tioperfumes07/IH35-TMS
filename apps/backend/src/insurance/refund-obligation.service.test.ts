@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const createJournalEntryMock = vi.fn();
+const createVendorCreditMock = vi.fn();
 const resolveRoleAccountOptionalMock = vi.fn();
 
-vi.mock("../accounting/journal-entries.service.js", () => ({
-  createJournalEntry: (...args: unknown[]) => createJournalEntryMock(...args),
+vi.mock("../accounting/vendor-credits.service.js", () => ({
+  createVendorCreditInClientTx: (...args: unknown[]) => createVendorCreditMock(...args),
 }));
 
 vi.mock("../accounting/coa-roles/resolver.service.js", () => ({
@@ -69,33 +69,35 @@ function drainClient(opts: { pending: Array<Record<string, unknown>>; existingJe
 
 describe("postPendingRefundObligations", () => {
   beforeEach(() => {
-    createJournalEntryMock.mockReset();
+    createVendorCreditMock.mockReset();
     resolveRoleAccountOptionalMock.mockReset();
-    createJournalEntryMock.mockResolvedValue({ id: "je-new" });
+    createVendorCreditMock.mockResolvedValue({ id: "vc-new", journal_entry_id: "je-new" });
   });
 
   const pendingRow = {
     id: "oblig-1",
     amount_cents: 75000,
     debit_role: "ap_control",
-    credit_role: "expense_default",
+    credit_role: "insurance_expense",
     deterministic_memo: "memo-1",
     entry_date: "2026-07-01",
+    vendor_id: "insurer-vendor",
   };
 
-  it("posts via createJournalEntry when roles resolve, then marks obligation posted", async () => {
+  it("issues the insurer's vendor credit when the credit role resolves, then marks obligation posted (LST-F414)", async () => {
     resolveRoleAccountOptionalMock.mockImplementation(async (_c, _oc, role: string) =>
-      role === "ap_control" ? "ap-acct" : "exp-acct"
+      role === "insurance_expense" ? "exp-acct" : null
     );
     const client = drainClient({ pending: [pendingRow] });
     const res = await postPendingRefundObligations(client, { operatingCompanyId: OC, userId: "u1", role: "Owner" });
 
-    expect(createJournalEntryMock).toHaveBeenCalledTimes(1);
-    const [jeInput] = createJournalEntryMock.mock.calls[0] as [
-      { postings: Array<{ debit_or_credit: string; amount_cents: number; account_id: string }> }
+    // A/P is written only by its documents (ROUND 393.1): Dr A/P / Cr insurance_expense through a vendor credit.
+    expect(createVendorCreditMock).toHaveBeenCalledTimes(1);
+    const [, creditInput] = createVendorCreditMock.mock.calls[0] as [
+      unknown,
+      { vendorId: string; accountId: string; amountCents: number; notes: string; issueDate: string }
     ];
-    expect(jeInput.postings.find((p) => p.debit_or_credit === "debit")?.account_id).toBe("ap-acct");
-    expect(jeInput.postings.find((p) => p.debit_or_credit === "credit")?.account_id).toBe("exp-acct");
+    expect(creditInput).toMatchObject({ vendorId: "insurer-vendor", accountId: "exp-acct", amountCents: 75000, notes: "memo-1", issueDate: "2026-07-01" });
     expect(res.posted).toEqual([
       { obligation_id: "oblig-1", journal_entry_id: "je-new", amount_cents: 75000, reused: false },
     ]);
@@ -103,12 +105,22 @@ describe("postPendingRefundObligations", () => {
     expect(client.updates).toHaveLength(1);
   });
 
+  it("leaves obligation pending when the policy names no insurer vendor", async () => {
+    resolveRoleAccountOptionalMock.mockResolvedValue("exp-acct");
+    const client = drainClient({ pending: [{ ...pendingRow, vendor_id: null }] });
+    const res = await postPendingRefundObligations(client, { operatingCompanyId: OC, userId: "u1", role: "Owner" });
+
+    expect(createVendorCreditMock).not.toHaveBeenCalled();
+    expect(res.still_pending).toEqual([{ obligation_id: "oblig-1", reason: "insurer_vendor_missing" }]);
+    expect(client.updates).toHaveLength(0);
+  });
+
   it("reuses an existing posted JE (dedupe by memo) — never double-posts", async () => {
     resolveRoleAccountOptionalMock.mockResolvedValue("acct");
     const client = drainClient({ pending: [pendingRow], existingJe: "je-prior" });
     const res = await postPendingRefundObligations(client, { operatingCompanyId: OC, userId: "u1", role: "Owner" });
 
-    expect(createJournalEntryMock).not.toHaveBeenCalled();
+    expect(createVendorCreditMock).not.toHaveBeenCalled();
     expect(res.posted[0]).toMatchObject({ journal_entry_id: "je-prior", reused: true });
   });
 
@@ -117,7 +129,7 @@ describe("postPendingRefundObligations", () => {
     const client = drainClient({ pending: [pendingRow] });
     const res = await postPendingRefundObligations(client, { operatingCompanyId: OC, userId: "u1", role: "Owner" });
 
-    expect(createJournalEntryMock).not.toHaveBeenCalled();
+    expect(createVendorCreditMock).not.toHaveBeenCalled();
     expect(res.posted).toHaveLength(0);
     expect(res.still_pending).toEqual([{ obligation_id: "oblig-1", reason: "coa_role_mapping_not_found" }]);
     expect(client.updates).toHaveLength(0);
