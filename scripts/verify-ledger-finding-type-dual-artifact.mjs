@@ -102,7 +102,11 @@ function findLatestMigrationDefiningConstraint(migrationsDirAbs) {
   let latest = null;
   for (const f of files) {
     const text = fs.readFileSync(path.join(migrationsDirAbs, f), "utf8");
-    if (text.includes(CONSTRAINT_NAME) && /CHECK\s*\(/i.test(text)) {
+    // LST-F418: only a migration that DEFINES the constraint counts — `ADD CONSTRAINT <name>` in code, comments stripped.
+    // 202614020000 merely mentions the name in a comment, and as the latest match it replaced the real definition
+    // (202613990000) with a much smaller "allowed set".
+    const code = text.replace(/--[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
+    if (new RegExp(`ADD\\s+CONSTRAINT\\s+"?${CONSTRAINT_NAME}"?`, "i").test(code) && /CHECK\s*\(/i.test(code)) {
       latest = { file: f, text };
     }
   }

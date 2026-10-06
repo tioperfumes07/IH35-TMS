@@ -17,6 +17,8 @@ const P = {
   link: "apps/backend/src/legal/contract-linkage.service.ts",
   contracts: "apps/backend/src/legal/contracts.service.ts",
   matters: "apps/backend/src/legal/matters.service.ts",
+  // LST-F418: ec4136ce9b (LEGAL-F32603, #23952) moved the matter's reserve money here — a bill linked to the matter.
+  money: "apps/backend/src/legal/legal-money.service.ts",
   routes: "apps/backend/src/legal/matters.routes.ts",
   handoff: "apps/backend/src/legal/signed-finance-handoff.service.ts",
   mig: "db/migrations/202615190100_legal_contract_and_matter_linkage.sql",
@@ -32,7 +34,9 @@ export function check(s) {
     if (!new RegExp(`push\\("${f}", input\\.${f}\\)`).test(s.matters)) p.push(`${P.matters}: matter update ignores ${f}.`);
   }
   if ((s.matters.match(/assertMatterPartyInCompany\(client, "mdata\.(customers|vendors|loads)"/g) ?? []).length < 6) p.push(`${P.matters}: matter customer/vendor/load not scope-checked on create + update.`);
-  if (!/createJournalEntryOnClient\(/.test(s.matters) || !/source_transaction_type: "legal_matter_reserve"/.test(s.matters) || !/reserve_journal_entry_id = \$3::uuid/.test(s.matters)) p.push(`${P.matters}: matter reserve no longer posts a sourced JE and stamps the matter.`);
+  // The reserve posts as a bill linked to its matter (createBill … legalMatterId → the bill poster), and the matter is
+  // stamped with the entry it produced. A raw JE was the old shape; A/P is written only by documents (ROUND 393.1).
+  if (!/createBill\([\s\S]{0,600}?legalMatterId:/.test(s.money) || !/SET reserve_journal_entry_id = COALESCE\(\$3::uuid/.test(s.money)) p.push(`${P.money}: the matter reserve must post as a bill linked to the matter (createBill … legalMatterId) and stamp legal.matters.reserve_journal_entry_id.`);
   if (!/"\/api\/v1\/legal\/matters\/:id\/reserve"/.test(s.routes)) p.push(`${P.routes}: reserve route missing.`);
   if (!/UPDATE accounting\.lease_contract lc SET contract_instance_id = ci\.id/.test(s.handoff)) p.push(`${P.handoff}: a signed lease contract no longer stamps its lease.`);
   return p;
@@ -44,11 +48,12 @@ if (process.argv.includes("--selftest")) {
   ex("real", real, false);
   ex("linkage dropped", { ...real, contracts: real.contracts.replace("await applyContractLinkage(client as never, {", "await noop({") }, true);
   ex("matter load dropped from update", { ...real, matters: real.matters.replace('push("load_id", input.load_id)', 'void 0') }, true);
-  ex("reserve not sourced", { ...real, matters: real.matters.replace('source_transaction_type: "legal_matter_reserve"', 'source_transaction_type: null') }, true);
+  ex("reserve not linked to its matter", { ...real, money: real.money.replace(/legalMatterId: [^,\n]+,/g, "") }, true);
+  ex("reserve entry not stamped on the matter", { ...real, money: real.money.replace(/SET reserve_journal_entry_id = COALESCE\(\$3::uuid/g, "SET updated_at = COALESCE($3::uuid") }, true);
   ex("handoff stamp dropped", { ...real, handoff: real.handoff.replace("UPDATE accounting.lease_contract lc SET contract_instance_id = ci.id", "SELECT 1") }, true);
   console.log(ok ? `${LABEL} --selftest PASS (5/5)` : `${LABEL} --selftest FAIL`);
   process.exit(ok ? 0 : 1);
 }
 const problems = check(real);
 if (problems.length) { console.error(`${LABEL} FAILED:\n  - ${problems.join("\n  - ")}`); process.exit(1); }
-console.log(`${LABEL}: OK -- contracts carry real FKs + link rows (entity-scoped), matters link customer/vendor/load, matter reserve posts a sourced JE, signed leases stamp back.`);
+console.log(`${LABEL}: OK -- contracts carry real FKs + link rows (entity-scoped), matters link customer/vendor/load, matter reserve posts as a bill linked to its matter, signed leases stamp back.`);
