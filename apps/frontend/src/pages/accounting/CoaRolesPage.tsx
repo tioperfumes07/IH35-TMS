@@ -78,6 +78,7 @@ const ROLE_LABELS: Record<CoaRole, string> = {
   driver_settlements_payable: "Driver settlements payable",
   accessorial_revenue: "Accessorial / detention income",
   reefer_fuel_expense: "Reefer Diesel (Off-Highway)",
+  accrued_claims_liability: "Accrued accident claims",
 };
 
 export function CoaRolesPage() {

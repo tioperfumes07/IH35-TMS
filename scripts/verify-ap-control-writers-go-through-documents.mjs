@@ -7,13 +7,14 @@
  * that resolves ap_control and writes its own journal lines therefore throws the first time it runs — measured
  * 2026-10-06: the insurance cancellation refund, the refund-obligation drain and the fleet add/remove wrote raw
  * `insurance_policy` / `refund_obligation` lines on ap_control (fixed here: they now issue the insurer's bill or vendor
- * credit), and the lease rent, accident-liability absorb, fuel "ap" branch and the retired payroll poster still do.
+ * credit). The lease rent, accident-liability absorb, fuel "ap" branch and retired payroll poster did too; each is fixed
+ * (LST-F422, F424, F415, F426).
  *
  * Every file under apps/backend/src (tests excluded) that contains the literal "ap_control" must be listed below:
  *   READERS          — resolve it to label / report / reconcile / declare a role; they write no posting.
  *   DOCUMENT_POSTERS — post A/P only as bill / bill_payment / vendor_credit / driver_settlement (debit) documents.
- *   KNOWN_DEBT       — still write raw lines on ap_control; each names its reason and the fix. SHRINK-ONLY: an entry whose
- *                      file no longer names ap_control is stale and FAILS (remove it); a new file not listed FAILS.
+ *   KNOWN_DEBT       — CLOSED at zero (LST-F426 payroll writer deleted, LST-F422 lease rent is a bill, LST-F424 accident
+ *                      absorb is an accrued claim). Any entry FAILS; a new file not listed FAILS.
  *
  * Run: node scripts/verify-ap-control-writers-go-through-documents.mjs [--selftest]
  */
@@ -55,12 +56,7 @@ export const DOCUMENT_POSTERS = new Set([
   "apps/backend/src/driver-finance/settlement-ap-chain.service.ts", // the settlement's bills + their payment
 ]);
 
-export const KNOWN_DEBT = new Map([
-  [
-    "apps/backend/src/safety/accident-liabilities.service.ts",
-    "company-absorb decision posts a manual JE crediting ap_control with no payee — owner decision on payee vs accrued liability (LST-F414 follow-up)",
-  ],
-]);
+export const KNOWN_DEBT = new Map([]);
 
 function walk(dir, out = []) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -87,6 +83,10 @@ export function collectProblems(files, lists = { READERS, DOCUMENT_POSTERS, KNOW
         `(createBill / createVendorCreditInClientTx), or list the file as a READER if it writes no posting.`
     );
   }
+  // The debt list is closed at zero: every A/P writer posts through a document. A new entry is a defect, not a policy.
+  for (const rel of lists.KNOWN_DEBT.keys()) {
+    problems.push(`${rel} is listed as KNOWN_DEBT — the list closed at zero (LST-F426/F422/F424); issue the vendor's document instead.`);
+  }
   const namingSet = new Set(naming);
   for (const rel of [...lists.READERS, ...lists.DOCUMENT_POSTERS, ...lists.KNOWN_DEBT.keys()]) {
     if (!namingSet.has(rel)) problems.push(`${rel} is listed but no longer names "ap_control" — remove the stale entry (shrink-only).`);
@@ -112,10 +112,12 @@ if (process.argv.includes("--selftest")) {
   const planted = new Map(real);
   planted.set("apps/backend/src/insurance/new-premium-poster.service.ts", 'const ap = await resolveRoleAccount(c, oc, "ap_control");');
   cases.push(["new unlisted ap_control writer", collectProblems(planted)]);
-  // 2. A fixed debt file left in the list (it stopped naming ap_control) is stale.
-  const fixed = new Map(real);
-  fixed.set("apps/backend/src/safety/accident-liabilities.service.ts", "// pays through a bill now");
-  cases.push(["stale KNOWN_DEBT entry", collectProblems(fixed)]);
+  // 2. The debt list reached zero (LST-F426 / F422 / F424): it is closed. Re-opening it with any entry FAILS, so a raw
+  //    ap_control writer can never be parked as "known debt" again.
+  const reopened = { READERS, DOCUMENT_POSTERS, KNOWN_DEBT: new Map([["apps/backend/src/insurance/new-premium-poster.service.ts", "parked"]]) };
+  const withParked = new Map(real);
+  withParked.set("apps/backend/src/insurance/new-premium-poster.service.ts", 'const ap = await resolveRoleAccount(c, oc, "ap_control");');
+  cases.push(["debt list re-opened", collectProblems(withParked, reopened)]);
   // 3. The insurance fleet poster regressing to a raw ap_control line.
   const regressed = new Map(real);
   regressed.set(
@@ -143,6 +145,5 @@ if (problems.length) {
   process.exit(1);
 }
 console.log(
-  `${LABEL}: OK — ${READERS.size} readers, ${DOCUMENT_POSTERS.size} document posters; ${KNOWN_DEBT.size} named debt (shrink-only): ` +
-    [...KNOWN_DEBT.keys()].map((k) => path.basename(k)).join(", ")
+  `${LABEL}: OK — ${READERS.size} readers, ${DOCUMENT_POSTERS.size} document posters; known debt closed at zero`
 );

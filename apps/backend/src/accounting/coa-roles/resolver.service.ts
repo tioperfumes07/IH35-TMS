@@ -223,6 +223,9 @@ export const COA_ROLE_VALUES = [
   /** ROUND 391.2 (migration 202615400930) — 5015 Reefer Diesel (Off-Highway): refrigeration-unit diesel, kept off 5000 so
    *  its gallons can be claimed against the federal off-highway credit and excluded from IFTA taxable gallons. */
   "reefer_fuel_expense",
+  /** LST-F424 (migration 202615440200) — 2180 Accrued Accident Claims: an accident cost the company absorbs, accrued at
+   *  the owner's decision and cleared when the payee's bill is coded to it (never a raw A/P line with no payee). */
+  "accrued_claims_liability",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];
