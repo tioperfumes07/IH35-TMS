@@ -13,6 +13,23 @@ import { readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import pg from "pg";
+
+// --selftest (Devin build order 2026-10-05): live-DB guards cannot be fixture-tested — their inputs
+// are rows on Neon. One case MUST pass (live check green, or the canonical no-credential refusal
+// when nothing resolves locally) and one MUST fail (dead credential — it must refuse, never green).
+if (process.argv.includes("--selftest")) { await selftest_verify_party_boards_bound_live(); }
+async function selftest_verify_party_boards_bound_live() {
+  const { runGuard, reportSelftest, statusOf, outputOf, DEAD_DB_ENV } = await import("./lib/guard-selftest.mjs");
+  const { fileURLToPath } = await import("node:url");
+  const me = fileURLToPath(import.meta.url);
+  const real = runGuard(me);
+  const noDb = runGuard(me, { env: DEAD_DB_ENV });
+  const refused = /DATABASE_URL (?:is )?(?:not set|unset|required)|credential/.test(outputOf(real));
+  reportSelftest("verify_party_boards_bound_live", [
+    { name: "live check green, or canonically refuses with no credential", pass: statusOf(real) === 0 || refused, detail: statusOf(real) === 0 ? undefined : outputOf(real).slice(-300) },
+    { name: "refuses on dead credential", pass: statusOf(noDb) !== 0, detail: statusOf(noDb) !== 0 ? undefined : outputOf(noDb).slice(-200) },
+  ]);
+}
 const ROOT = process.cwd();
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const ui = readFileSync("apps/frontend/src/components/boards/PartyBoard.tsx", "utf8");

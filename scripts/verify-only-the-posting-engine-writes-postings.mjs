@@ -23,8 +23,33 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+// --selftest (Devin build order 2026-10-05): one case that MUST pass (the real tree) and one that
+// MUST fail (a bare fixture cwd — a guard that reports green with none of its inputs present is a
+// vacuous proof). Never writes to tracked source.
+if (process.argv.includes("--selftest")) { await selftest_verify_only_the_posting_engine_writes_postings(); }
+async function selftest_verify_only_the_posting_engine_writes_postings() {
+  const { runGuard, withTmpFixture, reportSelftest, statusOf, outputOf } = await import("./lib/guard-selftest.mjs");
+  const { fileURLToPath } = await import("node:url");
+  const me = fileURLToPath(import.meta.url);
+  const live = runGuard(me);
+  const planted = withTmpFixture(
+    {
+      "apps/backend/src/accounting/posting-engine.service.ts": "// the engine\nawait client.query(`INSERT INTO accounting.journal_entry_postings (id) VALUES ($1)`, [id]);",
+      "apps/backend/src/evil/backdoor.ts": "await client.query(`INSERT INTO accounting.journal_entry_postings (id) VALUES ($1)`, [id]);",
+    },
+    ["apps/backend/src/evil"],
+    (tmp) => runGuard(me, { env: { VERIFY_ROOT: tmp } }),
+  );
+  reportSelftest("verify_only_the_posting_engine_writes_postings", [
+    { name: "real tree green", pass: statusOf(live) === 0, detail: statusOf(live) === 0 ? undefined : outputOf(live).slice(-300) },
+    { name: "planted unallowlisted writer fails", pass: statusOf(planted) !== 0 && /backdoor\.ts/.test(outputOf(planted)), detail: outputOf(planted).slice(-200) },
+  ]);
+}
+
 const LABEL = "verify-only-the-posting-engine-writes-postings";
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const ROOT = process.env.VERIFY_ROOT
+  ? path.resolve(process.env.VERIFY_ROOT)
+  : path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SRC = path.join(ROOT, "apps/backend/src");
 
 // The ten doors as they stood on 2026-10-03, each with the reason it is still open and who closes it.
