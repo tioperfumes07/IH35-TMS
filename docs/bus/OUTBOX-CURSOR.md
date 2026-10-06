@@ -1,22 +1,37 @@
-## 2026-10-07T00:45Z · GO-20 hook — modal z-index CI unblock (ambient guard-integrity)
+## 2026-10-07T01:10Z · GO-20 hook — lead census (post entity-scope merge)
 
-SYNC: rebased onto tip main. INBOX 432/433/435 rows measured DONE on tip (prior census stands).
+SYNC: `git pull --ff-only origin main` → tip `fe46e2ef85` (already up to date). INBOX + GO-20 read.
 
-ROOT CAUSE: QBO DatePicker/SaveDropdown landed at z-[1000]; Modal stayed z-[215] → `verify-modal-z-index-above-drawers` FAIL on tip (blocks #25674 + guard-integrity CI).
+**MERGED:** #25674 entity-scope 83 triage (`cursor/entity-scope-83-triage-c89b` · merged 2026-10-06T22:50Z).
 
-FIX: Modal z-[1001] · BookLoad z-[1002] · ParityDrawer stackAboveModal z-[1003] · ConfirmDiscard z-[1004] · Combobox LISTBOX 1100 unchanged.
+**OPEN:** #25675 modal z-index (`254b9c4eec`) — https://github.com/tioperfumes07/IH35-TMS/pull/25675
+- CI **guard-integrity PASS** (target of this PR)
+- CI **go26-consolidation-ratchet FAIL** — ambient `raw_table_outside_infra: 41 → 65 (+24)` on main, not introduced by this diff
+- Other checks still running at census time
 
-GUARD: verify-modal-z-index-above-drawers OK · verify-parity-drawer-z-index-above-modal OK · verify-confirm-discard-dialog-z-index-above-modal OK · verify-book-load-modal-z-index-above-drawer PASS
+**INBOX rows measured on branch `cursor/modal-z-index-1001-c89b`:**
+- 432-CUR #1 multi-select: DONE (Load Costs pills park)
+- 432-CUR #7 money-cells: `verify-money-cells-click-through OK — shrink-only 0 <= 0`
+- 435-CUR back arrows: `verify-back-arrow-stays-in-module PASS — 0 cross-module`; prod `navigate(-1)` only in tests/comments
+- 433-CUR / 432-CUR #3–#6: prior census DONE on tip
+
+**NEXT:** FAST-MERGE #25675 when CI green except ambient go26; owner Chrome B7 match-description + Bills tabs UNVERIFIED; go26 +24 is separate ambient class.
+
+Files Modified: this OUTBOX only (census pass)
+
+## 2026-10-07T00:45Z · modal z-index CI unblock — PR #25675 OPEN
+
+ROOT CAUSE: QBO DatePicker/SaveDropdown at z-[1000]; Modal at z-[215] → guard-integrity CI red.
+
+FIX: Modal z-[1001] · BookLoad z-[1002] · ParityDrawer z-[1003] · ConfirmDiscard z-[1004].
+
+GUARD: four z-index guards exit 0 · **CI guard-integrity PASS on #25675**
 
 LANE_CROSS: `docs/bus/2026-10-06-LEAD-RULING-CURSOR-MODAL-Z-INDEX-LANE-CROSS.md`
 
-REMAINING: go26 raw_table_outside_infra +24 on main; FAST-MERGE #25674; owner Chrome B7+Bills UNVERIFIED.
+Files Modified: Modal.tsx · ParityDrawer.tsx · ConfirmDiscardDialog.tsx · BookLoadModalV4.tsx · verify-modal-z-index-above-drawers.mjs · LANE_CROSS ruling
 
-LIVE PROOF: all four z-index guards exit 0 + selftest on branch `cursor/modal-z-index-1001-c89b`.
-
-Files Modified: Modal.tsx · ParityDrawer.tsx · ConfirmDiscardDialog.tsx · BookLoadModalV4.tsx · verify-modal-z-index-above-drawers.mjs · LANE_CROSS ruling · this OUTBOX
-
-## 2026-10-06T23:35Z · ACCT-F2026100684 entity-scope 83 triage — PR OPEN (CC-2 handoff)
+## 2026-10-06T23:35Z · ACCT-F2026100684 entity-scope 83 triage — MERGED #25674
 
 DONE: `verify-mdata-entity-scope` ratchet triage on tip — 83 new literals classified and closed.
 
