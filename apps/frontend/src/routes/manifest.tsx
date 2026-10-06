@@ -93,6 +93,11 @@ const NamesMasterHub = React.lazy(() => import("../pages/lists/names/NamesMaster
 const BrokersListPage = React.lazy(() => import("../pages/lists/names/BrokersListPage").then((m) => ({ default: m.BrokersListPage })));
 const LocationsListPage = React.lazy(() => import("../pages/lists/LocationsListPage").then((m) => ({ default: m.LocationsListPage })));
 /* Rule 07 — DriverDetail.tsx stays in the tree; /edit redirects to ?tab=edit. */
+/* ACCT-F2026100619 (Rule 07 "archive + relocate + keep reachable"): the pre-DRV-F420 driver page — its Operations
+   histories (debt, payroll, escrow, permits, accidents, settlements, fuel, maintenance, safety, communications, PWA,
+   documents vault), earnings and load history — became unreachable when #25517 made DriverProfilePage the profile.
+   It is mounted as the archived Full record at /drivers/:id/record, linked from the profile header. */
+const DriverDetailPage = React.lazy(() => import("../pages/DriverDetail").then((m) => ({ default: m.DriverDetailPage })));
 const DriverProfilePage = React.lazy(() => import("../pages/drivers/DriverProfilePage").then((m) => ({ default: m.DriverProfilePage })));
 const DriverLayoverHistoryPage = React.lazy(() => import("../pages/drivers/DriverLayoverHistoryPage").then((m) => ({ default: m.DriverLayoverHistoryPage })));
 const DriverHosDetailPage = React.lazy(() => import("../pages/drivers/DriverHosDetailPage").then((m) => ({ default: m.DriverHosDetailPage })));
@@ -5092,6 +5097,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DriverEditRedirect />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drivers/:id/record"
+          element={
+            <ProtectedRoute>
+              <DriverDetailPage />
             </ProtectedRoute>
           }
         />
