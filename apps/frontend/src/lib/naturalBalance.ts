@@ -29,3 +29,23 @@ export function naturalCents(rawDebitMinusCreditCents: number, normal: NormalBal
 export function naturalCentsForType(rawDebitMinusCreditCents: number, accountType: string | null | undefined): number {
   return naturalCents(rawDebitMinusCreditCents, normalBalanceOf(accountType));
 }
+
+/**
+ * ROUND 433 — (account_type, debit_cents, credit_cents) -> the amount in the account's natural sign.
+ * null when neither side is known: a missing amount renders as an em dash, never as 0 (law 368.3).
+ */
+export function naturalSign(
+  accountType: string | null | undefined,
+  debitCents: number | null | undefined,
+  creditCents: number | null | undefined
+): number | null {
+  if (debitCents == null && creditCents == null) return null;
+  return naturalCentsForType(Number(debitCents ?? 0) - Number(creditCents ?? 0), accountType);
+}
+
+/** Display a natural-sign amount: em dash for missing, never 0 and never -$0.00. */
+export function formatNaturalCents(cents: number | null | undefined, format: (cents: number) => string): string {
+  if (cents == null || Number.isNaN(Number(cents))) return "—";
+  const c = Number(cents);
+  return format(c === 0 ? 0 : c); // collapses -0 so it can never print -$0.00
+}

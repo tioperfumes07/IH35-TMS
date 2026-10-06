@@ -3,6 +3,8 @@
 // "A detector that runs after every reconciliation finalize and once nightly... It opens an alert
 // if none is open for that account and kind, and closes an alert automatically when the condition
 // clears, recording who or what closed it. It NEVER posts a journal entry."
+import { naturalSignFactor } from "../accounting/natural-sign.js";
+
 export type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
 };
@@ -231,11 +233,15 @@ export async function detectLiveBalanceDrift(client: DbClient, operating_company
   if (accountsRes.rows.length === 0) return { opened: 0, closed: 0 };
 
   const asOfDate = new Date().toISOString().slice(0, 10);
-  const balancesRes = await client.query<{ account_id: string; closing_balance_cents: string | number | null }>(
-    `SELECT account_id, closing_balance_cents FROM accounting.fn_account_balances_as_of($1::uuid, $2::date, NULL)`,
+  const balancesRes = await client.query<{ account_id: string; closing_balance_cents: string | number | null; normal_balance: string | null }>(
+    `SELECT account_id, closing_balance_cents, normal_balance::text AS normal_balance FROM accounting.fn_account_balances_as_of($1::uuid, $2::date, NULL)`,
     [operating_company_id, asOfDate]
   );
-  const closingByAccount = new Map(balancesRes.rows.map((r) => [r.account_id, Number(r.closing_balance_cents ?? 0)]));
+  // NATURAL SIGN (ROUND 433): a card feed reports the amount owed (positive); the ledger holds the liability raw
+  // (debit − credit). Compare in the account's natural direction, never raw.
+  const closingByAccount = new Map(
+    balancesRes.rows.map((r) => [r.account_id, Number(r.closing_balance_cents ?? 0) * naturalSignFactor(r.normal_balance)])
+  );
 
   const stillOpenAccountIds: string[] = [];
   let opened = 0;

@@ -12,6 +12,7 @@
  *                 voided, batch posted/reversed or none) whose journal entry no feed line on this account matches.
  *   explained     feed-only − GL-only;  unexplained = (feed − GL) − explained.
  */
+import { naturalSignFactor } from "../accounting/natural-sign.js";
 import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 
@@ -73,11 +74,15 @@ export async function computeTieouts(client: DbClient, opco: string, day: string
     [opco, bankAccountId ?? null]
   );
   if (!accts.rows.length) return [];
-  const gl = await client.query<{ account_id: string; closing_balance_cents: string }>(
-    `SELECT account_id::text, closing_balance_cents::text FROM accounting.fn_account_balances_as_of($1::uuid, $2::date, NULL)`,
+  const gl = await client.query<{ account_id: string; closing_balance_cents: string; normal_balance: string }>(
+    `SELECT account_id::text, closing_balance_cents::text, normal_balance::text FROM accounting.fn_account_balances_as_of($1::uuid, $2::date, NULL)`,
     [opco, day]
   );
   const glBy = new Map(gl.rows.map((r) => [r.account_id, Number(r.closing_balance_cents)]));
+  // NATURAL SIGN (ROUND 433): the feed reports a card's balance as the amount OWED (positive); the ledger holds a
+  // liability raw (debit − credit = −owed). Every ledger-side amount is put in the account's natural direction
+  // before it is compared with the feed, or a card would show twice its balance as drift.
+  const signBy = new Map(gl.rows.map((r) => [r.account_id, naturalSignFactor(r.normal_balance)]));
   const out = [];
   for (const a of accts.rows) {
     const feed = Number(a.current_balance_cents ?? 0);
@@ -97,6 +102,12 @@ export async function computeTieouts(client: DbClient, opco: string, day: string
       );
       feedOnly = { cents: Number(f.rows[0]?.c ?? 0), count: Number(f.rows[0]?.n ?? 0) };
       glOnly = { cents: Number(g.rows[0]?.c ?? 0), count: Number(g.rows[0]?.n ?? 0) };
+    }
+    if (a.ledger_account_id) {
+      const k = signBy.get(a.ledger_account_id) ?? 1;
+      glBal = glBal == null ? null : glBal * k;
+      feedOnly = { ...feedOnly, cents: feedOnly.cents * k };
+      glOnly = { ...glOnly, cents: glOnly.cents * k };
     }
     const cls = classifyTieout({ ledger_account_id: a.ledger_account_id, feed_balance_cents: feed, gl_balance_cents: glBal, feed_only_cents: feedOnly.cents, gl_only_cents: glOnly.cents, tolerance_cents: tol });
     const stale = !a.last_synced_at || Date.now() - new Date(a.last_synced_at).getTime() > STALE_FEED_HOURS * 3_600_000;
