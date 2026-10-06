@@ -11,6 +11,10 @@ const paths = {
   migration: path.join(ROOT, "db/migrations/0360_maint_pm_auto_engine.sql"),
   service: path.join(ROOT, "apps/backend/src/maintenance/pm-auto-engine.service.ts"),
   cron: path.join(ROOT, "apps/backend/src/maintenance/pm-auto-engine.cron.ts"),
+  // The HTTP surface (runs dashboard, pause/resume settings, the PM log read) moved out of the service into its own
+  // routes file; the guard reads both as one engine.
+  routes: path.join(ROOT, "apps/backend/src/maintenance/pm-auto-engine.routes.ts"),
+  odometerManualRoutes: path.join(ROOT, "apps/backend/src/telematics/odometer-manual.routes.ts"),
   serviceTest: path.join(ROOT, "apps/backend/src/maintenance/__tests__/pm-auto-engine.service.test.ts"),
   page: path.join(ROOT, "apps/frontend/src/pages/maintenance/PmAutoEnginePage.tsx"),
   pageTest: path.join(ROOT, "apps/frontend/src/pages/maintenance/__tests__/PmAutoEnginePage.test.tsx"),
@@ -41,7 +45,9 @@ function labelFailures(service, maintenanceApi, page) {
 function main() {
   const failures = [];
   const migration = read(paths.migration);
-  const service = read(paths.service);
+  // service + routes = the engine (the routes file holds the endpoints and the PM log read).
+  const service = `${read(paths.service)}\n${read(paths.routes)}`;
+  const odometerManualRoutes = read(paths.odometerManualRoutes);
   const cron = read(paths.cron);
   const serviceTest = read(paths.serviceTest);
   const page = read(paths.page);
@@ -78,7 +84,16 @@ function main() {
   if (!service.includes("origin = 'pm_schedule'") && !service.includes("'pm_schedule'")) {
     failures.push("service must create WOs with pm_schedule origin");
   }
-  if (!cron.includes("5 * * * *")) failures.push("cron must schedule hourly evaluation");
+  // E-14 (ORDERS 2026-10-01, fa7100a2f5 #23632): ONE run daily at 03:30 America/Chicago (cost discipline R-06) PLUS a run on
+  // every manual odometer entry — the evaluation is never left waiting for the next day when a reading arrives.
+  const e14 =
+    /cron\.schedule\(\s*"30 3 \* \* \*"/.test(cron) &&
+    /timezone:\s*"America\/Chicago"/.test(cron) &&
+    /export async function runPmAutoEngineAfterManualOdometer\(/.test(service) &&
+    /runPmAutoEngineAfterManualOdometer\(b\.operating_company_id\)/.test(odometerManualRoutes);
+  if (!cron.includes("5 * * * *") && !e14) {
+    failures.push("cron must schedule the PM evaluation (E-14: daily 03:30 America/Chicago + on manual odometer entry)");
+  }
   if ((serviceTest.match(/\bit\(/g) ?? []).length < 6) {
     failures.push("pm-auto-engine.service.test must include at least 6 vitest cases");
   }

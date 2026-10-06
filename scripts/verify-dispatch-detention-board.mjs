@@ -57,7 +57,15 @@ function audit(overrides = new Map()) {
   if ((routeTest.match(/\bit\(/g) ?? []).length < 5) failures.push("detention.routes tests must cover at least 5 cases");
 
   if (!routes.includes("/api/v1/dispatch/detention/board")) failures.push("detention routes must expose board endpoint");
-  if (!service.includes("dispatch.stop_arrivals")) failures.push("detention service must sync from stop_arrivals");
+  // E-09 (#23694): every dispatch.stop_arrivals reader moved to the ONE confirmed-arrival source (STOP_ARRIVAL_EVENTS_SQL,
+  // geofence events). Detention syncs from it, scoped to the company on the arrival AND the load.
+  const syncsFromArrivals =
+    service.includes("dispatch.stop_arrivals") ||
+    (/import \{[^}]*\bSTOP_ARRIVAL_EVENTS_SQL\b[^}]*\} from "\.\.\/telematics\/stop-arrival-events\.js"/.test(service) &&
+      /FROM \(\$\{STOP_ARRIVAL_EVENTS_SQL\}\) sa/.test(service) &&
+      /WHERE sa\.operating_company_id = \$1::uuid/.test(service) &&
+      /l\.operating_company_id = sa\.operating_company_id/.test(service));
+  if (!syncsFromArrivals) failures.push("detention service must sync from confirmed stop arrivals (STOP_ARRIVAL_EVENTS_SQL), company-scoped");
   if (!service.includes("accessorial_bridge_rows")) failures.push("detention service must bridge to accessorial rows");
   if (!service.includes("sendEmail")) failures.push("detention service must notify customer via email");
   if (!service.includes("pg_advisory_xact_lock") || !service.includes("dispatch.detention.customer-notify:")) {
