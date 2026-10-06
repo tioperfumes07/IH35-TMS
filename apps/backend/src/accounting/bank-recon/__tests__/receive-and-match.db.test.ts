@@ -73,7 +73,7 @@ describeIntegration("ROUND 433 B8 receive one deposit against several invoices (
     await db.query("SET ROLE ih35_app");
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
-    await db.query(`INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`, [userId, `b8-${suffix}@test.local`]);
+    await db.query(`INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Accountant','en') ON CONFLICT (id) DO NOTHING`, [userId, `b8-${suffix}@test.local`]);
     await db.query("COMMIT");
     isolated = await createIsolatedOperatingCompany({ codePrefix: "BEH", legalNamePrefix: "B8 Receive Fixture", label: "receive-and-match", actorUserId: userId, client: db });
     companyId = isolated.companyId;
