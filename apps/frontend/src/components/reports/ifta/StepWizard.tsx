@@ -47,7 +47,7 @@ export function StepWizard({
             className={
               activeStep === step.id
                 ? "rounded-sm border border-slate-500 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-900"
-                : "rounded-sm border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700"
+                : "rounded-sm border border-slate-300 bg-[var(--surface-unselected)] px-3 py-1 text-xs font-semibold text-slate-700"
             }
             onClick={() => setActiveStep(step.id)}
             data-ifta-wizard-step={step.id}

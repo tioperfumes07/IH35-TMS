@@ -481,7 +481,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
                       key={opt.value}
                       type="button"
                       onClick={() => setValue?.("temperature_type", opt.value, { shouldDirty: true })}
-                      className={`flex-1 px-2 ${idx === 0 ? "border-r border-gray-300" : ""} ${active ? "bg-[#1F2A44] text-white" : "bg-white text-slate-700"}`}
+                      className={`flex-1 px-2 ${idx === 0 ? "border-r border-gray-300" : ""} ${active ? "bg-[#1F2A44] text-white" : "bg-[var(--surface-unselected)] text-slate-700"}`}
                     >
                       {opt.label}
                     </button>
@@ -518,7 +518,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
                       type="button"
                       data-testid={`lumper-payer-${opt.value}`}
                       onClick={() => setValue?.("lumper_payer", opt.value, { shouldDirty: true })}
-                      className={`flex-1 px-2 ${idx === 0 ? "border-r border-gray-300" : ""} ${active ? "bg-[#1F2A44] text-white" : "bg-white text-slate-700"}`}
+                      className={`flex-1 px-2 ${idx === 0 ? "border-r border-gray-300" : ""} ${active ? "bg-[#1F2A44] text-white" : "bg-[var(--surface-unselected)] text-slate-700"}`}
                     >
                       {opt.label}
                     </button>
@@ -543,7 +543,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
                       type="button"
                       data-testid={`lumper-invoice-customer-${opt.value ? "yes" : "no"}`}
                       onClick={() => setValue?.("lumper_will_invoice_customer", opt.value, { shouldDirty: true })}
-                      className={`flex-1 px-2 ${idx === 0 ? "border-r border-gray-300" : ""} ${active ? "bg-[#1F2A44] text-white" : "bg-white text-slate-700"}`}
+                      className={`flex-1 px-2 ${idx === 0 ? "border-r border-gray-300" : ""} ${active ? "bg-[#1F2A44] text-white" : "bg-[var(--surface-unselected)] text-slate-700"}`}
                     >
                       {opt.label}
                     </button>
@@ -568,7 +568,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
                       type="button"
                       data-testid={`lumper-late-penalty-${opt.value ? "yes" : "no"}`}
                       onClick={() => setValue?.("lumper_late_penalty_applies", opt.value, { shouldDirty: true })}
-                      className={`flex-1 px-2 ${idx === 0 ? "border-r border-gray-300" : ""} ${active ? "bg-[#1F2A44] text-white" : "bg-white text-slate-700"}`}
+                      className={`flex-1 px-2 ${idx === 0 ? "border-r border-gray-300" : ""} ${active ? "bg-[#1F2A44] text-white" : "bg-[var(--surface-unselected)] text-slate-700"}`}
                     >
                       {opt.label}
                     </button>

@@ -115,7 +115,7 @@ export function ListViewGear<T>({ columns, gear, onGearChange }: Props<T>) {
                     key={value}
                     type="button"
                     onClick={() => set({ density: value })}
-                    className={`flex-1 py-1 ${draft.density === value ? "bg-slate-1000 text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
+                    className={`flex-1 py-1 ${draft.density === value ? "bg-slate-1000 text-white" : "bg-[var(--surface-unselected)] text-gray-700 hover:bg-[var(--surface-hover)]"}`}
                   >
                     {label}
                   </button>
@@ -143,7 +143,7 @@ export function ListViewGear<T>({ columns, gear, onGearChange }: Props<T>) {
                     key={v}
                     type="button"
                     onClick={() => set({ statusFilter: v })}
-                    className={`flex-1 py-1 capitalize ${draft.statusFilter === v ? "bg-slate-1000 text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
+                    className={`flex-1 py-1 capitalize ${draft.statusFilter === v ? "bg-slate-1000 text-white" : "bg-[var(--surface-unselected)] text-gray-700 hover:bg-[var(--surface-hover)]"}`}
                   >
                     {v === "all" ? "All" : v === "active" ? "Active" : "Inactive"}
                   </button>

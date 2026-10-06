@@ -526,7 +526,7 @@ export function RoundTrips({
         <div className="inline-flex rounded-sm border border-gray-200">
           <button
             type="button"
-            className={`px-2 py-0.5 ${boardView === "board" ? "bg-slate-800 text-white" : "bg-white text-slate-700"}`}
+            className={`px-2 py-0.5 ${boardView === "board" ? "bg-slate-800 text-white" : "bg-[var(--surface-unselected)] text-slate-700"}`}
             data-testid="round-trips-view-board"
             onClick={() => {
               setBoardView("board");
@@ -537,7 +537,7 @@ export function RoundTrips({
           </button>
           <button
             type="button"
-            className={`px-2 py-0.5 ${boardView === "timeline" ? "bg-slate-800 text-white" : "bg-white text-slate-700"}`}
+            className={`px-2 py-0.5 ${boardView === "timeline" ? "bg-slate-800 text-white" : "bg-[var(--surface-unselected)] text-slate-700"}`}
             data-testid="round-trips-view-timeline"
             onClick={() => {
               setBoardView("timeline");

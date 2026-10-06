@@ -81,7 +81,7 @@ function StatusPill({ status }: { status: string }) {
       className="inline-block rounded-sm px-2 py-0.5 text-xs font-semibold uppercase tracking-wide"
       style={{
         backgroundColor: unknown ? "#F3F4F6" : "#DBEAFE",
-        color: unknown ? "#6B7280" : "#1E40AF",
+        color: unknown ? "#6B7280" : "var(--accent-green)",
       }}
     >
       {status}

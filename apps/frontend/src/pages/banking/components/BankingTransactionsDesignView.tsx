@@ -2644,7 +2644,7 @@ export function BankingTransactionsDesignView({
                 className={`inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-sm border px-2 text-xs ${
                   draft.mode === modeId
                     ? "border-[#14314F] bg-[#14314F] text-white"
-                    : "border-[#E5E7EB] bg-white text-[#1F2A44]"
+                    : "border-[#E5E7EB] bg-[var(--surface-unselected)] text-[#1F2A44]"
                 }`}
               >
                 <input
@@ -3540,7 +3540,7 @@ export function BankingTransactionsDesignView({
                 className={`border px-2 py-1 text-left text-xs transition ${onReorderAccount ? "" : "rounded"} ${
                   account.id === selectedAccount?.id
                     ? "border-[#14314F] bg-[#14314F] text-white"
-                    : "border-[#E5E7EB] bg-white text-[#1F2A44] hover:bg-[#F7F8FA]"
+                    : "border-[#E5E7EB] bg-[var(--surface-unselected)] text-[#1F2A44] hover:bg-[var(--surface-hover)]"
                 }`}
                 onClick={() => onSelectAccount(account.id)}
               >

@@ -351,7 +351,7 @@ export function BreakEvenPage() {
                           "rounded-sm border px-2 py-0.5 text-xs font-medium",
                           cls === "variable"
                             ? "border-slate-400 bg-slate-100 text-slate-700"
-                            : "border-slate-300 bg-white text-slate-600",
+                            : "border-slate-300 bg-[var(--surface-unselected)] text-slate-600",
                         ].join(" ")}
                         title="Toggle fixed / variable (what-if, not saved)"
                       >

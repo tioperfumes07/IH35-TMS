@@ -750,7 +750,7 @@ export function ReconciliationWorkspacePage() {
               })}
             </ul>
           ) : (
-            <p className="mt-2 text-xs text-[#16A34A]">No uncleared items as of statement date.</p>
+            <p className="mt-2 text-xs text-[var(--accent-green)]">No uncleared items as of statement date.</p>
           )}
         </div>
       ) : null}
@@ -788,7 +788,7 @@ export function ReconciliationWorkspacePage() {
                 <p className="font-bold uppercase tracking-wide text-[#4B5563]">Difference</p>
                 <p
                   className={`mt-0.5 font-semibold tabular-nums ${
-                    summary.varianceCents === 0 ? "text-[#16A34A]" : "text-red-700"
+                    summary.varianceCents === 0 ? "text-[var(--accent-green)]" : "text-red-700"
                   }`}
                   data-testid="recon-difference"
                 >
@@ -803,7 +803,7 @@ export function ReconciliationWorkspacePage() {
               (Owner force-complete only with a written reason).
             </p>
           ) : (
-            <p className="mt-2 text-xs text-[#16A34A]">Difference is $0.00 — Finish is enabled.</p>
+            <p className="mt-2 text-xs text-[var(--accent-green)]">Difference is $0.00 — Finish is enabled.</p>
           )}
         </div>
       ) : balanceHeader ? (

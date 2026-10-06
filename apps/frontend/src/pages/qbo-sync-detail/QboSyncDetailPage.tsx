@@ -131,7 +131,7 @@ export function QboSyncDetailPage() {
               key={opt.value}
               type="button"
               className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                kind === opt.value ? "border-slate-300 bg-slate-100 text-slate-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                kind === opt.value ? "border-slate-300 bg-slate-100 text-slate-700" : "border-slate-200 bg-[var(--surface-unselected)] text-slate-600 hover:bg-[var(--surface-hover)]"
               }`}
               onClick={() => setKind(opt.value)}
             >
@@ -148,7 +148,7 @@ export function QboSyncDetailPage() {
               className={`rounded-full border px-3 py-1 text-xs font-medium ${
                 severity === opt.value
                   ? "border-slate-300 bg-slate-100 text-slate-700"
-                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                  : "border-slate-200 bg-[var(--surface-unselected)] text-slate-600 hover:bg-[var(--surface-hover)]"
               }`}
               onClick={() => setSeverity(opt.value)}
             >

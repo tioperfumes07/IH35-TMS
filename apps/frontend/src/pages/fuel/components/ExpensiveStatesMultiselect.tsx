@@ -102,7 +102,7 @@ export function ExpensiveStatesMultiselect({ companyId, value, onChange }: Props
             <label
               key={row.id}
               className={`inline-flex cursor-pointer items-center gap-1.5 rounded-sm border px-2 py-1 text-xs ${
-                checked ? "border-slate-700 bg-slate-50" : "border-gray-300 bg-white"
+                checked ? "border-slate-700 bg-slate-50" : "border-gray-300 bg-[var(--surface-unselected)]"
               }`}
             >
               <input type="checkbox" checked={checked} onChange={() => toggleCode(row.code)} />

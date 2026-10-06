@@ -346,7 +346,7 @@ export function DriverSafetyCards({ companyId, filter, activityWindow, onCountsC
                   ? "border-[#1f2a44] bg-[#1f2a44] text-white"
                   : emphasize
                     ? "border-red-200 bg-red-50 text-red-700"
-                    : "border-slate-300 bg-white text-slate-600"
+                    : "border-slate-300 bg-[var(--surface-unselected)] text-slate-600"
               }`}
             >
               {chip.label}

@@ -788,7 +788,7 @@ export function BillsPage() {
               className={`rounded border px-2 py-0.5 text-xs font-medium ${
                 allocationBillId === bill.id
                   ? "border-slate-300 bg-slate-100 text-slate-700"
-                  : "border-gray-300 bg-white text-gray-800 hover:bg-gray-50"
+                  : "border-gray-300 bg-[var(--surface-unselected)] text-gray-800 hover:bg-[var(--surface-hover)]"
               }`}
               onClick={() => setAllocationBillId((current) => (current === bill.id ? null : bill.id))}
             >

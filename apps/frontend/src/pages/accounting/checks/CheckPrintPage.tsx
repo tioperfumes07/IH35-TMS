@@ -267,7 +267,7 @@ export function CheckPrintPage() {
       label: "Payee",
       sortable: false,
       render: (row) => (
-        <Link to={`/accounting/checks/${row.id}`} className="text-blue-700 underline">
+        <Link to={`/accounting/checks/${row.id}`} className="text-[var(--accent-green)] underline">
           {row.print_on_check_name}
         </Link>
       ),
@@ -289,7 +289,7 @@ export function CheckPrintPage() {
       title="Print checks"
       subtitle="Assign numbers to checks waiting to print"
       actions={
-        <Link to="/accounting/checks" className="text-xs font-semibold text-blue-700 hover:underline">
+        <Link to="/accounting/checks" className="text-xs font-semibold text-[var(--accent-green)] hover:underline">
           ← All checks
         </Link>
       }

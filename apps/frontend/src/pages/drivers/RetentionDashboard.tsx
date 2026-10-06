@@ -78,7 +78,7 @@ export function RetentionDashboard() {
                   kind="driver"
                   id={row.driver_uuid}
                   label="Open driver profile"
-                  className="mr-2 text-blue-700 underline"
+                  className="mr-2 text-[var(--accent-green)] underline"
                 />
                 Late arrival rate (30d): {lateArrivalRate == null ? "Unavailable" : `${(lateArrivalRate * 100).toFixed(1)}%`}
               </p>

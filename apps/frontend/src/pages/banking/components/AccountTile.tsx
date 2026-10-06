@@ -36,7 +36,7 @@ export function AccountTile({ tile, selected, onSelect, onView, onInspect }: Pro
   return (
     <div
       className={`flex h-[120px] w-[220px] shrink-0 flex-col rounded-sm border px-3 py-2 text-left ${
-        selected ? "border-slate-400 bg-slate-50 shadow-xs" : "border-gray-200 bg-white"
+        selected ? "border-slate-400 bg-slate-50 shadow-xs" : "border-gray-200 bg-[var(--surface-unselected)]"
       }`}
       data-testid={`bank-account-tile-${tile.id}`}
     >

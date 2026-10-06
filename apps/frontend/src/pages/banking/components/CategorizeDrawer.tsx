@@ -117,7 +117,7 @@ export function CategorizeDrawer({ open, transaction, operatingCompanyId, onClos
               <button
                 key={key}
                 type="button"
-                className={`rounded-sm border px-2 py-1 text-xs ${action === key ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-200 bg-white text-gray-700"}`}
+                className={`rounded-sm border px-2 py-1 text-xs ${action === key ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-200 bg-[var(--surface-unselected)] text-gray-700"}`}
                 onClick={() => setAction(key)}
               >
                 {label}

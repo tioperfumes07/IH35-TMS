@@ -447,7 +447,7 @@ export function WorkOrdersConsoleListPage() {
         <button
           type="button"
           className={`rounded-sm border px-2 py-1 text-xs font-semibold ${
-            view === "list" ? "border-slate-500 bg-slate-50 text-slate-800" : "border-gray-300 bg-white text-gray-600"
+            view === "list" ? "border-slate-500 bg-slate-50 text-slate-800" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-600"
           }`}
           aria-pressed={view === "list"}
           onClick={() => setView("list")}
@@ -457,7 +457,7 @@ export function WorkOrdersConsoleListPage() {
         <button
           type="button"
           className={`rounded-sm border px-2 py-1 text-xs font-semibold ${
-            view === "kanban" ? "border-slate-500 bg-slate-50 text-slate-800" : "border-gray-300 bg-white text-gray-600"
+            view === "kanban" ? "border-slate-500 bg-slate-50 text-slate-800" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-600"
           }`}
           aria-pressed={view === "kanban"}
           onClick={() => setView("kanban")}

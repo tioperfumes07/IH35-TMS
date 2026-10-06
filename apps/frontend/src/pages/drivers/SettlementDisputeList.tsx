@@ -58,7 +58,7 @@ export function SettlementDisputeList({ driverId }: { driverId?: string } = {}) 
                 data-testid={`dispute-status-filter-${filter.id}`}
                 onClick={() => staged.setDraft({ statusFilter: filter.id })}
                 className={`rounded border px-2 py-1 text-xs font-medium ${
-                  staged.draft.statusFilter === filter.id ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-300 bg-white text-gray-700"
+                  staged.draft.statusFilter === filter.id ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-700"
                 }`}
               >
                 {filter.label}

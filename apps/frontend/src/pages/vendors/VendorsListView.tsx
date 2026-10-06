@@ -208,7 +208,7 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, un
                     data-vendor-filter-chip={chip.key}
                     onClick={chip.toggle}
                     className={`rounded-sm border px-2 py-1 text-xs font-medium ${
-                      chip.on ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                      chip.on ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-700 hover:bg-[var(--surface-hover)]"
                     }`}
                   >
                     {chip.label}

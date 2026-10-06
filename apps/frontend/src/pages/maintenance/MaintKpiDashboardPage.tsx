@@ -77,7 +77,7 @@ function KpiTile({
       type="button"
       onClick={onSelect}
       className={`rounded border px-3 py-2 text-left transition ${
-        active ? "border-slate-500 bg-slate-50 ring-1 ring-slate-300" : "border-gray-200 bg-white hover:border-slate-300"
+        active ? "border-slate-500 bg-slate-50 ring-1 ring-slate-300" : "border-gray-200 bg-[var(--surface-unselected)] hover:border-slate-300"
       }`}
       data-testid={testId}
     >

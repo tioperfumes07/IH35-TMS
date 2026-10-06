@@ -802,7 +802,7 @@ function KpiCard({
     </>
   );
   const base = `rounded-sm border px-2 py-1 text-xs ${
-    active ? "border-[#4B5563] bg-[#F7F8FA]" : "border-gray-200 bg-white"
+    active ? "border-[#4B5563] bg-[#F7F8FA]" : "border-gray-200 bg-[var(--surface-unselected)]"
   }`;
   if (disabled) {
     return (

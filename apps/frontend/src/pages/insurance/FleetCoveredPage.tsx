@@ -45,9 +45,9 @@ export function FleetCoveredPage() {
       alwaysVisible: true,
       render: (row) =>
         row.unit_id
-          ? <EntityLink kind="unit" id={row.unit_id} label={row.unit_number} className="text-blue-700 underline" />
+          ? <EntityLink kind="unit" id={row.unit_id} label={row.unit_number} className="text-[var(--accent-green)] underline" />
           : row.equipment_id
-            ? <EntityLink kind="trailer" id={row.equipment_id} label={row.unit_number} className="text-blue-700 underline" />
+            ? <EntityLink kind="trailer" id={row.equipment_id} label={row.unit_number} className="text-[var(--accent-green)] underline" />
             : row.unit_number,
     },
     { key: "vehicle_type", label: "Type", sortable: true, render: (row) => label(row.vehicle_type) },
