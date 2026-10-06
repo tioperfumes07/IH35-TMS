@@ -16,6 +16,105 @@
       "applied_ledger": "_system._schema_migrations on br-fancy-credit-akjnd07a",
       "why_not_in_migration": "already applied to production when the omission was caught; applied migrations are immutable",
       "text": "-- CANONICAL-CHECK: money concept = settlement line ITEM DETAIL, not settlement value. COLLIDES WITH driver_finance.driver_settlements AND WITH driver_finance.settlement_lines, and is distinct from BOTH, deliberately. driver_finance.driver_settlements remains THE canonical settlement ledger: this table creates no settlement, holds no gross/deduction/net, and never changes what a driver is paid. driver_finance.settlement_lines remains THE canonical settlement line ledger and remains the ONLY source of settlement value: this table never inserts a line, never alters a line's amount, and its rows sum to the amount of the ONE line they explain -- they redistribute nothing. GRAIN: one row per constituent item of a single pre-existing settlement_lines row that a historical AlwaysTrack import materialized as one generic extra_pay row with item_id NULL, collapsing 2-5 real document lines into one. The 17 affected lines sit in settlements 5769-5819, which are closed and verified 51/51 against AlwaysTrack and are never re-opened (owner ruling), so the item detail is recorded BESIDE the signed document rather than by editing it. Append-only, WORM-protected by 202614710000_worm_settlement_line_item_splits.sql. The permanent engine-side fix ships in the same migration: a NOT VALID check constraint on driver_finance.settlement_lines requiring item_id on every FUTURE extra_pay line, so the next import cannot recreate the defect; NOT VALID grandfathers the 17 legacy rows instead of retroactively failing closed settlements."
+    },
+    "driver_finance.feed_intakes": {
+      "migration": "202615170400_feed_gate_intakes.sql",
+      "applied_at_utc": "2026-10-01T16:00:20.606Z",
+      "applied_ledger": "_system._schema_migrations on br-fancy-credit-akjnd07a",
+      "why_not_in_migration": "already applied to production when the omission was caught; applied migrations are immutable",
+      "text": "-- CANONICAL-CHECK: money concept = NONE. driver_finance.feed_intakes is the FEED GATE intake register: one row per fed subject (settlement / load / expense / bill / invoice / factoring statement / fuel import / batch) with its open/passed/blocked/closed status, and the one-settlement-at-a-time rule per driver. It holds no amount, no debit/credit and no balance; it posts nothing and no posting path reads it as money. The canonical ledgers stay where they are: settlement value in driver_finance.driver_settlements / driver_finance.settlement_lines, the books in accounting.journal_entries. The migration's own header said 'CANONICAL-CHECK: driver_finance.*' mid-line, which the guard's line-start pattern does not read."
+    },
+    "driver_finance.feed_intake_checks": {
+      "migration": "202615170400_feed_gate_intakes.sql",
+      "applied_at_utc": "2026-10-01T16:00:20.606Z",
+      "applied_ledger": "_system._schema_migrations on br-fancy-credit-akjnd07a",
+      "why_not_in_migration": "already applied to production when the omission was caught; applied migrations are immutable",
+      "text": "-- CANONICAL-CHECK: money concept = NONE. driver_finance.feed_intake_checks is the WORM check history of a feed intake: one row per check per run (pass / fail / na, what is missing, where to fix it). No amount, no balance, no posting; it is evidence that a fed document was verified before it moved on. It duplicates no ledger: driver_finance.driver_settlements, driver_finance.settlement_lines and accounting.journal_entries remain the only stores of the money the checks look at."
+    },
+    "accounting.deposits": {
+      "migration": "202615171200_accounting_bank_deposits.sql",
+      "applied_at_utc": "2026-10-01T10:55:17.279Z",
+      "applied_ledger": "_system._schema_migrations on br-fancy-credit-akjnd07a",
+      "why_not_in_migration": "already applied to production when the omission was caught; applied migrations are immutable",
+      "text": "-- CANONICAL-CHECK: money concept = BANK DEPOSIT DOCUMENT (QuickBooks 'Make Deposit'). accounting.deposits is a source document: the deposit slip that moves receipts already in Undeposited Funds to a bank account (total_receipts_cents - cash_back_cents = amount_deposited_cents). Its GL effect is posted once through the posting engine as source type bank_deposit (DR the bank's ledger account / CR undeposited funds) and the entry is stamped on the row (journal_entry_id); accounting.journal_entries remains THE ledger. It is not a second bank ledger: banking.bank_transactions remains the bank feed, and the bank line MATCHES the deposit as one document rather than the deposit storing a bank balance. It holds no running balance. Void = reversal (voided_at), never DELETE (WORM)."
+    },
+    "accounting.deposit_lines": {
+      "migration": "202615171200_accounting_bank_deposits.sql",
+      "applied_at_utc": "2026-10-01T10:55:17.279Z",
+      "applied_ledger": "_system._schema_migrations on br-fancy-credit-akjnd07a",
+      "why_not_in_migration": "already applied to production when the omission was caught; applied migrations are immutable",
+      "text": "-- CANONICAL-CHECK: money concept = BANK DEPOSIT LINE: one row per receipt on a deposit slip (a customer payment from accounting.payments, a factoring advance from accounting.factoring_advances, or the cash-back line), each pointing at its source document by FK. The amount on a line is the amount of that receipt carried onto the slip; it creates no receivable or payment of its own and posts nothing by itself (the header posts the deposit). accounting.payments and accounting.factoring_advances remain the canonical receipt documents and accounting.journal_entries the ledger. WORM: lines are never deleted."
+    },
+    "banking.bank_account_tieouts": {
+      "migration": "202615180200_bank_account_tieouts.sql",
+      "applied_at_utc": "2026-10-01T15:29:47.142Z",
+      "applied_ledger": "_system._schema_migrations on br-fancy-credit-akjnd07a",
+      "why_not_in_migration": "already applied to production when the omission was caught; applied migrations are immutable",
+      "text": "-- CANONICAL-CHECK: money concept = BANK-to-GL TIE-OUT EVIDENCE, not a balance store. One row per bank account per day: the feed's closing balance, the GL balance of the account's ledger_account_id COMPUTED from accounting.journal_entry_postings at run time, the difference, and how much of it is explained by feed-only / GL-only lines. Nothing reads gl_balance_cents as a balance: it is recomputed on every run and kept only as the dated record of what tied (bank-tieout.routes.ts shows the history). banking.bank_transactions remains the bank feed, banking.bank_accounts.current_balance_cents the feed's current balance, and accounting.journal_entries the ledger. No DELETE grant."
+    },
+    "accounting.factoring_purchases": {
+      "migration": "202615180800_factoring_purchase_document.sql",
+      "applied_at_utc": "2026-10-01T17:46:06.718Z",
+      "applied_ledger": "_system._schema_migrations on br-fancy-credit-akjnd07a",
+      "why_not_in_migration": "already applied to production when the omission was caught; applied migrations are immutable",
+      "text": "-- CANONICAL-CHECK: money concept = FACTORING PURCHASE DOCUMENT (one Faro wire). accounting.factoring_purchases is the source document the owner closes: gross, escrow reserve, cash reserve, fee, wire fee, advance and net to IH35, held to Faro's formula by CHECK constraints. It posts through the existing secured-borrowing funding poster via exactly ONE accounting.factoring_advances row per purchase (factoring_advance_id, 1:1), so no GL math is duplicated and accounting.journal_entries stays the ledger; the bank match lives on the bank line (banking.bank_transactions.matched_factoring_advance_id), not here. It is distinct from the factoring.* schema (factoring.batch / reserve_movement / letter_of_release), which is the factor-relationship ledger: a purchase records what Faro bought, not a second factoring ledger. Void, never delete."
+    },
+    "accounting.factoring_purchase_lines": {
+      "migration": "202615180800_factoring_purchase_document.sql",
+      "applied_at_utc": "2026-10-01T17:46:06.718Z",
+      "applied_ledger": "_system._schema_migrations on br-fancy-credit-akjnd07a",
+      "why_not_in_migration": "already applied to production when the omission was caught; applied migrations are immutable",
+      "text": "-- CANONICAL-CHECK: money concept = FACTORING PURCHASE LINE: one row per invoice sold on a purchase (gross, escrow reserve, cash reserve, fee), linking invoice <-> customer <-> load <-> purchase. A purchase posts only when its header equals the sum of its live lines. The line is not a receivable and not a second invoice ledger: accounting.invoices remains THE invoice/A-R document (ASC 860 secured borrowing: A/R stays until the debtor pays) and accounting.journal_entries the ledger. It is distinct from factoring.* (the factor-relationship ledger). Money columns are frozen once the purchase is posted."
+    },
+    "accounting.lease_lessee_schedule_period": {
+      "migration": "202615210000_lease_to_own_lessee_asc842.sql",
+      "applied_at_utc": null,
+      "applied_ledger": "NOT APPLIED - held",
+      "why_not_in_migration": "the creating migration is HELD (db/migrations/.held-migrations.json, block ROUND-321-LEASE-TO-OWN): the Lead validates CC-1's exact bytes on a Neon branch before applying, so the declaration is relocated here instead of editing the held file under review",
+      "text": "-- CANONICAL-CHECK: money concept = ASC 842 LESSEE AMORTIZATION SCHEDULE (a subledger), not a second ledger. One row per lease asset line per period: payment, interest, principal, liability open/close, ROU amortization/close and straight-line cost, with the bill and the accretion journal entry each period posted through. The GL balance of the lease liability and ROU asset is accounting.journal_entries (roles lease_liability / rou_asset); those accounts pool every lease, so the per-lease carrying amount can only come from this schedule, and lease-buyout.service.ts reads it from POSTED, non-voided periods only. accounting.lease_contract remains the contract document. WORM (void-not-delete) + FORCE RLS."
+    },
+    "accounting.factoring_repurchase_due_events": {
+      "migration": "202615220700_factoring_repurchase_due_events.sql",
+      "applied_at_utc": "2026-10-02T18:51:04.399Z",
+      "applied_ledger": "_system._schema_migrations on br-fancy-credit-akjnd07a",
+      "why_not_in_migration": "already applied to production when the omission was caught; applied migrations are immutable",
+      "text": "-- CANONICAL-CHECK: money concept = NONE posted - an OBLIGATION EVENT queue. One row per purchased account still open on day 95 of its purchase (the Faro repurchase deadline), awaiting the owner's decision (extend / confirm repurchase / mark collected). It carries the line's gross for context but writes no journal entry, posting, bill or payment; the repurchase itself posts later through Banking when the deduction or payment is matched. accounting.factoring_purchases / accounting.factoring_purchase_lines remain the purchase documents, accounting.invoices the receivable, accounting.journal_entries the ledger, and factoring.* the factor-relationship ledger. Append-only."
+    },
+    "accounting.factoring_interest_accrual_runs": {
+      "migration": "202615240600_factoring_interest_accrual_runs.sql",
+      "applied_at_utc": "2026-10-02T19:30:26.566Z",
+      "applied_ledger": "_system._schema_migrations on br-fancy-credit-akjnd07a",
+      "why_not_in_migration": "already applied to production when the omission was caught; applied migrations are immutable",
+      "text": "-- CANONICAL-CHECK: money concept = MONTH-END ACCRUAL RUN (a maker-checker approval document for one journal entry). One row per company and period: proposed by one user, approved by a second (maker <> checker), and only then does ONE journal entry post (DR 6830 Default Interest / CR 2155 Accrued Factoring Interest), stamped on the row (posted = has journal_entry_id). A rejected run posts nothing. It stores no balance: the accrued interest balance is account 2155 in accounting.journal_entries, the ledger. Distinct from factoring.* (factor-relationship ledger). A decided run never changes; never deleted."
+    },
+    "accounting.factoring_interest_accrual_run_lines": {
+      "migration": "202615240600_factoring_interest_accrual_runs.sql",
+      "applied_at_utc": "2026-10-02T19:30:26.566Z",
+      "applied_ledger": "_system._schema_migrations on br-fancy-credit-akjnd07a",
+      "why_not_in_migration": "already applied to production when the omission was caught; applied migrations are immutable",
+      "text": "-- CANONICAL-CHECK: money concept = ACCRUAL RUN COMPUTATION LINE: one row per open purchased account in a run, showing how the run's total was computed (net amount, cumulative contract interest, what earlier posted runs already accrued, this run's accrual; accrual = cumulative - previously accrued, CHECK-enforced). These are the run's working papers; they post nothing themselves (the run's one journal entry does) and are frozen once the run leaves 'proposed'. accounting.journal_entries remains the ledger and accounting.factoring_purchase_lines the purchased accounts."
+    },
+    "accounting.faro_reserve_entries": {
+      "migration": "202615250600_faro_reserve_entries.sql",
+      "applied_at_utc": "2026-10-02T20:22:25.434Z",
+      "applied_ledger": "_system._schema_migrations on br-fancy-credit-akjnd07a",
+      "why_not_in_migration": "already applied to production when the omission was caught; applied migrations are immutable",
+      "text": "-- CANONICAL-CHECK: money concept = FARO RESERVE REPORT LINE (the factor's statement line as a source document). One row per line of Faro's Escrow Reserve Entries (register escrow, GL 1230) or Cash Reserve Entries (register cash, GL 1235) report, as printed, plus its parsed kind; each reserve posting stamps it as source type faro_reserve_entry. It is the bank feed for the reserve register, not a ledger: the reserve balance is the GL of 1230 / 1235 in accounting.journal_entries, and the stored running and short-pay balances this table was created with were removed (KILL THE SECOND SYSTEM tables 10 + 11: 202615420600 dropped running_balance_cents and short_pay_balance_cents). Distinct from factoring.reserve_movement (factor-relationship ledger) and from driver_finance.escrow_ledger (driver escrow, a different money). Idempotent import; never deleted."
+    },
+    "accounting.faro_cash_reserve_reclasses": {
+      "migration": "202615260600_faro_cash_reserve_reclass.sql",
+      "applied_at_utc": "2026-10-02T20:55:20.026Z",
+      "applied_ledger": "_system._schema_migrations on br-fancy-credit-akjnd07a",
+      "why_not_in_migration": "already applied to production when the omission was caught; applied migrations are immutable",
+      "text": "-- CANONICAL-CHECK: money concept = PERIOD-END PRESENTATION RECLASS document. One live row per company and period end: the cash reserve deficit at period end and the two journal entries it posted (DR 1235 / CR 2156 dated the period end, reversed the next day), so the balance sheet presents a negative reserve as a payable to Faro. It stores no balance: 1235 and 2156 balances are accounting.journal_entries, the ledger, and the deficit is read from that ledger when the reclass is made. Written once; history is never edited (a reclass whose entries were voided through the void engine may be posted again). Distinct from factoring.* and from driver_finance.escrow_ledger."
+    },
+    "accounting.document_work_order_copies": {
+      "migration": "202615380700_document_work_order_copies.sql",
+      "applied_at_utc": "2026-10-03T23:05:08.185Z",
+      "applied_ledger": "_system._schema_migrations on br-fancy-credit-akjnd07a",
+      "why_not_in_migration": "already applied to production when the omission was caught; applied migrations are immutable",
+      "text": "-- CANONICAL-CHECK: money concept = NONE. accounting.document_work_order_copies keeps the work order AS IT WAS when a bill or expense was linked to it (header, the print fields of unit / driver / vendor / company, line totals and lines), so the document opens and prints the work order it was entered against. Its totals are a frozen copy for printing, never read as money: accounting.bills / accounting.expenses remain the documents, maintenance.work_orders the live work order, and accounting.journal_entries the ledger. One writer (triggers on bills / bill_lines / expenses / expense_lines); WORM, never deleted."
     }
-  }
+  },
+  "_added_2026_10_06": "CC-2 (ACCT-F2026100618): 14 financial tables created 2026-10-01..10-03 (13 applied, 1 held) without a line-start '-- CANONICAL-CHECK:' block; with CI down the guard never ran and main went red. Declarations relocated here, one per table, each read against its migration and its readers; none is a second ledger (stored balances in faro_reserve_entries were already dropped by 202615420600)."
 }
