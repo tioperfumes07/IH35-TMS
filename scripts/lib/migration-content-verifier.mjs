@@ -128,7 +128,7 @@ function parseMigrationObjects(sql) {
 
   {
     const regex =
-      /create\s+(?:unique\s+)?index\s+(?:if\s+not\s+exists\s+)?(?:(?:"?([a-zA-Z_][\w$]*)"?)[.])?(?:"?([a-zA-Z_][\w$]*)"?)\s+on\s+(?:(?:"?([a-zA-Z_][\w$]*)"?)[.])?(?:"?([a-zA-Z_][\w$]*)"?)/gi;
+      /create\s+(?:unique\s+)?index\s+(?:if\s+not\s+exists\s+)?(?:(?:"?([a-zA-Z_][\w$]*)"?)[.])?(?:"?([a-zA-Z_][\w$]*)"?)\s+on\s+(?:only\s+)?(?:(?:"?([a-zA-Z_][\w$]*)"?)[.])?(?:"?([a-zA-Z_][\w$]*)"?)(?:\s+using\s+\w+)?\s*\(([^;]*?)\)/gi;
     let match;
     while ((match = regex.exec(text))) {
       const indexSchema = normalizeIdent(match[1] || match[3] || defaultSchema);
@@ -136,12 +136,20 @@ function parseMigrationObjects(sql) {
       const tableSchema = normalizeIdent(match[3] || defaultSchema);
       const tableName = normalizeIdent(match[4]);
       const fqin = `${indexSchema}.${indexName}`;
+      // ROUND 433: the plain column names the index is built on (expressions ignored) — a later DROP COLUMN takes
+      // every index on that column with it (Postgres), so the index's absence is not drift once its column is gone.
+      const columns = String(match[5] ?? "")
+        .split(",")
+        .map((part) => part.trim().match(/^"?([a-zA-Z_][\w$]*)"?(?:\s+(?:asc|desc|nulls\s+\w+|\w+_ops))*$/i)?.[1])
+        .filter(Boolean)
+        .map((c) => normalizeIdent(c));
       pushUnique(expected.indexes, "fqin", {
         indexSchema,
         indexName,
         tableSchema,
         tableName,
         fqin,
+        columns,
       });
     }
   }
@@ -431,6 +439,20 @@ export function parseDroppedObjects(sql) {
       const newFqtn = `${tableSchema}.${newTable}`;
       renamedTables.set(oldFqtn, newFqtn);
       droppedObjectKeys.add(makeObjectKey("table", oldFqtn));
+    }
+  }
+
+  {
+    // ROUND 433: ALTER TABLE s.t DROP COLUMN [IF EXISTS] c — recorded so an index built on c is not read as drift
+    // after c is gone (r342 step 2c dropped tenant_id on 17 tables and, with it, every tenant_id index).
+    const regex =
+      /alter\s+table\s+(?:if\s+exists\s+)?(?:only\s+)?(?:(?:"?([a-zA-Z_][\w$]*)"?)[.])?(?:"?([a-zA-Z_][\w$]*)"?)\s+drop\s+column\s+(?:if\s+exists\s+)?(?:"?([a-zA-Z_][\w$]*)"?)/gi;
+    let match;
+    while ((match = regex.exec(text))) {
+      const tableSchema = normalizeIdent(match[1] || defaultSchema);
+      const tableName = normalizeIdent(match[2]);
+      const column = normalizeIdent(match[3]);
+      droppedObjectKeys.add(makeObjectKey("column", `${tableSchema}.${tableName}.${column}`));
     }
   }
 
@@ -771,6 +793,28 @@ async function checkMigrationObjects(
       [item.indexSchema, item.indexName]
     );
     if (res.rows.length === 0) {
+      // ROUND 433: missing only because a column it is built on was dropped by a migration AND that column is really
+      // absent from the schema now (a dropped-then-re-added column still owes its index).
+      const goneColumn = await (async () => {
+        for (const column of item.columns ?? []) {
+          if (!droppedObjectSet.has(makeObjectKey("column", `${item.tableSchema}.${item.tableName}.${column}`))) continue;
+          const col = await client.query(
+            `SELECT 1 FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 AND column_name = $3 LIMIT 1`,
+            [item.tableSchema, item.tableName, column]
+          );
+          if (col.rows.length === 0) return column;
+        }
+        return null;
+      })();
+      if (goneColumn) {
+        skipped.push({
+          kind: "index",
+          object: item.fqin,
+          reason: "DROPPED_LATER",
+          trace: `column ${item.tableSchema}.${item.tableName}.${goneColumn} dropped in a later migration (drops its indexes)`,
+        });
+        continue;
+      }
       pushMissing("index", item);
     }
   }
