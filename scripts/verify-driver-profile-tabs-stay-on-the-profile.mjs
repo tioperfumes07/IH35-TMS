@@ -131,6 +131,15 @@ function audit(files) {
     failures.push("RULE 1 companion: off-profile links on the profile page must be View-all only");
   }
 
+  // BANK-F91557 leftover refuse — DriverProfilePage chrome uses house tokens, never Tailwind slate-*.
+  if (
+    files.profile.includes("text-slate-") ||
+    files.profile.includes("border-slate-") ||
+    files.profile.includes("bg-slate-")
+  ) {
+    failures.push("leftover slate class");
+  }
+
   return failures;
 }
 
@@ -197,7 +206,17 @@ function selftest() {
     for (const f of badFails) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS`);
+
+  const leftoverPlant = {
+    ...good,
+    profile: `${good.profile}\n<div className="text-slate-600 border-slate-300 bg-slate-50">plant</div>`,
+  };
+  const leftoverFails = audit(leftoverPlant);
+  if (!leftoverFails.includes("leftover slate class")) {
+    console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`, leftoverFails);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS leftover slate class plant`);
 }
 
 if (process.argv.includes("--selftest")) {

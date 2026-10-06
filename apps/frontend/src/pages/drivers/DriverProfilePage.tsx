@@ -130,12 +130,12 @@ function LayoverSummaryCard({ driverId, companyId }: { driverId: string; company
   return (
     <section className={`${MASTER_DETAIL.surfaceClass} p-3`}>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-xs font-semibold text-slate-900">Layovers (last 30 days)</h2>
+        <h2 className="text-xs font-semibold text-[#0F1219]">Layovers (last 30 days)</h2>
         <EntityLink
           kind="driver_layover_history"
           id={driverId}
           label="View history"
-          className="text-xs font-semibold text-slate-700 hover:underline"
+          className="text-xs font-semibold text-[#1F2A44] hover:underline"
         />
       </div>
       {isError ? (
@@ -148,19 +148,19 @@ function LayoverSummaryCard({ driverId, companyId }: { driverId: string; company
       ) : (
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <div className="rounded-sm bg-gray-50 p-3 text-center">
-            <p className="text-page-title font-bold text-slate-900">{totalLayovers}</p>
+            <p className="text-page-title font-bold text-[#0F1219]">{totalLayovers}</p>
             <p className="text-xs text-gray-500">Total layovers</p>
           </div>
           <div className="rounded-sm bg-gray-50 p-3 text-center">
-            <p className="text-page-title font-bold text-slate-900">{totalHours.toFixed(1)}</p>
+            <p className="text-page-title font-bold text-[#0F1219]">{totalHours.toFixed(1)}</p>
             <p className="text-xs text-gray-500">Total hours</p>
           </div>
           <div className="rounded-sm bg-gray-50 p-3 text-center">
-            <p className="text-page-title font-bold text-slate-900">{billableCount}</p>
+            <p className="text-page-title font-bold text-[#0F1219]">{billableCount}</p>
             <p className="text-xs text-gray-500">Billable</p>
           </div>
           <div className="rounded-sm bg-gray-50 p-3 text-center">
-            <p className="text-page-title font-bold text-slate-900">{perDiemCount}</p>
+            <p className="text-page-title font-bold text-[#0F1219]">{perDiemCount}</p>
             <p className="text-xs text-gray-500">Per diem eligible</p>
           </div>
         </div>
@@ -337,11 +337,11 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
   const hos = hosQ.data?.hos ?? aggregate?.hos ?? null;
 
   if (!companyId) {
-    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-[#4B5563]">Select an operating company.</div>;
   }
 
   if (profileQ.isLoading) {
-    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-600">Loading driver profile…</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-[#4B5563]">Loading driver profile…</div>;
   }
 
   if (profileQ.isError) {
@@ -357,14 +357,14 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
 
   if (!driver || !aggregate) {
     return (
-      <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-600">
+      <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3 text-xs text-[#4B5563]">
         <p>Driver not found.</p>
         {onBack ? (
-          <button type="button" onClick={onBack} className="text-xs font-semibold text-slate-700 hover:underline">
+          <button type="button" onClick={onBack} className="text-xs font-semibold text-[#1F2A44] hover:underline">
             ← Back to driver list
           </button>
         ) : (
-          <Link to="/drivers?subtab=profiles" className="text-xs font-semibold text-slate-700 hover:underline">
+          <Link to="/drivers?subtab=profiles" className="text-xs font-semibold text-[#1F2A44] hover:underline">
             ← Back to DQF profiles
           </Link>
         )}
@@ -421,8 +421,8 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
                 onClick={() => void toggleVisibility(driver.id, driver.status === "Inactive")}
                 className={`rounded border px-2 py-1 text-xs font-semibold disabled:opacity-50 ${
                   driver.status === "Inactive"
-                    ? "border-slate-300 text-slate-700 hover:bg-slate-100"
-                    : "border-slate-300 text-slate-600 hover:bg-slate-50"
+                    ? "border-[#E5E7EB] text-[#1F2A44] hover:bg-[#F7F8FA]"
+                    : "border-[#E5E7EB] text-[#4B5563] hover:bg-[#F7F8FA]"
                 }`}
                 title={driver.status === "Inactive" ? "Show this driver in dispatch pickers and lists" : "Hide this driver from dispatch pickers and lists (reversible)"}
               >
@@ -434,15 +434,15 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
               kind="driver"
               id={driver.id}
               label={displayName}
-              className="text-xs font-semibold text-slate-700 hover:underline"
+              className="text-xs font-semibold text-[#1F2A44] hover:underline"
               data-testid="driver-profile-open-full-record-link"
             />
             {onBack ? (
-              <button type="button" onClick={onBack} className="text-xs font-semibold text-slate-600 hover:underline">
+              <button type="button" onClick={onBack} className="text-xs font-semibold text-[#4B5563] hover:underline">
                 Back to list
               </button>
             ) : (
-              <Link to="/drivers/roster" className="text-xs font-semibold text-slate-600 hover:underline">
+              <Link to="/drivers/roster" className="text-xs font-semibold text-[#4B5563] hover:underline">
                 All drivers
               </Link>
             )}
@@ -544,7 +544,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
                   ?.driver_employment_status_label ?? null
               }
             />
-            <p className="mt-1 text-xs text-slate-600" data-testid="driver-last-samsara-login">
+            <p className="mt-1 text-xs text-[#4B5563]" data-testid="driver-last-samsara-login">
               Last Samsara login: {formatSamsaraLogin(profileDriver.last_samsara_login_at)}
             </p>
             {companyId ? <DriverSamsaraDuplicateBanner companyId={companyId} driverId={id} /> : null}
@@ -555,7 +555,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
                 kind="driver_safety_profile"
                 id={id}
                 label="Open full safety file →"
-                className="text-xs font-semibold text-slate-700 underline"
+                className="text-xs font-semibold text-[#1F2A44] underline"
                 data-testid="driver-profile-safety-file-link"
               />
             </div>
@@ -582,7 +582,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
               kind="compliance_hos_driver"
               id={id}
               label="Open this driver in HOS Tracker →"
-              className="mt-2 inline-block text-xs font-semibold text-slate-700 hover:underline"
+              className="mt-2 inline-block text-xs font-semibold text-[#1F2A44] hover:underline"
             />
           </div>
           <div data-testid="dp-section-6-assignment">
@@ -628,19 +628,19 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           <DriverTeamsReverseSection driverId={id} operatingCompanyId={companyId} />
           <DriverTeamSplitConfigReverseSection driverId={id} operatingCompanyId={companyId} />
           <section id="driver-dqf-checklist" className={`scroll-mt-4 ${MASTER_DETAIL.surfaceClass} p-3`}>
-            <h2 className="mb-1 text-xs font-semibold text-slate-900">Compliance summary</h2>
-            <p className="mb-3 text-xs text-slate-600">
+            <h2 className="mb-1 text-xs font-semibold text-[#0F1219]">Compliance summary</h2>
+            <p className="mb-3 text-xs text-[#4B5563]">
               Profile readiness combines master-data credentials with DQF checklist rows from the driver-qualification API.
               File status:{" "}
               {itemsQ.isError ? (
                 <span className="font-medium text-red-700">Could not be loaded.</span>
               ) : (
-                <span className="font-medium text-slate-800">{summary.label}</span>
+                <span className="font-medium text-[#1F2A44]">{summary.label}</span>
               )}
             </p>
-            <div className="grid gap-3 text-xs text-slate-700 md:grid-cols-3">
+            <div className="grid gap-3 text-xs text-[#1F2A44] md:grid-cols-3">
               <div>
-                <div className="font-semibold text-slate-800">CDL</div>
+                <div className="font-semibold text-[#1F2A44]">CDL</div>
                 <div>
                   {(profileDriver.cdl_number as string | null) ?? "—"} · {(profileDriver.cdl_state as string | null) ?? "—"}
                 </div>
@@ -649,22 +649,22 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
                 </div>
               </div>
               <div>
-                <div className="font-semibold text-slate-800">Medical card</div>
+                <div className="font-semibold text-[#1F2A44]">Medical card</div>
                 <div>
                   {profileDriver.dot_medical_expires_at
                     ? `Expires ${formatDateUS(profileDriver.dot_medical_expires_at as string)}`
-                    : <span className="font-medium text-slate-700">Missing — no document</span>}
+                    : <span className="font-medium text-[#1F2A44]">Missing — no document</span>}
                 </div>
               </div>
               <div>
-                <div className="font-semibold text-slate-800">Contact</div>
+                <div className="font-semibold text-[#1F2A44]">Contact</div>
                 <div data-testid="driver-compliance-phone">{formatPhoneDisplay(profileDriver.phone as string | null)}</div>
                 <div>{(profileDriver.email as string | null) ?? "—"}</div>
               </div>
             </div>
           </section>
           <section className={`${MASTER_DETAIL.surfaceClass} p-3`}>
-            <h2 className="mb-3 text-xs font-semibold text-slate-900">DQF checklist</h2>
+            <h2 className="mb-3 text-xs font-semibold text-[#0F1219]">DQF checklist</h2>
             <DriverDqfPanel companyId={companyId} driverId={id} editable focus={dqfFocus} onClearFocus={() => setDqfFocus("all")} />
           </section>
           <div data-testid="dp-section-12-action-bar">
@@ -767,7 +767,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
               <DriverCommunicationsTab driverId={id} operatingCompanyId={companyId} />
             </div>
             <section data-testid="dp-section-activity" className={`${MASTER_DETAIL.surfaceClass} p-3`}>
-              <h2 className="mb-3 text-xs font-semibold text-slate-900">Audit History</h2>
+              <h2 className="mb-3 text-xs font-semibold text-[#0F1219]">Audit History</h2>
               <EntityAuditHistoryTab operatingCompanyId={companyId} entityType="driver" entityId={id} />
             </section>
           </div>
@@ -776,10 +776,10 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
 
       {activeTab === "Settlements" ? (
         <div className="space-y-3" data-testid="dp-tab-settlements" data-dp-settlements-readonly="1">
-          <p className="text-xs text-slate-600">
+          <p className="text-xs text-[#4B5563]">
             Settlements and bills on this profile are read only. Pre-settlements are open drafts of the same settlement document — not a separate record.
             {" "}
-            <EntityLink kind="settlement_disputes_driver" id={id} label="Open settlement disputes →" className="font-semibold text-slate-700 hover:underline" />
+            <EntityLink kind="settlement_disputes_driver" id={id} label="Open settlement disputes →" className="font-semibold text-[#1F2A44] hover:underline" />
           </p>
           <div data-testid="dp-section-8-settlements">
             <SettlementsSection
@@ -817,7 +817,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
 
       {activeTab === "Cash advances" ? (
         <div className="space-y-3" data-testid="dp-tab-cash-advances">
-          <p className="text-xs text-slate-600">Cash advances on this driver are assets. Escrow is a liability held for this payee.</p>
+          <p className="text-xs text-[#4B5563]">Cash advances on this driver are assets. Escrow is a liability held for this payee.</p>
           <div data-testid="dp-section-cash-advances-reverse">
             <DriverCashAdvancesReverseSection
               operatingCompanyId={companyId}
@@ -837,7 +837,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
 
       {activeTab === "Additional payments" ? (
         <div className="space-y-3" data-testid="dp-tab-additional-payments">
-          <p className="text-xs text-slate-600">Additional payments and deductions adjust settlement lines — they are not standalone posting documents.</p>
+          <p className="text-xs text-[#4B5563]">Additional payments and deductions adjust settlement lines — they are not standalone posting documents.</p>
           <div data-testid="dp-section-deductions-reverse">
             <DriverDeductionsReverseSection
               operatingCompanyId={companyId}
@@ -873,7 +873,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
       {activeTab === "Complaints" ? (
         <div className="space-y-3" data-testid="dp-tab-complaints">
           <div className="flex justify-end">
-            <Link to={`/safety/complaints?driver_id=${id}`} className="text-xs font-semibold text-slate-700 hover:underline">
+            <Link to={`/safety/complaints?driver_id=${id}`} className="text-xs font-semibold text-[#1F2A44] hover:underline">
               View all
             </Link>
           </div>
@@ -933,7 +933,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
       {activeTab === "Driver disputes" ? (
         <div className="space-y-3" data-testid="dp-tab-driver-disputes">
           <div className="flex justify-end">
-            <Link to="/drivers/disputes" className="text-xs font-semibold text-slate-700 hover:underline">
+            <Link to="/drivers/disputes" className="text-xs font-semibold text-[#1F2A44] hover:underline">
               View all
             </Link>
           </div>
@@ -991,8 +991,8 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
       {activeTab === "QBO mapping" ? (
         <div className="space-y-3" data-testid="dp-tab-qbo-mapping">
           <section className={`${MASTER_DETAIL.surfaceClass} p-3`}>
-            <h2 className="mb-2 text-xs font-semibold text-slate-900">QBO vendor linkage</h2>
-            <p className="text-xs text-slate-600">
+            <h2 className="mb-2 text-xs font-semibold text-[#0F1219]">QBO vendor linkage</h2>
+            <p className="text-xs text-[#4B5563]">
               {profileDriver.qbo_vendor_id ? "Linked" : "Unlinked"}
               {profileDriver.qbo_vendor_name ? ` · ${String(profileDriver.qbo_vendor_name)}` : ""}
             </p>
