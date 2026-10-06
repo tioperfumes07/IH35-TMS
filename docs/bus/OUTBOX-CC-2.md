@@ -2251,3 +2251,9 @@ DID: #25575 FARO-F435 view (security_invoker, 95-day deadline, NULL-safe closed)
 PROOF (live, production, gate credential ih35_guard_reader): verify-faro-default-interest-accrues-from-day-35 exit 0 · verify-faro-no-purchased-account-past-repurchase-deadline exit 0 · verify-faro-partial-payment-leaves-account-open exit 0 (0 factoring purchases after the purge) · verify-one-ledger-membership-rule exit 0 (9 readers, 0 re-typed copies, function holds all 3 clauses). Each Faro guard proven RED on its planted defect on throwaway branch cc2-THROWAWAY-f435-proof-delete-after (own fixtures only; branch DELETED). Tainted rehearsal br-summer-art-aku5vt76 DELETED as a branch.
 BLOCKED: verify-rpt-s02-neon-tie live arm (USMCA empty GL) needs a Lead ruling on the purge-window measured-empty list (pinned at 13)
 NEXT: ROUND 435 Faro ten tabs + KPI strip
+
+### CC-2 · 16:10Z — ROUND 435 Faro tabs + KPI strip
+DID: part 1 #25584 (bdd45147f8) — the ten tabs: Submit invoice · Debtor receipts · Account summary · Aging · Chargeback and overpayments · Unapplied cash · Payments to us · Purchase report · Fees paid · Reserve (24 surfaces -> 10 tabs, 0 lost). Part 2 #25592 (23a50be1d9) — KPI strip: name and number only, one tile size (kpiTileClasses.ts), no KPI twice. Tiles: Reserve tab 35 -> 26, every other Factoring tab 22 -> 21. Verify-step claim #25589 (12407).
+PROOF: verify-faro-kpi-strip: PASS — 10 tabs; 10 engine tiles + 16 client tiles, no name or value twice, name and number only, one size · selftest 10/10 · local gate gate_exit=0
+BLOCKED: ruling needed — when the Faro reserve is merged (One Faro Security Reserve), the engine's cash_reserve_balance tile shows an em dash: a tile with no number. Hide it?
+NEXT: part 3 — /factoring/reserves (ReserveDashboard, a strict query-subset of the Reserve tab's ReserveTracker) and the dead pages/factoring/index.tsx come out, ~14 guards retargeted; then ROUND 432 Faro tables step 2 / Reefer.
