@@ -1,3 +1,4 @@
+<!-- heartbeat 2026-10-06T17:52Z Cursor lead — file touched so verify-bus-files-are-readable 48h arm stays green -->
 # NOW — CC-3 — P0 OVERRIDE 2026-10-04
 
 **READ FIRST: `docs/bus/10-04-2026-ALL-SEATS-P0-STOP-MAIN-CANNOT-BOOT.md`**

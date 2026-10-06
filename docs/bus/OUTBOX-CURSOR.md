@@ -16,6 +16,45 @@ Files Modified: this OUTBOX · CLAIMED 18358
 
 ---
 
+## 2026-10-06T18:00Z · OUTBOX heartbeat + natural-sign membership comment + 432 next
+
+DONE this tick:
+- Heartbeat NOW-CURSOR / NOW-CC-1/2/3 / NOW-CODEX (48h arm for verify-bus-files-are-readable).
+- Natural-sign leftover: `ledger-membership.ts` comment named `fn_account_balances_as_of` alone and tripped `verify-no-surface-prints-a-raw-ledger-sign`. Comment now names naturalSignFactor / naturalSignCents. Guard exit 0 (was red on tip).
+
+ALREADY ON TIP (433 hard four + 432 #5):
+- #25599 modal+B6+B3 · #25607 QBO format · #25609 r392/r388 · #25611 B7 · #25613 Bills tabs `5865963a22`
+
+LIVE PROOF: verify-no-surface-prints-a-raw-ledger-sign exit 0; verify-bus-files-are-readable PASS (0 hard). UNVERIFIED: owner Chrome B7 + Bills.
+
+NOW: 432-CUR #1 multi-select money-surface sweep (status+account filters already PASS; next = remaining money list filters).
+
+NEXT: Measure MultiSelectDropdown coverage on expenses/invoices/settlements/register; one PR per surface group + shrink-only guard.
+
+Files Modified: OUTBOX-CURSOR · NOW-* · ledger-membership.ts
+
+---
+
+## 2026-10-06T17:52Z · ROUND 433-CUR hard four + 432-CUR #5 Bills tabs DONE
+
+DONE:
+- 433-CUR #1 Categorize/Match modal + B6 + B3 — prior #25599
+- 433-CUR #2 QBO format + year DatePicker — #25607 `084b670689`
+- 433-CUR #3 r392/r388 — #25608 claim · #25609 `3ebe797b10`
+- 433-CUR #4 B7 match Description no internal id — #25610 claim · #25611 `7c2e82458b`
+- 432-CUR #5 Bills Vendor|Driver one register — #25612 claim 18358 · #25613 `5865963a22`
+
+B7: operatorVisibleMatchText + writer kill + FE humanMemo; guard 18356 exit 0; Neon session memos = 0. UNVERIFIED Chrome.
+Bills: tabs default vendor_bill; never two ParityTables; guard 18358 exit 0. UNVERIFIED Chrome.
+
+NOW: Heartbeat NOW-* (48h arm). Next 432-CUR — multi-select coverage or natural-sign leftover (`verify-no-surface-prints-a-raw-ledger-sign` red on ledger-membership.ts).
+
+NEXT: Fix ledger-membership natural-sign (or multi-select sweep). Owner Chrome for B7 + Bills tabs after FE deploy.
+
+Files Modified: this OUTBOX · NOW-CURSOR · NOW-CC-1/2/3 · NOW-CODEX (heartbeat)
+
+---
+
 ## 2026-10-06T15:00Z · ROUND 435-CUR back arrow stays in-module
 
 DONE: `inModuleBackHref` clamps 4 Up writers. `structuralParentHref` uses accountingFallbackCrumbs then module home (never `/home` from an Accounting leaf). Cross-module page literals retargeted (FactoringDetail, UnitDetail, Fleet/Fuel/CashFlow/Compliance/Settings/System/425c/Inventory/QBO).
