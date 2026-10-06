@@ -34,7 +34,8 @@ if (SELFTEST) {
   const planted = { ...srcs };
   const key = FILES[0];
   planted[key] = planted[key].replace(
-    /entityLabel\(bill\.bill_number,\s*bill\.id,\s*"Bill"\)/,
+    // LST-F421: e4250c06a8 labels the bill with visibleDocumentLabel(bill.display_id ?? bill.bill_number, …).
+    /(?:entityLabel\(bill\.bill_number|visibleDocumentLabel\(bill\.display_id \?\? bill\.bill_number),\s*bill\.id,\s*"Bill"\)/,
     "bill.bill_number ?? bill.id.slice(0, 8)",
   );
   if (!assertAll(planted).length) {

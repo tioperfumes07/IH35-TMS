@@ -27,14 +27,16 @@ export function collectFailures(src = source) {
 
   forbid("table", /driver_display_id/, "settlement table must not expose UUID-backed driver_display_id");
   requireMatch("table", /kind="driver"[\s\S]{0,100}?id=\{row\.driver_id\}[\s\S]{0,100}?name=\{row\.driver_full_name\}/, "table driver drill must bind row.driver_id to driver_full_name");
-  requireMatch("table", /kind="settlement" id=\{row\.id\} name=\{row\.display_id\}/, "table settlement drill must bind row.id to display_id");
+  // LST-F421: b3c7233d2d — the drill is a multi-line EntityLinkOrTombstone named by settlementLabel(row) (display id first).
+  requireMatch("table", /kind="settlement"[\s\S]{0,40}?id=\{row\.id\}[\s\S]{0,80}?name=\{(?:row\.display_id|settlementLabel\(row\))\}/, "table settlement drill must bind row.id to its human settlement label");
   // RG-02 remainder — was a literal `id={id}` (bare destructure), which PR #21040 correctly reverted
   // back to `id={link.id}` because a SIBLING guard (verify-settlements-load-ids-reverse-link.mjs)
   // requires that exact literal for its own, unrelated reason — the two guards were fighting over
   // one variable name. Loosened to the real invariant (an id prop bound to SOME id-shaped
   // expression, whatever the map variable is called) so both guards can stay green together.
   requireMatch("table", /kind="load"[\s\S]{0,80}?id=\{[\w.]*\bid\b\}/, "table load-count drill must bind each canonical load id");
-  requireMatch("table", /formatDateUS\(row\.period_start\)[\s\S]{0,60}?formatDateUS\(row\.period_end\)/, "table period must format both dates");
+  // LST-F421: Period Begin / Period End are separate columns now.
+  requireMatch("table", /formatDateUS\(row\.period_start\)[\s\S]{0,400}?formatDateUS\(row\.period_end\)/, "table period must format both dates");
 
   forbid("header", /driverDisplayId|driver_display_id/, "header must not accept UUID-backed driver display ids");
   requireMatch("header", /kind="settlement"[\s\S]{0,80}?id=\{settlementId\}[\s\S]{0,100}?entityLabel\(settlementDisplayId, settlementId, "Settlement"\)/, "header settlement drill must bind settlementId to its human display id");
@@ -73,8 +75,9 @@ function selftest() {
   if (baseline.length) throw new Error(`clean baseline red: ${baseline.join("; ")}`);
   const mutations = [
     ["table", "id={row.driver_id}", "id={row.id}"],
-    ["table", 'kind="settlement" id={row.id}', 'kind="settlement" id={row.driver_id}'],
-    ["table", 'kind="load"\n                      id={link.id}', 'kind="load"\n                      id={"L-static"}'],
+    // LST-F421: the settlement drill is multi-line now; plant on its id line (the settlementLabel name follows it).
+    ["table", "id={row.id}\n            name={settlementLabel(row)}", "id={row.driver_id}\n            name={settlementLabel(row)}"],
+    ["table", 'kind="load" id={link.id}', 'kind="load" id={"L-static"}'], // LST-F421: single-line EntityLink now
     ["header", "id={settlementId}", "id={driverId}"],
     ["header", 'kind="driver" id={driverId}', 'kind="driver" id={settlementId}'],
     ["header", "id={load.id}", "id={settlementId}"],

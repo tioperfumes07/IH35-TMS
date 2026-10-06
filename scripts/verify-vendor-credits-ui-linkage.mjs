@@ -52,10 +52,11 @@ export function assertVendorCreditsUiLinkage() {
   if (!/v\.vendor_name/.test(routes) || !/LEFT JOIN mdata\.vendors/.test(routes)) {
     errors.push("vendor-credits.routes: list/detail must LEFT JOIN mdata.vendors for vendor_name");
   }
-  if (!page.includes("getNextVendorCreditDocumentNumber")) {
+  // LST-F421: 98edb380d9 moved the next-number preview + Ref no. into QboDocumentNumberField (nextNumberPath / label).
+  if (!page.includes("getNextVendorCreditDocumentNumber") && !page.includes('nextNumberPath="/api/v1/accounting/vendor-credits/next-number"')) {
     errors.push(`${PAGE}: create drawer must preview next document number`);
   }
-  if (!/aria-label=["']Ref no\.["']/.test(page) || !page.includes("qbo-vendor-credit-header")) {
+  if (!/(?:aria-)?label=["']Ref no\.["']/.test(page) || !page.includes("qbo-vendor-credit-header")) {
     errors.push(`${PAGE}: create drawer must show QBO Ref no. top-right`);
   }
   if (!page.includes("ReferenceSelect") || !page.includes('createKind="vendor"')) {

@@ -70,7 +70,7 @@ export function audit(src) {
   if (!/kind="vendor"/.test(src.payBillModal)) {
     failures.push(`${FILES.payBillModal}: pay-bill modal must render the real bill's vendor`);
   }
-  if (!/function isVendorUuid/.test(src.apAging) || !/kind="vendor" id=\{r\.vendor_id\}/.test(src.apAging)) {
+  if (!/function isVendorUuid/.test(src.apAging) || !/kind="vendor"\s+id=\{r\.vendor_id\}/.test(src.apAging) /* LST-F421: multi-line EntityLink (8a4d2d833e) */) {
     failures.push(`${FILES.apAging}: AP aging must render real vendor EntityLinks with a real UUID guard`);
   }
   if (!/path="\/accounting\/vendors"/.test(src.routesManifest)) {

@@ -59,7 +59,7 @@ export function audit(src) {
   need(/id: "customer", label: "Customers"/.test(src.docsHome), `${FILES.docsHome}: docs must have a real Customers filter tab`);
   need(/value: "customer", label: "Customer"/.test(src.uploadModal) && /<EntityPicker/.test(src.uploadModal), `${FILES.uploadModal}: upload modal must have a real customer picker`);
   need(/function ManagementCustomerCell/.test(src.management) && /<EntityLink kind="customer" id=\{customerId\}/.test(src.management) && /<ManagementCustomerCell/.test(src.management), `${FILES.management}: management report AR section must render a real EntityLink kind="customer"`);
-  need(/kind="customer" id=\{r\.customer_id\}/.test(src.arAging), `${FILES.arAging}: AR aging must render a real EntityLink kind="customer"`);
+  need(/kind="customer"\s+id=\{r\.customer_id\}/.test(src.arAging) /* LST-F421: multi-line EntityLink (8a4d2d833e) */, `${FILES.arAging}: AR aging must render a real EntityLink kind="customer"`);
   need(/kind="customer" id=\{r\.customer_id\}/.test(src.customerProfitability), `${FILES.customerProfitability}: customer profitability must render a real EntityLink kind="customer"`);
   need(/kind="customer" id=\{row\.customer_id\}/.test(src.dispatchMargin), `${FILES.dispatchMargin}: dispatch margin must render a real EntityLink kind="customer"`);
   need(/listCustomers/.test(src.cargoClaim) && /kind="customer"/.test(src.cargoClaim), `${FILES.cargoClaim}: cargo claim must have a real customer picker and render EntityLink kind="customer"`);
@@ -95,7 +95,7 @@ if (process.argv.includes("--selftest")) {
     ["docs-tab", "docsHome", /id: "customer", label: "Customers"/, 'id: "customer_unused", label: "Customers"'],
     ["upload-picker", "uploadModal", /value: "customer", label: "Customer"/g, 'value: "unit", label: "Customer"'],
     ["management-link", "management", /<EntityLink kind="customer" id=\{customerId\}/g, '<EntityLink kind="unit" id={customerId}'],
-    ["ar-aging-link", "arAging", /kind="customer" id=\{r\.customer_id\}/, 'kind="unit" id={r.unit_id}'],
+    ["ar-aging-link", "arAging", /kind="customer"\s+id=\{r\.customer_id\}/, 'kind="unit" id={r.unit_id}'],
     ["profitability-link", "customerProfitability", /kind="customer" id=\{r\.customer_id\}/, 'kind="unit" id={r.unit_id}'],
     ["margin-link", "dispatchMargin", /kind="customer" id=\{row\.customer_id\}/, 'kind="unit" id={row.unit_id}'],
     ["cargo-claim-picker", "cargoClaim", /listCustomers/g, "listSomethingElse"],

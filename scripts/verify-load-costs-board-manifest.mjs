@@ -50,7 +50,7 @@ function violations(board, backend) {
   if (!board.includes("<ParityTable") || !board.includes("enableColumnReorder") || !board.includes("enableColumnResize") || !board.includes('sortMode="external"') || !board.includes("onSortChange") || !board.includes("sortKey={sortKey}") || !board.includes("sortDirection={sortDirection}")) errors.push("board is not a reorderable, resizable, server-sorted (external) ParityTable");
   for (const key of SORT_KEYS) if (!backend.includes(`"${key}"`)) errors.push(`backend load_costs_sort enum is missing server sort key: ${key}`);
   if (!board.includes("<DrillKpiCard") || (board.match(/<DrillKpiCard/g) ?? []).length !== 6) errors.push("six KPIs are not DrillKpiCard buttons");
-  if (!board.includes("scheduled_delivery_at") || !board.includes("actual_delivery_at") || !board.includes('actual_delivery_at ? formatDateUS(r.actual_delivery_at) : "—"')) errors.push("Del Date is not the truthful actual-delivery stop date");
+  if (!board.includes("scheduled_delivery_at") || !board.includes("actual_delivery_at") || !/actual_delivery_at \? formatDate(?:US|QboList)\(r\.actual_delivery_at\) : "—"/.test(board) /* LST-F421: formatDateQboList (67de437d0b, #23462) */) errors.push("Del Date is not the truthful actual-delivery stop date");
   // Status = SERVICE performance (In transit / On Time / Late / Delivered — no appointment on file),
   // computed from actual vs scheduled delivery -- NOT the load's lifecycle state (owner order
   // 2026-09-04). Spec §2.2's fourth branch is mandatory: never render "On Time" with no appointment.

@@ -34,7 +34,8 @@ function assert(cond, msg) {
 export function checkPage(src, label, placeholder) {
   assert(src.includes("ParityTable"), `${label}: must use ParityTable`);
   assert(
-    src.includes(`placeholder="${placeholder}"`) || src.includes(`placeholder='${placeholder}'`),
+    // LST-F421: MoneyListToolbar (8d2aab421e, FILTER-MULTI-01) takes the server-side search hint as searchPlaceholder=.
+    new RegExp(`(?:searchP|p)laceholder=["']${placeholder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["']`).test(src),
     `${label}: must keep server-side search placeholder ${placeholder}`,
   );
   assert(/suppressToolbarSearch/.test(src), `${label}: must pass suppressToolbarSearch`);

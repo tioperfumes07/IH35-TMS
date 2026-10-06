@@ -29,7 +29,8 @@ const repoRoot = process.cwd();
 const FILE = "apps/frontend/src/pages/accounting/BillDetailPanel.tsx";
 
 const NOT_VISIBLE_CALL_RE = /bill\.bill_number\s*\?\?\s*entityLabel\(null,\s*bill\.id,\s*"Bill"\)/;
-const VISIBLE_LABEL_CALL_RE = /visibleDocumentLabel\(bill\.bill_number\s*\?\?\s*bill\.vendor_name,\s*bill\.id,\s*"Bill"\)/;
+// LST-F421: ACCT-F6401 (e4250c06a8) leads with the human display_id.
+const VISIBLE_LABEL_CALL_RE = /visibleDocumentLabel\(bill\.(?:bill_number|display_id)\s*\?\?\s*bill\.vendor_name,\s*bill\.id,\s*"Bill"\)/;
 const IMPORTS_HELPER_RE = /import\s*\{[^}]*\bvisibleDocumentLabel\b[^}]*\}\s*from\s*["']\.\.\/\.\.\/lib\/entity-label["']/;
 
 export function checkBillDetailPanelVisibleLabel(src) {

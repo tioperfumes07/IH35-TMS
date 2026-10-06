@@ -54,7 +54,7 @@ const CHECKS = [
     // function (columns is always defined immediately before the panel that renders it).
     name: "SettlementsPage OpenDriverBillsPanel EntityLink drill (driver/load, never bill)",
     file: "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
-    pattern: /openDriverBillColumns[\s\S]*kind="driver"[\s\S]*kind="load"/,
+    pattern: /(?:build[Oo]|o)penDriverBillColumns[\s\S]*kind="driver"[\s\S]*kind="load"/ /* LST-F421: renamed buildOpenDriverBillColumns (d1f9bae0d3) */,
     forbiddenNear: {
       // Forbid a REAL JSX kind="bill" prop near this function — not a prose mention of it in a
       // comment (which is exactly why this check exists and cites the live repro). Fixed-width
@@ -64,7 +64,7 @@ const CHECKS = [
       // 86 chars, the props list, never the JSX). Window covers openDriverBillColumns (~1540
       // chars) through the end of OpenDriverBillsPanel (~2426 chars total, measured live) with
       // margin — wide enough for both blocks, not so wide it reaches unrelated later code.
-      pattern: /openDriverBillColumns[\s\S]{0,2600}/,
+      pattern: /(?:build[Oo]|o)penDriverBillColumns[\s\S]{0,2600}/,
       forbid: /<EntityLink[\s\S]{0,200}?kind\s*=\s*["']bill["']/,
       message: 'must NOT EntityLink kind="bill" in OpenDriverBillsPanel — driver_finance.driver_bills has no /accounting/bills/:id row, this 404s live',
     },

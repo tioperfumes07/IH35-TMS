@@ -29,7 +29,9 @@ export function check() {
   if (/status=unpaid|status:\s*["']unpaid["']/.test(page)) {
     failures.push(`${PAGE}: must not use status=unpaid for aging drill (misses partial balances)`);
   }
-  if (!/has_balance:\s*["']true["']/.test(drill)) {
+  // LST-F421: the drill builds a typed filter (apAgingBillsFilter { hasBalance: true }); AmountLink serialises it as
+  // has_balance=true. Either form is the same open-balance drill.
+  if (!/has_balance:\s*["']true["']|hasBalance:\s*true/.test(drill)) {
     failures.push(`${DRILL}: apAgingBillsListHref must use has_balance=true`);
   }
   if (!/Open bills/.test(page)) {

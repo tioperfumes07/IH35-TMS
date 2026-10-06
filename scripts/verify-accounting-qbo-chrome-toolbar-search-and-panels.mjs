@@ -40,15 +40,16 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-accounting-qbo-chrome-toolbar-search-and-panels";
 
 const CHECKS = [
+  // LST-F421: FILTER-MULTI-01 (8d2aab421e) moved the Bills search into MoneyListToolbar (always visible).
   {
-    name: "chrome.toolbar_search: BillsPage has its own search input + client-side filter",
+    name: "chrome.toolbar_search: BillsPage search lives in its MoneyListToolbar",
     file: "apps/frontend/src/pages/accounting/BillsPage.tsx",
-    pattern: /searchSlot=\{[\s\S]*?aria-label="Search bills"[\s\S]*?\}/,
+    pattern: /<MoneyListToolbar[\s\S]{0,300}searchTestId="bills-search-input"/,
   },
   {
-    name: "chrome.toolbar_search: search input is wired into the CollapsedListFilters toolbar",
+    name: "chrome.toolbar_search: the toolbar search drives the list filter",
     file: "apps/frontend/src/pages/accounting/BillsPage.tsx",
-    pattern: /<CollapsedListFilters[\s\S]{0,600}searchSlot=/,
+    pattern: /<MoneyListToolbar[\s\S]{0,200}onSearchChange=\{setSearch\}/,
   },
   { name: "accounting.modal.bill_payment: BillPaymentModal real ParityDrawer + MoneyInput", file: "apps/frontend/src/components/ap/BillPaymentModal.tsx", pattern: /ParityDrawer[\s\S]*MoneyInput|MoneyInput[\s\S]*ParityDrawer/ },
   { name: "accounting.panel.reallocate: AllocationsPage real ParityTable", file: "apps/frontend/src/pages/accounting/AllocationsPage.tsx", pattern: /<ParityTable\b/ },

@@ -35,9 +35,10 @@ function analyze(src, modalSrc) {
     failures.push(`${ROUTES_FILE}: reserveAmount has reverted to the old "whatever's left after advance" formula`);
   }
 
-  const createInsertMatch = src.match(/INSERT INTO accounting\.factoring_advances \(([\s\S]*?)\)\s*\n\s*VALUES/);
-  if (!createInsertMatch || !/factor_fee_cents/.test(createInsertMatch[1])) {
-    failures.push(`${ROUTES_FILE}: factor_fee_cents is missing from the factoring_advances INSERT column list`);
+  // LST-F418/F421: the create route has TWO inserts now (pre-invoice purchase + invoice-backed); every one must carry the fee.
+  const inserts = [...src.matchAll(/INSERT INTO accounting\.factoring_advances \(([\s\S]*?)\)\s*\n\s*VALUES/g)];
+  if (!inserts.length || inserts.some((m) => !/factor_fee_cents/.test(m[1]))) {
+    failures.push(`${ROUTES_FILE}: factor_fee_cents is missing from a factoring_advances INSERT column list`);
   }
   if (!/feeAmount,\s*\n\s*body\.data\.notes/.test(src) && !/feeAmount,\s*\n\s*body\.data\.notes \?\? null/.test(src)) {
     if (!src.includes("          feeAmount,\n          body.data.notes")) {
@@ -158,8 +159,9 @@ function selftest() {
       name: "advance_rate_pct reintroduced as a caller input in createBodySchema",
       apply: (s, m) => [
         s.replace(
-          "  reserve_pct: z.coerce.number().min(0).max(100),\n  factor_fee_pct: z.coerce.number().min(0).max(100),\n  notes: z.string().trim().max(5000).optional(),\n});",
-          "  advance_rate_pct: z.coerce.number().min(0).max(100),\n  reserve_pct: z.coerce.number().min(0).max(100),\n  factor_fee_pct: z.coerce.number().min(0).max(100),\n  notes: z.string().trim().max(5000).optional(),\n});"
+          // LST-F421: the schema continues past notes now (ROUND 172 match-law fields), so anchor on the reserve field only.
+          /\n  reserve_pct: z\.coerce\.number\(\)\.min\(0\)\.max\(100\),/,
+          "\n  advance_rate_pct: z.coerce.number().min(0).max(100),\n  reserve_pct: z.coerce.number().min(0).max(100),"
         ),
         m,
       ],
