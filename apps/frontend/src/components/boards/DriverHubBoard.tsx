@@ -10,7 +10,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ApiError, apiRequest } from "../../api/client";
 import { formatDateUS } from "../../lib/formatDate";
 import { ListErrorState } from "../ListErrorState";
-import { resolveEntityRoute, type EntityKind } from "../shared/EntityLink";
+import { EntityLink, resolveEntityRoute, type EntityKind } from "../shared/EntityLink";
 import "../../design/ih35-design-tokens.css";
 import "./party-board.css";
 import { formatUsdCentsTable } from "../../lib/money";
@@ -111,7 +111,13 @@ function DriverPanel({ operatingCompanyId, driverId }: { operatingCompanyId: str
                     <td className="pb-sub-sm" style={{ width: 84 }}>{formatDateUS(a.at)}</td>
                     <td style={{ width: 70 }}><span className={`pb-badge pb-badge--${a.kind}`}>{a.kind}</span></td>
                     <td className="pb-muted2">{a.what}</td>
-                    <td className="ih-num pb-strong text-right tabular-nums" style={{ width: 96 }}>{money(a.cents)}</td>
+                    <td className="ih-num pb-strong text-right tabular-nums" style={{ width: 96 }}>
+                      {a.id && resolveEntityRoute(a.entity as EntityKind, a.id) ? (
+                        <EntityLink kind={a.entity as EntityKind} id={a.id} label={money(a.cents)} />
+                      ) : (
+                        money(a.cents)
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

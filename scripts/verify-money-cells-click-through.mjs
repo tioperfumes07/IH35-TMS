@@ -27,7 +27,7 @@ const PANEL = "apps/frontend/src/components/shared/LedgerKpiPanel.tsx";
  * a proximity window cannot resolve. That makes 103 an upper bound, and an upper bound is a safe
  * ratchet: it can only be lowered. Do not raise it.
  */
-const SHRINK_ONLY_BASELINE = 55; // 2026-10-06 ROUND 433.2 batch 2: 76 -> 55 = 2 wired (Chart of Accounts book + bank balance) + 19 not money (5 input fields, 14 declared quantities)
+const SHRINK_ONLY_BASELINE = 49; // 2026-10-06 ROUND 433.2 batch 3: 55 -> 49 (dispatch load costs x3 -> load, driver hub activity -> its record, unit NBV -> fixed asset, lease allocation -> lease)
 
 function stripComments(src) {
   return String(src ?? "")

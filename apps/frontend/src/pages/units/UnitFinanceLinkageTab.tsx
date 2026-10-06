@@ -136,7 +136,7 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
                   <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs capitalize text-slate-700">{row.status}</span>
                 </div>
                 <div className="text-right text-xs tabular-nums text-gray-700">
-                  <div>NBV {fmtCents(row.net_book_value_cents)}</div>
+                  <div>NBV <EntityLink kind="fixed_asset" id={row.id} label={fmtCents(row.net_book_value_cents)} /></div>
                   <div className="text-gray-500">Depr. to date {fmtCents(row.depreciation_to_date_cents)} · in service {fmtDate(row.in_service_date)}</div>
                 </div>
               </li>
@@ -164,7 +164,7 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
                   <span className="ml-1 text-xs text-gray-500">({row.election})</span>
                 </div>
                 <div className="text-right text-xs tabular-nums text-gray-700">
-                  <div>{fmtCents(row.allocated_cost_cents)} allocated</div>
+                  <div><EntityLink kind="lease_contract" id={row.lease_contract_id} label={fmtCents(row.allocated_cost_cents)} /> allocated</div>
                   <div className="text-gray-500">
                     {fmtDate(row.commencement_date)} – {fmtDate(row.end_date)}
                   </div>
