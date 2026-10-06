@@ -38,7 +38,6 @@ export const COLUMN_DEBT = [
   "apps/backend/src/driver-finance/settlement-lines-materialize.service.ts",
   "apps/backend/src/driver-finance/settlement-payrun-close.service.ts",
   "apps/backend/src/mdata/canonical/driver-profile.service.ts",
-  "apps/backend/src/payroll/driver-settlement.service.deprecated.ts",
   "apps/backend/src/payroll/settlement-shadow.service.ts",
   "apps/backend/src/settlements/auto-deductions/apply.ts",
 ];

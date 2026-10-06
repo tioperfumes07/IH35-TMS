@@ -32,18 +32,6 @@
     "count": 1,
     "reason": "baselined 2026-07-11 — pre-existing UPDATE accounting.qbo_accounts; retire to mdata.qbo_accounts"
   },
-  "apps/backend/src/payroll/driver-settlement.service.deprecated.ts::payroll.driver_settlements::INSERT INTO": {
-    "count": 1,
-    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO payroll.driver_settlements; retire to driver_finance.driver_settlements"
-  },
-  "apps/backend/src/payroll/driver-settlement.service.deprecated.ts::payroll.driver_settlement_line_items::INSERT INTO": {
-    "count": 1,
-    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO payroll.driver_settlement_line_items; retire to driver_finance.*"
-  },
-  "apps/backend/src/payroll/driver-settlement.service.deprecated.ts::payroll.driver_settlements::UPDATE": {
-    "count": 1,
-    "reason": "baselined 2026-07-11 — pre-existing UPDATE payroll.driver_settlements; retire to driver_finance.driver_settlements"
-  },
   "apps/backend/src/safety/position-history/position-history.routes.ts::maint.position_history::INSERT INTO": {
     "count": 0,
     "reason": "SWEEP-C2 (2026-09-02) — SHRUNK 1→0. Repointed to maintenance.position_history (canonical, created by HELD migration 202609020000_c2_maintenance_position_history_canonical.sql). Key kept at 0 as a tripwire."

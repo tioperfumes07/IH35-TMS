@@ -17,10 +17,12 @@ function fail(message) {
 // driver-finance subledger. When the live service no longer exists, this engine is retired and its
 // tenant-scope contract is N/A — the RETIRE ledger is instead guarded by
 // verify-no-payroll-settlement-writes.mjs (G4), which forbids new payroll.* settlement writes in live code.
-if (!fs.existsSync(servicePath) && fs.existsSync(deprecatedServicePath)) {
+// LST-F426: the archived .deprecated.ts copy is deleted too (it was unreachable), so "retired" is: neither file exists.
+if (!fs.existsSync(servicePath)) {
+  if (fs.existsSync(deprecatedServicePath)) fail("the retired payroll settlement writer (driver-settlement.service.deprecated.ts) is back — it was deleted (LST-F426)");
   console.log(
-    "verify:driver-settlement-tenant-scope — OK (payroll settlement engine RETIRED -> " +
-      "driver-settlement.service.deprecated.ts; enforced by verify-no-payroll-settlement-writes.mjs G4)."
+    "verify:driver-settlement-tenant-scope — OK (payroll settlement engine RETIRED and deleted; " +
+      "enforced by verify-no-payroll-settlement-writes.mjs G4)."
   );
   process.exit(0);
 }

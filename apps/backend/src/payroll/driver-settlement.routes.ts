@@ -4,7 +4,7 @@ import type { FastifyInstance, FastifyReply } from "fastify";
 // RETIRED (settlement engine collapse Step 2, 2026-07-15). The payroll settlement engine
 // (computeSettlement / postSettlement -> payroll.driver_settlements / driver_settlement_line_items) is a
 // duplicate ledger, superseded by the canonical driver-finance settlements subledger + posting services
-// (parity verified 2026-07-15 — see driver-settlement.service.deprecated.ts for the full map). These two
+// (parity verified 2026-07-15; the retired writer itself was deleted in LST-F426, 2026-10-06). These two
 // endpoints had ZERO frontend callers; they now permanently 308-redirect to the canonical engine.
 // Single-subledger rule (QBO/NetSuite/McLeod/Alvys): never resurrect the payroll settlement ledger.
 // MUST NOT write payroll.* — guarded by scripts/verify-no-payroll-settlement-writes.mjs (G4).

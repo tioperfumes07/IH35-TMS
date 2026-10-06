@@ -4,8 +4,8 @@
 // never relying on the transitive (advance→liability→schedule) trace. Static guard: asserts every hop
 // of the canonical writer still stamps/propagates load_id, so this can't silently regress.
 //   1. driver_finance.driver_settlement_deductions INSERT (deductions.service.ts) includes load_id.
-//   2. The cash_advance_repayment recovery query (driver-settlement.service.ts) SELECTs load_id.
-//   3. The advance_recovery line is built with load_id from the per-deduction map, NOT `load_id: null`.
+//   2. The pay-run reads each recovered advance's load_id (settlement-payrun-close.service.ts; LST-F426).
+//   3. Each recovered advance is applied to its own load's bill (preferredLoadId), never one load-less line.
 //   4. The cash-advance approve path passes loadId into createSettlementDeduction.
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -16,7 +16,10 @@ const fail = (m) => { console.error(`FAIL verify-advance-recovery-load-id: ${m}`
 const read = (p) => { try { return readFileSync(join(root, p), "utf8"); } catch { fail(`missing file: ${p}`); } };
 
 const deductions = read("apps/backend/src/driver-finance/deductions.service.ts");
-const settlement = read("apps/backend/src/payroll/driver-settlement.service.deprecated.ts");
+// LST-F426: the payroll settlement writer (driver-settlement.service.deprecated.ts) is deleted — it was unreachable. The
+// live recovery is the pay-run's per-load A/P chain (settlement-payrun-close.service.ts, ROUND 326), which applies EACH
+// recovered advance to its own load's bill. Hops 2-3 now hold that writer to the rule.
+const payrun = read("apps/backend/src/driver-finance/settlement-payrun-close.service.ts");
 const approve = read("apps/backend/src/driver-finance/cash-advance-requests.service.ts");
 
 // 1. canonical deduction writer persists load_id
@@ -25,31 +28,14 @@ if (!/INSERT INTO driver_finance\.driver_settlement_deductions[\s\S]{0,400}\bloa
 }
 if (!/loadId\b/.test(deductions)) fail("deductions.service.ts: createSettlementDeduction must accept a loadId input");
 
-// 2. recovery query selects load_id from the pending ledger
-if (!/cash_advance_repayment[\s\S]{0,600}\bload_id\b/i.test(settlement) && !/\bload_id::text AS load_id[\s\S]{0,600}cash_advance_repayment/i.test(settlement)) {
-  // accept either order (SELECT list before or after the WHERE clause within the same query block)
-  if (!/load_id::text AS load_id/i.test(settlement)) {
-    fail("driver-settlement.service.ts: the cash_advance_repayment recovery query must SELECT load_id");
-  }
+// 2. the pay-run reads each recovered advance's load (its own load_id, else its linked driver bill's load).
+if (!/SELECT a\.id::text, COALESCE\(a\.load_id, db\.load_id\)::text AS load_id FROM driver_finance\.driver_advances a/.test(payrun)) {
+  fail("settlement-payrun-close.service.ts: the advance recovery must read each advance's load (COALESCE(a.load_id, db.load_id))");
 }
 
-// 3. the CANONICAL (capped-ledger, per-deduction) recovery line must stamp load_id from the deduction map.
-if (!/loadIdByDeduction/.test(settlement)) {
-  fail("driver-settlement.service.ts: canonical advance_recovery load_id must come from the per-deduction map (loadIdByDeduction)");
-}
-if (!/load_id:\s*loadIdByDeduction\.get\(/.test(settlement)) {
-  fail("driver-settlement.service.ts: the capped-ledger advance_recovery line must set load_id: loadIdByDeduction.get(...)");
-}
-// Any remaining `load_id: null` on a settlement line is allowed ONLY when explicitly justified as an
-// unavoidable multi-advance aggregate (the legacy blunt path) — marked `load_id-aggregate-exempt`.
-const lines = settlement.split("\n");
-for (let i = 0; i < lines.length; i++) {
-  if (/load_id:\s*null/.test(lines[i])) {
-    const ctx = lines.slice(Math.max(0, i - 6), i + 1).join("\n");
-    if (!/load_id-aggregate-exempt/.test(ctx)) {
-      fail(`driver-settlement.service.ts:${i + 1}: load_id: null without the load_id-aggregate-exempt justification — stamp the load_id or document why it can't carry one`);
-    }
-  }
+// 3. each recovered advance is applied to ITS OWN load's bill — never one aggregated, load-less recovery.
+if (!/kind: "advance",[^\n]*advanceId: r\.id,[^\n]*preferredLoadId: loadOf\.get\(r\.id\)/.test(payrun)) {
+  fail("settlement-payrun-close.service.ts: each advance recovery must be applied with preferredLoadId: loadOf.get(r.id)");
 }
 
 // 4. the approve path forwards the originating load onto the recovery deduction. Accept both the plain

@@ -74,7 +74,6 @@ export const MEMO_ID_BASELINE = new Map([
   ["apps/backend/src/driver-finance/settlement-dispute.service.ts|memo|params.disputeId", 1],
   ["apps/backend/src/governance/void-cancel-executors.ts|memo|entityId", 7],
   ["apps/backend/src/insurance/dispersal.service.ts|memo|policy.id", 2],
-  ["apps/backend/src/payroll/driver-settlement.service.deprecated.ts|memo|settlement.id", 3],
   ["apps/backend/src/routes/safety/dot-inspections.ts|description|inspection.id", 2],
   ["apps/backend/src/safety/safety-v5.routes.ts|description|inspection.id", 1],
 ]);

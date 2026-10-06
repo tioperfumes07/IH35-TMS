@@ -74,13 +74,14 @@ try {
 
 // ── 4. Settlement payout posts via Bill + BillPayment (bill_payment hits AP → operating) ──
 try {
-  const settle = read("apps/backend/src/payroll/driver-settlement.service.deprecated.ts");
-  if (!/export async function postSettlement/.test(settle))
-    failures.push("driver-settlement.service must export postSettlement");
-  if (!settle.includes("createBill"))
-    failures.push("settlement payout must create an accounting Bill");
-  if (!settle.includes("payBill"))
-    failures.push("settlement payout must create an accounting BillPayment via payBill");
+  // LST-F426: the live payout is the pay-run's per-load A/P chain (the retired payroll writer is deleted).
+  const settle = read("apps/backend/src/driver-finance/settlement-ap-chain.service.ts");
+  if (!/export async function postSettlementApChainInClientTx/.test(settle))
+    failures.push("settlement-ap-chain.service must export postSettlementApChainInClientTx");
+  if (!settle.includes("createBillInClientTx("))
+    failures.push("settlement payout must create an accounting Bill per load");
+  if (!settle.includes("payBillInClientTx("))
+    failures.push("settlement payout must create an accounting BillPayment via payBillInClientTx");
 } catch (e) { failures.push(e.message); }
 
 // ── 5. Detention revenue carried on Invoice as a line_type (routes to Income → operating) ──
