@@ -16334,5 +16334,10 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-10-06",
     "purpose": "verify-match-description-no-internal-id"
+  },
+  "18358": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-06",
+    "purpose": "verify-bills-one-register-at-a-time"
   }
 }
