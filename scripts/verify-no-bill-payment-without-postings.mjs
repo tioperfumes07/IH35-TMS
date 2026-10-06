@@ -14,7 +14,7 @@
  *            is how a committed payment was left with no postings (the post ran after commit and a failure was logged).
  * LIVE (direct endpoint, unscoped, read-only):
  *   RULE 3 — cash bill payments (not settlement_deduction_noncash, not void, not QBO-origin, not sample) with no
- *            bill_payment posting: may only SHRINK from the committed baseline. The baseline is the 90 written by
+ *            bill_payment posting: may only SHRINK from the committed baseline (0 since 2026-10-06). The original baseline was the 90 written by
  *            scripts/ops/2026-09-28-cc1-round148-ap-adoption-setbased.ts (#22918) — August/September documents, closed
  *            periods (claude/00-AUGUST-AND-SEPTEMBER-ARE-CLOSED-NO-SEAT-TOUCHES-THEM.md) and purge population; they are
  *            never posted by hand. A new one is a writer that regressed.
@@ -36,7 +36,9 @@ export const REQUIRES_LIVE_DB = "unposted bill payments are live money — fails
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-no-bill-payment-without-postings";
 // Measured 2026-10-03 on prod (direct, bypass): 90 cash bill payments with no posting, all from #22918, all Aug/Sep.
-export const UNPOSTED_CASH_BASELINE = 90;
+// 2026-10-06: 0 — the AUTH-400 purge removed the 90 and every writer posts in its own transaction (#25466), so the
+// ceiling drops to the measured 0 (shrink-only). Any unposted cash bill payment now fails.
+export const UNPOSTED_CASH_BASELINE = 0; // STALE-LITERAL-OK: measured live 2026-10-06, shrink-only
 const EXEMPT_INSERTERS = {
   "apps/backend/src/qbo-sync/ap-bill-payments-puller.ts": "QBO-origin mirror — parallel books, QBO already holds the A/P settlement",
 };
