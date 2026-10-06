@@ -626,7 +626,7 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/customers/:customer_id/lanes` | `apps/backend/src/mdata/customer-detail-alias.routes.ts:43` | — | — | — |
 | nested | `/api/v1/customers/:customerId/factor` | `apps/backend/src/factoring/factor.routes.ts:409` | — | — | — |
 | nested | `/api/v1/customers/:id/flag-duplicate` | `apps/backend/src/mdata/reclassify.routes.ts:192` | — | — | — |
-| nested | `/api/v1/customers/:id/payments` | `apps/backend/src/accounting/customer-payments.routes.ts:163` | — | — | — |
+| nested | `/api/v1/customers/:id/payments` | `apps/backend/src/accounting/customer-payments.routes.ts:155` | — | — | — |
 | nested | `/api/v1/customers/:id/portal-users` | `apps/backend/src/shipper-portal/portal-users-admin.routes.ts:70` | — | — | — |
 | nested | `/api/v1/customers/:id/reclassify` | `apps/backend/src/mdata/reclassify.routes.ts:105` | — | — | — |
 
