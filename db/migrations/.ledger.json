@@ -1,7 +1,7 @@
 {
   "_comment": "GENERATED FILE - cache of the canonical ledger _system._schema_migrations, read by verify:applied-migrations-immutable where the database is unreachable. Do not hand-edit. Regenerate with: npm run db:ledger:snapshot",
   "generated_by": "db:ledger:snapshot",
-  "migration_count": 1381,
+  "migration_count": 1417,
   "migrations": [
     {
       "filename": "0001_audit_init.sql",
@@ -5512,8 +5512,28 @@
       "checksum": "031ce00547b900ef1e5185a35e448c2ebdec87907ad0e9b64c884c0395321292"
     },
     {
+      "filename": "202615360000_deposit_is_a_bank_match_target.sql",
+      "checksum": "5e91c044da5a968e023ae573d6ad7a02b521c0ec998f315618bda283b9a5207f"
+    },
+    {
       "filename": "202615360100_bill_payment_refused_without_postings.sql",
       "checksum": "9ca96865afea5de697ab870dd0b74d4a3c99f3f1adfd5e2015b61a094d6a4f3c"
+    },
+    {
+      "filename": "202615360200_refuse_posting_fact_update.sql",
+      "checksum": "8c1376ef545d689e6276819e47bdb0d634b01c8a7504a3fd0221c45fa6c8247a"
+    },
+    {
+      "filename": "202615360300_driver_escrow_gl_never_negative.sql",
+      "checksum": "159016fdff0322d1aeae154839ae5e22710bee297eb3c001392937ed9df40f11"
+    },
+    {
+      "filename": "202615360400_no_record_points_at_another_companys_unit_driver_trailer.sql",
+      "checksum": "8aea9f98805a0ee061c53e27e13e4587f13836d201c0468575dcf721bada89ce"
+    },
+    {
+      "filename": "202615360500_new_posting_requires_spine_link.sql",
+      "checksum": "ec8ee9ee2f56914e389f09427955c4a7e0134aa7d4be67440de406e9abc0ae1d"
     },
     {
       "filename": "202615360600_bank_line_matched_to_nothing_refusal.sql",
@@ -5526,6 +5546,130 @@
     {
       "filename": "202615360800_reclassify_moves_posted_expense_line_account_with_its_entry.sql",
       "checksum": "f013aa00a2abe686ce33706c0a7fdcfb2564a13333c71c80485cc2bac489e3cc"
+    },
+    {
+      "filename": "202615360930_rearm_document_side_every_void_releases_its_lines.sql",
+      "checksum": "c55d29df13f32963428a92fd6df78b49581dd58f02705d34aa610bb08add46b3"
+    },
+    {
+      "filename": "202615370000_credit_memos_and_vendor_credits_post.sql",
+      "checksum": "f5f42164f0a6242fdf1c09c0c901599bf7b4f73201ac2727f0c30688a60be348"
+    },
+    {
+      "filename": "202615370600_fuel_purchase_unique_per_provider_transaction.sql",
+      "checksum": "c7b2e85cdb34ef3b38d924ad37b4d477cce97b5638beb09797200e7549b6b99e"
+    },
+    {
+      "filename": "202615370700_bills_bill_category.sql",
+      "checksum": "eb5294d01c8090f0318c3f1b9cf4e90fb390af86684fa50e439da40214069340"
+    },
+    {
+      "filename": "202615370800_posting_source_load_id_index_usable.sql",
+      "checksum": "d0de9b56727cb3bbd7fa21096ad98b491c2157574735c8943a28b9ec36d349ba"
+    },
+    {
+      "filename": "202615370930_every_poster_resolves_by_role_bindings.sql",
+      "checksum": "f8a020104f465e339e28ee668bad3a5b05c5c05b9c8b883b00c71e889b7afc31"
+    },
+    {
+      "filename": "202615380000_escrow_accounts_balance_cents_dies.sql",
+      "checksum": "4d21e50b28b333b3928a02f8e168fdefe9b54521250e89c4fbbd34a274911f66"
+    },
+    {
+      "filename": "202615380100_escrow_balances_and_ledger_running_balance_die.sql",
+      "checksum": "779f61f59313b257bab90baa786f4c0ff7f7cdb50cf8391ffc8ad828905f7f65"
+    },
+    {
+      "filename": "202615380200_ap_control_written_only_by_documents.sql",
+      "checksum": "b1b94e9523a5f9c06e296f46b96eb3a560e4cb2cbdf52fd75c62ba2f8911e8a0"
+    },
+    {
+      "filename": "202615380300_driver_receivable_accounts_and_roles.sql",
+      "checksum": "e2dd05d36de4c525726533c8fa8acabe01851cf6aa40eb3a11140de367d2e3d6"
+    },
+    {
+      "filename": "202615380400_driver_advance_balance_derived_from_gl.sql",
+      "checksum": "8412992c10d1eeb407fcc2f39d2245b0da7c836d46428b415a81cad41f879903"
+    },
+    {
+      "filename": "202615380600_reclassify_by_item_and_load.sql",
+      "checksum": "b8ad57e0689d8f420cc70ba290247e4bd411a73aa3274410f3c2828168805c11"
+    },
+    {
+      "filename": "202615380700_document_work_order_copies.sql",
+      "checksum": "ff0366c96019a4b1f6055ce54506868082599ee49aa9137412507cd08c0f14c1"
+    },
+    {
+      "filename": "202615380930_fuel_card_type_issuer_vendor.sql",
+      "checksum": "cb2054c22b7d0a3b36bd5dc997c1305d0dcf0f58a28866a568a77320c4b2abba"
+    },
+    {
+      "filename": "202615390100_settlement_deduction_links_its_driver_receivable.sql",
+      "checksum": "f2304ab58637e0b2196b1913612c03d6f377684ca78cee770f2ab0de68a29ebd"
+    },
+    {
+      "filename": "202615390200_driver_subaccount_numbers_one_per_driver.sql",
+      "checksum": "8ef1aa4f35a28a2fdbd7a8aad0a451eed4a6a15ead13f209562e02ba2a6f15d0"
+    },
+    {
+      "filename": "202615390930_recon_adjustments_link_to_session.sql",
+      "checksum": "42aef86bff1bc719df0fdb8cf69f668feb6a379fb989a09b3a6c78c5b226836f"
+    },
+    {
+      "filename": "202615390931_posting_load_id_backfill_where_provable.sql",
+      "checksum": "fb6fff9e47c89675b1bdbbfc6cf667527092c340d43a0a617d893cdaee6083e7"
+    },
+    {
+      "filename": "202615400700_reefer_fuel_type_from_relay_product.sql",
+      "checksum": "272caaf2cb4e3dd0e2b51284f27ac3f8d64dc1f90c343dc15fded89ac39ed1c6"
+    },
+    {
+      "filename": "202615400800_reclassify_batches_check_counts_item_and_load.sql",
+      "checksum": "b3a8843cb79d829c37264837fb60d10ac31d73c2f1d5505f085d014a311f748c"
+    },
+    {
+      "filename": "202615400930_reefer_diesel_own_account_and_role.sql",
+      "checksum": "02e9a34c2700fb840eec8d229e752c7e4bbe349b070e05eed36ff9400d8a5f21"
+    },
+    {
+      "filename": "202615410100_refuse_document_delete_leaving_gl.sql",
+      "checksum": "34455423b63b8e80f7153c813954c4eb2ea1f3e62b4edbe14e3fb1f2745ab1dd"
+    },
+    {
+      "filename": "202615410200_append_only_tables_admit_auth_listed_purge.sql",
+      "checksum": "7997ed134088911a72fb5b647a3897a8133d2048f56adce6cb6f08eae470082a"
+    },
+    {
+      "filename": "202615410300_one_reversal_per_posting_line.sql",
+      "checksum": "bed5b8ab022ed929a9ac9741772330f56850e29ab3f087d9f203504a8b264506"
+    },
+    {
+      "filename": "202615410400_cash_basis_snapshot_admits_auth_listed_purge.sql",
+      "checksum": "e208f8aa2eb510790131fa4453af887a9334b3eeab1cbb34008a068c52d9a8fb"
+    },
+    {
+      "filename": "202615410500_pm_alerts_admit_auth_listed_purge.sql",
+      "checksum": "dab2631927900f1378916fecf490e2f2a162c7d7827d86ddd755a3c74477b42f"
+    },
+    {
+      "filename": "202615410930_fuel_provider_transaction_unique_per_product_line.sql",
+      "checksum": "9653d7be1913be03a131f58cb4e99917937c0f17cd54302083f9a0988fa49088"
+    },
+    {
+      "filename": "202615410940_relay_posted_to_gl_is_derived.sql",
+      "checksum": "0be1c4d508b9202743640d0ffc6aefc285990f519ea1684c4b730f716a338d63"
+    },
+    {
+      "filename": "202615410950_relay_wallet_consumed_only_by_relay_fill.sql",
+      "checksum": "57d82627e2a04ceaae8d894b4c8ae540af756a300ccd67358d672dde76f64369"
+    },
+    {
+      "filename": "202615420600_faro_reserve_entries_drop_stored_balances.sql",
+      "checksum": "6b3821735288d4c6b3c6fe5a69700a32b6605d4defe3561dae6001559573fee9"
+    },
+    {
+      "filename": "202615420900_rls_uuid_cast_defensive_resweep.sql",
+      "checksum": "b06f090699e94edcca1abbf557d6a5c6f15616768c8b679230b3adadb1eef0c6"
     }
   ]
 }
