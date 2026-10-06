@@ -14,7 +14,7 @@
  *   3. LAYOUT — a 12-col overview row: KPI column left 7/12 (lg:col-span-7), factor profile right
  *      5/12 (lg:col-span-5).
  *   4. KPI tiles use the shared DrillKpiCard (Load-Costs tile: kpiTileBg/kpiTileBorder, 11px) — the
- *      six factoring KPIs, each with a real drill target.
+ *      five factoring KPIs (ROUND 435: six until the duplicate reserve tile went), each with a real drill target.
  *   5. The right column renders FactoringProfilePanel in its COMPACT variant, and that variant is a
  *      ≤220px card (maxHeight:220 when collapsed) with an EntityLink to the vendor.
  *
@@ -25,9 +25,10 @@ import fs from "node:fs";
 const HOME = "apps/frontend/src/pages/factoring/FactoringHome.tsx";
 const PANEL = "apps/frontend/src/pages/factoring/FactoringProfilePanel.tsx";
 
+// ROUND 435 (Lead, owner "no KPI twice"): factoring-kpi-reserve-balance removed — the escrow and cash reserve balances are
+// the page-level factoring KPI strip's own tiles and the total is the Reserve tab's shared reserve panel tile.
 const KPI_TEST_IDS = [
   "factoring-kpi-active-factor",
-  "factoring-kpi-reserve-balance",
   "factoring-kpi-outstanding-liability",
   "factoring-kpi-advanced-mtd",
   "factoring-kpi-recourse-days",
@@ -119,7 +120,7 @@ if (process.argv.includes("--selftest")) {
     ["home KPI col not left", withField("home", (s) => s.replace(/lg:col-span-7"/g, 'lg:col-span-4"').replace(/flex-1 min-w-0"\s+data-testid="factoring-home-kpi-col"/g, 'flex-none min-w-0" data-testid="factoring-home-kpi-col"'))],
     ["home profile col not right", withField("home", (s) => s.replace(/lg:col-span-5"/g, 'lg:col-span-8"').replace(/flex-1 min-w-0"\s+data-testid="factoring-home-profile-col"/g, 'flex-none min-w-0" data-testid="factoring-home-profile-col"'))],
     ["home drops DrillKpiCard import", withField("home", (s) => s.replace(/import\s*\{\s*DrillKpiCard\s*\}/g, "import { GoneCard }"))],
-    ["home drops a KPI tile", withField("home", (s) => s.replace(/testId="factoring-kpi-reserve-balance"/g, 'testId="gone"'))],
+    ["home drops a KPI tile", withField("home", (s) => s.replace(/testId="factoring-kpi-advanced-mtd"/g, 'testId="gone"'))],
     ["home drops compact variant use", withField("home", (s) => s.replace(/variant="compact"/g, 'variant="full"'))],
     ["panel drops compact branch", withField("panel", (s) => s.replace(/variant\s*===\s*"compact"/g, 'variant === "gone"'))],
     ["panel drops compact marker", withField("panel", (s) => s.replace(/data-factoring-profile-compact/g, "data-gone"))],

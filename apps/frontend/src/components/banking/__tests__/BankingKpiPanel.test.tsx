@@ -36,13 +36,15 @@ describe("BankingKpiPanel (bank feed + ledger KPI engine)", () => {
     expect(await screen.findByText("$118,554.31")).toBeTruthy();
     // the bucket is NOT flattened into the tile any more
     expect(screen.queryByText("USMCA FREIGHT (1000): $152,394.11")).toBeNull();
-    // the tile says a breakdown exists instead of printing it
-    expect(screen.getByText("75 rows · 1 breakdown")).toBeTruthy();
+    // ROUND 435 — a tile is a name and a number: the row count / breakdown note rides on the hover title, not in the tile
+    expect(screen.queryByText("75 rows · 1 breakdown")).toBeNull();
+    expect(screen.getByTestId("banking-ledger-kpi-cash_position").getAttribute("title")).toContain("75 rows · 1 breakdown");
     expect(screen.getByText("In")).toBeTruthy();
     expect(screen.getByText("Out")).toBeTruthy();
     expect(screen.getByText("$5.00")).toBeTruthy();
     expect(screen.getByText("$10.00")).toBeTruthy();
-    expect(screen.getByText("No posted factoring purchase in this range.")).toBeTruthy();
+    expect(screen.queryByText("No posted factoring purchase in this range.")).toBeNull();
+    expect(screen.getByTestId("banking-ledger-kpi-factoring_wires_vs_expected").getAttribute("title")).toContain("No posted factoring purchase in this range.");
   });
 
   it("moves the bucket breakdown into the drill, with a total that ties", async () => {

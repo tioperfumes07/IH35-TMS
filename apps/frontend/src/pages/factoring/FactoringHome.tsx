@@ -835,8 +835,6 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
     const cash = raw("cash_reserve_balance");
     return { escrow, cash: cash == null ? null : Number(cash), total: escrow + Number(cash ?? 0) };
   }, [factoringKpiQuery.data?.kpis]);
-  const engineHeld = (key: "escrow" | "cash" | "total") =>
-    factoringKpiQuery.isError ? "Unavailable" : engineReserve ? (engineReserve[key] == null ? "—" : fmtCents(engineReserve[key])) : null;
   // B7: reserve movement history lives in FactoringReservesSharedPanel (shared with Banking).
   const faroImportsQuery = useQuery({
     queryKey: ["data-infra", "faro-imports", companyId],
@@ -1053,16 +1051,11 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
         <div className="flex-1 min-w-0" data-testid="factoring-home-kpi-col">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="factoring-home-kpi-row">
             <DrillKpiCard
+              size="md"
               testId="factoring-kpi-active-factor"
               label="Active factor"
               value={summaryQuery.isError ? null : (summary?.active_factor_name ?? null)}
               to={FACTORING_TAB_PATH.statements_settings}
-            />
-            <DrillKpiCard
-              testId="factoring-kpi-reserve-balance"
-              label="Reserve balance"
-              value={engineHeld("total")}
-              to={FACTORING_TAB_PATH.reserve_tracker}
             />
             {/* FACTORING-CHARGEBACK-BALANCE-IS-ACTUALLY-OUTSTANDING-LIABILITY: this is Advance +
                 Reserve still owed to the factor (outstanding_liability_signed_cents), not a real
@@ -1073,32 +1066,17 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 on the Account Summary tab's own info popover, not a new one invented here); a
                 sparkline would have to fabricate the missing days. Flagged, not guessed. */}
             <DrillKpiCard
+              size="md"
               testId="factoring-kpi-outstanding-liability"
               label="Outstanding Liability Balance"
               value={summaryQuery.isError ? null : fmtCurrency(summary?.outstanding_liability_balance)}
-              hint={
-                summaryQuery.isError ? (
-                  "Point-in-time only — no daily history to trend"
-                ) : (
-                  <div className="space-y-1">
-                    <div>Point-in-time only — no daily history to trend</div>
-                    <div>
-                      Cleared{" "}
-                      {fmtCurrency((summary?.cleared_open_cents ?? 0) / 100)}. Applied factoring
-                      advances that have not been matched or categorized in Banking are named not
-                      cleared.
-                    </div>
-                    <UnclearedDocumentsNote docs={summary?.uncleared_documents ?? []} />
-                  </div>
-                )
-              }
               to={FACTORING_TAB_PATH.recourse_pipeline}
             />
             <DrillKpiCard
+              size="md"
               testId="factoring-kpi-advanced-mtd"
               label="Advanced MTD"
               value={summaryQuery.isError ? null : fmtCurrency(summary?.mtd_advanced_total)}
-              hint={summary ? `${summary.mtd_advances_count} advances` : undefined}
               to="/accounting/factoring"
             />
             {/* ROUND 21.0 item 5a real thresholds (CC-2 ROUND 20.8 Part A tokens — DrillKpiCard's
@@ -1107,22 +1085,31 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 FACTORING_RECOURSE_LIMIT_DAYS - FACTORING_RECOURSE_WARN_MARGIN_DAYS of it, "critical"
                 at or past it. */}
             <DrillKpiCard
+              size="md"
               testId="factoring-kpi-recourse-days"
               label="Repurchase deadline"
               value={summaryQuery.isError ? null : recourseDaysRaw}
               valueTone={recourseDaysTone}
-              hint={`Contract: ${FACTORING_RECOURSE_LIMIT_DAYS} calendar days from the Purchase Date`}
               to={FACTORING_TAB_PATH.recourse_pipeline}
             />
             <DrillKpiCard
+              size="md"
               testId="factoring-kpi-chargebacks"
               label="Chargebacks & fees"
               value={feesQuery.isError ? null : fmtCurrency(latestMonthlyFeeSummary?.chargeback_total ?? 0)}
               valueTone={chargebacksTone}
-              hint="Most recent posted month"
               to={FACTORING_TAB_PATH.chargebacks_fees}
             />
           </div>
+          {/* ROUND 435 — the cleared / not-cleared declaration of the Outstanding Liability Balance is a sentence, so it
+              lives under the strip, not inside the tile (a tile is a name and a number). */}
+          {summaryQuery.isError ? null : (
+            <div className="mt-1 text-xs text-gray-600" data-testid="factoring-home-liability-cleared">
+              Outstanding Liability Balance cleared {fmtCurrency((summary?.cleared_open_cents ?? 0) / 100)}. Applied
+              factoring advances that have not been matched or categorized in Banking are named not cleared.
+              <UnclearedDocumentsNote docs={summary?.uncleared_documents ?? []} />
+            </div>
+          )}
         </div>
         <div className="flex-1 min-w-0" data-testid="factoring-home-profile-col">
           {activeFactor ? (
@@ -1500,23 +1487,16 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           <div className="mb-2 text-xs font-medium text-gray-900">Loan / Save</div>
           <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-loan-save")}</div>
           <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="factoring-loan-save-summary">
-            <div className="bg-gray-50 p-2">
-              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Total Loan Balance</div>
-              <div className="text-xs font-medium text-gray-900">{fmtCurrency(summary?.outstanding_liability_balance)}</div>
-              <div className="mt-1 text-xs text-[#4B5563]">
-                Cleared {fmtCurrency((summary?.cleared_open_cents ?? 0) / 100)}. Applied factoring
-                advances that have not been matched or categorized in Banking are named not cleared.
-              </div>
-              <UnclearedDocumentsNote docs={summary?.uncleared_documents ?? []} />
-            </div>
-            <div className="bg-gray-50 p-2">
-              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Total Reserve (Savings)</div>
-              <div className="text-xs font-medium tabular-nums text-gray-900">{engineHeld("total") ?? "…"}</div>
-            </div>
-            <div className="bg-gray-50 p-2">
-              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Active Advances</div>
-              <div className="text-xs font-medium text-gray-900">{String((recourseQuery.data?.invoices ?? []).length)}</div>
-            </div>
+            {/* ROUND 435 — "Total Loan Balance" was the Outstanding Liability Balance tile and "Total Reserve (Savings)"
+                the shared reserve panel's Total reserve, both already on this screen from the same queries: removed, not
+                rendered twice. */}
+            <DrillKpiCard
+              testId="factoring-loan-save-active-advances"
+              label="Active advances"
+              value={recourseQuery.isError ? null : String((recourseQuery.data?.invoices ?? []).length)}
+              to={FACTORING_TAB_PATH.recourse_pipeline}
+              size="md"
+            />
           </div>
           {recourseQuery.isError ? (
             <ListErrorBanner onRetry={() => void recourseQuery.refetch()} />
@@ -1763,19 +1743,10 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
             </div>
             <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-escrow-account")}</div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="factoring-escrow-summary-strip">
+              {/* ROUND 435 — "Escrow held" repeated the Escrow reserve balance tile and "Posted wires" the cash-flow
+                  strip's Posted wires, on the same screen: removed. The rate is this section's own figure. */}
               <DrillKpiCard
-                testId="factoring-escrow-kpi-escrow"
-                label="Escrow held"
-                value={engineHeld("escrow")}
-                to={FACTORING_TAB_PATH.payments_to_you}
-              />
-              <DrillKpiCard
-                testId="factoring-escrow-kpi-wires"
-                label="Posted wires"
-                value={purchasesQuery.isError ? null : String(purchaseEscrowTotals.count)}
-                to={FACTORING_TAB_PATH.payments_to_you}
-              />
-              <DrillKpiCard
+              size="md"
                 testId="factoring-escrow-kpi-rate"
                 label="Escrow rate"
                 value={activeFactor ? `${rateToPctString(activeFactor.reserve_rate)}%` : null}
@@ -1877,19 +1848,9 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
             </div>
             <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-cash-reserve")}</div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="factoring-cash-reserve-summary-strip">
+              {/* ROUND 435 — "Cash reserve held" and "Posted wires" were already on this screen: removed. */}
               <DrillKpiCard
-                testId="factoring-cash-reserve-kpi-held"
-                label="Cash reserve held"
-                value={engineHeld("cash")}
-                to={FACTORING_TAB_PATH.payments_to_you}
-              />
-              <DrillKpiCard
-                testId="factoring-cash-reserve-kpi-wires"
-                label="Posted wires"
-                value={purchasesQuery.isError ? null : String(purchaseEscrowTotals.count)}
-                to={FACTORING_TAB_PATH.payments_to_you}
-              />
-              <DrillKpiCard
+              size="md"
                 testId="factoring-cash-reserve-kpi-rate"
                 label="Cash rate"
                 value={activeFactor ? `${rateToPctString(activeFactor.cash_reserve_rate ?? 0)}%` : null}

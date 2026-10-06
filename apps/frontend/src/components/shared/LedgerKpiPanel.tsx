@@ -7,7 +7,8 @@ import { Modal } from "../Modal";
 import { EntityLink, type EntityKind } from "./EntityLink";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents, QBO_MONEY_CELL_CLASS } from "../../lib/money";
-import { colors } from "../../design/tokens";
+import { colors, spacing } from "../../design/tokens";
+import { kpiTileClasses } from "../layout/kpiTileClasses";
 
 // KPI-TILE-COLOR LAW (owner ruling 2026-09-04, verbatim: "for all kpis i want different color not
 // just white background a light color to distinguish and darker border").
@@ -16,7 +17,9 @@ import { colors } from "../../design/tokens";
 // kpiTileBg / kpiTileBorder since that ruling and components/layout/DrillKpiCard.tsx already paints
 // from them; this panel never did. Same pattern, same tokens, so Banking and Factoring KPIs finally
 // match the rest of the system instead of disappearing into the page.
-const KPI_TILE_STYLE = { backgroundColor: colors.kpiTileBg, borderColor: colors.kpiTileBorder };
+const KPI_TILE_STYLE = { backgroundColor: colors.kpiTileBg, borderColor: colors.kpiTileBorder, maxHeight: spacing.kpiTileMaxHeight };
+// ROUND 435 — one tile size: the same shell / label / value as DrillKpiCard size="md", not a look-alike.
+const TILE = kpiTileClasses("md");
 
 /** Every drill id column is an EntityLink. 15 kinds, each verified against resolveEntityRoute. */
 export const DRILL_ID_COLUMN_KIND: Record<string, EntityKind> = {
@@ -162,38 +165,33 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
             key={k.key}
             type="button"
             onClick={() => setDrillKey(k.key)}
-            className="rounded-sm border p-2 text-left transition hover:brightness-95"
+            className={`${TILE.shell} transition hover:brightness-95`}
             style={KPI_TILE_STYLE}
             data-testid={`${domain}-kpi-${k.key}`}
-            title={`${k.source}${k.gl_account ? ` · GL ${k.gl_account}` : ""}`}
+            // ROUND 435 (owner): "the messages should not be there" — a tile is a NAME and a NUMBER. The source, the GL
+            // account, the row count and any empty-state reason live in the hover title and in the drill modal, never as a
+            // sentence inside the tile.
+            title={`${k.source}${k.gl_account ? ` · GL ${k.gl_account}` : ""} · ${k.empty_reason ?? `${k.row_count} row${k.row_count === 1 ? "" : "s"}${bucketCount(k) ? ` · ${bucketCount(k)} breakdown${bucketCount(k) === 1 ? "" : "s"}` : ""}`}${k.compare_value != null ? ` · ${k.compare_label ?? "Compare"} ${fmtCompare(k)}` : ""}`}
           >
             {/* BANK-F2026100303 — A KPI TILE IS ONE NUMBER, except factoring wires vs expected
                 which the owner wants as two quantities side by side, not a variance stacked on
                 Expected. 12 banking tiles at lg:grid-cols-6 is two rows — three rows was "too many
                 kpi boxes". */}
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{k.primary_label ?? k.label}</div>
+            <div className={TILE.label}>{k.primary_label ?? k.label}</div>
             {(k.key === "factoring_wires_vs_expected" || k.key === "cleared_vs_uncleared") && k.compare_value != null ? (
-              <div className="mt-0.5 flex items-baseline justify-between gap-2">
+              <div className="flex items-baseline justify-center gap-3">
                 <div className="min-w-0">
-                  <div className="text-[11px] text-slate-500">{k.key === "cleared_vs_uncleared" ? "In" : "Wires"}</div>
-                  <div className="text-[22px] font-semibold leading-tight tabular-nums text-slate-900">{fmtValue(k)}</div>
+                  <div className={TILE.label}>{k.key === "cleared_vs_uncleared" ? "In" : "Wires"}</div>
+                  <div className={`${TILE.value} tabular-nums`}>{fmtValue(k)}</div>
                 </div>
-                <div className="min-w-0 text-right">
-                  <div className="text-[11px] text-slate-500">{k.compare_label ?? (k.key === "cleared_vs_uncleared" ? "Out" : "Expected")}</div>
-                  <div className="text-[22px] font-semibold leading-tight tabular-nums text-slate-900">{fmtCompare(k)}</div>
+                <div className="min-w-0">
+                  <div className={TILE.label}>{k.compare_label ?? (k.key === "cleared_vs_uncleared" ? "Out" : "Expected")}</div>
+                  <div className={`${TILE.value} tabular-nums`}>{fmtCompare(k)}</div>
                 </div>
               </div>
             ) : (
-              <>
-                <div className="mt-0.5 text-[22px] font-semibold leading-tight tabular-nums text-slate-900">{fmtValue(k)}</div>
-                {k.compare_value != null ? (
-                  <div className="mt-0.5 truncate text-[11px] tabular-nums text-slate-500">{k.compare_label} {fmtCompare(k)}</div>
-                ) : null}
-              </>
+              <div className={`${TILE.value} tabular-nums`}>{fmtValue(k)}</div>
             )}
-            <div className="mt-1 text-[11px] text-slate-400">
-              {k.empty_reason ?? `${k.row_count} row${k.row_count === 1 ? "" : "s"}${bucketCount(k) ? ` · ${bucketCount(k)} breakdown${bucketCount(k) === 1 ? "" : "s"}` : ""}`}
-            </div>
           </button>
         ))}
       </div>
