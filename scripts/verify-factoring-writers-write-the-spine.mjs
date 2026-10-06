@@ -6,6 +6,7 @@
 // Live (DATABASE_URL): every leg of a posted entry written by these engines — Faro reserve entries, interest runs, Due-to-Faro
 // reclasses, short-pay write-downs, purchase funding — has a spine row to its document. Positive control: the spine table is
 // readable. A live check that cannot run FAILS. --selftest plants a writer without its spine call.
+export const REQUIRES_LIVE_DB = "live money guard — every arm reads production directly; fails closed with no DATABASE_URL. Runs real under money-pr-local-gate.";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

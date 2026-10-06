@@ -21,9 +21,15 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
-const FE = path.join(ROOT, "apps/frontend/src");
+// #25436-class fix: --selftest must never write into tracked source. These two roots are
+// env-overridable so the selftest mutates throwaway copies in a temp dir.
+const FE = process.env.VRSI_FE_DIR
+  ? path.resolve(process.env.VRSI_FE_DIR)
+  : path.join(ROOT, "apps/frontend/src");
 const MOD_DIR = path.join(ROOT, "docs/specs/scoreboard/modules");
-const SHARED = path.join(ROOT, "docs/specs/scoreboard/columns.shared.json");
+const SHARED = process.env.VRSI_SHARED_JSON
+  ? path.resolve(process.env.VRSI_SHARED_JSON)
+  : path.join(ROOT, "docs/specs/scoreboard/columns.shared.json");
 
 const REQUIRED_NEW_COLS = [
   "claim",
@@ -309,50 +315,63 @@ function spawnSyncCheck() {
 
 // selftest must use child process because run() process.exit(1)
 import { spawnSync } from "node:child_process";
+import os from "node:os";
 
 function selftestChild() {
-  const inlineFixture = path.join(FE, "pages/tasks/InlineSurfaceGuardSelftest.tsx");
-  fs.writeFileSync(
-    inlineFixture,
-    'function HiddenRegressionModal() { return null; }\nexport function Host() { return <HiddenRegressionModal />; }\n',
-  );
-  const inlineRed = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
-    cwd: ROOT,
-    encoding: "utf8",
-  });
-  fs.rmSync(inlineFixture);
-  if (inlineRed.status === 0 || !`${inlineRed.stdout}\n${inlineRed.stderr}`.includes("tasks.modal.hidden_regression")) {
-    console.error("selftest FAIL — inline named modal was not inventoried as an exact Required leaf");
-    process.exit(1);
-  }
-  console.log("selftest OK — mutation red (unmapped inline named modal)");
+  const me = fileURLToPath(import.meta.url);
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "vrsi-selftest-"));
+  const tmpFe = path.join(tmp, "fe");
+  const tmpShared = path.join(tmp, "columns.shared.json");
+  try {
+    // RED 1: an inline named Modal that no Required leaf claims, in a THROWAWAY FE root —
+    // never written into tracked apps/frontend/src (#25436-class defect fix).
+    fs.mkdirSync(path.join(tmpFe, "pages/tasks"), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmpFe, "pages/tasks/InlineSurfaceGuardSelftest.tsx"),
+      'function HiddenRegressionModal() { return null; }\nexport function Host() { return <HiddenRegressionModal />; }\n',
+    );
+    const inlineRed = spawnSync(process.execPath, [me], {
+      cwd: ROOT,
+      encoding: "utf8",
+      env: { ...process.env, VRSI_FE_DIR: tmpFe },
+    });
+    if (inlineRed.status === 0 || !`${inlineRed.stdout}\n${inlineRed.stderr}`.includes("tasks.modal.hidden_regression")) {
+      console.error("selftest FAIL — inline named modal was not inventoried as an exact Required leaf");
+      process.exitCode = 1;
+      return;
+    }
+    console.log("selftest OK — mutation red (unmapped inline named modal)");
 
-  const sharedPath = SHARED;
-  const bak = fs.readFileSync(sharedPath, "utf8");
-  const doc = JSON.parse(bak);
-  doc.columns = (doc.columns || []).filter((c) => c.id !== "claim");
-  fs.writeFileSync(sharedPath, JSON.stringify(doc, null, 2) + "\n");
-  const red = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
-    cwd: ROOT,
-    encoding: "utf8",
-  });
-  fs.writeFileSync(sharedPath, bak);
-  if (red.status === 0) {
-    console.error("selftest FAIL — expected nonzero after removing claim");
-    process.exit(1);
+    // RED 2: columns.shared.json without the claim column — mutated COPY in tmp, real file untouched.
+    const doc = JSON.parse(fs.readFileSync(SHARED, "utf8"));
+    doc.columns = (doc.columns || []).filter((c) => c.id !== "claim");
+    fs.writeFileSync(tmpShared, JSON.stringify(doc, null, 2) + "\n");
+    const red = spawnSync(process.execPath, [me], {
+      cwd: ROOT,
+      encoding: "utf8",
+      env: { ...process.env, VRSI_SHARED_JSON: tmpShared },
+    });
+    if (red.status === 0) {
+      console.error("selftest FAIL — expected nonzero after removing claim");
+      process.exitCode = 1;
+      return;
+    }
+    console.log("selftest OK — mutation red (removed claim column)");
+
+    // GREEN: real sources, untouched.
+    const green = spawnSync(process.execPath, [me], { cwd: ROOT, encoding: "utf8" });
+    if (green.status !== 0) {
+      console.error(green.stderr || green.stdout);
+      console.error("selftest FAIL — expected green on real sources");
+      process.exitCode = 1;
+      return;
+    }
+    console.log("selftest OK — green on real sources");
+    console.log("selftest 3/3");
+    process.exit(0);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
   }
-  console.log("selftest OK — mutation red (removed claim column)");
-  const green = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
-    cwd: ROOT,
-    encoding: "utf8",
-  });
-  if (green.status !== 0) {
-    console.error(green.stderr || green.stdout);
-    console.error("selftest FAIL — expected green after restore");
-    process.exit(1);
-  }
-  console.log("selftest OK — green on restore");
-  process.exit(0);
 }
 
 if (process.argv.includes("--selftest")) {

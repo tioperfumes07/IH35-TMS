@@ -11,6 +11,7 @@
 //   4. month close cannot lock while Faro interest is due and unposted.
 // Live (DATABASE_URL set): per company, 2150 balance == open Net Amount of posted, live purchase lines. A live guard that
 // cannot connect FAILS. --selftest plants each static regression.
+export const REQUIRES_LIVE_DB = "live money guard — every arm reads production directly; fails closed with no DATABASE_URL. Runs real under money-pr-local-gate.";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

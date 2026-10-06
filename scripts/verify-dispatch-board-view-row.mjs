@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["connectivity"],"leafRe":"home\\.(kanban|list|round_trips|board)","task":"DSP-BOARD-VIEW-ROW"} */
 // DSP-BOARD-VIEW-ROW guard (owner order 2026-09-04): "GET THE KANBAN, LIST, ROUNDTRIPS AND TRIP
 // PAIRING OFF THE TOP AND BACK TO THE BOARD VIEW ROW. WE CLEAN THE TOP." The four load-board VIEW
 // tabs must live in a dedicated board-view row (data-testid="dispatch-board-view-row"), NOT crowd
@@ -54,9 +55,11 @@ function auditKanban(src) {
   const f = [];
   // Both the collapsed and expanded lane headers must use a visible border (gray-300) with a header
   // tint — the owner's "column headers need borders, it looks too plain" fix.
-  const headerMatches = src.match(/<header className="[^"]*border border-gray-300 bg-gray-50[^"]*"/g) ?? [];
+  const headerMatches = src.match(/<header className="[^"]*border border-gray-300 bg-gray-50[^"]*"|<header [^>]*style=\{KANBAN_HEADER_STYLE\}/g) ?? [];
   if (headerMatches.length < 2)
     f.push(`${KANBAN}: both Kanban lane headers must use "border border-gray-300 bg-gray-50" (found ${headerMatches.length})`);
+  if (/style=\{KANBAN_HEADER_STYLE\}/.test(src) && !/KANBAN_HEADER_STYLE\s*=\s*\{[^}]*border/.test(src))
+    f.push(`${KANBAN}: KANBAN_HEADER_STYLE carries no border — the lane headers lost their visible outline`);
   // Lane outlines a little darker: no lane <section> may still carry the faint border-gray-200.
   if (/border border-gray-200 bg-white p-2" data-testid=\{`kanban-column/.test(src) || /flex-1`\} rounded-sm border border-gray-200 bg-white/.test(src))
     f.push(`${KANBAN}: Kanban lane outline still uses border-gray-200 — owner asked for a darker outline (border-gray-300)`);
@@ -82,7 +85,9 @@ function main() {
       console.error("SELFTEST FAIL: removing the board-view row did not trip the guard");
       process.exit(1);
     }
-    const mut2 = kanbanSrc.replaceAll("border border-gray-300 bg-gray-50", "border border-gray-100");
+    const mut2 = kanbanSrc
+      .replaceAll("border border-gray-300 bg-gray-50", "border border-gray-100")
+      .replaceAll("style={KANBAN_HEADER_STYLE}", "");
     if (auditKanban(mut2).length === 0) {
       console.error("SELFTEST FAIL: reverting the lane header border did not trip the guard");
       process.exit(1);

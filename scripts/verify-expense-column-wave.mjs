@@ -52,14 +52,14 @@ const CHECKS = [
     pattern: /dataTestId="expenses-filter-driver"/,
   },
   {
-    name: "LST-F5195: ExpensesListPage staged Apply writes entity URL keys",
+    name: "LST-F5195: ExpensesListPage entity filters write URL keys",
     file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx",
-    pattern: /onApply:\s*\(next\)\s*=>[\s\S]*?params\.set\("load_id"|params\.set\("driver_id"|params\.set\("unit_id"|params\.set\("trailer_id"/,
+    pattern: /onApply:\s*\(next\)\s*=>[\s\S]*?params\.set\("load_id"|params\.set\("driver_id"|params\.set\("unit_id"|params\.set\("trailer_id"|function setEntityFilterParam\(key: "load_id" \| "driver_id" \| "unit_id" \| "trailer_id"[\s\S]*?params\.set\(key, next\)/,
   },
   {
     name: "LST-F5195: ExpensesListPage must not keep silent patchEntityFilter",
     file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx",
-    pattern: /^(?![\s\S]*function patchEntityFilter)[\s\S]*useStagedListFilters/,
+    pattern: /^(?![\s\S]*function patchEntityFilter)[\s\S]*(?:useStagedListFilters|function setEntityFilterParam)/,
   },
   {
     name: "ACCT-F5048: ExpensesListPage Trailer column EntityLink",
@@ -114,7 +114,7 @@ export function checkAll(readFile) {
   if (expenseRoutes === null) {
     failures.push("accounting: expenses.routes.ts not found");
   } else {
-    const scopedWoJoins = expenseRoutes.match(/wo\.id = e\.linked_work_order_uuid(?:\s|\")+AND wo\.operating_company_id = e\.operating_company_id/g) ?? [];
+    const scopedWoJoins = expenseRoutes.match(/wo\.id = (?:e\.linked_work_order_uuid|COALESCE\(e\.linked_work_order_uuid,[\s\S]*?\))(?:\s|\")+AND wo\.operating_company_id = e\.operating_company_id/g) ?? [];
     if (scopedWoJoins.length < 2) {
       failures.push(`accounting: expense list/detail work-order joins must both be company-scoped (found ${scopedWoJoins.length}/2)`);
     }

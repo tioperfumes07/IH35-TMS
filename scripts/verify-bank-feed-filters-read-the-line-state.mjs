@@ -7,6 +7,11 @@
 //   4. date presets use the local calendar day (no toISOString().slice(0, 10))
 //   5. the KPI pre-filter clears when its prop returns to "all"
 import { readFileSync } from "node:fs";
+import { runGuard, runGuardInFixture, statusOf, outputOf, reportSelftest } from "./lib/guard-selftest.mjs";
+import { fileURLToPath } from "node:url";
+
+
+if (process.argv.includes("--selftest")) selftest();
 
 const LABEL = "verify-bank-feed-filters-read-the-line-state";
 const F = "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx";
@@ -40,3 +45,16 @@ if (fails.length) {
   process.exit(1);
 }
 console.log(`${LABEL}: PASS — description filter sticks, type filters read the line state, badges count after filters, local-day presets, pre-filter clears`);
+
+// --selftest (Devin build order 2026-10-05): one case that MUST pass (the real tree) and one
+// that MUST fail (a throwaway tree missing this guard's inputs — proves it fails closed,
+// never a vacuous green).
+function selftest() {
+  const me = fileURLToPath(import.meta.url);
+  const real = runGuard(me);
+  const missing = runGuardInFixture(me, {});
+  reportSelftest("verify-bank-feed-filters-read-the-line-state", [
+    { name: "real repo tree passes", pass: statusOf(real) === 0, detail: statusOf(real) === 0 ? undefined : outputOf(real).slice(-400) },
+    { name: "guard fails closed when its inputs are absent", pass: statusOf(missing) !== 0 },
+  ]);
+}

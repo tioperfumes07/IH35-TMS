@@ -7,6 +7,11 @@
  */
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { runGuard, runGuardInFixture, statusOf, outputOf, reportSelftest } from "./lib/guard-selftest.mjs";
+import { fileURLToPath } from "node:url";
+
+
+if (process.argv.includes("--selftest")) selftest();
 
 const root = join(process.cwd(), "apps/backend/src");
 const fails = [];
@@ -28,3 +33,16 @@ const walk = (d) => readdirSync(d).flatMap((n) => { const p = join(d, n); return
 for (const p of walk(root)) if (readFileSync(p, "utf8").split("\n").some((ln) => /\bl\.delivered_at\b/.test(ln) && !/^\s*(\/\/|\*|--)/.test(ln))) fails.push(`${p.slice(root.length + 1)} reads l.delivered_at (column does not exist)`);
 if (fails.length) { console.error("verify-load-at-time-single-definition: FAIL\n  " + fails.join("\n  ")); process.exit(1); }
 console.log(`verify-load-at-time-single-definition: OK (${callers.length} callers)`);
+
+// --selftest (Devin build order 2026-10-05): one case that MUST pass (the real tree) and one
+// that MUST fail (a throwaway tree missing this guard's inputs — proves it fails closed,
+// never a vacuous green).
+function selftest() {
+  const me = fileURLToPath(import.meta.url);
+  const real = runGuard(me);
+  const missing = runGuardInFixture(me, {});
+  reportSelftest("verify-load-at-time-single-definition", [
+    { name: "real repo tree passes", pass: statusOf(real) === 0, detail: statusOf(real) === 0 ? undefined : outputOf(real).slice(-400) },
+    { name: "guard fails closed when its inputs are absent", pass: statusOf(missing) !== 0 },
+  ]);
+}

@@ -110,7 +110,7 @@ export async function openInvoiceDispute(
     const invRes = await client.query(
       `SELECT id, customer_id, total_cents, amount_open_cents, status
          FROM accounting.invoices
-        WHERE id = $1 AND operating_company_id = $2`,
+        WHERE id = $1 AND operating_company_id = $2::uuid`,
       [invoiceId, operatingCompanyId]
     );
     const inv = invRes.rows[0];
@@ -193,7 +193,7 @@ export async function listInvoiceDisputes(
   return withCompanyScope(userId, operatingCompanyId, async (client) => {
     const res = await client.query(
       `SELECT * FROM accounting.invoice_disputes
-        WHERE invoice_id = $1 AND operating_company_id = $2
+        WHERE invoice_id = $1 AND operating_company_id = $2::uuid
         ORDER BY opened_at DESC`,
       [invoiceId, operatingCompanyId]
     );
@@ -221,7 +221,7 @@ export async function listInvoiceDisputeQueue(
          FROM accounting.invoice_disputes d
          JOIN accounting.invoices i ON i.id = d.invoice_id
          LEFT JOIN mdata.customers c ON c.id = d.customer_id
-        WHERE d.operating_company_id = $1
+        WHERE d.operating_company_id = $1::uuid
           ${statusClause}
         ORDER BY (d.status = 'open') DESC, d.opened_at DESC`,
       params
@@ -247,7 +247,7 @@ export async function resolveInvoiceDispute(
   return withCompanyScope(userId, operatingCompanyId, async (client) => {
     const cur = await client.query(
       `SELECT * FROM accounting.invoice_disputes
-        WHERE id = $1 AND operating_company_id = $2`,
+        WHERE id = $1 AND operating_company_id = $2::uuid`,
       [disputeId, operatingCompanyId]
     );
     const row = cur.rows[0] as InvoiceDisputeRow | undefined;
@@ -271,7 +271,7 @@ export async function resolveInvoiceDispute(
               resolved_at = now(),
               resolved_by_user_id = $7,
               updated_at = now()
-        WHERE id = $1 AND operating_company_id = $2 AND status = 'open'
+        WHERE id = $1 AND operating_company_id = $2::uuid AND status = 'open'
         RETURNING *`,
       [
         disputeId,
@@ -333,7 +333,7 @@ export async function decideDisputeFault(
   return withCompanyScope(userId, operatingCompanyId, async (client) => {
     const cur = await client.query(
       `SELECT * FROM accounting.invoice_disputes
-        WHERE id = $1 AND operating_company_id = $2`,
+        WHERE id = $1 AND operating_company_id = $2::uuid`,
       [disputeId, operatingCompanyId]
     );
     const row = cur.rows[0] as InvoiceDisputeRow | undefined;
@@ -348,7 +348,7 @@ export async function decideDisputeFault(
               driver_id = $6,
               load_id = $7,
               updated_at = now()
-        WHERE id = $1 AND operating_company_id = $2
+        WHERE id = $1 AND operating_company_id = $2::uuid
         RETURNING *`,
       [
         disputeId,
@@ -393,7 +393,7 @@ export async function cancelInvoiceDispute(
   const { userId, operatingCompanyId, disputeId } = input;
   return withCompanyScope(userId, operatingCompanyId, async (client) => {
     const cur = await client.query(
-      `SELECT status FROM accounting.invoice_disputes WHERE id = $1 AND operating_company_id = $2`,
+      `SELECT status FROM accounting.invoice_disputes WHERE id = $1 AND operating_company_id = $2::uuid`,
       [disputeId, operatingCompanyId]
     );
     const row = cur.rows[0];
@@ -406,7 +406,7 @@ export async function cancelInvoiceDispute(
               resolved_at = now(),
               resolved_by_user_id = $4,
               updated_at = now()
-        WHERE id = $1 AND operating_company_id = $2 AND status = 'open'
+        WHERE id = $1 AND operating_company_id = $2::uuid AND status = 'open'
         RETURNING *`,
       [disputeId, operatingCompanyId, input.reason, userId]
     );

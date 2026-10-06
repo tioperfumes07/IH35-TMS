@@ -10,6 +10,11 @@
  *   - the stop writer runs a daily 10-day catch-up fed by Samsara odometer history (stats/history).
  */
 import { readFileSync } from "node:fs";
+import { runGuard, runGuardInFixture, statusOf, outputOf, reportSelftest } from "./lib/guard-selftest.mjs";
+import { fileURLToPath } from "node:url";
+
+
+if (process.argv.includes("--selftest")) selftest();
 
 const f = (p) => readFileSync(p, "utf8");
 const svc = f("apps/backend/src/integrations/samsara/geofences/real-driven-miles.service.ts");
@@ -30,3 +35,16 @@ const checks = [
 const fails = checks.filter(([ok]) => !ok).map(([, what]) => what);
 if (fails.length) { console.error("verify-e05-legs-evidence-chain: FAIL\n  " + fails.join("\n  ")); process.exit(1); }
 console.log(`verify-e05-legs-evidence-chain: OK (${checks.length} checks)`);
+
+// --selftest (Devin build order 2026-10-05): one case that MUST pass (the real tree) and one
+// that MUST fail (a throwaway tree missing this guard's inputs — proves it fails closed,
+// never a vacuous green).
+function selftest() {
+  const me = fileURLToPath(import.meta.url);
+  const real = runGuard(me);
+  const missing = runGuardInFixture(me, {});
+  reportSelftest("verify-e05-legs-evidence-chain", [
+    { name: "real repo tree passes", pass: statusOf(real) === 0, detail: statusOf(real) === 0 ? undefined : outputOf(real).slice(-400) },
+    { name: "guard fails closed when its inputs are absent", pass: statusOf(missing) !== 0 },
+  ]);
+}

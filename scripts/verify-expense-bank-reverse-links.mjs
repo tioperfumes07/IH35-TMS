@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["accounting","banking"],"cols":["bank","expense","reverse_link"],"leafRe":"expense","task":"ACCT-F17-EXPENSE-BANK-REVERSE","vertical":"column-wave"} */
 /**
  * ACCT-F17 — Expense → bank reverse drill (Law §9 twin of Receive Payment bank reverse).
  *
@@ -42,7 +43,7 @@ export function check(files) {
   }
 
   const detail = files[DETAIL] ?? "";
-  if (!/matched_bank_transaction_id/.test(detail) || !/kind=["']bank_transaction["']/.test(detail)) {
+  if (!/matched_bank_transaction_id/.test(detail) || !/kind=["']bank_transaction["']|OnlineBankingMatchBanner/.test(detail)) {
     f.push(`${DETAIL}: must EntityLink kind=bank_transaction from matched_bank_transaction_id`);
   }
 

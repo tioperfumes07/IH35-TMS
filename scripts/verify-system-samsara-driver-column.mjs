@@ -84,7 +84,7 @@ export function verify(source) {
   need("mapApi", 'withCompany("/api/v1/samsara/map", companyId)', "the API must POST the company-bound map route (samsara_driver_mapping connectivity)");
   need("mapRoute", '"/api/v1/samsara/map"', "backend must mount POST /api/v1/samsara/map (samsara_driver_mapping connectivity)");
   need("index", "await registerSamsaraDriverMappingRoutes(app);", "driver-mapping routes must be registered (samsara_driver_mapping connectivity)");
-  need("mapRoute", "SELECT id::text AS id FROM mdata.drivers WHERE operating_company_id = $1::uuid AND id = $2::uuid LIMIT 1", "a driver target must be a driver of the same company (samsara_driver_mapping driver)");
+  need("mapRoute", "FROM mdata.drivers WHERE operating_company_id = $1::uuid AND id = $2::uuid LIMIT 1", "a driver target must be a driver of the same company (samsara_driver_mapping driver)");
 
   need("routeTest", "scopes the company (parameterized set_config)", "route test must prove bound company scope");
   need("routeTest", "expect(scopeCall?.values).toEqual([OCI])", "route test must assert the exact bound company");

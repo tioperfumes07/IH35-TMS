@@ -38,7 +38,9 @@ export function auditLoadColumn(sources, leaves) {
   // planted leaf from the real 98 landed exactly ON the stale 97 floor. Bumped 97 -> 98 to match
   // live reality; still a floor (may only go UP for a genuinely new load leaf, never down without
   // the same #9817-style disclosure).
-  if (p10.length < 98) failures.push(`priority-10 load inventory unexpectedly shrank to ${p10.length}`);
+  // Floor re-verified live 2026-10-05 (Devin, push-gate): merged seats added 3 more P10 load
+  // leaves — live count 101, so removing the planted leaf must trip below it. Bumped 98 -> 101.
+  if (p10.length < 101) failures.push(`priority-10 load inventory unexpectedly shrank to ${p10.length}`);
   // LINK-F5169 classified the final blanket Required tail leaf-by-leaf, leaving 134 genuine load
   // leaves at the time. Floor lowered to 131 (2026-08-20, CC-3) to match #9817
   // FLEET-UNIT-TRIP-COST-LOAD-REVERSE-INFLATION, a legitimate, documented honesty correction that
@@ -60,7 +62,9 @@ export function auditLoadColumn(sources, leaves) {
   // load leaf actually being built. Round 92/94 (CC-2, 2026-09-23) is exactly that: a genuinely
   // new load leaf, settlements.panel.open_pre_settlements (E11-D4), carrying `load` in its
   // required set -- re-verified live count is 131 total / 98 P10. Bumped 130 -> 131.
-  if (leaves.length < 131) failures.push(`all-module load inventory unexpectedly shrank to ${leaves.length}`);
+  // Re-verified live 2026-10-05 (Devin, push-gate): merged seats added 3 more load leaves —
+  // live count 134, so removing the planted leaf must trip below it. Bumped 131 -> 134.
+  if (leaves.length < 134) failures.push(`all-module load inventory unexpectedly shrank to ${leaves.length}`);
   for (const id of ["accounting.list", "accounting.submit", "accounting.detail"]) {
     if (leaves.some((leaf) => leaf.module === "factoring" && leaf.id === id)) failures.push(`factoring:${id} must not invent a per-advance load FK`);
   }

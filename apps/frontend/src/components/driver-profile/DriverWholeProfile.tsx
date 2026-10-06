@@ -10,7 +10,7 @@ import { formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { ListErrorState } from "../ListErrorState";
-import { resolveEntityRoute, type EntityKind } from "../shared/EntityLink";
+import { EntityLink, resolveEntityRoute, type EntityKind } from "../shared/EntityLink";
 import { ProfileKpi, ProfileRows, ProfileSection } from "../profile/ProfileBlocks";
 
 type Block<T> = { value: T; empty_reason: string | null };
@@ -145,7 +145,7 @@ export function DriverWholeProfile(props: { operatingCompanyId: string; driverId
     { key: "last_seen_at", label: "Last DVIR", sortable: true, render: (r) => d(r.last_seen_at) },
   ];
   const loadCols: Array<ParityColumn<Load>> = [
-    { key: "load_number", label: "Load", sortable: true },
+    { key: "load_number", label: "Load", sortable: true, render: (r) => <EntityLink kind="load" id={r.id} label={r.load_number} /> },
     { key: "first_stop_at", label: "Date", sortable: true, render: (r) => d(r.first_stop_at) },
     { key: "seat", label: "Seat", sortable: true },
     { key: "unit_number", label: "Truck", sortable: true },

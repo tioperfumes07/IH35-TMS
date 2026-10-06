@@ -1,10 +1,16 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["fleet"],"cols":["connectivity","reverse_link"],"task":"E-29-BORDER-CROSSING-CUSTOMS-LINK"}
  * E-29 addition: a detected border crossing links to the crossing the office declared (mdata.unit_border_crossings)
  * on a UNIQUE match only, and both sides read the other. Fails if the link step stops being unique-only, stops
  * running after the detector, or either reverse read disappears.
  */
 import { readFileSync } from "node:fs";
+import { runGuard, runGuardInFixture, statusOf, outputOf, reportSelftest } from "./lib/guard-selftest.mjs";
+import { fileURLToPath } from "node:url";
+
+if (process.argv.includes("--selftest")) selftest();
+
 const det = readFileSync("apps/backend/src/integrations/samsara/border-crossings/detector.service.ts", "utf8");
 const link = readFileSync("apps/backend/src/telematics/telematics-linkage.service.ts", "utf8");
 const hist = readFileSync("apps/backend/src/border-crossing/border-crossing-history.routes.ts", "utf8");
@@ -20,3 +26,16 @@ const checks = [
 const fails = checks.filter(([ok]) => !ok).map(([, w]) => w);
 if (fails.length) { console.error("verify-border-crossing-customs-link: FAIL\n  " + fails.join("\n  ")); process.exit(1); }
 console.log(`verify-border-crossing-customs-link: OK (${checks.length})`);
+
+// --selftest (Devin build order 2026-10-05): one case that MUST pass (the real tree) and one
+// that MUST fail (a throwaway tree missing this guard's inputs — proves it fails closed,
+// never a vacuous green).
+function selftest() {
+  const me = fileURLToPath(import.meta.url);
+  const real = runGuard(me);
+  const missing = runGuardInFixture(me, {});
+  reportSelftest("verify-border-crossing-customs-link", [
+    { name: "real repo tree passes", pass: statusOf(real) === 0, detail: statusOf(real) === 0 ? undefined : outputOf(real).slice(-400) },
+    { name: "guard fails closed when its inputs are absent", pass: statusOf(missing) !== 0 },
+  ]);
+}

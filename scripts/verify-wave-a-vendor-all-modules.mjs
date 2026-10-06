@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["accounting","banking","dispatch","driver-finance","factoring","fleet","legal","maintenance","mdata","planner","reports","safety","samsara","tasks","vendors","customers","compliance","docs","inventory"],"cols":["vendor_fk"],"leafRe":"\\.vendor_id$","task":"WAVE-A-VENDOR-ALL-MODULES"} */
 /** Full-product vendor FK census across every module that genuinely owns it; QBO sync is excluded.
  *
  * LINK-F5166 (2026-08-14): same self-regression pattern already documented and fixed for ap_bill
@@ -38,7 +39,7 @@ const contracts = [
   // converged fix (CC-2 had the same re-anchor via 01b9b2f5f; kept this already-integrated version).
   ["apps/frontend/src/pages/inventory/InventoryPartsStockPage.tsx", /<EntityLink[\s\S]{0,60}kind="vendor"[\s\S]{0,60}id=\{row\.vendor_id\}/],
   ["apps/frontend/src/pages/finance/ArApAgingPage.tsx", /<EntityLink kind="vendor" id=\{r\.vendor_id\}/],
-  ["apps/frontend/src/pages/reports/APAgingPage.tsx", /<EntityLink kind="vendor" id=\{r\.vendor_id\}/],
+  ["apps/frontend/src/pages/reports/APAgingPage.tsx", /<EntityLink\s+kind="vendor"\s+id=\{r\.vendor_id\}/],
 ];
 const composed = ["verify-wave-a-vendor-column.mjs", "verify-accounting-vendor-reverse-link-wired.mjs", "verify-vendor-picker-search.mjs", "verify-maint-vendors-ap-link-search.mjs", "verify-insurance-legal-reference-select.mjs"];
 export function auditVendorColumn(sources, leaves) {

@@ -47,8 +47,15 @@ import { spawnSync } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { runGuard, withTmpFixture, statusOf, outputOf, reportSelftest } from "./lib/guard-selftest.mjs";
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+
+if (process.argv.includes("--selftest")) selftest();
+
+// VERIFY_ROOT lets --selftest point the whole guard at a throwaway tree (never tracked source).
+const ROOT = process.env.VERIFY_ROOT
+  ? resolve(process.env.VERIFY_ROOT)
+  : resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-invoice-issue-implies-posted-and-linked";
 
 const POSTED_STATES = ["sent", "partial", "paid"];
@@ -95,6 +102,17 @@ const read = (p) => (existsSync(resolve(ROOT, p)) ? readFileSync(resolve(ROOT, p
 
 export function collectFailures() {
 const failures = [];
+
+// Fail closed on a tree this guard cannot see: with no git repo and no backend sources it
+// vacuously reported OK (measured 2026-10-05 — exited 0 in a bare directory). Missing core
+// inputs are a FAIL, never a pass.
+const coreMissing = [...SEND_PATHS, POSTER_PATH].filter((p) => !existsSync(resolve(ROOT, p)));
+if (coreMissing.length) {
+  failures.push(
+    `CORE INPUTS MISSING: ${coreMissing.join(", ")} — refusing to report OK on a tree this guard cannot see.`,
+  );
+  return { failures, statusWriters: [] };
+}
 
 // ---- RULE 1 : a send path must refuse a disabled posting ----
 for (const p of SEND_PATHS) {
@@ -180,4 +198,20 @@ if (failures.length) {
   process.exit(1);
 }
 console.log(`${LABEL}: OK — send paths refuse a disabled posting, ${statusWriters.length}/${WRITERS_CEILING} unposted status writers, poster declares its spine link.`);
+}
+
+// --selftest (Devin build order 2026-10-05): one case that MUST pass (the real tree) and one
+// that MUST fail (a throwaway tree missing this guard's inputs — proves it fails closed,
+// never a vacuous green). This guard resolves paths against its own ROOT, so the fixture is
+// pointed at via VERIFY_ROOT, not cwd.
+function selftest() {
+  const me = fileURLToPath(import.meta.url);
+  const real = runGuard(me);
+  const missing = withTmpFixture({}, [], (tmp) =>
+    runGuard(me, { cwd: tmp, env: { VERIFY_ROOT: tmp } }),
+  );
+  reportSelftest("verify-invoice-issue-implies-posted-and-linked", [
+    { name: "real repo tree passes", pass: statusOf(real) === 0, detail: statusOf(real) === 0 ? undefined : outputOf(real).slice(-400) },
+    { name: "guard fails closed when its inputs are absent", pass: statusOf(missing) !== 0 },
+  ]);
 }

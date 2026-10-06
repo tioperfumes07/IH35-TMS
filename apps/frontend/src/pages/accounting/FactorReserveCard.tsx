@@ -50,7 +50,7 @@ const invoiceColumns: Array<ParityColumn<ReserveByInvoiceRow>> = [
     label: "Invoice",
     sortable: true,
     render: (row) =>
-      row.invoice_id ? <EntityLink kind="invoice" id={row.invoice_id} label={row.invoice_display_id ?? "Invoice"} /> : "Not stamped to an invoice",
+      row.invoice_id ? <EntityLink kind="invoice" id={row.invoice_id} label={entityLabel(row.invoice_display_id, row.invoice_id, "Invoice")} /> : "Not stamped to an invoice",
   },
   ...(columns.slice(2) as unknown as Array<ParityColumn<ReserveByInvoiceRow>>),
 ];
@@ -100,7 +100,7 @@ export function FactorReserveCard({ operatingCompanyId }: { operatingCompanyId: 
         ) : null}
       </DataPanel>
       {drill ? (
-        <Modal open onClose={() => setDrill(null)} title={`Reserve — ${drill.customer_name}`}>
+        <Modal open onClose={() => setDrill(null)} title={`Reserve — ${entityLabel(drill.customer_name, drill.customer_id, "Customer")}`}>
           {invoices.isError ? (
             <ListErrorState title="Couldn't load the invoices" status={0} onRetry={() => void invoices.refetch()} />
           ) : (

@@ -994,7 +994,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
         `
           SELECT id, insured_value_cents
           FROM mdata.assets
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND id = ANY($2::uuid[])
         `,
         [query.data.operating_company_id, assetIds]
@@ -1020,7 +1020,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
           SET superseded_at = now(),
               superseded_reason = 'reallocate'
           WHERE bill_id = $1
-            AND operating_company_id = $2
+            AND operating_company_id = $2::uuid
             AND superseded_at IS NULL
         `,
         [params.data.id, query.data.operating_company_id]
@@ -1072,7 +1072,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
     const payload = await withCompanyScope(String(user.uuid), query.data.operating_company_id, async (client) => {
       const values: unknown[] = [query.data.operating_company_id, params.data.id];
-      const where = ["a.operating_company_id = $1", "a.asset_id = $2", "b.operating_company_id = $1::uuid", "a.superseded_at IS NULL"];
+      const where = ["a.operating_company_id = $1::uuid", "a.asset_id = $2", "b.operating_company_id = $1::uuid", "a.superseded_at IS NULL"];
       if (query.data.from) {
         values.push(query.data.from);
         where.push(`b.bill_date >= $${values.length}::date`);

@@ -28,7 +28,7 @@ export async function readVendorProfile(client: Q, companyId: string, vendorId: 
          FROM mdata.vendors v
          LEFT JOIN catalogs.payment_terms pt ON pt.id = v.payment_terms_id
          LEFT JOIN catalogs.accounts a ON a.id = v.default_expense_account_id
-        WHERE v.id = $1 AND v.operating_company_id = $2`,
+        WHERE v.id = $1 AND v.operating_company_id = $2::uuid`,
       [vendorId, companyId]
     )
   ).rows[0];
@@ -41,7 +41,7 @@ export async function readVendorProfile(client: Q, companyId: string, vendorId: 
               b.amount_cents, coalesce(b.paid_cents, 0) AS paid_cents, b.amount_cents - coalesce(b.paid_cents, 0) AS open_cents,
               GREATEST(current_date - b.due_date, 0) AS days_past_due, b.unit_id, b.load_id, b.linked_work_order_uuid
          FROM accounting.bills b
-        WHERE b.operating_company_id = $1 AND ${BILL_VENDOR_SQL} AND ${OPEN_BILL_SQL}
+        WHERE b.operating_company_id = $1::uuid AND ${BILL_VENDOR_SQL} AND ${OPEN_BILL_SQL}
         ORDER BY b.due_date NULLS LAST, b.bill_date`,
       [companyId, vendorId]
     )
@@ -66,10 +66,10 @@ export async function readVendorProfile(client: Q, companyId: string, vendorId: 
     await client.query(
       `SELECT
          (SELECT coalesce(sum(bp.amount_cents), 0) FROM accounting.bill_payments bp
-           WHERE bp.operating_company_id = $1 AND bp.vendor_id = $2::text AND bp.voided_at IS NULL AND bp.revoked_at IS NULL
+           WHERE bp.operating_company_id = $1::uuid AND bp.vendor_id = $2::text AND bp.voided_at IS NULL AND bp.revoked_at IS NULL
              AND bp.payment_date >= make_date($3, 1, 1) AND bp.payment_date < make_date($3 + 1, 1, 1)) AS bill_payments_cents,
          (SELECT coalesce(sum(e.total_amount_cents), 0) FROM accounting.expenses e
-           WHERE e.operating_company_id = $1 AND e.vendor_uuid = $2::uuid AND e.voided_at IS NULL
+           WHERE e.operating_company_id = $1::uuid AND e.vendor_uuid = $2::uuid AND e.voided_at IS NULL
              AND e.transaction_date >= make_date($3, 1, 1) AND e.transaction_date < make_date($3 + 1, 1, 1)) AS expenses_cents`,
       [companyId, vendorId, year]
     )
@@ -96,7 +96,7 @@ export async function readVendorProfile(client: Q, companyId: string, vendorId: 
       `SELECT p.id, p.insurer_name, p.policy_number, p.coverage_type, p.effective_date, p.expiry_date, p.status,
               p.total_premium_cents, (p.expiry_date - current_date) AS days_to_expiry
          FROM insurance.policy p
-        WHERE p.operating_company_id = $1 AND p.vendor_id = $2::text
+        WHERE p.operating_company_id = $1::uuid AND p.vendor_id = $2::text
         ORDER BY p.expiry_date DESC NULLS LAST`,
       [companyId, vendorId]
     )
@@ -120,7 +120,7 @@ export async function readVendorProfile(client: Q, companyId: string, vendorId: 
                    WHEN w.external_vendor_id = $2::uuid THEN 'external' ELSE 'shop' END AS role
          FROM maintenance.work_orders w
          LEFT JOIN mdata.units u ON u.id = w.unit_id
-        WHERE w.operating_company_id = $1
+        WHERE w.operating_company_id = $1::uuid
           AND (w.vendor_id = $2::uuid OR w.external_vendor_id = $2::uuid OR w.roadside_provider_vendor_id = $2::uuid)
           AND w.voided_by_user_id IS NULL
         ORDER BY coalesce(w.opened_at, w.created_at) DESC
@@ -135,7 +135,7 @@ export async function readVendorProfile(client: Q, companyId: string, vendorId: 
       `SELECT count(*)::int AS txns, coalesce(sum(gallons), 0) AS gallons, coalesce(round(sum(total_cost) * 100), 0)::bigint AS total_cents,
               max(coalesce(purchased_at, transaction_at)) AS last_at
          FROM fuel.fuel_transactions
-        WHERE operating_company_id = $1 AND vendor_id = $2::uuid AND voided_at IS NULL AND archived_at IS NULL
+        WHERE operating_company_id = $1::uuid AND vendor_id = $2::uuid AND voided_at IS NULL AND archived_at IS NULL
           AND coalesce(purchased_at, transaction_at) >= now() - interval '90 days'`,
       [companyId, vendorId]
     )
@@ -145,7 +145,7 @@ export async function readVendorProfile(client: Q, companyId: string, vendorId: 
       `SELECT f.id, coalesce(f.purchased_at, f.transaction_at) AS at, f.gallons, f.price_per_gallon,
               round(f.total_cost * 100)::bigint AS total_cents, f.location_city, f.location_state, f.unit_id, u.unit_number, f.load_id
          FROM fuel.fuel_transactions f LEFT JOIN mdata.units u ON u.id = f.unit_id
-        WHERE f.operating_company_id = $1 AND f.vendor_id = $2::uuid AND f.voided_at IS NULL AND f.archived_at IS NULL
+        WHERE f.operating_company_id = $1::uuid AND f.vendor_id = $2::uuid AND f.voided_at IS NULL AND f.archived_at IS NULL
         ORDER BY coalesce(f.purchased_at, f.transaction_at) DESC
         LIMIT 25`,
       [companyId, vendorId]
@@ -156,11 +156,11 @@ export async function readVendorProfile(client: Q, companyId: string, vendorId: 
   const locations = (
     await client.query(
       `SELECT l.id, l.location_name, l.location_type::text AS location_type, l.city, l.state, 'linked location' AS source, NULL::int AS visits
-         FROM mdata.locations l WHERE l.operating_company_id = $1 AND l.linked_vendor_id = $2::uuid
+         FROM mdata.locations l WHERE l.operating_company_id = $1::uuid AND l.linked_vendor_id = $2::uuid
        UNION ALL
        SELECT NULL, NULL, 'fuel stop', f.location_city, f.location_state, 'fuel purchases', count(*)::int
          FROM fuel.fuel_transactions f
-        WHERE f.operating_company_id = $1 AND f.vendor_id = $2::uuid AND f.voided_at IS NULL AND f.location_city IS NOT NULL
+        WHERE f.operating_company_id = $1::uuid AND f.vendor_id = $2::uuid AND f.voided_at IS NULL AND f.location_city IS NOT NULL
         GROUP BY f.location_city, f.location_state
        ORDER BY 7 DESC NULLS FIRST, 4`,
       [companyId, vendorId]
@@ -184,13 +184,13 @@ export async function readVendorProfile(client: Q, companyId: string, vendorId: 
     await client.query(
       `SELECT * FROM (
          SELECT 'bill' AS kind, b.id, coalesce(b.display_id, b.bill_number) AS ref, b.bill_date AS txn_date, b.amount_cents, b.status
-           FROM accounting.bills b WHERE b.operating_company_id = $1 AND ${BILL_VENDOR_SQL} AND b.voided_at IS NULL AND b.revoked_at IS NULL
+           FROM accounting.bills b WHERE b.operating_company_id = $1::uuid AND ${BILL_VENDOR_SQL} AND b.voided_at IS NULL AND b.revoked_at IS NULL
          UNION ALL
          SELECT 'bill_payment', bp.id, coalesce(bp.check_number, bp.reference_number), bp.payment_date, -bp.amount_cents, bp.status
-           FROM accounting.bill_payments bp WHERE bp.operating_company_id = $1 AND bp.vendor_id = $2::text AND bp.voided_at IS NULL AND bp.revoked_at IS NULL
+           FROM accounting.bill_payments bp WHERE bp.operating_company_id = $1::uuid AND bp.vendor_id = $2::text AND bp.voided_at IS NULL AND bp.revoked_at IS NULL
          UNION ALL
          SELECT 'expense', e.id, NULL, e.transaction_date, e.total_amount_cents, e.status
-           FROM accounting.expenses e WHERE e.operating_company_id = $1 AND e.vendor_uuid = $2::uuid AND e.voided_at IS NULL
+           FROM accounting.expenses e WHERE e.operating_company_id = $1::uuid AND e.vendor_uuid = $2::uuid AND e.voided_at IS NULL
        ) h ORDER BY txn_date DESC NULLS LAST LIMIT 50`,
       [companyId, vendorId]
     )

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["accounting","banking","dispatch","driver-finance","factoring","legal","maintenance","mdata","planner","reports","safety","tasks","customers","compliance","inventory"],"cols":["customer_fk"],"leafRe":"\\.customer_id$","task":"WAVE-A-CUSTOMER-ALL-MODULES"} */
 /** Full-product customer FK contract across every module that genuinely owns it.
  *
  * LINK-F5165 (2026-08-14): same self-regression pattern already documented and fixed for ap_bill
@@ -43,7 +44,7 @@ const contracts = [
   // detailed check of this same surface.
   [
     "apps/frontend/src/pages/legal/contracts/UnifiedContractCreatorModal.tsx",
-    /createKind="customer"|<EntityPicker[\s\S]{0,500}kind="customer"[\s\S]{0,500}allowCreate/,
+    /createKind="customer"|<EntityPicker[\s\S]{0,500}kind="customer"[\s\S]{0,500}allowCreate|<CatalogReferenceSelect[\s\S]{0,200}kind="customer"[\s\S]{0,200}allowCreate/,
   ],
   ["apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx", /customer_id:\s*values\.customer_id \|\| undefined/],
   // Direct inline EntityLink OR the extracted ManagementCustomerCell component (honest-label +

@@ -109,7 +109,7 @@ export async function registerLocationsListRoutes(app: FastifyInstance) {
               AND l2.id != loc.id
               AND l2.operating_company_id = loc.operating_company_id
           ) lm ON true
-          WHERE loc.operating_company_id = $1
+          WHERE loc.operating_company_id = $1::uuid
             AND ($2::text IS NULL OR (
               loc.location_name ILIKE '%' || $2 || '%'
               OR loc.location_code ILIKE '%' || $2 || '%'

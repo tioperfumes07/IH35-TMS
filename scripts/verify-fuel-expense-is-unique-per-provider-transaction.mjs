@@ -9,6 +9,11 @@
 // reverse and void. A pair not on it fails. A pair on it that is no longer duplicated fails too, so the entry is removed
 // the day the AUTH lands — the list can only get shorter.
 import { withUnscopedReadOnly, NOT_FROZEN_SQL, report } from "./lib/bank-feed-state-machine.mjs";
+import { runGuard, DEAD_DB_ENV, statusOf, outputOf, reportSelftest } from "./lib/guard-selftest.mjs";
+import { fileURLToPath } from "node:url";
+
+
+if (process.argv.includes("--selftest")) selftest();
 
 const LABEL = "verify-fuel-expense-is-unique-per-provider-transaction";
 
@@ -55,3 +60,22 @@ console.log(
     `with NO provider key (placeholder / parse fragment) ${out.shape.live - out.shape.keyed}`
 );
 report(LABEL, fails, `no provider transaction recorded twice beyond the ${AWAITING_OWNER_AUTH.size} named pairs awaiting owner AUTH`);
+
+// --selftest (Devin build order 2026-10-05): one case that MUST pass (the live DB check) and one
+// that MUST fail (the guard on a dead credential — it must refuse, never report a vacuous green).
+// A live-DB guard cannot be fixture-tested: its inputs are rows on Neon, not files on disk.
+function selftest() {
+  const me = fileURLToPath(import.meta.url);
+  const real = runGuard(me);
+  const noDb = runGuard(me, { env: DEAD_DB_ENV });
+  const refused = /DATABASE_URL not set/.test(outputOf(real));
+  reportSelftest("verify-fuel-expense-is-unique-per-provider-transaction", [
+    {
+      name: "live DB check is green, or canonically refuses when no credential resolves",
+      pass: statusOf(real) === 0 || refused,
+      detail:
+        statusOf(real) === 0 ? undefined : refused ? "no credential resolved locally — refusal verified" : outputOf(real).slice(-400),
+    },
+    { name: "refuses when no DB credential resolves", pass: statusOf(noDb) !== 0, detail: statusOf(noDb) !== 0 ? undefined : outputOf(noDb).slice(-200) },
+  ]);
+}

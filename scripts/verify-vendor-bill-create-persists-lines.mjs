@@ -42,6 +42,17 @@ function createBillBody(src) {
   return next < 0 ? rest : rest.slice(0, next + 1);
 }
 
+/** Slice a named `function <name>(` or `export ... function <name>(` body up to the next top-level `function`/`export function`. */
+function functionBody(src, name) {
+  const start = src.search(new RegExp(`(?:export\\s+)?(?:async\\s+)?function\\s+${name}\\s*\\(`));
+  if (start < 0) return "";
+  const rest = src.slice(start);
+  const next = rest.slice(1).search(/\n(?:export\s+)?(?:async\s+)?function\s/);
+  const nextExport = rest.slice(1).search(/\nexport\s+(?!.*function)/);
+  const ends = [next, nextExport].filter((i) => i >= 0);
+  return ends.length ? rest.slice(0, Math.min(...ends) + 1) : rest;
+}
+
 /**
  * @param {{ routesSrc: string, serviceSrc: string, formSrc: string, apiSrc: string }} inputs
  * @returns {string[]}
@@ -61,29 +72,41 @@ export function evaluate({ routesSrc, serviceSrc, formSrc, apiSrc }) {
     failures.push(`${ROUTES_REL} — createBillLineSchema must require amount_cents and accept account_id uuid`);
   }
 
-  // 2. createBill persists bill_lines + fail-closed
+  // 2. createBill persists bill_lines + fail-closed. ROUND 326 split the implementation into
+  //    validateCreateBillInput (input checks) + createBillRowInClientTx (row writes); createBill
+  //    itself delegates both inside one withCurrentUser txn. Assert the invariant through that chain.
   const body = createBillBody(service);
   if (!body) {
     failures.push(`${SERVICE_REL} — createBill() not found`);
   } else {
-    if (!/INSERT\s+INTO\s+accounting\.bill_lines\b/i.test(body)) {
+    const rowBody = functionBody(service, "createBillRowInClientTx") || body;
+    const validateBody = functionBody(service, "validateCreateBillInput") || body;
+    if (!/INSERT\s+INTO\s+accounting\.bill_lines\b/i.test(rowBody)) {
       failures.push(`${SERVICE_REL} — createBill() must INSERT INTO accounting.bill_lines`);
     }
-    if (!/INSERT\s+INTO\s+accounting\.bills\b/i.test(body)) {
+    if (!/INSERT\s+INTO\s+accounting\.bills\b/i.test(rowBody)) {
       failures.push(`${SERVICE_REL} — createBill() must still INSERT INTO accounting.bills`);
     }
-    if (!/bill_lines_required/.test(body)) {
+    if (!/bill_lines_required/.test(validateBody)) {
       failures.push(`${SERVICE_REL} — createBill() must fail closed with bill_lines_required when lines sent empty`);
     }
-    if (!/bill_lines_amount_mismatch/.test(body)) {
+    if (!/bill_lines_amount_mismatch/.test(validateBody)) {
       failures.push(`${SERVICE_REL} — createBill() must reject bill_lines_amount_mismatch`);
     }
-    // Same-txn: both INSERTs must appear inside the withCurrentUser callback of createBill
+    // Same-txn: createBill must call the validator and run the row writer inside withCurrentUser
+    // (ROUND 326 shape), or — legacy inline shape — contain both INSERTs after withCurrentUser itself.
     const withUserIdx = body.search(/withCurrentUser\s*\(/);
-    const billsIns = body.search(/INSERT\s+INTO\s+accounting\.bills\b/i);
-    const linesIns = body.search(/INSERT\s+INTO\s+accounting\.bill_lines\b/i);
-    if (withUserIdx < 0 || billsIns < withUserIdx || linesIns < withUserIdx) {
-      failures.push(`${SERVICE_REL} — bill_lines INSERT must run inside the same withCurrentUser txn as the bill header`);
+    if (/function\s+createBillRowInClientTx\s*\(/.test(service)) {
+      const writerIdx = body.search(/createBillRowInClientTx\s*\(/);
+      if (withUserIdx < 0 || writerIdx < withUserIdx || !/validateCreateBillInput\s*\(/.test(body)) {
+        failures.push(`${SERVICE_REL} — bill_lines INSERT must run inside the same withCurrentUser txn as the bill header`);
+      }
+    } else {
+      const billsIns = body.search(/INSERT\s+INTO\s+accounting\.bills\b/i);
+      const linesIns = body.search(/INSERT\s+INTO\s+accounting\.bill_lines\b/i);
+      if (withUserIdx < 0 || billsIns < withUserIdx || linesIns < withUserIdx) {
+        failures.push(`${SERVICE_REL} — bill_lines INSERT must run inside the same withCurrentUser txn as the bill header`);
+      }
     }
   }
 
@@ -108,7 +131,9 @@ export function evaluate({ routesSrc, serviceSrc, formSrc, apiSrc }) {
   } else {
     // Slice from createVendorBill to the next export function (avoid nested-brace fragility).
     const start = apiSrc.search(/export\s+function\s+createVendorBill\s*\(/);
-    const slice = apiSrc.slice(start, start + 1200);
+    const rest = apiSrc.slice(start);
+    const next = rest.slice(1).search(/\nexport\s+function\s/);
+    const slice = next < 0 ? rest : rest.slice(0, next + 1);
     if (!/\blines\s*:/.test(slice)) {
       failures.push(`${API_REL} — createVendorBill body must include lines`);
     }

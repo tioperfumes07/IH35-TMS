@@ -548,7 +548,7 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
             effective_to = LEAST(COALESCE(effective_to, CURRENT_DATE), CURRENT_DATE),
             voided_at = now(),
             voided_by_user_id = $2
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND agreement_code = 'FARO_FULL_RECOURSE_V1'
             AND voided_at IS NULL
             AND effective_from <= CURRENT_DATE

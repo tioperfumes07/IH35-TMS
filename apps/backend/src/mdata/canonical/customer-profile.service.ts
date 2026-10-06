@@ -33,7 +33,7 @@ export async function readCustomerProfile(client: Q, companyId: string, customer
               fv.vendor_name AS factoring_company_name
          FROM mdata.customers c
          LEFT JOIN mdata.vendors fv ON fv.id = c.factoring_company_vendor_id
-        WHERE c.id = $1 AND c.operating_company_id = $2`,
+        WHERE c.id = $1 AND c.operating_company_id = $2::uuid`,
       [customerId, companyId]
     )
   ).rows[0];
@@ -52,7 +52,7 @@ export async function readCustomerProfile(client: Q, companyId: string, customer
          coalesce(sum(amount_open_cents) FILTER (WHERE due_date < current_date), 0) AS overdue_cents,
          count(*)::int AS open_invoice_count
        FROM accounting.invoices
-      WHERE operating_company_id = $1 AND customer_id = $2
+      WHERE operating_company_id = $1::uuid AND customer_id = $2
         AND voided_at IS NULL AND status <> 'void' AND amount_open_cents > 0`,
       [companyId, customerId]
     )
@@ -81,7 +81,7 @@ export async function readCustomerProfile(client: Q, companyId: string, customer
               EXISTS (SELECT 1 FROM accounting.invoices i
                        WHERE i.source_load_id = l.id AND i.voided_at IS NULL AND i.status <> 'void') AS invoiced
          FROM mdata.loads l
-        WHERE l.operating_company_id = $1 AND l.customer_id = $2 AND ${OPEN_LOAD_PREDICATE_SQL}
+        WHERE l.operating_company_id = $1::uuid AND l.customer_id = $2 AND ${OPEN_LOAD_PREDICATE_SQL}
         ORDER BY l.created_at DESC`,
       [companyId, customerId]
     )
@@ -111,7 +111,7 @@ export async function readCustomerProfile(client: Q, companyId: string, customer
                  FROM accounting.payment_applications a JOIN accounting.invoices i ON i.id = a.invoice_id
                 WHERE a.payment_id = p.id AND a.unapplied_at IS NULL AND i.issue_date IS NOT NULL) AS days_to_pay
          FROM accounting.payments p
-        WHERE p.operating_company_id = $1 AND p.customer_id = $2 AND p.voided_at IS NULL
+        WHERE p.operating_company_id = $1::uuid AND p.customer_id = $2 AND p.voided_at IS NULL
         ORDER BY p.payment_date DESC NULLS LAST, p.created_at DESC
         LIMIT 25`,
       [companyId, customerId]
@@ -120,7 +120,7 @@ export async function readCustomerProfile(client: Q, companyId: string, customer
   const payTotals = (
     await client.query(
       `SELECT count(*)::int AS payment_count, coalesce(sum(amount_cents), 0) AS paid_cents, max(payment_date) AS last_payment_date
-         FROM accounting.payments WHERE operating_company_id = $1 AND customer_id = $2 AND voided_at IS NULL`,
+         FROM accounting.payments WHERE operating_company_id = $1::uuid AND customer_id = $2 AND voided_at IS NULL`,
       [companyId, customerId]
     )
   ).rows[0];
@@ -132,7 +132,7 @@ export async function readCustomerProfile(client: Q, companyId: string, customer
       `SELECT count(*)::int AS lines, coalesce(sum(fl.gross_cents), 0) AS gross_cents, max(fp.purchase_date) AS last_purchase_date
          FROM accounting.factoring_purchase_lines fl
          JOIN accounting.factoring_purchases fp ON fp.id = fl.purchase_id
-        WHERE fl.operating_company_id = $1 AND fl.customer_id = $2 AND fl.voided_at IS NULL AND fp.voided_at IS NULL`,
+        WHERE fl.operating_company_id = $1::uuid AND fl.customer_id = $2 AND fl.voided_at IS NULL AND fp.voided_at IS NULL`,
       [companyId, customerId]
     )
   ).rows[0];
@@ -154,7 +154,7 @@ export async function readCustomerProfile(client: Q, companyId: string, customer
       `SELECT f.id AS file_id, f.original_filename, f.mime_type, f.document_date, f.expiration_date, fl.created_at AS linked_at
          FROM docs.file_links fl JOIN docs.files f ON f.id = fl.file_id
         WHERE fl.entity_type = 'customer' AND fl.entity_id = $2 AND fl.deleted_at IS NULL
-          AND f.deleted_at IS NULL AND f.operating_company_id = $1
+          AND f.deleted_at IS NULL AND f.operating_company_id = $1::uuid
         ORDER BY fl.created_at DESC`,
       [companyId, customerId]
     )
@@ -183,7 +183,7 @@ export async function readCustomerProfile(client: Q, companyId: string, customer
          LEFT JOIN LATERAL (SELECT city, state FROM mdata.load_stops
                              WHERE load_id = l.id AND soft_deleted_at IS NULL AND stop_type = 'delivery'
                              ORDER BY sequence_number DESC LIMIT 1) d ON true
-        WHERE l.operating_company_id = $1 AND l.customer_id = $2
+        WHERE l.operating_company_id = $1::uuid AND l.customer_id = $2
           AND l.voided_at IS NULL AND l.soft_deleted_at IS NULL AND l.canceled_at IS NULL
           AND ${canonicalNotCancelledLoadClause("l")} AND coalesce(l.rate_total_cents, 0) > 0
         ORDER BY pickup_at DESC

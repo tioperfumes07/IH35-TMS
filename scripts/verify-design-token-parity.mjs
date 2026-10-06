@@ -12,6 +12,11 @@
  * Static, < 1 s.
  */
 import { readFileSync, existsSync } from "node:fs";
+import { runGuard, runGuardInFixture, statusOf, outputOf, reportSelftest } from "./lib/guard-selftest.mjs";
+import { fileURLToPath } from "node:url";
+
+
+if (process.argv.includes("--selftest")) selftest();
 
 const TOKENS = "apps/frontend/src/design/ih35-design-tokens.css";
 const SURFACES = [
@@ -65,3 +70,16 @@ for (const f of ["apps/frontend/src/components/boards/PartyBoard.tsx", "apps/fro
 }
 if (fails.length) { console.error("verify-design-token-parity: FAIL\n  " + fails.join("\n  ")); process.exit(1); }
 console.log(`verify-design-token-parity: OK — ${SURFACES.length} surfaces on the owner's tokens; controls 34 / fields 40 / actions 44 / date 132 / money 120; no column borders; KPI rows across`);
+
+// --selftest (Devin build order 2026-10-05): one case that MUST pass (the real tree) and one
+// that MUST fail (a throwaway tree missing this guard's inputs — proves it fails closed,
+// never a vacuous green).
+function selftest() {
+  const me = fileURLToPath(import.meta.url);
+  const real = runGuard(me);
+  const missing = runGuardInFixture(me, {});
+  reportSelftest("verify-design-token-parity", [
+    { name: "real repo tree passes", pass: statusOf(real) === 0, detail: statusOf(real) === 0 ? undefined : outputOf(real).slice(-400) },
+    { name: "guard fails closed when its inputs are absent", pass: statusOf(missing) !== 0 },
+  ]);
+}

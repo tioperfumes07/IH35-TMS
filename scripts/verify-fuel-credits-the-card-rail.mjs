@@ -58,10 +58,13 @@ export function analyse(docSrc, posterSrc) {
   if (/payment_account_uuid[\s\S]{0,80}1090/.test(doc) || /1090[\s\S]{0,80}payment_account_uuid/.test(doc)) {
     problems.push('fuel-expense-document.service.ts references "1090" near payment_account_uuid.');
   }
-  if (!/accountNumber\s*=\s*rail\s*===\s*["']dreamline_card_payable["']\s*\?\s*["']2510["']\s*:\s*["']1295["']/.test(poster)) {
+  // ROUND 352/365: rails resolve through declared CoA roles (fuel_wallet_relay /
+  // fuel_card_payable_dreamline), never raw account numbers — number-based resolution is how 1295
+  // drifted to -$33,839.80 unseen. The invariant is two rails, role-resolved, fail-closed.
+  if (!/resolveFuelCardRailAccount[\s\S]{0,800}fuel_wallet_relay[\s\S]{0,800}fuel_card_payable_dreamline/.test(poster)) {
     problems.push(
-      "poster.service.ts's card-rail resolver no longer maps exactly {dreamline_card_payable->2510, " +
-        "relay_fuel_wallet->1295} — the two-branch mapping was changed or a third branch/fallback was added."
+      "poster.service.ts's card-rail resolver no longer resolves both rails to their CoA roles " +
+        "(fuel_wallet_relay / fuel_card_payable_dreamline) — a branch was dropped, or a fallback was added."
     );
   }
   if (/["']1090["']/.test(poster)) {
@@ -74,15 +77,15 @@ if (process.argv.includes("--selftest")) {
   const goodDoc = `const { account_id } = await resolveCompanyDirectCreditAccount(client, opco, pref);`;
   const badDocNoCall = `const account_id = "hardcoded-uuid";`;
   const badDoc1090 = `payment_account_uuid: "1090-fallback-account-id",`;
-  const goodPoster = `const accountNumber = rail === "dreamline_card_payable" ? "2510" : "1295";`;
-  const badPoster1090 = `const accountNumber = rail === "dreamline_card_payable" ? "2510" : "1090";`;
+  const goodPoster = `async function resolveFuelCardRailAccount(c, o, rail) { if (rail === "relay_fuel_wallet") return resolveRoleAccount(c, o, "fuel_wallet_relay"); return resolveRoleAccount(c, o, "fuel_card_payable_dreamline"); }`;
+  const badPoster1090 = `async function resolveFuelCardRailAccount(c, o, rail) { if (rail === "relay_fuel_wallet") return resolveRoleAccount(c, o, "fuel_wallet_relay"); return { account_id: "1090" }; }`;
   const badPosterNoMap = `const accountNumber = resolveSomeOtherWay(rail);`;
   const cases = [
     ["clean pair passes", analyse(goodDoc, goodPoster).length === 0],
     ["missing resolver call is caught", analyse(badDocNoCall, goodPoster).some((p) => p.includes("no longer calls"))],
     ["1090 near payment_account_uuid is caught", analyse(badDoc1090, goodPoster).some((p) => p.includes("1090"))],
     ["1090 in poster's rail branch is caught", analyse(goodDoc, badPoster1090).some((p) => p.includes("1090"))],
-    ["poster mapping changed shape is caught", analyse(goodDoc, badPosterNoMap).some((p) => p.includes("two-branch mapping"))],
+    ["poster mapping changed shape is caught", analyse(goodDoc, badPosterNoMap).some((p) => p.includes("CoA roles"))],
     [
       "a comment naming the old 1090 bug does not trip the check",
       analyse(`// R-153.6/153.7: never 1090, never a guess\n${goodDoc}`, goodPoster).length === 0,

@@ -43,6 +43,7 @@ const FILE_OWNED_BY_LEAF = {
   "components/dispatch/tabs/FactoringTab.tsx": "load.drawer.factoring",
   "components/documents/DocumentsTab.tsx": "load.drawer.documents",
   "components/driver-finance/PaymentMethodPicker.tsx": "catalog.accounting.payment_methods.create",
+  "pages/drivers/DriverEditForm.tsx": "profiles.detail",
   "pages/Documents.tsx": "docs.pod",
   "pages/compliance/PropertyTaxRenditionPage.tsx": "property_tax.list",
   "pages/driver/FuelReceiptPage.tsx": "hop.fuel_compliance",

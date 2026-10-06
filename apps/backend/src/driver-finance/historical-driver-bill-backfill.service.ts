@@ -148,7 +148,7 @@ export async function createHistoricalDriverBill(
     `SELECT id::text, bill_number, status, voided_at::text, settled_in_settlement_id::text,
             gross_amount_cents
        FROM driver_finance.driver_bills
-      WHERE operating_company_id = $1 AND load_id = $2 AND driver_id = $3
+      WHERE operating_company_id = $1::uuid AND load_id = $2 AND driver_id = $3
       ORDER BY created_at
       LIMIT 1`,
     [input.operating_company_id, input.load_id, input.driver_id],
@@ -184,7 +184,7 @@ export async function createHistoricalDriverBill(
   const otherDriver = await client.query<{ bill_number: string; driver_id: string; team_driver_id: string | null }>(
     `SELECT db.bill_number, db.driver_id::text, db.team_driver_id::text
        FROM driver_finance.driver_bills db
-      WHERE db.operating_company_id = $1 AND db.load_id = $2 AND db.driver_id <> $3 AND db.voided_at IS NULL
+      WHERE db.operating_company_id = $1::uuid AND db.load_id = $2 AND db.driver_id <> $3 AND db.voided_at IS NULL
         AND db.team_driver_id IS DISTINCT FROM $3
         AND NOT EXISTS (
           SELECT 1 FROM mdata.loads l
