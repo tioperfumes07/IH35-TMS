@@ -21,12 +21,20 @@ const ROOT = new URL("..", import.meta.url).pathname.replace(/\/$/, "");
 const SERVICE = join(ROOT, "apps/backend/src/master-data/drivers/operations-depth/escrow-history.service.ts");
 const VIEW = join(ROOT, "apps/frontend/src/pages/drivers/operations/EscrowHistoryView.tsx");
 
+/** SQL/TS code only — comments cannot satisfy a check (one did: the old escrow_postings path named in a comment). */
+function code(src) {
+  return String(src).replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*--.*$/gm, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+}
+
 const CHECKS = [
   {
     id: "service-selects-settlement-id",
-    describe: "escrow-history must SELECT settlement_id from driver_finance.escrow_ledger",
+    // KILL-THE-SECOND-SYSTEM (CC-1, 39a9cb7c0c): escrow history is now the GL register of the driver's 2100-00-<nnn>
+    // sub-account; the settlement is the posting's own source document (source_transaction_type 'driver_settlement').
+    describe: "escrow-history must SELECT settlement_id from the posting's own source (driver_settlement)",
     file: SERVICE,
-    test: (src) => /settlement_id::text/.test(src),
+    test: (src) =>
+      /WHEN reg\.source_transaction_type = 'driver_settlement' THEN reg\.source_transaction_id::text END AS settlement_id/.test(code(src)),
   },
   {
     id: "service-types-settlement-id",
@@ -36,10 +44,14 @@ const CHECKS = [
   },
   {
     id: "service-resolves-journal-entry",
-    describe: "escrow-history must resolve the posted journal entry via accounting.escrow_postings",
+    // Each row IS a posted GL line, so its journal entry is its own (j.id), from posted entries only — read from code,
+    // never satisfied by a comment that names the old escrow_postings path.
+    describe: "escrow-history must take each row's journal entry from the posting itself (posted entries only)",
     file: SERVICE,
     test: (src) =>
-      /accounting\.escrow_postings/.test(src) && /source_type\s*=\s*'driver_settlement'/.test(src),
+      /JOIN accounting\.journal_entries j ON j\.id = p\.journal_entry_uuid AND j\.status = 'posted'/.test(code(src)) &&
+      /j\.id AS journal_entry_id/.test(code(src)) &&
+      /reg\.journal_entry_id::text/.test(code(src)),
   },
   {
     id: "je-join-is-driver-scoped",
@@ -47,10 +59,11 @@ const CHECKS = [
       "the journal-entry join must go through the accounting.escrow_accounts bridge on holder_type='driver' " +
       "so one driver can never surface another driver's GL entry",
     file: SERVICE,
+    // Both the count and the rows reach the postings ONLY through this driver's escrow sub-account in this company.
     test: (src) =>
-      /JOIN accounting\.escrow_accounts ea/.test(src) &&
-      /ea\.holder_type\s*=\s*'driver'/.test(src) &&
-      /ea\.holder_id\s*=\s*el\.driver_id/.test(src),
+      (code(src).match(
+        /JOIN accounting\.escrow_accounts ea\s+ON ea\.coa_account_id = p\.account_id\s+AND ea\.holder_type = 'driver'\s+AND ea\.holder_id = \$1::uuid\s+AND ea\.operating_company_id = \$2::uuid/g
+      ) ?? []).length >= 2,
   },
   {
     id: "je-refuses-ambiguous-match",
@@ -58,7 +71,9 @@ const CHECKS = [
       "the journal-entry resolution must return NULL when candidate postings disagree — showing the WRONG " +
       "journal entry against a driver's money is worse than showing none",
     file: SERVICE,
-    test: (src) => /count\(DISTINCT ep\.linked_journal_entry_id\)\s*=\s*1/.test(src),
+    // The old ledger->escrow_postings hop could find several JEs and had to refuse ambiguity. Now the JE is the row's
+    // own posting's entry — exactly one by construction. Fail if the JE is ever resolved through escrow_postings again.
+    test: (src) => /reg\.journal_entry_id::text/.test(code(src)) && !/accounting\.escrow_postings/.test(code(src)),
   },
   {
     id: "view-drills-to-journal-entry",
@@ -75,15 +90,16 @@ const CHECKS = [
     test: (src) =>
       /LEFT JOIN driver_finance\.driver_settlements ds\b/.test(src) &&
       /ds\.paid_via_bank_txn_id::text AS bank_transaction_id/.test(src) &&
-      /ds\.operating_company_id = el\.operating_company_id/.test(src),
+      /ds\.operating_company_id = reg\.operating_company_id/.test(code(src)) &&
+      /ds\.id::text = reg\.source_transaction_id::text/.test(code(src)),
   },
   {
     id: "escrow-columns-are-alias-qualified",
     describe:
-      "escrow_ledger columns must be alias-qualified — driver_settlements shares id/operating_company_id/" +
+      "register columns must be alias-qualified (reg.) — driver_settlements shares id/operating_company_id/" +
       "created_at, so an unqualified reference is ambiguous and 500s every escrow history page",
     file: SERVICE,
-    test: (src) => /el\.id::text AS uuid/.test(src) && /el\.created_at::text/.test(src),
+    test: (src) => /reg\.id::text AS uuid/.test(code(src)) && /reg\.created_at::text/.test(code(src)),
   },
   {
     id: "view-drills-to-bank-transaction",
@@ -123,8 +139,8 @@ function selftest() {
     {
       name: "service stops selecting settlement_id",
       file: SERVICE,
-      find: "        el.settlement_id::text,\n",
-      replace: "",
+      find: "THEN reg.source_transaction_id::text END AS settlement_id",
+      replace: "THEN NULL::text END AS settlement_id",
       expect: /service-selects-settlement-id/,
     },
     {
@@ -135,18 +151,25 @@ function selftest() {
       expect: /service-types-settlement-id/,
     },
     {
-      name: "JE resolution stops guarding against an ambiguous match",
+      name: "JE resolution goes back through escrow_postings (ambiguous hop)",
       file: SERVICE,
-      find: "count(DISTINCT ep.linked_journal_entry_id) = 1",
-      replace: "count(ep.linked_journal_entry_id) >= 1",
+      find: "        reg.journal_entry_id::text,\n",
+      replace: "        (SELECT ep.linked_journal_entry_id FROM accounting.escrow_postings ep LIMIT 1)::text AS journal_entry_id,\n",
       expect: /je-refuses-ambiguous-match/,
     },
     {
       name: "JE join stops being driver-scoped",
       file: SERVICE,
-      find: "         AND ea.holder_id = el.driver_id\n",
+      find: "           AND ea.holder_id = $1::uuid\n",
       replace: "",
       expect: /je-join-is-driver-scoped/,
+    },
+    {
+      name: "JE taken from somewhere other than the posting's own entry",
+      file: SERVICE,
+      find: "j.id AS journal_entry_id",
+      replace: "NULL::uuid AS journal_entry_id",
+      expect: /service-resolves-journal-entry/,
     },
     {
       name: "view stops drilling to the journal entry",
@@ -165,7 +188,7 @@ function selftest() {
     {
       name: "escrow columns lose their alias qualification",
       file: SERVICE,
-      find: "el.id::text AS uuid",
+      find: "reg.id::text AS uuid",
       replace: "id::text AS uuid",
       expect: /escrow-columns-are-alias-qualified/,
     },
