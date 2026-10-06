@@ -1882,3 +1882,28 @@ They are red only when a branch touches their owned paths, so they block those b
   - web `srv-d7s46dbrjlhs7383i150` → **dep-db2k203ochlc739f0n90**
   - backend `srv-d7rpem7avr4c73fhp4n0` → **dep-db2k0pikh2cs73c4a3u0**
 - CI is down account-wide; local gates are the record. No CI check claimed.
+
+## 2026-10-06 ~19:25Z — CC-1: A/P writer debt CLOSED at zero; merged since 19:30Z
+Every backend file that names `ap_control` is now a reader or a document poster (bill / bill payment / vendor credit / settlement deduction). `verify-ap-control-writers-go-through-documents` KNOWN_DEBT is **0**, and any new entry fails.
+
+| Item | PR | squash | what |
+|---|---|---|---|
+| LST-F420 | #25636 | 264a781927 | Load → Driver Pay → settlement reverse link (CC-3 file, LANE_CROSS on owner order; the request above is superseded) |
+| LST-F423 | #25631 | — | four guards join the measured-empty purge window (request above, done) |
+| LST-F425 | #25637 | 9de2bc0e39 | verify-reefer-fuel-credit red after #25625: reads the Combobox option form |
+| LST-F426 | #25643 | 7418bf9578 | retired payroll settlement writer deleted with its 3 tests; 7 guards retargeted to the live driver_finance chain |
+| LST-F422 | #25645 | 1332df8a2d | intercompany lessee rent is a BILL from the lessor every period (migration 202615440100; `accounting.lease_contract.lessee_vendor_id` present on prod) |
+| LST-F427 | #25646 | 4ab4941caf | E10 runner Phase 4b: never-posted expenses stamped void (ROUND 128 parity with invoices); never-posted guard checks the real runner (live: 0 / 0) |
+| LST-F424 | #25654 | 9002d57446 | company-absorbed accident cost = Dr expense / Cr **2180 Accrued Accident Claims** (role `accrued_claims_liability`), not a payee-less A/P line (migration 202615440200) |
+
+Deploys:
+- F424 (9002d57446): web **dep-db2kk5bbc2fs73fmbf8g**, backend **dep-db2kk5akh2cs73c4vmm0** (building at 19:21Z).
+- Earlier: F427 backend dep-db2kcieitv5s73c6ssog (deployed, then superseded). Its web build dep-db2kcijo36ts73fmfqhg failed on #25639's TS2322, which every seat inherited. 5bd8f122bb (ACCT-F2026100612) fixed that; my duplicate #25650 is closed. Web is live again at 286808b989.
+
+Migration 202615440200 was rehearsed on Neon fork **br-shy-wildflower-akncgc1a**:
+- before: 2180 = 0, 159 role rows;
+- after: 2180 Liability/OtherCurrentLiability, role bound, CHECK validated over every row;
+- the role-check block re-applied as a no-op.
+**The fork is still alive — the owner or the Lead deletes it.** The Neon tool forbids a seat deleting a branch without the owner.
+
+CI is down account-wide; local gates are the record (each PR: `money-pr-local-gate: PASS`, gate_exit=0). No CI check claimed.
