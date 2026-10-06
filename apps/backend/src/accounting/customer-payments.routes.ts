@@ -1,17 +1,9 @@
 import type { FastifyInstance, FastifyReply } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
-import { appendCrudAudit } from "../audit/crud-audit.js";
-import { DuplicateDocumentNumberError, nextPaymentDisplayId, resolvePaymentDisplayId } from "./display-id.js";
+import { DuplicateDocumentNumberError } from "./display-id.js";
 import { duplicateDocumentNumberBody } from "../lib/qbo-custom-document-number.js";
-import { enqueueAccountingOutbox } from "./outbox-events.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
-import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
-import { assertBankAccountUsable } from "../banking/bank-account-visibility.js";
-import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
-import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
-import { isEnabled } from "../lib/feature-flags/service.js";
-import { recordPostingFlagSkip } from "./posting-flag-skip-audit.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { createCustomerPaymentInClient } from "./payments/customer-payment-create.service.js";
 

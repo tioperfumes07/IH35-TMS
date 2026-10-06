@@ -37,7 +37,10 @@ const TARGETS = [
   { file: "apps/backend/src/accounting/bills.routes.ts", expectedCount: 0 },
   { file: "apps/backend/src/accounting/bills.service.ts", expectedCount: 4 },
   { file: "apps/backend/src/accounting/payments.routes.ts", expectedCount: 2 },
-  { file: "apps/backend/src/accounting/customer-payments.routes.ts", expectedCount: 1 },
+  // ROUND 433 B8: create moved into customer-payment-create.service.ts (one writer for
+  // Receive Payment + Banking receive-and-match). routes.ts expectedCount stays 0.
+  { file: "apps/backend/src/accounting/customer-payments.routes.ts", expectedCount: 0 },
+  { file: "apps/backend/src/accounting/payments/customer-payment-create.service.ts", expectedCount: 1 },
   { file: "apps/backend/src/accounting/expenses.routes.ts", expectedCount: 2 },
 ];
 
