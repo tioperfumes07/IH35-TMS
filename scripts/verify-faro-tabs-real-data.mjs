@@ -83,8 +83,25 @@ function read(rel) {
   return { ok: true, src: fs.readFileSync(p, "utf8"), err: null };
 }
 
+// ROUND 435 (owner, verbatim): THE TEN Faro tabs, in this order, and no others. Every section above still exists
+// (Rule 07) and is shown inside exactly one of these tabs (FACTORING_SECTION_PARENT; reachability is
+// verify-factoring-nav-reachable's job).
+export const OWNER_TEN = [
+  ["submit_invoice", "Submit invoice"],
+  ["debtor_receipts", "Debtor receipts"],
+  ["account_summary", "Account summary"],
+  ["aging", "Aging"],
+  ["chargebacks_overpayments", "Chargeback and overpayments"],
+  ["unapplied_cash", "Unapplied cash"],
+  ["payments_to_you", "Payments to us"],
+  ["purchase_report", "Purchase report"],
+  ["fees_paid", "Fees paid"],
+  ["reserve", "Reserve"],
+];
+const MANIFEST = "apps/frontend/src/router/route-manifest.ts";
+
 /** Exported for --selftest. */
-export function checkNavOrder(src) {
+export function checkNavOrder(src, manifestSrc = read(MANIFEST).src) {
   const failures = [];
   const subnavMatch = src.match(/const SUBNAV = \[([\s\S]*?)\] as const;/);
   if (!subnavMatch) {
@@ -92,18 +109,24 @@ export function checkNavOrder(src) {
     return failures;
   }
   const ids = [...subnavMatch[1].matchAll(/\{\s*id:\s*"([a-z_]+)"/g)].map((m) => m[1]);
-  if (ids.length !== REQUIRED_NAV_ORDER.length) {
-    failures.push(
-      `${HOME}: SUBNAV has ${ids.length} items, expected exactly ${REQUIRED_NAV_ORDER.length} (the real portal's 15).`,
-    );
+  for (const id of REQUIRED_NAV_ORDER) {
+    if (!ids.includes(id)) failures.push(`${HOME}: Rule 07 regression — section "${id}" was deleted instead of shown inside its Faro tab.`);
   }
-  for (let i = 0; i < REQUIRED_NAV_ORDER.length; i += 1) {
-    if (ids[i] !== REQUIRED_NAV_ORDER[i]) {
-      failures.push(
-        `${HOME}: SUBNAV position ${i} is "${ids[i] ?? "(missing)"}", expected "${REQUIRED_NAV_ORDER[i]}" (doc's own real-portal order).`,
-      );
-    }
+  if (!/<NavyPageSubNav\s+items=\{FARO_TABS\.map\(/.test(src)) {
+    failures.push(`${HOME}: the tab strip must be built from FARO_TABS (router/route-manifest.ts), the owner's ten.`);
   }
+  const start = manifestSrc.indexOf("export const FARO_TABS = [");
+  const end = manifestSrc.indexOf("] as const;", start);
+  if (start < 0 || end < 0) {
+    failures.push(`${MANIFEST}: could not find FARO_TABS.`);
+    return failures;
+  }
+  const tabs = [...manifestSrc.slice(start, end).matchAll(/\{\s*id:\s*"([a-z_]+)",\s*label:\s*"([^"]+)"/g)].map((m) => [m[1], m[2]]);
+  if (tabs.length !== OWNER_TEN.length) failures.push(`${MANIFEST}: FARO_TABS has ${tabs.length} tabs, the owner's set is exactly ${OWNER_TEN.length}.`);
+  OWNER_TEN.forEach(([id, label], k) => {
+    const got = tabs[k];
+    if (!got || got[0] !== id || got[1] !== label) failures.push(`${MANIFEST}: FARO_TABS position ${k} is ${got ? `"${got[1]}" (${got[0]})` : "(missing)"}, the owner's is "${label}" (${id}).`);
+  });
   return failures;
 }
 
@@ -120,9 +143,6 @@ export function checkInternalToolsPreserved(src) {
       failures.push(`${HOME}: Rule 07 regression — internal-ops tab "${id}" was removed instead of kept reachable.`);
     }
   }
-  if (!/Internal Tools/.test(src)) {
-    failures.push(`${HOME}: missing the "Internal Tools" dropdown wiring the preserved tabs into the nav.`);
-  }
   return failures;
 }
 
@@ -131,7 +151,7 @@ export function checkAgingReal(src) {
   // Window bumped 6000->9000 (2026-09-09): the aging table has legitimately grown two real
   // columns since this window was sized (Settlement EntityLink, real advance-linked when present
   // + lc_settlement_number fallback) -- same content requirement, more real content to scan past.
-  const agingSection = src.split('tab === "aging"')[1]?.slice(0, 9000) ?? "";
+  const agingSection = src.split('show("aging")')[1]?.slice(0, 9000) ?? "";
   if (!agingSection) {
     failures.push(`${HOME}: could not find the aging tab block.`);
     return failures;
@@ -157,11 +177,11 @@ export function checkAgingReal(src) {
 
 export function checkAccountSummaryReal(src) {
   const failures = [];
-  const stubMatch = src.match(/tab === "request_debtor_credit_check"[\s\S]*?data-testid=\{`factoring-stub-\$\{tab\}`\}/);
-  if (stubMatch && /tab === "account_summary"/.test(stubMatch[0])) {
+  const stubMatch = src.match(/show\("request_debtor_credit_check"\)[\s\S]*?data-testid=\{`factoring-stub-\$\{tab\}`\}/);
+  if (stubMatch && /show\("account_summary"\)/.test(stubMatch[0])) {
     failures.push(`${HOME}: Account Summary is still routed through the generic honest-stub block — must have its own real section (FAC-09a).`);
   }
-  const marker = 'tab === "account_summary" ?';
+  const marker = 'show("account_summary") ?';
   const idx = src.indexOf(marker);
   if (idx === -1) {
     failures.push(`${HOME}: could not find a dedicated Account Summary ("tab === \"account_summary\" ?") block.`);
@@ -196,11 +216,11 @@ export function checkAccountSummaryReal(src) {
 
 export function checkFeesPaidReal(src) {
   const failures = [];
-  const stubMatch = src.match(/tab === "request_debtor_credit_check"[\s\S]*?data-testid=\{`factoring-stub-\$\{tab\}`\}/);
-  if (stubMatch && /tab === "fees_paid"/.test(stubMatch[0])) {
+  const stubMatch = src.match(/show\("request_debtor_credit_check"\)[\s\S]*?data-testid=\{`factoring-stub-\$\{tab\}`\}/);
+  if (stubMatch && /show\("fees_paid"\)/.test(stubMatch[0])) {
     failures.push(`${HOME}: Fees Paid is still routed through the generic honest-stub block — must have its own real section (FAC-09a).`);
   }
-  const marker = 'tab === "fees_paid" ?';
+  const marker = 'show("fees_paid") ?';
   const idx = src.indexOf(marker);
   if (idx === -1) {
     failures.push(`${HOME}: could not find a dedicated Fees Paid ("tab === \"fees_paid\" ?") block.`);
@@ -229,11 +249,11 @@ export function checkFeesPaidReal(src) {
 
 export function checkPurchaseReportReal(src) {
   const failures = [];
-  const stubMatch = src.match(/tab === "request_debtor_credit_check"[\s\S]*?data-testid=\{`factoring-stub-\$\{tab\}`\}/);
-  if (stubMatch && /tab === "purchase_report"/.test(stubMatch[0])) {
+  const stubMatch = src.match(/show\("request_debtor_credit_check"\)[\s\S]*?data-testid=\{`factoring-stub-\$\{tab\}`\}/);
+  if (stubMatch && /show\("purchase_report"\)/.test(stubMatch[0])) {
     failures.push(`${HOME}: Purchase Report is still routed through the generic honest-stub block — must have its own real section (FAC-09a).`);
   }
-  const marker = 'tab === "purchase_report" ?';
+  const marker = 'show("purchase_report") ?';
   const idx = src.indexOf(marker);
   if (idx === -1) {
     failures.push(`${HOME}: could not find a dedicated Purchase Report ("tab === \"purchase_report\" ?") block.`);
@@ -268,11 +288,11 @@ export function checkPurchaseReportReal(src) {
 
 export function checkChargebacksOverpaymentsReal(src) {
   const failures = [];
-  const stubMatch = src.match(/tab === "request_debtor_credit_check"[\s\S]*?data-testid=\{`factoring-stub-\$\{tab\}`\}/);
-  if (stubMatch && /tab === "chargebacks_overpayments"/.test(stubMatch[0])) {
+  const stubMatch = src.match(/show\("request_debtor_credit_check"\)[\s\S]*?data-testid=\{`factoring-stub-\$\{tab\}`\}/);
+  if (stubMatch && /show\("chargebacks_overpayments"\)/.test(stubMatch[0])) {
     failures.push(`${HOME}: Chargebacks & Overpayments is still routed through the generic honest-stub block — must have its own real section (FAC-09a).`);
   }
-  const marker = 'tab === "chargebacks_overpayments" ?';
+  const marker = 'show("chargebacks_overpayments") ?';
   const idx = src.indexOf(marker);
   if (idx === -1) {
     failures.push(`${HOME}: could not find a dedicated Chargebacks & Overpayments ("tab === \"chargebacks_overpayments\" ?") block.`);
@@ -305,13 +325,13 @@ export function checkChargebacksOverpaymentsReal(src) {
 const PANEL = "apps/frontend/src/components/factoring/FactoringReservesSharedPanel.tsx";
 export function checkReserveReal(src, panelSrc = fs.readFileSync(path.join(ROOT, PANEL), "utf8")) {
   const failures = [];
-  const stubMatch = src.match(/tab === "request_debtor_credit_check"[\s\S]*?data-testid=\{`factoring-stub-\$\{tab\}`\}/);
-  if (stubMatch && /tab === "reserve"\s*\|\|/.test(stubMatch[0])) {
+  const stubMatch = src.match(/show\("request_debtor_credit_check"\)[\s\S]*?data-testid=\{`factoring-stub-\$\{tab\}`\}/);
+  if (stubMatch && /show\("reserve"\)\s*\|\|/.test(stubMatch[0])) {
     failures.push(`${HOME}: Reserve is still routed through the generic honest-stub block — must have its own real section (FAC-09a).`);
   }
   // ROUND 315 (ACCT-F31507, #23902): the Reserve tab mounts the SAME shared panel Banking Home uses (one reserve engine). The real
   // bindings (KPI-engine totals, getReserveBalanceHistory, running_balance_cents) live in that panel.
-  const m = src.match(/tab === "reserve"(?: && companyId)? \?/);
+  const m = src.match(/show\("reserve"\)(?: && companyId)? \?/);
   if (!m) {
     failures.push(`${HOME}: could not find a dedicated Reserve ("tab === \"reserve\"") block.`);
     return failures;
@@ -340,11 +360,11 @@ export function checkReserveReal(src, panelSrc = fs.readFileSync(path.join(ROOT,
 // already-advanced invoices and structurally cannot represent a pre-advance state.
 export function checkFundsDueReal(src) {
   const failures = [];
-  const stubMatch = src.match(/tab === "request_debtor_credit_check"[\s\S]*?data-testid=\{`factoring-stub-\$\{tab\}`\}/);
-  if (stubMatch && /tab === "funds_due"\s*\|\|/.test(stubMatch[0])) {
+  const stubMatch = src.match(/show\("request_debtor_credit_check"\)[\s\S]*?data-testid=\{`factoring-stub-\$\{tab\}`\}/);
+  if (stubMatch && /show\("funds_due"\)\s*\|\|/.test(stubMatch[0])) {
     failures.push(`${HOME}: Funds Due is still routed through the generic honest-stub block — must have its own real section (FUNDS-DUE-01).`);
   }
-  const marker = 'tab === "funds_due" ?';
+  const marker = 'show("funds_due") ?';
   const idx = src.indexOf(marker);
   if (idx === -1) {
     failures.push(`${HOME}: could not find a dedicated Funds Due ("tab === \"funds_due\" ?") block.`);
@@ -386,7 +406,7 @@ if (process.argv.includes("--selftest")) {
   const idsBlock = REQUIRED_NAV_ORDER.map((id) => `  { id: "${id}", label: "x" },`).join("\n");
   const internalBlock = INTERNAL_TOOLS_IDS.map((id) => `  { id: "${id}", label: "x" },`).join("\n");
   const agingBlock = `
-    tab === "aging" ? (
+    show("aging") ? (
       <ParityTable
         columns={[
           { key: "id", label: "ID" },
@@ -412,13 +432,13 @@ if (process.argv.includes("--selftest")) {
     ) : null
   `;
   const stubBlock = `
-      {tab === "request_debtor_credit_check" ||
-      tab === "payments_to_you" ? (
+      {show("request_debtor_credit_check") ||
+      show("payments_to_you") ? (
         <div data-testid={\`factoring-stub-\${tab}\`}>stub</div>
       ) : null}
   `;
   const fundsDueBlock = `
-      {tab === "funds_due" ? (
+      {show("funds_due") ? (
         <div data-testid="factoring-funds-due-report">
           <ParityTable
             columns={[
@@ -438,7 +458,7 @@ const fundsDueQuery = useQuery({ queryFn: () => getFactoringFundsDue(companyId) 
 const fundsDueRows = fundsDueQuery.data?.invoices ?? [];
   `;
   const purchaseReportBlock = `
-      {tab === "purchase_report" ? (
+      {show("purchase_report") ? (
         <ParityTable
           columns={[
             { key: "customer_name", label: "Debtor" },
@@ -469,7 +489,7 @@ const fundsDueRows = fundsDueQuery.data?.invoices ?? [];
       ) : null}
   `;
   const accountSummaryBlock = `
-      {tab === "account_summary" ? (
+      {show("account_summary") ? (
         <div data-testid="factoring-account-summary">
           <span data-testid="factoring-account-summary-ending-balance">{fmtCurrency(summary?.outstanding_liability_balance)}</span>
           <span data-testid="factoring-account-summary-reserve-balance">{fmtCurrency(engineReserve.total / 100)}</span>
@@ -479,7 +499,7 @@ const fundsDueRows = fundsDueQuery.data?.invoices ?? [];
       ) : null}
   `;
   const feesPaidBlock = `
-      {tab === "fees_paid" ? (
+      {show("fees_paid") ? (
         <div data-testid="factoring-fees-paid-view-toggle">
           <button data-testid="factoring-fees-paid-view-open-invoices">x</button>
           <button data-testid="factoring-fees-paid-view-all-fees">x</button>
@@ -492,7 +512,7 @@ const fundsDueRows = fundsDueQuery.data?.invoices ?? [];
       ) : null}
   `;
   const chargebacksOverpaymentsBlock = `
-      {tab === "chargebacks_overpayments" ? (
+      {show("chargebacks_overpayments") ? (
         <div>
           <span data-testid="factoring-chargebacks-overpayments-total-records">{(feesQuery.data?.history ?? []).length}</span>
           <span data-testid="factoring-chargebacks-overpayments-total-amount">
@@ -508,7 +528,7 @@ const reserveHistoryQuery = useQuery({
 });
   `;
   const reserveBlock = `
-      {tab === "reserve" && companyId ? (
+      {show("reserve") && companyId ? (
         <div data-testid="factoring-reserve-report">
           <FactoringReservesSharedPanel companyId={companyId} host="factoring" />
         </div>
@@ -526,7 +546,7 @@ ${idsBlock}
 const INTERNAL_TOOLS_SUBNAV = [
 ${internalBlock}
 ] as const;
-Internal Tools
+<NavyPageSubNav items={FARO_TABS.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] }))} />
 ${stubBlock}
 ${fundsDueQueryDef}
 ${fundsDueBlock}
@@ -538,28 +558,31 @@ ${reserveHistoryQueryDef}
 ${reserveBlock}
 ${accountSummaryBlock}
   `;
+  const goodManifest = `export const FARO_TABS = [\n${OWNER_TEN.map(([id, label]) => `  { id: "${id}", label: "${label}" },`).join("\n")}\n] as const;`;
+  const manifestEleven = goodManifest.replace("] as const;", '  { id: "funds_due", label: "Funds Due" },\n] as const;');
+  const manifestRelabelled = goodManifest.replace('label: "Payments to us"', 'label: "Payments to You"');
   const badWrongOrder = goodSrc.replace('{ id: "aging", label: "x" },', '{ id: "zzz", label: "x" },');
   const badDeletedInternal = goodSrc.replace('{ id: "vendor_merges", label: "x" },', "");
   const badAgingMissingColumn = goodSrc.replace('{ key: "b4", label: "90+" },', "");
   const badAccountSummaryStillStub = goodSrc.replace(
-    'tab === "payments_to_you" ? (',
-    'tab === "payments_to_you" ||\n      tab === "account_summary" ? (',
+    'show("payments_to_you") ? (',
+    'show("payments_to_you") ||\n      show("account_summary") ? (',
   );
   const badAccountSummaryFakeBinding = goodSrc.replace(
     'data-testid="factoring-account-summary-reserve-balance">{fmtCurrency(engineReserve.total / 100)}</span>',
     'data-testid="factoring-account-summary-reserve-balance">{fmtCurrency(9999)}</span>',
   );
   const badFeesPaidStillStub = goodSrc.replace(
-    'tab === "payments_to_you" ? (',
-    'tab === "payments_to_you" ||\n      tab === "fees_paid" ? (',
+    'show("payments_to_you") ? (',
+    'show("payments_to_you") ||\n      show("fees_paid") ? (',
   );
   const badFeesPaidFakeBinding = goodSrc.replace(
     '<span>{(feesQuery.data?.history ?? []).map((row) => fmtCurrency(row.factor_fee_amount))}</span>',
     "<span>{fmtCurrency(9999)}</span>",
   );
   const badPurchaseReportStillStub = goodSrc.replace(
-    'tab === "payments_to_you" ? (',
-    'tab === "payments_to_you" ||\n      tab === "purchase_report" ? (',
+    'show("payments_to_you") ? (',
+    'show("payments_to_you") ||\n      show("purchase_report") ? (',
   );
   const badPurchaseReportMissingColumn = goodSrc.replace('{ key: "chargeback", label: "ChgBack (Refund)", render: (row) => fmtCurrency(row.chargeback) },', "");
   const badPurchaseReportFakeBinding = goodSrc.replace(
@@ -567,16 +590,16 @@ ${accountSummaryBlock}
     '{ key: "advance_amount", label: "Net Adv", render: () => fmtCurrency(9999) },',
   );
   const badChargebacksOverpaymentsStillStub = goodSrc.replace(
-    'tab === "payments_to_you" ? (',
-    'tab === "payments_to_you" ||\n      tab === "chargebacks_overpayments" ? (',
+    'show("payments_to_you") ? (',
+    'show("payments_to_you") ||\n      show("chargebacks_overpayments") ? (',
   );
   const badChargebacksOverpaymentsFakeBinding = goodSrc.replace(
     '{fmtCurrency((feesQuery.data?.history ?? []).reduce((sum, row) => sum + Number(row.chargeback_amount ?? 0), 0))}',
     "{fmtCurrency(9999)}",
   );
   const badReserveStillStub = goodSrc.replace(
-    'tab === "payments_to_you" ? (',
-    'tab === "payments_to_you" ||\n      tab === "reserve" ? (',
+    'show("payments_to_you") ? (',
+    'show("payments_to_you") ||\n      show("reserve") ? (',
   );
   const badReservePanelFakeBinding = panelFixture.replace(
     "queryFn: () => getReserveBalanceHistory(activeFactorId!, companyId, { limit: 50 })",
@@ -585,8 +608,8 @@ ${accountSummaryBlock}
   const badReserveSecondView = goodSrc.replace("<FactoringReservesSharedPanel companyId={companyId} host=\"factoring\" />", "<OwnReserveTable />");
 
   const badFundsDueStillStub = goodSrc.replace(
-    'tab === "payments_to_you" ? (',
-    'tab === "payments_to_you" ||\n      tab === "funds_due" ? (',
+    'show("payments_to_you") ? (',
+    'show("payments_to_you") ||\n      show("funds_due") ? (',
   );
   const badFundsDueMissingFetch = goodSrc.replace(
     "const fundsDueQuery = useQuery({ queryFn: () => getFactoringFundsDue(companyId) });",
@@ -594,8 +617,10 @@ ${accountSummaryBlock}
   );
 
   const checks = [
-    ["clean source passes", checkNavOrder(goodSrc).length === 0 && checkInternalToolsPreserved(goodSrc).length === 0 && checkAgingReal(goodSrc).length === 0 && checkAccountSummaryReal(goodSrc).length === 0 && checkFeesPaidReal(goodSrc).length === 0 && checkPurchaseReportReal(goodSrc).length === 0 && checkReserveReal(goodSrc, panelFixture).length === 0 && checkChargebacksOverpaymentsReal(goodSrc).length === 0 && checkFundsDueReal(goodSrc).length === 0],
-    ["wrong nav order fails", checkNavOrder(badWrongOrder).length > 0],
+    ["clean source passes", checkNavOrder(goodSrc, goodManifest).length === 0 && checkInternalToolsPreserved(goodSrc).length === 0 && checkAgingReal(goodSrc).length === 0 && checkAccountSummaryReal(goodSrc).length === 0 && checkFeesPaidReal(goodSrc).length === 0 && checkPurchaseReportReal(goodSrc).length === 0 && checkReserveReal(goodSrc, panelFixture).length === 0 && checkChargebacksOverpaymentsReal(goodSrc).length === 0 && checkFundsDueReal(goodSrc).length === 0],
+    ["a deleted section fails", checkNavOrder(badWrongOrder, goodManifest).length > 0],
+    ["an eleventh Faro tab fails", checkNavOrder(goodSrc, manifestEleven).length > 0],
+    ["a tab label that is not the owner's wording fails", checkNavOrder(goodSrc, manifestRelabelled).length > 0],
     ["deleted internal tab fails", checkInternalToolsPreserved(badDeletedInternal).length > 0],
     ["missing aging column fails", checkAgingReal(badAgingMissingColumn).length > 0],
     ["account summary still stub fails", checkAccountSummaryReal(badAccountSummaryStillStub).length > 0],
@@ -629,5 +654,5 @@ if (!ok) {
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log(`${LABEL}: OK — 15-item real nav order locked, internal-ops tabs preserved (Rule 07), Aging + Account Summary + Fees Paid + Purchase Report + Reserve + Chargebacks & Overpayments real (FAC-09a)`);
+console.log(`${LABEL}: OK — the owner's ten Faro tabs locked in order, every section preserved (Rule 07), Aging + Account Summary + Fees Paid + Purchase Report + Reserve + Chargebacks & Overpayments real (FAC-09a)`);
 process.exit(0);

@@ -38,7 +38,7 @@ function read(rel) {
 /** Exported for --selftest. */
 export function checkStackedNotInterleaved(src) {
   const failures = [];
-  const tabSection = src.split('tab === "chargebacks_fees"')[1]?.split('tab === "statements_settings"')[0] ?? "";
+  const tabSection = src.split('show("chargebacks_fees")')[1]?.split('show("statements_settings")')[0] ?? "";
   if (!tabSection) {
     failures.push(`${HOME}: could not find the chargebacks_fees tab block.`);
     return failures;
@@ -79,38 +79,38 @@ export function run() {
 
 if (process.argv.includes("--selftest")) {
   const goodSrc = `
-    tab === "chargebacks_fees" ? (
+    show("chargebacks_fees") ? (
       <div>
         <div>Monthly fee summaries</div>
         <div>Chargebacks + fee history</div>
       </div>
     ) : null
 
-    tab === "statements_settings" ? (
+    show("statements_settings") ? (
       <div>Statement history</div>
     ) : null
   `;
   const badReversedOrder = `
-    tab === "chargebacks_fees" ? (
+    show("chargebacks_fees") ? (
       <div>
         <div>Chargebacks + fee history</div>
         <div>Monthly fee summaries</div>
       </div>
     ) : null
 
-    tab === "statements_settings" ? (
+    show("statements_settings") ? (
       <div>Statement history</div>
     ) : null
   `;
   const badSideBySide = `
-    tab === "chargebacks_fees" ? (
+    show("chargebacks_fees") ? (
       <div className="grid gap-3 lg:grid-cols-2">
         <div>Monthly fee summaries</div>
         <div>Chargebacks + fee history</div>
       </div>
     ) : null
 
-    tab === "statements_settings" ? (
+    show("statements_settings") ? (
       <div>Statement history</div>
     ) : null
   `;

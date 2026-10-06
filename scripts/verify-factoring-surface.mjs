@@ -36,13 +36,21 @@ import fs from "node:fs";
 
 const HOME = "apps/frontend/src/pages/factoring/FactoringHome.tsx";
 const LABEL = "verify-factoring-surface";
-// ROUND 24.6 (owner): 15 Faro-parity tabs + the Internal Tools dropdown. The order and members are locked by
-// verify-faro-tabs-real-data; this bounds the visible strip so nothing grows it unseen.
-const MAX_TABS = 16;
+// ROUND 435 (owner, verbatim): THE TEN Faro tabs and no others. The strip is built from FARO_TABS in
+// router/route-manifest.ts (members and order locked by verify-faro-ten-tabs); this bounds the visible strip.
+const MAX_TABS = 10;
+const MANIFEST = "apps/frontend/src/router/route-manifest.ts";
 const SUMMARY_START_MARKER = 'data-testid="factoring-account-summary"';
-const SUMMARY_END_MARKER = '{tab === "purchase_report"';
+const SUMMARY_END_MARKER = '{show("purchase_report")';
 
-function countTopLevelNavItems(src) {
+function countTopLevelNavItems(src, manifestSrc = fs.readFileSync(MANIFEST, "utf8")) {
+  // ROUND 435: the strip is `items={FARO_TABS.map(...)}` — one source of truth, counted from the FARO_TABS literal.
+  if (/<NavyPageSubNav\s+items=\{FARO_TABS\.map\(/.test(src)) {
+    const start = manifestSrc.indexOf("export const FARO_TABS = [");
+    const end = manifestSrc.indexOf("] as const;", start);
+    if (start < 0 || end < 0) return { count: -1, error: "could not read FARO_TABS in router/route-manifest.ts" };
+    return { count: (manifestSrc.slice(start, end).match(/\{\s*id:\s*"/g) ?? []).length, error: null };
+  }
   const marker = src.indexOf("<NavyPageSubNav");
   if (marker < 0) return { count: -1, error: "FactoringHome must render <NavyPageSubNav>" };
   const itemsStart = src.indexOf("items={[", marker);
@@ -176,19 +184,22 @@ if (process.argv.includes("--selftest")) {
 
   const mutations = [];
 
-  // 1. Tab count (ROUND 24.6): one more top-level item beyond the 15 Faro tabs + Internal Tools must fail.
+  // 1. Tab count (ROUND 435): a hand-written strip of 11 tabs instead of FARO_TABS must fail.
   mutations.push([
-    "adds a 17th top-level tab",
+    "the strip is hand-written with an 11th tab",
     base.home.replace(
-      "          {\n            label: \"Internal Tools\",",
-      "          { label: \"Extra\", to: \"/factoring/extra\" },\n          {\n            label: \"Internal Tools\","
+      "items={FARO_TABS.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] }))}",
+      "items={[" + Array.from({ length: 11 }, (_, k) => `{ label: "T${k}", to: "/factoring/t${k}" }`).join(", ") + "]}"
     ),
   ]);
 
-  // 1b. A second top-level runtime spread (anything but SUBNAV) must fail.
+  // 1b. A top-level runtime spread other than FARO_TABS must fail.
   mutations.push([
     "top-level nav adds another spread",
-    base.home.replace("          ...SUBNAV.map((item) => ({", "          ...EXTRA_TABS.map((x) => x),\n          ...SUBNAV.map((item) => ({"),
+    base.home.replace(
+      "items={FARO_TABS.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] }))}",
+      "items={[...EXTRA_TABS.map((x) => x)]}"
+    ),
   ]);
 
   // 2. A bare dash with no title= (simulate a future cell forgetting the canonical NotApplicable
@@ -241,4 +252,4 @@ if (failures.length) {
   failures.forEach((e) => console.error(`  - ${e}`));
   process.exit(1);
 }
-console.log(`${LABEL}: PASS — Factoring top-level nav = 15 Faro tabs + Internal Tools (ROUND 24.6), Account Summary's dashes all carry a title, no dev-facing schema commentary in rendered copy`);
+console.log(`${LABEL}: PASS — Factoring top-level nav = the ten Faro tabs from FARO_TABS (ROUND 435), Account Summary's dashes all carry a title, no dev-facing schema commentary in rendered copy`);
