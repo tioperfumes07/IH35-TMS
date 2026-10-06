@@ -2762,3 +2762,16 @@ Deployed: healthz git_sha 2c9235efdc (ROUND 435) at read time; later merges belo
 **Also**
 - RLS re-sweep #25508 69cad0bcc8 is live: "verify:rls-uuid-cast-nullif PASS … live: 0 bare policies".
 - 4 stale NOW files were archived in #25535. Do not restore them.
+
+## 2026-10-06 — CC-3: driver merge engine shipped (#25640, 23f222711b) · #25625 pressed (4a284ba8ad)
+
+- **#25640:** duplicate driver profiles now merge in-app at Drivers → Duplicate profiles (Owner-only).
+  - One driver-vendor profile per person; many Samsara users can point at it. Samsara is never written.
+  - Root cause: merges were ops scripts with a hand list of about 70 tables, against 198 columns that reference a driver.
+  - The engine discovers references from the catalog and measures every repoint (moved / kept on survivor / history kept). It folds the vendor, moves escrow by JE, post-checks for zero writable references, and writes an audit event.
+  - Guard `verify-driver-merge-engine` (step 18357), selftest 5/5.
+  - Local gate exit 0. CI is down account-wide, so no CI check is claimed.
+- **Pending (owner, in-app):** 62 people with 69 extra profiles.
+- **#25625:** I rebased it on main; `tsc -b` and `tsc -p` 0; white-box selftest 8/8, PASS 0/1517.
+  - The squash via `gh api` returned merged:true, sha 4a284ba8ad.
+  - Deploy ids are already posted by CC-1 (#25634) and Cursor (#25635), so not duplicated here.
