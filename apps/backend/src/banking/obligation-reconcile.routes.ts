@@ -14,6 +14,7 @@ import {
   bankLineIsUnmatchedSql,
   bankLinePointerSelectSql,
 } from "./bank-line-match-pointer.js";
+import { operatorVisibleMatchText } from "./operator-visible-match-text.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -117,7 +118,8 @@ export async function loadObligationCandidates(
     out.push({
       obligation_type: "load",
       obligation_id: r.id,
-      label: `Load ${r.load_number ?? r.id.slice(0, 8)}`,
+      // B7 — never put an id fragment in the operator-visible label (Match / link-suggestions).
+      label: r.load_number ? `Load ${r.load_number}` : "Load",
       amount_cents: Math.abs(Math.round(Number(r.rate_total_cents ?? 0))),
       event_date: String(r.created_at).slice(0, 10),
     });
@@ -136,9 +138,9 @@ export async function loadObligationCandidates(
     client,
     "obligation_reconcile_settlements",
     () =>
-      client.query<{ id: string; net_pay: unknown; created_at: string; driver_name: string | null }>(
+      client.query<{ id: string; net_pay: unknown; created_at: string; driver_name: string | null; source_document_ref: string | null }>(
         `
-        SELECT s.id, s.net_pay, s.created_at::text,
+        SELECT s.id, s.net_pay, s.created_at::text, s.source_document_ref,
                (d.first_name || ' ' || d.last_name) AS driver_name
         FROM driver_finance.driver_settlements s
         LEFT JOIN mdata.drivers d ON d.id = s.driver_id
@@ -151,10 +153,12 @@ export async function loadObligationCandidates(
     { rows: [] }
   );
   for (const r of st.rows) {
+    const settleRef = (r.source_document_ref ?? "").trim();
     out.push({
       obligation_type: "settlement",
       obligation_id: r.id,
-      label: `Settlement ${r.id.slice(0, 8)}`,
+      // B7 — AlwaysTrack document number is the only human settlement identity (Rule 03); never id.slice.
+      label: settleRef ? `Settlement ${settleRef}` : "Settlement",
       amount_cents: Math.abs(Math.round(Number(r.net_pay ?? 0) * 100)),
       counterparty_name: r.driver_name?.trim() || null,
       event_date: String(r.created_at).slice(0, 10),
@@ -182,7 +186,8 @@ export async function loadObligationCandidates(
     out.push({
       obligation_type: "fuel",
       obligation_id: r.id,
-      label: `Fuel ${r.id.slice(0, 8)}`,
+      // B7 — no id fragment in the Match / link-suggestion label.
+      label: "Fuel",
       amount_cents: Math.abs(cents),
       event_date: (r.purchased_at ?? new Date().toISOString()).slice(0, 10),
     });
@@ -209,7 +214,8 @@ export async function loadObligationCandidates(
     out.push({
       obligation_type: "work_order",
       obligation_id: r.id,
-      label: r.description?.slice(0, 80) || `Work order ${r.id.slice(0, 8)}`,
+      // B7 — description or plain noun; never id.slice in the Match label.
+      label: r.description?.slice(0, 80) || "Work order",
       amount_cents: Math.abs(cents),
       event_date: (r.opened_at ?? new Date().toISOString()).slice(0, 10),
     });
@@ -266,7 +272,8 @@ export async function loadObligationCandidates(
     out.push({
       obligation_type: "bill",
       obligation_id: r.id,
-      label: r.bill_number?.slice(0, 80) || r.memo?.slice(0, 80) || `Bill ${r.id.slice(0, 8)}`,
+      // B7 — display number / sanitized memo / plain noun; never id.slice.
+      label: r.bill_number?.slice(0, 80) || operatorVisibleMatchText(r.memo)?.slice(0, 80) || "Bill",
       amount_cents: Math.abs(Math.round(Number(r.amount_cents ?? 0))),
       event_date: String(r.bill_date).slice(0, 10),
       counterparty_name: r.vendor_name?.trim() || null,
@@ -301,7 +308,8 @@ export async function loadObligationCandidates(
     out.push({
       obligation_type: "expense",
       obligation_id: r.id,
-      label: r.expense_number ? `Expense ${r.expense_number}` : `Expense ${r.id.slice(0, 8)}`,
+      // B7 — expense_number or plain noun; never id.slice.
+      label: r.expense_number ? `Expense ${r.expense_number}` : "Expense",
       amount_cents: Math.abs(Math.round(Number(r.total_amount_cents ?? 0))),
       event_date: String(r.transaction_date).slice(0, 10),
       counterparty_name: r.vendor_name?.trim() || null,

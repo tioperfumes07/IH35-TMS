@@ -2757,12 +2757,12 @@ async function buildBankCategorizationLines(client: DbClient, operatingCompanyId
     throw new PostingEngineError("BANK_CATEGORIZATION_NOT_POSTING_ELIGIBLE", "Bank transaction has a zero/non-finite amount");
   }
 
-  // JE-MEMO-STORES-RAW-UUID-AT-POSTER — name the transaction by its own bank-statement description
-  // (real information), not its uuid. Truncated + a short id suffix: descriptions repeat across many
-  // rows (e.g. "Wire Transfer Fee"), so the suffix keeps the memo unique per transaction.
+  // JE-MEMO-STORES-RAW-UUID-AT-POSTER / 433-CUR B7 — name the transaction by its bank-statement
+  // description only. Uniqueness and reverse drill live on the spine (source_transaction_id), never
+  // as an 8-hex suffix in the memo (that suffix was surfacing in Match Description as junk).
   const txnDescription = (txn.description ?? "").trim();
   const label = txnDescription
-    ? `Bank categorization: ${txnDescription.slice(0, 60)} ${sourceId.slice(0, 8)}`
+    ? `Bank categorization: ${txnDescription.slice(0, 80)}`
     : "Bank categorization";
   const moneyIn = txn.is_credit === true;
   const catLine: PostingLineDraft = {

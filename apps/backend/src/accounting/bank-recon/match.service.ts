@@ -11,6 +11,7 @@ import { applyCashBasisSuppression, type CashBasisEntry } from "../cash-basis/en
 import { backlinkBankTransactionToInvoice } from "../payments/bank-invoice-backlink.service.js";
 import { backlinkBankTransactionToBill } from "../payments/bank-bill-backlink.service.js";
 import { assertBankTxnNotInReconciledSession } from "../../banking/closed-session-immutability.js";
+import { operatorVisibleMatchText } from "../../banking/operator-visible-match-text.js";
 // ACCT-LINK-01 regression fix (GO-1405 Recipe B, 2026-08-29): this variance-JE insert never
 // populated journal_entry_type_id -- one of several direct posters contributing to the live
 // 46/2214 (2%) density gap. Leaf module, no accounting-service imports.
@@ -435,17 +436,21 @@ type RawRow = {
 };
 
 function toCandidate(kind: LedgerEntryKind, row: RawRow, counterpartyKind: MatchCounterpartyKind): RawLedgerCandidate {
+  // B7 — Description / memo are operator-visible on the Match register. Never pass a session uuid
+  // or raw id fragment through (ROUND 390.3 + 433-CUR B7).
+  const memo = operatorVisibleMatchText(row.memo ?? "");
+  const descriptionRaw = operatorVisibleMatchText(row.description);
   return {
     ledger_entry_kind: kind,
     ledger_entry_id: row.id,
     amount_cents: Math.abs(Number(row.amount_cents ?? 0)),
     event_date: row.event_date,
-    memo: row.memo ?? "",
+    memo,
     counterparty_kind: row.counterparty_id ? counterpartyKind : null,
     counterparty_id: row.counterparty_id ?? null,
     counterparty_name: row.counterparty_name ?? null,
     reference: row.reference ?? null,
-    description: row.description ?? null,
+    description: descriptionRaw || null,
     open_balance_cents: row.open_balance_cents == null ? null : Math.abs(Number(row.open_balance_cents)),
   };
 }

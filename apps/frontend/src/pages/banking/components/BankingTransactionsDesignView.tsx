@@ -37,6 +37,7 @@ import { BulkActionBar } from "../../../components/bulk/BulkActionBar";
 import { ActionButton } from "../../../components/shared/ActionButton";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
+import { humanMemo } from "../../accounting/ManualJEListPage";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { QBO_BANKING_ACTIONS } from "../../../design/qbo-parity";
@@ -290,11 +291,12 @@ function buildMatchCandidateColumns(
       key: "description",
       label: "Description",
       sortValue: (c) => c.description ?? c.memo ?? "",
-      render: (c) => (
-        <span title={c.description ?? c.memo ?? undefined}>
-          {c.description?.trim() ? c.description : c.memo?.trim() ? c.memo : "—"}
-        </span>
-      ),
+      render: (c) => {
+        // B7 — never paint a session uuid / bare id that slipped into a memo (humanMemo strips UUIDs).
+        const raw = c.description?.trim() || c.memo?.trim() || "";
+        const visible = raw ? humanMemo(raw) : "—";
+        return <span title={visible === "—" ? undefined : visible}>{visible}</span>;
+      },
     },
     {
       key: "open_balance_cents",
@@ -3511,7 +3513,10 @@ export function BankingTransactionsDesignView({
                   }}
                 >
                   {String(suggestion.category ?? suggestion.kind ?? "candidate")} ·{" "}
-                  {entityLabel(suggestion.description, suggestion.id, "Transaction")}
+                  {/* B7 — suggestion.description may echo a prior bank memo; never fall through to the UUID id. */}
+                  {suggestion.description?.trim()
+                    ? humanMemo(suggestion.description)
+                    : String(suggestion.category ?? suggestion.kind ?? "Similar transaction")}
                 </button>
               ))}
             </div>
