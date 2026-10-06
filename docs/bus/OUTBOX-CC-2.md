@@ -2276,3 +2276,20 @@ RECOMMENDATION (I proceed on it unless the Lead rules otherwise): Cursor keeps t
   - B8 — several invoices against ONE deposit: a selection model in the match engine (many documents -> one bank line), not a filter; money path, my lane.
   - U23 — column filters + a column chooser on load / truck / driver columns.
 NEXT: B8 now.
+
+### CC-2 · 21:40Z — B8 built; main was red in ~30 guards and could not build a fresh DB — fixed, B8 merges when verify:local-ci is green
+DID (all fast-merged, local gate gate_exit=0 each; every re-pointed guard proven red on a planted defect):
+- #25628 / #25647 main frontend typecheck + build red (#25611 B7 unknown->string; #25639 MultiSelectDropdown props).
+- #25651/#25652/#25657 FRESH DB: catalogs.accounts.posts_to_financials was live with no creating migration (CC-3 finding 10-04) -> migration 202615400850 ADD COLUMN IF NOT EXISTS; fresh chain passes 202615400930; rehearsed no-op on a throwaway branch from prod (deleted). My first claim append (#25651) nested inside CC-3's 202615440900 entry — fixed in #25652.
+- #25644 (fork) banking reverse-link list surfaces (9) + escrow history (5) re-pointed.
+- #25656 seven arch guards (accounting tab lock U4/U11/U13/U14, customers tenant scope #23767, IFTA classifier — mine #25604, Q11 calibration, month-close conjunction, comparison cash basis ACCT-F412, fuel GPS verdict scope).
+- #25658 content-drift: an index on a later-dropped column is not drift (r342 step 2c; 24 false reds).
+- #25659 / #25664 maintenance tab lock + nav-count = C-36 nine + R313 four, tied label-for-label.
+- #25660 the four statement contract guards (mine — #25576 moved the ledger rule into ledger-membership.ts) + maint-pm (E-15 loader).
+- #25661 nav-integrity orphan routes (all reachable; guard now reads the Settlements tab strip; engine-status allowlisted with its two entry points).
+- #25662 14 financial tables declared (relocated declarations; none is a duplicate ledger; no baseline rewrite).
+- #25663 23 orphaned components re-wired (Rule 07): DriverDetail as /drivers/:id/record, DriverHubBoard as Drivers Home Board view, factoring batch pipeline under Submit invoice.
+- #25665 drivers action bar follows U2 (tabs wrap) + DRV-F420 (Edit tab).
+- B8 (one deposit -> several invoices) committed on cc-2/b8-deposit-to-invoices; guard 16/16; waiting for verify:local-ci (its DB integration test) — 4 more maintenance/dispatch guards being fixed now (ACCT-F2026100623).
+FOR THE LEAD (production write — needs an AUTH, not done): the production migration ledger has 3 entries whose files are not on disk — 202610290000_disp01_escrow_abandon_trigger_text_cast.sql (2026-07-30), 202614000000_mdata_locations_is_sample_data (2026-09-08), 202614690000_expense_lines_item_and_account_required (2026-09-30). verify-no-orphan-migration-ledger-entries fails against prod; runbook docs/runbooks/migration-orphan-cleanup.md.
+ALSO PRE-EXISTING (not mine, still red): frontend tests DriversListPage x2 ("multiple elements"), RecordTransferModal, TransferModal, ManualJEModal, SettlementsPage (ToastProvider); backend bill-account-resolver / bill-gl-draft / posting-engine closed-period / lv-escrow subtree / period-lock / recurring generator (mock-shape drift). Next sweep after B8.
