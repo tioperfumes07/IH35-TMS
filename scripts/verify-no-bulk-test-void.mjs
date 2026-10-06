@@ -16,6 +16,9 @@ const SKIP = new Set([
   "docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md",
   "docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0007-G1-LABEL.md",
   "docs/lockdown/SAMPLE-DATA-PURGE-LAW-2026-09-02.md",
+  // BANK-F431's guard: its --selftest fixtures quote the bank-line DELETE shapes it exists to catch (including the
+  // canonical predicate's OR is_sample_data), as test DATA. It deletes nothing and holds no query.
+  "scripts/verify-bank-line-deletion-has-one-canonical-authority.mjs",
 ]);
 
 const BULK = [
