@@ -2122,6 +2122,11 @@
       "claimed_at": "2026-10-05",
       "purpose": "AUTH-401: append-only maintenance.pm_alerts admits DELETE of rows listed in _system.purge_authorized_rows under an open AUTH (ARM L); nothing else"
     },
+    "202615440100": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-06",
+      "purpose": "LST-F422: accounting.lease_contract.lessee_vendor_id (the lessor as a vendor in the LESSEE company) + a trigger refusing a vendor from any other company; the intercompany lessee rent leg becomes a bill to it every period"
+    },
     "202615430100": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-06",
