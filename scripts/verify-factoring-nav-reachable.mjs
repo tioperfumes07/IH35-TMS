@@ -144,10 +144,40 @@ export function extractChildrenBlocks(block) {
  * @param {{factoringHomeSrc: string, navTestSrc: string, navTestExists: boolean}} input
  * @returns {string[]} failures (empty => pass)
  */
-export function assertGuard({ factoringHomeSrc, navTestSrc, navTestExists }) {
+/**
+ * ROUND 435 (owner): the strip is THE TEN Faro tabs (FARO_TABS). A section is reachable when it is mapped in
+ * FACTORING_SECTION_PARENT and either renders inside its parent tab (`show("<id>")` in FactoringHome) or, mapped to
+ * null (not a Faro surface), has its own URL in FACTORING_TAB_PATH. No dropdown may hide anything.
+ */
+export function tenTabReachability(factoringHomeSrc, manifestSrc) {
+  const failures = [];
+  const ids = [...(extractIdsFromConstBlock(factoringHomeSrc, "SUBNAV") ?? []), ...(extractIdsFromConstBlock(factoringHomeSrc, "INTERNAL_TOOLS_SUBNAV") ?? [])];
+  if (!ids.length) return [`${FACTORING_HOME_REL} — could not extract the section ids (SUBNAV / INTERNAL_TOOLS_SUBNAV)`];
+  const mapStart = manifestSrc.indexOf("export const FACTORING_SECTION_PARENT");
+  const mapEnd = manifestSrc.indexOf("};", mapStart);
+  if (mapStart < 0 || mapEnd < 0) return ["route-manifest.ts — could not read FACTORING_SECTION_PARENT"];
+  const parents = new Map([...manifestSrc.slice(mapStart, mapEnd).matchAll(/\b([a-z_]+):\s*(?:"([a-z_]+)"|(null))/g)].map((m) => [m[1], m[3] ? null : m[2]]));
+  const pathStart = manifestSrc.indexOf("export const FACTORING_TAB_PATH");
+  const pathBlock = manifestSrc.slice(pathStart, manifestSrc.indexOf("};", pathStart));
+  for (const id of ids) {
+    if (!parents.has(id)) { failures.push(`section "${id}" is in no Faro tab (missing from FACTORING_SECTION_PARENT) — unreachable`); continue; }
+    if (parents.get(id) === null) {
+      if (!new RegExp(`\\b${id}:\\s*"/factoring/`).test(pathBlock)) failures.push(`section "${id}" is mapped to no tab and has no URL of its own — unreachable`);
+    } else if (!factoringHomeSrc.includes(`show("${id}")`)) {
+      failures.push(`section "${id}" is mapped to tab "${parents.get(id)}" but FactoringHome never renders show("${id}") — surface shipped, link dead`);
+    }
+  }
+  if (/<NavyPageSubNav[\s\S]{0,200}children:/.test(factoringHomeSrc)) failures.push("the Faro strip has a dropdown — ROUND 435: every section shows inside its tab, nothing two clicks deep");
+  return failures;
+}
+
+export function assertGuard({ factoringHomeSrc, navTestSrc, navTestExists, manifestSrc = "" }) {
   const failures = [];
 
   // --- (1) STRUCTURAL ---
+  if (/<NavyPageSubNav\s+items=\{FARO_TABS\.map\(/.test(factoringHomeSrc)) {
+    failures.push(...tenTabReachability(factoringHomeSrc, manifestSrc));
+  } else {
   const subnavIds = extractIdsFromConstBlock(factoringHomeSrc, "SUBNAV");
   const internalIds = extractIdsFromConstBlock(factoringHomeSrc, "INTERNAL_TOOLS_SUBNAV");
   if (!subnavIds) {
@@ -213,6 +243,8 @@ export function assertGuard({ factoringHomeSrc, navTestSrc, navTestExists }) {
     }
   }
 
+  }
+
   // --- (2) BEHAVIORAL: the shared NavyDropdown must be proven, by a real click, to actually open ---
   // A structural-only check above would have PASSED on the original broken code — every id really
   // was present in the array. The entries were never missing; `NavyDropdown`'s `open` state just
@@ -248,7 +280,8 @@ function runReal() {
   const navTestExists = fs.existsSync(navTestPath);
   const navTestSrc = navTestExists ? fs.readFileSync(navTestPath, "utf8") : "";
 
-  const failures = assertGuard({ factoringHomeSrc, navTestSrc, navTestExists });
+  const manifestSrc = readRepo("apps/frontend/src/router/route-manifest.ts");
+  const failures = assertGuard({ factoringHomeSrc, navTestSrc, navTestExists, manifestSrc });
   if (failures.length > 0) {
     console.error(`[${LABEL}] FAIL (static checks):`);
     for (const f of failures) console.error(`  - ${f}`);
@@ -266,7 +299,7 @@ function runReal() {
   }
 
   console.log(
-    `[${LABEL}] PASS — every SUBNAV id renders as its own top-level tab (none nested inside a dropdown), INTERNAL_TOOLS_SUBNAV is reachable inside its own "Internal Tools" dropdown, and NavyDropdown is proven (by a real click) to actually open and render its children`
+    `[${LABEL}] PASS — every factoring section is reachable: one of the ten Faro tabs, rendered inside its tab, or standalone at its own URL (ROUND 435), and NavyDropdown is proven (by a real click) to actually open and render its children`
   );
 }
 
@@ -306,7 +339,37 @@ function runSelftest() {
     expect(document.body.contains(menu)).toBe(true);
   `;
 
+  // ROUND 435 fixtures — the ten-tab strip.
+  const faroHome = `
+    const SUBNAV = [ { id: "aging", label: "Aging" }, { id: "funds_due", label: "Funds Due" } ] as const;
+    const INTERNAL_TOOLS_SUBNAV = [ { id: "equipment_loans", label: "Equipment Loans (CCG)" } ] as const;
+    <NavyPageSubNav
+        items={FARO_TABS.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] }))}
+      />
+    {show("aging") ? (<div />) : null}
+    {show("funds_due") ? (<div />) : null}
+    {show("equipment_loans") ? (<div />) : null}
+  `;
+  const faroManifest = `
+    export const FACTORING_TAB_PATH: Record<string, string> = { aging: "/factoring/aging", funds_due: "/factoring/funds-due", equipment_loans: "/factoring/equipment-loans", };
+    export const FACTORING_SECTION_PARENT: Record<string, FaroTabId | null> = { aging: "aging", funds_due: "payments_to_you", equipment_loans: null, };
+  `;
   const cases = [
+    {
+      name: "ROUND 435 healthy: every section is a tab, inside its tab, or standalone at its own URL",
+      input: { factoringHomeSrc: faroHome, navTestSrc: goodNavTest, navTestExists: true, manifestSrc: faroManifest },
+      expectPass: true,
+    },
+    {
+      name: "ROUND 435 regression: a section mapped to no tab at all",
+      input: { factoringHomeSrc: faroHome, navTestSrc: goodNavTest, navTestExists: true, manifestSrc: faroManifest.replace('funds_due: "payments_to_you", ', "") },
+      expectPass: false,
+    },
+    {
+      name: "ROUND 435 regression: a section mapped to a tab but never rendered there",
+      input: { factoringHomeSrc: faroHome.replace('{show("funds_due") ? (<div />) : null}', ""), navTestSrc: goodNavTest, navTestExists: true, manifestSrc: faroManifest },
+      expectPass: false,
+    },
     {
       name: "healthy: every id reachable + real regression test present",
       input: { factoringHomeSrc: goodFactoringHome, navTestSrc: goodNavTest, navTestExists: true },

@@ -43,7 +43,7 @@ export function checkToggle(src) {
   if (!/const \[statementsView, setStatementsView\] = useState<"summary" \| "detail">\("summary"\)/.test(src)) {
     failures.push(`${HOME}: missing statementsView state (default "summary").`);
   }
-  const tabSection = src.split('tab === "statements_settings"')[1]?.slice(0, 4000) ?? "";
+  const tabSection = src.split('show("statements_settings")')[1]?.slice(0, 4000) ?? "";
   if (!tabSection) {
     failures.push(`${HOME}: could not find the statements_settings tab block.`);
     return failures;
@@ -77,7 +77,7 @@ export function run() {
 if (process.argv.includes("--selftest")) {
   const goodSrc = `
     const [statementsView, setStatementsView] = useState<"summary" | "detail">("summary");
-    tab === "statements_settings" ? (
+    show("statements_settings") ? (
       <div>
         <button onClick={() => setStatementsView("summary")}>Summary</button>
         <button aria-pressed={statementsView === "detail"} onClick={() => setStatementsView("detail")}>Detail</button>

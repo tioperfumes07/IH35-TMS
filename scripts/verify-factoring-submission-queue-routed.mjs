@@ -88,7 +88,7 @@ const TAB = {
 /** Matrix leaf factoring.tab.submit_to_factor — connectivity, customer, load, reverse_link. */
 export function checkSubmitTab(s) {
   const f = [];
-  if (!/tab === "submit_invoice" \? <SubmitToFactorTab /.test(s.home ?? "")) f.push(`${HOME}: the Submit Invoice tab must mount SubmitToFactorTab (connectivity)`);
+  if (!/show\("submit_invoice"\) \? <SubmitToFactorTab /.test(s.home ?? "")) f.push(`${HOME}: the Submit Invoice tab must mount SubmitToFactorTab (connectivity)`);
   if (!/await createFactoringPurchase\(companyId, \{/.test(s.tab) || !/app\.post\("\/api\/v1\/factoring\/purchases",/.test(s.routes) || !/app\.get\("\/api\/v1\/factoring\/purchases\/candidates",/.test(s.routes) || !/^\s*await registerFactoringPurchaseRoutes\(app\);/m.test(s.index)) f.push(`${TAB.tab}: must list candidates and post purchases through registered /api/v1/factoring/purchases routes (connectivity)`);
   if (!/<EntityLink kind="customer" id=\{r\.customer_id\}/.test(s.tab) || !/customer_id: applied\.customerId/.test(s.tab)) f.push(`${TAB.tab}: each candidate must link its customer, with a customer filter (customer)`);
   if (!/<EntityLink kind="load" id=\{r\.load_id\}/.test(s.tab)) f.push(`${TAB.tab}: each candidate must link its load (load)`);
@@ -166,7 +166,7 @@ if (process.argv.includes("--selftest")) {
   for (const [name, key, from, to] of [
     ["load link removed", "tab", '<EntityLink kind="load" id={r.load_id}', "<span"],
     ["customer reverse removed", "customerDrill", "filter={{ customer_id: customer.id }}", "filter={{}}"],
-    ["tab unmounted", "home", 'tab === "submit_invoice" ? <SubmitToFactorTab', 'tab === "submit_invoice" ? <div'],
+    ["tab unmounted", "home", 'show("submit_invoice") ? <SubmitToFactorTab', 'show("submit_invoice") ? <div'],
   ]) {
     const mutated = { ...realTab, [key]: realTab[key].split(from).join(to) };
     if (mutated[key] === realTab[key] || !checkSubmitTab(mutated).length) {

@@ -39,8 +39,8 @@ function read(rel) {
 export function checkBothTabs(src) {
   const failures = [];
 
-  const equipStart = src.indexOf('tab === "equipment_loans"');
-  const vendorMergesStart = src.indexOf('tab === "vendor_merges"');
+  const equipStart = src.indexOf('show("equipment_loans")');
+  const vendorMergesStart = src.indexOf('show("vendor_merges")');
   const equipSection =
     equipStart >= 0 && vendorMergesStart > equipStart ? src.slice(equipStart, vendorMergesStart) : "";
   if (!equipSection) {
@@ -54,7 +54,7 @@ export function checkBothTabs(src) {
     }
   }
 
-  const mergesSection = src.split('tab === "vendor_merges"')[1]?.slice(0, 8000) ?? "";
+  const mergesSection = src.split('show("vendor_merges")')[1]?.slice(0, 8000) ?? "";
   if (!mergesSection) {
     failures.push(`${HOME}: could not find the vendor_merges tab block.`);
   } else {
@@ -85,7 +85,7 @@ export function run() {
 
 if (process.argv.includes("--selftest")) {
   const goodSrc = `
-    tab === "equipment_loans" ? (
+    show("equipment_loans") ? (
       <div>
         <CollapsedListFilters>
           <label>Lender vendor</label>
@@ -93,7 +93,7 @@ if (process.argv.includes("--selftest")) {
       </div>
     ) : null
 
-    tab === "vendor_merges" ? (
+    show("vendor_merges") ? (
       <div>
         <ParityTable
           columns={VENDOR_MERGE_COLUMNS}
@@ -108,7 +108,7 @@ if (process.argv.includes("--selftest")) {
     ) : null
   `;
   const badEquipBespokeGrid = `
-    tab === "equipment_loans" ? (
+    show("equipment_loans") ? (
       <div>
         <div className="relative mb-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           <label>Lender vendor</label>
@@ -116,7 +116,7 @@ if (process.argv.includes("--selftest")) {
       </div>
     ) : null
 
-    tab === "vendor_merges" ? (
+    show("vendor_merges") ? (
       <div>
         <ParityTable
           columns={VENDOR_MERGE_COLUMNS}
@@ -127,11 +127,11 @@ if (process.argv.includes("--selftest")) {
     ) : null
   `;
   const badMergesMissingFilterBar = `
-    tab === "equipment_loans" ? (
+    show("equipment_loans") ? (
       <div><CollapsedListFilters><label>Lender vendor</label></CollapsedListFilters></div>
     ) : null
 
-    tab === "vendor_merges" ? (
+    show("vendor_merges") ? (
       <div>
         <div className="relative mb-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3" data-testid="factoring-home-vendor-merges-filters">
           <label>Driver</label>

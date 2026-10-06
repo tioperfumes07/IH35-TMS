@@ -239,6 +239,57 @@ export const FACTORING_TAB_PATH: Record<string, string> = {
   reserve_tracker: "/factoring/reserve-tracker",
 };
 
+// ROUND 435 (owner, verbatim): THE TEN FARO TABS and no others — "Submit invoice · Debtor receipts · Account summary ·
+// Aging · Chargeback and overpayments · Unapplied cash · Payments to us · Purchase report · Fees paid · Reserve".
+// Every other factoring surface is a SECTION rendered inside exactly one of these (visible, never hidden in a
+// dropdown), and its old URL redirects to the parent tab with ?section=<id>. No eleventh tab: the guard
+// scripts/verify-faro-ten-tabs.mjs fails on a label outside this list. Ids keep their existing paths so links work.
+export const FARO_TABS = [
+  { id: "submit_invoice", label: "Submit invoice" },
+  { id: "debtor_receipts", label: "Debtor receipts" },
+  { id: "account_summary", label: "Account summary" },
+  { id: "aging", label: "Aging" },
+  { id: "chargebacks_overpayments", label: "Chargeback and overpayments" },
+  { id: "unapplied_cash", label: "Unapplied cash" },
+  { id: "payments_to_you", label: "Payments to us" },
+  { id: "purchase_report", label: "Purchase report" },
+  { id: "fees_paid", label: "Fees paid" },
+  { id: "reserve", label: "Reserve" },
+] as const;
+export type FaroTabId = (typeof FARO_TABS)[number]["id"];
+
+/**
+ * Every factoring section -> the ONE Faro tab that shows it. `null` = not a Faro surface at all (a CCG equipment
+ * loan, a driver vendor merge): reachable at its own URL as a standalone page, never a tab, until it moves to its
+ * own module. A section missing from this map is a guard failure.
+ */
+export const FACTORING_SECTION_PARENT: Record<string, FaroTabId | null> = {
+  submit_invoice: "submit_invoice",
+  request_debtor_credit_check: "submit_invoice",
+  debtor_receipts: "debtor_receipts",
+  faro_imports: "debtor_receipts",
+  account_summary: "account_summary",
+  statements_settings: "account_summary",
+  invoice_status_report: "account_summary",
+  messages_support: "account_summary",
+  aging: "aging",
+  recourse_pipeline: "aging",
+  chargebacks_overpayments: "chargebacks_overpayments",
+  chargebacks_fees: "chargebacks_overpayments",
+  unapplied_cash: "unapplied_cash",
+  payments_to_you: "payments_to_you",
+  funds_due: "payments_to_you",
+  purchase_report: "purchase_report",
+  fees_paid: "fees_paid",
+  reserve: "reserve",
+  escrow_account: "reserve",
+  cash_reserve: "reserve",
+  reserve_tracker: "reserve",
+  loan_save: "reserve",
+  equipment_loans: null,
+  vendor_merges: null,
+};
+
 export function factoringTabFromPath(pathname: string): string {
   const norm = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
   if (norm === "/factoring") return "submit_invoice";

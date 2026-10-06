@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
@@ -71,7 +71,7 @@ import { VendorMergeDiffPreview } from "../../components/factoring/VendorMergeDi
 import { DeactivateFactorConfirmModal } from "../../components/factoring/DeactivateFactorConfirmModal";
 import { DuplicateVendorsBanner } from "../../components/factoring/DuplicateVendorsBanner";
 import { apiRequest } from "../../api/client";
-import { FACTORING_TAB_PATH, factoringTabFromPath } from "../../router/route-manifest";
+import { FACTORING_SECTION_PARENT, FACTORING_TAB_PATH, FARO_TABS, factoringTabFromPath } from "../../router/route-manifest";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDocumentsNote";
@@ -333,6 +333,19 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
   useEffect(() => {
     setTab(factoringTabFromPath(location.pathname) as FactoringTabId);
   }, [location.pathname]);
+  // ROUND 435 — the ten Faro tabs. `tab` is the SECTION the URL names; `activeFaroTab` is the one tab that shows it.
+  // An absorbed section's own URL (e.g. /factoring/funds-due) redirects to its parent tab with ?section=<id>, so the
+  // strip highlights the right tab and the section is scrolled into view. A non-Faro tool (parent null) renders alone.
+  const navigateToTab = useNavigate();
+  const sectionParent = FACTORING_SECTION_PARENT[tab];
+  const activeFaroTab: string | null = sectionParent === undefined ? tab : sectionParent;
+  useEffect(() => {
+    if (sectionParent && sectionParent !== tab) {
+      navigateToTab(`${FACTORING_TAB_PATH[sectionParent]}?section=${tab}`, { replace: true });
+    }
+  }, [sectionParent, tab, navigateToTab]);
+  const show = (section: FactoringTabId): boolean =>
+    activeFaroTab === null ? tab === section : FACTORING_SECTION_PARENT[section] === activeFaroTab;
   const [deactivating, setDeactivating] = useState(false);
   const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
   // NEW-25 (owner 2026-09-07): "Statements/Settings need a summary-totals vs. detailed-view
@@ -1031,22 +1044,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           className="overflow-x-auto ...">` (NavyPageSubNav's own root, unchanged) already scrolls
           horizontally rather than wrapping or collapsing; no component change needed for that. */}
       <NavyPageSubNav
-        items={[
-          ...SUBNAV.map((item) => ({
-            label: item.label,
-            // ROUND 315 step 3 (owner, 2026-10-01): "Submit Invoice" is now the Submit to Factor tab
-            // INSIDE this module (SubmitToFactorTab, rendered below at FACTORING_TAB_PATH.submit_invoice)
-            // -- every open invoice, expected reserves/fee, docs, customer direct pay, totals, and
-            // Save / Save and send through the purchase engine. The older /factoring/submit URL stays mounted (Rule 07)
-            // and redirects here — the batch queue is retired as a writer (one purchase engine, #24002).
-            to: FACTORING_TAB_PATH[item.id],
-          })),
-          {
-            label: "Internal Tools",
-            to: "",
-            children: INTERNAL_TOOLS_SUBNAV.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] })),
-          },
-        ]}
+        items={FARO_TABS.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] }))}
       />
 
       <DuplicateVendorsBanner companyId={companyId} />
@@ -1303,9 +1301,9 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
       {/* Lead ROUND 296 / 297 — day 95 asks the owner (EXTEND / CONFIRM REPURCHASE / MARK COLLECTED); renders only
           when a repurchase deadline is waiting, on every tab, so it is never missed. */}
       {companyId ? <RepurchaseDuePanel companyId={companyId} isOwner={user?.role === "Owner"} /> : null}
-      {tab === "submit_invoice" ? <SubmitToFactorTab companyId={companyId} isOwner={user?.role === "Owner"} /> : null}
+      {show("submit_invoice") ? <SubmitToFactorTab companyId={companyId} isOwner={user?.role === "Owner"} /> : null}
 
-      {tab === "funds_due" ? (
+      {show("funds_due") ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-funds-due-report">
           <div className="mb-2 text-xs font-medium text-gray-900">Funds Due</div>
           <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-funds-due")}</div>
@@ -1364,7 +1362,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           showing each debtor's factored invoice count, total invoice amount, advance, reserve,
           and fees. No separate backend endpoint needed — the recourse pipeline already carries
           all the per-invoice factoring data keyed by customer. */}
-      {tab === "request_debtor_credit_check" ? (
+      {show("request_debtor_credit_check") ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-request-debtor-credit-check">
           <div className="mb-2 text-xs font-medium text-gray-900">Request Debtor / Credit Check</div>
           <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-debtor-credit-check")}</div>
@@ -1443,7 +1441,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
       {/* Debtor Receipts — payments received from customers on factored invoices. New backend
           endpoint GET /api/v1/factoring/debtor-receipts. Live-verified 2026-09-10: 0 rows
           (USMCA has no customer payments yet — honest empty state). */}
-      {tab === "debtor_receipts" ? (
+      {show("debtor_receipts") ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-debtor-receipts">
           <div className="mb-2 text-xs font-medium text-gray-900">Debtor Receipts</div>
           <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-debtor-receipts")}</div>
@@ -1497,7 +1495,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
       {/* Loan / Save — reuses recourseQuery showing each factoring advance as a loan (advance
           amount = principal borrowed) with the reserve as the savings holdback. Also shows the
           total reserve balance from the factoring KPI engine (escrow + cash reserve roles). */}
-      {tab === "loan_save" ? (
+      {show("loan_save") ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-loan-save">
           <div className="mb-2 text-xs font-medium text-gray-900">Loan / Save</div>
           <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-loan-save")}</div>
@@ -1568,7 +1566,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
 
       {/* Unapplied Cash — payments with unapplied balances. New backend endpoint
           GET /api/v1/factoring/unapplied-cash. Live-verified 2026-09-10: 0 rows. */}
-      {tab === "unapplied_cash" ? (
+      {show("unapplied_cash") ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-unapplied-cash">
           <div className="mb-2 text-xs font-medium text-gray-900">Unapplied Cash</div>
           <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-unapplied-cash")}</div>
@@ -1619,7 +1617,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           GET /api/v1/factoring/invoice-status. Live-verified 2026-09-10: 64 non-void invoices
           (51 advanced, 8 not_factored sent, 5 proforma). REG-046: each row shows invoiced date,
           settlement number, delivery date, Original Invoice Amount, Advance, Reserve, Fees. */}
-      {tab === "invoice_status_report" ? (
+      {show("invoice_status_report") ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-invoice-status-report">
           <div className="mb-2 text-xs font-medium text-gray-900">Invoice Status Report</div>
           <div className="mb-2 text-xs text-gray-500" data-testid="factoring-invoice-status-label">
@@ -1687,7 +1685,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
       {/* Messages & Support — contact information for the active factor company. Read-only
           display of the factor's name, email, phone, and address from the factor profile.
           No message-writing capability (read-only report, no external system submission). */}
-      {tab === "messages_support" ? (
+      {show("messages_support") ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-messages-support">
           <div className="mb-2 text-xs font-medium text-gray-900">Messages &amp; Support</div>
           {summaryQuery.isError ? (
@@ -1740,14 +1738,14 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
 
       {/* ROUND 315 / Lead B7 — Reserve tab mounts the SAME shared panel Banking Home uses
           (escrow/cash from purchases + reserve ledger + CCG loans + categorize/transfer/apply). */}
-      {tab === "reserve" && companyId ? (
+      {show("reserve") && companyId ? (
         <div data-testid="factoring-reserve-report">
           <FactoringReservesSharedPanel companyId={companyId} host="factoring" />
         </div>
       ) : null}
 
       {/* FT2 — Escrow Account tab: ESCROW pool only (factor.reserve_rate). Do not merge with Cash Reserve. */}
-      {tab === "escrow_account" ? (
+      {show("escrow_account") ? (
         <div className="space-y-3" data-testid="factoring-escrow-account">
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-xs font-medium text-gray-900">Security Reserve (Faro statement: "Escrow Reserve")</div>
@@ -1861,7 +1859,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
       ) : null}
 
       {/* FT2 — Cash Reserve tab: CASH pool only (factor.cash_reserve_rate). Separate from Escrow. */}
-      {tab === "cash_reserve" ? (
+      {show("cash_reserve") ? (
         <div className="space-y-3" data-testid="factoring-cash-reserve">
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-xs font-medium text-gray-900">Cash Reserve</div>
@@ -1976,7 +1974,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
 
       {/* ROUND 315 / Lead B4: Payments to You — one row per Faro wire (= factoring_purchases).
           Click → invoices / fees / reserves / bank match. CC-2 purchase engine only. */}
-      {tab === "payments_to_you" ? (
+      {show("payments_to_you") ? (
         <PaymentsToYouPanel
           companyId={companyId}
           dateFrom={dateFromFromUrl || undefined}
@@ -1995,7 +1993,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           feesQuery.data.history, no new backend query) with a summary strip up front (Total
           Records + Total Chargebacks/Overpayments, matching the Aging tab's own strip pattern) --
           honest reuse of real data, not a fabricated new layout. */}
-      {tab === "chargebacks_overpayments" ? (
+      {show("chargebacks_overpayments") ? (
         <div className="space-y-3">
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
@@ -2050,7 +2048,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           are one combined factor_fee_amount) and no Loan/Savings/Funds-on-Hold/escrow-vs-cash
           reserve split — every line without a real backing field renders an honest "—" rather
           than a fabricated number, same standard as the Aging tab's PO/Other Ref/Memos columns. */}
-      {tab === "account_summary" ? (
+      {show("account_summary") ? (
         (() => {
           const latestMonth = latestMonthlyFeeSummary;
           return (
@@ -2214,7 +2212,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           all -- rendered an honest "—" in every row, never fabricated. "Display Fee Detail" /
           "Include Non-Purchased Invoices" checkboxes and "Filter by Debtor" are not wired this
           pass (noted in-page, not silently dropped). */}
-      {tab === "purchase_report" ? (
+      {show("purchase_report") ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-purchase-report">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <div className="text-xs font-medium text-gray-900">Purchase Report</div>
@@ -2339,7 +2337,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           either way). Fee Description is honestly "Factor Fee" for every row -- this schema has
           one combined factor_fee_amount, not a Discount/Schedule/Wire breakdown, same limitation
           noted on Account Summary. PO/Ref has no backing field -- rendered "—", never fabricated. */}
-      {tab === "fees_paid" ? (
+      {show("fees_paid") ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <div className="text-xs font-medium text-gray-900">Fees Paid</div>
@@ -2462,7 +2460,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
         </div>
       ) : null}
 
-      {tab === "aging" ? (
+      {show("aging") ? (
         <div className="space-y-3">
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
@@ -2585,13 +2583,13 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
         </div>
       ) : null}
 
-      {tab === "reserve_tracker" ? (
+      {show("reserve_tracker") ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <ReserveTracker />
         </div>
       ) : null}
 
-      {tab === "recourse_pipeline" ? (
+      {show("recourse_pipeline") ? (
         <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-home-recourse-filters">
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
             <span className="font-medium text-gray-900">Invoices inside recourse window (sorted by days until expiry)</span>
@@ -2686,7 +2684,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
         </div>
       ) : null}
 
-      {tab === "chargebacks_fees" ? (
+      {show("chargebacks_fees") ? (
         <div className="space-y-3" data-testid="factoring-home-chargebacks-filters">
           {/* NEW-24 (owner 2026-09-07): "Chargebacks & Fee History screen is split awkwardly
               with Monthly Fee Summaries mixed in — give each its own tab/window, or put Monthly
@@ -2782,7 +2780,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
         </div>
       ) : null}
 
-      {tab === "statements_settings" ? (
+      {show("statements_settings") ? (
         <div className="space-y-3">
           <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
             <div className="font-medium text-gray-900">Single-factor invariant status</div>
@@ -2895,7 +2893,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
         </div>
       ) : null}
 
-      {tab === "faro_imports" ? (
+      {show("faro_imports") ? (
         <div className="space-y-3">
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
@@ -3086,7 +3084,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
         </div>
       ) : null}
 
-      {tab === "equipment_loans" ? (
+      {show("equipment_loans") ? (
         <div className="space-y-3">
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-xs font-medium text-gray-900">Create equipment loan</div>
@@ -3097,7 +3095,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 value={loanEquipmentId || null}
                 onChange={(v) => setLoanEquipmentId(v ?? "")}
                 placeholder="Select equipment"
-                enabled={Boolean(companyId) && tab === "equipment_loans"}
+                enabled={Boolean(companyId) && show("equipment_loans")}
               />
               {/* CLS-SILENT-CAP: EntityPicker server-search — no uncapped listVendors page for lender. */}
               <EntityPicker
@@ -3107,7 +3105,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 value={loanLenderVendorId || null}
                 onChange={(v) => setLoanLenderVendorId(v ?? "")}
                 placeholder="Select lender vendor"
-                enabled={Boolean(companyId) && tab === "equipment_loans"}
+                enabled={Boolean(companyId) && show("equipment_loans")}
                 dataField="factoring-loan-lender-vendor"
                 className="w-full"
               />
@@ -3262,7 +3260,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
         </div>
       ) : null}
 
-      {tab === "vendor_merges" ? (
+      {show("vendor_merges") ? (
         <div className="space-y-3">
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-xs font-medium text-gray-900">Merge duplicate QBO vendors for a driver</div>

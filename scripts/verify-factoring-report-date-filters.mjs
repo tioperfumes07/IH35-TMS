@@ -75,17 +75,17 @@ export function auditSources({ backendSrc, frontendSrc }) {
       failures.push(`${FRONTEND_REL}: no dateRangeOnlyFilterBar helper -- the 5 report tabs with no other filterBar would have no way to set a date range`);
     }
     for (const tabId of REPORT_TAB_IDS) {
-      const needle = `tab === "${tabId}" ? (`;
+      const needle = `show("${tabId}") ? (`;
       const startIdx = frontendSrc.indexOf(needle);
       if (startIdx === -1) {
         failures.push(`${FRONTEND_REL}: tab "${tabId}" render block not found`);
         continue;
       }
-      // Bound the block at the NEXT `tab === "..." ? (` occurrence (or EOF) rather than a fixed
+      // Bound the block at the NEXT `show("...") ? (` occurrence (or EOF) rather than a fixed
       // char window -- tab blocks vary widely in size (a tall ParityTable column list dwarfs a
       // fixed window), and a truncated capture would false-negative on a real control that's
       // simply further down the block.
-      const nextTabIdx = frontendSrc.indexOf('tab === "', startIdx + needle.length);
+      const nextTabIdx = frontendSrc.indexOf('show("', startIdx + needle.length);
       const tabBlock = frontendSrc.slice(startIdx, nextTabIdx === -1 ? undefined : nextTabIdx);
       const hasDateControl =
         /dateRangeOnlyFilterBar\(/.test(tabBlock) ||
@@ -139,13 +139,13 @@ if (dateFrom) { dateFromFilter = \`AND cf.created_at >= $1::date\`; }
     queryKey: ["factoring", "funds-due", companyId, deepLinkDateFrom, deepLinkDateTo],
     queryFn: () => getFactoringFundsDue(companyId),
   });
-  {tab === "recourse_pipeline" ? (<div>{dateRangeOnlyFilterBar("x")}</div>) : null}
-  {tab === "chargebacks_fees" ? (<div>{dateRangeOnlyFilterBar("x")}</div>) : null}
-  {tab === "funds_due" ? (<div>{dateRangeOnlyFilterBar("x")}</div>) : null}
-  {tab === "payments_to_you" ? (<div>{dateRangeOnlyFilterBar("x")}</div>) : null}
-  {tab === "chargebacks_overpayments" ? (<div>{dateRangeOnlyFilterBar("x")}</div>) : null}
-  {tab === "purchase_report" ? (<div>{dateRangeOnlyFilterBar("x")}</div>) : null}
-  {tab === "aging" ? (<div>{dateRangeOnlyFilterBar("x")}</div>) : null}
+  {show("recourse_pipeline") ? (<div>{dateRangeOnlyFilterBar("x")}</div>) : null}
+  {show("chargebacks_fees") ? (<div>{dateRangeOnlyFilterBar("x")}</div>) : null}
+  {show("funds_due") ? (<div>{dateRangeOnlyFilterBar("x")}</div>) : null}
+  {show("payments_to_you") ? (<div>{dateRangeOnlyFilterBar("x")}</div>) : null}
+  {show("chargebacks_overpayments") ? (<div>{dateRangeOnlyFilterBar("x")}</div>) : null}
+  {show("purchase_report") ? (<div>{dateRangeOnlyFilterBar("x")}</div>) : null}
+  {show("aging") ? (<div>{dateRangeOnlyFilterBar("x")}</div>) : null}
 `;
 
   const pass = auditSources({ backendSrc: goodBackend, frontendSrc: goodFrontend });
@@ -170,7 +170,7 @@ if (dateFrom) { dateFromFilter = \`AND cf.created_at >= $1::date\`; }
   }
 
   const frontendMissingTabControl = goodFrontend.replace(
-    '  {tab === "aging" ? (<div>{dateRangeOnlyFilterBar("x")}</div>) : null}\n',
+    '  {show("aging") ? (<div>{dateRangeOnlyFilterBar("x")}</div>) : null}\n',
     ""
   );
   if (auditSources({ backendSrc: goodBackend, frontendSrc: frontendMissingTabControl }).length === 0) {
