@@ -1,0 +1,382 @@
+{
+  "meta": {
+    "measured": "2026-10-06",
+    "by": "DEVIN (Round 435-DEV)",
+    "note": "Census of every document the app can produce. state \u2208 HAS-DESIGNED-PDF | HAS-PDF-BUT-UNDESIGNED | NO-PDF. 'designed' = letterhead/form layout with totals (wrapPdfDocument / Handlebars template / purpose-built form render); 'undesigned' = printLetterHtml client dump or raw HTML without the canonical letter shell. A PDF generator that nothing calls counts as NO-PDF (unreachable = not printable).",
+    "baseline_no_pdf": 5
+  },
+  "documents": [
+    {
+      "id": "load-confirmation-dispatch-sheet",
+      "document": "Load confirmation / dispatch sheet",
+      "created": "dispatch (Book Load / Load Detail)",
+      "generator": "apps/backend/src/dispatch/dispatch-sheet.routes.ts (.html via wrapPdfDocument)",
+      "ui": "LoadDetailDrawer.tsx, BookLoadModalV4.tsx",
+      "state": "HAS-DESIGNED-PDF",
+      "probes": [
+        "apps/backend/src/dispatch/dispatch-sheet.routes.ts",
+        "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx"
+      ]
+    },
+    {
+      "id": "bol",
+      "document": "Bill of lading",
+      "created": "dispatch POD flow",
+      "generator": "apps/backend/src/dispatch/bol-generator.service.ts (bol.hbs) \u2192 GET bol.pdf (pod.routes.ts:414)",
+      "ui": "LoadBolPanel.tsx",
+      "state": "HAS-DESIGNED-PDF",
+      "probes": [
+        "apps/backend/src/dispatch/bol-generator.service.ts",
+        "apps/frontend/src/components/dispatch/LoadBolPanel.tsx"
+      ]
+    },
+    {
+      "id": "rate-confirmation",
+      "document": "Rate confirmation",
+      "created": "uploaded external doc (ratecon-extract OCR); app does not generate one",
+      "generator": "none",
+      "ui": "none",
+      "state": "NO-PDF",
+      "probes": []
+    },
+    {
+      "id": "driver-load-instructions",
+      "document": "Driver load instructions",
+      "created": "dispatch load distribution",
+      "generator": "apps/backend/src/dispatch/pdf-generator.service.ts (driver-instructions.hbs)",
+      "ui": "load-distribution.service.ts (auto on send)",
+      "state": "HAS-DESIGNED-PDF",
+      "probes": [
+        "apps/backend/src/dispatch/pdf-generator.service.ts",
+        "apps/backend/src/dispatch/load-distribution.service.ts"
+      ]
+    },
+    {
+      "id": "customer-invoice",
+      "document": "Customer invoice",
+      "created": "accounting invoices",
+      "generator": "apps/backend/src/accounting/invoice-render.routes.ts (.html via wrapPdfDocument)",
+      "ui": "InvoiceDetailPage.tsx",
+      "state": "HAS-DESIGNED-PDF",
+      "probes": [
+        "apps/backend/src/accounting/invoice-render.routes.ts",
+        "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx"
+      ]
+    },
+    {
+      "id": "driver-settlement",
+      "document": "Driver settlement",
+      "created": "driver-finance settlements",
+      "generator": "apps/backend/src/driver-finance/settlement-render.routes.ts + settlement-pdf-renderer.service.ts",
+      "ui": "SettlementDetailPage.tsx",
+      "state": "HAS-DESIGNED-PDF",
+      "probes": [
+        "apps/backend/src/driver-finance/settlement-render.routes.ts",
+        "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx"
+      ]
+    },
+    {
+      "id": "company-settlement",
+      "document": "Company settlement",
+      "created": "accounting company settlements",
+      "generator": "apps/backend/src/accounting/company-settlement-render.routes.ts (company-settlement.template.ts)",
+      "ui": "CompanySettlementsPage.tsx",
+      "state": "HAS-DESIGNED-PDF",
+      "probes": [
+        "apps/backend/src/accounting/company-settlement-render.routes.ts",
+        "apps/frontend/src/pages/driver-finance/CompanySettlementsPage.tsx"
+      ]
+    },
+    {
+      "id": "driver-bill",
+      "document": "Driver bill",
+      "created": "driver-finance driver-bills.routes.ts",
+      "generator": "none \u2014 4 routes, no pdf/html/print",
+      "ui": "none",
+      "state": "NO-PDF",
+      "probes": [
+        "apps/backend/src/driver-finance/driver-bills.routes.ts"
+      ]
+    },
+    {
+      "id": "vendor-bill",
+      "document": "Vendor bill",
+      "created": "accounting bills",
+      "generator": "apps/backend/src/accounting/bill-render.routes.ts (.html via wrapPdfDocument)",
+      "ui": "BillDetailPage.tsx",
+      "state": "HAS-DESIGNED-PDF",
+      "probes": [
+        "apps/backend/src/accounting/bill-render.routes.ts",
+        "apps/frontend/src/pages/accounting/BillDetailPage.tsx"
+      ]
+    },
+    {
+      "id": "bill-payment",
+      "document": "Bill payment / remittance",
+      "created": "accounting bill payments",
+      "generator": "apps/backend/src/accounting/bill-payment-render.routes.ts",
+      "ui": "BillPaymentDetailPage.tsx",
+      "state": "HAS-DESIGNED-PDF",
+      "probes": [
+        "apps/backend/src/accounting/bill-payment-render.routes.ts",
+        "apps/frontend/src/pages/accounting/BillPaymentDetailPage.tsx"
+      ]
+    },
+    {
+      "id": "check",
+      "document": "Check",
+      "created": "accounting checks",
+      "generator": "check-print-batch.service.ts + checks.routes.ts (render/check.template.ts)",
+      "ui": "CheckPrintPage.tsx",
+      "state": "HAS-DESIGNED-PDF",
+      "probes": [
+        "apps/backend/src/accounting/checks/checks.routes.ts",
+        "apps/frontend/src/pages/accounting/checks/CheckPrintPage.tsx"
+      ]
+    },
+    {
+      "id": "expense-receipt",
+      "document": "Expense / receipt",
+      "created": "accounting expenses",
+      "generator": "none (client printLetterHtml dump)",
+      "ui": "ExpenseDetailPage.tsx",
+      "state": "HAS-PDF-BUT-UNDESIGNED",
+      "probes": [
+        "apps/frontend/src/pages/accounting/ExpenseDetailPage.tsx"
+      ]
+    },
+    {
+      "id": "cash-advance-receipt",
+      "document": "Cash advance receipt",
+      "created": "cash advances",
+      "generator": "none (client printLetterHtml dump)",
+      "ui": "AdvanceDetailDrawer.tsx",
+      "state": "HAS-PDF-BUT-UNDESIGNED",
+      "probes": [
+        "apps/frontend/src/pages/cash-advances/components/AdvanceDetailDrawer.tsx"
+      ]
+    },
+    {
+      "id": "work-order",
+      "document": "Work order",
+      "created": "maintenance work orders",
+      "generator": "apps/backend/src/work-orders/wo-pdf-renderer.service.ts \u2192 GET /pdf",
+      "ui": "WorkOrderCopyLinks.tsx / maintenance api",
+      "state": "HAS-DESIGNED-PDF",
+      "probes": [
+        "apps/backend/src/work-orders/wo-pdf-renderer.service.ts",
+        "apps/frontend/src/components/accounting/WorkOrderCopyLinks.tsx"
+      ]
+    },
+    {
+      "id": "severe-repair-estimate",
+      "document": "Severe repair estimate",
+      "created": "maintenance severe-repair",
+      "generator": "apps/backend/src/maintenance/severe-repair-pdf-export.ts (raw HTML, no letter shell)",
+      "ui": "apps/frontend/src/api/maintenance.ts",
+      "state": "HAS-PDF-BUT-UNDESIGNED",
+      "probes": [
+        "apps/backend/src/maintenance/severe-repair-pdf-export.ts",
+        "apps/frontend/src/api/maintenance.ts"
+      ]
+    },
+    {
+      "id": "contract-instance",
+      "document": "Contract instance",
+      "created": "legal contracts",
+      "generator": "apps/backend/src/legal/pdf-renderer.service.ts \u2192 GET draft-pdf",
+      "ui": "apps/frontend/src/api/legal-contracts.ts",
+      "state": "HAS-DESIGNED-PDF",
+      "probes": [
+        "apps/backend/src/legal/pdf-renderer.service.ts",
+        "apps/frontend/src/api/legal-contracts.ts"
+      ]
+    },
+    {
+      "id": "insurance-coi",
+      "document": "Insurance certificate (COI)",
+      "created": "insurance policies",
+      "generator": "apps/backend/src/insurance/coi-pdf-renderer.service.ts \u2014 DEAD CODE (no route caller, only test mocks)",
+      "ui": "none",
+      "state": "NO-PDF",
+      "probes": [
+        "apps/backend/src/insurance/coi-pdf-renderer.service.ts"
+      ]
+    },
+    {
+      "id": "ifta-return",
+      "document": "IFTA return",
+      "created": "ifta quarterly preparer",
+      "generator": "apps/backend/src/ifta/ifta-return-pdf-generator.ts \u2014 DEAD CODE (no route caller; only CSV wired)",
+      "ui": "IFTAStepCSVExport.tsx (CSV only)",
+      "state": "NO-PDF",
+      "probes": [
+        "apps/backend/src/ifta/ifta-quarterly-preparer.routes.ts"
+      ]
+    },
+    {
+      "id": "form-2290",
+      "document": "Form 2290 HVUT",
+      "created": "compliance filings",
+      "generator": "apps/backend/src/compliance/form-2290-generator.ts \u2192 route returns pdf_base64",
+      "ui": "Form2290Filings.tsx",
+      "state": "HAS-DESIGNED-PDF",
+      "probes": [
+        "apps/backend/src/compliance/form-2290-generator.ts",
+        "apps/frontend/src/pages/compliance/Form2290Filings.tsx"
+      ]
+    },
+    {
+      "id": "form-425c",
+      "document": "Form 425-C filing + exhibits",
+      "created": "compliance",
+      "generator": "apps/backend/src/compliance/form-425c-pdf.ts \u2192 POST generate-filing-pdf",
+      "ui": "ExhibitsViewer.tsx / form425c api",
+      "state": "HAS-DESIGNED-PDF",
+      "probes": [
+        "apps/backend/src/compliance/form-425c-pdf.ts",
+        "apps/frontend/src/api/form425c.ts"
+      ]
+    },
+    {
+      "id": "property-tax-rendition",
+      "document": "Property tax rendition",
+      "created": "compliance property tax",
+      "generator": "apps/backend/src/compliance/property-tax/property-tax-pdf-renderer.service.ts",
+      "ui": "PropertyTaxRenditionPage.tsx",
+      "state": "HAS-DESIGNED-PDF",
+      "probes": [
+        "apps/backend/src/compliance/property-tax/property-tax-pdf-renderer.service.ts",
+        "apps/frontend/src/pages/compliance/PropertyTaxRenditionPage.tsx"
+      ]
+    },
+    {
+      "id": "emanifest",
+      "document": "eManifest (border crossing)",
+      "created": "border-crossing wizard",
+      "generator": "apps/backend/src/border-crossing/emanifest-pdf-renderer.service.ts \u2192 GET emanifest.pdf",
+      "ui": "WizardStep6.tsx",
+      "state": "HAS-DESIGNED-PDF",
+      "probes": [
+        "apps/backend/src/border-crossing/emanifest-pdf-renderer.service.ts",
+        "apps/frontend/src/components/border-crossing/WizardStep6.tsx"
+      ]
+    },
+    {
+      "id": "eld-audit-trail",
+      "document": "ELD audit trail (DOT inspection)",
+      "created": "safety ELD",
+      "generator": "apps/backend/src/safety/eld-audit-trail/eld-audit-pdf-renderer.service.ts \u2192 GET export.pdf",
+      "ui": "EldAuditTrailViewer.tsx",
+      "state": "HAS-DESIGNED-PDF",
+      "probes": [
+        "apps/backend/src/safety/eld-audit-trail/eld-audit-pdf-renderer.service.ts",
+        "apps/frontend/src/pages/safety/eld/EldAuditTrailViewer.tsx"
+      ]
+    },
+    {
+      "id": "driver-profile",
+      "document": "Driver qualification profile",
+      "created": "mdata drivers",
+      "generator": "apps/backend/src/mdata/driver-profile-pdf-renderer.service.ts \u2192 GET export.pdf",
+      "ui": "driver-profile/ActionBar.tsx",
+      "state": "HAS-DESIGNED-PDF",
+      "probes": [
+        "apps/backend/src/mdata/driver-pdf-export.routes.ts",
+        "apps/frontend/src/components/driver-profile/ActionBar.tsx"
+      ]
+    },
+    {
+      "id": "unit-profile",
+      "document": "Unit profile",
+      "created": "mdata units",
+      "generator": "apps/backend/src/mdata/vehicle-profile-pdf-renderer.service.ts \u2192 GET export.pdf",
+      "ui": "vehicle-profile/ActionBar.tsx",
+      "state": "HAS-DESIGNED-PDF",
+      "probes": [
+        "apps/backend/src/mdata/unit-pdf-export.routes.ts",
+        "apps/frontend/src/components/vehicle-profile/ActionBar.tsx"
+      ]
+    },
+    {
+      "id": "trailer-profile",
+      "document": "Trailer profile",
+      "created": "mdata equipment",
+      "generator": "apps/backend/src/mdata/trailer-profile-pdf-renderer.service.ts \u2192 GET export.pdf",
+      "ui": "trailer-profile/ActionBar.tsx",
+      "state": "HAS-DESIGNED-PDF",
+      "probes": [
+        "apps/backend/src/mdata/equipment-pdf-export.routes.ts",
+        "apps/frontend/src/components/trailer-profile/ActionBar.tsx"
+      ]
+    },
+    {
+      "id": "tax-1099-nec",
+      "document": "1099-NEC",
+      "created": "tax-documents",
+      "generator": "apps/backend/src/tax-documents/tax-document-pdf-renderer.ts \u2192 POST render-pdf",
+      "ui": "vendors components",
+      "state": "HAS-DESIGNED-PDF",
+      "probes": [
+        "apps/backend/src/tax-documents/tax-document-pdf-renderer.ts",
+        "apps/backend/src/tax-documents/tax-documents.routes.ts"
+      ]
+    },
+    {
+      "id": "counterparty-statement",
+      "document": "Counterparty statement",
+      "created": "accounting counterparty statements",
+      "generator": "apps/backend/src/accounting/counterparty-statements.routes.ts (wrapPdfDocument)",
+      "ui": "CounterpartyStatementPage.tsx",
+      "state": "HAS-DESIGNED-PDF",
+      "probes": [
+        "apps/backend/src/accounting/counterparty-statements.routes.ts",
+        "apps/frontend/src/pages/reports/CounterpartyStatementPage.tsx"
+      ]
+    },
+    {
+      "id": "statement-exports",
+      "document": "Statement exports (TB / P&L / BS / CF / AR aging / AP aging)",
+      "created": "accounting statement-export + scheduled-reports runner",
+      "generator": "apps/backend/src/accounting/statement-export.routes.ts + statement-export-pdf.service.ts (designed PDF endpoints EXIST but frontend never calls them \u2014 report pages print via printLetterHtml dump instead)",
+      "ui": "FinancialStatementsPage.tsx, TrialBalancePage.tsx, ProfitLossPage.tsx, BalanceSheetPage.tsx, ARAgingPage.tsx, APAgingPage.tsx (all printLetterHtml)",
+      "state": "HAS-PDF-BUT-UNDESIGNED",
+      "probes": [
+        "apps/backend/src/accounting/statement-export.routes.ts",
+        "apps/frontend/src/pages/finance/FinancialStatementsPage.tsx"
+      ]
+    },
+    {
+      "id": "report-pages-printLetterHtml",
+      "document": "Reports printing via client dump (customer profitability, fuel recon, maintenance cost, profit per truck, settlement summary, management package, cash-flow overview, register, reconciliation, misc)",
+      "created": "reports/",
+      "generator": "printLetterHtml client letter \u2014 no letterhead/totals block",
+      "ui": "14 report/finance pages",
+      "state": "HAS-PDF-BUT-UNDESIGNED",
+      "probes": [
+        "apps/frontend/src/lib/openPrintableDocument.ts"
+      ]
+    },
+    {
+      "id": "report-pages-no-print",
+      "document": "Reports with NO print path (16 report pages)",
+      "created": "reports/",
+      "generator": "none",
+      "ui": "BookingGap, Cancellations, CashFlowReport, Deadhead, DispatchMargin, DriverQualification, DuplicateMasters, GeofenceDwell, GeofenceRecon, InvoiceSearch, LaneProfitability, LateArrival, Loads, PerTruckCpm, PostedWhileTourOpen, ReeferFuelCredit",
+      "state": "NO-PDF",
+      "probes": []
+    },
+    {
+      "id": "pod",
+      "document": "POD (proof of delivery)",
+      "created": "uploaded doc (pod.routes.ts serves uploaded pdf_r2_key)",
+      "generator": "external \u2014 stored, not generated",
+      "ui": "pod review / load drawer",
+      "state": "HAS-DESIGNED-PDF",
+      "probes": [
+        "apps/backend/src/dispatch/pod.routes.ts"
+      ],
+      "note": "upstream document, not generated"
+    }
+  ]
+}
