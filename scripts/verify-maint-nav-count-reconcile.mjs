@@ -49,8 +49,9 @@ function main() {
   const expected = {
     moduleNav: 14,
     masterData: 12,
-    dashboardTabs: 9,
-    operationLinks: 10,
+    // C-36's nine + ROUND 313's four (#23853) — and below, the links must BE the Maintenance Home tab bar, label for label.
+    dashboardTabs: 13,
+    operationLinks: 14,
     listsCatalogs: 21,
   };
 
@@ -62,6 +63,19 @@ function main() {
   }
   if (navConfig.match(/MAINTENANCE_DASHBOARD_TAB_LINKS[\s\S]*?\];/g)?.[0]?.match(/path:/g)?.length !== expected.dashboardTabs) {
     failures.push(`MAINTENANCE_DASHBOARD_TAB_LINKS must have ${expected.dashboardTabs} entries`);
+  }
+  {
+    // The dashboard links are the Maintenance Home tab bar (MaintenanceHome.tsx SUBNAV, locked by
+    // verify-maintenance-tab-coverage): same labels, same order — a count alone let the two drift.
+    const linkLabels = [...(navConfig.match(/MAINTENANCE_DASHBOARD_TAB_LINKS[\s\S]*?\];/)?.[0] ?? "").matchAll(/label:\s*"([^"]+)"/g)].map((m) => m[1]);
+    const subnavLabels = [...(maintenanceHome.match(/const SUBNAV = \[([\s\S]*?)\] as const/)?.[1] ?? "").matchAll(/label:\s*"([^"]+)"/g)].map((m) => m[1]);
+    if (!subnavLabels.length || linkLabels.join("|") !== subnavLabels.join("|")) {
+      failures.push(`MAINTENANCE_DASHBOARD_TAB_LINKS must match MaintenanceHome SUBNAV in order (links: ${linkLabels.join(", ")}; subnav: ${subnavLabels.join(", ")})`);
+    }
+    const opLinks = navConfig.match(/MAINTENANCE_OPERATION_LINKS[\s\S]*?\];/)?.[0] ?? "";
+    if ((opLinks.match(/path:/g)?.length ?? 0) + linkLabels.length !== expected.operationLinks) {
+      failures.push(`MAINTENANCE_OPERATION_LINKS must be Home + the ${expected.dashboardTabs} dashboard tabs (${expected.operationLinks})`);
+    }
   }
   if (!navConfig.includes("...MAINTENANCE_DASHBOARD_TAB_LINKS")) {
     failures.push("MAINTENANCE_OPERATION_LINKS must spread MAINTENANCE_DASHBOARD_TAB_LINKS after Dashboard");
