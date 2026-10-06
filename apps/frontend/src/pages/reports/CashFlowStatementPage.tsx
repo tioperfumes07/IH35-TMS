@@ -22,6 +22,7 @@ import { printLetterHtml } from "../../lib/openPrintableDocument";
 import { useExportAction } from "../../hooks/useExportAction";
 
 import { formatUsdCents } from "../../lib/money";
+import { AmountLink } from "../../components/shared/AmountLink";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -339,11 +340,20 @@ export function CashFlowStatementPage() {
                     </tr>
                   ) : (
                     section.lines.map((line) => (
-                      <tr key={`${section.key}-${line.label}`} className="border-b border-gray-100">
+                      <tr key={`${section.key}-${line.account_id ?? line.label}`} className="border-b border-gray-100">
                         <td className="px-3 py-2">{formatAccountTypeLabel(line.account_type)}</td>
                         <td className="px-3 py-2">{humanizeEnumLabel(line.account_subtype) || "—"}</td>
                         <td className="px-3 py-2 font-medium text-gray-900">{formatCashFlowCompoundLabel(line.label)}</td>
-                        <td className="px-3 py-2 text-right tabular-nums">{money(line.amount)}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">
+                          {/* ROUND 433.3 — the line is one account, so its amount drills to that account's register
+                              for the same period. AmountLink owns the basis rule (a cash-basis figure gets no drill). */}
+                          <AmountLink
+                            filter={line.account_id ? { target: "register", accountId: line.account_id, from: applied.start, to: applied.end, basis: applied.basis } : null}
+                            data-testid={`cf-amount-${section.key}-${line.account_id ?? line.label}`}
+                          >
+                            {money(line.amount)}
+                          </AmountLink>
+                        </td>
                       </tr>
                     ))
                   )}

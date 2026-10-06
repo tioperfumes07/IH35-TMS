@@ -214,6 +214,10 @@ export type AccountingBalanceSheetResponse = {
 
 export type AccountingCashFlowLine = {
   label: string;
+  /** ROUND 433.3 — one line per account; null only when the posting's account row is missing. */
+  account_id: string | null;
+  account_number?: string | null;
+  account_name?: string | null;
   account_type: string;
   account_subtype: string | null;
   amount: number;

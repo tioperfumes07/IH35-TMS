@@ -2,6 +2,8 @@ import { withCurrentUser } from "../auth/db.js";
 
 type CashFlowLegRow = {
   journal_entry_uuid: string;
+  account_id: string | null;
+  account_name: string | null;
   entry_date: string;
   account_type: string;
   account_subtype: string | null;
@@ -13,12 +15,34 @@ type CashFlowLegRow = {
   amount_cents: string | number;
 };
 
+// ROUND 433.3 — one line per ACCOUNT (was one per account type:subtype), so every cell can drill to its register.
+// account_id is null only for a posting whose account row is missing (the LEFT JOIN found nothing).
 type CashFlowLine = {
   label: string;
+  account_id: string | null;
+  account_number: string | null;
+  account_name: string | null;
   account_type: string;
   account_subtype: string | null;
   amount: number;
 };
+
+type LineAcc = {
+  account_id: string | null;
+  account_number: string | null;
+  account_name: string | null;
+  account_type: string;
+  account_subtype: string | null;
+  amount: number;
+};
+
+/** The aggregation key and display label of one leg's line: the account when known, the type:subtype otherwise. */
+export function lineKeyOf(leg: { account_id?: string | null; account_number?: string | null; account_name?: string | null; account_type: string; account_subtype: string | null }) {
+  const typeLabel = `${leg.account_type}${leg.account_subtype ? `:${leg.account_subtype}` : ""}`;
+  if (!leg.account_id) return { key: `type:${typeLabel}`, label: typeLabel };
+  const label = [leg.account_number, leg.account_name].filter((x) => x && String(x).trim()).join(" ") || typeLabel;
+  return { key: `acct:${leg.account_id}`, label };
+}
 
 type CashFlowSection = {
   lines: CashFlowLine[];
@@ -191,10 +215,13 @@ function allocateProportionally(totalAmount: number, weights: number[]): number[
   return baseAllocations.map((value) => sign * value);
 }
 
-function toLines(byKey: Map<string, { account_type: string; account_subtype: string | null; amount: number }>): CashFlowLine[] {
-  return Array.from(byKey.entries())
-    .map(([label, value]) => ({
-      label,
+function toLines(byKey: Map<string, LineAcc & { label: string }>): CashFlowLine[] {
+  return Array.from(byKey.values())
+    .map((value) => ({
+      label: value.label,
+      account_id: value.account_id,
+      account_number: value.account_number,
+      account_name: value.account_name,
       account_type: value.account_type,
       account_subtype: value.account_subtype,
       amount: value.amount,
@@ -313,6 +340,8 @@ async function getCashBasisSections(
         )
         SELECT
           p.journal_entry_uuid::text AS journal_entry_uuid,
+          p.account_id::text AS account_id,
+          a.account_name,
           je.entry_date::text AS entry_date,
           COALESCE(a.account_type, '') AS account_type,
           a.account_subtype,
@@ -349,15 +378,22 @@ async function getCashBasisSections(
       byJe.set(row.journal_entry_uuid, list);
     }
 
-    const operatingByKey = new Map<string, { account_type: string; account_subtype: string | null; amount: number }>();
-    const investingByKey = new Map<string, { account_type: string; account_subtype: string | null; amount: number }>();
-    const financingByKey = new Map<string, { account_type: string; account_subtype: string | null; amount: number }>();
+    const operatingByKey = new Map<string, LineAcc & { label: string }>();
+    const investingByKey = new Map<string, LineAcc & { label: string }>();
+    const financingByKey = new Map<string, LineAcc & { label: string }>();
     let unclassifiedLegCount = 0;
 
     for (const legs of byJe.values()) {
       let cashNet = 0;
-      const nonCashLegs: Array<{ account_type: string; account_subtype: string | null; amount_cents: number; bucket: CashFlowBucket }> =
-        [];
+      const nonCashLegs: Array<{
+        account_id: string | null;
+        account_number: string | null;
+        account_name: string | null;
+        account_type: string;
+        account_subtype: string | null;
+        amount_cents: number;
+        bucket: CashFlowBucket;
+      }> = [];
 
       for (const leg of legs) {
         const amount = Number(leg.amount_cents ?? 0);
@@ -373,6 +409,9 @@ async function getCashBasisSections(
           });
           if (resolved.unclassified) unclassifiedLegCount += 1;
           nonCashLegs.push({
+            account_id: leg.account_id,
+            account_number: leg.account_number,
+            account_name: leg.account_name,
             account_type: leg.account_type,
             account_subtype: leg.account_subtype,
             amount_cents: amount,
@@ -390,17 +429,21 @@ async function getCashBasisSections(
       for (let idx = 0; idx < nonCashLegs.length; idx += 1) {
         const leg = nonCashLegs[idx];
         const allocatedAmount = allocations[idx];
-        const label = `${leg.account_type}${leg.account_subtype ? `:${leg.account_subtype}` : ""}`;
+        const { key, label } = lineKeyOf(leg);
 
         const targetMap =
           leg.bucket === "operating" ? operatingByKey : leg.bucket === "investing" ? investingByKey : financingByKey;
-        const prev = targetMap.get(label) ?? {
+        const prev = targetMap.get(key) ?? {
+          label,
+          account_id: leg.account_id,
+          account_number: leg.account_number,
+          account_name: leg.account_name,
           account_type: leg.account_type,
           account_subtype: leg.account_subtype,
           amount: 0,
         };
         prev.amount += allocatedAmount;
-        targetMap.set(label, prev);
+        targetMap.set(key, prev);
       }
     }
 
@@ -456,6 +499,8 @@ async function getAccrualBasisSections(
   inRangeValues: unknown[]
 ): Promise<CashFlowSections> {
   const legRows = await client.query<{
+    account_id: string | null;
+    account_name: string | null;
     account_type: string;
     account_subtype: string | null;
     account_number: string | null;
@@ -467,6 +512,8 @@ async function getAccrualBasisSections(
   }>(
     `
       SELECT
+        p.account_id::text AS account_id,
+        a.account_name,
         COALESCE(a.account_type, '') AS account_type,
         a.account_subtype,
         a.account_number,
@@ -493,9 +540,9 @@ async function getAccrualBasisSections(
     [operatingCompanyId, Array.from(CASH_SUBTYPES), ...inRangeValues]
   );
 
-  const operatingByKey = new Map<string, { account_type: string; account_subtype: string | null; amount: number }>();
-  const investingByKey = new Map<string, { account_type: string; account_subtype: string | null; amount: number }>();
-  const financingByKey = new Map<string, { account_type: string; account_subtype: string | null; amount: number }>();
+  const operatingByKey = new Map<string, LineAcc & { label: string }>();
+  const investingByKey = new Map<string, LineAcc & { label: string }>();
+  const financingByKey = new Map<string, LineAcc & { label: string }>();
   let unclassifiedLegCount = 0;
 
   for (const leg of legRows.rows) {
@@ -510,11 +557,19 @@ async function getAccrualBasisSections(
       source_transaction_type: leg.source_transaction_type,
     });
     if (resolved.unclassified) unclassifiedLegCount += 1;
-    const label = `${leg.account_type}${leg.account_subtype ? `:${leg.account_subtype}` : ""}`;
+    const { key, label } = lineKeyOf(leg);
     const targetMap = resolved.bucket === "operating" ? operatingByKey : resolved.bucket === "investing" ? investingByKey : financingByKey;
-    const prev = targetMap.get(label) ?? { account_type: leg.account_type, account_subtype: leg.account_subtype, amount: 0 };
+    const prev = targetMap.get(key) ?? {
+      label,
+      account_id: leg.account_id,
+      account_number: leg.account_number,
+      account_name: leg.account_name,
+      account_type: leg.account_type,
+      account_subtype: leg.account_subtype,
+      amount: 0,
+    };
     prev.amount += signedAmount;
-    targetMap.set(label, prev);
+    targetMap.set(key, prev);
   }
 
   const operatingLines = toLines(operatingByKey);
