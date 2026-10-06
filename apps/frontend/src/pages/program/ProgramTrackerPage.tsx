@@ -155,7 +155,7 @@ function BlockTable({ rows, kind, moved, extended = false }: { rows: TrackerBloc
               ) : null}
               <TrackerStatusCell status={r.status} kind={kind} />
               <td className="px-3 py-2 font-mono text-slate-500">{r.pr ? `#${r.pr}` : "—"}</td>
-              <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums text-slate-500">{kind === "completed" ? doneStamp(r) : changedStamp(r)}</td>
+              <td data-quantity className="whitespace-nowrap px-3 py-2 text-right tabular-nums text-slate-500">{kind === "completed" ? doneStamp(r) : changedStamp(r)}</td>
             </tr>
           ))}
         </tbody>
@@ -194,10 +194,10 @@ function SequenceTable({ phases }: { phases: TrackerPhase[] }) {
             <tr key={p.key} className="border-b border-gray-100 last:border-b-0">
               <td className="px-3 py-2 text-slate-500">{p.n}</td>
               <td className="px-3 py-2 text-slate-800">{p.label}</td>
-              <td className="px-3 py-2 text-right tabular-nums text-slate-700">{p.total}</td>
-              <td className="px-3 py-2 text-right tabular-nums text-slate-500">{p.pending}</td>
-              <td className="px-3 py-2 text-right tabular-nums text-slate-500">{p.in_progress}</td>
-              <td className="px-3 py-2 text-right tabular-nums text-slate-700">{p.completed}</td>
+              <td data-quantity className="px-3 py-2 text-right tabular-nums text-slate-700">{p.total}</td>
+              <td data-quantity className="px-3 py-2 text-right tabular-nums text-slate-500">{p.pending}</td>
+              <td data-quantity className="px-3 py-2 text-right tabular-nums text-slate-500">{p.in_progress}</td>
+              <td data-quantity className="px-3 py-2 text-right tabular-nums text-slate-700">{p.completed}</td>
               <td className="px-3 py-2"><ProgressBar done={p.completed} total={p.total} /></td>
               <td className="px-3 py-2"><span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${PILL[p.status].cls}`}>{PILL[p.status].label}</span></td>
             </tr>
@@ -236,10 +236,10 @@ function ByModuleView({ data, moved }: { data: ProgramTracker; moved: Set<string
             {data.modules.map((m) => [
               <tr key={m.module} className="cursor-pointer border-b border-gray-100 hover:bg-gray-50" onClick={() => setOpen(open === m.module ? null : m.module)}>
                 <td className="px-3 py-2 text-slate-800">{open === m.module ? "▾ " : "▸ "}{m.module}</td>
-                <td className="px-3 py-2 text-right tabular-nums text-slate-700">{m.built}</td>
-                <td className="px-3 py-2 text-right tabular-nums text-slate-500">{m.partial}</td>
-                <td className={`px-3 py-2 text-right tabular-nums ${m.not_built > 0 ? "font-semibold text-[#dc2626]" : "text-slate-400"}`}>{m.not_built}</td>
-                <td className="px-3 py-2 text-right tabular-nums text-slate-700">{m.total}</td>
+                <td data-quantity className="px-3 py-2 text-right tabular-nums text-slate-700">{m.built}</td>
+                <td data-quantity className="px-3 py-2 text-right tabular-nums text-slate-500">{m.partial}</td>
+                <td data-quantity className={`px-3 py-2 text-right tabular-nums ${m.not_built > 0 ? "font-semibold text-[#dc2626]" : "text-slate-400"}`}>{m.not_built}</td>
+                <td data-quantity className="px-3 py-2 text-right tabular-nums text-slate-700">{m.total}</td>
               </tr>,
               open === m.module ? (
                 <tr key={m.module + "-drill"}>

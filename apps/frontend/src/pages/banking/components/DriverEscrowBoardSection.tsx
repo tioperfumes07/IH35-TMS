@@ -266,7 +266,7 @@ export function DriverEscrowBoardSection({ operatingCompanyId, driverEscrowBalan
                                 <div className="h-2 flex-1 overflow-hidden rounded-sm bg-[#E5E7EB]">
                                   <div className="h-full bg-[#14314F]" style={{ width: `${pct}%` }} />
                                 </div>
-                                <span className="w-10 text-right tabular-nums text-[#6B7280]">{pct}%</span>
+                                <span data-quantity className="w-10 text-right tabular-nums text-[#6B7280]">{pct}%</span>
                               </div>
                             )}
                           </td>

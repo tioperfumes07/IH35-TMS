@@ -27,7 +27,7 @@ const PANEL = "apps/frontend/src/components/shared/LedgerKpiPanel.tsx";
  * a proximity window cannot resolve. That makes 103 an upper bound, and an upper bound is a safe
  * ratchet: it can only be lowered. Do not raise it.
  */
-const SHRINK_ONLY_BASELINE = 76; // 2026-10-06 ROUND 433.2: 88 -> 76 (driver overview settlement/pay/complaint/DVIR cells, customer A/R aging + open A/R, counterparty statement lines)
+const SHRINK_ONLY_BASELINE = 55; // 2026-10-06 ROUND 433.2 batch 2: 76 -> 55 = 2 wired (Chart of Accounts book + bank balance) + 19 not money (5 input fields, 14 declared quantities)
 
 function stripComments(src) {
   return String(src ?? "")
@@ -109,8 +109,22 @@ function moneyCellHits(src) {
     // The backward reach is needed because `esc(` usually precedes the className in the row string.
     const exportWindow = src.slice(Math.max(0, index - 200), Math.min(src.length, index + expr.length + 200));
     const isHtmlExportTemplate = /style="/.test(window) || /\besc\(/.test(exportWindow);
+    // ROUND 433.2 (2026-10-06) — what is NOT a money cell, decided by the ELEMENT, never by a guess at its content:
+    //   FORM CONTROL — the className sits on an input (input / textarea / select / NumberInput / MoneyInput /
+    //     CurrencyInput / AmountInput). A field the user types into is not a figure to click through.
+    //   QUANTITY — the element declares data-quantity: a count, hours, a percentage, a "3/5 applied" tally. The claim is
+    //     explicit and reviewable in the diff; a money value carrying it is a review failure, not a silent pass.
+    // MEASURED before: 23 of 76 counted cells were counts, timestamps, percentages or input fields — permanent noise
+    // that no wiring could ever retire, the same defect class as the 43 export cells above.
+    const lt = src.lastIndexOf("<", index);
+    const gt = src.indexOf(">", index + expr.length);
+    const openTag = lt === -1 ? "" : src.slice(lt, gt === -1 ? index + expr.length : gt + 1);
+    const tagName = (openTag.match(/^<\s*([A-Za-z][\w.]*)/) ?? [])[1] ?? "";
+    const isFormControl = /^(input|textarea|select|NumberInput|MoneyInput|CurrencyInput|AmountInput)$/.test(tagName);
+    const isQuantity = /\bdata-quantity\b/.test(openTag);
     hits.push({
       expr,
+      notMoney: isFormControl || isQuantity,
       htmlExport: isHtmlExportTemplate,
       shrinkOnly: /\bshrink-0\b/.test(expr) || /\bwhitespace-nowrap\b/.test(expr),
       // AmountLink is the aggregate counterpart to EntityLink (LST-F405): EntityLink answers
@@ -165,7 +179,7 @@ function countShrinkOnly(rootDir) {
       // The guard read green for weeks while the report pages had no drill at all. Styling is not
       // the law; clickability is. An HTML export/print template is excluded because a printed cell
       // must never be a link.
-      if (!hit.htmlExport && !hit.clickThrough) n += 1;
+      if (!hit.htmlExport && !hit.notMoney && !hit.clickThrough) n += 1;
     }
   }
   return n;
@@ -187,6 +201,21 @@ function selftest() {
     { name: "baseline stale (below)", panel: goodPanel, shrinkOnlyCount: SHRINK_ONLY_BASELINE - 1, expectFail: true },
     { name: "baseline exact", panel: goodPanel, shrinkOnlyCount: SHRINK_ONLY_BASELINE, expectFail: false },
   ];
+  // ROUND 433.2 — the element decides: an input is not a cell, data-quantity is not money, a plain <td> money cell counts.
+  const unwired = (src) => moneyCellHits(src).filter((h) => !h.htmlExport && !h.notMoney && !h.clickThrough).length;
+  const elementCases = [
+    ["a plain money <td> counts", `<td className="text-right tabular-nums">{money(x)}</td>`, 1],
+    ["an <input> is a field, not a cell", `<input className="text-right tabular-nums" value={v} />`, 0],
+    ["a MoneyInput is a field", `<MoneyInput className="text-right tabular-nums" valueDollars={v} />`, 0],
+    ["a declared quantity is not money", `<td data-quantity className="text-right tabular-nums">{p.total}</td>`, 0],
+    ["data-quantity on a SIBLING does not exempt this cell", `<td data-quantity className="x">{n}</td><td className="text-right tabular-nums">{money(x)}</td>`, 1],
+  ];
+  let elemPass = 0;
+  for (const [name, src, want] of elementCases) {
+    const got = unwired(src);
+    if (got === want) { elemPass += 1; console.log(`ok    ${name}`); }
+    else console.error(`FAIL  ${name} — expected ${want}, got ${got}`);
+  }
   let pass = 0;
   for (const c of cases) {
     const problems = findProblems({ panel: c.panel, shrinkOnlyCount: c.shrinkOnlyCount });
@@ -199,8 +228,10 @@ function selftest() {
       if (problems.length) console.error(`      ${problems.join("\n      ")}`);
     }
   }
-  console.log(`\n${LABEL} --selftest: ${pass}/${cases.length} ${pass === cases.length ? "PASS" : "FAIL"}`);
-  process.exit(pass === cases.length ? 0 : 1);
+  const total = cases.length + elementCases.length;
+  const ok = pass + elemPass;
+  console.log(`\n${LABEL} --selftest: ${ok}/${total} ${ok === total ? "PASS" : "FAIL"}`);
+  process.exit(ok === total ? 0 : 1);
 }
 
 function main() {

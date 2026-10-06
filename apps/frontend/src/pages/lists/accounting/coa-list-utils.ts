@@ -19,6 +19,8 @@ export type CoaListRow = {
   detail_type: string;
   qb_balance: string;
   bank_balance: string;
+  /** The feed account behind this GL account (ledger_account_id), for the bank-balance drill. */
+  bank_account_id?: string | null;
   /** B-1 / ORDERS — true when this CoA row is matched to a live bank feed (Plaid). */
   feed_connected: boolean;
   status: string;
@@ -59,19 +61,29 @@ function normalizeName(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-function resolveBankBalance(
+/**
+ * The bank / card feed account behind a GL account. ROUND 433.2: matched by banking.bank_accounts.ledger_account_id — the
+ * canonical link — instead of a fuzzy name match restricted to Asset accounts. The old rule could never show a credit
+ * card's balance (a card's GL account is a Liability: Amex-Scentsx, Dreamline Diesel Card) and could pin one account's
+ * feed on another whose name merely contained it. The name match survives only for a feed account with no ledger link.
+ */
+export function resolveBankAccount(
+  accountId: string,
   accountName: string,
   accountType: string,
   plaidAccounts: PlaidBankAccount[]
-): string {
-  if (accountType !== "Asset" && accountType !== "Bank") return "—";
+): PlaidBankAccount | null {
+  const linked = plaidAccounts.find((account) => account.ledger_account_id && account.ledger_account_id === accountId);
+  if (linked) return linked;
+  if (accountType !== "Asset" && accountType !== "Bank") return null;
   const normalized = normalizeName(accountName);
-  const match = plaidAccounts.find((account) => {
-    const plaidName = normalizeName(account.account_name ?? "");
-    return plaidName.length > 0 && (plaidName === normalized || normalized.includes(plaidName) || plaidName.includes(normalized));
-  });
-  if (!match) return "—";
-  return formatCurrencyFromCents(match.current_balance_cents);
+  return (
+    plaidAccounts.find((account) => {
+      if (account.ledger_account_id) return false; // linked elsewhere: never borrowed by name
+      const plaidName = normalizeName(account.account_name ?? "");
+      return plaidName.length > 0 && (plaidName === normalized || normalized.includes(plaidName) || plaidName.includes(normalized));
+    }) ?? null
+  );
 }
 
 export function buildCoaListRows(
@@ -99,7 +111,8 @@ export function buildCoaListRows(
     const balance = balanceByCode.get(row.code);
     const childIds = childrenByParent.get(row.id) ?? [];
 
-    const bankBalance = resolveBankBalance(row.display_name, accountType, plaidAccounts);
+    const bankAccount = resolveBankAccount(row.id, row.display_name, accountType, plaidAccounts);
+    const bankBalance = bankAccount ? formatCurrencyFromCents(bankAccount.current_balance_cents) : "—";
 
     return {
       id: row.id,
@@ -112,6 +125,7 @@ export function buildCoaListRows(
       // U27 — natural sign (income / liabilities positive), not the raw debit − credit the ledger function returns.
       qb_balance: formatCurrencyFromCents(balance ? naturalCents(balance.closing_balance_cents, balance.normal_balance) : undefined),
       bank_balance: bankBalance,
+      bank_account_id: bankAccount?.id ?? null,
       feed_connected: bankBalance !== "—",
       status: row.is_active ? "Active" : "Inactive",
       is_active: row.is_active,

@@ -137,7 +137,7 @@ function buildServicesColumns(onEdit: (svc: MaintenanceService) => void): Array<
     className: "text-right",
     sortValue: (svc) => svc.interval_miles ?? svc.interval_months ?? svc.interval_hours,
     render: (svc) => (
-      <span className="block text-right text-xs tabular-nums text-gray-600">{intervalDisplay(svc)}</span>
+      <span data-quantity className="block text-right text-xs tabular-nums text-gray-600">{intervalDisplay(svc)}</span>
     ),
   },
   {

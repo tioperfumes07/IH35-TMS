@@ -23,6 +23,7 @@ import { AccountDrawer } from "./AccountDrawer";
 import { CoaBatchActions } from "./CoaBatchActions";
 import { MoreActionsMenu } from "../../../components/shared/MoreActionsMenu";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { AmountLink } from "../../../components/shared/AmountLink";
 import { useShowAccountNumbers } from "../../../lib/useShowAccountNumbers";
 import {
   applyCollapsedVisibility,
@@ -107,7 +108,8 @@ function buildColumns(
   onToggleCollapse: (parentId: string) => void,
   onEditRow: (row: CoaListRow) => void,
   onMakeInactive: (row: CoaListRow) => void,
-  showAccountNumbers: boolean
+  showAccountNumbers: boolean,
+  asOfDate: string
 ): ListViewColumn<CoaListRow>[] {
   return [
     {
@@ -199,14 +201,25 @@ function buildColumns(
       label: "BOOK BALANCE",
       width: 160,
       sortType: "currency",
-      render: (row) => <span className="block text-right tabular-nums">{row.qb_balance}</span>,
+      // ROUND 433.2 — the book balance is the account's balance through the as-of date: its register, to that date.
+      render: (row) => (
+        <span className="block text-right tabular-nums">
+          <AmountLink filter={{ target: "register", accountId: row.id, to: asOfDate }} data-testid={`coa-book-${row.id}`}>
+            {row.qb_balance}
+          </AmountLink>
+        </span>
+      ),
     },
     {
       id: "bank_balance",
       label: "BANK BALANCE",
       width: 140,
       sortType: "currency",
-      render: (row) => <span className="block text-right tabular-nums">{row.bank_balance}</span>,
+      render: (row) => (
+        <span className="block text-right tabular-nums">
+          {row.bank_account_id ? <EntityLink kind="bank_account" id={row.bank_account_id} label={row.bank_balance} /> : row.bank_balance}
+        </span>
+      ),
     },
     {
       id: "status",
@@ -431,9 +444,10 @@ export function ChartOfAccountsListPage() {
           setDrawerOpen(true);
         },
         (coaRow) => setMakeInactiveRow(coaRow),
-        showAccountNumbers
+        showAccountNumbers,
+        asOfDate
       ),
-    [collapsedParentIds, catalogQuery.data, showAccountNumbers]
+    [collapsedParentIds, catalogQuery.data, showAccountNumbers, asOfDate]
   );
 
   const sort: SortConfig = {
