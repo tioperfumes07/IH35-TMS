@@ -119,7 +119,7 @@ export function OptimalDriversPanel({
                 aria-disabled={rowDisabled}
                 data-testid={`optimal-driver-row-${d.rank}`}
                 className={`flex w-full flex-col px-2 py-1.5 text-left text-xs transition ${
-                  selected ? "bg-slate-100" : "bg-white hover:bg-slate-50"
+                  selected ? "bg-slate-100" : "bg-[var(--surface-unselected)] hover:bg-[var(--surface-hover)]"
                 } ${blocked ? "cursor-not-allowed opacity-50" : ""}`}
                 onClick={() => {
                   if (!rowDisabled) {

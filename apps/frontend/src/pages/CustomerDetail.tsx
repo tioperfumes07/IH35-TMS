@@ -1780,7 +1780,7 @@ export function CustomerDetailPage() {
               {qualityEventsQuery.isError ? (
                 <ListErrorState title="Couldn't load customer quality history" status={0} message={qualityEventsQuery.error instanceof Error ? qualityEventsQuery.error.message : undefined} onRetry={() => void qualityEventsQuery.refetch()} />
               ) : qualityEvents.map((event) => (
-                <div key={event.id} className={`rounded-sm border px-3 py-2 ${event.voided_at ? "border-gray-200 bg-gray-50 text-gray-500" : "border-gray-300 bg-white"}`}>
+                <div key={event.id} className={`rounded-sm border px-3 py-2 ${event.voided_at ? "border-gray-200 bg-gray-50 text-gray-500" : "border-gray-300 bg-[var(--surface-unselected)]"}`}>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-xs">{formatDateUS(event.event_date)}</span>
                     <StatusBadge variant={event.severity === "severe" ? "crit" : event.severity === "warning" ? "warn" : "info"}>{event.severity}</StatusBadge>

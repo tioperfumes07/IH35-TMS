@@ -137,7 +137,7 @@ export function FilingsComplianceDueSection({ operatingCompanyId }: Props) {
             onClick={() => setStatusFilter((s) => (s === key ? "" : key))}
             className={`rounded-sm border px-3 py-2 text-left ${
               statusFilter === key ? "border-[#1f2a44] ring-1 ring-[#1f2a44]" : "border-slate-200"
-            } ${key === "overdue" && counts.overdue > 0 ? "bg-red-50" : "bg-white"}`}
+            } ${key === "overdue" && counts.overdue > 0 ? "bg-red-50" : "bg-[var(--surface-unselected)]"}`}
             data-testid={`filings-tile-${key}`}
           >
             <div className={`text-page-title font-semibold ${key === "overdue" ? "text-red-700" : "text-[#1f2a44]"}`}>

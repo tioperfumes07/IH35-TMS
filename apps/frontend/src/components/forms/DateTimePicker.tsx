@@ -265,7 +265,7 @@ export function DateTimePicker({
     <div className={`relative ${className}`} ref={ref} data-testid={dataTestId}>
       <div
         className={`flex min-h-11 w-full items-center gap-1 rounded-sm border border-gray-300 px-2 py-1 text-left text-xs disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 sm:min-h-0 ${
-          disabled ? "cursor-not-allowed bg-gray-50 text-gray-400" : "bg-white"
+          disabled ? "cursor-not-allowed bg-gray-50 text-gray-400" : "bg-[var(--surface-unselected)]"
         }`}
       >
         <input

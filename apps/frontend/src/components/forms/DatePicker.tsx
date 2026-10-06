@@ -259,7 +259,7 @@ export function DatePicker({
     >
       <div
         className={`flex ${heightClass} w-full items-center gap-1 rounded-sm border border-gray-300 px-2 text-left text-xs ${
-          disabled ? "cursor-not-allowed bg-gray-50 text-gray-400" : "bg-white"
+          disabled ? "cursor-not-allowed bg-gray-50 text-gray-400" : "bg-[var(--surface-unselected)]"
         }`}
         style={boxStyle}
       >

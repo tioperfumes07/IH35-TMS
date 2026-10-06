@@ -7,6 +7,7 @@ import { MoneyCell } from "../../components/shared/MoneyCell";
 import { useEffect, useMemo, useState } from "react";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+import { Combobox } from "../../components/Combobox";
 import { Button } from "../../components/Button";
 import { EntityPicker } from "../../components/EntityPicker";
 import { entityLabel } from "../../lib/entity-label";
@@ -95,8 +96,6 @@ function nextSequentialLoadNumber(existing: LoadDraft[], peekBase: string): stri
   return String(max + 1);
 }
 
-const editBtnClass =
-  "h-7 shrink-0 rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#1F2A44] hover:bg-[#F7F8FA]";
 
 function emptyFuel(): FuelDraft {
   return {
@@ -257,8 +256,14 @@ function TotalRow({
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="flex min-w-0 flex-col gap-1 text-section-header font-semibold uppercase text-[#4B5563]">
-      <span className="text-center leading-tight">{label}</span>
-      <div className="min-h-7 w-full min-w-0">{children}</div>
+      {/* SETL-F437 (owner 2026-10-06): "THE HEADERS ARENT ALIGNED, THE BOXES ARENT ALIGNED, IN
+          HEIGHT NOT THE SAME." A centred label over a centred box shares no left edge, and a label
+          that wrapped to two lines pushed its own box down. QuickBooks reads LEFT, and a FIXED label
+          height keeps one-line and two-line labels on the same baseline. */}
+      <span className="flex h-7 items-end truncate text-left leading-tight" title={label}>
+        {label}
+      </span>
+      <div className="h-7 w-full min-w-0">{children}</div>
     </label>
   );
 }
@@ -334,7 +339,7 @@ function LineCoding({
 
 /** Locked baseline: 28px clickable boxes, 12px body, 2px radius, equal paired widths. */
 const inputClass =
-  "h-7 w-full min-w-0 rounded-sm border border-[#E5E7EB] px-2 text-center text-xs text-[#0F1219]";
+  "h-7 w-full min-w-0 rounded-sm border border-[#E5E7EB] px-2 text-left text-xs text-[#0F1219]";
 const fieldGridClass = "grid grid-cols-2 gap-2";
 const pickerSize = "sm" as const;
 
@@ -351,9 +356,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
   const companyId = selectedCompanyId ?? "";
 
   const [settlementNo, setSettlementNo] = useState("");
-  const [settlementNoEditing, setSettlementNoEditing] = useState(false);
   const [peekLoadBase, setPeekLoadBase] = useState<string>("");
-  const [loadNumberEditing, setLoadNumberEditing] = useState<boolean[]>([false]);
   const [seqError, setSeqError] = useState<string | null>(null);
   const [driverId, setDriverId] = useState<string | null>(null);
   const [unitId, setUnitId] = useState<string | null>(null);
@@ -388,8 +391,6 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     if (!open || !companyId || wrongEntity) return;
     let cancelled = false;
     setSeqError(null);
-    setSettlementNoEditing(false);
-    setLoadNumberEditing([false]);
     void (async () => {
       try {
         const [loadPeek, settPeek] = await Promise.all([
@@ -401,7 +402,6 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
         setPeekLoadBase(nextLoad);
         setSettlementNo(settPeek.next_number);
         setLoads([emptyLoad(nextLoad)]);
-        setLoadNumberEditing([false]);
       } catch (err) {
         if (cancelled) return;
         const msg = err instanceof Error ? err.message : "Could not peek next load/settlement number";
@@ -409,7 +409,6 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
         setPeekLoadBase("");
         setSettlementNo("");
         setLoads([emptyLoad()]);
-        setLoadNumberEditing([false]);
       }
     })();
     return () => {
@@ -420,7 +419,6 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
   function addLoadRow() {
     const nextNum = nextSequentialLoadNumber(loads, peekLoadBase || "0");
     setLoads([...loads, emptyLoad(nextNum)]);
-    setLoadNumberEditing([...loadNumberEditing, false]);
   }
 
   const itemsQuery = useAccountingItemsQuery({
@@ -650,7 +648,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     <ParityDrawer
       open={open}
       onClose={onClose}
-      size="half"
+      size="xwide"
       title="Settlement Creator"
       subtitle="Company + Driver · AlwaysTrack · USMCA · Preview first"
       confirmDiscardOnClose
@@ -709,27 +707,11 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                 <input
                   className={inputClass}
                   value={settlementNo}
-                  readOnly={!settlementNoEditing}
                   onChange={(e) => setSettlementNo(e.target.value)}
                   placeholder="Next AlwaysTrack #"
-                  title={
-                    settlementNoEditing
-                      ? "Override — must be free AlwaysTrack digits (or optional P-NNNN)"
-                      : "Next AlwaysTrack settlement number (auto). Edit to change."
-                  }
+                  title="Prefilled with the next free AlwaysTrack number. Type over it to override. (SETL-F437: no Edit button.)"
                   data-testid="sc-settlement-no"
                 />
-                {!settlementNoEditing ? (
-                  <button
-                    type="button"
-                    className={editBtnClass}
-                    onClick={() => setSettlementNoEditing(true)}
-                    data-testid="sc-settlement-no-edit"
-                    title="Edit settlement number"
-                  >
-                    Edit
-                  </button>
-                ) : null}
               </div>
             </Field>
             <Field label="Driver">
@@ -804,34 +786,14 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       <input
                         className={inputClass}
                         value={load.load_number}
-                        readOnly={!loadNumberEditing[idx]}
                         onChange={(e) => {
                           const next = [...loads];
                           next[idx] = { ...load, load_number: e.target.value };
                           setLoads(next);
                         }}
-                        title={
-                          loadNumberEditing[idx]
-                            ? "Override — must be a NEW free load number (not an existing load)"
-                            : "Next free load number (auto). Edit to change."
-                        }
+                        title="Prefilled with the next free load number. Type over it to override — it must be a NEW number. (SETL-F437: no Edit button.)"
                         data-testid={`sc-load-number-${idx}`}
                       />
-                      {!loadNumberEditing[idx] ? (
-                        <button
-                          type="button"
-                          className={editBtnClass}
-                          onClick={() => {
-                            const next = [...loadNumberEditing];
-                            next[idx] = true;
-                            setLoadNumberEditing(next);
-                          }}
-                          data-testid={`sc-load-number-edit-${idx}`}
-                          title="Edit load number"
-                        >
-                          Edit
-                        </button>
-                      ) : null}
                     </div>
                   </Field>
                   <Field label="Customer">
@@ -855,21 +817,23 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                     />
                   </Field>
                   <Field label="Trip type">
-                    <select
-                      className={inputClass}
+                    <Combobox
+                      options={[
+                        { value: "NB", label: "NB" },
+                        { value: "TR", label: "TR" },
+                        { value: "SB", label: "SB" },
+                        { value: "LOCAL", label: "LOCAL" },
+                      ]}
                       value={load.trip_type ?? "NB"}
-                      onChange={(e) => {
+                      onChange={(v) => {
                         const next = [...loads];
-                        next[idx] = { ...load, trip_type: e.target.value as LoadDraft["trip_type"] };
+                        next[idx] = { ...load, trip_type: (v ?? "") as LoadDraft["trip_type"] };
                         setLoads(next);
                       }}
+                      size="sm"
+                      searchIsValue
                       data-testid={`sc-load-trip-type-${idx}`}
-                    >
-                      <option value="NB">NB</option>
-                      <option value="TR">TR</option>
-                      <option value="SB">SB</option>
-                      <option value="LOCAL">LOCAL</option>
-                    </select>
+                    />
                   </Field>
                   <Field label="Join outbound (SB)">
                     <input
@@ -1017,31 +981,25 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                     />
                   </Field>
                   <Field label="Factoring">
-                    <select
-                      className={inputClass}
+                    <Combobox
+                      options={[
+                        { value: "faro_usmca", label: "Faro USMCA" },
+                        { value: "direct", label: "None (direct)" },
+                        { value: "faro_transportation", label: "Faro Transportation" },
+                      ]}
                       value={load.factoring}
-                      onChange={(e) => {
-                        const next = [...loads];
-                        next[idx] = { ...load, factoring: e.target.value as SettlementCreatorFactorOption };
-                        setLoads(next);
-                      }}
-                    >
-                      <option value="faro_usmca">Faro USMCA</option>
-                      <option value="direct">None (direct)</option>
-                      <option value="faro_transportation">Faro Transportation</option>
-                    </select>
-                  </Field>
-                  <Field label="Date sent to factoring">
-                    <DatePicker
-                      className={inputClass}
-                      value={load.date_sent_to_factoring ?? ""}
                       onChange={(v) => {
                         const next = [...loads];
-                        next[idx] = { ...load, date_sent_to_factoring: v };
+                        next[idx] = { ...load, factoring: (v ?? "") as SettlementCreatorFactorOption };
                         setLoads(next);
                       }}
+                      size="sm"
+                      searchIsValue
                     />
                   </Field>
+                  {/* SETL-F437 — "Date sent to factoring" removed (owner, 2026-10-06): the invoices
+                      that go to Faro are SELECTED IN FARO, so a date typed here could only ever
+                      disagree with the factor's own record. It is not a settlement fact. */}
                   <label className="col-span-2 flex h-7 items-center justify-center gap-2 rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#0F1219]">
                     <input
                       type="checkbox"
@@ -1133,20 +1091,22 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   </Field>
                   {/* U25 — reefer diesel is its own fuel (out of IFTA, counted for the federal reefer-fuel credit). */}
                   <Field label="Fuel">
-                    <select
-                      className={inputClass}
+                    <Combobox
+                      options={[
+                        { value: "diesel", label: "Truck diesel" },
+                        { value: "reefer_diesel", label: "Reefer Diesel" },
+                        { value: "def", label: "DEF" },
+                      ]}
                       value={fuel.fuel_type ?? "diesel"}
-                      onChange={(e) => {
+                      onChange={(v) => {
                         const next = [...fuels];
-                        next[idx] = { ...fuel, fuel_type: e.target.value as "diesel" | "def" | "reefer_diesel" };
+                        next[idx] = { ...fuel, fuel_type: (v ?? "") as "diesel" | "def" | "reefer_diesel" };
                         setFuels(next);
                       }}
+                      size="sm"
+                      searchIsValue
                       data-testid={`sc-fuel-type-${idx}`}
-                    >
-                      <option value="diesel">Truck diesel</option>
-                      <option value="reefer_diesel">Reefer Diesel</option>
-                      <option value="def">DEF</option>
-                    </select>
+                    />
                   </Field>
                   <Field label="Gallons">
                     <input
@@ -1184,18 +1144,20 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                     />
                   </Field>
                   <Field label="Card">
-                    <select
-                      className={inputClass}
+                    <Combobox
+                      options={[
+                        { value: "dreamline", label: "Dreamline" },
+                        { value: "relay", label: "Relay" },
+                      ]}
                       value={fuel.card}
-                      onChange={(e) => {
+                      onChange={(v) => {
                         const next = [...fuels];
-                        next[idx] = { ...fuel, card: e.target.value as SettlementCreatorFuelCard };
+                        next[idx] = { ...fuel, card: (v ?? "") as SettlementCreatorFuelCard };
                         setFuels(next);
                       }}
-                    >
-                      <option value="dreamline">Dreamline</option>
-                      <option value="relay">Relay</option>
-                    </select>
+                      size="sm"
+                      searchIsValue
+                    />
                   </Field>
                   <LineCoding
                     companyId={companyId}
@@ -1276,18 +1238,20 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                     />
                   </Field>
                   <Field label="Card">
-                    <select
-                      className={inputClass}
+                    <Combobox
+                      options={[
+                        { value: "dreamline", label: "Dreamline" },
+                        { value: "relay", label: "Relay" },
+                      ]}
                       value={exp.card ?? "relay"}
-                      onChange={(e) => {
+                      onChange={(v) => {
                         const next = [...companyExpenses];
-                        next[idx] = { ...exp, card: e.target.value as SettlementCreatorFuelCard };
+                        next[idx] = { ...exp, card: (v ?? "") as SettlementCreatorFuelCard };
                         setCompanyExpenses(next);
                       }}
-                    >
-                      <option value="dreamline">Dreamline</option>
-                      <option value="relay">Relay</option>
-                    </select>
+                      size="sm"
+                      searchIsValue
+                    />
                   </Field>
                   <LineCoding
                     companyId={companyId}
@@ -1442,21 +1406,23 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               {additionalPay.map((row, idx) => (
                 <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
                   <Field label="Type">
-                    <select
-                      className={inputClass}
+                    <Combobox
+                      options={[
+                        { value: "detention", label: "Detention" },
+                        { value: "layover", label: "Layover" },
+                        { value: "bonus", label: "Bonus" },
+                        { value: "stop_pay", label: "Stop pay" },
+                        { value: "other", label: "Other" },
+                      ]}
                       value={row.pay_kind ?? "other"}
-                      onChange={(e) => {
+                      onChange={(v) => {
                         const next = [...additionalPay];
-                        next[idx] = { ...row, pay_kind: e.target.value as MoneyDraft["pay_kind"] };
+                        next[idx] = { ...row, pay_kind: (v ?? "") as MoneyDraft["pay_kind"] };
                         setAdditionalPay(next);
                       }}
-                    >
-                      <option value="detention">Detention</option>
-                      <option value="layover">Layover</option>
-                      <option value="bonus">Bonus</option>
-                      <option value="stop_pay">Stop pay</option>
-                      <option value="other">Other</option>
-                    </select>
+                      size="sm"
+                      searchIsValue
+                    />
                   </Field>
                   <Field label="Description">
                     <input
@@ -1575,19 +1541,21 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               {escrow.map((row, idx) => (
                 <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
                   <Field label="Type">
-                    <select
-                      className={inputClass}
+                    <Combobox
+                      options={[
+                        { value: "hold", label: "Hold (+)" },
+                        { value: "release", label: "Release (−)" },
+                        { value: "forfeit", label: "Forfeit (−)" },
+                      ]}
                       value={row.escrow_type ?? "hold"}
-                      onChange={(e) => {
+                      onChange={(v) => {
                         const next = [...escrow];
-                        next[idx] = { ...row, escrow_type: e.target.value as MoneyDraft["escrow_type"] };
+                        next[idx] = { ...row, escrow_type: (v ?? "") as MoneyDraft["escrow_type"] };
                         setEscrow(next);
                       }}
-                    >
-                      <option value="hold">Hold (+)</option>
-                      <option value="release">Release (−)</option>
-                      <option value="forfeit">Forfeit (−)</option>
-                    </select>
+                      size="sm"
+                      searchIsValue
+                    />
                   </Field>
                   <Field label="Description">
                     <input

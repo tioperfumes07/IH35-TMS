@@ -37,4 +37,11 @@ export const PARITY_CREATE_DRAWER_WIDTH = "w-full sm:w-[480px]";
 export const PARITY_DRAWER_WIDTH_WIDE = "w-full sm:w-[700px]";
 /** R-186.2 — half-page dual Company+Driver Settlement Creator. */
 export const PARITY_DRAWER_WIDTH_HALF = "w-full sm:w-[min(960px,50vw)] sm:min-w-[720px]";
+/**
+ * SETL-F437 (owner, 2026-10-06): the Settlement Creator is TWO five-column sides — company on the
+ * left, driver on the right — which is ten columns across. The owner laid it out in Excel and said
+ * "consider each side as the size of 5 cells, so we can make this wider". `half` (min(960px,50vw))
+ * crammed ten columns into nine hundred pixels and that is why the boxes read as junk.
+ */
+export const PARITY_DRAWER_WIDTH_XWIDE = "w-full sm:w-[min(1320px,78vw)] sm:min-w-[1040px]";
 export const PARITY_MODAL_WIDTH = "w-full sm:w-[760px]";

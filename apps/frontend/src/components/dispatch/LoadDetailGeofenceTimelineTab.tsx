@@ -103,7 +103,7 @@ function StopCard({ stop }: { stop: GeofenceStop }) {
 
   return (
     <div
-      className={`relative rounded-sm border p-3 text-xs ${stop.is_layover ? "border-slate-200 bg-slate-100" : "border-gray-200 bg-white"}`}
+      className={`relative rounded-sm border p-3 text-xs ${stop.is_layover ? "border-slate-200 bg-slate-100" : "border-gray-200 bg-[var(--surface-unselected)]"}`}
     >
       {stop.is_layover && (
         <div className="mb-1 text-xs font-bold uppercase tracking-widest text-slate-700">

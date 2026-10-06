@@ -398,7 +398,7 @@ export function ForensicReviewPage() {
                   setReviewNotes(anomaly.review_notes ?? "");
                 }}
                 className={`w-full rounded border px-2 py-2 text-left ${
-                  selectedAnomalyId === anomaly.id ? "border-slate-300 bg-slate-100" : "border-gray-100 bg-white"
+                  selectedAnomalyId === anomaly.id ? "border-slate-300 bg-slate-100" : "border-gray-100 bg-[var(--surface-unselected)]"
                 }`}
               >
                 <div className="flex items-center justify-between">

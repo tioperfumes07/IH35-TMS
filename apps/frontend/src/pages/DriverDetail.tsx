@@ -1766,7 +1766,7 @@ export function DriverDetailPage() {
                       ? "bg-slate-100 text-slate-700"
                       : "bg-slate-100 text-slate-700";
                   return (
-                    <div key={event.id} className={`rounded-sm border p-3 ${isVoided ? "border-gray-300 bg-gray-100" : "border-gray-200 bg-white"}`}>
+                    <div key={event.id} className={`rounded-sm border p-3 ${isVoided ? "border-gray-300 bg-gray-100" : "border-gray-200 bg-[var(--surface-unselected)]"}`}>
                       <button
                         type="button"
                         onClick={() => setExpandedSafetyEventId((current) => (current === event.id ? null : event.id))}

@@ -1528,7 +1528,7 @@ function AddNote({
 }) {
   const [value, setValue] = useState("");
   return (
-    <div className={compact ? "flex items-start gap-2" : "rounded border border-gray-200 bg-white p-3"}>
+    <div className={compact ? "flex items-start gap-2" : "rounded border border-gray-200 bg-[var(--surface-unselected)] p-3"}>
       <textarea
         value={value}
         onChange={(e) => setValue(e.target.value)}
