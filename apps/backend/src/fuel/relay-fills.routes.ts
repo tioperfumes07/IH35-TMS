@@ -77,7 +77,12 @@ export async function registerRelayFillRoutes(app: FastifyInstance) {
                 r.matched_unit_number AS relay_unit_number,
                 (SELECT sum(l.volume)::float8 FROM integrations.relay_fuel_transaction_lines l
                   WHERE l.relay_fuel_transaction_id = r.id AND l.voided_at IS NULL AND l.volume_uom = 'gallons'
-                    AND l.fuel_type IN ('diesel', 'reefer')) AS fuel_gallons,
+                    AND l.fuel_type = 'diesel') AS fuel_gallons,
+                -- U25 / ROUND 433.4: reefer diesel is its own product (5015, off-highway, out of IFTA). It was summed into
+                -- fuel_gallons above and shown as "gal diesel", so reefer gallons read as truck road fuel.
+                (SELECT sum(l.volume)::float8 FROM integrations.relay_fuel_transaction_lines l
+                  WHERE l.relay_fuel_transaction_id = r.id AND l.voided_at IS NULL AND l.volume_uom = 'gallons'
+                    AND l.fuel_type = 'reefer') AS reefer_gallons,
                 (SELECT sum(l.volume)::float8 FROM integrations.relay_fuel_transaction_lines l
                   WHERE l.relay_fuel_transaction_id = r.id AND l.voided_at IS NULL AND l.volume_uom = 'gallons'
                     AND l.fuel_type = 'def') AS def_gallons

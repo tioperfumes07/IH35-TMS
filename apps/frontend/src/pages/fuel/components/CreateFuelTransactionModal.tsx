@@ -27,7 +27,7 @@ const FUEL_TYPES: Array<{ value: FuelType; label: string }> = [
   { value: "diesel", label: "Diesel" },
   { value: "def", label: "DEF" },
   { value: "gas", label: "Gas" },
-  { value: "reefer_diesel", label: "Reefer diesel" },
+  { value: "reefer_diesel", label: "Reefer Diesel" },
   { value: "other", label: "Other" },
 ];
 

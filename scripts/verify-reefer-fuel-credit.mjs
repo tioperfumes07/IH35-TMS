@@ -46,7 +46,15 @@ if (!/reefer_diesel is EXCLUDED/.test(ifta)) fails.push("IFTA aggregator no long
 const sc = read("apps/backend/src/driver-finance/settlement-creator.service.ts");
 if ((sc.match(/reeferFuelExpenseRefusal\(/g) ?? []).length < 3) fails.push("Settlement Creator must refuse reefer fuel entered as a company expense (preview + post)");
 const drawer = read("apps/frontend/src/pages/settlements/SettlementCreatorDrawer.tsx");
-if (!/<option value="reefer_diesel">Reefer diesel<\/option>/.test(drawer)) fails.push("Settlement Creator fuel line must offer Reefer diesel");
+if (!/<option value="reefer_diesel">Reefer Diesel<\/option>/.test(drawer)) fails.push("Settlement Creator fuel line must offer Reefer Diesel (the 5015 account's name)");
+// ROUND 433.4 / U25: reefer diesel is its own product (5015, off-highway, out of IFTA). The Relay fills list summed it into
+// fuel_gallons and the unit/driver profile printed that as "gal diesel" — reefer gallons read as truck road fuel.
+{
+  const fills = read("apps/backend/src/fuel/relay-fills.routes.ts");
+  if (/fuel_type IN \('diesel', 'reefer'\)/.test(fills)) fails.push("relay-fills.routes: reefer gallons are folded into diesel fuel_gallons");
+  if (!/fuel_type = 'reefer'\) AS reefer_gallons/.test(fills)) fails.push("relay-fills.routes: reefer_gallons is not reported on its own");
+  if (!/gal Reefer Diesel/.test(read("apps/frontend/src/components/fuel/RelayFillsReverseSection.tsx"))) fails.push("RelayFillsReverseSection must show Reefer Diesel gallons apart from diesel");
+}
 const routes = read("apps/backend/src/accounting/reefer-fuel-credit.routes.ts");
 if (!routes.includes('"/api/v1/accounting/reports/reefer-fuel-credit"') || !routes.includes("/gallons")) fails.push("reefer fuel credit routes missing");
 if (!/reports\/reefer-fuel-credit/.test(read("apps/frontend/src/routes/manifest.tsx"))) fails.push("reefer fuel credit page not routed");

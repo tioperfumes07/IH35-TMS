@@ -688,7 +688,8 @@ export async function rewriteDocumentLine(
       );
       if ((r.rowCount ?? 0) === 0) notes.push(`${type} line not found; item / load not moved`);
       // U25 — Diesel <-> Reefer Diesel: the fuel transaction's category (IFTA in / out), the gallons and the trailer follow
-      // the item. Same account, so the ledger does not move; the Form 4136 reefer-fuel credit reads this category.
+      // the item. The ledger moves too: the item's own account comes with it (Fuel-Reefer-Diesel -> 5015 Reefer Diesel
+      // (Off-Highway), ROUND 391.2), so item, account, IFTA category and trailer move together (LAW 363.4).
       else if (type === "expense" && target.item_id) {
         const reeferNote = await syncReeferFuelForExpenseLine(client, companyId, p.source_transaction_line_id);
         if (reeferNote) notes.push(reeferNote);
