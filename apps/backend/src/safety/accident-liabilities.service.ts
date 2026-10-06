@@ -9,6 +9,7 @@
 import { createJournalEntryOnClient } from "../accounting/journal-entries.service.js";
 import { reverseJournalEntryNoFlip } from "../accounting/journal-entries.service.js";
 import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 export type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -210,17 +211,24 @@ export async function decideAccidentLiability(client: DbClient, input: DecideInp
     if (!liab.expense_account_id) {
       throw new AccidentLiabilityError("no_expense_account_on_liability", "This liability has no expense_account_id to post the company-absorbed amount to.");
     }
-    const apAccountId = await resolveRoleAccount(client, input.operating_company_id, "ap_control");
+    // LST-F424 — the absorbed cost is an ACCRUED CLAIM, not A/P: at decision time there is no invoice and often no payee,
+    // and A/P is written only by its documents (ROUND 393.1 refuses a raw ap_control line). Dr the liability's expense /
+    // Cr 2180 Accrued Accident Claims; the payee's bill, coded to 2180, clears it. Sourced to the liability (and its load)
+    // so the entry is reached from the accident and reversed by voidAccidentLiability.
+    const accruedClaimsAccountId = await resolveRoleAccount(client, input.operating_company_id, "accrued_claims_liability");
     const je = await createJournalEntryOnClient(
       client,
       {
         operating_company_id: input.operating_company_id,
-        entry_date: input.entry_date ?? new Date().toISOString().slice(0, 10),
+        // INS-MONEY-F6965 pattern: the company's business day, not the UTC date (wrong after ~19:00 Central).
+        entry_date: input.entry_date ?? companyBusinessDate(),
         memo: `Accident liability ${input.decision} — ${note}`,
-        source: "manual",
+        source: "auto",
+        source_transaction_type: "accident_liability",
+        source_transaction_id: liab.id,
         postings: [
-          { account_id: liab.expense_account_id, debit_or_credit: "debit", amount_cents: companyAbsorb },
-          { account_id: apAccountId, debit_or_credit: "credit", amount_cents: companyAbsorb },
+          { account_id: liab.expense_account_id, debit_or_credit: "debit", amount_cents: companyAbsorb, load_id: liab.load_id ?? null },
+          { account_id: accruedClaimsAccountId, debit_or_credit: "credit", amount_cents: companyAbsorb, load_id: liab.load_id ?? null },
         ],
       },
       { userId: input.decided_by_user_id, role: "Owner" }

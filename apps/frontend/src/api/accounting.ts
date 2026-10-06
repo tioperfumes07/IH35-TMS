@@ -2341,6 +2341,8 @@ export const COA_ROLE_VALUES = [
   "accessorial_revenue",
   // ROUND 391.2 (202615400930) — reefer diesel, its own account (federal off-highway credit; off IFTA).
   "reefer_fuel_expense",
+  // LST-F424 (202615440200) — 2180 Accrued Accident Claims.
+  "accrued_claims_liability",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];
