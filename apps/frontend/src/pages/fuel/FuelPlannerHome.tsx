@@ -503,12 +503,12 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                 <MultiSelectDropdown
                   label="Show"
                   options={[...FUEL_SHOW_OPTIONS]}
-                  value={showFilter}
+                  selected={showFilter}
                   onChange={(next) => {
                     setShowFilter(next);
                     setFuelHistoryPage(1);
                   }}
-                  testId="fuel-history-show-multiselect"
+                  data-testid="fuel-history-show-multiselect"
                 />
                 <label className="text-xs text-slate-600">
                   Driver
