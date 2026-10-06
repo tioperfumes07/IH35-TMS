@@ -11,6 +11,12 @@
 // appendCrudAudit(..., "bank_match.accepted", { reconciliation_match_id, ... }) right after
 // storeMatch, passing the actor explicitly (never a session var) -- that event is the real,
 // reliable "this went through the accept handler" signal this guard checks for.
+//
+// ROUND 363 (LAW 363.9 / 202615330930): a send-back / void KEEPS the match as match_state
+// 'released' (released_at set). banking.release_bank_line_matches() may INSERT a released
+// tombstone with released_from_state='pointer_only' for categorize pointers that never went
+// through accept — those rows are history, not live accepts. Exclude released_at IS NOT NULL
+// the same way voided_at IS NOT NULL is excluded.
 import pg from "pg";
 
 export const ALLOW_OFFLINE_SKIP = "live-data invariant by design, no static-only path";
@@ -54,6 +60,7 @@ async function main() {
       `SELECT rm.id::text, rm.bank_transaction_id::text, rm.operating_company_id::text
          FROM banking.reconciliation_matches rm
         WHERE rm.voided_at IS NULL
+          AND rm.released_at IS NULL
           AND NOT EXISTS (
             SELECT 1 FROM audit.audit_events ae
              WHERE ae.event_class = 'bank_match.accepted'
@@ -64,7 +71,7 @@ async function main() {
     await client.query("ROLLBACK");
 
     if (res.rows.length > 0) {
-      console.error(`${LABEL}: FAIL — ${res.rows.length} live (non-voided) reconciliation_matches row(s) have no corresponding accept audit event:`);
+      console.error(`${LABEL}: FAIL — ${res.rows.length} live (non-voided, non-released) reconciliation_matches row(s) have no corresponding accept audit event:`);
       for (const r of res.rows.slice(0, 20)) console.error(`  ✗ match ${r.id} (bank_transaction_id ${r.bank_transaction_id})`);
       if (res.rows.length > 20) console.error(`  ...and ${res.rows.length - 20} more`);
       process.exit(1);
