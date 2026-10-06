@@ -1,5 +1,5 @@
 import { settlementLabel } from "../../lib/settlementNumber";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
@@ -23,8 +23,8 @@ import { DataTable, type DataTableColumn } from "../../components/DataTable";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { EntityPicker } from "../../components/EntityPicker";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { SelectCombobox } from "../../components/Combobox";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { BulkProgressDialog } from "../../components/bulk/BulkProgressDialog";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
@@ -33,14 +33,28 @@ import { bulkRowLabelsFromRows } from "../../components/bulk/bulkRowLabels";
 import { SettlementCreatorDrawer } from "../settlements/SettlementCreatorDrawer";
 
 type FocusFilter = "debt" | "pending_acks" | "held" | null;
-type PaymentStateFilter =
-  | ""
+type PaymentStateValue =
   | "unpaid"
   | "queued"
   | "sent_to_bank"
   | "cleared"
   | "bounced"
   | "manual_paid";
+
+const PAYMENT_STATE_OPTIONS: Array<{ value: PaymentStateValue; label: string }> = [
+  { value: "unpaid", label: "Unpaid" },
+  { value: "queued", label: "Queued" },
+  { value: "sent_to_bank", label: "Sent" },
+  { value: "cleared", label: "Cleared" },
+  { value: "bounced", label: "Bounced" },
+  { value: "manual_paid", label: "Manual Paid" },
+];
+
+function parsePaymentStates(params: URLSearchParams): PaymentStateValue[] {
+  const allowed = new Set(PAYMENT_STATE_OPTIONS.map((o) => o.value));
+  const raw = params.getAll("payment_state");
+  return raw.filter((s): s is PaymentStateValue => allowed.has(s as PaymentStateValue));
+}
 
 function parseFocus(raw: string | null): FocusFilter {
   if (raw === "debt" || raw === "pending_acks" || raw === "held") return raw;
@@ -92,48 +106,56 @@ export function SettlementsPage() {
   };
   // Driver profile "Full settlements" → /settlements?driver_id= (PreserveSearchNavigate keeps param).
   // BANK-F5165 — visible EntityPicker (URL-only client filter is not reverse chrome).
-  const filterDriverId = searchParams.get("driver_id");
-  const [driverPickerId, setDriverPickerId] = useState("");
-  useEffect(() => {
-    if (filterDriverId) setDriverPickerId(filterDriverId);
-  }, [filterDriverId]);
-  // Driver filter commits via staged Apply (CLS-ADJACENT — no silent URL helper).
-  const effectiveDriverId = driverPickerId.trim() || filterDriverId || undefined;
-  const selectedPaymentState = (searchParams.get("payment_state") as PaymentStateFilter | null) || null;
+  const filterDriverId = searchParams.get("driver_id") || "";
+  // 432-CUR #1 — payment_state is multi-select (?payment_state=a&payment_state=b).
+  const paymentStates = parsePaymentStates(searchParams);
   // HIDE-VOIDED-01 — cancelled/reversed settlements clog the list after bulk reverse; default HIDE.
   // URL `include_cancelled=1` shows them (same pattern as safety "Show voided").
   const hideCancelled = searchParams.get("include_cancelled") !== "1";
   // B-A3: KPI focus filter — same predicates as the KPI counts (not a guess-route).
   const focusFilter = parseFocus(searchParams.get("focus"));
-  // BANK-F5210 + CLS-ADJACENT — driver FK stages with payment_state; URL only on Apply.
-  const staged = useStagedListFilters({
-    applied: {
-      paymentState: (selectedPaymentState ?? "") as PaymentStateFilter,
-      driverId: driverPickerId || filterDriverId || "",
-      hideCancelled,
-    },
-    empty: { paymentState: "" as PaymentStateFilter, driverId: "", hideCancelled: true },
-    onApply: (next) => {
-      setDriverPickerId(next.driverId);
-      setSearchParams(
-        (prev) => {
-          const params = new URLSearchParams(prev);
-          if (next.paymentState) params.set("payment_state", next.paymentState);
-          else params.delete("payment_state");
-          if (next.driverId) params.set("driver_id", next.driverId);
-          else params.delete("driver_id");
-          if (next.hideCancelled) params.delete("include_cancelled");
-          else params.set("include_cancelled", "1");
-          return params;
-        },
-        { replace: true },
-      );
-    },
-  });
+  const [search, setSearch] = useState("");
+
+  const setPaymentStates = (next: string[]) => {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        params.delete("payment_state");
+        for (const s of next) params.append("payment_state", s);
+        return params;
+      },
+      { replace: true },
+    );
+  };
+  const setDriverFilter = (next: string | null) => {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next) params.set("driver_id", next);
+        else params.delete("driver_id");
+        return params;
+      },
+      { replace: true },
+    );
+  };
+  const setHideCancelled = (next: boolean) => {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next) params.delete("include_cancelled");
+        else params.set("include_cancelled", "1");
+        return params;
+      },
+      { replace: true },
+    );
+  };
 
   const listQuery = useQuery({
-    queryKey: ["driver-finance", "settlements", companyId, selectedPaymentState ?? ""],
-    queryFn: () => listSettlements(companyId, { payment_state: selectedPaymentState ?? undefined }),
+    queryKey: ["driver-finance", "settlements", companyId, paymentStates.slice().sort().join(",")],
+    queryFn: () =>
+      listSettlements(companyId, {
+        payment_state: paymentStates.length ? paymentStates : undefined,
+      }),
     enabled: Boolean(companyId),
   });
   // FAIL-SETL-KPI-PERIOD — KPI tiles must count the full entity-scoped list, not the payment_state-filtered
@@ -150,8 +172,22 @@ export function SettlementsPage() {
   });
 
   const settlements = (listQuery.data?.settlements ?? []).filter((s) => {
-    if (effectiveDriverId && s.driver_id !== effectiveDriverId) return false;
+    if (filterDriverId && s.driver_id !== filterDriverId) return false;
     if (hideCancelled && s.status === "cancelled") return false;
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      const hay = [
+        settlementLabel(s),
+        s.driver_full_name,
+        s.payment_state,
+        s.status,
+        String(s.net_pay ?? ""),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
     return true;
   });
   // R-102-B item 5 — owner: "a list that silently hides is the same class of defect as a badge
@@ -160,11 +196,11 @@ export function SettlementsPage() {
   // one predicate that hides rows.
   const cancelledHiddenCount = hideCancelled
     ? (listQuery.data?.settlements ?? []).filter(
-        (s) => (!effectiveDriverId || s.driver_id === effectiveDriverId) && s.status === "cancelled",
+        (s) => (!filterDriverId || s.driver_id === filterDriverId) && s.status === "cancelled",
       ).length
     : 0;
   const kpiSettlements = (kpiBaseQuery.data?.settlements ?? []).filter((s) =>
-    effectiveDriverId ? s.driver_id === effectiveDriverId : true,
+    filterDriverId ? s.driver_id === filterDriverId : true,
   );
   const openBillsSummary = openBillsQuery.data?.open_driver_bills ?? { total_count: 0, total_gross_cents: 0, items: [] as OpenDriverBill[] };
   const now = new Date();
@@ -440,59 +476,54 @@ export function SettlementsPage() {
         <SettlementsToursRegister companyId={companyId} />
       ) : (
         <>
-      <CollapsedListFilters
-        activeFilterCount={(selectedPaymentState ? 1 : 0) + (effectiveDriverId ? 1 : 0) + (hideCancelled ? 0 : 1)}
-        onApply={staged.apply}
-        onReset={staged.reset}
-        onCancel={staged.cancel}
-        applyDisabled={!staged.dirty}
+      <MoneyListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search # · driver · payment state · status · net…"
+        searchTestId="settlements-search-input"
+        onClearAll={() => {
+          setSearch("");
+          setPaymentStates([]);
+          setDriverFilter(null);
+          setHideCancelled(true);
+        }}
+        activeFilterCount={
+          paymentStates.length + (filterDriverId ? 1 : 0) + (hideCancelled ? 0 : 1)
+        }
         testIdPrefix="settlements"
-        dataAttributes={{ "data-settlements-filter-toolbar": "collapsed" }}
       >
-        <div className="flex flex-wrap gap-3" data-testid="settlements-filters">
-          <label className="text-xs text-[#4B5563]">
-            Driver
-            <EntityPicker
-              kind="driver"
-              operatingCompanyId={companyId}
-              value={staged.draft.driverId || null}
-              onChange={(next) => staged.setDraft({ ...staged.draft, driverId: next ?? "" })}
-              allowCreate={false}
-              placeholder="All drivers"
-              className="mt-1"
-              dataTestId="settlements-filter-driver"
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-            Payment state
-            <SelectCombobox
-              value={staged.draft.paymentState}
-              onChange={(event) =>
-                staged.setDraft({ ...staged.draft, paymentState: event.target.value as PaymentStateFilter })
-              }
-              className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
-            >
-              <option value="">All</option>
-              <option value="unpaid">Unpaid</option>
-              <option value="queued">Queued</option>
-              <option value="sent_to_bank">Sent</option>
-              <option value="cleared">Cleared</option>
-              <option value="bounced">Bounced</option>
-              <option value="manual_paid">Manual Paid</option>
-            </SelectCombobox>
-          </label>
-          <label className="flex items-center gap-2 self-end pb-1 text-xs font-semibold text-gray-600">
-            <input
-              type="checkbox"
-              checked={staged.draft.hideCancelled}
-              onChange={(event) => staged.setDraft({ ...staged.draft, hideCancelled: event.target.checked })}
-              data-testid="settlements-hide-cancelled"
-              aria-label="Hide cancelled settlements"
-            />
-            Hide cancelled
-          </label>
-        </div>
-      </CollapsedListFilters>
+        <label className="text-xs text-[#4B5563]">
+          Driver
+          <EntityPicker
+            kind="driver"
+            operatingCompanyId={companyId}
+            value={filterDriverId || null}
+            onChange={(next) => setDriverFilter(next)}
+            allowCreate={false}
+            placeholder="All drivers"
+            className="mt-1"
+            dataTestId="settlements-filter-driver"
+          />
+        </label>
+        <MultiSelectDropdown
+          label="Payment state"
+          options={PAYMENT_STATE_OPTIONS}
+          selected={paymentStates}
+          onChange={setPaymentStates}
+          allLabel="All payment states"
+          data-testid="settlements-payment-state-filter"
+        />
+        <label className="flex items-center gap-2 self-end pb-1 text-xs font-semibold text-gray-600">
+          <input
+            type="checkbox"
+            checked={hideCancelled}
+            onChange={(event) => setHideCancelled(event.target.checked)}
+            data-testid="settlements-hide-cancelled"
+            aria-label="Hide cancelled settlements"
+          />
+          Hide cancelled
+        </label>
+      </MoneyListToolbar>
       {/* B-A3: Pending Acks / Held Deductions focus filters live on the Payments view alongside the
           payment pipeline (the top-of-page REG-005 KPI strip carries the summary tiles for both
           views). These two set ?focus= predicates matching the KPI counts on this same list. */}
@@ -515,31 +546,51 @@ export function SettlementsPage() {
         <div className="flex flex-wrap gap-2">
           <Button
             size="sm"
-            variant={selectedPaymentState === null ? "primary" : "secondary"}
-            onClick={() => {
-              const next = new URLSearchParams(searchParams);
-              next.delete("payment_state");
-              setSearchParams(next);
-            }}
+            variant={paymentStates.length === 0 ? "primary" : "secondary"}
+            onClick={() => setPaymentStates([])}
           >
             All
           </Button>
-          <Button size="sm" variant={selectedPaymentState === "unpaid" ? "primary" : "secondary"} onClick={() => setFilter("unpaid", searchParams, setSearchParams)}>
+          <Button
+            size="sm"
+            variant={paymentStates.length === 1 && paymentStates[0] === "unpaid" ? "primary" : "secondary"}
+            onClick={() => setPaymentStates(["unpaid"])}
+          >
             Unpaid ({paymentPipeline.unpaid})
           </Button>
-          <Button size="sm" variant={selectedPaymentState === "queued" ? "primary" : "secondary"} onClick={() => setFilter("queued", searchParams, setSearchParams)}>
+          <Button
+            size="sm"
+            variant={paymentStates.length === 1 && paymentStates[0] === "queued" ? "primary" : "secondary"}
+            onClick={() => setPaymentStates(["queued"])}
+          >
             Queued ({paymentPipeline.queued})
           </Button>
-          <Button size="sm" variant={selectedPaymentState === "sent_to_bank" ? "primary" : "secondary"} onClick={() => setFilter("sent_to_bank", searchParams, setSearchParams)}>
+          <Button
+            size="sm"
+            variant={paymentStates.length === 1 && paymentStates[0] === "sent_to_bank" ? "primary" : "secondary"}
+            onClick={() => setPaymentStates(["sent_to_bank"])}
+          >
             Sent ({paymentPipeline.sent_to_bank})
           </Button>
-          <Button size="sm" variant={selectedPaymentState === "cleared" ? "primary" : "secondary"} onClick={() => setFilter("cleared", searchParams, setSearchParams)}>
+          <Button
+            size="sm"
+            variant={paymentStates.length === 1 && paymentStates[0] === "cleared" ? "primary" : "secondary"}
+            onClick={() => setPaymentStates(["cleared"])}
+          >
             Cleared ({paymentPipeline.cleared})
           </Button>
-          <Button size="sm" variant={selectedPaymentState === "bounced" ? "primary" : "secondary"} onClick={() => setFilter("bounced", searchParams, setSearchParams)}>
+          <Button
+            size="sm"
+            variant={paymentStates.length === 1 && paymentStates[0] === "bounced" ? "primary" : "secondary"}
+            onClick={() => setPaymentStates(["bounced"])}
+          >
             Bounced ({paymentPipeline.bounced})
           </Button>
-          <Button size="sm" variant={selectedPaymentState === "manual_paid" ? "primary" : "secondary"} onClick={() => setFilter("manual_paid", searchParams, setSearchParams)}>
+          <Button
+            size="sm"
+            variant={paymentStates.length === 1 && paymentStates[0] === "manual_paid" ? "primary" : "secondary"}
+            onClick={() => setPaymentStates(["manual_paid"])}
+          >
             Manual Paid ({paymentPipeline.manual_paid})
           </Button>
         </div>
@@ -579,6 +630,7 @@ export function SettlementsPage() {
         loading={listQuery.isPending || (listQuery.isFetching && focusedSettlements.length === 0)}
         selectable
         maxSelectable={200}
+        suppressToolbarSearch
         onSelectionCapExceeded={() => pushToast("You can select up to 200 settlements at once.", "error")}
         batchActions={(selected) => (
           <Button
@@ -766,16 +818,6 @@ function OpenDriverBillsPanel({
       )}
     </DataPanel>
   );
-}
-
-function setFilter(
-  state: "unpaid" | "queued" | "sent_to_bank" | "cleared" | "bounced" | "manual_paid",
-  searchParams: URLSearchParams,
-  setSearchParams: (nextInit: URLSearchParams) => void
-) {
-  const next = new URLSearchParams(searchParams);
-  next.set("payment_state", state);
-  setSearchParams(next);
 }
 
 function KpiCard({

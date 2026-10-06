@@ -148,10 +148,24 @@ function q(companyId: string) {
 
 export function listSettlements(
   companyId: string,
-  options: { payment_state?: "unpaid" | "queued" | "sent_to_bank" | "cleared" | "bounced" | "manual_paid" } = {}
+  options: {
+    payment_state?:
+      | "unpaid"
+      | "queued"
+      | "sent_to_bank"
+      | "cleared"
+      | "bounced"
+      | "manual_paid"
+      | Array<"unpaid" | "queued" | "sent_to_bank" | "cleared" | "bounced" | "manual_paid">;
+  } = {}
 ) {
   const params = new URLSearchParams({ operating_company_id: companyId });
-  if (options.payment_state) params.set("payment_state", options.payment_state);
+  const states = options.payment_state;
+  if (Array.isArray(states)) {
+    for (const s of states) params.append("payment_state", s);
+  } else if (states) {
+    params.set("payment_state", states);
+  }
   return apiRequest<{ settlements: SettlementListRow[]; total_count: number }>(`/api/v1/driver-finance/settlements?${params.toString()}`);
 }
 
