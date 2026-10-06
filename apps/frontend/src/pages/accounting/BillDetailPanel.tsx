@@ -2,6 +2,7 @@ import { FlatFieldGrid } from "../../components/layout/FlatFieldGrid";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatUsd } from "../../utils/qboFormat";
 
 type BillSummary = {
   /** LINK-F5188: real accounting.bills row id — the caller always has it (selectedBill.id). */
@@ -19,8 +20,6 @@ type BillSummary = {
   journal_entry_date?: string | null;
   journal_entry_memo?: string | null;
 };
-
-const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
 type Props = {
   bill: BillSummary | null;
@@ -55,8 +54,8 @@ export function BillDetailPanel({ bill }: Props) {
           { label: "Vendor Invoice #", value: bill.bill_number ?? "—" },
           { label: "Vendor", value: entityLabel(bill.vendor_name, bill.vendor_id, "Vendor") },
           { label: "Status", value: bill.status ?? "—" },
-          { label: "Amount", value: money.format(amount) },
-          { label: "Open balance", value: money.format(balance) },
+          { label: "Amount", value: formatUsd(amount) },
+          { label: "Open balance", value: formatUsd(balance) },
           { label: "Due date", value: bill.due_date ? new Date(bill.due_date).toLocaleDateString() : "—" },
           {
             label: "Journal entry",

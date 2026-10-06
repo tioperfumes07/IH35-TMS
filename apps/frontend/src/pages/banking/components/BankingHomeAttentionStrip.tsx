@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ActionButton } from "../../../components/shared/ActionButton";
 import { X } from "lucide-react";
+import { formatUsdCents } from "../../../utils/qboFormat";
 
 export type BankingHomeAttentionFacts = {
   uncategorizedCount: number;
@@ -120,10 +121,7 @@ export function BankingHomeAttentionStrip({
   }
 
   if (facts.escrowDriverCount > 0 || facts.escrowBalanceCents !== 0) {
-    const dollars = (facts.escrowBalanceCents / 100).toLocaleString("en-US", {
-      style: "currency",
-      currency: "USD",
-    });
+    const dollars = formatUsdCents(facts.escrowBalanceCents);
     rows.push({
       id: "escrow",
       tone: "warn",

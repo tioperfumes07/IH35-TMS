@@ -16,6 +16,7 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
+import { formatUsd } from "../../../utils/qboFormat";
 import { RegisterToolbar } from "./RegisterToolbar";
 import { useListState } from "../../../components/list-state";
 import {
@@ -344,7 +345,7 @@ export function DriverEscrowLedgerSection({ operatingCompanyId, driverEscrowBala
       >
         <p className="font-semibold text-[#0F1219]">
           Driver Escrow is a liability — the company owes{" "}
-          {Number(driverEscrowBalance ?? 0).toLocaleString("en-US", { style: "currency", currency: "USD" })} back
+          {formatUsd(Number(driverEscrowBalance ?? 0))} back
           across {(driverBalancesQuery.data?.drivers ?? []).filter((d) => Number(d.escrow_balance ?? 0) !== 0).length}{" "}
           driver(s) with a balance.
         </p>

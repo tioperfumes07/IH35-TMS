@@ -44,7 +44,7 @@ import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 import { useBulkSelection } from "../../../hooks/useBulkSelection";
 import { Combobox, SelectCombobox } from "../../../components/Combobox";
 import { useToast } from "../../../components/Toast";
-import { formatUsdCents } from "../../../lib/money";
+import { formatUsdCents } from "../../../utils/qboFormat";
 import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomplete";
 import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
 import { EntityPicker } from "../../../components/EntityPicker";
@@ -159,7 +159,6 @@ export function qboActionLabel(mode: "match" | "categorize" | "transfer" | "cc_p
 }
 
 
-const USD = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const COMPANY_TRANSACTIONS_PAGE_SIZE = 500;
 // B2 BANK-REGISTER-COLUMNS: the register's gear-toggleable column headers all shared the identical
 // literal className string (22 occurrences) — extracted to one constant so B2's 5 new columns
@@ -637,7 +636,7 @@ export function formatBankTransactionDate(rawDate: string | null | undefined) {
  */
 export function formatSuggestedMatchInline(
   suggestion: BankTransactionSuggestion,
-  formatCents: (cents: number) => string = (c) => USD.format(Math.abs(c) / 100),
+  formatCents: (cents: number) => string = (c) => formatUsdCents(Math.abs(c)),
 ): string {
   const kind = String(suggestion.suggested_ledger_entry_kind ?? "").trim();
   const kindLabel = kind === "bill" ? "Bill" : kind === "expense" ? "Expense" : kind || "Match";
@@ -1822,9 +1821,9 @@ export function BankingTransactionsDesignView({
               {tx.relay_fuel_lines && tx.relay_fuel_lines.length > 0 ? (
                 <p
                   className="mt-0.5 truncate text-xs text-gray-500"
-                  title={formatRelayFuelBreakdownSummary(tx.relay_fuel_lines, (c) => USD.format(c / 100))}
+                  title={formatRelayFuelBreakdownSummary(tx.relay_fuel_lines, (c) => formatUsdCents(c))}
                 >
-                  {formatRelayFuelBreakdownSummary(tx.relay_fuel_lines, (c) => USD.format(c / 100))}
+                  {formatRelayFuelBreakdownSummary(tx.relay_fuel_lines, (c) => formatUsdCents(c))}
                 </p>
               ) : null}
               {/* LINK4-PR3 (owner ask, 2026-09-12) — informational only, writes nothing: a computed
@@ -2050,7 +2049,7 @@ export function BankingTransactionsDesignView({
           const { spent, received } = spentReceived(tx);
           return (
             <span className={spent > 0 ? "text-red-700" : "text-slate-700"}>
-              {spent > 0 ? `-${USD.format(spent / 100)}` : received > 0 ? USD.format(received / 100) : "—"}
+              {spent > 0 ? `-${formatUsdCents(spent)}` : received > 0 ? formatUsdCents(received) : "—"}
             </span>
           );
         },
@@ -2067,7 +2066,7 @@ export function BankingTransactionsDesignView({
           cellClass: "whitespace-nowrap text-right tabular-nums text-red-700",
           render: (tx) => {
             const { spent } = spentReceived(tx);
-            return spent > 0 ? USD.format(spent / 100) : "—";
+            return spent > 0 ? formatUsdCents(spent) : "—";
           },
         },
         {
@@ -2078,7 +2077,7 @@ export function BankingTransactionsDesignView({
           cellClass: "whitespace-nowrap text-right tabular-nums text-slate-700",
           render: (tx) => {
             const { received } = spentReceived(tx);
-            return received > 0 ? USD.format(received / 100) : "—";
+            return received > 0 ? formatUsdCents(received) : "—";
           },
         }
       );
@@ -2106,7 +2105,7 @@ export function BankingTransactionsDesignView({
               }
               data-testid={isEarliestSynced ? "banking-balance-earliest-synced-caveat" : undefined}
             >
-              {bal == null ? "—" : USD.format(bal / 100)}
+              {bal == null ? "—" : formatUsdCents(bal)}
               {isEarliestSynced && <sup className="ml-0.5 font-semibold text-slate-400">†</sup>}
             </span>
           );
@@ -2614,8 +2613,8 @@ export function BankingTransactionsDesignView({
             <div className="mb-2 grid grid-cols-1 gap-1 text-xs text-gray-600 md:grid-cols-2">
               <div>Date: {formatBankTransactionDate(tx.transaction_date)}</div>
               <div>Account: {selectedAccount?.account_name || "—"}</div>
-              <div>Spent: {spent > 0 ? USD.format(spent / 100) : "—"}</div>
-              <div>Received: {received > 0 ? USD.format(received / 100) : "—"}</div>
+              <div>Spent: {spent > 0 ? formatUsdCents(spent) : "—"}</div>
+              <div>Received: {received > 0 ? formatUsdCents(received) : "—"}</div>
             </div>
           ) : null}
           {tx.relay_fuel_lines && tx.relay_fuel_lines.length > 0 ? (
@@ -2630,7 +2629,7 @@ export function BankingTransactionsDesignView({
                       {row.label}
                       {row.volume_label ? <span className="text-gray-500"> · {row.volume_label}</span> : null}
                     </span>
-                    <span>{USD.format(row.amount_cents / 100)}</span>
+                    <span>{formatUsdCents(row.amount_cents)}</span>
                   </li>
                 ))}
               </ul>
@@ -3606,7 +3605,7 @@ export function BankingTransactionsDesignView({
               >
                 <div>{account.account_name || "Account"} {account.account_mask ? `••••${account.account_mask}` : ""}</div>
                 <div className={`mt-0.5 text-xs ${account.id === selectedAccount?.id ? "text-white/90" : "text-gray-500"}`}>
-                  {USD.format(Number(account.current_balance_cents ?? 0) / 100)}
+                  {formatUsdCents(Number(account.current_balance_cents ?? 0))}
                 </div>
               </button>
               {onReorderAccount ? (
