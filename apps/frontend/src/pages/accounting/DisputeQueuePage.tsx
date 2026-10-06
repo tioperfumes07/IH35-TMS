@@ -21,6 +21,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { statusPill } from "../../components/shared/statusPill";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { formatUsdCents, TABLE_MISSING } from "../../utils/qboFormat";
 
 const DECIDE_ROLES = new Set(["Owner", "Administrator", "Accountant"]);
 
@@ -34,8 +35,8 @@ const STATUS_OPTIONS = [
 ] as const;
 
 function money(cents: number | null | undefined) {
-  if (cents == null || !Number.isFinite(Number(cents))) return "—";
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(cents) / 100);
+  if (cents == null || !Number.isFinite(Number(cents))) return TABLE_MISSING;
+  return formatUsdCents(Number(cents));
 }
 
 function errorCode(err: unknown): string | null {

@@ -25,10 +25,11 @@ import { statusPill } from "../../components/shared/statusPill";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { SegmentedControl } from "../../components/SegmentedControl";
+import { formatUsdCents, TABLE_MISSING } from "../../utils/qboFormat";
 
 function money(cents: number | null | undefined) {
-  if (cents == null || !Number.isFinite(Number(cents))) return "—";
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(cents) / 100);
+  if (cents == null || !Number.isFinite(Number(cents))) return TABLE_MISSING;
+  return formatUsdCents(Number(cents));
 }
 
 // Round 88 (owner law) — the closed fault vocabulary, in the order a dispatcher would triage a

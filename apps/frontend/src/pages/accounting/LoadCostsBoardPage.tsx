@@ -28,6 +28,7 @@ import { STATUS_LABEL } from "../../components/dispatch/constants";
 import { InlineStatusPicker } from "../../components/dispatch/InlineStatusPicker";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { settlementLabel } from "../../lib/settlementNumber";
+import { formatUsdCents } from "../../utils/qboFormat";
 
 type FilterPill = "in_motion" | "delivered_open" | "all_open" | "this_week";
 // LOAD-COSTS-COMPLETE item (3) (owner's exact board-column list, 2026-09-04): Load · Unit · Driver ·
@@ -67,8 +68,7 @@ type BoardRow = {
   is_invoiced: boolean;
   is_resettlement?: boolean;
 };
-const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
-const fmt = (c: number) => money.format(c / 100);
+const fmt = (c: number) => formatUsdCents(c);
 /** Honesty rule (owner order 2026-09-04): Empty Miles / Deadhead Pay render BLANK, never zero, when
  * untracked -- a zero claims he ran no empty miles and underpays him. */
 const fmtBlank = (c: string | null) => (c == null ? "" : fmt(Number(c)));

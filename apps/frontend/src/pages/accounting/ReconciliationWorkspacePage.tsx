@@ -17,11 +17,10 @@ import { useToast } from "../../components/Toast";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { formatUsdCents } from "../../utils/qboFormat";
 
 function money(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
-    (Number(cents) || 0) / 100
-  );
+  return formatUsdCents(Number(cents) || 0);
 }
 
 function defaultPeriod() {

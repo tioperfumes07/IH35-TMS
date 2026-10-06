@@ -48,7 +48,7 @@ import {
   BANKING_SUBNAV_TAB_IDS,
   type BankingModuleTabId,
 } from "./BANKING_NAV_CONFIG";
-import { formatUsd } from "../../lib/money";
+import { formatUsd } from "../../utils/qboFormat";
 import { entityLabel } from "../../lib/entity-label";
 import { BankingNewMenu } from "./components/BankingNewMenu";
 import { LinkSuggestionsPanel } from "./components/LinkSuggestionsPanel";
@@ -210,10 +210,6 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     queryFn: () => getFactoringVirtual(companyId),
     enabled: Boolean(companyId),
   });
-  const money = useMemo(
-    () => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-    []
-  );
   // BANK-F01 / AUDIT row 2 — Cash posting KPI must match the per-account tile sum in dollars.
   // GET /api/v1/banking/dashboard/kpis sets total_cash = sumAuthoritativeDepositoryCashCents() / 100
   // (dollars for UI; same authoritative total as cash-flow opening_cash_cents). Do NOT divide again
@@ -694,7 +690,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                   />
                   <MoneyKpiTile
                     label="Factoring reserve"
-                    value={factoringKpiQuery.isError ? "Unavailable" : factoringReserve == null ? "…" : money.format(factoringReserve)}
+                    value={factoringKpiQuery.isError ? "Unavailable" : factoringReserve == null ? "…" : formatUsd(factoringReserve)}
                     tone={factoringKpiQuery.isError ? "bad" : "good"}
                     // VOCABULARY LAW: the factor's holdback is the contract's SECURITY RESERVE, an
                     // asset. "Escrow" means DRIVER escrow only — a 2100-series liability with no Faro
@@ -706,7 +702,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                   />
                   <MoneyKpiTile
                     label="Driver escrow"
-                    value={money.format(escrowFeed)}
+                    value={formatUsd(escrowFeed)}
                     tone="good"
                     sub={`${Number(kpiQuery.data?.drivers_with_escrow_balance ?? 0)} driver(s) · liability`}
                     onClick={() => navigate(BANKING_TAB_PATH.driver_escrow)}
@@ -752,7 +748,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                   tileKind: "virtual",
                 }),
               )}
-              formatMoney={(n) => money.format(n)}
+              formatMoney={(n) => formatUsd(n)}
               onView={(id) => {
                 const tile = sortedBankTiles.find((t) => t.id === id);
                 const virtualPath = virtualTileRoute(tile);
@@ -989,7 +985,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                       className="truncate text-left"
                       onClick={() => setSelectedAccountId(row.id)}
                     />
-                    <span className="font-medium tabular-nums">{money.format(row.balance)}</span>
+                    <span className="font-medium tabular-nums">{formatUsd(row.balance)}</span>
                     <span className="flex flex-col">
                       <button
                         type="button"
@@ -1037,7 +1033,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               <div className="space-y-1 px-3 py-2 text-xs">
                 <Link to="/factoring/reserve-tracker" className="flex justify-between hover:underline">
                   <span>Reserves held</span>
-                  <span className="tabular-nums">{factoringReserve == null ? "—" : money.format(factoringReserve)}</span>
+                  <span className="tabular-nums">{factoringReserve == null ? "—" : formatUsd(factoringReserve)}</span>
                 </Link>
                 <div className="flex justify-between">
                   <span>Advances funded MTD</span>
@@ -1047,7 +1043,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 </div>
                 <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
                   <span>Outstanding liability</span>
-                  <span className="text-red-700">{money.format(factoringOutstandingLiability)}</span>
+                  <span className="text-red-700">{formatUsd(factoringOutstandingLiability)}</span>
                 </Link>
                 <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
                   <span>+30 aging fees</span>

@@ -16,9 +16,10 @@ import {
 } from "../../../api/accounting";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useToast } from "../../../components/Toast";
+import { formatUsd } from "../../../utils/qboFormat";
 
 function money(amount: string | number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(amount));
+  return formatUsd(Number(amount));
 }
 
 function frequencyLabel(f: string) {

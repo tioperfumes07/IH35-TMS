@@ -19,6 +19,7 @@ import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { formatUsdCents } from "../../utils/qboFormat";
 
 // [HOLD-FOR-JORGE — TIER 1] Per-entity bank-account HIDE/EXCLUDE (build-and-hold, flag OFF by default).
 //
@@ -36,7 +37,7 @@ export const BANK_ACCOUNT_HIDE_FLAG_KEY = "BANK_ACCOUNT_HIDE_ENABLED";
 function formatCents(value: number | string | null | undefined): string {
   const cents = Number(value ?? 0);
   if (!Number.isFinite(cents)) return "$0.00";
-  return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
+  return formatUsdCents(cents);
 }
 
 export function BankAccountVisibilityPage() {

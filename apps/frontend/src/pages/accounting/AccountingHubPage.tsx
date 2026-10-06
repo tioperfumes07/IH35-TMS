@@ -27,8 +27,7 @@ import { entityLabel } from "../../lib/entity-label";
 // /banking can never show two different QBO-sync verdicts at the same moment again (see the
 // helper's own header comment for the full contradiction history).
 import { describeQboSyncStatus } from "../../lib/qbo-sync-status";
-
-const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+import { formatUsdCents } from "../../utils/qboFormat";
 
 type AmountRow = { key: string; left: ReactNode; right: string; muted?: string };
 type TabId =
