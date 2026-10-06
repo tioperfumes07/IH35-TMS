@@ -34,10 +34,10 @@ async function main() {
       if (!viewExists.rows[0]?.exists) {
         await client.query("ROLLBACK");
         console.log(
-          "verify-faro-default-interest-accrues-from-day-35: SKIP — views.factoring_repurchase_obligation does not exist yet " +
+          "verify-faro-default-interest-accrues-from-day-35: UNVERIFIED — views.factoring_repurchase_obligation does not exist (no migration in db/migrations builds it; the 202613301700/202613301800 it names were never written) " +
           "(202613301700/202613301800 not yet applied). Not a pass — re-run once the migration lands."
         );
-        process.exit(0);
+        process.exit(2); // UNVERIFIED, never a pass: the subject this guard polices has never been built
         return;
       }
 

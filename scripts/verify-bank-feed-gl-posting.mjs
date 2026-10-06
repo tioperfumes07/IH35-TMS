@@ -18,9 +18,11 @@ const fail = (m) => {
   console.error(`FAIL verify-bank-feed-gl-posting: ${m}`);
   process.exit(1);
 };
+// ONE definition, used by both the live check and the --selftest (a selftest of a copy proves nothing about the original).
+const ENGINE_CALL_RE = /\bpostSourceTransaction(?:InClientTx)?\(/;
 if (process.argv.includes("--selftest")) {
   // The engine-call rule must pass both engine entry points and fail a service that posts no engine call or writes GL inline.
-  const re = /\bpostSourceTransaction(?:InClientTx)?\(/;
+  const re = ENGINE_CALL_RE;
   const inline = /INSERT\s+INTO\s+accounting\.journal_entr/i;
   const cases = [
     ["in-tx engine call passes", re.test("await postSourceTransactionInClientTx(client, x)"), true],
@@ -64,7 +66,6 @@ if (!/reason:\s*"is_transfer"/.test(service)) fail("own-bank transfer interlock 
 // ROUND 389.4 triage (CC-2): the service posts through the engine's in-transaction entry point
 // postSourceTransactionInClientTx (the categorize write and its GL post commit together). The old regex accepted only the
 // bare postSourceTransaction( and failed verified-correct code. Either engine entry point passes; anything else fails.
-const ENGINE_CALL_RE = /\bpostSourceTransaction(?:InClientTx)?\(/;
 if (!ENGINE_CALL_RE.test(service)) fail("service must post via postSourceTransaction / postSourceTransactionInClientTx (reuse the engine — no new GL math)");
 
 // 4. No inline GL writes in banking routes/services.
