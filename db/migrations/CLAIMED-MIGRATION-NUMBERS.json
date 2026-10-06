@@ -2237,5 +2237,10 @@
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-06",
     "purpose": "ACCT-F2026100601: accounting.fn_account_balances_as_of adopts the one ledger-membership rule (excludes is_sample_data entries, as every statement already does) so Reclassify and account balances agree with the TB, BS and P&L"
+  },
+  "202615430900": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-06",
+    "purpose": "ROUND 435: every legal contract instance is filed as a PDF in docs.files — docs.file_links accepts entity_type 'contract_instance', legal.contract_instances.pdf_file_id references the current filed PDF"
   }
 }
