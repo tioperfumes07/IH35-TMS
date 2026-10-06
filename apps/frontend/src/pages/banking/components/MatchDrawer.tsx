@@ -25,6 +25,7 @@ import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
 import { useListState } from "../../../components/list-state";
 import { formatUsdCents } from "../../../lib/money";
+import { humanMemo } from "../../accounting/ManualJEListPage";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ApiError } from "../../../api/client";
 
@@ -137,8 +138,10 @@ function formatMoneyCents(cents: number | null | undefined) {
 }
 
 function candidateDrillLabel(candidate: BankMatchCandidate) {
-  const memo = candidate.memo?.trim();
-  return memo || KIND_LABELS[candidate.ledger_entry_kind];
+  // B7 — memo/description may historically carry "· session <uuid>"; never paint the id.
+  const memo = candidate.memo?.trim() || candidate.description?.trim();
+  if (memo) return humanMemo(memo);
+  return KIND_LABELS[candidate.ledger_entry_kind];
 }
 
 /** Label-only chrome — EntityLink must stay inline at the call site (entity-link-adoption). */
