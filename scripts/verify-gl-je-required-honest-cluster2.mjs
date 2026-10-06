@@ -81,8 +81,9 @@ export function auditGlJeCluster2(docs, sources) {
   }
 
   const mgmt = sources.managementReport;
-  if (!/plRegisterHref\(line\.account_id/.test(mgmt)) failures.push(`${SOURCES.managementReport}: P&L lines must drill via plRegisterHref(line.account_id, ...)`);
-  if (!/bsRegisterHref\(line\.account_id/.test(mgmt)) failures.push(`${SOURCES.managementReport}: Balance Sheet lines must drill via bsRegisterHref(line.account_id, ...)`);
+  // LST-F421: 8a4d2d833e (#25488) drills through AmountLink filter={plFilter(...)} / bsFilter(...) — the same register drill.
+  if (!/(?:plRegisterHref|plFilter)\(line\.account_id/.test(mgmt)) failures.push(`${SOURCES.managementReport}: P&L lines must drill to the register via plFilter(line.account_id, ...)`);
+  if (!/(?:bsRegisterHref|bsFilter)\(line\.account_id/.test(mgmt)) failures.push(`${SOURCES.managementReport}: Balance Sheet lines must drill to the register via bsFilter(line.account_id, ...)`);
 
   const table = sources.partsInventoryTable;
   if (!/setLastGlPosting\(created\.gl_posting/.test(table)) failures.push(`${SOURCES.partsInventoryTable}: purchase mutation must capture gl_posting from the create response`);
@@ -128,8 +129,8 @@ if (SELFTEST) {
     }
   }
   const sourceMutations = [
-    ["managementReport", (s) => s.replace(/plRegisterHref\(line\.account_id/g, "xx(line.account_id")],
-    ["managementReport", (s) => s.replace(/bsRegisterHref\(line\.account_id/g, "xx(line.account_id")],
+    ["managementReport", (s) => s.replace(/(?:plRegisterHref|plFilter)\(line\.account_id/g, "xx(line.account_id")],
+    ["managementReport", (s) => s.replace(/(?:bsRegisterHref|bsFilter)\(line\.account_id/g, "xx(line.account_id")],
     ["partsInventoryTable", (s) => s.replace("setLastGlPosting(created.gl_posting", "setLastGlPosting(null")],
     ["partsInventoryTable", (s) => s.replace(/kind="journal_entry"/g, 'kind="expense"')],
     ["maintenanceApi", (s) => s.replace(/PartsPurchaseGlPosting/g, "Xxx")],

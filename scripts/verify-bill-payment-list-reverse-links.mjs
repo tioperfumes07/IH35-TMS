@@ -47,7 +47,13 @@ function contractErrors(sources) {
     if (!source.includes('kind="journal_entry"')) {
       errors.push(`${surface}: JE EntityLink missing`);
     }
-    if (!source.includes('kind="bank_transaction"')) {
+    // LST-F421: BANK-F31517 (3abdb503c9) moved the detail's bank-line drill into OnlineBankingMatchBanner, which renders
+    // EntityLink kind="bank_transaction" for the matched line — accepted only when it is fed the payment's matched line.
+    const viaBanner =
+      surface === "detail" &&
+      source.includes("<OnlineBankingMatchBanner") &&
+      source.includes("bankTransactionId={payment.matched_bank_transaction_id}");
+    if (!source.includes('kind="bank_transaction"') && !viaBanner) {
       errors.push(`${surface}: bank transaction EntityLink missing`);
     }
   }

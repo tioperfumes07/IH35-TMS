@@ -32,7 +32,8 @@ if (SELFTEST) {
   const srcs = read();
   const planted = { ...srcs };
   planted[CHECKS[0][0]] = planted[CHECKS[0][0]].replace(
-    /entityLabel\(null,\s*row\.source_load_id,\s*"Load"\)/,
+    // LST-F421: ce364423c8 labels the load with its own load_number (entityLabel(row.source_load_number, …)).
+    /entityLabel\([^,]+,\s*row\.source_load_id,\s*"Load"\)/,
     "row.source_load_id.slice(0, 8)",
   );
   if (!assert(planted).length) {

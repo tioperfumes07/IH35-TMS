@@ -46,7 +46,7 @@ export function audit(src) {
   // fixed the route to the real table name, but this guard's own regex was never updated to match —
   // leaving it demanding the BROKEN table name forever, ready to steer a future "fix" straight back
   // into the same outage. Match the real, currently-shipped table name here.
-  const settlementLabelCount = countMatches(src.route, /settlement\.display_id AS matched_settlement_display_id/g);
+  const settlementLabelCount = countMatches(src.route, /settlement\.(?:display_id|source_document_ref) AS matched_settlement_display_id/g /* LST-F421: #21903 reads source_document_ref */);
   const settlementJoinCount = countMatches(src.route, /LEFT JOIN driver_finance\.driver_settlements settlement[\s\S]{0,100}settlement\.id = bt\.matched_settlement_id[\s\S]{0,100}settlement\.operating_company_id = bt\.operating_company_id/g);
   if (settlementLabelCount !== 2 || settlementJoinCount !== 2) {
     failures.push(`${ROUTE_FILE}: both transaction readers must project and company-scope matched settlements (labels ${settlementLabelCount}/2, joins ${settlementJoinCount}/2; never use phantom driver_finance.settlements — BANK-F5627)`);
@@ -90,8 +90,8 @@ if (process.argv.includes("--selftest")) {
     ["account-route-join", "route", /LEFT JOIN accounting\.bills bill\n\s+ON bill\.id = bt\.matched_bill_id/, "-- removed join"],
     ["company-route-join", "route", /LEFT JOIN accounting\.bills bill\n\s+ON bill\.id = bt\.matched_bill_id/g, (match, offset) => offset === good.route.lastIndexOf(match) ? "-- removed join" : match],
     ["api-type", "api", /matched_bill_number\?:\s*string \| null;/, "// removed"],
-    ["account-settlement-label", "route", /settlement\.display_id AS matched_settlement_display_id/, "NULL AS missing_settlement_label"],
-    ["company-settlement-label", "route", /settlement\.display_id AS matched_settlement_display_id/g, (match, offset) => offset === good.route.lastIndexOf(match) ? "NULL AS missing_settlement_label" : match],
+    ["account-settlement-label", "route", /settlement\.(?:display_id|source_document_ref) AS matched_settlement_display_id/, "NULL AS missing_settlement_label"],
+    ["company-settlement-label", "route", /settlement\.(?:display_id|source_document_ref) AS matched_settlement_display_id/g /* LST-F421: #21903 reads source_document_ref */, (match, offset) => offset === good.route.lastIndexOf(match) ? "NULL AS missing_settlement_label" : match],
     ["account-settlement-join", "route", /LEFT JOIN driver_finance\.driver_settlements settlement\n\s+ON settlement\.id = bt\.matched_settlement_id/, "-- removed settlement join"],
     ["company-settlement-join", "route", /LEFT JOIN driver_finance\.driver_settlements settlement\n\s+ON settlement\.id = bt\.matched_settlement_id/g, (match, offset) => offset === good.route.lastIndexOf(match) ? "-- removed settlement join" : match],
     ["settlement-api", "api", /matched_settlement_display_id\?:\s*string \| null;/, "// removed"],

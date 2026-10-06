@@ -9,8 +9,8 @@
  * - expenses.create: ExpensesListPage's "+ Create" mounts RecordExpenseModal — the SAME real
  *   ParityDrawer chrome already proven by batch1 for leaf accounting.modal.record_expense, just
  *   reached from this leaf's own nav id.
- * - chrome.toolbar_range: BillsPage's CollapsedListFilters carries two real DatePicker controls
- *   (dateFrom/dateTo) committed via the staged-filter Apply gate.
+ * - chrome.toolbar_range: BillsPage's MoneyListToolbar carries a real DateRangePresets (from/to) range
+ *   (LST-F421: was the staged CollapsedListFilters Apply gate before FILTER-MULTI-01).
  * - chrome.toolbar_gear: BillsPage's <ParityTable> mounts the shared component's own gear (⚙)
  *   popover — Density + column show/hide checklist + explicit Apply (applyGear).
  *
@@ -30,7 +30,9 @@ const LABEL = "verify-accounting-qbo-chrome-toolbar-range-gear-and-expenses-crea
 const CHECKS = [
   { name: "expenses.create: ExpensesListPage mounts the real RecordExpenseModal", file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx", pattern: /<RecordExpenseModal\b/ },
   { name: "expenses.create target: RecordExpenseModal is a real ParityDrawer", file: "apps/frontend/src/components/expenses/RecordExpenseModal.tsx", pattern: /<ParityDrawer/ },
-  { name: "chrome.toolbar_range: BillsPage has two real DatePicker range controls (dateFrom/dateTo)", file: "apps/frontend/src/pages/accounting/BillsPage.tsx", pattern: /staged\.draft\.dateFrom[\s\S]*staged\.draft\.dateTo/ },
+  // LST-F421: FILTER-MULTI-01 (8d2aab421e) replaced the staged CollapsedListFilters range with DateRangePresets (which wraps
+  // two DatePickers) on MoneyListToolbar; the range applies directly, there is no staged Apply gate any more.
+  { name: "chrome.toolbar_range: BillsPage has a real date range (DateRangePresets from/to)", file: "apps/frontend/src/pages/accounting/BillsPage.tsx", pattern: /<DateRangePresets[^>]*from=\{dateFrom\}[^>]*to=\{dateTo\}[^>]*onChange=/ },
   { name: "chrome.toolbar_gear: BillsPage mounts ParityTable with real columns prop", file: "apps/frontend/src/pages/accounting/BillsPage.tsx", pattern: /<ParityTable[\s\S]{0,200}columns=\{columns\}/ },
   { name: "chrome.toolbar_gear target: ParityTable's own gear popover has Density + column toggle + Apply", file: "apps/frontend/src/components/parity/ParityTable.tsx", pattern: /applyGear[\s\S]*gearOpen|gearOpen[\s\S]*applyGear/ },
 ];
