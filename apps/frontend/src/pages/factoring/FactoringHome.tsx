@@ -61,6 +61,9 @@ import { FactoringCashFlowPanel } from "./FactoringCashFlowPanel";
 import { FactoringKpiPanel } from "../../components/factoring/FactoringKpiPanel";
 import { getFactoringKpis } from "../../api/factoring-kpis";
 import { FactoringReservesSharedPanel } from "../../components/factoring/FactoringReservesSharedPanel";
+import { BatchWizard } from "./BatchWizard";
+import { SubmissionQueue } from "./SubmissionQueue";
+import { SubmissionWorkqueue } from "./SubmissionWorkqueue";
 import { FaroReserveRegisterPanel } from "../../components/factoring/FaroReserveRegisterPanel";
 import { ChargebacksTable, type ChargebackFeeRow } from "./ChargebacksTable";
 import { RecoursePipelineTable } from "./RecoursePipelineTable";
@@ -1289,6 +1292,18 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           when a repurchase deadline is waiting, on every tab, so it is never missed. */}
       {companyId ? <RepurchaseDuePanel companyId={companyId} isOwner={user?.role === "Owner"} /> : null}
       {show("submit_invoice") ? <SubmitToFactorTab companyId={companyId} isOwner={user?.role === "Owner"} /> : null}
+      {/* ACCT-F2026100619 (Rule 07): the batch-submission pipeline — submission queue, workqueue and batch wizard, each with
+          its own queries and mutations — was mounted only by the factoring index #25601 retired. It lives under Submit invoice. */}
+      {show("submit_invoice") ? (
+        <details className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-submit-batch-pipeline">
+          <summary className="cursor-pointer text-xs font-medium text-gray-900">Batch submission pipeline — queue · workqueue · batch wizard</summary>
+          <div className="mt-2 space-y-3">
+            <SubmissionQueue />
+            <SubmissionWorkqueue />
+            <BatchWizard />
+          </div>
+        </details>
+      ) : null}
 
       {show("funds_due") ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-funds-due-report">

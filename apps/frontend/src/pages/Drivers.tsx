@@ -29,6 +29,7 @@ import { DataPanel } from "../components/layout/DataPanel";
 import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { KpiCard } from "../components/layout/KpiCard";
 import { KpiStrip } from "../components/layout/KpiStrip";
+import { DriverHubBoard } from "../components/boards/DriverHubBoard";
 import { PageHeader } from "../components/layout/PageHeader";
 import { PreSettlementsPanel } from "../components/driver-finance/PreSettlementsPanel";
 import { dataTableErrorState, formatQueryErrorDetail } from "../lib/tableError";
@@ -909,7 +910,35 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               <PayRateTemplatesListPage />
             </div>
           ) : null}
+          {/* ACCT-F2026100619 (Rule 07): the owner's ROUND 326-5 Driver Hub board lost its mount in #25517; it is the Board
+              view of Drivers Home (?view=board), beside the attention panels. */}
           {subnavTab === "home" ? (
+            <div className="flex flex-wrap items-center gap-2 px-1" data-testid="drivers-home-view-toggle">
+              <SegmentedControl
+                value={searchParams.get("view") === "board" ? "board" : "attention"}
+                onChange={(next) =>
+                  setSearchParams(
+                    (prev) => {
+                      const p = new URLSearchParams(prev);
+                      if (next === "board") p.set("view", "board");
+                      else p.delete("view");
+                      return p;
+                    },
+                    { replace: false }
+                  )
+                }
+                testId="drivers-home-view"
+                options={[
+                  { value: "attention", label: "Attention", testId: "drivers-home-view-attention" },
+                  { value: "board", label: "Board", testId: "drivers-home-view-board" },
+                ]}
+              />
+            </div>
+          ) : null}
+          {subnavTab === "home" && searchParams.get("view") === "board" && selectedCompanyId ? (
+            <DriverHubBoard operatingCompanyId={selectedCompanyId} onList={() => navigate("/drivers/roster")} />
+          ) : null}
+          {subnavTab === "home" && searchParams.get("view") !== "board" ? (
             <div className="grid auto-rows-fr gap-3 md:grid-cols-2" data-testid="drivers-home-attention">
               <PreSettlementsPanel rows={settlementsReadyRows} loading={settlementsQuery.isLoading} isError={settlementsQuery.isError} title="Settlements Ready" />
               <DataPanel title="Debt Alert · before any payment" accentColor={colors.crit.strong}>

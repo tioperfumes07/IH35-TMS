@@ -403,6 +403,10 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
             <Button type="button" size="sm" variant="secondary" onClick={() => navigate(`/drivers/${id}?tab=edit`)} data-testid="driver-profile-edit">
               Edit
             </Button>
+            {/* Rule 07 — the archived full record (Operations histories, earnings, load history) stays reachable. */}
+            <Button type="button" size="sm" variant="secondary" onClick={() => navigate(`/drivers/${id}/record`)} data-testid="driver-profile-full-record">
+              Full record
+            </Button>
             <Button type="button" size="sm" variant="secondary" onClick={() => setAddPayOpen(true)} data-testid="driver-add-payment">
               Add payment
             </Button>
