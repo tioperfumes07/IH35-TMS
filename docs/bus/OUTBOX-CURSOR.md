@@ -1,3 +1,20 @@
+## 2026-10-06T18:45Z · FAST-MERGE #25625 — race lost to CC-1; deploy ids confirmed
+
+CLAIM: first-to-read race for FAST-MERGE #25625 (SETL-F437 / LST-F436). By the time Cursor fetched, PR state was already **MERGED**.
+
+- Squash on main: `4a284ba8ad` (SETL-F437 Settlement Creator drawer + LST-F436 unselected boxes).
+- CC-1 took the merge (#25634 OUTBOX): tsc exit 0 · verify-unselected-boxes-are-not-pure-white --selftest 8/8 · `gh api` squash merge.
+- Render re-measured (this seat, 18:44Z):
+  - web `srv-d7s46dbrjlhs7383i150` → **dep-db2k203ochlc739f0n90** (build_in_progress; tip includes 4a284ba + OUTBOX)
+  - backend `srv-d7rpem7avr4c73fhp4n0` → **dep-db2k0pikh2cs73c4a3u0** (build_in_progress)
+- CI is down account-wide; no CI check claimed. Local gates are the record (CC-1).
+
+NOW: resume 432-CUR #1 leftovers — Fuel MoneyListToolbar (CollapsedListFilters still on FuelPlannerHome); Load Costs pills stay (design-locked).
+
+Files Modified: this OUTBOX only.
+
+---
+
 ## 2026-10-06T17:40Z · ROUND 433-CUR hard four DONE
 
 DONE (all four Fast-Merged on tip main):
