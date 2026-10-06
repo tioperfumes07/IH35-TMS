@@ -8,11 +8,11 @@ import { formatQueryErrorDetail } from "../../lib/tableError";
 import { formatDateQboList } from "../../lib/formatDate";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
-import { DatePicker } from "../../components/forms/DatePicker";
+import { DateRangePresets } from "../../components/forms/DateRangePresets";
 import { formatCurrencyFromCents } from "../lists/accounting/coa-list-utils";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { SelectCombobox } from "../../components/Combobox";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { Button } from "../../components/Button";
 import { TOOLBAR_ICON_SIZE_CLASS } from "../../design/tokens";
@@ -72,14 +72,19 @@ export function TransactionRegisterPage() {
   const { selectedCompanyId } = useCompanyContext();
   const navigate = useNavigate();
 
+  // 432-CUR #1 — MoneyListToolbar always visible; filters commit immediately (no staged Apply).
   const [sources, setSources] = useState<TransactionSource[]>([]);
-  const [direction, setDirection] = useState<"all" | "in" | "out">("all");
+  const [directionFilter, setDirectionFilter] = useState<Array<"in" | "out">>([]);
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const staged = useStagedListFilters({ applied: { sources, direction, status, fromDate, toDate }, empty: { sources: [] as TransactionSource[], direction: "all" as const, status: "", fromDate: "", toDate: "" }, onApply: (next) => { setSources(next.sources); setDirection(next.direction); setStatus(next.status); setFromDate(next.fromDate); setToDate(next.toDate); setPage(0); } });
   const [page, setPage] = useState(0);
+
+  const direction: "all" | "in" | "out" =
+    directionFilter.length === 1 ? directionFilter[0]! : "all";
+
+  const bumpPage = () => setPage(0);
 
   const query = useQuery({
     queryKey: ["accounting", "transaction-register", selectedCompanyId, sources, direction, status, search, fromDate, toDate, page],
@@ -237,78 +242,81 @@ export function TransactionRegisterPage() {
       }
     >
 
-      <div className="space-y-2" data-transaction-register-filter-toolbar="collapsed">
-        <CollapsedListFilters
+      <div className="space-y-2" data-transaction-register-filter-toolbar="visible">
+        <MoneyListToolbar
+          search={search}
+          onSearchChange={(next) => {
+            bumpPage();
+            setSearch(next);
+          }}
+          searchPlaceholder="Description or customer / vendor / driver"
+          searchTestId="transaction-register-search"
+          testIdPrefix="transaction-register"
           activeFilterCount={
             (sources.length > 0 ? 1 : 0) +
-            (direction !== "all" ? 1 : 0) +
+            (directionFilter.length > 0 ? 1 : 0) +
             (status ? 1 : 0) +
             (fromDate || toDate ? 1 : 0)
           }
-          onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
-          testIdPrefix="transaction-register"
-          searchSlot={
-            <input
-              value={search}
-              onChange={(event) => {
-                setPage(0);
-                setSearch(event.target.value);
-              }}
-              placeholder="Description or customer / vendor / driver"
-              className="min-h-12 h-12 w-72 rounded-sm border border-slate-300 px-2 text-xs"
-              aria-label="Search transactions"
-            />
-          }
+          onClearAll={() => {
+            setSources([]);
+            setDirectionFilter([]);
+            setStatus("");
+            setFromDate("");
+            setToDate("");
+            setSearch("");
+            bumpPage();
+          }}
         >
-          <div className="flex flex-wrap items-center gap-1.5">
-            {SOURCE_OPTIONS.map((opt) => {
-              const active = staged.draft.sources.includes(opt.value);
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => staged.setDraft({ ...staged.draft, sources: active ? staged.draft.sources.filter((source) => source !== opt.value) : [...staged.draft.sources, opt.value] })}
-                  className={`rounded-full border px-3 py-0.5 text-xs ${
-                    active ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-slate-300 bg-[var(--surface-unselected)] text-slate-600"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="mt-2 grid gap-2 md:grid-cols-4">
-            <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
-              Direction
-              <SelectCombobox
-                value={staged.draft.direction}
-                onChange={(event) => staged.setDraft({ ...staged.draft, direction: event.target.value as "all" | "in" | "out" })}
-              >
-                <option value="all">All</option>
-                <option value="in">Money in</option>
-                <option value="out">Money out</option>
-              </SelectCombobox>
-            </label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
-              Status
-              <input
-                value={staged.draft.status}
-                onChange={(event) => staged.setDraft({ ...staged.draft, status: event.target.value })}
-                placeholder="e.g. paid, uncategorized"
-                className="h-9 rounded-sm border border-slate-300 px-2 text-xs"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
-              From
-              <DatePicker value={staged.draft.fromDate} onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })} className="h-9" />
-            </label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
-              To
-              <DatePicker value={staged.draft.toDate} onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })} className="h-9" />
-            </label>
-          </div>
-        </CollapsedListFilters>
+          <MultiSelectDropdown
+            label="Source"
+            options={SOURCE_OPTIONS}
+            selected={sources}
+            onChange={(next) => {
+              bumpPage();
+              setSources(next as TransactionSource[]);
+            }}
+            allLabel="All sources"
+            data-testid="transaction-register-filter-source"
+          />
+          <MultiSelectDropdown
+            label="Direction"
+            options={[
+              { value: "in", label: "Money in" },
+              { value: "out", label: "Money out" },
+            ]}
+            selected={directionFilter}
+            onChange={(next) => {
+              bumpPage();
+              setDirectionFilter(next as Array<"in" | "out">);
+            }}
+            allLabel="All directions"
+            data-testid="transaction-register-filter-direction"
+          />
+          <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
+            Status
+            <input
+              value={status}
+              onChange={(event) => {
+                bumpPage();
+                setStatus(event.target.value);
+              }}
+              placeholder="e.g. paid, uncategorized"
+              className="h-9 rounded-sm border border-slate-300 px-2 text-xs"
+              data-testid="transaction-register-filter-status"
+            />
+          </label>
+          <DateRangePresets
+            from={fromDate}
+            to={toDate}
+            onChange={(next) => {
+              bumpPage();
+              setFromDate(next.from);
+              setToDate(next.to);
+            }}
+            data-testid="transaction-register-date-range"
+          />
+        </MoneyListToolbar>
 
         <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
           <span>{total.toLocaleString()} transactions</span>
@@ -329,6 +337,7 @@ export function TransactionRegisterPage() {
           storageKey="transaction-register"
           tableTestId="transaction-register-table"
           suppressToolbarSearch
+          suppressToolbarRange
           // ACCT-F-PARITYTABLE-DOUBLE-PAGINATION: `rows` is already one server page (limit=
           // PAGE_SIZE of the real `total`, offset-driven). Without pageSize+hidePager,
           // ParityTable's own uncontrolled pager re-derives "total" from rows.length and renders
