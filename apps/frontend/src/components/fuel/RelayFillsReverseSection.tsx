@@ -79,6 +79,7 @@ export function RelayFillsReverseSection({
               <span className="ml-2 text-xs text-gray-500">
                 {formatDateUS(row.relay_created_at)}
                 {row.fuel_gallons != null ? ` · ${row.fuel_gallons.toLocaleString()} gal diesel` : ""}
+                {row.reefer_gallons != null ? ` · ${row.reefer_gallons.toLocaleString()} gal Reefer Diesel` : ""}
                 {row.def_gallons != null ? ` · ${row.def_gallons.toLocaleString()} gal DEF` : ""}
                 {` · ${formatMoneyCents(row.total_amount_paid_cents, "USD")}`}
                 {"unit_id" in filter ? (

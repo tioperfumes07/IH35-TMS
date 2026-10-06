@@ -23,7 +23,10 @@ export type RelayFillRow = {
   /** Relay's own free-text driver/unit — present even when matching failed or disagrees. */
   relay_driver_name: string | null;
   relay_unit_number: string | null;
+  /** Truck (road) diesel gallons only. */
   fuel_gallons: number | null;
+  /** U25 — Reefer Diesel gallons (5015, off-highway); never folded into diesel. */
+  reefer_gallons?: number | null;
   def_gallons: number | null;
 };
 

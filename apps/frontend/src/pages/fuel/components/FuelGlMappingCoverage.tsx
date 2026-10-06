@@ -18,7 +18,7 @@ export type FuelGlCategoryCode = (typeof FUEL_GL_CATEGORY_CODES)[number];
 const CATEGORY_LABEL: Record<FuelGlCategoryCode, string> = {
   diesel: "Diesel",
   def: "DEF",
-  reefer: "Reefer fuel",
+  reefer: "Reefer Diesel",
   oil: "Oil",
   misc: "Misc fuel",
 };

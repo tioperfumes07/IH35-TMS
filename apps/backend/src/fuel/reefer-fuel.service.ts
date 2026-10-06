@@ -2,8 +2,9 @@
 // receive a credit for the reefer fuel from the US government so we need to have it detailed — how many gallons etc.")
 //
 // Diesel burned by a trailer's reefer unit is an off-highway, nontaxable use: its federal excise tax is claimed back on
-// IRS Form 4136 (gallons × the per-gallon rate, with the actual fuel cost). Truck diesel and reefer diesel post to the
-// same account (5000 Fuel & Diesel), so the ledger does not move — what must be right is the CATEGORY and the GALLONS:
+// IRS Form 4136 (gallons × the per-gallon rate, with the actual fuel cost). Reefer diesel posts to its own account,
+// 5015 Reefer Diesel (Off-Highway) (ROUND 391.2), and the reclassify engine moves the account with the item; what this
+// service keeps right is the CATEGORY, the GALLONS and the TRAILER:
 //   * a reefer fuel line carries its gallons (quantity, unit "gal") and the trailer it fueled
 //   * the fuel-card transaction behind it is fuel_type 'reefer_diesel' — which the IFTA aggregator already excludes
 //     (reefer fuel does not move the truck, so it is not IFTA road fuel)

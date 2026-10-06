@@ -1143,7 +1143,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       data-testid={`sc-fuel-type-${idx}`}
                     >
                       <option value="diesel">Truck diesel</option>
-                      <option value="reefer_diesel">Reefer diesel</option>
+                      <option value="reefer_diesel">Reefer Diesel</option>
                       <option value="def">DEF</option>
                     </select>
                   </Field>
