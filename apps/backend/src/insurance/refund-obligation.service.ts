@@ -3,22 +3,22 @@
  *
  * When a policy is cancelled but the COA roles needed to post the unearned-
  * premium refund are not mapped, we persist a DURABLE obligation row instead of
- * silently skipping. The obligation carries everything required to post the
- * refund later via the existing createJournalEntry() service:
- *   operating_company_id, policy_id, amount_cents, debit_role, credit_role,
- *   deterministic_memo, entry_date.
+ * silently skipping. The obligation carries everything required to issue the
+ * refund later: operating_company_id, policy_id, amount_cents, debit_role,
+ * credit_role, deterministic_memo, entry_date.
  *
- * Draining (auto-/one-click post) resolves the roles and, when available, posts
- * the JE. Dedupe is by deterministic_memo (the SAME memo used for JE dedupe), so
- * retries never double-post — both a unique constraint on the obligation and a
- * pre-post JE lookup enforce this.
+ * Draining (auto-/one-click post) resolves the credit role and the policy's
+ * insurer vendor and issues a VENDOR CREDIT on the caller's transaction
+ * (LST-F414: A/P is written only by its documents, ROUND 393.1). Dedupe is by
+ * deterministic_memo (the credit's notes, or a JE posted before LST-F414), so
+ * retries never double-post — the obligation's unique constraint enforces it too.
  *
- * FINANCIAL RULE: all posting goes through createJournalEntry(). No new
+ * FINANCIAL RULE: all posting goes through createVendorCreditInClientTx(). No new
  * financial ledger code here.
  */
 
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
-import { createJournalEntry } from "../accounting/journal-entries.service.js";
+import { createVendorCreditInClientTx } from "../accounting/vendor-credits.service.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -64,7 +64,8 @@ export async function recordPendingRefundObligation(
       input.policyId,
       input.amountCents,
       input.debitRole ?? "ap_control",
-      input.creditRole ?? "expense_default",
+      // LST-F414 — the account the premium bills debited (policy-bill-schedule.service.ts), not expense_default.
+      input.creditRole ?? "insurance_expense",
       input.deterministicMemo,
       input.entryDate,
     ]
@@ -95,6 +96,7 @@ type DrainPolicyRow = {
   credit_role: string;
   deterministic_memo: string;
   entry_date: string;
+  vendor_id: string | null;
 };
 
 /**
@@ -117,10 +119,12 @@ export async function postPendingRefundObligations(
   }
   const pendingRes = await client.query<DrainPolicyRow>(
     `
-      SELECT id::text, amount_cents::bigint, debit_role, credit_role, deterministic_memo, entry_date::text
-      FROM insurance.refund_obligation
-      WHERE ${filters.join(" AND ")}
-      ORDER BY created_at ASC
+      SELECT o.id::text, o.amount_cents::bigint, o.debit_role, o.credit_role, o.deterministic_memo, o.entry_date::text,
+             p.vendor_id::text AS vendor_id
+      FROM insurance.refund_obligation o
+      LEFT JOIN insurance.policy p ON p.id = o.policy_id AND p.operating_company_id = o.operating_company_id
+      WHERE ${filters.map((f) => `o.${f}`).join(" AND ")}
+      ORDER BY o.created_at ASC
     `,
     values
   );
@@ -128,55 +132,59 @@ export async function postPendingRefundObligations(
   const result: DrainResult = { posted: [], still_pending: [] };
 
   for (const obligation of pendingRes.rows) {
-    const debitAccountId = await resolveRoleAccountOptional(client, input.operatingCompanyId, obligation.debit_role as never);
+    // LST-F414 — the refund is a vendor credit to the insurer: Dr A/P (the debit role is always ap_control) / Cr the
+    // credit role's account. A raw journal line on ap_control is refused at write time (ROUND 393.1).
     const creditAccountId = await resolveRoleAccountOptional(
       client,
       input.operatingCompanyId,
       obligation.credit_role as never
     );
-    if (!debitAccountId || !creditAccountId) {
+    if (!creditAccountId) {
       result.still_pending.push({ obligation_id: obligation.id, reason: "coa_role_mapping_not_found" });
+      continue;
+    }
+    if (!obligation.vendor_id) {
+      result.still_pending.push({ obligation_id: obligation.id, reason: "insurer_vendor_missing" });
       continue;
     }
 
     const amountCents = Number(obligation.amount_cents);
 
-    // Dedupe: reuse an existing posted JE with the same memo if present.
-    const existingJe = await client.query<{ id: string }>(
+    // Dedupe on the deterministic memo: a credit already issued for it, or a JE posted before LST-F414.
+    const existing = await client.query<{ id: string | null }>(
       `
-        SELECT id::text
-        FROM accounting.journal_entries
-        WHERE operating_company_id = $1::uuid
-          AND status = 'posted'
-          AND memo = $2
-        ORDER BY created_at ASC
-        LIMIT 1
+        SELECT COALESCE(
+          (SELECT vc.journal_entry_id::text FROM accounting.vendor_credits vc
+            WHERE vc.operating_company_id = $1::uuid AND vc.notes = $2 AND vc.voided_at IS NULL
+            ORDER BY vc.created_at ASC LIMIT 1),
+          (SELECT je.id::text FROM accounting.journal_entries je
+            WHERE je.operating_company_id = $1::uuid AND je.status = 'posted' AND je.memo = $2
+            ORDER BY je.created_at ASC LIMIT 1)
+        ) AS id
       `,
       [input.operatingCompanyId, obligation.deterministic_memo]
     );
 
     let journalEntryId: string;
     let reused: boolean;
-    if (existingJe.rows[0]) {
-      journalEntryId = existingJe.rows[0].id;
+    if (existing.rows[0]?.id) {
+      journalEntryId = existing.rows[0].id;
       reused = true;
     } else {
-      const je = await createJournalEntry(
-        {
-          operating_company_id: input.operatingCompanyId,
-          entry_date: obligation.entry_date,
-          memo: obligation.deterministic_memo,
-          source: "auto",
-          source_transaction_type: "refund_obligation",
-          source_transaction_id: obligation.id,
-          postings: [
-            { account_id: debitAccountId, debit_or_credit: "debit", amount_cents: amountCents, description: obligation.deterministic_memo },
-            { account_id: creditAccountId, debit_or_credit: "credit", amount_cents: amountCents, description: obligation.deterministic_memo },
-          ],
-        },
-        { userId: input.userId, role: input.role }
-      );
-      journalEntryId = je.id;
+      const credit = await createVendorCreditInClientTx(client, {
+        operatingCompanyId: input.operatingCompanyId,
+        vendorId: obligation.vendor_id,
+        issueDate: obligation.entry_date,
+        amountCents,
+        accountId: creditAccountId,
+        notes: obligation.deterministic_memo,
+        userId: input.userId,
+      });
+      if (!credit.journal_entry_id) {
+        result.still_pending.push({ obligation_id: obligation.id, reason: "vendor_credit_not_posted" });
+        continue;
+      }
+      journalEntryId = credit.journal_entry_id;
       reused = false;
     }
 

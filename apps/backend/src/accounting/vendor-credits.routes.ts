@@ -7,6 +7,7 @@ import { DuplicateDocumentNumberError, nextVendorCreditDisplayId, resolveVendorC
 import { duplicateDocumentNumberBody, suggestFromLastSaved } from "../lib/qbo-custom-document-number.js";
 import { resolveVendorIdentitySet } from "./vendor-identity.js";
 import { PostingEngineError, postSourceTransactionInClientTx, reversePostedSourceTransactionInClientTx } from "./posting-engine.service.js";
+import { createVendorCreditInClientTx, VendorCreditCreateError } from "./vendor-credits.service.js";
 import { statusListCondition, statusListParam } from "../lib/status-list.js";
 
 // CUSTVEND-PAR-1: Vendor credit CRUD + apply-to-bill + void.
@@ -242,78 +243,26 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
     let result;
     try {
       result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const vendorRes = await client.query(
-        `SELECT id FROM mdata.vendors WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
-        [body.data.vendor_id, query.data.operating_company_id]
-      );
-      if (!vendorRes.rows[0]) return { code: 404 as const, error: "vendor_not_found" };
-
-      const issueDate = body.data.issue_date ?? companyBusinessDate();
-
-      // ROUND 373.4 — the account must be this company's, active and postable; never guessed, never defaulted.
-      const acctRes = await client.query(
-        `SELECT id FROM catalogs.accounts
-          WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL AND COALESCE(is_postable, true)
-          LIMIT 1`,
-        [body.data.coa_account_id, query.data.operating_company_id]
-      );
-      if (!acctRes.rows[0]) return { code: 400 as const, error: "account_not_postable_for_company" };
-
-      // Canonical generator (same advisory-lock + MAX pattern as invoices/payments/credit memos).
-      // The private COUNT(*)+1 this replaced took no lock, so two concurrent creates produced the
-      // same VC number and one of them died on vendor_credits_operating_company_id_display_id_key.
-      const displayId = await resolveVendorCreditDisplayId(
-        client,
-        query.data.operating_company_id,
-        new Date(`${issueDate}T00:00:00Z`),
-        body.data.display_id
-      );
-
-      const insRes = await client.query(
-        `INSERT INTO accounting.vendor_credits
-           (operating_company_id, vendor_id, display_id, issue_date, amount_cents, notes, created_by_user_id, account_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8::uuid)
-         RETURNING id, display_id, status, issue_date, amount_cents, amount_unapplied_cents, account_id`,
-        [
-          query.data.operating_company_id,
-          body.data.vendor_id,
-          displayId,
-          issueDate,
-          body.data.amount_cents,
-          body.data.notes ?? null,
-          user.uuid,
-          body.data.coa_account_id,
-        ]
-      );
-      const credit = insRes.rows[0];
-      if (!credit) return { code: 500 as const, error: "vendor_credit_create_failed" };
-
-      // ROUND 373.4 — post on this transaction (Dr A/P / Cr the expense account); a failure rolls the credit back.
-      const posting = await postSourceTransactionInClientTx(
-        client as never,
-        { operating_company_id: query.data.operating_company_id, source_transaction_type: "vendor_credit", source_transaction_id: String(credit.id) },
-        { userId: user.uuid }
-      );
-      const jeId = (posting as { journal_entry_id?: string | null })?.journal_entry_id ?? null;
-      if (jeId) {
-        await client.query(`UPDATE accounting.vendor_credits SET journal_entry_id = $2::uuid WHERE id = $1::uuid`, [credit.id, jeId]);
-      }
-      credit.journal_entry_id = jeId;
-
-      await appendCrudAudit(
-        client,
-        user.uuid,
-        "accounting.vendor_credits.created",
-        { resource_type: "accounting.vendor_credits", resource_id: String(credit.id), display_id: displayId, vendor_id: body.data.vendor_id },
-        "info",
-        "CUSTVEND-PAR-1"
-      );
-
+      // LST-F414 — the one vendor-credit writer (also used by the insurance refund / fleet-remove posters).
+      const credit = await createVendorCreditInClientTx(client, {
+        operatingCompanyId: query.data.operating_company_id,
+        vendorId: body.data.vendor_id,
+        issueDate: body.data.issue_date ?? companyBusinessDate(),
+        amountCents: body.data.amount_cents,
+        accountId: body.data.coa_account_id,
+        notes: body.data.notes ?? null,
+        displayId: body.data.display_id ?? null,
+        userId: user.uuid,
+      });
       return { code: 201 as const, data: credit };
     });
     } catch (error) {
       if (error instanceof DuplicateDocumentNumberError) {
         return reply.code(409).send(duplicateDocumentNumberBody(error));
+      }
+      if (error instanceof VendorCreditCreateError) {
+        const code = error.code === "vendor_not_found" ? 404 : error.code === "account_not_postable_for_company" ? 400 : 500;
+        return reply.code(code).send({ error: error.code, message: error.message });
       }
       throw error;
     }

@@ -1,7 +1,7 @@
 import { membershipAware } from "../../test-helpers/membership-aware-query.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const createJournalEntryMock = vi.fn();
+const createVendorCreditMock = vi.fn();
 const resolveRoleAccountOptionalMock = vi.fn();
 const appendCrudAuditMock = vi.fn(async () => {});
 const recordObligationMock = vi.fn(async () => ({ id: "oblig-1", created: true }));
@@ -10,8 +10,8 @@ vi.mock("./refund-obligation.service.js", () => ({
   recordPendingRefundObligation: (...args: unknown[]) => recordObligationMock(...args),
 }));
 
-vi.mock("../accounting/journal-entries.service.js", () => ({
-  createJournalEntry: (...args: unknown[]) => createJournalEntryMock(...args),
+vi.mock("../accounting/vendor-credits.service.js", () => ({
+  createVendorCreditInClientTx: (...args: unknown[]) => createVendorCreditMock(...args),
 }));
 
 vi.mock("../accounting/coa-roles/resolver.service.js", () => ({
@@ -32,7 +32,7 @@ import { cancelInsurancePolicy, computeUnearnedPremiumCents } from "./policy-can
 
 const OC = "11111111-1111-4111-8111-111111111111";
 const POLICY_ID = "22222222-2222-4222-8222-222222222222";
-const AP_ACCT = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+const INSURER_VENDOR = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const EXP_ACCT = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 
 type PolicyOverrides = Partial<{
@@ -40,11 +40,12 @@ type PolicyOverrides = Partial<{
   total_premium_cents: number;
   effective_date: string;
   expiry_date: string;
+  vendor_id: string | null;
 }>;
 
 function buildQueryMock(opts: {
   policy?: PolicyOverrides | null;
-  existingRefundJeId?: string | null;
+  existingRefund?: { id: string; journal_entry_id: string } | null;
   cancelledScheduleRows?: number;
 } = {}) {
   const policy =
@@ -55,6 +56,7 @@ function buildQueryMock(opts: {
           status: "active",
           policy_number: "POL-9",
           insurer_name: "Acme Insurance",
+          vendor_id: INSURER_VENDOR,
           total_premium_cents: 1_200_000,
           effective_date: "2026-01-01",
           expiry_date: "2027-01-01",
@@ -66,8 +68,8 @@ function buildQueryMock(opts: {
 
   return vi.fn(async (sql: string, _values?: unknown[]) => {
     if (sql.includes("SET LOCAL app.operating_company_id")) return { rows: [] };
-    if (sql.includes("FROM accounting.journal_entries")) {
-      return { rows: opts.existingRefundJeId ? [{ id: opts.existingRefundJeId }] : [] };
+    if (sql.includes("FROM accounting.vendor_credits")) {
+      return { rows: opts.existingRefund ? [opts.existingRefund] : [] };
     }
     if (sql.includes("UPDATE insurance.policy")) {
       return policy ? { rows: [{ ...policy, status: "cancelled" }] } : { rows: [] };
@@ -107,18 +109,18 @@ describe("computeUnearnedPremiumCents", () => {
 
 describe("cancelInsurancePolicy", () => {
   beforeEach(() => {
-    createJournalEntryMock.mockReset();
+    createVendorCreditMock.mockReset();
     resolveRoleAccountOptionalMock.mockReset();
     appendCrudAuditMock.mockClear();
     recordObligationMock.mockClear();
     recordObligationMock.mockResolvedValue({ id: "oblig-1", created: true });
-    createJournalEntryMock.mockResolvedValue({ id: "je-1" });
+    createVendorCreditMock.mockResolvedValue({ id: "vc-1", journal_entry_id: "je-1" });
     resolveRoleAccountOptionalMock.mockImplementation(async (_c: unknown, _oc: string, role: string) =>
-      role === "ap_control" ? AP_ACCT : role === "expense_default" ? EXP_ACCT : null
+      role === "insurance_expense" ? EXP_ACCT : null
     );
   });
 
-  it("cancels, stops future unissued schedule rows, and posts a balanced refund JE", async () => {
+  it("cancels, stops future unissued schedule rows, and issues the refund as the insurer's vendor credit (LST-F414)", async () => {
     queryMock = buildQueryMock({ policy: { effective_date: "2026-01-01", expiry_date: "2027-01-01" }, cancelledScheduleRows: 3 });
     const result = await cancelInsurancePolicy({
       userId: "user-1",
@@ -136,21 +138,24 @@ describe("cancelInsurancePolicy", () => {
     expect(result.refund).not.toBeNull();
     expect(result.refund?.reused).toBe(false);
 
-    expect(createJournalEntryMock).toHaveBeenCalledTimes(1);
-    const [jeInput] = createJournalEntryMock.mock.calls[0] as [
-      { source: string; postings: Array<{ debit_or_credit: string; amount_cents: number; account_id: string }> }
+    expect(result.refund?.vendor_credit_id).toBe("vc-1");
+    expect(result.refund?.journal_entry_id).toBe("je-1");
+
+    // A/P is written only by its documents (ROUND 393.1): the refund is a vendor credit to the insurer against the
+    // insurance_expense account the premium bills debited — never a raw journal line on ap_control.
+    expect(createVendorCreditMock).toHaveBeenCalledTimes(1);
+    const [, creditInput] = createVendorCreditMock.mock.calls[0] as [
+      unknown,
+      { vendorId: string; accountId: string; amountCents: number; issueDate: string; notes: string }
     ];
-    expect(jeInput.source).toBe("auto");
-    expect(jeInput.postings).toHaveLength(2);
-    const debit = jeInput.postings.find((p) => p.debit_or_credit === "debit");
-    const credit = jeInput.postings.find((p) => p.debit_or_credit === "credit");
-    expect(debit?.account_id).toBe(AP_ACCT);
-    expect(credit?.account_id).toBe(EXP_ACCT);
-    expect(debit?.amount_cents).toBe(credit?.amount_cents);
-    expect(debit?.amount_cents).toBe(result.unearned_premium_cents);
+    expect(creditInput.vendorId).toBe(INSURER_VENDOR);
+    expect(creditInput.accountId).toBe(EXP_ACCT);
+    expect(creditInput.amountCents).toBe(result.unearned_premium_cents);
+    expect(creditInput.issueDate).toBe("2026-07-01");
+    expect(creditInput.notes).toContain("policy POL-9");
   });
 
-  it("is a no-op for an already-cancelled policy (no JE posted)", async () => {
+  it("is a no-op for an already-cancelled policy (no credit issued)", async () => {
     queryMock = buildQueryMock({ policy: { status: "cancelled" } });
     const result = await cancelInsurancePolicy({
       userId: "user-1",
@@ -162,12 +167,12 @@ describe("cancelInsurancePolicy", () => {
     });
 
     expect(result.kind).toBe("already_cancelled");
-    expect(createJournalEntryMock).not.toHaveBeenCalled();
+    expect(createVendorCreditMock).not.toHaveBeenCalled();
     expect(appendCrudAuditMock).not.toHaveBeenCalled();
   });
 
-  it("reuses an existing refund JE (idempotent) instead of double-posting", async () => {
-    queryMock = buildQueryMock({ existingRefundJeId: "je-prior" });
+  it("reuses an existing refund credit (idempotent) instead of double-posting", async () => {
+    queryMock = buildQueryMock({ existingRefund: { id: "vc-prior", journal_entry_id: "je-prior" } });
     const result = await cancelInsurancePolicy({
       userId: "user-1",
       role: "Manager",
@@ -181,7 +186,8 @@ describe("cancelInsurancePolicy", () => {
     if (result.kind !== "ok") return;
     expect(result.refund?.reused).toBe(true);
     expect(result.refund?.journal_entry_id).toBe("je-prior");
-    expect(createJournalEntryMock).not.toHaveBeenCalled();
+    expect(result.refund?.vendor_credit_id).toBe("vc-prior");
+    expect(createVendorCreditMock).not.toHaveBeenCalled();
   });
 
   it("returns policy_not_found when the policy does not exist", async () => {
@@ -195,7 +201,7 @@ describe("cancelInsurancePolicy", () => {
       cancelReason: "x",
     });
     expect(result.kind).toBe("policy_not_found");
-    expect(createJournalEntryMock).not.toHaveBeenCalled();
+    expect(createVendorCreditMock).not.toHaveBeenCalled();
   });
 
   it("still cancels + records a durable obligation + CRITICAL audit when COA roles are unmapped", async () => {
@@ -214,7 +220,7 @@ describe("cancelInsurancePolicy", () => {
     if (result.kind !== "ok") return;
     expect(result.refund).toBeNull();
     expect(result.refund_skipped_reason).toBe("coa_role_mapping_not_found");
-    expect(createJournalEntryMock).not.toHaveBeenCalled();
+    expect(createVendorCreditMock).not.toHaveBeenCalled();
 
     // Durable obligation recorded (secondary signal kept in response).
     expect(recordObligationMock).toHaveBeenCalledTimes(1);
@@ -226,5 +232,24 @@ describe("cancelInsurancePolicy", () => {
     );
     expect(criticalCall).toBeTruthy();
     expect(criticalCall?.[4]).toBe("critical");
+  });
+
+  it("records a durable obligation, never a plug, when the policy names no insurer vendor", async () => {
+    queryMock = buildQueryMock({ policy: { vendor_id: null } });
+    const result = await cancelInsurancePolicy({
+      userId: "user-1",
+      role: "Owner",
+      operatingCompanyId: OC,
+      policyId: POLICY_ID,
+      cancelledOn: "2026-07-01",
+      cancelReason: "no insurer",
+    });
+
+    expect(result.kind).toBe("ok");
+    if (result.kind !== "ok") return;
+    expect(result.refund).toBeNull();
+    expect(result.refund_skipped_reason).toBe("insurer_vendor_missing");
+    expect(createVendorCreditMock).not.toHaveBeenCalled();
+    expect(recordObligationMock).toHaveBeenCalledTimes(1);
   });
 });
