@@ -2267,5 +2267,10 @@
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-06",
     "purpose": "Declare catalogs.accounts.posts_to_financials (boolean NOT NULL DEFAULT true) — live on prod with no creating migration, so a fresh database dies at 202615400930 (CC-3 finding 2026-10-04). ADD COLUMN IF NOT EXISTS: no-op on prod; sorts before 202615400930 on a fresh chain."
+  },
+  "202615440700": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-06",
+    "purpose": "Entity isolation (ACCT-F2026100624): FK operating_company_id -> org.companies on audit.record_deletions, fuel.load_fuel_cost / tank_events / tank_state / unit_mpg, telematics.odometer_readings / unit_stop_events; FORCE RLS on telematics.geofence_odometer_captures / odometer_readings / unit_stop_events; natural-key FK company_code -> org.companies(code) on the 10 preserve.* tables."
   }
 }
