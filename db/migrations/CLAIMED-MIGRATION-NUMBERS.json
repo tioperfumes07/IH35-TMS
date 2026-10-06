@@ -2247,5 +2247,10 @@
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-06",
     "purpose": "FARO-F435 (Lead patch, applied by CC-2): views.factoring_repurchase_obligation — one row per factoring purchase line; day-35 default interest, repurchase deadline from the owner-decision due event, partial payment leaves it open. Unblocks three Faro guards that exited on the missing view."
+  },
+  "202615440900": {
+    "claimed_by": "CC-3",
+    "claimed_at": "2026-10-06",
+    "purpose": "Contract PDF format versioning: legal.contract_instances.pdf_format_version — an unsigned contract whose filed PDF predates the current legal-document format (12pt, 1in margins, Page X of Y) is re-filed in the current format on open; executed PDFs are never re-rendered"
   }
 }
