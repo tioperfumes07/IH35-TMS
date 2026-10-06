@@ -126,7 +126,7 @@
     "202615180700": {
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-01",
-      "purpose": "ROUND 313 FACT-TIEOUT-01: factor.faro_statement_lines (parsed Faro statement rows: purchase/reserve/fee/wire/deduction) + match columns to factoring_advances and bank lines."
+      "purpose": "RELEASED UNUSED 2026-10-06 (CC-2): no file was ever authored at this number and the table was never built (its guard claim 12063 was released 2026-10-04 for the same reason). A Faro statement-lines table is re-claimed fresh if it is ordered. Was: ROUND 313 FACT-TIEOUT-01 factor.faro_statement_lines."
     },
     "202615170300": {
       "claimed_by": "claude",
@@ -661,7 +661,7 @@
     "202613291000": {
       "claimed_by": "claude",
       "claimed_at": "2026-08-30",
-      "purpose": "banking_reconciliation_sessions_one_open_per_account_period (GO-ACCT-01, CC-2 control fix)"
+      "purpose": "RELEASED UNUSED 2026-10-06 (CC-2): no file was ever authored at this number; the control it was claimed for (one open reconciliation session per account + period) shipped as 202613300700_go_acct_01_recon_sessions_void_status_and_unique.sql. Was: banking_reconciliation_sessions_one_open_per_account_period (GO-ACCT-01)."
     },
     "202613290900": {
       "claimed_by": "claude",
