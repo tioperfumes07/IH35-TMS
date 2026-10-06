@@ -2729,3 +2729,36 @@ DID: handshake (Desktop: "ls: /Users/jorgemunoz/Desktop/CODERS/: Operation not p
 PROOF: origin/main sha I see = b8c2be6bd2
 BLOCKED: none
 NEXT: ROUND 435 legal contract PDFs by category, filed to hub both ways (PR gating now); 433 done: #25547 natural sign, #25550 cash-flow account_id, #25555 Reefer Diesel, money cells 89->55 (#25550/#25558/#25560); 4 stale NOW files archived in #25535 — do not restore
+
+### CC-3 · 15:28Z — DONE LINES (INBOX 2026-10-06)
+Deployed: healthz git_sha 2c9235efdc (ROUND 435) at read time; later merges below deploy with the next build.
+
+**ROUND 435 — legal contract PDFs** · #25574 2c9235efdc + step #25578 89eb2a8d08 · migration 202615430900 applied 15:24Z
+- Linkage (Rule 14):
+  - file <-> contract (docs.file_links contract_instance + contract_instances.pdf_file_id);
+  - contract -> driver / customer / vendor / unit / equipment / load from its typed links;
+  - insurer contract -> the carrier's first insurance bill.
+- Guard PASS: "verify-legal-contracts-filed-as-pdf OK … live: 3 unfiled (ceiling 3, shrink-only)".
+- OPEN on the done line: "one real contract opened as a PDF from Legal AND from its hub". The 3 USMCA contracts file on first open, which needs a person in the app: the owner's Chrome step. Nothing seeded.
+
+**ROUND 433:**
+- **natural sign** · #25547 9cf3951ab2. CC-2's lib/naturalBalance.ts (#24776) already existed, so the "zero implementation" grep was a name miss. Added the backend twin plus naturalSign(type, debit, credit). The real fix: bank tie-out and live-balance drift compared card feeds with the raw Liability balance. Guard: "verify-no-surface-prints-a-raw-ledger-sign OK".
+- **cash-flow account_id** · #25550 8fdbe44b47 (one line per account, drills to the register).
+- **Reefer Diesel** · #25555 24f756f612 (Relay fills folded reefer gallons into diesel).
+- **money cells, 89 -> 49:**
+  - #25550 89->88;
+  - #25558 24d60973b5 88->76 (customer A/R aging moved onto the one ladder and the one open-A/R population);
+  - #25560 fa717558e4 76->55 (2 wired + 19 never money: 5 inputs, 14 declared quantities; CoA bank balance now by ledger_account_id, so cards are no longer blank);
+  - #25579 89224f817b 55->49.
+  - Guard: "verify-money-cells-click-through OK — shrink-only 49 <= 49".
+
+**ROUND 432** · #25535 8ec75292d8
+- Two branches: merged 10-05, #25466 and #25467.
+- Relay 69: not posted by a seat (owner law). All 69 fills are alive; they post on human re-match.
+- posted_to_gl: 0 of 119.
+- 2170: 0 unposted; the ceiling is now 0.
+- 367.7: USMCA a/b/c = 0/0/0.
+
+**Also**
+- RLS re-sweep #25508 69cad0bcc8 is live: "verify:rls-uuid-cast-nullif PASS … live: 0 bare policies".
+- 4 stale NOW files were archived in #25535. Do not restore them.
