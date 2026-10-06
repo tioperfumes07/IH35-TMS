@@ -1218,7 +1218,7 @@ export function ReconciliationWorkspacePage() {
                   <div
                     key={tx.id}
                     className={`w-full px-2 py-2 text-left ${
-                      selectedTransactionId === tx.id ? "bg-slate-100" : "bg-white hover:bg-gray-50"
+                      selectedTransactionId === tx.id ? "bg-slate-100" : "bg-[var(--surface-unselected)] hover:bg-[var(--surface-hover)]"
                     } border-b border-gray-100`}
                     data-b2-recon-row-open={docHref ? "1" : "0"}
                   >
@@ -1287,7 +1287,7 @@ export function ReconciliationWorkspacePage() {
                         className={`mx-auto mt-0.5 flex h-7 w-7 items-center justify-center rounded-full border text-xs ${
                           cleared
                             ? "border-[#14314F] bg-[#14314F] text-white"
-                            : "border-gray-400 bg-white text-transparent"
+                            : "border-gray-400 bg-[var(--surface-unselected)] text-transparent"
                         } ${isReportMode ? "cursor-default opacity-80" : ""}`}
                         onClick={() => {
                           if (isReportMode || !sessionId || !companyId) return;
@@ -1387,7 +1387,7 @@ export function ReconciliationWorkspacePage() {
                   type="button"
                   onClick={() => setSelectedCandidateId(`${event.event_type}:${event.id}`)}
                   className={`w-full border-b border-gray-100 px-2 py-2 text-left ${
-                    selectedCandidateId === `${event.event_type}:${event.id}` ? "bg-slate-100" : "bg-white hover:bg-gray-50"
+                    selectedCandidateId === `${event.event_type}:${event.id}` ? "bg-slate-100" : "bg-[var(--surface-unselected)] hover:bg-gray-50"
                   }`}
                 >
                   <div className="text-xs uppercase tracking-wide text-gray-500">{event.event_type}</div>

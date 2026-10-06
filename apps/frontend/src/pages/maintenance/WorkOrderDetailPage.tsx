@@ -801,7 +801,7 @@ export function WorkOrderDetailPage() {
 
       {invoiceCents != null ? (
         <div
-          className={`rounded-sm border px-3 py-2 text-xs ${invoiceMismatch ? "border-red-300 bg-red-50 text-red-900" : "border-gray-200 bg-white text-gray-800"}`}
+          className={`rounded-sm border px-3 py-2 text-xs ${invoiceMismatch ? "border-red-300 bg-red-50 text-red-900" : "border-gray-200 bg-[var(--surface-unselected)] text-gray-800"}`}
         >
           Invoice {money.format(invoiceCents / 100)} vs Line items {money.format(linesCents / 100)} · Δ{" "}
           {money.format((deltaCents ?? 0) / 100)}

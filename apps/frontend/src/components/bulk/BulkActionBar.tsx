@@ -80,7 +80,7 @@ export function BulkActionBar({
             className={
               isDanger
                 ? "rounded-sm border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-800 disabled:opacity-50"
-                : "rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50"
+                : "rounded-sm border border-slate-300 bg-[var(--surface-unselected)] px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50"
             }
             disabled={applying || action.disabled}
             title={action.title}

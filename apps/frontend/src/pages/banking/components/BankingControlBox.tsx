@@ -85,7 +85,7 @@ export function BankingControlGroup({ children, className }: { children: ReactNo
   return (
     <div
       className={[
-        "inline-flex h-7 items-stretch overflow-hidden rounded-sm border border-[#E5E7EB] bg-white",
+        "inline-flex h-7 items-stretch overflow-hidden rounded-sm border border-[#E5E7EB] bg-[var(--surface-unselected)]",
         "[&>button+button]:border-l [&>button+button]:border-[#E5E7EB]",
         "[&>*+*]:border-l [&>*+*]:border-[#E5E7EB]",
         className ?? "",

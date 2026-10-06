@@ -24,7 +24,7 @@ export function SuperAdminNav() {
             className={`rounded px-2 py-1 font-medium transition-colors ${
               active
                 ? "bg-white text-gray-900 shadow-xs ring-1 ring-gray-200"
-                : "text-gray-500 hover:bg-white hover:text-gray-800"
+                : "text-gray-500 hover:bg-[var(--surface-unselected)] hover:text-gray-800"
             }`}
           >
             {link.label}

@@ -404,7 +404,7 @@ export function UserDetailPage() {
             {(safetyEventsQuery.isError ? [] : safetyEventsQuery.data ?? []).map((event) => (
               <div
                 key={event.id}
-                className={`rounded-sm border p-3 ${event.voided_at ? "border-gray-300 bg-gray-100 text-gray-500" : "border-gray-200 bg-white"}`}
+                className={`rounded-sm border p-3 ${event.voided_at ? "border-gray-300 bg-gray-100 text-gray-500" : "border-gray-200 bg-[var(--surface-unselected)]"}`}
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">

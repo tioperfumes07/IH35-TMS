@@ -150,7 +150,7 @@ export function DriverCommunicationsTab({
                 className={`flex gap-3 rounded border p-3 ${
                   entry.direction === "inbound"
                     ? "border-slate-200 bg-slate-100"
-                    : "border-gray-200 bg-white"
+                    : "border-gray-200 bg-[var(--surface-unselected)]"
                 }`}
               >
                 <div className="mt-0.5 shrink-0">

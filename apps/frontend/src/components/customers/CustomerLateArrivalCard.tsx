@@ -82,7 +82,7 @@ export function CustomerLateArrivalCard({ operatingCompanyId, customerId }: Prop
   return (
     <div
       data-testid="customer-late-arrival-card"
-      className={`rounded-sm border p-3 ${data.chronic_offender ? "border-slate-300 bg-slate-50" : "border-slate-200 bg-white"}`}
+      className={`rounded-sm border p-3 ${data.chronic_offender ? "border-slate-300 bg-slate-50" : "border-slate-200 bg-[var(--surface-unselected)]"}`}
     >
       <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Late arrival rate (30d)</div>
       <div className="mt-1 text-page-title font-semibold text-slate-900">{pct(data.late_rate)}</div>

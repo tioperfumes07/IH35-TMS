@@ -83,7 +83,7 @@ function PlannerDayCell({
     <td
       ref={setNodeRef}
       data-testid={`planner-cell-${driverId}-${day}`}
-      className={`min-w-[120px] border-b border-r align-top p-1 ${isOver ? "bg-slate-100" : "bg-white"}`}
+      className={`min-w-[120px] border-b border-r align-top p-1 ${isOver ? "bg-slate-100" : "bg-[var(--surface-unselected)]"}`}
     >
       {showHosOverlay && dayBlackouts.length > 0 ? (
         <div

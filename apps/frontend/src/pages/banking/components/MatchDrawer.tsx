@@ -777,7 +777,7 @@ export function MatchDrawer({
               className={
                 multiExact
                   ? "rounded-sm border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-white hover:bg-slate-800 disabled:opacity-60"
-                  : "rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs text-slate-400"
+                  : "rounded-sm border border-slate-300 bg-[var(--surface-unselected)] px-2 py-1 text-xs text-slate-400"
               }
               disabled={!multiExact || multiConfirmMutation.isPending}
               onClick={() => multiExact && multiConfirmMutation.mutate(multiSelected)}
@@ -928,7 +928,7 @@ export function MatchDrawer({
                 data-testid="match-candidate-row"
                 onClick={() => setSelectedId(c.ledger_entry_id)}
                 className={`cursor-pointer rounded border px-3 py-2 ${
-                  isTopAuto ? "border-slate-400 bg-slate-50" : "border-slate-200 bg-white"
+                  isTopAuto ? "border-slate-400 bg-slate-50" : "border-slate-200 bg-[var(--surface-unselected)]"
                 } ${isSelected ? "ring-1 ring-slate-400" : ""}`}
               >
                 <div className="flex items-center justify-between gap-2">
@@ -1003,7 +1003,7 @@ export function MatchDrawer({
                     className={
                       canConfirm
                         ? "rounded-sm border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-white hover:bg-slate-800 disabled:opacity-60"
-                        : "rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs text-slate-400"
+                        : "rounded-sm border border-slate-300 bg-[var(--surface-unselected)] px-2 py-1 text-xs text-slate-400"
                     }
                     disabled={!canConfirm || isConfirming}
                     title={

@@ -546,7 +546,7 @@ export function Combobox({
         className={`flex w-full min-w-0 items-center gap-1 ${
           formFieldChrome
             ? ""
-            : `rounded border bg-white px-2 ${controlSizeClass}`
+            : `rounded border bg-[var(--surface-unselected)] px-2 ${controlSizeClass}`
         } ${
           disabled
             ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400"

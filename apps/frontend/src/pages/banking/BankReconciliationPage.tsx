@@ -380,7 +380,7 @@ export function BankReconciliationPage() {
                   }
                 }}
                 className={`w-full cursor-pointer rounded border px-2 py-2 text-left text-xs ${
-                  selectedTxId === row.id ? "border-slate-300 bg-slate-100" : "border-gray-100 bg-white hover:bg-gray-50"
+                  selectedTxId === row.id ? "border-slate-300 bg-slate-100" : "border-gray-100 bg-[var(--surface-unselected)] hover:bg-[var(--surface-hover)]"
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
