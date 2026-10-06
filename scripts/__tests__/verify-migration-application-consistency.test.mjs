@@ -160,3 +160,14 @@ test("an index whose columns were never dropped is still reported", () => {
   assert.match(run.stderr, /index missing: qa\.idx_policy_status/);
   assert.doesNotMatch(run.stderr, /idx_policy_tenant_status/);
 });
+
+test("an index created inside a DO block on a later-dropped column is not expected", () => {
+  const run = runFixture("dropcol-do-migrations", "state-dropcol.json");
+  assert.equal(run.status, 0, run.stderr);
+});
+
+test("the same DO-block index is still reported when its column was never dropped", () => {
+  const run = runFixture("dropcol-do-nodrop-migrations", "state-dropcol.json");
+  assert.equal(run.status, 1);
+  assert.match(run.stderr, /index missing: qa\.uq_policy_tenant_id/);
+});
