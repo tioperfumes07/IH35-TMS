@@ -379,7 +379,7 @@ function collectExpectedObjects(migrationsDirectory) {
       if (/^do\b/i.test(lowerStmt)) {
         const doMasked = normalizedStmt.replace(/'(?:''|[^'])*'/g, "''");
         const doOps = doMasked.match(
-          /(drop\s+table\s+(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?|alter\s+table\s+(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?\s+(?:rename\s+to|set\s+schema)\s+[^;]+|create\s+(?:unique\s+)?index\s+(?:concurrently\s+)?(?:if\s+not\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?\s+on\s+(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?|drop\s+index\s+(?:concurrently\s+)?(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?|alter\s+index\s+(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?\s+rename\s+to\s+"?[\w$]+"?|alter\s+schema\s+"?[\w$]+"?\s+rename\s+to\s+"?[\w$]+"?)/gi
+          /(drop\s+table\s+(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?|alter\s+table\s+(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?\s+(?:rename\s+to|set\s+schema)\s+[^;]+|create\s+(?:unique\s+)?index\s+(?:concurrently\s+)?(?:if\s+not\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?\s+on\s+(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?(?:\s+using\s+\w+)?(?:\s*\([^;]*?\))?|drop\s+index\s+(?:concurrently\s+)?(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?|alter\s+index\s+(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?\s+rename\s+to\s+"?[\w$]+"?|alter\s+schema\s+"?[\w$]+"?\s+rename\s+to\s+"?[\w$]+"?)/gi
         );
         if (doOps) {
           for (const op of doOps) {
@@ -440,6 +440,7 @@ function collectExpectedObjects(migrationsDirectory) {
                 indexName: indexParts.name,
                 tableSchema: tableParts.schema,
                 table: tableParts.name,
+                columns: indexColumns(opStmt),
                 file: filename,
                 line: stmt.line,
               });

@@ -1,0 +1,1 @@
+ALTER TABLE qa.policy DROP COLUMN IF EXISTS tenant_id;
