@@ -27,9 +27,17 @@ describe("Load Number allocation (GO-10 REV-B)", () => {
     expect(mdataLoads).not.toMatch(/substring\([a-z_]+ FROM '\(\[0-9\]\{\d+\}\)\$'\)/);
   });
 
-  it("both files mint through the ONE shared allocator -- F2", () => {
+  // LST-F417: POST /api/v1/mdata/loads delegates to the ONE shared load-create path since #22372
+  // (createLoadWithFullSideEffects in book-load.service.ts), so its numbering / SAVEPOINT / 23505 handling are asserted
+  // there; the route must hold no create of its own.
+  it("POST /api/v1/mdata/loads creates through the ONE shared create path, never its own INSERT -- #22372", () => {
+    expect(mdataLoads).toContain("createLoadWithFullSideEffects");
+    expect(mdataLoads).not.toContain("INSERT INTO mdata.loads");
+  });
+
+  it("both create paths mint through the ONE shared allocator -- F2", () => {
     expect(reservationSvc).toContain("export async function allocateNextLoadNumber");
-    expect(mdataLoads).toContain("allocateNextLoadNumber");
+    expect(bookLoadSvc).toContain("reserveNextLoadId");
     // the old divergent per-file prefix formats are gone
     expect(reservationSvc).not.toContain("L-${ymd}-${seq}");
     expect(mdataLoads).not.toContain("toCompanyLoadToken");
@@ -58,15 +66,10 @@ describe("Load Number allocation (GO-10 REV-B)", () => {
     expect(reservationSvc).not.toContain("padStart(5");
   });
 
-  it("catches 23505 AT INSERT on reserve-id, POST /api/v1/mdata/loads, and Book Load -- F4", () => {
+  it("catches 23505 AT INSERT on reserve-id and on the shared create path (Book Load + POST /api/v1/mdata/loads) -- F4", () => {
     expect(reservationSvc).toContain("SAVEPOINT reserve_load_id");
     expect(reservationSvc).toContain("ROLLBACK TO SAVEPOINT reserve_load_id");
     expect(reservationSvc).toContain("LoadNumberConflictError");
-
-    expect(mdataLoads).toContain("SAVEPOINT create_load");
-    expect(mdataLoads).toContain("ROLLBACK TO SAVEPOINT create_load");
-    expect(mdataLoads).toContain('.code !== "23505"');
-    expect(mdataLoads).toContain("LoadNumberConflictError");
 
     expect(bookLoadSvc).toContain("SAVEPOINT book_load_insert");
     expect(bookLoadSvc).toContain("ROLLBACK TO SAVEPOINT book_load_insert");
@@ -80,7 +83,6 @@ describe("Load Number allocation (GO-10 REV-B)", () => {
 
   it("the 409 body is structured { error, load_number, existing_id }, not a bare string -- F4", () => {
     expect(reservationSvc).toContain("existingId");
-    expect(mdataLoads).toContain("existing_id");
     expect(bookLoadSvc).toContain("existing_id");
   });
 
@@ -92,8 +94,6 @@ describe("Load Number allocation (GO-10 REV-B)", () => {
   // cause. Both call sites must check which constraint actually fired before reporting
   // duplicate_load_number.
   it("distinguishes a real load_number collision from any other unique-index hit on the same INSERT -- GAP-TRACE-NO", () => {
-    expect(mdataLoads).toContain('.constraint !== "loads_operating_company_id_load_number_key"');
-    expect(mdataLoads).toContain("load_insert_unique_violation_non_load_number");
     expect(bookLoadSvc).toContain('.constraint !== "loads_operating_company_id_load_number_key"');
     expect(bookLoadSvc).toContain("load_insert_unique_violation_non_load_number");
   });
