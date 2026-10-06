@@ -2121,6 +2121,11 @@
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-05",
       "purpose": "AUTH-401: append-only maintenance.pm_alerts admits DELETE of rows listed in _system.purge_authorized_rows under an open AUTH (ARM L); nothing else"
+    },
+    "202615430100": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-06",
+      "purpose": "LST-F412: every non-QBO accounting.bills row gets a BILL-YYYY-NNNNN display_id at INSERT (one DB writer, same advisory lock as nextBillDisplayId); six writers inserted bills with display_id NULL"
     }
   },
   "202613590001": {
