@@ -75,7 +75,12 @@ function selftest() {
   }
   const noOpco = analyze({
     ...real,
-    assignSrc: real.assignSrc.replace(/\n\s*operating_company_id\n/, "\n"),
+    // LST-F418: planted inside the assignment INSERT only (factor.service.ts has other INSERTs naming the column first),
+    // and tolerant of the trailing comma the column now carries.
+    assignSrc: real.assignSrc.replace(
+      /(INSERT INTO factoring\.customer_factor_assignment \([\s\S]*?)\n\s*operating_company_id,?\n/,
+      "$1\n"
+    ),
   });
   if (!noOpco.some((x) => x.includes("operating_company_id"))) {
     console.error("selftest: omitted operating_company_id plant not caught");

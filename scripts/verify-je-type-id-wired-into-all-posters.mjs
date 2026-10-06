@@ -25,7 +25,7 @@ const LIVE_POSTER_FILES = [
   "apps/backend/src/accounting/fuel-posting/poster.service.ts",
   "apps/backend/src/accounting/lease-asc842/lease-posting.service.ts",
   "apps/backend/src/accounting/period-close-retained-earnings.service.ts",
-  "apps/backend/src/accounting/recurring.worker.ts",
+  // LST-F418: recurring.worker.ts no longer posts (CC-2-389.4, 4693704449: drafts only; verify-recurring-worker-never-posts owns it).
 ];
 
 function analyze() {

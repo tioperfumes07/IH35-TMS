@@ -29,10 +29,13 @@ const FILE = "apps/backend/src/accounting/company-settlement-report.service.ts";
 export function checkCompanyMpg(source) {
   const failures = [];
 
-  if (!/COALESCE\(SUM\(COALESCE\(miles_practical,\s*miles_shortest\)\),\s*0\)::text\s+AS\s+total_miles/.test(source)) {
-    failures.push(
-      "total_miles must be SUM(COALESCE(miles_practical, miles_shortest)) — miles_shortest is populated on 29 of 138 live loads"
-    );
+  // LST-F418: owner 2026-09-04 (5796d18688) — practical (customer) miles ONLY, the AlwaysTrack MPG basis; never blended
+  // with shortest. The earlier COALESCE(miles_practical, miles_shortest) is itself a regression now.
+  if (!/COALESCE\(SUM\(miles_practical\),\s*0\)::text\s+AS\s+total_miles/.test(source)) {
+    failures.push("total_miles must be SUM(miles_practical) — practical miles are the MPG basis (owner 2026-09-04)");
+  }
+  if (/COALESCE\(miles_practical,\s*miles_shortest\)/.test(source)) {
+    failures.push("total_miles blends miles_shortest into practical miles — the owner ruled practical only, never blended");
   }
   if (/SELECT\s+COALESCE\(SUM\(miles_shortest\),\s*0\)::text\s+AS\s+total_miles/.test(source)) {
     failures.push("total_miles reverted to SUM(miles_shortest) alone — that understated fleet MPG about 4.5x");
@@ -58,10 +61,12 @@ if (process.argv.includes("--selftest")) {
     ["baseline (unmodified source)", good, 0],
     [
       "reverts to miles_shortest only",
-      good.replace(
-        /COALESCE\(SUM\(COALESCE\(miles_practical, miles_shortest\)\), 0\)::text AS total_miles/,
-        "COALESCE(SUM(miles_shortest), 0)::text AS total_miles"
-      ),
+      good.replace(/COALESCE\(SUM\(miles_practical\), 0\)::text AS total_miles/, "COALESCE(SUM(miles_shortest), 0)::text AS total_miles"),
+      1,
+    ],
+    [
+      "blends shortest back in",
+      good.replace(/COALESCE\(SUM\(miles_practical\), 0\)::text AS total_miles/, "COALESCE(SUM(COALESCE(miles_practical, miles_shortest)), 0)::text AS total_miles"),
       1,
     ],
     ["the basis label is dropped", good.replace(/miles_basis/g, "x_removed"), 1],

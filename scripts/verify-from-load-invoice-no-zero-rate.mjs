@@ -19,6 +19,8 @@ const LABEL = "verify-from-load-invoice-no-zero-rate";
 const FILES = {
   fromLoad: "apps/backend/src/accounting/from-load.ts",
   bookLoad: "apps/backend/src/dispatch/book-load.service.ts",
+  // LST-F418: e9f2e3cf9e (#19825) — proforma at FIRST PICKUP, never at book; the zero-rate skip + audit moved here.
+  firstPickup: "apps/backend/src/accounting/proforma-mint-on-first-pickup.ts",
   resync: "apps/backend/src/accounting/resync-proforma-from-load-rate.ts",
   updateLoad: "apps/backend/src/dispatch/update-load.service.ts",
   mdataLoads: "apps/backend/src/mdata/loads.routes.ts",
@@ -37,13 +39,15 @@ function check(root = ROOT) {
   if (/nextInvoiceDisplayId/.test(fromLoad)) {
     errors.push(`${FILES.fromLoad}: from-load mint must not call nextInvoiceDisplayId`);
   }
-  if (!/const displayId = loadNumber/.test(fromLoad)) {
-    errors.push(`${FILES.fromLoad}: displayId must be load.load_number (displayId = loadNumber)`);
+  // LST-F418: 98edb380d9 — resolveInvoiceDisplayId(…, loadNumber) falls back to the load number (display-id.ts).
+  if (!/resolveInvoiceDisplayId\([\s\S]{0,200}?loadNumber\s*\)/.test(fromLoad)) {
+    errors.push(`${FILES.fromLoad}: displayId must fall back to load.load_number (resolveInvoiceDisplayId(…, loadNumber))`);
   }
 
   const bookLoad = fs.readFileSync(path.join(root, FILES.bookLoad), "utf8");
-  if (!/load_has_no_rate/.test(bookLoad) || !/proforma_skipped_zero_rate/.test(bookLoad)) {
-    errors.push(`${FILES.bookLoad}: must catch load_has_no_rate and audit proforma_skipped_zero_rate`);
+  const firstPickup = fs.readFileSync(path.join(root, FILES.firstPickup), "utf8");
+  if (!/load_has_no_rate/.test(firstPickup) || !/proforma_skipped_zero_rate/.test(firstPickup)) {
+    errors.push(`${FILES.firstPickup}: must catch load_has_no_rate and audit proforma_skipped_zero_rate`);
   }
 
   const resync = fs.readFileSync(path.join(root, FILES.resync), "utf8");
@@ -123,7 +127,7 @@ function selftest() {
 
     copyTree(tmp);
     fromLoad = fs.readFileSync(path.join(tmp, FILES.fromLoad), "utf8");
-    fromLoad = fromLoad.replace("const displayId = loadNumber;", "const displayId = await nextInvoiceDisplayId(client, input.operatingCompanyId, issueDate);");
+    fromLoad = fromLoad.replace(/resolveInvoiceDisplayId\(([\s\S]{0,200}?),\s*loadNumber\s*\)/, "nextInvoiceDisplayId($1)");
     fs.writeFileSync(path.join(tmp, FILES.fromLoad), fromLoad);
     const mintErrs = check(tmp);
     if (!mintErrs.some((e) => e.includes("nextInvoiceDisplayId"))) {

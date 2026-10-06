@@ -47,7 +47,7 @@ if (process.argv.includes("--selftest")) {
   const dropOpco = (src, table) => {
     const at = src.indexOf(`INSERT INTO factoring.${table} (`);
     const end = src.indexOf("VALUES", at);
-    return src.slice(0, at) + src.slice(at, end).replace(/\n\s*operating_company_id\n/, "\n") + src.slice(end);
+    return src.slice(0, at) + src.slice(at, end).replace(/\n\s*operating_company_id,?\n/, "\n") /* LST-F418: the column now carries a trailing comma */ + src.slice(end);
   };
   const plants = [
     ["factor INSERT without operating_company_id", dropOpco(s, "factor"), g],

@@ -110,14 +110,15 @@ function selftest() {
     {
       why: "dedupe result DISCARDED (the LV-TXN-009 defect verbatim)",
       src: service.replace(
-        /(?:const|let|var)\s+\w+\s*=\s*await\s+loadExistingOverageDeductionLink\s*\(/,
+        // LST-F418: two call sites (:456 existingLink, :743 link) — plant every one, or the second keeps the guard green.
+        /(?:const|let|var)\s+\w+\s*=\s*await\s+loadExistingOverageDeductionLink\s*\(/g,
         "await loadExistingOverageDeductionLink("
       ),
     },
     {
       why: "dedupe BOUND but never branched on (the no-op wearing a variable)",
       src: service.replace(
-        /if\s*\([^)]*\b\w+\.(?:deduction_id|overage_deduction_id)\b[^)]*\)/,
+        /if\s*\([^)]*\b\w+\.(?:deduction_id|overage_deduction_id)\b[^)]*\)/g,
         "if (false)"
       ),
     },

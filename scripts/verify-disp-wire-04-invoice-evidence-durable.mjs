@@ -30,6 +30,23 @@ function stripComments(src) {
   return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
 }
 
+/** True when the event at `at` sits inside an open `if (current.source_load_id) { … }` block. */
+function enclosedByLoadIdBlock(code, at) {
+  if (at < 0) return false;
+  const re = /if\s*\(\s*current\.source_load_id\s*\)\s*\{/g;
+  let m;
+  while ((m = re.exec(code)) && m.index < at) {
+    let depth = 0;
+    for (let i = m.index + m[0].length - 1; i < at; i += 1) {
+      if (code[i] === "{") depth += 1;
+      else if (code[i] === "}") depth -= 1;
+      if (depth === 0) break;
+    }
+    if (depth > 0) return true;
+  }
+  return false;
+}
+
 /** Assert against code only; returns the list of failures. */
 function check(rawSrc) {
   const code = stripComments(rawSrc);
@@ -40,9 +57,13 @@ function check(rawSrc) {
   }
 
   // The durable write must exist AND carry the canonical event_class.
-  const callIdx = code.indexOf("appendCrudAudit(");
+  // LST-F418: located from the event_class literal back to ITS appendCrudAudit( call — the file has an earlier,
+  // unrelated "info" backfill audit, and the first call in the file is not this one.
+  const evIdx = code.indexOf(EVENT_CLASS);
+  const callIdx = evIdx === -1 ? code.indexOf("appendCrudAudit(") : code.lastIndexOf("appendCrudAudit(", evIdx);
   const importIdx = code.search(/import\s*\{[^}]*\bappendCrudAudit\b/);
-  const hasCall = callIdx !== -1 && callIdx !== importIdx;
+  // The event's own call sits right before its literal; one found far back is some other audit, not this one.
+  const hasCall = callIdx !== -1 && callIdx !== importIdx && (evIdx === -1 || evIdx - callIdx < 800);
   if (!hasCall) {
     errors.push("appendCrudAudit(...) is never CALLED — importing it does not record anything.");
   }
@@ -69,7 +90,9 @@ function check(rawSrc) {
   // LV-012: the gate must NOT be nested inside a source_load_id check. An invoice with no load has
   // zero delivery evidence by definition — 11,981 of 11,982 prod invoices are in exactly that state,
   // so nesting made the control blind to all but one of them.
-  if (/if\s*\(\s*current\.source_load_id\s*\)\s*\{/.test(code)) {
+  // LST-F418: only an `if (current.source_load_id) {` block that ENCLOSES the evidence event counts — the revrec latch
+  // later in the file legitimately branches on the load and is unrelated.
+  if (enclosedByLoadIdBlock(code, evIdx)) {
     errors.push(
       "the evidence gate is nested inside `if (current.source_load_id)` — an invoice with NO load " +
         "skips the check entirely, which is the weakest-evidence case, not an exemption (LV-012)"
@@ -113,7 +136,17 @@ function selftest() {
   }
 
   const mutations = [
-    ["durable write removed", (s) => s.replace(/await appendCrudAudit\([\s\S]*?\);/, "")],
+    [
+      "durable write removed",
+      (s) => {
+        // Raw source: the event name also appears in comments, so take the occurrence with its audit call just before it.
+        for (let ev = s.indexOf(EVENT_CLASS); ev !== -1; ev = s.indexOf(EVENT_CLASS, ev + 1)) {
+          const at = s.lastIndexOf("appendCrudAudit(", ev);
+          if (at !== -1 && ev - at < 800) return `${s.slice(0, at)}skipDurableAudit(${s.slice(at + "appendCrudAudit(".length)}`;
+        }
+        return s;
+      },
+    ],
     ["event_class renamed", (s) => s.split(EVENT_CLASS).join("accounting.invoice.something_else")],
     ["import dropped", (s) => s.replace(/import \{ appendCrudAudit \}.*\n/, "")],
     ["evidence rule forked", (s) => s.split("finalActiveDeliveryDepartureAt").join("someLocalCopy")],

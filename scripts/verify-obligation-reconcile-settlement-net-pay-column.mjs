@@ -23,7 +23,8 @@ const LABEL = "verify-obligation-reconcile-settlement-net-pay-column";
 const SELFTEST = process.argv.includes("--selftest");
 const FILE = "apps/backend/src/banking/obligation-reconcile.routes.ts";
 
-const SELECT_LINE = "SELECT id, net_pay, created_at::text";
+// LST-F418: the query aliases driver_settlements as s.
+const SELECT_LINE = "SELECT s.id, s.net_pay, s.created_at::text";
 const CONVERT_LINE = "amount_cents: Math.abs(Math.round(Number(r.net_pay ?? 0) * 100)),";
 
 function assertAll(src) {
@@ -50,7 +51,7 @@ const read = () => fs.readFileSync(path.join(ROOT, FILE), "utf8");
 if (SELFTEST) {
   const src = read();
 
-  const revertedColumn = src.replace(SELECT_LINE, "SELECT id, net_settlement_cents, created_at::text");
+  const revertedColumn = src.replace(SELECT_LINE, "SELECT s.id, s.net_settlement_cents, s.created_at::text");
   const revertedProblems = assertAll(revertedColumn);
   if (!revertedProblems.some((p) => p.includes("phantom"))) {
     console.error(`${LABEL} SELFTEST FAILED: reverting to the phantom column not caught`);

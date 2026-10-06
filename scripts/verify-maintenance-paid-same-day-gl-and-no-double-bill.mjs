@@ -122,7 +122,7 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
     {
       name: "posting_status stamp removed",
       file: TWO_SECTION,
-      mutate: (text) => text.replace(/SET posting_status = 'posted'.*?updated_at = now\(\)/s, "SET updated_at = now()"),
+      mutate: (text) => text.replace(/SET status = 'posted', posting_status = 'posted'.*?updated_at = now\(\)/s, "SET updated_at = now()"), // LST-F418: the stamp now sets status too (ROOT CAUSE FIX 2026-09-26)
     },
     {
       name: "already-expensed skip check removed (double-bill regression)",

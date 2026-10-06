@@ -28,8 +28,9 @@ const FILE = "apps/backend/src/driver-finance/settlement-payrun-close.service.ts
 // "advance recovery amounts actually applied") — same term, same position in the formula.
 const NET_FORMULA =
   "grossCents +\n      reimbursementsCents +\n      detentionPayCents -\n      deductionsCents -\n      escrowContributionCents -\n      appliedAdvanceRecoveryCents -\n      chargebacksCents";
-const REIMB_QUERY_MARKER = "async function loadReimbursementsCents(";
-const REIMB_LEG_MARKER = 'legs.push({ account_id: reimbAcct, debit_or_credit: "debit", amount_cents: reimbursementsCents,';
+const REIMB_QUERY_MARKER = "async function loadReimbursementsByType(";
+// LST-F418: ROW 0 REIMBURSEMENT-PER-TYPE-GL fans the debit out one leg per distinct reimbursement account.
+const REIMB_LEG_MARKER = 'legs.push({ account_id: accountId, debit_or_credit: "debit", amount_cents: cents, description: `${label} — driver reimbursement`';
 const DETENTION_QUERY_MARKER = "async function loadDetentionPayCents(";
 const DETENTION_LEG_MARKER = 'legs.push({ account_id: detentionAcct, debit_or_credit: "debit", amount_cents: detentionPayCents,';
 
@@ -42,7 +43,7 @@ function assertAll(src) {
     );
   }
   if (!src.includes(REIMB_QUERY_MARKER)) {
-    problems.push("loadReimbursementsCents() is missing entirely -- reimbursements are not read at all.");
+    problems.push("loadReimbursementsByType() is missing entirely -- reimbursements are not read at all.");
   }
   if (!src.includes(REIMB_LEG_MARKER)) {
     problems.push("the reimbursement_expense debit JE leg is missing -- the JE would no longer balance when reimbursementsCents > 0.");
@@ -58,9 +59,9 @@ function assertAll(src) {
   if (!chargebackBlockMatch || !/is_active\s*=\s*true/.test(chargebackBlockMatch[0])) {
     problems.push("loadChargebacksCents() does not filter is_active = true -- a voided chargeback still reduces disbursed pay.");
   }
-  const reimbBlockMatch = src.match(/async function loadReimbursementsCents[\s\S]*?\n}/);
+  const reimbBlockMatch = src.match(/async function loadReimbursementsByType[\s\S]*?\n}/);
   if (!reimbBlockMatch || !/is_active\s*=\s*true/.test(reimbBlockMatch[0])) {
-    problems.push("loadReimbursementsCents() does not filter is_active = true -- a voided reimbursement still inflates disbursed pay.");
+    problems.push("loadReimbursementsByType() does not filter is_active = true -- a voided reimbursement still inflates disbursed pay.");
   }
   const detentionBlockMatch = src.match(/async function loadDetentionPayCents[\s\S]*?\n}/);
   if (!detentionBlockMatch || !/is_active\s*=\s*true/.test(detentionBlockMatch[0])) {
@@ -85,16 +86,17 @@ if (SELFTEST) {
   }
 
   const droppedActiveFilterOnReimb = src.replace(
-    /(async function loadReimbursementsCents[\s\S]*?)AND sl\.is_active = true\n(\s*`)/,
-    "$1$2"
+    // LST-F418: renamed from loadReimbursementsCents (ACCT-F26063); a GROUP BY now follows the filter.
+    /(async function loadReimbursementsByType[\s\S]*?)AND sl\.is_active = true\n/,
+    "$1"
   );
   if (droppedActiveFilterOnReimb === src) {
-    console.error(`${LABEL} SELFTEST SETUP FAILED: is_active removal pattern did not match loadReimbursementsCents`);
+    console.error(`${LABEL} SELFTEST SETUP FAILED: is_active removal pattern did not match loadReimbursementsByType`);
     process.exit(1);
   }
   const p2 = assertAll(droppedActiveFilterOnReimb);
-  if (!p2.some((p) => p.includes("loadReimbursementsCents() does not filter"))) {
-    console.error(`${LABEL} SELFTEST FAILED: dropping is_active from loadReimbursementsCents not caught`);
+  if (!p2.some((p) => p.includes("loadReimbursementsByType() does not filter"))) {
+    console.error(`${LABEL} SELFTEST FAILED: dropping is_active from loadReimbursementsByType not caught`);
     process.exit(1);
   }
 
