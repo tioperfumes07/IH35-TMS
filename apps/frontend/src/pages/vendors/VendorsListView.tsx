@@ -10,7 +10,8 @@ import { useBulkPermission } from "../../hooks/useBulkPermission";
 import { useToast } from "../../components/Toast";
 import { useListState, type ListQueryStatus } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { companyToday } from "../../lib/businessDate";
 import { mmmDd } from "../../lib/formatDate";
@@ -30,6 +31,12 @@ function vendorQualityLabel(notes: string | null | undefined) {
 function isCarrier(v: VendorOption): boolean {
   return String(v.vendor_type ?? "").toLowerCase().includes("carrier");
 }
+
+const VENDOR_FILTER_OPTIONS = [
+  { value: "active", label: "Active" },
+  { value: "1099", label: "1099-eligible" },
+  { value: "with_open", label: "With open" },
+] as const;
 
 // VISUAL2: honest client-side CSV export (mirrors useListExport's Blob-download pattern) so the
 // bulk "Export CSV" button actually produces a file instead of firing a fake success toast.
@@ -98,18 +105,13 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, un
   // ASC/DESC; sort persists in the URL (?sort=&dir=) so it survives reload / is shareable, same
   // contract as Bills/Expenses.
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
-  // QBO-PARITY-VENDORS — additive client-side filter chips over data already loaded on the row
-  // (deactivated_at, eligible_1099, open balance). Independent toggles, all default OFF so the
-  // unfiltered roster still shows by default. Non-financial: display filtering only.
-  // Free-text search: ParityTable toolbar owns it (LST-F3468) — no page-local TableSearch.
-  const [activeOnly, setActiveOnly] = useState(false);
-  const [only1099, setOnly1099] = useState(false);
-  const [withOpen, setWithOpen] = useState(false);
-  const staged = useStagedListFilters({
-    applied: { activeOnly, only1099, withOpen },
-    empty: { activeOnly: false, only1099: false, withOpen: false },
-    onApply: (next) => { setActiveOnly(next.activeOnly); setOnly1099(next.only1099); setWithOpen(next.withOpen); },
-  });
+  // 432-CUR #1 — MoneyListToolbar always visible; Status MultiSelect replaces Filters (N) chips.
+  // Independent toggles (Active / 1099 / With open) — empty = unfiltered roster.
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const [search, setSearch] = useState("");
+  const activeOnly = statusFilter.includes("active");
+  const only1099 = statusFilter.includes("1099");
+  const withOpen = statusFilter.includes("with_open");
   // Remount key: bumping this after a successful bulk mutation resets ParityTable's internal
   // selection state (mirrors the old selection.clear() call — ParityTable has no controlled/
   // external selection API to clear imperatively).
@@ -126,16 +128,25 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, un
     [vendors, openByVendorId]
   );
 
-  // QBO-PARITY-VENDORS — apply the filter chips (Active / 1099-eligible / With open).
+  // QBO-PARITY-VENDORS — apply Status MultiSelect (Active / 1099-eligible / With open) + toolbar search.
   const filteredRows = useMemo<VendorRow[]>(
-    () =>
-      enrichedRows.filter((row) => {
+    () => {
+      const q = search.trim().toLowerCase();
+      return enrichedRows.filter((row) => {
         if (activeOnly && row.deactivated_at != null) return false;
         if (only1099 && !row.eligible_1099) return false;
         if (withOpen && row.open_balance <= 0) return false;
+        if (q) {
+          const hay = [row.name, row.vendor_code, row.email, row.phone, row.vendor_type, row.vendor_category]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
         return true;
-      }),
-    [enrichedRows, activeOnly, only1099, withOpen]
+      });
+    },
+    [enrichedRows, activeOnly, only1099, withOpen, search]
   );
 
   // LIST-EMPTY-1: the empty row renders only once the roster fetch settles.
@@ -182,42 +193,29 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, un
           pushToast("You can select up to 200 items at a time. Clear some selections and try again.", "error")
         }
         filterBar={
-          <CollapsedListFilters
-            activeFilterCount={(activeOnly ? 1 : 0) + (only1099 ? 1 : 0) + (withOpen ? 1 : 0)}
-            onApply={staged.apply}
-            onReset={staged.reset}
-            onCancel={staged.cancel}
-            applyDisabled={!staged.dirty}
+          <MoneyListToolbar
+            search={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Search vendors"
+            searchTestId="vendors-search-input"
+            onClearAll={() => {
+              setSearch("");
+              setStatusFilter([]);
+            }}
+            activeFilterCount={statusFilter.length}
             testIdPrefix="vendors"
-            dataAttributes={{ "data-vendors-filter-toolbar": "collapsed" }}
           >
-            <div className="space-y-1.5">
-              <div className="text-xs font-semibold text-gray-600">Vendor filters</div>
-              <div className="inline-flex flex-wrap items-center gap-1" data-vendor-filter-chips="true">
-                {(
-                  [
-                    { key: "active", label: "Active", on: staged.draft.activeOnly, toggle: () => staged.setDraft({ ...staged.draft, activeOnly: !staged.draft.activeOnly }) },
-                    { key: "1099", label: "1099-eligible", on: staged.draft.only1099, toggle: () => staged.setDraft({ ...staged.draft, only1099: !staged.draft.only1099 }) },
-                    { key: "with-open", label: "With open", on: staged.draft.withOpen, toggle: () => staged.setDraft({ ...staged.draft, withOpen: !staged.draft.withOpen }) },
-                  ] as const
-                ).map((chip) => (
-                  <button
-                    key={chip.key}
-                    type="button"
-                    aria-pressed={chip.on}
-                    data-vendor-filter-chip={chip.key}
-                    onClick={chip.toggle}
-                    className={`rounded-sm border px-2 py-1 text-xs font-medium ${
-                      chip.on ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-700 hover:bg-[var(--surface-hover)]"
-                    }`}
-                  >
-                    {chip.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </CollapsedListFilters>
+            <MultiSelectDropdown
+              label="Status"
+              options={[...VENDOR_FILTER_OPTIONS]}
+              selected={statusFilter}
+              onChange={setStatusFilter}
+              allLabel="All vendors"
+              data-testid="vendors-status-filter"
+            />
+          </MoneyListToolbar>
         }
+        suppressToolbarSearch
         batchActions={(selected) => {
           const ids = selected.map((v) => v.id);
           return (

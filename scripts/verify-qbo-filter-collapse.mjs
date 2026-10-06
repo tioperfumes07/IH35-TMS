@@ -61,28 +61,29 @@ if (/PRESET_LABELS\[value\.period\]/.test(universalToolbar)) {
   failures.push("UniversalFilterBar: period label still always-on before the Filters popover");
 }
 
-// Customers — chips collapsed; search stays visible
+// Customers — FILTER-MULTI-01 MoneyListToolbar (always-visible TOOLBAR-ONE) supersedes
+// CollapsedListFilters Filters (N) popover for the list-view quality filter.
 const customers = read("apps/frontend/src/pages/customers/CustomersListView.tsx");
-if (!customers.includes("CollapsedListFilters")) {
-  failures.push("CustomersListView: must use CollapsedListFilters (filters behind Filters button)");
+if (!customers.includes("MoneyListToolbar") || !customers.includes('testIdPrefix="customers"')) {
+  failures.push("CustomersListView: must use MoneyListToolbar (FILTER-MULTI-01 TOOLBAR-ONE)");
 }
-if (/filterChips\.map/.test(customers.split("CollapsedListFilters")[0] ?? customers)) {
-  failures.push("CustomersListView: filter chips still rendered outside CollapsedListFilters popover");
+if (!customers.includes("MultiSelectDropdown")) {
+  failures.push("CustomersListView: must expose a real MultiSelectDropdown quality filter");
 }
-if (!customers.includes("data-customers-filter-toolbar")) {
-  failures.push("CustomersListView: missing data-customers-filter-toolbar collapsed marker");
+if (customers.includes("CollapsedListFilters")) {
+  failures.push("CustomersListView: CollapsedListFilters Filters (N) popover must stay retired");
 }
 
-// Vendors — chips collapsed; search stays visible
+// Vendors — same FILTER-MULTI-01 TOOLBAR-ONE retrofit as Customers.
 const vendors = read("apps/frontend/src/pages/vendors/VendorsListView.tsx");
-if (!vendors.includes("CollapsedListFilters")) {
-  failures.push("VendorsListView: must use CollapsedListFilters (filters behind Filters button)");
+if (!vendors.includes("MoneyListToolbar") || !vendors.includes('testIdPrefix="vendors"')) {
+  failures.push("VendorsListView: must use MoneyListToolbar (FILTER-MULTI-01 TOOLBAR-ONE)");
 }
-if (/data-vendor-filter-chips="true"/.test(vendors.split("CollapsedListFilters")[0] ?? vendors)) {
-  failures.push("VendorsListView: vendor filter chips still always-on outside popover");
+if (!vendors.includes("MultiSelectDropdown")) {
+  failures.push("VendorsListView: must expose a real MultiSelectDropdown status filter");
 }
-if (!vendors.includes("data-vendors-filter-toolbar")) {
-  failures.push("VendorsListView: missing data-vendors-filter-toolbar collapsed marker");
+if (vendors.includes("CollapsedListFilters")) {
+  failures.push("VendorsListView: CollapsedListFilters Filters (N) popover must stay retired");
 }
 
 // K.9 (2026-09-05) — Customers/Vendors PAGE-HEADER roster filters (Status/Type/Credit-status/Category)
@@ -125,6 +126,11 @@ const MONEY_LIST_TOOLBAR_PREFIX = new Map([
   ["apps/frontend/src/pages/accounting/ExpensesListPage.tsx", "expenses"],
   ["apps/frontend/src/pages/accounting/InvoicesListPage.tsx", "invoices"],
   ["apps/frontend/src/pages/accounting/ManualJEListPage.tsx", "manual-je"],
+  ["apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx", "bill-payments"],
+  ["apps/frontend/src/pages/accounting/FactoringListPage.tsx", "factoring"],
+  ["apps/frontend/src/pages/driver-finance/SettlementsPage.tsx", "settlements"],
+  ["apps/frontend/src/pages/customers/CustomersListView.tsx", "customers"],
+  ["apps/frontend/src/pages/vendors/VendorsListView.tsx", "vendors"],
 ]);
 
 function hasFilterToolbarGoldPattern(src, rel, marker) {

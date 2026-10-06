@@ -69,14 +69,14 @@ const LABEL = "verify-vendors-qbo-chrome-leaves";
 
 const CHECKS = [
   {
-    name: "list.view_list: VendorsListView real ParityTable + CollapsedListFilters",
+    name: "list.view_list: VendorsListView real ParityTable + MoneyListToolbar",
     file: "apps/frontend/src/pages/vendors/VendorsListView.tsx",
-    pattern: /<ParityTable[\s\S]*CollapsedListFilters|CollapsedListFilters[\s\S]*<ParityTable/,
+    pattern: /<ParityTable[\s\S]*MoneyListToolbar|MoneyListToolbar[\s\S]*<ParityTable/,
   },
   {
-    name: "list.filter_chips: VendorsListView real Active/1099/With-open filter chip row",
+    name: "list.filter_chips: VendorsListView real Active/1099/With-open MultiSelect status filter",
     file: "apps/frontend/src/pages/vendors/VendorsListView.tsx",
-    pattern: /data-vendor-filter-chips="true"[\s\S]{0,1500}with-open/,
+    pattern: /MultiSelectDropdown[\s\S]{0,800}1099-eligible[\s\S]{0,400}With open|VENDOR_FILTER_OPTIONS[\s\S]{0,400}1099-eligible[\s\S]{0,200}With open/,
   },
   {
     name: "list.view_master_detail / list.filters: Vendors.tsx real roster CollapsedListFilters (Status/Category)",
