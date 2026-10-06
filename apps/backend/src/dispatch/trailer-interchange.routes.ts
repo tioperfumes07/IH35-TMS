@@ -170,7 +170,7 @@ export async function registerTrailerInterchangeRoutes(app: FastifyInstance) {
           `
             SELECT ti.*, l.load_number, nt.trailer_number, nt.trailer_type, nt.counterparty_type, nt.counterparty_id
               FROM dispatch.trailer_interchanges ti
-              JOIN mdata.loads l ON l.id = ti.load_id
+              JOIN mdata.loads l ON l.id = ti.load_id AND l.operating_company_id = ti.operating_company_id
               JOIN dispatch.non_owned_trailers nt ON nt.id = ti.non_owned_trailer_id
              WHERE ${filters.join(" AND ")}
              ORDER BY ti.created_at DESC

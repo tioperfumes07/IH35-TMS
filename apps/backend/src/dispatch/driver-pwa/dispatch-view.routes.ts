@@ -481,6 +481,14 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
           SELECT s.id, l.operating_company_id::text
           FROM mdata.load_stops s
           JOIN mdata.loads l ON l.id = s.load_id
+          JOIN mdata.drivers drv ON drv.id = $3
+                                 AND (drv.operating_company_id = l.operating_company_id OR EXISTS (
+                                   SELECT 1 FROM mdata.driver_company_authorizations document_stop_dca
+                                   WHERE document_stop_dca.driver_id = drv.id
+                                     AND document_stop_dca.company_id = l.operating_company_id
+                                     AND document_stop_dca.is_authorized = true
+                                     AND document_stop_dca.deactivated_at IS NULL
+                                 ))
           WHERE s.id = $1
             AND s.load_id = $2
             AND s.soft_deleted_at IS NULL

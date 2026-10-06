@@ -174,8 +174,8 @@ export async function ensureSettlementFromFedBills(
     const lastLoad = bills[bills.length - 1]!;
     const sampleRes = await client.query<{ is_sample_data: boolean }>(
       `SELECT COALESCE(is_sample_data, false) AS is_sample_data
-         FROM mdata.loads WHERE id = $1::uuid`,
-      [firstLoad.load_id]
+         FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      [firstLoad.load_id, operatingCompanyId]
     );
     const isSampleData = Boolean(sampleRes.rows[0]?.is_sample_data);
     const inserted = await client.query<{ id: string; status: string }>(
