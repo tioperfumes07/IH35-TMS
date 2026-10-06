@@ -233,7 +233,7 @@ export function DriversListPage({ onOpenProfile, embedded = false }: DriversList
   }
 
   if (!companyId) {
-    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-[#4B5563]">Select an operating company.</div>;
   }
 
   return (
@@ -244,7 +244,7 @@ export function DriversListPage({ onOpenProfile, embedded = false }: DriversList
           subtitle="Fleet DQF checklist and compliance status chips"
           actions={
             <div className="flex items-center gap-2">
-              <label className="flex items-center gap-1.5 text-xs text-slate-600">
+              <label className="flex items-center gap-1.5 text-xs text-[#4B5563]">
                 <input
                   type="checkbox"
                   checked={showInactive}
@@ -269,7 +269,7 @@ export function DriversListPage({ onOpenProfile, embedded = false }: DriversList
                 type="button"
                 onClick={handleExportCsv}
                 disabled={exporting || !companyId}
-                className="h-8 rounded-sm border border-gray-300 px-3 text-xs text-slate-700 hover:bg-gray-50 disabled:opacity-40"
+                className="h-8 rounded-sm border border-gray-300 px-3 text-xs text-[#1F2A44] hover:bg-gray-50 disabled:opacity-40"
               >
                 {exporting ? "Exporting…" : "Export profiles (CSV)"}
               </button>
@@ -277,7 +277,7 @@ export function DriversListPage({ onOpenProfile, embedded = false }: DriversList
                 type="button"
                 onClick={() => setShowImport(true)}
                 disabled={!companyId}
-                className="h-8 rounded-sm border border-gray-300 px-3 text-xs text-slate-700 hover:bg-gray-50 disabled:opacity-40"
+                className="h-8 rounded-sm border border-gray-300 px-3 text-xs text-[#1F2A44] hover:bg-gray-50 disabled:opacity-40"
               >
                 Import drivers (CSV)
               </button>
@@ -289,7 +289,7 @@ export function DriversListPage({ onOpenProfile, embedded = false }: DriversList
         />
       ) : (
         <div className="flex flex-wrap items-center gap-2">
-          <label className="flex items-center gap-1.5 text-xs text-slate-600">
+          <label className="flex items-center gap-1.5 text-xs text-[#4B5563]">
             <input
               type="checkbox"
               checked={showInactive}
@@ -304,7 +304,7 @@ export function DriversListPage({ onOpenProfile, embedded = false }: DriversList
             type="button"
             onClick={handleExportCsv}
             disabled={exporting || !companyId}
-            className="h-7 rounded-sm border border-gray-300 px-2 text-xs text-slate-700 hover:bg-gray-50 disabled:opacity-40"
+            className="h-7 rounded-sm border border-gray-300 px-2 text-xs text-[#1F2A44] hover:bg-gray-50 disabled:opacity-40"
           >
             {exporting ? "Exporting…" : "Export CSV"}
           </button>
@@ -368,7 +368,7 @@ export function DriversListPage({ onOpenProfile, embedded = false }: DriversList
         ) : driversQ.isError ? (
           <ListErrorState title="Couldn't load drivers" status={0} message={(driversQ.error as Error)?.message} onRetry={() => void driversQ.refetch()} />
         ) : driversQ.isLoading ? (
-          <div className="px-3 py-6 text-center text-slate-500 text-xs">Loading drivers...</div>
+          <div className="px-3 py-6 text-center text-[#6B7280] text-xs">Loading drivers...</div>
         ) : (
           <DriversTable
             rows={focusedRows}
@@ -380,7 +380,7 @@ export function DriversListPage({ onOpenProfile, embedded = false }: DriversList
             }}
           />
         )}
-        <div className="flex items-center justify-between border-t border-gray-200 px-3 py-2 text-xs text-slate-600">
+        <div className="flex items-center justify-between border-t border-gray-200 px-3 py-2 text-xs text-[#4B5563]">
           <span>{totalDrivers === 0 ? "0 of 0" : `${rangeStart}–${rangeEnd} of ${totalDrivers}`}</span>
           <div className="flex gap-2">
             <button

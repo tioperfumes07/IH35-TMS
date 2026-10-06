@@ -33,6 +33,12 @@ function inspect({ registry, sources }) {
     if (!Array.isArray(contract.forbidden_tokens)) errors.push(`${contract.id}: forbidden_tokens must be array`);
     for (const token of contract.forbidden_tokens ?? []) if (source?.includes(token)) errors.push(`${contract.id}: forbidden ${token}`);
   }
+  // BANK-F91559 leftover refuse — DriversListPage chrome uses house tokens, never Tailwind slate-*.
+  const list = "apps/frontend/src/pages/drivers/DriversListPage.tsx";
+  const listSrc = sources[list] ?? "";
+  if (listSrc.includes("text-slate-") || listSrc.includes("border-slate-") || listSrc.includes("bg-slate-")) {
+    errors.push("leftover slate class");
+  }
   return errors;
 }
 
@@ -52,7 +58,17 @@ function selftest() {
     ["roster query back", { registry: good.registry, sources: { ...good.sources, [list]: good.sources[list].replaceAll("void driversQ.refetch()", "void 0") } }]
   ];
   for (const [name, fixture] of mutations) if (inspect(fixture).length === 0) throw new Error(`mutation escaped: ${name}`);
-  console.log(`${LABEL}: selftest PASS (${mutations.length}/${mutations.length})`);
+  const leftoverPlant = {
+    registry: good.registry,
+    sources: {
+      ...good.sources,
+      [list]: `${good.sources[list]}\n<div className="text-slate-600 border-slate-300 bg-slate-50">plant</div>`,
+    },
+  };
+  if (!inspect(leftoverPlant).includes("leftover slate class")) {
+    throw new Error("leftover plant escaped");
+  }
+  console.log(`${LABEL}: selftest PASS leftover slate class plant`);
 }
 
 if (process.argv.includes("--selftest")) selftest();
