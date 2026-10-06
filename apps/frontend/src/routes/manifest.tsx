@@ -103,6 +103,7 @@ const ApplicantsPipelinePage = React.lazy(() => import("../pages/drivers/Applica
 const ApplicationPage = React.lazy(() => import("../pages/public/ApplicationPage").then((m) => ({ default: m.ApplicationPage })));
 const DriverLoadStatusesPage = React.lazy(() => import("../pages/DriverLoadStatusesPage").then((m) => ({ default: m.DriverLoadStatusesPage })));
 const DriversPage = React.lazy(() => import("../pages/Drivers").then((m) => ({ default: m.DriversPage })));
+const DriverDuplicatesPage = React.lazy(() => import("../pages/drivers/DriverDuplicatesPage").then((m) => ({ default: m.DriverDuplicatesPage })));
 const RetentionDashboard = React.lazy(() => import("../pages/drivers/RetentionDashboard").then((m) => ({ default: m.RetentionDashboard })));
 import type { DriversSubnavId } from "../components/drivers/DRIVERS_TABS_CONFIG";
 const DispatchPage = React.lazy(() => import("../pages/Dispatch").then((m) => ({ default: m.DispatchPage })));
@@ -1212,6 +1213,14 @@ export const ROUTES = React.Children.toArray(
             <ProtectedRoute>
               <DriversPage />
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drivers/duplicates"
+          element={
+            <OwnerOnlyRoute>
+              <DriverDuplicatesPage />
+            </OwnerOnlyRoute>
           }
         />
         <Route

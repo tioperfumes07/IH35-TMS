@@ -608,6 +608,9 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             <Button type="button" data-testid="drivers-create-open" onClick={openCreate}>
               + Create Driver
             </Button>
+            <Link to="/drivers/duplicates" className="text-xs font-semibold text-[#14314F] hover:underline" data-testid="drivers-duplicates-link">
+              Duplicate profiles
+            </Link>
             <ActionButton onClick={() => void queryClient.invalidateQueries({ queryKey: ["drivers"] })}>Refresh</ActionButton>
           </div>
         }

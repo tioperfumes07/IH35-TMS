@@ -42,6 +42,7 @@ import { emitMasterDataCreatedSpineEvent } from "./master-data-spine-emit.js";
 import { buildDriverAggregate } from "./driver-aggregate.service.js";
 import { registerDriverDefaultTruckRoutes } from "./driver-default-truck.routes.js";
 import { registerDriverMessagesRoutes } from "./driver-messages.routes.js";
+import { registerDriverMergeRoutes } from "./driver-merge.routes.js";
 import {
   provisionDriverAdvanceSubAccount,
   provisionDriverEscrowSubAccount,
@@ -1548,6 +1549,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
   await registerDriverTrainingRoutes(app);
   await registerDriverW8benRoutes(app);
   await registerDriverMessagesRoutes(app);
+  await registerDriverMergeRoutes(app);
   await registerDriverPdfExportRoutes(app);
 
   app.get("/api/v1/mdata/drivers/:id", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
