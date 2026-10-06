@@ -2245,3 +2245,9 @@ DID: handshake
 PROOF: origin/main sha I see = 55b0811d96
 BLOCKED: none (~/Desktop is OS-blocked for this terminal; ~/Downloads is readable)
 NEXT: FARO-F435 — applying 0001-FARO-F435-repurchase-obligation-view.patch (sha256 12e9e43f95… verified); INBOX-CC-2.md not yet updated on main at 55b0811d96
+
+### CC-2 · 15:34Z — FARO-F435 + ACCT-F2026100601 live
+DID: #25575 FARO-F435 view (security_invoker, 95-day deadline, NULL-safe closed) + #25576 one ledger-membership rule; both migrations applied on production 2026-10-06T15:28:23Z (202615430500, 202615431000); view reloptions {security_invoker=true}
+PROOF (live, production, gate credential ih35_guard_reader): verify-faro-default-interest-accrues-from-day-35 exit 0 · verify-faro-no-purchased-account-past-repurchase-deadline exit 0 · verify-faro-partial-payment-leaves-account-open exit 0 (0 factoring purchases after the purge) · verify-one-ledger-membership-rule exit 0 (9 readers, 0 re-typed copies, function holds all 3 clauses). Each Faro guard proven RED on its planted defect on throwaway branch cc2-THROWAWAY-f435-proof-delete-after (own fixtures only; branch DELETED). Tainted rehearsal br-summer-art-aku5vt76 DELETED as a branch.
+BLOCKED: verify-rpt-s02-neon-tie live arm (USMCA empty GL) needs a Lead ruling on the purge-window measured-empty list (pinned at 13)
+NEXT: ROUND 435 Faro ten tabs + KPI strip
