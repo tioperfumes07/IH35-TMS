@@ -236,6 +236,16 @@ function resolveTableRef(rawToken, effectiveDefault, expectedTables, { forCreate
   return { schema: forCreate ? (effectiveDefault || RUNNER_SEARCH_PATH[0]) : effectiveDefault, name };
 }
 
+/** Plain column names of a CREATE INDEX statement's key list (expressions ignored). */
+function indexColumns(createIndexStatement) {
+  const list = String(createIndexStatement).match(/\bon\s+(?:only\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?(?:\s+using\s+\w+)?\s*\(([^;]*?)\)/i)?.[1] ?? "";
+  return list
+    .split(",")
+    .map((part) => part.trim().match(/^"?([a-zA-Z_][\w$]*)"?(?:\s+(?:asc|desc|nulls\s+\w+|\w+_ops))*$/i)?.[1])
+    .filter(Boolean)
+    .map((c) => normalizeIdent(c));
+}
+
 function indexKey(schema, indexName) {
   return `${schema}.${indexName}`;
 }
@@ -567,6 +577,7 @@ function collectExpectedObjects(migrationsDirectory) {
           indexName: indexParts.name,
           tableSchema: tableParts.schema,
           table: tableParts.name,
+          columns: indexColumns(normalizedStmt),
           file: filename,
           line: stmt.line,
         });
@@ -608,6 +619,16 @@ function collectExpectedObjects(migrationsDirectory) {
       if (alterTableForFkMatch) {
         const tableParts = parseQualifiedName(alterTableForFkMatch[1], defaultSchema);
         const body = alterTableForFkMatch[2];
+        // ROUND 433: DROP COLUMN drops every index built on that column (Postgres) — replayed in migration order, so an
+        // index on r342's dropped tenant_id is no longer "expected". An index whose column list could not be read stays.
+        for (const dc of body.matchAll(/drop\s+column\s+(?:if\s+exists\s+)?("?[\w$]+"?)/gi)) {
+          const column = normalizeIdent(dc[1]);
+          for (const [key, ix] of expectedIndexes) {
+            if (ix.tableSchema === tableParts.schema && ix.table === tableParts.name && (ix.columns ?? []).includes(column)) {
+              expectedIndexes.delete(key);
+            }
+          }
+        }
         const addFkMatch = body.match(/add\s+constraint\s+("?[\w$]+"?)\s+foreign\s+key/i);
         if (addFkMatch) {
           const constraint = normalizeIdent(addFkMatch[1]);

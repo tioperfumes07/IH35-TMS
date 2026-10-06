@@ -137,3 +137,26 @@ test("ALTER SCHEMA RENAME inside DO does not hang (Map mutate-while-iterate)", (
   assert.equal(run.status, 0);
   assert.match(run.stdout, /verify:migration-application-consistency OK/);
 });
+
+// ROUND 433: DROP COLUMN drops the indexes built on it (Postgres) — replayed in migration order.
+function runFixture(dir, state) {
+  return spawnSync("node", [scriptPath, "--migrations-dir", path.resolve(fixturesRoot, dir), "--state-file", path.resolve(fixturesRoot, state)], { encoding: "utf8" });
+}
+
+test("an index on a later-dropped column is not expected", () => {
+  const run = runFixture("dropcol-migrations", "state-dropcol.json");
+  assert.equal(run.status, 0, run.stderr);
+});
+
+test("without the DROP COLUMN the same missing index is still reported", () => {
+  const run = runFixture("dropcol-nodrop-migrations", "state-dropcol.json");
+  assert.equal(run.status, 1);
+  assert.match(run.stderr, /index missing: qa\.idx_policy_tenant_status/);
+});
+
+test("an index whose columns were never dropped is still reported", () => {
+  const run = runFixture("dropcol-migrations", "state-dropcol-missing-status.json");
+  assert.equal(run.status, 1);
+  assert.match(run.stderr, /index missing: qa\.idx_policy_status/);
+  assert.doesNotMatch(run.stderr, /idx_policy_tenant_status/);
+});
