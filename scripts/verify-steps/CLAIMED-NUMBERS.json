@@ -16305,6 +16305,11 @@
     "claimed_at": "2026-10-06",
     "purpose": "verify-ap-control-writers-go-through-documents"
   },
+  "18350": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-06",
+    "purpose": "verify-qbo-format-layer (433-CUR #2: utils/qboFormat barrel + DatePicker year select pin + hand-roll shrink)"
+  },
   "12407": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-06",
