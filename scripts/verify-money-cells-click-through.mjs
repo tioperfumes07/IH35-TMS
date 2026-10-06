@@ -27,7 +27,7 @@ const PANEL = "apps/frontend/src/components/shared/LedgerKpiPanel.tsx";
  * a proximity window cannot resolve. That makes 103 an upper bound, and an upper bound is a safe
  * ratchet: it can only be lowered. Do not raise it.
  */
-const SHRINK_ONLY_BASELINE = 89;
+const SHRINK_ONLY_BASELINE = 88; // 2026-10-06 ROUND 433.3: CashFlowStatementPage line amounts drill to the account register (89 -> 88)
 
 function stripComments(src) {
   return String(src ?? "")
@@ -178,14 +178,14 @@ function selftest() {
     }
   `;
   const cases = [
-    { name: "click-through money cells", panel: goodPanel, shrinkOnlyCount: 89, expectFail: false },
-    { name: "panel money not EntityLink", panel: `if (col.endsWith("_cents")) return <span className={QBO_MONEY_CELL_CLASS}>{v}</span>;`, shrinkOnlyCount: 89, expectFail: true },
-    { name: "panel missing shrink-0", panel: `if (col.endsWith("_cents")) return <EntityLink className={QBO_MONEY_CELL_CLASS} />;`, shrinkOnlyCount: 89, expectFail: true },
-    { name: "ratchet up from 89", panel: goodPanel, shrinkOnlyCount: 90, expectFail: true },
+    { name: "click-through money cells", panel: goodPanel, shrinkOnlyCount: SHRINK_ONLY_BASELINE, expectFail: false },
+    { name: "panel money not EntityLink", panel: `if (col.endsWith("_cents")) return <span className={QBO_MONEY_CELL_CLASS}>{v}</span>;`, shrinkOnlyCount: SHRINK_ONLY_BASELINE, expectFail: true },
+    { name: "panel missing shrink-0", panel: `if (col.endsWith("_cents")) return <EntityLink className={QBO_MONEY_CELL_CLASS} />;`, shrinkOnlyCount: SHRINK_ONLY_BASELINE, expectFail: true },
+    { name: "ratchet up from the baseline", panel: goodPanel, shrinkOnlyCount: SHRINK_ONLY_BASELINE + 1, expectFail: true },
     { name: "missing _cents branch", panel: `return <EntityLink className={\`\${QBO_MONEY_CELL_CLASS} shrink-0 whitespace-nowrap\`} />;`, shrinkOnlyCount: 103, expectFail: true },
     // LST-F405 — a STALE baseline must fail too, or slack accumulates invisibly (42 vs 3).
-    { name: "baseline stale (below)", panel: goodPanel, shrinkOnlyCount: 88, expectFail: true },
-    { name: "baseline exact", panel: goodPanel, shrinkOnlyCount: 89, expectFail: false },
+    { name: "baseline stale (below)", panel: goodPanel, shrinkOnlyCount: SHRINK_ONLY_BASELINE - 1, expectFail: true },
+    { name: "baseline exact", panel: goodPanel, shrinkOnlyCount: SHRINK_ONLY_BASELINE, expectFail: false },
   ];
   let pass = 0;
   for (const c of cases) {
