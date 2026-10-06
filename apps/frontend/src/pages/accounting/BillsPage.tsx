@@ -96,20 +96,10 @@ export function billTypeForCategory(category: BillListCategory | ""): BillListCa
   return "vendor";
 }
 
-// REG-016 (owner 2026-09-10): the Type filter was a single-select <select>, forcing a re-query per
-// value to see vendor AND driver bills together. The wire-level query param
-// (bill_type: "all" | "vendor_bill" | "driver_bill") is unchanged -- listBillRegister already
-// returns the union for "all" -- this is purely a UI-boundary adapter to the app's canonical
-// MultiSelectDropdown (components/forms/MultiSelectDropdown.tsx), same component
-// AuditHistoryTab.tsx already uses for its own naturally-multi-valued filters. Both checked (or
-// neither) means "all"; exactly one checked narrows to that type -- selecting neither resets to
-// "all" rather than a confusing empty result, matching the dropdown's own "0 selected = All" summary.
-function billTypesToSelected(billType: "all" | "vendor_bill" | "driver_bill"): string[] {
-  return billType === "all" ? ["vendor_bill", "driver_bill"] : [billType];
-}
-function selectedToBillType(selected: string[]): "all" | "vendor_bill" | "driver_bill" {
-  return selected.length === 1 && (selected[0] === "vendor_bill" || selected[0] === "driver_bill") ? selected[0] : "all";
-}
+// ROUND 432-CUR #5 — vendor bills and driver bills are different tables with different columns.
+// Owner: "tabs or two pages." Tabs. Never both ParityTables on one screen (the Type=all dual-register
+// layout). Wire still accepts bill_type vendor_bill | driver_bill (no "all" in the UI).
+export type BillsRegisterTab = "vendor_bill" | "driver_bill";
 
 // U10 (owner): "every bills sub-tab renders only its own type". This used to GUESS the type from memo / vendor words
 // (/maint|shop/, /fuel|diesel|loves/, /driver|settlement/), so each sub-tab showed the wrong bills and missed the right
@@ -293,7 +283,9 @@ export function BillsPage() {
   // Payments/Invoices/etc.) has one. Client-side over the already-loaded rows (server list caps at
   // 200, same rows already in memory) — bill number, vendor name, memo.
   const [search, setSearch] = useState("");
-  const [billType, setBillType] = useState<"all" | "vendor_bill" | "driver_bill">("all");
+  // ROUND 432-CUR #5 — default Vendor bills tab; Driver bills is a separate tab, never a second
+  // table under the vendor register.
+  const [billType, setBillType] = useState<BillsRegisterTab>("vendor_bill");
   // FILTER-MULTI-01: Vendor is now a real multi-select — array state, seeded from the single-value
   // deep-link contract (?vendor_id=, aging-drill / Pay-now links) below.
   const [vendorFilter, setVendorFilter] = useState<string[]>(() => {
@@ -413,13 +405,9 @@ export function BillsPage() {
     enabled: Boolean(companyId),
   });
 
-  // A3 (inv #13) — real driver_finance.driver_bills, a completely different table from
-  // accounting.bills. Shown as its own section (never crammed into the vendor-bill ParityTable's
-  // rows, whose Pay/Schedule/Allocate actions assume an accounting.bills row) whenever the "All
-  // bills" view or the "driver" category chip is active — the union + Source distinction this
-  // page's spec asks for, done honestly rather than faking one shared row shape for two
-  // structurally different tables.
-  const showDriverBills = billType !== "vendor_bill" && (categoryFilter.length === 0 || categoryFilter.includes("driver"));
+  // ROUND 432-CUR #5 — Driver register only on the Driver bills tab. Never stacked under Vendor.
+  const showDriverBills = billType === "driver_bill";
+  const showVendorBills = billType === "vendor_bill";
   // FILTER-MULTI-01: statusFilter/vendorFilter apply server-side when exactly one value is picked
   // (statusParam/vendorParam above); a 2+ selection fetches unnarrowed-on-that-field and this
   // client membership check does the real OR-of-several-values filtering. Driver bills have their
@@ -811,14 +799,14 @@ export function BillsPage() {
     setStatusFilter([]);
     setCategoryFilter([]);
     setVendorFilter([]);
-    setBillType("all");
+    setBillType("vendor_bill");
     setDateFrom("");
     setDateTo("");
     setUnitFilter("");
     setLoadFilter("");
   };
   const billsActiveFilterCount =
-    categoryFilter.length + statusFilter.length + vendorFilter.length + (dateFrom || dateTo ? 1 : 0) + (deepLinkUnitId ? 1 : 0) + (deepLinkLoadId ? 1 : 0) + (billType !== "all" ? 1 : 0);
+    categoryFilter.length + statusFilter.length + vendorFilter.length + (dateFrom || dateTo ? 1 : 0) + (deepLinkUnitId ? 1 : 0) + (deepLinkLoadId ? 1 : 0);
 
   const filterBar = (
     <div className="flex flex-col gap-2 w-full">
@@ -868,17 +856,6 @@ export function BillsPage() {
           onChange={setCategoryFilter}
           allLabel="All categories"
           data-testid="bills-category-filter"
-        />
-        <MultiSelectDropdown
-          label="Type"
-          options={[
-            { value: "vendor_bill", label: "Vendor bill" },
-            { value: "driver_bill", label: "Driver bill" },
-          ]}
-          selected={billTypesToSelected(billType)}
-          onChange={(next) => setBillType(selectedToBillType(next))}
-          allLabel="All bill types"
-          data-testid="bills-type-filter"
         />
         <div>
           {/* A3/FIX-06: vendor options still come from the canonical mdata.vendors read
@@ -935,7 +912,11 @@ export function BillsPage() {
   return (
     <AccountingSubNavWrapper
       title="Bills"
-      subtitle="Vendor bills with paid balance and partial payment history"
+      subtitle={
+        billType === "driver_bill"
+          ? "Driver bills from settlements — separate register from vendor bills"
+          : "Vendor bills with paid balance and partial payment history"
+      }
       createControl={
         <Button type="button" data-testid="bills-create-cta" onClick={() => setCreateOpen(true)} disabled={!companyId}>
           + Create
@@ -1000,6 +981,36 @@ export function BillsPage() {
         </p>
       ) : null}
 
+      {/* ROUND 432-CUR #5 — one register at a time. Tabs, never two ParityTables stacked. */}
+      <div className="flex flex-wrap gap-1 border-b border-[#E5E7EB] pb-2" data-testid="bills-register-tabs" role="tablist" aria-label="Bill register">
+        {(
+          [
+            { id: "vendor_bill" as const, label: "Vendor bills", count: billsQuery.data?.totals.vendor_bill.count },
+            { id: "driver_bill" as const, label: "Driver bills", count: billsQuery.data?.totals.driver_bill.count },
+          ] as const
+        ).map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={billType === tab.id}
+            data-testid={tab.id === "vendor_bill" ? "bills-tab-vendor" : "bills-tab-driver"}
+            onClick={() => setBillType(tab.id)}
+            className={`inline-flex h-[28px] items-center gap-1 rounded-sm border px-2 text-xs ${
+              billType === tab.id
+                ? "border-slate-400 bg-slate-100 font-semibold text-[#0F1219]"
+                : "border-[#E5E7EB] bg-[var(--surface-unselected)] font-medium text-[#4B5563] hover:bg-[var(--surface-hover)]"
+            }`}
+          >
+            {tab.label}
+            {typeof tab.count === "number" ? (
+              <span className="inline-flex min-w-[16px] items-center justify-center rounded-sm bg-white px-1 text-xs text-[#4B5563]">{tab.count}</span>
+            ) : null}
+          </button>
+        ))}
+      </div>
+
+      {showVendorBills ? (
       <ParityTable
         key={tableResetKey}
         columns={columns}
@@ -1070,40 +1081,23 @@ export function BillsPage() {
         )}
         emptyText="No bills found."
       />
+      ) : null}
 
-      {/* A3 (inv #13) — real driver_finance.driver_bills, unioned into this page's view with an
-          explicit Source label rather than crammed into the vendor-bill table above (whose
-          Pay/Schedule/Allocate/Void actions all assume an accounting.bills row). Shown for "All
-          bills" and the "driver" category chip; hidden for the vendor-only categories
-          (maintenance/repair/fuel), which cannot match a driver bill. */}
+      {/* A3 + 432-CUR #5 — driver_finance.driver_bills on the Driver bills tab only. */}
       {showDriverBills ? (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xs font-semibold text-gray-900">Driver bills</h2>
-            <span className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600" data-testid="bills-driver-source-label">
-              Source: Driver
-            </span>
-          </div>
-          <div className="flex gap-2 text-xs text-slate-600" data-testid="bills-type-totals">
-            <span>Vendor bills: {billsQuery.data?.totals.vendor_bill.count ?? 0} · {money(billsQuery.data?.totals.vendor_bill.amount_cents ?? 0)}</span>
-            <span>Driver bills: {billsQuery.data?.totals.driver_bill.count ?? 0} · {money(billsQuery.data?.totals.driver_bill.amount_cents ?? 0)}</span>
-          </div>
+        <div className="space-y-2" data-testid="bills-driver-register">
           <ParityTable
             columns={driverBillColumns}
             rows={driverBillRows}
             rowKey={(b) => b.id}
             rowClassName={(b) => voidedRowClassName(b.voided_at)}
             loading={billsQuery.isPending}
+            filterBar={filterBar}
             exportFilename="driver-bills"
             storageKey="bills-driver-list"
             initialPageSize={50}
             emptyText="No driver bills found."
-            // FILTER-MULTI-01 — owner, live-measured: "Driver Bills register has NO filter control
-            // at all" / a third competing "Search rows..." box. This register shares the ONE
-            // toolbar above (Status/Category/Type/Vendor/Unit/Load/dates/search) — driverBillRows
-            // is already derived through statusFilter — rather than growing a second, separate
-            // toolbar (rule: "shares ONE toolbar that filters both, or each register gets its own
-            // complete toolbar — not one with filters and one without").
+            // FILTER-MULTI-01 — shares the ONE toolbar (Status/Category/Vendor/Unit/Load/dates/search).
             suppressToolbarSearch
             suppressToolbarRange
           />
