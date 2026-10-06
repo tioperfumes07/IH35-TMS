@@ -1,12 +1,11 @@
-# NOW-CURSOR — 2026-10-06T15:00Z
+# NOW-CURSOR — 2026-10-06T18:00Z
 
-**DONE:** Handshake on Desktop CODERS. ROUND 435-CUR implemented — `inModuleBackHref` on 4 Up writers; Accounting parent via fallback crumbs; shrink-only guard 0 cross-module.
+**DONE:** 433 hard four + 432 #5 Bills tabs on tip. Natural-sign membership comment fix + NOW-* heartbeat shipping this PR. verify-no-surface-prints-a-raw-ledger-sign exit 0.
 
-**NOW:** Shipping `cursor/back-arrow-in-module-c89b` Fast Merge.
+**NOW:** 432-CUR #1 multi-select money-surface sweep (status+account guards already PASS).
 
-**NEXT:** After merge, next owner/lead row. Do not start 433-CUR visual closeout in this PR. Load-backlink still unpushed. No Chrome. No ACCT-F406.
+**NEXT:** Measure remaining single-select filters on expenses/invoices/settlements/register; one PR + shrink-only guard. Owner Chrome B7 + Bills after FE deploy. LOCAL GATES ONLY.
 
-**LOCAL GATES ONLY** — CI billing down. No Chrome this seat.
+**LOCAL GATES ONLY** — CI billing down.
 
 ---
-# WAS — idle after build-order PRs (owner overrode: continue engine)

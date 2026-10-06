@@ -11,6 +11,10 @@
  * hid reversal lines its own balance counted (ROUND 370). Every reader imports this; scripts/verify-one-ledger-membership-rule.mjs
  * fails on a re-typed copy and on a database function that does not hold the same three clauses.
  *
+ * ROUND 432 / U27 — this file is membership only (which postings count). It does NOT read balances. Any caller that
+ * reads accounting.fn_account_balances_as_of (raw debit − credit) must present or compare via naturalSignFactor /
+ * naturalSignCents / account_type / normal_balance — never the raw sign alone (verify-no-surface-prints-a-raw-ledger-sign).
+ *
  * Statement-specific exclusions are NOT part of membership and stay with the statement that needs them: the P&L and
  * balance sheet leave out the period-close retained-earnings entry because it would net a closed period to zero.
  *
