@@ -19,6 +19,8 @@ type Props = {
   batchActions?: (selected: SettlementListRow[]) => ReactNode;
   maxSelectable?: number;
   onSelectionCapExceeded?: () => void;
+  /** FILTER-MULTI-01 — parent MoneyListToolbar owns search; suppress ParityTable's. */
+  suppressToolbarSearch?: boolean;
 };
 
 function statusClass(status: SettlementListRow["status"]) {
@@ -37,6 +39,7 @@ export function SettlementsTable({
   batchActions,
   maxSelectable,
   onSelectionCapExceeded,
+  suppressToolbarSearch = false,
 }: Props) {
   // BANK-SORT-ROLLOUT-OPS — ?sort=/?dir= URL persistence via the shared useUrlSort hook
   // (BANK-SORT-ROLLOUT-ACCT), same contract as the dispatch board and fleet/WO lists so a
@@ -248,6 +251,7 @@ export function SettlementsTable({
       batchActions={batchActions}
       maxSelectable={maxSelectable}
       onSelectionCapExceeded={onSelectionCapExceeded}
+      suppressToolbarSearch={suppressToolbarSearch}
     />
   );
 }

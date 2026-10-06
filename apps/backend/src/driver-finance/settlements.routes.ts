@@ -6,6 +6,7 @@ import { allocateSettlementDisplayId } from "./settlement-display-id.js";
 import crypto from "node:crypto";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { statusListCondition, statusListParam } from "../lib/status-list.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { enqueueEmail } from "../email/queue.service.js";
@@ -44,14 +45,16 @@ const settlementStatusSchema = z.enum([
   "open",
   "closed",
 ]);
-const paymentStateSchema = z.enum(["unpaid", "queued", "sent_to_bank", "cleared", "bounced", "manual_paid"]);
+const PAYMENT_STATES = ["unpaid", "queued", "sent_to_bank", "cleared", "bounced", "manual_paid"] as const;
+/** 432-CUR #1 — payment_state is multi-select (?payment_state=a&payment_state=b); single still accepted. */
+const paymentStateListParam = statusListParam(PAYMENT_STATES);
 const listQuerySchema = z.object({
   include_reversed: z.coerce.boolean().default(false),
   operating_company_id: z.string().uuid(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
   status: settlementStatusSchema.optional(),
-  payment_state: paymentStateSchema.optional(),
+  payment_state: paymentStateListParam,
   driver_id: z.string().uuid().optional(),
 });
 const idParamsSchema = z.object({ id: z.string().uuid() });
@@ -240,9 +243,16 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
         values.push(q.status);
         where.push(`s.status = $${values.length}`);
       }
-      if (q.payment_state) {
-        values.push(q.payment_state);
-        where.push(`COALESCE(s.payment_state, 'unpaid') = $${values.length}`);
+      {
+        const paymentCond = statusListCondition(
+          "COALESCE(s.payment_state, 'unpaid')",
+          q.payment_state,
+          (v) => {
+            values.push(v);
+            return `$${values.length}`;
+          },
+        );
+        if (paymentCond) where.push(paymentCond);
       }
       if (q.driver_id) {
         values.push(q.driver_id);
@@ -419,7 +429,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
   const driverSettlementsQuerySchema = z.object({
     operating_company_id: z.string().uuid(),
     status: settlementStatusSchema.optional(),
-    payment_state: paymentStateSchema.optional(),
+    payment_state: paymentStateListParam,
     limit: z.coerce.number().int().min(1).max(200).default(50),
     offset: z.coerce.number().int().min(0).default(0),
   });
@@ -439,9 +449,16 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
         values.push(query.data.status);
         where.push(`s.status = $${values.length}`);
       }
-      if (query.data.payment_state) {
-        values.push(query.data.payment_state);
-        where.push(`COALESCE(s.payment_state, 'unpaid') = $${values.length}`);
+      {
+        const paymentCond = statusListCondition(
+          "COALESCE(s.payment_state, 'unpaid')",
+          query.data.payment_state,
+          (v) => {
+            values.push(v);
+            return `$${values.length}`;
+          },
+        );
+        if (paymentCond) where.push(paymentCond);
       }
       const countRes = await client.query(
         // CLS-JOIN-ENTITY-UNSCOPED: `where[0]` is always "s.operating_company_id = $1::uuid" (set
