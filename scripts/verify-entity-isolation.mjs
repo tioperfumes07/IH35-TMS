@@ -76,6 +76,16 @@ const EXCLUDED_SCHEMAS = ["pg_catalog", "information_schema", "pg_temp", "ih35_m
 // preference when a table happens to carry more than one.
 const SCOPE_COLUMNS = ["operating_company_id", "tenant_id", "company_id"];
 
+// NATURAL-KEY WALL (ACCT-F2026100624, 2026-10-06). The preserve.* schema (telematics / geocode preservation, migration
+// 202615220900) is keyed by natural keys ON PURPOSE so it survives a reset of every UUID: it scopes by the company CODE,
+// not its id. It counts as walled under exactly the same four requirements, with the key swapped:
+//   (a) a text company_code column, (b) a FOREIGN KEY company_code -> org.companies(code) (UNIQUE companies_code_key),
+//   (c) an RLS policy comparing company_code with the code of current_setting('app.operating_company_id') (via
+//       org.companies), (d) FORCE ROW LEVEL SECURITY.
+// Any one missing and the table is not walled. The FK must reference org.companies(code) — a company_code column with no
+// FK, or an FK to anything else, does not qualify.
+const NATURAL_SCOPE = { col: "company_code", refCol: "code" };
+
 // Accepted GUC names for the current_setting(...) comparison inside a qualifying RLS policy.
 // app.operating_company_id is standard; app.current_operating_company_id is the documented
 // events.event_log exception (see docs/ci-guards/ENTITY-ISOLATION.md).
@@ -127,18 +137,19 @@ async function introspect(client) {
     cols AS (
       SELECT a.attrelid, a.attname::text AS attname, format_type(a.atttypid, a.atttypmod) AS coltype
       FROM pg_attribute a
-      WHERE a.attname = ANY($2::text[]) AND NOT a.attisdropped
+      WHERE (a.attname = ANY($2::text[]) OR a.attname = $3) AND NOT a.attisdropped
     ),
     fks AS (
       -- attname::text is required: pg_attribute.attname is type "name", so a bare array_agg(attname)
       -- produces name[] (OID 1003), which node-pg's default array parser does not recognize and
       -- returns as an unparsed "{...}" string instead of a JS array. Cast to text first.
-      SELECT con.conrelid, a.attname::text AS col
+      SELECT con.conrelid, a.attname::text AS col, ra.attname::text AS ref_col
       FROM pg_constraint con
       JOIN pg_attribute a ON a.attrelid = con.conrelid AND a.attnum = ANY(con.conkey)
+      JOIN pg_attribute ra ON ra.attrelid = con.confrelid AND ra.attnum = ANY(con.confkey)
       WHERE con.contype = 'f'
         AND con.confrelid = 'org.companies'::regclass
-        AND a.attname = ANY($2::text[])
+        AND (a.attname = ANY($2::text[]) OR a.attname = $3)
     ),
     pol AS (
       SELECT polrelid,
@@ -159,14 +170,15 @@ async function introspect(client) {
         (SELECT json_agg(json_build_object('col', c.attname, 'type', c.coltype)) FROM cols c WHERE c.attrelid = t.oid),
         '[]'
       ) AS scope_cols,
-      COALESCE((SELECT array_agg(DISTINCT f.col) FROM fks f WHERE f.conrelid = t.oid), ARRAY[]::text[]) AS fk_cols,
+      COALESCE((SELECT array_agg(DISTINCT f.col) FROM fks f WHERE f.conrelid = t.oid AND f.col <> $3), ARRAY[]::text[]) AS fk_cols,
+      COALESCE((SELECT array_agg(DISTINCT f.col || '->' || f.ref_col) FROM fks f WHERE f.conrelid = t.oid AND f.col = $3), ARRAY[]::text[]) AS natural_fks,
       COALESCE(p.exprs, '') AS policy_exprs,
       COALESCE(p.policy_count, 0)::int AS policy_count
     FROM tabs t
     LEFT JOIN pol p ON p.polrelid = t.oid
     ORDER BY 1, 2;
     `,
-    [EXCLUDED_SCHEMAS, SCOPE_COLUMNS]
+    [EXCLUDED_SCHEMAS, SCOPE_COLUMNS, NATURAL_SCOPE.col]
   );
   return res.rows;
 }
@@ -217,6 +229,28 @@ function classify(row) {
     const forced = row.forced === true;
     if (isUuid && hasFk && hasPolicy && forced) {
       return { compliant: true, chosenCol: col, missing: [] };
+    }
+  }
+
+  // NATURAL-KEY WALL — see NATURAL_SCOPE above. All four, or not walled.
+  if (byName.has(NATURAL_SCOPE.col)) {
+    const isText = byName.get(NATURAL_SCOPE.col) === "text";
+    const hasNaturalFk = (row.natural_fks || []).includes(`${NATURAL_SCOPE.col}->${NATURAL_SCOPE.refCol}`);
+    const exprs = row.policy_exprs || "";
+    const naturalPolicy =
+      new RegExp(`\\b${NATURAL_SCOPE.col}\\b`).test(exprs) &&
+      /org\.companies/.test(exprs) &&
+      new RegExp(`current_setting\\(\\s*'(${gucAlt})'`).test(exprs);
+    if (isText && hasNaturalFk && naturalPolicy && row.forced === true && present.length === 0) {
+      return { compliant: true, chosenCol: NATURAL_SCOPE.col, missing: [] };
+    }
+    if (present.length === 0) {
+      const missing = [];
+      if (!isText) missing.push(`natural key '${NATURAL_SCOPE.col}' must be text (is '${byName.get(NATURAL_SCOPE.col)}')`);
+      if (!hasNaturalFk) missing.push(`needs FK from '${NATURAL_SCOPE.col}' to org.companies(${NATURAL_SCOPE.refCol})`);
+      if (!naturalPolicy) missing.push(`needs RLS policy comparing '${NATURAL_SCOPE.col}' with the code of current_setting('app.operating_company_id') via org.companies`);
+      if (row.forced !== true) missing.push(`needs FORCE ROW LEVEL SECURITY (RLS ${row.rls_enabled ? "on" : "off"} but FORCE off)`);
+      return { compliant: false, chosenCol: NATURAL_SCOPE.col, missing };
     }
   }
 
