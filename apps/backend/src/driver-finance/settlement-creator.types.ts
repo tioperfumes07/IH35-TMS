@@ -17,10 +17,23 @@ export type SettlementCreatorLoadBlock = {
   load_number: string;
   customer_name?: string | null;
   customer_id?: string | null;
+  /**
+   * SETL-F438 — bookLoad() REFUSES any non-draft load carrying neither of these
+   * (error customer_po_or_wo_number_required, ROUND 285.3.6 owner order 2026-09-30:
+   * "W/O or PO REQUIRED at load creation. Not optional, not a warning."). The Creator
+   * books with save_mode 'book_dispatch' and sent neither, so every seed attempt died.
+   * The Faro matcher reads both (factoring-advances.routes.ts, i8-dispatched-load-complete).
+   */
+  customer_po_number?: string | null;
+  customer_wo_number?: string | null;
   pickup_date?: string | null; // YYYY-MM-DD
   pickup_city?: string | null;
+  /** SETL-F438 — the REAL state. Never defaulted: the seeder used to hardcode 'TX' on both stops. */
+  pickup_state?: string | null;
   delivery_date?: string | null; // blank = not delivered yet (dispatched / in transit)
   delivery_city?: string | null;
+  /** SETL-F438 — the REAL state. A Laredo carrier does not deliver only inside Texas. */
+  delivery_state?: string | null;
   line_haul_miles?: number | null;
   line_haul_rate_cents?: number | null;
   line_haul_amount_cents?: number | null;

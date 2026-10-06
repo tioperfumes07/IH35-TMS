@@ -74,6 +74,18 @@ async function resolveTourIdForSb(
   return res.rows[0]?.tour_id ?? null;
 }
 
+/**
+ * SETL-F438 — A STOP CARRIES THE STATE THE TRUCK ACTUALLY WENT TO.
+ *
+ * This function used to write `state: "TX"` as a CONSTANT on BOTH stops and default the delivery
+ * city to the literal "Pending". Every load the Settlement Creator seeded therefore landed in
+ * mdata.load_stops as TX -> TX no matter where the load ran, and that constant is read downstream
+ * by IFTA, lane profitability and the invoice ship-to. A wrong value written confidently is worse
+ * than a missing one, so the state is now REQUIRED input and there is no default to fall back to.
+ *
+ * Nothing is guessed and nothing is defaulted: a load whose origin or destination the operator has
+ * not entered is refused by name, and the operator supplies it.
+ */
 function buildStops(load: SettlementCreatorLoadBlock): BookLoadInput["stops"] {
   const pickupAt = load.pickup_date
     ? `${load.pickup_date}T12:00:00.000Z`
@@ -81,19 +93,41 @@ function buildStops(load: SettlementCreatorLoadBlock): BookLoadInput["stops"] {
   const deliveryAt = load.delivery_date
     ? `${load.delivery_date}T18:00:00.000Z`
     : pickupAt;
+
+  const pickupCity = load.pickup_city?.trim();
+  const pickupState = load.pickup_state?.trim().toUpperCase();
+  const deliveryCity = load.delivery_city?.trim();
+  const deliveryState = load.delivery_state?.trim().toUpperCase();
+
+  if (!pickupCity || !pickupState) {
+    throw new SettlementCreatorSeedError(
+      "stop_city_state_required",
+      `Load ${load.load_number}: pickup city AND state are required. The seeder no longer defaults ` +
+        `them to Laredo, TX — a stop written with a state the truck never visited corrupts IFTA, ` +
+        `lane profitability and the invoice ship-to.`,
+    );
+  }
+  if (!deliveryCity || !deliveryState) {
+    throw new SettlementCreatorSeedError(
+      "stop_city_state_required",
+      `Load ${load.load_number}: delivery city AND state are required. The seeder no longer writes ` +
+        `the literal "Pending" / "TX" for a destination it was not told.`,
+    );
+  }
+
   return [
     {
       sequence_number: 1,
       stop_type: "pickup",
-      city: load.pickup_city?.trim() || "Laredo",
-      state: "TX",
+      city: pickupCity,
+      state: pickupState,
       scheduled_arrival_at: pickupAt,
     },
     {
       sequence_number: 2,
       stop_type: "delivery",
-      city: load.delivery_city?.trim() || "Pending",
-      state: "TX",
+      city: deliveryCity,
+      state: deliveryState,
       scheduled_arrival_at: deliveryAt,
     },
   ];
@@ -159,6 +193,20 @@ export async function ensureDispatchedLoadsForCreator(
       );
     }
 
+    // SETL-F438 — bookLoad() refuses a non-draft load with neither PO nor W/O
+    // (customer_po_or_wo_number_required, ROUND 285.3.6). The Creator books with
+    // save_mode 'book_dispatch', so without this the FIRST load always failed. Refuse by name here
+    // rather than let the operator read an opaque book_load_failed payload.
+    const poNumber = load.customer_po_number?.trim() || null;
+    const woNumber = load.customer_wo_number?.trim() || null;
+    if (!poNumber && !woNumber) {
+      throw new SettlementCreatorSeedError(
+        "customer_po_or_wo_number_required",
+        `Load ${load.load_number}: the customer's PO number (or W/O number) is required at load ` +
+          `creation — bookLoad refuses the load without one, and the Faro invoice join matches on it.`,
+      );
+    }
+
     const customerId = await resolveCustomerId(client, draft.operating_company_id, load);
     const tripType = load.trip_type ?? (load.join_outbound_load_number ? "SB" : "NB");
     const tourId =
@@ -176,6 +224,8 @@ export async function ensureDispatchedLoadsForCreator(
       status: notDelivered ? "dispatched" : "assigned_not_dispatched",
       trip_type: tripType,
       tour_id: tourId ?? undefined,
+      customer_po_number: poNumber ?? undefined,
+      customer_wo_number: woNumber ?? undefined,
       requested_load_number: load.load_number.trim(),
       live_load_number: load.load_number.trim(),
       assigned_primary_driver_id: draft.driver_id,

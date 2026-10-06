@@ -847,6 +847,19 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       placeholder="Outbound load #"
                     />
                   </Field>
+                  <Field label="Customer PO #">
+                    <input
+                      className={inputClass}
+                      value={load.customer_po_number ?? ""}
+                      onChange={(e) => {
+                        const next = [...loads];
+                        next[idx] = { ...load, customer_po_number: e.target.value };
+                        setLoads(next);
+                      }}
+                      title="REQUIRED — bookLoad refuses a load with no PO or W/O, and Faro matches the invoice on it"
+                      data-testid={`sc-load-po-${idx}`}
+                    />
+                  </Field>
                   <Field label="Pickup date">
                     <DatePicker
                       className={inputClass}
@@ -869,6 +882,20 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       }}
                     />
                   </Field>
+                  <Field label="Pickup state">
+                    <input
+                      className={inputClass}
+                      value={load.pickup_state ?? ""}
+                      onChange={(e) => {
+                        const next = [...loads];
+                        next[idx] = { ...load, pickup_state: e.target.value.toUpperCase() };
+                        setLoads(next);
+                      }}
+                      maxLength={6}
+                      title="REQUIRED — the state the load actually originated in. Nothing defaults to TX any more."
+                      data-testid={`sc-load-pickup-state-${idx}`}
+                    />
+                  </Field>
                   <Field label="Delivery date">
                     <DatePicker
                       className={inputClass}
@@ -889,6 +916,20 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         next[idx] = { ...load, delivery_city: e.target.value };
                         setLoads(next);
                       }}
+                    />
+                  </Field>
+                  <Field label="Delivery state">
+                    <input
+                      className={inputClass}
+                      value={load.delivery_state ?? ""}
+                      onChange={(e) => {
+                        const next = [...loads];
+                        next[idx] = { ...load, delivery_state: e.target.value.toUpperCase() };
+                        setLoads(next);
+                      }}
+                      maxLength={6}
+                      title="REQUIRED — the state the load actually delivered in. The seeder no longer writes Pending / TX."
+                      data-testid={`sc-load-delivery-state-${idx}`}
                     />
                   </Field>
                   <Field label="Loaded miles">
