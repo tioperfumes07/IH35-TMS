@@ -2261,11 +2261,11 @@
   "202615440900": {
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-06",
-    "purpose": "Contract PDF format versioning: legal.contract_instances.pdf_format_version — an unsigned contract whose filed PDF predates the current legal-document format (12pt, 1in margins, Page X of Y) is re-filed in the current format on open; executed PDFs are never re-rendered",
-    "202615400850": {
-      "claimed_by": "CC-2",
-      "claimed_at": "2026-10-06",
-      "purpose": "Declare catalogs.accounts.posts_to_financials (boolean NOT NULL DEFAULT true) — live on prod with no creating migration, so a fresh database dies at 202615400930 (CC-3 finding 2026-10-04). ADD COLUMN IF NOT EXISTS: no-op on prod; sorts before 202615400930 on a fresh chain."
-    }
+    "purpose": "Contract PDF format versioning: legal.contract_instances.pdf_format_version — an unsigned contract whose filed PDF predates the current legal-document format (12pt, 1in margins, Page X of Y) is re-filed in the current format on open; executed PDFs are never re-rendered"
+  },
+  "202615400850": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-06",
+    "purpose": "Declare catalogs.accounts.posts_to_financials (boolean NOT NULL DEFAULT true) — live on prod with no creating migration, so a fresh database dies at 202615400930 (CC-3 finding 2026-10-04). ADD COLUMN IF NOT EXISTS: no-op on prod; sorts before 202615400930 on a fresh chain."
   }
 }
