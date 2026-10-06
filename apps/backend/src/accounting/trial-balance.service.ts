@@ -1,4 +1,5 @@
 import { withCurrentUser } from "../auth/db.js";
+import { LEDGER_POSTING_COUNTS_SQL } from "./ledger-membership.js";
 
 type TrialBalanceRowDb = {
   account_id: string;
@@ -68,9 +69,7 @@ export async function getTrialBalanceReport(input: {
           ON a.id = p.account_id
          AND a.operating_company_id = p.operating_company_id
         WHERE p.operating_company_id = $1::uuid
-          AND je.status <> 'voided'
-          AND COALESCE(je.is_sample_data, false) = false
-          AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))${dateSql}
+          AND ${LEDGER_POSTING_COUNTS_SQL}${dateSql}
         GROUP BY p.account_id, a.account_number, a.account_name, a.account_type
         ORDER BY a.account_number ASC NULLS LAST, a.account_name ASC
       `,

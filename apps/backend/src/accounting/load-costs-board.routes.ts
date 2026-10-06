@@ -5,6 +5,7 @@ import { countUncategorizedTransactions } from "../banking/pending-categorizatio
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { canonicalActiveLoadNotFinishedByMoneyCte } from "../dispatch/canonical-active-load-set.js";
 import { wizardChargesLeftJoin } from "./load-wizard-charges.sql.js";
+import { LEDGER_POSTING_COUNTS_SQL } from "./ledger-membership.js";
 
 /** TAB-COMPLETION-STANDARD A — twelve hubs, both-way or explicit N/A. Silence is a defect. */
 export const LOAD_COSTS_HUB_LINKAGE = {
@@ -411,8 +412,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
                JOIN catalogs.accounts a ON a.id = p.account_id
               WHERE p.operating_company_id = $1::uuid
                 AND p.load_id = ANY($2::uuid[])
-                AND je.status <> 'voided'
-                AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
+                AND ${LEDGER_POSTING_COUNTS_SQL}
                 AND a.account_type IN ('Expense', 'CostOfGoodsSold', 'OtherExpense')
               GROUP BY p.load_id`,
             [parsed.data.operating_company_id, loadIds]

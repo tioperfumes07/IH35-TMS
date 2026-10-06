@@ -7,6 +7,7 @@ import {
 } from "./report-transforms.js";
 import { buildCashBasisProfitLossOnClient } from "./profit-loss-cash.service.js";
 import { resolveRoleAccountOptional } from "../coa-roles/resolver.service.js";
+import { LEDGER_POSTING_COUNTS_SQL } from "../ledger-membership.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -57,8 +58,7 @@ async function queryPeriodAggregates(client: DbClient, input: { operatingCompany
         ON a.id = p.account_id
        AND a.operating_company_id = p.operating_company_id
       WHERE p.operating_company_id = $1::uuid
-        AND je.status <> 'voided'
-        AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
+        AND ${LEDGER_POSTING_COUNTS_SQL}
         AND je.entry_date BETWEEN $2::date AND $3::date
       GROUP BY p.account_id, a.account_number, a.account_name, a.account_type
       ORDER BY a.account_number ASC NULLS LAST, a.account_name ASC
@@ -115,8 +115,7 @@ async function buildAccrualBalanceSheet(client: DbClient, input: { operatingComp
         ON a.id = p.account_id
        AND a.operating_company_id = p.operating_company_id
       WHERE p.operating_company_id = $1::uuid
-        AND je.status <> 'voided'
-        AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
+        AND ${LEDGER_POSTING_COUNTS_SQL}
         AND je.entry_date <= $2::date
         AND a.account_type IN ('Asset', 'Liability', 'Equity')
         -- ACCT-F5656 — must exclude the retained-earnings closing entry the SAME way the earnings
@@ -161,8 +160,7 @@ async function buildAccrualBalanceSheet(client: DbClient, input: { operatingComp
         ON a.id = p.account_id
        AND a.operating_company_id = p.operating_company_id
       WHERE p.operating_company_id = $1::uuid
-        AND je.status <> 'voided'
-        AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
+        AND ${LEDGER_POSTING_COUNTS_SQL}
         AND je.entry_date <= $2::date
         AND a.account_type IN ('Income', 'OtherIncome', 'CostOfGoodsSold', 'Expense', 'OtherExpense')
         AND je.id NOT IN (

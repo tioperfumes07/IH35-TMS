@@ -50,6 +50,7 @@ import {
 } from "../profit-loss-sections.js";
 import type { ProfitLossLine, ProfitLossReport, ProfitLossSection } from "../profit-loss.service.js";
 import { recognizeCashBasis, type SettlementEvent } from "./recognition.js";
+import { LEDGER_POSTING_COUNTS_SQL } from "../ledger-membership.js";
 
 /** How the basis engine treats a posting, decided entirely by its source document's kind. */
 export type CashBasisSourceTreatment =
@@ -391,9 +392,7 @@ const POSTINGS_SQL = `
     ON a.id = p.account_id
    AND a.operating_company_id = p.operating_company_id
   WHERE p.operating_company_id = $1::uuid
-    AND je.status <> 'voided'
-    AND COALESCE(je.is_sample_data, false) = false
-    AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
+    AND ${LEDGER_POSTING_COUNTS_SQL}
     AND je.id NOT IN (
       SELECT ap.retained_earnings_entry_id
       FROM accounting.periods ap

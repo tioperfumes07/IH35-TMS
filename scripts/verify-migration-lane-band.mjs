@@ -95,6 +95,12 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
     "cc-2/faro-f435-repurchase-view",
     new Set(["db/migrations/202615431000_views_factoring_repurchase_obligation.sql"]),
   ],
+  // CC-2 own engine (owner 2026-10-01: "fully complete and build their own engine, no handing off"; 2026-10-06: "FIX
+  // THE ENGINES"). ACCT-F2026100601: fn_account_balances_as_of adopts the one ledger-membership rule. Claimed #25557.
+  [
+    "cc-2/reclassify-derived-balances",
+    new Set(["db/migrations/202615430500_fn_account_balances_one_ledger_membership_rule.sql"]),
+  ],
   [
     "codex/samsara-usmca-retag-migration",
     new Set(["db/migrations/202613761300_samsara_usmca_retag.sql"]),

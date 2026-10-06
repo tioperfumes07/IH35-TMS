@@ -26,6 +26,7 @@ import { createJournalEntryOnClient, restoreReversedJournalEntryInClientTx } fro
 import { PostingEngineError } from "../posting-engine.service.js";
 import { writeTransactionSourceLink } from "../accounting-spine-emit.js";
 import { syncReeferFuelForExpenseLine } from "../../fuel/reefer-fuel.service.js";
+import { LEDGER_POSTING_COUNTS_SQL } from "../ledger-membership.js";
 
 type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }> };
 
@@ -112,8 +113,7 @@ export function buildLineWhere(filter: ReclassifyLineFilter, values: unknown[]):
   // (USMCA 9000 showed 2,837.33 with every row hidden). They are listed, flagged, and refused at apply instead.
   const where: string[] = [
     `p.operating_company_id = $1::uuid`,
-    `je.status <> 'voided'`,
-    `(p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))`,
+    LEDGER_POSTING_COUNTS_SQL,
     `je.entry_date BETWEEN $2::date AND $3::date`,
   ];
   if (filter.account_ids?.length) {
@@ -1134,8 +1134,7 @@ export async function getReclassifyAccountTree(userId: string, input: { operatin
            JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
            LEFT JOIN accounting.posting_batches pb ON pb.id = p.posting_batch_id AND pb.operating_company_id = p.operating_company_id
           WHERE p.operating_company_id = $1::uuid
-            AND je.status <> 'voided'
-            AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
+            AND ${LEDGER_POSTING_COUNTS_SQL}
           GROUP BY p.account_id
        )
        SELECT a.id::text AS account_id, a.account_number, a.account_name, a.account_type::text AS account_type, a.account_subtype,

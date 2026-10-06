@@ -15,6 +15,7 @@
 import { naturalSignFactor } from "../accounting/natural-sign.js";
 import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
+import { LEDGER_POSTING_COUNTS_SQL } from "../accounting/ledger-membership.js";
 
 export type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 
@@ -55,7 +56,7 @@ const GL_ONLY_SQL = `
   JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
   LEFT JOIN accounting.posting_batches pb ON pb.id = p.posting_batch_id AND pb.operating_company_id = p.operating_company_id
  WHERE p.operating_company_id = $1::uuid AND p.account_id = $3::uuid
-   AND je.status <> 'voided' AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
+   AND ${LEDGER_POSTING_COUNTS_SQL}
    AND je.entry_date <= $4::date
    AND NOT EXISTS (SELECT 1 FROM banking.bank_transactions bt
                     WHERE bt.operating_company_id = $1::uuid AND bt.bank_account_id = $2::uuid
