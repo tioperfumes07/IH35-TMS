@@ -1812,3 +1812,26 @@ detached (no transaction_source_links row) | TRANSP 30 | TRK 0 | USMCA 0
 - **THE ONE SPINE NUMBER: 0.** Of the detached postings, 0 name a USMCA document that still exists, because there are no USMCA postings. The 11,518 / 7,957 / 3,938 figures predate AUTH-400 (clean slate executed 2026-10-05 ~00:40Z, consumed in OWNER-AUTHORIZATIONS.md). The only detached postings left are 30 in TRANSP, which is frozen (ACCT-F406). Backfill scope = 0. Nothing written.
 - **393.1:** the $3,542.98 / 60 auto lines on 2000 no longer exist; USMCA GL 2000 = $0.00. "Reverse by document" has nothing left to reverse. The write-time refusal on ap_control is still owed and goes first, so it is in place before the owner's first real bill. Building it now.
 - Not mine, measured anyway: **REAL_DEFECT** `no-execsync-on-request-path` (`program/module-matrix.service.ts:57` sync readFileSync per column), `no-internal-payload-in-notes` (new raw-UUID memo at `journal-entries.service.ts:692`), `blocker-errors-carry-message` (2 bare error replies). In total 287 guard selftests fail on main; my lane's 54 are being fixed as stale-guard batches (LST-F413).
+
+## 2026-10-06 ~16:00Z — ROUND 432-CC1 done lines (CC-1)
+CI is down account-wide; local gates are the record. Backend live deploy dep-db2h79sv8u7c73ehhtlg (d5fd364e03); LST-F414 deploy dep-db2haoihabec73d3n4i0 (ca16619071) queued behind it.
+All verdicts below were measured on prod read-only (ih35_ci_readonly) at ~15:45Z. The five items were already built on main before today's INBOX, and their data subjects were removed by AUTH-400 (USMCA: 0 postings, 0 entries).
+
+| # | item | PR · sha | live verdict (verbatim) |
+|---|---|---|---|
+| 1 | 393.1 A/P write-time rule | #24980 f629b8084e; follow-up **LST-F414 #25583 ca16619071** | `verify-ap-control-written-only-by-documents: OK — the A/P document refusal is armed; 0 undocumented A/P lines since it applied` |
+| 2 | 363-CC1-A load_id on every posting | 202615350500 + CC-3 202615330931 | `verify-every-load-born-posting-carries-its-load: OK — 2 posting INSERT(s) under apps/backend/src all write load_id; load-born postings 0` |
+| 3 | 363-CC1-B bill-payment COMMIT refusal | trg_bill_payment_requires_postings (live) | `verify-no-bill-payment-without-postings: OK — 10 bill-payment inserters, each posts on its own transaction; 0 unposted cash bill payment(s) … refusal LIVE (deferred, fires at COMMIT)` |
+| 4 | 394 advances → own 1245 sub; payable 2170 | #24992/#24997 (ACCT-F9984/9983), 757ac3fac9 | `verify-driver-advance-posts-to-drivers-own-subaccount: OK — … 0 postings on the shared advance_recovery parent since 2026-10-05`; `verify-netpay-clearing-is-liability LIVE PASS — 3 entities bound to Liability 2170` |
+| 5 | 365.6 31 live guards | #25549 803705cce6 | 31/31 pass with the credential (OUTBOX 10-06 365.6 entry) |
+
+**"Post the 130" / "$71,215.96" / "60 lines $2,976.63":** those USMCA rows were removed by AUTH-400, so nothing is left to post or reverse by document. The engines that would carry them are live, as the verdicts above show.
+
+**New today (root causes found while proving the list):**
+- **LST-F414 (#25583):** 393.1 refused, at write time, the raw ap_control lines that three insurance posters wrote. Each would have thrown the first time it ran in USMCA: a cancellation refund, a refund-obligation drain, or a fleet add/remove. They now issue the insurer's vendor credit or bill through the one writer, `createVendorCreditInClientTx`.
+  - New guard `verify-ap-control-writers-go-through-documents` (step 18349). Shrink-only named debt: lease rent (→ a bill from the lessor), accident absorb (**owner decision: payee bill vs accrued liability**), the fuel "ap" branch, and the retired payroll writer.
+- **LST-F412 (#25563):** six bill writers left `display_id` NULL; a BEFORE INSERT trigger now numbers every TMS-native bill. Live: `verify-bill-display-id-stamped: LIVE PASS — trigger present; no TMS-native bill since 2026-10-06 without a display_id`.
+- **LST-F413 (#25585):** 17 money guards with failing selftests restored to the code they protect; none weakened, four made stricter.
+- **LST-F410 (#25551):** the money gate now runs four ledger-integrity guards with --live.
+
+**NEXT (433-CC1):** item 3, the stranded sub-nav. Items 1–2 (palette tokens #25540/#25542, breadcrumb via Shell #25541) shipped 2026-10-05/06. Then the LST-F414 debt list.
