@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { structuralParentHref } from "../../lib/structuralBreadcrumb";
+import { inModuleBackHref } from "../../lib/structuralBreadcrumb";
 
 type Props = {
   label?: string;
@@ -15,7 +15,7 @@ export function BackButton({ label = "Back", fallbackTo }: Props) {
     <button
       type="button"
       onClick={() => {
-        navigate(fallbackTo || structuralParentHref(pathname));
+        navigate(inModuleBackHref(pathname, fallbackTo));
       }}
       className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-slate-900 hover:underline"
       aria-label={label}

@@ -1181,7 +1181,7 @@ export function SystemModulePage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader breadcrumb={["Home", "System"]} backHref="/home" title="SYSTEM" subtitle="Owner-only" />
+      <PageHeader breadcrumb={["System"]} backHref="/system" title="SYSTEM" subtitle="Owner-only" />
       <NavyPageSubNav
         items={visibleTabs.map((t) => ({ label: t.label, to: `#${t.id}` }))}
         activeId={tab}

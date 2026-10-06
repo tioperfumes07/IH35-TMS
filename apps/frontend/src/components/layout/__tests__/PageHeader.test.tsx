@@ -55,4 +55,16 @@ describe("layout PageHeader", () => {
     expect(navigateSpy).toHaveBeenCalledWith("/accounting/invoices");
     expect(navigateSpy).not.toHaveBeenCalledWith(-1);
   });
+
+  it("ROUND 435-CUR — refuses a backHref that leaves the module", () => {
+    render(
+      <MemoryRouter initialEntries={["/customers/abc"]}>
+        <PageHeader title="Customer" backHref="/accounting" />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByLabelText("Back"));
+    expect(navigateSpy).toHaveBeenCalledWith("/customers");
+    expect(navigateSpy).not.toHaveBeenCalledWith("/accounting");
+    expect(navigateSpy).not.toHaveBeenCalledWith(-1);
+  });
 });

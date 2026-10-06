@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { humanizeSegment, structuralCrumbsForPath, structuralParentHref } from "../structuralBreadcrumb";
+import {
+  humanizeSegment,
+  inModuleBackHref,
+  modulePrefixForPath,
+  structuralCrumbsForPath,
+  structuralParentHref,
+} from "../structuralBreadcrumb";
 
 describe("structuralBreadcrumb (ROUND 367.9)", () => {
   it("skips Accounting (CC-2 shell owns that breadcrumb)", () => {
@@ -48,5 +54,22 @@ describe("structuralBreadcrumb (ROUND 367.9)", () => {
     const b = structuralCrumbsForPath("/customers/detail/1");
     expect(a).toEqual(b);
     expect(a?.[0]?.href).toBe("/customers");
+  });
+
+  it("ROUND 435-CUR — Accounting parent stays in Accounting (never /home)", () => {
+    expect(structuralParentHref("/accounting/invoices/11111111-1111-4111-8111-111111111111")).toBe(
+      "/accounting/invoices",
+    );
+    expect(structuralParentHref("/accounting/factoring/abc")).toBe("/accounting/factoring");
+    expect(modulePrefixForPath("/accounting/bills")).toBe("/accounting");
+  });
+
+  it("ROUND 435-CUR — back arrow refuses a different module", () => {
+    expect(inModuleBackHref("/customers/abc", "/accounting")).toBe("/customers");
+    expect(inModuleBackHref("/vendors/abc", "/accounting")).toBe("/vendors");
+    expect(inModuleBackHref("/accounting/factoring/1", "/factoring")).toBe("/accounting/factoring");
+    expect(inModuleBackHref("/fleet/units/1", "/units")).toBe("/fleet/units");
+    expect(inModuleBackHref("/banking/reconciliation", "/home")).toBe("/banking");
+    expect(inModuleBackHref("/customers/abc", "/customers")).toBe("/customers");
   });
 });

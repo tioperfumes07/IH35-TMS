@@ -2,7 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useClaimBreadcrumb } from "../../../lib/breadcrumbOwner";
-import { structuralParentHref } from "../../../lib/structuralBreadcrumb";
+import { inModuleBackHref } from "../../../lib/structuralBreadcrumb";
 import "./PageHeader.css";
 
 export type BreadcrumbItem = { label: string; href?: string };
@@ -59,8 +59,8 @@ export function PageHeader({ title, backHref, breadcrumb, subtitle, actions }: P
             aria-label="Back"
             data-testid="page-header-back"
             onClick={() => {
-              // ROUND 367.9 — Up is structural (route parent), never history navigate(-1).
-              navigate(backHref || structuralParentHref(location.pathname));
+              // ROUND 435-CUR — Up is the in-module structural parent. Never history, never another module.
+              navigate(inModuleBackHref(location.pathname, backHref));
             }}
           >
               <ArrowLeft size={18} aria-hidden />

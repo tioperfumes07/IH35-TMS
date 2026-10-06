@@ -144,7 +144,7 @@ export function FleetHomePage() {
       <PageHeader
         title="Fleet"
         subtitle="Trucks, trailers, and what needs attention."
-        backHref="/home"
+        backHref="/fleet"
         actions={
           companyId ? (
             <div className="flex flex-wrap items-center gap-2" data-testid="fleet-roster-create-actions">

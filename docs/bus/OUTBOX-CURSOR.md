@@ -1,3 +1,19 @@
+## 2026-10-06T15:00Z · ROUND 435-CUR back arrow stays in-module
+
+DONE: `inModuleBackHref` clamps 4 Up writers. `structuralParentHref` uses accountingFallbackCrumbs then module home (never `/home` from an Accounting leaf). Cross-module page literals retargeted (FactoringDetail, UnitDetail, Fleet/Fuel/CashFlow/Compliance/Settings/System/425c/Inventory/QBO).
+
+GUARD: `scripts/verify-back-arrow-stays-in-module.mjs` + 12414. PASS — 4 writers; 159 page literals; 648 manifest; 0 cross-module. `--selftest` 2/2. Breadcrumb live + --selftest PASS. Vitest 15/15.
+
+CUSTOMERS / VENDORS (code-traced, no Chrome): `/customers/:id` 13 tabs each render (`Profile` … `Audit History`); back `/customers`. `/vendors/:id` 6 tabs each render (`Profile` … `W-9 / 1099`); back `/vendors`. Documents vendor-tab permission-gated. `/accounting/customers|vendors` already Navigate-replace to module lists. No production `navigate(-1)`.
+
+NOW: Fast Merge this PR.
+
+NEXT: 433-CUR visual closeout is a later row. Engine load-backlink still local on `cursor/eng-spine-load-backlink-c89b`.
+
+Files Modified: structuralBreadcrumb.ts + tests · 4 headers · 11 page literals · verify-back-arrow-stays-in-module.mjs · 12414 · breadcrumb guard · MEMORY_BANK · this OUTBOX · NOW-CURSOR
+
+---
+
 ## 2026-10-06T14:10Z · ENG-SPINE bill-payment → bill backlink shipping
 
 DONE: measured hole — bill-payment accept never wrote `matched_bill_id` (zero accept writers in apps/; bills.service drill dead). Payment already had ACCT-F5620 invoice backlink.

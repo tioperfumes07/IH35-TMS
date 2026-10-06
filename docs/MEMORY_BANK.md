@@ -112,6 +112,22 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 
 ## Active Architectural Decisions
 
+### Active Architectural Decisions — Back arrow stays in-module (Cursor, ROUND 435-CUR, 2026-10-06)
+
+- Owner: a back arrow NEVER crosses a module boundary. Never `navigate(-1)`. No parent inside the
+  module → module home. Customers/Vendors back to their lists, never Accounting.
+- Mechanism: `inModuleBackHref(pathname, candidate)` on the four Up writers (layout PageHeader,
+  forms PageHeader, BackButton, BackArrowHeader). Same-module candidate wins; else
+  `structuralParentHref`. Accounting parent uses `accountingFallbackCrumbs` so a skipped crumb no
+  longer falls through to `/home`.
+- Guard: `scripts/verify-back-arrow-stays-in-module.mjs` (wired on 12414). Shrink-only: 4 writers
+  clamp; page `backHref`/`backTo`/`fallbackTo` literals keep the page's module prefix; 648 manifest
+  parents keep prefix. PASS: `4 writers; 159 page literals; 648 manifest; 0 cross-module`.
+- Customers `/customers/:id`: 13 tabs each have an `activeTab ===` render branch; `backHref="/customers"`.
+- Vendors `/vendors/:id`: 6 tabs each have a render branch; `backHref="/vendors"`. Documents is
+  permission-gated (`canViewDocuments`). `/accounting/customers` and `/accounting/vendors` already
+  `<Navigate replace>` to the module lists.
+
 ### Active Architectural Decisions — F-RETRY scheduled-writer idempotency (Cursor, ROUND 301 follow-up, 2026-10-02)
 
 - Independent census: 642 engines; F-RETRY word-match 47 → scheduler **18 CONFIRMED / 29 CLEARED**.

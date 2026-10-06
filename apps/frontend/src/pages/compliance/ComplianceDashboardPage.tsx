@@ -179,8 +179,8 @@ export function ComplianceDashboardPage() {
   return (
     <div className="space-y-6 p-4" data-testid="compliance-dashboard-page">
       <PageHeader
-        backHref="/home"
-        breadcrumb={["Home", "Compliance"]}
+        backHref="/compliance"
+        breadcrumb={["Compliance"]}
         title="Compliance Dashboard"
         subtitle="Expiring credentials across trucks, trailers, drivers, and carrier"
       />
