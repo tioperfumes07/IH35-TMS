@@ -1,6 +1,7 @@
 // ROUND 326.2 items 1-2 — one panel for every server-side KPI engine (factoring, banking). Every value comes from the
 // engine's GET .../kpis (ledger / bank feed / document, computed on the server); every tile drills to the exact rows
 // behind it (GET .../kpis/:key/drill), each id an EntityLink back to its record. A KPI with no data says why.
+import { MoneyCell } from "./MoneyCell";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Modal } from "../Modal";
@@ -218,7 +219,7 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
                       <tr key={b.label}>
                         <td className="text-left">{b.label}</td>
                         <td className="text-right">{b.count}</td>
-                        {drillKpi.unit === "cents" ? <td className={QBO_MONEY_CELL_CLASS}>{formatUsdCents(b.cents)}</td> : null}
+                        {drillKpi.unit === "cents" ? <td><MoneyCell cents={b.cents} drill={{ none: "Breakdown bucket of this KPI — the rows listed below in this drill are its transactions" }} /></td> : null}
                       </tr>
                     ))}
                   </tbody>
@@ -227,7 +228,7 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
                       <td className="text-left">Total</td>
                       <td className="text-right">{drillKpi.buckets.reduce((s, b) => s + b.count, 0)}</td>
                       {drillKpi.unit === "cents" ? (
-                        <td className={QBO_MONEY_CELL_CLASS}>{formatUsdCents(drillKpi.buckets.reduce((s, b) => s + b.cents, 0))}</td>
+                        <td><MoneyCell cents={drillKpi.buckets.reduce((s, b) => s + b.cents, 0)} drill={{ none: "Total of the buckets above; it ties to the KPI tile and to the rows listed below" }} /></td>
                       ) : null}
                     </tr>
                   </tfoot>

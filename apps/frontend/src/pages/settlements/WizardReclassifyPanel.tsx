@@ -3,6 +3,7 @@
 // Not a wizard-local copy of the logic: the lines come from findReclassifyLines (the Accounting > Reclassify register's
 // own query, narrowed to these documents) and the change goes through applyReclassify — the one reclassify engine, the
 // same writer and the same audit record as the Accounting tab. Guard: scripts/verify-wizard-and-reclassify-share-one-writer.mjs.
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -163,7 +164,7 @@ export function WizardReclassifyPanel({
                   </td>
                   <td className="p-1">{formatAccountDisplayLabel({ account_name: l.account_name, account_number: l.account_number }, { showNumber: showAccountNumbers })}</td>
                   <td className="p-1">{l.description ?? "—"}</td>
-                  <td className="p-1 text-right tabular-nums">{formatUsdCentsTable(l.amount_cents)}</td>
+                  <td className="p-1"><MoneyCell cents={l.amount_cents} format={formatUsdCentsTable} drill={{ entity: { kind: target.kind, id: target.id } }} /></td>
                 </tr>
               );
             })}

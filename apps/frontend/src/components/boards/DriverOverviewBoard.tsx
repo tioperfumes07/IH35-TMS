@@ -10,6 +10,7 @@ import { ApiError, apiRequest } from "../../api/client";
 import { formatDateUS } from "../../lib/formatDate";
 import { ListErrorState } from "../ListErrorState";
 import { EntityLink, resolveEntityRoute } from "../shared/EntityLink";
+import { MoneyCell } from "../shared/MoneyCell";
 import { DriverSamsaraDuplicateBanner } from "../driver-profile/DriverSamsaraDuplicateBanner";
 import { DriverEditForm } from "../../pages/drivers/DriverEditForm";
 import {
@@ -250,10 +251,10 @@ export function DriverOverviewBoard(props: {
                       <td colSpan={2}>{int(o.settlements.length)} settlements</td>
                       <td className="ih-num">{int(sum("loads"))}</td>
                       <td className="ih-num">{int(sum("miles"))}</td>
-                      <td className="ih-num text-right tabular-nums">{money(sum("line_haul_cents"))}</td>
-                      <td className="ih-num text-right tabular-nums">{money(sum("additional_cents"))}</td>
-                      <td className="ih-num text-right tabular-nums">{money(sum("deductions_cents"))}</td>
-                      <td className="ih-num text-right tabular-nums">{money(sum("net_cents"))}</td>
+                      <td className="ih-num"><MoneyCell cents={sum("line_haul_cents")} format={money} drill={{ none: "Total of the rows above — each row opens its own record (the 12 most recent settlements)" }} /></td>
+                      <td className="ih-num"><MoneyCell cents={sum("additional_cents")} format={money} drill={{ none: "Total of the rows above — each row opens its own record (the 12 most recent settlements)" }} /></td>
+                      <td className="ih-num"><MoneyCell cents={sum("deductions_cents")} format={money} drill={{ none: "Total of the rows above — each row opens its own record (the 12 most recent settlements)" }} /></td>
+                      <td className="ih-num"><MoneyCell cents={sum("net_cents")} format={money} drill={{ none: "Total of the rows above — each row opens its own record (the 12 most recent settlements)" }} /></td>
                     </tr>
                   </tfoot>
                 </table>
@@ -297,7 +298,7 @@ export function DriverOverviewBoard(props: {
                   <tfoot>
                     <tr className="pb-foot">
                       <td colSpan={6}>{int(o.additional.length)} payments, last 90 days</td>
-                      <td className="ih-num text-right tabular-nums">{money(t.additional_pay_cents)}</td>
+                      <td className="ih-num"><MoneyCell cents={t.additional_pay_cents} format={money} drill={{ none: "Total of the rows above — each row opens its own record (additional pay, last 90 days)" }} /></td>
                     </tr>
                   </tfoot>
                 </table>
@@ -355,7 +356,7 @@ export function DriverOverviewBoard(props: {
                   <tfoot>
                     <tr className="pb-foot">
                       <td colSpan={6}>{int(o.complaints.length)} complaints, 90 days · fleet average {t.fleet_complaints_avg_90d}</td>
-                      <td className="ih-num text-right tabular-nums">{money(o.complaints.reduce((s, c) => s + (c.cost_cents ?? 0), 0))}</td>
+                      <td className="ih-num"><MoneyCell cents={o.complaints.reduce((s, c) => s + (c.cost_cents ?? 0), 0)} format={money} drill={{ none: "Total of the rows above — each row opens its own record (complaints, last 90 days)" }} /></td>
                     </tr>
                   </tfoot>
                 </table>
