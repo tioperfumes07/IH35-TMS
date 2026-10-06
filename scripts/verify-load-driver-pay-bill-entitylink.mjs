@@ -93,10 +93,10 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} SELFTEST FAIL — planted dropped-driver-link regression not caught`);
     process.exit(1);
   }
-  const droppedComment = good.replace(
-    /\/\/ driver_finance\.driver_bills[\s\S]*?Never invent an AP bill link\.\n/,
-    ""
-  );
+  // LST-F420: the note is a JSX block comment beside the settlement link now; drop whichever form carries it.
+  const droppedComment = good
+    .replace(/\/\/ driver_finance\.driver_bills[\s\S]*?Never invent an AP bill link\.\n/, "")
+    .replace(/\{\/\*[^]*?driver_finance\.driver_bills != accounting\.bills[^]*?\*\/\}/, "");
   if (droppedComment === good) {
     console.error(`${LABEL} SELFTEST FAIL — comment-drop mutation anchor not found, re-anchor`);
     process.exit(1);

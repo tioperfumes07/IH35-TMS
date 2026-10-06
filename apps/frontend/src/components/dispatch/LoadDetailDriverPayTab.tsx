@@ -36,7 +36,15 @@ type PostingPreview = {
 type DriverPayDetail = {
   driver_id: string | null;
   driver_name: string | null;
-  bill: { id: string; bill_number: string; status: string; gross_amount_cents: number } | null;
+  bill: {
+    id: string;
+    bill_number: string;
+    status: string;
+    gross_amount_cents: number;
+    /** The settlement that paid this bill (driver_finance.driver_bills.settled_in_settlement_id), null while open. */
+    settled_in_settlement_id: string | null;
+    settlement_label: string | null;
+  } | null;
   mileage_lines: MileageLine[];
   accessorials: Accessorial[];
   deductions: Deduction[];
@@ -139,9 +147,29 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
       <div className="ldt-rowbar">
         <div>
           Driver bill <b className="ldt-k">{visibleDocumentLabel(bill.bill_number, bill.id, "Driver bill")}</b> ·{" "}
-          {driver_id ? <EntityLink kind="driver" id={driver_id} label={entityLabel(driver_name, driver_id, "Driver")} /> : <span className="ldt-muted">no driver</span>} ·{" "}
+          {driver_id ? (
+            <EntityLink kind="driver" id={driver_id} label={entityLabel(driver_name, driver_id, "Driver")} data-testid="load-driver-pay-driver-link" />
+          ) : (
+            <span className="ldt-muted">no driver</span>
+          )}{" "}
+          ·{" "}
           <span className={pillClass(bill.status === "open" ? "pending" : "approved")}>{statusLabel(bill.status)}</span>
           {bill.status === "open" ? <span className="ldt-muted"> · accrues to the open tour</span> : null}
+          {/* LST-F420 — reverse link to the settlement that paid this bill. driver_finance.driver_bills != accounting.bills:
+              this row is never an /accounting/bills/:id link (kind="bill" 404s for it); a settled driver bill drills to its
+              settlement, an open one to the driver above and its own driver-bill record below. */}
+          {bill.settled_in_settlement_id ? (
+            <>
+              {" "}
+              · paid in{" "}
+              <EntityLink
+                kind="settlement"
+                id={bill.settled_in_settlement_id}
+                label={entityLabel(bill.settlement_label, bill.settled_in_settlement_id, "Settlement")}
+                data-testid="load-driver-pay-settlement-link"
+              />
+            </>
+          ) : null}
         </div>
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
           {rate_card ? (
