@@ -2930,12 +2930,17 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
     );
   }
 
-  if (insertedId) {
+  // LST-F412 — trg_assign_bill_display_id (202615430100) already gave this row the next BILL-YYYY-NNNNN at
+  // INSERT, as it does for every writer. Only an operator-typed number replaces it, and only the id the
+  // trigger just assigned (never another writer's stamp).
+  const triggerDisplayId = (res.rows[0] as { display_id?: string | null }).display_id ?? null;
+  const requestedDisplayId = input.autoDisplayId ? null : billNumber ?? null;
+  if (insertedId && (!triggerDisplayId || (requestedDisplayId && requestedDisplayId !== triggerDisplayId))) {
     const billDisplayId = await resolveBillDisplayId(
       client,
       input.operatingCompanyId,
       new Date(input.billDate),
-      input.autoDisplayId ? null : billNumber
+      requestedDisplayId
     );
     const stamped = await client.query<BillRow>(
       `
@@ -2943,11 +2948,11 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
            SET display_id = $3::text
          WHERE id = $1::uuid
            AND operating_company_id = $2::uuid
-           AND display_id IS NULL
+           AND display_id IS NOT DISTINCT FROM $4::text
            AND qbo_bill_id IS NULL
         RETURNING *
       `,
-      [insertedId, input.operatingCompanyId, billDisplayId]
+      [insertedId, input.operatingCompanyId, billDisplayId, triggerDisplayId]
     );
     if (stamped.rows[0]) res.rows[0] = stamped.rows[0];
   }
