@@ -671,6 +671,42 @@ async function main() {
     }
   }
 
+  // ================= PHASE 4b: expenses with NO GL at all (LST-F427) =============
+  // Phase 4 selects only expenses with a live posted JE, so an expense that never posted (zero
+  // source_transaction_type='expense' postings) was skipped forever -- the same gap Phase 3b closed
+  // for invoices under the ROUND 128 ruling ("status does not matter ... VOID THEM"). There is no GL
+  // to reverse, so this is the direct stampDocumentVoided call only, never a reversal engine and never
+  // a post-then-void. The NOT EXISTS below is the live check, not an assumption.
+  await reassertSession();
+  const noGlExpenses = await client.query<{ id: string }>(
+    `
+      SELECT ex.id::text
+        FROM accounting.expenses ex
+       WHERE ex.operating_company_id = $1::uuid AND ex.voided_at IS NULL AND ex.status <> 'void'
+         AND NOT EXISTS (
+           SELECT 1 FROM accounting.journal_entry_postings jep
+            WHERE jep.source_transaction_type = 'expense' AND jep.source_transaction_id = ex.id::text
+         )
+    `,
+    [USMCA_COMPANY_ID]
+  );
+  console.log(`\nExpenses with NO GL at all (direct stamp, nothing to reverse): ${noGlExpenses.rowCount}`);
+  for (const ex of noGlExpenses.rows) {
+    if (!executeFlag) continue;
+    try {
+      await inTx(async () => {
+        await stamp(expenseTally, "expense", ex.id);
+      });
+      expenseTally.reversed++; // no GL existed to reverse; "reversed" tracks "processed", as in Phase 3b.
+    } catch (e) {
+      if (e instanceof VoidDocumentStampError) {
+        expenseTally.errors.push(`expense ${ex.id} (no-GL): stamp failed (${e.code})`);
+      } else {
+        expenseTally.errors.push(`expense ${ex.id} (no-GL): ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
+  }
+
   // ================= PHASE 5: fuel transactions (ROUND 125/126 -- caller built, no 7th engine) ====
   // "A fuel EXPENSE is created by a LOAD. A fuel BANK TRANSACTION is a separate real thing we MATCH
   // to it. They are NOT the same record and voiding one must never delete or alter the other" --
