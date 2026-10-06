@@ -2239,3 +2239,9 @@ Queue items named in the 2026-10-04 Lead order are DONE and merged (#25140): ver
 | Tables 10 + 11 (KILL THE SECOND SYSTEM) step 1 — readers repointed | THIS PR | Faro statement balance kept on the register account (tie-out engine compares it to 1230/1235); register balance derived; columns dropped next PR |
 Queue #2 (cc-2/two-main-red-fixes) needed no merge: both fixes reached main via #25376 (Cursor) and baf8688cca (CC-1).
 Open on my list: tables 10 + 11 step 2 (drop the two columns); the 9 failing-guard verdicts (due 2026-10-06 20:00Z); release unused verify-step claims.
+
+### CC-2 · 15:03Z
+DID: handshake
+PROOF: origin/main sha I see = 55b0811d96
+BLOCKED: none (~/Desktop is OS-blocked for this terminal; ~/Downloads is readable)
+NEXT: FARO-F435 — applying 0001-FARO-F435-repurchase-obligation-view.patch (sha256 12e9e43f95… verified); INBOX-CC-2.md not yet updated on main at 55b0811d96
