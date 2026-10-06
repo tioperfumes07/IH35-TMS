@@ -225,6 +225,17 @@ const subnavPaths = new Set([
   ...extractJsxAttrPaths(read("apps/frontend/src/pages/program/scenario-tracker/ScenarioTrackerHome.tsx"), ["to"]),
 ]);
 
+// ACCT-F2026100620 — the Settlements module's own tab strip (SettlementsPage.tsx <NavyPageSubNav items={[...]}>) is module
+// navigation: Batch Settlements (B-3 #23771) and Feed Gate (ACCT-F9602) are tabs in it and were read as orphans because this
+// guard never read that strip. Read ONLY that items block (not every `to:` in the file), so its paths are also held to the
+// SUBNAV→ROUTE check below.
+function extractNavyPageSubNavItemPaths(source) {
+  const block = source.match(/<NavyPageSubNav\s+items=\{\[([\s\S]*?)\]\}/)?.[1] ?? "";
+  if (!block) fail("Settlements tab strip (<NavyPageSubNav items={[...]}>) not found in SettlementsPage.tsx — nav source drifted");
+  return extractQuotedPaths(block, ["to"]);
+}
+for (const p of extractNavyPageSubNavItemPaths(read("apps/frontend/src/pages/driver-finance/SettlementsPage.tsx"))) subnavPaths.add(p);
+
 const driversNavMatch = read("apps/frontend/src/components/drivers/DRIVERS_TABS_CONFIG.ts").match(
   /export const DRIVERS_MODULE_NAV_PATHS = (\[[^\]]+\])/
 );

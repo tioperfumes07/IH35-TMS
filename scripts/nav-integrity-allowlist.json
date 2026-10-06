@@ -1,6 +1,10 @@
 {
   "ADMIN_ONLY": [
     {
+      "path": "/system/engine-status",
+      "reason": "E-41 Engine status board (#23615), OwnerOnlyRoute inside the Owner-only System module (sidebar /system). Deep-linked, not a tab: 'Open Engine status' on the System overview card (pages/system/SystemModulePage.tsx:241) and 'Full board' on the Maintenance engines widget (pages/maintenance/components/MaintEnginesStatusWidget.tsx:64)."
+    },
+    {
       "path": "/program",
       "reason": "Program Board internal block/task tracker; Topbar entry point (non-sidebar by design \u2014 sidebar locked at 28), not a module subnav"
     },
