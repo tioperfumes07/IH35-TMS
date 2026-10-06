@@ -16329,5 +16329,10 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-10-06",
     "purpose": "verify-suggestion-is-action"
+  },
+  "18356": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-10-06",
+    "purpose": "verify-match-description-no-internal-id"
   }
 }
