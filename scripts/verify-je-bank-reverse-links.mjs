@@ -12,6 +12,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { BANNER_REL, rendersBankTransactionLink } from "./lib/renders-bank-transaction-link.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-je-bank-reverse-links";
@@ -42,7 +43,8 @@ export function check(files) {
   }
 
   const detail = files[DETAIL] ?? "";
-  if (!/matched_bank_transaction_id/.test(detail) || !/kind=["']bank_transaction["']/.test(detail)) {
+  // BANK-F31517 (#23917): the detail page's bank link lives in OnlineBankingMatchBanner — the shared rule follows it.
+  if (!/matched_bank_transaction_id/.test(detail) || !rendersBankTransactionLink(detail, files[BANNER_REL])) {
     f.push(`${DETAIL}: must link kind=bank_transaction from matched_bank_transaction_id`);
   }
   if (/entityLabel\(\s*null\s*,\s*entry\.matched_bank_transaction_id/.test(detail)) {
@@ -63,7 +65,7 @@ export function check(files) {
 export function run(root = ROOT) {
   /** @type {Record<string, string | null>} */
   const files = {};
-  for (const rel of [SERVICE, API, DETAIL, LIST]) {
+  for (const rel of [SERVICE, API, DETAIL, LIST, BANNER_REL]) {
     try {
       files[rel] = fs.readFileSync(path.join(root, rel), "utf8");
     } catch {
