@@ -242,6 +242,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
             is_active,
             last_synced_at,
             plaid_item_id,
+            ledger_account_id::text AS ledger_account_id,
             created_at,
             updated_at,
             display_order

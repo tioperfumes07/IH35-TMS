@@ -368,7 +368,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
                           <div className="h-3 flex-1 rounded-sm bg-[#F7F8FA]">
                             <div className="h-3 rounded-sm bg-[#1f2a44]" style={{ width: `${pct}%` }} />
                           </div>
-                          <span className="w-12 shrink-0 text-right text-xs tabular-nums text-[#4B5563]">{hmm(day.on_duty_min)}</span>
+                          <span data-quantity className="w-12 shrink-0 text-right text-xs tabular-nums text-[#4B5563]">{hmm(day.on_duty_min)}</span>
                         </div>
                       );
                     })}

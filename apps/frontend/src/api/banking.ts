@@ -48,6 +48,8 @@ export type PlaidBankAccount = {
   account_class?: string | null;
   account_mask: string | null;
   plaid_item_id?: string | null;
+  /** The GL account this bank / card account posts to — the canonical link to the Chart of Accounts. */
+  ledger_account_id?: string | null;
   current_balance_cents: number;
   available_balance_cents: number;
   currency_code: string;

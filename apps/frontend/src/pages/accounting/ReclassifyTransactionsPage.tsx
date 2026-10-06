@@ -496,7 +496,7 @@ export function ReclassifyTransactionsPage() {
                     <td className="p-2">{b.created_by_email ?? "—"}</td>
                     <td className="p-2">{[b.to_account_name ? `→ ${formatAccountDisplayLabel({ account_name: b.to_account_name, account_number: b.to_account_number }, { showNumber: showAccountNumbers })}` : null, b.to_class_name ? `class → ${b.to_class_name}` : null, b.to_location_name ? `location → ${b.to_location_name}` : null, b.to_entity_uuid ? `${b.to_entity_type ?? "entity"} → ${entityLabel(b.to_entity_name ?? null, b.to_entity_uuid, b.to_entity_type === "vendor" ? "Vendor" : b.to_entity_type === "customer" ? "Customer" : b.to_entity_type === "driver" ? "Driver" : b.to_entity_type === "unit" ? "Unit" : "Entity")}` : null].filter(Boolean).join(" · ")}</td>
                     <td className="p-2 max-w-[18rem] truncate" title={b.reason}>{b.reason}</td>
-                    <td className="p-2 text-right tabular-nums">{b.lines_applied}/{b.lines_requested}{b.lines_refused ? ` (${b.lines_refused} refused)` : ""}</td>
+                    <td data-quantity className="p-2 text-right tabular-nums">{b.lines_applied}/{b.lines_requested}{b.lines_refused ? ` (${b.lines_refused} refused)` : ""}</td>
                     <td className="p-2 text-right tabular-nums">{formatCurrencyFromCents(b.amount_cents_moved)}</td>
                     <td className="p-2">{b.status}{b.undone_at ? ` ${formatDateQboList(b.undone_at)}` : ""}{b.override_refusals ? <span className="ml-1 font-semibold text-slate-700" data-testid={`reclassify-batch-override-${b.id}`}>· owner override</span> : null}</td>
                     <td className="p-2">

@@ -53,7 +53,7 @@ export function DriverEscrowSummaryCard({ held, contributions, deductions, faile
         <dt className="text-[#6B7280]">Total escrow held</dt>
         <Line kpi={held} failed={failed} testId="banking-driver-escrow-held" />
         <dt className="text-[#6B7280]">Accounts holding escrow</dt>
-        <dd className="text-right tabular-nums text-[#0F1219]" data-testid="banking-driver-escrow-accounts">
+        <dd data-quantity className="text-right tabular-nums text-[#0F1219]" data-testid="banking-driver-escrow-accounts">
           {failed ? "—" : accounts == null ? "…" : String(accounts)}
         </dd>
         <dt className="text-[#6B7280]">Contributions MTD</dt>

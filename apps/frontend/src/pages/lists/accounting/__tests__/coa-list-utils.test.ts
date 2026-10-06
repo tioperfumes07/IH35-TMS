@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildCoaListRows,
   orderCoaHierarchy,
+  resolveBankAccount,
   resolveSyncBadge,
   statementFromAccountType,
   statementTag,
@@ -132,5 +133,24 @@ describe("coa-list-utils", () => {
     );
     expect(rows.find((r) => r.id === "wf")?.description).toBe("Wells Fargo operating checking");
     expect(rows.find((r) => r.id === "blank")?.description).toBe("—");
+  });
+});
+
+describe("resolveBankAccount — the feed account behind a GL account (ROUND 433.2)", () => {
+  const acct = (over: Record<string, unknown>) =>
+    ({ id: "ba", operating_company_id: "oc", institution_name: null, account_name: null, account_type: null, account_mask: null,
+       current_balance_cents: 0, available_balance_cents: 0, currency_code: "USD", sync_status: "active", is_active: true,
+       last_synced_at: null, ...over }) as never;
+  it("a credit card on a Liability GL account resolves by ledger_account_id (the old Asset-only rule showed —)", () => {
+    const card = acct({ id: "amex", account_name: "Amex-Scentsx", ledger_account_id: "gl-2400", current_balance_cents: 70_000 });
+    expect(resolveBankAccount("gl-2400", "2400 Amex Card Payable", "Liability", [card])).toBe(card);
+  });
+  it("a feed linked to another GL account is never borrowed by a name match", () => {
+    const checking = acct({ id: "chk", account_name: "USMCA FREIGHT", ledger_account_id: "gl-1010" });
+    expect(resolveBankAccount("gl-1099", "USMCA FREIGHT Reserve", "Asset", [checking])).toBeNull();
+  });
+  it("an unlinked feed still matches by name (legacy)", () => {
+    const petty = acct({ id: "pc", account_name: "Petty Cash", ledger_account_id: null });
+    expect(resolveBankAccount("gl-1050", "Petty Cash", "Asset", [petty])).toBe(petty);
   });
 });
