@@ -26,6 +26,7 @@ const REGISTERED_PAGES = [
   "apps/frontend/src/pages/accounting/ManualJEListPage.tsx",
   "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
   "apps/frontend/src/pages/accounting/FactoringListPage.tsx",
+  "apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx",
 ];
 
 // Pages named in the packet but NOT yet retrofitted — tracked here so a reviewer can see the real

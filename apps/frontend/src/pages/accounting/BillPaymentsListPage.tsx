@@ -22,10 +22,12 @@ import { BillDetailPanel } from "./BillDetailPanel";
 import { PayBillModal } from "./PayBillModal";
 import { CCPaymentModal } from "./bill-payments/CCPaymentModal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { EntityPicker } from "../../components/EntityPicker";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { formatUsdCents } from "../../lib/money";
 
 // BANKREC-LISTSTATUS-01: read-only badge derived from bank.reconciliation_matches (server-side).
 // matched = green check, unmatched = neutral. Additive column only.
@@ -43,8 +45,6 @@ function ReconciledBadge({ isReconciled }: { isReconciled?: boolean }) {
     </span>
   );
 }
-
-import { formatUsdCents } from "../../lib/money";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -72,18 +72,9 @@ export function BillPaymentsListPage() {
   const [vendorId, setVendorId] = useState(() => searchParams.get("vendor_id") ?? "");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  // HIDE-VOIDED-01 — default hide revoked bill payments; uncheck to include voided paper.
-  const [hideVoided, setHideVoided] = useState(true);
-  const staged = useStagedListFilters({
-    applied: { vendorId, dateFrom, dateTo, hideVoided },
-    empty: { vendorId: "", dateFrom: "", dateTo: "", hideVoided: true },
-    onApply: (next) => {
-      setVendorId(next.vendorId);
-      setDateFrom(next.dateFrom);
-      setDateTo(next.dateTo);
-      setHideVoided(next.hideVoided);
-    },
-  });
+  // 432-CUR #1 — status multi-select (Active / Voided); default Active = hide voided.
+  const [statusFilter, setStatusFilter] = useState<string[]>(["active"]);
+  const hideVoided = statusFilter.length === 1 && statusFilter[0] === "active";
   const [search, setSearch] = useState("");
   const [selectedBillId, setSelectedBillId] = useState("");
   // ACCT-F5057 — Topbar Create→Bill payment uses ?create=1 (opens PayBillModal; select unpaid bill on page).
@@ -117,7 +108,7 @@ export function BillPaymentsListPage() {
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
 
   const paymentsQuery = useQuery({
-    queryKey: ["accounting", "bill-payments-list", companyId, vendorId, dateFrom, dateTo, hideVoided, search, sortKey, sortDirection],
+    queryKey: ["accounting", "bill-payments-list", companyId, vendorId, dateFrom, dateTo, statusFilter, search, sortKey, sortDirection],
     queryFn: () =>
       listBillPayments(companyId, {
         vendor_id: vendorId || undefined,
@@ -285,7 +276,10 @@ export function BillPaymentsListPage() {
     [canVoid, voidMutation],
   );
 
-  const billPayActiveFilterCount = (vendorId ? 1 : 0) + (dateFrom || dateTo ? 1 : 0) + (hideVoided ? 0 : 1);
+  const billPayActiveFilterCount =
+    (vendorId ? 1 : 0) +
+    (dateFrom || dateTo ? 1 : 0) +
+    (statusFilter.length === 1 && statusFilter[0] === "active" ? 0 : statusFilter.length ? 1 : 0);
 
   const filterBar = (
     <div className="space-y-2 w-full">
@@ -311,64 +305,75 @@ export function BillPaymentsListPage() {
             ))}
           </SelectCombobox>
         </label>
-        <CollapsedListFilters
+        <MoneyListToolbar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search payment rows"
+          searchTestId="bill-payments-search-input"
+          onClearAll={() => {
+            setSearch("");
+            setVendorId("");
+            setDateFrom("");
+            setDateTo("");
+            setStatusFilter(["active"]);
+            setSearchParams(
+              (prev) => {
+                const params = new URLSearchParams(prev);
+                params.delete("vendor_id");
+                return params;
+              },
+              { replace: true },
+            );
+          }}
           activeFilterCount={billPayActiveFilterCount}
-          onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
           testIdPrefix="bill-payments"
-          dataAttributes={{ "data-bill-payments-filter-toolbar": "collapsed" }}
-          searchSlot={
-            <input
-              className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-xs"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search payment rows"
-              aria-label="Search bill payments"
-            />
-          }
         >
-          <div className="grid gap-2 md:grid-cols-4">
-            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-              Vendor
-              {/* C1 PICKER LAW: was a raw-UUID box. A list FILTER, so allowCreate={false} — vendor
-                  inline create already lives on ReferenceSelect (createKind="vendor") for the forms
-                  that need it, and C1 must extend that mechanism rather than duplicate it. */}
-              <EntityPicker
-                kind="vendor"
-                operatingCompanyId={companyId}
-                value={staged.draft.vendorId || null}
-                onChange={(next) => staged.setDraft({ ...staged.draft, vendorId: next ?? "" })}
-                allowCreate={false}
-                placeholder="All vendors"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-              From
-              <DatePicker
-                className="h-9"
-                value={staged.draft.dateFrom}
-                onChange={(next) => staged.setDraft({ ...staged.draft, dateFrom: next })}
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-              To
-              <DatePicker
-                className="h-9"
-                value={staged.draft.dateTo}
-                onChange={(next) => staged.setDraft({ ...staged.draft, dateTo: next })}
-              />
-            </label>
-            <label className="flex items-center gap-2 self-end pb-1 text-xs font-semibold text-gray-600">
-              <input
-                type="checkbox"
-                checked={staged.draft.hideVoided}
-                onChange={(event) => staged.setDraft({ ...staged.draft, hideVoided: event.target.checked })}
-                data-testid="bill-payments-hide-voided"
-                aria-label="Hide voided bill payments"
-              />
-              Hide voided
-            </label>
-          </div>
-        </CollapsedListFilters>
+          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+            Vendor
+            {/* C1 PICKER LAW: was a raw-UUID box. A list FILTER, so allowCreate={false} — vendor
+                inline create already lives on ReferenceSelect (createKind="vendor") for the forms
+                that need it, and C1 must extend that mechanism rather than duplicate it. */}
+            <EntityPicker
+              kind="vendor"
+              operatingCompanyId={companyId}
+              value={vendorId || null}
+              onChange={(next) => {
+                const id = next ?? "";
+                setVendorId(id);
+                setSearchParams(
+                  (prev) => {
+                    const params = new URLSearchParams(prev);
+                    if (id) params.set("vendor_id", id);
+                    else params.delete("vendor_id");
+                    return params;
+                  },
+                  { replace: true },
+                );
+              }}
+              allowCreate={false}
+              placeholder="All vendors"
+            />
+          </label>
+          <MultiSelectDropdown
+            label="Status"
+            options={[
+              { value: "active", label: "Active (hide voided)" },
+              { value: "voided", label: "Voided" },
+            ]}
+            selected={statusFilter}
+            onChange={setStatusFilter}
+            allLabel="All (include voided)"
+            data-testid="bill-payments-status-filter"
+          />
+          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+            From
+            <DatePicker className="h-9" value={dateFrom} onChange={setDateFrom} />
+          </label>
+          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+            To
+            <DatePicker className="h-9" value={dateTo} onChange={setDateTo} />
+          </label>
+        </MoneyListToolbar>
         <div className="flex items-end text-xs text-gray-600 pb-1">
           {/* CLS-MONEY-KPI-FAKE-ZERO-REMAINDER-BILL-PAYMENTS — totals used paymentsQuery.data ?? []
               with no isError branch (ACCT-F5038). */}
