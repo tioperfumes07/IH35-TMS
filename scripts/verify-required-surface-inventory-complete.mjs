@@ -279,40 +279,6 @@ function run() {
   );
 }
 
-function selftest() {
-  const sharedPath = SHARED;
-  const bak = fs.readFileSync(sharedPath, "utf8");
-  let failed = false;
-  try {
-    const doc = JSON.parse(bak);
-    doc.columns = (doc.columns || []).filter((c) => c.id !== "claim");
-    fs.writeFileSync(sharedPath, JSON.stringify(doc, null, 2) + "\n");
-    const r = spawnSyncCheck();
-    if (r === 0) {
-      console.error("selftest FAIL — expected red after removing claim column");
-      failed = true;
-    } else {
-      console.log("selftest OK — red when claim column removed");
-    }
-  } finally {
-    fs.writeFileSync(sharedPath, bak);
-  }
-  if (failed) process.exit(1);
-  // green on restore
-  run();
-}
-
-function spawnSyncCheck() {
-  try {
-    run();
-    return 0;
-  } catch {
-    return 1;
-  } finally {
-    /* run() exits process on fail — intercept via subprocess in selftest */
-  }
-}
-
 // selftest must use child process because run() process.exit(1)
 import { spawnSync } from "node:child_process";
 import os from "node:os";
