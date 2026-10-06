@@ -1,3 +1,23 @@
+## 2026-10-06T19:12Z · BANK-F4321 All Transactions MoneyListToolbar MERGED #25649
+
+DONE: /accounting/transactions CollapsedListFilters → MoneyListToolbar + Source/Direction MultiSelect + DateRangePresets; registry 11→12.
+
+- Squash: `1ceabdae66`
+- Local gates: money-list-toolbar PASS 12 · qbo-filter-collapse PASS · transaction-register-paritytable OK · tsc 0 · cursor-ship-preflight PASS
+- Render (tip 1ceabdae):
+  - web `srv-d7s46dbrjlhs7383i150` → **dep-db2kepqkh2cs73c4pplg** (queued)
+  - backend `srv-d7rpem7avr4c73fhp4n0` → **dep-db2keei6f5ic73d2sfb0** (queued / tip-follow)
+
+432-CUR #1 status: Settlements · Factoring · Bill Payments · Customers · Vendors · Fuel · **All Transactions** DONE. Leftover: Load Costs pills design-locked only.
+
+NOTE: #25647 fixed Fuel MultiSelectDropdown props (selected/data-testid) after #25639 build red.
+
+NOW: 432-CUR #1 essentially closed (Load Costs park). Next INBOX hole.
+
+Files Modified: TransactionRegisterPage.tsx · verify-money-list-toolbar · verify-qbo-filter-collapse · this OUTBOX
+
+---
+
 ## 2026-10-06T19:00Z · BANK-F4321 Fuel MoneyListToolbar MERGED #25639
 
 DONE: Fuel History CollapsedListFilters → MoneyListToolbar + Show MultiSelect (Include voided / Has expense / Has JE); EntityPickers commit immediately; FuelPlannerHome passes suppressToolbarSearch; registry 10→11.

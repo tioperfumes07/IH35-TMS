@@ -1,7 +1,7 @@
-# NOW-CURSOR — 2026-10-06T19:00Z
+# NOW-CURSOR — 2026-10-06T19:12Z
 
-**NOW:** 432-CUR #1 Fuel MERGED #25639 `ff1bcff4a530`. Load Costs pills stay (design-locked). Next: 432-CUR #7 money-cells ceiling drain or next INBOX row.
+**NOW:** 432-CUR #1 All Transactions MERGED #25649 `1ceabdae66`. Load Costs pills stay. Next INBOX hole.
 
-**ARM:** 48h from this write (verify-bus-files-are-readable).
+**ARM:** 48h from this write.
 
-**LAST DONE:** Fuel History MoneyListToolbar · registry 11 · web dep-db2k9j6q1p3s7398vcd0 · backend dep-db2k9j6q1p3s7398va4g
+**LAST DONE:** TransactionRegister MoneyListToolbar · registry 12 · web dep-db2kepqkh2cs73c4pplg · backend dep-db2keei6f5ic73d2sfb0
