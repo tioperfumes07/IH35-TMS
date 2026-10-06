@@ -27,10 +27,10 @@ export const FUEL_CATEGORY_CODES = ["diesel", "def", "reefer", "oil", "misc"] as
 export type FuelCategoryCode = (typeof FUEL_CATEGORY_CODES)[number];
 export type FuelPostingPath = "driver_advance" | "company_direct";
 // R-30.1-A (A/P control contamination fix): card-settled fuel is the GL of record for its own
-// rail, never the generic A/P control account. "ap" is kept only for a genuine non-fuel-card
-// company-direct payable (never auto-selected for a fuel_event -- see
-// maybe-post-from-fuel-transaction.service.ts's resolveCompanyDirectCreditPreference).
-export type CompanyDirectCredit = "cash" | "ap" | "dreamline_card_payable" | "relay_fuel_wallet";
+// rail, never the generic A/P control account. LST-F415: the "ap" option is gone. No path selected it
+// (resolveCompanyDirectCreditPreference returns a card rail, cash, or refuses), and ROUND 393.1 refuses a
+// fuel_event line on ap_control at write time anyway — fuel bought on a vendor's terms is that vendor's BILL.
+export type CompanyDirectCredit = "cash" | "dreamline_card_payable" | "relay_fuel_wallet";
 
 export type FuelPostingInput = {
   operating_company_id: string;
@@ -136,17 +136,6 @@ export async function resolveCompanyDirectCreditAccount(
 ): Promise<{ account_id: string; source: string }> {
   if (preference === "dreamline_card_payable" || preference === "relay_fuel_wallet") {
     return resolveFuelCardRailAccount(client, operatingCompanyId, preference);
-  }
-  if (preference === "ap") {
-    // Resolve A/P via the canonical CoA-roles resolver (CoaRole 'ap_control'; legacy 'ap_clearing' binding
-    // is kept as a fallback tier inside the resolver). ap_control is a CONTROL role: the resolver FAILS
-    // CLOSED on ambiguity (>1 designated/subtype-matching account) rather than silently picking one.
-    const apBound = await resolveRoleAccountOptional(client, operatingCompanyId, "ap_control");
-    if (apBound) return { account_id: apBound, source: "role_designation:ap_control" };
-    // ROUND 365.1 — the `account_subtype = 'AccountsPayable' ORDER BY updated_at DESC` fallback that stood here is gone:
-    // which account it picked depended on which row was touched last. The resolver above already applies the
-    // ap_control control-role rules (designation first, fail closed on ambiguity); past it there is nothing to guess.
-    throw new Error("AP credit account mapping is missing for company-direct fuel posting");
   }
 
   // ROUND 377 (Lead, 2026-10-03) — THIS IS WHERE 1090 WENT TO -151,736.34.

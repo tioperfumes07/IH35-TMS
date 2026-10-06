@@ -65,10 +65,6 @@ export const KNOWN_DEBT = new Map([
     "company-absorb decision posts a manual JE crediting ap_control with no payee — owner decision on payee vs accrued liability (LST-F414 follow-up)",
   ],
   [
-    "apps/backend/src/accounting/fuel-posting/poster.service.ts",
-    "company_direct_credit 'ap' branch credits ap_control with fuel_event lines; no automatic path selects it (card rail or cash) — remove or route through a bill (LST-F414 follow-up)",
-  ],
-  [
     "apps/backend/src/payroll/driver-settlement.service.deprecated.ts",
     "retired RETIRE-lane settlement writer, imported only by a test (buildDraftLines) — delete with its test (LST-F414 follow-up)",
   ],
