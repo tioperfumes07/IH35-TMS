@@ -22,6 +22,7 @@
  *     silent orphan), then the error is rethrown so the policy transaction rolls back.
  */
 
+import { fileInsurerContractsOnFirstBill } from "../legal/contract-document.service.js";
 import * as Sentry from "@sentry/node";
 import { createBill, voidBill } from "../accounting/bills.service.js";
 import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
@@ -278,6 +279,18 @@ export async function createPolicyBillSchedule(
     // alerting on any that cannot be voided, then rethrow so the policy txn rolls back.
     await voidCommittedBills(committedBillIds, policy.operating_company_id, userId);
     throw err;
+  }
+
+  // ROUND 435 — an insurance contract is filed on the carrier's FIRST insurance bill. Bills now exist: link every filed
+  // contract with this carrier to it (idempotent, no posting). A filing hiccup never fails the billing.
+  if (billUuids.length > 0 && policy.vendor_id) {
+    await client.query("SAVEPOINT insurer_contract_filing");
+    try {
+      await fileInsurerContractsOnFirstBill(client as never, policy.operating_company_id, String(policy.vendor_id), userId);
+      await client.query("RELEASE SAVEPOINT insurer_contract_filing");
+    } catch {
+      await client.query("ROLLBACK TO SAVEPOINT insurer_contract_filing");
+    }
   }
 
   return { scheduleIds, billUuids, skipped: false };

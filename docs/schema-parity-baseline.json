@@ -7189,6 +7189,7 @@
       "lease_contract_id",
       "load_id",
       "operating_company_id",
+      "pdf_file_id",
       "sent_at",
       "signed_at",
       "signed_pdf_attachment_id",

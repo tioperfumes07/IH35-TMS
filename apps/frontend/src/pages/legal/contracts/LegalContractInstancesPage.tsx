@@ -19,6 +19,24 @@ import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../.
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
+import { getDownloadUrl } from "../../../api/docs";
+import "../../../design/ih35-design-tokens.css";
+
+const CATEGORY_LABELS: Record<string, string> = {
+  employment: "Employment",
+  driver: "Driver",
+  general: "General",
+  lease: "Lease",
+  vehicle_lease: "Vehicle lease",
+  asset_acquisition: "Asset acquisition",
+  customer: "Customer",
+  customer_contract: "Customer contract",
+  policy: "Policy",
+  uncategorized: "Uncategorized",
+};
+function categoryLabel(key: string) {
+  return CATEGORY_LABELS[key] ?? key.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
+}
 
 const STATUS_OPTIONS: Array<{ value: "all" | LegalContractStatus; label: string }> = [
   { value: "all", label: "All statuses" },
@@ -118,6 +136,19 @@ export function LegalContractInstancesPage() {
     });
   }, [dateFrom, dateTo, rows, signerTypeFilter, templateFilter]);
 
+  // ROUND 435 — contracts grouped by the template's category (employment, driver, lease, …), never one flat list.
+  const categorySections = useMemo(() => {
+    const groups = new Map<string, LegalContractSummary[]>();
+    for (const row of filteredRows) {
+      const key = row.category?.trim() || "uncategorized";
+      groups.set(key, [...(groups.get(key) ?? []), row]);
+    }
+    if (groups.size === 0) return [{ key: "all", label: "All contracts", rows: [] as LegalContractSummary[] }];
+    return Array.from(groups.entries())
+      .sort(([a], [b]) => (a === "uncategorized" ? 1 : b === "uncategorized" ? -1 : a.localeCompare(b)))
+      .map(([key, rows]) => ({ key, label: categoryLabel(key), rows }));
+  }, [filteredRows]);
+
   const templateOptions = useMemo(
     () => Array.from(new Set(rows.map((row) => row.template_code))).sort(),
     [rows]
@@ -148,6 +179,24 @@ export function LegalContractInstancesPage() {
     },
     onError: (error) => pushToast(userFacingApiError(error, "Failed to send reminder"), "error"),
   });
+
+  // ROUND 435 — open the contract's FILED PDF (docs.files). A contract with none is filed now, by the person opening it.
+  const openFiledPdf = async (row: LegalContractSummary) => {
+    // Open the tab inside the click (popup blockers allow it), then point it at the file once the URL exists. Not
+    // "noopener": that makes window.open return null and the tab could not be redirected.
+    const tab = window.open("about:blank", "_blank");
+    if (tab) tab.opener = null;
+    try {
+      const { file_id } = await legalContractsApi.filedPdf(row.id, operatingCompanyId);
+      const { presigned_url } = await getDownloadUrl(file_id);
+      if (tab) tab.location.href = presigned_url;
+      else window.open(presigned_url, "_blank", "noopener,noreferrer");
+      if (!row.pdf_file_id) await refresh();
+    } catch (error) {
+      tab?.close();
+      pushToast(userFacingApiError(error, "Couldn't open the contract PDF"), "error");
+    }
+  };
 
   const columns = useMemo<ParityColumn<LegalContractSummary>[]>(
     () => [
@@ -192,8 +241,26 @@ export function LegalContractInstancesPage() {
       { key: "status", label: "Status", sortable: true, render: (row) => <span className={statusClass(row.status)}>{row.status}</span> },
       { key: "sent_at", label: "Sent", sortable: true, render: (row) => (row.sent_at ? new Date(row.sent_at).toLocaleString() : "—") },
       { key: "signed_at", label: "Signed", sortable: true, render: (row) => (row.signed_at ? new Date(row.signed_at).toLocaleString() : "—") },
+      {
+        key: "pdf_file_id",
+        label: "PDF",
+        render: (row) => (
+          <button
+            type="button"
+            className="text-xs font-semibold text-slate-700 underline"
+            data-testid={`legal-contract-open-pdf-${row.id}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              void openFiledPdf(row);
+            }}
+          >
+            {row.pdf_file_id ? "Open PDF" : "File & open PDF"}
+          </button>
+        ),
+      },
     ],
-    [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [operatingCompanyId],
   );
 
   return (
@@ -239,147 +306,163 @@ export function LegalContractInstancesPage() {
           onRetry={() => void listQuery.refetch()}
         />
       ) : (
-      <ParityTable
-        rows={filteredRows}
-        columns={columns}
-        rowKey={(row) => row.id}
-        onRowClick={(row) => setActiveDetailId(row.id)}
-        suppressToolbarSearch
-        selectable
-        batchActions={(selected) => (
-          <>
-            <Button
-              size="sm"
-              variant="secondary"
-              disabled={selected.length === 0}
-              loading={sendReminderMutation.isPending}
-              onClick={() => sendReminderMutation.mutate(selected)}
-            >
-              Send Reminder
-            </Button>
-            <Button size="sm" variant="secondary" disabled title="Bulk void not yet wired to a backend endpoint">
-              Void
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              disabled={selected.length === 0}
-              onClick={async () => {
-                let downloaded = 0;
-                let failed = 0;
-                for (const row of selected) {
-                  try {
-                    const detail = await legalContractsApi.get(row.id, operatingCompanyId);
-                    // Signed instances open the executed PDF; unsigned drafts open the on-demand,
-                    // watermarked DRAFT PDF (the signed PDF does not exist until e-signing).
-                    const url = detail.signed_pdf_storage_url
-                      ? detail.signed_pdf_storage_url
-                      : legalContractsApi.draftPdfUrl(row.id, operatingCompanyId);
-                    window.open(url, "_blank", "noopener,noreferrer");
-                    downloaded += 1;
-                  } catch (error) {
-                    failed += 1;
-                    pushToast(
-                      userFacingApiError(error, `Failed to download contract ${row.template_code ?? row.id.slice(0, 8)}`),
-                      "error",
-                    );
+      <>
+        {/* ROUND 435 — VIEW BY CATEGORY: one section per template category, each with its own count. */}
+        {categorySections.map(({ key: sectionKey, label, rows: sectionRows }, sectionIndex) => {
+          const withFilterBar = sectionIndex === 0;
+          return (
+            <section key={sectionKey} className="space-y-1" data-testid={`legal-contracts-category-${sectionKey}`}>
+              {categorySections.length > 1 || sectionKey !== "all" ? (
+                <h2 className="ih-hd">
+                  {label} <span className="font-normal normal-case text-gray-500">({sectionRows.length})</span>
+                </h2>
+              ) : null}
+            <ParityTable
+              rows={sectionRows}
+              columns={columns}
+              rowKey={(row) => row.id}
+              onRowClick={(row) => setActiveDetailId(row.id)}
+              suppressToolbarSearch
+              selectable
+              batchActions={(selected) => (
+                <>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={selected.length === 0}
+                    loading={sendReminderMutation.isPending}
+                    onClick={() => sendReminderMutation.mutate(selected)}
+                  >
+                    Send Reminder
+                  </Button>
+                  <Button size="sm" variant="secondary" disabled title="Bulk void not yet wired to a backend endpoint">
+                    Void
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={selected.length === 0}
+                    onClick={async () => {
+                      let downloaded = 0;
+                      let failed = 0;
+                      for (const row of selected) {
+                        try {
+                          const detail = await legalContractsApi.get(row.id, operatingCompanyId);
+                          // Signed instances open the executed PDF; unsigned drafts open the on-demand,
+                          // watermarked DRAFT PDF (the signed PDF does not exist until e-signing).
+                          const url = detail.signed_pdf_storage_url
+                            ? detail.signed_pdf_storage_url
+                            : legalContractsApi.draftPdfUrl(row.id, operatingCompanyId);
+                          window.open(url, "_blank", "noopener,noreferrer");
+                          downloaded += 1;
+                        } catch (error) {
+                          failed += 1;
+                          pushToast(
+                            userFacingApiError(error, `Failed to download contract ${row.template_code ?? row.id.slice(0, 8)}`),
+                            "error",
+                          );
+                        }
+                      }
+                      if (downloaded > 0 && failed === 0) {
+                        pushToast(`Downloaded ${downloaded} contract${downloaded === 1 ? "" : "s"}.`, "success");
+                      } else if (downloaded > 0 && failed > 0) {
+                        pushToast(`Downloaded ${downloaded}; ${failed} failed.`, "info");
+                      }
+                    }}
+                  >
+                    Download
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={selected.length === 0}
+                    onClick={() => {
+                      for (const row of selected) {
+                        window.open(legalContractsApi.draftPdfUrl(row.id, operatingCompanyId), "_blank", "noopener,noreferrer");
+                      }
+                    }}
+                  >
+                    View draft PDF
+                  </Button>
+                </>
+              )}
+              // Settled-only empty (LIST-EMPTY-1 invariant): loading stays true while pending OR while a
+              // refetch is in flight with zero current rows, so emptyText never flashes mid-fetch — the
+              // guard-locked literal is preserved verbatim below.
+              loading={listQuery.isPending || (listQuery.isFetching && filteredRows.length === 0)}
+              storageKey={`legal-contracts-${sectionKey}`}
+              emptyText="No contract instances found for current filters."
+              filterBar={withFilterBar ? (
+
+                <CollapsedListFilters
+                  activeFilterCount={
+                    (statusFilter !== "all" ? 1 : 0) +
+                    (templateFilter ? 1 : 0) +
+                    (signerTypeFilter !== "all" ? 1 : 0) +
+                    (dateFrom ? 1 : 0) +
+                    (dateTo ? 1 : 0)
                   }
-                }
-                if (downloaded > 0 && failed === 0) {
-                  pushToast(`Downloaded ${downloaded} contract${downloaded === 1 ? "" : "s"}.`, "success");
-                } else if (downloaded > 0 && failed > 0) {
-                  pushToast(`Downloaded ${downloaded}; ${failed} failed.`, "info");
-                }
-              }}
-            >
-              Download
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              disabled={selected.length === 0}
-              onClick={() => {
-                for (const row of selected) {
-                  window.open(legalContractsApi.draftPdfUrl(row.id, operatingCompanyId), "_blank", "noopener,noreferrer");
-                }
-              }}
-            >
-              View draft PDF
-            </Button>
-          </>
-        )}
-        // Settled-only empty (LIST-EMPTY-1 invariant): loading stays true while pending OR while a
-        // refetch is in flight with zero current rows, so emptyText never flashes mid-fetch — the
-        // guard-locked literal is preserved verbatim below.
-        loading={listQuery.isPending || (listQuery.isFetching && filteredRows.length === 0)}
-        storageKey="legal-contracts"
-        emptyText="No contract instances found for current filters."
-        filterBar={
-          <CollapsedListFilters
-            activeFilterCount={
-              (statusFilter !== "all" ? 1 : 0) +
-              (templateFilter ? 1 : 0) +
-              (signerTypeFilter !== "all" ? 1 : 0) +
-              (dateFrom ? 1 : 0) +
-              (dateTo ? 1 : 0)
-            }
-            onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
-            testIdPrefix="legal-contracts"
-            dataAttributes={{ "data-legal-contracts-filter-toolbar": "collapsed" }}
-            searchSlot={
-              <TableSearch
-                value={search}
-                onChange={setSearch}
-                placeholder="Search signer or template code"
-                aria-label="Search signer or template code"
-                className="w-64"
-              />
-            }
-          >
-            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-              <SelectCombobox
-                value={staged.draft.statusFilter}
-                onChange={(event) => staged.setDraft({ ...staged.draft, statusFilter: event.target.value as "all" | LegalContractStatus })}
-                className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
-              >
-                {STATUS_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </SelectCombobox>
-              <SelectCombobox
-                value={staged.draft.templateFilter}
-                onChange={(event) => staged.setDraft({ ...staged.draft, templateFilter: event.target.value })}
-                className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
-              >
-                <option value="">All templates</option>
-                {templateOptions.map((code) => (
-                  <option key={code} value={code}>
-                    {code}
-                  </option>
-                ))}
-              </SelectCombobox>
-              <SelectCombobox
-                value={staged.draft.signerTypeFilter}
-                onChange={(event) => staged.setDraft({ ...staged.draft, signerTypeFilter: event.target.value })}
-                className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
-              >
-                <option value="all">All signer types</option>
-                <option value="driver">Driver</option>
-                <option value="employee">Employee</option>
-                <option value="customer">Customer</option>
-                <option value="vendor">Vendor</option>
-                <option value="other">Other</option>
-              </SelectCombobox>
-              <div className="grid grid-cols-2 gap-2">
-                <DatePicker value={staged.draft.dateFrom} onChange={(next) => staged.setDraft({ ...staged.draft, dateFrom: next })} className="h-9" />
-                <DatePicker value={staged.draft.dateTo} onChange={(next) => staged.setDraft({ ...staged.draft, dateTo: next })} className="h-9" />
-              </div>
-            </div>
-          </CollapsedListFilters>
-        }
-      />
+                  onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
+                  testIdPrefix="legal-contracts"
+                  dataAttributes={{ "data-legal-contracts-filter-toolbar": "collapsed" }}
+                  searchSlot={
+                    <TableSearch
+                      value={search}
+                      onChange={setSearch}
+                      placeholder="Search signer or template code"
+                      aria-label="Search signer or template code"
+                      className="w-64"
+                    />
+                  }
+                >
+                  <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+                    <SelectCombobox
+                      value={staged.draft.statusFilter}
+                      onChange={(event) => staged.setDraft({ ...staged.draft, statusFilter: event.target.value as "all" | LegalContractStatus })}
+                      className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
+                    >
+                      {STATUS_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </SelectCombobox>
+                    <SelectCombobox
+                      value={staged.draft.templateFilter}
+                      onChange={(event) => staged.setDraft({ ...staged.draft, templateFilter: event.target.value })}
+                      className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
+                    >
+                      <option value="">All templates</option>
+                      {templateOptions.map((code) => (
+                        <option key={code} value={code}>
+                          {code}
+                        </option>
+                      ))}
+                    </SelectCombobox>
+                    <SelectCombobox
+                      value={staged.draft.signerTypeFilter}
+                      onChange={(event) => staged.setDraft({ ...staged.draft, signerTypeFilter: event.target.value })}
+                      className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
+                    >
+                      <option value="all">All signer types</option>
+                      <option value="driver">Driver</option>
+                      <option value="employee">Employee</option>
+                      <option value="customer">Customer</option>
+                      <option value="vendor">Vendor</option>
+                      <option value="other">Other</option>
+                    </SelectCombobox>
+                    <div className="grid grid-cols-2 gap-2">
+                      <DatePicker value={staged.draft.dateFrom} onChange={(next) => staged.setDraft({ ...staged.draft, dateFrom: next })} className="h-9" />
+                      <DatePicker value={staged.draft.dateTo} onChange={(next) => staged.setDraft({ ...staged.draft, dateTo: next })} className="h-9" />
+                    </div>
+                  </div>
+                </CollapsedListFilters>
+              ) : undefined}
+            />
+            </section>
+          );
+        })}
+      </>
       )}
 
       {activeDetailId ? (

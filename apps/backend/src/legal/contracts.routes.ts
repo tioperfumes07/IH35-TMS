@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { ensureContractPdfFiled } from "./contract-document.service.js";
 import { ENSURABLE_CONTRACT_TYPES, ensureContractTypeTemplate } from "./contract-type-templates.service.js";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -214,6 +215,35 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
       const message = String((error as Error).message ?? "legal_pdf_render_failed");
       if (message === "legal_pdf_render_failed") return reply.code(409).send({ error: message });
       return reply.code(500).send({ error: "legal_contract_draft_pdf_failed" });
+    }
+  });
+
+  // ROUND 435 — OPEN the contract's filed PDF. Returns its docs.files id (the client opens it through the docs download,
+  // like any filed document). A contract with no filed PDF is filed NOW — by the person opening it, through the same
+  // engine as creation — so no contract is ever listed with nothing to open.
+  app.post("/api/v1/legal/contracts/:id/pdf-file", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    if (!requireOfficeRole(reply, String(authUser.role ?? ""))) return;
+    const parsedQuery = operatingCompanyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+    const parsedParams = idParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    try {
+      const fileId = await withCurrentUser(authUser.uuid, async (client) => {
+        await setOperatingCompany(client, parsedQuery.data.operating_company_id);
+        return ensureContractPdfFiled(client as never, {
+          operatingCompanyId: parsedQuery.data.operating_company_id,
+          contractInstanceId: parsedParams.data.id,
+          actorUserId: authUser.uuid,
+        });
+      });
+      return reply.send({ file_id: fileId });
+    } catch (error) {
+      const message = String((error as Error).message ?? "legal_contract_pdf_file_failed");
+      if (message === "legal_contract_instance_not_found") return reply.code(404).send({ error: message });
+      if (message === "legal_pdf_render_failed" || message === "legal_contract_pdf_storage_not_configured") return reply.code(409).send({ error: message });
+      return reply.code(500).send({ error: "legal_contract_pdf_file_failed" });
     }
   });
 
