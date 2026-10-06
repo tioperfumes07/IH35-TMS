@@ -36,17 +36,26 @@ const requiredKpiEndpoints = [
   "/api/v1/maintenance/parts-inventory/kpis",
 ];
 
+// C-36 locked the owner's nine; ROUND 313 item 3 (Lead order, d9ca1c5051 #23853) added PM Due / Faults / In Shop after
+// Active WOs and Cost/mi after Parts Inventory. The lock is the thirteen, in this order — nothing else, nothing missing.
 const C36_SUBNAV_IDS = [
   "rm_status_board",
   "fleet_table",
   "active_wos",
+  "pm_due", // R313
+  "faults", // R313
+  "in_shop", // R313
   "service_location",
   "driver_reports",
   "road_service",
   "parts_inventory",
+  "cost_per_mile", // R313 — a Reports surface (/reports/maintenance-cost-per-unit), see TAB_PATH_OUTSIDE_MAINTENANCE
   "integrity_report",
   "settings",
 ];
+
+/** A tab that opens a surface outside /maintenance, pinned to its exact path (R313: Cost/mi is the Reports page). */
+const TAB_PATH_OUTSIDE_MAINTENANCE = { cost_per_mile: "/reports/maintenance-cost-per-unit" };
 
 function readIfExists(filePath) {
   if (!fs.existsSync(filePath)) return "";
@@ -102,13 +111,13 @@ function main() {
   const routeManifestPath = path.join(ROOT, "apps/frontend/src/router/route-manifest.ts");
   const routeManifestSrc = readIfExists(routeManifestPath);
 
-  // C-36 — SUBNAV is exactly the 9 owner-canvas tabs (order locked).
+  // C-36 + R313 — SUBNAV is exactly the locked list above (order locked).
   const subnavBlock = homeSrc.match(/const SUBNAV = \[([\s\S]*?)\] as const/);
   const subnavIds = subnavBlock
     ? [...subnavBlock[1].matchAll(/\{\s*id:\s*"([^"]+)"\s*,\s*label:/g)].map((m) => m[1])
     : [];
-  if (subnavIds.length !== 9) {
-    failures.push(`C-36 SUBNAV must have exactly 9 tabs (found ${subnavIds.length}: ${subnavIds.join(",")})`);
+  if (subnavIds.length !== C36_SUBNAV_IDS.length) {
+    failures.push(`C-36 SUBNAV must have exactly ${C36_SUBNAV_IDS.length} tabs (found ${subnavIds.length}: ${subnavIds.join(",")})`);
   }
   for (let i = 0; i < C36_SUBNAV_IDS.length; i++) {
     if (subnavIds[i] !== C36_SUBNAV_IDS[i]) {
@@ -116,7 +125,8 @@ function main() {
     }
   }
   for (const id of subnavIds) {
-    if (!new RegExp(`${id}\\s*:\\s*"/maintenance`).test(routeManifestSrc)) {
+    const outside = TAB_PATH_OUTSIDE_MAINTENANCE[id];
+    if (outside ? !routeManifestSrc.includes(`${id}: "${outside}"`) : !new RegExp(`${id}\\s*:\\s*"/maintenance`).test(routeManifestSrc)) {
       failures.push(`missing_MAINTENANCE_TAB_PATH:${id}`);
     }
   }
