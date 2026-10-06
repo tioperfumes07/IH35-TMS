@@ -16,10 +16,16 @@ export type SettlementCreatorDraft = {
     load_number: string;
     customer_name?: string | null;
     customer_id?: string | null;
+    /** SETL-F438 — bookLoad refuses a load carrying neither; Faro matches the invoice on them. */
+    customer_po_number?: string | null;
+    customer_wo_number?: string | null;
     pickup_date?: string | null;
     pickup_city?: string | null;
+    /** SETL-F438 — the real state. The seeder used to hardcode TX on both stops. */
+    pickup_state?: string | null;
     delivery_date?: string | null;
     delivery_city?: string | null;
+    delivery_state?: string | null;
     line_haul_miles?: number | null;
     line_haul_rate_cents?: number | null;
     line_haul_amount_cents?: number | null;
