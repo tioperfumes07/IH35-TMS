@@ -52,7 +52,8 @@ if (!/<option value="reefer_diesel">Reefer Diesel<\/option>/.test(drawer)) fails
 {
   const fills = read("apps/backend/src/fuel/relay-fills.routes.ts");
   if (/fuel_type IN \('diesel', 'reefer'\)/.test(fills)) fails.push("relay-fills.routes: reefer gallons are folded into diesel fuel_gallons");
-  if (!/fuel_type = 'reefer'\) AS reefer_gallons/.test(fills)) fails.push("relay-fills.routes: reefer_gallons is not reported on its own");
+  // ROUND 432 item 4: the product comes from the one classifier (relay-product-kind.ts) — still its own reefer column.
+  if (!/relayLineKindSql\("l"\)\} = 'reefer'\) AS reefer_gallons/.test(fills)) fails.push("relay-fills.routes: reefer_gallons is not reported on its own");
   if (!/gal Reefer Diesel/.test(read("apps/frontend/src/components/fuel/RelayFillsReverseSection.tsx"))) fails.push("RelayFillsReverseSection must show Reefer Diesel gallons apart from diesel");
 }
 const routes = read("apps/backend/src/accounting/reefer-fuel-credit.routes.ts");
@@ -63,7 +64,7 @@ if (!/"reefer-fuel-credit", "Reefer fuel credit"/.test(read("apps/frontend/src/p
 // ROUND 391.2 / 393.2 — reefer comes FROM THE FEED's product code, never inferred.
 const mig = read("db/migrations/202615400700_reefer_fuel_type_from_relay_product.sql");
 if (!/l\.fuel_type = 'reefer'/.test(mig) || !/one_to_one/.test(mig)) fails.push("202615400700 must mark reefer only from Relay product lines, one-to-one");
-if (!/feed AS \(/.test(svc) || !/l\.fuel_type = 'reefer'/.test(svc)) fails.push("credit report must count the Relay feed's reefer lines no fuel row carries");
+if (!/feed AS \(/.test(svc) || !/relayLineKindSql\("l"\)\} = 'reefer'/.test(svc)) fails.push("credit report must count the Relay feed's reefer lines no fuel row carries");
 const parser = read("scripts/alwaystrack/parse_settlements.py");
 if (!/"product": product/.test(parser) || !/INVOICE_RE\.fullmatch/.test(parser)) fails.push("settlement parser must emit the product code and accept only a real invoice");
 const seed = read("apps/backend/src/feed/seed-settlement-document.service.ts");

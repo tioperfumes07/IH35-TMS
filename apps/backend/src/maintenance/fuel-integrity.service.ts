@@ -48,6 +48,7 @@ import { classifyFleetUnit, fleetUnitFactsSql } from "../telematics/live-fleet.j
 import { loadDriverIdsBySamsaraDriverId, ML_PER_US_GALLON } from "../telematics/fuel-efficiency-signal.service.js";
 import type { SamsaraFuelEnergyRow } from "../integrations/samsara/samsara-client.js";
 import { DEFAULT_TANK_CAPACITY_GAL, TANK_OVERFLOW_TOLERANCE } from "../integrations/fuel/fraud-detector/rules.service.js";
+import { relayLineIsGallonsSql } from "../fuel/relay-product-kind.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -473,7 +474,7 @@ export async function computeDriverFuelIntegrity(
            r.merchant_name, r.location_city, r.location_state,
            NULLIF(trim(concat_ws(' ', r.relay_driver_first_name, r.relay_driver_last_name)), '') AS relay_driver_name,
            (SELECT sum(l.volume)::text FROM integrations.relay_fuel_transaction_lines l
-             WHERE l.relay_fuel_transaction_id = r.id AND l.is_active AND l.volume_uom = 'gallons') AS gallons,
+             WHERE l.relay_fuel_transaction_id = r.id AND l.is_active AND ${relayLineIsGallonsSql("l")}) AS gallons,
            r.total_amount_paid_cents::text AS total_amount_paid_cents
       FROM integrations.relay_fuel_transactions r
      WHERE r.operating_company_id = $1::uuid AND r.voided_at IS NULL

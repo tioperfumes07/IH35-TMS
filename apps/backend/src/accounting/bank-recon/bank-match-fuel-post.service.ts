@@ -8,6 +8,7 @@
  * Fail-closed: null unit_id or null load_id is an ENGINE defect (owner), not a data soft-skip.
  */
 import { loadAtTimeSql } from "../../maintenance/driver-attribution.js";
+import { relayLineIsGallonsSql, relayLineKindSql } from "../../fuel/relay-product-kind.js";
 import {
   buildFuelTxnJeMemo,
   loadFuelTxnCreditSignals,
@@ -205,8 +206,8 @@ async function postRelayFuelFill(
              -- IFTA taxable gallons are ROAD diesel only: reefer (off-road) and DEF are not motor fuel (CC-2 2026-10-04;
              -- this used to sum diesel + reefer + DEF, overstating IFTA gallons on every mixed fill).
              (SELECT sum(l.volume)::text FROM integrations.relay_fuel_transaction_lines l
-               WHERE l.relay_fuel_transaction_id = r.id AND l.voided_at IS NULL AND l.volume_uom = 'gallons'
-                 AND l.fuel_type = 'diesel') AS gallons,
+               WHERE l.relay_fuel_transaction_id = r.id AND l.voided_at IS NULL AND ${relayLineIsGallonsSql("l")}
+                 AND ${relayLineKindSql("l")} = 'diesel') AS gallons,
              r.merchant_name::text AS merchant_name
         FROM integrations.relay_fuel_transactions r
         LEFT JOIN mdata.units u ON u.id = r.matched_unit_id
@@ -243,10 +244,12 @@ async function postRelayFuelFill(
   // lines' discounted prices, so the legs foot to the wallet credit with no plug; a fill whose lines do not foot, or that
   // carries no fuel line at all (a scale ticket is not fuel), is refused by name.
   const linesRes = await client.query<{ fuel_type: string; cents: string }>(
-    `SELECT l.fuel_type, sum(l.total_discounted_price_cents)::bigint::text AS cents
+    // ROUND 391.2 — the product is the ONE classifier's (relay-product-kind.ts: type, product code 033, description), so a
+    // 'reefer_2' or code-033 line posts as reefer instead of being refused or read as diesel.
+    `SELECT ${relayLineKindSql("l")} AS fuel_type, sum(l.total_discounted_price_cents)::bigint::text AS cents
        FROM integrations.relay_fuel_transaction_lines l
       WHERE l.relay_fuel_transaction_id = $1::uuid AND l.voided_at IS NULL
-      GROUP BY l.fuel_type`,
+      GROUP BY 1`,
     [input.fill_id]
   );
   const RELAY_KIND: Record<string, FuelCategoryCode> = { diesel: "diesel", def: "def", reefer: "reefer" };

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { relayLineIsGallonsSql, relayLineKindSql } from "./relay-product-kind.js";
 
 /**
  * Linkage law §6 for Relay fills (integrations.relay_fuel_transactions). Relay rows never become
@@ -76,16 +77,16 @@ export async function registerRelayFillRoutes(app: FastifyInstance) {
                 NULLIF(trim(concat_ws(' ', r.relay_driver_first_name, r.relay_driver_last_name)), '') AS relay_driver_name,
                 r.matched_unit_number AS relay_unit_number,
                 (SELECT sum(l.volume)::float8 FROM integrations.relay_fuel_transaction_lines l
-                  WHERE l.relay_fuel_transaction_id = r.id AND l.voided_at IS NULL AND l.volume_uom = 'gallons'
-                    AND l.fuel_type = 'diesel') AS fuel_gallons,
+                  WHERE l.relay_fuel_transaction_id = r.id AND l.voided_at IS NULL AND ${relayLineIsGallonsSql("l")}
+                    AND ${relayLineKindSql("l")} = 'diesel') AS fuel_gallons,
                 -- U25 / ROUND 433.4: reefer diesel is its own product (5015, off-highway, out of IFTA). It was summed into
                 -- fuel_gallons above and shown as "gal diesel", so reefer gallons read as truck road fuel.
                 (SELECT sum(l.volume)::float8 FROM integrations.relay_fuel_transaction_lines l
-                  WHERE l.relay_fuel_transaction_id = r.id AND l.voided_at IS NULL AND l.volume_uom = 'gallons'
-                    AND l.fuel_type = 'reefer') AS reefer_gallons,
+                  WHERE l.relay_fuel_transaction_id = r.id AND l.voided_at IS NULL AND ${relayLineIsGallonsSql("l")}
+                    AND ${relayLineKindSql("l")} = 'reefer') AS reefer_gallons,
                 (SELECT sum(l.volume)::float8 FROM integrations.relay_fuel_transaction_lines l
-                  WHERE l.relay_fuel_transaction_id = r.id AND l.voided_at IS NULL AND l.volume_uom = 'gallons'
-                    AND l.fuel_type = 'def') AS def_gallons
+                  WHERE l.relay_fuel_transaction_id = r.id AND l.voided_at IS NULL AND ${relayLineIsGallonsSql("l")}
+                    AND ${relayLineKindSql("l")} = 'def') AS def_gallons
            FROM integrations.relay_fuel_transactions r
            LEFT JOIN mdata.units u ON u.id = r.matched_unit_id
            LEFT JOIN mdata.drivers dr ON dr.id = r.matched_driver_id AND dr.operating_company_id = r.operating_company_id

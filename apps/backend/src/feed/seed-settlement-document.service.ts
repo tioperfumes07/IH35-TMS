@@ -1078,9 +1078,15 @@ export async function seedSettlementDocument(
     loadIds[planLoad.loadNumber] = loadId;
 
     // ROUND 143.3 — resolve the load's driver, unit, and trailer for fuel/expense linkage.
+    // ROUND 391.2 — the trailer is the load's PHYSICAL trailer: dispatch.load_assignment_history.new_trailer_id (FK
+    // mdata.equipment; mdata.loads has no trailer column). This read load_trailer_equipment_id, a trailer-TYPE catalog id
+    // (catalogs.load_trailer_equipment), into fuel_transactions.trailer_id — the wrong table behind that FK.
     const linkage = await client.query<{ driver_id: string | null; unit_id: string | null; trailer_id: string | null }>(
-      `SELECT assigned_primary_driver_id::text AS driver_id, assigned_unit_id::text AS unit_id, load_trailer_equipment_id::text AS trailer_id
-         FROM mdata.loads WHERE id = $1::uuid`,
+      `SELECT l.assigned_primary_driver_id::text AS driver_id, l.assigned_unit_id::text AS unit_id,
+              (SELECT h.new_trailer_id::text FROM dispatch.load_assignment_history h
+                WHERE h.load_id = l.id AND h.operating_company_id = l.operating_company_id AND h.new_trailer_id IS NOT NULL
+                ORDER BY h.assigned_at DESC, h.created_at DESC LIMIT 1) AS trailer_id
+         FROM mdata.loads l WHERE l.id = $1::uuid`,
       [loadId]
     );
     const driverId = linkage.rows[0]?.driver_id ?? null;

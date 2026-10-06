@@ -1,3 +1,6 @@
+import { loadAtTimeSql } from "../maintenance/driver-attribution.js";
+import { relayLineIsGallonsSql, relayLineKindSql } from "./relay-product-kind.js";
+
 // U25 (owner UI register 2026-10-03; owner 2026-10-03: "nothing on the books but it does affect the categorization. We can
 // receive a credit for the reefer fuel from the US government so we need to have it detailed — how many gallons etc.")
 //
@@ -148,11 +151,12 @@ export async function listReeferFuelForCredit(client: Db, companyId: string, fro
        SELECT 'relay_feed'::text AS source, l.id::text AS source_id, NULL::text AS expense_id, NULL::text AS expense_line_id,
               t.relay_fuel_code AS document_number, (t.relay_created_at)::date AS d, t.merchant_name AS vendor_name,
               NULLIF(concat_ws(', ', t.location_city, t.location_state), '') AS location,
-              t.matched_unit_id AS unit_id, NULL::uuid AS trailer_id, NULL::uuid AS load_id,
+              t.matched_unit_id AS unit_id, ${relayPromptReeferTrailerSql("t")} AS trailer_id, NULL::uuid AS load_id,
               l.volume::numeric AS gallons, COALESCE(l.total_discounted_price_cents, l.total_retail_price_cents, 0)::bigint AS cost_cents
          FROM integrations.relay_fuel_transaction_lines l
          JOIN integrations.relay_fuel_transactions t ON t.id = l.relay_fuel_transaction_id
-        WHERE l.operating_company_id = $1::uuid AND l.fuel_type = 'reefer' AND l.voided_at IS NULL AND t.voided_at IS NULL
+        WHERE l.operating_company_id = $1::uuid AND ${relayLineKindSql("l")} = 'reefer' AND ${relayLineIsGallonsSql("l")}
+          AND l.voided_at IS NULL AND t.voided_at IS NULL
           AND l.volume > 0
           AND (t.relay_created_at)::date BETWEEN $2::date AND $3::date
           AND NOT EXISTS (
@@ -201,6 +205,67 @@ async function assertReeferTrailer(client: Db, companyId: string, trailerId: str
   if (!/reefer/i.test(t.rows[0].equipment_type ?? "")) {
     throw new ReeferGallonsError("TRAILER_NOT_REEFER", `That trailer is a ${t.rows[0].equipment_type ?? "non-reefer"} trailer — reefer fuel goes to a Reefer trailer.`);
   }
+}
+
+/**
+ * SQL scalar: the Reefer trailer whose number the driver keyed at the pump on a Relay fill (prompt "Trailer #" / "Trailer" /
+ * "Reefer #" / "Reefer" / "Trailer Number"), when exactly one Reefer trailer this company ($1) owns or leases carries it; else NULL.
+ * `rf` = an integrations.relay_fuel_transactions alias.
+ */
+export function relayPromptReeferTrailerSql(rf: string): string {
+  return `(SELECT min(e.id::text)::uuid FROM mdata.equipment e
+      WHERE btrim(e.equipment_number) = btrim((
+              SELECT x->>'value' FROM jsonb_array_elements(CASE WHEN jsonb_typeof(${rf}.prompts) = 'array' THEN ${rf}.prompts ELSE '[]'::jsonb END) x
+               WHERE btrim(COALESCE(x->>'label', '')) ~* '^(trailer|reefer)( ?#| number)?$' AND btrim(COALESCE(x->>'value', '')) <> ''
+               LIMIT 1))
+        AND e.deactivated_at IS NULL AND e.equipment_type ~* 'reefer'
+        AND (e.owner_company_id = $1::uuid OR e.currently_leased_to_company_id = $1::uuid)
+     HAVING count(*) = 1)`;
+}
+
+/**
+ * ROUND 391.2 (owner order 432-CC2 item 4) — the Reefer trailer a reefer fuel row went into, resolved from records, never
+ * guessed. In order:
+ *   1. the trailer on the load the truck was hauling at the fill (the row's own load, else loadAtTimeSql — the one
+ *      load-at-time rule): its assignment history's trailer as of the fill time (mdata.loads has no trailer column;
+ *      dispatch.load_assignment_history.new_trailer_id is the only load<->trailer link);
+ *   2. the trailer number the driver keyed at the pump (the Relay fill's "Trailer #" / "Reefer #" prompt), when exactly
+ *      one of this company's trailers carries it.
+ * Either way it must be a Reefer trailer this company owns or leases (the same rule assertReeferTrailer enforces).
+ * Returns null when no record proves one — the row then waits for the manual "Set trailer" action on the credit report.
+ */
+export async function resolveReeferTrailerForFuelRow(client: Db, companyId: string, fuelTransactionId: string): Promise<string | null> {
+  const r = await client.query<{ trailer_id: string }>(
+    `WITH f AS (
+       SELECT ft.unit_id, ft.load_id, ft.relay_fuel_transaction_id, COALESCE(ft.purchased_at, ft.transaction_at)::timestamptz AS ts
+         FROM fuel.fuel_transactions ft
+        WHERE ft.id = $2::uuid AND ft.operating_company_id = $1::uuid
+     ),
+     cand AS (
+       SELECT h.new_trailer_id AS id, 1 AS pri
+         FROM f
+         ${loadAtTimeSql("f.unit_id", "f.ts", "lat")}
+         JOIN LATERAL (
+           SELECT x.new_trailer_id FROM dispatch.load_assignment_history x
+            WHERE x.operating_company_id = $1::uuid AND x.load_id = COALESCE(f.load_id, lat.load_id) AND x.new_trailer_id IS NOT NULL
+            ORDER BY (x.assigned_at <= f.ts) DESC, x.assigned_at DESC, x.created_at DESC
+            LIMIT 1
+         ) h ON true
+       UNION ALL
+       SELECT ${relayPromptReeferTrailerSql("rf")} AS id, 2 AS pri
+         FROM f
+         JOIN integrations.relay_fuel_transactions rf ON rf.id = f.relay_fuel_transaction_id AND rf.operating_company_id = $1::uuid
+     )
+     SELECT c.id::text AS trailer_id
+       FROM cand c
+       JOIN mdata.equipment e ON e.id = c.id
+      WHERE e.equipment_type ~* 'reefer'
+        AND (e.owner_company_id = $1::uuid OR e.currently_leased_to_company_id = $1::uuid)
+      ORDER BY c.pri
+      LIMIT 1`,
+    [companyId, fuelTransactionId],
+  );
+  return r.rows[0]?.trailer_id ?? null;
 }
 
 /**
