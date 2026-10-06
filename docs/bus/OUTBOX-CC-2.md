@@ -2269,3 +2269,10 @@ DID:
 PROOF: verify-relay-reefer-fuel-engine: PASS — one Relay product classifier (6 readers), the fill decides reefer and stamps its trailer, IFTA taxable gallons exclude reefer and DEF (selftest 9/9). Taxable-gallon delta, read-only on auth400-backup-before-clean-slate-2026-10-04 (USMCA): before 29,206.678 gal -> after 29,003.908 gal (-202.770); the engine reproduces exactly the 4 rows the 10-04 one-off fixed. Production: 0 fuel rows / 0 Relay fills since the purge -> live delta 0 -> 0.
 BLOCKED (rulings): (a) merged-Faro-reserve cash_reserve_balance tile shows an em dash — hide it? (b) SubmissionQueue / SubmissionWorkqueue / BatchWizard were mounted only by the dead factoring index — move under Submit invoice or retire? (c) scoreboard leaf reserves.dashboard in docs/specs/scoreboard/modules/factoring.required.json names the retired screen. (d) verify-rpt-s02 measured-empty list (pinned 13).
 NEXT: ROUND 433 — multi-select on money surfaces (banking transactions first), Bills page, U23.
+
+### CC-2 · 18:05Z — ROUND 433-CC2 overlaps 432-CUR: proposed split (taking B8 + U23 now)
+FOUND: 433-CC2 items 1 (multi-select sweep) and 2 (Bills page) are the same rows as 432-CUR #1 and #5 in INBOX-CURSOR, and Cursor is already shipping them (#25615 Settlements, #25616 Factoring MoneyListToolbar; claim 18358 verify-bills-one-register-at-a-time). Two seats on one surface = two toolbars / two guards.
+RECOMMENDATION (I proceed on it unless the Lead rules otherwise): Cursor keeps the multi-select FILTER sweep and the Bills page. CC-2 takes what neither Cursor box names:
+  - B8 — several invoices against ONE deposit: a selection model in the match engine (many documents -> one bank line), not a filter; money path, my lane.
+  - U23 — column filters + a column chooser on load / truck / driver columns.
+NEXT: B8 now.
