@@ -27,9 +27,9 @@ const PANEL = "apps/frontend/src/components/shared/LedgerKpiPanel.tsx";
  * a proximity window cannot resolve. That makes 103 an upper bound, and an upper bound is a safe
  * ratchet: it can only be lowered. Do not raise it.
  */
-const SHRINK_ONLY_BASELINE = 43; // 2026-10-06 ROUND 433.2 engine: 49 -> 43 (BS assets/liabilities + P&L section totals drill to the ledger; 3 computed BS figures declared no-drill)
+const SHRINK_ONLY_BASELINE = 23; // 2026-10-06 ROUND 433.2 batch 4: 43 -> 23 onto MoneyCell (wired: escrow held -> escrow record, bank tiles -> bank account, categorize queue -> bank line, approvals Dr/Cr -> journal entry, wizard line -> its document; declared: footers, running/opening/closing balances, settings, KPI breakdown)
 /** MoneyCell { none: reason } declarations on main (listed at run time). Unwired + declared may never grow. */
-const DECLARED_NO_DRILL = 3; // 2026-10-06 ROUND 433.2 batch 3: 55 -> 49 (dispatch load costs x3 -> load, driver hub activity -> its record, unit NBV -> fixed asset, lease allocation -> lease)
+const DECLARED_NO_DRILL = 20; // 2026-10-06 ROUND 433.2 batch 3: 55 -> 49 (dispatch load costs x3 -> load, driver hub activity -> its record, unit NBV -> fixed asset, lease allocation -> lease)
 
 function stripComments(src) {
   return String(src ?? "")

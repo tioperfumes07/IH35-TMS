@@ -1,3 +1,4 @@
+import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { ZeroCenterSparkline } from "../../../components/money/ZeroCenterSparkline";
 
 export type MoneyRailRow = {
@@ -42,7 +43,13 @@ function RailRow({
         <p className="truncate font-medium text-[#0F1219]">{row.name}</p>
         <p className="truncate text-[#6B7280]">{row.kind}</p>
       </div>
-      <p className="text-right font-medium tabular-nums text-[#0F1219]">{formatMoney(row.balance)}</p>
+      <p className="font-medium text-[#0F1219]">
+        {row.tileKind === "real" ? (
+          <MoneyCell cents={row.balance} format={formatMoney} drill={{ entity: { kind: "bank_account", id: row.id } }} />
+        ) : (
+          <MoneyCell cents={row.balance} format={formatMoney} drill={{ none: "Virtual tile balance: its own screen opens from the View button on this row" }} />
+        )}
+      </p>
       <div className="flex justify-center">
         {row.sparkPoints && row.sparkPoints.length >= 2 ? (
           <ZeroCenterSparkline points={row.sparkPoints} />

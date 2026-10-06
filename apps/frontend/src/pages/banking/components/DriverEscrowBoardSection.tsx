@@ -13,6 +13,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
 import { formatUsd } from "../../../lib/money";
+import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { useToast } from "../../../components/Toast";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 
@@ -248,13 +249,14 @@ export function DriverEscrowBoardSection({ operatingCompanyId, driverEscrowBalan
                         ) : null}
                         {colOn("unit") ? <td className="px-2 py-1.5 text-center">{dash(row.unit)}</td> : null}
                         {colOn("held") ? (
-                          <td className="px-2 py-1.5 text-right tabular-nums font-medium" style={{ width: 120 }}>
-                            {formatUsd(row.held)}
+                          <td className="px-2 py-1.5 font-medium" style={{ width: 120 }}>
+                            {/* row.held is in dollars (escrow_balance); MoneyCell only formats it through formatUsd. */}
+                            <MoneyCell cents={row.held} format={formatUsd} drill={{ entity: { kind: "escrow_record", id: row.driver_id } }} />
                           </td>
                         ) : null}
                         {colOn("target") ? (
-                          <td className="px-2 py-1.5 text-right tabular-nums" style={{ width: 120 }}>
-                            {row.target == null ? "—" : formatUsd(row.target)}
+                          <td className="px-2 py-1.5" style={{ width: 120 }}>
+                            <MoneyCell cents={row.target} format={formatUsd} drill={{ none: "Escrow target is a driver setting, not a transaction" }} />
                           </td>
                         ) : null}
                         {colOn("progress") ? (
@@ -314,13 +316,13 @@ export function DriverEscrowBoardSection({ operatingCompanyId, driverEscrowBalan
                   {colOn("driver") ? <td className="px-2 py-2 text-left">Totals</td> : null}
                   {colOn("unit") ? <td className="text-right tabular-nums" /> : null}
                   {colOn("held") ? (
-                    <td className="px-2 py-2 text-right tabular-nums" data-testid="escrow-footer-held">
-                      {formatUsd(heldTotal)}
+                    <td className="px-2 py-2" data-testid="escrow-footer-held">
+                      <MoneyCell cents={heldTotal} format={formatUsd} drill={{ none: "Total of the rows above — each row opens that driver's escrow record" }} />
                     </td>
                   ) : null}
                   {colOn("target") ? (
-                    <td className="px-2 py-2 text-right tabular-nums" data-testid="escrow-footer-target">
-                      {targetTotal == null ? "—" : formatUsd(targetTotal)}
+                    <td className="px-2 py-2" data-testid="escrow-footer-target">
+                      <MoneyCell cents={targetTotal} format={formatUsd} drill={{ none: "Total of the escrow targets above — targets are driver settings" }} />
                     </td>
                   ) : null}
                   {colOn("progress") ? <td /> : null}

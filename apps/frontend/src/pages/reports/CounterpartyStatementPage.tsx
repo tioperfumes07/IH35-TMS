@@ -9,6 +9,7 @@ import { getCustomerStatementOfAccount, getVendorStatementOfAccount, type Counte
 import { listAllDispatchLoads, type DispatchLoad } from "../../api/dispatch";
 import { listExpenses, type ExpenseListRow } from "../../api/accounting";
 import { EntityLink, resolveEntityRoute } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 
 /** ROUND 433.2 — the route of a statement line's own document, or null (a kind with no mounted route stays plain). */
 function lineKind(line: CounterpartyStatementLine): Parameters<typeof resolveEntityRoute>[0] | null {
@@ -282,7 +283,7 @@ export function CounterpartyStatementView({
                 <td className="px-3 py-2" colSpan={6}>
                   Opening balance ({mmmDd(query.data.from_date)})
                 </td>
-                <td className="px-3 py-2 text-right tabular-nums">{money(query.data.opening_balance_cents)}</td>
+                <td className="px-3 py-2"><MoneyCell cents={query.data.opening_balance_cents} format={money} drill={{ none: "Opening balance of this statement: everything before the first line listed below" }} /></td>
               </tr>
               {query.data.lines.length === 0 ? (
                 <tr>
@@ -299,7 +300,7 @@ export function CounterpartyStatementView({
                     <td className="px-3 py-2">{line.description}</td>
                     <td className="px-3 py-2 text-right tabular-nums">{line.debit_cents > 0 ? (lineKind(line) ? <EntityLink kind={lineKind(line)!} id={line.link_id} label={money(line.debit_cents)} /> : money(line.debit_cents)) : "—"}</td>
                     <td className="px-3 py-2 text-right tabular-nums">{line.credit_cents > 0 ? (lineKind(line) ? <EntityLink kind={lineKind(line)!} id={line.link_id} label={money(line.credit_cents)} /> : money(line.credit_cents)) : "—"}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">{money(line.running_balance_cents)}</td>
+                    <td className="px-3 py-2"><MoneyCell cents={line.running_balance_cents} format={money} drill={{ none: "Running balance: opening plus every line up to this one, each of which opens its document" }} /></td>
                   </tr>
                 ))
               )}
@@ -307,7 +308,7 @@ export function CounterpartyStatementView({
                 <td className="px-3 py-2" colSpan={6}>
                   Closing balance ({mmmDd(query.data.to_date)})
                 </td>
-                <td className="px-3 py-2 text-right tabular-nums">{money(query.data.closing_balance_cents)}</td>
+                <td className="px-3 py-2"><MoneyCell cents={query.data.closing_balance_cents} format={money} drill={{ none: "Closing balance of this statement: opening plus the lines listed above" }} /></td>
               </tr>
             </tbody>
           </table>

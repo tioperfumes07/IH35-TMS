@@ -4,6 +4,7 @@ import { categorizeBankTransaction } from "../../../api/banking";
 import { useToast } from "../../../components/Toast";
 import { formatDateUS } from "../../../lib/formatDate";
 import { formatUsd } from "../../../lib/money";
+import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { userFacingApiError } from "../../../lib/api-error-message";
 
 export type NeedsCategorizingRow = {
@@ -135,11 +136,8 @@ export function NeedsCategorizingQueue({ companyId, rows, onChange, onAccepted }
                       {missing(row.suggestedAccount)}
                     </td>
                     <td className="px-2 py-1.5 text-center">{missing(row.unit)}</td>
-                    <td
-                      className="px-2 py-1.5 text-right tabular-nums font-medium text-[#0F1219]"
-                      style={{ width: 120 }}
-                    >
-                      {formatUsd(amt)}
+                    <td className="px-2 py-1.5 font-medium text-[#0F1219]" style={{ width: 120 }}>
+                      <MoneyCell cents={amt} format={formatUsd} drill={{ entity: { kind: "bank_transaction", id: row.id } }} />
                     </td>
                     <td className="px-2 py-1.5">
                       <div className="flex items-center justify-center gap-1">

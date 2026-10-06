@@ -23,6 +23,7 @@ import { useExportAction } from "../../hooks/useExportAction";
 
 import { formatUsdCents } from "../../lib/money";
 import { AmountLink } from "../../components/shared/AmountLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -361,7 +362,7 @@ export function CashFlowStatementPage() {
                     <td colSpan={3} className="px-3 py-2 text-right">
                       Section total
                     </td>
-                    <td className="px-3 py-2 text-right tabular-nums">{money(section.total)}</td>
+                    <td className="px-3 py-2"><MoneyCell cents={section.total} format={money} drill={{ none: "Cash flow section total: cash allocated across the lines above, each of which opens its account" }} /></td>
                   </tr>
                 </tbody>
               </table>

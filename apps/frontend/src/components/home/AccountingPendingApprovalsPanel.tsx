@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { MoneyCell } from "../shared/MoneyCell";
 import { useQuery } from "@tanstack/react-query";
 import type { AccountingHomeData } from "../../api/accountingHome";
 import { fetchPendingApprovalsGl } from "../../api/accountingHome";
@@ -154,9 +155,10 @@ export function AccountingPendingApprovalsPanel({ data, isLoading }: Props) {
                           : "Required approver: unresolved"}
                       </div>
                     </div>
-                    <div className="text-right text-xs tabular-nums text-slate-700">
-                      <div>Dr {formatUsdFromCents(item.debit_total_cents)}</div>
-                      <div>Cr {formatUsdFromCents(item.credit_total_cents)}</div>
+                    <div className="text-xs text-slate-700">
+                      {/* ROUND 433.2 — the entry's own totals open the entry. */}
+                      <div>Dr <MoneyCell cents={item.debit_total_cents} format={formatUsdFromCents} drill={{ entity: { kind: "journal_entry", id: item.journal_entry_id } }} /></div>
+                      <div>Cr <MoneyCell cents={item.credit_total_cents} format={formatUsdFromCents} drill={{ entity: { kind: "journal_entry", id: item.journal_entry_id } }} /></div>
                       <div className={item.amounts_balanced ? "text-slate-500" : "text-slate-700"}>
                         {item.amounts_balanced ? "Balanced" : "Unbalanced"}
                       </div>
