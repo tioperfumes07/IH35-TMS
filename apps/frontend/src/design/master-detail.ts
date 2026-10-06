@@ -40,6 +40,6 @@ export const MASTER_DETAIL = {
   rowStripeClass: QBO_SURFACE_CLASS.rowStripe,
   rowSelectedClass: QBO_SURFACE_CLASS.rowSelected,
   /** C-01 inactive segmented pill tint — never rgba(0,0,0,0). */
-  segmentInactiveClass: "bg-[#F3F4F6] text-[#1F2A44] hover:bg-[#E5E7EB]",
+  segmentInactiveClass: "bg-[var(--surface-unselected)] text-[#1F2A44] hover:bg-[var(--surface-hover)]",
   segmentActiveClass: "bg-[#1F2A44] text-white",
 } as const;

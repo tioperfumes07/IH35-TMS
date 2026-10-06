@@ -88,7 +88,7 @@ function ProfileTabStrip({ driverId, activeTab }: { driverId: string; activeTab:
               <Link
                 key={label}
                 role="menuitem"
-                className="block px-2 py-1 text-[12px] text-[#0F1B2D] hover:bg-[#F1F4F7]"
+                className="block px-2 py-1 text-[12px] text-[#0F1B2D] hover:bg-[var(--surface-hover)]"
                 to={driverProfileTabHref(driverId, label)}
                 onClick={() => setMoreOpen(false)}
               >

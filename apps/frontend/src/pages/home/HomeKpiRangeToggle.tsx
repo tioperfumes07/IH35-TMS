@@ -39,7 +39,7 @@ export function HomeKpiRangeToggle({ value, onChange }: Props) {
           className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${
             value === range
               ? "border-slate-300 bg-slate-100 text-slate-700"
-              : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+              : "border-[var(--border-default)] bg-[var(--surface-unselected)] text-gray-700 hover:bg-[var(--surface-hover)]"
           }`}
           onClick={() => onChange(range)}
         >

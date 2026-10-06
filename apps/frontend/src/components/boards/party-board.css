@@ -17,7 +17,8 @@
 .pb-kpi--amber .ih-hd, .pb-kpi--amber .pb-kpi-v { color: var(--ih-amber); }
 .pb-kpi-v { font-size: var(--ih-fs-kpi); font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; text-align: left; }
 .pb-bar { background: var(--ih-card); border-bottom: 1px solid var(--ih-border); padding: 9px var(--ih-gutter); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.pb-chip { font: inherit; font-size: var(--ih-fs-sub); min-height: var(--ih-h-control); padding: 0 11px; border: 1px solid var(--ih-border-control); background: var(--ih-card); color: var(--ih-navy-ink); border-radius: var(--ih-radius); cursor: pointer; }
+.pb-chip { font: inherit; font-size: var(--ih-fs-sub); min-height: var(--ih-h-control); padding: 0 11px; border: 1px solid var(--ih-border-control); background: var(--surface-unselected); color: var(--ih-navy-ink); border-radius: var(--ih-radius); cursor: pointer; }
+.pb-chip:hover { background: var(--surface-hover); }
 .pb-chip[aria-pressed="true"] { font-weight: 600; border-color: var(--ih-navy); background: var(--ih-navy); color: var(--ih-card); }
 .pb-sep { width: 1px; height: 22px; background: var(--ih-divider); margin: 0 4px; }
 .pb-select { font: inherit; font-size: 12px; min-height: var(--ih-h-control); border: 1px solid var(--ih-border-control); border-radius: var(--ih-radius); padding: 0 8px; background: var(--ih-card); color: var(--ih-navy-ink); }
