@@ -119,7 +119,7 @@ describe("invoices list COUNT+LIST entity scope", () => {
     expect(handler).toContain("const extraSql = extraWhere.length ? `AND ${extraWhere.join(\" AND \")}` : \"\";");
     expect(countSql).toContain("${extraSql}");
     expect(listSql).toContain("${extraSql}");
-    expect(handler).toContain("COALESCE(i.amount_open_cents, 0) > 0");
+    expect(handler).toContain('openArInvoiceConditions("i")');
     // Bind $1 is company for both; LIMIT/OFFSET only on list after count.
     expect(handler.indexOf("SELECT COUNT(*)::int AS total")).toBeLessThan(handler.indexOf("LIMIT $${limitIdx}"));
   });

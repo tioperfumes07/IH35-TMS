@@ -8,7 +8,13 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getCustomerStatementOfAccount, getVendorStatementOfAccount, type CounterpartyStatementLine, type CounterpartyStatementResponse } from "../../api/reports";
 import { listAllDispatchLoads, type DispatchLoad } from "../../api/dispatch";
 import { listExpenses, type ExpenseListRow } from "../../api/accounting";
-import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLink, resolveEntityRoute } from "../../components/shared/EntityLink";
+
+/** ROUND 433.2 — the route of a statement line's own document, or null (a kind with no mounted route stays plain). */
+function lineKind(line: CounterpartyStatementLine): Parameters<typeof resolveEntityRoute>[0] | null {
+  const kind = line.link_kind as Parameters<typeof resolveEntityRoute>[0];
+  return line.link_id && resolveEntityRoute(kind, line.link_id) ? kind : null;
+}
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useStagedListFilters } from "../../components/table";
 import { openPrintableDocument } from "../../lib/openPrintableDocument";
@@ -291,8 +297,8 @@ export function CounterpartyStatementView({
                     <td className="px-3 py-2">{typeLabel(line.type)}</td>
                     <td className="px-3 py-2">{line.reference || "—"}</td>
                     <td className="px-3 py-2">{line.description}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">{line.debit_cents > 0 ? money(line.debit_cents) : "—"}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">{line.credit_cents > 0 ? money(line.credit_cents) : "—"}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{line.debit_cents > 0 ? (lineKind(line) ? <EntityLink kind={lineKind(line)!} id={line.link_id} label={money(line.debit_cents)} /> : money(line.debit_cents)) : "—"}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{line.credit_cents > 0 ? (lineKind(line) ? <EntityLink kind={lineKind(line)!} id={line.link_id} label={money(line.credit_cents)} /> : money(line.credit_cents)) : "—"}</td>
                     <td className="px-3 py-2 text-right tabular-nums">{money(line.running_balance_cents)}</td>
                   </tr>
                 ))

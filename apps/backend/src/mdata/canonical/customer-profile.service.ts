@@ -20,6 +20,9 @@ export const OPEN_LOAD_PREDICATE_SQL = `
   AND coalesce(l.is_quicksave_draft, false) = false
   AND l.status NOT IN ('closed', 'invoiced', 'cancelled')`;
 
+import { AGING_BUCKET_IDS, agingBucketWindow, agingWindowPredicate, type AgingBucketId } from "../../accounting/aging/buckets.js";
+import { openArInvoiceConditions } from "../../accounting/aging/open-ar.js";
+import { companyBusinessDate } from "../../lib/company-business-date.js";
 const n = (v: unknown) => Number(v ?? 0);
 
 export async function readCustomerProfile(client: Q, companyId: string, customerId: string) {
@@ -39,22 +42,31 @@ export async function readCustomerProfile(client: Q, companyId: string, customer
   ).rows[0];
   if (!cust) return null;
 
-  // 1. AR aging — open, non-void invoices bucketed by days past due (no due date = current).
+  // 1. AR aging — THE ladder (accounting/aging/buckets.ts) over THE open-A/R population (aging/open-ar.ts), as of the
+  // company business date. ROUND 433.2: this used to hand-write its own 0/30/60/90 ladder against current_date and count
+  // drafts, so a bucket could not drill to the invoice list (which uses the ladder and excludes drafts) without opening a
+  // list that adds up to something else. as_of travels with the figures so each bucket drills to exactly its rows.
+  const agingAsOf = companyBusinessDate();
+  const agingValues: unknown[] = [companyId, customerId];
+  const bind = (v: unknown) => {
+    agingValues.push(v);
+    return `$${agingValues.length}`;
+  };
+  const bucketSum = (id: AgingBucketId) => {
+    const pred = agingWindowPredicate("i.due_date", agingAsOf, agingBucketWindow(id), bind);
+    return `coalesce(sum(i.amount_open_cents) FILTER (WHERE ${pred ?? "true"}), 0) AS ${id}_cents`;
+  };
+  const overduePred = agingWindowPredicate("i.due_date", agingAsOf, { minDaysOverdue: 1, maxDaysOverdue: null }, bind);
   const agingRow = (
     await client.query(
-      `SELECT
-         coalesce(sum(amount_open_cents) FILTER (WHERE due_date IS NULL OR due_date >= current_date), 0) AS current_cents,
-         coalesce(sum(amount_open_cents) FILTER (WHERE current_date - due_date BETWEEN 1 AND 30), 0) AS d1_30_cents,
-         coalesce(sum(amount_open_cents) FILTER (WHERE current_date - due_date BETWEEN 31 AND 60), 0) AS d31_60_cents,
-         coalesce(sum(amount_open_cents) FILTER (WHERE current_date - due_date BETWEEN 61 AND 90), 0) AS d61_90_cents,
-         coalesce(sum(amount_open_cents) FILTER (WHERE current_date - due_date > 90), 0) AS d90_plus_cents,
-         coalesce(sum(amount_open_cents), 0) AS total_open_cents,
-         coalesce(sum(amount_open_cents) FILTER (WHERE due_date < current_date), 0) AS overdue_cents,
+      `SELECT ${AGING_BUCKET_IDS.map(bucketSum).join(",\n         ")},
+         coalesce(sum(i.amount_open_cents), 0) AS total_open_cents,
+         coalesce(sum(i.amount_open_cents) FILTER (WHERE ${overduePred}), 0) AS overdue_cents,
          count(*)::int AS open_invoice_count
-       FROM accounting.invoices
-      WHERE operating_company_id = $1::uuid AND customer_id = $2
-        AND voided_at IS NULL AND status <> 'void' AND amount_open_cents > 0`,
-      [companyId, customerId]
+       FROM accounting.invoices i
+      WHERE i.operating_company_id = $1::uuid AND i.customer_id = $2
+        AND ${openArInvoiceConditions("i").join(" AND ")}`,
+      agingValues
     )
   ).rows[0];
   const aging = {
@@ -66,6 +78,7 @@ export async function readCustomerProfile(client: Q, companyId: string, customer
     total_open_cents: n(agingRow.total_open_cents),
     overdue_cents: n(agingRow.overdue_cents),
     open_invoice_count: n(agingRow.open_invoice_count),
+    as_of: agingAsOf,
   };
 
   // 3. Open loads — not yet invoiced / closed / cancelled. Un-invoiced revenue is part of exposure.
