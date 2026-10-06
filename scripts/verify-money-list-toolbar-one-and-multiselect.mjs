@@ -25,6 +25,7 @@ const REGISTERED_PAGES = [
   "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
   "apps/frontend/src/pages/accounting/ManualJEListPage.tsx",
   "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
+  "apps/frontend/src/pages/accounting/FactoringListPage.tsx",
 ];
 
 // Pages named in the packet but NOT yet retrofitted — tracked here so a reviewer can see the real
@@ -32,7 +33,6 @@ const REGISTERED_PAGES = [
 // page to REGISTERED_PAGES above (after retrofitting it) is what turns enforcement on.
 const KNOWN_NOT_YET_DONE = [
   "Load Costs (LoadCostsBoardPage.tsx)",
-  "Factoring (FactoringListPage.tsx)",
   "Fuel (FuelTransactionsTable.tsx)",
   "Customers",
   "Vendors",

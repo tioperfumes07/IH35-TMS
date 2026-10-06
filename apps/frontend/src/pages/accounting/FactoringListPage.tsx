@@ -13,8 +13,11 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityPicker } from "../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { formatUsdCents } from "../../lib/money";
+import { FACTORING_TAB_PATH } from "../../router/route-manifest";
 
 const STATUS_OPTIONS: Array<{ value: "all" | "active" | FactoringAdvance["status"]; label: string }> = [
   { value: "active", label: "Active (hide voided)" },
@@ -27,10 +30,6 @@ const STATUS_OPTIONS: Array<{ value: "all" | "active" | FactoringAdvance["status
   { value: "recourse_returned", label: "Recourse" },
   { value: "voided", label: "Voided" },
 ];
-
-import { formatUsdCents } from "../../lib/money";
-import { FACTORING_TAB_PATH } from "../../router/route-manifest";
-import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -72,21 +71,11 @@ export function FactoringListPage() {
   // GO-23 row16 (owner FINISH LAW 2026-09-03): voided hidden by default, same convention as
   // Bills/Expenses/Invoices/Payments lists (all default status="active").
   // U12 (owner UI register 2026-10-03) — status is a multi-select; default Active; none picked = every status.
+  // 432-CUR #1 — MoneyListToolbar always visible; retired the Filters (N) popover.
   const [status, setStatus] = useState<Array<"all" | "active" | FactoringAdvance["status"]>>(["active"]);
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const loadId = deepLinkLoadId ?? "";
-  const staged = useStagedListFilters({
-    applied: { status, fromDate, toDate, loadId },
-    empty: { status: ["active"] as Array<"all" | "active" | FactoringAdvance["status"]>, fromDate: "", toDate: "", loadId: "" },
-    onApply: (next) => {
-      setStatus(next.status);
-      setFromDate(next.fromDate);
-      setToDate(next.toDate);
-      patchLoadFilter(next.loadId);
-    },
-  });
   const [submitOpen, setSubmitOpen] = useState(false);
 
   const query = useQuery({
@@ -151,52 +140,50 @@ export function FactoringListPage() {
     (status.length === 1 && status[0] === "active" ? 0 : status.length ? 1 : 0) + (fromDate || toDate ? 1 : 0) + (deepLinkLoadId ? 1 : 0);
 
   const filterBar = (
-    <CollapsedListFilters
+    <MoneyListToolbar
+      search={search}
+      onSearchChange={setSearch}
+      searchPlaceholder="FAC-2026-00012"
+      searchTestId="factoring-search-input"
+      onClearAll={() => {
+        setSearch("");
+        setStatus(["active"]);
+        setFromDate("");
+        setToDate("");
+        patchLoadFilter("");
+      }}
       activeFilterCount={factoringActiveFilterCount}
-      onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
       testIdPrefix="factoring"
-      dataAttributes={{ "data-factoring-filter-toolbar": "collapsed" }}
-      searchSlot={
-        <input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="FAC-2026-00012"
-          className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-xs"
-          aria-label="Search factoring advances"
-        />
-      }
     >
-      <div className="grid gap-2 md:grid-cols-4 w-full" data-testid="factoring-entity-filters">
-        <label className="flex flex-col gap-1 text-xs text-slate-600">
-          Load
-          <EntityPicker
-            kind="load"
-            operatingCompanyId={selectedCompanyId ?? ""}
-            value={staged.draft.loadId || null}
-            onChange={(next) => staged.setDraft({ ...staged.draft, loadId: next ?? "" })}
-            allowCreate={false}
-            placeholder="All loads"
-            dataTestId="factoring-filter-load"
-          />
-        </label>
-        <MultiSelectDropdown
-          label="Status"
-          options={STATUS_OPTIONS.filter((option) => option.value !== "all").map((option) => ({ value: option.value, label: option.label }))}
-          selected={staged.draft.status}
-          onChange={(next) => staged.setDraft({ ...staged.draft, status: next as Array<"all" | "active" | FactoringAdvance["status"]> })}
-          allLabel="All (include voided)"
-          data-testid="factoring-status-filter"
+      <label className="flex flex-col gap-1 text-xs text-slate-600" data-testid="factoring-entity-filters">
+        Load
+        <EntityPicker
+          kind="load"
+          operatingCompanyId={selectedCompanyId ?? ""}
+          value={deepLinkLoadId || null}
+          onChange={(next) => patchLoadFilter(next ?? "")}
+          allowCreate={false}
+          placeholder="All loads"
+          dataTestId="factoring-filter-load"
         />
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-          Date from
-          <DatePicker value={staged.draft.fromDate} onChange={(next) => staged.setDraft({ ...staged.draft, fromDate: next })} className="h-9" />
-        </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-          Date to
-          <DatePicker value={staged.draft.toDate} onChange={(next) => staged.setDraft({ ...staged.draft, toDate: next })} className="h-9" />
-        </label>
-      </div>
-    </CollapsedListFilters>
+      </label>
+      <MultiSelectDropdown
+        label="Status"
+        options={STATUS_OPTIONS.filter((option) => option.value !== "all").map((option) => ({ value: option.value, label: option.label }))}
+        selected={status}
+        onChange={(next) => setStatus(next as Array<"all" | "active" | FactoringAdvance["status"]>)}
+        allLabel="All (include voided)"
+        data-testid="factoring-status-filter"
+      />
+      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        Date from
+        <DatePicker value={fromDate} onChange={setFromDate} className="h-9" />
+      </label>
+      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        Date to
+        <DatePicker value={toDate} onChange={setToDate} className="h-9" />
+      </label>
+    </MoneyListToolbar>
   );
 
   return (
