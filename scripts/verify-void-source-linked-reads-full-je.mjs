@@ -20,12 +20,23 @@ function fail(msg) {
 }
 
 const src = readFileSync(servicePath, "utf8");
+// The reader's own body only: void.service.ts has a second SELECT DISTINCT … source_transaction_type = $3 (the
+// reversal back-link stamper), which let a regression in the reader pass on the file as a whole (LST-F413).
+function readerBody(text) {
+  const start = text.indexOf("async function readOriginalGlPostings");
+  if (start < 0) return "";
+  const end = text.indexOf("\n}\n", start);
+  return text.slice(start, end < 0 ? undefined : end);
+}
+const reader = readerBody(src);
 
 // Must expand via JE header set, not source-only WHERE.
-if (!/journal_entry_uuid\s+IN\s*\(/.test(src)) {
+if (!/journal_entry_uuid\s+IN\s*\(/.test(reader)) {
   fail("readOriginalGlPostings non-JE branch must select via journal_entry_uuid IN (…)");
 }
-if (!/SELECT DISTINCT journal_entry_uuid[\s\S]{0,400}?source_transaction_type\s*=\s*\$3/.test(src)) {
+// Table alias optional: the 2026-09-23 liveness fix aliased the subquery (jep.journal_entry_uuid,
+// jep.source_transaction_type) and joined journal_entries, which an unaliased match missed (LST-F413).
+if (!/SELECT DISTINCT (?:\w+\.)?journal_entry_uuid[\s\S]{0,700}?(?:\w+\.)?source_transaction_type\s*=\s*\$3/.test(reader)) {
   fail("IN-subquery must discover JE ids from source_transaction_type/id ($3/$2)");
 }
 // Forbidden regression: sole filter is source_transaction_type/id without JE expansion.

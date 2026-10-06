@@ -6,10 +6,9 @@
  * apps/backend/src/cash-advances/cash-advances.routes.ts had 8 `.catch(...)` sites. 7 are read-only
  * (dashboard/kpis, list, unpaid-bills, GET /:id's 2 queries, mark-disbursed's re-fetch) and are fixed
  * here — the query now throws naturally on a real failure. The 8th (PATCH /:id/reverse's
- * settlement-deduction-count guard, `.catch(() => ({ rows: [{ cnt: 0 }] }))`) is a live financial
- * write-path gate and is DELIBERATELY left untouched (Rule 13 financial law — routed to the board as
- * CASH-ADV-F9930-REVERSE-GUARD-NEVER-BLOCKS for CC-1, not fixed here) — this guard must NOT flag its
- * continued presence as a regression.
+ * settlement-deduction-count guard, `.catch(() => ({ rows: [{ cnt: 0 }] }))`) was a live financial
+ * write-path gate left for CC-1 as CASH-ADV-F9930-REVERSE-GUARD-NEVER-BLOCKS — FIXED 2026-09-03 (it now
+ * reads driver_liabilities.paid_to_date). LST-F413: this guard now refuses that fake catch coming back.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -42,10 +41,11 @@ export function check(cashAdvancesSrcRaw) {
     failures.push(`${CASH_ADVANCES_FILE}: a fake-empty .catch() reappeared on a cash-advances read query (LIAB-F9927 cash-advances leg)`);
   }
 
-  // Tripwire: the deliberately-untouched financial guard must still exist, unchanged in shape — if it
-  // disappears the "not bundled here, routed to CC-1" claim in the PR/board row goes stale.
-  if (!/\.catch\(\s*\(\)\s*=>\s*\(\{\s*rows:\s*\[\{\s*cnt:\s*0\s*\}\]/.test(src)) {
-    failures.push(`${CASH_ADVANCES_FILE}: expected untouched financial reverse-guard catch (CASH-ADV-F9930) not found — guard out of sync`);
+  // LST-F413: CASH-ADV-F9930 was FIXED 2026-09-03 (the reverse guard now reads driver_liabilities.paid_to_date at the
+  // liability's own grain). The tripwire that demanded the fake-{cnt:0} catch stay present is inverted: it must never
+  // come back — a reverse guard that swallows its own SQL error to cnt=0 never blocks a reversal.
+  if (/\.catch\(\s*\(\)\s*=>\s*\(\{\s*rows:\s*\[\{\s*cnt:\s*0\s*\}\]/.test(src)) {
+    failures.push(`${CASH_ADVANCES_FILE}: the fake-{cnt:0} .catch() on the financial reverse guard is back (CASH-ADV-F9930) — the guard can never block a reversal`);
   }
 
   const requiredAnchors = [
@@ -75,7 +75,7 @@ function run() {
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log("PASS: LIAB-F9927 (cash-advances leg) silent-catch sites stay fixed; CASH-ADV-F9930 financial guard stays untouched-but-tracked");
+  console.log("PASS: LIAB-F9927 (cash-advances leg) silent-catch sites stay fixed; CASH-ADV-F9930 fake-{cnt:0} reverse-guard catch stays gone");
 }
 
 function selftest() {
@@ -101,19 +101,15 @@ function selftest() {
     process.exit(1);
   }
 
-  // Offender B: someone "fixes" the financial reverse-guard catch too (out of scope for this sweep) —
-  // the guard must notice its expected shape vanished, so the board-routed finding doesn't go stale.
-  const offenderB = src.replace(
-    ".catch(() => ({ rows: [{ cnt: 0 }] as Record<string, unknown>[] }));",
-    ";"
-  );
+  // Offender B (LST-F413): the fixed financial reverse guard regresses to the fake-{cnt:0} catch that hid its SQL error.
+  const offenderB = `${src}\nconst usage = await client.query(sql, params).catch(() => ({ rows: [{ cnt: 0 }] as Record<string, unknown>[] }));\n`;
   if (offenderB === src) {
     console.error("FAIL(selftest): offender B mutation did not change the file — pattern out of sync");
     process.exit(1);
   }
   const failuresB = check(offenderB);
   if (failuresB.length === 0) {
-    console.error("FAIL(selftest): planted offender B (financial guard catch removed, tripwire) was NOT caught");
+    console.error("FAIL(selftest): planted offender B (fake-{cnt:0} reverse-guard catch reintroduced) was NOT caught");
     process.exit(1);
   }
 

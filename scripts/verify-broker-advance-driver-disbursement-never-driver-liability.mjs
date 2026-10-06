@@ -50,7 +50,8 @@ export function collectFailures(src = loadSource()) {
   if (!/hasPostedReceivable\s*=\s*advance\.applied_to_invoice_id\s*!=\s*null\s*&&\s*advance\.invoice_status\s*!==\s*"proforma"\s*&&\s*advance\.invoice_status\s*!==\s*"void"/.test(body)) {
     failures.push("the disbursement's hasPostedReceivable check no longer requires a non-null applied_to_invoice_id AND a non-proforma/non-void invoice status");
   }
-  if (!/creditAccountNumber\s*=\s*hasPostedReceivable\s*\?\s*ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER\s*:\s*CUSTOMER_DEPOSITS_ACCOUNT_NUMBER/.test(body)) {
+  // LST-F413: ROUND 365.1 (376f9426ec) resolves the credit by ROLE, not account number — same branch, renamed.
+  if (!/creditRole\s*=\s*hasPostedReceivable\s*\?\s*ACCOUNTS_RECEIVABLE_ROLE\s*:\s*CUSTOMER_DEPOSITS_ROLE/.test(body)) {
     failures.push("the disbursement's credit account is not branched on hasPostedReceivable (1100 if a receivable has posted, else 2250 Customer Deposits) -- an unconditional CR to 1100 books a receivable that may not exist yet");
   }
 
@@ -65,7 +66,7 @@ export function collectFailures(src = loadSource()) {
     if (!/hasPostedReceivable\s*=\s*appliedToInvoiceId\s*!=\s*null\s*&&\s*appliedInvoiceStatus\s*!==\s*"proforma"\s*&&\s*appliedInvoiceStatus\s*!==\s*"void"/.test(receiptBody)) {
       failures.push("the receipt's hasPostedReceivable check no longer requires a non-null appliedToInvoiceId AND a non-proforma/non-void invoice status");
     }
-    if (!/creditAccountNumber\s*=\s*hasPostedReceivable\s*\?\s*ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER\s*:\s*CUSTOMER_DEPOSITS_ACCOUNT_NUMBER/.test(receiptBody)) {
+    if (!/creditRole\s*=\s*hasPostedReceivable\s*\?\s*ACCOUNTS_RECEIVABLE_ROLE\s*:\s*CUSTOMER_DEPOSITS_ROLE/.test(receiptBody)) {
       failures.push("the receipt's credit account is not branched on hasPostedReceivable (1100 if a receivable has posted, else 2250 Customer Deposits)");
     }
   }
@@ -101,14 +102,14 @@ if (process.argv.includes("--selftest")) {
     escaped.push("createJournalEntryOnClient call removed");
   }
 
-  // creditAccountNumber's ternary line is textually identical in both functions, so these plants
+  // creditRole's ternary line is textually identical in both functions, so these plants
   // are scoped by including unique preceding context from each function rather than a bare
   // single-line replace (which would always hit whichever function appears first in the file).
   const disbursementCreditLine =
-    "const payableAccountId = await resolveAccountId(client, input.operatingCompanyId, DRIVER_SETTLEMENTS_PAYABLE_ACCOUNT_NUMBER);\n  const hasPostedReceivable = advance.applied_to_invoice_id != null && advance.invoice_status !== \"proforma\" && advance.invoice_status !== \"void\";\n  const creditAccountNumber = hasPostedReceivable ? ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER : CUSTOMER_DEPOSITS_ACCOUNT_NUMBER;";
+    "const payableAccountId = await resolveAccountId(client, input.operatingCompanyId, DRIVER_SETTLEMENTS_PAYABLE_ROLE);\n  const hasPostedReceivable = advance.applied_to_invoice_id != null && advance.invoice_status !== \"proforma\" && advance.invoice_status !== \"void\";\n  const creditRole = hasPostedReceivable ? ACCOUNTS_RECEIVABLE_ROLE : CUSTOMER_DEPOSITS_ROLE;";
   const badTiming = src.replace(
     disbursementCreditLine,
-    disbursementCreditLine.replace("const creditAccountNumber = hasPostedReceivable ? ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER : CUSTOMER_DEPOSITS_ACCOUNT_NUMBER;", "const creditAccountNumber = ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER;")
+    disbursementCreditLine.replace("const creditRole = hasPostedReceivable ? ACCOUNTS_RECEIVABLE_ROLE : CUSTOMER_DEPOSITS_ROLE;", "const creditRole = ACCOUNTS_RECEIVABLE_ROLE;")
   );
   if (badTiming === src || collectFailures(badTiming).length === 0) {
     escaped.push("disbursement's unconditional CR to 1100 not caught");
@@ -128,8 +129,8 @@ if (process.argv.includes("--selftest")) {
   // (after the disbursement-scoped tests above already proved that side is covered) mutates just
   // the receipt's copy in practice, verified by the assertion still requiring a failure.
   const badReceiptTiming = src.replace(
-    "const creditAccountNumber = hasPostedReceivable ? ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER : CUSTOMER_DEPOSITS_ACCOUNT_NUMBER;",
-    "const creditAccountNumber = ACCOUNTS_RECEIVABLE_ACCOUNT_NUMBER;"
+    "const creditRole = hasPostedReceivable ? ACCOUNTS_RECEIVABLE_ROLE : CUSTOMER_DEPOSITS_ROLE;",
+    "const creditRole = ACCOUNTS_RECEIVABLE_ROLE;"
   );
   if (badReceiptTiming === src || collectFailures(badReceiptTiming).length === 0) {
     escaped.push("receipt's unconditional CR to 1100 not caught");

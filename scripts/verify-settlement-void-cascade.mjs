@@ -114,7 +114,12 @@ export function assertBankOrphanGuard(src) {
   if (!/categorization_recover_from_driver = false/.test(src)) {
     errs.push(`${VOID_SERVICE_FILE}: categorization_recover_from_driver is NOT NULL on prod -- the reset must set it to false, not NULL, or every un-match on a row with it set throws`);
   }
-  if (!/linked_entity_id = \$2::uuid OR id = \$\{reverseIdSql\}/.test(src)) {
+  // Every forward-pointer clause must carry the reverse pointer too: the release (releaseBankLineMatchesWhere) and the
+  // reset statement each have one, so a presence check alone passes with one of them forward-only (LST-F413).
+  if (
+    !/linked_entity_id = \$2::uuid OR id = \$\{reverseIdSql\}/.test(src) ||
+    /linked_entity_id = \$2::uuid(?! OR id = \$\{reverseIdSql\})/.test(src)
+  ) {
     errs.push(`${VOID_SERVICE_FILE}: must check BOTH pointer shapes (forward linked_entity_id AND reverse source_bank_transaction_id) in one statement — the 4 live orphans had linked_entity_id=NULL, so a forward-only check misses them`);
   }
   if (!/await unmatchBankTransactionsForVoid\(client, \{/.test(src)) {
@@ -124,7 +129,9 @@ export function assertBankOrphanGuard(src) {
   // zero posted GL lines can still (in principle) carry a bank match, and the owner's rule has no
   // "only if something reversed" exception.
   const unmatchIdx = src.indexOf("await unmatchBankTransactionsForVoid(client, {");
-  const earlyReturnIdx = src.indexOf("reversed_line_count: 0 };");
+  // Anchored on the zero-count return's shape, not its exact tail: the return gained
+  // deposit_sweep_reversal_journal_entry_id, and an exact "reversed_line_count: 0 };" match went -1 (LST-F413).
+  const earlyReturnIdx = src.search(/reversed_line_count:\s*0\s*[,}]/);
   if (unmatchIdx === -1 || earlyReturnIdx === -1 || unmatchIdx > earlyReturnIdx) {
     errs.push(`${VOID_SERVICE_FILE}: unmatchBankTransactionsForVoid must run BEFORE the zero-postings early return in postVoidReversal, not after`);
   }

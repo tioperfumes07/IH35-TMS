@@ -21,14 +21,20 @@ export function problems(s) {
   if (!/if \(SCOPE === "zero-reset"\) \{\s*\n\s*for \(const t of ZERO_RESET_ROOTS\)/.test(s)) p.push("the zero-reset scope must collect every row of the document roots");
   for (const m of MASTER) if (!s.includes(`"${m}"`)) p.push(`master table ${m} must be listed as surviving`);
   if (!/if \(isMasterOrPreserve\(fk\.child\) \|\| !fk\.nullable\) \{\s*\n\s*report\.push\(`BLOCKER/.test(s)) p.push("a master / preserve table (or a non-nullable link) reached by the FK graph must be a BLOCKER");
-  if (!/delete order is TOPOLOGICAL over the FK graph/.test(s) || !/!edges\.some\(\(e\) => e\.parent === t && left\.has\(e\.child\)\)/.test(s)) p.push("the zero-reset must delete in topological order (children before parents)");
+  if (!/delete order is TOPOLOGICAL over the FK graph/.test(s) || !/!edges\.some\(\(e\) => e\.parent === t && (?:left\.has\(e\.child\)|live\(e\))\)/.test(s)) p.push("the zero-reset must delete in topological order (children before parents)");
   if (!/Every bank line of the company goes back to the queue/.test(s) || !/column_name LIKE 'matched/.test(s)) p.push("every bank line must return to the queue with all matched_* pointers cleared (most carry no FK)");
   if (!/ZERO-RESET REFUSED: the plan would touch preserved table/.test(s) || !/ZERO-RESET REFUSED: DELETE on preserved table/.test(s)) p.push("the preserved-table refusal must be an ASSERTION in the engine (plan check before the first write + per-DELETE check), not a report line");
   if (!/kind: "rows"/.test(s) || !/DELETE FROM \$\{r\.table\} WHERE \$\{r\.col\}::text = ANY/.test(s)) p.push("a child with no single-column primary key must be deleted by its foreign key");
-  if (!/masterAfter\[t\] !== n\) throw new Error\(`ZERO-RESET PROOF FAILED: master table/.test(s)) p.push("master-data counts must be proven unchanged after the delete");
+  // LST-F413: the proof now COLLECTS every shortfall and throws once (ROUND 389 full-shortfall proof), so the master
+  // check is a failures.push followed by the single ZERO-RESET PROOF FAILED throw.
+  if (!/masterAfter\[t\] !== n\) (?:throw new Error\(`ZERO-RESET PROOF FAILED: master table|failures\.push\(`master table)/.test(s) || !/throw new Error\(`ZERO-RESET PROOF FAILED/.test(s)) p.push("master-data counts must be proven unchanged after the delete");
   if (!/BLOCKER preservation engine has not recorded preserve\./.test(s)) p.push("the zero-reset must refuse until the preservation engine has recorded its rows");
   if (!/RESET_TABLES = new Set\(\["banking\.bank_transactions"\]\)/.test(s) || !/UPDATE \$\{r\.table\} SET \$\{r\.col\} = NULL/.test(s)) p.push("bank lines must be kept and unlinked, never deleted");
-  if (!/ZERO-RESET PROOF FAILED: \$\{gl\} GL posting\(s\) remain/.test(s) || !/ZERO-RESET PROOF FAILED: \$\{t\} still has/.test(s)) p.push("GL postings and every deleted table must be proven 0 in the same transaction");
+  if (
+    !(/ZERO-RESET PROOF FAILED: \$\{gl\} GL posting\(s\) remain/.test(s) && /ZERO-RESET PROOF FAILED: \$\{t\} still has/.test(s)) &&
+    !(/mustBeZero = new Set\(\[\.\.\.ZERO_RESET_ROOTS, "accounting\.journal_entry_postings", "accounting\.journal_entries"\]\)/.test(s) &&
+      /failures\.push\(`\$\{t\}: \$\{leftover\} row\(s\) left/.test(s))
+  ) p.push("GL postings and every deleted table must be proven 0 in the same transaction");
   if (!/verify-owner-authorization\.mjs/.test(s) || !/assertIsIntendedProduction\(client/.test(s) || !/BEGIN READ ONLY/.test(s)) p.push("APPLY must stay owner-AUTH + intended-production; DRY must be read-only");
   return p;
 }
@@ -56,8 +62,9 @@ if (isMain) {
     const plants = [
       ["preserved deleted", src.replace("if (isMasterOrPreserve(fk.child) || !fk.nullable) {", "if (false) {")],
       ["assertion removed", src.replace("ZERO-RESET REFUSED: DELETE on preserved table", "note")],
-      ["depth order", src.replace("!edges.some((e) => e.parent === t && left.has(e.child))", "true")],
-      ["no master proof", src.replace("masterAfter[t] !== n) throw", "false) throw")],
+      ["depth order", src.replaceAll("!edges.some((e) => e.parent === t && live(e))", "true")],
+      ["no master proof", src.replace("masterAfter[t] !== n) failures.push", "false) failures.push")],
+      ["GL not proven 0", src.replace('mustBeZero = new Set([...ZERO_RESET_ROOTS, "accounting.journal_entry_postings", ', "mustBeZero = new Set([...ZERO_RESET_ROOTS, ")],
       ["bank deleted", src.replace('RESET_TABLES = new Set(["banking.bank_transactions"])', "RESET_TABLES = new Set<string>([])")],
       ["no preservation check", src.replace("BLOCKER preservation engine has not recorded preserve.", "note preservation ")],
     ];

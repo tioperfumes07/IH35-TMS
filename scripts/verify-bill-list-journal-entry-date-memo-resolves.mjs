@@ -58,8 +58,11 @@ export function assertJournalEntryDateMemoSelected(source) {
   const memoCount = (source.match(/\$\{BILL_JOURNAL_ENTRY_MEMO_SQL\} AS journal_entry_memo/g) ?? []).length;
 
   if (siteCount < 2) errors.push(`only ${siteCount} of 2 expected journal_entry_id select sites found`);
-  if (dateCount < siteCount) errors.push(`only ${dateCount} of ${siteCount} sites select journal_entry_date`);
-  if (memoCount < siteCount) errors.push(`only ${memoCount} of ${siteCount} sites select journal_entry_memo`);
+  // LST-F413: the two BILL LIST sites must carry date + memo. A third journal_entry_id select (the work-order
+  // reverse-link query) needs only the id, so comparing against every id site made the real tree red.
+  const LIST_SITES = 2;
+  if (dateCount < LIST_SITES) errors.push(`only ${dateCount} of ${LIST_SITES} bill list sites select journal_entry_date`);
+  if (memoCount < LIST_SITES) errors.push(`only ${memoCount} of ${LIST_SITES} bill list sites select journal_entry_memo`);
   if (!/const BILL_JOURNAL_ENTRY_DATE_SQL/.test(source)) errors.push("BILL_JOURNAL_ENTRY_DATE_SQL constant missing");
   if (!/const BILL_JOURNAL_ENTRY_MEMO_SQL/.test(source)) errors.push("BILL_JOURNAL_ENTRY_MEMO_SQL constant missing");
 
