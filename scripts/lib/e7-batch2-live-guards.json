@@ -83,6 +83,7 @@
     "verify-yard-location-and-fence.mjs"
   ],
   "live_flag_guards": [
+    "verify-bill-display-id-stamped.mjs",
     "verify-acct-link-03-bill-unit-density.mjs",
     "verify-double-entry-balance-trigger.mjs",
     "verify-factoring-recourse-window.mjs",
