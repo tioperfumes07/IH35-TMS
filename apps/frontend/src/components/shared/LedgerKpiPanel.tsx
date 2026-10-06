@@ -113,12 +113,22 @@ function fmtCompare(k: LedgerKpi) {
   return String(v);
 }
 
-/** BANK-F2026100303 — fmtBucket is gone. It existed only to flatten every bucket into one inline
- *  string for the tile, which is the defect: Driver Escrow and Cash Position have the most buckets,
- *  so those tiles became unreadable. The tile now reports HOW MANY breakdowns there are and the
- *  drill renders them as a real table. */
+/** BANK-F2026100303 / r392 — fmtBucket is gone. It existed only to flatten every bucket into one
+ *  inline string for the tile, which is the defect: Driver Escrow and Cash Position have the most
+ *  buckets, so those tiles became unreadable. The tile now reports HOW MANY breakdowns there are
+ *  and the drill renders them as a real table.
+ *
+ *  TILE_BUCKET_LIMIT = 0 means zero buckets may render on the tile face (QBO-style: one number).
+ *  Slice buckets through this constant so a future raise is intentional and grep-visible. */
+export const TILE_BUCKET_LIMIT = 0;
+
 function bucketCount(k: LedgerKpi) {
   return k.buckets?.length ?? 0;
+}
+
+/** Buckets allowed on the tile face — always empty while TILE_BUCKET_LIMIT is 0. */
+function bucketsOnTile(k: LedgerKpi) {
+  return (k.buckets ?? []).slice(0, TILE_BUCKET_LIMIT);
 }
 
 type Props<K extends string> = {
@@ -169,6 +179,8 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
             className={`${TILE.shell} transition hover:brightness-95`}
             style={KPI_TILE_STYLE}
             data-testid={`${domain}-kpi-${k.key}`}
+            data-tile-bucket-limit={TILE_BUCKET_LIMIT}
+            data-buckets-on-tile={bucketsOnTile(k).length}
             // ROUND 435 (owner): "the messages should not be there" — a tile is a NAME and a NUMBER. The source, the GL
             // account, the row count and any empty-state reason live in the hover title and in the drill modal, never as a
             // sentence inside the tile.
