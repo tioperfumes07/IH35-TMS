@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** MATRIX-BUILT-OPTIONAL — live-only / invariant ratchet guard; no surface wiring leaf to register. */
 // ROUND 300 B-35 (Lead order): "/banking reports 'QBO Sync: Not connected, no active QuickBooks
 // connection, Last sync: n/a'. Establish what breaks while it is disconnected, what reconnecting
 // requires, and what would have to be re-synced. Report; do not connect."
@@ -36,6 +37,7 @@
 import pg from "pg";
 
 const LABEL = "verify-qbo-connection-status-honest";
+export const REQUIRES_LIVE_DB = "live-only guard: reads production database (USMCA) and cannot be statically verified; run by money-pr-local-gate with DATABASE_URL";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 async function measure(client) {

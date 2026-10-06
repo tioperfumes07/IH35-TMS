@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** MATRIX-BUILT-OPTIONAL — live-only / invariant ratchet guard; no surface wiring leaf to register. */
 // verify-every-posting-has-its-spine-link.mjs — ROUND 373 (Lead, 2026-10-03).
 //
 // THE HOLE: the Lead's census found 7,909 journal entry postings on USMCA and only 4,355 rows in
@@ -16,6 +17,7 @@
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const LABEL = "verify-every-posting-has-its-spine-link";
+export const REQUIRES_LIVE_DB = "live-only guard: reads production database (USMCA) and cannot be statically verified; run by money-pr-local-gate with DATABASE_URL";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 const cols = async (client, schema, table) => {

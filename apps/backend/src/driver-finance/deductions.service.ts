@@ -13,7 +13,7 @@ import { logger } from "../observability/structured-logger.js";
  * shared constant so the writer (the apply engine) and every reader (settlement detail GET, any
  * future consumer) can never drift on the literal string.
  */
-export const SETTLEMENT_DEDUCTION_SOURCE_TABLE = "driver_finance.driver_settlement_deductions";
+import { SETTLEMENT_DEDUCTION_SOURCE_TABLE } from "./settlement-deduction-constants.js";
 
 export type Queryable = {
   query: <T extends Record<string, unknown> = Record<string, unknown>>(

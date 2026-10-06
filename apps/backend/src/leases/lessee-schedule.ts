@@ -15,7 +15,7 @@
  *   OPERATING: lease cost = total payments / term (straight line, ASC 842-20-25-6); ROU amortization = lease cost -
  *              interest, so the ROU asset and the liability both reach zero at the end of the term.
  */
-import { escalatedAmount } from "./lease-bill-engine.service.js";
+import { escalatedAmount } from "./lessee-escalation.js";
 
 export type PurchaseOptionKind = "none" | "fmv" | "fixed";
 export type LesseeClassification = "operating" | "finance";

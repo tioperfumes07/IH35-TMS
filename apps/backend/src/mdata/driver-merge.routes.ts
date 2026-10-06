@@ -23,8 +23,8 @@ const isOffice = (role: string) => ["Owner", "Administrator", "Manager"].include
 async function scoped<T>(userId: string, companyId: string, fn: (c: never) => Promise<T>) {
   return withLuciaBypass(
     async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
-      await client.query("SELECT set_config('app.current_user_id', $1, true)", [userId]);
+      await client.query("SELECT set_config('app.operating_company_id', $1::uuid, true)", [companyId]);
+      await client.query("SELECT set_config('app.current_user_id', $1::uuid, true)", [userId]);
       return fn(client as never);
     },
     { actorUserId: userId }

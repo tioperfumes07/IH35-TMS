@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** MATRIX-BUILT-OPTIONAL — live-only / invariant ratchet guard; no surface wiring leaf to register. */
 // ROUND 326 item 3 (CC-1) — A/P is a real subledger: the ap_control GL balance equals the open bills (amount - paid,
 // not voided). USMCA measured 2026-10-02: GL credit $3,542.98 vs open bills $566.35 — variance $2,976.63, exactly the 60
 // orphan expense-JE chains the 2026-09-30 purge left in A/P (expense deleted, its JE + void reversal + re-reversal kept).
@@ -25,6 +26,7 @@ async function selftest_verify_ap_control_ties_subledger() {
 }
 
 const LABEL = "verify-ap-control-ties-subledger";
+export const REQUIRES_LIVE_DB = "live-only guard: reads production database (USMCA) and cannot be statically verified; run by money-pr-local-gate with DATABASE_URL";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const base = JSON.parse(readFileSync(new URL("./verify-ap-control-ties-subledger.baseline.json", import.meta.url), "utf8"));
 

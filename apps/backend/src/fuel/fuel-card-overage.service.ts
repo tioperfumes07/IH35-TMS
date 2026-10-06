@@ -20,7 +20,7 @@ import {
   computeFuelCardOverageCents,
   type FuelCardOveragePolicy,
 } from "./fuel-card-overage.math.js";
-import type { FuelTxnGlPostCandidate } from "../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
+import type { FuelTxnGlPostCandidate } from "../accounting/fuel-posting/fuel-credit-preference.js";
 import { resolveFuelOverageContractAuthority } from "./fuel-card-overage-contract.service.js";
 import { postFuelOverageReceivable } from "./fuel-card-overage-posting.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";

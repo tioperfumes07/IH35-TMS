@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** MATRIX-BUILT-OPTIONAL — live-only / invariant ratchet guard; no surface wiring leaf to register. */
 // ROUND 367.2 / 367.8 (CC-2) — one provider transaction is one fuel purchase, live.
 //
 // Reads every live fuel.fuel_transactions row (all companies except the frozen ones) and fails on any two that carry the
@@ -16,6 +17,7 @@ import { fileURLToPath } from "node:url";
 if (process.argv.includes("--selftest")) selftest();
 
 const LABEL = "verify-fuel-expense-is-unique-per-provider-transaction";
+export const REQUIRES_LIVE_DB = "live-only guard: reads production database (USMCA) and cannot be statically verified; run by money-pr-local-gate with DATABASE_URL";
 
 // provider ID -> the duplicated fuel rows awaiting an owner AUTH. Shrink-only; empty means every duplicate is resolved.
 // 99530579 (USMCA 510.61, loads 13533 / 13548) resolved 2026-10-04 by AUTH-212 (#25356): the 13533 copy voided through the

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** MATRIX-BUILT-OPTIONAL — live-only / invariant ratchet guard; no surface wiring leaf to register. */
 // ROUND 300 B-33 (Lead order): "safety.integrity_findings holds 116 live rows written by a cron
 // at 08:00 today (orphan_entry 46 / orphan_exit 46 / expected_missing 24, 0 resolved, 10 units),
 // every one keyed to unit_id with NO driver. Attribute them through driverAtTimeSql. Report how
@@ -25,6 +26,7 @@ import { register as registerTsx } from "tsx/esm/api";
 registerTsx();
 
 const LABEL = "verify-integrity-findings-attribution-rate";
+export const REQUIRES_LIVE_DB = "live-only guard: reads production database (USMCA) and cannot be statically verified; run by money-pr-local-gate with DATABASE_URL";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 // Baseline measured 2026-09-30. Floor only -- resolution may improve (telemetry coverage grows),

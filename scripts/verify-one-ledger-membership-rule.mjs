@@ -15,11 +15,14 @@
  *
  * Run: node scripts/verify-one-ledger-membership-rule.mjs [--selftest]
  */
+/** MATRIX-BUILT-OPTIONAL — live-only / invariant ratchet guard; no surface wiring leaf to register. */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const LABEL = "verify-one-ledger-membership-rule";
+export const REQUIRES_LIVE_DB = "RULE 4 requires reading accounting.fn_account_balances_as_of from the live database; the static rules (1-3) run here and the live arm runs in money-pr-local-gate with DATABASE_URL";
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const MODULE = "apps/backend/src/accounting/ledger-membership.ts";
 const BATCH_CLAUSE_RE = /batch_status\s+IN\s*\(\s*'posted'\s*,\s*'reversed'\s*\)/;

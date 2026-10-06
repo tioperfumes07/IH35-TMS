@@ -1,15 +1,15 @@
 {
   "_doc": "BASELINE of pre-existing DEAD/WEAK schema. DEBT REGISTER, not approval. NEW dead schema fails the build. Wire an object and DELETE its entry (the guard prints entries that became wired so the register drains).",
   "_law": "CLAUDE.md 10a Total Connectivity",
-  "_captured": "2026-07-21",
+  "_captured": "2026-10-06T23:42:57Z",
   "_scope": "SCHEMA REACHABILITY IN CODE only. This guard cannot prove rows are populated, that a poster runs, or that reverse drill-through exists in the UI. Those are live-data audits (LAW 0: prod wins). Never cite this guard as proof the books are wired.",
   "_verdicts": {
-    "none": "identifier appears NOWHERE in non-test source — storage with no reader at all",
-    "weak": "identifier appears in the codebase but in NO file that touches this table — the substring illusion (e.g. mdata.drivers.employment_status, superseded by driver_employment_status_id in 0343)"
+    "none": "identifier appears NOWHERE in non-test source \u2014 storage with no reader at all",
+    "weak": "identifier appears in the codebase but in NO file that touches this table \u2014 the substring illusion (e.g. mdata.drivers.employment_status, superseded by driver_employment_status_id in 0343)"
   },
-  "_recapture": "2026-07-21 — coverage went from 1,074 ADD COLUMN-only objects to 5,740 live columns (inline CREATE TABLE columns were 81% of the schema and were invisible), and whole-corpus substring matching was replaced by whole-token, table-context matching. The count grew because the guard now sees what it always claimed to check. DO-block DDL (real CREATE TABLE inside $$ bodies) and comma-separated inline columns are now parsed too — the prior revision discarded dollar-quoted bodies entirely.",
-  "stale_literal_ok": "shrink-only debt register — count drains as schema is wired, recaptured 2026-07-21",
-  "count": 586,
+  "_recapture": "2026-07-21 \u2014 coverage went from 1,074 ADD COLUMN-only objects to 5,740 live columns (inline CREATE TABLE columns were 81% of the schema and were invisible), and whole-corpus substring matching was replaced by whole-token, table-context matching. The count grew because the guard now sees what it always claimed to check. DO-block DDL (real CREATE TABLE inside $$ bodies) and comma-separated inline columns are now parsed too \u2014 the prior revision discarded dollar-quoted bodies entirely.",
+  "stale_literal_ok": "shrink-only debt register \u2014 count drains as schema is wired, recaptured 2026-07-21",
+  "count": 540,
   "entries": [
     {
       "object": "_system.background_jobs.last_error_message",
@@ -18,28 +18,46 @@
       "migration": "0160_p6_t11194_background_jobs_tracking.sql"
     },
     {
-      "object": "_system.background_jobs.last_failed_run_at",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "0160_p6_t11194_background_jobs_tracking.sql"
+      "object": "_system.purge_authorized_rows",
+      "kind": "TABLE",
+      "verdict": "none",
+      "migration": "202615210200_complete_delete_route_and_inbound_entity.sql"
     },
     {
-      "object": "_system.background_jobs.run_count_today",
+      "object": "_system.purge_authorized_rows.auth_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202615210200_complete_delete_route_and_inbound_entity.sql"
+    },
+    {
+      "object": "_system.purge_authorized_rows.listed_at",
       "kind": "COLUMN",
       "verdict": "none",
-      "migration": "0160_p6_t11194_background_jobs_tracking.sql"
+      "migration": "202615210200_complete_delete_route_and_inbound_entity.sql"
     },
     {
-      "object": "_system.reconciliation_findings.resolution_notes",
+      "object": "_system.purge_authorized_rows.listed_by",
       "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "0200_ds_remediate_reconciliation_findings.sql"
+      "verdict": "none",
+      "migration": "202615210200_complete_delete_route_and_inbound_entity.sql"
     },
     {
-      "object": "_system.reconciliation_findings.resolved_by_user_id",
+      "object": "_system.purge_authorized_rows.reason",
       "kind": "COLUMN",
       "verdict": "weak",
-      "migration": "0200_ds_remediate_reconciliation_findings.sql"
+      "migration": "202615210200_complete_delete_route_and_inbound_entity.sql"
+    },
+    {
+      "object": "_system.purge_authorized_rows.row_pk",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202615210200_complete_delete_route_and_inbound_entity.sql"
+    },
+    {
+      "object": "_system.purge_authorized_rows.table_name",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202615210200_complete_delete_route_and_inbound_entity.sql"
     },
     {
       "object": "accounting.ap_import_batches.requested_at",
@@ -90,54 +108,6 @@
       "migration": "0325_clear_default_classifications.sql"
     },
     {
-      "object": "accounting.depreciation_autopost_runs",
-      "kind": "TABLE",
-      "verdict": "none",
-      "migration": "202607100100_block01_depreciation_loan_link_and_autopost_log.sql"
-    },
-    {
-      "object": "accounting.depreciation_autopost_runs.asset_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202607100100_block01_depreciation_loan_link_and_autopost_log.sql"
-    },
-    {
-      "object": "accounting.depreciation_autopost_runs.error_code",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202607100100_block01_depreciation_loan_link_and_autopost_log.sql"
-    },
-    {
-      "object": "accounting.depreciation_autopost_runs.error_message",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202607100100_block01_depreciation_loan_link_and_autopost_log.sql"
-    },
-    {
-      "object": "accounting.depreciation_autopost_runs.outcome",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202607100100_block01_depreciation_loan_link_and_autopost_log.sql"
-    },
-    {
-      "object": "accounting.depreciation_autopost_runs.period_count",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202607100100_block01_depreciation_loan_link_and_autopost_log.sql"
-    },
-    {
-      "object": "accounting.depreciation_autopost_runs.run_date",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202607100100_block01_depreciation_loan_link_and_autopost_log.sql"
-    },
-    {
-      "object": "accounting.depreciation_autopost_runs.total_posted_cents",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202607100100_block01_depreciation_loan_link_and_autopost_log.sql"
-    },
-    {
       "object": "accounting.depreciation_schedule_rows.deleted_at",
       "kind": "COLUMN",
       "verdict": "weak",
@@ -150,16 +120,118 @@
       "migration": "202606281060_fixed_assets_data_model.sql"
     },
     {
-      "object": "accounting.expense_lines.ps_category_qbo_id",
+      "object": "accounting.document_work_order_copies.captured_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202615380700_document_work_order_copies.sql"
+    },
+    {
+      "object": "accounting.document_work_order_copies.is_sample_data",
       "kind": "COLUMN",
       "verdict": "weak",
-      "migration": "0266_acct11_pse_enforce.sql"
+      "migration": "202615380700_document_work_order_copies.sql"
     },
     {
       "object": "accounting.expense_lines.ps_item_qbo_id",
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "0266_acct11_pse_enforce.sql"
+    },
+    {
+      "object": "accounting.expenses_review_queue",
+      "kind": "TABLE",
+      "verdict": "none",
+      "migration": "202614560000_expenses_review_queue.sql"
+    },
+    {
+      "object": "accounting.expenses_review_queue.amount_cents",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614560000_expenses_review_queue.sql"
+    },
+    {
+      "object": "accounting.expenses_review_queue.claimed_duplicate_expense_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202614560000_expenses_review_queue.sql"
+    },
+    {
+      "object": "accounting.expenses_review_queue.claimed_duplicate_memo",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202614560000_expenses_review_queue.sql"
+    },
+    {
+      "object": "accounting.expenses_review_queue.load_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614560000_expenses_review_queue.sql"
+    },
+    {
+      "object": "accounting.expenses_review_queue.load_number",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614560000_expenses_review_queue.sql"
+    },
+    {
+      "object": "accounting.expenses_review_queue.memo",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614560000_expenses_review_queue.sql"
+    },
+    {
+      "object": "accounting.expenses_review_queue.queued_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614560000_expenses_review_queue.sql"
+    },
+    {
+      "object": "accounting.expenses_review_queue.reason_queued",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202614560000_expenses_review_queue.sql"
+    },
+    {
+      "object": "accounting.expenses_review_queue.resolution",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614560000_expenses_review_queue.sql"
+    },
+    {
+      "object": "accounting.expenses_review_queue.resolution_notes",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614560000_expenses_review_queue.sql"
+    },
+    {
+      "object": "accounting.expenses_review_queue.reviewed_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614560000_expenses_review_queue.sql"
+    },
+    {
+      "object": "accounting.expenses_review_queue.reviewed_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614560000_expenses_review_queue.sql"
+    },
+    {
+      "object": "accounting.expenses_review_queue.source_expense_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614560000_expenses_review_queue.sql"
+    },
+    {
+      "object": "accounting.expenses_review_queue.status",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614560000_expenses_review_queue.sql"
+    },
+    {
+      "object": "accounting.expenses_review_queue.transaction_date",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614560000_expenses_review_queue.sql"
     },
     {
       "object": "accounting.expenses.payment_term_id",
@@ -174,28 +246,10 @@
       "migration": "0178_p7_w2_accounting_entity_sync_columns.sql"
     },
     {
-      "object": "accounting.fixed_asset_classes.default_accum_depr_account_id",
+      "object": "accounting.factoring_repurchase_due_events.state_changed_at",
       "kind": "COLUMN",
       "verdict": "none",
-      "migration": "202606281060_fixed_assets_data_model.sql"
-    },
-    {
-      "object": "accounting.fixed_asset_classes.default_asset_account_id",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202606281060_fixed_assets_data_model.sql"
-    },
-    {
-      "object": "accounting.fixed_asset_classes.default_depr_expense_account_id",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202606281060_fixed_assets_data_model.sql"
-    },
-    {
-      "object": "accounting.fixed_asset_classes.deleted_at",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202606281060_fixed_assets_data_model.sql"
+      "migration": "202615220700_factoring_repurchase_due_events.sql"
     },
     {
       "object": "accounting.fixed_asset_disposals.deleted_at",
@@ -410,7 +464,7 @@
     {
       "object": "accounting.lease_classification.classification_basis",
       "kind": "COLUMN",
-      "verdict": "none",
+      "verdict": "weak",
       "migration": "202606290062_fin22_lease_asc842_subledger.sql"
     },
     {
@@ -444,25 +498,19 @@
       "migration": "202606290062_fin22_lease_asc842_subledger.sql"
     },
     {
-      "object": "accounting.line_category_load_required",
-      "kind": "TABLE",
+      "object": "accounting.lease_contract.rate_per_unit_cents",
+      "kind": "COLUMN",
       "verdict": "none",
-      "migration": "0093_p5_d5_load_fk_invariant_wo_time.sql"
+      "migration": "202613301000_fleet_lease_08_lease_contract_rate_per_unit_basis.sql"
     },
     {
-      "object": "accounting.line_category_load_required.description",
+      "object": "accounting.lease_contract.unit_count_basis_as_of",
       "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "0093_p5_d5_load_fk_invariant_wo_time.sql"
+      "verdict": "none",
+      "migration": "202613301000_fleet_lease_08_lease_contract_rate_per_unit_basis.sql"
     },
     {
       "object": "accounting.line_category_load_required.effective_from",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "0093_p5_d5_load_fk_invariant_wo_time.sql"
-    },
-    {
-      "object": "accounting.line_category_load_required.line_category",
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "0093_p5_d5_load_fk_invariant_wo_time.sql"
@@ -472,18 +520,6 @@
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "0217_accounting_period_cash_basis_snapshot.sql"
-    },
-    {
-      "object": "accounting.prepaid_amortization_rows.deleted_at",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202606271610_prepaid_expenses_data_model.sql"
-    },
-    {
-      "object": "accounting.prepaid_assets.deleted_at",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202606271610_prepaid_expenses_data_model.sql"
     },
     {
       "object": "accounting.revenue_contracts.ar_account_id",
@@ -660,52 +696,34 @@
       "migration": "0325_clear_default_classifications.sql"
     },
     {
-      "object": "accounting.vendor_credits.source_payment_id",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "0222_block_34_payment_application_engine.sql"
-    },
-    {
       "object": "accounting.vendor_payment_methods.account_holder_name",
       "kind": "COLUMN",
       "verdict": "weak",
-      "migration": "202612640000_vendor_payment_methods_master_data.sql",
-      "reason": "ACCT-F5322/ORPH-003 (202612640000_vendor_payment_methods_master_data.sql): deliberately staged AP vendor-payment master-data table, flag-gated VENDOR_PAYMENT_METHODS_ENABLED default OFF per-entity. Migration's own comment states explicitly: \"table exists as real master data with no route/UI/payment-path consumer wired yet\" — this is a tracked, intentional staging gap (owner flag-flip pattern used throughout this codebase), not an accidental orphan. Verified live 2026-08-19: zero backend routes/services touch this table."
+      "migration": "202612640000_vendor_payment_methods_master_data.sql"
     },
     {
       "object": "accounting.vendor_payment_methods.account_last4",
       "kind": "COLUMN",
       "verdict": "weak",
-      "migration": "202612640000_vendor_payment_methods_master_data.sql",
-      "reason": "ACCT-F5322/ORPH-003 (202612640000_vendor_payment_methods_master_data.sql): deliberately staged AP vendor-payment master-data table, flag-gated VENDOR_PAYMENT_METHODS_ENABLED default OFF per-entity. Migration's own comment states explicitly: \"table exists as real master data with no route/UI/payment-path consumer wired yet\" — this is a tracked, intentional staging gap (owner flag-flip pattern used throughout this codebase), not an accidental orphan. Verified live 2026-08-19: zero backend routes/services touch this table."
+      "migration": "202612640000_vendor_payment_methods_master_data.sql"
     },
     {
       "object": "accounting.vendor_payment_methods.account_token",
       "kind": "COLUMN",
       "verdict": "weak",
-      "migration": "202612640000_vendor_payment_methods_master_data.sql",
-      "reason": "ACCT-F5322/ORPH-003 (202612640000_vendor_payment_methods_master_data.sql): deliberately staged AP vendor-payment master-data table, flag-gated VENDOR_PAYMENT_METHODS_ENABLED default OFF per-entity. Migration's own comment states explicitly: \"table exists as real master data with no route/UI/payment-path consumer wired yet\" — this is a tracked, intentional staging gap (owner flag-flip pattern used throughout this codebase), not an accidental orphan. Verified live 2026-08-19: zero backend routes/services touch this table."
+      "migration": "202612640000_vendor_payment_methods_master_data.sql"
     },
     {
       "object": "accounting.vendor_payment_methods.is_default",
       "kind": "COLUMN",
       "verdict": "weak",
-      "migration": "202612640000_vendor_payment_methods_master_data.sql",
-      "reason": "ACCT-F5322/ORPH-003 (202612640000_vendor_payment_methods_master_data.sql): deliberately staged AP vendor-payment master-data table, flag-gated VENDOR_PAYMENT_METHODS_ENABLED default OFF per-entity. Migration's own comment states explicitly: \"table exists as real master data with no route/UI/payment-path consumer wired yet\" — this is a tracked, intentional staging gap (owner flag-flip pattern used throughout this codebase), not an accidental orphan. Verified live 2026-08-19: zero backend routes/services touch this table."
+      "migration": "202612640000_vendor_payment_methods_master_data.sql"
     },
     {
       "object": "accounting.vendor_payment_methods.routing_last4",
       "kind": "COLUMN",
       "verdict": "weak",
-      "migration": "202612640000_vendor_payment_methods_master_data.sql",
-      "reason": "ACCT-F5322/ORPH-003 (202612640000_vendor_payment_methods_master_data.sql): deliberately staged AP vendor-payment master-data table, flag-gated VENDOR_PAYMENT_METHODS_ENABLED default OFF per-entity. Migration's own comment states explicitly: \"table exists as real master data with no route/UI/payment-path consumer wired yet\" — this is a tracked, intentional staging gap (owner flag-flip pattern used throughout this codebase), not an accidental orphan. Verified live 2026-08-19: zero backend routes/services touch this table."
-    },
-    {
-      "object": "accounting.vendor_payment_methods.vendor_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202612640000_vendor_payment_methods_master_data.sql",
-      "reason": "ACCT-F5322/ORPH-003 (202612640000_vendor_payment_methods_master_data.sql): deliberately staged AP vendor-payment master-data table, flag-gated VENDOR_PAYMENT_METHODS_ENABLED default OFF per-entity. Migration's own comment states explicitly: \"table exists as real master data with no route/UI/payment-path consumer wired yet\" — this is a tracked, intentional staging gap (owner flag-flip pattern used throughout this codebase), not an accidental orphan. Verified live 2026-08-19: zero backend routes/services touch this table."
+      "migration": "202612640000_vendor_payment_methods_master_data.sql"
     },
     {
       "object": "alerts.broker_queue.proposed_message",
@@ -884,17 +902,11 @@
     {
       "object": "analytics.load_fact.accessorial_revenue",
       "kind": "COLUMN",
-      "verdict": "none",
+      "verdict": "weak",
       "migration": "202606111056_w2a_profitability_engine.sql"
     },
     {
       "object": "analytics.load_fact.cost_source",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202606111056_w2a_profitability_engine.sql"
-    },
-    {
-      "object": "analytics.load_fact.delivery_date",
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "202606111056_w2a_profitability_engine.sql"
@@ -902,7 +914,7 @@
     {
       "object": "analytics.load_fact.dest_state",
       "kind": "COLUMN",
-      "verdict": "none",
+      "verdict": "weak",
       "migration": "202606111056_w2a_profitability_engine.sql"
     },
     {
@@ -918,12 +930,6 @@
       "migration": "202606111056_w2a_profitability_engine.sql"
     },
     {
-      "object": "analytics.load_fact.empty_miles",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202606111056_w2a_profitability_engine.sql"
-    },
-    {
       "object": "analytics.load_fact.fact_id",
       "kind": "COLUMN",
       "verdict": "none",
@@ -932,7 +938,7 @@
     {
       "object": "analytics.load_fact.fuel_cost",
       "kind": "COLUMN",
-      "verdict": "none",
+      "verdict": "weak",
       "migration": "202606111056_w2a_profitability_engine.sql"
     },
     {
@@ -1092,16 +1098,22 @@
       "migration": "202606111056_w2a_profitability_engine.sql"
     },
     {
-      "object": "banking.bank_transactions.excluded_reason",
+      "object": "audit.record_deletions.deleted_at",
       "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "0182_p7_w2_bank_transactions_review.sql"
+      "verdict": "weak",
+      "migration": "202615210200_complete_delete_route_and_inbound_entity.sql"
     },
     {
-      "object": "banking.bank_transactions.matched_invoice_id",
+      "object": "audit.record_deletions.deleted_by_role",
       "kind": "COLUMN",
       "verdict": "none",
-      "migration": "0182_p7_w2_bank_transactions_review.sql"
+      "migration": "202615210200_complete_delete_route_and_inbound_entity.sql"
+    },
+    {
+      "object": "audit.record_deletions.deleted_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202615210200_complete_delete_route_and_inbound_entity.sql"
     },
     {
       "object": "banking.bank_transactions.pse_ps_item_qbo_id",
@@ -1122,10 +1134,40 @@
       "migration": "0266_acct11_pse_enforce.sql"
     },
     {
-      "object": "banking.bank_transactions.reconciliation_cleared",
+      "object": "banking.reconciliation_drift_alerts.is_sample_data",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613420001_go20_slice_a_bank_reconciliation_drift_alerts.sql"
+    },
+    {
+      "object": "banking.reconciliation_matches.release_kind",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202615330930_send_back_keeps_the_match.sql"
+    },
+    {
+      "object": "banking.reconciliation_matches.release_reason",
       "kind": "COLUMN",
       "verdict": "none",
-      "migration": "0182_p7_w2_bank_transactions_review.sql"
+      "migration": "202615330930_send_back_keeps_the_match.sql"
+    },
+    {
+      "object": "banking.reconciliation_matches.release_reversal_je_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202615330930_send_back_keeps_the_match.sql"
+    },
+    {
+      "object": "banking.reconciliation_matches.released_by_user_uuid",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202615330930_send_back_keeps_the_match.sql"
+    },
+    {
+      "object": "banking.reconciliation_matches.released_from_state",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202615330930_send_back_keeps_the_match.sql"
     },
     {
       "object": "banking.reconciliation_sessions.auto_match_run_at",
@@ -1140,34 +1182,64 @@
       "migration": "0184_p7_w2_reconciliation_sessions_extend.sql"
     },
     {
-      "object": "banking.reconciliation_sessions.reopen_reason",
+      "object": "catalogs.accounts.posts_to_financials",
       "kind": "COLUMN",
       "verdict": "none",
-      "migration": "0184_p7_w2_reconciliation_sessions_extend.sql"
+      "migration": "202615400850_catalogs_accounts_posts_to_financials_declared.sql"
     },
     {
-      "object": "banking.reconciliation_sessions.reopened_at",
-      "kind": "COLUMN",
+      "object": "catalogs.blocked_feature_flags",
+      "kind": "TABLE",
       "verdict": "none",
-      "migration": "0184_p7_w2_reconciliation_sessions_extend.sql"
+      "migration": "202614530000_qbo_flags_permanent_block.sql"
     },
     {
-      "object": "banking.reconciliation_sessions.reopened_by_user_id",
+      "object": "catalogs.blocked_feature_flags.blocked_at",
       "kind": "COLUMN",
       "verdict": "none",
-      "migration": "0184_p7_w2_reconciliation_sessions_extend.sql"
+      "migration": "202614530000_qbo_flags_permanent_block.sql"
     },
     {
-      "object": "brokerupdate.send.send_error",
+      "object": "catalogs.blocked_feature_flags.blocked_by_user_id",
       "kind": "COLUMN",
       "verdict": "none",
-      "migration": "202606111230_w4b_broker_auto_update.sql"
+      "migration": "202614530000_qbo_flags_permanent_block.sql"
+    },
+    {
+      "object": "catalogs.blocked_feature_flags.flag_key",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614530000_qbo_flags_permanent_block.sql"
+    },
+    {
+      "object": "catalogs.blocked_feature_flags.owner_ruling_ref",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202614530000_qbo_flags_permanent_block.sql"
+    },
+    {
+      "object": "catalogs.blocked_feature_flags.reason",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614530000_qbo_flags_permanent_block.sql"
     },
     {
       "object": "catalogs.company_violation_types.default_fine_amount_cents",
       "kind": "COLUMN",
       "verdict": "none",
       "migration": "0115_p6_stabilization_reconciliation.sql"
+    },
+    {
+      "object": "catalogs.driver_leave_balances.deactivated_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613620001_cc3_ddl_handoff_retention_grant_leave_safety_deactivated_at.sql"
+    },
+    {
+      "object": "catalogs.driver_leave_balances.deactivated_reason",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613620001_cc3_ddl_handoff_retention_grant_leave_safety_deactivated_at.sql"
     },
     {
       "object": "catalogs.equipment_types_dedup_ledger_0318",
@@ -1190,8 +1262,44 @@
     {
       "object": "catalogs.equipment_types_dedup_ledger_0318.duplicate_id",
       "kind": "COLUMN",
-      "verdict": "none",
+      "verdict": "weak",
       "migration": "0318_equipment_types_canonical_dedup.sql"
+    },
+    {
+      "object": "catalogs.lane_mileage.first_seen",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613342200_go16_rev_b_lane_mileage.sql"
+    },
+    {
+      "object": "catalogs.lane_mileage.last_seen",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613342200_go16_rev_b_lane_mileage.sql"
+    },
+    {
+      "object": "catalogs.lane_mileage.practical_max",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613342200_go16_rev_b_lane_mileage.sql"
+    },
+    {
+      "object": "catalogs.lane_mileage.practical_min",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613342200_go16_rev_b_lane_mileage.sql"
+    },
+    {
+      "object": "catalogs.lane_mileage.short_max",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613342200_go16_rev_b_lane_mileage.sql"
+    },
+    {
+      "object": "catalogs.lane_mileage.short_min",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613342200_go16_rev_b_lane_mileage.sql"
     },
     {
       "object": "catalogs.payee_tax_profile.backup_withholding_required",
@@ -1254,6 +1362,12 @@
       "migration": "202607130100_block17_24_tax_document_engine.sql"
     },
     {
+      "object": "catalogs.point_mileage.computed_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613600001_point_mileage_table.sql"
+    },
+    {
       "object": "catalogs.tax_form_thresholds.backup_withholding_rate_bps",
       "kind": "COLUMN",
       "verdict": "none",
@@ -1273,18 +1387,6 @@
     },
     {
       "object": "catalogs.vendor_types.qbo_vendor_type_id",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202607420000_vendor_types_catalog.sql"
-    },
-    {
-      "object": "catalogs.vendor_types.vendor_type_code",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202607420000_vendor_types_catalog.sql"
-    },
-    {
-      "object": "catalogs.vendor_types.vendor_type_name",
       "kind": "COLUMN",
       "verdict": "none",
       "migration": "202607420000_vendor_types_catalog.sql"
@@ -1334,7 +1436,7 @@
     {
       "object": "compliance.form_2290_filings.pdf_file_id",
       "kind": "COLUMN",
-      "verdict": "none",
+      "verdict": "weak",
       "migration": "0378_form_2290_filings.sql"
     },
     {
@@ -1346,8 +1448,26 @@
     {
       "object": "dispatch.bol_documents.docs_attachment_id",
       "kind": "COLUMN",
-      "verdict": "none",
+      "verdict": "weak",
       "migration": "0356_dispatch_pod_bol.sql"
+    },
+    {
+      "object": "dispatch.cargo_sensor_incidents.customer_notified_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613390002_go20_d_cargo_sensor_incidents.sql"
+    },
+    {
+      "object": "dispatch.cargo_sensor_incidents.is_sample_data",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613390002_go20_d_cargo_sensor_incidents.sql"
+    },
+    {
+      "object": "dispatch.detention_events.stop_arrival_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0353_dispatch_detention_events.sql"
     },
     {
       "object": "dispatch.load_abandonments.abandonment_notes",
@@ -1370,7 +1490,7 @@
     {
       "object": "dispatch.load_abandonments.recovery_driver_id",
       "kind": "COLUMN",
-      "verdict": "none",
+      "verdict": "weak",
       "migration": "0094_p5_e1_auto_deduct_escrow_load_abandonment.sql"
     },
     {
@@ -1384,12 +1504,6 @@
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "0094_p5_e1_auto_deduct_escrow_load_abandonment.sql"
-    },
-    {
-      "object": "dispatch.load_cancellations.reason_code_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202606300130_load_cancellations_per_entity_fk.sql"
     },
     {
       "object": "dispatch.load_eta_predictions.confidence_class",
@@ -1416,22 +1530,16 @@
       "migration": "0040_p3_t11_5_dispatch_rebuild.sql"
     },
     {
-      "object": "dispatch.loads.canceled_at",
+      "object": "dispatch.manual_delivery_authorizations.revoke_reason",
       "kind": "COLUMN",
       "verdict": "none",
-      "migration": "0281_dispatch_cancel_reason.sql"
+      "migration": "202613960000_manual_delivery_authorization.sql"
     },
     {
-      "object": "dispatch.loads.canceled_by",
+      "object": "dispatch.manual_delivery_authorizations.revoked_by_user_id",
       "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "0281_dispatch_cancel_reason.sql"
-    },
-    {
-      "object": "dispatch.pod_documents.docs_attachment_id",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "0356_dispatch_pod_bol.sql"
+      "verdict": "weak",
+      "migration": "202613960000_manual_delivery_authorization.sql"
     },
     {
       "object": "dispatch.ratecon_extractions.error_detail",
@@ -1452,6 +1560,24 @@
       "migration": "202606281000_auto_deduction_policies.sql"
     },
     {
+      "object": "driver_finance.deduction_recovery_links.driver_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614290000_deduction_chain_customer_to_driver.sql"
+    },
+    {
+      "object": "driver_finance.deduction_recovery_links.load_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614290000_deduction_chain_customer_to_driver.sql"
+    },
+    {
+      "object": "driver_finance.deduction_recovery_links.recovery_reason",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202614290000_deduction_chain_customer_to_driver.sql"
+    },
+    {
       "object": "driver_finance.driver_deduction_buckets.total_obligation_cents",
       "kind": "COLUMN",
       "verdict": "none",
@@ -1462,12 +1588,6 @@
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "202607370000_driver_payment_methods.sql"
-    },
-    {
-      "object": "driver_finance.driver_settlements.pay_method",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "0143_settlement_model_load_bookended_and_expense_attribution.sql"
     },
     {
       "object": "driver_finance.escrow_balances.release_claims_window_days",
@@ -1494,10 +1614,46 @@
       "migration": "0094_p5_e1_auto_deduct_escrow_load_abandonment.sql"
     },
     {
-      "object": "driver_finance.settlement_lines.auto_deduction_policy_id",
+      "object": "driver_finance.settlement_line_item_splits",
+      "kind": "TABLE",
+      "verdict": "none",
+      "migration": "202614680000_g2_settlement_line_item_splits_and_extra_pay_item_required.sql"
+    },
+    {
+      "object": "driver_finance.settlement_line_item_splits.adjusting_journal_entry_id",
       "kind": "COLUMN",
       "verdict": "none",
-      "migration": "202606281000_auto_deduction_policies.sql"
+      "migration": "202614680000_g2_settlement_line_item_splits_and_extra_pay_item_required.sql"
+    },
+    {
+      "object": "driver_finance.settlement_line_item_splits.amount_cents",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614680000_g2_settlement_line_item_splits_and_extra_pay_item_required.sql"
+    },
+    {
+      "object": "driver_finance.settlement_line_item_splits.description",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614680000_g2_settlement_line_item_splits_and_extra_pay_item_required.sql"
+    },
+    {
+      "object": "driver_finance.settlement_line_item_splits.item_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614680000_g2_settlement_line_item_splits_and_extra_pay_item_required.sql"
+    },
+    {
+      "object": "driver_finance.settlement_line_item_splits.sequence",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614680000_g2_settlement_line_item_splits_and_extra_pay_item_required.sql"
+    },
+    {
+      "object": "driver_finance.settlement_line_item_splits.settlement_line_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614680000_g2_settlement_line_item_splits_and_extra_pay_item_required.sql"
     },
     {
       "object": "driver_finance.settlement_lines.dispute_resolved_at",
@@ -1522,12 +1678,6 @@
       "kind": "COLUMN",
       "verdict": "none",
       "migration": "202607430000_settlement_lines_approval_columns.sql"
-    },
-    {
-      "object": "driver_finance.settlement_lines.posting_account_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202607520000_driver_finance_settlement_posting_linkage_columns.sql"
     },
     {
       "object": "driver_finance.settlement_preview_costs.cost_kind",
@@ -1569,63 +1719,13 @@
       "object": "finance.forecast_lines.deleted_at",
       "kind": "COLUMN",
       "verdict": "weak",
-      "migration": "202612600000_finance_forecast_scenarios_data_model.sql",
-      "reason": "202612600000_finance_forecast_scenarios_data_model.sql: finance.forecast_scenarios/forecast_lines ARE live-wired (real service apps/backend/src/finance/scenarios/scenarios.service.ts + FinanceScenariosPage.tsx/FinanceOverviewPage.tsx/ScenarioLinesTable.tsx consume every other column). deleted_at specifically is genuinely vestigial: the migration's own design is supersede-not-delete (status draft/active/superseded + superseded_at/superseded_by_scenario_id, confirmed live in scenarios.service.ts), so deleted_at was never meant to be read — a template-copy leftover, harmless nullable column, not a missing feature."
+      "migration": "202612600000_finance_forecast_scenarios_data_model.sql"
     },
     {
       "object": "finance.forecast_scenarios.deleted_at",
       "kind": "COLUMN",
       "verdict": "weak",
-      "migration": "202612600000_finance_forecast_scenarios_data_model.sql",
-      "reason": "202612600000_finance_forecast_scenarios_data_model.sql: finance.forecast_scenarios/forecast_lines ARE live-wired (real service apps/backend/src/finance/scenarios/scenarios.service.ts + FinanceScenariosPage.tsx/FinanceOverviewPage.tsx/ScenarioLinesTable.tsx consume every other column). deleted_at specifically is genuinely vestigial: the migration's own design is supersede-not-delete (status draft/active/superseded + superseded_at/superseded_by_scenario_id, confirmed live in scenarios.service.ts), so deleted_at was never meant to be read — a template-copy leftover, harmless nullable column, not a missing feature."
-    },
-    {
-      "object": "finance.loan_amortization_rows.deleted_at",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202606160100_fh3_amortization_data_model.sql"
-    },
-    {
-      "object": "finance.loan_amortization_rows.posted_journal_entry_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202606160100_fh3_amortization_data_model.sql"
-    },
-    {
-      "object": "finance.loans.deleted_at",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202606160100_fh3_amortization_data_model.sql"
-    },
-    {
-      "object": "fixed_assets.asset_classes",
-      "kind": "TABLE",
-      "verdict": "none",
-      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
-    },
-    {
-      "object": "fixed_assets.asset_classes.code",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
-    },
-    {
-      "object": "fixed_assets.asset_classes.default_accum_depr_account_id",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
-    },
-    {
-      "object": "fixed_assets.asset_classes.default_asset_account_id",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
-    },
-    {
-      "object": "fixed_assets.asset_classes.default_depr_expense_account_id",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
+      "migration": "202612600000_finance_forecast_scenarios_data_model.sql"
     },
     {
       "object": "fixed_assets.asset_classes.default_method",
@@ -1647,12 +1747,6 @@
     },
     {
       "object": "fixed_assets.asset_classes.depreciates",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202606151600_fh1_fixed_assets_data_model.sql"
-    },
-    {
-      "object": "fixed_assets.asset_classes.name",
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "202606151600_fh1_fixed_assets_data_model.sql"
@@ -1748,22 +1842,28 @@
       "migration": "202606170300_predicted_delivery_changes_audit.sql"
     },
     {
-      "object": "fuel.fuel_transactions.fuel_card_id",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "0300_create_fuel_transactions.sql"
-    },
-    {
       "object": "fuel.fuel_transactions.pump_number",
       "kind": "COLUMN",
       "verdict": "none",
       "migration": "0300_create_fuel_transactions.sql"
     },
     {
-      "object": "fuel.fuel_transactions.qbo_class_id",
+      "object": "geo.geofence_state_transitions.is_superseded",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql"
+    },
+    {
+      "object": "geo.geofence_state_transitions.superseded_reason",
       "kind": "COLUMN",
       "verdict": "weak",
-      "migration": "0300_create_fuel_transactions.sql"
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql"
+    },
+    {
+      "object": "geo.geofences.requires_driver_response",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql"
     },
     {
       "object": "identity.applicant_documents",
@@ -1794,6 +1894,90 @@
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "0363_identity_driver_applicants.sql"
+    },
+    {
+      "object": "identity.permissions.field_name",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613312000_permission_model.sql"
+    },
+    {
+      "object": "identity.role_permissions",
+      "kind": "TABLE",
+      "verdict": "none",
+      "migration": "202613312000_permission_model.sql"
+    },
+    {
+      "object": "identity.role_permissions.granted_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613312000_permission_model.sql"
+    },
+    {
+      "object": "identity.role_permissions.granted_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613312000_permission_model.sql"
+    },
+    {
+      "object": "identity.role_permissions.permission_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613312000_permission_model.sql"
+    },
+    {
+      "object": "identity.user_permissions",
+      "kind": "TABLE",
+      "verdict": "none",
+      "migration": "202613312000_permission_model.sql"
+    },
+    {
+      "object": "identity.user_permissions.expires_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613312000_permission_model.sql"
+    },
+    {
+      "object": "identity.user_permissions.grant_type",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613312000_permission_model.sql"
+    },
+    {
+      "object": "identity.user_permissions.granted_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613312000_permission_model.sql"
+    },
+    {
+      "object": "identity.user_permissions.granted_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613312000_permission_model.sql"
+    },
+    {
+      "object": "identity.user_permissions.permission_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613312000_permission_model.sql"
+    },
+    {
+      "object": "identity.user_permissions.reason",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613312000_permission_model.sql"
+    },
+    {
+      "object": "identity.user_permissions.user_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613312000_permission_model.sql"
+    },
+    {
+      "object": "identity.users.is_primary_owner",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613312000_permission_model.sql"
     },
     {
       "object": "ifta.personal_conveyance_miles_by_quarter",
@@ -1840,7 +2024,7 @@
     {
       "object": "ifta.quarterly_preparations.pdf_file_id",
       "kind": "COLUMN",
-      "verdict": "none",
+      "verdict": "weak",
       "migration": "202607130200_block03_ifta_trip_methodology_extend.sql"
     },
     {
@@ -1896,6 +2080,12 @@
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "202606080216_engine_fault_events.sql"
+    },
+    {
+      "object": "integrations.samsara_addresses.deactivated_reason",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613760001_samsara_geofence_import_drafts_batch.sql"
     },
     {
       "object": "integrations.samsara_webhook_events.processed_at",
@@ -1964,12 +2154,6 @@
       "migration": "202606122215_m1_positioned_parts_picker.sql"
     },
     {
-      "object": "maint.position_set.positions",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202606122215_m1_positioned_parts_picker.sql"
-    },
-    {
       "object": "maint.position_set.sort_order",
       "kind": "COLUMN",
       "verdict": "weak",
@@ -1994,22 +2178,16 @@
       "migration": "0056_p3_t11_15_4_driver_pwa_backend.sql"
     },
     {
-      "object": "maintenance.dvir_submissions.geo_lat",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "0056_p3_t11_15_4_driver_pwa_backend.sql"
-    },
-    {
-      "object": "maintenance.dvir_submissions.geo_lng",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "0056_p3_t11_15_4_driver_pwa_backend.sql"
-    },
-    {
       "object": "maintenance.internal_labor_log.journal_entry_id",
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "202606080935_block15_mechanic_shop.sql"
+    },
+    {
+      "object": "maintenance.predictive_alerts.is_sample_data",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613410001_go20_b_maintenance_predictive_alerts.sql"
     },
     {
       "object": "maintenance.wo_serialized_parts.part_catalog_id",
@@ -2018,40 +2196,34 @@
       "migration": "202606221100_block8_wo_vmrs_serialized_parts.sql"
     },
     {
-      "object": "maintenance.work_orders.cancel_notes",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202606221200_wo_enhancements_cancel.sql"
-    },
-    {
-      "object": "maintenance.work_orders.cancel_reason_code",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202606221200_wo_enhancements_cancel.sql"
-    },
-    {
       "object": "maintenance.work_orders.labor_only_no_parts",
       "kind": "COLUMN",
       "verdict": "none",
       "migration": "0049_p3_t11_6_1_wo_format_vendor_inventory_integrity.sql"
     },
     {
-      "object": "mdata.customers.billing_address_line2",
+      "object": "mdata.customer_aliases.merged_at",
       "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "0008_mdata_init.sql"
-    },
-    {
-      "object": "mdata.customers.billing_country",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "0008_mdata_init.sql"
+      "verdict": "weak",
+      "migration": "202615201000_customer_aliases.sql"
     },
     {
       "object": "mdata.customers.lumper_billing_mode",
       "kind": "COLUMN",
       "verdict": "none",
       "migration": "202606251500_lumper_billing_config.sql"
+    },
+    {
+      "object": "mdata.driver_samsara_accounts.first_seen_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202614350000_driver_samsara_accounts_map.sql"
+    },
+    {
+      "object": "mdata.driver_tag_memberships.assigned_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613430001_driver_f7334_canonical_driver_tags.sql"
     },
     {
       "object": "mdata.entity_reclassification_log.spine_event_id",
@@ -2072,28 +2244,10 @@
       "migration": "0111_p6_d2_book_load_v3_stops_columns.sql"
     },
     {
-      "object": "mdata.loads.canceled_at",
+      "object": "mdata.loads.mileage_variance_flag",
       "kind": "COLUMN",
       "verdict": "none",
-      "migration": "0281_dispatch_cancel_reason.sql"
-    },
-    {
-      "object": "mdata.loads.canceled_by",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "0281_dispatch_cancel_reason.sql"
-    },
-    {
-      "object": "mdata.locations.is_ih35_yard",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "0051_arriving_soon_views.sql"
-    },
-    {
-      "object": "mdata.maintenance_parts.typical_vendor_id",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202606281030_maintenance_parts_catalog.sql"
+      "migration": "202613342200_go16_rev_b_lane_mileage.sql"
     },
     {
       "object": "mdata.qbo_classes.fully_qualified_name",
@@ -2108,10 +2262,10 @@
       "migration": "0194_qbo_master_data_projection_transp.sql"
     },
     {
-      "object": "mdata.unit_border_crossings.manifest_number",
+      "object": "mdata.vendor_aliases.merged_at",
       "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "0295_vehicle_profile_part1.sql"
+      "verdict": "weak",
+      "migration": "202615201100_vendor_aliases.sql"
     },
     {
       "object": "mdata.vendors.vendor_type_id",
@@ -2408,12 +2562,6 @@
       "migration": "0304_compliance_dashboard.sql"
     },
     {
-      "object": "org.companies.irp_account_number",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "0304_compliance_dashboard.sql"
-    },
-    {
       "object": "org.companies.scac_code",
       "kind": "COLUMN",
       "verdict": "none",
@@ -2434,9 +2582,8 @@
     {
       "object": "outbox.outbox_queue.last_error",
       "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "0003_outbox_init.sql",
-      "reason": "outbox.outbox_queue is a RETIRED duplicate of outbox.events. Verified on prod 2026-08-03 (positive control mdata.vendors=2,828): 49 rows, ALL 'PENDING', attempts=0 on every row, oldest 2026-06-16 — nothing has ever drained it, because processor.ts reads outbox.events (31,622 rows, 31,618 delivered). This column became reader-less in the SAME PR that repointed 9 of its 11 producers onto the live table; its siblings available_at/locked_at/processed_at were already baselined here for the same reason and are the pre-existing evidence of it. Retiring the table is a MIGRATION and therefore owner-gated, so it is tracked separately rather than smuggled in — the two remaining writers are a deprecated unreachable route file and the QBO write-back pair that stays off by owner ruling."
+      "verdict": "weak",
+      "migration": "0003_outbox_init.sql"
     },
     {
       "object": "outbox.outbox_queue.locked_at",
@@ -2452,6 +2599,12 @@
     },
     {
       "object": "outbox.queue.audit_session_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "0201_ds_remediate_qbo_remote_counts_canonical.sql"
+    },
+    {
+      "object": "outbox.queue.external_id",
       "kind": "COLUMN",
       "verdict": "none",
       "migration": "0201_ds_remediate_qbo_remote_counts_canonical.sql"
@@ -2555,7 +2708,7 @@
     {
       "object": "payroll.driver_settlement_line_items.auto_deduction_policy_id",
       "kind": "COLUMN",
-      "verdict": "none",
+      "verdict": "weak",
       "migration": "202606281000_auto_deduction_policies.sql"
     },
     {
@@ -2667,6 +2820,84 @@
       "migration": "202606080940_block26_partition_hot_tables.sql"
     },
     {
+      "object": "pwa.driver_prompts.answer_code",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql"
+    },
+    {
+      "object": "pwa.driver_prompts.answer_note",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql"
+    },
+    {
+      "object": "pwa.driver_prompts.answered_at",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql"
+    },
+    {
+      "object": "pwa.driver_prompts.answered_by_user_uuid",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql"
+    },
+    {
+      "object": "pwa.driver_prompts.asked_at",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql"
+    },
+    {
+      "object": "pwa.driver_prompts.escalation_count",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql"
+    },
+    {
+      "object": "pwa.driver_prompts.expires_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql"
+    },
+    {
+      "object": "pwa.driver_prompts.gps_lat",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql"
+    },
+    {
+      "object": "pwa.driver_prompts.gps_lng",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql"
+    },
+    {
+      "object": "pwa.driver_prompts.last_escalated_at",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql"
+    },
+    {
+      "object": "pwa.driver_prompts.options_json",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql"
+    },
+    {
+      "object": "pwa.driver_prompts.question",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql"
+    },
+    {
+      "object": "pwa.driver_prompts.resolved_by",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql"
+    },
+    {
       "object": "qbo_archive.import_batches.jorge_signed_off_at",
       "kind": "COLUMN",
       "verdict": "none",
@@ -2721,22 +2952,16 @@
       "migration": "202607130200_block03_ifta_trip_methodology_extend.sql"
     },
     {
+      "object": "safety.accident_liabilities.is_sample_data",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613400001_go20_slice_c_accident_liabilities.sql"
+    },
+    {
       "object": "safety.anomaly_alert_rules.description",
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "202606080211_anomaly_alert_rules.sql"
-    },
-    {
-      "object": "safety.background_checks.voided_reason",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "0249_safety_background_checks.sql"
-    },
-    {
-      "object": "safety.civil_fines.voided_reason",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202607110200_civil_fines_voidable.sql"
     },
     {
       "object": "safety.company_violations.evidence_doc_ids",
@@ -2787,22 +3012,22 @@
       "migration": "0246_safety_driver_profile.sql"
     },
     {
+      "object": "safety.driver_safety_scores.deactivated_by_user_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "202613620001_cc3_ddl_handoff_retention_grant_leave_safety_deactivated_at.sql"
+    },
+    {
+      "object": "safety.driver_safety_scores.deactivated_reason",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202613620001_cc3_ddl_handoff_retention_grant_leave_safety_deactivated_at.sql"
+    },
+    {
       "object": "safety.drug_pool_selections.voided_reason",
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "0257_safety_drug_pool.sql"
-    },
-    {
-      "object": "safety.dvir_submissions.geo_lat",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "0344_safety_dvir.sql"
-    },
-    {
-      "object": "safety.dvir_submissions.geo_lng",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "0344_safety_dvir.sql"
     },
     {
       "object": "safety.hos_exceptions.voided_reason",
@@ -2853,13 +3078,43 @@
       "migration": "0270_safety_drug_program.sql"
     },
     {
-      "object": "safety.training_programs.voided_reason",
+      "object": "samsara.vehicle_state_miles",
+      "kind": "TABLE",
+      "verdict": "none",
+      "migration": "0372_ifta_quarterly_preparation.sql"
+    },
+    {
+      "object": "samsara.vehicle_state_miles.miles",
       "kind": "COLUMN",
       "verdict": "weak",
-      "migration": "0256_safety_training_programs.sql"
+      "migration": "0372_ifta_quarterly_preparation.sql"
+    },
+    {
+      "object": "samsara.vehicle_state_miles.period_end",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0372_ifta_quarterly_preparation.sql"
+    },
+    {
+      "object": "samsara.vehicle_state_miles.period_start",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0372_ifta_quarterly_preparation.sql"
     },
     {
       "object": "samsara.vehicle_state_miles.samsara_vehicle_id",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0372_ifta_quarterly_preparation.sql"
+    },
+    {
+      "object": "samsara.vehicle_state_miles.source",
+      "kind": "COLUMN",
+      "verdict": "weak",
+      "migration": "0372_ifta_quarterly_preparation.sql"
+    },
+    {
+      "object": "samsara.vehicle_state_miles.state",
       "kind": "COLUMN",
       "verdict": "weak",
       "migration": "0372_ifta_quarterly_preparation.sql"
@@ -2973,22 +3228,16 @@
       "migration": "202606120001_tasks_planner_v3.sql"
     },
     {
-      "object": "tasks.task.assigned_at",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202606111055_w1b_tasks_module.sql"
-    },
-    {
       "object": "tasks.task.completion_notes",
       "kind": "COLUMN",
       "verdict": "none",
       "migration": "202606111055_w1b_tasks_module.sql"
     },
     {
-      "object": "usmca_ops.activation_audit.checklist_snapshot",
+      "object": "telematics.vehicle_locations.source_operating_company_id",
       "kind": "COLUMN",
       "verdict": "none",
-      "migration": "202606080244_usmca_ops_schema_grant.sql"
+      "migration": "202613761300_samsara_usmca_retag.sql"
     },
     {
       "object": "usmca_ops.activation_state.pilot_driver_ids",
@@ -3001,630 +3250,9 @@
       "kind": "COLUMN",
       "verdict": "none",
       "migration": "202606080244_usmca_ops_schema_grant.sql"
-    },
-    {
-      "object": "usmca_ops.activation_state.rollback_at",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202606080244_usmca_ops_schema_grant.sql"
-    },
-    {
-      "object": "outbox.queue.external_id",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "0201_ds_remediate_qbo_remote_counts_canonical.sql",
-      "reason": "DEAD-SCHEMA-OUTBOX-QUEUE-EXTERNAL-ID-UNREAD (CC-3 2026-08-27): outbox.queue has an INSERT-only caller (lists-hub.routes.ts force-qbo-sync) and genuinely NO SELECT/UPDATE anywhere in apps/backend/src — confirmed via repo-wide grep, zero hits. The table has no dequeue/processor at all, so external_id (meant to record the remote system's assigned id after a successful push) is unread because nothing processes a row past insert, not because of a missing read on this one column specifically. The migration's own header comment says this exact thing: \"Long-term outbox unification with accounting.outbox_events is tracked separately\" — building a real QBO-sync processor is a genuine new feature (and QBO write-back-sensitive), not a drive-by reader. Baselined rather than fabricating a consumer."
-    },
-    {
-      "object": "accounting.bill_payments.void_reversal_entry_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613490001_go22_void_wiring_driver_finance_liability_chain.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "accounting.lease_contract.rate_per_unit_cents",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613301000_fleet_lease_08_lease_contract_rate_per_unit_basis.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "accounting.lease_contract.unit_count_basis",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613301000_fleet_lease_08_lease_contract_rate_per_unit_basis.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "accounting.lease_contract.unit_count_basis_as_of",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613301000_fleet_lease_08_lease_contract_rate_per_unit_basis.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "accounting.vendor_credits.void_reversal_entry_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613490001_go22_void_wiring_driver_finance_liability_chain.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "banking.reconciliation_drift_alerts.is_sample_data",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613420001_go20_slice_a_bank_reconciliation_drift_alerts.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "catalogs.driver_leave_balances.deactivated_by_user_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613620001_cc3_ddl_handoff_retention_grant_leave_safety_deactivated_at.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "catalogs.driver_leave_balances.deactivated_reason",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613620001_cc3_ddl_handoff_retention_grant_leave_safety_deactivated_at.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "catalogs.lane_mileage.first_seen",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613342200_go16_rev_b_lane_mileage.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "catalogs.lane_mileage.last_seen",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613342200_go16_rev_b_lane_mileage.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "catalogs.lane_mileage.practical_max",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613342200_go16_rev_b_lane_mileage.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "catalogs.lane_mileage.practical_min",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613342200_go16_rev_b_lane_mileage.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "catalogs.lane_mileage.short_max",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613342200_go16_rev_b_lane_mileage.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "catalogs.lane_mileage.short_min",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613342200_go16_rev_b_lane_mileage.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "catalogs.point_mileage.computed_at",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613600001_point_mileage_table.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "dispatch.cargo_sensor_incidents.customer_notified_at",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613390002_go20_d_cargo_sensor_incidents.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "dispatch.cargo_sensor_incidents.is_sample_data",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613390002_go20_d_cargo_sensor_incidents.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "dispatch.manual_delivery_authorizations.revoke_reason",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613960000_manual_delivery_authorization.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "dispatch.manual_delivery_authorizations.revoked_by_user_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613960000_manual_delivery_authorization.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "geo.geofence_state_transitions.is_superseded",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "geo.geofence_state_transitions.superseded_reason",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "geo.geofences.requires_driver_response",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "identity.permissions.field_name",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613312000_permission_model.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "identity.role_permissions",
-      "kind": "TABLE",
-      "verdict": "none",
-      "migration": "202613312000_permission_model.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "identity.role_permissions.granted_at",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613312000_permission_model.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "identity.role_permissions.granted_by_user_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613312000_permission_model.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "identity.role_permissions.permission_id",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613312000_permission_model.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "identity.user_permissions",
-      "kind": "TABLE",
-      "verdict": "none",
-      "migration": "202613312000_permission_model.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "identity.user_permissions.expires_at",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613312000_permission_model.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "identity.user_permissions.grant_type",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613312000_permission_model.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "identity.user_permissions.granted_at",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613312000_permission_model.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "identity.user_permissions.granted_by_user_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613312000_permission_model.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "identity.user_permissions.permission_id",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613312000_permission_model.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "identity.user_permissions.reason",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613312000_permission_model.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "identity.user_permissions.user_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613312000_permission_model.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "identity.users.is_primary_owner",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613312000_permission_model.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "integrations.samsara_addresses.deactivated_reason",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613760001_samsara_geofence_import_drafts_batch.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "maintenance.predictive_alerts.equipment_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613410001_go20_b_maintenance_predictive_alerts.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "maintenance.predictive_alerts.is_sample_data",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613410001_go20_b_maintenance_predictive_alerts.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "mdata.driver_tag_memberships.assigned_at",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613430001_driver_f7334_canonical_driver_tags.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "mdata.loads.mileage_variance_flag",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613342200_go16_rev_b_lane_mileage.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "pwa.driver_prompts",
-      "kind": "TABLE",
-      "verdict": "none",
-      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "pwa.driver_prompts.answer_code",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "pwa.driver_prompts.answer_note",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "pwa.driver_prompts.answered_at",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "pwa.driver_prompts.answered_by_user_uuid",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "pwa.driver_prompts.asked_at",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "pwa.driver_prompts.driver_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "pwa.driver_prompts.escalation_count",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "pwa.driver_prompts.expires_at",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "pwa.driver_prompts.geofence_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "pwa.driver_prompts.gps_lat",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "pwa.driver_prompts.gps_lng",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "pwa.driver_prompts.last_escalated_at",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "pwa.driver_prompts.load_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "pwa.driver_prompts.odometer_mi",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "pwa.driver_prompts.options_json",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "pwa.driver_prompts.prompt_kind",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "pwa.driver_prompts.question",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "pwa.driver_prompts.resolved_by",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "pwa.driver_prompts.stop_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "pwa.driver_prompts.unit_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613761200_geofence_engine_rebuild_per_vehicle_state.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "safety.accident_liabilities.is_sample_data",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613400001_go20_slice_c_accident_liabilities.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "safety.driver_safety_scores.deactivated_by_user_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202613620001_cc3_ddl_handoff_retention_grant_leave_safety_deactivated_at.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "safety.driver_safety_scores.deactivated_reason",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613620001_cc3_ddl_handoff_retention_grant_leave_safety_deactivated_at.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "telematics.vehicle_locations.source_operating_company_id",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613761300_samsara_usmca_retag.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "telematics.vehicle_locations.source_raw_samsara_event_id",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202613761300_samsara_usmca_retag.sql",
-      "reason": "DRV-STATUS-LOCK catch-up sync (2026-09-07): discovered this guard failing on a clean origin/main checkout (a88e37e6ce) while trying to push an UNRELATED urgent fix (DRV-STATUS-LOCK-PREVENTS-AUTO-REACTIVATION) -- 67 findings from migrations merged across many lanes/dates (spanning 202613301000 through 202613960000: GO-16/GO-20 a-d/GO-22, permission_model, geofence engine rebuild, manual-delivery-auth, Samsara USMCA retag, CC-3 DDL handoff, and others) were never added to this register at merge time, silently blocking the full verify:static fallback path for anyone whose sandbox lacks the local-DB capability (money-pr-local-gate.mjs's curated list does not include this guard, so it was not caught there). NOT independently verified per-item as intentional -- recording that these ARE currently unread, per this guard's own live measurement, so the repo-wide block clears. Filed as its own board finding for each owning lane to actually wire or dispute; this entry is a debt-register catch-up, not an approval."
-    },
-    {
-      "object": "driver_finance.driver_settlements.is_presettlement",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202614250000_load_stops_loads_escrow_ledger_settlement_refeed_columns.sql",
-      "reason": "E14 schema-only landing, ahead of the settlement-refeed feeder / driver_finance allocator fix (CC-3's lane) that will read and set it. Owner-ordered sequencing: schema first, feeder wiring next."
-    },
-    {
-      "object": "mdata.loads.line_haul_miles",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202614250000_load_stops_loads_escrow_ledger_settlement_refeed_columns.sql",
-      "reason": "E14 schema-only landing, ahead of the settlement-refeed feeder (scripts/ops/settlement-refeed.ts, not yet landed) that will populate and read it from parsed settlement documents."
-    },
-    {
-      "object": "accounting.factoring_advances.faro_invoice_number",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202614260000_factoring_advances_faro_invoice_number_purchase_date.sql",
-      "reason": "Schema-only landing per Lead ruling (2026-09-22) -- the missing join key between our book and Faro's own invoice numbering. Populated by the writer CC-2 owns (accounting/factor-reconciliation lane), which also owns the 3 pre-existing defects the ruling traced (reserve_amount_cents carrying the fee, the wire fee never deducted, and this missing key). No writer changes in this migration by design."
-    },
-    {
-      "object": "accounting.factoring_advances.faro_purchase_date",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202614260000_factoring_advances_faro_invoice_number_purchase_date.sql",
-      "reason": "Schema-only landing per Lead ruling (2026-09-22) -- Faro's own purchase-day grouping (spans 23 days; our advanced_at spans only 20 distinct dates and does not align), needed by the feed-control day-gate. Populated by the writer CC-2 owns. No writer changes in this migration by design."
-    },
-    {
-      "object": "integrations.samsara_drivers.local_vendor_id",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202614280000_samsara_drivers_local_vendor_id.sql",
-      "reason": "E20 Part A schema landing (2026-09-23) -- the mapping API routes (GET /samsara/profiles, GET /samsara/mapping-targets, POST /samsara/map, POST /samsara/unmap) that read/write this column are separate, not-yet-landed work in the same E20 build, not a different feature."
-    },
-    {
-      "object": "accounting.bill_lines.rate_cents",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202614271200_item_line_quantity_rate_amount.sql",
-      "reason": "Round 92/94 (CC-2, 2026-09-23) -- confirmed pre-existing on origin/main, unrelated to the branch that first hit this guard (E11-D4, apps/frontend/driver-finance only). Schema-only landing (Cursor, item lines catalog columns: item_id/quantity/rate_cents/unit_of_measure). Item lines remainder (bill/invoice lines rendered off these columns, Round 92/94 assignment) wires the bill_lines write path next -- in progress, parked mid-build (git stash) while this PR shipped first."
-    },
-    {
-      "object": "accounting.bill_lines.unit_of_measure",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202614271200_item_line_quantity_rate_amount.sql",
-      "reason": "Same schema-only landing as accounting.bill_lines.rate_cents above -- same in-progress writer."
-    },
-    {
-      "object": "accounting.expense_lines.item_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202614271200_item_line_quantity_rate_amount.sql",
-      "reason": "Round 92/94 (CC-2, 2026-09-23) -- confirmed pre-existing on origin/main, unrelated to the branch that first hit this guard. Schema-only landing (Cursor, item lines catalog columns). expense_lines is not named in the CC-2 item-lines-remainder assignment (bill and invoice lines only) -- tracked debt, not silently dropped."
-    },
-    {
-      "object": "accounting.expense_lines.rate_cents",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202614271200_item_line_quantity_rate_amount.sql",
-      "reason": "Same schema-only landing as accounting.expense_lines.item_id above -- same tracked debt."
-    },
-    {
-      "object": "accounting.expense_lines.unit_of_measure",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202614271200_item_line_quantity_rate_amount.sql",
-      "reason": "Same schema-only landing as accounting.expense_lines.item_id above -- same tracked debt."
-    },
-    {
-      "object": "accounting.invoice_lines.unit_of_measure",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202614271200_item_line_quantity_rate_amount.sql",
-      "reason": "Round 92/94 (CC-2, 2026-09-23) -- confirmed pre-existing on origin/main, unrelated to the branch that first hit this guard. accounting.invoice_lines already carries its own pre-existing quantity/unit_amount_cents/item_id (NOT NULL, fully wired create+display path, InvoiceDetailPage.tsx Qty/Unit columns) -- this migration only added the new, nullable unit_of_measure sibling column, not yet written by the existing create-line route. Tracked, not silently dropped."
-    },
-    {
-      "object": "driver_finance.settlement_lines.quantity",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202614271200_item_line_quantity_rate_amount.sql",
-      "reason": "Round 92/94 (CC-2, 2026-09-23) -- confirmed pre-existing on origin/main, unrelated to the branch that first hit this guard. Schema-only landing (Cursor, item lines catalog columns). settlement_lines is not named in the CC-2 item-lines-remainder assignment (bill and invoice lines only) -- tracked debt, not silently dropped. Line haul on settlements stays a contracted total per the Round 92 rule and never reconstructs as qty x rate; only a genuinely reconstructable line (e.g. a future non-linehaul settlement item) would ever populate this column."
-    },
-    {
-      "object": "driver_finance.settlement_lines.unit_of_measure",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202614271200_item_line_quantity_rate_amount.sql",
-      "reason": "Same schema-only landing as driver_finance.settlement_lines.quantity above -- same tracked debt."
-    },
-    {
-      "object": "accounting.invoice_disputes.driver_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202614290000_deduction_chain_customer_to_driver.sql",
-      "reason": "Round 92/94 (CC-2, 2026-09-23) -- confirmed pre-existing on origin/main, unrelated to the branch that first hit this guard (E11-D4, apps/frontend/driver-finance only, rebased onto this migration after it landed mid-session). Schema-only landing (Lead's own migration, DEDUCTION-CHAIN-CUSTOMER-TO-DRIVER, #22355) for the deduction screens CC-2 is assigned next: fault_party on invoice_disputes is a named human decision, driver_finance.deduction_recovery_links links a customer short-pay to the driver deduction that recovers it. Writer/reader is CC-2's very next build."
-    },
-    {
-      "object": "accounting.invoice_disputes.fault_decided_by_user_id",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202614290000_deduction_chain_customer_to_driver.sql",
-      "reason": "Same schema-only landing as accounting.invoice_disputes.driver_id above -- same next-build writer."
-    },
-    {
-      "object": "accounting.invoice_disputes.fault_reason",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202614290000_deduction_chain_customer_to_driver.sql",
-      "reason": "Same schema-only landing as accounting.invoice_disputes.driver_id above -- same next-build writer."
-    },
-    {
-      "object": "accounting.invoice_disputes.load_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202614290000_deduction_chain_customer_to_driver.sql",
-      "reason": "Same schema-only landing as accounting.invoice_disputes.driver_id above -- same next-build writer."
-    },
-    {
-      "object": "driver_finance.deduction_recovery_links.driver_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202614290000_deduction_chain_customer_to_driver.sql",
-      "reason": "Same schema-only landing as accounting.invoice_disputes.driver_id above -- same next-build writer."
-    },
-    {
-      "object": "driver_finance.deduction_recovery_links.load_id",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202614290000_deduction_chain_customer_to_driver.sql",
-      "reason": "Same schema-only landing as accounting.invoice_disputes.driver_id above -- same next-build writer."
-    },
-    {
-      "object": "driver_finance.deduction_recovery_links.recovery_reason",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202614290000_deduction_chain_customer_to_driver.sql",
-      "reason": "Same schema-only landing as accounting.invoice_disputes.driver_id above -- same next-build writer."
     }
   ],
   "measured_at": "2026-09-24T00:30:00Z",
-  "_comment": "measured_at backfilled 2026-09-24 (STALE-LITERAL-OK: baseline predates or lacks measured_at; backfilled to pass verify-no-stale-literals-in-guards)"
+  "_comment": "measured_at backfilled 2026-09-24 (STALE-LITERAL-OK: baseline predates or lacks measured_at; backfilled to pass verify-no-stale-literals-in-guards)",
+  "_recaptured": "2026-10-06T23:42:57Z"
 }

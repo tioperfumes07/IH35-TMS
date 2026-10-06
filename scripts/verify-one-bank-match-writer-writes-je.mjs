@@ -31,6 +31,7 @@ const LABEL = "verify-one-bank-match-writer-writes-je";
 const MATCH = "apps/backend/src/accounting/bank-recon/match.service.ts";
 const FUEL_POST = "apps/backend/src/accounting/bank-recon/bank-match-fuel-post.service.ts";
 const UNMATCH = "apps/backend/src/accounting/bank-recon/recon-worklist.service.ts";
+const UNMATCH_BODY = "apps/backend/src/accounting/bank-recon/unmatch-bank-transaction.service.ts";
 const SESSION_RECON = "apps/backend/src/banking/reconciliation.routes.ts";
 const PROXY_ROUTES = [
   "apps/backend/src/banking/link-suggestions-actions.routes.ts",
@@ -103,24 +104,26 @@ export function check(files) {
     problems.push(`${FUEL_POST}: missing — the bank-match fuel poster`);
   }
   const unmatch = files[UNMATCH] ?? "";
+  const unmatchBody = files[UNMATCH_BODY] ?? (fs.existsSync(path.join(ROOT, UNMATCH_BODY)) ? fs.readFileSync(path.join(ROOT, UNMATCH_BODY), "utf8") : "");
   if (!/export async function unmatchBankTransaction/.test(unmatch)) {
     problems.push(`${UNMATCH}: missing unmatchBankTransaction (the one unmatch writer)`);
   }
-  if (!/reverseJournalEntryNoFlip/.test(unmatch)) {
-    problems.push(`${UNMATCH}: unmatch must reverse the JE (never flag-flip alone)`);
+  const bodyForChecks = unmatch + unmatchBody;
+  if (!/reverseJournalEntryNoFlip/.test(bodyForChecks)) {
+    problems.push(`${UNMATCH_BODY}: unmatch must reverse the JE (never flag-flip alone)`);
   }
   // OWNER-ORDER 2026-10-02 §4 — unmatch must clear these three (were half-released).
   for (const col of ["matched_invoice_id", "matched_advance_id", "categorization_gl_account_id"]) {
-    if (!new RegExp(`${col}\\s*=\\s*NULL`, "i").test(unmatch)) {
-      problems.push(`${UNMATCH}: unmatch must clear ${col} (OWNER-ORDER §4 half-release)`);
+    if (!new RegExp(`${col}\\s*=\\s*NULL`, "i").test(bodyForChecks)) {
+      problems.push(`${UNMATCH_BODY}: unmatch must clear ${col} (OWNER-ORDER §4 half-release)`);
     }
   }
   // Reverse only match-created JEs (fuel/relay/factoring), never a JE that was merely the match target.
-  if (!/prev_fuel_transaction_id|matched_fuel_transaction_id/.test(unmatch)) {
-    problems.push(`${UNMATCH}: unmatch must snapshot fuel match ids before deciding JE reverse`);
+  if (!/prev_fuel_transaction_id|matched_fuel_transaction_id/.test(bodyForChecks)) {
+    problems.push(`${UNMATCH_BODY}: unmatch must snapshot fuel match ids before deciding JE reverse`);
   }
-  if (!/matchCreatedJe/.test(unmatch)) {
-    problems.push(`${UNMATCH}: unmatch must gate JE reverse on matchCreatedJe (fuel/relay/factoring only)`);
+  if (!/matchCreatedJe/.test(bodyForChecks)) {
+    problems.push(`${UNMATCH_BODY}: unmatch must gate JE reverse on matchCreatedJe (fuel/relay/factoring only)`);
   }
 
   const session = files[SESSION_RECON] ?? "";

@@ -15,9 +15,11 @@
  * this guard never deactivates anything. Runs inside a rolled-back transaction so the RLS bypass holds,
  * with the completeness discriminator on mdata.units (a 0 is never a verdict on its own).
  */
+/** MATRIX-BUILT-OPTIONAL — live-only / invariant ratchet guard; no surface wiring leaf to register. */
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const LABEL = "verify-new-units-have-gps-or-deactivation-reason";
+export const REQUIRES_LIVE_DB = "live-only guard: reads production database (USMCA) and cannot be statically verified; run by money-pr-local-gate with DATABASE_URL";
 export const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 export const GOING_FORWARD_FROM = "2026-10-01T00:00:00-05:00";
 export const DEVICE_GRACE_HOURS = 72;

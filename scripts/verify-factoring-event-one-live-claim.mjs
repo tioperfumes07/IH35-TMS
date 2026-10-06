@@ -28,6 +28,7 @@
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const LABEL = "verify-factoring-event-one-live-claim";
+export const REQUIRES_LIVE_DB = "live-only guard: reads production database (USMCA) and cannot be statically verified; run by money-pr-local-gate with DATABASE_URL";
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 const SQL = `
@@ -43,6 +44,7 @@ const SQL = `
   WHERE k.operating_company_id = $1::uuid`;
 
 /** Strip a trailing "#revN" suffix to recover the base event this claim belongs to. */
+/** MATRIX-BUILT-OPTIONAL — live-only / invariant ratchet guard; no surface wiring leaf to register. */
 export function baseEventKey(eventKey) {
   return eventKey.replace(/#rev\d+$/, "");
 }

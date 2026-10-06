@@ -41,6 +41,9 @@ export async function backlinkBankTransactionToBill(
   billPaymentId: string,
   billIds: string[]
 ): Promise<BankBillBacklinkResult> {
+  // Optional read inside a transaction must use its own SAVEPOINT so a failure does not
+  // poison the caller's transaction with a 25P02 (current transaction is aborted).
+  await client.query("SAVEPOINT svp_backlink_optional");
   try {
     const unique = Array.from(new Set(billIds.filter(Boolean)));
     if (unique.length !== 1) {
@@ -59,7 +62,10 @@ export async function backlinkBankTransactionToBill(
       [billPaymentId, operatingCompanyId]
     );
     const bankTxnId = payRes.rows[0]?.source_bank_transaction_id ?? null;
-    if (!bankTxnId) return { linked: false, reason: "no_source_bank_transaction" };
+    if (!bankTxnId) {
+      await client.query("RELEASE SAVEPOINT svp_backlink_optional");
+      return { linked: false, reason: "no_source_bank_transaction" };
+    }
 
     const upd = await client.query(
       `
@@ -75,6 +81,7 @@ export async function backlinkBankTransactionToBill(
       [billId, billPaymentId, bankTxnId, operatingCompanyId]
     );
     if ((upd.rowCount ?? 0) > 0) {
+      await client.query("RELEASE SAVEPOINT svp_backlink_optional");
       return { linked: true, bank_transaction_id: bankTxnId, bill_id: billId };
     }
 
@@ -87,9 +94,15 @@ export async function backlinkBankTransactionToBill(
       `,
       [bankTxnId, operatingCompanyId]
     );
-    if (exists.rows.length === 0) return { linked: false, reason: "bank_row_not_found" };
+    if (exists.rows.length === 0) {
+      await client.query("RELEASE SAVEPOINT svp_backlink_optional");
+      return { linked: false, reason: "bank_row_not_found" };
+    }
+    await client.query("RELEASE SAVEPOINT svp_backlink_optional");
     return { linked: false, reason: "already_matched", detail: `already matched to bill ${exists.rows[0]?.matched}` };
   } catch (error) {
+    await client.query("ROLLBACK TO SAVEPOINT svp_backlink_optional");
+    await client.query("RELEASE SAVEPOINT svp_backlink_optional");
     return { linked: false, reason: "error", detail: error instanceof Error ? error.message : String(error) };
   }
 }

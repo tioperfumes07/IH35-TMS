@@ -24,7 +24,7 @@ const LABEL = "verify-match-posts-nothing";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const MATCH = "apps/backend/src/accounting/bank-recon/match.service.ts";
 const ENGINE = "apps/backend/src/banking/bank-line-state-machine.service.ts";
-const UNMATCH = "apps/backend/src/accounting/bank-recon/recon-worklist.service.ts";
+const UNMATCH = "apps/backend/src/accounting/bank-recon/unmatch-bank-transaction.service.ts";
 const FARO = "apps/backend/src/factoring/faro-reserve-entries.service.ts";
 
 export const MATCH_TIME_POSTERS = [

@@ -28,13 +28,14 @@ const SPLITS_FILE = "apps/backend/src/banking/bank-transaction-splits.service.ts
 const BULK_FILE = "apps/backend/src/banking/bulk-transactions.ts";
 const MATCH_FILE = "apps/backend/src/accounting/bank-recon/match.service.ts";
 const WORKLIST_FILE = "apps/backend/src/accounting/bank-recon/recon-worklist.service.ts";
+const UNMATCH_FILE = "apps/backend/src/accounting/bank-recon/unmatch-bank-transaction.service.ts";
 
 function read(rel) {
   const p = path.join(ROOT, rel);
   return fs.existsSync(p) ? fs.readFileSync(p, "utf8") : null;
 }
 
-export function assertGuard(migrationSrc, splitsSrc, bulkSrc, matchSrc, worklistSrc) {
+export function assertGuard(migrationSrc, splitsSrc, bulkSrc, matchSrc, worklistSrc, unmatchSrc) {
   const errs = [];
   if (!migrationSrc) return [`${MIGRATION_FILE}: missing`];
 
@@ -68,13 +69,14 @@ export function assertGuard(migrationSrc, splitsSrc, bulkSrc, matchSrc, worklist
     }
   }
 
-  if (!worklistSrc) errs.push(`${WORKLIST_FILE}: missing`);
+  const src = (unmatchSrc || worklistSrc);
+  if (!src) errs.push(`${WORKLIST_FILE} or ${UNMATCH_FILE}: missing`);
   else {
-    if (!/UPDATE accounting\.payments\s*\n\s*SET source_bank_transaction_id = NULL,\s*\n\s*cleared_date = NULL/.test(worklistSrc)) {
-      errs.push(`${WORKLIST_FILE}: unmatching a bank transaction must also clear accounting.payments.cleared_date back to NULL (a payment no longer settles in the session it was ticked into)`);
+    if (!/UPDATE accounting\.payments\s*\n\s*SET source_bank_transaction_id = NULL,\s*\n\s*cleared_date = NULL/.test(src)) {
+      errs.push(`${UNMATCH_FILE}: unmatching a bank transaction must also clear accounting.payments.cleared_date back to NULL (a payment no longer settles in the session it was ticked into)`);
     }
-    if (!/UPDATE accounting\.bill_payments\s*\n\s*SET source_bank_transaction_id = NULL,\s*\n\s*from_bank_account_id = NULL,\s*\n\s*cleared_date = NULL/.test(worklistSrc)) {
-      errs.push(`${WORKLIST_FILE}: unmatching a bank transaction must also clear accounting.bill_payments.cleared_date back to NULL`);
+    if (!/UPDATE accounting\.bill_payments\s*\n\s*SET source_bank_transaction_id = NULL,\s*\n\s*from_bank_account_id = NULL,\s*\n\s*cleared_date = NULL/.test(src)) {
+      errs.push(`${UNMATCH_FILE}: unmatching a bank transaction must also clear accounting.bill_payments.cleared_date back to NULL`);
     }
   }
 
@@ -87,7 +89,8 @@ function selftest() {
   const goodBulk = read(BULK_FILE) ?? "";
   const goodMatch = read(MATCH_FILE) ?? "";
   const goodWorklist = read(WORKLIST_FILE) ?? "";
-  const goodErrs = assertGuard(goodMigration, goodSplits, goodBulk, goodMatch, goodWorklist);
+  const goodUnmatch = read(UNMATCH_FILE) ?? "";
+  const goodErrs = assertGuard(goodMigration, goodSplits, goodBulk, goodMatch, goodWorklist, goodUnmatch);
   if (goodErrs.length) {
     console.error(`${LABEL} --selftest FAIL good (${goodErrs.length}): ${goodErrs.join("; ")}`);
     process.exit(1);
@@ -114,7 +117,7 @@ function selftest() {
             "cleared_date = COALESCE(cleared_date, $4::date)\n          WHERE id = $2::uuid\n            AND operating_company_id = $3::uuid`,\n        [\n          input.bank_transaction_id,\n          input.ledger_entry_id,\n          input.operating_company_id,\n          txn.transaction_date.slice(0, 10),\n        ]",
             "WHERE id = $2::uuid\n            AND operating_company_id = $3::uuid`,\n        [input.bank_transaction_id, input.ledger_entry_id, input.operating_company_id]"
           ),
-        goodWorklist
+        goodUnmatch
       ),
     ],
     [
@@ -132,7 +135,7 @@ function selftest() {
             ",\n                cleared_date = COALESCE(cleared_date, $5::date),\n                updated_at = now()",
             ",\n                updated_at = now()"
           ),
-        goodWorklist
+        goodUnmatch
       ),
     ],
     [
@@ -187,7 +190,7 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-const errs = assertGuard(read(MIGRATION_FILE), read(SPLITS_FILE), read(BULK_FILE), read(MATCH_FILE), read(WORKLIST_FILE));
+const errs = assertGuard(read(MIGRATION_FILE), read(SPLITS_FILE), read(BULK_FILE), read(MATCH_FILE), read(WORKLIST_FILE), read(UNMATCH_FILE));
 if (errs.length) {
   console.error(`[${LABEL}] FAILED — ${errs.length} issue(s):`);
   for (const e of errs) console.error(`  ✗ ${e}`);

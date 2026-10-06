@@ -3,7 +3,9 @@
  * R-186.2 — Settlement Creator ties documents (Company + Driver AlwaysTrack PDFs).
  *
  * Static contract:
- * 1. Half-page ParityDrawer dual columns (Company | Driver), opened via ?creator=1.
+ * 1. Wide half/xwide ParityDrawer dual columns (Company | Driver), opened via ?creator=1.
+ *    SETL-F437 moved the Creator from a half-page with Edit-unlocked load/settlement numbers to
+ *    an xwide panel where the fields are directly editable (next-number peeked on open).
  * 2. Preview/Post refuse until company EXPENSES and driver TOTAL DUE match typed PDF cents
  *    (service already on main from R-186).
  * 3. Drawer separates Comp. Exp. / Drv reimbursements / Additional pay / Escrow / control totals.
@@ -14,6 +16,7 @@
  *
  * Self-test: node scripts/verify-settlement-creator-ties-document.mjs --selftest
  */
+/** MATRIX-BUILT-OPTIONAL — live-only / invariant ratchet guard; no surface wiring leaf to register. */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -43,8 +46,8 @@ function runChecks() {
   const settlementsPage = read(SETTLEMENTS_PAGE);
   const topbar = read(TOPBAR);
 
-  assert(/PARITY_DRAWER_WIDTH_HALF|size="half"/.test(drawer), "Drawer must open ParityDrawer size=half", failures);
-  assert(/PARITY_DRAWER_WIDTH_HALF/.test(sizing), "sizing.ts must export PARITY_DRAWER_WIDTH_HALF (~50vw)", failures);
+  assert(/size="xwide"/.test(drawer), "Drawer must open ParityDrawer size=xwide (SETL-F437)", failures);
+  assert(/PARITY_DRAWER_WIDTH_HALF|PARITY_DRAWER_WIDTH_XWIDE/.test(sizing), "sizing.ts must export the Creator drawer width constant", failures);
   assert(/sc-dual-columns|Company Settlement/.test(drawer) && /Driver Settlement/.test(drawer),
     "Drawer must render Company + Driver columns", failures);
   assert(/SettlementCreatorDrawer/.test(settlementsPage) && /creator=1|creatorOpen/.test(settlementsPage),
@@ -92,8 +95,8 @@ function runChecks() {
   // Owner 2026-09-26 — Creator creates NEW only: auto next load # + AlwaysTrack settlement #, Edit unlock.
   assert(/peekNextLoadNumber/.test(drawer) && /peekNextSettlementNumber/.test(drawer),
     "Drawer must peek next load # + next AlwaysTrack settlement # on open", failures);
-  assert(/sc-load-number-edit|sc-settlement-no-edit/.test(drawer) && /readOnly=\{!/.test(drawer),
-    "Load No. and Settlement No. must be read-only until Edit", failures);
+  assert(/peekNextLoadNumber/.test(drawer) && /peekNextSettlementNumber/.test(drawer) && /next free load number|next free AlwaysTrack number/.test(drawer),
+    "Load No. and Settlement No. are prefilled with the next free number and editable on open (SETL-F437)", failures);
   assert(/nextSequentialLoadNumber|addLoadRow/.test(drawer),
     "Add Load must continue the numeric sequence automatically", failures);
   assert(/load_already_exists/.test(fs.readFileSync(path.join(ROOT, "apps/backend/src/driver-finance/settlement-creator-seed-loads.ts"), "utf8")),
@@ -166,5 +169,5 @@ if (failures.length) {
   for (const f of failures) console.error(`  ✗ ${f}`);
   process.exit(1);
 }
-console.log(`${LABEL}: PASS — half-panel Creator, PDF control totals, Comp/Drv/Escrow sections wired`);
+console.log(`${LABEL}: PASS — xwide-panel Creator, PDF control totals, Comp/Drv/Escrow sections wired`);
 process.exit(0);

@@ -20,7 +20,7 @@ const MIGRATION = "db/migrations/202615330930_send_back_keeps_the_match.sql";
 
 /** Each send-back path: the file, the release call that must appear, and the clear it must come before. */
 export const PATHS = [
-  { file: "apps/backend/src/accounting/bank-recon/recon-worklist.service.ts", release: /await releaseBankLineMatches\(client,/, clear: /matched_expense_id = NULL,/ },
+  { file: "apps/backend/src/accounting/bank-recon/unmatch-bank-transaction.service.ts", release: /await releaseBankLineMatches\(client,/, clear: /matched_expense_id = NULL,/ },
   { file: "apps/backend/src/banking/bank-line-state-machine.service.ts", release: /await releaseBankLineMatches\(client, \{\s*bankTransactionId: line\.id,/, clear: /if \(line\.review_bucket === "excluded"\)/ },
   { file: "apps/backend/src/banking/bank-line-state-machine.service.ts", release: /await releaseBankLineMatches\(client, \{\s*bankTransactionId: f\.line_id,/, clear: /SET \$\{RELEASE_CATEGORIZATION_SET_SQL\}\s*WHERE id = \$1::uuid AND operating_company_id = \$2::uuid`,\s*\[f\.line_id/ },
   { file: "apps/backend/src/accounting/void.service.ts", release: /await releaseBankLineMatchesWhere\(client, `operating_company_id = \$1::uuid AND id = \$2::uuid`/, clear: /\$\{BANK_TX_UNMATCH_RESET_SQL\} AND id = \$2::uuid/ },

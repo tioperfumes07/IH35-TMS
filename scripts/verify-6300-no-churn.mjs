@@ -14,6 +14,7 @@ const LABEL = "verify-6300-no-churn";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const F = {
   worklist: "apps/backend/src/accounting/bank-recon/recon-worklist.service.ts",
+  unmatch: "apps/backend/src/accounting/bank-recon/unmatch-bank-transaction.service.ts",
   session: "apps/backend/src/banking/reconciliation.routes.ts",
   backlog: "apps/backend/src/banking/categorization.routes.ts",
 };
@@ -21,7 +22,8 @@ const RESET = /status = CASE WHEN prior\.matched_journal_entry_id IS NOT NULL AN
 
 export function problems(src) {
   const p = [];
-  if (!RESET.test(src.worklist)) p.push("recon-worklist unmatch must send a reversed categorized line back to pending_categorization");
+  const unmatchSrc = (src.worklist || "") + (src.unmatch || "");
+  if (!RESET.test(unmatchSrc)) p.push("recon-worklist unmatch must send a reversed categorized line back to pending_categorization");
   // The session unmatch may carry the reset itself, or DELEGATE to recon-worklist's unmatchBankTransaction (checked above),
   // which since ROUND 360 runs the bank-line state machine — whose release also sets status = 'pending_categorization'.
   const sessionDelegates = /await unmatchBankTransaction\(\{/.test(src.session) && /import \{[^}]*\bunmatchBankTransaction\b[^}]*\} from "\.\.\/accounting\/bank-recon\/recon-worklist\.service\.js"/.test(src.session);
@@ -43,7 +45,7 @@ if (isMain) {
   if (process.argv.includes("--selftest")) {
     if (own.length) { console.error(`${LABEL} --selftest FAIL on the real tree — ${own.join("; ")}`); process.exit(1); }
     const plants = [
-      ["worklist leaves categorized", { ...src, worklist: src.worklist.replace("THEN 'pending_categorization' ELSE bt.status END", "THEN bt.status ELSE bt.status END") }],
+      ["unmatch leaves categorized", { ...src, unmatch: src.unmatch.replace("THEN 'pending_categorization' ELSE bt.status END", "THEN bt.status ELSE bt.status END") }],
       ["session stops delegating and resets nothing", { ...src, session: src.session.replace("await unmatchBankTransaction({", "await somethingElse({") }],
       ["backlog re-posts reversed", { ...src, backlog: src.backlog.replace("AND je.reversed_by_je_id IS NOT NULL\n            )", "AND false\n            )") }],
     ];

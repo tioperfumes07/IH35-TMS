@@ -13,6 +13,8 @@
  * STATIC (always): the block migrations still declare every constraint. No database = FAIL (money guard).
  * Phases 3-4 append to PHASES as they ship. Run: node scripts/verify-money-lines-same-entity-fks.mjs [--selftest]
  */
+/** MATRIX-BUILT-OPTIONAL — live-only / invariant ratchet guard; no surface wiring leaf to register. */
+export const REQUIRES_LIVE_DB = "live-only guard: reads the live database to enumerate single-column FKs and composite FK coverage; static side is only migration metadata";
 import { readFileSync } from "node:fs";
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 

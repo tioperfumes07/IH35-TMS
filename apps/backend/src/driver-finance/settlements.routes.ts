@@ -16,7 +16,7 @@ import { queuePaymentOnFinalize } from "./settlement-payment.service.js";
 import { renderSettlementStatementPdf } from "./settlement-pdf-renderer.service.js";
 import { notifySettlementAvailable } from "../services/push-notification.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
-import { SETTLEMENT_DEDUCTION_SOURCE_TABLE } from "./deductions.service.js";
+import { SETTLEMENT_DEDUCTION_SOURCE_TABLE } from "./settlement-deduction-constants.js";
 import { canVoid } from "../accounting/void.service.js";
 import { postNegativeSettlementLiabilityIfNeeded } from "./negative-settlement-liability.service.js";
 import { loadIdsForSettlement } from "../accounting/tour-open-gate.service.js";

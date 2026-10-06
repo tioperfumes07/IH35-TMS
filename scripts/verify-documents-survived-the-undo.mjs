@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** MATRIX-BUILT-OPTIONAL — live-only / invariant ratchet guard; no surface wiring leaf to register. */
 // verify-documents-survived-the-undo.mjs — ROUND 371 (Lead, 2026-10-03).
 //
 // THE QUESTION THIS ANSWERS, IN THE OWNER'S WORDS: "the documents have not been deleted? expenses,
@@ -38,6 +39,7 @@ async function selftest_verify_documents_survived_the_undo() {
 
 
 const LABEL = "verify-documents-survived-the-undo";
+export const REQUIRES_LIVE_DB = "live-only guard: reads production database (USMCA) and cannot be statically verified; run by money-pr-local-gate with DATABASE_URL";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 // Each entry: label, schema.table, the company column, and an optional voided predicate so we can

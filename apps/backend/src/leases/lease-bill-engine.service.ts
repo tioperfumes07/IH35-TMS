@@ -11,6 +11,10 @@
  * Account: the contract's expense_account_id, else the entity's rent_expense role (fails closed until designated).
  * Escalation: monthly amount x (1 + escalation_pct_bps / 10000) ^ floor(months since commencement / every N).
  */
+import { escalatedAmount } from "./lessee-escalation.js";
+import { ensureAssetClass } from "./lessee-asset-class.js";
+export { escalatedAmount } from "./lessee-escalation.js";
+export { ensureAssetClass } from "./lessee-asset-class.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { createBill } from "../accounting/bills.service.js";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
@@ -42,14 +46,6 @@ export type LeaseBillPlan = {
 export type GateResult = { ok: true } | { ok: false; reason: string };
 
 /** Pure: the escalated monthly amount for a month. */
-export function escalatedAmount(baseCents: number, commencement: string, periodStart: string, bps: number | null, everyMonths: number | null): number {
-  if (!bps || !everyMonths || everyMonths <= 0) return baseCents;
-  const [y0, m0] = commencement.split("-").map(Number);
-  const [y1, m1] = periodStart.split("-").map(Number);
-  const elapsed = Math.max(0, (y1 - y0) * 12 + (m1 - m0));
-  const steps = Math.floor(elapsed / everyMonths);
-  return Math.round(baseCents * Math.pow(1 + bps / 10000, steps));
-}
 
 /** Pure: the gate — vendor, unit/trailer, period, account, class on every line. */
 export function gateLeaseBill(plan: LeaseBillPlan): GateResult {
@@ -79,28 +75,6 @@ export function groupIntoBills(
 }
 
 /** Class = unit: the unit's / trailer's class in this entity, created on first use (name = unit / trailer number). */
-export async function ensureAssetClass(client: DbClient, opco: string, asset: { unitId?: string | null; equipmentId?: string | null; label: string }, actorUserId: string): Promise<string> {
-  const col = asset.unitId ? "unit_id" : "equipment_id";
-  const id = asset.unitId ?? asset.equipmentId;
-  const found = await client.query<{ id: string }>(
-    `SELECT id::text FROM catalogs.classes WHERE operating_company_id = $1::uuid AND ${col} = $2::uuid AND deactivated_at IS NULL LIMIT 1`,
-    [opco, id]
-  );
-  if (found.rows[0]) return found.rows[0].id;
-  const made = await client.query<{ id: string }>(
-    `INSERT INTO catalogs.classes (class_name, class_code, operating_company_id, ${col}, notes, created_by_user_id)
-     VALUES ($1, $1, $2::uuid, $3::uuid, 'Class = unit (lease bill engine)', $4::uuid)
-     ON CONFLICT DO NOTHING
-     RETURNING id::text`,
-    [asset.label, opco, id, actorUserId]
-  );
-  if (made.rows[0]) return made.rows[0].id;
-  const again = await client.query<{ id: string }>(
-    `SELECT id::text FROM catalogs.classes WHERE operating_company_id = $1::uuid AND ${col} = $2::uuid AND deactivated_at IS NULL LIMIT 1`,
-    [opco, id]
-  );
-  return again.rows[0].id;
-}
 
 /** Plans the month's bills for an entity (optionally one contract). Writes only classes (find-or-create). */
 export async function planLeaseBills(client: DbClient, opco: string, periodStart: string, actorUserId: string, leaseId?: string): Promise<LeaseBillPlan[]> {

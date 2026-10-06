@@ -22,6 +22,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const VOID_SERVICE = "apps/backend/src/accounting/void.service.ts";
 const RECON_ROUTES = "apps/backend/src/banking/reconciliation.routes.ts";
 const RECON_WORKLIST = "apps/backend/src/accounting/bank-recon/recon-worklist.service.ts";
+const UNMATCH_FILE = "apps/backend/src/accounting/bank-recon/unmatch-bank-transaction.service.ts";
 
 function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
@@ -34,7 +35,7 @@ function assert(cond, msg, errors) {
 // LST-F408 (Lead, 2026-10-04): the checks are a pure function of the two source TEXTS, so the selftest plants a defect into
 // a string — it never writes a file. (It used to writeFileSync the planted text into apps/backend/src/accounting/
 // void.service.ts and restore it in `finally`: any interrupted run, or a commit made meanwhile, carried the mutation.)
-export function run(voidService = read(VOID_SERVICE), reconRoutes = read(RECON_ROUTES), reconWorklist = read(RECON_WORKLIST)) {
+export function run(voidService = read(VOID_SERVICE), reconRoutes = read(RECON_ROUTES), reconWorklist = read(RECON_WORKLIST), unmatchSrc = read(UNMATCH_FILE)) {
   const errors = [];
 
   const resetBlockMatch = voidService.match(/const BANK_TX_UNMATCH_RESET_SQL = `[\s\S]*?`;/);
@@ -66,10 +67,10 @@ export function run(voidService = read(VOID_SERVICE), reconRoutes = read(RECON_R
     `${RECON_ROUTES}: the manual /unmatch route must delegate to unmatchBankTransaction (the one manual-unmatch door)`,
     errors
   );
-  const unmatchFn = reconWorklist.slice(reconWorklist.indexOf("export async function unmatchBankTransaction"));
+  const unmatchFn = unmatchSrc.slice(unmatchSrc.indexOf("export async function unmatchBankTransactionOnClient"));
   assert(
-    /export async function unmatchBankTransaction/.test(reconWorklist) && /review_state\s*=\s*'for_review'/.test(unmatchFn.slice(0, 6000)),
-    `${RECON_WORKLIST}: unmatchBankTransaction (the manual /unmatch door) must reset review_state = 'for_review' (the sibling behavior this guard keeps the void-cascade path in line with)`,
+    /export async function unmatchBankTransactionOnClient/.test(unmatchSrc) && /review_state\s*=\s*'for_review'/.test(unmatchFn.slice(0, 6000)),
+    `${UNMATCH_FILE}: unmatchBankTransactionOnClient (the manual /unmatch door) must reset review_state = 'for_review' (the sibling behavior this guard keeps the void-cascade path in line with)`,
     errors
   );
 
@@ -84,11 +85,12 @@ function selftest() {
   }
   // Fixture for the sibling route (LST-F407: a selftest never depends on the real tree's current state).
   const routesFixture = "await unmatchBankTransaction({ companyId, bankTransactionId });";
-  const worklistFixture = "export async function unmatchBankTransaction(input) { await q(`UPDATE banking.bank_transactions SET review_state = 'for_review'`); }";
-  const errors = run(planted, routesFixture, worklistFixture);
+  const worklistFixture = "export async function unmatchBankTransaction(input) { throw null; }";
+  const unmatchFixture = "export async function unmatchBankTransactionOnClient(client, input) { await q(`UPDATE banking.bank_transactions SET review_state = 'for_review'`); }";
+  const errors = run(planted, routesFixture, worklistFixture, unmatchFixture);
   // and the sibling door is checked too: a delegated service that stops resetting is caught.
-  const sibling = run(source, routesFixture, worklistFixture.replace("review_state = 'for_review'", "status = 'x'"));
-  if (!sibling.some((e) => e.includes("unmatchBankTransaction (the manual /unmatch door) must reset"))) {
+  const sibling = run(source, routesFixture, worklistFixture, unmatchFixture.replace("review_state = 'for_review'", "status = 'x'"));
+  if (!sibling.some((e) => e.includes("unmatchBankTransactionOnClient (the manual /unmatch door) must reset"))) {
     throw new Error("planted removal of the manual-unmatch reset not detected");
   }
   if (!errors.some((e) => e.includes("must reset review_state = 'for_review'"))) {
