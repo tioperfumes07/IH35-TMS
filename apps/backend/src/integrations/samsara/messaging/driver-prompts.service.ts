@@ -78,7 +78,14 @@ export async function postDriverPromptsForRecentFenceEvents(client: Db, operatin
       if (!at?.id) { skipped += 1; continue; }
       loadId = String(at.id);
     }
-    const loadNumber = String((await client.query(`SELECT load_number FROM mdata.loads WHERE id = $1::uuid`, [loadId])).rows[0]?.load_number ?? "");
+    const loadNumber = String(
+      (
+        await client.query(`SELECT load_number FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [
+          loadId,
+          operatingCompanyId,
+        ])
+      ).rows[0]?.load_number ?? ""
+    );
     const body = DRIVER_PROMPT_TEMPLATES[kind](place, loadNumber, new Date(String(e.occurred_at)));
     const thread = await getOrCreateLoadThread(client as never, { operating_company_id: operatingCompanyId, load_id: loadId, actor_user_id: null });
     const r = await postMessage(

@@ -74,8 +74,8 @@ async function stopsForUnit(
   toIso: string
 ): Promise<StopEventRow[]> {
   const unitRes = await client.query<{ unit_number: string | null }>(
-    `SELECT unit_number FROM mdata.units WHERE id = $1::uuid`,
-    [unitId]
+    `SELECT unit_number FROM mdata.units WHERE id = $1::uuid AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid`,
+    [unitId, operatingCompanyId]
   );
   const unitNumber = unitRes.rows[0]?.unit_number ?? null;
 
@@ -115,14 +115,14 @@ async function stopsForUnit(
         SELECT vda.driver_id::text AS driver_id,
                (d.first_name || ' ' || d.last_name) AS driver_label
           FROM telematics.vehicle_driver_assignments vda
-          LEFT JOIN mdata.drivers d ON d.id = vda.driver_id
+          LEFT JOIN mdata.drivers d ON d.id = vda.driver_id AND d.operating_company_id = $3::uuid
          WHERE vda.unit_id = $1::uuid
            AND vda.started_at <= $2::timestamptz
            AND (vda.ended_at IS NULL OR vda.ended_at >= $2::timestamptz)
          ORDER BY vda.started_at DESC
          LIMIT 1
       `,
-      [unitId, s.startedAt.toISOString()]
+      [unitId, s.startedAt.toISOString(), operatingCompanyId]
     );
     driverId = drv.rows[0]?.driver_id ?? null;
     driverLabel = drv.rows[0]?.driver_label ?? null;

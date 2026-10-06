@@ -530,8 +530,9 @@ export async function buildCompanySettlementReport(
         COUNT(*) FILTER (WHERE miles_practical IS NULL AND miles_shortest IS NULL)::text AS loads_with_neither
       FROM mdata.loads
       WHERE id = ANY($1::uuid[])
+        AND operating_company_id = $2::uuid
     `,
-    [loadIds.length ? loadIds : ["00000000-0000-0000-0000-000000000000"]]
+    [loadIds.length ? loadIds : ["00000000-0000-0000-0000-000000000000"], input.operatingCompanyId]
   );
   const milesRow = milesRes.rows[0];
   const totalMiles = Number(milesRow?.total_miles ?? 0);
@@ -558,9 +559,10 @@ export async function buildCompanySettlementReport(
       SELECT DISTINCT assigned_unit_id::text AS unit_id
       FROM mdata.loads
       WHERE id = ANY($1::uuid[])
+        AND operating_company_id = $2::uuid
         AND assigned_unit_id IS NOT NULL
     `,
-    [loadIds.length ? loadIds : ["00000000-0000-0000-0000-000000000000"]]
+    [loadIds.length ? loadIds : ["00000000-0000-0000-0000-000000000000"], input.operatingCompanyId]
   );
   const unitIds = unitIdsRes.rows.map((r) => r.unit_id);
 

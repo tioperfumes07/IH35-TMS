@@ -28,6 +28,7 @@ export type DriverRef = { table: string; column: string };
 
 const LOAD_SQL = `SELECT count(*)::int AS n FROM mdata.loads
   WHERE (assigned_primary_driver_id = $1::uuid OR assigned_secondary_driver_id = $1::uuid OR accepted_by_driver_id = $1::uuid)
+    AND operating_company_id = $2::uuid
     AND soft_deleted_at IS NULL`;
 
 /**
@@ -167,7 +168,7 @@ export async function previewDriverMerge(client: Db, args: { companyId: string; 
   if (!s || !m) throw new Error("driver_merge_driver_not_found");
   if (s.merged_into) blockers.push("The surviving profile was itself merged into another driver — merge into that one instead.");
   if (m.merged_into) blockers.push("This profile is already merged.");
-  const loads = async (id: string) => Number((await client.query(LOAD_SQL, [id])).rows[0]?.n ?? 0);
+  const loads = async (id: string) => Number((await client.query(LOAD_SQL, [id, args.companyId])).rows[0]?.n ?? 0);
   const sLoads = await loads(s.id);
   const mLoads = await loads(m.id);
   const open = async (id: string) =>

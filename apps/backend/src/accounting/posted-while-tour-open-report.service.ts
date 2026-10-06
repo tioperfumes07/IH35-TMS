@@ -34,7 +34,7 @@ async function jeLinesFor(client: DbClient, journalEntryId: string | null) {
     `
       SELECT a.account_number, a.account_name, p.debit_or_credit, p.amount_cents::bigint::text AS amount_cents
       FROM accounting.journal_entry_postings p
-      LEFT JOIN catalogs.accounts a ON a.id = p.account_id
+      LEFT JOIN catalogs.accounts a ON a.id = p.account_id AND a.operating_company_id = p.operating_company_id
       WHERE p.journal_entry_uuid = $1::uuid
       ORDER BY p.line_sequence ASC
     `,
