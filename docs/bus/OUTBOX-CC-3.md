@@ -2723,3 +2723,9 @@ live 113 FKs / 37 tables PASS. **D3 (row audit on 28 dispatch tables + RLS FORCE
 - 2026-10-04: ACCT-F403 items 1+2 on main (#25417 — door merged inside the AUTH-218 PR, disclosed); floor already live (202615330600). Correction-4 measured: 0 of 58 driver settlements deduct fuel. Entity question on the bus. AUTH-217/218 consumed (reversed my AUTH-215 settlement-line DEF postings), AUTH-216 withdrawn. Bus: 10-04-2026-CC-3-ACCT-F403-ITEMS-1-2-DONE-CORRECTION-4-MEASURED-ENTITY-QUESTION.md
 - 2026-10-04 (late): ACCT-F406 tiebreak #25422; freshness content-scoped #25428; 2170 engine fix (bill-payment post failures never swallowed, guard RULE 5) ready on cc-3/bill-payment-post-failure-never-swallowed — gate waits on AUTH-400 purge (2 settlements voided with live JE; CC-1 engine fix #25427). ROUND 393.3 four doors confirmed done (9fcc093af7). Task list: ~/Downloads/CURSOR-10-4-26-ASSIGNED-WORKED-CC-3.xlsx
 - 2026-10-05 (pause, token limits): MERGED #25459 post-purge measured-empty purge window + AUTH-400 recorded; #25450 bus. READY, unpushed (gate red only on post-purge empty guards not mine — verify-every-posting-has-its-spine-link, verify-draft-load-saves-and-is-visible): cc-3/bill-payment-post-failure-never-swallowed (2170), cc-3/relay-fill-link-engine (ACCT-F403 linker). DROPPED cc-3/void-document-is-whole (CC-1 landed the same fix, f2dd6fba30). 38 test rows: owner yes handed to CC-1's --scope=listed tooling (children list to owner first).
+
+### CC-3 · 15:10Z
+DID: handshake (Desktop: "ls: /Users/jorgemunoz/Desktop/CODERS/: Operation not permitted" — /add-dir is a user command; orders read from the repo)
+PROOF: origin/main sha I see = b8c2be6bd2
+BLOCKED: none
+NEXT: ROUND 435 legal contract PDFs by category, filed to hub both ways (PR gating now); 433 done: #25547 natural sign, #25550 cash-flow account_id, #25555 Reefer Diesel, money cells 89->55 (#25550/#25558/#25560); 4 stale NOW files archived in #25535 — do not restore
