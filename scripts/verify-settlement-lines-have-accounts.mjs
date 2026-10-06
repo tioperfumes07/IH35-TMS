@@ -42,6 +42,7 @@
  *   DATABASE_URL=<Neon prod> node scripts/verify-settlement-lines-have-accounts.mjs
  */
 import fs from "node:fs";
+import { exitIfMeasuredEmptyByPurge } from "./lib/purge-window.mjs";
 export const REQUIRES_LIVE_DB =
   "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
@@ -61,11 +62,12 @@ export function materializerForcesPendingWhenUnresolved(src) {
 
 export function materializerHasTypedDeductionRoles(src) {
   return (
-    /d\.deduction_type === "wire_fee" \|\| d\.deduction_type === "ach_fee"/.test(src) &&
+    // LST-F418: the materializer now switches on a local `deductionType` (same value as d.deduction_type).
+    /(?:d\.deduction_type|deductionType) === "wire_fee" \|\| (?:d\.deduction_type|deductionType) === "ach_fee"/.test(src) &&
     /roleKey = "bank_fee_recovery"/.test(src) &&
-    /d\.deduction_type === "company_vehicle_fuel"/.test(src) &&
+    /(?:d\.deduction_type|deductionType) === "company_vehicle_fuel"/.test(src) &&
     /roleKey = "company_fuel_advance_expense"/.test(src) &&
-    /d\.deduction_type === "escrow_contribution"/.test(src) &&
+    /(?:d\.deduction_type|deductionType) === "escrow_contribution"/.test(src) &&
     /resolveDriverEscrowLiabilityAccount\(/.test(src)
   );
 }
@@ -88,7 +90,7 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAIL — dropping the postingAccountId gate (approving with a NULL account) was not caught`);
     process.exit(1);
   }
-  const regressedTyping = good.replace(/roleKey = "company_fuel_advance_expense";/g, `roleKey = bucketRecoveryRoleKey(d.deduction_type);`);
+  const regressedTyping = good.replace(/roleKey = "company_fuel_advance_expense";/g, `roleKey = bucketRecoveryRoleKey(deductionType);`);
   if (materializerHasTypedDeductionRoles(regressedTyping)) {
     console.error(`${LABEL} SELFTEST FAIL — reverting company_vehicle_fuel to the generic bucketRecoveryRoleKey guess was not caught`);
     process.exit(1);
@@ -108,7 +110,11 @@ function selftest() {
   console.log(`${LABEL} SELFTEST OK — 3/3 plants rejected (unresolved-role gate, typed-role regression, missing typed union members)`);
 }
 
-if (process.argv.includes("--selftest")) selftest();
+// LST-F418: a selftest is pure — it must not fall through to the live DB check.
+if (process.argv.includes("--selftest")) {
+  selftest();
+  process.exit(process.exitCode ?? 0);
+}
 
 // Static half.
 if (!fs.existsSync(MATERIALIZE_PATH)) {
@@ -138,6 +144,10 @@ try {
     `SELECT count(*)::int AS n FROM driver_finance.settlement_lines sl JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id WHERE ds.operating_company_id = $1 AND sl.is_active = true`,
     [USMCA]
   );
+  // LST-F423 (owner 2026-10-06, "fix, never defer"): after AUTH-400 the book is empty BY ORDER (seeding freeze); a 0 here
+  // is the purge, not a masked read. EMPTY BY PURGE only while the window is open and only on this measured 0 — the
+  // first real row ends it.
+  exitIfMeasuredEmptyByPurge("verify-settlement-lines-have-accounts", "USMCA settlement lines", Number(control.rows[0].n));
   if (control.rows[0].n === 0) {
     console.error(`${LABEL}: FAIL — settlement_line_control=0, this connection cannot see USMCA's settlement lines (masked read, not a verdict)`);
     process.exit(1);

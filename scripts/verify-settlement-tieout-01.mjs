@@ -37,6 +37,7 @@
  *   DATABASE_URL=<Neon prod> node scripts/verify-settlement-tieout-01.mjs
  */
 import fs from "node:fs";
+import { exitIfMeasuredEmptyByPurge } from "./lib/purge-window.mjs";
 export const REQUIRES_LIVE_DB =
   "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
@@ -79,10 +80,13 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAIL — dropping miles_shortest from the seed script was not caught`);
     process.exit(1);
   }
-  const regressedBookLoad = goodBookLoad.replace(
-    "const resolvedEmptyRate = hasValidOverride\n      ? perLoadRateDollars * 100\n      : rate && rate.rate_empty_per_mile_cents",
-    "const resolvedEmptyRate = rate && rate.rate_empty_per_mile_cents"
-  );
+  // LST-F418: the fallback is now the one deadhead rule (deadheadRateCents, ACCT-F9793); the plant drops the override
+  // branch whatever the fallback reads, and throws if it cannot (an inert plant proves nothing).
+  const regressedBookLoad = goodBookLoad.replace(/const resolvedEmptyRate = hasValidOverride\s*\?\s*perLoadRateDollars \* 100\s*:\s*/, "const resolvedEmptyRate = ");
+  if (regressedBookLoad === goodBookLoad) {
+    console.error(`${LABEL} SELFTEST FAIL — deadhead override plant anchor not found (inert)`);
+    process.exit(1);
+  }
   if (bookLoadOverrideGovernsDeadhead(regressedBookLoad)) {
     console.error(`${LABEL} SELFTEST FAIL — reverting the deadhead override extension was not caught`);
     process.exit(1);
@@ -90,7 +94,11 @@ function selftest() {
   console.log(`${LABEL} SELFTEST OK — 2/2 plants rejected`);
 }
 
-if (process.argv.includes("--selftest")) selftest();
+// LST-F418: a selftest is pure — it must not fall through to the live DB check.
+if (process.argv.includes("--selftest")) {
+  selftest();
+  process.exit(process.exitCode ?? 0);
+}
 
 // Static half.
 const failures = [];
@@ -128,6 +136,12 @@ try {
     `SELECT count(*)::int AS n FROM mdata.loads WHERE operating_company_id = $1 AND load_number IN ('13512','13513')`,
     [USMCA]
   );
+  // LST-F423 (owner 2026-10-06, "fix, never defer"): after AUTH-400 the book is empty BY ORDER (seeding freeze); no USMCA load at all
+  // is the purge, not a masked read. EMPTY BY PURGE only while the window is open and only on this measured 0 — the
+  // first real row ends it.
+  // Measured on the whole USMCA load table, not the pair: loads existing without 13512/13513 still FAIL below.
+  const usmcaLoads = await client.query(`SELECT count(*)::int AS n FROM mdata.loads WHERE operating_company_id = $1`, [USMCA]);
+  exitIfMeasuredEmptyByPurge("verify-settlement-tieout-01", "USMCA loads", Number(usmcaLoads.rows[0].n));
   if (control.rows[0].n !== 2) {
     console.error(`${LABEL}: FAIL — load_control=${control.rows[0].n}, expected 2 (masked read or loads genuinely missing, not a verdict either way)`);
     process.exit(1);
