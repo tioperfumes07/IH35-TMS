@@ -50,14 +50,18 @@ export async function settleWorkOrderFinancialLinkage(
 
   // WO → bill (the reliable, migration-backed linkage). Active = revoked_at IS NULL.
   const billsRes = await client.query(
-    `SELECT id::text AS id, bill_date::text AS bill_date
+    `SELECT id::text AS id, bill_date::text AS bill_date, COALESCE(display_id, bill_number) AS label
        FROM accounting.bills
       WHERE operating_company_id = $1::uuid
         AND linked_work_order_uuid = $2::uuid
         AND revoked_at IS NULL`,
     [operatingCompanyId, workOrderId]
   );
-  const linkedBills = billsRes.rows.map((r) => ({ id: String(r.id), bill_date: String(r.bill_date ?? "") }));
+  const linkedBills = billsRes.rows.map((r) => ({
+    id: String(r.id),
+    bill_date: String(r.bill_date ?? ""),
+    label: r.label ? String(r.label) : "(unnumbered)",
+  }));
   const billIds = linkedBills.map((b) => b.id);
 
   // WO → expense linkage is migration-backed as of 202606290071 (accounting.expenses.linked_work_order_uuid).
@@ -117,6 +121,15 @@ export async function settleWorkOrderFinancialLinkage(
   let closedPeriod = false;
   const today = companyBusinessDate();
 
+  // LST-F416 (ROUND 390.3) — reversal memos name the work order and documents by their human numbers; the records
+  // themselves are linked structurally (source_transaction_type/id on every reversal line), never by a raw id in prose.
+  // Read only once a reversal is certain (after the linkage / flag / payments gates).
+  const woRes = await client.query(
+    `SELECT display_id FROM maintenance.work_orders WHERE operating_company_id = $1::uuid AND id = $2::uuid LIMIT 1`,
+    [operatingCompanyId, workOrderId]
+  );
+  const woLabel = woRes.rows[0]?.display_id ? String(woRes.rows[0].display_id) : "(unnumbered)";
+
   // Reverse + void each linked bill.
   for (const bill of linkedBills) {
     // Guard an empty/short bill_date (COALESCE(null) -> '') so resolveReversalDate gets a real ISO date.
@@ -128,7 +141,7 @@ export async function settleWorkOrderFinancialLinkage(
         entityType: "bill",
         entityId: bill.id,
         originalDate,
-        memo: `Void reversal of bill ${bill.id} (work order ${workOrderId} voided): ${reason}`,
+        memo: `Void reversal of bill ${bill.label} (work order ${woLabel} voided): ${reason}`,
       },
       { userId }
     );
@@ -155,8 +168,8 @@ export async function settleWorkOrderFinancialLinkage(
   // expense = one net-zero reversing JE via the shared engine (entityType 'expense'). Unposted expenses
   // (no GL) just flip to void. Atomic with the bills above + the WO flip.
   if (linkedExpenseCount > 0) {
-    const expRes = await client.query<{ id: string; transaction_date: string | null }>(
-      `SELECT id::text AS id, transaction_date::text AS transaction_date
+    const expRes = await client.query<{ id: string; transaction_date: string | null; expense_number: string | null }>(
+      `SELECT id::text AS id, transaction_date::text AS transaction_date, expense_number
          FROM accounting.expenses
         WHERE operating_company_id = $1::uuid
           AND linked_work_order_uuid = $2::uuid
@@ -172,7 +185,7 @@ export async function settleWorkOrderFinancialLinkage(
           entityType: "expense",
           entityId: exp.id,
           originalDate: td,
-          memo: `Void reversal of expense ${exp.id} (work order ${workOrderId} voided): ${reason}`,
+          memo: `Void reversal of expense ${exp.expense_number ?? "(unnumbered)"} (work order ${woLabel} voided): ${reason}`,
         },
         { userId }
       );

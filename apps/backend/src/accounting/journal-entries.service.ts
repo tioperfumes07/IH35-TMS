@@ -22,6 +22,18 @@ import {
   resolveJournalEntryTypeId,
   type QueryableClient,
 } from "./journal-entry-type-resolver.js";
+
+/**
+ * LST-F416 (ROUND 390.3) — the human words for an entry in a reversal / restore memo. The link to the original is
+ * structural (reverses_je_id, reversal_of_line_id), never a raw id in prose: an operator reads "journal entry of
+ * 2026-10-06 ("Fuel — unit T-101")", not a UUID.
+ */
+export function describeJournalEntry(entryDate: string | null | undefined, memo: string | null | undefined): string {
+  const date = (entryDate ?? "").slice(0, 10);
+  const label = (memo ?? "").trim().replace(/\s+/g, " ");
+  const short = label.length > 80 ? `${label.slice(0, 77)}...` : label;
+  return `journal entry of ${date || "(no date)"}${short ? ` ("${short}")` : ""}`;
+}
 export { hasJournalEntryTypeColumn, inferJournalEntryTypeCode, resolveJournalEntryTypeId, type QueryableClient };
 
 type JournalEntrySource = "manual" | "auto";
@@ -488,8 +500,8 @@ export async function reverseJournalEntryNoFlip(
   const reason = params.reason.trim();
   const hasLinkage = await hasReversalLinkageColumns(client);
 
-  const existingRes = await client.query<{ status: JournalEntryStatus; entry_date: string; reversed_by_je_id: string | null }>(
-    `SELECT status, entry_date::text AS entry_date, ${hasLinkage ? "reversed_by_je_id::text" : "NULL::text"} AS reversed_by_je_id
+  const existingRes = await client.query<{ status: JournalEntryStatus; entry_date: string; reversed_by_je_id: string | null; memo: string | null }>(
+    `SELECT status, entry_date::text AS entry_date, ${hasLinkage ? "reversed_by_je_id::text" : "NULL::text"} AS reversed_by_je_id, memo
        FROM accounting.journal_entries
       WHERE id = $1 AND operating_company_id = $2::uuid
       LIMIT 1 FOR UPDATE`,
@@ -556,7 +568,7 @@ export async function reverseJournalEntryNoFlip(
       entityType: "journal_entry",
       entityId: journalEntryId,
       originalDate: existing.entry_date,
-      memo: `Reversal of journal entry ${journalEntryId}: ${reason}`,
+      memo: `Reversal of ${describeJournalEntry(existing.entry_date, existing.memo)}: ${reason}`,
       currentDate: params.currentBusinessDate,
     },
     { userId: params.actorUserId }
@@ -601,8 +613,8 @@ export async function restoreReversedJournalEntryInClientTx(
 ): Promise<{ restore_journal_entry_id: string; restore_date: string; already_restored: boolean }> {
   const { operatingCompanyId, journalEntryId } = params;
   const reason = params.reason.trim();
-  const head = await client.query<{ status: string; entry_date: string; reversed_by_je_id: string | null; is_sample_data: boolean | null }>(
-    `SELECT status, entry_date::text AS entry_date, reversed_by_je_id::text, is_sample_data
+  const head = await client.query<{ status: string; entry_date: string; reversed_by_je_id: string | null; is_sample_data: boolean | null; memo: string | null }>(
+    `SELECT status, entry_date::text AS entry_date, reversed_by_je_id::text, is_sample_data, memo
        FROM accounting.journal_entries WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
     [journalEntryId, operatingCompanyId]
   );
@@ -689,7 +701,7 @@ export async function restoreReversedJournalEntryInClientTx(
     {
       operating_company_id: operatingCompanyId,
       entry_date: restoreDate,
-      memo: `Restore of journal entry ${journalEntryId}: ${reason}`,
+      memo: `Restore of ${describeJournalEntry(x.entry_date, x.memo)}: ${reason}`,
       source: "auto",
       is_sample_data: Boolean(x.is_sample_data),
       source_transaction_type: "journal_entry",

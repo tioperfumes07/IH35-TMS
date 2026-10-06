@@ -63,7 +63,6 @@ export const MEMO_ID_BASELINE = new Map([
   ["apps/backend/src/accounting/finance-hub-amortization-posting/loan-payment-posting.service.ts|memo|input.loanId", 1],
   ["apps/backend/src/accounting/from-load.ts|memo|input.loadId", 1],
   ["apps/backend/src/accounting/invoices.routes.ts|memo|params.data.id", 1],
-  ["apps/backend/src/accounting/journal-entries.service.ts|memo|journalEntryId", 1],
   ["apps/backend/src/accounting/lease-asc842/lease-posting.service.ts|description|a.fixed_asset_id", 2],
   ["apps/backend/src/accounting/reclassify/reclassify.service.ts|memo|batchId", 1],
   ["apps/backend/src/accounting/settlement-posting/settlement-posting.service.ts|memo|input.settlementId", 1],
@@ -78,8 +77,6 @@ export const MEMO_ID_BASELINE = new Map([
   ["apps/backend/src/payroll/driver-settlement.service.deprecated.ts|memo|settlement.id", 3],
   ["apps/backend/src/routes/safety/dot-inspections.ts|description|inspection.id", 2],
   ["apps/backend/src/safety/safety-v5.routes.ts|description|inspection.id", 1],
-  ["apps/backend/src/work-orders/work-orders.routes.ts|memo|bill.id,workOrderId", 1],
-  ["apps/backend/src/work-orders/work-orders.routes.ts|memo|exp.id,workOrderId", 1],
 ]);
 
 /** [{ rel, src }] -> Map(key -> count) of memo / description templates that interpolate an internal id. */
