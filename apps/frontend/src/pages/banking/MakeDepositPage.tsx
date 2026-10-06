@@ -359,7 +359,7 @@ export function MakeDepositPage() {
 
             {createMut.isError ? <p className=" text-red-700">{userFacingApiError(createMut.error, "Deposit failed")}</p> : null}
             {createMut.isSuccess ? (
-              <p className=" text-[#16A34A]">
+              <p className=" text-[var(--accent-green)]">
                 Saved{" "}
                 <EntityLink kind="deposit" id={createMut.data.deposit.id} label={createMut.data.deposit.display_id} />
                 {createMut.data.deposit.journal_entry_id ? (

@@ -117,7 +117,7 @@ function chipClassName(selected: boolean) {
   return `h-7 rounded-sm border px-2 text-xs ${
     selected
       ? "border-[#14314F] bg-[#14314F] text-white"
-      : "border-[#E5E7EB] bg-white text-[#1F2A44]"
+      : "border-[#E5E7EB] bg-[var(--surface-unselected)] text-[#1F2A44]"
   }`;
 }
 
@@ -504,7 +504,7 @@ export function MatchDrawer({
                   className={`h-7 rounded-sm border px-2 text-xs ${
                     selected
                       ? "border-[#14314F] bg-[#14314F] text-white"
-                      : "border-[#E5E7EB] bg-white text-[#1F2A44]"
+                      : "border-[#E5E7EB] bg-[var(--surface-unselected)] text-[#1F2A44]"
                   } disabled:cursor-not-allowed disabled:opacity-40`}
                   onClick={() => {
                     if (match) setWriteOffAccountId(match.id);

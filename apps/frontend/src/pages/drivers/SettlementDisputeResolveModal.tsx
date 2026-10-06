@@ -106,7 +106,7 @@ export function SettlementDisputeResolveModal({ dispute, onClose, onResolve }: S
                 data-testid={`settlement-dispute-resolve-outcome-${o.id}`}
                 onClick={() => setOutcome(o.id)}
                 className={`rounded border px-2 py-1 text-xs font-medium ${
-                  outcome === o.id ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-300 bg-white text-gray-700"
+                  outcome === o.id ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-700"
                 }`}
               >
                 {o.label}

@@ -397,7 +397,7 @@ export function TripPairingBoardPage() {
               type="button"
               onClick={() => setSegment(s.key)}
               className={`border-l border-[#E5E7EB] px-2.5 py-1 text-xs font-semibold first:border-l-0 ${
-                segment === s.key ? "bg-[#1F2A44] text-white" : "bg-white text-[#1F2A44] hover:bg-[#E5E7EB]"
+                segment === s.key ? "bg-[#1F2A44] text-white" : "bg-[var(--surface-unselected)] text-[#1F2A44] hover:bg-[var(--surface-hover)]"
               }`}
             >
               {s.text}

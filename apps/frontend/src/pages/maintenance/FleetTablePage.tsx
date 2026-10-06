@@ -397,7 +397,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
             aria-selected={kindFilter === tab.key}
             onClick={() => setKind(tab.key)}
             className={`${BUTTON_MD_SIZE_CLASS} rounded-sm border ${
-              kindFilter === tab.key ? "border-slate-500 bg-slate-50 text-slate-800" : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+              kindFilter === tab.key ? "border-slate-500 bg-slate-50 text-slate-800" : "border-gray-200 bg-[var(--surface-unselected)] text-gray-600 hover:bg-[var(--surface-hover)]"
             }`}
           >
             {tab.label}
@@ -474,7 +474,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
                 className={`inline-flex h-7 items-center gap-1 rounded-sm border px-2 text-xs font-medium ${
                   active
                     ? "border-[#14314F] bg-[#14314F] text-white"
-                    : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                    : "border-gray-300 bg-[var(--surface-unselected)] text-gray-700 hover:bg-[var(--surface-hover)]"
                 }`}
                 aria-pressed={active}
               >

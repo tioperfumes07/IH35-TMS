@@ -347,8 +347,8 @@ export function AccountsPayableAgingPage() {
     <AccountingSubNavWrapper title="Accounts Payable" subtitle={apSubtitle}>
       <div className="mb-3 flex flex-wrap items-end gap-3 print:hidden" data-ap-aging-filter-toolbar="collapsed">
         <div className="inline-flex overflow-hidden rounded-sm border border-slate-300">
-          <button type="button" className={`px-3 py-1.5 text-xs ${view === "by_vendor" ? "bg-slate-800 text-white" : "bg-white text-slate-700"}`} onClick={() => setView("by_vendor")}>By Vendor</button>
-          <button type="button" className={`px-3 py-1.5 text-xs ${view === "by_type" ? "bg-slate-800 text-white" : "bg-white text-slate-700"}`} onClick={() => setView("by_type")}>By Vendor Type</button>
+          <button type="button" className={`px-3 py-1.5 text-xs ${view === "by_vendor" ? "bg-slate-800 text-white" : "bg-[var(--surface-unselected)] text-slate-700"}`} onClick={() => setView("by_vendor")}>By Vendor</button>
+          <button type="button" className={`px-3 py-1.5 text-xs ${view === "by_type" ? "bg-slate-800 text-white" : "bg-[var(--surface-unselected)] text-slate-700"}`} onClick={() => setView("by_type")}>By Vendor Type</button>
         </div>
 
         <CollapsedListFilters
@@ -437,7 +437,7 @@ export function AccountsPayableAgingPage() {
               aria-pressed={active}
               onClick={() => setBucketFilter(active ? "all" : k)}
               className={`flex flex-col items-start rounded-sm border px-3 py-1.5 text-left text-xs ${
-                active ? "border-slate-800 bg-slate-800 text-white" : "border-slate-200 bg-white text-slate-700 hover:border-slate-400"
+                active ? "border-slate-800 bg-slate-800 text-white" : "border-slate-200 bg-[var(--surface-unselected)] text-slate-700 hover:border-slate-400"
               }`}
             >
               <span className={`text-xs font-semibold uppercase tracking-wide ${active ? "text-slate-200" : "text-slate-500"}`}>

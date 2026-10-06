@@ -61,7 +61,7 @@ export function ReconcilerExceptionsPage() {
         render: (row) => {
           const href = recordHref(row);
           return href ? (
-            <Link to={href} className="font-medium text-blue-700 hover:underline">
+            <Link to={href} className="font-medium text-[var(--accent-green)] hover:underline">
               {row.entity_label}
             </Link>
           ) : (

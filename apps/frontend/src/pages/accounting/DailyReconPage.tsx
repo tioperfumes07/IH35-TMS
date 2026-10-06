@@ -134,7 +134,7 @@ export function DailyReconPage() {
             type="button"
             onClick={() => setMatchStatus(matchStatus === s ? "all" : s)}
             className={`rounded border px-3 py-2 text-left text-xs transition-colors ${
-              matchStatus === s ? "border-slate-400 bg-slate-100" : "border-gray-200 bg-white hover:bg-gray-50"
+              matchStatus === s ? "border-slate-400 bg-slate-100" : "border-gray-200 bg-[var(--surface-unselected)] hover:bg-[var(--surface-hover)]"
             }`}
           >
             <p className="font-semibold text-gray-900">{count}</p>

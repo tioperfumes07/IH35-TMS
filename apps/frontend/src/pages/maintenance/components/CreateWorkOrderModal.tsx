@@ -77,8 +77,8 @@ function FieldV5({ label, children }: { label: string; children: ReactNode }) {
 function SegYesNo({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
   return (
     <div data-testid="wo-oos-seg" className="inline-flex h-[30px] overflow-hidden rounded-[5px] border border-[#E5E7EB]">
-      <button type="button" onClick={() => onChange(true)} className={`px-3 text-xs font-semibold ${value ? "bg-[#b91c1c] text-white" : "bg-white text-inactive"}`}>Yes</button>
-      <button type="button" onClick={() => onChange(false)} className={`px-3 text-xs font-semibold ${!value ? "bg-[#1d2b45] text-white" : "bg-white text-inactive"}`}>No</button>
+      <button type="button" onClick={() => onChange(true)} className={`px-3 text-xs font-semibold ${value ? "bg-[#b91c1c] text-white" : "bg-[var(--surface-unselected)] text-inactive"}`}>Yes</button>
+      <button type="button" onClick={() => onChange(false)} className={`px-3 text-xs font-semibold ${!value ? "bg-[#1d2b45] text-white" : "bg-[var(--surface-unselected)] text-inactive"}`}>No</button>
     </div>
   );
 }
@@ -136,7 +136,7 @@ function AssetLocationMap({ parts, onAdd, onChange, onRemove }: { parts: Seriali
                   <div className="flex flex-wrap gap-1">
                     {cat.positions.map((pos) => (
                       <button type="button" key={pos} onClick={() => onChange(i, { position_code: pos })}
-                        className={`rounded-sm border px-2 py-0.5 text-xs font-bold ${sp.position_code === pos ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-[#4B5563] bg-white text-[#4B5563]"}`}>{pos}</button>
+                        className={`rounded-sm border px-2 py-0.5 text-xs font-bold ${sp.position_code === pos ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-[#4B5563] bg-[var(--surface-unselected)] text-[#4B5563]"}`}>{pos}</button>
                     ))}
                   </div>
                 </div>
@@ -1321,7 +1321,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                   const on = paymentTiming === p.v;
                   return (
                     <button type="button" key={p.v} onClick={() => form.setValue("payment_timing", p.v)}
-                      className={`flex-1 rounded-md border p-1.5 text-center ${on ? "border-[#1d2b45] bg-[#1d2b45] text-white" : "border-[#E5E7EB] bg-white text-sidebar-active"}`}>
+                      className={`flex-1 rounded-md border p-1.5 text-center ${on ? "border-[#1d2b45] bg-[#1d2b45] text-white" : "border-[#E5E7EB] bg-[var(--surface-unselected)] text-sidebar-active"}`}>
                       <div className="text-xs font-extrabold">{p.h}</div>
                       <div className="text-xs opacity-75">{p.s}</div>
                     </button>

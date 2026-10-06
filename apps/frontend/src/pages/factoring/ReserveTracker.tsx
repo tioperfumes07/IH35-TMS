@@ -304,7 +304,7 @@ export function ReserveTracker() {
               className={`cursor-pointer rounded border p-3 text-xs transition-colors ${
                 selectedFactorId === bal.factor_id
                   ? "border-slate-300 bg-slate-100"
-                  : "border-gray-200 bg-white hover:border-slate-300"
+                  : "border-gray-200 bg-[var(--surface-unselected)] hover:border-slate-300"
               }`}
               onClick={() => setSelectedFactorId(bal.factor_id)}
             >

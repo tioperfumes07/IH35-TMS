@@ -1299,7 +1299,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
               </label>
             </div>
             {isBillPayment ? (
-              <div className="mb-2 border border-blue-200 bg-blue-50 px-2 py-1.5 text-xs text-blue-800">
+              <div className="mb-2 border border-[var(--border-default)] bg-[var(--accent-green-soft)] px-2 py-1.5 text-xs text-[var(--text-primary)]">
                 This check will be saved as a Bill Payment (Check) — the category/item lines below are not used.
               </div>
             ) : null}
@@ -1403,7 +1403,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                   </span>
                   <button
                     type="button"
-                    className="font-semibold text-blue-700 hover:underline"
+                    className="font-semibold text-[var(--accent-green)] hover:underline"
                     data-b4-clear-payment="1"
                     data-testid="b4-clear-payment"
                     onClick={clearBillPayments}
@@ -1438,7 +1438,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                   <div className="flex justify-end border-b border-gray-100 px-2 py-1">
                     <button
                       type="button"
-                      className="text-xs font-semibold text-blue-700 hover:underline"
+                      className="text-xs font-semibold text-[var(--accent-green)] hover:underline"
                       data-b4-add-all="1"
                       data-testid="b4-add-all"
                       onClick={addAllOpenBillsToPay}
@@ -1455,7 +1455,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                           <EntityLink kind="bill" id={b.id} label={b.display_id ?? b.bill_number ?? undefined} /> · {formatDateUS(b.bill_date)} · {formatMoneyCents(remaining)}
                         </span>
                         <span className="flex items-center gap-2">
-                          <button type="button" className="font-semibold text-blue-700 hover:underline" onClick={() => addBillToPay(b)}>
+                          <button type="button" className="font-semibold text-[var(--accent-green)] hover:underline" onClick={() => addBillToPay(b)}>
                             Add
                           </button>
                           <Link
@@ -1646,7 +1646,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
           />
           <div className="flex items-center justify-between border-t border-gray-100 px-2 py-2">
             <div className="flex items-center gap-3">
-              <button type="button" className="text-xs font-semibold text-blue-700 hover:underline" onClick={() => addLine("category")}>
+              <button type="button" className="text-xs font-semibold text-[var(--accent-green)] hover:underline" onClick={() => addLine("category")}>
                 + Add lines
               </button>
               <button type="button" className="text-xs font-semibold text-gray-500 hover:underline" onClick={clearAllLines}>
@@ -1662,7 +1662,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
         {/* Item details grid (spec step 4) -- QBO collapses this section entirely until it has a
             line; "+ Add item lines" is the only thing shown while it's empty. */}
         {itemLines.length === 0 ? (
-          <button type="button" className="self-start text-xs font-semibold text-blue-700 hover:underline" onClick={() => addLine("item")}>
+          <button type="button" className="self-start text-xs font-semibold text-[var(--accent-green)] hover:underline" onClick={() => addLine("item")}>
             + Add item lines
           </button>
         ) : (
@@ -1677,7 +1677,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
               enableColumnReorder={false}
             />
             <div className="border-t border-gray-100 px-2 py-2">
-              <button type="button" className="text-xs font-semibold text-blue-700 hover:underline" onClick={() => addLine("item")}>
+              <button type="button" className="text-xs font-semibold text-[var(--accent-green)] hover:underline" onClick={() => addLine("item")}>
                 + Add lines
               </button>
             </div>

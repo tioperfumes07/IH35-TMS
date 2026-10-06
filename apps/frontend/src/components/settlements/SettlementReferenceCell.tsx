@@ -41,7 +41,7 @@ export function SettlementReferenceCell({ reference }: { reference?: SettlementR
 
   if (!id) return <span data-testid="settlement-reference-cell" className="text-gray-400">Not on a tour</span>;
 
-  const linkClass = "font-medium tabular-nums text-[#2563EB] hover:underline";
+  const linkClass = "font-medium tabular-nums text-[var(--accent-green)] hover:underline";
   const to = `/settlements/${id}`;
 
   if (number) {

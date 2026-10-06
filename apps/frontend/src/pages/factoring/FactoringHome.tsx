@@ -599,7 +599,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
         <button
           type="button"
           data-testid={`${testIdPrefix}-view-summary`}
-          className={`px-2.5 py-1 text-xs font-semibold ${view === "summary" ? "bg-[#1F2A44] text-white" : "bg-white text-[#1F2A44] hover:bg-[#F7F8FA]"}`}
+          className={`px-2.5 py-1 text-xs font-semibold ${view === "summary" ? "bg-[#1F2A44] text-white" : "bg-[var(--surface-unselected)] text-[#1F2A44] hover:bg-[var(--surface-hover)]"}`}
           aria-pressed={view === "summary"}
           onClick={() => setView("summary")}
         >
@@ -608,7 +608,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
         <button
           type="button"
           data-testid={`${testIdPrefix}-view-detail`}
-          className={`border-l border-gray-300 px-2.5 py-1 text-xs font-semibold ${view === "detail" ? "bg-[#1F2A44] text-white" : "bg-white text-[#1F2A44] hover:bg-[#F7F8FA]"}`}
+          className={`border-l border-gray-300 px-2.5 py-1 text-xs font-semibold ${view === "detail" ? "bg-[#1F2A44] text-white" : "bg-[var(--surface-unselected)] text-[#1F2A44] hover:bg-[var(--surface-hover)]"}`}
           aria-pressed={view === "detail"}
           onClick={() => setView("detail")}
         >
@@ -2347,7 +2347,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               <button
                 type="button"
                 data-testid="factoring-fees-paid-view-open-invoices"
-                className={`px-2.5 py-1 text-xs font-semibold ${feesPaidView === "open_invoices" ? "bg-[#1F2A44] text-white" : "bg-white text-[#1F2A44] hover:bg-[#F7F8FA]"}`}
+                className={`px-2.5 py-1 text-xs font-semibold ${feesPaidView === "open_invoices" ? "bg-[#1F2A44] text-white" : "bg-[var(--surface-unselected)] text-[#1F2A44] hover:bg-[var(--surface-hover)]"}`}
                 aria-pressed={feesPaidView === "open_invoices"}
                 onClick={() => setFeesPaidView("open_invoices")}
               >
@@ -2356,7 +2356,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               <button
                 type="button"
                 data-testid="factoring-fees-paid-view-all-fees"
-                className={`border-l border-gray-300 px-2.5 py-1 text-xs font-semibold ${feesPaidView === "all_fees" ? "bg-[#1F2A44] text-white" : "bg-white text-[#1F2A44] hover:bg-[#F7F8FA]"}`}
+                className={`border-l border-gray-300 px-2.5 py-1 text-xs font-semibold ${feesPaidView === "all_fees" ? "bg-[#1F2A44] text-white" : "bg-[var(--surface-unselected)] text-[#1F2A44] hover:bg-[var(--surface-hover)]"}`}
                 aria-pressed={feesPaidView === "all_fees"}
                 onClick={() => setFeesPaidView("all_fees")}
               >
@@ -2804,7 +2804,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 <button
                   type="button"
                   data-testid="factoring-statements-view-summary"
-                  className={`px-2.5 py-1 text-xs font-semibold ${statementsView === "summary" ? "bg-[#1F2A44] text-white" : "bg-white text-[#1F2A44] hover:bg-[#F7F8FA]"}`}
+                  className={`px-2.5 py-1 text-xs font-semibold ${statementsView === "summary" ? "bg-[#1F2A44] text-white" : "bg-[var(--surface-unselected)] text-[#1F2A44] hover:bg-[var(--surface-hover)]"}`}
                   aria-pressed={statementsView === "summary"}
                   onClick={() => setStatementsView("summary")}
                 >
@@ -2813,7 +2813,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 <button
                   type="button"
                   data-testid="factoring-statements-view-detail"
-                  className={`border-l border-gray-300 px-2.5 py-1 text-xs font-semibold ${statementsView === "detail" ? "bg-[#1F2A44] text-white" : "bg-white text-[#1F2A44] hover:bg-[#F7F8FA]"}`}
+                  className={`border-l border-gray-300 px-2.5 py-1 text-xs font-semibold ${statementsView === "detail" ? "bg-[#1F2A44] text-white" : "bg-[var(--surface-unselected)] text-[#1F2A44] hover:bg-[var(--surface-hover)]"}`}
                   aria-pressed={statementsView === "detail"}
                   onClick={() => setStatementsView("detail")}
                 >

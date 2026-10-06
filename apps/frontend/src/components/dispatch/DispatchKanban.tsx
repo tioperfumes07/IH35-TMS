@@ -2186,7 +2186,7 @@ export function DispatchKanban({
               type="button"
               onClick={() => setDensity(mode)}
               className={`rounded border px-2 py-0.5 font-semibold capitalize ${
-                density === mode ? "border-slate-300 bg-[#1F2A44] text-white" : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+                density === mode ? "border-slate-300 bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-600 hover:bg-[var(--surface-hover)]"
               }`}
               data-testid={`kanban-density-${mode}`}
             >

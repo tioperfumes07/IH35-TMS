@@ -303,7 +303,7 @@ export function LegalMatterDetailPage() {
               <button
                 key={t}
                 type="button"
-                className={`rounded-sm px-3 py-1 text-xs ${tab === t ? "bg-gray-900 text-white" : "border border-gray-200 bg-white"}`}
+                className={`rounded-sm px-3 py-1 text-xs ${tab === t ? "bg-gray-900 text-white" : "border border-gray-200 bg-[var(--surface-unselected)]"}`}
                 onClick={() => setTab(t)}
               >
                 {t}

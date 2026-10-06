@@ -228,7 +228,7 @@ export function SamsaraIntegrationPage() {
           <div className="flex gap-1" role="group" aria-label="Samsara driver status">
             {(["active", "deactivated", "all"] as const).map((status) => (
               <button key={status} type="button" data-testid={`samsara-roster-filter-${status}`} onClick={() => setRosterStatus(status)}
-                className={`h-7 rounded-sm border px-2 text-xs font-medium capitalize ${rosterStatus === status ? "border-slate-800 bg-slate-800 text-white" : "border-slate-300 bg-white text-slate-700"}`}>
+                className={`h-7 rounded-sm border px-2 text-xs font-medium capitalize ${rosterStatus === status ? "border-slate-800 bg-slate-800 text-white" : "border-slate-300 bg-[var(--surface-unselected)] text-slate-700"}`}>
                 {status}
               </button>
             ))}

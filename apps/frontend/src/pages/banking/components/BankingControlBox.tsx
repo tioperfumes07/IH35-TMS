@@ -8,7 +8,7 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
  * 2px (rounded-sm), text primary #0F1219 / secondary #1F2A44 / muted #6B7280, 28px control height.
  * Active state uses navy #14314F: the ONE locked "strong dark" token left in the baseline after
  * #1F2A44/#1B2333 were explicitly retired 2026-09-04 (NAVY-NOT-BLACK LAW) for reading near-black;
- * green #16A34A is reserved for primary-action/status (a different semantic), so it is not reused
+ * green is reserved for primary-action/status (a different semantic), so it is not reused
  * as an active-tab fill here. No new colors are invented — verify-banking-controls-boxed-and-
  * tokenized.mjs asserts every hex literal in the banking control components resolves to one of the
  * seven named here, and that this file is the only place a banking control box renders from.

@@ -843,7 +843,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
                   className={
                     wizardStep === step.id
                       ? "rounded-sm bg-slate-800 px-2 py-1 text-xs font-semibold text-white"
-                      : "rounded-sm bg-white px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200"
+                      : "rounded-sm bg-[var(--surface-unselected)] px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200"
                   }
                 >
                   {`${step.id}. ${step.label}`}

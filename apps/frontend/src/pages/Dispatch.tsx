@@ -527,7 +527,7 @@ export function DispatchPage({
                 className={`inline-flex h-7 items-center justify-center border px-3 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${
                   tab.active
                     ? "border-[#14314F] bg-[#14314F] text-white"
-                    : "border-gray-300 bg-white text-[#0F1219] hover:bg-gray-50"
+                    : "border-gray-300 bg-[var(--surface-unselected)] text-[#0F1219] hover:bg-[var(--surface-hover)]"
                 }`}
                 style={{ borderRadius: 2 }}
               >
@@ -611,7 +611,7 @@ export function DispatchPage({
             className={`inline-flex h-7 items-center justify-center gap-1 rounded-sm border px-3 text-xs font-medium transition ${
               draftsOnly
                 ? "border-[#14314F] bg-[#14314F] text-white"
-                : "border-gray-300 bg-white text-[#0F1219] hover:bg-gray-50"
+                : "border-gray-300 bg-[var(--surface-unselected)] text-[#0F1219] hover:bg-[var(--surface-hover)]"
             }`}
           >
             Drafts

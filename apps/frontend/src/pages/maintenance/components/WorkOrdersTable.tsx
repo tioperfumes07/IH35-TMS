@@ -306,7 +306,7 @@ export function WorkOrdersTable({
                     <label
                       key={code}
                       className={`inline-flex h-7 cursor-pointer items-center gap-1 rounded-sm border px-2 text-xs ${
-                        on ? "border-[#14314F] bg-[#14314F] text-white" : "border-gray-300 bg-white text-gray-700"
+                        on ? "border-[#14314F] bg-[#14314F] text-white" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-700"
                       }`}
                     >
                       <input

@@ -21,7 +21,7 @@ const CTRL = "de-ctrl h-[34px] rounded-sm border border-[#D8E0E8] bg-white px-2 
 
 function clipClass(filled: boolean) {
   return `inline-flex h-[34px] w-[34px] items-center justify-center rounded-sm border text-[12px] ${
-    filled ? "border-[#14314F] bg-[#14314F] text-white" : "border-[#D8E0E8] bg-white text-[#64748B]"
+    filled ? "border-[#14314F] bg-[#14314F] text-white" : "border-[#D8E0E8] bg-[var(--surface-unselected)] text-[#64748B]"
   }`;
 }
 

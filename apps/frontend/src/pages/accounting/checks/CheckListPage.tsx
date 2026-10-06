@@ -72,7 +72,7 @@ export function CheckListPage() {
   const columns: Array<ParityColumn<AllChecksRow>> = [
     {
       key: "check_number", label: "Check #", sortable: true, sortValue: (r) => Number(r.check_number ?? 0),
-      render: (r) => <Link to={documentHref(r)} className="text-blue-700 underline">{r.check_number ?? "To print"}</Link>,
+      render: (r) => <Link to={documentHref(r)} className="text-[var(--accent-green)] underline">{r.check_number ?? "To print"}</Link>,
     },
     { key: "check_date", label: "Date", sortable: true, sortValue: (r) => r.check_date ?? "", render: (r) => (r.check_date ? formatDateUS(r.check_date) : "—") },
     { key: "kind", label: "Type", sortable: true, sortValue: (r) => KIND_LABEL[r.kind], render: (r) => KIND_LABEL[r.kind] },

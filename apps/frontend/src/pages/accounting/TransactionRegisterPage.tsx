@@ -269,7 +269,7 @@ export function TransactionRegisterPage() {
                   type="button"
                   onClick={() => staged.setDraft({ ...staged.draft, sources: active ? staged.draft.sources.filter((source) => source !== opt.value) : [...staged.draft.sources, opt.value] })}
                   className={`rounded-full border px-3 py-0.5 text-xs ${
-                    active ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-slate-300 bg-white text-slate-600"
+                    active ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-slate-300 bg-[var(--surface-unselected)] text-slate-600"
                   }`}
                 >
                   {opt.label}

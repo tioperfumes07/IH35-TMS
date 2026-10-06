@@ -238,10 +238,10 @@ export function ReconciliationTabContent({
             accountStatus.map((row) => {
               const selected = row.account.id === selectedAccountId;
               const tone = row.neverReconciled
-                ? "border-amber-300 bg-amber-50"
+                ? "border-[var(--border-strong)] bg-[var(--surface-hover)]"
                 : row.openCount > 0
-                  ? "border-sky-300 bg-sky-50"
-                  : "border-gray-200 bg-white";
+                  ? "border-[var(--border-default)] bg-[var(--accent-green-soft)]"
+                  : "border-[var(--border-default)] bg-[var(--surface-unselected)]";
               return (
                 <button
                   key={row.account.id}
@@ -266,7 +266,7 @@ export function ReconciliationTabContent({
                     </p>
                   ) : null}
                   {!row.account.ledgerAccountId ? (
-                    <p className="mt-1 text-center text-amber-800">Cash GL unbound</p>
+                    <p className="mt-1 text-center text-[var(--text-primary)]">Cash GL unbound</p>
                   ) : null}
                 </button>
               );
@@ -306,7 +306,7 @@ export function ReconciliationTabContent({
                 className={`mt-0.5 text-xs font-semibold tabular-nums ${
                   cell.emphasize
                     ? cell.zero
-                      ? "text-[#16A34A]"
+                      ? "text-[var(--accent-green)]"
                       : cell.warn
                         ? "text-red-700"
                         : "text-[#0F1219]"

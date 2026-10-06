@@ -267,7 +267,7 @@ export function EntityAuditHistoryTab({ operatingCompanyId, entityType, entityId
         type="button"
         onClick={() => setVoidsOnly((v) => !v)}
         className={`text-xs px-2 py-1 rounded border flex items-center gap-1 mt-4 ${
-          voidsOnly ? "bg-red-100 border-red-300 text-red-700" : "bg-white hover:bg-gray-100"
+          voidsOnly ? "bg-red-100 border-red-300 text-red-700" : "bg-[var(--surface-unselected)] hover:bg-[var(--surface-hover)]"
         }`}
       >
         <AlertTriangle size={12} />
