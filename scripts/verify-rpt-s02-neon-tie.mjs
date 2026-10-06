@@ -28,8 +28,18 @@ const TB_SERVICE = "apps/backend/src/accounting/trial-balance.service.ts";
 const PL_SERVICE = "apps/backend/src/accounting/profit-loss.service.ts";
 const BS_SERVICE = "apps/backend/src/accounting/balance-sheet.service.ts";
 
-const JEP_FILTER =
+// ACCT-F2026100601: the statements select postings through THE ONE ledger rule (accounting/ledger-membership.ts:
+// not voided · not sample data · no batch or a posted/reversed batch). A service passes when it imports that rule and
+// uses it; the old hand-typed predicate also still passes here, but verify-one-ledger-membership-rule fails any
+// re-typed copy, so the two guards together allow exactly one shape.
+const LEGACY_JEP_FILTER =
   /je\.status\s*<>\s*'voided'[\s\S]*p\.posting_batch_id IS NULL OR pb\.batch_status IN \('posted', 'reversed'\)/;
+const JEP_FILTER = {
+  test: (src) =>
+    LEGACY_JEP_FILTER.test(src) ||
+    (/import\s*\{[^}]*LEDGER_POSTING_COUNTS_SQL[^}]*\}\s*from\s*["'][./]*ledger-membership\.js["']/.test(src) &&
+      /\$\{LEDGER_POSTING_COUNTS_SQL\}/.test(src)),
+};
 
 function read(relativePath, root = ROOT) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");

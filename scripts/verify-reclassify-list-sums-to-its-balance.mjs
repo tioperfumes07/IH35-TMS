@@ -21,7 +21,9 @@ const PAGE = "apps/frontend/src/pages/accounting/ReclassifyTransactionsPage.tsx"
 export function check({ service, page }) {
   const f = [];
   const where = service.slice(service.indexOf("export function buildLineWhere("), service.indexOf("const LINE_FROM"));
-  if (!/je\.status <> 'voided'/.test(where) || !/\(p\.posting_batch_id IS NULL OR pb\.batch_status IN \('posted', 'reversed'\)\)/.test(where)) f.push(`${SERVICE}: buildLineWhere must use the balance function's predicate (status <> 'voided' + batch posted/reversed)`);
+  // ACCT-F2026100601: the list selects postings through THE ONE ledger rule (accounting/ledger-membership.ts), the same
+  // three clauses fn_account_balances_as_of holds — never a re-typed copy (verify-one-ledger-membership-rule).
+  if (!/LEDGER_POSTING_COUNTS_SQL/.test(where) || !/import\s*\{[^}]*LEDGER_POSTING_COUNTS_SQL[^}]*\}\s*from\s*["']\.\.\/ledger-membership\.js["']/.test(service)) f.push(`${SERVICE}: buildLineWhere must select postings through LEDGER_POSTING_COUNTS_SQL from ../ledger-membership.js (the balance function's rule)`);
   if (/reversed_by_line_id IS NULL|reversal_of_line_id IS NULL|je\.status = 'posted'/.test(where)) f.push(`${SERVICE}: buildLineWhere hides rows the balance counts (reversed / reversal / posted-only)`);
   if (!/const openAccount = \(id: string \| null\) => \{ const ids = id \? \[id\] : \[\]; setFilter\("accountIds", ids\); runFind\(ids\); \}/.test(page)) f.push(`${PAGE}: clicking an account must load its transactions (openAccount -> runFind)`);
   if (!/onClick=\{\(\) => openAccount\(a\.account_id\)\}/.test(page)) f.push(`${PAGE}: the account rows must call openAccount on click`);
@@ -37,8 +39,8 @@ if (process.argv.includes("--selftest")) {
   const fails = [];
   if (check(real).length) fails.push(`tree not clean: ${check(real).join("; ")}`);
   const plants = [
-    ["list hides reversed lines again", { ...real, service: real.service.replace("`je.status <> 'voided'`,", "`je.status <> 'voided'`, `p.reversed_by_line_id IS NULL`,") }],
-    ["list posted-only again", { ...real, service: real.service.replace("`je.status <> 'voided'`,", "`je.status = 'posted'`,") }],
+    ["list hides reversed lines again", { ...real, service: real.service.replace("    LEDGER_POSTING_COUNTS_SQL,\n", "    LEDGER_POSTING_COUNTS_SQL, `p.reversed_by_line_id IS NULL`,\n") }],
+    ["list posted-only again", { ...real, service: real.service.replace("    LEDGER_POSTING_COUNTS_SQL,\n", "    `je.status = 'posted'`,\n") }],
     ["click only highlights", { ...real, page: real.page.replace('const openAccount = (id: string | null) => { const ids = id ? [id] : []; setFilter("accountIds", ids); runFind(ids); };', 'const openAccount = (id: string | null) => { const ids = id ? [id] : []; setFilter("accountIds", ids); };') }],
   ];
   for (const [n, s] of plants) if (JSON.stringify(s) === JSON.stringify(real)) fails.push(`plant did not change the source: ${n}`); else if (!check(s).length) fails.push(`plant escaped: ${n}`);
@@ -62,6 +64,7 @@ const r = await withUnscopedReadOnly(LABEL, async (c) => {
               JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
               LEFT JOIN accounting.posting_batches pb ON pb.id = p.posting_batch_id AND pb.operating_company_id = p.operating_company_id
              WHERE p.operating_company_id IN (SELECT id FROM co) AND je.status <> 'voided'
+               AND COALESCE(je.is_sample_data, false) = false
                AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
                AND je.entry_date BETWEEN $1::date AND $2::date
              GROUP BY 1)

@@ -1,5 +1,6 @@
 import { withCurrentUser } from "../auth/db.js";
 import { placeAccountType, signedSectionAmount } from "./profit-loss-sections.js";
+import { LEDGER_POSTING_COUNTS_SQL } from "./ledger-membership.js";
 
 type ProfitLossAggregateRowDb = {
   account_id: string | null;
@@ -83,9 +84,7 @@ export async function getProfitLossReport(input: {
           ON a.id = p.account_id
          AND a.operating_company_id = p.operating_company_id
         WHERE p.operating_company_id = $1::uuid
-          AND je.status <> 'voided'
-          AND COALESCE(je.is_sample_data, false) = false
-          AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))${dateSql}
+          AND ${LEDGER_POSTING_COUNTS_SQL}${dateSql}
           -- ACCT-F5656 — a period-close's own closing entry zeroes every revenue/expense account by
           -- posting the mirror-image of that period's activity (Dr revenue / Cr expense, net to
           -- Retained Earnings), dated on the closed period's own last day. Without this exclusion

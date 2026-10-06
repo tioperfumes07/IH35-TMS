@@ -1,4 +1,5 @@
 import { withCurrentUser } from "../auth/db.js";
+import { LEDGER_POSTING_COUNTS_SQL } from "./ledger-membership.js";
 
 type CashFlowLegRow = {
   journal_entry_uuid: string;
@@ -333,9 +334,7 @@ async function getCashBasisSections(
             ON pb.id = p.posting_batch_id
            AND pb.operating_company_id = p.operating_company_id
           WHERE p.operating_company_id = $1::uuid
-            AND je.status <> 'voided'
-            AND COALESCE(je.is_sample_data, false) = false
-            AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
+            AND ${LEDGER_POSTING_COUNTS_SQL}
             AND p.account_id IN (SELECT id FROM cash_accounts)${inRangeDateSql}
         )
         SELECT
@@ -362,9 +361,7 @@ async function getCashBasisSections(
           ON a.id = p.account_id
          AND a.operating_company_id = p.operating_company_id
         WHERE p.operating_company_id = $1::uuid
-          AND je.status <> 'voided'
-          AND COALESCE(je.is_sample_data, false) = false
-          AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
+          AND ${LEDGER_POSTING_COUNTS_SQL}
           AND p.journal_entry_uuid IN (SELECT journal_entry_uuid FROM cash_je)
         ORDER BY p.journal_entry_uuid, p.line_sequence
       `,
@@ -533,9 +530,7 @@ async function getAccrualBasisSections(
         ON a.id = p.account_id
        AND a.operating_company_id = p.operating_company_id
       WHERE p.operating_company_id = $1::uuid
-        AND je.status <> 'voided'
-        AND COALESCE(je.is_sample_data, false) = false
-        AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))${inRangeDateSql}
+        AND ${LEDGER_POSTING_COUNTS_SQL}${inRangeDateSql}
     `,
     [operatingCompanyId, Array.from(CASH_SUBTYPES), ...inRangeValues]
   );
@@ -620,9 +615,7 @@ async function readCashBalanceAsOf(
         ON a.id = p.account_id
        AND a.operating_company_id = p.operating_company_id
       WHERE p.operating_company_id = $1::uuid
-        AND je.status <> 'voided'
-        AND COALESCE(je.is_sample_data, false) = false
-        AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
+        AND ${LEDGER_POSTING_COUNTS_SQL}
         AND ${dateCondition}
         AND a.account_type = 'Asset'
         AND a.account_subtype = ANY($3::text[])

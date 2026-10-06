@@ -1,4 +1,5 @@
 import { withCurrentUser } from "../auth/db.js";
+import { LEDGER_POSTING_COUNTS_SQL } from "./ledger-membership.js";
 
 type BalanceSheetAccountRowDb = {
   account_id: string;
@@ -74,9 +75,7 @@ export async function getBalanceSheetReport(input: {
           ON a.id = p.account_id
          AND a.operating_company_id = p.operating_company_id
         WHERE p.operating_company_id = $1::uuid
-          AND je.status <> 'voided'
-          AND COALESCE(je.is_sample_data, false) = false
-          AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
+          AND ${LEDGER_POSTING_COUNTS_SQL}
           AND je.entry_date <= $2::date
           AND a.account_type IN ('Asset', 'Liability', 'Equity')
           -- ACCT-F5656 — the closing entry that sweeps net income into Retained Earnings must be
@@ -151,9 +150,7 @@ export async function getBalanceSheetReport(input: {
           ON a.id = p.account_id
          AND a.operating_company_id = p.operating_company_id
         WHERE p.operating_company_id = $1::uuid
-          AND je.status <> 'voided'
-          AND COALESCE(je.is_sample_data, false) = false
-          AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
+          AND ${LEDGER_POSTING_COUNTS_SQL}
           AND je.entry_date <= $2::date
           AND a.account_type IN ('Income', 'OtherIncome', 'CostOfGoodsSold', 'Expense', 'OtherExpense')
           AND je.id NOT IN (
