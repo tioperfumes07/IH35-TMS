@@ -55,7 +55,10 @@ if (!/structuralCrumbsForPath/.test(structuralComp) || !/data-testid=\"structura
 
 const helperSrc = read("apps/frontend/src/lib/structuralBreadcrumb.ts");
 if (!/\/accounting/.test(helperSrc) || !/structuralParentHref/.test(helperSrc)) {
-  fails.push("structuralBreadcrumb.ts must skip Accounting and export structuralParentHref");
+  fails.push("structuralBreadcrumb.ts must skip Accounting crumbs and export structuralParentHref");
+}
+if (!/export function inModuleBackHref/.test(helperSrc) || !/export function modulePrefixForPath/.test(helperSrc)) {
+  fails.push("structuralBreadcrumb.ts must export inModuleBackHref + modulePrefixForPath (ROUND 435-CUR)");
 }
 if (!/›|Module › List › Record|Module › List/.test(helperSrc) && !/ROUND 367\.9/.test(helperSrc)) {
   fails.push("structuralBreadcrumb.ts must document Module › List › Record contract");
@@ -86,16 +89,17 @@ for (const f of scanned) {
   }
 }
 
-// Shared headers must import structuralParentHref (or take an explicit structural backTo/backHref).
+// Shared headers must clamp Up with inModuleBackHref (never navigate(-1), never another module).
 const headerFiles = [
   "apps/frontend/src/components/layout/PageHeader.tsx",
   "apps/frontend/src/components/forms/shared/PageHeader.tsx",
   "apps/frontend/src/components/shared/BackButton.tsx",
+  "apps/frontend/src/components/layout/BackArrowHeader.tsx",
 ];
 for (const f of headerFiles) {
   const src = strip(read(f));
-  if (!/structuralParentHref/.test(src)) {
-    fails.push(`${f}: must use structuralParentHref for Up when no explicit parent is provided`);
+  if (!/inModuleBackHref/.test(src)) {
+    fails.push(`${f}: must use inModuleBackHref so Up cannot leave the module (ROUND 435-CUR)`);
   }
 }
 

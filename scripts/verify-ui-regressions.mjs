@@ -63,9 +63,9 @@ try {
 
   const layoutPageHeader = read("apps/frontend/src/components/layout/PageHeader.tsx");
   const formPageHeader = read("apps/frontend/src/components/forms/shared/PageHeader.tsx");
-  // ROUND 367.9 — Up is structuralParentHref / backHref, never navigate(-1) / lastModuleHref history.
-  assertIncludes(layoutPageHeader, "structuralParentHref", "Layout PageHeader structural Up missing");
-  assertIncludes(formPageHeader, "structuralParentHref", "Form PageHeader structural Up missing");
+  // ROUND 435-CUR — Up is inModuleBackHref (clamps structural parent to this module), never navigate(-1).
+  assertIncludes(layoutPageHeader, "inModuleBackHref", "Layout PageHeader structural Up missing");
+  assertIncludes(formPageHeader, "inModuleBackHref", "Form PageHeader structural Up missing");
   assertIncludes(formPageHeader, "string | BreadcrumbItem", "Form PageHeader must accept string[] breadcrumbs from leaf pages");
   const app = read("apps/frontend/src/App.tsx");
   assertIncludes(app, "<ScrollToTop", "App must mount CC-2 ScrollToTop (do not duplicate RouteScrollReset)");
@@ -77,7 +77,7 @@ try {
     throw new Error("Accounting wrapper must render a way back (breadcrumb to the Accounting home)");
   }
   const fuelPlanner = read("apps/frontend/src/pages/fuel/FuelPlannerHome.tsx");
-  assertIncludes(fuelPlanner, 'backHref="/home"', "Fuel module header must have a module-parent backHref");
+  assertIncludes(fuelPlanner, 'backHref="/fuel"', "Fuel module header must stay in Fuel (ROUND 435-CUR)");
   const safetyLayout = read("apps/frontend/src/pages/safety/SafetyLayout.tsx");
   assertIncludes(safetyLayout, "structuralParentHref", "Safety layout Up must be structural (ROUND 367.9)");
   const customerCreate = read("apps/frontend/src/components/customers/CustomerProfileForm.tsx");

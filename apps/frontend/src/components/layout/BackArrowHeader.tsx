@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Fragment } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { inModuleBackHref } from "../../lib/structuralBreadcrumb";
 
 type BackArrowHeaderProps = {
   backTo: string;
@@ -12,6 +13,7 @@ type BackArrowHeaderProps = {
 
 export function BackArrowHeader({ backTo, breadcrumb, title, countBadge, actions }: BackArrowHeaderProps) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
 
   return (
     <div className="border-b border-(--border-default) px-6 pb-2 pt-3.5">
@@ -24,12 +26,12 @@ export function BackArrowHeader({ backTo, breadcrumb, title, countBadge, actions
         ))}
       </div>
       <div className="flex items-center gap-2.5">
-        {/* ROUND 367.9 — Up is structural: always the named parent route, never navigate(-1). */}
+        {/* ROUND 435-CUR — Up stays inside this module. Never navigate(-1). */}
         <button
           type="button"
           aria-label="Back"
           onClick={() => {
-            navigate(backTo);
+            navigate(inModuleBackHref(pathname, backTo));
           }}
           className="inline-flex items-center gap-1 rounded-xs border-0 bg-transparent px-1 py-0.5 text-xs font-semibold text-(--text-secondary) no-underline hover:bg-(--bg-surface-alt) hover:text-(--text-primary)"
         >

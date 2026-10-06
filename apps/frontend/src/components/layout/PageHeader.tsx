@@ -3,7 +3,7 @@ import { Fragment, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { colors, typography } from "../../design/tokens";
 import { useClaimBreadcrumb } from "../../lib/breadcrumbOwner";
-import { structuralParentHref } from "../../lib/structuralBreadcrumb";
+import { inModuleBackHref } from "../../lib/structuralBreadcrumb";
 
 type Props = {
   backHref?: string;
@@ -63,8 +63,8 @@ export function PageHeader({ backHref, onBack, breadcrumb, title, subtitle, acti
                 onBack();
                 return;
               }
-              // ROUND 367.9 — Up is structural (route parent), never history navigate(-1).
-              navigate(backHref || structuralParentHref(location.pathname));
+              // ROUND 435-CUR — Up is the in-module structural parent. Never history, never another module.
+              navigate(inModuleBackHref(location.pathname, backHref));
             }}
           >
               <ArrowLeft className="h-4 w-4" />

@@ -58,6 +58,9 @@ const MODULES: readonly ModuleDef[] = [
   { prefix: "/form-425c", label: "425C", home: "/425c" },
   { prefix: "/admin", label: "Admin", home: "/admin" },
   { prefix: "/home", label: "Home", home: "/home" },
+  { prefix: "/accounting", label: "Accounting", home: "/accounting" },
+  { prefix: "/qbo", label: "QBO", home: "/qbo/sync-dashboard" },
+  { prefix: "/integrations", label: "Integrations", home: "/integrations/samsara" },
 ];
 
 const SKIP_PREFIXES = [
@@ -147,16 +150,44 @@ export function structuralCrumbsForPath(pathname: string): StructuralCrumb[] | n
   return items;
 }
 
-/** Structural parent for Up — never navigate(-1). */
+/** Longest registered module prefix, else the first path segment. Never null on a real app path. */
+export function modulePrefixForPath(pathname: string): string | null {
+  const path = (pathname.split("?")[0] || pathname).replace(/\/+$/, "") || "/";
+  if (path === "/" || path === "") return null;
+  const mod = matchModule(path);
+  if (mod) return mod.prefix;
+  const segs = path.split("/").filter(Boolean);
+  return segs[0] ? `/${segs[0]}` : null;
+}
+
+/**
+ * ROUND 435-CUR — a back arrow NEVER crosses a module boundary.
+ * Same-module candidate wins; otherwise the structural parent (module home if the leaf has none).
+ */
+export function inModuleBackHref(pathname: string, candidate?: string | null): string {
+  const parent = structuralParentHref(pathname);
+  if (!candidate) return parent;
+  const target = candidate.split("?")[0] || candidate;
+  const from = modulePrefixForPath(pathname);
+  const to = modulePrefixForPath(target);
+  if (from && to && from === to) return candidate;
+  return parent;
+}
+
+/** Structural parent for Up — never navigate(-1), never another module. */
 export function structuralParentHref(pathname: string): string {
-  const crumbs = structuralCrumbsForPath(pathname);
-  if (!crumbs || crumbs.length === 0) return "/home";
-  for (let i = crumbs.length - 2; i >= 0; i--) {
-    const href = crumbs[i]?.href;
-    if (href) return href;
+  const path = pathname.split("?")[0] || pathname;
+  const crumbs = structuralCrumbsForPath(path) ?? accountingFallbackCrumbs(path);
+  if (crumbs && crumbs.length > 0) {
+    for (let i = crumbs.length - 2; i >= 0; i--) {
+      const href = crumbs[i]?.href;
+      if (href) return href;
+    }
   }
-  const mod = matchModule(pathname.split("?")[0] || pathname);
-  return mod?.home ?? "/home";
+  const mod = matchModule(path);
+  if (mod) return mod.home;
+  const prefix = modulePrefixForPath(path);
+  return prefix ?? "/home";
 }
 
 /**

@@ -2,9 +2,9 @@
 /**
  * UI-BACK-BUTTON audit wave 2 — updated for ROUND 367.9 / U18.
  *
- * BackArrowHeader: structural navigate(backTo) — never history.
+ * BackArrowHeader: inModuleBackHref(pathname, backTo) — never history, never another module.
  * AccountingSubNavWrapper: breadcrumb way back (CC-2), never history.
- * BackButton: structuralParentHref / fallbackTo — never navigate(-1).
+ * BackButton: inModuleBackHref(pathname, fallbackTo) — never navigate(-1).
  */
 import fs from "node:fs";
 
@@ -21,8 +21,8 @@ function stripComments(text) {
 function auditBackArrowHeader(source) {
   const failures = [];
   const stripped = stripComments(source);
-  if (!/navigate\(\s*backTo\s*\)/.test(stripped)) {
-    failures.push(`${BACK_ARROW_HEADER}: must navigate(backTo) — structural parent route`);
+  if (!/navigate\(\s*inModuleBackHref\(\s*pathname\s*,\s*backTo\s*\)/.test(stripped)) {
+    failures.push(`${BACK_ARROW_HEADER}: must navigate(inModuleBackHref(pathname, backTo)) — in-module parent`);
   }
   if (/hasInAppHistory|navigate\(\s*-1\s*\)/.test(stripped)) {
     failures.push(`${BACK_ARROW_HEADER}: must not use hasInAppHistory or navigate(-1) (ROUND 367.9)`);
@@ -60,8 +60,8 @@ function auditAccountingWrapper(source) {
 function auditReg007(file, source) {
   const failures = [];
   const stripped = stripComments(source);
-  if (!/structuralParentHref/.test(stripped)) {
-    failures.push(`${file}: must use structuralParentHref for Up (ROUND 367.9)`);
+  if (!/inModuleBackHref/.test(stripped)) {
+    failures.push(`${file}: must use inModuleBackHref for Up (ROUND 435-CUR)`);
   }
   if (/hasInAppHistory|onClick=\{\(\)\s*=>\s*navigate\(-1\)\}|navigate\(\s*-1\s*\)/.test(stripped)) {
     failures.push(`${file}: must not use history-based back (ROUND 367.9)`);
@@ -85,7 +85,7 @@ if (process.argv.includes("--selftest")) {
     {
       name: "reintroduce navigate(-1) in BackArrowHeader",
       target: "backArrow",
-      mutate: (t) => t.replace("navigate(backTo);", "navigate(-1);"),
+      mutate: (t) => t.replace("navigate(inModuleBackHref(pathname, backTo));", "navigate(-1);"),
     },
     {
       name: "remove the breadcrumb from AccountingSubNavWrapper entirely",
@@ -136,9 +136,9 @@ if (process.argv.includes("--selftest")) {
   const reg007Mutations = [];
   for (const f of REG007_FILES) {
     reg007Mutations.push({
-      name: `strip structuralParentHref from ${f}`,
+      name: `strip inModuleBackHref from ${f}`,
       file: f,
-      mutate: (t) => t.replace(/structuralParentHref/g, "MISSING"),
+      mutate: (t) => t.replace(/inModuleBackHref/g, "MISSING"),
     });
     reg007Mutations.push({
       name: `reintroduce bare navigate(-1) in ${f}`,
@@ -157,5 +157,5 @@ if (process.argv.includes("--selftest")) {
 }
 
 console.log(
-  "verify-backarrowheader-and-accounting-back-wired PASS — BackArrowHeader structural Up + visible Back; AccountingSubNavWrapper breadcrumb home (U18); BackButton structuralParentHref",
+  "verify-backarrowheader-and-accounting-back-wired PASS — BackArrowHeader inModuleBackHref + visible Back; AccountingSubNavWrapper breadcrumb home (U18); BackButton inModuleBackHref",
 );

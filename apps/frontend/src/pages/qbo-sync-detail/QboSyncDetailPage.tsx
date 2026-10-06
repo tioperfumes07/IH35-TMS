@@ -114,7 +114,7 @@ export function QboSyncDetailPage() {
   return (
     <div className="space-y-4 p-4">
       <PageHeader
-        backHref="/integrations"
+        backHref="/qbo/sync-dashboard"
         breadcrumb={["Integrations", "QBO event log"]}
         title="QBO Sync Event Log"
         subtitle="Read-only tenant-scoped observability across runs, alerts, and outbox events"

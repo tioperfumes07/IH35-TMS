@@ -1,10 +1,10 @@
-# NOW-CURSOR — 2026-10-06T14:10Z
+# NOW-CURSOR — 2026-10-06T15:00Z
 
-**DONE:** Measured next ENG-SPINE hole — bill-payment accept never stamped `matched_bill_id`.
+**DONE:** Handshake on Desktop CODERS. ROUND 435-CUR implemented — `inModuleBackHref` on 4 Up writers; Accounting parent via fallback crumbs; shrink-only guard 0 cross-module.
 
-**NOW:** Shipping `runBillPaymentAcceptFollowUps` + `backlinkBankTransactionToBill` on both accept paths (AP twin of ACCT-F5620).
+**NOW:** Shipping `cursor/back-arrow-in-module-c89b` Fast Merge.
 
-**NEXT:** Fast Merge this PR. Then next ten-of-ten hole. No Chrome. No ACCT-F406.
+**NEXT:** After merge, next owner/lead row. Do not start 433-CUR visual closeout in this PR. Load-backlink still unpushed. No Chrome. No ACCT-F406.
 
 **LOCAL GATES ONLY** — CI billing down. No Chrome this seat.
 

@@ -62,7 +62,7 @@ export function UnitDetail() {
   return (
     <div className="space-y-3 p-4" data-testid="unit-detail-page">
       <PageHeader
-        backHref="/units"
+        backHref="/fleet"
         breadcrumb={["Fleet", "Units", unitLabel]}
         title={unitLabel}
         subtitle="Permits, toll tags, and finance linkage"

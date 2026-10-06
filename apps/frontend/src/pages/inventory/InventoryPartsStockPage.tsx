@@ -205,7 +205,7 @@ export function InventoryPartsStockPage() {
     <div className="space-y-4">
       <PageHeader
         title="Parts & Stock"
-        backHref="/"
+        backHref="/inventory"
         breadcrumb={["Inventory", "Parts & Stock"]}
         actions={
           <Button onClick={() => setIsCreateOpen(true)}>

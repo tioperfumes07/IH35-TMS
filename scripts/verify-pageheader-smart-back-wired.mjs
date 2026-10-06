@@ -3,7 +3,7 @@
  * ROUND 367.9 SUPERSEDES UI-BACK-BUTTON-IGNORES-REAL-NAVIGATION-HISTORY.
  *
  * Owner 2026-10-03: Up is structural (Module › List › Record), never browser history.
- * Both PageHeader components must navigate via backHref || structuralParentHref(pathname).
+ * Both PageHeader components must navigate via inModuleBackHref(pathname, backHref).
  * hasInAppHistory / navigate(-1) on these headers is a REGRESSION.
  *
  * Filename kept (CLAIMED step continuity). Contract body updated to the structural law.
@@ -26,6 +26,9 @@ function auditHelper(source) {
   if (!/export function structuralParentHref\b/.test(stripped)) {
     failures.push(`${HELPER_FILE} must export structuralParentHref`);
   }
+  if (!/export function inModuleBackHref\b/.test(stripped)) {
+    failures.push(`${HELPER_FILE} must export inModuleBackHref (ROUND 435-CUR)`);
+  }
   if (!/export function structuralCrumbsForPath\b/.test(stripped)) {
     failures.push(`${HELPER_FILE} must export structuralCrumbsForPath`);
   }
@@ -42,12 +45,12 @@ function auditHeader(file, source) {
   };
   const stripped = stripComments(source);
   need(
-    /structuralParentHref/.test(stripped),
-    "must use structuralParentHref for Up when no explicit parent is provided",
+    /inModuleBackHref/.test(stripped),
+    "must use inModuleBackHref for Up (ROUND 435-CUR — never leave the module)",
   );
   need(
-    /navigate\(\s*backHref\s*\|\|\s*structuralParentHref\(/.test(stripped),
-    "back handler must navigate(backHref || structuralParentHref(...))",
+    /navigate\(\s*inModuleBackHref\(/.test(stripped),
+    "back handler must navigate(inModuleBackHref(pathname, backHref))",
   );
   need(
     !/hasInAppHistory/.test(stripped) && !/navigate\(\s*-1\s*\)/.test(stripped),
@@ -76,16 +79,16 @@ if (process.argv.includes("--selftest")) {
       mutate: (t) => t.replace("export function structuralParentHref", "export function structuralParentHrefREMOVED"),
     },
     {
-      name: "remove structuralParentHref from layout/PageHeader",
+      name: "remove inModuleBackHref from layout/PageHeader",
       target: "header0",
-      mutate: (t) => t.replace(/structuralParentHref/g, "MISSING"),
+      mutate: (t) => t.replace(/inModuleBackHref/g, "MISSING"),
     },
     {
       name: "reintroduce navigate(-1) in forms/shared/PageHeader",
       target: "header1",
       mutate: (t) => t.replace(
-        "navigate(backHref || structuralParentHref(location.pathname));",
-        "navigate(-1);",
+        /navigate\(\s*inModuleBackHref\([^)]+\)\s*\)/,
+        "navigate(-1)",
       ),
     },
   ];
@@ -109,5 +112,5 @@ if (process.argv.includes("--selftest")) {
 }
 
 console.log(
-  "verify-pageheader-smart-back-wired PASS — both PageHeader components use structural Up (ROUND 367.9), never history",
+  "verify-pageheader-smart-back-wired PASS — both PageHeader components use inModuleBackHref (ROUND 435-CUR), never history",
 );

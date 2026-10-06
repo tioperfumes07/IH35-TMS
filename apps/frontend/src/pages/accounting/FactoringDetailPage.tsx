@@ -202,7 +202,7 @@ export function FactoringDetailPage() {
       ) : null}
       <PageHeader
         title={entityLabel(detail.display_id, detail.id, "Advance")}
-        backHref="/factoring"
+        backHref="/accounting/factoring"
         breadcrumb={[
           { label: "Factoring", href: "/factoring" },
           { label: entityLabel(detail.display_id, detail.id, "Advance") },
