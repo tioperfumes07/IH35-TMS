@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import type { VendorOption } from "../../api/mdata";
 import { vendorQualityKind, vendorQualityClass } from "../../lib/quality-badge";
 import { ResizableTable } from "../../components/shared/ResizableTable";
@@ -170,9 +171,12 @@ export function VendorListSidebar({
                     </td>
                     <td style={{ width: widths.open_balance }} className="px-2 py-1.5 text-right text-xs tabular-nums text-gray-700">
                       Cleared{" "}
-                      {fmtMoney(
-                        (openByVendorId.get(vendor.id) ?? 0) + (unclearedByVendorId?.get(vendor.id)?.uncleared_cents ?? 0),
-                      )}
+                      <MoneyCell
+                        cents={(openByVendorId.get(vendor.id) ?? 0) + (unclearedByVendorId?.get(vendor.id)?.uncleared_cents ?? 0)}
+                        format={fmtMoney}
+                        className="inline"
+                        drill={{ none: "Cleared balance = open bills + uncleared payments — open the vendor to see each" }}
+                      />
                       <UnclearedDocumentsNote docs={unclearedByVendorId?.get(vendor.id)?.uncleared_documents ?? []} />
                     </td>
                     <td style={{ width: widths.status }} className="px-2 py-1.5">

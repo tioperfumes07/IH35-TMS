@@ -202,7 +202,8 @@ export async function getUnitFinanceLinkage(
       started_on: r.started_on,
       maturity_on: r.maturity_on,
       status: r.status,
-      drill_to: "/factoring/equipment-loans",
+      // ROUND 433.2 — the loan itself (FactoringHome reads loan_id), not the unfiltered loan list.
+      drill_to: `/factoring/equipment-loans?loan_id=${encodeURIComponent(String(r.id))}`,
     })),
   };
 }

@@ -2,6 +2,7 @@
  * CLOSURE-11 — MaintenanceServicesCatalog: searchable PM + repair services list.
  * Route: /lists/maintenance/services-catalog
  */
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { useState } from "react";
 import { CatalogListSearchInput } from "../../components/lists/CatalogListSearchInput";
 import { Button } from "../../components/Button";
@@ -146,7 +147,7 @@ function buildServicesColumns(onEdit: (svc: MaintenanceService) => void): Array<
     sortable: true,
     className: "text-right",
     sortValue: (svc) => svc.typical_cost_cents,
-    render: (svc) => <span className="block text-right tabular-nums">{centsToDisplay(svc.typical_cost_cents)}</span>,
+    render: (svc) => <MoneyCell cents={svc.typical_cost_cents} format={centsToDisplay} drill={{ none: "Typical cost is a catalog setting for this service, not a transaction" }} />,
   },
   {
     key: "is_safety_critical",

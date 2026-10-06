@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import type { Customer } from "../../api/mdata";
 import { customerQualityKind, customerQualityClass } from "../../lib/quality-badge";
 import { ResizableTable } from "../../components/shared/ResizableTable";
@@ -169,10 +170,12 @@ export function CustomerListSidebar({
                       {openBalancesAvailable ? (
                         <>
                           Cleared{" "}
-                          {fmtMoney(
-                            (openByCustomerId.get(customer.id) ?? 0) +
-                              (unclearedByCustomerId?.get(customer.id)?.uncleared_cents ?? 0),
-                          )}
+                          <MoneyCell
+                            cents={(openByCustomerId.get(customer.id) ?? 0) + (unclearedByCustomerId?.get(customer.id)?.uncleared_cents ?? 0)}
+                            format={fmtMoney}
+                            className="inline"
+                            drill={{ none: "Cleared balance = open invoices + uncleared payments — open the customer to see each" }}
+                          />
                         </>
                       ) : (
                         "Unavailable"

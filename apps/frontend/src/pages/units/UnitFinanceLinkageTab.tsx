@@ -194,7 +194,8 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
                   <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs capitalize text-slate-700">{row.status}</span>
                 </div>
                 <div className="text-right text-xs tabular-nums text-gray-700">
-                  <div>{fmtCents(row.principal_cents)} @ {row.apr_percent}%</div>
+                  {/* ROUND 433.2 — the loan's own route (drill_to, built by the backend for this loan). */}
+                  <div><Link className="dpo-link" to={row.drill_to}>{fmtCents(row.principal_cents)}</Link> @ {row.apr_percent}%</div>
                   <div className="text-gray-500">
                     {fmtDate(row.started_on)} – {fmtDate(row.maturity_on)}
                   </div>

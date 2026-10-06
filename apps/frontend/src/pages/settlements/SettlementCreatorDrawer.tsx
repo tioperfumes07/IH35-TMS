@@ -3,6 +3,7 @@
  * ONE panel for BOTH Company + Driver AlwaysTrack settlements (USMCA only).
  * Live Post enabled (owner 2026-09-25). Preview still gates can_post on control totals.
  */
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { useEffect, useMemo, useState } from "react";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
@@ -196,17 +197,17 @@ function Section({
             {pdfCents != null ? (
               <span className="text-xs text-[#6B7280]">
                 PDF{" "}
-                <span className="inline-block w-[120px] text-right tabular-nums">
-                  {formatUsdCents(pdfCents)}
+                <span className="inline-block w-[120px]">
+                  <MoneyCell cents={pdfCents} drill={{ none: "Total printed on the uploaded settlement PDF — a preview, not yet a record" }} />
                 </span>
               </span>
             ) : null}
             <span
-              className={`inline-block w-[120px] text-right text-xs font-bold tabular-nums ${
+              className={`inline-block w-[120px] text-xs font-bold ${
                 tied === null ? "text-[#0F1219]" : tied ? "text-[#16A34A]" : "text-red-600"
               }`}
             >
-              {formatUsdCents(subtotalCents)}
+              <MoneyCell cents={subtotalCents} drill={{ none: "Subtotal of the lines being built in this settlement — a preview until it is posted" }} />
             </span>
           </span>
         </div>
@@ -246,8 +247,8 @@ function TotalRow({
       <span className={`text-xs ${strong ? "font-bold uppercase tracking-wide text-[#0F1219]" : "text-[#4B5563]"}`}>
         {label}
       </span>
-      <span className={`inline-block w-[120px] text-right text-xs tabular-nums ${strong ? "font-bold" : ""} ${colour}`}>
-        {formatUsdCentsTable(cents)}
+      <span className={`inline-block w-[120px] text-xs ${strong ? "font-bold" : ""} ${colour}`}>
+        <MoneyCell cents={cents} format={formatUsdCentsTable} drill={{ none: "Settlement preview figure — computed from the lines being built, no record until posted" }} />
       </span>
     </div>
   );

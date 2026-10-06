@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { AmountLink, type AmountFilter } from "../../components/shared/AmountLink";
 // ACCT-F411 — the aging bucket drills. Unlike the A/P and A/R aging PAGES, this package's tables
 // carry current_cents and bucket_1_30_cents SEPARATELY, so each cell is exactly one bucket id and
@@ -187,7 +188,13 @@ function PLSection({ companyId, fromDate, toDate, basis, searchQuery }: { compan
             ))}
             <tr className="font-semibold border-t border-slate-200">
               <td colSpan={2} className="py-0.5 pl-2 text-right text-slate-700">Total {title}</td>
-              <td className="py-0.5 text-right tabular-nums">{money(total)}</td>
+              <td className="py-0.5">
+                <MoneyCell
+                  cents={total}
+                  format={money}
+                  drill={{ amount: lines.length && lines.every((l) => l.account_id) ? { target: "ledger", accountIds: lines.map((l) => String(l.account_id)), from: fromDate, to: toDate, basis } : null }}
+                />
+              </td>
             </tr>
           </tbody>
         </table></div>
@@ -488,7 +495,7 @@ function CustomerSummarySection({ companyId, fromDate, toDate, searchQuery }: { 
               <td className="py-0.5 text-slate-800">
                 <ManagementCustomerCell customerId={row.customer_id} customerName={row.customer_name} />
               </td>
-              <td className="py-0.5 text-right tabular-nums">{money(row.revenue_cents)}</td>
+              <td className="py-0.5"><MoneyCell cents={row.revenue_cents} format={money} drill={{ none: "Revenue for the period for this customer — the customer link opens its invoices" }} /></td>
               <td className="py-0.5 text-right">{row.load_count}</td>
             </tr>
           ))}
@@ -530,7 +537,7 @@ function VendorExpenseSummarySection({ companyId, fromDate, toDate, searchQuery 
               <td className="py-0.5 text-slate-800">
                 <ManagementVendorCell vendorId={row.vendor_id} vendorName={row.vendor_name} />
               </td>
-              <td className="py-0.5 text-right tabular-nums">{money(row.total_open_cents)}</td>
+              <td className="py-0.5"><MoneyCell cents={row.total_open_cents} format={money} drill={{ amount: apAgingBillsFilter(row.vendor_id) }} /></td>
               <td className="py-0.5 text-right">{row.open_bill_count}</td>
             </tr>
           ))}
