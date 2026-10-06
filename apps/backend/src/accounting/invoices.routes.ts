@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { AGING_BUCKET_IDS, agingWindowFromBucket, agingWindowPredicate } from "./aging/buckets.js";
+import { openArInvoiceConditions } from "./aging/open-ar.js";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
@@ -405,9 +406,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       }
       // has_balance: aging-compatible open AR — apply BEFORE LIMIT/OFFSET so pagination is truthful.
       if (q.has_balance) {
-        extraWhere.push("COALESCE(i.amount_open_cents, 0) > 0");
-        extraWhere.push("i.voided_at IS NULL");
-        extraWhere.push("i.status NOT IN ('draft', 'void', 'voided', 'paid')");
+        extraWhere.push(...openArInvoiceConditions("i"));
       }
       // ACCT-F411 — A/R aging window, off i.due_date, the same column ar-aging.service.ts buckets
       // on. Boundaries from accounting/aging/buckets.ts, proven equivalent to the report's JS

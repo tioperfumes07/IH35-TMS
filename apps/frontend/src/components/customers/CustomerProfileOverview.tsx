@@ -12,6 +12,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { ListErrorState } from "../ListErrorState";
 import { EntityLink } from "../shared/EntityLink";
+import { AmountLink, type AgingBucketId } from "../shared/AmountLink";
 import { ProfileKpi, ProfileSection } from "../profile/ProfileBlocks";
 
 type Block<T> = { value: T; empty_reason: string | null };
@@ -23,7 +24,7 @@ type Rate = { load_id: string; load_number: string; rate_total_cents: number; lo
 
 export type CustomerProfile = {
   customer: { id: string; name: string; status: string };
-  ar_aging: Block<{ current_cents: number; d1_30_cents: number; d31_60_cents: number; d61_90_cents: number; d90_plus_cents: number; total_open_cents: number; overdue_cents: number; open_invoice_count: number }>;
+  ar_aging: Block<{ current_cents: number; d1_30_cents: number; d31_60_cents: number; d61_90_cents: number; d90_plus_cents: number; total_open_cents: number; overdue_cents: number; open_invoice_count: number; as_of?: string }>;
   credit: Block<{ credit_limit_cents: number | null; credit_limit_source: string | null; open_ar_cents: number; uninvoiced_open_load_cents: number; exposure_cents: number; available_cents: number | null; over_limit: boolean }>;
   open_loads: Block<OpenLoad[]>;
   payment_history: Block<{ payment_count: number; paid_cents: number; last_payment_date: string | null; avg_days_to_pay: number | null; recent: Payment[] }>;
@@ -108,21 +109,34 @@ export function CustomerProfileOverview(props: { operatingCompanyId: string; cus
         <Section title="AR aging" testId="customer-profile-ar-aging" reason={p.ar_aging.empty_reason}>
           <table className={`w-full ${money}`}>
             <tbody>
+              {/* ROUND 433.2 — each bucket drills to this customer's open invoices in that bucket, as of the date the server
+                  bucketed on (the one ladder, the one open-A/R population), so the list adds up to the figure clicked. */}
               {([
-                ["Current", a.current_cents],
-                ["1–30 days", a.d1_30_cents],
-                ["31–60 days", a.d31_60_cents],
-                ["61–90 days", a.d61_90_cents],
-                ["Over 90 days", a.d90_plus_cents],
-              ] as const).map(([label, cents]) => (
+                ["Current", a.current_cents, "current"],
+                ["1–30 days", a.d1_30_cents, "d1_30"],
+                ["31–60 days", a.d31_60_cents, "d31_60"],
+                ["61–90 days", a.d61_90_cents, "d61_90"],
+                ["Over 90 days", a.d90_plus_cents, "d90_plus"],
+              ] as const).map(([label, cents, bucket]) => (
                 <tr key={label} className="border-b border-[color:var(--ih-rule)]">
                   <td className="py-1">{label}</td>
-                  <td className="py-1 text-right tabular-nums">{formatUsdCents(cents)}</td>
+                  <td className="py-1 text-right tabular-nums">
+                    <AmountLink
+                      filter={a.as_of ? { target: "invoices", customerId: props.customerId, hasBalance: true, agingBucket: bucket as AgingBucketId, agingAsOf: a.as_of } : null}
+                      data-testid={`customer-ar-${bucket}`}
+                    >
+                      {formatUsdCents(cents)}
+                    </AmountLink>
+                  </td>
                 </tr>
               ))}
               <tr className="font-semibold">
                 <td className="py-1">Total open ({a.open_invoice_count} invoices)</td>
-                <td className="py-1 text-right tabular-nums">{formatUsdCents(a.total_open_cents)}</td>
+                <td className="py-1 text-right tabular-nums">
+                  <AmountLink filter={{ target: "invoices", customerId: props.customerId, hasBalance: true }} data-testid="customer-ar-total">
+                    {formatUsdCents(a.total_open_cents)}
+                  </AmountLink>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -131,7 +145,7 @@ export function CustomerProfileOverview(props: { operatingCompanyId: string; cus
         <Section title="Credit limit & exposure" testId="customer-profile-credit" reason={p.credit.empty_reason}>
           <table className={`w-full ${money}`}>
             <tbody>
-              <tr className="border-b border-[color:var(--ih-rule)]"><td className="py-1">Open AR</td><td className="py-1 text-right tabular-nums">{formatUsdCents(c.open_ar_cents)}</td></tr>
+              <tr className="border-b border-[color:var(--ih-rule)]"><td className="py-1">Open AR</td><td className="py-1 text-right tabular-nums"><AmountLink filter={{ target: "invoices", customerId: props.customerId, hasBalance: true }} data-testid="customer-credit-open-ar">{formatUsdCents(c.open_ar_cents)}</AmountLink></td></tr>
               <tr className="border-b border-[color:var(--ih-rule)]"><td className="py-1">Open loads not yet invoiced</td><td className="py-1 text-right tabular-nums">{formatUsdCents(c.uninvoiced_open_load_cents)}</td></tr>
               <tr className="border-b border-[color:var(--ih-rule)] font-semibold"><td className="py-1">Exposure</td><td className={`py-1 text-right ${c.over_limit ? "text-red-600" : ""} tabular-nums`}>{formatUsdCents(c.exposure_cents)}</td></tr>
               <tr><td className="py-1">Limit{c.credit_limit_source ? ` (${c.credit_limit_source})` : ""}</td><td className="py-1 text-right tabular-nums">{c.credit_limit_cents == null ? "Not set" : formatUsdCents(c.credit_limit_cents)}</td></tr>

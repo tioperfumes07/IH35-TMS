@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { openArInvoiceConditions } from "../aging/open-ar.js";
 
 /**
  * Repo-root anchored, NOT cwd-anchored. These tests read source files by path; using
@@ -24,9 +25,12 @@ describe("invoices has_balance filter", () => {
 
   it("filters open balance and aging-compatible statuses before LIMIT/OFFSET", () => {
     expect(routes).toContain("q.has_balance");
-    expect(routes).toContain("COALESCE(i.amount_open_cents, 0) > 0");
-    expect(routes).toContain("i.voided_at IS NULL");
-    expect(routes).toMatch(/status NOT IN \('draft', 'void', 'voided', 'paid'\)/);
+    // ROUND 433.2 — the population is the ONE open-A/R predicate (aging/open-ar.ts), shared with the customer profile.
+    expect(routes).toContain('extraWhere.push(...openArInvoiceConditions("i"))');
+    const conds = openArInvoiceConditions("i");
+    expect(conds).toContain("COALESCE(i.amount_open_cents, 0) > 0");
+    expect(conds).toContain("i.voided_at IS NULL");
+    expect(conds.join(" AND ")).toMatch(/status NOT IN \('draft', 'void', 'voided', 'paid'\)/);
     // COUNT must use the same WHERE (truthful total/has_more) before LIMIT/OFFSET.
     expect(routes).toContain("SELECT COUNT(*)::int AS total");
     expect(routes).toContain("has_more");

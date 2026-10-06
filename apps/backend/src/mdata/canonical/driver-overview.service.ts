@@ -73,13 +73,15 @@ export async function readDriverOverview(client: Q, oc: string, driverId: string
   const reports = (await q(
     `SELECT * FROM (
        SELECT r.id, initcap(replace(coalesce(r.report_type, 'report'), '_', ' ')) AS kind, u.unit_number AS unit, left(r.description, 120) AS what, r.reported_at AS at,
-              initcap(replace(coalesce(r.status, 'open'), '_', ' ')) AS outcome, NULL::bigint AS cost_cents, 'driver_report' AS entity
+              initcap(replace(coalesce(r.status, 'open'), '_', ' ')) AS outcome, NULL::bigint AS cost_cents, 'driver_report' AS entity,
+              NULL::text AS wo_id
          FROM maintenance.driver_reports r LEFT JOIN mdata.loads l ON l.id = r.load_id LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
         WHERE r.operating_company_id = $1::uuid AND r.driver_id = $2
        UNION ALL
        SELECT v.id, 'DVIR', u.unit_number, CASE WHEN v.has_major_defect THEN 'Major defect' ELSE 'Defect' END, v.submitted_at,
               CASE WHEN w.closed_at IS NOT NULL THEN 'Repaired' WHEN w.id IS NOT NULL THEN 'Work order open' ELSE 'Open' END,
-              coalesce(w.actual_cost_cents, round(w.total_actual_cost * 100)::bigint), 'dvir'
+              coalesce(w.actual_cost_cents, round(w.total_actual_cost * 100)::bigint), 'dvir',
+              w.id::text
          FROM safety.dvir_submissions v LEFT JOIN mdata.units u ON u.id = v.unit_id LEFT JOIN maintenance.work_orders w ON w.id = v.follow_up_wo_id
         WHERE v.operating_company_id = $1::uuid AND v.driver_id = $2 AND v.has_any_defect
      ) x ORDER BY at DESC NULLS LAST LIMIT 12`)).map((r) => ({ ...r, cost_cents: r.cost_cents == null ? null : n(r.cost_cents) }));

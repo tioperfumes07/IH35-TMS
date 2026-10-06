@@ -35,7 +35,8 @@ type Overview = {
   settlement_count: number;
   additional: Array<{ id: string; at: string; line_type: string; kind: string; description: string | null; amount_cents: number; load_id: string | null; load_number: string | null; settlement_id: string; settlement: string | null; approved_by: string | null }>;
   complaints: Array<{ id: string; at: string; kind: string; summary: string | null; load_id: string | null; load_number: string | null; raised_by: string | null; outcome: string | null; cost_cents: number | null; severity: string | null }>;
-  reports: Array<{ id: string; kind: string; unit: string | null; what: string | null; at: string | null; outcome: string | null; cost_cents: number | null; entity: string }>;
+  /** wo_id — the work order whose cost this is (a DVIR defect's repair); null for a report that cost nothing. */
+  reports: Array<{ id: string; kind: string; unit: string | null; what: string | null; at: string | null; outcome: string | null; cost_cents: number | null; entity: string; wo_id?: string | null }>;
   integrity: Integrity[];
   integrity_flagged: string[];
   trucks: Array<{ unit_id: string; unit: string; from: string; to: string | null; miles: number; mpg: number | null }>;
@@ -236,10 +237,11 @@ export function DriverOverviewBoard(props: {
                         <td className="ih-num pb-muted">{s.status === "closed" ? day(s.closed_at) : s.status}</td>
                         <td className="ih-num">{int(s.loads)}</td>
                         <td className="ih-num">{s.miles ? int(s.miles) : <span className="ih-empty">—</span>}</td>
-                        <td className="ih-num text-right tabular-nums">{money(s.line_haul_cents)}</td>
-                        <td className="ih-num text-right tabular-nums">{s.additional_cents ? usd(s.additional_cents) : <span className="ih-empty">—</span>}</td>
-                        <td className="ih-num text-right tabular-nums">{money(s.deductions_cents)}</td>
-                        <td className="ih-num pb-strong text-right tabular-nums">{money(s.net_cents)}</td>
+                        {/* ROUND 433.2 — every amount on a settlement row opens that settlement. */}
+                        <td className="ih-num text-right tabular-nums"><EntityLink kind="settlement" id={s.id} label={money(s.line_haul_cents)} /></td>
+                        <td className="ih-num text-right tabular-nums">{s.additional_cents ? <EntityLink kind="settlement" id={s.id} label={usd(s.additional_cents)} /> : <span className="ih-empty">—</span>}</td>
+                        <td className="ih-num text-right tabular-nums"><EntityLink kind="settlement" id={s.id} label={money(s.deductions_cents)} /></td>
+                        <td className="ih-num pb-strong text-right tabular-nums"><EntityLink kind="settlement" id={s.id} label={money(s.net_cents)} /></td>
                       </tr>
                     ))}
                   </tbody>
@@ -288,7 +290,7 @@ export function DriverOverviewBoard(props: {
                         <td>{p.load_id ? <button type="button" className="pb-name" onClick={() => go("load", p.load_id)}>{p.load_number}</button> : "—"}</td>
                         <td><button type="button" className="pb-name" onClick={() => go("settlement", p.settlement_id)}>{p.settlement ?? "—"}</button></td>
                         <td className="pb-muted2">{p.approved_by ?? "—"}</td>
-                        <td className="ih-num pb-strong text-right tabular-nums">{usd(p.amount_cents)}</td>
+                        <td className="ih-num pb-strong text-right tabular-nums">{p.settlement_id ? <EntityLink kind="settlement" id={p.settlement_id} label={usd(p.amount_cents)} /> : usd(p.amount_cents)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -346,7 +348,7 @@ export function DriverOverviewBoard(props: {
                         <td>{c.load_id ? <button type="button" className="pb-name" onClick={() => go("load", c.load_id)}>{c.load_number}</button> : "—"}</td>
                         <td className="pb-muted2">{c.raised_by ?? "—"}</td>
                         <td className="pb-muted2">{c.outcome ?? "—"}</td>
-                        <td className={`ih-num${c.cost_cents ? " dd-red" : ""} text-right tabular-nums`}>{money(c.cost_cents)}</td>
+                        <td className={`ih-num${c.cost_cents ? " dd-red" : ""} text-right tabular-nums`}>{c.cost_cents ? <EntityLink kind="complaint" id={c.id} label={money(c.cost_cents)} /> : money(c.cost_cents)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -381,7 +383,7 @@ export function DriverOverviewBoard(props: {
                         <td className="pb-muted2">{r.what ?? "—"}</td>
                         <td className="ih-num pb-muted">{day(r.at)}</td>
                         <td className="pb-muted2">{r.outcome ?? "—"}</td>
-                        <td className="ih-num text-right tabular-nums">{money(r.cost_cents)}</td>
+                        <td className="ih-num text-right tabular-nums">{r.wo_id ? <EntityLink kind="work_order" id={r.wo_id} label={money(r.cost_cents)} /> : money(r.cost_cents)}</td>
                       </tr>
                     ))}
                   </tbody>
