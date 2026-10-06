@@ -46,7 +46,12 @@ if (!/reefer_diesel is EXCLUDED/.test(ifta)) fails.push("IFTA aggregator no long
 const sc = read("apps/backend/src/driver-finance/settlement-creator.service.ts");
 if ((sc.match(/reeferFuelExpenseRefusal\(/g) ?? []).length < 3) fails.push("Settlement Creator must refuse reefer fuel entered as a company expense (preview + post)");
 const drawer = read("apps/frontend/src/pages/settlements/SettlementCreatorDrawer.tsx");
-if (!/<option value="reefer_diesel">Reefer Diesel<\/option>/.test(drawer)) fails.push("Settlement Creator fuel line must offer Reefer Diesel (the 5015 account's name)");
+// LST-F425: SETL-F437 (#25625) moved the fuel-type picker from a native <select> to a type-to-filter Combobox; either form
+// must still offer Reefer Diesel (the 5015 account's name).
+if (
+  !/<option value="reefer_diesel">Reefer Diesel<\/option>/.test(drawer) &&
+  !/\{\s*value:\s*"reefer_diesel",\s*label:\s*"Reefer Diesel"\s*\}/.test(drawer)
+) fails.push("Settlement Creator fuel line must offer Reefer Diesel (the 5015 account's name)");
 // ROUND 433.4 / U25: reefer diesel is its own product (5015, off-highway, out of IFTA). The Relay fills list summed it into
 // fuel_gallons and the unit/driver profile printed that as "gal diesel" — reefer gallons read as truck road fuel.
 {
