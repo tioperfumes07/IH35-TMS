@@ -206,7 +206,7 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
           testIdPrefix="drivers-table"
           dataAttributes={{ "data-drivers-table-filter-toolbar": "collapsed" }}
         >
-          <div className="w-full max-w-xs text-xs font-semibold text-slate-600">
+          <div className="w-full max-w-xs text-xs font-semibold text-[#4B5563]">
             <label htmlFor="drivers-table-status-filter">Status</label>
             <Combobox
               id="drivers-table-status-filter"
@@ -219,7 +219,7 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
               allowClear
             />
           </div>
-          <div className="w-full max-w-xs text-xs font-semibold text-slate-600">
+          <div className="w-full max-w-xs text-xs font-semibold text-[#4B5563]">
             <label htmlFor="drivers-table-tag-filter">Tag</label>
             <Combobox
               id="drivers-table-tag-filter"
@@ -239,7 +239,7 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+              className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-[#1F2A44]"
               onClick={() => handleExportSelected(selected)}
             >
               Export Selected (CSV)
@@ -248,7 +248,7 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
               type="button"
               disabled={selected.length === 0}
               title="Add or remove a tag on the selected drivers"
-              className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50"
+              className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-[#1F2A44] disabled:opacity-50"
               onClick={() => {
                 setTagRows(selected);
                 setTagAction("add");
@@ -277,7 +277,7 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
           key: "name",
           label: "Driver",
           sortable: true,
-          cellClass: "font-medium text-slate-900",
+          cellClass: "font-medium text-[#0F1219]",
           // D1: the driver name itself opens the profile (entity-name click → its profile),
           // not only the trailing "Open profile" action. Same target as that action.
           render: (row) =>
@@ -285,7 +285,7 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
               <button
                 type="button"
                 onClick={() => onOpenProfile(row.driverId)}
-                className="text-left font-medium text-slate-900 hover:text-slate-700 hover:underline"
+                className="text-left font-medium text-[#0F1219] hover:text-[#1F2A44] hover:underline"
               >
                 {row.name}
               </button>
@@ -295,7 +295,7 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
                 id={row.driverId}
                 name={row.name}
                 noun="Driver"
-                className="font-medium text-slate-900 hover:text-slate-700 hover:underline"
+                className="font-medium text-[#0F1219] hover:text-[#1F2A44] hover:underline"
                 data-testid="drivers-table-name-link"
               />
             ),
@@ -315,7 +315,7 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
         {
           key: "dqf_present_count",
           label: "Checklist stats",
-          cellClass: "text-slate-600",
+          cellClass: "text-[#4B5563]",
           sortable: true,
           render: (row) => `${row.summary.presentCount} present · ${row.summary.missingCount} missing · ${row.summary.expiredCount} expired`,
         },
@@ -326,9 +326,9 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
           cellClass: "text-center tabular-nums",
           render: (row) =>
             row.integrityFindings == null ? (
-              <span className="text-slate-400">—</span>
+              <span className="text-[#6B7280]">—</span>
             ) : (
-              <span className={row.integrityFindings > 0 ? "font-semibold text-slate-900" : "text-slate-600"}>
+              <span className={row.integrityFindings > 0 ? "font-semibold text-[#0F1219]" : "text-[#4B5563]"}>
                 {row.integrityFindings}
               </span>
             ),
@@ -340,9 +340,9 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
           cellClass: "text-center tabular-nums",
           render: (row) =>
             row.complaintsCount == null ? (
-              <span className="text-slate-400">—</span>
+              <span className="text-[#6B7280]">—</span>
             ) : (
-              <span className={row.complaintsCount > 0 ? "font-semibold text-slate-900" : "text-slate-600"}>
+              <span className={row.complaintsCount > 0 ? "font-semibold text-[#0F1219]" : "text-[#4B5563]"}>
                 {row.complaintsCount}
               </span>
             ),
@@ -357,7 +357,7 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
             return (
               <div className="flex flex-wrap gap-1" data-testid={`drivers-table-tags-${row.driverId}`}>
                 {tags.map((t) => (
-                  <span key={t.tag_id} className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs text-slate-700">
+                  <span key={t.tag_id} className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs text-[#1F2A44]">
                     {t.label}
                   </span>
                 ))}
@@ -374,7 +374,7 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
           cellClass: "text-right",
           render: (row) =>
             onOpenProfile ? (
-              <button type="button" onClick={() => onOpenProfile(row.driverId)} className="text-xs font-semibold text-slate-700 hover:underline">
+              <button type="button" onClick={() => onOpenProfile(row.driverId)} className="text-xs font-semibold text-[#1F2A44] hover:underline">
                 Open profile
               </button>
             ) : (
@@ -383,7 +383,7 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
                 id={row.driverId}
                 name={row.name}
                 noun="Driver"
-                className="text-xs font-semibold text-slate-700 hover:underline"
+                className="text-xs font-semibold text-[#1F2A44] hover:underline"
                 data-testid="drivers-table-open-profile-link"
               />
             ),
@@ -451,14 +451,14 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
           <div className="flex gap-2 text-xs font-semibold">
             <button
               type="button"
-              className={`rounded-sm border px-2 py-1 ${tagAction === "add" ? "border-slate-700 bg-slate-700 text-white" : "border-gray-300 text-slate-700"}`}
+              className={`rounded-sm border px-2 py-1 ${tagAction === "add" ? "border-[#14314F] bg-[#14314F] text-white" : "border-gray-300 text-[#1F2A44]"}`}
               onClick={() => setTagAction("add")}
             >
               Add tag
             </button>
             <button
               type="button"
-              className={`rounded-sm border px-2 py-1 ${tagAction === "remove" ? "border-slate-700 bg-slate-700 text-white" : "border-gray-300 text-slate-700"}`}
+              className={`rounded-sm border px-2 py-1 ${tagAction === "remove" ? "border-[#14314F] bg-[#14314F] text-white" : "border-gray-300 text-[#1F2A44]"}`}
               onClick={() => setTagAction("remove")}
             >
               Remove tag

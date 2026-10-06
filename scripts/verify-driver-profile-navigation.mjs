@@ -70,6 +70,18 @@ if (!hasCanonicalFullRecordIdentity(profile)) {
   failures.push(`${profilePath}: full-record drill must bind driver.id to the canonical displayName, never an invented action label.`);
 }
 
+// BANK-F91558 leftover refuse — DriversTable chrome uses house tokens, never Tailwind slate-*.
+function leftoverSlateErrors(src) {
+  const hits = [];
+  if (src.includes("text-slate-") || src.includes("border-slate-") || src.includes("bg-slate-")) {
+    hits.push("leftover slate class");
+  }
+  return hits;
+}
+if (leftoverSlateErrors(table).length) {
+  failures.push(`${tablePath}: leftover slate class`);
+}
+
 if (failures.length > 0) {
   console.error("\n✗ verify-driver-profile-navigation: driver-profile navigation (D1/D2/D3) regressed.\n");
   for (const f of failures) console.error("  " + f);
@@ -81,7 +93,12 @@ if (process.argv.includes("--selftest")) {
     console.error("verify-driver-profile-navigation SELFTEST FAIL — fabricated full-record label escaped");
     process.exit(1);
   }
-  console.log("verify-driver-profile-navigation SELFTEST PASS — fabricated full-record label rejected");
+  const leftoverPlant = `${table}\n<div className="text-slate-600 border-slate-300 bg-slate-50">plant</div>`;
+  if (!leftoverSlateErrors(leftoverPlant).includes("leftover slate class")) {
+    console.error("verify-driver-profile-navigation SELFTEST FAIL leftover plant escaped");
+    process.exit(1);
+  }
+  console.log("verify-driver-profile-navigation SELFTEST PASS leftover slate class plant");
   process.exit(0);
 }
 console.log("✓ verify-driver-profile-navigation: name-click + aggregate-scoped profile + module-header back/breadcrumb intact.");
