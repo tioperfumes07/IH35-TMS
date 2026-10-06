@@ -44,3 +44,31 @@ describe("legal pdf-renderer draft option", () => {
     expect(html).toContain("TRK-42");
   });
 });
+
+describe("legal PDF typography and page numbers (owner 2026-10-06)", () => {
+  const base = {
+    templateCode: "TRK-42", templateVersion: 3, contractInstanceId: "abcdef12-3456-7890-abcd-ef1234567890",
+    language: "en" as const, signerName: "Jane Driver", contentHtmlEn: "<p>Body</p>", contentHtmlEs: "<p>Cuerpo</p>",
+    filledVariables: {}, signedAtIso: "2026-10-06T00:00:00Z", typedSignature: "", drawnSignatureSvg: "", ipAddress: null, userAgent: null,
+  };
+  it("body is 12-point Times New Roman", () => {
+    const html = __test__.buildPdfHtml(base);
+    expect(html).toContain('font-family: "LegalSerif", "Times New Roman", Times, serif');
+    // the face is embedded (no host-font dependency): a Times-metric woff2 travels inside the HTML
+    expect(html).toMatch(/@font-face \{ font-family: "LegalSerif"; font-weight: 400; font-style: normal; src: url\(data:font\/woff2;base64,/);
+    expect(html).toContain("font-size: 12pt");
+  });
+  it("every page footer carries Page X of Y and the contract identity", () => {
+    const f = __test__.buildPageFooter(base);
+    expect(f).toContain('class="pageNumber"');
+    expect(f).toContain('class="totalPages"');
+    expect(f).toContain("TRK-42 v3 · abcdef12");
+  });
+  it("Spanish numbers in Spanish, bilingual in both, draft says so", () => {
+    expect(__test__.buildPageFooter({ ...base, language: "es" })).toContain("Página");
+    const bi = __test__.buildPageFooter({ ...base, language: "bilingual", draft: true });
+    expect(bi).toContain("Page");
+    expect(bi).toContain("Página");
+    expect(bi).toContain("DRAFT — NOT EXECUTED");
+  });
+});
