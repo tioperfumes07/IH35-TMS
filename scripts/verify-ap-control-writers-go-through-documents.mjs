@@ -57,10 +57,6 @@ export const DOCUMENT_POSTERS = new Set([
 
 export const KNOWN_DEBT = new Map([
   [
-    "apps/backend/src/accounting/lease-asc842/lease-posting.service.ts",
-    "lessee rent period credits ap_control with lease_schedule_period lines — must become a bill from the lessor (LST-F414 follow-up)",
-  ],
-  [
     "apps/backend/src/safety/accident-liabilities.service.ts",
     "company-absorb decision posts a manual JE crediting ap_control with no payee — owner decision on payee vs accrued liability (LST-F414 follow-up)",
   ],

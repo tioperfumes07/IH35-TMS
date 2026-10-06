@@ -27,7 +27,8 @@ import { withCurrentUser } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { resolveRoleAccountOptional } from "../coa-roles/resolver.service.js";
-import { ensureOpenPeriod } from "../posting-engine.service.js";
+import { ensureOpenPeriod, postSourceTransactionInClientTx } from "../posting-engine.service.js";
+import { createBillInClientTx } from "../bills.service.js";
 // ACCT-LINK-01 regression fix (GO-1405 Recipe B, 2026-08-29): this lease JE insert never
 // populated journal_entry_type_id -- one of several direct posters contributing to the live
 // 46/2214 (2%) density gap. Leaf module, no accounting-service imports.
@@ -80,6 +81,8 @@ type LeaseRow = {
   lessor_operating_company_id: string;
   lessee_operating_company_id: string | null;
   lessee_customer_id: string | null;
+  /** LST-F422: the lessor as a vendor IN THE LESSEE company — the vendor each period's lessee rent bill is owed to. */
+  lessee_vendor_id: string | null;
 };
 
 type LeaseAssetRow = {
@@ -106,7 +109,7 @@ async function loadLease(client: DbClient, operatingCompanyId: string, leaseCont
     `SELECT id::text, election, status, display_id, commencement_date::text, end_date::text,
             payment_amount_cents::text, number_of_periods,
             lessor_operating_company_id::text, lessee_operating_company_id::text, lessee_customer_id::text,
-            lessor_vendor_id::text AS lessor_vendor_id
+            lessor_vendor_id::text AS lessor_vendor_id, lessee_vendor_id::text AS lessee_vendor_id
        FROM accounting.lease_contract
       WHERE operating_company_id = $1::uuid AND id = $2::uuid
       LIMIT 1 FOR UPDATE`,
@@ -420,9 +423,14 @@ export async function postOperatingRentalPeriod(
 }
 
 /**
- * OPERATING — lessee rent expense (TRANSP/USMCA books). Dr rent_expense / Cr ap_control.
- * Amount from lease_schedule_period.payment_cents (same schedule as lessor rental). Reuses
- * postLeaseJournalEntry + assertBalanced — NO new GL math. Flag-gated per lessee opco.
+ * OPERATING — lessee rent (TRANSP/USMCA books), one period. LST-F422: a BILL from the lessor, never a raw journal line.
+ *
+ * It used to post Dr rent_expense / Cr ap_control directly. ROUND 393.1 refuses an ap_control line that is not a bill /
+ * bill payment / vendor credit, and a raw line names no vendor, so the A/P subledger could not tie to GL. The lessee's
+ * rent is what the lessee OWES the lessor: a bill to lease_contract.lessee_vendor_id (the lessor as a vendor in the
+ * lessee company), posted by the canonical bill poster (Dr rent_expense / Cr A/P) on this transaction, stamped with the
+ * lease contract and period, idempotent on lease_bill_key. Same amount and date as before: the schedule period's
+ * payment_cents on its period_date. Flag-gated per lessee opco, as before.
  */
 export async function postOperatingLesseeRentPeriod(
   input: {
@@ -440,16 +448,39 @@ export async function postOperatingLesseeRentPeriod(
       return { result: "skipped_flag_off", journal_entry_id: null, lease_contract_id: input.leaseContractId };
     }
 
-    const idempotencyKey = buildLeaseIdempotencyKey(
-      input.lesseeOperatingCompanyId,
-      input.leaseContractId,
-      "rent_expense",
-      input.periodNumber
-    );
-    const existing = await findExistingPostedJe(client, input.lesseeOperatingCompanyId, idempotencyKey);
-    if (existing) return { result: "already_posted", journal_entry_id: existing, lease_contract_id: input.leaseContractId };
+    // A raw rent JE posted before LST-F422 for this period stays the record of it (never a second posting).
+    const legacyKey = buildLeaseIdempotencyKey(input.lesseeOperatingCompanyId, input.leaseContractId, "rent_expense", input.periodNumber);
+    const legacy = await findExistingPostedJe(client, input.lesseeOperatingCompanyId, legacyKey);
+    if (legacy) return { result: "already_posted", journal_entry_id: legacy, lease_contract_id: input.leaseContractId };
 
-    // Lease header lives on the lessor opco; read under lessor scope then switch back for JE insert.
+    const leaseBillKey = `ASC842-RENT:${input.leaseContractId}:P${input.periodNumber}`;
+    const existingBill = await client.query<{ id: string; journal_entry_id: string | null }>(
+      `SELECT b.id::text,
+              (SELECT p.journal_entry_uuid::text FROM accounting.journal_entry_postings p
+                WHERE p.operating_company_id = b.operating_company_id AND p.source_transaction_type = 'bill'
+                  AND p.source_transaction_id = b.id::text ORDER BY p.created_at ASC LIMIT 1) AS journal_entry_id
+         FROM accounting.bills b
+        WHERE b.operating_company_id = $1::uuid AND b.lease_bill_key = $2
+          AND b.voided_at IS NULL AND b.revoked_at IS NULL
+        LIMIT 1`,
+      [input.lesseeOperatingCompanyId, leaseBillKey]
+    );
+    if (existingBill.rows[0]?.journal_entry_id) {
+      return { result: "already_posted", journal_entry_id: existingBill.rows[0].journal_entry_id, lease_contract_id: input.leaseContractId };
+    }
+    if (existingBill.rows[0]) {
+      // The period's bill exists but never posted (e.g. created while the bill poster was off): post it now, once.
+      const reposted = await postSourceTransactionInClientTx(
+        client as never,
+        { operating_company_id: input.lesseeOperatingCompanyId, source_transaction_type: "bill", source_transaction_id: existingBill.rows[0].id },
+        { userId: actor.userId }
+      );
+      const jeId = (reposted as { journal_entry_id?: string | null })?.journal_entry_id ?? null;
+      if (!jeId) throw new LeasePostingError("UNBALANCED_ENTRY", `Lessee rent bill for period ${input.periodNumber} did not post`);
+      return { result: "already_posted", journal_entry_id: jeId, lease_contract_id: input.leaseContractId };
+    }
+
+    // Lease header lives on the lessor opco; read under lessor scope then switch back for the bill.
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.lessorOperatingCompanyId]);
     const lease = await loadLease(client, input.lessorOperatingCompanyId, input.leaseContractId);
     if (lease.election !== "operating") {
@@ -462,6 +493,12 @@ export async function postOperatingLesseeRentPeriod(
       throw new LeasePostingError(
         "LEASE_NOT_FOUND",
         `Lease ${lease.display_id ?? lease.id} is not intercompany to lessee ${input.lesseeOperatingCompanyId}`
+      );
+    }
+    if (!lease.lessee_vendor_id) {
+      throw new LeasePostingError(
+        "LEASE_LESSEE_VENDOR_MISSING",
+        `Lease ${lease.display_id ?? lease.id} names no lessee vendor — the lessor's vendor record in the lessee company that each period's rent bill is owed to`
       );
     }
 
@@ -482,54 +519,57 @@ export async function postOperatingLesseeRentPeriod(
 
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.lesseeOperatingCompanyId]);
     const rentExpenseAccount = await resolveRole(client, input.lesseeOperatingCompanyId, "rent_expense");
-    const apAccount = await resolveRole(client, input.lesseeOperatingCompanyId, "ap_control");
+    const label = `Lease ${lease.display_id ?? "(unnumbered)"} rent, period ${input.periodNumber}`;
 
-    const label = `Lease ${lease.display_id ?? lease.id} rent expense period ${input.periodNumber}`;
-    const lines: PostingLine[] = [
+    const bill = await createBillInClientTx(
+      client as never,
       {
-        account_id: rentExpenseAccount,
-        debit_or_credit: "debit",
-        amount_cents: amount,
-        description: `${label} rent expense`,
-        links: [{ type: "lease_schedule_period", id: period.id, role: "lease_period" }],
+        operatingCompanyId: input.lesseeOperatingCompanyId,
+        vendorId: lease.lessee_vendor_id,
+        billDate: period.period_date,
+        dueDate: period.period_date,
+        amountCents: amount,
+        memo: label,
+        coaAccountId: rentExpenseAccount,
+        leaseContractId: input.leaseContractId,
+        leasePeriodStart: period.period_date,
+        leaseBillKey,
       },
-      {
-        account_id: apAccount,
-        debit_or_credit: "credit",
-        amount_cents: amount,
-        description: `${label} AP (lessor)`,
-        links: [{ type: "lease_schedule_period", id: period.id, role: "lease_period" }],
-      },
-    ];
-
-    const posted = await postLeaseJournalEntry(client, {
-      operatingCompanyId: input.lesseeOperatingCompanyId,
-      leaseContractId: input.leaseContractId,
-      entryDate: period.period_date,
-      memo: `${label} posting`,
-      idempotencyKey,
-      sourceType: "lease_rental",
-      lines,
-      actorUserId: actor.userId,
-    });
+      actor.userId
+    );
+    const posting = await postSourceTransactionInClientTx(
+      client as never,
+      { operating_company_id: input.lesseeOperatingCompanyId, source_transaction_type: "bill", source_transaction_id: String(bill.id) },
+      { userId: actor.userId }
+    );
+    const journalEntryId = (posting as { journal_entry_id?: string | null })?.journal_entry_id ?? null;
+    if (!journalEntryId) {
+      throw new LeasePostingError("UNBALANCED_ENTRY", `Lessee rent bill for period ${input.periodNumber} did not post — rolled back`);
+    }
 
     await emitLeasePosted(client, {
       operatingCompanyId: input.lesseeOperatingCompanyId,
       actorUserId: actor.userId,
       subjectUnitId: null,
       leaseContractId: input.leaseContractId,
-      journalEntryId: posted.journalEntryId,
+      journalEntryId,
       kind: "operating_rent_expense",
-      auditPayload: { period_number: input.periodNumber, payment_cents: amount, lessor_operating_company_id: input.lessorOperatingCompanyId },
+      auditPayload: {
+        period_number: input.periodNumber,
+        payment_cents: amount,
+        lessor_operating_company_id: input.lessorOperatingCompanyId,
+        bill_id: String(bill.id),
+        lease_bill_key: leaseBillKey,
+      },
     });
 
     return {
       result: "posted",
-      journal_entry_id: posted.journalEntryId,
+      journal_entry_id: journalEntryId,
       lease_contract_id: input.leaseContractId,
-      idempotency_key: idempotencyKey,
-      debit_total_cents: posted.debitTotal,
-      credit_total_cents: posted.creditTotal,
+      idempotency_key: leaseBillKey,
+      debit_total_cents: amount,
+      credit_total_cents: amount,
     };
   });
 }
@@ -541,9 +581,10 @@ export type OperatingActivationResult = {
 };
 
 /**
- * LEASE-BRIDGE — on activate (draft→active), post period-1 ASC 842 operating entries:
+ * LEASE-BRIDGE — one operating period's ASC 842 entries, both sides. Activation posts period 1; the rental route posts
+ * every later period through this same function (LST-F422: periods 2..N used to post the lessor only).
  *   TRK (lessor): Dr cash-like / Cr rental_income
- *   TRANSP/USMCA (lessee opco): Dr rent_expense / Cr ap_control
+ *   TRANSP/USMCA (lessee opco): a bill from the lessor (lessee_vendor_id) — Dr rent_expense / Cr A/P via the bill poster
  * Guarded by LEASE_GL_POSTING_ENABLED per entity. Does NOT enable QBO push.
  */
 export async function postOperatingActivationEntries(

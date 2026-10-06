@@ -24,7 +24,6 @@ import {
   activateLease,
 } from "./lease.service.js";
 import {
-  postOperatingRentalPeriod,
   postOperatingEndOfTermSale,
   postSalesTypeCommencement,
   postSalesTypeInterestPeriod,
@@ -46,6 +45,7 @@ function ensureFinanceUser(req: Parameters<typeof currentAuthUser>[0], reply: Pa
 function mapError(error: LeasePostingError) {
   const byCode: Record<string, number> = {
     LEASE_NOT_FOUND: 404,
+    LEASE_LESSEE_VENDOR_MISSING: 422,
     SCHEDULE_PERIOD_NOT_FOUND: 404,
     LEASE_NOT_POSTABLE: 409,
     DISPOSAL_ALREADY_EXISTS: 409,
@@ -70,6 +70,8 @@ const createLeaseBody = z.object({
   lessee_name: z.string().trim().min(1),
   lessee_customer_id: z.string().uuid().optional().nullable(),
   lessee_operating_company_id: z.string().uuid().optional().nullable(),
+  // LST-F422: intercompany lessee — the lessor as a vendor IN THE LESSEE company; each period's rent is a bill to it.
+  lessee_vendor_id: z.string().uuid().optional().nullable(),
   display_id: z.string().trim().min(1).optional().nullable(),
   election: election.optional(),
   commencement_date: isoDate,
@@ -112,6 +114,7 @@ export async function registerLeasePostingRoutes(app: FastifyInstance) {
           lesseeName: body.data.lessee_name,
           lesseeCustomerId: body.data.lessee_customer_id ?? null,
           lesseeOperatingCompanyId: body.data.lessee_operating_company_id ?? null,
+          lesseeVendorId: body.data.lessee_vendor_id ?? null,
           displayId: body.data.display_id ?? null,
           election: body.data.election,
           commencementDate: body.data.commencement_date,
@@ -237,11 +240,14 @@ export async function registerLeasePostingRoutes(app: FastifyInstance) {
     const detail = await withCurrentUser(user.uuid, async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
       const contract = await client.query(
-        `SELECT id::text, display_id, election, status, commencement_date::text, end_date::text,
-                payment_amount_cents::text, payment_frequency, number_of_periods,
-                total_lease_payments_cents::text, commencement_je_id::text
-           FROM accounting.lease_contract
-          WHERE operating_company_id = $1::uuid AND id = $2::uuid LIMIT 1`,
+        `SELECT lc.id::text, lc.display_id, lc.election, lc.status, lc.commencement_date::text, lc.end_date::text,
+                lc.payment_amount_cents::text, lc.payment_frequency, lc.number_of_periods,
+                lc.total_lease_payments_cents::text, lc.commencement_je_id::text,
+                -- LST-F422: who pays the lessee's rent bills, so the contract drills to the lessee's vendor and bills.
+                lc.lessee_operating_company_id::text, lc.lessee_vendor_id::text,
+                (SELECT v.vendor_name FROM mdata.vendors v WHERE v.id = lc.lessee_vendor_id) AS lessee_vendor_name
+           FROM accounting.lease_contract lc
+          WHERE lc.operating_company_id = $1::uuid AND lc.id = $2::uuid LIMIT 1`,
         [opco, params.data.lease_id]
       );
       if (contract.rows.length === 0) return null;
@@ -288,11 +294,15 @@ export async function registerLeasePostingRoutes(app: FastifyInstance) {
     const body = rentalBody.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
     try {
-      const result = await postOperatingRentalPeriod(
+      // LST-F422: a period is BOTH sides — the lessor's rental income and, for an intercompany lessee, the lessee's rent
+      // bill. This route used to post the lessor only, so periods 2..N never reached the lessee's books.
+      const period = await postOperatingActivationEntries(
         { operatingCompanyId: query.data.operating_company_id, leaseContractId: body.data.lease_contract_id, periodNumber: body.data.period_number },
         { userId: user.uuid }
       );
-      return reply.code(result.result === "posted" ? 201 : 200).send(result);
+      if (!("lessor" in period)) return reply.code(422).send({ error: "LEASE_NOT_OPERATING", message: "This lease is sales-type, not operating." });
+      const posted = period.lessor.result === "posted" || period.lessee.result === "posted";
+      return reply.code(posted ? 201 : 200).send({ ...period.lessor, lessee: period.lessee });
     } catch (error) {
       if (error instanceof LeasePostingError) {
         const m = mapError(error);
