@@ -101,6 +101,12 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
     "cc-2/reclassify-derived-balances",
     new Set(["db/migrations/202615430500_fn_account_balances_one_ledger_membership_rule.sql"]),
   ],
+  // CC-2: declare catalogs.accounts.posts_to_financials (live on prod, never created by a migration) so a fresh
+  // database can migrate past 202615400930 (CC-3 finding 2026-10-04; owner 2026-10-06 "fix, never defer"). Claimed #25651/#25652.
+  [
+    "cc-2/posts-to-financials-declared",
+    new Set(["db/migrations/202615400850_catalogs_accounts_posts_to_financials_declared.sql"]),
+  ],
   [
     "codex/samsara-usmca-retag-migration",
     new Set(["db/migrations/202613761300_samsara_usmca_retag.sql"]),

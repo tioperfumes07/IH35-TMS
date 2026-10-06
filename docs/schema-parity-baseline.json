@@ -2936,6 +2936,7 @@
       "opening_balance_qbo_snapshot_cents",
       "operating_company_id",
       "parent_account_id",
+      "posts_to_financials",
       "qbo_account_id",
       "qbo_account_qrn",
       "qbo_sync_error",
