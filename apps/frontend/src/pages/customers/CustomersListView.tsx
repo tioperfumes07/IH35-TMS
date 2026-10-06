@@ -9,7 +9,8 @@ import { useBulkPermission } from "../../hooks/useBulkPermission";
 import { useToast } from "../../components/Toast";
 import { useListState, type ListQueryStatus } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { CustomerDrillModal } from "../../components/customers/CustomerDrillModal";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -79,7 +80,15 @@ type CustomerProfitability = {
   last_load_iso: string | null;
 };
 
-type FilterChip = "all" | "late_pay" | "medium" | "active" | "overdue" | "with_open";
+type FilterChip = "late_pay" | "medium" | "active" | "overdue" | "with_open";
+
+const QUALITY_FILTER_OPTIONS: Array<{ value: FilterChip; label: string }> = [
+  { value: "late_pay", label: "Late-pay" },
+  { value: "medium", label: "Medium" },
+  { value: "active", label: "Active" },
+  { value: "overdue", label: "Has overdue" },
+  { value: "with_open", label: "With open" },
+];
 
 type Props = {
   companyId: string;
@@ -106,9 +115,9 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
   // ASC/DESC; sort persists in the URL (?sort=&dir=) so it survives reload / is shareable, same
   // contract as Bills/Expenses.
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
-  const [filter, setFilter] = useState<FilterChip>("all");
-  const staged = useStagedListFilters({ applied: { filter }, empty: { filter: "all" as FilterChip }, onApply: (next) => setFilter(next.filter) });
-  // Free-text search: ParityTable toolbar owns it (LST-F3468) — no page-local TableSearch.
+  // 432-CUR #1 — MoneyListToolbar always visible; Quality MultiSelect replaces the Filters (N) popover chips.
+  const [qualityFilter, setQualityFilter] = useState<string[]>([]);
+  const [search, setSearch] = useState("");
   // Remount key: bumping this after a successful bulk mutation resets ParityTable's internal
   // selection state (mirrors the old selection.clear() call — ParityTable has no controlled/
   // external selection API to clear imperatively).
@@ -131,19 +140,30 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
     [atRiskQuery.data?.customers]
   );
 
-  // Chip pre-filter only — ParityTable owns free-text search + sort/paging/column-visibility/selection.
+  // Quality MultiSelect + toolbar search — ParityTable still owns sort/paging/column-visibility/selection.
   const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
     return customers.filter((customer) => {
+      if (q) {
+        const hay = [customer.name, customer.customer_code, customer.email, customer.phone]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      if (qualityFilter.length === 0) return true;
       const badge = qualityBadge(customer);
       const open = openByCustomerId.get(customer.id) ?? 0;
-      if (filter === "late_pay") return badge.label === "Late-pay";
-      if (filter === "medium") return badge.label === "Medium";
-      if (filter === "active") return badge.label === "Active";
-      if (filter === "overdue") return openBalancesAvailable && open > 0 && badge.label === "Late-pay";
-      if (filter === "with_open") return openBalancesAvailable && open > 0;
-      return true;
+      return qualityFilter.some((f) => {
+        if (f === "late_pay") return badge.label === "Late-pay";
+        if (f === "medium") return badge.label === "Medium";
+        if (f === "active") return badge.label === "Active";
+        if (f === "overdue") return openBalancesAvailable && open > 0 && badge.label === "Late-pay";
+        if (f === "with_open") return openBalancesAvailable && open > 0;
+        return false;
+      });
     });
-  }, [customers, filter, openBalancesAvailable, openByCustomerId]);
+  }, [customers, qualityFilter, search, openBalancesAvailable, openByCustomerId]);
 
   const enrichedRows = useMemo<CustomerRow[]>(
     () =>
@@ -252,14 +272,13 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
     pushToast(`Exported ${selected.length} customer(s) to CSV.`, "success");
   };
 
-  const filterChips: Array<{ id: FilterChip; label: string }> = [
-    { id: "all", label: "All" },
-    { id: "late_pay", label: "Late-pay" },
-    { id: "medium", label: "Medium" },
-    { id: "active", label: "Active" },
-    { id: "overdue", label: "Has overdue" },
-    { id: "with_open", label: "With open" },
-  ];
+  const qualityOptions = useMemo(
+    () =>
+      QUALITY_FILTER_OPTIONS.filter(
+        (opt) => openBalancesAvailable || (opt.value !== "overdue" && opt.value !== "with_open"),
+      ),
+    [openBalancesAvailable],
+  );
 
   return (
     <div className="space-y-2" data-customers-list-view="true" data-bulk-selectable="true" data-entity-type="customers">
@@ -291,41 +310,34 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
           pushToast("You can select up to 200 items at a time. Clear some selections and try again.", "error")
         }
         filterBar={
-          <CollapsedListFilters
-            activeFilterCount={filter !== "all" ? 1 : 0}
+          <MoneyListToolbar
+            search={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Search customers"
+            searchTestId="customers-search-input"
+            onClearAll={() => {
+              setSearch("");
+              setQualityFilter([]);
+            }}
+            activeFilterCount={qualityFilter.length}
             testIdPrefix="customers"
-            onApply={staged.apply}
-            onReset={staged.reset}
-            onCancel={staged.cancel}
-            applyDisabled={!staged.dirty}
-            dataAttributes={{ "data-customers-filter-toolbar": "collapsed" }}
           >
-            <div className="space-y-1.5">
-              <div className="text-xs font-semibold text-gray-600">Quality / status</div>
-              <div className="flex flex-wrap items-center gap-2">
-                {filterChips.map((chip) => (
-                  <button
-                    key={chip.id}
-                    type="button"
-                    className={`rounded-full px-3 py-1 text-xs font-medium ${
-                      staged.draft.filter === chip.id ? "bg-[#1F2A44] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                    onClick={() => staged.setDraft({ filter: chip.id })}
-                    disabled={!openBalancesAvailable && (chip.id === "overdue" || chip.id === "with_open")}
-                    title={!openBalancesAvailable && (chip.id === "overdue" || chip.id === "with_open") ? "Open balances unavailable" : undefined}
-                  >
-                    {chip.label}
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs text-slate-600">
-                {atRiskQuery.isError
-                  ? "Relationship health is unavailable; retry the failed read above."
-                  : `Relationship health loaded for all ${atRiskQuery.data?.total ?? 0} at-risk customers.`}
-              </p>
-            </div>
-          </CollapsedListFilters>
+            <MultiSelectDropdown
+              label="Quality"
+              options={qualityOptions}
+              selected={qualityFilter}
+              onChange={setQualityFilter}
+              allLabel="All qualities"
+              data-testid="customers-quality-filter"
+            />
+            <p className="pb-1 text-xs text-[#6B7280]">
+              {atRiskQuery.isError
+                ? "Relationship health is unavailable; retry the failed read above."
+                : `Relationship health loaded for all ${atRiskQuery.data?.total ?? 0} at-risk customers.`}
+            </p>
+          </MoneyListToolbar>
         }
+        suppressToolbarSearch
         batchActions={(selected) => {
           const ids = selected.map((c) => c.id);
           return (
