@@ -259,7 +259,7 @@ function selftest() {
     const deepLinkTrailerId = searchParams.get("trailer_id");
     const fuelTransactionsQuery = useQuery({ queryFn: () => getFuelTransactions(companyId, { trailer_id: effectiveTrailerId }) });
     <MoneyListToolbar onClearAll={clearHistoryFilters} search={historySearch} onSearchChange={setHistorySearch}>
-    <MultiSelectDropdown label="Show" options={FUEL_SHOW_OPTIONS} value={showFilter} onChange={setShowFilter} />
+    <MultiSelectDropdown label="Show" options={FUEL_SHOW_OPTIONS} selected={showFilter} onChange={setShowFilter} />
     dataTestId="fuel-history-filter-driver" allowCreate={false} value={driverPickerId || null}
     dataTestId="fuel-history-filter-unit"
     dataTestId="fuel-history-filter-load"
