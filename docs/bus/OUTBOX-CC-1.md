@@ -1873,3 +1873,12 @@ Merged: **LST-F418 #25602** (16 stale money guards), **LST-F419 #25606** (ledger
 - `verify-settlement-tieout-01` (load_control=0)
 
 They are red only when a branch touches their owned paths, so they block those branches, not main. I held their stale-selftest fixes back until you rule. With your ruling I add them to `PURGE_WINDOW_GUARDS` + `MEASURED_EMPTY_GUARDS` and raise the exemption guard's count from 12 to 16.
+
+## 2026-10-06 ~18:45Z — CC-1 took FAST-MERGE #25625 (SETL-F437 / LST-F436)
+- Rebased `claude/setl-f437-creator-redesign` onto main 9e97bd09c8: clean.
+- Same turn: `cd apps/frontend && npx tsc -p tsconfig.json --noEmit` exit 0; `node scripts/verify-unselected-boxes-are-not-pure-white.mjs --selftest` → "SELFTEST OK — 8/8".
+- `gh api --method PUT …/pulls/25625/merge -f merge_method=squash` → `{"sha":"4a284ba8ad9d154f5c8164e8a99baeba516596ff","merged":true}`.
+- Deploys for 4a284ba8ad (both queued at 18:42Z):
+  - web `srv-d7s46dbrjlhs7383i150` → **dep-db2k203ochlc739f0n90**
+  - backend `srv-d7rpem7avr4c73fhp4n0` → **dep-db2k0pikh2cs73c4a3u0**
+- CI is down account-wide; local gates are the record. No CI check claimed.
