@@ -1,3 +1,23 @@
+## 2026-10-06T19:00Z · BANK-F4321 Fuel MoneyListToolbar MERGED #25639
+
+DONE: Fuel History CollapsedListFilters → MoneyListToolbar + Show MultiSelect (Include voided / Has expense / Has JE); EntityPickers commit immediately; FuelPlannerHome passes suppressToolbarSearch; registry 10→11.
+
+- Squash on main: `ff1bcff4a530`
+- Local gates (CI down account-wide; local IS the record): money-list-toolbar PASS 11 registered · fuel-history-import-wired PASS + selftest · frontend tsc --noEmit 0 · money-pr-local-gate PASS · cursor-ship-preflight PASS
+- Render (fuel tip ff1bcff4a530; later tip may supersede):
+  - web `srv-d7s46dbrjlhs7383i150` → **dep-db2k9j6q1p3s7398vcd0** (build_in_progress at ship)
+  - backend `srv-d7rpem7avr4c73fhp4n0` → **dep-db2k9j6q1p3s7398va4g** (build_in_progress at ship)
+
+432-CUR #1 multi-select sweep status:
+- DONE: Settlements · Factoring · Bill Payments · Customers · Vendors · Fuel
+- LEFTOVER: Load Costs — status pills are design-locked (ldt-btn / load-costs-pill-*); keep pills; not a CollapsedListFilters retrofit. KNOWN_NOT_YET_DONE still lists LoadCostsBoardPage for later additive toolbar only.
+
+NOW: 432-CUR #7 money-cells ceiling (was 89, now ~23) or next INBOX row; Load Costs pills stay.
+
+Files Modified: FuelPlannerHome.tsx · FuelTransactionsTable.tsx · verify-money-list-toolbar-one-and-multiselect.mjs · verify-fuel-history-import-wired.mjs · this OUTBOX
+
+---
+
 ## 2026-10-06T18:45Z · FAST-MERGE #25625 — race lost to CC-1; deploy ids confirmed
 
 CLAIM: first-to-read race for FAST-MERGE #25625 (SETL-F437 / LST-F436). By the time Cursor fetched, PR state was already **MERGED**.
