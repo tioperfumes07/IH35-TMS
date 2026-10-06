@@ -529,9 +529,11 @@ export async function buildCompanySettlementReport(
         COUNT(miles_shortest)::text AS loads_with_shortest,
         COUNT(*) FILTER (WHERE miles_practical IS NULL AND miles_shortest IS NULL)::text AS loads_with_neither
       FROM mdata.loads
-      WHERE id = ANY($1::uuid[])
+      WHERE operating_company_id = $1::uuid
+        AND id = ANY($2::uuid[])
     `,
-    [loadIds.length ? loadIds : ["00000000-0000-0000-0000-000000000000"]]
+    // ROUND 433 entity scope: bound to this company like every sibling read above (the ids come from settlement lines).
+    [input.operatingCompanyId, loadIds.length ? loadIds : ["00000000-0000-0000-0000-000000000000"]]
   );
   const milesRow = milesRes.rows[0];
   const totalMiles = Number(milesRow?.total_miles ?? 0);
@@ -557,10 +559,11 @@ export async function buildCompanySettlementReport(
     `
       SELECT DISTINCT assigned_unit_id::text AS unit_id
       FROM mdata.loads
-      WHERE id = ANY($1::uuid[])
+      WHERE operating_company_id = $1::uuid
+        AND id = ANY($2::uuid[])
         AND assigned_unit_id IS NOT NULL
     `,
-    [loadIds.length ? loadIds : ["00000000-0000-0000-0000-000000000000"]]
+    [input.operatingCompanyId, loadIds.length ? loadIds : ["00000000-0000-0000-0000-000000000000"]]
   );
   const unitIds = unitIdsRes.rows.map((r) => r.unit_id);
 

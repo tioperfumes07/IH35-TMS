@@ -129,11 +129,11 @@ export async function planLeaseBills(client: DbClient, opco: string, periodStart
          FROM accounting.lease_asset_line a
          LEFT JOIN mdata.units u ON u.id = a.unit_uuid
          LEFT JOIN mdata.equipment e ON e.id = a.equipment_id
-        WHERE a.lease_contract_id = $1::uuid AND a.deleted_at IS NULL AND a.is_active
+        WHERE a.lease_contract_id = $1::uuid AND a.operating_company_id = $4::uuid AND a.deleted_at IS NULL AND a.is_active
           AND COALESCE(a.start_date, $3::date) <= ($2::date + interval '1 month' - interval '1 day')
           AND (a.end_date IS NULL OR a.end_date >= $2::date)
         ORDER BY label`,
-      [c.id, periodStart, c.commencement]
+      [c.id, periodStart, c.commencement, opco]
     );
     // ROUND 321: a capitalized lease-to-own (ASC 842 lessee) bills against the lease liability — the payment reduces it.
     // An unbound lease_liability role leaves the account empty so the gate refuses the bill by name ("no account").

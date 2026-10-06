@@ -15,9 +15,13 @@ import { STOP_ARRIVAL_EVENTS_SQL } from "./stop-arrival-events.js";
 import { faultDescriptionSql, faultProposalJoinSql } from "../maintenance/fault-catalog-proposal.js";
 
 /** Display labels so a screen never renders a uuid (verify-no-uuid-label-rendering). */
-const LN = (col: string) => `(SELECT x.load_number FROM mdata.loads x WHERE x.id = ${col}) AS load_number`;
-const UN = (col: string) => `(SELECT x.unit_number FROM mdata.units x WHERE x.id = ${col}) AS unit_number`;
-const DL = (col: string) => `(SELECT NULLIF(trim(concat_ws(' ', x.first_name, x.last_name)), '') FROM mdata.drivers x WHERE x.id = ${col}) AS driver_label`;
+// ROUND 433 entity scope: every label is resolved inside THIS company ($1 = oc in every query below) — a stray id on a
+// telematics row can never print another entity's load / truck / driver.
+const LN = (col: string) => `(SELECT x.load_number FROM mdata.loads x WHERE x.id = ${col} AND x.operating_company_id = $1::uuid) AS load_number`;
+const UN = (col: string) =>
+  `(SELECT x.unit_number FROM mdata.units x WHERE x.id = ${col} AND (x.owner_company_id = $1::uuid OR x.currently_leased_to_company_id = $1::uuid)) AS unit_number`;
+const DL = (col: string) =>
+  `(SELECT NULLIF(trim(concat_ws(' ', x.first_name, x.last_name)), '') FROM mdata.drivers x WHERE x.id = ${col} AND (x.operating_company_id = $1::uuid OR EXISTS (SELECT 1 FROM mdata.driver_company_authorizations dca WHERE dca.driver_id = x.id AND dca.company_id = $1::uuid AND dca.is_authorized = true AND dca.deactivated_at IS NULL))) AS driver_label`;
 
 type Db = { query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }> };
 

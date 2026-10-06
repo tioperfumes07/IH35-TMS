@@ -253,7 +253,8 @@ export async function registerLocationRoutes(app: FastifyInstance) {
           `(location_name ILIKE $${idx} OR location_code ILIKE $${idx} OR address_line1 ILIKE $${idx} OR city ILIKE $${idx}
             OR EXISTS (
               SELECT 1 FROM mdata.customers c
-              WHERE c.id = linked_customer_id AND c.customer_name ILIKE $${idx}
+              WHERE c.id = linked_customer_id AND c.operating_company_id = mdata.locations.operating_company_id
+                AND c.customer_name ILIKE $${idx}
             ))`
         );
       }

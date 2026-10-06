@@ -113,6 +113,9 @@ assertCanonicalSubset("ACTIVE_DISPATCH_STATUSES", ACTIVE_DISPATCH_STATUSES);
 export const PENDING_LOAD_STATUSES = DISPATCH_WORK_LOAD_STATUSES.filter(
   (s) => !(ACTIVE_DISPATCH_STATUSES as readonly string[]).includes(s)
 );
+// ROUND 433: placeholders hoisted out of the SQL template so the query is ONE literal (a nested template split it,
+// and the entity-scope guard saw a fragment without its l.operating_company_id = $1).
+const PENDING_STATUS_PLACEHOLDERS = PENDING_LOAD_STATUSES.map((_, i) => `$${i + 2}`).join(", ");
 
 const LOC_STALE_MIN = 60;
 const HOS_STALE_MIN = 120;
@@ -325,7 +328,7 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
         ) de ON true
         WHERE l.operating_company_id = $1::uuid
           AND l.soft_deleted_at IS NULL
-          AND l.status::text IN (${PENDING_LOAD_STATUSES.map((_, i) => `$${i + 2}`).join(", ")})
+          AND l.status::text IN (${PENDING_STATUS_PLACEHOLDERS})
           AND NOT EXISTS (
             SELECT 1 FROM mdata.units u2
             WHERE u2.id = l.assigned_unit_id

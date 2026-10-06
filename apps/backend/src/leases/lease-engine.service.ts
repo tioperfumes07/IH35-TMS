@@ -305,8 +305,8 @@ export async function getLease(client: DbClient, opco: string, leaseId: string) 
        FROM accounting.lease_asset_line a
        LEFT JOIN mdata.units u ON u.id = a.unit_uuid
        LEFT JOIN mdata.equipment e ON e.id = a.equipment_id
-      WHERE a.lease_contract_id = $1::uuid AND a.deleted_at IS NULL ORDER BY u.unit_number NULLS LAST, e.equipment_number`,
-    [leaseId]
+      WHERE a.lease_contract_id = $1::uuid AND a.operating_company_id = $2::uuid AND a.deleted_at IS NULL ORDER BY u.unit_number NULLS LAST, e.equipment_number`,
+    [leaseId, opco]
   )).rows;
   const bills = (await client.query(
     `SELECT b.id::text, b.display_id, b.bill_number, b.bill_date::text, b.lease_period_start::text, b.amount_cents, b.paid_cents, b.status,

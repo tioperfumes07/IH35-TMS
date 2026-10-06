@@ -841,7 +841,7 @@ export async function seedExpense(
      SELECT $1::uuid, $2, $3::uuid, d.id, $4::date, $5, $6, $7::uuid, 'draft', 'unposted', $8::uuid, $8::uuid, false,
             l.assigned_unit_id, $9
        FROM mdata.loads l JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
-      WHERE l.id = $7::uuid
+      WHERE l.id = $7::uuid AND l.operating_company_id = $1::uuid
      RETURNING id::text`,
     [operatingCompanyId, expenseNumber, vendorId, line.date, line.amountCents, line.description, loadId, actorUserId, line.invoice?.trim() || null]
   );

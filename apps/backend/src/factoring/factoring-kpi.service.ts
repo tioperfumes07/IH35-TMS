@@ -50,7 +50,7 @@ async function factoringAccounts(client: DbClient, oci: string): Promise<Account
   const pick = async (role: Parameters<typeof resolveRoleAccountOptional>[2]) => {
     const id = await resolveRoleAccountOptional(client as never, oci, role);
     if (!id) return { id: null, label: `role ${role} (unbound)` };
-    const r = await client.query<{ n: string; name: string }>(`SELECT account_number AS n, account_name AS name FROM catalogs.accounts WHERE id = $1::uuid`, [id]);
+    const r = await client.query<{ n: string; name: string }>(`SELECT account_number AS n, account_name AS name FROM catalogs.accounts WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [id, oci]);
     return { id, label: `${r.rows[0]?.n ?? "?"} ${r.rows[0]?.name ?? ""}`.trim() };
   };
   const escrow = await pick("factor_reserve_held");

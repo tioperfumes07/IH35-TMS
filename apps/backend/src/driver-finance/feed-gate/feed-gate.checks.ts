@@ -22,7 +22,9 @@ const SETTLEMENT_LOADS = `
 const LOAD_SUBJECT = `
   SELECT l.id, l.load_number FROM mdata.loads l WHERE l.operating_company_id = $1::uuid AND l.id = $2::uuid AND l.soft_deleted_at IS NULL`;
 
-/** Load-level checks, parameterised on the load set CTE so the same SQL serves a load feed and a settlement feed. */
+/** Load-level checks, parameterised on the load set CTE so the same SQL serves a load feed and a settlement feed.
+ *  ROUND 433 entity scope: every check also joins the load ON this company ($1 = companyId in runOneCheck), so a check
+ *  is scoped on its own, not only through whichever load set it was given. */
 function loadChecks(loadSet: string): FeedCheckDef[] {
   const L = `WITH loads AS (${loadSet})`;
   return [
@@ -31,60 +33,60 @@ function loadChecks(loadSet: string): FeedCheckDef[] {
              (l.customer_id IS NOT NULL AND c.id IS NOT NULL AND c.deactivated_at IS NULL) AS ok,
              CASE WHEN l.customer_id IS NULL THEN 'no customer on the load' WHEN c.id IS NULL THEN 'customer id points at no customer' WHEN c.deactivated_at IS NOT NULL THEN 'customer is deactivated' END AS missing,
              '/dispatch/loads/' || l.id::text AS fix_link, jsonb_build_object('customer', c.customer_name) AS measured
-        FROM loads x JOIN mdata.loads l ON l.id = x.id LEFT JOIN mdata.customers c ON c.id = l.customer_id` },
+        FROM loads x JOIN mdata.loads l ON l.id = x.id AND l.operating_company_id = $1::uuid LEFT JOIN mdata.customers c ON c.id = l.customer_id` },
     { key: "load.driver_unit_trailer_assigned", group: "load", sql: `${L}
       SELECT 'mdata.loads', l.id, 'Load ' || l.load_number,
              (l.assigned_primary_driver_id IS NOT NULL AND l.assigned_unit_id IS NOT NULL AND l.load_trailer_equipment_id IS NOT NULL),
              concat_ws('; ', CASE WHEN l.assigned_primary_driver_id IS NULL THEN 'no driver' END, CASE WHEN l.assigned_unit_id IS NULL THEN 'no truck' END, CASE WHEN l.load_trailer_equipment_id IS NULL THEN 'no trailer' END),
              '/dispatch/loads/' || l.id::text, jsonb_build_object('driver', d.first_name || ' ' || d.last_name, 'unit', u.unit_number, 'trailer', l.load_trailer_equipment_id)
-        FROM loads x JOIN mdata.loads l ON l.id = x.id LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id` },
+        FROM loads x JOIN mdata.loads l ON l.id = x.id AND l.operating_company_id = $1::uuid LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id` },
     { key: "load.trip_type_present", group: "load", sql: `${L}
       SELECT 'mdata.loads', l.id, 'Load ' || l.load_number, l.trip_type IS NOT NULL, CASE WHEN l.trip_type IS NULL THEN 'trip type (NB/SB/TR/LOCAL) not set — SET-01 link cannot run' END,
-             '/dispatch/loads/' || l.id::text, jsonb_build_object('trip_type', l.trip_type) FROM loads x JOIN mdata.loads l ON l.id = x.id` },
+             '/dispatch/loads/' || l.id::text, jsonb_build_object('trip_type', l.trip_type) FROM loads x JOIN mdata.loads l ON l.id = x.id AND l.operating_company_id = $1::uuid` },
     { key: "load.stops_geocoded", group: "load", sql: `${L}
       SELECT 'mdata.loads', l.id, 'Load ' || l.load_number, count(s.*) FILTER (WHERE s.latitude IS NULL) = 0 AND count(s.*) >= 2,
              CASE WHEN count(s.*) < 2 THEN 'fewer than 2 stops' WHEN count(s.*) FILTER (WHERE s.latitude IS NULL) > 0 THEN count(s.*) FILTER (WHERE s.latitude IS NULL) || ' stop(s) without coordinates' END,
              '/dispatch/loads/' || l.id::text, jsonb_build_object('stops', count(s.*), 'ungeocoded', count(s.*) FILTER (WHERE s.latitude IS NULL))
-        FROM loads x JOIN mdata.loads l ON l.id = x.id LEFT JOIN mdata.load_stops s ON s.load_id = l.id AND s.soft_deleted_at IS NULL GROUP BY l.id, l.load_number` },
+        FROM loads x JOIN mdata.loads l ON l.id = x.id AND l.operating_company_id = $1::uuid LEFT JOIN mdata.load_stops s ON s.load_id = l.id AND s.soft_deleted_at IS NULL GROUP BY l.id, l.load_number` },
     { key: "load.stops_stamped", group: "stamps", sql: `${L}
       SELECT 'mdata.loads', l.id, 'Load ' || l.load_number,
              CASE WHEN l.status::text IN ('delivered','delivered_pending_docs','completed_docs_received','invoiced','completed') THEN count(s.*) FILTER (WHERE s.actual_arrival_at IS NULL OR s.actual_departure_at IS NULL) = 0 ELSE NULL END,
              CASE WHEN count(s.*) FILTER (WHERE s.actual_arrival_at IS NULL OR s.actual_departure_at IS NULL) > 0 THEN count(s.*) FILTER (WHERE s.actual_arrival_at IS NULL OR s.actual_departure_at IS NULL) || ' stop(s) missing actual arrival/departure stamps' END,
              '/dispatch/loads/' || l.id::text, jsonb_build_object('status', l.status::text, 'unstamped', count(s.*) FILTER (WHERE s.actual_arrival_at IS NULL OR s.actual_departure_at IS NULL))
-        FROM loads x JOIN mdata.loads l ON l.id = x.id LEFT JOIN mdata.load_stops s ON s.load_id = l.id AND s.soft_deleted_at IS NULL GROUP BY l.id, l.load_number, l.status` },
+        FROM loads x JOIN mdata.loads l ON l.id = x.id AND l.operating_company_id = $1::uuid LEFT JOIN mdata.load_stops s ON s.load_id = l.id AND s.soft_deleted_at IS NULL GROUP BY l.id, l.load_number, l.status` },
     { key: "invoice.exists_with_live_line", group: "revenue", sql: `${L}
       SELECT 'mdata.loads', l.id, 'Load ' || l.load_number,
              (i.id IS NOT NULL AND EXISTS (SELECT 1 FROM accounting.invoice_lines il WHERE il.invoice_id = i.id AND il.soft_deleted_at IS NULL AND il.account_id IS NOT NULL)),
              CASE WHEN i.id IS NULL THEN 'no live invoice for this load' WHEN NOT EXISTS (SELECT 1 FROM accounting.invoice_lines il WHERE il.invoice_id = i.id AND il.soft_deleted_at IS NULL) THEN 'invoice ' || i.display_id || ' has no line' WHEN NOT EXISTS (SELECT 1 FROM accounting.invoice_lines il WHERE il.invoice_id = i.id AND il.soft_deleted_at IS NULL AND il.account_id IS NOT NULL) THEN 'invoice ' || i.display_id || ' line has no income account' END,
              CASE WHEN i.id IS NULL THEN '/dispatch/loads/' || l.id::text ELSE '/accounting/invoices/' || i.id::text END, jsonb_build_object('invoice', i.display_id, 'status', i.status, 'total_cents', i.total_cents)
-        FROM loads x JOIN mdata.loads l ON l.id = x.id LEFT JOIN LATERAL (SELECT * FROM accounting.invoices v WHERE v.source_load_id = l.id AND v.voided_at IS NULL ORDER BY v.created_at DESC LIMIT 1) i ON true` },
+        FROM loads x JOIN mdata.loads l ON l.id = x.id AND l.operating_company_id = $1::uuid LEFT JOIN LATERAL (SELECT * FROM accounting.invoices v WHERE v.source_load_id = l.id AND v.voided_at IS NULL ORDER BY v.created_at DESC LIMIT 1) i ON true` },
     { key: "invoice.rate_equals_invoice", group: "revenue", sql: `${L}
       SELECT 'accounting.invoices', i.id, 'Invoice ' || i.display_id, i.total_cents = l.rate_total_cents,
              CASE WHEN i.total_cents <> l.rate_total_cents THEN 'invoice total ' || i.total_cents || 'c ≠ load rate ' || l.rate_total_cents || 'c' END,
              '/accounting/invoices/' || i.id::text, jsonb_build_object('invoice_cents', i.total_cents, 'load_rate_cents', l.rate_total_cents)
-        FROM loads x JOIN mdata.loads l ON l.id = x.id JOIN accounting.invoices i ON i.source_load_id = l.id AND i.voided_at IS NULL` },
+        FROM loads x JOIN mdata.loads l ON l.id = x.id AND l.operating_company_id = $1::uuid JOIN accounting.invoices i ON i.source_load_id = l.id AND i.voided_at IS NULL` },
     { key: "invoice.ar_je_posted", group: "controls", sql: `${L}
       SELECT 'accounting.invoices', i.id, 'Invoice ' || i.display_id,
              CASE WHEN i.status IN ('sent','partial','paid') THEN EXISTS (SELECT 1 FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid WHERE p.source_transaction_type = 'invoice' AND p.source_transaction_id = i.id::text AND je.status = 'posted') ELSE NULL END,
              CASE WHEN i.status IN ('sent','partial','paid') AND NOT EXISTS (SELECT 1 FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid WHERE p.source_transaction_type = 'invoice' AND p.source_transaction_id = i.id::text AND je.status = 'posted') THEN 'invoice is ' || i.status || ' but no posted A/R journal entry exists' END,
              '/accounting/invoices/' || i.id::text, jsonb_build_object('status', i.status, 'sent_at', i.sent_at)
-        FROM loads x JOIN mdata.loads l ON l.id = x.id JOIN accounting.invoices i ON i.source_load_id = l.id AND i.voided_at IS NULL` },
+        FROM loads x JOIN mdata.loads l ON l.id = x.id AND l.operating_company_id = $1::uuid JOIN accounting.invoices i ON i.source_load_id = l.id AND i.voided_at IS NULL` },
     { key: "invoice.sent_stamped", group: "stamps", sql: `${L}
       SELECT 'accounting.invoices', i.id, 'Invoice ' || i.display_id, CASE WHEN i.status IN ('sent','partial','paid') THEN (i.sent_at IS NOT NULL AND i.issue_date IS NOT NULL AND i.due_date IS NOT NULL) ELSE NULL END,
              concat_ws('; ', CASE WHEN i.status IN ('sent','partial','paid') AND i.sent_at IS NULL THEN 'sent_at not stamped' END, CASE WHEN i.issue_date IS NULL THEN 'no issue date' END, CASE WHEN i.due_date IS NULL THEN 'no due date' END),
              '/accounting/invoices/' || i.id::text, jsonb_build_object('issue_date', i.issue_date, 'due_date', i.due_date, 'sent_at', i.sent_at)
-        FROM loads x JOIN mdata.loads l ON l.id = x.id JOIN accounting.invoices i ON i.source_load_id = l.id AND i.voided_at IS NULL` },
+        FROM loads x JOIN mdata.loads l ON l.id = x.id AND l.operating_company_id = $1::uuid JOIN accounting.invoices i ON i.source_load_id = l.id AND i.voided_at IS NULL` },
     { key: "invoice.factoring_linked", group: "linkage", sql: `${L}
       SELECT 'accounting.invoices', i.id, 'Invoice ' || i.display_id,
              CASE WHEN i.factoring_status = 'advanced' THEN (fa.id IS NOT NULL AND fa.voided_at IS NULL AND fa.source_load_id = l.id) WHEN i.factoring_status IN ('not_factored') OR i.factoring_status IS NULL THEN NULL ELSE NULL END,
              CASE WHEN i.factoring_status = 'advanced' AND fa.id IS NULL THEN 'invoice says advanced but no factoring advance is linked' WHEN i.factoring_status = 'advanced' AND fa.source_load_id IS DISTINCT FROM l.id THEN 'linked advance points at a different load' END,
              '/factoring', jsonb_build_object('factoring_status', i.factoring_status, 'advance', fa.display_id, 'faro_purchase_date', fa.faro_purchase_date)
-        FROM loads x JOIN mdata.loads l ON l.id = x.id JOIN accounting.invoices i ON i.source_load_id = l.id AND i.voided_at IS NULL LEFT JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id` },
+        FROM loads x JOIN mdata.loads l ON l.id = x.id AND l.operating_company_id = $1::uuid JOIN accounting.invoices i ON i.source_load_id = l.id AND i.voided_at IS NULL LEFT JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id` },
     { key: "driver_bill.exists_not_void", group: "driver_pay", sql: `${L}
       SELECT 'mdata.loads', l.id, 'Load ' || l.load_number, db.id IS NOT NULL,
              CASE WHEN db.id IS NULL THEN 'no live driver bill for this load' END,
              '/driver-finance/driver-bills', jsonb_build_object('bill', db.bill_number, 'gross_cents', db.gross_amount_cents, 'miles_basis', db.miles_basis_type)
-        FROM loads x JOIN mdata.loads l ON l.id = x.id LEFT JOIN LATERAL (SELECT * FROM driver_finance.driver_bills b WHERE b.load_id = l.id AND b.voided_at IS NULL ORDER BY b.created_at DESC LIMIT 1) db ON true` },
+        FROM loads x JOIN mdata.loads l ON l.id = x.id AND l.operating_company_id = $1::uuid LEFT JOIN LATERAL (SELECT * FROM driver_finance.driver_bills b WHERE b.load_id = l.id AND b.voided_at IS NULL ORDER BY b.created_at DESC LIMIT 1) db ON true` },
     { key: "costs.expenses_linked_and_posted", group: "costs", sql: `${L}
       SELECT 'accounting.expenses', e.id, 'Expense ' || coalesce(e.expense_number, left(e.id::text, 8)),
              (e.vendor_uuid IS NOT NULL AND e.payment_account_uuid IS NOT NULL AND e.posting_status = 'posted' AND e.journal_entry_id IS NOT NULL

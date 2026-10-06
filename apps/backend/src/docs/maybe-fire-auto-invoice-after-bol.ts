@@ -41,7 +41,9 @@ export async function maybeFireAutoInvoiceAfterBolSaved(input: {
           ON dfl.file_id = df.id
           AND dfl.entity_type = 'load'
           AND dfl.deleted_at IS NULL
-        JOIN mdata.loads l ON l.id = dfl.entity_id
+        -- ROUND 433 entity scope: the linked load must be the FILE's company's load — a cross-company link can never
+        -- release another entity's invoice.
+        JOIN mdata.loads l ON l.id = dfl.entity_id AND l.operating_company_id = df.operating_company_id
         WHERE df.id = $1::uuid
           AND df.deleted_at IS NULL
         LIMIT 1

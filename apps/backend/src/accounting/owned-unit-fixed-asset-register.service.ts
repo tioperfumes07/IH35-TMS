@@ -357,9 +357,12 @@ export async function registerCapitalizedRepairAsFixedAsset(
     `SELECT id::text AS id, unit_number, vin, owner_company_id::text AS owner_company_id
      FROM mdata.units
      WHERE id = $1::uuid
+       -- ROUND 433 entity scope: the unit must be in THIS company's fleet (owned or leased to it); a unit id from another
+       -- entity must never become a fixed asset on this company's books.
+       AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
        AND deactivated_at IS NULL
        AND COALESCE(is_sample_data, false) = false`,
-    [input.unit_uuid]
+    [input.unit_uuid, input.operating_company_id]
   );
   if (!unit.rows[0]) return { created: false, reason: "unit_not_found" };
 

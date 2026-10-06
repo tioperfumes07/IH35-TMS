@@ -241,7 +241,7 @@ export function expenseListSearchFields(aliases: {
     {
       kind: "text",
       sql: `(SELECT a.account_name FROM accounting.expense_lines el
-             JOIN catalogs.accounts a ON a.id = el.expense_account_uuid
+             JOIN catalogs.accounts a ON a.id = el.expense_account_uuid AND a.operating_company_id = ${e}.operating_company_id
              WHERE el.expense_id = ${e}.id
              ORDER BY el.line_sequence LIMIT 1)`,
     },

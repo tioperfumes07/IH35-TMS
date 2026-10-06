@@ -132,13 +132,14 @@ export async function computeRelayFillGpsVerdicts(
                 v.captured_at AS at
            FROM telematics.vehicle_locations v
            JOIN mdata.units u ON u.id = v.unit_id
+                              AND (u.owner_company_id = $6::uuid OR u.currently_leased_to_company_id = $6::uuid)
           WHERE v.unit_id = ANY($1::uuid[])
             AND v.captured_at BETWEEN $4::timestamptz - make_interval(mins => $5) AND $4::timestamptz + make_interval(mins => $5)
             AND coalesce(v.speed_mph, CASE WHEN v.engine_state = 'off' THEN 0 END) <= 1
             AND v.lat BETWEEN $2::float8 - 0.01 AND $2::float8 + 0.01
             AND v.lng BETWEEN $3::float8 - 0.01 AND $3::float8 + 0.01
           ORDER BY v.unit_id, abs(extract(epoch FROM v.captured_at - $4::timestamptz))`,
-        [fleetIds, Number(f.lat), Number(f.lng), pump.toISOString(), GPS_WINDOW_MIN]
+        [fleetIds, Number(f.lat), Number(f.lng), pump.toISOString(), GPS_WINDOW_MIN, operatingCompanyId]
       );
       candidates = c.rows
         .map((r) => ({ unit_id: r.unit_id, unit_number: r.unit_number, metres: Math.round(Number(r.metres)), at: new Date(r.at).toISOString() }))

@@ -67,8 +67,8 @@ export async function reverseLoadCancellationInClientTx(client: Db, actorUserId:
   }
   const after = (
     await client.query<{ status: string; canceled_at: string | null; canceled_by: string | null }>(
-      `SELECT status::text AS status, canceled_at::text, canceled_by::text FROM mdata.loads WHERE id = $1::uuid`,
-      [input.load_id]
+      `SELECT status::text AS status, canceled_at::text, canceled_by::text FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      [input.load_id, input.operating_company_id]
     )
   ).rows[0];
   if (after.canceled_at !== null) throw new Error("E_CANCEL_STAMP_NOT_CLEARED");

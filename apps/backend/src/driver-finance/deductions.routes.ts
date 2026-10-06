@@ -165,8 +165,8 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
           const acctId = await resolveRoleAccountOptional(client, operating_company_id, "reimbursement_expense");
           if (acctId) {
             const acctRes = await client.query(
-              `SELECT account_number, account_name FROM catalogs.accounts WHERE id = $1::uuid LIMIT 1`,
-              [acctId]
+              `SELECT account_number, account_name FROM catalogs.accounts WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+              [acctId, operating_company_id]
             );
             const acct = acctRes.rows[0] as { account_number: string | null; account_name: string | null } | undefined;
             if (acct) {

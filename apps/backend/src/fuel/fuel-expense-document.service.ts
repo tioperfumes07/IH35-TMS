@@ -132,8 +132,8 @@ export async function resolveFuelLineAccount(
   const mapped = await resolveFuelItem(client, operatingCompanyId, line.fuel_type ?? "diesel");
   if ("refused" in mapped) return mapped;
   const a = await client.query<{ account_number: string | null; account_name: string | null }>(
-    `SELECT account_number, account_name FROM catalogs.accounts WHERE id = $1::uuid`,
-    [mapped.expenseAccountId],
+    `SELECT account_number, account_name FROM catalogs.accounts WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    [mapped.expenseAccountId, operatingCompanyId],
   );
   return { account_id: mapped.expenseAccountId, account_number: a.rows[0]?.account_number ?? null, account_name: a.rows[0]?.account_name ?? mapped.itemName };
 }

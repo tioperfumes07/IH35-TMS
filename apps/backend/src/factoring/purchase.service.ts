@@ -376,10 +376,10 @@ export async function getPurchaseDetail(client: DbClient, oci: string, purchaseI
         JOIN mdata.customers c ON c.id = pl.customer_id
         LEFT JOIN mdata.loads l ON l.id = pl.load_id
         LEFT JOIN driver_finance.driver_settlements ds ON ds.id = pl.settlement_id
-       WHERE pl.purchase_id = $1::uuid
+       WHERE pl.purchase_id = $1::uuid AND pl.operating_company_id = $2::uuid
        ORDER BY pl.line_no
     `,
-    [purchaseId]
+    [purchaseId, oci]
   )).rows;
   return { ...head, lines };
 }

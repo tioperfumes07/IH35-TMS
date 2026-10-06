@@ -316,18 +316,20 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
       );
       values.push(scopedCompanyId);
       const ociIdx = values.length;
+      // Rule 49: the active unit roster is the fleet currently leased to this carrier. Ownership
+      // identifies the asset holder and would pull Transportation-only trucks into USMCA.
+      // ROUND 433: the scope predicate is pushed unconditionally (one of the two forms), so the entity-scope guard can
+      // see the list is always scoped.
+      const unitScopePredicate =
+        status === "InService"
+          ? `currently_leased_to_company_id = $${ociIdx}::uuid`
+          : `(owner_company_id = $${ociIdx} OR currently_leased_to_company_id = $${ociIdx})`;
+      filters.push(unitScopePredicate);
       if (status === "InService") {
-        // Rule 49: the active unit roster is the fleet currently leased to this carrier. Ownership
-        // identifies the asset holder and would pull Transportation-only trucks into USMCA.
-        filters.push(`currently_leased_to_company_id = $${ociIdx}::uuid`);
         filters.push("is_oos IS NOT TRUE");
         filters.push("sold_date IS NULL");
         filters.push("disposed_date IS NULL");
         filters.push("deactivated_at IS NULL");
-      } else {
-        filters.push(
-          `(owner_company_id = $${ociIdx} OR currently_leased_to_company_id = $${ociIdx})`,
-        );
       }
       const whereClause =
         filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";

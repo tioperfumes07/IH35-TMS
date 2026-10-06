@@ -433,12 +433,12 @@ export async function confirmPresettlementLink(client: DbClient, input: ConfirmI
             (SELECT ls.scheduled_arrival_at FROM mdata.load_stops ls
               WHERE ls.load_id = $1::uuid AND ls.stop_type = 'pickup' AND ls.soft_deleted_at IS NULL
               ORDER BY ls.sequence_number ASC LIMIT 1),
-            (SELECT l.created_at FROM mdata.loads l WHERE l.id = $1::uuid),
+            (SELECT l.created_at FROM mdata.loads l WHERE l.id = $1::uuid AND l.operating_company_id = $2::uuid),
             now()
           )::text AS trip_started_at,
-          COALESCE((SELECT l.is_sample_data FROM mdata.loads l WHERE l.id = $1::uuid), false) AS is_sample_data
+          COALESCE((SELECT l.is_sample_data FROM mdata.loads l WHERE l.id = $1::uuid AND l.operating_company_id = $2::uuid), false) AS is_sample_data
       `,
-      [suggestion.load_id]
+      [suggestion.load_id, input.operating_company_id]
     );
     const periodDate = String(loadContext.rows[0]!.trip_started_at).slice(0, 10);
     const isSampleData = Boolean(loadContext.rows[0]!.is_sample_data);

@@ -75,10 +75,13 @@ export async function buildLoadSaveProof(
                ELSE mdata.resolve_customer_label_same_company($2::uuid, $1::uuid) END AS customer_name,
           CASE WHEN $3::uuid IS NULL THEN NULL
                ELSE mdata.resolve_driver_label_same_company($3::uuid, $1::uuid) END AS driver_name,
-          (SELECT u.unit_number FROM mdata.units u WHERE u.id = $4::uuid LIMIT 1) AS unit_number,
+          (SELECT u.unit_number FROM mdata.units u WHERE u.id = $4::uuid
+             AND (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid) LIMIT 1) AS unit_number,
           COALESCE(
-            (SELECT u.unit_number FROM mdata.units u WHERE u.id = $5::uuid LIMIT 1),
-            (SELECT e.equipment_number FROM mdata.equipment e WHERE e.id = $5::uuid LIMIT 1)
+            (SELECT u.unit_number FROM mdata.units u WHERE u.id = $5::uuid
+               AND (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid) LIMIT 1),
+            (SELECT e.equipment_number FROM mdata.equipment e WHERE e.id = $5::uuid
+               AND (e.owner_company_id = $1::uuid OR e.currently_leased_to_company_id = $1::uuid) LIMIT 1)
           ) AS trailer_number
       `,
       [opco, customerId || null, driverId || null, unitId || null, args.trailerId || null]

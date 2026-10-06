@@ -28,17 +28,18 @@ export type PostedWhileTourOpenRow = {
   accounts: Array<{ account_number: string | null; account_name: string | null; debit_or_credit: string; amount_cents: number }>;
 };
 
-async function jeLinesFor(client: DbClient, journalEntryId: string | null) {
+async function jeLinesFor(client: DbClient, operatingCompanyId: string, journalEntryId: string | null) {
   if (!journalEntryId) return [];
   const res = await client.query<{ account_number: string | null; account_name: string | null; debit_or_credit: string; amount_cents: string }>(
     `
       SELECT a.account_number, a.account_name, p.debit_or_credit, p.amount_cents::bigint::text AS amount_cents
       FROM accounting.journal_entry_postings p
-      LEFT JOIN catalogs.accounts a ON a.id = p.account_id
+      LEFT JOIN catalogs.accounts a ON a.id = p.account_id AND a.operating_company_id = p.operating_company_id
       WHERE p.journal_entry_uuid = $1::uuid
+        AND p.operating_company_id = $2::uuid
       ORDER BY p.line_sequence ASC
     `,
-    [journalEntryId]
+    [journalEntryId, operatingCompanyId]
   );
   return res.rows.map((r) => ({ ...r, amount_cents: Number(r.amount_cents) }));
 }
@@ -126,7 +127,7 @@ export async function getPostedWhileTourOpenReport(client: DbClient, operatingCo
       journal_entry_id: e.journal_entry_id,
       amount_cents: Number(e.amount_cents),
       settlement_status: e.settlement_status ?? "no_settlement_linked",
-      accounts: await jeLinesFor(client, e.journal_entry_id),
+      accounts: await jeLinesFor(client, operatingCompanyId, e.journal_entry_id),
     });
   }
   const seenBills = new Set<string>();
@@ -142,7 +143,7 @@ export async function getPostedWhileTourOpenReport(client: DbClient, operatingCo
       journal_entry_id: journalEntryId,
       amount_cents: Math.round(Number(b.amount_cents) * 100),
       settlement_status: b.settlement_status ?? "no_settlement_linked",
-      accounts: await jeLinesFor(client, journalEntryId),
+      accounts: await jeLinesFor(client, operatingCompanyId, journalEntryId),
     });
   }
   return rows;

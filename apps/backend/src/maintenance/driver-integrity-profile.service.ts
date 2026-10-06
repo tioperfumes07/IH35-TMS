@@ -207,8 +207,11 @@ export async function computeDriverIntegrityProfiles(
 
   const driverIds = new Set<string>([...fuelBy.keys(), ...eventsBy.keys(), ...findingsBy.keys(), ...complaints.keys()]);
   const names = await client.query<{ id: string; name: string }>(
-    `SELECT id::text, trim(concat_ws(' ', first_name, last_name)) AS name FROM mdata.drivers WHERE id = ANY($1::uuid[])`,
-    [[...driverIds]]
+    `SELECT d.id::text, trim(concat_ws(' ', d.first_name, d.last_name)) AS name FROM mdata.drivers d
+      WHERE d.id = ANY($1::uuid[])
+        AND (d.operating_company_id = $2::uuid OR EXISTS (SELECT 1 FROM mdata.driver_company_authorizations dca
+              WHERE dca.driver_id = d.id AND dca.company_id = $2::uuid AND dca.is_authorized = true AND dca.deactivated_at IS NULL))`,
+    [[...driverIds], operatingCompanyId]
   );
   const nameBy = new Map(names.rows.map((r) => [r.id, r.name]));
 

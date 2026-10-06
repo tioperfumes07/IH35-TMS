@@ -807,8 +807,9 @@ export async function postSettlementCreatorInClientTx(
   // (column named, guard green, every auto-opened settlement still hardcoded "not sample data").
   // Derived off the driver, per the guard's own prescribed pattern ("driver for the weekly close").
   const driverSampleRes = await client.query<{ is_sample_data: boolean | null }>(
-    `SELECT is_sample_data FROM mdata.drivers WHERE id = $1::uuid`,
-    [draft.driver_id],
+    // ROUND 433 entity scope: the driver must be this company's (home or authorized), the same predicate dispatch uses.
+    `SELECT d.is_sample_data FROM mdata.drivers d WHERE d.id = $1::uuid AND (d.operating_company_id = $2::uuid OR EXISTS (SELECT 1 FROM mdata.driver_company_authorizations dca WHERE dca.driver_id = d.id AND dca.company_id = $2::uuid AND dca.is_authorized = true AND dca.deactivated_at IS NULL))`,
+    [draft.driver_id, draft.operating_company_id],
   );
   const isSampleData = driverSampleRes.rows[0]?.is_sample_data ?? false;
 

@@ -681,10 +681,10 @@ export function driverReimbursementSubAccountName(driverName: string): string {
  * sub-parent — same generation shape as the live 2100-00-NNN escrow sequence. Scans existing
  * children's account_number suffixes and returns max+1 (never reuses a number, even across voids).
  */
-async function nextDriverReimbursementLeafNumber(client: DbClient, subParentId: string): Promise<string> {
+async function nextDriverReimbursementLeafNumber(client: DbClient, operatingCompanyId: string, subParentId: string): Promise<string> {
   const rows = await client.query<{ account_number: string }>(
-    `SELECT account_number FROM catalogs.accounts WHERE parent_account_id = $1::uuid AND account_number LIKE $2`,
-    [subParentId, `${DRIVER_REIMBURSEMENT_SUB_PARENT_ACCOUNT_NUMBER}-%`]
+    `SELECT account_number FROM catalogs.accounts WHERE operating_company_id = $3::uuid AND parent_account_id = $1::uuid AND account_number LIKE $2`,
+    [subParentId, `${DRIVER_REIMBURSEMENT_SUB_PARENT_ACCOUNT_NUMBER}-%`, operatingCompanyId]
   );
   let max = 0;
   for (const r of rows.rows) {
@@ -767,7 +767,7 @@ export async function provisionDriverReimbursementSubAccount(
   });
   if (existingId) return { created: false, reason: "already_exists", accountId: existingId };
 
-  const leafNumber = await nextDriverReimbursementLeafNumber(client, subParentId);
+  const leafNumber = await nextDriverReimbursementLeafNumber(client, input.operatingCompanyId, subParentId);
 
   const ins = await client.query<{ id: string }>(
     `

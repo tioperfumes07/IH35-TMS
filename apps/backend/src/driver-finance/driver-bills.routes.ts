@@ -250,8 +250,8 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
       const apAccountId = await resolveRoleAccountOptional(client, parsed.data.operating_company_id, "ap_control");
       type AccountRow = { id: string; account_number: string; account_name: string };
       const accountNamesRes = await client.query(
-        `SELECT id::text, account_number, account_name FROM catalogs.accounts WHERE id = ANY($1::uuid[])`,
-        [[driverPayAccountId, apAccountId].filter((x): x is string => Boolean(x))]
+        `SELECT id::text, account_number, account_name FROM catalogs.accounts WHERE id = ANY($1::uuid[]) AND operating_company_id = $2::uuid`,
+        [[driverPayAccountId, apAccountId].filter((x): x is string => Boolean(x)), parsed.data.operating_company_id]
       );
       const accountRows = accountNamesRes.rows as AccountRow[];
       const nameOf = (id: string | null) => (id ? accountRows.find((a) => a.id === id) ?? null : null);

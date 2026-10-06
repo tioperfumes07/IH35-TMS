@@ -115,7 +115,7 @@ export async function buildWeeklyCloseDraftForDriver(
         -- DERIVED from the driver, not hardcoded. A weekly close for a sample driver produces a
         -- sample settlement; a literal here would strand it untagged in the live ledger exactly the
         -- way the dispatch writer did (LV-SAMPLE-TAG-DISPATCH-HOLE).
-        COALESCE((SELECT d.is_sample_data FROM mdata.drivers d WHERE d.id = $3::uuid), false),
+        COALESCE((SELECT d.is_sample_data FROM mdata.drivers d WHERE d.id = $3::uuid AND (d.operating_company_id = $1::uuid OR EXISTS (SELECT 1 FROM mdata.driver_company_authorizations dca WHERE dca.driver_id = d.id AND dca.company_id = $1::uuid AND dca.is_authorized = true AND dca.deactivated_at IS NULL))), false),
         'week_calendar' -- ROUND 313: a weekly close IS a calendar-week settlement; never NULL.
       )
       RETURNING id::text AS id
