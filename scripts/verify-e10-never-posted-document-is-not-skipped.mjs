@@ -39,63 +39,40 @@ const LABEL = "verify-e10-never-posted-document-is-not-skipped";
 const RUNNER_PATH = path.join(ROOT, "scripts/ops/e10-void-runner-01-usmca.ts");
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
-export function assertNeverPostedPredicateShape(runnerPath = RUNNER_PATH) {
+/** Checks the runner source text. Exported so the selftest can run it on planted variants. */
+export function shapeFailures(src) {
   const fails = [];
-  if (!fs.existsSync(runnerPath)) {
-    fails.push(`runner not found at ${path.relative(ROOT, runnerPath)}`);
-    return fails;
-  }
-  const src = fs.readFileSync(runnerPath, "utf8");
-
-  if (!/never posted|neverPosted/i.test(src)) {
-    fails.push("no 'never posted' candidate handling found at all -- the predicate gap is unaddressed.");
-    return fails;
-  }
-
-  // For invoice: the never-posted query must exclude draft/proforma AND must NOT call a
-  // reversal engine (reversePostedSourceTransaction / reverseJournalEntryNoFlip) anywhere near
-  // its own stampDocumentVoided call -- it must go straight to the stamp.
-  const invoiceBlockMatch = src.match(/neverPostedInvoices[\s\S]{0,2500}/);
-  if (!invoiceBlockMatch) {
-    fails.push("no never-posted invoice candidate query found (expected a neverPostedInvoices variable).");
-  } else {
-    const block = invoiceBlockMatch[0];
-    if (!/status NOT IN \('draft', 'proforma'\)|status NOT IN\('draft','proforma'\)/i.test(block.replace(/\s+/g, " "))) {
-      fails.push("never-posted invoice query does not visibly exclude draft/proforma status.");
+  // ROUND 128 (owner): "status does not matter ... VOID THEM" -- draft/proforma are IN scope. Each family needs a
+  // candidate query for documents with zero postings, stamped directly, never routed through a reversal engine.
+  for (const [family, variable, sourceType] of [
+    ["invoice", "noGlInvoices", "invoice"],
+    ["expense", "noGlExpenses", "expense"],
+  ]) {
+    const m = src.match(new RegExp(`const ${variable} = await client\\.query[\\s\\S]*?\\n  \\}\\n`));
+    if (!m) {
+      fails.push(`no never-posted ${family} phase found (expected \`const ${variable} = await client.query\` and its loop).`);
+      continue;
     }
-    if (!/NOT EXISTS[\s\S]{0,200}journal_entry_postings/i.test(block)) {
-      fails.push("never-posted invoice query does not check for zero journal_entry_postings rows.");
+    const block = m[0];
+    if (!new RegExp(`NOT EXISTS[\\s\\S]{0,200}journal_entry_postings[\\s\\S]{0,200}source_transaction_type = '${sourceType}'`).test(block)) {
+      fails.push(`the ${variable} query does not select ${family}s with zero journal_entry_postings rows.`);
     }
-    if (!/stampDocumentVoided/.test(block)) {
-      fails.push("never-posted invoice block does not call stampDocumentVoided.");
+    if (/status NOT IN \(\s*'draft'/i.test(block)) {
+      fails.push(`the ${variable} query excludes draft/proforma -- ROUND 128 put them in scope; they would be skipped forever.`);
     }
-    if (/reversePostedSourceTransaction|reverseJournalEntryNoFlip|reverseFactoringAdvanceEvent/.test(block)) {
-      fails.push("never-posted invoice block appears to call a reversal engine -- this must be a stamp-only path (owner's ruling: never post-then-void to turn a check green).");
+    if (!new RegExp(`stamp\\(\\w+Tally, "${family}"`).test(block)) {
+      fails.push(`the ${variable} loop does not stamp the ${family} voided.`);
+    }
+    if (/reversePostedSourceTransaction|reverseJournalEntryNoFlip|reverseFactoringAdvanceEvent|reverseByJeIdFallback/.test(block)) {
+      fails.push(`the ${variable} loop calls a reversal engine -- a document with no GL is stamp-only (never post-then-void).`);
     }
   }
-
-  const expenseBlockMatch = src.match(/neverPostedExpenses[\s\S]{0,2000}/);
-  if (!expenseBlockMatch) {
-    fails.push("no never-posted expense candidate query found (expected a neverPostedExpenses variable).");
-  } else {
-    const block = expenseBlockMatch[0];
-    if (!/NOT EXISTS[\s\S]{0,200}journal_entry_postings/i.test(block)) {
-      fails.push("never-posted expense query does not check for zero journal_entry_postings rows.");
-    }
-    if (!/stampDocumentVoided/.test(block)) {
-      fails.push("never-posted expense block does not call stampDocumentVoided.");
-    }
-    if (/reversePostedSourceTransaction|reverseJournalEntryNoFlip|reverseFactoringAdvanceEvent/.test(block)) {
-      fails.push("never-posted expense block appears to call a reversal engine -- must be stamp-only.");
-    }
-  }
-
-  // The draft/proforma documents must be NAMED (logged), never voided.
-  if (!/NAMED, NOT VOIDED/i.test(src)) {
-    fails.push("draft/proforma documents are not visibly named-and-not-voided anywhere in the file.");
-  }
-
   return fails;
+}
+
+export function assertNeverPostedPredicateShape(runnerPath = RUNNER_PATH) {
+  if (!fs.existsSync(runnerPath)) return [`runner not found at ${path.relative(ROOT, runnerPath)}`];
+  return shapeFailures(fs.readFileSync(runnerPath, "utf8"));
 }
 
 async function liveCheck() {
@@ -112,7 +89,7 @@ async function liveCheck() {
     const invRes = await client.query(
       `
         SELECT count(*)::text AS n FROM accounting.invoices i
-         WHERE i.operating_company_id = $1::uuid AND i.voided_at IS NULL AND i.status NOT IN ('draft', 'proforma')
+         WHERE i.operating_company_id = $1::uuid AND i.voided_at IS NULL AND i.status <> 'void'
            AND NOT EXISTS (SELECT 1 FROM accounting.journal_entry_postings jep WHERE jep.source_transaction_type = 'invoice' AND jep.source_transaction_id = i.id::text)
       `,
       [USMCA_COMPANY_ID]
@@ -120,13 +97,13 @@ async function liveCheck() {
     const expRes = await client.query(
       `
         SELECT count(*)::text AS n FROM accounting.expenses ex
-         WHERE ex.operating_company_id = $1::uuid AND ex.voided_at IS NULL AND ex.status <> 'draft'
+         WHERE ex.operating_company_id = $1::uuid AND ex.voided_at IS NULL AND ex.status <> 'void'
            AND NOT EXISTS (SELECT 1 FROM accounting.journal_entry_postings jep WHERE jep.source_transaction_type = 'expense' AND jep.source_transaction_id = ex.id::text)
       `,
       [USMCA_COMPANY_ID]
     );
     await client.query("COMMIT");
-    console.log(`${LABEL}: live -- never-posted invoices (not draft/proforma): ${invRes.rows[0].n}, never-posted expenses (not draft): ${expRes.rows[0].n}`);
+    console.log(`${LABEL}: live -- never-posted invoices: ${invRes.rows[0].n}, never-posted expenses: ${expRes.rows[0].n} (any status; the runner stamps them void)`);
   } catch (e) {
     await client.query("ROLLBACK");
     console.log(`${LABEL}: live check query error: ${e instanceof Error ? e.message : String(e)}`);
@@ -139,14 +116,28 @@ async function liveCheck() {
 async function main() {
   const selftest = process.argv.includes("--selftest");
   if (selftest) {
-    const fakeMissing = path.join(ROOT, "scripts/verify-e10-never-posted-document-is-not-skipped.mjs");
-    const failsOnSelf = assertNeverPostedPredicateShape(fakeMissing);
-    const pass1 = failsOnSelf.length > 0;
-    const failsReal = assertNeverPostedPredicateShape(RUNNER_PATH);
-    const pass2 = failsReal.length === 0;
-    console.log(`${LABEL} --selftest: red-before-green file fails closed: ${pass1 ? "PASS" : "FAIL"}; real runner passes clean: ${pass2 ? "PASS" : "FAIL"}`);
-    if (!pass2) for (const f of failsReal) console.log(`  ${f}`);
-    process.exitCode = pass1 && pass2 ? 0 : 1;
+    const real = fs.readFileSync(RUNNER_PATH, "utf8");
+    const base = shapeFailures(real);
+    const plants = [
+      ["expense phase removed (the LST-F427 gap)", real.replace(/const noGlExpenses = /, "const skippedExpenses = ")],
+      ["invoice phase removed", real.replace(/const noGlInvoices = /, "const skippedInvoices = ")],
+      ["draft/proforma excluded again", real.replace("AND i.voided_at IS NULL AND i.status <> 'void'", "AND i.voided_at IS NULL AND i.status NOT IN ('draft', 'proforma')")],
+      ["expense query drops the zero-postings check", real.replace(/(const noGlExpenses[\s\S]*?)NOT EXISTS/, "$1EXISTS")],
+      ["expense loop routed through a reversal engine", real.replace('await stamp(expenseTally, "expense", ex.id);\n      });\n      expenseTally.reversed++; // no GL', 'await reverseByJeIdFallback("expense", ex.id, VOID_REASON, "expense", expenseTally);\n      });\n      expenseTally.reversed++; // no GL')],
+    ];
+    const missed = [];
+    for (const [name, planted] of plants) {
+      if (planted === real) missed.push(`${name} (plant did not change the source)`);
+      else if (shapeFailures(planted).length === 0) missed.push(name);
+    }
+    if (base.length || missed.length) {
+      console.error(`${LABEL} --selftest FAIL`);
+      for (const f of base) console.error(`  real runner: ${f}`);
+      for (const m of missed) console.error(`  not caught: ${m}`);
+      process.exitCode = 1;
+      return;
+    }
+    console.log(`${LABEL} --selftest PASS -- real runner clean; ${plants.length}/${plants.length} plants caught`);
     return;
   }
 
@@ -156,7 +147,7 @@ async function main() {
     for (const f of fails) console.error(`  - ${f}`);
     process.exitCode = 1;
   } else {
-    console.log(`${LABEL}: OK -- the runner stamps never-posted documents (zero journal_entry_postings, not draft/proforma) directly, never via a reversal engine; draft/proforma are named, not voided.`);
+    console.log(`${LABEL}: OK -- the runner stamps never-posted invoices and expenses (zero journal_entry_postings, any status -- ROUND 128) directly, never via a reversal engine.`);
   }
   await liveCheck();
 }
