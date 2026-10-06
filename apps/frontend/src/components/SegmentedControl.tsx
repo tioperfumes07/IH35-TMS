@@ -40,7 +40,7 @@ export function SegmentedControl<T extends string>({
       role="group"
       data-testid={testId}
       data-segmented-control="true"
-      className={`inline-flex h-7 items-stretch rounded-sm border bg-white p-0.5 text-center text-xs ${className}`.trim()}
+      className={`inline-flex h-7 items-stretch rounded-sm border bg-[var(--surface-unselected)] p-0.5 text-center text-xs ${className}`.trim()}
       style={{ borderColor: QBO_SURFACE.border }}
       {...dataAttributes}
     >

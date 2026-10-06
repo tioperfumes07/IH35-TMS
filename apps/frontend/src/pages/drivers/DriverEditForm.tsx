@@ -517,7 +517,7 @@ export function DriverEditForm({
               const inactive = quals.find((q) => q.equipment_type_id === chip.type!.id && !q.is_active);
               const on = Boolean(active);
               return (
-                <label key={chip.type.id} className={`inline-flex h-[34px] items-center gap-2 rounded-sm border px-2 text-[12px] ${on ? "border-[#14314F] bg-[#F1F4F7]" : "border-[#D8E0E8]"}`}>
+                <label key={chip.type.id} className={`inline-flex h-[34px] items-center gap-2 rounded-sm border px-2 text-[12px] ${on ? "border-[#14314F] bg-[var(--ih-page)]" : "border-[#D8E0E8]"}`}>
                   <input
                     type="checkbox"
                     checked={on}

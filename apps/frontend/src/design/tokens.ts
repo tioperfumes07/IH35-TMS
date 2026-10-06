@@ -37,7 +37,7 @@ export const colors = {
   // text #1A2233 · secondary #5A6779 · accent #1E63C4 · success #0E7C5A · warning #B45309 ·
   // danger #C0392F · row hover #EEF2F7. Prefer CSS var(--color-*) in components; these JS mirrors
   // stay for call sites that still import colors.* until they migrate.
-  bodyBg: "#F4F6F8",
+  bodyBg: "#FAF8F3",
   cardBg: "#FFFFFF",
   // C-18: was #E3E8EF (too close to canvas #F4F6F8). Locked baseline edge is #E5E7EB.
   cardBorder: "#E5E7EB",

@@ -18,7 +18,7 @@ export function PlannerViewToggle({ viewMode, onChange }: PlannerViewToggleProps
   return (
     <div
       data-testid="planner-view-toggle"
-      className="flex items-center gap-1 rounded-sm border border-gray-200 bg-white p-1"
+      className="flex items-center gap-1 rounded-sm border border-[var(--border-default)] bg-[var(--surface-unselected)] p-1"
       role="group"
       aria-label="Planner view mode"
     >
@@ -30,7 +30,7 @@ export function PlannerViewToggle({ viewMode, onChange }: PlannerViewToggleProps
         className={`${base} ${
           viewMode === "grid"
             ? "bg-[var(--planner-active)] text-white"
-            : "text-gray-700 hover:bg-gray-100"
+            : "text-gray-700 hover:bg-[var(--surface-hover)]"
         }`}
       >
         Grid
@@ -43,7 +43,7 @@ export function PlannerViewToggle({ viewMode, onChange }: PlannerViewToggleProps
         className={`${base} ${
           viewMode === "list"
             ? "bg-[var(--planner-active)] text-white"
-            : "text-gray-700 hover:bg-gray-100"
+            : "text-gray-700 hover:bg-[var(--surface-hover)]"
         }`}
       >
         List
