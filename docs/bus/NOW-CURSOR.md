@@ -1,11 +1,7 @@
-# NOW-CURSOR — 2026-10-06T18:00Z
+# NOW-CURSOR — 2026-10-06T19:00Z
 
-**DONE:** 433 hard four + 432 #5 Bills tabs on tip. Natural-sign membership comment fix + NOW-* heartbeat shipping this PR. verify-no-surface-prints-a-raw-ledger-sign exit 0.
+**NOW:** 432-CUR #1 Fuel MERGED #25639 `ff1bcff4a530`. Load Costs pills stay (design-locked). Next: 432-CUR #7 money-cells ceiling drain or next INBOX row.
 
-**NOW:** 432-CUR #1 multi-select money-surface sweep (status+account guards already PASS).
+**ARM:** 48h from this write (verify-bus-files-are-readable).
 
-**NEXT:** Measure remaining single-select filters on expenses/invoices/settlements/register; one PR + shrink-only guard. Owner Chrome B7 + Bills after FE deploy. LOCAL GATES ONLY.
-
-**LOCAL GATES ONLY** — CI billing down.
-
----
+**LAST DONE:** Fuel History MoneyListToolbar · registry 11 · web dep-db2k9j6q1p3s7398vcd0 · backend dep-db2k9j6q1p3s7398va4g
