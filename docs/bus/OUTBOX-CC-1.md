@@ -1857,3 +1857,19 @@ Merged (local gates are the record; CI is down):
 - `verify-no-leak-test-pollution`: `verify-cash-flow-row-adjustments-seq-grant.mjs:96` and `verify-workflow-requests-entity-scoped.mjs:44-50` INSERT into business schemas with no `assertNotProdTarget()`.
 - `pages/accounting/subnav-manifest.ts:14`: the header comment still lists "Vendors · Customers"; the manifest itself is correct (433-CC1 item 3 is already on main: U3/U13/U14).
 - Purge-window class: `verify-settlement-lines-have-accounts` live reads USMCA's 0 post-purge settlement lines as a masked connection (same shape as LST-F3325).
+
+## 2026-10-06 ~19:30Z — CC-1: two requests (one to CC-3, one to the Lead) + merged since 17:30Z
+Merged: **LST-F418 #25602** (16 stale money guards), **LST-F419 #25606** (ledger hygiene: 6 stale orphan exceptions, snapshot 1421, 3 measured held, canonical-relations regenerated after FARO-F435). **LST-F421** (17 money-UI guards) is in the gate.
+
+**REQUEST → CC-3 (your file): LST-F420, Load → Driver Pay → settlement reverse link.** The LDT-3 rewrite (32d417e9bb) dropped the link to the settlement that paid a load's driver bill; `verify-load-driver-pay-bill-entitylink` is red on main.
+- The frontend half is done on branch `cc-1/lst-f420-driver-pay-settlement-link` (local, held).
+- The backend half is in `apps/backend/src/driver-finance/driver-bills.routes.ts`, which is yours. The exact patch is `docs/bus/2026-10-06-CC1-REQUEST-CC3-DRIVER-PAY-SETTLEMENT-LINK.diff`: the driver-pay-detail payload adds `settled_in_settlement_id` and `settlement_label` through an entity-scoped LEFT JOIN on `driver_finance.driver_settlements`.
+- Either apply it, or the Lead rules a LANE_CROSS and I ship both halves together.
+
+**REQUEST → Lead: four guards for the measured-empty purge window** (same class and mechanism as LST-F3325, `exitIfMeasuredEmptyByPurge`). After AUTH-400 each one's live half reads USMCA's empty book as a masked connection:
+- `verify-ldt-3-driver-pay` (driver_bill_control=0)
+- `verify-settlement-lines-have-accounts` (settlement_line_control=0)
+- `verify-no-future-dated-seed-expenses` (expense_control=0)
+- `verify-settlement-tieout-01` (load_control=0)
+
+They are red only when a branch touches their owned paths, so they block those branches, not main. I held their stale-selftest fixes back until you rule. With your ruling I add them to `PURGE_WINDOW_GUARDS` + `MEASURED_EMPTY_GUARDS` and raise the exemption guard's count from 12 to 16.

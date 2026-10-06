@@ -1,0 +1,40 @@
+@@ -159,14 +159,20 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
+         id: string; bill_number: string; status: string; driver_id: string; driver_name: string | null;
+         gross_amount_cents: string; miles_basis: string | null; miles_deadhead: string | null;
+         loaded_pay_cents: string | null; deadhead_pay_cents: string | null;
++        settled_in_settlement_id: string | null; settlement_label: string | null;
+       };
+       const billRes = await client.query(
+         `
+           SELECT db.id::text, db.bill_number, db.status, db.driver_id::text,
+             concat_ws(' ', d.first_name, d.last_name) AS driver_name,
+-            db.gross_amount_cents, db.miles_basis, db.miles_deadhead, db.loaded_pay_cents, db.deadhead_pay_cents
++            db.gross_amount_cents, db.miles_basis, db.miles_deadhead, db.loaded_pay_cents, db.deadhead_pay_cents,
++            -- LST-F420: the settlement that paid this bill — the load's Driver Pay tab drills to it (reverse link).
++            db.settled_in_settlement_id::text AS settled_in_settlement_id,
++            COALESCE(ds.display_id, ds.source_document_ref) AS settlement_label
+           FROM driver_finance.driver_bills db
+           LEFT JOIN mdata.drivers d ON d.id = db.driver_id AND d.operating_company_id = db.operating_company_id
++          LEFT JOIN driver_finance.driver_settlements ds
++            ON ds.id = db.settled_in_settlement_id AND ds.operating_company_id = db.operating_company_id
+           WHERE db.operating_company_id = $1::uuid AND db.load_id = $2::uuid AND db.status <> 'void'
+           ORDER BY db.created_at DESC
+           LIMIT 1
+@@ -270,7 +276,16 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
+         kind: "ok" as const,
+         driver_id: bill?.driver_id ?? null,
+         driver_name: bill?.driver_name ?? null,
+-        bill: bill ? { id: bill.id, bill_number: bill.bill_number, status: bill.status, gross_amount_cents: grossCents } : null,
++        bill: bill
++          ? {
++              id: bill.id,
++              bill_number: bill.bill_number,
++              status: bill.status,
++              gross_amount_cents: grossCents,
++              settled_in_settlement_id: bill.settled_in_settlement_id,
++              settlement_label: bill.settlement_label,
++            }
++          : null,
+         mileage_lines: mileageLines,
+         accessorials: accessorialsRes.rows,
+         deductions: deductionsRes.rows,
