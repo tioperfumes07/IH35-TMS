@@ -122,6 +122,32 @@ export async function countUncategorizedTransactions(
 // the same 34 already-voided USMCA fixture rows the register endpoint already effectively drops via
 // its own voided_at IS NULL filter. includeSampleData=true is the owner-only reveal toggle; nothing
 // is ever deleted, the rows just don't count toward the live total unless explicitly asked.
+//
+// BANK-F430 (2026-10-05, live USMCA): this count is the DENOMINATOR of the Banking Home UNCATEGORIZED
+// caption ("989 of 1011 transactions"), and it counted VOIDED rows while the numerator
+// (countUncategorizedTransactions -> pendingCategorizationPredicate) excludes them. The two halves of
+// one fraction were drawn from two different populations, so the gap read as finished work that does
+// not exist.
+//
+// Measured on prod USMCA 2026-10-05 under app.bypass_rls='lucia':
+//   789 pending_categorization + 200 uncategorized, all live  = the 989 numerator
+//    22 pending_categorization with voided_at IS NOT NULL      = the whole 1011 - 989 gap
+// and of 1011 rows: status='categorized' 0, review_state='matched' 0, review_state='categorized' 0,
+// categorization_gl_account_id 0, reconciled_obligation_id 0, every matched_*_id 0. Nothing on this
+// entity is matched or categorized, which is the expected state after the data entry was deleted.
+//
+// The 22 voided rows are NOT purge residue. The zero-reset holds `banking` in PRESERVED_SCHEMAS and
+// bank_transactions in RESET_TABLES: it clears matched_*_id and sends lines back to for_review, and
+// never deletes one. Those 22 are live Plaid pending rows voided by their posted successors
+// (bank-tx-dedup.ts::supersedePlaidPendingByExactPostedCandidate) on 10-01 20:51Z, 10-03 00:28Z and
+// 10-04 00:16Z -- all before AUTH-400 at 10-05 00:24Z. Each carries a live same-amount counterpart
+// within 5 days and none an exact date+amount+description counterpart, which is that function's own
+// candidate rule (pending = false AND amount_cents = pending.amount_cents).
+//
+// Whoever voided a row, it does not belong in this denominator: the register the tile links to
+// (/api/v1/banking/plaid/company-transactions) already filters voided_at IS NULL, so 1011 was a
+// number the operator could not click into. The superseded-duplicate clause is deliberately NOT
+// applied here: the register does not apply it either, and this count must equal the register's rows.
 export async function countTotalBankTransactions(
   client: Queryable,
   operatingCompanyId: string,
@@ -132,7 +158,7 @@ export async function countTotalBankTransactions(
       SELECT count(*)::int AS count
       FROM banking.bank_transactions bt
       WHERE bt.operating_company_id = $1::uuid
-        ${includeSampleData ? "" : "AND bt.is_sample_data = false"}
+        ${includeSampleData ? "" : "AND bt.voided_at IS NULL AND bt.is_sample_data = false"}
     `,
     [operatingCompanyId]
   );
