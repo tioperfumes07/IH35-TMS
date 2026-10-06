@@ -128,7 +128,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/accounting/sales-tax/returns/prepare` | `apps/backend/src/accounting/sales-tax/routes.ts:179` | — | — | — |
 | create | `/api/v1/accounting/settlement-posting/bill-payment-post` | `apps/backend/src/accounting/settlement-posting/settlement-posting.routes.ts:141` | — | — | — |
 | create | `/api/v1/accounting/settlement-posting/recover-from-driver` | `apps/backend/src/accounting/settlement-posting/settlement-posting.routes.ts:158` | — | — | — |
-| create | `/api/v1/accounting/vendor-credits` | `apps/backend/src/accounting/vendor-credits.routes.ts:232` | — | — | — |
+| create | `/api/v1/accounting/vendor-credits` | `apps/backend/src/accounting/vendor-credits.routes.ts:233` | — | — | — |
 | create | `/api/v1/accounting/vendors/batch-categorize` | `apps/backend/src/accounting/vendor-category.routes.ts:45` | — | — | — |
 
 ### safety — 67 create-surface(s)

@@ -222,10 +222,12 @@ const SIBLINGS = [
     bad: /created_by_user_email\s*\|\|\s*item\.created_by_user_id|voided_by_user_email\s*\|\|\s*event\.voided_by_user_id/,
     good: /entityLabel\(\s*item\.created_by_user_email\s*,\s*item\.created_by_user_id\s*,\s*"User"\s*\)/,
   },
+  // ROUND 435: ReserveDashboard.tsx retired (strict duplicate; /factoring/reserves -> the Reserve tab); the same factor
+  // label lives on in ReserveTracker.tsx's per-factor balance cards.
   {
-    rel: "apps/frontend/src/pages/factoring/ReserveDashboard.tsx",
-    bad: /factorNameById\.get\(balance\.factor_id\)\s*\?\?\s*balance\.factor_id/,
-    good: /entityLabel\(\s*factorNameById\.get\(balance\.factor_id\)\s*,\s*balance\.factor_id\s*,\s*"Factor"\s*\)/,
+    rel: "apps/frontend/src/pages/factoring/ReserveTracker.tsx",
+    bad: /factorNameById\.get\(bal\.factor_id\)\s*\?\?\s*bal\.factor_id/,
+    good: /entityLabel\(\s*factorNameById\.get\(bal\.factor_id\)\s*,\s*bal\.factor_id\s*,\s*"Factor"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/daily-tasks/DailyTasksPage.tsx",

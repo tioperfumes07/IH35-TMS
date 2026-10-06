@@ -217,6 +217,7 @@ export function ReserveTracker() {
     return m;
   }, [factorsQ.data]);
 
+  const reserveBalances = balancesQ.data ?? [];
   const totalHistPages = Math.max(1, Math.ceil((historyQ.data?.total ?? 0) / PAGE_SIZE));
 
   const forecastByWindow = {
@@ -228,7 +229,7 @@ export function ReserveTracker() {
 
   if (!companyId) {
     return (
-      <div className="rounded-sm border bg-white p-4 text-xs text-gray-500">
+      <div className="rounded-sm border bg-white p-4 text-xs text-gray-500" data-testid="factoring-reserves-need-company">
         Select an operating company to view the reserve tracker.
       </div>
     );
@@ -295,10 +296,24 @@ export function ReserveTracker() {
         )}
       </div>
 
-      {/* Per-factor reserve balances */}
-      {(balancesQ.data ?? []).length > 0 ? (
+      {/* Per-factor reserve balances. ROUND 435 (carried over from the retired ReserveDashboard): a failed balances read
+          says so and an empty one says it is empty — never a silently missing section that reads as "nothing held". */}
+      {balancesQ.isError ? (
+        <ListErrorState
+          title="Couldn't load reserve balances"
+          status={0}
+          message={(balancesQ.error as Error)?.message}
+          onRetry={() => void balancesQ.refetch()}
+        />
+      ) : balancesQ.isLoading ? (
+        <div className="rounded-sm border bg-white p-3 text-xs text-gray-500">Loading reserve balances…</div>
+      ) : reserveBalances.length === 0 ? (
+        <div className="rounded-sm border bg-white p-3 text-xs text-gray-500" data-testid="factoring-reserves-honest-empty">
+          No reserve balances found.
+        </div>
+      ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {(balancesQ.data ?? []).map((bal) => (
+          {reserveBalances.map((bal) => (
             <div
               key={bal.factor_id}
               className={`cursor-pointer rounded border p-3 text-xs transition-colors ${
@@ -329,7 +344,7 @@ export function ReserveTracker() {
             </div>
           ))}
         </div>
-      ) : null}
+      )}
 
       {/* Reserve balance history table */}
       {selectedFactorId ? (
@@ -354,8 +369,11 @@ export function ReserveTracker() {
                 storageKey="factoring-reserve-movement-history"
                 tableTestId="reserve-movement-history-table"
                 emptyText="No movements recorded for this factor."
-                initialPageSize={PAGE_SIZE}
-                pageSizeOptions={[PAGE_SIZE]}
+                // ACCT-F-PARITYTABLE-DOUBLE-PAGINATION (moved here with ROUND 435, when ReserveDashboard — which carried this
+                // fix — was retired as a duplicate): the rows are one server page (histPage drives the API offset), so the
+                // table must not re-slice them or draw its own pager over the real one below.
+                pageSize={PAGE_SIZE}
+                hidePager
               />
               {/* Server-side pager (histPage drives the API offset) — handlers unchanged. */}
               <div className="mt-2 flex items-center justify-between text-xs text-gray-600">

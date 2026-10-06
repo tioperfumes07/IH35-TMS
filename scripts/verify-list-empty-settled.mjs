@@ -115,7 +115,9 @@ const MIGRATED = [
   // list-state primitive. DispatchBoard no longer renders that literal directly, so it is not a
   // list-state surface anymore. Covered below by the DataTable false-empty scan.
   { file: "apps/frontend/src/pages/factoring/FactorAdmin.tsx", empties: ["No factors configured yet.", "No assignments found for this factor/customer.", "No batch history for this customer."] },
-  { file: "apps/frontend/src/pages/factoring/ReserveDashboard.tsx", empties: ["No reserve balances found.", "No reserve movements found for the selected factor.", "No recent movements for this factor.", "No projected reserve releases in the selected window."] },
+  // ROUND 435: ReserveDashboard.tsx retired (strict duplicate; /factoring/reserves -> the Reserve tab). Its surviving
+  // twin carries the same settled empties.
+  { file: "apps/frontend/src/pages/factoring/ReserveTracker.tsx", empties: ["No reserve balances found.", "No movements recorded for this factor.", "No projected releases in the next 60 days."] },
   { file: "apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx", empties: ["No disputes found for current filter."] },
   // SETL-S01 / SETL-S02 — settlements + cash advances honest empty (settled-only).
   {

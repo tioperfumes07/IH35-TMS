@@ -18,7 +18,8 @@ const LABEL = "verify-factor-entitylink-drill";
 
 const ENTITY_LINK_FILE = "apps/frontend/src/components/shared/EntityLink.tsx";
 const FACTOR_ADMIN_FILE = "apps/frontend/src/pages/factoring/FactorAdmin.tsx";
-const RESERVE_DASHBOARD_FILE = "apps/frontend/src/pages/factoring/ReserveDashboard.tsx";
+// ROUND 435: ReserveDashboard.tsx was retired (a strict duplicate of ReserveTracker; /factoring/reserves redirects to the
+// Reserve tab), so ReserveTracker.tsx is the one reserve display site this guard holds.
 const RESERVE_TRACKER_FILE = "apps/frontend/src/pages/factoring/ReserveTracker.tsx";
 
 export function auditEntityLinkSource(source) {
@@ -74,12 +75,12 @@ if (process.argv.includes("--selftest")) {
   }
 
   const goodSite = '<EntityLink kind="factor" id={balance.factor_id} label={entityLabel(factorNameById.get(balance.factor_id), balance.factor_id, "Factor")} />';
-  if (auditDisplaySite(goodSite, RESERVE_DASHBOARD_FILE).length) {
+  if (auditDisplaySite(goodSite, RESERVE_TRACKER_FILE).length) {
     console.error(`${LABEL} SELFTEST FAIL — real display-site wiring rejected`);
     process.exit(1);
   }
   const mutatedSite = '{entityLabel(factorNameById.get(balance.factor_id), balance.factor_id, "Factor")}';
-  if (!auditDisplaySite(mutatedSite, RESERVE_DASHBOARD_FILE).length) {
+  if (!auditDisplaySite(mutatedSite, RESERVE_TRACKER_FILE).length) {
     console.error(`${LABEL} SELFTEST FAIL — display-site regression to dead text escaped`);
     process.exit(1);
   }
@@ -91,7 +92,6 @@ if (process.argv.includes("--selftest")) {
 const failures = [
   ...auditEntityLinkSource(fs.readFileSync(path.join(ROOT, ENTITY_LINK_FILE), "utf8")),
   ...auditFactorAdminSource(fs.readFileSync(path.join(ROOT, FACTOR_ADMIN_FILE), "utf8")),
-  ...auditDisplaySite(fs.readFileSync(path.join(ROOT, RESERVE_DASHBOARD_FILE), "utf8"), RESERVE_DASHBOARD_FILE),
   ...auditDisplaySite(fs.readFileSync(path.join(ROOT, RESERVE_TRACKER_FILE), "utf8"), RESERVE_TRACKER_FILE),
 ];
 if (failures.length) {

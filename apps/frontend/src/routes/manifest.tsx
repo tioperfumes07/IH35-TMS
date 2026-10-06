@@ -236,7 +236,6 @@ const CashAdvancesHomePage = React.lazy(() => import("../pages/cash-advances/Cas
 const FactoringHomePage = React.lazy(() => import("../pages/factoring/FactoringHome").then((m) => ({ default: m.FactoringHomePage })));
 const BatchDetail = React.lazy(() => import("../pages/factoring/BatchDetail").then((m) => ({ default: m.BatchDetail })));
 const FactorAdmin = React.lazy(() => import("../pages/factoring/FactorAdmin").then((m) => ({ default: m.FactorAdmin })));
-const ReserveDashboard = React.lazy(() => import("../pages/factoring/ReserveDashboard").then((m) => ({ default: m.ReserveDashboard })));
 const FaroImportPage = React.lazy(() => import("../pages/factoring/FaroImportPage").then((m) => ({ default: m.FaroImportPage })));
 const VehicleProfilePage = React.lazy(() => import("../pages/fleet/VehicleProfilePage").then((m) => ({ default: m.VehicleProfilePage })));
 const FleetHomePage = React.lazy(() => import("../pages/fleet/FleetHomePage").then((m) => ({ default: m.FleetHomePage })));
@@ -2744,13 +2743,11 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
+        {/* ROUND 435 — ReserveDashboard rendered a strict subset of ReserveTracker (same three queries), which lives in
+            the Reserve tab; the old URL lands there instead of on a second copy. */}
         <Route
           path="/factoring/reserves"
-          element={
-            <ProtectedRoute>
-              <ReserveDashboard />
-            </ProtectedRoute>
-          }
+          element={<Navigate to="/factoring/reserve" replace />}
         />
         <Route
           path="/factoring/faro-import"

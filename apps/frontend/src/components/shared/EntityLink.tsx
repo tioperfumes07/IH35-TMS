@@ -269,7 +269,7 @@ export type EntityKind =
   // same drill pattern as claim/lawsuit/settlement.
   | "geofence"
   | "document"
-  // LINK reverse_link: ReserveDashboard/ReserveTracker rendered a reserve balance's factor as dead
+  // LINK reverse_link: ReserveTracker (and the retired ReserveDashboard) rendered a reserve balance's factor as dead
   // text — no module could link INTO a factor record. FactorAdmin (route verified present in
   // routes/manifest.tsx: <Route path="/factoring/factors">) is the only factor detail surface; it
   // has no per-id sub-route, so this resolves with a query param the page now honors.

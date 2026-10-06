@@ -49,7 +49,6 @@ const FILE_OWNED_BY_LEAF = {
   "pages/driver/FuelReceiptPage.tsx": "hop.fuel_compliance",
   "pages/driver-finance/SettlementCloseArrivalPage.tsx": "settlement_close",
   "pages/factoring/FactorAdmin.tsx": "factors.admin",
-  "pages/factoring/ReserveDashboard.tsx": "reserves.dashboard",
   "pages/factoring/ReserveTracker.tsx": "home.reserve_tracker",
   "pages/fuel/FuelPlannerHome.tsx": "planner",
   "pages/insurance/PoliciesList.tsx": "policies.list",
