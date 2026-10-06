@@ -1971,18 +1971,6 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "table-no-mobile-fallback:apps/frontend/src/pages/factoring/ReserveDashboard.tsx",
-      "rule": "table-no-mobile-fallback",
-      "file": "apps/frontend/src/pages/factoring/ReserveDashboard.tsx",
-      "message": "Table without mobile overflow/fallback pattern",
-      "viewport": {
-        "width": 375,
-        "height": 667
-      },
-      "suggested_fix": "See gap-91 spec",
-      "owner_module": "office-tms"
-    },
-    {
       "id": "table-no-mobile-fallback:apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx",
       "rule": "table-no-mobile-fallback",
       "file": "apps/frontend/src/pages/form425c/tabs/HistoryTab.tsx",

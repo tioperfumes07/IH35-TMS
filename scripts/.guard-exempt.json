@@ -1010,7 +1010,6 @@
   "verify-reports-hub-9-categories.mjs": "baselined 2026-07-10 \u2014 pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
   "verify-reports-lists-no-dead-buttons.mjs": "added 2026-09-10 Devin-B B-2 \u2014 runs in verify-static suite (pre-push + CI); verify-step wiring pending CLAIM-RESERVE",
   "verify-required-document-types-entity-scope.mjs": "baselined 2026-07-16 B-D2 \u2014 package.json script exists but no CI workflow/verify-steps execution; wire into locked-guards.yml or ci.yml, or justify individually",
-  "verify-reserve-dashboard-factor-picker.mjs": "baselined 2026-08-10 war CI unblock \u2014 orphan guard backlog; verify-steps janitor wave follows",
   "verify-reserve-docs-liabilities-human-labels.mjs": "baselined 2026-08-10 war CI unblock \u2014 orphan guard backlog; verify-steps janitor wave follows",
   "verify-reserve-tracker-factor-picker.mjs": "baselined 2026-08-10 war CI unblock \u2014 orphan guard backlog; verify-steps janitor wave follows",
   "verify-responsive-layout.mjs": "baselined 2026-07-16 B-D2 \u2014 package.json script exists but no CI workflow/verify-steps execution; wire into locked-guards.yml or ci.yml, or justify individually",

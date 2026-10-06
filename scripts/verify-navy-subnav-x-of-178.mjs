@@ -76,8 +76,7 @@ const MODULE_COUNTS = {
   // Customers.tsx: 6 list tabs + 14 CUSTOMER_TABS
   "customers":          { count: 20, source: "apps/frontend/src/pages/Customers.tsx" },
 
-  // factoring/index.tsx: SUBNAV
-  "factoring-index":    { count: 5,  source: "apps/frontend/src/pages/factoring/index.tsx" },
+  // factoring/index.tsx (5 tabs) retired ROUND 435 — dead second Factoring tab set, deleted with ReserveDashboard.
 
   // ComplianceDashboardPage.tsx: COMPLIANCE_TABS
   "compliance":         { count: 9,  source: "apps/frontend/src/pages/compliance/ComplianceDashboardPage.tsx" },
@@ -118,7 +117,6 @@ const CONVERTED = [
   "vendor-detail",      // VendorDetail
   "customer-detail",    // CustomerDetail
   "customers",          // Customers
-  "factoring-index",    // factoring/index
   "compliance",         // ComplianceDashboardPage
   "cash-flow",          // CashFlowPage
   "users",              // Users

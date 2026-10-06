@@ -36,7 +36,8 @@ const CHECKS = [
   { name: "factoring submit route", file: MANIFEST, pattern: /path="\/factoring\/submit"[\s\S]{0,200}<Navigate to="\/factoring\/submit-invoice" replace \/>/ },
   { name: "factoring batches/new route", file: MANIFEST, pattern: /path="\/factoring\/batches\/new"[\s\S]{0,200}<Navigate to="\/factoring\/submit-invoice" replace \/>/ },
   { name: "factoring factors route", file: MANIFEST, pattern: mountedRoute("/factoring/factors", "FactorAdmin") },
-  { name: "factoring reserves route", file: MANIFEST, pattern: mountedRoute("/factoring/reserves", "ReserveDashboard") },
+  // ROUND 435: ReserveDashboard was a strict duplicate of ReserveTracker (the Reserve tab) — the old URL stays and lands there.
+  { name: "factoring reserves route (redirect)", file: MANIFEST, pattern: /path="\/factoring\/reserves"[\s\S]{0,200}<Navigate to="\/factoring\/reserve" replace \/>/ },
   { name: "faro import route", file: MANIFEST, pattern: mountedRoute("/factoring/faro-import", "FaroImportPage") },
   { name: "accounting factoring list route", file: MANIFEST, pattern: mountedRoute("/accounting/factoring", "FactoringListPage") },
   { name: "factor recon route", file: MANIFEST, pattern: mountedRoute("/accounting/factor-reconciliation", "FactorReconciliationPage") },

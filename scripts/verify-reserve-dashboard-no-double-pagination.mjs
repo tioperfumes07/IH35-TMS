@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 /**
+ * ROUND 435 (2026-10-06): ReserveDashboard (`/factoring/reserves`) was retired as a strict duplicate of
+ * ReserveTracker (the Reserve tab), and `/factoring/reserves` now redirects there. ReserveTracker's movement-history
+ * table had the SAME double pager (ParityTable initialPageSize + pageSizeOptions over a server-paged batch, above its
+ * own histPage Prev/Next), so this guard now holds the surviving surface to the fix. History of the original:
+ *
  * ACCT-F-PARITYTABLE-DOUBLE-PAGINATION (5th producer) — `/factoring/reserves` (ReserveDashboard)
  * "Reserve Balance Over Time" section rendered TWO independent, conflicting pagination controls
  * on one table. ParityTable's own uncontrolled pager re-derives "total" from the `rows` array it
@@ -19,12 +24,13 @@
  */
 import fs from "node:fs";
 
-const FILE = "apps/frontend/src/pages/factoring/ReserveDashboard.tsx";
+const FILE = "apps/frontend/src/pages/factoring/ReserveTracker.tsx";
 const source = fs.readFileSync(FILE, "utf8");
 
 function paritytableBlock(text) {
-  const start = text.indexOf("<ParityTable");
-  const end = text.indexOf("/>", text.indexOf("storageKey=\"factoring-reserve-balance-history\"", start));
+  const key = text.indexOf('storageKey="factoring-reserve-movement-history"');
+  const start = key >= 0 ? text.lastIndexOf("<ParityTable", key) : -1;
+  const end = start >= 0 ? text.indexOf("/>", key) : -1;
   const raw = start >= 0 && end > start ? text.slice(start, end) : "";
   // Strip `//`-comment lines so the explanatory comment ABOVE the props (which necessarily
   // names hidePager/pageSize in prose) can never make a mutation that deletes the real prop
@@ -39,13 +45,13 @@ function audit(text) {
   const failures = [];
   const need = (condition, message) => { if (!condition) failures.push(message); };
   const block = paritytableBlock(text);
-  need(block.length > 0, "<ParityTable ...> block (Reserve Balance Over Time) not found");
+  need(block.length > 0, "<ParityTable ...> block (Reserve Movement History) not found");
   need(/\bhidePager\b/.test(block), "ParityTable must pass hidePager so its own uncontrolled pager never renders alongside the real server pager below");
-  need(/pageSize=\{pageSize\}/.test(block), "ParityTable must pass pageSize={pageSize} so the server-paged batch handed to it is never re-sliced client-side");
+  need(/pageSize=\{PAGE_SIZE\}/.test(block), "ParityTable must pass pageSize={PAGE_SIZE} so the server-paged batch handed to it is never re-sliced client-side");
   // The real server pager (page/totalPages-driven Prev/Next) must still exist -- this guard is
   // about killing the DUPLICATE, not the only real one.
-  need(/setPage\(\(current\) => Math\.min\(totalPages - 1, current \+ 1\)\)/.test(text), "the real totalPages-driven Next handler must still be present");
-  need(/setPage\(\(current\) => Math\.max\(0, current - 1\)\)/.test(text), "the real totalPages-driven Prev handler must still be present");
+  need(/setHistPage\(\(p\) => Math\.min\(totalHistPages - 1, p \+ 1\)\)/.test(text), "the real totalPages-driven Next handler must still be present");
+  need(/setHistPage\(\(p\) => Math\.max\(0, p - 1\)\)/.test(text), "the real totalPages-driven Prev handler must still be present");
   return failures;
 }
 
@@ -58,9 +64,9 @@ if (failures.length) {
 if (process.argv.includes("--selftest")) {
   const mutations = [
     { name: "drop hidePager", mutate: (t) => t.replace(/\n\s*hidePager\n/, "\n") },
-    { name: "drop pageSize={pageSize}", mutate: (t) => t.replace(/\n\s*pageSize=\{pageSize\}\n/, "\n") },
-    { name: "drop real Next handler", mutate: (t) => t.replace("setPage((current) => Math.min(totalPages - 1, current + 1))", "setPage((current) => current)") },
-    { name: "drop real Prev handler", mutate: (t) => t.replace("setPage((current) => Math.max(0, current - 1))", "setPage((current) => current)") },
+    { name: "drop pageSize={PAGE_SIZE}", mutate: (t) => t.replace(/\n\s*pageSize=\{PAGE_SIZE\}\n/, "\n") },
+    { name: "drop real Next handler", mutate: (t) => t.replace("setHistPage((p) => Math.min(totalHistPages - 1, p + 1))", "setHistPage((p) => p)") },
+    { name: "drop real Prev handler", mutate: (t) => t.replace("setHistPage((p) => Math.max(0, p - 1))", "setHistPage((p) => p)") },
   ];
   let caught = 0;
   for (const { name, mutate } of mutations) {
@@ -72,4 +78,4 @@ if (process.argv.includes("--selftest")) {
   console.log(`verify-reserve-dashboard-no-double-pagination SELFTEST PASS — ${caught}/${mutations.length} mutations detected`);
 }
 
-console.log("verify-reserve-dashboard-no-double-pagination PASS — ParityTable is hidePager+pageSize-pinned, real page pager intact, no duplicate/conflicting pagination on /factoring/reserves");
+console.log("verify-reserve-dashboard-no-double-pagination PASS — ParityTable is hidePager+pageSize-pinned, real page pager intact, no duplicate/conflicting pagination on the Reserve tab's movement history (ReserveTracker)");

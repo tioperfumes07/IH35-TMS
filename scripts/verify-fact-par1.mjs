@@ -182,16 +182,10 @@ pass("SubmissionWorkqueue.tsx exists");
 if (!wqSrc.includes("listWorkqueue")) fail("SubmissionWorkqueue.tsx missing listWorkqueue call");
 pass("SubmissionWorkqueue.tsx: listWorkqueue wired");
 
-// ── 7. Factoring index page has both tabs ────────────────────────────────────
-const IDX = "apps/frontend/src/pages/factoring/index.tsx";
-const idxSrc = read(IDX);
-if (!idxSrc) fail(`factoring index missing: ${IDX}`);
-
-if (!idxSrc.includes("SubmissionQueue")) fail("factoring index.tsx missing SubmissionQueue tab");
-pass("factoring index.tsx: SubmissionQueue tab");
-
-if (!idxSrc.includes("SubmissionWorkqueue")) fail("factoring index.tsx missing SubmissionWorkqueue tab");
-pass("factoring index.tsx: SubmissionWorkqueue tab");
+// ── 7. (retired ROUND 435) pages/factoring/index.tsx was a second Factoring tab set that no route mounted; it was deleted
+// with ReserveDashboard. Its tabs (SubmissionQueue / SubmissionWorkqueue / BatchWizard) were reachable only through it —
+// unreachable before and after — and are on the board (ACCT-F2026100607 REMAINING) for a Lead ruling: mount inside the
+// Submit invoice tab, or retire. This check asserted a file that no longer exists; checks 1-6 and 8 still hold the block.
 
 // ── 8. No 'financed' factoring_status anywhere in this block ─────────────────
 [SVC, ROUTES, SQ, WQ].forEach((rel) => {

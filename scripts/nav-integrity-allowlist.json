@@ -151,10 +151,6 @@
       "reason": "Factor admin orphan \u2014 wiring deferred Block 43"
     },
     {
-      "path": "/factoring/reserves",
-      "reason": "Reserve dashboard orphan \u2014 wiring deferred Block 43"
-    },
-    {
       "path": "/factoring/batches/:id",
       "reason": "Factoring batch detail dynamic route \u2014 Block 43"
     },
