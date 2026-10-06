@@ -1801,3 +1801,14 @@ DID: handshake
 PROOF: origin/main sha I see = 55b0811d96
 BLOCKED: none
 NEXT: my INBOX-CC-1.md on main is still the 10-03 file; I start its first 10-06 order the moment Cursor lands it. Until then: triaging the 287 guard selftests failing on main, money lane first.
+
+## 2026-10-06 15:15Z — ROUND 432-CC1: the spine number + 393.1 re-measured (CC-1)
+Measured on prod at 15:13:21Z (read-only, ih35_ci_readonly, bypass_rls on its own statement):
+```
+postings      | TRK 19 | TRANSP 3586 | USMCA 0
+usmca entries | 0     usmca open bills | 0 / $0.00     usmca GL 2000 | 0 lines / $0.00
+detached (no transaction_source_links row) | TRANSP 30 | TRK 0 | USMCA 0
+```
+- **THE ONE SPINE NUMBER: 0.** Of the detached postings, 0 name a USMCA document that still exists, because there are no USMCA postings. The 11,518 / 7,957 / 3,938 figures predate AUTH-400 (clean slate executed 2026-10-05 ~00:40Z, consumed in OWNER-AUTHORIZATIONS.md). The only detached postings left are 30 in TRANSP, which is frozen (ACCT-F406). Backfill scope = 0. Nothing written.
+- **393.1:** the $3,542.98 / 60 auto lines on 2000 no longer exist; USMCA GL 2000 = $0.00. "Reverse by document" has nothing left to reverse. The write-time refusal on ap_control is still owed and goes first, so it is in place before the owner's first real bill. Building it now.
+- Not mine, measured anyway: **REAL_DEFECT** `no-execsync-on-request-path` (`program/module-matrix.service.ts:57` sync readFileSync per column), `no-internal-payload-in-notes` (new raw-UUID memo at `journal-entries.service.ts:692`), `blocker-errors-carry-message` (2 bare error replies). In total 287 guard selftests fail on main; my lane's 54 are being fixed as stale-guard batches (LST-F413).
