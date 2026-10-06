@@ -63,7 +63,14 @@ if (!fs.existsSync(testPath)) {
   failures.push("missing the match-auto-vs-manual regression test file");
 } else {
   const testSource = fs.readFileSync(testPath, "utf8");
-  if (!/auto-matches a JE candidate whose memo is boilerplate-diluted but is the real transaction/.test(testSource)) {
+  // ROUND 157-C (#22960) renamed the case — a JE is never a match candidate — and kept the calibration as a direct
+  // assertion on the scorer. What proves 0.5 is that assertion: the boilerplate-wrapped memo scores >= the bar and < 0.8.
+  const calibrated =
+    /boilerplate-diluted/.test(testSource) &&
+    /memoSimilarity\("ACME Invoice 4500", "Bank categorization: ACME Invoice 4500 [^"]* posting"\)/.test(testSource) &&
+    /toBeGreaterThanOrEqual\(AUTO_MATCH_MEMO_SIMILARITY_MIN\)/.test(testSource) &&
+    /toBeLessThan\(0\.8\)/.test(testSource);
+  if (!/auto-matches a JE candidate whose memo is boilerplate-diluted but is the real transaction/.test(testSource) && !calibrated) {
     failures.push(
       "match-auto-vs-manual.test.ts must keep the boilerplate-diluted-JE regression case — it is the only thing proving 0.5 (not a lower or higher number) is correct"
     );

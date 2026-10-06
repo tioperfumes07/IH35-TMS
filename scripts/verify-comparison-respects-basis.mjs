@@ -26,7 +26,14 @@ if (!routeSource.includes("/api/v1/accounting/comparison-report")) failures.push
 if (!/basis:\s*z\.enum\(\["accrual", "cash"\]\)\.optional\(\)/.test(routeSource)) {
   failures.push("comparison route must validate basis as accrual|cash");
 }
-if (!serviceSource.includes("transformProfitLossToCashBasis")) failures.push("comparison service must support cash-basis P&L transform");
+// ACCT-F412 (#25512): the cash-basis P&L column is COMPUTED from the postings (getCashBasisProfitLossReport). The old
+// transformProfitLossToCashBasis converted the accrual report and produced two identical columns — refuse it coming back.
+if (!/if \(input\.basis === "cash"\)[\s\S]{0,600}getCashBasisProfitLossReport\(/.test(serviceSource)) {
+  failures.push("comparison service must compute the cash-basis P&L from postings (getCashBasisProfitLossReport) when basis is cash");
+}
+if (serviceSource.includes("transformProfitLossToCashBasis")) {
+  failures.push("comparison service must not convert the accrual P&L into a cash column (transformProfitLossToCashBasis — ACCT-F412)");
+}
 if (!serviceSource.includes("transformBalanceSheetToCashBasis")) failures.push("comparison service must support cash-basis balance-sheet transform");
 if (!serviceSource.includes("type: ComparisonReportType")) failures.push("comparison service must support both pl and bs report types");
 if (!pageSource.includes("Basis")) failures.push("frontend comparison page must expose basis selector");

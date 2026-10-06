@@ -472,7 +472,7 @@
   ],
   "subNavTabs": {
     "accounting": [
-      "Bill",
+      "All bills",
       "Maintenance bill",
       "Repair bill",
       "Fuel bill",
@@ -481,9 +481,7 @@
       "Multiple bills",
       "Expenses",
       "Bill payment",
-      "Maintenance & shop",
-      "Vendors",
-      "Customers",
+      "Work orders & bills",
       "Reports",
       "AR Aging",
       "AP Aging",
