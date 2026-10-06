@@ -38,6 +38,7 @@ import { ActionButton } from "../../../components/shared/ActionButton";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
 import { Button } from "../../../components/Button";
+import { Modal } from "../../../components/Modal";
 import { QBO_BANKING_ACTIONS } from "../../../design/qbo-parity";
 import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 import { useBulkSelection } from "../../../hooks/useBulkSelection";
@@ -191,10 +192,19 @@ const MATCH_CANDIDATE_ENTITY_KIND: Record<BankMatchCandidateKind, EntityKind> = 
   deposit: "deposit",
 };
 
-// ROUND 157-C / 156 MASTER SPEC: BUILD NO TYPE FILTER. Settlement-born only is the entire
-// candidate universe (match.service fetchLedgerCandidates). The retired Show multi-select is gone.
+// ROUND 433-CUR B3 (owner 2026-10-06): match candidates ARE filterable by transaction type
+// (MultiSelectDropdown). Settlement-born remains the default universe; kinds narrow it further.
+const MATCH_KIND_FILTER_OPTIONS: ReadonlyArray<{ value: BankMatchCandidateKind; label: string }> = [
+  { value: "payment", label: "Payment" },
+  { value: "bill_payment", label: "Bill Payment" },
+  { value: "expense", label: "Expense" },
+  { value: "bill", label: "Bill" },
+  { value: "transfer", label: "Transfer" },
+  { value: "je", label: "Journal Entry" },
+  { value: "deposit", label: "Deposit" },
+];
 const SETTLEMENT_BORN_MATCH_NOTE =
-  "Settlement-born documents only — driver/company settlement bills and bill payments. No type filter.";
+  "Settlement-born documents by default — narrow by transaction type with the multi-selector.";
 
 // BANK-MATCH-QBO-c: "Gap" (dollars off · days off, both unsigned) told you HOW FAR a candidate was
 // but not which direction — the owner's own "I don't know what the gap is" measured live. Split
@@ -819,6 +829,8 @@ export function BankingTransactionsDesignView({
   const [matchDateTo, setMatchDateTo] = useState("");
   const [matchAmountMin, setMatchAmountMin] = useState("");
   const [matchAmountMax, setMatchAmountMax] = useState("");
+  /** ROUND 433-CUR B3 — match candidates filterable by transaction type (multi-select). Empty = all kinds. */
+  const [matchKinds, setMatchKinds] = useState<BankMatchCandidateKind[]>([]);
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
   const [collapsedMonths, setCollapsedMonths] = useState<Record<string, boolean>>({});
   const [printExportMenuOpen, setPrintExportMenuOpen] = useState(false);
@@ -1014,13 +1026,14 @@ export function BankingTransactionsDesignView({
   const matchCandidatesQuery = useQuery({
     queryKey: [
       "banking", "tx-match-candidates", companyId, expandedTxId ?? "", matchWindowStep ?? "cascade", matchSearchQ,
-      matchPayee, matchDateFrom, matchDateTo, matchAmountMin, matchAmountMax,
+      matchPayee, matchDateFrom, matchDateTo, matchAmountMin, matchAmountMax, matchKinds.join(","),
     ],
     queryFn: () =>
       getMatchCandidates(String(expandedTxId), companyId, {
-        windowStep: matchDateFrom || matchDateTo || matchPayee || matchSearchQ || matchAmountMin || matchAmountMax ? undefined : matchWindowStep,
+        windowStep: matchDateFrom || matchDateTo || matchPayee || matchSearchQ || matchAmountMin || matchAmountMax || matchKinds.length > 0 ? undefined : matchWindowStep,
         q: matchSearchQ || undefined,
-        // ROUND 157-C: never send kinds — engine is settlement-born only (BUILD NO TYPE FILTER).
+        // ROUND 433-CUR B3 — kinds multi-select (overrides ROUND 157-C "BUILD NO TYPE FILTER").
+        kinds: matchKinds.length > 0 ? matchKinds : undefined,
         payee: matchPayee || undefined,
         dateFrom: matchDateFrom || undefined,
         dateTo: matchDateTo || undefined,
@@ -1039,6 +1052,7 @@ export function BankingTransactionsDesignView({
     setMatchDateTo("");
     setMatchAmountMin("");
     setMatchAmountMax("");
+    setMatchKinds([]);
   }, [expandedTxId]);
 
   // BLOCK-6b — FORWARD drill-through panel. API + client existed; this wire is the Law §9 surface.
@@ -2490,15 +2504,12 @@ export function BankingTransactionsDesignView({
           links.deduction_id ||
           matchedJournalEntryId)
     );
+    // ROUND 433-CUR #1 (owner 2026-10-06): Categorize / Match is a DIMMED POPUP (Modal), not an
+    // inline expand that keeps register rows competing with the boxes. Content still lives in this
+    // builder; ParityTable's expand slot is a stub — the Modal hosts the panel (see return JSX).
     return (
-      // BANK-DESIGN-1 (owner 2026-09-06): the expanded row is TWO outlined boxes — CATEGORIZE (left) and MATCH
-      // CANDIDATES (right) — each an .ldt-card.strong (dark 1px outline, .ldt-ch header band), the Load-costs palette.
-      // Nothing inside either box was removed or reordered except the candidate register, which
-      // BANK-MATCH-QBO-c moved onto <ParityTable> (see .ldt-rows-match-table below).
-      // ROUND 16.18 (owner, 2026-09-06 23:0xZ): "the categorize box shouold be smaller ... this way
-      // the match candidates window, renders more appropriate" — same narrower-left/wider-right
-      // split already established for Cash Flow's Expected Income/Expenses. Categorize does not
-      // need half the screen; Match Candidates' 10-column register does.
+      // BANK-DESIGN-1 (owner 2026-09-06): TWO outlined boxes — CATEGORIZE (left) and MATCH
+      // CANDIDATES (right) — each an .ldt-card.strong. ROUND 16.18: narrower-left/wider-right 2fr/3fr.
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[2fr_3fr]" data-testid="banking-categorize-expanded-panel">
         <div className="ldt-card strong" data-testid="banking-categorize-box">
           <div className="ldt-ch">
@@ -2738,6 +2749,11 @@ export function BankingTransactionsDesignView({
                     setDraft(tx, { payee: opt.label });
                   }}
                 />
+                {draft.vendorId ? (
+                  <div className="mt-0.5 flex items-center gap-2 text-xs" data-testid="banking-categorize-vendor-link">
+                    <EntityLink kind="vendor" id={draft.vendorId} label={entityLabel(draft.payee, draft.vendorId, "Vendor")} />
+                  </div>
+                ) : null}
                 <CappedListNotice
                   shown={vendorsQuery.data?.vendors?.length ?? 0}
                   limit={PICKER_PAGE}
@@ -2849,6 +2865,19 @@ export function BankingTransactionsDesignView({
                   placeholder="Select category account"
                   onOptionCreated={() => void coaQuery.refetch()}
                 />
+                {draft.accountId ? (
+                  <div className="mt-0.5 flex items-center gap-2 text-xs" data-testid="banking-categorize-account-link">
+                    <EntityLink
+                      kind="account"
+                      id={draft.accountId}
+                      label={entityLabel(
+                        (coaQuery.data?.accounts ?? []).find((a) => a.id === draft.accountId)?.account_name,
+                        draft.accountId,
+                        "Account"
+                      )}
+                    />
+                  </div>
+                ) : null}
               </div>
             </label>
             <label className="text-xs text-gray-600">
@@ -2919,6 +2948,15 @@ export function BankingTransactionsDesignView({
                     setDraft(tx, { productService: opt.label });
                   }}
                 />
+                {draft.itemId ? (
+                  <div className="mt-0.5 flex items-center gap-2 text-xs" data-testid="banking-categorize-item-link">
+                    <EntityLink
+                      kind="catalog_item"
+                      id={draft.itemId}
+                      label={entityLabel(draft.productService, draft.itemId, "Item")}
+                    />
+                  </div>
+                ) : null}
               </div>
             </label>
             <label className="text-xs text-gray-600">
@@ -2941,6 +2979,15 @@ export function BankingTransactionsDesignView({
                     setDraft(tx, { customerProject: opt.label });
                   }}
                 />
+                {draft.customerId ? (
+                  <div className="mt-0.5 flex items-center gap-2 text-xs" data-testid="banking-categorize-customer-link">
+                    <EntityLink
+                      kind="customer"
+                      id={draft.customerId}
+                      label={entityLabel(draft.customerProject, draft.customerId, "Customer")}
+                    />
+                  </div>
+                ) : null}
                 <CappedListNotice
                   shown={customersQuery.data?.customers?.length ?? 0}
                   limit={PICKER_PAGE}
@@ -3253,7 +3300,8 @@ export function BankingTransactionsDesignView({
               Search 7 days
             </button>
           ) : null}
-          {/* ROUND 157-C: BUILD NO TYPE FILTER. Payee · Date · Amount only. */}
+          {/* ROUND 433-CUR B3: match candidates filterable BY TRANSACTION TYPE (multi-select).
+              Payee · Date · Amount · Type. Overrides ROUND 157-C "BUILD NO TYPE FILTER". */}
           <div className="mt-2 flex flex-wrap items-end gap-2" data-testid="banking-match-filters">
             <label className="ldt-fld">
               <span className="ldt-muted block">Payee (vendor / customer)</span>
@@ -3275,8 +3323,20 @@ export function BankingTransactionsDesignView({
               <span className="ldt-muted block">Amount to</span>
               <input type="number" inputMode="decimal" min={0} step="0.01" data-testid="banking-match-filter-amount-max" value={matchAmountMax} onChange={(e) => setMatchAmountMax(e.target.value)} className="h-7 w-24 rounded-sm border border-gray-300 px-1 text-xs" />
             </label>
-            {matchPayee || matchDateFrom || matchDateTo || matchAmountMin || matchAmountMax ? (
-              <button type="button" className="ldt-link" data-testid="banking-match-filter-clear" onClick={() => { setMatchPayee(""); setMatchDateFrom(""); setMatchDateTo(""); setMatchAmountMin(""); setMatchAmountMax(""); }}>
+            <div data-testid="banking-match-filter-kinds" className="ldt-fld min-w-[180px]">
+              <MultiSelectDropdown
+                label="Transaction type"
+                options={MATCH_KIND_FILTER_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+                selected={matchKinds}
+                onChange={(next) => setMatchKinds(next as BankMatchCandidateKind[])}
+                allLabel="All transaction types"
+                data-testid="banking-match-filter-kinds-dropdown"
+                className="mt-0"
+                triggerClassName={bankingControlBoxClass({ active: matchKinds.length > 0 })}
+              />
+            </div>
+            {matchPayee || matchDateFrom || matchDateTo || matchAmountMin || matchAmountMax || matchKinds.length > 0 ? (
+              <button type="button" className="ldt-link" data-testid="banking-match-filter-clear" onClick={() => { setMatchPayee(""); setMatchDateFrom(""); setMatchDateTo(""); setMatchAmountMin(""); setMatchAmountMax(""); setMatchKinds([]); }}>
                 clear filters
               </button>
             ) : null}
@@ -3804,8 +3864,8 @@ export function BankingTransactionsDesignView({
           >
             {suggestingMatches ? "Suggesting..." : "Suggest matches"}
           </BankingControlBox>
-          {/* B.2 — transaction TYPE filter on the register (not the Match panel). MultiSelectDropdown
-              satisfies FILTER-MULTI-01. Match panel itself has BUILD NO TYPE FILTER (settlement-born only). */}
+          {/* B.2 — transaction TYPE filter on the register. MultiSelectDropdown satisfies FILTER-MULTI-01.
+              ROUND 433-CUR B3 also adds a kinds multi-select on the Match panel (banking-match-filter-kinds). */}
           <div data-testid="banking-transaction-type-filter">
             <MultiSelectDropdown
               label="Transaction type"
@@ -4065,7 +4125,17 @@ export function BankingTransactionsDesignView({
         expandedKeys={expandedTxId ? [expandedTxId] : []}
         onExpandedChange={(keys) => setExpandedTxId(keys[0] ?? null)}
         expandMode="single"
-        renderExpanded={renderExpandedRegisterRow}
+        // ROUND 433-CUR #1 — panel content renders in the dimmed Modal below, not inline under the
+        // row (owner: QBO popup; competing register numbers confuse). Keep A1 expand wire so the
+        // selected row stays highlighted; stub marks the redirect for guards / a11y.
+        renderExpanded={() => (
+          <p
+            className="px-2 py-1 text-xs text-slate-600"
+            data-testid="banking-categorize-inline-redirect"
+          >
+            Categorize / Match opens in the popup.
+          </p>
+        )}
         onRowClick={(tx) => setExpandedTxId((cur) => (cur === tx.id ? null : tx.id))}
         groupBy={
           showGroupHeaders
@@ -4118,6 +4188,28 @@ export function BankingTransactionsDesignView({
         onClose={() => setSplitTx(null)}
         onSaved={() => onDataChanged()}
       />
+      {/* ROUND 433-CUR #1 — Categorize / Match popup (dim overlay). Live surface is
+          BankingTransactionsDesignView; BankTxCategorizationPage is @archived. */}
+      <Modal
+        open={Boolean(expandedTxId)}
+        onClose={() => setExpandedTxId(null)}
+        title="Categorize / Match"
+        wide
+        modalKind="banking-categorize-match"
+        sizePreset="xl"
+      >
+        <div className="overflow-auto p-3" data-testid="banking-categorize-match-modal">
+          {(() => {
+            const tx =
+              scopedRows.find((row) => row.id === expandedTxId) ??
+              pagedRows.find((row) => row.id === expandedTxId) ??
+              null;
+            return tx ? renderExpandedRegisterRow(tx) : (
+              <p className="text-xs text-slate-600">Transaction not on this page — clear filters or change account.</p>
+            );
+          })()}
+        </div>
+      </Modal>
       {/* HELD financial-actions wiring — reuses the orphaned MatchDrawer (getMatchCandidates +
       acceptBankReconMatch, already gated) instead of inventing a second match/accept flow. */}
       <PrintOrientationDialog

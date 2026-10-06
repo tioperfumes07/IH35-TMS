@@ -79,6 +79,35 @@ export function problemsFor(view, css) {
 
   if (!/\.ldt-card\.strong\s*\{\s*border-color:\s*var\(--ldt-ink2\)/.test(css)) problems.push("tokens: .ldt-card.strong { border-color: var(--ldt-ink2) } missing");
   if (!/\.ldt-rows-match-table tr\.best\s*\{\s*background:\s*var\(--ldt-accent-soft\)/.test(css)) problems.push("tokens: .ldt-rows-match-table tr.best needs the --ldt-accent-soft best-match tint");
+
+  // ROUND 433-CUR #1 — Categorize/Match is a dimmed Modal popup (not only inline under the row).
+  if (!/from ["'].*components\/Modal["']/.test(view) && !/from ["'].*\/Modal["']/.test(view)) {
+    problems.push("ROUND 433-CUR: must import Modal for Categorize/Match popup");
+  }
+  if (!/data-testid="banking-categorize-match-modal"/.test(view)) {
+    problems.push("ROUND 433-CUR: Categorize/Match panel must render inside banking-categorize-match-modal");
+  }
+  if (!/title="Categorize \/ Match"/.test(view) || !/\bwide\b/.test(view)) {
+    problems.push("ROUND 433-CUR: Modal must be titled Categorize / Match and wide");
+  }
+  // B3 — match candidates filterable by transaction type (multi-select).
+  if (!/data-testid="banking-match-filter-kinds"/.test(view) || !/MultiSelectDropdown/.test(view)) {
+    problems.push("ROUND 433-CUR B3: match filters must include banking-match-filter-kinds MultiSelectDropdown");
+  }
+  if (!/kinds:\s*matchKinds\.length\s*>\s*0\s*\?\s*matchKinds/.test(view)) {
+    problems.push("ROUND 433-CUR B3: getMatchCandidates must receive kinds from matchKinds multi-select");
+  }
+  // B6 — every categorize picker box is EntityLink-linked when selected.
+  for (const id of [
+    "banking-categorize-vendor-link",
+    "banking-categorize-account-link",
+    "banking-categorize-item-link",
+    "banking-categorize-customer-link",
+  ]) {
+    if (!view.includes(`data-testid="${id}"`)) {
+      problems.push(`ROUND 433-CUR B6: missing EntityLink surface ${id}`);
+    }
+  }
   return problems;
 }
 
@@ -98,6 +127,10 @@ function selftest() {
     ["gear removed", view.replace('gearButtonTestId="banking-match-gear"', ""), css],
     ["tokens: strong outline dropped", view, css.replace(".ldt-card.strong { border-color: var(--ldt-ink2); }", "")],
     ["tokens: best tint dropped", view, css.replace(".ldt-rows-match-table tr.best { background: var(--ldt-accent-soft); }", "")],
+    ["433 modal testid dropped", view.replace('data-testid="banking-categorize-match-modal"', 'data-testid="banking-categorize-match-GONE"'), css],
+    ["433 B3 kinds filter dropped", view.replace('data-testid="banking-match-filter-kinds"', 'data-testid="banking-match-filter-kinds-GONE"'), css],
+    ["433 B3 kinds not sent to API", view.replace("kinds: matchKinds.length > 0 ? matchKinds : undefined,", "/* kinds removed */"), css],
+    ["433 B6 vendor link dropped", view.replace('data-testid="banking-categorize-vendor-link"', 'data-testid="banking-categorize-vendor-GONE"'), css],
   ];
   let caught = 0;
   for (const [name, v, c] of mutants) {
