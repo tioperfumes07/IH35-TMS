@@ -89,6 +89,12 @@ const LANES = [
 // migration as part of its assigned Telematics vertical.  This is deliberately
 // exact-file + exact-branch authorization, not general migration authority.
 const OWNER_AUTHORIZED_ONE_OFFS = new Map([
+  // FARO-F435: the Lead authored it (read-only credential), the owner ordered "SO YOU BUILD THE FARO VIEWS", CC-2
+  // applies it as the reserving seat (#25569).
+  [
+    "cc-2/faro-f435-repurchase-view",
+    new Set(["db/migrations/202615431000_views_factoring_repurchase_obligation.sql"]),
+  ],
   [
     "codex/samsara-usmca-retag-migration",
     new Set(["db/migrations/202613761300_samsara_usmca_retag.sql"]),
