@@ -1795,3 +1795,9 @@ The #25339 merge turned main red at gate step 03d; CC-3 caught it. verify-coa-ca
 - **Lead branches:** the claim is rebuilt on main as #25410. The original rewrote the whole registry from an older base and would have dropped 2 newer claims. LST-F400 is rebased with CLAIMED-NUMBERS.json dropped, as #25411.
 - **Not mine, reported as asked:** `verify-geocode-provider-is-reachable` makes a network call. It belongs in the CI phase, not the local pre-push; it did not block my pushes today.
 - **AUTH-400:** rehearsal-2 (br-small-leaf-akjde74y) is voiding with the root-cause fixes (two-way reversal links + one-reversal index, live-lines document void, settlement link refusal, sourced escrow deposit idempotency, LIFO + reclassify undo). Push follows its proof. Prod is untouched.
+
+### CC-1 · 15:03Z
+DID: handshake
+PROOF: origin/main sha I see = 55b0811d96
+BLOCKED: none
+NEXT: my INBOX-CC-1.md on main is still the 10-03 file; I start its first 10-06 order the moment Cursor lands it. Until then: triaging the 287 guard selftests failing on main, money lane first.
