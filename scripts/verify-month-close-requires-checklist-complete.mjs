@@ -36,7 +36,16 @@ if (!routeSource.includes("checklist_incomplete")) {
 if (!serviceSource.includes("checklist_incomplete")) {
   failures.push("service must enforce checklist completeness before lock");
 }
-if (!/canLock = periodOpen && bankReconComplete && arComplete && apComplete && fuelTaxComplete/.test(serviceSource)) {
+// The expression may wrap lines and may ADD gates (Faro interest / cash reserve, ACCT-F2973 / F2975) — it must stay a
+// pure conjunction: the five base gates present, every term joined by &&, no || anywhere in it.
+const canLockExpr = (serviceSource.match(/const canLock\s*=\s*([\s\S]*?);/) ?? [])[1] ?? "";
+const canLockTerms = canLockExpr.split("&&").map((t) => t.trim());
+const strictConjunction =
+  canLockExpr.length > 0 &&
+  !/\|\||\?|!/.test(canLockExpr) &&
+  ["periodOpen", "bankReconComplete", "arComplete", "apComplete", "fuelTaxComplete"].every((g) => canLockTerms.includes(g)) &&
+  canLockTerms.every((t) => /^[A-Za-z_][\w.]*$/.test(t));
+if (!strictConjunction) {
   failures.push("service can_lock must be a strict conjunction of all checklist gates");
 }
 if (!serviceSource.includes("accounting.month_close_locked")) {

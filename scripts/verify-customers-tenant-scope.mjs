@@ -20,7 +20,13 @@ function collectProblems(source) {
   if (!/set_config\('app\.operating_company_id'/.test(listRoute)) {
     problems.push("customers list route must set app.operating_company_id");
   }
-  if (!/operating_company_id\s*=\s*\$\$\{values\.length\}/.test(listRoute)) {
+  // The filter binds the RESOLVED company id: either inline ($${values.length} right after the push) or through a named
+  // index taken from values.length immediately after pushing resolvedOperatingCompanyId (Cursor #23767 named it
+  // companyScopeIdx so the active-company pin can reuse the same bound value). Either way the bound value is the
+  // membership-resolved company — never a GUC or an unscoped list.
+  const namedIdx = listRoute.match(/values\.push\(resolvedOperatingCompanyId\);\s*const (\w+) = values\.length;/);
+  const scopedViaNamedIdx = Boolean(namedIdx) && new RegExp(`filters\\.push\\(\`operating_company_id = \\$\\$\\{${namedIdx?.[1]}\\}::uuid\`\\)`).test(listRoute);
+  if (!/operating_company_id\s*=\s*\$\$\{values\.length\}/.test(listRoute) && !scopedViaNamedIdx) {
     problems.push("customers list query must include operating_company_id filter");
   }
 
@@ -53,11 +59,18 @@ if (problems.length) {
 
 if (SELFTEST) {
   const mutations = [
-    text.replace("operating_company_id = $${values.length}::uuid", "TRUE /* planted list tenant leak */"),
+    // ROUND 433: the list binds the company through companyScopeIdx (Cursor #23767); plant the leak on EVERY copy of it.
+    text.split("operating_company_id = $${companyScopeIdx}::uuid").join("TRUE /* planted list tenant leak */"),
     text.replace("resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id)", "resolveOperatingCompanyId(client, authUser.uuid)"),
     text.replace("FROM mdata.get_customer_same_company($1::uuid, $2::uuid) LIMIT 1", "FROM mdata.customers WHERE id = $1::uuid LIMIT 1"),
     text.replace("FROM mdata.get_customer_same_company($1::uuid, $2::uuid) c", "FROM mdata.customers c /* planted expanded detail leak */"),
   ];
+  // A mutation that changes nothing proves nothing — fail the selftest instead of counting it as caught or escaped.
+  const inert = mutations.filter((candidate) => candidate === text).length;
+  if (inert) {
+    console.error(`verify:customers-tenant-scope SELFTEST FAILED — ${inert}/${mutations.length} planted defects no longer match the source (fixture drift)`);
+    process.exit(1);
+  }
   const escaped = mutations.filter((candidate) => collectProblems(candidate).length === 0);
   if (escaped.length) {
     console.error(`verify:customers-tenant-scope SELFTEST FAILED — ${escaped.length}/${mutations.length} planted defects escaped`);

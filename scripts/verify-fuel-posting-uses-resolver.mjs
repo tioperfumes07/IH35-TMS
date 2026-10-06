@@ -49,7 +49,9 @@ if (!relayFn) failures.push("bank-match-fuel-post: postRelayFuelFill not found")
 else {
   if (/fuel_kind:\s*"diesel"/.test(relayFn)) failures.push("bank-match-fuel-post: the Relay path posts the whole fill as diesel (fuel_kind: \"diesel\") — post one leg per product");
   if (!/cost_lines:\s*costLines/.test(relayFn)) failures.push("bank-match-fuel-post: the Relay path must pass cost_lines (one per product) to the poster");
-  if (/l\.fuel_type IN \('diesel', 'reefer', 'def'\)\) AS gallons/.test(relayFn) || !/l\.fuel_type = 'diesel'\) AS gallons/.test(relayFn)) {
+  // ROUND 432 item 4 (#25604): the product comes from the ONE Relay classifier (relay-product-kind.ts) — still diesel only.
+  const dieselOnly = /l\.fuel_type = 'diesel'\) AS gallons/.test(relayFn) || /\$\{relayLineKindSql\("l"\)\} = 'diesel'\) AS gallons/.test(relayFn);
+  if (/l\.fuel_type IN \('diesel', 'reefer', 'def'\)\) AS gallons/.test(relayFn) || !dieselOnly) {
     failures.push("bank-match-fuel-post: Relay IFTA gallons must be road diesel only (reefer and DEF are not motor fuel)");
   }
   if (!/relay_fill_lines_do_not_foot/.test(relayFn) || !/relay_fill_has_no_fuel_lines/.test(relayFn)) failures.push("bank-match-fuel-post: the Relay path must refuse lines that do not foot and fills with no fuel line");
