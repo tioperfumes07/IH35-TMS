@@ -2257,3 +2257,15 @@ DID: part 1 #25584 (bdd45147f8) — the ten tabs: Submit invoice · Debtor recei
 PROOF: verify-faro-kpi-strip: PASS — 10 tabs; 10 engine tiles + 16 client tiles, no name or value twice, name and number only, one size · selftest 10/10 · local gate gate_exit=0
 BLOCKED: ruling needed — when the Faro reserve is merged (One Faro Security Reserve), the engine's cash_reserve_balance tile shows an em dash: a tile with no number. Hide it?
 NEXT: part 3 — /factoring/reserves (ReserveDashboard, a strict query-subset of the Reserve tab's ReserveTracker) and the dead pages/factoring/index.tsx come out, ~14 guards retargeted; then ROUND 432 Faro tables step 2 / Reefer.
+
+### CC-2 · 17:20Z — ROUND 432 money engines + ROUND 435 part 3
+DID:
+- 432 #1 Reclassify — closed by #25576 (ACCT-F2026100601, one ledger-membership rule in 9 readers + fn_account_balances_as_of; list and balance read the same rows). Post-purge the USMCA GL is empty, so "no transactions" is now the truth, not the defect.
+- 432 #2 nine guard verdicts — #25548.
+- 432 #3 tables 10+11 step 2 — merged earlier (0251434c5d); live check: information_schema shows 0 of accounting.faro_reserve_entries.running_balance_cents / short_pay_balance_cents on production.
+- 432 #4 REEFER — #25604 (ACCT-F2026100608). One Relay product classifier (type / code 033 / description) in 6 readers; the link engine lets the fill decide (a diesel row that only ties the fill's reefer line becomes reefer_diesel) and stamps the Reefer trailer from records; seed + batch settlements stop writing a trailer-TYPE catalog id as trailer_id; CSV import writes 'gallons'.
+- 432 #5 claims — #25595 released migrations 202613291000 + 202615180700; all 26 unused CC-2 verify-step claims were already released 10-04.
+- 435 part 3 — #25601 (272c2ac31c): /factoring/reserves redirects to the Reserve tab; duplicate ReserveDashboard + dead pages/factoring/index.tsx removed; ReserveTracker gained the error / honest-empty / single-pager fixes only the duplicate had; 3 guards retired, 6 retargeted, baselines only shrank.
+PROOF: verify-relay-reefer-fuel-engine: PASS — one Relay product classifier (6 readers), the fill decides reefer and stamps its trailer, IFTA taxable gallons exclude reefer and DEF (selftest 9/9). Taxable-gallon delta, read-only on auth400-backup-before-clean-slate-2026-10-04 (USMCA): before 29,206.678 gal -> after 29,003.908 gal (-202.770); the engine reproduces exactly the 4 rows the 10-04 one-off fixed. Production: 0 fuel rows / 0 Relay fills since the purge -> live delta 0 -> 0.
+BLOCKED (rulings): (a) merged-Faro-reserve cash_reserve_balance tile shows an em dash — hide it? (b) SubmissionQueue / SubmissionWorkqueue / BatchWizard were mounted only by the dead factoring index — move under Submit invoice or retire? (c) scoreboard leaf reserves.dashboard in docs/specs/scoreboard/modules/factoring.required.json names the retired screen. (d) verify-rpt-s02 measured-empty list (pinned 13).
+NEXT: ROUND 433 — multi-select on money surfaces (banking transactions first), Bills page, U23.
