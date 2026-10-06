@@ -16279,5 +16279,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-06",
     "purpose": "verify-breadcrumb-mounted-app-wide"
+  },
+  "18321": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-06",
+    "purpose": "verify-no-surface-prints-a-raw-ledger-sign"
   }
 }
