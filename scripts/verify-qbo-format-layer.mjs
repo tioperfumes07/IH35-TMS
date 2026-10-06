@@ -23,7 +23,7 @@ const DATEPICKER = path.join(ROOT, "apps/frontend/src/components/forms/DatePicke
 const SRC = path.join(ROOT, "apps/frontend/src");
 
 /** Frozen after 433-CUR #2 banking/accounting conversion. Count may never go UP. */
-const HANDROLL_CEILING = 59;
+const HANDROLL_CEILING = 58;
 
 const EXEMPT = new Set([
   "apps/frontend/src/lib/money.ts",
