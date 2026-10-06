@@ -161,8 +161,8 @@ function check(modalText) {
 
 function selftest() {
   const original = fs.readFileSync(MODAL, "utf8");
-  const broken = original.replace(/z-\[215\]/g, "z-[1]");
-  assert(broken !== original, "selftest mutation did not match — Modal.tsx's z-[215] literal changed");
+  const broken = original.replace(/z-\[1001\]/g, "z-[1]");
+  assert(broken !== original, "selftest mutation did not match — Modal.tsx's z-[1001] literal changed");
   let failed = false;
   try {
     check(broken);

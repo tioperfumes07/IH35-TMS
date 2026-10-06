@@ -1,3 +1,21 @@
+## 2026-10-07T00:45Z · GO-20 hook — modal z-index CI unblock (ambient guard-integrity)
+
+SYNC: rebased onto tip main. INBOX 432/433/435 rows measured DONE on tip (prior census stands).
+
+ROOT CAUSE: QBO DatePicker/SaveDropdown landed at z-[1000]; Modal stayed z-[215] → `verify-modal-z-index-above-drawers` FAIL on tip (blocks #25674 + guard-integrity CI).
+
+FIX: Modal z-[1001] · BookLoad z-[1002] · ParityDrawer stackAboveModal z-[1003] · ConfirmDiscard z-[1004] · Combobox LISTBOX 1100 unchanged.
+
+GUARD: verify-modal-z-index-above-drawers OK · verify-parity-drawer-z-index-above-modal OK · verify-confirm-discard-dialog-z-index-above-modal OK · verify-book-load-modal-z-index-above-drawer PASS
+
+LANE_CROSS: `docs/bus/2026-10-06-LEAD-RULING-CURSOR-MODAL-Z-INDEX-LANE-CROSS.md`
+
+REMAINING: go26 raw_table_outside_infra +24 on main; FAST-MERGE #25674; owner Chrome B7+Bills UNVERIFIED.
+
+LIVE PROOF: all four z-index guards exit 0 + selftest on branch `cursor/modal-z-index-1001-c89b`.
+
+Files Modified: Modal.tsx · ParityDrawer.tsx · ConfirmDiscardDialog.tsx · BookLoadModalV4.tsx · verify-modal-z-index-above-drawers.mjs · LANE_CROSS ruling · this OUTBOX
+
 ## 2026-10-06T23:35Z · ACCT-F2026100684 entity-scope 83 triage — PR OPEN (CC-2 handoff)
 
 DONE: `verify-mdata-entity-scope` ratchet triage on tip — 83 new literals classified and closed.

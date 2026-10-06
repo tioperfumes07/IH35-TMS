@@ -208,7 +208,7 @@ export function Modal({
     <>
       <div
         className={
-          // z-[215]: above every other z-[N] tier in the frontend, including the highest drawer
+          // z-[1001]: above DatePicker/SaveDropdown popovers (z-[1000]) and every drawer tier
           // (LoadDetailDrawer, z-[210]) — CANCEL-LOAD-MODAL-INVISIBLE-BEHIND-DRAWER. This Modal renders
           // through its own createPortal to document.body (so parent overflow/transform never clips it —
           // this was never a positioning bug), but the OLD z-[70] sat a full tier below LoadDetailDrawer's
@@ -218,8 +218,8 @@ export function Modal({
           // Stays BELOW Combobox.tsx's LISTBOX_Z_INDEX=220 so a ReferenceSelect/Combobox dropdown opened
           // inside this Modal (e.g. the cancellation-reason picker) still paints above the Modal itself.
           isDrawer
-            ? "fixed inset-0 z-[215] flex justify-end bg-black/50"
-            : "fixed inset-0 z-[215] flex items-center justify-center bg-black/50 p-4"
+            ? "fixed inset-0 z-[1001] flex justify-end bg-black/50"
+            : "fixed inset-0 z-[1001] flex items-center justify-center bg-black/50 p-4"
         }
         data-ih35-blocking-modal="true"
         onMouseDown={attemptClose}

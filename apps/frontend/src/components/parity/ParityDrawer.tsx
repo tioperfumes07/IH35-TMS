@@ -140,9 +140,9 @@ export function ParityDrawer({
   // LV-WO-PARTPANEL-BEHIND-MODAL-DESTROYS-FORM: any nested "+ Create" (QuickCreateEntityModal,
   // CatalogQuickCreateDrawer, InlineCreateDrawer, CreateTrailerModal, CreateUnitModal) opened from
   // inside a Modal (Create Work Order, Book Load, etc.) painted BEHIND that Modal's backdrop again.
-  // Bumped to z-[218] — above Modal's 215, below Combobox's LISTBOX_Z_INDEX=220 so a picker opened
+  // Bumped to z-[1003] — above Modal's 1001, below Combobox's LISTBOX_Z_INDEX=1100 so a picker opened
   // inside this drawer still paints on top of it. Locked by verify-parity-drawer-z-index-above-modal.mjs.
-  const stackClass = stackAboveModal ? "z-[218]" : "z-[60]";
+  const stackClass = stackAboveModal ? "z-[1003]" : "z-[60]";
   return createPortal(
     <div
       className={`fixed inset-0 ${stackClass}`}
