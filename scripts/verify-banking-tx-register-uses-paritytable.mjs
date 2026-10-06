@@ -107,7 +107,14 @@ export function assertMigrated(src) {
     errors.push(`${PAGE}: must set expandMode="single" (one categorize panel at a time)`);
   }
   if (!/renderExpanded=\{/.test(body)) {
-    errors.push(`${PAGE}: must pass renderExpanded (categorize/match inline panel)`);
+    errors.push(`${PAGE}: must pass renderExpanded (categorize/match expand wire — ROUND 433-CUR hosts panel in Modal)`);
+  }
+  // ROUND 433-CUR #1 — panel content is in the dimmed Modal, not competing inline under the row.
+  if (!/data-testid="banking-categorize-match-modal"/.test(body)) {
+    errors.push(`${PAGE}: ROUND 433-CUR must host Categorize/Match in banking-categorize-match-modal`);
+  }
+  if (!/data-testid="banking-categorize-inline-redirect"/.test(body)) {
+    errors.push(`${PAGE}: ROUND 433-CUR expand slot must stub with banking-categorize-inline-redirect`);
   }
 
   // A5 controlled selection + existing bulk bar
