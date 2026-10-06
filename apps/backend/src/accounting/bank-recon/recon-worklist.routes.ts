@@ -6,7 +6,12 @@ import { companyQuerySchema, currentAuthUser, validationError } from "../shared.
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 import { ReconciledSessionLockedError } from "../../banking/closed-session-immutability.js";
 import { type LedgerEntryKind, acceptExactMultiDocumentMatch } from "./match.service.js";
+import { ReceiveAndMatchError, receivePaymentsAndMatch } from "./receive-and-match.service.js";
 import { acceptReconMatch, closeReconPeriod, getReconWorklist, rejectReconMatch, unmatchBankTransaction } from "./recon-worklist.service.js";
+
+// ROUND 433 B8 — 'deposit' (a posted bank deposit — several receipts on one deposit slip) is a persistable match kind
+// (PERSISTABLE_MATCH_KINDS, kind CHECK 202615360000) and the candidate list offers it, but no route accepted it.
+const matchKindSchema = z.enum(["payment", "bill_payment", "transfer", "je", "expense", "deposit"]);
 
 const worklistQuerySchema = companyQuerySchema.extend({
   account_id: z.string().uuid(),
@@ -17,7 +22,7 @@ const worklistQuerySchema = companyQuerySchema.extend({
 const acceptBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   bank_transaction_id: z.string().uuid(),
-  ledger_entry_kind: z.enum(["payment", "bill_payment", "transfer", "je", "expense"]),
+  ledger_entry_kind: matchKindSchema,
   ledger_entry_id: z.string().uuid(),
   variance_account_id: z.string().uuid().optional(),
 });
@@ -25,7 +30,7 @@ const acceptBodySchema = z.object({
 const rejectBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   bank_transaction_id: z.string().uuid(),
-  ledger_entry_kind: z.enum(["payment", "bill_payment", "transfer", "je", "expense"]),
+  ledger_entry_kind: matchKindSchema,
   ledger_entry_id: z.string().uuid(),
 });
 
@@ -37,7 +42,7 @@ const unmatchBodySchema = z.object({
 const manualBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   bank_transaction_id: z.string().uuid(),
-  ledger_entry_kind: z.enum(["payment", "bill_payment", "transfer", "je", "expense"]),
+  ledger_entry_kind: matchKindSchema,
   ledger_entry_id: z.string().uuid(),
   variance_account_id: z.string().uuid().optional(),
 });
@@ -48,12 +53,28 @@ const multiAcceptBodySchema = z.object({
   entries: z
     .array(
       z.object({
-        ledger_entry_kind: z.enum(["payment", "bill_payment", "transfer", "je", "expense"]),
+        ledger_entry_kind: matchKindSchema,
         ledger_entry_id: z.string().uuid(),
       })
     )
     .min(2)
     .max(50),
+  /** ROUND 433 B8 — a named account for a difference between the line and the selected documents. */
+  difference_account_id: z.string().uuid().optional(),
+});
+
+const receiveAndMatchBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  bank_transaction_id: z.string().uuid(),
+  applications: z.array(z.object({ invoice_id: z.string().uuid(), amount_cents: z.coerce.number().int().positive() })).min(1).max(200),
+  payment_method: z.enum(["ach", "wire", "check", "cash", "credit_card", "other"]).optional(),
+  reference_number: z.string().trim().max(200).optional(),
+  remainder: z
+    .discriminatedUnion("kind", [
+      z.object({ kind: z.literal("customer_credit"), customer_id: z.string().uuid() }),
+      z.object({ kind: z.literal("difference"), account_id: z.string().uuid() }),
+    ])
+    .nullish(),
 });
 
 const closeBodySchema = z.object({
@@ -231,6 +252,7 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
           ledger_entry_kind: asLedgerKind(e.ledger_entry_kind),
           ledger_entry_id: e.ledger_entry_id,
         })),
+        difference_account_id: body.data.difference_account_id ?? null,
       });
       return { ok: true, result };
     } catch (error) {
@@ -250,6 +272,35 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
       if (message.startsWith("match_kind_not_acceptable:")) {
         return reply.code(400).send({ error: message });
       }
+      throw error;
+    }
+  });
+
+  // ROUND 433 B8 — one bank deposit applied to several invoices: the payments are created FROM the line and matched to it
+  // in one transaction (receive-and-match.service.ts). Same role gate as every other accept.
+  app.post("/api/v1/bank-recon/receive-and-match", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
+    const body = receiveAndMatchBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
+    try {
+      const result = await receivePaymentsAndMatch({
+        operating_company_id: body.data.operating_company_id,
+        bank_transaction_id: body.data.bank_transaction_id,
+        actor_user_uuid: user.uuid,
+        applications: body.data.applications,
+        payment_method: body.data.payment_method,
+        reference_number: body.data.reference_number ?? null,
+        remainder: body.data.remainder ?? null,
+      });
+      return { ok: true, result };
+    } catch (error) {
+      if (error instanceof ReceiveAndMatchError) return reply.code(error.status).send({ error: error.code, message: error.message });
+      if (error instanceof ReconciledSessionLockedError) return reply.code(409).send({ error: error.code, message: error.message });
+      const message = String((error as Error).message ?? "");
+      if (message === "bank_transaction_already_matched" || message.startsWith("document_already_matched")) return reply.code(409).send({ error: message });
       throw error;
     }
   });

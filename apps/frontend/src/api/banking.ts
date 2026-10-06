@@ -613,6 +613,8 @@ export function getMatchCandidates(bankTxnId: string, companyId: string, opts?: 
     bank_transaction_id?: string;
     /** Abs bank amount — multi-doc Resolve sums selected ledger amounts against this. */
     bank_amount_cents?: number;
+    /** ROUND 433 B8 — true on a deposit (money in): the drawer then offers open invoices to receive against it. */
+    bank_is_credit?: boolean;
   }>(`/api/v1/banking/transactions/${bankTxnId}/match-candidates?${params.toString()}`);
 }
 
@@ -1645,14 +1647,41 @@ export function acceptBankReconMatch(
   });
 }
 
+/**
+ * ROUND 433 B8 — one bank DEPOSIT applied to several open invoices: the server creates one receive payment per customer
+ * from the line (payment -> line, payment <-> invoices) and matches them to it in one transaction. A deposit larger than
+ * the applied total needs a home: a customer credit or a named difference account.
+ */
+export function receivePaymentsAndMatchBankLine(input: {
+  operating_company_id: string;
+  bank_transaction_id: string;
+  applications: Array<{ invoice_id: string; amount_cents: number }>;
+  payment_method?: "ach" | "wire" | "check" | "cash" | "credit_card" | "other";
+  reference_number?: string;
+  remainder?: { kind: "customer_credit"; customer_id: string } | { kind: "difference"; account_id: string } | null;
+}) {
+  return apiRequest<{
+    ok: boolean;
+    result: {
+      bank_amount_cents: number;
+      applied_cents: number;
+      remainder_cents: number;
+      payments: Array<{ id: string; display_id: string; customer_id: string; amount_cents: number; applications: number }>;
+      match_ids: string[];
+      difference_journal_entry_id: string | null;
+    };
+  }>(`/api/v1/bank-recon/receive-and-match`, { method: "POST", body: input });
+}
+
 /** ROUND 206 — one bank line → many documents (exact sum only; variance → use accept with write-off). */
 export function acceptBankReconMultiMatch(input: {
   operating_company_id: string;
   bank_transaction_id: string;
   entries: Array<{
-    ledger_entry_kind: "payment" | "bill_payment" | "transfer" | "je" | "expense";
+    ledger_entry_kind: "payment" | "bill_payment" | "transfer" | "je" | "expense" | "deposit";
     ledger_entry_id: string;
   }>;
+  difference_account_id?: string;
 }) {
   return apiRequest<{ ok: boolean; result: Record<string, unknown> }>(`/api/v1/bank-recon/accept-multi-match`, {
     method: "POST",

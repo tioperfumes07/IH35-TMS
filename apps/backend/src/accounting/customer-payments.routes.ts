@@ -13,7 +13,7 @@ import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { recordPostingFlagSkip } from "./posting-flag-skip-audit.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
-import { getAppliedCreditMemoCents } from "./payments/apply.service.js";
+import { createCustomerPaymentInClient } from "./payments/customer-payment-create.service.js";
 
 const paymentMethodSchema = z.enum([
   "ach",
@@ -188,251 +188,25 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
 
     let result;
     try {
-    result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const customerRes = await client.query(
-        `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
-        [params.data.id, query.data.operating_company_id]
-      );
-      if (!customerRes.rows[0]) return { code: 404 as const, error: "customer_not_found" as const };
-
-      // deposited_to_account_id stores catalogs.accounts.id (GL debit). bank_account_id is the
-      // Banking row — bridge via ledger_account_id. Never store a free-text bank slug.
-      let depositedToAccountId: string | null = null;
-      if (body.data.bank_account_id) {
-        const acctRes = await client.query(
-          `
-            SELECT id::text AS id, ledger_account_id::text AS ledger_account_id
-            FROM banking.bank_accounts
-            WHERE id = $1::uuid
-              AND operating_company_id = $2::uuid
-            LIMIT 1
-          `,
-          [body.data.bank_account_id, query.data.operating_company_id]
-        );
-        const bankRow = acctRes.rows[0] as { id: string; ledger_account_id: string | null } | undefined;
-        if (!bankRow) return { code: 400 as const, error: "bank_account_not_found" };
-        // BANK-ACCOUNT-HIDE: an account hidden for THIS entity can never receive a NEW payment
-        // deposit (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
-        if (!(await assertBankAccountUsable(client, body.data.bank_account_id, query.data.operating_company_id))) {
-          return { code: 400 as const, error: "bank_account_not_found" };
-        }
-        depositedToAccountId = bankRow.ledger_account_id;
-        if (!depositedToAccountId) return { code: 400 as const, error: "bank_account_missing_ledger_gl" };
-      } else {
-        // ROUND 326 queue item 12 (G-06) + owner ruling 2026-10-02 ("no holding accounts — every payment on a real
-        // account, default Bank of America, editable like QuickBooks"): a payment with no deposit account picked lands
-        // on the operating bank, never in 1090 Undeposited Funds, where it waited for a sweep that often never came.
-        depositedToAccountId = await resolveRoleAccountOptional(client, query.data.operating_company_id, "operating_bank");
-        if (!depositedToAccountId) return { code: 400 as const, error: "operating_bank_unmapped" };
-      }
-
-      const displayId = await resolvePaymentDisplayId(
-        client,
-        query.data.operating_company_id,
-        new Date(`${body.data.received_at}T00:00:00.000Z`),
-        body.data.display_id
-      );
-
-      const paymentRes = await client.query(
-        `
-          INSERT INTO accounting.payments (
-            operating_company_id,
-            customer_id,
-            display_id,
-            payment_method,
-            payment_date,
-            reference,
-            amount_cents,
-            deposited_to_account_id,
-            notes,
-            created_by_user_id,
-            payment_source_kind,
-            source_bank_transaction_id,
-            -- FAIL-F2 sweep / ACCT-F264 — customer payments could not be marked TEST data either.
-            -- accounting.payments.is_sample_data exists (12,129 rows) and NOTHING wrote it, exactly as
-            -- expenses and bills did not until #4993. posting-engine resolves the flag from the SOURCE
-            -- row (customer_payment is in SAMPLE_TAGGED_SOURCE_TABLES), so an untagged payment yields
-            -- an untagged journal entry and sample cash lands in real books.
-            is_sample_data
-          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
-          RETURNING id, display_id, amount_unapplied_cents
-        `,
-        [
-          query.data.operating_company_id,
-          params.data.id,
-          displayId,
-          body.data.payment_method,
-          body.data.received_at,
-          body.data.reference_number ?? null,
-          body.data.amount_cents,
-          depositedToAccountId,
-          null,
-          user.uuid,
-          "manual",
-          null,
-          // $13 — only an explicit true marks sample; omitting it keeps the column's false default, so
-          // no existing caller changes behaviour and nothing is retroactively re-classified.
-          body.data.is_sample_data === true,
-        ]
-      );
-      const payment = paymentRes.rows[0] as { id: string; display_id: string; amount_unapplied_cents: number } | undefined;
-      if (!payment?.id) return { code: 500 as const, error: "payment_create_failed" as const };
-
-      let applicationsCount = 0;
-      for (const applyRow of body.data.applications) {
-        const invoiceRes = await client.query(
-          `
-            SELECT id, amount_open_cents, status
-            FROM accounting.invoices
-            WHERE id = $1
-              AND operating_company_id = $2::uuid
-              AND customer_id = $3
-            LIMIT 1
-          `,
-          [applyRow.invoice_id, query.data.operating_company_id, params.data.id]
-        );
-        const invoice = invoiceRes.rows[0] as { id: string; amount_open_cents: number; status: string } | null;
-        if (!invoice) return { code: 404 as const, error: "invoice_not_found_for_customer" as const };
-        if (!["sent", "partial"].includes(String(invoice.status))) return { code: 409 as const, error: "invoice_not_open_for_payment" as const };
-        // ACCT-F5633 — amount_open_cents (a GENERATED column) has no knowledge of non-voided
-        // credit-memo applications; net them off the same way credit-memos.routes.ts's own apply
-        // route and ar-aging.service.ts (ACCT-F5612) already do, or a cash payment could still apply
-        // on top of a balance a credit memo already covered.
-        const appliedCreditMemoCents = await getAppliedCreditMemoCents(client, query.data.operating_company_id, invoice.id);
-        const invoiceRemainingCents = Number(invoice.amount_open_cents ?? 0) - appliedCreditMemoCents;
-        if (Number(applyRow.amount_cents) > invoiceRemainingCents) return { code: 400 as const, error: "apply_amount_exceeds_invoice_open" as const };
-
-        await client.query(
-          `
-            INSERT INTO accounting.payment_applications (
-              operating_company_id,
-              payment_id,
-              invoice_id,
-              target_kind,
-              target_id,
-              amount_cents,
-              amount_applied,
-              applied_by_user_id,
-              applied_by_user_uuid
-            ) VALUES ($1,$2,$3,'invoice',$3,$4,$5,$6,$6)
-          `,
-          [
-            query.data.operating_company_id,
-            payment.id,
-            applyRow.invoice_id,
-            applyRow.amount_cents,
-            applyRow.amount_cents / 100,
-            user.uuid,
-          ]
-        );
-        applicationsCount += 1;
-      }
-
-      // CLS-SUBLEDGER-GL-DARK / ACCT-F150 — POST THE RECEIPT.
-      //
-      // This route creates the payment AND its applications in one operation, so A/R moves here. It
-      // never called the poster, which is why USMCA payment a0b83bf5 applied $250.00 against an
-      // invoice on 2026-08-06 and produced ZERO journal_entry_postings — subledger moved, ledger
-      // stayed dark, books out by $250 with nothing reporting a failure. It was not a flag or a
-      // mapping problem: CUSTOMER_PAYMENT_GL_POSTING_ENABLED was true for USMCA, ar_control (1100)
-      // and undeposited_funds (1090) were bound and active fifteen days earlier, and the payment was
-      // source_system='tms'. The poster simply was never invoked on this path.
-      //
-      // apply.service.ts was audited and hardened for exactly this; the ROUTES were never wired to
-      // it. Same gate, same skip-audit, same poster — no new GL math (locked rule: reuse the existing
-      // poster). Flag OFF still writes the payment and applications and records the skip append-only,
-      // so a skip can never read as a silent success.
-      //
-      // ACCT-F5705: the `applicationsCount > 0` gate below used to also block the post-or-skip-audit
-      // pair entirely for a zero-application payment (a customer credit / unapplied cash / prepayment
-      // — a real, UI-supported outcome, see CustomerDetail.tsx's creditBalanceCents flow). buildCustomer
-      // PaymentLines (posting-engine.service.ts) posts purely from accounting.payments.amount_cents —
-      // it has NO dependency on payment_applications — so that condition was blocking a call the
-      // poster never needed gated. apply.service.ts's own applyPayment (the correct reference shape)
-      // has no such gate. Removed here to match: every real payment now either posts or is skip-audited,
-      // never silently neither.
-      const customerPaymentPostingEnabled = await isEnabled(client, "CUSTOMER_PAYMENT_GL_POSTING_ENABLED", {
+    // ROUND 433 B8 — the payment writer is customer-payment-create.service.ts (one writer for this form and for Banking's
+    // receive-and-match); this route keeps auth, validation and the HTTP shape.
+    result = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+      createCustomerPaymentInClient(client, user.uuid, {
         operating_company_id: query.data.operating_company_id,
-        user_uuid: user.uuid,
-      });
-      if (customerPaymentPostingEnabled) {
-        // ATOMICITY — this MUST be the in-client-tx poster, not postSourceTransaction().
-        // withCompanyScope -> withCurrentUser does pool.connect() + BEGIN ... COMMIT, so this callback
-        // runs inside an open transaction and the payment row above is NOT yet committed.
-        // postSourceTransaction() takes its own pool connection and its own transaction, so from there
-        // the payment does not exist yet — the poster would find nothing and the receipt would stay
-        // dark, which is the very defect this block fixes. Passing the caller's client also makes the
-        // payment, its applications and its journal entry commit or roll back as ONE unit: there is no
-        // window in which A/R has moved and the GL has not.
-        await postSourceTransactionInClientTx(
-          client,
-          {
-            operating_company_id: query.data.operating_company_id,
-            source_transaction_type: "customer_payment",
-            source_transaction_id: payment.id,
-            posting_purpose: "initial_post",
-          },
-          { userId: user.uuid }
-        );
-      } else {
-        await recordPostingFlagSkip(client, user.uuid, {
-          flagKey: "CUSTOMER_PAYMENT_GL_POSTING_ENABLED",
-          postingDomain: "customer_payment",
-          operatingCompanyId: query.data.operating_company_id,
-          context: { payment_id: payment.id, route: "POST /api/v1/customers/:id/payments" },
-        });
-      }
-
-      const refreshedRes = await client.query(`SELECT amount_unapplied_cents FROM accounting.payments WHERE id = $1 LIMIT 1`, [payment.id]);
-      const refreshed = refreshedRes.rows[0] ?? { amount_unapplied_cents: 0 };
-
-      await enqueueAccountingOutbox(client, query.data.operating_company_id, "qbo.customer_payment.created", "customer_payment", payment.id, {
-        payment_id: payment.id,
         customer_id: params.data.id,
+        received_at: body.data.received_at,
         amount_cents: body.data.amount_cents,
-        payment_date: body.data.received_at,
-      });
-
-      await appendCrudAudit(
-        client,
-        user.uuid,
-        "accounting.customer_payment.created.p6_t11204",
-        {
-          resource_type: "accounting.payments",
-          resource_id: payment.id,
-          operating_company_id: query.data.operating_company_id,
-          customer_id: params.data.id,
-          display_id: payment.display_id,
-          applications_count: applicationsCount,
-        },
-        "info",
-        "P6-T11204-PAYMENTS"
-      );
-
-      // ACCOUNTING-SPINE-EVENT-FIRE-AND-FORGET-SILENT-DROP: this used to fire in a SEPARATE
-      // withCompanyScope transaction opened AFTER this one had already committed, with a bare
-      // .catch(warn) — a real emit failure was silently swallowed (the payment exists, the audit
-      // trail doesn't). Moved into the payment's own creation transaction, awaited, so the write and
-      // its spine event can never diverge.
-      await emitAccountingSpineEvent(client, {
-        operating_company_id: query.data.operating_company_id,
-        actor_user_id: String(user.uuid),
-        event_type: "payment.customer_created",
-        entity_id: payment.id,
-        entity_type: "customer_payment",
-        source_table: "accounting.payments",
-      });
-
-      return {
-        code: 201 as const,
-        data: {
-          id: payment.id,
-          display_id: payment.display_id,
-          amount_unapplied_cents: Number(refreshed.amount_unapplied_cents ?? 0),
-          applications_count: applicationsCount,
-        },
-      };
-    });
+        payment_method: body.data.payment_method,
+        bank_account_id: body.data.bank_account_id ?? null,
+        reference_number: body.data.reference_number ?? null,
+        is_sample_data: body.data.is_sample_data,
+        display_id: body.data.display_id ?? null,
+        applications: body.data.applications,
+        payment_source_kind: "manual",
+        source_bank_transaction_id: null,
+        route: "POST /api/v1/customers/:id/payments",
+      })
+    );
     } catch (error) {
       if (error instanceof DuplicateDocumentNumberError) {
         return reply.code(409).send(duplicateDocumentNumberBody(error));

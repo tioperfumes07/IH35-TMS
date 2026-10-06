@@ -28,6 +28,7 @@ import { formatUsdCents } from "../../../lib/money";
 import { humanMemo } from "../../accounting/ManualJEListPage";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ApiError } from "../../../api/client";
+import { ReceiveAgainstInvoicesPanel } from "./ReceiveAgainstInvoicesPanel";
 
 // ROUND 206 Resolve (owner asked 4×): exact Confirm stays link-and-clear; variance Confirm is enabled
 // when a write-off / difference account is selected (posts via acceptMatchWithResolveDifference);
@@ -149,6 +150,11 @@ function kindBadgeClassName() {
   return "inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-slate-700 hover:underline";
 }
 
+
+/** ROUND 433 B8 — a multi-select key is kind + id: two document kinds can share an id space, a selection must not. */
+function multiKey(c: Pick<BankMatchCandidate, "ledger_entry_kind" | "ledger_entry_id">): string {
+  return `${c.ledger_entry_kind}:${c.ledger_entry_id}`;
+}
 
 function formatWindowDay(iso: string) {
   const d = new Date(`${iso.slice(0, 10)}T00:00:00Z`);
@@ -316,7 +322,7 @@ export function MatchDrawer({
         operating_company_id: operatingCompanyId,
         bank_transaction_id: String(bankTransactionId),
         entries: entries.map((c) => ({
-          ledger_entry_kind: c.ledger_entry_kind as "payment" | "bill_payment" | "transfer" | "je" | "expense",
+          ledger_entry_kind: c.ledger_entry_kind as "payment" | "bill_payment" | "transfer" | "je" | "expense" | "deposit",
           ledger_entry_id: c.ledger_entry_id,
         })),
       }),
@@ -360,7 +366,7 @@ export function MatchDrawer({
   }, [candidatesQuery.data?.candidates, suggestedOnly]);
   const bankAmountCents = Number(candidatesQuery.data?.bank_amount_cents ?? 0);
   const multiSelected = useMemo(
-    () => candidates.filter((c) => selectedIds.has(c.ledger_entry_id) && c.ledger_entry_kind !== "bill"),
+    () => candidates.filter((c) => selectedIds.has(multiKey(c)) && c.ledger_entry_kind !== "bill"),
     [candidates, selectedIds]
   );
   const multiSumCents = multiSelected.reduce((s, c) => s + Number(c.amount_cents ?? 0), 0);
@@ -761,6 +767,19 @@ export function MatchDrawer({
           ) : null}
         </div>
 
+        {/* ROUND 433 B8 — a deposit can be received against SEVERAL open invoices (one payment per customer, matched as one). */}
+        {candidatesQuery.data?.bank_is_credit && bankTransactionId ? (
+          <ReceiveAgainstInvoicesPanel
+            operatingCompanyId={operatingCompanyId}
+            bankTransactionId={String(bankTransactionId)}
+            bankAmountCents={bankAmountCents}
+            onReceived={() => {
+              void candidatesQuery.refetch();
+              onAccepted?.();
+            }}
+          />
+        ) : null}
+
         {multiSelected.length >= 2 ? (
           <div
             className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5"
@@ -911,7 +930,7 @@ export function MatchDrawer({
           {candidates.map((c) => {
             const isTopAuto = c.ledger_entry_id === topAutoMatchId;
             const isSelected = c.ledger_entry_id === selectedId;
-            const isMultiChecked = selectedIds.has(c.ledger_entry_id);
+            const isMultiChecked = selectedIds.has(multiKey(c));
             const isBill = c.ledger_entry_kind === "bill";
             const isExactMatch = c.amount_gap_cents === 0;
             const canConfirmVariance = !isBill && !isExactMatch && Boolean(effectiveWriteOffId);
@@ -940,7 +959,7 @@ export function MatchDrawer({
                       checked={isMultiChecked}
                       disabled={isBill}
                       title={isBill ? "Bills stay held (CHAIN-04)" : "Include in multi-document match"}
-                      onChange={() => toggleMulti(c.ledger_entry_id)}
+                      onChange={() => toggleMulti(multiKey(c))}
                       onClick={(e) => e.stopPropagation()}
                     />
                     <input

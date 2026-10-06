@@ -493,6 +493,8 @@ export type FindCandidatesResult = {
   window: MatchWindowInfo;
   /** Abs bank amount (cents) — FE multi-doc Resolve sums selected ledger amounts against this. */
   bank_amount_cents: number;
+  /** ROUND 433 B8 — money in (deposit) vs out, so the drawer offers open invoices only on a deposit. */
+  bank_is_credit?: boolean;
 };
 
 const MAX_CUSTOM_SPAN_DAYS = 730;
@@ -1230,6 +1232,7 @@ export async function findCandidates(input: {
       candidates,
       window,
       bank_amount_cents: txnAmountAbs,
+      bank_is_credit: txn.is_credit,
     });
     const txnMemo = `${txn.merchant_name ?? ""} ${txn.description ?? ""} ${txn.notes ?? ""}`.trim();
     const txnDate = txn.transaction_date;
@@ -1961,17 +1964,26 @@ async function sweepMatchedReceiptToBank(
   }
 }
 
-export async function acceptExactMultiDocumentMatch(input: {
+export type MultiDocumentMatchInput = {
   operating_company_id: string;
   bank_transaction_id: string;
   actor_user_uuid: string;
   entries: Array<{ ledger_entry_kind: LedgerEntryKind; ledger_entry_id: string }>;
-}): Promise<{
+  /**
+   * ROUND 433 B8 — when the documents do not sum to the bank line, the difference posts to THIS named account through
+   * the same postDifferenceJournalEntry the 1:1 accept uses. Omitted -> a non-zero difference is refused, as before.
+   */
+  difference_account_id?: string | null;
+};
+export type MultiDocumentMatchResult = {
   variance_cents: number;
   match_ids: string[];
   cleared_matched_column: string | null;
   cleared_ledger_entry_id: string | null;
-}> {
+  difference_journal_entry_id: string | null;
+};
+
+export async function acceptExactMultiDocumentMatch(input: MultiDocumentMatchInput): Promise<MultiDocumentMatchResult> {
   if (!input.entries.length) throw new Error("multi_match_requires_entries");
   await assertOwnerMayMatchFactoringPurchase(
     input.operating_company_id,
@@ -1982,6 +1994,21 @@ export async function acceptExactMultiDocumentMatch(input: {
 
   return withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+    return acceptMultiDocumentMatchInClient(client, input);
+  });
+}
+
+/**
+ * The multi-document accept on the CALLER's transaction (ROUND 433 B8: Banking's receive-and-match creates the payments
+ * and matches them to the line as one unit). The caller has already run assertOwnerMayMatchFactoringPurchase when any
+ * entry is a factoring kind, and set app.operating_company_id.
+ */
+export async function acceptMultiDocumentMatchInClient(
+  client: Parameters<typeof storeMatch>[0],
+  input: MultiDocumentMatchInput
+): Promise<MultiDocumentMatchResult> {
+  if (!input.entries.length) throw new Error("multi_match_requires_entries");
+  {
     const txn = await loadTransaction(client, input.operating_company_id, input.bank_transaction_id, true);
     if (!txn) throw new Error("bank_transaction_not_found");
     await assertBankTxnNotInReconciledSession(client, input.bank_transaction_id, input.operating_company_id);
@@ -2020,7 +2047,7 @@ export async function acceptExactMultiDocumentMatch(input: {
 
     const txnAmountAbs = Math.abs(Number(txn.amount_cents ?? 0));
     const varianceCents = txnAmountAbs - ledgerSum;
-    if (varianceCents !== 0) {
+    if (varianceCents !== 0 && !input.difference_account_id) {
       throw new Error(`multi_match_nonzero_variance:${varianceCents}`);
     }
 
@@ -2075,6 +2102,21 @@ export async function acceptExactMultiDocumentMatch(input: {
       );
       matchIds.push(reconciliationMatchId);
     }
+
+    // ROUND 433 B8 — a named difference posts once for the line, through the 1:1 path's own poster (never a plug).
+    const differenceJournalEntryId =
+      varianceCents !== 0 && input.difference_account_id
+        ? await postDifferenceJournalEntry(client, {
+            operating_company_id: input.operating_company_id,
+            bank_transaction_id: input.bank_transaction_id,
+            bank_account_id: txn.bank_account_id,
+            difference_account_id: input.difference_account_id,
+            actor_user_uuid: input.actor_user_uuid,
+            transaction_date: txn.transaction_date,
+            variance_cents: varianceCents,
+            is_credit: txn.is_credit,
+          })
+        : null;
 
     // ROUND 326 queue item 12 (G-06) + ENG-SPINE: every persistable kind that has a reverse bank
     // FK gets the same stamp the 1:1 accept writes (payment / bill_payment / settlement). A batch
@@ -2148,12 +2190,13 @@ export async function acceptExactMultiDocumentMatch(input: {
     }
 
     return {
-      variance_cents: 0,
+      variance_cents: varianceCents,
       match_ids: matchIds,
       cleared_matched_column: matchedColumn,
       cleared_ledger_entry_id: matchedColumn ? first.ledger_entry_id : null,
+      difference_journal_entry_id: differenceJournalEntryId,
     };
-  });
+  }
 }
 
 export async function previewMatchVariance(input: {
