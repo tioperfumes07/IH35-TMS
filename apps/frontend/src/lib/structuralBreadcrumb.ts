@@ -158,3 +158,21 @@ export function structuralParentHref(pathname: string): string {
   const mod = matchModule(pathname.split("?")[0] || pathname);
   return mod?.home ?? "/home";
 }
+
+/**
+ * R433 (U18) — Accounting fallback. structuralCrumbsForPath stays null for /accounting (CC-2 owns that
+ * shell's own crumb). Accounting pages that do not render AccountingSubNavWrapper still get a
+ * route-derived Accounting › List › Record trail from the Shell; the wrapper claims the slot otherwise.
+ */
+export function accountingFallbackCrumbs(pathname: string): StructuralCrumb[] | null {
+  const path = pathname.split("?")[0] || pathname;
+  if (path !== "/accounting" && !path.startsWith("/accounting/")) return null;
+  const segs = path.split("/").filter(Boolean).slice(1);
+  if (segs.length === 0) return [{ label: "Accounting" }];
+  const items: StructuralCrumb[] = [{ label: "Accounting", href: "/accounting" }];
+  segs.forEach((seg, i) => {
+    const last = i === segs.length - 1;
+    items.push(last ? { label: humanizeSegment(seg) } : { label: humanizeSegment(seg), href: `/accounting/${segs.slice(0, i + 1).join("/")}` });
+  });
+  return items;
+}

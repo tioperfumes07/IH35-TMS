@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useClaimBreadcrumb } from "../../lib/breadcrumbOwner";
 
 type BreadcrumbItem = {
   label: string;
@@ -7,9 +8,12 @@ type BreadcrumbItem = {
 
 type Props = {
   items: BreadcrumbItem[];
+  /** Shell StructuralBreadcrumb only: do not claim the page breadcrumb slot. */
+  skipClaim?: boolean;
 };
 
-export function Breadcrumb({ items }: Props) {
+export function Breadcrumb({ items, skipClaim = false }: Props) {
+  useClaimBreadcrumb(!skipClaim);
   return (
     <nav aria-label="Breadcrumb" className="text-xs text-slate-500">
       <ol className="flex flex-wrap items-center gap-1">

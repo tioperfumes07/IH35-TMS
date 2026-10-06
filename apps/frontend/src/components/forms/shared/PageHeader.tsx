@@ -1,6 +1,7 @@
 import { ArrowLeft } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useClaimBreadcrumb } from "../../../lib/breadcrumbOwner";
 import { structuralParentHref } from "../../../lib/structuralBreadcrumb";
 import "./PageHeader.css";
 
@@ -32,6 +33,7 @@ export function PageHeader({ title, backHref, breadcrumb, subtitle, actions }: P
   const navigate = useNavigate();
   const location = useLocation();
   const showBreadcrumb = breadcrumb != null && breadcrumb.length > 1;
+  useClaimBreadcrumb(showBreadcrumb);
 
   return (
     <header className="page-header">

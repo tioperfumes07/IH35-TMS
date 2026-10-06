@@ -2,6 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { colors, typography } from "../../design/tokens";
+import { useClaimBreadcrumb } from "../../lib/breadcrumbOwner";
 import { structuralParentHref } from "../../lib/structuralBreadcrumb";
 
 type Props = {
@@ -21,6 +22,7 @@ type Props = {
 export function PageHeader({ backHref, onBack, breadcrumb, title, subtitle, actions }: Props) {
   const navigate = useNavigate();
   const location = useLocation();
+  useClaimBreadcrumb(Boolean(breadcrumb && breadcrumb.length > 0));
 
   return (
     <div className="mb-2 shrink-0">
