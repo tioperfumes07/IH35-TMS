@@ -7,6 +7,22 @@
 //   3. posting_source_load_id compares keys as uuid (migration 202615370800): the text comparison took 54 s
 import { existsSync, readFileSync } from "node:fs";
 
+// --selftest (Devin build order 2026-10-05): one case that MUST pass (the real tree) and one that
+// MUST fail (a bare fixture cwd — a guard that reports green with none of its inputs present is a
+// vacuous proof). Never writes to tracked source.
+if (process.argv.includes("--selftest")) { await selftest_verify_load_costs_in_dispatch_reads_the_ledger(); }
+async function selftest_verify_load_costs_in_dispatch_reads_the_ledger() {
+  const { runGuard, runGuardInFixture, reportSelftest, statusOf, outputOf } = await import("./lib/guard-selftest.mjs");
+  const { fileURLToPath } = await import("node:url");
+  const me = fileURLToPath(import.meta.url);
+  const live = runGuard(me);
+  const empty = runGuardInFixture(me);
+  reportSelftest("verify_load_costs_in_dispatch_reads_the_ledger", [
+    { name: "real tree green", pass: statusOf(live) === 0, detail: statusOf(live) === 0 ? undefined : outputOf(live).slice(-300) },
+    { name: "bare fixture fails closed", pass: statusOf(empty) !== 0, detail: statusOf(empty) !== 0 ? undefined : outputOf(empty).slice(-200) },
+  ]);
+}
+
 const LABEL = "verify-load-costs-in-dispatch-reads-the-ledger";
 const fails = [];
 const manifest = readFileSync("apps/frontend/src/routes/manifest.tsx", "utf8");

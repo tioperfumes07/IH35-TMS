@@ -7,6 +7,22 @@
 import fs from "node:fs";
 import path from "node:path";
 
+// --selftest (Devin build order 2026-10-05): one case that MUST pass (the real tree) and one that
+// MUST fail (a bare fixture cwd — a guard that reports green with none of its inputs present is a
+// vacuous proof). Never writes to tracked source.
+if (process.argv.includes("--selftest")) { await selftest_verify_reclassify_batch_check_covers_targets(); }
+async function selftest_verify_reclassify_batch_check_covers_targets() {
+  const { runGuard, runGuardInFixture, reportSelftest, statusOf, outputOf } = await import("./lib/guard-selftest.mjs");
+  const { fileURLToPath } = await import("node:url");
+  const me = fileURLToPath(import.meta.url);
+  const live = runGuard(me);
+  const empty = runGuardInFixture(me);
+  reportSelftest("verify_reclassify_batch_check_covers_targets", [
+    { name: "real tree green", pass: statusOf(live) === 0, detail: statusOf(live) === 0 ? undefined : outputOf(live).slice(-300) },
+    { name: "bare fixture fails closed", pass: statusOf(empty) !== 0, detail: statusOf(empty) !== 0 ? undefined : outputOf(empty).slice(-200) },
+  ]);
+}
+
 const LABEL = "verify-reclassify-batch-check-covers-targets";
 const ROOT = process.cwd();
 const SERVICE = path.join(ROOT, "apps/backend/src/accounting/reclassify/reclassify.service.ts");

@@ -10,6 +10,23 @@
  */
 import { readFileSync } from "node:fs";
 import pg from "pg";
+
+// --selftest (Devin build order 2026-10-05): live-DB guards cannot be fixture-tested — their inputs
+// are rows on Neon. One case MUST pass (live check green, or the canonical no-credential refusal
+// when nothing resolves locally) and one MUST fail (dead credential — it must refuse, never green).
+if (process.argv.includes("--selftest")) { await selftest_verify_preserve_ledger(); }
+async function selftest_verify_preserve_ledger() {
+  const { runGuard, reportSelftest, statusOf, outputOf, DEAD_DB_ENV } = await import("./lib/guard-selftest.mjs");
+  const { fileURLToPath } = await import("node:url");
+  const me = fileURLToPath(import.meta.url);
+  const real = runGuard(me);
+  const noDb = runGuard(me, { env: DEAD_DB_ENV });
+  const refused = /DATABASE_URL (?:is )?(?:not set|unset|required)|credential/.test(outputOf(real));
+  reportSelftest("verify_preserve_ledger", [
+    { name: "live check green, or canonically refuses with no credential", pass: statusOf(real) === 0 || refused, detail: statusOf(real) === 0 ? undefined : outputOf(real).slice(-300) },
+    { name: "refuses on dead credential", pass: statusOf(noDb) !== 0, detail: statusOf(noDb) !== 0 ? undefined : outputOf(noDb).slice(-200) },
+  ]);
+}
 const MIG = readFileSync("db/migrations/202615220900_preserve_telematics_geocode.sql", "utf8");
 const SVC = readFileSync("apps/backend/src/telematics/preservation.service.ts", "utf8");
 const IDX = readFileSync("apps/backend/src/index.ts", "utf8");
