@@ -8,8 +8,33 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+// --selftest (Devin build order 2026-10-05): one case that MUST pass (the real tree) and one that
+// MUST fail (a bare fixture cwd — a guard that reports green with none of its inputs present is a
+// vacuous proof). Never writes to tracked source.
+if (process.argv.includes("--selftest")) { await selftest_verify_void_document_door_is_whole(); }
+async function selftest_verify_void_document_door_is_whole() {
+  const { runGuard, withTmpFixture, reportSelftest, statusOf, outputOf } = await import("./lib/guard-selftest.mjs");
+  const { fileURLToPath } = await import("node:url");
+  const me = fileURLToPath(import.meta.url);
+  const live = runGuard(me);
+  const rogue = withTmpFixture(
+    {
+      "apps/backend/src/accounting/void-document.service.ts": "// voidDocument without the family stamps\nexport async function voidDocument() {}",
+      "apps/backend/src/accounting/rogue.ts": "await client.query(`UPDATE accounting.payments SET voided_at = now() WHERE id = $1`);",
+    },
+    ["apps/backend/src/accounting"],
+    (tmp) => runGuard(me, { env: { VERIFY_ROOT: tmp } }),
+  );
+  reportSelftest("verify_void_document_door_is_whole", [
+    { name: "real tree green", pass: statusOf(live) === 0, detail: statusOf(live) === 0 ? undefined : outputOf(live).slice(-300) },
+    { name: "unstamped door + rogue payment-void writer fails", pass: statusOf(rogue) !== 0, detail: outputOf(rogue).slice(-200) },
+  ]);
+}
+
 const LABEL = "verify-void-document-door-is-whole";
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const ROOT = process.env.VERIFY_ROOT
+  ? path.resolve(process.env.VERIFY_ROOT)
+  : path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DOOR = "apps/backend/src/accounting/void-document.service.ts";
 const WRITER = "apps/backend/src/accounting/payment-void-stamp.service.ts";
 const read = (rel) => readFileSync(path.join(ROOT, rel), "utf8");

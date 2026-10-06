@@ -10,6 +10,23 @@
 import { readFileSync } from "node:fs";
 import { NOT_FROZEN_SQL, FROZEN_COMPANY_CODES } from "./lib/bank-feed-state-machine.mjs";
 
+// --selftest (Devin build order 2026-10-05): one case that MUST pass (the real tree, whose static
+// arm runs offline under ALLOW_OFFLINE_SKIP) and one that MUST fail (a bare fixture cwd — a guard
+// that reports green with none of its inputs present is a vacuous proof). Never writes to tracked source.
+if (process.argv.includes("--selftest")) { await selftest_verify_register_num_resolves_purged_documents(); }
+async function selftest_verify_register_num_resolves_purged_documents() {
+  const { runGuard, runGuardInFixture, reportSelftest, statusOf, outputOf } = await import("./lib/guard-selftest.mjs");
+  const { fileURLToPath } = await import("node:url");
+  const me = fileURLToPath(import.meta.url);
+  const live = runGuard(me);
+  const empty = runGuardInFixture(me);
+  reportSelftest("verify_register_num_resolves_purged_documents", [
+    { name: "real tree green", pass: statusOf(live) === 0, detail: statusOf(live) === 0 ? undefined : outputOf(live).slice(-300) },
+    { name: "bare fixture fails closed", pass: statusOf(empty) !== 0, detail: statusOf(empty) !== 0 ? undefined : outputOf(empty).slice(-200) },
+  ]);
+}
+
+
 export const ALLOW_OFFLINE_SKIP = "the enforcing half is static and always runs; the live half only counts documents purged with no number in the audit trail";
 
 const LABEL = "verify-register-num-resolves-purged-documents";
