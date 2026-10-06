@@ -77,7 +77,8 @@ function csvRowToApiShape(g: (name: string) => string | undefined): Record<strin
     const tg = Number(totalGross);
     if (Number.isFinite(tg)) { retailSum += tg; hasRetail = true; }
     fuel_items.push({
-      fuel_type: ft, volume: vol, volume_uom: "gallon",
+      // ROUND 391.2 — Relay's API unit is "gallons"; this once wrote "gallon" and every reader filtered "gallons".
+      fuel_type: ft, volume: vol, volume_uom: "gallons",
       retail_price_per_unit: S(g(`retail_price ${ft}`)),
       discounted_price_per_unit: S(g(`discounted_price ${ft}`)),
       total_retail_price: totalGross, total_discounted_price: totalPrice,

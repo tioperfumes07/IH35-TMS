@@ -21,6 +21,7 @@
  *   no_candidate  GPS shows no truck stopped at the station and the card names none
  * Computed on read. Writes nothing.
  */
+import { relayLineIsGallonsSql } from "./relay-product-kind.js";
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
@@ -97,7 +98,7 @@ export async function computeRelayFillGpsVerdicts(
             r.location_latitude::text AS lat, r.location_longitude::text AS lng,
             concat_ws(', ', r.merchant_name, r.location_city, r.location_state) AS station,
             (SELECT sum(l.volume)::text FROM integrations.relay_fuel_transaction_lines l
-              WHERE l.relay_fuel_transaction_id = r.id AND l.is_active AND l.volume_uom = 'gallons') AS gallons,
+              WHERE l.relay_fuel_transaction_id = r.id AND l.is_active AND ${relayLineIsGallonsSql("l")}) AS gallons,
             -- The card's own "Truck #": the ingest's resolved id, else that number resolved inside THIS
             -- company's fleet (the same rule the ingest uses), never across entities.
             COALESCE(r.matched_unit_id, (

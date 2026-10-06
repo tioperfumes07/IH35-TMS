@@ -120,7 +120,10 @@ async function listSet01LoadsInTx(
         c.customer_name AS customer_name,
         l.assigned_unit_id::text AS unit_id,
         u.unit_number,
-        l.load_trailer_equipment_id::text AS trailer_id,
+        -- ROUND 391.2 — the load's physical trailer (assignment history, FK mdata.equipment), not the trailer-TYPE catalog id.
+        (SELECT h.new_trailer_id::text FROM dispatch.load_assignment_history h
+          WHERE h.load_id = l.id AND h.operating_company_id = l.operating_company_id AND h.new_trailer_id IS NOT NULL
+          ORDER BY h.assigned_at DESC, h.created_at DESC LIMIT 1) AS trailer_id,
         l.trip_type::text AS trip_type,
         l.status::text AS status,
         (

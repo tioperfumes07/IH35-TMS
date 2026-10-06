@@ -21,7 +21,7 @@ function client(paid: number, lines: Array<{ fuel_type: string; cents: number }>
           return { rows: [{ transaction_at: "2026-09-10T12:00:00Z", amount_cents: String(paid), driver_id: "d1", unit_id: "u1", unit_number: "T169", location_state: "TX", gallons: "100", merchant_name: "Love's" }] };
         }
         if (sql.includes("JOIN mdata.loads l ON l.id = lat.load_id")) return { rows: [{ load_id: "load-1", load_number: "13558" }] };
-        if (sql.includes("FROM integrations.relay_fuel_transaction_lines l") && sql.includes("GROUP BY l.fuel_type")) {
+        if (sql.includes("FROM integrations.relay_fuel_transaction_lines l") && sql.includes("AS fuel_type, sum(l.total_discounted_price_cents)")) {
           return { rows: lines.map((l) => ({ fuel_type: l.fuel_type, cents: String(l.cents) })) };
         }
         return { rows: [] };
@@ -51,7 +51,9 @@ describe("Relay fill posting — one leg per product", () => {
     const { c, calls } = client(5000, [{ fuel_type: "diesel", cents: 5000 }]);
     await postFuelFillOnBankMatch(c, input);
     const rowSql = calls.find((s) => s.includes("FROM integrations.relay_fuel_transactions r"))!;
-    expect(rowSql).toMatch(/l\.fuel_type = 'diesel'\) AS gallons/);
+    // ROUND 391.2 — the product comes from the one classifier (relay-product-kind.ts), still diesel only.
+    expect(rowSql).toMatch(/END\) = 'diesel'\) AS gallons/);
+    expect(rowSql).toMatch(/fuel_product_code/);
     expect(rowSql).not.toMatch(/IN \('diesel', 'reefer', 'def'\)/);
   });
 
