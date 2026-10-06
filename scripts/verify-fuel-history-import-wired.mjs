@@ -99,18 +99,22 @@ function checkDeepLinkFilters(plannerSrc, reverseSrc, tableSrc) {
   if (!/dataTestId="fuel-history-filter-trailer"/.test(plannerSrc)) {
     failures.push("FuelPlannerHome History must expose trailer EntityPicker filter");
   }
-  // LST-F5214 — History entity filters commit only via staged Apply (no silent URL helpers).
-  if (!/useStagedListFilters/.test(plannerSrc) || !/CollapsedListFilters/.test(plannerSrc)) {
-    failures.push("FuelPlannerHome History must use CollapsedListFilters + useStagedListFilters");
+  // LST-F5214 superseded by 432-CUR #1 — History entity filters are always-visible on
+  // MoneyListToolbar (immediate URL commit). CollapsedListFilters Filters (N) is retired.
+  if (!/MoneyListToolbar/.test(plannerSrc) || !/MultiSelectDropdown/.test(plannerSrc)) {
+    failures.push("FuelPlannerHome History must use MoneyListToolbar + MultiSelectDropdown");
   }
-  if (!/onApply=\{staged\.apply\}/.test(plannerSrc) || !/onReset=\{staged\.reset\}/.test(plannerSrc) || !/onCancel=\{staged\.cancel\}/.test(plannerSrc)) {
-    failures.push("FuelPlannerHome History must wire Apply/Cancel/Reset to staged handlers");
+  if (/\bCollapsedListFilters\b/.test(plannerSrc) || /\buseStagedListFilters\b/.test(plannerSrc)) {
+    failures.push("FuelPlannerHome History must not keep CollapsedListFilters / useStagedListFilters");
+  }
+  if (!/onClearAll=\{clearHistoryFilters\}/.test(plannerSrc) && !/onClearAll=\{/.test(plannerSrc)) {
+    failures.push("FuelPlannerHome History MoneyListToolbar must wire Clear all");
   }
   if (/function patchHistoryFilter|const setDriverFilter\s*=|const setUnitFilter\s*=|const setLoadFilter\s*=|const setTrailerFilter\s*=/.test(plannerSrc)) {
     failures.push("FuelPlannerHome History must not keep silent set*Filter / patchHistoryFilter helpers");
   }
-  if (!/staged\.draft\.driverId/.test(plannerSrc) || !/staged\.setDraft/.test(plannerSrc)) {
-    failures.push("FuelPlannerHome History EntityPickers must bind staged.draft");
+  if (!/dataTestId="fuel-history-filter-driver"/.test(plannerSrc) || !/value=\{driverPickerId/.test(plannerSrc)) {
+    failures.push("FuelPlannerHome History EntityPickers must bind driverPickerId (immediate, not staged.draft)");
   }
   if (!/FUEL_HISTORY_KIND/.test(reverseSrc ?? "") || !/kind=\{FUEL_HISTORY_KIND\[filterKey\]\}/.test(reverseSrc ?? "") || !/fuel_history_driver/.test(reverseSrc ?? "") || !/fuel_history_trailer/.test(reverseSrc ?? "")) {
     failures.push("FuelTransactionsReverseSection Open Fuel History must use EntityLink FUEL_HISTORY_KIND filter map");
@@ -250,16 +254,16 @@ function selftest() {
   const goodPlanner = `
     import { getFuelTransactions } from "../../api/fuelPlanner";
     import { ImportFuelTransactionsModal } from "./components/ImportFuelTransactionsModal";
-    import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+    import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+    import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
     const deepLinkTrailerId = searchParams.get("trailer_id");
-    const staged = useStagedListFilters({ applied: { driverId: "" }, empty: { driverId: "" }, onApply });
     const fuelTransactionsQuery = useQuery({ queryFn: () => getFuelTransactions(companyId, { trailer_id: effectiveTrailerId }) });
-    <CollapsedListFilters onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel}>
-    dataTestId="fuel-history-filter-driver" allowCreate={false}
+    <MoneyListToolbar onClearAll={clearHistoryFilters} search={historySearch} onSearchChange={setHistorySearch}>
+    <MultiSelectDropdown label="Show" options={FUEL_SHOW_OPTIONS} value={showFilter} onChange={setShowFilter} />
+    dataTestId="fuel-history-filter-driver" allowCreate={false} value={driverPickerId || null}
     dataTestId="fuel-history-filter-unit"
     dataTestId="fuel-history-filter-load"
     dataTestId="fuel-history-filter-trailer"
-    staged.draft.driverId staged.setDraft
     <ActionButton onClick={() => setImportOpen(true)}>Import Fuel Transactions</ActionButton>
     <FuelTransactionsTable rows={fuelTransactionsQuery.data?.transactions ?? []} />
     <ImportFuelTransactionsModal open={importOpen} />
