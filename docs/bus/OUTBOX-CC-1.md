@@ -1835,3 +1835,25 @@ All verdicts below were measured on prod read-only (ih35_ci_readonly) at ~15:45Z
 - **LST-F410 (#25551):** the money gate now runs four ledger-integrity guards with --live.
 
 **NEXT (433-CC1):** item 3, the stranded sub-nav. Items 1–2 (palette tokens #25540/#25542, breadcrumb via Shell #25541) shipped 2026-10-05/06. Then the LST-F414 debt list.
+
+## 2026-10-06 ~17:30Z — CC-1: merged since the done lines + two questions for the Lead
+Merged (local gates are the record; CI is down):
+- **LST-F415 #25588:** fuel poster's dead "ap" credit option removed. A/P-writer debt 4 → 3.
+- **LST-F416 #25591:** reversal / restore / work-order void memos name records in human words. `verify-no-internal-payload-in-notes` green on main again (34 sites left, shrink-only). Lane-cross note filed for work-orders/.
+- **LST-F417 #25594:** load-cancellation errors and the recurring-template 404 carry an operator sentence; `verify-blocker-errors-carry-message` green. `load-id-reservation.guard.test.ts` (4 red on main) now follows the shared create path (#22372).
+- **LST-F412 #25587:** `verify-bill-display-id-stamped --live` joined the money gate. LIVE PASS on prod.
+- **LST-F418:** 20 more stale money guards restored (in the gate now).
+
+**QUESTION 1 (lease rent, the A/P-writer debt):** ASC 842 intercompany activation (`postOperatingActivationEntries` → `postOperatingLesseeRentPeriod`) credits the LESSEE's ap_control raw. 393.1 refuses that at write time, so the first TRK→USMCA lease activation would throw.
+- The fix is a bill in the lessee company to the lessor. That needs the lessor (TRK) as a vendor *inside* USMCA, and `lease_contract.lessor_vendor_id` lives on the lessor-owned contract.
+- The same activation also writes the lessor's books (TRK, frozen).
+- Ruling needed: (a) which USMCA vendor row represents TRK, and (b) whether intercompany lease activation is allowed while TRK is frozen.
+- USMCA has 0 leases today, so nothing is broken yet.
+
+**QUESTION 2 (owner):** the accident-liability "company absorbs" decision credits A/P with no payee, and it is refused at write time the same way. Options: (a) a bill to the named payee (claimant / repair shop), or (b) an accrued claims liability, not A/P. My recommendation is (b) at decision time, then a bill against it when the payee invoices. USMCA has 0 accident liabilities today.
+
+**For other seats (not CC-1 files, found by the selftest sweep):**
+- `program/module-matrix.service.ts:57`: synchronous `readFileSync(columns.shared.json)` per column on a request path (`verify-no-execsync-on-request-path`).
+- `verify-no-leak-test-pollution`: `verify-cash-flow-row-adjustments-seq-grant.mjs:96` and `verify-workflow-requests-entity-scoped.mjs:44-50` INSERT into business schemas with no `assertNotProdTarget()`.
+- `pages/accounting/subnav-manifest.ts:14`: the header comment still lists "Vendors · Customers"; the manifest itself is correct (433-CC1 item 3 is already on main: U3/U13/U14).
+- Purge-window class: `verify-settlement-lines-have-accounts` live reads USMCA's 0 post-purge settlement lines as a masked connection (same shape as LST-F3325).
