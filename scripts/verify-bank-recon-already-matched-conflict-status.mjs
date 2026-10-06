@@ -12,8 +12,10 @@ const FILE = "apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts";
 function inspect(source) {
   const failures = [];
   const occurrences = (source.match(/if \(message === "bank_transaction_already_matched"\) \{\s*\n\s*return reply\.code\(409\)\.send\(\{ error: message \}\);\s*\n\s*\}/g) ?? []).length;
-  if (occurrences < 2) {
-    failures.push(`expected 2 catch blocks (accept-match + manual-match) to map bank_transaction_already_matched -> 409, found ${occurrences}`);
+  // LST-F413: three handlers map it today (accept-match, manual-match and a third at :244) — with a floor of 2, removing
+  // one still left 2 and the mutation passed. The floor is every handler that exists; it may only rise.
+  if (occurrences < 3) {
+    failures.push(`expected 3 catch blocks (accept-match, manual-match, and the third worklist handler) to map bank_transaction_already_matched -> 409, found ${occurrences}`);
   }
   return failures;
 }

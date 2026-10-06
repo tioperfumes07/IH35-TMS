@@ -64,15 +64,18 @@ export function staticFailures({ files, read }) {
 }
 
 /** violations: [{ key, kind, detail }] */
-export function liveFailures(violations) {
+// LST-F413: the debt list is a parameter so the selftest proves the ratchet on a synthetic list; it used to assert the
+// real list's size (CEILING === 3), which went red the moment AUTH-213 paid the debt down to 0 — as the guard instructs.
+export function liveFailures(violations, debt = DEBT) {
   const failures = [];
   const seen = new Set();
+  const ceiling = Object.keys(debt).length;
   for (const v of violations) {
     seen.add(v.key);
-    if (!DEBT[v.key]) failures.push(`${v.kind}: ${v.key} ${v.detail} — a driver's escrow never releases more than it holds.`);
+    if (!debt[v.key]) failures.push(`${v.kind}: ${v.key} ${v.detail} — a driver's escrow never releases more than it holds.`);
   }
-  for (const k of Object.keys(DEBT)) {
-    if (!seen.has(k)) failures.push(`DEBT RATCHET: ${k} no longer violates — remove it from DEBT so the ceiling drops (${CEILING} -> ${CEILING - 1}).`);
+  for (const k of Object.keys(debt)) {
+    if (!seen.has(k)) failures.push(`DEBT RATCHET: ${k} no longer violates — remove it from DEBT so the ceiling drops (${ceiling} -> ${ceiling - 1}).`);
   }
   return failures;
 }
@@ -109,12 +112,14 @@ async function measure(client) {
 const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
   if (process.argv.includes("--selftest")) {
-    const debtRows = Object.keys(DEBT).map((k) => ({ key: k, kind: "GL_DEBIT_BALANCE", detail: "x" }));
+    const SYN = { "USMCA:2100-00-001": "synthetic", "USMCA:2100-00-002": "synthetic" };
+    const debtRows = Object.keys(SYN).map((k) => ({ key: k, kind: "GL_DEBIT_BALANCE", detail: "x" }));
     const cases = [
-      ["named debt only passes", liveFailures(debtRows).length === 0],
-      ["a new over-released driver fails", liveFailures([...debtRows, { key: "USMCA:2100-00-099", kind: "NEGATIVE_BALANCE", detail: "-1" }]).length === 1],
-      ["a debt entry that went green fails (shrink)", liveFailures(debtRows.slice(1)).some((f) => f.startsWith("DEBT RATCHET"))],
-      ["ceiling is the named debt", CEILING === 3],
+      ["named debt only passes", liveFailures(debtRows, SYN).length === 0],
+      ["a new over-released driver fails", liveFailures([...debtRows, { key: "USMCA:2100-00-099", kind: "NEGATIVE_BALANCE", detail: "-1" }], SYN).length === 1],
+      ["a debt entry that went green fails (shrink)", liveFailures(debtRows.slice(1), SYN).some((f) => f.startsWith("DEBT RATCHET"))],
+      ["ceiling is the named debt", CEILING === Object.keys(DEBT).length],
+      ["empty debt: any over-release fails", liveFailures([{ key: "USMCA:2100-00-003", kind: "GL_DEBIT_BALANCE", detail: "1" }], {}).length === 1],
     ];
     for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
     const bad = cases.filter(([, ok]) => !ok).length;

@@ -54,7 +54,8 @@ export function run(root = ROOT) {
     if (!/export\s+async\s+function\s+maybePostBankCategorizationToGl/.test(poster)) {
       failures.push("bank-feed-gl-posting.service: maybePostBankCategorizationToGl must exist");
     }
-    if (!/postSourceTransaction\s*\([\s\S]*source_transaction_type:\s*["']bank_categorization["']/.test(poster)) {
+    // LST-F413: the poster runs on the caller's transaction now (postSourceTransactionInClientTx).
+    if (!/postSourceTransaction(?:InClientTx)?\s*\([\s\S]*source_transaction_type:\s*["']bank_categorization["']/.test(poster)) {
       failures.push("bank-feed-gl-posting.service: must post via postSourceTransaction bank_categorization (reuse poster, no new GL math)");
     }
     if (!/SET\s+matched_journal_entry_id\s*=/.test(poster)) {
@@ -83,8 +84,9 @@ export function run(root = ROOT) {
     } else {
       const singleSlice =
         singleRowEnd > singleRowStart ? routes.slice(singleRowStart, singleRowEnd) : routes.slice(singleRowStart);
-      if (!/await\s+maybePostBankCategorizationToGl/.test(singleSlice)) {
-        failures.push("categorization.routes: single-row categorize must await maybePostBankCategorizationToGl");
+      // LST-F413: single-row categorize posts INSIDE its transaction (postBankCategorizationOnClient, owner law 2026-10-02).
+      if (!/await\s+(?:maybePostBankCategorizationToGl|postBankCategorizationOnClient)\b/.test(singleSlice)) {
+        failures.push("categorization.routes: single-row categorize must await the bank-feed GL poster");
       }
     }
   }

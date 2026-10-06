@@ -38,8 +38,11 @@ function failures(sources) {
   if (!/LEFT JOIN accounting\.escrow_accounts ea/.test(visualizer)) {
     out.push(`${VISUALIZER}: driver-balances list must LEFT JOIN accounting.escrow_accounts`);
   }
-  if (!/FROM accounting\.escrow_accounts ea\s*\n\s*JOIN accounting\.escrow_postings ep/.test(visualizer)) {
-    out.push(`${VISUALIZER}: per-driver timeline must join accounting.escrow_accounts + accounting.escrow_postings`);
+  // LST-F413: three visualizer reads join the subledger (per-driver timeline + two more); a presence check passed with one
+  // of them removed. Every one must keep the join — the floor is the count that exists, and may only rise.
+  const subledgerJoins = (visualizer.match(/FROM accounting\.escrow_accounts ea\s*\n\s*JOIN accounting\.escrow_postings ep/g) ?? []).length;
+  if (subledgerJoins < 3) {
+    out.push(`${VISUALIZER}: per-driver timeline must join accounting.escrow_accounts + accounting.escrow_postings (found ${subledgerJoins}/3 joins)`);
   }
   if (!/purpose = 'driver_bond'/.test(visualizer)) {
     out.push(`${VISUALIZER}: must scope to purpose='driver_bond' (driver escrow specifically, not vendor/factor reserves)`);

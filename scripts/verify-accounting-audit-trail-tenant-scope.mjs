@@ -69,11 +69,19 @@ function audit(routes, service) {
   return failures;
 }
 
+function replaceAfter(text, marker, from, to) {
+  const at = text.indexOf(marker);
+  if (at < 0) return text;
+  const hit = text.indexOf(from, at);
+  return hit < 0 ? text : `${text.slice(0, hit)}${to}${text.slice(hit + from.length)}`;
+}
+
 if (process.argv.includes("--selftest")) {
   const wrapper = "withCompanyScope(user.uuid, query.data.operating_company_id";
   const companyPredicate = "jp.operating_company_id = $1::uuid";
   const plants = [
-    ["list route company wrapper", routeSource.replace(wrapper, "UNSCOPED_LIST(user.uuid, query.data.operating_company_id"), serviceSource],
+    // LST-F413: the proof-trail route (mounted first) carries the same wrapper text, so a bare .replace planted it there.
+    ["list route company wrapper", replaceAfter(routeSource, 'app.get("/api/v1/accounting/audit-trail"', wrapper, "UNSCOPED_LIST(user.uuid, query.data.operating_company_id"), serviceSource],
     ["lineage route company wrapper", replaceLast(routeSource, wrapper, "UNSCOPED_LINEAGE(user.uuid, query.data.operating_company_id"), serviceSource],
     ["list posting predicate", routeSource, serviceSource.replace('const where = ["jp.operating_company_id = $1::uuid"]', "const where = []")],
     ["list JE company join", routeSource, serviceSource.replace("AND je.operating_company_id = jp.operating_company_id", "AND true")],

@@ -50,19 +50,17 @@ function analyze(src) {
     failures.push(`${FILES.amortization}: insertJournalEntryHeader does not call ensureOpenPeriod`);
   }
 
-  if (!/import\s*\{\s*ensureOpenPeriod\s*\}\s*from\s*"\.\.\/posting-engine\.service\.js"/.test(src.bankRecon)) {
+  // LST-F413: ensureOpenPeriod may share the import with other names (match.service.ts imports several).
+  if (!/import\s*\{[^}]*\bensureOpenPeriod\b[^}]*\}\s*from\s*"\.\.\/posting-engine\.service\.js"/.test(src.bankRecon)) {
     failures.push(`${FILES.bankRecon}: does not import ensureOpenPeriod from posting-engine.service.js`);
   }
   if (!/await ensureOpenPeriod\(client, input\.operating_company_id, input\.transaction_date\)/.test(src.bankRecon)) {
     failures.push(`${FILES.bankRecon}: does not call ensureOpenPeriod before the variance-JE insert`);
   }
 
-  if (!/import\s*\{\s*ensureOpenPeriod\s*\}\s*from\s*"\.\/posting-engine\.service\.js"/.test(src.recurring)) {
-    failures.push(`${FILES.recurring}: does not import ensureOpenPeriod from posting-engine.service.js`);
-  }
-  if (!/await ensureOpenPeriod\(client, oc, entryDate\)/.test(src.recurring)) {
-    failures.push(`${FILES.recurring}: materializeJournal does not call ensureOpenPeriod`);
-  }
+  // LST-F413: the recurring worker no longer posts at all (CC-2-389.4, 4693704449 — it creates draft documents only),
+  // so it has no period to check; verify-recurring-worker-never-posts.mjs owns that fact. Asserting the old
+  // materializeJournal call here demanded the very posting path that was removed.
 
   if (!/import\s*\{\s*ensureOpenPeriod,\s*resolvePostingTemplateId\s*\}\s*from\s*"\.\.\/posting-engine\.service\.js"/.test(src.fuel)) {
     failures.push(`${FILES.fuel}: does not import the shared ensureOpenPeriod (still has a local copy?)`);
@@ -102,10 +100,6 @@ function selftest() {
     {
       name: "bank-recon/match.service.ts loses the ensureOpenPeriod call",
       apply: (s) => ({ ...s, bankRecon: s.bankRecon.replace("await ensureOpenPeriod(client, input.operating_company_id, input.transaction_date);", "") }),
-    },
-    {
-      name: "recurring.worker.ts loses the ensureOpenPeriod call",
-      apply: (s) => ({ ...s, recurring: s.recurring.replace("await ensureOpenPeriod(client, oc, entryDate);", "") }),
     },
     {
       name: "fuel-posting's local drifted copy reintroduced",

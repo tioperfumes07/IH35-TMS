@@ -83,7 +83,9 @@ if (process.argv.includes("--selftest")) {
     throw new Error(`[${LABEL}] selftest: removed voidBill call site should FAIL but passed`);
   }
 
-  const m3 = { ...real, [ROUTES]: real[ROUTES].replace(/AND bt\.voided_at IS NULL\n\s+ORDER BY bt\.transaction_date ASC/, "ORDER BY bt.transaction_date ASC") };
+  // LST-F413: anchored on the backlog query's own clause pair (the G-18 rewrite moved ORDER BY out of reach).
+  const m3 = { ...real, [ROUTES]: real[ROUTES].replace(/(AND bt\.matched_journal_entry_id IS NULL)\n\s+AND bt\.voided_at IS NULL/, "$1") };
+  if (m3[ROUTES] === real[ROUTES]) throw new Error(`[${LABEL}] selftest: backlog voided-filter mutation anchor not found (inert)`);
   if (!analyze(m3).some((f) => f.includes("voided_at IS NULL (found"))) {
     throw new Error(`[${LABEL}] selftest: removed backlog voided filter should FAIL but passed`);
   }

@@ -52,21 +52,19 @@ if (process.argv.includes("--selftest")) {
   const src = fs.readFileSync(BILLS_SERVICE, "utf8");
   const mutations = [
     ['} else if (!input.coaAccountId) {\n    throw new Error("bill_lines_required");\n  }', ""],
-    [
-      `    } else if (input.coaAccountId) {`,
-      `    } else if (false) {`,
-    ],
+    // LST-F413: whitespace-tolerant — the 4-space literal went inert when the block was re-indented to 2.
+    [/\} else if \(input\.coaAccountId\) \{/, "} else if (false) {"],
   ];
   let failed = false;
   for (const [from, to] of mutations) {
-    if (!src.includes(from)) {
-      console.error(`${LABEL} SELFTEST FAIL — mutation anchor not found: ${JSON.stringify(from.slice(0, 60))}`);
+    if (typeof from === "string" ? !src.includes(from) : !from.test(src)) {
+      console.error(`${LABEL} SELFTEST FAIL — mutation anchor not found: ${JSON.stringify(String(from).slice(0, 60))}`);
       failed = true;
       continue;
     }
     const mutated = src.replace(from, to);
     if (mutated === src || auditBillsService(mutated).length === 0) {
-      console.error(`${LABEL} SELFTEST FAIL — mutation escaped: ${JSON.stringify(from.slice(0, 60))}`);
+      console.error(`${LABEL} SELFTEST FAIL — mutation escaped: ${JSON.stringify(String(from).slice(0, 60))}`);
       failed = true;
     }
   }
@@ -78,10 +76,7 @@ if (process.argv.includes("--selftest")) {
   }
 
   const genSrc = fs.readFileSync(RECURRING_GENERATOR, "utf8");
-  const genMutated = genSrc.replace(
-    'if (!billLines) {\n    throw new Error("recurring_bill_template_missing_line_items");\n  }',
-    ""
-  );
+  const genMutated = genSrc.replace(/if \(!billLines\) \{\s*throw new Error\("recurring_bill_template_missing_line_items"\);\s*\}/, "");
   if (genMutated === genSrc || auditRecurringGenerator(genMutated).length === 0) {
     console.error(`${LABEL} SELFTEST FAIL — generator.service.ts mutation escaped`);
     failed = true;

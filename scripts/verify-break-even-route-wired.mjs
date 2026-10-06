@@ -35,56 +35,58 @@ function stripLineComments(src) {
     .join("\n");
 }
 
-export function check(srcRaw) {
-  const src = stripLineComments(srcRaw);
+const ROUTE_FILE = "apps/backend/src/accounting/break-even.routes.ts";
+
+// LST-F413: BOOT-DUP-GET-FINANCE-BREAK-EVEN (62737ff7ca) removed the explicit index.ts import + call on purpose — with the
+// accounting/*.routes.ts autoload ALSO mounting the file's default fp, Fastify threw a duplicate GET and the server never
+// bound its port. The route is registered exactly once: by its own default fp export, and never by index.ts as well.
+export function check(indexRaw, routeRaw) {
+  const index = stripLineComments(indexRaw);
+  const route = stripLineComments(routeRaw);
   const failures = [];
-
-  if (!/import\s*\{\s*registerBreakEvenRoutes\s*\}\s*from\s*["']\.\/accounting\/break-even\.routes\.js["']/.test(src)) {
-    failures.push(`${INDEX_FILE}: registerBreakEvenRoutes is not imported from ./accounting/break-even.routes.js — GET /api/v1/finance/break-even will 404 (GO-0021-BREAK-EVEN-ROUTE-NEVER-REGISTERED)`);
+  if (!/export\s+default\s+fp\(\s*async\s*\(\s*app\s*\)\s*=>\s*\{\s*await\s+registerBreakEvenRoutes\s*\(\s*app\s*\)/.test(route)) {
+    failures.push(`${ROUTE_FILE}: the default fp export no longer registers registerBreakEvenRoutes(app) — GET /api/v1/finance/break-even will 404 (GO-0021-BREAK-EVEN-ROUTE-NEVER-REGISTERED)`);
   }
-
-  if (!/await\s+registerBreakEvenRoutes\s*\(\s*app\s*\)/.test(src)) {
-    failures.push(`${INDEX_FILE}: registerBreakEvenRoutes(app) is never called — GET /api/v1/finance/break-even will 404 (GO-0021-BREAK-EVEN-ROUTE-NEVER-REGISTERED)`);
+  if (/await\s+registerBreakEvenRoutes\s*\(\s*app\s*\)/.test(index)) {
+    failures.push(`${INDEX_FILE}: calls registerBreakEvenRoutes(app) while the autoload also mounts the default fp — duplicate GET, the server never binds (BOOT-DUP-GET-FINANCE-BREAK-EVEN)`);
   }
-
   return failures;
 }
 
 function readSrc() {
-  return fs.readFileSync(path.join(root, INDEX_FILE), "utf8");
+  return [fs.readFileSync(path.join(root, INDEX_FILE), "utf8"), fs.readFileSync(path.join(root, ROUTE_FILE), "utf8")];
 }
 
 function run() {
-  const failures = check(readSrc());
+  const failures = check(...readSrc());
   if (failures.length > 0) {
     console.error("FAIL: break-even-route-wired");
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log("PASS: GET /api/v1/finance/break-even stays registered in index.ts");
+  console.log("PASS: GET /api/v1/finance/break-even is mounted exactly once (its default fp; index.ts does not also call it)");
 }
 
 function selftest() {
-  const src = readSrc();
-  const baseline = check(src);
+  const [index, route] = readSrc();
+  const baseline = check(index, route);
   if (baseline.length !== 0) {
     console.error("FAIL(selftest): baseline (current HEAD) is not clean:", baseline);
     process.exit(1);
   }
-
-  // Offender: remove the registration call (simulate the exact original defect).
-  const offender = src.replace(/\n\s*await registerBreakEvenRoutes\(app\);/, "");
-  if (offender === src) {
-    console.error("FAIL(selftest): offender mutation did not change the file — pattern out of sync");
-    process.exit(1);
+  const unregistered = route.replace(/await\s+registerBreakEvenRoutes\s*\(\s*app\s*\);(\s*\}\s*,\s*\{\s*name:)/, "$1");
+  const doubled = `${index}\nawait registerBreakEvenRoutes(app);\n`;
+  for (const [name, i, r] of [["default fp stops registering", index, unregistered], ["index.ts double-mounts", doubled, route]]) {
+    if (i === index && r === route) {
+      console.error(`FAIL(selftest): ${name} — mutation did not change the source (pattern out of sync)`);
+      process.exit(1);
+    }
+    if (check(i, r).length === 0) {
+      console.error(`FAIL(selftest): ${name} — NOT caught`);
+      process.exit(1);
+    }
   }
-  const failures = check(offender);
-  if (failures.length === 0) {
-    console.error("FAIL(selftest): planted offender (registration call removed) was NOT caught");
-    process.exit(1);
-  }
-
-  console.log("PASS(selftest): planted regression correctly caught; baseline clean");
+  console.log("PASS(selftest): 2/2 planted regressions caught; baseline clean");
 }
 
 if (process.argv.includes("--selftest")) {

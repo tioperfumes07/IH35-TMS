@@ -18,25 +18,25 @@ function isolateRoute(source, startMarker, endMarker) {
   return start >= 0 && end > start ? source.slice(start, end) : "";
 }
 
+// LST-F413: both bulk routes now post INSIDE the categorize transaction through postBankCategorizationOnClient (owner law
+// 2026-10-02: a categorized line and its GL commit together, or neither does). The fire-after-commit
+// maybePostBankCategorizationToGl + `const bankFeedGl` shape this guard used to require is the pattern that was removed.
 function analyzeBulkRoute(label, bulkRoute, companyIdExpr) {
   const failures = [];
   if (!bulkRoute) {
     failures.push(`could not isolate ${label}`);
     return failures;
   }
-  if (!/const bankFeedGl/.test(bulkRoute)) {
-    failures.push(`${label}: must report per-row bank_feed_gl outcomes`);
-  }
-  if (!/for\s*\(\s*const id of result\.categorizedIds\s*\)/.test(bulkRoute)) {
-    failures.push(`${label}: must process only rows successfully categorized`);
-  }
   const posterRe = new RegExp(
-    String.raw`await\s+maybePostBankCategorizationToGl\s*\(\s*\{[\s\S]*?companyId:\s*${companyIdExpr}[\s\S]*?actorUserUuid:\s*String\(user\.uuid\)[\s\S]*?bankTransactionId:\s*id[\s\S]*?\}\s*\)`
+    String.raw`await\s+postBankCategorizationOnClient\s*\(\s*client\s*,\s*\{[\s\S]*?companyId:\s*${companyIdExpr}[\s\S]*?actorUserUuid:\s*String\(user\.uuid\)[\s\S]*?bankTransactionId:\s*id[\s\S]*?\}\s*\)`
   );
   if (!posterRe.test(bulkRoute)) {
-    failures.push(`${label}: must await the existing bank-feed GL poster for each categorized row`);
+    failures.push(`${label}: must await the bank-feed GL poster on the categorize transaction for each categorized row`);
   }
-  if (!/bank_feed_gl:\s*bankFeedGl/.test(bulkRoute)) {
+  if (!/bankFeedGl\.push\(\{\s*bank_transaction_id:\s*id,\s*\.\.\.posting\s*\}\)/.test(bulkRoute)) {
+    failures.push(`${label}: must record the per-row bank_feed_gl outcome`);
+  }
+  if (!/bank_feed_gl:\s*(?:result\.)?bankFeedGl/.test(bulkRoute)) {
     failures.push(`${label}: response must expose bank_feed_gl posting outcomes`);
   }
   return failures;
@@ -78,10 +78,10 @@ if (process.argv.includes("--selftest")) {
 
   const original = fs.readFileSync(tmpCopiedPath, "utf8");
   const bulkStart = original.indexOf('app.post("/api/v1/banking/transactions/categorize-bulk"');
-  const awaitedPoster = original.indexOf("await maybePostBankCategorizationToGl", bulkStart);
+  const awaitedPoster = original.indexOf("await postBankCategorizationOnClient", bulkStart);
   if (awaitedPoster < 0) throw new Error("could not locate categorize-bulk poster for selftest");
-  const mutated = `${original.slice(0, awaitedPoster)}void maybePostBankCategorizationToGl${original.slice(
-    awaitedPoster + "await maybePostBankCategorizationToGl".length
+  const mutated = `${original.slice(0, awaitedPoster)}void postBankCategorizationOnClient${original.slice(
+    awaitedPoster + "await postBankCategorizationOnClient".length
   )}`;
   fs.writeFileSync(tmpCopiedPath, mutated);
   if (!run(tmpRoot).length) throw new Error("FAIL case was not detected after removing categorize-bulk awaited poster");
@@ -89,10 +89,10 @@ if (process.argv.includes("--selftest")) {
   // Legacy dual-path: strip poster from /bulk-categorize while leaving categorize-bulk OK.
   fs.writeFileSync(tmpCopiedPath, original);
   const legacyStart = original.indexOf('app.post("/api/v1/banking/transactions/bulk-categorize"');
-  const legacyPoster = original.indexOf("await maybePostBankCategorizationToGl", legacyStart);
+  const legacyPoster = original.indexOf("await postBankCategorizationOnClient", legacyStart);
   if (legacyPoster < 0) throw new Error("could not locate bulk-categorize poster for selftest");
   const legacyMutated = `${original.slice(0, legacyPoster)}/*removed*/${original.slice(
-    legacyPoster + "await maybePostBankCategorizationToGl".length
+    legacyPoster + "await postBankCategorizationOnClient".length
   )}`;
   fs.writeFileSync(tmpCopiedPath, legacyMutated);
   const legacyFails = run(tmpRoot);
