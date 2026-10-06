@@ -65,6 +65,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Client } from "pg";
 import { assertIsIntendedProduction } from "../lib/assert-not-production.mjs";
+// BANK-F431 — the criterion for a bank line is no longer "voided_at alone". One canonical predicate,
+// imported, never re-typed: apps/backend/src/banking/bank-line-deletable.ts explains why.
+import { bankLineDeletablePredicate, recordBankLineDeletionsSql } from "../../apps/backend/src/banking/bank-line-deletable.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -108,7 +111,13 @@ const ORDER: Array<{ table: string; pred: string; opco: boolean }> = [
   { table: "accounting.factoring_default_interest_accruals", pred: "factoring_advance_id IN (SELECT id FROM accounting.factoring_advances WHERE voided_at IS NOT NULL AND operating_company_id = $1::uuid)", opco: false },
   { table: "accounting.factoring_lifecycle_posting_keys", pred: "factoring_advance_id IN (SELECT id FROM accounting.factoring_advances WHERE voided_at IS NOT NULL AND operating_company_id = $1::uuid)", opco: false },
   { table: "accounting.factoring_advances", pred: "voided_at IS NOT NULL", opco: true },
-  { table: "banking.bank_transactions", pred: "voided_at IS NOT NULL OR is_sample_data = true", opco: true },
+  // BANK-F431 (2026-10-05): this step used to delete on voided_at alone (OR the sample flag) and
+  // it deleted 10 bank lines on 09-30 and 9 on 10-01 that were Plaid feed-supersession artifacts --
+  // the WORM merge evidence bank-tx-dedup.ts creates on purpose. Measured on prod USMCA 2026-10-05: all
+  // 22 voided bank lines carry merged_into_bank_transaction_id, so the old criterion would have eaten
+  // all 22 and the canonical predicate leaves 0 deletable. is_sample_data stays OR'd OUTSIDE the
+  // predicate on purpose -- a sample row is deletable because it is not real, never because it is voided.
+  { table: "banking.bank_transactions", pred: `${bankLineDeletablePredicate("banking.bank_transactions")} OR is_sample_data = true`, opco: true },
   { table: "driver_finance.driver_settlements", pred: "voided_at IS NOT NULL OR is_sample_data = true", opco: true },
   // ---- master data LAST: nothing may still point at these by the time we get here
   { table: "mdata.equipment", pred: "is_sample_data = true", opco: false },
@@ -182,6 +191,18 @@ async function main() {
     const params = step.opco || step.pred.includes("$1") ? [USMCA] : [];
     await client.query("SAVEPOINT purge_step");
     try {
+      // BANK-F431 — NO SILENT DELETES. audit.record_deletions held ZERO rows for
+      // banking.bank_transactions after 327 lines were removed, and audit.row_changes carried no
+      // action and no changed_by_role, so nothing in the database said which engine or AUTH did it.
+      // The record is written BEFORE the DELETE, in the same transaction, from the SAME predicate, so
+      // it survives the row and can never describe a different set than the one removed.
+      if (step.table === "banking.bank_transactions") {
+        const rec = await client.query(
+          recordBankLineDeletionsSql(`${bankLineDeletablePredicate("bt")} OR bt.is_sample_data = true`),
+          [USMCA, "owner_purge_voided_and_sample", AUTH_ID, `BANK-F431 owner purge ${AUTH_ID}`]
+        );
+        console.log(`  recorded ${rec.rowCount ?? 0} bank line(s) in audit.record_deletions before delete`);
+      }
       const res = await client.query(`DELETE FROM ${step.table} WHERE ${where}`, params);
       await client.query("RELEASE SAVEPOINT purge_step");
       deleted += res.rowCount ?? 0;

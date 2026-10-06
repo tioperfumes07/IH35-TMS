@@ -113,6 +113,18 @@ import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+// BANK-F431 — "DELETE CRITERION IS voided_at ALONE" (this file's own header) is what deleted 274
+// Plaid feed-supersession artifacts on 2026-09-28. One canonical predicate now decides, imported and
+// never re-typed: apps/backend/src/banking/bank-line-deletable.ts explains why.
+import { bankLineDeletablePredicate, recordBankLineDeletionsByIdSql } from "../../apps/backend/src/banking/bank-line-deletable.js";
+
+// Per-table EXTRA clause ANDed onto this engine's "voided_at IS NOT NULL" candidate scan. Empty for
+// every table that has no extra law; a table listed here is a table where voided_at alone is wrong.
+const EXTRA_DELETE_PREDICATE: Record<string, (alias: string) => string> = {
+  "banking.bank_transactions": (alias) => bankLineDeletablePredicate(alias),
+};
+const extraPred = (table: string, alias: string) =>
+  EXTRA_DELETE_PREDICATE[table] ? ` AND ${EXTRA_DELETE_PREDICATE[table](alias)}` : "";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -254,7 +266,7 @@ async function measure(client: pg.Client) {
     const amtCol = AMOUNT_COLUMN[t];
     const r = await client.query<{ n: string; total: string | null }>(
       `SELECT COUNT(*) AS n, ${amtCol ? `SUM(${amtCol})` : "NULL"} AS total
-         FROM ${t} WHERE voided_at IS NOT NULL AND operating_company_id = $1`,
+         FROM ${t} WHERE voided_at IS NOT NULL AND operating_company_id = $1${extraPred(t, t)}`,
       [USMCA],
     );
     counts[t] = Number(r.rows[0].n);
@@ -455,6 +467,14 @@ async function bulkDeleteBatched(client: pg.Client, table: string, ids: string[]
   let total = 0;
   for (const batch of chunk(ids, BATCH_SIZE)) {
     const t0 = Date.now();
+    // BANK-F431 — NO SILENT DELETES. audit.record_deletions held ZERO rows for
+    // banking.bank_transactions after 327 lines were removed, and audit.row_changes carried no action
+    // and no changed_by_role, so nothing said which engine or AUTH did it. Written from the SAME id
+    // list, in the same transaction, immediately before the DELETE, so it can never describe a
+    // different set than the one removed.
+    if (table === "banking.bank_transactions") {
+      await client.query(recordBankLineDeletionsByIdSql(), [batch, "auth_purge_voided_usmca", AUTH_ID, `BANK-F431 voided purge ${AUTH_ID}`]);
+    }
     const res = await client.query(`DELETE FROM ${table} WHERE id = ANY($1::uuid[])`, [batch]);
     const elapsedSec = (Date.now() - t0) / 1000;
     const n = res.rowCount ?? 0;
@@ -533,7 +553,7 @@ async function main() {
       const rows = await client.query<{ id: string; je_id: string | null }>(
         `SELECT id::text, ${jeCol ? `${jeCol}::text` : "NULL"} AS je_id
            FROM ${table}
-          WHERE voided_at IS NOT NULL AND operating_company_id = $1`,
+          WHERE voided_at IS NOT NULL AND operating_company_id = $1${extraPred(table, table)}`,
         [USMCA],
       );
       const allIds = rows.rows.map((r) => r.id);
