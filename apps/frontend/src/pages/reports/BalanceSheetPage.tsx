@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { AmountLink, type AmountFilter } from "../../components/shared/AmountLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
@@ -51,6 +52,19 @@ function bsFilter(
     to: applied.asOfDate,
     basis: applied.basis,
   };
+}
+
+
+/** ROUND 433.2 — a section TOTAL drills to the ledger lines of exactly that section's accounts. Every line must name its
+ *  account (a synthetic line has no ledger to open), or the total stays plain rather than drilling to a partial list. */
+function sectionLedger(
+  lines: ReadonlyArray<{ account_id?: string | null }>,
+  from: string,
+  to: string,
+  basis: AccountingBasis
+): AmountFilter | null {
+  if (!lines.length || lines.some((l) => !l.account_id)) return null;
+  return { target: "ledger", accountIds: lines.map((l) => String(l.account_id)), from, to, basis };
 }
 
 export function BalanceSheetPage() {
@@ -326,7 +340,9 @@ export function BalanceSheetPage() {
                   <td colSpan={showCodes ? 2 : 1} className="px-3 py-2 text-right">
                     Total assets
                   </td>
-                  <td className="px-3 py-2 text-right tabular-nums">{money(query.data.assets.total)}</td>
+                  <td className="px-3 py-2">
+                    <MoneyCell cents={query.data.assets.total} format={money} drill={{ amount: sectionLedger(query.data.assets.lines, `${applied.asOfDate.slice(0, 7)}-01`, applied.asOfDate, applied.basis) }} data-testid="bs-total-assets" />
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -378,7 +394,9 @@ export function BalanceSheetPage() {
                     <td colSpan={showCodes ? 2 : 1} className="px-3 py-2 text-right">
                       Total liabilities
                     </td>
-                    <td className="px-3 py-2 text-right tabular-nums">{money(query.data.liabilities.total)}</td>
+                    <td className="px-3 py-2">
+                      <MoneyCell cents={query.data.liabilities.total} format={money} drill={{ amount: sectionLedger(query.data.liabilities.lines, `${applied.asOfDate.slice(0, 7)}-01`, applied.asOfDate, applied.basis) }} data-testid="bs-total-liabilities" />
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -429,20 +447,26 @@ export function BalanceSheetPage() {
                     <tr className="border-b border-gray-100">
                       {showCodes ? <td className="px-3 py-2 font-medium text-gray-900">{cashBasisAdjustment?.account_code ?? "CASH_BASIS_ADJ"}</td> : null}
                       <td className="px-3 py-2">{cashBasisAdjustment?.account_name ?? "Cash Basis Adjustment"}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">{money(cashBasisAdjustment?.amount ?? 0)}</td>
+                      <td className="px-3 py-2">
+                        <MoneyCell cents={cashBasisAdjustment?.amount ?? 0} format={money} drill={{ none: "Cash-basis adjustment: computed by the cash-basis engine from open A/R and A/P, not a posting" }} />
+                      </td>
                     </tr>
                   ) : null}
                   <tr className="bg-slate-50 font-semibold">
                     <td colSpan={showCodes ? 2 : 1} className="px-3 py-2 text-right">
                       Current year earnings
                     </td>
-                    <td className="px-3 py-2 text-right tabular-nums">{money(query.data.equity.current_year_earnings)}</td>
+                    <td className="px-3 py-2">
+                      <MoneyCell cents={query.data.equity.current_year_earnings} format={money} drill={{ none: "Current-year earnings: computed from this fiscal year's Profit & Loss, not a posted account" }} />
+                    </td>
                   </tr>
                   <tr className="bg-slate-50 font-semibold">
                     <td colSpan={showCodes ? 2 : 1} className="px-3 py-2 text-right">
                       Total equity
                     </td>
-                    <td className="px-3 py-2 text-right tabular-nums">{money(query.data.equity.total)}</td>
+                    <td className="px-3 py-2">
+                      <MoneyCell cents={query.data.equity.total} format={money} drill={{ none: "Total equity includes current-year earnings, which are computed, so no ledger list sums to it" }} />
+                    </td>
                   </tr>
                 </tbody>
               </table>

@@ -11,7 +11,8 @@ import { useAuth } from "../../auth/useAuth";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { EntityPicker } from "../../components/EntityPicker";
 import { useAccountingItemsQuery } from "../../hooks/useAccountingItemsQuery";
-import { naturalCentsForType } from "../../lib/naturalBalance";
+import { naturalCentsForType, normalBalanceOf } from "../../lib/naturalBalance";
+import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
@@ -124,13 +125,19 @@ export function ReclassifyTransactionsPage() {
   // Owner ruling (Round 83): account numbers hidden by default, shown only when the toggle is on.
   const [showAccountNumbers, setShowAccountNumbers] = useShowAccountNumbers();
 
-  const [fromDate, setFromDate] = useState(firstOfFiscalYear());
-  const [toDate, setToDate] = useState(today());
-  const [f, setF] = useState<Filters>(NO_FILTERS);
+  // ROUND 433.2 — a TOTAL drills here (AmountLink target "ledger"): ?account_ids=a,b&from_date=&to_date= opens exactly
+  // those accounts' lines for the period, and the tie-out below proves opening + lines = the clicked total.
+  const [searchParams] = useSearchParams();
+  const urlAccountIds = (searchParams.get("account_ids") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  const urlFrom = /^\d{4}-\d{2}-\d{2}$/.test(searchParams.get("from_date") ?? "") ? String(searchParams.get("from_date")) : null;
+  const urlTo = /^\d{4}-\d{2}-\d{2}$/.test(searchParams.get("to_date") ?? "") ? String(searchParams.get("to_date")) : null;
+  const [fromDate, setFromDate] = useState(urlFrom ?? firstOfFiscalYear());
+  const [toDate, setToDate] = useState(urlTo ?? today());
+  const [f, setF] = useState<Filters>(() => ({ ...NO_FILTERS, accountIds: urlAccountIds }));
   const setFilter = <K extends keyof Filters>(k: K, v: Filters[K]) => setF((cur) => ({ ...cur, [k]: v }));
   // The register LOADS ON OPEN (every account, the default window): it used to start null, and the lines query only runs
   // once `applied` is set, so the page opened empty until a click or Find.
-  const [applied, setApplied] = useState<({ from: string; to: string } & Filters) | null>(() => ({ from: firstOfFiscalYear(), to: today(), ...NO_FILTERS }));
+  const [applied, setApplied] = useState<({ from: string; to: string } & Filters) | null>(() => ({ from: urlFrom ?? firstOfFiscalYear(), to: urlTo ?? today(), ...NO_FILTERS, accountIds: urlAccountIds }));
   const [visibleCols, setVisibleCols] = useState<ColKey[]>(readColumns);
   const chooseColumns = (next: string[]) => {
     const keep = COLUMNS.filter((c) => next.includes(c.key)).map((c) => c.key);
@@ -221,7 +228,12 @@ export function ReclassifyTransactionsPage() {
   const oneAccountId = applied?.accountIds.length === 1 ? applied.accountIds[0] : null;
   const activeAccount: ReclassifyTreeAccount | undefined = accountsQ.data?.accounts?.find((a) => a.account_id === oneAccountId);
   // U27 — one account listed: its balances in that account's natural sign; several accounts: each line in its own.
-  const acctNatural = (cents: number) => (activeAccount ? naturalCentsForType(cents, activeAccount.account_type) : cents);
+  // Several accounts on ONE side (a statement section total): present in that side's natural sign too.
+  const appliedAccounts = (accountsQ.data?.accounts ?? []).filter((a) => applied?.accountIds.includes(a.account_id));
+  const sharedType =
+    appliedAccounts.length > 1 && new Set(appliedAccounts.map((a) => normalBalanceOf(a.account_type))).size === 1 ? appliedAccounts[0].account_type : null;
+  const acctNatural = (cents: number) =>
+    activeAccount ? naturalCentsForType(cents, activeAccount.account_type) : sharedType ? naturalCentsForType(cents, sharedType) : cents;
   const onlyAccountFilter = !!applied && applied.types.length + applied.classIds.length + applied.itemIds.length + applied.loadIds.length + applied.truckIds.length + applied.driverIds.length + applied.trailerIds.length + applied.vendorIds.length === 0 && !applied.search;
 
   const runFind = (overrideAccountIds?: string[]) => {
@@ -396,6 +408,25 @@ export function ReclassifyTransactionsPage() {
                     These lines do not add up to the account balance: listed {formatCurrencyFromCents(acctNatural(linesQ.data.closing_balance_cents))}, tree {formatCurrencyFromCents(acctNatural(activeAccount.closing_balance_cents))}. Do not rely on either number until this is fixed.
                   </div>
                 )
+              ) : null}
+              {/* ROUND 433.2 — a drilled TOTAL (several accounts): the listed lines must add up to the sum of those accounts. */}
+              {linesQ.data && !activeAccount && appliedAccounts.length > 1 && onlyAccountFilter && applied.from === fromDate && applied.to === toDate ? (
+                (() => {
+                  const treeClosing = appliedAccounts.reduce((s, a) => s + a.closing_balance_cents, 0);
+                  const agree = linesQ.data.closing_balance_cents === treeClosing;
+                  return (
+                    <div
+                      className={agree ? "mt-1 rounded border border-gray-200 bg-white px-2 py-1 text-xs text-slate-600" : "mt-1 rounded border border-red-300 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700"}
+                      role={agree ? undefined : "alert"}
+                      data-testid="reclassify-total-check"
+                      data-total-agree={agree ? "1" : "0"}
+                    >
+                      {agree
+                        ? `${appliedAccounts.length} accounts: opening ${formatCurrencyFromCents(acctNatural(linesQ.data.opening_cents))} + ${linesQ.data.total_lines} listed line(s) ${formatCurrencyFromCents(acctNatural(linesQ.data.total_net_amount_cents))} = ${formatCurrencyFromCents(acctNatural(linesQ.data.closing_balance_cents))} — matches the total.`
+                        : `These lines do not add up to the accounts' total: listed ${formatCurrencyFromCents(acctNatural(linesQ.data.closing_balance_cents))}, accounts ${formatCurrencyFromCents(acctNatural(treeClosing))}.`}
+                    </div>
+                  );
+                })()
               ) : null}
               {linesQ.error ? <ListErrorState {...formatQueryErrorDetail(linesQ.error)} onRetry={() => void linesQ.refetch()} /> : null}
               <div className="mt-1 overflow-x-auto rounded border border-gray-200 bg-white">

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AmountLink, type AmountFilter } from "../../components/shared/AmountLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -52,6 +53,19 @@ function plFilter(
 ): AmountFilter | null {
   if (!accountId) return null;
   return { target: "register", accountId, from: applied.start, to: applied.end, basis: applied.basis };
+}
+
+
+/** ROUND 433.2 — a section TOTAL drills to the ledger lines of exactly that section's accounts. Every line must name its
+ *  account (a synthetic line has no ledger to open), or the total stays plain rather than drilling to a partial list. */
+function sectionLedger(
+  lines: ReadonlyArray<{ account_id?: string | null }>,
+  from: string,
+  to: string,
+  basis: AccountingBasis
+): AmountFilter | null {
+  if (!lines.length || lines.some((l) => !l.account_id)) return null;
+  return { target: "ledger", accountIds: lines.map((l) => String(l.account_id)), from, to, basis };
 }
 
 export function ProfitLossPage() {
@@ -324,7 +338,9 @@ export function ProfitLossPage() {
                     <td colSpan={showCodes ? 3 : 2} className="px-3 py-2 text-right">
                       Section total
                     </td>
-                    <td className="px-3 py-2 text-right tabular-nums">{money(section.total)}</td>
+                    <td className="px-3 py-2">
+                      <MoneyCell cents={section.total} format={money} drill={{ amount: sectionLedger(section.lines, applied.start, applied.end, applied.basis) }} data-testid={`pl-total-${section.key}`} />
+                    </td>
                   </tr>
                 </tbody>
               </table>
