@@ -10,11 +10,11 @@
 
 | bucket | n | meaning |
 |---|---:|---|
-| **create** (collection POST) | 337 | `POST /api/v1/mdata/customers` — creates a top-level record |
+| **create** (collection POST) | 338 | `POST /api/v1/mdata/customers` — creates a top-level record |
 | **nested create** (child POST) | 274 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
 | action (NOT a create) | 251 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 72 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 934 | |
+| **TOTAL POST endpoints** | 935 | |
 | UI files with `+ Create`/`+ Book` | 195 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
@@ -93,13 +93,13 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/accounting/invoices/:id/unvoid` | `apps/backend/src/accounting/invoices.routes.ts:1362` | — | — | — |
 | create | `/api/v1/accounting/invoices/from-load` | `apps/backend/src/accounting/invoices.routes.ts:803` | — | — | — |
 | create | `/api/v1/accounting/journal-entries` | `apps/backend/src/accounting/journal-entries.routes.ts:110` | — | — | — |
-| create | `/api/v1/accounting/lease-posting/leases` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:99` | — | — | — |
-| nested | `/api/v1/accounting/lease-posting/leases/:lease_id/assets` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:140` | — | — | — |
-| nested | `/api/v1/accounting/lease-posting/leases/:lease_id/schedule` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:172` | — | — | — |
-| create | `/api/v1/accounting/lease-posting/operating/end-of-term-sale` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:306` | — | — | — |
-| create | `/api/v1/accounting/lease-posting/operating/rental` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:282` | — | — | — |
-| create | `/api/v1/accounting/lease-posting/sales-type/commencement` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:330` | — | — | — |
-| create | `/api/v1/accounting/lease-posting/sales-type/interest` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:354` | — | — | — |
+| create | `/api/v1/accounting/lease-posting/leases` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:101` | — | — | — |
+| nested | `/api/v1/accounting/lease-posting/leases/:lease_id/assets` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:143` | — | — | — |
+| nested | `/api/v1/accounting/lease-posting/leases/:lease_id/schedule` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:175` | — | — | — |
+| create | `/api/v1/accounting/lease-posting/operating/end-of-term-sale` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:316` | — | — | — |
+| create | `/api/v1/accounting/lease-posting/operating/rental` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:288` | — | — | — |
+| create | `/api/v1/accounting/lease-posting/sales-type/commencement` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:340` | — | — | — |
+| create | `/api/v1/accounting/lease-posting/sales-type/interest` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:364` | — | — | — |
 | create | `/api/v1/accounting/month-close` | `apps/backend/src/accounting/month-close.routes.ts:60` | — | — | — |
 | create | `/api/v1/accounting/month-close-acknowledge` | `apps/backend/src/accounting/month-close.routes.ts:90` | — | — | — |
 | create | `/api/v1/accounting/opening-balance-register/clone-as-is-commit` | `apps/backend/src/accounting/opening-balance-register/opening-balance-register.routes.ts:169` | — | — | — |
@@ -630,6 +630,17 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/customers/:id/portal-users` | `apps/backend/src/shipper-portal/portal-users-admin.routes.ts:70` | — | — | — |
 | nested | `/api/v1/customers/:id/reclassify` | `apps/backend/src/mdata/reclassify.routes.ts:105` | — | — | — |
 
+### bank-recon — 6 create-surface(s)
+
+| kind | endpoint | route file | created | registered | gap |
+|---|---|---|---|---|---|
+| create | `/api/v1/bank-recon/accept-match` | `apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts:111` | — | — | — |
+| create | `/api/v1/bank-recon/accept-multi-match` | `apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts:239` | — | — | — |
+| create | `/api/v1/bank-recon/close-period` | `apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts:308` | — | — | — |
+| create | `/api/v1/bank-recon/manual-match` | `apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts:198` | — | — | — |
+| create | `/api/v1/bank-recon/receive-and-match` | `apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts:281` | — | — | — |
+| create | `/api/v1/bank-recon/reject-match` | `apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts:152` | — | — | — |
+
 ### checks — 6 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
@@ -651,16 +662,6 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/driver-pay/settlements/:id/mark-sent` | `apps/backend/src/driver-finance/settlement-payment.routes.ts:87` | — | — | — |
 | nested | `/api/v1/driver-pay/settlements/:id/queue-payment` | `apps/backend/src/driver-finance/settlement-payment.routes.ts:71` | — | — | — |
 | nested | `/api/v1/driver-pay/settlements/:id/reopen-manual-paid` | `apps/backend/src/driver-finance/settlement-payment.routes.ts:170` | — | — | — |
-
-### bank-recon — 5 create-surface(s)
-
-| kind | endpoint | route file | created | registered | gap |
-|---|---|---|---|---|---|
-| create | `/api/v1/bank-recon/accept-match` | `apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts:90` | — | — | — |
-| create | `/api/v1/bank-recon/accept-multi-match` | `apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts:218` | — | — | — |
-| create | `/api/v1/bank-recon/close-period` | `apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts:257` | — | — | — |
-| create | `/api/v1/bank-recon/manual-match` | `apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts:177` | — | — | — |
-| create | `/api/v1/bank-recon/reject-match` | `apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts:131` | — | — | — |
 
 ### ifta — 5 create-surface(s)
 
