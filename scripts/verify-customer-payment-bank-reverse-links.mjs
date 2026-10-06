@@ -7,6 +7,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { BANNER_REL, rendersBankTransactionLink } from "./lib/renders-bank-transaction-link.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-customer-payment-bank-reverse-links";
@@ -15,10 +16,10 @@ function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
-/** @param {{ routes: string, api: string, listPage: string, detailPage: string }} sources */
+/** @param {{ routes: string, api: string, listPage: string, detailPage: string, banner?: string }} sources */
 export function contractErrors(sources) {
   const errors = [];
-  const { routes, api, listPage, detailPage } = sources;
+  const { routes, api, listPage, detailPage, banner } = sources;
 
   if (!routes.includes("PAYMENT_MATCHED_BANK_TRANSACTION_ID_SQL")) {
     errors.push("backend: must define PAYMENT_MATCHED_BANK_TRANSACTION_ID_SQL");
@@ -43,7 +44,7 @@ export function contractErrors(sources) {
     ["list", listPage],
     ["detail", detailPage],
   ]) {
-    if (!source.includes('kind="bank_transaction"')) {
+    if (!rendersBankTransactionLink(source, banner)) {
       errors.push(`${surface}: bank_transaction EntityLink missing`);
     }
     if (!source.includes("matched_bank_transaction_id")) {
@@ -69,6 +70,7 @@ export function run(root = ROOT) {
     api: read("apps/frontend/src/api/accounting.ts"),
     listPage: read("apps/frontend/src/pages/accounting/PaymentsListPage.tsx"),
     detailPage: read("apps/frontend/src/pages/accounting/PaymentDetailPage.tsx"),
+    banner: read(BANNER_REL),
   });
 }
 
@@ -94,6 +96,11 @@ if (process.argv.includes("--selftest")) {
   if (errs.length) throw new Error(`${LABEL} PASS fail: ${errs.join("; ")}`);
   const bad = { ...good, detailPage: 'kind="account"' };
   if (!contractErrors(bad).length) throw new Error(`${LABEL} FAIL fail`);
+  // The banner path: mounted with the matched id + the banner renders the link -> pass; either half missing -> fail.
+  const viaBanner = { ...good, detailPage: "<OnlineBankingMatchBanner companyId={c} bankTransactionId={payment.matched_bank_transaction_id} />", banner: '<EntityLink kind="bank_transaction" />' };
+  if (contractErrors(viaBanner).length) throw new Error(`${LABEL} banner path should pass: ${contractErrors(viaBanner).join("; ")}`);
+  if (!contractErrors({ ...viaBanner, banner: '<EntityLink kind="account" />' }).length) throw new Error(`${LABEL} banner without the link escaped`);
+  if (!contractErrors({ ...viaBanner, detailPage: "<OnlineBankingMatchBanner companyId={c} bankTransactionId={x} /> matched_bank_transaction_id" }).length) throw new Error(`${LABEL} banner not fed the matched id escaped`);
   console.log(`${LABEL} --selftest OK`);
 } else {
   const f = run();
