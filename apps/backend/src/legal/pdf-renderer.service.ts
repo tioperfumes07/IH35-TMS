@@ -178,6 +178,13 @@ function buildPdfHtml(payload: LegalPdfPayload) {
 // renderSignedContractPdf so launch/render failures are mapped to legal_pdf_render_failed.
 export const __test__ = { buildPdfHtml, buildPageFooter };
 
+/**
+ * The legal-document format a PDF is rendered in. Bump when the layout changes (typography, margins, footer): every
+ * UNSIGNED contract whose filed PDF is older is re-filed on its next open. 1 = Arial ~9pt, no page numbers (pre-10-06);
+ * 2 = 12pt embedded Times-metric serif, 1in margins, "Page X of Y" (#25590).
+ */
+export const CONTRACT_PDF_FORMAT_VERSION = 2;
+
 /** 1-inch margins (US Letter); the bottom margin carries the running footer. */
 export const PDF_LAYOUT = { top: "1in", right: "1in", bottom: "1in", left: "1in" } as const;
 

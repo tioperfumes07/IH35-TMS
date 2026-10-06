@@ -16,7 +16,7 @@
 // No financial posting. Nothing here creates a contract — it files the ones people create.
 import crypto from "node:crypto";
 import { isR2Configured, putObjectBytes } from "../storage/r2-client.js";
-import { renderSignedContractPdf } from "./pdf-renderer.service.js";
+import { CONTRACT_PDF_FORMAT_VERSION, renderSignedContractPdf } from "./pdf-renderer.service.js";
 import { appendContractAuditLog } from "./templates.service.js";
 
 type Db = { query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[]; rowCount?: number | null }> };
@@ -127,13 +127,21 @@ export async function fileContractPdf(
   if (!pdf.pdfBuffer || pdf.pdfBuffer.length === 0) throw new Error("legal_pdf_render_failed");
 
   const r2Key = `org/${args.operatingCompanyId}/legal/contracts/${inst.id}/${args.stage}-${crypto.randomUUID()}.pdf`;
+  // A re-file is a NEW VERSION of the contract's document: it points at the file it supersedes (nothing is deleted).
+  const prev = (
+    await client.query(
+      `SELECT f.id::text AS id, COALESCE(f.version_number, 1) AS v FROM legal.contract_instances ci JOIN docs.files f ON f.id = ci.pdf_file_id
+        WHERE ci.operating_company_id = $1::uuid AND ci.id = $2::uuid`,
+      [args.operatingCompanyId, inst.id]
+    )
+  ).rows[0];
   await putObjectBytes(r2Key, pdf.pdfBuffer, "application/pdf");
   const title = String(inst.display_name_en ?? inst.template_code);
   const fileRow = (
     await client.query(
       `INSERT INTO docs.files (operating_company_id, original_filename, mime_type, size_bytes, sha256_hash, r2_key,
-                               upload_completed_at, document_date, description, uploader_user_id)
-       VALUES ($1::uuid, $2, 'application/pdf', $3, $4, $5, now(), current_date, $6, $7::uuid)
+                               upload_completed_at, document_date, description, uploader_user_id, parent_file_id, version_number)
+       VALUES ($1::uuid, $2, 'application/pdf', $3, $4, $5, now(), current_date, $6, $7::uuid, $8::uuid, $9)
        RETURNING id::text`,
       [
         args.operatingCompanyId,
@@ -143,6 +151,8 @@ export async function fileContractPdf(
         r2Key,
         `${title} — ${args.stage === "signed" ? "executed" : "draft, not executed"} (contract ${String(inst.id).slice(0, 8)})`,
         args.actorUserId ?? (inst.created_by_user_id ? String(inst.created_by_user_id) : null),
+        prev?.id ?? null,
+        prev ? Number(prev.v) + 1 : 1,
       ]
     )
   ).rows[0];
@@ -151,8 +161,9 @@ export async function fileContractPdf(
   // Both ways: file -> contract, contract -> file.
   await linkFile(client, fileId, { entity_type: "contract_instance", entity_id: String(inst.id) }, args.actorUserId);
   await client.query(
-    `UPDATE legal.contract_instances SET pdf_file_id = $3::uuid, updated_at = now() WHERE operating_company_id = $1::uuid AND id = $2::uuid`,
-    [args.operatingCompanyId, inst.id, fileId]
+    `UPDATE legal.contract_instances SET pdf_file_id = $3::uuid, pdf_format_version = $4, updated_at = now()
+      WHERE operating_company_id = $1::uuid AND id = $2::uuid`,
+    [args.operatingCompanyId, inst.id, fileId, CONTRACT_PDF_FORMAT_VERSION]
   );
 
   // Filed where it belongs.
@@ -205,12 +216,16 @@ export async function ensureContractPdfFiled(
 ): Promise<string> {
   const cur = (
     await client.query(
-      `SELECT pdf_file_id::text AS f, status::text AS s FROM legal.contract_instances WHERE operating_company_id = $1::uuid AND id = $2::uuid`,
+      `SELECT pdf_file_id::text AS f, status::text AS s, COALESCE(pdf_format_version, 1) AS v
+         FROM legal.contract_instances WHERE operating_company_id = $1::uuid AND id = $2::uuid`,
       [args.operatingCompanyId, args.contractInstanceId]
     )
   ).rows[0];
   if (!cur) throw new Error("legal_contract_instance_not_found");
-  if (cur.f) return String(cur.f);
+  // An EXECUTED contract's PDF is the signed record — never re-rendered. Anything unsigned whose PDF predates the current
+  // legal-document format is re-filed now (new version; the old file stays as its parent).
+  const executed = String(cur.s) === "signed_electronically";
+  if (cur.f && (executed || Number(cur.v) >= CONTRACT_PDF_FORMAT_VERSION)) return String(cur.f);
   const r = await fileContractPdf(client, { ...args, stage: "draft" });
   return r.fileId;
 }
