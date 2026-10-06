@@ -30,7 +30,9 @@ export function check({ service, page }) {
   // The register loads on open, and its default window is fiscal year to date (a last-month window cannot list what an
   // all-time-through-To-date balance counts).
   if (/useState<\{ from: string; to: string;[^>]*\} \| null>\(null\)/.test(page)) f.push(`${PAGE}: the register must load on open — \`applied\` may not start null`);
-  if (!/useState\(firstOfFiscalYear\(\)\)/.test(page) || /firstOfPrevMonth/.test(page)) f.push(`${PAGE}: the default window must be fiscal year to date, not last month`);
+  // ROUND 433.2: a drilled TOTAL arrives with ?from_date (AmountLink "ledger"); with no URL window the default is still
+  // fiscal year to date — `useState(urlFrom ?? firstOfFiscalYear())` keeps that default and nothing else may replace it.
+  if (!/useState\((?:urlFrom \?\? )?firstOfFiscalYear\(\)\)/.test(page) || /firstOfPrevMonth/.test(page)) f.push(`${PAGE}: the default window must be fiscal year to date, not last month`);
   return f;
 }
 

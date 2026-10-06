@@ -113,6 +113,18 @@ export type AmountFilter =
       agingBucket?: AgingBucketId | readonly AgingBucketId[] | null;
       agingAsOf?: string | null;
     }
+  /**
+   * ROUND 433.2 — a TOTAL over a set of accounts (a statement section, "Total assets", a P&L section). Opens the ledger
+   * lines of exactly those accounts for the period; the ledger page shows opening + listed lines = closing, so the
+   * clicked total and the list tie. Same basis rule as the register: a cash-basis figure gets no drill.
+   */
+  | {
+      target: "ledger";
+      accountIds: readonly string[];
+      from: string;
+      to: string;
+      basis?: "accrual" | "cash" | null;
+    }
   /** Customer invoices, narrowed by the params InvoicesListPage reads. */
   | {
       target: "invoices";
@@ -178,6 +190,14 @@ export function resolveAmountRoute(filter: AmountFilter | null | undefined): str
         ["from_date", filter.from],
         ["to_date", filter.to],
         ["basis", filter.basis === "cash" ? "cash" : null],
+      ])}`;
+    case "ledger":
+      // No accounts = no total to explain; a cash-basis figure would not tie to the accrual ledger.
+      if (!filter.accountIds.length || filter.basis === "cash") return null;
+      return `/accounting/reclassify${qs([
+        ["account_ids", filter.accountIds.join(",")],
+        ["from_date", filter.from],
+        ["to_date", filter.to],
       ])}`;
     case "bills":
       // ACCT-F411 — a bucket without an as-of date is meaningless ("31-60 days" from when?), so

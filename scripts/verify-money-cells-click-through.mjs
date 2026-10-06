@@ -27,7 +27,9 @@ const PANEL = "apps/frontend/src/components/shared/LedgerKpiPanel.tsx";
  * a proximity window cannot resolve. That makes 103 an upper bound, and an upper bound is a safe
  * ratchet: it can only be lowered. Do not raise it.
  */
-const SHRINK_ONLY_BASELINE = 49; // 2026-10-06 ROUND 433.2 batch 3: 55 -> 49 (dispatch load costs x3 -> load, driver hub activity -> its record, unit NBV -> fixed asset, lease allocation -> lease)
+const SHRINK_ONLY_BASELINE = 43; // 2026-10-06 ROUND 433.2 engine: 49 -> 43 (BS assets/liabilities + P&L section totals drill to the ledger; 3 computed BS figures declared no-drill)
+/** MoneyCell { none: reason } declarations on main (listed at run time). Unwired + declared may never grow. */
+const DECLARED_NO_DRILL = 3; // 2026-10-06 ROUND 433.2 batch 3: 55 -> 49 (dispatch load costs x3 -> load, driver hub activity -> its record, unit NBV -> fixed asset, lease allocation -> lease)
 
 function stripComments(src) {
   return String(src ?? "")
@@ -165,6 +167,46 @@ export function findProblems({ panel, shrinkOnlyCount }) {
   return problems;
 }
 
+/**
+ * ROUND 433.2 — THE ENGINE: components/shared/MoneyCell. Its `drill` prop is REQUIRED — a record (entity), an exact list
+ * (amount), or an explicit { none: "reason" }. This scan reads every MoneyCell call site:
+ *   - a `none` reason must say WHY (>= 20 characters) — it is shown on hover and listed here, never hidden;
+ *   - declared no-drill cells are counted, and UNWIRED + DECLARED together may never grow (COMBINED_BASELINE), so a raw
+ *     cell cannot be "fixed" by relabelling it `none`: only real wiring lowers the total.
+ */
+export const MONEY_CELL_COMPONENT = "apps/frontend/src/components/shared/MoneyCell.tsx";
+export function moneyCellDeclarations(src) {
+  const out = [];
+  const re = /<MoneyCell\b[\s\S]*?\/>/g;
+  let m;
+  while ((m = re.exec(src)) !== null) {
+    const tag = m[0];
+    const none = tag.match(/drill=\{\{\s*none:\s*(["'`])([\s\S]*?)\1\s*\}\}/);
+    const wired = /drill=\{\{\s*(entity|amount)\s*:/.test(tag);
+    out.push({ kind: none ? "none" : wired ? "wired" : "unparsed", reason: none ? none[2] : null });
+  }
+  return out;
+}
+function scanMoneyCells(rootDir) {
+  const declared = [];
+  const problems = [];
+  for (const file of walkTsx(path.join(rootDir, "apps/frontend/src"))) {
+    const rel = file.replace(rootDir + "/", "");
+    if (rel === MONEY_CELL_COMPONENT) continue;
+    const src = stripComments(fs.readFileSync(file, "utf8"));
+    if (!src.includes("<MoneyCell")) continue;
+    for (const d of moneyCellDeclarations(src)) {
+      if (d.kind === "unparsed") problems.push(`${rel}: a MoneyCell's drill is not a literal { entity } / { amount } / { none: "reason" } — the drill decision must be readable at the call site`);
+      if (d.kind === "none") {
+        if (!d.reason || d.reason.trim().length < 20) problems.push(`${rel}: MoneyCell { none } needs a real reason (>= 20 chars), got ${JSON.stringify(d.reason)}`);
+        declared.push(`${rel}: ${d.reason}`);
+      }
+    }
+  }
+  return { declared, problems };
+}
+export const COMBINED_BASELINE = SHRINK_ONLY_BASELINE + DECLARED_NO_DRILL;
+
 function countShrinkOnly(rootDir) {
   let n = 0;
   for (const file of walkTsx(path.join(rootDir, "apps/frontend/src"))) {
@@ -210,6 +252,18 @@ function selftest() {
     ["a declared quantity is not money", `<td data-quantity className="text-right tabular-nums">{p.total}</td>`, 0],
     ["data-quantity on a SIBLING does not exempt this cell", `<td data-quantity className="x">{n}</td><td className="text-right tabular-nums">{money(x)}</td>`, 1],
   ];
+  const declCases = [
+    ["MoneyCell { entity } is wired", `<MoneyCell cents={1} drill={{ entity: { kind: "bill", id } }} />`, "wired"],
+    ["MoneyCell { amount } is wired", `<MoneyCell cents={1} drill={{ amount: f }} />`, "wired"],
+    ["MoneyCell { none } is declared with its reason", `<MoneyCell cents={1} drill={{ none: "computed ratio, no record behind it" }} />`, "none"],
+    ["a drill built elsewhere is unparsed (must be readable)", `<MoneyCell cents={1} drill={d} />`, "unparsed"],
+  ];
+  let declPass = 0;
+  for (const [name, src, want] of declCases) {
+    const got = moneyCellDeclarations(src)[0]?.kind;
+    if (got === want) { declPass += 1; console.log(`ok    ${name}`); }
+    else console.error(`FAIL  ${name} — expected ${want}, got ${got}`);
+  }
   let elemPass = 0;
   for (const [name, src, want] of elementCases) {
     const got = unwired(src);
@@ -228,8 +282,8 @@ function selftest() {
       if (problems.length) console.error(`      ${problems.join("\n      ")}`);
     }
   }
-  const total = cases.length + elementCases.length;
-  const ok = pass + elemPass;
+  const total = cases.length + elementCases.length + declCases.length;
+  const ok = pass + elemPass + declPass;
   console.log(`\n${LABEL} --selftest: ${ok}/${total} ${ok === total ? "PASS" : "FAIL"}`);
   process.exit(ok === total ? 0 : 1);
 }
@@ -239,12 +293,23 @@ function main() {
   const panel = fs.readFileSync(path.join(ROOT, PANEL), "utf8");
   const shrinkOnlyCount = countShrinkOnly(ROOT);
   const problems = findProblems({ panel, shrinkOnlyCount });
+  const mc = scanMoneyCells(ROOT);
+  problems.push(...mc.problems);
+  const component = fs.existsSync(path.join(ROOT, MONEY_CELL_COMPONENT)) ? fs.readFileSync(path.join(ROOT, MONEY_CELL_COMPONENT), "utf8") : "";
+  if (!/drill: MoneyDrill;/.test(component) || !/EntityLink/.test(component) || !/AmountLink/.test(component))
+    problems.push(`${MONEY_CELL_COMPONENT}: MoneyCell must REQUIRE drill and resolve it through EntityLink / AmountLink`);
+  const combined = shrinkOnlyCount + mc.declared.length;
+  if (combined > COMBINED_BASELINE)
+    problems.push(`unwired ${shrinkOnlyCount} + declared no-drill ${mc.declared.length} = ${combined} > ${COMBINED_BASELINE} — relabelling a cell { none } does not fix it; wire it`);
+  else if (mc.declared.length !== DECLARED_NO_DRILL)
+    problems.push(`DECLARED_NO_DRILL is ${DECLARED_NO_DRILL} but ${mc.declared.length} MoneyCell { none } declarations exist — set it to ${mc.declared.length} in this commit (combined stays <= ${COMBINED_BASELINE})`);
   if (problems.length) {
     console.error(`${LABEL} FAIL — ${problems.length} defect(s) (shrink-only=${shrinkOnlyCount}, baseline=${SHRINK_ONLY_BASELINE}):`);
     for (const p of problems) console.error(`  - ${p}`);
     process.exit(1);
   }
-  console.log(`${LABEL} OK — drill money cells click through; shrink-only ${shrinkOnlyCount} <= ${SHRINK_ONLY_BASELINE}.`);
+  console.log(`${LABEL} OK — drill money cells click through; shrink-only ${shrinkOnlyCount} <= ${SHRINK_ONLY_BASELINE}; declared no-drill ${mc.declared.length} (combined ${combined} <= ${COMBINED_BASELINE}).`);
+  for (const d of mc.declared) console.log(`  · no-drill: ${d}`);
 }
 
 main();
