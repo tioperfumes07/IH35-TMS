@@ -3,7 +3,7 @@
  * Forward matched_* alone left payments/bill_payments.source_bank_transaction_id null.
  */
 import { describe, expect, it, vi } from "vitest";
-import { acceptMatchWithResolveDifference } from "../match.service.js";
+import { acceptExactMultiDocumentMatch, acceptMatchWithResolveDifference } from "../match.service.js";
 
 const { mockQuery, mockWithLuciaBypass } = vi.hoisted(() => {
   const query = vi.fn();
@@ -48,6 +48,7 @@ const BANK_TX = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const BANK_ACCT = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
 const PAYMENT = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
 const BILL_PAY = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+const BILL = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const SETTLEMENT = "ffffffff-ffff-4fff-8fff-ffffffffffff";
 
 function bankTxnRow(overrides: Record<string, unknown> = {}) {
@@ -183,6 +184,87 @@ describe("WAVE-H3 acceptMatch reverse bank FK stamps", () => {
     // 5th bound param here (payment's own bank_account_id is the 4th).
     expect(String(reverse?.[0])).toContain("cleared_date = COALESCE(cleared_date");
     expect(reverse?.[1]).toEqual([BANK_TX, BILL_PAY, OPCO, BANK_ACCT, "2026-07-31"]);
+  });
+
+  it("ENG-SPINE — bill_payment match also backlinks matched_bill_id when the payment names one bill", async () => {
+    mockQuery.mockReset();
+    mockWithLuciaBypass.mockClear();
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (String(sql).includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "match-1" }], rowCount: 1 };
+      const s = String(sql);
+      if (s.includes("FROM banking.bank_transactions") && s.includes("SELECT")) return { rows: [bankTxnRow()] };
+      if (s.includes("FROM accounting.bill_payments") && s.includes("amount_cents")) {
+        return { rows: [{ amount_cents: 50000 }] };
+      }
+      if (s.includes("FROM accounting.bill_payments") && s.includes("bill_id::text")) {
+        return { rows: [{ bill_id: BILL }] };
+      }
+      if (s.includes("FROM accounting.bill_payments") && s.includes("source_bank_transaction_id")) {
+        return { rows: [{ source_bank_transaction_id: BANK_TX }] };
+      }
+      if (s.includes("UPDATE banking.bank_transactions") && s.includes("matched_bill_id")) {
+        return { rows: [{ id: BANK_TX }], rowCount: 1 };
+      }
+      return { rows: [] };
+    });
+
+    await acceptMatchWithResolveDifference({
+      operating_company_id: OPCO,
+      bank_transaction_id: BANK_TX,
+      actor_user_uuid: ACTOR,
+      ledger_entry_kind: "bill_payment",
+      ledger_entry_id: BILL_PAY,
+      difference_account_id: "00000000-0000-4000-8000-000000000000",
+    });
+
+    const billLookup = mockQuery.mock.calls.find(([sql]) => String(sql).includes("bill_id::text AS bill_id"));
+    expect(billLookup).toBeDefined();
+    expect(billLookup?.[1]).toEqual([BILL_PAY, OPCO]);
+
+    const backlink = mockQuery.mock.calls.find(
+      ([sql]) => String(sql).includes("UPDATE banking.bank_transactions") && String(sql).includes("matched_bill_id")
+    );
+    expect(backlink).toBeDefined();
+    expect(backlink?.[1]).toEqual([BILL, BILL_PAY, BANK_TX, OPCO]);
+  });
+
+  it("ENG-SPINE — multi-document bill_payment accept shares runBillPaymentAcceptFollowUps", async () => {
+    mockQuery.mockReset();
+    mockWithLuciaBypass.mockClear();
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (String(sql).includes("INSERT INTO banking.reconciliation_matches")) return { rows: [{ id: "match-1" }], rowCount: 1 };
+      const s = String(sql);
+      if (s.includes("FROM banking.bank_transactions") && s.includes("SELECT")) return { rows: [bankTxnRow()] };
+      if (s.includes("FROM accounting.bill_payments") && s.includes("amount_cents")) {
+        return { rows: [{ amount_cents: 50000 }] };
+      }
+      if (s.includes("FROM accounting.bill_payments") && s.includes("bill_id::text")) {
+        return { rows: [{ bill_id: BILL }] };
+      }
+      if (s.includes("FROM accounting.bill_payments") && s.includes("source_bank_transaction_id")) {
+        return { rows: [{ source_bank_transaction_id: BANK_TX }] };
+      }
+      if (s.includes("UPDATE banking.bank_transactions") && s.includes("matched_bill_id")) {
+        return { rows: [{ id: BANK_TX }], rowCount: 1 };
+      }
+      if (s.includes("UPDATE banking.bank_transactions") && s.includes("review_state = 'matched'")) {
+        return { rows: [{ id: BANK_TX }], rowCount: 1 };
+      }
+      return { rows: [] };
+    });
+
+    await acceptExactMultiDocumentMatch({
+      operating_company_id: OPCO,
+      bank_transaction_id: BANK_TX,
+      actor_user_uuid: ACTOR,
+      entries: [{ ledger_entry_kind: "bill_payment", ledger_entry_id: BILL_PAY }],
+    });
+
+    const backlink = mockQuery.mock.calls.find(
+      ([sql]) => String(sql).includes("UPDATE banking.bank_transactions") && String(sql).includes("matched_bill_id")
+    );
+    expect(backlink).toBeDefined();
+    expect(backlink?.[1]).toEqual([BILL, BILL_PAY, BANK_TX, OPCO]);
   });
 
   it("settlement match stamps driver_finance.driver_settlements.paid_via_bank_txn_id", async () => {

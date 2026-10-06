@@ -1652,6 +1652,24 @@ Guard: `verify-match-candidates-cover-all-documents.mjs` (amount loader
 fail-closed + `--selftest` plants). Vitest
 `accept-match-ledger-amount-fail-closed.test.ts`.
 
+## Active Architectural Decisions — ENG-SPINE bill-payment → bill backlink on both accept paths (Cursor, 2026-10-06)
+
+Payment accept already filled `matched_invoice_id` (ACCT-F5620). Bill-payment accept
+stamped `matched_bill_payment_id` + `source_bank_transaction_id` and left
+`banking.bank_transactions.matched_bill_id` null. Repo-wide apps/ search found no
+accept writer — only NULL clears. `bills.service.ts` drills `bt.matched_bill_id`,
+so the vendor bill's bank hop stayed unreachable after purge-and-recreate
+(CLS-LINKAGE-ONEWAY).
+
+Permanent: `backlinkBankTransactionToBill` is the AP twin of
+`backlinkBankTransactionToInvoice`. `runBillPaymentAcceptFollowUps` is the one
+writer. Both accept paths call it after `stampReverseBankPointerOnAccept`.
+Fill-only-NULL. Exactly one bill. Never throws. `bill_payments.bill_id` is the
+source. No new reverse column. No mass backfill. No `paid_at` stamp. No ACCT-F406.
+
+Guards: `verify-wave-h3-bank-match-reverse-fk.mjs` (helper + both callers) +
+`verify-no-automatch.mjs` allowlist. Vitest h3 + `bank-bill-backlink.test.ts`.
+
 ## Active Architectural Decisions — KILL THE SECOND SYSTEM (Cursor, 2026-10-03)
 
 Owner, verbatim: the ledger is the balance; policies stay; this is a deletion, not a build.
