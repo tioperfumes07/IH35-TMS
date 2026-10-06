@@ -50,6 +50,12 @@ export const PURGE_WINDOW_GUARDS = Object.freeze([
   "verify-settlement-deduction-balance-derived",
   // Lead ruling 2026-10-05 (second): same measured condition.
   "verify-draft-load-saves-and-is-visible",
+  // LST-F423 — owner order 2026-10-06 ("fix, never defer"): four more guards that fail closed on the empty post-purge book
+  // (*_control=0 read as a masked connection). Same measured condition: the first live row ends each exemption.
+  "verify-ldt-3-driver-pay",
+  "verify-settlement-lines-have-accounts",
+  "verify-no-future-dated-seed-expenses",
+  "verify-settlement-tieout-01",
 ]);
 
 /** The guards whose exemption is gated on a MEASURED live-row count (Lead ruling 2026-10-05). */
@@ -58,6 +64,12 @@ export const MEASURED_EMPTY_GUARDS = Object.freeze([
   "verify-every-posting-has-a-spine-link",
   "verify-settlement-deduction-balance-derived",
   "verify-draft-load-saves-and-is-visible",
+  // LST-F423 — owner order 2026-10-06 ("fix, never defer"): four more guards that fail closed on the empty post-purge book
+  // (*_control=0 read as a masked connection). Same measured condition: the first live row ends each exemption.
+  "verify-ldt-3-driver-pay",
+  "verify-settlement-lines-have-accounts",
+  "verify-no-future-dated-seed-expenses",
+  "verify-settlement-tieout-01",
 ]);
 
 export const EXPECTED_ZERO_PATH = path.join(ROOT, "scripts/purge/usmca-purge-expected-zero.generated.json");

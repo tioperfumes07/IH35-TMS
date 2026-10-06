@@ -37,10 +37,10 @@ function stripComments(text) {
 
 // Each required token is [human-name, RegExp]. All must match the comment-stripped source.
 const LIST_REQUIRED = [
-  ["filter-chips container", /data-vendor-filter-chips\s*=/],
-  ["Active chip label", /["']Active["']/],
-  ["1099-eligible chip label", /["']1099-eligible["']/],
-  ["With open chip label", /["']With open["']/],
+  ["Status MultiSelect filter", /MultiSelectDropdown|vendors-status-filter/],
+  ["Active filter option", /["']Active["']/],
+  ["1099-eligible filter option", /["']1099-eligible["']/],
+  ["With open filter option", /["']With open["']/],
   ["1099? column label", /label:\s*["']1099\?["']/],
   ["Status column keyed on deactivated_at", /key:\s*["']deactivated_at["']/],
   ["Status column label", /label:\s*["']Status["']/],
@@ -83,13 +83,17 @@ function read(rel) {
 
 function selftest() {
   const goodList = `
-    <div data-vendor-filter-chips="true">
-      {[
-        { key: "active", label: "Active" },
-        { key: "1099", label: "1099-eligible" },
-        { key: "with-open", label: "With open" },
-      ]}
-    </div>
+    <MoneyListToolbar testIdPrefix="vendors">
+      <MultiSelectDropdown
+        label="Status"
+        options={[
+          { value: "active", label: "Active" },
+          { value: "1099", label: "1099-eligible" },
+          { value: "with_open", label: "With open" },
+        ]}
+        data-testid="vendors-status-filter"
+      />
+    </MoneyListToolbar>
     columns={[
       { key: "created_at", label: "Created" },
       { key: "eligible_1099", label: "1099?" },
@@ -113,12 +117,12 @@ function selftest() {
       wantMin: 1,
     },
     {
-      name: "list missing filter-chips container → >=1 error",
-      in: { list: goodList.replace(/data-vendor-filter-chips="true"/, ""), detail: goodDetail },
+      name: "list missing Status MultiSelect → >=1 error",
+      in: { list: goodList.replace(/MultiSelectDropdown/, "SelectCombobox").replace(/vendors-status-filter/, "vendors-status-select"), detail: goodDetail },
       wantMin: 1,
     },
     {
-      name: "list missing 'With open' chip → >=1 error",
+      name: "list missing 'With open' option → >=1 error",
       in: { list: goodList.replace(/label: "With open"/, 'label: "Overdue"'), detail: goodDetail },
       wantMin: 1,
     },
@@ -140,7 +144,7 @@ function selftest() {
     {
       name: "a COMMENT mentioning the tokens does NOT satisfy the checks",
       in: {
-        list: `// data-vendor-filter-chips label: "1099?" label: "Status" key: "deactivated_at" "Active" "1099-eligible" "With open"`,
+        list: `// MultiSelectDropdown vendors-status-filter label: "1099?" label: "Status" key: "deactivated_at" "Active" "1099-eligible" "With open"`,
         detail: `// "W-9 / 1099" activeTab === "W-9 / 1099" W-9 / 1099 Status`,
       },
       wantMin: 1,

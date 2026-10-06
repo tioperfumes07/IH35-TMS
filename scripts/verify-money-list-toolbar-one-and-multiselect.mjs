@@ -27,6 +27,8 @@ const REGISTERED_PAGES = [
   "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
   "apps/frontend/src/pages/accounting/FactoringListPage.tsx",
   "apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx",
+  "apps/frontend/src/pages/customers/CustomersListView.tsx",
+  "apps/frontend/src/pages/vendors/VendorsListView.tsx",
 ];
 
 // Pages named in the packet but NOT yet retrofitted — tracked here so a reviewer can see the real
@@ -35,8 +37,6 @@ const REGISTERED_PAGES = [
 const KNOWN_NOT_YET_DONE = [
   "Load Costs (LoadCostsBoardPage.tsx)",
   "Fuel (FuelTransactionsTable.tsx)",
-  "Customers",
-  "Vendors",
 ];
 
 const fail = (m) => {

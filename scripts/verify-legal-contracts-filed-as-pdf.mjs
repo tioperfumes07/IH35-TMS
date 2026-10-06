@@ -25,7 +25,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-legal-contracts-filed-as-pdf";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
-export const UNFILED_CEILING = 3; // STALE-LITERAL-OK: measured live 2026-10-06, shrink-only
+export const UNFILED_CEILING = 0; // STALE-LITERAL-OK: measured live 2026-10-06 (3 -> 0 once opened), shrink-only
 const F = {
   service: "apps/backend/src/legal/contracts.service.ts",
   engine: "apps/backend/src/legal/contract-document.service.ts",
@@ -50,6 +50,11 @@ export function staticProblems(src) {
   if (!/ci\.pdf_file_id,\s*\n\s*ct\.category/.test(src.service)) p.push("the contract list does not return pdf_file_id and category");
   if (!/categorySections/.test(src.page) || !/filedPdf\(/.test(src.page)) p.push("Legal Contracts must render by category and open the filed PDF");
   if (!/pdf-file`/.test(src.api)) p.push("frontend API has no filed-PDF call");
+  // 2026-10-06: contracts filed before the legal-document format kept showing the old layout. The filed PDF records its
+  // format; opening an UNSIGNED contract with an older format re-files it; an EXECUTED contract is never re-rendered.
+  if (!/pdf_format_version = \$4/.test(src.engine)) p.push("the engine does not stamp pdf_format_version on the filed PDF");
+  if (!/executed \|\| Number\(cur\.v\) >= CONTRACT_PDF_FORMAT_VERSION/.test(src.engine)) p.push("open does not re-file a stale unsigned PDF (or would re-render an executed one)");
+  if (!/parent_file_id, version_number/.test(src.engine)) p.push("a re-file must be a new docs.files version pointing at the one it supersedes");
   return p;
 }
 
@@ -69,10 +74,11 @@ function selftest() {
   if (!staticProblems(m("service", "pdfBuffer: pdf.pdfBuffer", "pdfBuffer: rerender()")).some((x) => /EXECUTED/.test(x))) bad.push("a re-rendered signed PDF passed");
   if (!staticProblems(m("billing", /fileInsurerContractsOnFirstBill\(/g, "noop(")).some((x) => /insurance/.test(x))) bad.push("an insurer billing path with no filing passed");
   if (!staticProblems(m("page", /categorySections/g, "rows")).some((x) => /category/.test(x))) bad.push("a flat Legal table passed");
+  if (!staticProblems(m("engine", "executed || Number(cur.v) >= CONTRACT_PDF_FORMAT_VERSION", "cur.f")).some((x) => /stale unsigned/.test(x))) bad.push("an open that never re-files a stale PDF passed");
   if (liveProblems({ columnExists: true, unfiled: UNFILED_CEILING + 1 }).failures.length !== 1) bad.push("a growing unfiled count passed");
   if (liveProblems({ columnExists: false, unfiled: 99 }).failures.length !== 0) bad.push("pending deploy was failed");
   if (bad.length) { console.error(`${LABEL} SELFTEST FAILED:\n  - ${bad.join("\n  - ")}`); process.exit(1); }
-  console.log(`${LABEL} SELFTEST OK — 7/7 (real tree passes; no-create-filing, re-rendered signed PDF, unfiled insurer bill, flat table, growing count each caught; pending deploy tolerated)`);
+  console.log(`${LABEL} SELFTEST OK — 8/8 (real tree passes; no-create-filing, re-rendered signed PDF, unfiled insurer bill, flat table, growing count each caught; pending deploy tolerated, stale-format re-file enforced)`);
   process.exit(0);
 }
 if (process.argv.includes("--selftest")) selftest();

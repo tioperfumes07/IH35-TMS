@@ -25,6 +25,7 @@
  *   DATABASE_URL=<Neon prod> node scripts/verify-ldt-3-driver-pay.mjs
  */
 import fs from "node:fs";
+import { exitIfMeasuredEmptyByPurge } from "./lib/purge-window.mjs";
 export const REQUIRES_LIVE_DB =
   "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
@@ -55,7 +56,11 @@ function selftest() {
   console.log(`${LABEL} SELFTEST OK — 1/1 plant rejected`);
 }
 
-if (process.argv.includes("--selftest")) selftest();
+// LST-F418: a selftest is pure — it must not fall through to the live DB check.
+if (process.argv.includes("--selftest")) {
+  selftest();
+  process.exit(process.exitCode ?? 0);
+}
 
 // Static half.
 if (!fs.existsSync(ROUTE_PATH)) {
@@ -85,6 +90,10 @@ try {
     `SELECT count(*)::int AS n FROM driver_finance.driver_bills db JOIN mdata.loads l ON l.id = db.load_id WHERE l.operating_company_id = $1 AND db.status <> 'void'`,
     [USMCA]
   );
+  // LST-F423 (owner 2026-10-06, "fix, never defer"): after AUTH-400 the book is empty BY ORDER (seeding freeze); a 0 here
+  // is the purge, not a masked read. EMPTY BY PURGE only while the window is open and only on this measured 0 — the
+  // first real row ends it.
+  exitIfMeasuredEmptyByPurge("verify-ldt-3-driver-pay", "USMCA live driver bills", Number(control.rows[0].n));
   if (control.rows[0].n === 0) {
     console.error(`${LABEL}: FAIL — driver_bill_control=0, this connection cannot see USMCA's driver bills (masked read, not a verdict)`);
     process.exit(1);
