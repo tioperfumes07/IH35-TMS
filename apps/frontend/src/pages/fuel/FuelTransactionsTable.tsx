@@ -33,6 +33,7 @@ export type FuelTransactionRow = {
   expense_id?: string | null;
   expense_number?: string | null;
   journal_entry_id?: string | null;
+  vendor_name?: string | null;
 };
 
 type Props = {
@@ -41,6 +42,8 @@ type Props = {
   // beside it. Optional so a narrower caller keeps compiling; the one real caller (FuelPlannerHome)
   // always has it.
   operatingCompanyId?: string;
+  // 432-CUR #1 — FuelPlannerHome owns MoneyListToolbar search; ParityTable native search must stay off.
+  suppressToolbarSearch?: boolean;
 };
 
 // QBO money (lib/money). A missing amount is "—", never "$0.00".
@@ -83,7 +86,7 @@ function exportFuelTransactionsCsv(rows: FuelTransactionRow[]): void {
   URL.revokeObjectURL(url);
 }
 
-export function FuelTransactionsTable({ rows, operatingCompanyId }: Props) {
+export function FuelTransactionsTable({ rows, operatingCompanyId, suppressToolbarSearch = false }: Props) {
   const { pushToast } = useToast();
   // Same role gate the old BulkSelectableTable wrapper enforced (BULK_WRITE_ROLES via
   // useBulkPermission) — preserved here so bulk selection/actions stay hidden for roles that
@@ -97,6 +100,7 @@ export function FuelTransactionsTable({ rows, operatingCompanyId }: Props) {
       rowClassName={(row) => voidedRowClassName(row.voided_at)}
       storageKey="fuel-transactions"
       emptyText="No fuel transactions."
+      suppressToolbarSearch={suppressToolbarSearch}
       selectable={bulkPermission.canUseBulkOps}
       batchActions={() => (
         <div className="flex flex-wrap gap-2">

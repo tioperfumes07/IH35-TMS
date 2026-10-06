@@ -21,7 +21,8 @@ import { EntityPicker } from "../../components/EntityPicker";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
-import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { FUEL_TAB_PATH, fuelTabFromPath } from "../../router/route-manifest";
@@ -74,9 +75,16 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
   const [selectedActiveRouteId, setSelectedActiveRouteId] = useState<string | null>(null);
   const fuelHistoryPageSize = 50;
   const [fuelHistoryPage, setFuelHistoryPage] = useState(1);
-  // R-102-B item 5 ("DEFAULT FILTERS") — off on every fresh load, matching every sibling family's
-  // own "active hides voided" convention (fuel_transactions previously had no hide/toggle at all).
-  const [includeVoidedFuel, setIncludeVoidedFuel] = useState(false);
+  // 432-CUR #1 — MoneyListToolbar + Show MultiSelect (Include voided / Has expense / Has JE).
+  // Default empty = live rows only (same as the old includeVoidedFuel=false default).
+  const FUEL_SHOW_OPTIONS = [
+    { value: "voided", label: "Include voided" },
+    { value: "with_expense", label: "Has expense" },
+    { value: "with_je", label: "Has JE" },
+  ] as const;
+  const [showFilter, setShowFilter] = useState<string[]>([]);
+  const [historySearch, setHistorySearch] = useState("");
+  const includeVoidedFuel = showFilter.includes("voided");
   useEffect(() => {
     actionGenerationRef.current += 1;
     setActiveRoutePage(1);
@@ -113,36 +121,79 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
   useEffect(() => {
     if (deepLinkTrailerId) setTrailerPickerId(deepLinkTrailerId);
   }, [deepLinkTrailerId]);
-  const staged = useStagedListFilters({
-    applied: {
-      driverId: driverPickerId || deepLinkDriverId || "",
-      unitId: unitPickerId || deepLinkUnitId || "",
-      loadId: loadPickerId || deepLinkLoadId || "",
-      trailerId: trailerPickerId || deepLinkTrailerId || "",
-    },
-    empty: { driverId: "", unitId: "", loadId: "", trailerId: "" },
-    onApply: (next) => {
-      setDriverPickerId(next.driverId);
-      setUnitPickerId(next.unitId);
-      setLoadPickerId(next.loadId);
-      setTrailerPickerId(next.trailerId);
-      setSearchParams(
-        (prev) => {
-          const params = new URLSearchParams(prev);
-          if (next.driverId) params.set("driver_id", next.driverId);
-          else params.delete("driver_id");
-          if (next.unitId) params.set("unit_id", next.unitId);
-          else params.delete("unit_id");
-          if (next.loadId) params.set("load_id", next.loadId);
-          else params.delete("load_id");
-          if (next.trailerId) params.set("trailer_id", next.trailerId);
-          else params.delete("trailer_id");
-          return params;
-        },
-        { replace: true },
-      );
-    },
-  });
+  // 432-CUR #1 — EntityPickers commit immediately (MoneyListToolbar always visible; no staged Apply).
+  const writeHistoryUrl = (next: {
+    driverId: string;
+    unitId: string;
+    loadId: string;
+    trailerId: string;
+  }) => {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next.driverId) params.set("driver_id", next.driverId);
+        else params.delete("driver_id");
+        if (next.unitId) params.set("unit_id", next.unitId);
+        else params.delete("unit_id");
+        if (next.loadId) params.set("load_id", next.loadId);
+        else params.delete("load_id");
+        if (next.trailerId) params.set("trailer_id", next.trailerId);
+        else params.delete("trailer_id");
+        return params;
+      },
+      { replace: true },
+    );
+  };
+  const setHistoryDriverId = (next: string) => {
+    setDriverPickerId(next);
+    setFuelHistoryPage(1);
+    writeHistoryUrl({
+      driverId: next,
+      unitId: unitPickerId,
+      loadId: loadPickerId,
+      trailerId: trailerPickerId,
+    });
+  };
+  const setHistoryUnitId = (next: string) => {
+    setUnitPickerId(next);
+    setFuelHistoryPage(1);
+    writeHistoryUrl({
+      driverId: driverPickerId,
+      unitId: next,
+      loadId: loadPickerId,
+      trailerId: trailerPickerId,
+    });
+  };
+  const setHistoryLoadId = (next: string) => {
+    setLoadPickerId(next);
+    setFuelHistoryPage(1);
+    writeHistoryUrl({
+      driverId: driverPickerId,
+      unitId: unitPickerId,
+      loadId: next,
+      trailerId: trailerPickerId,
+    });
+  };
+  const setHistoryTrailerId = (next: string) => {
+    setTrailerPickerId(next);
+    setFuelHistoryPage(1);
+    writeHistoryUrl({
+      driverId: driverPickerId,
+      unitId: unitPickerId,
+      loadId: loadPickerId,
+      trailerId: next,
+    });
+  };
+  const clearHistoryFilters = () => {
+    setDriverPickerId("");
+    setUnitPickerId("");
+    setLoadPickerId("");
+    setTrailerPickerId("");
+    setShowFilter([]);
+    setHistorySearch("");
+    setFuelHistoryPage(1);
+    writeHistoryUrl({ driverId: "", unitId: "", loadId: "", trailerId: "" });
+  };
   const effectiveDriverId = driverPickerId.trim() || deepLinkDriverId || undefined;
   const effectiveUnitId = unitPickerId.trim() || deepLinkUnitId || undefined;
   const effectiveLoadId = loadPickerId.trim() || deepLinkLoadId || undefined;
@@ -437,85 +488,86 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
               Fleet-card imports and office-keyed fuel purchases (manual create stamps unit / trailer / load).
             </p>
             <div className="mt-3" data-testid="fuel-history-filters">
-              <CollapsedListFilters
+              <MoneyListToolbar
+                search={historySearch}
+                onSearchChange={setHistorySearch}
+                searchPlaceholder="Search fuel transactions"
+                searchTestId="fuel-history-search-input"
+                onClearAll={clearHistoryFilters}
                 activeFilterCount={
-                  [effectiveDriverId, effectiveUnitId, effectiveLoadId, effectiveTrailerId].filter(Boolean).length
+                  [effectiveDriverId, effectiveUnitId, effectiveLoadId, effectiveTrailerId].filter(Boolean).length +
+                  showFilter.length
                 }
-                onApply={staged.apply}
-                onReset={staged.reset}
-                onCancel={staged.cancel}
-                applyDisabled={!staged.dirty}
                 testIdPrefix="fuel-history"
-                dataAttributes={{ "data-fuel-history-filter-toolbar": "collapsed" }}
               >
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                  <label className="text-xs text-slate-600">
-                    Driver
-                    <EntityPicker
-                      kind="driver"
-                      operatingCompanyId={companyId}
-                      value={staged.draft.driverId || null}
-                      onChange={(next) => staged.setDraft({ ...staged.draft, driverId: next ?? "" })}
-                      allowCreate={false}
-                      placeholder="All drivers"
-                      className="mt-1"
-                      dataTestId="fuel-history-filter-driver"
-                    />
-                  </label>
-                  <label className="text-xs text-slate-600">
-                    Unit
-                    <EntityPicker
-                      kind="unit"
-                      operatingCompanyId={companyId}
-                      value={staged.draft.unitId || null}
-                      onChange={(next) => staged.setDraft({ ...staged.draft, unitId: next ?? "" })}
-                      allowCreate={false}
-                      placeholder="All units"
-                      className="mt-1"
-                      dataTestId="fuel-history-filter-unit"
-                    />
-                  </label>
-                  <label className="text-xs text-slate-600">
-                    Load
-                    <EntityPicker
-                      kind="load"
-                      operatingCompanyId={companyId}
-                      value={staged.draft.loadId || null}
-                      onChange={(next) => staged.setDraft({ ...staged.draft, loadId: next ?? "" })}
-                      allowCreate={false}
-                      placeholder="All loads"
-                      className="mt-1"
-                      dataTestId="fuel-history-filter-load"
-                    />
-                  </label>
-                  <label className="text-xs text-slate-600">
-                    Trailer
-                    <EntityPicker
-                      kind="trailer"
-                      operatingCompanyId={companyId}
-                      value={staged.draft.trailerId || null}
-                      onChange={(next) => staged.setDraft({ ...staged.draft, trailerId: next ?? "" })}
-                      allowCreate={false}
-                      placeholder="All trailers"
-                      className="mt-1"
-                      dataTestId="fuel-history-filter-trailer"
-                    />
-                  </label>
-                </div>
-              </CollapsedListFilters>
+                <MultiSelectDropdown
+                  label="Show"
+                  options={[...FUEL_SHOW_OPTIONS]}
+                  value={showFilter}
+                  onChange={(next) => {
+                    setShowFilter(next);
+                    setFuelHistoryPage(1);
+                  }}
+                  testId="fuel-history-show-multiselect"
+                />
+                <label className="text-xs text-slate-600">
+                  Driver
+                  <EntityPicker
+                    kind="driver"
+                    operatingCompanyId={companyId}
+                    value={driverPickerId || null}
+                    onChange={(next) => setHistoryDriverId(next ?? "")}
+                    allowCreate={false}
+                    placeholder="All drivers"
+                    className="mt-1"
+                    dataTestId="fuel-history-filter-driver"
+                  />
+                </label>
+                <label className="text-xs text-slate-600">
+                  Unit
+                  <EntityPicker
+                    kind="unit"
+                    operatingCompanyId={companyId}
+                    value={unitPickerId || null}
+                    onChange={(next) => setHistoryUnitId(next ?? "")}
+                    allowCreate={false}
+                    placeholder="All units"
+                    className="mt-1"
+                    dataTestId="fuel-history-filter-unit"
+                  />
+                </label>
+                <label className="text-xs text-slate-600">
+                  Load
+                  <EntityPicker
+                    kind="load"
+                    operatingCompanyId={companyId}
+                    value={loadPickerId || null}
+                    onChange={(next) => setHistoryLoadId(next ?? "")}
+                    allowCreate={false}
+                    placeholder="All loads"
+                    className="mt-1"
+                    dataTestId="fuel-history-filter-load"
+                  />
+                </label>
+                <label className="text-xs text-slate-600">
+                  Trailer
+                  <EntityPicker
+                    kind="trailer"
+                    operatingCompanyId={companyId}
+                    value={trailerPickerId || null}
+                    onChange={(next) => setHistoryTrailerId(next ?? "")}
+                    allowCreate={false}
+                    placeholder="All trailers"
+                    className="mt-1"
+                    dataTestId="fuel-history-filter-trailer"
+                  />
+                </label>
+              </MoneyListToolbar>
             </div>
             {/* R-102-B item 5 ("DEFAULT FILTERS" — owner, ROUND 121: "a list that silently hides
                 is the same class of defect as a badge that never renders"). Voided fuel purchases
-                used to show mixed in with live ones by default, with no way to hide them at all. */}
+                hide by default; Show MultiSelect "Include voided" turns them on. */}
             <div className="mt-2 flex items-center gap-2">
-              <label className="flex items-center gap-1 text-xs text-gray-600" data-testid="fuel-history-show-voided">
-                <input
-                  type="checkbox"
-                  checked={includeVoidedFuel}
-                  onChange={(e) => { setIncludeVoidedFuel(e.target.checked); setFuelHistoryPage(1); }}
-                />
-                Show voided
-              </label>
               {!includeVoidedFuel && fuelHistoryVoidedCount > 0 ? (
                 <span className="text-xs text-gray-500" data-testid="fuel-history-voided-count">
                   {fuelHistoryTotal} live, {fuelHistoryVoidedCount} voided (hidden)
@@ -535,7 +587,29 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                 </p>
               ) : (
                 <>
-                  <FuelTransactionsTable rows={fuelTransactionsQuery.data?.transactions ?? []} operatingCompanyId={companyId} />
+                  <FuelTransactionsTable
+                    suppressToolbarSearch
+                    rows={(fuelTransactionsQuery.data?.transactions ?? []).filter((row) => {
+                      if (showFilter.includes("with_expense") && !row.expense_id) return false;
+                      if (showFilter.includes("with_je") && !row.journal_entry_id) return false;
+                      const q = historySearch.trim().toLowerCase();
+                      if (!q) return true;
+                      const hay = [
+                        row.driver_name,
+                        row.unit_number,
+                        row.load_number,
+                        row.trailer_number,
+                        row.station,
+                        row.vendor_name,
+                        row.expense_number,
+                      ]
+                        .filter(Boolean)
+                        .join(" ")
+                        .toLowerCase();
+                      return hay.includes(q);
+                    })}
+                    operatingCompanyId={companyId}
+                  />
                   <div className="mt-2 flex items-center justify-end gap-2 text-xs text-slate-600" data-testid="fuel-history-server-pager">
                     <ActionButton
                       disabled={fuelHistoryPage <= 1 || fuelTransactionsQuery.isFetching}
