@@ -26,6 +26,10 @@ export type LegalContractSummary = {
   updated_at: string;
   display_name_en: string | null;
   display_name_es: string | null;
+  /** ROUND 435 — the template's category, for the by-category view. */
+  category?: string | null;
+  /** ROUND 435 — the contract's current filed PDF (docs.files). */
+  pdf_file_id?: string | null;
 };
 
 export type LegalContractDetail = LegalContractSummary & {
@@ -134,6 +138,11 @@ export const legalContractsApi = {
   // tab — the backend streams application/pdf and auth rides on the session cookie (credentials).
   draftPdfUrl(contractId: string, operatingCompanyId: string) {
     return resolveApiUrl(withCompany(`/api/v1/legal/contracts/${contractId}/draft-pdf`, operatingCompanyId));
+  },
+
+  /** ROUND 435 — the contract's filed PDF (filed now if it has none). Open it through the docs download. */
+  filedPdf(contractId: string, operatingCompanyId: string) {
+    return apiRequest<{ file_id: string }>(withCompany(`/api/v1/legal/contracts/${contractId}/pdf-file`, operatingCompanyId), { method: "POST" });
   },
 
   create(operatingCompanyId: string, payload: CreateLegalContractInput) {

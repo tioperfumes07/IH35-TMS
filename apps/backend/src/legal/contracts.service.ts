@@ -13,6 +13,7 @@ import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { withLuciaBypass } from "../auth/db.js";
 import { renderSignedContractPdf } from "./pdf-renderer.service.js";
 import { getR2BucketName } from "../storage/r2-client.js";
+import { fileContractPdfBestEffort } from "./contract-document.service.js";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { validateFilledVariablesAgainstSchema } from "./templates.service.js";
 import { applySignedOperationalLinks } from "./signed-links.service.js";
@@ -207,6 +208,8 @@ export async function listContractInstances(
         ci.voided_at,
         ci.created_at,
         ci.updated_at,
+        ci.pdf_file_id,
+        ct.category,
         ct.display_name_en,
         ct.display_name_es
       FROM legal.contract_instances ci
@@ -354,7 +357,15 @@ export async function createContractInstance(
     ipAddress: args.ipAddress,
     userAgent: args.userAgent,
   });
-  return instance;
+  // ROUND 435 — filed at creation: a draft PDF in docs.files, linked both ways and at its hubs. Best-effort: a render
+  // failure is audited and the contract files itself the first time it is opened, but the contract is never lost.
+  const filed = await fileContractPdfBestEffort(client as never, {
+    operatingCompanyId: args.operatingCompanyId,
+    contractInstanceId: String(instance.id),
+    actorUserId: args.actorUserId,
+    stage: "draft",
+  });
+  return { ...instance, pdf_file_id: filed.fileId };
 }
 
 export async function sendContractSigningLink(
@@ -882,6 +893,15 @@ export async function completePublicSigning(
       actorName: input.signed_by_name,
       ipAddress: auditMeta.ipAddress ?? null,
       userAgent: auditMeta.userAgent ?? null,
+    });
+
+    // ROUND 435 — the EXECUTED PDF is filed too (docs.files, both ways, at its hubs), byte-identical to the signed copy.
+    await fileContractPdfBestEffort(client as never, {
+      operatingCompanyId: String(token.operating_company_id),
+      contractInstanceId: String(token.contract_instance_id),
+      actorUserId: token.created_by_user_id ? String(token.created_by_user_id) : null,
+      stage: "signed",
+      signedPdf: { pdfBuffer: pdf.pdfBuffer, filename: pdf.filename, mimeType: pdf.mimeType, sha256: pdf.sha256 },
     });
 
     // Phase 4 (operational, ON) + Phase 5 (Option-B financial handoff — link+consent+

@@ -11,10 +11,10 @@
 | bucket | n | meaning |
 |---|---:|---|
 | **create** (collection POST) | 337 | `POST /api/v1/mdata/customers` — creates a top-level record |
-| **nested create** (child POST) | 273 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
+| **nested create** (child POST) | 274 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
 | action (NOT a create) | 250 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 72 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 932 | |
+| **TOTAL POST endpoints** | 933 | |
 | UI files with `+ Create`/`+ Book` | 195 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
@@ -87,11 +87,11 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/accounting/fixed-assets/register-trk-units` | `apps/backend/src/accounting/fixed-assets.routes.ts:415` | — | — | — |
 | create | `/api/v1/accounting/fixed-assets/register-unit` | `apps/backend/src/accounting/fixed-assets.routes.ts:381` | — | — | — |
 | nested | `/api/v1/accounting/invoice-disputes/:id/fault` | `apps/backend/src/accounting/invoice-disputes.routes.ts:186` | — | — | — |
-| create | `/api/v1/accounting/invoices` | `apps/backend/src/accounting/invoices.routes.ts:576` | — | — | — |
+| create | `/api/v1/accounting/invoices` | `apps/backend/src/accounting/invoices.routes.ts:575` | — | — | — |
 | nested | `/api/v1/accounting/invoices/:id/disputes` | `apps/backend/src/accounting/invoice-disputes.routes.ts:107` | — | — | — |
 | nested | `/api/v1/accounting/invoices/:id/lines` | `apps/backend/src/accounting/invoice-lines.routes.ts:96` | — | — | — |
-| nested | `/api/v1/accounting/invoices/:id/unvoid` | `apps/backend/src/accounting/invoices.routes.ts:1363` | — | — | — |
-| create | `/api/v1/accounting/invoices/from-load` | `apps/backend/src/accounting/invoices.routes.ts:804` | — | — | — |
+| nested | `/api/v1/accounting/invoices/:id/unvoid` | `apps/backend/src/accounting/invoices.routes.ts:1362` | — | — | — |
+| create | `/api/v1/accounting/invoices/from-load` | `apps/backend/src/accounting/invoices.routes.ts:803` | — | — | — |
 | create | `/api/v1/accounting/journal-entries` | `apps/backend/src/accounting/journal-entries.routes.ts:110` | — | — | — |
 | create | `/api/v1/accounting/lease-posting/leases` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:99` | — | — | — |
 | nested | `/api/v1/accounting/lease-posting/leases/:lease_id/assets` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:140` | — | — | — |
@@ -215,19 +215,19 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/mdata/driver-tags` | `apps/backend/src/mdata/driver-tags.routes.ts:107` | — | — | — |
 | create | `/api/v1/mdata/driver-teams` | `apps/backend/src/mdata/driver-teams.routes.ts:260` | — | — | — |
 | nested | `/api/v1/mdata/driver-teams/:id/replace-driver` | `apps/backend/src/mdata/driver-teams.routes.ts:461` | — | — | — |
-| create | `/api/v1/mdata/drivers` | `apps/backend/src/mdata/drivers.routes.ts:1533` | — | — | — |
+| create | `/api/v1/mdata/drivers` | `apps/backend/src/mdata/drivers.routes.ts:1535` | — | — | — |
 | nested | `/api/v1/mdata/drivers/:driver_id/safety-events` | `apps/backend/src/mdata/driver-safety-events.routes.ts:578` | — | — | — |
 | nested | `/api/v1/mdata/drivers/:driver_id/suspend` | `apps/backend/src/mdata/driver-safety-events.routes.ts:363` | — | — | — |
 | nested | `/api/v1/mdata/drivers/:id/clear-default-truck` | `apps/backend/src/mdata/driver-default-truck.routes.ts:213` | — | — | — |
 | nested | `/api/v1/mdata/drivers/:id/default-truck` | `apps/backend/src/mdata/driver-default-truck.routes.ts:157` | — | — | — |
-| nested | `/api/v1/mdata/drivers/:id/disable-phone-login` | `apps/backend/src/mdata/drivers.routes.ts:2845` | — | — | — |
-| nested | `/api/v1/mdata/drivers/:id/enable-phone-login` | `apps/backend/src/mdata/drivers.routes.ts:2714` | — | — | — |
+| nested | `/api/v1/mdata/drivers/:id/disable-phone-login` | `apps/backend/src/mdata/drivers.routes.ts:2847` | — | — | — |
+| nested | `/api/v1/mdata/drivers/:id/enable-phone-login` | `apps/backend/src/mdata/drivers.routes.ts:2716` | — | — | — |
 | nested | `/api/v1/mdata/drivers/:id/messages` | `apps/backend/src/mdata/driver-messages.routes.ts:28` | — | — | — |
-| nested | `/api/v1/mdata/drivers/:id/reactivate` | `apps/backend/src/mdata/drivers.routes.ts:2635` | — | — | — |
-| nested | `/api/v1/mdata/drivers/:id/resend-invite` | `apps/backend/src/mdata/drivers.routes.ts:2012` | — | — | — |
+| nested | `/api/v1/mdata/drivers/:id/reactivate` | `apps/backend/src/mdata/drivers.routes.ts:2637` | — | — | — |
+| nested | `/api/v1/mdata/drivers/:id/resend-invite` | `apps/backend/src/mdata/drivers.routes.ts:2014` | — | — | — |
 | nested | `/api/v1/mdata/drivers/:id/training` | `apps/backend/src/mdata/driver-training.routes.ts:79` | — | — | — |
 | nested | `/api/v1/mdata/drivers/:id/w8ben` | `apps/backend/src/mdata/driver-w8ben.routes.ts:215` | — | — | — |
-| create | `/api/v1/mdata/drivers/bulk-invite` | `apps/backend/src/mdata/drivers.routes.ts:1805` | — | — | — |
+| create | `/api/v1/mdata/drivers/bulk-invite` | `apps/backend/src/mdata/drivers.routes.ts:1807` | — | — | — |
 | create | `/api/v1/mdata/drivers/bulk-tag` | `apps/backend/src/mdata/driver-tags.routes.ts:179` | — | — | — |
 | create | `/api/v1/mdata/drivers/check-returning` | `apps/backend/src/mdata/driver-returning-detection.routes.ts:155` | — | — | — |
 | create | `/api/v1/mdata/equipment` | `apps/backend/src/mdata/equipment.routes.ts:252` | — | — | — |
@@ -279,12 +279,12 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/banking/link-suggestions/exclude` | `apps/backend/src/banking/link-suggestions-actions.routes.ts:280` | — | — | — |
 | create | `/api/v1/banking/link-suggestions/undo` | `apps/backend/src/banking/link-suggestions-actions.routes.ts:326` | — | — | — |
 | create | `/api/v1/banking/manual-je` | `apps/backend/src/banking/manual-je.routes.deprecated.ts:56` | — | — | — |
-| nested | `/api/v1/banking/plaid/accounts/:id/disconnect` | `apps/backend/src/integrations/plaid/link.routes.ts:444` | — | — | — |
+| nested | `/api/v1/banking/plaid/accounts/:id/disconnect` | `apps/backend/src/integrations/plaid/link.routes.ts:445` | — | — | — |
 | create | `/api/v1/banking/plaid/create-link-token` | `apps/backend/src/integrations/plaid/link.routes.ts:185` | — | — | — |
-| create | `/api/v1/banking/plaid/create-update-link-token` | `apps/backend/src/integrations/plaid/link.routes.ts:535` | — | — | — |
+| create | `/api/v1/banking/plaid/create-update-link-token` | `apps/backend/src/integrations/plaid/link.routes.ts:536` | — | — | — |
 | create | `/api/v1/banking/plaid/exchange-public-token` | `apps/backend/src/integrations/plaid/link.routes.ts:207` | — | — | — |
 | nested | `/api/v1/banking/plaid/items/:itemId/disconnect` | `apps/backend/src/banking/plaid-items.routes.ts:116` | — | — | — |
-| create | `/api/v1/banking/plaid/items/disconnect` | `apps/backend/src/integrations/plaid/link.routes.ts:551` | — | — | — |
+| create | `/api/v1/banking/plaid/items/disconnect` | `apps/backend/src/integrations/plaid/link.routes.ts:552` | — | — | — |
 | create | `/api/v1/banking/reconciliation-sessions` | `apps/backend/src/banking/p7-wave2.routes.ts:565` | — | — | — |
 | nested | `/api/v1/banking/reconciliation-sessions/:id/finalize` | `apps/backend/src/banking/p7-wave2.routes.ts:659` | — | — | — |
 | nested | `/api/v1/banking/reconciliation/:sessionId/clear` | `apps/backend/src/banking/reconciliation.routes.ts:1000` | — | — | — |
@@ -426,18 +426,19 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/catalogs/wo-cancellation-reasons` | `apps/backend/src/catalogs/wo-cancellation-reasons.routes.ts:94` | — | — | — |
 | create | `/api/v1/catalogs/workflow-requests` | `apps/backend/src/catalogs/workflow-routes.ts:276` | — | — | — |
 
-### legal — 21 create-surface(s)
+### legal — 22 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
 | nested | `/api/v1/legal/attorney-review/:token/request-changes` | `apps/backend/src/legal/attorney-review.routes.ts:45` | — | — | — |
-| create | `/api/v1/legal/contracts` | `apps/backend/src/legal/contracts.routes.ts:258` | — | — | — |
-| create | `/api/v1/legal/contracts/draft-preview` | `apps/backend/src/legal/contracts.routes.ts:227` | — | — | — |
-| create | `/api/v1/legal/contracts/lease-to-own/ensure-template` | `apps/backend/src/legal/contracts.routes.ts:388` | — | — | — |
-| create | `/api/v1/legal/contracts/sync-linkage` | `apps/backend/src/legal/contracts.routes.ts:127` | — | — | — |
-| nested | `/api/v1/legal/contracts/templates/:code/ensure` | `apps/backend/src/legal/contracts.routes.ts:347` | — | — | — |
-| create | `/api/v1/legal/contracts/truck-lease/ensure-template` | `apps/backend/src/legal/contracts.routes.ts:332` | — | — | — |
-| create | `/api/v1/legal/linkage/backfill-from-sources` | `apps/backend/src/legal/contracts.routes.ts:144` | — | — | — |
+| create | `/api/v1/legal/contracts` | `apps/backend/src/legal/contracts.routes.ts:288` | — | — | — |
+| nested | `/api/v1/legal/contracts/:id/pdf-file` | `apps/backend/src/legal/contracts.routes.ts:224` | — | — | — |
+| create | `/api/v1/legal/contracts/draft-preview` | `apps/backend/src/legal/contracts.routes.ts:257` | — | — | — |
+| create | `/api/v1/legal/contracts/lease-to-own/ensure-template` | `apps/backend/src/legal/contracts.routes.ts:418` | — | — | — |
+| create | `/api/v1/legal/contracts/sync-linkage` | `apps/backend/src/legal/contracts.routes.ts:128` | — | — | — |
+| nested | `/api/v1/legal/contracts/templates/:code/ensure` | `apps/backend/src/legal/contracts.routes.ts:377` | — | — | — |
+| create | `/api/v1/legal/contracts/truck-lease/ensure-template` | `apps/backend/src/legal/contracts.routes.ts:362` | — | — | — |
+| create | `/api/v1/legal/linkage/backfill-from-sources` | `apps/backend/src/legal/contracts.routes.ts:145` | — | — | — |
 | create | `/api/v1/legal/matters` | `apps/backend/src/legal/matters.routes.ts:205` | — | — | — |
 | nested | `/api/v1/legal/matters/:id/deadlines` | `apps/backend/src/legal/matters.routes.ts:455` | — | — | — |
 | nested | `/api/v1/legal/matters/:id/documents` | `apps/backend/src/legal/matters.routes.ts:410` | — | — | — |
