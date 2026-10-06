@@ -15,10 +15,20 @@ const maintenanceApi = read("apps/frontend/src/api/maintenance.ts");
 
 function fleetScopeFailures(source) {
   const failures = [];
+  // fleetRosterSql must itself stay the operating-entity roster (the guard is only as strong as the helper).
+  const rosterSrc = read("apps/backend/src/mdata/fleet-visibility.ts");
+  if (!/COALESCE\(\$\{c\("currently_leased_to_company_id"\)\}, \$\{c\("owner_company_id"\)\}\) = \$\{companyParam\}::uuid/.test(rosterSrc)) {
+    failures.push("apps/backend/src/mdata/fleet-visibility.ts: fleetRosterSql must scope by the operating entity (COALESCE(currently_leased_to, owner) = company)");
+  }
   const oosQuery = source.match(/AS oos_hours[\s\S]{0,500}?FROM mdata\.units u[\s\S]{0,500}?u\.oos_since::date <= \$3::date/)?.[0] ?? "";
   const activeCounter = source.match(/async function countActiveUnits[\s\S]{0,700}?return Number\(res\.rows\[0\]\?\.c \?\? 1\);/)?.[0] ?? "";
   for (const [name, query] of [["OOS downtime", oosQuery], ["MTBF active-unit denominator", activeCounter]]) {
-    if (!query.includes("owner_company_id = $1::uuid") || !query.includes("currently_leased_to_company_id = $1::uuid")) {
+    // ROUND 326 item 17 / audit M3 (#24029): fleet COUNTS read THE ONE FLEET ROSTER — mdata/fleet-visibility.ts
+    // fleetRosterSql: the unit's operating entity (COALESCE(currently_leased_to, owner) = company), active, not sold /
+    // disposed / sample / demo, power units only. That is the canonical scope for a denominator; the bare
+    // owner-or-leased pair is still accepted where a query has not moved.
+    const usesRoster = /FROM mdata\.units\s+WHERE \$\{fleetRosterSql\("", "\$1"\)\}/.test(query);
+    if (!usesRoster && (!query.includes("owner_company_id = $1::uuid") || !query.includes("currently_leased_to_company_id = $1::uuid"))) {
       failures.push(`${KPI_ROUTES}: ${name} must use the canonical owner-or-currently-leased fleet scope`);
     }
   }
@@ -74,9 +84,14 @@ for (const [name, ok] of checks) if (!ok) failures.push(name);
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ["OOS leased scope", kpiRoutes.replace("WHERE (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)", "WHERE u.owner_company_id = $1::uuid")],
-    ["active-unit leased scope", kpiRoutes.replace("WHERE (owner_company_id = $1::uuid OR currently_leased_to_company_id = $1::uuid)", "WHERE owner_company_id = $1::uuid")],
+    // ROUND 326 item 17 (#24029): the denominator reads the one fleet roster — plant an owner-only scope in its place.
+    ["active-unit fleet scope", kpiRoutes.replace('WHERE ${fleetRosterSql("", "$1")}', "WHERE owner_company_id = $1::uuid")],
   ];
   for (const [name, mutated] of mutations) {
+    if (mutated === kpiRoutes) {
+      console.error(`verify:maint-kpi-dashboard SELFTEST FAIL — ${name} mutation no longer matches the source (fixture drift)`);
+      process.exit(1);
+    }
     if (mutated === kpiRoutes || fleetScopeFailures(mutated).length === 0) {
       console.error(`verify:maint-kpi-dashboard SELFTEST FAIL — ${name} mutation escaped`);
       process.exit(1);

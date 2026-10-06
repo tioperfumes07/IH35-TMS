@@ -66,8 +66,16 @@ function main() {
   if (!vehicleActionBar.includes("+ Create Work Order")) {
     failures.push("vehicle ActionBar must expose + Create Work Order");
   }
-  if (!vehicleActionBar.includes("/maintenance/work-orders/new?unit_id=")) {
-    failures.push("vehicle ActionBar must deep-link to /maintenance/work-orders/new?unit_id=");
+  // D24 (C-21..C-24, #23462): Create Work Order is a MODAL on Maintenance Home (?create_wo=1&unit_id=), pre-filled with the
+  // unit; the old /maintenance/work-orders/new?unit_id= page only redirects there. Either link is fine — the unit must
+  // reach the modal.
+  const maintHome = read(path.join(ROOT, "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx"));
+  const modalLink =
+    vehicleActionBar.includes("/maintenance?create_wo=1&unit_id=") &&
+    /const createWoUnitId = searchParams\.get\("unit_id"\)/.test(maintHome) &&
+    /\{ unit_id: createWoUnitId,/.test(maintHome);
+  if (!vehicleActionBar.includes("/maintenance/work-orders/new?unit_id=") && !modalLink) {
+    failures.push("vehicle ActionBar must deep-link to Create Work Order for this unit (/maintenance?create_wo=1&unit_id= -> modal prefilled)");
   }
   if (!workOrderNew.includes("WorkOrderNewPage")) {
     failures.push("WorkOrderNewPage must exist for deep-link handler");
