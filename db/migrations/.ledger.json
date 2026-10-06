@@ -1,7 +1,7 @@
 {
   "_comment": "GENERATED FILE - cache of the canonical ledger _system._schema_migrations, read by verify:applied-migrations-immutable where the database is unreachable. Do not hand-edit. Regenerate with: npm run db:ledger:snapshot",
   "generated_by": "db:ledger:snapshot",
-  "migration_count": 1417,
+  "migration_count": 1421,
   "migrations": [
     {
       "filename": "0001_audit_init.sql",
@@ -5670,6 +5670,22 @@
     {
       "filename": "202615420900_rls_uuid_cast_defensive_resweep.sql",
       "checksum": "b06f090699e94edcca1abbf557d6a5c6f15616768c8b679230b3adadb1eef0c6"
+    },
+    {
+      "filename": "202615430100_bills_display_id_assigned_at_insert.sql",
+      "checksum": "281cb06ab70206b69481cf587c3307708036266b135f391a8bf93cac46964e13"
+    },
+    {
+      "filename": "202615430500_fn_account_balances_one_ledger_membership_rule.sql",
+      "checksum": "14370b9093053433823a9ac140399c4e13b772fcf08b45d27133effc541481c2"
+    },
+    {
+      "filename": "202615430900_legal_contract_pdf_filed.sql",
+      "checksum": "b16220e75759310a8f3d3ae8e44c89ea9295de0c23271889d3f40c1ec30eba0c"
+    },
+    {
+      "filename": "202615431000_views_factoring_repurchase_obligation.sql",
+      "checksum": "e31682cacf0729f10fb5bb2920834e7e273e746dffeaebd49b1c7252c2335d5a"
     }
   ]
 }
