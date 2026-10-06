@@ -12,6 +12,10 @@ export type AccountingLeaseContract = {
   number_of_periods: number;
   total_lease_payments_cents: string;
   commencement_je_id: string | null;
+  /** LST-F422: intercompany lessee company and the lessor-as-vendor its period rent bills are owed to. */
+  lessee_operating_company_id?: string | null;
+  lessee_vendor_id?: string | null;
+  lessee_vendor_name?: string | null;
 };
 
 export type AccountingLeaseAsset = {

@@ -34,6 +34,8 @@ export type CreateLeaseInput = {
    */
   lesseeCustomerId?: string | null;
   lesseeOperatingCompanyId?: string | null;
+  /** LST-F422: intercompany lessee — the lessor as a vendor IN THE LESSEE company (required with lesseeOperatingCompanyId). */
+  lesseeVendorId?: string | null;
   displayId?: string | null;
   election?: LeaseElection;
   commencementDate: string;
@@ -69,6 +71,18 @@ export async function createLeaseContract(input: CreateLeaseInput, actor: Actor)
   if (lesseeOperatingCompanyId && lesseeOperatingCompanyId === input.lessorOperatingCompanyId) {
     throw new Error("createLeaseContract: a company cannot lease to itself (lessee equals lessor).");
   }
+  // LST-F422: an intercompany lessee pays its rent by BILL, every period, to the lessor's vendor record in the lessee
+  // company. A/P is written only by documents (ROUND 393.1), so the vendor is required up front, never guessed later.
+  const lesseeVendorId = input.lesseeVendorId ?? null;
+  if (lesseeOperatingCompanyId && !lesseeVendorId) {
+    throw new Error(
+      "createLeaseContract: an intercompany lease needs lesseeVendorId — the lessor as a vendor in the lessee company " +
+        "(e.g. TRK in USMCA). Each period's rent is a bill to that vendor."
+    );
+  }
+  if (!lesseeOperatingCompanyId && lesseeVendorId) {
+    throw new Error("createLeaseContract: lesseeVendorId applies only to an intercompany lessee (lesseeOperatingCompanyId).");
+  }
 
   return withCurrentUser(actor.userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
@@ -76,11 +90,11 @@ export async function createLeaseContract(input: CreateLeaseInput, actor: Actor)
     const res = await client.query<{ id: string }>(
       `INSERT INTO accounting.lease_contract
          (operating_company_id, lessor_operating_company_id, lessee_name, lessee_customer_id,
-          lessee_operating_company_id, display_id,
+          lessee_operating_company_id, display_id, lessee_vendor_id,
           election, commencement_date, end_date, payment_amount_cents, payment_frequency, number_of_periods,
           total_lease_payments_cents, discount_rate_bps, residual_value_cents, contract_instance_id, status,
           created_by_user_id)
-       VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5::uuid,$6,$7,$8::date,$9::date,$10,$11,$12,$13,$14,$15,$16::uuid,'draft',$17::uuid)
+       VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5::uuid,$6,$18::uuid,$7,$8::date,$9::date,$10,$11,$12,$13,$14,$15,$16::uuid,'draft',$17::uuid)
        RETURNING id::text`,
       [
         input.operatingCompanyId,
@@ -100,6 +114,7 @@ export async function createLeaseContract(input: CreateLeaseInput, actor: Actor)
         input.residualValueCents ?? 0,
         input.contractInstanceId ?? null,
         actor.userId,
+        lesseeVendorId,
       ]
     );
     const id = res.rows[0]!.id;

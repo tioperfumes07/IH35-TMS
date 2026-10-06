@@ -1341,6 +1341,7 @@
       "lessee_liability_initial_cents",
       "lessee_name",
       "lessee_operating_company_id",
+      "lessee_vendor_id",
       "lessor_operating_company_id",
       "lessor_vendor_id",
       "number_of_periods",

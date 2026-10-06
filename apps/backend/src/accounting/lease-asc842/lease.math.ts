@@ -12,6 +12,7 @@ export type BalancedLine = { debit_or_credit: "debit" | "credit"; amount_cents: 
 
 export type LeasePostingErrorCode =
   | "LEASE_NOT_FOUND"
+  | "LEASE_LESSEE_VENDOR_MISSING"
   | "LEASE_BILLS_THROUGH_BILL_ENGINE"
   | "LEASE_NOT_POSTABLE"
   | "LEASE_NOT_OPERATING"

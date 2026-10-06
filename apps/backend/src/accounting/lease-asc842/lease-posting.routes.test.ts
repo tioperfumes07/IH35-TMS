@@ -74,29 +74,39 @@ describe("FIN-22 lease posting routes — wiring, gate, flag-OFF passthrough, er
     const app = await build();
     const res = await app.inject({ method: "POST", url: rentalUrl, payload: { lease_contract_id: LEASE, period_number: 1 } });
     expect(res.statusCode).toBe(403);
-    expect(rentalMock).not.toHaveBeenCalled();
+    expect(activationPostMock).not.toHaveBeenCalled();
   });
 
   it("flag OFF -> poster no-op passthrough (skipped_flag_off, HTTP 200, no JE)", async () => {
-    rentalMock.mockResolvedValue({ result: "skipped_flag_off", journal_entry_id: null, lease_contract_id: LEASE });
+    // LST-F422: a period posts BOTH legs through postOperatingActivationEntries (lessor rental + lessee rent bill).
+    activationPostMock.mockResolvedValue({
+      period_number: 1,
+      lessor: { result: "skipped_flag_off", journal_entry_id: null, lease_contract_id: LEASE },
+      lessee: { result: "skipped_no_intercompany_lessee", journal_entry_id: null, lease_contract_id: LEASE },
+    });
     const app = await build();
     const res = await app.inject({ method: "POST", url: rentalUrl, payload: { lease_contract_id: LEASE, period_number: 1 } });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ result: "skipped_flag_off", journal_entry_id: null });
-    expect(rentalMock).toHaveBeenCalledWith(
+    expect(activationPostMock).toHaveBeenCalledWith(
       { operatingCompanyId: OPCO, leaseContractId: LEASE, periodNumber: 1 },
       { userId: authState.uuid }
     );
+    expect(rentalMock).not.toHaveBeenCalled();
   });
 
   it("posted -> HTTP 201 with balanced totals passthrough", async () => {
-    rentalMock.mockResolvedValue({
-      result: "posted",
-      journal_entry_id: "33333333-3333-4333-8333-333333333333",
-      lease_contract_id: LEASE,
-      idempotency_key: "k",
-      debit_total_cents: 250000,
-      credit_total_cents: 250000,
+    activationPostMock.mockResolvedValue({
+      period_number: 1,
+      lessor: {
+        result: "posted",
+        journal_entry_id: "33333333-3333-4333-8333-333333333333",
+        lease_contract_id: LEASE,
+        idempotency_key: "k",
+        debit_total_cents: 250000,
+        credit_total_cents: 250000,
+      },
+      lessee: { result: "skipped_no_intercompany_lessee", journal_entry_id: null, lease_contract_id: LEASE },
     });
     const app = await build();
     const res = await app.inject({ method: "POST", url: rentalUrl, payload: { lease_contract_id: LEASE, period_number: 1 } });
@@ -104,8 +114,27 @@ describe("FIN-22 lease posting routes — wiring, gate, flag-OFF passthrough, er
     expect(res.json()).toMatchObject({ result: "posted", debit_total_cents: 250000, credit_total_cents: 250000 });
   });
 
+  it("intercompany period: the lessee's rent bill posts with the lessor's rental (LST-F422 — every period, not just activation)", async () => {
+    activationPostMock.mockResolvedValue({
+      period_number: 4,
+      lessor: { result: "already_posted", journal_entry_id: "44444444-4444-4444-8444-444444444444", lease_contract_id: LEASE },
+      lessee: {
+        result: "posted",
+        journal_entry_id: "55555555-5555-4555-8555-555555555555",
+        lease_contract_id: LEASE,
+        idempotency_key: `ASC842-RENT:${LEASE}:P4`,
+        debit_total_cents: 180000,
+        credit_total_cents: 180000,
+      },
+    });
+    const app = await build();
+    const res = await app.inject({ method: "POST", url: rentalUrl, payload: { lease_contract_id: LEASE, period_number: 4 } });
+    expect(res.statusCode).toBe(201);
+    expect(res.json()).toMatchObject({ result: "already_posted", lessee: { result: "posted", idempotency_key: `ASC842-RENT:${LEASE}:P4` } });
+  });
+
   it("RETITLE_REQUIRED -> HTTP 409 (poster precondition surfaced, not swallowed)", async () => {
-    rentalMock.mockRejectedValue(new LeasePostingError("RETITLE_REQUIRED", "re-title to TRK first"));
+    activationPostMock.mockRejectedValue(new LeasePostingError("RETITLE_REQUIRED", "re-title to TRK first"));
     const app = await build();
     const res = await app.inject({ method: "POST", url: rentalUrl, payload: { lease_contract_id: LEASE, period_number: 1 } });
     expect(res.statusCode).toBe(409);
@@ -113,7 +142,7 @@ describe("FIN-22 lease posting routes — wiring, gate, flag-OFF passthrough, er
   });
 
   it("LEASE_NOT_OPERATING -> HTTP 422", async () => {
-    rentalMock.mockRejectedValue(new LeasePostingError("LEASE_NOT_OPERATING", "sales-type lease"));
+    activationPostMock.mockRejectedValue(new LeasePostingError("LEASE_NOT_OPERATING", "sales-type lease"));
     const app = await build();
     const res = await app.inject({ method: "POST", url: rentalUrl, payload: { lease_contract_id: LEASE, period_number: 1 } });
     expect(res.statusCode).toBe(422);
@@ -124,7 +153,7 @@ describe("FIN-22 lease posting routes — wiring, gate, flag-OFF passthrough, er
     const res = await app.inject({ method: "POST", url: rentalUrl, payload: { lease_contract_id: LEASE } }); // missing period_number
     expect(res.statusCode).toBeGreaterThanOrEqual(400);
     expect(res.statusCode).not.toBe(201);
-    expect(rentalMock).not.toHaveBeenCalled();
+    expect(activationPostMock).not.toHaveBeenCalled();
   });
 
   it("sales-type commencement + end-of-term sale routes delegate to their posters", async () => {

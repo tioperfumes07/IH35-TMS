@@ -66,6 +66,16 @@ function checkWiring() {
   assertContains(routes, "leases/:lease_id/activate", "activate path");
   assertContains(posting, "export async function postOperatingActivationEntries", "activation poster");
   assertContains(posting, "export async function postOperatingLesseeRentPeriod", "lessee poster");
+  // LST-F422: the lessee leg is a BILL from the lessor's vendor in the lessee company (A/P only through documents,
+  // ROUND 393.1), idempotent on its lease bill key, and the rental route posts BOTH legs every period.
+  const lesseeFn = posting.slice(posting.indexOf("export async function postOperatingLesseeRentPeriod"), posting.indexOf("export type OperatingActivationResult"));
+  assertContains(lesseeFn, "createBillInClientTx(", "lessee leg creates the lessor's bill");
+  assertContains(lesseeFn, "vendorId: lease.lessee_vendor_id", "lessee bill owed to lessee_vendor_id");
+  assertContains(lesseeFn, "leaseBillKey", "lessee bill idempotency key");
+  assertContains(lesseeFn, 'source_transaction_type: "bill"', "lessee bill posts through the bill poster");
+  if (/"ap_control"/.test(posting)) fail("lease-posting.service.ts resolves ap_control — the lessee leg must post through its bill, never a raw A/P line (LST-F422)");
+  const rentalRoute = routes.slice(routes.indexOf("lease-posting/operating/rental"));
+  assertContains(rentalRoute.slice(0, 1500), "postOperatingActivationEntries(", "rental route posts both legs per period");
   assertContains(posting, "assertBalanced", "balanced gate");
   assertContains(posting, '"rent_expense"', "lessee role resolve");
   assertContains(posting, "rental_income", "lessor role");
@@ -102,9 +112,8 @@ if (isSelftest) {
     }
     const tmpRoutes = join(tmpRoot, "apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts");
     const original = readFileSync(routesPath, "utf8");
-    const planted = original
-      .replace(/postOperatingActivationEntries,/g, "")
-      .replace(/const activation = await postOperatingActivationEntries\([\s\S]*?\);/m, "const activation = null;");
+    // LST-F422: the rental route calls the same per-period function now, so unwire every call, not just activation's.
+    const planted = original.replace(/postOperatingActivationEntries/g, "postNothingAtAll");
     writeFileSync(tmpRoutes, planted);
     const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
       cwd: tmpRoot,
