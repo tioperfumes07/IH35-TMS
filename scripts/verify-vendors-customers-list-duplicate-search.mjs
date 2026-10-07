@@ -19,7 +19,8 @@ function assert(cond, msg) {
 
 export function checkPage(src, label) {
   assert(src.includes("ParityTable"), `${label}: must use ParityTable`);
-  assert(src.includes("CollapsedListFilters"), `${label}: must keep CollapsedListFilters for chips`);
+  // MoneyListToolbar/MultiSelectDropdown now owns chips (FILTER-MULTI-01), so CollapsedListFilters
+  // is no longer required; the invariant is no duplicate free-text search.
   assert(!/\bTableSearch\b/.test(src.replace(/\/\/.*$/gm, "")), `${label}: must not import/use TableSearch (ParityTable owns search)`);
   assert(!/searchSlot=/.test(src), `${label}: must not mount searchSlot competing with toolbar Search`);
 }
