@@ -81,7 +81,7 @@ export function PredictiveAlertsPage() {
     setResolveAlertId(id);
     setResolveModalOpen(true);
   };
-  const submitResolve = (note: string) => {
+  const submitResolve = async (note: string): Promise<void> => {
     if (!resolveAlertId) return;
     resolveMut.mutate({ id: resolveAlertId, companyId: operatingCompanyId, generation: actionGenerationRef.current, note: note.trim() });
     setResolveModalOpen(false);
