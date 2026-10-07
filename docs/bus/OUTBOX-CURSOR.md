@@ -1,3 +1,21 @@
+## 2026-10-07T19:59Z · BANK-SLATE-DRV-FLEET + BANK-SLATE-SETL-DETAIL MERGED
+
+FINDING: Leftover Tailwind slate-* on driver/fleet + settlement detail surfaces → house tokens.
+
+MERGED:
+- BANK-SLATE-DRV-FLEET #25708 squash `18346611e9` — BrakeWear/W8Ben/AuditHistory/BorderCred/FleetTable; guard verify-drv-fleet-slate-leftover-chrome piggyback EVEN 1752
+- BANK-SLATE-SETL-DETAIL #25709 squash `ebfd8a0bc8` — SettlementDetailPage + AddPayLine/OpenPre/PreSettlements/SettlementsSection; guard verify-setl-detail-slate-leftover-chrome piggyback EVEN 3914
+
+LIVE PROOF:
+- verify-drv-fleet-slate-leftover-chrome exit 0 — PASS leftover slate class refuse (6 files); SELFTEST PASS
+- verify-setl-detail-slate-leftover-chrome exit 0 — PASS leftover slate class refuse (5 files); SELFTEST PASS
+
+REMAINING: owner Chrome Settlement Creator click; FE redeploy for slate tips; next leftover slate class (AccidentReportDrawer · FineCreate · HOS tabs/modals · DesignView)
+
+NEXT leftover: AccidentReportDrawer · FineCreateModal · HosViolationCreateModal · HOSViolationsTab (text-slate-*)
+
+Files Modified: this OUTBOX only
+
 ## 2026-10-07T19:30Z · SETL-CREATOR-LAYOUT + FE-BUILD UNBLOCK LIVE
 
 FINDING: Settlement Creator permanent layout on tip; FE build unblocked after VoidReasonModal Promise TS2322.
