@@ -1,3 +1,22 @@
+## 2026-10-07T22:50Z · RELAY-F442 SENDER FEE — PUSHED (await merge)
+
+FINDING: RELAY-F442 — `total_amount_paid` is fuel-only; `sender_fee` ($2 on txn_4ypX8FQCRzHr5n) excluded from wallet + GL → $2/fill wallet drift vs Relay prepaid.
+
+SHIPPED on `cursor/relay-f442-sender-fee-c89b`:
+- `relay-sender-fee-cents.ts` — fees[] prefer, else line fees; wallet = paid + fee
+- ingest + wallet backfill drawdown includes fee; staging paid stays fuel-only
+- `postRelayFuelFill` + fuel poster: `fee_amount_cents` → "Fuel Card Fee" debit; credit = paid+fee
+- Settlement Creator: `total_cost`=net, `fee_amount`=`fees_cents` (expense line 2 already exists ROUND 192)
+- guard `verify-relay-f442-sender-fee.mjs` piggyback EVEN 12375
+
+LIVE PROOF: verify-relay-f442 --selftest + live PASS · backend tsc exit 0 · vitest 8+13 PASS · claim no CI
+
+REMAINING: merge + BE deploy; live wallet re-backfill for fills that already have fee lines; F440 cron silence stays CC-1; F441 lines already stored (typed lines from fuel_items)
+
+NEXT: merge F442 · owner Chrome prove fee line on match / Creator · F440 unblock feed
+
+Files Modified: relay-sender-fee-cents(+test) · relay-fuel-ingest · relay-wallet-bank-feed · bank-match-fuel-post(+test) · poster.service · settlement-creator.service · SettlementCreatorDrawer · verify-relay-f442 · verify-steps/12375
+
 ## 2026-10-07T22:08Z · R441 C1–C4 MERGED
 
 FINDING: BANK-F91151 / R441-C1–C4 — banking drawers stay open after success; edit expand blank; CC liability = all Liability; vendor column "Vendor — not visible".

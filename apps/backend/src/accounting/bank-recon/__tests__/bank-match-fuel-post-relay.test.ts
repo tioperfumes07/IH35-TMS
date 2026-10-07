@@ -10,7 +10,11 @@ import { FuelMatchPostError, postFuelFillOnBankMatch } from "../bank-match-fuel-
 const OPCO = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const input = { operating_company_id: OPCO, actor_user_uuid: "actor", kind: "relay_fuel" as const, fill_id: "fill-1" };
 
-function client(paid: number, lines: Array<{ fuel_type: string; cents: number }>) {
+function client(
+  paid: number,
+  lines: Array<{ fuel_type: string; cents: number; fee_cents?: number }>,
+  fees: unknown[] = [],
+) {
   const calls: string[] = [];
   return {
     calls,
@@ -18,11 +22,32 @@ function client(paid: number, lines: Array<{ fuel_type: string; cents: number }>
       query: vi.fn(async (sql: string) => {
         calls.push(sql);
         if (sql.includes("FROM integrations.relay_fuel_transactions r")) {
-          return { rows: [{ transaction_at: "2026-09-10T12:00:00Z", amount_cents: String(paid), driver_id: "d1", unit_id: "u1", unit_number: "T169", location_state: "TX", gallons: "100", merchant_name: "Love's" }] };
+          return {
+            rows: [
+              {
+                transaction_at: "2026-09-10T12:00:00Z",
+                amount_cents: String(paid),
+                transaction_id: "txn_4ypX8FQCRzHr5n",
+                fees_json: fees,
+                driver_id: "d1",
+                unit_id: "u1",
+                unit_number: "T169",
+                location_state: "TX",
+                gallons: "100",
+                merchant_name: "Love's",
+              },
+            ],
+          };
         }
         if (sql.includes("JOIN mdata.loads l ON l.id = lat.load_id")) return { rows: [{ load_id: "load-1", load_number: "13558" }] };
-        if (sql.includes("FROM integrations.relay_fuel_transaction_lines l") && sql.includes("AS fuel_type, sum(l.total_discounted_price_cents)")) {
-          return { rows: lines.map((l) => ({ fuel_type: l.fuel_type, cents: String(l.cents) })) };
+        if (sql.includes("FROM integrations.relay_fuel_transaction_lines l") && sql.includes("AS fuel_type")) {
+          return {
+            rows: lines.map((l) => ({
+              fuel_type: l.fuel_type,
+              cents: String(l.cents),
+              fee_cents: String(l.fee_cents ?? 0),
+            })),
+          };
         }
         return { rows: [] };
       }),
@@ -36,8 +61,15 @@ describe("Relay fill posting — one leg per product", () => {
   it("posts diesel, DEF and reefer as three cost lines that foot to the wallet credit (used to be one diesel leg)", async () => {
     const { c } = client(60000, [{ fuel_type: "diesel", cents: 50000 }, { fuel_type: "def", cents: 3000 }, { fuel_type: "reefer", cents: 7000 }]);
     await postFuelFillOnBankMatch(c, input);
-    const arg = mockPost.mock.calls[0]![1] as { fuel_kind: string; cost_lines: unknown; amount_cents: number; company_direct_credit: string };
+    const arg = mockPost.mock.calls[0]![1] as {
+      fuel_kind: string;
+      cost_lines: unknown;
+      amount_cents: number;
+      fee_amount_cents: number | null;
+      company_direct_credit: string;
+    };
     expect(arg.amount_cents).toBe(60000);
+    expect(arg.fee_amount_cents).toBeNull();
     expect(arg.fuel_kind).toBe("diesel");
     expect(arg.company_direct_credit).toBe("relay_fuel_wallet");
     expect(arg.cost_lines).toEqual([
@@ -45,6 +77,27 @@ describe("Relay fill posting — one leg per product", () => {
       { fuel_kind: "def", amount_cents: 3000 },
       { fuel_kind: "reefer", amount_cents: 7000 },
     ]);
+  });
+
+  it("RELAY-F442 — sender_fee is its own fee_amount_cents; wallet amount = paid + fee", async () => {
+    // txn_4ypX8FQCRzHr5n: DEF 69.41 + reefer 524.92 = 594.33 paid; fees[] sender_fee $2.00 → wallet 596.33
+    const { c } = client(
+      59433,
+      [
+        { fuel_type: "def", cents: 6941, fee_cents: 200 },
+        { fuel_type: "reefer", cents: 52492, fee_cents: 0 },
+      ],
+      [{ type: "sender_fee", amount: "2.00" }],
+    );
+    await postFuelFillOnBankMatch(c, input);
+    const arg = mockPost.mock.calls[0]![1] as {
+      amount_cents: number;
+      fee_amount_cents: number | null;
+      cost_lines: Array<{ fuel_kind: string; amount_cents: number }>;
+    };
+    expect(arg.fee_amount_cents).toBe(200);
+    expect(arg.amount_cents).toBe(59633);
+    expect(arg.cost_lines.reduce((t, l) => t + l.amount_cents, 0)).toBe(59433);
   });
 
   it("IFTA gallons are road diesel only (reefer and DEF are not motor fuel)", async () => {

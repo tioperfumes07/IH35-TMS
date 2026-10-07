@@ -1138,12 +1138,15 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     pdfDriverNet,
   ]);
 
+  // RELAY-F442 — receipt/gallons×cpg is fuel net; fees_cents is the card fee (own GL line). Subtotal = both.
   const fuelSubtotal = fuels.reduce((s, f) => {
-    const a =
-      f.receipt_cents ??
-      Math.round(Number(f.gallons || 0) * Number(f.cpg_cents || 0)) +
-        Math.round(Number(f.fees_cents || 0)) -
-        Math.round(Number(f.discount_cents || 0));
+    const fee = Math.max(0, Math.round(Number(f.fees_cents || 0)));
+    const net =
+      f.receipt_cents != null
+        ? Math.round(Number(f.receipt_cents))
+        : Math.round(Number(f.gallons || 0) * Number(f.cpg_cents || 0)) -
+          Math.round(Number(f.discount_cents || 0));
+    const a = net + fee;
     return s + (a > 0 ? a : 0);
   }, 0);
   /**
