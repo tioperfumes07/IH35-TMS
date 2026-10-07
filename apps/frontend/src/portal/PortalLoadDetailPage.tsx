@@ -76,66 +76,66 @@ export function PortalLoadDetailPage() {
 
   return (
     <div className="space-y-6">
-      {detailQuery.isLoading ? <p className="text-xs text-slate-600">Loading load…</p> : null}
+      {detailQuery.isLoading ? <p className="text-xs text-[#4B5563]">Loading load…</p> : null}
       {detailQuery.error ? <p className="text-xs text-red-600">Load not found.</p> : null}
 
       {detail ? (
         <>
-          <div className="rounded-sm border border-slate-200 bg-white p-4">
+          <div className="rounded-sm border border-[#E5E7EB] bg-white p-4">
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-page-title font-semibold">Load {detail.load.load_number}</h1>
               <StatusBadge variant="neutral">{detail.load.status.replace(/_/g, " ")}</StatusBadge>
               <StatusBadge variant="info">{detail.load.progress_status ?? "unknown"}</StatusBadge>
             </div>
             {detail.load.progress_eta_delta_minutes != null ? (
-              <p className="mt-2 text-xs text-slate-600">ETA delta vs schedule: {detail.load.progress_eta_delta_minutes} min</p>
+              <p className="mt-2 text-xs text-[#4B5563]">ETA delta vs schedule: {detail.load.progress_eta_delta_minutes} min</p>
             ) : null}
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-sm border border-slate-200 bg-white p-4 text-xs">
-              <h2 className="font-semibold text-slate-900">Pickup</h2>
-              <p className="mt-2 text-slate-700">{pickup?.address_line1}</p>
-              <p className="text-slate-700">{[pickup?.city, pickup?.state].filter(Boolean).join(", ")}</p>
+            <div className="rounded-sm border border-[#E5E7EB] bg-white p-4 text-xs">
+              <h2 className="font-semibold text-[#0F1219]">Pickup</h2>
+              <p className="mt-2 text-[#1F2A44]">{pickup?.address_line1}</p>
+              <p className="text-[#1F2A44]">{[pickup?.city, pickup?.state].filter(Boolean).join(", ")}</p>
             </div>
-            <div className="rounded-sm border border-slate-200 bg-white p-4 text-xs">
-              <h2 className="font-semibold text-slate-900">Delivery</h2>
-              <p className="mt-2 text-slate-700">{delivery?.address_line1}</p>
-              <p className="text-slate-700">{[delivery?.city, delivery?.state].filter(Boolean).join(", ")}</p>
+            <div className="rounded-sm border border-[#E5E7EB] bg-white p-4 text-xs">
+              <h2 className="font-semibold text-[#0F1219]">Delivery</h2>
+              <p className="mt-2 text-[#1F2A44]">{delivery?.address_line1}</p>
+              <p className="text-[#1F2A44]">{[delivery?.city, delivery?.state].filter(Boolean).join(", ")}</p>
             </div>
           </div>
 
-          <div className="rounded-sm border border-slate-200 bg-white p-4">
-            <h2 className="font-semibold text-slate-900">Live location</h2>
+          <div className="rounded-sm border border-[#E5E7EB] bg-white p-4">
+            <h2 className="font-semibold text-[#0F1219]">Live location</h2>
             {detail.tracking ? (
-              <p className="mt-2 text-xs text-slate-700">
+              <p className="mt-2 text-xs text-[#1F2A44]">
                 {detail.tracking.location_text} · {detail.tracking.last_update_text}
               </p>
             ) : (
-              <p className="mt-2 text-xs text-slate-600">Location unavailable — truck not assigned or GPS pending.</p>
+              <p className="mt-2 text-xs text-[#4B5563]">Location unavailable — truck not assigned or GPS pending.</p>
             )}
           </div>
 
-          <div className="rounded-sm border border-slate-200 bg-white p-4">
-            <h2 className="mb-4 font-semibold text-slate-900">Milestones</h2>
-            <ol className="space-y-4 border-l-2 border-slate-200 pl-4">
+          <div className="rounded-sm border border-[#E5E7EB] bg-white p-4">
+            <h2 className="mb-4 font-semibold text-[#0F1219]">Milestones</h2>
+            <ol className="space-y-4 border-l-2 border-[#E5E7EB] pl-4">
               {detail.milestones.map((m) => (
                 <li key={m.id} className="relative">
                   <span className="absolute left-[-1.35rem] top-1 h-3 w-3 rounded-full bg-[#1F2A44]" aria-hidden />
-                  <p className="font-medium capitalize text-slate-900">{milestoneLabel(m.milestone_type)}</p>
-                  <p className="text-xs text-slate-500">{new Date(m.occurred_at).toLocaleString()}</p>
+                  <p className="font-medium capitalize text-[#0F1219]">{milestoneLabel(m.milestone_type)}</p>
+                  <p className="text-xs text-[#6B7280]">{new Date(m.occurred_at).toLocaleString()}</p>
                 </li>
               ))}
-              {detail.milestones.length === 0 ? <li className="text-xs text-slate-600">No milestones recorded yet.</li> : null}
+              {detail.milestones.length === 0 ? <li className="text-xs text-[#4B5563]">No milestones recorded yet.</li> : null}
             </ol>
           </div>
 
-          <div className="rounded-sm border border-slate-200 bg-white p-4">
-            <h2 className="mb-3 font-semibold text-slate-900">Documents</h2>
+          <div className="rounded-sm border border-[#E5E7EB] bg-white p-4">
+            <h2 className="mb-3 font-semibold text-[#0F1219]">Documents</h2>
             <ul className="space-y-2 text-xs">
               {(docsQuery.data ?? []).map((doc) => (
                 <li key={doc.id} className="flex items-center justify-between gap-3">
-                  <span className="uppercase text-slate-700">
+                  <span className="uppercase text-[#1F2A44]">
                     {doc.category}: {doc.filename}
                   </span>
                   <Button variant="secondary" onClick={() => void downloadDoc(doc.id)}>
@@ -143,7 +143,7 @@ export function PortalLoadDetailPage() {
                   </Button>
                 </li>
               ))}
-              {(docsQuery.data ?? []).length === 0 ? <li className="text-slate-600">No documents available yet.</li> : null}
+              {(docsQuery.data ?? []).length === 0 ? <li className="text-[#4B5563]">No documents available yet.</li> : null}
             </ul>
           </div>
         </>

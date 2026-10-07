@@ -58,29 +58,29 @@ export function PortalProfilePage() {
 
   return (
     <div className="max-w-lg space-y-4">
-      <h1 className="text-page-title font-semibold text-slate-900">Profile & notifications</h1>
-      {profileQuery.isLoading ? <p className="text-xs text-slate-600">Loading…</p> : null}
+      <h1 className="text-page-title font-semibold text-[#0F1219]">Profile & notifications</h1>
+      {profileQuery.isLoading ? <p className="text-xs text-[#4B5563]">Loading…</p> : null}
       {profileQuery.isError ? (
         <p className="text-xs text-red-700">Failed to load profile. <button type="button" className="font-semibold underline" onClick={() => void profileQuery.refetch()}>Retry</button></p>
       ) : null}
       {profileQuery.data ? (
         <form
-          className="space-y-4 rounded-sm border border-slate-200 bg-white p-4"
+          className="space-y-4 rounded-sm border border-[#E5E7EB] bg-white p-4"
           onSubmit={(e) => {
             e.preventDefault();
             saveMutation.mutate();
           }}
         >
           <label className="block text-xs">
-            <span className="font-medium text-slate-700">Email</span>
-            <input className="mt-1 w-full rounded-sm border border-slate-200 bg-slate-50 px-3 py-2" value={profileQuery.data.email} readOnly />
+            <span className="font-medium text-[#1F2A44]">Email</span>
+            <input className="mt-1 w-full rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2" value={profileQuery.data.email} readOnly />
           </label>
           <label className="block text-xs">
-            <span className="font-medium text-slate-700">Full name</span>
-            <input className="mt-1 w-full rounded-sm border border-slate-300 px-3 py-2" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+            <span className="font-medium text-[#1F2A44]">Full name</span>
+            <input className="mt-1 w-full rounded-sm border border-[#E5E7EB] px-3 py-2" value={fullName} onChange={(e) => setFullName(e.target.value)} />
           </label>
           <fieldset className="space-y-2 text-xs">
-            <legend className="font-medium text-slate-700">Email notifications</legend>
+            <legend className="font-medium text-[#1F2A44]">Email notifications</legend>
             <label className="flex items-center gap-2">
               <input type="checkbox" checked={notifyDispatch} onChange={(e) => setNotifyDispatch(e.target.checked)} />
               Dispatch

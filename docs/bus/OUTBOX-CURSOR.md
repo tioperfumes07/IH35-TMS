@@ -1,3 +1,22 @@
+## 2026-10-07T21:50Z · BANK-SLATE-PORTAL-ADV MERGED
+
+FINDING: Leftover Tailwind slate-* on PortalDashboard / PortalRouteGuard / CashAdvanceRequests → house tokens (+ OUTBOX #25730).
+
+MERGED:
+- BANK-SLATE-PORTAL-ADV #25731 squash `7fee1e5d7c` — PortalDashboardPage / PortalRouteGuard / CashAdvanceRequestsPage; guard verify-portal-adv-slate-leftover-chrome piggyback EVEN 3532; OUTBOX #25730 census
+- BANK-SLATE-FILT-CSA-PORTAL #25730 squash `8de9c7f153`
+- BANK-SLATE-LATE-INV-TOUR #25729 squash `bcef9c92be`
+
+SESSION WAVE: #25708–#25731 slate drain continuous
+
+LIVE PROOF: verify-portal-adv-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS
+
+REMAINING: FE redeploy; owner Chrome Settlement Creator; ~884 FE files still carry slate-*
+
+NEXT leftover: (this PR) PortalLayout · PortalProfile · PortalLoadDetail → densest remaining FE slate cluster
+
+Files Modified: OUTBOX + PortalLayout / PortalProfilePage / PortalLoadDetailPage
+
 ## 2026-10-07T21:45Z · BANK-SLATE-FILT-CSA-PORTAL MERGED
 
 FINDING: Leftover Tailwind slate-* on RunnerFilters / CsaFleetScoreCard / PortalLogin → house tokens (+ OUTBOX #25729).

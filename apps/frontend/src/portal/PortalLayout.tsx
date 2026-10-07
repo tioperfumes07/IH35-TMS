@@ -11,17 +11,17 @@ export function PortalLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <header className="border-b border-slate-200 bg-white">
+    <div className="min-h-screen bg-[#F7F8FA] text-[#0F1219]">
+      <header className="border-b border-[#E5E7EB] bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <Link to="/portal/dashboard" className="text-page-title font-semibold text-slate-900">
+          <Link to="/portal/dashboard" className="text-page-title font-semibold text-[#0F1219]">
             IH 35 Shipper Portal
           </Link>
           <nav className="flex items-center gap-3 text-xs">
-            <Link to="/portal/dashboard" className="text-slate-700 hover:text-slate-900">
+            <Link to="/portal/dashboard" className="text-[#1F2A44] hover:text-[#0F1219]">
               Loads
             </Link>
-            <Link to="/portal/profile" className="text-slate-700 hover:text-slate-900">
+            <Link to="/portal/profile" className="text-[#1F2A44] hover:text-[#0F1219]">
               Profile
             </Link>
             <Button variant="secondary" onClick={() => void onLogout()}>
