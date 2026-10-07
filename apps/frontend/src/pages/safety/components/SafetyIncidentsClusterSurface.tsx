@@ -557,7 +557,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
         key: "action",
         label: "Action",
         render: (row) => (
-          <button type="button" className="text-slate-700 underline" onClick={() => openRow(row)}>
+          <button type="button" className="text-[#1F2A44] underline" onClick={() => openRow(row)}>
             {config.detailLabel}
           </button>
         ),
@@ -572,8 +572,8 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
     <div className="space-y-3" data-testid={config.pageTestId}>
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div>
-          <div className="text-xs font-semibold text-slate-800">{config.title}</div>
-          <div className="text-xs text-slate-500">{config.subtitle}</div>
+          <div className="text-xs font-semibold text-[#0F1219]">{config.title}</div>
+          <div className="text-xs text-[#6B7280]">{config.subtitle}</div>
         </div>
         <Button
           size="sm"
@@ -592,7 +592,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
         className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white px-3 py-2"
         data-testid={`${config.pageTestId}-filters`}
       >
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Driver
           <EntityPicker
             kind="driver"
@@ -605,7 +605,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             dataTestId={`${config.pageTestId}-filter-driver`}
           />
         </label>
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Unit
           <EntityPicker
             kind="unit"
@@ -618,7 +618,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             dataTestId={`${config.pageTestId}-filter-unit`}
           />
         </label>
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Load
           <EntityPicker
             kind="load"
@@ -631,7 +631,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             dataTestId={`${config.pageTestId}-filter-load`}
           />
         </label>
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Trailer
           <EntityPicker
             kind="trailer"
@@ -644,7 +644,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             dataTestId={`${config.pageTestId}-filter-trailer`}
           />
         </label>
-        <div className="text-xs text-slate-600">
+        <div className="text-xs text-[#4B5563]">
           <label htmlFor="safety-incidents-from-date">From</label>
           <DatePicker
             id="safety-incidents-from-date"
@@ -655,7 +655,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             data-testid="safety-incidents-from-date"
           />
         </div>
-        <div className="text-xs text-slate-600">
+        <div className="text-xs text-[#4B5563]">
           <label htmlFor="safety-incidents-to-date">To</label>
           <DatePicker
             id="safety-incidents-to-date"
@@ -711,7 +711,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
       {drawerOpen ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid={`${config.pageTestId}-drawer`}>
           <div className="mb-2 flex items-center justify-between gap-2">
-            <div className="text-xs font-semibold text-slate-800">
+            <div className="text-xs font-semibold text-[#0F1219]">
               {createMode ? config.createLabel : editMode ? `Edit ${config.detailLabel}` : config.detailLabel}
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -750,7 +750,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                   </Button>
                 </>
               ) : null}
-              <button type="button" className="text-xs text-slate-500 underline" onClick={closeDrawer}>
+              <button type="button" className="text-xs text-[#6B7280] underline" onClick={closeDrawer}>
                 Close
               </button>
             </div>
@@ -758,7 +758,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
 
           {savedHint ? (
             <div
-              className="mb-2 text-xs font-medium text-slate-700"
+              className="mb-2 text-xs font-medium text-[#1F2A44]"
               data-testid={`${config.pageTestId}-saved-hint`}
             >
               Report saved — add photos now.
@@ -773,7 +773,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
           <div className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
             {has("incident_date") ? (
               <div className="block">
-                <label className="text-slate-600" htmlFor={`${config.pageTestId}-field-incident-date`}>Incident date</label>
+                <label className="text-[#4B5563]" htmlFor={`${config.pageTestId}-field-incident-date`}>Incident date</label>
                 {formEditable ? (
                   <DatePicker
                     id={`${config.pageTestId}-field-incident-date`}
@@ -783,14 +783,14 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                     max={companyToday()}
                   />
                 ) : (
-                  <div className="mt-1 text-slate-800">{formatDateUS(detail?.incident_at)}</div>
+                  <div className="mt-1 text-[#0F1219]">{formatDateUS(detail?.incident_at)}</div>
                 )}
               </div>
             ) : null}
 
             {has("driver_id") ? (
               <label className="block">
-                <span className="text-slate-600">Driver</span>
+                <span className="text-[#4B5563]">Driver</span>
                 {formEditable ? (
                   <div className="mt-1" data-testid={`${config.pageTestId}-field-driver_id`}>
                     <DriverPickerWithCreate
@@ -809,14 +809,14 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                     />
                   </div>
                 ) : (
-                  <div className="mt-1 text-slate-800">—</div>
+                  <div className="mt-1 text-[#0F1219]">—</div>
                 )}
               </label>
             ) : null}
 
             {has("unit_id") ? (
               <label className="block">
-                <span className="text-slate-600">Unit</span>
+                <span className="text-[#4B5563]">Unit</span>
                 {formEditable ? (
                   <div className="mt-1" data-testid={`${config.pageTestId}-field-unit_id`}>
                     <EntityPicker
@@ -836,7 +836,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                     <LoadSuggestionReadError query={suggestionQuery} />
                   </div>
                 ) : (
-                  <div className="mt-1 text-slate-800">
+                  <div className="mt-1 text-[#0F1219]">
                     {str(detail?.unit_number) || "—"}
                   </div>
                 )}
@@ -845,7 +845,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
 
             {has("trailer_id") ? (
               <label className="block">
-                <span className="text-slate-600">
+                <span className="text-[#4B5563]">
                   Trailer{config.requiredExtraFields.includes("trailer_id") ? " *" : ""}
                 </span>
                 {formEditable ? (
@@ -875,14 +875,14 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                     />
                   </div>
                 ) : (
-                  <div className="mt-1 text-slate-800">—</div>
+                  <div className="mt-1 text-[#0F1219]">—</div>
                 )}
               </label>
             ) : null}
 
             {has("load_id") ? (
               <label className="block">
-                <span className="text-slate-600">Load</span>
+                <span className="text-[#4B5563]">Load</span>
                 {formEditable ? (
                   <div className="mt-1" data-testid={`${config.pageTestId}-field-load_id`}>
                     <EntityPicker
@@ -910,14 +910,14 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                     />
                   </div>
                 ) : (
-                  <div className="mt-1 text-slate-800">—</div>
+                  <div className="mt-1 text-[#0F1219]">—</div>
                 )}
               </label>
             ) : null}
 
             {has("interchange_party") ? (
               <label className="block">
-                <span className="text-slate-600">Interchange party</span>
+                <span className="text-[#4B5563]">Interchange party</span>
                 {formEditable ? (
                   <input
                     className={inputCls}
@@ -927,14 +927,14 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                     onChange={(e) => setField("interchange_party", e.target.value)}
                   />
                 ) : (
-                  <div className="mt-1 text-slate-800">{str(detail?.interchange_party) || "—"}</div>
+                  <div className="mt-1 text-[#0F1219]">{str(detail?.interchange_party) || "—"}</div>
                 )}
               </label>
             ) : null}
 
             {has("damage_amount_cents") ? (
               <label className="block">
-                <span className="text-slate-600">Estimated damage amount</span>
+                <span className="text-[#4B5563]">Estimated damage amount</span>
                 {formEditable ? (
                   <div className="mt-1" data-testid={`${config.pageTestId}-field-damage_amount_cents`}>
                     <MoneyInput
@@ -944,7 +944,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                     />
                   </div>
                 ) : (
-                  <div className="mt-1 text-slate-800">
+                  <div className="mt-1 text-[#0F1219]">
                     {formatUsdCents(Number(detail?.damage_amount_cents ?? 0))}
                   </div>
                 )}
@@ -955,7 +955,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
           <div className="mt-2 space-y-2 text-xs">
             {has("location") ? (
               <label className="block">
-                <span className="text-slate-600">Location *</span>
+                <span className="text-[#4B5563]">Location *</span>
                 <input
                   className={inputCls}
                   value={str(formEditable ? selected?.location : detail?.location)}
@@ -967,7 +967,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             ) : null}
             {has("description") ? (
               <label className="block">
-                <span className="text-slate-600">Description *</span>
+                <span className="text-[#4B5563]">Description *</span>
                 <textarea
                   className={inputCls}
                   rows={3}
@@ -981,7 +981,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
 
             {!createMode ? (
               <div className="space-y-1">
-                <div className="text-slate-600">Photos ({photoCount})</div>
+                <div className="text-[#4B5563]">Photos ({photoCount})</div>
                 <input
                   type="file"
                   accept="image/*"
@@ -1000,8 +1000,8 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
 
             {!createMode && detail?.id ? (
               <div className="space-y-2 rounded-sm border border-gray-200 p-2" data-testid={`${config.pageTestId}-lifecycle`}>
-                <div className="text-slate-600">
-                  Status: <span className="font-semibold text-slate-800">{str(detail?.status) || "open"}</span>
+                <div className="text-[#4B5563]">
+                  Status: <span className="font-semibold text-[#0F1219]">{str(detail?.status) || "open"}</span>
                 </div>
                 {/* SAF-F20: a status change is an accountable decision, not a field edit — the reason
                     is required before the transition can be sent, matching every other close/void
@@ -1016,7 +1016,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                         className={
                           statusTarget === next
                             ? "rounded-sm border border-[#1f2a44] px-2 py-1 font-semibold text-[#1f2a44]"
-                            : "rounded-sm border border-gray-300 px-2 py-1 text-slate-600"
+                            : "rounded-sm border border-gray-300 px-2 py-1 text-[#4B5563]"
                         }
                         data-testid={`${config.pageTestId}-status-${next}`}
                         onClick={() => setStatusTarget((cur) => (cur === next ? null : next))}
@@ -1117,7 +1117,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                   </div>
                 ) : null}
                 {!createMode && detail?.voided_at ? (
-                  <div className="text-xs text-slate-500" data-testid={`${config.pageTestId}-voided-note`}>
+                  <div className="text-xs text-[#6B7280]" data-testid={`${config.pageTestId}-voided-note`}>
                     Voided {formatDateUS(str(detail.voided_at))}
                     {str(detail.voided_reason) ? ` · ${str(detail.voided_reason)}` : ""}
                   </div>
@@ -1128,7 +1128,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
             {createMode ? (
               <div className="space-y-1">
                 {missingFields.length > 0 ? (
-                  <div className="text-xs text-slate-500" data-testid={`${config.pageTestId}-missing-fields`}>
+                  <div className="text-xs text-[#6B7280]" data-testid={`${config.pageTestId}-missing-fields`}>
                     Missing required: {missingFields.join(", ")}
                   </div>
                 ) : null}
