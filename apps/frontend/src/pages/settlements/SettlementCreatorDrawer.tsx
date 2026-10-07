@@ -23,7 +23,7 @@ import { formatUsdCents, formatUsdCentsTable } from "../../lib/money";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 import { useAccountingItemsQuery } from "../../hooks/useAccountingItemsQuery";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { getReclassifyAccountTree } from "../../api/reclassify";
 import { WizardReclassifyPanel } from "./WizardReclassifyPanel";
 import { FuelStopLocationPicker } from "../../components/locations/FuelStopLocationPicker";
@@ -33,6 +33,7 @@ import {
   getLaneMileage,
   getChainDeadhead,
   getDriverPayCard,
+  getRouteMileage,
 } from "../../api/dispatch";
 import {
   previewSettlementCreator,
@@ -103,31 +104,58 @@ function emptyLoad(loadNumber = ""): LoadDraft {
   };
 }
 
-/** Apply a Google Places / geocode pick onto one stop side — same fields Book Load writes. */
+/**
+ * Apply a Google Places / geocode pick onto one stop side — same fields Book Load writes.
+ *
+ * SETL-F440: AddressGeocodeInput calls onResolve THEN onChange(formatted). The Creator used to
+ * rebuild the load from a stale closure in onChange and wipe city/state that onResolve just set,
+ * leaving the whole pick in the address box. Callers MUST use functional setLoads so onChange only
+ * patches the address line and city/state/zip/lat survive.
+ *
+ * Address is OPTIONAL for hand-seeded Creator loads (city + state are the required stop identity).
+ * Street line prefers address_line1; formatted is only a fallback for the one-line address field.
+ */
 function applyGeocodeToLoad(
   load: LoadDraft,
   side: "pickup" | "delivery",
   r: GeocodeResult,
 ): LoadDraft {
+  // Book Load parity (stopGeocodePatches): only emit non-empty parts. Do NOT dump
+  // `formatted` into address — that left city+state in one box. Street line alone;
+  // city/state/zip/lat come from structured Place Details fields.
+  const street = (r.address_line1 || "").trim() || undefined;
+  const city = (r.city || "").trim();
+  const state = (r.state || "").trim().toUpperCase();
+  const zip = (r.zip || "").trim();
+  const lat = typeof r.lat === "number" && Number.isFinite(r.lat) && r.lat !== 0 ? r.lat : null;
+  const lng = typeof r.lon === "number" && Number.isFinite(r.lon) && r.lon !== 0 ? r.lon : null;
   if (side === "pickup") {
     return {
       ...load,
-      pickup_address: r.address_line1 || r.formatted || load.pickup_address,
-      pickup_city: r.city || load.pickup_city,
-      pickup_state: (r.state || load.pickup_state || "").toUpperCase(),
-      pickup_zip: r.zip || load.pickup_zip,
-      pickup_lat: typeof r.lat === "number" && Number.isFinite(r.lat) && r.lat !== 0 ? r.lat : load.pickup_lat,
-      pickup_lng: typeof r.lon === "number" && Number.isFinite(r.lon) && r.lon !== 0 ? r.lon : load.pickup_lng,
+      // Prefer street line; if Places only returned city/state, leave address as-is
+      // (onChange may still write formatted — city/state stay on their own fields).
+      ...(street ? { pickup_address: street } : {}),
+      ...(city ? { pickup_city: city } : {}),
+      ...(state ? { pickup_state: state } : {}),
+      ...(zip ? { pickup_zip: zip } : {}),
+      ...(lat != null ? { pickup_lat: lat } : {}),
+      ...(lng != null ? { pickup_lng: lng } : {}),
+      // New place → allow lane/route engines to refill miles (operator can still type over).
+      loaded_miles: null,
+      line_haul_miles: null,
+      empty_miles: null,
     };
   }
   return {
     ...load,
-    delivery_address: r.address_line1 || r.formatted || load.delivery_address,
-    delivery_city: r.city || load.delivery_city,
-    delivery_state: (r.state || load.delivery_state || "").toUpperCase(),
-    delivery_zip: r.zip || load.delivery_zip,
-    delivery_lat: typeof r.lat === "number" && Number.isFinite(r.lat) && r.lat !== 0 ? r.lat : load.delivery_lat,
-    delivery_lng: typeof r.lon === "number" && Number.isFinite(r.lon) && r.lon !== 0 ? r.lon : load.delivery_lng,
+    ...(street ? { delivery_address: street } : {}),
+    ...(city ? { delivery_city: city } : {}),
+    ...(state ? { delivery_state: state } : {}),
+    ...(zip ? { delivery_zip: zip } : {}),
+    ...(lat != null ? { delivery_lat: lat } : {}),
+    ...(lng != null ? { delivery_lng: lng } : {}),
+    loaded_miles: null,
+    line_haul_miles: null,
   };
 }
 
@@ -434,6 +462,9 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
   /** Operator typed miles/rate — do not overwrite with lane / pay-card autofill. */
   const milesTouchedRef = useRef<Record<number, boolean>>({});
   const ratesTouchedRef = useRef(false);
+  // AddressGeocodeInput calls onResolve THEN onChange(formatted). Ignore that formatted
+  // echo so city/state stay on their own fields and address keeps street-only (or blank).
+  const ignoreGeocodeFormattedRef = useRef<Record<number, "pickup" | "delivery" | null>>({});
 
   const wrongEntity = Boolean(companyId && companyId !== USMCA);
 
@@ -523,94 +554,156 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     );
   }, [driverPayCardQuery.data]);
 
-  // Lane history miles + chain deadhead — same engines as Book Load.
-  const primaryLoad = loads[0];
-  const laneMileageQuery = useQuery({
-    queryKey: [
-      "sc-lane-mileage",
-      companyId,
-      primaryLoad?.pickup_city,
-      primaryLoad?.pickup_state,
-      primaryLoad?.pickup_zip,
-      primaryLoad?.delivery_city,
-      primaryLoad?.delivery_state,
-      primaryLoad?.delivery_zip,
-    ],
-    queryFn: () =>
-      getLaneMileage({
-        operating_company_id: companyId,
-        origin_city: String(primaryLoad?.pickup_city ?? ""),
-        origin_state: String(primaryLoad?.pickup_state ?? ""),
-        origin_postal_code: primaryLoad?.pickup_zip || undefined,
-        dest_city: String(primaryLoad?.delivery_city ?? ""),
-        dest_state: String(primaryLoad?.delivery_state ?? ""),
-        dest_postal_code: primaryLoad?.delivery_zip || undefined,
-      }),
-    enabled:
-      open &&
-      Boolean(companyId) &&
-      !wrongEntity &&
-      Boolean(primaryLoad?.pickup_city && primaryLoad?.pickup_state && primaryLoad?.delivery_city && primaryLoad?.delivery_state),
-    staleTime: 30_000,
-  });
-
-  useEffect(() => {
-    const lane = laneMileageQuery.data;
-    if (!lane?.autofill_allowed || lane.practical_miles == null) return;
-    if (milesTouchedRef.current[0]) return;
-    setLoads((prev) => {
-      const cur = prev[0];
-      if (!cur) return prev;
-      if (cur.loaded_miles != null && cur.loaded_miles > 0) return prev;
-      const next = [...prev];
-      next[0] = {
-        ...cur,
-        loaded_miles: lane.practical_miles,
-        line_haul_miles: lane.practical_miles,
+  // SETL-F440 — lane history + chain deadhead + route-engine fallback, PER load row.
+  // Book Load fills practical from lane history; when history has no row, the route engine
+  // (getRouteMileage) supplies practical from the geocoded lat/lng. Google Routes stays
+  // REFERENCE ONLY (DSP-48) and is never written into loaded/empty miles here.
+  const laneMileageQueries = useQueries({
+    queries: loads.map((load, idx) => {
+      const originCity = String(load.pickup_city ?? "").trim();
+      const originState = String(load.pickup_state ?? "").trim();
+      const destCity = String(load.delivery_city ?? "").trim();
+      const destState = String(load.delivery_state ?? "").trim();
+      return {
+        queryKey: [
+          "sc-lane-mileage",
+          companyId,
+          idx,
+          originCity,
+          originState,
+          load.pickup_zip,
+          destCity,
+          destState,
+          load.delivery_zip,
+        ],
+        queryFn: () =>
+          getLaneMileage({
+            operating_company_id: companyId,
+            origin_city: originCity,
+            origin_state: originState,
+            origin_postal_code: load.pickup_zip || undefined,
+            dest_city: destCity,
+            dest_state: destState,
+            dest_postal_code: load.delivery_zip || undefined,
+          }),
+        enabled:
+          open &&
+          Boolean(companyId) &&
+          !wrongEntity &&
+          Boolean(originCity && originState && destCity && destState),
+        staleTime: 30_000,
       };
-      return next;
-    });
-  }, [laneMileageQuery.data]);
+    }),
+  });
 
-  const chainDeadheadQuery = useQuery({
-    queryKey: [
-      "sc-chain-deadhead",
-      companyId,
-      unitId,
-      primaryLoad?.pickup_city,
-      primaryLoad?.pickup_state,
-    ],
-    queryFn: () =>
-      getChainDeadhead({
-        operating_company_id: companyId,
-        unit_uuid: unitId!,
-        pickup_city: String(primaryLoad?.pickup_city ?? ""),
-        pickup_state: String(primaryLoad?.pickup_state ?? ""),
-        pickup_latitude: primaryLoad?.pickup_lat ?? undefined,
-        pickup_longitude: primaryLoad?.pickup_lng ?? undefined,
-      }),
-    enabled:
-      open &&
-      Boolean(companyId) &&
-      Boolean(unitId) &&
-      !wrongEntity &&
-      Boolean(primaryLoad?.pickup_city && primaryLoad?.pickup_state),
-    staleTime: 30_000,
+  const routeMileageQueries = useQueries({
+    queries: loads.map((load, idx) => {
+      const oLat = load.pickup_lat;
+      const oLng = load.pickup_lng;
+      const dLat = load.delivery_lat;
+      const dLng = load.delivery_lng;
+      const hasCoords =
+        typeof oLat === "number" &&
+        Number.isFinite(oLat) &&
+        oLat !== 0 &&
+        typeof oLng === "number" &&
+        Number.isFinite(oLng) &&
+        oLng !== 0 &&
+        typeof dLat === "number" &&
+        Number.isFinite(dLat) &&
+        dLat !== 0 &&
+        typeof dLng === "number" &&
+        Number.isFinite(dLng) &&
+        dLng !== 0;
+      return {
+        queryKey: ["sc-route-mileage", companyId, idx, oLat, oLng, dLat, dLng],
+        queryFn: () =>
+          getRouteMileage({
+            operating_company_id: companyId,
+            origin_lat: oLat as number,
+            origin_lng: oLng as number,
+            dest_lat: dLat as number,
+            dest_lng: dLng as number,
+          }),
+        enabled: open && Boolean(companyId) && !wrongEntity && hasCoords,
+        staleTime: 5 * 60 * 1000,
+      };
+    }),
+  });
+
+  const chainDeadheadQueries = useQueries({
+    queries: loads.map((load, idx) => {
+      const pickupCity = String(load.pickup_city ?? "").trim();
+      const pickupState = String(load.pickup_state ?? "").trim();
+      return {
+        queryKey: ["sc-chain-deadhead", companyId, unitId, idx, pickupCity, pickupState],
+        queryFn: () =>
+          getChainDeadhead({
+            operating_company_id: companyId,
+            unit_uuid: unitId!,
+            pickup_city: pickupCity,
+            pickup_state: pickupState,
+            pickup_latitude: load.pickup_lat ?? undefined,
+            pickup_longitude: load.pickup_lng ?? undefined,
+          }),
+        enabled:
+          open &&
+          Boolean(companyId) &&
+          Boolean(unitId) &&
+          !wrongEntity &&
+          Boolean(pickupCity && pickupState),
+        staleTime: 30_000,
+      };
+    }),
   });
 
   useEffect(() => {
-    const dh = chainDeadheadQuery.data;
-    if (!dh || dh.source !== "chain" || dh.deadhead_miles == null) return;
-    if (milesTouchedRef.current[0]) return;
     setLoads((prev) => {
-      const cur = prev[0];
-      if (!cur) return prev;
-      if (cur.empty_miles != null && cur.empty_miles > 0) return prev;
-      const next = [...prev];
-      next[0] = { ...cur, empty_miles: dh.deadhead_miles };
-      return next;
+      let changed = false;
+      const next = prev.map((cur, idx) => {
+        if (milesTouchedRef.current[idx]) return cur;
+        let row = cur;
+        const lane = laneMileageQueries[idx]?.data;
+        const route = routeMileageQueries[idx]?.data;
+        const laneMiles =
+          lane && lane.practical_miles != null && Number(lane.practical_miles) > 0
+            ? Number(lane.practical_miles)
+            : null;
+        // Creator seeds AlwaysTrack history: fill whenever the catalog has practical miles
+        // (fills=true covers thin / ZIP / reverse). Route-engine practical is the coords fallback.
+        const routeMiles =
+          route && "practical_miles" in route && route.practical_miles != null && Number(route.practical_miles) > 0
+            ? Number(route.practical_miles)
+            : null;
+        const loaded = laneMiles ?? routeMiles;
+        if (loaded != null && !(row.loaded_miles != null && row.loaded_miles > 0)) {
+          row = { ...row, loaded_miles: loaded, line_haul_miles: loaded };
+          changed = true;
+        }
+        const dh = chainDeadheadQueries[idx]?.data;
+        if (
+          dh &&
+          dh.source === "chain" &&
+          dh.deadhead_miles != null &&
+          !(row.empty_miles != null && row.empty_miles > 0)
+        ) {
+          row = { ...row, empty_miles: dh.deadhead_miles };
+          changed = true;
+        }
+        return row;
+      });
+      return changed ? next : prev;
     });
-  }, [chainDeadheadQuery.data]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- data refs change per query result
+  }, [
+    laneMileageQueries.map((q) => q.dataUpdatedAt).join(","),
+    routeMileageQueries.map((q) => q.dataUpdatedAt).join(","),
+    chainDeadheadQueries.map((q) => q.dataUpdatedAt).join(","),
+  ]);
+
+  const laneMileageFetching = laneMileageQueries.some((q) => q.isFetching);
+  const routeMileageFetching = routeMileageQueries.some((q) => q.isFetching);
+  const chainDeadheadFetching = chainDeadheadQueries.some((q) => q.isFetching);
 
   function addLoadRow() {
     const nextNum = nextSequentialLoadNumber(loads, peekLoadBase || "0");
@@ -1079,20 +1172,36 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       }}
                     />
                   </Field>
-                  <Field label="Pickup address">
+                  <Field label="Pickup address (optional)">
                     <AddressGeocodeInput
                       value={load.pickup_address ?? ""}
                       onChange={(v) => {
-                        const next = [...loads];
-                        next[idx] = { ...load, pickup_address: v };
-                        setLoads(next);
+                        // Functional patch ONLY — AddressGeocodeInput calls onResolve then
+                        // onChange(formatted); a stale full-load rebuild here wiped city/state.
+                        if (ignoreGeocodeFormattedRef.current[idx] === "pickup") {
+                          ignoreGeocodeFormattedRef.current[idx] = null;
+                          return;
+                        }
+                        setLoads((prev) => {
+                          const cur = prev[idx];
+                          if (!cur) return prev;
+                          const next = [...prev];
+                          next[idx] = { ...cur, pickup_address: v };
+                          return next;
+                        });
                       }}
                       onResolve={(r) => {
-                        const next = [...loads];
-                        next[idx] = applyGeocodeToLoad(load, "pickup", r);
-                        setLoads(next);
+                        milesTouchedRef.current[idx] = false;
+                        ignoreGeocodeFormattedRef.current[idx] = "pickup";
+                        setLoads((prev) => {
+                          const cur = prev[idx];
+                          if (!cur) return prev;
+                          const next = [...prev];
+                          next[idx] = applyGeocodeToLoad(cur, "pickup", r);
+                          return next;
+                        });
                       }}
-                      placeholder="Type address or place…"
+                      placeholder="Optional — pick a place to fill city/state"
                       className={inputClass}
                       dataAttrs={{ "data-testid": `sc-load-pickup-address-${idx}` }}
                     />
@@ -1102,9 +1211,20 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       className={inputClass}
                       value={load.pickup_city ?? ""}
                       onChange={(e) => {
-                        const next = [...loads];
-                        next[idx] = { ...load, pickup_city: e.target.value };
-                        setLoads(next);
+                        milesTouchedRef.current[idx] = false;
+                        setLoads((prev) => {
+                          const cur = prev[idx];
+                          if (!cur) return prev;
+                          const next = [...prev];
+                          next[idx] = {
+                            ...cur,
+                            pickup_city: e.target.value,
+                            loaded_miles: null,
+                            line_haul_miles: null,
+                            empty_miles: null,
+                          };
+                          return next;
+                        });
                       }}
                       data-testid={`sc-load-pickup-city-${idx}`}
                     />
@@ -1113,9 +1233,20 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                     <StateSelect
                       value={load.pickup_state ?? ""}
                       onChange={(code) => {
-                        const next = [...loads];
-                        next[idx] = { ...load, pickup_state: code };
-                        setLoads(next);
+                        milesTouchedRef.current[idx] = false;
+                        setLoads((prev) => {
+                          const cur = prev[idx];
+                          if (!cur) return prev;
+                          const next = [...prev];
+                          next[idx] = {
+                            ...cur,
+                            pickup_state: code,
+                            loaded_miles: null,
+                            line_haul_miles: null,
+                            empty_miles: null,
+                          };
+                          return next;
+                        });
                       }}
                       placeholder="State"
                     />
@@ -1128,9 +1259,13 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       className={inputClass}
                       value={load.pickup_zip ?? ""}
                       onChange={(e) => {
-                        const next = [...loads];
-                        next[idx] = { ...load, pickup_zip: e.target.value };
-                        setLoads(next);
+                        setLoads((prev) => {
+                          const cur = prev[idx];
+                          if (!cur) return prev;
+                          const next = [...prev];
+                          next[idx] = { ...cur, pickup_zip: e.target.value };
+                          return next;
+                        });
                       }}
                       data-testid={`sc-load-pickup-zip-${idx}`}
                     />
@@ -1146,20 +1281,34 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       }}
                     />
                   </Field>
-                  <Field label="Delivery address">
+                  <Field label="Delivery address (optional)">
                     <AddressGeocodeInput
                       value={load.delivery_address ?? ""}
                       onChange={(v) => {
-                        const next = [...loads];
-                        next[idx] = { ...load, delivery_address: v };
-                        setLoads(next);
+                        if (ignoreGeocodeFormattedRef.current[idx] === "delivery") {
+                          ignoreGeocodeFormattedRef.current[idx] = null;
+                          return;
+                        }
+                        setLoads((prev) => {
+                          const cur = prev[idx];
+                          if (!cur) return prev;
+                          const next = [...prev];
+                          next[idx] = { ...cur, delivery_address: v };
+                          return next;
+                        });
                       }}
                       onResolve={(r) => {
-                        const next = [...loads];
-                        next[idx] = applyGeocodeToLoad(load, "delivery", r);
-                        setLoads(next);
+                        milesTouchedRef.current[idx] = false;
+                        ignoreGeocodeFormattedRef.current[idx] = "delivery";
+                        setLoads((prev) => {
+                          const cur = prev[idx];
+                          if (!cur) return prev;
+                          const next = [...prev];
+                          next[idx] = applyGeocodeToLoad(cur, "delivery", r);
+                          return next;
+                        });
                       }}
-                      placeholder="Type address or place…"
+                      placeholder="Optional — pick a place to fill city/state"
                       className={inputClass}
                       dataAttrs={{ "data-testid": `sc-load-delivery-address-${idx}` }}
                     />
@@ -1169,9 +1318,19 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       className={inputClass}
                       value={load.delivery_city ?? ""}
                       onChange={(e) => {
-                        const next = [...loads];
-                        next[idx] = { ...load, delivery_city: e.target.value };
-                        setLoads(next);
+                        milesTouchedRef.current[idx] = false;
+                        setLoads((prev) => {
+                          const cur = prev[idx];
+                          if (!cur) return prev;
+                          const next = [...prev];
+                          next[idx] = {
+                            ...cur,
+                            delivery_city: e.target.value,
+                            loaded_miles: null,
+                            line_haul_miles: null,
+                          };
+                          return next;
+                        });
                       }}
                       data-testid={`sc-load-delivery-city-${idx}`}
                     />
@@ -1180,9 +1339,19 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                     <StateSelect
                       value={load.delivery_state ?? ""}
                       onChange={(code) => {
-                        const next = [...loads];
-                        next[idx] = { ...load, delivery_state: code };
-                        setLoads(next);
+                        milesTouchedRef.current[idx] = false;
+                        setLoads((prev) => {
+                          const cur = prev[idx];
+                          if (!cur) return prev;
+                          const next = [...prev];
+                          next[idx] = {
+                            ...cur,
+                            delivery_state: code,
+                            loaded_miles: null,
+                            line_haul_miles: null,
+                          };
+                          return next;
+                        });
                       }}
                       placeholder="State"
                     />
@@ -1195,9 +1364,13 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       className={inputClass}
                       value={load.delivery_zip ?? ""}
                       onChange={(e) => {
-                        const next = [...loads];
-                        next[idx] = { ...load, delivery_zip: e.target.value };
-                        setLoads(next);
+                        setLoads((prev) => {
+                          const cur = prev[idx];
+                          if (!cur) return prev;
+                          const next = [...prev];
+                          next[idx] = { ...cur, delivery_zip: e.target.value };
+                          return next;
+                        });
                       }}
                       data-testid={`sc-load-delivery-zip-${idx}`}
                     />
@@ -1208,14 +1381,21 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       value={load.loaded_miles ?? ""}
                       onChange={(e) => {
                         milesTouchedRef.current[idx] = true;
-                        const next = [...loads];
-                        next[idx] = { ...load, loaded_miles: e.target.value === "" ? null : Number(e.target.value) };
-                        setLoads(next);
+                        setLoads((prev) => {
+                          const cur = prev[idx];
+                          if (!cur) return prev;
+                          const next = [...prev];
+                          next[idx] = {
+                            ...cur,
+                            loaded_miles: e.target.value === "" ? null : Number(e.target.value),
+                          };
+                          return next;
+                        });
                       }}
                       title={
-                        idx === 0 && laneMileageQuery.isFetching
-                          ? "Looking up lane miles…"
-                          : "Filled from lane history when city/state are set (same as Book Load)"
+                        laneMileageFetching || routeMileageFetching
+                          ? "Looking up loaded miles…"
+                          : "Filled from lane history, else route engine when city/state (and coords) are set"
                       }
                       data-testid={`sc-load-loaded-miles-${idx}`}
                     />
@@ -1226,11 +1406,24 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       value={load.empty_miles ?? ""}
                       onChange={(e) => {
                         milesTouchedRef.current[idx] = true;
-                        const next = [...loads];
-                        next[idx] = { ...load, empty_miles: e.target.value === "" ? null : Number(e.target.value) };
-                        setLoads(next);
+                        setLoads((prev) => {
+                          const cur = prev[idx];
+                          if (!cur) return prev;
+                          const next = [...prev];
+                          next[idx] = {
+                            ...cur,
+                            empty_miles: e.target.value === "" ? null : Number(e.target.value),
+                          };
+                          return next;
+                        });
                       }}
-                      title="Filled from this truck's last delivery → this pickup (chain deadhead)"
+                      title={
+                        !unitId
+                          ? "Pick a unit — empty miles fill from that truck's last delivery → this pickup"
+                          : chainDeadheadFetching
+                            ? "Looking up this unit's last delivery…"
+                            : "Filled from this truck's last delivery → this pickup (chain deadhead)"
+                      }
                       data-testid={`sc-load-empty-miles-${idx}`}
                     />
                   </Field>
