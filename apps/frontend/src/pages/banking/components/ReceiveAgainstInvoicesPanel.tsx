@@ -152,7 +152,7 @@ export function ReceiveAgainstInvoicesPanel({ operatingCompanyId, bankTransactio
       </div>
 
       <div className="max-h-72 overflow-auto rounded-sm border border-slate-200">
-        <table className="w-full text-xs" data-testid="receive-against-invoices-table">
+        <table className="w-full border-collapse text-xs tabular-nums" data-testid="receive-against-invoices-table">
           <thead className="sticky top-0 bg-slate-50 text-slate-600">
             <tr>
               <th className="w-8 px-2 py-1" />
