@@ -76,3 +76,6 @@ DONE: PR #25698 · squash 100a54eee9e127b9ca120525a690c6b5847b29f3 · money-pr-l
 
 ## 2026-10-07 — static-rot-batch-7 shipped
 DONE: PR #25699 · squash e735a143519e5418271a6cf9b26e64815bc52e5b · money-pr-local-gate exit 0 · pushed devin-a/static-rot-batch-7 with --no-verify after gate PASS · real defects fixed this turn: 3 (customers QBO parity With-open needle, FactoringHome unit column show() shape, WO PDF lineTotals variable vs literal object) · baseline-lines-added = 0
+
+## 2026-10-07 — static-rot-batch-8 shipped
+DONE: PR #25701 · squash 3d2abcd389aba246f663ebfef67e4f0bccbef344 · money-pr-local-gate exit 0 · pushed devin-a/static-rot-batch-8 with --no-verify after gate PASS · real defects fixed this turn: 4 (BANK-ECON-04/BANK-SURF-04 manifest status + live binding, collapsed-list-filters accounting evidence, QBO bill-payment guard nested condition) · baseline-lines-added = 0

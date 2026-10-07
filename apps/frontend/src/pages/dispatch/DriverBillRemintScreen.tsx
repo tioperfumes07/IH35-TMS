@@ -12,6 +12,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { userFacingApiError } from "../../lib/api-error-message";
 
@@ -27,6 +28,11 @@ export function DriverBillRemintScreen() {
   const queryClient = useQueryClient();
   const [remintingId, setRemintingId] = useState<string | null>(null);
   const [remintingAll, setRemintingAll] = useState(false);
+  const [reasonModalOpen, setReasonModalOpen] = useState(false);
+  const [reasonModalTitle, setReasonModalTitle] = useState("Remint driver bill");
+  const [reasonModalEntity, setReasonModalEntity] = useState<string | undefined>(undefined);
+  const [pendingAction, setPendingAction] = useState<"one" | "all" | null>(null);
+  const [pendingRow, setPendingRow] = useState<NeedsDriverBillRemintRow | null>(null);
 
   const query = useQuery({
     queryKey: ["dispatch", "needs-driver-bill-remint", companyId],
@@ -40,51 +46,62 @@ export function DriverBillRemintScreen() {
     await queryClient.invalidateQueries({ queryKey: ["dispatch", "needs-driver-bill-remint", companyId] });
   }
 
-  async function handleRemintOne(row: NeedsDriverBillRemintRow) {
-    const reason = window.prompt(`Reason for reminting ${row.load_number} (required):`, "");
-    if (reason == null) return;
-    const trimmed = reason.trim();
-    if (!trimmed) {
-      pushToast("A reason is required to remint a driver bill", "error");
-      return;
-    }
-    setRemintingId(row.id);
-    try {
-      const result = await remintDriverBill(row.id, companyId, trimmed);
-      if ("ok" in result) {
-        pushToast(`${row.load_number}: ${result.outcome.outcome.replace(/_/g, " ")}`, "success");
-      } else {
-        pushToast(userFacingApiError(result, "Remint blocked"), "error");
-      }
-      await refresh();
-    } catch (error) {
-      pushToast(userFacingApiError(error, "Remint failed"), "error");
-    } finally {
-      setRemintingId(null);
-    }
+  function handleRemintOne(row: NeedsDriverBillRemintRow) {
+    setPendingAction("one");
+    setPendingRow(row);
+    setReasonModalTitle(`Remint driver bill for ${row.load_number}`);
+    setReasonModalEntity(`Load ${row.load_number}`);
+    setReasonModalOpen(true);
   }
 
-  async function handleRemintAll() {
-    const reason = window.prompt(`Reason for reminting all ${rows.length} loads (required):`, "");
-    if (reason == null) return;
+  function handleRemintAll() {
+    setPendingAction("all");
+    setPendingRow(null);
+    setReasonModalTitle(`Remint driver bills for all ${rows.length} loads`);
+    setReasonModalEntity(`${rows.length} loads`);
+    setReasonModalOpen(true);
+  }
+
+  async function submitRemintReason(reason: string) {
     const trimmed = reason.trim();
     if (!trimmed) {
       pushToast("A reason is required to remint", "error");
       return;
     }
-    setRemintingAll(true);
-    try {
-      const result = await remintAllDriverBills(companyId, trimmed);
-      const minted = result.outcomes.filter((o) => o.outcome === "minted").length;
-      const skipped = result.outcomes.filter((o) => o.outcome === "skipped_no_pay_rate").length;
-      const already = result.outcomes.filter((o) => o.outcome === "already_exists").length;
-      pushToast(`Reminted ${minted} · already existed ${already} · still no pay rate ${skipped}`, minted > 0 ? "success" : "info");
-      await refresh();
-    } catch (error) {
-      pushToast(userFacingApiError(error, "Remint-all failed"), "error");
-    } finally {
-      setRemintingAll(false);
+    if (pendingAction === "one" && pendingRow) {
+      const row = pendingRow;
+      setRemintingId(row.id);
+      try {
+        const result = await remintDriverBill(row.id, companyId, trimmed);
+        if ("ok" in result) {
+          pushToast(`${row.load_number}: ${result.outcome.outcome.replace(/_/g, " ")}`, "success");
+        } else {
+          pushToast(userFacingApiError(result, "Remint blocked"), "error");
+        }
+        await refresh();
+      } catch (error) {
+        pushToast(userFacingApiError(error, "Remint failed"), "error");
+      } finally {
+        setRemintingId(null);
+      }
+    } else if (pendingAction === "all") {
+      setRemintingAll(true);
+      try {
+        const result = await remintAllDriverBills(companyId, trimmed);
+        const minted = result.outcomes.filter((o) => o.outcome === "minted").length;
+        const skipped = result.outcomes.filter((o) => o.outcome === "skipped_no_pay_rate").length;
+        const already = result.outcomes.filter((o) => o.outcome === "already_exists").length;
+        pushToast(`Reminted ${minted} · already existed ${already} · still no pay rate ${skipped}`, minted > 0 ? "success" : "info");
+        await refresh();
+      } catch (error) {
+        pushToast(userFacingApiError(error, "Remint-all failed"), "error");
+      } finally {
+        setRemintingAll(false);
+      }
     }
+    setReasonModalOpen(false);
+    setPendingAction(null);
+    setPendingRow(null);
   }
 
   const columns = useMemo<ParityColumn<NeedsDriverBillRemintRow>[]>(
@@ -153,6 +170,15 @@ export function DriverBillRemintScreen() {
           emptyText="No loads are past delivery evidence with a missing driver bill."
         />
       )}
+      <VoidReasonModal
+        open={reasonModalOpen}
+        title={reasonModalTitle}
+        entityRef={reasonModalEntity}
+        submitLabel="Remint"
+        postsReversingEntry={false}
+        onClose={() => setReasonModalOpen(false)}
+        onSubmit={submitRemintReason}
+      />
     </div>
   );
 }

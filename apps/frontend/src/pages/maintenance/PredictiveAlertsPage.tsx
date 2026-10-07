@@ -16,6 +16,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { ListErrorState } from "../../components/ListErrorState";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 
 const ALERT_TYPE_LABEL: Record<string, string> = { brake_wear: "Brake wear", tire_tread: "Tire tread" };
 
@@ -25,6 +26,8 @@ export function PredictiveAlertsPage() {
   const { pushToast } = useToast();
   const qc = useQueryClient();
   const [stateFilter, setStateFilter] = useState<"open" | "resolved">("open");
+  const [resolveModalOpen, setResolveModalOpen] = useState(false);
+  const [resolveAlertId, setResolveAlertId] = useState<string | null>(null);
   const actionGenerationRef = useRef(0);
   const staged = useStagedListFilters({
     applied: { stateFilter },
@@ -75,9 +78,13 @@ export function PredictiveAlertsPage() {
     createWoMut.mutate({ id, companyId: operatingCompanyId, generation: actionGenerationRef.current });
   };
   const runResolve = (id: string) => {
-    const note = window.prompt("Resolution note (required):");
-    if (!note || !note.trim()) return;
-    resolveMut.mutate({ id, companyId: operatingCompanyId, generation: actionGenerationRef.current, note: note.trim() });
+    setResolveAlertId(id);
+    setResolveModalOpen(true);
+  };
+  const submitResolve = (note: string) => {
+    if (!resolveAlertId) return;
+    resolveMut.mutate({ id: resolveAlertId, companyId: operatingCompanyId, generation: actionGenerationRef.current, note: note.trim() });
+    setResolveModalOpen(false);
   };
 
   const columns = useMemo<ParityColumn<PredictiveAlertRow>[]>(
@@ -204,6 +211,14 @@ export function PredictiveAlertsPage() {
           rowTestId={(row) => `predictive-alert-row-${row.id}`}
         />
       )}
+      <VoidReasonModal
+        open={resolveModalOpen}
+        title="Resolve predictive alert"
+        submitLabel="Resolve"
+        postsReversingEntry={false}
+        onClose={() => setResolveModalOpen(false)}
+        onSubmit={submitResolve}
+      />
     </div>
   );
 }

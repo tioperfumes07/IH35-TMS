@@ -25,6 +25,7 @@ import { SimpleCombobox as Combobox } from "../Combobox";
 import { EntityPicker } from "../EntityPicker";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { useToast } from "../Toast";
+import { VoidReasonModal } from "../accounting/VoidReasonModal";
 import { companyToday } from "../../lib/businessDate";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { DatePicker } from "../forms/DatePicker";
@@ -63,6 +64,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
   const [preventable, setPreventable] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [actionPending, setActionPending] = useState(false);
+  const [voidReasonOpen, setVoidReasonOpen] = useState(false);
   const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
   const lifecycleGenerationRef = useRef(0);
 
@@ -401,29 +403,26 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
     if (!canMutate || isBusy) return;
     const liabilityId = accident ? String(accident.spawned_liability_id ?? "") : "";
     if (!liabilityId) return;
+    setVoidReasonOpen(true);
+  };
+
+  const submitVoidLiability = async (reason: string) => {
+    const liabilityId = accident ? String(accident.spawned_liability_id ?? "") : "";
+    if (!liabilityId) return;
     const generation = lifecycleGenerationRef.current;
     const companyId = operatingCompanyId;
-    const reason = window.prompt("Reason for voiding this accident liability (required):", "");
-    if (reason == null) return;
-    const trimmed = reason.trim();
-    if (!trimmed) {
-      pushToast("A reason is required to void an accident liability", "error");
-      return;
-    }
     setActionPending(true);
-    void voidAccidentLiability(liabilityId, companyId, trimmed)
-      .then(() => {
-        if (lifecycleGenerationRef.current !== generation) return;
-        pushToast("Accident liability voided", "success");
-        onUpdated();
-      })
-      .catch((error) => {
-        if (lifecycleGenerationRef.current !== generation) return;
-        pushToast(userFacingApiError(error, "Request failed"), "error");
-      })
-      .finally(() => {
-        if (lifecycleGenerationRef.current === generation) setActionPending(false);
-      });
+    try {
+      await voidAccidentLiability(liabilityId, companyId, reason.trim());
+      pushToast("Accident liability voided", "success");
+      onUpdated();
+      setVoidReasonOpen(false);
+    } catch (error) {
+      if (lifecycleGenerationRef.current !== generation) return;
+      pushToast(userFacingApiError(error, "Request failed"), "error");
+    } finally {
+      if (lifecycleGenerationRef.current === generation) setActionPending(false);
+    }
   };
 
   const uploadPhoto = (file: File) => {
@@ -918,6 +917,15 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
         </div>
         </div>
       </ParityDrawer>
+      <VoidReasonModal
+        open={voidReasonOpen}
+        title="Void accident liability"
+        entityRef={accident?.display_id ? `Accident ${String(accident.display_id)}` : undefined}
+        submitLabel="Void"
+        postsReversingEntry={true}
+        onClose={() => setVoidReasonOpen(false)}
+        onSubmit={submitVoidLiability}
+      />
     </>
   );
 }
