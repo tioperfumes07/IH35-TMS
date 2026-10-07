@@ -686,6 +686,7 @@
       "remit_to_address",
       "reversed_by_je_id",
       "settlement_no",
+      "source_bank_transaction_id",
       "source_fuel_transaction_id",
       "source_settlement_ref",
       "status",

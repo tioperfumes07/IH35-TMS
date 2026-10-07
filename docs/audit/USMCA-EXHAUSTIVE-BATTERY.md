@@ -93,13 +93,13 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/accounting/invoices/:id/unvoid` | `apps/backend/src/accounting/invoices.routes.ts:1362` | — | — | — |
 | create | `/api/v1/accounting/invoices/from-load` | `apps/backend/src/accounting/invoices.routes.ts:803` | — | — | — |
 | create | `/api/v1/accounting/journal-entries` | `apps/backend/src/accounting/journal-entries.routes.ts:110` | — | — | — |
-| create | `/api/v1/accounting/lease-posting/leases` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:99` | — | — | — |
-| nested | `/api/v1/accounting/lease-posting/leases/:lease_id/assets` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:140` | — | — | — |
-| nested | `/api/v1/accounting/lease-posting/leases/:lease_id/schedule` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:172` | — | — | — |
-| create | `/api/v1/accounting/lease-posting/operating/end-of-term-sale` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:306` | — | — | — |
-| create | `/api/v1/accounting/lease-posting/operating/rental` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:282` | — | — | — |
-| create | `/api/v1/accounting/lease-posting/sales-type/commencement` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:330` | — | — | — |
-| create | `/api/v1/accounting/lease-posting/sales-type/interest` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:354` | — | — | — |
+| create | `/api/v1/accounting/lease-posting/leases` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:101` | — | — | — |
+| nested | `/api/v1/accounting/lease-posting/leases/:lease_id/assets` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:143` | — | — | — |
+| nested | `/api/v1/accounting/lease-posting/leases/:lease_id/schedule` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:175` | — | — | — |
+| create | `/api/v1/accounting/lease-posting/operating/end-of-term-sale` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:316` | — | — | — |
+| create | `/api/v1/accounting/lease-posting/operating/rental` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:288` | — | — | — |
+| create | `/api/v1/accounting/lease-posting/sales-type/commencement` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:340` | — | — | — |
+| create | `/api/v1/accounting/lease-posting/sales-type/interest` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:364` | — | — | — |
 | create | `/api/v1/accounting/month-close` | `apps/backend/src/accounting/month-close.routes.ts:60` | — | — | — |
 | create | `/api/v1/accounting/month-close-acknowledge` | `apps/backend/src/accounting/month-close.routes.ts:90` | — | — | — |
 | create | `/api/v1/accounting/opening-balance-register/clone-as-is-commit` | `apps/backend/src/accounting/opening-balance-register/opening-balance-register.routes.ts:169` | — | — | — |
@@ -216,18 +216,18 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/mdata/driver-teams` | `apps/backend/src/mdata/driver-teams.routes.ts:260` | — | — | — |
 | nested | `/api/v1/mdata/driver-teams/:id/replace-driver` | `apps/backend/src/mdata/driver-teams.routes.ts:461` | — | — | — |
 | create | `/api/v1/mdata/drivers` | `apps/backend/src/mdata/drivers.routes.ts:1536` | — | — | — |
-| nested | `/api/v1/mdata/drivers/:driver_id/safety-events` | `apps/backend/src/mdata/driver-safety-events.routes.ts:578` | — | — | — |
-| nested | `/api/v1/mdata/drivers/:driver_id/suspend` | `apps/backend/src/mdata/driver-safety-events.routes.ts:363` | — | — | — |
+| nested | `/api/v1/mdata/drivers/:driver_id/safety-events` | `apps/backend/src/mdata/driver-safety-events.routes.ts:579` | — | — | — |
+| nested | `/api/v1/mdata/drivers/:driver_id/suspend` | `apps/backend/src/mdata/driver-safety-events.routes.ts:364` | — | — | — |
 | nested | `/api/v1/mdata/drivers/:id/clear-default-truck` | `apps/backend/src/mdata/driver-default-truck.routes.ts:213` | — | — | — |
 | nested | `/api/v1/mdata/drivers/:id/default-truck` | `apps/backend/src/mdata/driver-default-truck.routes.ts:157` | — | — | — |
-| nested | `/api/v1/mdata/drivers/:id/disable-phone-login` | `apps/backend/src/mdata/drivers.routes.ts:2849` | — | — | — |
-| nested | `/api/v1/mdata/drivers/:id/enable-phone-login` | `apps/backend/src/mdata/drivers.routes.ts:2718` | — | — | — |
+| nested | `/api/v1/mdata/drivers/:id/disable-phone-login` | `apps/backend/src/mdata/drivers.routes.ts:2851` | — | — | — |
+| nested | `/api/v1/mdata/drivers/:id/enable-phone-login` | `apps/backend/src/mdata/drivers.routes.ts:2720` | — | — | — |
 | nested | `/api/v1/mdata/drivers/:id/messages` | `apps/backend/src/mdata/driver-messages.routes.ts:28` | — | — | — |
-| nested | `/api/v1/mdata/drivers/:id/reactivate` | `apps/backend/src/mdata/drivers.routes.ts:2639` | — | — | — |
-| nested | `/api/v1/mdata/drivers/:id/resend-invite` | `apps/backend/src/mdata/drivers.routes.ts:2016` | — | — | — |
+| nested | `/api/v1/mdata/drivers/:id/reactivate` | `apps/backend/src/mdata/drivers.routes.ts:2641` | — | — | — |
+| nested | `/api/v1/mdata/drivers/:id/resend-invite` | `apps/backend/src/mdata/drivers.routes.ts:2018` | — | — | — |
 | nested | `/api/v1/mdata/drivers/:id/training` | `apps/backend/src/mdata/driver-training.routes.ts:79` | — | — | — |
 | nested | `/api/v1/mdata/drivers/:id/w8ben` | `apps/backend/src/mdata/driver-w8ben.routes.ts:215` | — | — | — |
-| create | `/api/v1/mdata/drivers/bulk-invite` | `apps/backend/src/mdata/drivers.routes.ts:1809` | — | — | — |
+| create | `/api/v1/mdata/drivers/bulk-invite` | `apps/backend/src/mdata/drivers.routes.ts:1811` | — | — | — |
 | create | `/api/v1/mdata/drivers/bulk-tag` | `apps/backend/src/mdata/driver-tags.routes.ts:179` | — | — | — |
 | create | `/api/v1/mdata/drivers/check-returning` | `apps/backend/src/mdata/driver-returning-detection.routes.ts:155` | — | — | — |
 | create | `/api/v1/mdata/equipment` | `apps/backend/src/mdata/equipment.routes.ts:252` | — | — | — |
@@ -274,10 +274,10 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/banking/equipment-loans` | `apps/backend/src/data-infra/data-infra.routes.ts:205` | — | — | — |
 | nested | `/api/v1/banking/equipment-loans/:id/attributions` | `apps/backend/src/data-infra/data-infra.routes.ts:240` | — | — | — |
 | nested | `/api/v1/banking/equipment-loans/:id/payments` | `apps/backend/src/data-infra/data-infra.routes.ts:259` | — | — | — |
-| create | `/api/v1/banking/link-suggestions/accept` | `apps/backend/src/banking/link-suggestions-actions.routes.ts:167` | — | — | — |
-| create | `/api/v1/banking/link-suggestions/bulk-accept` | `apps/backend/src/banking/link-suggestions-actions.routes.ts:191` | — | — | — |
-| create | `/api/v1/banking/link-suggestions/exclude` | `apps/backend/src/banking/link-suggestions-actions.routes.ts:280` | — | — | — |
-| create | `/api/v1/banking/link-suggestions/undo` | `apps/backend/src/banking/link-suggestions-actions.routes.ts:326` | — | — | — |
+| create | `/api/v1/banking/link-suggestions/accept` | `apps/backend/src/banking/link-suggestions-actions.routes.ts:169` | — | — | — |
+| create | `/api/v1/banking/link-suggestions/bulk-accept` | `apps/backend/src/banking/link-suggestions-actions.routes.ts:193` | — | — | — |
+| create | `/api/v1/banking/link-suggestions/exclude` | `apps/backend/src/banking/link-suggestions-actions.routes.ts:282` | — | — | — |
+| create | `/api/v1/banking/link-suggestions/undo` | `apps/backend/src/banking/link-suggestions-actions.routes.ts:328` | — | — | — |
 | create | `/api/v1/banking/manual-je` | `apps/backend/src/banking/manual-je.routes.deprecated.ts:56` | — | — | — |
 | nested | `/api/v1/banking/plaid/accounts/:id/disconnect` | `apps/backend/src/integrations/plaid/link.routes.ts:445` | — | — | — |
 | create | `/api/v1/banking/plaid/create-link-token` | `apps/backend/src/integrations/plaid/link.routes.ts:185` | — | — | — |
@@ -403,8 +403,8 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/catalogs/dispatch-flag-colors` | `apps/backend/src/catalogs/dispatch-flag-colors.routes.ts:103` | — | — | — |
 | nested | `/api/v1/catalogs/dispatch-flag-colors/:id/reactivate` | `apps/backend/src/catalogs/dispatch-flag-colors.routes.ts:282` | — | — | — |
 | create | `/api/v1/catalogs/driver-load-statuses` | `apps/backend/src/catalogs/driver-load-statuses.routes.ts:128` | — | — | — |
-| create | `/api/v1/catalogs/driver-termination-reasons` | `apps/backend/src/mdata/driver-safety-events.routes.ts:171` | — | — | — |
-| nested | `/api/v1/catalogs/driver-termination-reasons/:id/reactivate` | `apps/backend/src/mdata/driver-safety-events.routes.ts:333` | — | — | — |
+| create | `/api/v1/catalogs/driver-termination-reasons` | `apps/backend/src/mdata/driver-safety-events.routes.ts:172` | — | — | — |
+| nested | `/api/v1/catalogs/driver-termination-reasons/:id/reactivate` | `apps/backend/src/mdata/driver-safety-events.routes.ts:334` | — | — | — |
 | create | `/api/v1/catalogs/equipment-types` | `apps/backend/src/catalogs/equipment-types.routes.ts:218` | — | — | — |
 | create | `/api/v1/catalogs/file-categories` | `apps/backend/src/catalogs/file-categories.routes.ts:69` | — | — | — |
 | create | `/api/v1/catalogs/items` | `apps/backend/src/catalogs/items.routes.ts:180` | — | — | — |
@@ -730,9 +730,9 @@ after creation; a GL/posting failure goes to CC-1.
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
-| create | `/api/v1/leases` | `apps/backend/src/leases/lease.routes.ts:124` | — | — | — |
-| nested | `/api/v1/leases/:id/buyout` | `apps/backend/src/leases/lease.routes.ts:181` | — | — | — |
-| nested | `/api/v1/leases/:id/sign` | `apps/backend/src/leases/lease.routes.ts:139` | — | — | — |
+| create | `/api/v1/leases` | `apps/backend/src/leases/lease.routes.ts:127` | — | — | — |
+| nested | `/api/v1/leases/:id/buyout` | `apps/backend/src/leases/lease.routes.ts:187` | — | — | — |
+| nested | `/api/v1/leases/:id/sign` | `apps/backend/src/leases/lease.routes.ts:143` | — | — | — |
 
 ### notifications — 3 create-surface(s)
 

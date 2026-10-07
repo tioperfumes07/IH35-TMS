@@ -17,8 +17,7 @@
  */
 import type { QueryableClient } from "../accounting/journal-entry-type-resolver.js";
 import { createJournalEntryOnClient } from "../accounting/journal-entries.service.js";
-import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
-import { nextExpenseDisplayId } from "../accounting/display-id.js";
+import { createAndPostBankLineExpenseOnClient } from "../accounting/bank-line-expense.service.js";
 
 export type ReconAdjustmentInput = {
   operating_company_id: string;
@@ -178,12 +177,6 @@ async function createAndPostServiceChargeExpense(
   );
 
   const memo = reconServiceChargeMemo(input.service_charge_date);
-  const expenseNumber = await nextExpenseDisplayId(
-    client as never,
-    input.operating_company_id,
-    new Date(`${input.service_charge_date}T00:00:00.000Z`)
-  );
-
   // Idempotent re-entry (ROUND 390.3): the expense this SESSION already minted for this amount, found through the
   // spine link — never the memo (two sessions with an identical charge used to share one memo key, and the second
   // charge was swallowed).
@@ -197,30 +190,6 @@ async function createAndPostServiceChargeExpense(
     );
     if (existing.rows[0]) return { expense_id: existing.rows[0].id, journal_entry_id: linkedJe };
   }
-
-  const inserted = await client.query<{ id: string }>(
-    `INSERT INTO accounting.expenses (
-        operating_company_id, status, posting_status, transaction_date, total_amount_cents,
-        memo, expense_number, vendor_uuid, payment_account_uuid,
-        is_sample_data, is_company_expense, is_reimbursable
-      ) VALUES (
-        $1::uuid, 'draft', 'unposted', $2::date, $3::bigint,
-        $4, $5, $6::uuid, $7::uuid,
-        false, true, false
-      )
-      RETURNING id::text AS id`,
-    [
-      input.operating_company_id,
-      input.service_charge_date,
-      input.service_charge_cents,
-      memo,
-      expenseNumber,
-      vendorId,
-      input.bank_ledger_account_id,
-    ]
-  );
-  const expenseId = inserted.rows[0]?.id;
-  if (!expenseId) throw new Error("recon_service_charge_expense_insert_failed");
 
   // expense_lines_item_id_required (NOT VALID on legacy rows) — new lines must carry a catalogs.items id.
   // Prefer an item whose default_expense_account_id is the service-charge GL account.
@@ -245,47 +214,25 @@ async function createAndPostServiceChargeExpense(
     );
   }
 
-  await client.query(
-    `INSERT INTO accounting.expense_lines (
-        operating_company_id, expense_id, line_sequence, amount, amount_cents,
-        description, load_required, expense_account_uuid, item_id,
-        quantity, rate_cents, unit_of_measure
-      ) VALUES (
-        $1::uuid, $2::uuid, 1, $3::numeric, $4::bigint,
-        $5, false, $6::uuid, $7::uuid,
-        1, $4::bigint, 'each'
-      )`,
-    [
-      input.operating_company_id,
-      expenseId,
-      input.service_charge_cents / 100,
-      input.service_charge_cents,
-      "Bank service charge",
-      input.service_charge_account_id,
-      itemId,
-    ]
-  );
-
-  const posting = await postSourceTransactionInClientTx(
+  // ROUND 441.5 — the same expense writer the categorize poster uses (accounting/bank-line-expense.service.ts).
+  const created = await createAndPostBankLineExpenseOnClient(
     client as never,
     {
-      operating_company_id: input.operating_company_id,
-      source_transaction_type: "expense",
-      source_transaction_id: expenseId,
+      operatingCompanyId: input.operating_company_id,
+      transactionDate: input.service_charge_date,
+      amountCents: input.service_charge_cents,
+      memo,
+      vendorId,
+      paymentAccountId: input.bank_ledger_account_id,
+      expenseAccountId: input.service_charge_account_id,
+      itemId,
+      lineDescription: "Bank service charge",
+      sourceBankTransactionId: null,
     },
     { userId: actor.userId }
   );
-
-  await client.query(
-    `UPDATE accounting.expenses
-        SET status = 'posted',
-            posting_status = 'posted',
-            posted_at = now(),
-            journal_entry_id = $2::uuid,
-            updated_at = now()
-      WHERE id = $1::uuid AND operating_company_id = $3::uuid`,
-    [expenseId, posting.journal_entry_id, input.operating_company_id]
-  );
+  const expenseId = created.expense_id;
+  const posting = { journal_entry_id: created.journal_entry_id };
 
   // The link IS the document's tie to its session (the expense's own postings carry source 'expense'). No link, no post.
   const linked = await linkEntryToSession(client, input.operating_company_id, posting.journal_entry_id, input.session_id, RECON_SERVICE_CHARGE_ROLE);

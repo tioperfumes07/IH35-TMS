@@ -543,6 +543,8 @@ const BANK_MATCH_REVERSE_TABLE: Partial<Record<VoidableEntityType, string>> = {
   bill: "accounting.bills",
   bill_payment: "accounting.bill_payments",
   customer_payment: "accounting.payments",
+  // ROUND 441.5 — an Expense created by categorizing a money-out bank line names that line.
+  expense: "accounting.expenses",
 };
 
 // ROUND 373 / 368.2(b) — the bank line's OWN pointer to the document being voided. The cascade used to find lines only by
