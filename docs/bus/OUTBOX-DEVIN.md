@@ -106,3 +106,7 @@ DONE: PR #25745 · squash 4c6bcc755f9405496b0898a75ce34a3c4a30d7c3 · money-pr-l
 
 ## 2026-10-07 — FAST-MERGE PR #25734 (SETL-F443 creator grid) merged by Devin
 DONE: PR #25734 · squash 6ec5f41a9d0efd4526cffc957f102a13ba8077ad · frontend tsc exit 0 · backend tsc exit 0 · merged via gh api (admin squash). Render deploy IDs not retrievable on this seat (no RENDER_API_KEY); live proof: GET https://ih35-tms.onrender.com/api/v1/healthz/shallow returned git_sha a634b44785, an ancestor of which is 6ec5f41a (includes the PR).
+
+## 2026-10-07 — drain: orphan guards + maintenance-design-law re-anchor shipped
+DONE: PR #25749 · squash 9a853dd765bb41ab030ec66ea8063201747b2640 · money-pr-local-gate exit 0 · wired four orphan settlement-creator guards into existing verify-step 14821 and mapped StateSelect Combobox · baseline-lines-added = 0
+DONE: PR #25754 · squash 8db3696b991c3b77ec3b75322b8d8cbb1914a9b6 · money-pr-local-gate exit 0 · re-anchored verify-maintenance-design-law.mjs to current CENTER-EVERYTHING and QBO-ROWS-NOT-COLUMNS owner rulings · baseline-lines-added = 0

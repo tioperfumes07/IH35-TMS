@@ -2299,3 +2299,95 @@ DID: #25734 was already merged at 22:22Z. Its receipt-upload toast called pushTo
 PROOF: web srv-d7s46dbrjlhs7383i150 dep-db3ch9s9v7es73a5j1b0 LIVE 22:35:28Z @78cfe3f0a2 · backend srv-d7rpem7avr4c73fhp4n0 dep-db3ch9s9v7es73a5iv20 LIVE 22:36:37Z @78cfe3f0a2. Local: frontend typecheck 0, npm run build 0.
 NOTE FOR SEATS: `npx tsc -p tsconfig.json --noEmit` in apps/frontend checks NOTHING (files:[] + references) — that is how TS2345 passed the Lead's gate. Use `npm run -s typecheck` (tsc -b) or `npm run build`.
 B8: six commits appeared on cc-2/b8-deposit-to-invoices in wt3-cc2 between 21:53Z and 22:33Z that this session did not author — paused until the owner says which session owns it.
+
+### CC-2 · 2026-10-07 22:50Z — ROUND 441.6 CLOSE-OUT (stopping until Oct 8 6pm Chicago)
+
+**1. B8 BRANCH — NOT TOUCHED BEYOND WHAT IS STATED HERE. Lead rules ownership.**
+Branch: `cc-2/b8-deposit-to-invoices` · worktree /Users/jorgemunoz/IH35-TMS-claude/wt3-cc2 · **LOCAL ONLY — never pushed (ls-remote: none)**. 7 commits ahead of origin/main:
+| SHA (full) | author | author date | subject |
+|---|---|---|---|
+| f043936591d400c06f84251f34e889401c502cd3 | tioperfumes07 <tioperfumes07@gmail.com> | 2026-10-06T13:56:22-05:00 | B8 — one deposit -> several invoices (THIS SESSION authored) |
+| f44e92b325dac259fd29ab396cde84e2bd3f1f1d | tioperfumes07 | 2026-10-06T16:53:06-05:00 | B8 DB fixture uses Accountant; Owner insert blocked by trigger |
+| 2ceb8e7163fe159b6051f74c8bea14b6445163f3 | tioperfumes07 | 2026-10-06T16:54:56-05:00 | regenerate USMCA-EXHAUSTIVE-BATTERY.md after B8 |
+| 8e64711f2d70e4e271e17dd0b65c93373eaf11d6 | tioperfumes07 | 2026-10-06T16:56:52-05:00 | spine-event guard follows the customer-payment writer (B8) |
+| aab4ddb2f5ea17a5f85bc46e215c882f3486b279 | tioperfumes07 | 2026-10-06T16:58:09-05:00 | battery line-number refresh after customer-payments routes thin |
+| 4eb61a43e896d8b60389483c29eec0cc99e4ca94 | tioperfumes07 | 2026-10-06T17:05:56-05:00 | orphan match guard excludes Round-363 release tombstones |
+| 73f8fe039c (orig, 2026-10-06T17:11:30-05:00) -> **f0f30cd5e3a14be243156820fd4eba24ede2bd71** (2026-10-07T17:33:29-05:00) | tioperfumes07 | see left | B8 receive panel table carries tabular-nums |
+The six I did not make are f44e92b325, 2ceb8e7163, 8e64711f2d, aab4ddb2f5, 4eb61a43e8, 73f8fe039c — all git author tioperfumes07 (every seat commits under the owner's git identity, so author does not identify the session). CORRECTION to my 22:37Z note: they are dated **2026-10-06 21:53Z–22:11Z**, not 10-07.
+DISCLOSURE: before noticing, I ran `git reset --soft HEAD~1` + recommit on the tip — 73f8fe039c became f0f30cd5e3. Same parent (4eb61a43e8), **identical tree (23acc61cdfda)** — no content changed; only that one SHA. Nothing else on the branch was rewritten, rebased, pushed or deleted.
+
+**2. 83-QUERY COMPANY-SCOPE REVIEW (step 84 verify-mdata-entity-scope)**
+Cleared: **83 of 83** in commit 7f74cd91d673 on `cc-2/entity-scope-83` — 42 code fixes (predicate added, 29 files), 22 proven indirect (helper carries the predicate; guard checks the helper), 19 baselined with reasons. Guard on that branch: exit 0, "60 unscoped literals, all allowlisted", --selftest 12/12. Open (verdict): **0**.
+Open (process): NOT GATED, NOT MERGED. Pushed as DRAFT **#25752**. Next step: `money-pr-local-gate` on 7f74cd91d6 -> review the baseline rewrite (`scripts/verify-steps/84-verify-mdata-entity-scope.baseline.json`, -838 lines, 60 entries) -> fast-merge. Lead ruling requested: `apps/backend/src/dispatch/deadhead/chain-deadhead.service.ts` reads the truck's previous delivery across entities and returns that load's number (baselined as by-design).
+
+**3. UNCOMMITTED:** none in any worktree. All fork branches are on the remote. The only unpushed branch is B8 (item 1), left as-is by order.
+
+**4. STOPPED.** Nothing new started before Oct 8 6pm Chicago.
+Open items carried: B8 merge (needs its DB test green in verify:local-ci; the fixture fix is f44e92b325 on that branch) · #25752 gate + merge · prod migration ledger has 3 entries with no file on disk (202610290000, 202614000000, 202614690000 — needs an AUTH) · pre-existing test reds (DriversListPage x2, RecordTransferModal, TransferModal, ManualJEModal, SettlementsPage; backend bill-account-resolver etc.) and the ~90 DB-test failures in the fresh-DB suite (41 are the Owner-insert trigger in fixtures — same fix as f44e92b325).
+
+### CC-2 · 2026-10-07 23:05Z — ROUND 441.8 rulings executed (then stopped)
+
+**RULING 1 — B8 backed up.** `cc-2/b8-deposit-to-invoices` pushed AS-IS (tip f0f30cd5e3) → DRAFT **#25755** "DO NOT MERGE — B8 provenance under review", body has all 7 SHAs + dates + the re-commit disclosure. Nothing rewritten.
+
+**RULING 2 — chain-deadhead: the UNIT path is possible; fallback NOT needed.** Measured read-only on the pre-purge backup (USMCA only; no frozen-company rows read):
+- every telematics.unit_stop_events row for units that ran USMCA loads is filed under USMCA (804 rows / 14 units) → reading them is in-company;
+- since stop events began (2026-09-22): **18 / 18** USMCA loads have a ≥30-min dwell stop for their unit before pickup; 12 are tied to the prior load (load_id_at_time);
+- before 09-22 only 18 / 135 have stop events (feature start) — the books are purged, so no history to serve.
+Plan (after reset): origin = the unit's last dwell stop before pickup from its own company-scoped stop history; drop the mdata.loads cross-company read entirely. ALSO FOUND: today the service returns the other company's `prior_load_number` to the caller — a cross-company label leak, removed by the same change.
+
+**RULING 3 — #25752: 19 exceptions listed in the PR body (file:line · query · reason); waits on the Lead's read; DO NOT MERGE.** New facts the Lead needs:
+- Cursor's **#25674** (17da23e63f, merged 2026-10-06 17:50 Chicago) did the SAME 83-query triage in parallel. Main's step-84 baseline now holds **114 entries with NO written reason** (incl. 2 for chain-deadhead) — i.e. unreviewed cross-tenant exceptions are already on main. #25752 carries the stricter rule (new exceptions need a reason; 41 legacy unreasoned capped, shrink-only).
+- Main today: **1** open unscoped literal — `apps/backend/src/driver-finance/feed-gate/feed-gate.checks.ts` (`SELECT 'mdata.loads', l.id, 'Load ' || l.load_number …`).
+- #25752 gate NOT green: verify-seat-distance-from-main; rebase conflicts in 16 files (money paths). Left as draft; needs a reconcile pass against #25674 after the reset. Lead to rule: keep #25752's reason-required mechanism and re-point it at main's 114, or close #25752 as superseded.
+
+**CARRIED — finding: 41 DB test files fail on the Owner-role trigger.**
+Rule: `identity.guard_role_escalation()` (db/migrations/202613312000_permission_model.sql) raises `role_escalation_blocked: only a primary owner can assign the Owner role` on any INSERT/UPDATE setting role='Owner' unless `identity.allow_owner_bootstrap()` (SET LOCAL app.allow_owner_bootstrap = '1'). Fixture fix: test files that INSERT an Owner directly must use the sanctioned bootstrap exactly as apps/backend/test-helpers/db-fixture.ts:263-272 does, or seed a non-Owner role (Accountant) when Owner is not under test (B8's f44e92b325 does the latter). The 41 files (verify:local-ci fresh DB, 2026-10-07):
+- apps/backend/src/accounting/__tests__/abandonment-escrow-forfeit-scenario.db.test.ts
+- apps/backend/src/accounting/__tests__/accident-dire-scenario.db.test.ts
+- apps/backend/src/accounting/__tests__/acct-f5622-payment-void-recompute.db.test.ts
+- apps/backend/src/accounting/__tests__/acct-f5623-bill-payment-vendor-credit-netting.db.test.ts
+- apps/backend/src/accounting/__tests__/bill-gl-posting.db.test.ts
+- apps/backend/src/accounting/__tests__/bill-payment-gl-ap-control-isolation.stress.db.test.ts
+- apps/backend/src/accounting/__tests__/bill-payment-gl-posting.db.test.ts
+- apps/backend/src/accounting/__tests__/customer-payment-gl-posting.db.test.ts
+- apps/backend/src/accounting/__tests__/driver-reimbursement-gl-posting.db.test.ts
+- apps/backend/src/accounting/__tests__/escrow-new-hire-scenario.db.test.ts
+- apps/backend/src/accounting/__tests__/expense-gl-posting.db.test.ts
+- apps/backend/src/accounting/__tests__/insurance-claim-recovery-scenario.db.test.ts
+- apps/backend/src/accounting/__tests__/internal-fine-autodeduct.db.test.ts
+- apps/backend/src/accounting/__tests__/invoice-ar-killswitch.db.test.ts
+- apps/backend/src/accounting/__tests__/scenario-battery.db.test.ts
+- apps/backend/src/accounting/__tests__/subledger-gl-tieout-ar.db.test.ts
+- apps/backend/src/accounting/__tests__/tioperfumes-e2e-scenario.db.test.ts
+- apps/backend/src/accounting/__tests__/worm-audit-actor-attribution.db.test.ts
+- apps/backend/src/accounting/amortization-posting/__tests__/amortization-gl-posting.db.test.ts
+- apps/backend/src/accounting/amortization-posting/__tests__/prepaid-purchase-posting.db.test.ts
+- apps/backend/src/accounting/bank-recon/__tests__/receive-and-match.db.test.ts
+- apps/backend/src/accounting/finance-hub-amortization-posting/__tests__/loan-payment-posting.db.test.ts
+- apps/backend/src/accounting/lease-asc842/__tests__/lease-gl-posting.db.test.ts
+- apps/backend/src/accounting/opening-balance-register/__tests__/opening-balance-register-commit-gate.db.test.ts
+- apps/backend/src/accounting/revrec-delivery-posting/__tests__/revrec-latch-two-event-live.db.test.ts
+- apps/backend/src/accounting/settlement-posting/__tests__/settlement-bill-payment-posting.db.test.ts
+- apps/backend/src/accounting/settlement-posting/__tests__/settlement-gl-posting.db.test.ts
+- apps/backend/src/banking/__tests__/bank-driver-advance-idempotency.db.test.ts
+- apps/backend/src/banking/__tests__/bank-driver-advance.db.test.ts
+- apps/backend/src/banking/__tests__/bank-driver-expense-deduction-idempotency.db.test.ts
+- apps/backend/src/banking/__tests__/bank-feed-gl-posting.db.test.ts
+- apps/backend/src/banking/__tests__/bank-feed-transfer-dedup.db.test.ts
+- apps/backend/src/banking/__tests__/bank-transaction-splits-vendor-bill.db.test.ts
+- apps/backend/src/banking/__tests__/bulk-transactions-post-as-bill.db.test.ts
+- apps/backend/src/banking/__tests__/mark-bank-feed-transfer.db.test.ts
+- apps/backend/src/banking/__tests__/transfer-gl-posting.db.test.ts
+- apps/backend/src/dispatch/__tests__/acct-f5624-detention-billing-bridge-resync.db.test.ts
+- apps/backend/src/driver-finance/__tests__/settlement-payrun-close.db.test.ts
+- apps/backend/src/finance/amortization/__tests__/amortization.db.test.ts
+- apps/backend/src/finance/scenarios/__tests__/scenarios.db.test.ts
+- apps/backend/src/settlements/__tests__/approval-service-canonical.db.test.ts
+Not asserted: whether CC-3's 5 front-end failures share this cause — front-end (jsdom) tests do not touch the DB trigger; the frontend reds I saw on main were different (ToastProvider, "multiple elements"). Needs a side-by-side, not an assumption.
+
+**CARRIED — the 3 prod migration-ledger "orphans" (verify-no-orphan-migration-ledger-entries vs prod):**
+1. `202610290000_disp01_escrow_abandon_trigger_text_cast` — REAL rename orphan: renamed to `202610291200_disp01_escrow_abandon_trigger_text_cast.sql` on 2026-07-30 (0897d9ca8d, band move). It recreates trigger `trg_auto_propose_escrow_on_abandon` on mdata.loads (`dispatch.auto_propose_escrow_on_abandonment`, text cast fix). Needs an AUTH to repoint/retire the old ledger row.
+2. `202614000000_mdata_locations_is_sample_data` (ACC-15: adds is_sample_data to mdata.locations) — file IS on disk; the guard reports the entry without `.sql` → a mirror key-format mismatch, not a missing file. Needs a look before any AUTH.
+3. `202614690000_expense_lines_item_and_account_required` (document integrity: expense lines must carry item + account; 639-line backfill) — same as 2: file on disk, entry without `.sql`.
+
+**STOPPED.** Nothing new before Oct 8 6pm Chicago. Uncommitted: none. All branches on the remote (B8 #25755, entity-scope #25752).
