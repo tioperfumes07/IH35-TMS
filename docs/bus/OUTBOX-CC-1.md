@@ -1945,3 +1945,51 @@ PR **#25737** → dff23d7f39. Deploys: web **dep-db3c25t040hc739tqtbg**, backend
 CI is down account-wide; local gates are the record (`money-pr-local-gate: PASS`).
 
 Two throwaway Neon forks are alive for the owner/Lead to delete: br-shy-wildflower-akncgc1a (LST-F424) and br-red-meadow-aknhkedd (ROUND 441).
+
+## 2026-10-07 ~23:40Z — CC-1: the 5 CONVERTED (net TB delta $0.00); Phase 1, RELAY-F440, F430 merged and live
+**Converted on prod through the app** (`scripts/ops/round-441-5-convert-categorized-costs-to-expenses.ts`, as the Owner):
+1. Undo the line (reversal reason names ROUND 441.5 LST-F433).
+2. Re-categorize it, which since Phase 1 creates the Expense document, linked both ways.
+
+| bank line | voided categorization JE | new Expense | vendor | account / item |
+|---|---|---|---|---|
+| External transfer fee 01/15 $5.00 | 4d293634-800c-4967-9c6e-d296a64621c0 | EXP-2026-00001 (061376d6-990a-4df4-af0e-60c974d2c31e) | Bank Of America | 6300 / BC-Bank Ach & Wire Fees |
+| Wire Transfer Fee 06/01 $30.00 | 3558febf-bd50-46ac-a865-c89b8f787f6a | EXP-2026-00002 (1dda1ba3-42e2-4a64-81e6-dfd5c6f42c15) | Bank Of America | 6300 / BC-Bank Ach & Wire Fees |
+| Overdraft item fee 01/20 $10.00 | a6d06fc6-fa12-443e-be6b-b1df0a0287f2 | EXP-2026-00003 (4fc43d9b-79b5-4818-b0b1-5cb116310337) | Bank Of America | 6310 / BC-Overdraft Fee (new) |
+| ED-HER PLASTICS 08/18 $146.14 | d11b4ffc-5077-4461-9d7e-191a6c5dcbdb | EXP-2026-00004 (81c50dd0-ec8a-4c29-aab8-c069f4845af0) | ED-HER PLASTICS INC (existing) | 6900 / Miscellaneous Expense (new) |
+| Cash Deposit Processing 03/02 $12.00 | 0133f7dc-c3b4-419e-8276-099086694ed9 | EXP-2026-00005 (a52bf1d2-6dcd-4769-890e-d89667951fb9) | Bank Of America | 6300 / BC-Cash Deposit Processing Fee (new) |
+
+**Trial balance (cents), before → after:**
+- 1000: −1,883,314 → −1,883,314
+- 6300: 4,700 → 4,700
+- 6310: 1,000 → 1,000
+- 6900: 14,614 → 14,614
+- **Net delta 0.** The same date, amount and account on every line; only the shape changed.
+
+**Vendors:** none invented. The three fee vendors resolve to the existing **Bank Of America** vendor; Ed-Her resolves to the existing **ED-HER PLASTICS INC**.
+
+**Items created** (owner's standing order 2026-08-07, create missing USMCA items; type Charge, because the item route requires an income account for Service): BC-Overdraft Fee → 6310, Miscellaneous Expense → 6900, BC-Cash Deposit Processing Fee → 6300.
+- 6310 and 6900 had no item at all.
+- 6300 has six items and none names a cash-deposit processing fee. Picking one would have been a guess, so the fitting item was created.
+- The owner can re-point any of them.
+
+**Live after (prod):**
+- `verify-costs-are-expenses-not-handwritten-jes: LIVE PASS — 70 USMCA posted JE(s) scanned, 0 cost JE violation(s)`
+- `verify-bank-categorized-cost-is-expense-document: OK … live L1–L6 clean`
+- `verify-undo-leaves-no-document-behind: PASS`
+
+**Every seat's money gate is unblocked.**
+
+**Merged:**
+- **Phase 1** #25762 → 84a705420b: money-out categorize to an expense account creates the Expense; migration 202615440500 live.
+- **RELAY-F440** #25763 → 4c68154955. **Confirmed:** migration 202615440400 adds `integration_sync_log_update_bypass` FOR UPDATE (plus finish in finally, 0-row finish refused, reclaimable claims, watermark fallback). Prod now: 0 open relay claims, 14 closed "abandoned: …". The 12:00Z tick on 10-08 is the first that can record its finish; its result goes here.
+- **F430** #25764 → 6a12ba07ef: the detail-type trigger maps code → account type.
+
+**Relay key (441.7):** unchanged. All 119 USMCA fills carry linked_org "IH 35 TRANSPORTATION LLC" (66068577). The TRANSP pull stays disabled and unrepaired.
+- **Data note for the Lead:** fill txn_4ypX8FQCRzHr5n is held by BOTH USMCA and TRANSP, which breaks the one-fill-one-company rule. This is historic and is not touched while TRANSP is frozen.
+
+**Q5, the 53:** 23 money-in ($35,355.00: 2410 $31,855.00, 3000 $3,500.00) and 30 money-out to 2410 ($53,985.00). Untouched until Phase 2 (Deposit, in build; migration 202615440600 claimed #25765).
+
+**Neon forks:** br-shy-wildflower-akncgc1a, br-red-meadow-aknhkedd and br-twilight-night-akmnrs5o are deleted.
+
+CI is down account-wide; local gates are the record. The Lead's gate for these PRs, backend tsc = 0, PASSED on each.
