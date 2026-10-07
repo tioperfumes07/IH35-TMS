@@ -493,7 +493,7 @@ export function Combobox({
                 }}
                 onMouseEnter={() => setActiveIndex(0)}
                 className={`w-full border-b border-gray-100 px-2 py-1.5 text-left text-xs font-medium ${
-                  activeIndex === 0 ? "bg-slate-100 text-slate-700" : "text-slate-600 hover:bg-gray-50"
+                  activeIndex === 0 ? "bg-[#F7F8FA] text-[#1F2A44]" : "text-[#4B5563] hover:bg-gray-50"
                 }`}
               >
                 {addRowLabel}
@@ -503,13 +503,13 @@ export function Combobox({
               <div className="px-2 py-1.5 text-xs text-gray-500">No matches</div>
             ) : null}
             {!loading && listCapNotice ? (
-              <div className="border-b border-slate-100 bg-slate-50 px-2 py-1.5" data-testid="combobox-list-cap-notice">
+              <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5" data-testid="combobox-list-cap-notice">
                 {listCapNotice}
               </div>
             ) : null}
             {!loading && !listCapNotice && localBrowseTruncated ? (
               <div
-                className="border-b border-slate-100 bg-slate-50 px-2 py-1.5 text-[11px] text-slate-600"
+                className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-[11px] text-[#4B5563]"
                 data-testid="combobox-truncated-notice"
               >
                 Showing first {MAX_VISIBLE_OPTIONS} — type to search the rest
@@ -533,7 +533,7 @@ export function Combobox({
                     onClick={() => commitSelection(option.value, option)}
                     onMouseEnter={() => setActiveIndex(listIndex)}
                     className={`w-full px-2 py-1.5 text-left text-xs ${
-                      activeIndex === listIndex ? "bg-slate-100 text-slate-700" : "text-gray-800 hover:bg-gray-50"
+                      activeIndex === listIndex ? "bg-[#F7F8FA] text-[#1F2A44]" : "text-gray-800 hover:bg-gray-50"
                     }`}
                   >
                     <div>{option.label}</div>
@@ -567,7 +567,7 @@ export function Combobox({
             ? "border-red-400 focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-200"
             : formFieldChrome
             ? ""
-            : "border-gray-300 focus-within:border-slate-300 focus-within:ring-2 focus-within:ring-slate-400"
+            : "border-gray-300 focus-within:border-[#E5E7EB] focus-within:ring-2 focus-within:ring-[#9CA3AF]"
         }`}
       >
         <input

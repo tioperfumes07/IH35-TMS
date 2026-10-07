@@ -161,10 +161,10 @@ export function ReportFilterBar({
     <div
       data-report-filter-bar="inline"
       data-testid={`${testIdPrefix}-report-filter-bar`}
-      className="flex flex-wrap items-center gap-2 rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700"
+      className="flex flex-wrap items-center gap-2 rounded-sm border border-[#E5E7EB] bg-white px-3 py-2 text-xs text-[#1F2A44]"
     >
-      <label className="flex items-center gap-1 text-xs text-slate-600">
-        <span className="font-semibold text-slate-600">From</span>
+      <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+        <span className="font-semibold text-[#4B5563]">From</span>
         <DatePicker
           className="h-7 w-[120px]"
           value={fromDate ?? ""}
@@ -173,8 +173,8 @@ export function ReportFilterBar({
           data-testid={`${testIdPrefix}-filter-from`}
         />
       </label>
-      <label className="flex items-center gap-1 text-xs text-slate-600">
-        <span className="font-semibold text-slate-600">To</span>
+      <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+        <span className="font-semibold text-[#4B5563]">To</span>
         <DatePicker
           className="h-7 w-[120px]"
           value={toDate ?? ""}
@@ -189,40 +189,40 @@ export function ReportFilterBar({
             key={btn.preset}
             type="button"
             onClick={() => handlePreset(btn.preset)}
-            className="h-7 rounded-sm border border-slate-300 bg-white px-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+            className="h-7 rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs font-medium text-[#1F2A44] hover:bg-[#F7F8FA]"
             data-testid={`${testIdPrefix}-preset-${btn.preset}`}
           >
             {btn.label}
           </button>
         ))}
       </div>
-      <div className="mx-1 h-5 w-px bg-slate-200" />
-      <label className="flex items-center gap-1 text-xs text-slate-600">
-        <span className="font-semibold text-slate-600">Search</span>
+      <div className="mx-1 h-5 w-px bg-[#E5E7EB]" />
+      <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+        <span className="font-semibold text-[#4B5563]">Search</span>
         <input
           type="text"
           value={search ?? ""}
           onChange={handleSearch}
           placeholder="Search…"
-          className="h-7 w-[160px] rounded-sm border border-slate-300 px-2 text-xs text-slate-700 placeholder:text-slate-400"
+          className="h-7 w-[160px] rounded-sm border border-[#E5E7EB] px-2 text-xs text-[#1F2A44] placeholder:text-[#9CA3AF]"
           data-testid={`${testIdPrefix}-filter-search`}
         />
       </label>
       {children ? (
         <>
-          <div className="mx-1 h-5 w-px bg-slate-200" />
+          <div className="mx-1 h-5 w-px bg-[#E5E7EB]" />
           {children}
         </>
       ) : null}
       {statusOptions && statusOptions.length > 0 ? (
         <>
-          <div className="mx-1 h-5 w-px bg-slate-200" />
-          <label className="flex items-center gap-1 text-xs text-slate-600">
-            <span className="font-semibold text-slate-600">Status</span>
+          <div className="mx-1 h-5 w-px bg-[#E5E7EB]" />
+          <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+            <span className="font-semibold text-[#4B5563]">Status</span>
             <select
               value={statusFilter ?? ""}
               onChange={handleStatus}
-              className="h-7 rounded-sm border border-slate-300 bg-white px-2 text-xs text-slate-700"
+              className="h-7 rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#1F2A44]"
               data-testid={`${testIdPrefix}-filter-status`}
             >
               <option value="">All</option>
@@ -237,12 +237,12 @@ export function ReportFilterBar({
       ) : null}
       {onApply ? (
         <>
-          <div className="mx-1 h-5 w-px bg-slate-200" />
+          <div className="mx-1 h-5 w-px bg-[#E5E7EB]" />
           {onReset ? (
             <button
               type="button"
               onClick={onReset}
-              className="h-7 rounded-sm border border-slate-300 bg-white px-3 text-xs font-medium text-slate-600 hover:bg-slate-50"
+              className="h-7 rounded-sm border border-[#E5E7EB] bg-white px-3 text-xs font-medium text-[#4B5563] hover:bg-[#F7F8FA]"
               data-testid={`${testIdPrefix}-reset`}
             >
               Reset
@@ -252,7 +252,7 @@ export function ReportFilterBar({
             <button
               type="button"
               onClick={onCancel}
-              className="h-7 rounded-sm border border-slate-300 bg-white px-3 text-xs font-medium text-slate-600 hover:bg-slate-50"
+              className="h-7 rounded-sm border border-[#E5E7EB] bg-white px-3 text-xs font-medium text-[#4B5563] hover:bg-[#F7F8FA]"
               data-testid={`${testIdPrefix}-cancel`}
             >
               Cancel
@@ -262,7 +262,7 @@ export function ReportFilterBar({
             type="button"
             onClick={onApply}
             disabled={applyDisabled}
-            className="h-7 rounded-sm border border-slate-700 bg-slate-700 px-3 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+            className="h-7 rounded-sm border border-[#1F2A44] bg-[#1F2A44] px-3 text-xs font-medium text-white hover:bg-[#14314F] disabled:opacity-50"
             data-testid={`${testIdPrefix}-apply`}
           >
             Apply
