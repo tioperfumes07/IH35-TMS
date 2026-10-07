@@ -70,7 +70,7 @@
      rows are visible on #F4F6F8 (was near-white #E3E8EF / oklch hairlines). */
   --color-canvas: var(--surface-page);
   --color-card: var(--surface-raised);
-  --color-border: var(--border-default);
+  --color-border: #E5E7EB;
   --color-divider: #D8DEE6;
   --color-divider-strong: #C7D2DC;
   --color-row-stripe: #FAFBFC;
