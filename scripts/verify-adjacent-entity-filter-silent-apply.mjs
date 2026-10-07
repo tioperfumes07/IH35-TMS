@@ -3,9 +3,11 @@
  * verify-adjacent-entity-filter-silent-apply.mjs
  * CLS-ADJACENT-ENTITY-FILTER-SILENT-APPLY
  *
- * Nine list surfaces must not mount company-scoped EntityPickers beside
- * CollapsedListFilters that write URL/query immediately. Entity FKs belong in
- * the same staged tuple and commit only on Apply.
+ * @matrix-built {"modules":["accounting","driver_finance","fuel","legal","maintenance"],"cols":["ui_interactions","connectivity"],"task":"CLS-ADJACENT-ENTITY-FILTER-SILENT-APPLY","vertical":"class-sweep"}
+ *
+ * Non-MoneyListToolbar list surfaces must not mount company-scoped EntityPickers
+ * beside CollapsedListFilters that write URL/query immediately. Entity FKs belong
+ * in the same staged tuple and commit only on Apply.
  */
 import fs from "node:fs";
 import path from "node:path";

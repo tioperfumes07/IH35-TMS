@@ -79,9 +79,11 @@ export function check(paths = { backend: BACKEND, apiClient: API_CLIENT, drawer:
     offenders.push(`missing: ${path.relative(ROOT, DRAWER_P)}`);
   } else {
     if (!/voidLiability\(/.test(drawerSrc)) offenders.push("LiabilityDetailDrawer does not call voidLiability()");
-    // A real reason prompt, not a hardcoded string handed straight to the API call (that would
-    // defeat the point of a required, meaningful void_reason column).
-    if (!/window\.prompt\(/.test(drawerSrc)) offenders.push("LiabilityDetailDrawer does not prompt for a void reason");
+    // A real reason prompt via the canonical VoidReasonModal, not a hardcoded string handed straight
+    // to the API call (that would defeat the point of a required, meaningful void_reason column).
+    if (!/VoidReasonModal/.test(drawerSrc) || !/reason\.trim\(\)/.test(drawerSrc)) {
+      offenders.push("LiabilityDetailDrawer does not prompt for a void reason via VoidReasonModal with a trimmed reason");
+    }
   }
 
   return offenders;
@@ -144,7 +146,13 @@ async function selftest() {
   fs.writeFileSync(backendFile, backendGood);
 
   // case5: frontend never calls voidLiability — must go RED.
-  fs.writeFileSync(drawerFile, drawerGood.replace(/void voidLiability\(/, "void Promise.resolve((").replace("voidLiability, ", ""));
+  fs.writeFileSync(
+    drawerFile,
+    drawerGood
+      .replace(/await voidLiability\(/, "await Promise.resolve((")
+      .replace(/import \{ holdLiability, markLiabilityPaidOff, resumeLiability, voidLiability \}/, "import { holdLiability, markLiabilityPaidOff, resumeLiability }")
+      .replace("voidLiability, ", ""),
+  );
   if (!check(paths).some((o) => /does not call voidLiability/.test(o))) failures.push("case5 FAIL — missing FE call must be caught.");
   fs.writeFileSync(drawerFile, drawerGood);
 
