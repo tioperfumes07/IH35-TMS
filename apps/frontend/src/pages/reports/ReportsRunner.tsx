@@ -190,7 +190,7 @@ export function ReportsRunnerPage() {
       <div className="space-y-3">
         <ReportsSubNav />
         <PageHeader title={`Reports / ${reportMeta.name}`} />
-        <div className="rounded-sm border border-slate-200 bg-white px-3 py-4 text-xs text-slate-600">Runner configuration is not available yet for this report.</div>
+        <div className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-4 text-xs text-[#4B5563]">Runner configuration is not available yet for this report.</div>
       </div>
     );
   }
@@ -200,9 +200,9 @@ export function ReportsRunnerPage() {
       <div className="space-y-3">
         <ReportsSubNav />
         <PageHeader title={`Reports / ${reportMeta.name}`} actions={<button type="button" className="rounded-sm border px-3 py-1.5 text-xs" onClick={() => navigate("/reports")}>Back</button>} />
-        <section className="rounded-sm border border-slate-200 bg-slate-50 p-4">
-          <h2 className="text-page-title font-semibold text-slate-900">Report unavailable in this phase</h2>
-          <p className="mt-1 text-xs text-slate-800">
+        <section className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4">
+          <h2 className="text-page-title font-semibold text-[#0F1219]">Report unavailable in this phase</h2>
+          <p className="mt-1 text-xs text-[#0F1219]">
             {reportMeta.description} This runner ships with {STUB_PHASE[reportMeta.id] ?? "a later phase"}.
           </p>
         </section>
@@ -219,7 +219,7 @@ export function ReportsRunnerPage() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="rounded-sm border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700"
+              className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-1.5 text-xs font-semibold text-[#1F2A44]"
               onClick={() => downloadCSV(config.csvFilename(filters), config.columns, resultRows)}
               disabled={resultRows.length === 0}
             >
@@ -248,10 +248,10 @@ export function ReportsRunnerPage() {
       ) : null}
 
       {isRunning ? (
-        <div className="rounded-sm border border-slate-200 bg-white px-3 py-6 text-center text-xs text-slate-500">Running report...</div>
+        <div className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-6 text-center text-xs text-[#6B7280]">Running report...</div>
       ) : (
         <section className="space-y-2">
-          <div className="text-xs text-slate-500">
+          <div className="text-xs text-[#6B7280]">
             Results ({resultRows.length} rows{runState ? ` · ${(runState.durationMs / 1000).toFixed(1)}s` : ""})
           </div>
           {config.id === "csa-fleet" ? <CsaFleetScoreCard value={runState?.csaValue ?? {}} /> : <RunnerTable columns={config.columns} rows={resultRows} />}

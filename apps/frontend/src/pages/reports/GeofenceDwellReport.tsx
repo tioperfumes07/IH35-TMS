@@ -127,7 +127,7 @@ export function GeofenceDwellReport() {
 
   const columns = useMemo<ParityColumn<GeofenceDwellRow>[]>(
     () => [
-      { key: "geofence_label", label: "Geofence", sortable: true, render: (row) => <span className="font-medium text-slate-900">{row.geofence_label}</span> },
+      { key: "geofence_label", label: "Geofence", sortable: true, render: (row) => <span className="font-medium text-[#0F1219]">{row.geofence_label}</span> },
       { key: "location_kind", label: "Kind", sortable: true },
       { key: "unit_number", label: "Unit", sortable: true, render: (row) => <EntityLinkOrTombstone kind="unit" id={row.unit_id} name={row.unit_number} noun="Unit" /> },
       { key: "driver", label: "Driver", sortable: true, render: (row) => <EntityLinkOrTombstone kind="driver" id={row.driver_id ?? undefined} name={driverName(row.first_name, row.last_name)} noun="Driver" /> },
@@ -181,7 +181,7 @@ export function GeofenceDwellReport() {
         applyDisabled={!staged.dirty}
       >
         <div className="flex items-center gap-2">
-          <div className="text-xs text-slate-700">
+          <div className="text-xs text-[#1F2A44]">
             <Combobox
               id="geofence-dwell-filter"
               className="h-7"
@@ -193,10 +193,10 @@ export function GeofenceDwellReport() {
               error={geofenceQuery.isError ? "Couldn't load geofences" : undefined}
             />
           </div>
-          <label className="flex items-center gap-1 text-xs text-slate-600">
-            <span className="font-semibold text-slate-600">Kind</span>
+          <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+            <span className="font-semibold text-[#4B5563]">Kind</span>
             <SelectCombobox
-              className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
+              className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
               value={staged.draft.locationKind}
               onChange={(event) => staged.setDraft((p) => ({ ...p, locationKind: event.target.value as GeofenceLocationKind | "" }))}
             >
@@ -211,17 +211,17 @@ export function GeofenceDwellReport() {
       </ReportFilterBar>
 
       <section className="grid gap-2 sm:grid-cols-3">
-        <div className="rounded-sm border border-slate-200 bg-white px-3 py-2">
-          <div className="text-xs uppercase text-slate-500">Visits</div>
-          <div className="text-page-title font-semibold text-slate-900">{summary.events}</div>
+        <div className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-2">
+          <div className="text-xs uppercase text-[#6B7280]">Visits</div>
+          <div className="text-page-title font-semibold text-[#0F1219]">{summary.events}</div>
         </div>
-        <div className="rounded-sm border border-slate-200 bg-white px-3 py-2">
-          <div className="text-xs uppercase text-slate-500">Closed dwells</div>
-          <div className="text-page-title font-semibold text-slate-900">{summary.completedDwells}</div>
+        <div className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-2">
+          <div className="text-xs uppercase text-[#6B7280]">Closed dwells</div>
+          <div className="text-page-title font-semibold text-[#0F1219]">{summary.completedDwells}</div>
         </div>
-        <div className="rounded-sm border border-slate-200 bg-white px-3 py-2">
-          <div className="text-xs uppercase text-slate-500">Avg dwell</div>
-          <div className="text-page-title font-semibold text-slate-900">{minutesToClock(summary.avgDwell)}</div>
+        <div className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-2">
+          <div className="text-xs uppercase text-[#6B7280]">Avg dwell</div>
+          <div className="text-page-title font-semibold text-[#0F1219]">{minutesToClock(summary.avgDwell)}</div>
         </div>
       </section>
 
