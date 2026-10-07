@@ -173,7 +173,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
             kind="claim"
             id={claim.id}
             label={entityLabel(claim.claim_number, claim.id, "Claim")}
-            className="font-medium text-slate-700 underline"
+            className="font-medium text-[#1F2A44] underline"
           />
         ),
       },
@@ -313,7 +313,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
       </div>
 
       {highlightedClaimId ? (
-        <div className="mb-3 space-y-2 rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+        <div className="mb-3 space-y-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
           <p>
             Claim graph{" "}
             <span className="font-semibold">
@@ -349,7 +349,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                         graph.claim.accident_report_id,
                         "Accident",
                       )}
-                      className="text-slate-700 underline"
+                      className="text-[#1F2A44] underline"
                       data-testid={`claim-forward-accident-${graph.claim.accident_report_id}`}
                     />
                   </>
@@ -363,11 +363,11 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                     kind="lawsuit"
                     id={l.id}
                     label={entityLabel(l.case_number, l.id, "Case")}
-                    className="mr-2 text-slate-700 underline"
+                    className="mr-2 text-[#1F2A44] underline"
                   />
                 ))}
                 {graph.reverse.matters.map((m) => (
-                  <EntityLink key={m.id} kind="matter" id={m.id} label={entityLabel(m.matter_number, m.id, "Legal matter")} className="mr-2 text-slate-700 underline" />
+                  <EntityLink key={m.id} kind="matter" id={m.id} label={entityLabel(m.matter_number, m.id, "Legal matter")} className="mr-2 text-[#1F2A44] underline" />
                 ))}
                 {graph.reverse.accidents.map((a) => (
                   <EntityLink
@@ -379,7 +379,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                       a.id,
                       "Accident",
                     )}
-                    className="mr-2 text-slate-700 underline"
+                    className="mr-2 text-[#1F2A44] underline"
                     data-testid={`claim-reverse-accident-${a.id}`}
                   />
                 ))}
@@ -397,7 +397,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                     }
                     id={i.id}
                     label={entityLabel(i.incident_type ? `Incident ${i.incident_type}` : null, i.id, "Incident")}
-                    className="mr-2 text-slate-700 underline"
+                    className="mr-2 text-[#1F2A44] underline"
                     data-testid={`claim-reverse-incident-${i.id}`}
                   />
                 ))}
@@ -407,7 +407,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                     kind="bill"
                     id={b.id}
                     label={visibleDocumentLabel(b.bill_number, b.id, "Bill")}
-                    className="mr-2 text-slate-700 underline"
+                    className="mr-2 text-[#1F2A44] underline"
                     data-testid={`claim-reverse-bill-${b.id}`}
                   />
                 ))}
@@ -421,7 +421,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                       e.id,
                       "Expense",
                     )}
-                    className="mr-2 text-slate-700 underline"
+                    className="mr-2 text-[#1F2A44] underline"
                     data-testid={`claim-reverse-expense-${e.id}`}
                   />
                 ))}
@@ -431,7 +431,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                     kind="work_order"
                     id={wo.id}
                     label={entityLabel(wo.display_id, wo.id, "Work order")}
-                    className="mr-2 text-slate-700 underline"
+                    className="mr-2 text-[#1F2A44] underline"
                     data-testid={`claim-reverse-wo-${wo.id}`}
                   />
                 ))}
@@ -444,7 +444,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                 {graph.reverse.damage_continuity_chains.map((chain) => (
                   <span
                     key={chain.id}
-                    className="mr-2 text-slate-700"
+                    className="mr-2 text-[#1F2A44]"
                     data-testid={`claim-reverse-continuity-chain-${chain.id}`}
                   >
                     Continuity chain · {chain.final_resolution_status ?? "in progress"}
@@ -461,7 +461,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                   ? "none linked yet"
                   : null}
               </div>
-              <p className="md:col-span-2 text-xs text-slate-500" data-testid="claim-graph-money-gaps">
+              <p className="md:col-span-2 text-xs text-[#6B7280]" data-testid="claim-graph-money-gaps">
                 {graph.gaps.bill || graph.gaps.expense || graph.gaps.work_order
                   ? `Money FK gaps: ${[graph.gaps.bill, graph.gaps.expense, graph.gaps.work_order].filter(Boolean).join(" · ")}`
                   : "Bill / expense / WO insurance_claim_id columns present — reverse lists above when density > 0."}
@@ -509,7 +509,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
         loading={listState.isLoading}
         storageKey="insurance-claims"
         emptyText="No claims found."
-        rowClassName={(claim) => (highlightedClaimId === claim.id ? "bg-slate-100" : "")}
+        rowClassName={(claim) => (highlightedClaimId === claim.id ? "bg-[#F7F8FA]" : "")}
         filterBar={
           <CollapsedListFilters
             activeFilterCount={[driverFilter, unitFilter, loadFilter, trailerFilter].filter(Boolean).length}
@@ -520,7 +520,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
             testIdPrefix="insurance-claims"
           >
           <div className="flex flex-wrap items-end gap-3" data-testid="insurance-claims-filters">
-            <label className="text-xs text-slate-600">
+            <label className="text-xs text-[#4B5563]">
               Driver
               <EntityPicker
                 kind="driver"
@@ -533,7 +533,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                 dataTestId="insurance-claims-filter-driver"
               />
             </label>
-            <label className="text-xs text-slate-600">
+            <label className="text-xs text-[#4B5563]">
               Unit
               <EntityPicker
                 kind="unit"
@@ -546,7 +546,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                 dataTestId="insurance-claims-filter-unit"
               />
             </label>
-            <label className="text-xs text-slate-600">
+            <label className="text-xs text-[#4B5563]">
               Load
               <EntityPicker
                 kind="load"
@@ -559,7 +559,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
                 dataTestId="insurance-claims-filter-load"
               />
             </label>
-            <label className="text-xs text-slate-600">
+            <label className="text-xs text-[#4B5563]">
               Trailer
               <EntityPicker
                 kind="trailer"

@@ -36,9 +36,9 @@ function daysUntil(value: string) {
 }
 
 function statusBadge(status: InsurancePolicyStatus) {
-  if (status === "active") return "bg-slate-100 text-slate-700";
-  if (status === "pending") return "bg-slate-100 text-slate-700";
-  if (status === "expired") return "bg-slate-100 text-slate-700";
+  if (status === "active") return "bg-[#F7F8FA] text-[#1F2A44]";
+  if (status === "pending") return "bg-[#F7F8FA] text-[#1F2A44]";
+  if (status === "expired") return "bg-[#F7F8FA] text-[#1F2A44]";
   return "bg-red-50 text-red-700";
 }
 
@@ -101,7 +101,7 @@ export function PoliciesList() {
 
   // TBL-STANDARD: shared DataTable columns (alignment per GLOBAL-SORT-RULE — text centers, money/dates right).
   const columns = [
-    { key: "policy_number", label: "Policy #", sortable: true, render: (p: InsurancePolicy) => <EntityLink kind="insurance_policy" id={p.id} label={entityLabel(p.policy_number, p.id, "Policy")} className="font-medium text-slate-800" /> },
+    { key: "policy_number", label: "Policy #", sortable: true, render: (p: InsurancePolicy) => <EntityLink kind="insurance_policy" id={p.id} label={entityLabel(p.policy_number, p.id, "Policy")} className="font-medium text-[#0F1219]" /> },
     { key: "insurer_name", label: "Insurer", sortable: true },
     { key: "coverage_type", label: "Type", sortable: true, render: (p: InsurancePolicy) => coverageTypeName(p) },
     { key: "total_premium_cents", label: "Coverage Amount", sortable: true, numeric: true, render: (p: InsurancePolicy) => formatMoney(p.total_premium_cents) },
@@ -121,8 +121,8 @@ export function PoliciesList() {
       <header className="rounded-sm border border-gray-200 bg-white p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-xs font-semibold text-slate-900">Policies</h2>
-            <p className="mt-1 text-xs text-slate-600">Filter and review insurance policies. Click any row to open policy details.</p>
+            <h2 className="text-xs font-semibold text-[#0F1219]">Policies</h2>
+            <p className="mt-1 text-xs text-[#4B5563]">Filter and review insurance policies. Click any row to open policy details.</p>
           </div>
           {canCreatePolicy ? (
             <div className="flex flex-wrap items-center gap-2">
@@ -165,7 +165,7 @@ export function PoliciesList() {
         className="rounded-sm border border-gray-200 bg-white p-2"
       >
         <div className="grid gap-3 md:grid-cols-4">
-          <div className="text-xs font-semibold text-slate-600">
+          <div className="text-xs font-semibold text-[#4B5563]">
             <label htmlFor="insurance-policies-type-filter">Type</label>
             {typesQuery.isError ? (
               <ListErrorState
@@ -189,7 +189,7 @@ export function PoliciesList() {
             )}
           </div>
 
-          <div className="text-xs font-semibold text-slate-600">
+          <div className="text-xs font-semibold text-[#4B5563]">
             <label htmlFor="insurance-policies-status-filter">Status</label>
             <Combobox
               id="insurance-policies-status-filter"
@@ -207,7 +207,7 @@ export function PoliciesList() {
             />
           </div>
 
-          <label className="col-span-2 flex items-center gap-2 pt-5 text-xs font-semibold text-slate-700">
+          <label className="col-span-2 flex items-center gap-2 pt-5 text-xs font-semibold text-[#1F2A44]">
             <input
               type="checkbox"
               checked={staged.draft.expiringSoonOnly}
