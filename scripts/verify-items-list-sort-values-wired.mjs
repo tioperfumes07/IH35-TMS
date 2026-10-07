@@ -65,8 +65,9 @@ if (process.argv.includes("--selftest")) {
   }
   let mutationsDetected = 0;
   for (const { key } of REQUIRED) {
-    const re = new RegExp(`key: "${key}", label: "[^"]*", sortable: true, sortValue: \\(r\\) => [^,]+, render:`);
-    const mutated = { page: good.page.replace(re, (m) => m.replace(/sortValue: \(r\) => [^,]+, /, "")) };
+    // Props may be multi-line (GO-0027 formatting), so allow any whitespace/newlines between key and sortValue/render.
+    const re = new RegExp(`key: "${key}"[\\s\\S]{0,400}?sortValue: \\(r\\) => [^,]+,\\s*render:`);
+    const mutated = { page: good.page.replace(re, (m) => m.replace(/sortValue: \(r\) => [^,]+,\s*/, "")) };
     if (mutated.page === good.page) {
       // status has a different literal shape (multi-line); handle separately below
       continue;
