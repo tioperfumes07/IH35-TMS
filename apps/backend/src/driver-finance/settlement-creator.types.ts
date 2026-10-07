@@ -67,6 +67,13 @@ export type SettlementCreatorLoadBlock = {
 };
 
 export type SettlementCreatorFuelLine = {
+  /**
+   * SETL-F444 — the RECEIPT IMAGE for this fill, already uploaded to docs.files and confirmed.
+   * fuel.fuel_transactions.source_doc_id has existed with its FK to docs.files since migration
+   * 202613290400; the Creator simply never passed anything into it, so a fill posted with no
+   * evidence attached. (The existing `receipt_cents` is the receipt AMOUNT, not the document.)
+   */
+  source_doc_id?: string | null;
   date: string; // YYYY-MM-DD — PDF date stamped on fuel.fuel_transactions
   vendor_name?: string | null;
   location?: string | null;

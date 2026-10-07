@@ -24,6 +24,7 @@ import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 import { useAccountingItemsQuery } from "../../hooks/useAccountingItemsQuery";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { getReclassifyAccountTree } from "../../api/reclassify";
+import { uploadSourceDocumentFromFile } from "../../api/docs";
 import { WizardReclassifyPanel } from "./WizardReclassifyPanel";
 import { FuelStopLocationPicker } from "../../components/locations/FuelStopLocationPicker";
 import { formatFuelStopLocationLabel } from "../../lib/fuelStopLocationLabel";
@@ -2031,7 +2032,40 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         searchIsValue
                       />
                     </Field>
-                    <Field label="Receipt" span={2}>
+                    <Field label="Receipt file">
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        className="h-7 w-full min-w-0 text-xs text-[var(--text-strong,#0F1219)] file:mr-2 file:h-7 file:rounded-sm file:border file:border-[var(--border-subtle,#E5E7EB)] file:bg-[var(--surface-unselected,#F8FAFC)] file:px-2 file:text-xs"
+                        title={fuel.source_doc_id ? "Receipt attached — choose another file to replace it" : "Attach the receipt image or PDF for this fill"}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0] ?? null;
+                          if (!file || !companyId) return;
+                          try {
+                            const fileId = await uploadSourceDocumentFromFile(file, {
+                              operating_company_id: companyId,
+                              // Only parents that already exist may be linked here — never the
+                              // fuel row, which Post has not created yet.
+                              entity_links: [
+                                ...(driverId ? [{ entity_type: "driver" as const, entity_id: driverId }] : []),
+                                ...(unitId ? [{ entity_type: "unit" as const, entity_id: unitId }] : []),
+                              ],
+                            });
+                            const next = [...fuels];
+                            next[idx] = { ...next[idx], source_doc_id: fileId };
+                            setFuels(next);
+                          } catch (err) {
+                            pushToast({
+                              kind: "error",
+                              message: `Receipt upload failed — ${(err as Error).message}. The fill is unchanged; try again.`,
+                            });
+                            e.target.value = "";
+                          }
+                        }}
+                        data-testid={`sc-fuel-receipt-file-${idx}`}
+                      />
+                    </Field>
+                    <Field label="Receipt" span={1}>
                       <MoneyInput
                         className={moneyInputClass}
                         valueCents={fuel.receipt_cents ?? null}

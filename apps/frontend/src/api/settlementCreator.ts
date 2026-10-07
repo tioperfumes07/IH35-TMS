@@ -65,6 +65,8 @@ export type SettlementCreatorDraft = {
     fees_cents?: number | null;
     discount_cents?: number | null;
     card: SettlementCreatorFuelCard;
+    /** SETL-F444 — docs.files id of the uploaded receipt image for this fill. */
+    source_doc_id?: string | null;
     load_number?: string | null;
     fuel_type?: "diesel" | "def" | "reefer_diesel";
     /** ROUND 363-CC2-D — picked at creation; the account wins over the item's default, load_id over load_number. */
