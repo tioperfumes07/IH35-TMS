@@ -1,3 +1,22 @@
+## 2026-10-07T21:15Z · BANK-SLATE-AR-SETTLE-HUB MERGED
+
+FINDING: Leftover Tailwind slate-* on ARAging / SettlementSummary / ReportsHub → house tokens (+ OUTBOX #25724).
+
+MERGED:
+- BANK-SLATE-AR-SETTLE-HUB #25726 squash `7bd28a66c2` — ARAgingPage / SettlementSummaryPage / ReportsHub; guard verify-ar-settle-hub-slate-leftover-chrome piggyback EVEN 12340; OUTBOX #25724 census
+- BANK-SLATE-BS-PL-LOGIN #25724 squash `f33c020bef`
+- BANK-SLATE-VEND-CF-CUST #25723 squash `dbc54e5ac3`
+
+SESSION WAVE: #25708–#25726 slate drain continuous
+
+LIVE PROOF: verify-ar-settle-hub-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS
+
+REMAINING: FE redeploy; owner Chrome Settlement Creator; ~904 FE files still carry slate-*
+
+NEXT leftover: (this PR) ReportCategory · ManagementReportPackage · FuelReconciliation → then ReportsRunner / PerTruckCpm / GeofenceDwell
+
+Files Modified: OUTBOX + ReportCategoryPage / ManagementReportPackagePage / FuelReconciliationPage
+
 ## 2026-10-07T21:08Z · BANK-SLATE-BS-PL-LOGIN MERGED
 
 FINDING: Leftover Tailwind slate-* on BalanceSheet / ProfitLoss / LoginReset → house tokens (+ OUTBOX #25723).
