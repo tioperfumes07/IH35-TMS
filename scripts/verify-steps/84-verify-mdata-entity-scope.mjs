@@ -17,6 +17,7 @@ import { fileURLToPath } from "node:url";
  * in the checked-in baseline. The guard FAILS only when a NEW unscoped literal appears — including
  * when a previously-scoped query is reverted to drop its predicate (its hash changes and is no longer
  * in the baseline). Regenerate the baseline intentionally with UPDATE_ENTITY_SCOPE_BASELINE=1.
+ * ROUND 441.14: every baseline entry should carry a written `reason`; unreasoned count is shrink-only (ceiling).
  */
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -96,10 +97,15 @@ function loadBaseline() {
 }
 
 function writeBaseline(found) {
+  // ROUND 441.14 / #25752 contribution: a regenerate keeps every entry's written reason and the shrink-only ceiling.
+  const prior = loadBaseline();
+  const reasons = new Map((prior?.entries ?? []).filter((e) => e.reason).map((e) => [e.key, e.reason]));
   const entries = [...found.entries()]
-    .map(([key, v]) => ({ key, file: v.file, preview: v.preview }))
+    .map(([key, v]) => ({ key, file: v.file, preview: v.preview, ...(reasons.has(key) ? { reason: reasons.get(key) } : {}) }))
     .sort((a, b) => a.key.localeCompare(b.key));
-  fs.writeFileSync(BASELINE, JSON.stringify({ entries }, null, 2) + "\n", "utf8");
+  const unreasoned = entries.filter((e) => !e.reason).length;
+  const ceiling = Math.min(prior?.unreasoned_ceiling ?? unreasoned, unreasoned);
+  fs.writeFileSync(BASELINE, JSON.stringify({ unreasoned_ceiling: ceiling, entries }, null, 2) + "\n", "utf8");
   return entries.length;
 }
 
@@ -120,6 +126,18 @@ function runGuard() {
     process.exit(1);
   }
   const allow = new Set(baseline.entries.map((e) => e.key));
+  // ROUND 441.14 — keep #25752's rule: every baselined literal states WHY it is legitimately unscoped.
+  // Entries frozen before the reason field existed are counted, and that count may only shrink (ceiling).
+  // A new entry without a written reason (trim length >= 20) fails the guard.
+  const unreasoned = baseline.entries.filter((e) => !(typeof e.reason === "string" && e.reason.trim().length >= 20)).length;
+  if (typeof baseline.unreasoned_ceiling !== "number" || unreasoned > baseline.unreasoned_ceiling) {
+    console.error(
+      `verify-mdata-entity-scope FAILED — ${unreasoned} baseline entries have no written reason (ceiling ${baseline.unreasoned_ceiling ?? "missing"}). ` +
+        "A literal is baselined only with a per-literal 'reason' saying why it is legitimately unscoped. " +
+        "See closed #25752 for the 19 reasoned exceptions; Round 441.14 baselined main at 114 shrink-only."
+    );
+    process.exit(1);
+  }
 
   const violations = [];
   for (const [key, v] of found.entries()) {
