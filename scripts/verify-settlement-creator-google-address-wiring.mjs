@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * SETL-F439 — Settlement Creator stop addresses must use the SAME Google Places path as Book Load.
+ * SETL-F439 / SETL-F440 — Settlement Creator stop addresses on the Book Load Google Places path,
+ * with city/state split out of the pick, and loaded/empty miles from lane history + route engine.
  *
- * Owner 2026-10-07: "the addresses are not wired from our google addresses etc like it is in load
- * wizard. i need that wired in the settlement creator" + every reported Creator defect in the same
- * session (UUID customer chrome, dates transfer, miles + pay/mi, discard Cancel, company→driver
- * load carry, invoice subtotals).
+ * Owner 2026-10-07 (follow-up): "it all fills in the same box, the address does not fill the pickup
+ * city and pick up state automatically" + "address is not mandatory, just city and state" +
+ * "not getting the calculated loaded miles from google and from our own database, nor the empty miles".
  *
  * RULES:
  *  1. Drawer imports AddressGeocodeInput (not a plain text city/state-only stop editor).
@@ -16,6 +16,10 @@
  *  6. getLaneMileage + getDriverPayCard + getChainDeadhead are wired (miles + $/mi like Book Load).
  *  7. Loads subtotal uses line_haul_amount_cents (invoice total), not the $/mi rate.
  *  8. Route schema accepts pickup_address / delivery_address (Zod otherwise strips them).
+ *  9. company→driver load carry (defaultLoadNumber).
+ * 10. SETL-F440 — onChange after a Places pick uses functional setLoads so city/state are not wiped.
+ * 11. SETL-F440 — getRouteMileage is the coords fallback for loaded miles (lane DB first).
+ * 12. SETL-F440 — seed requires city+state; address_line1 stays optional (|| undefined).
  */
 import { readFileSync, existsSync } from "node:fs";
 
@@ -37,7 +41,7 @@ function run({ drawer, seed, routes }) {
   if (!/StateSelect/.test(drawer)) {
     out.push("RULE 2: Settlement Creator does not import StateSelect — free-text state regresses to TEXAS/TX typos.");
   }
-  if (!/applyGeocodeToLoad|onResolve=\{\(r\)/.test(drawer)) {
+  if (!/applyGeocodeToLoad/.test(drawer)) {
     out.push("RULE 1b: AddressGeocodeInput is imported but never resolves a pick into city/state/zip/lat.");
   }
 
@@ -88,6 +92,40 @@ function run({ drawer, seed, routes }) {
     out.push("RULE 9: company→driver load carry (defaultLoadNumber) is missing — new fuel/expense lines stay load-blank.");
   }
 
+  // SETL-F440 — the onChange-after-onResolve race. Require functional setLoads in the address onChange.
+  if (!/setLoads\(\(prev\)\s*=>/.test(drawer) || !/pickup_address:\s*v/.test(drawer)) {
+    out.push(
+      "RULE 10: Address onChange must use functional setLoads((prev)=>…) so a Places pick's city/state " +
+        "are not wiped by onChange(formatted) after onResolve.",
+    );
+  }
+  if (!/applyGeocodeToLoad\(cur,\s*[\"']pickup[\"']/.test(drawer) && !/applyGeocodeToLoad\(cur, \"pickup\"/.test(drawer)) {
+    // allow either quote style
+    if (!/applyGeocodeToLoad\(cur,\s*\"pickup\"/.test(drawer) && !/applyGeocodeToLoad\(cur,\s*'pickup'/.test(drawer)) {
+      out.push("RULE 10b: onResolve must applyGeocodeToLoad(cur, …) from functional prev — not a stale load closure.");
+    }
+  }
+  if (!/ignoreGeocodeFormattedRef/.test(drawer)) {
+    out.push(
+      "RULE 10c: must ignore AddressGeocodeInput's post-pick onChange(formatted) so the full place " +
+        "string does not dump city+state back into the address box.",
+    );
+  }
+
+  if (!/getRouteMileage/.test(drawer)) {
+    out.push("RULE 11: getRouteMileage is not wired — loaded miles have no route-engine fallback when lane history is empty.");
+  }
+  if (!/useQueries/.test(drawer)) {
+    out.push("RULE 11b: useQueries must fill miles per load row — a single primary-load query leaves later loads blank.");
+  }
+
+  if (!/stop_city_state_required/.test(seed)) {
+    out.push("RULE 12: seed must refuse missing city/state by name (stop_city_state_required).");
+  }
+  if (!/address_line1:\s*load\.pickup_address\?\.trim\(\)\s*\|\|\s*undefined/.test(seed)) {
+    out.push("RULE 12b: pickup address_line1 must stay optional (|| undefined) — hand seed requires city+state only.");
+  }
+
   return out;
 }
 
@@ -95,16 +133,21 @@ if (process.argv.includes("--selftest")) {
   const goodDrawer = `
 import { AddressGeocodeInput } from "...";
 import { StateSelect } from "...";
-import { getLaneMileage, getChainDeadhead, getDriverPayCard } from "...";
+import { useQueries } from "@tanstack/react-query";
+import { getLaneMileage, getChainDeadhead, getDriverPayCard, getRouteMileage } from "...";
 const defaultLoadNumber = loads[0]?.load_number;
 selectedOption={load.customer_id && load.customer_name ? { value: load.customer_id, label: load.customer_name } : null}
 onRegisterAttemptClose={registerAttemptClose}
 attemptClose ? attemptClose() : onClose()
-onResolve={(r) => applyGeocodeToLoad(load, "pickup", r)}
+onResolve={(r) => { setLoads((prev) => { const cur = prev[idx]; next[idx] = applyGeocodeToLoad(cur, "pickup", r); }); }}
+onChange={(v) => { setLoads((prev) => { next[idx] = { ...cur, pickup_address: v }; }); }}
+const ignoreGeocodeFormattedRef = useRef({});
 const loadsSubtotal = loads.reduce((s, l) => s + Number(l.line_haul_amount_cents ?? 0), 0);
-getLaneMileage({...}); getDriverPayCard({...}); getChainDeadhead({...});
+getLaneMileage({...}); getDriverPayCard({...}); getChainDeadhead({...}); getRouteMileage({...});
+useQueries({ queries: loads.map(...) });
 `;
   const goodSeed = `
+if (!pickupCity || !pickupState) throw new SettlementCreatorSeedError("stop_city_state_required", "...");
 function buildStops(load) {
   return [
     { address_line1: load.pickup_address?.trim() || undefined, postal_code: load.pickup_zip?.trim() || undefined, latitude: load.pickup_lat, city: pickupCity, state: pickupState },
@@ -120,12 +163,13 @@ delivery_zip: z.string().trim().max(20).nullable().optional(),`;
   const badDrawer = `
 const loadsSubtotal = loads.reduce((s, l) => s + Math.max(0, Number(l.line_haul_rate_cents ?? 0)) + Math.max(0, Number(l.empty_rate_cents ?? 0)), 0);
 <input value={load.pickup_city} />
+onChange={(v) => { const next = [...loads]; next[idx] = { ...load, pickup_address: v }; setLoads(next); }}
 `;
   const badSeed = `function buildStops(load) { return [{ city: pickupCity, state: pickupState }]; }`;
 
   const cases = [
     ["fixed tree passes", { drawer: goodDrawer, seed: goodSeed, routes: goodRoutes }, 0],
-    ["catches missing AddressGeocode + rates-as-subtotal + bare stops", { drawer: badDrawer, seed: badSeed, routes: goodRoutes }, 14],
+    ["catches missing AddressGeocode + rates-as-subtotal + bare stops + stale onChange", { drawer: badDrawer, seed: badSeed, routes: goodRoutes }, 21],
     ["catches schema strip", { drawer: goodDrawer, seed: goodSeed, routes: "const schema = z.object({});" }, 4],
     ["missing drawer FAILS", { drawer: null, seed: goodSeed, routes: goodRoutes }, 1],
   ];
@@ -147,6 +191,6 @@ if (failures.length > 0) {
   process.exit(1);
 }
 console.log(
-  `${NAME}: PASS — Settlement Creator stops use AddressGeocodeInput + StateSelect; buildStops carries ` +
-    `address/zip/lat; customer selectedOption; discard Cancel; lane miles + pay card + deadhead; invoice subtotal.`,
+  `${NAME}: PASS — Settlement Creator Places pick fills city/state (functional setLoads); ` +
+    `lane + route-engine loaded miles; chain empty miles; address optional; city+state required.`,
 );
