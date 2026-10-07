@@ -1,6 +1,6 @@
 {
- "date": "2026-10-06",
- "generated_at_iso": "2026-10-06T18:28:45.794Z",
+ "date": "2026-10-07",
+ "generated_at_iso": "2026-10-07T06:49:53.250Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -396,7 +396,7 @@
    "evidence": "[verified 2026-07-12] agent: migration validates unrelated FKs, no safety_events/driver_status FK exists",
    "name": "",
    "registered_on": null,
-   "pr": 25476
+   "pr": 25670
   },
   {
    "id": "AF-1-entity-coa-fix",
@@ -849,10 +849,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #25618 title-match only, unverified",
+   "evidence": "PR #25673 title-match only, unverified",
    "name": "CC-2 cross-check signal for Codex/Cursor: ran verify-codex-vertical-nonmoney-zero-remainder.mjs directly, confirming rem",
    "registered_on": null,
-   "pr": 25618
+   "pr": 25673
   },
   {
    "id": "cc-2-claim-reports-0223",
@@ -860,10 +860,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #25618 title-match only, unverified",
+   "evidence": "PR #25673 title-match only, unverified",
    "name": "CC-2 claims POST-U14 leftover sequence order 5 (REPORTS, /reports) after driver-hub's unique-FINDING hunting came up emp",
    "registered_on": null,
-   "pr": 25618
+   "pr": 25673
   },
   {
    "id": "cc-2-codex-progress-check-fleet-sweep-0223",
@@ -871,10 +871,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #25618 title-match only, unverified",
+   "evidence": "PR #25673 title-match only, unverified",
    "name": "CC-2 confirms Codex is actively progressing (DRV-F6246-53 series, commit-message status not OUTBOX-CODEX.md) and reports",
    "registered_on": null,
-   "pr": 25618
+   "pr": 25673
   },
   {
    "id": "cc-2-customers-reverse-proof-0223",
@@ -882,10 +882,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #25618 title-match only, unverified",
+   "evidence": "PR #25673 title-match only, unverified",
    "name": "CC-2 helping Codex's MODULE=customers reverse SQL/GET hops (per U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md). Live SQL ",
    "registered_on": null,
-   "pr": 25618
+   "pr": 25673
   },
   {
    "id": "cc-2-dot-inspection-test-fixture-void-0223",
@@ -893,10 +893,10 @@
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #25618 title-match only, unverified",
+   "evidence": "PR #25673 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg: found and voided a stray test-fixture row (safety.dot_inspections) live in the DOT audit ",
    "registered_on": null,
-   "pr": 25618
+   "pr": 25673
   },
   {
    "id": "cc-2-driver-hub-chrome-law-note-0223",
@@ -904,10 +904,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #25618 title-match only, unverified",
+   "evidence": "PR #25673 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired sweep session close-out status: 3 PRs merged this leg (label-leak fix, sample-data-fixture-",
    "registered_on": null,
-   "pr": 25618
+   "pr": 25673
   },
   {
    "id": "cc-2-driver-hub-chrome-law-pass2-0223",
@@ -915,10 +915,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #25618 title-match only, unverified",
+   "evidence": "PR #25673 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: second chrome-law live pass. Leave Requests Range filter honest-empty state + Reset/Ca",
    "registered_on": null,
-   "pr": 25618
+   "pr": 25673
   },
   {
    "id": "cc-2-driver-hub-create-void-verified-0223",
@@ -926,10 +926,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #25618 title-match only, unverified",
+   "evidence": "PR #25673 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: live CREATE-TEST-THEN-VOID verification of the Assign Temp Cover control on production",
    "registered_on": null,
-   "pr": 25618
+   "pr": 25673
   },
   {
    "id": "cc-2-driver-hub-postdeploy-confirm-0223",
@@ -937,10 +937,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #25618 title-match only, unverified",
+   "evidence": "PR #25673 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: post-deploy live re-check confirms LV-DRIVER-HUB-REPORTING-STALE-NO-LOAD-FK's fix (#14",
    "registered_on": null,
-   "pr": 25618
+   "pr": 25673
   },
   {
    "id": "cc-2-driver-hub-responsive-checked-0223",
@@ -948,10 +948,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #25618 title-match only, unverified",
+   "evidence": "PR #25673 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: responsive-overflow check clean (Driver Scheduler + Reporting, ~500px viewport, 0 hori",
    "registered_on": null,
-   "pr": 25618
+   "pr": 25673
   },
   {
    "id": "cc-2-driver-hub-row3-done-0223",
@@ -959,10 +959,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #25618 title-match only, unverified",
+   "evidence": "PR #25673 title-match only, unverified",
    "name": "CC-2 marks POST-U14 leftover row 3 (DRIVER HUB) DONE with full close-out summary, correcting stale claim-only text so th",
    "registered_on": null,
-   "pr": 25618
+   "pr": 25673
   },
   {
    "id": "cc-2-driver-hub-sweep-status-0223",
@@ -970,10 +970,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #25618 title-match only, unverified",
+   "evidence": "PR #25673 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired sweep progress status. Documents that Overview/Driver Scheduler/Leave Requests tabs plus th",
    "registered_on": null,
-   "pr": 25618
+   "pr": 25673
   },
   {
    "id": "cc-2-drivers-fleet-reverse-proof-0223",
@@ -981,10 +981,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #25618 title-match only, unverified",
+   "evidence": "PR #25673 title-match only, unverified",
    "name": "CC-2 helping Codex's MODULE=drivers and MODULE=fleet reverse SQL/GET hops. Live SQL proof of forward+reverse FK chains f",
    "registered_on": null,
-   "pr": 25618
+   "pr": 25673
   },
   {
    "id": "cc-2-mdata-reverse-sweep-0223b",
@@ -992,10 +992,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #25618 title-match only, unverified",
+   "evidence": "PR #25673 title-match only, unverified",
    "name": "CC-2 mdata reverse SQL/GET sweep continuation on customers/drivers/fleet (help Codex CERTIFY, per INBOX-CC-2). This pass",
    "registered_on": null,
-   "pr": 25618
+   "pr": 25673
   },
   {
    "id": "cc-2-mdata-sweep-clean-0223c",
@@ -1003,10 +1003,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #25618 title-match only, unverified",
+   "evidence": "PR #25673 title-match only, unverified",
    "name": "CC-2 mdata reverse SQL/GET sweep continuation on customers/drivers/fleet (help Codex CERTIFY). This pass swept clean acr",
    "registered_on": null,
-   "pr": 25618
+   "pr": 25673
   },
   {
    "id": "cc-2-reports-full-category-sweep-0223",
@@ -1014,10 +1014,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #25618 title-match only, unverified",
+   "evidence": "PR #25673 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg session close-out: all 9 report categories walked, 8 reports run live, all genuinely wired",
    "registered_on": null,
-   "pr": 25618
+   "pr": 25673
   },
   {
    "id": "cc-2-reports-progress-status-0223",
@@ -1025,10 +1025,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #25618 title-match only, unverified",
+   "evidence": "PR #25673 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg progress status: IFTA Quarterly Preparer entry confirmed real and correctly wired; Generat",
    "registered_on": null,
-   "pr": 25618
+   "pr": 25673
   },
   {
    "id": "cc-2-reports-row-done-0223",
@@ -1036,10 +1036,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #25618 title-match only, unverified",
+   "evidence": "PR #25673 title-match only, unverified",
    "name": "CC-2 marks POST-U14 leftover row 5 (REPORTS) DONE, matching CC-3's table-exhausted close-out. Returning full attention t",
    "registered_on": null,
-   "pr": 25618
+   "pr": 25673
   },
   {
    "id": "cc-2-reports-sweep2-clean-0223",
@@ -1047,10 +1047,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #25618 title-match only, unverified",
+   "evidence": "PR #25673 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg: Fleet utilization and Internal inspection-point rollup reports spot-checked live, both cl",
    "registered_on": null,
-   "pr": 25618
+   "pr": 25673
   },
   {
    "id": "cc-2-sql-proof-rls-discriminator-0223",
@@ -1058,10 +1058,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #25618 title-match only, unverified",
+   "evidence": "PR #25673 title-match only, unverified",
    "name": "CC-2 delivers a hop-10 (RLS + completeness discriminator) SQL proof for Codex's MODULE=drivers and MODULE=fleet CERTIFIE",
    "registered_on": null,
-   "pr": 25618
+   "pr": 25673
   },
   {
    "id": "cc2-ack-go-0105-r1-guard-money-h4-after-live",
@@ -1287,10 +1287,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #22968 title-match only, unverified",
+   "evidence": "PR #25657 title-match only, unverified",
    "name": "Reconcile 8 KPI drifts production vs app. All 8 canonical KPIs already fixed in main: canonical-kpis.ts, KPI_SOURCES_OF_",
    "registered_on": null,
-   "pr": 22968
+   "pr": 25657
   },
   {
    "id": "FIX-AUDIT-NESTED-MODALS",
@@ -1298,10 +1298,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #22968 title-match only, unverified",
+   "evidence": "PR #25657 title-match only, unverified",
    "name": "Fix nested-box modal pattern (double-frame headers). WorkOrderDetailModal + CustomerDrillModal already clean. Added doub",
    "registered_on": null,
-   "pr": 22968
+   "pr": 25657
   },
   {
    "id": "FIX-AUDIT-TEST-DATA-LEAK",
@@ -1309,10 +1309,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #22968 title-match only, unverified",
+   "evidence": "PR #25657 title-match only, unverified",
    "name": "Archive TEST/seed rows from prod listings. Infrastructure already in place (migrations 0320/0367/0369/0396, EXCLUDE_ARCH",
    "registered_on": null,
-   "pr": 22968
+   "pr": 25657
   },
   {
    "id": "GAP-47",
@@ -3083,7 +3083,7 @@
    "evidence": "all 1 file(s) on main",
    "name": "CC-2 /driver-hub Fully-Wired 1-12 Live Chrome leftover (POST-URGENT-14 sequence order 3), triggered by an empty unique-F",
    "registered_on": null,
-   "pr": 25618
+   "pr": 25673
   },
   {
    "id": "cc-2-driver-list-sample-data-exclusion-0223",
@@ -3094,7 +3094,7 @@
    "evidence": "all 3 file(s) on main",
    "name": "CC-2 /driver-hub Fully-Wired leg, CREATE-flow probe on Assign Temp Cover found other seats' test/QA fixture units and dr",
    "registered_on": null,
-   "pr": 25618
+   "pr": 25673
   },
   {
    "id": "cc-2-help-codex-certify-cdf-0223",
@@ -3105,7 +3105,7 @@
    "evidence": "all 2 file(s) on main",
    "name": "CC-2 mdata reverse SQL/GET hunt on customers/drivers/fleet (help Codex CERTIFY, per INBOX-CC-2). Found + root-caused + f",
    "registered_on": null,
-   "pr": 25618
+   "pr": 25673
   },
   {
    "id": "cc-2-reports-required-filter-indicator-0223",
@@ -3116,7 +3116,7 @@
    "evidence": "all 3 file(s) on main",
    "name": "CC-2 /reports Fully-Wired leg. Live probe on driver-pay-history found Run report silently disabled with zero visual expl",
    "registered_on": null,
-   "pr": 25618
+   "pr": 25673
   },
   {
    "id": "CC1-FINANCE-SETTLEMENTS-TOOLBAR-CONNECTIVITY-HONESTY-2026-08-16",
@@ -4252,7 +4252,7 @@
    "evidence": "all 1 file(s) on main",
    "name": "at-risk-loads 500 (Postgres 42703) — project city/state in the sd delivery-stop lateral + projection-drift regression gu",
    "registered_on": null,
-   "pr": 22968
+   "pr": 25657
   },
   {
    "id": "FIX-AUDIT-PROD-STUBS",
@@ -4263,7 +4263,7 @@
    "evidence": "all 1 file(s) on main",
    "name": "Remove 13+ production stub strings. Fixed DriversTable.tsx '(stub)' toast. CI guard (verify-no-prod-stubs.mjs) already i",
    "registered_on": null,
-   "pr": 22968
+   "pr": 25657
   },
   {
    "id": "FIX-AUDIT-TRIGGER-DRIFT",
@@ -4274,7 +4274,7 @@
    "evidence": "all 1 file(s) on main",
    "name": "",
    "registered_on": null,
-   "pr": 22968
+   "pr": 25657
   },
   {
    "id": "FIX-CANARY-SMOKE-DURABLE",
@@ -13738,6 +13738,306 @@
  ],
  "merged_prs": [
   {
+   "number": 25674,
+   "title": "Cursor-entity-scope 83 triage — verify-mdata-entity-scope ratchet (ACCT-F2026100684)",
+   "mergedAt": "2026-10-06T22:50:20Z",
+   "branch": "cursor/entity-scope-83-triage-c89b"
+  },
+  {
+   "number": 25673,
+   "title": "CC-2-FIX migration consistency: DO-block indexes carry their columns too",
+   "mergedAt": "2026-10-06T21:15:41Z",
+   "branch": "cc-2/migration-consistency-do-index-columns"
+  },
+  {
+   "number": 25672,
+   "title": "CC-2-FIX migration consistency: DROP COLUMN drops its indexes (24 false reds on every fresh build)",
+   "mergedAt": "2026-10-06T21:08:12Z",
+   "branch": "cc-2/migration-consistency-dropped-column"
+  },
+  {
+   "number": 25671,
+   "title": "CC-2-FIX cron tenant context: Samsara driver prompts asserts its company; guard ignores comments",
+   "mergedAt": "2026-10-06T21:01:44Z",
+   "branch": "cc-2/cron-tenant-context-2"
+  },
+  {
+   "number": 25670,
+   "title": "CC-2-FIX entity isolation: 20 tables walled (FKs to org.companies, FORCE RLS on telematics, preserve natural-key FK) — migration 202615440700",
+   "mergedAt": "2026-10-06T20:57:47Z",
+   "branch": "cc-2/entity-isolation-20"
+  },
+  {
+   "number": 25669,
+   "title": "CC-2-FIX bank-link reverse guards follow OnlineBankingMatchBanner (red on main since #23917)",
+   "mergedAt": "2026-10-06T20:44:32Z",
+   "branch": "cc-2/bank-link-guards-follow-banner"
+  },
+  {
+   "number": 25668,
+   "title": "CC-2-CLAIM-RESERVE migration 202615440700 (entity isolation)",
+   "mergedAt": "2026-10-06T20:37:16Z",
+   "branch": "chore/claim-reserve-mig-202615440700"
+  },
+  {
+   "number": 25667,
+   "title": "CC-2-FIX four maintenance/dispatch guards follow their rulings (Create WO modal, E-09 arrivals, E-14 PM schedule, one fleet roster)",
+   "mergedAt": "2026-10-06T20:29:27Z",
+   "branch": "cc-2/maint-dispatch-guards-4"
+  },
+  {
+   "number": 25666,
+   "title": "CC-2-OUTBOX main reds fixed; B8 status; prod orphan ledger entries",
+   "mergedAt": "2026-10-06T20:24:54Z",
+   "branch": "cc-2/outbox-mainreds"
+  },
+  {
+   "number": 25665,
+   "title": "CC-2-FIX drivers action-bar guard follows U2 (tabs wrap) and DRV-F420 (Edit tab)",
+   "mergedAt": "2026-10-06T20:24:18Z",
+   "branch": "cc-2/drivers-action-bar-guard-rulings"
+  },
+  {
+   "number": 25664,
+   "title": "CC-2-FIX maint nav-count guard: dashboard links = the Maintenance Home tab bar, label for label",
+   "mergedAt": "2026-10-06T20:17:58Z",
+   "branch": "cc-2/maint-nav-count-follows-subnav"
+  },
+  {
+   "number": 25663,
+   "title": "CC-2-FIX 23 orphaned components reachable again (Rule 07: archive + keep reachable, nothing deleted)",
+   "mergedAt": "2026-10-06T20:10:19Z",
+   "branch": "cc-2/orphan-components-23"
+  },
+  {
+   "number": 25662,
+   "title": "CC-2-FIX canonical-ledger declarations for 14 financial tables (verify-no-duplicate-financial-ledger red on main)",
+   "mergedAt": "2026-10-06T20:05:45Z",
+   "branch": "cc-2/canonical-declarations-14"
+  },
+  {
+   "number": 25661,
+   "title": "CC-2-FIX nav-integrity: three reachable routes read as orphans (Settlements tab strip + Engine status)",
+   "mergedAt": "2026-10-06T20:04:52Z",
+   "branch": "cc-2/nav-integrity-orphan-routes"
+  },
+  {
+   "number": 25660,
+   "title": "CC-2-FIX statement contract guards follow the one ledger rule; maint-pm follows the shared odometer loader",
+   "mergedAt": "2026-10-06T19:59:15Z",
+   "branch": "cc-2/maint-pm-guard-shared-odometer"
+  },
+  {
+   "number": 25659,
+   "title": "CC-2-FIX maintenance tab-coverage guard: lock C-36 nine + R313 four, in order",
+   "mergedAt": "2026-10-06T19:51:50Z",
+   "branch": "cc-2/maintenance-tab-coverage-r313"
+  },
+  {
+   "number": 25658,
+   "title": "CC-2-FIX content-drift: an index on a later-dropped column is not drift (24 false reds on every fresh build)",
+   "mergedAt": "2026-10-06T19:44:13Z",
+   "branch": "cc-2/content-drift-dropped-column-index"
+  },
+  {
+   "number": 25657,
+   "title": "CC-2-FIX a fresh database can be built again: declare catalogs.accounts.posts_to_financials (migration 202615400850)",
+   "mergedAt": "2026-10-06T19:36:58Z",
+   "branch": "cc-2/posts-to-financials-declared"
+  },
+  {
+   "number": 25656,
+   "title": "CC-2-FIX seven arch-design guards red on main (stale text after ruled changes)",
+   "mergedAt": "2026-10-06T19:25:20Z",
+   "branch": "cc-2/locked-ui-accounting-tabs-follow-owner-rulings"
+  },
+  {
+   "number": 25655,
+   "title": "Claude-1- OUTBOX: A/P writer debt closed at zero; F420–F427 merged + deploy ids",
+   "mergedAt": "2026-10-06T19:21:40Z",
+   "branch": "cc-1/outbox-2026-10-06-f420-f427"
+  },
+  {
+   "number": 25654,
+   "title": "Claude-1- LST-F424: company-absorbed accident cost is an accrued claim (2180), not a payee-less A/P line; ap_control debt closed at zero",
+   "mergedAt": "2026-10-06T19:20:51Z",
+   "branch": "cc-1/lst-f424-accrued-accident-claims"
+  },
+  {
+   "number": 25653,
+   "title": "Cursor- OUTBOX All Transactions #25649 + deploy ids",
+   "mergedAt": "2026-10-06T19:15:12Z",
+   "branch": "cursor/outbox-f4321-txn-reg-c89b"
+  },
+  {
+   "number": 25652,
+   "title": "CC-2-CLAIM-RESERVE fix: 202615400850 nested inside 202615440900 by #25651",
+   "mergedAt": "2026-10-06T19:13:57Z",
+   "branch": "chore/claim-reserve-mig-202615400850-fix"
+  },
+  {
+   "number": 25651,
+   "title": "CC-2-CLAIM-RESERVE migration 202615400850 (posts_to_financials declaration)",
+   "mergedAt": "2026-10-06T19:12:59Z",
+   "branch": "chore/claim-reserve-mig-202615400850"
+  },
+  {
+   "number": 25649,
+   "title": "Cursor- BANK-F4321 All Transactions MoneyListToolbar (432-CUR #1)",
+   "mergedAt": "2026-10-06T19:09:24Z",
+   "branch": "cursor/bank-f4321-txn-register-toolbar-c89b"
+  },
+  {
+   "number": 25648,
+   "title": "LST-F439 P0: main frontend build red — MultiSelectDropdown value=/testId= should be selected=/data-testid=",
+   "mergedAt": "2026-10-06T22:50:14Z",
+   "branch": "claude/lst-f439-multiselect-props"
+  },
+  {
+   "number": 25647,
+   "title": "CC-2-FIX main frontend build red (Fuel History multi-select props, #25639)",
+   "mergedAt": "2026-10-06T19:08:39Z",
+   "branch": "cc-2/fix-main-fuel-history-multiselect"
+  },
+  {
+   "number": 25646,
+   "title": "Claude-1- LST-F427: E10 runner stamps never-posted expenses void (Phase 4b); never-posted guard checks the real runner",
+   "mergedAt": "2026-10-06T19:05:13Z",
+   "branch": "cc-1/lst-f427-e10-no-gl-expenses"
+  },
+  {
+   "number": 25645,
+   "title": "Claude-1- LST-F422: the intercompany lessee's rent is a BILL from the lessor-as-vendor every period (it was a raw A/P line, period 1 only)",
+   "mergedAt": "2026-10-06T19:05:08Z",
+   "branch": "cc-1/lst-f422-lease-lessee-rent-bill"
+  },
+  {
+   "number": 25644,
+   "title": "CC-2-FIX two guards red on main: banking reverse-link list surfaces + escrow history (re-pointed, equally strict)",
+   "mergedAt": "2026-10-06T19:04:39Z",
+   "branch": "cc-2/fix-red-banking-escrow-guards"
+  },
+  {
+   "number": 25643,
+   "title": "Claude-1- LST-F426: retire the dead payroll settlement writer; its guards read the live driver_finance chain",
+   "mergedAt": "2026-10-06T19:02:11Z",
+   "branch": "cc-1/lst-f426-retire-payroll-settlement-writer"
+  },
+  {
+   "number": 25642,
+   "title": "Cursor- OUTBOX Fuel #25639 merged + deploy ids",
+   "mergedAt": "2026-10-06T19:02:29Z",
+   "branch": "cursor/outbox-f4321-fuel-c89b"
+  },
+  {
+   "number": 25641,
+   "title": "Claude-3- OUTBOX: driver merge engine #25640",
+   "mergedAt": "2026-10-06T18:58:48Z",
+   "branch": "cc-3/outbox-driver-merge"
+  },
+  {
+   "number": 25640,
+   "title": "Claude-3- duplicate driver profiles merge in-app through one engine (one driver-vendor, many Samsara users)",
+   "mergedAt": "2026-10-06T18:58:24Z",
+   "branch": "claude/driver-merge-engine"
+  },
+  {
+   "number": 25639,
+   "title": "Cursor- BANK-F4321 Fuel History MoneyListToolbar (432-CUR #1)",
+   "mergedAt": "2026-10-06T18:58:18Z",
+   "branch": "cursor/bank-f4321-fuel-toolbar-c89b"
+  },
+  {
+   "number": 25638,
+   "title": "SETL-F438: the Settlement Creator could not create a load (no PO/WO to bookLoad) + stops hardcoded state TX",
+   "mergedAt": "2026-10-06T22:49:37Z",
+   "branch": "claude/setl-f438-po-and-stop-state"
+  },
+  {
+   "number": 25637,
+   "title": "Claude-1- LST-F425: verify-reefer-fuel-credit red on main after #25625 — reads the Combobox option too",
+   "mergedAt": "2026-10-06T18:50:46Z",
+   "branch": "cc-1/lst-f425-reefer-guard-combobox"
+  },
+  {
+   "number": 25636,
+   "title": "Claude-1- LST-F420: a load's Driver Pay tab drills to the settlement that paid its driver bill again",
+   "mergedAt": "2026-10-06T18:45:48Z",
+   "branch": "cc-1/lst-f420-driver-pay-settlement-link"
+  },
+  {
+   "number": 25635,
+   "title": "Cursor-OUTBOX #25625 race lost to CC-1; deploy ids confirmed",
+   "mergedAt": "2026-10-06T18:45:33Z",
+   "branch": "cursor/outbox-f25625-confirm-c89b"
+  },
+  {
+   "number": 25634,
+   "title": "Claude-1- OUTBOX: #25625 fast-merged + deploy ids",
+   "mergedAt": "2026-10-06T18:43:12Z",
+   "branch": "cc-1/outbox-fastmerge-25625"
+  },
+  {
+   "number": 25633,
+   "title": "Claude-1- claim migration 202615440200 (LST-F424)",
+   "mergedAt": "2026-10-06T18:42:05Z",
+   "branch": "chore/claim-migration-202615440200"
+  },
+  {
+   "number": 25632,
+   "title": "Cursor-BANK-F4321 Vendors MoneyListToolbar (432-CUR #1 multi-select)",
+   "mergedAt": "2026-10-06T18:40:55Z",
+   "branch": "cursor/bank-f4321-vendors-toolbar-c89b"
+  },
+  {
+   "number": 25631,
+   "title": "Claude-1- LST-F423: four guards join the MEASURED-EMPTY purge window (ends on the first live row); stale selftests restored",
+   "mergedAt": "2026-10-06T18:40:27Z",
+   "branch": "cc-1/lst-f423-purge-window-measured-4"
+  },
+  {
+   "number": 25630,
+   "title": "Claude-3- CLAIM-RESERVE 18357 (verify-driver-merge-engine)",
+   "mergedAt": "2026-10-06T18:40:11Z",
+   "branch": "chore/claim-reserve-driver-merge"
+  },
+  {
+   "number": 25629,
+   "title": "CC-2-CLAIM-RESERVE 12415 verify-bank-deposit-receives-several-invoices",
+   "mergedAt": "2026-10-06T18:39:32Z",
+   "branch": "cc-2/claim-reserve-12415"
+  },
+  {
+   "number": 25628,
+   "title": "CC-2-FIX main frontend typecheck red (B7 suggestion.description)",
+   "mergedAt": "2026-10-06T18:35:02Z",
+   "branch": "cc-2/fix-main-tsc-b7-description"
+  },
+  {
+   "number": 25627,
+   "title": "Claude-3- contract PDFs: format version; stale unsigned PDFs re-filed in the legal format on open",
+   "mergedAt": "2026-10-06T18:33:40Z",
+   "branch": "cc-3/contract-pdf-format-version"
+  },
+  {
+   "number": 25626,
+   "title": "Cursor-BANK-F4321 Customers MoneyListToolbar (432-CUR #1 multi-select)",
+   "mergedAt": "2026-10-06T18:31:22Z",
+   "branch": "cursor/bank-f4321-customers-toolbar-c89b"
+  },
+  {
+   "number": 25625,
+   "title": "SETL-F437 + LST-F436: Settlement Creator drawer redesign + 20 white unselected boxes",
+   "mergedAt": "2026-10-06T18:42:38Z",
+   "branch": "claude/setl-f437-creator-redesign"
+  },
+  {
+   "number": 25624,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-06T22:50:24Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 25623,
    "title": "Claude-1- claim migration 202615440100 (LST-F422)",
    "mergedAt": "2026-10-06T18:25:18Z",
@@ -17036,306 +17336,6 @@
    "title": "CC-2-AUTH-210: reefer trailer on 7 fills from the trailer each load's settlement prints",
    "mergedAt": "2026-10-04T02:01:10Z",
    "branch": "cc-2/auth-210-reefer-trailers-settlements"
-  },
-  {
-   "number": 25060,
-   "title": "Cursor- BANK-F91374 VendorMappingIntegrityCard text-[11px] → text-xs + leftover refuse/plant",
-   "mergedAt": "2026-10-04T02:00:57Z",
-   "branch": "cursor/bank-f91374-vendor-map-text-c89b"
-  },
-  {
-   "number": 25059,
-   "title": "Cursor- BANK-F91373 LegalTemplateDetailPage text-[11px] → text-xs + leftover refuse/plant",
-   "mergedAt": "2026-10-04T02:00:17Z",
-   "branch": "cursor/bank-f91373-legal-tmpl-text-c89b"
-  },
-  {
-   "number": 25058,
-   "title": "Cursor- BANK-F91372 CertExpiryBadge text-[11px] → text-xs + leftover refuse/plant",
-   "mergedAt": "2026-10-04T01:59:07Z",
-   "branch": "cursor/bank-f91372-cert-expiry-text-c89b"
-  },
-  {
-   "number": 25057,
-   "title": "Claude-1- CLAIM-RESERVE migration 202615390100 (ROUND 394 ruling 2 step 2)",
-   "mergedAt": "2026-10-04T01:59:02Z",
-   "branch": "claude/claim-reserve-mig-202615390100"
-  },
-  {
-   "number": 25056,
-   "title": "CC-2-AUTH-209 consumed + fuel-per-load re-reconciled 321 -> 320",
-   "mergedAt": "2026-10-04T01:55:51Z",
-   "branch": "cc-2/auth-209-consumed-rebaseline"
-  },
-  {
-   "number": 25055,
-   "title": "Cursor-BANK-F91371 NotificationPreferencesPage text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:53:36Z",
-   "branch": "cursor/bank-f91371-notif-prefs-text-c89b"
-  },
-  {
-   "number": 25054,
-   "title": "Cursor-OUTBOX F91365-70 leftover drain MERGED tip 5bfeafcf79",
-   "mergedAt": "2026-10-04T01:52:43Z",
-   "branch": "cursor/outbox-f91365-70-c89b"
-  },
-  {
-   "number": 25053,
-   "title": "CC-2-AUTH-209: void duplicate fuel receipt 1848853 (load 13543 copy)",
-   "mergedAt": "2026-10-04T01:52:31Z",
-   "branch": "cc-2/auth-209-void-dup-fuel-1848853"
-  },
-  {
-   "number": 25052,
-   "title": "Cursor-BANK-F91370 DriverImportModal text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:51:55Z",
-   "branch": "cursor/bank-f91370-drv-import-text-c89b"
-  },
-  {
-   "number": 25051,
-   "title": "Cursor-BANK-F91369 PartsMasterDataPage text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:51:07Z",
-   "branch": "cursor/bank-f91369-parts-md-text-c89b"
-  },
-  {
-   "number": 25050,
-   "title": "Cursor-BANK-F91368 DefectsInboxPage text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:50:13Z",
-   "branch": "cursor/bank-f91368-defects-inbox-text-c89b"
-  },
-  {
-   "number": 25049,
-   "title": "Cursor-BANK-F91367 AutoDeductionPolicies text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:49:33Z",
-   "branch": "cursor/bank-f91367-auto-deduct-text-c89b"
-  },
-  {
-   "number": 25048,
-   "title": "Cursor-BANK-F91366 PendingSettlementDeductionsPanel text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:48:54Z",
-   "branch": "cursor/bank-f91366-pend-deduct-text-c89b"
-  },
-  {
-   "number": 25047,
-   "title": "Claude-3- PICKUP Lead r391: one posting-line writer + reefer 5015 (migration fixed on fork) + void-guard fix",
-   "mergedAt": "2026-10-04T02:07:42Z",
-   "branch": "cc-3/r391-pickup"
-  },
-  {
-   "number": 25046,
-   "title": "Cursor-BANK-F91365 FaultDraftsPage text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:48:03Z",
-   "branch": "cursor/bank-f91365-fault-drafts-text-c89b"
-  },
-  {
-   "number": 25045,
-   "title": "Cursor-OUTBOX F91349-64 leftover drain MERGED tip cf206a45ab",
-   "mergedAt": "2026-10-04T01:47:22Z",
-   "branch": "cursor/outbox-f91349-64-c89b"
-  },
-  {
-   "number": 25044,
-   "title": "Cursor-BANK-F91364 AssetSummaryCards text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:46:36Z",
-   "branch": "cursor/bank-f91364-asset-sum-text-c89b"
-  },
-  {
-   "number": 25043,
-   "title": "Cursor-BANK-F91363 DriverDqfComplianceChip text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:45:49Z",
-   "branch": "cursor/bank-f91363-dqf-chip-text-c89b"
-  },
-  {
-   "number": 25042,
-   "title": "Cursor-BANK-F91362 DeadheadReportPage text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:45:04Z",
-   "branch": "cursor/bank-f91362-deadhead-rpt-text-c89b"
-  },
-  {
-   "number": 25041,
-   "title": "Cursor-BANK-F91361 DriverProfileStopsMilesSection text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:44:03Z",
-   "branch": "cursor/bank-f91361-stops-miles-text-c89b"
-  },
-  {
-   "number": 25040,
-   "title": "CC-2-393.2: the 3,908 unlinked postings are the AUTH-177 purge, not the nine doors",
-   "mergedAt": "2026-10-04T01:43:30Z",
-   "branch": "cc-2/outbox-393-2-spine-cause"
-  },
-  {
-   "number": 25039,
-   "title": "Cursor-BANK-F91360 DvirSeverityBadge text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:42:31Z",
-   "branch": "cursor/bank-f91360-dvir-sev-text-c89b"
-  },
-  {
-   "number": 25038,
-   "title": "Cursor-BANK-F91359 QuickAssignModal text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:41:01Z",
-   "branch": "cursor/bank-f91359-quick-assign-text-c89b"
-  },
-  {
-   "number": 25037,
-   "title": "Cursor-BANK-F91358 CompliancePanel text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:40:12Z",
-   "branch": "cursor/bank-f91358-fuel-comp-text-c89b"
-  },
-  {
-   "number": 25036,
-   "title": "Cursor-BANK-F91357 CashAdvancesHome text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:39:35Z",
-   "branch": "cursor/bank-f91357-cash-adv-home-text-c89b"
-  },
-  {
-   "number": 25035,
-   "title": "Cursor-BANK-F91356 PerformanceScorecardSection text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:38:24Z",
-   "branch": "cursor/bank-f91356-perf-score-text-c89b"
-  },
-  {
-   "number": 25034,
-   "title": "Claude-1- ROUND 394 ruling 1 step 1: driver advance debits/credits the driver's OWN 1245 sub-account",
-   "mergedAt": "2026-10-04T01:37:12Z",
-   "branch": "cc-1/r394-2-advances-own-subaccount"
-  },
-  {
-   "number": 25033,
-   "title": "CC-2-AUTH-208 consumed: reefer trailer 10224 on T170 09-09 fill",
-   "mergedAt": "2026-10-04T01:36:43Z",
-   "branch": "cc-2/auth-208-consumed"
-  },
-  {
-   "number": 25032,
-   "title": "Cursor-BANK-F91355 VoidReasonModal text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:36:19Z",
-   "branch": "cursor/bank-f91355-void-reason-text-c89b"
-  },
-  {
-   "number": 25031,
-   "title": "CC-2-FUEL-PER-LOAD: re-reconcile after AUTH-207; duplicate check counted a voided copy as live",
-   "mergedAt": "2026-10-04T01:36:13Z",
-   "branch": "cc-2/fuel-per-load-rebaseline-99794138"
-  },
-  {
-   "number": 25030,
-   "title": "Cursor-BANK-F91354 FMCSAVerificationModal text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:35:38Z",
-   "branch": "cursor/bank-f91354-fmcsa-text-c89b"
-  },
-  {
-   "number": 25029,
-   "title": "Cursor-BANK-F91353 JournalEntryTypePicker text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:34:10Z",
-   "branch": "cursor/bank-f91353-je-type-text-c89b"
-  },
-  {
-   "number": 25028,
-   "title": "Cursor-BANK-F91352 ScheduledReportsPanel text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:33:00Z",
-   "branch": "cursor/bank-f91352-sched-rpt-text-c89b"
-  },
-  {
-   "number": 25027,
-   "title": "Cursor-BANK-F91351 W8BenSection text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:32:23Z",
-   "branch": "cursor/bank-f91351-w8ben-sec-text-c89b"
-  },
-  {
-   "number": 25026,
-   "title": "CC-2-AUTH-208: AUTH-207 consumed + reefer trailer 10224 on the T170 09-09 fill",
-   "mergedAt": "2026-10-04T01:32:08Z",
-   "branch": "cc-2/auth-208-reefer-trailer-t170"
-  },
-  {
-   "number": 25025,
-   "title": "Cursor-BANK-F91350 AssignFuelCardDrawer text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:31:39Z",
-   "branch": "cursor/bank-f91350-fuel-card-text-c89b"
-  },
-  {
-   "number": 25024,
-   "title": "Cursor-BANK-F91349 DocumentsTab text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:30:31Z",
-   "branch": "cursor/bank-f91349-docs-tab-text-c89b"
-  },
-  {
-   "number": 25023,
-   "title": "Cursor-BANK-F91348 IftaPreparerCard text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:29:51Z",
-   "branch": "cursor/bank-f91348-ifta-card-text-c89b"
-  },
-  {
-   "number": 25022,
-   "title": "Claude-1- CLAIM-RESERVE migrations 202615380400 + 202615380500 (ROUND 394 ruling 1 step 2)",
-   "mergedAt": "2026-10-04T01:29:31Z",
-   "branch": "claude/claim-reserve-mig-202615380400"
-  },
-  {
-   "number": 25021,
-   "title": "Cursor-OUTBOX BANK-F91344..F91347 leftover drain MERGED",
-   "mergedAt": "2026-10-04T01:29:18Z",
-   "branch": "cursor/outbox-f91344-47-c89b"
-  },
-  {
-   "number": 25020,
-   "title": "Cursor-BANK-F91347 AtRiskDriverCard text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:28:37Z",
-   "branch": "cursor/bank-f91347-at-risk-text-c89b"
-  },
-  {
-   "number": 25019,
-   "title": "Cursor-BANK-F91346 HOSStatusSection text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:28:01Z",
-   "branch": "cursor/bank-f91346-hos-status-text-c89b"
-  },
-  {
-   "number": 25018,
-   "title": "Cursor-BANK-F91345 TriSignalHoverDetail text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:27:58Z",
-   "branch": "cursor/bank-f91345-tri-signal-text-c89b"
-  },
-  {
-   "number": 25017,
-   "title": "Cursor-BANK-F91344 FuelFraudBadge text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:27:26Z",
-   "branch": "cursor/bank-f91344-fuel-fraud-text-c89b"
-  },
-  {
-   "number": 25016,
-   "title": "Cursor-OUTBOX BANK-F91339..F91343 leftover drain MERGED",
-   "mergedAt": "2026-10-04T01:27:02Z",
-   "branch": "cursor/outbox-f91339-43-c89b"
-  },
-  {
-   "number": 25015,
-   "title": "Cursor-BANK-F91343 ClaimCreateModal text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:26:27Z",
-   "branch": "cursor/bank-f91343-claim-create-text-c89b"
-  },
-  {
-   "number": 25014,
-   "title": "Cursor-BANK-F91342 FactoringRecourse reverse text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:25:57Z",
-   "branch": "cursor/bank-f91342-factoring-recourse-text-c89b"
-  },
-  {
-   "number": 25013,
-   "title": "Cursor-BANK-F91341 FilingsComplianceDue text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:25:32Z",
-   "branch": "cursor/bank-f91341-filings-text-c89b"
-  },
-  {
-   "number": 25012,
-   "title": "Cursor-BANK-F91340 HomeFleetRestoreCard text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:25:07Z",
-   "branch": "cursor/bank-f91340-fleet-restore-text-c89b"
-  },
-  {
-   "number": 25011,
-   "title": "Cursor-BANK-F91339 HomeKpiRangeToggle text-[11px]→text-xs leftover drain",
-   "mergedAt": "2026-10-04T01:24:38Z",
-   "branch": "cursor/bank-f91339-home-kpi-range-text-c89b"
   }
  ],
  "merged_pr_total": 3000,
