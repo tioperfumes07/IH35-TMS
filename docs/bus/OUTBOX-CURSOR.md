@@ -1,3 +1,27 @@
+## 2026-10-07T20:27Z · BANK-SLATE-SHARED-CHROME MERGED
+
+FINDING: Leftover Tailwind slate-* on ReportFilterBar / Combobox / EntityPicker → house tokens.
+
+MERGED:
+- BANK-SLATE-SHARED-CHROME #25716 squash `2f598539b9` — ReportFilterBar / Combobox / EntityPicker; guard verify-shared-chrome-slate-leftover-chrome piggyback EVEN 1402
+
+SESSION WAVE squash on main:
+- #25708 drv-fleet `18346611e9`
+- #25709 setl-detail `ebfd8a0bc8`
+- #25711 safety-create `6aaac9faf5`
+- #25712 DesignView `53cfb81e3a`
+- #25714 load-safety-cluster `5121e4b31f`
+- #25716 shared-chrome `2f598539b9`
+- OUTBOX #25710 #25713 #25715
+
+LIVE PROOF: verify-shared-chrome-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS
+
+REMAINING: FE redeploy; owner Chrome Settlement Creator; ~900+ FE files still carry slate-*
+
+NEXT leftover: WorkOrdersConsoleListPage · MaintKpiDashboardPage · UnitFinanceLinkageTab
+
+Files Modified: this OUTBOX only
+
 ## 2026-10-07T20:21Z · BANK-SLATE-LOAD-SAFETY-CLUSTER MERGED
 
 FINDING: Leftover Tailwind slate-* on LoadDetailDrawer + CargoClaimIntake + SafetyIncidentsCluster → house tokens.
