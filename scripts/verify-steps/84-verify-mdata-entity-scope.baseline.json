@@ -1,4 +1,5 @@
 {
+  "unreasoned_ceiling": 93,
   "entries": [
     {
       "key": "apps/backend/src/accounting/bank-recon/bank-match-fuel-post.service.ts#7ba26329d65de13d80e658f3e83f867ce3e96ac7",
@@ -8,22 +9,26 @@
     {
       "key": "apps/backend/src/accounting/coa-asymmetry-report.service.ts#20a6ae5627fba58869fd5af4f8c9199a19e5a5e7",
       "file": "apps/backend/src/accounting/coa-asymmetry-report.service.ts",
-      "preview": "` WITH postable AS ( SELECT a.account_number, a.account_type, c.code AS entity_code FROM catalogs.accounts a JOIN org.co"
+      "preview": "` WITH postable AS ( SELECT a.account_number, a.account_type, c.code AS entity_code FROM catalogs.accounts a JOIN org.co",
+      "reason": "Owner diagnostic that compares the TRK and TRANSP charts of accounts by design (c.code IN ('TRK','TRANSP')); reads catalogs.accounts only, no money."
     },
     {
       "key": "apps/backend/src/accounting/coa-asymmetry-report.service.ts#5d4d1a4a73230a63f6212ecb074219b4c2cfc5af",
       "file": "apps/backend/src/accounting/coa-asymmetry-report.service.ts",
-      "preview": "` SELECT c.code AS entity_code, count(*) FILTER (WHERE a.is_postable AND a.deactivated_at IS NULL)::bigint AS postable, "
+      "preview": "` SELECT c.code AS entity_code, count(*) FILTER (WHERE a.is_postable AND a.deactivated_at IS NULL)::bigint AS postable, ",
+      "reason": "Owner diagnostic that compares the TRK and TRANSP charts of accounts by design (c.code IN ('TRK','TRANSP')); reads catalogs.accounts only, no money."
     },
     {
       "key": "apps/backend/src/accounting/coa-asymmetry-report.service.ts#7185df7c925309dda34043881d39bd59ca371f13",
       "file": "apps/backend/src/accounting/coa-asymmetry-report.service.ts",
-      "preview": "` WITH postable AS ( SELECT a.account_number, c.code AS entity_code FROM catalogs.accounts a JOIN org.companies c ON c.i"
+      "preview": "` WITH postable AS ( SELECT a.account_number, c.code AS entity_code FROM catalogs.accounts a JOIN org.companies c ON c.i",
+      "reason": "Owner diagnostic that compares the TRK and TRANSP charts of accounts by design (c.code IN ('TRK','TRANSP')); reads catalogs.accounts only, no money."
     },
     {
       "key": "apps/backend/src/accounting/coa-asymmetry-report.service.ts#b3eb1c941741421d4e982ac3c1b99351ebbc7039",
       "file": "apps/backend/src/accounting/coa-asymmetry-report.service.ts",
-      "preview": "` WITH postable AS ( SELECT a.id AS account_id, a.account_number, a.account_name, a.account_type, c.code AS entity_code "
+      "preview": "` WITH postable AS ( SELECT a.id AS account_id, a.account_number, a.account_name, a.account_type, c.code AS entity_code ",
+      "reason": "Owner diagnostic that compares the TRK and TRANSP charts of accounts by design (c.code IN ('TRK','TRANSP')); reads catalogs.accounts only, no money."
     },
     {
       "key": "apps/backend/src/accounting/reclassify/reclassify.service.ts#1afc19862b2424672f9b03f2a88e4d778e945fd2",
@@ -73,7 +78,8 @@
     {
       "key": "apps/backend/src/cron/insurance-monthly-report.cron.ts#cb9e986267bcead4ba2ce38f5043e77785b35ad4",
       "file": "apps/backend/src/cron/insurance-monthly-report.cron.ts",
-      "preview": "`SELECT DISTINCT operating_company_id::text AS operating_company_id FROM mdata.drivers WHERE deactivated_at IS NULL AND "
+      "preview": "`SELECT DISTINCT operating_company_id::text AS operating_company_id FROM mdata.drivers WHERE deactivated_at IS NULL AND ",
+      "reason": "Enumerates the companies that have active drivers so the monthly insurance report runs once PER company; each per-company report is scoped."
     },
     {
       "key": "apps/backend/src/customers/list.routes.ts#70d72643fa242e4706ddcbd9e84b6efea438a148",
@@ -103,7 +109,8 @@
     {
       "key": "apps/backend/src/dispatch/deadhead/chain-deadhead.service.ts#0fcb9b13a55434067442da3b88c0efbf3bb1c5ce",
       "file": "apps/backend/src/dispatch/deadhead/chain-deadhead.service.ts",
-      "preview": "` SELECT l.load_number, s.city, s.state, s.latitude::float8 AS latitude, s.longitude::float8 AS longitude, COALESCE(s.ac"
+      "preview": "` SELECT l.load_number, s.city, s.state, s.latitude::float8 AS latitude, s.longitude::float8 AS longitude, COALESCE(s.ac",
+      "reason": "Physical-truck deadhead chain: the unit's previous delivery position crosses entities on purpose (documented in code); reads only that unit's own loads."
     },
     {
       "key": "apps/backend/src/dispatch/load-save-proof.ts#a840f15e5a5a067d8e3ebf1b0b7153716614f9da",
@@ -218,7 +225,8 @@
     {
       "key": "apps/backend/src/driver/auth.ts#62ee0c496b04629b344cffa48ff120130115258a",
       "file": "apps/backend/src/driver/auth.ts",
-      "preview": "` SELECT d.id, concat_ws(' ', d.first_name, d.last_name) AS full_name, d.status::text AS status, COALESCE(iu.preferred_l"
+      "preview": "` SELECT d.id, concat_ws(' ', d.first_name, d.last_name) AS full_name, d.status::text AS status, COALESCE(iu.preferred_l",
+      "reason": "Driver login: resolves the driver row by the authenticated identity_user_id (an identity lookup, global by nature); the row carries its company."
     },
     {
       "key": "apps/backend/src/driver/earnings.routes.ts#47f75ea0bbd2f3dfd717bea298ade71d0a112deb",
@@ -293,7 +301,8 @@
     {
       "key": "apps/backend/src/integrations/relay-payments/relay-fuel-ingest.service.ts#30b9c213de3f0a4dee8cf514c40efc9a1d521791",
       "file": "apps/backend/src/integrations/relay-payments/relay-fuel-ingest.service.ts",
-      "preview": "` SELECT COALESCE(currently_leased_to_company_id, owner_company_id)::text AS company FROM mdata.units WHERE unit_number "
+      "preview": "` SELECT COALESCE(currently_leased_to_company_id, owner_company_id)::text AS company FROM mdata.units WHERE unit_number ",
+      "reason": "Resolves WHICH company runs a Relay-printed unit number (LIMIT 2, ambiguity refused) \u2014 this read is what determines the company."
     },
     {
       "key": "apps/backend/src/integrations/samsara/driver-mapping/driver-mapping.routes.ts#e9d45d0904928a1b38df782208b7121fe2ea6643",
@@ -308,17 +317,20 @@
     {
       "key": "apps/backend/src/integrations/samsara/samsara-master-sync.service.ts#1836f0497f7017fbe256fc6fe7336d45625fdc2e",
       "file": "apps/backend/src/integrations/samsara/samsara-master-sync.service.ts",
-      "preview": "`SELECT id::text, COALESCE(currently_leased_to_company_id, owner_company_id)::text AS oc, samsara_vehicle_id::text AS si"
+      "preview": "`SELECT id::text, COALESCE(currently_leased_to_company_id, owner_company_id)::text AS oc, samsara_vehicle_id::text AS si",
+      "reason": "Samsara-to-local master matching (driver account / vehicle / equipment) \u2014 determines the local record and its company (oc) for the Samsara entity."
     },
     {
       "key": "apps/backend/src/integrations/samsara/samsara-master-sync.service.ts#6aa6d9be71afb574550dc8e1859ff7b5c2f049a1",
       "file": "apps/backend/src/integrations/samsara/samsara-master-sync.service.ts",
-      "preview": "`SELECT id::text, COALESCE(currently_leased_to_company_id, owner_company_id)::text AS oc, samsara_vehicle_id::text AS si"
+      "preview": "`SELECT id::text, COALESCE(currently_leased_to_company_id, owner_company_id)::text AS oc, samsara_vehicle_id::text AS si",
+      "reason": "Samsara-to-local master matching (driver account / vehicle / equipment) \u2014 determines the local record and its company (oc) for the Samsara entity."
     },
     {
       "key": "apps/backend/src/integrations/samsara/samsara-master-sync.service.ts#f5402297a4807dc0597d5592c5547b8dfa5b6231",
       "file": "apps/backend/src/integrations/samsara/samsara-master-sync.service.ts",
-      "preview": "`SELECT COALESCE(d.merged_into_driver_id, d.id)::text AS id, a.operating_company_id::text AS oc, NULL::text AS sid FROM "
+      "preview": "`SELECT COALESCE(d.merged_into_driver_id, d.id)::text AS id, a.operating_company_id::text AS oc, NULL::text AS sid FROM ",
+      "reason": "Samsara-to-local master matching (driver account / vehicle / equipment) \u2014 determines the local record and its company (oc) for the Samsara entity."
     },
     {
       "key": "apps/backend/src/jobs/cert-expiry-monitor.ts#a31851a231fe733c8c0d5659ece9a86208a8f38d",
@@ -328,7 +340,8 @@
     {
       "key": "apps/backend/src/jobs/search-indexer-incremental.ts#a37708cc1eae02d5e459c98ddfea0a75d4c65d2d",
       "file": "apps/backend/src/jobs/search-indexer-incremental.ts",
-      "preview": "` SELECT operating_company_id::text AS operating_company_id FROM mdata.loads WHERE operating_company_id IS NOT NULL UNIO"
+      "preview": "` SELECT operating_company_id::text AS operating_company_id FROM mdata.loads WHERE operating_company_id IS NOT NULL UNIO",
+      "reason": "Enumerates the company ids that have data so the search index is rebuilt once PER company; each per-company index pass is scoped."
     },
     {
       "key": "apps/backend/src/leases/lease-bill-engine.service.ts#e76f6ceaf837894c32b050ba07a8368997c73dff",
@@ -338,7 +351,8 @@
     {
       "key": "apps/backend/src/leases/lease-buyout.service.ts#7fbdfcce9d338b9d0777d8ea8e65e52d86f04268",
       "file": "apps/backend/src/leases/lease-buyout.service.ts",
-      "preview": "`SELECT vin FROM mdata.equipment WHERE id = $1::uuid`"
+      "preview": "`SELECT vin FROM mdata.equipment WHERE id = $1::uuid`",
+      "reason": "VIN of the equipment on THIS company's own lease asset line (id from the scoped lease); the lessor owns it until this buyout transfers it."
     },
     {
       "key": "apps/backend/src/leases/lease-engine.service.ts#7938d6c2d306b0ee50dc8ac14015a10bf971530b",
@@ -448,12 +462,14 @@
     {
       "key": "apps/backend/src/mdata/drivers.routes.ts#233047b6f4741dc81d3aff937ee5455b1dfb9991",
       "file": "apps/backend/src/mdata/drivers.routes.ts",
-      "preview": "` SELECT id, identity_user_id, first_name, last_name, phone, email, COALESCE((SELECT iu.preferred_language FROM identity"
+      "preview": "` SELECT id, identity_user_id, first_name, last_name, phone, email, COALESCE((SELECT iu.preferred_language FROM identity",
+      "reason": "Delete safety: counts EVERY row referencing the driver, in every table and company, before a delete is allowed \u2014 must see all references."
     },
     {
       "key": "apps/backend/src/mdata/drivers.routes.ts#97b7d513b58ecab05ab61400e3ba60b1c9194791",
       "file": "apps/backend/src/mdata/drivers.routes.ts",
-      "preview": "`SELECT ( (SELECT count(*) FROM mdata.loads l WHERE $1::uuid IN (l.assigned_primary_driver_id, l.assigned_secondary_driv"
+      "preview": "`SELECT ( (SELECT count(*) FROM mdata.loads l WHERE $1::uuid IN (l.assigned_primary_driver_id, l.assigned_secondary_driv",
+      "reason": "Delete safety: counts EVERY row referencing the driver, in every table and company, before a delete is allowed \u2014 must see all references."
     },
     {
       "key": "apps/backend/src/mdata/locations.routes.ts#abf96d363d6fa5a8bec4e7f6be5f19ab91ca3988",
@@ -523,32 +539,38 @@
     {
       "key": "apps/backend/src/telematics/preservation.service.ts#13fa3a1d31a7b622136354c0c4a6bce380428d54",
       "file": "apps/backend/src/telematics/preservation.service.ts",
-      "preview": "` INSERT INTO preserve.dvir_submissions (company_code, unit_number, submitted_at, dvir_type, trailer_number, driver_name"
+      "preview": "` INSERT INTO preserve.dvir_submissions (company_code, unit_number, submitted_at, dvir_type, trailer_number, driver_name",
+      "reason": "Pre-purge preservation copy (system job over every company): each copied row keeps its own company_code; labels resolve from that row's own FK."
     },
     {
       "key": "apps/backend/src/telematics/preservation.service.ts#33446bf23b469d1d63ffe2c1728ba8054dd2a774",
       "file": "apps/backend/src/telematics/preservation.service.ts",
-      "preview": "`(SELECT nullif(btrim(coalesce(d.cdl_state, '') || ' ' || coalesce(d.cdl_number::text, '')), '') FROM mdata.drivers d WH"
+      "preview": "`(SELECT nullif(btrim(coalesce(d.cdl_state, '') || ' ' || coalesce(d.cdl_number::text, '')), '') FROM mdata.drivers d WH",
+      "reason": "Pre-purge preservation copy (system job over every company): each copied row keeps its own company_code; labels resolve from that row's own FK."
     },
     {
       "key": "apps/backend/src/telematics/preservation.service.ts#5cc03180079156906664a116825c9dfd38b38143",
       "file": "apps/backend/src/telematics/preservation.service.ts",
-      "preview": "`(SELECT nullif(btrim(coalesce(d.first_name, '') || ' ' || coalesce(d.last_name, '')), '') FROM mdata.drivers d WHERE d."
+      "preview": "`(SELECT nullif(btrim(coalesce(d.first_name, '') || ' ' || coalesce(d.last_name, '')), '') FROM mdata.drivers d WHERE d.",
+      "reason": "Pre-purge preservation copy (system job over every company): each copied row keeps its own company_code; labels resolve from that row's own FK."
     },
     {
       "key": "apps/backend/src/telematics/preservation.service.ts#8f0a2f1b6ea2e004613748ab11892c16bcbddd06",
       "file": "apps/backend/src/telematics/preservation.service.ts",
-      "preview": "`coalesce((SELECT u.unit_number FROM mdata.units u WHERE u.id = ${alias}.${idCol}), 'UNKNOWN-' || coalesce(${alias}.${id"
+      "preview": "`coalesce((SELECT u.unit_number FROM mdata.units u WHERE u.id = ${alias}.${idCol}), 'UNKNOWN-' || coalesce(${alias}.${id",
+      "reason": "Pre-purge preservation copy (system job over every company): each copied row keeps its own company_code; labels resolve from that row's own FK."
     },
     {
       "key": "apps/backend/src/telematics/preservation.service.ts#cd1cff874baefc42e336f2ad2dfb83f939246bba",
       "file": "apps/backend/src/telematics/preservation.service.ts",
-      "preview": "`(SELECT l.load_number::text FROM mdata.loads l WHERE l.id = ${alias}.${idCol})`"
+      "preview": "`(SELECT l.load_number::text FROM mdata.loads l WHERE l.id = ${alias}.${idCol})`",
+      "reason": "Pre-purge preservation copy (system job over every company): each copied row keeps its own company_code; labels resolve from that row's own FK."
     },
     {
       "key": "apps/backend/src/telematics/preservation.service.ts#e46650022f995b7a07c968f7c6e5d48d3dcbe129",
       "file": "apps/backend/src/telematics/preservation.service.ts",
-      "preview": "` INSERT INTO preserve.hos_snapshots (company_code, driver_key, polled_at, driver_name, driver_cdl, unit_number, duty_st"
+      "preview": "` INSERT INTO preserve.hos_snapshots (company_code, driver_key, polled_at, driver_name, driver_cdl, unit_number, duty_st",
+      "reason": "Pre-purge preservation copy (system job over every company): each copied row keeps its own company_code; labels resolve from that row's own FK."
     },
     {
       "key": "apps/backend/src/telematics/telematics-linkage.service.ts#dae5080bc06a3f2cc477cb55b0d5a184c25d6719",
