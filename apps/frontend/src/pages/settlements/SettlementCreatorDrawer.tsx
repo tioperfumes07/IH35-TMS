@@ -388,9 +388,18 @@ function TotalRow({
   );
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
+const SPAN_CLASS: Record<number, string> = {
+  1: "col-span-1", 2: "col-span-2", 3: "col-span-3", 4: "col-span-4", 5: "col-span-5",
+};
+
+/**
+ * SETL-F443 — the owner's layout unit is FIVE CELLS PER SIDE, not five equal fields.
+ * Every field was pinned to one cell, so Customer truncated to "Select custome" and the pickup
+ * address had nowhere to render. A field now declares how many of the five it occupies.
+ */
+function Field({ label, span = 1, children }: { label: string; span?: number; children: ReactNode }) {
   return (
-    <label className="flex min-w-0 flex-col gap-1 text-section-header font-semibold uppercase text-[#4B5563]">
+    <label className={`${SPAN_CLASS[span] ?? "col-span-1"} flex min-w-0 flex-col gap-1 text-section-header font-semibold uppercase text-[var(--text-muted,#4B5563)]`}>
       {/* SETL-F437 (owner 2026-10-06): "THE HEADERS ARENT ALIGNED, THE BOXES ARENT ALIGNED, IN
           HEIGHT NOT THE SAME." A centred label over a centred box shares no left edge, and a label
           that wrapped to two lines pushed its own box down. QuickBooks reads LEFT, and a FIXED label
@@ -552,7 +561,7 @@ function LineCoding({
 
 /** Locked baseline: 28px clickable boxes, 12px body, 2px radius, equal paired widths. */
 const inputClass =
-  "h-7 w-full min-w-0 rounded-sm border border-[#E5E7EB] px-2 text-left text-xs text-[#0F1219]";
+  "h-7 w-full min-w-0 rounded-sm border border-[var(--border-subtle,#E5E7EB)] bg-[var(--surface-input,#FFFFFF)] px-2 text-left text-xs text-[var(--text-strong,#0F1219)]";
 /** MoneyInput owns h-7 + leading $ frame — never forward border/px (SYS-MONEY / SETL-F441). */
 const moneyInputClass = "w-full";
 /** SETL-F442 — owner mock: five equal columns on Company + Driver (not 2-col stacked pairs). */
@@ -1390,7 +1399,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         ) : null}
                       </div>
                     </Field>
-                    <Field label="Customer">
+                    <Field label="Customer" span={3}>
                       <EntityPicker
                         kind="customer"
                         operatingCompanyId={companyId}
@@ -1485,7 +1494,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         }}
                       />
                     </Field>
-                    <label className="col-span-2 flex h-7 items-center justify-center gap-2 self-end rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#0F1219]">
+                    <label className="col-span-1 flex h-7 items-center justify-center gap-2 self-end rounded-sm border border-[var(--border-subtle,#E5E7EB)] bg-[var(--surface-unselected,#F8FAFC)] px-2 text-xs text-[var(--text-strong,#0F1219)]">
                       <input
                         type="checkbox"
                         checked={load.not_yet_delivered !== false && !load.delivery_date}
@@ -1506,7 +1515,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
 
                   {/* Stop identity — address / city / state / ZIP */}
                   <div className={fieldGridClass}>
-                    <Field label="Pickup address (optional)">
+                    <Field label="Pickup address (optional)" span={2}>
                       <AddressGeocodeInput
                         value={load.pickup_address ?? ""}
                         onChange={(v) => {
@@ -1605,7 +1614,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                     <span />
                   </div>
                   <div className={fieldGridClass}>
-                    <Field label="Delivery address (optional)">
+                    <Field label="Delivery address (optional)" span={2}>
                       <AddressGeocodeInput
                         value={load.delivery_address ?? ""}
                         onChange={(v) => {
@@ -1797,7 +1806,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   </div>
 
                   <div className={fieldGridClass}>
-                    <Field label="Accessorial item">
+                    <Field label="Accessorial item" span={2}>
                       <input
                         className={inputClass}
                         value={load.accessorials?.[0]?.item_name ?? ""}
@@ -1828,7 +1837,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         ariaLabel="Accessorial amount"
                       />
                     </Field>
-                    <Field label="Factoring">
+                    <Field label="Factoring" span={2}>
                       <Combobox
                         options={[
                           { value: "faro_usmca", label: "Faro USMCA" },
@@ -1881,7 +1890,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         />
                       </div>
                     </Field>
-                    <Field label="Vendor">
+                    <Field label="Vendor" span={2}>
                       <EntityPicker
                         kind="vendor"
                         operatingCompanyId={companyId}
@@ -1902,7 +1911,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         placeholder="Search vendor (LOVES)…"
                       />
                     </Field>
-                    <Field label="Location">
+                    <Field label="Location" span={3}>
                       <FuelStopLocationPicker
                         operatingCompanyId={companyId}
                         value={fuel.location_id ?? null}
@@ -1935,7 +1944,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       />
                     </Field>
                     {/* U25 — reefer diesel is its own fuel (out of IFTA, counted for the federal reefer-fuel credit). */}
-                    <Field label="Fuel">
+                    <Field label="Fuel" span={2}>
                       <Combobox
                         options={[
                           { value: "diesel", label: "Truck diesel" },
