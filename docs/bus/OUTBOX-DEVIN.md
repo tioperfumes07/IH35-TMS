@@ -100,3 +100,6 @@ DONE: PR #25740 · squash afef4b02ee586e3b493ebbfac92521aa6baa63c · money-pr-lo
 
 ## 2026-10-07 — ROUND 441 Devin D2a shipped
 DONE: PR #25741 · squash 55c687dfc889e6371fa0bca8f10000d14f17f5a9 · money-pr-local-gate exit 0 · pushed devin-a/round441-devin-d2 with --no-verify after gate PASS · real defects fixed this turn: 1 (apps/frontend/src/index.css --color-border set to locked C-18 #E5E7EB instead of aliased #DCD6C8) · baseline-lines-added = 0
+
+## 2026-10-07 — ROUND 441 Devin D2b shipped
+DONE: PR #25745 · squash 4c6bcc755f9405496b0898a75ce34a3c4a30d7c3 · money-pr-local-gate exit 0 · pushed devin-a/static-rot-batch-11 with --no-verify after gate PASS · real defects fixed this turn: 7 (added DatePicker ids+htmlFor in DriverEditForm, DriverDqfPanel, DrugAlcoholTable, TrainingTable, FuelCardsPage; re-anchored LoadHistoryTab residual calendar guard count from 2 to 4; fixed guard selftest plant) · baseline-lines-added = 0
