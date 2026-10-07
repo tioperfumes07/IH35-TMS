@@ -49,7 +49,7 @@ function MiniSparkline({ points, testId }: { points: MaintKpiSparkPoint[]; testI
     })
     .join(" ");
   return (
-    <svg width={width} height={height} className="text-slate-600" data-testid={testId} aria-hidden>
+    <svg width={width} height={height} className="text-[#4B5563]" data-testid={testId} aria-hidden>
       <polyline fill="none" stroke="currentColor" strokeWidth="2" points={coords} />
     </svg>
   );
@@ -77,13 +77,13 @@ function KpiTile({
       type="button"
       onClick={onSelect}
       className={`rounded border px-3 py-2 text-left transition ${
-        active ? "border-slate-500 bg-slate-50 ring-1 ring-slate-300" : "border-gray-200 bg-[var(--surface-unselected)] hover:border-slate-300"
+        active ? "border-[#6B7280] bg-[#F7F8FA] ring-1 ring-[#E5E7EB]" : "border-gray-200 bg-[var(--surface-unselected)] hover:border-[#E5E7EB]"
       }`}
       data-testid={testId}
     >
-      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="text-page-title font-semibold text-slate-900">{value}</div>
-      <div className="text-xs text-slate-500">{hint}</div>
+      <div className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">{label}</div>
+      <div className="text-page-title font-semibold text-[#0F1219]">{value}</div>
+      <div className="text-xs text-[#6B7280]">{hint}</div>
       <div className="mt-1">
         <MiniSparkline points={sparkline} testId={`${testId}-sparkline`} />
       </div>
@@ -220,13 +220,13 @@ export function MaintKpiDashboardPage() {
       />
       <p className="-mt-2 text-xs text-gray-500">
         Cross-link:{" "}
-        <Link to="/reports/maintenance-cost-per-unit" className="font-semibold text-slate-700 underline">
+        <Link to="/reports/maintenance-cost-per-unit" className="font-semibold text-[#1F2A44] underline">
           maintenance cost per unit report
         </Link>
       </p>
 
       {/* ROUND 285.4.9 / #33 — idle events with no idle_source need human review. */}
-      <section className="rounded-sm border border-slate-200 bg-slate-100 p-3" data-testid="idle-events-needs-review">
+      <section className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3" data-testid="idle-events-needs-review">
         <div className="mb-2 flex items-baseline justify-between gap-2">
           <h2 className="text-section-header font-bold uppercase tracking-wide text-gray-600">
             Idle events needing review
@@ -286,7 +286,7 @@ export function MaintKpiDashboardPage() {
                   render: (r) => (
                     <button
                       type="button"
-                      className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs"
+                      className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-xs"
                       style={{ height: 28 }}
                       data-testid={`idle-confirm-manual-${r.event_id}`}
                       disabled={confirmIdle.isPending}
@@ -313,7 +313,7 @@ export function MaintKpiDashboardPage() {
           >
             <div className="flex flex-wrap items-end gap-2 text-xs">
               <label className="flex flex-col gap-0.5">
-                <span className="text-xs uppercase text-slate-500">From</span>
+                <span className="text-xs uppercase text-[#6B7280]">From</span>
                 <DatePicker
                   className=""
                   value={staged.draft.periodStart}
@@ -322,7 +322,7 @@ export function MaintKpiDashboardPage() {
                 />
               </label>
               <label className="flex flex-col gap-0.5">
-                <span className="text-xs uppercase text-slate-500">To</span>
+                <span className="text-xs uppercase text-[#6B7280]">To</span>
                 <DatePicker
                   className=""
                   value={staged.draft.periodEnd}
@@ -331,7 +331,7 @@ export function MaintKpiDashboardPage() {
                 />
               </label>
               <div className="flex min-w-48 flex-col gap-0.5">
-                <span className="text-xs uppercase text-slate-500">Unit</span>
+                <span className="text-xs uppercase text-[#6B7280]">Unit</span>
                 <EntityPicker
                   kind="unit"
                   operatingCompanyId={companyId}
@@ -378,22 +378,22 @@ export function MaintKpiDashboardPage() {
       </div>
       )}
 
-      <section className="rounded-sm border border-slate-200 bg-slate-50 p-3" data-testid="maint-kpi-pm-hub">
-        <div className="text-xs font-semibold uppercase text-slate-900">PM compliance hub</div>
-        <p className="mt-1 text-xs text-slate-800">
+      <section className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3" data-testid="maint-kpi-pm-hub">
+        <div className="text-xs font-semibold uppercase text-[#0F1219]">PM compliance hub</div>
+        <p className="mt-1 text-xs text-[#0F1219]">
           Manage schedules and the auto-WO engine from linked maintenance surfaces.
         </p>
         <div className="mt-2 flex flex-wrap gap-2">
           <Link
             to="/maintenance/pm-auto-engine"
-            className="rounded-sm bg-slate-900 px-3 py-1 text-xs font-semibold text-white"
+            className="rounded-sm bg-[#0F1219] px-3 py-1 text-xs font-semibold text-white"
             data-testid="maint-kpi-link-pm-engine"
           >
             PM auto engine
           </Link>
           <Link
             to="/maintenance/pm-schedule"
-            className="rounded-sm border border-slate-400 bg-white px-3 py-1 text-xs font-semibold text-slate-900"
+            className="rounded-sm border border-[#9CA3AF] bg-white px-3 py-1 text-xs font-semibold text-[#0F1219]"
             data-testid="maint-kpi-link-pm-schedule"
           >
             PM schedule
@@ -402,7 +402,7 @@ export function MaintKpiDashboardPage() {
       </section>
 
       <section className="overflow-x-auto rounded-sm border border-gray-200 bg-white" data-testid="maint-kpi-drilldown">
-        <div className="border-b border-gray-100 px-3 py-2 text-xs font-semibold text-slate-800">
+        <div className="border-b border-gray-100 px-3 py-2 text-xs font-semibold text-[#0F1219]">
           Drill-down — {activeKpi.replace(/_/g, " ")}
         </div>
         {drilldownQ.isError ? (

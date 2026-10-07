@@ -93,7 +93,7 @@ function WoKanbanColumnSortControls({
       <button
         type="button"
         className={`inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-xs font-semibold normal-case tracking-normal ${
-          active ? "bg-slate-200 text-slate-900" : "text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+          active ? "bg-[#E5E7EB] text-[#0F1219]" : "text-gray-500 hover:bg-gray-100 hover:text-gray-800"
         }`}
         onClick={() => onToggleSort(columnKey, sortKey)}
       >
@@ -235,7 +235,7 @@ export function WorkOrdersConsoleListPage() {
         sortable: true,
         sortValue: (row) => consoleSortValue(row, "unit_number"),
         render: (row) => (
-          <span className="font-mono text-xs text-slate-800">{String(row.unit_number ?? "—")}</span>
+          <span className="font-mono text-xs text-[#0F1219]">{String(row.unit_number ?? "—")}</span>
         ),
       },
       {
@@ -279,7 +279,7 @@ export function WorkOrdersConsoleListPage() {
         sortable: true,
         sortValue: (row) => consoleSortValue(row, "total_estimated_cost"),
         className: "text-right",
-        cellClass: "text-right font-mono text-xs text-slate-700",
+        cellClass: "text-right font-mono text-xs text-[#1F2A44]",
         render: (row) => String(row.total_estimated_cost ?? "—"),
       },
       {
@@ -288,7 +288,7 @@ export function WorkOrdersConsoleListPage() {
         sortable: true,
         sortValue: (row) => consoleSortValue(row, "total_actual_cost"),
         className: "text-right",
-        cellClass: "text-right font-mono text-xs text-slate-700",
+        cellClass: "text-right font-mono text-xs text-[#1F2A44]",
         render: (row) => String(row.total_actual_cost ?? "—"),
       },
       {
@@ -297,7 +297,7 @@ export function WorkOrdersConsoleListPage() {
         sortable: true,
         sortValue: (row) => consoleSortValue(row, "labor_cost_cents"),
         className: "text-right",
-        cellClass: "text-right font-mono text-xs text-slate-700",
+        cellClass: "text-right font-mono text-xs text-[#1F2A44]",
         render: (row) => (row.labor_cost_cents != null ? String(row.labor_cost_cents) : "0"),
       },
       {
@@ -306,7 +306,7 @@ export function WorkOrdersConsoleListPage() {
         sortable: true,
         sortValue: (row) => consoleSortValue(row, "opened_at"),
         render: (row) => (
-          <span className="text-xs text-slate-600">
+          <span className="text-xs text-[#4B5563]">
             {String(row.opened_at ?? row.created_at ?? "").slice(0, 10)}
           </span>
         ),
@@ -447,7 +447,7 @@ export function WorkOrdersConsoleListPage() {
         <button
           type="button"
           className={`rounded-sm border px-2 py-1 text-xs font-semibold ${
-            view === "list" ? "border-slate-500 bg-slate-50 text-slate-800" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-600"
+            view === "list" ? "border-[#6B7280] bg-[#F7F8FA] text-[#0F1219]" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-600"
           }`}
           aria-pressed={view === "list"}
           onClick={() => setView("list")}
@@ -457,7 +457,7 @@ export function WorkOrdersConsoleListPage() {
         <button
           type="button"
           className={`rounded-sm border px-2 py-1 text-xs font-semibold ${
-            view === "kanban" ? "border-slate-500 bg-slate-50 text-slate-800" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-600"
+            view === "kanban" ? "border-[#6B7280] bg-[#F7F8FA] text-[#0F1219]" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-600"
           }`}
           aria-pressed={view === "kanban"}
           onClick={() => setView("kanban")}
@@ -477,7 +477,7 @@ export function WorkOrdersConsoleListPage() {
         <div className="space-y-2" data-testid="work-orders-console-kanban">
           {filterBar}
           {listQuery.isLoading ? (
-            <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-600">Loading work orders…</div>
+            <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-[#4B5563]">Loading work orders…</div>
           ) : sortedRows.length === 0 ? (
             <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
               No work orders match the current filters.
@@ -492,7 +492,7 @@ export function WorkOrdersConsoleListPage() {
                     className="rounded-sm border border-gray-200 bg-white"
                     data-testid={`work-orders-console-kanban-col-${col.id}`}
                   >
-                    <header className="border-b border-gray-100 px-2 py-1.5 text-xs font-semibold text-slate-700">
+                    <header className="border-b border-gray-100 px-2 py-1.5 text-xs font-semibold text-[#1F2A44]">
                       <div>
                         {col.text} ({columnRows.length})
                       </div>
@@ -504,15 +504,15 @@ export function WorkOrdersConsoleListPage() {
                     </header>
                     <ul className="max-h-[28rem] space-y-1 overflow-y-auto p-2">
                       {columnRows.map((row) => (
-                        <li key={String(row.id)} className="rounded-sm border border-gray-100 bg-slate-50 px-2 py-1.5 text-xs">
+                        <li key={String(row.id)} className="rounded-sm border border-gray-100 bg-[#F7F8FA] px-2 py-1.5 text-xs">
                           <EntityLink
                             kind="work_order"
                             id={String(row.id)}
                             label={entityLabel(row.display_id, row.id, "Work order")}
-                            className="font-mono font-semibold text-slate-800"
+                            className="font-mono font-semibold text-[#0F1219]"
                           />
-                          <div className="mt-0.5 font-mono text-xs text-slate-500">{String(row.unit_number ?? "—")}</div>
-                          <div className="mt-0.5 text-xs capitalize text-slate-600">{String(row.status ?? "")}</div>
+                          <div className="mt-0.5 font-mono text-xs text-[#6B7280]">{String(row.unit_number ?? "—")}</div>
+                          <div className="mt-0.5 text-xs capitalize text-[#4B5563]">{String(row.status ?? "")}</div>
                         </li>
                       ))}
                     </ul>
@@ -526,7 +526,7 @@ export function WorkOrdersConsoleListPage() {
         renderListTable()
       )}
 
-      <div className="flex items-center justify-between gap-2 text-xs text-slate-600">
+      <div className="flex items-center justify-between gap-2 text-xs text-[#4B5563]">
         <span>{total === 0 ? "No work orders" : `Showing ${pageStart}–${pageEnd} of ${total}`}</span>
         <div className="flex items-center gap-2">
           <button
