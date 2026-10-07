@@ -1,3 +1,26 @@
+## 2026-10-07T22:08Z · R441 C1–C4 MERGED
+
+FINDING: BANK-F91151 / R441-C1–C4 — banking drawers stay open after success; edit expand blank; CC liability = all Liability; vendor column "Vendor — not visible".
+
+MERGED:
+- BANK-R441-C1-C4 #25742 squash `b1057bec43` — MatchDrawer onClose on match success; DesignView Post collapses+clears draft; edit hydrate empty sticky draft strings; RecordCCPaymentModal Credit Cards children only; payee column "—" never "Vendor — not visible"; guard verify-r441 on EVEN 12342
+
+ALREADY ON TIP (same wave):
+- CC-1 A1–A4 #25737 — Credit Cards parent + Amex reparent + Citi 1345 + 2410 related-party subs (C3 filter target live)
+- Devin D1 #25740 · D2a #25741
+
+DEPLOY (owner-ordered both ids):
+- FE `ih35-tms-web` `srv-d7s46dbrjlhs7383i150` → **dep-db3c5i0br16s73e1abf0** (api trigger, queued; tip includes #25742) · also commit build **dep-db3c4jd040hc739tsrng** build_in_progress
+- BE `IH35-TMS` `srv-d7rpem7avr4c73fhp4n0` → **dep-db3c16v9e2qs7384sif0** (queued on tip; no BE code in #25742)
+
+LIVE PROOF: money-pr-local-gate exit 0 · verify-r441 6/6 PASS · FE tsc exit 0 · vitest 13/13 PASS · claim no CI
+
+REMAINING: Live=UNVERIFIED until FE dep live; owner Chrome — Post/Match/Pay CC close on success; Pay CC offers Citi 1345; 09/21 $600 Citi payment; slate drain resumes (parked behind C1–C4)
+
+NEXT: owner records Citi payment once FE dep live · slate leftover drain resume
+
+Files Modified: MatchDrawer · BankingTransactionsDesignView · RecordCCPaymentModal(+test) · verify-r441-banking-modal-close-cc-vendor.mjs · verify-steps/12342
+
 ## 2026-10-07T21:55Z · BANK-SLATE-PORTAL-PAGES MERGED
 
 FINDING: Leftover Tailwind slate-* on PortalLayout / PortalProfile / PortalLoadDetail → house tokens (+ OUTBOX #25731).
