@@ -75,6 +75,7 @@ export async function resolvePrintOperatingCompanyId(
     for (const row of companies.rows) {
       const cid = row.cid;
       if (!cid) continue;
+      // membership-scope-exempt: cid comes from org.user_accessible_company_ids() membership list.
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [cid]);
       const found = await client.query(lookupSql, [rowId]);
       const op = found.rows[0]?.operating_company_id as string | undefined;

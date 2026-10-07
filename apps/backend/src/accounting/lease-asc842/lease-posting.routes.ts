@@ -245,7 +245,7 @@ export async function registerLeasePostingRoutes(app: FastifyInstance) {
                 lc.total_lease_payments_cents::text, lc.commencement_je_id::text,
                 -- LST-F422: who pays the lessee's rent bills, so the contract drills to the lessee's vendor and bills.
                 lc.lessee_operating_company_id::text, lc.lessee_vendor_id::text,
-                (SELECT v.vendor_name FROM mdata.vendors v WHERE v.id = lc.lessee_vendor_id) AS lessee_vendor_name
+                (SELECT v.vendor_name FROM mdata.vendors v WHERE v.id = lc.lessee_vendor_id AND v.operating_company_id = lc.operating_company_id) AS lessee_vendor_name
            FROM accounting.lease_contract lc
           WHERE lc.operating_company_id = $1::uuid AND lc.id = $2::uuid LIMIT 1`,
         [opco, params.data.lease_id]

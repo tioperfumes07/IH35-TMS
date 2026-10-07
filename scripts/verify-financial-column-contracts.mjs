@@ -48,6 +48,10 @@ const KNOWN_COLUMNS = {
     // customer|vendor|driver|unit and to (entity_uuid IS NULL) = (entity_type IS NULL). Live-
     // verified present on prod 2026-08-19 (information_schema.columns, tiny-field-89581227).
     "entity_type",
+    // ROUND 363-CC1-A (202615350500_journal_entry_postings_load_id_stamp.sql): load lineage on
+    // the posting itself; location_id added alongside it for cost-center/geo attribution.
+    "load_id",
+    "location_id",
   ]),
   "accounting.posting_batches": new Set([
     "id", "operating_company_id", "batch_status", "source_transaction_type",

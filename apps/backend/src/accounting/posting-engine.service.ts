@@ -12,6 +12,7 @@ import {
   InvoiceLoadSourceRequiredError as SharedInvoiceLoadSourceError,
 } from "./invoice-linkage-guards.js";
 import { releaseBankLinesNamingDocument, resolveReversalDate, todayIso } from "./void.service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 // ACCT-LINK-01 regression fix (GO-1405 Recipe B, 2026-08-29): this canonical poster's own
 // createJournalEntryHeader() never populated journal_entry_type_id -- confirmed the dominant
 // contributor to live density staying at 46/2214 (2%) despite journal-entries.service.ts's
@@ -1794,7 +1795,7 @@ async function buildFactoringAdvanceDepositSweepLines(client: DbClient, operatin
       Number(advance.cash_rsv_cents ?? 0)
   );
   return {
-    postingDate: advance.advanced_at ?? new Date().toISOString().slice(0, 10),
+    postingDate: advance.advanced_at ?? companyBusinessDate(),
     memo: `${label} deposit`,
     lines: [
       {

@@ -21,6 +21,7 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 const isOffice = (role: string) => ["Owner", "Administrator", "Manager"].includes(role);
 
 async function scoped<T>(userId: string, companyId: string, fn: (c: never) => Promise<T>) {
+  await assertCompanyMembership(userId, companyId);
   return withLuciaBypass(
     async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1::uuid, true)", [companyId]);

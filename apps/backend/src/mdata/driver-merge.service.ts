@@ -404,7 +404,7 @@ export async function listDuplicateDriverCandidates(client: Db, companyId: strin
   const rows = (
     await client.query(
       `SELECT d.id::text, d.first_name, d.last_name, d.status::text AS status, d.cdl_number,
-              (SELECT count(*)::int FROM mdata.loads l WHERE (l.assigned_primary_driver_id = d.id OR l.assigned_secondary_driver_id = d.id) AND l.soft_deleted_at IS NULL) AS loads
+              (SELECT count(*)::int FROM mdata.loads l WHERE (l.assigned_primary_driver_id = d.id OR l.assigned_secondary_driver_id = d.id) AND l.operating_company_id = d.operating_company_id AND l.soft_deleted_at IS NULL) AS loads
          FROM mdata.drivers d WHERE d.operating_company_id = $1::uuid AND d.merged_into_driver_id IS NULL`,
       [companyId]
     )

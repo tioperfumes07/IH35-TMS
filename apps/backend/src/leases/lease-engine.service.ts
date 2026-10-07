@@ -278,7 +278,7 @@ export async function listLeases(client: DbClient, opco: string) {
             c.payment_amount_cents, c.deposit_cents, c.election, c.signed_at, c.closed_at::text,
             c.lessor_operating_company_id::text, lc.short_name AS lessor_company, c.lessor_vendor_id::text, v.vendor_name AS lessor_vendor,
             (SELECT count(*)::int FROM accounting.lease_asset_line a WHERE a.lease_contract_id = c.id AND a.deleted_at IS NULL) AS asset_count,
-            (SELECT count(*)::int FROM accounting.bills b WHERE b.lease_contract_id = c.id AND b.voided_at IS NULL) AS bill_count
+            (SELECT count(*)::int FROM accounting.bills b WHERE b.lease_contract_id = c.id AND b.revoked_at IS NULL AND b.voided_at IS NULL) AS bill_count
        FROM accounting.lease_contract c
        LEFT JOIN org.companies lc ON lc.id = c.lessor_operating_company_id
        LEFT JOIN mdata.vendors v ON v.id = c.lessor_vendor_id
@@ -312,7 +312,7 @@ export async function getLease(client: DbClient, opco: string, leaseId: string) 
     `SELECT b.id::text, b.display_id, b.bill_number, b.bill_date::text, b.lease_period_start::text, b.amount_cents, b.paid_cents, b.status,
             (SELECT bp.id::text FROM accounting.bill_payments bp WHERE bp.bill_id = b.id AND bp.voided_at IS NULL ORDER BY bp.payment_date DESC LIMIT 1) AS last_payment_id
        FROM accounting.bills b
-      WHERE b.lease_contract_id = $1::uuid AND b.operating_company_id = $2::uuid AND b.voided_at IS NULL
+      WHERE b.lease_contract_id = $1::uuid AND b.operating_company_id = $2::uuid AND b.revoked_at IS NULL AND b.voided_at IS NULL
       ORDER BY b.lease_period_start DESC NULLS LAST, b.bill_date DESC`,
     [leaseId, opco]
   )).rows;
@@ -356,7 +356,7 @@ export async function leasesForAsset(client: DbClient, opco: string, asset: { un
             (SELECT bp.id::text FROM accounting.bill_payments bp WHERE bp.bill_id = b.id AND bp.voided_at IS NULL ORDER BY bp.payment_date DESC LIMIT 1) AS last_payment_id
        FROM accounting.bill_lines bl JOIN accounting.bills b ON b.id = bl.bill_id
       WHERE bl.${asset.unitId ? "unit_id" : "equipment_id"} = $1::uuid AND bl.lease_asset_line_id IS NOT NULL AND bl.voided_at IS NULL
-        AND b.operating_company_id = $2::uuid AND b.voided_at IS NULL
+        AND b.operating_company_id = $2::uuid AND b.revoked_at IS NULL AND b.voided_at IS NULL
       ORDER BY b.lease_period_start DESC NULLS LAST`,
     [id, opco]
   )).rows;

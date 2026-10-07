@@ -7,6 +7,7 @@
 // check via check-create.service.ts's createCheck() -- a genuinely new document, new number, not a
 // mutation of the voided one).
 import { withLuciaBypass } from "../../auth/db.js";
+import { companyBusinessDate } from "../../lib/company-business-date.js";
 import { voidDocument } from "../void-document.service.js";
 import { stampDocumentVoided, stampDocumentReinstated } from "../void-document-stamp.service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
@@ -45,7 +46,7 @@ export async function voidCheck(
     if (!check) throw new CheckVoidError("CHECK_NOT_FOUND", "Check not found in this company.");
     if (check.status === "void" || check.voided_at) throw new CheckVoidError("CHECK_ALREADY_VOID", "This check is already void.");
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = companyBusinessDate();
     const result = await voidDocument(client, {
       operatingCompanyId: operating_company_id,
       type: "expense",

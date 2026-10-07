@@ -185,6 +185,7 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
       }
       await assertCompanyMembership(user.uuid, query.data.operating_company_id);
       const next = await withCurrentUser(user.uuid, async (client) => {
+        // membership-scope-exempt: caller operating_company_id validated by assertCompanyMembership above.
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
           query.data.operating_company_id,
         ]);
@@ -211,6 +212,7 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
     await assertCompanyMembership(user.uuid, draft.operating_company_id);
 
     const preview = await withCurrentUser(user.uuid, async (client) => {
+        // membership-scope-exempt: caller operating_company_id validated by assertCompanyMembership above.
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
         draft.operating_company_id,
       ]);
@@ -238,6 +240,7 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
     try {
       // R-186.1 — book missing dispatched loads via bookLoad (own tx) BEFORE settlement post.
       await withCurrentUser(user.uuid, async (client) => {
+        // membership-scope-exempt: caller operating_company_id validated by assertCompanyMembership above.
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
           draft.operating_company_id,
         ]);
@@ -245,6 +248,7 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
       });
 
       const result = await withCurrentUser(user.uuid, async (client) => {
+        // membership-scope-exempt: caller operating_company_id validated by assertCompanyMembership above.
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
           draft.operating_company_id,
         ]);
@@ -274,6 +278,7 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
             if (load.date_sent_to_factoring) {
               try {
                 await withCurrentUser(user.uuid, async (client) => {
+        // membership-scope-exempt: caller operating_company_id validated by assertCompanyMembership above.
                   await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
                     draft.operating_company_id,
                   ]);

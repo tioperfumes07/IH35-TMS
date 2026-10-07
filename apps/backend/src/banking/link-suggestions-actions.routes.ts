@@ -102,6 +102,7 @@ async function acceptLinkSuggestionForUser(
   auditSourceTag: string,
   auditExtra: Record<string, unknown> = {}
 ): Promise<AcceptLinkSuggestionOutcome> {
+  await assertCompanyMembership(userUuid, companyId);
   const ledgerKind = CANONICAL_LEDGER_KIND[kind];
   if (!ledgerKind) {
     return { ok: false, reason: "use_match_drawer_for_kind" };
@@ -142,6 +143,7 @@ async function acceptLinkSuggestionForUser(
   }
 
   await withCurrentUser(userUuid, async (client) => {
+    // membership-scope-exempt: caller company validated at acceptLinkSuggestionForUser entry.
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
     await appendCrudAudit(
       client,

@@ -732,7 +732,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
                FROM accounting.bills b
               WHERE b.operating_company_id = w.operating_company_id
                 AND b.linked_work_order_uuid = w.id
-                AND b.voided_at IS NULL
+                AND b.revoked_at IS NULL AND b.voided_at IS NULL
               ORDER BY b.bill_date NULLS LAST, b.id
               LIMIT 1
            ) lb ON TRUE

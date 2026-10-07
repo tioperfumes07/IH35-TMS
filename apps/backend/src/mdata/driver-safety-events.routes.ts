@@ -17,6 +17,7 @@ type ScopeClient = { query: <T = Record<string, unknown>>(sql: string, values?: 
 async function scopeToCallerCompany(client: ScopeClient, userId: string, requested?: string | null): Promise<string | null> {
   const operatingCompanyId = await resolveOperatingCompanyId(client, userId, requested ?? null);
   if (!operatingCompanyId) return null;
+  // membership-scope-exempt: resolveOperatingCompanyId validated the company against accessible companies.
   await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [operatingCompanyId]);
   return operatingCompanyId;
 }

@@ -140,7 +140,7 @@ export async function postHeldDocumentsForClosedTour(
         JOIN accounting.bill_lines bl ON bl.bill_id = b.id AND bl.voided_at IS NULL
         WHERE b.operating_company_id = $1::uuid
           AND b.posting_hold_reason = 'tour_open'
-          AND b.voided_at IS NULL
+          AND b.revoked_at IS NULL AND b.voided_at IS NULL
           AND bl.load_id = ANY($2::uuid[])
       `,
       [operatingCompanyId, closedLoadIds]

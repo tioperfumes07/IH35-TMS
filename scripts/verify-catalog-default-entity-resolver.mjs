@@ -89,7 +89,7 @@ export function assertCanonicalResolver(sources) {
       !/linkFmcsaLookupToCustomer\(customerId, lookupId, operatingCompanyId\)/.test(fmcsaModal)) {
     problems.push(`${FMCSA_MODAL}: lookup and link writes must forward selected operating company.`);
   }
-  if (!/listFmcsaLookups\(operatingCompanyId!, \{ limit: 25 \}\)/.test(customerDetail) ||
+  if (!/listAllFmcsaLookups\(operatingCompanyId!\)/.test(customerDetail) ||
       !/operatingCompanyId=\{operatingCompanyId!\}/.test(customerDetail) ||
       !/verifyCustomerFmcsa\(id, operatingCompanyId!\)/.test(customerDetail) ||
       !/verifyCustomerFmcsa\(id: string, operatingCompanyId: string\)/.test(mdataApi)) {
@@ -159,7 +159,7 @@ if (SELFTEST) {
     { ...live, [SHADOW_FILE]: live[SHADOW_FILE].replace("AND operating_company_id = $2::uuid", "AND TRUE") },
     "scope both lookup and customer");
   expectCaught("fmcsa-history-company-removed",
-    { ...live, [CUSTOMER_DETAIL]: live[CUSTOMER_DETAIL].replace("listFmcsaLookups(operatingCompanyId!, { limit: 25 })", "listFmcsaLookups({ limit: 25 })") },
+    { ...live, [CUSTOMER_DETAIL]: live[CUSTOMER_DETAIL].replace("listAllFmcsaLookups(operatingCompanyId!)", "listAllFmcsaLookups()") },
     "history, modal, and forced verify");
   expectCaught("fmcsa-modal-link-company-removed",
     { ...live, [FMCSA_MODAL]: live[FMCSA_MODAL].replace("linkFmcsaLookupToCustomer(customerId, lookupId, operatingCompanyId)", "linkFmcsaLookupToCustomer(customerId, lookupId)") },
