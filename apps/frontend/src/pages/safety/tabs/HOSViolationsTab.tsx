@@ -254,7 +254,7 @@ export function HOSViolationsTab() {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3" data-testid="hos-violations-filters">
-        <label className="block min-w-[200px] text-xs text-slate-600">
+        <label className="block min-w-[200px] text-xs text-[#4B5563]">
           Driver
           <div className="mt-1">
             <EntityPicker
@@ -269,7 +269,7 @@ export function HOSViolationsTab() {
             />
           </div>
         </label>
-        <label className="block min-w-[200px] text-xs text-slate-600">
+        <label className="block min-w-[200px] text-xs text-[#4B5563]">
           Load
           <div className="mt-1">
             <EntityPicker
@@ -442,14 +442,14 @@ export function HOSViolationsTab() {
         hidePager
         rowClassName={(row) =>
           highlightedViolationId && String(row.id) === highlightedViolationId
-            ? "bg-slate-100 ring-1 ring-inset ring-slate-300"
+            ? "bg-[#F7F8FA] ring-1 ring-inset ring-[#E5E7EB]"
             : ""
         }
       />
       {!query.isError && violationTotal > pageSize ? (
         <div className="flex items-center justify-end gap-2 text-xs" data-testid="hos-violations-server-pager">
           <Button size="sm" variant="secondary" disabled={page <= 1 || query.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous violations</Button>
-          <span className="text-slate-600">Page {page} of {violationPageCount} · {violationTotal} violations</span>
+          <span className="text-[#4B5563]">Page {page} of {violationPageCount} · {violationTotal} violations</span>
           <Button size="sm" variant="secondary" disabled={page >= violationPageCount || query.isFetching} onClick={() => setPage((current) => Math.min(violationPageCount, current + 1))}>Next violations</Button>
         </div>
       ) : null}

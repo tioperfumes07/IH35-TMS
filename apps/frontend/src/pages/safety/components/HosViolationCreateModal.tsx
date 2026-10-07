@@ -289,7 +289,7 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
               dataTestId="hos-vio-load-entity-picker"
             />
             {suggestionPinned && form.related_load_id && suggestionQuery.data?.data?.load_id === form.related_load_id ? (
-              <p className="text-xs text-slate-600" data-testid="hos-vio-load-suggested">
+              <p className="text-xs text-[#4B5563]" data-testid="hos-vio-load-suggested">
                 Auto-filled from the active trip for this driver on the occurrence date.
               </p>
             ) : null}

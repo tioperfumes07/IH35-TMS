@@ -364,7 +364,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
                 limit={200}
                 total={civilFineTypesQuery.data?.total}
                 hint="Type to search the full civil-fine-type catalog."
-                className="text-xs text-slate-600"
+                className="text-xs text-[#4B5563]"
               />
             </div>
             <div className="flex flex-col gap-1 md:col-span-2">
@@ -403,7 +403,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
                 dataTestId="fine-create-load-entity-picker"
               />
               {suggestionPinned && relatedLoadId && suggestionQuery.data?.data?.load_id === relatedLoadId ? (
-                <p className="text-xs text-slate-600" data-testid="fine-create-load-suggested">
+                <p className="text-xs text-[#4B5563]" data-testid="fine-create-load-suggested">
                   Auto-filled from the active trip for this driver/unit on the issued date.
                 </p>
               ) : null}
@@ -449,7 +449,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
                 onChange={(event) => setSourceDocFile(event.target.files?.[0] ?? null)}
               />
               {sourceDocFile ? (
-                <span className="text-xs text-slate-500" data-testid="fine-source-doc-name">
+                <span className="text-xs text-[#6B7280]" data-testid="fine-source-doc-name">
                   {sourceDocFile.name} — filed under the driver, unit and load selected above.
                 </span>
               ) : null}
