@@ -82,3 +82,6 @@ DONE: PR #25701 · squash 3d2abcd389aba246f663ebfef67e4f0bccbef344 · money-pr-l
 
 ## 2026-10-07 — static-rot-batch-9 shipped
 DONE: PR #25702 · squash 74375ea356871e4e1213a8cf5742c8c093c1a3be · money-pr-local-gate exit 0 · pushed devin-a/static-rot-batch-9 with --no-verify after gate PASS · real defects fixed this turn: 7 (native dialogs replaced with modal components across LoadDetailDrawer, AccidentReportDrawer, DriverBillRemintScreen, SettlementDetailPage, LiabilityDetailDrawer, PredictiveAlertsPage, SettlementCreatorDrawer) · baseline-lines-added = 0
+
+## 2026-10-07 — static-rot-batch-10 shipped
+DONE: PR #25703 · squash 17282c0a774b019319a9347b71750cd0928cfda3 · money-pr-local-gate exit 0 · pushed devin-a/static-rot-batch-10 with --no-verify after gate PASS · real defects fixed this turn: 1 (verify-print-opens-canonical-document selftest now isolates mutations in a temp sandbox, preventing tracked-source corruption like org.companies_that_do_not_exist()) · baseline-lines-added = 0

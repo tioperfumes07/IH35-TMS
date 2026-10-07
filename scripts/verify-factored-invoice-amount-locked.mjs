@@ -8,6 +8,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+
+export const REQUIRES_LIVE_DB = "Neon live verification required";
 const LABEL = "verify-factored-invoice-amount-locked";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const MIG = "db/migrations/202615300600_factored_invoice_amount_lock.sql";

@@ -22,6 +22,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+
+export const REQUIRES_LIVE_DB = "Neon live verification required";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-samsara-one-canonical-map";
 const ROUTES = "apps/backend/src/integrations/samsara/driver-mapping/driver-mapping.routes.ts";

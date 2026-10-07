@@ -21,6 +21,8 @@ import pg from "pg";
 // EVERY invocation and are what stop the defect being introduced. Only the live cross-check of
 // existing rows needs a database. Without DATABASE_URL the static half still enforces, so the run
 // is a partial pass, not a silent one — and it says so on stdout.
+
+export const REQUIRES_LIVE_DB = "Neon live verification required";
 export const ALLOW_OFFLINE_SKIP = "Static source checks always run and enforce the rule; only the live row cross-check needs DATABASE_URL.";
 
 

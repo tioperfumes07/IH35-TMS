@@ -21,6 +21,8 @@
 // See ifta-excludes-non-highway-fuel-types.mjs's identical declaration for why this is correct:
 // this file is PURELY STATIC (reads two source files off disk, pattern-matches). It opens no DB
 // connection on its own account, so there is no live result to fake-green.
+
+export const REQUIRES_LIVE_DB = "Neon live verification required";
 export const ALLOW_OFFLINE_SKIP =
   "Static source-shape guard: reads fuel-expense-document.service.ts and poster.service.ts off disk, asserts the card-rail resolution shape. No DB connection on the static path.";
 

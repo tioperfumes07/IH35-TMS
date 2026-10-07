@@ -16,6 +16,8 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // The static half (code shape) is authoritative offline; the live half needs the database and runs in CI/live gate.
+
+export const REQUIRES_LIVE_DB = "Neon live verification required";
 export const ALLOW_OFFLINE_SKIP = "static half authoritative offline; live tie-out half runs only with DATABASE_URL (CI + live gate)";
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "..", "..");

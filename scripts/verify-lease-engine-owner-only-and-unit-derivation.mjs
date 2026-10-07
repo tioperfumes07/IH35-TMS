@@ -19,6 +19,8 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
+
+export const REQUIRES_LIVE_DB = "Neon live verification required";
 const ROOT = resolve(fileURLToPath(import.meta.url), "..", "..");
 const LABEL = "verify-lease-engine-owner-only-and-unit-derivation";
 const read = (rel) => readFileSync(resolve(ROOT, rel), "utf8");
