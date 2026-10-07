@@ -37,7 +37,7 @@ function renderLoadLinks(settlement: SettlementListRow) {
   // E11-D4 (Lead ruling, 2026-09-23) — "never blank": a settlement ready for review/payment with
   // no load link is a real, named state (e.g. a non-load-bookended settlement model), not an
   // absence to render silently.
-  return <span className="text-xs italic text-slate-600">No load assigned</span>;
+  return <span className="text-xs italic text-[#4B5563]">No load assigned</span>;
 }
 
 function renderSettlementLinks(settlement: SettlementListRow) {

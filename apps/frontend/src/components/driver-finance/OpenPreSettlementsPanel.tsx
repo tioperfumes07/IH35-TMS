@@ -31,7 +31,7 @@ import type { OpenPreSettlement } from "../../api/driverFinance";
 function renderLoadRange(row: OpenPreSettlement) {
   if (!row.first_load_id) {
     return (
-      <span className="text-xs italic text-slate-600" data-testid="open-pre-settlement-no-load">
+      <span className="text-xs italic text-[#4B5563]" data-testid="open-pre-settlement-no-load">
         No load assigned yet
       </span>
     );

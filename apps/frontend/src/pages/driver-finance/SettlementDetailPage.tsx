@@ -702,7 +702,7 @@ export function SettlementDetailPage() {
         <TourSettlementTab settlementId={settlementId} operatingCompanyId={companyId} />
       </div>
       {hasEngineTeamSplitLines ? (
-        <div className="mb-3 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-400">
+        <div className="mb-3 inline-flex items-center rounded-full bg-[#F7F8FA] px-3 py-1 text-xs font-semibold text-[#1F2A44] ring-1 ring-[#9CA3AF]">
           Team split lines detected (primary/co-driver)
         </div>
       ) : null}
@@ -787,19 +787,19 @@ export function SettlementDetailPage() {
       {readout ? <CompanyWaterfallSection readout={readout} report={companyReport} /> : null}
       <MoneyProofTrailPanel operatingCompanyId={companyId} documentType="settlement" documentId={settlementId} />
       {showManualPaidDraftBanner ? (
-        <div className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-800">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#0F1219]">
           Payment is recorded as <span className="font-semibold">manual_paid</span> but this settlement is not
           finalized yet — finalize to lock the period before treating pay as complete on the books.
         </div>
       ) : null}
       {canOpenDispute ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-xs">
-          <p className="mb-2 font-semibold text-slate-700">Open Dispute</p>
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs">
+          <p className="mb-2 font-semibold text-[#1F2A44]">Open Dispute</p>
           <div className="grid gap-2 md:grid-cols-3">
             <SelectCombobox
               value={disputeCategory}
               onChange={(event) => setDisputeCategory(event.target.value)}
-              className="rounded-sm border border-slate-300 bg-white px-2 py-1"
+              className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1"
               data-testid="settlement-detail-dispute-category"
             >
               {/* SETL-PICK-03: same options module as SettlementDisputeModal (DB CHECK). */}
@@ -849,7 +849,7 @@ export function SettlementDetailPage() {
           <textarea
             value={disputeDescription}
             onChange={(event) => setDisputeDescription(event.target.value)}
-            className="mt-2 min-h-[80px] w-full rounded-sm border border-slate-300 bg-white px-2 py-1"
+            className="mt-2 min-h-[80px] w-full rounded-sm border border-[#E5E7EB] bg-white px-2 py-1"
             placeholder="Describe the settlement issue (minimum 20 characters)."
           />
         </div>
@@ -872,14 +872,14 @@ export function SettlementDetailPage() {
       />
       <PendingAckNotice pendingAckCount={debt.debt?.pending_ack_count ?? 0} />
       {teamSplitQuery.data && Array.isArray((teamSplitQuery.data as Record<string, unknown>).splits) ? (
-        <div className="rounded-sm border border-slate-300 bg-slate-100 p-3 text-xs">
-          <p className="mb-1 font-semibold text-slate-700">Team Split</p>
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs">
+          <p className="mb-1 font-semibold text-[#1F2A44]">Team Split</p>
           <div className="space-y-1">
             {((teamSplitQuery.data as Record<string, unknown>).splits as Array<Record<string, unknown>>).map((split, index) => {
               const driverId = typeof split.driver_id === "string" && split.driver_id ? split.driver_id : null;
               const driverName = typeof split.driver_name === "string" ? split.driver_name : null;
               return (
-                <div key={`${index}-${driverId ?? index}`} className="rounded-sm border border-slate-300 bg-white px-2 py-1">
+                <div key={`${index}-${driverId ?? index}`} className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1">
                   Driver{" "}
                   {driverId ? (
                     <EntityLink kind="driver" id={driverId} label={entityLabel(driverName, driverId, "Driver")} />
@@ -945,8 +945,8 @@ export function SettlementDetailPage() {
               load this settlement pays out — drill-through into that posting. Empty when no
               bills were posted yet (honest-empty, not fabricated). */}
           {(settlement.linked_bills as Array<Record<string, unknown>> | undefined)?.length ? (
-            <section className="rounded-sm border border-slate-200 bg-slate-50 p-2" data-testid="settlement-linked-bills">
-              <h3 className="mb-1 text-xs font-semibold uppercase text-slate-800">GL-Posted Bills</h3>
+            <section className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2" data-testid="settlement-linked-bills">
+              <h3 className="mb-1 text-xs font-semibold uppercase text-[#0F1219]">GL-Posted Bills</h3>
               <div className="space-y-1">
                 {(settlement.linked_bills as Array<Record<string, unknown>>).map((row, idx) => (
                   <div key={String(row.accounting_bill_id ?? idx)} className="flex items-center justify-between text-xs">
@@ -996,7 +996,7 @@ export function SettlementDetailPage() {
             <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
               <div className="mb-2 flex items-center justify-between">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Approval</p>
-                <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{approvalStatus}</span>
+                <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]">{approvalStatus}</span>
               </div>
               <p className="mb-2 text-xs text-gray-600">All line items must be reviewed before approving. This flips the settlement from Needs Review to Approved.</p>
               <button
@@ -1152,7 +1152,7 @@ export function SettlementDetailPage() {
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        className="rounded-sm bg-slate-600 px-2 py-1 text-xs text-white"
+                        className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs text-white"
                         onClick={() => {
                           if (!companyId) return;
                           void markSettlementCleared(settlementId, companyId)
@@ -1255,8 +1255,8 @@ export function SettlementDetailPage() {
                     PART 2 — flat inside the single "Payment Status" frame above, not a nested card
                     (QBO/NetSuite style); the top border alone separates the correction sub-section
                     without framing a second box. */}
-                <div className="space-y-1 border-t border-slate-200 pt-2" data-testid="settlement-reopen-block">
-                  <p className="text-xs text-slate-700">
+                <div className="space-y-1 border-t border-[#E5E7EB] pt-2" data-testid="settlement-reopen-block">
+                  <p className="text-xs text-[#1F2A44]">
                     Marked paid in error? Reopen requires a written reason and is itself permanently
                     audited — the original mark-paid record is never erased.
                   </p>
@@ -1269,7 +1269,7 @@ export function SettlementDetailPage() {
                   />
                   <button
                     type="button"
-                    className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700 disabled:cursor-not-allowed disabled:text-gray-400"
+                    className="rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs text-[#1F2A44] disabled:cursor-not-allowed disabled:text-gray-400"
                     disabled={!canReopen || reopenReason.trim().length < 3}
                     title={reopenBlockedReason ?? undefined}
                     data-testid="settlement-reopen-button"
@@ -1286,7 +1286,7 @@ export function SettlementDetailPage() {
                     Reopen (correction)
                   </button>
                   {reopenBlockedReason ? (
-                    <p className="text-xs text-slate-500" data-testid="settlement-reopen-blocked-reason">
+                    <p className="text-xs text-[#6B7280]" data-testid="settlement-reopen-blocked-reason">
                       {reopenBlockedReason}
                     </p>
                   ) : null}
@@ -1433,15 +1433,15 @@ function OpenDriverBillsSection({
   if (!driverId) return null;
   if (loading) {
     return (
-      <section className="rounded-sm border border-slate-200 bg-slate-50 p-2">
-        <h3 className="mb-1 text-xs font-semibold uppercase text-slate-800">Open Driver Bills</h3>
+      <section className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2">
+        <h3 className="mb-1 text-xs font-semibold uppercase text-[#0F1219]">Open Driver Bills</h3>
         <p className="text-xs text-gray-500">Loading open driver bills…</p>
       </section>
     );
   }
   return (
-    <section className="rounded-sm border border-slate-200 bg-slate-50 p-2">
-      <h3 className="mb-1 text-xs font-semibold uppercase text-slate-800">
+    <section className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2">
+      <h3 className="mb-1 text-xs font-semibold uppercase text-[#0F1219]">
         Open Driver Bills · {totalCount} · {formatUsdCents(totalGrossCents)}
       </h3>
       {items.length === 0 ? (
