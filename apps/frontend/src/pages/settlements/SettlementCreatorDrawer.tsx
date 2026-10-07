@@ -2055,10 +2055,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                             next[idx] = { ...next[idx], source_doc_id: fileId };
                             setFuels(next);
                           } catch (err) {
-                            pushToast({
-                              kind: "error",
-                              message: `Receipt upload failed — ${(err as Error).message}. The fill is unchanged; try again.`,
-                            });
+                            pushToast(`Receipt upload failed — ${(err as Error).message}. The fill is unchanged; try again.`, "error");
                             e.target.value = "";
                           }
                         }}
