@@ -14,7 +14,7 @@ const label = (value: string) => value.replaceAll("_", " ").replace(/\b\w/g, (c)
 const dataValue = (value: string | number | null | undefined) => value == null || value === "" ? <span className="font-semibold text-red-700">DATA GAP</span> : value;
 
 function policyCell(row: InsuranceFleetCoveredUnit, type: InsuranceCoverageType) {
-  if (row.vehicle_type === "trailer" && type === "auto_liability") return <span className="inline-flex rounded-sm border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs font-semibold text-slate-600">N/A</span>;
+  if (row.vehicle_type === "trailer" && type === "auto_liability") return <span className="inline-flex rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#4B5563]">N/A</span>;
   const coverage = row.coverages.find((item) => item.coverage_type === type);
   if (!coverage) return <span className="inline-flex rounded-sm border border-red-300 bg-red-50 px-1.5 py-0.5 text-xs font-semibold text-red-800">MISSING</span>;
   return <Link className="inline-flex rounded-sm border border-gray-400 bg-white px-1.5 py-0.5 text-xs font-semibold text-gray-800 underline" to={`/safety/insurance/policies/${coverage.policy_id}`}>{coverage.policy_number} · {coverage.expiry_date}</Link>;
@@ -59,7 +59,7 @@ export function FleetCoveredPage() {
     { key: "physical_damage", label: "Physical Damage", sortable: true, sortValue: (row) => row.coverages.find((c) => c.coverage_type === "physical_damage")?.policy_number ?? "", render: (row) => policyCell(row, "physical_damage") },
     { key: "cargo", label: "Cargo", sortable: true, sortValue: (row) => row.coverages.find((c) => c.coverage_type === "cargo")?.policy_number ?? "", render: (row) => policyCell(row, "cargo") },
     { key: "insured_value_cents", label: "Insured Value", sortable: true, render: (row) => row.coverages.length > 0 && row.insured_value_cents == null ? <span className="font-semibold text-red-700">DATA GAP</span> : formatMoney(row.insured_value_cents), exportValue: (row) => formatMoney(row.insured_value_cents) },
-    { key: "premium_per_month_cents", label: "Premium/mo", sortable: true, render: (row) => <>{formatMoney(row.premium_per_month_cents)}<span className="block text-xs text-slate-500">{[...new Set(row.coverages.map((c) => c.allocation_method))].map(label).join(", ") || "—"}</span></>, exportValue: (row) => formatMoney(row.premium_per_month_cents) },
+    { key: "premium_per_month_cents", label: "Premium/mo", sortable: true, render: (row) => <>{formatMoney(row.premium_per_month_cents)}<span className="block text-xs text-[#6B7280]">{[...new Set(row.coverages.map((c) => c.allocation_method))].map(label).join(", ") || "—"}</span></>, exportValue: (row) => formatMoney(row.premium_per_month_cents) },
     { key: "cost_per_thousand", label: "Cost/mo per $1,000", sortable: true, sortValue: (row) => row.insured_value_cents ? row.premium_per_month_cents / row.insured_value_cents : null, render: (row) => row.insured_value_cents ? formatMoney(Math.round(row.premium_per_month_cents * 100000 / row.insured_value_cents)) : "—" },
     { key: "deductible", label: "Deductible", render: () => "NOT STORED" },
     { key: "covered_since", label: "Covered Since", sortable: true, render: (row) => row.covered_since ?? "—" },
@@ -70,9 +70,9 @@ export function FleetCoveredPage() {
 
   return <div className="space-y-4">
     <header className="rounded-sm border border-gray-200 bg-white p-4">
-      <h2 className="text-xs font-semibold text-slate-900">Fleet Covered</h2>
-      <p className="mt-1 text-xs text-slate-600">One row per active tractor or trailer, with current policy and allocated monthly economics.</p>
-      <p className="mt-2 text-xs font-medium text-slate-700">Premium allocation: {allocationMethods.length ? allocationMethods.map(label).join(", ") : "—"}</p>
+      <h2 className="text-xs font-semibold text-[#0F1219]">Fleet Covered</h2>
+      <p className="mt-1 text-xs text-[#4B5563]">One row per active tractor or trailer, with current policy and allocated monthly economics.</p>
+      <p className="mt-2 text-xs font-medium text-[#1F2A44]">Premium allocation: {allocationMethods.length ? allocationMethods.map(label).join(", ") : "—"}</p>
     </header>
     {/* DSP-TBL (owner ruling 2026-09-05): footerCells replaces the raw 2-row footer. Row 1
         (Totals) migrates 1:1 -- one cell per column, keyed, follows reorder/hide automatically.
@@ -82,14 +82,14 @@ export function FleetCoveredPage() {
         that comparison line moves to its own paragraph right below the table -- same information,
         same order on the page, no longer inside ParityTable's own footer machinery. */}
     <ParityTable rows={rows} columns={columns} rowKey={(row) => row.asset_id} loading={query.isPending} storageKey="insurance-fleet-covered" emptyText="No active fleet assets." enableColumnResize enableColumnReorder exportFilename="insurance-fleet-covered.csv" footerCells={{
-      unit_number: <span className={coveredRows.length === 34 ? "text-slate-900" : "text-red-700"}>Totals · {coveredRows.length} covered units {coveredRows.length === 34 ? "" : "· expected 34"}</span>,
+      unit_number: <span className={coveredRows.length === 34 ? "text-[#0F1219]" : "text-red-700"}>Totals · {coveredRows.length} covered units {coveredRows.length === 34 ? "" : "· expected 34"}</span>,
       insured_value_cents: <span>{formatMoney(totals.tiv)}</span>,
       premium_per_month_cents: <span>{formatMoney(totals.premium)}</span>,
     }} />
-    <p className="text-xs text-slate-700" data-testid="fleet-covered-policy-tiv-diff">
+    <p className="text-xs text-[#1F2A44]" data-testid="fleet-covered-policy-tiv-diff">
       Policy 437539 TIV {formatMoney(POLICY_437539_TIV_CENTS)} · Difference{" "}
-      <span className={`font-semibold ${tivDifference === 0 ? "text-slate-700" : "text-red-700"}`}>{formatMoney(tivDifference)}</span>
+      <span className={`font-semibold ${tivDifference === 0 ? "text-[#1F2A44]" : "text-red-700"}`}>{formatMoney(tivDifference)}</span>
     </p>
-    <p className="text-xs text-slate-500">Deductible is shown as — because the current policy schema does not store a deductible; no value is inferred.</p>
+    <p className="text-xs text-[#6B7280]">Deductible is shown as — because the current policy schema does not store a deductible; no value is inferred.</p>
   </div>;
 }
