@@ -1,3 +1,22 @@
+## 2026-10-07T21:00Z · BANK-SLATE-VEND-CF-CUST MERGED
+
+FINDING: Leftover Tailwind slate-* on VendorDetail / Customers / CashFlowReport → house tokens (+ OUTBOX #25722).
+
+MERGED:
+- BANK-SLATE-VEND-CF-CUST #25723 squash `dbc54e5ac3` — VendorDetail / Customers / CashFlowReport; guard verify-vend-cf-cust-slate-leftover-chrome piggyback EVEN 2016; OUTBOX #25722 census
+- BANK-SLATE-INS-LAND-RPT #25722 squash `cf79987268`
+- BANK-SLATE-INS-COV-POL #25721 squash `fc5aa418e2`
+
+SESSION WAVE: #25708–#25723 slate drain continuous
+
+LIVE PROOF: verify-vend-cf-cust-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS
+
+REMAINING: FE redeploy; owner Chrome Settlement Creator; ~910 FE files still carry slate-*
+
+NEXT leftover: (this PR) BalanceSheet · ProfitLoss · LoginReset → then ARAging / SettlementSummary / ReportsHub
+
+Files Modified: OUTBOX + BalanceSheetPage / ProfitLossPage / LoginResetRequestPage
+
 ## 2026-10-07T20:55Z · BANK-SLATE-INS-LAND-RPT MERGED
 
 FINDING: Leftover Tailwind slate-* on LawsuitsTab / InsuranceLanding / ReportsHome → house tokens (+ OUTBOX #25721).

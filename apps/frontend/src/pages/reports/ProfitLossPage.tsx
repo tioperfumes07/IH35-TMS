@@ -314,7 +314,7 @@ export function ProfitLossPage() {
                         <td className="px-3 py-2">
                           <AmountLink
                             filter={plFilter(line.account_id, applied)}
-                            className="text-slate-700 underline-offset-2 hover:underline"
+                            className="text-[#1F2A44] underline-offset-2 hover:underline"
                             data-testid={`pl-name-${line.account_id}`}
                           >
                             {line.account_name || "—"}
@@ -334,7 +334,7 @@ export function ProfitLossPage() {
                       </tr>
                     ))
                   )}
-                  <tr className="bg-slate-50 font-semibold">
+                  <tr className="bg-[#F7F8FA] font-semibold">
                     <td colSpan={showCodes ? 3 : 2} className="px-3 py-2 text-right">
                       Section total
                     </td>
