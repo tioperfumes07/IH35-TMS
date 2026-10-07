@@ -90,14 +90,46 @@ function collectUnscopedLiterals() {
   return found;
 }
 
+/**
+ * ROUND 441.13 (Lead) — an exception is a cross-tenant surface, the most expensive defect class we have, so it must
+ * SAY WHY. A baseline entry may carry `reason`: ONE line (no newline), at least 20 characters, naming why the read is
+ * safe (scoped through a named CTE/helper, an id validated in the same request, a deliberately global system job...).
+ * Entries WITHOUT a reason are legacy debt: at most UNREASONED_CEILING of them, and the ceiling only goes DOWN — lower
+ * it in the same PR that gives an old entry its reason or removes it. A NEW exception without a reason therefore fails.
+ * (From closed #25752; main had 114 when this landed, 113 after the feed-gate entry got its reason.)
+ */
+export const UNREASONED_CEILING = 113;
+export const REASON_MIN_CHARS = 20;
+
+export function reasonProblem(entry) {
+  if (entry.reason === undefined) return null; // unreasoned (counted against the ceiling)
+  const r = String(entry.reason);
+  if (/\n/.test(r)) return `${entry.key}: reason must be ONE line`;
+  if (r.trim().length < REASON_MIN_CHARS) return `${entry.key}: reason must say why (>= ${REASON_MIN_CHARS} chars)`;
+  return null;
+}
+
+export function checkReasons(entries) {
+  const problems = entries.map(reasonProblem).filter(Boolean);
+  const unreasoned = entries.filter((e) => e.reason === undefined).length;
+  if (unreasoned > UNREASONED_CEILING) {
+    problems.push(
+      `${unreasoned} baseline entries have no written reason (ceiling ${UNREASONED_CEILING}, shrink-only) — every NEW exception needs a one-line "reason" in ${path.basename(BASELINE)}`
+    );
+  }
+  return { problems, unreasoned };
+}
+
 function loadBaseline() {
   if (!fs.existsSync(BASELINE)) return null;
   return JSON.parse(fs.readFileSync(BASELINE, "utf8"));
 }
 
 function writeBaseline(found) {
+  // Regenerating keeps every existing reason (by key) — a reason is never silently dropped.
+  const prior = new Map((loadBaseline()?.entries ?? []).map((e) => [e.key, e.reason]));
   const entries = [...found.entries()]
-    .map(([key, v]) => ({ key, file: v.file, preview: v.preview }))
+    .map(([key, v]) => (prior.get(key) !== undefined ? { key, file: v.file, preview: v.preview, reason: prior.get(key) } : { key, file: v.file, preview: v.preview }))
     .sort((a, b) => a.key.localeCompare(b.key));
   fs.writeFileSync(BASELINE, JSON.stringify({ entries }, null, 2) + "\n", "utf8");
   return entries.length;
@@ -139,6 +171,15 @@ function runGuard() {
     process.exit(1);
   }
 
+  const { problems: reasonProblems, unreasoned } = checkReasons(baseline.entries);
+  if (reasonProblems.length > 0) {
+    console.error(`verify-mdata-entity-scope FAILED — exceptions must carry a written reason:\n  - ${reasonProblems.join("\n  - ")}`);
+    process.exit(1);
+  }
+  if (unreasoned < UNREASONED_CEILING) {
+    console.log(`verify-mdata-entity-scope: ${unreasoned} unreasoned entries < ceiling ${UNREASONED_CEILING} — lower UNREASONED_CEILING to ${unreasoned} (shrink-only).`);
+  }
+
   // Stale baseline entries (code removed) are reported but not fatal, so deletions don't break CI.
   const stale = baseline.entries.filter((e) => !found.has(e.key));
   if (stale.length > 0) {
@@ -157,5 +198,23 @@ export default {
 
 // Allow direct execution: `node scripts/verify-steps/84-verify-mdata-entity-scope.mjs`
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  runGuard();
+  if (process.argv.includes("--selftest")) {
+    const base = Array.from({ length: UNREASONED_CEILING }, (_, i) => ({ key: `k${i}` }));
+    const cases = [
+      ["at the ceiling, no reasons", base, true],
+      ["one new exception without a reason", [...base, { key: "new" }], false],
+      ["one new exception WITH a reason", [...base, { key: "new", reason: "loads come from the company-scoped CTE above" }], true],
+      ["a two-line reason", [...base, { key: "new", reason: "line one is long enough\nline two" }], false],
+      ["a reason that says nothing", [...base, { key: "new", reason: "ok" }], false],
+    ];
+    let bad = 0;
+    for (const [name, entries, wantOk] of cases) {
+      const ok = checkReasons(entries).problems.length === 0;
+      if (ok !== wantOk) { console.error(`selftest FAIL: ${name}`); bad++; }
+    }
+    if (bad) process.exit(1);
+    console.log(`verify-mdata-entity-scope --selftest PASS ${cases.length}/${cases.length}`);
+  } else {
+    runGuard();
+  }
 }

@@ -161,9 +161,10 @@
       "preview": "`${L} SELECT 'accounting.invoices', i.id, 'Invoice ' || i.display_id, i.total_cents = l.rate_total_cents, CASE WHEN i.to"
     },
     {
-      "key": "apps/backend/src/driver-finance/feed-gate/feed-gate.checks.ts#bf046f05f53795831a38bb532057d2d04e543676",
+      "key": "apps/backend/src/driver-finance/feed-gate/feed-gate.checks.ts#796f84ae605d0f202c32a564ca49ecaf7832a97b",
       "file": "apps/backend/src/driver-finance/feed-gate/feed-gate.checks.ts",
-      "preview": "`${L} SELECT 'mdata.loads', l.id, 'Load ' || l.load_number, db.id IS NOT NULL, CASE WHEN db.id IS NULL THEN 'no live dri"
+      "preview": "`${L} SELECT 'mdata.loads', l.id, 'Load ' || l.load_number, db.id IS NOT NULL, CASE WHEN db.id IS NULL THEN 'no live dri",
+      "reason": "Feed-gate check: its loads come only from the ${L} CTE (SETTLEMENT_LOADS / LOAD_SUBJECT, both l.operating_company_id = $1) and are re-joined by id; driver_bills join by that load id."
     },
     {
       "key": "apps/backend/src/driver-finance/feed-gate/feed-gate.checks.ts#da93d62e168a463fe6640560c17840c13df77178",
