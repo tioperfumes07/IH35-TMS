@@ -32,25 +32,25 @@ export function PortalLoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
-      <form onSubmit={onSubmit} className="w-full max-w-md rounded-sm border border-slate-200 bg-white p-6 shadow-xs">
-        <h1 className="text-page-title font-semibold text-slate-900">Shipper portal sign in</h1>
-        <p className="mt-1 text-xs text-slate-600">Track your loads in real time.</p>
+    <div className="flex min-h-screen items-center justify-center bg-[#F7F8FA] p-4">
+      <form onSubmit={onSubmit} className="w-full max-w-md rounded-sm border border-[#E5E7EB] bg-white p-6 shadow-xs">
+        <h1 className="text-page-title font-semibold text-[#0F1219]">Shipper portal sign in</h1>
+        <p className="mt-1 text-xs text-[#4B5563]">Track your loads in real time.</p>
         <label className="mt-4 block text-xs">
-          <span className="font-medium text-slate-700">Email</span>
+          <span className="font-medium text-[#1F2A44]">Email</span>
           <input
             type="email"
-            className="mt-1 w-full rounded-sm border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded-sm border border-[#E5E7EB] px-3 py-2"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
         </label>
         <label className="mt-3 block text-xs">
-          <span className="font-medium text-slate-700">Password</span>
+          <span className="font-medium text-[#1F2A44]">Password</span>
           <input
             type="password"
-            className="mt-1 w-full rounded-sm border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded-sm border border-[#E5E7EB] px-3 py-2"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required

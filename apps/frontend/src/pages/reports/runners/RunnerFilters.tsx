@@ -27,7 +27,7 @@ type Props = {
 // month_picker, unit_select, driver_select, company fallback) gets the same required marker.
 function FilterLabel({ filter }: { filter: RunnerFilter }) {
   return (
-    <div className="mb-1 text-xs font-semibold text-slate-600">
+    <div className="mb-1 text-xs font-semibold text-[#4B5563]">
       {filter.label}
       {filter.required ? (
         <span className="ml-0.5 text-red-600" aria-hidden="true">
@@ -109,7 +109,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
                   <FilterLabel filter={filter} />
                   <div className="mb-2 flex flex-wrap items-center gap-2">
                     <select
-                      className="h-[34px] rounded-sm border border-slate-300 px-2 text-xs"
+                      className="h-[34px] rounded-sm border border-[#E5E7EB] px-2 text-xs"
                       value={String(draft.date_preset ?? "custom")}
                       onChange={(e) => {
                         const next = e.target.value;
@@ -133,7 +133,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
                       value={String(draft.from ?? "")}
                       onChange={(next) => staged.setDraft({ ...draft, from: next, date_preset: "custom" })}
                     />
-                    <span className="text-slate-500">to</span>
+                    <span className="text-[#6B7280]">to</span>
                     <DatePicker
                       className=""
                       value={String(draft.to ?? "")}
@@ -147,7 +147,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
               return (
                 <label key={filter.key} className="block">
                   <FilterLabel filter={filter} />
-                  <input type="month" className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-xs" value={String(draft[filter.key] ?? "")} onChange={(e) => staged.setDraft({ ...draft, [filter.key]: e.target.value })} />
+                  <input type="month" className="w-full rounded-sm border border-[#E5E7EB] px-2 py-1.5 text-xs" value={String(draft[filter.key] ?? "")} onChange={(e) => staged.setDraft({ ...draft, [filter.key]: e.target.value })} />
                 </label>
               );
             }
@@ -194,7 +194,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
             return (
               <label key={filter.key} className="block">
                 <FilterLabel filter={filter} />
-                <SelectCombobox className="w-full rounded-sm border border-slate-300 px-2 py-1.5 text-xs" value={String(draft[filter.key] ?? selectedCompanyId ?? "")} onChange={(e) => staged.setDraft({ ...draft, [filter.key]: e.target.value })}>
+                <SelectCombobox className="w-full rounded-sm border border-[#E5E7EB] px-2 py-1.5 text-xs" value={String(draft[filter.key] ?? selectedCompanyId ?? "")} onChange={(e) => staged.setDraft({ ...draft, [filter.key]: e.target.value })}>
                   {companies.map((company) => (
                     <option key={company.id} value={company.id}>
                       {company.legal_name}

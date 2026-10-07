@@ -1,3 +1,22 @@
+## 2026-10-07T21:40Z · BANK-SLATE-LATE-INV-TOUR MERGED
+
+FINDING: Leftover Tailwind slate-* on LateArrival / InvoiceSearch / PostedWhileTourOpen → house tokens (+ OUTBOX #25728).
+
+MERGED:
+- BANK-SLATE-LATE-INV-TOUR #25729 squash `bcef9c92be` — LateArrivalReport / InvoiceSearchReportPage / PostedWhileTourOpenReportPage; guard verify-late-inv-tour-slate-leftover-chrome piggyback EVEN 1024; OUTBOX #25728 census
+- BANK-SLATE-RUNNER-CPM-GEO #25728 squash `37bb9fd96b`
+- BANK-SLATE-RPT-MGMT-FUEL #25727 squash `2630b65349`
+
+SESSION WAVE: #25708–#25729 slate drain continuous
+
+LIVE PROOF: verify-late-inv-tour-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS
+
+REMAINING: FE redeploy; owner Chrome Settlement Creator; ~890 FE files still carry slate-*
+
+NEXT leftover: (this PR) RunnerFilters · CsaFleetScoreCard · PortalLogin → then PortalDashboard / CashAdvanceRequests / PortalRouteGuard
+
+Files Modified: OUTBOX + RunnerFilters / CsaFleetScoreCard / PortalLoginPage
+
 ## 2026-10-07T21:30Z · BANK-SLATE-RUNNER-CPM-GEO MERGED
 
 FINDING: Leftover Tailwind slate-* on ReportsRunner / PerTruckCpm / GeofenceDwell → house tokens (+ OUTBOX #25727).
