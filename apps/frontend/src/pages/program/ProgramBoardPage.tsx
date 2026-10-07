@@ -504,7 +504,7 @@ export function ProgramBoardPage() {
               <a
                 key={link.href}
                 href={link.href}
-                className="rounded-sm border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-gray-50"
+                className="rounded-sm border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-[#1F2A44] hover:bg-gray-50"
               >
                 {link.label} →
               </a>
@@ -520,7 +520,7 @@ export function ProgramBoardPage() {
       {/* HONEST TIMESTAMPS — two distinct fields, never conflated. Left = the snapshot's true age;
           right = live server compute time (re-polled every 60s). Live counts are recomputed at request
           time from the snapshot, so they always match the rows below. */}
-      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+      <div className="flex flex-wrap items-center gap-2 text-xs text-[#4B5563]">
         <span className="rounded border border-gray-300 bg-white px-2 py-1">
           Blocks data as of{" "}
           <span className="font-semibold tabular-nums">{data?.data_as_of_ct ?? "…"}</span>
@@ -533,9 +533,9 @@ export function ProgramBoardPage() {
         <span className="rounded border border-gray-300 bg-white px-2 py-1">
           Live metrics refreshed{" "}
           <span className="font-semibold tabular-nums">{data?.refreshed_at_ct ?? "…"}</span>
-          {isFetching ? <span className="ml-1 text-slate-400">· refreshing…</span> : null}
+          {isFetching ? <span className="ml-1 text-[#6B7280]">· refreshing…</span> : null}
         </span>
-        <span className="text-xs text-slate-400">auto-refreshes every 60s</span>
+        <span className="text-xs text-[#6B7280]">auto-refreshes every 60s</span>
         {Object.entries(data?.live?.counts ?? data?.counts ?? {}).map(([k, v]) => {
           const c = statusChip(k);
           return (
@@ -545,30 +545,30 @@ export function ProgramBoardPage() {
           );
         })}
         {data?.live ? (
-          <span className="rounded border border-gray-300 bg-white px-2 py-1 text-slate-500">
+          <span className="rounded border border-gray-300 bg-white px-2 py-1 text-[#6B7280]">
             {data.live.merged_pr_total} merged PRs · {data.live.hold_count} HOLD · {data.live.financial_count} financial
           </span>
         ) : null}
       </div>
       {/* Honesty note — PR/HOLD figures are snapshot-based, not a live GitHub feed. */}
       {data?.live ? (
-        <p className="text-xs text-slate-400">{data.live.note}</p>
+        <p className="text-xs text-[#6B7280]">{data.live.note}</p>
       ) : null}
 
       {/* LOCKED DECISIONS — owner-locked answers surfaced up top so they are never buried in a thread. */}
       {lockedDecisions.length > 0 ? (
         <div className="rounded border border-gray-200 bg-white" style={{ borderLeft: "3px solid #1F2A44" }}>
-          <div className="border-b border-gray-100 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <div className="border-b border-gray-100 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
             Locked Decisions — owner-locked, do not re-litigate ({lockedDecisions.length})
           </div>
           <ol className="divide-y divide-gray-100">
             {lockedDecisions.map((d, i) => (
-              <li key={d.id} className="flex gap-2 px-3 py-2 text-xs text-slate-700">
-                <span className="tabular-nums font-semibold text-slate-400">{i + 1}.</span>
+              <li key={d.id} className="flex gap-2 px-3 py-2 text-xs text-[#1F2A44]">
+                <span className="tabular-nums font-semibold text-[#6B7280]">{i + 1}.</span>
                 <span className="flex-1">
-                  <span className="mr-2 rounded bg-slate-200 px-1.5 py-0.5 text-xs font-semibold text-slate-600">{d.id}</span>
+                  <span className="mr-2 rounded bg-[#E5E7EB] px-1.5 py-0.5 text-xs font-semibold text-[#4B5563]">{d.id}</span>
                   {d.decision}
-                  <span className="ml-2 tabular-nums text-xs text-slate-400">{d.date_ct}</span>
+                  <span className="ml-2 tabular-nums text-xs text-[#6B7280]">{d.date_ct}</span>
                 </span>
               </li>
             ))}
@@ -606,7 +606,7 @@ export function ProgramBoardPage() {
         })}
       </div>
 
-      {isLoading ? <div className="py-8 text-center text-xs text-slate-500">Loading board…</div> : null}
+      {isLoading ? <div className="py-8 text-center text-xs text-[#6B7280]">Loading board…</div> : null}
       {isError ? (
         <ListErrorBanner
           message={`Failed to load program board: ${userFacingApiError(error, "error")}`}
@@ -645,12 +645,12 @@ export function ProgramBoardPage() {
                     </span>
                   );
                 })}
-                <span className="font-semibold tabular-nums text-slate-600">{pendingSummary.pct}% complete</span>
+                <span className="font-semibold tabular-nums text-[#4B5563]">{pendingSummary.pct}% complete</span>
               </div>
-              <div className="h-1.5 w-full overflow-hidden rounded bg-slate-200" role="progressbar" aria-valuenow={pendingSummary.pct} aria-valuemin={0} aria-valuemax={100}>
+              <div className="h-1.5 w-full overflow-hidden rounded bg-[#E5E7EB]" role="progressbar" aria-valuenow={pendingSummary.pct} aria-valuemin={0} aria-valuemax={100}>
                 <div className="h-full rounded" style={{ width: `${pendingSummary.pct}%`, background: "#1F2A44" }} />
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[#6B7280]">
                 Everything not yet concluded — pending, legacy GATED (actionable; no owner approval), and needs-verify. Live on every load; as items are
                 finished they leave this list and the completion metric above rises.
               </p>
@@ -667,14 +667,14 @@ export function ProgramBoardPage() {
               />
               <DeltasBadge deltas={deltas} open={deltasOpen} onToggle={() => setDeltasOpen((o) => !o)} />
             </div>
-            <span className="text-xs tabular-nums text-slate-500">
+            <span className="text-xs tabular-nums text-[#6B7280]">
               Showing {activeRows.length} of {baseRows.length}
             </span>
           </div>
 
           <div className="overflow-x-auto rounded border border-gray-200">
             <table className="w-full border-collapse text-xs">
-              <thead className="sticky top-0 z-10 bg-slate-100 text-left text-slate-600">
+              <thead className="sticky top-0 z-10 bg-[#F7F8FA] text-left text-[#4B5563]">
                 <tr>
                   <th className="px-2 py-1.5 font-semibold">#</th>
                   <Th label="Date" onClick={() => toggleSort("date")} active={sort.key === "date"} dir={sort.dir} />
@@ -709,28 +709,28 @@ export function ProgramBoardPage() {
                     <Fragment key={r.key}>
                       <tr
                         onClick={() => setExpanded(isOpen ? null : r.key)}
-                        className="cursor-pointer border-t border-gray-100 hover:bg-slate-50"
+                        className="cursor-pointer border-t border-gray-100 hover:bg-[#F7F8FA]"
                         style={r.fin ? { boxShadow: "inset 3px 0 0 0 #DC2626" } : undefined}
                       >
-                        <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-slate-400">{i + 1}</td>
-                        <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-slate-500">{formatDateCt(r.date)}</td>
-                        <td className="px-2 py-1.5 font-semibold text-slate-800">
-                          <span className="mr-1 text-slate-400">{isOpen ? "▾" : "▸"}</span>
+                        <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-[#6B7280]">{i + 1}</td>
+                        <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-[#6B7280]">{formatDateCt(r.date)}</td>
+                        <td className="px-2 py-1.5 font-semibold text-[#0F1219]">
+                          <span className="mr-1 text-[#6B7280]">{isOpen ? "▾" : "▸"}</span>
                           {r.id}
                         </td>
-                        <td className="whitespace-nowrap px-2 py-1.5 text-slate-500">{r.wave}</td>
-                        <td className="px-2 py-1.5 text-slate-700">
+                        <td className="whitespace-nowrap px-2 py-1.5 text-[#6B7280]">{r.wave}</td>
+                        <td className="px-2 py-1.5 text-[#1F2A44]">
                           {r.description}
-                          {qs.length ? <span className="ml-1 rounded bg-slate-200 px-1 text-xs text-slate-600">Q{qs.length}</span> : null}
+                          {qs.length ? <span className="ml-1 rounded bg-[#E5E7EB] px-1 text-xs text-[#4B5563]">Q{qs.length}</span> : null}
                         </td>
-                        <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-slate-600">{r.tier || "—"}</td>
+                        <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-[#4B5563]">{r.tier || "—"}</td>
                         <td className="px-2 py-1.5">
                           {r.fin ? (
                             <span className="rounded px-1.5 py-0.5 text-xs font-semibold" style={{ background: "#FEE2E2", color: "#991B1B" }}>
                               FIN
                             </span>
                           ) : (
-                            <span className="text-slate-300">—</span>
+                            <span className="text-[#6B7280]">—</span>
                           )}
                         </td>
                         <td className="whitespace-nowrap px-2 py-1.5">
@@ -745,29 +745,29 @@ export function ProgramBoardPage() {
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
-                              className="text-slate-700 underline hover:text-slate-900"
+                              className="text-[#1F2A44] underline hover:text-[#0F1219]"
                             >
                               #{r.pr}
                             </a>
                           ) : (
-                            <span className="text-slate-300">—</span>
+                            <span className="text-[#6B7280]">—</span>
                           )}
                         </td>
                         {showAuditCols ? (
                           <>
                             <td className="whitespace-nowrap px-2 py-1.5">
                               {r.severity ? (
-                                <span className="tabular-nums font-semibold text-slate-600">{r.severity.toUpperCase()}</span>
+                                <span className="tabular-nums font-semibold text-[#4B5563]">{r.severity.toUpperCase()}</span>
                               ) : (
-                                <span className="text-slate-300">—</span>
+                                <span className="text-[#6B7280]">—</span>
                               )}
                             </td>
-                            <td className="px-2 py-1.5 text-slate-600">
+                            <td className="px-2 py-1.5 text-[#4B5563]">
                               <span className="block max-w-[150px] truncate" title={r.module || undefined}>
                                 {r.module || "—"}
                               </span>
                             </td>
-                            <td className="px-2 py-1.5 text-slate-500">
+                            <td className="px-2 py-1.5 text-[#6B7280]">
                               <span className="block max-w-[190px] truncate font-mono text-xs" title={r.where || undefined}>
                                 {r.where || "—"}
                               </span>
@@ -783,7 +783,7 @@ export function ProgramBoardPage() {
                                   );
                                 })()
                               ) : (
-                                <span className="text-slate-300">—</span>
+                                <span className="text-[#6B7280]">—</span>
                               )}
                             </td>
                           </>
@@ -811,7 +811,7 @@ export function ProgramBoardPage() {
                         ) : null}
                       </tr>
                       {isOpen ? (
-                        <tr className="border-t border-gray-100 bg-slate-50">
+                        <tr className="border-t border-gray-100 bg-[#F7F8FA]">
                           <td colSpan={colCount} className="px-4 py-3">
                             <ThreadPanel
                               blockId={r.id}
@@ -830,7 +830,7 @@ export function ProgramBoardPage() {
                 })}
                 {activeRows.length === 0 ? (
                   <tr>
-                    <td colSpan={colCount} className="px-2 py-6 text-center text-slate-400">
+                    <td colSpan={colCount} className="px-2 py-6 text-center text-[#6B7280]">
                       No rows.
                     </td>
                   </tr>
@@ -841,11 +841,11 @@ export function ProgramBoardPage() {
 
           {tab === "focus" && (data?.sequence?.length ?? 0) > 0 ? (
             <div className="rounded border border-gray-200 bg-white p-3">
-              <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Recommended sequence</div>
-              <ol className="space-y-1 text-xs text-slate-700">
+              <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Recommended sequence</div>
+              <ol className="space-y-1 text-xs text-[#1F2A44]">
                 {data?.sequence?.map((s) => (
                   <li key={s.step} className="flex gap-2">
-                    <span className="font-semibold tabular-nums text-slate-400">{s.step}.</span>
+                    <span className="font-semibold tabular-nums text-[#6B7280]">{s.step}.</span>
                     <span>{s.label}</span>
                   </li>
                 ))}
@@ -866,14 +866,14 @@ export function ProgramBoardPage() {
               aria-label="Filter merged PRs"
               className="h-7 w-72 max-w-full rounded border border-gray-300 px-2 text-xs"
             />
-            <span className="text-xs tabular-nums text-slate-500">
+            <span className="text-xs tabular-nums text-[#6B7280]">
               showing {mergedFiltered.length} of {data?.merged_pr_total ?? mergedFiltered.length} merged PRs
               {(data?.merged_pr_total ?? 0) > (data?.merged_prs?.length ?? 0) ? " (most recent slice)" : ""}
             </span>
           </div>
           <div className="overflow-x-auto rounded border border-gray-200">
             <table className="w-full border-collapse text-xs">
-              <thead className="sticky top-0 z-10 bg-slate-100 text-left text-slate-600">
+              <thead className="sticky top-0 z-10 bg-[#F7F8FA] text-left text-[#4B5563]">
                 <tr>
                   <th className="px-2 py-1.5 font-semibold">#</th>
                   <th className="px-2 py-1.5 font-semibold">PR #</th>
@@ -884,26 +884,26 @@ export function ProgramBoardPage() {
               </thead>
               <tbody>
                 {mergedFiltered.map((p, i) => (
-                  <tr key={p.number} className="border-t border-gray-100 hover:bg-slate-50">
-                    <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-slate-400">{i + 1}</td>
+                  <tr key={p.number} className="border-t border-gray-100 hover:bg-[#F7F8FA]">
+                    <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-[#6B7280]">{i + 1}</td>
                     <td className="whitespace-nowrap px-2 py-1.5 font-semibold">
                       <a
                         href={`https://github.com/tioperfumes07/IH35-TMS/pull/${p.number}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-slate-700 underline hover:text-slate-900"
+                        className="text-[#1F2A44] underline hover:text-[#0F1219]"
                       >
                         #{p.number}
                       </a>
                     </td>
-                    <td className="px-2 py-1.5 text-slate-700">{p.title}</td>
-                    <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-slate-500">{formatDateTimeCt(p.mergedAt)}</td>
-                    <td className="whitespace-nowrap px-2 py-1.5 font-mono text-xs text-slate-500">{p.branch ?? "—"}</td>
+                    <td className="px-2 py-1.5 text-[#1F2A44]">{p.title}</td>
+                    <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-[#6B7280]">{formatDateTimeCt(p.mergedAt)}</td>
+                    <td className="whitespace-nowrap px-2 py-1.5 font-mono text-xs text-[#6B7280]">{p.branch ?? "—"}</td>
                   </tr>
                 ))}
                 {mergedFiltered.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-2 py-6 text-center text-slate-400">
+                    <td colSpan={5} className="px-2 py-6 text-center text-[#6B7280]">
                       No merged PRs in this snapshot.
                     </td>
                   </tr>
@@ -925,14 +925,14 @@ export function ProgramBoardPage() {
               aria-label="Filter held PRs"
               className="h-7 w-72 max-w-full rounded border border-gray-300 px-2 text-xs"
             />
-            <span className="text-xs tabular-nums text-slate-500">{holdFiltered.length} held items</span>
+            <span className="text-xs tabular-nums text-[#6B7280]">{holdFiltered.length} held items</span>
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[#6B7280]">
             Merged but gated — typically behind a feature flag or awaiting deploy/ancestry. Not an owner merge-approval hold; flip flags or wait for deploy as applicable.
           </p>
           <div className="overflow-x-auto rounded border border-gray-200">
             <table className="w-full border-collapse text-xs">
-              <thead className="sticky top-0 z-10 bg-slate-100 text-left text-slate-600">
+              <thead className="sticky top-0 z-10 bg-[#F7F8FA] text-left text-[#4B5563]">
                 <tr>
                   <th className="px-2 py-1.5 font-semibold">#</th>
                   <th className="px-2 py-1.5 font-semibold">PR #</th>
@@ -945,20 +945,20 @@ export function ProgramBoardPage() {
                 {holdFiltered.map((p, i) => {
                   const isTier1 = /financial/i.test(p.category);
                   return (
-                    <tr key={p.number} className="border-t border-gray-100 hover:bg-slate-50">
-                      <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-slate-400">{i + 1}</td>
+                    <tr key={p.number} className="border-t border-gray-100 hover:bg-[#F7F8FA]">
+                      <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-[#6B7280]">{i + 1}</td>
                       <td className="whitespace-nowrap px-2 py-1.5 font-semibold">
                         <a
                           href={`https://github.com/tioperfumes07/IH35-TMS/pull/${p.number}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-slate-700 underline hover:text-slate-900"
+                          className="text-[#1F2A44] underline hover:text-[#0F1219]"
                         >
                           #{p.number}
                         </a>
                       </td>
-                      <td className="px-2 py-1.5 text-slate-700">{p.title}</td>
-                      <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-slate-500">{formatDateTimeCt(p.mergedAt)}</td>
+                      <td className="px-2 py-1.5 text-[#1F2A44]">{p.title}</td>
+                      <td className="whitespace-nowrap px-2 py-1.5 tabular-nums text-[#6B7280]">{formatDateTimeCt(p.mergedAt)}</td>
                       <td className="whitespace-nowrap px-2 py-1.5">
                         <span
                           className="rounded px-1.5 py-0.5 text-xs font-semibold"
@@ -972,7 +972,7 @@ export function ProgramBoardPage() {
                 })}
                 {holdFiltered.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-2 py-6 text-center text-slate-400">
+                    <td colSpan={5} className="px-2 py-6 text-center text-[#6B7280]">
                       No HOLD-FOR-JORGE items in this snapshot.
                     </td>
                   </tr>
@@ -986,20 +986,20 @@ export function ProgramBoardPage() {
       {/* QUESTIONS tab */}
       {!isLoading && !isError && tab === "questions" ? (
         <div className="space-y-3">
-          <p className="text-xs text-slate-500">Every agent question. Type your answer inline — it persists.</p>
-          {questions.length === 0 ? <div className="py-6 text-center text-slate-400">No questions yet.</div> : null}
+          <p className="text-xs text-[#6B7280]">Every agent question. Type your answer inline — it persists.</p>
+          {questions.length === 0 ? <div className="py-6 text-center text-[#6B7280]">No questions yet.</div> : null}
           {questions.map((q, i) => {
             const ans = answersByBlock.get(q.block_id ?? "__general__") ?? [];
             return (
               <div key={q.id} className="rounded border border-gray-200 bg-white p-3">
-                <div className="mb-1 flex items-center gap-2 text-xs text-slate-400">
-                  <span className="tabular-nums font-semibold text-slate-500">{i + 1}.</span>
-                  <span className="rounded bg-slate-200 px-1.5 py-0.5 font-semibold text-slate-600">
+                <div className="mb-1 flex items-center gap-2 text-xs text-[#6B7280]">
+                  <span className="tabular-nums font-semibold text-[#6B7280]">{i + 1}.</span>
+                  <span className="rounded bg-[#E5E7EB] px-1.5 py-0.5 font-semibold text-[#4B5563]">
                     {q.block_id ?? "general"}
                   </span>
                   <span className="tabular-nums">{q.created_at_ct}</span>
                 </div>
-                <div className="text-xs text-slate-800">{q.body}</div>
+                <div className="text-xs text-[#0F1219]">{q.body}</div>
                 <ThreadPanel
                   blockId={q.block_id ?? null}
                   questions={[]}
@@ -1025,16 +1025,16 @@ export function ProgramBoardPage() {
             }}
             submitting={mutation.isPending}
           />
-          {ideas.length === 0 ? <div className="py-6 text-center text-slate-400">No ideas yet.</div> : null}
+          {ideas.length === 0 ? <div className="py-6 text-center text-[#6B7280]">No ideas yet.</div> : null}
           {ideas.map((n, i) => (
             <div key={n.id} className="rounded border border-gray-200 bg-white p-3">
-              <div className="mb-1 flex items-center gap-2 text-xs text-slate-400">
-                <span className="tabular-nums font-semibold text-slate-500">{i + 1}.</span>
-                <span className="rounded bg-slate-200 px-1.5 py-0.5 font-semibold text-slate-600">{n.author}</span>
-                {n.block_id ? <span className="rounded bg-slate-100 px-1.5 py-0.5">{n.block_id}</span> : null}
+              <div className="mb-1 flex items-center gap-2 text-xs text-[#6B7280]">
+                <span className="tabular-nums font-semibold text-[#6B7280]">{i + 1}.</span>
+                <span className="rounded bg-[#E5E7EB] px-1.5 py-0.5 font-semibold text-[#4B5563]">{n.author}</span>
+                {n.block_id ? <span className="rounded bg-[#F7F8FA] px-1.5 py-0.5">{n.block_id}</span> : null}
                 <span className="tabular-nums">{n.created_at_ct}</span>
               </div>
-              <div className="text-xs text-slate-800">{n.body}</div>
+              <div className="text-xs text-[#0F1219]">{n.body}</div>
             </div>
           ))}
         </div>
@@ -1076,17 +1076,17 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
   return (
     <div className="space-y-3 rounded border border-gray-200 bg-white p-3" style={{ borderLeft: "3px solid #1F2A44" }}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-xs font-semibold text-slate-800">Audit Truth — 2026-07-10</h2>
-        <span className="text-xs text-slate-400">{audit.source}</span>
+        <h2 className="text-xs font-semibold text-[#0F1219]">Audit Truth — 2026-07-10</h2>
+        <span className="text-xs text-[#6B7280]">{audit.source}</span>
       </div>
-      <p className="text-xs font-semibold text-slate-700">{audit.headline}</p>
+      <p className="text-xs font-semibold text-[#1F2A44]">{audit.headline}</p>
 
       {audit.why_done_overstates.length > 0 ? (
         <div>
-          <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
             Why the DONE count overstates completion
           </div>
-          <ul className="list-disc space-y-0.5 pl-4 text-xs text-slate-600">
+          <ul className="list-disc space-y-0.5 pl-4 text-xs text-[#4B5563]">
             {audit.why_done_overstates.map((w, i) => (
               <li key={i}>{w}</li>
             ))}
@@ -1105,18 +1105,18 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
               <div className="text-page-title font-semibold tabular-nums" style={{ color: t.accent ?? "#1F2A44" }}>
                 {t.value}
               </div>
-              <div className="text-xs uppercase tracking-wide text-slate-500">{t.label}</div>
+              <div className="text-xs uppercase tracking-wide text-[#6B7280]">{t.label}</div>
             </div>
           ))}
         </div>
-        <p className="mt-1 text-xs text-slate-400">{audit.true_totals.note}</p>
+        <p className="mt-1 text-xs text-[#6B7280]">{audit.true_totals.note}</p>
       </div>
 
       <div>
-        <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">By module</div>
+        <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#6B7280]">By module</div>
         <div className="overflow-x-auto rounded border border-gray-200">
           <table className="w-full border-collapse text-xs">
-            <thead className="bg-slate-100 text-left text-slate-600">
+            <thead className="bg-[#F7F8FA] text-left text-[#4B5563]">
               <tr>
                 <th className="px-2 py-1.5 font-semibold">Module</th>
                 <th className="px-2 py-1.5 font-semibold">Built</th>
@@ -1128,13 +1128,13 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
             <tbody>
               {audit.by_module.map((m) => (
                 <tr key={m.module} className="border-t border-gray-100">
-                  <td className="px-2 py-1.5 font-semibold text-slate-800">{m.module}</td>
-                  <td className="px-2 py-1.5 tabular-nums text-slate-600">{m.built}</td>
-                  <td className="px-2 py-1.5 tabular-nums text-slate-600">{m.partial}</td>
+                  <td className="px-2 py-1.5 font-semibold text-[#0F1219]">{m.module}</td>
+                  <td className="px-2 py-1.5 tabular-nums text-[#4B5563]">{m.built}</td>
+                  <td className="px-2 py-1.5 tabular-nums text-[#4B5563]">{m.partial}</td>
                   <td className="px-2 py-1.5 tabular-nums" style={{ color: "#DC2626" }}>
                     {m.not_built}
                   </td>
-                  <td className="px-2 py-1.5 tabular-nums text-slate-600">{m.needs_design}</td>
+                  <td className="px-2 py-1.5 tabular-nums text-[#4B5563]">{m.needs_design}</td>
                 </tr>
               ))}
             </tbody>
@@ -1144,12 +1144,12 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
 
       {audit.prod_verified_facts.length > 0 ? (
         <div>
-          <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Prod-verified facts</div>
+          <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Prod-verified facts</div>
           <ul className="space-y-1.5">
             {audit.prod_verified_facts.map((f, i) => (
-              <li key={i} className="rounded border border-gray-100 bg-slate-50 px-2 py-1.5 text-xs">
+              <li key={i} className="rounded border border-gray-100 bg-[#F7F8FA] px-2 py-1.5 text-xs">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-semibold text-slate-800">{f.fact}</span>
+                  <span className="font-semibold text-[#0F1219]">{f.fact}</span>
                   <span
                     className="rounded px-1.5 py-0.5 text-xs font-semibold"
                     style={{ background: "#E2E8F0", color: "#4B5563" }}
@@ -1157,7 +1157,7 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
                     {f.verdict}
                   </span>
                 </div>
-                <div className="mt-0.5 text-slate-600">{f.detail}</div>
+                <div className="mt-0.5 text-[#4B5563]">{f.detail}</div>
               </li>
             ))}
           </ul>
@@ -1166,7 +1166,7 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
 
       {audit.schema_drift_flags.length > 0 ? (
         <div>
-          <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Schema drift flags</div>
+          <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Schema drift flags</div>
           <ul className="list-disc space-y-0.5 pl-4 text-xs" style={{ color: "#DC2626" }}>
             {audit.schema_drift_flags.map((s, i) => (
               <li key={i}>{s}</li>
@@ -1177,7 +1177,7 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
 
       <div>
         <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <div className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
             Top open items ({filteredOpenItems.length} of {audit.top_open_items.length})
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -1209,7 +1209,7 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
         </div>
         <div className="overflow-x-auto rounded border border-gray-200">
           <table className="w-full border-collapse text-xs">
-            <thead className="bg-slate-100 text-left text-slate-600">
+            <thead className="bg-[#F7F8FA] text-left text-[#4B5563]">
               <tr>
                 <th className="px-2 py-1.5 font-semibold">ID</th>
                 <th className="px-2 py-1.5 font-semibold">Module</th>
@@ -1225,8 +1225,8 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
                 const isNotBuilt = it.verdict.toLowerCase().replace(/\s+/g, "-").includes("not-built");
                 return (
                   <tr key={it.id} className="border-t border-gray-100">
-                    <td className="whitespace-nowrap px-2 py-1.5 font-mono text-xs text-slate-500">{it.id}</td>
-                    <td className="whitespace-nowrap px-2 py-1.5 text-slate-600">{it.module}</td>
+                    <td className="whitespace-nowrap px-2 py-1.5 font-mono text-xs text-[#6B7280]">{it.id}</td>
+                    <td className="whitespace-nowrap px-2 py-1.5 text-[#4B5563]">{it.module}</td>
                     <td className="whitespace-nowrap px-2 py-1.5">
                       <span
                         className="rounded px-1.5 py-0.5 text-xs font-semibold"
@@ -1235,18 +1235,18 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
                         {it.verdict}
                       </span>
                     </td>
-                    <td className="whitespace-nowrap px-2 py-1.5 text-slate-600">{it.tier}</td>
-                    <td className="px-2 py-1.5 text-slate-700">
+                    <td className="whitespace-nowrap px-2 py-1.5 text-[#4B5563]">{it.tier}</td>
+                    <td className="px-2 py-1.5 text-[#1F2A44]">
                       <span className="block max-w-[320px] truncate" title={it.title}>
                         {it.title}
                       </span>
                     </td>
-                    <td className="px-2 py-1.5 text-slate-600">
+                    <td className="px-2 py-1.5 text-[#4B5563]">
                       <span className="block max-w-[280px] truncate" title={it.missing}>
                         {it.missing}
                       </span>
                     </td>
-                    <td className="px-2 py-1.5 text-slate-500">
+                    <td className="px-2 py-1.5 text-[#6B7280]">
                       <span className="block max-w-[140px] truncate" title={it.spec}>
                         {it.spec}
                       </span>
@@ -1256,7 +1256,7 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
               })}
               {filteredOpenItems.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-2 py-6 text-center text-slate-400">
+                  <td colSpan={7} className="px-2 py-6 text-center text-[#6B7280]">
                     No items match this filter.
                   </td>
                 </tr>
@@ -1271,9 +1271,9 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
 
 function Th({ label, onClick, active, dir }: { label: string; onClick: () => void; active: boolean; dir: "asc" | "desc" }) {
   return (
-    <th className="cursor-pointer select-none px-2 py-1.5 font-semibold hover:text-slate-900" onClick={onClick}>
+    <th className="cursor-pointer select-none px-2 py-1.5 font-semibold hover:text-[#0F1219]" onClick={onClick}>
       {label}
-      {active ? <span className="ml-0.5 text-slate-400">{dir === "asc" ? "▲" : "▼"}</span> : null}
+      {active ? <span className="ml-0.5 text-[#6B7280]">{dir === "asc" ? "▲" : "▼"}</span> : null}
     </th>
   );
 }
@@ -1297,14 +1297,14 @@ function DeltasBadge({ deltas, open, onToggle }: { deltas?: BoardDeltas; open: b
       </button>
       {open ? (
         <div className="absolute left-0 z-20 mt-1 w-72 max-w-[80vw] rounded border border-gray-200 bg-white p-2 text-xs shadow-lg">
-          {deltas?.since ? <div className="mb-1 text-xs text-slate-400">since {deltas.since}</div> : null}
+          {deltas?.since ? <div className="mb-1 text-xs text-[#6B7280]">since {deltas.since}</div> : null}
           {added.length ? (
             <div className="mb-1.5">
-              <div className="font-semibold text-slate-600">New ({added.length})</div>
+              <div className="font-semibold text-[#4B5563]">New ({added.length})</div>
               <ul className="mt-0.5 space-y-0.5">
                 {added.map((d) => (
-                  <li key={`add-${d.id}`} className="truncate text-slate-700" title={d.name || d.id}>
-                    <span className="font-mono text-xs text-slate-500">{d.id}</span>
+                  <li key={`add-${d.id}`} className="truncate text-[#1F2A44]" title={d.name || d.id}>
+                    <span className="font-mono text-xs text-[#6B7280]">{d.id}</span>
                     {d.name ? ` — ${d.name}` : ""}
                   </li>
                 ))}
@@ -1313,15 +1313,15 @@ function DeltasBadge({ deltas, open, onToggle }: { deltas?: BoardDeltas; open: b
           ) : null}
           {completed.length ? (
             <div>
-              <div className="font-semibold text-slate-600">Completed ({completed.length})</div>
+              <div className="font-semibold text-[#4B5563]">Completed ({completed.length})</div>
               <ul className="mt-0.5 space-y-0.5">
                 {completed.map((d) => (
-                  <li key={`done-${d.id}`} className="truncate text-slate-700" title={d.name || d.id}>
+                  <li key={`done-${d.id}`} className="truncate text-[#1F2A44]" title={d.name || d.id}>
                     <span className="rounded px-1 text-xs font-semibold" style={{ background: "#DCFCE7", color: "#166534" }}>
                       done
                     </span>{" "}
-                    <span className="font-mono text-xs text-slate-500">{d.id}</span>
-                    {d.pr ? <span className="ml-1 text-slate-500">{d.pr}</span> : null}
+                    <span className="font-mono text-xs text-[#6B7280]">{d.id}</span>
+                    {d.pr ? <span className="ml-1 text-[#6B7280]">{d.pr}</span> : null}
                   </li>
                 ))}
               </ul>
@@ -1374,16 +1374,16 @@ function TallyBar({ tally, totals, lastSyncedCt }: { tally?: TabTally; totals?: 
     <div className="space-y-1.5 rounded border border-gray-200 bg-white p-2">
       {hasProgress ? (
         <div className="space-y-1">
-          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-[#4B5563]">
             <span className="font-semibold tabular-nums">
               {typeof deployed === "number" ? deployed : "—"} of {typeof total === "number" ? total : "—"} deployed
               {typeof pct === "number" ? ` · ${pct}%` : ""}
             </span>
-            {lastSyncedCt ? <span className="text-xs text-slate-400">synced {lastSyncedCt}</span> : null}
+            {lastSyncedCt ? <span className="text-xs text-[#6B7280]">synced {lastSyncedCt}</span> : null}
           </div>
           {typeof pct === "number" ? (
             <div
-              className="h-1.5 w-full overflow-hidden rounded bg-slate-200"
+              className="h-1.5 w-full overflow-hidden rounded bg-[#E5E7EB]"
               role="progressbar"
               aria-valuenow={pct}
               aria-valuemin={0}
@@ -1406,7 +1406,7 @@ function TallyBar({ tally, totals, lastSyncedCt }: { tally?: TabTally; totals?: 
             </span>
           ) : null}
           {hasDeltas ? (
-            <span className="rounded px-2 py-0.5 tabular-nums text-slate-600" style={{ background: "#E2E8F0" }}>
+            <span className="rounded px-2 py-0.5 tabular-nums text-[#4B5563]" style={{ background: "#E2E8F0" }}>
               +{addedRecent ?? 0} added · {completedRecent ?? 0} completed (since last sync)
             </span>
           ) : null}
@@ -1415,18 +1415,18 @@ function TallyBar({ tally, totals, lastSyncedCt }: { tally?: TabTally; totals?: 
 
       {hasModules ? (
         <div className="flex flex-wrap items-center gap-1 text-xs">
-          <span className="font-semibold uppercase tracking-wide text-slate-500">Pending by module:</span>
+          <span className="font-semibold uppercase tracking-wide text-[#6B7280]">Pending by module:</span>
           {shown.map(([mod, n]) => (
             <span
               key={mod}
-              className="rounded px-1.5 py-0.5 tabular-nums text-slate-600"
+              className="rounded px-1.5 py-0.5 tabular-nums text-[#4B5563]"
               style={{ background: "#E2E8F0" }}
               title={`${mod}: ${n} pending`}
             >
               <span className="inline-block max-w-[140px] truncate align-bottom">{mod}</span> {n}
             </span>
           ))}
-          {moreCount > 0 ? <span className="text-slate-400">+{moreCount} more</span> : null}
+          {moreCount > 0 ? <span className="text-[#6B7280]">+{moreCount} more</span> : null}
         </div>
       ) : null}
     </div>
@@ -1446,7 +1446,7 @@ function LifecycleCell({ row }: { row: Row }) {
     { label: "Merged", ts: row.mergedCt },
     { label: "Render", ts: row.deployedCt, sha: row.deployNo, render: true },
   ];
-  if (!stages.some((s) => s.ts)) return <span className="text-slate-300">—</span>;
+  if (!stages.some((s) => s.ts)) return <span className="text-[#6B7280]">—</span>;
   return (
     <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs leading-tight">
       {stages.map((s, i) => {
@@ -1466,7 +1466,7 @@ function LifecycleCell({ row }: { row: Row }) {
                 {done ? formatDateTimeCt(s.ts ?? null) : "pending"}
               </span>
             </span>
-            {i < stages.length - 1 ? <span className="text-slate-300">·</span> : null}
+            {i < stages.length - 1 ? <span className="text-[#6B7280]">·</span> : null}
           </Fragment>
         );
       })}
@@ -1490,25 +1490,25 @@ function ThreadPanel({
   return (
     <div className="space-y-2">
       {questions.map((q) => (
-        <div key={q.id} className="rounded border-l-2 border-slate-300 bg-white px-3 py-2">
-          <div className="mb-0.5 flex items-center gap-2 text-xs text-slate-400">
-            <span className="font-semibold text-slate-500">Agent question</span>
+        <div key={q.id} className="rounded border-l-2 border-[#E5E7EB] bg-white px-3 py-2">
+          <div className="mb-0.5 flex items-center gap-2 text-xs text-[#6B7280]">
+            <span className="font-semibold text-[#6B7280]">Agent question</span>
             <span className="tabular-nums">{q.created_at_ct}</span>
           </div>
-          <div className="text-xs text-slate-800">{q.body}</div>
+          <div className="text-xs text-[#0F1219]">{q.body}</div>
         </div>
       ))}
       {answers.map((a) => (
         <div key={a.id} className="rounded border-l-2 px-3 py-2" style={{ borderColor: "#1F2A44", background: "#EAECF1" }}>
-          <div className="mb-0.5 flex items-center gap-2 text-xs text-slate-500">
+          <div className="mb-0.5 flex items-center gap-2 text-xs text-[#6B7280]">
             <span className="font-semibold">{a.author === "owner" ? "Jorge" : a.author}</span>
             <span className="tabular-nums">{a.created_at_ct}</span>
           </div>
-          <div className="text-xs text-slate-800">{a.body}</div>
+          <div className="text-xs text-[#0F1219]">{a.body}</div>
         </div>
       ))}
       {!questions.length && !answers.length ? (
-        <div className="text-xs text-slate-400">No agent question on file for {blockId ?? "this item"} yet — you can still add a note.</div>
+        <div className="text-xs text-[#6B7280]">No agent question on file for {blockId ?? "this item"} yet — you can still add a note.</div>
       ) : null}
       <AddNote placeholder="Type your answer…" onSubmit={onSubmit} submitting={submitting} compact />
     </div>
