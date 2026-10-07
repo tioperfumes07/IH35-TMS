@@ -1,5 +1,6 @@
 import { SelectCombobox } from "../../Combobox";
 import { MoneyInput } from "../MoneyInput";
+import { NumberInput } from "../NumberInput";
 import { ParityTable } from "../../parity/ParityTable";
 import { ReferenceSelect } from "../../parity/ReferenceSelect";
 import { QBO_MONEY_CELL_CLASS, formatUsdTable } from "../../../lib/money";
@@ -261,21 +262,21 @@ export function CostBreakdownBox({
                   key: "qty",
                   label: col.qty,
                   render: (line) => (
-                    <input
+                    <NumberInput
                       disabled={readOnly}
-                      type="number"
-                      min={0}
                       value={line.quantity}
-                      onChange={(event) =>
+                      decimals={4}
+                      onChange={(n) =>
                         onSectionAChange(
                           sectionA.lines.map((entry) => {
                             if (entry.id !== line.id) return entry;
-                            const quantity = Number(event.target.value || 0);
+                            const quantity = n ?? 0;
                             return { ...entry, quantity, amount: quantity * Number(entry.unit_cost || 0) };
                           })
                         )
                       }
-                      className="w-20 rounded-sm border border-gray-300 px-2 py-1"
+                      className="w-20"
+                      ariaLabel={col.qty}
                     />
                   ),
                 },
@@ -420,21 +421,21 @@ export function CostBreakdownBox({
                       </option>
                     ))}
                   </SelectCombobox>
-                  <input
+                  <NumberInput
                     disabled={readOnly}
-                    type="number"
-                    min={0}
                     value={line.quantity}
-                    onChange={(event) =>
+                    decimals={4}
+                    onChange={(n) =>
                       onSectionBChange(
                         sectionB.lines.map((entry) => {
                           if (entry.id !== line.id) return entry;
-                          const quantity = Number(event.target.value || 0);
+                          const quantity = n ?? 0;
                           return { ...entry, quantity, amount: quantity * Number(entry.unit_cost || 0) };
                         })
                       )
                     }
-                    className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                    className="w-20"
+                    ariaLabel="Quantity"
                     placeholder="Qty"
                   />
                   {/* M-1 dollars-mode: QBO display ($ + .00), unit_cost stays a DOLLAR number — payload byte-for-byte unchanged. */}
@@ -671,12 +672,11 @@ export function CostBreakdownBox({
                         ) : (
                           <div className="px-2 py-1 text-xs text-gray-500">No location</div>
                         )}
-                        <input
+                        <NumberInput
                           disabled={readOnly}
-                          type="number"
-                          min={0}
                           value={row.quantity}
-                          onChange={(event) =>
+                          decimals={4}
+                          onChange={(n) =>
                             onSectionBChange(
                               sectionB.lines.map((entry) =>
                                 entry.id !== line.id
@@ -685,14 +685,15 @@ export function CostBreakdownBox({
                                       ...entry,
                                       sub_rows: (entry.sub_rows ?? []).map((current) => {
                                         if (current.id !== row.id) return current;
-                                        const quantity = Number(event.target.value || 0);
+                                        const quantity = n ?? 0;
                                         return { ...current, quantity, amount: quantity * Number(current.unit_cost || 0) };
                                       }),
                                     }
                               )
                             )
                           }
-                          className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                          className="w-20"
+                          ariaLabel="Sub-row quantity"
                         />
                         {/* M-1 dollars-mode (sub-row): QBO display, unit_cost stays a DOLLAR number — payload unchanged. */}
                         <MoneyInput

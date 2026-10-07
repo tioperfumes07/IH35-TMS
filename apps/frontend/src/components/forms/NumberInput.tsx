@@ -73,8 +73,24 @@ export function NumberInput({
           setText(value ? String(value) : "");
         }}
         onChange={(e) => {
-          setText(e.target.value);
-          onChange?.(parseNumber(e.target.value, decimals));
+          const next = e.target.value;
+          setText(next);
+          // Same incomplete-hold as MoneyInput (SETL-F443 / QTY-DEC-ALL): trailing "."
+          // ("45.", "12.5.") must not emit — Number("45.") === 45 would wipe the decimal
+          // mid-keystroke and block diesel gallons / line qty / every fractional quantity.
+          const cleaned = next.replace(/[^0-9.-]/g, "");
+          if (
+            cleaned === "" ||
+            cleaned === "-" ||
+            cleaned === "." ||
+            cleaned === "-." ||
+            cleaned === "-0." ||
+            /\.$/.test(cleaned)
+          ) {
+            if (cleaned === "") onChange?.(null);
+            return;
+          }
+          onChange?.(parseNumber(next, decimals));
         }}
         onBlur={() => {
           setFocused(false);

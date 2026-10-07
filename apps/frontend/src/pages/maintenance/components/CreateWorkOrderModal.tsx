@@ -33,6 +33,7 @@ import { SimpleCombobox as Combobox, SelectCombobox } from "../../../components/
 import { EntityPicker } from "../../../components/EntityPicker";
 import { ParityTable } from "../../../components/parity/ParityTable";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { NumberInput } from "../../../components/forms/NumberInput";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
 import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
 import { TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
@@ -1040,13 +1041,12 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                     className: "text-right",
                     alwaysVisible: true,
                     render: (row) => (
-                      <input
-                        type="number"
-                        step="1"
-                        min="0"
+                      <NumberInput
                         value={row.quantity}
-                        onChange={(e) => patchEditLine(row._idx, { quantity: Number(e.target.value) })}
-                        className={`${FLD} text-right`}
+                        decimals={4}
+                        onChange={(n) => patchEditLine(row._idx, { quantity: n ?? 0 })}
+                        ariaLabel={`Line ${row._idx + 1} quantity`}
+                        className="w-full"
                       />
                     ),
                   },
