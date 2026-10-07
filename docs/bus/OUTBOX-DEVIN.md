@@ -119,3 +119,6 @@ DONE: PR #25768 · squash db4173053cac67b92adde8c189de6d184084f068 · money-pr-l
 
 ## 2026-10-07 — drain: classify 25 live-DB verify-* guards with REQUIRES_LIVE_DB
 DONE: PR #25774 · squash 21e6695899a5d7a83d7c6adc7d55cc9714bd75e1 · money-pr-local-gate exit 0 · added REQUIRES_LIVE_DB to 25 Neon-reading guards so static sweep skips them; verify-driver-profile-linkage.mjs left untouched because it surfaces a real live data defect (2 active drivers with empty document blocks) requiring its own vertical slice · baseline-lines-added = 0
+
+## 2026-10-08 — drain: shared-types import + master-data create guard re-anchor + scoreboard regeneration
+DONE: PR #25778 · squash d8978520b9dec8f88abf6854065a5d357afff6e1 · money-pr-local-gate exit 0 · fixed LoadDetailDrawer.tsx @ih35/shared-types type import; re-anchored verify-master-data-create-targets.mjs to accept NewCustomerDrawerForm delegation and invalidatePartsStockQueries reload; regenerated program-scoreboard artifacts · baseline-lines-added = 0
