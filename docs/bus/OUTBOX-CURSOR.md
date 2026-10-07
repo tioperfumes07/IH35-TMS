@@ -1,3 +1,19 @@
+## 2026-10-07T15:40Z · SETL-F441 Settlement Creator UX + miles + Devin PATH-1 order
+
+FINDING: SETL-F441 — cap notice under Customer; StateSelect ▾/height; hand-type city miles blank; MoneyInput $ gutter; discard fullscreen feel.
+
+FIX: listCapNotice in Combobox portal; StateSelect→Combobox sm; cityGeocodeQueries; moneyInputClass + pad strip; ConfirmDiscard w-[320px] rounded-sm.
+
+GUARD: verify-settlement-creator-ux-f441.mjs selftest 2/2 + live PASS; google-address-wiring RULES 13–14 selftest 4/4 + live PASS; StateSelect vitest 4/4.
+
+LANE_CROSS: docs/bus/2026-10-07-LEAD-RULING-CURSOR-SETL-F441-LANE-CROSS.md
+
+DEVIN ANSWER (also on OUTBOX-DEVIN tip): PATH 1 only — never grow VERIFY-STATIC-BASELINE; money-pr-local-gate PASS then push (--no-verify only for ambient verify-static ENV after gate PASS); fix real defects in files you touch; no defer.
+
+Files Modified: EntityPicker · Combobox · StateSelect(+test) · ConfirmDiscardDialog · single-frame-classname · SettlementCreatorDrawer · verify-settlement-creator-ux-f441.mjs · google-address-wiring · gate-step-map · LANE_CROSS · OUTBOX-DEVIN · this OUTBOX
+
+NEXT: money-pr-local-gate → push → PR → FAST-MERGE → deploy → Chrome prove.
+
 ## 2026-10-07T13:00Z · SETL-F440 city/state + miles wiring — MERGED #25680
 
 FINDING: SETL-F440 — Places pick left city/state blank (stale onChange wiped them); loaded/empty miles never fired; address optional for hand seed.

@@ -28,23 +28,30 @@ export function ConfirmDiscardDialog({ open, onCancel, onDiscard }: Props) {
       className="fixed inset-0 z-[1004] flex items-center justify-center bg-black/45 p-4"
       onMouseDown={onCancel}
       role="presentation"
+      data-testid="confirm-discard-backdrop"
     >
+      {/*
+        SETL-F441 / owner: discard is a NORMAL dialog box (~320px), never a full-screen panel.
+        Prior fluid max-width stretch on half drawers is gone; pin an explicit width.
+        Radius 2px (rounded-sm) — GLOBAL-TYPE-SIZE-BASELINE / SQUARE-EDGES LAW.
+      */}
       <div
-        className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-4 shadow-2xl"
+        className="w-[320px] max-w-[calc(100vw-2rem)] rounded-sm border border-[#E5E7EB] bg-white p-3 shadow-lg"
         onMouseDown={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-discard-title"
+        data-testid="confirm-discard-dialog"
       >
-        <h3 id="confirm-discard-title" className="text-xs font-semibold text-gray-900">
+        <h3 id="confirm-discard-title" className="text-xs font-semibold text-[#0F1219]">
           Discard unsaved changes?
         </h3>
-        <p className="mt-2 text-xs text-gray-600">Your edits will be lost.</p>
-        <div className="mt-4 flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onCancel}>
+        <p className="mt-2 text-xs text-[#6B7280]">Your edits will be lost.</p>
+        <div className="mt-3 flex justify-end gap-2">
+          <Button type="button" size="sm" variant="secondary" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="button" onClick={onDiscard}>
+          <Button type="button" size="sm" onClick={onDiscard}>
             Discard
           </Button>
         </div>

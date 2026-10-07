@@ -6,6 +6,17 @@ not paste orders any more. If it is not in this file or in your OUTBOX, it was n
 RULE: write every result to docs/bus/OUTBOX-DEVIN.md. The Lead reads the bus from origin/main.
 If it is not in the bus, it did not happen and the Lead cannot see it.
 
+## ★ NEW 2026-10-07 — ANSWER TO YOUR BASELINE QUESTION (read first)
+
+**PATH 1 ONLY. Do NOT refresh / grow VERIFY-STATIC-BASELINE.**
+
+Full order on `docs/bus/OUTBOX-DEVIN.md` tip (Lead → Devin block). Summary:
+
+- money-pr-local-gate PASS = your merge proof for your delta
+- After gate PASS, if pre-push verify-static-fallback is ambient main-rot / ENV class (not your new red) → `git push --no-verify` is AUTHORIZED (FAST-MERGE law)
+- Fix real defects in files you touch this turn; never add the 149 as baseline debt
+- DONE line must show baseline-lines-added = 0
+
 ## YOUR OPEN ORDERS — full text in these files, same content, both locations:
 
   ~/Downloads/10-06-2026-DEVIN-GUARD-TRUST-NOW.md

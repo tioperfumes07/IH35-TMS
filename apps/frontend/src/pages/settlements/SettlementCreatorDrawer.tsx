@@ -16,7 +16,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { StateSelect } from "../../components/forms/StateSelect";
 import { AddressGeocodeInput } from "../../components/dispatch/AddressGeocodeInput";
-import type { GeocodeResult } from "../../api/geocoding";
+import { geocodeSearch, type GeocodeResult } from "../../api/geocoding";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { formatUsdCents, formatUsdCentsTable } from "../../lib/money";
@@ -414,6 +414,8 @@ function LineCoding({
 /** Locked baseline: 28px clickable boxes, 12px body, 2px radius, equal paired widths. */
 const inputClass =
   "h-7 w-full min-w-0 rounded-sm border border-[#E5E7EB] px-2 text-left text-xs text-[#0F1219]";
+/** MoneyInput owns h-7 + leading $ frame — never forward border/px (SYS-MONEY / SETL-F441). */
+const moneyInputClass = "w-full";
 const fieldGridClass = "grid grid-cols-2 gap-2";
 const pickerSize = "sm" as const;
 
@@ -554,10 +556,77 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     );
   }, [driverPayCardQuery.data]);
 
-  // SETL-F440 — lane history + chain deadhead + route-engine fallback, PER load row.
-  // Book Load fills practical from lane history; when history has no row, the route engine
-  // (getRouteMileage) supplies practical from the geocoded lat/lng. Google Routes stays
-  // REFERENCE ONLY (DSP-48) and is never written into loaded/empty miles here.
+  // SETL-F440/F441 — lane history + chain deadhead + route-engine fallback, PER load row.
+  // Hand-typed city/state (no Places pick) has no lat/lng — geocodeSearch fills coords so the
+  // route engine can run. Google Routes API stays REFERENCE ONLY (DSP-48) and is never written.
+  function hasFiniteCoord(n: number | null | undefined): n is number {
+    return typeof n === "number" && Number.isFinite(n) && n !== 0;
+  }
+
+  const cityGeocodeQueries = useQueries({
+    queries: loads.flatMap((load, idx) => {
+      const sides: Array<{ side: "pickup" | "delivery"; city: string; state: string; has: boolean }> = [
+        {
+          side: "pickup",
+          city: String(load.pickup_city ?? "").trim(),
+          state: String(load.pickup_state ?? "").trim(),
+          has: hasFiniteCoord(load.pickup_lat) && hasFiniteCoord(load.pickup_lng),
+        },
+        {
+          side: "delivery",
+          city: String(load.delivery_city ?? "").trim(),
+          state: String(load.delivery_state ?? "").trim(),
+          has: hasFiniteCoord(load.delivery_lat) && hasFiniteCoord(load.delivery_lng),
+        },
+      ];
+      return sides.map(({ side, city, state, has }) => ({
+        queryKey: ["sc-city-geocode", companyId, idx, side, city, state],
+        queryFn: () => geocodeSearch(`${city}, ${state}`),
+        enabled:
+          open &&
+          Boolean(companyId) &&
+          !wrongEntity &&
+          Boolean(city && state) &&
+          !has,
+        staleTime: 10 * 60 * 1000,
+      }));
+    }),
+  });
+
+  useEffect(() => {
+    setLoads((prev) => {
+      let changed = false;
+      const next = prev.map((cur, idx) => {
+        let row = cur;
+        const pickupQ = cityGeocodeQueries[idx * 2]?.data;
+        const deliveryQ = cityGeocodeQueries[idx * 2 + 1]?.data;
+        const pickupHit = pickupQ?.results?.[0];
+        const deliveryHit = deliveryQ?.results?.[0];
+        if (
+          pickupHit &&
+          hasFiniteCoord(pickupHit.lat) &&
+          hasFiniteCoord(pickupHit.lon) &&
+          !(hasFiniteCoord(row.pickup_lat) && hasFiniteCoord(row.pickup_lng))
+        ) {
+          row = { ...row, pickup_lat: pickupHit.lat, pickup_lng: pickupHit.lon };
+          changed = true;
+        }
+        if (
+          deliveryHit &&
+          hasFiniteCoord(deliveryHit.lat) &&
+          hasFiniteCoord(deliveryHit.lon) &&
+          !(hasFiniteCoord(row.delivery_lat) && hasFiniteCoord(row.delivery_lng))
+        ) {
+          row = { ...row, delivery_lat: deliveryHit.lat, delivery_lng: deliveryHit.lon };
+          changed = true;
+        }
+        return row;
+      });
+      return changed ? next : prev;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cityGeocodeQueries.map((q) => q.dataUpdatedAt).join(",")]);
+
   const laneMileageQueries = useQueries({
     queries: loads.map((load, idx) => {
       const originCity = String(load.pickup_city ?? "").trim();
@@ -603,18 +672,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
       const dLat = load.delivery_lat;
       const dLng = load.delivery_lng;
       const hasCoords =
-        typeof oLat === "number" &&
-        Number.isFinite(oLat) &&
-        oLat !== 0 &&
-        typeof oLng === "number" &&
-        Number.isFinite(oLng) &&
-        oLng !== 0 &&
-        typeof dLat === "number" &&
-        Number.isFinite(dLat) &&
-        dLat !== 0 &&
-        typeof dLng === "number" &&
-        Number.isFinite(dLng) &&
-        dLng !== 0;
+        hasFiniteCoord(oLat) && hasFiniteCoord(oLng) && hasFiniteCoord(dLat) && hasFiniteCoord(dLng);
       return {
         queryKey: ["sc-route-mileage", companyId, idx, oLat, oLng, dLat, dLng],
         queryFn: () =>
@@ -665,12 +723,16 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
         let row = cur;
         const lane = laneMileageQueries[idx]?.data;
         const route = routeMileageQueries[idx]?.data;
+        // Prefer lane DB (fills covers Thin/ZIP/reverse). Route-engine practical is coords fallback.
         const laneMiles =
-          lane && lane.practical_miles != null && Number(lane.practical_miles) > 0
+          lane &&
+          lane.fills &&
+          lane.practical_miles != null &&
+          Number(lane.practical_miles) > 0
             ? Number(lane.practical_miles)
-            : null;
-        // Creator seeds AlwaysTrack history: fill whenever the catalog has practical miles
-        // (fills=true covers thin / ZIP / reverse). Route-engine practical is the coords fallback.
+            : lane && lane.practical_miles != null && Number(lane.practical_miles) > 0
+              ? Number(lane.practical_miles)
+              : null;
         const routeMiles =
           route && "practical_miles" in route && route.practical_miles != null && Number(route.practical_miles) > 0
             ? Number(route.practical_miles)
@@ -696,14 +758,16 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- data refs change per query result
   }, [
-    laneMileageQueries.map((q) => q.dataUpdatedAt).join(","),
-    routeMileageQueries.map((q) => q.dataUpdatedAt).join(","),
-    chainDeadheadQueries.map((q) => q.dataUpdatedAt).join(","),
+    laneMileageQueries.map((q) => `${q.dataUpdatedAt}:${q.status}`).join(","),
+    routeMileageQueries.map((q) => `${q.dataUpdatedAt}:${q.status}`).join(","),
+    chainDeadheadQueries.map((q) => `${q.dataUpdatedAt}:${q.status}`).join(","),
+    loads.map((l) => `${l.pickup_city}|${l.pickup_state}|${l.delivery_city}|${l.delivery_state}|${l.pickup_lat}|${l.delivery_lat}`).join(";"),
   ]);
 
   const laneMileageFetching = laneMileageQueries.some((q) => q.isFetching);
   const routeMileageFetching = routeMileageQueries.some((q) => q.isFetching);
   const chainDeadheadFetching = chainDeadheadQueries.some((q) => q.isFetching);
+  const cityGeocodeFetching = cityGeocodeQueries.some((q) => q.isFetching);
 
   function addLoadRow() {
     const nextNum = nextSequentialLoadNumber(loads, peekLoadBase || "0");
@@ -1393,9 +1457,11 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         });
                       }}
                       title={
-                        laneMileageFetching || routeMileageFetching
+                        laneMileageFetching || routeMileageFetching || cityGeocodeFetching
                           ? "Looking up loaded miles…"
-                          : "Filled from lane history, else route engine when city/state (and coords) are set"
+                          : !load.pickup_city || !load.pickup_state || !load.delivery_city || !load.delivery_state
+                            ? "Set pickup + delivery city and state — miles fill from lane DB, else route engine"
+                            : "Filled from lane history (our DB), else route engine once city/state geocode"
                       }
                       data-testid={`sc-load-loaded-miles-${idx}`}
                     />
@@ -1420,16 +1486,18 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       title={
                         !unitId
                           ? "Pick a unit — empty miles fill from that truck's last delivery → this pickup"
-                          : chainDeadheadFetching
-                            ? "Looking up this unit's last delivery…"
-                            : "Filled from this truck's last delivery → this pickup (chain deadhead)"
+                          : !load.pickup_city || !load.pickup_state
+                            ? "Set pickup city + state — empty miles use this truck's last delivery → pickup"
+                            : chainDeadheadFetching
+                              ? "Looking up this unit's last delivery…"
+                              : "Filled from this truck's last delivery → this pickup (chain deadhead)"
                       }
                       data-testid={`sc-load-empty-miles-${idx}`}
                     />
                   </Field>
                   <Field label="Empty $/mi">
                     <MoneyInput
-                      className={inputClass}
+                      className={moneyInputClass}
                       valueCents={load.empty_rate_cents}
                       onChangeCents={(cents) => {
                         ratesTouchedRef.current = true;
@@ -1442,7 +1510,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   </Field>
                   <Field label="Rate $/mi">
                     <MoneyInput
-                      className={inputClass}
+                      className={moneyInputClass}
                       valueCents={load.line_haul_rate_cents}
                       onChangeCents={(cents) => {
                         ratesTouchedRef.current = true;
@@ -1455,7 +1523,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   </Field>
                   <Field label="Revenue">
                     <MoneyInput
-                      className={inputClass}
+                      className={moneyInputClass}
                       valueCents={load.line_haul_amount_cents}
                       onChangeCents={(cents) => {
                         const next = [...loads];
@@ -1483,7 +1551,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   </Field>
                   <Field label="Accessorial $">
                     <MoneyInput
-                      className={inputClass}
+                      className={moneyInputClass}
                       valueCents={load.accessorials?.[0]?.amount_cents || null}
                       onChangeCents={(cents) => {
                         const next = [...loads];
@@ -1641,7 +1709,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   </Field>
                   <Field label="CPG">
                     <MoneyInput
-                      className={inputClass}
+                      className={moneyInputClass}
                       valueCents={fuel.cpg_cents || null}
                       onChangeCents={(c) => {
                         const next = [...fuels];
@@ -1653,7 +1721,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   </Field>
                   <Field label="Receipt">
                     <MoneyInput
-                      className={inputClass}
+                      className={moneyInputClass}
                       valueCents={fuel.receipt_cents ?? null}
                       onChangeCents={(c) => {
                         const next = [...fuels];
@@ -1747,7 +1815,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   </Field>
                   <Field label="Amount">
                     <MoneyInput
-                      className={inputClass}
+                      className={moneyInputClass}
                       valueCents={exp.amount_cents || null}
                       onChangeCents={(c) => {
                         const next = [...companyExpenses];
@@ -1809,7 +1877,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               <Field label="PDF company EXPENSES total">
                 <div data-testid="sc-pdf-company">
                   <MoneyInput
-                    className={inputClass}
+                    className={moneyInputClass}
                     valueCents={pdfCompanyExpenses || null}
                     onChangeCents={(c) => setPdfCompanyExpenses(c ?? 0)}
                     ariaLabel="PDF company expenses"
@@ -1878,7 +1946,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   </Field>
                   <Field label="Amount">
                     <MoneyInput
-                      className={inputClass}
+                      className={moneyInputClass}
                       valueCents={exp.amount_cents || null}
                       onChangeCents={(c) => {
                         const next = [...drvReimbursements];
@@ -1964,7 +2032,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   </Field>
                   <Field label="Amount">
                     <MoneyInput
-                      className={inputClass}
+                      className={moneyInputClass}
                       valueCents={row.amount_cents || null}
                       onChangeCents={(c) => {
                         const next = [...additionalPay];
@@ -1997,7 +2065,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               <Field label="Admin fee (7200)">
                 <div data-testid="sc-admin-fee">
                   <MoneyInput
-                    className={inputClass}
+                    className={moneyInputClass}
                     valueCents={adminFeeCents || null}
                     onChangeCents={(c) => setAdminFeeCents(c ?? 0)}
                     ariaLabel="Admin fee"
@@ -2019,7 +2087,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   </Field>
                   <Field label="Amount">
                     <MoneyInput
-                      className={inputClass}
+                      className={moneyInputClass}
                       valueCents={row.amount_cents || null}
                       onChangeCents={(c) => {
                         const next = [...deductions];
@@ -2053,7 +2121,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   </Field>
                   <Field label="Amount">
                     <MoneyInput
-                      className={inputClass}
+                      className={moneyInputClass}
                       valueCents={row.amount_cents || null}
                       onChangeCents={(c) => {
                         const next = [...advances];
@@ -2112,7 +2180,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   </Field>
                   <Field label="Amount">
                     <MoneyInput
-                      className={inputClass}
+                      className={moneyInputClass}
                       valueCents={row.amount_cents || null}
                       onChangeCents={(c) => {
                         const next = [...escrow];
@@ -2153,7 +2221,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               <Field label="PDF TOTAL DUE">
                 <div data-testid="sc-pdf-driver">
                   <MoneyInput
-                    className={inputClass}
+                    className={moneyInputClass}
                     valueCents={pdfDriverNet || null}
                     onChangeCents={(c) => setPdfDriverNet(c ?? 0)}
                     ariaLabel="PDF driver total due"

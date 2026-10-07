@@ -97,6 +97,13 @@ type ComboboxProps = {
    * nor `id` — the wrapping label already provides an accessible name via implicit association.
    */
   ariaLabel?: string;
+  /**
+   * SETL-F441 — optional truncation disclosure rendered INSIDE the open listbox only.
+   * EntityPicker used to park CappedListNotice under the field label ("Customer") permanently —
+   * "Showing the first 201. Type to search…" — which is wrong for dense forms. Cap honesty stays;
+   * it only appears when the operator opens the picker.
+   */
+  listCapNotice?: ReactNode;
 };
 
 const MAX_VISIBLE_OPTIONS = 50;
@@ -188,6 +195,7 @@ export function Combobox({
   searchIsValue = false,
   ariaLabel,
   size = "md",
+  listCapNotice,
 }: ComboboxProps) {
   const controlSizeClass = size === "sm" ? FORM_FIELD_CONTROL_SIZE_CLASS : FILTER_CONTROL_SIZE_CLASS;
   const [open, setOpen] = useState(false);
@@ -494,7 +502,12 @@ export function Combobox({
             {!loading && filteredOptions.length === 0 && !showAddNew ? (
               <div className="px-2 py-1.5 text-xs text-gray-500">No matches</div>
             ) : null}
-            {!loading && localBrowseTruncated ? (
+            {!loading && listCapNotice ? (
+              <div className="border-b border-slate-100 bg-slate-50 px-2 py-1.5" data-testid="combobox-list-cap-notice">
+                {listCapNotice}
+              </div>
+            ) : null}
+            {!loading && !listCapNotice && localBrowseTruncated ? (
               <div
                 className="border-b border-slate-100 bg-slate-50 px-2 py-1.5 text-[11px] text-slate-600"
                 data-testid="combobox-truncated-notice"
