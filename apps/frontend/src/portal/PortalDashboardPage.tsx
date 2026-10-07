@@ -32,7 +32,7 @@ const COLUMNS: Array<ParityColumn<PortalLoadRow>> = [
         kind="portal_load"
         id={load.id}
         label={load.load_number}
-        className="font-medium text-slate-700 hover:underline"
+        className="font-medium text-[#1F2A44] hover:underline"
       />
     ),
   },
@@ -41,7 +41,7 @@ const COLUMNS: Array<ParityColumn<PortalLoadRow>> = [
     label: "Route",
     sortable: true,
     sortValue: (load) => formatRoute(load),
-    render: (load) => <span className="text-slate-700">{formatRoute(load)}</span>,
+    render: (load) => <span className="text-[#1F2A44]">{formatRoute(load)}</span>,
   },
   {
     key: "status",
@@ -67,8 +67,8 @@ export function PortalDashboardPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-page-title font-semibold text-slate-900">Your loads</h1>
-        <p className="text-xs text-slate-600">Active and recent shipments for your account.</p>
+        <h1 className="text-page-title font-semibold text-[#0F1219]">Your loads</h1>
+        <p className="text-xs text-[#4B5563]">Active and recent shipments for your account.</p>
       </div>
 
       {loadsQuery.isError ? (
