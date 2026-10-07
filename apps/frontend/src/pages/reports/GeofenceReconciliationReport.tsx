@@ -5,7 +5,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
-import { formatDateUS, mmmDdTime, mmmDd } from "../../lib/formatDate";
+import { formatDateUS, mmmDdTime } from "../../lib/formatDate";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
