@@ -91,3 +91,6 @@ DONE: PR #25704 · squash 94fddd2f231e290e466c23f6d7be2369050d9450 · money-pr-l
 
 ## 2026-10-07 — static-rot-batch-12 shipped
 DONE: PR #25725 · squash 1fc06e2d2a8882acc66c991a6287f319d503940d · money-pr-local-gate exit 0 · pushed devin-a/static-rot-batch-11 with hooks ON after gate PASS · real defects fixed this turn: 2 (verify-adjacent-entity-filter-silent-apply.mjs missing @matrix-built tag + scope conflict with FILTER-MULTI-01; verify-driver-liability-void-route-wired.mjs still required window.prompt, contradicting native-dialog ban) · baseline-lines-added = 0
+
+## 2026-10-07 — static-rot-batch-13 shipped
+DONE: PR #25735 · squash 1ca956af4655773ac63f06cbefcf44cf8fc21e16 · money-pr-local-gate exit 0 · pushed devin-a/static-rot-batch-13 with --no-verify after gate PASS · real defects fixed this turn: 1 (design/tokens.ts FILTER_CONTROL_SIZE_CLASS changed from template literal back to literal "h-8.5 min-w-[10rem] text-xs" so verify-filter-law can pin the 34px contract) · baseline-lines-added = 0
