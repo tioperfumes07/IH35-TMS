@@ -1,3 +1,22 @@
+## 2026-10-07T13:00Z · SETL-F440 city/state + miles wiring — MERGED #25680
+
+FINDING: SETL-F440 — Places pick left city/state blank (stale onChange wiped them); loaded/empty miles never fired; address optional for hand seed.
+
+MERGED: #25680 squash `756a0f8edd` on origin/main.
+Branch: cursor/settlement-creator-geocode-miles-c89b
+
+FIX: functional setLoads + ignoreGeocodeFormattedRef; applyGeocodeToLoad street/city/state/zip/lat; per-load lane → route-engine loaded miles + chain empty miles.
+
+GUARD: verify-settlement-creator-google-address-wiring.mjs RULES 10–12 — selftest 4/4 + live PASS; money-pr-local-gate PASS.
+
+LIVE PROOF: guard exit 0; squash on main 756a0f8edd.
+
+REMAINING: Chrome after deploy — pick place → city+state fill; miles fill with unit + both cities.
+
+Files Modified: SettlementCreatorDrawer.tsx · verify-settlement-creator-google-address-wiring.mjs
+
+NEXT: Chrome prove SETL-F440 on deployed sha; drain INBOX measured-open.
+
 ## 2026-10-07T09:30Z · SETL-F439 Settlement Creator Google address wiring — MERGED #25677
 
 FINDING: SETL-F439 — Creator stops not on Book Load Google Places path; UUID customer; blank period; missing miles+$/mi; rate invoice subtotal; Cancel bypassed discard.
