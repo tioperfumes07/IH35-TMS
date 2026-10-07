@@ -3,9 +3,11 @@
  * verify-adjacent-entity-filter-silent-apply.mjs
  * CLS-ADJACENT-ENTITY-FILTER-SILENT-APPLY
  *
- * Nine list surfaces must not mount company-scoped EntityPickers beside
- * CollapsedListFilters that write URL/query immediately. Entity FKs belong in
- * the same staged tuple and commit only on Apply.
+ * @matrix-built {"modules":["accounting","driver_finance","fuel","legal","maintenance"],"cols":["ui_interactions","connectivity"],"task":"CLS-ADJACENT-ENTITY-FILTER-SILENT-APPLY","vertical":"class-sweep"}
+ *
+ * Non-MoneyListToolbar list surfaces must not mount company-scoped EntityPickers
+ * beside CollapsedListFilters that write URL/query immediately. Entity FKs belong
+ * in the same staged tuple and commit only on Apply.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -24,36 +26,12 @@ const TARGETS = [
     entityKeys: ["driverId", "unitId"],
   },
   {
-    file: "apps/frontend/src/pages/accounting/BillsPage.tsx",
-    entityKeys: ["unitId", "loadId"],
-  },
-  {
     file: "apps/frontend/src/pages/accounting/VendorCreditsPage.tsx",
     entityKeys: ["vendorId"],
   },
   {
-    file: "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
-    entityKeys: ["sourceLoadId"],
-  },
-  {
-    file: "apps/frontend/src/pages/accounting/FactoringListPage.tsx",
-    entityKeys: ["loadId"],
-  },
-  {
-    file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx",
-    entityKeys: ["loadId", "driverId", "unitId", "trailerId"],
-  },
-  {
-    file: "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
-    entityKeys: ["driverId"],
-  },
-  {
     file: "apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx",
     entityKeys: ["driverId", "loadId"],
-  },
-  {
-    file: "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
-    entityKeys: ["driverId", "unitId", "loadId", "trailerId"],
   },
 ];
 
