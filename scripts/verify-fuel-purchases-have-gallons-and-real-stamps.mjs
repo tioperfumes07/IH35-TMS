@@ -10,6 +10,8 @@
  * DEF rows with no gallons are reported, not failed: their source (Faro settlement lines,
  * quantity=1.0 placeholder) never had gallons, and DEF is not motor fuel.
  */
+export const REQUIRES_LIVE_DB = "Neon live verification required";
+
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";

@@ -8,6 +8,8 @@
  * Live check: no source_load_id may have >1 active (non-void, non-draft) TMS invoice per opco.
  * Empty duplicate set is not vacuous — also asserts uq_invoices_source_load_active exists on prod.
  */
+export const REQUIRES_LIVE_DB = "Neon live verification required";
+
 import fs from "node:fs";
 import path from "node:path";
 import pg from "pg";

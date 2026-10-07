@@ -9,6 +9,8 @@
  *             touching mdata.qbo_vendors, and the vendor page mounts every block; live: open bills that resolve to no
  *             same-company mdata.vendors row (their A/P is missing from every profile) must not exceed the baseline.
  */
+export const REQUIRES_LIVE_DB = "Neon live verification required";
+
 import { readFileSync } from "node:fs";
 import pg from "pg";
 

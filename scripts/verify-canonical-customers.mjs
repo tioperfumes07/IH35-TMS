@@ -9,6 +9,8 @@
  *             empty reason, and the customer page mounts every block; live: every open invoice belongs to a
  *             customer row in its own company, so the profile's AR ties to the company's AR to the cent.
  */
+export const REQUIRES_LIVE_DB = "Neon live verification required";
+
 import { readFileSync } from "node:fs";
 import pg from "pg";
 

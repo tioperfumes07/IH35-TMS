@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+export const REQUIRES_LIVE_DB = "Neon live verification required";
+
 // ROUND 166 JOB 2: three driver bills minted with $0.00 gross in three DIFFERENT failure shapes,
 // which is exactly why one narrow check missed them:
 //   13618/13621 (already fixed, AUTH-097) -- real miles+rate existed, bill was stale/orphaned.
