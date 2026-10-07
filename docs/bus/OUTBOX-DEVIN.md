@@ -88,3 +88,6 @@ DONE: PR #25703 · squash 17282c0a774b019319a9347b71750cd0928cfda3 · money-pr-l
 
 ## 2026-10-07 — static-rot-batch-11 shipped
 DONE: PR #25704 · squash 94fddd2f231e290e466c23f6d7be2369050d9450 · money-pr-local-gate exit 0 · pushed devin-a/static-rot-batch-11 with --no-verify after gate PASS · real defects fixed this turn: 19 live-only DB guards reclassified with REQUIRES_LIVE_DB so verify-static no longer counts their no-DB SKIP as rot · baseline-lines-added = 0
+
+## 2026-10-07 — static-rot-batch-12 shipped
+DONE: PR #25725 · squash 1fc06e2d2a8882acc66c991a6287f319d503940d · money-pr-local-gate exit 0 · pushed devin-a/static-rot-batch-11 with hooks ON after gate PASS · real defects fixed this turn: 2 (verify-adjacent-entity-filter-silent-apply.mjs missing @matrix-built tag + scope conflict with FILTER-MULTI-01; verify-driver-liability-void-route-wired.mjs still required window.prompt, contradicting native-dialog ban) · baseline-lines-added = 0
