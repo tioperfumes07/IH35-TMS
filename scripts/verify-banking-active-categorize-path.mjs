@@ -74,9 +74,14 @@ export function evaluateActiveCategorizePath(input) {
     failures.push(`${DESIGN_VIEW_REL} — live register must call categorizeBankTransaction(`);
   }
   // Deep-link honesty: ?type=uncategorized must update the filter after mount (not mount-only useState).
-  if (!designViewSrc.includes("setSelectedTransactionType(initialTransactionType")) {
+  // ROUND 432 multi-select: state is selectedTransactionTypes[] — sync via setSelectedTransactionTypes([initial…]).
+  // Singular setSelectedTransactionType is retired; do not re-pin the old needle.
+  if (
+    !designViewSrc.includes("setSelectedTransactionTypes([initialTransactionType") &&
+    !designViewSrc.includes("setSelectedTransactionType(initialTransactionType")
+  ) {
     failures.push(
-      `${DESIGN_VIEW_REL} — must sync selectedTransactionType when initialTransactionType changes (deep-link ?type=)`,
+      `${DESIGN_VIEW_REL} — must sync selectedTransactionTypes when initialTransactionType changes (deep-link ?type=)`,
     );
   }
 
@@ -149,7 +154,8 @@ function runSelftest() {
   const goodHome =
     'searchParams.get("type") === "uncategorized" setTransactionsInitialFilter("uncategorized") <BankingTransactionsDesignView';
   const goodDetail = "<BankingTransactionsDesignView selectedAccountId={id} />";
-  const goodDesign = "categorizeBankTransaction( setSelectedTransactionType(initialTransactionType";
+  const goodDesign =
+    "categorizeBankTransaction( setSelectedTransactionTypes([initialTransactionType]); useEffect";
   const goodOld = `${ARCHIVE_MARKER} superseded`;
 
   const cases = [
