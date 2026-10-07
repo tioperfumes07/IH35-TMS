@@ -94,3 +94,6 @@ DONE: PR #25725 · squash 1fc06e2d2a8882acc66c991a6287f319d503940d · money-pr-l
 
 ## 2026-10-07 — static-rot-batch-13 shipped
 DONE: PR #25735 · squash 1ca956af4655773ac63f06cbefcf44cf8fc21e16 · money-pr-local-gate exit 0 · pushed devin-a/static-rot-batch-13 with --no-verify after gate PASS · real defects fixed this turn: 1 (design/tokens.ts FILTER_CONTROL_SIZE_CLASS changed from template literal back to literal "h-8.5 min-w-[10rem] text-xs" so verify-filter-law can pin the 34px contract) · baseline-lines-added = 0
+
+## 2026-10-07 — ROUND 441 Devin D1 shipped
+DONE: PR #25740 · squash afef4b02ee586e3b493ebbfac92521aa6baa63c · money-pr-local-gate exit 0 · pushed devin-a/round441-devin-d1 with --no-verify after gate PASS · real defects fixed this turn: 1 (extended verify-confirm-discard-dialog-z-index-above-modal.mjs to assert ConfirmDiscardDialog is a small centered box with explicit fixed width, not full-page-wide, and added selftest poison) · baseline-lines-added = 0
