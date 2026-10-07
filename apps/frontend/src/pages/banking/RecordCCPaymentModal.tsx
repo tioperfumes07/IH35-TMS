@@ -117,24 +117,31 @@ export function RecordCCPaymentModal({
     [vendorsQuery.data?.vendors]
   );
 
-  const liabilityOptions = useMemo(
-    () =>
-      (accountsQuery.data?.accounts ?? [])
-        .filter(
-          (acct) =>
-            acct.is_postable &&
-            !acct.deactivated_at &&
-            (acct.account_type === "Liability" ||
-              String(acct.account_subtype ?? "").toLowerCase().includes("credit") ||
-              String(acct.account_name ?? "").toLowerCase().includes("credit card"))
-        )
-        .map((acct) => ({
-          value: acct.id,
-          label: acct.account_name,
-          type: acct.account_type ?? undefined,
-        })),
-    [accountsQuery.data?.accounts]
-  );
+  // R441-C3 — Card liability picker offers ONLY children of the "Credit Cards" COA parent
+  // (CC-1 A1). Never every Liability. Empty until that parent exists so the moment A1 lands
+  // the filter is already correct.
+  const liabilityOptions = useMemo(() => {
+    const accounts = accountsQuery.data?.accounts ?? [];
+    const creditCardsParent = accounts.find(
+      (acct) =>
+        !acct.deactivated_at &&
+        String(acct.account_name ?? "").trim().toLowerCase() === "credit cards" &&
+        (acct.parent_account_id == null || String(acct.parent_account_id).trim() === "")
+    );
+    if (!creditCardsParent) return [];
+    return accounts
+      .filter(
+        (acct) =>
+          acct.is_postable &&
+          !acct.deactivated_at &&
+          acct.parent_account_id === creditCardsParent.id
+      )
+      .map((acct) => ({
+        value: acct.id,
+        label: acct.account_name,
+        type: acct.account_type ?? undefined,
+      }));
+  }, [accountsQuery.data?.accounts]);
 
   const amountCents = centsFromAmount(amount);
   const valid =
@@ -237,9 +244,14 @@ export function RecordCCPaymentModal({
               createKind="account"
               addNewLabel="+ Add new account"
               operatingCompanyId={operatingCompanyId}
-              placeholder="Select liability account…"
+              placeholder="Select card liability…"
               disabled={!operatingCompanyId}
             />
+            {liabilityOptions.length === 0 && !accountsQuery.isFetching ? (
+              <p className="mt-1 text-xs text-[#6B7280]" data-testid="cc-liability-credit-cards-empty">
+                No Credit Cards accounts yet — create the Credit Cards parent and card subs in Chart of Accounts.
+              </p>
+            ) : null}
           </div>
         </label>
         <label className="block">

@@ -300,9 +300,11 @@ export function MatchDrawer({
     },
     onMutate: (candidate) => setConfirmingId(candidate.ledger_entry_id),
     onSuccess: async () => {
+      // R441-C1 — close on success so the owner knows the match landed; stay open on error.
       pushToast("Match confirmed — transaction cleared.", "success");
       await candidatesQuery.refetch();
       onAccepted?.();
+      onClose();
     },
     onError: (error) => {
       pushToast(userFacingApiError(error, "Confirm match failed"), "error");
@@ -321,10 +323,12 @@ export function MatchDrawer({
         })),
       }),
     onSuccess: async () => {
+      // R441-C1 — close on success; never close on error (onError below).
       pushToast("Multi-document match confirmed — bank line cleared.", "success");
       setSelectedIds(new Set());
       await candidatesQuery.refetch();
       onAccepted?.();
+      onClose();
     },
     onError: (error) => {
       pushToast(userFacingApiError(error, "Multi-document match failed"), "error");

@@ -1474,6 +1474,34 @@ export function BankingTransactionsDesignView({
     setDrafts((prev) => ({ ...prev, [tx.id]: { ...(prev[tx.id] ?? makeDefaultDraft(tx)), ...patch } }));
   }
 
+  // R441-C2 — edit expand must show every field from the live record before first paint.
+  // Sticky empty drafts (rule pre-fill / early expand before categorization_* arrived) used to
+  // block makeDefaultDraft forever. Fill blank string/id sticky keys from the record; never
+  // wipe operator-typed values or boolean toggles.
+  useEffect(() => {
+    if (!expandedTxId) return;
+    const tx = scopedRows.find((row) => row.id === expandedTxId);
+    if (!tx) return;
+    setDrafts((prev) => {
+      const fresh = makeDefaultDraft(tx);
+      const existing = prev[tx.id];
+      if (!existing) return { ...prev, [tx.id]: fresh };
+      const patched: RowDetailDraft = { ...existing };
+      let changed = false;
+      (Object.keys(fresh) as Array<keyof RowDetailDraft>).forEach((key) => {
+        const cur = patched[key];
+        const next = fresh[key];
+        if (typeof next !== "string") return;
+        if (typeof cur === "string" && cur === "" && next !== "") {
+          (patched as Record<string, unknown>)[key] = next;
+          changed = true;
+        }
+      });
+      return changed ? { ...prev, [tx.id]: patched } : prev;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- hydrate on expand; makeDefaultDraft is stable per tx fields
+  }, [expandedTxId, scopedRows]);
+
   // ROUND 16.21 (owner, 2026-09-06): "banking categorization backlog is 0/364, not improving."
   // Root cause traced to ACCT-F375 (2026-08-12) never reaching the frontend: accounting.banking_rules
   // has real, seeded, correctly-matching USMCA rules (139/364 live matches confirmed) and the
@@ -1593,7 +1621,16 @@ export function BankingTransactionsDesignView({
         is_billable: draft.billable,
         tags: draft.tags || undefined,
       });
+      // R441-C1 — close the categorize drawer on success so the owner sees the write landed.
+      // On failure (catch below) leave it open with the error toast.
       pushToast("Transaction posted", "success");
+      setExpandedTxId(null);
+      setDrafts((prev) => {
+        if (!(tx.id in prev)) return prev;
+        const next = { ...prev };
+        delete next[tx.id];
+        return next;
+      });
       onDataChanged();
     } catch (error) {
       pushToast(userFacingApiError(error, "Post failed"), "error");
@@ -2184,16 +2221,18 @@ export function BankingTransactionsDesignView({
         className: REGISTER_COLUMN_HEADER_CLASS,
         cellClass: "truncate text-gray-700",
         render: (tx) => {
+          // R441-C4 — vendor COLUMN never paints "Vendor — not visible"; unresolved → em dash.
           const draft = getDraft(tx);
-          return draft.vendorId ? (
-            <EntityLink
-              kind="vendor"
-              id={draft.vendorId}
-              label={entityLabel(draft.payee, draft.vendorId, "Vendor")}
-            />
-          ) : (
-            draft.payee || "—"
-          );
+          const raw = String(draft.payee ?? "").trim();
+          const usableName =
+            raw &&
+            !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(raw)
+              ? raw
+              : "";
+          if (draft.vendorId && usableName) {
+            return <EntityLink kind="vendor" id={draft.vendorId} label={usableName} />;
+          }
+          return usableName || "—";
         },
       });
     }

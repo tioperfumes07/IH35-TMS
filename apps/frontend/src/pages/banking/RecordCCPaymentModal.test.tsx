@@ -52,6 +52,7 @@ describe("RecordCCPaymentModal", () => {
   const bankId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
   const vendorId = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
   const liabilityAccountId = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+  const creditCardsParentId = "ffffffff-ffff-4fff-8fff-ffffffffffff";
 
   beforeEach(() => {
     vi.mocked(bankingApi.getPlaidBankAccounts).mockResolvedValue({
@@ -79,10 +80,29 @@ describe("RecordCCPaymentModal", () => {
     vi.mocked(catalogAccountsApi.listCatalogAccounts).mockResolvedValue({
       accounts: [
         {
+          id: creditCardsParentId,
+          account_name: "Credit Cards",
+          account_type: "Liability",
+          account_subtype: "Other Current Liabilities",
+          parent_account_id: null,
+          is_postable: false,
+          deactivated_at: null,
+        },
+        {
           id: liabilityAccountId,
           account_name: "Amex Credit Card Liability",
           account_type: "Liability",
           account_subtype: "credit_card",
+          parent_account_id: creditCardsParentId,
+          is_postable: true,
+          deactivated_at: null,
+        },
+        {
+          id: "aaaaaaa1-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
+          account_name: "Owner / Related-Party Loan Payable",
+          account_type: "Liability",
+          account_subtype: null,
+          parent_account_id: null,
           is_postable: true,
           deactivated_at: null,
         },
@@ -123,9 +143,12 @@ describe("RecordCCPaymentModal", () => {
     openDropdown(vendorInput);
     fireEvent.click(await screen.findByRole("option", { name: /Amex Corporate Card/i }));
 
-    const accountInput = await screen.findByPlaceholderText("Select liability account…");
+    const accountInput = await screen.findByPlaceholderText("Select card liability…");
     openDropdown(accountInput);
-    fireEvent.click(await screen.findByRole("option", { name: /Amex Credit Card Liability/i }));
+    expect(await screen.findByRole("option", { name: /Amex Credit Card Liability/i })).toBeInTheDocument();
+    // R441-C3 — non-card liabilities under other parents must not appear.
+    expect(screen.queryByRole("option", { name: /Owner \/ Related-Party/i })).toBeNull();
+    fireEvent.click(screen.getByRole("option", { name: /Amex Credit Card Liability/i }));
 
     // "Pay from bank account" is also a Combobox now (SelectCombobox is a Combobox adapter, not a
     // native <select> — CLS-BOX-IN-BOX), so it opens/selects the same way as the other pickers.
