@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+export const REQUIRES_LIVE_DB = "Neon live verification required";
+
 // R-102-E GUARD -- verify-no-sample-data-holds-a-real-number.mjs
 //
 // FAILS if any is_sample_data=true mdata.loads row (USMCA) holds a load_number that appears in

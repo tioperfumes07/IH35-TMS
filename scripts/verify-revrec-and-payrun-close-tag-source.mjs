@@ -23,6 +23,8 @@
  * A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B owner ruling) --
  * no ALLOW_OFFLINE_SKIP declared.
  */
+export const REQUIRES_LIVE_DB = "Neon live verification required";
+
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const LABEL = "verify-revrec-and-payrun-close-tag-source";

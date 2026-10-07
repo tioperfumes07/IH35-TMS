@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+export const REQUIRES_LIVE_DB = "Neon live verification required";
+
 // PROTECT-LIST GUARD (owner, P0) — USMCA master/reference data is real, live, and catastrophic to
 // lose (geofences, customer/vendor/driver/account/item rosters, the entire banking transaction
 // feed). Two independent checks, both required:

@@ -9,6 +9,8 @@
  * Counts under SET LOCAL app.bypass_rls = 'lucia' (named per the count law). No database = FAIL.
  * Run: node scripts/verify-cancelled-load-has-cancellation-record.mjs [--selftest]
  */
+export const REQUIRES_LIVE_DB = "Neon live verification required";
+
 import { readFileSync } from "node:fs";
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 

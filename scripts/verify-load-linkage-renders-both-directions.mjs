@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+export const REQUIRES_LIVE_DB = "Neon live verification required";
+
 // ROUND 153 STEP 3 (Lead, owner order, 2026-09-25): "Linkage renders: every load shows its
 // settlement number beside the load number, its driver bill, its expenses, fuel, Faro advance and
 // invoice — both directions (settlement → loads, load → settlement)."

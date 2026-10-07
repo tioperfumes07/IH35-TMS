@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+export const REQUIRES_LIVE_DB = "Neon live verification required";
+
 // ROUND 163 JOB 1 (P0): "our issued-invoice total must equal the QBO control total for the same
 // date range, or the gate fails with the delta." Control file:
 // feed-input/qbo-invoice-list-2026-08-07-to-2026-09-27.csv (owner-supplied QBO export, copied

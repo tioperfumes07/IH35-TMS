@@ -6,6 +6,8 @@
  * fails the gate. Static: migration 202615330929 still declares the triggers + the FORCE.
  * No allow-list. No database = FAIL. Run: node scripts/verify-dispatch-tables-audited-and-rls-forced.mjs [--selftest]
  */
+export const REQUIRES_LIVE_DB = "Neon live verification required";
+
 import { readFileSync } from "node:fs";
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 

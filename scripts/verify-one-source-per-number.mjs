@@ -83,6 +83,8 @@ function stripComments(src) {
  * @param {string} src
  * @returns {string[]} human-readable hit snippets
  */
+export const REQUIRES_LIVE_DB = "Neon live verification required";
+
 export function findBillHeaderTotalAsLoadCost(src) {
   const hits = [];
   // A SELECT ... SUM(<alias>.amount_cents) ... FROM accounting.bills <alias> ... that also

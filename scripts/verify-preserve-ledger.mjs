@@ -8,6 +8,8 @@
  *             (positions, geofence events, stop events, HOS) — the ledger is not silently falling behind.
  * Fails closed without DATABASE_URL.
  */
+export const REQUIRES_LIVE_DB = "Neon live verification required";
+
 import { readFileSync } from "node:fs";
 import pg from "pg";
 

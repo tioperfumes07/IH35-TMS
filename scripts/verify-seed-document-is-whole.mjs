@@ -49,6 +49,8 @@ const LABEL = "verify-seed-document-is-whole";
  * }} doc
  * @returns {{ whole: boolean, problems: string[] }}
  */
+export const REQUIRES_LIVE_DB = "Neon live verification required";
+
 export function assessDocumentWholeness(doc) {
   const problems = [];
 

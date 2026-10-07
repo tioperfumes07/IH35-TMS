@@ -9,6 +9,8 @@
  *   live   -- the engine's tiles and chip counts equal an independent SQL recompute, to the cent.
  * Fails closed without DATABASE_URL.
  */
+export const REQUIRES_LIVE_DB = "Neon live verification required";
+
 import { readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import path from "node:path";

@@ -21,6 +21,8 @@
  *           release rows must be >= 0. (`correction` is exempt -- its sign is data-dependent,
  *           per the shared helper's own contract.)
  */
+export const REQUIRES_LIVE_DB = "Neon live verification required";
+
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

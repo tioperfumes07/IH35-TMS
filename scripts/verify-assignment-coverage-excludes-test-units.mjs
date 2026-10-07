@@ -11,6 +11,8 @@
  * elsewhere) and fails if a coverage/attribution report includes one of them, or if the known
  * list itself silently grows without a name attached.
  */
+export const REQUIRES_LIVE_DB = "Neon live verification required";
+
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";

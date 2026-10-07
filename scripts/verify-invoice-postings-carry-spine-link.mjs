@@ -11,6 +11,8 @@
  * Counts under SET LOCAL app.bypass_rls = 'lucia' (named per the count law). No database = FAIL (money guard).
  * Run: node scripts/verify-invoice-postings-carry-spine-link.mjs [--selftest]
  */
+export const REQUIRES_LIVE_DB = "Neon live verification required";
+
 import { readFileSync } from "node:fs";
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
