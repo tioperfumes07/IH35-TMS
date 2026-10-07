@@ -74,7 +74,7 @@ export function Step2FuelReview({ filing, onSaveOverrides, saving }: Props) {
             type="number"
             min={0}
             step="0.1"
-            className="w-28 rounded-sm border border-slate-300 px-2 py-1"
+            className="w-28 rounded-sm border border-[#E5E7EB] px-2 py-1"
             value={draftOverrides[row.state] ?? ""}
             onChange={(event) =>
               setDraftOverrides((prev) => ({ ...prev, [row.state]: event.target.value }))
@@ -101,10 +101,10 @@ export function Step2FuelReview({ filing, onSaveOverrides, saving }: Props) {
   const total = states.reduce((sum, state) => sum + Number(draftOverrides[state] ?? 0), 0);
 
   return (
-    <section className="rounded-sm border border-slate-200 bg-white" data-ifta-step="2">
-      <div className="border-b border-slate-200 bg-slate-50 px-3 py-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-900">Step 2 · Fuel review</h3>
-        <p className="text-xs text-slate-800">Per-jurisdiction fuel purchased from fuel card transactions.</p>
+    <section className="rounded-sm border border-[#E5E7EB] bg-white" data-ifta-step="2">
+      <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-[#0F1219]">Step 2 · Fuel review</h3>
+        <p className="text-xs text-[#1F2A44]">Per-jurisdiction fuel purchased from fuel card transactions.</p>
       </div>
       <div className="space-y-2 px-3 py-3 text-xs">
         <ParityTable
@@ -120,14 +120,14 @@ export function Step2FuelReview({ filing, onSaveOverrides, saving }: Props) {
           rowTestId={(row) => `ifta-step2-fuel-row-${row.state}`}
         />
         {states.length > 0 ? (
-          <div className="flex justify-end rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs font-semibold text-slate-900">
+          <div className="flex justify-end rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs font-semibold text-[#0F1219]">
             <span className="mr-4">Total</span>
             <span>{fmtNum(total)}</span>
           </div>
         ) : null}
         <button
           type="button"
-          className="rounded-sm border border-slate-400 bg-slate-100 px-3 py-1.5 font-semibold text-slate-900 disabled:opacity-50"
+          className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-1.5 font-semibold text-[#0F1219] disabled:opacity-50"
           disabled={saving}
           onClick={() => {
             // GO-0028: the parent mutation's onError already surfaces a toast; .catch() here
