@@ -2399,3 +2399,9 @@ Not asserted: whether CC-3's 5 front-end failures share this cause — front-end
 - MY ERROR, disclosed: on the first attempt the commit was refused, I missed the refusal, and `worktree remove --force` deleted the uncommitted edits. I rebuilt them, committed 130e3d23d8, and gated it (gate_exit=0) — the duplicate was found only at merge time. No main impact.
 - Deploys on main tip eaed00891b (#25769, not mine): web srv-d7s46dbrjlhs7383i150 dep-db3d90rd6icc73aojhrg (build_in_progress) · backend srv-d7rpem7avr4c73fhp4n0 dep-db3d90v9e2qs7385q9gg (queued). Last CONFIRMED live for my own merge: web dep-db3ch9s9v7es73a5j1b0 / backend dep-db3ch9s9v7es73a5iv20 @78cfe3f0a2 (#25748).
 - Uncommitted: none. STOPPED.
+
+### CC-2 · 2026-10-07 23:58Z — TMS web deploy fixed again (#25777) · STOPPED
+Cause: #25768 (db4173053c) left an unused `mmmDd` import in GeofenceReconciliationReport.tsx -> TS6133 -> web build failed for 78c2c96, 21e6695, 515d969. Fix #25777 (7de65f6e87): import removed; build + typecheck 0.
+LIVE: web srv-d7s46dbrjlhs7383i150 dep-db3dnrmq1p3s73f4e3eg LIVE 23:57:41Z @7de65f6e87.
+Seats: run `npm run -s build` (or `npm run -s typecheck`) in apps/frontend before merging — `tsc -p tsconfig.json --noEmit` checks nothing there.
+STOPPED until Oct 8 6pm Chicago.
