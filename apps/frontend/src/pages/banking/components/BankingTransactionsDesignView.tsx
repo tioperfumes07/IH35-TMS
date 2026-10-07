@@ -378,7 +378,7 @@ function buildMatchCandidateColumns(
           <button
             type="button"
             data-testid="banking-match-candidate-confirm"
-            className="rounded-sm border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-sm border border-[#1F2A44] bg-[#0F1219] px-2 py-1 text-xs text-white hover:bg-[#14314F] disabled:cursor-not-allowed disabled:opacity-40"
             disabled={!canConfirm || isConfirming}
             title={
               isBill
@@ -1843,8 +1843,8 @@ export function BankingTransactionsDesignView({
                   operator reviews + Saves there — this chip exists so a row worth expanding is
                   visible without opening every row to find out. */}
               {hasAutoSuggestion(tx) ? (
-                <p className="mt-0.5 truncate text-xs text-slate-600" title="Computed by the categorization rules engine — expand this row to review and accept">
-                  <span className="font-semibold uppercase tracking-wide text-slate-500">Suggested: </span>
+                <p className="mt-0.5 truncate text-xs text-[#4B5563]" title="Computed by the categorization rules engine — expand this row to review and accept">
+                  <span className="font-semibold uppercase tracking-wide text-[#6B7280]">Suggested: </span>
                   {tx.suggested_vendor_name || tx.suggested_account_name || "a category"}
                   {tx.suggested_account_number ? ` (${tx.suggested_account_number})` : ""}
                 </p>
@@ -2059,7 +2059,7 @@ export function BankingTransactionsDesignView({
         render: (tx) => {
           const { spent, received } = spentReceived(tx);
           return (
-            <span className={spent > 0 ? "text-red-700" : "text-slate-700"}>
+            <span className={spent > 0 ? "text-red-700" : "text-[#1F2A44]"}>
               {spent > 0 ? `-${formatUsdCents(spent)}` : received > 0 ? formatUsdCents(received) : "—"}
             </span>
           );
@@ -2085,7 +2085,7 @@ export function BankingTransactionsDesignView({
           label: "Received",
           sortable: true,
           className: REGISTER_COLUMN_HEADER_CLASS,
-          cellClass: "whitespace-nowrap text-right tabular-nums text-slate-700",
+          cellClass: "whitespace-nowrap text-right tabular-nums text-[#1F2A44]",
           render: (tx) => {
             const { received } = spentReceived(tx);
             return received > 0 ? formatUsdCents(received) : "—";
@@ -2117,7 +2117,7 @@ export function BankingTransactionsDesignView({
               data-testid={isEarliestSynced ? "banking-balance-earliest-synced-caveat" : undefined}
             >
               {bal == null ? "—" : formatUsdCents(bal)}
-              {isEarliestSynced && <sup className="ml-0.5 font-semibold text-slate-400">†</sup>}
+              {isEarliestSynced && <sup className="ml-0.5 font-semibold text-[#9CA3AF]">†</sup>}
             </span>
           );
         },
@@ -2263,7 +2263,7 @@ export function BankingTransactionsDesignView({
         sortValue: (tx) => (hasPersistedMatch(tx) ? 1 : 0),
         render: (tx) =>
           hasPersistedMatch(tx) ? (
-            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">
+            <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#1F2A44]">
               Matched{tx.matched_kind ? ` (${tx.matched_kind})` : ""}
             </span>
           ) : (
@@ -2335,8 +2335,8 @@ export function BankingTransactionsDesignView({
                     title={`${txnSuggestions[tx.id]!.suggested_ledger_entry_kind} match, ${txnSuggestions[tx.id]!.date_gap_days}d gap`}
                     className={`h-7 rounded-sm border px-1.5 text-xs font-semibold ${
                       txnSuggestions[tx.id]!.suggested_confidence === "high"
-                        ? "border-slate-700 bg-slate-700 text-white"
-                        : "border-slate-300 bg-slate-50 text-slate-600"
+                        ? "border-[#1F2A44] bg-[#1F2A44] text-white"
+                        : "border-[#E5E7EB] bg-[#F7F8FA] text-[#4B5563]"
                     }`}
                     onClick={() => setMatchDrawerTxId(tx.id)}
                     data-testid={`banking-suggested-match-${tx.id}`}
@@ -2532,10 +2532,10 @@ export function BankingTransactionsDesignView({
           </div>
           <div className="p-2">
           <div
-            className="mb-2 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5"
+            className="mb-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5"
             data-testid="banking-tx-categorization-links-panel"
           >
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-700">Linked to (persisted)</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#1F2A44]">Linked to (persisted)</p>
             {categorizationLinksQuery.isLoading && expandedTxId === tx.id ? (
               <p className="mt-1 text-xs text-gray-500">Loading linkage…</p>
             ) : null}
@@ -2545,7 +2545,7 @@ export function BankingTransactionsDesignView({
             {categorizationLinksQuery.isSuccess &&
             expandedTxId === tx.id &&
             !hasPersistedLinks ? (
-              <p className="mt-1 text-xs text-slate-700">
+              <p className="mt-1 text-xs text-[#1F2A44]">
                 No persisted Driver / Unit / Load / Vendor / Customer / deduction tags on this row yet. Draft fields
                 below are not Law §9 links until Post / Categorize commits them.
               </p>
@@ -2617,7 +2617,7 @@ export function BankingTransactionsDesignView({
             expandedTxId === tx.id &&
             hasPersistedLinks &&
             !matchedJournalEntryId ? (
-              <p className="mt-1 text-xs text-slate-600">
+              <p className="mt-1 text-xs text-[#4B5563]">
                 No <code className="text-xs">matched_journal_entry_id</code> on this row yet. That column is set by
                 recon Match to an existing JE, or by the flag-gated bank-feed poster (BANK_FEED_GL_POSTING_ENABLED,
                 default OFF) — absence is not by itself proof the flag blocked a post.
@@ -2634,7 +2634,7 @@ export function BankingTransactionsDesignView({
           ) : null}
           {tx.relay_fuel_lines && tx.relay_fuel_lines.length > 0 ? (
             <div className="mb-2">
-              <p className="mb-1 text-section-header font-semibold uppercase tracking-wide text-slate-700">
+              <p className="mb-1 text-section-header font-semibold uppercase tracking-wide text-[#1F2A44]">
                 Fuel breakdown (Relay)
               </p>
               <ul className="space-y-0.5 text-xs text-gray-800">
@@ -2773,7 +2773,7 @@ export function BankingTransactionsDesignView({
                   limit={PICKER_PAGE}
                   total={vendorsQuery.data?.total}
                   hint="Type to search the full vendor catalog."
-                  className="mt-1 text-xs text-slate-600"
+                  className="mt-1 text-xs text-[#4B5563]"
                 />
               </div>
             </label>
@@ -2840,7 +2840,7 @@ export function BankingTransactionsDesignView({
                   </SelectCombobox>
                   <button
                     type="button"
-                    className="text-left text-xs text-slate-600 underline sm:col-span-2"
+                    className="text-left text-xs text-[#4B5563] underline sm:col-span-2"
                     onClick={() => setTransferModalTx(tx)}
                   >
                     Open full Transfer dialog (amount / memo / post)
@@ -3007,7 +3007,7 @@ export function BankingTransactionsDesignView({
                   limit={PICKER_PAGE}
                   total={customersQuery.data?.total}
                   hint="Type to search the full customer catalog."
-                  className="mt-1 text-xs text-slate-600"
+                  className="mt-1 text-xs text-[#4B5563]"
                 />
               </div>
             </label>
@@ -3047,7 +3047,7 @@ export function BankingTransactionsDesignView({
                   <EntityLink kind="driver" id={draft.driverId} label={entityLabel(draft.driverName, draft.driverId, "Driver")} />
                   <button
                     type="button"
-                    className="text-slate-700 underline"
+                    className="text-[#1F2A44] underline"
                     onClick={() =>
                       setDraft(tx, {
                         driverId: "",
@@ -3076,7 +3076,7 @@ export function BankingTransactionsDesignView({
                   <EntityLink kind="unit" id={draft.unitId} label={entityLabel(draft.unitName, draft.unitId, "Unit")} />
                   <button
                     type="button"
-                    className="text-slate-700 underline"
+                    className="text-[#1F2A44] underline"
                     onClick={() => setDraft(tx, { unitId: "", unitName: "" })}
                   >
                     Clear
@@ -3101,7 +3101,7 @@ export function BankingTransactionsDesignView({
                   <EntityLink kind="trailer" id={draft.trailerId} label={entityLabel(draft.trailerName, draft.trailerId, "Trailer")} />
                   <button
                     type="button"
-                    className="text-slate-700 underline"
+                    className="text-[#1F2A44] underline"
                     onClick={() => setDraft(tx, { trailerId: "", trailerName: "" })}
                   >
                     Clear
@@ -3126,7 +3126,7 @@ export function BankingTransactionsDesignView({
                   <EntityLink kind="load" id={draft.loadId} label={entityLabel(draft.loadName, draft.loadId, "Load")} />
                   <button
                     type="button"
-                    className="text-slate-700 underline"
+                    className="text-[#1F2A44] underline"
                     onClick={() => setDraft(tx, { loadId: "", loadName: "" })}
                   >
                     Clear
@@ -3137,17 +3137,17 @@ export function BankingTransactionsDesignView({
           </div>
           {!tx.is_credit && draft.mode === "categorize" ? (
             <div
-              className="mt-2 border-t border-slate-400 pt-2"
+              className="mt-2 border-t border-[#9CA3AF] pt-2"
               data-testid="banking-driver-money-treatment"
             >
-              <p className="text-xs font-semibold text-slate-900">Driver expense treatment</p>
-              <p className="mt-0.5 text-xs text-slate-600">
+              <p className="text-xs font-semibold text-[#0F1219]">Driver expense treatment</p>
+              <p className="mt-0.5 text-xs text-[#4B5563]">
                 Paid a fine or cost for a driver without creating an expense first? Choose recoverable (deduct on
                 settlement) or payable (company owes the driver — posts to Driver Advance / Employee Loan when
                 enabled).
               </p>
               <div
-                className="mt-2 rounded-sm border border-slate-300 bg-slate-50 px-2 py-1.5"
+                className="mt-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5"
                 data-testid="bank-categorize-recover-box"
               >
                 <label className="flex items-start gap-2 text-xs text-gray-800">
@@ -3168,7 +3168,7 @@ export function BankingTransactionsDesignView({
                   </span>
                 </label>
                 {!draft.driverId ? (
-                  <p className="mt-1 text-xs text-slate-700">Tag a driver above to enable recovery</p>
+                  <p className="mt-1 text-xs text-[#1F2A44]">Tag a driver above to enable recovery</p>
                 ) : null}
               </div>
               <fieldset className="mt-2 space-y-1.5">
@@ -3232,7 +3232,7 @@ export function BankingTransactionsDesignView({
                 </label>
               ) : null}
               {!draft.driverId ? (
-                <p className="mt-1.5 text-xs text-slate-700">
+                <p className="mt-1.5 text-xs text-[#1F2A44]">
                   Select a driver above before Post — recovery and payable paths require a driver tag.
                 </p>
               ) : null}
@@ -3462,7 +3462,7 @@ export function BankingTransactionsDesignView({
 
           {suggestionsQuery.data?.rule_match ? (
             <p
-              className="mt-3 border-t border-slate-300 bg-slate-50 pt-2 text-xs text-slate-700"
+              className="mt-3 border-t border-[#E5E7EB] bg-[#F7F8FA] pt-2 text-xs text-[#1F2A44]"
               data-testid="banking-rule-match-prefill-note"
             >
               Rule match: Category/Payee above were pre-filled from a matching bank-feed rule —
@@ -3532,7 +3532,7 @@ export function BankingTransactionsDesignView({
       {transactionsQuery.isSuccess ? (
         <>
           <div
-            className="border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+            className="border-l-4 border-[#9CA3AF] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
             data-testid="banking-bank-feed-gl-posting-honesty-banner"
           >
             {/*
@@ -4023,7 +4023,7 @@ export function BankingTransactionsDesignView({
       {earliestSyncedTransactionId != null &&
       pagedRows.some((tx) => tx.id === earliestSyncedTransactionId) ? (
         <p
-          className="mb-1 text-xs text-slate-500"
+          className="mb-1 text-xs text-[#6B7280]"
           data-testid="banking-balance-earliest-synced-legend"
         >
           † Balance shown from the earliest transaction available through this bank connection — it
