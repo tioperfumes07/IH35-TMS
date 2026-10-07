@@ -44,7 +44,7 @@ function selftest() {
   const good = fs.readFileSync(TARGET, "utf8");
   checkSource(good, "real");
   const bad = good.replace(
-    /filterBar=\{\s*<span className="text-\[11px\] text-slate-500">\{typeFiltered\.length\} rows<\/span>\s*\}/,
+    /filterBar=\{\s*<span className="text-xs text-slate-500">\{typeFiltered\.length\} rows<\/span>\s*\}/,
     `filterBar={
               <div className="w-56"><TableSearch value={search} onChange={setSearch} placeholder="Search vendor…" /></div>
             }`,

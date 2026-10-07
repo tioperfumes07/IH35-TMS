@@ -17,6 +17,8 @@
  *   USMCA contract instances with no filed PDF — shrink-only from 3 (opening a contract files it). Before migration
  *   202615430900 is applied the column does not exist: PENDING DEPLOY, then the ceiling applies. No DATABASE_URL = FAIL.
  * Run: node scripts/verify-legal-contracts-filed-as-pdf.mjs [--selftest]
+ *
+ * REQUIRES_LIVE_DB — skipped by no-DB static sweep; fail-closed under the money gate.
  */
 import fs from "node:fs";
 import path from "node:path";
