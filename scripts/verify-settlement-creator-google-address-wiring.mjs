@@ -20,6 +20,8 @@
  * 10. SETL-F440 — onChange after a Places pick uses functional setLoads so city/state are not wiped.
  * 11. SETL-F440 — getRouteMileage is the coords fallback for loaded miles (lane DB first).
  * 12. SETL-F440 — seed requires city+state; address_line1 stays optional (|| undefined).
+ * 13. SETL-F441 — geocodeSearch + cityGeocodeQueries so hand-typed city/state still get coords → route miles.
+ * 14. SETL-F441 — MoneyInput uses moneyInputClass (not bordered inputClass) so leading $ is QBO-correct.
  */
 import { readFileSync, existsSync } from "node:fs";
 
@@ -126,6 +128,17 @@ function run({ drawer, seed, routes }) {
     out.push("RULE 12b: pickup address_line1 must stay optional (|| undefined) — hand seed requires city+state only.");
   }
 
+  if (!/geocodeSearch/.test(drawer) || !/cityGeocodeQueries/.test(drawer)) {
+    out.push(
+      "RULE 13: hand-typed city/state must geocodeSearch → lat/lng (cityGeocodeQueries) so route-engine miles can fill without a Places pick.",
+    );
+  }
+  if (!/moneyInputClass/.test(drawer) || /MoneyInput\s*\n\s*className=\{inputClass\}/.test(drawer)) {
+    out.push(
+      "RULE 14: MoneyInput must use moneyInputClass (w-full only) — forwarding inputClass border/px misplaces the leading $.",
+    );
+  }
+
   return out;
 }
 
@@ -135,7 +148,9 @@ import { AddressGeocodeInput } from "...";
 import { StateSelect } from "...";
 import { useQueries } from "@tanstack/react-query";
 import { getLaneMileage, getChainDeadhead, getDriverPayCard, getRouteMileage } from "...";
+import { geocodeSearch } from "...";
 const defaultLoadNumber = loads[0]?.load_number;
+const moneyInputClass = "w-full";
 selectedOption={load.customer_id && load.customer_name ? { value: load.customer_id, label: load.customer_name } : null}
 onRegisterAttemptClose={registerAttemptClose}
 attemptClose ? attemptClose() : onClose()
@@ -144,7 +159,9 @@ onChange={(v) => { setLoads((prev) => { next[idx] = { ...cur, pickup_address: v 
 const ignoreGeocodeFormattedRef = useRef({});
 const loadsSubtotal = loads.reduce((s, l) => s + Number(l.line_haul_amount_cents ?? 0), 0);
 getLaneMileage({...}); getDriverPayCard({...}); getChainDeadhead({...}); getRouteMileage({...});
+const cityGeocodeQueries = useQueries({ queries: loads.flatMap(...) });
 useQueries({ queries: loads.map(...) });
+<MoneyInput className={moneyInputClass} valueCents={...} />
 `;
   const goodSeed = `
 if (!pickupCity || !pickupState) throw new SettlementCreatorSeedError("stop_city_state_required", "...");
@@ -169,7 +186,7 @@ onChange={(v) => { const next = [...loads]; next[idx] = { ...load, pickup_addres
 
   const cases = [
     ["fixed tree passes", { drawer: goodDrawer, seed: goodSeed, routes: goodRoutes }, 0],
-    ["catches missing AddressGeocode + rates-as-subtotal + bare stops + stale onChange", { drawer: badDrawer, seed: badSeed, routes: goodRoutes }, 21],
+    ["catches missing AddressGeocode + rates-as-subtotal + bare stops + stale onChange", { drawer: badDrawer, seed: badSeed, routes: goodRoutes }, 23],
     ["catches schema strip", { drawer: goodDrawer, seed: goodSeed, routes: "const schema = z.object({});" }, 4],
     ["missing drawer FAILS", { drawer: null, seed: goodSeed, routes: goodRoutes }, 1],
   ];

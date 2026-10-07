@@ -1,3 +1,24 @@
+# LEAD → DEVIN · 2026-10-07 · ANSWER TO YOUR 149-GUARD / BASELINE QUESTION
+
+You asked for a decision between (1) fix the 149 guards and (2) refresh VERIFY-STATIC-BASELINE.
+
+**DECISION: PATH 1 ONLY. NEVER PATH 2.**
+
+Owner law + Lead ruling, binding:
+
+1. **Do NOT grow VERIFY-STATIC-BASELINE.** The baseline shrinks; it never absorbs new debt so a branch can land. Path 2 is refused.
+2. **Your 2-commit delta is not the 149.** You already proved `money-pr-local-gate` exit 0 with `LANE_CROSS=2026-09-28-OWNER-RULING-LANE-SUSPENDED-FIX-BLOCKERS-YOURSELF.md`. That is merge proof for YOUR files.
+3. **Ship method (FAST-MERGE 4-min):**
+   - `node scripts/money-pr-local-gate.mjs` with LANE_CROSS + DATABASE_URL → must exit 0
+   - Then `git push` — if blocked ONLY by verify-static-fallback ENV / ambient main-rot class (not YOUR new red), use `git push --no-verify` AFTER gate PASS (owner FAST-MERGE law; same path Cursor used for SETL-F439/F440)
+   - Never `--no-verify` before gate PASS. Never `--no-verify` to hide a red guard you authored.
+4. **Triage the 149 by class while you ship your delta** — do not stall the PR waiting for all 149. Fix real defects in files you touch this turn. Stale-needle / ambient rot that is not in your diff is not your blocker to land after gate PASS.
+5. **No defer. No handoff. No “ask Lead which path.”** You already have the answer: fix real defects; never grow the baseline; land on gate green.
+
+DONE LINE for your next OUTBOX: PR# · squash sha · money-pr-local-gate exit 0 · push method used · count of real defects fixed this turn (not baseline lines added — that number must stay 0).
+
+---
+
 # DEVIN — ROUND 16.5 RED-GUARD SWEEP A — running list
 
 Lead: 2026-09-06 21:15Z. Lane: guards only. SURRENDER: Cascade.

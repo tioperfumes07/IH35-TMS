@@ -291,17 +291,21 @@ export function EntityPicker({
     void rosterQuery.refetch();
   }
 
+  // SETL-F441 — cap honesty lives INSIDE the open listbox (Combobox listCapNotice), never under
+  // the field label. "Showing the first 201…" under Customer was the dense-form defect.
+  const serverCapNotice =
+    config.serverSearch && rosterShown >= rosterLimit ? (
+      <CappedListNotice
+        shown={rosterShown}
+        limit={rosterLimit}
+        hint={`Type to search for a ${config.label} that is not listed.`}
+        className="m-0 text-[11px] text-slate-600"
+      />
+    ) : null;
+
   return (
     <>
       <div className="space-y-1">
-        {config.serverSearch ? (
-          <CappedListNotice
-            shown={rosterShown}
-            limit={rosterLimit}
-            hint={`Type to search for a ${config.label} that is not listed.`}
-            className="text-[11px] text-slate-600"
-          />
-        ) : null}
         <Combobox
           className={className}
           size={size}
@@ -321,6 +325,7 @@ export function EntityPicker({
           disabled={disabled || !operatingCompanyId}
           allowClear={allowClear}
           allowAddNew={createOffered ? { label: entityAddNewLabel(kind), onAdd: () => setCreateOpen(true) } : undefined}
+          listCapNotice={serverCapNotice}
         />
         {heldStaleMessage ? (
           <p className="text-[11px] font-medium text-slate-800" data-testid="entity-picker-held-merged" role="status">

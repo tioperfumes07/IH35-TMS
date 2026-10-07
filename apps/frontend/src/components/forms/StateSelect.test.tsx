@@ -3,7 +3,16 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { StateSelect } from "./StateSelect";
 
-describe("StateSelect dismissal", () => {
+describe("StateSelect — Combobox filter chrome (SETL-F441)", () => {
+  it("uses a combobox (no ▾ caret button) at form-field height", async () => {
+    const onChange = vi.fn();
+    render(<StateSelect value="" onChange={onChange} />);
+    const input = screen.getByRole("combobox", { name: "State" });
+    expect(input).toBeInTheDocument();
+    expect(input.className).toMatch(/h-7/);
+    expect(screen.queryByText("▾")).not.toBeInTheDocument();
+  });
+
   it("plain outside click closes the dropdown", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
@@ -14,18 +23,13 @@ describe("StateSelect dismissal", () => {
       </div>,
     );
 
-    await user.click(screen.getByRole("button", { name: "State▾" }));
-    expect(screen.getByPlaceholderText("Search state…")).toBeInTheDocument();
+    await user.click(screen.getByRole("combobox", { name: "State" }));
+    expect(await screen.findByRole("listbox")).toBeInTheDocument();
 
     await user.click(screen.getByLabelText("Outside field"));
-    expect(screen.queryByPlaceholderText("Search state…")).not.toBeInTheDocument();
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
 
-  // B9 / K2 regression guard: BookLoadModalV4's panel calls e.stopPropagation() on mousedown
-  // (BOOK-LOAD-MODAL-INVISIBLE-BEHIND-DRAWER guard) so the document-level mousedown listener
-  // this component also carries never fires there. This is the exact shape that trapped the
-  // dropdown open live on Stop 1's Address/City fields -- a click "outside" that never reaches
-  // document because an ancestor swallowed it first.
   it("outside click still closes when an ancestor stops mousedown propagation (BookLoadModalV4 panel shape)", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
@@ -37,11 +41,11 @@ describe("StateSelect dismissal", () => {
       </div>,
     );
 
-    await user.click(screen.getByRole("button", { name: "State▾" }));
-    expect(screen.getByPlaceholderText("Search state…")).toBeInTheDocument();
+    await user.click(screen.getByRole("combobox", { name: "State" }));
+    expect(await screen.findByRole("listbox")).toBeInTheDocument();
 
     await user.click(screen.getByLabelText("Address"));
-    expect(screen.queryByPlaceholderText("Search state…")).not.toBeInTheDocument();
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
     expect(onChange).not.toHaveBeenCalled();
   });
 
@@ -50,10 +54,10 @@ describe("StateSelect dismissal", () => {
     const onChange = vi.fn();
     render(<StateSelect value="" onChange={onChange} />);
 
-    await user.click(screen.getByRole("button", { name: "State▾" }));
-    await user.click(screen.getByText("Texas"));
+    await user.click(screen.getByRole("combobox", { name: "State" }));
+    await user.click(await screen.findByRole("option", { name: /TX — Texas/i }));
 
     expect(onChange).toHaveBeenCalledWith("TX");
-    expect(screen.queryByPlaceholderText("Search state…")).not.toBeInTheDocument();
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
 });
