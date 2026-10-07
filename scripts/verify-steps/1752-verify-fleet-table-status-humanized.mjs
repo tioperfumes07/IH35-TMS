@@ -6,5 +6,8 @@ export default {
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-fleet-table-status-humanized.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-fleet-table-status-humanized.mjs"]);
+    // BANK leftover slate refuse — BrakeWear / W8Ben / AuditHistory / BorderCred / FleetTable (piggyback EVEN 1752).
+    await ctx.run("node", ["scripts/verify-drv-fleet-slate-leftover-chrome.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-drv-fleet-slate-leftover-chrome.mjs"]);
   },
 };

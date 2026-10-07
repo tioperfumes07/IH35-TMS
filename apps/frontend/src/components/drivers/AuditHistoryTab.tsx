@@ -178,7 +178,7 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
             <div>
               <button
                 type="button"
-                className="text-slate-700 underline"
+                className="text-[#1F2A44] underline"
                 data-testid={`driver-audit-expand-${row.id}`}
                 onClick={() => setExpandedId(expanded ? null : row.id)}
               >
@@ -338,7 +338,7 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
               <Button size="sm" variant="secondary" disabled={page === 0 || auditQuery.isFetching} onClick={() => setPage((current) => Math.max(0, current - 1))}>
                 Previous
               </Button>
-              <span className="text-slate-600">
+              <span className="text-[#4B5563]">
                 {page * pageSize + 1}–{Math.min((page + 1) * pageSize, totalCount)} of {totalCount}
               </span>
               <Button size="sm" variant="secondary" disabled={(page + 1) * pageSize >= totalCount || auditQuery.isFetching} onClick={() => setPage((current) => current + 1)}>
