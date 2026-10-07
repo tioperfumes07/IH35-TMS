@@ -106,11 +106,11 @@ describe("LawsuitsTab ?lawsuit_id= reverse drill-through (Law §9)", () => {
 
     const targetRow = await screen.findByText("CASE-1001");
     await waitFor(() => {
-      expect(targetRow.closest("tr")).toHaveClass("bg-slate-100");
+      expect(targetRow.closest("tr")).toHaveClass("bg-[#F7F8FA]");
     });
 
     const otherRow = screen.getByText("CASE-2002");
-    expect(otherRow.closest("tr")).not.toHaveClass("bg-slate-100");
+    expect(otherRow.closest("tr")).not.toHaveClass("bg-[#F7F8FA]");
   });
 
   it("shows the deep-linked lawsuit's claim reverse section (no dead end)", async () => {
@@ -136,6 +136,6 @@ describe("LawsuitsTab ?lawsuit_id= reverse drill-through (Law §9)", () => {
     render(wrap(<LawsuitsTab />, "/safety/insurance/lawsuits"));
 
     const row = await screen.findByText("CASE-1001");
-    expect(row.closest("tr")).not.toHaveClass("bg-slate-100");
+    expect(row.closest("tr")).not.toHaveClass("bg-[#F7F8FA]");
   });
 });
