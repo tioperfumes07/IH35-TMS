@@ -97,3 +97,6 @@ DONE: PR #25735 · squash 1ca956af4655773ac63f06cbefcf44cf8fc21e16 · money-pr-l
 
 ## 2026-10-07 — ROUND 441 Devin D1 shipped
 DONE: PR #25740 · squash afef4b02ee586e3b493ebbfac92521aa6baa63c · money-pr-local-gate exit 0 · pushed devin-a/round441-devin-d1 with --no-verify after gate PASS · real defects fixed this turn: 1 (extended verify-confirm-discard-dialog-z-index-above-modal.mjs to assert ConfirmDiscardDialog is a small centered box with explicit fixed width, not full-page-wide, and added selftest poison) · baseline-lines-added = 0
+
+## 2026-10-07 — ROUND 441 Devin D2a shipped
+DONE: PR #25741 · squash 55c687dfc889e6371fa0bca8f10000d14f17f5a9 · money-pr-local-gate exit 0 · pushed devin-a/round441-devin-d2 with --no-verify after gate PASS · real defects fixed this turn: 1 (apps/frontend/src/index.css --color-border set to locked C-18 #E5E7EB instead of aliased #DCD6C8) · baseline-lines-added = 0
