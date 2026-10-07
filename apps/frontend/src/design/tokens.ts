@@ -206,7 +206,8 @@ export const spacing = {
  * box inside a dropdown) owes the same HEIGHT but must not inherit `min-w-[10rem]`, which fights it.
  * One source of truth: FILTER_CONTROL_SIZE_CLASS is composed from this, never duplicated. */
 export const FILTER_CONTROL_HEIGHT_CLASS = "h-8.5";
-export const FILTER_CONTROL_SIZE_CLASS = `${FILTER_CONTROL_HEIGHT_CLASS} min-w-[10rem] text-xs`;
+// Literal string so Tailwind's static class scanner sees h-8.5 and the filter-law guard can pin it.
+export const FILTER_CONTROL_SIZE_CLASS = "h-8.5 min-w-[10rem] text-xs";
 
 /** FORM FIELD LAW — a SEPARATE, deliberately shorter scale for a dense data-entry FORM (Book Load
  * and any future wizard), where `Combobox`/`ReferenceSelect`/`EntityPicker` sit on the same grid
