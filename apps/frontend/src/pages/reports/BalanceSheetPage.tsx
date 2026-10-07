@@ -319,7 +319,7 @@ export function BalanceSheetPage() {
                       <td className="px-3 py-2">
                         <AmountLink
                           filter={bsFilter(line.account_id, applied)}
-                          className="text-slate-700 underline-offset-2 hover:underline"
+                          className="text-[#1F2A44] underline-offset-2 hover:underline"
                           data-testid={`bs-name-${line.account_id}`}
                         >
                           {line.account_name || "—"}
@@ -336,7 +336,7 @@ export function BalanceSheetPage() {
                     </tr>
                   ))
                 )}
-                <tr className="bg-slate-50 font-semibold">
+                <tr className="bg-[#F7F8FA] font-semibold">
                   <td colSpan={showCodes ? 2 : 1} className="px-3 py-2 text-right">
                     Total assets
                   </td>
@@ -373,7 +373,7 @@ export function BalanceSheetPage() {
                         <td className="px-3 py-2">
                           <AmountLink
                             filter={bsFilter(line.account_id, applied)}
-                            className="text-slate-700 underline-offset-2 hover:underline"
+                            className="text-[#1F2A44] underline-offset-2 hover:underline"
                             data-testid={`bs-name-${line.account_id}`}
                           >
                             {line.account_name || "—"}
@@ -390,7 +390,7 @@ export function BalanceSheetPage() {
                       </tr>
                     ))
                   )}
-                  <tr className="bg-slate-50 font-semibold">
+                  <tr className="bg-[#F7F8FA] font-semibold">
                     <td colSpan={showCodes ? 2 : 1} className="px-3 py-2 text-right">
                       Total liabilities
                     </td>
@@ -426,7 +426,7 @@ export function BalanceSheetPage() {
                         <td className="px-3 py-2">
                           <AmountLink
                             filter={bsFilter(line.account_id, applied)}
-                            className="text-slate-700 underline-offset-2 hover:underline"
+                            className="text-[#1F2A44] underline-offset-2 hover:underline"
                             data-testid={`bs-name-${line.account_id}`}
                           >
                             {line.account_name || "—"}
@@ -452,7 +452,7 @@ export function BalanceSheetPage() {
                       </td>
                     </tr>
                   ) : null}
-                  <tr className="bg-slate-50 font-semibold">
+                  <tr className="bg-[#F7F8FA] font-semibold">
                     <td colSpan={showCodes ? 2 : 1} className="px-3 py-2 text-right">
                       Current year earnings
                     </td>
@@ -460,7 +460,7 @@ export function BalanceSheetPage() {
                       <MoneyCell cents={query.data.equity.current_year_earnings} format={money} drill={{ none: "Current-year earnings: computed from this fiscal year's Profit & Loss, not a posted account" }} />
                     </td>
                   </tr>
-                  <tr className="bg-slate-50 font-semibold">
+                  <tr className="bg-[#F7F8FA] font-semibold">
                     <td colSpan={showCodes ? 2 : 1} className="px-3 py-2 text-right">
                       Total equity
                     </td>
