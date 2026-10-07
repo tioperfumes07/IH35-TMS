@@ -1,3 +1,22 @@
+## 2026-10-07T09:30Z · SETL-F439 Settlement Creator Google address wiring — MERGED #25677
+
+FINDING: SETL-F439 — Creator stops not on Book Load Google Places path; UUID customer; blank period; missing miles+$/mi; rate invoice subtotal; Cancel bypassed discard.
+
+MERGED: #25677 squash `152f81ee28` on origin/main.
+Branch: cursor/settlement-creator-google-wire2-c89b
+
+FIX: AddressGeocodeInput+StateSelect; buildStops address_line1/postal/lat; selectedOption; period from load dates; lane+deadhead+pay card; loadsSubtotal=line_haul_amount; Cancel→attemptClose; defaultLoadNumber.
+
+GUARD: scripts/verify-settlement-creator-google-address-wiring.mjs — selftest 4/4 exit 0; live PASS; F438 PO+state PASS.
+
+LIVE PROOF: guard exit 0 on tip before merge; on main tip 152f81ee28 after squash.
+
+REMAINING: owner Chrome click on deployed sha — not a fully-wired claim until then.
+
+Files Modified: SettlementCreatorDrawer.tsx · settlement-creator.types.ts · settlement-creator.routes.ts · settlement-creator-seed-loads.ts · settlementCreator.ts · verify-settlement-creator-google-address-wiring.mjs
+
+NEXT: drain remaining INBOX 432/433/435 measured-open (Bills tabs / B7 Chrome UNVERIFIED per prior census; money cells ceiling already 0).
+
 ## 2026-10-07T01:10Z · GO-20 hook — lead census (post entity-scope merge)
 
 SYNC: `git pull --ff-only origin main` → tip `fe46e2ef85` (already up to date). INBOX + GO-20 read.
