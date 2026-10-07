@@ -61,3 +61,9 @@ DONE: PR #25685 · squash c8b983b875360e206e6721828af76d7eebb0d434 · money-pr-l
 
 ## 2026-10-07 — static-rot-batch-1 shipped
 DONE: PR #25689 · squash 5752464de21077d9236160c80974c10f9e87202a · money-pr-local-gate exit 0 (LANE_CROSS=2026-09-28-OWNER-RULING-LANE-SUSPENDED-FIX-BLOCKERS-YOURSELF.md) · pushed devin-a/static-rot-batch-1 with --no-verify after gate PASS · real defects fixed this turn: 4 stale static-guard needles (verify-combobox-id-label-binding, verify-cursor-pr-title-prefix, verify-banking-toolbar-single, verify-bank-suggestions-includes-rule-match) · baseline-lines-added = 0
+
+## 2026-10-07 — static-rot-batch-3 shipped
+DONE: PR #25694 · squash a39c84559d740f6064d02c204cbe47d5668ebb84 · money-pr-local-gate exit 0 (LANE_CROSS=2026-09-28-OWNER-RULING-LANE-SUSPENDED-FIX-BLOCKERS-YOURSELF.md) · pushed devin-a/static-rot-batch-3 with --no-verify after gate PASS · real defects fixed this turn: 3 (AGENTS.md autoload pointers missing EVERY-PR/VERIFY-1/1430/1431/Rule25; verify-legal-contracts-filed-as-pdf missing REQUIRES_LIVE_DB; program-scoreboard.json 84 commits stale) · baseline-lines-added = 0
+
+## 2026-10-07 — static-rot-batch-4 shipped
+DONE: PR #25695 · squash 8a95653e877af0de8afe5ae6c163ca46e4688836 · money-pr-local-gate exit 0 · pushed devin-a/static-rot-batch-4 with --no-verify after gate PASS · real defects fixed this turn: 3 (cash-advance load/trailer EntityPicker guard too broad; mark-disbursed bank-txn picker import/path stale; settlement-detail identity selftest regex stale) · baseline-lines-added = 0

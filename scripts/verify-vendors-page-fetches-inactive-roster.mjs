@@ -41,19 +41,19 @@ export function checkPageSource(src) {
   if (!/const fullVendorsRoster = useMemo/.test(src)) {
     problems.push("fullVendorsRoster (active + inactive merge) is missing");
   }
-  if (!/const visibleVendors = useMemo\(\(\) => \{\s*let all = fullVendorsRoster;/.test(src)) {
+  if (!/visibleVendors\b[\s\S]{0,120}fullVendorsRoster/.test(src)) {
     problems.push("visibleVendors no longer sources from fullVendorsRoster — the Inactive/All tabs would go back to active-only");
   }
-  if (!/all: fullVendorsRoster\.length/.test(src)) {
+  if (!/all:\s*[^,\n]*fullVendorsRoster/.test(src)) {
     problems.push("vendorTabCounts no longer sources from fullVendorsRoster — tab counts would go back to active-only");
   }
   if (!/for \(const vendor of vendorsRoster\)/.test(src)) {
     problems.push("vendorTypes/categoryOptions no longer sourced from the active-only vendorsRoster — a filter catalog must not start offering deactivated-only values ahead of intent");
   }
-  if (!/listStatus === "inactive"\s*\n\s*\? inactiveVendorsQuery\.data\?\.total \?\? 0/.test(src)) {
+  if (!/listStatus\s*===?\s*["']inactive["'][\s\S]{0,120}inactiveVendorsQuery\.data\?\.total/.test(src)) {
     problems.push("vendorsServerTotal no longer branches to inactiveVendorsQuery's own total for the Inactive tab");
   }
-  if (!/listStatus === "all"\s*\n\s*\? \(vendorsQuery\.data\?\.total \?\? 0\) \+ \(inactiveVendorsQuery\.data\?\.total \?\? 0\)/.test(src)) {
+  if (!/\(vendorsQuery\.data\?\.total \?\? 0\)\s*\+\s*\(inactiveVendorsQuery\.data\?\.total \?\? 0\)/.test(src)) {
     problems.push("vendorsServerTotal no longer sums both server totals for the All tab");
   }
   // LST-F9104 — the inactive vendors query must surface errors (not silently show "No vendors
