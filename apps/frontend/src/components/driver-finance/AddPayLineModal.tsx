@@ -71,7 +71,7 @@ export function AddPayLineModal(props: { open: boolean; onClose: () => void; ope
       <div className="space-y-3 text-xs" data-testid="add-pay-line-modal">
         {settlementsQuery.isLoading ? <div className="text-gray-500">Loading settlements…</div> : null}
         {!settlementsQuery.isLoading && openSettlements.length === 0 ? (
-          <div className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-slate-700" data-testid="add-pay-line-no-open-settlement">
+          <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-[#1F2A44]" data-testid="add-pay-line-no-open-settlement">
             This driver has no open settlement. Pay lines go on an open settlement — run a settlement first.
           </div>
         ) : null}
