@@ -195,7 +195,7 @@ export function InvoiceSearchReportPage() {
       <div>
         <ReportsSubNav />
         <PageHeader title="Invoice Search" subtitle="Search invoices via server-side query builder" />
-        <div className="px-4 pb-6 text-xs text-slate-600">Select an operating company to search invoices.</div>
+        <div className="px-4 pb-6 text-xs text-[#4B5563]">Select an operating company to search invoices.</div>
       </div>
     );
   }
