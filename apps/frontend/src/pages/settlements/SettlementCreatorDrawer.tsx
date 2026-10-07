@@ -290,17 +290,19 @@ function defaultEscrowLine(): MoneyDraft {
   return { description: "Driver escrow", amount_cents: DEFAULT_ESCROW_HOLD_CENTS, load_number: "", escrow_type: "hold" };
 }
 
+/**
+ * Owner 2026-10-07: "+ Add" is NEVER in the section title row. It sits under / beside the
+ * last item so the next row stacks under the previous one. Title is title-only.
+ */
 function Section({
   title,
   subtotalCents,
   pdfCents,
-  onAdd,
   children,
 }: {
   title: string;
   subtotalCents?: number | null;
   pdfCents?: number | null;
-  onAdd?: () => void;
   children: ReactNode;
 }) {
   const tied =
@@ -309,13 +311,8 @@ function Section({
       : Math.round(subtotalCents) === Math.round(pdfCents);
   return (
     <section className="space-y-2 rounded-sm border border-[#E5E7EB] bg-white p-2">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-center gap-2">
         <h3 className="text-center text-section-header font-bold uppercase tracking-wide text-[#4B5563]">{title}</h3>
-        {onAdd ? (
-          <Button type="button" size="sm" variant="secondary" onClick={onAdd}>
-            + Add
-          </Button>
-        ) : null}
       </div>
       {children}
       {subtotalCents != null ? (
@@ -406,6 +403,79 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
+/** Under the last item (never the section header) — next click stacks another row below. */
+function AddUnderButton({
+  onClick,
+  testId,
+  label = "+ Add",
+}: {
+  onClick: () => void;
+  testId?: string;
+  label?: string;
+}) {
+  return (
+    <div className="flex items-center justify-start border-t border-dashed border-[#E5E7EB] pt-2" data-testid={testId}>
+      <Button type="button" size="sm" variant="secondary" onClick={onClick} className="h-7 px-2 text-xs">
+        {label}
+      </Button>
+    </div>
+  );
+}
+
+function RemoveLineButton({
+  onClick,
+  testId,
+  label,
+}: {
+  onClick: () => void;
+  testId?: string;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      data-testid={testId}
+      className="h-7 shrink-0 px-1 text-xs font-bold text-[#6B7280] hover:text-[#B91C1C]"
+      onClick={onClick}
+    >
+      ×
+    </button>
+  );
+}
+
+/**
+ * Owner 2026-10-07: fuel/expense load # is auto from date vs load PU–DEL window.
+ * Ask only when a load has PU and DEL on the SAME calendar day AND the expense is on that day
+ * (same-day trip — which load / assign-to is ambiguous without an explicit pick).
+ */
+function fuelNeedsExplicitLoadNumber(expenseDate: string, allLoads: LoadDraft[]): boolean {
+  const d = (expenseDate || "").slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return false;
+  return allLoads.some((l) => {
+    const pu = (l.pickup_date || "").slice(0, 10);
+    const del = (l.delivery_date || "").slice(0, 10);
+    return Boolean(pu && del && pu === del && pu === d);
+  });
+}
+
+/** Unique load whose PU–DEL window contains the expense date; else "". */
+function autoLoadNumberForExpenseDate(expenseDate: string, allLoads: LoadDraft[]): string {
+  const d = (expenseDate || "").slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return "";
+  const matches = allLoads.filter((l) => {
+    const num = String(l.load_number ?? "").trim();
+    if (!num) return false;
+    const pu = (l.pickup_date || "").slice(0, 10);
+    const del = (l.delivery_date || "").slice(0, 10);
+    if (!pu) return false;
+    if (del) return d >= pu && d <= del;
+    return d === pu;
+  });
+  if (matches.length === 1) return String(matches[0]!.load_number).trim();
+  return "";
+}
+
 type LineCodingFields = { item_id?: string | null; account_id?: string | null; load_id?: string | null; load_number?: string | null };
 type RefOption = { value: string; label: string };
 
@@ -422,6 +492,7 @@ function LineCoding({
   accountsLoading,
   item,
   testIdPrefix,
+  showLoad = true,
 }: {
   companyId: string;
   line: LineCodingFields;
@@ -430,6 +501,8 @@ function LineCoding({
   accountsLoading: boolean;
   item?: { options: RefOption[]; loading: boolean; onSearch: (q: string) => void; placeholder: string };
   testIdPrefix: string;
+  /** false when load # is auto-from-date (fuel) or shown elsewhere. */
+  showLoad?: boolean;
 }) {
   return (
     <>
@@ -460,17 +533,19 @@ function LineCoding({
           data-testid={`${testIdPrefix}-account`}
         />
       </Field>
-      <Field label="Load">
-        <EntityPicker
-          kind="load"
-          operatingCompanyId={companyId}
-          value={line.load_id ?? null}
-          onChange={(id, opt) => onPatch({ load_id: id, load_number: id ? (opt?.label ?? line.load_number ?? null) : null })}
-          placeholder={line.load_number ? `Load ${line.load_number}` : "Pick the load"}
-          size={pickerSize}
-          data-testid={`${testIdPrefix}-load`}
-        />
-      </Field>
+      {showLoad ? (
+        <Field label="Load">
+          <EntityPicker
+            kind="load"
+            operatingCompanyId={companyId}
+            value={line.load_id ?? null}
+            onChange={(id, opt) => onPatch({ load_id: id, load_number: id ? (opt?.label ?? line.load_number ?? null) : null })}
+            placeholder={line.load_number ? `Load ${line.load_number}` : "Pick the load"}
+            size={pickerSize}
+            data-testid={`${testIdPrefix}-load`}
+          />
+        </Field>
+      ) : null}
     </>
   );
 }
@@ -544,6 +619,66 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     const n = loads.find((l) => String(l.load_number ?? "").trim())?.load_number?.trim();
     return n || "";
   }, [loads]);
+
+  const loadDateWindowKey = useMemo(
+    () => loads.map((l) => `${l.load_number}|${l.pickup_date}|${l.delivery_date}`).join(";"),
+    [loads],
+  );
+  const fuelDatesKey = useMemo(() => fuels.map((f) => f.date).join(";"), [fuels]);
+  const compExpDatesKey = useMemo(() => companyExpenses.map((e) => e.date).join(";"), [companyExpenses]);
+
+  // Fuel / Comp. Exp. load #: auto from expense date vs load PU–DEL; never ask unless same-day trip.
+  useEffect(() => {
+    setFuels((prev) => {
+      let changed = false;
+      const next = prev.map((f) => {
+        if (fuelNeedsExplicitLoadNumber(f.date, loads)) return f;
+        const auto = autoLoadNumberForExpenseDate(f.date, loads);
+        if (auto && f.load_number !== auto) {
+          changed = true;
+          return { ...f, load_number: auto };
+        }
+        return f;
+      });
+      return changed ? next : prev;
+    });
+    setCompanyExpenses((prev) => {
+      let changed = false;
+      const next = prev.map((e) => {
+        if (fuelNeedsExplicitLoadNumber(e.date, loads)) return e;
+        const auto = autoLoadNumberForExpenseDate(e.date, loads);
+        if (auto && e.load_number !== auto) {
+          changed = true;
+          return { ...e, load_number: auto };
+        }
+        return e;
+      });
+      return changed ? next : prev;
+    });
+    // loadDateWindowKey / fuelDatesKey / compExpDatesKey stand in for loads+dates (stable strings).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadDateWindowKey, fuelDatesKey, compExpDatesKey]);
+
+  // Company → driver: escrow lines inherit the first company load # (and stay tied when it changes).
+  useEffect(() => {
+    if (!defaultLoadNumber) return;
+    setEscrow((prev) => {
+      if (!prev.length) return prev;
+      let changed = false;
+      const next = prev.map((row, i) => {
+        if (i === 0 && (!row.load_number || row.load_number !== defaultLoadNumber)) {
+          changed = true;
+          return { ...row, load_number: defaultLoadNumber };
+        }
+        if (!row.load_number) {
+          changed = true;
+          return { ...row, load_number: defaultLoadNumber };
+        }
+        return row;
+      });
+      return changed ? next : prev;
+    });
+  }, [defaultLoadNumber]);
 
   const registerAttemptClose = useCallback((next: () => void) => {
     setAttemptClose(() => next);
@@ -1224,660 +1359,730 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               Company Settlement
             </h2>
 
-            <Section title="Loads" subtotalCents={loadsSubtotal} onAdd={addLoadRow}>
+            <Section title="Loads" subtotalCents={loadsSubtotal}>
               {loads.map((load, idx) => (
-                <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
-                  <Field label="Load No.">
-                    <div className="flex items-center gap-1">
-                      <input
-                        className={inputClass}
-                        value={load.load_number}
-                        onChange={(e) => {
+                <div
+                  key={idx}
+                  className="space-y-2 border-b border-[#E5E7EB] pb-2 pt-1"
+                  data-testid={`sc-load-block-${idx}`}
+                >
+                  {/* Row 1 — Load # / Customer / Trip type (owner 2026-10-07) */}
+                  <div className={fieldGridClass} data-testid={`sc-load-row1-${idx}`}>
+                    <Field label="Load No.">
+                      <div className="flex items-center gap-1">
+                        <input
+                          className={inputClass}
+                          value={load.load_number}
+                          onChange={(e) => {
+                            const next = [...loads];
+                            next[idx] = { ...load, load_number: e.target.value };
+                            setLoads(next);
+                          }}
+                          title="Prefilled with the next free load number. Type over it to override — it must be a NEW number. (SETL-F437: no Edit button.)"
+                          data-testid={`sc-load-number-${idx}`}
+                        />
+                        {loads.length > 1 ? (
+                          <RemoveLineButton
+                            label="Remove load"
+                            testId={`sc-load-remove-${idx}`}
+                            onClick={() => setLoads(loads.filter((_, i) => i !== idx))}
+                          />
+                        ) : null}
+                      </div>
+                    </Field>
+                    <Field label="Customer">
+                      <EntityPicker
+                        kind="customer"
+                        operatingCompanyId={companyId}
+                        value={load.customer_id ?? null}
+                        selectedOption={
+                          load.customer_id && load.customer_name
+                            ? { value: load.customer_id, label: load.customer_name }
+                            : null
+                        }
+                        onChange={(id, opt) => {
                           const next = [...loads];
-                          next[idx] = { ...load, load_number: e.target.value };
+                          next[idx] = {
+                            ...load,
+                            customer_id: id,
+                            customer_name: opt?.label ?? (id ? load.customer_name : ""),
+                          };
                           setLoads(next);
                         }}
-                        title="Prefilled with the next free load number. Type over it to override — it must be a NEW number. (SETL-F437: no Edit button.)"
-                        data-testid={`sc-load-number-${idx}`}
+                        allowCreate={false}
+                        size={pickerSize}
+                        className="mt-0"
+                        dataTestId={`sc-load-customer-${idx}`}
                       />
-                    </div>
-                  </Field>
-                  <Field label="Customer">
-                    <EntityPicker
-                      kind="customer"
-                      operatingCompanyId={companyId}
-                      value={load.customer_id ?? null}
-                      selectedOption={
-                        load.customer_id && load.customer_name
-                          ? { value: load.customer_id, label: load.customer_name }
-                          : null
-                      }
-                      onChange={(id, opt) => {
-                        const next = [...loads];
-                        next[idx] = {
-                          ...load,
-                          customer_id: id,
-                          customer_name: opt?.label ?? (id ? load.customer_name : ""),
-                        };
-                        setLoads(next);
-                      }}
-                      allowCreate={false}
-                      size={pickerSize}
-                      className="mt-0"
-                      dataTestId={`sc-load-customer-${idx}`}
-                    />
-                  </Field>
-                  <Field label="Trip type">
-                    <Combobox
-                      options={[
-                        { value: "NB", label: "NB" },
-                        { value: "TR", label: "TR" },
-                        { value: "SB", label: "SB" },
-                        { value: "LOCAL", label: "LOCAL" },
-                      ]}
-                      value={load.trip_type ?? "NB"}
-                      onChange={(v) => {
-                        const next = [...loads];
-                        next[idx] = { ...load, trip_type: (v ?? "") as LoadDraft["trip_type"] };
-                        setLoads(next);
-                      }}
-                      size="sm"
-                      searchIsValue
-                      data-testid={`sc-load-trip-type-${idx}`}
-                    />
-                  </Field>
-                  <Field label="Join outbound (SB)">
-                    <input
-                      className={inputClass}
-                      value={load.join_outbound_load_number ?? ""}
-                      onChange={(e) => {
-                        const next = [...loads];
-                        next[idx] = { ...load, join_outbound_load_number: e.target.value };
-                        setLoads(next);
-                      }}
-                      placeholder="Outbound load #"
-                    />
-                  </Field>
-                  <Field label="Customer PO #">
-                    <input
-                      className={inputClass}
-                      value={load.customer_po_number ?? ""}
-                      onChange={(e) => {
-                        const next = [...loads];
-                        next[idx] = { ...load, customer_po_number: e.target.value };
-                        setLoads(next);
-                      }}
-                      title="REQUIRED — bookLoad refuses a load with no PO or W/O, and Faro matches the invoice on it"
-                      data-testid={`sc-load-po-${idx}`}
-                    />
-                  </Field>
-                  <Field label="Pickup date">
-                    <DatePicker
-                      className={inputClass}
-                      value={load.pickup_date ?? ""}
-                      onChange={(v) => {
-                        const next = [...loads];
-                        next[idx] = { ...load, pickup_date: v };
-                        setLoads(next);
-                      }}
-                    />
-                  </Field>
-                  <Field label="Pickup address (optional)">
-                    <AddressGeocodeInput
-                      value={load.pickup_address ?? ""}
-                      onChange={(v) => {
-                        // Functional patch ONLY — AddressGeocodeInput calls onResolve then
-                        // onChange(formatted); a stale full-load rebuild here wiped city/state.
-                        if (ignoreGeocodeFormattedRef.current[idx] === "pickup") {
-                          ignoreGeocodeFormattedRef.current[idx] = null;
-                          return;
+                    </Field>
+                    <Field label="Trip type">
+                      <Combobox
+                        options={[
+                          { value: "NB", label: "NB" },
+                          { value: "TR", label: "TR" },
+                          { value: "SB", label: "SB" },
+                          { value: "LOCAL", label: "LOCAL" },
+                        ]}
+                        value={load.trip_type ?? "NB"}
+                        onChange={(v) => {
+                          const next = [...loads];
+                          next[idx] = { ...load, trip_type: (v ?? "") as LoadDraft["trip_type"] };
+                          setLoads(next);
+                        }}
+                        size="sm"
+                        searchIsValue
+                        data-testid={`sc-load-trip-type-${idx}`}
+                      />
+                    </Field>
+                    <Field label="Join outbound (SB)">
+                      <input
+                        className={inputClass}
+                        value={load.join_outbound_load_number ?? ""}
+                        onChange={(e) => {
+                          const next = [...loads];
+                          next[idx] = { ...load, join_outbound_load_number: e.target.value };
+                          setLoads(next);
+                        }}
+                        placeholder="Outbound load #"
+                      />
+                    </Field>
+                    <Field label="Customer PO #">
+                      <input
+                        className={inputClass}
+                        value={load.customer_po_number ?? ""}
+                        onChange={(e) => {
+                          const next = [...loads];
+                          next[idx] = { ...load, customer_po_number: e.target.value };
+                          setLoads(next);
+                        }}
+                        title="REQUIRED — bookLoad refuses a load with no PO or W/O, and Faro matches the invoice on it"
+                        data-testid={`sc-load-po-${idx}`}
+                      />
+                    </Field>
+                  </div>
+
+                  {/* Row 2 — PU date + DEL date ONLY */}
+                  <div className={fieldGridClass} data-testid={`sc-load-row2-dates-${idx}`}>
+                    <Field label="Pickup date">
+                      <DatePicker
+                        className={inputClass}
+                        value={load.pickup_date ?? ""}
+                        onChange={(v) => {
+                          const next = [...loads];
+                          next[idx] = { ...load, pickup_date: v };
+                          setLoads(next);
+                        }}
+                      />
+                    </Field>
+                    <Field label="Delivery date">
+                      <DatePicker
+                        className={inputClass}
+                        value={load.delivery_date ?? ""}
+                        onChange={(v) => {
+                          const next = [...loads];
+                          next[idx] = { ...load, delivery_date: v, not_yet_delivered: !v };
+                          setLoads(next);
+                        }}
+                      />
+                    </Field>
+                    <label className="col-span-2 flex h-7 items-center justify-center gap-2 self-end rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#0F1219]">
+                      <input
+                        type="checkbox"
+                        checked={load.not_yet_delivered !== false && !load.delivery_date}
+                        onChange={(e) => {
+                          const next = [...loads];
+                          next[idx] = {
+                            ...load,
+                            not_yet_delivered: e.target.checked,
+                            delivery_date: e.target.checked ? "" : load.delivery_date,
+                          };
+                          setLoads(next);
+                        }}
+                        data-testid={`sc-not-delivered-${idx}`}
+                      />
+                      Not delivered
+                    </label>
+                  </div>
+
+                  {/* Stop identity — address / city / state / ZIP */}
+                  <div className={fieldGridClass}>
+                    <Field label="Pickup address (optional)">
+                      <AddressGeocodeInput
+                        value={load.pickup_address ?? ""}
+                        onChange={(v) => {
+                          if (ignoreGeocodeFormattedRef.current[idx] === "pickup") {
+                            ignoreGeocodeFormattedRef.current[idx] = null;
+                            return;
+                          }
+                          setLoads((prev) => {
+                            const cur = prev[idx];
+                            if (!cur) return prev;
+                            const next = [...prev];
+                            next[idx] = { ...cur, pickup_address: v };
+                            return next;
+                          });
+                        }}
+                        onResolve={(r) => {
+                          milesTouchedRef.current[idx] = false;
+                          ignoreGeocodeFormattedRef.current[idx] = "pickup";
+                          setLoads((prev) => {
+                            const cur = prev[idx];
+                            if (!cur) return prev;
+                            const next = [...prev];
+                            next[idx] = applyGeocodeToLoad(cur, "pickup", r);
+                            return next;
+                          });
+                        }}
+                        placeholder="Optional — pick a place to fill city/state"
+                        className={inputClass}
+                        dataAttrs={{ "data-testid": `sc-load-pickup-address-${idx}` }}
+                      />
+                    </Field>
+                    <Field label="Pickup city">
+                      <input
+                        className={inputClass}
+                        value={load.pickup_city ?? ""}
+                        onChange={(e) => {
+                          milesTouchedRef.current[idx] = false;
+                          setLoads((prev) => {
+                            const cur = prev[idx];
+                            if (!cur) return prev;
+                            const next = [...prev];
+                            next[idx] = {
+                              ...cur,
+                              pickup_city: e.target.value,
+                              loaded_miles: null,
+                              line_haul_miles: null,
+                              empty_miles: null,
+                            };
+                            return next;
+                          });
+                        }}
+                        data-testid={`sc-load-pickup-city-${idx}`}
+                      />
+                    </Field>
+                    <Field label="Pickup state">
+                      <StateSelect
+                        value={load.pickup_state ?? ""}
+                        onChange={(code) => {
+                          milesTouchedRef.current[idx] = false;
+                          setLoads((prev) => {
+                            const cur = prev[idx];
+                            if (!cur) return prev;
+                            const next = [...prev];
+                            next[idx] = {
+                              ...cur,
+                              pickup_state: code,
+                              loaded_miles: null,
+                              line_haul_miles: null,
+                              empty_miles: null,
+                            };
+                            return next;
+                          });
+                        }}
+                        placeholder="State"
+                      />
+                      <span className="sr-only" data-testid={`sc-load-pickup-state-${idx}`}>
+                        {load.pickup_state}
+                      </span>
+                    </Field>
+                    <Field label="Pickup ZIP">
+                      <input
+                        className={inputClass}
+                        value={load.pickup_zip ?? ""}
+                        onChange={(e) => {
+                          setLoads((prev) => {
+                            const cur = prev[idx];
+                            if (!cur) return prev;
+                            const next = [...prev];
+                            next[idx] = { ...cur, pickup_zip: e.target.value };
+                            return next;
+                          });
+                        }}
+                        data-testid={`sc-load-pickup-zip-${idx}`}
+                      />
+                    </Field>
+                    <span />
+                  </div>
+                  <div className={fieldGridClass}>
+                    <Field label="Delivery address (optional)">
+                      <AddressGeocodeInput
+                        value={load.delivery_address ?? ""}
+                        onChange={(v) => {
+                          if (ignoreGeocodeFormattedRef.current[idx] === "delivery") {
+                            ignoreGeocodeFormattedRef.current[idx] = null;
+                            return;
+                          }
+                          setLoads((prev) => {
+                            const cur = prev[idx];
+                            if (!cur) return prev;
+                            const next = [...prev];
+                            next[idx] = { ...cur, delivery_address: v };
+                            return next;
+                          });
+                        }}
+                        onResolve={(r) => {
+                          milesTouchedRef.current[idx] = false;
+                          ignoreGeocodeFormattedRef.current[idx] = "delivery";
+                          setLoads((prev) => {
+                            const cur = prev[idx];
+                            if (!cur) return prev;
+                            const next = [...prev];
+                            next[idx] = applyGeocodeToLoad(cur, "delivery", r);
+                            return next;
+                          });
+                        }}
+                        placeholder="Optional — pick a place to fill city/state"
+                        className={inputClass}
+                        dataAttrs={{ "data-testid": `sc-load-delivery-address-${idx}` }}
+                      />
+                    </Field>
+                    <Field label="Delivery city">
+                      <input
+                        className={inputClass}
+                        value={load.delivery_city ?? ""}
+                        onChange={(e) => {
+                          milesTouchedRef.current[idx] = false;
+                          setLoads((prev) => {
+                            const cur = prev[idx];
+                            if (!cur) return prev;
+                            const next = [...prev];
+                            next[idx] = {
+                              ...cur,
+                              delivery_city: e.target.value,
+                              loaded_miles: null,
+                              line_haul_miles: null,
+                            };
+                            return next;
+                          });
+                        }}
+                        data-testid={`sc-load-delivery-city-${idx}`}
+                      />
+                    </Field>
+                    <Field label="Delivery state">
+                      <StateSelect
+                        value={load.delivery_state ?? ""}
+                        onChange={(code) => {
+                          milesTouchedRef.current[idx] = false;
+                          setLoads((prev) => {
+                            const cur = prev[idx];
+                            if (!cur) return prev;
+                            const next = [...prev];
+                            next[idx] = {
+                              ...cur,
+                              delivery_state: code,
+                              loaded_miles: null,
+                              line_haul_miles: null,
+                            };
+                            return next;
+                          });
+                        }}
+                        placeholder="State"
+                      />
+                      <span className="sr-only" data-testid={`sc-load-delivery-state-${idx}`}>
+                        {load.delivery_state}
+                      </span>
+                    </Field>
+                    <Field label="Delivery ZIP">
+                      <input
+                        className={inputClass}
+                        value={load.delivery_zip ?? ""}
+                        onChange={(e) => {
+                          setLoads((prev) => {
+                            const cur = prev[idx];
+                            if (!cur) return prev;
+                            const next = [...prev];
+                            next[idx] = { ...cur, delivery_zip: e.target.value };
+                            return next;
+                          });
+                        }}
+                        data-testid={`sc-load-delivery-zip-${idx}`}
+                      />
+                    </Field>
+                    <span />
+                  </div>
+
+                  {/* Compact money/miles row — same row, small boxes; Revenue → Invoice Amt */}
+                  <div className={fieldGridClass} data-testid={`sc-load-miles-money-${idx}`}>
+                    <Field label="Loaded miles">
+                      <DecimalNumberInput
+                        className={inputClass}
+                        value={load.loaded_miles}
+                        onChange={(n) => {
+                          milesTouchedRef.current[idx] = true;
+                          setLoads((prev) => {
+                            const cur = prev[idx];
+                            if (!cur) return prev;
+                            const next = [...prev];
+                            next[idx] = { ...cur, loaded_miles: n };
+                            return next;
+                          });
+                        }}
+                        title={
+                          laneMileageFetching || routeMileageFetching || cityGeocodeFetching
+                            ? "Looking up loaded miles…"
+                            : !load.pickup_city || !load.pickup_state || !load.delivery_city || !load.delivery_state
+                              ? "Set pickup + delivery city and state — miles fill from lane DB, else route engine"
+                              : "Filled from lane history (our DB), else route engine once city/state geocode"
                         }
-                        setLoads((prev) => {
-                          const cur = prev[idx];
-                          if (!cur) return prev;
-                          const next = [...prev];
-                          next[idx] = { ...cur, pickup_address: v };
-                          return next;
-                        });
-                      }}
-                      onResolve={(r) => {
-                        milesTouchedRef.current[idx] = false;
-                        ignoreGeocodeFormattedRef.current[idx] = "pickup";
-                        setLoads((prev) => {
-                          const cur = prev[idx];
-                          if (!cur) return prev;
-                          const next = [...prev];
-                          next[idx] = applyGeocodeToLoad(cur, "pickup", r);
-                          return next;
-                        });
-                      }}
-                      placeholder="Optional — pick a place to fill city/state"
-                      className={inputClass}
-                      dataAttrs={{ "data-testid": `sc-load-pickup-address-${idx}` }}
-                    />
-                  </Field>
-                  <Field label="Pickup city">
-                    <input
-                      className={inputClass}
-                      value={load.pickup_city ?? ""}
-                      onChange={(e) => {
-                        milesTouchedRef.current[idx] = false;
-                        setLoads((prev) => {
-                          const cur = prev[idx];
-                          if (!cur) return prev;
-                          const next = [...prev];
-                          next[idx] = {
-                            ...cur,
-                            pickup_city: e.target.value,
-                            loaded_miles: null,
-                            line_haul_miles: null,
-                            empty_miles: null,
-                          };
-                          return next;
-                        });
-                      }}
-                      data-testid={`sc-load-pickup-city-${idx}`}
-                    />
-                  </Field>
-                  <Field label="Pickup state">
-                    <StateSelect
-                      value={load.pickup_state ?? ""}
-                      onChange={(code) => {
-                        milesTouchedRef.current[idx] = false;
-                        setLoads((prev) => {
-                          const cur = prev[idx];
-                          if (!cur) return prev;
-                          const next = [...prev];
-                          next[idx] = {
-                            ...cur,
-                            pickup_state: code,
-                            loaded_miles: null,
-                            line_haul_miles: null,
-                            empty_miles: null,
-                          };
-                          return next;
-                        });
-                      }}
-                      placeholder="State"
-                    />
-                    <span className="sr-only" data-testid={`sc-load-pickup-state-${idx}`}>
-                      {load.pickup_state}
-                    </span>
-                  </Field>
-                  <Field label="Pickup ZIP">
-                    <input
-                      className={inputClass}
-                      value={load.pickup_zip ?? ""}
-                      onChange={(e) => {
-                        setLoads((prev) => {
-                          const cur = prev[idx];
-                          if (!cur) return prev;
-                          const next = [...prev];
-                          next[idx] = { ...cur, pickup_zip: e.target.value };
-                          return next;
-                        });
-                      }}
-                      data-testid={`sc-load-pickup-zip-${idx}`}
-                    />
-                  </Field>
-                  <Field label="Delivery date">
-                    <DatePicker
-                      className={inputClass}
-                      value={load.delivery_date ?? ""}
-                      onChange={(v) => {
-                        const next = [...loads];
-                        next[idx] = { ...load, delivery_date: v, not_yet_delivered: !v };
-                        setLoads(next);
-                      }}
-                    />
-                  </Field>
-                  <Field label="Delivery address (optional)">
-                    <AddressGeocodeInput
-                      value={load.delivery_address ?? ""}
-                      onChange={(v) => {
-                        if (ignoreGeocodeFormattedRef.current[idx] === "delivery") {
-                          ignoreGeocodeFormattedRef.current[idx] = null;
-                          return;
+                        data-testid={`sc-load-loaded-miles-${idx}`}
+                        ariaLabel="Loaded miles"
+                      />
+                    </Field>
+                    <Field label="Empty miles">
+                      <DecimalNumberInput
+                        className={inputClass}
+                        value={load.empty_miles}
+                        onChange={(n) => {
+                          milesTouchedRef.current[idx] = true;
+                          setLoads((prev) => {
+                            const cur = prev[idx];
+                            if (!cur) return prev;
+                            const next = [...prev];
+                            next[idx] = { ...cur, empty_miles: n };
+                            return next;
+                          });
+                        }}
+                        title={
+                          !unitId
+                            ? "Pick a unit — empty miles fill from that truck's last delivery → this pickup"
+                            : !load.pickup_city || !load.pickup_state
+                              ? "Set pickup city + state — empty miles use this truck's last delivery → pickup"
+                              : chainDeadheadFetching
+                                ? "Looking up this unit's last delivery…"
+                                : "Filled from this truck's last delivery → this pickup (chain deadhead)"
                         }
-                        setLoads((prev) => {
-                          const cur = prev[idx];
-                          if (!cur) return prev;
-                          const next = [...prev];
-                          next[idx] = { ...cur, delivery_address: v };
-                          return next;
-                        });
-                      }}
-                      onResolve={(r) => {
-                        milesTouchedRef.current[idx] = false;
-                        ignoreGeocodeFormattedRef.current[idx] = "delivery";
-                        setLoads((prev) => {
-                          const cur = prev[idx];
-                          if (!cur) return prev;
-                          const next = [...prev];
-                          next[idx] = applyGeocodeToLoad(cur, "delivery", r);
-                          return next;
-                        });
-                      }}
-                      placeholder="Optional — pick a place to fill city/state"
-                      className={inputClass}
-                      dataAttrs={{ "data-testid": `sc-load-delivery-address-${idx}` }}
-                    />
-                  </Field>
-                  <Field label="Delivery city">
-                    <input
-                      className={inputClass}
-                      value={load.delivery_city ?? ""}
-                      onChange={(e) => {
-                        milesTouchedRef.current[idx] = false;
-                        setLoads((prev) => {
-                          const cur = prev[idx];
-                          if (!cur) return prev;
-                          const next = [...prev];
-                          next[idx] = {
-                            ...cur,
-                            delivery_city: e.target.value,
-                            loaded_miles: null,
-                            line_haul_miles: null,
-                          };
-                          return next;
-                        });
-                      }}
-                      data-testid={`sc-load-delivery-city-${idx}`}
-                    />
-                  </Field>
-                  <Field label="Delivery state">
-                    <StateSelect
-                      value={load.delivery_state ?? ""}
-                      onChange={(code) => {
-                        milesTouchedRef.current[idx] = false;
-                        setLoads((prev) => {
-                          const cur = prev[idx];
-                          if (!cur) return prev;
-                          const next = [...prev];
-                          next[idx] = {
-                            ...cur,
-                            delivery_state: code,
-                            loaded_miles: null,
-                            line_haul_miles: null,
-                          };
-                          return next;
-                        });
-                      }}
-                      placeholder="State"
-                    />
-                    <span className="sr-only" data-testid={`sc-load-delivery-state-${idx}`}>
-                      {load.delivery_state}
-                    </span>
-                  </Field>
-                  <Field label="Delivery ZIP">
-                    <input
-                      className={inputClass}
-                      value={load.delivery_zip ?? ""}
-                      onChange={(e) => {
-                        setLoads((prev) => {
-                          const cur = prev[idx];
-                          if (!cur) return prev;
-                          const next = [...prev];
-                          next[idx] = { ...cur, delivery_zip: e.target.value };
-                          return next;
-                        });
-                      }}
-                      data-testid={`sc-load-delivery-zip-${idx}`}
-                    />
-                  </Field>
-                  <Field label="Loaded miles">
-                    <DecimalNumberInput
-                      className={inputClass}
-                      value={load.loaded_miles}
-                      onChange={(n) => {
-                        milesTouchedRef.current[idx] = true;
-                        setLoads((prev) => {
-                          const cur = prev[idx];
-                          if (!cur) return prev;
-                          const next = [...prev];
-                          next[idx] = { ...cur, loaded_miles: n };
-                          return next;
-                        });
-                      }}
-                      title={
-                        laneMileageFetching || routeMileageFetching || cityGeocodeFetching
-                          ? "Looking up loaded miles…"
-                          : !load.pickup_city || !load.pickup_state || !load.delivery_city || !load.delivery_state
-                            ? "Set pickup + delivery city and state — miles fill from lane DB, else route engine"
-                            : "Filled from lane history (our DB), else route engine once city/state geocode"
-                      }
-                      data-testid={`sc-load-loaded-miles-${idx}`}
-                      ariaLabel="Loaded miles"
-                    />
-                  </Field>
-                  <Field label="Empty miles">
-                    <DecimalNumberInput
-                      className={inputClass}
-                      value={load.empty_miles}
-                      onChange={(n) => {
-                        milesTouchedRef.current[idx] = true;
-                        setLoads((prev) => {
-                          const cur = prev[idx];
-                          if (!cur) return prev;
-                          const next = [...prev];
-                          next[idx] = { ...cur, empty_miles: n };
-                          return next;
-                        });
-                      }}
-                      title={
-                        !unitId
-                          ? "Pick a unit — empty miles fill from that truck's last delivery → this pickup"
-                          : !load.pickup_city || !load.pickup_state
-                            ? "Set pickup city + state — empty miles use this truck's last delivery → pickup"
-                            : chainDeadheadFetching
-                              ? "Looking up this unit's last delivery…"
-                              : "Filled from this truck's last delivery → this pickup (chain deadhead)"
-                      }
-                      data-testid={`sc-load-empty-miles-${idx}`}
-                      ariaLabel="Empty miles"
-                    />
-                  </Field>
-                  <Field label="Empty $/mi">
-                    <MoneyInput
-                      className={moneyInputClass}
-                      valueCents={load.empty_rate_cents}
-                      onChangeCents={(cents) => {
-                        ratesTouchedRef.current = true;
-                        const next = [...loads];
-                        next[idx] = { ...load, empty_rate_cents: cents };
-                        setLoads(next);
-                      }}
-                      ariaLabel="Empty miles rate"
-                    />
-                  </Field>
-                  <Field label="Rate $/mi">
-                    <MoneyInput
-                      className={moneyInputClass}
-                      valueCents={load.line_haul_rate_cents}
-                      onChangeCents={(cents) => {
-                        ratesTouchedRef.current = true;
-                        const next = [...loads];
-                        next[idx] = { ...load, line_haul_rate_cents: cents };
-                        setLoads(next);
-                      }}
-                      ariaLabel="Rate per mile"
-                    />
-                  </Field>
-                  <Field label="Revenue">
-                    <MoneyInput
-                      className={moneyInputClass}
-                      valueCents={load.line_haul_amount_cents}
-                      onChangeCents={(cents) => {
-                        const next = [...loads];
-                        next[idx] = { ...load, line_haul_amount_cents: cents };
-                        setLoads(next);
-                      }}
-                      ariaLabel="Load revenue"
-                    />
-                  </Field>
-                  <Field label="Accessorial item">
-                    <input
-                      className={inputClass}
-                      value={load.accessorials?.[0]?.item_name ?? ""}
-                      onChange={(e) => {
-                        const next = [...loads];
-                        const acc = [...(load.accessorials ?? [])];
-                        const row = acc[0] ?? { item_name: "", amount_cents: 0, description: null };
-                        acc[0] = { ...row, item_name: e.target.value };
-                        next[idx] = { ...load, accessorials: acc.filter((a) => a.item_name || a.amount_cents > 0) };
-                        setLoads(next);
-                      }}
-                      placeholder="Detention / layover…"
-                      data-testid={`sc-accessorial-item-${idx}`}
-                    />
-                  </Field>
-                  <Field label="Accessorial $">
-                    <MoneyInput
-                      className={moneyInputClass}
-                      valueCents={load.accessorials?.[0]?.amount_cents || null}
-                      onChangeCents={(cents) => {
-                        const next = [...loads];
-                        const acc = [...(load.accessorials ?? [])];
-                        const row = acc[0] ?? { item_name: "Accessorial", amount_cents: 0, description: null };
-                        acc[0] = { ...row, amount_cents: cents ?? 0, item_name: row.item_name || "Accessorial" };
-                        next[idx] = { ...load, accessorials: (cents ?? 0) > 0 || row.item_name ? acc : [] };
-                        setLoads(next);
-                      }}
-                      ariaLabel="Accessorial amount"
-                    />
-                  </Field>
-                  <Field label="Factoring">
-                    <Combobox
-                      options={[
-                        { value: "faro_usmca", label: "Faro USMCA" },
-                        { value: "direct", label: "None (direct)" },
-                        { value: "faro_transportation", label: "Faro Transportation" },
-                      ]}
-                      value={load.factoring}
-                      onChange={(v) => {
-                        const next = [...loads];
-                        next[idx] = { ...load, factoring: (v ?? "") as SettlementCreatorFactorOption };
-                        setLoads(next);
-                      }}
-                      size="sm"
-                      searchIsValue
-                    />
-                  </Field>
-                  {/* SETL-F437 — "Date sent to factoring" removed (owner, 2026-10-06): the invoices
-                      that go to Faro are SELECTED IN FARO, so a date typed here could only ever
-                      disagree with the factor's own record. It is not a settlement fact. */}
-                  <label className="col-span-5 flex h-7 items-center justify-center gap-2 rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#0F1219]">
-                    <input
-                      type="checkbox"
-                      checked={load.not_yet_delivered !== false && !load.delivery_date}
-                      onChange={(e) => {
-                        const next = [...loads];
-                        next[idx] = {
-                          ...load,
-                          not_yet_delivered: e.target.checked,
-                          delivery_date: e.target.checked ? "" : load.delivery_date,
-                        };
-                        setLoads(next);
-                      }}
-                      data-testid={`sc-not-delivered-${idx}`}
-                    />
-                    Not delivered
-                  </label>
+                        data-testid={`sc-load-empty-miles-${idx}`}
+                        ariaLabel="Empty miles"
+                      />
+                    </Field>
+                    <Field label="Empty $/mi">
+                      <MoneyInput
+                        className={moneyInputClass}
+                        valueCents={load.empty_rate_cents}
+                        onChangeCents={(cents) => {
+                          ratesTouchedRef.current = true;
+                          const next = [...loads];
+                          next[idx] = { ...load, empty_rate_cents: cents };
+                          setLoads(next);
+                        }}
+                        ariaLabel="Empty miles rate"
+                      />
+                    </Field>
+                    <Field label="Rate $/mi">
+                      <MoneyInput
+                        className={moneyInputClass}
+                        valueCents={load.line_haul_rate_cents}
+                        onChangeCents={(cents) => {
+                          ratesTouchedRef.current = true;
+                          const next = [...loads];
+                          next[idx] = { ...load, line_haul_rate_cents: cents };
+                          setLoads(next);
+                        }}
+                        ariaLabel="Rate per mile"
+                      />
+                    </Field>
+                    <Field label="Invoice Amt">
+                      <MoneyInput
+                        className={moneyInputClass}
+                        valueCents={load.line_haul_amount_cents}
+                        onChangeCents={(cents) => {
+                          const next = [...loads];
+                          next[idx] = { ...load, line_haul_amount_cents: cents };
+                          setLoads(next);
+                        }}
+                        ariaLabel="Invoice amount"
+                      />
+                    </Field>
+                  </div>
+
+                  <div className={fieldGridClass}>
+                    <Field label="Accessorial item">
+                      <input
+                        className={inputClass}
+                        value={load.accessorials?.[0]?.item_name ?? ""}
+                        onChange={(e) => {
+                          const next = [...loads];
+                          const acc = [...(load.accessorials ?? [])];
+                          const row = acc[0] ?? { item_name: "", amount_cents: 0, description: null };
+                          acc[0] = { ...row, item_name: e.target.value };
+                          next[idx] = { ...load, accessorials: acc.filter((a) => a.item_name || a.amount_cents > 0) };
+                          setLoads(next);
+                        }}
+                        placeholder="Detention / layover…"
+                        data-testid={`sc-accessorial-item-${idx}`}
+                      />
+                    </Field>
+                    <Field label="Accessorial $">
+                      <MoneyInput
+                        className={moneyInputClass}
+                        valueCents={load.accessorials?.[0]?.amount_cents || null}
+                        onChangeCents={(cents) => {
+                          const next = [...loads];
+                          const acc = [...(load.accessorials ?? [])];
+                          const row = acc[0] ?? { item_name: "Accessorial", amount_cents: 0, description: null };
+                          acc[0] = { ...row, amount_cents: cents ?? 0, item_name: row.item_name || "Accessorial" };
+                          next[idx] = { ...load, accessorials: (cents ?? 0) > 0 || row.item_name ? acc : [] };
+                          setLoads(next);
+                        }}
+                        ariaLabel="Accessorial amount"
+                      />
+                    </Field>
+                    <Field label="Factoring">
+                      <Combobox
+                        options={[
+                          { value: "faro_usmca", label: "Faro USMCA" },
+                          { value: "direct", label: "None (direct)" },
+                          { value: "faro_transportation", label: "Faro Transportation" },
+                        ]}
+                        value={load.factoring}
+                        onChange={(v) => {
+                          const next = [...loads];
+                          next[idx] = { ...load, factoring: (v ?? "") as SettlementCreatorFactorOption };
+                          setLoads(next);
+                        }}
+                        size="sm"
+                        searchIsValue
+                      />
+                    </Field>
+                  </div>
                 </div>
               ))}
+              <AddUnderButton onClick={addLoadRow} testId="sc-loads-add" label="+ Add load" />
             </Section>
 
-            <Section
-              title="Fuel purchases"
-              subtotalCents={fuelSubtotal}
-              onAdd={() =>
-                setFuels([
-                  ...fuels,
-                  {
-                    ...emptyFuel(),
-                    load_number: defaultLoadNumber,
-                    date: periodStart || emptyFuel().date,
-                  },
-                ])
-              }
-            >
-              {fuels.map((fuel, idx) => (
-                <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
-                  <Field label="Date">
-                    <DatePicker
-                      className={inputClass}
-                      value={fuel.date}
-                      onChange={(v) => {
+            <Section title="Fuel purchases" subtotalCents={fuelSubtotal}>
+              {fuels.map((fuel, idx) => {
+                const needsLoad = fuelNeedsExplicitLoadNumber(fuel.date, loads);
+                return (
+                  <div
+                    key={idx}
+                    className={`${fieldGridClass} border-b border-[#E5E7EB] pb-2 pt-2`}
+                    data-testid={`sc-fuel-block-${idx}`}
+                  >
+                    <Field label="Date">
+                      <div className="flex items-center gap-1">
+                        <DatePicker
+                          className={inputClass}
+                          value={fuel.date}
+                          onChange={(v) => {
+                            const next = [...fuels];
+                            const auto = fuelNeedsExplicitLoadNumber(v, loads)
+                              ? next[idx].load_number
+                              : autoLoadNumberForExpenseDate(v, loads) || next[idx].load_number;
+                            next[idx] = { ...fuel, date: v, load_number: auto ?? "" };
+                            setFuels(next);
+                          }}
+                        />
+                        <RemoveLineButton
+                          label="Remove fuel"
+                          testId={`sc-fuel-remove-${idx}`}
+                          onClick={() => setFuels(fuels.filter((_, i) => i !== idx))}
+                        />
+                      </div>
+                    </Field>
+                    <Field label="Vendor">
+                      <EntityPicker
+                        kind="vendor"
+                        operatingCompanyId={companyId}
+                        value={fuel.vendor_id ?? null}
+                        onChange={(id, opt) => {
+                          const next = [...fuels];
+                          next[idx] = {
+                            ...fuel,
+                            vendor_id: id,
+                            vendor_name: opt?.label ?? fuel.vendor_name,
+                          };
+                          setFuels(next);
+                        }}
+                        allowCreate={false}
+                        size={pickerSize}
+                        className="mt-0"
+                        dataTestId={`sc-fuel-vendor-${idx}`}
+                        placeholder="Search vendor (LOVES)…"
+                      />
+                    </Field>
+                    <Field label="Location">
+                      <FuelStopLocationPicker
+                        operatingCompanyId={companyId}
+                        value={fuel.location_id ?? null}
+                        dataTestId={`sc-fuel-location-${idx}`}
+                        onChange={(id, loc) => {
+                          const next = [...fuels];
+                          const label = loc ? formatFuelStopLocationLabel(loc) : "";
+                          const lovesCode = loc?.location_code?.toUpperCase().startsWith("LOVES-");
+                          next[idx] = {
+                            ...fuel,
+                            location_id: id,
+                            location: label,
+                            vendor_name:
+                              lovesCode && !(fuel.vendor_name ?? "").trim() ? "LOVES" : fuel.vendor_name,
+                          };
+                          setFuels(next);
+                        }}
+                      />
+                    </Field>
+                    <Field label="Invoice #">
+                      <input
+                        className={inputClass}
+                        value={fuel.invoice ?? ""}
+                        onChange={(e) => {
+                          const next = [...fuels];
+                          next[idx] = { ...fuel, invoice: e.target.value };
+                          setFuels(next);
+                        }}
+                        data-testid={`sc-fuel-invoice-${idx}`}
+                      />
+                    </Field>
+                    {/* U25 — reefer diesel is its own fuel (out of IFTA, counted for the federal reefer-fuel credit). */}
+                    <Field label="Fuel">
+                      <Combobox
+                        options={[
+                          { value: "diesel", label: "Truck diesel" },
+                          { value: "reefer_diesel", label: "Reefer Diesel" },
+                          { value: "def", label: "DEF" },
+                        ]}
+                        value={fuel.fuel_type ?? "diesel"}
+                        onChange={(v) => {
+                          const next = [...fuels];
+                          next[idx] = { ...fuel, fuel_type: (v ?? "") as "diesel" | "def" | "reefer_diesel" };
+                          setFuels(next);
+                        }}
+                        size="sm"
+                        searchIsValue
+                        data-testid={`sc-fuel-type-${idx}`}
+                      />
+                    </Field>
+                    <Field label={fuel.fuel_type === "def" ? "DEF gal" : "Gallons"}>
+                      <DecimalNumberInput
+                        className={inputClass}
+                        value={fuel.gallons > 0 ? fuel.gallons : null}
+                        allowZero={false}
+                        onChange={(n) => {
+                          const next = [...fuels];
+                          next[idx] = { ...fuel, gallons: n ?? 0 };
+                          setFuels(next);
+                        }}
+                        ariaLabel="Gallons"
+                        title="Diesel / reefer / DEF gallons — decimals allowed (e.g. 45.123)"
+                        data-testid={`sc-fuel-gallons-${idx}`}
+                      />
+                    </Field>
+                    <Field label={fuel.fuel_type === "def" ? "DEF $/gal" : "CPG"}>
+                      <MoneyInput
+                        className={moneyInputClass}
+                        valueCents={fuel.cpg_cents > 0 ? fuel.cpg_cents : null}
+                        onChangeCents={(c) => {
+                          const next = [...fuels];
+                          next[idx] = { ...fuel, cpg_cents: c ?? 0 };
+                          setFuels(next);
+                        }}
+                        ariaLabel="Cents per gallon"
+                      />
+                    </Field>
+                    <Field label="Receipt">
+                      <MoneyInput
+                        className={moneyInputClass}
+                        valueCents={fuel.receipt_cents ?? null}
+                        onChangeCents={(c) => {
+                          const next = [...fuels];
+                          next[idx] = { ...fuel, receipt_cents: c };
+                          setFuels(next);
+                        }}
+                        ariaLabel="Fuel receipt"
+                      />
+                    </Field>
+                    <Field label="Card">
+                      <Combobox
+                        options={[
+                          { value: "dreamline", label: "Dreamline" },
+                          { value: "relay", label: "Relay" },
+                        ]}
+                        value={fuel.card}
+                        onChange={(v) => {
+                          const next = [...fuels];
+                          next[idx] = { ...fuel, card: (v ?? "") as SettlementCreatorFuelCard };
+                          setFuels(next);
+                        }}
+                        size="sm"
+                        searchIsValue
+                      />
+                    </Field>
+                    {/* Load # only when same-day PU+DEL+expense — else auto by date */}
+                    {needsLoad ? (
+                      <Field label="Load No. / Assign to">
+                        <input
+                          className={inputClass}
+                          value={fuel.load_number ?? ""}
+                          onChange={(e) => {
+                            const next = [...fuels];
+                            next[idx] = { ...fuel, load_number: e.target.value };
+                            setFuels(next);
+                          }}
+                          placeholder="Required — same-day PU & DEL"
+                          title="Pickup and delivery are the same day as this fuel — pick which load"
+                          data-testid={`sc-fuel-load-${idx}`}
+                        />
+                      </Field>
+                    ) : (
+                      <Field label="Load (auto by date)">
+                        <input
+                          className={`${inputClass} bg-[#F7F8FA] text-[#6B7280]`}
+                          value={fuel.load_number ? String(fuel.load_number) : "— auto from date"}
+                          readOnly
+                          title="Assigned from fuel date vs load pickup–delivery window"
+                          data-testid={`sc-fuel-load-auto-${idx}`}
+                        />
+                      </Field>
+                    )}
+                    <LineCoding
+                      companyId={companyId}
+                      line={fuel}
+                      testIdPrefix={`sc-fuel-${idx}`}
+                      accountOptions={accountOptions}
+                      accountsLoading={accountTreeQuery.isLoading}
+                      showLoad={false}
+                      item={{
+                        options: itemOptions,
+                        loading: itemsQuery.isLoading,
+                        onSearch: setItemSearch,
+                        placeholder: "Fuel item (blank = by fuel type)",
+                      }}
+                      onPatch={(patch) => {
                         const next = [...fuels];
-                        next[idx] = { ...fuel, date: v };
+                        next[idx] = { ...fuel, ...patch };
                         setFuels(next);
                       }}
                     />
-                  </Field>
-                  <Field label="Vendor">
-                    <EntityPicker
-                      kind="vendor"
-                      operatingCompanyId={companyId}
-                      value={fuel.vendor_id ?? null}
-                      onChange={(id, opt) => {
-                        const next = [...fuels];
-                        next[idx] = {
-                          ...fuel,
-                          vendor_id: id,
-                          vendor_name: opt?.label ?? fuel.vendor_name,
-                        };
-                        setFuels(next);
-                      }}
-                      allowCreate={false}
-                      size={pickerSize}
-                      className="mt-0"
-                      dataTestId={`sc-fuel-vendor-${idx}`}
-                      placeholder="Search vendor (LOVES)…"
-                    />
-                  </Field>
-                  <Field label="Location">
-                    <FuelStopLocationPicker
-                      operatingCompanyId={companyId}
-                      value={fuel.location_id ?? null}
-                      dataTestId={`sc-fuel-location-${idx}`}
-                      onChange={(id, loc) => {
-                        const next = [...fuels];
-                        const label = loc ? formatFuelStopLocationLabel(loc) : "";
-                        const lovesCode = loc?.location_code?.toUpperCase().startsWith("LOVES-");
-                        next[idx] = {
-                          ...fuel,
-                          location_id: id,
-                          location: label,
-                          // DB Love's stop → default vendor name LOVES when unset
-                          vendor_name:
-                            lovesCode && !(fuel.vendor_name ?? "").trim() ? "LOVES" : fuel.vendor_name,
-                        };
-                        setFuels(next);
-                      }}
-                    />
-                  </Field>
-                  <Field label="Invoice #">
-                    <input
-                      className={inputClass}
-                      value={fuel.invoice ?? ""}
-                      onChange={(e) => {
-                        const next = [...fuels];
-                        next[idx] = { ...fuel, invoice: e.target.value };
-                        setFuels(next);
-                      }}
-                      data-testid={`sc-fuel-invoice-${idx}`}
-                    />
-                  </Field>
-                  {/* U25 — reefer diesel is its own fuel (out of IFTA, counted for the federal reefer-fuel credit). */}
-                  <Field label="Fuel">
-                    <Combobox
-                      options={[
-                        { value: "diesel", label: "Truck diesel" },
-                        { value: "reefer_diesel", label: "Reefer Diesel" },
-                        { value: "def", label: "DEF" },
-                      ]}
-                      value={fuel.fuel_type ?? "diesel"}
-                      onChange={(v) => {
-                        const next = [...fuels];
-                        next[idx] = { ...fuel, fuel_type: (v ?? "") as "diesel" | "def" | "reefer_diesel" };
-                        setFuels(next);
-                      }}
-                      size="sm"
-                      searchIsValue
-                      data-testid={`sc-fuel-type-${idx}`}
-                    />
-                  </Field>
-                  <Field label="Gallons">
-                    <DecimalNumberInput
-                      className={inputClass}
-                      value={fuel.gallons > 0 ? fuel.gallons : null}
-                      allowZero={false}
-                      onChange={(n) => {
-                        const next = [...fuels];
-                        next[idx] = { ...fuel, gallons: n ?? 0 };
-                        setFuels(next);
-                      }}
-                      ariaLabel="Gallons"
-                      title="Diesel / reefer / DEF gallons — decimals allowed (e.g. 45.123)"
-                      data-testid={`sc-fuel-gallons-${idx}`}
-                    />
-                  </Field>
-                  <Field label="CPG">
-                    <MoneyInput
-                      className={moneyInputClass}
-                      valueCents={fuel.cpg_cents > 0 ? fuel.cpg_cents : null}
-                      onChangeCents={(c) => {
-                        const next = [...fuels];
-                        next[idx] = { ...fuel, cpg_cents: c ?? 0 };
-                        setFuels(next);
-                      }}
-                      ariaLabel="Cents per gallon"
-                    />
-                  </Field>
-                  <Field label="Receipt">
-                    <MoneyInput
-                      className={moneyInputClass}
-                      valueCents={fuel.receipt_cents ?? null}
-                      onChangeCents={(c) => {
-                        const next = [...fuels];
-                        next[idx] = { ...fuel, receipt_cents: c };
-                        setFuels(next);
-                      }}
-                      ariaLabel="Fuel receipt"
-                    />
-                  </Field>
-                  <Field label="Card">
-                    <Combobox
-                      options={[
-                        { value: "dreamline", label: "Dreamline" },
-                        { value: "relay", label: "Relay" },
-                      ]}
-                      value={fuel.card}
-                      onChange={(v) => {
-                        const next = [...fuels];
-                        next[idx] = { ...fuel, card: (v ?? "") as SettlementCreatorFuelCard };
-                        setFuels(next);
-                      }}
-                      size="sm"
-                      searchIsValue
-                    />
-                  </Field>
-                  <LineCoding
-                    companyId={companyId}
-                    line={fuel}
-                    testIdPrefix={`sc-fuel-${idx}`}
-                    accountOptions={accountOptions}
-                    accountsLoading={accountTreeQuery.isLoading}
-                    item={{ options: itemOptions, loading: itemsQuery.isLoading, onSearch: setItemSearch, placeholder: "Fuel item (blank = by fuel type)" }}
-                    onPatch={(patch) => {
-                      const next = [...fuels];
-                      next[idx] = { ...fuel, ...patch };
-                      setFuels(next);
-                    }}
-                  />
-                </div>
-              ))}
+                  </div>
+                );
+              })}
+              <AddUnderButton
+                testId="sc-fuels-add"
+                label="+ Add fuel"
+                onClick={() => {
+                  const date = periodStart || emptyFuel().date;
+                  const auto = fuelNeedsExplicitLoadNumber(date, loads)
+                    ? ""
+                    : autoLoadNumberForExpenseDate(date, loads) || defaultLoadNumber;
+                  setFuels([
+                    ...fuels,
+                    {
+                      ...emptyFuel(),
+                      load_number: auto,
+                      date,
+                    },
+                  ]);
+                }}
+              />
             </Section>
 
-            <Section
-              title="Company expenses"
-              subtotalCents={compExpSubtotal}
-              onAdd={() =>
-                setCompanyExpenses([
-                  ...companyExpenses,
-                  {
-                    ...emptyCompExp(),
-                    load_number: defaultLoadNumber,
-                    date: periodStart || emptyCompExp().date,
-                  },
-                ])
-              }
-            >
+            <Section title="Company expenses" subtotalCents={compExpSubtotal}>
               <p className="text-center text-xs text-[#6B7280]">
                 PDF &quot;Comp.&quot; — credits the fuel card rail (never A/P)
               </p>
               {companyExpenses.map((exp, idx) => (
-                <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
+                <div key={idx} className={`${fieldGridClass} border-b border-[#E5E7EB] pb-2 pt-2`} data-testid={`sc-comp-exp-block-${idx}`}>
                   <Field label="Date">
                     <DatePicker
                       className={inputClass}
@@ -1975,6 +2180,24 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   </Field>
                 </div>
               ))}
+              <AddUnderButton
+                testId="sc-comp-exp-add"
+                label="+ Add expense"
+                onClick={() => {
+                  const date = periodStart || emptyCompExp().date;
+                  const auto = fuelNeedsExplicitLoadNumber(date, loads)
+                    ? ""
+                    : autoLoadNumberForExpenseDate(date, loads) || defaultLoadNumber;
+                  setCompanyExpenses([
+                    ...companyExpenses,
+                    {
+                      ...emptyCompExp(),
+                      load_number: auto,
+                      date,
+                    },
+                  ]);
+                }}
+              />
             </Section>
 
             <Section title="Control totals · Company" pdfCents={pdfCompanyExpenses} subtotalCents={companySubtotal}>
@@ -1997,26 +2220,58 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               Driver Settlement
             </h2>
 
-            <Section
-              title="Driver-paid reimbursements"
-              subtotalCents={drvReimbSubtotal}
-              onAdd={() =>
-                setDrvReimbursements([
-                  ...drvReimbursements,
-                  {
-                    ...emptyDrvReimb(),
-                    load_number: defaultLoadNumber,
-                    // Company→driver carry: period Start is the settlement date for new Drv lines.
-                    date: periodStart || emptyDrvReimb().date,
-                  },
-                ])
-              }
-            >
+            {/* Company → driver carry (owner 2026-10-07): load #, PU, miles, rates, escrow load — read-only mirror */}
+            <Section title="Loads carried from company">
+              <p className="text-center text-xs text-[#6B7280]">
+                PU dates · load # · loaded / empty miles · pay $/mi — from Company Settlement (no re-type)
+              </p>
+              {loads.map((load, idx) => (
+                <div
+                  key={idx}
+                  className={`${fieldGridClass} border-b border-[#E5E7EB] pb-2 pt-1`}
+                  data-testid={`sc-drv-carry-load-${idx}`}
+                >
+                  <Field label="Load No.">
+                    <input className={`${inputClass} bg-[#F7F8FA]`} value={load.load_number || "—"} readOnly />
+                  </Field>
+                  <Field label="Pickup date">
+                    <input className={`${inputClass} bg-[#F7F8FA]`} value={load.pickup_date || "—"} readOnly />
+                  </Field>
+                  <Field label="Loaded mi">
+                    <input
+                      className={`${inputClass} bg-[#F7F8FA]`}
+                      value={load.loaded_miles != null ? String(load.loaded_miles) : "—"}
+                      readOnly
+                    />
+                  </Field>
+                  <Field label="Empty mi">
+                    <input
+                      className={`${inputClass} bg-[#F7F8FA]`}
+                      value={load.empty_miles != null ? String(load.empty_miles) : "—"}
+                      readOnly
+                    />
+                  </Field>
+                  <Field label="Pay $/mi">
+                    <input
+                      className={`${inputClass} bg-[#F7F8FA]`}
+                      value={
+                        load.line_haul_rate_cents != null
+                          ? `$${(load.line_haul_rate_cents / 100).toFixed(2)}`
+                          : "—"
+                      }
+                      readOnly
+                    />
+                  </Field>
+                </div>
+              ))}
+            </Section>
+
+            <Section title="Driver-paid reimbursements" subtotalCents={drvReimbSubtotal}>
               <p className="text-center text-xs text-[#6B7280]">
                 PDF &quot;Drv&quot; — Cr 2175 Driver Reimbursements Payable (never 6890/5310)
               </p>
               {drvReimbursements.map((exp, idx) => (
-                <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
+                <div key={idx} className={`${fieldGridClass} border-b border-[#E5E7EB] pb-2 pt-2`} data-testid={`sc-drv-reimb-block-${idx}`}>
                   <Field label="Date">
                     <DatePicker
                       className={inputClass}
@@ -2098,20 +2353,26 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   </Field>
                 </div>
               ))}
+              <AddUnderButton
+                testId="sc-drv-reimb-add"
+                label="+ Add reimbursement"
+                onClick={() =>
+                  setDrvReimbursements([
+                    ...drvReimbursements,
+                    {
+                      ...emptyDrvReimb(),
+                      load_number: defaultLoadNumber,
+                      // Company→driver carry: period Start is the settlement date for new Drv lines.
+                      date: periodStart || emptyDrvReimb().date,
+                    },
+                  ])
+                }
+              />
             </Section>
 
-            <Section
-              title="Additional pay to driver"
-              subtotalCents={addPaySubtotal}
-              onAdd={() =>
-                setAdditionalPay([
-                  ...additionalPay,
-                  { ...emptyMoney(), pay_kind: "detention", load_number: defaultLoadNumber },
-                ])
-              }
-            >
+            <Section title="Additional pay to driver" subtotalCents={addPaySubtotal}>
               {additionalPay.map((row, idx) => (
-                <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
+                <div key={idx} className={`${fieldGridClass} border-b border-[#E5E7EB] pb-2 pt-2`}>
                   <Field label="Type">
                     <Combobox
                       options={[
@@ -2167,13 +2428,19 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   </Field>
                 </div>
               ))}
+              <AddUnderButton
+                testId="sc-add-pay-add"
+                label="+ Add pay"
+                onClick={() =>
+                  setAdditionalPay([
+                    ...additionalPay,
+                    { ...emptyMoney(), pay_kind: "detention", load_number: defaultLoadNumber },
+                  ])
+                }
+              />
             </Section>
 
-            <Section
-              title="Deductions"
-              subtotalCents={dedSubtotal + adminFeeCents}
-              onAdd={() => setDeductions([...deductions, { ...emptyMoney(), load_number: defaultLoadNumber }])}
-            >
+            <Section title="Deductions" subtotalCents={dedSubtotal + adminFeeCents}>
               <Field label="Admin fee (7200)">
                 <div data-testid="sc-admin-fee">
                   <MoneyInput
@@ -2185,7 +2452,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                 </div>
               </Field>
               {deductions.map((row, idx) => (
-                <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
+                <div key={idx} className={`${fieldGridClass} border-b border-[#E5E7EB] pb-2 pt-2`}>
                   <Field label="Description">
                     <input
                       className={inputClass}
@@ -2211,15 +2478,16 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   </Field>
                 </div>
               ))}
+              <AddUnderButton
+                testId="sc-deductions-add"
+                label="+ Add deduction"
+                onClick={() => setDeductions([...deductions, { ...emptyMoney(), load_number: defaultLoadNumber }])}
+              />
             </Section>
 
-            <Section
-              title="Cash advances"
-              subtotalCents={advSubtotal}
-              onAdd={() => setAdvances([...advances, { ...emptyMoney(), load_number: defaultLoadNumber }])}
-            >
+            <Section title="Cash advances" subtotalCents={advSubtotal}>
               {advances.map((row, idx) => (
-                <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
+                <div key={idx} className={`${fieldGridClass} border-b border-[#E5E7EB] pb-2 pt-2`}>
                   <Field label="Description">
                     <input
                       className={inputClass}
@@ -2245,23 +2513,17 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   </Field>
                 </div>
               ))}
+              <AddUnderButton
+                testId="sc-advances-add"
+                label="+ Add advance"
+                onClick={() => setAdvances([...advances, { ...emptyMoney(), load_number: defaultLoadNumber }])}
+              />
             </Section>
 
-            <Section
-              title="Escrow"
-              subtotalCents={escrowNet}
-              onAdd={() =>
-                setEscrow([
-                  ...escrow,
-                  escrow.length
-                    ? { ...emptyMoney(), escrow_type: "hold", load_number: defaultLoadNumber }
-                    : { ...defaultEscrowLine(), load_number: defaultLoadNumber },
-                ])
-              }
-            >
+            <Section title="Escrow" subtotalCents={escrowNet}>
               <p className="text-center text-xs text-[#6B7280]">Driver escrow · 2100-00-0NN · hold +, release/forfeit −</p>
               {escrow.map((row, idx) => (
-                <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
+                <div key={idx} className={`${fieldGridClass} border-b border-[#E5E7EB] pb-2 pt-2`}>
                   <Field label="Type">
                     <Combobox
                       options={[
@@ -2327,6 +2589,18 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   </Field>
                 </div>
               ))}
+              <AddUnderButton
+                testId="sc-escrow-add"
+                label="+ Add escrow"
+                onClick={() =>
+                  setEscrow([
+                    ...escrow,
+                    escrow.length
+                      ? { ...emptyMoney(), escrow_type: "hold", load_number: defaultLoadNumber }
+                      : { ...defaultEscrowLine(), load_number: defaultLoadNumber },
+                  ])
+                }
+              />
             </Section>
 
             <Section title="Control totals · Driver" pdfCents={pdfDriverNet} subtotalCents={preview?.driver_net_cents ?? null}>

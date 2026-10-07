@@ -49,13 +49,13 @@ function run(src) {
   if (!/function DecimalNumberInput/.test(src.drawer)) {
     out.push("RULE 2: SettlementCreatorDrawer must define DecimalNumberInput for quantities.");
   }
-  if (!/<DecimalNumberInput[\s\S]{0,1200}sc-fuel-gallons-/.test(src.drawer)) {
+  if (!/<DecimalNumberInput[\s\S]{0,2000}sc-fuel-gallons-/.test(src.drawer)) {
     out.push("RULE 2b: Fuel gallons (diesel/reefer/DEF) must use DecimalNumberInput.");
   }
-  if (!/<DecimalNumberInput[\s\S]{0,1200}sc-load-loaded-miles-/.test(src.drawer)) {
+  if (!/<DecimalNumberInput[\s\S]{0,2000}sc-load-loaded-miles-/.test(src.drawer)) {
     out.push("RULE 2c: Loaded miles must use DecimalNumberInput.");
   }
-  if (!/<DecimalNumberInput[\s\S]{0,1200}sc-load-empty-miles-/.test(src.drawer)) {
+  if (!/<DecimalNumberInput[\s\S]{0,2000}sc-load-empty-miles-/.test(src.drawer)) {
     out.push("RULE 2d: Empty miles must use DecimalNumberInput.");
   }
 
