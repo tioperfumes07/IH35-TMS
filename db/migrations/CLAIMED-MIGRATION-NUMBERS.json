@@ -2132,6 +2132,11 @@
       "claimed_at": "2026-10-07",
       "purpose": "RELAY-F440: integrations.integration_sync_log has RLS forced with INSERT/SELECT policies only, so the Relay tick's completion UPDATE matched 0 rows silently (14 ticks, 0 finished); add the lucia-bypass UPDATE policy and close the abandoned claims"
     },
+    "202615440500": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-07",
+      "purpose": "ROUND 441.5 Phase 1: accounting.expenses.source_bank_transaction_id (company-scoped FK, one live expense per bank line) so a money-out bank line categorized to an expense account creates an expense document linked both ways"
+    },
     "202615440200": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-06",
