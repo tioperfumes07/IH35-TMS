@@ -436,7 +436,7 @@ export function CargoClaimIntakeSurface({
         key: "action",
         label: "Action",
         render: (row) => (
-          <button type="button" className="text-slate-700 underline" onClick={() => setSelectedId(String(row.id))}>
+          <button type="button" className="text-[#1F2A44] underline" onClick={() => setSelectedId(String(row.id))}>
             {detailLabel}
           </button>
         ),
@@ -597,14 +597,14 @@ export function CargoClaimIntakeSurface({
   };
 
   const inputClass = "mt-1 w-full rounded-sm border border-gray-200 px-2 py-1";
-  const labelSpan = "text-slate-600";
+  const labelSpan = "text-[#4B5563]";
 
   return (
     <div className="space-y-3" data-testid={pageTestId}>
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div>
-          <div className="text-xs font-semibold text-slate-800">{title}</div>
-          <div className="text-xs text-slate-500">{subtitle}</div>
+          <div className="text-xs font-semibold text-[#0F1219]">{title}</div>
+          <div className="text-xs text-[#6B7280]">{subtitle}</div>
         </div>
         {!creating ? (
           <Button
@@ -625,8 +625,8 @@ export function CargoClaimIntakeSurface({
       {creating ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid={`${pageTestId}-create-form`}>
           <div className="mb-2 flex items-center justify-between">
-            <div className="text-xs font-semibold text-slate-800">{createLabel}</div>
-            <button type="button" className="text-xs text-slate-500 underline" onClick={resetCreate}>
+            <div className="text-xs font-semibold text-[#0F1219]">{createLabel}</div>
+            <button type="button" className="text-xs text-[#6B7280] underline" onClick={resetCreate}>
               Cancel
             </button>
           </div>
@@ -703,7 +703,7 @@ export function CargoClaimIntakeSurface({
                   limit={PICKER_LIMIT}
                   total={customersQuery.data?.total}
                   hint="Type to search the full customer catalog."
-                  className="mt-1 text-xs text-slate-600"
+                  className="mt-1 text-xs text-[#4B5563]"
                 />
               </div>
             </label>
@@ -735,7 +735,7 @@ export function CargoClaimIntakeSurface({
                   limit={PICKER_LIMIT}
                   total={reasonsQuery.data?.total}
                   hint="Type to search the full cargo-claim-reason catalog."
-                  className="mt-1 text-xs text-slate-600"
+                  className="mt-1 text-xs text-[#4B5563]"
                 />
               </div>
             </label>
@@ -749,7 +749,7 @@ export function CargoClaimIntakeSurface({
                   disabled={form.amountUndetermined}
                 />
               </div>
-              <label className="mt-1 flex items-center gap-1 text-xs text-slate-500">
+              <label className="mt-1 flex items-center gap-1 text-xs text-[#6B7280]">
                 <input
                   type="checkbox"
                   data-testid={`${pageTestId}-amount-undetermined`}
@@ -837,7 +837,7 @@ export function CargoClaimIntakeSurface({
             <Button size="sm" data-testid={`${pageTestId}-save`} loading={saving} onClick={() => void saveCreate()}>
               Save
             </Button>
-            <button type="button" className="text-xs text-slate-500 underline" onClick={resetCreate}>
+            <button type="button" className="text-xs text-[#6B7280] underline" onClick={resetCreate}>
               Cancel
             </button>
           </div>
@@ -872,7 +872,7 @@ export function CargoClaimIntakeSurface({
         rowTestId={(row) => `${pageTestId}-row-${String(row.id ?? "")}`}
         filterBar={
           <div className="relative flex flex-wrap items-end gap-3" data-testid={`${pageTestId}-filters`}>
-            <label className="text-xs text-slate-600">
+            <label className="text-xs text-[#4B5563]">
               Driver
               <EntityPicker
                 kind="driver"
@@ -885,7 +885,7 @@ export function CargoClaimIntakeSurface({
                 dataTestId={`${pageTestId}-filter-driver`}
               />
             </label>
-            <label className="text-xs text-slate-600">
+            <label className="text-xs text-[#4B5563]">
               Unit
               <EntityPicker
                 kind="unit"
@@ -898,7 +898,7 @@ export function CargoClaimIntakeSurface({
                 dataTestId={`${pageTestId}-filter-unit`}
               />
             </label>
-            <label className="text-xs text-slate-600">
+            <label className="text-xs text-[#4B5563]">
               Load
               <EntityPicker
                 kind="load"
@@ -911,7 +911,7 @@ export function CargoClaimIntakeSurface({
                 dataTestId={`${pageTestId}-filter-load`}
               />
             </label>
-            <label className="text-xs text-slate-600">
+            <label className="text-xs text-[#4B5563]">
               Trailer
               <EntityPicker
                 kind="trailer"
@@ -969,7 +969,7 @@ export function CargoClaimIntakeSurface({
       {selectedId ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid={`${pageTestId}-detail`}>
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <div className="text-xs font-semibold text-slate-800">{detailLabel}</div>
+            <div className="text-xs font-semibold text-[#0F1219]">{detailLabel}</div>
             <div className="flex items-center gap-2">
               {detail && !detail.voided_at && !editMode ? (
                 <button
@@ -988,7 +988,7 @@ export function CargoClaimIntakeSurface({
                   </Button>
                   <button
                     type="button"
-                    className="text-xs text-slate-500 underline"
+                    className="text-xs text-[#6B7280] underline"
                     onClick={() => {
                       setEditMode(false);
                       setEditError(null);
@@ -998,7 +998,7 @@ export function CargoClaimIntakeSurface({
                   </button>
                 </>
               ) : null}
-              <button type="button" className="text-xs text-slate-500 underline" onClick={closeDetail}>
+              <button type="button" className="text-xs text-[#6B7280] underline" onClick={closeDetail}>
                 Close
               </button>
             </div>
@@ -1096,7 +1096,7 @@ export function CargoClaimIntakeSurface({
               </label>
             </div>
           ) : (
-            <div className="space-y-1 text-xs text-slate-700">
+            <div className="space-y-1 text-xs text-[#1F2A44]">
               <div>
                 Status: <span className="font-semibold">{String(detail?.status ?? "open")}</span>
               </div>
@@ -1153,7 +1153,7 @@ export function CargoClaimIntakeSurface({
           ) : null}
 
           <div className="mt-2 space-y-2 text-xs">
-            <div className="text-slate-600">Photos ({photoCount})</div>
+            <div className="text-[#4B5563]">Photos ({photoCount})</div>
             <input
               type="file"
               accept="image/*"
@@ -1174,7 +1174,7 @@ export function CargoClaimIntakeSurface({
                         className={
                           statusTarget === next
                             ? "rounded-sm border border-[#1f2a44] px-2 py-1 font-semibold text-[#1f2a44]"
-                            : "rounded-sm border border-gray-300 px-2 py-1 text-slate-600"
+                            : "rounded-sm border border-gray-300 px-2 py-1 text-[#4B5563]"
                         }
                         data-testid={`${pageTestId}-status-${next}`}
                         onClick={() => setStatusTarget((cur) => (cur === next ? null : next))}
@@ -1272,7 +1272,7 @@ export function CargoClaimIntakeSurface({
             ) : null}
 
             {detail?.voided_at ? (
-              <div className="text-xs text-slate-500" data-testid={`${pageTestId}-voided-note`}>
+              <div className="text-xs text-[#6B7280]" data-testid={`${pageTestId}-voided-note`}>
                 Voided {formatDateUS(detail.voided_at)}
                 {detail.voided_reason ? ` · ${String(detail.voided_reason)}` : ""}
               </div>

@@ -786,7 +786,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                 Record expense
               </Button>
               {isPage ? (
-                <Link className="text-xs font-semibold text-slate-700 underline" to="/dispatch/load-costs" data-testid="load-costs-load-back">← Load costs</Link>
+                <Link className="text-xs font-semibold text-[#1F2A44] underline" to="/dispatch/load-costs" data-testid="load-costs-load-back">← Load costs</Link>
               ) : (
                 <Button type="button" variant="secondary" size="sm" onClick={onClose}>
                   Close
@@ -906,7 +906,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                           <span className="inline-flex flex-wrap items-center gap-1.5">
                             {STATUS_LABEL[load.status]}
                             {autoStatusSwitchQuery.isError ? (
-                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700">
+                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#1F2A44]">
                                 Auto-status audit unavailable
                                 <button
                                   type="button"
@@ -929,9 +929,9 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                       {
                         label: "Geofence",
                         value: geofenceStatusQuery.isLoading ? (
-                          <span className="text-slate-500">Checking…</span>
+                          <span className="text-[#6B7280]">Checking…</span>
                         ) : geofenceStatusQuery.isError ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700">
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#1F2A44]">
                             Geofence status unavailable
                             <button type="button" className="underline" onClick={() => void geofenceStatusQuery.refetch()}>
                               Retry
@@ -958,7 +958,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                                 // GLOBAL-TYPE-SIZE-BASELINE ratchet (verify-ui-design-system-ratchet.mjs):
                                 // no NEW raw text-[Npx] — inherits the Overview tab's own text-xs (12px,
                                 // the locked body size) instead of a one-off arbitrary value.
-                                className="rounded-sm border border-slate-300 px-1.5 py-0.5 font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                                className="rounded-sm border border-[#E5E7EB] px-1.5 py-0.5 font-semibold text-[#1F2A44] hover:bg-[#F7F8FA] disabled:opacity-50"
                                 disabled={geocodeStopsMutation.isPending}
                                 onClick={() => geocodeStopsMutation.mutate()}
                               >
@@ -967,7 +967,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                             ) : null}
                           </span>
                         ) : (
-                          <span className="text-slate-500">—</span>
+                          <span className="text-[#6B7280]">—</span>
                         ),
                       },
                       {
@@ -1020,7 +1020,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                     ]}
                   />
                   <p className="mt-1 text-xs text-gray-400">Single customer total. Linehaul / fuel / accessorial breakdown arrives with the charge line-items block.</p>
-                  <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-600" data-testid="load-money-reverse-links">
+                  <div className="mt-2 flex flex-wrap gap-3 text-xs text-[#4B5563]" data-testid="load-money-reverse-links">
                     <span>
                       Linked expenses:{" "}
                       {loadExpensesQuery.isLoading
@@ -1032,7 +1032,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                     {load.operating_company_id ? (
                       <button
                         type="button"
-                        className="text-slate-700 underline"
+                        className="text-[#1F2A44] underline"
                         onClick={() =>
                           navigate(
                             `/accounting/expenses?load_id=${encodeURIComponent(load.id)}&operating_company_id=${encodeURIComponent(load.operating_company_id)}`
@@ -1490,9 +1490,9 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                   canEdit={canEdit}
                 />
                 {/* Driver Instructions PDF + Portal/SMS/WhatsApp distribution (kept — additive-only) */}
-                <div className="rounded-sm border border-slate-300 bg-slate-100 p-2">
+                <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2">
                   <div className="flex items-center justify-between gap-2">
-                    <div className="text-xs text-slate-700">Driver Instructions PDF + Portal/SMS/WhatsApp distribution</div>
+                    <div className="text-xs text-[#1F2A44]">Driver Instructions PDF + Portal/SMS/WhatsApp distribution</div>
                     <div className="flex gap-2">
                       <Button
                         size="sm"
@@ -1533,13 +1533,13 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
           ) : null}
           {activeTab === "History" && load ? (
             <div className="space-y-3 p-3" data-testid="load-drawer-history-tab">
-              <p className="text-xs text-slate-700">
+              <p className="text-xs text-[#1F2A44]">
                 Full load history — status changes, field edits, assignments, stop stamps, and linked documents
                 (invoice, Faro advance, settlement, expenses, work orders).
               </p>
               <Link
                 to={`/dispatch/loads/${encodeURIComponent(load.id)}/history`}
-                className="inline-flex h-7 items-center rounded-sm border border-slate-300 bg-white px-2 text-xs font-medium text-slate-800"
+                className="inline-flex h-7 items-center rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs font-medium text-[#0F1219]"
                 data-testid="load-drawer-open-history"
               >
                 Open load history
@@ -1574,8 +1574,8 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                 const prevTrailerId = r.previous_trailer_id != null ? String(r.previous_trailer_id) : null;
                 const nextTrailerId = r.new_trailer_id != null ? String(r.new_trailer_id) : null;
                 return (
-                  <div key={id || at + method} className="relative border-l-2 border-slate-300 pl-3">
-                    <div className="absolute left-[-5px] top-1 h-2 w-2 rounded-full bg-slate-1000" />
+                  <div key={id || at + method} className="relative border-l-2 border-[#E5E7EB] pl-3">
+                    <div className="absolute left-[-5px] top-1 h-2 w-2 rounded-full bg-[#F7F8FA]0" />
                     <div className="text-xs text-gray-500">{at}</div>
                     <div className="text-xs font-semibold text-gray-800">{method.replace(/_/g, " ")}</div>
                     <div className="text-xs text-gray-600" data-testid="load-drawer-assignment-history-driver-links">
@@ -1589,7 +1589,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                           data-testid="load-drawer-assignment-prev-driver-link"
                         />
                       ) : (
-                        <span className="text-slate-400">Unassigned</span>
+                        <span className="text-[#9CA3AF]">Unassigned</span>
                       )}{" "}
                       →{" "}
                       {nextId ? (
@@ -1601,7 +1601,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                           data-testid="load-drawer-assignment-new-driver-link"
                         />
                       ) : (
-                        <span className="text-slate-400">Unassigned</span>
+                        <span className="text-[#9CA3AF]">Unassigned</span>
                       )}
                     </div>
                     {prevUnitId || nextUnitId ? (
@@ -1616,7 +1616,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                             data-testid="load-drawer-assignment-prev-unit-link"
                           />
                         ) : (
-                          <span className="text-slate-400">Unassigned</span>
+                          <span className="text-[#9CA3AF]">Unassigned</span>
                         )}{" "}
                         →{" "}
                         {nextUnitId ? (
@@ -1628,7 +1628,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                             data-testid="load-drawer-assignment-new-unit-link"
                           />
                         ) : (
-                          <span className="text-slate-400">Unassigned</span>
+                          <span className="text-[#9CA3AF]">Unassigned</span>
                         )}
                       </div>
                     ) : null}
@@ -1644,7 +1644,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                             data-testid="load-drawer-assignment-prev-trailer-link"
                           />
                         ) : (
-                          <span className="text-slate-400">Unassigned</span>
+                          <span className="text-[#9CA3AF]">Unassigned</span>
                         )}{" "}
                         →{" "}
                         {nextTrailerId ? (
@@ -1656,7 +1656,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                             data-testid="load-drawer-assignment-new-trailer-link"
                           />
                         ) : (
-                          <span className="text-slate-400">Unassigned</span>
+                          <span className="text-[#9CA3AF]">Unassigned</span>
                         )}
                       </div>
                     ) : null}

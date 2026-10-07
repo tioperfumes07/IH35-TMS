@@ -1,7 +1,9 @@
 export default {
   name: "verify:safety-incidents-cluster-uses-paritytable",
-  run(ctx) {
-    ctx.run("node", ["scripts/verify-safety-incidents-cluster-uses-paritytable.mjs", "--selftest"]);
-    ctx.run("node", ["scripts/verify-safety-incidents-cluster-uses-paritytable.mjs"]);
+  async run(ctx) {
+    await ctx.run("node", ["scripts/verify-load-safety-cluster-slate-leftover-chrome.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-load-safety-cluster-slate-leftover-chrome.mjs"]);
+    await ctx.run("node", ["scripts/verify-safety-incidents-cluster-uses-paritytable.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-safety-incidents-cluster-uses-paritytable.mjs"]);
   },
 };
