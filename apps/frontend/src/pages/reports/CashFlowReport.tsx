@@ -111,10 +111,10 @@ export function CashFlowReport() {
         onReset={staged.reset}
         applyDisabled={!staged.dirty}
       >
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Group by</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Group by</span>
           <select
-            className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
+            className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.groupBy}
             onChange={(e) => staged.setDraft((p) => ({ ...p, groupBy: e.target.value }))}
             data-testid="reports-cash-flow-group-by"
@@ -137,13 +137,13 @@ export function CashFlowReport() {
       {summary ? (
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-sm border bg-white p-4">
-            <div className="text-xs text-slate-600">Operating balance</div>
+            <div className="text-xs text-[#4B5563]">Operating balance</div>
             <div className="text-page-title font-semibold">{money(summary.operating_balance_cents)}</div>
           </div>
           <div className="rounded-sm border bg-white p-4">
-            <div className="text-xs text-slate-600">Scoped loads (OCI)</div>
+            <div className="text-xs text-[#4B5563]">Scoped loads (OCI)</div>
             <div className="text-page-title font-semibold">{summary.scoped_load_count}</div>
-            <div className="text-xs text-slate-500">Company: {selectedCompany?.legal_name ?? "—"}</div>
+            <div className="text-xs text-[#6B7280]">Company: {selectedCompany?.legal_name ?? "—"}</div>
           </div>
         </div>
       ) : null}

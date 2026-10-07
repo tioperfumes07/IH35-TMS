@@ -2,6 +2,9 @@
 export default {
   name: "customers-chrome-action-parity",
   run(ctx) {
-    return ctx.run("node", ["scripts/verify-customers-chrome-action-parity.mjs"]);
+    ctx.run("node", ["scripts/verify-customers-chrome-action-parity.mjs"]);
+    // BANK leftover refuse — VendorDetail/Customers/CashFlowReport house tokens
+    ctx.run("node", ["scripts/verify-vend-cf-cust-slate-leftover-chrome.mjs", "--selftest"]);
+    return ctx.run("node", ["scripts/verify-vend-cf-cust-slate-leftover-chrome.mjs"]);
   },
 };
