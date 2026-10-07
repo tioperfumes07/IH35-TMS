@@ -68,10 +68,14 @@ export function classifyTrialBalance(input) {
   }
 
   // C. Accounting equation: Assets = Liabilities + Equity + (Income - Expenses)
+  // LST-F437 — accountTypeNets are debit-minus-credit (the live query's convention). A credit-normal class's balance is
+  // the NEGATED net, signed: Math.abs() turned a liability carrying a DEBIT balance (2410 related-party, money paid out
+  // to the owner exceeding money lent, measured 2026-10-07) into a credit and failed an equation that closes exactly.
+  // OtherIncome is income too; it was left out.
   const assets = accountTypeNets.Asset || 0;
-  const liabilities = Math.abs(accountTypeNets.Liability || 0);
-  const equity = Math.abs(accountTypeNets.Equity || 0);
-  const income = Math.abs(accountTypeNets.Income || 0);
+  const liabilities = -(accountTypeNets.Liability || 0);
+  const equity = -(accountTypeNets.Equity || 0);
+  const income = -((accountTypeNets.Income || 0) + (accountTypeNets.OtherIncome || 0));
   const expenses = (accountTypeNets.Expense || 0) + (accountTypeNets.CostOfGoodsSold || 0) + (accountTypeNets.OtherExpense || 0);
   const netIncome = income - expenses;
   const rhs = liabilities + equity + netIncome;
@@ -155,11 +159,12 @@ function runSelftest() {
     unbalancedJes: 0,
     totalDebits: 100000,
     totalCredits: 100000,
+    // debit-minus-credit, the live query's convention: credit-normal balances are negative
     accountTypeNets: {
       Asset: 40000,
-      Liability: 30000,
+      Liability: -30000,
       Equity: 0,
-      Income: 20000,
+      Income: -20000,
       Expense: 10000,
       CostOfGoodsSold: 0,
       OtherExpense: 0,
@@ -181,6 +186,26 @@ function runSelftest() {
     console.error(`${LABEL} --selftest FAIL — GREEN: expected all pass, got ${green.problems}`);
     fail += 1;
   } else pass += 1;
+
+  // GREEN C (LST-F437, measured prod 2026-10-07): a liability carrying a DEBIT balance (2410 related-party paid out more
+  // than lent) still closes the equation — bank -18,833.14 = 2410 +22,130.00 debit, 3000 3,500.00 credit, expenses 203.14.
+  const greenDebitLiability = classifyTrialBalance({
+    ...baseInput,
+    accountTypeNets: { Asset: -1883314, Liability: 2213000, Equity: -350000, Income: 0, Expense: 20314, CostOfGoodsSold: 0, OtherExpense: 0 },
+  });
+  if (greenDebitLiability.checks.find((c) => c.id === "C")?.pass !== true) {
+    console.error(`${LABEL} --selftest FAIL — GREEN C debit-balance liability: expected check C PASS, got ${greenDebitLiability.problems}`);
+    process.exit(1);
+  }
+  // GREEN C: Other Income counts as income.
+  const greenOtherIncome = classifyTrialBalance({
+    ...baseInput,
+    accountTypeNets: { ...baseInput.accountTypeNets, Asset: 45000, OtherIncome: -5000 },
+  });
+  if (greenOtherIncome.checks.find((c) => c.id === "C")?.pass !== true) {
+    console.error(`${LABEL} --selftest FAIL — GREEN C other income: expected check C PASS, got ${greenOtherIncome.problems}`);
+    process.exit(1);
+  }
 
   // RED A: unbalanced JEs
   const redA = classifyTrialBalance({ ...baseInput, unbalancedJes: 3 });
