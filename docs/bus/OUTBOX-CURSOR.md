@@ -1,3 +1,24 @@
+## 2026-10-07T20:42Z · BANK-SLATE-INS-CLAIMS-POL MERGED
+
+FINDING: Leftover Tailwind slate-* on ClaimsTab / PoliciesList / FleetCoveredPage → house tokens.
+
+MERGED:
+- BANK-SLATE-INS-CLAIMS-POL #25720 squash `fd8344e849` — ClaimsTab / PoliciesList / FleetCoveredPage; guard verify-ins-claims-pol-slate-leftover-chrome piggyback EVEN 1004
+- BANK-SLATE-WO-MAINT-UNIT #25718 squash `e19d5f2d99`
+- OUTBOX #25719 `e31ea2f1e2`
+
+SESSION WAVE squash on main:
+- #25708 drv-fleet · #25709 setl-detail · #25711 safety-create · #25712 DesignView · #25714 load-safety · #25716 shared-chrome · #25718 wo-maint-unit · #25720 ins-claims-pol
+- OUTBOX #25710 #25713 #25715 #25717 #25719
+
+LIVE PROOF: verify-ins-claims-pol-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS
+
+REMAINING: FE redeploy; owner Chrome Settlement Creator; ~900 FE files still carry slate-*
+
+NEXT leftover: LawsuitsTab · InsuranceLanding · ReportsHome
+
+Files Modified: OUTBOX + CoverageGapDashboard / PolicyDetail / TypeCatalogAdmin (same PR)
+
 ## 2026-10-07T20:35Z · BANK-SLATE-WO-MAINT-UNIT MERGED
 
 FINDING: Leftover Tailwind slate-* on WorkOrdersConsoleList / MaintKpi / UnitFinanceLinkage → house tokens.

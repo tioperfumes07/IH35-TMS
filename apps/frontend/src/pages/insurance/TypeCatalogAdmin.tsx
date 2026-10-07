@@ -209,9 +209,9 @@ export function TypeCatalogAdmin() {
               Active
             </label>
           ) : row.active ? (
-            <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">active</span>
+            <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]">active</span>
           ) : (
-            <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">inactive</span>
+            <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]">inactive</span>
           ),
       },
       {
@@ -303,14 +303,14 @@ export function TypeCatalogAdmin() {
   return (
     <div className="space-y-4">
       <header className="rounded-sm border border-gray-200 bg-white p-4">
-        <h2 className="text-xs font-semibold text-slate-900">Type Catalog Admin</h2>
-        <p className="mt-1 text-xs text-slate-600">Create, edit, and deactivate entries from insurance type catalog.</p>
+        <h2 className="text-xs font-semibold text-[#0F1219]">Type Catalog Admin</h2>
+        <p className="mt-1 text-xs text-[#4B5563]">Create, edit, and deactivate entries from insurance type catalog.</p>
       </header>
 
       <section className="rounded-sm border border-gray-200 bg-white p-4">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-600">+ Create type</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">+ Create type</h3>
         <div className="mt-2 grid gap-2 md:grid-cols-5">
-          <label className="text-xs font-semibold text-slate-600">
+          <label className="text-xs font-semibold text-[#4B5563]">
             Code
             <select
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
@@ -324,7 +324,7 @@ export function TypeCatalogAdmin() {
               ))}
             </select>
           </label>
-          <label className="text-xs font-semibold text-slate-600 md:col-span-2">
+          <label className="text-xs font-semibold text-[#4B5563] md:col-span-2">
             Name
             <input
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
@@ -333,7 +333,7 @@ export function TypeCatalogAdmin() {
               placeholder="Display name"
             />
           </label>
-          <label className="text-xs font-semibold text-slate-600">
+          <label className="text-xs font-semibold text-[#4B5563]">
             Sort order
             <input
               type="number"
@@ -366,7 +366,7 @@ export function TypeCatalogAdmin() {
             </Button>
           </div>
         </div>
-        <label className="mt-2 block text-xs font-semibold text-slate-600">
+        <label className="mt-2 block text-xs font-semibold text-[#4B5563]">
           Description
           <input
             className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
