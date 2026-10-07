@@ -19,7 +19,7 @@ const surfaces = [
 const required = [
   ["apps/backend/src/driver-finance/settlements.routes.ts", "/api/v1/driver-finance/settlement-references", "settlement_lines sl", "l.presettlement_link_id"],
   ["apps/frontend/src/api/driverFinance.ts", "SettlementReference", "getSettlementReferences"],
-  ["apps/frontend/src/components/settlements/SettlementReferenceCell.tsx", "settlement-reference-cell", "Presettlement"],
+  ["apps/frontend/src/components/settlements/SettlementReferenceCell.tsx", "settlement-reference-cell", "PENDING"],
   ["apps/backend/src/dispatch/book-load.service.ts", "AUTO-TOUR-ALL-LOADS", "randomUUID"],
   ["db/migrations/202614070000_repair_load_tour_assignment.sql", "assigned_primary_driver_id IS NOT NULL", "driver_finance.driver_settlements", "tour_id = resolved_tour_id"],
 ];

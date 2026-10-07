@@ -28,7 +28,7 @@ import path from "node:path";
 const LABEL = "verify-settlement-detail-load-coalesce";
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const TARGET_DETAIL = "apps/backend/src/driver-finance/settlements.routes.ts";
-const TARGET_HTML = "apps/backend/src/driver-finance/settlement-render.routes.ts";
+const TARGET_HTML = "apps/backend/src/driver-finance/settlement-document.service.ts";
 
 function fail(msg) {
   console.error(`[${LABEL}] FAIL: ${msg}`);

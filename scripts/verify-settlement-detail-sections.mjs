@@ -94,7 +94,7 @@ checkFile(DEDUCTIONS, "DeductionsSection", [
 
 // SettlementDetailPage passes isOpen + S.1b fields
 checkFile(DETAIL_PAGE, "SettlementDetailPage", [
-  { pattern: /isOpen=\{!settlementIsLocked\}/, description: "isOpen prop not passed to sections" },
+  { pattern: /isOpen=\{!(?:settlementIsLocked|settlementIsReadOnly)\}/, description: "isOpen prop not passed to sections" },
   { pattern: /origin_city/, description: "origin_city not mapped from API response" },
   { pattern: /dest_city/, description: "dest_city not mapped from API response" },
   { pattern: /line_date/, description: "line_date not mapped from API response" },
