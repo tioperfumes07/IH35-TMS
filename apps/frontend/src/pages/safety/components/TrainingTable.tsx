@@ -61,6 +61,7 @@ export function TrainingTable({ rows, hidePager = false }: Props) {
           ))}
         </select>
         <DatePicker
+          id="training-date-from"
           value={from}
           onChange={(v) => {
             setPreset("custom");
@@ -71,6 +72,7 @@ export function TrainingTable({ rows, hidePager = false }: Props) {
         />
         <span className="text-xs text-[#6B7280]">to</span>
         <DatePicker
+          id="training-date-to"
           value={to}
           onChange={(v) => {
             setPreset("custom");
