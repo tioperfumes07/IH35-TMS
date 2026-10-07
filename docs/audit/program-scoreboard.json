@@ -1,10 +1,10 @@
 {
-  "healthzSha": "084b670",
-  "generated_at": "2026-10-06T16:45:33.596Z",
+  "healthzSha": "44af1dd",
+  "generated_at": "2026-10-07T17:57:08.047Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "084b670",
+    "deployedSha": "44af1dd",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 25607,
-      "title": "Cursor-BANK-F4332 ONE QBO format layer + DatePicker year select (433-CUR #2)",
+      "number": 25693,
+      "title": "FINDING: OUTBOX — SETL-F442+F443 merged + FE live for Chrome",
       "state": "merged",
-      "mergedAtCt": "10/06/2026, 11:34 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25607",
-      "sha": "084b670689",
-      "committedAtIso": "2026-10-06T11:34:58-05:00"
+      "mergedAtCt": "10/07/2026, 12:40 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25693",
+      "sha": "44af1dd786",
+      "committedAtIso": "2026-10-07T12:40:13-05:00"
     },
     {
-      "number": 25606,
-      "title": "FINDING: LST-F419 LANE: FINANCIAL — migration-ledger hygiene and three more stale guards: five stale ledger_orphans exceptions removed (each measured in both prod ledgers), ledger snapshot 1417 -> 1421, three truthfully-held migrations recorded, legal reserve guard follows its bill",
+      "number": 25692,
+      "title": "FINDING: SETL-F443 — MoneyInput + Creator quantities accept typed decimals (diesel/CPG/rates)",
       "state": "merged",
-      "mergedAtCt": "10/06/2026, 11:25 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25606",
-      "sha": "e078287022",
-      "committedAtIso": "2026-10-06T11:25:49-05:00"
+      "mergedAtCt": "10/07/2026, 12:32 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25692",
+      "sha": "2406442be6",
+      "committedAtIso": "2026-10-07T12:32:15-05:00"
     },
     {
-      "number": 25605,
-      "title": "FINDING: N/A — CC-2 OUTBOX: ROUND 432 items 1-5 + ROUND 435 part 3",
+      "number": 25691,
+      "title": "FINDING: SETL-F442 — 5-col Creator, decimals, period→load dates, no driver EntityLink under picker",
       "state": "merged",
-      "mergedAtCt": "10/06/2026, 11:24 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25605",
-      "sha": "2755627b2f",
-      "committedAtIso": "2026-10-06T11:24:33-05:00"
+      "mergedAtCt": "10/07/2026, 12:26 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25691",
+      "sha": "1ae260e60c",
+      "committedAtIso": "2026-10-07T12:26:48-05:00"
     },
     {
-      "number": 25601,
-      "title": "FINDING: ROUND-435-CC2 LANE: FINANCIAL — /factoring/reserves rendered a second Reserve screen (ReserveDashboard, a strict subset of the Reserve tab's ReserveTracker) and a dead second Factoring tab set sat in pages/factoring/index.tsx; the duplicate is gone, the old URL lands on the Reserve tab, and the survivor gained the honest states only the duplicate had",
+      "number": 25690,
+      "title": "FINDING: LST-F423-P4 — re-anchor two more stale static-guard needles (AP aging selftest, BillsPage money formatter)",
       "state": "merged",
-      "mergedAtCt": "10/06/2026, 11:24 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25601",
-      "sha": "272c2ac31c",
-      "committedAtIso": "2026-10-06T11:24:06-05:00"
+      "mergedAtCt": "10/07/2026, 11:29 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25690",
+      "sha": "ec86a162fb",
+      "committedAtIso": "2026-10-07T11:29:35-05:00"
     },
     {
-      "number": 25604,
-      "title": "FINDING: ACCT-F2026100608 LANE: FINANCIAL — a Relay reefer fill never became a reefer fuel row (IFTA counted its gallons as taxable road diesel) and never carried its trailer; the fill now decides the product and the trailer is stamped from records (USMCA IFTA taxable 29,206.678 -> 29,003.908 gal)",
+      "number": 25689,
+      "title": "FINDING: LST-F423-P3 — re-anchor four stale static-guard needles to current code shape",
       "state": "merged",
-      "mergedAtCt": "10/06/2026, 11:23 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25604",
-      "sha": "533d94071c",
-      "committedAtIso": "2026-10-06T11:23:13-05:00"
+      "mergedAtCt": "10/07/2026, 11:18 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25689",
+      "sha": "5752464de2",
+      "committedAtIso": "2026-10-07T11:18:37-05:00"
     },
     {
-      "number": 25603,
-      "title": "FINDING: BANK-F4332 LANE: FINANCIAL — CLAIM-RESERVE EVEN 18350 for verify-qbo-format-layer (433-CUR #2).",
+      "number": 25688,
+      "title": "OUTBOX: BANK-F2026100701 MERGED #25687 ab83c0375d — SETL-F441 LIVE for Chrome",
       "state": "merged",
-      "mergedAtCt": "10/06/2026, 11:20 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25603",
-      "sha": "4682f790cb",
-      "committedAtIso": "2026-10-06T11:20:45-05:00"
+      "mergedAtCt": "10/07/2026, 11:10 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25688",
+      "sha": "ee40fb0a9a",
+      "committedAtIso": "2026-10-07T11:10:22-05:00"
     },
     {
-      "number": 25602,
-      "title": "FINDING: LST-F418 LANE: FINANCIAL — 16 more money guards whose --selftest failed on main restored to the code they protect; four made purer or stricter, none weakened",
+      "number": 25687,
+      "title": "FINDING: BANK-F2026100701 — active-categorize-path guard false-red after multi-select; DesignView modal stub slate",
       "state": "merged",
-      "mergedAtCt": "10/06/2026, 11:17 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25602",
-      "sha": "977e6c3db4",
-      "committedAtIso": "2026-10-06T11:17:45-05:00"
+      "mergedAtCt": "10/07/2026, 11:09 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25687",
+      "sha": "ab83c0375d",
+      "committedAtIso": "2026-10-07T11:09:38-05:00"
     },
     {
-      "number": 25600,
-      "title": "FINDING: ACCT-F2026100604 LANE: FINANCIAL -- ROUND 433.2 batch 4 onto MoneyCell: unwired money cells 43 -> 23 (6 wired to their record, 17 declared with a reason the guard lists); combined unwired+declared 46 -> 43",
+      "number": 25686,
+      "title": "FINDING: N/A — append Devin OUTBOX done line for LST-F423 merged via #25685",
       "state": "merged",
-      "mergedAtCt": "10/06/2026, 11:15 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25600",
-      "sha": "17fcf92355",
-      "committedAtIso": "2026-10-06T11:15:41-05:00"
+      "mergedAtCt": "10/07/2026, 11:08 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25686",
+      "sha": "bbeae61cff",
+      "committedAtIso": "2026-10-07T11:08:34-05:00"
     },
     {
-      "number": 25599,
-      "title": "FINDING: BANK-F4331 LANE: FINANCIAL — Categorize/Match opens as a dimmed Modal popup so register rows stop competing with the boxes.",
+      "number": 25685,
+      "title": "Cursor- fix: LST-F423 static red-on-main rot — membership, entity scope, bill dates/refs",
       "state": "merged",
-      "mergedAtCt": "10/06/2026, 11:13 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25599",
-      "sha": "b38b71de42",
-      "committedAtIso": "2026-10-06T11:13:41-05:00"
+      "mergedAtCt": "10/07/2026, 11:08 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25685",
+      "sha": "c8b983b875",
+      "committedAtIso": "2026-10-07T11:08:03-05:00"
     },
     {
-      "number": 25598,
-      "title": "FINDING: N/A (CLAIM-RESERVE 12411 -- reservation-only commit, no code fix)",
+      "number": 25684,
+      "title": "OUTBOX: SETL-F441 FE+BE LIVE — dep-db36ks72975c73f5bvd0 / dep-db36k7brjlhs7387a8ig · healthz 566433ba15",
       "state": "merged",
-      "mergedAtCt": "10/06/2026, 11:12 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25598",
-      "sha": "24268b8b92",
-      "committedAtIso": "2026-10-06T11:12:59-05:00"
+      "mergedAtCt": "10/07/2026, 11:00 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25684",
+      "sha": "f9e954bf09",
+      "committedAtIso": "2026-10-07T11:00:23-05:00"
     }
   ]
 }
