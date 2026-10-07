@@ -196,7 +196,7 @@ export function FuelReconciliationPage() {
         render: (r) => (
           <div className="flex flex-wrap gap-1">
             {(r.flags ?? []).map((f) => (
-              <span key={f} className="rounded-sm border border-slate-300 bg-slate-100 px-1 py-0.5 text-xs font-semibold text-slate-700" title={FLAG_META[f].label}>
+              <span key={f} className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1 py-0.5 text-xs font-semibold text-[#1F2A44]" title={FLAG_META[f].label}>
                 {FLAG_META[f].label}
               </span>
             ))}
@@ -301,11 +301,11 @@ export function FuelReconciliationPage() {
         onReset={staged.reset}
         applyDisabled={!staged.dirty}
       >
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Unit</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Unit</span>
           <input
             type="text"
-            className="h-7 w-24 rounded-sm border border-slate-300 px-2 text-xs"
+            className="h-7 w-24 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.unitFilter}
             onChange={(e) => staged.setDraft((p) => ({ ...p, unitFilter: e.target.value }))}
             placeholder="All units"
@@ -349,10 +349,10 @@ export function FuelReconciliationPage() {
 
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="no-print mb-2 flex gap-2 border-b border-gray-100 pb-2">
-              <button type="button" className={`text-xs font-semibold ${tab === "card" ? "text-slate-700" : "text-gray-500"}`} onClick={() => setTab("card")}>
+              <button type="button" className={`text-xs font-semibold ${tab === "card" ? "text-[#1F2A44]" : "text-gray-500"}`} onClick={() => setTab("card")}>
                 Unmatched Card Transactions
               </button>
-              <button type="button" className={`text-xs font-semibold ${tab === "wo" ? "text-slate-700" : "text-gray-500"}`} onClick={() => setTab("wo")}>
+              <button type="button" className={`text-xs font-semibold ${tab === "wo" ? "text-[#1F2A44]" : "text-gray-500"}`} onClick={() => setTab("wo")}>
                 Unmatched WO Entries
               </button>
             </div>

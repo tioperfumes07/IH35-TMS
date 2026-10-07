@@ -38,7 +38,7 @@ function ManagementCustomerCell({
   const label = entityLabel(customerName, customerId, "Customer");
   if (isUnresolvedEntityTombstone(customerName, customerId, "Customer")) {
     return (
-      <span className="text-slate-800" data-testid="management-report-customer-tombstone">
+      <span className="text-[#0F1219]" data-testid="management-report-customer-tombstone">
         {label}
       </span>
     );
@@ -57,7 +57,7 @@ function ManagementVendorCell({
   const label = entityLabel(vendorName, vendorId, "Vendor");
   if (isUnresolvedEntityTombstone(vendorName, vendorId, "Vendor")) {
     return (
-      <span className="text-slate-800" data-testid="management-report-vendor-tombstone">
+      <span className="text-[#0F1219]" data-testid="management-report-vendor-tombstone">
         {label}
       </span>
     );
@@ -133,10 +133,10 @@ function currentMonthRange() {
 
 function SectionDivider({ title, index }: { title: string; index: number }) {
   return (
-    <div className="mt-8 border-b-2 border-slate-800 pb-1 print:mt-6">
+    <div className="mt-8 border-b-2 border-[#0F1219] pb-1 print:mt-6">
       <div className="flex items-baseline gap-3">
-        <span className="text-section-header font-semibold uppercase tracking-widest text-slate-500">{index + 1}</span>
-        <h2 className="text-xs font-semibold text-slate-900">{title}</h2>
+        <span className="text-section-header font-semibold uppercase tracking-widest text-[#6B7280]">{index + 1}</span>
+        <h2 className="text-xs font-semibold text-[#0F1219]">{title}</h2>
       </div>
     </div>
   );
@@ -158,16 +158,16 @@ function PLSection({ companyId, fromDate, toDate, basis, searchQuery }: { compan
 
   const renderSection = (title: string, lines: typeof revenue.lines, total: number) => (
     <div className="mb-4">
-      <div className="text-section-header font-semibold uppercase tracking-wide text-slate-500 mb-1">{title}</div>
+      <div className="text-section-header font-semibold uppercase tracking-wide text-[#6B7280] mb-1">{title}</div>
       {filterLines(lines).length === 0 ? (
-        <p className="text-xs text-slate-400 pl-2">— no entries —</p>
+        <p className="text-xs text-[#6B7280] pl-2">— no entries —</p>
       ) : (
         <div className="overflow-x-auto"><table className="min-w-full text-xs">
           <tbody>
             {filterLines(lines).map((line) => (
               <tr key={`${line.account_code}-${line.account_name}`} className="border-b border-gray-50">
-                <td className="py-0.5 pl-2 text-slate-600">{line.account_code}</td>
-                <td className="py-0.5 pl-1 text-slate-800">
+                <td className="py-0.5 pl-2 text-[#4B5563]">{line.account_code}</td>
+                <td className="py-0.5 pl-1 text-[#0F1219]">
                   <AmountLink
                     filter={plFilter(line.account_id, fromDate, toDate, basis)}
                     className="hover:underline"
@@ -176,7 +176,7 @@ function PLSection({ companyId, fromDate, toDate, basis, searchQuery }: { compan
                     {line.account_name}
                   </AmountLink>
                 </td>
-                <td className="py-0.5 text-right text-slate-800 tabular-nums">
+                <td className="py-0.5 text-right text-[#0F1219] tabular-nums">
                   <AmountLink
                     filter={plFilter(line.account_id, fromDate, toDate, basis)}
                     data-testid={`mrp-pl-amount-${line.account_id}`}
@@ -186,8 +186,8 @@ function PLSection({ companyId, fromDate, toDate, basis, searchQuery }: { compan
                 </td>
               </tr>
             ))}
-            <tr className="font-semibold border-t border-slate-200">
-              <td colSpan={2} className="py-0.5 pl-2 text-right text-slate-700">Total {title}</td>
+            <tr className="font-semibold border-t border-[#E5E7EB]">
+              <td colSpan={2} className="py-0.5 pl-2 text-right text-[#1F2A44]">Total {title}</td>
               <td className="py-0.5">
                 <MoneyCell
                   cents={total}
@@ -206,12 +206,12 @@ function PLSection({ companyId, fromDate, toDate, basis, searchQuery }: { compan
     <div className="mt-3 text-xs">
       {renderSection("Revenue", revenue.lines, revenue.total)}
       {renderSection("Cost of Goods Sold", cogs.lines, cogs.total)}
-      <div className="border-t border-slate-300 py-1 flex justify-between font-semibold text-xs">
+      <div className="border-t border-[#E5E7EB] py-1 flex justify-between font-semibold text-xs">
         <span>Gross Profit</span>
-        <span className={gross_profit < 0 ? "text-rose-700" : "text-slate-900"}>{money(gross_profit)}</span>
+        <span className={gross_profit < 0 ? "text-rose-700" : "text-[#0F1219]"}>{money(gross_profit)}</span>
       </div>
       {renderSection("Operating Expenses", operating_expenses.lines, operating_expenses.total)}
-      <div className="border-t-2 border-slate-800 py-1 flex justify-between font-bold text-xs">
+      <div className="border-t-2 border-[#0F1219] py-1 flex justify-between font-bold text-xs">
         <span>Net Income</span>
         <span className={net_income < 0 ? "text-rose-700" : "text-emerald-700"}>{money(net_income)}</span>
       </div>
@@ -237,7 +237,7 @@ function BSSection({ companyId, asOfDate, basis, searchQuery }: { companyId: str
     <div className="mb-3">
       {filterLines(lines).map((line) => (
         <div key={`${line.account_code}-${line.account_name}`} className="flex justify-between text-xs py-0.5 border-b border-gray-50">
-          <span className="text-slate-600 pl-2">
+          <span className="text-[#4B5563] pl-2">
             {line.account_code}{" "}
             {line.account_id ? (
               <AmountLink
@@ -251,11 +251,11 @@ function BSSection({ companyId, asOfDate, basis, searchQuery }: { companyId: str
               line.account_name
             )}
           </span>
-          <span className="text-slate-800">{money(line.amount)}</span>
+          <span className="text-[#0F1219]">{money(line.amount)}</span>
         </div>
       ))}
-      <div className="flex justify-between text-xs font-semibold border-t border-slate-200 py-0.5">
-        <span className="pl-2 text-slate-700">{label}</span>
+      <div className="flex justify-between text-xs font-semibold border-t border-[#E5E7EB] py-0.5">
+        <span className="pl-2 text-[#1F2A44]">{label}</span>
         <span>{money(total)}</span>
       </div>
     </div>
@@ -263,13 +263,13 @@ function BSSection({ companyId, asOfDate, basis, searchQuery }: { companyId: str
 
   return (
     <div className="mt-3">
-      <div className="text-section-header font-semibold uppercase tracking-wide text-slate-500 mb-1">Assets</div>
+      <div className="text-section-header font-semibold uppercase tracking-wide text-[#6B7280] mb-1">Assets</div>
       {renderLines(assets.lines, assets.total, "Total Assets")}
-      <div className="text-section-header font-semibold uppercase tracking-wide text-slate-500 mb-1 mt-3">Liabilities</div>
+      <div className="text-section-header font-semibold uppercase tracking-wide text-[#6B7280] mb-1 mt-3">Liabilities</div>
       {renderLines(liabilities.lines, liabilities.total, "Total Liabilities")}
-      <div className="text-section-header font-semibold uppercase tracking-wide text-slate-500 mb-1 mt-3">Equity</div>
+      <div className="text-section-header font-semibold uppercase tracking-wide text-[#6B7280] mb-1 mt-3">Equity</div>
       {renderLines(equity.lines, equity.total, "Total Equity")}
-      <div className="flex justify-between font-bold text-xs border-t-2 border-slate-800 pt-1 mt-2">
+      <div className="flex justify-between font-bold text-xs border-t-2 border-[#0F1219] pt-1 mt-2">
         <span>Total Liabilities & Equity</span>
         <span>{money(total_liabilities_and_equity)}</span>
       </div>
@@ -290,12 +290,12 @@ function ARAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
   const rows = query.data.rows;
   const q = searchQuery.toLowerCase();
   const filtered = q ? rows.filter((row) => String(row.customer_name ?? "").toLowerCase().includes(q)) : rows;
-  if (filtered.length === 0) return <p className="py-4 text-xs text-slate-400">No open A/R as of {asOfDate}</p>;
+  if (filtered.length === 0) return <p className="py-4 text-xs text-[#6B7280]">No open A/R as of {asOfDate}</p>;
 
   return (
     <div className="mt-3 overflow-auto">
       <div className="overflow-x-auto"><table className="min-w-full text-xs">
-        <thead className="text-section-header font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">
+        <thead className="text-section-header font-semibold uppercase tracking-wide text-[#6B7280] border-b border-[#E5E7EB]">
           <tr>
             <th className="py-1 text-left">Customer</th>
             <th className="py-1 text-right">Current</th>
@@ -309,7 +309,7 @@ function ARAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
         <tbody>
           {filtered.map((row) => (
             <tr key={row.customer_id} className="border-b border-gray-50">
-              <td className="py-0.5 text-slate-800">
+              <td className="py-0.5 text-[#0F1219]">
                 <ManagementCustomerCell customerId={row.customer_id} customerName={row.customer_name} />
               </td>
               <td className="py-0.5 text-right tabular-nums">
@@ -383,12 +383,12 @@ function APAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
   const rows = query.data.rows;
   const q = searchQuery.toLowerCase();
   const filtered = q ? rows.filter((row) => String(row.vendor_name ?? "").toLowerCase().includes(q)) : rows;
-  if (filtered.length === 0) return <p className="py-4 text-xs text-slate-400">No open A/P as of {asOfDate}</p>;
+  if (filtered.length === 0) return <p className="py-4 text-xs text-[#6B7280]">No open A/P as of {asOfDate}</p>;
 
   return (
     <div className="mt-3 overflow-auto">
       <div className="overflow-x-auto"><table className="min-w-full text-xs">
-        <thead className="text-section-header font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">
+        <thead className="text-section-header font-semibold uppercase tracking-wide text-[#6B7280] border-b border-[#E5E7EB]">
           <tr>
             <th className="py-1 text-left">Vendor</th>
             <th className="py-1 text-right">Current</th>
@@ -402,7 +402,7 @@ function APAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
         <tbody>
           {filtered.map((row) => (
             <tr key={row.vendor_id} className="border-b border-gray-50">
-              <td className="py-0.5 text-slate-800">
+              <td className="py-0.5 text-[#0F1219]">
                 <ManagementVendorCell vendorId={row.vendor_id} vendorName={row.vendor_name} />
               </td>
               <td className="py-0.5 text-right tabular-nums">
@@ -474,7 +474,7 @@ function CustomerSummarySection({ companyId, fromDate, toDate, searchQuery }: { 
   if (query.isError || !query.data) return <p className="py-4 text-xs text-red-600">Customer summary unavailable</p>;
 
   const rows = query.data.by_customer ?? [];
-  if (rows.length === 0) return <p className="py-4 text-xs text-slate-400">No customer revenue data for this period</p>;
+  if (rows.length === 0) return <p className="py-4 text-xs text-[#6B7280]">No customer revenue data for this period</p>;
 
   const q = searchQuery.toLowerCase();
   const filteredRows = q ? rows.filter((row) => String(row.customer_name ?? "").toLowerCase().includes(q)) : rows;
@@ -482,7 +482,7 @@ function CustomerSummarySection({ companyId, fromDate, toDate, searchQuery }: { 
   return (
     <div className="mt-3 overflow-auto">
       <div className="overflow-x-auto"><table className="min-w-full text-xs">
-        <thead className="text-section-header font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">
+        <thead className="text-section-header font-semibold uppercase tracking-wide text-[#6B7280] border-b border-[#E5E7EB]">
           <tr>
             <th className="py-1 text-left">Customer</th>
             <th className="py-1 text-right">Revenue</th>
@@ -492,7 +492,7 @@ function CustomerSummarySection({ companyId, fromDate, toDate, searchQuery }: { 
         <tbody>
           {sorted.slice(0, 30).map((row) => (
             <tr key={row.customer_id} className="border-b border-gray-50">
-              <td className="py-0.5 text-slate-800">
+              <td className="py-0.5 text-[#0F1219]">
                 <ManagementCustomerCell customerId={row.customer_id} customerName={row.customer_name} />
               </td>
               <td className="py-0.5"><MoneyCell cents={row.revenue_cents} format={money} drill={{ none: "Revenue for the period for this customer — the customer link opens its invoices" }} /></td>
@@ -516,7 +516,7 @@ function VendorExpenseSummarySection({ companyId, fromDate, toDate, searchQuery 
   if (query.isError || !query.data) return <p className="py-4 text-xs text-red-600">Vendor summary unavailable</p>;
 
   const rows = query.data.rows;
-  if (rows.length === 0) return <p className="py-4 text-xs text-slate-400">No open vendor balances</p>;
+  if (rows.length === 0) return <p className="py-4 text-xs text-[#6B7280]">No open vendor balances</p>;
 
   const q = searchQuery.toLowerCase();
   const filteredRows = q ? rows.filter((row) => String(row.vendor_name ?? "").toLowerCase().includes(q)) : rows;
@@ -524,7 +524,7 @@ function VendorExpenseSummarySection({ companyId, fromDate, toDate, searchQuery 
   return (
     <div className="mt-3 overflow-auto">
       <div className="overflow-x-auto"><table className="min-w-full text-xs">
-        <thead className="text-section-header font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">
+        <thead className="text-section-header font-semibold uppercase tracking-wide text-[#6B7280] border-b border-[#E5E7EB]">
           <tr>
             <th className="py-1 text-left">Vendor</th>
             <th className="py-1 text-right">Open balance</th>
@@ -534,7 +534,7 @@ function VendorExpenseSummarySection({ companyId, fromDate, toDate, searchQuery 
         <tbody>
           {sorted.slice(0, 30).map((row) => (
             <tr key={row.vendor_id} className="border-b border-gray-50">
-              <td className="py-0.5 text-slate-800">
+              <td className="py-0.5 text-[#0F1219]">
                 <ManagementVendorCell vendorId={row.vendor_id} vendorName={row.vendor_name} />
               </td>
               <td className="py-0.5"><MoneyCell cents={row.total_open_cents} format={money} drill={{ amount: apAgingBillsFilter(row.vendor_id) }} /></td>
@@ -676,28 +676,28 @@ export function ManagementReportPackagePage() {
       {companyId ? (
         <div className="rounded-sm border border-gray-200 bg-white p-6 print:border-0 print:p-0">
           {/* Cover page */}
-          <div className="mb-8 border-b-2 border-slate-800 pb-6 print:pb-4">
-            <div className="text-section-header font-semibold uppercase tracking-widest text-slate-400 mb-2">Management Report Package</div>
-            <h1 className="text-page-title font-bold text-slate-900 mb-1">{pkg.label}</h1>
-            <div className="text-slate-600 text-xs mb-4">{pkg.description}</div>
-            <div className="grid grid-cols-2 gap-4 text-xs text-slate-500 mt-6">
-              <div><span className="font-semibold text-slate-700">Entity</span><br />{entityName}</div>
-              <div><span className="font-semibold text-slate-700">Period</span><br />{applied.start} through {applied.end}</div>
-              <div><span className="font-semibold text-slate-700">Basis</span><br />{applied.basis === "cash" ? "Cash" : "Accrual"}</div>
-              <div><span className="font-semibold text-slate-700">Prepared</span><br />{preparedDate}</div>
+          <div className="mb-8 border-b-2 border-[#0F1219] pb-6 print:pb-4">
+            <div className="text-section-header font-semibold uppercase tracking-widest text-[#6B7280] mb-2">Management Report Package</div>
+            <h1 className="text-page-title font-bold text-[#0F1219] mb-1">{pkg.label}</h1>
+            <div className="text-[#4B5563] text-xs mb-4">{pkg.description}</div>
+            <div className="grid grid-cols-2 gap-4 text-xs text-[#6B7280] mt-6">
+              <div><span className="font-semibold text-[#1F2A44]">Entity</span><br />{entityName}</div>
+              <div><span className="font-semibold text-[#1F2A44]">Period</span><br />{applied.start} through {applied.end}</div>
+              <div><span className="font-semibold text-[#1F2A44]">Basis</span><br />{applied.basis === "cash" ? "Cash" : "Accrual"}</div>
+              <div><span className="font-semibold text-[#1F2A44]">Prepared</span><br />{preparedDate}</div>
             </div>
-            <p className="mt-4 text-xs text-slate-400 italic">
+            <p className="mt-4 text-xs text-[#6B7280] italic">
               Pre-import: amounts reflect TMS-posted entries only. Verified against QBO import post data-cutover.
             </p>
           </div>
 
           {/* Table of Contents */}
           <div className="mb-8">
-            <div className="text-section-header font-semibold uppercase tracking-widest text-slate-500 mb-2">Table of Contents</div>
-            <ol className="space-y-1 text-xs text-slate-700">
+            <div className="text-section-header font-semibold uppercase tracking-widest text-[#6B7280] mb-2">Table of Contents</div>
+            <ol className="space-y-1 text-xs text-[#1F2A44]">
               {pkg.sections.map((section, i) => (
                 <li key={section} className="flex items-baseline gap-2">
-                  <span className="text-xs font-semibold text-slate-400 min-w-[1rem]">{i + 1}</span>
+                  <span className="text-xs font-semibold text-[#6B7280] min-w-[1rem]">{i + 1}</span>
                   <span>{section}</span>
                 </li>
               ))}
@@ -743,14 +743,14 @@ export function ManagementReportPackagePage() {
         </div>
       ) : null}
 
-      <div className="no-print flex gap-3 text-xs text-slate-500 pt-2">
+      <div className="no-print flex gap-3 text-xs text-[#6B7280] pt-2">
         {Object.entries(PACKAGES).map(([type, meta]) => (
           <EntityLink
             key={type}
             kind="management_report_package"
             id={type}
             label={meta.label}
-            className={`underline-offset-2 hover:underline ${type === pkgType ? "font-semibold text-slate-800" : ""}`}
+            className={`underline-offset-2 hover:underline ${type === pkgType ? "font-semibold text-[#0F1219]" : ""}`}
           />
         ))}
       </div>
