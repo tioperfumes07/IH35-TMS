@@ -2391,3 +2391,11 @@ Not asserted: whether CC-3's 5 front-end failures share this cause — front-end
 3. `202614690000_expense_lines_item_and_account_required` (document integrity: expense lines must carry item + account; 639-line backfill) — same as 2: file on disk, entry without `.sql`.
 
 **STOPPED.** Nothing new before Oct 8 6pm Chicago. Uncommitted: none. All branches on the remote (B8 #25755, entity-scope #25752).
+
+### CC-2 · 2026-10-07 23:30Z — ROUND 441.13 done · STOPPED until Oct 8 6pm Chicago
+- #25755 (B8) — left as a DRAFT, untouched. Backed up on the remote at f0f30cd5e3.
+- #25752 — CLOSED as superseded by #25674; the close comment links the 19 reasoned exceptions (commit 7f74cd91d673 on cc-2/entity-scope-83, still on the remote).
+- Reason-required guard — another seat merged it first as #25769 (eaed00891b): it carried #25752's 19 reasons onto main's baseline (ceiling 114 -> 93). My own version (#25770) was CLOSED as a duplicate; nothing in it added to #25769. Main's step 84 is green: 103 literals, all allowlisted.
+- MY ERROR, disclosed: on the first attempt the commit was refused, I missed the refusal, and `worktree remove --force` deleted the uncommitted edits. I rebuilt them, committed 130e3d23d8, and gated it (gate_exit=0) — the duplicate was found only at merge time. No main impact.
+- Deploys on main tip eaed00891b (#25769, not mine): web srv-d7s46dbrjlhs7383i150 dep-db3d90rd6icc73aojhrg (build_in_progress) · backend srv-d7rpem7avr4c73fhp4n0 dep-db3d90v9e2qs7385q9gg (queued). Last CONFIRMED live for my own merge: web dep-db3ch9s9v7es73a5j1b0 / backend dep-db3ch9s9v7es73a5iv20 @78cfe3f0a2 (#25748).
+- Uncommitted: none. STOPPED.
