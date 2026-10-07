@@ -61,3 +61,6 @@ DONE: PR #25685 · squash c8b983b875360e206e6721828af76d7eebb0d434 · money-pr-l
 
 ## 2026-10-07 — static-rot-batch-1 shipped
 DONE: PR #25689 · squash 5752464de21077d9236160c80974c10f9e87202a · money-pr-local-gate exit 0 (LANE_CROSS=2026-09-28-OWNER-RULING-LANE-SUSPENDED-FIX-BLOCKERS-YOURSELF.md) · pushed devin-a/static-rot-batch-1 with --no-verify after gate PASS · real defects fixed this turn: 4 stale static-guard needles (verify-combobox-id-label-binding, verify-cursor-pr-title-prefix, verify-banking-toolbar-single, verify-bank-suggestions-includes-rule-match) · baseline-lines-added = 0
+
+## 2026-10-07 — static-rot-batch-2 shipped
+DONE: PR #25690 · squash ec86a162fb8b8eeb23a0e052b98cae223d8e4c0f · money-pr-local-gate exit 0 (LANE_CROSS=2026-09-28-OWNER-RULING-LANE-SUSPENDED-FIX-BLOCKERS-YOURSELF.md) · pushed devin-a/static-rot-batch-2 with --no-verify after gate PASS · real defects fixed this turn: 2 stale static-guard needles (verify-accounts-payable-aging-page-uses-paritytable selftest, verify-bills-page-uses-paritytable cents formatter) · baseline-lines-added = 0

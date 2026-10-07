@@ -4,6 +4,7 @@
  * not window.print() on the SPA shell (sidebar chrome).
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -14,17 +15,17 @@ const ROOT = path.resolve(__dirname, "..");
 const SELF = path.join(ROOT, "scripts/verify-print-opens-canonical-document.mjs");
 
 const TARGETS = {
-  helper: path.join(ROOT, "apps/frontend/src/lib/openPrintableDocument.ts"),
-  invoice: path.join(ROOT, "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx"),
-  settlement: path.join(ROOT, "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx"),
-  dispatch: path.join(ROOT, "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx"),
-  cashAdvance: path.join(ROOT, "apps/frontend/src/pages/cash-advances/components/AdvanceDetailDrawer.tsx"),
-  wrap: path.join(ROOT, "apps/backend/src/render/pdf-template.ts"),
-  spaPrint: path.join(ROOT, "apps/frontend/src/index.css"),
-  invoiceHtml: path.join(ROOT, "apps/backend/src/accounting/invoice-render.routes.ts"),
-  shared: path.join(ROOT, "apps/backend/src/accounting/shared.ts"),
-  billHtml: path.join(ROOT, "apps/backend/src/accounting/bill-render.routes.ts"),
-  woPdf: path.join(ROOT, "apps/backend/src/work-orders/work-orders.routes.ts"),
+  helper: process.env.GUARD_HELPER_PATH || path.join(ROOT, "apps/frontend/src/lib/openPrintableDocument.ts"),
+  invoice: process.env.GUARD_INVOICE_PATH || path.join(ROOT, "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx"),
+  settlement: process.env.GUARD_SETTLEMENT_PATH || path.join(ROOT, "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx"),
+  dispatch: process.env.GUARD_DISPATCH_PATH || path.join(ROOT, "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx"),
+  cashAdvance: process.env.GUARD_CASH_ADVANCE_PATH || path.join(ROOT, "apps/frontend/src/pages/cash-advances/components/AdvanceDetailDrawer.tsx"),
+  wrap: process.env.GUARD_WRAP_PATH || path.join(ROOT, "apps/backend/src/render/pdf-template.ts"),
+  spaPrint: process.env.GUARD_SPA_PRINT_PATH || path.join(ROOT, "apps/frontend/src/index.css"),
+  invoiceHtml: process.env.GUARD_INVOICE_HTML_PATH || path.join(ROOT, "apps/backend/src/accounting/invoice-render.routes.ts"),
+  shared: process.env.GUARD_SHARED_PATH || path.join(ROOT, "apps/backend/src/accounting/shared.ts"),
+  billHtml: process.env.GUARD_BILL_HTML_PATH || path.join(ROOT, "apps/backend/src/accounting/bill-render.routes.ts"),
+  woPdf: process.env.GUARD_WO_PDF_PATH || path.join(ROOT, "apps/backend/src/work-orders/work-orders.routes.ts"),
 };
 
 function fail(msg) {
@@ -122,30 +123,33 @@ function assertSource() {
 function selftest() {
   assertSource();
   const invoicePath = TARGETS.invoice;
-  const backup = fs.readFileSync(invoicePath, "utf8");
+  const invoiceBackup = fs.readFileSync(invoicePath, "utf8");
   // Plant SPA print on the Print button only — NEVER rewrite imports (replaceAll on the
   // helper name previously corrupted BillDetailPage imports when restore raced).
   const re = /onClick=\{\(\) =>\s*\n?\s*openPrintableDocument\([\s\S]*?\)\s*\}/;
-  if (!re.test(backup)) fail("selftest could not find openPrintableDocument onClick to plant");
-  const planted = backup.replace(re, "onClick={() => window.print()}");
-  fs.writeFileSync(invoicePath, planted);
-  try {
-    const r = spawnSync(process.execPath, [SELF], { encoding: "utf8" });
-    if (r.status === 0) fail("mutated InvoiceDetailPage still passed — selftest must FAIL on SPA print");
-  } finally {
-    fs.writeFileSync(invoicePath, backup);
-  }
+  if (!re.test(invoiceBackup)) fail("selftest could not find openPrintableDocument onClick to plant");
 
   const sharedPath = TARGETS.shared;
   const sharedBackup = fs.readFileSync(sharedPath, "utf8");
   const sharedPlanted = sharedBackup.replace("org.user_accessible_company_ids()", "org.companies_that_do_not_exist()");
   if (sharedPlanted === sharedBackup) fail("selftest could not plant missing user_accessible_company_ids");
-  fs.writeFileSync(sharedPath, sharedPlanted);
+
+  // Run mutation tests against temp copies so a killed selftest cannot leave the tracked source corrupted.
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "print-canonical-selftest-"));
+  const tmpInvoice = path.join(tmpDir, "InvoiceDetailPage.tsx");
+  const tmpShared = path.join(tmpDir, "shared.ts");
+  fs.writeFileSync(tmpInvoice, invoiceBackup.replace(re, "onClick={() => window.print()}"));
+  fs.writeFileSync(tmpShared, sharedPlanted);
+
+  const env = { ...process.env, GUARD_INVOICE_PATH: tmpInvoice, GUARD_SHARED_PATH: tmpShared };
   try {
-    const r = spawnSync(process.execPath, [SELF], { encoding: "utf8" });
-    if (r.status === 0) fail("mutated shared.ts still passed — selftest must FAIL when print lookup skips membership GUC");
+    const invoiceR = spawnSync(process.execPath, [SELF], { encoding: "utf8", env });
+    if (invoiceR.status === 0) fail("mutated InvoiceDetailPage still passed — selftest must FAIL on SPA print");
+
+    const sharedR = spawnSync(process.execPath, [SELF], { encoding: "utf8", env });
+    if (sharedR.status === 0) fail("mutated shared.ts still passed — selftest must FAIL when print lookup skips membership GUC");
   } finally {
-    fs.writeFileSync(sharedPath, sharedBackup);
+    fs.rmSync(tmpDir, { recursive: true, force: true });
   }
   console.log("PASS: verify-print-opens-canonical-document --selftest");
 }
