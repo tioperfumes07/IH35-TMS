@@ -58,8 +58,25 @@ function comboboxListboxZIndex(text) {
   return Number(constMatch[1]);
 }
 
+function dialogSizeCheck(text) {
+  // SETL-F441 / owner: discard is a normal centered dialog box, never a full-page panel.
+  assert(/className="fixed inset-0[^"]*\bitems-center\b[^"]*\bjustify-center\b/.test(text),
+    "ConfirmDiscardDialog.tsx must center its dialog with items-center justify-center on the outer backdrop.");
+  const inner = text.match(/<div(?:\s|\n)*className="([^"]*rounded-sm[^"]*)"/);
+  assert(inner, "ConfirmDiscardDialog.tsx must have a rounded-sm inner dialog container.");
+  const innerClass = inner[1];
+  assert(/\bw-\[\d+(px|rem)\]/.test(innerClass),
+    "ConfirmDiscardDialog.tsx inner dialog must have an explicit fixed width (e.g. w-[320px]), never w-full/w-screen.");
+  assert(!/\bw-(full|screen)\b/.test(innerClass),
+    "ConfirmDiscardDialog.tsx inner dialog must not stretch full-page-wide (no w-full/w-screen).");
+  assert(!/\bh-(full|screen)\b/.test(innerClass),
+    "ConfirmDiscardDialog.tsx inner dialog must not be full-page tall (no h-full/h-screen).");
+}
+
 function check(root = ROOT) {
-  const dialogZ = dialogZIndex(fs.readFileSync(path.join(root, DIALOG_REL), "utf8"));
+  const dialogSrc = fs.readFileSync(path.join(root, DIALOG_REL), "utf8");
+  const dialogZ = dialogZIndex(dialogSrc);
+  dialogSizeCheck(dialogSrc);
   const modalZ = modalZIndex(fs.readFileSync(path.join(root, MODAL_REL), "utf8"));
   const listboxZ = comboboxListboxZIndex(fs.readFileSync(path.join(root, COMBOBOX_REL), "utf8"));
   assert(
@@ -109,6 +126,18 @@ function selftest() {
       failed = true;
     }
     assert(failed, "--selftest expected FAIL when ConfirmDiscardDialog's z-index regresses below Modal's");
+
+    // Poison: make the inner dialog full-width — must fail.
+    const wide = dialogSrc.replace(/w-\[320px\]/, "w-full");
+    assert(wide !== dialogSrc, "selftest mutation did not match — ConfirmDiscardDialog.tsx's w-[320px] literal changed");
+    fs.writeFileSync(tmpDialogDst, wide);
+    failed = false;
+    try {
+      check(tmp);
+    } catch {
+      failed = true;
+    }
+    assert(failed, "--selftest expected FAIL when ConfirmDiscardDialog's inner box becomes full-width");
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
