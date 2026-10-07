@@ -33,10 +33,10 @@ const changedStamp = (r: TrackerBlockRow) => r.last_changed_ct || ctDateTime(r.l
 const doneStamp = (r: TrackerBlockRow) => r.completed_ct || ctDateTime(r.completed_at);
 
 const PILL: Record<TrackerPhase["status"], { label: string; cls: string }> = {
-  done: { label: "Done", cls: "bg-[#d1fae5] text-slate-800" },
-  "in-progress": { label: "In progress", cls: "bg-slate-100 text-slate-700" },
+  done: { label: "Done", cls: "bg-[#d1fae5] text-[#0F1219]" },
+  "in-progress": { label: "In progress", cls: "bg-[#F7F8FA] text-[#1F2A44]" },
   "awaiting-owner": { label: "Awaiting owner", cls: "border border-[#dc2626] text-[#dc2626]" },
-  queued: { label: "Queued", cls: "bg-slate-50 text-slate-500" },
+  queued: { label: "Queued", cls: "bg-[#F7F8FA] text-[#6B7280]" },
 };
 
 /** Historical GATED tags are source history, not an owner hold (same law as Final Additions). */
@@ -48,13 +48,13 @@ function TrackerStatusCell({ status, kind }: { status: string; kind: "open" | "c
   const gated = isLegacyGatedStatus(status);
   return (
     <td
-      className="px-3 py-2 text-slate-600"
+      className="px-3 py-2 text-[#4B5563]"
       title={gated ? "Historical GATED tag; no owner approval required" : undefined}
       data-testid={gated ? "tracker-status-legacy-gated" : undefined}
     >
       {status}
       {kind === "completed" ? " · live" : ""}
-      {gated ? <span className="ml-1 text-[11px] uppercase tracking-wide text-slate-500">(actionable)</span> : null}
+      {gated ? <span className="ml-1 text-[11px] uppercase tracking-wide text-[#6B7280]">(actionable)</span> : null}
     </td>
   );
 }
@@ -62,8 +62,8 @@ function TrackerStatusCell({ status, kind }: { status: string; kind: "open" | "c
 function StatCard({ n, label }: { n: string | number; label: string }) {
   return (
     <div className="min-w-[140px] flex-1 rounded-sm border border-gray-200 bg-white px-4 py-3">
-      <div className="text-page-title font-semibold tabular-nums text-slate-900">{n}</div>
-      <div className="mt-0.5 text-[11px] uppercase tracking-wide text-slate-500">{label}</div>
+      <div className="text-page-title font-semibold tabular-nums text-[#0F1219]">{n}</div>
+      <div className="mt-0.5 text-[11px] uppercase tracking-wide text-[#6B7280]">{label}</div>
     </div>
   );
 }
@@ -71,7 +71,7 @@ function StatCard({ n, label }: { n: string | number; label: string }) {
 function ProgressBar({ done, total }: { done: number; total: number }) {
   const pct = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
   return (
-    <div className="h-2 w-full min-w-[80px] overflow-hidden rounded-sm bg-slate-100">
+    <div className="h-2 w-full min-w-[80px] overflow-hidden rounded-sm bg-[#F7F8FA]">
       <div className="h-full rounded-sm bg-[#334155]" style={{ width: `${pct}%` }} />
     </div>
   );
@@ -92,7 +92,7 @@ function LayerChips({ r }: { r: TrackerBlockRow }) {
     <span className="inline-flex flex-wrap gap-0.5">
       {LAYER_DEFS.map((l) => (
         <span key={l.abbr} title={l.title}
-          className={`rounded-sm px-1 text-xs ${r.layers[l.key] ? "bg-slate-200 text-slate-700" : "bg-slate-50 text-slate-300"}`}>{l.abbr}</span>
+          className={`rounded-sm px-1 text-xs ${r.layers[l.key] ? "bg-[#E5E7EB] text-[#1F2A44]" : "bg-[#F7F8FA] text-[#6B7280]"}`}>{l.abbr}</span>
       ))}
     </span>
   );
@@ -101,12 +101,12 @@ function LayerChips({ r }: { r: TrackerBlockRow }) {
 // `extended` (By-Module drill-down only) adds 4 LIVE-from-registry columns: Wired / Needs design / Missing /
 // Completeness. Top-level Pending/In-Progress/Completed tables stay compact (extended omitted → false).
 function BlockTable({ rows, kind, moved, extended = false }: { rows: TrackerBlockRow[]; kind: "open" | "completed"; moved: Set<string>; extended?: boolean }) {
-  if (rows.length === 0) return <p className="px-3 py-4 text-xs text-slate-500">None.</p>;
+  if (rows.length === 0) return <p className="px-3 py-4 text-xs text-[#6B7280]">None.</p>;
   return (
     <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
       <table className="w-full border-collapse text-xs">
         <thead>
-          <tr className="border-b border-gray-200 text-[11px] uppercase tracking-wide text-slate-500">
+          <tr className="border-b border-gray-200 text-[11px] uppercase tracking-wide text-[#6B7280]">
             <th className="px-3 py-2 text-left">Block</th>
             <th className="px-3 py-2 text-left">Kind</th>
             <th className="px-3 py-2 text-left">Layers</th>
@@ -122,40 +122,40 @@ function BlockTable({ rows, kind, moved, extended = false }: { rows: TrackerBloc
         <tbody>
           {rows.map((r) => (
             <tr key={r.id} className={`border-b border-gray-100 last:border-b-0 align-top ${moved.has(r.id) ? "bg-[#d1fae5]" : ""}`}>
-              <td className="px-3 py-2 text-slate-800">
+              <td className="px-3 py-2 text-[#0F1219]">
                 {r.name}
-                {r.financial ? <span className="ml-1 rounded-sm bg-slate-100 px-1 text-xs text-slate-500">FIN</span> : null}
+                {r.financial ? <span className="ml-1 rounded-sm bg-[#F7F8FA] px-1 text-xs text-[#6B7280]">FIN</span> : null}
                 {r.feature_incomplete ? <span className="ml-1 rounded-sm border border-[#dc2626] px-1 text-xs text-[#dc2626]">FEATURE INCOMPLETE</span> : null}
-                {r.cross_module.length ? <div className="mt-0.5 text-xs text-slate-400">links: {r.cross_module.join(", ")}</div> : null}
+                {r.cross_module.length ? <div className="mt-0.5 text-xs text-[#6B7280]">links: {r.cross_module.join(", ")}</div> : null}
               </td>
-              <td className="px-3 py-2 text-slate-500">{r.kind}</td>
+              <td className="px-3 py-2 text-[#6B7280]">{r.kind}</td>
               <td className="px-3 py-2"><LayerChips r={r} /></td>
               {extended ? (
                 <td className="px-3 py-2 text-center">
                   {r.wired
-                    ? <span className="font-semibold text-slate-600" title="Linkage declared: financial primitive + operational module + hub table">✓</span>
+                    ? <span className="font-semibold text-[#4B5563]" title="Linkage declared: financial primitive + operational module + hub table">✓</span>
                     : <span className="font-semibold text-[#dc2626]" title={`Undeclared linkage: ${r.missing.filter((m) => m.startsWith("link:")).join(", ") || "—"}`}>✗</span>}
                 </td>
               ) : null}
               {extended ? (
-                <td className="px-3 py-2 text-slate-500">
-                  {r.needs_design ? <span className="rounded-sm bg-slate-100 px-1 text-[11px] text-slate-700">Needs design</span> : "—"}
+                <td className="px-3 py-2 text-[#6B7280]">
+                  {r.needs_design ? <span className="rounded-sm bg-[#F7F8FA] px-1 text-[11px] text-[#1F2A44]">Needs design</span> : "—"}
                 </td>
               ) : null}
               {extended ? (
-                <td className="px-3 py-2 text-[11px] text-slate-500">{r.missing.length ? r.missing.join(", ") : "—"}</td>
+                <td className="px-3 py-2 text-[11px] text-[#6B7280]">{r.missing.length ? r.missing.join(", ") : "—"}</td>
               ) : null}
               {extended ? (
                 <td className="px-3 py-2">
                   <div className="flex items-center gap-2">
                     <ProgressBar done={r.completeness} total={100} />
-                    <span className="tabular-nums text-[11px] text-slate-600">{r.completeness}%</span>
+                    <span className="tabular-nums text-[11px] text-[#4B5563]">{r.completeness}%</span>
                   </div>
                 </td>
               ) : null}
               <TrackerStatusCell status={r.status} kind={kind} />
-              <td className="px-3 py-2 font-mono text-slate-500">{r.pr ? `#${r.pr}` : "—"}</td>
-              <td data-quantity className="whitespace-nowrap px-3 py-2 text-right tabular-nums text-slate-500">{kind === "completed" ? doneStamp(r) : changedStamp(r)}</td>
+              <td className="px-3 py-2 font-mono text-[#6B7280]">{r.pr ? `#${r.pr}` : "—"}</td>
+              <td data-quantity className="whitespace-nowrap px-3 py-2 text-right tabular-nums text-[#6B7280]">{kind === "completed" ? doneStamp(r) : changedStamp(r)}</td>
             </tr>
           ))}
         </tbody>
@@ -167,7 +167,7 @@ function BlockTable({ rows, kind, moved, extended = false }: { rows: TrackerBloc
 function CompletedSection({ rows, moved }: { rows: TrackerBlockRow[]; moved: Set<string> }) {
   return (
     <div className="space-y-2">
-      <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Completed &amp; live ({rows.length}) — 100% done, merged + deployed</h2>
+      <h2 className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Completed &amp; live ({rows.length}) — 100% done, merged + deployed</h2>
       <BlockTable rows={rows} kind="completed" moved={moved} />
     </div>
   );
@@ -178,7 +178,7 @@ function SequenceTable({ phases }: { phases: TrackerPhase[] }) {
     <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
       <table className="w-full border-collapse text-xs">
         <thead>
-          <tr className="border-b border-gray-200 text-[11px] uppercase tracking-wide text-slate-500">
+          <tr className="border-b border-gray-200 text-[11px] uppercase tracking-wide text-[#6B7280]">
             <th className="px-3 py-2 text-left">#</th>
             <th className="px-3 py-2 text-left">Phase</th>
             <th className="px-3 py-2 text-right">Total</th>
@@ -192,12 +192,12 @@ function SequenceTable({ phases }: { phases: TrackerPhase[] }) {
         <tbody>
           {phases.map((p) => (
             <tr key={p.key} className="border-b border-gray-100 last:border-b-0">
-              <td className="px-3 py-2 text-slate-500">{p.n}</td>
-              <td className="px-3 py-2 text-slate-800">{p.label}</td>
-              <td data-quantity className="px-3 py-2 text-right tabular-nums text-slate-700">{p.total}</td>
-              <td data-quantity className="px-3 py-2 text-right tabular-nums text-slate-500">{p.pending}</td>
-              <td data-quantity className="px-3 py-2 text-right tabular-nums text-slate-500">{p.in_progress}</td>
-              <td data-quantity className="px-3 py-2 text-right tabular-nums text-slate-700">{p.completed}</td>
+              <td className="px-3 py-2 text-[#6B7280]">{p.n}</td>
+              <td className="px-3 py-2 text-[#0F1219]">{p.label}</td>
+              <td data-quantity className="px-3 py-2 text-right tabular-nums text-[#1F2A44]">{p.total}</td>
+              <td data-quantity className="px-3 py-2 text-right tabular-nums text-[#6B7280]">{p.pending}</td>
+              <td data-quantity className="px-3 py-2 text-right tabular-nums text-[#6B7280]">{p.in_progress}</td>
+              <td data-quantity className="px-3 py-2 text-right tabular-nums text-[#1F2A44]">{p.completed}</td>
               <td className="px-3 py-2"><ProgressBar done={p.completed} total={p.total} /></td>
               <td className="px-3 py-2"><span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${PILL[p.status].cls}`}>{PILL[p.status].label}</span></td>
             </tr>
@@ -220,11 +220,11 @@ function ByModuleView({ data, moved }: { data: ProgramTracker; moved: Set<string
         <StatCard n={totals.not_built} label="Not built" />
         <StatCard n={data.modules.length} label="Modules" />
       </div>
-      <p className="text-[11px] text-slate-400">Each block counted once, by module (from its file paths); reconciles to the registered total. Computed live from the registry.</p>
+      <p className="text-[11px] text-[#6B7280]">Each block counted once, by module (from its file paths); reconciles to the registered total. Computed live from the registry.</p>
       <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="w-full border-collapse text-xs">
           <thead>
-            <tr className="border-b border-gray-200 text-[11px] uppercase tracking-wide text-slate-500">
+            <tr className="border-b border-gray-200 text-[11px] uppercase tracking-wide text-[#6B7280]">
               <th className="px-3 py-2 text-left">Module</th>
               <th className="px-3 py-2 text-right">Built</th>
               <th className="px-3 py-2 text-right">Partial</th>
@@ -235,11 +235,11 @@ function ByModuleView({ data, moved }: { data: ProgramTracker; moved: Set<string
           <tbody>
             {data.modules.map((m) => [
               <tr key={m.module} className="cursor-pointer border-b border-gray-100 hover:bg-gray-50" onClick={() => setOpen(open === m.module ? null : m.module)}>
-                <td className="px-3 py-2 text-slate-800">{open === m.module ? "▾ " : "▸ "}{m.module}</td>
-                <td data-quantity className="px-3 py-2 text-right tabular-nums text-slate-700">{m.built}</td>
-                <td data-quantity className="px-3 py-2 text-right tabular-nums text-slate-500">{m.partial}</td>
-                <td data-quantity className={`px-3 py-2 text-right tabular-nums ${m.not_built > 0 ? "font-semibold text-[#dc2626]" : "text-slate-400"}`}>{m.not_built}</td>
-                <td data-quantity className="px-3 py-2 text-right tabular-nums text-slate-700">{m.total}</td>
+                <td className="px-3 py-2 text-[#0F1219]">{open === m.module ? "▾ " : "▸ "}{m.module}</td>
+                <td data-quantity className="px-3 py-2 text-right tabular-nums text-[#1F2A44]">{m.built}</td>
+                <td data-quantity className="px-3 py-2 text-right tabular-nums text-[#6B7280]">{m.partial}</td>
+                <td data-quantity className={`px-3 py-2 text-right tabular-nums ${m.not_built > 0 ? "font-semibold text-[#dc2626]" : "text-[#6B7280]"}`}>{m.not_built}</td>
+                <td data-quantity className="px-3 py-2 text-right tabular-nums text-[#1F2A44]">{m.total}</td>
               </tr>,
               open === m.module ? (
                 <tr key={m.module + "-drill"}>
@@ -274,7 +274,7 @@ function TrackerBody({ data, moved }: { data: ProgramTracker; moved: Set<string>
   ];
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600">
+      <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#4B5563]">
         <span className="inline-flex items-center gap-1 rounded-sm border border-gray-300 bg-white px-2 py-1">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#334155]" /> Registered count live · loaded {relTime(data.generated_at)}
         </span>
@@ -297,7 +297,7 @@ function TrackerBody({ data, moved }: { data: ProgramTracker; moved: Set<string>
         ).length;
         if (legacyGated <= 0) return null;
         return (
-          <div className="rounded-sm border border-gray-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-600" data-testid="tracker-legacy-gated-disclosure">
+          <div className="rounded-sm border border-gray-200 bg-[#F7F8FA] px-3 py-2 text-[11px] text-[#4B5563]" data-testid="tracker-legacy-gated-disclosure">
             {legacyGated} open row{legacyGated === 1 ? " carries" : "s carry"} a historical GATED tag.
             The tag is retained as source history; no owner approval is required and these rows remain actionable.
           </div>
@@ -307,9 +307,9 @@ function TrackerBody({ data, moved }: { data: ProgramTracker; moved: Set<string>
       {/* FIX B — "Since Jul 1": the same breakdown restricted to blocks created (git add-date) on/after
           2026-07-01, side-by-side with the full view. Undated blocks are surfaced, never guessed in. */}
       {data.since_jul1 ? (
-        <div className="rounded-sm border border-gray-200 bg-slate-50 p-3">
-          <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-            Since Jul 1 <span className="font-normal normal-case text-slate-400">(blocks created on/after {data.since_jul1.since} · {data.since_jul1.total} of {data.registered_total} · {data.since_jul1.undated} undated)</span>
+        <div className="rounded-sm border border-gray-200 bg-[#F7F8FA] p-3">
+          <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">
+            Since Jul 1 <span className="font-normal normal-case text-[#6B7280]">(blocks created on/after {data.since_jul1.since} · {data.since_jul1.total} of {data.registered_total} · {data.since_jul1.undated} undated)</span>
           </div>
           <div className="flex flex-wrap gap-3">
             <StatCard n={data.since_jul1.total} label="Registered since Jul 1" />
@@ -323,8 +323,8 @@ function TrackerBody({ data, moved }: { data: ProgramTracker; moved: Set<string>
       <div className="flex flex-wrap gap-1 border-b border-gray-200">
         {tabs.map((t) => (
           <button key={t.key} type="button" onClick={() => setTab(t.key)}
-            className={`-mb-px border-b-2 px-3 py-2 text-xs ${tab === t.key ? "border-[#1f2a44] font-semibold text-slate-900" : "border-transparent text-slate-500 hover:text-slate-700"}`}>
-            {t.label}{typeof t.count === "number" ? <span className="ml-1 tabular-nums text-slate-400">({t.count})</span> : null}
+            className={`-mb-px border-b-2 px-3 py-2 text-xs ${tab === t.key ? "border-[#1f2a44] font-semibold text-[#0F1219]" : "border-transparent text-[#6B7280] hover:text-[#1F2A44]"}`}>
+            {t.label}{typeof t.count === "number" ? <span className="ml-1 tabular-nums text-[#6B7280]">({t.count})</span> : null}
           </button>
         ))}
       </div>
@@ -344,11 +344,11 @@ function TrackerBody({ data, moved }: { data: ProgramTracker; moved: Set<string>
       )}
 
       {data.view_counts.not_counted > 0 ? (
-        <div className="text-[11px] text-slate-400">
+        <div className="text-[11px] text-[#6B7280]">
           Not counted: {data.view_counts.not_counted} superseded/duplicate block(s) — excluded from the pending / in-progress / completed totals (honest, §0).
         </div>
       ) : null}
-      <div className="text-[11px] text-slate-400">
+      <div className="text-[11px] text-[#6B7280]">
         The headline <b>Registered</b> count is computed live at request time from the deployed
         <span className="font-mono"> .block-ready</span> registry — <b>unique block_id, with duplicate / superseded /
         stale files excluded</b> (a CI guard keeps every active block_id unique), so it is never inflated by the raw
@@ -402,13 +402,13 @@ export function ProgramTrackerPage() {
         title="Program Tracker"
         subtitle="Build Progress — live from the block registry. Pending / In Progress / Completed / Sequence / By Module. Auto-refreshes on open, focus, and every 60s."
         actions={
-          <a href="/program/legacy-board" className="rounded-sm border border-gray-300 bg-white px-3 py-1.5 text-xs text-slate-600 hover:bg-gray-50">
+          <a href="/program/legacy-board" className="rounded-sm border border-gray-300 bg-white px-3 py-1.5 text-xs text-[#4B5563] hover:bg-gray-50">
             Legacy audit board
           </a>
         }
       />
       {query.isLoading ? (
-        <p className="text-xs text-slate-500">Loading live tracker…</p>
+        <p className="text-xs text-[#6B7280]">Loading live tracker…</p>
       ) : query.isError ? (
         <ListErrorBanner
           message={`Couldn't load the tracker: ${userFacingApiError(query.error, "error")}`}
