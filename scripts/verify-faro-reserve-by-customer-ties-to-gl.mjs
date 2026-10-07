@@ -7,6 +7,8 @@ import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+
+export const REQUIRES_LIVE_DB = "Neon live verification required";
 const LABEL = "verify-faro-reserve-by-customer-ties-to-gl";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";

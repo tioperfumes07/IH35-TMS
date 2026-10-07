@@ -29,6 +29,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 
+
+export const REQUIRES_LIVE_DB = "Neon live verification required";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-driver-escrow-counter-leg-is-clearing";
 const TARGET = path.join(ROOT, "apps/backend/src/accounting/escrow/service.ts");

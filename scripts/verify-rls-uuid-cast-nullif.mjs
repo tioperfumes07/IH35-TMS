@@ -18,6 +18,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+
+export const REQUIRES_LIVE_DB = "Neon live verification required";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const migrationsDir = path.join(ROOT, "db/migrations");
 const BARE_CAST = /current_setting\([^)]+\)\s*::\s*uuid/i;

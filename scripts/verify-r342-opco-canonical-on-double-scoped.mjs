@@ -11,6 +11,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+
+export const REQUIRES_LIVE_DB = "Neon live verification required";
 const LABEL = "verify-r342-opco-canonical-on-double-scoped";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const MIG = "db/migrations/202615310700_r342_phase2a_expand_operating_company_id.sql";

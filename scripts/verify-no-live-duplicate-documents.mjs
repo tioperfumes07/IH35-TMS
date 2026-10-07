@@ -27,6 +27,8 @@ import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 // --selftest (Devin build order 2026-10-05): live-DB guards cannot be fixture-tested — their inputs
 // are rows on Neon. One case MUST pass (live check green, or the canonical no-credential refusal
 // when nothing resolves locally) and one MUST fail (dead credential — it must refuse, never green).
+
+export const REQUIRES_LIVE_DB = "Neon live verification required";
 if (process.argv.includes("--selftest")) { await selftest_verify_no_live_duplicate_documents(); }
 async function selftest_verify_no_live_duplicate_documents() {
   const { runGuard, reportSelftest, statusOf, outputOf, DEAD_DB_ENV } = await import("./lib/guard-selftest.mjs");

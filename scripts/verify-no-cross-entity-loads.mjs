@@ -10,6 +10,8 @@
 import { readFileSync } from "node:fs";
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
+
+export const REQUIRES_LIVE_DB = "Neon live verification required";
 const LABEL = "verify-no-cross-entity-loads";
 const ROOT = new URL("../", import.meta.url);
 const read = (p) => readFileSync(new URL(p, ROOT), "utf8");
