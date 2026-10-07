@@ -2299,3 +2299,28 @@ DID: #25734 was already merged at 22:22Z. Its receipt-upload toast called pushTo
 PROOF: web srv-d7s46dbrjlhs7383i150 dep-db3ch9s9v7es73a5j1b0 LIVE 22:35:28Z @78cfe3f0a2 · backend srv-d7rpem7avr4c73fhp4n0 dep-db3ch9s9v7es73a5iv20 LIVE 22:36:37Z @78cfe3f0a2. Local: frontend typecheck 0, npm run build 0.
 NOTE FOR SEATS: `npx tsc -p tsconfig.json --noEmit` in apps/frontend checks NOTHING (files:[] + references) — that is how TS2345 passed the Lead's gate. Use `npm run -s typecheck` (tsc -b) or `npm run build`.
 B8: six commits appeared on cc-2/b8-deposit-to-invoices in wt3-cc2 between 21:53Z and 22:33Z that this session did not author — paused until the owner says which session owns it.
+
+### CC-2 · 2026-10-07 22:50Z — ROUND 441.6 CLOSE-OUT (stopping until Oct 8 6pm Chicago)
+
+**1. B8 BRANCH — NOT TOUCHED BEYOND WHAT IS STATED HERE. Lead rules ownership.**
+Branch: `cc-2/b8-deposit-to-invoices` · worktree /Users/jorgemunoz/IH35-TMS-claude/wt3-cc2 · **LOCAL ONLY — never pushed (ls-remote: none)**. 7 commits ahead of origin/main:
+| SHA (full) | author | author date | subject |
+|---|---|---|---|
+| f043936591d400c06f84251f34e889401c502cd3 | tioperfumes07 <tioperfumes07@gmail.com> | 2026-10-06T13:56:22-05:00 | B8 — one deposit -> several invoices (THIS SESSION authored) |
+| f44e92b325dac259fd29ab396cde84e2bd3f1f1d | tioperfumes07 | 2026-10-06T16:53:06-05:00 | B8 DB fixture uses Accountant; Owner insert blocked by trigger |
+| 2ceb8e7163fe159b6051f74c8bea14b6445163f3 | tioperfumes07 | 2026-10-06T16:54:56-05:00 | regenerate USMCA-EXHAUSTIVE-BATTERY.md after B8 |
+| 8e64711f2d70e4e271e17dd0b65c93373eaf11d6 | tioperfumes07 | 2026-10-06T16:56:52-05:00 | spine-event guard follows the customer-payment writer (B8) |
+| aab4ddb2f5ea17a5f85bc46e215c882f3486b279 | tioperfumes07 | 2026-10-06T16:58:09-05:00 | battery line-number refresh after customer-payments routes thin |
+| 4eb61a43e896d8b60389483c29eec0cc99e4ca94 | tioperfumes07 | 2026-10-06T17:05:56-05:00 | orphan match guard excludes Round-363 release tombstones |
+| 73f8fe039c (orig, 2026-10-06T17:11:30-05:00) -> **f0f30cd5e3a14be243156820fd4eba24ede2bd71** (2026-10-07T17:33:29-05:00) | tioperfumes07 | see left | B8 receive panel table carries tabular-nums |
+The six I did not make are f44e92b325, 2ceb8e7163, 8e64711f2d, aab4ddb2f5, 4eb61a43e8, 73f8fe039c — all git author tioperfumes07 (every seat commits under the owner's git identity, so author does not identify the session). CORRECTION to my 22:37Z note: they are dated **2026-10-06 21:53Z–22:11Z**, not 10-07.
+DISCLOSURE: before noticing, I ran `git reset --soft HEAD~1` + recommit on the tip — 73f8fe039c became f0f30cd5e3. Same parent (4eb61a43e8), **identical tree (23acc61cdfda)** — no content changed; only that one SHA. Nothing else on the branch was rewritten, rebased, pushed or deleted.
+
+**2. 83-QUERY COMPANY-SCOPE REVIEW (step 84 verify-mdata-entity-scope)**
+Cleared: **83 of 83** in commit 7f74cd91d673 on `cc-2/entity-scope-83` — 42 code fixes (predicate added, 29 files), 22 proven indirect (helper carries the predicate; guard checks the helper), 19 baselined with reasons. Guard on that branch: exit 0, "60 unscoped literals, all allowlisted", --selftest 12/12. Open (verdict): **0**.
+Open (process): NOT GATED, NOT MERGED. Pushed as DRAFT **#25752**. Next step: `money-pr-local-gate` on 7f74cd91d6 -> review the baseline rewrite (`scripts/verify-steps/84-verify-mdata-entity-scope.baseline.json`, -838 lines, 60 entries) -> fast-merge. Lead ruling requested: `apps/backend/src/dispatch/deadhead/chain-deadhead.service.ts` reads the truck's previous delivery across entities and returns that load's number (baselined as by-design).
+
+**3. UNCOMMITTED:** none in any worktree. All fork branches are on the remote. The only unpushed branch is B8 (item 1), left as-is by order.
+
+**4. STOPPED.** Nothing new started before Oct 8 6pm Chicago.
+Open items carried: B8 merge (needs its DB test green in verify:local-ci; the fixture fix is f44e92b325 on that branch) · #25752 gate + merge · prod migration ledger has 3 entries with no file on disk (202610290000, 202614000000, 202614690000 — needs an AUTH) · pre-existing test reds (DriversListPage x2, RecordTransferModal, TransferModal, ManualJEModal, SettlementsPage; backend bill-account-resolver etc.) and the ~90 DB-test failures in the fresh-DB suite (41 are the Owner-insert trigger in fixtures — same fix as f44e92b325).
