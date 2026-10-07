@@ -38,20 +38,35 @@ import { fetchRelayFuelTransactionsInWindows } from "./relay-fuel-windowed-pull.
 
 const RELAY_SYNC_KIND = "relay_fuel_daily_pull";
 
+/** RELAY-F440 — a claim with no finish older than this is a run that died, never a run in flight. */
+export const RELAY_CLAIM_STALE_MINUTES = 30;
+
 /**
  * ROUND 306 E-20 — claim this company's tick in integrations.integration_sync_log under an advisory
  * lock. The backend runs 2 instances and each fires this cron, so every company was pulled twice a
- * day. The first instance claims; the second sees a claim from the last 30 minutes and skips. The
- * claim row is also the tick's visible record (the Relay cron previously wrote nothing there).
+ * day. The first instance claims; the second skips.
+ *
+ * RELAY-F440 — the skip is for a CONCURRENT instance only: a claim still open (finished_at IS NULL) and younger than
+ * RELAY_CLAIM_STALE_MINUTES, or one that finished successfully within that time. An open claim OLDER than that is a run
+ * that died without recording why; it is closed here as success=false with the reason, and this instance claims.
  */
 async function claimRelayTick(client: DbClient, operatingCompanyId: string): Promise<string | null> {
   await client.query(`SELECT pg_advisory_xact_lock(hashtext('relay_fuel_ingest:' || $1))`, [operatingCompanyId]);
+  await client.query(
+    `UPDATE integrations.integration_sync_log
+        SET finished_at = now(), success = false,
+            error_message = 'abandoned: no completion recorded within ' || $3::text || ' minutes (the run died or was killed)'
+      WHERE operating_company_id = $1::uuid AND integration = 'relay' AND sync_kind = $2
+        AND finished_at IS NULL AND started_at <= now() - make_interval(mins => $3::int)`,
+    [operatingCompanyId, RELAY_SYNC_KIND, RELAY_CLAIM_STALE_MINUTES]
+  );
   const recent = await client.query<{ id: string }>(
     `SELECT id::text FROM integrations.integration_sync_log
       WHERE operating_company_id = $1::uuid AND integration = 'relay' AND sync_kind = $2
-        AND started_at > now() - interval '30 minutes'
+        AND started_at > now() - make_interval(mins => $3::int)
+        AND (finished_at IS NULL OR success = true)
       LIMIT 1`,
-    [operatingCompanyId, RELAY_SYNC_KIND]
+    [operatingCompanyId, RELAY_SYNC_KIND, RELAY_CLAIM_STALE_MINUTES]
   );
   if (recent.rows.length > 0) return null;
   const ins = await client.query<{ id: string }>(
@@ -62,17 +77,24 @@ async function claimRelayTick(client: DbClient, operatingCompanyId: string): Pro
   return ins.rows[0]?.id ?? null;
 }
 
-/** End date of this company's last SUCCESSFUL tick — the sync log, or the older audit trail. */
+/**
+ * End date of this company's last SUCCESSFUL tick — the sync log, or the older audit trail. RELAY-F440: when neither
+ * has one, the newest fill already stored (integrations.relay_fuel_transactions.relay_created_at) is the watermark, so
+ * the window self-heals even if no tick has ever been recorded as successful.
+ */
 async function lastCoveredEndDate(client: DbClient, operatingCompanyId: string): Promise<string | null> {
   const res = await client.query<{ end_date: string | null }>(
-    `SELECT max(d)::text AS end_date FROM (
-       SELECT (payload->>'end_date')::date AS d FROM integrations.integration_sync_log
-        WHERE operating_company_id = $1::uuid AND integration = 'relay' AND sync_kind = $2 AND success = true
-       UNION ALL
-       SELECT (payload->>'end_date')::date FROM audit.audit_events
-        WHERE source = $3 AND event_class = 'integrations.relay_fuel_ingest_daily_pull'
-          AND payload->>'operating_company_id' = $1::text
-     ) t`,
+    `SELECT COALESCE(
+       (SELECT max(d) FROM (
+          SELECT (payload->>'end_date')::date AS d FROM integrations.integration_sync_log
+           WHERE operating_company_id = $1::uuid AND integration = 'relay' AND sync_kind = $2 AND success = true
+          UNION ALL
+          SELECT (payload->>'end_date')::date FROM audit.audit_events
+           WHERE source = $3 AND event_class = 'integrations.relay_fuel_ingest_daily_pull'
+             AND payload->>'operating_company_id' = $1::text
+        ) t),
+       (SELECT max(relay_created_at)::date FROM integrations.relay_fuel_transactions WHERE operating_company_id = $1::uuid)
+     )::text AS end_date`,
     [operatingCompanyId, RELAY_SYNC_KIND, RELAY_FUEL_INGEST_AUDIT_SOURCE]
   );
   return res.rows[0]?.end_date ?? null;
@@ -83,12 +105,16 @@ async function finishRelayTick(
   logId: string,
   outcome: { success: boolean; rowsAdded: number; error: string | null; payload: Record<string, unknown> }
 ): Promise<void> {
-  await client.query(
+  // RELAY-F440 — an UPDATE that matches no row does not raise (row-level security without an UPDATE policy did exactly
+  // that for every tick). RETURNING makes "0 rows" visible, and it is refused by name instead of passing silently.
+  const res = await client.query<{ id: string }>(
     `UPDATE integrations.integration_sync_log
         SET finished_at = now(), success = $2, rows_added = $3, error_message = $4, payload = $5::jsonb
-      WHERE id = $1::uuid`,
+      WHERE id = $1::uuid
+      RETURNING id::text`,
     [logId, outcome.success, outcome.rowsAdded, outcome.error, JSON.stringify(outcome.payload)]
   );
+  if (res.rows.length !== 1) throw new Error(`relay_sync_log_finish_matched_${res.rows.length}_rows:${logId}`);
 }
 
 let initialized = false;
@@ -328,9 +354,15 @@ export async function runRelayFuelIngestTick(
       app.log.info({ operating_company_id: operatingCompanyId }, "[RELAY_FUEL_INGEST_CRON] tick already claimed by another instance — skipped");
       continue;
     }
-    const lastEnd = await withLuciaBypass(async (client) => lastCoveredEndDate(client, operatingCompanyId));
-    const window = computeRelayIngestWindow(lastEnd, yesterday);
+    // RELAY-F440 — everything after the claim runs inside the try, and the claim is closed exactly once in `finally`:
+    // success=true with the window, or success=false with the error. A tick that dies records that it died and why.
+    let lastEnd: string | null = null;
+    let window: ReturnType<typeof computeRelayIngestWindow> | null = null;
+    let outcome: { success: boolean; rowsAdded: number; error: string | null; payload: Record<string, unknown> } | null = null;
     try {
+      lastEnd = await withLuciaBypass(async (client) => lastCoveredEndDate(client, operatingCompanyId));
+      window = computeRelayIngestWindow(lastEnd, yesterday);
+      const tickWindow = window;
       let pulled = 0;
       let upserted = 0;
       let skipped = 0;
@@ -338,8 +370,8 @@ export async function runRelayFuelIngestTick(
       // Server-side date filter via dtstart/dtend, one paced call per window (>=10s apart, halved on a
       // timeout) so a catch-up never becomes one long call. Client-side filter stays as the defensive fallback.
       const pull = await fetchRelayFuelTransactionsInWindows(entityCode, {
-        startDate: window.startDate,
-        endDate: window.endDate,
+        startDate: tickWindow.startDate,
+        endDate: tickWindow.endDate,
         windowDays: relayIngestWindowDays(),
         onWindow: async (chunk, apiRows, meta) => {
           const windowRows = filterRelayFuelTransactionsByDateRange(apiRows, chunk.startDate, chunk.endDate);
@@ -351,7 +383,7 @@ export async function runRelayFuelIngestTick(
               window_rows: windowRows.length,
               rejected_rows: meta.rejected.length,
               window: `${chunk.startDate}..${chunk.endDate}`,
-              window_reason: window.reason,
+              window_reason: tickWindow.reason,
             },
             "[RELAY_FUEL_INGEST_CRON] relay pull complete"
           );
@@ -369,41 +401,43 @@ export async function runRelayFuelIngestTick(
         },
       });
       // Good rows are stored; a refused row fails the tick so the sync log does not mark the window covered.
-      if (rejected.length > 0) throw relayRejectedRowsError(rejected, window.startDate, window.endDate);
-      await withLuciaBypass(async (client) =>
-        finishRelayTick(client, logId, {
-          success: true,
-          rowsAdded: upserted,
-          error: null,
-          payload: {
-            start_date: window.startDate,
-            end_date: window.endDate,
-            window_reason: window.reason,
-            last_covered_end: lastEnd,
-            pulled,
-            upserted,
-            skipped,
-            relay_calls: pull.calls,
-            window_halvings: pull.halvings,
-            entity_code: entityCode,
-          },
-        })
-      );
+      if (rejected.length > 0) throw relayRejectedRowsError(rejected, tickWindow.startDate, tickWindow.endDate);
+      outcome = {
+        success: true,
+        rowsAdded: upserted,
+        error: null,
+        payload: {
+          start_date: tickWindow.startDate,
+          end_date: tickWindow.endDate,
+          window_reason: tickWindow.reason,
+          last_covered_end: lastEnd,
+          pulled,
+          upserted,
+          skipped,
+          relay_calls: pull.calls,
+          window_halvings: pull.halvings,
+          entity_code: entityCode,
+        },
+      };
       app.log.info(
-        { operating_company_id: operatingCompanyId, window: `${window.startDate}..${window.endDate}`, pulled, upserted, skipped, relay_calls: pull.calls, window_halvings: pull.halvings },
+        { operating_company_id: operatingCompanyId, window: `${tickWindow.startDate}..${tickWindow.endDate}`, pulled, upserted, skipped, relay_calls: pull.calls, window_halvings: pull.halvings },
         "[RELAY_FUEL_INGEST_CRON] run complete"
       );
     } catch (error) {
       app.log.error({ err: error, operating_company_id: operatingCompanyId }, "[RELAY_FUEL_INGEST_CRON] company ingest failed");
       failures.push({ operating_company_id: operatingCompanyId, error });
-      await withLuciaBypass(async (client) =>
-        finishRelayTick(client, logId, {
-          success: false,
-          rowsAdded: 0,
-          error: String((error as Error)?.message ?? error),
-          payload: { start_date: window.startDate, end_date: window.endDate, window_reason: window.reason, last_covered_end: lastEnd, entity_code: entityCode },
-        })
-      ).catch((logErr) => app.log.warn({ err: logErr, operating_company_id: operatingCompanyId }, "[RELAY_FUEL_INGEST_CRON] sync-log finish failed"));
+      outcome = {
+        success: false,
+        rowsAdded: 0,
+        error: String((error as Error)?.message ?? error),
+        payload: {
+          start_date: window?.startDate ?? null,
+          end_date: window?.endDate ?? null,
+          window_reason: window?.reason ?? null,
+          last_covered_end: lastEnd,
+          entity_code: entityCode,
+        },
+      };
       await withLuciaBypass(async (client) => {
         await client
           .query(`SELECT audit.append_event($1, $2, $3::jsonb, NULL, $4)`, [
@@ -421,6 +455,20 @@ export async function runRelayFuelIngestTick(
             app.log.warn({ err: auditErr, operating_company_id: operatingCompanyId }, "[RELAY_FUEL_INGEST_CRON] failure-audit write failed");
           });
       });
+    } finally {
+      const final = outcome ?? {
+        success: false,
+        rowsAdded: 0,
+        error: "relay_tick_ended_without_an_outcome",
+        payload: { last_covered_end: lastEnd, entity_code: entityCode },
+      };
+      try {
+        await withLuciaBypass(async (client) => finishRelayTick(client, logId, final));
+      } catch (finishErr) {
+        // The claim could not be closed: that is itself a failure of this tick, never a log line only.
+        app.log.error({ err: finishErr, operating_company_id: operatingCompanyId }, "[RELAY_FUEL_INGEST_CRON] sync-log finish failed");
+        failures.push({ operating_company_id: operatingCompanyId, error: finishErr });
+      }
     }
   }
 
