@@ -1907,3 +1907,41 @@ Migration 202615440200 was rehearsed on Neon fork **br-shy-wildflower-akncgc1a**
 **The fork is still alive — the owner or the Lead deletes it.** The Neon tool forbids a seat deleting a branch without the owner.
 
 CI is down account-wide; local gates are the record (each PR: `money-pr-local-gate: PASS`, gate_exit=0). No CI check claimed.
+
+## 2026-10-07 ~22:00Z — ROUND 441 CC-1 A1–A4 DONE: Credit Cards + related-party subs are LIVE on prod USMCA
+**Owner: the Citi payment can be recorded now.** Card liability account: **2500-00-002 Citi Credit Card 1345**.
+
+- **A1 + A2**: created through the app's own account routes. `scripts/ops/round-441-coa-credit-cards-and-related-party.ts` mounts `POST`/`PATCH /api/v1/catalogs/accounts` and drives it with `app.inject()` as the Owner (Jorge Munoz). Validation, the sample-name refusal, the crud audit and the account-push queue all ran. There was no SQL write.
+- **Rehearsed first** on Neon fork br-red-meadow-aknhkedd: 6 created, 3 updated; a second run changed nothing.
+- **Amex 2500** had **0 posted lines**, measured before the change, so it was renumbered to 2500-00-001 and **2500 is now the Credit Cards header** (not postable).
+- **Dreamline 2510** joined Credit Cards with its **number kept**: the fuel card-rail resolver finds it by "2510". Its `fuel_card_payable_dreamline` binding is intact. Not in the order, but without it the card filter (C3) would hide a real card account.
+- **2410** keeps its number and its 52 posted lines; the four subs sit under it.
+- **Subtypes**: card accounts `CreditCard`, loans `OtherCurrentLiability` — the same values Amex/Dreamline/2410 and the reports already use.
+
+**A4 — live SELECT (prod, read-only, after the run):**
+```
+account_number | account_name                                              | subtype               | postable | parent
+2410           | Owner / Related-Party Loan Payable                        | OtherCurrentLiability | t | (none)
+2410-00-001    | Jorge Pablo Guadalupe Muñoz Gonzalez — Related-Party Loan | OtherCurrentLiability | t | 2410 Owner / Related-Party Loan Payable
+2410-00-002    | Scentsx — Related-Party Loan                              | OtherCurrentLiability | t | 2410 Owner / Related-Party Loan Payable
+2410-00-003    | Tio Perfumes 2 — Related-Party Loan                       | OtherCurrentLiability | t | 2410 Owner / Related-Party Loan Payable
+2410-00-004    | Laura Muñoz — Related-Party Loan                          | OtherCurrentLiability | t | 2410 Owner / Related-Party Loan Payable
+2500           | Credit Cards                                              | CreditCard            | f | (none)
+2500-00-001    | Amex Credit Card Payable                                  | CreditCard            | t | 2500 Credit Cards
+2500-00-002    | Citi Credit Card 1345                                     | CreditCard            | t | 2500 Credit Cards
+2510           | Dreamline Diesel Card Payable                             | CreditCard            | t | 2500 Credit Cards
+```
+Audit: `catalogs.accounts.created` 6, `catalogs.accounts.updated` 3, actor = Owner.
+
+**→ CURSOR, C3:** filter "Card liability account (COA)" to `parent_account_id = <2500 Credit Cards>`, postable only. That offers Amex, Citi 1345 and Dreamline, never the header.
+The backend `POST /bill-payments/cc-payment` already accepts any Liability whose subtype contains "credit", so all three are valid.
+
+**Found and fixed on the way — LST-F430:** `catalogs.accounts_detail_type_scope_check` refused every Asset/Liability/Expense detail type. It compared the 8-value account_type to the catalog code/name, so the New Account screen offered detail types the database then rejected.
+- Migration 202615441100 maps code → type with the route's own table.
+- A new guard keeps the two maps identical.
+- It is in flight (claim #25736 merged).
+
+PR **#25737** → dff23d7f39. Deploys: web **dep-db3c25t040hc739tqtbg**, backend **dep-db3c16v9e2qs7384sif0**.
+CI is down account-wide; local gates are the record (`money-pr-local-gate: PASS`).
+
+Two throwaway Neon forks are alive for the owner/Lead to delete: br-shy-wildflower-akncgc1a (LST-F424) and br-red-meadow-aknhkedd (ROUND 441).
