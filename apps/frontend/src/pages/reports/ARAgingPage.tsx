@@ -348,7 +348,7 @@ export function ARAgingPage() {
         }
       />
       {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
-      <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+      <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#4B5563]">
         This report is always accrual basis under the owner-locked reporting policy.
       </p>
       {query.isError ? <ListErrorState title="Couldn't load A/R aging" status={0} message={(query.error as Error)?.message} onRetry={() => void query.refetch()} /> : null}
@@ -376,8 +376,8 @@ export function ARAgingPage() {
         onReset={staged.reset}
         applyDisabled={!staged.dirty}
       >
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Customer</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Customer</span>
           <EntityPicker
             kind="customer"
             operatingCompanyId={companyId}
@@ -395,8 +395,8 @@ export function ARAgingPage() {
             dataTestId="ar-aging-filter-customer"
           />
         </label>
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Min bal ($)</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Min bal ($)</span>
           <MoneyInput
             valueDollars={staged.draft.minBal ? Number(staged.draft.minBal) : null}
             onChangeDollars={(d) => staged.setDraft((p) => ({ ...p, minBal: d == null ? "" : String(d) }))}
@@ -404,10 +404,10 @@ export function ARAgingPage() {
             className="w-24"
           />
         </label>
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Bucket</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Bucket</span>
           <SelectCombobox
-            className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
+            className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.bucketFilter}
             onChange={(e) => staged.setDraft((p) => ({ ...p, bucketFilter: e.target.value as ARAgingFilters["bucketFilter"] }))}
           >
@@ -418,7 +418,7 @@ export function ARAgingPage() {
       </ReportFilterBar>
 
       {kpis.uncleared > 0 ? (
-        <p className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
+        <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
           Cleared {money(kpis.cleared)}. Applied payments that have not been matched or categorized in Banking are named not cleared beside each customer.
         </p>
       ) : null}

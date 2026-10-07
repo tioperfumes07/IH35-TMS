@@ -1,3 +1,22 @@
+## 2026-10-07T21:08Z · BANK-SLATE-BS-PL-LOGIN MERGED
+
+FINDING: Leftover Tailwind slate-* on BalanceSheet / ProfitLoss / LoginReset → house tokens (+ OUTBOX #25723).
+
+MERGED:
+- BANK-SLATE-BS-PL-LOGIN #25724 squash `f33c020bef` — BalanceSheetPage / ProfitLossPage / LoginResetRequestPage; guard verify-bs-pl-login-slate-leftover-chrome piggyback EVEN 3844; OUTBOX #25723 census
+- BANK-SLATE-VEND-CF-CUST #25723 squash `dbc54e5ac3`
+- BANK-SLATE-INS-LAND-RPT #25722 squash `cf79987268`
+
+SESSION WAVE: #25708–#25724 slate drain continuous
+
+LIVE PROOF: verify-bs-pl-login-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS
+
+REMAINING: FE redeploy; owner Chrome Settlement Creator; ~900 FE files still carry slate-*
+
+NEXT leftover: (this PR) ARAging · SettlementSummary · ReportsHub → then ReportCategory / ManagementReport / FuelRecon
+
+Files Modified: OUTBOX + ARAgingPage / SettlementSummaryPage / ReportsHub
+
 ## 2026-10-07T21:00Z · BANK-SLATE-VEND-CF-CUST MERGED
 
 FINDING: Leftover Tailwind slate-* on VendorDetail / Customers / CashFlowReport → house tokens (+ OUTBOX #25722).
