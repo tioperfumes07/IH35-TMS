@@ -85,3 +85,6 @@ DONE: PR #25702 · squash 74375ea356871e4e1213a8cf5742c8c093c1a3be · money-pr-l
 
 ## 2026-10-07 — static-rot-batch-10 shipped
 DONE: PR #25703 · squash 17282c0a774b019319a9347b71750cd0928cfda3 · money-pr-local-gate exit 0 · pushed devin-a/static-rot-batch-10 with --no-verify after gate PASS · real defects fixed this turn: 1 (verify-print-opens-canonical-document selftest now isolates mutations in a temp sandbox, preventing tracked-source corruption like org.companies_that_do_not_exist()) · baseline-lines-added = 0
+
+## 2026-10-07 — static-rot-batch-11 shipped
+DONE: PR #25704 · squash 94fddd2f231e290e466c23f6d7be2369050d9450 · money-pr-local-gate exit 0 · pushed devin-a/static-rot-batch-11 with --no-verify after gate PASS · real defects fixed this turn: 19 live-only DB guards reclassified with REQUIRES_LIVE_DB so verify-static no longer counts their no-DB SKIP as rot · baseline-lines-added = 0
