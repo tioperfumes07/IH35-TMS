@@ -10,8 +10,6 @@ import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { Combobox } from "../../components/Combobox";
 import { Button } from "../../components/Button";
 import { EntityPicker } from "../../components/EntityPicker";
-import { entityLabel } from "../../lib/entity-label";
-import { EntityLink } from "../../components/shared/EntityLink";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { StateSelect } from "../../components/forms/StateSelect";
@@ -45,6 +43,67 @@ import {
   type SettlementCreatorFactorOption,
 } from "../../api/settlementCreator";
 import type { ReactNode } from "react";
+
+/**
+ * SETL-F442 — decimal-safe numeric box (miles / gallons).
+ * MoneyInput already keeps typed text while focused so "12." / "0.5" survive;
+ * plain `Number(e.target.value)` on controlled `<input value={n}>` wiped the trailing
+ * decimal mid-keystroke and made the boxes look broken. Same focus/text pattern here,
+ * without a leading $ (miles are not money).
+ */
+function DecimalNumberInput({
+  value,
+  onChange,
+  className,
+  title,
+  "data-testid": dataTestId,
+  ariaLabel,
+  allowZero = true,
+}: {
+  value: number | null | undefined;
+  onChange: (n: number | null) => void;
+  className?: string;
+  title?: string;
+  "data-testid"?: string;
+  ariaLabel?: string;
+  allowZero?: boolean;
+}) {
+  const display =
+    value == null || Number.isNaN(value) || (!allowZero && value === 0) ? "" : String(value);
+  const [text, setText] = useState(display);
+  const [focused, setFocused] = useState(false);
+  useEffect(() => {
+    if (!focused) setText(display);
+  }, [display, focused]);
+  return (
+    <input
+      className={className}
+      inputMode="decimal"
+      value={text}
+      title={title}
+      aria-label={ariaLabel}
+      data-testid={dataTestId}
+      onFocus={() => {
+        setFocused(true);
+        setText(value != null && !(value === 0 && !allowZero) ? String(value) : "");
+      }}
+      onBlur={() => setFocused(false)}
+      onChange={(e) => {
+        const next = e.target.value;
+        if (next !== "" && !/^\d*\.?\d*$/.test(next)) return;
+        setText(next);
+        if (next === "" || next === ".") {
+          onChange(null);
+          return;
+        }
+        // Keep "12." / "0." as typed text; only emit a finite number when complete.
+        if (next.endsWith(".")) return;
+        const n = Number(next);
+        if (Number.isFinite(n)) onChange(n);
+      }}
+    />
+  );
+}
 
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
@@ -416,7 +475,10 @@ const inputClass =
   "h-7 w-full min-w-0 rounded-sm border border-[#E5E7EB] px-2 text-left text-xs text-[#0F1219]";
 /** MoneyInput owns h-7 + leading $ frame — never forward border/px (SYS-MONEY / SETL-F441). */
 const moneyInputClass = "w-full";
-const fieldGridClass = "grid grid-cols-2 gap-2";
+/** SETL-F442 — owner mock: five equal columns on Company + Driver (not 2-col stacked pairs). */
+const fieldGridClass = "grid grid-cols-5 gap-2";
+/** Header has six facts (settlement / driver / truck / trailer / start / end) — one row. */
+const headerGridClass = "grid grid-cols-6 gap-2";
 const pickerSize = "sm" as const;
 
 export type SettlementCreatorDrawerProps = {
@@ -510,22 +572,43 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     };
   }, [open, companyId, wrongEntity]);
 
-  // Dates transfer: settlement period follows the earliest pickup / latest delivery on the loads
-  // (owner: typing stop dates must fill Start/End — same numbers the AlwaysTrack statement uses).
+  // SETL-F442 (owner mock): top Start → FIRST load pickup; top End → LAST load delivery.
+  // One period entry feeds stop dates — no double-typing on every load row. Driver Settlement
+  // shares this header (same Start/End / driver / unit) so company→driver is automatic.
   useEffect(() => {
-    const pickups = loads.map((l) => l.pickup_date).filter((d): d is string => Boolean(d && /^\d{4}-\d{2}-\d{2}$/.test(d)));
-    const deliveries = loads.map((l) => l.delivery_date).filter((d): d is string => Boolean(d && /^\d{4}-\d{2}-\d{2}$/.test(d)));
-    if (pickups.length) {
-      const minPickup = pickups.slice().sort()[0];
-      if (!periodStart || periodStart > minPickup) setPeriodStart(minPickup);
+    if (!periodStart && !periodEnd) return;
+    setLoads((prev) => {
+      if (!prev.length) return prev;
+      let changed = false;
+      const next = prev.map((l) => ({ ...l }));
+      if (periodStart && /^\d{4}-\d{2}-\d{2}$/.test(periodStart) && next[0].pickup_date !== periodStart) {
+        next[0] = { ...next[0], pickup_date: periodStart };
+        changed = true;
+      }
+      if (periodEnd && /^\d{4}-\d{2}-\d{2}$/.test(periodEnd)) {
+        const last = next.length - 1;
+        if (next[last].delivery_date !== periodEnd) {
+          next[last] = { ...next[last], delivery_date: periodEnd, not_yet_delivered: false };
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [periodStart, periodEnd]);
+
+  // Bootstrap only: if operator typed load stop dates first and Start/End are still blank, fill them.
+  useEffect(() => {
+    const pickups = loads
+      .map((l) => l.pickup_date)
+      .filter((d): d is string => Boolean(d && /^\d{4}-\d{2}-\d{2}$/.test(d)));
+    const deliveries = loads
+      .map((l) => l.delivery_date)
+      .filter((d): d is string => Boolean(d && /^\d{4}-\d{2}-\d{2}$/.test(d)));
+    if (pickups.length && !periodStart) setPeriodStart(pickups.slice().sort()[0]!);
+    if (!periodEnd) {
+      if (deliveries.length) setPeriodEnd(deliveries.slice().sort().at(-1)!);
+      else if (pickups.length) setPeriodEnd(pickups.slice().sort().at(-1)!);
     }
-    if (deliveries.length) {
-      const maxDelivery = deliveries.slice().sort().at(-1)!;
-      if (!periodEnd || periodEnd < maxDelivery) setPeriodEnd(maxDelivery);
-    } else if (pickups.length && !periodEnd) {
-      setPeriodEnd(pickups.slice().sort().at(-1)!);
-    }
-    // Only react to load date edits — not when the operator types period fields by hand after.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loads.map((l) => `${l.pickup_date}|${l.delivery_date}`).join(";")]);
 
@@ -1054,9 +1137,9 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
           </p>
         ) : null}
 
-        {/* Shared header */}
+        {/* Shared header — one row for Company + Driver (no second name under the picker). */}
         <Section title="Header">
-          <div className={`${fieldGridClass} md:grid-cols-3`}>
+          <div className={headerGridClass} data-testid="sc-header-grid">
             <Field label="Settlement No.">
               <div className="flex items-center gap-1">
                 <input
@@ -1085,14 +1168,6 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                 className="mt-0"
                 dataTestId="sc-driver"
               />
-              {driverId ? (
-                <EntityLink
-                  kind="driver"
-                  id={driverId}
-                  label={entityLabel(driverLabel || null, driverId, "Driver")}
-                  className="mt-1 block text-xs font-semibold text-[#1F2A44] underline"
-                />
-              ) : null}
             </Field>
             <Field label="Truck">
               <EntityPicker
@@ -1440,19 +1515,16 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                     />
                   </Field>
                   <Field label="Loaded miles">
-                    <input
+                    <DecimalNumberInput
                       className={inputClass}
-                      value={load.loaded_miles ?? ""}
-                      onChange={(e) => {
+                      value={load.loaded_miles}
+                      onChange={(n) => {
                         milesTouchedRef.current[idx] = true;
                         setLoads((prev) => {
                           const cur = prev[idx];
                           if (!cur) return prev;
                           const next = [...prev];
-                          next[idx] = {
-                            ...cur,
-                            loaded_miles: e.target.value === "" ? null : Number(e.target.value),
-                          };
+                          next[idx] = { ...cur, loaded_miles: n };
                           return next;
                         });
                       }}
@@ -1464,22 +1536,20 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                             : "Filled from lane history (our DB), else route engine once city/state geocode"
                       }
                       data-testid={`sc-load-loaded-miles-${idx}`}
+                      ariaLabel="Loaded miles"
                     />
                   </Field>
                   <Field label="Empty miles">
-                    <input
+                    <DecimalNumberInput
                       className={inputClass}
-                      value={load.empty_miles ?? ""}
-                      onChange={(e) => {
+                      value={load.empty_miles}
+                      onChange={(n) => {
                         milesTouchedRef.current[idx] = true;
                         setLoads((prev) => {
                           const cur = prev[idx];
                           if (!cur) return prev;
                           const next = [...prev];
-                          next[idx] = {
-                            ...cur,
-                            empty_miles: e.target.value === "" ? null : Number(e.target.value),
-                          };
+                          next[idx] = { ...cur, empty_miles: n };
                           return next;
                         });
                       }}
@@ -1493,6 +1563,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                               : "Filled from this truck's last delivery → this pickup (chain deadhead)"
                       }
                       data-testid={`sc-load-empty-miles-${idx}`}
+                      ariaLabel="Empty miles"
                     />
                   </Field>
                   <Field label="Empty $/mi">
@@ -1584,7 +1655,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   {/* SETL-F437 — "Date sent to factoring" removed (owner, 2026-10-06): the invoices
                       that go to Faro are SELECTED IN FARO, so a date typed here could only ever
                       disagree with the factor's own record. It is not a settlement fact. */}
-                  <label className="col-span-2 flex h-7 items-center justify-center gap-2 rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#0F1219]">
+                  <label className="col-span-5 flex h-7 items-center justify-center gap-2 rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#0F1219]">
                     <input
                       type="checkbox"
                       checked={load.not_yet_delivered !== false && !load.delivery_date}
@@ -1608,7 +1679,16 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
             <Section
               title="Fuel purchases"
               subtotalCents={fuelSubtotal}
-              onAdd={() => setFuels([...fuels, { ...emptyFuel(), load_number: defaultLoadNumber }])}
+              onAdd={() =>
+                setFuels([
+                  ...fuels,
+                  {
+                    ...emptyFuel(),
+                    load_number: defaultLoadNumber,
+                    date: periodStart || emptyFuel().date,
+                  },
+                ])
+              }
             >
               {fuels.map((fuel, idx) => (
                 <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
@@ -1697,14 +1777,17 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                     />
                   </Field>
                   <Field label="Gallons">
-                    <input
+                    <DecimalNumberInput
                       className={inputClass}
-                      value={fuel.gallons || ""}
-                      onChange={(e) => {
+                      value={fuel.gallons || null}
+                      allowZero={false}
+                      onChange={(n) => {
                         const next = [...fuels];
-                        next[idx] = { ...fuel, gallons: Number(e.target.value) || 0 };
+                        next[idx] = { ...fuel, gallons: n ?? 0 };
                         setFuels(next);
                       }}
+                      ariaLabel="Gallons"
+                      data-testid={`sc-fuel-gallons-${idx}`}
                     />
                   </Field>
                   <Field label="CPG">
@@ -1767,7 +1850,16 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
             <Section
               title="Company expenses"
               subtotalCents={compExpSubtotal}
-              onAdd={() => setCompanyExpenses([...companyExpenses, { ...emptyCompExp(), load_number: defaultLoadNumber }])}
+              onAdd={() =>
+                setCompanyExpenses([
+                  ...companyExpenses,
+                  {
+                    ...emptyCompExp(),
+                    load_number: defaultLoadNumber,
+                    date: periodStart || emptyCompExp().date,
+                  },
+                ])
+              }
             >
               <p className="text-center text-xs text-[#6B7280]">
                 PDF &quot;Comp.&quot; — credits the fuel card rail (never A/P)
@@ -1897,7 +1989,15 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               title="Driver-paid reimbursements"
               subtotalCents={drvReimbSubtotal}
               onAdd={() =>
-                setDrvReimbursements([...drvReimbursements, { ...emptyDrvReimb(), load_number: defaultLoadNumber }])
+                setDrvReimbursements([
+                  ...drvReimbursements,
+                  {
+                    ...emptyDrvReimb(),
+                    load_number: defaultLoadNumber,
+                    // Company→driver carry: period Start is the settlement date for new Drv lines.
+                    date: periodStart || emptyDrvReimb().date,
+                  },
+                ])
               }
             >
               <p className="text-center text-xs text-[#6B7280]">
