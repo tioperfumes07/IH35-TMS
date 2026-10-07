@@ -46,7 +46,7 @@ export type BankLineUndoOutcome = {
   /** Journal entries that were already reversed or voided — GL untouched, link cleared (never a double reversal). */
   already_reversed_journal_entry_ids: string[];
   /** Documents the line CREATED, voided through the governed void path. */
-  voided_documents: Array<{ type: "bill" | "bill_payment" | "customer_payment"; id: string }>;
+  voided_documents: Array<{ type: "bill" | "bill_payment" | "customer_payment" | "expense"; id: string }>;
   /** Pre-existing documents released back to the match pool (kind matched) — untouched. */
   released_documents: Array<{ kind: string; id: string }>;
   revoked_transfer_id: string | null;
@@ -157,7 +157,7 @@ async function voidDocumentsCreatedByLine(
   input: { operatingCompanyId: string; bankTransactionId: string; actorUserId: string; reason: string },
   outcome: BankLineUndoOutcome
 ): Promise<void> {
-  const created = await client.query<{ type: "bill" | "bill_payment" | "customer_payment"; id: string }>(
+  const created = await client.query<{ type: "bill" | "bill_payment" | "customer_payment" | "expense"; id: string }>(
     `SELECT 'bill_payment'::text AS type, id::text FROM accounting.bill_payments
       WHERE operating_company_id = $1::uuid AND source_bank_transaction_id = $2::uuid AND voided_at IS NULL AND revoked_at IS NULL
      UNION ALL
@@ -165,7 +165,11 @@ async function voidDocumentsCreatedByLine(
       WHERE operating_company_id = $1::uuid AND source_bank_transaction_id = $2::uuid AND voided_at IS NULL
      UNION ALL
      SELECT 'bill', id::text FROM accounting.bills
-      WHERE operating_company_id = $1::uuid AND source_bank_transaction_id = $2::uuid AND voided_at IS NULL AND revoked_at IS NULL`,
+      WHERE operating_company_id = $1::uuid AND source_bank_transaction_id = $2::uuid AND voided_at IS NULL AND revoked_at IS NULL
+     UNION ALL
+     -- ROUND 441.5 — the Expense a categorized money-out line created (QBO "Categorize + Add").
+     SELECT 'expense', id::text FROM accounting.expenses
+      WHERE operating_company_id = $1::uuid AND source_bank_transaction_id = $2::uuid AND voided_at IS NULL`,
     [input.operatingCompanyId, input.bankTransactionId]
   );
   for (const doc of created.rows) {
@@ -382,12 +386,23 @@ export async function undoBankLineOnClient(
     // added / split — the line CREATED what it carries. BANK-F01 order: reverse the entry it posted FIRST (same client,
     // so a refused reversal — closed period, integrity conflict — rolls the whole undo back), then release the line,
     // then void the documents it created (after the release, so no void cascade finds the line by its links).
-    if (line.matched_journal_entry_id) {
+    // ROUND 441.5 — when the line created an Expense, that entry is the EXPENSE's own posting: the expense's void (below,
+    // voidDocumentsCreatedByLine) reverses it with the document, so it is not reversed here as a bare entry.
+    const createdExpense = line.matched_journal_entry_id
+      ? await client.query(
+          `SELECT 1 FROM accounting.expenses
+            WHERE operating_company_id = $1::uuid AND source_bank_transaction_id = $2::uuid
+              AND journal_entry_id = $3::uuid AND voided_at IS NULL LIMIT 1`,
+          [input.operatingCompanyId, line.id, line.matched_journal_entry_id]
+        )
+      : { rows: [] };
+    if (line.matched_journal_entry_id && createdExpense.rows.length === 0) {
       const r = await reverseOnceOnClient(client, {
         operatingCompanyId: input.operatingCompanyId,
         journalEntryId: line.matched_journal_entry_id,
         actorUserId: input.actorUserId,
-        reason: `Undo bank categorization — release bank_transaction ${line.id}`,
+        // The caller's reason rides on the reversal (an ops conversion names its finding); the default stays as it was.
+        reason: `${input.reason?.trim() || "Undo bank categorization"} — release bank_transaction ${line.id}`,
       });
       (r === "reversed" ? outcome.reversed_journal_entry_ids : outcome.already_reversed_journal_entry_ids).push(
         line.matched_journal_entry_id

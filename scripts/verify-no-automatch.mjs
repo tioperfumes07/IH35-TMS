@@ -54,8 +54,13 @@ const KNOWN_AUTOMATCH_DEBT = [];
 //     NO LONGER stamp matched_* on accept — they proxy acceptReconMatch →
 //     acceptMatchWithResolveDifference (match.service.ts stamps via dynamic column whitelist).
 //     Removed from this allowlist once their bound UPDATE writers were retired.
+//   - bank-feed-gl-posting.service.ts (ROUND 441.5, owner "ours should work exactly as quickbooks"): stamps
+//     matched_expense_id with the Expense the categorized line ITSELF just created (QBO "Categorize + Add") in the same
+//     transaction — the document's own origin, never a scored candidate. categorized_by_user_id is N/A here: the
+//     categorize write that triggers it already stamped the operator, and the expense records created_by_user_id.
 const TARGET_COLUMN_WRITE_ALLOWLIST = new Set([
   "apps/backend/src/accounting/bank-recon/recon-worklist.service.ts",
+  "apps/backend/src/banking/bank-feed-gl-posting.service.ts",
   "apps/backend/src/accounting/payments/bank-invoice-backlink.service.ts",
   "apps/backend/src/accounting/payments/bank-bill-backlink.service.ts",
 ]);
