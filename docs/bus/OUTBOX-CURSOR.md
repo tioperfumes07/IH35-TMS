@@ -1,3 +1,26 @@
+## 2026-10-07T19:30Z · SETL-CREATOR-LAYOUT + FE-BUILD UNBLOCK LIVE
+
+FINDING: Settlement Creator permanent layout on tip; FE build unblocked after VoidReasonModal Promise TS2322.
+
+MERGED:
+- SETL-CREATOR-LAYOUT #25705 squash `c72244a80d` — Add under items; load row1/row2/miles+Invoice Amt; fuel auto-load#; DEF; Remove; company→driver carry
+- FE-BUILD-VOID-PROMISE #25706 squash `4cefa7e4d4` — PredictiveAlertsPage submitResolve async Promise<void> (unblocked every FE deploy after 3d2abcd)
+
+DEPLOY:
+- FE `srv-d7s46dbrjlhs7383i150` dep-db39odc9v7es73cjut1g **live** (commit `4cefa7e4d4`)
+- BE healthz shallow `git_sha=4cefa7e4d4bd6fc9b1566af23102252e31feb5be` HTTP 200
+- app.ih35dispatch.com HTTP 200
+
+LIVE PROOF (bundle, not click):
+- `assets/SettlementsPage-D_McOXU2.js` contains: `Invoice Amt`, `+ Add load`, `Loads carried from company`, `sc-loads-add`, `+ Add fuel`, `Remove fuel`
+- Guards: verify-settlement-creator-ux-f442 PASS; verify-settlement-creator-decimals-f443 PASS
+
+REMAINING: owner Chrome click Settlement Creator (Add under load, Invoice Amt, fuel auto-load, Remove)
+
+NEXT leftover: BrakeWearDashboard · W8BenModal/Section · AuditHistoryTab · BorderCredentialsSection · FleetTable (text-slate-*)
+
+Files Modified: this OUTBOX only
+
 ## 2026-10-07T17:35Z · SETL-F442 + F443 MERGED + FE LIVE for Chrome
 
 FINDING: Settlement Creator mock layout + all money/qty decimals.
