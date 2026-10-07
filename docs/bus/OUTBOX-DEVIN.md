@@ -116,3 +116,6 @@ DONE: PR #25756 · squash ab9c81b73b712d5a9ce2328339b7ee007c1a6393 · money-pr-l
 
 ## 2026-10-07 — drain: report QBO date/time chrome + recurring-bill money formatter shipped
 DONE: PR #25768 · squash db4173053cac67b92adde8c189de6d184084f068 · money-pr-local-gate exit 0 · fixed formatDateUS/formatDateTimeUS usage on Cancellations/CashFlow/FuelRecon/GeofenceRecon/ScheduledReports/SubscriptionManager; restored RecurringBillList money() USD literal · baseline-lines-added = 0
+
+## 2026-10-07 — drain: classify 25 live-DB verify-* guards with REQUIRES_LIVE_DB
+DONE: PR #25774 · squash 21e6695899a5d7a83d7c6adc7d55cc9714bd75e1 · money-pr-local-gate exit 0 · added REQUIRES_LIVE_DB to 25 Neon-reading guards so static sweep skips them; verify-driver-profile-linkage.mjs left untouched because it surfaces a real live data defect (2 active drivers with empty document blocks) requiring its own vertical slice · baseline-lines-added = 0
