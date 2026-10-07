@@ -2122,6 +2122,11 @@
       "claimed_at": "2026-10-05",
       "purpose": "AUTH-401: append-only maintenance.pm_alerts admits DELETE of rows listed in _system.purge_authorized_rows under an open AUTH (ARM L); nothing else"
     },
+    "202615441100": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-07",
+      "purpose": "LST-F430: catalogs.accounts_detail_type_scope_check compares the 8-value account_type to the catalog code/name, so every Liability/Asset/Expense detail type is refused; map code -> account_type exactly as accounts.routes.ts CATALOG_CODE_TO_ACCOUNT_TYPE_ENUM"
+    },
     "202615440200": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-06",
