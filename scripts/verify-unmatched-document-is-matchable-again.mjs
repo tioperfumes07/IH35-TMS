@@ -21,7 +21,7 @@ export const REQUIRES_LIVE_DB = "no released document is still flagged as matche
 
 const LABEL = "verify-unmatched-document-is-matchable-again";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const UNMATCH = "apps/backend/src/accounting/bank-recon/recon-worklist.service.ts";
+const UNMATCH = "apps/backend/src/accounting/bank-recon/unmatch-bank-transaction.service.ts";
 // The release function must retire every live auto/user row of the line, not only the pointer-backed ones.
 const RELEASE_MIGRATION = "db/migrations/202615330930_send_back_keeps_the_match.sql";
 const RELEASE_MARKER = /SET released_from_state = rm\.match_state,[\s\S]{0,300}AND rm\.match_state IN \('auto_matched', 'user_matched'\)/.test(fs.readFileSync(path.join(ROOT, RELEASE_MIGRATION), "utf8")) ? "RELEASE_SQL_RETIRES_ALL_LIVE_ROWS" : "";

@@ -232,6 +232,7 @@ export async function registerRecurringTemplateDetailRoutes(app: FastifyInstance
     };
 
     const created = await withCurrentUser(user.uuid, async (client) => {
+      // membership-scope-exempt: caller company validated by assertCompanyMembership above.
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
       // Real customer, same company — never trust an id the caller invented.
       const cust = await client.query(

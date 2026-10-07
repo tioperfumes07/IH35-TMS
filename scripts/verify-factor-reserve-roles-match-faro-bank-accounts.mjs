@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** MATRIX-BUILT-OPTIONAL — live-only / invariant ratchet guard; no surface wiring leaf to register. */
 // Lead ROUND 296 FINAL (owner-relayed 2026-10-02), migrations 202615220800 + 202615230600: the Faro reserve is two
 // registers, one per Faro report — 1230 Factoring Reserves = Faro's ESCROW report (restricted, per invoice; role
 // factor_reserve_held) and 1235 Faro Cash Reserve = Faro's CASH report (on deposit, releasable; role
@@ -10,6 +11,7 @@
 import pg from "pg";
 
 const LABEL = "verify-factor-reserve-roles-match-faro-bank-accounts";
+export const REQUIRES_LIVE_DB = "live-only guard: reads production database (USMCA) and cannot be statically verified; run by money-pr-local-gate with DATABASE_URL";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 const PAIRS = [

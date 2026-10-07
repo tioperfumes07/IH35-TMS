@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** MATRIX-BUILT-OPTIONAL — live-only / invariant ratchet guard; no surface wiring leaf to register. */
 // B-26 (CC-2 spec, docs/bus/2026-09-30-CC2-B26-LINELESS-INVOICE-CONSTRAINT-SPEC.md): a lineless
 // invoice header must be impossible AT THE TABLE. Asserts the DEFERRABLE constraint trigger from
 // migration 202614780000 is live, and (when a DATABASE_URL is available) that it actually refuses
@@ -8,6 +9,7 @@
 import pg from "pg";
 
 const LABEL = "verify-invoice-header-requires-line-constraint";
+export const REQUIRES_LIVE_DB = "live-only guard: reads production database (USMCA) and cannot be statically verified; run by money-pr-local-gate with DATABASE_URL";
 
 export function findMissingTrigger(triggers) {
   const has = triggers.some((t) => t.tgname === "invoice_must_have_lines");

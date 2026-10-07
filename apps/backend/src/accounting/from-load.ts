@@ -8,6 +8,7 @@ import { recomputeInvoiceTotals } from "./shared.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { createJournalEntryOnClient } from "./journal-entries.service.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -521,7 +522,7 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
         client as never,
         {
           operating_company_id: input.operatingCompanyId,
-          entry_date: new Date().toISOString().slice(0, 10),
+          entry_date: companyBusinessDate(),
           memo: `Broker advance reclassified from customer deposit to receivable -- invoice minted for load ${input.loadId}`,
           source: "manual",
           postings: [

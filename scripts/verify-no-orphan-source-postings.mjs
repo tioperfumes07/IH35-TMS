@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** MATRIX-BUILT-OPTIONAL — live-only / invariant ratchet guard; no surface wiring leaf to register. */
 // ROUND 326 item 3 (CC-1) — a money line never outlives its document. The 2026-09-30 purge deleted USMCA expenses and
 // invoices but left the journal entries that posted for them (1,974 orphan JEs + their reversal partners = 2,035;
 // A/P control overstated $2,976.63, 9000 Ask My Accountant inflated by the same). The complete-delete engine now takes a
@@ -25,6 +26,7 @@ async function selftest_verify_no_orphan_source_postings() {
 }
 
 const LABEL = "verify-no-orphan-source-postings";
+export const REQUIRES_LIVE_DB = "live-only guard: reads production database (USMCA) and cannot be statically verified; run by money-pr-local-gate with DATABASE_URL";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const base = JSON.parse(readFileSync(new URL("./verify-no-orphan-source-postings.baseline.json", import.meta.url), "utf8"));
 const DOCS = [

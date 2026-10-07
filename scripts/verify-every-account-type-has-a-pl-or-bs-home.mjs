@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** MATRIX-BUILT-OPTIONAL — live-only / invariant ratchet guard; no surface wiring leaf to register. */
 // verify-every-account-type-has-a-pl-or-bs-home.mjs — ROUND 384 (Lead, 2026-10-03).
 //
 // OWNER: "each account in chart of accounts, sub accounts, expense in profit and loss and income must
@@ -40,6 +41,7 @@ async function selftest_verify_every_account_type_has_a_pl_or_bs_home() {
 
 
 const LABEL = "verify-every-account-type-has-a-pl-or-bs-home";
+export const REQUIRES_LIVE_DB = "live-only guard: reads production database (USMCA) and cannot be statically verified; run by money-pr-local-gate with DATABASE_URL";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 // Kept in step with profit-loss.service.ts and balance-sheet.service.ts. Adding a type here without

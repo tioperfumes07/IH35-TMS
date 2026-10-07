@@ -84,7 +84,7 @@ function loadChecks(loadSet: string): FeedCheckDef[] {
       SELECT 'mdata.loads', l.id, 'Load ' || l.load_number, db.id IS NOT NULL,
              CASE WHEN db.id IS NULL THEN 'no live driver bill for this load' END,
              '/driver-finance/driver-bills', jsonb_build_object('bill', db.bill_number, 'gross_cents', db.gross_amount_cents, 'miles_basis', db.miles_basis_type)
-        FROM loads x JOIN mdata.loads l ON l.id = x.id LEFT JOIN LATERAL (SELECT * FROM driver_finance.driver_bills b WHERE b.load_id = l.id AND b.voided_at IS NULL ORDER BY b.created_at DESC LIMIT 1) db ON true` },
+        FROM loads x JOIN mdata.loads l ON l.id = x.id LEFT JOIN LATERAL (SELECT * FROM driver_finance.driver_bills b WHERE b.load_id = l.id AND b.revoked_at IS NULL AND b.voided_at IS NULL ORDER BY b.created_at DESC LIMIT 1) db ON true` },
     { key: "costs.expenses_linked_and_posted", group: "costs", sql: `${L}
       SELECT 'accounting.expenses', e.id, 'Expense ' || coalesce(e.expense_number, left(e.id::text, 8)),
              (e.vendor_uuid IS NOT NULL AND e.payment_account_uuid IS NOT NULL AND e.posting_status = 'posted' AND e.journal_entry_id IS NOT NULL
@@ -133,10 +133,10 @@ const SETTLEMENT_CHECKS: FeedCheckDef[] = [
         FROM driver_finance.driver_settlement_deductions dd WHERE dd.operating_company_id = $1::uuid AND dd.applied_to_settlement_id = $2::uuid AND dd.voided_at IS NULL` },
   { key: "settlement.gross_equals_driver_bills", group: "driver_pay", sql: `
       SELECT 'driver_finance.driver_settlements', s.id, 'Settlement ' || s.display_id,
-             round(s.gross_pay * 100)::bigint = coalesce((SELECT sum(b.gross_amount_cents) FROM driver_finance.driver_bills b WHERE b.settled_in_settlement_id = s.id AND b.voided_at IS NULL), 0),
-             CASE WHEN round(s.gross_pay * 100)::bigint <> coalesce((SELECT sum(b.gross_amount_cents) FROM driver_finance.driver_bills b WHERE b.settled_in_settlement_id = s.id AND b.voided_at IS NULL), 0)
-                  THEN 'gross_pay ' || round(s.gross_pay * 100)::bigint || 'c ≠ Σ driver bills ' || coalesce((SELECT sum(b.gross_amount_cents) FROM driver_finance.driver_bills b WHERE b.settled_in_settlement_id = s.id AND b.voided_at IS NULL), 0) || 'c' END,
-             '/driver-finance/settlements/' || s.id::text, jsonb_build_object('gross_pay', s.gross_pay, 'bills_cents', (SELECT sum(b.gross_amount_cents) FROM driver_finance.driver_bills b WHERE b.settled_in_settlement_id = s.id AND b.voided_at IS NULL))
+             round(s.gross_pay * 100)::bigint = coalesce((SELECT sum(b.gross_amount_cents) FROM driver_finance.driver_bills b WHERE b.settled_in_settlement_id = s.id AND b.revoked_at IS NULL AND b.voided_at IS NULL), 0),
+             CASE WHEN round(s.gross_pay * 100)::bigint <> coalesce((SELECT sum(b.gross_amount_cents) FROM driver_finance.driver_bills b WHERE b.settled_in_settlement_id = s.id AND b.revoked_at IS NULL AND b.voided_at IS NULL), 0)
+                  THEN 'gross_pay ' || round(s.gross_pay * 100)::bigint || 'c ≠ Σ driver bills ' || coalesce((SELECT sum(b.gross_amount_cents) FROM driver_finance.driver_bills b WHERE b.settled_in_settlement_id = s.id AND b.revoked_at IS NULL AND b.voided_at IS NULL), 0) || 'c' END,
+             '/driver-finance/settlements/' || s.id::text, jsonb_build_object('gross_pay', s.gross_pay, 'bills_cents', (SELECT sum(b.gross_amount_cents) FROM driver_finance.driver_bills b WHERE b.settled_in_settlement_id = s.id AND b.revoked_at IS NULL AND b.voided_at IS NULL))
         FROM driver_finance.driver_settlements s WHERE s.operating_company_id = $1::uuid AND s.id = $2::uuid` },
   { key: "settlement.net_math", group: "driver_pay", sql: `
       SELECT 'driver_finance.driver_settlements', s.id, 'Settlement ' || s.display_id,
@@ -332,8 +332,8 @@ const DEPOSIT_CHECKS: FeedCheckDef[] = [
 const BILL_PAYMENT_CHECKS: FeedCheckDef[] = [
   { key: "bill_payment.header_complete", group: "costs", sql: `
       SELECT 'accounting.bill_payments', bp.id, 'Bill payment ' || coalesce(bp.reference_number, bp.check_number, left(bp.id::text, 8)) || ' ' || bp.amount_cents || 'c',
-             (bp.bill_id IS NOT NULL AND b.id IS NOT NULL AND b.voided_at IS NULL AND bp.vendor_id IS NOT NULL AND v.id IS NOT NULL AND bp.payment_date IS NOT NULL AND coalesce(bp.amount_cents, 0) > 0 AND (bp.from_bank_account_id IS NOT NULL OR bp.cc_account_id IS NOT NULL OR bp.settlement_deduction_noncash = true)),
-             concat_ws('; ', CASE WHEN bp.bill_id IS NULL OR b.id IS NULL THEN 'no bill' END, CASE WHEN b.voided_at IS NOT NULL THEN 'bill is voided' END, CASE WHEN bp.vendor_id IS NULL OR v.id IS NULL THEN 'no vendor' END, CASE WHEN bp.payment_date IS NULL THEN 'no payment date' END,
+             (bp.bill_id IS NOT NULL AND b.id IS NOT NULL AND b.revoked_at IS NULL AND b.voided_at IS NULL AND bp.vendor_id IS NOT NULL AND v.id IS NOT NULL AND bp.payment_date IS NOT NULL AND coalesce(bp.amount_cents, 0) > 0 AND (bp.from_bank_account_id IS NOT NULL OR bp.cc_account_id IS NOT NULL OR bp.settlement_deduction_noncash = true)),
+             concat_ws('; ', CASE WHEN bp.bill_id IS NULL OR b.id IS NULL THEN 'no bill' END, CASE WHEN b.voided_at IS NOT NULL OR b.revoked_at IS NOT NULL THEN 'bill is voided' END, CASE WHEN bp.vendor_id IS NULL OR v.id IS NULL THEN 'no vendor' END, CASE WHEN bp.payment_date IS NULL THEN 'no payment date' END,
                              CASE WHEN coalesce(bp.amount_cents, 0) <= 0 THEN 'amount is zero' END, CASE WHEN bp.from_bank_account_id IS NULL AND bp.cc_account_id IS NULL AND coalesce(bp.settlement_deduction_noncash, false) = false THEN 'no paid-from bank / credit card account' END),
              '/accounting/bills/' || coalesce(bp.bill_id::text, ''), jsonb_build_object('vendor', v.vendor_name, 'bill', coalesce(b.display_id, b.bill_number), 'date', bp.payment_date, 'cents', bp.amount_cents, 'method', bp.payment_method)
         FROM accounting.bill_payments bp LEFT JOIN accounting.bills b ON b.id = bp.bill_id LEFT JOIN mdata.vendors v ON v.id::text = bp.vendor_id WHERE bp.operating_company_id = $1::uuid AND bp.id = $2::uuid AND bp.voided_at IS NULL` },

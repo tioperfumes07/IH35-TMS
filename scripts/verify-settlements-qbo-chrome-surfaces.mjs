@@ -96,10 +96,10 @@ const CHECKS = [
     pattern: /MoneyInput/,
   },
   {
-    name: "chrome.toolbar_filter: SettlementsPage CollapsedListFilters payment_state Apply triad",
+    name: "chrome.toolbar_filter: SettlementsPage MoneyListToolbar payment_state MultiSelectDropdown",
     file: "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
     pattern:
-      /CollapsedListFilters[\s\S]*onApply=\{staged\.apply\}[\s\S]*onReset=\{staged\.reset\}[\s\S]*onCancel=\{staged\.cancel\}[\s\S]*testIdPrefix="settlements"/,
+      /MoneyListToolbar[\s\S]*testIdPrefix="settlements"[\s\S]*MultiSelectDropdown[\s\S]*label="Payment state"[\s\S]*options=\{PAYMENT_STATE_OPTIONS\}[\s\S]*selected=\{paymentStates\}/,
   },
 ];
 

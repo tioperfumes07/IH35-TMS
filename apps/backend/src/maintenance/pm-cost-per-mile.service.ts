@@ -140,7 +140,7 @@ export async function computePmCostPerMile(
        JOIN maintenance.work_orders w ON w.id = b.linked_work_order_uuid AND w.operating_company_id = b.operating_company_id
       WHERE b.operating_company_id = $1::uuid
         AND w.unit_id = ANY($2::uuid[])
-        AND b.voided_at IS NULL
+        AND b.revoked_at IS NULL AND b.voided_at IS NULL
         AND w.voided_at IS NULL
         AND b.bill_date BETWEEN $3::date AND $4::date`,
     [operatingCompanyId, unitIds, from, to]

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** MATRIX-BUILT-OPTIONAL — live-only / invariant ratchet guard; no surface wiring leaf to register. */
 // A-26 (Lead ruling r294d, 2026-09-30): accounting.bills.vendor_uuid is TEXT while mdata.vendors.id
 // is UUID, forcing an explicit ::text cast at every join. accounting.bills.mdata_vendor_id is the
 // already-populated, correctly-typed UUID column meant to replace it in new joins. This guard
@@ -9,6 +10,7 @@
 import pg from "pg";
 
 const LABEL = "verify-bills-mdata-vendor-id-fk";
+export const REQUIRES_LIVE_DB = "live-only guard: reads production database (USMCA) and cannot be statically verified; run by money-pr-local-gate with DATABASE_URL";
 
 export function findMissingFk(constraints) {
   const hasFk = constraints.some(

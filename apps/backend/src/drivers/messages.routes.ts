@@ -150,8 +150,7 @@ export async function registerDriversMessagesRoutes(app: FastifyInstance) {
           if (!homeCompanyId) throw new Error("driver_company_missing");
           operatingCompanyId = homeCompanyId;
         }
-        // membership-scope-exempt: principal-derived, and (when caller-supplied) explicitly
-        // authorization-checked above via assertDriverActingCompany.
+        // membership-scope-exempt: principal-derived, authorization-checked above via assertDriverActingCompany.
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
         const created = await insertDriverReply(client as Queryable, {
           operatingCompanyId,
@@ -202,8 +201,7 @@ export async function registerDriversMessagesRoutes(app: FastifyInstance) {
           if (!homeCompanyId) return null;
           operatingCompanyId = homeCompanyId;
         }
-        // membership-scope-exempt: principal-derived, and (when caller-supplied) explicitly
-        // authorization-checked above via assertDriverActingCompany.
+        // membership-scope-exempt: principal-derived, authorization-checked above via assertDriverActingCompany.
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
         return markMessageRead(client as Queryable, params.data.messageId, operatingCompanyId, userId);
       });

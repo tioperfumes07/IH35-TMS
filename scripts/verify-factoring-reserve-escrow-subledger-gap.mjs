@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** MATRIX-BUILT-OPTIONAL — live-only / invariant ratchet guard; no surface wiring leaf to register. */
 // ROUND 300 B-34 (Lead order): "Factoring Reserve $4,992.75 and Driver Escrow Pool $2,375.00 are
 // VIRTUAL ledgers. Prove each ties to its real-world counterpart, or name the gap. Escrow shows
 // 14 drivers; confirm that against driver_finance."
@@ -29,6 +30,7 @@
 import pg from "pg";
 
 const LABEL = "verify-factoring-reserve-escrow-subledger-gap";
+export const REQUIRES_LIVE_DB = "live-only guard: reads production database (USMCA) and cannot be statically verified; run by money-pr-local-gate with DATABASE_URL";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const FACTORING_RESERVES_ACCOUNT_ID = "165cc317-5c8b-4296-8aab-f5101f4a6815";
 

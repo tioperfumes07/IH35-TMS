@@ -91,6 +91,7 @@ export async function registerLeaseRoutes(app: FastifyInstance) {
     if (!user) return;
     if (!READ_ROLES.has(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     return withCurrentUser(user.uuid, async (client) => {
+        // membership-scope-exempt: caller operating_company_id validated by assertCompanyMembership above.
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [q.data.operating_company_id]);
       return { leases: await listLeases(client as DbClient, q.data.operating_company_id) };
     });
@@ -102,6 +103,7 @@ export async function registerLeaseRoutes(app: FastifyInstance) {
     const user = await authed(req, reply, q.data.operating_company_id);
     if (!user) return;
     return withCurrentUser(user.uuid, async (client) => {
+        // membership-scope-exempt: caller operating_company_id validated by assertCompanyMembership above.
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [q.data.operating_company_id]);
       return leasesForAsset(client as DbClient, q.data.operating_company_id, { unitId: q.data.unit_id, equipmentId: q.data.equipment_id });
     });
@@ -114,6 +116,7 @@ export async function registerLeaseRoutes(app: FastifyInstance) {
     const user = await authed(req, reply, q.data.operating_company_id);
     if (!user) return;
     const out = await withCurrentUser(user.uuid, async (client) => {
+        // membership-scope-exempt: caller operating_company_id validated by assertCompanyMembership above.
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [q.data.operating_company_id]);
       return getLease(client as DbClient, q.data.operating_company_id, p.data.id);
     });
@@ -128,6 +131,7 @@ export async function registerLeaseRoutes(app: FastifyInstance) {
     if (!user) return;
     try {
       return await withCurrentUser(user.uuid, async (client) => {
+        // membership-scope-exempt: caller operating_company_id validated by assertCompanyMembership above.
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [b.data.operating_company_id]);
         await refuseNonOwner(client as DbClient, user, "create", b.data.operating_company_id);
         const { operating_company_id, ...input } = b.data;
@@ -145,6 +149,7 @@ export async function registerLeaseRoutes(app: FastifyInstance) {
     let commencement: string;
     try {
       commencement = await withCurrentUser(user.uuid, async (client) => {
+        // membership-scope-exempt: caller operating_company_id validated by assertCompanyMembership above.
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [b.data.operating_company_id]);
         await refuseNonOwner(client as DbClient, user, "sign", b.data.operating_company_id);
         await signLease(client as DbClient, b.data.operating_company_id, user.uuid, p.data.id, b.data.signed_at, b.data.contract_instance_id ?? null);
@@ -168,6 +173,7 @@ export async function registerLeaseRoutes(app: FastifyInstance) {
     if (!user) return;
     try {
       await withCurrentUser(user.uuid, async (client) => {
+        // membership-scope-exempt: caller operating_company_id validated by assertCompanyMembership above.
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [b.data.operating_company_id]);
         await refuseNonOwner(client as DbClient, user, "close", b.data.operating_company_id);
         await closeLease(client as DbClient, b.data.operating_company_id, user.uuid, p.data.id, b.data.closed_on, b.data.reason);
@@ -186,6 +192,7 @@ export async function registerLeaseRoutes(app: FastifyInstance) {
     if (!user) return;
     try {
       await withCurrentUser(user.uuid, async (client) => {
+        // membership-scope-exempt: caller operating_company_id validated by assertCompanyMembership above.
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [b.data.operating_company_id]);
         await refuseNonOwner(client as DbClient, user, "buyout", b.data.operating_company_id);
       });

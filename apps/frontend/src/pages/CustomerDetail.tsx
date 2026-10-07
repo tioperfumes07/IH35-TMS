@@ -568,7 +568,7 @@ export function CustomerDetailPage() {
     enabled: Boolean(qualityModalOpen && operatingCompanyId),
   });
   const fmcsaHistoryQuery = useQuery({
-    queryKey: ["fmcsa-lookups", detailQuery.data?.operating_company_id ?? "none"],
+    queryKey: ["fmcsa-lookups", operatingCompanyId ?? "none"],
     queryFn: () => listAllFmcsaLookups(operatingCompanyId!).then((res) => res.lookups),
     enabled: fmcsaHistoryOpen && Boolean(operatingCompanyId),
   });

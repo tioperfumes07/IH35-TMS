@@ -3,7 +3,7 @@
 import { classifyGuards } from "./verify-guard-wired.mjs";
 
 const LABEL = "verify-cc1-money-orphan-guard-registry-batch";
-/** 77 orphans remaining after Cursor's 14-item batch (verify-step 3422) minus this 76-item
+/** 79 orphans remaining after Cursor's 14-item batch (verify-step 3422) minus this 78-item
  * CC-1 money/accounting/banking/factoring/settlements slice
  * (docs/audit/ORPHAN-GUARD-OWNER-HANDOFF-2026-08-15.md). The 1 file left after this batch is
  * verify-wave-c-gl-je-system-qbo-recon.mjs — explicitly excluded from USMCA sprint scope by
@@ -89,6 +89,8 @@ const REQUIRED = [
   "verify-wave-c-liability-gl-je-cash-flow.mjs",
   "verify-wave-c-liability-gl-je-finance-statements.mjs",
   "verify-wave-c-liability-insurance-legal.mjs",
+  "verify-settlement-creator-books-with-po-and-real-stop-state.mjs",
+  "verify-unselected-boxes-are-not-pure-white.mjs",
 ];
 
 function failures(classification) {

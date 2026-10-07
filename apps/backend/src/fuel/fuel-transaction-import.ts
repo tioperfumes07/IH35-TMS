@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { resolveUnitByCard, type CardResolution } from "./fuel-card-assignments.service.js";
-import type { FuelTxnGlPostCandidate } from "../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
+import type { FuelTxnGlPostCandidate } from "../accounting/fuel-posting/fuel-credit-preference.js";
 
 /**
  * FUEL-1 — Fuel-card TRANSACTION import writer.

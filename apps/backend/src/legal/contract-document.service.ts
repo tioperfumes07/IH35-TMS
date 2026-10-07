@@ -57,7 +57,7 @@ export async function insurerFirstBillId(client: Db, companyId: string, vendorId
        FROM insurance.policy p
        JOIN insurance.payment_schedule ps ON ps.policy_id = p.id AND ps.operating_company_id = p.operating_company_id
        JOIN accounting.bills b ON b.id::text = ps.bill_uuid::text AND b.operating_company_id = p.operating_company_id
-      WHERE p.operating_company_id = $1::uuid AND p.vendor_id::text = $2::text AND b.voided_at IS NULL
+      WHERE p.operating_company_id = $1::uuid AND p.vendor_id::text = $2::text AND b.revoked_at IS NULL AND b.voided_at IS NULL
       ORDER BY b.bill_date NULLS LAST, b.created_at
       LIMIT 1`,
     [companyId, vendorId]

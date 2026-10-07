@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** MATRIX-BUILT-OPTIONAL — live-only / invariant ratchet guard; no surface wiring leaf to register. */
 /**
  * ROUND 363-CC3-B / LAW 363.9 — FAILS IF a bank-line send-back can overwrite its match. A send-back (unmatch, the
  * bank-line state machine's undo, a document void, a transfer revoke, the governed purge reset) KEEPS the accepted
@@ -16,11 +17,12 @@ import { readFileSync } from "node:fs";
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const LABEL = "verify-send-back-preserves-the-match-and-its-load";
+export const REQUIRES_LIVE_DB = "live-only guard: reads production database (USMCA) and cannot be statically verified; run by money-pr-local-gate with DATABASE_URL";
 const MIGRATION = "db/migrations/202615330930_send_back_keeps_the_match.sql";
 
 /** Each send-back path: the file, the release call that must appear, and the clear it must come before. */
 export const PATHS = [
-  { file: "apps/backend/src/accounting/bank-recon/recon-worklist.service.ts", release: /await releaseBankLineMatches\(client,/, clear: /matched_expense_id = NULL,/ },
+  { file: "apps/backend/src/accounting/bank-recon/unmatch-bank-transaction.service.ts", release: /await releaseBankLineMatches\(client,/, clear: /matched_expense_id = NULL,/ },
   { file: "apps/backend/src/banking/bank-line-state-machine.service.ts", release: /await releaseBankLineMatches\(client, \{\s*bankTransactionId: line\.id,/, clear: /if \(line\.review_bucket === "excluded"\)/ },
   { file: "apps/backend/src/banking/bank-line-state-machine.service.ts", release: /await releaseBankLineMatches\(client, \{\s*bankTransactionId: f\.line_id,/, clear: /SET \$\{RELEASE_CATEGORIZATION_SET_SQL\}\s*WHERE id = \$1::uuid AND operating_company_id = \$2::uuid`,\s*\[f\.line_id/ },
   { file: "apps/backend/src/accounting/void.service.ts", release: /await releaseBankLineMatchesWhere\(client, `operating_company_id = \$1::uuid AND id = \$2::uuid`/, clear: /\$\{BANK_TX_UNMATCH_RESET_SQL\} AND id = \$2::uuid/ },

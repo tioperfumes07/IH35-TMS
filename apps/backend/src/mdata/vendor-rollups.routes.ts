@@ -100,7 +100,7 @@ export async function registerVendorRollupsRoutes(app: FastifyInstance) {
                  MAX(b.bill_date) AS last_d
                FROM accounting.bills b
                WHERE b.operating_company_id = $1::uuid
-                 AND b.voided_at IS NULL
+                 AND b.revoked_at IS NULL AND b.voided_at IS NULL
                  AND COALESCE(NULLIF(b.vendor_uuid, ''), b.vendor_id) IS NOT NULL
                GROUP BY 1
              )

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** MATRIX-BUILT-OPTIONAL — live-only / invariant ratchet guard; no surface wiring leaf to register. */
 // Guards against the exact defect class found in BACKFILL-REV-E-LIVE-LOAD-NUMBER-SCHEMA-BUGS /
 // LIVE-LOAD-NUMBER-BACKFILL-STILL-PLACEHOLDER-NOT-REAL-AT (2026-08-31): `mdata.loads.live_load_number`
 // is the real-world AlwaysTrack reference for a historical-import load (see
@@ -17,6 +18,7 @@
 //
 // Database-required: exits 2 (UNVERIFIED) if DATABASE_URL/DATABASE_DIRECT_URL is unset, matching this
 // repo's SKIP-capability convention (never treat "couldn't check" as "passed").
+export const REQUIRES_LIVE_DB = "live-only guard: reads production database (USMCA) and cannot be statically verified; run by money-pr-local-gate with DATABASE_URL";
 import pg from "pg";
 
 const url = process.env.DATABASE_URL || process.env.DATABASE_DIRECT_URL || "";

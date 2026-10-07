@@ -8,12 +8,13 @@
  * PARALLEL BOOKS: posts to the TMS GL only. Does NOT enable QBO_JE_PUSH_ENABLED / entity push.
  * Idempotent via postFuelExpenseFromEvent's posting_batches key (fuel_event_id = fuel.fuel_transactions.id).
  */
+import { RelayFillLinksNotPostsError, resolveCompanyDirectCreditPreference, loadFuelTxnCreditSignals, type FuelTxnGlPostCandidate, type CompanyDirectCredit } from "./fuel-credit-preference.js";
+export { RelayFillLinksNotPostsError, resolveCompanyDirectCreditPreference, loadFuelTxnCreditSignals, type FuelTxnGlPostCandidate, type CompanyDirectCredit } from "./fuel-credit-preference.js";
 import { EXPENSE_GL_POSTING_FLAG_KEY } from "../expense-gl-posting-flag.js";
 import { withLuciaBypass } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import {
   postFuelExpenseFromEvent,
-  type CompanyDirectCredit,
   type FuelCategoryCode,
   type FuelPostingPath,
   type FuelPostingResult,
@@ -24,34 +25,6 @@ export const FUEL_EXPENSE_GL_POSTING_FLAG_KEY = EXPENSE_GL_POSTING_FLAG_KEY;
 
 const SYSTEM_ACTOR_USER_ID = process.env.SYSTEM_ACTOR_USER_ID ?? "00000000-0000-4000-8000-000000000001";
 
-export type FuelTxnGlPostCandidate = {
-  operating_company_id: string;
-  /** Prefer the authenticated ingest actor; cron/backfill may omit → system actor. */
-  actor_user_id?: string | null;
-  fuel_transaction_id: string;
-  /** Canonical fuel.fuel_transactions.fuel_type (diesel|def|gas|reefer_diesel|other). */
-  fuel_type: string;
-  transaction_at: string;
-  /** Integer cents — never invent; caller must pass the real paid amount. */
-  amount_cents: number;
-  driver_id?: string | null;
-  location_state?: string | null;
-  gallons?: number | null;
-  /** Relay cash_advance → driver_advance path when a driver is matched. */
-  cash_advance?: boolean;
-  /** The Relay staging row this fill came from (rail selection only — posted is derived, never stored; 202615410940). */
-  relay_fuel_transaction_id?: string | null;
-  /**
-   * FUEL-08 — real payment method drives the company_direct credit side.
-   * Prefer explicit fuel_card_id / has_fuel_card / company_direct_credit from the caller;
-   * never hardcode "cash" for fleet-card / Relay rows.
-   */
-  fuel_card_id?: string | null;
-  /** True when a fleet/fuel card number was present on the import/ingest row. */
-  has_fuel_card?: boolean;
-  /** Explicit override — when set, wins over inferred signals. */
-  company_direct_credit?: CompanyDirectCredit;
-};
 
 export type MaybePostFuelTxnResult =
   | { status: "skipped_posts_on_bank_match" }
@@ -81,7 +54,6 @@ function resolvePostingPath(candidate: FuelTxnGlPostCandidate): FuelPostingPath 
 }
 
 /** USMCA operating_company_id — the only entity R-153.6/153.7's owner-stated rail rule applies to. */
-import { USMCA_COMPANY_ID } from "../../org/company-ids.js";
 
 /**
  * R-30.1-A (A/P control contamination fix, 2026-09-22) — SUPERSEDES the old FUEL-08 behavior of
@@ -112,123 +84,6 @@ import { USMCA_COMPANY_ID } from "../../org/company-ids.js";
  * (postFuelFillOnBankMatch kind 'relay_fuel'). The AlwaysTrack settlement line is driver-facing; it LINKS to that fill
  * (fuel.fuel_transactions.relay_fuel_transaction_id). Every fuel-row posting path resolves its rail here, so this is the door.
  */
-export class RelayFillLinksNotPostsError extends Error {
-  readonly code = "relay_fill_links_not_posts";
-  constructor(public readonly fuelTransactionId: string) {
-    super(
-      `relay_fill_links_not_posts: fuel transaction ${fuelTransactionId} is on the Relay rail — it links to its Relay fill and posts ` +
-        `no fuel; the fill posts at Relay's charge when its wallet line is matched in Banking (ACCT-F403)`
-    );
-  }
-}
-
-export function resolveCompanyDirectCreditPreference(
-  candidate: FuelTxnGlPostCandidate,
-  txnSignals?: { fuel_card_id?: string | null; fuel_card_code?: string | null; notes?: string | null; source?: string | null } | null
-): CompanyDirectCredit {
-  if (candidate.company_direct_credit === "relay_fuel_wallet") throw new RelayFillLinksNotPostsError(candidate.fuel_transaction_id);
-  if (candidate.company_direct_credit) return candidate.company_direct_credit;
-
-  const code = (txnSignals?.fuel_card_code ?? "").toUpperCase();
-  if (code === "DREAMLINE") return "dreamline_card_payable";
-  // ACCT-F403: every Relay-rail answer below is a fill that posts from its wallet line, never from this fuel row.
-  if (code === "RELAY") throw new RelayFillLinksNotPostsError(candidate.fuel_transaction_id);
-  // Legacy Relay-bridge rows created before fuel_card_id was stamped to the RELAY catalog row.
-  if (candidate.relay_fuel_transaction_id) throw new RelayFillLinksNotPostsError(candidate.fuel_transaction_id);
-
-  // R-153.7: for USMCA only, no-evidence rows are owner-stated Relay -- checked BEFORE the cardSignaled throw below, since
-  // an owner FACT supersedes the "cannot identify" refusal. Relay -> the row links, it does not post (ACCT-F403).
-  if (candidate.operating_company_id === USMCA_COMPANY_ID) throw new RelayFillLinksNotPostsError(candidate.fuel_transaction_id);
-
-  const notes = (txnSignals?.notes ?? "").toLowerCase();
-  const cardSignaled =
-    Boolean(candidate.fuel_card_id || candidate.has_fuel_card || txnSignals?.fuel_card_id) ||
-    notes.includes("card=") ||
-    notes.includes("relay_bridge=1") ||
-    notes.includes("relay_txn=");
-  if (cardSignaled) {
-    throw new Error(
-      `fuel_event ${candidate.fuel_transaction_id}: a card is signaled (fuel_card_id=${
-        txnSignals?.fuel_card_id ?? candidate.fuel_card_id ?? "null"
-      }) but its rail could not be identified from a known catalogs.fuel_card_types row. ` +
-        `Refusing to credit ap_control per R-30.1-A. Stamp fuel_card_id to DREAMLINE or RELAY, or pass an explicit company_direct_credit.`
-    );
-  }
-  // No card signal at all (e.g. an older import row with neither a stamped fuel_card_id nor a
-  // card-shaped note) — no evidence of a card/payable rail, so this is true cash, never a guess
-  // at "ap" the way the pre-fix `source === 'import'` branch used to. (USMCA never reaches here —
-  // handled above.)
-  return "cash";
-}
-
-/** R-153.6: exported so fuel-expense-document.service.ts resolves the rail from the SAME query
- *  shape (fuel_card_id + catalogs.fuel_card_types.code) this poster already uses. */
-export async function loadFuelTxnCreditSignals(
-  client: DbClient,
-  operatingCompanyId: string,
-  fuelTransactionId: string
-): Promise<{
-  fuel_card_id: string | null;
-  fuel_card_code: string | null;
-  notes: string | null;
-  source: string | null;
-  unit_id: string | null;
-  trailer_id: string | null;
-  /** E14.2 — human JE memo parts (load # / unit / vendor / driver). Never invent. */
-  load_number: string | null;
-  unit_number: string | null;
-  vendor_name: string | null;
-  driver_name: string | null;
-}> {
-  const res = await client.query<{
-    fuel_card_id: string | null;
-    fuel_card_code: string | null;
-    notes: string | null;
-    source: string | null;
-    unit_id: string | null;
-    trailer_id: string | null;
-    load_number: string | null;
-    unit_number: string | null;
-    vendor_name: string | null;
-    driver_name: string | null;
-  }>(
-    `
-      SELECT ft.fuel_card_id::text AS fuel_card_id,
-             ct.code::text AS fuel_card_code,
-             ft.notes,
-             ft.source::text AS source,
-             ft.unit_id::text AS unit_id,
-             ft.trailer_id::text AS trailer_id,
-             l.load_number::text AS load_number,
-             u.unit_number::text AS unit_number,
-             v.vendor_name::text AS vendor_name,
-             NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS driver_name
-        FROM fuel.fuel_transactions ft
-        LEFT JOIN catalogs.fuel_card_types ct ON ct.id = ft.fuel_card_id
-        LEFT JOIN mdata.loads l ON l.id = ft.load_id AND l.operating_company_id = ft.operating_company_id
-        LEFT JOIN mdata.units u ON u.id = ft.unit_id
-        LEFT JOIN mdata.vendors v ON v.id = ft.vendor_id AND v.operating_company_id = ft.operating_company_id
-        LEFT JOIN mdata.drivers d ON d.id = ft.driver_id AND d.operating_company_id = ft.operating_company_id
-       WHERE ft.id = $1::uuid
-         AND ft.operating_company_id = $2::uuid
-       LIMIT 1
-    `,
-    [fuelTransactionId, operatingCompanyId]
-  );
-  const row = res.rows[0];
-  return {
-    fuel_card_id: row?.fuel_card_id ?? null,
-    fuel_card_code: row?.fuel_card_code ?? null,
-    notes: row?.notes ?? null,
-    source: row?.source ?? null,
-    unit_id: row?.unit_id ?? null,
-    trailer_id: row?.trailer_id ?? null,
-    load_number: row?.load_number ?? null,
-    unit_number: row?.unit_number ?? null,
-    vendor_name: row?.vendor_name ?? null,
-    driver_name: row?.driver_name ?? null,
-  };
-}
 
 /** E14.2 — JE memo with at least one human id (load / unit / vendor / driver). Never bare fuel UUID. */
 export function buildFuelTxnJeMemo(args: {

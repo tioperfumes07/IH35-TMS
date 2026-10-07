@@ -21,6 +21,7 @@ import { fileURLToPath } from "node:url";
 const LABEL = "verify-fuel-posts-only-on-bank-match";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const MAYBE = "apps/backend/src/accounting/fuel-posting/maybe-post-from-fuel-transaction.service.ts";
+const PREF = "apps/backend/src/accounting/fuel-posting/fuel-credit-preference.ts";
 const POSTER = "apps/backend/src/accounting/fuel-posting/poster.service.ts";
 const MATCH = "apps/backend/src/accounting/bank-recon/match.service.ts";
 const FILLS = "apps/backend/src/fuel/relay-fills.routes.ts";
@@ -67,12 +68,13 @@ export function check(files) {
   if (/\br\.posted_to_gl\b/.test(files[FILLS] ?? "")) problems.push(`${FILLS}: reads the stored posted_to_gl flag instead of deriving it from a journal entry`);
 
   // 4. ACCT-F403 — the Relay-fill door.
-  const rs = maybe.indexOf("export function resolveCompanyDirectCreditPreference(");
-  const re = rs < 0 ? -1 : maybe.indexOf("\n}\n", rs);
-  const resolver = rs < 0 ? "" : maybe.slice(rs, re);
-  if (!resolver) problems.push(`${MAYBE}: resolveCompanyDirectCreditPreference not found (fails closed)`);
-  if (/return\s+"relay_fuel_wallet"/.test(resolver)) problems.push(`${MAYBE}: the rail resolver lets a fuel row post to the Relay wallet — a Relay-rail settlement row must link to its fill, not post`);
-  if (resolver && !/USMCA_COMPANY_ID\) throw new RelayFillLinksNotPostsError/.test(resolver)) problems.push(`${MAYBE}: the USMCA no-card (Relay) default must refuse with RelayFillLinksNotPostsError`);
+  const pref = files[PREF] ?? "";
+  const rs = pref.indexOf("export function resolveCompanyDirectCreditPreference(");
+  const re = rs < 0 ? -1 : pref.indexOf("\n}\n", rs);
+  const resolver = rs < 0 ? "" : pref.slice(rs, re);
+  if (!resolver) problems.push(`${PREF}: resolveCompanyDirectCreditPreference not found (fails closed)`);
+  if (/return\s+"relay_fuel_wallet"/.test(resolver)) problems.push(`${PREF}: the rail resolver lets a fuel row post to the Relay wallet — a Relay-rail settlement row must link to its fill, not post`);
+  if (resolver && !/USMCA_COMPANY_ID\) throw new RelayFillLinksNotPostsError/.test(resolver)) problems.push(`${PREF}: the USMCA no-card (Relay) default must refuse with RelayFillLinksNotPostsError`);
   if (/input\.company_direct_credit \?\? "cash"/.test(files[POSTER] ?? "")) problems.push(`${POSTER}: a fuel row silently defaults to "cash" — it must resolve its rail (a Relay fill would post twice)`);
   if (!/err instanceof RelayFillLinksNotPostsError\) return \{ outcome: "relay_link"/.test(files[DOC] ?? "")) problems.push(`${DOC}: a Relay-rail fuel row must return relay_link (no document, no posting)`);
   const door = files[DOOR] ?? "";
@@ -108,7 +110,7 @@ if (process.argv.includes("--selftest")) {
     ["new fuel poster caller", { ...real, "apps/backend/src/x/new.ts": "await postFuelExpenseFromEvent(input)" }],
     ["hand-set posted_to_gl", { ...real, "apps/backend/src/x/new.ts": "UPDATE integrations.relay_fuel_transactions SET posted_to_gl = true" }],
     ["fills reads stored flag", { ...real, [FILLS]: real[FILLS] + "\n// r.posted_to_gl" }],
-    ["resolver posts Relay", { ...real, [MAYBE]: real[MAYBE].replace("if (candidate.operating_company_id === USMCA_COMPANY_ID) throw new RelayFillLinksNotPostsError(candidate.fuel_transaction_id);", 'if (candidate.operating_company_id === USMCA_COMPANY_ID) return "relay_fuel_wallet";') }],
+    ["resolver posts Relay", { ...real, [PREF]: real[PREF].replace("if (candidate.operating_company_id === USMCA_COMPANY_ID) throw new RelayFillLinksNotPostsError(candidate.fuel_transaction_id);", 'if (candidate.operating_company_id === USMCA_COMPANY_ID) return "relay_fuel_wallet";') }],
     ["poster cash default", { ...real, [POSTER]: real[POSTER].replace('credit ?? "cash"', 'input.company_direct_credit ?? "cash"') }],
     ["document posts Relay", { ...real, [DOC]: real[DOC].replace('if (err instanceof RelayFillLinksNotPostsError) return { outcome: "relay_link"', "if (false) return { outcome: \"relay_link\"") }],
     ["database door gone", { ...real, [DOOR]: "" }],

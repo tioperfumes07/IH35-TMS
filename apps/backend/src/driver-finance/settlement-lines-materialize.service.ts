@@ -60,7 +60,7 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { resolveRoleAccountOptional, resolveReimbursementExpenseAccount, isCoaRole } from "../accounting/coa-roles/resolver.service.js";
 import { bucketRecoveryRoleKey } from "../accounting/settlement-posting/settlement-bill-payment.math.js";
-import { SETTLEMENT_DEDUCTION_SOURCE_TABLE } from "./deductions.service.js";
+import { SETTLEMENT_DEDUCTION_SOURCE_TABLE } from "./settlement-deduction-constants.js";
 import { resolveDriverEscrowLiabilityAccount } from "./escrow-resolver.service.js";
 import { driverReceivableFor } from "./driver-receivable-roles.js";
 

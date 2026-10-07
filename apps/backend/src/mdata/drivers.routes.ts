@@ -1686,6 +1686,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     const rows = await withCurrentUser(authUser.uuid, async (client) => {
       const companyId = await resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id);
       if (!companyId) return null;
+      // membership-scope-exempt: resolveOperatingCompanyId validated the company against accessible companies.
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
       const parent = await client.query<{ id: string }>(
         `SELECT id::text FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
@@ -1737,6 +1738,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           parsedQuery.data.operating_company_id
         );
         if (!scopedCompanyId) return { error: "operating_company_id_required" as const };
+        // membership-scope-exempt: resolveOperatingCompanyId validated the company against accessible companies.
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [scopedCompanyId]);
 
         const driverExists = await client.query(

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** MATRIX-BUILT-OPTIONAL — live-only / invariant ratchet guard; no surface wiring leaf to register. */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -39,13 +40,16 @@ export function run(overrides = {}) {
   assert(!header.includes("#8A92AB") && !header.includes("#334155"), "SettlementHeader leftover chrome must not use off-scale #334155 / #8A92AB", errors);
   assert(detail.includes("showManualPaidDraftBanner"), "SettlementDetailPage must surface manual_paid draft honesty banner", errors);
 
-  // FE Render build unblock (ih35-tms-web exit 2): Manual Paid chip must type-check through setFilter.
+  // FE Render build unblock (ih35-tms-web exit 2): Manual Paid chip must type-check through the multi-select payment_state filter.
   const settlementsPage = read("apps/frontend/src/pages/driver-finance/SettlementsPage.tsx");
-  const setFilterSig =
-    settlementsPage.match(/function setFilter\(\s*state:\s*([\s\S]*?),\s*\n\s*searchParams:/)?.[1] ?? "";
   assert(
-    /"manual_paid"/.test(setFilterSig),
-    "SettlementsPage setFilter must accept payment_state 'manual_paid' (tsc exit 2 otherwise)",
+    /type PaymentStateValue =[\s\S]*?\| "manual_paid"[\s\S]*?;/.test(settlementsPage),
+    "SettlementsPage PaymentStateValue union must include 'manual_paid' (tsc exit 2 otherwise)",
+    errors
+  );
+  assert(
+    /allowed\.has\(s as PaymentStateValue\)/.test(settlementsPage) || /allowed\.has\(s\)/.test(settlementsPage),
+    "SettlementsPage parsePaymentStates must allow manual_paid through the allowed set",
     errors
   );
   assert(!settlementsPage.includes("text-[11px]"), "SettlementsPage leftover chrome must use text-xs, not text-[11px]", errors);
@@ -79,14 +83,16 @@ function selftest() {
     throw new Error("planted type removal not detected");
   }
 
-  // Plant: drop manual_paid from setFilter's state union only — must FAIL.
-  const pagePlanted = pageBackup.replace(
-    /(function setFilter\(\s*state:\s*[\s\S]*?)\| "manual_paid"/,
-    "$1"
-  );
+  // Plant: drop manual_paid from PaymentStateValue union and allowed set — must FAIL.
+  const pagePlanted = pageBackup
+    .replace(/(\| "manual_paid")/, "")
+    .replace(
+      /const allowed = new Set\(PAYMENT_STATE_OPTIONS\.map\(\(o\) => o\.value\)\);/,
+      "const allowed = new Set(PAYMENT_STATE_OPTIONS.map((o) => o.value).filter((v) => v !== \"manual_paid\"));"
+    );
   const plantedPage = run({ [PAGE_REL]: pagePlanted });
   if (!plantedPage.some((e) => e.includes("manual_paid"))) {
-    throw new Error("planted setFilter manual_paid removal not detected");
+    throw new Error("planted PaymentStateValue manual_paid removal not detected");
   }
 
   const plantedHeader = run({ [HEADER_REL]: `${headerBackup}\n<div className="text-[11px] text-[#8A92AB]">plant</div>` });

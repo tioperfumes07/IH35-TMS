@@ -96,7 +96,7 @@ export async function getPostedWhileTourOpenReport(client: DbClient, operatingCo
         ON pb.source_transaction_type = 'bill' AND pb.source_transaction_id = b.id::text AND pb.batch_status = 'posted'
         AND pb.operating_company_id = b.operating_company_id
       WHERE b.operating_company_id = $1::uuid
-        AND b.voided_at IS NULL
+        AND b.revoked_at IS NULL AND b.voided_at IS NULL
       ORDER BY b.id, bl.load_id
     `,
     [operatingCompanyId]

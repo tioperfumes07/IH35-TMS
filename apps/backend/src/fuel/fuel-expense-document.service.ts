@@ -79,8 +79,8 @@ import {
   loadFuelTxnCreditSignals,
   RelayFillLinksNotPostsError,
   resolveCompanyDirectCreditPreference,
-} from "../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
-import { resolveCompanyDirectCreditAccount } from "../accounting/fuel-posting/poster.service.js";
+} from "../accounting/fuel-posting/fuel-credit-preference.js";
+import { resolveCompanyDirectCreditAccount } from "../accounting/fuel-posting/company-direct-credit-account.js";
 import { resolveLineItemAndAccount } from "../accounting/line-item-account.js";
 import { resolveFuelItem, resolveItemByName } from "../accounting/fuel-posting/fuel-item-account.js";
 

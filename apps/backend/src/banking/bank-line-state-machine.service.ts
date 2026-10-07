@@ -27,7 +27,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { reverseJournalEntryNoFlip } from "../accounting/journal-entries.service.js";
 import { POSTING_ENGINE_SUPPORTS_REPOST } from "../accounting/posting-engine.service.js";
 import { voidDocument } from "../accounting/void-document.service.js";
-import { unmatchBankTransactionOnClient } from "../accounting/bank-recon/recon-worklist.service.js";
+import { unmatchBankTransactionOnClient } from "../accounting/bank-recon/unmatch-bank-transaction.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { assertBankTxnNotInReconciledSession } from "./closed-session-immutability.js";
 import { RELEASE_TRANSFER_LINK_SET_SQL, revokeTransferInClient } from "./transfers.service.js";

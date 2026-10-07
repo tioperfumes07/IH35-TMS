@@ -50,7 +50,7 @@ export async function settleWorkOrderFinancialLinkage(
 
   // WO → bill (the reliable, migration-backed linkage). Active = revoked_at IS NULL.
   const billsRes = await client.query(
-    `SELECT id::text AS id, bill_date::text AS bill_date, COALESCE(display_id, bill_number) AS label
+    `SELECT id::text AS id, bill_date::text AS bill_date, COALESCE(bill_number, display_id) AS label
        FROM accounting.bills
       WHERE operating_company_id = $1::uuid
         AND linked_work_order_uuid = $2::uuid

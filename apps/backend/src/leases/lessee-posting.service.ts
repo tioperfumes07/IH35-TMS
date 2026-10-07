@@ -18,7 +18,7 @@ import { createJournalEntryOnClient } from "../accounting/journal-entries.servic
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { buildLesseeSchedule, classifyLessee, type LesseeClassification, type PurchaseOptionKind } from "./lessee-schedule.js";
-import { ensureAssetClass } from "./lease-bill-engine.service.js";
+import { ensureAssetClass } from "./lessee-asset-class.js";
 
 type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }> };
 

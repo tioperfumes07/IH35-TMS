@@ -13,6 +13,7 @@ import {
 } from "./posting-engine.service.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 import { releaseBankLinesNamingDocument } from "./void.service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 export class BankDepositError extends Error {
@@ -470,7 +471,7 @@ export async function voidBankDeposit(input: {
             source_transaction_id: dep.id,
           },
           { userId: input.userId },
-          new Date().toISOString().slice(0, 10)
+          companyBusinessDate()
         );
         reversalJe = rev.journal_entry_id;
       } catch (err) {

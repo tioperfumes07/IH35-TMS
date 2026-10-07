@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** MATRIX-BUILT-OPTIONAL — live-only / invariant ratchet guard; no surface wiring leaf to register. */
 // ROUND 300/301 B-31 (Lead order): "TRACE the chain: Faro receipt -> payment -> payment_application
 // -> invoice.amount_paid_cents. NAME where it breaks... DO NOT net anything to make it balance.
 // Name where the relief is missing and prove it with rows."
@@ -31,6 +32,7 @@
 import pg from "pg";
 
 const LABEL = "verify-invoice-amount-paid-matches-applications";
+export const REQUIRES_LIVE_DB = "live-only guard: reads production database (USMCA) and cannot be statically verified; run by money-pr-local-gate with DATABASE_URL";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 // Baseline measured 2026-09-30 (ROUND 301). Ratchet floor on the zero-payment-application

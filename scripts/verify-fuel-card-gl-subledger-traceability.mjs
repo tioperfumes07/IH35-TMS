@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** MATRIX-BUILT-OPTIONAL — live-only / invariant ratchet guard; no surface wiring leaf to register. */
 // ROUND 300 B-32 (Lead order): "/banking shows Dreamline Diesel Card at -$140,226.34 with 397
 // uncategorized transactions, and Relay Fuel Wallet at -$32,726.45 with 76. Establish what those
 // balances actually represent and whether they are real liabilities or an unposted feed.
@@ -28,6 +29,7 @@
 import pg from "pg";
 
 const LABEL = "verify-fuel-card-gl-subledger-traceability";
+export const REQUIRES_LIVE_DB = "live-only guard: reads production database (USMCA) and cannot be statically verified; run by money-pr-local-gate with DATABASE_URL";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const DREAMLINE_GL_ACCOUNT_ID = "be1f70f8-fec4-463b-893d-dfc0acfe264d";
 const RELAY_GL_ACCOUNT_ID = "5585dc64-dd7c-4314-b279-c9dd29c705fc";

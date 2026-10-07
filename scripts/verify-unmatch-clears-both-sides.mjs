@@ -30,7 +30,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-unmatch-clears-both-sides";
-const TARGET = path.join(ROOT, "apps/backend/src/accounting/bank-recon/recon-worklist.service.ts");
+const TARGET = path.join(ROOT, "apps/backend/src/accounting/bank-recon/unmatch-bank-transaction.service.ts");
 
 const ALL_EIGHT_COLUMNS = [
   "matched_expense_id",
