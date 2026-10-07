@@ -383,6 +383,9 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
                 id={row.driverId}
                 name={row.name}
                 noun="Driver"
+                // ROUND 441.6: d25094d465 (#9858) swapped EntityLink label="Open profile" for this component and the
+                // action column began repeating the driver's name beside the Driver column.
+                linkLabel="Open profile"
                 className="text-xs font-semibold text-[#1F2A44] hover:underline"
                 data-testid="drivers-table-open-profile-link"
               />

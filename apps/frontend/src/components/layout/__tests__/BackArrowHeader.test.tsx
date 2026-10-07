@@ -1,7 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BackArrowHeader } from "../BackArrowHeader";
+import { inModuleBackHref } from "../../../lib/structuralBreadcrumb";
 
 // BackArrowHeader is the THIRD back-button component in the codebase (alongside both PageHeader
 // components) -- it backs the whole catalog-list-page family (dispatch/driver/maintenance/fuel/
@@ -27,31 +28,30 @@ describe("BackArrowHeader", () => {
     expect(screen.getByLabelText("Back")).toBeInTheDocument();
   });
 
-  it("falls back to backTo on a direct load/refresh (idx 0)", () => {
-    window.history.replaceState({ idx: 0 }, "");
+  // ROUND 435-CUR (#25581) superseded the history-based back: Up never navigates(-1) and never leaves its module.
+  // These two cases replace the old "falls back to backTo at idx 0" / "prefers real history" assertions.
+  it("goes to backTo when it is in the same module, even when real history exists", () => {
+    window.history.replaceState({ idx: 3, key: "abc123", usr: null }, "");
     render(
-      <MemoryRouter>
+      <MemoryRouter initialEntries={["/lists/dispatch/load-types/abc"]}>
         <BackArrowHeader backTo="/lists/dispatch/load-types" breadcrumb={["Lists", "Load Types"]} title="Load Types" />
       </MemoryRouter>,
     );
     fireEvent.click(screen.getByLabelText("Back"));
-    expect(navigateSpy).toHaveBeenCalledWith("/lists/dispatch/load-types");
+    expect(navigateSpy).toHaveBeenCalledWith(inModuleBackHref("/lists/dispatch/load-types/abc", "/lists/dispatch/load-types"));
+    expect(navigateSpy).not.toHaveBeenCalledWith(-1);
   });
 
-  describe("smart back (UI-BACK-BUTTON-IGNORES-REAL-NAVIGATION-HISTORY)", () => {
-    const originalState = window.history.state;
-    afterEach(() => window.history.replaceState(originalState, ""));
-
-    it("prefers real history over backTo once the user has navigated in-app", () => {
-      window.history.replaceState({ idx: 1, key: "abc123", usr: null }, "");
-      render(
-        <MemoryRouter>
-          <BackArrowHeader backTo="/lists/dispatch/load-types" breadcrumb={["Lists", "Load Types"]} title="Load Types" />
-        </MemoryRouter>,
-      );
-      fireEvent.click(screen.getByLabelText("Back"));
-      expect(navigateSpy).toHaveBeenCalledWith(-1);
-      expect(navigateSpy).not.toHaveBeenCalledWith("/lists/dispatch/load-types");
-    });
+  it("never follows a backTo into another module — it goes to this page's structural parent", () => {
+    render(
+      <MemoryRouter initialEntries={["/lists/dispatch/load-types/abc"]}>
+        <BackArrowHeader backTo="/accounting/bills" breadcrumb={["Lists", "Load Types"]} title="Load Types" />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByLabelText("Back"));
+    const target = navigateSpy.mock.calls[0]?.[0];
+    expect(target).toBe(inModuleBackHref("/lists/dispatch/load-types/abc", "/accounting/bills"));
+    expect(target).not.toBe("/accounting/bills");
+    expect(target).not.toBe(-1);
   });
 });

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
   MemoryRouter,
@@ -105,13 +105,17 @@ function renderFinanceRoute(path: string, includeBreakEven = false) {
 }
 
 function expectFinanceTabState(activeName: "Hub" | "Overview", inactiveName: "Hub" | "Overview") {
-  const activeTab = screen.getByRole("button", { name: activeName });
-  const inactiveTab = screen.getByRole("button", { name: inactiveName });
+  // The Finance tabs are NavyPageSubNav links; exactly one is current (Hub -> /finance must not stay current on
+  // /finance/overview just because it is a path prefix — ROUND 441.6).
+  const nav = screen.getByTestId("navy-page-subnav");
+  const activeTab = within(nav).getByRole("link", { name: activeName });
+  const inactiveTab = within(nav).getByRole("link", { name: inactiveName });
 
-  expect(activeTab).toHaveClass("border-[#1f2a44]", "text-[#1f2a44]");
-  expect(activeTab).not.toHaveClass("border-transparent", "text-gray-500");
-  expect(inactiveTab).toHaveClass("border-transparent", "text-gray-500");
-  expect(inactiveTab).not.toHaveClass("border-[#1f2a44]", "text-[#1f2a44]");
+  expect(activeTab).toHaveAttribute("aria-current", "page");
+  expect(activeTab).toHaveClass("font-semibold");
+  expect(inactiveTab).not.toHaveAttribute("aria-current");
+  expect(inactiveTab).not.toHaveClass("font-semibold");
+  expect(within(nav).getAllByRole("link").filter((l) => l.getAttribute("aria-current") === "page")).toHaveLength(1);
 }
 
 afterEach(() => {

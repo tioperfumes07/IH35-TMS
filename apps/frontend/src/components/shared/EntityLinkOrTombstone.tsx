@@ -13,6 +13,9 @@ type Props = {
   tombstoneTestId?: string;
   /** Forwarded to EntityLink when resolved (and overrides tombstone test id when set). */
   "data-testid"?: string;
+  /** Text for the resolved link when it is an action ("Open profile"), not the entity's name. The tombstone still
+   *  shows the governed label, so an unresolved entity never gets a live-looking action link. */
+  linkLabel?: string;
 };
 
 /**
@@ -28,6 +31,7 @@ export function EntityLinkOrTombstone({
   onClick,
   tombstoneTestId = "entity-link-tombstone",
   "data-testid": dataTestId,
+  linkLabel,
 }: Props) {
   const trimmedId = id != null ? String(id).trim() : "";
   if (!trimmedId) {
@@ -40,7 +44,7 @@ export function EntityLinkOrTombstone({
       </span>
     );
   }
-  const label = name != null ? String(name).trim() : "";
+  const label = linkLabel ?? (name != null ? String(name).trim() : "");
   return (
     <EntityLink
       kind={kind}

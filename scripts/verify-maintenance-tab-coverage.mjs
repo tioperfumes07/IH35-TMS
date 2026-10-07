@@ -96,7 +96,12 @@ function main() {
   if (!navySubNavSrc.includes('aria-current={active ? "page" : undefined}')) {
     failures.push("shared NavyPageSubNav must set aria-current from controlled tab id");
   }
-  if (!navySubNavSrc.includes('aria-current={isActive(pathname, item.to) ? "page" : undefined}')) {
+  // ROUND 441.6: route state = the MOST SPECIFIC matching tab (an index tab like /finance no longer stays current on
+  // /finance/overview). Still derived from the route — never from a prop or local state.
+  if (
+    !navySubNavSrc.includes('aria-current={activeTo === item.to ? "page" : undefined}') ||
+    !/const activeTo = mostSpecificActiveTo\(\s*pathname,/.test(navySubNavSrc)
+  ) {
     failures.push("shared NavyPageSubNav must set aria-current from route state");
   }
   if (homeSrc.includes("<NavLink") && homeSrc.includes("data-maintenance-subtab")) {
