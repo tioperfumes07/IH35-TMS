@@ -83,6 +83,7 @@ export function DrugAlcoholTable({ rows, pageSize = 50, hidePager = false }: Pro
           ))}
         </select>
         <DatePicker
+          id="drug-alcohol-test-date-from"
           value={from}
           onChange={(v) => {
             setPreset("custom");
@@ -93,6 +94,7 @@ export function DrugAlcoholTable({ rows, pageSize = 50, hidePager = false }: Pro
         />
         <span className="text-xs text-[#6B7280]">to</span>
         <DatePicker
+          id="drug-alcohol-test-date-to"
           value={to}
           onChange={(v) => {
             setPreset("custom");

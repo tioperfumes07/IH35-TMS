@@ -175,11 +175,11 @@ export function DriverDqfPanel({ companyId, driverId, editable = true, focus = "
                 aria-describedby="dqf-create-checklist-help"
               />
             </div>
-            <label className="block text-xs text-slate-600">Effective<DatePicker className="mt-1 w-36" value={effectiveDate} onChange={setEffectiveDate} /></label>
-            <label className="block text-xs text-slate-600">Expiry<DatePicker className="mt-1 w-36" value={expiryDate} onChange={setExpiryDate} /></label>
-            <label className="block text-xs text-slate-600">Executed<DatePicker className="mt-1 w-36" value={executedAt} onChange={setExecutedAt} /></label>
-            <label className="block text-xs text-slate-600">Removable after<DatePicker className="mt-1 w-36" value={removableAfter} onChange={setRemovableAfter} /></label>
-            <label className="block text-xs text-slate-600">Retain until<DatePicker className="mt-1 w-36" value={retainUntil} onChange={setRetainUntil} /></label>
+            <label htmlFor="dqf-effective-date" className="block text-xs text-[#4B5563]">Effective<DatePicker id="dqf-effective-date" className="mt-1 w-36" value={effectiveDate} onChange={setEffectiveDate} /></label>
+            <label htmlFor="dqf-expiry-date" className="block text-xs text-[#4B5563]">Expiry<DatePicker id="dqf-expiry-date" className="mt-1 w-36" value={expiryDate} onChange={setExpiryDate} /></label>
+            <label htmlFor="dqf-executed-date" className="block text-xs text-[#4B5563]">Executed<DatePicker id="dqf-executed-date" className="mt-1 w-36" value={executedAt} onChange={setExecutedAt} /></label>
+            <label htmlFor="dqf-removable-after" className="block text-xs text-[#4B5563]">Removable after<DatePicker id="dqf-removable-after" className="mt-1 w-36" value={removableAfter} onChange={setRemovableAfter} /></label>
+            <label htmlFor="dqf-retain-until" className="block text-xs text-[#4B5563]">Retain until<DatePicker id="dqf-retain-until" className="mt-1 w-36" value={retainUntil} onChange={setRetainUntil} /></label>
             <button
               type="submit"
               className="rounded-sm bg-slate-800 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"

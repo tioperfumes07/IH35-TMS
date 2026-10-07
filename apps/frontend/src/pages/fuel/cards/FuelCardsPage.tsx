@@ -98,10 +98,15 @@ function EndCardDrawer({
         <p className="text-gray-600">
           Card …{assignment?.card_last_digits} moves off truck {assignment?.unit_number ?? "this truck"} as of the date below.
         </p>
-        <label className="block font-semibold text-gray-700">
+        <label htmlFor="fuel-cards-end-effective-to" className="block font-semibold text-[#1F2A44]">
           Effective to *
           <div className="mt-1">
-            <DatePicker value={effectiveTo} onChange={setEffectiveTo} data-testid="fuel-cards-end-effective-to" />
+            <DatePicker
+              id="fuel-cards-end-effective-to"
+              value={effectiveTo}
+              onChange={setEffectiveTo}
+              data-testid="fuel-cards-end-effective-to"
+            />
           </div>
         </label>
         {submitError ? (
