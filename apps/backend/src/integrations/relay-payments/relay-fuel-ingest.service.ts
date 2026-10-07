@@ -25,6 +25,7 @@ import { linkRelayFillToSettlementFuelRows } from "../../fuel/relay-fill-link.se
 import { relayMoneyField, type RelayFuelTransaction } from "./relay-client.js";
 import type { DbClient } from "./db-client.type.js";
 import { resolveRelayDriverMatch, type RelayDriverUnresolvedReason } from "./relay-fuel-driver-match.js";
+import { relayFillFeeCents, relayWalletDrawdownCents } from "./relay-sender-fee-cents.js";
 import { upsertRelayWalletBankFeedRow } from "./relay-wallet-bank-feed.service.js";
 
 export type { DbClient } from "./db-client.type.js";
@@ -361,6 +362,15 @@ export async function upsertRelayFuelTransaction(
   // in place, so per-product gallons are known. Ambiguous or absent -> no link (the settlement side retries when it arrives).
   await linkRelayFillToSettlementFuelRows(client as never, operatingCompanyId, relayFuelTransactionId);
 
+  // RELAY-F442 — total_amount_paid_cents stays fuel-only (staging truth). Wallet drawdown = paid + sender_fee
+  // so the prepaid Relay wallet does not drift $2/fill against Relay's real balance.
+  const feeCents = relayFillFeeCents({
+    transaction_id: txId,
+    fees: tx.fees,
+    line_fee_amount_cents: lineCents.map((c) => c.fee_amount),
+  });
+  const walletAmountCents = relayWalletDrawdownCents(totalAmountPaidCents, feeCents);
+
   // ROUND 43 FOLLOW-UP item 2: no fuel.fuel_transactions bridge, no GL candidate. The raw Relay
   // staging upsert above (integrations.relay_fuel_transactions) IS the system of record for what
   // Relay itself reported; bridging it into fuel.fuel_transactions unconditionally is what
@@ -371,7 +381,7 @@ export async function upsertRelayFuelTransaction(
     operating_company_id: operatingCompanyId,
     transaction_id: tx.transaction_id,
     relay_created_at: tx.created_at,
-    amount_cents: totalAmountPaidCents,
+    amount_cents: walletAmountCents,
     merchant_name: tx.merchant?.name ?? null,
     location_city: tx.location?.city ?? null,
     location_state: tx.location?.state ?? null,

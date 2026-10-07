@@ -102,6 +102,28 @@ async function itemByName(
   return res.rows[0] ?? null;
 }
 
+/** RELAY-F442 — preview account for "Fuel Card Fee" (same resolve-by-name rule as the fee expense line). */
+async function itemAccountByName(
+  client: DbClient,
+  opco: string,
+  itemName: string,
+): Promise<{ account_number: string | null; account_name: string | null } | null> {
+  const res = await client.query<{ account_number: string | null; account_name: string | null }>(
+    `
+      SELECT a.account_number, a.account_name
+        FROM catalogs.items i
+        JOIN catalogs.accounts a ON a.id = i.default_expense_account_id
+       WHERE i.item_name = $2
+         AND (i.operating_company_id = $1::uuid OR i.operating_company_id IS NULL)
+         AND i.deactivated_at IS NULL
+       ORDER BY (i.operating_company_id = $1::uuid) DESC
+       LIMIT 1
+    `,
+    [opco, itemName],
+  );
+  return res.rows[0] ?? null;
+}
+
 /** The card rail's role — never its account number (2510 / 1295 on USMCA). Same roles the fuel poster resolves. */
 function cardRailRole(card: "dreamline" | "relay"): CoaRole {
   return card === "dreamline" ? "fuel_card_payable_dreamline" : "fuel_wallet_relay";
@@ -109,6 +131,26 @@ function cardRailRole(card: "dreamline" | "relay"): CoaRole {
 
 function dollarsFromCents(cents: number): number {
   return Math.round(cents) / 100;
+}
+
+/**
+ * RELAY-F442 / ROUND 192 — fuel net (total_cost) and card fee (fee_amount) stay separate.
+ * receipt_cents / gallons×cpg−discount is the FUEL charge; fees_cents is the card fee, never folded in.
+ */
+function fuelPurchaseNetAndFeeCents(fuel: {
+  receipt_cents?: number | null;
+  gallons?: number | null;
+  cpg_cents?: number | null;
+  fees_cents?: number | null;
+  discount_cents?: number | null;
+}): { netCents: number; feeCents: number } {
+  const feeCents = Math.max(0, Math.round(Number(fuel.fees_cents || 0)));
+  const netCents =
+    fuel.receipt_cents != null
+      ? Math.round(Number(fuel.receipt_cents))
+      : Math.round(Number(fuel.gallons || 0) * Number(fuel.cpg_cents || 0)) -
+        Math.round(Number(fuel.discount_cents || 0));
+  return { netCents, feeCents };
 }
 
 /**
@@ -372,13 +414,10 @@ export async function previewSettlementCreator(
   const je_lines: SettlementCreatorJeLine[] = [];
   const push = (line: SettlementCreatorJeLine) => je_lines.push(line);
 
-  // --- Fuel: Dr fuel item expense / Cr card rail (2510 / 1295) ---
+  // --- Fuel: Dr fuel item expense (+ Dr Fuel Card Fee when fees_cents > 0) / Cr card rail (2510 / 1295) ---
   for (const fuel of draft.fuel_purchases ?? []) {
-    const amount =
-      fuel.receipt_cents ??
-      Math.round(Number(fuel.gallons || 0) * Number(fuel.cpg_cents || 0)) +
-        Math.round(Number(fuel.fees_cents || 0)) -
-        Math.round(Number(fuel.discount_cents || 0));
+    const { netCents, feeCents } = fuelPurchaseNetAndFeeCents(fuel);
+    const amount = netCents + feeCents;
     if (amount <= 0) continue;
     const rail = await accountByRole(client, draft.operating_company_id, cardRailRole(fuel.card));
     // ROUND 363-CC2-D — the account the post will use (picked item / account, else the fuel-type item), not a guess.
@@ -386,15 +425,32 @@ export async function previewSettlementCreator(
     const fuelExpense = "refused" in fuelAcct ? null : fuelAcct;
     if (!rail) blockers.push(`Card rail role '${cardRailRole(fuel.card)}' is not bound — bind it on the CoA Roles page.`);
     if ("refused" in fuelAcct) blockers.push(`Fuel line ${fuel.date}: ${fuelAcct.refused}`);
-    push({
-      load_number: fuel.load_number ?? null,
-      account_number: fuelExpense?.account_number ?? null,
-      account_name: fuelExpense?.account_name ?? "Fuel expense",
-      debit_cents: amount,
-      credit_cents: 0,
-      memo: `Fuel ${fuel.card} ${fuel.date}`,
-      section: "fuel",
-    });
+    if (netCents > 0) {
+      push({
+        load_number: fuel.load_number ?? null,
+        account_number: fuelExpense?.account_number ?? null,
+        account_name: fuelExpense?.account_name ?? "Fuel expense",
+        debit_cents: netCents,
+        credit_cents: 0,
+        memo: `Fuel ${fuel.card} ${fuel.date}`,
+        section: "fuel",
+      });
+    }
+    if (feeCents > 0) {
+      const feeAcct = await itemAccountByName(client, draft.operating_company_id, "Fuel Card Fee");
+      if (!feeAcct) {
+        blockers.push(`Fuel line ${fuel.date}: catalogs.items "Fuel Card Fee" missing or has no expense account — refusing rather than folding the fee into fuel.`);
+      }
+      push({
+        load_number: fuel.load_number ?? null,
+        account_number: feeAcct?.account_number ?? null,
+        account_name: feeAcct?.account_name ?? "Fuel Card Fee",
+        debit_cents: feeCents,
+        credit_cents: 0,
+        memo: `Fuel card fee ${fuel.card} ${fuel.date}`,
+        section: "fuel",
+      });
+    }
     push({
       load_number: fuel.load_number ?? null,
       account_number: rail?.account_number ?? null,
@@ -468,13 +524,10 @@ export async function previewSettlementCreator(
     });
   }
 
-  // Fuel also counts toward company expenses total on the AT company PDF.
+  // Fuel also counts toward company expenses total on the AT company PDF (net + fee).
   for (const fuel of draft.fuel_purchases ?? []) {
-    const amount =
-      fuel.receipt_cents ??
-      Math.round(Number(fuel.gallons || 0) * Number(fuel.cpg_cents || 0)) +
-        Math.round(Number(fuel.fees_cents || 0)) -
-        Math.round(Number(fuel.discount_cents || 0));
+    const { netCents, feeCents } = fuelPurchaseNetAndFeeCents(fuel);
+    const amount = netCents + feeCents;
     if (amount > 0) companyExpensesCents += amount;
   }
 
@@ -1031,13 +1084,10 @@ export async function postSettlementCreatorInClientTx(
   }
 
   // Fuel → fuel.fuel_transactions → createExpenseFromFuelTransaction → post expense
+  // RELAY-F442: total_cost = fuel net; fee_amount = card fee (own expense line via createExpenseFromFuelTransaction).
   for (const fuel of draft.fuel_purchases ?? []) {
-    const amountCents =
-      fuel.receipt_cents ??
-      Math.round(Number(fuel.gallons || 0) * Number(fuel.cpg_cents || 0)) +
-        Math.round(Number(fuel.fees_cents || 0)) -
-        Math.round(Number(fuel.discount_cents || 0));
-    if (amountCents <= 0) continue;
+    const { netCents, feeCents } = fuelPurchaseNetAndFeeCents(fuel);
+    if (netCents + feeCents <= 0) continue;
 
     const loadId = await resolveLineLoadId(client, draft.operating_company_id, fuel);
 
@@ -1083,19 +1133,19 @@ export async function postSettlementCreatorInClientTx(
       `
         INSERT INTO fuel.fuel_transactions (
           operating_company_id, vendor_id, load_id, driver_id, unit_id,
-          fuel_type, gallons, price_per_gallon, total_cost,
+          fuel_type, gallons, price_per_gallon, total_cost, fee_amount,
           purchased_at, transaction_at, transaction_reference, location_city,
           source, load_required, load_exemption_reason, created_by_user_id, source_row_hash, trailer_id,
           source_doc_id
         )
         VALUES (
           $1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::uuid,
-          $6, $7, $8, $9,
-          $10::timestamptz, $10::timestamptz, $11, $12,
-          'manual', $13, $14, $15::uuid, $16,
-          (SELECT eq.id FROM mdata.equipment eq WHERE eq.id = $17::uuid AND eq.equipment_type ~* 'reefer'
+          $6, $7, $8, $9, $10,
+          $11::timestamptz, $11::timestamptz, $12, $13,
+          'manual', $14, $15, $16::uuid, $17,
+          (SELECT eq.id FROM mdata.equipment eq WHERE eq.id = $18::uuid AND eq.equipment_type ~* 'reefer'
               AND (eq.owner_company_id = $1::uuid OR eq.currently_leased_to_company_id = $1::uuid)),
-          $18::uuid
+          $19::uuid
         )
         RETURNING id::text
       `,
@@ -1108,7 +1158,8 @@ export async function postSettlementCreatorInClientTx(
         fuelType,
         fuel.gallons,
         dollarsFromCents(fuel.cpg_cents),
-        dollarsFromCents(amountCents),
+        dollarsFromCents(netCents),
+        dollarsFromCents(feeCents),
         `${fuel.date}T12:00:00.000Z`,
         fuel.invoice ?? null,
         fuel.location ?? null,

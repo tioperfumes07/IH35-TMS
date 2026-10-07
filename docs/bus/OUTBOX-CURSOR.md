@@ -1,3 +1,31 @@
+## 2026-10-07T23:20Z · RELAY-F442 SENDER FEE — PR #25758 OPEN
+
+FINDING: ACCT-F442 (RELAY-F442) — `total_amount_paid` is fuel-only; `sender_fee` ($2 on txn_4ypX8FQCRzHr5n) excluded from wallet + GL → $2/fill wallet drift vs Relay prepaid.
+
+PR: https://github.com/tioperfumes07/IH35-TMS/pull/25758
+Branch: `cursor/relay-f442-sender-fee-c89b` tip `1c8e84105a` (code `d859a8e134` + LANE_CROSS)
+Base: origin/main `d17915fea7`
+
+SHIPPED:
+- `relay-sender-fee-cents.ts` — fees[] prefer, else line fees; wallet = paid + fee
+- ingest + wallet backfill drawdown includes fee; staging paid stays fuel-only
+- `postRelayFuelFill` + fuel poster: `fee_amount_cents` → "Fuel Card Fee" debit; credit = paid+fee
+- Settlement Creator: `total_cost`=net, `fee_amount`=`fees_cents` (expense line 2 already exists ROUND 192)
+- guard `verify-relay-f442-sender-fee.mjs` piggyback EVEN 12375
+
+LANE_CROSS: docs/bus/2026-10-07-LEAD-RULING-CURSOR-RELAY-F442-LANE-CROSS.md
+(Owner: F440=CC-1; F441+F442=Cursor parallel.)
+
+LIVE PROOF: verify-relay-f442 --selftest PASS · LANE GUARD PASS · verify-claude-green-evidence-shape OK · claim no CI
+
+PUSH NOTE: HUSKY=0 after F442 guards PASS — money-pr-local-gate red only on ambient `verify-costs-are-expenses-not-handwritten-jes` (5 tip USMCA bank-categorization handwritten JEs; CC-2 writer R-153.6; not introduced by this PR; guard runs twice in LIVE_DOMAIN_GUARDS → failed=2).
+
+REMAINING: FAST-MERGE #25758 · BE deploy · owner Chrome fee line on match/Creator · F440 stays CC-1 · ambient handwritten-JE tip debt to CC-2
+
+NEXT: merge F442 · coordinate seats from INBOX-CURSOR (back-arrow / money UI board still open)
+
+Files Modified: relay-sender-fee-cents(+test) · relay-fuel-ingest · relay-wallet-bank-feed · bank-match-fuel-post(+test) · poster.service · settlement-creator.service · SettlementCreatorDrawer · verify-relay-f442 · verify-steps/12375 · LANE_CROSS ruling · this OUTBOX
+
 ## 2026-10-07T22:08Z · R441 C1–C4 MERGED
 
 FINDING: BANK-F91151 / R441-C1–C4 — banking drawers stay open after success; edit expand blank; CC liability = all Liability; vendor column "Vendor — not visible".

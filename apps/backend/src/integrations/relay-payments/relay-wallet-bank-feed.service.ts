@@ -473,10 +473,13 @@ export async function backfillRelayWalletBankFeedForCompany(
   client: DbClient,
   operatingCompanyId: string,
 ): Promise<{ inserted: number; updated: number; skipped: number; failed: number }> {
+  // RELAY-F442 — wallet amount = total_amount_paid (fuel) + line fee_amount_cents (sender_fee).
+  // Staging keeps paid fuel-only; drawdown must match Relay's prepaid wallet.
   const rows = await client.query<{
     transaction_id: string;
     relay_created_at: string;
     total_amount_paid_cents: string;
+    fee_cents: string;
     merchant_name: string | null;
     location_city: string | null;
     location_state: string | null;
@@ -491,6 +494,13 @@ export async function backfillRelayWalletBankFeedForCompany(
         r.transaction_id,
         r.relay_created_at::text AS relay_created_at,
         r.total_amount_paid_cents::text AS total_amount_paid_cents,
+        coalesce((
+          SELECT sum(coalesce(l.fee_amount_cents, 0))
+            FROM integrations.relay_fuel_transaction_lines l
+           WHERE l.relay_fuel_transaction_id = r.id
+             AND l.voided_at IS NULL
+             AND l.is_active = true
+        ), 0)::bigint::text AS fee_cents,
         r.merchant_name,
         r.location_city,
         r.location_state,
@@ -527,7 +537,7 @@ export async function backfillRelayWalletBankFeedForCompany(
         operating_company_id: operatingCompanyId,
         transaction_id: row.transaction_id,
         relay_created_at: row.relay_created_at,
-        amount_cents: Number(row.total_amount_paid_cents),
+        amount_cents: Math.round(Number(row.total_amount_paid_cents)) + Math.round(Number(row.fee_cents ?? 0)),
         merchant_name: row.merchant_name,
         location_city: row.location_city,
         location_state: row.location_state,

@@ -1,8 +1,11 @@
 import { resolveCompanyDirectCreditAccount, type CompanyDirectCredit } from "./company-direct-credit-account.js";
 export { resolveCompanyDirectCreditAccount, type CompanyDirectCredit } from "./company-direct-credit-account.js";
 import { withLuciaBypass } from "../../auth/db.js";
-import { POSTING_KIND_FUEL_TYPE, resolveFuelItem } from "./fuel-item-account.js";
+import { POSTING_KIND_FUEL_TYPE, resolveFuelItem, resolveItemByName } from "./fuel-item-account.js";
 import { resolveRoleAccount, resolveRoleAccountOptional } from "../coa-roles/resolver.service.js";
+
+/** RELAY-F442 / ROUND 192 — card fee posts on its own item, never folded into diesel/reefer/DEF. */
+const FUEL_FEE_ITEM_NAME = "Fuel Card Fee";
 // ACCT-PERIOD-CLOSE-01: reuse the shared, exported ensureOpenPeriod (posting-engine.service.ts's
 // own PostingEngineError("PERIOD_LOCKED", ...) class) instead of this file's own local copy, which
 // had drifted: it silently swallowed a closed_period_cutoff() query failure into cutoff=null
@@ -56,6 +59,11 @@ export type FuelPostingInput = {
    * amount_cents exactly, and the single credit carries the total. Absent = one leg of fuel_kind, as before.
    */
   cost_lines?: Array<{ fuel_kind: FuelCategoryCode; amount_cents: number }>;
+  /**
+   * RELAY-F442 — Relay sender_fee (and Settlement Creator fees_cents) post as a SEPARATE debit on the
+   * "Fuel Card Fee" item. amount_cents must equal sum(cost_lines) + fee_amount_cents. Never fold into a fuel leg.
+   */
+  fee_amount_cents?: number | null;
 };
 
 export type FuelPostingResult = {
@@ -257,8 +265,23 @@ export async function postFuelExpenseOnClient(client: DbClient, input: FuelPosti
   const expense = { account_id: fuelItem.expenseAccountId, item_id: fuelItem.itemId };
   // Debit legs: one per product line when the purchase is itemised, else the one fuel_kind leg. Each leg's account is its
   // own item's; the legs must foot to the total exactly — never a plug, never a guess.
-  const costLines = input.cost_lines?.length ? input.cost_lines : [{ fuel_kind: fuelKind, amount_cents: amountCents }];
-  const debitLegs: Array<{ fuel_kind: FuelCategoryCode; amount_cents: number; account_id: string; item_id: string }> = [];
+  const feeCents = Math.round(Number(input.fee_amount_cents ?? 0));
+  if (!Number.isFinite(feeCents) || feeCents < 0) throw new Error(`fuel_posting_fee_amount_invalid: ${input.fee_amount_cents}`);
+  const fuelOnlyCents = amountCents - feeCents;
+  if (fuelOnlyCents <= 0 && feeCents > 0) {
+    throw new Error(`fuel_posting_fee_exceeds_total: fee ${feeCents} >= amount ${amountCents}`);
+  }
+  // When a fee is present, cost_lines (or the single fuel_kind leg) must cover the FUEL portion only;
+  // the fee is its own debit below. Without a fee, behaviour is unchanged (legs foot to amount_cents).
+  const costLines = input.cost_lines?.length
+    ? input.cost_lines
+    : [{ fuel_kind: fuelKind, amount_cents: feeCents > 0 ? fuelOnlyCents : amountCents }];
+  const debitLegs: Array<{
+    fuel_kind: FuelCategoryCode | "fuel_card_fee";
+    amount_cents: number;
+    account_id: string;
+    item_id: string;
+  }> = [];
   for (const cl of costLines) {
     const kind = normalizeFuelKind(cl.fuel_kind);
     const cents = Math.round(Number(cl.amount_cents));
@@ -266,6 +289,16 @@ export async function postFuelExpenseOnClient(client: DbClient, input: FuelPosti
     const item = kind === fuelKind ? fuelItem : await resolveFuelItem(client as never, input.operating_company_id, POSTING_KIND_FUEL_TYPE[kind] ?? null);
     if ("refused" in item) throw new Error(`fuel_posting_account_refused: ${item.refused}`);
     debitLegs.push({ fuel_kind: kind, amount_cents: cents, account_id: item.expenseAccountId, item_id: item.itemId });
+  }
+  if (feeCents > 0) {
+    const feeItem = await resolveItemByName(client as never, input.operating_company_id, FUEL_FEE_ITEM_NAME);
+    if ("refused" in feeItem) throw new Error(`fuel_posting_fee_account_refused: ${feeItem.refused}`);
+    debitLegs.push({
+      fuel_kind: "fuel_card_fee",
+      amount_cents: feeCents,
+      account_id: feeItem.expenseAccountId,
+      item_id: feeItem.itemId,
+    });
   }
   const legsTotal = debitLegs.reduce((t, l) => t + l.amount_cents, 0);
   if (legsTotal !== amountCents) throw new Error(`fuel_posting_cost_lines_do_not_foot: lines ${legsTotal} != total ${amountCents}`);
@@ -423,7 +456,13 @@ export async function postFuelExpenseOnClient(client: DbClient, input: FuelPosti
       account_id: leg.account_id,
       debit_or_credit: "debit" as const,
       amount_cents: leg.amount_cents,
-      description: (debitLegs.length > 1 ? `${memo} · ${leg.fuel_kind} expense` : `${memo} · fuel expense`).slice(0, 200),
+      description: (
+        leg.fuel_kind === "fuel_card_fee"
+          ? `${memo} · fuel card fee`
+          : debitLegs.length > 1
+            ? `${memo} · ${leg.fuel_kind} expense`
+            : `${memo} · fuel expense`
+      ).slice(0, 200),
     })),
     {
       account_id: creditAccountId,
