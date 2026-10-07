@@ -11,6 +11,7 @@ docs/certification/*.cert.json
 
 docs/audits/PASS-8-*
 .cursor/rules/00-agent-bus-inbox-CASCADE.mdc
+!.cursor/rules/34-cursor-pr-title-prefix.mdc
 tmp-from-load-zero-*/
 
 # GATE-LIVELOCK-01 — derived, regenerated in ~0.3s by ensureFreshGateStepMap() on every scoped

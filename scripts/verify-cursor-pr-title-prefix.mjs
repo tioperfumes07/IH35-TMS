@@ -74,8 +74,9 @@ function assertRuleWired(root = ROOT) {
     problems.push(`MISSING ${rule}`);
   } else {
     const body = fs.readFileSync(abs, "utf8");
-    if (!/alwaysApply:\s*true/.test(body) || !/Cursor-/.test(body)) {
-      problems.push(`${rule}: must be alwaysApply and require Cursor- prefix`);
+    const superseded = /SUPERSEDED-ALWAYS-APPLY/.test(body);
+    if (!/Cursor-/.test(body) || (!superseded && !/alwaysApply:\s*true/.test(body))) {
+      problems.push(`${rule}: must require Cursor- prefix and be alwaysApply (or explicitly superseded-always-apply)`);
     }
   }
   const standing = path.join(root, "docs/specs/STANDING-SESSION-DIRECTIVE.md");
