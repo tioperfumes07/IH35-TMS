@@ -245,11 +245,11 @@ export function SettlementSummaryPage() {
         onReset={staged.reset}
         applyDisabled={!staged.dirty}
       >
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Driver</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Driver</span>
           <input
             type="text"
-            className="h-7 w-32 rounded-sm border border-slate-300 px-2 text-xs"
+            className="h-7 w-32 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.driverFilter}
             onChange={(e) => staged.setDraft((p) => ({ ...p, driverFilter: e.target.value }))}
             placeholder="All drivers"

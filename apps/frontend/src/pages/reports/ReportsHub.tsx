@@ -42,7 +42,7 @@ export function ReportsHubPage() {
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder="Search reports…"
-        className="w-full rounded-sm border border-slate-200 px-3 py-2 text-xs"
+        className="w-full rounded-sm border border-[#E5E7EB] px-3 py-2 text-xs"
         data-testid="reports-hub-search"
       />
       {catalogQuery.isError ? (
@@ -61,7 +61,7 @@ export function ReportsHubPage() {
             kind="report_category"
             id={category.id}
             label={category.label}
-            className="block text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-[#1f2a44] hover:underline"
+            className="block text-xs font-semibold uppercase tracking-wide text-[#6B7280] hover:text-[#1f2a44] hover:underline"
           />
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {category.reports.map((report) => (
