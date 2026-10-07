@@ -27,13 +27,22 @@ export type SettlementCreatorLoadBlock = {
   customer_po_number?: string | null;
   customer_wo_number?: string | null;
   pickup_date?: string | null; // YYYY-MM-DD
+  /** Google / Places one-line address (same field Book Load writes). */
+  pickup_address?: string | null;
   pickup_city?: string | null;
   /** SETL-F438 — the REAL state. Never defaulted: the seeder used to hardcode 'TX' on both stops. */
   pickup_state?: string | null;
+  pickup_zip?: string | null;
+  pickup_lat?: number | null;
+  pickup_lng?: number | null;
   delivery_date?: string | null; // blank = not delivered yet (dispatched / in transit)
+  delivery_address?: string | null;
   delivery_city?: string | null;
   /** SETL-F438 — the REAL state. A Laredo carrier does not deliver only inside Texas. */
   delivery_state?: string | null;
+  delivery_zip?: string | null;
+  delivery_lat?: number | null;
+  delivery_lng?: number | null;
   line_haul_miles?: number | null;
   line_haul_rate_cents?: number | null;
   line_haul_amount_cents?: number | null;
