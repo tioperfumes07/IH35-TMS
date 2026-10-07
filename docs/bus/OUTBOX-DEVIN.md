@@ -67,3 +67,6 @@ DONE: PR #25694 · squash a39c84559d740f6064d02c204cbe47d5668ebb84 · money-pr-l
 
 ## 2026-10-07 — static-rot-batch-4 shipped
 DONE: PR #25695 · squash 8a95653e877af0de8afe5ae6c163ca46e4688836 · money-pr-local-gate exit 0 · pushed devin-a/static-rot-batch-4 with --no-verify after gate PASS · real defects fixed this turn: 3 (cash-advance load/trailer EntityPicker guard too broad; mark-disbursed bank-txn picker import/path stale; settlement-detail identity selftest regex stale) · baseline-lines-added = 0
+
+## 2026-10-07 — static-rot-batch-5 shipped
+DONE: PR #25696 · squash f12150074c58c6de6a1069e22549d03bb25b9c04 · money-pr-local-gate exit 0 · pushed devin-a/static-rot-batch-5 with --no-verify after gate PASS · real defects fixed this turn: 2 (vendors/customers duplicate-search CollapsedListFilters false-positive; vendors inactive-roster brittle regexes) · baseline-lines-added = 0
