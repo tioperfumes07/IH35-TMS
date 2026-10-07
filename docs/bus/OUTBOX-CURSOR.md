@@ -1,3 +1,26 @@
+## 2026-10-07T15:56Z · SETL-F441 DEPLOYED LIVE — FE + BE
+
+FINDING: SETL-F441 deployed; owner Chrome prove next.
+
+MERGED: #25682 squash `566433ba15` · OUTBOX #25683 `037e3a33c3`
+
+DEPLOY:
+- FE `srv-d7s46dbrjlhs7383i150` dep-db36ks72975c73f5bvd0 **live** (commit 037e3a33 — includes F441)
+- BE `srv-d7rpem7avr4c73fhp4n0` dep-db36k7brjlhs7387a8ig **live**
+- GET https://ih35-tms.onrender.com/api/v1/healthz/shallow → HTTP 200 `git_sha=566433ba1577ade31d0ff606932ed2aac8e3d353`
+
+DEVIN: PATH 1 only (never grow VERIFY-STATIC-BASELINE) — on OUTBOX-DEVIN + INBOX-DEVIN tip.
+
+432/433/435 census on tip: back-arrow PASS 0 cross-module; money-cells 0; Bills tabs; categorize/match Modal on BankingTransactionsDesignView (433-CUR #1); naturalSign + TILE_BUCKET + suggestionIsAction present.
+
+LIVE PROOF: healthz git_sha=566433ba15; FE HTTP 200.
+
+REMAINING: owner Chrome Settlement Creator (cap / State / miles / $ / discard).
+
+Files Modified: this OUTBOX only
+
+NEXT: owner Chrome prove SETL-F441; drain next measured leftover (DesignView text-slate on categorize stub).
+
 ## 2026-10-07T15:50Z · SETL-F441 MERGED #25682 → deploy
 
 FINDING: SETL-F441 — cap under Customer; StateSelect; hand-type miles; Money $; discard size.
