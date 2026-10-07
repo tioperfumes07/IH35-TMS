@@ -489,9 +489,78 @@ export async function runRelayFuelIngestTick(
   }
 }
 
+/**
+ * ROUND 441.15 — a one-shot historical backfill started by the SERVER, so the Relay API key never leaves it.
+ * RELAY_FUEL_BACKFILL_ONCE = "<run_id>|<company code>|<months>" (e.g. "r441-15-usmca-1|USMCA|3"). At boot the first instance
+ * to take the advisory lock records integrations.relay_fuel_ingest_backfill_started with that run_id and runs the SAME
+ * runRelayFuelBackfill the Owner-only route runs; every later boot (and the second instance) sees the run_id already
+ * recorded and does nothing. A malformed value is logged and ignored, never guessed at.
+ */
+export function parseRelayBackfillOnce(raw: string | undefined): { runId: string; companyCode: string; months: number } | null {
+  const v = (raw ?? "").trim();
+  if (!v) return null;
+  const [runId, companyCode, monthsRaw] = v.split("|").map((x) => x.trim());
+  const months = Number.parseInt(monthsRaw ?? "", 10);
+  if (!runId || !/^[a-z0-9-]{6,64}$/.test(runId)) return null;
+  if (!companyCode || !/^[A-Z0-9_]{2,20}$/.test(companyCode)) return null;
+  if (!Number.isInteger(months) || months < 1 || months > 24) return null;
+  return { runId, companyCode, months };
+}
+
+export async function runRelayFuelBackfillOnceFromEnv(app: FastifyInstance): Promise<"none" | "invalid" | "already_ran" | "started" | "company_not_found"> {
+  const raw = process.env.RELAY_FUEL_BACKFILL_ONCE;
+  if (!raw?.trim()) return "none";
+  const spec = parseRelayBackfillOnce(raw);
+  if (!spec) {
+    app.log.warn("[RELAY_FUEL_BACKFILL_ONCE] RELAY_FUEL_BACKFILL_ONCE is malformed — expected run_id|COMPANY|months; ignored");
+    return "invalid";
+  }
+  const claim = await withLuciaBypass(async (client) => {
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext('relay_fuel_backfill_once:' || $1))`, [spec.runId]);
+    const seen = await client.query(
+      `SELECT 1 FROM audit.audit_events
+        WHERE source = $1 AND event_class = 'integrations.relay_fuel_ingest_backfill_started' AND payload->>'run_id' = $2
+        LIMIT 1`,
+      [RELAY_FUEL_INGEST_AUDIT_SOURCE, spec.runId]
+    );
+    if (seen.rows.length > 0) return { state: "already_ran" as const };
+    const co = await client.query<{ id: string }>(
+      `SELECT id::text FROM org.companies WHERE code = $1 AND is_active AND deactivated_at IS NULL LIMIT 1`,
+      [spec.companyCode]
+    );
+    const companyId = co.rows[0]?.id;
+    if (!companyId) return { state: "company_not_found" as const };
+    await client.query(`SELECT audit.append_event($1, 'info', $2::jsonb, NULL, $3)`, [
+      "integrations.relay_fuel_ingest_backfill_started",
+      JSON.stringify({ run_id: spec.runId, operating_company_id: companyId, months: spec.months, trigger: "RELAY_FUEL_BACKFILL_ONCE" }),
+      RELAY_FUEL_INGEST_AUDIT_SOURCE,
+    ]);
+    return { state: "started" as const, companyId };
+  });
+  if (claim.state !== "started") {
+    app.log.info({ run_id: spec.runId, state: claim.state }, "[RELAY_FUEL_BACKFILL_ONCE] nothing to do");
+    return claim.state;
+  }
+  app.log.info({ run_id: spec.runId, company: spec.companyCode, months: spec.months }, "[RELAY_FUEL_BACKFILL_ONCE] backfill started");
+  void runRelayFuelBackfill(app, { months: spec.months, operatingCompanyId: claim.companyId, runId: spec.runId }).catch(async (err) => {
+    app.log.error({ err, run_id: spec.runId }, "[RELAY_FUEL_BACKFILL_ONCE] backfill failed");
+    await withLuciaBypass((client) =>
+      client.query(`SELECT audit.append_event($1, 'warning', $2::jsonb, NULL, $3)`, [
+        "integrations.relay_fuel_ingest_backfill_failed",
+        JSON.stringify({ run_id: spec.runId, operating_company_id: claim.companyId, months: spec.months, error: String((err as Error)?.message ?? err) }),
+        RELAY_FUEL_INGEST_AUDIT_SOURCE,
+      ])
+    ).catch((auditErr) => app.log.error({ err: auditErr, run_id: spec.runId }, "[RELAY_FUEL_BACKFILL_ONCE] terminal audit failed"));
+  });
+  return "started";
+}
+
 export function initializeRelayFuelIngestCron(app: FastifyInstance) {
   if (initialized) return;
   initialized = true;
+  void runRelayFuelBackfillOnceFromEnv(app).catch((err) =>
+    app.log.error({ err }, "[RELAY_FUEL_BACKFILL_ONCE] could not start the one-shot backfill")
+  );
   if ((process.env.RELAY_FUEL_INGEST_CRON_ENABLED ?? "true").trim() === "false") {
     app.log.info("Relay fuel ingest cron disabled via RELAY_FUEL_INGEST_CRON_ENABLED=false");
     return;
