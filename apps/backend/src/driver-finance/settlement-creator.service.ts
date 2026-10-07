@@ -1085,7 +1085,8 @@ export async function postSettlementCreatorInClientTx(
           operating_company_id, vendor_id, load_id, driver_id, unit_id,
           fuel_type, gallons, price_per_gallon, total_cost,
           purchased_at, transaction_at, transaction_reference, location_city,
-          source, load_required, load_exemption_reason, created_by_user_id, source_row_hash, trailer_id
+          source, load_required, load_exemption_reason, created_by_user_id, source_row_hash, trailer_id,
+          source_doc_id
         )
         VALUES (
           $1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::uuid,
@@ -1093,7 +1094,8 @@ export async function postSettlementCreatorInClientTx(
           $10::timestamptz, $10::timestamptz, $11, $12,
           'manual', $13, $14, $15::uuid, $16,
           (SELECT eq.id FROM mdata.equipment eq WHERE eq.id = $17::uuid AND eq.equipment_type ~* 'reefer'
-              AND (eq.owner_company_id = $1::uuid OR eq.currently_leased_to_company_id = $1::uuid))
+              AND (eq.owner_company_id = $1::uuid OR eq.currently_leased_to_company_id = $1::uuid)),
+          $18::uuid
         )
         RETURNING id::text
       `,
@@ -1115,6 +1117,8 @@ export async function postSettlementCreatorInClientTx(
         actorUserId,
         enteredFuelRowHash(draft.operating_company_id, vendor.id, fuel.invoice),
         fuelType === "reefer_diesel" ? draft.trailer_id ?? null : null,
+        // SETL-F444 — the receipt image, uploaded and confirmed before Post; null when none.
+        fuel.source_doc_id ?? null,
       ],
     );
     const fuelId = inserted.rows[0]!.id;

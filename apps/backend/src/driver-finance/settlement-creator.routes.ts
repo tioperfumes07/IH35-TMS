@@ -105,6 +105,7 @@ const draftSchema = z.object({
         card: z.enum(["dreamline", "relay"]),
         load_number: z.string().trim().max(40).nullable().optional(),
         fuel_type: z.enum(["diesel", "def", "reefer_diesel"]).optional(),
+        source_doc_id: z.string().uuid().nullable().optional(),
         // ROUND 363-CC2-D — the item, the account and the load, picked at creation (ids, never free text).
         item_id: z.string().uuid().nullable().optional(),
         account_id: z.string().uuid().nullable().optional(),
