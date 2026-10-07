@@ -65,8 +65,8 @@ import {
   getOfficeTransitionButtons,
   isTerminalLoadStatus,
   loadCanMarkInvoiced,
-  type OfficeTransitionButton,
 } from "@ih35/shared-types";
+import type { OfficeTransitionButton } from "@ih35/shared-types";
 import { LoadStatusChanger } from "./LoadStatusChanger";
 
 const tabs = [
