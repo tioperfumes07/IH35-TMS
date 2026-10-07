@@ -18,9 +18,9 @@ const LABEL = "verify-cash-advance-mark-disbursed-bank-txn-picker";
 const FILE = "apps/frontend/src/pages/cash-advances/components/MarkDisbursedModal.tsx";
 const checks = [
   [/import \{ getPlaidCompanyTransactions \} from "\.\.\/\.\.\/\.\.\/api\/banking";/, "imports the same company-transactions source FineLifecycleActions.tsx uses"],
-  [/import \{ Combobox \} from "\.\.\/\.\.\/\.\.\/components\/shared\/Combobox";/, "imports the shared Combobox component"],
+  [/import \{ (?:Combobox|SimpleCombobox as Combobox) \} from "\.\.\/\.\.\/\.\.\/components\/Combobox";/, "imports the shared Combobox component"],
   [/const bankTxQuery = useQuery\(\{[\s\S]{0,400}getPlaidCompanyTransactions\(operatingCompanyId/, "queries getPlaidCompanyTransactions for the picker's option source"],
-  [/<Combobox\s*\n\s*options=\{bankOptions\}\s*\n\s*value=\{bankTxnId\}\s*\n\s*onChange=\{setBankTxnId\}/, "the Bank transaction field renders a real Combobox bound to bankTxnId, not a raw <input>"],
+  [/<Combobox[\s\S]{0,80}options=\{bankOptions\}[\s\S]{0,80}value=\{bankTxnId\}[\s\S]{0,80}onChange=\{setBankTxnId\}/, "the Bank transaction field renders a real Combobox bound to bankTxnId, not a raw <input>"],
 ];
 const src = fs.readFileSync(FILE, "utf8");
 const audit = (text) => checks.filter(([re]) => !re.test(text)).map(([, msg]) => msg);

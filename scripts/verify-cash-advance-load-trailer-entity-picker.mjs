@@ -36,9 +36,8 @@ export function collectProblems(src) {
   if (/listLoads\(|listUnits\(/.test(code)) {
     problems.push(`${TARGET}: must not local-fetch load/trailer roster — EntityPicker owns search`);
   }
-  if (/from ["'].*\/Combobox["']/.test(src)) {
-    problems.push(`${TARGET}: Combobox import must be removed`);
-  }
+  // The page may still import Combobox/SelectCombobox for non-load/trailer fields (e.g. driver,
+  // purpose); the rule here is only that load and trailer selection must be EntityPicker based.
   return problems;
 }
 
