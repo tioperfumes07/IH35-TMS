@@ -35,11 +35,11 @@ export function AccountingPendingApprovalsPanel({ data, isLoading }: Props) {
 
   if (isLoading) {
     return (
-      <section className="rounded-sm border border-slate-200 bg-white">
-        <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold text-slate-900">Pending &amp; Sync</div>
+      <section className="rounded-sm border border-[#E5E7EB] bg-white">
+        <div className="border-b border-[#E5E7EB] px-3 py-2 text-xs font-semibold text-[#0F1219]">Pending &amp; Sync</div>
         <div className="space-y-2 p-3">
-          <div className="h-4 animate-pulse rounded-sm bg-slate-100" />
-          <div className="h-4 animate-pulse rounded-sm bg-slate-100" />
+          <div className="h-4 animate-pulse rounded-sm bg-[#F7F8FA]" />
+          <div className="h-4 animate-pulse rounded-sm bg-[#F7F8FA]" />
         </div>
       </section>
     );
@@ -58,42 +58,42 @@ export function AccountingPendingApprovalsPanel({ data, isLoading }: Props) {
       ?.message ?? "Journal approval control is unavailable — no migrated approval record.";
 
   return (
-    <section className="rounded-sm border border-slate-200 bg-white">
-      <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold text-slate-900">Pending &amp; Sync</div>
-      <ul className="divide-y divide-slate-100 text-xs">
+    <section className="rounded-sm border border-[#E5E7EB] bg-white">
+      <div className="border-b border-[#E5E7EB] px-3 py-2 text-xs font-semibold text-[#0F1219]">Pending &amp; Sync</div>
+      <ul className="divide-y divide-[#E5E7EB] text-xs">
         <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
           <span>Journal entries awaiting approval (GL-linked)</span>
-          <span className="font-semibold tabular-nums text-slate-900">{pending}</span>
+          <span className="font-semibold tabular-nums text-[#0F1219]">{pending}</span>
         </li>
         {!controlAvailable ? (
-          <li className="px-3 py-2 text-xs text-slate-700">
+          <li className="px-3 py-2 text-xs text-[#1F2A44]">
             Approval control unavailable: {unavailableMessage}
           </li>
         ) : null}
         <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
           <span>QBO sync queue depth</span>
-          <span className="font-semibold tabular-nums text-slate-900">{qboDepth}</span>
+          <span className="font-semibold tabular-nums text-[#0F1219]">{qboDepth}</span>
         </li>
         <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
           <span>Failed outbox events</span>
-          <span className={`font-semibold tabular-nums ${qboFailed > 0 ? "text-slate-700" : "text-slate-900"}`}>
+          <span className={`font-semibold tabular-nums ${qboFailed > 0 ? "text-[#1F2A44]" : "text-[#0F1219]"}`}>
             {qboFailed}
           </span>
         </li>
         <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
           <span>Early-pay discounts expiring this week</span>
-          <span className="font-semibold tabular-nums text-slate-900">{earlyPay}</span>
+          <span className="font-semibold tabular-nums text-[#0F1219]">{earlyPay}</span>
         </li>
-        <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-xs text-slate-500">
+        <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-xs text-[#6B7280]">
           <span>Last QBO sync</span>
           <span>{lastSync ? formatShortDate(lastSync) : "No successful sync recorded"}</span>
         </li>
       </ul>
 
-      <div className="border-t border-slate-100 px-3 py-2">
-        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Approval queue</div>
+      <div className="border-t border-[#E5E7EB] px-3 py-2">
+        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Approval queue</div>
         {pendingQuery.isLoading ? (
-          <div className="h-4 animate-pulse rounded-sm bg-slate-100" />
+          <div className="h-4 animate-pulse rounded-sm bg-[#F7F8FA]" />
         ) : pendingQuery.isError ? (
           <div className="flex items-center justify-between gap-3 text-xs text-red-700">
             <span>Failed to load pending journal approvals — this is not confirmed "no pending approvals."</span>
@@ -106,11 +106,11 @@ export function AccountingPendingApprovalsPanel({ data, isLoading }: Props) {
             </button>
           </div>
         ) : !controlAvailable ? (
-          <p className="text-xs text-slate-700">{unavailableMessage}</p>
+          <p className="text-xs text-[#1F2A44]">{unavailableMessage}</p>
         ) : items.length === 0 ? (
-          <p className="text-xs text-slate-500">No pending journal approvals.</p>
+          <p className="text-xs text-[#6B7280]">No pending journal approvals.</p>
         ) : (
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-[#E5E7EB]">
             {items.map((item) => {
               const key = item.journal_entry_id ?? item.forward_drill.href ?? "item";
               const title = entityLabel(item.journal_display_id, item.journal_entry_id, "Journal entry");
@@ -124,13 +124,13 @@ export function AccountingPendingApprovalsPanel({ data, isLoading }: Props) {
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0">
                       {drillHref ? (
-                        <Link to={drillHref} className="font-medium text-slate-900 hover:underline">
+                        <Link to={drillHref} className="font-medium text-[#0F1219] hover:underline">
                           {title}
                         </Link>
                       ) : (
-                        <span className="font-medium text-slate-900">{title}</span>
+                        <span className="font-medium text-[#0F1219]">{title}</span>
                       )}
-                      <div className="mt-0.5 text-xs text-slate-500">
+                      <div className="mt-0.5 text-xs text-[#6B7280]">
                         Journal approval
                         {item.status ? ` · ${item.status}` : ""}
                         {item.risk ? ` · ${item.risk}` : ""}
@@ -138,16 +138,16 @@ export function AccountingPendingApprovalsPanel({ data, isLoading }: Props) {
                         {item.reversed ? " · reversed" : ""}
                         {item.maker_checker_violation ? " · maker=checker" : ""}
                       </div>
-                      {item.reason ? <div className="mt-0.5 text-xs text-slate-600">{item.reason}</div> : null}
+                      {item.reason ? <div className="mt-0.5 text-xs text-[#4B5563]">{item.reason}</div> : null}
                       {item.assignment_exception ? (
-                        <div className="mt-0.5 text-xs text-slate-700">
+                        <div className="mt-0.5 text-xs text-[#1F2A44]">
                           {item.assignment_exception.code}: {item.assignment_exception.message}
                         </div>
                       ) : null}
                       {accountSummary ? (
-                        <div className="mt-0.5 text-xs text-slate-600">GL: {accountSummary}</div>
+                        <div className="mt-0.5 text-xs text-[#4B5563]">GL: {accountSummary}</div>
                       ) : null}
-                      <div className="mt-0.5 text-xs text-slate-500">
+                      <div className="mt-0.5 text-xs text-[#6B7280]">
                         {item.creator?.role ? `Creator role: ${item.creator.role}` : "Creator: —"}
                         {" · "}
                         {item.required_approver?.user_id || item.required_approver?.role
@@ -155,11 +155,11 @@ export function AccountingPendingApprovalsPanel({ data, isLoading }: Props) {
                           : "Required approver: unresolved"}
                       </div>
                     </div>
-                    <div className="text-xs text-slate-700">
+                    <div className="text-xs text-[#1F2A44]">
                       {/* ROUND 433.2 — the entry's own totals open the entry. */}
                       <div>Dr <MoneyCell cents={item.debit_total_cents} format={formatUsdFromCents} drill={{ entity: { kind: "journal_entry", id: item.journal_entry_id } }} /></div>
                       <div>Cr <MoneyCell cents={item.credit_total_cents} format={formatUsdFromCents} drill={{ entity: { kind: "journal_entry", id: item.journal_entry_id } }} /></div>
-                      <div className={item.amounts_balanced ? "text-slate-500" : "text-slate-700"}>
+                      <div className={item.amounts_balanced ? "text-[#6B7280]" : "text-[#1F2A44]"}>
                         {item.amounts_balanced ? "Balanced" : "Unbalanced"}
                       </div>
                     </div>
@@ -170,20 +170,20 @@ export function AccountingPendingApprovalsPanel({ data, isLoading }: Props) {
           </ul>
         )}
         {controlAvailable && pendingQuery.data?.has_more ? (
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-[#6B7280]">
             Showing {items.length} of {pendingQuery.data.total}. Open journal entries for the full queue.
           </p>
         ) : null}
       </div>
 
-      <div className="flex flex-wrap gap-2 border-t border-slate-100 px-3 py-2">
-        <Link to="/accounting/journal-entries" className="text-xs font-medium text-slate-700 hover:underline">
+      <div className="flex flex-wrap gap-2 border-t border-[#E5E7EB] px-3 py-2">
+        <Link to="/accounting/journal-entries" className="text-xs font-medium text-[#1F2A44] hover:underline">
           Journal entries
         </Link>
-        <Link to="/accounting/invoices" className="text-xs font-medium text-slate-700 hover:underline">
+        <Link to="/accounting/invoices" className="text-xs font-medium text-[#1F2A44] hover:underline">
           Accounting home
         </Link>
-        <Link to="/reports/ar-aging" className="text-xs font-medium text-slate-700 hover:underline">
+        <Link to="/reports/ar-aging" className="text-xs font-medium text-[#1F2A44] hover:underline">
           AR aging report
         </Link>
       </div>

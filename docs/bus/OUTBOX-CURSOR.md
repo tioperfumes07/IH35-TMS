@@ -1,3 +1,22 @@
+## 2026-10-07T22:00Z · BANK-SLATE-PROGRAM-BOARD MERGED
+
+FINDING: Leftover Tailwind slate-* on ProgramBoard / ProgramTracker / ModuleMatrixPreview → house tokens (+ OUTBOX #25732).
+
+MERGED:
+- BANK-SLATE-PROGRAM-BOARD #25733 squash `9ebedf7c7b` — ProgramBoardPage / ProgramTrackerPage; guard verify-program-board-slate-leftover-chrome piggyback EVEN 981; OUTBOX #25732 census
+- BANK-SLATE-PORTAL-PAGES #25732 squash `5e553becd8`
+- BANK-SLATE-PORTAL-ADV #25731 squash `7fee1e5d7c`
+
+SESSION WAVE: #25708–#25733 slate drain continuous
+
+LIVE PROOF: verify-program-board-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS
+
+REMAINING: FE redeploy; owner Chrome Settlement Creator; ~870 FE files still carry slate-*
+
+NEXT leftover: (this PR) QboSyncHealth · QboStyleHome · PendingApprovals → RollingLedger / WorkOrderDetail / DrugAlcohol
+
+Files Modified: OUTBOX + QboSyncHealthCard / QboStyleHomePage / AccountingPendingApprovalsPanel
+
 ## 2026-10-07T21:55Z · BANK-SLATE-PORTAL-PAGES MERGED
 
 FINDING: Leftover Tailwind slate-* on PortalLayout / PortalProfile / PortalLoadDetail → house tokens (+ OUTBOX #25731).
