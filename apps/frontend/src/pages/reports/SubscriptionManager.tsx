@@ -13,7 +13,7 @@ import { useToast } from "../../components/Toast";
 import { useAuth } from "../../auth/useAuth";
 import { MobileOptimizedTable } from "../../components/shared/MobileOptimizedTable";
 import { ReportsSubNav } from "./ReportsSubNav";
-import { mmmDdTime } from "../../lib/formatDate";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 // SUBSCRIPTIONS-PRESET-FILTER-SILENT-NOOP: the "Saved" category's "Owner weekly pack" /
 // "Quarter close package" shortcuts (CategoryHoverNav.tsx, ReportsRunner.tsx's
@@ -45,7 +45,7 @@ function subscriptionStatusLabel(isActive: boolean): "Active" | "Inactive" {
 
 function subscriptionTimestampLabel(value: string | null | undefined): string {
   if (!value) return "—";
-  return mmmDdTime(value) || "—";
+  return formatDateTimeUS(value) || "—";
 }
 
 type SubscriptionRow = {

@@ -110,3 +110,6 @@ DONE: PR #25734 · squash 6ec5f41a9d0efd4526cffc957f102a13ba8077ad · frontend t
 ## 2026-10-07 — drain: orphan guards + maintenance-design-law re-anchor shipped
 DONE: PR #25749 · squash 9a853dd765bb41ab030ec66ea8063201747b2640 · money-pr-local-gate exit 0 · wired four orphan settlement-creator guards into existing verify-step 14821 and mapped StateSelect Combobox · baseline-lines-added = 0
 DONE: PR #25754 · squash 8db3696b991c3b77ec3b75322b8d8cbb1914a9b6 · money-pr-local-gate exit 0 · re-anchored verify-maintenance-design-law.mjs to current CENTER-EVERYTHING and QBO-ROWS-NOT-COLUMNS owner rulings · baseline-lines-added = 0
+
+## 2026-10-07 — drain: items-list-sort selftest re-anchor shipped
+DONE: PR #25756 · squash ab9c81b73b712d5a9ce2328339b7ee007c1a6393 · money-pr-local-gate exit 0 · re-anchored verify-items-list-sort-values-wired.mjs selftest to multi-line column prop formatting · baseline-lines-added = 0
