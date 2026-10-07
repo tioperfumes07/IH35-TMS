@@ -448,7 +448,7 @@ export function VendorDetailPage() {
     if (vendorQuery.error instanceof ApiError && vendorQuery.error.status === 404) {
       return (
         <div className="space-y-3">
-          <div className="text-xs text-slate-700" role="alert">
+          <div className="text-xs text-[#1F2A44]" role="alert">
             This vendor is archived or is not available in the selected company. Historical transactions remain preserved.
           </div>
           <Button variant="secondary" onClick={() => navigate("/vendors")}>
@@ -491,7 +491,7 @@ export function VendorDetailPage() {
         subtitle={vendor.vendor_type}
         actions={
           <div className="flex items-center gap-2">
-            <span className={`rounded-sm px-2 py-1 text-xs font-semibold ${vendor.deactivated_at ? "bg-gray-200 text-gray-700" : "bg-slate-100 text-slate-700"}`}>
+            <span className={`rounded-sm px-2 py-1 text-xs font-semibold ${vendor.deactivated_at ? "bg-gray-200 text-gray-700" : "bg-[#F7F8FA] text-[#1F2A44]"}`}>
               {vendor.deactivated_at ? "Inactive" : "Active"}
             </span>
             <Button variant="secondary" onClick={() => navigate(`/vendors/${id}/statement`)}>
@@ -517,7 +517,7 @@ export function VendorDetailPage() {
           </button>
         </div>
       ) : reworkSignalCount > 0 ? (
-        <div className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-700">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
           Warning: {reworkSignalCount} possible re-do signal(s) in last 30 days (same vendor/unit/failure pattern).
         </div>
       ) : null}
@@ -572,10 +572,10 @@ export function VendorDetailPage() {
               Distinct from QBO Mapping. */}
           {vendor.driver_id ? (
             <div
-              className="mb-3 rounded-sm border border-slate-200 bg-slate-50 p-3"
+              className="mb-3 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3"
               data-testid="vendor-linked-driver"
             >
-              <div className="text-xs uppercase text-slate-600">Linked driver (A/P payee)</div>
+              <div className="text-xs uppercase text-[#4B5563]">Linked driver (A/P payee)</div>
               <div className="mt-1 text-xs font-semibold text-gray-900">
                 <EntityLinkOrTombstone
                   kind="driver"
@@ -590,7 +590,7 @@ export function VendorDetailPage() {
               read-only until Edit is on, matching QBO's header Edit. Previously the only Edit button
               was buried at the bottom, so the profile looked un-editable and dropdowns wouldn't open. */}
           <div className="mb-3 flex items-center justify-between gap-2 border-b border-gray-100 pb-2">
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-[#6B7280]">
               {profileEditMode ? "Editing — change any field, then Save." : "Read-only. Click Edit to change vendor details."}
             </span>
             <div className="flex gap-2">
@@ -744,10 +744,10 @@ export function VendorDetailPage() {
               <span
                 className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
                   profileForm.qualityRating === "good"
-                    ? "bg-slate-100 text-slate-700"
+                    ? "bg-[#F7F8FA] text-[#1F2A44]"
                     : profileForm.qualityRating === "bad"
                       ? "bg-red-100 text-red-800"
-                      : "bg-slate-100 text-slate-700"
+                      : "bg-[#F7F8FA] text-[#1F2A44]"
                 }`}
               >
                 {profileForm.qualityRating === "good" ? "Good" : profileForm.qualityRating === "bad" ? "Bad" : "Medium"}
@@ -775,7 +775,7 @@ export function VendorDetailPage() {
             {!companyId ? (
               <div className="flex items-center gap-2 text-xs text-gray-900">
                 <VendorCategoryChip code={vendor.vendor_category} />
-                <span className="text-xs text-slate-600">Select operating company to edit.</span>
+                <span className="text-xs text-[#4B5563]">Select operating company to edit.</span>
               </div>
             ) : (
               <div className="flex flex-wrap items-center gap-2 text-xs text-gray-900">
@@ -873,7 +873,7 @@ export function VendorDetailPage() {
             <span className="text-xs font-semibold text-gray-600">Factor rate schedule</span>
             <p className="max-w-2xl text-xs text-gray-700" data-testid="vendor-factor-schedule-relocated">
               Advance / fee / reserve rates are edited on{" "}
-              <Link to="/factoring" className="font-medium text-slate-900 underline">
+              <Link to="/factoring" className="font-medium text-[#0F1219] underline">
                 Factoring → active factor profile
               </Link>{" "}
               <span className="text-gray-500">Rate fields are managed on that profile, not in vendor notes.</span>
@@ -945,13 +945,13 @@ export function VendorDetailPage() {
         <div className="space-y-2" data-testid="vendor-ap-readonly">
           {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
           <div
-            className="rounded-sm border border-dashed border-gray-200 bg-white px-3 py-2 text-xs text-slate-600"
+            className="rounded-sm border border-dashed border-gray-200 bg-white px-3 py-2 text-xs text-[#4B5563]"
             data-testid="vendor-record-bill-payment-disabled"
             data-vend-ap-readonly="1"
           >
             Bills and A/P on this vendor profile are read only. Record bill payments from{" "}
             {/* ROUND 297 audit (drill): /accounting/pay-bills was never a route; pay THIS vendor's bills. */}
-            <Link to={`/accounting/bill-payments?vendor_id=${encodeURIComponent(id)}`} className="font-semibold text-slate-800 underline">
+            <Link to={`/accounting/bill-payments?vendor_id=${encodeURIComponent(id)}`} className="font-semibold text-[#0F1219] underline">
               Accounting → Pay bills
             </Link>
             .
@@ -1083,7 +1083,7 @@ export function VendorDetailPage() {
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
               <div className="text-xs font-semibold text-gray-900">Vendor credits</div>
-              <Link to={`/accounting/vendor-credits?vendor_id=${encodeURIComponent(id)}`} className="text-xs text-slate-700 hover:underline">
+              <Link to={`/accounting/vendor-credits?vendor_id=${encodeURIComponent(id)}`} className="text-xs text-[#1F2A44] hover:underline">
                 View all credits
               </Link>
             </div>
@@ -1106,7 +1106,7 @@ export function VendorDetailPage() {
                         kind="vendor_credit"
                         id={c.id}
                         label={entityLabel(c.display_id, c.id, "Vendor credit")}
-                        className="text-slate-700 hover:underline"
+                        className="text-[#1F2A44] hover:underline"
                       />
                     ),
                   },
@@ -1166,11 +1166,11 @@ export function VendorDetailPage() {
               ) : taxFormDocsQuery.isError ? (
                 <span className="rounded-sm bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800">Couldn&apos;t check</span>
               ) : (taxFormDocsQuery.data?.length ?? 0) > 0 ? (
-                <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+                <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]">
                   {taxFormDocsQuery.data!.length} tax-form document{taxFormDocsQuery.data!.length === 1 ? "" : "s"} attached
                 </span>
               ) : (
-                <span className="rounded-sm border border-slate-200 bg-white px-2 py-0.5 text-xs font-semibold text-slate-600">
+                <span className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-0.5 text-xs font-semibold text-[#4B5563]">
                   No tax-form document on file
                 </span>
               )}

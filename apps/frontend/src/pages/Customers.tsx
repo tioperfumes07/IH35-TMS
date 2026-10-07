@@ -1401,7 +1401,7 @@ export function CustomersPage() {
                       {/* VC-DETAIL-01 — Status = active/inactive (deactivated_at); the quality chip is
                           its own separate chip, never the Status value. */}
                       <div className="mt-1 flex flex-wrap items-center gap-2">
-                        <span className={`inline-flex rounded-sm px-2 py-0.5 text-xs font-semibold ${selectedCustomer.deactivated_at ? "bg-gray-200 text-gray-700" : "bg-slate-100 text-slate-700"}`} data-testid="customer-detail-status">
+                        <span className={`inline-flex rounded-sm px-2 py-0.5 text-xs font-semibold ${selectedCustomer.deactivated_at ? "bg-gray-200 text-gray-700" : "bg-[#F7F8FA] text-[#1F2A44]"}`} data-testid="customer-detail-status">
                           {selectedCustomer.deactivated_at ? "Inactive" : "Active"}
                         </span>
                         <span
@@ -1472,7 +1472,7 @@ export function CustomersPage() {
                       </p>
                       <UnclearedDocumentsNote docs={unclearedByCustomerId.get(selectedCustomer.id)?.uncleared_documents ?? []} />
                       {(unclearedByCustomerId.get(selectedCustomer.id)?.uncleared_cents ?? 0) > 0 ? (
-                        <p className="mt-2 rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
+                        <p className="mt-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
                           Applied payments that have not been matched or categorized in Banking are named not cleared.
                         </p>
                       ) : null}
