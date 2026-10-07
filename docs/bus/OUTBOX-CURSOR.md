@@ -1,3 +1,25 @@
+## 2026-10-07T20:14Z · BANK-SLATE-SAFETY-CREATE + BANK-F91560 DesignView MERGED
+
+FINDING: Leftover Tailwind slate-* on safety create surfaces + BankingTransactionsDesignView → house tokens.
+
+MERGED:
+- BANK-SLATE-SAFETY-CREATE #25711 squash `6aaac9faf5` — AccidentReportDrawer / FineCreate / HosViolationCreate / HOSViolationsTab; guard verify-safety-create-slate-leftover-chrome piggyback EVEN 1326
+- BANK-F91560 #25712 squash `53cfb81e3a` — BankingTransactionsDesignView; guard verify-bank-designview-slate-leftover-chrome piggyback EVEN 12342
+
+PRIOR THIS SESSION (already on bus #25710):
+- BANK-SLATE-DRV-FLEET #25708 `18346611e9`
+- BANK-SLATE-SETL-DETAIL #25709 `ebfd8a0bc8`
+
+LIVE PROOF:
+- verify-safety-create-slate-leftover-chrome exit 0 — PASS (4 files); SELFTEST PASS
+- verify-bank-designview-slate-leftover-chrome exit 0 — PASS (1 file); SELFTEST PASS
+
+REMAINING: FE redeploy for slate tips; owner Chrome Settlement Creator; next leftover slate class (LoadDetailDrawer · CargoClaimIntake · SafetyIncidentsCluster)
+
+NEXT leftover: LoadDetailDrawer · CargoClaimIntakeSurface · SafetyIncidentsClusterSurface (text-slate-*)
+
+Files Modified: this OUTBOX only
+
 ## 2026-10-07T19:59Z · BANK-SLATE-DRV-FLEET + BANK-SLATE-SETL-DETAIL MERGED
 
 FINDING: Leftover Tailwind slate-* on driver/fleet + settlement detail surfaces → house tokens.
