@@ -17,6 +17,7 @@ import { ListErrorState } from "../ListErrorState";
 import { FlatFieldGrid } from "../layout/FlatFieldGrid";
 import { getDownloadUrl, listAllFiles } from "../../api/docs";
 import { CancelLoadModal } from "./CancelLoadModal";
+import { VoidReasonModal } from "../accounting/VoidReasonModal";
 import { LdtDocumentsTab } from "./tabs/LdtDocumentsTab";
 import { LoadCompletionPromptsCard } from "./LoadCompletionPromptsCard";
 import { LoadDetailDriverPayTab } from "./LoadDetailDriverPayTab";
@@ -237,6 +238,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
   const [templateLibraryOpen, setTemplateLibraryOpen] = useState(false);
   const [abandonmentOpen, setAbandonmentOpen] = useState(false);
   const [recordExpenseOpen, setRecordExpenseOpen] = useState(false);
+  const [remintReasonOpen, setRemintReasonOpen] = useState(false);
   const { pushToast } = useToast();
 
   // Prefer entity-scoped dispatch GET (fuller payload). ALWAYS race mdata GET in parallel —
@@ -1184,34 +1186,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                         size="sm"
                         loading={remintDriverBillMutation.isPending}
                         data-testid="load-remint-driver-bill-button"
-                        onClick={async () => {
-                          // LAW-EDITABLE-BY-PERMISSION-ALWAYS-TRACEABLE-2026-09-01: every edit is
-                          // traceable to why — this mints a real driver payable, so a reason is
-                          // required, not optional.
-                          const reason = window.prompt("Reason for reminting this driver bill (required, logged):");
-                          if (!reason || !reason.trim()) return;
-                          try {
-                            const res = await remintDriverBillMutation.mutateAsync({ id: load.id, reason: reason.trim() });
-                            const outcome = "outcome" in res ? res.outcome.outcome : "error";
-                            const messages: Record<string, string> = {
-                              minted: "Driver bill minted",
-                              already_exists: "Driver bill already exists — nothing to remint",
-                              skipped_no_pay_rate: "Still no pay rate/miles — tracking $0 bill stays open to seed later",
-                              not_applicable: "No driver assigned to this load",
-                              // P1 (owner 2026-09-14) — "Refuse LOUDLY with the reason on screen."
-                              refused_no_shortest_miles:
-                                "Shortest miles have not been captured for this load — enter shortest miles before a driver bill can be created",
-                            };
-                            pushToast(
-                              messages[outcome] ?? `Remint outcome: ${outcome}`,
-                              outcome === "minted" ? "success" : outcome === "refused_no_shortest_miles" ? "error" : "info"
-                            );
-                            refetchLoad();
-                            void queryClient.invalidateQueries({ queryKey: ["loads"] });
-                          } catch (err) {
-                            pushToast(userFacingApiError(err, "Could not remint driver bill"), "error");
-                          }
-                        }}
+                        onClick={() => setRemintReasonOpen(true)}
                       >
                         Remint driver bill
                       </Button>
@@ -1900,6 +1875,38 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
           onClose={() => setRecordExpenseOpen(false)}
         />
       ) : null}
+      <VoidReasonModal
+        open={remintReasonOpen}
+        title="Reason for reminting this driver bill"
+        entityRef={load?.load_number ? `Load ${load.load_number}` : undefined}
+        submitLabel="Remint"
+        postsReversingEntry={false}
+        onClose={() => setRemintReasonOpen(false)}
+        onSubmit={async (reason) => {
+          if (!load) return;
+          try {
+            const res = await remintDriverBillMutation.mutateAsync({ id: load.id, reason });
+            const outcome = "outcome" in res ? res.outcome.outcome : "error";
+            const messages: Record<string, string> = {
+              minted: "Driver bill minted",
+              already_exists: "Driver bill already exists — nothing to remint",
+              skipped_no_pay_rate: "Still no pay rate/miles — tracking $0 bill stays open to seed later",
+              not_applicable: "No driver assigned to this load",
+              refused_no_shortest_miles:
+                "Shortest miles have not been captured for this load — enter shortest miles before a driver bill can be created",
+            };
+            pushToast(
+              messages[outcome] ?? `Remint outcome: ${outcome}`,
+              outcome === "minted" ? "success" : outcome === "refused_no_shortest_miles" ? "error" : "info"
+            );
+            refetchLoad();
+            void queryClient.invalidateQueries({ queryKey: ["loads"] });
+            setRemintReasonOpen(false);
+          } catch (err) {
+            pushToast(userFacingApiError(err, "Could not remint driver bill"), "error");
+          }
+        }}
+      />
     </>
   );
   // LDT-PAGE: the page renders inline where it is mounted; the drawer portals to body so parent overflow cannot clip it.

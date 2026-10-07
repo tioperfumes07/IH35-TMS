@@ -34,6 +34,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { OnlineBankingMatchBanner } from "../../components/accounting/OnlineBankingMatchBanner";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { VoidedBanner } from "../../components/accounting/VoidedBanner";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { Button } from "../../components/Button";
 import { BackButton } from "../../components/shared/BackButton";
@@ -136,6 +137,8 @@ export function SettlementDetailPage() {
   const [pendingConfirm, setPendingConfirm] = useState<"mark_paid" | "reopen" | null>(null);
   const [reverseBusy, setReverseBusy] = useState(false);
   const [unlockBusy, setUnlockBusy] = useState(false);
+  const [reverseReasonOpen, setReverseReasonOpen] = useState(false);
+  const [unlockReasonOpen, setUnlockReasonOpen] = useState(false);
 
   const detailQuery = useQuery({
     queryKey: ["driver-finance", "settlement-detail", settlementId, companyId],
@@ -243,12 +246,16 @@ export function SettlementDetailPage() {
     ]);
   }
 
-  // SETL-NO-VOID-PATH-01 — reason prompt required, always (VOID LAW item 4). window.prompt matches
-  // this app's existing lightweight-reason-capture precedent (e.g. the load remint action).
-  async function handleReverseSettlement() {
+  // SETL-NO-VOID-PATH-01 — reason prompt required, always (VOID LAW item 4). Captured through
+  // VoidReasonModal so the reason is validated, catalogued, and the Chrome extension event loop
+  // is not frozen by a native dialog.
+  function handleReverseSettlement() {
     if (!settlementId || !companyId) return;
-    const reason = window.prompt("Reason for reversing this settlement (required):", "");
-    if (reason == null) return;
+    setReverseReasonOpen(true);
+  }
+
+  async function submitReverseReason(reason: string) {
+    if (!settlementId || !companyId) return;
     const trimmed = reason.trim();
     if (!trimmed) {
       pushToast("A reason is required to reverse a settlement", "error");
@@ -264,6 +271,7 @@ export function SettlementDetailPage() {
         "success"
       );
       await refreshSettlementViews();
+      setReverseReasonOpen(false);
     } catch (error) {
       pushToast(userFacingApiError(error, "Reverse blocked"), "error");
     } finally {
@@ -271,10 +279,13 @@ export function SettlementDetailPage() {
     }
   }
 
-  async function handleUnlockSettlement() {
+  function handleUnlockSettlement() {
     if (!settlementId || !companyId) return;
-    const reason = window.prompt("Reason for unlocking this settlement (required):", "");
-    if (reason == null) return;
+    setUnlockReasonOpen(true);
+  }
+
+  async function submitUnlockReason(reason: string) {
+    if (!settlementId || !companyId) return;
     const trimmed = reason.trim();
     if (!trimmed) {
       pushToast("A reason is required to unlock a settlement", "error");
@@ -285,6 +296,7 @@ export function SettlementDetailPage() {
       await unlockSettlement(settlementId, companyId, trimmed);
       pushToast("Settlement unlocked", "success");
       await refreshSettlementViews();
+      setUnlockReasonOpen(false);
     } catch (error) {
       pushToast(userFacingApiError(error, "Unlock failed"), "error");
     } finally {
@@ -1382,6 +1394,24 @@ export function SettlementDetailPage() {
             throw error;
           }
         }}
+      />
+      <VoidReasonModal
+        open={reverseReasonOpen}
+        title="Reverse settlement"
+        entityRef={settlement?.source_document_ref ? `Settlement ${settlement.source_document_ref}` : undefined}
+        submitLabel="Reverse"
+        postsReversingEntry={true}
+        onClose={() => setReverseReasonOpen(false)}
+        onSubmit={submitReverseReason}
+      />
+      <VoidReasonModal
+        open={unlockReasonOpen}
+        title="Unlock settlement"
+        entityRef={settlement?.source_document_ref ? `Settlement ${settlement.source_document_ref}` : undefined}
+        submitLabel="Unlock"
+        postsReversingEntry={false}
+        onClose={() => setUnlockReasonOpen(false)}
+        onSubmit={submitUnlockReason}
       />
     </div>
   );

@@ -17,6 +17,7 @@ import { AddressGeocodeInput } from "../../components/dispatch/AddressGeocodeInp
 import { geocodeSearch, type GeocodeResult } from "../../api/geocoding";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
+import { ConfirmModal } from "../../components/shared/ConfirmModal";
 import { formatUsdCents, formatUsdCentsTable } from "../../lib/money";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
@@ -527,6 +528,8 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [attemptClose, setAttemptClose] = useState<(() => void) | null>(null);
+  const [confirmRepostOpen, setConfirmRepostOpen] = useState(false);
+  const [confirmRepostMessage, setConfirmRepostMessage] = useState<string>("");
   /** Operator typed miles/rate — do not overwrite with lane / pay-card autofill. */
   const milesTouchedRef = useRef<Record<number, boolean>>({});
   const ratesTouchedRef = useRef(false);
@@ -1059,24 +1062,8 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     } catch (e) {
       const apiErr = e as { status?: number; data?: { error?: string; message?: string }; message?: string };
       if (apiErr?.status === 409 && apiErr?.data?.error === "settlement_exists") {
-        const ok = window.confirm(
-          `${apiErr.data.message ?? "Settlement already exists."}\n\nEdit = void the prior settlement and all Creator companion docs, then repost. Continue?`,
-        );
-        if (ok) {
-          try {
-            const res = await postSettlementCreator({ ...draft, edit_void_repost: true });
-            pushToast(
-              `Settlement ${res.source_document_ref || res.display_id} voided prior + reposted`,
-              "success",
-            );
-            setPosted({ label: `Settlement ${res.source_document_ref || res.display_id} voided prior + reposted`, documentIds: [...(res.expense_ids ?? [])] });
-            return;
-          } catch (retryErr) {
-            setError(String((retryErr as Error).message || "Void and repost failed"));
-            return;
-          }
-        }
-        setError(apiErr.data.message ?? "Post cancelled — settlement already exists.");
+        setConfirmRepostMessage(`${apiErr.data.message ?? "Settlement already exists."}\n\nEdit = void the prior settlement and all Creator companion docs, then repost. Continue?`);
+        setConfirmRepostOpen(true);
         return;
       }
       setError(String((e as Error).message || "Post failed"));
@@ -1085,9 +1072,29 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
     }
   }
 
+  async function handleConfirmRepost() {
+    if (!draft) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await postSettlementCreator({ ...draft, edit_void_repost: true });
+      pushToast(
+        `Settlement ${res.source_document_ref || res.display_id} voided prior + reposted`,
+        "success",
+      );
+      setPosted({ label: `Settlement ${res.source_document_ref || res.display_id} voided prior + reposted`, documentIds: [...(res.expense_ids ?? [])] });
+    } catch (retryErr) {
+      setError(String((retryErr as Error).message || "Void and repost failed"));
+      throw retryErr;
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
-    <ParityDrawer
-      open={open}
+    <>
+      <ParityDrawer
+        open={open}
       onClose={onClose}
       size="xwide"
       title="Settlement Creator"
@@ -2497,5 +2504,15 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
         ) : null}
       </div>
     </ParityDrawer>
+    <ConfirmModal
+      open={confirmRepostOpen}
+      title="Settlement already exists"
+      message={confirmRepostMessage}
+      confirmLabel="Void prior and repost"
+      danger
+      onClose={() => setConfirmRepostOpen(false)}
+      onConfirm={handleConfirmRepost}
+    />
+    </>
   );
 }

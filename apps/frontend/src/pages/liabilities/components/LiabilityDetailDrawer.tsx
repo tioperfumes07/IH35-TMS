@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { holdLiability, markLiabilityPaidOff, resumeLiability, voidLiability } from "../../../api/liabilities";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { Button } from "../../../components/Button";
@@ -5,6 +6,7 @@ import { useToast } from "../../../components/Toast";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
+import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
 import { formatUsdTable } from "../../../lib/money";
 
 type Props = {
@@ -29,6 +31,7 @@ const ORIGIN_TO_ENTITY_KIND: Record<string, "safety_fine" | "internal_fine" | "c
 
 export function LiabilityDetailDrawer({ open, operatingCompanyId, liability, onClose, onUpdated }: Props) {
   const { pushToast } = useToast();
+  const [voidReasonOpen, setVoidReasonOpen] = useState(false);
   if (!open || !liability) return null;
   const id = String(liability.id ?? "");
   const settlementHistory = (liability.settlement_history as Array<Record<string, unknown>> | undefined) ?? [];
@@ -87,21 +90,7 @@ export function LiabilityDetailDrawer({ open, operatingCompanyId, liability, onC
       <Button
         size="sm"
         variant="danger"
-        onClick={() => {
-          const reason = window.prompt("Reason for voiding this liability (required):", "");
-          if (reason == null) return;
-          const trimmed = reason.trim();
-          if (!trimmed) {
-            pushToast("A reason is required to void a liability", "error");
-            return;
-          }
-          void voidLiability(id, operatingCompanyId, trimmed)
-            .then(() => {
-              pushToast("Liability voided", "success");
-              onUpdated();
-            })
-            .catch((error) => pushToast(userFacingApiError(error, "Request failed"), "error"));
-        }}
+        onClick={() => setVoidReasonOpen(true)}
       >
         Void
       </Button>
@@ -109,7 +98,8 @@ export function LiabilityDetailDrawer({ open, operatingCompanyId, liability, onC
   );
 
   return (
-    <ParityDrawer open={open} title="Liability Detail" onClose={onClose} size="regular" footer={footer}>
+    <>
+      <ParityDrawer open={open} title="Liability Detail" onClose={onClose} size="regular" footer={footer}>
         <div className="space-y-1 rounded-sm border border-gray-200 bg-gray-50 p-2">
           <div>
             Driver:{" "}
@@ -169,5 +159,26 @@ export function LiabilityDetailDrawer({ open, operatingCompanyId, liability, onC
           </div>
         </div>
     </ParityDrawer>
+    {liability ? (
+      <VoidReasonModal
+        open={voidReasonOpen}
+        title="Void liability"
+        entityRef={liability.display_id ? `Liability ${String(liability.display_id)}` : undefined}
+        submitLabel="Void"
+        postsReversingEntry={true}
+        onClose={() => setVoidReasonOpen(false)}
+        onSubmit={async (reason) => {
+          try {
+            await voidLiability(id, operatingCompanyId, reason.trim());
+            pushToast("Liability voided", "success");
+            onUpdated();
+            setVoidReasonOpen(false);
+          } catch (error) {
+            pushToast(userFacingApiError(error, "Request failed"), "error");
+          }
+        }}
+      />
+    ) : null}
+    </>
   );
 }
