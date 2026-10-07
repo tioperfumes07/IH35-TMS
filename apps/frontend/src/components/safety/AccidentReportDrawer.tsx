@@ -465,12 +465,12 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
       >
         <div className="text-xs" data-testid="accident-report-drawer">
         {createMode ? (
-          <div className="mb-2 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700">
+          <div className="mb-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#1F2A44]">
             Office intake uses this form layout. Persisted reports also arrive from the driver mobile app or maintenance work order conversion.
           </div>
         ) : null}
         <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-2">
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-700">Accident Damage Details</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-[#1F2A44]">Accident Damage Details</div>
           <div className="grid grid-cols-2 gap-x-3 gap-y-2">
             <Field label="Record Type *">
               <ReferenceSelect
@@ -641,7 +641,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                   dataTestId="accident-load"
                 />
                 {createMode && suggestionPinned && loadId && suggestionQuery.data?.data?.load_id === loadId ? (
-                  <p className="mt-1 text-xs text-slate-600" data-testid="accident-create-load-suggested">
+                  <p className="mt-1 text-xs text-[#4B5563]" data-testid="accident-create-load-suggested">
                     Auto-filled from the active trip for this driver/unit on the incident date.
                   </p>
                 ) : null}
@@ -682,7 +682,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                   class is modeled + persisted, show undetermined rather than invent a value. */}
               <input
                 data-testid="accident-class"
-                className="h-8 w-full rounded-sm border border-gray-300 bg-gray-100 px-2 text-slate-600"
+                className="h-8 w-full rounded-sm border border-gray-300 bg-gray-100 px-2 text-[#4B5563]"
                 readOnly
                 value="Not classified"
                 title="No accident class is stored yet — value is not auto-computed"
@@ -714,7 +714,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                   here may predate or differ from the linked claim's own number. No claim_id → render
                   nothing extra; the free-text field alone stays exactly as honest as it always was. */}
               {typeof accident?.claim_id === "string" && accident.claim_id ? (
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-[#6B7280]">
                   Linked claim:{" "}
                   <EntityLink
                     kind="claim"
@@ -730,7 +730,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                   driver_finance.driver_liabilities by origin='safety_accident'/origin_id and returns
                   spawned_liability_id; render it the same honest-drill way as the claim link above. */}
               {typeof accident?.spawned_liability_id === "string" && accident.spawned_liability_id ? (
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-[#6B7280]">
                   Spawned liability:{" "}
                   <EntityLink
                     kind="liability"
@@ -851,7 +851,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
           </label>
         </div>
         {!canMutate ? (
-          <div className="mt-1 text-xs text-slate-500" data-testid="accident-photo-gate-note">
+          <div className="mt-1 text-xs text-[#6B7280]" data-testid="accident-photo-gate-note">
             Save the report first to attach photos.
           </div>
         ) : null}
@@ -866,10 +866,10 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
         ) : null}
         {!detailQuery.isError && spawnedWorkOrders.length > 0 ? (
           <div
-            className="mt-2 rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-xs text-slate-700"
+            className="mt-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#1F2A44]"
             data-testid="accident-spawned-wo"
           >
-            <div className="font-semibold text-slate-600">Linked AC work orders</div>
+            <div className="font-semibold text-[#4B5563]">Linked AC work orders</div>
             <ul className="mt-1 space-y-0.5">
               {spawnedWorkOrders.map((wo) => (
                 <li key={wo.id}>
@@ -877,7 +877,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                     kind="work_order"
                     id={wo.id}
                     label={entityLabel(wo.display_id, wo.id, "Work order")}
-                    className="font-semibold text-slate-700 underline"
+                    className="font-semibold text-[#1F2A44] underline"
                     data-testid={`accident-spawned-wo-link-${wo.id}`}
                   />
                 </li>
