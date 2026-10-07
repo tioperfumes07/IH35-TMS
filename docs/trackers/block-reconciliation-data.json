@@ -1,6 +1,6 @@
 {
  "date": "2026-10-07",
- "generated_at_iso": "2026-10-07T06:49:53.250Z",
+ "generated_at_iso": "2026-10-07T18:40:42.557Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,162 @@
  ],
  "merged_prs": [
   {
+   "number": 25701,
+   "title": "Cursor- fix(guards): LST-F423-P12 banking manifest + collapsed filters + QBO bill payment needles",
+   "mergedAt": "2026-10-07T18:25:11Z",
+   "branch": "devin-a/static-rot-batch-8"
+  },
+  {
+   "number": 25700,
+   "title": "Cursor- QTY-DEC-ALL NumberInput + fuel/cost/WO qty decimals",
+   "mergedAt": "2026-10-07T18:21:11Z",
+   "branch": "cursor/qty-money-decimals-all-c89b"
+  },
+  {
+   "number": 25699,
+   "title": "Cursor- fix(guards): LST-F423-P11 customers/unit/WO PDF needles",
+   "mergedAt": "2026-10-07T18:19:14Z",
+   "branch": "devin-a/static-rot-batch-7"
+  },
+  {
+   "number": 25698,
+   "title": "Cursor- fix(guards): LST-F423-P10 settlement/subnav stale needles",
+   "mergedAt": "2026-10-07T18:16:09Z",
+   "branch": "devin-a/static-rot-batch-6"
+  },
+  {
+   "number": 25697,
+   "title": "Cursor- fix(guards): LST-F423-P9 settlement presettlement/sections/load-coalesce needles",
+   "mergedAt": "2026-10-07T18:14:52Z",
+   "branch": "devin-a/static-rot-batch-6"
+  },
+  {
+   "number": 25696,
+   "title": "Cursor- fix(guards): LST-F423-P8 vendor list search + inactive-roster needles",
+   "mergedAt": "2026-10-07T18:06:06Z",
+   "branch": "devin-a/static-rot-batch-5"
+  },
+  {
+   "number": 25695,
+   "title": "Cursor- fix(guards): LST-F423-P7 cash-advance picker needles + settlement identity selftest",
+   "mergedAt": "2026-10-07T18:03:03Z",
+   "branch": "devin-a/static-rot-batch-4"
+  },
+  {
+   "number": 25694,
+   "title": "Cursor- fix(guards): LST-F423-P6 autoload pointers, AP-aging selftest, legal live-DB, scoreboard refresh",
+   "mergedAt": "2026-10-07T17:59:48Z",
+   "branch": "devin-a/static-rot-batch-3"
+  },
+  {
+   "number": 25693,
+   "title": "Cursor- OUTBOX SETL-F442+F443 merged + FE live for Chrome",
+   "mergedAt": "2026-10-07T17:40:13Z",
+   "branch": "cursor/outbox-setl-f442-f443-c89b"
+  },
+  {
+   "number": 25692,
+   "title": "Cursor- SETL-F443 Money + quantity decimals (diesel gallons, CPG, rates, revenue)",
+   "mergedAt": "2026-10-07T17:32:16Z",
+   "branch": "cursor/settlement-creator-decimal-all-c89b"
+  },
+  {
+   "number": 25691,
+   "title": "Cursor- SETL-F442 Settlement Creator 5-col · decimals · period→load · no driver name under picker",
+   "mergedAt": "2026-10-07T17:26:48Z",
+   "branch": "cursor/settlement-creator-5col-decimals-c89b"
+  },
+  {
+   "number": 25690,
+   "title": "Cursor- fix(guards): LST-F423-P4 stale needle re-anchors (AP aging + BillsPage)",
+   "mergedAt": "2026-10-07T16:29:35Z",
+   "branch": "devin-a/static-rot-batch-2"
+  },
+  {
+   "number": 25689,
+   "title": "Cursor- fix(guards): LST-F423-P3 stale static-guard needle re-anchors",
+   "mergedAt": "2026-10-07T16:18:38Z",
+   "branch": "devin-a/static-rot-batch-1"
+  },
+  {
+   "number": 25688,
+   "title": "Cursor- OUTBOX BANK-F2026100701 MERGED + SETL-F441 LIVE",
+   "mergedAt": "2026-10-07T16:10:22Z",
+   "branch": "cursor/outbox-bank-cat-c89b"
+  },
+  {
+   "number": 25687,
+   "title": "Cursor- BANK-F2026100701 categorize-path deep-link sync guard + modal stub house tokens",
+   "mergedAt": "2026-10-07T16:09:38Z",
+   "branch": "cursor/bank-cat-modal-slate-c89b"
+  },
+  {
+   "number": 25686,
+   "title": "Cursor- docs: Devin OUTBOX done line for LST-F423 (#25685)",
+   "mergedAt": "2026-10-07T16:08:35Z",
+   "branch": "docs/devin-outbox-lst423"
+  },
+  {
+   "number": 25685,
+   "title": "Cursor- fix: LST-F423 static red-on-main rot — membership, entity scope, bill dates/refs",
+   "mergedAt": "2026-10-07T16:08:04Z",
+   "branch": "claude/devin-vacuous-sweep-rebased"
+  },
+  {
+   "number": 25684,
+   "title": "Cursor- OUTBOX SETL-F441 FE+BE LIVE deploy proof",
+   "mergedAt": "2026-10-07T16:00:24Z",
+   "branch": "cursor/outbox-deploy-f441-c89b"
+  },
+  {
+   "number": 25683,
+   "title": "Cursor- OUTBOX SETL-F441 MERGED #25682",
+   "mergedAt": "2026-10-07T15:51:09Z",
+   "branch": "cursor/outbox-setl-f441-c89b"
+  },
+  {
+   "number": 25682,
+   "title": "Cursor- SETL-F441 Settlement Creator UX + miles (cap, StateSelect, Money $, discard, city geocode)",
+   "mergedAt": "2026-10-07T15:49:46Z",
+   "branch": "cursor/settlement-creator-ux-miles-money-c89b"
+  },
+  {
+   "number": 25681,
+   "title": "Cursor- OUTBOX: SETL-F440 city/state + miles MERGED #25680",
+   "mergedAt": "2026-10-07T13:00:09Z",
+   "branch": "cursor/outbox-setl-f440-c89b"
+  },
+  {
+   "number": 25680,
+   "title": "Cursor- FINDING: SETL-F440 — Settlement Creator city/state + loaded/empty miles wiring",
+   "mergedAt": "2026-10-07T12:59:29Z",
+   "branch": "cursor/settlement-creator-geocode-miles-c89b"
+  },
+  {
+   "number": 25678,
+   "title": "Cursor- docs(bus): SETL-F439 OUTBOX — Settlement Creator Google wiring MERGED #25677",
+   "mergedAt": "2026-10-07T09:30:12Z",
+   "branch": "cursor/outbox-setl-f439-c89b"
+  },
+  {
+   "number": 25677,
+   "title": "Cursor- fix(settlements): SETL-F439 — Settlement Creator Google address wiring + Creator defects",
+   "mergedAt": "2026-10-07T09:26:38Z",
+   "branch": "cursor/settlement-creator-google-wire2-c89b"
+  },
+  {
+   "number": 25676,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-10-07T08:27:46Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 25675,
+   "title": "Cursor- fix(ui): CI-MODAL-Z-20261007 — Modal z-index below DatePicker popover tier",
+   "mergedAt": "2026-10-07T08:27:14Z",
+   "branch": "cursor/modal-z-index-1001-c89b"
+  },
+  {
    "number": 25674,
    "title": "Cursor-entity-scope 83 triage — verify-mdata-entity-scope ratchet (ACCT-F2026100684)",
    "mergedAt": "2026-10-06T22:50:20Z",
@@ -17180,162 +17336,6 @@
    "title": "Cursor- BANK-F91392 CreateExpenseModal text-[11px] → text-xs + leftover refuse/plant",
    "mergedAt": "2026-10-04T02:19:02Z",
    "branch": "cursor/bank-f91392-create-exp-text-c89b"
-  },
-  {
-   "number": 25086,
-   "title": "CC-2-CLAIM-RESERVE: 202615400800 in band (release 202615401000)",
-   "mergedAt": "2026-10-04T02:18:40Z",
-   "branch": "chore/claim-reserve-cc2-202615400800"
-  },
-  {
-   "number": 25085,
-   "title": "Cursor- BANK-F91391 CreateBillModal text-[11px] → text-xs + leftover refuse/plant",
-   "mergedAt": "2026-10-04T02:18:23Z",
-   "branch": "cursor/bank-f91391-create-bill-text-c89b"
-  },
-  {
-   "number": 25084,
-   "title": "Claude-1- CLAIM-RESERVE verify-step (driver receivables post on creation, ROUND 394 ruling 2)",
-   "mergedAt": "2026-10-04T02:17:53Z",
-   "branch": "claude/claim-reserve-step-r394-receivables"
-  },
-  {
-   "number": 25083,
-   "title": "Cursor- BANK-F91390 ConvertIssueToWOModal text-[11px] → text-xs + leftover refuse/plant",
-   "mergedAt": "2026-10-04T02:17:44Z",
-   "branch": "cursor/bank-f91390-convert-issue-text-c89b"
-  },
-  {
-   "number": 25082,
-   "title": "CC-2-CLAIM-RESERVE: migration 202615401000 (reclassify by load constraint)",
-   "mergedAt": "2026-10-04T02:16:59Z",
-   "branch": "chore/claim-reserve-cc2-202615401000"
-  },
-  {
-   "number": 25081,
-   "title": "Cursor- BANK-F91389 DeadheadOptimizerPanel text-[11px] → text-xs + leftover refuse/plant",
-   "mergedAt": "2026-10-04T02:16:54Z",
-   "branch": "cursor/bank-f91389-deadhead-opt-text-c89b"
-  },
-  {
-   "number": 25080,
-   "title": "Cursor- BANK-F91388 CreateDriverModal text-[11px] → text-xs + leftover refuse/plant",
-   "mergedAt": "2026-10-04T02:16:14Z",
-   "branch": "cursor/bank-f91388-create-drv-text-c89b"
-  },
-  {
-   "number": 25079,
-   "title": "Cursor- BANK-F91387 DriverAssignmentSection text-[11px] → text-xs + leftover refuse/plant",
-   "mergedAt": "2026-10-04T02:15:34Z",
-   "branch": "cursor/bank-f91387-drv-assign-text-c89b"
-  },
-  {
-   "number": 25078,
-   "title": "Cursor- BANK-F91386 TireWearProjectionChart text-[11px] → text-xs + leftover refuse/plant",
-   "mergedAt": "2026-10-04T02:14:18Z",
-   "branch": "cursor/bank-f91386-tire-wear-text-c89b"
-  },
-  {
-   "number": 25077,
-   "title": "Claude-3- ROUND 393.3: void / lease / period close / recurring post through the one writer (allowlist 11 -> 7); recurring worker stays OPEN",
-   "mergedAt": "2026-10-04T02:13:09Z",
-   "branch": "cc-3/393-3-doors"
-  },
-  {
-   "number": 25076,
-   "title": "Cursor- BANK-F91385 FinancialUnitPLSection text-[11px] → text-xs + leftover refuse/plant",
-   "mergedAt": "2026-10-04T02:12:27Z",
-   "branch": "cursor/bank-f91385-unit-pl-text-c89b"
-  },
-  {
-   "number": 25075,
-   "title": "Cursor- OUTBOX stamp BANK-F91382..F91384 leftover drain MERGED",
-   "mergedAt": "2026-10-04T02:11:42Z",
-   "branch": "cursor/outbox-f91382-84-c89b"
-  },
-  {
-   "number": 25074,
-   "title": "Cursor- BANK-F91384 PhotoGallery text-[11px] → text-xs + leftover refuse/plant",
-   "mergedAt": "2026-10-04T02:11:20Z",
-   "branch": "cursor/bank-f91384-photo-gal-text-c89b"
-  },
-  {
-   "number": 25073,
-   "title": "Cursor- BANK-F91383 SafetyDashboardFilter text-[11px] → text-xs + leftover refuse/plant",
-   "mergedAt": "2026-10-04T02:09:54Z",
-   "branch": "cursor/bank-f91383-safety-filt-text-c89b"
-  },
-  {
-   "number": 25072,
-   "title": "Cursor- BANK-F91382 SafetyGroupNav text-[11px] → text-xs + leftover refuse/plant",
-   "mergedAt": "2026-10-04T02:09:02Z",
-   "branch": "cursor/bank-f91382-safety-nav-text-c89b"
-  },
-  {
-   "number": 25071,
-   "title": "Cursor- OUTBOX stamp BANK-F91377..F91381 leftover drain MERGED",
-   "mergedAt": "2026-10-04T02:08:09Z",
-   "branch": "cursor/outbox-f91377-81-c89b"
-  },
-  {
-   "number": 25070,
-   "title": "Cursor- BANK-F91381 TelematicsSectionTable text-[11px] → text-xs + leftover refuse/plant",
-   "mergedAt": "2026-10-04T02:07:26Z",
-   "branch": "cursor/bank-f91381-telematics-tbl-text-c89b"
-  },
-  {
-   "number": 25069,
-   "title": "Cursor- BANK-F91380 BackArrowHeader text-[11px] → text-xs + leftover refuse/plant",
-   "mergedAt": "2026-10-04T02:06:43Z",
-   "branch": "cursor/bank-f91380-backarrow-text-c89b"
-  },
-  {
-   "number": 25068,
-   "title": "Cursor- BANK-F91379 PageHeader text-[11px] → text-xs + leftover refuse/plant",
-   "mergedAt": "2026-10-04T02:05:40Z",
-   "branch": "cursor/bank-f91379-page-hdr-text-c89b"
-  },
-  {
-   "number": 25067,
-   "title": "Cursor- BANK-F91378 ArrivingSoonFilterBar text-[11px] → text-xs + leftover refuse/plant",
-   "mergedAt": "2026-10-04T02:04:46Z",
-   "branch": "cursor/bank-f91378-arriving-filt-text-c89b"
-  },
-  {
-   "number": 25066,
-   "title": "CC-2-FUEL-PER-LOAD: governed voids are reconciled movement, not drift + AUTH-210 consumed",
-   "mergedAt": "2026-10-04T02:04:34Z",
-   "branch": "cc-2/fuel-per-load-governed-voids"
-  },
-  {
-   "number": 25065,
-   "title": "Cursor- BANK-F91377 UploadZone text-[11px] → text-xs + leftover refuse/plant",
-   "mergedAt": "2026-10-04T02:03:58Z",
-   "branch": "cursor/bank-f91377-uploadzone-text-c89b"
-  },
-  {
-   "number": 25064,
-   "title": "Cursor- OUTBOX stamp BANK-F91371..F91376 leftover drain MERGED",
-   "mergedAt": "2026-10-04T02:03:17Z",
-   "branch": "cursor/outbox-f91371-76-c89b"
-  },
-  {
-   "number": 25063,
-   "title": "Cursor- BANK-F91376 LaunchReadinessPage text-[11px] → text-xs + leftover refuse/plant",
-   "mergedAt": "2026-10-04T02:02:31Z",
-   "branch": "cursor/bank-f91376-launch-rdy-text-c89b"
-  },
-  {
-   "number": 25062,
-   "title": "Cursor- BANK-F91375 ProfilesTab text-[11px] → text-xs + leftover refuse/plant",
-   "mergedAt": "2026-10-04T02:01:44Z",
-   "branch": "cursor/bank-f91375-profiles-text-c89b"
-  },
-  {
-   "number": 25061,
-   "title": "CC-2-AUTH-210: reefer trailer on 7 fills from the trailer each load's settlement prints",
-   "mergedAt": "2026-10-04T02:01:10Z",
-   "branch": "cc-2/auth-210-reefer-trailers-settlements"
   }
  ],
  "merged_pr_total": 3000,
