@@ -113,3 +113,6 @@ DONE: PR #25754 · squash 8db3696b991c3b77ec3b75322b8d8cbb1914a9b6 · money-pr-l
 
 ## 2026-10-07 — drain: items-list-sort selftest re-anchor shipped
 DONE: PR #25756 · squash ab9c81b73b712d5a9ce2328339b7ee007c1a6393 · money-pr-local-gate exit 0 · re-anchored verify-items-list-sort-values-wired.mjs selftest to multi-line column prop formatting · baseline-lines-added = 0
+
+## 2026-10-07 — drain: report QBO date/time chrome + recurring-bill money formatter shipped
+DONE: PR #25768 · squash db4173053cac67b92adde8c189de6d184084f068 · money-pr-local-gate exit 0 · fixed formatDateUS/formatDateTimeUS usage on Cancellations/CashFlow/FuelRecon/GeofenceRecon/ScheduledReports/SubscriptionManager; restored RecurringBillList money() USD literal · baseline-lines-added = 0
