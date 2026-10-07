@@ -1,10 +1,10 @@
 {
-  "healthzSha": "44af1dd",
-  "generated_at": "2026-10-07T17:57:08.047Z",
+  "healthzSha": "515d969",
+  "generated_at": "2026-10-07T23:52:17.340Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "44af1dd",
+    "deployedSha": "515d969",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -14,7 +14,7 @@
     {
       "tier": "0",
       "module": "banking",
-      "build": "17/20",
+      "build": "19/20",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 25693,
-      "title": "FINDING: OUTBOX — SETL-F442+F443 merged + FE live for Chrome",
+      "number": 25775,
+      "title": "FINDING: LST-F437 LANE: FINANCIAL — verify-trial-balance-and-balance-sheet took Math.abs() of liability/equity/income, so a liability with a debit balance (2410 today) failed an accounting equation that closes exactly; Other Income was left out",
       "state": "merged",
-      "mergedAtCt": "10/07/2026, 12:40 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25693",
-      "sha": "44af1dd786",
-      "committedAtIso": "2026-10-07T12:40:13-05:00"
+      "mergedAtCt": "10/07/2026, 06:43 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25775",
+      "sha": "515d969169",
+      "committedAtIso": "2026-10-07T18:43:50-05:00"
     },
     {
-      "number": 25692,
-      "title": "FINDING: SETL-F443 — MoneyInput + Creator quantities accept typed decimals (diesel/CPG/rates)",
+      "number": 25774,
+      "title": "Cursor- classify 25 live-DB guards with REQUIRES_LIVE_DB",
       "state": "merged",
-      "mergedAtCt": "10/07/2026, 12:32 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25692",
-      "sha": "2406442be6",
-      "committedAtIso": "2026-10-07T12:32:15-05:00"
+      "mergedAtCt": "10/07/2026, 06:42 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25774",
+      "sha": "21e6695899",
+      "committedAtIso": "2026-10-07T18:42:43-05:00"
     },
     {
-      "number": 25691,
-      "title": "FINDING: SETL-F442 — 5-col Creator, decimals, period→load dates, no driver EntityLink under picker",
+      "number": 25773,
+      "title": "FINDING: LST-F435 LANE: FINANCIAL — ROUND 441.15: the Relay backfill could only be started by an Owner session on the live app; a one-shot, server-side trigger (RELAY_FUEL_BACKFILL_ONCE) runs the same backfill exactly once so the Relay key never leaves the server",
       "state": "merged",
-      "mergedAtCt": "10/07/2026, 12:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25691",
-      "sha": "1ae260e60c",
-      "committedAtIso": "2026-10-07T12:26:48-05:00"
+      "mergedAtCt": "10/07/2026, 06:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25773",
+      "sha": "78c2c96952",
+      "committedAtIso": "2026-10-07T18:35:58-05:00"
     },
     {
-      "number": 25690,
-      "title": "FINDING: LST-F423-P4 — re-anchor two more stale static-guard needles (AP aging selftest, BillsPage money formatter)",
+      "number": 25772,
+      "title": "FINDING: N/A (CLAIM-RESERVE migration 202615440510 for CC-1 ROUND 441.5 Phase 2 — re-keys my own unused 202615440600 claim into the cc-1 band HH 00–05; reservation-only commit, no code fix)",
       "state": "merged",
-      "mergedAtCt": "10/07/2026, 11:29 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25690",
-      "sha": "ec86a162fb",
-      "committedAtIso": "2026-10-07T11:29:35-05:00"
+      "mergedAtCt": "10/07/2026, 06:31 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25772",
+      "sha": "817c8b66fc",
+      "committedAtIso": "2026-10-07T18:31:28-05:00"
     },
     {
-      "number": 25689,
-      "title": "FINDING: LST-F423-P3 — re-anchor four stale static-guard needles to current code shape",
+      "number": 25771,
+      "title": "FINDING: N/A — CC-2 OUTBOX: ROUND 441.13 done, stopped",
       "state": "merged",
-      "mergedAtCt": "10/07/2026, 11:18 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25689",
-      "sha": "5752464de2",
-      "committedAtIso": "2026-10-07T11:18:37-05:00"
+      "mergedAtCt": "10/07/2026, 06:28 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25771",
+      "sha": "7c05c4a1c8",
+      "committedAtIso": "2026-10-07T18:28:22-05:00"
     },
     {
-      "number": 25688,
-      "title": "OUTBOX: BANK-F2026100701 MERGED #25687 ab83c0375d — SETL-F441 LIVE for Chrome",
+      "number": 25769,
+      "title": "FINDING: ENTITY-SCOPE-REASON LANE: FINANCIAL — written reason required (shrink-only @114)",
       "state": "merged",
-      "mergedAtCt": "10/07/2026, 11:10 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25688",
-      "sha": "ee40fb0a9a",
-      "committedAtIso": "2026-10-07T11:10:22-05:00"
+      "mergedAtCt": "10/07/2026, 06:26 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25769",
+      "sha": "eaed00891b",
+      "committedAtIso": "2026-10-07T18:26:33-05:00"
     },
     {
-      "number": 25687,
-      "title": "FINDING: BANK-F2026100701 — active-categorize-path guard false-red after multi-select; DesignView modal stub slate",
+      "number": 25768,
+      "title": "Cursor- fix(report): ACCT-F441 QBO date/time chrome and recurring-bill money formatter",
       "state": "merged",
-      "mergedAtCt": "10/07/2026, 11:09 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25687",
-      "sha": "ab83c0375d",
-      "committedAtIso": "2026-10-07T11:09:38-05:00"
+      "mergedAtCt": "10/07/2026, 06:24 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25768",
+      "sha": "db4173053c",
+      "committedAtIso": "2026-10-07T18:24:10-05:00"
     },
     {
-      "number": 25686,
-      "title": "FINDING: N/A — append Devin OUTBOX done line for LST-F423 merged via #25685",
+      "number": 25758,
+      "title": "FINDING: ACCT-F442 LANE: FINANCIAL — Relay sender_fee from fees[] wallet + Fuel Card Fee GL",
       "state": "merged",
-      "mergedAtCt": "10/07/2026, 11:08 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25686",
-      "sha": "bbeae61cff",
-      "committedAtIso": "2026-10-07T11:08:34-05:00"
+      "mergedAtCt": "10/07/2026, 06:23 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25758",
+      "sha": "b7c1876cd6",
+      "committedAtIso": "2026-10-07T18:23:44-05:00"
     },
     {
-      "number": 25685,
-      "title": "Cursor- fix: LST-F423 static red-on-main rot — membership, entity scope, bill dates/refs",
+      "number": 25767,
+      "title": "FINDING: P0 LANE: FINANCIAL — feed-gate.checks.ts company filter (cross-tenant hole)",
       "state": "merged",
-      "mergedAtCt": "10/07/2026, 11:08 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25685",
-      "sha": "c8b983b875",
-      "committedAtIso": "2026-10-07T11:08:03-05:00"
+      "mergedAtCt": "10/07/2026, 06:23 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25767",
+      "sha": "f773fac08b",
+      "committedAtIso": "2026-10-07T18:23:41-05:00"
     },
     {
-      "number": 25684,
-      "title": "OUTBOX: SETL-F441 FE+BE LIVE — dep-db36ks72975c73f5bvd0 / dep-db36k7brjlhs7387a8ig · healthz 566433ba15",
+      "number": 25766,
+      "title": "FINDING: LST-F433 LANE: FINANCIAL — ROUND 441.5: the 5 bare cost categorizations converted to expense documents on prod (net TB delta 0); conversion script records the fitting item for the fifth line; OUTBOX proof",
       "state": "merged",
-      "mergedAtCt": "10/07/2026, 11:00 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25684",
-      "sha": "f9e954bf09",
-      "committedAtIso": "2026-10-07T11:00:23-05:00"
+      "mergedAtCt": "10/07/2026, 06:18 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25766",
+      "sha": "defdede499",
+      "committedAtIso": "2026-10-07T18:18:09-05:00"
     }
   ]
 }

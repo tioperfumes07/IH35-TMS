@@ -72,7 +72,10 @@ export function auditMasterDataCreateTargets(sources) {
           `(POST /api/v1/mdata/customers) so the returned id is a real, bookable mdata.customers FK.`
       );
     }
-    if (!/createCustomer\s*\(/.test(src)) {
+    // QuickCreateEntityModal delegates the customer branch to NewCustomerDrawerForm (same Lists chrome)
+    // so the createCustomer call lives in the drawer component, not here.
+    const delegatesCustomer = /<NewCustomerDrawerForm[\s\S]{0,400}onCreated=\{/.test(src);
+    if (!delegatesCustomer && !/createCustomer\s*\(/.test(src)) {
       errors.push(
         `D1-1 REGRESSION: ${rel} no longer calls createCustomer(...). The customer create must ` +
           `target the real mdata.customers endpoint.`
@@ -82,7 +85,7 @@ export function auditMasterDataCreateTargets(sources) {
     // ap_email → billing_email → ar_email. Follow direct payloads or the shared helper.
     const composesHelper = /createCustomer\(profileValuesToCreatePayload\(/.test(src);
     const carriesDirectly = /\bar_email\s*:/.test(src) && /\bap_email\s*:/.test(src);
-    if (!(carriesDirectly || (composesHelper && helperCarriesInvoiceEmail))) {
+    if (!delegatesCustomer && !(carriesDirectly || (composesHelper && helperCarriesInvoiceEmail))) {
       errors.push(
         `LV-CUSTOMER-CREATE-INVOICE-EMAIL: ${rel} createCustomer(...) must pass ar_email and ap_email ` +
           `(same value as email) so invoice send can resolve a recipient without a CustomerDetail edit.`
@@ -105,7 +108,8 @@ export function auditMasterDataCreateTargets(sources) {
       `through the shared helper (credentials + idempotency + base URL).`
     );
   }
-  if (!/onSuccess:\s*async \(created\)/.test(partSrc) || !/await queryClient\.invalidateQueries/.test(partSrc) || !/onCreated\?\.\(created\.id\)/.test(partSrc)) {
+  const reloadsParts = /await queryClient\.invalidateQueries/.test(partSrc) || /await invalidatePartsStockQueries\(queryClient/.test(partSrc);
+  if (!/onSuccess:\s*async \(created\)/.test(partSrc) || !reloadsParts || !/onCreated\?\.\(created\.id\)/.test(partSrc)) {
     errors.push("D5-1 REGRESSION: PartCreateDrawer must reload then forward the returned part id (R=W).");
   }
   const partsPageSrc = sources[PARTS_PAGE] ?? "";
@@ -142,7 +146,7 @@ if (process.argv.includes("--selftest")) {
   }
   const cases = [
     ["shared invoice email removed", CUSTOMER_PAYLOAD_HELPER, /\bap_email:\s*apEmail/, "ap_email"],
-    ["quick create targets mirror", CUSTOMER_CREATORS[2], /createCustomer\s*\(/, "createQboCustomer("],
+    ["quick create targets mirror", CUSTOMER_CREATORS[2], /<NewCustomerDrawerForm/, "<QboCustomerDrawerForm"],
     ["part create bypasses helper", PART_CREATE_DRAWER, /apiRequest\s*[<(]/, "fetch(resolveApiUrl("],
     ["part returned id dropped", PART_CREATE_DRAWER, /onCreated\?\.\(created\.id\)/, "void created.id"],
     ["part reverse route dropped", PARTS_PAGE, /next\.set\("part_id", id\)/, "void id"],
