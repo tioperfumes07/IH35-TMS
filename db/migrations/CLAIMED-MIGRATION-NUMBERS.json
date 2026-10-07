@@ -2137,6 +2137,11 @@
       "claimed_at": "2026-10-07",
       "purpose": "ROUND 441.5 Phase 1: accounting.expenses.source_bank_transaction_id (company-scoped FK, one live expense per bank line) so a money-out bank line categorized to an expense account creates an expense document linked both ways"
     },
+    "202615440600": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-07",
+      "purpose": "ROUND 441.5 Phase 2: a money-in bank line categorized to any account creates a DEPOSIT document (QBO Add funds to this deposit) — deposit_lines line_type 'account' with account_id + received-from, deposits.source_bank_transaction_id, undeposited_funds_account_id optional when no receipts"
+    },
     "202615440200": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-06",
