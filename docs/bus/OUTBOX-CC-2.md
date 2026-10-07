@@ -2324,3 +2324,70 @@ Open (process): NOT GATED, NOT MERGED. Pushed as DRAFT **#25752**. Next step: `m
 
 **4. STOPPED.** Nothing new started before Oct 8 6pm Chicago.
 Open items carried: B8 merge (needs its DB test green in verify:local-ci; the fixture fix is f44e92b325 on that branch) · #25752 gate + merge · prod migration ledger has 3 entries with no file on disk (202610290000, 202614000000, 202614690000 — needs an AUTH) · pre-existing test reds (DriversListPage x2, RecordTransferModal, TransferModal, ManualJEModal, SettlementsPage; backend bill-account-resolver etc.) and the ~90 DB-test failures in the fresh-DB suite (41 are the Owner-insert trigger in fixtures — same fix as f44e92b325).
+
+### CC-2 · 2026-10-07 23:05Z — ROUND 441.8 rulings executed (then stopped)
+
+**RULING 1 — B8 backed up.** `cc-2/b8-deposit-to-invoices` pushed AS-IS (tip f0f30cd5e3) → DRAFT **#25755** "DO NOT MERGE — B8 provenance under review", body has all 7 SHAs + dates + the re-commit disclosure. Nothing rewritten.
+
+**RULING 2 — chain-deadhead: the UNIT path is possible; fallback NOT needed.** Measured read-only on the pre-purge backup (USMCA only; no frozen-company rows read):
+- every telematics.unit_stop_events row for units that ran USMCA loads is filed under USMCA (804 rows / 14 units) → reading them is in-company;
+- since stop events began (2026-09-22): **18 / 18** USMCA loads have a ≥30-min dwell stop for their unit before pickup; 12 are tied to the prior load (load_id_at_time);
+- before 09-22 only 18 / 135 have stop events (feature start) — the books are purged, so no history to serve.
+Plan (after reset): origin = the unit's last dwell stop before pickup from its own company-scoped stop history; drop the mdata.loads cross-company read entirely. ALSO FOUND: today the service returns the other company's `prior_load_number` to the caller — a cross-company label leak, removed by the same change.
+
+**RULING 3 — #25752: 19 exceptions listed in the PR body (file:line · query · reason); waits on the Lead's read; DO NOT MERGE.** New facts the Lead needs:
+- Cursor's **#25674** (17da23e63f, merged 2026-10-06 17:50 Chicago) did the SAME 83-query triage in parallel. Main's step-84 baseline now holds **114 entries with NO written reason** (incl. 2 for chain-deadhead) — i.e. unreviewed cross-tenant exceptions are already on main. #25752 carries the stricter rule (new exceptions need a reason; 41 legacy unreasoned capped, shrink-only).
+- Main today: **1** open unscoped literal — `apps/backend/src/driver-finance/feed-gate/feed-gate.checks.ts` (`SELECT 'mdata.loads', l.id, 'Load ' || l.load_number …`).
+- #25752 gate NOT green: verify-seat-distance-from-main; rebase conflicts in 16 files (money paths). Left as draft; needs a reconcile pass against #25674 after the reset. Lead to rule: keep #25752's reason-required mechanism and re-point it at main's 114, or close #25752 as superseded.
+
+**CARRIED — finding: 41 DB test files fail on the Owner-role trigger.**
+Rule: `identity.guard_role_escalation()` (db/migrations/202613312000_permission_model.sql) raises `role_escalation_blocked: only a primary owner can assign the Owner role` on any INSERT/UPDATE setting role='Owner' unless `identity.allow_owner_bootstrap()` (SET LOCAL app.allow_owner_bootstrap = '1'). Fixture fix: test files that INSERT an Owner directly must use the sanctioned bootstrap exactly as apps/backend/test-helpers/db-fixture.ts:263-272 does, or seed a non-Owner role (Accountant) when Owner is not under test (B8's f44e92b325 does the latter). The 41 files (verify:local-ci fresh DB, 2026-10-07):
+- apps/backend/src/accounting/__tests__/abandonment-escrow-forfeit-scenario.db.test.ts
+- apps/backend/src/accounting/__tests__/accident-dire-scenario.db.test.ts
+- apps/backend/src/accounting/__tests__/acct-f5622-payment-void-recompute.db.test.ts
+- apps/backend/src/accounting/__tests__/acct-f5623-bill-payment-vendor-credit-netting.db.test.ts
+- apps/backend/src/accounting/__tests__/bill-gl-posting.db.test.ts
+- apps/backend/src/accounting/__tests__/bill-payment-gl-ap-control-isolation.stress.db.test.ts
+- apps/backend/src/accounting/__tests__/bill-payment-gl-posting.db.test.ts
+- apps/backend/src/accounting/__tests__/customer-payment-gl-posting.db.test.ts
+- apps/backend/src/accounting/__tests__/driver-reimbursement-gl-posting.db.test.ts
+- apps/backend/src/accounting/__tests__/escrow-new-hire-scenario.db.test.ts
+- apps/backend/src/accounting/__tests__/expense-gl-posting.db.test.ts
+- apps/backend/src/accounting/__tests__/insurance-claim-recovery-scenario.db.test.ts
+- apps/backend/src/accounting/__tests__/internal-fine-autodeduct.db.test.ts
+- apps/backend/src/accounting/__tests__/invoice-ar-killswitch.db.test.ts
+- apps/backend/src/accounting/__tests__/scenario-battery.db.test.ts
+- apps/backend/src/accounting/__tests__/subledger-gl-tieout-ar.db.test.ts
+- apps/backend/src/accounting/__tests__/tioperfumes-e2e-scenario.db.test.ts
+- apps/backend/src/accounting/__tests__/worm-audit-actor-attribution.db.test.ts
+- apps/backend/src/accounting/amortization-posting/__tests__/amortization-gl-posting.db.test.ts
+- apps/backend/src/accounting/amortization-posting/__tests__/prepaid-purchase-posting.db.test.ts
+- apps/backend/src/accounting/bank-recon/__tests__/receive-and-match.db.test.ts
+- apps/backend/src/accounting/finance-hub-amortization-posting/__tests__/loan-payment-posting.db.test.ts
+- apps/backend/src/accounting/lease-asc842/__tests__/lease-gl-posting.db.test.ts
+- apps/backend/src/accounting/opening-balance-register/__tests__/opening-balance-register-commit-gate.db.test.ts
+- apps/backend/src/accounting/revrec-delivery-posting/__tests__/revrec-latch-two-event-live.db.test.ts
+- apps/backend/src/accounting/settlement-posting/__tests__/settlement-bill-payment-posting.db.test.ts
+- apps/backend/src/accounting/settlement-posting/__tests__/settlement-gl-posting.db.test.ts
+- apps/backend/src/banking/__tests__/bank-driver-advance-idempotency.db.test.ts
+- apps/backend/src/banking/__tests__/bank-driver-advance.db.test.ts
+- apps/backend/src/banking/__tests__/bank-driver-expense-deduction-idempotency.db.test.ts
+- apps/backend/src/banking/__tests__/bank-feed-gl-posting.db.test.ts
+- apps/backend/src/banking/__tests__/bank-feed-transfer-dedup.db.test.ts
+- apps/backend/src/banking/__tests__/bank-transaction-splits-vendor-bill.db.test.ts
+- apps/backend/src/banking/__tests__/bulk-transactions-post-as-bill.db.test.ts
+- apps/backend/src/banking/__tests__/mark-bank-feed-transfer.db.test.ts
+- apps/backend/src/banking/__tests__/transfer-gl-posting.db.test.ts
+- apps/backend/src/dispatch/__tests__/acct-f5624-detention-billing-bridge-resync.db.test.ts
+- apps/backend/src/driver-finance/__tests__/settlement-payrun-close.db.test.ts
+- apps/backend/src/finance/amortization/__tests__/amortization.db.test.ts
+- apps/backend/src/finance/scenarios/__tests__/scenarios.db.test.ts
+- apps/backend/src/settlements/__tests__/approval-service-canonical.db.test.ts
+Not asserted: whether CC-3's 5 front-end failures share this cause — front-end (jsdom) tests do not touch the DB trigger; the frontend reds I saw on main were different (ToastProvider, "multiple elements"). Needs a side-by-side, not an assumption.
+
+**CARRIED — the 3 prod migration-ledger "orphans" (verify-no-orphan-migration-ledger-entries vs prod):**
+1. `202610290000_disp01_escrow_abandon_trigger_text_cast` — REAL rename orphan: renamed to `202610291200_disp01_escrow_abandon_trigger_text_cast.sql` on 2026-07-30 (0897d9ca8d, band move). It recreates trigger `trg_auto_propose_escrow_on_abandon` on mdata.loads (`dispatch.auto_propose_escrow_on_abandonment`, text cast fix). Needs an AUTH to repoint/retire the old ledger row.
+2. `202614000000_mdata_locations_is_sample_data` (ACC-15: adds is_sample_data to mdata.locations) — file IS on disk; the guard reports the entry without `.sql` → a mirror key-format mismatch, not a missing file. Needs a look before any AUTH.
+3. `202614690000_expense_lines_item_and_account_required` (document integrity: expense lines must carry item + account; 639-line backfill) — same as 2: file on disk, entry without `.sql`.
+
+**STOPPED.** Nothing new before Oct 8 6pm Chicago. Uncommitted: none. All branches on the remote (B8 #25755, entity-scope #25752).
