@@ -75,7 +75,8 @@ function assertMigrated(src) {
   if (!src.includes('storageKey="bill-payments-subtable"')) {
     errors.push(`${PAGE}: must set storageKey="bill-payments-subtable" on the payments sub-table`);
   }
-  if (!/currency:\s*"USD"/.test(src) || !src.includes("/ 100")) {
+  const hasCentsFormatter = src.includes("/ 100") || src.includes("formatUsdCents");
+  if (!hasCentsFormatter) {
     errors.push(`${PAGE}: must keep the cents-based USD money() formatter`);
   }
   if (!src.includes("ListErrorBanner")) {

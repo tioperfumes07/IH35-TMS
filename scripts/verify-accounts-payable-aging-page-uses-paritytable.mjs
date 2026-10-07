@@ -107,6 +107,7 @@ function selftest() {
       { key: "d90_plus", label: "91+" },
       { key: "total", label: "Total" },
     ];
+    const headerClass = "text-section-header";
     const emptyMessage = "No open A/P in TMS bills.";
     <Link>Open bills</Link>
     <ListErrorState title="Couldn't load A/P aging" status={0} onRetry={() => {}} />
