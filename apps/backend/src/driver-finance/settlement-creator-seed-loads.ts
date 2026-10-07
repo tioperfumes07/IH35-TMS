@@ -115,19 +115,44 @@ function buildStops(load: SettlementCreatorLoadBlock): BookLoadInput["stops"] {
     );
   }
 
+  const pickupLat = load.pickup_lat;
+  const pickupLng = load.pickup_lng;
+  const deliveryLat = load.delivery_lat;
+  const deliveryLng = load.delivery_lng;
+
   return [
     {
       sequence_number: 1,
       stop_type: "pickup",
+      address_line1: load.pickup_address?.trim() || undefined,
       city: pickupCity,
       state: pickupState,
+      postal_code: load.pickup_zip?.trim() || undefined,
+      latitude:
+        typeof pickupLat === "number" && Number.isFinite(pickupLat) && pickupLat !== 0
+          ? pickupLat
+          : undefined,
+      longitude:
+        typeof pickupLng === "number" && Number.isFinite(pickupLng) && pickupLng !== 0
+          ? pickupLng
+          : undefined,
       scheduled_arrival_at: pickupAt,
     },
     {
       sequence_number: 2,
       stop_type: "delivery",
+      address_line1: load.delivery_address?.trim() || undefined,
       city: deliveryCity,
       state: deliveryState,
+      postal_code: load.delivery_zip?.trim() || undefined,
+      latitude:
+        typeof deliveryLat === "number" && Number.isFinite(deliveryLat) && deliveryLat !== 0
+          ? deliveryLat
+          : undefined,
+      longitude:
+        typeof deliveryLng === "number" && Number.isFinite(deliveryLng) && deliveryLng !== 0
+          ? deliveryLng
+          : undefined,
       scheduled_arrival_at: deliveryAt,
     },
   ];

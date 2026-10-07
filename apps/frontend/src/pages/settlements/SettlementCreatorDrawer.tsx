@@ -4,7 +4,7 @@
  * Live Post enabled (owner 2026-09-25). Preview still gates can_post on control totals.
  */
 import { MoneyCell } from "../../components/shared/MoneyCell";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { Combobox } from "../../components/Combobox";
@@ -14,6 +14,9 @@ import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { StateSelect } from "../../components/forms/StateSelect";
+import { AddressGeocodeInput } from "../../components/dispatch/AddressGeocodeInput";
+import type { GeocodeResult } from "../../api/geocoding";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { formatUsdCents, formatUsdCentsTable } from "../../lib/money";
@@ -25,7 +28,12 @@ import { getReclassifyAccountTree } from "../../api/reclassify";
 import { WizardReclassifyPanel } from "./WizardReclassifyPanel";
 import { FuelStopLocationPicker } from "../../components/locations/FuelStopLocationPicker";
 import { formatFuelStopLocationLabel } from "../../lib/fuelStopLocationLabel";
-import { peekNextLoadNumber } from "../../api/dispatch";
+import {
+  peekNextLoadNumber,
+  getLaneMileage,
+  getChainDeadhead,
+  getDriverPayCard,
+} from "../../api/dispatch";
 import {
   previewSettlementCreator,
   postSettlementCreator,
@@ -65,9 +73,19 @@ function emptyLoad(loadNumber = ""): LoadDraft {
     load_number: loadNumber,
     customer_name: "",
     pickup_date: "",
+    pickup_address: "",
     pickup_city: "",
+    pickup_state: "",
+    pickup_zip: "",
+    pickup_lat: null,
+    pickup_lng: null,
     delivery_date: "",
+    delivery_address: "",
     delivery_city: "",
+    delivery_state: "",
+    delivery_zip: "",
+    delivery_lat: null,
+    delivery_lng: null,
     line_haul_miles: null,
     line_haul_rate_cents: null,
     line_haul_amount_cents: null,
@@ -82,6 +100,34 @@ function emptyLoad(loadNumber = ""): LoadDraft {
     trip_type: "NB",
     join_outbound_load_number: "",
     not_yet_delivered: true,
+  };
+}
+
+/** Apply a Google Places / geocode pick onto one stop side — same fields Book Load writes. */
+function applyGeocodeToLoad(
+  load: LoadDraft,
+  side: "pickup" | "delivery",
+  r: GeocodeResult,
+): LoadDraft {
+  if (side === "pickup") {
+    return {
+      ...load,
+      pickup_address: r.address_line1 || r.formatted || load.pickup_address,
+      pickup_city: r.city || load.pickup_city,
+      pickup_state: (r.state || load.pickup_state || "").toUpperCase(),
+      pickup_zip: r.zip || load.pickup_zip,
+      pickup_lat: typeof r.lat === "number" && Number.isFinite(r.lat) && r.lat !== 0 ? r.lat : load.pickup_lat,
+      pickup_lng: typeof r.lon === "number" && Number.isFinite(r.lon) && r.lon !== 0 ? r.lon : load.pickup_lng,
+    };
+  }
+  return {
+    ...load,
+    delivery_address: r.address_line1 || r.formatted || load.delivery_address,
+    delivery_city: r.city || load.delivery_city,
+    delivery_state: (r.state || load.delivery_state || "").toUpperCase(),
+    delivery_zip: r.zip || load.delivery_zip,
+    delivery_lat: typeof r.lat === "number" && Number.isFinite(r.lat) && r.lat !== 0 ? r.lat : load.delivery_lat,
+    delivery_lng: typeof r.lon === "number" && Number.isFinite(r.lon) && r.lon !== 0 ? r.lon : load.delivery_lng,
   };
 }
 
@@ -359,6 +405,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
   const [peekLoadBase, setPeekLoadBase] = useState<string>("");
   const [seqError, setSeqError] = useState<string | null>(null);
   const [driverId, setDriverId] = useState<string | null>(null);
+  const [driverLabel, setDriverLabel] = useState("");
   const [unitId, setUnitId] = useState<string | null>(null);
   const [trailerId, setTrailerId] = useState<string | null>(null);
   const [trailerNumber, setTrailerNumber] = useState("");
@@ -383,8 +430,22 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
   const [preview, setPreview] = useState<SettlementCreatorPreview | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [attemptClose, setAttemptClose] = useState<(() => void) | null>(null);
+  /** Operator typed miles/rate — do not overwrite with lane / pay-card autofill. */
+  const milesTouchedRef = useRef<Record<number, boolean>>({});
+  const ratesTouchedRef = useRef(false);
 
   const wrongEntity = Boolean(companyId && companyId !== USMCA);
+
+  /** Company → driver carry: new money lines default to the first (or only) load number. */
+  const defaultLoadNumber = useMemo(() => {
+    const n = loads.find((l) => String(l.load_number ?? "").trim())?.load_number?.trim();
+    return n || "";
+  }, [loads]);
+
+  const registerAttemptClose = useCallback((next: () => void) => {
+    setAttemptClose(() => next);
+  }, []);
 
   // Owner 2026-09-26: auto next load # + next AlwaysTrack settlement # on open. Locked until Edit.
   useEffect(() => {
@@ -415,6 +476,141 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
       cancelled = true;
     };
   }, [open, companyId, wrongEntity]);
+
+  // Dates transfer: settlement period follows the earliest pickup / latest delivery on the loads
+  // (owner: typing stop dates must fill Start/End — same numbers the AlwaysTrack statement uses).
+  useEffect(() => {
+    const pickups = loads.map((l) => l.pickup_date).filter((d): d is string => Boolean(d && /^\d{4}-\d{2}-\d{2}$/.test(d)));
+    const deliveries = loads.map((l) => l.delivery_date).filter((d): d is string => Boolean(d && /^\d{4}-\d{2}-\d{2}$/.test(d)));
+    if (pickups.length) {
+      const minPickup = pickups.slice().sort()[0];
+      if (!periodStart || periodStart > minPickup) setPeriodStart(minPickup);
+    }
+    if (deliveries.length) {
+      const maxDelivery = deliveries.slice().sort().at(-1)!;
+      if (!periodEnd || periodEnd < maxDelivery) setPeriodEnd(maxDelivery);
+    } else if (pickups.length && !periodEnd) {
+      setPeriodEnd(pickups.slice().sort().at(-1)!);
+    }
+    // Only react to load date edits — not when the operator types period fields by hand after.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loads.map((l) => `${l.pickup_date}|${l.delivery_date}`).join(";")]);
+
+  // Driver pay card → Rate $/mi + Empty $/mi (same card Book Load shows).
+  const driverPayCardQuery = useQuery({
+    queryKey: ["sc-driver-pay-card", companyId, driverId],
+    queryFn: () => getDriverPayCard({ operating_company_id: companyId, driver_id: driverId! }),
+    enabled: open && Boolean(companyId) && Boolean(driverId) && !wrongEntity,
+    staleTime: 60_000,
+  });
+
+  useEffect(() => {
+    const card = driverPayCardQuery.data;
+    if (!card?.has_rate || ratesTouchedRef.current) return;
+    if (card.basis_type !== "per_mile_pay") return;
+    setLoads((prev) =>
+      prev.map((l) => ({
+        ...l,
+        line_haul_rate_cents:
+          l.line_haul_rate_cents != null && l.line_haul_rate_cents > 0
+            ? l.line_haul_rate_cents
+            : card.rate_per_mile_cents,
+        empty_rate_cents:
+          l.empty_rate_cents != null && l.empty_rate_cents > 0
+            ? l.empty_rate_cents
+            : card.rate_empty_per_mile_cents,
+      })),
+    );
+  }, [driverPayCardQuery.data]);
+
+  // Lane history miles + chain deadhead — same engines as Book Load.
+  const primaryLoad = loads[0];
+  const laneMileageQuery = useQuery({
+    queryKey: [
+      "sc-lane-mileage",
+      companyId,
+      primaryLoad?.pickup_city,
+      primaryLoad?.pickup_state,
+      primaryLoad?.pickup_zip,
+      primaryLoad?.delivery_city,
+      primaryLoad?.delivery_state,
+      primaryLoad?.delivery_zip,
+    ],
+    queryFn: () =>
+      getLaneMileage({
+        operating_company_id: companyId,
+        origin_city: String(primaryLoad?.pickup_city ?? ""),
+        origin_state: String(primaryLoad?.pickup_state ?? ""),
+        origin_postal_code: primaryLoad?.pickup_zip || undefined,
+        dest_city: String(primaryLoad?.delivery_city ?? ""),
+        dest_state: String(primaryLoad?.delivery_state ?? ""),
+        dest_postal_code: primaryLoad?.delivery_zip || undefined,
+      }),
+    enabled:
+      open &&
+      Boolean(companyId) &&
+      !wrongEntity &&
+      Boolean(primaryLoad?.pickup_city && primaryLoad?.pickup_state && primaryLoad?.delivery_city && primaryLoad?.delivery_state),
+    staleTime: 30_000,
+  });
+
+  useEffect(() => {
+    const lane = laneMileageQuery.data;
+    if (!lane?.autofill_allowed || lane.practical_miles == null) return;
+    if (milesTouchedRef.current[0]) return;
+    setLoads((prev) => {
+      const cur = prev[0];
+      if (!cur) return prev;
+      if (cur.loaded_miles != null && cur.loaded_miles > 0) return prev;
+      const next = [...prev];
+      next[0] = {
+        ...cur,
+        loaded_miles: lane.practical_miles,
+        line_haul_miles: lane.practical_miles,
+      };
+      return next;
+    });
+  }, [laneMileageQuery.data]);
+
+  const chainDeadheadQuery = useQuery({
+    queryKey: [
+      "sc-chain-deadhead",
+      companyId,
+      unitId,
+      primaryLoad?.pickup_city,
+      primaryLoad?.pickup_state,
+    ],
+    queryFn: () =>
+      getChainDeadhead({
+        operating_company_id: companyId,
+        unit_uuid: unitId!,
+        pickup_city: String(primaryLoad?.pickup_city ?? ""),
+        pickup_state: String(primaryLoad?.pickup_state ?? ""),
+        pickup_latitude: primaryLoad?.pickup_lat ?? undefined,
+        pickup_longitude: primaryLoad?.pickup_lng ?? undefined,
+      }),
+    enabled:
+      open &&
+      Boolean(companyId) &&
+      Boolean(unitId) &&
+      !wrongEntity &&
+      Boolean(primaryLoad?.pickup_city && primaryLoad?.pickup_state),
+    staleTime: 30_000,
+  });
+
+  useEffect(() => {
+    const dh = chainDeadheadQuery.data;
+    if (!dh || dh.source !== "chain" || dh.deadhead_miles == null) return;
+    if (milesTouchedRef.current[0]) return;
+    setLoads((prev) => {
+      const cur = prev[0];
+      if (!cur) return prev;
+      if (cur.empty_miles != null && cur.empty_miles > 0) return prev;
+      const next = [...prev];
+      next[0] = { ...cur, empty_miles: dh.deadhead_miles };
+      return next;
+    });
+  }, [chainDeadheadQuery.data]);
 
   function addLoadRow() {
     const nextNum = nextSequentialLoadNumber(loads, peekLoadBase || "0");
@@ -567,10 +763,11 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
    * invoice/line-haul total — the first number he checks against the AlwaysTrack settlement — was
    * never shown anywhere in the Creator. Every other section had one; this one was simply missed.
    */
-  const loadsSubtotal = loads.reduce(
-    (s, l) => s + Math.max(0, Number(l.line_haul_rate_cents ?? 0)) + Math.max(0, Number(l.empty_rate_cents ?? 0)),
-    0
-  );
+  const loadsSubtotal = loads.reduce((s, l) => {
+    const revenue = Math.max(0, Number(l.line_haul_amount_cents ?? 0));
+    const accessorial = (l.accessorials ?? []).reduce((a, row) => a + Math.max(0, Number(row.amount_cents ?? 0)), 0);
+    return s + revenue + accessorial;
+  }, 0);
   const compExpSubtotal = companyExpenses.reduce((s, e) => s + (e.amount_cents > 0 ? e.amount_cents : 0), 0);
   const companySubtotal = fuelSubtotal + compExpSubtotal;
   const drvReimbSubtotal = drvReimbursements.reduce((s, e) => s + (e.amount_cents > 0 ? e.amount_cents : 0), 0);
@@ -652,10 +849,11 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
       title="Settlement Creator"
       subtitle="Company + Driver · AlwaysTrack · USMCA · Preview first"
       confirmDiscardOnClose
-      isDirty={Boolean(settlementNo || driverId || loads.some((l) => l.load_number))}
+      isDirty={Boolean(settlementNo || driverId || loads.some((l) => l.load_number || l.pickup_city || l.customer_id))}
+      onRegisterAttemptClose={registerAttemptClose}
       footer={
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
-          <Button type="button" size="sm" variant="secondary" onClick={onClose}>
+          <Button type="button" size="sm" variant="secondary" onClick={() => (attemptClose ? attemptClose() : onClose())}>
             Cancel
           </Button>
           <Button type="button" size="sm" variant="secondary" disabled={busy || wrongEntity || !draft} onClick={() => void onPreview()} data-testid="sc-preview">
@@ -719,7 +917,12 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                 kind="driver"
                 operatingCompanyId={companyId}
                 value={driverId}
-                onChange={setDriverId}
+                selectedOption={driverId && driverLabel ? { value: driverId, label: driverLabel } : null}
+                onChange={(id, opt) => {
+                  setDriverId(id);
+                  setDriverLabel(opt?.label ?? "");
+                  ratesTouchedRef.current = false;
+                }}
                 allowCreate={false}
                 size={pickerSize}
                 className="mt-0"
@@ -729,7 +932,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                 <EntityLink
                   kind="driver"
                   id={driverId}
-                  label={entityLabel(null, driverId, "Driver")}
+                  label={entityLabel(driverLabel || null, driverId, "Driver")}
                   className="mt-1 block text-xs font-semibold text-[#1F2A44] underline"
                 />
               ) : null}
@@ -801,12 +1004,17 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       kind="customer"
                       operatingCompanyId={companyId}
                       value={load.customer_id ?? null}
+                      selectedOption={
+                        load.customer_id && load.customer_name
+                          ? { value: load.customer_id, label: load.customer_name }
+                          : null
+                      }
                       onChange={(id, opt) => {
                         const next = [...loads];
                         next[idx] = {
                           ...load,
                           customer_id: id,
-                          customer_name: opt?.label ?? load.customer_name,
+                          customer_name: opt?.label ?? (id ? load.customer_name : ""),
                         };
                         setLoads(next);
                       }}
@@ -871,6 +1079,24 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       }}
                     />
                   </Field>
+                  <Field label="Pickup address">
+                    <AddressGeocodeInput
+                      value={load.pickup_address ?? ""}
+                      onChange={(v) => {
+                        const next = [...loads];
+                        next[idx] = { ...load, pickup_address: v };
+                        setLoads(next);
+                      }}
+                      onResolve={(r) => {
+                        const next = [...loads];
+                        next[idx] = applyGeocodeToLoad(load, "pickup", r);
+                        setLoads(next);
+                      }}
+                      placeholder="Type address or place…"
+                      className={inputClass}
+                      dataAttrs={{ "data-testid": `sc-load-pickup-address-${idx}` }}
+                    />
+                  </Field>
                   <Field label="Pickup city">
                     <input
                       className={inputClass}
@@ -880,20 +1106,33 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         next[idx] = { ...load, pickup_city: e.target.value };
                         setLoads(next);
                       }}
+                      data-testid={`sc-load-pickup-city-${idx}`}
                     />
                   </Field>
                   <Field label="Pickup state">
-                    <input
-                      className={inputClass}
+                    <StateSelect
                       value={load.pickup_state ?? ""}
-                      onChange={(e) => {
+                      onChange={(code) => {
                         const next = [...loads];
-                        next[idx] = { ...load, pickup_state: e.target.value.toUpperCase() };
+                        next[idx] = { ...load, pickup_state: code };
                         setLoads(next);
                       }}
-                      maxLength={6}
-                      title="REQUIRED — the state the load actually originated in. Nothing defaults to TX any more."
-                      data-testid={`sc-load-pickup-state-${idx}`}
+                      placeholder="State"
+                    />
+                    <span className="sr-only" data-testid={`sc-load-pickup-state-${idx}`}>
+                      {load.pickup_state}
+                    </span>
+                  </Field>
+                  <Field label="Pickup ZIP">
+                    <input
+                      className={inputClass}
+                      value={load.pickup_zip ?? ""}
+                      onChange={(e) => {
+                        const next = [...loads];
+                        next[idx] = { ...load, pickup_zip: e.target.value };
+                        setLoads(next);
+                      }}
+                      data-testid={`sc-load-pickup-zip-${idx}`}
                     />
                   </Field>
                   <Field label="Delivery date">
@@ -907,6 +1146,24 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       }}
                     />
                   </Field>
+                  <Field label="Delivery address">
+                    <AddressGeocodeInput
+                      value={load.delivery_address ?? ""}
+                      onChange={(v) => {
+                        const next = [...loads];
+                        next[idx] = { ...load, delivery_address: v };
+                        setLoads(next);
+                      }}
+                      onResolve={(r) => {
+                        const next = [...loads];
+                        next[idx] = applyGeocodeToLoad(load, "delivery", r);
+                        setLoads(next);
+                      }}
+                      placeholder="Type address or place…"
+                      className={inputClass}
+                      dataAttrs={{ "data-testid": `sc-load-delivery-address-${idx}` }}
+                    />
+                  </Field>
                   <Field label="Delivery city">
                     <input
                       className={inputClass}
@@ -916,20 +1173,33 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         next[idx] = { ...load, delivery_city: e.target.value };
                         setLoads(next);
                       }}
+                      data-testid={`sc-load-delivery-city-${idx}`}
                     />
                   </Field>
                   <Field label="Delivery state">
-                    <input
-                      className={inputClass}
+                    <StateSelect
                       value={load.delivery_state ?? ""}
-                      onChange={(e) => {
+                      onChange={(code) => {
                         const next = [...loads];
-                        next[idx] = { ...load, delivery_state: e.target.value.toUpperCase() };
+                        next[idx] = { ...load, delivery_state: code };
                         setLoads(next);
                       }}
-                      maxLength={6}
-                      title="REQUIRED — the state the load actually delivered in. The seeder no longer writes Pending / TX."
-                      data-testid={`sc-load-delivery-state-${idx}`}
+                      placeholder="State"
+                    />
+                    <span className="sr-only" data-testid={`sc-load-delivery-state-${idx}`}>
+                      {load.delivery_state}
+                    </span>
+                  </Field>
+                  <Field label="Delivery ZIP">
+                    <input
+                      className={inputClass}
+                      value={load.delivery_zip ?? ""}
+                      onChange={(e) => {
+                        const next = [...loads];
+                        next[idx] = { ...load, delivery_zip: e.target.value };
+                        setLoads(next);
+                      }}
+                      data-testid={`sc-load-delivery-zip-${idx}`}
                     />
                   </Field>
                   <Field label="Loaded miles">
@@ -937,10 +1207,17 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       className={inputClass}
                       value={load.loaded_miles ?? ""}
                       onChange={(e) => {
+                        milesTouchedRef.current[idx] = true;
                         const next = [...loads];
                         next[idx] = { ...load, loaded_miles: e.target.value === "" ? null : Number(e.target.value) };
                         setLoads(next);
                       }}
+                      title={
+                        idx === 0 && laneMileageQuery.isFetching
+                          ? "Looking up lane miles…"
+                          : "Filled from lane history when city/state are set (same as Book Load)"
+                      }
+                      data-testid={`sc-load-loaded-miles-${idx}`}
                     />
                   </Field>
                   <Field label="Empty miles">
@@ -948,10 +1225,13 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       className={inputClass}
                       value={load.empty_miles ?? ""}
                       onChange={(e) => {
+                        milesTouchedRef.current[idx] = true;
                         const next = [...loads];
                         next[idx] = { ...load, empty_miles: e.target.value === "" ? null : Number(e.target.value) };
                         setLoads(next);
                       }}
+                      title="Filled from this truck's last delivery → this pickup (chain deadhead)"
+                      data-testid={`sc-load-empty-miles-${idx}`}
                     />
                   </Field>
                   <Field label="Empty $/mi">
@@ -959,6 +1239,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       className={inputClass}
                       valueCents={load.empty_rate_cents}
                       onChangeCents={(cents) => {
+                        ratesTouchedRef.current = true;
                         const next = [...loads];
                         next[idx] = { ...load, empty_rate_cents: cents };
                         setLoads(next);
@@ -971,6 +1252,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       className={inputClass}
                       valueCents={load.line_haul_rate_cents}
                       onChangeCents={(cents) => {
+                        ratesTouchedRef.current = true;
                         const next = [...loads];
                         next[idx] = { ...load, line_haul_rate_cents: cents };
                         setLoads(next);
@@ -1062,7 +1344,11 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               ))}
             </Section>
 
-            <Section title="Fuel purchases" subtotalCents={fuelSubtotal} onAdd={() => setFuels([...fuels, emptyFuel()])}>
+            <Section
+              title="Fuel purchases"
+              subtotalCents={fuelSubtotal}
+              onAdd={() => setFuels([...fuels, { ...emptyFuel(), load_number: defaultLoadNumber }])}
+            >
               {fuels.map((fuel, idx) => (
                 <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
                   <Field label="Date">
@@ -1220,7 +1506,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
             <Section
               title="Company expenses"
               subtotalCents={compExpSubtotal}
-              onAdd={() => setCompanyExpenses([...companyExpenses, emptyCompExp()])}
+              onAdd={() => setCompanyExpenses([...companyExpenses, { ...emptyCompExp(), load_number: defaultLoadNumber }])}
             >
               <p className="text-center text-xs text-[#6B7280]">
                 PDF &quot;Comp.&quot; — credits the fuel card rail (never A/P)
@@ -1349,7 +1635,9 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
             <Section
               title="Driver-paid reimbursements"
               subtotalCents={drvReimbSubtotal}
-              onAdd={() => setDrvReimbursements([...drvReimbursements, emptyDrvReimb()])}
+              onAdd={() =>
+                setDrvReimbursements([...drvReimbursements, { ...emptyDrvReimb(), load_number: defaultLoadNumber }])
+              }
             >
               <p className="text-center text-xs text-[#6B7280]">
                 PDF &quot;Drv&quot; — Cr 2175 Driver Reimbursements Payable (never 6890/5310)
@@ -1442,7 +1730,12 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
             <Section
               title="Additional pay to driver"
               subtotalCents={addPaySubtotal}
-              onAdd={() => setAdditionalPay([...additionalPay, { ...emptyMoney(), pay_kind: "detention" }])}
+              onAdd={() =>
+                setAdditionalPay([
+                  ...additionalPay,
+                  { ...emptyMoney(), pay_kind: "detention", load_number: defaultLoadNumber },
+                ])
+              }
             >
               {additionalPay.map((row, idx) => (
                 <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
@@ -1503,7 +1796,11 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               ))}
             </Section>
 
-            <Section title="Deductions" subtotalCents={dedSubtotal + adminFeeCents} onAdd={() => setDeductions([...deductions, emptyMoney()])}>
+            <Section
+              title="Deductions"
+              subtotalCents={dedSubtotal + adminFeeCents}
+              onAdd={() => setDeductions([...deductions, { ...emptyMoney(), load_number: defaultLoadNumber }])}
+            >
               <Field label="Admin fee (7200)">
                 <div data-testid="sc-admin-fee">
                   <MoneyInput
@@ -1543,7 +1840,11 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               ))}
             </Section>
 
-            <Section title="Cash advances" subtotalCents={advSubtotal} onAdd={() => setAdvances([...advances, emptyMoney()])}>
+            <Section
+              title="Cash advances"
+              subtotalCents={advSubtotal}
+              onAdd={() => setAdvances([...advances, { ...emptyMoney(), load_number: defaultLoadNumber }])}
+            >
               {advances.map((row, idx) => (
                 <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
                   <Field label="Description">
@@ -1576,7 +1877,14 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
             <Section
               title="Escrow"
               subtotalCents={escrowNet}
-              onAdd={() => setEscrow([...escrow, escrow.length ? { ...emptyMoney(), escrow_type: "hold" } : defaultEscrowLine()])}
+              onAdd={() =>
+                setEscrow([
+                  ...escrow,
+                  escrow.length
+                    ? { ...emptyMoney(), escrow_type: "hold", load_number: defaultLoadNumber }
+                    : { ...defaultEscrowLine(), load_number: defaultLoadNumber },
+                ])
+              }
             >
               <p className="text-center text-xs text-[#6B7280]">Driver escrow · 2100-00-0NN · hold +, release/forfeit −</p>
               {escrow.map((row, idx) => (
