@@ -490,6 +490,7 @@
       "tag_label"
     ],
     "accounting.deposit_lines": [
+      "account_id",
       "amount_cents",
       "created_at",
       "deposit_id",
@@ -497,6 +498,8 @@
       "id",
       "line_type",
       "operating_company_id",
+      "received_from_customer_id",
+      "received_from_vendor_id",
       "sort_order",
       "source_factoring_advance_id",
       "source_payment_id"
@@ -518,6 +521,7 @@
       "posted_at",
       "posting_status",
       "reference_number",
+      "source_bank_transaction_id",
       "total_receipts_cents",
       "undeposited_funds_account_id",
       "updated_at",

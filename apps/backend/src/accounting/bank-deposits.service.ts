@@ -432,99 +432,202 @@ export async function createBankDeposit(input: CreateBankDepositInput) {
   });
 }
 
+/**
+ * Void a deposit on the CALLER's transaction: reverse its posting, release every bank line naming it, stamp it void.
+ * voidBankDeposit (the route) wraps it in its own transaction; Undo of a bank line that created the deposit calls it on
+ * the undo's transaction (ROUND 441.5 Phase 2).
+ */
+export async function voidBankDepositOnClient(
+  client: DbClient,
+  input: { operatingCompanyId: string; userId: string; depositId: string; reason: string }
+) {
+  const reason = input.reason.trim();
+  if (reason.length < 3) throw new BankDepositError("REASON_REQUIRED", "Void reason must be at least 3 characters");
+  const res = await client.query<{
+    id: string;
+    display_id: string;
+    voided_at: string | null;
+    journal_entry_id: string | null;
+  }>(
+    `
+    SELECT id::text, display_id, voided_at::text, journal_entry_id::text
+    FROM accounting.deposits
+    WHERE id = $1::uuid AND operating_company_id = $2::uuid
+    FOR UPDATE
+    `,
+    [input.depositId, input.operatingCompanyId]
+  );
+  const dep = res.rows[0];
+  if (!dep) throw new BankDepositError("NOT_FOUND", "Deposit not found");
+  if (dep.voided_at) throw new BankDepositError("ALREADY_VOIDED", "Deposit is already voided");
+
+  let reversalJe: string | null = null;
+  if (dep.journal_entry_id) {
+    try {
+      const rev = await reversePostedSourceTransactionInClientTx(
+        client,
+        {
+          operating_company_id: input.operatingCompanyId,
+          source_transaction_type: "bank_deposit",
+          source_transaction_id: dep.id,
+        },
+        { userId: input.userId },
+        companyBusinessDate()
+      );
+      reversalJe = rev.journal_entry_id;
+    } catch (err) {
+      if (!(err instanceof PostingEngineError && err.code === "SOURCE_NOT_FOUND")) throw err;
+    }
+  }
+
+  // ROUND 373.4 / ENG-REVERSE — set-based release through the shared primitive BEFORE the deposit
+  // stops being live. Per-row unmatch was a Rule 53 miss and could not run if the releaser's
+  // closed list omitted matched_deposit_id. Legacy JE-only matches (pre-pointer) still release too.
+  const releasedDepositLines = await releaseBankLinesNamingDocument(
+    client as never,
+    { operatingCompanyId: input.operatingCompanyId, pointerColumn: "matched_deposit_id", documentId: dep.id },
+    { userId: input.userId, reason: `void: deposit ${dep.id}` }
+  );
+  const releasedJeLines = dep.journal_entry_id
+    ? await releaseBankLinesNamingDocument(
+        client as never,
+        {
+          operatingCompanyId: input.operatingCompanyId,
+          pointerColumn: "matched_journal_entry_id",
+          documentId: dep.journal_entry_id,
+        },
+        { userId: input.userId, reason: `void: deposit ${dep.id} journal ${dep.journal_entry_id}` }
+      )
+    : 0;
+
+  await client.query(
+    `
+    UPDATE accounting.deposits
+       SET voided_at = now(),
+           voided_by_user_id = $2::uuid,
+           void_reason = $3,
+           posting_status = CASE WHEN journal_entry_id IS NOT NULL THEN 'reversed' ELSE posting_status END,
+           updated_at = now(),
+           updated_by_user_id = $2::uuid
+     WHERE id = $1::uuid
+    `,
+    [dep.id, input.userId, reason]
+  );
+
+  await appendCrudAudit(client, input.userId, "accounting.bank_deposit_voided", {
+    operating_company_id: input.operatingCompanyId,
+    deposit_id: dep.id,
+    display_id: dep.display_id,
+    void_reason: reason,
+    reversal_journal_entry_id: reversalJe,
+    released_deposit_pointer_lines: releasedDepositLines,
+    released_journal_pointer_lines: releasedJeLines,
+  });
+
+  return { id: dep.id, display_id: dep.display_id, reversal_journal_entry_id: reversalJe };
+}
+
 export async function voidBankDeposit(input: {
   operatingCompanyId: string;
   userId: string;
   depositId: string;
   reason: string;
 }) {
-  const reason = input.reason.trim();
-  if (reason.length < 3) throw new BankDepositError("REASON_REQUIRED", "Void reason must be at least 3 characters");
+  return withCompanyTx(input.userId, input.operatingCompanyId, (client) => voidBankDepositOnClient(client, input));
+}
 
-  return withCompanyTx(input.userId, input.operatingCompanyId, async (client) => {
-    const res = await client.query<{
-      id: string;
-      display_id: string;
-      voided_at: string | null;
-      journal_entry_id: string | null;
-    }>(
-      `
-      SELECT id::text, display_id, voided_at::text, journal_entry_id::text
-      FROM accounting.deposits
-      WHERE id = $1::uuid AND operating_company_id = $2::uuid
-      FOR UPDATE
-      `,
-      [input.depositId, input.operatingCompanyId]
-    );
-    const dep = res.rows[0];
-    if (!dep) throw new BankDepositError("NOT_FOUND", "Deposit not found");
-    if (dep.voided_at) throw new BankDepositError("ALREADY_VOIDED", "Deposit is already voided");
-
-    let reversalJe: string | null = null;
-    if (dep.journal_entry_id) {
-      try {
-        const rev = await reversePostedSourceTransactionInClientTx(
-          client,
-          {
-            operating_company_id: input.operatingCompanyId,
-            source_transaction_type: "bank_deposit",
-            source_transaction_id: dep.id,
-          },
-          { userId: input.userId },
-          companyBusinessDate()
-        );
-        reversalJe = rev.journal_entry_id;
-      } catch (err) {
-        if (!(err instanceof PostingEngineError && err.code === "SOURCE_NOT_FOUND")) throw err;
-      }
-    }
-
-    // ROUND 373.4 / ENG-REVERSE — set-based release through the shared primitive BEFORE the deposit
-    // stops being live. Per-row unmatch was a Rule 53 miss and could not run if the releaser's
-    // closed list omitted matched_deposit_id. Legacy JE-only matches (pre-pointer) still release too.
-    const releasedDepositLines = await releaseBankLinesNamingDocument(
-      client as never,
-      { operatingCompanyId: input.operatingCompanyId, pointerColumn: "matched_deposit_id", documentId: dep.id },
-      { userId: input.userId, reason: `void: deposit ${dep.id}` }
-    );
-    const releasedJeLines = dep.journal_entry_id
-      ? await releaseBankLinesNamingDocument(
-          client as never,
-          {
-            operatingCompanyId: input.operatingCompanyId,
-            pointerColumn: "matched_journal_entry_id",
-            documentId: dep.journal_entry_id,
-          },
-          { userId: input.userId, reason: `void: deposit ${dep.id} journal ${dep.journal_entry_id}` }
-        )
-      : 0;
-
-    await client.query(
-      `
-      UPDATE accounting.deposits
-         SET voided_at = now(),
-             voided_by_user_id = $2::uuid,
-             void_reason = $3,
-             posting_status = CASE WHEN journal_entry_id IS NOT NULL THEN 'reversed' ELSE posting_status END,
-             updated_at = now(),
-             updated_by_user_id = $2::uuid
-       WHERE id = $1::uuid
-      `,
-      [dep.id, input.userId, reason]
-    );
-
-    await appendCrudAudit(client, input.userId, "accounting.bank_deposit_voided", {
-      operating_company_id: input.operatingCompanyId,
-      deposit_id: dep.id,
-      display_id: dep.display_id,
-      void_reason: reason,
-      reversal_journal_entry_id: reversalJe,
-      released_deposit_pointer_lines: releasedDepositLines,
-      released_journal_pointer_lines: releasedJeLines,
-    });
-
-    return { id: dep.id, display_id: dep.display_id, reversal_journal_entry_id: reversalJe };
+/**
+ * ROUND 441.5 Phase 2 — QBO "Add funds to this deposit" from a categorized money-IN bank line, on the caller's
+ * transaction: one Deposit with one 'account' line (the chosen account, the payer), posted by the existing deposit poster
+ * (Dr the bank's ledger account / Cr that account), linked to the line (source_bank_transaction_id). No Undeposited Funds.
+ */
+export async function createAndPostBankLineDepositOnClient(
+  client: DbClient,
+  input: {
+    operatingCompanyId: string;
+    depositDate: string;
+    amountCents: number;
+    bankAccountId: string;
+    bankLedgerAccountId: string;
+    accountId: string;
+    receivedFromVendorId: string | null;
+    receivedFromCustomerId: string | null;
+    description: string;
+    sourceBankTransactionId: string;
+  },
+  actor: { userId: string }
+): Promise<{ deposit_id: string; display_id: string; journal_entry_id: string; posting_batch_id: string | null }> {
+  if (!Number.isInteger(input.amountCents) || input.amountCents <= 0) {
+    throw new BankDepositError("AMOUNT_REQUIRED", "A deposit needs a positive amount");
+  }
+  const displayId = await nextDepositDisplayId(client, input.operatingCompanyId, new Date(`${input.depositDate}T12:00:00Z`));
+  const ins = await client.query<{ id: string; display_id: string }>(
+    `INSERT INTO accounting.deposits (
+        operating_company_id, display_id, deposit_date,
+        bank_account_id, bank_ledger_account_id, undeposited_funds_account_id,
+        total_receipts_cents, cash_back_cents, amount_deposited_cents, cash_back_account_id,
+        memo, source_bank_transaction_id, created_by_user_id, updated_by_user_id
+      ) VALUES (
+        $1::uuid, $2, $3::date,
+        $4::uuid, $5::uuid, NULL,
+        $6::bigint, 0, $6::bigint, NULL,
+        $7, $8::uuid, $9::uuid, $9::uuid
+      )
+      RETURNING id::text, display_id`,
+    [
+      input.operatingCompanyId,
+      displayId,
+      input.depositDate,
+      input.bankAccountId,
+      input.bankLedgerAccountId,
+      input.amountCents,
+      input.description.slice(0, 500),
+      input.sourceBankTransactionId,
+      actor.userId,
+    ]
+  );
+  const deposit = ins.rows[0]!;
+  await client.query(
+    `INSERT INTO accounting.deposit_lines (
+        deposit_id, operating_company_id, line_type, account_id, received_from_vendor_id, received_from_customer_id,
+        amount_cents, description, sort_order
+      ) VALUES ($1::uuid, $2::uuid, 'account', $3::uuid, $4::uuid, $5::uuid, $6::bigint, $7, 1)`,
+    [
+      deposit.id,
+      input.operatingCompanyId,
+      input.accountId,
+      input.receivedFromVendorId,
+      input.receivedFromCustomerId,
+      input.amountCents,
+      input.description.slice(0, 500),
+    ]
+  );
+  const posting = await postSourceTransactionInClientTx(
+    client,
+    { operating_company_id: input.operatingCompanyId, source_transaction_type: "bank_deposit", source_transaction_id: deposit.id },
+    { userId: actor.userId }
+  );
+  await client.query(
+    `UPDATE accounting.deposits
+        SET journal_entry_id = $2::uuid, posting_status = 'posted', posted_at = now(), updated_at = now()
+      WHERE id = $1::uuid`,
+    [deposit.id, posting.journal_entry_id]
+  );
+  await appendCrudAudit(client, actor.userId, "accounting.bank_deposit_created", {
+    operating_company_id: input.operatingCompanyId,
+    deposit_id: deposit.id,
+    display_id: deposit.display_id,
+    total_receipts_cents: input.amountCents,
+    journal_entry_id: posting.journal_entry_id,
+    source_bank_transaction_id: input.sourceBankTransactionId,
+    account_id: input.accountId,
   });
+  return {
+    deposit_id: deposit.id,
+    display_id: deposit.display_id,
+    journal_entry_id: posting.journal_entry_id,
+    posting_batch_id: (posting as { posting_batch_id?: string | null }).posting_batch_id ?? null,
+  };
 }
 
 export async function getBankDeposit(operatingCompanyId: string, userId: string, depositId: string) {

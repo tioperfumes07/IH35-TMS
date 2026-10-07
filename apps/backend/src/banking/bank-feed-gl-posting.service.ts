@@ -51,6 +51,7 @@ import {
 } from "../accounting/expense-category-map/resolver.service.js";
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { createAndPostBankLineExpenseOnClient, resolveExpenseItemForAccount } from "../accounting/bank-line-expense.service.js";
+import { createAndPostBankLineDepositOnClient } from "../accounting/bank-deposits.service.js";
 import { isBankAccountHideEnabled } from "./bank-account-visibility.js";
 
 export const BANK_FEED_GL_POSTING_FLAG_KEY = "BANK_FEED_GL_POSTING_ENABLED";
@@ -87,6 +88,8 @@ export type BankFeedGlResult =
       already_posted: boolean;
       /** ROUND 441.5 — the expense document a money-out line to an expense account created (QBO "Categorize + Add"). */
       expense_id?: string;
+      /** ROUND 441.5 Phase 2 — the deposit document a money-in line created (QBO "Add funds to this deposit"). */
+      deposit_id?: string;
     };
 
 export type MaybePostBankCategorizationInput = {
@@ -359,6 +362,11 @@ export async function postBankCategorizationOnClient(client: PgClient, input: Ma
   if (decision.direction === "money_out" && EXPENSE_DOCUMENT_ACCOUNT_TYPES.has(decision.categorizedAccountType ?? "")) {
     return postBankLineAsExpenseOnClient(client, input, decision);
   }
+  // ROUND 441.5 Phase 2 — money IN to any account is QBO "Add funds to this deposit": a Deposit document crediting the
+  // chosen account (income, a liability such as 2410, equity such as 3000), never a bare journal entry.
+  if (decision.direction === "money_in") {
+    return postBankLineAsDepositOnClient(client, input, decision);
+  }
 
   // BANK-F05 — a categorization that has been reversed must RE-post, not silently return the original batch. The
   // revision is the number of journal entries for THIS source already reversed: stable across a double-submit (it
@@ -521,5 +529,91 @@ async function postBankLineAsExpenseOnClient(
     amount_cents: decision.amountCents,
     already_posted: false,
     expense_id: created.expense_id,
+  };
+}
+
+/**
+ * ROUND 441.5 Phase 2 — the categorized money-in line becomes a Deposit: Dr the bank's ledger account / Cr the chosen
+ * account, received from the vendor or customer the operator tagged, through the existing deposit poster in this
+ * transaction. The line and the document name each other (bank_transactions.matched_deposit_id + matched_journal_entry_id;
+ * deposits.source_bank_transaction_id); Undo voids the deposit, voiding the deposit releases the line.
+ */
+async function postBankLineAsDepositOnClient(
+  client: PgClient,
+  input: MaybePostBankCategorizationInput,
+  decision: DecisionOk
+): Promise<BankFeedGlResult> {
+  const lineRes = await client.query(
+    `SELECT bt.transaction_date::text AS transaction_date, bt.description, bt.categorization_memo,
+            bt.bank_account_id::text AS bank_account_id,
+            bt.categorization_vendor_id::text AS vendor_id, bt.categorization_customer_id::text AS customer_id
+       FROM banking.bank_transactions bt
+      WHERE bt.id = $1::uuid AND bt.operating_company_id = $2::uuid
+      LIMIT 1`,
+    [input.bankTransactionId, input.companyId]
+  );
+  const line = lineRes.rows[0] as
+    | {
+        transaction_date: string;
+        description: string | null;
+        categorization_memo: string | null;
+        bank_account_id: string | null;
+        vendor_id: string | null;
+        customer_id: string | null;
+      }
+    | undefined;
+  if (!line || !line.bank_account_id) return { posted: false, reason: "bank_txn_not_found" };
+
+  // The payer must be this company's; a tag from elsewhere is refused, never carried onto the document.
+  for (const [table, id] of [
+    ["mdata.vendors", line.vendor_id],
+    ["mdata.customers", line.customer_id],
+  ] as const) {
+    if (!id) continue;
+    const r = await client.query(`SELECT 1 FROM ${table} WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`, [id, input.companyId]);
+    if (!r.rows[0]) return { posted: false, reason: "account_cross_entity", message: "The tagged payer is not a vendor or customer of this company." };
+  }
+
+  const description = (line.categorization_memo ?? "").trim() || (line.description ?? "").trim() || "Bank deposit";
+  const created = await createAndPostBankLineDepositOnClient(
+    client as never,
+    {
+      operatingCompanyId: input.companyId,
+      depositDate: line.transaction_date,
+      amountCents: decision.amountCents,
+      bankAccountId: line.bank_account_id,
+      bankLedgerAccountId: decision.bankLedgerAccountId,
+      accountId: decision.categorizedAccountId,
+      // One payer per line (deposit_lines_one_payer): the customer when both are tagged.
+      receivedFromCustomerId: line.customer_id,
+      receivedFromVendorId: line.customer_id ? null : line.vendor_id,
+      description,
+      sourceBankTransactionId: input.bankTransactionId,
+    },
+    { userId: input.actorUserUuid }
+  );
+
+  await client.query(
+    `UPDATE banking.bank_transactions
+        SET matched_deposit_id = $1::uuid,
+            matched_journal_entry_id = $2::uuid,
+            review_state = 'matched',
+            resolution_kind = 'added', -- this line CREATED the deposit; Undo voids it
+            reviewed_at = now(),
+            updated_at = now()
+      WHERE id = $3::uuid AND operating_company_id = $4::uuid AND matched_journal_entry_id IS NULL`,
+    [created.deposit_id, created.journal_entry_id, input.bankTransactionId, input.companyId]
+  );
+
+  return {
+    posted: true,
+    journal_entry_id: created.journal_entry_id,
+    posting_batch_id: created.posting_batch_id ?? "",
+    direction: decision.direction,
+    categorized_account_id: decision.categorizedAccountId,
+    bank_ledger_account_id: decision.bankLedgerAccountId,
+    amount_cents: decision.amountCents,
+    already_posted: false,
+    deposit_id: created.deposit_id,
   };
 }
