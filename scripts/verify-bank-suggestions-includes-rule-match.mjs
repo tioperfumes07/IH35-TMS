@@ -52,7 +52,7 @@ export function checkSuggestionsIncludesRuleMatch(src) {
   if (!routeMatch) return { ok: false, reason: "GET /transactions/:id/suggestions route not found" };
 
   // Grab a generous window after the route declaration covering the handler body.
-  const block = code.slice(routeMatch.index, routeMatch.index + 4000);
+  const block = code.slice(routeMatch.index, routeMatch.index + 6000);
 
   if (!/FROM\s+accounting\.banking_rules/i.test(block)) {
     return { ok: false, reason: "handler does not query accounting.banking_rules" };

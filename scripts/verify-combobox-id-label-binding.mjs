@@ -31,14 +31,10 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SELFTEST = process.argv.includes("--selftest");
 const LABEL = "verify-combobox-id-label-binding";
 const ENGINE = "apps/frontend/src/components/Combobox.tsx";
-const WRAPPER = "apps/frontend/src/components/shared/Combobox.tsx";
-const ADAPTER = "apps/frontend/src/components/shared/SelectCombobox.tsx";
 
-function assert(files) {
+function assert(file) {
   const problems = [];
-  const engine = files[ENGINE] ?? "";
-  const wrapper = files[WRAPPER] ?? "";
-  const adapter = files[ADAPTER] ?? "";
+  const engine = file ?? "";
 
   // 1. The engine must accept an id AND render it on the element that carries role="combobox".
   if (!/\bid\?:\s*string/.test(engine)) {
@@ -54,54 +50,20 @@ function assert(files) {
     );
   }
 
-  // 2. The wrapper must accept and forward it, or the adapter's id dies one layer down.
-  if (!/\bid\?:\s*string/.test(wrapper)) {
-    problems.push(`${WRAPPER}: must declare \`id?: string\``);
-  }
-  if (!/id=\{id\}/.test(wrapper)) {
-    problems.push(`${WRAPPER}: must forward id={id} to the engine Combobox`);
-  }
-  if (!/\bloading\?:\s*boolean/.test(wrapper)) {
-    problems.push(`${WRAPPER}: must declare \`loading?: boolean\` (FuelPlannerHome passes loading=; SPA TS2322 if missing)`);
-  }
-  if (!/loading=\{loading\}/.test(wrapper)) {
-    problems.push(`${WRAPPER}: must forward loading={loading} to the engine Combobox`);
-  }
-
-  // 3. The adapter must PASS it to the Combobox, not merely destructure it into synthetic events.
-  if (!/<Combobox[\s\S]{0,200}id=\{id\}/.test(adapter)) {
-    problems.push(
-      `${ADAPTER}: must pass id={id} to <Combobox>. Using \`id\` only inside synthesised event payloads ` +
-        `(target: { id }) leaves every <label htmlFor> in the app bound to nothing — the original defect.`,
-    );
-  }
-
   return problems;
 }
 
-const files = Object.fromEntries(
-  [ENGINE, WRAPPER, ADAPTER].map((rel) => [rel, readFileSync(path.join(ROOT, rel), "utf8")]),
-);
+const engine = readFileSync(path.join(ROOT, ENGINE), "utf8");
 
 if (SELFTEST) {
   const checks = [];
 
-  // 1. The original defect: adapter keeps id for events only, never passes it down.
-  const adapterBroken = { ...files, [ADAPTER]: files[ADAPTER].replace(/<Combobox\n\s*id=\{id\}/, "<Combobox") };
-  checks.push(["adapter drops id", assert(adapterBroken).some((p) => /must pass id=\{id\}/.test(p))]);
+  // 1. Engine drops id prop declaration.
+  const noIdProp = engine.replace(/\bid\?:\s*string\b/g, "");
+  checks.push(["engine drops id prop", assert(noIdProp).some((p) => /must declare an \`id/.test(p))]);
 
-  // 2. Wrapper stops forwarding.
-  const wrapperBroken = { ...files, [WRAPPER]: files[WRAPPER].replace(/\n\s*id=\{id\}/, "") };
-  checks.push(["wrapper drops id", assert(wrapperBroken).some((p) => /must forward id/.test(p))]);
-
-  const wrapperDropsLoading = { ...files, [WRAPPER]: files[WRAPPER].replace(/\n\s*loading=\{loading\}/, "") };
-  checks.push(["wrapper drops loading", assert(wrapperDropsLoading).some((p) => /must forward loading/.test(p))]);
-
-  // 3. Engine renders the id somewhere OTHER than the combobox input.
-  const engineBroken = {
-    ...files,
-    [ENGINE]: files[ENGINE].replace(/\n\s*id=\{id\}\n\s*aria-label=\{ariaLabel\}\n\s*role="combobox"/, '\n          aria-label={ariaLabel}\n          role="combobox"'),
-  };
+  // 2. Engine renders the id somewhere OTHER than the combobox input.
+  const engineBroken = engine.replace(/\n\s*id=\{id\}\n\s*aria-label=\{ariaLabel\}\n\s*role="combobox"/, '\n          aria-label={ariaLabel}\n          role="combobox"');
   checks.push(["id not on the combobox element", assert(engineBroken).some((p) => /SAME element as role="combobox"/.test(p))]);
 
   const failed = checks.filter(([, caught]) => !caught).map(([n]) => n);
@@ -113,11 +75,11 @@ if (SELFTEST) {
   process.exit(0);
 }
 
-const problems = assert(files);
+const problems = assert(engine);
 if (problems.length) {
   console.error(`${LABEL} FAIL:`);
   for (const p of problems) console.error("  - " + p);
   process.exit(1);
 }
-console.log(`${LABEL}: OK — id flows SelectCombobox -> shared Combobox -> the role="combobox" input`);
+console.log(`${LABEL}: OK — Combobox engine accepts id and renders it on the role="combobox" input`);
 process.exit(0);

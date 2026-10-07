@@ -164,7 +164,7 @@ function selftest() {
 
     // Plant #3: drop the automation honesty checkbox from gearExtra.
     planted = backup.replace(
-      /<p className="mt-2 text-\[11px\] font-semibold uppercase tracking-\[0\.4px\] text-gray-500">Automation review<\/p>[\s\S]*?<\/label>\n/,
+      /<p className="mt-2 text-section-header font-semibold uppercase tracking-\[0\.4px\] text-gray-500">Automation review<\/p>[\s\S]*?<\/label>\n/,
       ""
     );
     errors = run(planted);
