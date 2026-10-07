@@ -86,6 +86,10 @@ function violations(lib, editor, wizard, equipment, timeWindow, moneyInput, numb
   if (!moneyInput.includes('cleaned === "-"') || !moneyInput.includes("Incomplete typed states")) {
     errors.push("MoneyInput must allow typing a leading minus without emitting null mid-keystroke");
   }
+  // QTY-DEC-ALL — NumberInput must hold trailing "." mid-keystroke (diesel gallons / line qty).
+  if (!numberInput.includes("/\\.$/.test(cleaned)")) {
+    errors.push('NumberInput onChange must include /\\.$/.test(cleaned) so "45." gallons stay typeable');
+  }
   if (!editor.includes("accessorial-amounts-column-total")) {
     errors.push("AccessorialEditor amounts column must show a total (display bug fix)");
   }

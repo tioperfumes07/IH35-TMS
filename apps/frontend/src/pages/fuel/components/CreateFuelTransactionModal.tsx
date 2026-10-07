@@ -7,6 +7,7 @@ import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { NumberInput } from "../../../components/forms/NumberInput";
 import { EntityPicker } from "../../../components/EntityPicker";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { SelectCombobox } from "../../../components/Combobox";
@@ -46,8 +47,8 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
   const [loadId, setLoadId] = useState("");
   const [loadExemptionReason, setLoadExemptionReason] = useState("");
   const [fuelType, setFuelType] = useState<FuelType>("diesel");
-  const [gallons, setGallons] = useState("");
-  const [pricePerGallon, setPricePerGallon] = useState("");
+  const [gallons, setGallons] = useState<number | null>(null);
+  const [pricePerGallon, setPricePerGallon] = useState<number | null>(null);
   const [totalCost, setTotalCost] = useState<number | null>(null);
   const [locationCity, setLocationCity] = useState("");
   const [locationState, setLocationState] = useState("");
@@ -67,8 +68,8 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
     setLoadId("");
     setLoadExemptionReason("");
     setFuelType("diesel");
-    setGallons("");
-    setPricePerGallon("");
+    setGallons(null);
+    setPricePerGallon(null);
     setTotalCost(null);
     setLocationCity("");
     setLocationState("");
@@ -100,7 +101,8 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
     || Boolean(driverId || unitId || trailerId || vendorId || loadId)
     || Boolean(loadExemptionReason.trim())
     || fuelType !== "diesel"
-    || Boolean(gallons.trim() || pricePerGallon.trim())
+    || gallons != null
+    || pricePerGallon != null
     || totalCost != null
     || Boolean(locationCity.trim() || locationState.trim() || notes.trim() || sourceDocFile);
 
@@ -167,8 +169,6 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
     const submissionGeneration = lifecycleGenerationRef.current;
     setSaving(true);
     try {
-      const gallonsNum = gallons.trim() ? Number(gallons) : undefined;
-      const ppgNum = pricePerGallon.trim() ? Number(pricePerGallon) : undefined;
       const sourceDocId = await uploadSourceDoc();
       await createFuelTransaction(operatingCompanyId, {
         transaction_at: transactionDate,
@@ -177,8 +177,11 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
         trailer_id: trailerId || null,
         vendor_id: vendorId || null,
         fuel_type: fuelType,
-        gallons: gallonsNum && Number.isFinite(gallonsNum) && gallonsNum > 0 ? gallonsNum : undefined,
-        price_per_gallon: ppgNum && Number.isFinite(ppgNum) && ppgNum > 0 ? ppgNum : undefined,
+        gallons: gallons != null && Number.isFinite(gallons) && gallons > 0 ? gallons : undefined,
+        price_per_gallon:
+          pricePerGallon != null && Number.isFinite(pricePerGallon) && pricePerGallon > 0
+            ? pricePerGallon
+            : undefined,
         total_cost: totalCost,
         location_city: locationCity.trim() || undefined,
         location_state: locationState.trim() || undefined,
@@ -341,23 +344,27 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
           </label>
           <label className="block font-semibold text-gray-700">
             Gallons
-            <input
-              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
-              inputMode="decimal"
-              value={gallons}
-              onChange={(e) => setGallons(e.target.value)}
-              data-testid="fuel-create-gallons"
-            />
+            <div className="mt-1" data-testid="fuel-create-gallons">
+              <NumberInput
+                value={gallons}
+                decimals={3}
+                onChange={setGallons}
+                ariaLabel="Gallons"
+                className="w-full"
+                unit="gal"
+              />
+            </div>
           </label>
           <label className="block font-semibold text-gray-700">
             $/gal
-            <input
-              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
-              inputMode="decimal"
-              value={pricePerGallon}
-              onChange={(e) => setPricePerGallon(e.target.value)}
-              data-testid="fuel-create-ppg"
-            />
+            <div className="mt-1" data-testid="fuel-create-ppg">
+              <MoneyInput
+                valueDollars={pricePerGallon}
+                onChangeDollars={setPricePerGallon}
+                ariaLabel="Price per gallon (USD)"
+                className="w-full"
+              />
+            </div>
           </label>
         </div>
 

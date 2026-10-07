@@ -37,6 +37,39 @@ describe("NumberInput", () => {
     expect(input).toHaveValue("12.35");
   });
 
+  it("holds a trailing decimal mid-keystroke so gallons/qty can be typed (45.123)", async () => {
+    const user = userEvent.setup();
+    const seen: Array<number | null> = [];
+    function Track() {
+      const [value, setValue] = useState<number | null>(null);
+      return (
+        <NumberInput
+          value={value}
+          onChange={(n) => {
+            seen.push(n);
+            setValue(n);
+          }}
+          decimals={3}
+          ariaLabel="Gallons"
+        />
+      );
+    }
+    render(<Track />);
+    const input = screen.getByLabelText("Gallons");
+    await user.type(input, "45");
+    expect(seen[seen.length - 1]).toBe(45);
+    const emitsAfterDigits = seen.length;
+    await user.type(input, ".");
+    expect(input).toHaveValue("45.");
+    // Incomplete "45." must not emit again (would round away the decimal mid-keystroke).
+    expect(seen.length).toBe(emitsAfterDigits);
+    await user.type(input, "123");
+    expect(input).toHaveValue("45.123");
+    expect(seen[seen.length - 1]).toBe(45.123);
+    await user.tab();
+    expect(input).toHaveValue("45.123");
+  });
+
   it("clears to empty on focus so typed digits never prepend onto a stale value (W-3 class bug)", async () => {
     const user = userEvent.setup();
     render(<Harness />);
