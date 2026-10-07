@@ -4,6 +4,7 @@
  * not window.print() on the SPA shell (sidebar chrome).
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -119,34 +120,48 @@ function assertSource() {
   }
 }
 
+function copyToTemp(temp, rel) {
+  const src = path.join(ROOT, rel);
+  const dest = path.join(temp, rel);
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.copyFileSync(src, dest);
+  return dest;
+}
+
 function selftest() {
   assertSource();
-  const invoicePath = TARGETS.invoice;
-  const backup = fs.readFileSync(invoicePath, "utf8");
-  // Plant SPA print on the Print button only — NEVER rewrite imports (replaceAll on the
-  // helper name previously corrupted BillDetailPage imports when restore raced).
-  const re = /onClick=\{\(\) =>\s*\n?\s*openPrintableDocument\([\s\S]*?\)\s*\}/;
-  if (!re.test(backup)) fail("selftest could not find openPrintableDocument onClick to plant");
-  const planted = backup.replace(re, "onClick={() => window.print()}");
-  fs.writeFileSync(invoicePath, planted);
-  try {
-    const r = spawnSync(process.execPath, [SELF], { encoding: "utf8" });
-    if (r.status === 0) fail("mutated InvoiceDetailPage still passed — selftest must FAIL on SPA print");
-  } finally {
-    fs.writeFileSync(invoicePath, backup);
-  }
 
-  const sharedPath = TARGETS.shared;
-  const sharedBackup = fs.readFileSync(sharedPath, "utf8");
-  const sharedPlanted = sharedBackup.replace("org.user_accessible_company_ids()", "org.companies_that_do_not_exist()");
-  if (sharedPlanted === sharedBackup) fail("selftest could not plant missing user_accessible_company_ids");
-  fs.writeFileSync(sharedPath, sharedPlanted);
+  // Run mutation tests in a temp sandbox — never write mutations back into tracked source.
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), "verify-print-canonical-"));
   try {
-    const r = spawnSync(process.execPath, [SELF], { encoding: "utf8" });
+    for (const rel of Object.values(TARGETS).map((p) => path.relative(ROOT, p))) {
+      copyToTemp(temp, rel);
+    }
+    const scriptRel = path.relative(ROOT, SELF);
+    const tempSelf = copyToTemp(temp, scriptRel);
+    const libRel = "scripts/lib/tenant-guc-match.mjs";
+    copyToTemp(temp, libRel);
+
+    const invoicePath = path.join(temp, path.relative(ROOT, TARGETS.invoice));
+    const re = /onClick=\{\(\) =>\s*\n?\s*openPrintableDocument\([\s\S]*?\)\s*\}/;
+    const invoiceBackup = fs.readFileSync(invoicePath, "utf8");
+    if (!re.test(invoiceBackup)) fail("selftest could not find openPrintableDocument onClick to plant");
+    fs.writeFileSync(invoicePath, invoiceBackup.replace(re, "onClick={() => window.print()}"));
+
+    const sharedPath = path.join(temp, path.relative(ROOT, TARGETS.shared));
+    const sharedBackup = fs.readFileSync(sharedPath, "utf8");
+    const sharedPlanted = sharedBackup.replace("org.user_accessible_company_ids()", "org.companies_that_do_not_exist()");
+    if (sharedPlanted === sharedBackup) fail("selftest could not plant missing user_accessible_company_ids");
+    fs.writeFileSync(sharedPath, sharedPlanted);
+
+    let r = spawnSync(process.execPath, [tempSelf], { encoding: "utf8" });
+    if (r.status === 0) fail("mutated InvoiceDetailPage still passed — selftest must FAIL on SPA print");
+    r = spawnSync(process.execPath, [tempSelf], { encoding: "utf8" });
     if (r.status === 0) fail("mutated shared.ts still passed — selftest must FAIL when print lookup skips membership GUC");
   } finally {
-    fs.writeFileSync(sharedPath, sharedBackup);
+    fs.rmSync(temp, { recursive: true, force: true });
   }
+
   console.log("PASS: verify-print-opens-canonical-document --selftest");
 }
 
