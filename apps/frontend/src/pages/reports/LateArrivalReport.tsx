@@ -96,7 +96,7 @@ export function LateArrivalReport() {
 
   const columns = useMemo<ParityColumn<LateArrivalRow>[]>(
     () => [
-      { key: "entity_label", label: TAB_LABELS[appliedFilters.groupBy], sortable: true, render: (row) => <span className="font-medium text-slate-900">{row.entity_label}</span> },
+      { key: "entity_label", label: TAB_LABELS[appliedFilters.groupBy], sortable: true, render: (row) => <span className="font-medium text-[#0F1219]">{row.entity_label}</span> },
       { key: "late_count", label: "Late", sortable: true },
       { key: "total_count", label: "Total", sortable: true },
       { key: "late_rate", label: "Rate", sortable: true, render: (row) => pct(row.late_rate) },
@@ -142,12 +142,12 @@ export function LateArrivalReport() {
         onReset={staged.reset}
         applyDisabled={!staged.dirty}
       >
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Min delay (h)</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Min delay (h)</span>
           <input
             type="number"
             min={0}
-            className="h-7 w-24 rounded-sm border border-slate-300 px-2 text-xs"
+            className="h-7 w-24 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.minDelayHours}
             onChange={(e) => staged.setDraft((p) => ({ ...p, minDelayHours: e.target.value }))}
             data-testid="reports-late-arrival-min-delay"
@@ -155,16 +155,16 @@ export function LateArrivalReport() {
         </label>
       </ReportFilterBar>
 
-      <div className="text-xs text-slate-500">
+      <div className="text-xs text-[#6B7280]">
         {summary.chronic} chronic (&gt;20%) · {summary.total} entities
       </div>
 
-      <div className="flex gap-2 border-b border-slate-200">
+      <div className="flex gap-2 border-b border-[#E5E7EB]">
         {(Object.keys(TAB_LABELS) as GroupBy[]).map((tab) => (
           <button
             key={tab}
             type="button"
-            className={`px-3 py-2 text-xs ${staged.draft.groupBy === tab ? "border-b-2 border-slate-300 font-medium text-slate-700" : "text-slate-600"}`}
+            className={`px-3 py-2 text-xs ${staged.draft.groupBy === tab ? "border-b-2 border-[#E5E7EB] font-medium text-[#1F2A44]" : "text-[#4B5563]"}`}
             onClick={() => {
               staged.setDraft((current) => ({ ...current, groupBy: tab }));
             }}
@@ -189,7 +189,7 @@ export function LateArrivalReport() {
           storageKey="late-arrival-report"
           emptyText="No completed stops with scheduled times in this period."
           exportFilename="late-arrival-report.csv"
-          rowClassName={(row) => (row.chronic_offender ? "bg-slate-50" : "")}
+          rowClassName={(row) => (row.chronic_offender ? "bg-[#F7F8FA]" : "")}
         />
       )}
     </div>

@@ -113,7 +113,7 @@ export function PostedWhileTourOpenReportPage() {
 
       {!companyId ? <p className="text-xs text-red-600">Select operating company.</p> : null}
 
-      <div className="rounded-sm border border-slate-300 bg-slate-50 p-3 text-xs text-slate-700">
+      <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]">
         This is a report, not an action. Nothing here can reverse, void, or post a journal entry —
         the owner reviews this list and confirms before any reversal is executed.
       </div>
