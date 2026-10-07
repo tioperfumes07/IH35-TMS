@@ -17,8 +17,33 @@ export const ALLOW_OFFLINE_SKIP = "live-data invariant by design, no static-only
 
 const LABEL = "verify-no-match-persisted-outside-accept-handler";
 
+// LST-F431 — a LIVE match is one that is neither voided nor released. The release function
+// (banking.release_bank_match, 202615330930 "send back keeps the match") writes a match_state='released' HISTORY row
+// when it releases a match that only ever existed as a bank-line pointer (released_from_state 'pointer_only'). That row
+// records a release; it was never accepted, so it has no accept event and must not be read as a match persisted
+// outside the accept handler. Measured 2026-10-07: match 0e1d0b24 (JE void, release_kind 'void', pointer_only) turned
+// every money gate red.
+export const LIVE_MATCH_PREDICATE = "rm.voided_at IS NULL AND rm.match_state <> 'released'";
+
+/** Mirrors LIVE_MATCH_PREDICATE for the selftest. */
+export function isLiveMatch(row) {
+  return row.voided_at == null && row.match_state !== "released";
+}
+
 function selftest() {
-  console.log(`${LABEL} selftest OK — this guard is a live-data check by design (no pure logic to unit test)`);
+  const cases = [
+    [{ voided_at: null, match_state: "user_matched" }, true],
+    [{ voided_at: null, match_state: "auto_matched" }, true],
+    [{ voided_at: null, match_state: "rejected" }, true],
+    [{ voided_at: null, match_state: "released" }, false], // the pointer_only release history row
+    [{ voided_at: "2026-10-06", match_state: "user_matched" }, false],
+  ];
+  const bad = cases.filter(([row, want]) => isLiveMatch(row) !== want);
+  if (bad.length) throw new Error(`${LABEL} selftest FAIL: ${JSON.stringify(bad)}`);
+  if (!/voided_at IS NULL/.test(LIVE_MATCH_PREDICATE) || !/match_state <> 'released'/.test(LIVE_MATCH_PREDICATE)) {
+    throw new Error(`${LABEL} selftest FAIL: the SQL predicate no longer excludes voided AND released rows`);
+  }
+  console.log(`${LABEL} selftest OK — ${cases.length}/${cases.length} live/not-live cases; SQL predicate excludes voided and released rows`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -53,7 +78,7 @@ async function main() {
     const res = await client.query(
       `SELECT rm.id::text, rm.bank_transaction_id::text, rm.operating_company_id::text
          FROM banking.reconciliation_matches rm
-        WHERE rm.voided_at IS NULL
+        WHERE ${LIVE_MATCH_PREDICATE}
           AND NOT EXISTS (
             SELECT 1 FROM audit.audit_events ae
              WHERE ae.event_class = 'bank_match.accepted'
@@ -64,7 +89,7 @@ async function main() {
     await client.query("ROLLBACK");
 
     if (res.rows.length > 0) {
-      console.error(`${LABEL}: FAIL — ${res.rows.length} live (non-voided) reconciliation_matches row(s) have no corresponding accept audit event:`);
+      console.error(`${LABEL}: FAIL — ${res.rows.length} live (non-voided, non-released) reconciliation_matches row(s) have no corresponding accept audit event:`);
       for (const r of res.rows.slice(0, 20)) console.error(`  ✗ match ${r.id} (bank_transaction_id ${r.bank_transaction_id})`);
       if (res.rows.length > 20) console.error(`  ...and ${res.rows.length - 20} more`);
       process.exit(1);
