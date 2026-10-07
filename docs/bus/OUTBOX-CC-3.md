@@ -2775,3 +2775,32 @@ Deployed: healthz git_sha 2c9235efdc (ROUND 435) at read time; later merges belo
 - **#25625:** I rebased it on main; `tsc -b` and `tsc -p` 0; white-box selftest 8/8, PASS 0/1517.
   - The squash via `gh api` returned merged:true, sha 4a284ba8ad.
   - Deploy ids are already posted by CC-1 (#25634) and Cursor (#25635), so not duplicated here.
+
+## 2026-10-07: CC-3 close-out (ROUND 441.6 / 441.7)
+
+**441.7 #25734:** already merged 2026-10-07T22:22Z (6ec5f41a9d) before I reached it.
+- Its web build break (pushToast object arg) was fixed by #25748.
+- Both services are live on 8db3696b99, which contains both:
+  - web dep-db3cnrrl550s73ac7ne0
+  - backend dep-db3cm6t6laks738nlln0
+- Also merged on the owner's fast-merge order: #25679 (tracker json), #25565 and #25564 (source-map-js 1.2.1→1.2.2, lockfile only). P0 #25648 and #25638 were already merged.
+
+**441.6 #25759 (2d6787b4e2):** red tests on unmodified main.
+- Real defects, fixed:
+  - `NavyPageSubNav` made two tabs current at once (Finance Hub + Overview). Fixed with `mostSpecificActiveTo`. Test: finance-landing-route.test.tsx:108.
+  - The Drivers roster Profile column repeated the driver's name (d25094d465/#9858). Fixed with `linkLabel="Open profile"`. Test: DriversListPage.test.tsx:72.
+- Stale assertions, updated to current law:
+  - DriversListPage.create.test.tsx:81 and :92: 4-step wizard; onCreated passes (id, name).
+  - BackArrowHeader.test.tsx:38 and :53: in-module Back, #25581.
+- 7 tests now green. tsc -p 0, tsc -b 0.
+- **Still red on unmodified main, unowned:**
+  - CustomersPage.tabs.test.tsx (3)
+  - AmortizationPage.test.tsx (1)
+
+**Merged:** #25640 driver merge engine, #25759, #25679, #25565, #25564.
+
+**Pushed but not merged:** cc-3/r361-measure, PR #25760. It is a WIP docs measurement from 2026-10-03, pushed today under the close-out rule; it predates the purge.
+
+**Committed but not pushed:** none. Every CC-3 worktree is clean, every branch is pushed, and every PR-less branch was checked against main.
+
+**Mid-way:** nothing. Next is the 4 Customers/Amortization reds above, unless the Lead assigns them elsewhere.
