@@ -43,7 +43,7 @@ const CHECKS = [
   // drivers: profiles.detail
   ["apps/frontend/src/components/driver-profile/CurrentAssignmentSection.tsx", /<EntityLinkOrTombstone[\s\S]{0,80}kind="unit"[\s\S]{0,120}id=\{cur\.unit_id == null \? null : String\(cur\.unit_id\)\}[\s\S]{0,80}name=\{cur\.unit_number\}[\s\S]{0,40}noun="Unit"/],
   // factoring: home.equipment_loans
-  ["apps/frontend/src/pages/factoring/FactoringHome.tsx", /tab === "equipment_loans"[\s\S]{0,400}kind="unit"/],
+  ["apps/frontend/src/pages/factoring/FactoringHome.tsx", /(?:tab === "equipment_loans"|show\("equipment_loans"\))[\s\S]{0,400}kind="unit"/],
   // home: role.dispatcher
   ["apps/frontend/src/components/home/DispatcherActiveLoadsPanel.tsx", /kind="unit" id=\{row\.unit_id\}/],
   // system: audit.trail

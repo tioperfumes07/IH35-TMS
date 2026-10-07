@@ -40,8 +40,8 @@ const TARGETS = [
     requires: [
       ['label: "Overdue"', "Overdue column present in the list"],
       ["overdue_label", "Overdue column bound to the overdue_label heuristic field"],
-      ['id: "with_open", label: "With open"', "With open filter chip present"],
-      ['filter === "with_open"', "With open filter predicate wired"],
+      ['"with_open", label: "With open"', "With open filter chip present"],
+      [' === "with_open"', "With open filter predicate wired"],
     ],
   },
 ];

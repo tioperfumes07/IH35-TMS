@@ -48,7 +48,7 @@ export function checkWoPdfCostBreakdownLineFallback(rendererSrc, routesSrc) {
   if (!/FROM maintenance\.work_order_lines/.test(routesSrc) || !/GROUP BY line_type/.test(routesSrc)) {
     offenders.push(`${ROUTES}: the /pdf route no longer sums maintenance.work_order_lines by line_type.`);
   }
-  if (!/lineTotals:\s*\{\s*laborCents,\s*partsCents,\s*otherCents\s*\}/.test(routesSrc)) {
+  if (!/const lineTotals = lineTotalsFromSums\(/.test(routesSrc) || !/buildPdfModel\(\{[\s\S]{0,300}lineTotals[\s\S]{0,50}\}\)/.test(routesSrc)) {
     offenders.push(`${ROUTES}: buildPdfModel is not called with the computed lineTotals.`);
   }
 
