@@ -39,7 +39,7 @@ export function W8BenSection({
         </div>
         <button
           type="button"
-          className="text-xs text-slate-700 underline disabled:cursor-not-allowed disabled:text-gray-400"
+          className="text-xs text-[#1F2A44] underline disabled:cursor-not-allowed disabled:text-gray-400"
           data-testid="dp-capture-w8ben"
           onClick={onCapture}
           disabled={!onCapture}
@@ -49,7 +49,7 @@ export function W8BenSection({
       </div>
 
       <div
-        className="mt-3 border-l-2 border-slate-300 bg-slate-100 p-3 text-xs text-slate-700"
+        className="mt-3 border-l-2 border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]"
         data-testid="w8ben-esign-blocked"
       >
         <p className="font-semibold">E-signature blocked — no attorney-approved W-8BEN template (Codex)</p>
@@ -72,7 +72,7 @@ export function W8BenSection({
             <Field label="IRS expiration" value={w8ben.irs_expiration_date} />
             <Field label="Certified by" value={w8ben.certification_name} />
           </div>
-          <p className="mt-3 text-xs text-slate-600">
+          <p className="mt-3 text-xs text-[#4B5563]">
             {renewalDue ? (
               renewalDays !== null && renewalDays < 0 ? (
                 <span className="text-red-700">Yearly renewal overdue — was due {renewalDue}.</span>

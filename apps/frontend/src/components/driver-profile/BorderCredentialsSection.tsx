@@ -171,7 +171,7 @@ export function BorderCredentialsSection({
           <h2 className="text-xs font-semibold text-gray-800">Border ops credentials</h2>
           <button
             type="button"
-            className="text-xs text-slate-700 underline disabled:cursor-not-allowed disabled:text-gray-400"
+            className="text-xs text-[#1F2A44] underline disabled:cursor-not-allowed disabled:text-gray-400"
             data-testid="dp-edit-border-creds"
             onClick={() => setEditOpen(true)}
             disabled={!canEdit}
@@ -209,7 +209,7 @@ export function BorderCredentialsSection({
           </FieldGroup>
 
           <FieldGroup label="SENTRI">
-            <label className="flex items-center gap-2 text-xs text-slate-700">
+            <label className="flex items-center gap-2 text-xs text-[#1F2A44]">
               <input
                 type="checkbox"
                 data-testid="border-creds-sentri-member"
@@ -274,7 +274,7 @@ export function BorderCredentialsSection({
                     }
                   />
                   {credentialFiles[key] ? (
-                    <span className="mt-1 block text-xs text-slate-500">{credentialFiles[key]!.name}</span>
+                    <span className="mt-1 block text-xs text-[#6B7280]">{credentialFiles[key]!.name}</span>
                   ) : null}
                 </FieldGroup>
               ))}

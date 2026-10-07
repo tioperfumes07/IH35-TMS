@@ -182,7 +182,7 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
         }}
       >
         <div
-          className="rounded-sm border border-slate-300 bg-slate-100 p-3 text-xs text-slate-700"
+          className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#1F2A44]"
           data-testid="w8ben-esign-blocked"
         >
           <p className="font-semibold">E-signature blocked — no attorney-approved W-8BEN template (Codex)</p>
@@ -191,12 +191,12 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
             data to the driver profile only — it does not produce a signed IRS W-8BEN artifact.
           </p>
         </div>
-        <p className="text-xs text-slate-600">
+        <p className="text-xs text-[#4B5563]">
           IRS Certificate of Foreign Status of Beneficial Owner. Required at hire for foreign (B-1)
           drivers; IH35 policy renews yearly. Field-data capture only until an attorney-approved template ships.
         </p>
 
-        <div className="text-xs font-semibold uppercase text-slate-500">Part I — Beneficial owner</div>
+        <div className="text-xs font-semibold uppercase text-[#6B7280]">Part I — Beneficial owner</div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1">
             <label className={labelCls}>Full legal name</label>
@@ -248,7 +248,7 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
           </div>
         </div>
 
-        <div className="text-xs font-semibold uppercase text-slate-500">Part II — Treaty claim (optional, usually N/A)</div>
+        <div className="text-xs font-semibold uppercase text-[#6B7280]">Part II — Treaty claim (optional, usually N/A)</div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1">
             <label className={labelCls}>Treaty country</label>
@@ -260,7 +260,7 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
           </div>
         </div>
 
-        <div className="text-xs font-semibold uppercase text-slate-500">Part III — Certification (typed metadata only)</div>
+        <div className="text-xs font-semibold uppercase text-[#6B7280]">Part III — Certification (typed metadata only)</div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1">
             <label className={labelCls}>Certification name (typed — not e-signed)</label>
