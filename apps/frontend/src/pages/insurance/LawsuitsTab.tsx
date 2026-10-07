@@ -97,7 +97,7 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
             kind="lawsuit"
             id={lawsuit.id}
             label={entityLabel(lawsuit.case_number, lawsuit.id, "Case")}
-            className="font-medium text-slate-700 underline"
+            className="font-medium text-[#1F2A44] underline"
           />
         ),
       },
@@ -180,7 +180,7 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
         loading={listState.isLoading}
         storageKey="insurance-lawsuits"
         emptyText="No lawsuits match the applied filters."
-        rowClassName={(lawsuit) => (selectedLawsuitId === lawsuit.id ? "bg-slate-100" : "")}
+        rowClassName={(lawsuit) => (selectedLawsuitId === lawsuit.id ? "bg-[#F7F8FA]" : "")}
         filterBar={
           <CollapsedListFilters
             activeFilterCount={statusFilter ? 1 : 0}
@@ -191,7 +191,7 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
             testIdPrefix="insurance-lawsuits"
             dataAttributes={{ "data-insurance-lawsuits-filter-toolbar": "collapsed" }}
           >
-            <label className="text-xs font-semibold text-slate-600">
+            <label className="text-xs font-semibold text-[#4B5563]">
               Status
               <SelectCombobox
                 className="mt-1 w-full max-w-xs rounded-sm border border-gray-300 px-2 py-1 text-xs"

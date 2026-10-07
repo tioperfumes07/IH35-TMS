@@ -189,37 +189,37 @@ export function ReportsHomePage() {
         {reportsKpis.map((item) => (
           <div
             key={item.label}
-            className={`rounded-sm border bg-white px-3 py-2 ${item.warn ? "border-l-[3px] border-l-slate-700" : "border-slate-200"}`}
+            className={`rounded-sm border bg-white px-3 py-2 ${item.warn ? "border-l-[3px] border-l-[#1F2A44]" : "border-[#E5E7EB]"}`}
           >
-            <div className="text-xs font-semibold uppercase tracking-[0.04em] text-slate-500">
+            <div className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280]">
               {item.label}
             </div>
             <div
-              className={`text-page-title font-semibold ${item.warn ? "text-slate-700" : "text-slate-900"}`}
+              className={`text-page-title font-semibold ${item.warn ? "text-[#1F2A44]" : "text-[#0F1219]"}`}
             >
               {item.value}
             </div>
-            <div className="text-xs text-slate-500">{item.meta}</div>
+            <div className="text-xs text-[#6B7280]">{item.meta}</div>
           </div>
         ))}
       </div>
 
       <div className="grid gap-3 lg:grid-cols-[1.8fr_1fr]">
         <div className="space-y-3">
-          <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
-            <div className="border-b border-slate-200 px-3 py-2">
+          <section className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
+            <div className="border-b border-[#E5E7EB] px-3 py-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="text-xs font-semibold text-slate-900">
+                <h3 className="text-xs font-semibold text-[#0F1219]">
                   Accounting + financial reports
                 </h3>
                 <BasisSelector value={basis} onChange={setBasis} />
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[#6B7280]">
                 Core accounting statements plus operational finance views
               </p>
             </div>
             {/* Flat grid cells — no nested bordered tiles (Cascade row 205 box-in-box). */}
-            <div className="grid sm:grid-cols-2 sm:divide-x sm:divide-slate-100">
+            <div className="grid sm:grid-cols-2 sm:divide-x sm:divide-[#E5E7EB]">
               {(
                 [
                   ["trial-balance", "Trial balance"],
@@ -241,12 +241,12 @@ export function ReportsHomePage() {
                 <button
                   key={id}
                   type="button"
-                  className="border-t border-slate-100 px-3 py-2 text-left text-xs font-semibold text-slate-800 hover:bg-slate-50"
+                  className="border-t border-[#E5E7EB] px-3 py-2 text-left text-xs font-semibold text-[#0F1219] hover:bg-[#F7F8FA]"
                   onClick={() => navigate(PHASE_6_REPORT_HREFS[id])}
                 >
                   <span className="flex items-center justify-between gap-2">
                     <span>{label}</span>
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                    <span className="rounded-full bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
                       {basisForReport(id)}
                     </span>
                   </span>
@@ -254,17 +254,17 @@ export function ReportsHomePage() {
               ))}
             </div>
           </section>
-          <section className="overflow-hidden rounded-sm border border-slate-200 bg-white">
-            <div className="border-b border-slate-200 px-3 py-2">
-              <h3 className="text-xs font-semibold text-slate-900">
+          <section className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
+            <div className="border-b border-[#E5E7EB] px-3 py-2">
+              <h3 className="text-xs font-semibold text-[#0F1219]">
                 Management reports
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[#6B7280]">
                 Branded financial compilations — lender, insurance, and
                 stakeholder ready
               </p>
             </div>
-            <div className="grid sm:grid-cols-3 sm:divide-x sm:divide-slate-100">
+            <div className="grid sm:grid-cols-3 sm:divide-x sm:divide-[#E5E7EB]">
               {(
                 [
                   [
@@ -287,13 +287,13 @@ export function ReportsHomePage() {
                 <button
                   key={type}
                   type="button"
-                  className="border-t border-slate-100 px-3 py-2 text-left hover:bg-slate-50"
+                  className="border-t border-[#E5E7EB] px-3 py-2 text-left hover:bg-[#F7F8FA]"
                   onClick={() => navigate(`/reports/management?type=${type}`)}
                 >
-                  <div className="text-xs font-semibold text-slate-800">
+                  <div className="text-xs font-semibold text-[#0F1219]">
                     {label}
                   </div>
-                  <div className="mt-0.5 text-xs text-slate-500">{sub}</div>
+                  <div className="mt-0.5 text-xs text-[#6B7280]">{sub}</div>
                 </button>
               ))}
             </div>
@@ -308,7 +308,7 @@ export function ReportsHomePage() {
       {showCustomBuilder ? <CustomReportBuilder /> : null}
 
       {category === "saved" && !showCustomBuilder ? (
-        <section className="rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+        <section className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-2 text-xs text-[#4B5563]">
           Open <strong>+ Custom report</strong> to build and save reports —
           saved definitions appear in the builder list.
         </section>

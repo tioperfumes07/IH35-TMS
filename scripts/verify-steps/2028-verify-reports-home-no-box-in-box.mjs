@@ -2,6 +2,9 @@
 export default {
   name: "reports-home-no-box-in-box",
   run(ctx) {
-    return ctx.run("node", ["scripts/verify-reports-home-no-box-in-box.mjs"]);
+    ctx.run("node", ["scripts/verify-reports-home-no-box-in-box.mjs"]);
+    // BANK leftover refuse — LawsuitsTab/InsuranceLanding/ReportsHome house tokens
+    ctx.run("node", ["scripts/verify-ins-land-rpt-slate-leftover-chrome.mjs", "--selftest"]);
+    return ctx.run("node", ["scripts/verify-ins-land-rpt-slate-leftover-chrome.mjs"]);
   },
 };

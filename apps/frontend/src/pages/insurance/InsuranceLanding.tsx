@@ -71,11 +71,11 @@ export function InsuranceLanding() {
   return (
     <div className="min-w-0 space-y-4 overflow-x-hidden">
       <header className="min-w-0 rounded-sm border border-gray-200 bg-white p-4">
-        <h2 className="text-xs font-semibold text-slate-900">Insurance Dashboard</h2>
-        <p className="mt-1 text-xs text-slate-600">Operational snapshot across policies, COI requests, claims, and lawsuits.</p>
+        <h2 className="text-xs font-semibold text-[#0F1219]">Insurance Dashboard</h2>
+        <p className="mt-1 text-xs text-[#4B5563]">Operational snapshot across policies, COI requests, claims, and lawsuits.</p>
       </header>
 
-      {summaryQuery.isLoading ? <div className="text-xs text-slate-500">Loading insurance dashboard...</div> : null}
+      {summaryQuery.isLoading ? <div className="text-xs text-[#6B7280]">Loading insurance dashboard...</div> : null}
 
       {summaryQuery.isError ? (
         <ListErrorState
