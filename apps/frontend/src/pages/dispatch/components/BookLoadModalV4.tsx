@@ -1848,7 +1848,7 @@ export function BookLoadModalV4({
       // CANCEL-LOAD-MODAL-INVISIBLE-BEHIND-DRAWER bug (z-[215], "above every other z-[N] tier including
       // the highest drawer") — this hand-rolled portal never got the same treatment. z-[216] keeps it
       // unambiguously topmost even alongside a Modal.tsx-based dialog.
-      className="fixed inset-0 z-[216] flex items-start justify-center overflow-y-auto px-4 py-6"
+      className="fixed inset-0 z-[1002] flex items-start justify-center overflow-y-auto px-4 py-6"
       data-ih35-blocking-modal="true"
       style={{ background: "rgba(15, 19, 32, 0.6)" }}
       onMouseDown={attemptBookLoadClose}

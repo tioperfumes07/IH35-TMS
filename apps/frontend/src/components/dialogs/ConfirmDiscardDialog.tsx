@@ -17,7 +17,7 @@ type Props = {
  * Modal's own backdrop painted OVER its own discard-confirmation dialog: a user closing any Modal
  * with unsaved changes (e.g. BookLoadModalV4) got no visible "Discard unsaved changes?" prompt —
  * clicks landed on Modal's onMouseDown={attemptClose} instead of Cancel/Discard. Bumped to
- * z-[219] — above Modal's 215 and ParityDrawer's stackAboveModal 218, below Combobox's
+ * z-[1004] — above Modal's 1001 and ParityDrawer's stackAboveModal 1003, below Combobox's
  * LISTBOX_Z_INDEX=220. Locked by verify-confirm-discard-dialog-z-index-above-modal.mjs.
  */
 export function ConfirmDiscardDialog({ open, onCancel, onDiscard }: Props) {
@@ -25,7 +25,7 @@ export function ConfirmDiscardDialog({ open, onCancel, onDiscard }: Props) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[219] flex items-center justify-center bg-black/45 p-4"
+      className="fixed inset-0 z-[1004] flex items-center justify-center bg-black/45 p-4"
       onMouseDown={onCancel}
       role="presentation"
     >
