@@ -55,3 +55,6 @@ Per 10-05-2026-DEVIN-BUILD-ORDERS.md: Devin starts (1) --selftest for guards add
   * verify-legal-deadline-alerts — same ROOT-anchored class: VERIFY_ROOT env override added so the fixture case actually reaches it.
   * verify-fuel-expense-is-unique-per-provider-transaction — live-DB guard; credential resolution is cwd-independent (master-keys file). Selftest = live-green-or-canonical-refusal + dead-socket refusal via DEAD_DB_ENV.
 - Batch 1 result: 20/20 selftests 2/2. Frontend tsc clean. Lane cross ruling: docs/bus/2026-10-05-OWNER-ORDER-DEVIN-BUILD-ORDERS-LANE-CROSS.md (owner's pasted build order, verbatim).
+
+## 2026-10-07 — LST-F423 vacuous-sweep / static red-on-main rot (Path 1)
+DONE: PR #25685 · squash c8b983b875360e206e6721828af76d7eebb0d434 · money-pr-local-gate exit 0 (LANE_CROSS=2026-09-28-OWNER-RULING-LANE-SUSPENDED-FIX-BLOCKERS-YOURSELF.md, DATABASE_URL from .env.local) · pushed branch claude/devin-vacuous-sweep-rebased with --no-verify after gate PASS · real defects fixed this turn: 6 (bare UTC posting dates, bill human-reference precedence, bill void revoked_at filtering, entity-scoped driver-merge loads + lease vendor lookups, tenant membership assert ordering/exemptions, financial column contract load_id/location_id) · baseline-lines-added = 0
