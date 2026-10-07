@@ -238,8 +238,20 @@ function NavyDropdown({ item, pathname }: { item: NavyPageSubNavItem; pathname: 
   );
 }
 
+/** ROUND 441.6: a module's index tab (Finance "Hub" -> /finance) prefix-matches every sibling (/finance/overview),
+ *  so two tabs were active at once. Only the most specific matching tab is active. */
+export function mostSpecificActiveTo(pathname: string, tos: readonly string[]): string | null {
+  let best: string | null = null;
+  for (const to of tos) if (isActive(pathname, to) && (best === null || to.length > best.length)) best = to;
+  return best;
+}
+
 export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPageSubNavProps) {
   const { pathname } = useLocation();
+  const activeTo = mostSpecificActiveTo(
+    pathname,
+    items.filter((i) => !i.children?.length).map((i) => i.to)
+  );
   const useLocalState = activeId !== undefined && onTabChange !== undefined;
   // C-22 — locked tab-row height (28px clickable boxes law): every module's NavyPageSubNav is h-7.
   const tabClass = (active: boolean) =>
@@ -273,15 +285,15 @@ export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPa
             );
           }
           return (
-            <NavLink
+            <Link
               key={item.to}
               to={item.to}
-              aria-current={isActive(pathname, item.to) ? "page" : undefined}
-              className={tabClass(isActive(pathname, item.to))}
+              aria-current={activeTo === item.to ? "page" : undefined}
+              className={tabClass(activeTo === item.to)}
             >
               {item.label}
               {item.hasData ? <DataDot /> : null}
-            </NavLink>
+            </Link>
           );
         })}
       </div>

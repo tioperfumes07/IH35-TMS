@@ -78,6 +78,10 @@ describe("DriversListPage create-driver entry (SM1)", () => {
     await user.type(document.querySelector('[data-field="last_name"]')!, "Doe");
     await user.type(document.querySelector('[data-field="phone_input"]')!, "9565550001");
 
+    // The creator is a 4-step wizard (#7658): Save lives on step 4, behind the drug-screen acknowledgement.
+    for (let step = 1; step < 4; step += 1) await user.click(screen.getByTestId("driver-create-wizard-next"));
+    await user.click(screen.getByRole("checkbox", { name: /pre-employment drug screen/i }));
+
     const saveButtons = screen.getAllByRole("button", { name: /^Save$/i });
     await user.click(saveButtons[saveButtons.length - 1]!);
 
@@ -85,7 +89,7 @@ describe("DriversListPage create-driver entry (SM1)", () => {
       expect(createDriverMock).toHaveBeenCalledTimes(1);
     });
     await waitFor(() => {
-      expect(onOpenProfile).toHaveBeenCalledWith("new-driver-123");
+      expect(onOpenProfile).toHaveBeenCalledWith("new-driver-123", "Jane Doe");
     });
   });
 });
