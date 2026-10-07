@@ -58,3 +58,6 @@ Per 10-05-2026-DEVIN-BUILD-ORDERS.md: Devin starts (1) --selftest for guards add
 
 ## 2026-10-07 — LST-F423 vacuous-sweep / static red-on-main rot (Path 1)
 DONE: PR #25685 · squash c8b983b875360e206e6721828af76d7eebb0d434 · money-pr-local-gate exit 0 (LANE_CROSS=2026-09-28-OWNER-RULING-LANE-SUSPENDED-FIX-BLOCKERS-YOURSELF.md, DATABASE_URL from .env.local) · pushed branch claude/devin-vacuous-sweep-rebased with --no-verify after gate PASS · real defects fixed this turn: 6 (bare UTC posting dates, bill human-reference precedence, bill void revoked_at filtering, entity-scoped driver-merge loads + lease vendor lookups, tenant membership assert ordering/exemptions, financial column contract load_id/location_id) · baseline-lines-added = 0
+
+## 2026-10-07 — static-rot-batch-1 shipped
+DONE: PR #25689 · squash 5752464de21077d9236160c80974c10f9e87202a · money-pr-local-gate exit 0 (LANE_CROSS=2026-09-28-OWNER-RULING-LANE-SUSPENDED-FIX-BLOCKERS-YOURSELF.md) · pushed devin-a/static-rot-batch-1 with --no-verify after gate PASS · real defects fixed this turn: 4 stale static-guard needles (verify-combobox-id-label-binding, verify-cursor-pr-title-prefix, verify-banking-toolbar-single, verify-bank-suggestions-includes-rule-match) · baseline-lines-added = 0
