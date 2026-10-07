@@ -45,11 +45,10 @@ import {
 import type { ReactNode } from "react";
 
 /**
- * SETL-F442 — decimal-safe numeric box (miles / gallons).
- * MoneyInput already keeps typed text while focused so "12." / "0.5" survive;
- * plain `Number(e.target.value)` on controlled `<input value={n}>` wiped the trailing
- * decimal mid-keystroke and made the boxes look broken. Same focus/text pattern here,
- * without a leading $ (miles are not money).
+ * SETL-F442/F443 — decimal-safe quantity box (miles / diesel gallons / DEF / any qty).
+ * MoneyInput owns $-money with the same trailing-"." hold. Plain
+ * `Number(e.target.value)` on controlled `<input value={n}>` wiped the trailing
+ * decimal mid-keystroke. No leading $ — quantities are not money.
  */
 function DecimalNumberInput({
   value,
@@ -85,11 +84,16 @@ function DecimalNumberInput({
       data-testid={dataTestId}
       onFocus={() => {
         setFocused(true);
-        setText(value != null && !(value === 0 && !allowZero) ? String(value) : "");
+        // Same W-3 pattern as MoneyInput: empty-on-zero so digits are not prepended to a leftover 0.
+        setText(value != null && value !== 0 ? String(value) : allowZero && value === 0 ? "" : "");
       }}
-      onBlur={() => setFocused(false)}
+      onBlur={() => {
+        setFocused(false);
+        setText(display);
+      }}
       onChange={(e) => {
         const next = e.target.value;
+        // Allow 45.123 gal / 12.5 mi — digits + one optional decimal point only.
         if (next !== "" && !/^\d*\.?\d*$/.test(next)) return;
         setText(next);
         if (next === "" || next === ".") {
@@ -1779,7 +1783,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                   <Field label="Gallons">
                     <DecimalNumberInput
                       className={inputClass}
-                      value={fuel.gallons || null}
+                      value={fuel.gallons > 0 ? fuel.gallons : null}
                       allowZero={false}
                       onChange={(n) => {
                         const next = [...fuels];
@@ -1787,13 +1791,14 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         setFuels(next);
                       }}
                       ariaLabel="Gallons"
+                      title="Diesel / reefer / DEF gallons — decimals allowed (e.g. 45.123)"
                       data-testid={`sc-fuel-gallons-${idx}`}
                     />
                   </Field>
                   <Field label="CPG">
                     <MoneyInput
                       className={moneyInputClass}
-                      valueCents={fuel.cpg_cents || null}
+                      valueCents={fuel.cpg_cents > 0 ? fuel.cpg_cents : null}
                       onChangeCents={(c) => {
                         const next = [...fuels];
                         next[idx] = { ...fuel, cpg_cents: c ?? 0 };

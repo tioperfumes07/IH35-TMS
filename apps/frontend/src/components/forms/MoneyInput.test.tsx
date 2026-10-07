@@ -108,4 +108,26 @@ describe("MoneyInput keystroke layer — zero-field digit-shift (W-3 10× guard)
     await user.type(input, "1500", { skipClick: true, initialSelectionStart: 0, initialSelectionEnd: 0 });
     expect(lastCents).toBe(150000); // was 1500000 (the leftover "0" made the value "15000")
   });
+
+  // SETL-F443 — trailing "." must stay typeable so $12.50 / CPG / every fractional money box works.
+  it("typing 12.5 keeps the decimal and stores 1250 cents", async () => {
+    const user = userEvent.setup();
+    render(<CentsHarness />);
+    const input = screen.getByLabelText("Amount") as HTMLInputElement;
+    await user.click(input);
+    await user.type(input, "12.5", { skipClick: true });
+    expect(input.value).toBe("12.5");
+    expect(lastCents).toBe(1250);
+  });
+
+  it("typing a trailing decimal point does not collapse the field (12. stays 12.)", async () => {
+    const user = userEvent.setup();
+    render(<CentsHarness />);
+    const input = screen.getByLabelText("Amount") as HTMLInputElement;
+    await user.click(input);
+    await user.type(input, "12.", { skipClick: true });
+    expect(input.value).toBe("12.");
+    // Last complete emit was 12.00 dollars = 1200 cents from the "12" keystrokes before "."
+    expect(lastCents).toBe(1200);
+  });
 });
