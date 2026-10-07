@@ -179,7 +179,7 @@ export function CoverageGapDashboard() {
     const missingTypesCol: ParityColumn<InsuranceCoverageGapUnit> = {
       key: "missing_types",
       label: "Missing types",
-      render: (row) => <span className="text-xs text-slate-600">{missingTypeLabels(row.missing_types, typeNameByCode)}</span>,
+      render: (row) => <span className="text-xs text-[#4B5563]">{missingTypeLabels(row.missing_types, typeNameByCode)}</span>,
     };
     return [unitCol, ...typeCols, missingTypesCol];
   }, [catalogCodes, typeNameByCode, requiredTypes]);
@@ -208,8 +208,8 @@ export function CoverageGapDashboard() {
   return (
     <div className="space-y-4">
       <header className="rounded-sm border border-gray-200 bg-white p-4">
-        <h2 className="text-xs font-semibold text-slate-900">Tractor Coverage Gap Dashboard</h2>
-        <p className="mt-1 text-xs text-slate-600">
+        <h2 className="text-xs font-semibold text-[#0F1219]">Tractor Coverage Gap Dashboard</h2>
+        <p className="mt-1 text-xs text-[#4B5563]">
           Scoped to tractors (fleet units with a Samsara-tracked unit record) — trailers are tracked
           separately on Fleet Covered. One column per coverage type from the catalog. Gap count{" "}
           {coverageGapsQuery.data?.coverage_gap_count ?? gapRows.length} must equal units with at least one Missing.
@@ -225,7 +225,7 @@ export function CoverageGapDashboard() {
           className="mt-3 max-w-sm"
         >
           <div data-testid="coverage-gap-filters">
-            <label className="text-xs text-slate-600">
+            <label className="text-xs text-[#4B5563]">
               Unit
               <EntityPicker
                 kind="unit"
@@ -243,30 +243,30 @@ export function CoverageGapDashboard() {
       </header>
 
       {coverageGapsQuery.isLoading || policiesQuery.isLoading || typesQuery.isLoading ? (
-        <div className="text-xs text-slate-500">Loading coverage gap dashboard...</div>
+        <div className="text-xs text-[#6B7280]">Loading coverage gap dashboard...</div>
       ) : null}
 
       <section className="grid gap-3 md:grid-cols-3">
         <article className="rounded-sm border border-gray-200 bg-white p-4">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Policies expiring in 30 days</p>
-          <p className="mt-2 text-page-title font-semibold text-slate-900">{summary.expiring30.length}</p>
+          <p className="text-xs uppercase tracking-wide text-[#6B7280]">Policies expiring in 30 days</p>
+          <p className="mt-2 text-page-title font-semibold text-[#0F1219]">{summary.expiring30.length}</p>
         </article>
         <article className="rounded-sm border border-gray-200 bg-white p-4">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Policies expiring in 60 days</p>
-          <p className="mt-2 text-page-title font-semibold text-slate-900">{summary.expiring60.length}</p>
+          <p className="text-xs uppercase tracking-wide text-[#6B7280]">Policies expiring in 60 days</p>
+          <p className="mt-2 text-page-title font-semibold text-[#0F1219]">{summary.expiring60.length}</p>
         </article>
         <article className="rounded-sm border border-gray-200 bg-white p-4">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Policies expiring in 90 days</p>
-          <p className="mt-2 text-page-title font-semibold text-slate-900">{summary.expiring90.length}</p>
+          <p className="text-xs uppercase tracking-wide text-[#6B7280]">Policies expiring in 90 days</p>
+          <p className="mt-2 text-page-title font-semibold text-[#0F1219]">{summary.expiring90.length}</p>
         </article>
       </section>
 
       {summary.unitsWithoutActiveCoverage.length > 0 ? (
         <section className="rounded-sm border border-gray-200 bg-white p-4">
-          <h3 className="text-xs font-semibold text-slate-900">Units without active coverage</h3>
+          <h3 className="text-xs font-semibold text-[#0F1219]">Units without active coverage</h3>
           <ul className="mt-2 space-y-1">
             {summary.unitsWithoutActiveCoverage.slice(0, 10).map((row) => (
-              <li key={row.unit_id} className="text-xs text-slate-600">
+              <li key={row.unit_id} className="text-xs text-[#4B5563]">
                 <EntityLink kind="unit" id={row.unit_id} label={unitLabel(row)} /> — {missingTypeLabels(row.missing_types, typeNameByCode)}
               </li>
             ))}
@@ -275,10 +275,10 @@ export function CoverageGapDashboard() {
       ) : null}
 
       <section className="rounded-sm border border-gray-200 bg-white p-4">
-        <h3 className="text-xs font-semibold text-slate-900">Coverage by type</h3>
+        <h3 className="text-xs font-semibold text-[#0F1219]">Coverage by type</h3>
         <div className="mt-2 flex flex-wrap gap-2">
           {catalogCodes.map((code) => (
-            <label key={code} className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+            <label key={code} className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
               {insuranceTypeLabel(code, typeNameByCode.get(code))}
               <select
                 className="ml-1 h-7 rounded-sm border border-gray-300 bg-white px-1 text-xs font-normal normal-case"

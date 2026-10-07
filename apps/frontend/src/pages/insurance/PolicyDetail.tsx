@@ -172,7 +172,7 @@ export function PolicyDetail() {
       },
       { key: "requested_at", label: "Requested", sortable: true, render: (row) => formatDateUS(row.requested_at) },
       { key: "status", label: "Status", sortable: true },
-      { key: "document_url", label: "Document", render: (row) => (row.document_url ? <a href={row.document_url} className="text-slate-700 underline">View</a> : "-") },
+      { key: "document_url", label: "Document", render: (row) => (row.document_url ? <a href={row.document_url} className="text-[#1F2A44] underline">View</a> : "-") },
     ],
     [],
   );
@@ -222,7 +222,7 @@ export function PolicyDetail() {
   }
 
   if (policyQuery.isLoading) {
-    return <div className="text-xs text-slate-500">Loading policy details...</div>;
+    return <div className="text-xs text-[#6B7280]">Loading policy details...</div>;
   }
 
   if (policyQuery.isError || !policyQuery.data) {
@@ -283,7 +283,7 @@ export function PolicyDetail() {
 
       {editing ? (
         <div className="grid gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3 md:grid-cols-4">
-          <label className="text-xs font-semibold text-slate-600">
+          <label className="text-xs font-semibold text-[#4B5563]">
             Status
             <select
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
@@ -297,7 +297,7 @@ export function PolicyDetail() {
               <option value="cancelled">Cancelled</option>
             </select>
           </label>
-          <label className="text-xs font-semibold text-slate-600">
+          <label className="text-xs font-semibold text-[#4B5563]">
             Effective date
             <DatePicker
               className="mt-1 w-full"
@@ -306,7 +306,7 @@ export function PolicyDetail() {
               disabled={updateMutation.isPending}
             />
           </label>
-          <label className="text-xs font-semibold text-slate-600">
+          <label className="text-xs font-semibold text-[#4B5563]">
             Expiry date
             <DatePicker
               className="mt-1 w-full"
@@ -338,7 +338,7 @@ export function PolicyDetail() {
       ) : null}
 
       <section className="rounded-sm border border-gray-200 bg-white p-4">
-        <h3 className="text-xs font-semibold text-slate-900">Units Assigned</h3>
+        <h3 className="text-xs font-semibold text-[#0F1219]">Units Assigned</h3>
         <div className="mt-2">
           <ParityTable
             rows={policy.units}
@@ -355,7 +355,7 @@ export function PolicyDetail() {
       <PaymentScheduleTab operatingCompanyId={companyId} policyId={policyId} />
 
       <section className="rounded-sm border border-gray-200 bg-white p-4">
-        <h3 className="text-xs font-semibold text-slate-900">COI History (INS-04)</h3>
+        <h3 className="text-xs font-semibold text-[#0F1219]">COI History (INS-04)</h3>
         <div className="mt-2">
           {coiQuery.isError ? (
             <ListErrorState
@@ -379,7 +379,7 @@ export function PolicyDetail() {
 
       <section className="grid gap-4 xl:grid-cols-2">
         <div className="rounded-sm border border-gray-200 bg-white p-4">
-          <h3 className="text-xs font-semibold text-slate-900">Claims (INS-06)</h3>
+          <h3 className="text-xs font-semibold text-[#0F1219]">Claims (INS-06)</h3>
           <div className="mt-2">
             {claimsQuery.isError ? (
               <ListErrorState
@@ -402,7 +402,7 @@ export function PolicyDetail() {
         </div>
 
         <div className="rounded-sm border border-gray-200 bg-white p-4">
-          <h3 className="text-xs font-semibold text-slate-900">Lawsuits (INS-06)</h3>
+          <h3 className="text-xs font-semibold text-[#0F1219]">Lawsuits (INS-06)</h3>
           <div className="mt-2">
             {lawsuitsQuery.isError ? (
               <ListErrorState
