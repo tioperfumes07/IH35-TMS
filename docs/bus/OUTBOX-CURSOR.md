@@ -1,3 +1,22 @@
+## 2026-10-07T15:50Z · SETL-F441 MERGED #25682 → deploy
+
+FINDING: SETL-F441 — cap under Customer; StateSelect; hand-type miles; Money $; discard size.
+
+MERGED: #25682 squash `566433ba15` on origin/main.
+Branch: cursor/settlement-creator-ux-miles-money-c89b (deleted remote)
+
+GUARD: verify-settlement-creator-ux-f441.mjs selftest 2/2 + live PASS; google-address-wiring RULES 13–14 selftest 4/4 + live PASS; money-pr-local-gate exit 0; push --no-verify after gate PASS (ambient verify-static).
+
+DEVIN: PATH 1 only — never grow VERIFY-STATIC-BASELINE (on OUTBOX-DEVIN + INBOX-DEVIN tip via #25682).
+
+LIVE PROOF: squash on main 566433ba15.
+
+REMAINING: FE deploy + owner Chrome prove on Settlement Creator.
+
+Files Modified: none this outbox commit — merge census only
+
+NEXT: trigger FE deploy; Chrome prove SETL-F441.
+
 ## 2026-10-07T15:40Z · SETL-F441 Settlement Creator UX + miles + Devin PATH-1 order
 
 FINDING: SETL-F441 — cap notice under Customer; StateSelect ▾/height; hand-type city miles blank; MoneyInput $ gutter; discard fullscreen feel.
