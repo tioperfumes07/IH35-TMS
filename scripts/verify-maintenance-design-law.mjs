@@ -29,15 +29,23 @@ export function collectProblems({
   requireText(tokens, 'kpiTileBorder: "#C7D2DC"', "--kpi-border token drifted");
   requireText(tokens, 'BUTTON_MD_SIZE_CLASS = "h-7', "28px control token drifted");
 
+  // CENTER-EVERYTHING LAW (owner ruling 2026-09-04): text-center is the default for
+  // non-board ParityTable surfaces; board views keep text-left because dense ledgers
+  // read left-to-right. The layout modes (auto/fixed) both inherit this contract.
   requireText(
     parity,
-    'className={`w-full ${columnLayout === "auto" ? "table-auto" : "table-fixed"} text-center`}',
-    "ParityTable columns are not centered across both supported layout modes",
+    'className={`w-full ${columnLayout === "auto" ? "table-auto" : "table-fixed"} ${board ? "text-left" : "text-center"} tabular-nums`}',
+    "ParityTable default centering contract missing across layout modes",
   );
   requireText(parity, 'stickyHeader ? "sticky top-0 z-10"', "ParityTable header is not sticky by default");
-  requireText(parity, "colors.tableRowStripe", "ParityTable zebra rows are not token-backed");
-  requireText(parity, "borderRight: `1px solid ${colors.tableColumnRule}`", "ParityTable header column rule missing");
-  requireText(parity, "borderRight: `1px solid ${colors.tableBodyRule}`", "ParityTable body column rule missing");
+  // Zebra backing can use the direct color token or the QBO_SURFACE wrapper — both are token-backed.
+  if (!/colors\.tableRowStripe|QBO_SURFACE\.rowStripe/.test(parity)) {
+    problems.push("ParityTable zebra rows are not token-backed");
+  }
+  // QBO-ROWS-NOT-COLUMNS (owner ruling 2026-09-30): body cells draw horizontal row rules only,
+  // never vertical column rules. Header / group bands still outline with tableColumnRule.
+  requireText(parity, "borderBottom: `1px solid ${colors.tableColumnRule}`", "ParityTable header/group row rule missing");
+  requireText(parity, "borderBottom: `1px solid ${colors.tableBodyRule}`", "ParityTable body row rule missing");
   requireText(parity, "fontWeight: headerWeight ?? 700", "ParityTable header weight no longer defaults to 700");
 
   requireText(drill, "backgroundColor: colors.kpiTileBg", "KPI computed background is not token-backed");
@@ -66,12 +74,17 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   const parity = read("apps/frontend/src/components/parity/ParityTable.tsx");
-  const plantedCenter = collectProblems({ parity: parity.replace("} text-center`}", "} text-left`}") });
-  if (!plantedCenter.includes("ParityTable columns are not centered across both supported layout modes")) {
+  const plantedCenter = collectProblems({ parity: parity.replace('board ? "text-left" : "text-center"', 'board ? "text-left" : "text-left"') });
+  if (!plantedCenter.includes("ParityTable default centering contract missing across layout modes")) {
     console.error("verify-maintenance-design-law SELFTEST FAIL — planted table-centering drift escaped");
     process.exit(1);
   }
-  console.log("verify-maintenance-design-law SELFTEST PASS — shared surface and computed-style token mutations caught 3/3");
+  const plantedRowRule = collectProblems({ parity: parity.replace("borderBottom: `1px solid ${colors.tableBodyRule}`", "") });
+  if (!plantedRowRule.includes("ParityTable body row rule missing")) {
+    console.error("verify-maintenance-design-law SELFTEST FAIL — planted body row rule removal escaped");
+    process.exit(1);
+  }
+  console.log("verify-maintenance-design-law SELFTEST PASS — shared surface and computed-style token mutations caught 4/4");
   process.exit(0);
 }
 
