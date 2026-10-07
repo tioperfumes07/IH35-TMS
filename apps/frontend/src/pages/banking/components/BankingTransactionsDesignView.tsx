@@ -4147,7 +4147,7 @@ export function BankingTransactionsDesignView({
         // selected row stays highlighted; stub marks the redirect for guards / a11y.
         renderExpanded={() => (
           <p
-            className="px-2 py-1 text-xs text-slate-600"
+            className="px-2 py-1 text-xs text-[#4B5563]"
             data-testid="banking-categorize-inline-redirect"
           >
             Categorize / Match opens in the popup.
@@ -4222,7 +4222,7 @@ export function BankingTransactionsDesignView({
               pagedRows.find((row) => row.id === expandedTxId) ??
               null;
             return tx ? renderExpandedRegisterRow(tx) : (
-              <p className="text-xs text-slate-600">Transaction not on this page — clear filters or change account.</p>
+              <p className="text-xs text-[#4B5563]">Transaction not on this page — clear filters or change account.</p>
             );
           })()}
         </div>
