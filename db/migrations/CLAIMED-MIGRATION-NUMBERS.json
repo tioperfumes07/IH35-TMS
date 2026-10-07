@@ -2127,6 +2127,11 @@
       "claimed_at": "2026-10-07",
       "purpose": "LST-F430: catalogs.accounts_detail_type_scope_check compares the 8-value account_type to the catalog code/name, so every Liability/Asset/Expense detail type is refused; map code -> account_type exactly as accounts.routes.ts CATALOG_CODE_TO_ACCOUNT_TYPE_ENUM"
     },
+    "202615440400": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-07",
+      "purpose": "RELAY-F440: integrations.integration_sync_log has RLS forced with INSERT/SELECT policies only, so the Relay tick's completion UPDATE matched 0 rows silently (14 ticks, 0 finished); add the lucia-bypass UPDATE policy and close the abandoned claims"
+    },
     "202615440200": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-06",
