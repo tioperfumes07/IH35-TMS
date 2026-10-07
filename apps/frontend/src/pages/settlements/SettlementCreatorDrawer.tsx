@@ -1447,31 +1447,6 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         data-testid={`sc-load-trip-type-${idx}`}
                       />
                     </Field>
-                    <Field label="Join outbound (SB)">
-                      <input
-                        className={inputClass}
-                        value={load.join_outbound_load_number ?? ""}
-                        onChange={(e) => {
-                          const next = [...loads];
-                          next[idx] = { ...load, join_outbound_load_number: e.target.value };
-                          setLoads(next);
-                        }}
-                        placeholder="Outbound load #"
-                      />
-                    </Field>
-                    <Field label="Customer PO #">
-                      <input
-                        className={inputClass}
-                        value={load.customer_po_number ?? ""}
-                        onChange={(e) => {
-                          const next = [...loads];
-                          next[idx] = { ...load, customer_po_number: e.target.value };
-                          setLoads(next);
-                        }}
-                        title="REQUIRED — bookLoad refuses a load with no PO or W/O, and Faro matches the invoice on it"
-                        data-testid={`sc-load-po-${idx}`}
-                      />
-                    </Field>
                   </div>
 
                   {/* Row 2 — PU date + DEL date ONLY */}
@@ -1515,6 +1490,19 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                       />
                       Not delivered
                     </label>
+                    <Field label="Customer PO #" span={2}>
+                      <input
+                        className={inputClass}
+                        value={load.customer_po_number ?? ""}
+                        onChange={(e) => {
+                          const next = [...loads];
+                          next[idx] = { ...load, customer_po_number: e.target.value };
+                          setLoads(next);
+                        }}
+                        title="REQUIRED — bookLoad refuses a load with no PO or W/O, and Faro matches the invoice on it"
+                        data-testid={`sc-load-po-${idx}`}
+                      />
+                    </Field>
                   </div>
 
                   {/* Stop identity — address / city / state / ZIP */}
