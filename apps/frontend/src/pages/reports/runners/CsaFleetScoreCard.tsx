@@ -29,14 +29,14 @@ export function CsaFleetScoreCard({ value }: Props) {
   const totalOos = toNullableNumber(value.total_oos);
   return (
     <section className="space-y-3">
-      <section className="rounded-sm border border-slate-200 bg-white p-4">
+      <section className="rounded-sm border border-[#E5E7EB] bg-white p-4">
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-page-title font-semibold text-slate-900">{totalPoints == null ? "—" : totalPoints.toLocaleString()}</div>
-          <div className="text-xs text-slate-600">Internal inspection points</div>
+          <div className="text-page-title font-semibold text-[#0F1219]">{totalPoints == null ? "—" : totalPoints.toLocaleString()}</div>
+          <div className="text-xs text-[#4B5563]">Internal inspection points</div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="rounded-full border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700">
+          <span className="rounded-full border border-[#E5E7EB] px-2 py-1 text-xs font-semibold text-[#1F2A44]">
             Not an FMCSA percentile
           </span>
           <button
@@ -74,13 +74,13 @@ export function CsaFleetScoreCard({ value }: Props) {
         </div>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-        <div className="rounded-sm border border-slate-200 p-2">
-          <div className="text-slate-500">Inspections</div>
-          <div className="font-semibold text-slate-900">{totalInspections == null ? "—" : totalInspections.toLocaleString()}</div>
+        <div className="rounded-sm border border-[#E5E7EB] p-2">
+          <div className="text-[#6B7280]">Inspections</div>
+          <div className="font-semibold text-[#0F1219]">{totalInspections == null ? "—" : totalInspections.toLocaleString()}</div>
         </div>
-        <div className="rounded-sm border border-slate-200 p-2">
-          <div className="text-slate-500">Out of Service</div>
-          <div className="font-semibold text-slate-900">{totalOos == null ? "—" : totalOos.toLocaleString()}</div>
+        <div className="rounded-sm border border-[#E5E7EB] p-2">
+          <div className="text-[#6B7280]">Out of Service</div>
+          <div className="font-semibold text-[#0F1219]">{totalOos == null ? "—" : totalOos.toLocaleString()}</div>
         </div>
       </div>
       <div className="mt-4 space-y-2">
@@ -89,7 +89,7 @@ export function CsaFleetScoreCard({ value }: Props) {
           const width = score != null && maxBasic != null && maxBasic > 0 ? `${Math.round((score / maxBasic) * 100)}%` : "0%";
           return (
             <div key={basic.key}>
-              <div className="mb-1 flex items-center justify-between text-xs text-slate-600">
+              <div className="mb-1 flex items-center justify-between text-xs text-[#4B5563]">
                 <span>{basic.label}</span>
                 <span>
                   {basic.key === "basic_hazmat"
@@ -99,7 +99,7 @@ export function CsaFleetScoreCard({ value }: Props) {
                       : score.toFixed(1)}
                 </span>
               </div>
-              <div className="h-2 rounded-sm bg-slate-100">
+              <div className="h-2 rounded-sm bg-[#F7F8FA]">
                 <div
                   className="h-2 rounded-sm bg-[#1f2a44]"
                   data-testid={`csa-bar-${basic.key}`}
@@ -110,7 +110,7 @@ export function CsaFleetScoreCard({ value }: Props) {
           );
         })}
       </div>
-      <div className="mt-3 text-xs text-slate-500">Last computed: {value.computed_at ? mmmDdTime(value.computed_at as string) : "—"}</div>
+      <div className="mt-3 text-xs text-[#6B7280]">Last computed: {value.computed_at ? mmmDdTime(value.computed_at as string) : "—"}</div>
     </section>
     </section>
   );
