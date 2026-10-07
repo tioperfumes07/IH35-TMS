@@ -1890,6 +1890,62 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         />
                       </div>
                     </Field>
+                    {needsLoad ? (
+                      <Field label="Load No. / Assign to">
+                        <input
+                          className={inputClass}
+                          value={fuel.load_number ?? ""}
+                          onChange={(e) => {
+                            const next = [...fuels];
+                            next[idx] = { ...fuel, load_number: e.target.value };
+                            setFuels(next);
+                          }}
+                          placeholder="Required — same-day PU & DEL"
+                          title="Pickup and delivery are the same day as this fuel — pick which load"
+                          data-testid={`sc-fuel-load-${idx}`}
+                        />
+                      </Field>
+                    ) : (
+                      <Field label="Load (auto by date)">
+                        <input
+                          className={`${inputClass} bg-[#F7F8FA] text-[#6B7280]`}
+                          value={fuel.load_number ? String(fuel.load_number) : "— auto from date"}
+                          readOnly
+                          title="Assigned from fuel date vs load pickup–delivery window"
+                          data-testid={`sc-fuel-load-auto-${idx}`}
+                        />
+                      </Field>
+                    )}
+                    <Field label="Fuel" span={2}>
+                      <Combobox
+                        options={[
+                          { value: "diesel", label: "Truck diesel" },
+                          { value: "reefer_diesel", label: "Reefer Diesel" },
+                          { value: "def", label: "DEF" },
+                        ]}
+                        value={fuel.fuel_type ?? "diesel"}
+                        onChange={(v) => {
+                          const next = [...fuels];
+                          next[idx] = { ...fuel, fuel_type: (v ?? "") as "diesel" | "def" | "reefer_diesel" };
+                          setFuels(next);
+                        }}
+                        size="sm"
+                        searchIsValue
+                        data-testid={`sc-fuel-type-${idx}`}
+                      />
+                    </Field>
+                    <Field label="Invoice #">
+                      <input
+                        className={inputClass}
+                        value={fuel.invoice ?? ""}
+                        onChange={(e) => {
+                          const next = [...fuels];
+                          next[idx] = { ...fuel, invoice: e.target.value };
+                          setFuels(next);
+                        }}
+                        data-testid={`sc-fuel-invoice-${idx}`}
+                      />
+                    </Field>
                     <Field label="Vendor" span={2}>
                       <EntityPicker
                         kind="vendor"
@@ -1931,37 +1987,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         }}
                       />
                     </Field>
-                    <Field label="Invoice #">
-                      <input
-                        className={inputClass}
-                        value={fuel.invoice ?? ""}
-                        onChange={(e) => {
-                          const next = [...fuels];
-                          next[idx] = { ...fuel, invoice: e.target.value };
-                          setFuels(next);
-                        }}
-                        data-testid={`sc-fuel-invoice-${idx}`}
-                      />
-                    </Field>
                     {/* U25 — reefer diesel is its own fuel (out of IFTA, counted for the federal reefer-fuel credit). */}
-                    <Field label="Fuel" span={2}>
-                      <Combobox
-                        options={[
-                          { value: "diesel", label: "Truck diesel" },
-                          { value: "reefer_diesel", label: "Reefer Diesel" },
-                          { value: "def", label: "DEF" },
-                        ]}
-                        value={fuel.fuel_type ?? "diesel"}
-                        onChange={(v) => {
-                          const next = [...fuels];
-                          next[idx] = { ...fuel, fuel_type: (v ?? "") as "diesel" | "def" | "reefer_diesel" };
-                          setFuels(next);
-                        }}
-                        size="sm"
-                        searchIsValue
-                        data-testid={`sc-fuel-type-${idx}`}
-                      />
-                    </Field>
                     <Field label={fuel.fuel_type === "def" ? "DEF gal" : "Gallons"}>
                       <DecimalNumberInput
                         className={inputClass}
@@ -1989,18 +2015,6 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         ariaLabel="Cents per gallon"
                       />
                     </Field>
-                    <Field label="Receipt">
-                      <MoneyInput
-                        className={moneyInputClass}
-                        valueCents={fuel.receipt_cents ?? null}
-                        onChangeCents={(c) => {
-                          const next = [...fuels];
-                          next[idx] = { ...fuel, receipt_cents: c };
-                          setFuels(next);
-                        }}
-                        ariaLabel="Fuel receipt"
-                      />
-                    </Field>
                     <Field label="Card">
                       <Combobox
                         options={[
@@ -2017,33 +2031,19 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                         searchIsValue
                       />
                     </Field>
+                    <Field label="Receipt" span={2}>
+                      <MoneyInput
+                        className={moneyInputClass}
+                        valueCents={fuel.receipt_cents ?? null}
+                        onChangeCents={(c) => {
+                          const next = [...fuels];
+                          next[idx] = { ...fuel, receipt_cents: c };
+                          setFuels(next);
+                        }}
+                        ariaLabel="Fuel receipt"
+                      />
+                    </Field>
                     {/* Load # only when same-day PU+DEL+expense — else auto by date */}
-                    {needsLoad ? (
-                      <Field label="Load No. / Assign to">
-                        <input
-                          className={inputClass}
-                          value={fuel.load_number ?? ""}
-                          onChange={(e) => {
-                            const next = [...fuels];
-                            next[idx] = { ...fuel, load_number: e.target.value };
-                            setFuels(next);
-                          }}
-                          placeholder="Required — same-day PU & DEL"
-                          title="Pickup and delivery are the same day as this fuel — pick which load"
-                          data-testid={`sc-fuel-load-${idx}`}
-                        />
-                      </Field>
-                    ) : (
-                      <Field label="Load (auto by date)">
-                        <input
-                          className={`${inputClass} bg-[#F7F8FA] text-[#6B7280]`}
-                          value={fuel.load_number ? String(fuel.load_number) : "— auto from date"}
-                          readOnly
-                          title="Assigned from fuel date vs load pickup–delivery window"
-                          data-testid={`sc-fuel-load-auto-${idx}`}
-                        />
-                      </Field>
-                    )}
                     <LineCoding
                       companyId={companyId}
                       line={fuel}
