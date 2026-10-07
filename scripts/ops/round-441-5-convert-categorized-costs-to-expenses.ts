@@ -43,7 +43,9 @@ const PLAN: Plan[] = [
     label: "Cash Deposit Processing 03/02 $12.00",
     accountNumber: "6300",
     vendorName: "Bank Of America",
-    item: { stop: "6300 has six items and none names a cash-deposit processing fee; choosing one is a ruling, not a gap" },
+    // None of 6300's six items names a cash-deposit processing fee, so picking one would be a guess. The fitting item is
+    // missing, not ambiguous: created under the owner's standing order (2026-08-07, create missing USMCA items).
+    item: { create: { name: "BC-Cash Deposit Processing Fee", description: "Bank fee for processing a cash deposit. Created ROUND 441.5 (no 6300 item named it)." } },
   },
   {
     journalEntryId: "a6d06fc6-fa12-443e-be6b-b1df0a0287f2",
