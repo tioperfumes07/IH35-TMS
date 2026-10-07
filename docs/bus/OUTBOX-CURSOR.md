@@ -1,3 +1,25 @@
+## 2026-10-07T17:35Z · SETL-F442 + F443 MERGED + FE LIVE for Chrome
+
+FINDING: Settlement Creator mock layout + all money/qty decimals.
+
+MERGED:
+- SETL-F442 #25691 squash `1ae260e60c` — 5-col grids; header 6-col; no Driver EntityLink under picker; period Start→first PU / End→last DEL; DecimalNumberInput miles/gallons
+- SETL-F443 #25692 squash `2406442be6` — MoneyInput trailing-`.` hold so CPG/rates/revenue accept decimals; diesel gallons decimals locked
+
+DEPLOY:
+- FE `srv-d7s46dbrjlhs7383i150` dep-db3848mq1p3s73f9cdmg **live** (commit `2406442be6` = F443 tip)
+- BE healthz `git_sha=1ae260e60c` (F442; F443 is FE-only)
+
+GUARD: verify-settlement-creator-ux-f442 + verify-settlement-creator-decimals-f443 exit 0; MoneyInput vitest 15/15
+
+LIVE PROOF: FE deploy live on 2406442be6; app.ih35dispatch.com HTTP 200
+
+REMAINING: owner Chrome Settlement Creator — even header (one driver name); type `45.123` gal + `$3.459` CPG; Start/End drive first/last load dates
+
+Files Modified: this OUTBOX only
+
+NEXT: owner Chrome prove SETL-F442/F443; next measured leftover
+
 ## 2026-10-07T16:10Z · BANK-F2026100701 MERGED #25687 + SETL-F441 LIVE for Chrome
 
 FINDING: BANK-F2026100701 — active-categorize-path guard false-red after multi-select.
