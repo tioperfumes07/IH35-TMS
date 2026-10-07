@@ -2,7 +2,9 @@
 export default {
   name: "verify-combobox-listbox-portaled",
   async run(ctx) {
-    ctx.run("node", ["scripts/verify-combobox-listbox-portaled.mjs", "--selftest"]);
-    ctx.run("node", ["scripts/verify-combobox-listbox-portaled.mjs"]);
+    await ctx.run("node", ["scripts/verify-shared-chrome-slate-leftover-chrome.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-shared-chrome-slate-leftover-chrome.mjs"]);
+    await ctx.run("node", ["scripts/verify-combobox-listbox-portaled.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-combobox-listbox-portaled.mjs"]);
   },
 };
