@@ -1,3 +1,21 @@
+## 2026-10-07T16:10Z · BANK-F2026100701 MERGED #25687 + SETL-F441 LIVE for Chrome
+
+FINDING: BANK-F2026100701 — active-categorize-path guard false-red after multi-select.
+
+MERGED: #25687 squash `ab83c0375d` on origin/main.
+
+FIX: needle → setSelectedTransactionTypes([initial…]); categorize modal stub #4B5563.
+
+GUARD: verify-banking-active-categorize-path selftest + live OK; money-pr-local-gate PASS.
+
+SETL-F441 Chrome-ready: FE dep-db36ks72975c73f5bvd0 live · BE dep-db36k7brjlhs7387a8ig live · healthz 566433ba15.
+
+DEVIN PATH-1 ordered (never grow VERIFY-STATIC-BASELINE).
+
+Files Modified: this OUTBOX only
+
+NEXT: owner Chrome Settlement Creator prove; next measured leftover.
+
 ## 2026-10-07T15:56Z · SETL-F441 DEPLOYED LIVE — FE + BE
 
 FINDING: SETL-F441 deployed; owner Chrome prove next.
