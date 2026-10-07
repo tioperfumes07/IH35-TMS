@@ -225,7 +225,7 @@ export function CashAdvanceRequestsPage() {
           if (waitingOwner) {
             return (
               <div className="space-y-1">
-                <span className="inline-flex rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                <span className="inline-flex rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-medium text-[#1F2A44]">
                   Pending Owner Approval
                 </span>
                 {ownerUrl ? (
@@ -245,7 +245,7 @@ export function CashAdvanceRequestsPage() {
             );
           }
           if (above) {
-            return <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-900">Above policy</span>;
+            return <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs text-[#0F1219]">Above policy</span>;
           }
           return <span className="text-xs text-gray-500">Within policy</span>;
         },
@@ -295,7 +295,7 @@ export function CashAdvanceRequestsPage() {
 
       {companyId ? (
         <div className="relative flex flex-wrap items-end gap-3" data-testid="cash-advance-requests-filters">
-          <label className="text-xs text-slate-600">
+          <label className="text-xs text-[#4B5563]">
             Driver
             <EntityPicker
               kind="driver"
@@ -402,7 +402,7 @@ export function CashAdvanceRequestsPage() {
           exportFilename="cash-advance-requests"
           rowClassName={(row) =>
             requestIdFromUrl && String(row.id ?? "") === requestIdFromUrl
-              ? "bg-slate-100 ring-1 ring-slate-400"
+              ? "bg-[#F7F8FA] ring-1 ring-[#6B7280]"
               : ""
           }
           rowActions={(row) => {
@@ -439,7 +439,7 @@ export function CashAdvanceRequestsPage() {
                   </Button>
                 </div>
                 {isMaker ? (
-                  <div className="text-right text-xs text-slate-700">You submitted this — needs a different approver.</div>
+                  <div className="text-right text-xs text-[#1F2A44]">You submitted this — needs a different approver.</div>
                 ) : null}
               </div>
             );
