@@ -110,11 +110,24 @@ export function MoneyInput({
         onChange={(e) => {
           const next = e.target.value;
           setText(next);
-          // Incomplete typed states ("-", "-.", ".") must NOT emit null — AccessorialEditor and
-          // most callers coerce null → 0, which made a -250 adjustment impossible (the minus key
-          // zeroed the field before digits arrived). Only emit when empty or a complete number.
+          // Incomplete typed states must NOT emit — AccessorialEditor and most callers coerce
+          // null → 0, which made a -250 adjustment impossible (the minus key zeroed the field
+          // before digits arrived). Trailing "." ("12.", "0.", "-3.") is also incomplete:
+          // Number("12.") === 12 would round away the decimal mid-keystroke and block $12.50 /
+          // diesel CPG / every fractional money box (SETL-F443).
           const cleaned = next.replace(/[^0-9.-]/g, "");
-          if (cleaned === "-" || cleaned === "." || cleaned === "-." || cleaned === "-0.") {
+          if (cleaned === "") {
+            if (isDollars) onChangeDollars?.(null);
+            else onChangeCents?.(null);
+            return;
+          }
+          if (
+            cleaned === "-" ||
+            cleaned === "." ||
+            cleaned === "-." ||
+            cleaned === "-0." ||
+            /\.$/.test(cleaned)
+          ) {
             return;
           }
           if (isDollars) onChangeDollars?.(parseToDollars(next));
