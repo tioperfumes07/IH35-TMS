@@ -56,8 +56,8 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
 
       <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-linked-financials">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <h3 className="text-xs font-semibold text-slate-900">Linked Bills / Expenses</h3>
-          <Link to={`/accounting/bills?unit_id=${encodeURIComponent(unitId)}`} className="text-xs text-slate-700 hover:underline">
+          <h3 className="text-xs font-semibold text-[#0F1219]">Linked Bills / Expenses</h3>
+          <Link to={`/accounting/bills?unit_id=${encodeURIComponent(unitId)}`} className="text-xs text-[#1F2A44] hover:underline">
             Open Bills →
           </Link>
         </div>
@@ -114,8 +114,8 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
 
       <section className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <h3 className="text-xs font-semibold text-slate-900">Fixed assets &amp; depreciation</h3>
-          <Link to="/accounting/fixed-assets" className="text-xs text-slate-700 hover:underline">
+          <h3 className="text-xs font-semibold text-[#0F1219]">Fixed assets &amp; depreciation</h3>
+          <Link to="/accounting/fixed-assets" className="text-xs text-[#1F2A44] hover:underline">
             Open Fixed Assets register →
           </Link>
         </div>
@@ -130,10 +130,10 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
                     kind="fixed_asset"
                     id={row.id}
                     label={row.name}
-                    className="font-medium text-slate-700 hover:underline"
+                    className="font-medium text-[#1F2A44] hover:underline"
                   />
                   {row.asset_number ? <span className="text-gray-500"> · #{row.asset_number}</span> : null}
-                  <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs capitalize text-slate-700">{row.status}</span>
+                  <span className="ml-2 rounded bg-[#F7F8FA] px-1.5 py-0.5 text-xs capitalize text-[#1F2A44]">{row.status}</span>
                 </div>
                 <div className="text-right text-xs tabular-nums text-gray-700">
                   <div>NBV <EntityLink kind="fixed_asset" id={row.id} label={fmtCents(row.net_book_value_cents)} /></div>
@@ -147,8 +147,8 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
 
       <section className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <h3 className="text-xs font-semibold text-slate-900">ASC 842 leases</h3>
-          <Link to="/finance/hub" className="text-xs text-slate-700 hover:underline">
+          <h3 className="text-xs font-semibold text-[#0F1219]">ASC 842 leases</h3>
+          <Link to="/finance/hub" className="text-xs text-[#1F2A44] hover:underline">
             Open Finance Hub →
           </Link>
         </div>
@@ -160,7 +160,7 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
               <li key={`${row.lease_contract_id}-${row.fixed_asset_id}`} className="flex flex-wrap items-center justify-between gap-2 py-2 text-xs">
                 <div>
                   <span className="font-medium">{entityLabel(row.display_id, row.lease_contract_id, "Contract")}</span>
-                  <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs capitalize text-slate-700">{row.status}</span>
+                  <span className="ml-2 rounded bg-[#F7F8FA] px-1.5 py-0.5 text-xs capitalize text-[#1F2A44]">{row.status}</span>
                   <span className="ml-1 text-xs text-gray-500">({row.election})</span>
                 </div>
                 <div className="text-right text-xs tabular-nums text-gray-700">
@@ -177,8 +177,8 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
 
       <section className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <h3 className="text-xs font-semibold text-slate-900">Equipment loans (CCG / factoring)</h3>
-          <Link to="/factoring/equipment-loans" className="text-xs text-slate-700 hover:underline">
+          <h3 className="text-xs font-semibold text-[#0F1219]">Equipment loans (CCG / factoring)</h3>
+          <Link to="/factoring/equipment-loans" className="text-xs text-[#1F2A44] hover:underline">
             Open Equipment Loans →
           </Link>
         </div>
@@ -191,7 +191,7 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
                 <div>
                   <span className="font-medium">{entityLabel(row.equipment_number, row.equipment_id, "Equipment")}</span>
                   {row.lender_vendor_name ? <span className="text-gray-500"> · {row.lender_vendor_name}</span> : null}
-                  <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs capitalize text-slate-700">{row.status}</span>
+                  <span className="ml-2 rounded bg-[#F7F8FA] px-1.5 py-0.5 text-xs capitalize text-[#1F2A44]">{row.status}</span>
                 </div>
                 <div className="text-right text-xs tabular-nums text-gray-700">
                   {/* ROUND 433.2 — the loan's own route (drill_to, built by the backend for this loan). */}
