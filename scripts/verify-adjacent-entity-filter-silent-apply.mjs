@@ -24,36 +24,12 @@ const TARGETS = [
     entityKeys: ["driverId", "unitId"],
   },
   {
-    file: "apps/frontend/src/pages/accounting/BillsPage.tsx",
-    entityKeys: ["unitId", "loadId"],
-  },
-  {
     file: "apps/frontend/src/pages/accounting/VendorCreditsPage.tsx",
     entityKeys: ["vendorId"],
   },
   {
-    file: "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
-    entityKeys: ["sourceLoadId"],
-  },
-  {
-    file: "apps/frontend/src/pages/accounting/FactoringListPage.tsx",
-    entityKeys: ["loadId"],
-  },
-  {
-    file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx",
-    entityKeys: ["loadId", "driverId", "unitId", "trailerId"],
-  },
-  {
-    file: "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
-    entityKeys: ["driverId"],
-  },
-  {
     file: "apps/frontend/src/pages/maintenance/DriverReportsQueuePage.tsx",
     entityKeys: ["driverId", "loadId"],
-  },
-  {
-    file: "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
-    entityKeys: ["driverId", "unitId", "loadId", "trailerId"],
   },
 ];
 
