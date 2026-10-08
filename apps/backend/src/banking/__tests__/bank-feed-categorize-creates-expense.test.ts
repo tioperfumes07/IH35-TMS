@@ -198,20 +198,16 @@ describe("categorize poster — money IN creates a Deposit (ROUND 441.5 Phase 2)
   });
 });
 
-describe("categorize poster — money OUT to a non-expense account keeps the categorization entry", () => {
+describe("categorize poster — EVERY money-out is an Expense, whatever the account (ROUND 441.16)", () => {
   it.each([
-    ["money out to a liability (2410)", { cat_account_type: "Liability" }],
-    ["money out to equity", { cat_account_type: "Equity" }],
-    ["money out to an asset", { cat_account_type: "Asset" }],
-  ])("%s posts bank_categorization", async (_label, over) => {
-    const { c } = client(txnRow(over));
+    ["a liability (2410)", "Liability"],
+    ["equity", "Equity"],
+    ["an asset", "Asset"],
+  ])("money out to %s creates the Expense, never a bare entry", async (_label, type) => {
+    const { c } = client(txnRow({ cat_account_type: type }));
     const out = await run(c);
-    expect(createAndPostBankLineExpenseOnClient).not.toHaveBeenCalled();
-    expect(postSourceTransactionInClientTx).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ source_transaction_type: "bank_categorization", source_transaction_id: BT }),
-      { userId: ACTOR }
-    );
-    expect(out).toMatchObject({ posted: true, journal_entry_id: "je-cat" });
+    expect(postSourceTransactionInClientTx).not.toHaveBeenCalled();
+    expect(createAndPostBankLineExpenseOnClient).toHaveBeenCalledTimes(1);
+    expect(out).toMatchObject({ posted: true, expense_id: "exp-1", direction: "money_out" });
   });
 });

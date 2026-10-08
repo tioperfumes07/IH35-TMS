@@ -55,10 +55,10 @@ function fnBody(src, name) {
 export function staticProblems(src) {
   const p = [];
   const poster = fnBody(src.poster, "postBankCategorizationOnClient");
-  const branch = poster.search(/if \(decision\.direction === "money_in"\) \{\s*return postBankLineAsDepositOnClient\(/);
-  const bare = poster.indexOf('source_transaction_type: "bank_categorization"');
-  if (branch < 0 || bare < 0 || branch > bare) {
-    p.push("S1: postBankCategorizationOnClient does not send money-in categorizations to the Deposit before the bare bank_categorization entry");
+  // ROUND 441.16 — money out is the Expense path; everything else (money in) is the Deposit, and no bare entry remains.
+  if (!/return postBankLineAsDepositOnClient\(client, input, decision\);\s*\}\s*$/m.test(poster) ||
+      /source_transaction_type: "bank_categorization"/.test(poster)) {
+    p.push("S1: postBankCategorizationOnClient does not send money-in categorizations to the Deposit (or still writes a bare bank_categorization entry)");
   }
   const dep = fnBody(src.poster, "postBankLineAsDepositOnClient");
   if (!/createAndPostBankLineDepositOnClient\(/.test(dep) || !/sourceBankTransactionId: input\.bankTransactionId/.test(dep) ||
@@ -153,7 +153,7 @@ if (process.argv.includes("--selftest")) {
   const plant = (key, from, to) => ({ ...src, [key]: src[key].replace(from, to) });
   const good = { deposit_id: "d", je: "j", operator: "u", bt: "b", bt_deposit: "d", bt_je: "j", amount: 1000, net: 0, dr_bank: 1000, cr_cat: 1000 };
   const cases = [
-    ["S1", staticProblems(plant("poster", 'if (decision.direction === "money_in") {', 'if (false) {'))],
+    ["S1", staticProblems(plant("poster", "  return postBankLineAsDepositOnClient(client, input, decision);\n}", "  return postBankLineAsExpenseOnClient(client, input, decision);\n}"))],
     ["S2", staticProblems(plant("poster", "SET matched_deposit_id = $1::uuid,", "SET reviewed_note = $1::text,"))],
     ["S3", staticProblems(plant("deposits", 'source_transaction_type: "bank_deposit", source_transaction_id: deposit.id },\n    { userId: actor.userId }', 'source_transaction_type: "journal_entry", source_transaction_id: deposit.id },\n    { userId: actor.userId }'))],
     ["S4", staticProblems(plant("engine", "WHERE deposit_id = $1::uuid AND operating_company_id = $2::uuid AND line_type = 'account'", "WHERE deposit_id = $1::uuid AND operating_company_id = $2::uuid AND false"))],

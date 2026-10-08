@@ -49,7 +49,6 @@ import {
   resolveAccountForCategory,
   ExpenseCategoryMapResolutionError,
 } from "../accounting/expense-category-map/resolver.service.js";
-import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { createAndPostBankLineExpenseOnClient, resolveExpenseItemForAccount } from "../accounting/bank-line-expense.service.js";
 import { createAndPostBankLineDepositOnClient } from "../accounting/bank-deposits.service.js";
 import { isBankAccountHideEnabled } from "./bank-account-visibility.js";
@@ -355,81 +354,18 @@ export async function postBankCategorizationOnClient(client: PgClient, input: Ma
   const decision = await decideOnClient(client, input);
   if (!decision.ok) return { posted: false, reason: decision.reason, message: decision.message };
 
-  // ROUND 441.5 (owner 2026-10-07: "ours should work exactly as quickbooks") — money OUT to an expense / cost account is
-  // QBO "Categorize + Add": it CREATES an Expense document with the payee, posted by the expense poster, never a bare
-  // journal entry. Everything else (money in, a liability, equity, an asset) keeps the categorization entry until the
-  // Deposit path lands (Phase 2).
-  if (decision.direction === "money_out" && EXPENSE_DOCUMENT_ACCOUNT_TYPES.has(decision.categorizedAccountType ?? "")) {
+  // ROUND 441.5 / 441.16 (owner 2026-10-07: "ours should work exactly as quickbooks") — QBO "Categorize + Add" always mints
+  // a DOCUMENT; the category is only the other leg. Money OUT, to any account (expense, a liability such as 2410, equity,
+  // an asset), is an Expense paid from the bank. Money IN, to any account, is a Deposit. No third case, and never a bare
+  // journal entry.
+  if (decision.direction === "money_out") {
     return postBankLineAsExpenseOnClient(client, input, decision);
   }
-  // ROUND 441.5 Phase 2 — money IN to any account is QBO "Add funds to this deposit": a Deposit document crediting the
-  // chosen account (income, a liability such as 2410, equity such as 3000), never a bare journal entry.
-  if (decision.direction === "money_in") {
-    return postBankLineAsDepositOnClient(client, input, decision);
-  }
-
-  // BANK-F05 — a categorization that has been reversed must RE-post, not silently return the original batch. The
-  // revision is the number of journal entries for THIS source already reversed: stable across a double-submit (it
-  // rises when someone reverses, never when someone posts).
-  const reversedCountRows = await client.query(
-    `SELECT COUNT(DISTINCT je.id)::text AS n
-       FROM accounting.journal_entries je
-       JOIN accounting.journal_entry_postings p ON p.journal_entry_uuid = je.id
-                                               AND p.operating_company_id = je.operating_company_id
-      WHERE je.operating_company_id = $1::uuid
-        AND p.source_transaction_type = 'bank_categorization'
-        AND p.source_transaction_id::text = $2
-        AND je.reversed_by_je_id IS NOT NULL`,
-    [input.companyId, input.bankTransactionId]
-  );
-  const reversedCount = Number((reversedCountRows.rows[0] as { n?: string } | undefined)?.n ?? 0);
-
-  const posted = await postSourceTransactionInClientTx(
-    client as never,
-    {
-      operating_company_id: input.companyId,
-      source_transaction_type: "bank_categorization",
-      source_transaction_id: input.bankTransactionId,
-      ...(reversedCount > 0
-        ? { posting_purpose: "repost" as const, repost_revision: reversedCount }
-        : { posting_purpose: "initial_post" as const }),
-    },
-    { userId: input.actorUserUuid }
-  );
-
-  // Durable back-pointer, same transaction. review_state='matched' (the line is now linked to its journal entry).
-  await client.query(
-    `
-      UPDATE banking.bank_transactions
-      SET matched_journal_entry_id = $1::uuid,
-          review_state = 'matched',
-          resolution_kind = 'added', -- ROUND 360: categorize CREATED this entry; Undo reverses it
-          reviewed_at = now(),
-          updated_at = now()
-      WHERE id = $2::uuid
-        AND operating_company_id = $3::uuid
-        AND matched_journal_entry_id IS NULL
-    `,
-    [posted.journal_entry_id, input.bankTransactionId, input.companyId]
-  );
-
-  return {
-    posted: true,
-    journal_entry_id: posted.journal_entry_id,
-    posting_batch_id: posted.posting_batch_id,
-    direction: decision.direction,
-    categorized_account_id: decision.categorizedAccountId,
-    bank_ledger_account_id: decision.bankLedgerAccountId,
-    amount_cents: decision.amountCents,
-    already_posted: posted.result === "already_posted",
-  };
+  return postBankLineAsDepositOnClient(client, input, decision);
 }
 
-/** Account types whose money-out categorization is an Expense document (QBO "Categorize + Add"). */
-export const EXPENSE_DOCUMENT_ACCOUNT_TYPES: ReadonlySet<string> = new Set(["Expense", "CostOfGoodsSold", "OtherExpense"]);
-
 /**
- * ROUND 441.5 — the categorized money-out line becomes an Expense: payee = the vendor the operator tagged, paid from the
+ * ROUND 441.5 / 441.16 — the categorized money-out line (any account) becomes an Expense: payee = the vendor the operator tagged, paid from the
  * bank's ledger account, one line on the chosen account with its item and the line's load / unit / trailer / driver
  * tags. Posted by the existing expense poster in this transaction; the line and the document name each other
  * (bank_transactions.matched_expense_id + matched_journal_entry_id; expenses.source_bank_transaction_id), so Undo of the

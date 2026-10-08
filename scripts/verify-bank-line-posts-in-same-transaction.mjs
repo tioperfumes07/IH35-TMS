@@ -43,7 +43,11 @@ export function check({ poster, routes, reconcile = "" }) {
   }
   if (/\bpostSourceTransaction\(/.test(poster)) problems.push(`${POSTER}: posts in its own transaction (postSourceTransaction) — use the caller's client`);
   if (!/export async function postBankCategorizationOnClient\(/.test(poster)) problems.push(`${POSTER}: postBankCategorizationOnClient is missing`);
-  if (!/postSourceTransactionInClientTx\(/.test(poster)) problems.push(`${POSTER}: does not post on the caller's client (postSourceTransactionInClientTx)`);
+  // ROUND 441.16 — the poster creates the DOCUMENT (Expense / Deposit) and the document writers post on the client they
+  // are handed; both must receive the caller's client, so the line, the document and its entry commit together.
+  if (!/createAndPostBankLineExpenseOnClient\(\s*client\b/.test(poster) || !/createAndPostBankLineDepositOnClient\(\s*client\b/.test(poster)) {
+    problems.push(`${POSTER}: does not post on the caller's client (createAndPostBankLineExpenseOnClient / createAndPostBankLineDepositOnClient(client, …))`);
+  }
   if (!/matched_document_id\) return \{ ok: false, reason: "already_matched_to_document" \}/.test(poster)) {
     problems.push(`${POSTER}: the matched-document interlock is gone (a matched line would be posted twice)`);
   }
@@ -62,6 +66,7 @@ if (process.argv.includes("--selftest")) {
   const real = { poster: read(POSTER), routes: read(ROUTES), reconcile: read(RECONCILE) };
   if (check(real).length) { console.error(`${LABEL} --selftest FAIL: real tree not clean: ${check(real)[0]}`); process.exit(1); }
   const cases = [
+    ["expense document written off the caller's transaction", { ...real, poster: real.poster.replace("createAndPostBankLineExpenseOnClient(\n    client", "createAndPostBankLineExpenseOnClient(\n    otherClient") }],
     ["poster back on its own transaction", { ...real, poster: real.poster + "\nawait postSourceTransaction(x, y);" }],
     ["interlock removed", { ...real, poster: real.poster.replace('if (txn.matched_document_id) return { ok: false, reason: "already_matched_to_document" };', "") }],
     ["label-only categorize back", { ...real, reconcile: real.reconcile.replace("if (LABEL_ONLY_CATEGORIZE_RETIRED) return -1;", "") }],

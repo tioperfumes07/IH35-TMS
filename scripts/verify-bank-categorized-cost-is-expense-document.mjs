@@ -7,16 +7,16 @@
  * cost lines ($203.14 on 6300 / 6310 / 6900) had no expense document and no payee on the books.
  *
  * STATIC (always runs):
- *   S1 postBankCategorizationOnClient sends money_out + an EXPENSE_DOCUMENT_ACCOUNT_TYPES account to the expense path
- *      BEFORE any bank_categorization posting
- *   S2 EXPENSE_DOCUMENT_ACCOUNT_TYPES = Expense, CostOfGoodsSold, OtherExpense
+ *   S1 postBankCategorizationOnClient sends EVERY money_out decision to the expense path (ROUND 441.16: whatever account
+ *      the operator chose — expense, liability, equity, asset)
+ *   S2 postBankCategorizationOnClient writes no bare bank_categorization entry at all
  *   S3 the expense path creates the document with sourceBankTransactionId and stamps matched_expense_id +
  *      matched_journal_entry_id on the line
  *   S4 the writer posts through postSourceTransactionInClientTx 'expense' (no hand-written JE) and records the operator
  *   S5 Undo of the line voids the expense it created (voidDocumentsCreatedByLine reads accounting.expenses)
  *   S6 voiding the expense releases the line (void.service BANK_MATCH_REVERSE_TABLE expense)
  * LIVE (with DATABASE_URL), USMCA:
- *   L1 no live bank_categorization JE on a money-out line debits an Expense / COGS / Other Expense account
+ *   L1 no live bank_categorization JE on a money-out line (any account)
  *   L2 every live expense with source_bank_transaction_id is named back by that line (matched_expense_id) and the line's
  *      matched_journal_entry_id is the expense's own entry
  *   L3 that entry balances
@@ -55,15 +55,11 @@ function fnBody(src, name) {
 export function staticProblems(src) {
   const p = [];
   const poster = fnBody(src.poster, "postBankCategorizationOnClient");
-  const branch = poster.search(/decision\.direction === "money_out" && EXPENSE_DOCUMENT_ACCOUNT_TYPES\.has\(/);
-  const bare = poster.indexOf('source_transaction_type: "bank_categorization"');
-  if (branch < 0 || bare < 0 || branch > bare || !/return postBankLineAsExpenseOnClient\(/.test(poster)) {
-    p.push("S1: postBankCategorizationOnClient does not send money-out expense categorizations to the expense document before the bare bank_categorization entry");
+  if (!/if \(decision\.direction === "money_out"\) \{\s*return postBankLineAsExpenseOnClient\(/.test(poster)) {
+    p.push("S1: postBankCategorizationOnClient does not send every money-out categorization to the Expense document");
   }
-  const types = src.poster.match(/EXPENSE_DOCUMENT_ACCOUNT_TYPES[^=]*=\s*new Set\(\[([^\]]*)\]\)/);
-  const set = new Set((types?.[1] ?? "").match(/"([A-Za-z]+)"/g)?.map((x) => x.replace(/"/g, "")) ?? []);
-  if (!["Expense", "CostOfGoodsSold", "OtherExpense"].every((t) => set.has(t))) {
-    p.push("S2: EXPENSE_DOCUMENT_ACCOUNT_TYPES must hold Expense, CostOfGoodsSold and OtherExpense");
+  if (/source_transaction_type: "bank_categorization"/.test(poster)) {
+    p.push("S2: postBankCategorizationOnClient still writes a bare bank_categorization entry — every categorization is a document");
   }
   const path_ = fnBody(src.poster, "postBankLineAsExpenseOnClient");
   if (!/createAndPostBankLineExpenseOnClient\(/.test(path_) || !/sourceBankTransactionId: input\.bankTransactionId/.test(path_) ||
@@ -100,11 +96,10 @@ async function liveProblems(url) {
          JOIN catalogs.accounts a ON a.id = p.account_id
         WHERE je.operating_company_id = $1::uuid AND je.status = 'posted' AND je.voided_at IS NULL
           AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL
-          AND bt.is_credit = false AND p.debit_or_credit = 'debit'
-          AND a.account_type IN ('Expense', 'CostOfGoodsSold', 'OtherExpense')`,
+          AND bt.is_credit = false AND p.debit_or_credit = 'debit'`,
       [USMCA]
     );
-    for (const r of l1.rows) p.push(`L1: bare categorization entry ${r.je} debits expense account ${r.account_number} with no expense document`);
+    for (const r of l1.rows) p.push(`L1: bare money-out categorization entry ${r.je} (account ${r.account_number}) with no expense document`);
     const col = await c.query(
       `SELECT 1 FROM information_schema.columns
         WHERE table_schema = 'accounting' AND table_name = 'expenses' AND column_name = 'source_bank_transaction_id'`
@@ -164,8 +159,8 @@ if (process.argv.includes("--selftest")) {
   const plant = (key, from, to) => ({ ...src, [key]: src[key].replace(from, to) });
   const good = { expense_id: "e", je: "j", operator: "u", bt: "b", bt_expense: "e", bt_je: "j", amount: 1000, net: 0, dr_cat: 1000, cr_bank: 1000 };
   const cases = [
-    ["S1", staticProblems(plant("poster", 'decision.direction === "money_out" && EXPENSE_DOCUMENT_ACCOUNT_TYPES.has(', 'false && EXPENSE_DOCUMENT_ACCOUNT_TYPES.has('))],
-    ["S2", staticProblems(plant("poster", '"CostOfGoodsSold", ', ""))],
+    ["S1", staticProblems(plant("poster", 'if (decision.direction === "money_out") {', 'if (false) {'))],
+    ["S2", staticProblems(plant("poster", "  return postBankLineAsDepositOnClient(client, input, decision);\n}", '  return postBankLineAsDepositOnClient(client, input, decision) ?? ({ source_transaction_type: "bank_categorization" } as never);\n}'))],
     ["S3", staticProblems(plant("poster", "SET matched_expense_id = $1::uuid,", "SET reviewed_note = $1::text,"))],
     ["S4", staticProblems(plant("writer", 'source_transaction_type: "expense"', 'source_transaction_type: "journal_entry"'))],
     ["S5", staticProblems(plant("undo", "SELECT 'expense', id::text FROM accounting.expenses", "SELECT 'expense', id::text FROM accounting.bills"))],
@@ -194,4 +189,4 @@ if (problems.length) {
   for (const x of problems) console.error(`  ✗ ${x}`);
   process.exit(1);
 }
-console.log(`${LABEL}: OK — money-out cost categorizations are expense documents linked both ways${url ? "; live L1–L6 clean" : " (static only — no DATABASE_URL)"}`);
+console.log(`${LABEL}: OK — every money-out categorization is an expense document linked both ways${url ? "; live L1–L6 clean" : " (static only — no DATABASE_URL)"}`);
