@@ -30,7 +30,7 @@ function renderCustomerCell(load: DispatchLoadRow): ReactNode {
       name={load.customer_name}
       noun="Customer"
       onClick={(e) => e.stopPropagation()}
-      className="text-slate-700 hover:underline"
+      className="text-[#4B5563] hover:underline"
       data-testid="loads-customer-link"
     />
   );
@@ -210,7 +210,7 @@ function renderDeliveryDateCell(load: DispatchLoadRow) {
   const late = Boolean(load.delivery_late_vs_appt);
   if (!date) return "—";
   return (
-    <span className={late ? "font-medium text-slate-700" : undefined} title={late ? "Late vs appointment" : undefined}>
+    <span className={late ? "font-medium text-[#4B5563]" : undefined} title={late ? "Late vs appointment" : undefined}>
       {date}
       {late ? " · late" : ""}
     </span>
@@ -416,7 +416,7 @@ function renderUnitLocationCell(
   }
   const loc = load.assigned_unit_id ? locationByUnit[load.assigned_unit_id] : undefined;
   const text = loc ? [loc.city, loc.state].filter(Boolean).join(", ") : "";
-  return text ? <span className="text-xs text-slate-700">{text}</span> : <span className="text-xs text-slate-400">—</span>;
+  return text ? <span className="text-xs text-[#4B5563]">{text}</span> : <span className="text-xs text-[#6B7280]">—</span>;
 }
 
 function compareDispatch(a: string | number | null | undefined, b: string | number | null | undefined): number {
@@ -476,21 +476,21 @@ function matchesDispatchSectionFilter(load: BoardLoad, query: string): boolean {
 
 function statusVariant(status: DispatchLoadRow["status"]) {
   if (status === "cancelled") return "bg-red-100 text-red-700";
-  if (status === "delivered") return "bg-slate-100 text-slate-700";
-  if (status === "in_transit" || status === "at_pickup" || status === "at_delivery") return "bg-slate-100 text-slate-700";
+  if (status === "delivered") return "bg-[#F7F8FA] text-[#4B5563]";
+  if (status === "in_transit" || status === "at_pickup" || status === "at_delivery") return "bg-[#F7F8FA] text-[#4B5563]";
   if (status === "closed" || status === "paid" || status === "invoiced") return "bg-gray-200 text-gray-700";
-  return "bg-slate-100 text-slate-700";
+  return "bg-[#F7F8FA] text-[#4B5563]";
 }
 
 function riskTierClass(load: DispatchLoadRow) {
   const configuredTier = readDispatchAlertTier(load.operating_company_id, load.progress_eta_delta_minutes);
   if (configuredTier === "red") return "bg-red-100 text-red-800";
-  if (configuredTier === "amber") return "bg-slate-100 text-slate-700";
-  if (load.on_time_prediction === "green") return "bg-slate-100 text-slate-700";
-  if (load.on_time_prediction === "amber") return "bg-slate-100 text-slate-700";
+  if (configuredTier === "amber") return "bg-[#F7F8FA] text-[#4B5563]";
+  if (load.on_time_prediction === "green") return "bg-[#F7F8FA] text-[#4B5563]";
+  if (load.on_time_prediction === "amber") return "bg-[#F7F8FA] text-[#4B5563]";
   if (load.on_time_prediction === "red") return "bg-red-100 text-red-800";
-  if (load.progress_status === "early" || load.progress_status === "on_track") return "bg-slate-100 text-slate-700";
-  if (load.progress_status === "behind") return "bg-slate-100 text-slate-700";
+  if (load.progress_status === "early" || load.progress_status === "on_track") return "bg-[#F7F8FA] text-[#4B5563]";
+  if (load.progress_status === "behind") return "bg-[#F7F8FA] text-[#4B5563]";
   if (load.progress_status === "delayed") return "bg-red-100 text-red-800";
   return "bg-gray-100 text-gray-600";
 }
@@ -528,7 +528,7 @@ function DocComplianceCell({ load }: { load: DispatchLoadRow }) {
   const ready = load.geofence_ready;
   return (
     <span
-      className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${ready ? "bg-slate-100 text-slate-700" : "bg-slate-100 text-slate-700"}`}
+      className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${ready ? "bg-[#F7F8FA] text-[#4B5563]" : "bg-[#F7F8FA] text-[#4B5563]"}`}
       title={ready ? "Pre-dispatch doc gate passed" : "Doc compliance pending"}
     >
       {ready ? "Ready" : "Pending"}
@@ -1229,7 +1229,7 @@ export function DispatchBoard({
         )}
         {isDraft ? (
           <span
-            className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700"
+            className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]"
             data-testid={`dispatch-draft-badge-${load.id}`}
           >
             DRAFT
@@ -1320,7 +1320,7 @@ export function DispatchBoard({
     return (
       <button
         type="button"
-        className="font-mono text-xs text-slate-700 underline-offset-2 hover:underline"
+        className="font-mono text-xs text-[#4B5563] underline-offset-2 hover:underline"
         onClick={(e) => {
           e.stopPropagation();
           setSettlementNumberDraft(openPreSettlement.settlement_number ?? "");
@@ -1561,7 +1561,7 @@ export function DispatchBoard({
       return (
         <div className="rounded-sm border border-gray-200 bg-white p-6 text-xs text-gray-500">
           No loads match your filters.{" "}
-          <button type="button" className="font-semibold text-slate-700 hover:underline" onClick={() => onPageChange(0)}>
+          <button type="button" className="font-semibold text-[#4B5563] hover:underline" onClick={() => onPageChange(0)}>
             Go back to first page
           </button>
         </div>
@@ -1957,7 +1957,7 @@ export function DispatchBoard({
         render: (load) => (
           <button
             type="button"
-            className="rounded-sm border border-slate-300 px-2 py-0.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            className="rounded-sm border border-[#E5E7EB] px-2 py-0.5 text-xs font-semibold text-[#4B5563] hover:bg-[#F7F8FA]"
             onClick={(event) => {
               event.stopPropagation();
               setQuickAssignLoad(load);
