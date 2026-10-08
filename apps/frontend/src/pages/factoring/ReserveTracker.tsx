@@ -41,7 +41,6 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatUsdCents } from "../../lib/money";
-import { SelectCombobox } from "../../components/Combobox";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 

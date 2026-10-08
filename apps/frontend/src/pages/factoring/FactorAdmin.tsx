@@ -34,7 +34,6 @@ import { DeactivateFactorConfirmModal } from "../../components/factoring/Deactiv
 import { entityLabel } from "../../lib/entity-label";
 import { useListState } from "../../components/list-state";
 import { companyToday } from "../../lib/businessDate";
-import { SelectCombobox } from "../../components/Combobox";
 
 function formatPct(value: number) {
   return `${(Number(value || 0) * 100).toFixed(2)}%`;
