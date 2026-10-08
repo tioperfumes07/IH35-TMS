@@ -1,3 +1,13 @@
+## 2026-10-08T09:30Z · BANK leftover slate — geofence breaches / anomalies / DOT compliance
+
+FINDING: BANK-F91184 — GeofenceBreachesTab / AnomaliesTab / DOTComplianceTab Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25838 squash `e7cfd11641` (BANK-F91183 DOT insp/detention/assignment)
+GUARD: scripts/verify-geofence-anom-dot-slate-leftover-chrome.mjs + verify-steps/4082 piggyback
+LIVE PROOF: verify-geofence-anom-dot-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 4082 piggyback + OUTBOX
+
 ## 2026-10-08T07:35Z · BANK leftover slate — DOT inspections / detention board / assignment history
 
 FINDING: BANK-F91183 — DOTInspectionsTab / DetentionBoardPage / AssignmentHistoryPage Tailwind slate-* → house tokens

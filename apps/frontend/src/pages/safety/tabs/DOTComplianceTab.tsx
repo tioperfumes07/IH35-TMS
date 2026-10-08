@@ -53,8 +53,8 @@ const DOT_REFERENCE_CARDS: DotReferenceCard[] = [
 
 function tierClass(severity: string) {
   if (severity === "expired") return "bg-red-50 text-red-800";
-  if (severity === "critical") return "bg-slate-50 text-slate-700";
-  return "bg-slate-100 text-slate-700";
+  if (severity === "critical") return "bg-[#F7F8FA] text-[#4B5563]";
+  return "bg-[#F7F8FA] text-[#4B5563]";
 }
 
 function sourceLabel(sourceType: string) {
@@ -146,7 +146,7 @@ export function DOTComplianceTab() {
         render: (row) => (
           <button
             type="button"
-            className="rounded-sm border border-slate-300 px-2 py-0.5 text-xs disabled:opacity-50"
+            className="rounded-sm border border-[#E5E7EB] px-2 py-0.5 text-xs disabled:opacity-50"
             disabled={acknowledgeMutation.isPending || remindersQ.isLoading || remindersQ.isError}
             onClick={() => acknowledgeMutation.mutate({ reminderId: row.id, companyId, generation: actionGenerationRef.current })}
           >
@@ -159,7 +159,7 @@ export function DOTComplianceTab() {
   );
 
   if (!companyId) {
-    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-[#4B5563]">Select an operating company.</div>;
   }
 
   return (
@@ -171,10 +171,10 @@ export function DOTComplianceTab() {
       <div className="rounded-sm border border-gray-200 bg-white p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-xs font-semibold text-slate-900">Compliance Reminders Panel</h2>
-            <p className="mt-1 text-xs text-slate-600">Open reminders generated from DQF, medical cards, and related compliance records.</p>
+            <h2 className="text-xs font-semibold text-[#0F1219]">Compliance Reminders Panel</h2>
+            <p className="mt-1 text-xs text-[#4B5563]">Open reminders generated from DQF, medical cards, and related compliance records.</p>
           </div>
-          <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">Open {orderedReminders.length}</span>
+          <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]">Open {orderedReminders.length}</span>
         </div>
         <div className="mt-3">
           {remindersQ.isError ? (
@@ -207,11 +207,11 @@ export function DOTComplianceTab() {
         {DOT_REFERENCE_CARDS.map((card) => (
           <article key={card.cfr} className="rounded-sm border border-gray-200 bg-white p-4">
             <div className="flex items-start justify-between gap-2">
-              <h3 className="text-xs font-semibold text-slate-900">{card.title}</h3>
-              <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{card.cfr}</span>
+              <h3 className="text-xs font-semibold text-[#0F1219]">{card.title}</h3>
+              <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]">{card.cfr}</span>
             </div>
-            <p className="mt-2 text-xs leading-relaxed text-slate-700">{card.summary}</p>
-            <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+            <p className="mt-2 text-xs leading-relaxed text-[#4B5563]">{card.summary}</p>
+            <div className="mt-2 flex items-center justify-between text-xs text-[#6B7280]">
               <span>Cadence: {card.cadence}</span>
               <span>Open: {sourceCounters.get(card.sourceType) ?? 0}</span>
             </div>

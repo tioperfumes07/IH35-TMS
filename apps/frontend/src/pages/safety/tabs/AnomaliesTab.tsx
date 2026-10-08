@@ -29,9 +29,9 @@ function subjectLabel(subjectType: SafetyAnomaly["subject_type"]): string {
 
 function severityBadgeClass(severity: SafetyAnomalySeverity) {
   if (severity === "critical") return "bg-red-100 text-red-800";
-  if (severity === "high") return "bg-slate-100 text-slate-700";
-  if (severity === "medium") return "bg-slate-100 text-slate-700";
-  return "bg-slate-100 text-slate-700";
+  if (severity === "high") return "bg-[#F7F8FA] text-[#4B5563]";
+  if (severity === "medium") return "bg-[#F7F8FA] text-[#4B5563]";
+  return "bg-[#F7F8FA] text-[#4B5563]";
 }
 
 export function AnomaliesTab() {
@@ -112,7 +112,7 @@ export function AnomaliesTab() {
         render: (row) => (
           <button
             type="button"
-            className="text-slate-700 underline"
+            className="text-[#4B5563] underline"
             onClick={(event) => {
               event.stopPropagation();
               setSelected(row);
@@ -137,23 +137,23 @@ export function AnomaliesTab() {
       dataAttributes={{ "data-anomalies-filter-toolbar": "collapsed" }}
     >
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-semibold text-slate-700">Severity</span>
+        <span className="text-xs font-semibold text-[#4B5563]">Severity</span>
         {SEVERITY_FILTERS.map((item) => (
           <button
             key={item}
             type="button"
-            className={`rounded-sm px-2 py-1 text-xs ${staged.draft.severity === item ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
+            className={`rounded-sm px-2 py-1 text-xs ${staged.draft.severity === item ? "bg-[#0F1219] text-white" : "bg-[#F7F8FA] text-[#4B5563]"}`}
             onClick={() => staged.setDraft({ ...staged.draft, severity: item })}
           >
             {item}
           </button>
         ))}
-        <span className="ml-3 text-xs font-semibold text-slate-700">Status</span>
+        <span className="ml-3 text-xs font-semibold text-[#4B5563]">Status</span>
         {STATUS_FILTERS.map((item) => (
           <button
             key={item}
             type="button"
-          className={`rounded-sm px-2 py-1 text-xs ${staged.draft.status === item ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
+          className={`rounded-sm px-2 py-1 text-xs ${staged.draft.status === item ? "bg-[#0F1219] text-white" : "bg-[#F7F8FA] text-[#4B5563]"}`}
             onClick={() => staged.setDraft({ ...staged.draft, status: item })}
           >
             {item}
@@ -194,7 +194,7 @@ export function AnomaliesTab() {
       {!anomaliesQuery.isError && totalCount > pageSize ? (
         <div className="flex items-center justify-end gap-2 text-xs" data-testid="anomalies-server-pager">
           <button type="button" className="rounded-sm border px-2 py-1 disabled:opacity-50" disabled={page <= 1 || anomaliesQuery.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous</button>
-          <span className="text-slate-600">Page {page} of {pageCount} · {totalCount} anomalies</span>
+          <span className="text-[#4B5563]">Page {page} of {pageCount} · {totalCount} anomalies</span>
           <button type="button" className="rounded-sm border px-2 py-1 disabled:opacity-50" disabled={page >= pageCount || anomaliesQuery.isFetching} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}>Next</button>
         </div>
       ) : null}
