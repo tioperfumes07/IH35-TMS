@@ -63,7 +63,7 @@ export function DriverDaySummaryCard({ operatingCompanyId }: Props) {
           kind="driver"
           id={row.driver_id}
           label={entityLabel(row.driver_name, row.driver_id, "Driver")}
-          className="font-medium text-slate-800"
+          className="font-medium text-[#0F1219]"
         />
       ),
     },
@@ -100,11 +100,11 @@ export function DriverDaySummaryCard({ operatingCompanyId }: Props) {
   ];
 
   return (
-    <section className="rounded-sm border border-slate-200 bg-white">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-3 py-2">
+    <section className="rounded-sm border border-[#E5E7EB] bg-white">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E5E7EB] px-3 py-2">
         <div>
-          <h3 className="text-xs font-semibold text-slate-900">Driver day-summaries</h3>
-          <p className="text-xs text-slate-500">Miles, on-duty hours, fuel stops, and arrival timeliness</p>
+          <h3 className="text-xs font-semibold text-[#0F1219]">Driver day-summaries</h3>
+          <p className="text-xs text-[#6B7280]">Miles, on-duty hours, fuel stops, and arrival timeliness</p>
         </div>
         <DatePicker
           value={date}
@@ -113,7 +113,7 @@ export function DriverDaySummaryCard({ operatingCompanyId }: Props) {
         />
       </div>
       {query.isLoading ? (
-        <div className="px-3 py-3 text-xs text-slate-500">Loading driver day summary...</div>
+        <div className="px-3 py-3 text-xs text-[#6B7280]">Loading driver day summary...</div>
       ) : query.isError ? (
         <ListErrorState
           title="Couldn't load summary right now."
@@ -150,11 +150,11 @@ export function DriverDaySummaryCard({ operatingCompanyId }: Props) {
                 applyDisabled={!stagedFilters.dirty}
                 testIdPrefix="home-driver-day-summary"
               >
-                <label className="block text-xs font-semibold text-slate-600">
+                <label className="block text-xs font-semibold text-[#4B5563]">
                   Driver activity
                   <select
                     aria-label="Driver activity filter"
-                    className="mt-1 h-9 w-full rounded-sm border border-slate-300 bg-white px-2 text-xs"
+                    className="mt-1 h-9 w-full rounded-sm border border-[#4B5563] bg-white px-2 text-xs"
                     value={stagedFilters.draft.activityFilter}
                     onChange={(event) =>
                       stagedFilters.setDraft({ activityFilter: event.target.value as ActivityFilter })

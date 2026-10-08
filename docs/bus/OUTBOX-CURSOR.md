@@ -1,3 +1,13 @@
+## 2026-10-08T16:05Z · BANK leftover slate — fleet snapshot / driver day summary / home KPI card
+
+FINDING: BANK-F91216 — FleetSnapshotPanel / DriverDaySummaryCard / HomeKpiCard Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25877 squash `2bad098417` (BANK-F91215 drvshell/docalerts/map)
+GUARD: scripts/verify-home-fleet-drvday-kpi-slate-leftover-chrome.mjs + verify-steps/3648 piggyback
+LIVE PROOF: verify-home-fleet-drvday-kpi-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3648 piggyback + OUTBOX
+
 ## 2026-10-08T15:50Z · BANK leftover slate — driver shell / document alerts / dispatch map
 
 FINDING: BANK-F91215 — DriverShell / DocumentAlertsPage / MapView Tailwind slate-* → house tokens

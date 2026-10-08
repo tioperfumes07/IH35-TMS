@@ -22,11 +22,11 @@ type Props = {
 export function HomeKpiCard({ label, number, accent, isLoading, isError, error, onRetry, subtext, delta, to }: Props) {
   if (isLoading) {
     return (
-      <div className="flex min-h-[118px] flex-col rounded-sm border border-slate-200 bg-white p-3 shadow-xs">
-        <div className="text-xs font-semibold uppercase tracking-[0.04em] text-slate-500">{label}</div>
+      <div className="flex min-h-[118px] flex-col rounded-sm border border-[#E5E7EB] bg-white p-3 shadow-xs">
+        <div className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280]">{label}</div>
         <div className="mt-2 flex flex-1 flex-col justify-center space-y-2">
-          <div className="h-6 animate-pulse rounded-sm bg-slate-100" />
-          <div className="h-3 w-2/3 animate-pulse rounded-sm bg-slate-100" />
+          <div className="h-6 animate-pulse rounded-sm bg-[#E5E7EB]" />
+          <div className="h-3 w-2/3 animate-pulse rounded-sm bg-[#E5E7EB]" />
         </div>
       </div>
     );
@@ -34,8 +34,8 @@ export function HomeKpiCard({ label, number, accent, isLoading, isError, error, 
 
   if (isError) {
     return (
-      <div className="flex min-h-[118px] flex-col rounded-sm border border-slate-200 bg-white p-3 shadow-xs">
-        <div className="text-xs font-semibold uppercase tracking-[0.04em] text-slate-500">{label}</div>
+      <div className="flex min-h-[118px] flex-col rounded-sm border border-[#E5E7EB] bg-white p-3 shadow-xs">
+        <div className="text-xs font-semibold uppercase tracking-[0.04em] text-[#6B7280]">{label}</div>
         <div className="mt-1 flex-1 overflow-hidden">
           {(() => {
             const { status, message } = formatQueryErrorDetail(error);
@@ -58,7 +58,7 @@ export function HomeKpiCard({ label, number, accent, isLoading, isError, error, 
     <div className="flex min-h-[118px] flex-col gap-1">
       <KpiCard label={label} number={number} accent={accent} to={to} />
       {delta ? <div className="px-3 text-xs">{delta}</div> : null}
-      {subtext ? <div className="px-3 text-xs leading-snug text-slate-500">{subtext}</div> : null}
+      {subtext ? <div className="px-3 text-xs leading-snug text-[#6B7280]">{subtext}</div> : null}
     </div>
   );
 }
