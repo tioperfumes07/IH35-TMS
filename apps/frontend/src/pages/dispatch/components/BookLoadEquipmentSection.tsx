@@ -281,7 +281,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           pickers alone leave selected identities non-navigable; expose EntityLinks. */}
       {assignedUnitId || assignedTrailerUnitId || interchangeTrailerId || primaryDriverId || secondaryDriverId ? (
         <div
-          className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600"
+          className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-[#4B5563]"
           data-testid="book-load-equipment-selected-entitylinks"
         >
           {primaryDriverId ? (
@@ -454,7 +454,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
               placeholder={primaryDriverId && driverPayCardQuery.isLoading ? "…" : ""}
               data-testid="driver-pay-rate-per-mile"
               aria-readonly="true"
-              className="h-7 w-[5.5rem] rounded-sm border border-gray-300 bg-slate-50 px-2 text-right text-xs tabular-nums"
+              className="h-7 w-[5.5rem] rounded-sm border border-gray-300 bg-[#F7F8FA] px-2 text-right text-xs tabular-nums"
             />
           }
         />
@@ -463,7 +463,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           (Frozen/Fresh) is asked FIRST, THEN "Reefer temperature (°F)" (the single setpoint reefer_temp_f).
           temperature_type persists via migration 202606231600 (W-FIX-1). Reefer mode + Pre-cool removed. */}
       {isReefer ? (
-        <div data-testid="reefer-panel" className="grid grid-cols-1 gap-2 rounded-sm border border-slate-200 bg-slate-100 p-2 md:grid-cols-2">
+        <div data-testid="reefer-panel" className="grid grid-cols-1 gap-2 rounded-sm border border-[#E5E7EB] bg-[#E5E7EB] p-2 md:grid-cols-2">
           <Field
             label="Temperature type"
             input={
@@ -481,7 +481,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
                       key={opt.value}
                       type="button"
                       onClick={() => setValue?.("temperature_type", opt.value, { shouldDirty: true })}
-                      className={`flex-1 px-2 ${idx === 0 ? "border-r border-gray-300" : ""} ${active ? "bg-[#1F2A44] text-white" : "bg-[var(--surface-unselected)] text-slate-700"}`}
+                      className={`flex-1 px-2 ${idx === 0 ? "border-r border-gray-300" : ""} ${active ? "bg-[#1F2A44] text-white" : "bg-[var(--surface-unselected)] text-[#1F2A44]"}`}
                     >
                       {opt.label}
                     </button>
@@ -518,7 +518,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
                       type="button"
                       data-testid={`lumper-payer-${opt.value}`}
                       onClick={() => setValue?.("lumper_payer", opt.value, { shouldDirty: true })}
-                      className={`flex-1 px-2 ${idx === 0 ? "border-r border-gray-300" : ""} ${active ? "bg-[#1F2A44] text-white" : "bg-[var(--surface-unselected)] text-slate-700"}`}
+                      className={`flex-1 px-2 ${idx === 0 ? "border-r border-gray-300" : ""} ${active ? "bg-[#1F2A44] text-white" : "bg-[var(--surface-unselected)] text-[#1F2A44]"}`}
                     >
                       {opt.label}
                     </button>
@@ -543,7 +543,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
                       type="button"
                       data-testid={`lumper-invoice-customer-${opt.value ? "yes" : "no"}`}
                       onClick={() => setValue?.("lumper_will_invoice_customer", opt.value, { shouldDirty: true })}
-                      className={`flex-1 px-2 ${idx === 0 ? "border-r border-gray-300" : ""} ${active ? "bg-[#1F2A44] text-white" : "bg-[var(--surface-unselected)] text-slate-700"}`}
+                      className={`flex-1 px-2 ${idx === 0 ? "border-r border-gray-300" : ""} ${active ? "bg-[#1F2A44] text-white" : "bg-[var(--surface-unselected)] text-[#1F2A44]"}`}
                     >
                       {opt.label}
                     </button>
@@ -568,7 +568,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
                       type="button"
                       data-testid={`lumper-late-penalty-${opt.value ? "yes" : "no"}`}
                       onClick={() => setValue?.("lumper_late_penalty_applies", opt.value, { shouldDirty: true })}
-                      className={`flex-1 px-2 ${idx === 0 ? "border-r border-gray-300" : ""} ${active ? "bg-[#1F2A44] text-white" : "bg-[var(--surface-unselected)] text-slate-700"}`}
+                      className={`flex-1 px-2 ${idx === 0 ? "border-r border-gray-300" : ""} ${active ? "bg-[#1F2A44] text-white" : "bg-[var(--surface-unselected)] text-[#1F2A44]"}`}
                     >
                       {opt.label}
                     </button>
@@ -582,7 +582,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
       {/* Render-v6 §B conditional detail: revealed by trailer type. Reefer setpoint above (reefer only);
           flatbed reveals the tarp-type detail (the "Tarps" required toggle stays in the Equipment chips). */}
       {isFlatbed ? (
-        <div data-testid="flatbed-tarp-detail" className="grid grid-cols-1 gap-2 rounded-sm border border-slate-200 bg-slate-100 p-2 md:grid-cols-3">
+        <div data-testid="flatbed-tarp-detail" className="grid grid-cols-1 gap-2 rounded-sm border border-[#E5E7EB] bg-[#E5E7EB] p-2 md:grid-cols-3">
           {/* RENDER-A-v2 §B flatbed = Tarp required? · Tarp qty · Tarp size. The old "Tarp type" material
               dropdown is a separate extra beyond the size dropdown → kept hidden for round-trip. */}
           <input type="hidden" {...register("tarp_type")} />
