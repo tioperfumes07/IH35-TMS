@@ -2024,3 +2024,25 @@ CI is down account-wide; local gates are the record. The Lead's gate for these P
 - Neon forks: **all deleted**.
 
 CI is down account-wide; local gates are the record.
+
+## 2026-10-08 ~01:10Z — CC-1 ROUND 441.24: the 23 deposits UNDONE, lines re-categorized as CHAIN-05 entries; retired
+- `scripts/ops/round-441-24-undo-categorize-deposits.ts` ran on prod as the Owner, after a clean rehearsal on fork br-quiet-leaf-ak0jx0ag (since deleted). For each line:
+  - Undo the line. That reverses the deposit's posting via `reversePostedSourceTransactionInClientTx('bank_deposit')`, stamps the deposit void so it is no longer a live match, and releases the line.
+  - Re-categorize with the same account and payer. That posts ONE `bank_categorization` entry, Dr 1000 / Cr the account, with no document.
+- **23 lines, $35,355.00** (22 + the 2026-06-24 line). Trial balance, before → after:
+  - 1000: −1,883,314 → −1,883,314 cents
+  - 2410: 2,213,000 → 2,213,000 cents
+  - 3000: −350,000 → −350,000 cents
+  - **Net delta 0.**
+- Live after (prod):
+  - `verify-bank-categorize-posts-chain05-matrix: OK — … live: 53 entries match their matrix row`
+  - `verify-undo-leaves-no-document-behind: PASS`
+  - `verify-trial-balance-and-balance-sheet: PASS`
+- **The 2026-06-24 $5,000.00 row, live:**
+```
+date       | amount  | account                                 | payer       | dr   | cr   | stamp (matched_journal_entry_id)      | deposit_ref | expense_ref
+2026-06-24 | 5000.00 | 2410 Owner / Related-Party Loan Payable | Scentsx Llc | 1000 | 2410 | 8c186a53-c85c-448c-8152-57a2b4933d4b  | NULL        | NULL
+```
+- The 5 expenses ($203.14) stand, as ruled. USMCA now has no live deposit or expense created by categorize besides those 5.
+- **Handoff:** `docs/bus/2026-10-08-CC1-HANDOFF-TO-CURSOR-FINAL.md`. Unmerged branches pushed as drafts: #25791 (RELAY-F441), #25792 (superseded, close).
+- CC-1 is retired. CI is down account-wide; local gates are the record.
