@@ -385,7 +385,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
           partNeedsReorder(row.qty_on_hand, row.reorder_threshold) ? (
             <span className="rounded-sm bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">REORDER</span>
           ) : (
-            <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">OK</span>
+            <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]">OK</span>
           ),
       },
     ],
@@ -516,11 +516,11 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
               />
             )}
             {!rmStatusQuery.isError && (rmStatusQuery.data?.total_count ?? 0) > rmStatusPageSize ? (
-              <div className="mt-2 flex items-center justify-between text-xs text-slate-600" data-testid="rm-status-server-range">
+              <div className="mt-2 flex items-center justify-between text-xs text-[#4B5563]" data-testid="rm-status-server-range">
                 <span>{rmStatusPage * rmStatusPageSize + 1}–{Math.min((rmStatusPage + 1) * rmStatusPageSize, rmStatusQuery.data?.total_count ?? 0)} of {rmStatusQuery.data?.total_count ?? 0} open work orders</span>
                 <div className="flex gap-2">
-                  <button type="button" className="rounded border border-slate-300 px-2 py-1 disabled:opacity-50" disabled={rmStatusPage === 0 || rmStatusQuery.isFetching} onClick={() => setRmStatusPage((value) => Math.max(0, value - 1))}>Previous</button>
-                  <button type="button" className="rounded border border-slate-300 px-2 py-1 disabled:opacity-50" disabled={(rmStatusPage + 1) * rmStatusPageSize >= (rmStatusQuery.data?.total_count ?? 0) || rmStatusQuery.isFetching} onClick={() => setRmStatusPage((value) => value + 1)}>Next</button>
+                  <button type="button" className="rounded border border-[#E5E7EB] px-2 py-1 disabled:opacity-50" disabled={rmStatusPage === 0 || rmStatusQuery.isFetching} onClick={() => setRmStatusPage((value) => Math.max(0, value - 1))}>Previous</button>
+                  <button type="button" className="rounded border border-[#E5E7EB] px-2 py-1 disabled:opacity-50" disabled={(rmStatusPage + 1) * rmStatusPageSize >= (rmStatusQuery.data?.total_count ?? 0) || rmStatusQuery.isFetching} onClick={() => setRmStatusPage((value) => value + 1)}>Next</button>
                 </div>
               </div>
             ) : null}

@@ -181,7 +181,7 @@ export function InventoryPurchasesPage() {
 
       <div className="flex justify-end">
         <Link
-          className="inline-flex min-h-11 items-center rounded-sm bg-slate-800 px-3 text-xs font-semibold text-white hover:bg-slate-700 sm:min-h-[32px]"
+          className="inline-flex min-h-11 items-center rounded-sm bg-[#0F1219] px-3 text-xs font-semibold text-white hover:bg-[#1F2A44] sm:min-h-[32px]"
           to="/maintenance/parts-inventory?create=purchase"
         >
           + Record Purchase
@@ -190,11 +190,11 @@ export function InventoryPurchasesPage() {
 
       <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600">
         Purchase receipts are preserved as an append-only history. Stock on-hand lives on{" "}
-        <Link className="text-slate-700 underline" to="/maintenance/parts-inventory?create=purchase">
+        <Link className="text-[#1F2A44] underline" to="/maintenance/parts-inventory?create=purchase">
           Maintenance Parts Inventory
         </Link>{" "}
         (upserted by part on each purchase); WO part consumption lives on{" "}
-        <Link className="text-slate-700 underline" to="/inventory/assignments">
+        <Link className="text-[#1F2A44] underline" to="/inventory/assignments">
           Assignments
         </Link>
         .
@@ -231,7 +231,7 @@ export function InventoryPurchasesPage() {
                 dataAttributes={{ "data-inventory-purchases-filter-toolbar": "collapsed" }}
               >
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <label className="text-xs text-slate-600">
+                  <label className="text-xs text-[#4B5563]">
                     Vendor
                     <SelectCombobox
                       value={stagedFilters.draft.vendorFilter}
@@ -247,7 +247,7 @@ export function InventoryPurchasesPage() {
                       ))}
                     </SelectCombobox>
                   </label>
-                  <label className="text-xs text-slate-600">
+                  <label className="text-xs text-[#4B5563]">
                     Status
                     <SelectCombobox
                       value={stagedFilters.draft.statusFilter}
