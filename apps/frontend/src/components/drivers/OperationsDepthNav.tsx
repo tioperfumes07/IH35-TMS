@@ -65,7 +65,7 @@ export function OperationsDepthNav({ activeSlug, onChange }: Props) {
             <button
               type="button"
               className={`rounded px-2 py-1 text-xs font-semibold ${
-                groupActive ? "bg-[#1F2A44] text-white" : "text-slate-600 hover:bg-gray-100"
+                groupActive ? "bg-[#1F2A44] text-white" : "text-[#4B5563] hover:bg-gray-100"
               }`}
             >
               {group.group}
@@ -77,7 +77,7 @@ export function OperationsDepthNav({ activeSlug, onChange }: Props) {
                   type="button"
                   onClick={() => onChange(item.slug)}
                   className={`px-3 py-1.5 text-left text-xs ${
-                    item.slug === activeSlug ? "bg-slate-100 font-semibold text-slate-700" : "text-slate-700 hover:bg-gray-50"
+                    item.slug === activeSlug ? "bg-[#F7F8FA] font-semibold text-[#1F2A44]" : "text-[#1F2A44] hover:bg-gray-50"
                   }`}
                 >
                   {item.label}
