@@ -41,11 +41,11 @@ export function RelayFillsReverseSection({
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-900">
+        <h3 className="text-xs font-semibold text-[#0F1219]">
           Relay fills
           {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
         </h3>
-        <Link to="/fuel/relay-unmatched" className="text-xs font-semibold text-slate-700 hover:underline">
+        <Link to="/fuel/relay-unmatched" className="text-xs font-semibold text-[#1F2A44] hover:underline">
           Open Relay — unmatched
         </Link>
       </div>
@@ -62,15 +62,15 @@ export function RelayFillsReverseSection({
         <p className="text-xs text-gray-500">No Relay fills linked to {contextLabel}.</p>
       ) : null}
       {totalCount > rows.length ? (
-        <p className="text-xs text-slate-500" data-testid="relay-fills-reverse-range">
+        <p className="text-xs text-[#6B7280]" data-testid="relay-fills-reverse-range">
           Showing {rows.length} of {totalCount}.
         </p>
       ) : null}
       {rows.length > 0 ? (
         <ul className="space-y-2">
           {rows.map((row) => (
-            <li key={row.id} className="text-xs text-slate-700" data-testid={`relay-fill-${row.id}`}>
-              <span className="font-medium text-slate-900">
+            <li key={row.id} className="text-xs text-[#1F2A44]" data-testid={`relay-fill-${row.id}`}>
+              <span className="font-medium text-[#0F1219]">
                 {row.merchant_name || "Relay fill"}
                 {row.location_city || row.location_state
                   ? ` — ${[row.location_city, row.location_state].filter(Boolean).join(", ")}`

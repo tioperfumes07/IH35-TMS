@@ -1,3 +1,13 @@
+## 2026-10-08T18:45Z · BANK leftover slate — FuelIntegrity / FuelReceipt / RelayFills
+
+FINDING: BANK-F91226 — FuelIntegrityPage / FuelReceiptPage / RelayFillsReverseSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25892 squash `2b49a8b728` (BANK-F91225 vendors list)
+GUARD: scripts/verify-fuel-integ-receipt-relay-slate-leftover-chrome.mjs + verify-steps/3684 piggyback
+LIVE PROOF: verify-fuel-integ-receipt-relay-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3684 piggyback + OUTBOX
+
 ## 2026-10-08T18:35Z · BANK leftover slate — VendorsPage / VendorsListView / VendorListSidebar
 
 FINDING: BANK-F91225 — VendorsPage / VendorsListView / VendorListSidebar Tailwind slate-* → house tokens

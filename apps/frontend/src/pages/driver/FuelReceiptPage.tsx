@@ -118,7 +118,7 @@ export function FuelReceiptPage() {
   return (
     <div className="space-y-3 text-xs">
       <h1 className="text-xs font-semibold">Fuel receipt</h1>
-      {message ? <p className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-xs">{message}</p> : null}
+      {message ? <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs">{message}</p> : null}
 
       <div className="flex flex-wrap gap-2">
         <button type="button" className="rounded-sm border px-2 py-1" onClick={() => void startCamera()}>
@@ -152,7 +152,7 @@ export function FuelReceiptPage() {
       <canvas ref={canvasRef} className="hidden" />
       {previewUrl ? <img src={previewUrl} alt="Receipt preview" className="w-full rounded-sm border" /> : null}
 
-      <label className="block text-xs font-medium text-slate-600">
+      <label className="block text-xs font-medium text-[#4B5563]">
         Truck (unit)
         <Combobox
           options={unitOptions}
@@ -174,23 +174,23 @@ export function FuelReceiptPage() {
           />
         ) : null}
       </label>
-      <label className="block text-xs font-medium text-slate-600">
+      <label className="block text-xs font-medium text-[#4B5563]">
         Odometer
         <input className="mt-1 w-full rounded-sm border px-2 py-1" value={odometer} onChange={(e) => setOdometer(e.target.value)} inputMode="numeric" />
       </label>
-      <label className="block text-xs font-medium text-slate-600">
+      <label className="block text-xs font-medium text-[#4B5563]">
         Amount (USD)
         {/* M-1: dollars-mode QBO money entry; backend z.coerce.number()→round(amount*100), byte-for-byte. */}
         <MoneyInput valueDollars={amount} onChangeDollars={setAmount} ariaLabel="Amount (USD)" className="mt-1 w-full" />
       </label>
-      <label className="block text-xs font-medium text-slate-600">
+      <label className="block text-xs font-medium text-[#4B5563]">
         Station name
         <input className="mt-1 w-full rounded-sm border px-2 py-1" value={station} onChange={(e) => setStation(e.target.value)} />
       </label>
 
       <button
         type="button"
-        className="w-full rounded-sm bg-slate-900 py-2 text-white disabled:opacity-50"
+        className="w-full rounded-sm bg-[#0F1219] py-2 text-white disabled:opacity-50"
         disabled={busy}
         onClick={() => void submit()}
       >
