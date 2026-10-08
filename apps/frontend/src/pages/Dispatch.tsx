@@ -744,7 +744,7 @@ export function DispatchPage({
         <DataPanel title="Book load">
           <DataPanelRow>
             <span className="text-xs text-gray-700">Use the Book Load flow to create a new dispatch load.</span>
-            <button className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700" onClick={() => openBookLoadModal()} type="button">
+            <button className="rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs text-[#1F2A44]" onClick={() => openBookLoadModal()} type="button">
               + Book Load
             </button>
           </DataPanelRow>
@@ -758,7 +758,7 @@ export function DispatchPage({
         !defaultCompanyIds[0] ? (
           <div
             data-testid="dispatch-pre-settlements-need-company"
-            className="rounded-sm border bg-white p-4 text-xs text-slate-600"
+            className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]"
           >
             Select an operating company to load pre-settlements for that entity.
           </div>
@@ -797,7 +797,7 @@ export function DispatchPage({
       ) : !defaultCompanyIds[0] ? (
         <div
           data-testid="dispatch-settlements-need-company"
-          className="rounded-sm border bg-white p-4 text-xs text-slate-600"
+          className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]"
         >
           Select an operating company — settlement runs are entity-scoped in Driver Finance.
         </div>
@@ -816,7 +816,7 @@ export function DispatchPage({
               </span>
               <Link
                 to="/driver-finance/settlements"
-                className="text-xs text-slate-700 underline"
+                className="text-xs text-[#1F2A44] underline"
                 data-testid="dispatch-settlements-link"
               >
                 View all settlements →

@@ -1,3 +1,13 @@
+## 2026-10-08T14:25Z · BANK leftover slate — abandonment report / round trips / dispatch
+
+FINDING: BANK-F91210 — AbandonmentReportModal / RoundTrips / Dispatch Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25869 squash `018bff41f6` (BANK-F91209 med/cert/sched)
+GUARD: scripts/verify-abandon-rt-disp-slate-leftover-chrome.mjs + verify-steps/3934 piggyback
+LIVE PROOF: verify-abandon-rt-disp-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3934 piggyback + OUTBOX
+
 ## 2026-10-08T14:10Z · BANK leftover slate — medical cards history / cert expiry badge / driver scheduler grid
 
 FINDING: BANK-F91209 — MedicalCardsHistorySection / CertExpiryBadge / DriverSchedulerGridPage Tailwind slate-* → house tokens

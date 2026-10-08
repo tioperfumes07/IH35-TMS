@@ -262,7 +262,7 @@ function TripCard({
         <div className="flex items-center gap-1">
           <BillingChip load={load} operatingCompanyId={operatingCompanyId} />
           {tag ? (
-            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">{tag}</span>
+            <span className="rounded-sm bg-[#E5E7EB] px-1.5 py-0.5 text-xs font-semibold text-[#1F2A44]">{tag}</span>
           ) : null}
           {hasVisibleFlag(load.flag_code) ? (
             <span
@@ -339,10 +339,10 @@ function NeedsReturnCard({
 }) {
   return (
     <div
-      className="flex min-h-[120px] w-full flex-col items-center justify-center gap-2 rounded-sm border border-dashed border-slate-200 bg-slate-100/40 p-3 text-center"
+      className="flex min-h-[120px] w-full flex-col items-center justify-center gap-2 rounded-sm border border-dashed border-[#E5E7EB] bg-[#E5E7EB]/40 p-3 text-center"
       data-testid="round-trip-needs-return"
     >
-      <span className="text-xs font-semibold text-slate-700">Needs return</span>
+      <span className="text-xs font-semibold text-[#1F2A44]">Needs return</span>
       <Button type="button" size="sm" variant="secondary" onClick={() => onBookReturn({ unitId, driverId })}>
         + Book return
       </Button>
@@ -516,7 +516,7 @@ export function RoundTrips({
   }
 
   if (!enabled) {
-    return <div className="rounded-sm border bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border bg-white p-4 text-xs text-[#4B5563]">Select an operating company.</div>;
   }
 
   const isLoading = loading || preSettlementsQuery.isLoading || idleUnitsQuery.isLoading;
@@ -526,7 +526,7 @@ export function RoundTrips({
         <div className="inline-flex rounded-sm border border-gray-200">
           <button
             type="button"
-            className={`px-2 py-0.5 ${boardView === "board" ? "bg-slate-800 text-white" : "bg-[var(--surface-unselected)] text-slate-700"}`}
+            className={`px-2 py-0.5 ${boardView === "board" ? "bg-[#0F1219] text-white" : "bg-[var(--surface-unselected)] text-[#1F2A44]"}`}
             data-testid="round-trips-view-board"
             onClick={() => {
               setBoardView("board");
@@ -537,7 +537,7 @@ export function RoundTrips({
           </button>
           <button
             type="button"
-            className={`px-2 py-0.5 ${boardView === "timeline" ? "bg-slate-800 text-white" : "bg-[var(--surface-unselected)] text-slate-700"}`}
+            className={`px-2 py-0.5 ${boardView === "timeline" ? "bg-[#0F1219] text-white" : "bg-[var(--surface-unselected)] text-[#1F2A44]"}`}
             data-testid="round-trips-view-timeline"
             onClick={() => {
               setBoardView("timeline");
