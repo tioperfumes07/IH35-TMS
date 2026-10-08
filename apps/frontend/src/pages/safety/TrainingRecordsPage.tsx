@@ -26,11 +26,11 @@ type Props = {
 const EMPTY_FILTERS = { driverId: "" };
 
 function expiryLabel(expiryDate: string | null | undefined) {
-  if (!expiryDate) return { text: "No expiry", tone: "text-slate-500" };
+  if (!expiryDate) return { text: "No expiry", tone: "text-[#6B7280]" };
   const days = Math.ceil((new Date(`${expiryDate}T00:00:00`).getTime() - Date.now()) / (24 * 60 * 60 * 1000));
   if (days < 0) return { text: "Expired", tone: "text-red-700" };
-  if (days <= 30) return { text: `Due in ${days}d`, tone: "text-slate-700" };
-  return { text: formatDateUS(expiryDate), tone: "text-slate-700" };
+  if (days <= 30) return { text: `Due in ${days}d`, tone: "text-[#1F2A44]" };
+  return { text: formatDateUS(expiryDate), tone: "text-[#1F2A44]" };
 }
 
 export function TrainingRecordsPage({ operatingCompanyId }: Props) {
@@ -202,7 +202,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
           columns={recordColumns}
           rows={rows}
           rowKey={(row) => String(row.id)}
-          rowClassName={(row) => deepLinkTrainingId && String(row.id) === deepLinkTrainingId ? "bg-slate-100 ring-1 ring-slate-400" : ""}
+          rowClassName={(row) => deepLinkTrainingId && String(row.id) === deepLinkTrainingId ? "bg-[#F7F8FA] ring-1 ring-[#6B7280]" : ""}
           loading={recordsQuery.isLoading}
           emptyText="No training records found."
           storageKey="safety-training-records"
@@ -214,7 +214,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
           hidePager
           filterBar={
             <div className="relative flex flex-wrap items-end gap-2" data-testid="training-records-filters">
-              <label className="text-xs text-slate-600">
+              <label className="text-xs text-[#4B5563]">
                 Driver
                 <EntityPicker
                   kind="driver"
@@ -284,7 +284,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
             });
           }}
         >
-          <label className="block text-xs text-slate-600">
+          <label className="block text-xs text-[#4B5563]">
             Driver
             <div className="mt-1">
               <DriverPickerWithCreate
@@ -297,7 +297,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
               />
             </div>
           </label>
-          <label className="block text-xs text-slate-600">
+          <label className="block text-xs text-[#4B5563]">
             Training name
             <input
               value={trainingName}
@@ -307,7 +307,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
               required
             />
           </label>
-          <div className="block text-xs text-slate-600">
+          <div className="block text-xs text-[#4B5563]">
             <label htmlFor="training-record-completed-date">Completed date</label>
             <DatePicker
               id="training-record-completed-date"
@@ -318,7 +318,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
               data-testid="training-record-completed"
             />
           </div>
-          <div className="block text-xs text-slate-600">
+          <div className="block text-xs text-[#4B5563]">
             <label htmlFor="training-record-expiry-date">Expiry date (optional)</label>
             <DatePicker
               id="training-record-expiry-date"
@@ -328,7 +328,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
               data-testid="training-record-expiry"
             />
           </div>
-          <label className="block text-xs text-slate-600">
+          <label className="block text-xs text-[#4B5563]">
             Notes
             <textarea
               value={notes}

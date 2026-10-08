@@ -134,7 +134,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
       render: (m) => (
         <button
           type="button"
-          className="text-slate-700 underline"
+          className="text-[#1F2A44] underline"
           data-testid={`safety-meeting-attendance-btn-${m.id}`}
           onClick={() => setExpandedMeetingId(expandedMeetingId === m.id ? null : m.id)}
         >
@@ -148,8 +148,8 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
     <div className="space-y-3" data-testid="safety-meetings-page">
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div>
-          <div className="text-xs font-semibold text-slate-800">Safety Meetings</div>
-          <div className="text-xs text-slate-500">Schedule meetings, track required attendees, and sync attendance to safety events.</div>
+          <div className="text-xs font-semibold text-[#0F1219]">Safety Meetings</div>
+          <div className="text-xs text-[#6B7280]">Schedule meetings, track required attendees, and sync attendance to safety events.</div>
         </div>
         <Button size="sm" data-testid="safety-meetings-create-btn" onClick={() => setCreateOpen(true)}>
           + Create Meeting
@@ -187,10 +187,10 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
             const attendeeIds = meeting.required_attendees ?? [];
             return (
               <div className="space-y-2">
-                <div className="text-xs font-semibold text-slate-700">Attendance — {meeting.title}</div>
+                <div className="text-xs font-semibold text-[#1F2A44]">Attendance — {meeting.title}</div>
                 <div className="grid gap-1 md:grid-cols-2">
                   {attendeeIds.map((driverId) => (
-                    <label key={driverId} className="flex items-center gap-2 text-xs text-slate-700">
+                    <label key={driverId} className="flex items-center gap-2 text-xs text-[#1F2A44]">
                       <input
                         type="checkbox"
                         checked={Boolean(meeting.attendance?.[driverId])}
@@ -214,7 +214,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
                     </label>
                   ))}
                   {attendeeIds.length === 0 ? (
-                    <div className="text-xs text-slate-500">No required attendees on this meeting.</div>
+                    <div className="text-xs text-[#6B7280]">No required attendees on this meeting.</div>
                   ) : null}
                 </div>
                 {attendanceMutation.isError && attendanceMutation.variables?.generation === lifecycleGenerationRef.current ? (
@@ -245,7 +245,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
             });
           }}
         >
-          <div className="block text-xs text-slate-600">
+          <div className="block text-xs text-[#4B5563]">
             <label htmlFor="safety-meeting-date">Date</label>
             <DatePicker
               id="safety-meeting-date"
@@ -256,7 +256,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
               data-testid="safety-meeting-date"
             />
           </div>
-          <label className="block text-xs text-slate-600">
+          <label className="block text-xs text-[#4B5563]">
             Topic
             <input
               value={topic}
@@ -267,7 +267,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
             />
           </label>
           <div>
-            <div className="text-xs font-semibold text-slate-600">Required attendees</div>
+            <div className="text-xs font-semibold text-[#4B5563]">Required attendees</div>
             {/* Picker law: EntityPicker kind=driver — server search; nested create. */}
             <div className="mt-1" data-testid="safety-meeting-driver-search">
               <EntityPicker
@@ -286,7 +286,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
                 {requiredAttendees.map((driverId) => (
                   <li
                     key={driverId}
-                    className="flex items-center justify-between gap-2 text-xs text-slate-700"
+                    className="flex items-center justify-between gap-2 text-xs text-[#1F2A44]"
                     data-testid={`safety-meeting-required-${driverId}`}
                   >
                     <EntityLink
@@ -296,7 +296,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
                     />
                     <button
                       type="button"
-                      className="text-slate-600 underline"
+                      className="text-[#4B5563] underline"
                       onClick={() =>
                         setRequiredAttendees((current) => current.filter((id) => id !== driverId))
                       }
