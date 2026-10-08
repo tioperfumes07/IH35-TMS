@@ -1,3 +1,13 @@
+## 2026-10-08 · BANK-F91064 — RevenueRecognition / ExpensesList / CounterpartyStatement slate → house
+
+FINDING: BANK-F91064 — RevenueRecognitionPage / ExpensesListPage / CounterpartyStatementPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25997 squash `1879c7edf3` (BANK-F91063 CoA/FinanceProjections/BankVisibility)
+GUARD: scripts/verify-91064-rev-expenses-counter-slate-leftover-chrome.mjs + verify-steps/3662 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: RevenueRecognitionPage + ExpensesListPage + CounterpartyStatementPage + refuse guard + 3662 piggyback + OUTBOX
+
 ## 2026-10-08 · BANK-F91063 — CoA / FinanceProjections / BankVisibility slate → house
 
 FINDING: BANK-F91063 — ChartOfAccountsListPage / FinanceProjectionsPage / BankAccountVisibilityPage Tailwind slate-* → house tokens

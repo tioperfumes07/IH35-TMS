@@ -236,11 +236,11 @@ export function CounterpartyStatementView({
           To
           <DatePicker className="mt-1 block h-9" value={staged.draft.end} onChange={(next) => staged.setDraft((p) => ({ ...p, end: next }))} />
         </label>
-        <div className="mx-1 h-5 w-px bg-slate-200" />
+        <div className="mx-1 h-5 w-px bg-[#E5E7EB]" />
         <button
           type="button"
           onClick={staged.reset}
-          className="h-7 rounded-sm border border-slate-300 bg-white px-3 text-xs font-medium text-slate-600 hover:bg-slate-50"
+          className="h-7 rounded-sm border border-[#E5E7EB] bg-white px-3 text-xs font-medium text-[#4B5563] hover:bg-[#F7F8FA]"
           data-testid="reports-counterparty-statement-reset"
         >
           Reset
@@ -248,7 +248,7 @@ export function CounterpartyStatementView({
         <button
           type="button"
           onClick={staged.cancel}
-          className="h-7 rounded-sm border border-slate-300 bg-white px-3 text-xs font-medium text-slate-600 hover:bg-slate-50"
+          className="h-7 rounded-sm border border-[#E5E7EB] bg-white px-3 text-xs font-medium text-[#4B5563] hover:bg-[#F7F8FA]"
           data-testid="reports-counterparty-statement-cancel"
         >
           Cancel
@@ -257,7 +257,7 @@ export function CounterpartyStatementView({
           type="button"
           onClick={staged.apply}
           disabled={!staged.dirty}
-          className="h-7 rounded-sm border border-slate-700 bg-slate-700 px-3 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+          className="h-7 rounded-sm border border-[#1F2A44] bg-[#1F2A44] px-3 text-xs font-medium text-white hover:bg-[#1F2A44] disabled:opacity-50"
           data-testid="reports-counterparty-statement-apply"
         >
           Apply
@@ -279,7 +279,7 @@ export function CounterpartyStatementView({
               </tr>
             </thead>
             <tbody>
-              <tr className="border-b border-gray-100 bg-slate-50 font-semibold">
+              <tr className="border-b border-gray-100 bg-[#F7F8FA] font-semibold">
                 <td className="px-3 py-2" colSpan={6}>
                   Opening balance ({mmmDd(query.data.from_date)})
                 </td>
@@ -304,7 +304,7 @@ export function CounterpartyStatementView({
                   </tr>
                 ))
               )}
-              <tr className="bg-slate-50 font-semibold">
+              <tr className="bg-[#F7F8FA] font-semibold">
                 <td className="px-3 py-2" colSpan={6}>
                   Closing balance ({mmmDd(query.data.to_date)})
                 </td>
@@ -319,7 +319,7 @@ export function CounterpartyStatementView({
 
       {kind === "customer" && loadsQuery.data ? (
         <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="statement-loads-history">
-          <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-600">Load history</h2>
+          <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#4B5563]">Load history</h2>
           <ParityTable
             columns={loadColumns}
             rows={loadsQuery.data.loads}
@@ -333,7 +333,7 @@ export function CounterpartyStatementView({
 
       {kind === "vendor" && expensesQuery.data?.rows ? (
         <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="statement-expenses-history">
-          <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-600">Expense history</h2>
+          <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#4B5563]">Expense history</h2>
           <ParityTable
             columns={expenseColumns}
             rows={expensesQuery.data.rows}
