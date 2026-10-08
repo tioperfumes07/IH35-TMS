@@ -540,12 +540,12 @@ function driverNameLabel(load: DispatchLoadRow): string {
 function onTimeChipClass(load: DispatchLoadRow): string {
   const configuredTier = readDispatchAlertTier(load.operating_company_id, load.progress_eta_delta_minutes);
   if (configuredTier === "red") return "bg-red-100 text-red-800";
-  if (configuredTier === "amber") return "bg-slate-100 text-slate-700";
-  if (load.on_time_prediction === "green") return "bg-slate-100 text-slate-700";
-  if (load.on_time_prediction === "amber") return "bg-slate-100 text-slate-700";
+  if (configuredTier === "amber") return "bg-[#F7F8FA] text-[#4B5563]";
+  if (load.on_time_prediction === "green") return "bg-[#F7F8FA] text-[#4B5563]";
+  if (load.on_time_prediction === "amber") return "bg-[#F7F8FA] text-[#4B5563]";
   if (load.on_time_prediction === "red") return "bg-red-100 text-red-800";
-  if (load.progress_status === "early" || load.progress_status === "on_track") return "bg-slate-100 text-slate-700";
-  if (load.progress_status === "behind") return "bg-slate-100 text-slate-700";
+  if (load.progress_status === "early" || load.progress_status === "on_track") return "bg-[#F7F8FA] text-[#4B5563]";
+  if (load.progress_status === "behind") return "bg-[#F7F8FA] text-[#4B5563]";
   if (load.progress_status === "delayed") return "bg-red-100 text-red-800";
   return "bg-gray-100 text-gray-600";
 }
@@ -621,7 +621,7 @@ function DeliveredProfitBadge({ load }: { load: KanbanLoad }) {
     return (
       <button
         type="button"
-        className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700"
+        className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]"
         title="Load profitability unavailable — retry"
         aria-label="Retry load profitability"
         onClick={(event) => {
@@ -728,7 +728,7 @@ function KanbanDispatchCard({
       onClick={() => onClick(load.id)}
       className={`relative cursor-pointer rounded border border-gray-200 bg-white p-3 text-left shadow-xs transition hover:-translate-y-0.5 hover:shadow-sm ${
         isDragging ? "opacity-60" : ""
-      } ${isOver ? "ring-2 ring-slate-400" : ""} ${
+      } ${isOver ? "ring-2 ring-[#E5E7EB]" : ""} ${
         draggableEnabled ? "cursor-grab select-none active:cursor-grabbing" : "cursor-default"
       }`}
       data-testid={`kanban-card-${load.load_number}`}
@@ -798,7 +798,7 @@ function KanbanDispatchCard({
       </div>
 
       <div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-600">
-        <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 font-semibold text-slate-700">{mode}</span>
+        <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 font-semibold text-[#4B5563]">{mode}</span>
         <span>{weight}</span>
         <span className="truncate" title={commodity}>
           {commodity}
@@ -807,8 +807,8 @@ function KanbanDispatchCard({
 
       {dwell ? (
         <div className="mt-1 flex flex-wrap gap-1 text-xs">
-          <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-slate-700">Dwell {formatMinutes(dwell.dwell)}</span>
-          <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-slate-700">Free {formatMinutes(dwell.free)}</span>
+          <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-[#4B5563]">Dwell {formatMinutes(dwell.dwell)}</span>
+          <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-[#4B5563]">Free {formatMinutes(dwell.free)}</span>
           <span className={`rounded-sm px-1.5 py-0.5 ${dwell.det != null && dwell.det > 0 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-600"}`}>
             Det {formatMinutes(dwell.det)}
           </span>
@@ -831,7 +831,7 @@ function KanbanDispatchCard({
       {isDeliveredColumn ? (
         <div className="mt-2 flex flex-wrap items-center gap-1">
           {factoring ? (
-            <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold capitalize text-slate-700">{factoring}</span>
+            <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold capitalize text-[#4B5563]">{factoring}</span>
           ) : null}
           <DeliveredProfitBadge load={load} />
         </div>
@@ -901,7 +901,7 @@ function KanbanCompactCard({
         .join(" · ")}
       className={`flex h-10 items-center gap-2 rounded border border-gray-200 bg-white px-2 text-xs shadow-xs transition hover:bg-gray-50 ${
         isDragging ? "opacity-60" : ""
-      } ${isOver ? "ring-2 ring-slate-400" : ""} ${
+      } ${isOver ? "ring-2 ring-[#E5E7EB]" : ""} ${
         draggableEnabled ? "cursor-grab select-none active:cursor-grabbing" : "cursor-pointer"
       }`}
       data-testid={`kanban-compact-card-${load.load_number}`}
@@ -1016,7 +1016,7 @@ function KanbanStandardCard({
       title={`${cardPrimaryLabel(load)} · ${entityLabel(load.load_number, load.id, "Load")} · ${lane}`}
       className={`flex flex-col gap-0.5 rounded border border-gray-200 bg-white px-2 py-1.5 text-xs shadow-xs transition hover:bg-gray-50 ${
         isDragging ? "opacity-60" : ""
-      } ${isOver ? "ring-2 ring-slate-400" : ""} ${
+      } ${isOver ? "ring-2 ring-[#E5E7EB]" : ""} ${
         draggableEnabled ? "cursor-grab select-none active:cursor-grabbing" : "cursor-pointer"
       }`}
       data-testid={`kanban-standard-card-${load.load_number}`}
@@ -1155,7 +1155,7 @@ function AwaitingTruckCard({ load, onBook }: { load: DispatchLoadRow; onBook: (i
           onBook(load.id);
         }
       }}
-      className={`cursor-pointer select-none rounded-sm border border-gray-200 bg-white p-2 hover:border-slate-400 hover:bg-slate-50 ${
+      className={`cursor-pointer select-none rounded-sm border border-gray-200 bg-white p-2 hover:border-[#E5E7EB] hover:bg-[#F7F8FA] ${
         isDragging ? "opacity-60" : ""
       } ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
     >
@@ -1222,7 +1222,7 @@ function KanbanColumnSortControls({
       <button
         type="button"
         className={`inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-xs font-semibold normal-case tracking-normal ${
-          active ? "bg-slate-200 text-slate-900" : "text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+          active ? "bg-[#E5E7EB] text-[#0F1219]" : "text-gray-500 hover:bg-gray-100 hover:text-gray-800"
         }`}
         data-testid={`kanban-column-sort-${columnKey}-${sortKey}`}
         onClick={() => onToggleSort(columnKey, sortKey)}
@@ -1322,7 +1322,7 @@ export function KanbanDispatchColumn({
       <button
         type="button"
         onClick={() => onColumnHeaderClick(column.statuses)}
-        className="text-center text-xs font-semibold text-gray-700 hover:text-slate-900 hover:underline"
+        className="text-center text-xs font-semibold text-gray-700 hover:text-[#0F1219] hover:underline"
         data-testid={`kanban-column-header-link-${column.key}`}
         title={`View ${column.title} loads in the list`}
       >
@@ -1398,7 +1398,7 @@ export function KanbanDispatchColumn({
                 badge and its own refusal. */}
             {column.derivedOnly ? (
               <span
-                className="rounded-sm bg-slate-100 px-1 py-0.5 text-xs font-semibold uppercase text-slate-500"
+                className="rounded-sm bg-[#F7F8FA] px-1 py-0.5 text-xs font-semibold uppercase text-[#6B7280]"
                 data-testid={`kanban-column-auto-badge-${column.key}`}
                 title="Only resumed and finished from its own card — not drag-droppable"
               >
@@ -1406,7 +1406,7 @@ export function KanbanDispatchColumn({
               </span>
             ) : column.manualStamp ? (
               <span
-                className="rounded-sm border border-slate-200 bg-slate-100 px-1 py-0.5 text-xs font-semibold uppercase text-slate-700"
+                className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1 py-0.5 text-xs font-semibold uppercase text-[#4B5563]"
                 data-testid={`kanban-column-stamp-badge-${column.key}`}
                 title={`Fills automatically from geofence/driver PWA. Dropping a card here records a MANUAL ${column.manualStamp.event === "arrive" ? "arrival" : "departure"} stamp on the ${column.manualStamp.stop} stop — it is stored and shown as Manual, and it never overwrites an existing stamp.`}
               >
@@ -1463,7 +1463,7 @@ export function KanbanDispatchColumn({
           aria-orientation="vertical"
           data-testid={`kanban-column-resize-${column.key}`}
           onPointerDown={onResizePointerDown}
-          className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none hover:bg-slate-300"
+          className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none hover:bg-[#E5E7EB]"
           title="Drag to resize this lane"
         />
       ) : null}
@@ -1552,7 +1552,7 @@ function KanbanSwimLaneColumn({
       <button
         type="button"
         onClick={() => onColumnHeaderClick(column.statuses)}
-        className="text-center text-xs font-semibold text-gray-700 hover:text-slate-900 hover:underline"
+        className="text-center text-xs font-semibold text-gray-700 hover:text-[#0F1219] hover:underline"
         data-testid={`kanban-column-header-link-${column.key}`}
         title={`View ${column.title} loads in the list`}
       >
@@ -1642,7 +1642,7 @@ function KanbanSwimLaneColumn({
             {headerLink}
             {column.derivedOnly ? (
               <span
-                className="rounded-sm bg-slate-100 px-1 py-0.5 text-xs font-semibold uppercase text-slate-500"
+                className="rounded-sm bg-[#F7F8FA] px-1 py-0.5 text-xs font-semibold uppercase text-[#6B7280]"
                 data-testid={`kanban-column-auto-badge-${column.key}`}
                 title="Only resumed and finished from its own card — not drag-droppable"
               >
@@ -1650,7 +1650,7 @@ function KanbanSwimLaneColumn({
               </span>
             ) : column.manualStamp ? (
               <span
-                className="rounded-sm border border-slate-200 bg-slate-100 px-1 py-0.5 text-xs font-semibold uppercase text-slate-700"
+                className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1 py-0.5 text-xs font-semibold uppercase text-[#4B5563]"
                 data-testid={`kanban-column-stamp-badge-${column.key}`}
                 title={`Fills automatically from geofence/driver PWA. Dropping a card here records a MANUAL ${column.manualStamp.event === "arrive" ? "arrival" : "departure"} stamp on the ${column.manualStamp.stop} stop — it is stored and shown as Manual, and it never overwrites an existing stamp.`}
               >
@@ -1727,7 +1727,7 @@ function KanbanSwimLaneColumn({
           aria-orientation="vertical"
           data-testid={`kanban-column-resize-${column.key}`}
           onPointerDown={onResizePointerDown}
-          className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none hover:bg-slate-300"
+          className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none hover:bg-[#E5E7EB]"
           title="Drag to resize this lane"
         />
       ) : null}
@@ -2186,7 +2186,7 @@ export function DispatchKanban({
               type="button"
               onClick={() => setDensity(mode)}
               className={`rounded border px-2 py-0.5 font-semibold capitalize ${
-                density === mode ? "border-slate-300 bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-600 hover:bg-[var(--surface-hover)]"
+                density === mode ? "border-[#E5E7EB] bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-600 hover:bg-[var(--surface-hover)]"
               }`}
               data-testid={`kanban-density-${mode}`}
             >
@@ -2223,22 +2223,22 @@ export function DispatchKanban({
 
         {/* Part D — Fleet out-of-service strip, pinned at the bottom of the board. */}
         <section
-          className="sticky bottom-0 mt-2 rounded-sm border border-slate-200 bg-slate-100 p-2"
+          className="sticky bottom-0 mt-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2"
           data-testid="dispatch-kanban-oos-strip"
         >
           <header className="flex items-center justify-between gap-2">
             <div>
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-700">Fleet out of service</h3>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Fleet out of service</h3>
               <KanbanColumnSortControls
                 columnKey="oos_strip"
                 sort={columnSorts.oos_strip ?? { key: "unit", direction: "asc" }}
                 onToggleSort={toggleKanbanColumnSort}
               />
             </div>
-            <span className="rounded-sm bg-white px-2 py-0.5 text-xs font-bold text-slate-700">{outOfServiceLoads.length}</span>
+            <span className="rounded-sm bg-white px-2 py-0.5 text-xs font-bold text-[#4B5563]">{outOfServiceLoads.length}</span>
           </header>
           {outOfServiceLoads.length === 0 ? (
-            <p className="mt-1 text-xs italic text-slate-700">
+            <p className="mt-1 text-xs italic text-[#4B5563]">
               Full fleet out-of-service feed pending — no units flagged.
             </p>
           ) : (
@@ -2255,7 +2255,7 @@ export function DispatchKanban({
                       onLoadClick(load.id);
                     }
                   }}
-                  className="flex items-center gap-2 rounded-sm border border-slate-200 bg-white px-2 py-1 text-xs hover:bg-slate-100"
+                  className="flex items-center gap-2 rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-xs hover:bg-[#F7F8FA]"
                   data-testid="kanban-oos-chip"
                 >
                   <span className="text-red-600" aria-hidden>
