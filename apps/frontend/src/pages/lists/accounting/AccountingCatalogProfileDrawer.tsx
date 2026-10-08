@@ -71,50 +71,50 @@ export function AccountingCatalogProfileDrawer({
     >
       <dl className="grid gap-3 text-xs sm:grid-cols-2">
         <div>
-          <dt className="text-xs font-semibold text-slate-500">{codeLabel}</dt>
-          <dd className="mt-1 break-words text-slate-900">{row.code || "—"}</dd>
+          <dt className="text-xs font-semibold text-[#6B7280]">{codeLabel}</dt>
+          <dd className="mt-1 break-words text-[#0F1219]">{row.code || "—"}</dd>
         </div>
         {singleCodeNameField ? null : (
           <div>
-            <dt className="text-xs font-semibold text-slate-500">Name</dt>
-            <dd className="mt-1 break-words text-slate-900">{row.display_name || "—"}</dd>
+            <dt className="text-xs font-semibold text-[#6B7280]">Name</dt>
+            <dd className="mt-1 break-words text-[#0F1219]">{row.display_name || "—"}</dd>
           </div>
         )}
         <div className="sm:col-span-2">
-          <dt className="text-xs font-semibold text-slate-500">Description</dt>
-          <dd className="mt-1 whitespace-pre-wrap break-words text-slate-900">{row.description || "—"}</dd>
+          <dt className="text-xs font-semibold text-[#6B7280]">Description</dt>
+          <dd className="mt-1 whitespace-pre-wrap break-words text-[#0F1219]">{row.description || "—"}</dd>
         </div>
         <div>
-          <dt className="text-xs font-semibold text-slate-500">Status</dt>
-          <dd className="mt-1 text-slate-900">{row.is_active ? "Active" : "Inactive"}</dd>
+          <dt className="text-xs font-semibold text-[#6B7280]">Status</dt>
+          <dd className="mt-1 text-[#0F1219]">{row.is_active ? "Active" : "Inactive"}</dd>
         </div>
         <div>
-          <dt className="text-xs font-semibold text-slate-500">Sort order</dt>
-          <dd className="mt-1 text-slate-900">{Number.isFinite(row.sort_order) ? row.sort_order : "—"}</dd>
+          <dt className="text-xs font-semibold text-[#6B7280]">Sort order</dt>
+          <dd className="mt-1 text-[#0F1219]">{Number.isFinite(row.sort_order) ? row.sort_order : "—"}</dd>
         </div>
         <div>
-          <dt className="text-xs font-semibold text-slate-500">Created</dt>
-          <dd className="mt-1 text-slate-900">{formatTimestamp(row.created_at)}</dd>
+          <dt className="text-xs font-semibold text-[#6B7280]">Created</dt>
+          <dd className="mt-1 text-[#0F1219]">{formatTimestamp(row.created_at)}</dd>
         </div>
         <div>
-          <dt className="text-xs font-semibold text-slate-500">Updated</dt>
-          <dd className="mt-1 text-slate-900">{formatTimestamp(row.updated_at)}</dd>
+          <dt className="text-xs font-semibold text-[#6B7280]">Updated</dt>
+          <dd className="mt-1 text-[#0F1219]">{formatTimestamp(row.updated_at)}</dd>
         </div>
       </dl>
 
-      <section className="mt-5 border-t border-slate-200 pt-4" aria-label="Metadata">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Metadata</h3>
+      <section className="mt-5 border-t border-[#E5E7EB] pt-4" aria-label="Metadata">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Metadata</h3>
         {metadataEntries.length ? (
           <dl className="mt-3 grid gap-3 text-xs sm:grid-cols-2">
             {metadataEntries.map(([key, value]) => (
               <div key={key}>
-                <dt className="text-xs font-semibold text-slate-500">{metadataLabel(key)}</dt>
-                <dd className="mt-1 break-words text-slate-900">{formatMetadataValue(value)}</dd>
+                <dt className="text-xs font-semibold text-[#6B7280]">{metadataLabel(key)}</dt>
+                <dd className="mt-1 break-words text-[#0F1219]">{formatMetadataValue(value)}</dd>
               </div>
             ))}
           </dl>
         ) : (
-          <p className="mt-2 text-xs text-slate-500">No metadata.</p>
+          <p className="mt-2 text-xs text-[#6B7280]">No metadata.</p>
         )}
       </section>
     </ParityDrawer>

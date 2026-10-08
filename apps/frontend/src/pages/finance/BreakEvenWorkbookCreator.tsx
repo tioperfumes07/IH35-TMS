@@ -113,22 +113,22 @@ export function BreakEvenWorkbookCreator({ operatingCompanyId, liveMiles, liveRe
 
   if (!enabled) {
     return (
-      <section className="mt-6 rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600" data-testid="break-even-workbook-flag-off">
+      <section className="mt-6 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs text-[#4B5563]" data-testid="break-even-workbook-flag-off">
         Break-even creator saves through Finance Scenarios. Enable flag <code>{FINANCE_HUB_SCENARIOS_FLAG}</code>, then return here to input expenses, notes, and assets from the 2025 workbook.
       </section>
     );
   }
 
   return (
-    <section className="mt-6 rounded-sm border border-slate-200 bg-white p-4" data-testid="break-even-workbook-creator">
+    <section className="mt-6 rounded-sm border border-[#E5E7EB] bg-white p-4" data-testid="break-even-workbook-creator">
       <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h2 className="text-xs font-semibold text-slate-900">+ Create break-even analysis</h2>
-          <p className="text-xs text-slate-500">
+          <h2 className="text-xs font-semibold text-[#0F1219]">+ Create break-even analysis</h2>
+          <p className="text-xs text-[#6B7280]">
             Input the 2025 workbook shape: per-lender notes/leases, vehicle clusters (T139–T146, CCG reefers), plus operating costs. Use + Add vehicle for another unit. Saves as a Finance Scenario.
           </p>
         </div>
-        <Link className="text-xs font-semibold text-slate-700 underline" to="/finance/scenarios">
+        <Link className="text-xs font-semibold text-[#1F2A44] underline" to="/finance/scenarios">
           Open scenario history
         </Link>
       </div>
@@ -142,29 +142,29 @@ export function BreakEvenWorkbookCreator({ operatingCompanyId, liveMiles, liveRe
           </button>
         </p>
       ) : history.length > 0 ? (
-        <p className="mb-3 text-xs text-slate-600" data-testid="break-even-workbook-history">
+        <p className="mb-3 text-xs text-[#4B5563]" data-testid="break-even-workbook-history">
           Saved workbooks: {history.map((s) => s.name).join(" · ")}
         </p>
       ) : null}
       <div className="mb-3 grid gap-3 sm:grid-cols-3">
-        <label className="text-xs font-medium text-slate-600">
+        <label className="text-xs font-medium text-[#4B5563]">
           Name
-          <input className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-xs" value={name} onChange={(e) => setName(e.target.value)} />
+          <input className="mt-1 h-8 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs" value={name} onChange={(e) => setName(e.target.value)} />
         </label>
-        <label className="text-xs font-medium text-slate-600">
+        <label className="text-xs font-medium text-[#4B5563]">
           Period starts
           <DatePicker className="mt-1" value={periodStart} onChange={setPeriodStart} />
         </label>
-        <label className="text-xs font-medium text-slate-600">
+        <label className="text-xs font-medium text-[#4B5563]">
           Miles (month)
-          <input type="number" min={0} className="mt-1 h-8 w-full rounded-sm border border-slate-300 px-2 text-xs" value={miles} onChange={(e) => setMiles(e.target.value)} />
+          <input type="number" min={0} className="mt-1 h-8 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs" value={miles} onChange={(e) => setMiles(e.target.value)} />
         </label>
       </div>
       <div className="space-y-2">
         {lines.map((line, idx) => (
           <div key={`${line.category_kind}-${line.category_label}`} className="grid gap-2 sm:grid-cols-[7rem_1fr_8rem] sm:items-center">
-            <span className="text-xs font-semibold uppercase text-slate-500">{line.category_kind}</span>
-            <span className="text-xs text-slate-800">{line.category_label}</span>
+            <span className="text-xs font-semibold uppercase text-[#6B7280]">{line.category_kind}</span>
+            <span className="text-xs text-[#0F1219]">{line.category_label}</span>
             <MoneyInput
               valueCents={line.monthly_estimate_cents}
               onChangeCents={(cents) => {
@@ -176,10 +176,10 @@ export function BreakEvenWorkbookCreator({ operatingCompanyId, liveMiles, liveRe
         ))}
       </div>
       <div className="mt-3 flex flex-wrap items-end gap-2">
-        <label className="text-xs font-medium text-slate-600">
+        <label className="text-xs font-medium text-[#4B5563]">
           Add vehicle / unit
           <input
-            className="mt-1 h-8 w-48 rounded-sm border border-slate-300 px-2 text-xs"
+            className="mt-1 h-8 w-48 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={newVehicle}
             onChange={(e) => setNewVehicle(e.target.value)}
             placeholder="T147"
@@ -187,7 +187,7 @@ export function BreakEvenWorkbookCreator({ operatingCompanyId, liveMiles, liveRe
         </label>
         <button
           type="button"
-          className="h-8 rounded-sm border border-slate-300 px-3 text-xs font-semibold text-slate-800"
+          className="h-8 rounded-sm border border-[#E5E7EB] px-3 text-xs font-semibold text-[#0F1219]"
           onClick={() => {
             const label = newVehicle.trim();
             if (!label) return;
@@ -206,7 +206,7 @@ export function BreakEvenWorkbookCreator({ operatingCompanyId, liveMiles, liveRe
           + Add vehicle
         </button>
       </div>
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-xs">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[#E5E7EB] pt-3 text-xs">
         <span>
           Preview break-even {preview.total_cost_per_mile_cents == null ? "—" : `$${(preview.total_cost_per_mile_cents / 100).toFixed(3)}/mi`} · expenses {formatUsdCents(expenseCents)}
         </span>

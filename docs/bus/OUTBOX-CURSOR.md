@@ -6,6 +6,16 @@
 
 ## 2026-10-08 · BANK-F91056 — SubmitToFactor / FactoringTab / FactoringQueue slate → house
 
+## 2026-10-08 · BANK-F91057 — CatalogProfile / BreakEven / DriverReimb slate → house
+
+FINDING: BANK-F91057 — AccountingCatalogProfileDrawer / BreakEvenWorkbookCreator / AccountingDriverReimbursementDetailPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25990 squash `2cf3b00cfc` (BANK-F91056 SubmitToFactor/FactoringTab/Queue)
+GUARD: scripts/verify-91057-catalog-breakeven-reimb-slate-leftover-chrome.mjs + verify-steps/3634 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: AccountingCatalogProfileDrawer + BreakEvenWorkbookCreator + AccountingDriverReimbursementDetailPage + refuse guard + 3634 piggyback + OUTBOX
+
 FINDING: BANK-F91056 — SubmitToFactorTab / FactoringTab / FactoringQueuePage Tailwind slate-* → house tokens
 LANE: NON-FINANCIAL
 Prior tip merge: #25989 squash `441fb4c5cb` (BANK-F91055 CreditMemos/VendorCredits/InvoiceTypeModal)
