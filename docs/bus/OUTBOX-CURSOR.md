@@ -1,3 +1,13 @@
+## 2026-10-08T14:10Z · BANK leftover slate — medical cards history / cert expiry badge / driver scheduler grid
+
+FINDING: BANK-F91209 — MedicalCardsHistorySection / CertExpiryBadge / DriverSchedulerGridPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25867 squash `bb161413d6` (BANK-F91208 rpt sub)
+GUARD: scripts/verify-safety-med-cert-sched-slate-leftover-chrome.mjs + verify-steps/4100 piggyback
+LIVE PROOF: verify-safety-med-cert-sched-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 4100 piggyback + OUTBOX
+
 ## 2026-10-08T13:55Z · BANK leftover slate — subscription editor / frequently run / subscription manager
 
 FINDING: BANK-F91208 — SubscriptionEditor / FrequentlyRunTable / SubscriptionManager Tailwind slate-* → house tokens

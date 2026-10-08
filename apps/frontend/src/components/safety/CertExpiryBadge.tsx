@@ -23,9 +23,9 @@ function statusForDays(days: number | null): "critical" | "warn" | "ok" | "unkno
 
 function classNameForStatus(status: ReturnType<typeof statusForDays>): string {
   if (status === "critical") return "bg-red-100 text-red-700 border-red-200";
-  if (status === "warn") return "bg-slate-100 text-slate-700 border-slate-200";
-  if (status === "ok") return "bg-slate-100 text-slate-700 border-slate-200";
-  return "bg-slate-100 text-slate-600 border-slate-200";
+  if (status === "warn") return "bg-[#E5E7EB] text-[#1F2A44] border-[#E5E7EB]";
+  if (status === "ok") return "bg-[#E5E7EB] text-[#1F2A44] border-[#E5E7EB]";
+  return "bg-[#E5E7EB] text-[#4B5563] border-[#E5E7EB]";
 }
 
 export function CertExpiryBadge({ label, expiresAt }: Props) {

@@ -276,7 +276,7 @@ export function DriverSchedulerGridPage() {
           <button
             key={d}
             type="button"
-            className={`rounded-sm px-2 py-1 ${windowDays === d ? "bg-slate-800 text-white" : "bg-gray-100 text-gray-700"}`}
+            className={`rounded-sm px-2 py-1 ${windowDays === d ? "bg-[#0F1219] text-white" : "bg-gray-100 text-gray-700"}`}
             onClick={() => setWindowDays(d)}
           >
             {d}d
@@ -329,13 +329,13 @@ export function DriverSchedulerGridPage() {
                       const lt = cellByDriverDay.get(`${driverId}|${d}`);
                       const bg =
                         lt === "vacation"
-                          ? "bg-slate-100"
+                          ? "bg-[#E5E7EB]"
                           : lt === "sick"
-                            ? "bg-slate-100"
+                            ? "bg-[#E5E7EB]"
                             : lt === "personal"
                               ? "bg-orange-100"
                               : lt === "wfh"
-                                ? "bg-slate-100"
+                                ? "bg-[#E5E7EB]"
                                 : "bg-white";
                       const label = lt ? String(lt).slice(0, 3) : "";
                       return (
@@ -357,7 +357,7 @@ export function DriverSchedulerGridPage() {
       ) : null}
 
       {query.data?.pending_requests?.length ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-50 p-2 text-xs text-slate-700">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2 text-xs text-[#1F2A44]">
           <div className="font-semibold">Pending in this window</div>
           <ul className="list-inside list-disc">
             {query.data.pending_requests.map((p) => (
@@ -397,7 +397,7 @@ export function DriverSchedulerGridPage() {
           />
         ) : null}
         {!tempAssignmentsQuery.isError && tempAssignmentTotal > tempPageSize ? (
-          <div className="mt-2 flex items-center justify-between border-t border-slate-200 pt-2 text-xs text-slate-600">
+          <div className="mt-2 flex items-center justify-between border-t border-[#E5E7EB] pt-2 text-xs text-[#4B5563]">
             <span>
               {tempPage * tempPageSize + 1}–{Math.min((tempPage + 1) * tempPageSize, tempAssignmentTotal)} of {tempAssignmentTotal}
             </span>
