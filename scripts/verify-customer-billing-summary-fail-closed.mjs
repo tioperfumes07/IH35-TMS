@@ -76,8 +76,8 @@ export function check(src) {
   if (!source.includes("Cleared:") || !source.includes("not cleared")) {
     failures.push(`${TARGET_FILE}: Credit Terms outstanding must declare Cleared and name not cleared`);
   }
-  if (!source.includes("bg-slate-100")) {
-    failures.push(`${TARGET_FILE}: uncleared notice must use slate-100, not amber`);
+  if (!source.includes("bg-slate-100") && !source.includes("bg-[#F1F5F9]")) {
+    failures.push(`${TARGET_FILE}: uncleared notice must use slate-100 (#F1F5F9), not amber`);
   }
 
   return failures;
