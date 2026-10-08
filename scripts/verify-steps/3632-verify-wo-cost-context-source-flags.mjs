@@ -3,5 +3,6 @@ export default {
   name: "verify-wo-cost-context-source-flags",
   run(ctx) {
     ctx.run("node", ["scripts/verify-wo-cost-context-source-flags.mjs"]);
+    ctx.run("node", ["scripts/verify-safety-evidence-slate-leftover-chrome.mjs"]);
   },
 };

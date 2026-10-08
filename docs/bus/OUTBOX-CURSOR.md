@@ -1,3 +1,13 @@
+## 2026-10-08T20:55Z · BANK leftover slate — PhotoEvidence / EvidenceChain / DiffFindings
+
+FINDING: BANK-F91235 — PhotoEvidenceViewer / EvidenceChainAudit / DiffFindingsList Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25910 squash `f34f7c3d22` (BANK-F91234 permits/fines/dashcam)
+GUARD: scripts/verify-safety-evidence-slate-leftover-chrome.mjs + verify-steps/3632 piggyback
+LIVE PROOF: verify-safety-evidence-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3632 piggyback + OUTBOX
+
 ## 2026-10-08T20:45Z · BANK leftover slate — Permits / FinesPage / DashcamViewer
 
 FINDING: BANK-F91234 — Permits / FinesPage / DashcamViewerPage Tailwind slate-* → house tokens
