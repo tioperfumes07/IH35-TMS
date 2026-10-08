@@ -50,7 +50,7 @@ export function GeofenceBreachesTab() {
     <div className="space-y-3">
       <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-white p-3">
         <div className="flex items-center gap-2">
-          <h3 className="text-xs font-semibold text-slate-900">Geofence Alerts</h3>
+          <h3 className="text-xs font-semibold text-[#0F1219]">Geofence Alerts</h3>
           <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
             {eventsQuery.isError ? "—" : `${activeCount} active`}
           </span>
@@ -61,7 +61,7 @@ export function GeofenceBreachesTab() {
               key={item}
               type="button"
               onClick={() => { setFilter(item); setPage(0); }}
-              className={`rounded-sm px-2 py-1 text-xs ${filter === item ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
+              className={`rounded-sm px-2 py-1 text-xs ${filter === item ? "bg-[#0F1219] text-white" : "bg-[#F7F8FA] text-[#4B5563]"}`}
             >
               {item}
             </button>
@@ -80,14 +80,14 @@ export function GeofenceBreachesTab() {
           <div key={event.id} className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${event.event_type === "entry" ? "bg-slate-100 text-slate-700" : "bg-slate-100 text-slate-700"}`}>
+                <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${event.event_type === "entry" ? "bg-[#F7F8FA] text-[#4B5563]" : "bg-[#F7F8FA] text-[#4B5563]"}`}>
                   {event.event_type}
                 </span>
-                <span className="text-xs font-medium text-slate-900">Unit <EntityLink kind="unit" id={event.vehicle_id} label={entityLabel(event.unit_number, event.vehicle_id, "Unit")} /></span>
+                <span className="text-xs font-medium text-[#0F1219]">Unit <EntityLink kind="unit" id={event.vehicle_id} label={entityLabel(event.unit_number, event.vehicle_id, "Unit")} /></span>
               </div>
-              <span className="text-xs text-slate-500">{formatDateTimeUS(event.event_at)} CT</span>
+              <span className="text-xs text-[#6B7280]">{formatDateTimeUS(event.event_at)} CT</span>
             </div>
-            <div className="mt-1 text-xs text-slate-600">
+            <div className="mt-1 text-xs text-[#4B5563]">
               {/* LINK reverse_link: geofence_label was dead text with no drill-through — EntityLink
                   kind="geofence" now resolves to /dispatch/geofencing?geofence_id= (GeofencesPage,
                   which honors that param and highlights the row). */}
@@ -107,7 +107,7 @@ export function GeofenceBreachesTab() {
             </div>
             <div className="mt-2 flex items-center gap-2">
               {event.acknowledged_at ? (
-                <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-600">Acknowledged</span>
+                <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs text-[#4B5563]">Acknowledged</span>
               ) : (
                 <button
                   type="button"
@@ -127,9 +127,9 @@ export function GeofenceBreachesTab() {
             </div>
           </div>
             ))}
-            {eventsQuery.isLoading ? <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-500">Loading geofence alerts...</div> : null}
+            {eventsQuery.isLoading ? <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-[#6B7280]">Loading geofence alerts...</div> : null}
             {!eventsQuery.isLoading && (eventsQuery.data?.events ?? []).length === 0 ? (
-              <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-500">No geofence alerts for selected filter.</div>
+              <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-[#6B7280]">No geofence alerts for selected filter.</div>
             ) : null}
           </>
         )}
@@ -140,7 +140,7 @@ export function GeofenceBreachesTab() {
           </p>
         ) : null}
         {!eventsQuery.isError && totalCount > 0 ? (
-          <div className="flex items-center justify-between text-xs text-slate-600" data-testid="geofence-breaches-server-pager">
+          <div className="flex items-center justify-between text-xs text-[#4B5563]" data-testid="geofence-breaches-server-pager">
             <span>{page * pageSize + 1}–{Math.min((page + 1) * pageSize, totalCount)} of {totalCount}</span>
             <div className="flex gap-2">
               <button type="button" className="rounded-sm border px-2 py-1 disabled:opacity-50" disabled={page === 0 || eventsQuery.isFetching} onClick={() => setPage((value) => Math.max(0, value - 1))}>Previous</button>
