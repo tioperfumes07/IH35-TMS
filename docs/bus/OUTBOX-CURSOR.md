@@ -1,3 +1,13 @@
+## 2026-10-08T13:40Z · BANK leftover slate — fleet table / road service / inventory parts stock
+
+FINDING: BANK-F91207 — FleetTablePage / RoadServiceList / InventoryPartsStockPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25863 squash `0437ef632f` (BANK-F91206 safety events/da/rtd)
+GUARD: scripts/verify-fleet-road-inv-slate-leftover-chrome.mjs + verify-steps/3652 piggyback
+LIVE PROOF: verify-fleet-road-inv-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3652 piggyback + OUTBOX
+
 ## 2026-10-08T13:20Z · BANK leftover slate — safety events table / drug-alcohol dashboard / return-to-duty
 
 FINDING: BANK-F91206 — SafetyEventsTable / DrugAlcoholDashboard / ReturnToDuty Tailwind slate-* → house tokens
