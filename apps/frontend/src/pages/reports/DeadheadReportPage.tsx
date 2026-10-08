@@ -165,10 +165,10 @@ export function DeadheadReportPage() {
         onReset={staged.reset}
         applyDisabled={!staged.dirty}
       >
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Period</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Period</span>
           <SelectCombobox
-            className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
+            className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.period}
             onChange={(e) => {
               staged.setDraft((p) => ({ ...p, period: e.target.value as DeadheadPeriod, selectedUnitId: null }));
@@ -179,10 +179,10 @@ export function DeadheadReportPage() {
             <option value="YTD">Year to date</option>
           </SelectCombobox>
         </label>
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Group by</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Group by</span>
           <select
-            className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
+            className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.groupBy}
             onChange={(e) => staged.setDraft((p) => ({ ...p, groupBy: e.target.value }))}
             data-testid="reports-deadhead-group-by"
@@ -192,12 +192,12 @@ export function DeadheadReportPage() {
             <option value="month">Month</option>
           </select>
         </label>
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Min DH mi</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Min DH mi</span>
           <input
             type="number"
             min={0}
-            className="h-7 w-24 rounded-sm border border-slate-300 px-2 text-xs"
+            className="h-7 w-24 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.minDeadheadMiles}
             onChange={(e) => staged.setDraft((p) => ({ ...p, minDeadheadMiles: e.target.value }))}
             data-testid="reports-deadhead-min-miles"
@@ -246,7 +246,7 @@ export function DeadheadReportPage() {
             storageKey="deadhead-report"
             emptyText="No trucks with deadhead data for this period."
             exportFilename="deadhead-report.csv"
-            rowClassName={(row) => (appliedFilters.selectedUnitId === row.unit_id ? "bg-slate-100" : "")}
+            rowClassName={(row) => (appliedFilters.selectedUnitId === row.unit_id ? "bg-[#F7F8FA]" : "")}
             onRowClick={(row) => setAppliedFilters((p) => ({ ...p, selectedUnitId: row.unit_id }))}
           />
 
