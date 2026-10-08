@@ -1,6 +1,6 @@
 {
   "healthzSha": "58f5b53",
-  "generated_at": "2026-10-08T10:03:44.210Z",
+  "generated_at": "2026-10-08T10:08:02.971Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 25860,
+      "title": "FINDING: RPT-441-22 — two report guards pinned stale anchors that no longer match the locked token/JSX layout",
+      "state": "merged",
+      "mergedAtCt": "10/08/2026, 05:05 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25860",
+      "sha": "e55206e14a",
+      "committedAtIso": "2026-10-08T05:05:47-05:00"
+    },
+    {
       "number": 25859,
       "title": "FINDING: BANK-F91204 — leftover slate on load exception reasons / termination reasons / domain flyout house tokens",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25851",
       "sha": "2632b8375e",
       "committedAtIso": "2026-10-08T03:58:36-05:00"
-    },
-    {
-      "number": 25850,
-      "title": "FINDING: BANK-F91195 — leftover slate on fuel planner / deadhead report / scheduled reports house tokens",
-      "state": "merged",
-      "mergedAtCt": "10/08/2026, 03:53 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/25850",
-      "sha": "8f365d6c09",
-      "committedAtIso": "2026-10-08T03:53:49-05:00"
     }
   ]
 }

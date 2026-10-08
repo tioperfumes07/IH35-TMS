@@ -34,8 +34,15 @@ export function audit(src) {
   ) {
     failures.push(`${FILE}: A/P aging rows must render a real EntityLink kind="vendor"`);
   }
-  if (!/bucket_1_30_cents[\s\S]{0,300}bucket_31_60_cents[\s\S]{0,300}bucket_61_90_cents[\s\S]{0,300}bucket_91_plus_cents/.test(src)) {
-    failures.push(`${FILE}: A/P aging table must render the full bucket breakdown (current/1-30/31-60/61-90/91+)`);
+  // The full bucket breakdown must live in the A/P section itself (the A/R section renders the
+  // same field names for customer rows, so a file-wide regex cannot prove the A/P table has them).
+  const apStart = src.indexOf("function APAgingSection");
+  const apEnd = apStart >= 0 ? src.indexOf("\nfunction ", apStart + 10) : -1;
+  const apSection = apStart >= 0 ? src.slice(apStart, apEnd >= 0 ? apEnd : src.length) : "";
+  for (const bucket of ["current_cents", "bucket_1_30_cents", "bucket_31_60_cents", "bucket_61_90_cents", "bucket_91_plus_cents"]) {
+    if (!apSection.includes(bucket)) {
+      failures.push(`${FILE}: A/P aging table must render the full bucket breakdown (current/1-30/31-60/61-90/91+) — missing ${bucket}`);
+    }
   }
   return failures;
 }
