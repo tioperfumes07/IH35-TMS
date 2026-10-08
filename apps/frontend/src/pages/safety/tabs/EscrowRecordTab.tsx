@@ -161,7 +161,7 @@ export function EscrowRecordTab() {
             kind="driver"
             id={row.id || null}
             label={entityLabel(row.driver_name, row.id, "Driver")}
-            className="font-semibold text-slate-700"
+            className="font-semibold text-[#4B5563]"
             data-testid={`escrow-driver-link-${row.id}`}
           />
         ),
@@ -176,7 +176,7 @@ export function EscrowRecordTab() {
         render: (row) => (
           <span
             data-testid={`escrow-signed-clause-${row.id}`}
-            className={row.has_signed_clause ? "font-semibold text-slate-700" : "text-slate-400"}
+            className={row.has_signed_clause ? "font-semibold text-[#4B5563]" : "text-[#6B7280]"}
           >
             {row.has_signed_clause ? "On file" : "Missing"}
           </span>
@@ -191,7 +191,7 @@ export function EscrowRecordTab() {
         sortable: true,
         render: (row) =>
           row.accumulation_rate_pct == null ? (
-            <span className="text-slate-400">Not configured</span>
+            <span className="text-[#6B7280]">Not configured</span>
           ) : (
             `${row.accumulation_rate_pct.toFixed(2)}%`
           ),
@@ -211,7 +211,7 @@ export function EscrowRecordTab() {
               Forfeit
             </button>
           ) : (
-            <span className="text-slate-400">Owner-only</span>
+            <span className="text-[#6B7280]">Owner-only</span>
           ),
       },
     ],
@@ -220,10 +220,10 @@ export function EscrowRecordTab() {
 
   return (
     <div className="space-y-3" data-testid="escrow-record-tab">
-      <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-600">
+      <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-[#4B5563]">
         Escrow balances and events surface security-invoker data. Forfeiture attempts are auditable.
         {rows.length > 0 ? (
-          <p className="mt-1 text-xs text-slate-500" data-testid="escrow-signed-clause-summary">
+          <p className="mt-1 text-xs text-[#6B7280]" data-testid="escrow-signed-clause-summary">
             Signed escrow clause on file: {signedClauseCount} of {rows.length} drivers, based on signed contract records.
             Forfeit stays blocked until the clause is signed.
           </p>
@@ -256,7 +256,7 @@ export function EscrowRecordTab() {
         rowTestId={(row) => `escrow-record-row-${row.id}`}
         filterBar={
           <div className="relative flex flex-wrap items-end gap-2" data-testid="escrow-records-filters">
-            <label className="text-xs text-slate-600">
+            <label className="text-xs text-[#4B5563]">
               Driver
               <EntityPicker
                 kind="driver"
@@ -315,11 +315,11 @@ export function EscrowRecordTab() {
       ) : null}
 
       <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="escrow-forfeit-audit">
-        <h4 className="text-xs font-semibold text-slate-700">Forfeiture Audit</h4>
-        <p className="mt-1 text-xs text-slate-500">Successful forfeitures: {totalForfeits}</p>
+        <h4 className="text-xs font-semibold text-[#4B5563]">Forfeiture Audit</h4>
+        <p className="mt-1 text-xs text-[#6B7280]">Successful forfeitures: {totalForfeits}</p>
         <div className="mt-2 space-y-1 text-xs">
           {attempts.map((entry) => (
-            <div key={entry.id} className={entry.status === "blocked" ? "text-red-700" : "text-slate-700"}>
+            <div key={entry.id} className={entry.status === "blocked" ? "text-red-700" : "text-[#4B5563]"}>
               {entry.created_at.slice(0, 16).replace("T", " ")} - <EntityLink kind="driver" id={entry.driver_id} label={entityLabel(entry.driver_name, entry.driver_id, "Driver")} /> - {formatUsd(entry.amount)} - {entry.reason} (
               {entry.status})
               {/* LIABILITY column-wave: linked_liability_id already flows end-to-end
@@ -332,7 +332,7 @@ export function EscrowRecordTab() {
               ) : null}
             </div>
           ))}
-          {attempts.length === 0 ? <div className="text-slate-400">No forfeiture attempts yet.</div> : null}
+          {attempts.length === 0 ? <div className="text-[#6B7280]">No forfeiture attempts yet.</div> : null}
         </div>
       </div>
 

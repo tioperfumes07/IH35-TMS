@@ -39,7 +39,7 @@ export function StatusSuggestionPrompt() {
         status={0}
         message={query.error instanceof Error ? query.error.message : undefined}
         onRetry={() => void query.refetch()}
-        className="border-b border-slate-200 bg-slate-100"
+        className="border-b border-[#E5E7EB] bg-[#F7F8FA]"
       />
     );
   }
@@ -47,24 +47,24 @@ export function StatusSuggestionPrompt() {
 
   return (
     <div className="fixed inset-0 z-61 flex items-end justify-center bg-black/35 p-3">
-      <div className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-4 shadow-xl">
-        <p className="text-xs font-semibold text-slate-900">Status suggestion</p>
-        <p className="mt-1 text-xs text-slate-700">
+      <div className="w-full max-w-md rounded-lg border border-[#E5E7EB] bg-white p-4 shadow-xl">
+        <p className="text-xs font-semibold text-[#0F1219]">Status suggestion</p>
+        <p className="mt-1 text-xs text-[#4B5563]">
           Looks like you’re underway on load{" "}
           <EntityLink
             kind="driver_app_load"
             id={active.load_id}
             label={entityLabel(active.load_number, active.load_id, "Load")}
-            className="font-semibold text-slate-700 hover:underline"
+            className="font-semibold text-[#4B5563] hover:underline"
           />
           . Mark as <span className="font-semibold">{active.suggested_to.replace("_", " ")}</span>?
         </p>
-        <p className="mt-1 text-xs text-slate-500">{active.reason}</p>
+        <p className="mt-1 text-xs text-[#6B7280]">{active.reason}</p>
         {mutationError ? <p role="alert" className="mt-2 text-xs text-red-700">{mutationError}</p> : null}
         <div className="mt-3 flex items-center justify-end gap-2">
           <button
             type="button"
-            className="rounded-sm border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            className="rounded-sm border border-[#E5E7EB] px-3 py-1.5 text-xs font-semibold text-[#4B5563] hover:bg-[#F7F8FA]"
             onClick={() => {
               setSnoozedUntilById((current) => ({ ...current, [active.id]: Date.now() + SNOOZE_MS }));
             }}
@@ -73,7 +73,7 @@ export function StatusSuggestionPrompt() {
           </button>
           <button
             type="button"
-            className="rounded-sm border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            className="rounded-sm border border-[#E5E7EB] px-3 py-1.5 text-xs font-semibold text-[#4B5563] hover:bg-[#F7F8FA]"
             onClick={() => void respondMutation.mutateAsync({ id: active.id, response: "dismissed" })}
           >
             No
