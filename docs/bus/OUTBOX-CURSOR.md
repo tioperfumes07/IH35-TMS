@@ -1,5 +1,17 @@
 ## 2026-10-08 · BANK-F91052 — FixedAssets / LoanWizard / Amortization slate → house
 
+## 2026-10-08 · HEALTHZ — integrity dead-lease 90s catch-up → live ok=true
+
+FINDING: healthz stale — dead integrity catch-up lease blocked tick (#follow 25986)
+LANE: Cursor backend health
+Squash merge: #25987 `66ace32016`
+Deploy: `dep-db421v6q1p3s73eo3h6g` LIVE; shallow+full `/api/v1/healthz` ok=true git_sha=`66ace32016798ea6efcfe7fa41f0f30a2fd1b876`
+Neon: safety.integrity_alert_engine_cron last_ok fresh; retry_held + plaid last_ok today
+GUARD: in-process-startup-catchup.test.ts leaseSeconds===90
+LIVE PROOF: GET https://ih35-tms.onrender.com/api/v1/healthz ok=true fails=none on tip sha
+REMAINING: none — resume FE slate drain
+Files Modified: in-process-startup-catchup.ts + .test.ts (+ OUTBOX)
+
 FINDING: BANK-F91052 — FixedAssets / LoanWizard / Amortization Tailwind slate-* → house tokens
 LANE: NON-FINANCIAL
 Prior tip merge: #25983 squash `03c96522c2` (BANK-F91053 AccountDrawer/TransactionRegister/FactoringDetail)
