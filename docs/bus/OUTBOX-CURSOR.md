@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK leftover slate — ScheduledReportsBackendPendingBanner / ReportBlockVPendingBanner / ReportBlockTPendingBanner
+
+FINDING: BANK-F91274 — ScheduledReportsBackendPendingBanner / ReportBlockVPendingBanner / ReportBlockTPendingBanner Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: squash `ef0ec36ddf`
+GUARD: scripts/verify-91274-rpt-pending-slate-leftover-chrome.mjs + verify-steps/3472 piggyback
+LIVE PROOF: verify-91274-rpt-pending-slate-leftover-chrome.mjs exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3472 piggyback + OUTBOX
+
 ## 2026-10-09T01:10Z · BANK leftover slate — DtcAuto / CompanyViolationTypes / DriversReferenceCatalog
 
 FINDING: BANK-F91273 — DtcAutoWorkOrdersCard / CompanyViolationTypesListPage / DriversReferenceCatalogPage Tailwind slate-* → house tokens
