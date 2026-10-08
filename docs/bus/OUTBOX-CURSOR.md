@@ -1,3 +1,13 @@
+## 2026-10-08 · BANK-F91063 — CoA / FinanceProjections / BankVisibility slate → house
+
+FINDING: BANK-F91063 — ChartOfAccountsListPage / FinanceProjectionsPage / BankAccountVisibilityPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25996 squash `472aa89f1b` (BANK-F91062 FactoringList/DailyRecon/APAging)
+GUARD: scripts/verify-91063-coa-proj-bankvis-slate-leftover-chrome.mjs + verify-steps/3658 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: ChartOfAccountsListPage + FinanceProjectionsPage + BankAccountVisibilityPage + refuse guard + 3658 piggyback + OUTBOX
+
 ## 2026-10-08 · BANK-F91062 — FactoringList / DailyRecon / APAging slate → house
 
 FINDING: BANK-F91062 — FactoringListPage / DailyReconPage / APAgingPage Tailwind slate-* → house tokens

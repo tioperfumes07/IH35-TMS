@@ -106,19 +106,19 @@ export function BankAccountVisibilityPage() {
       {
         key: "institution_name",
         label: "Institution",
-        render: (account) => <span className="text-slate-600">{account.institution_name ?? "—"}</span>,
+        render: (account) => <span className="text-[#4B5563]">{account.institution_name ?? "—"}</span>,
       },
       {
         key: "account_mask",
         label: "Mask",
-        render: (account) => <span className="text-slate-600">{account.account_mask ?? "—"}</span>,
+        render: (account) => <span className="text-[#4B5563]">{account.account_mask ?? "—"}</span>,
       },
       {
         key: "current_balance_cents",
         label: "Balance",
         sortable: true,
         render: (account) => (
-          <span className="tabular-nums text-slate-800">{formatCents(account.current_balance_cents)}</span>
+          <span className="tabular-nums text-[#1F2A44]">{formatCents(account.current_balance_cents)}</span>
         ),
       },
       {
@@ -126,11 +126,11 @@ export function BankAccountVisibilityPage() {
         label: "Status",
         render: (account) =>
           account.hidden_at ? (
-            <span className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+            <span className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-0.5 text-xs font-medium text-[#1F2A44]">
               Hidden
             </span>
           ) : (
-            <span className="rounded-sm border border-slate-300 bg-white px-2 py-0.5 text-xs font-medium text-slate-600">
+            <span className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-0.5 text-xs font-medium text-[#4B5563]">
               Visible
             </span>
           ),
@@ -138,7 +138,7 @@ export function BankAccountVisibilityPage() {
       {
         key: "hidden_reason",
         label: "Reason",
-        render: (account) => <span className="text-slate-600">{account.hidden_reason ?? "—"}</span>,
+        render: (account) => <span className="text-[#4B5563]">{account.hidden_reason ?? "—"}</span>,
       },
       {
         key: "action",
@@ -174,7 +174,7 @@ export function BankAccountVisibilityPage() {
     return (
       <div className="space-y-3">
         <BackArrowHeader backTo="/banking" breadcrumb={["Banking", "Account Visibility"]} title="Bank Account Visibility" />
-        <div className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-4 text-xs text-slate-700">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-4 text-xs text-[#1F2A44]">
           Bank Account Visibility is not yet enabled for this company. (Feature flag{" "}
           <code>{BANK_ACCOUNT_HIDE_FLAG_KEY}</code> is off.)
         </div>
@@ -195,7 +195,7 @@ export function BankAccountVisibilityPage() {
         reversible and audited — the account is never deleted.
       </p>
       {!canManage ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
           Read-only: only an Owner or Administrator can hide or unhide a bank account.
         </div>
       ) : null}

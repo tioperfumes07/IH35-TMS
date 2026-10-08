@@ -30,8 +30,8 @@ export function FinanceProjectionsPage() {
 
   const header = (
     <div className="mb-4">
-      <h1 className="text-page-title font-semibold text-slate-800">Projections</h1>
-      <p className="text-xs text-slate-500">
+      <h1 className="text-page-title font-semibold text-[#1F2A44]">Projections</h1>
+      <p className="text-xs text-[#6B7280]">
         Period-by-period estimate vs. actual for the company's currently active scenario.
       </p>
     </div>
@@ -42,7 +42,7 @@ export function FinanceProjectionsPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         <PageHeader title="Projections" />
-        <p className="text-xs text-slate-500">Loading…</p>
+        <p className="text-xs text-[#6B7280]">Loading…</p>
       </div>
     );
   }
@@ -52,7 +52,7 @@ export function FinanceProjectionsPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs text-[#4B5563]">
           Financial projections are not yet enabled for this company. (Feature flag <code>{FINANCE_HUB_SCENARIOS_FLAG}</code>{" "}
           is off.)
         </div>
@@ -82,9 +82,9 @@ export function FinanceProjectionsPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs text-[#4B5563]">
           No active scenario yet.{" "}
-          <Link to="/finance/scenarios" className="font-medium text-slate-800 underline">
+          <Link to="/finance/scenarios" className="font-medium text-[#1F2A44] underline">
             Create and activate one in Scenarios
           </Link>{" "}
           to see projections here.
@@ -98,7 +98,7 @@ export function FinanceProjectionsPage() {
       <FinanceModuleTabs />
       {header}
       {summaryQuery.isLoading || detailQuery.isLoading ? (
-        <p className="text-xs text-slate-500">Loading…</p>
+        <p className="text-xs text-[#6B7280]">Loading…</p>
       ) : detailQuery.isError ? (
         // GO-0038: same class as GO-0028 above (summaryQuery), on the second query this page
         // fetches -- a failed detail fetch must never silently fall through to a blank content
@@ -111,15 +111,15 @@ export function FinanceProjectionsPage() {
         />
       ) : detailQuery.data ? (
         <div className="space-y-4">
-          <div className="rounded-sm border border-slate-200 bg-white p-4">
+          <div className="rounded-sm border border-[#E5E7EB] bg-white p-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xs font-semibold text-slate-800">{detailQuery.data.scenario.name}</h2>
-                <p className="text-xs text-slate-500">
+                <h2 className="text-xs font-semibold text-[#1F2A44]">{detailQuery.data.scenario.name}</h2>
+                <p className="text-xs text-[#6B7280]">
                   {detailQuery.data.scenario.period_basis} · {detailQuery.data.scenario.period_count} periods
                 </p>
               </div>
-              <Link to={`/finance/scenarios/${detailQuery.data.scenario.id}`} className="text-xs font-medium text-slate-700 underline">
+              <Link to={`/finance/scenarios/${detailQuery.data.scenario.id}`} className="text-xs font-medium text-[#1F2A44] underline">
                 Full detail →
               </Link>
             </div>
