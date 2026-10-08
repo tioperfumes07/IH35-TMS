@@ -8,9 +8,9 @@ export function MedicalCardSection({ medical, unavailable = false }: { medical: 
 
   return (
     <section className={`rounded-sm border p-4 ${colorClass}`}>
-      <h2 className="mb-2 text-xs font-semibold text-slate-900">Medical card (DOT)</h2>
+      <h2 className="mb-2 text-xs font-semibold text-[#0F1219]">Medical card (DOT)</h2>
       {unavailable ? <p className="mb-2 text-xs font-medium text-red-700">Medical card data could not be loaded.</p> : null}
-      <p className="text-xs text-slate-700">
+      <p className="text-xs text-[#1F2A44]">
         {/* LV-DRIVER-PROFILE-RAW-ISO-DATES-REOPEN — display chrome only; day counts stay raw. */}
         {/* DRIVER-COMPLIANCE-01 (owner/Claude Lead 2026-09-11): a bare "—" reads as N/A, not as
             "this driver has no medical certificate on file" -- say it plainly instead. */}
@@ -23,8 +23,8 @@ export function MedicalCardSection({ medical, unavailable = false }: { medical: 
           <span className="font-medium">Missing — no document</span>
         )}
       </p>
-      <p className="text-xs text-slate-600">Examiner {String(medical.examiner ?? "—")}</p>
-      <p className="text-xs text-slate-600">Restrictions {String(medical.restrictions ?? "—")}</p>
+      <p className="text-xs text-[#4B5563]">Examiner {String(medical.examiner ?? "—")}</p>
+      <p className="text-xs text-[#4B5563]">Restrictions {String(medical.restrictions ?? "—")}</p>
     </section>
   );
 }
