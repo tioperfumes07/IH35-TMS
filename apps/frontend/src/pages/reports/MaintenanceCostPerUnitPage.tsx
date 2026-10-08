@@ -155,7 +155,7 @@ export function MaintenanceCostPerUnitPage() {
               return (
                 <span
                   key={f}
-                  className="rounded-sm border border-slate-300 bg-slate-100 px-1 py-0.5 text-xs font-semibold text-slate-700"
+                  className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1 py-0.5 text-xs font-semibold text-[#1F2A44]"
                   title={label}
                 >
                   {label}
@@ -294,11 +294,11 @@ export function MaintenanceCostPerUnitPage() {
         onReset={staged.reset}
         applyDisabled={!staged.dirty}
       >
-        <label className="flex items-center gap-1 text-xs text-slate-600">
-          <span className="font-semibold text-slate-600">Unit</span>
+        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
+          <span className="font-semibold text-[#4B5563]">Unit</span>
           <input
             type="text"
-            className="h-7 w-24 rounded-sm border border-slate-300 px-2 text-xs"
+            className="h-7 w-24 rounded-sm border border-[#E5E7EB] px-2 text-xs"
             value={staged.draft.unitFilter}
             onChange={(e) => staged.setDraft((p) => ({ ...p, unitFilter: e.target.value }))}
             placeholder="All units"
