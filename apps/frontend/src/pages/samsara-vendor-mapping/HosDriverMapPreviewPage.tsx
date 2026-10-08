@@ -14,13 +14,13 @@ function ConfidencePill({ confidence }: { confidence: DriverMapRow["confidence"]
       ? "bg-emerald-100 text-emerald-800"
       : confidence === "low"
         ? "bg-yellow-100 text-yellow-800"
-        : "bg-slate-100 text-slate-500";
+        : "bg-[#F7F8FA] text-[#6B7280]";
   return <span className={`rounded px-2 py-0.5 text-xs font-semibold uppercase ${cls}`}>{confidence}</span>;
 }
 
 function BasisPill({ basis }: { basis: DriverMapRow["match_basis"] }) {
   if (!basis) return <span className="text-xs text-gray-400">—</span>;
-  return <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600">{basis}</span>;
+  return <span className="rounded bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-medium text-[#4B5563]">{basis}</span>;
 }
 
 const DRIVER_MAP_COLUMNS: Array<ParityColumn<DriverMapRow>> = [
@@ -165,7 +165,7 @@ export function HosDriverMapPreviewPage() {
               <span><span className="font-semibold text-emerald-700">{d.id_reconcile.stored_matches_proposed}</span> stored = proposed</span>
               <span><span className="font-semibold text-red-600">{d.id_reconcile.stored_differs_from_proposed}</span> stored ≠ proposed</span>
               <span><span className="font-semibold text-amber-700">{d.id_reconcile.stored_but_no_roster_match}</span> stored but no roster match</span>
-              <span><span className="font-semibold text-slate-500">{d.id_reconcile.both_null}</span> both null</span>
+              <span><span className="font-semibold text-[#6B7280]">{d.id_reconcile.both_null}</span> both null</span>
             </div>
             <p className="mt-2 text-xs text-amber-700">
               This screen is a read-only reconciliation. Review ambiguous rows before using the separately guarded mapping workflow.
