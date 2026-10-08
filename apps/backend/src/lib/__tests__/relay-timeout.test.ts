@@ -11,9 +11,9 @@ describe("relay timeout hierarchy", () => {
     else process.env.RELAY_API_TIMEOUT_MS = saved;
   });
 
-  it("defaults the fetch timeout to 120s when env is unset", () => {
+  it("defaults the fetch timeout to 180s when env is unset", () => {
     delete process.env.RELAY_API_TIMEOUT_MS;
-    expect(relayApiTimeoutMs()).toBe(120_000);
+    expect(relayApiTimeoutMs()).toBe(180_000);
   });
 
   it("breaker timeout is strictly greater than the fetch timeout by the slack", () => {

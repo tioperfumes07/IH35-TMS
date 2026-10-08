@@ -545,6 +545,148 @@ export function parseRelayBackfillOnce(raw: string | undefined): { runId: string
   return { runId, companyCode, months };
 }
 
+/**
+ * ROUND 441.21-B R1 — ONE calendar day only. RELAY_FUEL_ONEDAY_PROBE = "<run_id>|<company>|<YYYY-MM-DD>".
+ * Raises nothing else: pulls that single day, audits raw_rows / api_rows, ingests if Relay answers.
+ * USMCA days before 2026-08-03 are refused (RELAY DATE LAW).
+ */
+export function parseRelayOneDayProbe(raw: string | undefined): { runId: string; companyCode: string; day: string } | null {
+  const v = (raw ?? "").trim();
+  if (!v) return null;
+  const [runId, companyCode, day] = v.split("|").map((x) => x.trim());
+  if (!runId || !/^[a-z0-9-]{6,64}$/.test(runId)) return null;
+  if (!companyCode || !/^[A-Z0-9_]{2,20}$/.test(companyCode)) return null;
+  if (!day || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return null;
+  return { runId, companyCode, day };
+}
+
+export async function runRelayFuelOneDayProbeFromEnv(
+  app: FastifyInstance
+): Promise<"none" | "invalid" | "already_ran" | "started" | "company_not_found" | "pre_floor_day"> {
+  const raw = process.env.RELAY_FUEL_ONEDAY_PROBE;
+  if (!raw?.trim()) return "none";
+  const spec = parseRelayOneDayProbe(raw);
+  if (!spec) {
+    app.log.warn("[RELAY_FUEL_ONEDAY_PROBE] malformed — expected run_id|COMPANY|YYYY-MM-DD; ignored");
+    return "invalid";
+  }
+  const claim = await withLuciaBypass(async (client) => {
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext('relay_fuel_oneday_probe:' || $1))`, [spec.runId]);
+    const seen = await client.query(
+      `SELECT 1 FROM audit.audit_events
+        WHERE source = $1 AND event_class = 'integrations.relay_fuel_oneday_probe_started' AND payload->>'run_id' = $2
+        LIMIT 1`,
+      [RELAY_FUEL_INGEST_AUDIT_SOURCE, spec.runId]
+    );
+    if (seen.rows.length > 0) return { state: "already_ran" as const };
+    const co = await client.query<{ id: string }>(
+      `SELECT id::text FROM org.companies WHERE code = $1 AND is_active AND deactivated_at IS NULL LIMIT 1`,
+      [spec.companyCode]
+    );
+    const companyId = co.rows[0]?.id;
+    if (!companyId) return { state: "company_not_found" as const };
+    if (isUsmcaOperatingCompany(companyId) && isBeforeRelayUsmcaFloor(spec.day)) {
+      return { state: "pre_floor_day" as const, companyId };
+    }
+    await client.query(`SELECT audit.append_event($1, 'info', $2::jsonb, NULL, $3)`, [
+      "integrations.relay_fuel_oneday_probe_started",
+      JSON.stringify({
+        run_id: spec.runId,
+        operating_company_id: companyId,
+        day: spec.day,
+        window_timeout_ms: Number.parseInt(process.env.RELAY_WINDOW_CALL_TIMEOUT_MS ?? "180000", 10) || 180_000,
+        trigger: "RELAY_FUEL_ONEDAY_PROBE",
+      }),
+      RELAY_FUEL_INGEST_AUDIT_SOURCE,
+    ]);
+    return { state: "started" as const, companyId };
+  });
+  if (claim.state === "pre_floor_day") {
+    app.log.warn({ run_id: spec.runId, day: spec.day, floor: RELAY_USMCA_DATA_FLOOR }, "[RELAY_FUEL_ONEDAY_PROBE] pre-floor day refused");
+    return "pre_floor_day";
+  }
+  if (claim.state !== "started") {
+    app.log.info({ run_id: spec.runId, state: claim.state }, "[RELAY_FUEL_ONEDAY_PROBE] nothing to do");
+    return claim.state;
+  }
+  app.log.info({ run_id: spec.runId, company: spec.companyCode, day: spec.day }, "[RELAY_FUEL_ONEDAY_PROBE] one-day pull started");
+  void (async () => {
+    let rawRows = 0;
+    let pulled = 0;
+    let upserted = 0;
+    let skipped = 0;
+    try {
+      const pull = await fetchRelayFuelTransactionsInWindows(spec.companyCode, {
+        startDate: spec.day,
+        endDate: spec.day,
+        windowDays: 1,
+        onWindow: async (w, apiRows, meta) => {
+          rawRows += apiRows.length;
+          const windowRows = filterRelayFuelTransactionsByDateRange(apiRows, w.startDate, w.endDate);
+          const stats = await withLuciaBypass(async (client) =>
+            ingestForCompany(client, app, claim.companyId, w.startDate, w.endDate, spec.companyCode, {
+              preloaded: windowRows,
+              rejected: meta.rejected,
+            })
+          );
+          pulled += stats.pulled;
+          upserted += stats.upserted;
+          skipped += stats.skipped;
+          app.log.info(
+            {
+              run_id: spec.runId,
+              day: spec.day,
+              raw_rows: apiRows.length,
+              pulled: stats.pulled,
+              upserted: stats.upserted,
+              skipped: stats.skipped,
+            },
+            "[RELAY_FUEL_ONEDAY_PROBE] window complete"
+          );
+        },
+      });
+      await withLuciaBypass((client) =>
+        client.query(`SELECT audit.append_event($1, 'info', $2::jsonb, NULL, $3)`, [
+          "integrations.relay_fuel_oneday_probe_completed",
+          JSON.stringify({
+            run_id: spec.runId,
+            operating_company_id: claim.companyId,
+            day: spec.day,
+            raw_rows: rawRows,
+            api_rows: pull.rows,
+            pulled,
+            upserted,
+            skipped,
+            windows: pull.windows,
+            relay_calls: pull.calls,
+          }),
+          RELAY_FUEL_INGEST_AUDIT_SOURCE,
+        ])
+      );
+      app.log.info(
+        { run_id: spec.runId, day: spec.day, raw_rows: rawRows, pulled, upserted, skipped },
+        "[RELAY_FUEL_ONEDAY_PROBE] completed"
+      );
+    } catch (err) {
+      app.log.error({ err, run_id: spec.runId, day: spec.day, raw_rows: rawRows }, "[RELAY_FUEL_ONEDAY_PROBE] failed");
+      await withLuciaBypass((client) =>
+        client.query(`SELECT audit.append_event($1, 'warning', $2::jsonb, NULL, $3)`, [
+          "integrations.relay_fuel_oneday_probe_failed",
+          JSON.stringify({
+            run_id: spec.runId,
+            operating_company_id: claim.companyId,
+            day: spec.day,
+            raw_rows: rawRows,
+            error: String((err as Error)?.message ?? err),
+          }),
+          RELAY_FUEL_INGEST_AUDIT_SOURCE,
+        ])
+      ).catch((auditErr) => app.log.error({ err: auditErr, run_id: spec.runId }, "[RELAY_FUEL_ONEDAY_PROBE] terminal audit failed"));
+    }
+  })();
+  return "started";
+}
+
 export async function runRelayFuelBackfillOnceFromEnv(app: FastifyInstance): Promise<"none" | "invalid" | "already_ran" | "started" | "company_not_found"> {
   const raw = process.env.RELAY_FUEL_BACKFILL_ONCE;
   if (!raw?.trim()) return "none";
@@ -596,6 +738,9 @@ export async function runRelayFuelBackfillOnceFromEnv(app: FastifyInstance): Pro
 export function initializeRelayFuelIngestCron(app: FastifyInstance) {
   if (initialized) return;
   initialized = true;
+  void runRelayFuelOneDayProbeFromEnv(app).catch((err) =>
+    app.log.error({ err }, "[RELAY_FUEL_ONEDAY_PROBE] could not start the one-day probe")
+  );
   void runRelayFuelBackfillOnceFromEnv(app).catch((err) =>
     app.log.error({ err }, "[RELAY_FUEL_BACKFILL_ONCE] could not start the one-shot backfill")
   );

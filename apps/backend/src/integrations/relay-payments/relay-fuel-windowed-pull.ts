@@ -36,11 +36,12 @@ export function relayMinCallIntervalMs(): number {
 
 /** Per-call client budget for a windowed call. Relay's server-side limit (if that is the reading) is 10s;
  *  15s lets its own answer arrive, then we abort and halve. Clamped downstream to relayApiTimeoutMs(). */
-/** Per-call client budget. ROUND 441.21-B R1 — raised default 15s → 60s: one-day windows on the
- *  Transportation key timed out at 15s (same class as the frozen TRANSP pull since 10-03). Env still wins. */
+/** Per-call client budget. ROUND 441.21-B R1 — raised default 15s → 180s: one-day windows on the
+ *  Transportation key timed out at 15s (same class as the frozen TRANSP pull since 10-03). Env still wins.
+ *  Must stay ≤ relayApiTimeoutMs() or the client clamps it. */
 export function relayWindowCallTimeoutMs(): number {
-  const raw = Number.parseInt(process.env.RELAY_WINDOW_CALL_TIMEOUT_MS ?? "60000", 10);
-  return Number.isFinite(raw) && raw > 0 ? raw : 60_000;
+  const raw = Number.parseInt(process.env.RELAY_WINDOW_CALL_TIMEOUT_MS ?? "180000", 10);
+  return Number.isFinite(raw) && raw > 0 ? raw : 180_000;
 }
 
 type Clock = { now: () => number; sleep: (ms: number) => Promise<void> };
