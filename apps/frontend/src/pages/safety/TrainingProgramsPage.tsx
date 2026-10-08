@@ -186,7 +186,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
       render: (p) => (
         <button
           type="button"
-          className="text-slate-700 underline"
+          className="text-[#1F2A44] underline"
           data-testid={`training-program-assign-${p.id}`}
           onClick={() => {
             setSelectedProgram(p);
@@ -261,7 +261,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
             });
           }}
         >
-          <label className="block text-xs text-slate-600">
+          <label className="block text-xs text-[#4B5563]">
             Program name
             <input
               value={name}
@@ -271,7 +271,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
               required
             />
           </label>
-          <div className="block text-xs text-slate-600">
+          <div className="block text-xs text-[#4B5563]">
             <label htmlFor="training-program-category">Category</label>
             <Combobox
               id="training-program-category"
@@ -289,7 +289,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
               placeholder="Select category"
             />
           </div>
-          <div className="block text-xs text-slate-600">
+          <div className="block text-xs text-[#4B5563]">
             <label htmlFor="training-program-frequency">Recertify interval</label>
             <Combobox
               id="training-program-frequency"
@@ -306,7 +306,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
             />
           </div>
           {frequency === "n_month" ? (
-            <label className="block text-xs text-slate-600">
+            <label className="block text-xs text-[#4B5563]">
               Months
               <input
                 type="number"
@@ -319,7 +319,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
               />
             </label>
           ) : null}
-          <label className="block text-xs text-slate-600">
+          <label className="block text-xs text-[#4B5563]">
             Passing grade (optional)
             <input
               value={passingGrade}
@@ -360,10 +360,10 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
             });
           }}
         >
-          <div className="text-xs text-slate-600">
-            Program: <span className="font-semibold text-slate-800">{selectedProgram?.name ?? "—"}</span>
+          <div className="text-xs text-[#4B5563]">
+            Program: <span className="font-semibold text-[#0F1219]">{selectedProgram?.name ?? "—"}</span>
           </div>
-          <div className="text-xs font-semibold text-slate-600">Drivers</div>
+          <div className="text-xs font-semibold text-[#4B5563]">Drivers</div>
           {/* Picker law: EntityPicker kind=driver — server search; nested create. */}
           <div data-testid="training-program-driver-search">
             <EntityPicker
@@ -382,7 +382,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
               {assignDriverIds.map((driverId) => (
                 <li
                   key={driverId}
-                  className="flex items-center justify-between gap-2 text-xs text-slate-700"
+                  className="flex items-center justify-between gap-2 text-xs text-[#1F2A44]"
                   data-testid={`training-program-assign-driver-${driverId}`}
                 >
                   <EntityLink
@@ -392,7 +392,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
                   />
                   <button
                     type="button"
-                    className="text-slate-600 underline"
+                    className="text-[#4B5563] underline"
                     onClick={() =>
                       setAssignDriverIds((current) => current.filter((id) => id !== driverId))
                     }
