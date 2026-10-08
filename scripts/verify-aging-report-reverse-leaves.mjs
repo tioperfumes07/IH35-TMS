@@ -21,11 +21,11 @@ const sources = {
 // param is now appliedFilters.asOfDate, not the older bespoke appliedAsOf variable. Accept either.
 const checks = [
   ["ar", /getArAgingReport\(companyId, (?:appliedAsOf|appliedFilters\.asOfDate)\)/, "AR read is company-scoped"],
-  ["ar", /kind="customer" id=\{r\.customer_id\}/, "AR rows drill to customer"],
+  ["ar", /kind="customer"[\s\S]{0,160}?id=\{r\.customer_id\}/, "AR rows drill to customer"],
   ["ar", /arAgingInvoiceListHref\(r\.customer_id\)/, "AR rows drill to filtered invoices"],
   ["ar", /Couldn't load A\/R aging[\s\S]*query\.refetch\(\)/, "AR failures are retryable"],
   ["ap", /getApAgingReport\(companyId, (?:appliedAsOf|appliedFilters\.asOfDate)\)/, "AP read is company-scoped"],
-  ["ap", /kind="vendor" id=\{r\.vendor_id\}/, "AP rows drill to vendor"],
+  ["ap", /kind="vendor"[\s\S]{0,160}?id=\{r\.vendor_id\}/, "AP rows drill to vendor"],
   ["ap", /apAgingBillsListHref\(r\.vendor_id\)/, "AP rows drill to filtered bills"],
   ["ap", /Couldn't load A\/P aging[\s\S]*query\.refetch\(\)/, "AP failures are retryable"],
 ];
