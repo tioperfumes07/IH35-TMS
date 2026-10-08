@@ -10,9 +10,9 @@ type Props = {
 export function ReportBlockVPendingBanner({ error, onRetry }: Props) {
   const status = error instanceof ApiError ? error.status : null;
   return (
-    <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs" data-testid="report-block-v-pending">
-      <p className="font-semibold text-slate-900">Backend endpoint pending — Block V (P6-T11199) in flight</p>
-      <p className="mt-1 text-slate-800">
+    <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs" data-testid="report-block-v-pending">
+      <p className="font-semibold text-[#0F1219]">Backend endpoint pending — Block V (P6-T11199) in flight</p>
+      <p className="mt-1 text-[#0F1219]">
         This API is not available yet or returned an error{status ? ` (HTTP ${status})` : ""}. After Block V deploys, retry to load
         live data.
       </p>

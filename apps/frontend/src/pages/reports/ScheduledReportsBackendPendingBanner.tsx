@@ -10,9 +10,9 @@ type Props = {
 export function ScheduledReportsBackendPendingBanner({ error, onRetry }: Props) {
   const status = error instanceof ApiError ? error.status : null;
   return (
-    <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs" data-testid="scheduled-reports-backend-pending">
-      <p className="font-semibold text-slate-900">Backend not ready — file P6-T11201 backend ticket</p>
-      <p className="mt-1 text-slate-800">
+    <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs" data-testid="scheduled-reports-backend-pending">
+      <p className="font-semibold text-[#0F1219]">Backend not ready — file P6-T11201 backend ticket</p>
+      <p className="mt-1 text-[#0F1219]">
         Scheduled report CRUD requires the future `/api/v1/scheduled-reports` service.{status ? ` Last error: HTTP ${status}.` : ""}
       </p>
       <Button className="mt-3" size="sm" onClick={onRetry}>
