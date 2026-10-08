@@ -176,7 +176,7 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
     ? (card: ArrivingSoonCardType) => (
         <button
           type="button"
-          className="rounded-sm border border-slate-300 px-2 py-0.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+          className="rounded-sm border border-[#E5E7EB] px-2 py-0.5 text-xs font-semibold text-[#4B5563] hover:bg-[#F7F8FA]"
           onClick={() => setSelectedCard(card)}
         >
           Convert to WO
@@ -226,7 +226,7 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
 
       {query.isError ? (
         <div
-          className="rounded-sm border border-slate-300 bg-slate-50 p-3 text-xs text-slate-700"
+          className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#4B5563]"
           data-testid="maint-arriving-soon-error"
           role="alert"
         >
@@ -236,12 +236,12 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
       ) : null}
 
       {recentConversions.length > 0 ? (
-        <section className="rounded-sm border border-slate-200 bg-white p-3" data-testid="maint-arriving-soon-recent-conversions">
-          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Recently converted to work orders</div>
-          <ul className="divide-y divide-slate-100">
+        <section className="rounded-sm border border-[#E5E7EB] bg-white p-3" data-testid="maint-arriving-soon-recent-conversions">
+          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Recently converted to work orders</div>
+          <ul className="divide-y divide-[#E5E7EB]">
             {recentConversions.map((conversion) => (
               <li key={conversion.issue_id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-xs">
-                <span className="min-w-0 flex-1 truncate text-slate-700">
+                <span className="min-w-0 flex-1 truncate text-[#4B5563]">
                   {conversion.issue_type || conversion.issue_category || conversion.issue_description || "In-transit issue"}
                 </span>
                 {conversion.unit_id ? (
@@ -288,7 +288,7 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
       </div>
 
       {!query.isError && Number(counts.total ?? 0) > 0 ? (
-        <nav className="flex items-center justify-between text-xs text-slate-600" aria-label="Arriving Soon pages" data-testid="maint-arriving-soon-pager">
+        <nav className="flex items-center justify-between text-xs text-[#4B5563]" aria-label="Arriving Soon pages" data-testid="maint-arriving-soon-pager">
           <span>{(page - 1) * pageSize + 1}–{Math.min(page * pageSize, Number(counts.total))} of {Number(counts.total)}</span>
           <div className="flex gap-2">
             <button type="button" className="rounded border px-2 py-1 disabled:opacity-50" disabled={page === 1 || query.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous</button>
