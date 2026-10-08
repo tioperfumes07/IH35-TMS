@@ -98,7 +98,7 @@ export function PmCostPerMilePanel({ operatingCompanyId, unitId }: { operatingCo
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="pm-cost-per-mile-panel">
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-900">PM cost per mile — real driven miles</h3>
+        <h3 className="text-xs font-semibold text-[#0F1219]">PM cost per mile — real driven miles</h3>
         <div className="flex items-end gap-2 text-xs text-gray-600">
           <label className="flex flex-col gap-1">From<DatePicker value={from} onChange={setFrom} /></label>
           <label className="flex flex-col gap-1">To<DatePicker value={to} onChange={setTo} /></label>
@@ -109,7 +109,7 @@ export function PmCostPerMilePanel({ operatingCompanyId, unitId }: { operatingCo
           {fleet.maintenance_cpm.map((c) => (
             <div key={c.basis} className="border-b border-gray-200 p-2">
               <div className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Fleet CPM · {BASIS_SHORT[c.basis]}</div>
-              <div className="text-xs font-semibold text-slate-900">{cpmText(c)}</div>
+              <div className="text-xs font-semibold text-[#0F1219]">{cpmText(c)}</div>
               <div className="text-section-header text-gray-500">
                 {c.cents_per_mile != null ? `${formatNumberTable(c.miles, 1)} mi · ${c.units_included} units (${c.units_excluded} without this basis)` : c.reason}
               </div>
@@ -117,7 +117,7 @@ export function PmCostPerMilePanel({ operatingCompanyId, unitId }: { operatingCo
           ))}
           <div className="border-b border-gray-200 p-2">
             <div className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Driven − paid (unbilled, unpaid)</div>
-            <div className="text-xs font-semibold text-slate-900">{fleet.real_minus_short_miles != null ? `${formatNumberTable(fleet.real_minus_short_miles, 1)} mi` : "—"}</div>
+            <div className="text-xs font-semibold text-[#0F1219]">{fleet.real_minus_short_miles != null ? `${formatNumberTable(fleet.real_minus_short_miles, 1)} mi` : "—"}</div>
             <div className="text-section-header text-gray-500">{fleet.real_minus_short_miles != null ? "units with both bases" : "no unit has both real and short miles"}</div>
           </div>
         </div>

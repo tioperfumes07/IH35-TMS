@@ -80,7 +80,7 @@ export function ThreeMileCpmPanel({ operatingCompanyId }: { operatingCompanyId: 
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="three-mile-cpm-panel">
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-900">Three-mile cost per mile — billed vs paid vs really driven</h3>
+        <h3 className="text-xs font-semibold text-[#0F1219]">Three-mile cost per mile — billed vs paid vs really driven</h3>
         <div className="flex flex-wrap items-end gap-2 text-xs text-gray-600">
           <SegmentedControl value={groupBy} options={GROUPS} onChange={setGroupBy} testId="three-mile-group-by" />
           <label className="flex flex-col gap-1">From<DatePicker value={from} onChange={setFrom} /></label>
@@ -92,7 +92,7 @@ export function ThreeMileCpmPanel({ operatingCompanyId }: { operatingCompanyId: 
           {fleet.cpm.map((c) => (
             <div key={c.basis} className="border-b border-gray-200 p-2">
               <div className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Fleet CPM · {BASIS_SHORT[c.basis]}</div>
-              <div className="text-xs font-semibold text-slate-900">{cpmText(c)}</div>
+              <div className="text-xs font-semibold text-[#0F1219]">{cpmText(c)}</div>
               <div className="text-section-header text-gray-500">
                 {c.cents_per_mile != null ? `${formatNumberTable(c.miles ?? 0, 1)} mi · ${c.loads_included} loads (${c.loads_excluded} without this basis)` : c.reason}
               </div>
@@ -101,7 +101,7 @@ export function ThreeMileCpmPanel({ operatingCompanyId }: { operatingCompanyId: 
           {fleet.mpg.map((m) => (
             <div key={m.basis} className="border-b border-gray-200 p-2">
               <div className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Fleet MPG · {BASIS_SHORT[m.basis]}</div>
-              <div className="text-xs font-semibold text-slate-900">{mpgText(m)}</div>
+              <div className="text-xs font-semibold text-[#0F1219]">{mpgText(m)}</div>
               <div className="text-section-header text-gray-500">{m.mpg != null ? `${formatNumberTable(m.miles ?? 0, 1)} mi / ${formatNumberTable(m.gallons ?? 0, 1)} gal diesel` : m.reason}</div>
             </div>
           ))}

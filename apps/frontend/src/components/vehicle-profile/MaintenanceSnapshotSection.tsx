@@ -43,7 +43,7 @@ export function MaintenanceSnapshotSection({
                 id={String(wo.wo_id)}
                 name={wo.display_id}
                 noun="Work order"
-                className="text-slate-700 hover:underline"
+                className="text-[#1F2A44] hover:underline"
                 data-testid="vehicle-maint-snapshot-wo-link"
               />
               <span className="text-gray-500"> · {String(wo.status ?? "open")}</span>
@@ -67,7 +67,7 @@ export function MaintenanceSnapshotSection({
           ) : null}
         </p>
       ) : null}
-      <Link to="/maintenance" className="text-xs text-slate-700 underline">
+      <Link to="/maintenance" className="text-xs text-[#1F2A44] underline">
         Open maintenance console
       </Link>
       <div className="mt-3 grid gap-2 md:grid-cols-4">
@@ -95,7 +95,7 @@ export function MaintenanceSnapshotSection({
               id={String(lastService.wo_id)}
               name={lastService.display_id}
               noun="Work order"
-              className="text-slate-700 hover:underline"
+              className="text-[#1F2A44] hover:underline"
               data-testid="vp-maint-snapshot-last-service-wo-link"
             />
           ) : (
@@ -108,7 +108,7 @@ export function MaintenanceSnapshotSection({
               id={String(lastService.vendor_id)}
               name={lastService.vendor}
               noun="Vendor"
-              className="text-slate-700 hover:underline"
+              className="text-[#1F2A44] hover:underline"
               data-testid="vp-maint-snapshot-last-service-vendor-link"
             />
           ) : (

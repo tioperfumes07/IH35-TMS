@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK leftover slate — MaintSnapshot / ThreeMileCpm / PmCpm
+
+FINDING: BANK-F91282 — MaintenanceSnapshotSection / ThreeMileCpmPanel / PmCostPerMilePanel Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25963 squash `3c5daa73cb` (BANK-F91281 GeofenceRecon/Cancellations/MaintCPU)
+GUARD: scripts/verify-91282-veh-cpm-maint-slate-leftover-chrome.mjs + verify-steps/3450 piggyback
+LIVE PROOF: verify-91282-veh-cpm-maint-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3450 piggyback + OUTBOX
+
 ## 2026-10-09 · BANK leftover slate — GeofenceRecon / Cancellations / MaintCPU
 
 FINDING: BANK-F91281 — GeofenceReconciliationReport / CancellationsReportPage / MaintenanceCostPerUnitPage Tailwind slate-* → house tokens
