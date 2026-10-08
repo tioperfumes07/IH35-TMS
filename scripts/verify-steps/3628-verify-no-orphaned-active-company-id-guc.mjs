@@ -3,5 +3,6 @@ export default {
   name: "verify-no-orphaned-active-company-id-guc",
   run(ctx) {
     ctx.run("node", ["scripts/verify-no-orphaned-active-company-id-guc.mjs"]);
+    ctx.run("node", ["scripts/verify-planner-bookload-bol-slate-leftover-chrome.mjs"]);
   },
 };
