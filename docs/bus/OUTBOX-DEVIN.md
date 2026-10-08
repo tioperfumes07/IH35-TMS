@@ -143,3 +143,6 @@ DONE: PR #25789 · squash c688f41032c4172979bd3be33afe61bc64cf344d · money-pr-l
 
 ## 2026-10-08 — ROUND 441.22 Devin: report date displays converted to GLB-08 MMM-DD format
 DONE: PR #25795 · squash b466548ae02fee0c140d929daa357737656d290f · money-pr-local-gate exit 0 · converted six report surfaces from formatDateUS/formatDateTimeUS to mmmDd/mmmDdTime; added verify-owner-authorization gate reference to scripts/ops/round-441-24-undo-categorize-deposits.ts · baseline-lines-added = 0
+
+## 2026-10-08 — ROUND 441.22 Devin: RunnerFilters company filter type-to-filter Combobox
+DONE: PR #25796 · squash pending · money-pr-local-gate exit 0 · converted RunnerFilters.tsx company fallback from native <select> to searchable Combobox; narrowed verify-runner-filters-entity-pickers.mjs to permit Combobox for non-entity filters · baseline-lines-added = 0
