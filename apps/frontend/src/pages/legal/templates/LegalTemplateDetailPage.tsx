@@ -266,42 +266,42 @@ export function LegalTemplateDetailPage() {
 
       <div className="grid gap-3 lg:grid-cols-2">
         <section
-          className="overflow-hidden rounded-sm border border-slate-300 bg-white"
+          className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white"
           data-testid="legal-template-metadata"
         >
-          <div className="border-b border-slate-200 bg-slate-50 px-3 py-2">
-            <div className="text-xs font-semibold uppercase text-slate-600">Template metadata</div>
+          <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
+            <div className="text-xs font-semibold uppercase text-[#6B7280]">Template metadata</div>
           </div>
-          <div className="divide-y divide-slate-200 px-3 py-3">
+          <div className="divide-y divide-[#E5E7EB] px-3 py-3">
             <div className="grid gap-2 pb-3 md:grid-cols-2">
-              <label className="text-xs font-semibold text-slate-700">
+              <label className="text-xs font-semibold text-[#4B5563]">
                 Display Name (EN)
                 <input
                   value={editable.display_name_en}
                   onChange={(event) => setEditable((prev) => ({ ...prev, display_name_en: event.target.value }))}
                   disabled={!isDraft}
-                  className="mt-1 h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
+                  className="mt-1 h-9 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs"
                 />
               </label>
-              <label className="text-xs font-semibold text-slate-700">
+              <label className="text-xs font-semibold text-[#4B5563]">
                 Display Name (ES)
                 <input
                   value={editable.display_name_es}
                   onChange={(event) => setEditable((prev) => ({ ...prev, display_name_es: event.target.value }))}
                   disabled={!isDraft}
-                  className="mt-1 h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
+                  className="mt-1 h-9 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs"
                 />
               </label>
-              <label className="text-xs font-semibold text-slate-700">
+              <label className="text-xs font-semibold text-[#4B5563]">
                 Category
                 <input
                   value={editable.category}
                   onChange={(event) => setEditable((prev) => ({ ...prev, category: event.target.value }))}
                   disabled={!isDraft}
-                  className="mt-1 h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
+                  className="mt-1 h-9 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs"
                 />
               </label>
-              <label className="flex items-center gap-2 text-xs text-slate-700">
+              <label className="flex items-center gap-2 text-xs text-[#4B5563]">
                 <input
                   type="checkbox"
                   checked={editable.requires_witness}
@@ -312,7 +312,7 @@ export function LegalTemplateDetailPage() {
               </label>
             </div>
 
-            <div className="space-y-1 bg-slate-50 px-2 py-2 text-xs text-slate-700">
+            <div className="space-y-1 bg-[#F7F8FA] px-2 py-2 text-xs text-[#4B5563]">
               <div><span className="font-semibold">Status:</span> {template.status}</div>
               <div><span className="font-semibold">Attorney approval:</span> {template.attorney_approved_by ?? "pending"}</div>
               <div><span className="font-semibold">Approved at:</span> {template.attorney_approved_at ? formatDateTimeUS(template.attorney_approved_at) : "pending"}</div>
@@ -320,16 +320,16 @@ export function LegalTemplateDetailPage() {
 
             {template.status === "pending_review" ? (
               <div className="space-y-2 py-3">
-                <div className="text-xs font-semibold text-slate-700">Attorney review link</div>
-                <p className="text-xs text-slate-700">
+                <div className="text-xs font-semibold text-[#4B5563]">Attorney review link</div>
+                <p className="text-xs text-[#4B5563]">
                   Share this URL with outside counsel. It is single-use and expires in 30 days. Regenerate invalidates prior links.
                 </p>
                 {attorneyReviewUrl ? (
-                  <div className="break-all bg-slate-50 px-2 py-1 font-mono text-xs text-slate-800">
+                  <div className="break-all bg-[#F7F8FA] px-2 py-1 font-mono text-xs text-[#1F2A44]">
                     {attorneyReviewUrl}
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-700">Submit for review creates a link. If you lost it, regenerate below.</p>
+                  <p className="text-xs text-[#4B5563]">Submit for review creates a link. If you lost it, regenerate below.</p>
                 )}
                 <div className="flex flex-wrap gap-2">
                   <Button
@@ -353,30 +353,30 @@ export function LegalTemplateDetailPage() {
             ) : null}
 
             <div className="space-y-2 pt-3">
-              <div className="text-xs font-semibold uppercase text-slate-600">Attorney approval input</div>
-              <label className="block text-xs font-semibold text-slate-700">
+              <div className="text-xs font-semibold uppercase text-[#6B7280]">Attorney approval input</div>
+              <label className="block text-xs font-semibold text-[#4B5563]">
                 Attorney Name
                 <input
                   value={attorneyName}
                   onChange={(event) => setAttorneyName(event.target.value)}
-                  className="mt-1 h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
+                  className="mt-1 h-9 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs"
                 />
               </label>
-              <label className="block text-xs font-semibold text-slate-700">
+              <label className="block text-xs font-semibold text-[#4B5563]">
                 Bar Number
                 <input
                   value={attorneyBarNumber}
                   onChange={(event) => setAttorneyBarNumber(event.target.value)}
-                  className="mt-1 h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
+                  className="mt-1 h-9 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs"
                 />
               </label>
-              <label className="block text-xs font-semibold text-slate-700">
+              <label className="block text-xs font-semibold text-[#4B5563]">
                 Notes
                 <textarea
                   value={attorneyNotes}
                   onChange={(event) => setAttorneyNotes(event.target.value)}
                   rows={3}
-                  className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1 text-xs"
+                  className="mt-1 w-full rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs"
                 />
               </label>
               <Button
@@ -390,11 +390,11 @@ export function LegalTemplateDetailPage() {
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-sm border border-slate-300 bg-white">
-          <div className="border-b border-slate-200 bg-slate-50 px-3 py-2">
-            <div className="text-xs font-semibold uppercase text-slate-600">Version history</div>
+        <section className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
+          <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
+            <div className="text-xs font-semibold uppercase text-[#6B7280]">Version history</div>
           </div>
-          <div className="divide-y divide-slate-200 px-3 py-3">
+          <div className="divide-y divide-[#E5E7EB] px-3 py-3">
             <ParityTable
               rows={versionRows}
               columns={VERSION_COLUMNS}
@@ -405,55 +405,55 @@ export function LegalTemplateDetailPage() {
               initialPageSize={15}
             />
 
-            <label className="block pt-3 text-xs font-semibold text-slate-700">
+            <label className="block pt-3 text-xs font-semibold text-[#4B5563]">
               Variable schema (JSON)
               <textarea
                 rows={8}
                 value={editable.variable_schema_json}
                 disabled={!isDraft}
                 onChange={(event) => setEditable((prev) => ({ ...prev, variable_schema_json: event.target.value }))}
-                className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1 font-mono text-xs"
+                className="mt-1 w-full rounded-sm border border-[#E5E7EB] px-2 py-1 font-mono text-xs"
               />
             </label>
           </div>
         </section>
       </div>
 
-      <section className="overflow-hidden rounded-sm border border-slate-300 bg-white">
-        <div className="border-b border-slate-200 bg-slate-50 px-3 py-2">
-          <div className="text-xs font-semibold uppercase text-slate-600">Template content</div>
+      <section className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
+        <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
+          <div className="text-xs font-semibold uppercase text-[#6B7280]">Template content</div>
         </div>
-        <div className="grid grid-cols-1 divide-y divide-slate-200 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+        <div className="grid grid-cols-1 divide-y divide-[#E5E7EB] lg:grid-cols-2 lg:divide-x lg:divide-y-0">
           <div className="px-3 py-3">
-            <label className="block text-xs font-semibold text-slate-700">
+            <label className="block text-xs font-semibold text-[#4B5563]">
               English HTML
               <textarea
                 rows={12}
                 value={editable.content_html_en}
                 disabled={!isDraft}
                 onChange={(event) => setEditable((prev) => ({ ...prev, content_html_en: event.target.value }))}
-                className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1 font-mono text-xs"
+                className="mt-1 w-full rounded-sm border border-[#E5E7EB] px-2 py-1 font-mono text-xs"
               />
             </label>
           </div>
           <div className="px-3 py-3">
-            <label className="block text-xs font-semibold text-slate-700">
+            <label className="block text-xs font-semibold text-[#4B5563]">
               Spanish HTML
               <textarea
                 rows={12}
                 value={editable.content_html_es}
                 disabled={!isDraft}
                 onChange={(event) => setEditable((prev) => ({ ...prev, content_html_es: event.target.value }))}
-                className="mt-1 w-full rounded-sm border border-slate-300 px-2 py-1 font-mono text-xs"
+                className="mt-1 w-full rounded-sm border border-[#E5E7EB] px-2 py-1 font-mono text-xs"
               />
             </label>
           </div>
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-sm border border-slate-300 bg-white">
-        <div className="border-b border-slate-200 bg-slate-50 px-3 py-2">
-          <div className="text-xs font-semibold uppercase text-slate-600">Audit log</div>
+      <section className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
+        <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
+          <div className="text-xs font-semibold uppercase text-[#6B7280]">Audit log</div>
         </div>
         <div className="px-3 py-3">
           <ParityTable
@@ -465,7 +465,7 @@ export function LegalTemplateDetailPage() {
             emptyText="No audit events recorded."
             initialPageSize={15}
             renderExpanded={(row) => (
-              <pre className="overflow-auto bg-slate-50 p-3 text-xs text-slate-700">
+              <pre className="overflow-auto bg-[#F7F8FA] p-3 text-xs text-[#4B5563]">
                 {JSON.stringify(row.event_payload, null, 2)}
               </pre>
             )}
