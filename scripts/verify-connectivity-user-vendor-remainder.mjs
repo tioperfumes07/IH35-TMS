@@ -42,7 +42,12 @@ export function verify(source) {
   need("vendorPage", "vendor_id: selectedVendor!.id", "vendor transactions must bind the selected vendor FK");
   need("vendorPage", '<EntityLink kind="bill" id={r.id}', "vendor transaction rows must drill to canonical bills");
   need("vendorPage", "selectedVendorPublicNotes", "vendor Notes tab must read the selected canonical vendor row");
-  need("vendorPage", 'navigate(`/vendors/${selectedVendor.id}`)', "vendor Edit must open the canonical profile route");
+  // CUR-2 (owner ruling): Edit opens the QBO-style right-side VendorEditDrawer for the selected
+  // vendor — the canonical profile route stays reachable by URL. Accept either Edit path.
+  if (!source.vendorPage.includes('navigate(`/vendors/${selectedVendor.id}`)')
+      && !(source.vendorPage.includes("setEditVendorId(selectedVendor.id)") && source.vendorPage.includes("VendorEditDrawer"))) {
+    failures.push("vendor Edit must open the canonical profile route or the CUR-2 VendorEditDrawer");
+  }
   need("vendorPage", 'navigate(`/accounting/bills?vendor_id=${selectedVendor.id}`)', "New transaction must preserve vendor context into the canonical bill creator");
   need("vendorPage", 'date_from: dateFrom || undefined', "vendor transaction filters must forward the start date");
   need("vendorPage", 'date_to: dateTo || undefined', "vendor transaction filters must forward the end date");
@@ -79,7 +84,7 @@ if (process.argv.includes("--selftest")) {
     ["identityApi", '`/api/v1/identity/users/${userId}/safety-events`'], ["safetyRoute", 'app.post("/api/v1/identity/users/:user_id/safety-events"'],
     ["safetyRoute", "const opco = await scopeToRelatedEntity(client, authUser.uuid"], ["safetyRoute", "INSERT INTO mdata.dispatcher_safety_events"], ["safetyRoute", '"mdata.dispatcher_safety_events.created"'],
     ["vendorPage", 'listBills(companyId, {'], ["vendorPage", "vendor_id: selectedVendor!.id"], ["vendorPage", '<EntityLink kind="bill" id={r.id}'],
-    ["vendorPage", "selectedVendorPublicNotes"], ["vendorPage", 'navigate(`/vendors/${selectedVendor.id}`)'], ["vendorPage", 'navigate(`/accounting/bills?vendor_id=${selectedVendor.id}`)'],
+    ["vendorPage", "selectedVendorPublicNotes"], ["vendorPage", "setEditVendorId(selectedVendor.id)"], ["vendorPage", 'navigate(`/accounting/bills?vendor_id=${selectedVendor.id}`)'],
     ["vendorPage", 'date_from: dateFrom || undefined'], ["vendorPage", 'date_to: dateTo || undefined'], ["vendorPage", 'status: statusFilter === "unpaid"'],
     ["vendorPage", "const txnFilters = useStagedListFilters({"], ["vendorPage", 'testIdPrefix="vendor-txn"'], ["vendorPage", "onApply={txnFilters.apply}"],
     ["vendorPage", "onCancel={txnFilters.cancel}"], ["vendorPage", "onReset={txnFilters.reset}"],

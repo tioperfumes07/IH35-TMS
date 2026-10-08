@@ -32,7 +32,10 @@ const BANKING_DIR_REL = "apps/frontend/src/pages/banking";
 // (categorizeBankTransaction) AND renders the QBO-parity From/To column.
 // Phase B remapped columnKey="fromTo" → ParityColumn key: "fromTo" (same safety property).
 function hostsLiveCategorizeGrid(src) {
-  if (/@archived/.test(src)) return false;
+  // The @archived marker is a header comment on the archived file itself — a live file that merely
+  // MENTIONS "@archived" mid-source (e.g. documenting a sibling's archive) is not archived.
+  const header = src.split("\n").slice(0, 10).join("\n");
+  if (/@archived/.test(header)) return false;
   const hasFromTo = src.includes('columnKey="fromTo"') || /key:\s*"fromTo"/.test(src);
   return src.includes("categorizeBankTransaction(") && hasFromTo;
 }
