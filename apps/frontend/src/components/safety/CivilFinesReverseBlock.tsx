@@ -27,14 +27,14 @@ export function CivilFinesReverseBlock({ companyId, related, entityId }: { compa
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={`${related}-civil-fines-reverse`}>
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-slate-900">
+        <h3 className="text-xs font-semibold text-[#0F1219]">
           Civil fines{total ? <span className="ml-2 text-xs font-normal text-gray-600">({total})</span> : null}
         </h3>
         <EntityLink
           kind={related === "load" ? "safety_fines_load" : "safety_fines_unit"}
           id={entityId}
           label="Open Fines"
-          className="text-xs font-semibold text-slate-700 underline"
+          className="text-xs font-semibold text-[#1F2A44] underline"
         />
       </div>
       {query.isLoading ? <p className="text-xs text-gray-500">Loading…</p> : null}
@@ -51,7 +51,7 @@ export function CivilFinesReverseBlock({ companyId, related, entityId }: { compa
           {rows.map((row) => {
             const id = String(row.id ?? "");
             return (
-              <li key={id} className="text-xs text-slate-700">
+              <li key={id} className="text-xs text-[#1F2A44]">
                 <EntityLink kind="safety_fine" id={id} label={entityLabel(String(row.violation_description ?? ""), id, "Fine")} />
                 <span className="ml-2 text-xs text-gray-500">
                   {row.issued_date ? formatDateUS(String(row.issued_date)) : "—"}
@@ -65,7 +65,7 @@ export function CivilFinesReverseBlock({ companyId, related, entityId }: { compa
       {!query.isError && total > pageSize ? (
         <div className="flex items-center justify-end gap-2 text-xs" data-testid={`${related}-civil-fines-server-pager`}>
           <Button size="sm" variant="secondary" disabled={page <= 1 || query.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous fines</Button>
-          <span className="text-slate-600">Page {page} of {pageCount} · {total} fines</span>
+          <span className="text-[#4B5563]">Page {page} of {pageCount} · {total} fines</span>
           <Button size="sm" variant="secondary" disabled={page >= pageCount || query.isFetching} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}>Next fines</Button>
         </div>
       ) : null}
