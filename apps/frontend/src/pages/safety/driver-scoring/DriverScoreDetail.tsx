@@ -22,7 +22,7 @@ function TrendChart({ periods }: { periods: DriverSafetyScoreRow[] }) {
     .filter((value): value is number => value != null);
 
   if (points.length < 2) {
-    return <div className="h-16 text-xs text-slate-500">Not enough scored periods for a trend yet.</div>;
+    return <div className="h-16 text-xs text-[#6B7280]">Not enough scored periods for a trend yet.</div>;
   }
 
   const min = Math.min(...points);
@@ -38,10 +38,10 @@ function TrendChart({ periods }: { periods: DriverSafetyScoreRow[] }) {
 
   return (
     <div className="space-y-1">
-      <svg viewBox="0 0 100 100" className="h-24 w-full rounded-sm border border-slate-100 bg-slate-50 p-2">
-        <polyline points={coordinates} fill="none" stroke="currentColor" strokeWidth="4" className="text-slate-700" />
+      <svg viewBox="0 0 100 100" className="h-24 w-full rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2">
+        <polyline points={coordinates} fill="none" stroke="currentColor" strokeWidth="4" className="text-[#4B5563]" />
       </svg>
-      <div className="flex justify-between text-xs text-slate-500">
+      <div className="flex justify-between text-xs text-[#6B7280]">
         <span>{periods[0]?.period_start ?? ""}</span>
         <span>{periods[periods.length - 1]?.period_end ?? ""}</span>
       </div>
@@ -136,21 +136,21 @@ export function DriverScoreDetail({ companyId, driverUuid, driverName, onClose }
   return (
     <div className="space-y-3">
       <section
-        className="overflow-hidden rounded-sm border border-slate-200 bg-white"
+        className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white"
         data-testid="driver-score-detail-panel"
       >
-        <div className="flex items-start justify-between gap-2 border-b border-slate-200 px-3 py-2">
+        <div className="flex items-start justify-between gap-2 border-b border-[#E5E7EB] px-3 py-2">
           <div>
-            <h4 className="text-xs font-semibold text-slate-900">
+            <h4 className="text-xs font-semibold text-[#0F1219]">
               <EntityLink
                 kind="driver"
                 id={driverUuid}
                 label={entityLabel(driverName, driverUuid, "Driver")}
               />
             </h4>
-            <p className="text-xs text-slate-500">12-period composite safety trend</p>
+            <p className="text-xs text-[#6B7280]">12-period composite safety trend</p>
           </div>
-          <button type="button" className="text-xs text-slate-600 underline" onClick={onClose}>
+          <button type="button" className="text-xs text-[#6B7280] underline" onClick={onClose}>
             Close
           </button>
         </div>
@@ -166,26 +166,26 @@ export function DriverScoreDetail({ companyId, driverUuid, driverName, onClose }
           </div>
         ) : (
           <>
-            <div className="border-b border-slate-100 px-3 py-2">
+            <div className="border-b border-[#E5E7EB] px-3 py-2">
               <TrendChart periods={periods} />
             </div>
 
             {latest ? (
-              <div className="grid grid-cols-2 text-xs sm:divide-x sm:divide-slate-100 md:grid-cols-4">
-                <div className="border-t border-slate-100 px-3 py-2 md:border-t-0">
-                  <div className="text-slate-500">Latest score</div>
+              <div className="grid grid-cols-2 text-xs sm:divide-x sm:divide-[#E5E7EB] md:grid-cols-4">
+                <div className="border-t border-[#E5E7EB] px-3 py-2 md:border-t-0">
+                  <div className="text-[#6B7280]">Latest score</div>
                   <div className="font-semibold">{latest.composite_score?.toFixed(1) ?? "N/A"}</div>
                 </div>
-                <div className="border-t border-slate-100 px-3 py-2 md:border-t-0">
-                  <div className="text-slate-500">Fleet rank</div>
+                <div className="border-t border-[#E5E7EB] px-3 py-2 md:border-t-0">
+                  <div className="text-[#6B7280]">Fleet rank</div>
                   <div className="font-semibold">{latest.rank_in_fleet ?? "—"}</div>
                 </div>
-                <div className="border-t border-slate-100 px-3 py-2 md:border-t-0">
-                  <div className="text-slate-500">Miles</div>
+                <div className="border-t border-[#E5E7EB] px-3 py-2 md:border-t-0">
+                  <div className="text-[#6B7280]">Miles</div>
                   <div className="font-semibold">{latest.miles_driven.toFixed(0)}</div>
                 </div>
-                <div className="border-t border-slate-100 px-3 py-2 md:border-t-0">
-                  <div className="text-slate-500">Period</div>
+                <div className="border-t border-[#E5E7EB] px-3 py-2 md:border-t-0">
+                  <div className="text-[#6B7280]">Period</div>
                   <div className="font-semibold">
                     {latest.period_start} → {latest.period_end}
                   </div>
@@ -208,26 +208,26 @@ export function DriverScoreDetail({ companyId, driverUuid, driverName, onClose }
       </section>
 
       <section
-        className="overflow-hidden rounded-sm border border-slate-200 bg-white"
+        className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white"
         data-testid="driver-score-harsh-events-panel"
       >
-        <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2">
-          <h5 className="text-xs font-semibold text-slate-900">Harsh Event Timeline</h5>
+        <div className="flex items-center justify-between border-b border-[#E5E7EB] px-3 py-2">
+          <h5 className="text-xs font-semibold text-[#0F1219]">Harsh Event Timeline</h5>
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-slate-500">Period</span>
+            <span className="text-[#6B7280]">Period</span>
             {EVENT_PERIODS.map((days) => (
               <button
                 key={days}
                 type="button"
                 onClick={() => setEventPeriodDays(days)}
-                className={`rounded-sm px-2 py-1 ${eventPeriodDays === days ? "bg-[#1f2a44] text-white" : "bg-slate-100 text-slate-700"}`}
+                className={`rounded-sm px-2 py-1 ${eventPeriodDays === days ? "bg-[#1f2a44] text-white" : "bg-[#F7F8FA] text-[#4B5563]"}`}
               >
                 {days}d
               </button>
             ))}
           </div>
         </div>
-        <div className="divide-y divide-slate-100 text-xs">
+        <div className="divide-y divide-[#E5E7EB] text-xs">
           {eventsQuery.isError ? (
             <div className="px-3 py-2">
               <ListErrorState
@@ -257,7 +257,7 @@ export function DriverScoreDetail({ companyId, driverUuid, driverName, onClose }
                     </span>
                     <button
                       type="button"
-                      className="text-slate-700 underline"
+                      className="text-[#4B5563] underline"
                       onClick={() => setExpandedEventId(expandedEventId === event.id ? null : event.id)}
                     >
                       {expandedEventId === event.id ? "Hide dashcam" : "View dashcam"}
@@ -271,13 +271,13 @@ export function DriverScoreDetail({ companyId, driverUuid, driverName, onClose }
                 </div>
               ))}
               {(eventsQuery.data?.events ?? []).length === 0 ? (
-                <div className="px-3 py-2 text-slate-500">No harsh events for this driver in period.</div>
+                <div className="px-3 py-2 text-[#6B7280]">No harsh events for this driver in period.</div>
               ) : null}
             </>
           )}
         </div>
         {!eventsQuery.isError && eventTotal > eventPageSize ? (
-          <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-3 py-2 text-xs" data-testid="driver-score-events-server-pager">
+          <div className="flex items-center justify-end gap-2 border-t border-[#E5E7EB] px-3 py-2 text-xs" data-testid="driver-score-events-server-pager">
             <button type="button" disabled={eventPage <= 1 || eventsQuery.isFetching} onClick={() => setEventPage((current) => Math.max(1, current - 1))}>Previous</button>
             <span>Page {eventPage} of {eventPageCount} · {eventTotal} harsh events</span>
             <button type="button" disabled={eventPage >= eventPageCount || eventsQuery.isFetching} onClick={() => setEventPage((current) => Math.min(eventPageCount, current + 1))}>Next</button>
