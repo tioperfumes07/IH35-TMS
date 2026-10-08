@@ -15,6 +15,8 @@
  *   R4 lastCoveredEndDate falls back to max(relay_created_at) from integrations.relay_fuel_transactions
  *   R5 lastCoveredEndDate is read inside the try, never before it
  *   R6 a migration gives integrations.integration_sync_log an UPDATE policy
+ *   R7 claimRelayTick is called INSIDE the try (ROUND 441.21-B R3) — a throw between claim and try
+ *      left finished_at NULL forever; finally only finishes when logId was set
  * LIVE (with DATABASE_URL): no relay tick has finished_at IS NULL older than 2 hours.
  *
  * Run: node scripts/verify-relay-tick-completes.mjs [--selftest]
@@ -70,6 +72,14 @@ export function staticProblems(cronSrc, migrationsSql) {
   if (!/CREATE POLICY\s+\w+\s+ON\s+integrations\.integration_sync_log\s+FOR UPDATE/i.test(migrationsSql)) {
     p.push("R6: no migration gives integrations.integration_sync_log an UPDATE policy — the completion write matches 0 rows");
   }
+  // R7 — claim must sit inside the try (after `try {`). A claim before try left abandoned ticks.
+  const claimIdx = tick.indexOf("claimRelayTick(");
+  if (claimIdx < 0 || tryIdx < 0 || claimIdx < tryIdx) {
+    p.push("R7: claimRelayTick is outside the try — a throw after claim leaves finished_at NULL with no finally close");
+  }
+  if (!finallyBlocks.some((b) => /if \(logId\)/.test(b))) {
+    p.push("R7: finally finishes unconditionally — a concurrent skip (logId null) must not call finishRelayTick");
+  }
   return p;
 }
 
@@ -120,21 +130,32 @@ if (process.argv.includes("--selftest")) {
       "R5 watermark read before try",
       staticProblems(
         cronSrc.replace(
-          "    try {\n      lastEnd = await withLuciaBypass",
-          "    lastEnd = await withLuciaBypass(async (client) => lastCoveredEndDate(client, operatingCompanyId));\n    try {\n      lastEnd = await withLuciaBypass"
+          "    try {\n      logId = await withLuciaBypass(async (client) => claimRelayTick(client, operatingCompanyId));",
+          "    void lastCoveredEndDate(null as never, '');\n    try {\n      logId = await withLuciaBypass(async (client) => claimRelayTick(client, operatingCompanyId));"
         ),
         migrationsSql
       ),
       "R5",
     ],
     ["R6 no UPDATE policy", staticProblems(cronSrc, migrationsSql.replace(/FOR UPDATE/g, "FOR SELECT")), "R6"],
+    [
+      "R7 claim outside try",
+      staticProblems(
+        cronSrc.replace(
+          "    try {\n      logId = await withLuciaBypass(async (client) => claimRelayTick(client, operatingCompanyId));",
+          "    logId = await withLuciaBypass(async (client) => claimRelayTick(client, operatingCompanyId));\n    try {\n      void 0;"
+        ),
+        migrationsSql
+      ),
+      "R7",
+    ],
   ];
   const missed = plants.filter(([, probs, rule]) => !probs.some((x) => x.startsWith(rule))).map(([n]) => n);
   if (missed.length) {
     console.error(`${LABEL} --selftest FAIL — not caught: ${missed.join("; ")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS — real tree clean; ${plants.length}/${plants.length} plants caught (R1–R6)`);
+  console.log(`${LABEL} --selftest PASS — real tree clean; ${plants.length}/${plants.length} plants caught (R1–R7)`);
   process.exit(0);
 }
 
