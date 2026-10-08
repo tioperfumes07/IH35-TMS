@@ -166,6 +166,10 @@ export function DepositDetailPage() {
                       <td className="px-2 py-[7px]">
                         {line.customer_id ? (
                           <EntityLink kind="customer" id={line.customer_id} label={line.customer_name ?? "Customer"} />
+                        ) : line.received_from_customer_id ? (
+                          <EntityLink kind="customer" id={line.received_from_customer_id} label={line.received_from_customer_name ?? "Customer"} />
+                        ) : line.received_from_vendor_id ? (
+                          <EntityLink kind="vendor" id={line.received_from_vendor_id} label={line.received_from_vendor_name ?? "Vendor"} />
                         ) : (
                           "—"
                         )}

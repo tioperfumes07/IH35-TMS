@@ -178,3 +178,6 @@ DONE: PR #25868 · squash b35be7c829b2a61ba57e0c569f145ee1ac61c6d2 · money-pr-l
 
 ## 2026-10-08 — ROUND 441.22 Devin: three stale filter-panel guard anchors (FILTER-MULTI-01)
 DONE: PR #25872 · squash 33e554ca46d96843295dfdeedb6c7d29e313b361 · money-pr-local-gate exit 0 · cancellations/booking-gap accept RPT-06 ReportFilterBar; filter-panels guard asserts MoneyListToolbar on the three FILTER-MULTI-01 pages · baseline-lines-added = 0
+
+## 2026-10-08 — ROUND 441.22 Devin: four stale guard anchors + BillDetail Payment sort
+DONE: PR #25875 · squash 1faf85b6adfdd6d6eacec25a35b969f881f1d02d · money-pr-local-gate exit 0 · bank-feed honesty palette accepts locked tokens; Payment column sortable via sortValue; status-spelling leaf re-anchored to helper; lease detail checks re-anchored to ROUND-316 page · baseline-lines-added = 0

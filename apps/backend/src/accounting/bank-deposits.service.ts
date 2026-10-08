@@ -566,6 +566,10 @@ export async function getBankDeposit(operatingCompanyId: string, userId: string,
       SELECT dl.id::text, dl.line_type, dl.amount_cents::bigint AS amount_cents, dl.description AS memo,
              dl.source_payment_id::text AS source_payment_id,
              dl.source_factoring_advance_id::text AS source_factoring_advance_id,
+             dl.received_from_vendor_id::text AS received_from_vendor_id,
+             dl.received_from_customer_id::text AS received_from_customer_id,
+             rfv.vendor_name AS received_from_vendor_name,
+             rfc.customer_name AS received_from_customer_name,
              p.display_id AS payment_display_id,
              p.customer_id::text AS customer_id,
              COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(p.customer_id, p.operating_company_id)) AS customer_name,
@@ -591,6 +595,10 @@ export async function getBankDeposit(operatingCompanyId: string, userId: string,
           ON inv.id = pa0.invoice_id AND inv.operating_company_id = $2::uuid
         LEFT JOIN accounting.factoring_advances fa
           ON fa.id = dl.source_factoring_advance_id AND fa.operating_company_id = $2::uuid
+        LEFT JOIN mdata.vendors rfv
+          ON rfv.id = dl.received_from_vendor_id AND rfv.operating_company_id = $2::uuid
+        LEFT JOIN mdata.customers rfc
+          ON rfc.id = dl.received_from_customer_id AND rfc.operating_company_id = $2::uuid
         LEFT JOIN mdata.loads l
           ON l.id = COALESCE(inv.source_load_id, fa.source_load_id)
          AND l.operating_company_id = $2::uuid
