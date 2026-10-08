@@ -868,7 +868,7 @@ export function VendorsPage() {
                       {/* VC-DETAIL-01 — Status = active/inactive (deactivated_at); the quality chip
                           is its own separate chip, never the Status value. */}
                       <div className="mt-1 flex flex-wrap items-center gap-2">
-                        <span className={`inline-flex rounded-sm px-2 py-0.5 text-xs font-semibold ${selectedVendor.deactivated_at ? "bg-gray-200 text-gray-700" : "bg-slate-100 text-slate-700"}`} data-testid="vendor-detail-status">
+                        <span className={`inline-flex rounded-sm px-2 py-0.5 text-xs font-semibold ${selectedVendor.deactivated_at ? "bg-gray-200 text-gray-700" : "bg-[#F7F8FA] text-[#1F2A44]"}`} data-testid="vendor-detail-status">
                           {selectedVendor.deactivated_at ? "Inactive" : "Active"}
                         </span>
                         <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${vendorQualityLabel(selectedVendor.notes).className}`}>
@@ -944,7 +944,7 @@ export function VendorsPage() {
                   </p>
                   <UnclearedDocumentsNote docs={unclearedByVendorId.get(selectedVendor.id)?.uncleared_documents ?? []} />
                   {(unclearedByVendorId.get(selectedVendor.id)?.uncleared_cents ?? 0) > 0 ? (
-                    <p className="mt-2 rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
+                    <p className="mt-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
                       Applied payments that have not been matched or categorized in Banking are named not cleared.
                     </p>
                   ) : null}
@@ -1087,7 +1087,7 @@ export function VendorsPage() {
                       id={selectedVendor.id}
                       name={selectedVendor.name}
                       noun="Vendor"
-                      className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-800 hover:bg-slate-50"
+                      className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-xs font-medium text-[#0F1219] hover:bg-[#F7F8FA]"
                       data-testid="vendor-details-full-profile-record-link"
                     />
                   </div>

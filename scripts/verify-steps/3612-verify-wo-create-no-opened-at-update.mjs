@@ -3,5 +3,6 @@ export default {
   name: "verify-wo-create-no-opened-at-update",
   run(ctx) {
     ctx.run("node", ["scripts/verify-wo-create-no-opened-at-update.mjs"]);
+    ctx.run("node", ["scripts/verify-vendors-catalog-batch-slate-leftover-chrome.mjs"]);
   },
 };
