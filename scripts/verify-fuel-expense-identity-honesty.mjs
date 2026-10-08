@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["fuel"],"cols":["connectivity","honesty"],"leafRe":"^(home|planner|relay_inbox|history|fuel\\.modal\\.import_fuel_transactions|fuel\\.modal\\.create_fuel_transaction|fuel\\.modal\\.upload_loves_prices|fuel\\.panel\\.savings)$","task":"FUEL-EXPENSE-IDENTITY-HONESTY"} */
 import fs from "node:fs";
 import path from "node:path";
 

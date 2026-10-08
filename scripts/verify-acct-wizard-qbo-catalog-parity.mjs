@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Guard: Vendor Bill / Expense wizard QBO + catalog wiring (Accounting PR wave).
- * Proves: due-date helper, Terms not SelectCombobox box-in-box, entity-scoped CoA,
+ * Proves: due-date helper, Terms typed single-frame control, entity-scoped CoA,
  * CostBreakdown ReferenceSelect when company set,
  * expense category allows TMS-native accounts (category_account_id).
  */
@@ -31,10 +31,12 @@ ok("due-date helper present");
 const bill = read("apps/frontend/src/components/accounting/VendorBillForm.tsx");
 if (!bill.includes("dueDateFromBillTerms")) fail("VendorBillForm must auto-calc due date");
 if (!bill.includes("dueDateTouched")) fail("VendorBillForm must respect manual due override");
-if (bill.includes("SelectCombobox") && bill.includes("Terms")) {
-  // Terms must be native <select>, not SelectCombobox (box-in-box)
+if (bill.includes("Terms")) {
+  // Terms must be a single-frame typed control — the native <select> was retired by the D5
+  // type-to-filter sweep; SelectCombobox is the single control frame (Field adds no box).
   const termsBlock = bill.slice(bill.indexOf("Terms"), bill.indexOf("Due Date"));
-  if (termsBlock.includes("SelectCombobox")) fail("Terms still uses SelectCombobox (box-in-box)");
+  if (!termsBlock.includes("SelectCombobox") && !termsBlock.includes("<select")) fail("Terms must use a typed select control");
+  if (termsBlock.includes("SelectCombobox") && /Field[^>]*className="[^"]*border/.test(bill)) fail("Terms Field must not add a second frame around SelectCombobox");
 }
 // Unit picker must NOT hard-filter status. "Active" was an invalid enum the backend silently
 // swallowed, so the picker returned ALL non-deactivated units; pinning a real status turned it into

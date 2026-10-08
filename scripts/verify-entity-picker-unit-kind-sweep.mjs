@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["leases"],"cols":["picker_law"],"leafRe":"^leases\\.","task":"EP-UNIT-KIND-SWEEP","vertical":"class-sweep"} */
 /**
  * EP-UNIT-KIND-SWEEP — ONE generalized guard for silent listUnits unit pickers.
  * Delivery §9.0 item 17: every unit field picker must use EntityPicker kind="unit".
