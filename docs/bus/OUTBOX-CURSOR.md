@@ -1,3 +1,13 @@
+## 2026-10-08T05:48Z · BANK leftover slate — insurance policy / claim create
+
+FINDING: BANK-F91165 — PolicyCreateWizard / ClaimCreateModal / PolicyCreateModal Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25818 squash `56bea4c735` (BANK-F91164 create driver/tasks/contract)
+GUARD: scripts/verify-ins-policy-claim-slate-leftover-chrome.mjs + verify-steps/1054 piggyback
+LIVE PROOF: verify-ins-policy-claim-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 insurance surfaces + refuse guard + 1054 piggyback + OUTBOX
+
 ## 2026-10-08T05:42Z · BANK leftover slate — create driver / tasks chat / contract creator
 
 FINDING: BANK-F91164 — CreateDriverModal / TasksChatPage / UnifiedContractCreatorModal Tailwind slate-* → house tokens

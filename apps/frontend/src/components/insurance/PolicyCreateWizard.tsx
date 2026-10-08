@@ -125,7 +125,7 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
           }`}
         />
       ))}
-      <span className="ml-2 text-xs text-slate-500">
+      <span className="ml-2 text-xs text-[#6B7280]">
         Step {current} of {total}
       </span>
     </div>
@@ -221,7 +221,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
         label: "Amount",
         sortable: true,
         render: (row) => (
-          <span className="font-medium text-slate-800">{formatUsdCents(row.amount_cents)}</span>
+          <span className="font-medium text-[#1F2A44]">{formatUsdCents(row.amount_cents)}</span>
         ),
       },
       {
@@ -440,8 +440,8 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
         {step === 2 && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-700">Select Vehicles *</span>
-              <span className="text-xs font-medium text-slate-600">
+              <span className="text-xs font-semibold text-[#4B5563]">Select Vehicles *</span>
+              <span className="text-xs font-medium text-[#4B5563]">
                 {selectedUnits.length} selected
               </span>
             </div>
@@ -465,7 +465,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
                   key={unit.value}
                   type="button"
                   onClick={() => setSelectedUnits((current) => current.filter((item) => item.value !== unit.value))}
-                  className="rounded-full border border-gray-300 bg-gray-50 px-2 py-1 text-xs text-slate-700"
+                  className="rounded-full border border-gray-300 bg-gray-50 px-2 py-1 text-xs text-[#4B5563]"
                   aria-label={`Remove ${unit.label}`}
                 >
                   {unit.label} ×
@@ -473,7 +473,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
               ))}
             </div>
             {selectedUnits.length === 0 && (
-              <p className="text-xs text-slate-700">Select at least one vehicle to continue.</p>
+              <p className="text-xs text-[#4B5563]">Select at least one vehicle to continue.</p>
             )}
           </div>
         )}
@@ -510,7 +510,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
             <Field label="Allocation Method">
               <div className="grid grid-cols-1 gap-1.5">
                 {(Object.keys(ALLOCATION_LABELS) as AllocationMethod[]).map((method) => (
-                  <label key={method} className="flex cursor-pointer items-center gap-2 text-xs text-slate-700">
+                  <label key={method} className="flex cursor-pointer items-center gap-2 text-xs text-[#4B5563]">
                     <input
                       type="radio"
                       name="allocation_method"
@@ -524,16 +524,16 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
               </div>
             </Field>
             {premiumCents > 0 && termMonths > 0 && selectedUnits.length > 0 ? (
-              <div className="rounded-sm border border-slate-200 bg-slate-100 px-4 py-3">
-                <p className="text-xs font-semibold text-slate-700">Cost per vehicle insured per month</p>
-                <p className="mt-0.5 text-page-title font-bold text-slate-700">{costInfo.costPerVehicleDisplay}</p>
-                <p className="mt-0.5 text-xs text-slate-600">
+              <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-4 py-3">
+                <p className="text-xs font-semibold text-[#4B5563]">Cost per vehicle insured per month</p>
+                <p className="mt-0.5 text-page-title font-bold text-[#4B5563]">{costInfo.costPerVehicleDisplay}</p>
+                <p className="mt-0.5 text-xs text-[#4B5563]">
                   {selectedUnits.length} vehicle{selectedUnits.length !== 1 ? "s" : ""} ·{" "}
                   {formatMoney(costInfo.totalMonthlyPremiumCents)} / mo total · {termMonths} month term
                 </p>
               </div>
             ) : (
-              <p className="text-xs text-slate-400">Enter premium and term to see per-vehicle cost.</p>
+              <p className="text-xs text-[#6B7280]">Enter premium and term to see per-vehicle cost.</p>
             )}
           </div>
         )}
@@ -542,31 +542,31 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
           <div className="space-y-3">
             <div className="rounded-sm border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs space-y-1">
               <div className="flex justify-between">
-                <span className="font-semibold text-slate-700">Carrier</span>
-                <span className="text-slate-700">{step1.insurer_name}</span>
+                <span className="font-semibold text-[#4B5563]">Carrier</span>
+                <span className="text-[#4B5563]">{step1.insurer_name}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-semibold text-slate-700">Policy #</span>
-                <span className="text-slate-700">{step1.policy_number}</span>
+                <span className="font-semibold text-[#4B5563]">Policy #</span>
+                <span className="text-[#4B5563]">{step1.policy_number}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-semibold text-slate-700">Vehicles</span>
-                <span className="text-slate-700">{selectedUnits.length}</span>
+                <span className="font-semibold text-[#4B5563]">Vehicles</span>
+                <span className="text-[#4B5563]">{selectedUnits.length}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-semibold text-slate-700">Total premium</span>
-                <span className="text-slate-700">{formatMoney(premiumCents)}</span>
+                <span className="font-semibold text-[#4B5563]">Total premium</span>
+                <span className="text-[#4B5563]">{formatMoney(premiumCents)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-semibold text-slate-700">Per vehicle / mo</span>
-                <span className="font-semibold text-slate-700">{costInfo.costPerVehicleDisplay}</span>
+                <span className="font-semibold text-[#4B5563]">Per vehicle / mo</span>
+                <span className="font-semibold text-[#4B5563]">{costInfo.costPerVehicleDisplay}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-semibold text-slate-700">Allocation</span>
-                <span className="text-slate-700">{ALLOCATION_LABELS[step3.allocation_method]}</span>
+                <span className="font-semibold text-[#4B5563]">Allocation</span>
+                <span className="text-[#4B5563]">{ALLOCATION_LABELS[step3.allocation_method]}</span>
               </div>
             </div>
-            <p className="text-xs font-semibold text-slate-700">
+            <p className="text-xs font-semibold text-[#4B5563]">
               Bill schedule — {billPreview.length} monthly bills
             </p>
             <div className="max-h-48 overflow-y-auto">
@@ -638,7 +638,7 @@ function Field({
 }) {
   return (
     <label className="space-y-1">
-      <span className="text-xs font-semibold text-slate-700">{label}</span>
+      <span className="text-xs font-semibold text-[#4B5563]">{label}</span>
       {children}
       {error ? <span className="block text-xs text-red-700">{error}</span> : null}
     </label>

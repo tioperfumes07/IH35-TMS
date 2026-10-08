@@ -284,14 +284,14 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           </div>
         ) : null}
         {formError ? (
-          <div className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-700" role="alert">
+          <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#4B5563]" role="alert">
             {formError}
           </div>
         ) : null}
 
         <div className="grid gap-3 md:grid-cols-2">
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Insurer (vendor) *</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Insurer (vendor) *</span>
             {/* CLS-SILENT-CAP / FAIL-INS-VENDOR-UX: EntityPicker server-search + allowCreate → mdata.vendors R=W. */}
             <EntityPicker
               kind="vendor"
@@ -319,7 +319,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Policy Number *</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Policy Number *</span>
             <input
               className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.policy_number}
@@ -329,7 +329,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Type *</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Type *</span>
             {/*
               LST-PICKER-01 (guard 1864): bare <select> had zero inline create — operators had to leave
               the policy form for TypeCatalogAdmin. ReferenceSelect createKind=insurance_coverage_type
@@ -361,7 +361,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Status</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Status</span>
             <select
               className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.status}
@@ -375,7 +375,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Effective Date *</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Effective Date *</span>
             <DatePicker
               className="w-full"
               value={form.effective_date}
@@ -385,7 +385,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Expiry Date *</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Expiry Date *</span>
             <DatePicker
               className="w-full"
               value={form.expiry_date}
@@ -395,7 +395,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Total Premium (USD)</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Total Premium (USD)</span>
             {/* M-1: dollars-mode QBO money entry; bridged so parseCurrencyToCents (×100) is byte-for-byte. */}
             <MoneyInput
               valueDollars={form.total_premium ? Number(form.total_premium) : null}
@@ -406,7 +406,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Down Payment (USD)</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Down Payment (USD)</span>
             <MoneyInput
               valueDollars={form.down_payment ? Number(form.down_payment) : null}
               onChangeDollars={(d) => updateField("down_payment", d == null ? "" : String(d))}
@@ -416,7 +416,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Installments</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Installments</span>
             <input
               type="number"
               min="0"
@@ -428,7 +428,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Due Day</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Due Day</span>
             <input
               type="number"
               min="1"
@@ -441,7 +441,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Pay Day</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Pay Day</span>
             <input
               type="number"
               min="1"
@@ -454,7 +454,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Late Fee %</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Late Fee %</span>
             <input
               type="number"
               min="0"
@@ -468,7 +468,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Insurer Email</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Insurer Email</span>
             <input
               type="email"
               className="w-full rounded-sm border border-gray-300 px-2 py-1"
@@ -480,7 +480,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
         </div>
 
         <label className="space-y-1">
-          <span className="text-xs font-semibold text-slate-700">Agent Contact</span>
+          <span className="text-xs font-semibold text-[#4B5563]">Agent Contact</span>
           <input
             className="w-full rounded-sm border border-gray-300 px-2 py-1"
             value={form.agent_contact}
@@ -490,8 +490,8 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-700">Covered Units *</span>
-            <span className="text-xs text-slate-500">{selectedUnits.length} selected</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Covered Units *</span>
+            <span className="text-xs text-[#6B7280]">{selectedUnits.length} selected</span>
           </div>
           <EntityPicker
             kind="unit"
@@ -509,7 +509,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
               <button
                 key={unit.value}
                 type="button"
-                className="rounded-full border border-gray-300 bg-gray-50 px-2 py-1 text-xs text-slate-700"
+                className="rounded-full border border-gray-300 bg-gray-50 px-2 py-1 text-xs text-[#4B5563]"
                 onClick={() => setSelectedUnits((current) => current.filter((item) => item.value !== unit.value))}
                 aria-label={`Remove ${unit.label}`}
               >

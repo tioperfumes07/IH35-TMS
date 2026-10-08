@@ -314,14 +314,14 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
           </div>
         ) : null}
         {formError ? (
-          <div className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-700" role="alert">
+          <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#4B5563]" role="alert">
             {formError}
           </div>
         ) : null}
 
         <div className="grid gap-3 md:grid-cols-2">
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Claim Number *</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Claim Number *</span>
             <input
               className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.claim_number}
@@ -331,7 +331,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Policy *</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Policy *</span>
             <EntityPicker
               kind="insurance_policy"
               operatingCompanyId={operatingCompanyId}
@@ -349,7 +349,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Unit / Asset</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Unit / Asset</span>
             <EntityPicker
               kind="unit"
               operatingCompanyId={operatingCompanyId}
@@ -362,7 +362,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
           </label>
 
           <label className="space-y-1" data-testid="claim-create-driver-field">
-            <span className="text-xs font-semibold text-slate-700">Driver</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Driver</span>
             <DriverPickerWithCreate
               operatingCompanyId={operatingCompanyId}
               value={form.driver_id || null}
@@ -374,7 +374,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
           </label>
 
           <label className="space-y-1" data-testid="claim-create-load-field">
-            <span className="text-xs font-semibold text-slate-700">Load</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Load</span>
             <EntityPicker
               kind="load"
               operatingCompanyId={operatingCompanyId}
@@ -387,7 +387,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
               dataTestId="claim-create-load-picker"
             />
             {suggestionPinned && form.load_id && suggestionQuery.data?.data?.load_id === form.load_id ? (
-              <span className="text-xs text-slate-600" data-testid="claim-create-load-suggested">
+              <span className="text-xs text-[#4B5563]" data-testid="claim-create-load-suggested">
                 Auto-filled from active trip for this driver/unit/trailer on the accident date.
               </span>
             ) : null}
@@ -395,7 +395,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
           </label>
 
           <label className="space-y-1" data-testid="claim-create-trailer-field">
-            <span className="text-xs font-semibold text-slate-700">Trailer</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Trailer</span>
             <EntityPicker
               kind="trailer"
               operatingCompanyId={operatingCompanyId}
@@ -409,7 +409,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
           </label>
 
           <div className="space-y-1" data-testid="claim-create-accident-field">
-            <label htmlFor="claim-create-accident-picker" className="text-xs font-semibold text-slate-700">Accident report</label>
+            <label htmlFor="claim-create-accident-picker" className="text-xs font-semibold text-[#4B5563]">Accident report</label>
             <Combobox
               id="claim-create-accident-picker"
               options={accidentOptions}
@@ -423,7 +423,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
             {accidentsQuery.isError ? (
               <button
                 type="button"
-                className="text-xs font-semibold text-slate-700 underline"
+                className="text-xs font-semibold text-[#4B5563] underline"
                 onClick={() => void accidentsQuery.refetch()}
               >
                 Retry accident reports
@@ -432,7 +432,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
           </div>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Status</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Status</span>
             <select
               className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.status}
@@ -448,7 +448,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
           </label>
 
           <label className="space-y-1" data-testid="claim-create-fault-field">
-            <span className="text-xs font-semibold text-slate-700">Fault</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Fault</span>
             <select
               className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.fault}
@@ -462,7 +462,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
           </label>
 
           <label className="space-y-1" data-testid="claim-create-driver-responsible-field">
-            <span className="text-xs font-semibold text-slate-700">Driver Responsible</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Driver Responsible</span>
             <select
               className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.driver_responsible}
@@ -475,7 +475,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Accident Date *</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Accident Date *</span>
             <DatePicker
               className="w-full"
               value={form.accident_date}
@@ -485,7 +485,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Reported Date *</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Reported Date *</span>
             <DatePicker
               className="w-full"
               value={form.reported_date}
@@ -495,7 +495,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Amount Claimed (USD)</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Amount Claimed (USD)</span>
             {/* M-1: dollars-mode QBO money entry; bridged over the string form so parseCurrencyToCents (×100) is byte-for-byte. */}
             <MoneyInput
               valueDollars={form.amount_claimed ? Number(form.amount_claimed) : null}
@@ -506,7 +506,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Amount Paid (USD)</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Amount Paid (USD)</span>
             <MoneyInput
               valueDollars={form.amount_paid ? Number(form.amount_paid) : null}
               onChangeDollars={(d) => updateField("amount_paid", d == null ? "" : String(d))}
@@ -516,7 +516,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Adjuster Name</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Adjuster Name</span>
             <input
               className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.adjuster_name}
@@ -525,7 +525,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-semibold text-slate-700">Adjuster Email</span>
+            <span className="text-xs font-semibold text-[#4B5563]">Adjuster Email</span>
             <input
               type="email"
               className="w-full rounded-sm border border-gray-300 px-2 py-1"
@@ -542,10 +542,10 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
             value to move past "ask". No $ threshold anywhere: if the driver is at fault/responsible,
             they owe the FULL company-funded repair amount, not just the deductible. */}
         <div className="space-y-3 border-t border-gray-100 pt-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Deductible &amp; Recovery</h3>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Deductible &amp; Recovery</h3>
           <div className="grid gap-3 md:grid-cols-3">
             <label className="space-y-1">
-              <span className="text-xs font-semibold text-slate-700">Deductible (USD)</span>
+              <span className="text-xs font-semibold text-[#4B5563]">Deductible (USD)</span>
               <MoneyInput
                 valueDollars={form.deductible ? Number(form.deductible) : null}
                 onChangeDollars={(d) => updateField("deductible", d == null ? "" : String(d))}
@@ -555,7 +555,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
             </label>
 
             <label className="space-y-1" data-testid="claim-create-recovery-rail-field">
-              <span className="text-xs font-semibold text-slate-700">Driver Deductible Recovery</span>
+              <span className="text-xs font-semibold text-[#4B5563]">Driver Deductible Recovery</span>
               <select
                 className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={form.recovery_rail}
@@ -569,7 +569,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
             </label>
 
             <label className="space-y-1" data-testid="claim-create-repair-books-field">
-              <span className="text-xs font-semibold text-slate-700">Uninsured Repair Books Treatment</span>
+              <span className="text-xs font-semibold text-[#4B5563]">Uninsured Repair Books Treatment</span>
               <select
                 className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={form.repair_books_treatment}
@@ -591,7 +591,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
         </div>
 
         <label className="space-y-1">
-          <span className="text-xs font-semibold text-slate-700">Notes</span>
+          <span className="text-xs font-semibold text-[#4B5563]">Notes</span>
           <textarea
             className="w-full rounded-sm border border-gray-300 px-2 py-1"
             rows={3}
