@@ -98,13 +98,13 @@ export function FilterPopover({ filter, activeValues, onChange, rows }: Props) {
         onClick={() => setOpen((v) => !v)}
         className={`flex items-center gap-1 px-2 py-1 text-xs rounded border transition-colors ${
           isActive
-            ? "bg-slate-100 border-slate-300 text-slate-700"
+            ? "bg-[#F7F8FA] border-[#E5E7EB] text-[#1F2A44]"
             : "border-gray-300 text-gray-600 hover:bg-gray-50"
         }`}
       >
         {filter.label}
         {isActive && (
-          <span className="bg-slate-1000 text-white text-xs font-semibold rounded-full px-1.5 py-0.5 leading-none">
+          <span className="bg-[#F7F8FA]0 text-white text-xs font-semibold rounded-full px-1.5 py-0.5 leading-none">
             {appliedCount}
           </span>
         )}
@@ -123,7 +123,7 @@ export function FilterPopover({ filter, activeValues, onChange, rows }: Props) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search…"
-              className="w-full text-xs border border-gray-300 rounded-sm px-2 py-1 outline-hidden focus:ring-1 focus:ring-slate-400"
+              className="w-full text-xs border border-gray-300 rounded-sm px-2 py-1 outline-hidden focus:ring-1 focus:ring-[#6B7280]"
             />
           )}
           <div className="max-h-52 overflow-y-auto space-y-0.5">

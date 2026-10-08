@@ -1,7 +1,7 @@
 import { formatDateUS } from "../../lib/formatDate";
 
 function expColor(days: number | null | undefined) {
-  if (days == null) return "text-slate-600";
+  if (days == null) return "text-[#4B5563]";
   if (days < 0) return "text-red-700";
   if (days <= 30) return "text-amber-700";
   return "text-emerald-700";
@@ -14,8 +14,8 @@ export function LicenseSection({ license }: { license: Record<string, unknown> }
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-4">
-      <h2 className="mb-2 text-xs font-semibold text-slate-900">License & endorsements</h2>
-      <div className="grid gap-2 text-xs text-slate-700 md:grid-cols-2">
+      <h2 className="mb-2 text-xs font-semibold text-[#0F1219]">License & endorsements</h2>
+      <div className="grid gap-2 text-xs text-[#1F2A44] md:grid-cols-2">
         <div>CDL {String(license.cdl_number ?? "—")}</div>
         <div>
           Class {String(license.class ?? "—")} · {String(license.state ?? "—")}
@@ -32,7 +32,7 @@ export function LicenseSection({ license }: { license: Record<string, unknown> }
           <span
             key={key}
             className={`rounded px-2 py-0.5 text-xs font-semibold ${
-              endorsements[key] ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-400"
+              endorsements[key] ? "bg-[#F7F8FA] text-[#1F2A44]" : "bg-gray-100 text-gray-400"
             }`}
           >
             {key.toUpperCase()}

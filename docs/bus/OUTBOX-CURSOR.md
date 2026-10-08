@@ -1,3 +1,13 @@
+## 2026-10-09T00:30Z · BANK leftover slate — Modal / FilterPopover / LicenseSection
+
+FINDING: BANK-F91265 — Modal / FilterPopover / LicenseSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25943 squash `b0f20856c1` (BANK-F91264 AuthGate/DispatchSubnav/DispatchAlerts)
+GUARD: scripts/verify-modal-filter-license-slate-leftover-chrome.mjs + verify-steps/3500 piggyback
+LIVE PROOF: verify-modal-filter-license-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3500 piggyback + OUTBOX
+
 ## 2026-10-09T00:25Z · BANK leftover slate — AuthGate / DispatchSubnav / DispatchAlerts
 
 FINDING: BANK-F91264 — AuthGatePanel / DispatchSubnav / DispatchAlertsPage Tailwind slate-* → house tokens
