@@ -239,13 +239,7 @@ export function AccountsPayableAgingPage() {
   const freshnessLabel =
     qboMirror?.freshness === "fresh" ? "fresh" : qboMirror?.freshness === "stale" ? "stale" : "never-synced";
   const signedDelta = qboMirror?.reconcile.delta_cents;
-  const deltaLabel =
-    signedDelta == null
-      ? "n/a"
-      : `${signedDelta > 0 ? "+" : ""}${(signedDelta / 100).toLocaleString("en-US", {
-          style: "currency",
-          currency: "USD",
-        })}`;
+  const deltaLabel = signedDelta == null ? "n/a" : `${signedDelta > 0 ? "+" : ""}${formatUsdCents(signedDelta)}`;
   const reconcileLabel = (() => {
     const status = qboMirror?.reconcile.status;
     if (!status || status === "unavailable") return "n/a (mirror unavailable)";

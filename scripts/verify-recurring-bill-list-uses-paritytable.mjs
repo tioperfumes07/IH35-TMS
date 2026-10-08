@@ -56,8 +56,10 @@ function assertMigrated(src) {
   if (!src.includes('tableTestId="recurring-bill-templates-table"')) {
     errors.push(`${PAGE}: must set tableTestId="recurring-bill-templates-table"`);
   }
-  if (!src.includes("money(") || !src.includes('currency: "USD"')) {
-    errors.push(`${PAGE}: must keep the money() USD currency formatter for the Amount column (1:1)`);
+  const amountUsesCanonicalMoney =
+    /money\(/.test(src) || /formatUsd(?:Cents)?\(/.test(src);
+  if (!amountUsesCanonicalMoney) {
+    errors.push(`${PAGE}: must keep a canonical USD currency formatter for the Amount column (money() or formatUsd/formatUsdCents from lib/money)`);
   }
   if (!src.includes('kind="vendor"')) {
     errors.push(`${PAGE}: must keep the vendor EntityLink in the Vendor column`);

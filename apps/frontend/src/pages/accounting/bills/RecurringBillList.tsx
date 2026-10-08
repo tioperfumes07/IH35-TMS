@@ -18,10 +18,8 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useToast } from "../../../components/Toast";
 
 
-const MONEY_CURRENCY: Intl.NumberFormatOptions = { style: "currency", currency: "USD" };
-function money(amount: string | number) {
-  return new Intl.NumberFormat("en-US", MONEY_CURRENCY).format(Number(amount));
-}
+import { formatUsd } from "../../../lib/money";
+
 
 function frequencyLabel(f: string) {
   return { weekly: "Weekly", biweekly: "Bi-weekly", monthly: "Monthly", quarterly: "Quarterly", annually: "Annually" }[f] ?? f;
@@ -119,7 +117,7 @@ export function RecurringBillList() {
         className: "text-right",
         cellClass: "text-right font-medium text-gray-900",
         sortValue: (tmpl) => Number(tmpl.amount),
-        render: (tmpl) => money(tmpl.amount),
+        render: (tmpl) => formatUsd(Number(tmpl.amount)),
       },
       {
         key: "auto_post",
