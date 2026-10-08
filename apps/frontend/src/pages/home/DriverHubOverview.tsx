@@ -145,7 +145,7 @@ export function DriverHubOverview({ companyId, canReview }: { companyId: string;
               key={card.title}
               to={card.to}
               data-testid={card.testId}
-              className="rounded-sm border border-[#E5E7EB] bg-white p-3 shadow-xs transition hover:border-slate-300 hover:shadow-sm"
+              className="rounded-sm border border-[#E5E7EB] bg-white p-3 shadow-xs transition hover:border-[#E5E7EB] hover:shadow-sm"
             >
               <div className="text-xs font-semibold uppercase tracking-[0.25px] text-[#6B7280]">{card.title}</div>
               <div className={`mt-1 text-page-title font-bold tabular-nums ${card.isError ? "text-red-700" : "text-[#1A1F36]"}`}>
@@ -164,7 +164,7 @@ export function DriverHubOverview({ companyId, canReview }: { companyId: string;
       <section className="space-y-2" data-testid="driver-hub-leave-preview">
         <div className="flex items-baseline justify-between gap-2">
           <h2 className="text-xs font-semibold text-[#1A1F36]">Leave requests queue</h2>
-          <Link to="/driver-hub?tab=leave_requests" className="text-xs text-slate-700 hover:underline">
+          <Link to="/driver-hub?tab=leave_requests" className="text-xs text-[#1F2A44] hover:underline">
             Open full queue →
           </Link>
         </div>

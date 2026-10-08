@@ -3,6 +3,8 @@ export default {
   name: "verify-collapsed-list-filters-single-frame-vertical",
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-collapsed-list-filters-single-frame-vertical.mjs", "--selftest"]);
-    return ctx.run("node", ["scripts/verify-collapsed-list-filters-single-frame-vertical.mjs"]);
+    await ctx.run("node", ["scripts/verify-collapsed-list-filters-single-frame-vertical.mjs"]);
+    // BANK leftover refuse — ServiceTimeline / StatusBarMobile / DriverHubOverview house tokens
+    return ctx.run("node", ["scripts/verify-91286-svc-statusbar-drvhub-slate-leftover-chrome.mjs"]);
   },
 };

@@ -150,11 +150,11 @@ export function ServiceTimeline({ companyId, unitId, equipmentId, showUnitEventT
         </ul>
       )}
       {!timelineQ.isError && totalCount > PAGE_SIZE ? (
-        <div className="mt-3 flex items-center justify-between border-t border-slate-200 pt-2 text-xs text-slate-600">
+        <div className="mt-3 flex items-center justify-between border-t border-[#E5E7EB] pt-2 text-xs text-[#4B5563]">
           <span>{page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} of {totalCount}</span>
           <div className="flex gap-2">
-            <button type="button" className="rounded border border-slate-300 px-2 py-1 disabled:opacity-50" disabled={page === 0 || timelineQ.isFetching} onClick={() => setPage((value) => Math.max(0, value - 1))}>Previous</button>
-            <button type="button" className="rounded border border-slate-300 px-2 py-1 disabled:opacity-50" disabled={(page + 1) * PAGE_SIZE >= totalCount || timelineQ.isFetching} onClick={() => setPage((value) => value + 1)}>Next</button>
+            <button type="button" className="rounded border border-[#E5E7EB] px-2 py-1 disabled:opacity-50" disabled={page === 0 || timelineQ.isFetching} onClick={() => setPage((value) => Math.max(0, value - 1))}>Previous</button>
+            <button type="button" className="rounded border border-[#E5E7EB] px-2 py-1 disabled:opacity-50" disabled={(page + 1) * PAGE_SIZE >= totalCount || timelineQ.isFetching} onClick={() => setPage((value) => value + 1)}>Next</button>
           </div>
         </div>
       ) : null}
