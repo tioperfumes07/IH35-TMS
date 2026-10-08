@@ -12,5 +12,10 @@ const guards = [
 
 export default {
   name: "verify-vendor-column-orphan-guard-registry-batch",
-  async run(ctx) { for (const guard of guards) await ctx.run("node", [`scripts/${guard}`]); },
+  async run(ctx) {
+    for (const guard of guards) await ctx.run("node", [`scripts/${guard}`]);
+    // BANK leftover refuse — DriverCatalog / FuelCatalog / ListViewGear house tokens
+    await ctx.run("node", ["scripts/verify-91291-drv-fuel-listgear-slate-leftover-chrome.mjs"]);
+  },
 };
+
