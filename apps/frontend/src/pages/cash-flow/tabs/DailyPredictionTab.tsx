@@ -153,13 +153,13 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
             <button
               type="button"
               onClick={() => setDate(todayIso())}
-              className="text-xs text-slate-700 hover:underline"
+              className="text-xs text-[#4B5563] hover:underline"
             >
               Back to today
             </button>
           )}
           {date === todayIso() && (
-            <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">Today</span>
+            <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-medium text-[#4B5563]">Today</span>
           )}
         </div>
         <button
@@ -192,11 +192,11 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
           <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Predicted Net</p>
           <div className="mt-1 flex items-center gap-1">
             {netPositive ? (
-              <TrendingUp className="h-5 w-5 text-slate-600" />
+              <TrendingUp className="h-5 w-5 text-[#6B7280]" />
             ) : (
               <TrendingDown className="h-5 w-5 text-red-600" />
             )}
-            <p className={`text-page-title font-bold ${netPositive ? "text-slate-700" : "text-red-700"}`}>
+            <p className={`text-page-title font-bold ${netPositive ? "text-[#4B5563]" : "text-red-700"}`}>
               {isLoading ? "—" : formatCents(net, { sign: true })}
             </p>
           </div>
@@ -292,7 +292,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                         {new Date(item.delivery_time).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
                       </span>
                     )}
-                    <span className="ml-2 inline-flex rounded-full bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-700">
+                    <span className="ml-2 inline-flex rounded-full bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-medium text-[#4B5563]">
                       {item.basis === "Proforma" ? "Proforma / Pre-invoice" : item.basis}
                     </span>
                   </div>
@@ -335,9 +335,9 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                         {/* PUNCHLIST #70: 'Bill Due' pill recolored off-palette orange -> slate. */}
                         <span className={`inline-flex rounded-full px-1.5 py-0.5 text-xs font-medium mr-2 ${
                           item.kind === "driver_pay"
-                            ? "bg-slate-100 text-slate-700"
+                            ? "bg-[#F7F8FA] text-[#4B5563]"
                             : item.kind === "bill_due"
-                            ? "bg-slate-100 text-slate-700"
+                            ? "bg-[#F7F8FA] text-[#4B5563]"
                             : "bg-gray-100 text-gray-600"
                         }`}>
                           {item.kind === "driver_pay" ? "Driver Pay" : item.kind === "bill_due" ? "Bill Due" : "Manual"}
@@ -418,7 +418,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                     placeholder="Label (e.g. Fuel surcharge)"
                     value={addLabel}
                     onChange={(e) => setAddLabel(e.target.value)}
-                    className="flex-1 rounded-sm border border-gray-200 px-2 py-1.5 text-xs focus:border-slate-300 focus:outline-hidden"
+                    className="flex-1 rounded-sm border border-gray-200 px-2 py-1.5 text-xs focus:border-[#E5E7EB] focus:outline-hidden"
                   />
                   {/* M-1: dollars-mode; seam Math.round(parseFloat(addAmount...)*100)=amount_cents byte-for-byte. */}
                   <MoneyInput
@@ -452,7 +452,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
       {!isLoading && data && (
         <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-5 py-4">
           <span className="text-xs font-semibold text-gray-700">Predicted net cash flow for {fmtDate(date)}</span>
-          <span className={`text-page-title font-bold ${netPositive ? "text-slate-700" : "text-red-700"}`}>
+          <span className={`text-page-title font-bold ${netPositive ? "text-[#4B5563]" : "text-red-700"}`}>
             {formatCents(net, { sign: true })}
           </span>
         </div>
@@ -479,7 +479,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                     onClick={() => setDate(entry.date)}
                     title={`${pos ? "+" : ""}${formatUsdCents(entry.predicted_net_cents)}`}
                     className={`flex flex-col items-center py-2 transition-colors ${
-                      isSelected ? "bg-slate-100" : isToday ? "bg-gray-50" : "hover:bg-gray-50"
+                      isSelected ? "bg-[#F7F8FA]" : isToday ? "bg-gray-50" : "hover:bg-gray-50"
                     }`}
                   >
                     <span className="text-xs text-gray-500">
@@ -488,7 +488,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                     <span className="text-xs text-gray-400">
                       {localDateFromIso(entry.date).toLocaleDateString("en-US", { month: "numeric", day: "numeric" })}
                     </span>
-                    <span className={`mt-1 text-xs font-bold ${pos ? "text-slate-600" : "text-red-600"}`}>
+                    <span className={`mt-1 text-xs font-bold ${pos ? "text-[#6B7280]" : "text-red-600"}`}>
                       {formatCompactUsd(entry.predicted_net_cents)}
                     </span>
                   </button>

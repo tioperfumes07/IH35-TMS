@@ -110,7 +110,7 @@ function ProjectionPanel({
   const [form, setForm] = useState<RowForm>(emptyRow());
   const [showMore, setShowMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const accent = direction === "income" ? "text-slate-700" : "text-red-700";
+  const accent = direction === "income" ? "text-[#4B5563]" : "text-red-700";
   const columns = MDP_COLUMNS[direction];
 
   const saveMutation = useMutation({
@@ -220,7 +220,7 @@ function ProjectionPanel({
               ))}
               <span className={`w-24 shrink-0 text-right font-semibold ${accent}`}>{fmtCents(toCents(e.amount_cents))}</span>
               <span className="flex w-16 shrink-0 justify-end gap-2">
-                <button type="button" className="text-slate-600 hover:underline" onClick={() => editRow(e)}>Edit</button>
+                <button type="button" className="text-[#6B7280] hover:underline" onClick={() => editRow(e)}>Edit</button>
                 <button type="button" className="text-red-600 hover:underline" onClick={() => deleteMutation.mutate(e.id)}>Del</button>
               </span>
             </div>
@@ -238,7 +238,7 @@ function ProjectionPanel({
       {/* Single horizontal add / edit row: the named columns, then optional "+ more". */}
       <div className="shrink-0 space-y-1.5 border-t border-gray-100 bg-gray-50 px-3 py-2 text-xs">
         {form.id ? (
-          <div className="rounded-sm bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700" data-mdp-editing={direction}>
+          <div className="rounded-sm bg-[#F7F8FA] px-2 py-1 text-xs font-semibold text-[#4B5563]" data-mdp-editing={direction}>
             Editing existing {direction} line — change fields then press Save.
           </div>
         ) : null}
@@ -284,7 +284,7 @@ function ProjectionPanel({
           <MoneyInput valueCents={form.amount_cents} onChangeCents={(c) => setForm((f) => ({ ...f, amount_cents: c }))} placeholder="Total" ariaLabel="Total" className="w-24 min-w-[6rem] grow-0" />
         </div>
 
-        <button type="button" className="text-xs text-slate-500 hover:underline" onClick={() => setShowMore((v) => !v)}>
+        <button type="button" className="text-xs text-[#6B7280] hover:underline" onClick={() => setShowMore((v) => !v)}>
           {showMore ? "− less" : "+ more"}
         </button>
 
@@ -316,7 +316,7 @@ function ProjectionPanel({
           {/* PUNCHLIST #193: this is the panel's PRIMARY submit action (not a reference-dropdown mini-
               create), so it takes the locked "+ Create" vocab; "+ Add new ___" is reserved for the
               inline dropdown-create pattern elsewhere. */}
-          <button type="button" className="h-7 rounded-sm bg-slate-700 px-3 font-semibold text-white hover:bg-slate-800 disabled:opacity-50" disabled={saveMutation.isPending} onClick={() => saveMutation.mutate()}>
+          <button type="button" className="h-7 rounded-sm bg-[#4B5563] px-3 font-semibold text-white hover:bg-[#1F2A44] disabled:opacity-50" disabled={saveMutation.isPending} onClick={() => saveMutation.mutate()}>
             {form.id ? "Save" : `+ Create ${direction} line`}
           </button>
         </div>
@@ -530,7 +530,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
 
   return (
     <div className="space-y-4">
-      {hasReverseFilter ? <Link className="text-xs font-semibold text-slate-700 underline" to="/cash-flow?tab=manual_daily_projections">Clear projection filter</Link> : null}
+      {hasReverseFilter ? <Link className="text-xs font-semibold text-[#4B5563] underline" to="/cash-flow?tab=manual_daily_projections">Clear projection filter</Link> : null}
       {(entriesQuery.isError || openingQuery.isError) && (
         <ListErrorBanner
           message={`Failed to load projections: ${((entriesQuery.error ?? openingQuery.error) as Error | undefined)?.message ?? "Request failed"}`}
@@ -547,17 +547,17 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
       )}
       {/* KPI cards — uniform height; totals from computeProjectionTotals(entries). */}
       <div className="grid grid-cols-3 gap-3" data-mdp-kpi-row="true">
-        <div className="flex min-h-[5.5rem] flex-col rounded-lg border border-slate-200 bg-white px-4 py-3" data-mdp-kpi="income">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Expected Income</p>
-          <p className="mt-1 text-page-title font-semibold text-slate-700" data-mdp-kpi-total="income">{fmtCents(totalIncome)}</p>
+        <div className="flex min-h-[5.5rem] flex-col rounded-lg border border-[#E5E7EB] bg-white px-4 py-3" data-mdp-kpi="income">
+          <p className="text-xs font-medium uppercase tracking-wide text-[#6B7280]">Expected Income</p>
+          <p className="mt-1 text-page-title font-semibold text-[#4B5563]" data-mdp-kpi-total="income">{fmtCents(totalIncome)}</p>
         </div>
-        <div className="flex min-h-[5.5rem] flex-col rounded-lg border border-slate-200 bg-white px-4 py-3" data-mdp-kpi="expense">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Expected Expenses</p>
-          <p className="mt-1 text-page-title font-semibold text-slate-700" data-mdp-kpi-total="expense">{fmtCents(totalExpense)}</p>
+        <div className="flex min-h-[5.5rem] flex-col rounded-lg border border-[#E5E7EB] bg-white px-4 py-3" data-mdp-kpi="expense">
+          <p className="text-xs font-medium uppercase tracking-wide text-[#6B7280]">Expected Expenses</p>
+          <p className="mt-1 text-page-title font-semibold text-[#4B5563]" data-mdp-kpi-total="expense">{fmtCents(totalExpense)}</p>
         </div>
-        <div className={`flex min-h-[5.5rem] flex-col rounded-lg border px-4 py-3 ${netPositive ? "border-slate-200 bg-slate-50" : "border-slate-300 bg-slate-100"}`} data-mdp-kpi="net">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Predicted Net</p>
-          <p className={`mt-1 text-page-title font-semibold ${netPositive ? "text-slate-700" : "text-slate-900"}`} data-mdp-kpi-total="net">{fmtCents(net)}</p>
+        <div className={`flex min-h-[5.5rem] flex-col rounded-lg border px-4 py-3 ${netPositive ? "border-[#E5E7EB] bg-[#F7F8FA]" : "border-[#E5E7EB] bg-[#F7F8FA]"}`} data-mdp-kpi="net">
+          <p className="text-xs font-medium uppercase tracking-wide text-[#6B7280]">Predicted Net</p>
+          <p className={`mt-1 text-page-title font-semibold ${netPositive ? "text-[#4B5563]" : "text-[#0F1219]"}`} data-mdp-kpi-total="net">{fmtCents(net)}</p>
         </div>
       </div>
 
@@ -631,7 +631,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
         <span className="text-gray-400">— one day per entry; lines save to that date.</span>
         <button
           type="button"
-          className="ml-auto h-7 rounded-sm bg-slate-700 px-3 font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+          className="ml-auto h-7 rounded-sm bg-[#4B5563] px-3 font-semibold text-white hover:bg-[#1F2A44] disabled:opacity-50"
           // GO-0042: also gate on entriesQuery.isFetching -- after a failed pull, onError now
           // invalidates the cache, but the refetch is async. Without this, a user who retries
           // before that refetch lands would still hand pullMutation a stale existingKeys set via

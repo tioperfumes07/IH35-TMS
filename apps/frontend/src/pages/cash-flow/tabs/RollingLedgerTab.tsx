@@ -99,9 +99,9 @@ const STATUS_LABEL: Record<RollingLedgerRow["status"], string> = {
 
 // §7 palette law — financial UI never uses amber/warning colors, even for an overdue signal.
 const STATUS_CLASS: Record<RollingLedgerRow["status"], string> = {
-  overdue: "border-slate-300 bg-slate-200 text-slate-800 font-semibold",
-  due_today: "border-slate-200 bg-slate-100 text-slate-700",
-  upcoming: "border-slate-200 bg-white text-slate-500",
+  overdue: "border-[#E5E7EB] bg-[#E5E7EB] text-[#1F2A44] font-semibold",
+  due_today: "border-[#E5E7EB] bg-[#F7F8FA] text-[#4B5563]",
+  upcoming: "border-[#E5E7EB] bg-white text-[#6B7280]",
 };
 
 // CASH-FLOW-ROLLING-LEDGER-4-FIXES fix 4 (owner 2026-09-07) — Factor advance/reserve rows already
@@ -114,14 +114,14 @@ function isFactoringRow(type: string): boolean {
 
 function StatusPill({ row }: { row: RollingLedgerRow }) {
   if (isFactoringRow(row.type)) {
-    return <span className="inline-flex rounded-full border border-slate-200 bg-white px-1.5 py-0.5 text-xs text-slate-400">—</span>;
+    return <span className="inline-flex rounded-full border border-[#E5E7EB] bg-white px-1.5 py-0.5 text-xs text-[#6B7280]">—</span>;
   }
   return (
     <>
-      <span className={`inline-flex rounded-full border px-1.5 py-0.5 text-xs ${row.is_rollover_echo ? "border-slate-200 bg-slate-100 text-slate-500" : STATUS_CLASS[row.status]}`}>
+      <span className={`inline-flex rounded-full border px-1.5 py-0.5 text-xs ${row.is_rollover_echo ? "border-[#E5E7EB] bg-[#F7F8FA] text-[#6B7280]" : STATUS_CLASS[row.status]}`}>
         {row.is_rollover_echo ? "Rolled" : STATUS_LABEL[row.status]}
       </span>
-      {row.reason_label && <div className="mt-0.5 text-xs text-slate-400">rolled — {row.reason_label}</div>}
+      {row.reason_label && <div className="mt-0.5 text-xs text-[#6B7280]">rolled — {row.reason_label}</div>}
     </>
   );
 }
@@ -141,13 +141,13 @@ function SegmentedControl<T extends string>({
   dataTestId?: string;
 }) {
   return (
-    <div className="inline-flex h-7 overflow-hidden rounded-sm border border-slate-300 bg-white text-xs" data-testid={dataTestId}>
+    <div className="inline-flex h-7 overflow-hidden rounded-sm border border-[#E5E7EB] bg-white text-xs" data-testid={dataTestId}>
       {options.map((opt, i) => (
         <button
           key={opt.value}
           type="button"
-          className={`flex h-7 items-center px-2.5 ${i !== 0 ? "border-l border-slate-300" : ""} ${
-            value === opt.value ? "bg-[#1f2a44] text-white" : "text-slate-700"
+          className={`flex h-7 items-center px-2.5 ${i !== 0 ? "border-l border-[#E5E7EB]" : ""} ${
+            value === opt.value ? "bg-[#1f2a44] text-white" : "text-[#4B5563]"
           }`}
           onClick={() => onChange(opt.value)}
         >
@@ -175,7 +175,7 @@ function TypeFilterDropdown({
     <div className="relative">
       <button
         type="button"
-        className="flex h-7 min-w-[9rem] items-center justify-between gap-1 rounded-sm border border-slate-300 bg-white px-2 text-xs text-slate-700"
+        className="flex h-7 min-w-[9rem] items-center justify-between gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#4B5563]"
         onClick={() => setOpen((o) => !o)}
         data-testid="rolling-ledger-type-filter"
       >
@@ -208,9 +208,9 @@ function TypeFilterDropdown({
         <ChevronDown className="h-3 w-3" />
       </button>
       {open && (
-        <div className="absolute left-0 z-20 mt-1 w-64 rounded-sm border border-slate-200 bg-white p-2 shadow-sm">
+        <div className="absolute left-0 z-20 mt-1 w-64 rounded-sm border border-[#E5E7EB] bg-white p-2 shadow-sm">
           {options.map((opt) => (
-            <label key={opt.value} className="flex cursor-pointer items-center gap-2 rounded-sm px-1.5 py-1 text-xs text-slate-700 hover:bg-slate-50">
+            <label key={opt.value} className="flex cursor-pointer items-center gap-2 rounded-sm px-1.5 py-1 text-xs text-[#4B5563] hover:bg-[#F7F8FA]">
               <input type="checkbox" checked={selected.includes(opt.value)} onChange={() => toggle(opt.value)} />
               {opt.label}
             </label>
@@ -226,25 +226,25 @@ function TypeFilterDropdown({
 function DayNavigatorCard({ date, today, onChange }: { date: string; today: string; onChange: (next: string) => void }) {
   return (
     <div
-      className="flex h-16 items-center justify-center gap-3 rounded-sm border border-slate-800 bg-white px-3"
+      className="flex h-16 items-center justify-center gap-3 rounded-sm border border-[#E5E7EB] bg-white px-3"
       data-testid="rolling-ledger-day-navigator"
     >
       <button
         type="button"
         onClick={() => onChange(addDaysIso(date, -1))}
-        className="flex h-7 w-7 items-center justify-center rounded-sm border border-slate-300 text-slate-600 hover:bg-slate-50"
+        className="flex h-7 w-7 items-center justify-center rounded-sm border border-[#E5E7EB] text-[#6B7280] hover:bg-[#F7F8FA]"
         aria-label="Previous day"
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
-      <span className="text-xs font-semibold text-slate-800">
+      <span className="text-xs font-semibold text-[#1F2A44]">
         {fmtDate(date)}
-        {date === today && <span className="ml-1.5 font-normal text-slate-500">· Today</span>}
+        {date === today && <span className="ml-1.5 font-normal text-[#6B7280]">· Today</span>}
       </span>
       <button
         type="button"
         onClick={() => onChange(addDaysIso(date, 1))}
-        className="flex h-7 w-7 items-center justify-center rounded-sm border border-slate-300 text-slate-600 hover:bg-slate-50"
+        className="flex h-7 w-7 items-center justify-center rounded-sm border border-[#E5E7EB] text-[#6B7280] hover:bg-[#F7F8FA]"
         aria-label="Next day"
       >
         <ChevronRight className="h-4 w-4" />
@@ -253,7 +253,7 @@ function DayNavigatorCard({ date, today, onChange }: { date: string; today: stri
         <button
           type="button"
           onClick={() => onChange(today)}
-          className="ml-1 rounded-sm border border-slate-300 px-2 py-0.5 text-xs text-slate-600 hover:bg-slate-50"
+          className="ml-1 rounded-sm border border-[#E5E7EB] px-2 py-0.5 text-xs text-[#6B7280] hover:bg-[#F7F8FA]"
         >
           Today
         </button>
@@ -285,13 +285,13 @@ function ExpenseRolloverMenu({
           setOpen((o) => !o);
         }}
         disabled={pending}
-        className="rounded-sm border border-slate-300 bg-white px-1.5 py-0.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+        className="rounded-sm border border-[#E5E7EB] bg-white px-1.5 py-0.5 text-xs font-medium text-[#4B5563] hover:bg-[#F7F8FA] disabled:opacity-50"
         data-testid="rolling-ledger-expense-rollover-menu"
       >
         Roll over ▾
       </button>
       {open && (
-        <div className="absolute right-0 z-20 mt-1 w-48 rounded-sm border border-slate-200 bg-white p-1 shadow-md" onClick={(e) => e.stopPropagation()}>
+        <div className="absolute right-0 z-20 mt-1 w-48 rounded-sm border border-[#E5E7EB] bg-white p-1 shadow-md" onClick={(e) => e.stopPropagation()}>
           {filtered.map((r) => (
             <button
               key={r.code}
@@ -300,7 +300,7 @@ function ExpenseRolloverMenu({
                 onRollover(r.code);
                 setOpen(false);
               }}
-              className="block w-full rounded-sm px-2 py-1 text-left text-xs text-slate-700 hover:bg-slate-50"
+              className="block w-full rounded-sm px-2 py-1 text-left text-xs text-[#4B5563] hover:bg-[#F7F8FA]"
             >
               {r.label}
             </button>
@@ -336,17 +336,17 @@ function StopTrackingButton({
           setOpen((o) => !o);
         }}
         disabled={pending}
-        className="rounded-sm border border-slate-300 bg-white px-1.5 py-0.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+        className="rounded-sm border border-[#E5E7EB] bg-white px-1.5 py-0.5 text-xs font-medium text-[#4B5563] hover:bg-[#F7F8FA] disabled:opacity-50"
         data-testid="rolling-ledger-expense-stop"
       >
         Stop
       </button>
       {open && (
-        <div className="absolute right-0 z-20 mt-1 w-56 rounded-sm border border-slate-200 bg-white p-2 shadow-md text-xs" onClick={(e) => e.stopPropagation()}>
+        <div className="absolute right-0 z-20 mt-1 w-56 rounded-sm border border-[#E5E7EB] bg-white p-2 shadow-md text-xs" onClick={(e) => e.stopPropagation()}>
           <select
             value={reasonCode}
             onChange={(e) => setReasonCode(e.target.value)}
-            className="mb-1 h-[26px] w-full rounded-sm border border-slate-300 px-1 text-xs"
+            className="mb-1 h-[26px] w-full rounded-sm border border-[#E5E7EB] px-1 text-xs"
           >
             {filtered.map((r) => (
               <option key={r.code} value={r.code}>
@@ -359,7 +359,7 @@ function StopTrackingButton({
             value={hiddenReason}
             onChange={(e) => setHiddenReason(e.target.value)}
             placeholder="Reason required (audited)"
-            className="mb-1 h-[26px] w-full rounded-sm border border-slate-300 px-1 text-xs"
+            className="mb-1 h-[26px] w-full rounded-sm border border-[#E5E7EB] px-1 text-xs"
             data-testid="rolling-ledger-expense-stop-reason"
           />
           <button
@@ -370,7 +370,7 @@ function StopTrackingButton({
               setOpen(false);
               setHiddenReason("");
             }}
-            className="w-full rounded-sm bg-slate-800 px-2 py-1 text-xs font-medium text-white hover:bg-slate-900 disabled:opacity-50"
+            className="w-full rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-medium text-white hover:bg-[#0F1219] disabled:opacity-50"
           >
             Confirm stop
           </button>
@@ -436,21 +436,21 @@ function AdjustPopover({ row, reasons, applies, onClose, onSubmit, pending }: Ad
   const canSave = hide ? hiddenReason.trim().length > 0 && reasonCode : reasonCode && projectedDate;
 
   return (
-    <div className="rounded-sm border border-slate-400 bg-white p-3 text-xs shadow-md" data-testid="rolling-ledger-adjust-popover">
-      <div className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-600">
+    <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs shadow-md" data-testid="rolling-ledger-adjust-popover">
+      <div className="mb-2 text-xs font-bold uppercase tracking-wide text-[#6B7280]">
         Adjust expectation · {row.document_label} · {row.counterparty} · {formatCents(row.amount_cents || 0)} due {fmtDateShort(row.due_date)}
       </div>
       <div className="grid grid-cols-2 gap-3">
         <label className="block">
-          <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500">Projected date</span>
+          <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[#6B7280]">Projected date</span>
           <DatePicker value={projectedDate} onChange={setProjectedDate} min={row.due_date} disabled={hide} />
         </label>
         <label className="block">
-          <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500">Reason (catalog)</span>
+          <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[#6B7280]">Reason (catalog)</span>
           <select
             value={reasonCode}
             onChange={(e) => setReasonCode(e.target.value)}
-            className="h-[26px] w-full rounded-sm border border-slate-300 px-2 text-xs"
+            className="h-[26px] w-full rounded-sm border border-[#E5E7EB] px-2 text-xs"
           >
             {filteredReasons.map((r) => (
               <option key={r.code} value={r.code}>
@@ -460,22 +460,22 @@ function AdjustPopover({ row, reasons, applies, onClose, onSubmit, pending }: Ad
           </select>
         </label>
         <label className="col-span-2 block">
-          <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500">Note</span>
+          <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[#6B7280]">Note</span>
           <input
             type="text"
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="optional — who said what, when"
-            className="h-[26px] w-full rounded-sm border border-slate-300 px-2 text-xs"
+            className="h-[26px] w-full rounded-sm border border-[#E5E7EB] px-2 text-xs"
           />
         </label>
         {route && (
           <div className="col-span-2">
-            <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500">Or record it</span>
+            <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[#6B7280]">Or record it</span>
             <button
               type="button"
               onClick={() => navigate(route)}
-              className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 hover:bg-slate-50"
+              className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-xs text-[#4B5563] hover:bg-[#F7F8FA]"
             >
               Go to {row.document_label} to record the payment →
             </button>
@@ -483,22 +483,22 @@ function AdjustPopover({ row, reasons, applies, onClose, onSubmit, pending }: Ad
         )}
         <label className="col-span-2 flex items-center gap-2">
           <input type="checkbox" checked={hide} onChange={(e) => setHide(e.target.checked)} className="h-3.5 w-3.5" />
-          <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Stop showing here</span>
+          <span className="text-xs font-medium uppercase tracking-wide text-[#6B7280]">Stop showing here</span>
         </label>
         {hide && (
           <label className="col-span-2 block">
-            <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500">Reason required (audited)</span>
+            <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[#6B7280]">Reason required (audited)</span>
             <input
               type="text"
               value={hiddenReason}
               onChange={(e) => setHiddenReason(e.target.value)}
-              className="h-[26px] w-full rounded-sm border border-slate-300 px-2 text-xs"
+              className="h-[26px] w-full rounded-sm border border-[#E5E7EB] px-2 text-xs"
               data-testid="rolling-ledger-hide-reason"
             />
           </label>
         )}
         <div className="col-span-2 flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="rounded-sm border border-slate-300 bg-white px-3 py-1 text-xs text-slate-700 hover:bg-slate-50">
+          <button type="button" onClick={onClose} className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-1 text-xs text-[#4B5563] hover:bg-[#F7F8FA]">
             Cancel
           </button>
           <button
@@ -507,7 +507,7 @@ function AdjustPopover({ row, reasons, applies, onClose, onSubmit, pending }: Ad
             onClick={() =>
               onSubmit({ projectedDate: hide ? null : projectedDate, reasonCode, note, hide, hiddenReason })
             }
-            className="rounded-sm bg-slate-800 px-3 py-1 text-xs font-medium text-white hover:bg-slate-900 disabled:opacity-50"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-medium text-white hover:bg-[#0F1219] disabled:opacity-50"
             data-testid="rolling-ledger-adjust-save"
           >
             Save
@@ -682,7 +682,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       render: (row) => (
         <>
           <EntityLink kind={row.document_kind} id={row.document_id} label={row.document_label} onClick={(e) => e.stopPropagation()} />{" "}
-          <span className="text-slate-400">{row.counterparty}</span>
+          <span className="text-[#6B7280]">{row.counterparty}</span>
         </>
       ),
     },
@@ -693,7 +693,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
         row.load_id ? (
           <EntityLink kind="load" id={row.load_id} label={row.load_number ?? row.load_id} onClick={(e) => e.stopPropagation()} />
         ) : (
-          <span className="text-slate-400">—</span>
+          <span className="text-[#6B7280]">—</span>
         ),
     },
     // ALL-SEATS LAW (owner, 2026-09-13): every window with a load number needs a settlement/tour
@@ -706,7 +706,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
         row.load_id ? (
           <SettlementRefCell loadId={row.load_id} operatingCompanyId={operatingCompanyId} />
         ) : (
-          <span className="text-slate-400">—</span>
+          <span className="text-[#6B7280]">—</span>
         ),
     },
     {
@@ -730,7 +730,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       label: "Expected",
       className: "text-right",
       cellClass: "text-right font-mono font-medium",
-      render: (row) => <span className={row.amount_cents === 0 ? "text-slate-400" : "text-slate-800"}>{formatCents(row.amount_cents)}</span>,
+      render: (row) => <span className={row.amount_cents === 0 ? "text-[#6B7280]" : "text-[#1F2A44]"}>{formatCents(row.amount_cents)}</span>,
     },
     { key: "status", label: "Status", sortable: false, render: (row) => <StatusPill row={row} /> },
   ];
@@ -753,7 +753,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       label: "Amount",
       className: "text-right",
       cellClass: "text-right font-mono font-medium",
-      render: (row) => <span className={row.amount_cents === 0 ? "text-slate-400" : "text-slate-800"}>{formatCents(row.amount_cents)}</span>,
+      render: (row) => <span className={row.amount_cents === 0 ? "text-[#6B7280]" : "text-[#1F2A44]"}>{formatCents(row.amount_cents)}</span>,
     },
     { key: "status", label: "Status", sortable: false, render: (row) => <StatusPill row={row} /> },
     {
@@ -796,7 +796,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       render: (day) => (
         <>
           {fmtDate(day.date)}
-          {day.date === today && <span className="ml-1 text-xs text-slate-400">(today)</span>}
+          {day.date === today && <span className="ml-1 text-xs text-[#6B7280]">(today)</span>}
         </>
       ),
     },
@@ -806,14 +806,14 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       key: "income_carry_over_cents",
       label: "Income carried",
       className: "text-right",
-      cellClass: "text-right text-slate-400",
+      cellClass: "text-right text-[#6B7280]",
       render: (day) => (day.income_carry_over_cents === 0 ? "—" : formatCents(day.income_carry_over_cents)),
     },
     {
       key: "expenses_carry_over_cents",
       label: "Expenses carried",
       className: "text-right",
-      cellClass: "text-right text-slate-400",
+      cellClass: "text-right text-[#6B7280]",
       render: (day) => (day.expenses_carry_over_cents === 0 ? "—" : formatCents(day.expenses_carry_over_cents)),
     },
     {
@@ -821,13 +821,13 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       label: "Net",
       className: "text-right",
       cellClass: "text-right",
-      render: (day) => <span className={day.net_cents < 0 ? "text-slate-800" : "text-slate-600"}>{day.net_cents === 0 ? "—" : formatCents(day.net_cents, { sign: true })}</span>,
+      render: (day) => <span className={day.net_cents < 0 ? "text-[#1F2A44]" : "text-[#6B7280]"}>{day.net_cents === 0 ? "—" : formatCents(day.net_cents, { sign: true })}</span>,
     },
     {
       key: "running_cash_cents",
       label: "Running cash",
       className: "text-right",
-      cellClass: "text-right font-medium text-slate-800",
+      cellClass: "text-right font-medium text-[#1F2A44]",
       render: (day) => (day.running_cash_cents === null ? "—" : formatCents(day.running_cash_cents, { sign: true })),
     },
   ];
@@ -839,7 +839,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       → segmented All/Income/Expenses → From/To (always visible) + Presets → segmented
       By day/By type → All transaction types (dropdown-button) → Rolled over: show (dropdown-
       button) → gear (ParityTable's own, per register) + Export. */}
-      <div className="flex flex-wrap items-center gap-2 rounded-sm border border-slate-200 bg-white p-2">
+      <div className="flex flex-wrap items-center gap-2 rounded-sm border border-[#E5E7EB] bg-white p-2">
         <div className="h-7 w-[242px]">
           <Combobox
             options={descriptionFilterOptions}
@@ -862,11 +862,11 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
           dataTestId="rolling-ledger-kind-filter"
         />
         <div className="flex h-7 items-center gap-1">
-          <label htmlFor="rolling-ledger-from" className="text-xs font-bold uppercase text-slate-600">
+          <label htmlFor="rolling-ledger-from" className="text-xs font-bold uppercase text-[#6B7280]">
             From
           </label>
           <DatePicker id="rolling-ledger-from" value={from} onChange={(v) => { setFrom(v); updateParams({ rl_from: v }); }} max={to} className="h-7 w-[128px]" data-testid="rolling-ledger-from" />
-          <label htmlFor="rolling-ledger-to" className="text-xs font-bold uppercase text-slate-600">
+          <label htmlFor="rolling-ledger-to" className="text-xs font-bold uppercase text-[#6B7280]">
             To
           </label>
           <DatePicker id="rolling-ledger-to" value={to} onChange={(v) => { setTo(v); updateParams({ rl_to: v }); }} min={from} className="h-7 w-[128px]" data-testid="rolling-ledger-to" />
@@ -874,7 +874,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
             <button
               type="button"
               onClick={() => setPresetMenuOpen((o) => !o)}
-              className="flex h-7 items-center gap-1 rounded-sm border border-slate-300 bg-white px-2 text-xs text-slate-700 hover:bg-slate-50"
+              className="flex h-7 items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#4B5563] hover:bg-[#F7F8FA]"
               data-testid="rolling-ledger-presets"
             >
               Presets <ChevronDown className="h-3 w-3" />
@@ -886,8 +886,8 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
                     key={opt.value}
                     type="button"
                     onClick={() => applyPreset(opt.value)}
-                    className={`block w-full rounded-sm px-2 py-1 text-left text-xs hover:bg-slate-50 ${
-                      preset === opt.value ? "bg-slate-100 font-medium text-slate-800" : "text-slate-700"
+                    className={`block w-full rounded-sm px-2 py-1 text-left text-xs hover:bg-[#F7F8FA] ${
+                      preset === opt.value ? "bg-[#F7F8FA] font-medium text-[#1F2A44]" : "text-[#4B5563]"
                     }`}
                   >
                     {opt.label}
@@ -914,7 +914,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
         <button
           type="button"
           onClick={() => updateParams({ rl_rolled: showRolledOver ? "hide" : null })}
-          className="flex h-7 items-center gap-1 rounded-sm border border-slate-300 bg-white px-2 text-xs text-slate-700 hover:bg-slate-50"
+          className="flex h-7 items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#4B5563] hover:bg-[#F7F8FA]"
           data-testid="rolling-ledger-rolled-toggle"
         >
           Rolled over: <b>{showRolledOver ? "show" : "hide"}</b>
@@ -925,7 +925,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
           type="button"
           onClick={() => exportRowsCsv(allRows)}
           disabled={allRows.length === 0}
-          className="h-7 rounded-sm border border-slate-300 bg-white px-3 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          className="h-7 rounded-sm border border-[#E5E7EB] bg-white px-3 text-xs font-medium text-[#4B5563] hover:bg-[#F7F8FA] disabled:opacity-50"
           data-testid="rolling-ledger-export"
         >
           Export
@@ -935,9 +935,9 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       {/* Day navigator card — 64px, restores the skeleton element from before this correction. */}
       <DayNavigatorCard date={selectedDate ?? today} today={today} onChange={(next) => setSelectedDate(next)} />
 
-      {isLoading && <div className="rounded-sm border border-slate-200 bg-white p-6 text-center text-xs text-slate-500">Loading…</div>}
+      {isLoading && <div className="rounded-sm border border-[#E5E7EB] bg-white p-6 text-center text-xs text-[#6B7280]">Loading…</div>}
       {isError && (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 p-6 text-center text-xs text-slate-700">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-6 text-center text-xs text-[#4B5563]">
           Failed to load the rolling ledger. Please try again.
         </div>
       )}
@@ -958,10 +958,10 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
             }`}
           >
             {rowKindFilter !== "expenses" && (
-              <div className="overflow-hidden rounded-sm border border-slate-800 bg-white">
-                <div className="border-b border-slate-200 bg-slate-100 px-2.5 py-1.5">
-                  <span className="text-xs font-bold uppercase tracking-wide text-slate-700">Expected income</span>
-                  <span className="ml-2 text-xs text-slate-500">{incomeRows.length} rows</span>
+              <div className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
+                <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-2.5 py-1.5">
+                  <span className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">Expected income</span>
+                  <span className="ml-2 text-xs text-[#6B7280]">{incomeRows.length} rows</span>
                 </div>
                 <ParityTable
                   rows={incomeRows}
@@ -975,7 +975,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
                       ? {
                           getKey: (row) => row.type,
                           renderHeader: (key, rows) => (
-                            <span className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                            <span className="text-xs font-bold uppercase tracking-wide text-[#6B7280]">
                               {key} · {rows.length} · {formatCents(rows.reduce((s, r) => s + r.amount_cents, 0))}
                             </span>
                           ),
@@ -988,7 +988,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
                 {/* ROUND 16.7 CORRECTION — the multi-field AdjustPopover exists ONLY on Expected
                 Income rows ("THE ADJUST EXPECTATION ... WILL ONLY COME IN EXPECTED INCOME SIDE"). */}
                 {adjustingRow && adjustingRowIsIncome && (
-                  <div className="border-t border-slate-200 p-2">
+                  <div className="border-t border-[#E5E7EB] p-2">
                     <AdjustPopover
                       row={adjustingRow}
                       reasons={reasons}
@@ -1005,12 +1005,12 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
             )}
 
             {rowKindFilter !== "income" && (
-              <div className="overflow-hidden rounded-sm border border-slate-800 bg-white">
-                <div className="border-b border-slate-200 bg-slate-100 px-2.5 py-1.5">
-                  <span className="text-xs font-bold uppercase tracking-wide text-slate-700">
+              <div className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
+                <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-2.5 py-1.5">
+                  <span className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">
                     Expected expenses{selectedDate ? ` · ${fmtDate(selectedDate)}` : ""}
                   </span>
-                  <span className="ml-2 text-xs text-slate-500">{expenseRowsToday.length} rows</span>
+                  <span className="ml-2 text-xs text-[#6B7280]">{expenseRowsToday.length} rows</span>
                 </div>
                 <ParityTable
                   rows={expenseRowsToday}
@@ -1023,7 +1023,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
                       ? {
                           getKey: (row) => row.type,
                           renderHeader: (key, rows) => (
-                            <span className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                            <span className="text-xs font-bold uppercase tracking-wide text-[#6B7280]">
                               {key} · {rows.length} · {formatCents(rows.reduce((s, r) => s + r.amount_cents, 0))}
                             </span>
                           ),
@@ -1040,19 +1040,19 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
           </div>
 
           {/* Day grid */}
-          <div className="overflow-hidden rounded-sm border border-slate-800 bg-white">
-            <div className="border-b border-slate-200 bg-slate-100 px-2.5 py-1.5">
-              <span className="text-xs font-bold uppercase tracking-wide text-slate-700">
+          <div className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
+            <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-2.5 py-1.5">
+              <span className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">
                 Day grid · {fmtDateShort(from)} → {fmtDateShort(to)}
               </span>
-              <span className="ml-2 text-xs text-slate-500">click a date → its rows above · carried = still-open older items</span>
+              <span className="ml-2 text-xs text-[#6B7280]">click a date → its rows above · carried = still-open older items</span>
             </div>
             <ParityTable
               rows={data.days}
               columns={dayGridColumns}
               rowKey={(day) => day.date}
               storageKey="cash-flow-day-grid"
-              rowClassName={(day) => `${day.date === today ? "bg-slate-50 font-medium" : ""} ${day.date === selectedDate ? "bg-slate-100" : ""} ${day.date < today ? "text-slate-400" : ""}`}
+              rowClassName={(day) => `${day.date === today ? "bg-[#F7F8FA] font-medium" : ""} ${day.date === selectedDate ? "bg-[#F7F8FA]" : ""} ${day.date < today ? "text-[#6B7280]" : ""}`}
               onRowClick={(day) => setSelectedDate(day.date === selectedDate ? null : day.date)}
               data-testid="rolling-ledger-day-grid"
             />
