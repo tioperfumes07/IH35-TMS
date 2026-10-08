@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK leftover slate — SafetyGeneric / Maintenance / Fleet catalog lists
+
+FINDING: BANK-F91289 — SafetyGenericCatalogListPage / MaintenanceCatalogListPage / FleetCatalogListPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25970 squash `18c2bf6119` (BANK-F91288 UserActivity/TrailerIdentity/OpsDepthNav)
+GUARD: scripts/verify-91289-safety-maint-fleet-cat-slate-leftover-chrome.mjs + verify-steps/3416 piggyback
+LIVE PROOF: verify-91289-safety-maint-fleet-cat-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3416 piggyback + OUTBOX
+
 ## 2026-10-09 · BANK leftover slate — UserActivity / TrailerIdentity / OpsDepthNav
 
 FINDING: BANK-F91288 — UserActivityTab / IdentityStatusHeader / OperationsDepthNav Tailwind slate-* → house tokens
