@@ -56,15 +56,15 @@ function CascadeItemRow({
   onToggle: () => void;
 }) {
   return (
-    <label className="flex items-center justify-between gap-2 py-0.5 text-xs text-slate-700">
+    <label className="flex items-center justify-between gap-2 py-0.5 text-xs text-[#4B5563]">
       <span className="flex items-center gap-1.5">
         <input type="checkbox" checked={!excluded} onChange={onToggle} />
-        <span className={excluded ? "line-through text-slate-400" : ""}>
+        <span className={excluded ? "line-through text-[#6B7280]" : ""}>
           {item.number ?? "—"}
           {item.detail ? ` — ${item.detail}` : ""}
         </span>
       </span>
-      <span className={excluded ? "line-through text-slate-400" : "font-mono"}>{formatUsdCents(item.amount_cents)}</span>
+      <span className={excluded ? "line-through text-[#6B7280]" : "font-mono"}>{formatUsdCents(item.amount_cents)}</span>
     </label>
   );
 }
@@ -83,8 +83,8 @@ function CascadeSection({
   if (items.length === 0) return null;
   const totalCents = items.reduce((sum, item) => (excludedIds.has(item.id) ? sum : sum + item.amount_cents), 0);
   return (
-    <div className="border-t border-slate-200 pt-1">
-      <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+    <div className="border-t border-[#E5E7EB] pt-1">
+      <div className="flex items-center justify-between text-xs font-semibold text-[#4B5563]">
         <span>{title}</span>
         <span className="font-mono">{formatUsdCents(totalCents)}</span>
       </div>
@@ -214,13 +214,13 @@ export function CancelLoadModal({
   return (
     <Modal open={open} onClose={guardedClose} title={modalTitle}>
       {batchN ? (
-        <p className="mb-2 text-xs text-slate-600" data-testid="cancel-load-modal-batch-note">
+        <p className="mb-2 text-xs text-[#4B5563]" data-testid="cancel-load-modal-batch-note">
           Reason and note apply once to all {batchN} selected loads. Fail-stop: one blocked row rolls back the
           whole batch.
         </p>
       ) : null}
       {loadId ? (
-        <div className="mb-2 text-xs text-slate-600" data-testid="cancel-load-modal-entitylinks">
+        <div className="mb-2 text-xs text-[#4B5563]" data-testid="cancel-load-modal-entitylinks">
           Load:{" "}
           <EntityLinkOrTombstone kind="load" id={loadId} name={loadNumber} noun="Load" />
         </div>
@@ -360,7 +360,7 @@ export function CancelLoadModal({
         {!needsApproval || ownerInlineApprove ? (
           isBatch ? (
             <div
-              className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-1.5 text-xs text-slate-800"
+              className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs text-[#1F2A44]"
               data-testid="cancel-load-modal-cascade-notice"
             >
               <span className="font-semibold">This will automatically:</span>
@@ -369,16 +369,16 @@ export function CancelLoadModal({
                 <li>Cancel any linked driver settlements (if not yet paid out)</li>
                 <li>Void all open invoices on each load with a reversing journal entry</li>
               </ul>
-              <p className="mt-1 text-slate-600">Paid or factored invoices and paid-out settlements must be resolved manually.</p>
+              <p className="mt-1 text-[#4B5563]">Paid or factored invoices and paid-out settlements must be resolved manually.</p>
             </div>
           ) : (
             <div
-              className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-1.5 text-xs text-slate-800"
+              className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs text-[#1F2A44]"
               data-testid="cancel-load-modal-cascade-preview"
             >
               <span className="font-semibold">Every artifact this cancel will touch:</span>
               {previewQuery.isPending ? (
-                <p className="mt-1 text-slate-600">Loading impact…</p>
+                <p className="mt-1 text-[#4B5563]">Loading impact…</p>
               ) : previewQuery.isError ? (
                 <ListErrorState
                   status={0}
@@ -387,7 +387,7 @@ export function CancelLoadModal({
                 />
               ) : preview ? (
                 cascadeIsEmpty ? (
-                  <p className="mt-1 text-slate-600" data-testid="cancel-load-modal-cascade-empty">
+                  <p className="mt-1 text-[#4B5563]" data-testid="cancel-load-modal-cascade-empty">
                     No linked invoices, expenses, vendor bills, driver advances, settlements, fuel
                     expenses, or driver bills found for this load.
                   </p>
@@ -400,10 +400,10 @@ export function CancelLoadModal({
                     <CascadeSection title="Settlements" items={preview.settlements} excludedIds={excludedIds} onToggle={toggleExcluded} />
                     <CascadeSection title="Fuel expenses" items={preview.fuel_expenses} excludedIds={excludedIds} onToggle={toggleExcluded} />
                     {preview.driver_bills.length > 0 ? (
-                      <div className="border-t border-slate-200 pt-1">
-                        <div className="text-xs font-semibold text-slate-700">Driver bill — KEEP / VOID split</div>
+                      <div className="border-t border-[#E5E7EB] pt-1">
+                        <div className="text-xs font-semibold text-[#4B5563]">Driver bill — KEEP / VOID split</div>
                         {preview.driver_bills.map((db) => (
-                          <div key={db.id} className="py-0.5 text-xs text-slate-700">
+                          <div key={db.id} className="py-0.5 text-xs text-[#4B5563]">
                             <div className="flex items-center justify-between">
                               <span>
                                 {db.number ?? "—"}
@@ -411,11 +411,11 @@ export function CancelLoadModal({
                               </span>
                               <span className="font-mono">{formatUsdCents(db.amount_cents)}</span>
                             </div>
-                            <div className="ml-3 flex items-center justify-between text-slate-600">
+                            <div className="ml-3 flex items-center justify-between text-[#4B5563]">
                               <span>KEEP — empty miles actually driven</span>
                               <span className="font-mono">{formatUsdCents(db.keep_cents)}</span>
                             </div>
-                            <div className="ml-3 flex items-center justify-between text-slate-600">
+                            <div className="ml-3 flex items-center justify-between text-[#4B5563]">
                               <span>VOID — loaded miles, tarp, extra stops, detention (freight never moved)</span>
                               <span className="font-mono">{formatUsdCents(db.void_cents)}</span>
                             </div>
@@ -423,7 +423,7 @@ export function CancelLoadModal({
                         ))}
                       </div>
                     ) : null}
-                    <label className="mt-1 flex items-center gap-1.5 border-t border-slate-200 pt-1 text-xs font-medium text-slate-800">
+                    <label className="mt-1 flex items-center gap-1.5 border-t border-[#E5E7EB] pt-1 text-xs font-medium text-[#1F2A44]">
                       <input
                         type="checkbox"
                         checked={reviewedCascade}
@@ -440,11 +440,11 @@ export function CancelLoadModal({
         ) : null}
         {needsApproval ? (
           ownerInlineApprove ? (
-            <div className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700">
+            <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#4B5563]">
               As Owner, confirming will approve &amp; cancel this load immediately.
             </div>
           ) : (
-            <div className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700">
+            <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#4B5563]">
               This will be submitted for Owner approval; the load isn&apos;t cancelled until an Owner approves.
             </div>
           )
