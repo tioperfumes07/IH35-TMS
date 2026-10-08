@@ -12,7 +12,7 @@ import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import { syncSamsaraDriversMaster, syncSamsaraVehiclesMaster, syncSamsaraTrailersMaster } from "../integrations/samsara/samsara-master-sync.service.js";
 import { listSamsaraIngestionTenantIds } from "../integrations/samsara/ingestion-tenants.service.js";
-import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { recordBackgroundJobDisabled, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 
 let initialized = false;
 const CRON_NAME = "samsara.master_sync_cron";
@@ -65,6 +65,11 @@ export function initializeSamsaraMasterSyncCron(app: FastifyInstance) {
   // routes are unaffected.
   if (process.env.ENABLE_SAMSARA_MASTER_SYNC_CRON !== "true") {
     app.log.info("Samsara master sync cron not scheduled: ENABLE_SAMSARA_MASTER_SYNC_CRON is not true (writes business records)");
+    // GO-0017-L3: disabled-by-design must refresh last_successful_run_at on every boot so healthz
+    // does not treat a frozen row as a crashed scheduler (live: 11k+ minutes LATE while never scheduled).
+    recordBackgroundJobDisabled(CRON_NAME).catch((err) =>
+      app.log.warn({ err }, `[background-job:${CRON_NAME}] failed to record disabled-outcome`)
+    );
     return;
   }
 

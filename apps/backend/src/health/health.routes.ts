@@ -540,10 +540,10 @@ export function backgroundJobRule(
       // "35 7 * * *" = every 1440m -> two missed periods
       return { enabled: true, maxStaleMinutes: 2880 };
     case "fuel.fraud_detector_worker":
-      // "*/15 * * * *" = every 15m -> two missed periods
-      // The detector can create alerts and dispatch notifications, so its worker is default-OFF.
-      // Monitoring the disabled ledger row as enabled made one historic run permanently stale.
-      return { enabled: envEnabled("ENABLE_FUEL_FRAUD_DETECTOR_WORKER"), maxStaleMinutes: 30 };
+      // ROUND 306 E-21: no 15m timer — runs from fuel-ingest hooks (Loves daily import + statement
+      // upload). A 30m window false-alarmed every quiet day (live: 615m LATE while armed + healthy).
+      // Window = two missed daily Loves imports. Default-OFF still mirrored.
+      return { enabled: envEnabled("ENABLE_FUEL_FRAUD_DETECTOR_WORKER"), maxStaleMinutes: 2880 };
     case "idempotency.cleanup_cron":
       // "30 3 * * *" = every 1440m -> two missed periods
       return { enabled: true, maxStaleMinutes: 2880 };
@@ -563,8 +563,12 @@ export function backgroundJobRule(
       // "*/15 * * * *" = every 15m -> two missed periods
       return { enabled: true, maxStaleMinutes: 30 };
     case "qbo_sync.drift_scheduler":
-      // "0 */4 * * *" = every 240m -> two missed periods
-      return { enabled: true, maxStaleMinutes: 480 };
+      // "0 */4 * * *" = every 240m -> two missed periods.
+      // USMCA has no QBO write-back (Rule 50). TRANSP/TRK realms must not keep this LATE forever
+      // (live: 44k+ minutes while "QBO not authorized for this company").
+      return qboRealmConnected
+        ? { enabled: true, maxStaleMinutes: 480 }
+        : { enabled: false, maxStaleMinutes: 480, dormantReason: "no_qbo_realm_connected" };
     case "reports.deadhead_refresh_cron":
       // "0 3 * * 1" = every 10080m -> two missed periods
       return { enabled: true, maxStaleMinutes: 20160 };
@@ -593,8 +597,11 @@ export function backgroundJobRule(
       // "0 3 * * 1" = every 10080m -> two missed periods
       return { enabled: true, maxStaleMinutes: 20160 };
     case "safety.integrity_alert_engine_cron":
-      // "20 */6 * * *" = every 360m -> two missed periods
-      return { enabled: true, maxStaleMinutes: 720 };
+      // "20 */6 * * *" = every 360m -> two missed periods. Env-off must dormant (GO-0017-L3),
+      // not LATE forever while the cron never schedules.
+      return process.env.ENABLE_INTEGRITY_ALERT_ENGINE_CRON === "false"
+        ? { enabled: false, maxStaleMinutes: 720, dormantReason: "env_disabled" }
+        : { enabled: true, maxStaleMinutes: 720 };
     case "safety.reminders_cron":
       // "15 6 * * *" = every 1440m -> two missed periods
       return { enabled: true, maxStaleMinutes: 2880 };
@@ -602,8 +609,16 @@ export function backgroundJobRule(
       // "15 * * * *" = every 60m -> two missed periods
       return { enabled: true, maxStaleMinutes: 120 };
     case "samsara.master_sync_cron":
-      // "30 * * * *" = every 60m -> two missed periods
-      return { enabled: true, maxStaleMinutes: 120 };
+      // "30 * * * *" = every 60m -> two missed periods.
+      // Cron ships flag-OFF (writes mdata.*); health must mirror ENABLE_SAMSARA_MASTER_SYNC_CRON
+      // or a disabled job stays LATE forever (live: 11k+ minutes while never scheduled).
+      return {
+        enabled: process.env.ENABLE_SAMSARA_MASTER_SYNC_CRON === "true",
+        maxStaleMinutes: 120,
+        ...(process.env.ENABLE_SAMSARA_MASTER_SYNC_CRON === "true"
+          ? {}
+          : { dormantReason: "env_disabled" }),
+      };
     case "samsara.positions_cron":
       // "*/5 * * * *" = every 5m -> two missed periods
       return { enabled: true, maxStaleMinutes: 15 };
@@ -650,18 +665,33 @@ export function backgroundJobRule(
     case "qbo.sync_queue_runner":
       return { enabled: true, maxStaleMinutes: 10 };
     case "qbo.sync_alerts_cron":
+      // Opt-in retry. No USMCA realm (Rule 50) ⇒ dormant, not LATE on TRANSP history.
+      if (!qboRealmConnected && !envEnabled("QBO_SYNC_RETRY_ENABLED")) {
+        return { enabled: false, maxStaleMinutes: 15, dormantReason: "no_qbo_realm_connected" };
+      }
       return { enabled: envEnabled("QBO_SYNC_RETRY_ENABLED"), maxStaleMinutes: 15 };
     case "qbo.master_data_sync.delta":
       // Fire whenever a realm is connected, regardless of the sync-enabled flag.
-      return {
-        enabled: envEnabled("QBO_MASTERDATA_SYNC_ENABLED") || qboRealmConnected,
-        maxStaleMinutes: 30,
-      };
+      // USMCA-scoped connection evidence: no realm ⇒ dormant (never_succeeded + late skip).
+      {
+        const armed = envEnabled("QBO_MASTERDATA_SYNC_ENABLED") || qboRealmConnected;
+        return armed
+          ? { enabled: true, maxStaleMinutes: 30 }
+          : { enabled: false, maxStaleMinutes: 30, dormantReason: "no_qbo_realm_connected" };
+      }
     case "qbo.master_data_sync.full":
       return null;
     case "qbo.token_refresh_cron":
+      // USMCA has no QBO connection (Rule 50). Without a realm the hourly refresh cannot
+      // succeed meaningfully — live: 18k+ minutes LATE while refreshing TRANSP tokens only.
+      if (!qboRealmConnected) {
+        return { enabled: false, maxStaleMinutes: 120, dormantReason: "no_qbo_realm_connected" };
+      }
       return { enabled: process.env.ENABLE_QBO_TOKEN_REFRESH_CRON !== "false", maxStaleMinutes: 120 };
     case "qbo.forensic_import_runner":
+      if (!qboRealmConnected) {
+        return { enabled: false, maxStaleMinutes: 10, dormantReason: "no_qbo_realm_connected" };
+      }
       return { enabled: process.env.ENABLE_QBO_FORENSIC_RUNNER !== "false", maxStaleMinutes: 10 };
     case "cash_advance.expiry_cron":
       // Daily 06:15 CT. Default-enabled unless explicitly turned off. 26h window = one run + margin.
@@ -693,6 +723,9 @@ export function backgroundJobRule(
     case "accounting.collections_sync_cron":
       // Daily 04:00 CT (collections-sync.cron.ts) — A/R collections. Default-ON. 26h window.
       return { enabled: process.env.ACCOUNTING_COLLECTIONS_SYNC_ENABLED !== "false", maxStaleMinutes: 1560 };
+    case "accounting.retry_held_expense_postings":
+      // "20 */6 * * *" = every 360m → two missed periods. System-actor membership scoped (USMCA).
+      return { enabled: true, maxStaleMinutes: 720 };
     case "fuel.loves_card_import_cron":
       // Daily 06:00 CT standalone Render cron (run-loves-card-import.ts) — fuel-card expense import. 26h window.
       return { enabled: true, maxStaleMinutes: 1560 };
@@ -740,8 +773,14 @@ async function checkBackgroundJobStaleness(): Promise<void> {
       `SELECT to_regclass('integrations.qbo_connections') IS NOT NULL AS ok`
     );
     if (connReg.rows[0]?.ok) {
+      // USMCA-only (00-IH35-LAW / Rule 50): TRANSP/TRK QBO realms are frozen parallel books.
+      // Counting them as "connected" armed every QBO freshness rule forever while USMCA has no
+      // write-back — live never_succeeded/stale list was dominated by qbo_* against TRANSP.
       const conn = await client.query<{ connected: boolean | null }>(
-        `SELECT bool_or(revoked_at IS NULL) AS connected FROM integrations.qbo_connections`
+        `SELECT bool_or(revoked_at IS NULL) AS connected
+           FROM integrations.qbo_connections
+          WHERE operating_company_id = $1::uuid`,
+        [USMCA_COMPANY_ID]
       );
       qboEvidence.anyActiveConnection = Boolean(conn.rows[0]?.connected);
       const reauth = await client.query<{ code: string }>(
@@ -750,7 +789,9 @@ async function checkBackgroundJobStaleness(): Promise<void> {
            JOIN org.companies oc ON oc.id = qc.operating_company_id
           WHERE qc.revoked_at IS NULL
             AND qc.needs_reauth_at IS NOT NULL
-          ORDER BY oc.code`
+            AND qc.operating_company_id = $1::uuid
+          ORDER BY oc.code`,
+        [USMCA_COMPANY_ID]
       );
       qboEvidence.needsReauthLabels = reauth.rows.map((r) => r.code);
     }

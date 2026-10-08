@@ -45,6 +45,21 @@ const TARGETS = [
     disabledCheck: "!fuelFraudDetectorEnabled()",
     jobName: "fuel.fraud_detector_worker",
   },
+  {
+    file: "apps/backend/src/cron/samsara-master-sync.cron.ts",
+    disabledCheck: 'process.env.ENABLE_SAMSARA_MASTER_SYNC_CRON !== "true"',
+    jobName: "samsara.master_sync_cron",
+  },
+  {
+    file: "apps/backend/src/safety/integrity-alert-engine.cron.ts",
+    disabledCheck: 'process.env.ENABLE_INTEGRITY_ALERT_ENGINE_CRON === "false"',
+    jobName: "safety.integrity_alert_engine_cron",
+  },
+  {
+    file: "apps/backend/src/cron/plaid-daily-sync.ts",
+    disabledCheck: '(process.env.ENABLE_PLAID_DAILY_SYNC_CRON ?? "true").trim() === "false"',
+    jobName: "banking.plaid_daily_sync_cron",
+  },
 ];
 
 function stripLineComments(src) {
@@ -82,7 +97,12 @@ export function check(sources) {
     // before its return — anchor on the check condition and look within a bounded window after it.
     const checkIdx = src.indexOf(target.disabledCheck);
     const windowAfter = src.slice(checkIdx, checkIdx + 600);
-    if (!windowAfter.includes(`recordBackgroundJobDisabled(${JSON.stringify(target.jobName)}`) && !windowAfter.includes(`recordBackgroundJobDisabled(CRON_NAME)`)) {
+    const callOk =
+      windowAfter.includes(`recordBackgroundJobDisabled(${JSON.stringify(target.jobName)}`) ||
+      windowAfter.includes(`recordBackgroundJobDisabled(CRON_NAME)`) ||
+      // plaid-daily-sync.ts exports PLAID_DAILY_SYNC_JOB = the job_name string
+      windowAfter.includes(`recordBackgroundJobDisabled(PLAID_DAILY_SYNC_JOB)`);
+    if (!callOk) {
       failures.push(`${target.file}: recordBackgroundJobDisabled call not found near the disabled-check for job "${target.jobName}" — guard out of sync or fix reverted`);
     }
   }
@@ -105,7 +125,7 @@ function run() {
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log("PASS: all 4 GO-0017-L3 cron disabled-paths record an outcome instead of vanishing silently");
+  console.log(`PASS: all ${TARGETS.length} GO-0017-L3 cron disabled-paths record an outcome instead of vanishing silently`);
 }
 
 function selftest() {

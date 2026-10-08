@@ -30,17 +30,47 @@ export async function runRetryHeldExpensePostingsCronTick(deps?: {
   const withLuciaBypassImpl = deps?.withLuciaBypassImpl ?? withLuciaBypass;
   const retryImpl = deps?.retryHeldExpensePostingsImpl ?? retryHeldExpensePostings;
 
-  const companyIds = await withLuciaBypassImpl(async (client) => listActiveOperatingCompanyIds(client));
-  const summary = { company_count: companyIds.length, posted: 0, still_held_orphan: 0, still_held_posting_error: 0, flag_off: 0 };
+  // System actor has org.user_company_access for USMCA only (measured). listActiveOperatingCompanyIds
+  // also returns TRANSP/TRK; withCompanyScope → assertCompanyMembership then throws
+  // forbidden_company_membership and the WHOLE tick never records success (healthz never_succeeded
+  // since 2026-09-29). Skip companies the system actor cannot join — do not fail the job.
+  const companyIds = await withLuciaBypassImpl(async (client) => {
+    const all = await listActiveOperatingCompanyIds(client);
+    const access = await client.query<{ company_id: string }>(
+      `SELECT company_id::text AS company_id
+         FROM org.user_company_access
+        WHERE user_id = $1::uuid
+          AND deactivated_at IS NULL`,
+      [SYSTEM_ACTOR_ID]
+    );
+    const allowed = new Set(access.rows.map((r) => r.company_id));
+    return all.filter((id) => allowed.has(id));
+  });
+  const summary = {
+    company_count: companyIds.length,
+    posted: 0,
+    still_held_orphan: 0,
+    still_held_posting_error: 0,
+    flag_off: 0,
+    skipped_no_membership: 0,
+  };
 
   for (const operatingCompanyId of companyIds) {
     assertTenantContext(operatingCompanyId, CRON_NAME);
-    const result = await retryImpl(operatingCompanyId, { userId: SYSTEM_ACTOR_ID });
-    for (const o of result.outcomes) {
-      if (o.outcome === "posted") summary.posted += 1;
-      else if (o.outcome === "still_held_orphan") summary.still_held_orphan += 1;
-      else if (o.outcome === "still_held_posting_error") summary.still_held_posting_error += 1;
-      else summary.flag_off += 1;
+    try {
+      const result = await retryImpl(operatingCompanyId, { userId: SYSTEM_ACTOR_ID });
+      for (const o of result.outcomes) {
+        if (o.outcome === "posted") summary.posted += 1;
+        else if (o.outcome === "still_held_orphan") summary.still_held_orphan += 1;
+        else if (o.outcome === "still_held_posting_error") summary.still_held_posting_error += 1;
+        else summary.flag_off += 1;
+      }
+    } catch (err) {
+      if ((err as Error)?.message === "forbidden_company_membership") {
+        summary.skipped_no_membership += 1;
+        continue;
+      }
+      throw err;
     }
   }
 
