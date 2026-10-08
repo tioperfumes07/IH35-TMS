@@ -30,7 +30,7 @@ function calloutAt(iso: string | null | undefined) {
     : d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
-const LINK = "text-slate-700 hover:underline";
+const LINK = "text-[#1F2A44] hover:underline";
 
 type Props = {
   operatingCompanyId: string;
@@ -138,7 +138,7 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
                 onClick={() => staged.setDraft({ statusFilter: filter.id })}
                 className={`rounded border px-2 py-1 text-xs font-medium ${
                   statusFilter === filter.id
-                    ? "border-slate-600 bg-slate-50 text-slate-800"
+                    ? "border-[#4B5563] bg-[#F7F8FA] text-[#0F1219]"
                     : "border-gray-300 bg-[var(--surface-unselected)] text-gray-700"
                 }`}
               >
@@ -161,7 +161,7 @@ export function RoadServiceList({ operatingCompanyId }: Props) {
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}
-        rowClassName={(row) => (highlightedTicketId === row.id ? "bg-slate-100 ring-1 ring-slate-400" : "")}
+        rowClassName={(row) => (highlightedTicketId === row.id ? "bg-[#E5E7EB] ring-1 ring-[#6B7280]" : "")}
         loading={isLoading}
         emptyText="No roadside tickets found."
         storageKey="maint-road-service"

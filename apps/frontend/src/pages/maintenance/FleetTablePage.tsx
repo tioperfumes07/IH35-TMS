@@ -397,7 +397,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
             aria-selected={kindFilter === tab.key}
             onClick={() => setKind(tab.key)}
             className={`${BUTTON_MD_SIZE_CLASS} rounded-sm border ${
-              kindFilter === tab.key ? "border-slate-500 bg-slate-50 text-slate-800" : "border-gray-200 bg-[var(--surface-unselected)] text-gray-600 hover:bg-[var(--surface-hover)]"
+              kindFilter === tab.key ? "border-[#4B5563] bg-[#F7F8FA] text-[#0F1219]" : "border-gray-200 bg-[var(--surface-unselected)] text-gray-600 hover:bg-[var(--surface-hover)]"
             }`}
           >
             {tab.label}
@@ -406,7 +406,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
       </div>
 
       {!kpisQuery.isError && (kpis as { unclassified_units?: number }).unclassified_units ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700" data-testid="maint-fleet-unclassified-notice">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#E5E7EB] px-2 py-1 text-xs text-[#1F2A44]" data-testid="maint-fleet-unclassified-notice">
           {(kpis as { unclassified_units?: number }).unclassified_units} unit(s) have no vehicle type, so they are not counted in the fleet,
           cost per mile or fleet baselines. Set Tractor / Straight Truck / Box Truck (or Pickup / Other) on each unit.
         </div>
@@ -525,7 +525,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
         </span>
         <button
           type="button"
-          className="ml-auto rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+          className="ml-auto rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-xs font-semibold text-[#1F2A44] hover:bg-[#F7F8FA]"
           title="Current location + assigned driver + Hours of Service for all reporting vehicles (Samsara)"
           onClick={() => void exportLocationHos()}
           disabled={isExportingLocationHos}

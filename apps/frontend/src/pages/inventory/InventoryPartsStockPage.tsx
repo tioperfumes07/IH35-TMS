@@ -56,7 +56,7 @@ const columns: ParityColumn<InventoryPartRow>[] = [
       ) : partNeedsReorder(row.on_hand_qty, row.reorder_threshold) ? (
         <span className="rounded-sm bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">REORDER</span>
       ) : (
-        <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">OK</span>
+        <span className="rounded-sm bg-[#E5E7EB] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]">OK</span>
       ),
   },
   {
@@ -240,7 +240,7 @@ export function InventoryPartsStockPage() {
               dataAttributes={{ "data-inventory-parts-filter-toolbar": "collapsed" }}
             >
               <div className="grid gap-3 sm:grid-cols-2">
-                <label className="text-xs text-slate-600">
+                <label className="text-xs text-[#4B5563]">
                   Category
                   <Combobox
                     value={stagedFilters.draft.categoryFilter || null}
@@ -250,7 +250,7 @@ export function InventoryPartsStockPage() {
                     allowClear
                   />
                 </label>
-                <label className="text-xs text-slate-600">
+                <label className="text-xs text-[#4B5563]">
                   Stock state
                   <Combobox
                     value={stagedFilters.draft.stockFilter || null}
@@ -271,7 +271,7 @@ export function InventoryPartsStockPage() {
           rowActions={(row) => (
             <button
               type="button"
-              className="text-slate-600 underline text-xs"
+              className="text-[#4B5563] underline text-xs"
               onClick={() => {
                 const raw = rawParts.find((p) => p.id === row.id) ?? null;
                 setEditingPart(raw);
