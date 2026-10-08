@@ -276,7 +276,7 @@ function CountBadge({
   return (
     <span
       className={`ml-1 inline-flex min-w-[1.1rem] items-center justify-center rounded px-1 text-xs font-semibold leading-none ${
-        alert ? "bg-red-100 text-red-700" : "bg-slate-200 text-slate-600"
+        alert ? "bg-red-100 text-red-700" : "bg-[#E5E7EB] text-[#4B5563]"
       }`}
       aria-label={`${count} ${noun}`}
     >
@@ -726,7 +726,7 @@ export function DispatchSubnav({ operatingCompanyId }: Props) {
         <div
           role="alert"
           data-testid="dispatch-subnav-badge-error"
-          className="mx-2 flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+          className="mx-2 flex items-center justify-between gap-3 rounded-md border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
         >
           <span className="inline-flex items-center gap-1.5">
             <AlertTriangle aria-hidden="true" className="h-3.5 w-3.5" />

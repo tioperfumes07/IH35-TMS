@@ -67,7 +67,7 @@ export function AuthGatePanel(props: AuthGatePanelProps) {
           gates used UUIDs as query params only; expose real EntityLinks for bound identities. */}
       {hasIdentity ? (
         <div
-          className="flex flex-wrap gap-x-3 gap-y-1 bg-white px-2 py-1.5 text-xs text-slate-700"
+          className="flex flex-wrap gap-x-3 gap-y-1 bg-white px-2 py-1.5 text-xs text-[#1F2A44]"
           data-testid="auth-gate-panel-entitylinks"
         >
           {props.loadUuid ? (
@@ -111,10 +111,10 @@ export function AuthGatePanel(props: AuthGatePanelProps) {
         <div key={`b-${i}`} className="rounded-sm bg-red-50 px-2 py-1 text-xs text-red-800">{b.workflow}: {b.message}</div>
       ))}
       {warnings.map((w, i) => (
-        <div key={`w-${i}`} className="rounded-sm bg-slate-100 px-2 py-1 text-xs text-slate-700">{w.workflow}: {w.message}</div>
+        <div key={`w-${i}`} className="rounded-sm bg-[#F7F8FA] px-2 py-1 text-xs text-[#1F2A44]">{w.workflow}: {w.message}</div>
       ))}
       {info.map((inf, i) => (
-        <div key={`i-${i}`} className="rounded-sm bg-slate-100 px-2 py-1 text-xs text-slate-700">{inf.message}</div>
+        <div key={`i-${i}`} className="rounded-sm bg-[#F7F8FA] px-2 py-1 text-xs text-[#1F2A44]">{inf.message}</div>
       ))}
       {q.isLoading ? <p className="text-xs text-gray-500">Checking dispatch authorization gates…</p> : null}
     </div>
