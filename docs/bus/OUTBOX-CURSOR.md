@@ -1,3 +1,13 @@
+## 2026-10-08T22:15Z · BANK leftover slate — SectionQuickJump / DispatcherKpi / BulkPreValidation
+
+FINDING: BANK-F91243 — SectionQuickJump / DispatcherKpiBar / BulkPreValidationDialog Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25919 squash `e949937797` (BANK-F91242 MaintAlerts/Engines/Arriving)
+GUARD: scripts/verify-home-kpi-bulk-slate-leftover-chrome.mjs + verify-steps/3596 piggyback
+LIVE PROOF: verify-home-kpi-bulk-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3596 piggyback + OUTBOX
+
 ## 2026-10-08T22:05Z · BANK leftover slate — MaintAlerts / EnginesStatus / ArrivingSoon
 
 FINDING: BANK-F91242 — MaintenanceAlertsCard / MaintEnginesStatusWidget / ArrivingSoonCard Tailwind slate-* → house tokens
