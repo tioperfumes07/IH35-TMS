@@ -309,7 +309,7 @@ export function CashFlowOverviewPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={projection} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(v) => mmmDd(v) || String(v)} />
+                  <XAxis dataKey="date" tickFormatter={(v) => mmmDd(v) || String(v)} />
                   <YAxis tickFormatter={(v) => money(Number(v))} width={72} tick={{ fontSize: 11 }} />
                   <Tooltip
                     content={({ active, payload, label }) =>
