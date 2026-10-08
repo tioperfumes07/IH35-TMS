@@ -1961,9 +1961,9 @@ export function BookLoadModalV4({
           ) : null}
 
           {creditLimitBlock ? (
-            <div className="mx-3 mt-2 rounded-sm border-2 border-slate-300 bg-slate-50 px-3 py-2 text-xs">
-              <p className="font-semibold text-slate-700">Credit limit reached</p>
-              <p className="mt-0.5 text-slate-600">
+            <div className="mx-3 mt-2 rounded-sm border-2 border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs">
+              <p className="font-semibold text-[#4B5563]">Credit limit reached</p>
+              <p className="mt-0.5 text-[#4B5563]">
                 Open exposure: {formatUsdCents(creditLimitBlock.exposure_cents)} &mdash;{" "}
                 Limit: {formatUsdCents(creditLimitBlock.limit_cents)}
                 {creditLimitBlock.credit_limit_source === "factor" ? " (Factor-set — FARO)" : ""}
@@ -1971,17 +1971,17 @@ export function BookLoadModalV4({
               {canOverrideCreditLimit ? (
                 <label className="mt-1.5 inline-flex cursor-pointer items-center gap-2">
                   <input type="checkbox" checked={overrideCreditLimit} onChange={(e) => setOverrideCreditLimit(e.target.checked)} />
-                  <span className="text-slate-700">Override — I acknowledge this customer is over their credit limit</span>
+                  <span className="text-[#4B5563]">Override — I acknowledge this customer is over their credit limit</span>
                 </label>
               ) : (
-                <p className="mt-1 text-slate-500">Contact an Owner or Manager to override.</p>
+                <p className="mt-1 text-[#6B7280]">Contact an Owner or Manager to override.</p>
               )}
             </div>
           ) : null}
 
           {isEditMode ? (
             <div
-              className="mx-3 mt-2 rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-[11px] text-slate-700"
+              className="mx-3 mt-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-[11px] text-[#4B5563]"
               data-testid="book-load-edit-honesty"
             >
               Editing persisted load details. Only fields you change are saved (partial PATCH — untouched
@@ -1994,11 +1994,11 @@ export function BookLoadModalV4({
 
           {isEditMode && loadIsEditLocked ? (
             <div
-              className="border-b border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-800"
+              className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
               data-testid="owner-lock-override-banner"
             >
-              <p className="font-semibold text-slate-900">Owner override</p>
-              <p className="mt-0.5 text-slate-700">
+              <p className="font-semibold text-[#0F1219]">Owner override</p>
+              <p className="mt-0.5 text-[#4B5563]">
                 This load is locked
                 {editLockQuery.data?.lock?.reason ? ` (${editLockQuery.data.lock.reason.replace(/_/g, " ")})` : ""}
                 {editLockQuery.data?.lock?.reference_display_id
@@ -2010,9 +2010,9 @@ export function BookLoadModalV4({
               </p>
               {canOwnerLockOverride ? (
                 <label className="mt-2 block">
-                  <span className="text-[11px] font-bold uppercase tracking-wide text-slate-600">Override reason</span>
+                  <span className="text-[11px] font-bold uppercase tracking-wide text-[#4B5563]">Override reason</span>
                   <textarea
-                    className="mt-1 w-full rounded-sm border border-slate-400 bg-white px-2 py-1 text-xs text-slate-900"
+                    className="mt-1 w-full rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-xs text-[#0F1219]"
                     rows={2}
                     value={overrideReason}
                     onChange={(e) => setOverrideReason(e.target.value)}
@@ -2083,7 +2083,7 @@ export function BookLoadModalV4({
             <div
               className={`mx-3 mt-2 rounded border px-3 py-2 text-xs ${
                 gateBanner.type === "advisory"
-                  ? "border-slate-200 bg-slate-100 text-slate-700"
+                  ? "border-[#E5E7EB] bg-[#F7F8FA] text-[#4B5563]"
                   : "border-red-300 bg-red-50 text-red-900"
               }`}
             >
@@ -2275,7 +2275,7 @@ export function BookLoadModalV4({
                         {customersQuery.isError ? <ListErrorBanner message="Could not load customers." onRetry={() => void customersQuery.refetch()} /> : null}
                         {/* GO-21/GO-23 A2: empty/short result must say why — never a silent short list. */}
                         {!customersQuery.isError && !customersQuery.isLoading && customerSearch.trim() && (customersQuery.data ?? []).length === 0 ? (
-                          <p className="mt-0.5 normal-case tracking-normal text-slate-600" data-testid="book-load-v4-customer-no-matches">
+                          <p className="mt-0.5 normal-case tracking-normal text-[#4B5563]" data-testid="book-load-v4-customer-no-matches">
                             No customers match “{customerSearch.trim()}”. Check the spelling, or{" "}
                             <span className="font-semibold">+ Add new</span> if this is a new customer.
                           </p>
@@ -2284,7 +2284,7 @@ export function BookLoadModalV4({
                           shown={customersQuery.data?.length ?? 0}
                           limit={CUSTOMER_AUTOCOMPLETE_LIMIT}
                           hint="Keep typing to narrow — this search covers every customer, not just what's shown."
-                          className="mt-0.5 block normal-case tracking-normal text-slate-600"
+                          className="mt-0.5 block normal-case tracking-normal text-[#4B5563]"
                         />
                       </div>
                       {form.formState.errors.customer_id?.message ? <span className="mt-0.5 block normal-case tracking-normal text-red-600">{form.formState.errors.customer_id.message}</span> : null}
@@ -2771,11 +2771,11 @@ export function BookLoadModalV4({
                   {preDispatch.remainingBlockers > 0 || authGateBlocked || repairBlockSubmitBlocked ? (
                     <b className="text-red-700">Active blocker(s) — override required</b>
                   ) : preDispatch.overrideCount > 0 ? (
-                    <b className="text-slate-800" data-testid="pre-dispatch-header-cleared">
+                    <b className="text-[#1F2A44]" data-testid="pre-dispatch-header-cleared">
                       CLEARED
                     </b>
                   ) : preDispatch.hasUnackedInsScheduleConfirm ? (
-                    <b className="text-slate-700">Insurance schedule confirmation required before booking</b>
+                    <b className="text-[#4B5563]">Insurance schedule confirmation required before booking</b>
                   ) : assignedPrimaryDriverId || assignedUnitId || watchedCustomerId ? (
                     <b>
                       {preDispatch.hasWarnings
@@ -2918,14 +2918,14 @@ export function BookLoadModalV4({
 
           {saveAck ? (
             <div
-              className="border-t border-slate-300 bg-slate-50 px-3 py-3"
+              className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-3 py-3"
               data-testid="book-load-save-ack"
               role="status"
             >
-              <p className="text-xs font-semibold text-slate-900">
+              <p className="text-xs font-semibold text-[#0F1219]">
                 Load {saveAck.loadNumber} is saved.
               </p>
-              <p className="mt-1 text-xs text-slate-800">{saveAck.summary}</p>
+              <p className="mt-1 text-xs text-[#1F2A44]">{saveAck.summary}</p>
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <EntityLink kind="load" id={saveAck.id} label={saveAck.loadNumber || "Open load"} />
                 <Button

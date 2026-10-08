@@ -55,7 +55,7 @@ export function OwnerApprovalPortalPage() {
   const req = data?.request;
   const rec = data?.recommendation ?? "low";
   const recTone =
-    rec === "high" ? "bg-red-100 text-red-900" : rec === "medium" ? "bg-slate-100 text-slate-900" : "bg-slate-100 text-slate-700";
+    rec === "high" ? "bg-red-100 text-red-900" : rec === "medium" ? "bg-[#F7F8FA] text-[#0F1219]" : "bg-[#F7F8FA] text-[#4B5563]";
 
   async function onApprove() {
     if (!token) return;
@@ -86,22 +86,22 @@ export function OwnerApprovalPortalPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-8 text-slate-900">
+    <div className="min-h-screen bg-[#F7F8FA] px-4 py-8 text-[#0F1219]">
       <div className="mx-auto max-w-4xl space-y-4">
-        <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
+        <div className="rounded-sm border border-[#E5E7EB] bg-white p-4 shadow-xs">
           <h1 className="text-page-title font-semibold">Owner approval — cash advance request</h1>
-          <p className="mt-1 text-xs text-slate-600">Documented decision required (minimum 30 characters).</p>
+          <p className="mt-1 text-xs text-[#4B5563]">Documented decision required (minimum 30 characters).</p>
         </div>
 
-        {loading ? <p className="text-xs text-slate-600">Loading…</p> : null}
+        {loading ? <p className="text-xs text-[#4B5563]">Loading…</p> : null}
         {error && !done ? <p className="text-xs text-red-600">Could not open this approval ({error}).</p> : null}
-        {done ? <p className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-900">{done}</p> : null}
+        {done ? <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs text-[#0F1219]">{done}</p> : null}
 
         {data && !done ? (
           <>
             <div className="grid gap-3 md:grid-cols-2">
-              <div className="rounded-sm border border-slate-200 bg-white p-4 text-xs">
-                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Request</div>
+              <div className="rounded-sm border border-[#E5E7EB] bg-white p-4 text-xs">
+                <div className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Request</div>
                 <p className="mt-2 font-mono text-xs">{entityLabel(String(req?.display_id ?? ""), String(req?.id ?? ""), "Request")}</p>
                 <p className="mt-2">
                   <strong>Driver:</strong>{" "}<EntityLink kind="driver" id={String(req?.driver_id ?? "")} label={entityLabel(String(req?.driver_name ?? ""), String(req?.driver_id ?? ""), "Driver")} />
@@ -112,10 +112,10 @@ export function OwnerApprovalPortalPage() {
                 <p className="mt-1">
                   <strong>Reason:</strong> {String(req?.reason ?? "")}
                 </p>
-                <p className="mt-2 text-xs text-slate-600">Submitted: {String(req?.submitted_at ?? "").replace("T", " ").slice(0, 19)}</p>
+                <p className="mt-2 text-xs text-[#4B5563]">Submitted: {String(req?.submitted_at ?? "").replace("T", " ").slice(0, 19)}</p>
               </div>
-              <div className="rounded-sm border border-slate-200 bg-white p-4 text-xs">
-                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Policy</div>
+              <div className="rounded-sm border border-[#E5E7EB] bg-white p-4 text-xs">
+                <div className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Policy</div>
                 <p className="mt-2">
                   Standard threshold: <strong>{money(data.policy.threshold_dollars)}</strong>
                 </p>
@@ -131,17 +131,17 @@ export function OwnerApprovalPortalPage() {
               </div>
             </div>
 
-            <div className="rounded-sm border border-slate-200 bg-white p-4">
-              <h2 className="text-xs font-semibold text-slate-900">12-month driver history</h2>
+            <div className="rounded-sm border border-[#E5E7EB] bg-white p-4">
+              <h2 className="text-xs font-semibold text-[#0F1219]">12-month driver history</h2>
               <div className="mt-3 grid gap-4 md:grid-cols-2">
                 <div>
-                  <div className="text-xs font-semibold uppercase text-slate-500">Cash advances</div>
+                  <div className="text-xs font-semibold uppercase text-[#6B7280]">Cash advances</div>
                   <ul className="mt-2 max-h-48 space-y-1 overflow-auto text-xs">
                     {(data.driver_history.advances ?? []).length === 0 ? (
-                      <li className="text-slate-500">None in period.</li>
+                      <li className="text-[#6B7280]">None in period.</li>
                     ) : (
                       data.driver_history.advances.map((a) => (
-                        <li key={String(a.id ?? Math.random())} className="border-b border-slate-100 py-1">
+                        <li key={String(a.id ?? Math.random())} className="border-b border-[#E5E7EB] py-1">
                           {String(a.display_id ?? "")} · {money(Number(a.amount ?? 0))} · {String(a.created_at ?? "").slice(0, 10)}
                         </li>
                       ))
@@ -149,15 +149,15 @@ export function OwnerApprovalPortalPage() {
                   </ul>
                 </div>
                 <div>
-                  <div className="text-xs font-semibold uppercase text-slate-500">Settlements</div>
+                  <div className="text-xs font-semibold uppercase text-[#6B7280]">Settlements</div>
                   <ul className="mt-2 max-h-48 space-y-1 overflow-auto text-xs">
                     {(data.driver_history.settlements ?? []).length === 0 ? (
-                      <li className="text-slate-500">None in period.</li>
+                      <li className="text-[#6B7280]">None in period.</li>
                     ) : (
                       data.driver_history.settlements.map((s) => {
                         const settlementId = String(s.id ?? "");
                         return (
-                          <li key={settlementId || Math.random()} className="border-b border-slate-100 py-1">
+                          <li key={settlementId || Math.random()} className="border-b border-[#E5E7EB] py-1">
                             <EntityLink
                               kind="settlement"
                               id={settlementId}
@@ -176,10 +176,10 @@ export function OwnerApprovalPortalPage() {
               </div>
             </div>
 
-            <div className="rounded-sm border border-slate-200 bg-white p-4">
-              <label className="block text-xs font-semibold text-slate-900">Owner notes (required, 30+ characters)</label>
+            <div className="rounded-sm border border-[#E5E7EB] bg-white p-4">
+              <label className="block text-xs font-semibold text-[#0F1219]">Owner notes (required, 30+ characters)</label>
               <textarea
-                className="mt-2 w-full rounded-sm border border-slate-200 p-2 text-xs"
+                className="mt-2 w-full rounded-sm border border-[#E5E7EB] p-2 text-xs"
                 rows={5}
                 value={ownerNotes}
                 onChange={(e) => setOwnerNotes(e.target.value)}
