@@ -1495,7 +1495,7 @@ export function ParityTable<T>({
           {selectable && selected.size > 0 ? (
             <div className="flex flex-wrap items-center gap-2">
               <span
-                className="rounded-sm bg-slate-800 px-2 py-1 text-xs font-bold tracking-wide text-white"
+                className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-bold tracking-wide text-white"
                 data-testid="parity-selection-count"
                 title={`${selected.size} row(s) selected for bulk action`}
               >
@@ -1504,7 +1504,7 @@ export function ParityTable<T>({
               {batchActions ? batchActions(selectedRows) : null}
               <button
                 type="button"
-                className="rounded-sm border border-gray-300 bg-white px-1.5 py-0.5 font-semibold text-slate-700 underline-offset-2 hover:underline"
+                className="rounded-sm border border-gray-300 bg-white px-1.5 py-0.5 font-semibold text-[#1F2A44] underline-offset-2 hover:underline"
                 onClick={clearSelection}
               >
                 Clear selection
@@ -1512,7 +1512,7 @@ export function ParityTable<T>({
               {pageOnlySelected ? (
                 <button
                   type="button"
-                  className="rounded-sm border border-slate-400 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-800"
+                  className="rounded-sm border border-[#6B7280] bg-[#F7F8FA] px-2 py-1 text-[11px] font-semibold text-[#0F1219]"
                   data-testid="parity-select-all-matching"
                   onClick={selectAllMatching}
                 >
@@ -1854,9 +1854,9 @@ export function ParityTable<T>({
                       onTouchStart={(e) => startResizeTouch(key, e)}
                       onKeyDown={(e) => onResizeKey(key, e)}
                       onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
-                      className="absolute right-0 top-0 flex h-full w-2 cursor-col-resize touch-none select-none items-center justify-center bg-slate-200/90 hover:bg-slate-300 focus:bg-slate-400 focus:outline-hidden"
+                      className="absolute right-0 top-0 flex h-full w-2 cursor-col-resize touch-none select-none items-center justify-center bg-[#E5E7EB]/90 hover:bg-[#E5E7EB] focus:bg-[#6B7280] focus:outline-hidden"
                     >
-                      <span aria-hidden className="block h-3 w-px bg-slate-500" />
+                      <span aria-hidden className="block h-3 w-px bg-[#F7F8FA]0" />
                     </span>
                   ) : null}
                 </th>
@@ -1925,7 +1925,7 @@ export function ParityTable<T>({
             className="sticky bottom-0 z-[5]"
           >
             <tr
-              className="border-t-2 border-slate-700 font-semibold"
+              className="border-t-2 border-[#1F2A44] font-semibold"
               // Same shade as the group-band row (colors.tableGroupBandBg, --grp-bg) — a totals
               // row reads as its own "band" of the same visual language, not a plain data row.
               style={{ backgroundColor: colors.tableGroupBandBg, ...(board ? { backgroundColor: "var(--ih-thead)", borderTop: "2px solid var(--ih-border)" } : {}) }}
@@ -1953,7 +1953,7 @@ export function ParityTable<T>({
           </tfoot>
         ) : footer ? (
           <tfoot data-testid="parity-table-footer">
-            <tr className="border-t-2 border-slate-700 bg-slate-50 font-semibold">{footer}</tr>
+            <tr className="border-t-2 border-[#1F2A44] bg-[#F7F8FA] font-semibold">{footer}</tr>
           </tfoot>
         ) : null}
       </table>
