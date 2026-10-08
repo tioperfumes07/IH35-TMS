@@ -1,3 +1,13 @@
+## 2026-10-08T21:35Z · BANK leftover slate — BorderCrossing / InterchangeTrailer / PreDispatch
+
+FINDING: BANK-F91239 — BorderCrossingWizardPage / InterchangeTrailerPicker / PreDispatchValidationPanel Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25914 squash `6e4ff3babd` (BANK-F91238 HosDetail/HosClocks/HosPill)
+GUARD: scripts/verify-border-trailer-predispatch-slate-leftover-chrome.mjs + verify-steps/3616 piggyback
+LIVE PROOF: verify-border-trailer-predispatch-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3616 piggyback + OUTBOX
+
 ## 2026-10-08T21:25Z · BANK leftover slate — HosDetail / HosClocks / HosPill
 
 FINDING: BANK-F91238 — DriverHosDetailPage / DriverHosClocks / DriverHosPill Tailwind slate-* → house tokens
