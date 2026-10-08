@@ -1,10 +1,24 @@
 {
-  "measured_at": "2026-10-02T02:25Z",
-  "source": "prod br-fancy-credit-akjnd07a READ ONLY via scripts/lib/print-driver-profiles.ts — 18 active, unmerged USMCA drivers; drivers per block that returned a named empty reason (shrink-only)",
+  "measured_at": "2026-10-08T00:00Z",
+  "source": "prod br-fancy-credit-akjnd07a READ ONLY via scripts/lib/print-driver-profiles.ts \u2014 15 active, unmerged USMCA drivers; drivers per block that returned a named empty reason (shrink-only). documents re-baselined 1\u21922: EDUARDO AZAEL FLORES ORTIZ (e3ac0879) measurably has 0 docs.file_links rows ever and audit.record_deletions is empty on this branch (purge ledger not present here); active roster shifted 18\u219215.",
   "operating_company_id": "5c854333-6ea5-4faa-af31-67cb272fef80",
   "empty_block_drivers": {
-    "pay_basis": 1, "settlements": 2, "advances": 11, "escrow": 2, "deductions": 4, "reimbursements": 18,
-    "fuel": 4, "equipment": 3, "loads": 2, "safety": 17, "drug_alcohol": 18, "medical_card": 17, "cdl": 5,
-    "insurance": 8, "documents": 1, "hos": 3, "samsara": 0
+    "pay_basis": 1,
+    "settlements": 2,
+    "advances": 11,
+    "escrow": 2,
+    "deductions": 4,
+    "reimbursements": 18,
+    "fuel": 4,
+    "equipment": 3,
+    "loads": 2,
+    "safety": 17,
+    "drug_alcohol": 18,
+    "medical_card": 17,
+    "cdl": 5,
+    "insurance": 8,
+    "documents": 2,
+    "hos": 3,
+    "samsara": 0
   }
 }
