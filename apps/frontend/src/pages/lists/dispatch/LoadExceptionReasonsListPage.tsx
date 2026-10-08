@@ -37,7 +37,7 @@ type StatusFilter = "active" | "inactive" | "all";
 const CODE_REGEX = /^[a-z][a-z0-9_]+$/;
 
 function statusPill(isActive: boolean) {
-  return `inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold ${isActive ? "text-slate-700" : "text-slate-600"}`;
+  return `inline-flex rounded-full bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold ${isActive ? "text-[#1F2A44]" : "text-[#4B5563]"}`;
 }
 
 function parseConflict(error: unknown): string | null {
@@ -142,11 +142,11 @@ export function LoadExceptionReasonsListPage() {
   const breadcrumb = useMemo(() => ["Lists & Catalogs", "Dispatch", "Load Exception Reasons"], []);
 
   const columns: Array<ParityColumn<LoadExceptionReason>> = [
-    { key: "code", label: "Code", sortable: true, render: (row) => <span className="font-semibold text-slate-800">{row.code}</span> },
-    { key: "name", label: "Name", sortable: true, render: (row) => <span className="text-slate-800">{row.name}</span> },
-    { key: "applies_to", label: "Applies To", sortable: true, render: (row) => <span className="text-slate-700">{row.applies_to}</span> },
-    { key: "linked_module", label: "Linked Module", sortable: true, render: (row) => <span className="text-slate-600">{row.linked_module ?? "—"}</span> },
-    { key: "sort_order", label: "Order", sortable: true, render: (row) => <span className="text-slate-700">{row.sort_order}</span> },
+    { key: "code", label: "Code", sortable: true, render: (row) => <span className="font-semibold text-[#0F1219]">{row.code}</span> },
+    { key: "name", label: "Name", sortable: true, render: (row) => <span className="text-[#0F1219]">{row.name}</span> },
+    { key: "applies_to", label: "Applies To", sortable: true, render: (row) => <span className="text-[#1F2A44]">{row.applies_to}</span> },
+    { key: "linked_module", label: "Linked Module", sortable: true, render: (row) => <span className="text-[#4B5563]">{row.linked_module ?? "—"}</span> },
+    { key: "sort_order", label: "Order", sortable: true, render: (row) => <span className="text-[#1F2A44]">{row.sort_order}</span> },
     {
       key: "is_active",
       label: "Status",
@@ -185,13 +185,13 @@ export function LoadExceptionReasonsListPage() {
         }
       />
 
-      <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-600">
+      <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs text-[#4B5563]">
         Operational exception taxonomy for loads still active/in-motion (breakdown, accident,
         weather, border hold, detention, etc.) — distinct from Load Cancellation Reasons, which is a
         load's terminal state.
       </div>
 
-      <div className="grid gap-2 rounded-sm border border-slate-200 bg-white p-3 md:grid-cols-[1fr_180px]">
+      <div className="grid gap-2 rounded-sm border border-[#E5E7EB] bg-white p-3 md:grid-cols-[1fr_180px]">
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Show
           <SelectCombobox

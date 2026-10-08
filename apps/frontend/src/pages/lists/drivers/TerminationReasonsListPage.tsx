@@ -41,16 +41,16 @@ function severityBadgeClass(severity: DriverTerminationSeverity) {
     case "severe":
       return "rounded-sm bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700";
     case "warning":
-      return "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700";
+      return "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]";
     default:
-      return "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700";
+      return "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]";
   }
 }
 
 function statusPillClass(isActive: boolean) {
   return isActive
-    ? "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700"
-    : "rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600";
+    ? "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]"
+    : "rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]";
 }
 
 type FormState = {
@@ -171,7 +171,7 @@ export function TerminationReasonsListPage() {
         }
       />
 
-      <div className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-600">
+      <div className="rounded-sm border border-[#E5E7EB] bg-white p-3 text-xs text-[#4B5563]">
         Termination / separation reason taxonomy used on driver safety events. Severity influences how
         returning-driver detection surfaces the warning. Editable by Owners.
       </div>
