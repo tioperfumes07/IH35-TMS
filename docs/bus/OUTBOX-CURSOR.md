@@ -1,3 +1,13 @@
+## 2026-10-08T20:06Z · BANK leftover slate — ExhibitsViewer / DriverQualification / FilingsCompliance
+
+FINDING: BANK-F91232 — ExhibitsViewer / DriverQualificationReportPage / FilingsComplianceDueSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25901 squash `6c7fca614b` (GW-20261012 ambient UI-lane guard rot)
+GUARD: scripts/verify-exhibits-drvqual-filings-slate-leftover-chrome.mjs + verify-steps/3644 piggyback
+LIVE PROOF: verify-exhibits-drvqual-filings-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3644 piggyback + OUTBOX
+
 ## 2026-10-08T19:35Z · BANK leftover slate — WorkOrderDetailModal / CreateWO reconcile / cost breakdown
 
 FINDING: BANK-F91231 — WorkOrderDetailModal / CreateWOSectionReconcile / CreateWOSectionCostBreakdown Tailwind slate-* → house tokens

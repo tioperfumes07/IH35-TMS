@@ -102,9 +102,9 @@ export function ExhibitsViewer() {
         }
       />
 
-      <section className="rounded-sm border border-slate-200 bg-white p-3">
+      <section className="rounded-sm border border-[#E5E7EB] bg-white p-3">
         <div className="flex flex-wrap items-end gap-3">
-          <label className="text-xs font-semibold text-slate-600">
+          <label className="text-xs font-semibold text-[#4B5563]">
             Period start
             <DatePicker
               className="mt-1 block"
@@ -112,7 +112,7 @@ export function ExhibitsViewer() {
               onChange={(next) => setPeriod((p) => ({ ...p, period_start: next }))}
             />
           </label>
-          <label className="text-xs font-semibold text-slate-600">
+          <label className="text-xs font-semibold text-[#4B5563]">
             Period end
             <DatePicker
               className="mt-1 block"
@@ -181,9 +181,9 @@ export function ExhibitsViewer() {
         ))}
       </div>
 
-      <section className="rounded-sm border border-slate-200 bg-white p-3">
+      <section className="rounded-sm border border-[#E5E7EB] bg-white p-3">
         <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-xs font-semibold text-slate-900">Exhibit {activeLetter.toUpperCase()} preview</h2>
+          <h2 className="text-xs font-semibold text-[#0F1219]">Exhibit {activeLetter.toUpperCase()} preview</h2>
           {built ? (
             <button
               type="button"
@@ -208,9 +208,9 @@ export function ExhibitsViewer() {
           ) : null}
         </div>
         {!built ? (
-          <p className="text-xs text-slate-500">Build exhibits to preview tab content.</p>
+          <p className="text-xs text-[#6B7280]">Build exhibits to preview tab content.</p>
         ) : (
-          <pre className="max-h-[420px] overflow-auto rounded-sm bg-slate-50 p-3 text-xs text-slate-800">
+          <pre className="max-h-[420px] overflow-auto rounded-sm bg-[#F7F8FA] p-3 text-xs text-[#0F1219]">
             {JSON.stringify(activeExhibit, null, 2)}
           </pre>
         )}
