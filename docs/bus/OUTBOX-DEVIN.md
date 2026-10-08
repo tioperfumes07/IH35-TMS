@@ -198,3 +198,7 @@ DONE: PR #25886 · squash 179c0861b4ffa0677583f319d36b813ebc78cd2c · hooks-ON p
 DONE: PR #25891 · squash 331ea0dfdc8fdc32216bdfec713a4b6e0e9c3ed6 · gate exit 0 · margin-pct + tasks-chrome selftests exit 0 · ambient main-rot documented
 
 - 2026-10-08 DEVIN-A: PR #25895 MERGED squash 3318209e1f0ca4c6b861f96b87aea6cb49733435 — LST-F44122c hand-rolled USD currency formatting drained to lib/money (43 sites, 38 files; ratchet 54→12); re-anchored verify-faro-import-page-uses-paritytable + verify-cash-forecast-profile-reverse to canonical formatters. ROUND 441.22.
+
+- 2026-10-08 DEVIN-A: PR #25901 MERGED squash 6c7fca614b7c980ffeadddd38077706fe028609f — ambient UI-lane guard rot drained (9 guards re-anchored: CatalogReferenceSelect rename, FILTER-MULTI-01 MoneyListToolbar, /factoring/advances canonical route, ROUND-297 read-only payment surface); VendorDetail vendor-payment-bill-link testid restored. ROUND 441.22.
+- 2026-10-08 DEVIN-A: PR #25903 MERGED squash 32f767089b672e70bf7e484e25a696fc63f18326 — D3 hex tail normalized (97 files, case-only) + HOTFIX 8 import blocks corrupted on main by D5 SelectCombobox insertion. ROUND 441.22.
+- 2026-10-08 DEVIN-A: PR #25904 MERGED squash e4212349ae629514fc21f994fda33d647a3fb306 — relay-bank-match phantom journal_entries columns → journal_entry_postings; held-migration declarations guard honors .held-migrations.json. ROUND 441.22.
