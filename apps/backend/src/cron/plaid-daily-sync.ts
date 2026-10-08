@@ -1,6 +1,6 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyBaseLogger, FastifyInstance } from "fastify";
 import cron from "node-cron";
-import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { recordBackgroundJobDisabled, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { withLuciaBypass } from "../auth/db.js";
 import { syncTransactions, handleItemError } from "../integrations/plaid/plaid.service.js";
 import { sendEmail } from "../notifications/email.service.js";
@@ -50,11 +50,85 @@ function buildFailureEmail(
   return `<p>Plaid daily sync reported failures:</p><ul>${items}</ul>`;
 }
 
+/** Exported for in-process startup catch-up (deploy-churn / email-notify poison). */
+export async function runPlaidDailySyncTick(log: FastifyBaseLogger): Promise<{ failure_count: number }> {
+  const accounts = await getAllActivePlaidAccounts();
+  const uniqueItems = new Map<string, ActivePlaidAccount>();
+  for (const account of accounts) {
+    if (!uniqueItems.has(account.plaid_item_id)) {
+      uniqueItems.set(account.plaid_item_id, account);
+    }
+  }
+
+  const failures: Array<{
+    plaid_item_id: string;
+    account_name: string | null;
+    institution_name: string | null;
+    reason: string;
+  }> = [];
+
+  for (const account of uniqueItems.values()) {
+    try {
+      const result = await syncTransactions(account.plaid_item_id);
+      log.info(
+        {
+          plaid_item_id: account.plaid_item_id,
+          total: result.autoCategorizeTotal,
+          matched: result.autoCategorizeMatched,
+          unmatched: result.autoCategorizeUnmatched,
+        },
+        "[PLAID_AUTOCAT_BATCH]"
+      );
+    } catch (error) {
+      const code =
+        typeof error === "object" && error && "code" in error
+          ? String((error as { code?: unknown }).code ?? "SYNC_FAILED")
+          : "SYNC_FAILED";
+      await handleItemError(account.plaid_item_id, code);
+      failures.push({
+        plaid_item_id: account.plaid_item_id,
+        account_name: account.account_name,
+        institution_name: account.institution_name,
+        reason: error instanceof Error ? error.message : "unknown_error",
+      });
+    }
+  }
+
+  if (failures.length > 0) {
+    // Notify is best-effort. A Resend domain-verify failure (live: E_EMAIL_SEND_FAILED on
+    // ih35trucking.net) must NOT mark the sync tick itself failed — that froze
+    // banking.plaid_daily_sync_cron for weeks (last_ok 2026-09-22) while the bank feed
+    // itself had already finished. Log + continue; per-account sync errors stay in failures.
+    try {
+      await sendEmail({
+        to: "tioperfumes07@gmail.com",
+        subject: `[IH 35 TMS] Plaid daily sync: ${failures.length} account(s) failed`,
+        sender: "noreply",
+        html: buildFailureEmail(failures),
+        text: `Plaid daily sync failed for ${failures.length} account(s).`,
+        eventClass: "banking.plaid.error",
+        tags: [{ name: "type", value: "plaid_alert" }],
+        actorUserId: null,
+      });
+    } catch (emailErr) {
+      log.warn(
+        { err: emailErr, failure_count: failures.length },
+        "[PLAID_DAILY_SYNC] failure alert email not sent — sync tick still records success"
+      );
+    }
+  }
+
+  return { failure_count: failures.length };
+}
+
 export function initializePlaidDailySyncCron(app: FastifyInstance) {
   if (initialized) return;
   initialized = true;
   if ((process.env.ENABLE_PLAID_DAILY_SYNC_CRON ?? "true").trim() === "false") {
     app.log.info("Plaid daily sync cron disabled via ENABLE_PLAID_DAILY_SYNC_CRON=false");
+    recordBackgroundJobDisabled(PLAID_DAILY_SYNC_JOB).catch((err) =>
+      app.log.warn({ err }, `[background-job:${PLAID_DAILY_SYNC_JOB}] failed to record disabled-outcome`)
+    );
     return;
   }
 
@@ -64,60 +138,7 @@ export function initializePlaidDailySyncCron(app: FastifyInstance) {
       await wrapBackgroundJobTick(
         PLAID_DAILY_SYNC_JOB,
         async () => {
-          const accounts = await getAllActivePlaidAccounts();
-          const uniqueItems = new Map<string, ActivePlaidAccount>();
-          for (const account of accounts) {
-            if (!uniqueItems.has(account.plaid_item_id)) {
-              uniqueItems.set(account.plaid_item_id, account);
-            }
-          }
-
-          const failures: Array<{
-            plaid_item_id: string;
-            account_name: string | null;
-            institution_name: string | null;
-            reason: string;
-          }> = [];
-
-          for (const account of uniqueItems.values()) {
-            try {
-              const result = await syncTransactions(account.plaid_item_id);
-              app.log.info(
-                {
-                  plaid_item_id: account.plaid_item_id,
-                  total: result.autoCategorizeTotal,
-                  matched: result.autoCategorizeMatched,
-                  unmatched: result.autoCategorizeUnmatched,
-                },
-                "[PLAID_AUTOCAT_BATCH]"
-              );
-            } catch (error) {
-              const code =
-                typeof error === "object" && error && "code" in error
-                  ? String((error as { code?: unknown }).code ?? "SYNC_FAILED")
-                  : "SYNC_FAILED";
-              await handleItemError(account.plaid_item_id, code);
-              failures.push({
-                plaid_item_id: account.plaid_item_id,
-                account_name: account.account_name,
-                institution_name: account.institution_name,
-                reason: error instanceof Error ? error.message : "unknown_error",
-              });
-            }
-          }
-
-          if (failures.length > 0) {
-            await sendEmail({
-              to: "tioperfumes07@gmail.com",
-              subject: `[IH 35 TMS] Plaid daily sync: ${failures.length} account(s) failed`,
-              sender: "noreply",
-              html: buildFailureEmail(failures),
-              text: `Plaid daily sync failed for ${failures.length} account(s).`,
-              eventClass: "banking.plaid.error",
-              tags: [{ name: "type", value: "plaid_alert" }],
-              actorUserId: null,
-            });
-          }
+          await runPlaidDailySyncTick(app.log);
         },
         app.log
       );

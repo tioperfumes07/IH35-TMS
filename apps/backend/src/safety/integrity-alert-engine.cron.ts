@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
-import { JOB_LEASE_SECONDS, wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { JOB_LEASE_SECONDS, recordBackgroundJobDisabled, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { runIntegrityAlertEngineForTenant } from "./integrity-alert-engine.service.js";
 
 /**
@@ -34,6 +34,9 @@ export function initializeIntegrityAlertEngineCron(app: FastifyInstance) {
 
   if (process.env.ENABLE_INTEGRITY_ALERT_ENGINE_CRON === "false") {
     app.log.info("Integrity alert engine cron disabled via ENABLE_INTEGRITY_ALERT_ENGINE_CRON=false");
+    recordBackgroundJobDisabled(CRON_NAME).catch((err) =>
+      app.log.warn({ err }, `[background-job:${CRON_NAME}] failed to record disabled-outcome`)
+    );
     return;
   }
 

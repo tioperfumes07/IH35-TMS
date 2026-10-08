@@ -85,8 +85,12 @@ export function assertNoHardDeleteBankStubs(opts = {}) {
     if (!/className=\{`relative flex items-center justify-end gap-1 \$\{menuOpen \? "z-50" : ""\}`\}/.test(src)) {
       failures.push(`${BANKING_VIEW} open action-menu parent must own z-50 so later table rows cannot occlude clicks`);
     }
-    if (!/absolute right-0 top-7 z-50 min-w-\[220px\]/.test(src)) {
-      failures.push(`${BANKING_VIEW} action menu must retain the elevated z-50 layer`);
+    // Portaled panel (createPortal + fixed z-[240]) supersedes in-cell absolute z-50 — ParityTable
+    // overflow cannot clip a body-level panel. Keep either pattern green.
+    const portaledMenu = /createPortal\(/.test(src) && /fixed z-\[240\] min-w-\[220px\]/.test(src);
+    const inlineMenu = /absolute right-0 top-7 z-50 min-w-\[220px\]/.test(src);
+    if (!portaledMenu && !inlineMenu) {
+      failures.push(`${BANKING_VIEW} action menu must retain an elevated layer (portaled fixed z-[240] or absolute z-50)`);
     }
   }
 

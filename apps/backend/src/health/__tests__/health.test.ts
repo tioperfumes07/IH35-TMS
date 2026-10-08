@@ -362,6 +362,46 @@ describe("backgroundJobRule money-cron freshness coverage (G4-HEALTH guard)", ()
       else process.env.ENABLE_SAMSARA_WEBHOOK_PROJECTION_CRON = prior;
     }
   });
+
+  it("samsara master sync is dormant unless ENABLE_SAMSARA_MASTER_SYNC_CRON=true", () => {
+    const prior = process.env.ENABLE_SAMSARA_MASTER_SYNC_CRON;
+    try {
+      delete process.env.ENABLE_SAMSARA_MASTER_SYNC_CRON;
+      const off = backgroundJobRule("samsara.master_sync_cron", false);
+      expect(off?.enabled).toBe(false);
+      expect(off?.dormantReason).toBe("env_disabled");
+      process.env.ENABLE_SAMSARA_MASTER_SYNC_CRON = "true";
+      expect(backgroundJobRule("samsara.master_sync_cron", false)?.enabled).toBe(true);
+    } finally {
+      if (prior === undefined) delete process.env.ENABLE_SAMSARA_MASTER_SYNC_CRON;
+      else process.env.ENABLE_SAMSARA_MASTER_SYNC_CRON = prior;
+    }
+  });
+
+  it("fuel fraud detector uses a daily-ingest window (not 30m timer)", () => {
+    const prior = process.env.ENABLE_FUEL_FRAUD_DETECTOR_WORKER;
+    try {
+      process.env.ENABLE_FUEL_FRAUD_DETECTOR_WORKER = "true";
+      expect(backgroundJobRule("fuel.fraud_detector_worker", false)?.maxStaleMinutes).toBe(2880);
+    } finally {
+      if (prior === undefined) delete process.env.ENABLE_FUEL_FRAUD_DETECTOR_WORKER;
+      else process.env.ENABLE_FUEL_FRAUD_DETECTOR_WORKER = prior;
+    }
+  });
+
+  it("retry_held_expense_postings has a freshness rule", () => {
+    const r = backgroundJobRule("accounting.retry_held_expense_postings", false);
+    expect(r?.enabled).toBe(true);
+    expect(r?.maxStaleMinutes).toBe(720);
+  });
+
+  it("QBO token refresh + forensic are dormant with no USMCA realm", () => {
+    for (const jobName of ["qbo.token_refresh_cron", "qbo.forensic_import_runner", "qbo_sync.drift_scheduler"]) {
+      const off = backgroundJobRule(jobName, false);
+      expect(off?.enabled, jobName).toBe(false);
+      expect(off?.dormantReason, jobName).toBe("no_qbo_realm_connected");
+    }
+  });
 });
 
 // A1-1 guard: the QBO master-data mirror-staleness alarm must not self-disable when the
@@ -393,6 +433,7 @@ describe("A1-1 backgroundJobRule — QBO mirror-staleness arms on connected real
     delete process.env.QBO_MASTERDATA_SYNC_ENABLED;
     const rule = backgroundJobRule("qbo.master_data_sync.delta", false);
     expect(rule?.enabled).toBe(false);
+    expect(rule?.dormantReason).toBe("no_qbo_realm_connected");
   });
 
   it("sync flag ON → alarm armed regardless of realm connection", () => {

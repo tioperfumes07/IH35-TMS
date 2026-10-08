@@ -15,6 +15,9 @@ import { runCashAdvanceExpiryTick } from "./cash-advance-request-expiry-cron.js"
 import { processEmailQueueTick } from "../email/cron.js";
 import { runChatConfirmationEscalationTick } from "./chat-confirmation-escalation.cron.js";
 import { runSamsaraRemoteCountCollectorTick } from "./samsara-remote-count-collector.cron.js";
+import { runIntegrityAlertEngineCronTick } from "../safety/integrity-alert-engine.cron.js";
+import { runRetryHeldExpensePostingsCronTick } from "./retry-held-expense-postings.cron.js";
+import { PLAID_DAILY_SYNC_JOB, runPlaidDailySyncTick } from "./plaid-daily-sync.js";
 
 /**
  * SYSTEM-BACKGROUND-JOB-LEDGER-STALE-AFTER-SUCCESSFUL-TICKS
@@ -50,6 +53,14 @@ export const IN_PROCESS_CATCHUP_WINDOWS: ReadonlyArray<{
   // money poster or a QBO path — squarely the class this list exists to cover. 1440 = 2x its own
   // 12h (720min) schedule, the same "two-period health window" convention already used above.
   { jobName: "samsara.remote_count_collector", maxStaleMinutes: 1440, disabled: () => (process.env.SAMSARA_REMOTE_COUNT_COLLECTOR_ENABLED ?? "true").trim() === "false" },
+  // Deploy churn kills the 6h :20 lease mid-tick (live: leased_at set, last_finished_at NULL,
+  // last_successful_run_at frozen days). Catch-up restores the ledger without waiting for :20 CT.
+  { jobName: "safety.integrity_alert_engine_cron", maxStaleMinutes: 720, disabled: () => process.env.ENABLE_INTEGRITY_ALERT_ENGINE_CRON === "false" },
+  // Non-QBO membership-scoped sweep (USMCA system actor). Catch-up clears never_succeeded after
+  // the TRANSP/TRK membership poison is filtered out — not a forbidden money poster inventing GL.
+  { jobName: "accounting.retry_held_expense_postings", maxStaleMinutes: 720, disabled: () => false },
+  // Bank-feed pull (not categorize/match). Email-notify poison froze last_ok at 2026-09-22.
+  { jobName: PLAID_DAILY_SYNC_JOB, maxStaleMinutes: 1560, disabled: () => (process.env.ENABLE_PLAID_DAILY_SYNC_CRON ?? "true").trim() === "false" },
 ];
 
 function tickFor(jobName: string, app: FastifyInstance): (() => Promise<void>) | null {
@@ -86,6 +97,12 @@ function tickFor(jobName: string, app: FastifyInstance): (() => Promise<void>) |
       };
     case "samsara.remote_count_collector":
       return () => runSamsaraRemoteCountCollectorTick(app);
+    case "safety.integrity_alert_engine_cron":
+      return () => runIntegrityAlertEngineCronTick();
+    case "accounting.retry_held_expense_postings":
+      return () => runRetryHeldExpensePostingsCronTick().then(() => undefined);
+    case "banking.plaid_daily_sync_cron":
+      return () => runPlaidDailySyncTick(app.log).then(() => undefined);
     default:
       return null;
   }
