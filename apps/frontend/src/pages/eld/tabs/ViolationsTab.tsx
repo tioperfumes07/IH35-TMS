@@ -80,15 +80,15 @@ export function ViolationsTab({ operatingCompanyId }: Props) {
   );
 
   if (!operatingCompanyId) {
-    return <p className="text-xs text-slate-600">Select an operating company to load HOS violations.</p>;
+    return <p className="text-xs text-[#4B5563]">Select an operating company to load HOS violations.</p>;
   }
 
   return (
     <div className="space-y-3" data-testid="eld-violations-tab">
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
         <div>
-          <div className="text-xs font-semibold text-slate-800">HOS Violations</div>
-          <div className="text-xs text-slate-500">
+          <div className="text-xs font-semibold text-[#0F1219]">HOS Violations</div>
+          <div className="text-xs text-[#6B7280]">
             Read-only from <code className="text-xs">GET /api/v1/safety/hos-violations</code>. Create / void on
             Safety.
           </div>
@@ -121,7 +121,7 @@ export function ViolationsTab({ operatingCompanyId }: Props) {
       />
       {!query.isError && total > pageSize ? <div className="flex items-center justify-end gap-2 text-xs" data-testid="eld-hos-violations-server-pager">
         <Button size="sm" variant="secondary" disabled={page <= 1 || query.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous violations</Button>
-        <span className="text-slate-600">Page {page} of {pageCount} · {total} violations</span>
+        <span className="text-[#4B5563]">Page {page} of {pageCount} · {total} violations</span>
         <Button size="sm" variant="secondary" disabled={page >= pageCount || query.isFetching} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}>Next violations</Button>
       </div> : null}
     </div>

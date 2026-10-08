@@ -80,7 +80,7 @@ export function LiveDutyTab({ operatingCompanyId }: Props) {
         key: "action",
         label: "Action",
         render: (row) => (
-          <Link to={`/drivers/${row.driver_id}/hos`} className="font-semibold text-slate-700 hover:underline">
+          <Link to={`/drivers/${row.driver_id}/hos`} className="font-semibold text-[#1F2A44] hover:underline">
             Drill-down
           </Link>
         ),
@@ -90,14 +90,14 @@ export function LiveDutyTab({ operatingCompanyId }: Props) {
   );
 
   if (!operatingCompanyId) {
-    return <p className="text-xs text-slate-600">Select an operating company to load live duty status.</p>;
+    return <p className="text-xs text-[#4B5563]">Select an operating company to load live duty status.</p>;
   }
 
   return (
     <div className="space-y-3" data-testid="eld-live-duty-tab">
       <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
-        <div className="text-xs font-semibold text-slate-800">Live Duty Status</div>
-        <div className="text-xs text-slate-500">
+        <div className="text-xs font-semibold text-[#0F1219]">Live Duty Status</div>
+        <div className="text-xs text-[#6B7280]">
           Canonical roster from <code className="text-xs">GET /api/v1/telematics/hos/daily-roster</code> · duty day{" "}
           {date} (America/Chicago). Refreshes every 60s.
         </div>
@@ -114,9 +114,9 @@ export function LiveDutyTab({ operatingCompanyId }: Props) {
               ["Unavailable", counts.unavailable],
             ] as const
           ).map(([label, value]) => (
-            <div key={label} className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2">
-              <div className="text-xs uppercase text-slate-700">{label}</div>
-              <div className="text-page-title font-semibold tabular-nums text-slate-900">{value}</div>
+            <div key={label} className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
+              <div className="text-xs uppercase text-[#1F2A44]">{label}</div>
+              <div className="text-page-title font-semibold tabular-nums text-[#0F1219]">{value}</div>
             </div>
           ))}
         </div>

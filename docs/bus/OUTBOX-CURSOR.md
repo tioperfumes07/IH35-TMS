@@ -1,3 +1,13 @@
+## 2026-10-08T18:55Z · BANK leftover slate — LiveDuty / Violations / Unidentified ELD tabs
+
+FINDING: BANK-F91227 — LiveDutyTab / ViolationsTab / UnidentifiedTab Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25893 squash `2d1d6c3270` (BANK-F91226 fuel integ/receipt/relay)
+GUARD: scripts/verify-eld-liveduty-viol-slate-leftover-chrome.mjs + verify-steps/3680 piggyback
+LIVE PROOF: verify-eld-liveduty-viol-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3680 piggyback + OUTBOX
+
 ## 2026-10-08T18:45Z · BANK leftover slate — FuelIntegrity / FuelReceipt / RelayFills
 
 FINDING: BANK-F91226 — FuelIntegrityPage / FuelReceiptPage / RelayFillsReverseSection Tailwind slate-* → house tokens
