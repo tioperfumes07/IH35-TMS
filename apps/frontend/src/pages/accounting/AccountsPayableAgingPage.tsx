@@ -57,12 +57,12 @@ const BUCKET_FILTER_KEYS = ["current", "d1_30", "d31_60", "d61_90", "d90_plus"] 
 type BucketFilterKey = (typeof BUCKET_FILTER_KEYS)[number] | "all";
 const GROUP_ORDER: ApAgingDisplayGroup[] = ["Driver", "Repair", "Diesel", "Insurance", "Intercompany", "Other"];
 const GROUP_CHIP: Record<ApAgingDisplayGroup, string> = {
-  Driver: "bg-slate-100 text-slate-700",
-  Repair: "bg-slate-100 text-slate-700",
-  Diesel: "bg-slate-100 text-slate-700",
-  Insurance: "bg-slate-100 text-slate-700",
-  Intercompany: "bg-slate-100 text-slate-700",
-  Other: "bg-slate-100 text-slate-600",
+  Driver: "bg-[#F7F8FA] text-[#1F2A44]",
+  Repair: "bg-[#F7F8FA] text-[#1F2A44]",
+  Diesel: "bg-[#F7F8FA] text-[#1F2A44]",
+  Insurance: "bg-[#F7F8FA] text-[#1F2A44]",
+  Intercompany: "bg-[#F7F8FA] text-[#1F2A44]",
+  Other: "bg-[#F7F8FA] text-[#4B5563]",
 };
 
 type Buckets = { current: number; d1_30: number; d31_60: number; d61_90: number; d90_plus: number; total_outstanding: number };
@@ -103,8 +103,8 @@ const VENDOR_COLUMNS: Array<ParityColumn<ApAgingVendor>> = [
     render: (v) =>
       v.vendor_id ? (
         <span className="inline-flex flex-col gap-0.5">
-          <EntityLink kind="vendor" id={v.vendor_id} label={entityLabel(v.vendor_name, v.vendor_id, "Vendor")} className="font-medium text-slate-700" />
-          <Link to={apAgingBillsListHref(v.vendor_id)} className="text-xs font-medium text-slate-500 hover:underline">
+          <EntityLink kind="vendor" id={v.vendor_id} label={entityLabel(v.vendor_name, v.vendor_id, "Vendor")} className="font-medium text-[#1F2A44]" />
+          <Link to={apAgingBillsListHref(v.vendor_id)} className="text-xs font-medium text-[#6B7280] hover:underline">
             Open bills
           </Link>
         </span>
@@ -340,9 +340,9 @@ export function AccountsPayableAgingPage() {
   return (
     <AccountingSubNavWrapper title="Accounts Payable" subtitle={apSubtitle}>
       <div className="mb-3 flex flex-wrap items-end gap-3 print:hidden" data-ap-aging-filter-toolbar="collapsed">
-        <div className="inline-flex overflow-hidden rounded-sm border border-slate-300">
-          <button type="button" className={`px-3 py-1.5 text-xs ${view === "by_vendor" ? "bg-slate-800 text-white" : "bg-[var(--surface-unselected)] text-slate-700"}`} onClick={() => setView("by_vendor")}>By Vendor</button>
-          <button type="button" className={`px-3 py-1.5 text-xs ${view === "by_type" ? "bg-slate-800 text-white" : "bg-[var(--surface-unselected)] text-slate-700"}`} onClick={() => setView("by_type")}>By Vendor Type</button>
+        <div className="inline-flex overflow-hidden rounded-sm border border-[#E5E7EB]">
+          <button type="button" className={`px-3 py-1.5 text-xs ${view === "by_vendor" ? "bg-[#14314F] text-white" : "bg-[var(--surface-unselected)] text-[#1F2A44]"}`} onClick={() => setView("by_vendor")}>By Vendor</button>
+          <button type="button" className={`px-3 py-1.5 text-xs ${view === "by_type" ? "bg-[#14314F] text-white" : "bg-[var(--surface-unselected)] text-[#1F2A44]"}`} onClick={() => setView("by_type")}>By Vendor Type</button>
         </div>
 
         <CollapsedListFilters
@@ -351,11 +351,11 @@ export function AccountsPayableAgingPage() {
           testIdPrefix="ap-aging"
         >
           <div className="flex flex-wrap items-end gap-3">
-            <label className="text-xs font-semibold text-slate-600">
+            <label className="text-xs font-semibold text-[#4B5563]">
               As of
               <div className="mt-1"><DatePicker value={staged.draft.asOf} onChange={(d) => staged.setDraft({ ...staged.draft, asOf: d || today() })} /></div>
             </label>
-            <label className="text-xs font-semibold text-slate-600">
+            <label className="text-xs font-semibold text-[#4B5563]">
               Vendor type
               <SelectCombobox className="mt-1 block" value={staged.draft.typeFilter} onChange={(e) => staged.setDraft({ ...staged.draft, typeFilter: e.target.value as ApAgingDisplayGroup | "all" })}>
                 <option value="all">All types</option>
@@ -365,7 +365,7 @@ export function AccountsPayableAgingPage() {
           </div>
         </CollapsedListFilters>
 
-        <span className="text-xs text-slate-500">Basis: {query.data?.basis === "cash" ? "Cash" : "Accrual"}</span>
+        <span className="text-xs text-[#6B7280]">Basis: {query.data?.basis === "cash" ? "Cash" : "Accrual"}</span>
 
         <div className="ml-auto flex gap-2">
           <Button type="button" variant="secondary" onClick={exportCsv}>Export</Button>
@@ -374,39 +374,39 @@ export function AccountsPayableAgingPage() {
       </div>
 
       <div
-        className="mb-3 grid gap-1 rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 print:hidden"
+        className="mb-3 grid gap-1 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#4B5563] print:hidden"
         data-testid="ap-aging-qbo-mirror-status"
       >
         <div>
-          Internal basis: <span className="font-semibold text-slate-800">TMS bills</span>
+          Internal basis: <span className="font-semibold text-[#1F2A44]">TMS bills</span>
           {query.data?.as_of_is_historical ? (
-            <span className="ml-2 text-slate-600">(historical as-of — open reconstructed via as-of payments + credits)</span>
+            <span className="ml-2 text-[#4B5563]">(historical as-of — open reconstructed via as-of payments + credits)</span>
           ) : null}
         </div>
         <div>
           QBO mirror pull:{" "}
-          <span className="font-semibold text-slate-800">{qboMirror?.pull_enabled ? "ON" : "OFF"}</span>
+          <span className="font-semibold text-[#1F2A44]">{qboMirror?.pull_enabled ? "ON" : "OFF"}</span>
           {" · "}
           projection:{" "}
-          <span className="font-semibold text-slate-800">{qboMirror?.projection_enabled ? "ON" : "OFF"}</span>
+          <span className="font-semibold text-[#1F2A44]">{qboMirror?.projection_enabled ? "ON" : "OFF"}</span>
           {" · "}
-          freshness: <span className="font-semibold text-slate-800">{freshnessLabel}</span>
+          freshness: <span className="font-semibold text-[#1F2A44]">{freshnessLabel}</span>
           {qboSyncedAt ? ` (${formatDateUS(qboSyncedAt)})` : ""}
         </div>
         <div>
-          Reconcile: <span className="font-semibold text-slate-800">{reconcileLabel}</span>
+          Reconcile: <span className="font-semibold text-[#1F2A44]">{reconcileLabel}</span>
           {qboMirror?.reconcile_applicable ? (
             <>
-              {" · "}signed Δ (TMS − mirror): <span className="font-semibold tabular-nums text-slate-800">{deltaLabel}</span>
+              {" · "}signed Δ (TMS − mirror): <span className="font-semibold tabular-nums text-[#1F2A44]">{deltaLabel}</span>
             </>
           ) : (
-            <span className="ml-1 text-slate-500">— no match claim when source N/A or as-of is historical</span>
+            <span className="ml-1 text-[#6B7280]">— no match claim when source N/A or as-of is historical</span>
           )}
         </div>
       </div>
 
       {vendors.some((v) => v.uncleared_cents > 0) ? (
-        <p className="mb-3 rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
+        <p className="mb-3 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
           Cleared {money(vendors.reduce((s, v) => s + v.cleared_open_cents, 0))}. Applied payments that have not been matched or categorized in Banking are named not cleared beside each vendor.
         </p>
       ) : null}
@@ -431,10 +431,10 @@ export function AccountsPayableAgingPage() {
               aria-pressed={active}
               onClick={() => setBucketFilter(active ? "all" : k)}
               className={`flex flex-col items-start rounded-sm border px-3 py-1.5 text-left text-xs ${
-                active ? "border-slate-800 bg-slate-800 text-white" : "border-slate-200 bg-[var(--surface-unselected)] text-slate-700 hover:border-slate-400"
+                active ? "border-[#E5E7EB] bg-[#14314F] text-white" : "border-[#E5E7EB] bg-[var(--surface-unselected)] text-[#1F2A44] hover:border-[#E5E7EB]"
               }`}
             >
-              <span className={`text-xs font-semibold uppercase tracking-wide ${active ? "text-slate-200" : "text-slate-500"}`}>
+              <span className={`text-xs font-semibold uppercase tracking-wide ${active ? "text-[#E5E7EB]" : "text-[#6B7280]"}`}>
                 {MONEY_LABELS[k]}
               </span>
               <span className={`tabular-nums font-semibold ${!active && RED_KEYS.has(k) ? "text-red-600" : ""}`}>
@@ -448,7 +448,7 @@ export function AccountsPayableAgingPage() {
             type="button"
             data-testid="ap-aging-bucket-tile-clear"
             onClick={() => setBucketFilter("all")}
-            className="self-center px-2 text-xs font-medium text-slate-500 underline hover:text-slate-700"
+            className="self-center px-2 text-xs font-medium text-[#6B7280] underline hover:text-[#1F2A44]"
           >
             Clear bucket filter
           </button>
@@ -456,7 +456,7 @@ export function AccountsPayableAgingPage() {
       </div>
 
       {query.isLoading ? (
-        <div className="px-3 py-6 text-xs text-slate-500">Loading A/P aging…</div>
+        <div className="px-3 py-6 text-xs text-[#6B7280]">Loading A/P aging…</div>
       ) : query.isError ? (
         <ListErrorState
           title="Couldn't load A/P aging"
@@ -478,7 +478,7 @@ export function AccountsPayableAgingPage() {
             sortDirection={sortDirection}
             onSortChange={onSortChange}
             filterBar={
-              <span className="text-xs text-slate-500">{typeFiltered.length} rows</span>
+              <span className="text-xs text-[#6B7280]">{typeFiltered.length} rows</span>
             }
           />
           {/* TOTAL row — same values the former <tfoot> carried (sum of the filtered vendor rows),
@@ -486,12 +486,12 @@ export function AccountsPayableAgingPage() {
               totals render as a strip directly under the grid (same pattern as ArApAgingPage). */}
           <div
             data-testid="ap-aging-by-vendor-total"
-            className="flex flex-wrap items-center justify-end gap-x-5 gap-y-1 rounded-sm border border-slate-200 border-t-2 border-t-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold"
+            className="flex flex-wrap items-center justify-end gap-x-5 gap-y-1 rounded-sm border border-[#E5E7EB] border-t-2 border-t-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs font-semibold"
           >
             <span className="mr-auto">TOTAL</span>
             {MONEY_KEYS.map((k) => (
               <span key={k} className="whitespace-nowrap">
-                <span className="text-section-header font-semibold uppercase tracking-wide text-slate-500">{MONEY_LABELS[k]}</span>{" "}
+                <span className="text-section-header font-semibold uppercase tracking-wide text-[#6B7280]">{MONEY_LABELS[k]}</span>{" "}
                 <span className={`tabular-nums ${RED_KEYS.has(k) ? "text-red-600" : ""}`}>{money(amount(vendorTotals, k))}</span>
               </span>
             ))}
@@ -512,17 +512,17 @@ export function AccountsPayableAgingPage() {
             sortDirection={sortDirection}
             onSortChange={onSortChange}
             filterBar={
-              <span className="text-xs text-slate-500">{typeFiltered.length} rows</span>
+              <span className="text-xs text-[#6B7280]">{typeFiltered.length} rows</span>
             }
           />
           <div
             data-testid="ap-aging-by-type-total"
-            className="flex flex-wrap items-center justify-end gap-x-5 gap-y-1 rounded-sm border border-slate-200 border-t-2 border-t-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold"
+            className="flex flex-wrap items-center justify-end gap-x-5 gap-y-1 rounded-sm border border-[#E5E7EB] border-t-2 border-t-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs font-semibold"
           >
             <span className="mr-auto">TOTAL</span>
             {MONEY_KEYS.map((k) => (
               <span key={k} className="whitespace-nowrap">
-                <span className="text-section-header font-semibold uppercase tracking-wide text-slate-500">{MONEY_LABELS[k]}</span>{" "}
+                <span className="text-section-header font-semibold uppercase tracking-wide text-[#6B7280]">{MONEY_LABELS[k]}</span>{" "}
                 <span className={`tabular-nums ${RED_KEYS.has(k) ? "text-red-600" : ""}`}>{money(amount(vendorTotals, k))}</span>
               </span>
             ))}
