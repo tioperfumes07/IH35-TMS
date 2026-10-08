@@ -20,7 +20,8 @@ const FILE = path.join(
 );
 
 const src = fs.readFileSync(FILE, "utf8");
-const fnStart = src.indexOf("export async function runRelayFuelBackfill");
+// Exact name + "(" — indexOf("...Backfill") also matches runRelayFuelBackfillOnceFromEnv.
+const fnStart = src.indexOf("export async function runRelayFuelBackfill(");
 if (fnStart < 0) {
   console.error(`[${LABEL}] FAIL — runRelayFuelBackfill not found`);
   process.exit(1);
