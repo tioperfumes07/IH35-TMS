@@ -1,3 +1,13 @@
+## 2026-10-08T20:30Z · BANK leftover slate — DriverLoadDetail / BrokersList / QboSyncHealth
+
+FINDING: BANK-F91233 — DriverLoadDetailPage / BrokersListPage / QboSyncHealthCard Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25902 squash `bb4e93afd9` (BANK-F91232 exhibits/drvqual/filings)
+GUARD: scripts/verify-drvload-brokers-qbohealth-slate-leftover-chrome.mjs + verify-steps/3640 piggyback
+LIVE PROOF: verify-drvload-brokers-qbohealth-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3640 piggyback + OUTBOX
+
 ## 2026-10-08T20:06Z · BANK leftover slate — ExhibitsViewer / DriverQualification / FilingsCompliance
 
 FINDING: BANK-F91232 — ExhibitsViewer / DriverQualificationReportPage / FilingsComplianceDueSection Tailwind slate-* → house tokens

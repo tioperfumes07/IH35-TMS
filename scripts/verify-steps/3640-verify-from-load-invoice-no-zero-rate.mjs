@@ -3,5 +3,6 @@ export default {
   name: "verify-from-load-invoice-no-zero-rate",
   run(ctx) {
     ctx.run("node", ["scripts/verify-from-load-invoice-no-zero-rate.mjs"]);
+    ctx.run("node", ["scripts/verify-drvload-brokers-qbohealth-slate-leftover-chrome.mjs"]);
   },
 };

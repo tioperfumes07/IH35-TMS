@@ -37,7 +37,7 @@ export function DriverLoadDetailPage() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <Link className="text-xs text-slate-600" to="/driver/loads">
+        <Link className="text-xs text-[#4B5563]" to="/driver/loads">
           ← {t("driver.loads_title")}
         </Link>
         <button type="button" className="text-xs font-semibold text-red-800" onClick={() => setReportOpen(true)}>
@@ -47,11 +47,11 @@ export function DriverLoadDetailPage() {
       <h2 className="text-xs font-semibold">
         <EntityLink kind="load" id={load.id} label={entityLabel(load.display_id, load.id, "Load")} /> — {t("driver.load_detail")}
       </h2>
-      <p className="text-xs text-slate-600">
+      <p className="text-xs text-[#4B5563]">
         {t("driver.customer")}: <EntityLink kind="customer" id={load.customer_id} label={entityLabel(load.customer_name, load.customer_id, "Customer")} />
       </p>
-      <div className="rounded-sm border border-slate-200 bg-white p-2">
-        <p className="text-xs font-semibold uppercase text-slate-500">{t("driver.stops")}</p>
+      <div className="rounded-sm border border-[#E5E7EB] bg-white p-2">
+        <p className="text-xs font-semibold uppercase text-[#6B7280]">{t("driver.stops")}</p>
         <ul className="mt-1 space-y-1 text-xs">
           {load.stops.map((s: DriverLoad["stops"][number]) => (
             <li key={s.id}>
@@ -60,11 +60,11 @@ export function DriverLoadDetailPage() {
           ))}
         </ul>
       </div>
-      <div className="rounded-sm border border-slate-200 bg-white p-2">
-        <p className="text-xs font-semibold text-slate-600">{t("driver.bol")}</p>
+      <div className="rounded-sm border border-[#E5E7EB] bg-white p-2">
+        <p className="text-xs font-semibold text-[#4B5563]">{t("driver.bol")}</p>
         <iframe
           title="rate-confirmation"
-          className="mt-2 h-64 w-full border border-slate-100"
+          className="mt-2 h-64 w-full border border-[#E5E7EB]"
           srcDoc={load.rate_confirmation_html}
           sandbox="allow-scripts allow-same-origin"
         />
