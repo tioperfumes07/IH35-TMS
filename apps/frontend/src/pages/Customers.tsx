@@ -1271,16 +1271,18 @@ export function CustomersPage() {
               ]}
             />
             {/* C-01 — Active/Inactive soft-delete filter (not the default list tab). */}
-            <SegmentedControl
-              value={listTab === "with_transactions" ? "active" : listStatus}
-              onChange={(value) => setListTab(value === "active" ? "active" : value)}
-              dataAttributes={{ "data-list-status-filter": "customers", "data-customers-roster-filter-toolbar": "inline" }}
-              options={[
+            <div data-list-status-filter="customers" data-customers-roster-filter-toolbar="inline">
+              <SegmentedControl
+                value={listTab === "with_transactions" ? "active" : listStatus}
+                onChange={(value) => setListTab(value === "active" ? "active" : value)}
+                dataAttributes={{ "data-list-status-filter": "customers", "data-customers-roster-filter-toolbar": "inline" }}
+                options={[
                 { value: "active", label: "Active", testId: "customers-roster-status-active" },
                 { value: "inactive", label: "Inactive", testId: "customers-roster-status-inactive" },
                 { value: "all", label: "All", testId: "customers-roster-status-all" },
               ]}
-            />
+              />
+            </div>
             {/* C-31 — With transactions is the DEFAULT NAVY TAB below (A-21), not a buried header control. */}
             <SelectCombobox
               value={rosterType}
