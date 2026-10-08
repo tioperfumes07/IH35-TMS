@@ -1,3 +1,13 @@
+## 2026-10-08T07:05Z · BANK leftover slate — earnings tab / users / feed gate
+
+FINDING: BANK-F91177 — EarningsTab / Users / FeedGatePage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25831 squash `4cf35d8d6e` (BANK-F91176 permits/IDVR/complaints)
+GUARD: scripts/verify-earnings-users-feed-slate-leftover-chrome.mjs + verify-steps/1016 piggyback
+LIVE PROOF: verify-earnings-users-feed-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 1016 piggyback + OUTBOX
+
 ## 2026-10-08T07:00Z · BANK leftover slate — permits / IDVR detail / complaints tab
 
 FINDING: BANK-F91176 — PermitsPage / IdvrDetailPage / ComplaintsTab Tailwind slate-* → house tokens
