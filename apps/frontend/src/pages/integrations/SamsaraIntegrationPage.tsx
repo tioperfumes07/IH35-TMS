@@ -115,7 +115,7 @@ export function SamsaraIntegrationPage() {
         actions={
           <Link
             to="/samsara/driver-mapping"
-            className="rounded-sm border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-gray-50"
+            className="rounded-sm border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-[#4B5563] hover:bg-gray-50"
             data-testid="samsara-driver-mapping-link"
           >
             Driver mapping
@@ -123,7 +123,7 @@ export function SamsaraIntegrationPage() {
         }
       />
 
-      <div className="rounded-sm border border-slate-200 bg-white p-4 text-xs text-slate-700">
+      <div className="rounded-sm border border-[#E5E7EB] bg-white p-4 text-xs text-[#4B5563]">
         <div className="mb-3 flex items-center gap-2">
           <span
             className={`inline-block h-2 w-2 shrink-0 rounded-full ${
@@ -133,61 +133,61 @@ export function SamsaraIntegrationPage() {
                   ? "bg-amber-400"
                   : statusVis.dot === "red"
                     ? "bg-red-500"
-                    : "bg-slate-400"
+                    : "bg-[#6B7280]"
             }`}
           />
-          <span className="font-medium text-slate-900">{statusVis.label}</span>
+          <span className="font-medium text-[#0F1219]">{statusVis.label}</span>
         </div>
-        <dl className="grid grid-cols-1 gap-2 text-xs text-slate-600">
+        <dl className="grid grid-cols-1 gap-2 text-xs text-[#4B5563]">
           <div>
-            <dt className="font-semibold text-slate-700">Last health check</dt>
+            <dt className="font-semibold text-[#4B5563]">Last health check</dt>
             <dd>{configQuery.data?.last_health_check_at ?? "—"}</dd>
           </div>
           <div>
-            <dt className="font-semibold text-slate-700">Status</dt>
+            <dt className="font-semibold text-[#4B5563]">Status</dt>
             <dd>{configQuery.data?.last_health_status ?? "—"}</dd>
           </div>
           {configQuery.data?.last_error ? (
             <div>
-              <dt className="font-semibold text-slate-700">Last error</dt>
+              <dt className="font-semibold text-[#4B5563]">Last error</dt>
               <dd className="whitespace-pre-wrap text-red-700">{configQuery.data.last_error}</dd>
             </div>
           ) : null}
           <div>
-            <dt className="font-semibold text-slate-700">Org id on file</dt>
+            <dt className="font-semibold text-[#4B5563]">Org id on file</dt>
             <dd>{configQuery.data?.samsara_org_id ?? "—"}</dd>
           </div>
         </dl>
       </div>
 
-      <div className="rounded-sm border border-slate-200 bg-white p-4">
-        <h2 className="mb-3 text-xs font-semibold text-slate-900">Configure Samsara</h2>
+      <div className="rounded-sm border border-[#E5E7EB] bg-white p-4">
+        <h2 className="mb-3 text-xs font-semibold text-[#0F1219]">Configure Samsara</h2>
         <div className="space-y-3 text-xs">
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-slate-600">API token</span>
+            <span className="mb-1 block text-xs font-medium text-[#4B5563]">API token</span>
             <input
               type="password"
               autoComplete="off"
-              className="w-full rounded-sm border border-slate-300 px-2 py-1"
+              className="w-full rounded-sm border border-[#E5E7EB] px-2 py-1"
               value={apiToken}
               onChange={(e) => setApiToken(e.target.value)}
             />
           </label>
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-slate-600">Webhook secret</span>
+            <span className="mb-1 block text-xs font-medium text-[#4B5563]">Webhook secret</span>
             <input
               type="password"
               autoComplete="off"
-              className="w-full rounded-sm border border-slate-300 px-2 py-1"
+              className="w-full rounded-sm border border-[#E5E7EB] px-2 py-1"
               value={webhookSecret}
               onChange={(e) => setWebhookSecret(e.target.value)}
             />
           </label>
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-slate-600">Samsara org id</span>
+            <span className="mb-1 block text-xs font-medium text-[#4B5563]">Samsara org id</span>
             <input
               type="text"
-              className="w-full rounded-sm border border-slate-300 px-2 py-1"
+              className="w-full rounded-sm border border-[#E5E7EB] px-2 py-1"
               value={orgId}
               onChange={(e) => setOrgId(e.target.value)}
               placeholder="Optional until live API"
@@ -197,7 +197,7 @@ export function SamsaraIntegrationPage() {
         <div className="mt-4 flex flex-wrap gap-2">
           <button
             type="button"
-            className="rounded-sm bg-slate-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+            className="rounded-sm bg-[#0F1219] px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
             disabled={saveMutation.isPending || !apiToken || !webhookSecret}
             onClick={() => saveMutation.mutate()}
           >
@@ -205,7 +205,7 @@ export function SamsaraIntegrationPage() {
           </button>
           <button
             type="button"
-            className="rounded-sm border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 disabled:opacity-50"
+            className="rounded-sm border border-[#E5E7EB] bg-white px-3 py-1.5 text-xs font-medium text-[#1F2A44] disabled:opacity-50"
             disabled={testMutation.isPending || !apiToken || !webhookSecret}
             onClick={() => testMutation.mutate()}
           >
@@ -222,13 +222,13 @@ export function SamsaraIntegrationPage() {
         </div>
       </div>
 
-      <section className="rounded-sm border border-slate-200 bg-white p-4" data-testid="samsara-driver-roster">
+      <section className="rounded-sm border border-[#E5E7EB] bg-white p-4" data-testid="samsara-driver-roster">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="text-xs font-semibold text-slate-900">Samsara driver roster</h2>
+          <h2 className="text-xs font-semibold text-[#0F1219]">Samsara driver roster</h2>
           <div className="flex gap-1" role="group" aria-label="Samsara driver status">
             {(["active", "deactivated", "all"] as const).map((status) => (
               <button key={status} type="button" data-testid={`samsara-roster-filter-${status}`} onClick={() => setRosterStatus(status)}
-                className={`h-7 rounded-sm border px-2 text-xs font-medium capitalize ${rosterStatus === status ? "border-slate-800 bg-slate-800 text-white" : "border-slate-300 bg-[var(--surface-unselected)] text-slate-700"}`}>
+                className={`h-7 rounded-sm border px-2 text-xs font-medium capitalize ${rosterStatus === status ? "border-[#0F1219] bg-[#1F2A44] text-white" : "border-[#E5E7EB] bg-[var(--surface-unselected)] text-[#4B5563]"}`}>
                 {status}
               </button>
             ))}

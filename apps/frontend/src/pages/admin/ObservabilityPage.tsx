@@ -92,7 +92,7 @@ export function ObservabilityPage() {
               data.sentry_configured ? (
                 <span className="text-green-700 font-medium">Configured ✓</span>
               ) : (
-                <span className="text-slate-700 font-medium">
+                <span className="text-[#4B5563] font-medium">
                   Not configured — set SENTRY_DSN env var
                 </span>
               )
@@ -107,7 +107,7 @@ export function ObservabilityPage() {
                   href={data.sentry_org_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-slate-700 underline text-xs"
+                  className="text-[#4B5563] underline text-xs"
                 >
                   {data.sentry_org_url}
                 </a>
@@ -123,7 +123,7 @@ export function ObservabilityPage() {
                   href={data.recent_errors_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-slate-700 underline text-xs"
+                  className="text-[#4B5563] underline text-xs"
                 >
                   Open in Sentry →
                 </a>
@@ -138,7 +138,7 @@ export function ObservabilityPage() {
                 href={data.healthz_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-slate-700 underline text-xs"
+                className="text-[#4B5563] underline text-xs"
               >
                 {data.healthz_url}
               </a>
@@ -183,7 +183,7 @@ function HealthzChecksSection({ query }: { query: UseQueryResult<HealthzPayload,
   const otherChecks = checks.filter((c) => !c.name.startsWith(LEDGER_CHECK_PREFIX));
 
   return (
-    <div className="mt-2 border-t border-slate-200 pt-4">
+    <div className="mt-2 border-t border-[#E5E7EB] pt-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-[#14314F]">
           Health checks{query.data.git_sha ? ` — build ${query.data.git_sha.slice(0, 7)}` : ""}
@@ -194,7 +194,7 @@ function HealthzChecksSection({ query }: { query: UseQueryResult<HealthzPayload,
             (ErrorMonitor.tsx, LaunchReadinessPage.tsx, LaunchToggles.tsx). */}
         <span
           className={`rounded-sm px-2 py-0.5 text-xs font-semibold uppercase ${
-            query.data.ok ? "bg-slate-100 text-slate-700" : "bg-red-100 text-red-800"
+            query.data.ok ? "bg-[#F7F8FA] text-[#4B5563]" : "bg-red-100 text-red-800"
           }`}
           data-testid="healthz-overall-status"
         >
@@ -204,7 +204,7 @@ function HealthzChecksSection({ query }: { query: UseQueryResult<HealthzPayload,
 
       {ledgerChecks.length > 0 && (
         <div className="mt-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
             Ledger / financial ({ledgerChecks.length})
           </h3>
           <HealthzCheckTable checks={ledgerChecks} />
@@ -213,7 +213,7 @@ function HealthzChecksSection({ query }: { query: UseQueryResult<HealthzPayload,
 
       {otherChecks.length > 0 && (
         <div className="mt-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
             Infrastructure ({otherChecks.length})
           </h3>
           <HealthzCheckTable checks={otherChecks} />
@@ -226,17 +226,17 @@ function HealthzChecksSection({ query }: { query: UseQueryResult<HealthzPayload,
 function HealthzCheckTable({ checks }: { checks: HealthzCheck[] }) {
   return (
     <table className="mt-1 w-full text-xs" data-testid="healthz-check-table">
-      <tbody className="divide-y divide-slate-100">
+      <tbody className="divide-y divide-[#E5E7EB]">
         {checks.map((c) => (
           <tr key={c.name} data-testid="healthz-check-row">
-            <td className="py-1 pr-2 font-mono text-slate-700">{c.name}</td>
-            <td className="py-1 pr-2 text-slate-500">{c.tier}</td>
-            <td className="py-1 pr-2 text-slate-500">{c.duration_ms != null ? `${c.duration_ms}ms` : "—"}</td>
+            <td className="py-1 pr-2 font-mono text-[#4B5563]">{c.name}</td>
+            <td className="py-1 pr-2 text-[#6B7280]">{c.tier}</td>
+            <td className="py-1 pr-2 text-[#6B7280]">{c.duration_ms != null ? `${c.duration_ms}ms` : "—"}</td>
             <td className="py-1 text-right">
               <span
                 className={
                   c.ok
-                    ? "rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700"
+                    ? "rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#4B5563]"
                     : "rounded-sm bg-red-100 px-1.5 py-0.5 text-xs font-semibold text-red-800"
                 }
               >
