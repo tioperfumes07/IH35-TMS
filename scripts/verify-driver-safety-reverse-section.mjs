@@ -274,8 +274,8 @@ if (SELFTEST) {
     {
       ...live,
       [SECTION]: live[SECTION].replace(
-        /<EntityLink\n          kind=\{openKind\}\n          id=\{openId\}\n          label=\{linkLabel\}\n          className="text-xs font-semibold text-slate-700 underline"\n        \/>/,
-        '<Link className="text-xs font-semibold text-slate-700 underline" to={to ?? "#"}>{linkLabel}</Link>'
+        /<EntityLink\s+kind=\{openKind\}\s+id=\{openId\}\s+label=\{linkLabel\}[^/]*\/>/,
+        '<Link className="underline" to={to ?? "#"}>{linkLabel}</Link>'
       ),
     },
     "EntityLink-only"
