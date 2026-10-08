@@ -395,7 +395,7 @@ export function HOSViolationsTab() {
         />
         <button
           type="button"
-          className="rounded-sm bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-60"
+          className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-60"
           disabled={!form.driver_id || !selectedViolationType?.id || createMutation.isPending}
           onClick={() => createMutation.mutate({
             companyId,

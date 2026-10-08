@@ -48,7 +48,7 @@ function IntegritySubTabBar({ subTab, onChange }: { subTab: SubTab; onChange: (n
           key={tab.id}
           type="button"
           className="rounded-sm border px-3 py-1 text-xs font-semibold"
-          style={subTab === tab.id ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#E5E7EB", color: "#4B5563" }}
+          style={subTab === tab.id ? { background: "#1F2A44", borderColor: "#1F2A44", color: "white" } : { background: "white", borderColor: "#E5E7EB", color: "#4B5563" }}
           onClick={() => onChange(tab.id)}
         >
           {tab.label}
@@ -230,7 +230,7 @@ export function IntegrityReportsTab() {
           return (
             <button
               type="button"
-              className="text-[#1f2a44] underline disabled:opacity-40"
+              className="text-[#1F2A44] underline disabled:opacity-40"
               disabled={!rowId || reviewMutation.isPending}
               onClick={() => reviewMutation.mutate({ observationId: rowId, companyId, generation: actionGenerationRef.current })}
             >

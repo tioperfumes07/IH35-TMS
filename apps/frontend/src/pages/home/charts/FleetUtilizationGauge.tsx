@@ -6,9 +6,9 @@ import { formatQueryErrorDetail } from "../../../lib/tableError";
 
 /** @internal Exported for unit tests (threshold colors + print-safe grays). */
 export function gaugeFillForUtilization(pct: number): { active: string; rest: string } {
-  if (pct < 50) return { active: "#dc2626", rest: "#e5e7eb" };
-  if (pct <= 75) return { active: "#ca8a04", rest: "#e5e7eb" };
-  return { active: "#1A7A3C", rest: "#e5e7eb" };
+  if (pct < 50) return { active: "#dc2626", rest: "#E5E7EB" };
+  if (pct <= 75) return { active: "#ca8a04", rest: "#E5E7EB" };
+  return { active: "#1A7A3C", rest: "#E5E7EB" };
 }
 
 type Props = {

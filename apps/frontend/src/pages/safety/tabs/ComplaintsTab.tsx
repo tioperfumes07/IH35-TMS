@@ -577,7 +577,7 @@ export function ComplaintsTab() {
             />
             <button
               type="button"
-              className="rounded-sm bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-60"
+              className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-60"
               disabled={createDisabled}
               onClick={() => createMutation.mutate({ companyId, generation: lifecycleGenerationRef.current, payload: buildComplaintPayload() })}
             >

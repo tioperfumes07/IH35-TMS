@@ -442,7 +442,7 @@ export function DOTInspectionsTab() {
           {evidenceFile ? evidenceFile.name : "Inspection PDF"}
           <input type="file" accept="application/pdf" className="sr-only" onChange={(event) => setEvidenceFile(event.target.files?.[0] ?? null)} />
         </label>
-        <button type="button" className={`${SAFETY_FIELD_CLASS} bg-[#1f2a44] font-semibold text-white disabled:opacity-60`} disabled={!form.inspector_name || createMutation.isPending} onClick={() => {
+        <button type="button" className={`${SAFETY_FIELD_CLASS} bg-[#1F2A44] font-semibold text-white disabled:opacity-60`} disabled={!form.inspector_name || createMutation.isPending} onClick={() => {
           const input: CreateInput = {
             companyId,
             generation: companyGenerationRef.current,
@@ -551,7 +551,7 @@ export function DOTInspectionsTab() {
                 <div className="mt-2 flex items-center gap-2">
                   <button
                     type="button"
-                    className="rounded-sm bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white"
+                    className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-semibold text-white"
                     onClick={() => followUpMutation.mutate({ id: String(row.id), state: "reviewed", companyId, generation: companyGenerationRef.current })}
                   >
                     Mark Reviewed
@@ -565,7 +565,7 @@ export function DOTInspectionsTab() {
                   </button>
                   <button
                     type="button"
-                    className="rounded-sm bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white hover:bg-[#0f1729]"
+                    className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-semibold text-white hover:bg-[#0f1729]"
                     onClick={() => followUpMutation.mutate({ id: String(row.id), state: "clean", companyId, generation: companyGenerationRef.current })}
                   >
                     Mark Clean

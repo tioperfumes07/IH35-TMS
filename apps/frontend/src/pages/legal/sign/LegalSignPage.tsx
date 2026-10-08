@@ -322,7 +322,7 @@ export function LegalSignPage() {
 
         <button
           type="button"
-          className="mt-4 rounded-sm bg-[#1f2a44] px-4 py-2 text-xs font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+          className="mt-4 rounded-sm bg-[#1F2A44] px-4 py-2 text-xs font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-300"
           disabled={!verificationPassed || isSubmitting}
           onClick={submitSignature}
         >

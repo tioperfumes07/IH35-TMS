@@ -83,12 +83,12 @@ export function TasksCalendarPage() {
           <button type="button" onClick={() => shiftMonth(-1)} className="rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs text-[#4B5563]">
             ← Prev
           </button>
-          <div className="text-xs font-semibold text-[#1f2a44]">{monthLabel(bounds.start)}</div>
+          <div className="text-xs font-semibold text-[#1F2A44]">{monthLabel(bounds.start)}</div>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setAnchor(today)}
-              className="rounded-sm bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white hover:bg-[#172038]"
+              className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-semibold text-white hover:bg-[#172038]"
             >
               Today
             </button>
@@ -111,9 +111,9 @@ export function TasksCalendarPage() {
               return (
                 <div
                   key={day}
-                  className={`min-h-[84px] rounded-sm border p-1 ${isToday ? "border-[#1f2a44] bg-[#F7F8FA]" : "border-[#E5E7EB]"}`}
+                  className={`min-h-[84px] rounded-sm border p-1 ${isToday ? "border-[#1F2A44] bg-[#F7F8FA]" : "border-[#E5E7EB]"}`}
                 >
-                  <div className={`text-xs ${isToday ? "font-bold text-[#1f2a44]" : "text-[#6B7280]"}`}>{Number(day.slice(8, 10))}</div>
+                  <div className={`text-xs ${isToday ? "font-bold text-[#1F2A44]" : "text-[#6B7280]"}`}>{Number(day.slice(8, 10))}</div>
                   <div className="mt-0.5 space-y-0.5">
                     {dayTasks.slice(0, 3).map((t) => (
                       <div key={t.task_id} className="flex items-center gap-1 truncate text-xs text-[#4B5563]" title={t.title}>

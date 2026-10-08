@@ -454,7 +454,7 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
                 </span>
               ) : null}
               {createMutation.isError && createMutation.variables?.generation === lifecycleGenerationRef.current ? (
-                <span className="text-xs text-[#dc2626]" data-testid="fine-create-error">
+                <span className="text-xs text-red-600" data-testid="fine-create-error">
                   {createMutation.error instanceof Error ? createMutation.error.message : "Could not create the fine."}
                 </span>
               ) : null}

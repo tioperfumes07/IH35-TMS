@@ -56,7 +56,7 @@ export function ComplianceFilingsDueWidget({ operatingCompanyId }: Props) {
           <>
             <div className="flex items-center gap-4">
               <div>
-                <div className={`text-page-title font-semibold ${pendingCount > 0 ? "text-red-700" : "text-[#1f2a44]"}`}>
+                <div className={`text-page-title font-semibold ${pendingCount > 0 ? "text-red-700" : "text-[#1F2A44]"}`}>
                   {pendingCount}
                 </div>
                 <div className="text-xs text-[#6B7280]">overdue + due soon</div>

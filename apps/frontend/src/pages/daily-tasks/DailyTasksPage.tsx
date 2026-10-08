@@ -376,7 +376,7 @@ export function DailyTasksPage() {
               type="button"
               onClick={() => setView(id)}
               className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold ${
-                view === id ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-[#E5E7EB] bg-[var(--surface-unselected)] text-[#4B5563] hover:bg-[var(--surface-hover)]"
+                view === id ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-[#E5E7EB] bg-[var(--surface-unselected)] text-[#4B5563] hover:bg-[var(--surface-hover)]"
               }`}
             >
               {VIEW_LABEL[id]}

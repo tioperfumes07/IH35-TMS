@@ -135,7 +135,7 @@ export function DispatchChatPage() {
                     key={t.id}
                     type="button"
                     onClick={() => setActiveThreadId(t.id)}
-                    className={`border-b border-[#E5E7EB] px-3 py-2 text-left text-xs ${active ? "bg-[#F7F8FA] text-[#1f2a44]" : "text-[#4B5563] hover:bg-[#F7F8FA]"}`}
+                    className={`border-b border-[#E5E7EB] px-3 py-2 text-left text-xs ${active ? "bg-[#F7F8FA] text-[#1F2A44]" : "text-[#4B5563] hover:bg-[#F7F8FA]"}`}
                   >
                     <div className="flex items-center gap-2">
                       <span className="font-semibold">{threadLabel(t)}</span>
@@ -158,7 +158,7 @@ export function DispatchChatPage() {
               <div className="flex flex-1 items-center justify-center text-xs text-[#6B7280]">Select a thread</div>
             ) : (
               <>
-                <div className="border-b border-[#E5E7EB] px-4 py-2 text-xs font-semibold text-[#1f2a44]">{threadLabel(activeThread)}</div>
+                <div className="border-b border-[#E5E7EB] px-4 py-2 text-xs font-semibold text-[#1F2A44]">{threadLabel(activeThread)}</div>
                 {archived ? (
                   <div className="bg-[#F7F8FA] px-4 py-1 text-xs text-[#6B7280]">Archived — load closed, read-only</div>
                 ) : null}
@@ -177,10 +177,10 @@ export function DispatchChatPage() {
                         {m.status === "tombstoned" ? (
                           <span className="italic text-[#6B7280]">message removed</span>
                         ) : m.msg_type === "cash_advance_card" ? (
-                          <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 font-semibold text-[#1f2a44]">Cash advance {dollars} · {m.cash_advance_status ?? "pending"}</span>
+                          <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 font-semibold text-[#1F2A44]">Cash advance {dollars} · {m.cash_advance_status ?? "pending"}</span>
                         ) : m.msg_type === "confirmation_request" ? (
                           <span>
-                            <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 font-semibold text-[#1f2a44]">Confirmation</span>{" "}
+                            <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 font-semibold text-[#1F2A44]">Confirmation</span>{" "}
                             <span className="text-[#1F2A44]">{m.body}</span>{" "}
                             {m.acked_at ? (
                               <span className="text-xs font-semibold text-[#4B5563]">✓ acknowledged {fmtTime(m.acked_at)}</span>
@@ -195,7 +195,7 @@ export function DispatchChatPage() {
                               <button
                                 type="button"
                                 onClick={() => void openAttachment(m.attachment_id!)}
-                                className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1f2a44] hover:bg-[#F7F8FA]"
+                                className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44] hover:bg-[#F7F8FA]"
                               >
                                 Open {attachmentLabel(m)}
                               </button>
@@ -217,7 +217,7 @@ export function DispatchChatPage() {
                     onChange={(e) => setDraft(e.target.value)}
                     rows={2}
                     placeholder="Message the driver…"
-                    className="flex-1 resize-none rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs focus:border-[#1f2a44] focus:outline-hidden"
+                    className="flex-1 resize-none rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs focus:border-[#1F2A44] focus:outline-hidden"
                   />
                   <div className="flex flex-col gap-1 self-end">
                     <input
@@ -237,7 +237,7 @@ export function DispatchChatPage() {
                       type="button"
                       disabled={composerBusy || archived}
                       onClick={() => fileInputRef.current?.click()}
-                      className="rounded-sm border border-[#E5E7EB] px-3 py-1.5 text-xs font-semibold text-[#1f2a44] disabled:opacity-40"
+                      className="rounded-sm border border-[#E5E7EB] px-3 py-1.5 text-xs font-semibold text-[#1F2A44] disabled:opacity-40"
                     >
                       {attachMutation.isPending ? "Uploading…" : "Attach"}
                     </button>
@@ -245,7 +245,7 @@ export function DispatchChatPage() {
                       type="button"
                       disabled={!draft.trim() || composerBusy || archived}
                       onClick={() => sendMutation.mutate({ body: draft.trim() })}
-                      className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
+                      className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
                     >
                       Send
                     </button>
@@ -253,7 +253,7 @@ export function DispatchChatPage() {
                       type="button"
                       disabled={!draft.trim() || composerBusy || archived}
                       onClick={() => sendMutation.mutate({ body: draft.trim(), msgType: "confirmation_request" })}
-                      className="rounded-sm border border-[#1f2a44] px-3 py-1 text-xs font-semibold text-[#1f2a44] disabled:opacity-40"
+                      className="rounded-sm border border-[#1F2A44] px-3 py-1 text-xs font-semibold text-[#1F2A44] disabled:opacity-40"
                     >
                       Send confirmation
                     </button>

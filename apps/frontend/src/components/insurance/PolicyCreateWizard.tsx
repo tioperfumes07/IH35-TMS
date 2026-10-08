@@ -598,7 +598,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
               <button
                 type="button"
                 disabled={step === 2 && selectedUnits.length === 0}
-                className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-50"
+                className="rounded-sm border border-[#1F2A44] bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-50"
                 onClick={() => {
                   if (step === 1 && !validateStep1()) return;
                   if (step === 3 && !validateStep3()) return;
@@ -612,7 +612,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
               <button
                 type="button"
                 disabled={createMutation.isPending}
-                className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-50"
+                className="rounded-sm border border-[#1F2A44] bg-[#1F2A44] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-50"
                 onClick={submitCreatePolicy}
               >
                 {createMutation.isPending

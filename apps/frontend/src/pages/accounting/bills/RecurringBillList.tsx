@@ -218,7 +218,7 @@ export function RecurringBillList() {
         </div>
         <button
           onClick={() => navigate("/accounting/bills/recurring/create")}
-          className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729]"
+          className="rounded-sm border border-[#1F2A44] bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729]"
         >
           + Create
         </button>

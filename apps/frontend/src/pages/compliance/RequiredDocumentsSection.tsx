@@ -103,7 +103,7 @@ export function RequiredDocumentsSection({ operatingCompanyId }: { operatingComp
     <section data-testid="compliance-section-required-documents" className="mt-4">
       <div className="mb-3 flex items-center justify-between">
         <div>
-          <h2 className="text-xs font-semibold text-[#1f2a44]">Required Documents</h2>
+          <h2 className="text-xs font-semibold text-[#1F2A44]">Required Documents</h2>
           <p className="text-xs text-[#6B7280]">
             Which documents are required per record. Warn-first; promote any to a hard block. Seeded from FMCSA/IRS defaults.
           </p>
@@ -112,7 +112,7 @@ export function RequiredDocumentsSection({ operatingCompanyId }: { operatingComp
           <button
             type="button"
             onClick={() => setShowCreate((s) => !s)}
-            className="rounded-sm border border-[#1f2a44] px-3 py-1 text-xs font-semibold text-[#1f2a44] hover:bg-[#F7F8FA]"
+            className="rounded-sm border border-[#1F2A44] px-3 py-1 text-xs font-semibold text-[#1F2A44] hover:bg-[#F7F8FA]"
           >
             {showCreate ? "Cancel" : "+ Create required type"}
           </button>
@@ -129,7 +129,7 @@ export function RequiredDocumentsSection({ operatingCompanyId }: { operatingComp
             aria-selected={entityKind === k.id}
             onClick={() => setEntityKind(k.id)}
             className={`px-3 py-1.5 text-xs font-semibold ${
-              entityKind === k.id ? "border-b-2 border-[#1f2a44] text-[#1f2a44]" : "text-[#6B7280] hover:text-[#4B5563]"
+              entityKind === k.id ? "border-b-2 border-[#1F2A44] text-[#1F2A44]" : "text-[#6B7280] hover:text-[#4B5563]"
             }`}
           >
             {k.label}
@@ -275,7 +275,7 @@ function CreateRow({
           type="button"
           disabled={!valid || pending}
           onClick={() => onSubmit({ code, label, enforcement, has_expiry: hasExpiry })}
-          className="rounded-sm bg-[#1f2a44] px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
+          className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
         >
           {pending ? "Creating…" : "+ Create"}
         </button>

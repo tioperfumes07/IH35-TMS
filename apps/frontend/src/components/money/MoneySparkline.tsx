@@ -22,7 +22,7 @@ export function MoneySparkline(props: FillProps | LineProps) {
     const pct = Math.max(0, Math.min(100, props.pct));
     return (
       <svg className="mt-2 block h-[7px] w-full" viewBox="0 0 120 7" preserveAspectRatio="none" aria-hidden="true">
-        <rect x="0" y="0" width="120" height="7" rx="3.5" fill="#eef2f6" />
+        <rect x="0" y="0" width="120" height="7" rx="3.5" fill="#EEF2F6" />
         <rect x="0" y="0" width={(pct / 100) * 120} height="7" rx="3.5" fill={props.colorHex} />
       </svg>
     );

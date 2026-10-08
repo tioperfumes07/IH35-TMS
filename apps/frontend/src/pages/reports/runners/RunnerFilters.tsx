@@ -102,7 +102,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
             type="button"
             onClick={() => onRun(values)}
             disabled={isRunning}
-            className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-sm border border-[#1F2A44] bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isRunning ? "Running..." : "Run report"}
           </button>
@@ -235,7 +235,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
             onRun(draft);
           }}
           disabled={requiredMissing || isRunning}
-          className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-sm border border-[#1F2A44] bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isRunning ? "Running..." : "Run report"}
         </button>

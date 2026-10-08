@@ -65,7 +65,7 @@ export function OperationsDepthNav({ activeSlug, onChange }: Props) {
             <button
               type="button"
               className={`rounded px-2 py-1 text-xs font-semibold ${
-                groupActive ? "bg-[#1f2a44] text-white" : "text-slate-600 hover:bg-gray-100"
+                groupActive ? "bg-[#1F2A44] text-white" : "text-slate-600 hover:bg-gray-100"
               }`}
             >
               {group.group}

@@ -40,7 +40,7 @@ export function SafetyGroupNav({ groups, activeTabId, onTabChange }: Props) {
               trigger={
                 <span
                   className="flex items-center gap-1 whitespace-nowrap border-b-2 border-transparent bg-transparent px-4 py-3 text-xs font-semibold text-slate-500"
-                  style={hasActive ? { color: "#1f2a44", borderBottomColor: "#1f2a44" } : undefined}
+                  style={hasActive ? { color: "#1F2A44", borderBottomColor: "#1F2A44" } : undefined}
                 >
                   <span>{group.label}</span>
                   <span className="text-xs opacity-60">v</span>
@@ -55,8 +55,8 @@ export function SafetyGroupNav({ groups, activeTabId, onTabChange }: Props) {
                     key={tab.id}
                     to={tab.route}
                     onClick={() => onTabChange?.(tab.id)}
-                    className="flex w-full items-center justify-between px-3 py-2 text-left text-xs text-slate-600 hover:bg-gray-50 hover:text-[#1f2a44]"
-                    style={active ? { color: "#1f2a44", borderLeft: "3px solid #1f2a44", background: "#f8fafc", fontWeight: 600 } : { borderLeft: "3px solid transparent" }}
+                    className="flex w-full items-center justify-between px-3 py-2 text-left text-xs text-slate-600 hover:bg-gray-50 hover:text-[#1F2A44]"
+                    style={active ? { color: "#1F2A44", borderLeft: "3px solid #1F2A44", background: "#f8fafc", fontWeight: 600 } : { borderLeft: "3px solid transparent" }}
                   >
                     <span>{tab.label}</span>
                     {tab.badge === "new" ? (
@@ -64,7 +64,7 @@ export function SafetyGroupNav({ groups, activeTabId, onTabChange }: Props) {
                         NEW
                       </span>
                     ) : tab.badge === "renamed" ? (
-                      <span className="rounded-sm px-1.5 py-0.5 text-xs font-bold" style={{ background: "#f1f5f9", color: "#4B5563" }}>
+                      <span className="rounded-sm px-1.5 py-0.5 text-xs font-bold" style={{ background: "#F1F5F9", color: "#4B5563" }}>
                         RENAMED
                       </span>
                     ) : null}
@@ -76,7 +76,7 @@ export function SafetyGroupNav({ groups, activeTabId, onTabChange }: Props) {
         })}
         <div className="ml-auto whitespace-nowrap px-4 py-3 text-xs text-slate-400">
           Active:{" "}
-          <span className="font-semibold text-[#1f2a44]">
+          <span className="font-semibold text-[#1F2A44]">
             {activeMeta?.tab.label ?? (activeTabId === "home" ? "Safety Home" : "Driver Files")}
           </span>
         </div>

@@ -17,8 +17,8 @@ type Props = {
 type ColumnKey = "open" | "in_progress" | "waiting_parts" | "severe" | "complete";
 const COLUMNS: { key: ColumnKey; title: string; accent: string }[] = [
   { key: "open", title: "Open", accent: "#1F2A44" },
-  { key: "in_progress", title: "In Progress", accent: "#64748b" },
-  { key: "waiting_parts", title: "Awaiting Parts", accent: "#b45309" },
+  { key: "in_progress", title: "In Progress", accent: "#64748B" },
+  { key: "waiting_parts", title: "Awaiting Parts", accent: "#B45309" },
   { key: "severe", title: "Severe / OOS", accent: "#dc2626" },
   { key: "complete", title: "Completed", accent: "#4B5563" },
 ];

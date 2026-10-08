@@ -88,7 +88,7 @@ export function DriverVendorMappingTab() {
         render: () => (
           <button
             type="button"
-            className="underline text-[#1f2a44] disabled:opacity-50 disabled:no-underline"
+            className="underline text-[#1F2A44] disabled:opacity-50 disabled:no-underline"
             disabled
             title="Acknowledging findings is not available yet — no backend endpoint. Re-run the scan once the mapping is fixed."
             onClick={() =>

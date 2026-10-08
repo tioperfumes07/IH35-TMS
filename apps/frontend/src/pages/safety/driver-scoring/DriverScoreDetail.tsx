@@ -220,7 +220,7 @@ export function DriverScoreDetail({ companyId, driverUuid, driverName, onClose }
                 key={days}
                 type="button"
                 onClick={() => setEventPeriodDays(days)}
-                className={`rounded-sm px-2 py-1 ${eventPeriodDays === days ? "bg-[#1f2a44] text-white" : "bg-[#F7F8FA] text-[#4B5563]"}`}
+                className={`rounded-sm px-2 py-1 ${eventPeriodDays === days ? "bg-[#1F2A44] text-white" : "bg-[#F7F8FA] text-[#4B5563]"}`}
               >
                 {days}d
               </button>

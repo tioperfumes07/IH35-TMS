@@ -267,7 +267,7 @@ function RenditionListView({
               if (!districtId) setDistrictId(chosen);
               createM.mutate(chosen);
             }}
-            className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
+            className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
             data-testid="property-tax-create"
           >
             + Create
@@ -288,7 +288,7 @@ function RenditionListView({
               type="button"
               disabled={!newCounty.trim() || !newCadName.trim() || addDistrictM.isPending}
               onClick={() => addDistrictM.mutate()}
-              className="rounded-sm bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-40"
+              className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-40"
             >
               Save
             </button>
@@ -476,7 +476,7 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
               type="button"
               disabled={assessedInput == null || assessedM.isPending}
               onClick={() => assessedM.mutate(Math.round((assessedInput ?? 0) * 100))}
-              className="rounded-sm bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-40"
+              className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-40"
             >
               Save
             </button>
@@ -549,7 +549,7 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
               type="button"
               disabled={selectedAssets.length === 0 || addLineM.isPending}
               onClick={() => addLineM.mutate(selectedAssets)}
-              className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
+              className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
               data-testid="property-tax-rendition-create-lines"
             >
               + Create Line{selectedAssets.length === 1 ? "" : "s"}

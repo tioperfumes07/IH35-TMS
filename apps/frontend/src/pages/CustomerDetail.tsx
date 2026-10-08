@@ -2027,7 +2027,7 @@ export function CustomerDetailPage() {
                 {(customerPnlRow.flags ?? []).length > 0 ? (
                   <div className="mt-3 flex flex-wrap gap-1">
                     {(customerPnlRow.flags ?? []).map((f) => (
-                      <span key={f} className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#1f2a44]">
+                      <span key={f} className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#1F2A44]">
                         {f}
                       </span>
                     ))}

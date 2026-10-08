@@ -381,7 +381,7 @@ export function DispatchPage({
               type="button"
               variant="secondary"
               size="sm"
-              className={view === "overview" ? "border-b-2 border-b-[#1f2a44] font-semibold" : ""}
+              className={view === "overview" ? "border-b-2 border-b-[#1F2A44] font-semibold" : ""}
               data-testid="dispatch-view-overview"
               disabled={boardScope === "history"}
               title={boardScope === "history" ? "Home is live-board only — switch to Live" : undefined}
@@ -402,7 +402,7 @@ export function DispatchPage({
               type="button"
               variant="secondary"
               size="sm"
-              className={boardScope === "live" ? "border-b-2 border-b-[#1f2a44] font-semibold" : ""}
+              className={boardScope === "live" ? "border-b-2 border-b-[#1F2A44] font-semibold" : ""}
               data-testid="dispatch-board-scope-live"
               onClick={() => {
                 const next = new URLSearchParams(searchParams);
@@ -421,7 +421,7 @@ export function DispatchPage({
               type="button"
               variant="secondary"
               size="sm"
-              className={boardScope === "history" ? "border-b-2 border-b-[#1f2a44] font-semibold" : ""}
+              className={boardScope === "history" ? "border-b-2 border-b-[#1F2A44] font-semibold" : ""}
               data-testid="dispatch-board-scope-history"
               onClick={() => {
                 const next = new URLSearchParams(searchParams);

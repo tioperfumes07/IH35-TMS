@@ -343,7 +343,7 @@ export function DriverSafetyCards({ companyId, filter, activityWindow, onCountsC
               onClick={() => setRiskFilter(chip.id)}
               className={`rounded-full border px-2.5 py-0.5 text-xs ${
                 active
-                  ? "border-[#1f2a44] bg-[#1f2a44] text-white"
+                  ? "border-[#1F2A44] bg-[#1F2A44] text-white"
                   : emphasize
                     ? "border-red-200 bg-red-50 text-red-700"
                     : "border-[#E5E7EB] bg-[var(--surface-unselected)] text-[#4B5563]"

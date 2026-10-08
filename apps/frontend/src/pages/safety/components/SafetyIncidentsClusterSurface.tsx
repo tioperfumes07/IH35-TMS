@@ -1015,7 +1015,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                         type="button"
                         className={
                           statusTarget === next
-                            ? "rounded-sm border border-[#1f2a44] px-2 py-1 font-semibold text-[#1f2a44]"
+                            ? "rounded-sm border border-[#1F2A44] px-2 py-1 font-semibold text-[#1F2A44]"
                             : "rounded-sm border border-gray-300 px-2 py-1 text-[#4B5563]"
                         }
                         data-testid={`${config.pageTestId}-status-${next}`}
@@ -1066,7 +1066,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                   <div className="space-y-1 border-t border-gray-200 pt-2">
                     <button
                       type="button"
-                      className="rounded-sm border border-gray-300 px-2 py-1 text-[#dc2626]"
+                      className="rounded-sm border border-gray-300 px-2 py-1 text-red-600"
                       data-testid={`${config.pageTestId}-void-btn`}
                       onClick={() => {
                         setVoidOpen((cur) => !cur);
@@ -1085,7 +1085,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                           onChange={(e) => setVoidReason(e.target.value)}
                         />
                         {voidError ? (
-                          <div className="text-xs text-[#dc2626]" data-testid={`${config.pageTestId}-void-error`}>
+                          <div className="text-xs text-red-600" data-testid={`${config.pageTestId}-void-error`}>
                             {voidError}
                           </div>
                         ) : null}

@@ -204,7 +204,7 @@ export function EscrowRecordTab() {
           isOwner ? (
             <button
               type="button"
-              className="text-[#1f2a44] underline"
+              className="text-[#1F2A44] underline"
               data-testid={`escrow-forfeit-btn-${row.id}`}
               onClick={() => setSelected(row)}
             >

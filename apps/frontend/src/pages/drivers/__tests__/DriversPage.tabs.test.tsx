@@ -179,7 +179,7 @@ describe("DriversPage list status tabs", () => {
     renderDriversAt("/drivers");
     const addDriverButton = await screen.findByRole("button", { name: "+ Create Driver" });
     expect(addDriverButton).toHaveTextContent("+ Create Driver");
-    expect(addDriverButton.className).toContain("bg-[#1f2a44]");
+    expect(addDriverButton.className).toContain("bg-[#1F2A44]");
   });
 
   it("Teams tab switches to the teams roster and + Create Team", async () => {

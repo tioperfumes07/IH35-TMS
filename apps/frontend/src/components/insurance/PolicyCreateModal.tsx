@@ -526,7 +526,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           </button>
           <button
             type="submit"
-            className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-60"
+            className="rounded-sm border border-[#1F2A44] bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-60"
             disabled={createMutation.isPending || typesQuery.isError}
           >
             {createMutation.isPending ? "Creating..." : "+ Policy"}

@@ -148,7 +148,7 @@ export function SessionDetail({ sessionUuid, operatingCompanyId }: Props) {
               key={angle}
               type="button"
               className={`rounded border px-2 py-1 text-xs ${
-                selectedAngle === angle ? "border-[#1f2a44] bg-[#F7F8FA]" : "border-[#E5E7EB]"
+                selectedAngle === angle ? "border-[#1F2A44] bg-[#F7F8FA]" : "border-[#E5E7EB]"
               }`}
               onClick={() => setSelectedAngle(angle)}
             >

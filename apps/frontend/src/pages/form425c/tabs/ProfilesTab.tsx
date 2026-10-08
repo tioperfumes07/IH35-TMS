@@ -148,7 +148,7 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
       </div>
 
       <div className="rounded-sm border bg-white">
-        <div className="border-b bg-[#1f2a44] px-3 py-2 text-xs font-semibold text-white">Default Questionnaire Answers</div>
+        <div className="border-b bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white">Default Questionnaire Answers</div>
         {QUESTIONNAIRE.map((q) => {
           const answer = profile.defaultAnswers[q.num];
           const flagged = (q.expectYes && answer === "no") || (!q.expectYes && answer === "yes");
@@ -160,7 +160,7 @@ export function ProfilesTab({ profiles, activeCompany, availableCompanies, setAc
                 {flagged ? (
                   <Link
                     to="/425c?tab=form"
-                    className="rounded-sm bg-[#1f2a44] px-1.5 py-0.5 text-xs font-semibold uppercase text-white hover:underline"
+                    className="rounded-sm bg-[#1F2A44] px-1.5 py-0.5 text-xs font-semibold uppercase text-white hover:underline"
                   >
                     Save Exhibit on Form 425C
                   </Link>

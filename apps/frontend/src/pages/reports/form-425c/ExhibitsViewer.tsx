@@ -91,7 +91,7 @@ export function ExhibitsViewer() {
         breadcrumb={[{ label: "425C" }, { label: "Exhibits" }]}
         backHref="/425c"
         actions={
-          <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-[#1f2a44]">
+          <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-[#1F2A44]">
             <Link to="/425c?tab=qb" className="hover:underline">Deposit Import</Link>
             <Link to="/425c?tab=merge" className="hover:underline">Merge & Export</Link>
             <Link to="/425c?tab=history" className="hover:underline">History</Link>
@@ -134,7 +134,7 @@ export function ExhibitsViewer() {
               }
               buildMut.mutate();
             }}
-            className="rounded-sm bg-[#1f2a44] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
+            className="rounded-sm bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
           >
             {buildMut.isPending ? "Building…" : "Build all exhibits"}
           </button>
@@ -161,7 +161,7 @@ export function ExhibitsViewer() {
               }
               pushToast("Opened exhibits A–F print window", "success");
             }}
-            className="rounded-sm border border-[#1f2a44] px-3 py-2 text-xs font-semibold text-[#1f2a44]"
+            className="rounded-sm border border-[#1F2A44] px-3 py-2 text-xs font-semibold text-[#1F2A44]"
           >
             Print / Save as PDF
           </button>
@@ -187,7 +187,7 @@ export function ExhibitsViewer() {
           {built ? (
             <button
               type="button"
-              className="text-xs font-semibold text-[#1f2a44] hover:underline"
+              className="text-xs font-semibold text-[#1F2A44] hover:underline"
               onClick={() => {
                 if (!activeExhibit) {
                   pushToast("No exhibit payload to export", "error");

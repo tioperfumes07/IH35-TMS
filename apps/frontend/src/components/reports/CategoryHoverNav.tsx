@@ -236,7 +236,7 @@ export function CategoryHoverNav({ activeCategory, onCategoryChange }: Props) {
                 <span
                   className={`inline-flex items-center border-b-2 px-1 py-1 text-xs font-semibold ${
                     active
-                      ? "border-b-[#1f2a44] text-[#1f2a44]"
+                      ? "border-b-[#1F2A44] text-[#1F2A44]"
                       : "border-b-transparent text-slate-500 hover:text-slate-700"
                   }`}
                 >

@@ -190,3 +190,6 @@ DONE: PR #25882 · squash e0fb8c6e8b800d78bda4607e5a6433c4df10a040 · money-pr-l
 
 ## 2026-10-08 — ROUND 441.22 Devin: vendor/banking guard anchors
 DONE: PR #25883 · squash bb5c6c8a7521e94296e3a4660488cd8511e9f4bf · hooks-ON push · static sweep 5877 READY TO PUSH · selftests 9/9 + 5/5
+
+## 2026-10-08 — ROUND 441.22 Devin: reports palette tokens + GLB-08/ROUND-297 anchors
+DONE: PR #25886 · squash 179c0861b4ffa0677583f319d36b813ebc78cd2c · hooks-ON push · static sweep 5878 READY TO PUSH · iso-axis/wave-c selftests exit 0

@@ -35,7 +35,7 @@ const doneStamp = (r: TrackerBlockRow) => r.completed_ct || ctDateTime(r.complet
 const PILL: Record<TrackerPhase["status"], { label: string; cls: string }> = {
   done: { label: "Done", cls: "bg-[#d1fae5] text-[#0F1219]" },
   "in-progress": { label: "In progress", cls: "bg-[#F7F8FA] text-[#1F2A44]" },
-  "awaiting-owner": { label: "Awaiting owner", cls: "border border-[#dc2626] text-[#dc2626]" },
+  "awaiting-owner": { label: "Awaiting owner", cls: "border border-red-600 text-red-600" },
   queued: { label: "Queued", cls: "bg-[#F7F8FA] text-[#6B7280]" },
 };
 
@@ -125,7 +125,7 @@ function BlockTable({ rows, kind, moved, extended = false }: { rows: TrackerBloc
               <td className="px-3 py-2 text-[#0F1219]">
                 {r.name}
                 {r.financial ? <span className="ml-1 rounded-sm bg-[#F7F8FA] px-1 text-xs text-[#6B7280]">FIN</span> : null}
-                {r.feature_incomplete ? <span className="ml-1 rounded-sm border border-[#dc2626] px-1 text-xs text-[#dc2626]">FEATURE INCOMPLETE</span> : null}
+                {r.feature_incomplete ? <span className="ml-1 rounded-sm border border-red-600 px-1 text-xs text-red-600">FEATURE INCOMPLETE</span> : null}
                 {r.cross_module.length ? <div className="mt-0.5 text-xs text-[#6B7280]">links: {r.cross_module.join(", ")}</div> : null}
               </td>
               <td className="px-3 py-2 text-[#6B7280]">{r.kind}</td>
@@ -134,7 +134,7 @@ function BlockTable({ rows, kind, moved, extended = false }: { rows: TrackerBloc
                 <td className="px-3 py-2 text-center">
                   {r.wired
                     ? <span className="font-semibold text-[#4B5563]" title="Linkage declared: financial primitive + operational module + hub table">✓</span>
-                    : <span className="font-semibold text-[#dc2626]" title={`Undeclared linkage: ${r.missing.filter((m) => m.startsWith("link:")).join(", ") || "—"}`}>✗</span>}
+                    : <span className="font-semibold text-red-600" title={`Undeclared linkage: ${r.missing.filter((m) => m.startsWith("link:")).join(", ") || "—"}`}>✗</span>}
                 </td>
               ) : null}
               {extended ? (
@@ -238,7 +238,7 @@ function ByModuleView({ data, moved }: { data: ProgramTracker; moved: Set<string
                 <td className="px-3 py-2 text-[#0F1219]">{open === m.module ? "▾ " : "▸ "}{m.module}</td>
                 <td data-quantity className="px-3 py-2 text-right tabular-nums text-[#1F2A44]">{m.built}</td>
                 <td data-quantity className="px-3 py-2 text-right tabular-nums text-[#6B7280]">{m.partial}</td>
-                <td data-quantity className={`px-3 py-2 text-right tabular-nums ${m.not_built > 0 ? "font-semibold text-[#dc2626]" : "text-[#6B7280]"}`}>{m.not_built}</td>
+                <td data-quantity className={`px-3 py-2 text-right tabular-nums ${m.not_built > 0 ? "font-semibold text-red-600" : "text-[#6B7280]"}`}>{m.not_built}</td>
                 <td data-quantity className="px-3 py-2 text-right tabular-nums text-[#1F2A44]">{m.total}</td>
               </tr>,
               open === m.module ? (
@@ -323,7 +323,7 @@ function TrackerBody({ data, moved }: { data: ProgramTracker; moved: Set<string>
       <div className="flex flex-wrap gap-1 border-b border-gray-200">
         {tabs.map((t) => (
           <button key={t.key} type="button" onClick={() => setTab(t.key)}
-            className={`-mb-px border-b-2 px-3 py-2 text-xs ${tab === t.key ? "border-[#1f2a44] font-semibold text-[#0F1219]" : "border-transparent text-[#6B7280] hover:text-[#1F2A44]"}`}>
+            className={`-mb-px border-b-2 px-3 py-2 text-xs ${tab === t.key ? "border-[#1F2A44] font-semibold text-[#0F1219]" : "border-transparent text-[#6B7280] hover:text-[#1F2A44]"}`}>
             {t.label}{typeof t.count === "number" ? <span className="ml-1 tabular-nums text-[#6B7280]">({t.count})</span> : null}
           </button>
         ))}

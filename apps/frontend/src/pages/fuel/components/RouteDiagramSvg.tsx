@@ -59,7 +59,7 @@ export function RouteDiagramSvg({ totalMiles, stops, expensiveStates }: Props) {
   return (
     <div className="overflow-hidden rounded-sm border border-gray-200 bg-white p-2">
       <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="h-auto w-full">
-        <line x1={LEFT} y1={LINE_Y} x2={WIDTH - RIGHT} y2={LINE_Y} stroke="#1f2a44" strokeWidth={3} />
+        <line x1={LEFT} y1={LINE_Y} x2={WIDTH - RIGHT} y2={LINE_Y} stroke="#1F2A44" strokeWidth={3} />
 
         {avoidZones.map((zone) => (
           <g key={`zone-${zone.pointId}`}>
@@ -105,7 +105,7 @@ export function RouteDiagramSvg({ totalMiles, stops, expensiveStates }: Props) {
                 </text>
               ) : null}
               {String(stop.hos_note ?? "").toLowerCase().includes("30") ? (
-                <line x1={stop.x!} y1={LINE_Y + 44} x2={stop.x!} y2={LINE_Y + 54} stroke="#1f2a44" strokeWidth={2} />
+                <line x1={stop.x!} y1={LINE_Y + 44} x2={stop.x!} y2={LINE_Y + 54} stroke="#1F2A44" strokeWidth={2} />
               ) : null}
             </g>
           );

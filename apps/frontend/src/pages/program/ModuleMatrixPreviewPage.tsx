@@ -959,7 +959,7 @@ export function ModuleMatrixPreviewPage() {
 export default ModuleMatrixPreviewPage;
 
 const CSS = `
-.ih35mm{--navy:#1f2a44;--navy-dk:#0f1729;--slate:#334155;--slate-lt:#64748b;--bg:#f8fafc;--card:#fff;--line:#e2e8f0;--green:#16a34a;--green-bg:#dcfce7;--red:#dc2626;--red-bg:#fee2e2;--amber:#d97706;--amber-bg:#fef3c7;--accent-bg:#e8eef7;--gray-bg:#f1f5f9;color:var(--navy);font-size:14px;padding:0 4px 40px}
+.ih35mm{--navy:#1F2A44;--navy-dk:#0f1729;--slate:#334155;--slate-lt:#64748B;--bg:#f8fafc;--card:#fff;--line:#e2e8f0;--green:#16A34A;--green-bg:#dcfce7;--red:#dc2626;--red-bg:#fee2e2;--amber:#d97706;--amber-bg:#fef3c7;--accent-bg:#e8eef7;--gray-bg:#F1F5F9;color:var(--navy);font-size:14px;padding:0 4px 40px}
 .ih35mm *{box-sizing:border-box}
 .ih35mm .banner{background:var(--amber-bg);border:1px solid #fde68a;color:#78350f;border-radius:10px;padding:10px 14px;font-size:12.5px;margin-bottom:14px;line-height:1.5}
 .ih35mm .banner.live{background:var(--green-bg);border-color:#86efac;color:#14532d}
@@ -1027,7 +1027,7 @@ const CSS = `
 .ih35mm .scroll{overflow-x:auto;border-radius:10px;border:1px solid var(--line);background:var(--card)}
 .ih35mm table{width:100%;border-collapse:collapse;min-width:1100px}
 .ih35mm th,.ih35mm td{padding:9px 11px;text-align:left;border-bottom:1px solid var(--line);font-size:12.5px;vertical-align:middle}
-.ih35mm th{background:#f1f5f9;font-size:10px;text-transform:uppercase;letter-spacing:.25px;color:var(--slate-lt)}
+.ih35mm th{background:#F1F5F9;font-size:10px;text-transform:uppercase;letter-spacing:.25px;color:var(--slate-lt)}
 .ih35mm th.col{text-align:center;min-width:80px;max-width:96px;white-space:normal;line-height:1.2;padding:8px 5px;font-size:9.5px;letter-spacing:.12px}
 .ih35mm th.grp{font-size:10px;letter-spacing:.35px;padding:6px 4px}
 .ih35mm th.grp{text-align:center;color:var(--navy);border-bottom:2px solid var(--line);background:var(--accent-bg)}
@@ -1088,6 +1088,6 @@ const CSS = `
 .ih35mm .recent-when{font-variant-numeric:tabular-nums;color:var(--navy);font-weight:700;white-space:nowrap}
 .ih35mm .recent-empty{margin:0;font-size:12.5px;color:var(--slate-lt)}
 .ih35mm .clsWarn{background:var(--amber-bg);border:1px solid #fde68a;color:#78350f;border-radius:8px;padding:8px 10px;font-size:12px;margin:0 0 10px}
-.ih35mm code{background:#f1f5f9;padding:1px 4px;border-radius:3px;font-size:12px}
+.ih35mm code{background:#F1F5F9;padding:1px 4px;border-radius:3px;font-size:12px}
 @media(max-width:900px){.ih35mm .metrics{grid-template-columns:repeat(2,1fr)}}
 `;

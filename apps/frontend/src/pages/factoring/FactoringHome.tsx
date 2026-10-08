@@ -1246,7 +1246,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                     type="button"
                     disabled={savingFactorProfile}
                     data-testid="factoring-profile-save"
-                    className="rounded-sm bg-[#1f2a44] px-4 py-2 text-xs font-semibold text-white disabled:opacity-50 hover:bg-[#0f1729]"
+                    className="rounded-sm bg-[#1F2A44] px-4 py-2 text-xs font-semibold text-white disabled:opacity-50 hover:bg-[#0f1729]"
                     onClick={async () => {
                       if (!profileEditForm || !activeFactor) return;
                       try {

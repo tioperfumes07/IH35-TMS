@@ -18,7 +18,7 @@ function ReportNameCell({
       <button
         type="button"
         onClick={() => onRun(row)}
-        className="text-left font-semibold text-[#0F1219] hover:text-[#1f2a44] hover:underline"
+        className="text-left font-semibold text-[#0F1219] hover:text-[#1F2A44] hover:underline"
       >
         {row.name}
       </button>

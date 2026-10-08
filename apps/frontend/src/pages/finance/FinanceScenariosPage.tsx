@@ -272,7 +272,7 @@ export function FinanceScenariosPage() {
         </CollapsedListFilters>
         <button
           onClick={() => setCreatorOpen((v) => !v)}
-          className="rounded-sm bg-[#1f2a44] px-4 py-2 text-xs font-medium text-white"
+          className="rounded-sm bg-[#1F2A44] px-4 py-2 text-xs font-medium text-white"
         >
           {creatorOpen ? "Cancel" : "+ Create Scenario"}
         </button>
@@ -417,7 +417,7 @@ export function FinanceScenariosPage() {
               disabled={!canSubmit || createMutation.isPending}
               title={!canSubmit ? submitHint : undefined}
               aria-describedby={!canSubmit ? "finance-scenario-submit-hint" : undefined}
-              className="rounded-sm bg-[#1f2a44] px-4 py-2 text-xs font-medium text-white disabled:opacity-50"
+              className="rounded-sm bg-[#1F2A44] px-4 py-2 text-xs font-medium text-white disabled:opacity-50"
             >
               {createMutation.isPending ? "Creating…" : "Create scenario"}
             </button>

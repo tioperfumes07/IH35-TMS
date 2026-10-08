@@ -232,7 +232,7 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
                 type="button"
                 onClick={() => void runCommit()}
                 disabled={busy || s.will_create === 0}
-                className="min-h-11 rounded-sm bg-[#1f2a44] px-3 text-xs font-medium text-white hover:bg-[#0f1729] disabled:opacity-40"
+                className="min-h-11 rounded-sm bg-[#1F2A44] px-3 text-xs font-medium text-white hover:bg-[#0f1729] disabled:opacity-40"
               >
                 {busy ? "Importing…" : `Import ${s.will_create} new driver${s.will_create === 1 ? "" : "s"}`}
               </button>

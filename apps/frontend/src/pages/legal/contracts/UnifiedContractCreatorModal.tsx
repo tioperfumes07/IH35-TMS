@@ -210,7 +210,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
           {["Template", "Fill", "Party & sign"].map((label, i) => (
             <span
               key={label}
-              className={`rounded-sm px-2 py-1 ${step === i + 1 ? "bg-[#1f2a44] text-white" : "bg-[#F7F8FA] text-[#4B5563]"}`}
+              className={`rounded-sm px-2 py-1 ${step === i + 1 ? "bg-[#1F2A44] text-white" : "bg-[#F7F8FA] text-[#4B5563]"}`}
             >
               {i + 1}. {label}
             </span>

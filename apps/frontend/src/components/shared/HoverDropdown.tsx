@@ -119,7 +119,7 @@ export function HoverDropdown({ trigger, children, align = "left", delay = 200, 
           className={`absolute top-full z-40 rounded-b border border-gray-200 bg-white py-1 ${align === "right" ? "right-0" : "left-0"}`}
           style={{
             minWidth,
-            borderTop: "2px solid #1f2a44",
+            borderTop: "2px solid #1F2A44",
             boxShadow: "0 6px 18px rgba(15,23,41,0.08)",
           }}
           onClick={(event) => {

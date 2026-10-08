@@ -1309,7 +1309,7 @@ export function SettlementDetailPage() {
                       the silent false negative, not the 404, and it would outlive any routing decision.
                       An honest "couldn't load" is strictly safer than a confident wrong "none". */}
                   {paymentEventsQuery.isError ? (
-                    <p className="text-xs text-[#dc2626]" data-testid="settlement-payment-events-error">
+                    <p className="text-xs text-red-600" data-testid="settlement-payment-events-error">
                       Couldn't load payment events — this is not the same as “none”. Retry or check with
                       accounting before concluding the driver was unpaid.
                     </p>

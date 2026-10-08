@@ -232,7 +232,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
               type="button"
               onClick={() => setStep(i)}
               className={`rounded-sm px-2 py-1 text-xs ${
-                i === step ? "bg-[#1f2a44] font-semibold text-white" : "text-slate-600 hover:bg-slate-100"
+                i === step ? "bg-[#1F2A44] font-semibold text-white" : "text-slate-600 hover:bg-slate-100"
               }`}
             >
               {i + 1}. {label}
@@ -471,7 +471,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
           )}
 
           {error && (
-            <div className="rounded-sm bg-[#dc2626] px-3 py-2 text-xs font-semibold text-white">{error}</div>
+            <div className="rounded-sm bg-red-600 px-3 py-2 text-xs font-semibold text-white">{error}</div>
           )}
         </div>
 
@@ -488,7 +488,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
             <button
               type="button"
               onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
-              className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729]"
+              className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729]"
             >
               Next
             </button>
@@ -497,7 +497,7 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
               type="button"
               onClick={() => void submit()}
               disabled={submitting || !payload}
-              className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-40"
+              className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-40"
             >
               {submitting ? "Creating…" : "+ Create"}
             </button>
