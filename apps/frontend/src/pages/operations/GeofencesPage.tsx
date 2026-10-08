@@ -179,7 +179,7 @@ export function GeofencesPage() {
         render: (item) => (
           <button
             type="button"
-            className="rounded-sm border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            className="rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs font-semibold text-[#4B5563] hover:bg-[#F7F8FA]"
             onClick={() => void toggleActive(item.id, item.is_active)}
           >
             {item.is_active ? "Deactivate" : "Activate"}
@@ -195,22 +195,22 @@ export function GeofencesPage() {
   return (
     <div className="space-y-4">
       <PageHeader title="Geofences" subtitle="Polygon geofences for customer sites, yards, and vendor locations." />
-      <section className="rounded-sm border border-slate-200 bg-white p-3">
-        <h3 className="text-xs font-semibold text-slate-900">Create geofence</h3>
-        <p className="mt-1 text-xs text-slate-600">Polygon editor: one `lng,lat` pair per line. Minimum 3 points.</p>
+      <section className="rounded-sm border border-[#E5E7EB] bg-white p-3">
+        <h3 className="text-xs font-semibold text-[#0F1219]">Create geofence</h3>
+        <p className="mt-1 text-xs text-[#4B5563]">Polygon editor: one `lng,lat` pair per line. Minimum 3 points.</p>
         <div className="mt-3 grid gap-3 md:grid-cols-2">
-          <label className="text-xs text-slate-700">
+          <label className="text-xs text-[#4B5563]">
             Label
             <input
-              className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
+              className="mt-1 block h-9 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs"
               value={label}
               onChange={(event) => setLabel(event.target.value)}
             />
           </label>
-          <label className="text-xs text-slate-700">
+          <label className="text-xs text-[#4B5563]">
             Location kind
             <select
-              className="mt-1 block h-9 w-full rounded-sm border border-slate-300 px-2 text-xs"
+              className="mt-1 block h-9 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs"
               value={locationKind}
               onChange={(event) => setLocationKind(event.target.value as GeofenceLocationKind)}
             >
@@ -221,7 +221,7 @@ export function GeofencesPage() {
               ))}
             </select>
           </label>
-          <label className="text-xs text-slate-700 md:col-span-2">
+          <label className="text-xs text-[#4B5563] md:col-span-2">
             Link to existing location (optional)
             {locationKind === "customer_site" ? (
               <div className="mt-1">
@@ -265,20 +265,20 @@ export function GeofencesPage() {
                 error={yardsQuery.isError ? "Couldn't load yard locations" : undefined}
               />
             ) : (
-              <p className="mt-1 text-xs text-slate-500">No linked entity for custom geofences.</p>
+              <p className="mt-1 text-xs text-[#6B7280]">No linked entity for custom geofences.</p>
             )}
           </label>
-          <label className="text-xs text-slate-700 md:col-span-2">
+          <label className="text-xs text-[#4B5563] md:col-span-2">
             Polygon points (`lng,lat`)
             <textarea
-              className="mt-1 block h-36 w-full rounded-sm border border-slate-300 px-2 py-2 font-mono text-xs"
+              className="mt-1 block h-36 w-full rounded-sm border border-[#E5E7EB] px-2 py-2 font-mono text-xs"
               value={polygonText}
               onChange={(event) => setPolygonText(event.target.value)}
             />
           </label>
         </div>
         <div className="mt-3 flex items-center justify-between">
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[#6B7280]">
             {polygonPreview ? `${polygonPreview.coordinates[0].length - 1} vertices` : "Invalid polygon format"}
           </p>
           <Button size="sm" onClick={() => void handleCreate()} disabled={saving || !polygonPreview || !label.trim()}>
@@ -287,8 +287,8 @@ export function GeofencesPage() {
         </div>
       </section>
 
-      <section className="rounded-sm border border-slate-200 bg-white p-3">
-        <h3 className="text-xs font-semibold text-slate-900">Active geofences</h3>
+      <section className="rounded-sm border border-[#E5E7EB] bg-white p-3">
+        <h3 className="text-xs font-semibold text-[#0F1219]">Active geofences</h3>
         {geofencesQuery.isError ? (
           <ListErrorState
             title="Couldn't load geofences"
@@ -306,7 +306,7 @@ export function GeofencesPage() {
               emptyText="No geofences configured yet. Use the form above to create one."
               storageKey="operations-geofences"
               exportFilename="geofences"
-              rowClassName={(item) => (highlightedGeofenceId === item.id ? "bg-slate-100" : "")}
+              rowClassName={(item) => (highlightedGeofenceId === item.id ? "bg-[#F7F8FA]" : "")}
             />
           </div>
         )}
