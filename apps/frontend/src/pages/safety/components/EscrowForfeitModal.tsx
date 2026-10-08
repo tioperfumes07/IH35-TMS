@@ -120,12 +120,12 @@ export function EscrowForfeitModal({ open, row, operatingCompanyId, loading, onC
       title={row ? `Escrow Forfeit — ${entityLabel(row.driver_name, row.id, "Driver")}` : "Escrow Forfeit"}
     >
       <div className="space-y-3 text-xs text-gray-700" data-testid="escrow-forfeit-modal">
-        <div className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-slate-700">
+        <div className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-[#1F2A44]">
           Current escrow balance: <span className="font-semibold">{formatUsd(balance)}</span>
         </div>
 
         <label className="block text-xs">
-          <span className="text-slate-600">Amount to forfeit *</span>
+          <span className="text-[#4B5563]">Amount to forfeit *</span>
           <div data-testid="escrow-forfeit-amount">
             <MoneyInput
               valueDollars={amountUsd}
@@ -142,7 +142,7 @@ export function EscrowForfeitModal({ open, row, operatingCompanyId, loading, onC
         </label>
 
         <label className="block text-xs">
-          <span className="text-slate-600">Draw reason *</span>
+          <span className="text-[#4B5563]">Draw reason *</span>
           <div className="mt-1" data-testid="escrow-forfeit-reason">
             {/*
               LST-PICKER-01: Combobox had no inline create — operators had to leave for Lists.
@@ -172,7 +172,7 @@ export function EscrowForfeitModal({ open, row, operatingCompanyId, loading, onC
             />
           </div>
           {selectedDrawMeta ? (
-            <span className="mt-1 block text-xs text-slate-600" data-testid="escrow-forfeit-catalog-recovery-meta">
+            <span className="mt-1 block text-xs text-[#4B5563]" data-testid="escrow-forfeit-catalog-recovery-meta">
               Catalog recovery: {selectedDrawMeta.default_recovery_rail ?? "ask"}
               {selectedDrawMeta.survives_separation ? " · survives separation" : ""}
             </span>
@@ -180,7 +180,7 @@ export function EscrowForfeitModal({ open, row, operatingCompanyId, loading, onC
         </label>
 
         <label className="block text-xs">
-          <span className="text-slate-600">Note (optional)</span>
+          <span className="text-[#4B5563]">Note (optional)</span>
           <input
             className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2"
             value={reasonNote}
@@ -191,7 +191,7 @@ export function EscrowForfeitModal({ open, row, operatingCompanyId, loading, onC
         </label>
 
         <label className="block text-xs">
-          <span className="text-slate-600">Offsets which debt?</span>
+          <span className="text-[#4B5563]">Offsets which debt?</span>
           <div className="mt-1" data-testid="escrow-forfeit-liability-picker">
             {/*
               Driver-scoped liability list (not a global EntityPicker kind). SelectCombobox matches
@@ -215,7 +215,7 @@ export function EscrowForfeitModal({ open, row, operatingCompanyId, loading, onC
             </SelectCombobox>
           </div>
           {!liabilitiesQuery.isLoading && liabilityOptions.length === 0 ? (
-            <span className="mt-1 block text-xs text-slate-500">
+            <span className="mt-1 block text-xs text-[#6B7280]">
               This driver has no open liabilities on record.
             </span>
           ) : null}
