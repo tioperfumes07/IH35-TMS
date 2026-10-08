@@ -98,10 +98,10 @@ export function EldEditHistoryTimeline({
           Read-only audit trail from mirrored Samsara HOS log edits ({formatDateUS(from)} to {formatDateUS(to)}).
         </p>
       ) : null}
-      <ol className="space-y-2 border-l-2 border-slate-300 pl-4">
+      <ol className="space-y-2 border-l-2 border-[#E5E7EB] pl-4">
         {edits.map((edit) => (
           <li key={edit.id} className="relative rounded-sm border border-gray-200 bg-white p-3 text-xs">
-            <span className="absolute left-[-1.15rem] top-4 h-2.5 w-2.5 rounded-full bg-slate-700" aria-hidden />
+            <span className="absolute left-[-1.15rem] top-4 h-2.5 w-2.5 rounded-full bg-[#1F2A44]" aria-hidden />
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="font-semibold text-gray-900">{edit.field_name}</span>
               <span className="text-xs text-gray-500">{formatTimestamp(edit.edited_at)}</span>
@@ -110,11 +110,11 @@ export function EldEditHistoryTimeline({
               Edited by {edit.edited_by} · Reason: {edit.reason}
             </div>
             <div className="mt-2 grid gap-1 text-xs md:grid-cols-2">
-              <div className="rounded-sm bg-slate-50 px-2 py-1 text-slate-500">
+              <div className="rounded-sm bg-[#F7F8FA] px-2 py-1 text-[#6B7280]">
                 <span className="font-semibold">Before:</span>{" "}
                 <span className="line-through">{edit.before_state ?? "—"}</span>
               </div>
-              <div className="rounded-sm bg-slate-50 px-2 py-1 text-slate-900">
+              <div className="rounded-sm bg-[#F7F8FA] px-2 py-1 text-[#0F1219]">
                 <span className="font-semibold">After:</span> <span className="font-medium">{edit.after_state ?? "—"}</span>
               </div>
             </div>

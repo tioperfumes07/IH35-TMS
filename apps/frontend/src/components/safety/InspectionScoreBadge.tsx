@@ -14,7 +14,7 @@ type Props = {
 };
 
 function classNameForRate(rate: number | null): string {
-  if (rate == null) return "bg-slate-100 text-slate-600 border-slate-200";
+  if (rate == null) return "bg-[#F7F8FA] text-[#4B5563] border-[#E5E7EB]";
   // Semantic severity states for the DOT clean-inspection rate (good / warning / critical) — a status
   // indicator, not a decorative palette band, so exempt from the §7 green/amber lock (cf. red-for-Accident).
   // Required by verify:dot-inspection-history.
@@ -49,7 +49,7 @@ export function InspectionScoreBadge({ companyId, driverId }: Props) {
         title={(query.error as Error)?.message ?? "DOT inspection score could not be loaded."}
         onClick={() => void query.refetch()}
       >
-        <span className="inline-flex items-center rounded-sm border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+        <span className="inline-flex items-center rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]">
           DOT: unavailable · Retry
         </span>
       </button>

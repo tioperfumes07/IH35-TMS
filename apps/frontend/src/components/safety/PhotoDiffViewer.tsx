@@ -14,20 +14,20 @@ export function PhotoDiffViewer({ pre, post, angleLabel }: Props) {
   return (
     <div className="grid gap-3 md:grid-cols-2" data-testid="photo-diff-viewer">
       {[pre, post].map((side) => (
-        <div key={side.label} className="rounded-sm border border-slate-200 bg-slate-50 p-2">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <div key={side.label} className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
             {side.label}
             {angleLabel ? ` · ${angleLabel}` : ""}
           </p>
           {side.imageUrl ? (
             <img src={side.imageUrl} alt={side.label} className="max-h-64 w-full object-contain" />
           ) : (
-            <div className="flex h-48 items-center justify-center rounded-sm border border-dashed border-slate-300 text-xs text-slate-500">
+            <div className="flex h-48 items-center justify-center rounded-sm border border-dashed border-[#E5E7EB] text-xs text-[#6B7280]">
               No image
             </div>
           )}
           {side.sha256 ? (
-            <p className="mt-2 break-all font-mono text-xs text-slate-500">{side.sha256.slice(0, 24)}…</p>
+            <p className="mt-2 break-all font-mono text-xs text-[#6B7280]">{side.sha256.slice(0, 24)}…</p>
           ) : null}
         </div>
       ))}
