@@ -15,5 +15,6 @@ export default {
     await ctx.run("node", ["scripts/verify-inventory-purchase-history-creator-route.mjs"]);
     await ctx.run("node", ["scripts/verify-insurance-claims-filter-apply.mjs"]);
     await ctx.run("node", ["scripts/verify-maintenance-integration-strip-capability.mjs"]);
+    await ctx.run("node", ["scripts/verify-91062-factor-daily-aging-slate-leftover-chrome.mjs"]);
   },
 };
