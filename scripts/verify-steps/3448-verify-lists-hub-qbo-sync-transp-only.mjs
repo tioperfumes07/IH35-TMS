@@ -3,5 +3,7 @@ export default {
   name: "verify-lists-hub-qbo-sync-transp-only",
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-lists-hub-qbo-sync-transp-only.mjs"]);
+    // BANK leftover refuse — LoadLivePosition / LiveLoadIdBar / RealDrivenMiles house tokens
+    await ctx.run("node", ["scripts/verify-91283-load-pos-id-miles-slate-leftover-chrome.mjs"]);
   },
 };

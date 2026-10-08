@@ -137,7 +137,7 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
 
   return (
     <div className="flex flex-wrap items-end gap-3" data-testid="book-load-live-load-id-bar">
-      <div className="min-w-[14rem] max-w-[18rem] text-left normal-case tracking-normal text-slate-900">
+      <div className="min-w-[14rem] max-w-[18rem] text-left normal-case tracking-normal text-[#0F1219]">
         <QboDocumentNumberField
           label="Load #"
           value={manualNumber}
@@ -168,7 +168,7 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
         />
       </div>
       {awaitingFirstNumber ? (
-        <span className="pb-5 text-xs font-normal text-slate-600">
+        <span className="pb-5 text-xs font-normal text-[#4B5563]">
           First load for this company — type the Load # in the box. Later loads can stay blank.
         </span>
       ) : error ? (
@@ -179,7 +179,7 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
           </button>
         </>
       ) : (
-        <span className="pb-5 text-xs text-slate-600">{preview ? "Previewed — assigned on save" : "Loading…"}</span>
+        <span className="pb-5 text-xs text-[#4B5563]">{preview ? "Previewed — assigned on save" : "Loading…"}</span>
       )}
     </div>
   );

@@ -1,3 +1,13 @@
+## 2026-10-09 · BANK leftover slate — LoadPosition / LiveLoadId / DrivenMiles
+
+FINDING: BANK-F91283 — LoadLivePositionCell / LiveLoadIdBar / LoadRealDrivenMilesSection Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25964 squash `e182ab0f58` (BANK-F91282 MaintSnapshot/ThreeMileCpm/PmCpm)
+GUARD: scripts/verify-91283-load-pos-id-miles-slate-leftover-chrome.mjs + verify-steps/3448 piggyback
+LIVE PROOF: verify-91283-load-pos-id-miles-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3448 piggyback + OUTBOX
+
 ## 2026-10-09 · BANK leftover slate — MaintSnapshot / ThreeMileCpm / PmCpm
 
 FINDING: BANK-F91282 — MaintenanceSnapshotSection / ThreeMileCpmPanel / PmCostPerMilePanel Tailwind slate-* → house tokens
