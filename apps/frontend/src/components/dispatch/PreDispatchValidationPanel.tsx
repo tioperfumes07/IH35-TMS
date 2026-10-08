@@ -235,7 +235,7 @@ export function PreDispatchValidationPanel({
           validation used UUIDs as query params only; expose real EntityLinks for selected identities. */}
       {(driverUuid || unitUuid || trailerUuid || customerId) ? (
         <div
-          className="flex flex-wrap gap-x-3 gap-y-1 border-t border-slate-200 pt-2 text-xs text-slate-700"
+          className="flex flex-wrap gap-x-3 gap-y-1 border-t border-[#E5E7EB] pt-2 text-xs text-[#1F2A44]"
           data-testid="pre-dispatch-validation-entitylinks"
         >
           {driverUuid ? (
@@ -272,7 +272,7 @@ export function PreDispatchValidationPanel({
           Not run — select a driver, unit, or customer to run checks.
         </div>
       ) : error ? (
-        <div className="border-t border-slate-200 bg-slate-50 px-0 py-2 text-xs text-slate-700" role="alert">
+        <div className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-0 py-2 text-xs text-[#1F2A44]" role="alert">
           <span>Pre-dispatch check unavailable: {error}</span>
           <button
             type="button"
@@ -321,8 +321,8 @@ export function PreDispatchValidationPanel({
         </div>
       ) : null}
       {result.blockers.length > 0 && !loading && remainingBlockers === 0 && !externallyBlocked ? (
-        <div className="rounded-sm border border-slate-300 bg-slate-50 p-2.5 text-xs" data-testid="pre-dispatch-overrides-cleared">
-          <div className="font-semibold text-slate-800">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2.5 text-xs" data-testid="pre-dispatch-overrides-cleared">
+          <div className="font-semibold text-[#0F1219]">
             Booking is cleared to dispatch with {Object.keys(blockOverrides).length} override
             {Object.keys(blockOverrides).length === 1 ? "" : "s"} recorded.
           </div>

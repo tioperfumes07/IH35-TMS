@@ -142,7 +142,7 @@ export function BorderCrossingWizardPage() {
       />
 
       {!selectedCompanyId ? (
-        <p className="rounded-sm border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-700" data-testid="border-crossing-need-company">
+        <p className="rounded-sm border border-dashed border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]" data-testid="border-crossing-need-company">
           Select an operating company to load entity-scoped customs brokers and submit a crossing.
         </p>
       ) : null}
@@ -153,13 +153,13 @@ export function BorderCrossingWizardPage() {
         <ListErrorBanner message={brokersError} onRetry={() => window.location.reload()} />
       ) : null}
       {showPortsEmpty ? (
-        <p className="rounded-sm border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-700" data-testid="border-crossing-ports-honest-empty">
+        <p className="rounded-sm border border-dashed border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]" data-testid="border-crossing-ports-honest-empty">
           No ports of entry are available yet. Ports populate from the border-crossing ports catalog; until then the
           Port step has nothing to select.
         </p>
       ) : null}
       {showBrokersEmpty ? (
-        <p className="rounded-sm border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-700" data-testid="border-crossing-brokers-honest-empty">
+        <p className="rounded-sm border border-dashed border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]" data-testid="border-crossing-brokers-honest-empty">
           No customs brokers for this company. Brokers appear after they are created for the active entity (Broker
           step can stay empty until then).
         </p>

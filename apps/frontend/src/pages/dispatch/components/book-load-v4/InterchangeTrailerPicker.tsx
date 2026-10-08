@@ -118,7 +118,7 @@ export function InterchangeTrailerPicker({ operatingCompanyId, value, onChange, 
       />
       {trailersQuery.isError ? <p className="text-xs text-red-600">Could not load interchange trailers.</p> : null}
       {showCreate ? (
-        <div className="space-y-1.5 rounded-sm border border-slate-200 bg-slate-50 p-2" data-testid="interchange-trailer-create-panel">
+        <div className="space-y-1.5 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2" data-testid="interchange-trailer-create-panel">
           <label className="block text-xs font-semibold text-gray-600">
             Trailer number
             <input
@@ -136,7 +136,7 @@ export function InterchangeTrailerPicker({ operatingCompanyId, value, onChange, 
                 setNewCounterpartyId(null);
                 setCounterpartySearch("");
               }}
-              className={`rounded-sm border px-2 py-1 ${newCounterpartyType === "customer" ? "border-slate-700 bg-slate-700 text-white" : "border-gray-300 text-slate-700"}`}
+              className={`rounded-sm border px-2 py-1 ${newCounterpartyType === "customer" ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 text-[#1F2A44]"}`}
             >
               Customer trailer
             </button>
@@ -147,7 +147,7 @@ export function InterchangeTrailerPicker({ operatingCompanyId, value, onChange, 
                 setNewCounterpartyId(null);
                 setCounterpartySearch("");
               }}
-              className={`rounded-sm border px-2 py-1 ${newCounterpartyType === "vendor" ? "border-slate-700 bg-slate-700 text-white" : "border-gray-300 text-slate-700"}`}
+              className={`rounded-sm border px-2 py-1 ${newCounterpartyType === "vendor" ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 text-[#1F2A44]"}`}
             >
               Vendor trailer
             </button>
