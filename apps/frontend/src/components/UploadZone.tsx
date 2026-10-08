@@ -160,9 +160,9 @@ export function UploadZone({
   }
 
   return (
-    <div className="rounded-sm border border-slate-200 bg-white p-3">
+    <div className="rounded-sm border border-[#E5E7EB] bg-white p-3">
       <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-700">{title}</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-[#1F2A44]">{title}</h3>
         <Button type="button" size="sm" variant="secondary" onClick={pickFiles}>
           Add files
         </Button>
@@ -178,7 +178,7 @@ export function UploadZone({
         }}
       />
       <div
-        className="rounded-sm border border-dashed border-slate-300 bg-slate-50 px-3 py-4 text-center text-xs text-slate-600"
+        className="rounded-sm border border-dashed border-[#E5E7EB] bg-[#F7F8FA] px-3 py-4 text-center text-xs text-[#4B5563]"
         onDragOver={(event) => event.preventDefault()}
         onDrop={(event) => {
           event.preventDefault();
@@ -191,7 +191,7 @@ export function UploadZone({
       {Object.entries(uploadingByName).length > 0 ? (
         <div className="mt-2 space-y-1">
           {Object.entries(uploadingByName).map(([key, pct]) => (
-            <div key={key} className="text-xs text-slate-700">
+            <div key={key} className="text-xs text-[#1F2A44]">
               Uploading {key.split(":")[0]} - {pct}%
             </div>
           ))}
@@ -199,16 +199,16 @@ export function UploadZone({
       ) : null}
       <div className="mt-2 space-y-2">
         {rows.map((row) => (
-          <div key={row.id} className="flex items-center justify-between rounded-sm border border-slate-200 px-2 py-1">
+          <div key={row.id} className="flex items-center justify-between rounded-sm border border-[#E5E7EB] px-2 py-1">
             <div className="min-w-0">
-              <div className="truncate text-xs font-medium text-slate-800">{row.filename}</div>
-              <div className="text-xs text-slate-500">
+              <div className="truncate text-xs font-medium text-[#0F1219]">{row.filename}</div>
+              <div className="text-xs text-[#6B7280]">
                 {Math.round(Number(row.size_bytes || 0) / 1024)} KB - {row.content_type}
               </div>
             </div>
             <div className="ml-2 flex items-center gap-2">
               <SelectCombobox
-                className="h-8 rounded-sm border border-slate-300 px-2 text-xs"
+                className="h-8 rounded-sm border border-[#E5E7EB] px-2 text-xs"
                 value={row.category}
                 onChange={(event) => setCategoryByFile((current) => ({ ...current, [row.filename]: event.target.value as AttachmentCategory }))}
               >
@@ -239,7 +239,7 @@ export function UploadZone({
             </div>
           </div>
         ))}
-        {rows.length === 0 ? <div className="text-xs text-slate-500">No files attached yet.</div> : null}
+        {rows.length === 0 ? <div className="text-xs text-[#6B7280]">No files attached yet.</div> : null}
       </div>
     </div>
   );
