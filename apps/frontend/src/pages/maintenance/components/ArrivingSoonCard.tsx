@@ -9,7 +9,7 @@ type Props = {
 
 function severityClass(card: ArrivingSoonCardType) {
   if (card.severe_count > 0) return "border-l-4 border-l-red-500";
-  if (card.already_arrived) return "border-l-4 border-l-slate-500";
+  if (card.already_arrived) return "border-l-4 border-l-[#6B7280]";
   return "border-l-4 border-l-gray-300";
 }
 

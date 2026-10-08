@@ -168,7 +168,7 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
                 </button>
                 <button
                   type="button"
-                  className="rounded-sm bg-slate-600 px-2 py-1 text-xs font-semibold text-white hover:bg-[#1F2A44]"
+                  className="rounded-sm bg-[#4B5563] px-2 py-1 text-xs font-semibold text-white hover:bg-[#1F2A44]"
                   disabled={scheduleMutation.isPending}
                   onClick={() => {
                     setSchedulingAlertId(alert.id);
