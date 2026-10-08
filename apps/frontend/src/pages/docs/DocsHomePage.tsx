@@ -82,7 +82,7 @@ function docsColumns(): Array<ParityColumn<DocsFoundationRow>> {
         kind="document"
         id={row.id}
         label={row.original_filename}
-        className="max-w-full truncate text-left font-medium text-slate-700 underline"
+        className="max-w-full truncate text-left font-medium text-[#1F2A44] underline"
         data-testid="docs-file-preview-link"
       />
     ),
