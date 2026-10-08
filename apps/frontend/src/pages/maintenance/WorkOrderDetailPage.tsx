@@ -41,8 +41,8 @@ import { RoadServiceReverseSection } from "../../components/maintenance/RoadServ
 import { ExpensesReverseSection } from "../../components/accounting/ExpensesReverseSection";
 import { WarrantyClaimsReverseSection } from "../../components/maintenance/WarrantyClaimsReverseSection";
 import { DvirSeverityBadge } from "../../components/maintenance/DvirSeverityBadge";
+import { formatUsd, formatUsdCents } from "../../lib/money";
 
-const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 /** Matches apps/backend/src/maintenance/wo-oos-estimator.ts DEFAULT_DAILY_LOSS_CENTS */
 const OOS_DAILY_LOSS_CENTS = 50_000;
 
@@ -89,7 +89,7 @@ const POSTING_PREVIEW_COLUMNS: Array<ParityColumn<PostingPreviewTableRow>> = [
     key: "amount_cents",
     label: "Amount",
     sortable: true,
-    render: (row) => money.format((row.amount_cents ?? 0) / 100),
+    render: (row) => formatUsdCents(row.amount_cents),
   },
 ];
 
@@ -116,7 +116,7 @@ const LINKED_BILL_COLUMNS: Array<ParityColumn<LinkedBillRow>> = [
     label: "Amount",
     sortable: true,
     className: "text-right",
-    render: (row) => money.format((row.amount_cents ?? 0) / 100),
+    render: (row) => formatUsdCents(row.amount_cents),
   },
   {
     key: "journal_entry_id",
@@ -150,7 +150,7 @@ const LINKED_EXPENSE_COLUMNS: Array<ParityColumn<LinkedExpenseTableRow>> = [
     label: "Amount",
     sortable: true,
     className: "text-right",
-    render: (row) => money.format((row.total_amount_cents ?? 0) / 100),
+    render: (row) => formatUsdCents(row.total_amount_cents),
   },
   {
     key: "journal_entry_id",
@@ -194,7 +194,7 @@ const LINKED_BILL_PAYMENT_COLUMNS: Array<ParityColumn<LinkedBillPaymentRow>> = [
     label: "Amount",
     sortable: true,
     className: "text-right",
-    render: (row) => money.format((row.amount_cents ?? 0) / 100),
+    render: (row) => formatUsdCents(row.amount_cents),
   },
   {
     key: "journal_entry_id",
@@ -230,7 +230,7 @@ const LINKED_INVOICE_COLUMNS: Array<ParityColumn<LinkedInvoiceRow>> = [
     label: "Amount",
     sortable: true,
     className: "text-right",
-    render: (row) => money.format((row.total_cents ?? 0) / 100),
+    render: (row) => formatUsdCents(row.total_cents),
   },
   { key: "status", label: "Status", sortable: true, render: (row) => row.status || "—" },
   {
@@ -272,7 +272,7 @@ const LINKED_CUSTOMER_PAYMENT_COLUMNS: Array<ParityColumn<LinkedCustomerPaymentR
     label: "Amount",
     sortable: true,
     className: "text-right",
-    render: (row) => money.format((row.amount_cents ?? 0) / 100),
+    render: (row) => formatUsdCents(row.amount_cents),
   },
   {
     key: "journal_entry_id",
@@ -308,7 +308,7 @@ const WO_PARTS_LINK_COLUMNS: Array<ParityColumn<PartsAssignmentRow>> = [
     label: "Amount",
     sortable: true,
     className: "text-right",
-    render: (row) => money.format(Number(row.vendor_invoice_amount ?? 0)),
+    render: (row) => formatUsd(Number(row.vendor_invoice_amount ?? 0)),
   },
   { key: "created_at", label: "When", sortable: true, render: (row) => formatDateUS(row.created_at) || "—" },
 ];
@@ -803,8 +803,8 @@ export function WorkOrderDetailPage() {
         <div
           className={`rounded-sm border px-3 py-2 text-xs ${invoiceMismatch ? "border-red-300 bg-red-50 text-red-900" : "border-gray-200 bg-[var(--surface-unselected)] text-gray-800"}`}
         >
-          Invoice {money.format(invoiceCents / 100)} vs Line items {money.format(linesCents / 100)} · Δ{" "}
-          {money.format((deltaCents ?? 0) / 100)}
+          Invoice {formatUsdCents(invoiceCents)} vs Line items {formatUsdCents(linesCents)} · Δ{" "}
+          {formatUsdCents(deltaCents)}
         </div>
       ) : null}
 
@@ -823,13 +823,13 @@ export function WorkOrderDetailPage() {
         <div className="rounded-sm border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-950">
           <div className="font-semibold">OOS severe — downtime cost estimate</div>
           <p className="mt-1 text-xs">
-            {oosDowntimeEstimate.daysOos.toFixed(1)} days OOS × {money.format(oosDowntimeEstimate.dailyLossCents / 100)}/day ={" "}
-            <span className="font-semibold">{money.format(oosDowntimeEstimate.downtimeCents / 100)}</span> downtime
+            {oosDowntimeEstimate.daysOos.toFixed(1)} days OOS × {formatUsdCents(oosDowntimeEstimate.dailyLossCents)}/day ={" "}
+            <span className="font-semibold">{formatUsdCents(oosDowntimeEstimate.downtimeCents)}</span> downtime
             {oosDowntimeEstimate.repairCents > 0 ? (
               <>
                 {" "}
-                + {money.format(oosDowntimeEstimate.repairCents / 100)} repair estimate ={" "}
-                <span className="font-semibold">{money.format(oosDowntimeEstimate.combinedCents / 100)}</span> combined
+                + {formatUsdCents(oosDowntimeEstimate.repairCents)} repair estimate ={" "}
+                <span className="font-semibold">{formatUsdCents(oosDowntimeEstimate.combinedCents)}</span> combined
               </>
             ) : null}
           </p>
@@ -1185,7 +1185,7 @@ export function WorkOrderDetailPage() {
                 <FlatFieldGrid
                   columns={3}
                   fields={[
-                    { label: "Total", value: money.format((previewQ.data.total_cents ?? 0) / 100) },
+                    { label: "Total", value: formatUsdCents(previewQ.data.total_cents) },
                     { label: "Currency", value: previewQ.data.currency || "USD" },
                     { label: "Lines", value: String(previewQ.data.lines?.length ?? 0) },
                   ]}

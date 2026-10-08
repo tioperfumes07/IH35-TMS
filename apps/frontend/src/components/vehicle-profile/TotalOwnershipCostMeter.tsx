@@ -1,3 +1,4 @@
+import { formatUsdCents } from "../../lib/money";
 type Ownership = {
   purchase_price_cents?: number | null;
   lifetime_maintenance_cents?: number;
@@ -9,7 +10,7 @@ type Ownership = {
 
 function usd(cents: number | null | undefined) {
   if (cents == null) return "—";
-  return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
+  return formatUsdCents(cents);
 }
 
 export function TotalOwnershipCostMeter({ ownership }: { ownership: Ownership }) {

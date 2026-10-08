@@ -14,6 +14,7 @@ import { useStagedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { entityLabel } from "../../lib/entity-label";
+import { formatUsdCents } from "../../lib/money";
 
 const EMPTY_FILTERS = {
   driverId: "",
@@ -21,7 +22,7 @@ const EMPTY_FILTERS = {
 
 function formatUsdFromCents(cents: unknown) {
   const n = Number(cents ?? 0);
-  return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(n / 100);
+  return formatUsdCents(n);
 }
 
 // Maker<>checker (migration 202607380000, I4): a request's reviewer can never be the office user

@@ -32,6 +32,7 @@ import {
   type RenditionStatus,
 } from "../../api/property-tax";
 import { openPrintableDocument } from "../../lib/openPrintableDocument";
+import { formatUsdCents } from "../../lib/money";
 
 const BREADCRUMB = ["Compliance", "Business Property Tax"];
 
@@ -41,7 +42,7 @@ const EMPTY_FILTERS = {
 
 function centsToUSD(cents: number | null | undefined): string {
   if (cents == null) return "—";
-  return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
+  return formatUsdCents(cents);
 }
 
 const STATUS_LABEL: Record<RenditionStatus, string> = {

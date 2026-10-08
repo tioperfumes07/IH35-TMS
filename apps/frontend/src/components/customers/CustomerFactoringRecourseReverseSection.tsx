@@ -3,14 +3,14 @@ import { getFactoringRecoursePipeline, getFactoringChargebacksFees } from "../..
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../ListErrorState";
+import { formatUsd } from "../../lib/money";
 
 // LINK-F5171/LINK-F5180 — factoring:home.recourse_pipeline + factoring:home.chargebacks_fees
 // reverse gaps. Both endpoints now accept an optional customer_id filter (LINK-F5180), resolved
 // server-side via the same accounting.invoices.factoring_advance_id join both views share.
 // NOTE: advance_amount/chargeback_amount are already DOLLAR values (not cents) -- same convention
 // FactoringHome.tsx's own fmtCurrency uses (currency.format(Number(value)), no /100).
-const currencyFmt = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
-const fmtDollars = (value: unknown) => currencyFmt.format(Number(value ?? 0));
+const fmtDollars = (value: unknown) => formatUsd(Number(value ?? 0));
 export function CustomerFactoringRecourseReverseSection({ operatingCompanyId, customerId }: { operatingCompanyId: string; customerId: string }) {
   const recourseQuery = useQuery({
     queryKey: ["customer-factoring-recourse-reverse", operatingCompanyId, customerId],

@@ -11,6 +11,7 @@ import { apiRequest } from "../../api/client";
 import { companyToday } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { formatUsdCents } from "../../lib/money";
 
 type PreviewLine = {
   invoice_number: string;
@@ -43,7 +44,6 @@ type CommitResponse = {
   reserve_movements: number;
 };
 
-const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
 // Display-only preview columns — 1:1 with the former hand-rolled table (order, labels,
 // currency formatting, sign all unchanged). No action controls live in these cells.
@@ -78,25 +78,25 @@ const PREVIEW_COLUMNS: Array<ParityColumn<PreviewLine>> = [
     key: "gross_amount_cents",
     label: "Gross",
     sortable: true,
-    render: (row) => currency.format(row.gross_amount_cents / 100),
+    render: (row) => formatUsdCents(row.gross_amount_cents),
   },
   {
     key: "advance_amount_cents",
     label: "Advance",
     sortable: true,
-    render: (row) => currency.format(row.advance_amount_cents / 100),
+    render: (row) => formatUsdCents(row.advance_amount_cents),
   },
   {
     key: "reserve_amount_cents",
     label: "Reserve",
     sortable: true,
-    render: (row) => currency.format(row.reserve_amount_cents / 100),
+    render: (row) => formatUsdCents(row.reserve_amount_cents),
   },
   {
     key: "net_amount_cents",
     label: "Net",
     sortable: true,
-    render: (row) => currency.format(row.net_amount_cents / 100),
+    render: (row) => formatUsdCents(row.net_amount_cents),
   },
 ];
 

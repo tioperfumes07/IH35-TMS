@@ -10,6 +10,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
 import { SelectCombobox } from "../Combobox";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
+import { formatUsdCents } from "../../lib/money";
 
 // B6 — Driver Inbox (inside Driver Hub Home). Built to APPROVED-PREVIEW-driver-inbox.html.
 // Locked tokens: navy banner #1A1F36, white active-tab underline; cards #fff / #E5E7EB 4px;
@@ -33,7 +34,7 @@ function initials(name: string): string {
   return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "?";
 }
 function usd(cents: unknown) {
-  return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(Number(cents ?? 0) / 100);
+  return formatUsdCents(Number(cents));
 }
 
 export function DriverInbox({ companyId, canReview }: { companyId: string; canReview: boolean }) {

@@ -51,6 +51,7 @@ import {
   type CheckRemitToAddress,
 } from "../../api/checks";
 import { createAccountingRecurringExpenseTemplate } from "../../api/accountingRecurringTemplate";
+import { formatUsdCents } from "../../lib/money";
 
 const EMPTY_ADDRESS: CheckRemitToAddress = {
   address_line1: null,
@@ -62,7 +63,7 @@ const EMPTY_ADDRESS: CheckRemitToAddress = {
 };
 
 function formatMoneyCents(cents: number): string {
-  return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
+  return formatUsdCents(cents);
 }
 
 // Payment date defaults to today in Central Time (spec §2) -- the operator's wall-clock browser

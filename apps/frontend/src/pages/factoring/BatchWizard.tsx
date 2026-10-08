@@ -20,11 +20,11 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { formatUsdCents } from "../../lib/money";
 
-const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
 function asMoney(cents: number) {
-  return money.format((Number(cents) || 0) / 100);
+  return formatUsdCents(cents);
 }
 
 type WizardStep = 1 | 2 | 3 | 4;

@@ -6,10 +6,10 @@ import { getInsuranceFleetCovered, type InsuranceCoverageType, type InsuranceFle
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { formatUsdCents } from "../../lib/money";
 
-const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const POLICY_437539_TIV_CENTS = 104_054_000;
-const formatMoney = (cents: number | null) => cents == null ? "—" : money.format(cents / 100);
+const formatMoney = (cents: number | null) => cents == null ? "—" : formatUsdCents(cents);
 const label = (value: string) => value.replaceAll("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
 const dataValue = (value: string | number | null | undefined) => value == null || value === "" ? <span className="font-semibold text-red-700">DATA GAP</span> : value;
 

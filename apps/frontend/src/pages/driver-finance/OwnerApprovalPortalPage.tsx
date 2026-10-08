@@ -11,9 +11,10 @@ import { Button } from "../../components/Button";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { settlementLabel } from "../../lib/settlementNumber";
+import { formatUsdCents } from "../../lib/money";
 
 function money(n: number) {
-  return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(n);
+  return formatUsdCents(n);
 }
 
 export function OwnerApprovalPortalPage() {

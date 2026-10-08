@@ -10,9 +10,10 @@ import { getPartsAssignmentsPage } from "../../api/maintenance";
 import { ListErrorBanner } from "../shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { AddPartsLinkDrawer } from "./AddPartsLinkDrawer";
+import { formatUsd } from "../../lib/money";
 
-function money(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(cents) || 0);
+function money(value: number) {
+  return formatUsd(Number(value) || 0);
 }
 
 type Props = {

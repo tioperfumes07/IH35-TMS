@@ -4,6 +4,7 @@ import type { RunnerColumn } from "./runner-config";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { mmmDd } from "../../../lib/formatDate";
+import { formatUsdCents } from "../../../lib/money";
 
 type Props = {
   columns: RunnerColumn[];
@@ -12,12 +13,12 @@ type Props = {
   tableId?: string;
 };
 
-const currencyFormatter = new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", minimumFractionDigits: 2 });
+
 const numberFormatter = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 });
 
 function formatCell(value: unknown, format: RunnerColumn["format"]) {
   if (value == null) return "";
-  if (format === "currency") return currencyFormatter.format(Number(value) / 100);
+  if (format === "currency") return formatUsdCents(Number(value));
   if (format === "percent") return `${numberFormatter.format(Number(value))}%`;
   if (format === "number") return numberFormatter.format(Number(value));
   if (format === "date") {

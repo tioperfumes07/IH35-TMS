@@ -4,6 +4,7 @@ import { apiRequest } from "../../api/client";
 import { TotalOwnershipCostMeter } from "./TotalOwnershipCostMeter";
 import { ComparableUnitsWidget } from "./ComparableUnitsWidget";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { formatUsdCents } from "../../lib/money";
 
 type Period = "YTD" | "quarter" | "month";
 
@@ -30,7 +31,7 @@ type Financial = {
 };
 
 function usd(cents: number) {
-  return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
+  return formatUsdCents(cents);
 }
 
 function Bar({ label, value, fleet, higherIsBetter }: { label: string; value: number; fleet: number; higherIsBetter: boolean }) {

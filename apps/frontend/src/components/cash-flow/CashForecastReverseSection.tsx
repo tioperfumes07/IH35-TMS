@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { EntityLink } from "../shared/EntityLink";
 import { listForecastEntries } from "../../api/forecast";
+import { formatUsdCents } from "../../lib/money";
 
 type Filter =
   | { party_ref_kind: "customer" | "driver" | "vendor"; party_ref_id: string }
@@ -29,7 +30,7 @@ export function CashForecastReverseSection({ operatingCompanyId, filter }: { ope
             <EntityLink
               kind="cash_forecast_entry"
               id={entry.id}
-              label={`${entry.entry_date} · ${(entry.amount_cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" })} · ${entry.direction}`}
+              label={`${entry.entry_date} · ${formatUsdCents(entry.amount_cents)} · ${entry.direction}`}
               className="text-xs font-semibold text-slate-700 hover:underline"
             />
           </li>

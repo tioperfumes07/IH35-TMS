@@ -23,6 +23,7 @@ import { useStagedListFilters } from "../../components/table";
 import { entityLabel } from "../../lib/entity-label";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
+import { formatUsd, formatUsdCents } from "../../lib/money";
 
 const EMPTY_FILTERS = {
   customerId: "",
@@ -58,12 +59,11 @@ type QueueResponse = {
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
-const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const fmtM = (cents: number, currency = "USD") => {
-  const fmt = currency === "MXN"
-    ? new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" })
-    : money;
-  return fmt.format((Number(cents) || 0) / 100);
+  if (currency === "MXN") {
+    return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format((Number(cents) || 0) / 100);
+  }
+  return formatUsdCents(cents);
 };
 const fmtD = (v: string | null | undefined) => {
   if (!v) return "—";
@@ -340,14 +340,14 @@ export function FactoringQueuePage() {
             <div className="mt-1 font-semibold text-gray-900">
               {/* views.factoring_summary normalizes signed ledger cents to DOLLARS.
                   Format directly as dollars; do NOT divide by 100. Must match FactoringHome.tsx. */}
-              {money.format(summaryQ.data.reserve_balance || 0)}
+              {formatUsd(summaryQ.data.reserve_balance || 0)}
             </div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
             <div className="text-section-header font-semibold uppercase tracking-wide text-gray-500">MTD Advances</div>
             <div className="mt-1 font-semibold text-gray-900">
               {/* mtd_advanced_total is also DOLLARS (0124 sums factoring_advances.advance_amount — no _cents). */}
-              {money.format(summaryQ.data.mtd_advanced_total || 0)}{" "}
+              {formatUsd(summaryQ.data.mtd_advanced_total || 0)}{" "}
               <span className="text-xs text-gray-500">({summaryQ.data.mtd_advances_count} batch)</span>
             </div>
           </div>

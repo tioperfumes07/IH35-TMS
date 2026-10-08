@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { EntityLink } from "../shared/EntityLink";
 import { listOverageEvents } from "../../pages/fuel/card-overage/CardOverageQueuePage";
 import { ListErrorState } from "../ListErrorState";
+import { formatUsdCents } from "../../lib/money";
 
 type Props = {
   operatingCompanyId: string;
@@ -54,7 +55,7 @@ export function FuelCardOverageReverseSection({ operatingCompanyId, filter }: Pr
             <EntityLink
               kind="fuel_card_overage_event"
               id={event.id}
-              label={`${new Date(event.created_at).toLocaleDateString()} · ${(event.overage_cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" })}`}
+              label={`${new Date(event.created_at).toLocaleDateString()} · ${formatUsdCents(event.overage_cents)}`}
               className="text-xs font-semibold text-slate-700 hover:underline"
             />
           </li>

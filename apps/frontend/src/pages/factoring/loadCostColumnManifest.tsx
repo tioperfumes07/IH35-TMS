@@ -3,6 +3,7 @@ import type { ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { visibleDocumentLabel } from "../../lib/entity-label";
+import { formatUsdCents } from "../../lib/money";
 
 /**
  * FAC-08 (owner 2026-09-06: "THE GEAR TO INCLUDE MORE COLUMNS … DRIVER, TRUCK, LOAD AND SETTLEMENT
@@ -52,7 +53,6 @@ export interface LoadCostColumnFields {
 }
 
 const DASH = "—";
-const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
 
 /** bigint cents arrive as strings over the wire; coerce honestly (never fabricate a 0). */
 export function centsFromWire(value: string | number | null | undefined): number | null {
@@ -62,7 +62,7 @@ export function centsFromWire(value: string | number | null | undefined): number
 }
 
 function money(cents: number | null): ReactNode {
-  return cents == null ? DASH : usd.format(cents / 100);
+  return cents == null ? DASH : formatUsdCents(cents);
 }
 
 const MONEY_CELL = "whitespace-nowrap text-right tabular-nums";

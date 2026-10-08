@@ -7,10 +7,10 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatUsdCents } from "../../lib/money";
 
-const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 function asMoney(cents: number) {
-  return money.format((Number(cents) || 0) / 100);
+  return formatUsdCents(cents);
 }
 
 const STATUS_LABEL: Record<string, string> = {

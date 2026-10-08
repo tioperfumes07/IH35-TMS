@@ -20,6 +20,7 @@ import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useStagedListFilters } from "../../components/table";
 import { useAutoDeductionPolicies, useAutoDeductionPolicyMutations } from "../../hooks/useAutoDeductionPolicies";
+import { formatUsdCents } from "../../lib/money";
 
 const EMPTY_FILTERS = {
   driverId: "",
@@ -42,7 +43,7 @@ type Props = {
 };
 
 function money(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+  return formatUsdCents(cents);
 }
 
 export function AutoDeductionPoliciesPanel() {

@@ -12,6 +12,7 @@ import type {
   AllocationMethod,
   AllocationPreviewRow,
 } from "./types";
+import { formatUsdCents } from "../../lib/money";
 
 const FALLBACK_ASSETS: AllocationAssetOption[] = [
   { id: "asset-demo-tractor-1", unit_code: "TRK-112", insured_value_cents: 9500000 },
@@ -26,7 +27,7 @@ type Props = {
 };
 
 function money(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+  return formatUsdCents(cents);
 }
 
 function previewEqual(totalCents: number, assets: AllocationAssetOption[]): AllocationPreviewRow[] {
