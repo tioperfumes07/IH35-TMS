@@ -373,14 +373,14 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
       <div className="space-y-4 text-xs">
         {/* Exact Leaves load.drawer.factoring:customer — customer_id was used for invoice queries only. */}
         {load.customer_id ? (
-          <div className="text-xs text-slate-600" data-testid="factoring-tab-customer-entitylink">
+          <div className="text-xs text-[#4B5563]" data-testid="factoring-tab-customer-entitylink">
             Customer:{" "}
             <EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name ?? null} noun="Customer" />
           </div>
         ) : null}
         {/* LINKAGE LAW §10-B reverse drill: the factoring purchase(s) (= Faro wire) this load's invoice sits on. */}
         <div data-testid="factoring-tab-purchases">
-          <div className="mb-1 font-semibold text-slate-700">Factoring purchases</div>
+          <div className="mb-1 font-semibold text-[#1F2A44]">Factoring purchases</div>
           <FactoringPurchaseLinksPanel companyId={operatingCompanyId} filter={{ load_id: loadId }} emptyText="This load's invoice has not been sold to the factor." />
         </div>
 
@@ -406,21 +406,21 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
               id={loadId}
               label="View in Dispatch Factoring Queue →"
               data-testid="factoring-tab-view-in-dispatch-queue"
-              className="text-xs font-medium text-slate-700 hover:underline"
+              className="text-xs font-medium text-[#1F2A44] hover:underline"
             />
             <EntityLink
               kind="factoring_recourse_load"
               id={loadId}
               label="View in Recourse Pipeline →"
               data-testid="factoring-tab-view-in-recourse-pipeline"
-              className="text-xs font-medium text-slate-700 hover:underline"
+              className="text-xs font-medium text-[#1F2A44] hover:underline"
             />
             <EntityLink
               kind="factoring_submit_queue_load"
               id={loadId}
               label="View in Submission Queue →"
               data-testid="factoring-tab-view-in-submission-queue"
-              className="text-xs font-medium text-slate-700 hover:underline"
+              className="text-xs font-medium text-[#1F2A44] hover:underline"
             />
             {/* LDT-4 restyle (bd00b7cac1) dropped this invoice reverse-drill (was a CheckItem note
                 in the pre-LDT-4 readiness checklist that LDT-4 replaced with the packet/step UI) —
@@ -431,7 +431,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
                 id={linkedInvoice.id}
                 name={linkedInvoice.display_id}
                 noun="Invoice"
-                className="text-xs font-medium text-slate-700 hover:underline"
+                className="text-xs font-medium text-[#1F2A44] hover:underline"
                 data-testid="load-factoring-invoice-link"
               />
             ) : null}
@@ -442,7 +442,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
                   id={linkedInvoice.factoring_advance_id}
                   label="View Advance Batch →"
                   data-testid="factoring-tab-view-advance-batch"
-                  className="text-xs font-medium text-slate-700 hover:underline"
+                  className="text-xs font-medium text-[#1F2A44] hover:underline"
                 />
                 {/* Banking's duplicate "Factoring (Faro)" tab was deleted (ROUND-20.8 B3, #21962) and /banking/factoring now
                     redirects without the load. The load's factoring money lives on the purchase: its lines, its wire and
@@ -450,7 +450,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
                 <Link
                   to={`/factoring/payments-to-you?load_id=${encodeURIComponent(loadId)}`}
                   data-testid="factoring-tab-view-banking-entry"
-                  className="text-xs font-medium text-slate-700 hover:underline"
+                  className="text-xs font-medium text-[#1F2A44] hover:underline"
                 >
                   View purchase & bank wire →
                 </Link>
@@ -518,7 +518,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
             </div>
           ) : null}
           {!isDeliverable ? (
-            <p className="mt-2 text-xs text-slate-700">
+            <p className="mt-2 text-xs text-[#1F2A44]">
               Packet assembles once load status is delivered or later.
             </p>
           ) : null}
@@ -562,8 +562,8 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
           <div className="space-y-2">
             {/* Before POD: mark packet ready (if deliverable) */}
             {step !== "POD" && isDeliverable && !meta.generated_at ? (
-              <div className="rounded-sm border border-slate-300 bg-slate-100 p-3">
-                <p className="mb-2 text-xs text-slate-700">
+              <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3">
+                <p className="mb-2 text-xs text-[#1F2A44]">
                   {docsLoadError || invoicesQ.isError
                     ? "Couldn't verify document completeness — see packet above and retry before relying on this."
                     : packetComplete
@@ -578,8 +578,8 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
 
             {/* POD step: approve (if not yet approved) */}
             {step === "POD" && !meta.approved_at ? (
-              <div className="rounded-sm border border-slate-200 bg-slate-100 p-3">
-                <p className="mb-2 text-xs font-medium text-slate-700">
+              <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3">
+                <p className="mb-2 text-xs font-medium text-[#1F2A44]">
                   Dispatcher approval required before submitting to FARO.
                 </p>
                 <Button size="sm" onClick={() => approveMutation.mutate()} loading={approveMutation.isPending}>
@@ -590,8 +590,8 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
 
             {/* Approved + not yet submitted: submit to FARO */}
             {meta.approved_at && step === "POD" && !submitOpen ? (
-              <div className="rounded-sm border border-slate-200 bg-slate-100 p-3">
-                <p className="mb-2 text-xs text-slate-700">
+              <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3">
+                <p className="mb-2 text-xs text-[#1F2A44]">
                   Packet approved on {new Date(meta.approved_at).toLocaleString()}. Ready to submit to FARO.
                 </p>
                 <Button
@@ -604,7 +604,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
                 {candidateQ.isError ? (
                   <QueryErrorNote label="submission eligibility" onRetry={() => candidateQ.refetch()} />
                 ) : linkedInvoice && !candidateIds.has(linkedInvoice.id) ? (
-                  <p className="mt-1 text-xs text-slate-700">Invoice may already be in a batch or already factored.</p>
+                  <p className="mt-1 text-xs text-[#1F2A44]">Invoice may already be in a batch or already factored.</p>
                 ) : null}
               </div>
             ) : null}
@@ -629,7 +629,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
                 <div className="flex gap-2">
                   <Link
                     to={FACTORING_TAB_PATH.submit_invoice}
-                    className="inline-flex h-7 items-center rounded-sm border border-slate-700 px-2 text-xs font-medium"
+                    className="inline-flex h-7 items-center rounded-sm border border-[#1F2A44] px-2 text-xs font-medium"
                     data-testid="factoring-tab-open-submit-to-factor"
                   >
                     Open Submit to Factor
