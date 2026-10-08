@@ -46,8 +46,8 @@ export function StepWizard({
             type="button"
             className={
               activeStep === step.id
-                ? "rounded-sm border border-slate-500 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-900"
-                : "rounded-sm border border-slate-300 bg-[var(--surface-unselected)] px-3 py-1 text-xs font-semibold text-slate-700"
+                ? "rounded-sm border border-[#6B7280] bg-[#F7F8FA] px-3 py-1 text-xs font-semibold text-[#0F1219]"
+                : "rounded-sm border border-[#E5E7EB] bg-[var(--surface-unselected)] px-3 py-1 text-xs font-semibold text-[#1F2A44]"
             }
             onClick={() => setActiveStep(step.id)}
             data-ifta-wizard-step={step.id}
