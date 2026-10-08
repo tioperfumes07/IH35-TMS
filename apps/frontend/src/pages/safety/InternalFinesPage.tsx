@@ -414,7 +414,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
             <option value="pending">Pending</option>
             <option value="approved">Approved</option>
           </SelectCombobox>
-          {/* SAF-B29: native <select> of limit:200 dispatch loads truncated silently. EntityPicker
+          {/* SAF-B29: native <SelectCombobox> of limit:200 dispatch loads truncated silently. EntityPicker
               server-searches mdata.loads. CREATE chrome owes picker_law — allowCreate (+ Add new load). */}
           <EntityPicker
             kind="load"

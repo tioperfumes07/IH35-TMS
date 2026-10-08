@@ -8,6 +8,7 @@ import type {
 } from "../../../api/catalogs-driver";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { SelectCombobox } from "../../../components/Combobox";
 
 const CODE_REGEX = /^[A-Z0-9-]+$/;
 
@@ -257,7 +258,7 @@ export function DriverCatalogModal({
         {optionalEnums.map((field) => (
           <label key={field.key} className="flex flex-col gap-1 text-xs text-gray-700">
             {field.label}
-            <select
+            <SelectCombobox
               className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
               data-testid={`catalog-enum-${field.key}`}
               value={form[field.key]}
@@ -269,7 +270,7 @@ export function DriverCatalogModal({
                   {option}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
         ))}
 

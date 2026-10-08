@@ -6,6 +6,7 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { PmCostPerMilePanel } from "../../../components/maintenance/PmCostPerMilePanel";
+import { SelectCombobox } from "../../../components/Combobox";
 
 type ReportRow = Record<string, unknown>;
 
@@ -67,7 +68,7 @@ export function MaintenanceReportsPage() {
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <label className="mb-2 block text-xs text-gray-600">
           Report
-          <select
+          <SelectCombobox
             className="mt-1 block w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
             value={report}
             onChange={(event) => setReport(event.target.value as (typeof REPORTS)[number]["id"])}
@@ -77,7 +78,7 @@ export function MaintenanceReportsPage() {
                 {item.label}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
         {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to the empty state — an outage presenting as a report with no findings. */}
         {/* E-15: "Cost per mile" is the real-driven PM cost-per-mile engine with its own period + three bases. */}

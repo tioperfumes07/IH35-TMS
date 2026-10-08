@@ -20,6 +20,7 @@ import { formatQueryErrorDetail } from "../../lib/tableError";
 import { useCostPerVehicle } from "./useCostPerVehicle";
 import { formatUsdCents } from "../../lib/money";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { SelectCombobox } from "../Combobox";
 
 /** Map with-bills 409s Cascade hit live (insurance_vendor_not_found on free-text insurer). */
 export function mapPolicyWithBillsError(err: unknown): string {
@@ -378,7 +379,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
                   className="py-4"
                 />
               ) : (
-                // LST-PICKER-01 (guard 1864): bare <select> → ReferenceSelect inline create.
+                // LST-PICKER-01 (guard 1864): bare <SelectCombobox> → ReferenceSelect inline create.
                 // Value is coverage CODE (policies store coverage_type text, not type_catalog UUID).
                 <ReferenceSelect
                   value={step1.coverage_type || null}
@@ -396,14 +397,14 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
               )}
             </Field>
             <Field label="Status">
-              <select
+              <SelectCombobox
                 className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={step1.status}
                 onChange={(e) => setStep1((s) => ({ ...s, status: e.target.value }))}
               >
                 <option value="active">Active</option>
                 <option value="pending">Pending</option>
-              </select>
+              </SelectCombobox>
             </Field>
             <Field label="Effective Date *" error={step1Errors.effective_date}>
               <DatePicker

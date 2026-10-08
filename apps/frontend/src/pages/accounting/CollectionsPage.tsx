@@ -21,6 +21,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { userFacingApiError } from "../../lib/api-error-message";
 
 import { formatUsdCents } from "../../lib/money";
+import { SelectCombobox } from "../../components/Combobox";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -117,20 +118,20 @@ export function CollectionsPage() {
       <div className="grid gap-3 rounded-sm border border-gray-200 bg-white p-3 lg:grid-cols-4">
         <label className="text-xs text-gray-600">
           Aging bucket
-          <select value={bucket} onChange={(event) => setBucket(event.target.value as CollectionAgingBucket | "all")} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
+          <SelectCombobox value={bucket} onChange={(event) => setBucket(event.target.value as CollectionAgingBucket | "all")} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
             <option value="all">All</option>
             <option value="1_30">1-30</option>
             <option value="31_60">31-60</option>
             <option value="61_90">61-90</option>
             <option value="91_plus">91+</option>
-          </select>
+          </SelectCombobox>
         </label>
         <label className="text-xs text-gray-600">
           Owner
-          <select value={owner} onChange={(event) => setOwner(event.target.value)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
+          <SelectCombobox value={owner} onChange={(event) => setOwner(event.target.value)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
             <option value="all">All</option>
             <option value="unassigned">Unassigned</option>
-          </select>
+          </SelectCombobox>
         </label>
         <div className="lg:col-span-2 flex items-end justify-end">
           <Button size="sm" onClick={() => syncMutation.mutate()} disabled={!companyId || syncMutation.isPending}>
@@ -244,12 +245,12 @@ export function CollectionsPage() {
               <div className="grid gap-2 rounded-sm border border-gray-200 p-3 md:grid-cols-3">
                 <label className="text-xs text-gray-600">
                   Contact type
-                  <select value={contactType} onChange={(event) => setContactType(event.target.value as CollectionContactType)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
+                  <SelectCombobox value={contactType} onChange={(event) => setContactType(event.target.value as CollectionContactType)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
                     <option value="call">Call</option>
                     <option value="email">Email</option>
                     <option value="letter">Letter</option>
                     <option value="sms">SMS</option>
-                  </select>
+                  </SelectCombobox>
                 </label>
                 <label className="text-xs text-gray-600">
                   Next action date
@@ -269,11 +270,11 @@ export function CollectionsPage() {
               <div className="grid gap-2 rounded-sm border border-gray-200 p-3 md:grid-cols-3">
                 <label className="text-xs text-gray-600 md:col-span-2">
                   Resolution
-                  <select value={resolution} onChange={(event) => setResolution(event.target.value as CollectionTaskResolution)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
+                  <SelectCombobox value={resolution} onChange={(event) => setResolution(event.target.value as CollectionTaskResolution)} className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs">
                     <option value="paid">Paid</option>
                     <option value="disputed">Disputed</option>
                     <option value="written_off">Written off</option>
-                  </select>
+                  </SelectCombobox>
                 </label>
                 <div className="flex items-end justify-end">
                   <Button size="sm" variant="secondary" onClick={() => resolveMutation.mutate()} disabled={!companyId || !selectedTask || resolveMutation.isPending}>

@@ -23,6 +23,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { userFacingApiError } from "../../lib/api-error-message";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { SelectCombobox } from "../../components/Combobox";
 
 const KIND_OPTIONS: ExpenseCategoryMapKind[] = [
   "fuel",
@@ -227,7 +228,7 @@ export function ExpenseCategoryMapPage() {
             <div className="mt-3 grid gap-3">
               <label className="text-xs font-semibold text-gray-600">
                 Category kind
-                <select
+                <SelectCombobox
                   className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
                   value={form.category_kind}
                   onChange={(event) =>
@@ -239,7 +240,7 @@ export function ExpenseCategoryMapPage() {
                       {kind}
                     </option>
                   ))}
-                </select>
+                </SelectCombobox>
               </label>
 
               <label className="text-xs font-semibold text-gray-600">

@@ -11,6 +11,7 @@ import { IFTAStepGallons } from "./IFTAStepGallons";
 import { IFTAStepMiles } from "./IFTAStepMiles";
 import { IFTAStepTax } from "./IFTAStepTax";
 import { filingQuarterLabel, parseQuarterLabel, recentQuarterOptions, toQuarterLabel } from "./quarter";
+import { SelectCombobox } from "../../../components/Combobox";
 
 export function IFTAPreparer() {
   const { selectedCompanyId } = useCompanyContext();
@@ -54,7 +55,7 @@ export function IFTAPreparer() {
         <div className="flex flex-wrap items-end gap-2">
           <label className="flex flex-col gap-1 text-xs font-semibold text-[#1F2A44]">
             Filing quarter
-            <select
+            <SelectCombobox
               aria-label="Filing quarter"
               value={selectedLabel}
               onChange={(event) => setSelectedLabel(event.target.value)}
@@ -69,7 +70,7 @@ export function IFTAPreparer() {
                   </option>
                 );
               })}
-            </select>
+            </SelectCombobox>
           </label>
           <button
             type="button"

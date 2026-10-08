@@ -33,6 +33,7 @@ import {
 } from "../../api/property-tax";
 import { openPrintableDocument } from "../../lib/openPrintableDocument";
 import { formatUsdCents } from "../../lib/money";
+import { SelectCombobox } from "../../components/Combobox";
 
 const BREADCRUMB = ["Compliance", "Business Property Tax"];
 
@@ -451,7 +452,7 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
       <section className="grid gap-3 rounded-sm border border-[#E5E7EB] bg-white p-3 md:grid-cols-3">
         <div>
           <div className="text-xs uppercase tracking-wide text-[#6B7280]">Status</div>
-          <select
+          <SelectCombobox
             value={rendition.status}
             onChange={(e) => statusM.mutate(e.target.value as RenditionStatus)}
             className="mt-1 rounded-sm border px-2 py-1 text-xs"
@@ -461,7 +462,7 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
                 {STATUS_LABEL[s]}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </div>
         <div>
           <div className="text-xs uppercase tracking-wide text-[#6B7280]">CAD-Assessed Tax (drives accrual)</div>

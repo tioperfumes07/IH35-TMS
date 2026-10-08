@@ -14,6 +14,7 @@ import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
+import { SelectCombobox } from "../../components/Combobox";
 
 function PodRowActions({
   doc,
@@ -197,7 +198,7 @@ export function PodReviewPage() {
         </label>
         <label className="text-xs">
           POD status
-          <select
+          <SelectCombobox
             className="mt-1 block w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={staged.draft.statusFilter}
             onChange={(event) => staged.setDraft({ ...staged.draft, statusFilter: event.target.value as typeof statusFilter })}
@@ -207,7 +208,7 @@ export function PodReviewPage() {
             <option value="approved">Approved</option>
             <option value="rejected">Rejected</option>
             <option value="">All</option>
-          </select>
+          </SelectCombobox>
         </label>
       </div>
     </CollapsedListFilters>

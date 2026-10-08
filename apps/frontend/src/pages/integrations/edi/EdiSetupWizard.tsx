@@ -5,6 +5,7 @@ import { PageHeader } from "../../../components/layout/PageHeader";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { SelectCombobox } from "../../../components/Combobox";
 
 type EdiPartner = {
   uuid: string;
@@ -120,7 +121,7 @@ export function EdiSetupWizard() {
             <input className="w-full rounded-sm border px-3 py-2" value={isaId} onChange={(e) => setIsaId(e.target.value)} placeholder="ISA ID" />
             <input className="w-full rounded-sm border px-3 py-2" value={gsId} onChange={(e) => setGsId(e.target.value)} placeholder="GS ID" />
             <label className="block text-xs font-medium">Connection type</label>
-            <select
+            <SelectCombobox
               className="w-full rounded-sm border px-3 py-2"
               value={connectionType}
               onChange={(e) => setConnectionType(e.target.value as typeof connectionType)}
@@ -129,7 +130,7 @@ export function EdiSetupWizard() {
               <option value="as2">AS2</option>
               <option value="ftp">FTP</option>
               <option value="sftp">SFTP</option>
-            </select>
+            </SelectCombobox>
             <input
               className="w-full rounded-sm border px-3 py-2"
               value={endpoint}

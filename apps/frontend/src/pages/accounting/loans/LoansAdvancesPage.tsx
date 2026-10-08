@@ -31,6 +31,7 @@ import { FORM_SELECT_CLASS } from "../../../components/forms/inputClass";
 import { LoanApplicationWizard } from "./LoanApplicationWizard";
 import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { formatUsdCents } from "../../../lib/money";
+import { SelectCombobox } from "../../../components/Combobox";
 
 const DIRECTIONS: Array<{ value: "" | LoanDirection; label: string }> = [
   { value: "", label: "All directions" },
@@ -99,7 +100,7 @@ export function LoansAdvancesPage() {
       />
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <select
+        <SelectCombobox
           className={`${FORM_SELECT_CLASS} max-w-[260px]`}
           value={direction}
           onChange={(e) => setDirection(e.target.value as "" | LoanDirection)}
@@ -110,7 +111,7 @@ export function LoansAdvancesPage() {
               {d.label}
             </option>
           ))}
-        </select>
+        </SelectCombobox>
         <MultiSelectDropdown
           label="Status"
           options={STATUSES.filter((st): st is LoanStatus => st !== "").map((st) => ({ value: st, label: st }))}
@@ -119,7 +120,7 @@ export function LoansAdvancesPage() {
           allLabel="All statuses"
           data-testid="loans-status-filter"
         />
-        <select
+        <SelectCombobox
           className={`${FORM_SELECT_CLASS} max-w-[200px]`}
           value={targetType}
           onChange={(e) => setTargetType(e.target.value as "" | LoanTargetType)}
@@ -130,7 +131,7 @@ export function LoansAdvancesPage() {
               {t || "All target types"}
             </option>
           ))}
-        </select>
+        </SelectCombobox>
       </div>
 
       {!companyId && (

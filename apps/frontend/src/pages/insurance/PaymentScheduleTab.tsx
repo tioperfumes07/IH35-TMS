@@ -16,6 +16,7 @@ import { formatUsdCents } from "../../lib/money";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { SelectCombobox } from "../../components/Combobox";
 
 type Props = {
   operatingCompanyId?: string;
@@ -128,7 +129,7 @@ export function PaymentScheduleTab({ operatingCompanyId, policyId }: Props) {
       <div className="mb-3 flex items-center gap-2">
         <label className="text-xs font-semibold text-gray-600">
           Payment status filter
-          <select
+          <SelectCombobox
             className="ml-2 rounded-sm border border-gray-300 px-2 py-1 text-xs"
             value={statusFilter}
             onChange={(event) => setStatusFilter((event.target.value || "") as "" | PaymentScheduleStatus)}
@@ -138,7 +139,7 @@ export function PaymentScheduleTab({ operatingCompanyId, policyId }: Props) {
                 {option.label}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
       </div>
 

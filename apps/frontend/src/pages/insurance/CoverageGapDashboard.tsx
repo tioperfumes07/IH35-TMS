@@ -24,6 +24,7 @@ import { useSearchParams } from "react-router-dom";
 import { insuranceTypeLabel } from "../../lib/insurance-type-label";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { companyToday } from "../../lib/businessDate";
+import { SelectCombobox } from "../../components/Combobox";
 
 function toDate(value: string) {
   return new Date(`${value}T00:00:00.000Z`);
@@ -280,7 +281,7 @@ export function CoverageGapDashboard() {
           {catalogCodes.map((code) => (
             <label key={code} className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
               {insuranceTypeLabel(code, typeNameByCode.get(code))}
-              <select
+              <SelectCombobox
                 className="ml-1 h-7 rounded-sm border border-gray-300 bg-white px-1 text-xs font-normal normal-case"
                 value={coverageFilter[code] ?? "all"}
                 onChange={(event) =>
@@ -291,7 +292,7 @@ export function CoverageGapDashboard() {
                 <option value="all">All</option>
                 <option value="covered">Covered</option>
                 <option value="missing">Missing</option>
-              </select>
+              </SelectCombobox>
             </label>
           ))}
         </div>

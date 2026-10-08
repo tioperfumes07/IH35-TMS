@@ -18,6 +18,7 @@ import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
 import { Combobox } from "../Combobox";
 import { LoadSuggestionReadError } from "../shared/LoadSuggestionReadError";
+import { SelectCombobox } from "../Combobox";
 
 /** Tri-state driver_responsible: "" = not yet determined (NULL), "true" / "false" = decided. */
 type DriverResponsibleOption = "" | "true" | "false";
@@ -433,7 +434,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
 
           <label className="space-y-1">
             <span className="text-xs font-semibold text-[#4B5563]">Status</span>
-            <select
+            <SelectCombobox
               className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.status}
               onChange={(event) => updateField("status", event.target.value as InsuranceClaimStatus)}
@@ -444,12 +445,12 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
               <option value="denied">Denied</option>
               <option value="paid">Paid</option>
               <option value="closed">Closed</option>
-            </select>
+            </SelectCombobox>
           </label>
 
           <label className="space-y-1" data-testid="claim-create-fault-field">
             <span className="text-xs font-semibold text-[#4B5563]">Fault</span>
-            <select
+            <SelectCombobox
               className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.fault}
               onChange={(event) => updateField("fault", event.target.value as InsuranceClaimFault)}
@@ -458,12 +459,12 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
               <option value="company">Company</option>
               <option value="third_party">Third party</option>
               <option value="shared">Shared</option>
-            </select>
+            </SelectCombobox>
           </label>
 
           <label className="space-y-1" data-testid="claim-create-driver-responsible-field">
             <span className="text-xs font-semibold text-[#4B5563]">Driver Responsible</span>
-            <select
+            <SelectCombobox
               className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.driver_responsible}
               onChange={(event) => updateField("driver_responsible", event.target.value as DriverResponsibleOption)}
@@ -471,7 +472,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
               <option value="">Not yet determined</option>
               <option value="true">Yes — driver responsible</option>
               <option value="false">No — driver not responsible</option>
-            </select>
+            </SelectCombobox>
           </label>
 
           <label className="space-y-1">
@@ -556,7 +557,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
 
             <label className="space-y-1" data-testid="claim-create-recovery-rail-field">
               <span className="text-xs font-semibold text-[#4B5563]">Driver Deductible Recovery</span>
-              <select
+              <SelectCombobox
                 className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={form.recovery_rail}
                 onChange={(event) => updateField("recovery_rail", event.target.value as InsuranceClaimRecoveryRail)}
@@ -565,12 +566,12 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
                 <option value="escrow">Recover from driver escrow</option>
                 <option value="settlement">Recover from next settlement</option>
                 <option value="split">Split escrow / settlement</option>
-              </select>
+              </SelectCombobox>
             </label>
 
             <label className="space-y-1" data-testid="claim-create-repair-books-field">
               <span className="text-xs font-semibold text-[#4B5563]">Uninsured Repair Books Treatment</span>
-              <select
+              <SelectCombobox
                 className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={form.repair_books_treatment}
                 onChange={(event) =>
@@ -580,7 +581,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
                 <option value="ask">Ask later (not decided)</option>
                 <option value="expense">Expense</option>
                 <option value="capitalize">Capitalize</option>
-              </select>
+              </SelectCombobox>
             </label>
           </div>
           <p className="text-xs text-gray-500">

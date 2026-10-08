@@ -15,6 +15,7 @@ import { useStagedListFilters } from "../../components/table";
 import { formatUsdCents } from "../../lib/money";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
+import { SelectCombobox } from "../../components/Combobox";
 
 function mmmDd(iso: string | null | undefined): string {
   if (!iso) return "—";
@@ -227,7 +228,7 @@ export function InvoiceSearchReportPage() {
             className="h-7 w-64 rounded-sm border border-gray-300 px-2 text-xs"
             data-testid="invoice-search-input"
           />
-          <select
+          <SelectCombobox
             value={staged.draft.statusFilter}
             onChange={(e) => staged.setDraft((p) => ({ ...p, statusFilter: e.target.value }))}
             className="h-7 rounded-sm border border-gray-300 px-2 text-xs"
@@ -236,8 +237,8 @@ export function InvoiceSearchReportPage() {
             {STATUS_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
-          </select>
-          <select
+          </SelectCombobox>
+          <SelectCombobox
             value={staged.draft.dateRange}
             onChange={(e) => staged.setDraft((p) => ({ ...p, dateRange: e.target.value }))}
             className="h-7 rounded-sm border border-gray-300 px-2 text-xs"
@@ -247,7 +248,7 @@ export function InvoiceSearchReportPage() {
             <option value="last_30">Last 30 days</option>
             <option value="last_90">Last 90 days</option>
             <option value="this_year">This year</option>
-          </select>
+          </SelectCombobox>
           <button type="button" className="h-7 rounded-sm bg-[#1F2A44] px-2 text-xs text-white disabled:opacity-50" disabled={!staged.dirty} onClick={staged.apply}>Apply</button>
           {staged.dirty ? (
             <>

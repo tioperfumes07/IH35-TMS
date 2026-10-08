@@ -13,6 +13,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
 
 import { formatUsdCents } from "../../lib/money";
+import { SelectCombobox } from "../../components/Combobox";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -156,7 +157,7 @@ export function CashForecastPage() {
             <h2 className="text-xs font-semibold">Projected balance</h2>
             <label className="text-xs text-gray-600">
               Weeks
-              <select
+              <SelectCombobox
                 value={weeks}
                 onChange={(event) => setWeeks(Number(event.target.value))}
                 className="ml-2 h-8 rounded-sm border border-gray-300 px-2 text-xs"
@@ -164,7 +165,7 @@ export function CashForecastPage() {
                 <option value={13}>13</option>
                 <option value={8}>8</option>
                 <option value={26}>26</option>
-              </select>
+              </SelectCombobox>
             </label>
           </div>
           <div className="h-64 w-full">

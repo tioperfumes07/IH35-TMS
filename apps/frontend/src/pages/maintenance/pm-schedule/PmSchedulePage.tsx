@@ -17,6 +17,7 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { useToast } from "../../../components/Toast";
 import { useSearchParams } from "react-router-dom";
+import { SelectCombobox } from "../../../components/Combobox";
 
 const NIL_UUID = "00000000-0000-0000-0000-000000000000";
 
@@ -256,7 +257,7 @@ export function PmSchedulePage() {
 
           <label className="block">
             <span className="text-xs text-gray-600">PM type</span>
-            <select
+            <SelectCombobox
               className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
               value={draft.pm_type}
               onChange={(e) => setDraft((d) => ({ ...d, pm_type: e.target.value }))}
@@ -267,13 +268,13 @@ export function PmSchedulePage() {
                   {opt.label}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
 
           <div className="grid grid-cols-2 gap-2">
             <label className="block">
               <span className="text-xs text-gray-600">Interval kind</span>
-              <select
+              <SelectCombobox
                 className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
                 value={draft.interval_kind}
                 onChange={(e) =>
@@ -286,7 +287,7 @@ export function PmSchedulePage() {
                     {opt.label}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
             </label>
             <label className="block">
               <span className="text-xs text-gray-600">Interval value</span>

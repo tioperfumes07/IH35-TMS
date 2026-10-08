@@ -2,6 +2,7 @@ import { useCallback, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DatePicker } from "../forms/DatePicker";
 import { companyToday, monthBoundsIso, addDaysIso } from "../../lib/businessDate";
+import { SelectCombobox } from "../Combobox";
 
 // RPT-06 — Inline filter bar visible on first load (0 clicks).
 // Replaces the CollapsedListFilters popover pattern on report landing pages.
@@ -219,7 +220,7 @@ export function ReportFilterBar({
           <div className="mx-1 h-5 w-px bg-[#E5E7EB]" />
           <label className="flex items-center gap-1 text-xs text-[#4B5563]">
             <span className="font-semibold text-[#4B5563]">Status</span>
-            <select
+            <SelectCombobox
               value={statusFilter ?? ""}
               onChange={handleStatus}
               className="h-7 rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#1F2A44]"
@@ -231,7 +232,7 @@ export function ReportFilterBar({
                   {opt.label}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
         </>
       ) : null}

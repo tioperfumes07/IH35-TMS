@@ -14,6 +14,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useStagedListFilters } from "../../components/table";
+import { SelectCombobox } from "../../components/Combobox";
 
 interface Finding {
   uuid: string;
@@ -158,7 +159,7 @@ export function GeofenceReconciliationReport() {
       >
         <label className="flex items-center gap-1 text-xs text-slate-600">
           <span className="font-semibold text-slate-600">Kind</span>
-          <select
+          <SelectCombobox
             className="h-7 rounded-sm border border-slate-300 px-2 text-xs"
             value={staged.draft.kindFilter}
             onChange={(e) => staged.setDraft((p) => ({ ...p, kindFilter: e.target.value }))}
@@ -169,7 +170,7 @@ export function GeofenceReconciliationReport() {
             <option value="orphan_exit">Exit without Entry</option>
             <option value="duplicate_fire">Duplicate Fire</option>
             <option value="expected_missing">Missing Expected Event</option>
-          </select>
+          </SelectCombobox>
         </label>
       </ReportFilterBar>
       {isError && (

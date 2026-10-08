@@ -19,6 +19,7 @@ import { Combobox } from "../../../components/Combobox";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { CashFlowKpiStrip } from "./CashFlowKpiStrip";
 import { SettlementRefCell } from "../../../components/shared/SettlementRefCell";
+import { SelectCombobox } from "../../../components/Combobox";
 
 // CASH-FLOW-02 (owner order 2026-09-06 20:1x/20:2x/20:5xZ). A daily snapshot with roll-over:
 // every expected dollar carries its own due date and stays until paid/matched.
@@ -343,7 +344,7 @@ function StopTrackingButton({
       </button>
       {open && (
         <div className="absolute right-0 z-20 mt-1 w-56 rounded-sm border border-[#E5E7EB] bg-white p-2 shadow-md text-xs" onClick={(e) => e.stopPropagation()}>
-          <select
+          <SelectCombobox
             value={reasonCode}
             onChange={(e) => setReasonCode(e.target.value)}
             className="mb-1 h-[26px] w-full rounded-sm border border-[#E5E7EB] px-1 text-xs"
@@ -353,7 +354,7 @@ function StopTrackingButton({
                 {r.label}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
           <input
             type="text"
             value={hiddenReason}
@@ -447,7 +448,7 @@ function AdjustPopover({ row, reasons, applies, onClose, onSubmit, pending }: Ad
         </label>
         <label className="block">
           <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[#6B7280]">Reason (catalog)</span>
-          <select
+          <SelectCombobox
             value={reasonCode}
             onChange={(e) => setReasonCode(e.target.value)}
             className="h-[26px] w-full rounded-sm border border-[#E5E7EB] px-2 text-xs"
@@ -457,7 +458,7 @@ function AdjustPopover({ row, reasons, applies, onClose, onSubmit, pending }: Ad
                 {r.label}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
         <label className="col-span-2 block">
           <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[#6B7280]">Note</span>

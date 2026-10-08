@@ -6,6 +6,7 @@ import { Button } from "../Button";
 import { DatePicker } from "../forms/DatePicker";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
+import { SelectCombobox } from "../Combobox";
 
 interface UserActivityTabProps {
   operatingCompanyId: string;
@@ -196,7 +197,7 @@ export function UserActivityTab({ operatingCompanyId, userId }: UserActivityTabP
         </label>
         <label className="text-xs text-gray-600">
           Event type
-          <select
+          <SelectCombobox
             className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-xs"
             value={eventTypeFilter}
             onChange={(e) => setEventTypeFilter(e.target.value)}
@@ -207,11 +208,11 @@ export function UserActivityTab({ operatingCompanyId, userId }: UserActivityTabP
                 {value}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
         <label className="text-xs text-gray-600">
           Source
-          <select
+          <SelectCombobox
             className="mt-1 block rounded-sm border border-gray-300 px-2 py-1 text-xs"
             value={sourceFilter}
             onChange={(e) => setSourceFilter(e.target.value)}
@@ -221,7 +222,7 @@ export function UserActivityTab({ operatingCompanyId, userId }: UserActivityTabP
                 {opt.label}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
         <button
           onClick={() => setVoidsOnly((v) => !v)}

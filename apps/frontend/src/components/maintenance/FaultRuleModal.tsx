@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "../Button";
 import { ParityDrawer } from "../parity/ParityDrawer";
+import { SelectCombobox } from "../Combobox";
 
 export type FaultRuleFormValues = {
   id?: string;
@@ -70,7 +71,7 @@ export function FaultRuleModal({ initial, onClose, onSave, saving }: Props) {
         </label>
         <label className="block">
           <span className="text-gray-600">Source</span>
-          <select
+          <SelectCombobox
             className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
             value={form.source}
             onChange={(e) => setForm((f) => ({ ...f, source: e.target.value as FaultRuleFormValues["source"] }))}
@@ -78,7 +79,7 @@ export function FaultRuleModal({ initial, onClose, onSave, saving }: Props) {
             <option value="samsara">Samsara</option>
             <option value="j1939_dtc">J1939 DTC</option>
             <option value="custom">Custom</option>
-          </select>
+          </SelectCombobox>
         </label>
         <label className="block">
           <span className="text-gray-600">Description</span>
@@ -90,7 +91,7 @@ export function FaultRuleModal({ initial, onClose, onSave, saving }: Props) {
         </label>
         <label className="block">
           <span className="text-gray-600">Severity</span>
-          <select
+          <SelectCombobox
             className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
             value={form.severity}
             onChange={(e) => setForm((f) => ({ ...f, severity: e.target.value as FaultRuleFormValues["severity"] }))}
@@ -99,7 +100,7 @@ export function FaultRuleModal({ initial, onClose, onSave, saving }: Props) {
             <option value="medium">Medium</option>
             <option value="high">High</option>
             <option value="critical">Critical</option>
-          </select>
+          </SelectCombobox>
         </label>
         <label className="flex items-center gap-2">
           <input
@@ -111,7 +112,7 @@ export function FaultRuleModal({ initial, onClose, onSave, saving }: Props) {
         </label>
         <label className="block">
           <span className="text-gray-600">Suggested priority</span>
-          <select
+          <SelectCombobox
             className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1"
             value={form.suggested_priority ?? ""}
             onChange={(e) =>
@@ -125,7 +126,7 @@ export function FaultRuleModal({ initial, onClose, onSave, saving }: Props) {
             <option value="routine">Routine</option>
             <option value="urgent">Urgent</option>
             <option value="immediate">Immediate</option>
-          </select>
+          </SelectCombobox>
         </label>
         <label className="block">
           <span className="text-gray-600">Estimated repair hours</span>

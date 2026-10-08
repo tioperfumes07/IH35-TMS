@@ -11,6 +11,7 @@ import { formatDateTimeUS } from "../../../lib/formatDate";
 import { DrillKpiCard } from "../../../components/layout/DrillKpiCard";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import {
+import { SelectCombobox } from "../../../components/Combobox";
   applyUniversalDatePreset,
   QBO_DATE_PRESETS,
 } from "../../../components/table/UniversalListToolbar";
@@ -87,7 +88,7 @@ export function LegalDeadlineAlertsPage() {
           <div className="flex flex-wrap items-end gap-2 rounded-sm border border-[#E5E7EB] bg-white p-2">
             <label className="block text-xs">
               <span className="mb-1 block font-semibold uppercase text-[#4B5563]">Preset</span>
-              <select
+              <SelectCombobox
                 className="h-[34px] rounded-sm border border-[#E5E7EB] px-2 text-xs"
                 value={preset}
                 onChange={(e) => {
@@ -106,7 +107,7 @@ export function LegalDeadlineAlertsPage() {
                     {p.label}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
             </label>
             <label className="block text-xs">
               <span className="mb-1 block font-semibold uppercase text-[#4B5563]">Due from</span>

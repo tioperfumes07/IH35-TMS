@@ -13,6 +13,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { formatUsdCents } from "../../../lib/money";
+import { SelectCombobox } from "../../../components/Combobox";
 
 type Props = {
   open: boolean;
@@ -207,10 +208,10 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 mb-0.5">Entity Type</label>
-                  <select value={lessee.entity_type} onChange={(e) => setLessee((p) => ({ ...p, entity_type: e.target.value }))}
+                  <SelectCombobox value={lessee.entity_type} onChange={(e) => setLessee((p) => ({ ...p, entity_type: e.target.value }))}
                     className="w-full h-10 rounded-sm border border-gray-300 px-2 text-xs">
                     {["LLC","Inc.","Corp.","LP","LLLP","Sole Proprietor"].map((t) => <option key={t}>{t}</option>)}
-                  </select>
+                  </SelectCombobox>
                 </div>
                 {([["address","Address"],["city_state_zip","City, State ZIP"],["signer_name","Signer Name *"],["signer_title","Signer Title"],["signer_email","Signer Email *"]] as [keyof typeof lessee, string][]).map(([k,l]) => (
                   <div key={k}>

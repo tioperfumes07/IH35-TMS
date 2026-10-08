@@ -8,6 +8,7 @@ import { useToast } from "../../components/Toast";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
+import { SelectCombobox } from "../../components/Combobox";
   getProgramBoard,
   postProgramBoardNote,
   type BoardDeltas,
@@ -1181,7 +1182,7 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
             Top open items ({filteredOpenItems.length} of {audit.top_open_items.length})
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <select
+            <SelectCombobox
               value={moduleFilter}
               onChange={(e) => setModuleFilter(e.target.value)}
               className="h-7 rounded border border-gray-300 px-1.5 text-xs"
@@ -1192,8 +1193,8 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
                   {m}
                 </option>
               ))}
-            </select>
-            <select
+            </SelectCombobox>
+            <SelectCombobox
               value={verdictFilter}
               onChange={(e) => setVerdictFilter(e.target.value)}
               className="h-7 rounded border border-gray-300 px-1.5 text-xs"
@@ -1204,7 +1205,7 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
                   {v}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </div>
         </div>
         <div className="overflow-x-auto rounded border border-gray-200">

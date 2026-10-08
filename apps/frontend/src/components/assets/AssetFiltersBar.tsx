@@ -1,5 +1,6 @@
 import type { AssetLifecycle } from "./types";
 import { CollapsedListFilters, useStagedListFilters } from "../table";
+import { SelectCombobox } from "../Combobox";
 
 type Props = {
   lifecycle: AssetLifecycle | "all";
@@ -32,7 +33,7 @@ export function AssetFiltersBar({ lifecycle, onLifecycleChange }: Props) {
       >
         <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
           Lifecycle
-          <select
+          <SelectCombobox
             value={staged.draft.lifecycle}
             onChange={(event) => staged.setDraft({ lifecycle: event.target.value as AssetLifecycle | "all" })}
             className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs font-normal text-gray-900"
@@ -42,7 +43,7 @@ export function AssetFiltersBar({ lifecycle, onLifecycleChange }: Props) {
                 {option.label}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
       </CollapsedListFilters>
     </section>

@@ -4,6 +4,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import {
+import { SelectCombobox } from "../../../components/Combobox";
   applyUniversalDatePreset,
   QBO_DATE_PRESETS,
 } from "../../../components/table/UniversalListToolbar";
@@ -62,7 +63,7 @@ export function DrugAlcoholTable({ rows, pageSize = 50, hidePager = false }: Pro
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-end gap-2">
-        <select
+        <SelectCombobox
           className="h-[34px] rounded-sm border border-[#E5E7EB] px-2 text-xs"
           value={preset}
           onChange={(e) => {
@@ -81,7 +82,7 @@ export function DrugAlcoholTable({ rows, pageSize = 50, hidePager = false }: Pro
               {p.label}
             </option>
           ))}
-        </select>
+        </SelectCombobox>
         <DatePicker
           id="drug-alcohol-test-date-from"
           value={from}

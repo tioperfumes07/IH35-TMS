@@ -2,6 +2,7 @@ import { EntityPicker } from "../EntityPicker";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import type { WizardFormState } from "./borderCrossingApi";
+import { SelectCombobox } from "../Combobox";
 
 type Props = {
   form: WizardFormState;
@@ -81,7 +82,7 @@ export function WizardStep1({ form, onChange, operatingCompanyId }: Props) {
       ) : null}
       <label className="block text-xs">
         Direction *
-        <select
+        <SelectCombobox
           className="mt-1 w-full rounded-sm border px-2 py-1.5"
           value={form.direction}
           onChange={(e) => onChange({ direction: e.target.value as WizardFormState["direction"] })}
@@ -89,7 +90,7 @@ export function WizardStep1({ form, onChange, operatingCompanyId }: Props) {
           <option value="">Select…</option>
           <option value="northbound">Northbound (into US)</option>
           <option value="southbound">Southbound (into MX)</option>
-        </select>
+        </SelectCombobox>
       </label>
     </section>
   );

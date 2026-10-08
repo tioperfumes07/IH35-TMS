@@ -10,6 +10,7 @@ import { ParityDrawer } from "../parity/ParityDrawer";
 import { EntityPicker } from "../EntityPicker";
 import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
+import { SelectCombobox } from "../Combobox";
 
 type Props = {
   open: boolean;
@@ -225,7 +226,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
 
           <label className="space-y-1">
             <span className="text-xs font-semibold text-[#4B5563]">Status</span>
-            <select
+            <SelectCombobox
               className="w-full rounded-sm border border-gray-300 px-2 py-1"
               value={form.status}
               onChange={(event) => updateField("status", event.target.value as InsuranceLawsuitStatus)}
@@ -235,7 +236,7 @@ export function LawsuitCreateModal({ open, operatingCompanyId, onClose, onCreate
               <option value="settled">Settled</option>
               <option value="dismissed">Dismissed</option>
               <option value="judgment">Judgment</option>
-            </select>
+            </SelectCombobox>
           </label>
 
           <label className="space-y-1">

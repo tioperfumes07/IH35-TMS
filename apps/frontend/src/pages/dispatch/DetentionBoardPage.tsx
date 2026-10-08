@@ -29,6 +29,7 @@ import { DispatchSubnav } from "../../components/dispatch/DispatchSubnav";
 import { serverDispatchAlertQueryFromSortState, sortDispatchAlertBoardRows } from "./dispatchAlertBoardSort";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
+import { SelectCombobox } from "../../components/Combobox";
 
 function formatMoney(cents: number): string {
   return formatUsdCents(Math.max(0, cents));
@@ -132,7 +133,7 @@ function DetentionApprovalQueue({
               <span className="min-w-[4rem] text-center">{formatMoney(Number(row.amount_cents ?? 0))}</span>
               <label className="flex items-center gap-1">
                 <span className="text-section-header font-bold uppercase text-[#4B5563]">Method</span>
-                <select
+                <SelectCombobox
                   className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
                   value={method}
                   aria-label={`Approval method for ${row.load_number ?? row.id}`}
@@ -143,7 +144,7 @@ function DetentionApprovalQueue({
                       {m}
                     </option>
                   ))}
-                </select>
+                </SelectCombobox>
               </label>
               <button
                 type="button"

@@ -31,6 +31,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { LOCKED_BORDER, LOCKED_TEXT_SECONDARY } from "../../design/locked-baseline-tokens";
 import { useLoadCostRollups } from "../../hooks/useLoadCostRollups";
 import {
+import { SelectCombobox } from "../../components/Combobox";
   getTruckLine,
   listLoadExceptionReasons,
   recordTruckLineException,
@@ -213,7 +214,7 @@ function pct(index: number) {
 // ROOT CAUSE: it was stuck because it was never a control. The top bar rendered six plain <span>
 // elements — "All trucks (14) Rolling (8) Stopped (3) …" — with no onClick, no state and nothing
 // downstream reading them. They were a read-out that LOOKED like a filter bar.
-// FIX: one real <select>, and ONE classifier that both the counts and the filter read, so an
+// FIX: one real <SelectCombobox>, and ONE classifier that both the counts and the filter read, so an
 // option can never show a count the filtered board disagrees with. There is no second place to
 // change when a bucket's definition moves.
 export type TruckLineStatusFilter =
@@ -1322,7 +1323,7 @@ export function TruckLineBoard({
         <label className="flex items-center gap-1.5 text-xs text-[#1F2A44]" data-testid="truck-line-top-bar">
           <span className="font-semibold uppercase tracking-[0.3px] text-[#4B5563] text-section-header">Status</span>
           {/* TRUCKLINE-STATUS-COMBOBOX (Lead, 2026-09-30) — the owner asked for the house combo
-              drop-down here twice; it was still a bare <select>, which is why it looked and
+              drop-down here twice; it was still a bare <SelectCombobox>, which is why it looked and
               behaved unlike every other filter in the app. This is components/Combobox, size
               "sm" so it keeps the h-7 rhythm of the row it sits in, with the SAME data-testid
               the previous control carried so every existing test and e2e selector still

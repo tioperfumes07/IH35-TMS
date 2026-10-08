@@ -41,6 +41,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatUsdCents } from "../../lib/money";
+import { SelectCombobox } from "../../components/Combobox";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -248,7 +249,7 @@ export function ReserveTracker() {
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div className="text-xs font-semibold text-gray-800">Estimated Reserve Release Schedule</div>
           <div className="min-w-[220px]" data-testid="reserve-tracker-factor-picker">
-            {/* LST-F159: bare <select> had no + Add new — operators left Reserve Tracker to create a factor. */}
+            {/* LST-F159: bare <SelectCombobox> had no + Add new — operators left Reserve Tracker to create a factor. */}
             <Combobox
               options={factorFilterOptions}
               value={selectedFactorId || null}

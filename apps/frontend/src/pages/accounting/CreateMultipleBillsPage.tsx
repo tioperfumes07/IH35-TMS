@@ -20,6 +20,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { dueDateFromBillTerms } from "../../components/accounting/vendorBillDueDate";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { SelectCombobox } from "../../components/Combobox";
 
 type SeedDraft = {
   bank_transaction_id?: string;
@@ -386,7 +387,7 @@ export function CreateMultipleBillsPage() {
             key: "terms",
             label: "Terms",
             render: (row) => (
-              <select
+              <SelectCombobox
                 className="h-8 w-24 rounded-sm border border-gray-300 bg-white px-1 text-xs"
                 value={row.terms}
                 onChange={(event) => updateRow(row.id, { terms: event.target.value })}
@@ -396,7 +397,7 @@ export function CreateMultipleBillsPage() {
                 <option value="net_15">Net 15</option>
                 <option value="net_7">Net 7</option>
                 <option value="due_on_receipt">Due on receipt</option>
-              </select>
+              </SelectCombobox>
             ),
           },
           {

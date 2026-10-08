@@ -14,6 +14,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { formatDateUS } from "../../lib/formatDate";
+import { SelectCombobox } from "../../components/Combobox";
 
 type Props = {
   operatingCompanyId: string;
@@ -131,7 +132,7 @@ export function VendorPaymentMethodsSection({ operatingCompanyId, vendorId, canW
         <div className="mb-3 grid gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3 md:grid-cols-2">
           <label className="block text-xs">
             Method
-            <select
+            <SelectCombobox
               className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
               value={methodType}
               onChange={(event) => setMethodType(event.target.value as VendorPaymentMethod["method_type"])}
@@ -141,7 +142,7 @@ export function VendorPaymentMethodsSection({ operatingCompanyId, vendorId, canW
                   {methodTypeLabel(type)}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
           <label className="block text-xs">
             Bank name (optional)
