@@ -265,7 +265,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
     <ParityDrawer open={open} onClose={onClose} title="Split transaction" size="wide">
       {!transaction ? null : (
         <div className="space-y-3 text-xs text-gray-800">
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-gray-50 p-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 bg-gray-50 p-2">
             <div>
               {/* LINK-F5190: transaction.id is the real banking.bank_transactions id (already used
                   throughout this modal's getBankTransactionSplits/save/commit/void calls) -- the

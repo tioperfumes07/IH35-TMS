@@ -67,7 +67,7 @@ export function EmailQueuePage() {
         </div>
         <div className="space-y-2">
           {(queueQuery.data?.items ?? []).map((item) => (
-            <div key={item.id} className="rounded-sm border border-gray-100 p-2 text-xs">
+            <div key={item.id} className="border-t border-gray-100 p-2 text-xs">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="space-y-1">
                   <p className="font-semibold text-gray-900">{item.subject}</p>

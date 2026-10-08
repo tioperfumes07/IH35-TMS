@@ -107,7 +107,7 @@ export function PmCostPerMilePanel({ operatingCompanyId, unitId }: { operatingCo
       {!unitId && fleet?.maintenance_cpm ? (
         <div className="grid grid-cols-1 gap-2 md:grid-cols-4" data-testid="pm-cpm-fleet">
           {fleet.maintenance_cpm.map((c) => (
-            <div key={c.basis} className="rounded-sm border border-gray-200 p-2">
+            <div key={c.basis} className="border-b border-gray-200 p-2">
               <div className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Fleet CPM · {BASIS_SHORT[c.basis]}</div>
               <div className="text-xs font-semibold text-slate-900">{cpmText(c)}</div>
               <div className="text-section-header text-gray-500">
@@ -115,7 +115,7 @@ export function PmCostPerMilePanel({ operatingCompanyId, unitId }: { operatingCo
               </div>
             </div>
           ))}
-          <div className="rounded-sm border border-gray-200 p-2">
+          <div className="border-b border-gray-200 p-2">
             <div className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Driven − paid (unbilled, unpaid)</div>
             <div className="text-xs font-semibold text-slate-900">{fleet.real_minus_short_miles != null ? `${formatNumberTable(fleet.real_minus_short_miles, 1)} mi` : "—"}</div>
             <div className="text-section-header text-gray-500">{fleet.real_minus_short_miles != null ? "units with both bases" : "no unit has both real and short miles"}</div>

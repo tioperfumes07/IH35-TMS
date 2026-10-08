@@ -91,7 +91,7 @@ export function QboSyncQueuePage() {
         <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Queue Items</div>
         <div className="space-y-2">
           {(queueQuery.data?.items ?? []).map((item) => (
-            <div key={item.id} className="rounded-sm border border-gray-100 p-2 text-xs">
+            <div key={item.id} className="border-t border-gray-100 p-2 text-xs">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="space-y-0.5">
                   {/* GO-23 C1: this rendered the raw entity_id UUID -- the backend's listSyncQueue

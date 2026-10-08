@@ -74,7 +74,7 @@ export function DriverSamsaraDuplicateBanner({
       )}
       {duplicate_warning ? (
         <div
-          className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs text-[#1F2A44]"
+          className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs text-[#1F2A44]"
           data-testid="dp-samsara-duplicate-warning"
           role="status"
         >

@@ -85,7 +85,7 @@ export function CategorizeDrawer({ open, transaction, operatingCompanyId, onClos
           <div className="mb-1 font-semibold">Suggestions</div>
           <div className="space-y-1">
             {(suggestionsQuery.data?.suggestions ?? []).slice(0, 3).map((sugg) => (
-              <div key={String(sugg.id)} className="flex items-center justify-between rounded-sm border border-gray-100 px-2 py-1">
+              <div key={String(sugg.id)} className="flex items-center justify-between border-b border-gray-100 px-2 py-1">
                 <div className="truncate">{String(sugg.category ?? "categorized")} · ${Number(sugg.amount ?? 0).toFixed(2)}</div>
                 <button
                   type="button"

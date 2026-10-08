@@ -72,7 +72,7 @@ export function CarrierSwitcher() {
               const isSelected = company.id === selectedCompanyId;
               const isDefault = company.id === defaultCompanyId;
               return (
-                <div key={company.id} className="rounded-sm border border-gray-100 p-2">
+                <div key={company.id} className="p-2">
                   <div className={`w-full text-left ${isSelected ? "font-semibold text-gray-900" : "text-gray-700"}`}>
                     {company.short_name || company.legal_name}
                   </div>

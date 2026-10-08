@@ -80,7 +80,7 @@ export function Step3JurisdictionCalc({ filing }: Props) {
           exportFilename="ifta-jurisdiction-tax"
         />
         {rows.length > 0 ? (
-          <div className="flex justify-end rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs font-semibold text-[#0F1219]">
+          <div className="flex justify-end border-t border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs font-semibold text-[#0F1219]">
             <span className="mr-4">Total net tax</span>
             <span>{fmtMoney(data.total_tax_owed ?? 0)}</span>
           </div>

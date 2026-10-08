@@ -99,12 +99,12 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
             <span>Amortized: {fmtCents(detail.amortized_cents)}</span>
             <span>{pct}%</span>
           </div>
-          <div className="h-2 rounded-full bg-gray-200">
+          <div className="h-2 bg-gray-200">
             <div className="h-2 rounded-full bg-slate-500 transition-all" style={{ width: `${pct}%` }} />
           </div>
         </div>
 
-        <div className="mb-4 grid grid-cols-1 gap-2 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700 sm:grid-cols-2">
+        <div className="mb-4 grid grid-cols-1 gap-2 border-t border-slate-200 bg-slate-50 p-3 text-xs text-slate-700 sm:grid-cols-2">
           {detail.purchase_je_id ? (
             <p>
               Purchase JE:{" "}

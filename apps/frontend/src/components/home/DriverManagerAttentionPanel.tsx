@@ -68,7 +68,7 @@ export function DriverManagerAttentionPanel({ items, loading, coolingDriverCount
           items.map((item) => (
             <article
               key={item.item_id}
-              className={`rounded-sm border px-3 py-2 ${SEVERITY_STYLES[item.severity]}`}
+              className={`border-b border-[#E5E7EB] px-3 py-2 ${SEVERITY_STYLES[item.severity]}`}
             >
               <div className="flex items-start justify-between gap-2">
                 <div>

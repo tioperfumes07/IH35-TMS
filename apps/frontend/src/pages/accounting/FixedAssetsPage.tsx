@@ -243,14 +243,14 @@ function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: (
         </div>
 
         {detail.disposal && (
-          <div className="mb-4 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+          <div className="mb-4 border-y border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
             <p className="font-semibold mb-1">Disposed {fmtDate(detail.disposal.disposal_date)} ({titleize(detail.disposal.disposal_type)})</p>
             <p>Proceeds {fmtCents(detail.disposal.proceeds_cents)} · Book value {fmtCents(detail.disposal.book_value_at_disposal_cents)} · {detail.disposal.gain_loss_cents >= 0 ? "Gain" : "Loss"} {fmtCents(Math.abs(detail.disposal.gain_loss_cents))}</p>
           </div>
         )}
 
         {detail.je_preview.depreciation_je_template && (
-          <div className="mb-4 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+          <div className="mb-4 border-y border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
             <p className="font-semibold mb-1">
               {detail.je_preview.manual_posting_enabled
                 ? "GL Posting (manual trigger enabled for this entity)"

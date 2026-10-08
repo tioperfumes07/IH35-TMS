@@ -120,7 +120,7 @@ export function Step2FuelReview({ filing, onSaveOverrides, saving }: Props) {
           rowTestId={(row) => `ifta-step2-fuel-row-${row.state}`}
         />
         {states.length > 0 ? (
-          <div className="flex justify-end rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs font-semibold text-[#0F1219]">
+          <div className="flex justify-end border-t border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs font-semibold text-[#0F1219]">
             <span className="mr-4">Total</span>
             <span>{fmtNum(total)}</span>
           </div>

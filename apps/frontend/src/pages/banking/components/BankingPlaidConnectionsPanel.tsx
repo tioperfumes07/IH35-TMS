@@ -250,7 +250,7 @@ export function BankingPlaidConnectionsPanel({
                   ) : null
                 }
               />
-              <div className="rounded-sm border border-gray-100 px-3 pb-3 pt-0">
+              <div className="border-t border-gray-100 px-3 pb-3 pt-0">
                 <p className="text-xs text-gray-600">
                   Accounts:{" "}
                   {g.accounts.map((a) => (

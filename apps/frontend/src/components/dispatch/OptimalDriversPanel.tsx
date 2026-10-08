@@ -166,7 +166,7 @@ export function OptimalDriversPanel({
       </ul> : null}
 
       {showOverrideWarning ? (
-        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2 text-xs text-[#4B5563]">
+        <div className="border-t border-[#E5E7EB] bg-[#F7F8FA] p-2 text-xs text-[#4B5563]">
           Selected driver is not the top-ranked suggestion. Enable <strong>Manual override</strong> to confirm a non-optimal pick.
         </div>
       ) : null}

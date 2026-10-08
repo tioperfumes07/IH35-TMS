@@ -749,7 +749,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
               ) : (
                 <div className="space-y-2">
                   {hosAware.map((rec) => (
-                    <div key={`${rec.stop_id}-${rec.reason}`} className="rounded-sm border border-gray-200 p-2 text-xs">
+                    <div key={`${rec.stop_id}-${rec.reason}`} className="border-b border-gray-200 p-2 text-xs">
                       <div className="flex items-center justify-between">
                         <span className="font-semibold text-gray-900">
                           Stop {rec.sequence_number} · {rec.city ?? "Unknown"}, {rec.state ?? "NA"}
