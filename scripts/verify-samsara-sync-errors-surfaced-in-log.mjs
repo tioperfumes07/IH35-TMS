@@ -31,8 +31,8 @@ if (process.argv.includes("--selftest")) {
   }
   // Mutate exactly one occurrence back to dropping the error detail.
   const mutated = real.replace(
-    'errorMessage: errors.length > 0 ? errors.join("; ") : null,\n    payload: { remote_count: vehicles.length },',
-    "payload: { remote_count: vehicles.length },"
+    /errorMessage: errors\.length > 0 \? errors\.join\("; "\) : null,/,
+    ""
   );
   if (mutated === real) {
     console.error("verify-samsara-sync-errors-surfaced-in-log --selftest: mutation did not match live source — update the test");
