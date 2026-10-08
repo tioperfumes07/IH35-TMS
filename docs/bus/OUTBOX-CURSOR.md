@@ -1,3 +1,13 @@
+## 2026-10-08 · BANK-F91058 — Bills / LedgerKpi / FinanceOverview slate → house
+
+FINDING: BANK-F91058 — BillsPage / LedgerKpiPanel / FinanceOverviewPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25991 squash `9f80ba689f` (BANK-F91057 CatalogProfile/BreakEven/DriverReimb)
+GUARD: scripts/verify-91058-bills-ledger-finance-slate-leftover-chrome.mjs + verify-steps/3638 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: BillsPage + LedgerKpiPanel + FinanceOverviewPage + refuse guard + 3638 piggyback + OUTBOX
+
 ## 2026-10-08 · BANK-F91052 — FixedAssets / LoanWizard / Amortization slate → house
 
 ## 2026-10-08 · HEALTHZ — integrity dead-lease 90s catch-up → live ok=true

@@ -45,8 +45,8 @@ export function FinanceOverviewPage() {
 
   const header = (
     <div className="mb-4">
-      <h1 className="text-page-title font-semibold text-slate-800">Finance Overview</h1>
-      <p className="text-xs text-slate-500">Rollup of the company's currently active forecast scenario.</p>
+      <h1 className="text-page-title font-semibold text-[#0F1219]">Finance Overview</h1>
+      <p className="text-xs text-[#6B7280]">Rollup of the company's currently active forecast scenario.</p>
     </div>
   );
 
@@ -55,7 +55,7 @@ export function FinanceOverviewPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         <PageHeader title="Finance Overview" />
-        <p className="text-xs text-slate-500">Loading…</p>
+        <p className="text-xs text-[#6B7280]">Loading…</p>
       </div>
     );
   }
@@ -65,7 +65,7 @@ export function FinanceOverviewPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs text-[#4B5563]">
           Financial planning is not yet enabled for this company. (Feature flag <code>{FINANCE_HUB_SCENARIOS_FLAG}</code> is
           off.)
         </div>
@@ -96,9 +96,9 @@ export function FinanceOverviewPage() {
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs text-[#4B5563]">
           No active scenario yet.{" "}
-          <Link to="/finance/scenarios" className="font-medium text-slate-800 underline">
+          <Link to="/finance/scenarios" className="font-medium text-[#0F1219] underline">
             Create and activate one in Scenarios
           </Link>{" "}
           to see an overview here.
@@ -112,18 +112,18 @@ export function FinanceOverviewPage() {
       <FinanceModuleTabs />
       {header}
       {summaryQuery.isLoading ? (
-        <p className="text-xs text-slate-500">Loading…</p>
+        <p className="text-xs text-[#6B7280]">Loading…</p>
       ) : summary ? (
         <div className="space-y-4">
-          <div className="flex items-center justify-between rounded-sm border border-slate-200 bg-white p-4">
+          <div className="flex items-center justify-between rounded-sm border border-[#E5E7EB] bg-white p-4">
             <div>
-              <h2 className="text-xs font-semibold text-slate-800">{summary.scenario.name}</h2>
-              <p className="text-xs text-slate-500">
+              <h2 className="text-xs font-semibold text-[#0F1219]">{summary.scenario.name}</h2>
+              <p className="text-xs text-[#6B7280]">
                 {summary.scenario.period_basis} · {summary.scenario.period_count} periods starting{" "}
                 {summary.scenario.period_start}
               </p>
             </div>
-            <Link to={`/finance/scenarios/${summary.scenario.id}`} className="text-xs font-medium text-slate-700 underline">
+            <Link to={`/finance/scenarios/${summary.scenario.id}`} className="text-xs font-medium text-[#1F2A44] underline">
               View scenario →
             </Link>
           </div>
@@ -149,9 +149,9 @@ export function FinanceOverviewPage() {
                 />
               </>
             ) : (
-              <div className="col-span-2 flex items-center rounded-sm border border-dashed border-slate-200 p-4 text-xs text-slate-500 md:col-span-3">
+              <div className="col-span-2 flex items-center rounded-sm border border-dashed border-[#E5E7EB] p-4 text-xs text-[#6B7280] md:col-span-3">
                 No actuals recorded yet — record them on{" "}
-                <Link to="/finance/projections" className="ml-1 font-medium text-slate-700 underline">
+                <Link to="/finance/projections" className="ml-1 font-medium text-[#1F2A44] underline">
                   Projections
                 </Link>
                 .
