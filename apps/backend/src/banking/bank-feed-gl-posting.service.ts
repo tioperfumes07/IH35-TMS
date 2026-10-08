@@ -50,8 +50,6 @@ import {
   ExpenseCategoryMapResolutionError,
 } from "../accounting/expense-category-map/resolver.service.js";
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
-import { createAndPostBankLineExpenseOnClient, resolveExpenseItemForAccount } from "../accounting/bank-line-expense.service.js";
-import { createAndPostBankLineDepositOnClient } from "../accounting/bank-deposits.service.js";
 import { isBankAccountHideEnabled } from "./bank-account-visibility.js";
 
 export const BANK_FEED_GL_POSTING_FLAG_KEY = "BANK_FEED_GL_POSTING_ENABLED";
@@ -69,6 +67,7 @@ export type BankFeedGlSkipReason =
   | "driver_advance_branch"
   | "account_cross_entity"
   | "account_not_postable"
+  | "account_is_ar_ap_control"
   | "bank_account_ledger_unlinked"
   | "bank_ledger_account_class_mismatch"
   | "bank_account_hidden"
@@ -86,10 +85,6 @@ export type BankFeedGlResult =
       bank_ledger_account_id: string;
       amount_cents: number;
       already_posted: boolean;
-      /** ROUND 441.5 — the expense document a money-out line to an expense account created (QBO "Categorize + Add"). */
-      expense_id?: string;
-      /** ROUND 441.5 Phase 2 — the deposit document a money-in line created (QBO "Add funds to this deposit"). */
-      deposit_id?: string;
     };
 
 export type MaybePostBankCategorizationInput = {
@@ -102,7 +97,6 @@ type DecisionOk = {
   ok: true;
   direction: "money_in" | "money_out";
   categorizedAccountId: string;
-  categorizedAccountType: string | null;
   bankLedgerAccountId: string;
   amountCents: number;
 };
@@ -152,8 +146,7 @@ async function decideOnClient(client: PgClient, input: MaybePostBankCategorizati
           ca.id::text                                  AS cat_account_id,
           ca.operating_company_id::text                AS cat_account_opco,
           ca.deactivated_at                            AS cat_account_deactivated_at,
-          ca.is_postable                               AS cat_account_is_postable,
-          ca.account_type::text                        AS cat_account_type
+          ca.is_postable                               AS cat_account_is_postable
         FROM banking.bank_transactions bt
         LEFT JOIN banking.bank_accounts ba
           ON ba.id = bt.bank_account_id
@@ -206,7 +199,6 @@ async function decideOnClient(client: PgClient, input: MaybePostBankCategorizati
           cat_account_opco: string | null;
           cat_account_deactivated_at: string | null;
           cat_account_is_postable: boolean | null;
-          cat_account_type: string | null;
         }
       | undefined;
     if (!txn) return { ok: false, reason: "bank_txn_not_found" };
@@ -280,6 +272,22 @@ async function decideOnClient(client: PgClient, input: MaybePostBankCategorizati
       return { ok: false, reason: "account_not_postable" };
     }
 
+    // CHAIN-05 §10.3 (Lead ruling ROUND 441.19): categorizing to the A/R or A/P control account from the bank feed is
+    // DISALLOWED — those belong to the invoice / bill chains (and A/P is written only by its documents, ROUND 393.1).
+    const control = await client.query(
+      `SELECT 1 FROM accounting.chart_of_accounts_roles
+        WHERE operating_company_id = $1::uuid AND account_id = $2::uuid AND is_active AND role IN ('ar_control', 'ap_control')
+        LIMIT 1`,
+      [input.companyId, txn.cat_account_id]
+    );
+    if (control.rows.length > 0) {
+      return {
+        ok: false,
+        reason: "account_is_ar_ap_control",
+        message: "A bank line cannot be categorized to Accounts Receivable or Accounts Payable — record the invoice payment or bill payment instead (or Match it).",
+      };
+    }
+
     // Fail-closed bank cash-GL bridge (the direction-appropriate bank leg).
     if (!txn.bank_ledger_account_id) return { ok: false, reason: "bank_account_ledger_unlinked" };
 
@@ -325,7 +333,6 @@ async function decideOnClient(client: PgClient, input: MaybePostBankCategorizati
       ok: true,
       direction: txn.is_credit === true ? "money_in" : "money_out",
       categorizedAccountId,
-      categorizedAccountType: txn.cat_account_type,
       bankLedgerAccountId: txn.bank_ledger_account_id,
       amountCents,
     };
@@ -354,19 +361,6 @@ export async function maybePostBankCategorizationToGl(input: MaybePostBankCatego
 export async function postBankCategorizationOnClient(client: PgClient, input: MaybePostBankCategorizationInput): Promise<BankFeedGlResult> {
   const decision = await decideOnClient(client, input);
   if (!decision.ok) return { posted: false, reason: decision.reason, message: decision.message };
-
-  // ROUND 441.5 (owner 2026-10-07: "ours should work exactly as quickbooks") — money OUT to an expense / cost account is
-  // QBO "Categorize + Add": it CREATES an Expense document with the payee, posted by the expense poster, never a bare
-  // journal entry. Everything else (money in, a liability, equity, an asset) keeps the categorization entry until the
-  // Deposit path lands (Phase 2).
-  if (decision.direction === "money_out" && EXPENSE_DOCUMENT_ACCOUNT_TYPES.has(decision.categorizedAccountType ?? "")) {
-    return postBankLineAsExpenseOnClient(client, input, decision);
-  }
-  // ROUND 441.5 Phase 2 — money IN to any account is QBO "Add funds to this deposit": a Deposit document crediting the
-  // chosen account (income, a liability such as 2410, equity such as 3000), never a bare journal entry.
-  if (decision.direction === "money_in") {
-    return postBankLineAsDepositOnClient(client, input, decision);
-  }
 
   // BANK-F05 — a categorization that has been reversed must RE-post, not silently return the original batch. The
   // revision is the number of journal entries for THIS source already reversed: stable across a double-submit (it
@@ -422,198 +416,5 @@ export async function postBankCategorizationOnClient(client: PgClient, input: Ma
     bank_ledger_account_id: decision.bankLedgerAccountId,
     amount_cents: decision.amountCents,
     already_posted: posted.result === "already_posted",
-  };
-}
-
-/** Account types whose money-out categorization is an Expense document (QBO "Categorize + Add"). */
-export const EXPENSE_DOCUMENT_ACCOUNT_TYPES: ReadonlySet<string> = new Set(["Expense", "CostOfGoodsSold", "OtherExpense"]);
-
-/**
- * ROUND 441.5 — the categorized money-out line becomes an Expense: payee = the vendor the operator tagged, paid from the
- * bank's ledger account, one line on the chosen account with its item and the line's load / unit / trailer / driver
- * tags. Posted by the existing expense poster in this transaction; the line and the document name each other
- * (bank_transactions.matched_expense_id + matched_journal_entry_id; expenses.source_bank_transaction_id), so Undo of the
- * line voids the expense and voiding the expense releases the line. resolution_kind 'added': this line created it.
- */
-async function postBankLineAsExpenseOnClient(
-  client: PgClient,
-  input: MaybePostBankCategorizationInput,
-  decision: DecisionOk
-): Promise<BankFeedGlResult> {
-  const lineRes = await client.query(
-    `SELECT bt.transaction_date::text AS transaction_date, bt.description, bt.categorization_memo,
-            bt.categorization_vendor_id::text AS vendor_id, bt.categorization_item_id::text AS item_id,
-            bt.categorization_load_id::text AS load_id, bt.categorization_unit_id::text AS unit_id,
-            bt.categorization_trailer_id::text AS trailer_id, bt.categorization_driver_id::text AS driver_id,
-            ca.account_number, ca.account_name
-       FROM banking.bank_transactions bt
-       JOIN catalogs.accounts ca ON ca.id = bt.categorization_gl_account_id AND ca.operating_company_id = bt.operating_company_id
-      WHERE bt.id = $1::uuid AND bt.operating_company_id = $2::uuid
-      LIMIT 1`,
-    [input.bankTransactionId, input.companyId]
-  );
-  const line = lineRes.rows[0] as
-    | {
-        transaction_date: string;
-        description: string | null;
-        categorization_memo: string | null;
-        vendor_id: string | null;
-        item_id: string | null;
-        load_id: string | null;
-        unit_id: string | null;
-        trailer_id: string | null;
-        driver_id: string | null;
-        account_number: string | null;
-        account_name: string | null;
-      }
-    | undefined;
-  if (!line) return { posted: false, reason: "bank_txn_not_found" };
-
-  // The vendor must be this company's; a tag from elsewhere is refused, never carried onto the document.
-  if (line.vendor_id) {
-    const v = await client.query(
-      `SELECT 1 FROM mdata.vendors WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL LIMIT 1`,
-      [line.vendor_id, input.companyId]
-    );
-    if (!v.rows[0]) return { posted: false, reason: "account_cross_entity", message: "The tagged vendor is not an active vendor of this company." };
-  }
-
-  const itemId = await resolveExpenseItemForAccount(client as never, {
-    operatingCompanyId: input.companyId,
-    accountId: decision.categorizedAccountId,
-    explicitItemId: line.item_id,
-    accountLabel: [line.account_number, line.account_name].filter(Boolean).join(" "),
-  });
-
-  const description = (line.categorization_memo ?? "").trim() || (line.description ?? "").trim() || "Bank transaction";
-  const created = await createAndPostBankLineExpenseOnClient(
-    client as never,
-    {
-      operatingCompanyId: input.companyId,
-      transactionDate: line.transaction_date,
-      amountCents: decision.amountCents,
-      memo: description.slice(0, 500),
-      vendorId: line.vendor_id,
-      paymentAccountId: decision.bankLedgerAccountId,
-      expenseAccountId: decision.categorizedAccountId,
-      itemId,
-      lineDescription: description.slice(0, 500),
-      sourceBankTransactionId: input.bankTransactionId,
-      loadId: line.load_id,
-      unitId: line.unit_id,
-      trailerId: line.trailer_id,
-      driverId: line.driver_id,
-    },
-    { userId: input.actorUserUuid }
-  );
-
-  await client.query(
-    `UPDATE banking.bank_transactions
-        SET matched_expense_id = $1::uuid,
-            matched_journal_entry_id = $2::uuid,
-            review_state = 'matched',
-            resolution_kind = 'added', -- this line CREATED the expense; Undo voids it
-            reviewed_at = now(),
-            updated_at = now()
-      WHERE id = $3::uuid AND operating_company_id = $4::uuid AND matched_journal_entry_id IS NULL`,
-    [created.expense_id, created.journal_entry_id, input.bankTransactionId, input.companyId]
-  );
-
-  return {
-    posted: true,
-    journal_entry_id: created.journal_entry_id,
-    posting_batch_id: created.posting_batch_id ?? "",
-    direction: decision.direction,
-    categorized_account_id: decision.categorizedAccountId,
-    bank_ledger_account_id: decision.bankLedgerAccountId,
-    amount_cents: decision.amountCents,
-    already_posted: false,
-    expense_id: created.expense_id,
-  };
-}
-
-/**
- * ROUND 441.5 Phase 2 — the categorized money-in line becomes a Deposit: Dr the bank's ledger account / Cr the chosen
- * account, received from the vendor or customer the operator tagged, through the existing deposit poster in this
- * transaction. The line and the document name each other (bank_transactions.matched_deposit_id + matched_journal_entry_id;
- * deposits.source_bank_transaction_id); Undo voids the deposit, voiding the deposit releases the line.
- */
-async function postBankLineAsDepositOnClient(
-  client: PgClient,
-  input: MaybePostBankCategorizationInput,
-  decision: DecisionOk
-): Promise<BankFeedGlResult> {
-  const lineRes = await client.query(
-    `SELECT bt.transaction_date::text AS transaction_date, bt.description, bt.categorization_memo,
-            bt.bank_account_id::text AS bank_account_id,
-            bt.categorization_vendor_id::text AS vendor_id, bt.categorization_customer_id::text AS customer_id
-       FROM banking.bank_transactions bt
-      WHERE bt.id = $1::uuid AND bt.operating_company_id = $2::uuid
-      LIMIT 1`,
-    [input.bankTransactionId, input.companyId]
-  );
-  const line = lineRes.rows[0] as
-    | {
-        transaction_date: string;
-        description: string | null;
-        categorization_memo: string | null;
-        bank_account_id: string | null;
-        vendor_id: string | null;
-        customer_id: string | null;
-      }
-    | undefined;
-  if (!line || !line.bank_account_id) return { posted: false, reason: "bank_txn_not_found" };
-
-  // The payer must be this company's; a tag from elsewhere is refused, never carried onto the document.
-  for (const [table, id] of [
-    ["mdata.vendors", line.vendor_id],
-    ["mdata.customers", line.customer_id],
-  ] as const) {
-    if (!id) continue;
-    const r = await client.query(`SELECT 1 FROM ${table} WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`, [id, input.companyId]);
-    if (!r.rows[0]) return { posted: false, reason: "account_cross_entity", message: "The tagged payer is not a vendor or customer of this company." };
-  }
-
-  const description = (line.categorization_memo ?? "").trim() || (line.description ?? "").trim() || "Bank deposit";
-  const created = await createAndPostBankLineDepositOnClient(
-    client as never,
-    {
-      operatingCompanyId: input.companyId,
-      depositDate: line.transaction_date,
-      amountCents: decision.amountCents,
-      bankAccountId: line.bank_account_id,
-      bankLedgerAccountId: decision.bankLedgerAccountId,
-      accountId: decision.categorizedAccountId,
-      // One payer per line (deposit_lines_one_payer): the customer when both are tagged.
-      receivedFromCustomerId: line.customer_id,
-      receivedFromVendorId: line.customer_id ? null : line.vendor_id,
-      description,
-      sourceBankTransactionId: input.bankTransactionId,
-    },
-    { userId: input.actorUserUuid }
-  );
-
-  await client.query(
-    `UPDATE banking.bank_transactions
-        SET matched_deposit_id = $1::uuid,
-            matched_journal_entry_id = $2::uuid,
-            review_state = 'matched',
-            resolution_kind = 'added', -- this line CREATED the deposit; Undo voids it
-            reviewed_at = now(),
-            updated_at = now()
-      WHERE id = $3::uuid AND operating_company_id = $4::uuid AND matched_journal_entry_id IS NULL`,
-    [created.deposit_id, created.journal_entry_id, input.bankTransactionId, input.companyId]
-  );
-
-  return {
-    posted: true,
-    journal_entry_id: created.journal_entry_id,
-    posting_batch_id: created.posting_batch_id ?? "",
-    direction: decision.direction,
-    categorized_account_id: decision.categorizedAccountId,
-    bank_ledger_account_id: decision.bankLedgerAccountId,
-    amount_cents: decision.amountCents,
-    already_posted: false,
-    deposit_id: created.deposit_id,
   };
 }

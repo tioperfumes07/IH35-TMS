@@ -75,6 +75,7 @@ The rule is standard double-entry and matches QuickBooks Online and NetSuite exa
 | **A** | money-OUT (`false`) | Expense | `CAT` (expense) | `BANK` | Paid an expense (fuel, insurance) — cash-basis expense recognition |
 | **A′** | money-OUT (`false`) | Asset (non-bank, e.g. prepaid, receivable) | `CAT` (asset) | `BANK` | Bought an asset / made an advance |
 | **A″** | money-OUT (`false`) | Liability (e.g. loan principal, credit-card payoff) | `CAT` (liability ↓) | `BANK` | Paid down a liability |
+| **A‴** | money-OUT (`false`) | Equity (e.g. owner draw) | `CAT` (equity ↓) | `BANK` | Owner took money out — added ROUND 441.19 (Lead), resolving §10.5 |
 | **B** | money-IN (`true`) | Income / Revenue | `BANK` | `CAT` (income) | Deposit of revenue |
 | **B′** | money-IN (`true`) | Liability (e.g. loan proceeds, customer deposit, escrow held-in-trust) | `BANK` | `CAT` (liability ↑) | Borrowed / received held funds |
 | **B″** | money-IN (`true`) | Asset contra / refund | `BANK` | `CAT` | Refund/return of an asset outflow |
@@ -148,7 +149,7 @@ Both legs are equal by construction → balanced. **The direction is driven ONLY
 **New per-entity flag (OFF by default):** `BANK_FEED_GL_POSTING_ENABLED` (`lib.feature_flags`, resolved per `operating_company_id` + `user_uuid`, exactly like `BANK_DRIVER_ADVANCE_ENABLED`). With the flag OFF the service is a strict NO-OP returning `{ posted:false, reason:'flag_off' }` — zero JEs. The categorize tag (§1.1) is already committed by the route, so a non-posting outcome never loses the tag.
 
 **Fail-closed reasons (mirror BLOCK-6's `BankDriverAdvanceSkipReason`):**
-`flag_off`, `bank_txn_not_found`, `not_categorized` (status ≠ 'categorized'), `no_account` (`categorization_gl_account_id` NULL), `account_cross_entity` (chosen account's `operating_company_id` ≠ bank tx), `account_not_postable` (deactivated / not `is_postable`), `bank_account_ledger_unlinked` (`ledger_account_id` NULL), `zero_amount`, `already_posted` (`matched_journal_entry_id` set), `is_transfer` (transfer_kind set — deferred, §10), `already_matched_to_bill` (`matched_bill_id` set — §double-post guard).
+`flag_off`, `bank_txn_not_found`, `not_categorized` (status ≠ 'categorized'), `no_account` (`categorization_gl_account_id` NULL), `account_cross_entity` (chosen account's `operating_company_id` ≠ bank tx), `account_not_postable` (deactivated / not `is_postable`), `bank_account_ledger_unlinked` (`ledger_account_id` NULL), `zero_amount`, `already_posted` (`matched_journal_entry_id` set), `is_transfer` (transfer_kind set — deferred, §10), `already_matched_to_bill` (`matched_bill_id` set — §double-post guard). **ROUND 441.19:** `account_is_ar_ap_control` — the chosen account carries the `ar_control` or `ap_control` role (§10.3 ruling: disallowed from the bank feed).
 
 **Relationship to `BANK_DRIVER_ADVANCE_ENABLED` — NO double-gate, NO double-post (critical):**
 The driver-advance branch (D) is owned by `bank-driver-advance.service.ts` and gated by `BANK_DRIVER_ADVANCE_ENABLED`. CHAIN-05 MUST **cede** that branch. Concretely, `maybePostBankCategorizationToGl` returns early with reason `driver_advance_branch` (no post) when **BOTH**: `categorization_driver_id IS NOT NULL` **AND** the chosen `categorization_gl_account_id` equals the entity's resolved driver-advance receivable (`resolveAccountForCategory(opco,'cash_advance','cash_advance').account_id`). That is the exact predicate BLOCK-6 uses to decide it owns the row — so the two services partition the space with no overlap:
@@ -235,8 +236,16 @@ Plus a **static CI guard** `scripts/verify-bank-feed-gl-posting.mjs` (§9 consti
 1. **Transfers between own bank accounts (no P&L).** The `/transfer` route already tags `status='transfer'` and can pair two lines. Options: (a) CHAIN-05 skips transfers entirely (v1, safest — `reason:'is_transfer'`) and a later block posts the balance-sheet-only `Dr BANK₂ / Cr BANK₁`; or (b) post the transfer JE now off the `destination_bank_account_id`/`paired_transaction_id`. **Recommendation: (a) skip in v1.** Needs your call.
 2. **Double-post interlock with CHAIN-03 (bill→GL) + CHAIN-04 (bill-payment).** A single cash movement (e.g. paying a vendor bill) can appear as (i) a Bill posting AP, (ii) a Bill-payment posting Dr AP / Cr bank, AND (iii) a bank-feed line. If all three post, the bank credit is double-counted. Proposed rule: **a bank line with `matched_bill_id` (or matched to a bill-payment) NEVER posts under CHAIN-05** — it is the CHAIN-04 event, already sourced elsewhere; CHAIN-05 posts only *unmatched, direct* spends/deposits. This mirrors QBO's **Match vs Categorize** split (Match = link to existing record, no new JE; Categorize = new JE). **Confirm this is the dedupe contract** and confirm whether "matched to a bill-payment" needs its own column/guard beyond `matched_bill_id`.
 3. **Cash-basis timing.** TRANSP is cash-basis primary (locked memory). CHAIN-05 recognizes expense/revenue on the **bank `transaction_date`** — correct for cash-basis. Confirm this is the intended recognition date (vs. any accrual overlay) and that categorizing to AR/AP control accounts from the bank feed should be **disallowed** (those belong to the invoice/bill chains, not the bank feed) to avoid mixing bases.
+   **RULED (Lead, ROUND 441.19):** disallowed — refused with `account_is_ar_ap_control`.
+
+**ROUND 441.18/441.19 (2026-10-08) — Categorize creates NO document.** ROUND 441.5 briefly had categorize mint an Expense
+(money out) or a Deposit (money in) on top of the entry; that contradicted §10.2 and was reverted. Categorize posts the one
+entry in this matrix; Match links an existing document and creates nothing. Guard:
+`scripts/verify-bank-categorize-posts-chain05-matrix.mjs` (fails if the poster creates any document, or if a live entry
+does not match its row).
 4. **Flag name + rollout gate.** Confirm `BANK_FEED_GL_POSTING_ENABLED` as the flag key, per-entity, OFF; and the enablement gate (Neon-branch balanced-JE proof + trial-balance-nets-zero + your written Tier-1 OK) before any flip — same bar as BLOCK-6.
 5. **Which non-bank account types are postable from the feed.** Expense / Income / Asset / Liability are in-scope. Should Equity (owner draw/contribution) be allowed from the feed, or restricted?
+   **RULED (Lead, ROUND 441.19, 2026-10-08):** allowed — money out to equity is row **A‴** (Dr equity / Cr bank), money in to equity is the mirror (Dr bank / Cr equity, the B-shape).
 
 ---
 
