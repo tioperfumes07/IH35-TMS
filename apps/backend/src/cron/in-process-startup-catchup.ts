@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { withLuciaBypass } from "../auth/db.js";
-import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { JOB_LEASE_SECONDS, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { isReconciliationJobOverdue } from "./reconciliation-worker.cron.js";
 import { runSearchIndexerIncrementalTick } from "../jobs/search-indexer-incremental.js";
 import { purgeExpiredIdempotencyKeys } from "../middleware/idempotency-cleanup.cron.js";
@@ -30,12 +30,20 @@ import { PLAID_DAILY_SYNC_JOB, runPlaidDailySyncTick } from "./plaid-daily-sync.
  * Forbidden here: TMS→QBO push, QBO inbound/CDC/token/forensic, money posters (collections,
  * loves import, factoring interest, settlement auto-pay, bank recon auto-match). Those stay
  * honestly LATE until their owning lane runs them or health mirrors their OFF flags.
+ *
+ * Order matters: never_succeeded / bank-feed jobs run BEFORE integrity. Live 2026-10-08 the
+ * integrity mega-txn hung catch-up forever so retry_held + plaid never started.
  */
 export const IN_PROCESS_CATCHUP_WINDOWS: ReadonlyArray<{
   jobName: string;
   maxStaleMinutes: number;
   disabled: () => boolean;
+  /** Pass leaseSeconds into wrapBackgroundJobTick (dual-instance single-fire). */
+  leaseSeconds?: number;
 }> = [
+  // Never-succeeded / bank feed FIRST — must not wait behind integrity.
+  { jobName: "accounting.retry_held_expense_postings", maxStaleMinutes: 720, disabled: () => false },
+  { jobName: PLAID_DAILY_SYNC_JOB, maxStaleMinutes: 1560, disabled: () => (process.env.ENABLE_PLAID_DAILY_SYNC_CRON ?? "true").trim() === "false" },
   { jobName: "samsara.webhook_projection_cron", maxStaleMinutes: 15, disabled: () => (process.env.ENABLE_SAMSARA_WEBHOOK_PROJECTION_CRON ?? "true").trim() === "false" },
   { jobName: "ai.model_lifecycle_monitor", maxStaleMinutes: 2880, disabled: () => process.env.ENABLE_MODEL_LIFECYCLE_MONITOR_CRON === "false" },
   { jobName: "safety.reminders_cron", maxStaleMinutes: 2880, disabled: () => process.env.ENABLE_SAFETY_REMINDERS_CRON === "false" },
@@ -53,14 +61,13 @@ export const IN_PROCESS_CATCHUP_WINDOWS: ReadonlyArray<{
   // money poster or a QBO path — squarely the class this list exists to cover. 1440 = 2x its own
   // 12h (720min) schedule, the same "two-period health window" convention already used above.
   { jobName: "samsara.remote_count_collector", maxStaleMinutes: 1440, disabled: () => (process.env.SAMSARA_REMOTE_COUNT_COLLECTOR_ENABLED ?? "true").trim() === "false" },
-  // Deploy churn kills the 6h :20 lease mid-tick (live: leased_at set, last_finished_at NULL,
-  // last_successful_run_at frozen days). Catch-up restores the ledger without waiting for :20 CT.
-  { jobName: "safety.integrity_alert_engine_cron", maxStaleMinutes: 720, disabled: () => process.env.ENABLE_INTEGRITY_ALERT_ENGINE_CRON === "false" },
-  // Non-QBO membership-scoped sweep (USMCA system actor). Catch-up clears never_succeeded after
-  // the TRANSP/TRK membership poison is filtered out — not a forbidden money poster inventing GL.
-  { jobName: "accounting.retry_held_expense_postings", maxStaleMinutes: 720, disabled: () => false },
-  // Bank-feed pull (not categorize/match). Email-notify poison froze last_ok at 2026-09-22.
-  { jobName: PLAID_DAILY_SYNC_JOB, maxStaleMinutes: 1560, disabled: () => (process.env.ENABLE_PLAID_DAILY_SYNC_CRON ?? "true").trim() === "false" },
+  // LAST — leased so dual catch-up cannot fight; USMCA-only short txn in the cron itself.
+  {
+    jobName: "safety.integrity_alert_engine_cron",
+    maxStaleMinutes: 720,
+    disabled: () => process.env.ENABLE_INTEGRITY_ALERT_ENGINE_CRON === "false",
+    leaseSeconds: JOB_LEASE_SECONDS,
+  },
 ];
 
 function tickFor(jobName: string, app: FastifyInstance): (() => Promise<void>) | null {
@@ -135,7 +142,7 @@ export async function catchUpOverdueInProcessJobTicks(app: FastifyInstance): Pro
     return;
   }
 
-  for (const { jobName, maxStaleMinutes, disabled } of IN_PROCESS_CATCHUP_WINDOWS) {
+  for (const { jobName, maxStaleMinutes, disabled, leaseSeconds } of IN_PROCESS_CATCHUP_WINDOWS) {
     if (disabled()) continue;
     const last = ages.has(jobName) ? ages.get(jobName) : null;
     if (!isReconciliationJobOverdue(last ?? null, maxStaleMinutes)) continue;
@@ -143,7 +150,7 @@ export async function catchUpOverdueInProcessJobTicks(app: FastifyInstance): Pro
     if (!tick) continue;
     try {
       app.log.warn({ jobName }, `[in-process-catchup] overdue — running one startup tick for ${jobName}`);
-      await wrapBackgroundJobTick(jobName, tick, app.log);
+      await wrapBackgroundJobTick(jobName, tick, app.log, leaseSeconds ? { leaseSeconds } : undefined);
     } catch (error) {
       app.log.error({ err: error, jobName }, `[in-process-catchup] ${jobName} catch-up threw`);
     }
