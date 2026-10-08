@@ -24,12 +24,12 @@ type Props = {
 
 const TONE_CLASSES: Record<NonNullable<Props["tone"]>, string> = {
   default: "border-gray-200 bg-white hover:bg-gray-50",
-  attention: "border-slate-300 bg-slate-100 hover:bg-slate-200",
+  attention: "border-[#E5E7EB] bg-[#F7F8FA] hover:bg-[#E5E7EB]",
 };
 
 const TONE_TEXT: Record<NonNullable<Props["tone"]>, { label: string; value: string; sub: string }> = {
   default: { label: "text-gray-500", value: "text-gray-900", sub: "text-gray-500" },
-  attention: { label: "text-slate-700", value: "text-slate-700", sub: "text-slate-700" },
+  attention: { label: "text-[#1F2A44]", value: "text-[#1F2A44]", sub: "text-[#1F2A44]" },
 };
 
 export function KpiStatCard({ label, value, sub, to, onClick, disabled, disabledReason, tone = "default" }: Props) {
