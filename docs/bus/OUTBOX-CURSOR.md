@@ -1,3 +1,13 @@
+## 2026-10-08T10:05Z · BANK leftover slate — catalog index / recent activity / task planner
+
+FINDING: BANK-F91189 — CatalogIndex / RecentActivityCard / TaskPlannerGrid Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25843 squash `2c44032217` (BANK-F91188 IFTA steps)
+GUARD: scripts/verify-catalog-activity-planner-slate-leftover-chrome.mjs + verify-steps/10220 piggyback
+LIVE PROOF: verify-catalog-activity-planner-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 10220 piggyback + OUTBOX
+
 ## 2026-10-08T10:00Z · BANK leftover slate — IFTA CSV / miles / gallons steps
 
 FINDING: BANK-F91188 — IFTAStepCSVExport / IFTAStepMiles / IFTAStepGallons Tailwind slate-* → house tokens
