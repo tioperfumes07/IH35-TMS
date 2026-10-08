@@ -111,17 +111,17 @@ export function TasksReportPage() {
   // hand-rolled table. Preserves the overdue red-highlight on the Overdue column.
   const assigneeColumns = useMemo<ParityColumn<AssigneeRow>[]>(
     () => [
-      { key: "name", label: "Assignee", sortable: true, cellClass: "font-medium text-slate-800" },
-      { key: "total", label: "Total", sortable: true, cellClass: "text-slate-600" },
-      { key: "completed", label: "Completed", sortable: true, cellClass: "text-slate-600" },
-      { key: "open", label: "Open", sortable: true, cellClass: "text-slate-600" },
+      { key: "name", label: "Assignee", sortable: true, cellClass: "font-medium text-[#1F2A44]" },
+      { key: "total", label: "Total", sortable: true, cellClass: "text-[#4B5563]" },
+      { key: "completed", label: "Completed", sortable: true, cellClass: "text-[#4B5563]" },
+      { key: "open", label: "Open", sortable: true, cellClass: "text-[#4B5563]" },
       {
         key: "overdue",
         label: "Overdue",
         sortable: true,
-        render: (row) => <span className={row.overdue > 0 ? "font-semibold text-red-700" : "text-slate-600"}>{row.overdue}</span>,
+        render: (row) => <span className={row.overdue > 0 ? "font-semibold text-red-700" : "text-[#4B5563]"}>{row.overdue}</span>,
       },
-      { key: "avgActualMinutes", label: "Avg time (min)", sortable: true, render: (row) => row.avgActualMinutes ?? "—", cellClass: "text-slate-600" },
+      { key: "avgActualMinutes", label: "Avg time (min)", sortable: true, render: (row) => row.avgActualMinutes ?? "—", cellClass: "text-[#4B5563]" },
     ],
     [],
   );
@@ -146,7 +146,7 @@ export function TasksReportPage() {
       <PageHeader title="Admin Report" subtitle="Task throughput and team productivity" />
       <TasksModuleTabs />
 
-      {query.isLoading ? <div className="text-xs text-slate-500">Loading report…</div> : null}
+      {query.isLoading ? <div className="text-xs text-[#6B7280]">Loading report…</div> : null}
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -156,15 +156,15 @@ export function TasksReportPage() {
           ["Completion rate", `${completionRate}%`],
           ["Open", tasks.filter((t) => isOpenTaskStatus(t.status)).length],
         ] as Array<[string, number | string]>).map(([label, value]) => (
-          <div key={label} className="rounded-sm border border-slate-200 bg-white p-3">
-            <div className="text-xs font-semibold text-slate-500">{label}</div>
-            <div className="text-page-title font-bold text-slate-900">{value}</div>
+          <div key={label} className="rounded-sm border border-[#E5E7EB] bg-white p-3">
+            <div className="text-xs font-semibold text-[#6B7280]">{label}</div>
+            <div className="text-page-title font-bold text-[#0F1219]">{value}</div>
           </div>
         ))}
       </div>
 
       <div className="space-y-2">
-        <div className="text-xs font-semibold text-slate-900">By assignee</div>
+        <div className="text-xs font-semibold text-[#0F1219]">By assignee</div>
         <ParityTable
           rows={byAssignee}
           columns={assigneeColumns}
@@ -185,7 +185,7 @@ export function TasksReportPage() {
               dataAttributes={{ "data-tasks-report-filter-toolbar": "collapsed" }}
             >
               <div className="flex flex-wrap items-end gap-3">
-                <label className="text-xs font-semibold text-slate-600">
+                <label className="text-xs font-semibold text-[#4B5563]">
                   Window
                   <SelectCombobox
                     className="mt-1 block w-full max-w-xs"
@@ -202,7 +202,7 @@ export function TasksReportPage() {
                     ))}
                   </SelectCombobox>
                 </label>
-                <label className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                <label className="flex items-center gap-2 text-xs font-semibold text-[#4B5563]">
                   <input
                     type="checkbox"
                     checked={staged.draft.overdueOnly}

@@ -1,3 +1,14 @@
+## 2026-10-08T07:25Z · BANK leftover slate — custom report / final additions / tasks report
+
+FINDING: BANK-F91181 — CustomReportBuilder / FinalAdditionsPage / TasksReportPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25835 squash `0e26add33d` (BANK-F91180 vendor-map/proptax/attention)
+GUARD: scripts/verify-rpt-final-tasks-slate-leftover-chrome.mjs + verify-steps/2028 piggyback
+LIVE PROOF: verify-rpt-final-tasks-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+NOTE: stale 44121b-relay-continue timer ignored — ROUND 441.21-B already CLOSED; continue = slate drain only
+Files Modified: 3 FE surfaces + refuse guard + 2028 piggyback + OUTBOX
+
 ## 2026-10-08T07:20Z · BANK leftover slate — vendor mapping / property tax / attention list
 
 FINDING: BANK-F91180 — VendorMappingResolutionPage / PropertyTaxRenditionPage / AttentionList Tailwind slate-* → house tokens

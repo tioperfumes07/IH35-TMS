@@ -104,8 +104,8 @@ export function CustomReportBuilder() {
       {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
 
       <div className="grid gap-3 lg:grid-cols-2">
-        <section className="rounded-sm border border-slate-200 bg-white p-3">
-          <h3 className="text-xs font-semibold text-slate-900">Available fields</h3>
+        <section className="rounded-sm border border-[#E5E7EB] bg-white p-3">
+          <h3 className="text-xs font-semibold text-[#0F1219]">Available fields</h3>
           <ul className="mt-2 space-y-1">
             {unselected.map((field) => (
               <li key={field.id}>
@@ -114,7 +114,7 @@ export function CustomReportBuilder() {
                   draggable
                   onDragStart={(e) => e.dataTransfer.setData("text/plain", field.id)}
                   onClick={() => addField(field)}
-                  className="w-full rounded-sm border border-dashed border-slate-300 bg-slate-50 px-2 py-1 text-left text-xs font-semibold text-slate-800 hover:border-[#1f2a44]"
+                  className="w-full rounded-sm border border-dashed border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-left text-xs font-semibold text-[#1F2A44] hover:border-[#1f2a44]"
                 >
                   {field.label}
                 </button>
@@ -124,7 +124,7 @@ export function CustomReportBuilder() {
         </section>
 
         <section
-          className="rounded-sm border border-slate-200 bg-white p-3"
+          className="rounded-sm border border-[#E5E7EB] bg-white p-3"
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
             e.preventDefault();
@@ -133,22 +133,22 @@ export function CustomReportBuilder() {
             if (field) addField(field);
           }}
         >
-          <h3 className="text-xs font-semibold text-slate-900">Report layout</h3>
+          <h3 className="text-xs font-semibold text-[#0F1219]">Report layout</h3>
           <input
-            className="mt-2 w-full rounded-sm border border-slate-300 px-2 py-1 text-xs"
+            className="mt-2 w-full rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs"
             placeholder="Report name"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
           <input
-            className="mt-2 w-full rounded-sm border border-slate-300 px-2 py-1 text-xs"
+            className="mt-2 w-full rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs"
             placeholder="Filter: report_id (optional)"
             value={filterReportId}
             onChange={(e) => setFilterReportId(e.target.value)}
           />
-          <div className="mt-2 min-h-[120px] rounded-sm border border-dashed border-slate-300 bg-slate-100/40 p-2">
+          <div className="mt-2 min-h-[120px] rounded-sm border border-dashed border-[#E5E7EB] bg-[#F7F8FA]/40 p-2">
             {selectedFields.length === 0 ? (
-              <p className="text-xs text-slate-500">Drop fields here or click to add</p>
+              <p className="text-xs text-[#6B7280]">Drop fields here or click to add</p>
             ) : (
               selectedFields.map((field, idx) => (
                 <div key={field.id} className="mb-1 flex items-center justify-between rounded-sm bg-white px-2 py-1 text-xs">
@@ -172,8 +172,8 @@ export function CustomReportBuilder() {
         </section>
       </div>
 
-      <section className="rounded-sm border border-slate-200 bg-white p-3">
-        <h3 className="text-xs font-semibold text-slate-900">Saved custom reports</h3>
+      <section className="rounded-sm border border-[#E5E7EB] bg-white p-3">
+        <h3 className="text-xs font-semibold text-[#0F1219]">Saved custom reports</h3>
         <div className="mt-2 space-y-2">
           {savedQuery.isError ? (
             // GO-0028: a failed fetch must never render the same "No saved reports yet." text as
@@ -185,13 +185,13 @@ export function CustomReportBuilder() {
               </button>
             </div>
           ) : (savedQuery.data?.rows ?? []).length === 0 ? (
-            <p className="text-xs text-slate-500">No saved reports yet.</p>
+            <p className="text-xs text-[#6B7280]">No saved reports yet.</p>
           ) : null}
           {(savedQuery.data?.rows ?? []).map((row) => (
-            <div key={row.id} className="flex items-center justify-between rounded-sm border border-slate-100 bg-slate-50 px-3 py-2">
+            <div key={row.id} className="flex items-center justify-between rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
               <div>
-                <div className="text-xs font-semibold text-slate-900">{row.name}</div>
-                <div className="text-xs text-slate-500">{row.fields.length} fields</div>
+                <div className="text-xs font-semibold text-[#0F1219]">{row.name}</div>
+                <div className="text-xs text-[#6B7280]">{row.fields.length} fields</div>
               </div>
               <Button variant="secondary" onClick={() => runMut.mutate(row.id)}>
                 Run
