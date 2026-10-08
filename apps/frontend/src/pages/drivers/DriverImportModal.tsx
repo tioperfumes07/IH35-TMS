@@ -146,7 +146,7 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
   return (
     <Modal open onClose={handleClose} title="Import drivers from Master Contacts List (CSV)" sizePreset="lg" confirmDiscardOnClose isDirty={Boolean(file)} onRegisterAttemptClose={(next) => setAttemptClose(() => next)}>
       <div className="space-y-3">
-        <p className="mb-3 text-xs text-slate-600">
+        <p className="mb-3 text-xs text-[#4B5563]">
           Upload the master contacts CSV. Drivers with a termination date import as <span className="font-medium">Terminated</span> (kept off active rosters,
           reachable for rehire). Preview writes nothing.
         </p>
@@ -168,7 +168,7 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
             type="button"
             onClick={() => void runPreview()}
             disabled={!file || busy || !companyId}
-            className="min-h-11 rounded-sm border border-slate-300 px-3 text-xs text-slate-700 hover:bg-gray-50 disabled:opacity-40"
+            className="min-h-11 rounded-sm border border-[#E5E7EB] px-3 text-xs text-[#1F2A44] hover:bg-gray-50 disabled:opacity-40"
           >
             {busy && !preview && !previewError ? "Previewing…" : "Preview"}
           </button>
@@ -198,16 +198,16 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {([
-                ["Will create", s.will_create, "text-slate-700"],
-                ["Already in roster", s.dup_existing, "text-slate-600"],
-                ["Duplicate in file", s.dup_in_file, "text-slate-700"],
-                ["Skipped (junk)", s.invalid, "text-slate-500"],
-                ["New w/o phone", s.will_create_no_phone, "text-slate-700"],
-                ["Total rows", s.total, "text-slate-900"],
+                ["Will create", s.will_create, "text-[#1F2A44]"],
+                ["Already in roster", s.dup_existing, "text-[#4B5563]"],
+                ["Duplicate in file", s.dup_in_file, "text-[#1F2A44]"],
+                ["Skipped (junk)", s.invalid, "text-[#6B7280]"],
+                ["New w/o phone", s.will_create_no_phone, "text-[#1F2A44]"],
+                ["Total rows", s.total, "text-[#0F1219]"],
               ] as const).map(([label, n, cls]) => (
                 <div key={label} className="rounded-sm border border-gray-200 p-2">
                   <div className={`text-page-title font-semibold ${cls}`}>{n}</div>
-                  <div className="text-xs text-slate-500">{label}</div>
+                  <div className="text-xs text-[#6B7280]">{label}</div>
                 </div>
               ))}
             </div>
@@ -225,7 +225,7 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
             />
 
             <div className="flex items-center justify-end gap-2">
-              <button type="button" onClick={attemptClose} disabled={busy} className="min-h-11 rounded-sm border border-slate-300 px-3 text-xs text-slate-700 hover:bg-gray-50 disabled:opacity-40">
+              <button type="button" onClick={attemptClose} disabled={busy} className="min-h-11 rounded-sm border border-[#E5E7EB] px-3 text-xs text-[#1F2A44] hover:bg-gray-50 disabled:opacity-40">
                 Cancel
               </button>
               <button

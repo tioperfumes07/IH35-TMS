@@ -51,8 +51,8 @@ const SEVERITY_OPTIONS: Array<{ value: "all" | CertSeverity; label: string }> = 
 
 function severityClassName(severity: CertSeverity) {
   if (severity === "critical") return "bg-red-100 text-red-700";
-  if (severity === "warn") return "bg-slate-100 text-slate-700";
-  return "bg-slate-100 text-slate-700";
+  if (severity === "warn") return "bg-[#F7F8FA] text-[#1F2A44]";
+  return "bg-[#F7F8FA] text-[#1F2A44]";
 }
 
 function severityWeight(severity: CertSeverity) {
@@ -122,11 +122,11 @@ export function ExpiryDashboard({ breadcrumbLabel = "Cert Expiry" }: ExpiryDashb
   );
 
   if (!companyId) {
-    return <div className="rounded-sm border border-slate-200 bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
+    return <div className="rounded-sm border border-[#E5E7EB] bg-white p-4 text-xs text-[#4B5563]">Select an operating company.</div>;
   }
 
   return (
-    <section className="space-y-3 rounded-sm border border-slate-200 bg-white p-4">
+    <section className="space-y-3 rounded-sm border border-[#E5E7EB] bg-white p-4">
       {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see TrainingProgramsPage.tsx sibling comment. */}
       <PageHeader
         title="Certificate Expiry Dashboard"
@@ -134,7 +134,7 @@ export function ExpiryDashboard({ breadcrumbLabel = "Cert Expiry" }: ExpiryDashb
         breadcrumb={[{ label: "Safety" }, { label: breadcrumbLabel }]}
         backHref="/safety"
         actions={
-          <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+          <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]">
             Open {alertsQuery.isError ? "—" : filteredRows.length}
           </span>
         }
@@ -161,7 +161,7 @@ export function ExpiryDashboard({ breadcrumbLabel = "Cert Expiry" }: ExpiryDashb
           filterBar={
             <div className="flex flex-wrap items-center gap-2 text-xs">
               <div className="flex items-center gap-1">
-                <span className="text-slate-500">Cert:</span>
+                <span className="text-[#6B7280]">Cert:</span>
                 <label htmlFor="cert-expiry-cert-type" className="sr-only">Certificate type</label>
                 <Combobox
                   id="cert-expiry-cert-type"
@@ -173,7 +173,7 @@ export function ExpiryDashboard({ breadcrumbLabel = "Cert Expiry" }: ExpiryDashb
                 />
               </div>
               <div className="flex items-center gap-1">
-                <span className="text-slate-500">Severity:</span>
+                <span className="text-[#6B7280]">Severity:</span>
                 <label htmlFor="cert-expiry-severity" className="sr-only">Severity</label>
                 <Combobox
                   id="cert-expiry-severity"
