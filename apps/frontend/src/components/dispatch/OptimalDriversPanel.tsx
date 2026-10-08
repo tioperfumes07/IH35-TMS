@@ -81,13 +81,13 @@ export function OptimalDriversPanel({
   );
 
   return (
-    <div className="space-y-2 rounded-sm border border-slate-200 bg-slate-50 p-3" data-testid="optimal-drivers-panel">
+    <div className="space-y-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3" data-testid="optimal-drivers-panel">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wide text-slate-600">Ranked driver suggestions</p>
-          <p className="text-xs text-slate-500">Top 10 by HOS, proximity, eligibility, and recent performance</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">Ranked driver suggestions</p>
+          <p className="text-xs text-[#6B7280]">Top 10 by HOS, proximity, eligibility, and recent performance</p>
         </div>
-        <label className="flex items-center gap-1.5 text-xs text-slate-700">
+        <label className="flex items-center gap-1.5 text-xs text-[#4B5563]">
           <input
             type="checkbox"
             checked={manualOverride}
@@ -99,7 +99,7 @@ export function OptimalDriversPanel({
         </label>
       </div>
 
-      {q.isLoading && !driversOverride ? <p className="text-xs text-slate-500">Loading ranked drivers…</p> : null}
+      {q.isLoading && !driversOverride ? <p className="text-xs text-[#6B7280]">Loading ranked drivers…</p> : null}
       {q.isError && !driversOverride ? (
         <ListErrorState status={0} message="Could not load optimizer rankings." onRetry={() => void q.refetch()} />
       ) : null}
@@ -119,7 +119,7 @@ export function OptimalDriversPanel({
                 aria-disabled={rowDisabled}
                 data-testid={`optimal-driver-row-${d.rank}`}
                 className={`flex w-full flex-col px-2 py-1.5 text-left text-xs transition ${
-                  selected ? "bg-slate-100" : "bg-[var(--surface-unselected)] hover:bg-[var(--surface-hover)]"
+                  selected ? "bg-[#F7F8FA]" : "bg-[var(--surface-unselected)] hover:bg-[var(--surface-hover)]"
                 } ${blocked ? "cursor-not-allowed opacity-50" : ""}`}
                 onClick={() => {
                   if (!rowDisabled) {
@@ -135,7 +135,7 @@ export function OptimalDriversPanel({
                   }
                 }}
               >
-                <span className="flex items-center justify-between gap-2 font-semibold text-slate-800">
+                <span className="flex items-center justify-between gap-2 font-semibold text-[#1F2A44]">
                   <span>
                     #{d.rank} ·{" "}
                     {/* Exact Leaves dispatch.panel.optimal_drivers:driver — ranked rows were
@@ -154,11 +154,11 @@ export function OptimalDriversPanel({
                     </span>
                     {!d.hos_safe ? " · HOS risk" : ""}
                   </span>
-                  <span className="font-mono text-xs text-slate-700">{fmtScore(d.total_score)} pts</span>
+                  <span className="font-mono text-xs text-[#4B5563]">{fmtScore(d.total_score)} pts</span>
                 </span>
-                <span className="text-xs text-slate-500">{breakdownLabel(d)}</span>
-                {blockedByHos ? <span className="text-xs text-slate-700">Insufficient HOS for estimated drive</span> : null}
-                {routingSettings.auto_routing_respect_equipment && d.ineligible_reason ? <span className="text-xs text-slate-700">{d.ineligible_reason}</span> : null}
+                <span className="text-xs text-[#6B7280]">{breakdownLabel(d)}</span>
+                {blockedByHos ? <span className="text-xs text-[#4B5563]">Insufficient HOS for estimated drive</span> : null}
+                {routingSettings.auto_routing_respect_equipment && d.ineligible_reason ? <span className="text-xs text-[#4B5563]">{d.ineligible_reason}</span> : null}
               </div>
             </li>
           );
@@ -166,7 +166,7 @@ export function OptimalDriversPanel({
       </ul> : null}
 
       {showOverrideWarning ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-xs text-slate-700">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2 text-xs text-[#4B5563]">
           Selected driver is not the top-ranked suggestion. Enable <strong>Manual override</strong> to confirm a non-optimal pick.
         </div>
       ) : null}

@@ -1,3 +1,13 @@
+## 2026-10-08T06:32Z · BANK leftover slate — fines/deductions / optimal drivers / deadhead
+
+FINDING: BANK-F91171 — FinesDeductionsCard / OptimalDriversPanel / DeadheadOptimizerPanel Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25824 squash `429f05f780` (BANK-F91170 WO console/time/arriving)
+GUARD: scripts/verify-dispatch-opt-slate-leftover-chrome.mjs + verify-steps/3922 piggyback
+LIVE PROOF: verify-dispatch-opt-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 dispatch surfaces + refuse guard + 3922 piggyback + OUTBOX
+
 ## 2026-10-08T06:25Z · BANK leftover slate — WO console detail / time tracking / arriving soon
 
 FINDING: BANK-F91170 — WorkOrdersConsoleDetailPage / WOTimeTrackingPanel / ArrivingSoonPage Tailwind slate-* → house tokens

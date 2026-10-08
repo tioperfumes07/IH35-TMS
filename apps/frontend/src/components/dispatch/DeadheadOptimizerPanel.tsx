@@ -58,51 +58,51 @@ export function DeadheadOptimizerPanel({
   const suggestions = (suggestionsOverride ?? q.data?.suggestions ?? []).slice(0, 5);
 
   return (
-    <div className="space-y-2 rounded-sm border border-slate-200 bg-slate-100/60 p-3" data-testid="deadhead-optimizer-panel">
+    <div className="space-y-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA]/60 p-3" data-testid="deadhead-optimizer-panel">
       <div>
-        <p className="text-xs font-bold uppercase tracking-wide text-slate-700">Next-load deadhead suggestions</p>
-        <p className="text-xs text-slate-700/80">Top 5 pending loads ranked by (revenue − deadhead cost) / total miles</p>
+        <p className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">Next-load deadhead suggestions</p>
+        <p className="text-xs text-[#4B5563]/80">Top 5 pending loads ranked by (revenue − deadhead cost) / total miles</p>
         {/* Exact Leaves dispatch.panel.deadhead_optimizer:unit — unitUuid was API-only */}
         {unitUuid ? (
-          <p className="mt-1 text-xs text-slate-600" data-testid="deadhead-optimizer-unit-entitylink">
+          <p className="mt-1 text-xs text-[#4B5563]" data-testid="deadhead-optimizer-unit-entitylink">
             Unit: <EntityLinkOrTombstone kind="unit" id={unitUuid} name={unitName} noun="Unit" />
           </p>
         ) : null}
       </div>
 
-      {q.isLoading && !suggestionsOverride ? <p className="text-xs text-slate-700/70">Loading suggestions…</p> : null}
+      {q.isLoading && !suggestionsOverride ? <p className="text-xs text-[#4B5563]/70">Loading suggestions…</p> : null}
       {q.isError && !suggestionsOverride ? (
         <ListErrorState status={0} message="Could not load deadhead suggestions." onRetry={() => void q.refetch()} />
       ) : null}
       {!q.isLoading && !q.isError && suggestions.length === 0 ? (
-        <p className="text-xs text-slate-700/70">No nearby pending loads within the deadhead limit.</p>
+        <p className="text-xs text-[#4B5563]/70">No nearby pending loads within the deadhead limit.</p>
       ) : null}
 
       {!q.isError || suggestionsOverride ? <ul className="max-h-44 space-y-1 overflow-y-auto">
         {suggestions.map((row, index) => (
           <li
             key={row.load_uuid}
-            className="rounded-sm border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-800"
+            className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1.5 text-xs text-[#1F2A44]"
             data-testid={`deadhead-suggestion-row-${index + 1}`}
           >
             <div className="flex items-center justify-between gap-2 font-semibold">
               <span>
                 #{index + 1} · <EntityLinkOrTombstone kind="load" id={row.load_uuid} name={row.load_number} noun="Load" /> · {row.pickup_city}, {row.pickup_state}
               </span>
-              <span className="font-mono text-xs text-slate-700">{row.score.toFixed(2)} ¢/mi score</span>
+              <span className="font-mono text-xs text-[#4B5563]">{row.score.toFixed(2)} ¢/mi score</span>
             </div>
-            <div className="text-xs text-slate-600">
+            <div className="text-xs text-[#4B5563]">
               DH {fmtMiles(row.deadhead_miles)} mi · Loaded {fmtMiles(row.loaded_miles)} mi · Rev {fmtMoneyCents(row.est_revenue_cents)} ·
               Margin {fmtMoneyCents(row.est_margin_cents)}
             </div>
-            <div className="text-xs text-slate-500">
+            <div className="text-xs text-[#6B7280]">
               → {row.delivery_city}, {row.delivery_state}
             </div>
           </li>
         ))}
       </ul> : null}
 
-      {disabled ? <p className="text-xs text-slate-500">Suggestions are read-only while the form is disabled.</p> : null}
+      {disabled ? <p className="text-xs text-[#6B7280]">Suggestions are read-only while the form is disabled.</p> : null}
     </div>
   );
 }
