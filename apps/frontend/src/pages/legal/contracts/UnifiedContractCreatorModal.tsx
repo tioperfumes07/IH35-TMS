@@ -210,7 +210,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
           {["Template", "Fill", "Party & sign"].map((label, i) => (
             <span
               key={label}
-              className={`rounded-sm px-2 py-1 ${step === i + 1 ? "bg-[#1f2a44] text-white" : "bg-slate-100 text-slate-600"}`}
+              className={`rounded-sm px-2 py-1 ${step === i + 1 ? "bg-[#1f2a44] text-white" : "bg-[#F7F8FA] text-[#4B5563]"}`}
             >
               {i + 1}. {label}
             </span>
@@ -220,9 +220,9 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
         {step === 1 && (
           <div className="space-y-3">
             {noActiveTemplates ? (
-              <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-                <div className="font-semibold text-slate-800">No active templates for this entity yet.</div>
-                <p className="mt-0.5 text-xs text-slate-600">
+              <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#4B5563]">
+                <div className="font-semibold text-[#1F2A44]">No active templates for this entity yet.</div>
+                <p className="mt-0.5 text-xs text-[#4B5563]">
                   The standard contract library (lease &amp; NDA templates) has not been provisioned for this
                   operating company. Seed it once to enable the template picker below.
                 </p>
@@ -238,7 +238,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
               </div>
             ) : null}
             <label className="flex flex-col gap-1 text-xs">
-              <span className="font-semibold text-slate-700">Document category</span>
+              <span className="font-semibold text-[#4B5563]">Document category</span>
               <SelectCombobox
                 value={category}
                 onChange={(e) => {
@@ -257,7 +257,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
             </label>
 
             <label className="flex flex-col gap-1 text-xs" data-testid="legal-contract-create-template-picker">
-              <span className="font-semibold text-slate-700">Template (active versions)</span>
+              <span className="font-semibold text-[#4B5563]">Template (active versions)</span>
               <Combobox
                 value={templateCode || null}
                 onChange={(next) => setTemplateCode(next ?? "")}
@@ -275,14 +275,14 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
             </label>
 
             {ndaSuggestion && category === "employment" ? (
-              <div className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-600">
+              <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#4B5563]">
                 Suggested for drivers: confidentiality-only NDA (<code>nda_ebt_confidentiality</code>). Office roles
                 are eligible for a full non-compete version. Suggestion only.
               </div>
             ) : null}
 
             <label className="flex flex-col gap-1 text-xs">
-              <span className="font-semibold text-slate-700">Language</span>
+              <span className="font-semibold text-[#4B5563]">Language</span>
               <SelectCombobox
                 value={language}
                 onChange={(e) => setLanguage(e.target.value as LegalContractLanguage)}
@@ -293,7 +293,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
               </SelectCombobox>
             </label>
             {language === "es" ? (
-              <div className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700">
+              <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#4B5563]">
                 Spanish body is a pending-translation placeholder; English controls until a certified translation is
                 recorded. Do not execute a driver-facing Spanish contract before then.
               </div>
@@ -312,18 +312,18 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
 
         {step === 2 && (
           <div className="space-y-3">
-            <div className="text-xs text-slate-500">
+            <div className="text-xs text-[#6B7280]">
               {selectedTemplate?.display_name_en} · v{selectedTemplate?.version}
             </div>
             {Object.keys(fields).length === 0 ? (
-              <div className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs text-slate-600">
+              <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs text-[#4B5563]">
                 This template has no fill-in fields. Continue to the party step.
               </div>
             ) : (
               <div className="grid gap-3 md:grid-cols-2">
                 {Object.entries(fields).map(([name, def]) => (
                   <label key={name} className="flex flex-col gap-1 text-xs">
-                    <span className="font-semibold text-slate-700">
+                    <span className="font-semibold text-[#4B5563]">
                       {name.replace(/_/g, " ")}
                       {def.required ? <span className="text-crit"> *</span> : null}
                     </span>
@@ -339,7 +339,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                         type={def.type === "number" ? "number" : "text"}
                         value={filled[name] ?? ""}
                         onChange={(e) => setFilled((prev) => ({ ...prev, [name]: e.target.value }))}
-                        className="rounded-sm border border-slate-300 px-2 py-1"
+                        className="rounded-sm border border-[#E5E7EB] px-2 py-1"
                         placeholder={def.description ?? ""}
                       />
                     )}
@@ -348,18 +348,18 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
               </div>
             )}
             {isLease ? (
-              <div className="space-y-2 rounded-sm border border-slate-200 bg-slate-50 p-2">
-                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <div className="space-y-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2">
+                <div className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
                   Exhibit A — units & ASC 842 election (handed to Finance / FIN-22)
                 </div>
-                <div className="text-xs text-slate-600">
+                <div className="text-xs text-[#4B5563]">
                   Lessor is IH 35 Trucking, LLC. Select the units this lease covers. Legal links the units and the
                   election to the signed lease; the Finance lease subledger (FIN-22) computes classification, schedule,
                   and any GL — Legal posts nothing.
                 </div>
-                <div className="max-h-36 space-y-1 overflow-auto rounded-sm border border-slate-200 bg-white p-2">
+                <div className="max-h-36 space-y-1 overflow-auto rounded-sm border border-[#E5E7EB] bg-white p-2">
                   {leaseUnitsListState.isEmpty ? (
-                    <div className="text-xs text-slate-500">No eligible units found for this entity.</div>
+                    <div className="text-xs text-[#6B7280]">No eligible units found for this entity.</div>
                   ) : (
                     leaseUnits.map((u) => (
                       <label key={u.id} className="flex items-center gap-2 text-xs">
@@ -406,7 +406,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                     Option B — fixed payoff (sales-type)
                   </label>
                 </div>
-                <div className="text-xs text-slate-500">
+                <div className="text-xs text-[#6B7280]">
                   The election guides the CPA's ASC 842 classification per deal; FIN-22 confirms and posts.
                 </div>
               </div>
@@ -437,7 +437,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
         {step === 3 && (
           <div className="space-y-3">
             <label className="flex flex-col gap-1 text-xs">
-              <span className="font-semibold text-slate-700">Signer type</span>
+              <span className="font-semibold text-[#4B5563]">Signer type</span>
               <SelectCombobox
                 value={signerType}
                 onChange={(e) => {
@@ -456,7 +456,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
 
             {(signerType === "driver" || signerType === "customer" || signerType === "vendor") && (
               <label className="flex flex-col gap-1 text-xs">
-                <span className="font-semibold text-slate-700">
+                <span className="font-semibold text-[#4B5563]">
                   Select {signerType}
                   <span className="text-crit"> *</span>
                 </span>
@@ -558,41 +558,41 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
 
             <div className="grid gap-3 md:grid-cols-2">
               <label className="flex flex-col gap-1 text-xs">
-                <span className="font-semibold text-slate-700">Signer name *</span>
+                <span className="font-semibold text-[#4B5563]">Signer name *</span>
                 <input
                   value={signerName}
                   onChange={(e) => setSignerName(e.target.value)}
-                  className="rounded-sm border border-slate-300 px-2 py-1"
+                  className="rounded-sm border border-[#E5E7EB] px-2 py-1"
                 />
               </label>
               <label className="flex flex-col gap-1 text-xs">
-                <span className="font-semibold text-slate-700">Signer email</span>
+                <span className="font-semibold text-[#4B5563]">Signer email</span>
                 <input
                   type="email"
                   value={signerEmail}
                   onChange={(e) => setSignerEmail(e.target.value)}
-                  className="rounded-sm border border-slate-300 px-2 py-1"
+                  className="rounded-sm border border-[#E5E7EB] px-2 py-1"
                 />
               </label>
               <label className="flex flex-col gap-1 text-xs">
-                <span className="font-semibold text-slate-700">Signer phone (+E.164)</span>
+                <span className="font-semibold text-[#4B5563]">Signer phone (+E.164)</span>
                 <input
                   value={signerPhone}
                   onChange={(e) => setSignerPhone(e.target.value)}
-                  className="rounded-sm border border-slate-300 px-2 py-1"
+                  className="rounded-sm border border-[#E5E7EB] px-2 py-1"
                   placeholder="+15551234567"
                 />
               </label>
             </div>
 
             {selectedTemplate?.category === "lease" && (unitsQuery.data?.units?.length ?? 0) === 0 ? (
-              <div className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700">
+              <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1 text-xs text-[#4B5563]">
                 A Trucking-seller lease requires the units titled to IH 35 Trucking, LLC first. Exhibit A units are
                 linked to the lease after signature (handed to the Finance lease subledger).
               </div>
             ) : null}
 
-            <div className="text-xs text-slate-500">
+            <div className="text-xs text-[#6B7280]">
               Email/phone present → the contract is sent for e-signature on create; otherwise it is saved as a draft.
             </div>
 

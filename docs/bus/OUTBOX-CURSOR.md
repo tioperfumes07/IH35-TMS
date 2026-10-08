@@ -1,3 +1,13 @@
+## 2026-10-08T05:42Z · BANK leftover slate — create driver / tasks chat / contract creator
+
+FINDING: BANK-F91164 — CreateDriverModal / TasksChatPage / UnifiedContractCreatorModal Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25817 squash `b501dcefdc` (BANK-F91163 miles/kanban/chat)
+GUARD: scripts/verify-drv-tasks-legal-slate-leftover-chrome.mjs + verify-steps/2154 piggyback
+LIVE PROOF: verify-drv-tasks-legal-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 2154 piggyback + OUTBOX
+
 ## 2026-10-08T05:35Z · BANK leftover slate — miles strip / kanban / dispatch chat
 
 FINDING: BANK-F91163 — MilesStrip / DispatchKanban / DispatchChatPage Tailwind slate-* → house tokens
