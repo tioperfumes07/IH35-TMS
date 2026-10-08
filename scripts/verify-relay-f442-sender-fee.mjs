@@ -71,6 +71,7 @@ function main() {
   const ingest = read("apps/backend/src/integrations/relay-payments/relay-fuel-ingest.service.ts");
   const poster = read("apps/backend/src/accounting/fuel-posting/poster.service.ts");
   const match = read("apps/backend/src/accounting/bank-recon/bank-match-fuel-post.service.ts");
+  const matchDrawer = read("apps/backend/src/accounting/bank-recon/match.service.ts");
   const creator = read("apps/backend/src/driver-finance/settlement-creator.service.ts");
 
   assertContains(helper, "relay-sender-fee-cents.ts", /export function relayFillFeeCents/, "must export relayFillFeeCents");
@@ -96,6 +97,12 @@ function main() {
 
   assertContains(match, "bank-match-fuel-post.service.ts", /fee_amount_cents:\s*feeCents/, "Relay match poster must pass fee_amount_cents");
   assertContains(match, "bank-match-fuel-post.service.ts", /relayWalletDrawdownCents\s*\(\s*paidCents/, "match amount_cents must be paid + fee");
+  assertContains(
+    matchDrawer,
+    "match.service.ts",
+    /RELAY_FUEL_WALLET_AMOUNT_SQL/,
+    "Match drawer loadLedgerAmountCents / candidates must use F442 wallet drawdown SQL",
+  );
 
   assertContains(creator, "settlement-creator.service.ts", /fuelPurchaseNetAndFeeCents/, "Creator must split net vs fee");
   assertContains(creator, "settlement-creator.service.ts", /fee_amount,/, "INSERT must write fee_amount column");
