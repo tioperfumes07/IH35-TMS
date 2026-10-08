@@ -1,3 +1,13 @@
+## 2026-10-09T01:00Z · BANK leftover slate — DotInspections / VehiclesMasterData / PartsMasterData
+
+FINDING: BANK-F91271 — DotInspectionsPage / VehiclesMasterDataPage / PartsMasterDataPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25949 squash `59babcfb2d` (BANK-F91270 DrugAlcohol/FineDetail/PositionHistory)
+GUARD: scripts/verify-dot-veh-parts-slate-leftover-chrome.mjs + verify-steps/3482 piggyback
+LIVE PROOF: verify-dot-veh-parts-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3482 piggyback + OUTBOX
+
 ## 2026-10-09T00:55Z · BANK leftover slate — DrugAlcohol / FineDetail / PositionHistory
 
 FINDING: BANK-F91270 — DrugAlcoholProgramTab / FineDetailDrawer / PositionHistoryPage Tailwind slate-* → house tokens

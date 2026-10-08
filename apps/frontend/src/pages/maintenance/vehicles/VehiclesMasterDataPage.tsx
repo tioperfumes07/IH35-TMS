@@ -19,7 +19,7 @@ import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 
-const LINK = "text-slate-700 hover:underline";
+const LINK = "text-[#1F2A44] hover:underline";
 
 type VehicleDraft = {
   unit_display_id: string;
@@ -207,14 +207,14 @@ export function VehiclesMasterDataPage() {
       label: "Source",
       sortable: true,
       render: (row) => (
-        <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-700">{row.source}</span>
+        <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs text-[#1F2A44]">{row.source}</span>
       ),
     },
   ];
 
   const rowActions = (row: MaintenanceVehicleRow) => (
     <div className="flex gap-2">
-      <button type="button" className="text-slate-600 underline" onClick={() => setEditing(row)}>
+      <button type="button" className="text-[#4B5563] underline" onClick={() => setEditing(row)}>
         Edit
       </button>
       <button

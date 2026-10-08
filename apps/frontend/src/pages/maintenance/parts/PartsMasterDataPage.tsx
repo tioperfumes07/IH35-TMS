@@ -215,7 +215,7 @@ export function PartsMasterDataPage() {
       label: "Source",
       sortable: true,
       render: (row) => (
-        <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
+        <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs text-[#1F2A44]">
           {row.voided_at ? "Voided" : row.source === "csv" ? "CSV" : "Manual"}
         </span>
       ),
@@ -224,7 +224,7 @@ export function PartsMasterDataPage() {
 
   const rowActions = (row: MaintenancePartRow) => (
     <div className="flex gap-2">
-      <button type="button" className="text-slate-600 underline" onClick={() => setEditing(row)}>
+      <button type="button" className="text-[#4B5563] underline" onClick={() => setEditing(row)}>
         Edit
       </button>
       <button
@@ -289,7 +289,7 @@ export function PartsMasterDataPage() {
           }}>
             CSV Import
           </Button>
-          <a className="text-xs text-slate-600 underline" href={getMaintenancePartsTemplateUrl(companyId)} target="_blank" rel="noreferrer">
+          <a className="text-xs text-[#4B5563] underline" href={getMaintenancePartsTemplateUrl(companyId)} target="_blank" rel="noreferrer">
             Download template
           </a>
         </div>

@@ -111,7 +111,7 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
           rows={query.data?.dot_inspections ?? []}
           rowKey={(row) => String(row.id)}
           rowClassName={(row) =>
-            deepLinkInspectionId && String(row.id) === deepLinkInspectionId ? "bg-slate-100 ring-1 ring-slate-400" : ""
+            deepLinkInspectionId && String(row.id) === deepLinkInspectionId ? "bg-[#F7F8FA] ring-1 ring-[#6B7280]" : ""
           }
           loading={query.isLoading}
           emptyText="No DOT inspections recorded."
@@ -132,7 +132,7 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
                     {String(row.station_label ?? "DOT station")} · Unit{" "}
                     <EntityLinkOrTombstone kind="unit" id={row.unit_id as string | undefined} name={row.unit_number} noun="Unit" />
                   </span>
-                  <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-slate-700">{String(row.dwell_minutes ?? 0)} min</span>
+                  <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-[#1F2A44]">{String(row.dwell_minutes ?? 0)} min</span>
                 </div>
                 <p className="mt-1 text-gray-600">
                   Driver:{" "}
