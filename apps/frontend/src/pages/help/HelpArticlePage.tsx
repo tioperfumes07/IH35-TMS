@@ -58,7 +58,7 @@ export function HelpArticlePage() {
       <div className="space-y-3">
         <PageHeader breadcrumb={["Help"]} title="Article not found" />
         <p className="text-xs text-gray-700">
-          <Link to="/help" className="text-slate-700 hover:underline">
+          <Link to="/help" className="text-[#1F2A44] hover:underline">
             Back to help home
           </Link>
         </p>
@@ -77,7 +77,7 @@ export function HelpArticlePage() {
         <div className="mt-2 flex flex-wrap gap-2">
           <button
             type="button"
-            className="rounded-sm border border-gray-300 px-3 py-1 text-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+            className="rounded-sm border border-gray-300 px-3 py-1 text-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6B7280]"
             onClick={() => chooseFeedback("up")}
             aria-pressed={feedback === "up"}
           >
@@ -85,7 +85,7 @@ export function HelpArticlePage() {
           </button>
           <button
             type="button"
-            className="rounded-sm border border-gray-300 px-3 py-1 text-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+            className="rounded-sm border border-gray-300 px-3 py-1 text-xs focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6B7280]"
             onClick={() => chooseFeedback("down")}
             aria-pressed={feedback === "down"}
           >
@@ -103,7 +103,7 @@ export function HelpArticlePage() {
           </p>
         ) : null}
         <p className="mt-3 text-xs">
-          <Link to="/help" className="text-slate-700 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400">
+          <Link to="/help" className="text-[#1F2A44] hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6B7280]">
             ← All articles
           </Link>
         </p>

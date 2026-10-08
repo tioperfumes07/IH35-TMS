@@ -23,10 +23,10 @@ function ErrorFallback({ error, onReload }: { error: Error; onReload: () => void
   const mailto = `mailto:support@ih35dispatch.com?subject=${subject}&body=${body}`;
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-950 px-4 py-10 text-slate-50">
-      <div className="w-full max-w-xl rounded-lg border border-white/10 bg-slate-900 p-6 shadow-xl">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#0F1219] px-4 py-10 text-[#F7F8FA]">
+      <div className="w-full max-w-xl rounded-lg border border-white/10 bg-[#0F1219] p-6 shadow-xl">
         <h1 className="text-page-title font-semibold text-white">Something went wrong</h1>
-        <p className="mt-2 text-xs text-slate-300">
+        <p className="mt-2 text-xs text-[#6B7280]">
           The page hit an unexpected error. You can reload to try again, or email support with the prefilled details below.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
@@ -44,9 +44,9 @@ function ErrorFallback({ error, onReload }: { error: Error; onReload: () => void
             Report issue
           </a>
         </div>
-        <details className="mt-6 rounded-md border border-white/10 bg-black/30 p-3 text-xs text-slate-200">
+        <details className="mt-6 rounded-md border border-white/10 bg-black/30 p-3 text-xs text-[#E5E7EB]">
           <summary className="cursor-pointer select-none text-xs font-semibold text-white">Technical details</summary>
-          <pre className="mt-3 max-h-[320px] overflow-auto whitespace-pre-wrap wrap-break-word text-xs text-slate-200">
+          <pre className="mt-3 max-h-[320px] overflow-auto whitespace-pre-wrap wrap-break-word text-xs text-[#E5E7EB]">
             {error.stack ?? error.message}
           </pre>
         </details>

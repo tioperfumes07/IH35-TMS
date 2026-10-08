@@ -3,5 +3,6 @@ export default {
   name: "verify-bank-account-detail-parity-surface-bar",
   async run(ctx) {
     await ctx.run("node", ["scripts/verify-bank-account-detail-parity-surface-bar.mjs"]);
+    ctx.run("node", ["scripts/verify-errbound-help-engine-slate-leftover-chrome.mjs"]);
   },
 };

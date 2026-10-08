@@ -57,7 +57,7 @@ export function EngineStatusBoardPage() {
         sortable: true,
         render: (row) => (
           <span
-            className={row.health === "red" ? "font-semibold text-slate-900" : "text-slate-700"}
+            className={row.health === "red" ? "font-semibold text-[#0F1219]" : "text-[#1F2A44]"}
             data-testid={`engine-health-${row.id}`}
             data-health={row.health}
             title={row.health_reason}
@@ -99,11 +99,11 @@ export function EngineStatusBoardPage() {
         subtitle="Every registry engine — last run, rows written in 24 hours, last error, next run. Red = should produce and wrote nothing in its window."
       />
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        <Link to="/system" className="text-slate-700 underline">
+        <Link to="/system" className="text-[#1F2A44] underline">
           System home
         </Link>
         <span className="text-gray-400">·</span>
-        <span data-testid="engine-status-red-count" className="text-slate-700">
+        <span data-testid="engine-status-red-count" className="text-[#1F2A44]">
           {redCount} red · {rows.length} engines
         </span>
         <Button type="button" size="sm" variant="secondary" onClick={() => void q.refetch()} disabled={q.isFetching}>
@@ -129,7 +129,7 @@ export function EngineStatusBoardPage() {
           storageKey="system-engine-status-board"
           emptyText="No engines in catalog."
           exportFilename="engine-status"
-          rowClassName={(row) => (row.health === "red" ? "bg-slate-100" : "")}
+          rowClassName={(row) => (row.health === "red" ? "bg-[#F7F8FA]" : "")}
           rowTestId={(row) => `engine-row-${row.id}`}
         />
       ) : null}
