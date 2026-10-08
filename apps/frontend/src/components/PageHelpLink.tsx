@@ -13,7 +13,7 @@ export function PageHelpLink({ className }: Props) {
 
   const label = "Help for this page";
   const baseClass =
-    "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border border-slate-600/80 text-slate-200 hover:bg-white/10";
+    "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border border-[#4B5563]/80 text-[#E5E7EB] hover:bg-white/10";
   const merged = className ? `${baseClass} ${className}` : baseClass;
 
   return (
@@ -25,7 +25,7 @@ export function PageHelpLink({ className }: Props) {
 
 export function FooterFaqLink({ className }: { className?: string }) {
   const href = faqHelpUrl();
-  const base = "inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700";
+  const base = "inline-flex items-center gap-1 text-xs text-[#6B7280] hover:text-[#1F2A44]";
   return (
     <a
       href={href}

@@ -85,17 +85,17 @@ export function StaleDeployBanner() {
     <div
       role="status"
       data-testid="stale-deploy-banner"
-      className="fixed left-1/2 top-2 z-[240] flex max-w-[min(36rem,calc(100vw-2rem))] -translate-x-1/2 items-center gap-3 rounded-sm border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 shadow-md"
+      className="fixed left-1/2 top-2 z-[240] flex max-w-[min(36rem,calc(100vw-2rem))] -translate-x-1/2 items-center gap-3 rounded-sm border border-[#E5E7EB] bg-white px-3 py-2 text-xs text-[#0F1219] shadow-md"
     >
       <span>A new version is available — Reload.</span>
       <button
         type="button"
-        className="rounded-sm border border-slate-400 bg-white px-2 py-0.5 text-xs font-semibold"
+        className="rounded-sm border border-[#6B7280] bg-white px-2 py-0.5 text-xs font-semibold"
         onClick={() => window.location.reload()}
       >
         Reload
       </button>
-      <button type="button" className="text-xs text-slate-600 underline" onClick={() => setDismissed(true)}>
+      <button type="button" className="text-xs text-[#4B5563] underline" onClick={() => setDismissed(true)}>
         Dismiss
       </button>
     </div>
