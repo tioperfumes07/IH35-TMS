@@ -150,7 +150,7 @@ export function InventoryAssignmentsPage() {
       <InventoryModuleTabs />
 
       {unitId ? (
-        <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+        <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
           Showing assignments for the selected unit.{" "}
           <Link className="underline" to="/inventory/assignments">
             View all units
@@ -160,11 +160,11 @@ export function InventoryAssignmentsPage() {
 
       <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600">
         Parts used on work orders appear in this assignment trail. Stock on-hand and purchase receipts stay on{" "}
-        <Link className="text-slate-700 underline" to="/inventory">
+        <Link className="text-[#1F2A44] underline" to="/inventory">
           Parts &amp; Stock
         </Link>{" "}
         and{" "}
-        <Link className="text-slate-700 underline" to="/inventory/purchases">
+        <Link className="text-[#1F2A44] underline" to="/inventory/purchases">
           Purchase History
         </Link>
         .
@@ -183,7 +183,7 @@ export function InventoryAssignmentsPage() {
       ) : (
         <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
           <h3 className="text-xs font-semibold">Assignment trail</h3>
-          {totalCount ? <p className="text-xs text-slate-500" data-testid="inventory-assignments-range">{page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} of {totalCount} assignments</p> : null}
+          {totalCount ? <p className="text-xs text-[#6B7280]" data-testid="inventory-assignments-range">{page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} of {totalCount} assignments</p> : null}
           <ParityTable<PartsAssignmentRow>
             columns={columns}
             rows={rows}
