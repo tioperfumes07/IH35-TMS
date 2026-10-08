@@ -1,3 +1,13 @@
+## 2026-10-08 · BANK-F91060 — DetailTypes / VendorBillForm / QboReconcile slate → house
+
+FINDING: BANK-F91060 — DetailTypesListPage / VendorBillForm / QboReconcileCapturesPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25993 squash `d53a7150b5` (BANK-F91059 Prepaid/Calculator/AuditTrail)
+GUARD: scripts/verify-91060-detail-vendorbill-qbo-slate-leftover-chrome.mjs + verify-steps/3646 piggyback
+LIVE PROOF: UNVERIFIED pending gate; leftover slate class = 0 on 3 targets
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: DetailTypesListPage + VendorBillForm + QboReconcileCapturesPage + refuse guard + 3646 piggyback + OUTBOX
+
 ## 2026-10-08 · BANK-F91059 — Prepaid / Calculator / AuditTrail slate → house
 
 FINDING: BANK-F91059 — PrepaidExpensesPage / CalculatorPage / AccountingAuditTrailPage Tailwind slate-* → house tokens
