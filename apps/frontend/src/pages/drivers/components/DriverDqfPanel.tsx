@@ -109,7 +109,7 @@ export function DriverDqfPanel({ companyId, driverId, editable = true, focus = "
 
   if (!driverId) {
     return (
-      <div className="rounded-sm border border-dashed border-gray-300 p-4 text-center text-xs text-slate-500">
+      <div className="rounded-sm border border-dashed border-gray-300 p-4 text-center text-xs text-[#6B7280]">
         Select a driver to view the DQF checklist.
       </div>
     );
@@ -118,27 +118,27 @@ export function DriverDqfPanel({ companyId, driverId, editable = true, focus = "
   return (
     <div className="space-y-3">
       {focus !== "all" ? (
-        <div className="flex items-center justify-between rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+        <div className="flex items-center justify-between rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#4B5563]">
           <span>Showing DQF items: {focus === "expiry_alerts" ? "expiry alerts" : focus}</span>
-          <button type="button" className="font-medium text-slate-900 underline" onClick={onClearFocus}>
+          <button type="button" className="font-medium text-[#0F1219] underline" onClick={onClearFocus}>
             Show all
           </button>
         </div>
       ) : null}
       {editable ? (
         <section
-          className="rounded-sm border border-slate-200 bg-slate-50 p-3"
+          className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3"
           aria-labelledby="dqf-create-checklist-heading"
           data-testid="dqf-create-checklist-form"
         >
           <div className="mb-2 space-y-1">
             <h3
               id="dqf-create-checklist-heading"
-              className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-800"
+              className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#1F2A44]"
             >
               Add DQF checklist item
             </h3>
-            <p id="dqf-create-checklist-help" className="text-xs text-slate-600">
+            <p id="dqf-create-checklist-help" className="text-xs text-[#4B5563]">
               Pick a required document type from the 49 CFR catalog below. Dates are optional. The button stays disabled until a catalog row is selected — it is not a free-text item name.
             </p>
           </div>
@@ -160,7 +160,7 @@ export function DriverDqfPanel({ companyId, driverId, editable = true, focus = "
               });
             }}
           >
-            <div className="min-w-[280px] text-xs text-slate-600">
+            <div className="min-w-[280px] text-xs text-[#4B5563]">
               <label htmlFor="dqf-required-document-type">Required document type</label>
               <Combobox
                 id="dqf-required-document-type"
@@ -182,7 +182,7 @@ export function DriverDqfPanel({ companyId, driverId, editable = true, focus = "
             <label htmlFor="dqf-retain-until" className="block text-xs text-[#4B5563]">Retain until<DatePicker id="dqf-retain-until" className="mt-1 w-36" value={retainUntil} onChange={setRetainUntil} /></label>
             <button
               type="submit"
-              className="rounded-sm bg-slate-800 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+              className="rounded-sm bg-[#0F1219] px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
               disabled={createMutation.isPending || !documentTypeId || documentTypesQ.isError}
               aria-describedby="dqf-create-checklist-help"
               data-testid="dqf-create-checklist-item"
@@ -192,7 +192,7 @@ export function DriverDqfPanel({ companyId, driverId, editable = true, focus = "
             </button>
           </form>
           {!documentTypeId && !documentTypesQ.isLoading && !documentTypesQ.isError ? (
-            <p className="mt-2 text-xs text-slate-500" data-testid="dqf-create-checklist-pick-hint">
+            <p className="mt-2 text-xs text-[#6B7280]" data-testid="dqf-create-checklist-pick-hint">
               Select a catalog document type to enable Create.
             </p>
           ) : null}
@@ -225,12 +225,12 @@ export function DriverDqfPanel({ companyId, driverId, editable = true, focus = "
               key: "required_document_type_label",
               label: "Item",
               sortable: true,
-              cellClass: "font-medium text-slate-800",
+              cellClass: "font-medium text-[#1F2A44]",
             },
             {
               key: "required_document_type_authority",
               label: "Authority",
-              cellClass: "text-slate-600",
+              cellClass: "text-[#4B5563]",
               render: (item) => item.required_document_type_authority || "—",
             },
             {
@@ -245,14 +245,14 @@ export function DriverDqfPanel({ companyId, driverId, editable = true, focus = "
               key: "effective_date",
               label: "Effective",
               sortable: true,
-              cellClass: "text-slate-600",
+              cellClass: "text-[#4B5563]",
               render: (item) => formatDateUS(item.effective_date) || "—",
             },
             {
               key: "expiry_date",
               label: "Expiry",
               sortable: true,
-              cellClass: "text-slate-600",
+              cellClass: "text-[#4B5563]",
               render: (item) => formatDateUS(item.expiry_date) || "—",
             },
             {
