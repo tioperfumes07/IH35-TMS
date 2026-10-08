@@ -181,7 +181,7 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId, readOnly 
         label: "Labor code",
         sortable: true,
         sortValue: (row) => laborEntryCodeLabel(row, laborCodes),
-        render: (row) => <span className="text-slate-900">{laborEntryCodeLabel(row, laborCodes)}</span>,
+        render: (row) => <span className="text-[#0F1219]">{laborEntryCodeLabel(row, laborCodes)}</span>,
       },
       {
         key: "actor_kind",
@@ -222,11 +222,11 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId, readOnly 
 
   return (
     <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs" data-testid="wo-time-tracking-panel">
-      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Labor time tracking</div>
-      <p className="mt-1 text-xs text-slate-600">Start/stop timers or add manual ranges. Rates drive computed labor cost.</p>
+      <div className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Labor time tracking</div>
+      <p className="mt-1 text-xs text-[#4B5563]">Start/stop timers or add manual ranges. Rates drive computed labor cost.</p>
 
       <div className="mt-3 grid gap-2 md:grid-cols-3">
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Actor kind
           <SelectCombobox
             className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
@@ -241,7 +241,7 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId, readOnly 
             ))}
           </SelectCombobox>
         </label>
-        <label className="text-xs text-slate-600">
+        <label className="text-xs text-[#4B5563]">
           Labor rate (¢/hr)
           <input
             className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
@@ -251,7 +251,7 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId, readOnly 
             disabled={readOnly}
           />
         </label>
-        <label className="text-xs text-slate-600 md:col-span-1">
+        <label className="text-xs text-[#4B5563] md:col-span-1">
           Notes
           <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" value={notes} onChange={(e) => setNotes(e.target.value)} disabled={readOnly} />
         </label>
@@ -261,17 +261,17 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId, readOnly 
         <Button type="button" size="sm" onClick={() => void startMut.mutateAsync()} disabled={readOnly || startMut.isPending || openEntries.length > 0}>
           Start timer
         </Button>
-        {openEntries.length > 0 ? <span className="text-xs text-slate-600">An open timer exists — stop it before starting another.</span> : null}
+        {openEntries.length > 0 ? <span className="text-xs text-[#4B5563]">An open timer exists — stop it before starting another.</span> : null}
       </div>
 
       <div className="mt-4 border-t border-gray-100 pt-3">
-        <div className="text-xs font-semibold text-slate-600">Manual entry</div>
+        <div className="text-xs font-semibold text-[#4B5563]">Manual entry</div>
         <div className="mt-2 grid gap-2 md:grid-cols-2">
-          <label className="text-xs text-slate-600">
+          <label className="text-xs text-[#4B5563]">
             Started (ISO)
             <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" value={manualStart} onChange={(e) => setManualStart(e.target.value)} disabled={readOnly} />
           </label>
-          <label className="text-xs text-slate-600">
+          <label className="text-xs text-[#4B5563]">
             Ended (ISO)
             <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" value={manualEnd} onChange={(e) => setManualEnd(e.target.value)} disabled={readOnly} />
           </label>

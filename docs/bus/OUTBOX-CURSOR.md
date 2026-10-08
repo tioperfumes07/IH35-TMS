@@ -1,3 +1,13 @@
+## 2026-10-08T06:25Z · BANK leftover slate — WO console detail / time tracking / arriving soon
+
+FINDING: BANK-F91170 — WorkOrdersConsoleDetailPage / WOTimeTrackingPanel / ArrivingSoonPage Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25823 squash `4720aa9268` (BANK-F91169 bookload/cancel/portal)
+GUARD: scripts/verify-wo-time-arriving-slate-leftover-chrome.mjs + verify-steps/3788 piggyback
+LIVE PROOF: verify-wo-time-arriving-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 WO/maint surfaces + refuse guard + 3788 piggyback + OUTBOX
+
 ## 2026-10-08T06:18Z · BANK leftover slate — book load / cancel load / owner approval portal
 
 FINDING: BANK-F91169 — BookLoadModalV4 / CancelLoadModal / OwnerApprovalPortalPage Tailwind slate-* → house tokens

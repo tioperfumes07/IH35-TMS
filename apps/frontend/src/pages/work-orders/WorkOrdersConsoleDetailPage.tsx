@@ -182,7 +182,7 @@ export function WorkOrdersConsoleDetailPage() {
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
-          className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-slate-900 hover:underline"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-[#4B5563] hover:text-[#0F1219] hover:underline"
           onClick={() => navigate("/work-orders")}
         >
           <span aria-hidden="true">←</span>
@@ -247,17 +247,17 @@ export function WorkOrdersConsoleDetailPage() {
       {reasonModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4" role="dialog" aria-modal="true">
           <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-4 shadow-xl">
-            <h2 className="text-xs font-semibold text-slate-900">
+            <h2 className="text-xs font-semibold text-[#0F1219]">
               {reasonModal.kind === "cancel" ? "Cancel work order" : "Void work order"}
             </h2>
-            <p className="mt-1 text-xs text-slate-600">
+            <p className="mt-1 text-xs text-[#4B5563]">
               {reasonModal.kind === "cancel"
                 ? "Pick a reason from catalogs.wo_cancellation_reasons. The work order is never deleted — it stays on record with your reason in the audit trail."
                 : "This voids the work order (incl. completed). It is never deleted — it stays on record with your reason in the audit trail."}
             </p>
             {reasonModal.kind === "cancel" ? (
               <>
-                <label className="mt-3 block text-xs font-semibold text-slate-700" htmlFor="wo-console-cancel-reason">
+                <label className="mt-3 block text-xs font-semibold text-[#4B5563]" htmlFor="wo-console-cancel-reason">
                   Cancellation reason (required)
                 </label>
                 <Combobox
@@ -272,12 +272,12 @@ export function WorkOrdersConsoleDetailPage() {
                     if (label) createWoReasonMut.mutate(label);
                   }}
                 />
-                <label className="mt-3 block text-xs font-semibold text-slate-700" htmlFor="wo-console-cancel-notes">
+                <label className="mt-3 block text-xs font-semibold text-[#4B5563]" htmlFor="wo-console-cancel-notes">
                   Notes (optional)
                 </label>
                 <textarea
                   id="wo-console-cancel-notes"
-                  className="mt-1 w-full rounded-sm border border-slate-300 p-2 text-xs"
+                  className="mt-1 w-full rounded-sm border border-[#E5E7EB] p-2 text-xs"
                   rows={2}
                   value={cancelNotes}
                   onChange={(e) => setCancelNotes(e.target.value)}
@@ -286,12 +286,12 @@ export function WorkOrdersConsoleDetailPage() {
               </>
             ) : (
               <>
-                <label className="mt-3 block text-xs font-semibold text-slate-700" htmlFor="wo-reason">
+                <label className="mt-3 block text-xs font-semibold text-[#4B5563]" htmlFor="wo-reason">
                   Reason (required)
                 </label>
                 <textarea
                   id="wo-reason"
-                  className="mt-1 w-full rounded-sm border border-slate-300 p-2 text-xs"
+                  className="mt-1 w-full rounded-sm border border-[#E5E7EB] p-2 text-xs"
                   rows={3}
                   value={reasonText}
                   onChange={(e) => setReasonText(e.target.value)}
@@ -328,26 +328,26 @@ export function WorkOrdersConsoleDetailPage() {
 
       <div className="grid gap-3 md:grid-cols-2">
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Details</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Details</div>
           <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-            <div className="text-slate-500">Status</div>
+            <div className="text-[#6B7280]">Status</div>
             <div>{String(wo?.status ?? "—")}</div>
-            <div className="text-slate-500">Billing type</div>
+            <div className="text-[#6B7280]">Billing type</div>
             <div>{String(wo?.wo_billing_type ?? "—")}</div>
-            <div className="text-slate-500">Service class</div>
+            <div className="text-[#6B7280]">Service class</div>
             <div>{String(wo?.wo_service_class ?? "—")}</div>
-            <div className="text-slate-500">Vendor invoice #</div>
+            <div className="text-[#6B7280]">Vendor invoice #</div>
             <div className="font-mono text-xs">{String(wo?.vendor_invoice_number ?? wo?.external_vendor_invoice_number ?? "—")}</div>
-            <div className="text-slate-500">Vendor WO #</div>
+            <div className="text-[#6B7280]">Vendor WO #</div>
             <div className="font-mono text-xs">{String(wo?.vendor_work_order_number ?? wo?.external_vendor_wo_number ?? "—")}</div>
-            <div className="text-slate-500">Labor cost (tracked)</div>
+            <div className="text-[#6B7280]">Labor cost (tracked)</div>
             <div>{String(wo?.labor_cost_cents ?? "0")} ¢</div>
           </div>
         </div>
 
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Photos</div>
-          <p className="mt-2 text-xs text-slate-600">Upload evidence photos (R2 signed URL).</p>
+          <div className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Photos</div>
+          <p className="mt-2 text-xs text-[#4B5563]">Upload evidence photos (R2 signed URL).</p>
           <input
             type="file"
             accept="image/*"
@@ -356,7 +356,7 @@ export function WorkOrdersConsoleDetailPage() {
           />
           <div className="mt-3 space-y-1 text-xs">
             {photoPaths.map((path) => (
-              <div key={path} className="font-mono text-xs text-slate-700">
+              <div key={path} className="font-mono text-xs text-[#4B5563]">
                 {path}
               </div>
             ))}
@@ -373,8 +373,8 @@ export function WorkOrdersConsoleDetailPage() {
       ) : null}
 
       <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Line items</div>
-        <pre className="mt-2 max-h-[320px] overflow-auto rounded-sm bg-slate-50 p-2 text-xs">
+        <div className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Line items</div>
+        <pre className="mt-2 max-h-[320px] overflow-auto rounded-sm bg-[#F7F8FA] p-2 text-xs">
           {JSON.stringify(detailQuery.data?.line_items ?? [], null, 2)}
         </pre>
       </div>
