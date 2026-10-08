@@ -32,9 +32,9 @@ function pwaPingLabel(lastPingAt: string | null): string {
 
 function pwaPingClass(lastPingAt: string | null): string {
   const label = pwaPingLabel(lastPingAt);
-  if (label === "Online") return "bg-slate-100 text-slate-700";
-  if (label === "Recent") return "bg-slate-100 text-slate-700";
-  if (label === "Stale") return "bg-slate-100 text-slate-700";
+  if (label === "Online") return "bg-[#F7F8FA] text-[#4B5563]";
+  if (label === "Recent") return "bg-[#F7F8FA] text-[#4B5563]";
+  if (label === "Stale") return "bg-[#F7F8FA] text-[#4B5563]";
   return "bg-gray-100 text-gray-600";
 }
 
@@ -46,8 +46,8 @@ function formatEtaTime(etaAt: string | null): string {
 }
 
 function onTimeClass(prediction: DispatchLoadRow["on_time_prediction"]): string {
-  if (prediction === "green") return "bg-slate-100 text-slate-700";
-  if (prediction === "amber") return "bg-slate-100 text-slate-700";
+  if (prediction === "green") return "bg-[#F7F8FA] text-[#4B5563]";
+  if (prediction === "amber") return "bg-[#F7F8FA] text-[#4B5563]";
   if (prediction === "red") return "bg-red-100 text-red-800";
   return "bg-gray-100 text-gray-500";
 }
@@ -72,7 +72,7 @@ export function DriverStatusColumn({ load }: { load: DispatchLoadRow }) {
 
   return (
     <div className="inline-flex flex-nowrap items-center gap-1 whitespace-nowrap" data-testid="driver-status-column">
-      <span className="rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+      <span className="rounded-full border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#4B5563]">
         {LIFECYCLE_LABEL[lifecycle] ?? lifecycle.replaceAll("_", " ")}
       </span>
       <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${pwaPingClass(load.driver_pwa_last_ping_at ?? null)}`}>
@@ -90,7 +90,7 @@ export function SamsaraEtaColumn({ load }: { load: DispatchLoadRow }) {
 
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-800"
+      className="inline-flex items-center gap-1 rounded-full bg-[#F7F8FA] px-2 py-0.5 text-xs font-medium text-[#1F2A44]"
       title={`ETA source: ${load.samsara_eta_source ?? "unknown"}`}
       data-testid="samsara-eta-column"
     >

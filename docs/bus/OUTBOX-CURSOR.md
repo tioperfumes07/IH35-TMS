@@ -1,3 +1,13 @@
+## 2026-10-08T09:40Z · BANK leftover slate — load completion / dispatch list / live ETA
+
+FINDING: BANK-F91185 — LoadCompletionPromptsCard / DispatchList / LiveEtaColumns Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25839 squash `5b1e8f2f1c` (BANK-F91184 geofence/anomalies/DOT)
+GUARD: scripts/verify-dispatch-list-eta-slate-leftover-chrome.mjs + verify-steps/3600 piggyback
+LIVE PROOF: verify-dispatch-list-eta-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3600 piggyback + OUTBOX
+
 ## 2026-10-08T09:30Z · BANK leftover slate — geofence breaches / anomalies / DOT compliance
 
 FINDING: BANK-F91184 — GeofenceBreachesTab / AnomaliesTab / DOTComplianceTab Tailwind slate-* → house tokens

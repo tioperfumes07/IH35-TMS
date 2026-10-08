@@ -50,14 +50,14 @@ function ConfirmButtons({
 }) {
   return (
     <div className="flex items-center justify-between gap-2 py-1">
-      <span className="text-slate-700">{label}</span>
+      <span className="text-[#4B5563]">{label}</span>
       <span className="flex gap-1">
         <button
           type="button"
           disabled={disabled}
           onClick={() => onChoose(true)}
           className={`rounded border px-2 py-0.5 text-xs font-semibold ${
-            value === true ? "border-slate-600 bg-slate-100 text-slate-700" : "border-slate-300 text-slate-600 hover:bg-slate-50"
+            value === true ? "border-[#1F2A44] bg-[#F7F8FA] text-[#4B5563]" : "border-[#E5E7EB] text-[#4B5563] hover:bg-[#F7F8FA]"
           }`}
         >
           Yes
@@ -67,7 +67,7 @@ function ConfirmButtons({
           disabled={disabled}
           onClick={() => onChoose(false)}
           className={`rounded border px-2 py-0.5 text-xs font-semibold ${
-            value === false ? "border-slate-600 bg-slate-200 text-slate-800" : "border-slate-300 text-slate-600 hover:bg-slate-50"
+            value === false ? "border-[#1F2A44] bg-[#E5E7EB] text-[#1F2A44]" : "border-[#E5E7EB] text-[#4B5563] hover:bg-[#F7F8FA]"
           }`}
         >
           No
@@ -136,21 +136,21 @@ export function LoadCompletionPromptsCard({ loadId, operatingCompanyId }: Props)
 
   return (
     <div
-      className="rounded border border-slate-200 bg-slate-100 p-3 text-xs"
+      className="rounded border border-[#E5E7EB] bg-[#F7F8FA] p-3 text-xs"
       data-testid="load-completion-prompts-card"
     >
-      <div className="mb-1 text-xs font-bold uppercase tracking-wide text-slate-700">Dispatch confirmations</div>
+      <div className="mb-1 text-xs font-bold uppercase tracking-wide text-[#4B5563]">Dispatch confirmations</div>
 
       {showLumperBlock ? (
-        <div className="mb-2 border-b border-slate-200 pb-2 last:mb-0 last:border-0 last:pb-0" data-testid="load-completion-lumper-block">
-          <div className="mb-1 text-xs font-semibold text-slate-700">Reefer load — lumper</div>
+        <div className="mb-2 border-b border-[#E5E7EB] pb-2 last:mb-0 last:border-0 last:pb-0" data-testid="load-completion-lumper-block">
+          <div className="mb-1 text-xs font-semibold text-[#4B5563]">Reefer load — lumper</div>
           {prompts.has_lumper ? (
-            <div className="text-slate-600">
+            <div className="text-[#4B5563]">
               Lumper on file
               {prompts.lumper_paid_by ? ` — paid by ${LUMPER_PAID_BY_LABEL[prompts.lumper_paid_by] ?? prompts.lumper_paid_by}` : ""}.
             </div>
           ) : (
-            <div className="text-slate-500">No lumper recorded on this load's stops.</div>
+            <div className="text-[#6B7280]">No lumper recorded on this load's stops.</div>
           )}
           <ConfirmButtons
             label="Lumper receipts sent?"
@@ -171,7 +171,7 @@ export function LoadCompletionPromptsCard({ loadId, operatingCompanyId }: Props)
 
       {showLateBlock ? (
         <div data-testid="load-completion-late-penalty-block">
-          <div className="mb-1 text-xs font-semibold text-slate-700">
+          <div className="mb-1 text-xs font-semibold text-[#4B5563]">
             Driver was late — {prompts.late_stops.map((s) => `stop #${s.sequence} (${s.minutes_late}m late)`).join(", ")}
           </div>
           <ConfirmButtons

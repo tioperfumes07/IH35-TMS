@@ -26,15 +26,15 @@ type RowOverride = {
 
 function statusVariant(status: DispatchLoadRow["status"]) {
   if (status === "cancelled") return "bg-red-100 text-red-700";
-  if (status === "delivered") return "bg-slate-100 text-slate-700";
-  if (status === "in_transit" || status === "at_pickup" || status === "at_delivery") return "bg-slate-100 text-slate-700";
+  if (status === "delivered") return "bg-[#F7F8FA] text-[#4B5563]";
+  if (status === "in_transit" || status === "at_pickup" || status === "at_delivery") return "bg-[#F7F8FA] text-[#4B5563]";
   if (status === "closed" || status === "paid" || status === "invoiced") return "bg-gray-200 text-gray-700";
-  return "bg-slate-100 text-slate-700";
+  return "bg-[#F7F8FA] text-[#4B5563]";
 }
 
 function progressPill(progress?: DispatchLoadRow["progress_status"]) {
-  if (progress === "early" || progress === "on_track") return "bg-slate-100 text-slate-700";
-  if (progress === "behind") return "bg-slate-100 text-slate-700";
+  if (progress === "early" || progress === "on_track") return "bg-[#F7F8FA] text-[#4B5563]";
+  if (progress === "behind") return "bg-[#F7F8FA] text-[#4B5563]";
   if (progress === "delayed") return "bg-red-100 text-red-800";
   return "bg-gray-100 text-gray-700";
 }
@@ -110,7 +110,7 @@ export function DispatchList({
     return (
       <div className="rounded-sm border border-gray-200 bg-white p-6 text-xs text-gray-500">
         No loads match your filters.{" "}
-        <button type="button" className="font-semibold text-slate-700 hover:underline" onClick={() => onPageChange(0)}>
+        <button type="button" className="font-semibold text-[#4B5563] hover:underline" onClick={() => onPageChange(0)}>
           Go back to first page
         </button>
       </div>
@@ -210,19 +210,19 @@ export function DispatchList({
                     <div>{entityLabel(load.load_number, load.id, "Load")}</div>
                     {showPreSettlementPrompt && openPreSettlement ? (
                       <div
-                        className="flex flex-wrap items-center gap-2 rounded-sm bg-slate-100 px-2 py-1 text-xs text-slate-700"
+                        className="flex flex-wrap items-center gap-2 rounded-sm bg-[#F7F8FA] px-2 py-1 text-xs text-[#4B5563]"
                         onClick={(event) => event.stopPropagation()}
                       >
                         <span className="font-semibold">Driver has open pre-settlement</span>
                         {openPreSettlement.settlement_number ? (
-                          <span className="font-mono text-slate-700">
+                          <span className="font-mono text-[#4B5563]">
                             {entityLabel(openPreSettlement.settlement_number, openPreSettlement.settlement_id, "Settlement")}
                           </span>
                         ) : null}
-                        <span className="text-slate-700">· add this load to it?</span>
+                        <span className="text-[#4B5563]">· add this load to it?</span>
                         <button
                           type="button"
-                          className="rounded-sm bg-slate-300 px-2 py-0.5 text-xs font-semibold text-slate-700 hover:bg-slate-300"
+                          className="rounded-sm bg-[#E5E7EB] px-2 py-0.5 text-xs font-semibold text-[#4B5563] hover:bg-[#E5E7EB]"
                           onClick={(event) => {
                             event.stopPropagation();
                             onAddToPreSettlement?.(openPreSettlement.settlement_id, load.id, load.operating_company_id);
