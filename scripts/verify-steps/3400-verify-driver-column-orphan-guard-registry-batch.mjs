@@ -49,5 +49,7 @@ export default {
     await ctx.run("node", ["scripts/verify-maint-parts-adjustment-company-lifecycle.mjs"]);
     await ctx.run("node", ["scripts/verify-safety-detail-drawer-record-lifecycle.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-safety-detail-drawer-record-lifecycle.mjs"]);
+    // BANK leftover refuse — CivilFines / LoadDriverReports / DriverReports house tokens
+    await ctx.run("node", ["scripts/verify-91292-fines-drv-reports-slate-leftover-chrome.mjs"]);
   },
 };
