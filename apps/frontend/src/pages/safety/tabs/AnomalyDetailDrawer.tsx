@@ -142,7 +142,7 @@ export function AnomalyDetailDrawer({
         confirmDiscardOnClose
         isDirty={Boolean(note.trim())}
         onRegisterAttemptClose={(next) => setAttemptClose(() => next)}
-        footer={<button type="button" className="rounded-sm border border-slate-300 px-3 py-1 text-xs font-semibold" disabled={actionPending} onClick={attemptClose}>Close</button>}
+        footer={<button type="button" className="rounded-sm border border-[#E5E7EB] px-3 py-1 text-xs font-semibold" disabled={actionPending} onClick={attemptClose}>Close</button>}
       >
         <div ref={panelRef} data-testid="anomaly-detail-drawer">
 
@@ -199,7 +199,7 @@ export function AnomalyDetailDrawer({
 
             <div>
               <div className="mb-1 text-xs font-semibold text-gray-700">Evidence</div>
-              <pre className="max-h-80 overflow-auto rounded-sm border border-gray-200 bg-slate-950 p-3 text-xs text-slate-100">
+              <pre className="max-h-80 overflow-auto rounded-sm border border-gray-200 bg-[#0F1219] p-3 text-xs text-[#F7F8FA]">
                 {JSON.stringify(anomaly.evidence ?? {}, null, 2)}
               </pre>
             </div>
@@ -229,7 +229,7 @@ export function AnomalyDetailDrawer({
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                  className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
                   onClick={() => ackMutation.mutate({ anomalyId: String(anomalyId), companyId: operatingCompanyId, generation: actionGenerationRef.current })}
                   disabled={actionPending || anomaly.status !== "new"}
                 >
@@ -245,7 +245,7 @@ export function AnomalyDetailDrawer({
                 </button>
                 <button
                   type="button"
-                  className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                  className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
                   onClick={() => dismissMutation.mutate({ anomalyId: String(anomalyId), companyId: operatingCompanyId, generation: actionGenerationRef.current, note })}
                   disabled={actionPending || note.trim().length === 0}
                 >

@@ -56,12 +56,12 @@ export function DriverFilesTab() {
           <DriversListPage onOpenProfile={(nextDriverId) => setDriverId(nextDriverId)} />
           <div className="mt-4 space-y-2" data-testid="driver-files-training-section">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-xs font-semibold text-slate-900">Training Completions</h3>
+              <h3 className="text-xs font-semibold text-[#0F1219]">Training Completions</h3>
               <span className="flex flex-wrap gap-3 text-xs">
-                <Link to="/safety/training/programs" className="font-semibold text-slate-700 underline">
+                <Link to="/safety/training/programs" className="font-semibold text-[#1F2A44] underline">
                   Training Programs
                 </Link>
-                <Link to="/safety/training/records" className="font-semibold text-slate-700 underline">
+                <Link to="/safety/training/records" className="font-semibold text-[#1F2A44] underline">
                   Training Records
                 </Link>
               </span>
@@ -80,7 +80,7 @@ export function DriverFilesTab() {
             )}
             {!trainingQuery.isError && trainingTotal > trainingPageSize ? <div className="flex items-center justify-end gap-2 text-xs" data-testid="driver-files-training-server-pager">
               <Button size="sm" variant="secondary" disabled={trainingPage <= 1 || trainingQuery.isFetching} onClick={() => setTrainingPage((current) => Math.max(1, current - 1))}>Previous training</Button>
-              <span className="text-slate-600">Page {trainingPage} of {trainingPageCount} · {trainingTotal} records</span>
+              <span className="text-[#4B5563]">Page {trainingPage} of {trainingPageCount} · {trainingTotal} records</span>
               <Button size="sm" variant="secondary" disabled={trainingPage >= trainingPageCount || trainingQuery.isFetching} onClick={() => setTrainingPage((current) => Math.min(trainingPageCount, current + 1))}>Next training</Button>
             </div> : null}
           </div>

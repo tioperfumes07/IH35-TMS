@@ -1,3 +1,13 @@
+## 2026-10-08T23:25Z · BANK leftover slate — DriverFiles / AnomalyDetail / MergeExport
+
+FINDING: BANK-F91252 — DriverFilesTab / AnomalyDetailDrawer / MergeExportTab Tailwind slate-* → house tokens
+LANE: NON-FINANCIAL
+Prior tip merge: #25929 squash `9b1953ea9b` (BANK-F91251 InventoryPurchases/Assignments/MaintenanceHome)
+GUARD: scripts/verify-safety-files-anomaly-merge-slate-leftover-chrome.mjs + verify-steps/3560 piggyback
+LIVE PROOF: verify-safety-files-anomaly-merge-slate-leftover-chrome exit 0 — PASS (3 files); SELFTEST PASS; leftover slate class = 0
+REMAINING: FE redeploy; densest remaining FE slate-* cluster
+Files Modified: 3 FE surfaces + refuse guard + 3560 piggyback + OUTBOX
+
 ## 2026-10-08T23:20Z · BANK leftover slate — InventoryPurchases / InventoryAssignments / MaintenanceHome
 
 FINDING: BANK-F91251 — InventoryPurchasesPage / InventoryAssignmentsPage / MaintenanceHome Tailwind slate-* → house tokens

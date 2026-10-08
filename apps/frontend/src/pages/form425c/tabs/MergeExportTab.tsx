@@ -15,13 +15,13 @@ export function MergeExportTab({ company, month, year, canGenerate, generating, 
   return (
     <div className="space-y-3 p-4">
       <div className="rounded-sm border bg-white p-4">
-        <div className="text-xs font-semibold text-slate-800">Build Complete Report Package</div>
-        <p className="mt-2 text-xs text-slate-600">
+        <div className="text-xs font-semibold text-[#0F1219]">Build Complete Report Package</div>
+        <p className="mt-2 text-xs text-[#4B5563]">
           Prints the current MOR without changing status or writing a filing PDF. Use{" "}
           <strong>Generate PDF</strong> on Form 425C to create the court artifact and mark ready to
           file. Browser destination <strong>Save as PDF</strong>.
         </p>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-[#6B7280]">
           Suggested filename:{" "}
           {suggestedFilename(company.name, month, year) ? (
             <em>{suggestedFilename(company.name, month, year)}</em>
@@ -29,7 +29,7 @@ export function MergeExportTab({ company, month, year, canGenerate, generating, 
             <em className="font-semibold text-red-700">Set the debtor name in Profiles before a court filename</em>
           )}
         </p>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-[#6B7280]">
           Period: {MONTHS[month]} {year}
         </p>
         {!canGenerate ? (
@@ -41,7 +41,7 @@ export function MergeExportTab({ company, month, year, canGenerate, generating, 
           type="button"
           onClick={onGenerate}
           disabled={generating}
-          className="mt-3 rounded-sm bg-slate-700 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
+          className="mt-3 rounded-sm bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
         >
           {generating ? "Generating..." : "Generate Filing HTML + Print PDF"}
         </button>
